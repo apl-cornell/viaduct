@@ -1,5 +1,6 @@
 plugins {
     id 'java'
+    id 'checkstyle'
 }
 
 group 'edu.cornell.cs.apl'
@@ -9,6 +10,10 @@ sourceCompatibility = 1.8
 
 repositories {
     mavenCentral()
+}
+
+checkstyle {
+    maxWarnings 0
 }
 
 dependencies {

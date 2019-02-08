@@ -1,6 +1,8 @@
 plugins {
     id 'java'
     id 'checkstyle'
+    id 'com.github.spotbugs' version '1.6.9'
+    id 'pmd'
 }
 
 group 'edu.cornell.cs.apl'
@@ -9,13 +11,18 @@ version '1.0-SNAPSHOT'
 sourceCompatibility = 1.8
 
 repositories {
-    mavenCentral()
+    jcenter()
 }
 
 checkstyle {
     maxWarnings 0
 }
 
+tasks.withType(com.github.spotbugs.SpotBugsTask) {
+    reports.xml.enabled = false
+    reports.html.enabled = true
+}
+
 dependencies {
-    testCompile group: 'junit', name: 'junit', version: '4.12'
+    testImplementation group: 'junit', name: 'junit', version: '4.12'
 }

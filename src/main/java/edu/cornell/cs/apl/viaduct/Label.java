@@ -1,17 +1,15 @@
 package edu.cornell.cs.apl.viaduct;
 
-public class Label
-{
-    public static Label BOTTOM = new Label();
+/** security labels. */
+public class Label {
+  public static final Label BOTTOM = new Label();
 
-    // TODO: implement 
-    public Label join(Label other)
-    {
-        return this;
-    }
+  // TODO: implement
+  public Label join(Label other) {
+    return this;
+  }
 
-    public String toString()
-    {
-        return "{L}";
-    }
+  public String toString() {
+    return "{L}";
+  }
 }

@@ -1,32 +1,23 @@
 package edu.cornell.cs.apl.viaduct;
 
-public class VarLookupNode implements ExprNode
-{
-    Variable var;
+/** variable reference. */
+public class VarLookupNode implements ExprNode {
+  Variable var;
 
-    public VarLookupNode(Variable _var)
-    {
-        this.var = _var;
-    }
+  public VarLookupNode(Variable var) {
+    this.var = var;
+  }
 
-    public Variable getVar()
-    {
-        return this.var;
-    }
+  public Variable getVar() {
+    return this.var;
+  }
 
-    public <R> R accept(ExprVisitor<R> v)
-    {
-        // TODO: ew fix this
-        try {
-            return v.visit(this);
-        } catch (UndeclaredVariableException undeclVarExn) {}
+  public <R> R accept(ExprVisitor<R> v) {
+    return v.visit(this);
+  }
 
-        return null;
-    }
-
-    @Override
-    public String toString()
-    {
-        return "(var " + var.toString() + ")";
-    }
+  @Override
+  public String toString() {
+    return "(var " + var.toString() + ")";
+  }
 }

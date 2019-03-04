@@ -1,33 +1,29 @@
 package edu.cornell.cs.apl.viaduct;
 
-public class LeqNode implements BinaryExprNode
-{
-    ExprNode lhs, rhs;
+/** less than or equal to comparison between arithmetic exprs.  */
+public class LeqNode implements BinaryExprNode {
+  ExprNode lhs;
+  ExprNode rhs;
 
-    public LeqNode(ExprNode _lhs, ExprNode _rhs)
-    {
-        this.lhs = _lhs;
-        this.rhs = _rhs;
-    }
+  public LeqNode(ExprNode lhs, ExprNode rhs) {
+    this.lhs = lhs;
+    this.rhs = rhs;
+  }
 
-    public ExprNode getLHS()
-    {
-        return this.lhs;
-    }
+  public ExprNode getLhs() {
+    return this.lhs;
+  }
 
-    public ExprNode getRHS()
-    {
-        return this.rhs;
-    }
+  public ExprNode getRhs() {
+    return this.rhs;
+  }
 
-    public <R> R accept(ExprVisitor<R> v)
-    {
-        return v.visit(this);
-    }
+  public <R> R accept(ExprVisitor<R> v) {
+    return v.visit(this);
+  }
 
-    @Override
-    public String toString()
-    {
-        return "(<= " + this.lhs.toString() + " " + this.rhs.toString() + ")";
-    }
+  @Override
+  public String toString() {
+    return "(<= " + this.lhs.toString() + " " + this.rhs.toString() + ")";
+  }
 }

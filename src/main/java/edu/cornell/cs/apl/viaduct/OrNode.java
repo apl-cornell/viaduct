@@ -1,33 +1,29 @@
 package edu.cornell.cs.apl.viaduct;
 
-public class OrNode implements BinaryExprNode
-{
-    ExprNode lhs, rhs;
+/** boolean disjunction expression. */
+public class OrNode implements BinaryExprNode {
+  ExprNode lhs;
+  ExprNode rhs;
 
-    public OrNode(ExprNode _lhs, ExprNode _rhs)
-    {
-        this.lhs = _lhs;
-        this.rhs = _rhs;
-    }
+  public OrNode(ExprNode lhs, ExprNode rhs) {
+    this.lhs = lhs;
+    this.rhs = rhs;
+  }
 
-    public ExprNode getLHS()
-    {
-        return this.lhs;
-    }
+  public ExprNode getLhs() {
+    return this.lhs;
+  }
 
-    public ExprNode getRHS()
-    {
-        return this.rhs;
-    }
+  public ExprNode getRhs() {
+    return this.rhs;
+  }
 
-    public <R> R accept(ExprVisitor<R> v)
-    {
-        return v.visit(this);
-    }
+  public <R> R accept(ExprVisitor<R> v) {
+    return v.visit(this);
+  }
 
-    @Override
-    public String toString()
-    {
-        return "(|| " + this.lhs.toString() + " " + this.rhs.toString() + ")";
-    }
+  @Override
+  public String toString() {
+    return "(|| " + this.lhs.toString() + " " + this.rhs.toString() + ")";
+  }
 }

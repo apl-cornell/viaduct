@@ -1,38 +1,29 @@
 package edu.cornell.cs.apl.viaduct;
 
-public class AssignNode implements StmtNode
-{
-    Variable var;
-    ExprNode rhs;
+/** variable assignment statement. */
+public class AssignNode implements StmtNode {
+  Variable var;
+  ExprNode rhs;
 
-    public AssignNode(Variable _var, ExprNode _rhs)
-    {
-        this.var = _var;
-        this.rhs = _rhs;
-    }
+  public AssignNode(Variable var, ExprNode rhs) {
+    this.var = var;
+    this.rhs = rhs;
+  }
 
-    public Variable getVar()
-    {
-        return this.var;
-    }
+  public Variable getVar() {
+    return this.var;
+  }
 
-    public ExprNode getRHS()
-    {
-        return this.rhs;
-    }
+  public ExprNode getRhs() {
+    return this.rhs;
+  }
 
-    public <R> R accept(StmtVisitor<R> v)
-    {
-        try {
-            return v.visit(this);
-        } catch (UndeclaredVariableException undeclVarExn) {}
+  public <R> R accept(StmtVisitor<R> v) {
+    return v.visit(this);
+  }
 
-        return null;
-    }
-
-    @Override
-    public String toString()
-    {
-        return "(assign " + this.var.toString() + " to " + this.rhs.toString() + ")";
-    }
+  @Override
+  public String toString() {
+    return "(assign " + this.var.toString() + " to " + this.rhs.toString() + ")";
+  }
 }

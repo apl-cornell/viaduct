@@ -1,8 +1,12 @@
 package edu.cornell.cs.apl.viaduct;
 
-public class Main {
-  /** create shell game. */
-  public static StmtNode getShellGame() {
+import static org.junit.Assert.assertEquals;
+
+import org.junit.Test;
+
+public class ShellGameTest {
+  @Test
+  public void testShellGame() {
     ExprBuilder e = new ExprBuilder();
     StmtNode shellGame =
         (new StmtBuilder())
@@ -24,15 +28,8 @@ public class Main {
                 (new StmtBuilder()).skip())
             .build();
 
-    return shellGame;
-  }
-
-  /** entry method. */
-  public static void main(String[] args) {
-    PrintVisitor print = new PrintVisitor();
-    StmtNode shellGame = getShellGame();
-
     // print out the AST
+    PrintVisitor print = new PrintVisitor();
     String shellGameStr = shellGame.accept(print);
     System.out.println(shellGameStr);
 

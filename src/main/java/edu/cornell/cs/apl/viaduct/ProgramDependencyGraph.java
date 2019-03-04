@@ -32,8 +32,15 @@ public class ProgramDependencyGraph {
     Collections.sort(sortedNodes);
 
     StringBuffer buf = new StringBuffer();
-    for (PdgNode node : sortedNodes) {
-      buf.append(node.toString() + "\n");
+    for (PdgNode node : sortedNodes)
+    {
+      buf.append(node.toString());
+      buf.append(" (outedges:");
+      for (PdgNode outNode : node.getOutNodes())
+      {
+        buf.append(" " + outNode.getLineNumber().toString());
+      }
+      buf.append(")\n");
     }
 
     return buf.toString();

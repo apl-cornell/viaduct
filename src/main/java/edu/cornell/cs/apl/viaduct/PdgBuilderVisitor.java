@@ -28,7 +28,7 @@ public class PdgBuilderVisitor implements StmtVisitor<Set<PdgNode>>, ExprVisitor
   /** visit binary operation expr. */
   protected Set<PdgNode> visitBinaryOp(BinaryExprNode binNode) {
     Set<PdgNode> lhsDeps = binNode.getLhs().accept(this);
-    Set<PdgNode> rhsDeps = binNode.getLhs().accept(this);
+    Set<PdgNode> rhsDeps = binNode.getRhs().accept(this);
     Set<PdgNode> deps = new HashSet<PdgNode>(lhsDeps);
     deps.addAll(rhsDeps);
     return deps;

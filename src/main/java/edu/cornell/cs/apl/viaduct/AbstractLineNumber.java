@@ -88,9 +88,11 @@ public class AbstractLineNumber implements Comparable<AbstractLineNumber> {
   @Override
   public String toString() {
     StringBuilder buf = new StringBuilder();
+    buf.append("<");
     for (LineNumberComponent comp : this.componentList) {
       buf.append("(" + comp.getMarker() + ":" + comp.getSequenceNum() + ")");
     }
+    buf.append(">");
 
     return buf.toString();
   }

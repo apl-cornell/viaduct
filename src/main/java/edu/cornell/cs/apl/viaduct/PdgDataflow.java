@@ -8,7 +8,8 @@ public abstract class PdgDataflow<T extends Lattice<T>> {
   protected abstract T input(PdgNode node);
   protected abstract T output(PdgNode node);
   protected abstract T transfer(PdgNode node, T nextInput);
-  protected abstract void update(PdgNode node, T input, T output);
+  protected abstract void updateInput(PdgNode node, T nextInput);
+  protected abstract void updateOutput(PdgNode node, T nextInput);
 
   /** worklist algorithm */
   public void dataflow(ProgramDependencyGraph pdg) {
@@ -22,13 +23,14 @@ public abstract class PdgDataflow<T extends Lattice<T>> {
       {
         nextInput = nextInput.join(output(inNode));
       }
+      updateInput(node, nextInput);
 
       T curOutput = output(node);
       T nextOutput = transfer(node, nextInput);
 
       // if output has been updated, add node back to the worklist
       if (!nextOutput.equals(curOutput)) {
-        update(node, nextInput, nextOutput);
+        updateOutput(node, nextOutput);
         worklist.add(node);
       }
     }

@@ -19,8 +19,11 @@ public class PdgLabelDataflow extends PdgDataflow<Label> {
         }
     }
 
-    protected void update(PdgNode node, Label nextInput, Label nextOutput) {
+    protected void updateInput(PdgNode node, Label nextInput) {
         node.setInLabel(nextInput);
+    }
+
+    protected void updateOutput(PdgNode node, Label nextOutput) {
         node.setOutLabel(nextOutput);
     }
 }

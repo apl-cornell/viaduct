@@ -49,7 +49,7 @@ public class PdgBuilderVisitor implements StmtVisitor<Set<PdgNode>>, ExprVisitor
       inNode.addOutNode(node);
     }
 
-    this.pdg.add(node);
+    this.pdg.addNode(node);
 
     Set<PdgNode> deps = new HashSet<PdgNode>();
     deps.add(node);
@@ -137,7 +137,7 @@ public class PdgBuilderVisitor implements StmtVisitor<Set<PdgNode>>, ExprVisitor
     AbstractLineNumber lineno = this.lineNumberBuilder.generateLineNumber();
     PdgNode node = new PdgStorageNode(varDecl, lineno, varDecl.getVarLabel());
     this.storageNodes.add(varDecl.getDeclaredVar(), node);
-    this.pdg.add(node);
+    this.pdg.addNode(node);
 
     return new HashSet<PdgNode>();
   }
@@ -159,7 +159,7 @@ public class PdgBuilderVisitor implements StmtVisitor<Set<PdgNode>>, ExprVisitor
         inNode.addOutNode(node);
       }
       varNode.addInNode(node);
-      this.pdg.add(node);
+      this.pdg.addNode(node);
 
       Set<PdgNode> deps = new HashSet<PdgNode>();
       deps.add(node);
@@ -189,7 +189,7 @@ public class PdgBuilderVisitor implements StmtVisitor<Set<PdgNode>>, ExprVisitor
 
     AbstractLineNumber lineno = this.lineNumberBuilder.generateLineNumber();
     PdgNode node = new PdgControlNode(ifNode, lineno, Label.BOTTOM);
-    this.pdg.add(node);
+    this.pdg.addNode(node);
 
     // then and else branches create a new lexical scope, so
     // must push then pop a new symbol table for them

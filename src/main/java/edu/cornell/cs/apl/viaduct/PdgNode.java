@@ -9,6 +9,8 @@ public abstract class PdgNode implements Comparable<PdgNode> {
   AbstractLineNumber lineNumber;
   Set<PdgNode> inNodes;
   Set<PdgNode> outNodes;
+  Label inLabel;
+  Label outLabel;
 
   /** constructor. */
   public PdgNode(AstNode astNode, AbstractLineNumber lineno,
@@ -18,6 +20,8 @@ public abstract class PdgNode implements Comparable<PdgNode> {
     this.lineNumber = lineno;
     this.inNodes = inNodes;
     this.outNodes = outNodes;
+    this.inLabel = Label.BOTTOM;
+    this.outLabel = Label.BOTTOM;
   }
 
   /** constructor, defaults to no edges. */
@@ -84,24 +88,20 @@ public abstract class PdgNode implements Comparable<PdgNode> {
     return storageInputs;
   }
 
-  public abstract Label getLabel();
-
-  public abstract void setLabel(Label label);
-
   public Label getInLabel() {
-    return this.getLabel();
+    return this.inLabel;
   }
 
   public void setInLabel(Label label) {
-    this.setLabel(label);
+    this.inLabel = label;
   }
 
   public Label getOutLabel() {
-    return this.getLabel();
+    return this.outLabel;
   }
 
   public void setOutLabel(Label label) {
-    this.setLabel(label);
+    this.outLabel = label;
   }
 
   public abstract boolean isStorageNode();

@@ -6,17 +6,8 @@ public class PdgStorageNode extends PdgNode {
 
   public PdgStorageNode(AstNode astNode, AbstractLineNumber lineno, Label label) {
     super(astNode, lineno);
-    this.label = label;
-  }
-
-  @Override
-  public Label getLabel() {
-    return this.label;
-  }
-
-  @Override
-  public void setLabel(Label label) {
-    this.label = label;
+    this.setInLabel(label);
+    this.setOutLabel(label);
   }
 
   @Override

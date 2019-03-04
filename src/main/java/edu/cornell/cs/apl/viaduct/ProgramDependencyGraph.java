@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * represents dependencies (reads/writes) among part of a program. nodes represent declared
@@ -17,8 +18,12 @@ public class ProgramDependencyGraph {
     this.nodes = new HashSet<PdgNode>();
   }
 
-  public void add(PdgNode node) {
+  public void addNode(PdgNode node) {
     this.nodes.add(node);
+  }
+
+  public Set<PdgNode> getNodes() {
+    return this.nodes;
   }
 
   @Override

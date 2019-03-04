@@ -1,7 +1,7 @@
 package edu.cornell.cs.apl.viaduct;
 
 /** security labels. */
-public class Label {
+public class Label implements Lattice<Label> {
   public static final Label BOTTOM = new Label();
 
   // TODO: implement

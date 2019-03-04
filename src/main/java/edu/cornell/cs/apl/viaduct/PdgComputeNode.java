@@ -2,66 +2,22 @@ package edu.cornell.cs.apl.viaduct;
 
 /** PDG compute node, which represents expressions or statements. */
 public class PdgComputeNode extends PdgNode {
-  // only downgrade nodes have two different labels; every other node
-  // only has a single label
-  Label inLabel;
-  Label outLabel;
   boolean isDowngrade;
 
-  /** constructor. */
+  /** constructor for non-downgrade nodes. */
   public PdgComputeNode(AstNode astNode, AbstractLineNumber lineno, Label label) {
     super(astNode, lineno);
-    this.inLabel = label;
-    this.outLabel = label;
+    this.setInLabel(label);
+    this.setOutLabel(label);
     this.isDowngrade = false;
   }
 
-  /** constructor. */
+  /** constructor for downgrade nodes. */
   public PdgComputeNode(AstNode astNode, AbstractLineNumber lineno, Label inLabel, Label outLabel) {
     super(astNode, lineno);
-    this.inLabel = inLabel;
-    this.outLabel = outLabel;
+    this.setInLabel(inLabel);
+    this.setOutLabel(outLabel);
     this.isDowngrade = true;
-  }
-
-  @Override
-  public Label getLabel() {
-    return this.getOutLabel();
-  }
-
-  @Override
-  public void setLabel(Label label) {
-    this.inLabel = label;
-    this.outLabel = label;
-  }
-
-  @Override
-  public Label getInLabel() {
-    if (this.isDowngrade) {
-      return this.inLabel;
-
-    } else {
-      return this.getLabel();
-    }
-  }
-
-  @Override
-  public void setInLabel(Label label) {
-    this.inLabel = label;
-  }
-
-  @Override
-  public Label getOutLabel() {
-    if (this.isDowngrade) {
-      return this.outLabel;
-    } else {
-      return this.getLabel();
-    }
-  }
-
-  @Override
-  public void setOutLabel(Label label) {
-    this.inLabel = label;
   }
 
   @Override

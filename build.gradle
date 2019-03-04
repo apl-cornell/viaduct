@@ -16,6 +16,10 @@ repositories {
     jcenter()
 }
 
+application {
+    mainClassName = 'edu.cornell.cs.apl.viaduct.Main'
+}
+
 checkstyle {
     maxWarnings 0
 }
@@ -34,12 +38,4 @@ tasks.withType(com.github.spotbugs.SpotBugsTask) {
 
 dependencies {
     testImplementation group: 'junit', name: 'junit', version: '4.12'
-}
-
-sourceSets {
-    main.java.srcDirs = ['src/main/java']
-}
-
-application {
-    mainClassName = 'edu.cornell.cs.apl.viaduct.Main'
 }

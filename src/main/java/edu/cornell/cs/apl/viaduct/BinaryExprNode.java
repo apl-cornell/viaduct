@@ -1,8 +1,20 @@
 package edu.cornell.cs.apl.viaduct;
 
 /** binary operation expression. */
-public interface BinaryExprNode extends ExprNode {
-  ExprNode getLhs();
+public abstract class BinaryExprNode implements ExprNode {
+  ExprNode lhs;
+  ExprNode rhs;
 
-  ExprNode getRhs();
+  public BinaryExprNode(ExprNode lhs, ExprNode rhs) {
+    this.lhs = lhs;
+    this.rhs = rhs;
+  }
+
+  ExprNode getLhs() {
+    return this.lhs;
+  }
+
+  ExprNode getRhs() {
+    return this.rhs;
+  }
 }

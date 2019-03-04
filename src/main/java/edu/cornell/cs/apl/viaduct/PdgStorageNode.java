@@ -2,8 +2,7 @@ package edu.cornell.cs.apl.viaduct;
 
 /** PDG storage node, which represents declared variables. */
 public class PdgStorageNode extends PdgNode {
-  Label label;
-
+  /** constructor that sets in and out labels to be the same. */
   public PdgStorageNode(AstNode astNode, AbstractLineNumber lineno, Label label) {
     super(astNode, lineno);
     this.setInLabel(label);

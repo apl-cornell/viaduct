@@ -2,6 +2,7 @@ package edu.cornell.cs.apl.viaduct;
 
 /** PDG node for control flow statements. */
 public class PdgControlNode extends PdgNode {
+  /** constructor that sets in and out labels to be the same. */
   public PdgControlNode(AstNode astNode, AbstractLineNumber lineno, Label label) {
     super(astNode, lineno);
     this.setInLabel(label);

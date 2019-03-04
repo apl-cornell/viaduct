@@ -1,6 +1,7 @@
 plugins {
     id 'java'
     id 'checkstyle'
+    id "com.diffplug.gradle.spotless" version "3.18.0"
     id 'com.github.spotbugs' version '1.6.9'
     id 'pmd'
     id 'application'
@@ -17,6 +18,12 @@ repositories {
 
 checkstyle {
     maxWarnings 0
+}
+
+spotless {
+    java {
+        googleJavaFormat()
+    }
 }
 
 tasks.withType(com.github.spotbugs.SpotBugsTask) {

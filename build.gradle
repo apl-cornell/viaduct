@@ -3,6 +3,7 @@ plugins {
     id 'checkstyle'
     id 'com.github.spotbugs' version '1.6.9'
     id 'pmd'
+    id 'application'
 }
 
 group 'edu.cornell.cs.apl'
@@ -25,4 +26,12 @@ tasks.withType(com.github.spotbugs.SpotBugsTask) {
 
 dependencies {
     testImplementation group: 'junit', name: 'junit', version: '4.12'
+}
+
+sourceSets {
+    main.java.srcDirs = ['src/main/java']
+}
+
+application {
+    mainClassName = 'edu.cornell.cs.apl.viaduct.Main'
 }

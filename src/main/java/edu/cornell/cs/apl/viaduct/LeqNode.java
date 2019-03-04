@@ -1,6 +1,6 @@
 package edu.cornell.cs.apl.viaduct;
 
-public class LeqNode implements ExprNode
+public class LeqNode implements BinaryExprNode
 {
     ExprNode lhs, rhs;
 
@@ -23,5 +23,11 @@ public class LeqNode implements ExprNode
     public <R> R accept(ExprVisitor<R> v)
     {
         return v.visit(this);
+    }
+
+    @Override
+    public String toString()
+    {
+        return "(<= " + this.lhs.toString() + " " + this.rhs.toString() + ")";
     }
 }

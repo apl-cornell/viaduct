@@ -9,4 +9,9 @@ public class Label
     {
         return this;
     }
+
+    public String toString()
+    {
+        return "{L}";
+    }
 }

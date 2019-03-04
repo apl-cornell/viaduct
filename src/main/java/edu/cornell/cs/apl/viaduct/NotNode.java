@@ -18,4 +18,10 @@ public class NotNode implements ExprNode
     {
         return v.visit(this);
     }
+
+    @Override
+    public String toString()
+    {
+        return "(! " + this.negatedExpr.toString() + ")";
+    }
 }

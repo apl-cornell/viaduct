@@ -25,4 +25,10 @@ public class EndorseNode implements ExprNode
     {
         return v.visit(this);
     }
+
+    @Override
+    public String toString()
+    {
+        return "(endorse " + this.endorsedExpr.toString() + " to " + this.downgradeLabel.toString() + ")";
+    }
 }

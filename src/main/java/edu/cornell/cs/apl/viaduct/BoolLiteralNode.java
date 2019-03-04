@@ -18,4 +18,10 @@ public class BoolLiteralNode implements ExprNode
     {
         return v.visit(this);
     }
+
+    @Override
+    public String toString()
+    {
+        return "(bool " + Boolean.toString(this.val) + ")";
+    }
 }

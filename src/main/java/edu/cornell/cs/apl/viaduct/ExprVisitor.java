@@ -2,7 +2,7 @@ package edu.cornell.cs.apl.viaduct;
 
 public interface ExprVisitor<R>
 {
-    R visit(VarLookupNode var) throws UndeclaredVariableException;
+    R visit(VarLookupNode var);
     R visit(IntLiteralNode intLit);
     R visit(PlusNode plusNode);
     R visit(BoolLiteralNode boolLit);

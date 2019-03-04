@@ -23,6 +23,16 @@ public class AssignNode implements StmtNode
 
     public <R> R accept(StmtVisitor<R> v)
     {
-        return v.visit(this);
+        try {
+            return v.visit(this);
+        } catch (UndeclaredVariableException undeclVarExn) {}
+
+        return null;
+    }
+
+    @Override
+    public String toString()
+    {
+        return "(assign " + this.var.toString() + " to " + this.rhs.toString() + ")";
     }
 }

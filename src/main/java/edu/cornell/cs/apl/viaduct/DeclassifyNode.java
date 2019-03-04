@@ -25,4 +25,10 @@ public class DeclassifyNode implements ExprNode
     {
         return v.visit(this);
     }
+
+    @Override
+    public String toString()
+    {
+        return "(declassify " + this.declassifiedExpr.toString() + " to " + this.downgradeLabel.toString() + ")";
+    }
 }

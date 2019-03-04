@@ -1,6 +1,6 @@
 package edu.cornell.cs.apl.viaduct;
 
-public class OrNode implements ExprNode
+public class OrNode implements BinaryExprNode
 {
     ExprNode lhs, rhs;
 
@@ -23,5 +23,11 @@ public class OrNode implements ExprNode
     public <R> R accept(ExprVisitor<R> v)
     {
         return v.visit(this);
+    }
+
+    @Override
+    public String toString()
+    {
+        return "(|| " + this.lhs.toString() + " " + this.rhs.toString() + ")";
     }
 }

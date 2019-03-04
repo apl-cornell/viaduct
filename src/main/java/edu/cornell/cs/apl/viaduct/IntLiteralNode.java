@@ -18,4 +18,10 @@ public class IntLiteralNode implements ExprNode
     {
         return v.visit(this);
     }
+
+    @Override
+    public String toString()
+    {
+        return "(int " + Integer.toString(this.val) + ")";
+    }
 }

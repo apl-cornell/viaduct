@@ -1,44 +1,24 @@
 package edu.cornell.cs.apl.viaduct;
 
 import java.util.Set;
+import java.util.HashSet;
 
-public class PDGNode
+public abstract class PDGNode
 {
+    ASTNode astNode;
     Set<PDGNode> inNodes;
     Set<PDGNode> outNodes;
-    // only downgrade nodes have two different labels; every other node
-    // only has a single label
-    Label inLabel, outLabel;
-    boolean isDowngrade;
-    boolean isStorage;
 
-    public PDGNode(Set<PDGNode> _inNodes, Set<PDGNode> _outNodes, Label _label)
+    public PDGNode(ASTNode _astNode, Set<PDGNode> _inNodes, Set<PDGNode> _outNodes)
     {
         this.inNodes = _inNodes;
         this.outNodes = _outNodes;
-        this.inLabel = _label;
-        this.outLabel = _label;
-        this.isDowngrade = false;
-        this.isStorage = false;
+        this.astNode = _astNode;
     }
 
-    public PDGNode(Set<PDGNode> _inNodes, Set<PDGNode> _outNodes, Label _label, boolean _isStorage)
+    public PDGNode(ASTNode _astNode)
     {
-        this.inNodes = _inNodes;
-        this.outNodes = _outNodes;
-        this.inLabel = _label;
-        this.outLabel = _label;
-        this.isDowngrade = false;
-        this.isStorage = _isStorage;
-    }
-
-    public PDGNode(Set<PDGNode> _inNodes, Set<PDGNode> _outNodes, Label _inLabel, Label _outLabel)
-    {
-        this.inNodes = _inNodes;
-        this.outNodes = _outNodes;
-        this.inLabel = _inLabel;
-        this.outLabel = _outLabel;
-        this.isDowngrade = true;
+        this(_astNode, new HashSet<PDGNode>(), new HashSet<PDGNode>());
     }
 
     public void addInNode(PDGNode node)
@@ -46,9 +26,19 @@ public class PDGNode
         this.inNodes.add(node);
     }
 
+    public void addInNodes(Set<PDGNode> nodes)
+    {
+        this.inNodes.addAll(nodes);
+    }
+
     public void addOutNode(PDGNode node)
     {
         this.outNodes.add(node);
+    }
+
+    public void addOutNodes(Set<PDGNode> nodes)
+    {
+        this.outNodes.addAll(nodes);
     }
 
     public Set<PDGNode> getInNodes()
@@ -61,23 +51,49 @@ public class PDGNode
         return this.outNodes;
     }
 
+    public Set<PDGNode> getStorageNodeInputs()
+    {
+        Set<PDGNode> storageInputs = new HashSet<PDGNode>();
+        for (PDGNode inNode : this.inNodes)
+        {
+            if (inNode.isStorageNode()) {
+                storageInputs.add(inNode);
+
+            } else {
+                storageInputs.addAll(inNode.getStorageNodeInputs());
+            }
+        }
+
+        return storageInputs;
+    }
+
+    public abstract Label getLabel();
+
+    public abstract void setLabel(Label _label);
+
     public Label getInLabel()
     {
-        return this.inLabel;
+        return this.getLabel();
+    }
+
+    public void setInLabel(Label _label)
+    {
+        this.setLabel(_label);
     }
 
     public Label getOutLabel()
     {
-        return this.outLabel;
+        return this.getLabel();
     }
 
-    public boolean isDowngrade()
+    public void setOutLabel(Label _label)
     {
-        return this.isDowngrade;
+        this.setLabel(_label);
     }
 
-    public boolean isStorage()
-    {
-        return this.isStorage;
-    }
+    public abstract boolean isStorageNode();
+
+    public abstract boolean isComputeNode();
+
+    public abstract boolean isDowngradeNode();
 }

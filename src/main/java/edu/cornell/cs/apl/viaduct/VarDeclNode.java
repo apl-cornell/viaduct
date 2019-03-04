@@ -25,4 +25,11 @@ public class VarDeclNode implements StmtNode
     {
         return v.visit(this);
     }
+
+    @Override
+    public String toString()
+    {
+        return "(varDecl " + this.declaredVar.toString()
+                + " as " + this.varLabel.toString() + ")";
+    }
 }

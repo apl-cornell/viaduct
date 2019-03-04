@@ -32,4 +32,13 @@ public class IfNode implements StmtNode
     {
         return v.visit(this);
     }
+
+    @Override
+    public String toString()
+    {
+        return "(if " + this.guard.toString()
+                + " then " + this.thenBranch
+                + " else " + this.elseBranch
+                + ")";
+    }
 }

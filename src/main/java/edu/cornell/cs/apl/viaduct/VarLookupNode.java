@@ -23,4 +23,10 @@ public class VarLookupNode implements ExprNode
 
         return null;
     }
+
+    @Override
+    public String toString()
+    {
+        return "(var " + var.toString() + ")";
+    }
 }

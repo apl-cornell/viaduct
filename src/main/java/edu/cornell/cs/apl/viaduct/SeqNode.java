@@ -20,4 +20,16 @@ public class SeqNode implements StmtNode
     {
         return v.visit(this);
     }
+
+    @Override
+    public String toString()
+    {
+        String seqStr = "(";
+        for (StmtNode stmt : this.stmts) 
+        {
+            seqStr += stmt.toString();
+        }
+        seqStr += ")";
+        return seqStr;
+    }
 }

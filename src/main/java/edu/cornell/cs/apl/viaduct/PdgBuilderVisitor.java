@@ -4,9 +4,10 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-/** build program dependency graph from AST.
- * the visit methods return the set of PDG node on which the AST node depends on (reads)
-*/
+/**
+ * build program dependency graph from AST. the visit methods return the set of PDG node on which
+ * the AST node depends on (reads)
+ */
 public class PdgBuilderVisitor implements StmtVisitor<Set<PdgNode>>, ExprVisitor<Set<PdgNode>> {
   SymbolTable<Variable, PdgNode> storageNodes;
   ProgramDependencyGraph pdg;
@@ -30,9 +31,7 @@ public class PdgBuilderVisitor implements StmtVisitor<Set<PdgNode>>, ExprVisitor
     return deps;
   }
 
-  /** visit declassify and endorse nodes.
-   * return the created PDG for the downgraded expr
-  */
+  /** visit declassify and endorse nodes. return the created PDG for the downgraded expr */
   public Set<PdgNode> visitDowngrade(
       AstNode downgradeNode, Set<PdgNode> inNodes, Label downgradeLabel) {
     // create new PDG node

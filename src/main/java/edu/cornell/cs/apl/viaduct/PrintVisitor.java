@@ -1,6 +1,6 @@
 package edu.cornell.cs.apl.viaduct;
 
-/**  pretty-prints an AST. */
+/** pretty-prints an AST. */
 public class PrintVisitor implements ExprVisitor<String>, StmtVisitor<String> {
   static int INDENT_LEVEL = 2;
   int indent;

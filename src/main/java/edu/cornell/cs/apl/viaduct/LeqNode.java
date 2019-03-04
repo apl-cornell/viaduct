@@ -1,6 +1,6 @@
 package edu.cornell.cs.apl.viaduct;
 
-/** less than or equal to comparison between arithmetic exprs.  */
+/** less than or equal to comparison between arithmetic exprs. */
 public class LeqNode implements BinaryExprNode {
   ExprNode lhs;
   ExprNode rhs;

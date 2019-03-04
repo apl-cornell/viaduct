@@ -45,11 +45,11 @@ public abstract class PdgNode {
     return this.outNodes;
   }
 
-  /** returns all storage nodes that this PDG node transitively reads.
-   * this is used for compute nodes for conditionals, where
-   * to model read channels the PC of the conditional has to be
-   * "written" to storage nodes read in its branches.
-  */
+  /**
+   * returns all storage nodes that this PDG node transitively reads. this is used for compute nodes
+   * for conditionals, where to model read channels the PC of the conditional has to be "written" to
+   * storage nodes read in its branches.
+   */
   public Set<PdgNode> getStorageNodeInputs() {
     Set<PdgNode> storageInputs = new HashSet<PdgNode>();
     for (PdgNode inNode : this.inNodes) {

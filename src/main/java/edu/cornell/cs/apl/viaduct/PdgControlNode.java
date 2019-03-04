@@ -1,10 +1,10 @@
 package edu.cornell.cs.apl.viaduct;
 
-/** PDG storage node, which represents declared variables. */
-public class PdgStorageNode extends PdgNode {
+/** PDG node for control flow statements. */
+public class PdgControlNode extends PdgNode {
   Label label;
 
-  public PdgStorageNode(AstNode astNode, AbstractLineNumber lineno, Label label) {
+  public PdgControlNode(AstNode astNode, AbstractLineNumber lineno, Label label) {
     super(astNode, lineno);
     this.label = label;
   }
@@ -21,7 +21,7 @@ public class PdgStorageNode extends PdgNode {
 
   @Override
   public boolean isStorageNode() {
-    return true;
+    return false;
   }
 
   @Override
@@ -36,12 +36,12 @@ public class PdgStorageNode extends PdgNode {
 
   @Override
   public boolean isControlNode() {
-    return false;
+    return true;
   }
 
   @Override
   public String toString() {
-    return "<" + this.lineNumber.toString() + " storage node for "
+    return "<" + this.lineNumber.toString() + " control node for "
             + this.astNode.toString() + ">";
   }
 }

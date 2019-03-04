@@ -9,16 +9,16 @@ public class PdgComputeNode extends PdgNode {
   boolean isDowngrade;
 
   /** constructor. */
-  public PdgComputeNode(AstNode astNode, Label label) {
-    super(astNode);
+  public PdgComputeNode(AstNode astNode, AbstractLineNumber lineno, Label label) {
+    super(astNode, lineno);
     this.inLabel = label;
     this.outLabel = label;
     this.isDowngrade = false;
   }
 
   /** constructor. */
-  public PdgComputeNode(AstNode astNode, Label inLabel, Label outLabel) {
-    super(astNode);
+  public PdgComputeNode(AstNode astNode, AbstractLineNumber lineno, Label inLabel, Label outLabel) {
+    super(astNode, lineno);
     this.inLabel = inLabel;
     this.outLabel = outLabel;
     this.isDowngrade = true;
@@ -80,12 +80,19 @@ public class PdgComputeNode extends PdgNode {
   }
 
   @Override
+  public boolean isControlNode() {
+    return false;
+  }
+
+  @Override
   public String toString() {
     if (this.isDowngrade) {
-      return "<downgrade compute node for " + this.astNode.toString() + ">";
+      return "<" + this.lineNumber.toString() + " downgrade compute node for "
+              + this.astNode.toString() + ">";
 
     } else {
-      return "<compute node for " + this.astNode.toString() + ">";
+      return "<" + this.lineNumber.toString() + " compute node for "
+              + this.astNode.toString() + ">";
     }
   }
 }

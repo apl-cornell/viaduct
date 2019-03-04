@@ -4,21 +4,41 @@ import java.util.HashSet;
 import java.util.Set;
 
 /** node in a program dependence graph. */
-public abstract class PdgNode {
+public abstract class PdgNode implements Comparable<PdgNode> {
   AstNode astNode;
+  AbstractLineNumber lineNumber;
   Set<PdgNode> inNodes;
   Set<PdgNode> outNodes;
 
   /** constructor. */
-  public PdgNode(AstNode astNode, Set<PdgNode> inNodes, Set<PdgNode> outNodes) {
+  public PdgNode(AstNode astNode, AbstractLineNumber lineno,
+          Set<PdgNode> inNodes, Set<PdgNode> outNodes) {
+
+    this.astNode = astNode;
+    this.lineNumber = lineno;
     this.inNodes = inNodes;
     this.outNodes = outNodes;
-    this.astNode = astNode;
   }
 
-  /** constructor. */
-  public PdgNode(AstNode astNode) {
-    this(astNode, new HashSet<PdgNode>(), new HashSet<PdgNode>());
+  /** constructor, defaults to no edges. */
+  public PdgNode(AstNode astNode, AbstractLineNumber lineno) {
+    this(astNode, lineno, new HashSet<PdgNode>(), new HashSet<PdgNode>());
+  }
+
+  public void setAstNode(AstNode node) {
+    this.astNode = node;
+  }
+
+  public AstNode getAstNode() {
+    return this.astNode;
+  }
+
+  public void setLineNumber(AbstractLineNumber lineno) {
+    this.lineNumber = lineno;
+  }
+
+  public AbstractLineNumber getLineNumber() {
+    return this.lineNumber;
   }
 
   public void addInNode(PdgNode node) {
@@ -89,4 +109,26 @@ public abstract class PdgNode {
   public abstract boolean isComputeNode();
 
   public abstract boolean isDowngradeNode();
+
+  public abstract boolean isControlNode();
+
+  public int compareTo(PdgNode other) {
+    return this.lineNumber.compareTo(other.lineNumber);
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (o instanceof PdgNode) {
+      PdgNode otherPdg = (PdgNode)o;
+      return this.astNode.equals(otherPdg.astNode);
+
+    } else {
+      return false;
+    }
+  }
+
+  @Override
+  public int hashCode() {
+    return this.astNode.hashCode();
+  }
 }

@@ -10,10 +10,13 @@ import java.util.Set;
  */
 public class PdgBuilderVisitor implements StmtVisitor<Set<PdgNode>>, ExprVisitor<Set<PdgNode>> {
   SymbolTable<Variable, PdgNode> storageNodes;
+  AbstractLineNumberBuilder lineNumberBuilder;
   ProgramDependencyGraph pdg;
 
+  /** constructor that initializes to default "empty" state. */
   public PdgBuilderVisitor() {
     this.storageNodes = new SymbolTable<Variable, PdgNode>();
+    this.lineNumberBuilder = new AbstractLineNumberBuilder();
     this.pdg = new ProgramDependencyGraph();
   }
 
@@ -34,9 +37,11 @@ public class PdgBuilderVisitor implements StmtVisitor<Set<PdgNode>>, ExprVisitor
   /** visit declassify and endorse nodes. return the created PDG for the downgraded expr */
   public Set<PdgNode> visitDowngrade(
       AstNode downgradeNode, Set<PdgNode> inNodes, Label downgradeLabel) {
+
     // create new PDG node
     // calculate inLabel later during dataflow analysis
-    PdgNode node = new PdgComputeNode(downgradeNode, Label.BOTTOM, downgradeLabel);
+    AbstractLineNumber lineno = lineNumberBuilder.generateLineNumber();
+    PdgNode node = new PdgComputeNode(downgradeNode, lineno, Label.BOTTOM, downgradeLabel);
     node.addInNodes(inNodes);
 
     // make sure to add outEdges from inNodes to the new node
@@ -129,7 +134,8 @@ public class PdgBuilderVisitor implements StmtVisitor<Set<PdgNode>>, ExprVisitor
 
   /** return created storage node. */
   public Set<PdgNode> visit(VarDeclNode varDecl) {
-    PdgNode node = new PdgStorageNode(varDecl, varDecl.getVarLabel());
+    AbstractLineNumber lineno = this.lineNumberBuilder.generateLineNumber();
+    PdgNode node = new PdgStorageNode(varDecl, lineno, varDecl.getVarLabel());
     this.storageNodes.add(varDecl.getDeclaredVar(), node);
     this.pdg.add(node);
 
@@ -144,7 +150,8 @@ public class PdgBuilderVisitor implements StmtVisitor<Set<PdgNode>>, ExprVisitor
 
       // create new PDG node for the assignment that reads from the RHS nodes
       // and writes to the variable's storage node
-      PdgNode node = new PdgComputeNode(assignNode, Label.BOTTOM);
+      AbstractLineNumber lineno = this.lineNumberBuilder.generateLineNumber();
+      PdgNode node = new PdgComputeNode(assignNode, lineno, Label.BOTTOM);
       node.addInNodes(inNodes);
       node.addOutNode(varNode);
 
@@ -177,38 +184,45 @@ public class PdgBuilderVisitor implements StmtVisitor<Set<PdgNode>>, ExprVisitor
 
   /** return created PDG compute node for conditional. */
   public Set<PdgNode> visit(IfNode ifNode) {
-    PdgNode node = new PdgComputeNode(ifNode, Label.BOTTOM);
-    Set<PdgNode> inNodes = ifNode.getGuard().accept(this);
-    node.addInNodes(inNodes);
+    // add edges from guard nodes
+    final Set<PdgNode> inNodes = ifNode.getGuard().accept(this);
+
+    AbstractLineNumber lineno = this.lineNumberBuilder.generateLineNumber();
+    PdgNode node = new PdgControlNode(ifNode, lineno, Label.BOTTOM);
+    this.pdg.add(node);
 
     // then and else branches create a new lexical scope, so
     // must push then pop a new symbol table for them
 
+    Set<PdgNode> outNodes = new HashSet<PdgNode>();
     this.storageNodes.push();
+    this.lineNumberBuilder.pushBranch(AbstractLineNumberBuilder.THEN_MARKER);
     Set<PdgNode> thenNodes = ifNode.getThenBranch().accept(this);
+    outNodes.addAll(thenNodes);
     this.storageNodes.pop();
+    this.lineNumberBuilder.popBranch();
 
     this.storageNodes.push();
+    this.lineNumberBuilder.pushBranch(AbstractLineNumberBuilder.ELSE_MARKER);
     Set<PdgNode> elseNodes = ifNode.getElseBranch().accept(this);
-    this.storageNodes.pop();
-
-    Set<PdgNode> outNodes = new HashSet<PdgNode>(thenNodes);
     outNodes.addAll(elseNodes);
+    this.storageNodes.pop();
+    this.lineNumberBuilder.popBranch();
 
-    // PDG node for conditional changes PC label, so it must write
-    // to storage nodes created in the then and else branches
-    // also, to model read channels we must add out edges to
-    // all storage nodes read from the branches
-    node.addOutNodes(outNodes);
-
+    // add in edges
+    node.addInNodes(inNodes);
     for (PdgNode inNode : inNodes) {
       inNode.addOutNode(node);
     }
 
+    // add out edges
     Set<PdgNode> additionalOutNodes = new HashSet<PdgNode>();
+    node.addOutNodes(outNodes);
     for (PdgNode outNode : outNodes) {
       outNode.addInNode(node);
 
+      // also, to model read channels we must add out edges to
+      // all storage nodes read from the branches
       for (PdgNode outStorage : outNode.getStorageNodeInputs()) {
         outStorage.addInNode(node);
         additionalOutNodes.add(outStorage);

@@ -1,11 +1,12 @@
 package edu.cornell.cs.apl.viaduct;
 
+import edu.cornell.cs.apl.viaduct.surface.StmtNode;
 import org.junit.Test;
 
 public class ShellGameTest {
   @Test
   public void testShellGame() {
-    ExprBuilder e = new ExprBuilder();
+    ExpressionBuilder e = new ExpressionBuilder();
     StmtNode shellGame =
         (new StmtBuilder())
             .varDecl("cinput", Label.BOTTOM)

@@ -1,16 +1,35 @@
 package edu.cornell.cs.apl.viaduct;
 
+import edu.cornell.cs.apl.viaduct.surface.AndNode;
+import edu.cornell.cs.apl.viaduct.surface.AssignNode;
+import edu.cornell.cs.apl.viaduct.surface.BinaryExpressionNode;
+import edu.cornell.cs.apl.viaduct.surface.BlockNode;
+import edu.cornell.cs.apl.viaduct.surface.BooleanLiteralNode;
+import edu.cornell.cs.apl.viaduct.surface.DowngradeNode;
+import edu.cornell.cs.apl.viaduct.surface.EqualNode;
+import edu.cornell.cs.apl.viaduct.surface.IfNode;
+import edu.cornell.cs.apl.viaduct.surface.IntegerLiteralNode;
+import edu.cornell.cs.apl.viaduct.surface.LeqNode;
+import edu.cornell.cs.apl.viaduct.surface.LessThanNode;
+import edu.cornell.cs.apl.viaduct.surface.NotNode;
+import edu.cornell.cs.apl.viaduct.surface.OrNode;
+import edu.cornell.cs.apl.viaduct.surface.PlusNode;
+import edu.cornell.cs.apl.viaduct.surface.ReadNode;
+import edu.cornell.cs.apl.viaduct.surface.SkipNode;
+import edu.cornell.cs.apl.viaduct.surface.StmtNode;
+import edu.cornell.cs.apl.viaduct.surface.VarDeclNode;
+
 /** pretty-prints an AST. */
 public class PrintVisitor implements ExprVisitor<String>, StmtVisitor<String> {
-  static int INDENT_LEVEL = 2;
-  int indent;
+  private static final int INDENT_LEVEL = 4;
+  private int indent;
 
   public PrintVisitor() {
     this.indent = 0;
   }
 
-  protected String getIndent() {
-    StringBuffer indentStr = new StringBuffer();
+  private String getIndent() {
+    StringBuilder indentStr = new StringBuilder();
     for (int i = 0; i < this.indent; i++) {
       indentStr.append(" ");
     }
@@ -18,20 +37,22 @@ public class PrintVisitor implements ExprVisitor<String>, StmtVisitor<String> {
     return indentStr.toString();
   }
 
-  protected String visitBinary(BinaryExprNode binNode, String op) {
+  private String visitBinary(BinaryExpressionNode binNode, String op) {
     String lhsStr = binNode.getLhs().accept(this);
     String rhsStr = binNode.getRhs().accept(this);
     return lhsStr + " " + op + " " + rhsStr;
   }
 
+  // TODO: remove worthless comments.
+
   /** print node. */
-  public String visit(VarLookupNode var) {
-    return var.getVar().getName();
+  public String visit(ReadNode readNode) {
+    return readNode.getVariable().getName();
   }
 
   /** print node. */
-  public String visit(IntLiteralNode intLit) {
-    return Integer.toString(intLit.getVal());
+  public String visit(IntegerLiteralNode integerLiteralNode) {
+    return Integer.toString(integerLiteralNode.getValue());
   }
 
   /** print node. */
@@ -40,8 +61,8 @@ public class PrintVisitor implements ExprVisitor<String>, StmtVisitor<String> {
   }
 
   /** print node. */
-  public String visit(BoolLiteralNode boolLit) {
-    return Boolean.toString(boolLit.getVal());
+  public String visit(BooleanLiteralNode booleanLiteralNode) {
+    return Boolean.toString(booleanLiteralNode.getValue());
   }
 
   /** print node. */
@@ -55,13 +76,13 @@ public class PrintVisitor implements ExprVisitor<String>, StmtVisitor<String> {
   }
 
   /** print node. */
-  public String visit(LessThanNode ltNode) {
-    return visitBinary(ltNode, "<");
+  public String visit(LessThanNode lessThanNode) {
+    return visitBinary(lessThanNode, "<");
   }
 
   /** print node. */
-  public String visit(EqualNode eqNode) {
-    return visitBinary(eqNode, "==");
+  public String visit(EqualNode equalNode) {
+    return visitBinary(equalNode, "==");
   }
 
   /** print node. */
@@ -71,43 +92,34 @@ public class PrintVisitor implements ExprVisitor<String>, StmtVisitor<String> {
 
   /** print node. */
   public String visit(NotNode notNode) {
-    return "!" + notNode.getNegatedExpr().accept(this);
+    return "!" + notNode.getExpression().accept(this);
   }
 
   /** print node. */
-  public String visit(DeclassifyNode declNode) {
-    String declExprStr = declNode.getDeclassifiedExpr().accept(this);
-    String labelStr = declNode.getDowngradeLabel().toString();
-    return "declassify(" + declExprStr + ", " + labelStr + ")";
-  }
-
-  /** print node. */
-  public String visit(EndorseNode endoNode) {
-    String declExprStr = endoNode.getEndorsedExpr().accept(this);
-    String labelStr = endoNode.getDowngradeLabel().toString();
-    return "endorse(" + declExprStr + ", " + labelStr + ")";
+  public String visit(DowngradeNode downgradeNode) {
+    // TODO: special case declassfy and endorse
+    String expressionStr = downgradeNode.getExpression().accept(this);
+    String labelStr = downgradeNode.getExpression().toString();
+    return "downgrade(" + expressionStr + ", " + labelStr + ")";
   }
 
   /** print node. */
   public String visit(SkipNode skipNode) {
-    String indentStr = getIndent();
-    return indentStr + "skip";
+    return getIndent() + "skip";
   }
 
   /** print node. */
   public String visit(VarDeclNode varDecl) {
-    String varStr = varDecl.getDeclaredVar().getName();
-    String labelStr = varDecl.getVarLabel().toString();
-    String indentStr = getIndent();
-    return indentStr + varStr + " : " + labelStr;
+    String varStr = varDecl.getVariable().getName();
+    String labelStr = varDecl.getLabel().toString();
+    return getIndent() + varStr + " : " + labelStr;
   }
 
   /** print node. */
   public String visit(AssignNode assignNode) {
-    String varStr = assignNode.getVar().getName();
+    String varStr = assignNode.getVariable().getName();
     String rhsStr = assignNode.getRhs().accept(this);
-    String indentStr = getIndent();
-    return indentStr + varStr + " <- " + rhsStr;
+    return getIndent() + varStr + " <- " + rhsStr;
   }
 
   /** print node. */
@@ -135,10 +147,11 @@ public class PrintVisitor implements ExprVisitor<String>, StmtVisitor<String> {
   }
 
   /** print node. */
-  public String visit(SeqNode seqNode) {
-    StringBuffer buf = new StringBuffer();
-    for (StmtNode stmt : seqNode.getStmts()) {
-      buf.append(stmt.accept(this) + "\n");
+  public String visit(BlockNode blockNode) {
+    StringBuilder buf = new StringBuilder();
+    for (StmtNode stmt : blockNode.getStatements()) {
+      buf.append(stmt.accept(this));
+      buf.append('\n');
     }
 
     return buf.toString();

@@ -1,8 +1,8 @@
-package edu.cornell.cs.apl.viaduct;
+package edu.cornell.cs.apl.viaduct.surface;
 
-/** represents referenced or declared variables. */
+/** A variable that can be read from or assigned to. */
 public class Variable {
-  String name;
+  private final String name;
 
   public Variable(String name) {
     this.name = name;
@@ -16,6 +16,7 @@ public class Variable {
     return this.name;
   }
 
+  // TODO: why redefine equals?
   @Override
   public boolean equals(Object o) {
     if (o instanceof Variable) {

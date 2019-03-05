@@ -1,5 +1,7 @@
 package edu.cornell.cs.apl.viaduct;
 
+import edu.cornell.cs.apl.viaduct.surface.AstNode;
+
 /** PDG storage node, which represents declared variables. */
 public class PdgStorageNode extends PdgNode {
   /** constructor that sets in and out labels to be the same. */

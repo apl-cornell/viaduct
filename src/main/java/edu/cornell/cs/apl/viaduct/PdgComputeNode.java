@@ -1,5 +1,7 @@
 package edu.cornell.cs.apl.viaduct;
 
+import edu.cornell.cs.apl.viaduct.surface.AstNode;
+
 /** PDG compute node, which represents expressions or statements. */
 public class PdgComputeNode extends PdgNode {
   boolean isDowngrade;

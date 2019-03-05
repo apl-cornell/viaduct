@@ -1,5 +1,6 @@
 package edu.cornell.cs.apl.viaduct;
 
+import edu.cornell.cs.apl.viaduct.surface.AstNode;
 import java.util.HashSet;
 import java.util.Set;
 

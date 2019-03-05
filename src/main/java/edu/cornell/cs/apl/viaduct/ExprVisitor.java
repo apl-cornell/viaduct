@@ -1,14 +1,26 @@
 package edu.cornell.cs.apl.viaduct;
 
-/** interface for visiting expressions. */
-public interface ExprVisitor<R> {
-  R visit(VarLookupNode var);
+import edu.cornell.cs.apl.viaduct.surface.AndNode;
+import edu.cornell.cs.apl.viaduct.surface.BooleanLiteralNode;
+import edu.cornell.cs.apl.viaduct.surface.DowngradeNode;
+import edu.cornell.cs.apl.viaduct.surface.EqualNode;
+import edu.cornell.cs.apl.viaduct.surface.IntegerLiteralNode;
+import edu.cornell.cs.apl.viaduct.surface.LeqNode;
+import edu.cornell.cs.apl.viaduct.surface.LessThanNode;
+import edu.cornell.cs.apl.viaduct.surface.NotNode;
+import edu.cornell.cs.apl.viaduct.surface.OrNode;
+import edu.cornell.cs.apl.viaduct.surface.PlusNode;
+import edu.cornell.cs.apl.viaduct.surface.ReadNode;
 
-  R visit(IntLiteralNode intLit);
+/** Expression visitor. */
+public interface ExprVisitor<R> {
+  R visit(ReadNode readNode);
+
+  R visit(IntegerLiteralNode integerLiteralNode);
 
   R visit(PlusNode plusNode);
 
-  R visit(BoolLiteralNode boolLit);
+  R visit(BooleanLiteralNode booleanLiteralNode);
 
   R visit(OrNode orNode);
 
@@ -22,7 +34,5 @@ public interface ExprVisitor<R> {
 
   R visit(NotNode notNode);
 
-  R visit(DeclassifyNode declNode);
-
-  R visit(EndorseNode endoNode);
+  R visit(DowngradeNode downgradeNode);
 }

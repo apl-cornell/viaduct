@@ -1,5 +1,7 @@
 package edu.cornell.cs.apl.viaduct;
 
+import edu.cornell.cs.apl.viaduct.surface.AstNode;
+
 /** PDG node for control flow statements. */
 public class PdgControlNode extends PdgNode {
   /** constructor that sets in and out labels to be the same. */

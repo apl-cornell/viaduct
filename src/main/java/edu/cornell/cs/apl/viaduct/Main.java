@@ -1,9 +1,11 @@
 package edu.cornell.cs.apl.viaduct;
 
+import edu.cornell.cs.apl.viaduct.surface.StmtNode;
+
 public class Main {
   /** create shell game. */
   public static StmtNode getShellGame() {
-    ExprBuilder e = new ExprBuilder();
+    ExpressionBuilder e = new ExpressionBuilder();
     StmtNode shellGame =
         (new StmtBuilder())
             .varDecl("cinput", Label.BOTTOM)

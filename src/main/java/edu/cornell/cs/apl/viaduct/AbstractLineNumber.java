@@ -2,26 +2,10 @@ package edu.cornell.cs.apl.viaduct;
 
 import java.util.ArrayList;
 
+// TODO: make class immutable
+
 /** Used for maintaining ordering information about PDG nodes. */
 public class AbstractLineNumber implements Comparable<AbstractLineNumber> {
-  static class LineNumberComponent {
-    String marker;
-    int seqNum;
-
-    LineNumberComponent(String m, int seq) {
-      this.marker = m;
-      this.seqNum = seq;
-    }
-
-    String getMarker() {
-      return this.marker;
-    }
-
-    int getSequenceNum() {
-      return this.seqNum;
-    }
-  }
-
   ArrayList<LineNumberComponent> componentList;
 
   public AbstractLineNumber() {
@@ -73,7 +57,7 @@ public class AbstractLineNumber implements Comparable<AbstractLineNumber> {
   @Override
   public boolean equals(Object o) {
     if (o instanceof AbstractLineNumber) {
-      return this.compareTo((AbstractLineNumber)o) == 0;
+      return this.compareTo((AbstractLineNumber) o) == 0;
 
     } else {
       return false;
@@ -95,5 +79,23 @@ public class AbstractLineNumber implements Comparable<AbstractLineNumber> {
     buf.append(">");
 
     return buf.toString();
+  }
+
+  static class LineNumberComponent {
+    String marker;
+    int seqNum;
+
+    LineNumberComponent(String m, int seq) {
+      this.marker = m;
+      this.seqNum = seq;
+    }
+
+    String getMarker() {
+      return this.marker;
+    }
+
+    int getSequenceNum() {
+      return this.seqNum;
+    }
   }
 }

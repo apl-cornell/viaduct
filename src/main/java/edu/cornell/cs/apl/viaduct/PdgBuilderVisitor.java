@@ -1,5 +1,24 @@
 package edu.cornell.cs.apl.viaduct;
 
+import edu.cornell.cs.apl.viaduct.surface.AndNode;
+import edu.cornell.cs.apl.viaduct.surface.AssignNode;
+import edu.cornell.cs.apl.viaduct.surface.BinaryExpressionNode;
+import edu.cornell.cs.apl.viaduct.surface.BlockNode;
+import edu.cornell.cs.apl.viaduct.surface.BooleanLiteralNode;
+import edu.cornell.cs.apl.viaduct.surface.DowngradeNode;
+import edu.cornell.cs.apl.viaduct.surface.EqualNode;
+import edu.cornell.cs.apl.viaduct.surface.IfNode;
+import edu.cornell.cs.apl.viaduct.surface.IntegerLiteralNode;
+import edu.cornell.cs.apl.viaduct.surface.LeqNode;
+import edu.cornell.cs.apl.viaduct.surface.LessThanNode;
+import edu.cornell.cs.apl.viaduct.surface.NotNode;
+import edu.cornell.cs.apl.viaduct.surface.OrNode;
+import edu.cornell.cs.apl.viaduct.surface.PlusNode;
+import edu.cornell.cs.apl.viaduct.surface.ReadNode;
+import edu.cornell.cs.apl.viaduct.surface.SkipNode;
+import edu.cornell.cs.apl.viaduct.surface.StmtNode;
+import edu.cornell.cs.apl.viaduct.surface.VarDeclNode;
+import edu.cornell.cs.apl.viaduct.surface.Variable;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -9,9 +28,9 @@ import java.util.Set;
  * the AST node depends on (reads)
  */
 public class PdgBuilderVisitor implements StmtVisitor<Set<PdgNode>>, ExprVisitor<Set<PdgNode>> {
-  SymbolTable<Variable, PdgNode> storageNodes;
-  AbstractLineNumberBuilder lineNumberBuilder;
-  ProgramDependencyGraph pdg;
+  private SymbolTable<Variable, PdgNode> storageNodes;
+  private AbstractLineNumberBuilder lineNumberBuilder;
+  private ProgramDependencyGraph pdg;
 
   /** constructor that initializes to default "empty" state. */
   public PdgBuilderVisitor() {
@@ -26,7 +45,7 @@ public class PdgBuilderVisitor implements StmtVisitor<Set<PdgNode>>, ExprVisitor
   }
 
   /** visit binary operation expr. */
-  protected Set<PdgNode> visitBinaryOp(BinaryExprNode binNode) {
+  private Set<PdgNode> visitBinaryOp(BinaryExpressionNode binNode) {
     Set<PdgNode> lhsDeps = binNode.getLhs().accept(this);
     Set<PdgNode> rhsDeps = binNode.getRhs().accept(this);
     Set<PdgNode> deps = new HashSet<PdgNode>(lhsDeps);
@@ -34,43 +53,21 @@ public class PdgBuilderVisitor implements StmtVisitor<Set<PdgNode>>, ExprVisitor
     return deps;
   }
 
-  /** visit declassify and endorse nodes. return the created PDG for the downgraded expr */
-  public Set<PdgNode> visitDowngrade(
-      AstNode downgradeNode, Set<PdgNode> inNodes, Label downgradeLabel) {
-
-    // create new PDG node
-    // calculate inLabel later during dataflow analysis
-    AbstractLineNumber lineno = lineNumberBuilder.generateLineNumber();
-    PdgNode node = new PdgComputeNode(downgradeNode, lineno, Label.BOTTOM, downgradeLabel);
-    node.addInNodes(inNodes);
-
-    // make sure to add outEdges from inNodes to the new node
-    for (PdgNode inNode : inNodes) {
-      inNode.addOutNode(node);
-    }
-
-    this.pdg.addNode(node);
-
-    Set<PdgNode> deps = new HashSet<PdgNode>();
-    deps.add(node);
-    return deps;
-  }
-
   /** return PDG storage node for referenced var. */
-  public Set<PdgNode> visit(VarLookupNode varLookup) {
-    if (this.storageNodes.contains(varLookup.getVar())) {
-      PdgNode varNode = this.storageNodes.get(varLookup.getVar());
+  public Set<PdgNode> visit(ReadNode varLookup) {
+    if (this.storageNodes.contains(varLookup.getVariable())) {
+      PdgNode varNode = this.storageNodes.get(varLookup.getVariable());
       HashSet<PdgNode> deps = new HashSet<PdgNode>();
       deps.add(varNode);
       return deps;
 
     } else {
-      throw new UndeclaredVariableException(varLookup.getVar());
+      throw new UndeclaredVariableException(varLookup.getVariable());
     }
   }
 
   /** return empty set of dependencies. */
-  public Set<PdgNode> visit(IntLiteralNode intLit) {
+  public Set<PdgNode> visit(IntegerLiteralNode intLit) {
     return new HashSet<PdgNode>();
   }
 
@@ -80,7 +77,7 @@ public class PdgBuilderVisitor implements StmtVisitor<Set<PdgNode>>, ExprVisitor
   }
 
   /** return empty set of dependencies. */
-  public Set<PdgNode> visit(BoolLiteralNode boolLit) {
+  public Set<PdgNode> visit(BooleanLiteralNode boolLit) {
     return new HashSet<PdgNode>();
   }
 
@@ -111,20 +108,31 @@ public class PdgBuilderVisitor implements StmtVisitor<Set<PdgNode>>, ExprVisitor
 
   /** return negated expr dependencies. */
   public Set<PdgNode> visit(NotNode notNode) {
-    Set<PdgNode> deps = new HashSet<PdgNode>(notNode.getNegatedExpr().accept(this));
+    Set<PdgNode> deps = new HashSet<PdgNode>(notNode.getExpression().accept(this));
     return deps;
   }
 
   /** return created PDG node for downgrade. */
-  public Set<PdgNode> visit(DeclassifyNode declNode) {
-    return visitDowngrade(
-        declNode, declNode.getDeclassifiedExpr().accept(this), declNode.getDowngradeLabel());
-  }
+  public Set<PdgNode> visit(DowngradeNode downgradeNode) {
+    Set<PdgNode> inNodes = downgradeNode.getExpression().accept(this);
+    Label label = downgradeNode.getLabel();
 
-  /** return created PDG node for downgrade. */
-  public Set<PdgNode> visit(EndorseNode endoNode) {
-    return visitDowngrade(
-        endoNode, endoNode.getEndorsedExpr().accept(this), endoNode.getDowngradeLabel());
+    // create new PDG node
+    // calculate inLabel later during dataflow analysis
+    AbstractLineNumber lineno = lineNumberBuilder.generateLineNumber();
+    PdgNode node = new PdgComputeNode(downgradeNode, lineno, Label.BOTTOM, label);
+    node.addInNodes(inNodes);
+
+    // make sure to add outEdges from inNodes to the new node
+    for (PdgNode inNode : inNodes) {
+      inNode.addOutNode(node);
+    }
+
+    this.pdg.addNode(node);
+
+    Set<PdgNode> deps = new HashSet<PdgNode>();
+    deps.add(node);
+    return deps;
   }
 
   /** return empty set of dependencies. */
@@ -135,8 +143,8 @@ public class PdgBuilderVisitor implements StmtVisitor<Set<PdgNode>>, ExprVisitor
   /** return created storage node. */
   public Set<PdgNode> visit(VarDeclNode varDecl) {
     AbstractLineNumber lineno = this.lineNumberBuilder.generateLineNumber();
-    PdgNode node = new PdgStorageNode(varDecl, lineno, varDecl.getVarLabel());
-    this.storageNodes.add(varDecl.getDeclaredVar(), node);
+    PdgNode node = new PdgStorageNode(varDecl, lineno, varDecl.getLabel());
+    this.storageNodes.add(varDecl.getVariable(), node);
     this.pdg.addNode(node);
 
     return new HashSet<PdgNode>();
@@ -144,9 +152,9 @@ public class PdgBuilderVisitor implements StmtVisitor<Set<PdgNode>>, ExprVisitor
 
   /** return created PDG compute node for assignment. */
   public Set<PdgNode> visit(AssignNode assignNode) {
-    if (this.storageNodes.contains(assignNode.getVar())) {
+    if (this.storageNodes.contains(assignNode.getVariable())) {
       Set<PdgNode> inNodes = assignNode.getRhs().accept(this);
-      PdgNode varNode = this.storageNodes.get(assignNode.getVar());
+      PdgNode varNode = this.storageNodes.get(assignNode.getVariable());
 
       // create new PDG node for the assignment that reads from the RHS nodes
       // and writes to the variable's storage node
@@ -166,14 +174,14 @@ public class PdgBuilderVisitor implements StmtVisitor<Set<PdgNode>>, ExprVisitor
       return deps;
 
     } else {
-      throw new UndeclaredVariableException(assignNode.getVar());
+      throw new UndeclaredVariableException(assignNode.getVariable());
     }
   }
 
   /** return dependencies of list of stmts. */
-  public Set<PdgNode> visit(SeqNode seqNode) {
+  public Set<PdgNode> visit(BlockNode blockNode) {
     Set<PdgNode> deps = new HashSet<PdgNode>();
-    List<StmtNode> stmts = seqNode.getStmts();
+    List<StmtNode> stmts = blockNode.getStatements();
     for (StmtNode stmt : stmts) {
       Set<PdgNode> stmtDeps = stmt.accept(this);
       deps.addAll(stmtDeps);

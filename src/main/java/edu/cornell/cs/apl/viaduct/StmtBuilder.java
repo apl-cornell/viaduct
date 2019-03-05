@@ -1,5 +1,13 @@
 package edu.cornell.cs.apl.viaduct;
 
+import edu.cornell.cs.apl.viaduct.surface.AssignNode;
+import edu.cornell.cs.apl.viaduct.surface.BlockNode;
+import edu.cornell.cs.apl.viaduct.surface.ExpressionNode;
+import edu.cornell.cs.apl.viaduct.surface.IfNode;
+import edu.cornell.cs.apl.viaduct.surface.SkipNode;
+import edu.cornell.cs.apl.viaduct.surface.StmtNode;
+import edu.cornell.cs.apl.viaduct.surface.VarDeclNode;
+import edu.cornell.cs.apl.viaduct.surface.Variable;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -12,7 +20,7 @@ public class StmtBuilder {
   }
 
   public StmtNode build() {
-    return new SeqNode(this.stmts);
+    return new BlockNode(this.stmts);
   }
 
   public StmtBuilder skip() {
@@ -25,13 +33,13 @@ public class StmtBuilder {
     return this;
   }
 
-  public StmtBuilder assign(String varName, ExprNode rhs) {
+  public StmtBuilder assign(String varName, ExpressionNode rhs) {
     this.stmts.add(new AssignNode(new Variable(varName), rhs));
     return this;
   }
 
   /** creates conditional/if nodes. */
-  public StmtBuilder cond(ExprNode guard, StmtBuilder thenBranch, StmtBuilder elseBranch) {
+  public StmtBuilder cond(ExpressionNode guard, StmtBuilder thenBranch, StmtBuilder elseBranch) {
     StmtNode ifNode = new IfNode(guard, thenBranch.build(), elseBranch.build());
     this.stmts.add(ifNode);
     return this;

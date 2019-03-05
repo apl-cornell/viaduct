@@ -16,7 +16,6 @@ public class Variable {
     return this.name;
   }
 
-  // TODO: why redefine equals?
   @Override
   public boolean equals(Object o) {
     if (o instanceof Variable) {

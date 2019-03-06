@@ -1,4 +1,4 @@
-package edu.cornell.cs.apl.viaduct.surface;
+package edu.cornell.cs.apl.viaduct.imp.ast;
 
 /** A variable that can be read from or assigned to. */
 public class Variable {

@@ -1,18 +1,19 @@
-package edu.cornell.cs.apl.viaduct;
+package edu.cornell.cs.apl.viaduct.imp.builders;
 
-import edu.cornell.cs.apl.viaduct.surface.AndNode;
-import edu.cornell.cs.apl.viaduct.surface.BooleanLiteralNode;
-import edu.cornell.cs.apl.viaduct.surface.DowngradeNode;
-import edu.cornell.cs.apl.viaduct.surface.EqualNode;
-import edu.cornell.cs.apl.viaduct.surface.ExpressionNode;
-import edu.cornell.cs.apl.viaduct.surface.IntegerLiteralNode;
-import edu.cornell.cs.apl.viaduct.surface.LeqNode;
-import edu.cornell.cs.apl.viaduct.surface.LessThanNode;
-import edu.cornell.cs.apl.viaduct.surface.NotNode;
-import edu.cornell.cs.apl.viaduct.surface.OrNode;
-import edu.cornell.cs.apl.viaduct.surface.PlusNode;
-import edu.cornell.cs.apl.viaduct.surface.ReadNode;
-import edu.cornell.cs.apl.viaduct.surface.Variable;
+import edu.cornell.cs.apl.viaduct.Label;
+import edu.cornell.cs.apl.viaduct.imp.ast.AndNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.BooleanLiteralNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.DowngradeNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.EqualNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.ExpressionNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.IntegerLiteralNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.LeqNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.LessThanNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.NotNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.OrNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.PlusNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.ReadNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.Variable;
 
 /** Builds expressions. */
 public class ExpressionBuilder {

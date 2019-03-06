@@ -1,6 +1,6 @@
 package edu.cornell.cs.apl.viaduct;
 
-import edu.cornell.cs.apl.viaduct.surface.AstNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.AstNode;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -14,8 +14,8 @@ public abstract class PdgNode implements Comparable<PdgNode> {
   Label outLabel;
 
   /** constructor. */
-  public PdgNode(AstNode astNode, AbstractLineNumber lineno,
-          Set<PdgNode> inNodes, Set<PdgNode> outNodes) {
+  public PdgNode(
+      AstNode astNode, AbstractLineNumber lineno, Set<PdgNode> inNodes, Set<PdgNode> outNodes) {
 
     this.astNode = astNode;
     this.lineNumber = lineno;
@@ -30,20 +30,20 @@ public abstract class PdgNode implements Comparable<PdgNode> {
     this(astNode, lineno, new HashSet<PdgNode>(), new HashSet<PdgNode>());
   }
 
-  public void setAstNode(AstNode node) {
-    this.astNode = node;
-  }
-
   public AstNode getAstNode() {
     return this.astNode;
   }
 
-  public void setLineNumber(AbstractLineNumber lineno) {
-    this.lineNumber = lineno;
+  public void setAstNode(AstNode node) {
+    this.astNode = node;
   }
 
   public AbstractLineNumber getLineNumber() {
     return this.lineNumber;
+  }
+
+  public void setLineNumber(AbstractLineNumber lineno) {
+    this.lineNumber = lineno;
   }
 
   public void addInNode(PdgNode node) {
@@ -120,7 +120,7 @@ public abstract class PdgNode implements Comparable<PdgNode> {
   @Override
   public boolean equals(Object o) {
     if (o instanceof PdgNode) {
-      PdgNode otherPdg = (PdgNode)o;
+      PdgNode otherPdg = (PdgNode) o;
       return this.astNode.equals(otherPdg.astNode);
 
     } else {

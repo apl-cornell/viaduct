@@ -1,6 +1,6 @@
 package edu.cornell.cs.apl.viaduct;
 
-import edu.cornell.cs.apl.viaduct.surface.AstNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.AstNode;
 
 /** PDG node for control flow statements. */
 public class PdgControlNode extends PdgNode {
@@ -33,7 +33,6 @@ public class PdgControlNode extends PdgNode {
 
   @Override
   public String toString() {
-    return "<" + this.lineNumber.toString() + " control node for "
-            + this.astNode.toString() + ">";
+    return "<" + this.lineNumber.toString() + " control node for " + this.astNode.toString() + ">";
   }
 }

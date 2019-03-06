@@ -1,6 +1,6 @@
-package edu.cornell.cs.apl.viaduct.surface;
+package edu.cornell.cs.apl.viaduct.imp.ast;
 
-import edu.cornell.cs.apl.viaduct.StmtVisitor;
+import edu.cornell.cs.apl.viaduct.imp.visitors.StmtVisitor;
 
 /** generic statement interface for visitors. */
 public interface StmtNode extends AstNode {

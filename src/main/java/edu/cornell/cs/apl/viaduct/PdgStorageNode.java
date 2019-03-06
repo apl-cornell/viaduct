@@ -1,6 +1,6 @@
 package edu.cornell.cs.apl.viaduct;
 
-import edu.cornell.cs.apl.viaduct.surface.AstNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.AstNode;
 
 /** PDG storage node, which represents declared variables. */
 public class PdgStorageNode extends PdgNode {
@@ -33,7 +33,6 @@ public class PdgStorageNode extends PdgNode {
 
   @Override
   public String toString() {
-    return "<" + this.lineNumber.toString() + " storage node for "
-            + this.astNode.toString() + ">";
+    return "<" + this.lineNumber.toString() + " storage node for " + this.astNode.toString() + ">";
   }
 }

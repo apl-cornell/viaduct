@@ -1,6 +1,9 @@
 package edu.cornell.cs.apl.viaduct;
 
-import edu.cornell.cs.apl.viaduct.surface.StmtNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.StmtNode;
+import edu.cornell.cs.apl.viaduct.imp.builders.ExpressionBuilder;
+import edu.cornell.cs.apl.viaduct.imp.builders.StmtBuilder;
+import edu.cornell.cs.apl.viaduct.imp.visitors.PrintVisitor;
 import org.junit.Test;
 
 public class ShellGameTest {

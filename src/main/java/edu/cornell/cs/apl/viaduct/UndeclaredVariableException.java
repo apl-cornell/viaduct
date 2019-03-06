@@ -1,6 +1,6 @@
 package edu.cornell.cs.apl.viaduct;
 
-import edu.cornell.cs.apl.viaduct.surface.Variable;
+import edu.cornell.cs.apl.viaduct.imp.ast.Variable;
 
 /** referenced or assigned variable was undeclared. */
 public class UndeclaredVariableException extends RuntimeException {

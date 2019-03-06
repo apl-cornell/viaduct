@@ -1,6 +1,6 @@
-package edu.cornell.cs.apl.viaduct.surface;
+package edu.cornell.cs.apl.viaduct.imp.ast;
 
-import edu.cornell.cs.apl.viaduct.StmtVisitor;
+import edu.cornell.cs.apl.viaduct.imp.visitors.StmtVisitor;
 
 // TODO: remove since BlockNode([]) is the same thing.
 

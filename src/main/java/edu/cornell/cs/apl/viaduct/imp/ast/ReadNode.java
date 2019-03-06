@@ -1,6 +1,6 @@
-package edu.cornell.cs.apl.viaduct.surface;
+package edu.cornell.cs.apl.viaduct.imp.ast;
 
-import edu.cornell.cs.apl.viaduct.ExprVisitor;
+import edu.cornell.cs.apl.viaduct.imp.visitors.ExprVisitor;
 
 /** Read the value of a variable. */
 public class ReadNode implements ExpressionNode {

@@ -1,6 +1,6 @@
 package edu.cornell.cs.apl.viaduct;
 
-import edu.cornell.cs.apl.viaduct.surface.AstNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.AstNode;
 
 /** PDG compute node, which represents expressions or statements. */
 public class PdgComputeNode extends PdgNode {
@@ -45,12 +45,18 @@ public class PdgComputeNode extends PdgNode {
   @Override
   public String toString() {
     if (this.isDowngrade) {
-      return "<" + this.lineNumber.toString() + " downgrade compute node for "
-              + this.astNode.toString() + ">";
+      return "<"
+          + this.lineNumber.toString()
+          + " downgrade compute node for "
+          + this.astNode.toString()
+          + ">";
 
     } else {
-      return "<" + this.lineNumber.toString() + " compute node for "
-              + this.astNode.toString() + ">";
+      return "<"
+          + this.lineNumber.toString()
+          + " compute node for "
+          + this.astNode.toString()
+          + ">";
     }
   }
 }

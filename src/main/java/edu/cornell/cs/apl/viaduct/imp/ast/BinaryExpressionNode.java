@@ -1,4 +1,4 @@
-package edu.cornell.cs.apl.viaduct.surface;
+package edu.cornell.cs.apl.viaduct.imp.ast;
 
 /**
  * Superclass of binary operation expressions.

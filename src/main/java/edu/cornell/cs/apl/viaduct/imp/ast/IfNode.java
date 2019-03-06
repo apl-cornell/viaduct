@@ -9,7 +9,7 @@ public class IfNode implements StmtNode {
   private final StmtNode elseBranch;
 
   /**
-   * If {@param guard} evaluates to true, execute {@param thenBranch}, otherwise, execute {@param
+   * If {@code guard} evaluates to true, execute {@code thenBranch}, otherwise, execute {@code
    * elseBranch}.
    *
    * @param guard condition to check

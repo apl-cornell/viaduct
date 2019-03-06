@@ -1,10 +1,10 @@
 plugins {
-    id 'java'
+    id 'application'
     id 'checkstyle'
     id "com.diffplug.gradle.spotless" version "3.18.0"
     id 'com.github.spotbugs' version '1.6.9'
     // id 'pmd'
-    id 'application'
+    id 'jacoco'
 }
 
 group 'edu.cornell.cs.apl'
@@ -24,18 +24,28 @@ checkstyle {
     maxWarnings 0
 }
 
- spotless {
-     java {
-         googleJavaFormat()
-         paddedCell()
-     }
- }
+spotless {
+    java {
+        googleJavaFormat()
+        paddedCell()
+    }
+}
 
 tasks.withType(com.github.spotbugs.SpotBugsTask) {
-    reports.xml.enabled = false
-    reports.html.enabled = true
+    reports {
+        xml.enabled = false
+        html.enabled = true
+    }
+}
+
+jacocoTestReport {
+    reports {
+        xml.enabled true
+        html.enabled true
+    }
 }
 
 dependencies {
     testImplementation group: 'junit', name: 'junit', version: '4.12'
 }
+

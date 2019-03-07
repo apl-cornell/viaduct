@@ -12,3 +12,11 @@ script:
   - ./gradlew javadoc
 after_success:
   - bash <(curl -s https://codecov.io/bash)
+deploy:
+  provider: pages
+  skip_cleanup: true
+  github_token: $GITHUB_TOKEN
+  keep_history: true
+  local_dir: build/docs/javadoc
+  on:
+    branch: master

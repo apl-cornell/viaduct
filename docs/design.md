@@ -43,7 +43,7 @@ The compiler has the following phases:
    *abstract* in the sense that they are treated as primitives.
 
 4. *Concrete implementation generation* (`Via` --> `?`). This phase takes
-  an abstract protocol specified in `Via` and translates it into an 
+  an abstract protocol specified in `Via` and translates it into an
   actual implementation. For example, we can provide backend translators
   to SGX configurations, or other languages such as ObliVM that support MPC.
 

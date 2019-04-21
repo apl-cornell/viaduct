@@ -36,17 +36,17 @@ public class Main {
 
   /** entry method. */
   public static void main(String[] args) {
-    PrintVisitor print = new PrintVisitor();
+    // PrintVisitor print = new PrintVisitor();
     StmtNode shellGame = getShellGame();
 
     // print out the AST
-    String shellGameStr = shellGame.accept(print);
-    System.out.println(shellGameStr);
+    // String shellGameStr = shellGame.accept(print);
+    // System.out.println(shellGameStr);
 
     // build PDG for the shell game
     ImpPdgBuilderVisitor pdgBuilder = new ImpPdgBuilderVisitor();
     shellGame.accept(pdgBuilder);
     ProgramDependencyGraph<ImpAstNode> pdg = pdgBuilder.getPdg();
-    System.out.println(pdg.toString());
+    System.out.println(PdgDotPrinter.printPdgDotGraph(pdg));
   }
 }

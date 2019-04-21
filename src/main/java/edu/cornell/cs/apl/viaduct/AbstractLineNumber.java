@@ -2,18 +2,60 @@ package edu.cornell.cs.apl.viaduct;
 
 import java.util.ArrayList;
 
-// TODO: make class immutable
-
 /** Used for maintaining ordering information about PDG nodes. */
 public class AbstractLineNumber implements Comparable<AbstractLineNumber> {
+  static class LineNumberComponent {
+    String marker;
+    int seqNum;
+
+    LineNumberComponent(String m, int seq) {
+      this.marker = m;
+      this.seqNum = seq;
+    }
+
+    String getMarker() {
+      return this.marker;
+    }
+
+    int getSequenceNum() {
+      return this.seqNum;
+    }
+  }
+
   ArrayList<LineNumberComponent> componentList;
 
-  public AbstractLineNumber() {
+  private AbstractLineNumber() {
     this.componentList = new ArrayList<LineNumberComponent>();
   }
 
-  public void addComponent(String m, int seq) {
-    this.componentList.add(new LineNumberComponent(m, seq));
+  public AbstractLineNumber(String main) {
+    this();
+    this.componentList.add(new LineNumberComponent(main, 1));
+  }
+
+  /** returns a clone but with the last component's sequence number incremented. */
+  public AbstractLineNumber increment() {
+    AbstractLineNumber newLn = new AbstractLineNumber();
+
+    int n = this.componentList.size();
+    for (int i = 0; i < n - 1; i++) {
+      newLn.componentList.add(this.componentList.get(i));
+    }
+    LineNumberComponent last = this.componentList.get(n - 1);
+    newLn.componentList.add(new LineNumberComponent(last.getMarker(), last.getSequenceNum() + 1));
+
+    return newLn;
+  }
+
+  /** returns a clone but with a new component appended. */
+  public AbstractLineNumber addBranch(String branch) {
+    AbstractLineNumber newLn = new AbstractLineNumber();
+    for (int i = 0; i < this.componentList.size(); i++) {
+      newLn.componentList.add(this.componentList.get(i));
+    }
+    newLn.componentList.add(new LineNumberComponent(branch, 1));
+
+    return newLn;
   }
 
   /**
@@ -72,30 +114,12 @@ public class AbstractLineNumber implements Comparable<AbstractLineNumber> {
   @Override
   public String toString() {
     StringBuilder buf = new StringBuilder();
-    buf.append("<");
+    buf.append("[");
     for (LineNumberComponent comp : this.componentList) {
       buf.append("(" + comp.getMarker() + ":" + comp.getSequenceNum() + ")");
     }
-    buf.append(">");
+    buf.append("]");
 
     return buf.toString();
-  }
-
-  static class LineNumberComponent {
-    String marker;
-    int seqNum;
-
-    LineNumberComponent(String m, int seq) {
-      this.marker = m;
-      this.seqNum = seq;
-    }
-
-    String getMarker() {
-      return this.marker;
-    }
-
-    int getSequenceNum() {
-      return this.seqNum;
-    }
   }
 }

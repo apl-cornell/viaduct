@@ -1,7 +1,6 @@
 package edu.cornell.cs.apl.viaduct.imp.visitors;
 
 import edu.cornell.cs.apl.viaduct.AbstractLineNumber;
-import edu.cornell.cs.apl.viaduct.AbstractLineNumberBuilder;
 import edu.cornell.cs.apl.viaduct.Label;
 import edu.cornell.cs.apl.viaduct.PdgComputeNode;
 import edu.cornell.cs.apl.viaduct.PdgControlNode;
@@ -41,15 +40,25 @@ import java.util.Set;
 public class ImpPdgBuilderVisitor
     implements StmtVisitor<Set<PdgNode<ImpAstNode>>>, ExprVisitor<Set<PdgNode<ImpAstNode>>> {
 
+  private static final String MAIN_MARKER = "main";
+  private static final String THEN_MARKER = "then";
+  private static final String ELSE_MARKER = "else";
+
   private SymbolTable<Variable, PdgNode<ImpAstNode>> storageNodes;
-  private AbstractLineNumberBuilder lineNumberBuilder;
+  private AbstractLineNumber currLineNumber;
   private ProgramDependencyGraph<ImpAstNode> pdg;
 
   /** constructor that initializes to default "empty" state. */
   public ImpPdgBuilderVisitor() {
     this.storageNodes = new SymbolTable<Variable, PdgNode<ImpAstNode>>();
-    this.lineNumberBuilder = new AbstractLineNumberBuilder();
+    this.currLineNumber = new AbstractLineNumber(MAIN_MARKER);
     this.pdg = new ProgramDependencyGraph<ImpAstNode>();
+  }
+
+  private AbstractLineNumber nextLineNumber() {
+    AbstractLineNumber old = this.currLineNumber;
+    this.currLineNumber = this.currLineNumber.increment();
+    return old;
   }
 
   /** return built PDG. */
@@ -134,7 +143,8 @@ public class ImpPdgBuilderVisitor
 
     // create new PDG node
     // calculate inLabel later during dataflow analysis
-    AbstractLineNumber lineno = lineNumberBuilder.generateLineNumber();
+    AbstractLineNumber lineno = nextLineNumber();
+
     PdgNode<ImpAstNode> node =
         new PdgComputeNode<ImpAstNode>(downgradeNode, lineno, Label.BOTTOM, label);
     node.addInNodes(inNodes);
@@ -158,7 +168,7 @@ public class ImpPdgBuilderVisitor
 
   /** return created storage node. */
   public Set<PdgNode<ImpAstNode>> visit(VarDeclNode varDecl) {
-    AbstractLineNumber lineno = this.lineNumberBuilder.generateLineNumber();
+    AbstractLineNumber lineno = nextLineNumber();
     PdgNode<ImpAstNode> node = new PdgStorageNode<ImpAstNode>(varDecl, lineno, varDecl.getLabel());
     this.storageNodes.add(varDecl.getVariable(), node);
     this.pdg.addNode(node);
@@ -174,7 +184,7 @@ public class ImpPdgBuilderVisitor
 
       // create new PDG node for the assignment that reads from the RHS nodes
       // and writes to the variable's storage node
-      AbstractLineNumber lineno = this.lineNumberBuilder.generateLineNumber();
+      AbstractLineNumber lineno = nextLineNumber();
       PdgNode<ImpAstNode> node = new PdgComputeNode<ImpAstNode>(assignNode, lineno, Label.BOTTOM);
       node.addInNodes(inNodes);
       node.addOutNode(varNode);
@@ -211,8 +221,8 @@ public class ImpPdgBuilderVisitor
     // add edges from guard nodes
     final Set<PdgNode<ImpAstNode>> inNodes = ifNode.getGuard().accept(this);
 
-    AbstractLineNumber lineno = this.lineNumberBuilder.generateLineNumber();
-    PdgNode<ImpAstNode> node = new PdgControlNode<ImpAstNode>(ifNode, lineno, Label.BOTTOM);
+    AbstractLineNumber ifLineno = nextLineNumber();
+    PdgNode<ImpAstNode> node = new PdgControlNode<ImpAstNode>(ifNode, ifLineno, Label.BOTTOM);
     this.pdg.addNode(node);
 
     // then and else branches create a new lexical scope, so
@@ -220,18 +230,18 @@ public class ImpPdgBuilderVisitor
 
     Set<PdgNode<ImpAstNode>> outNodes = new HashSet<PdgNode<ImpAstNode>>();
     this.storageNodes.push();
-    this.lineNumberBuilder.pushBranch(AbstractLineNumberBuilder.THEN_MARKER);
+    this.currLineNumber = this.currLineNumber.addBranch(THEN_MARKER);
     Set<PdgNode<ImpAstNode>> thenNodes = ifNode.getThenBranch().accept(this);
     outNodes.addAll(thenNodes);
     this.storageNodes.pop();
-    this.lineNumberBuilder.popBranch();
+    this.currLineNumber = ifLineno;
 
     this.storageNodes.push();
-    this.lineNumberBuilder.pushBranch(AbstractLineNumberBuilder.ELSE_MARKER);
+    this.currLineNumber = this.currLineNumber.addBranch(ELSE_MARKER);
     Set<PdgNode<ImpAstNode>> elseNodes = ifNode.getElseBranch().accept(this);
     outNodes.addAll(elseNodes);
     this.storageNodes.pop();
-    this.lineNumberBuilder.popBranch();
+    this.currLineNumber = ifLineno;
 
     // add in edges
     node.addInNodes(inNodes);

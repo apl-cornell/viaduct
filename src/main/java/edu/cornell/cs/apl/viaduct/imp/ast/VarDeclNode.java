@@ -4,7 +4,7 @@ import edu.cornell.cs.apl.viaduct.Label;
 import edu.cornell.cs.apl.viaduct.imp.visitors.StmtVisitor;
 
 /** Variable declaration. */
-public class VarDeclNode implements StmtNode {
+public class VarDeclNode extends StmtNode {
   private final Variable variable;
   private final Label label;
 

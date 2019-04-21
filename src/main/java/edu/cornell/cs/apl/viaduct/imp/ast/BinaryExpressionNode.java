@@ -5,7 +5,7 @@ package edu.cornell.cs.apl.viaduct.imp.ast;
  *
  * <p>Specific operations (like addition or boolean AND) should inherit from this class.
  */
-public abstract class BinaryExpressionNode implements ExpressionNode {
+public abstract class BinaryExpressionNode extends ExpressionNode {
   private final ExpressionNode lhs;
   private final ExpressionNode rhs;
 

@@ -3,7 +3,7 @@ package edu.cornell.cs.apl.viaduct.imp.ast;
 import edu.cornell.cs.apl.viaduct.imp.visitors.ExprVisitor;
 
 /** Boolean negation. */
-public class NotNode implements ExpressionNode {
+public class NotNode extends ExpressionNode {
   private final ExpressionNode expression;
 
   public NotNode(ExpressionNode expression) {

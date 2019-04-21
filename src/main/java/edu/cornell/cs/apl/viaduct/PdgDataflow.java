@@ -4,26 +4,26 @@ import java.util.LinkedList;
 import java.util.Queue;
 
 /** dataflow analysis for PDGs. parameterized by lattice defined by subclasses. */
-public abstract class PdgDataflow<T extends Lattice<T>> {
-  protected abstract T input(PdgNode node);
+public abstract class PdgDataflow<T extends Lattice<T>, U extends AstNode> {
+  protected abstract T input(PdgNode<U> node);
 
-  protected abstract T output(PdgNode node);
+  protected abstract T output(PdgNode<U> node);
 
-  protected abstract T transfer(PdgNode node, T nextInput);
+  protected abstract T transfer(PdgNode<U> node, T nextInput);
 
-  protected abstract void updateInput(PdgNode node, T nextInput);
+  protected abstract void updateInput(PdgNode<U> node, T nextInput);
 
-  protected abstract void updateOutput(PdgNode node, T nextInput);
+  protected abstract void updateOutput(PdgNode<U> node, T nextInput);
 
   /** worklist algorithm. */
-  public void dataflow(ProgramDependencyGraph pdg) {
-    Queue<PdgNode> worklist = new LinkedList<PdgNode>(pdg.getNodes());
+  public void dataflow(ProgramDependencyGraph<U> pdg) {
+    Queue<PdgNode<U>> worklist = new LinkedList<PdgNode<U>>(pdg.getNodes());
 
     while (worklist.size() > 0) {
-      PdgNode node = worklist.remove();
+      PdgNode<U> node = worklist.remove();
 
       T nextInput = input(node);
-      for (PdgNode inNode : node.getInNodes()) {
+      for (PdgNode<U> inNode : node.getInNodes()) {
         nextInput = nextInput.join(output(inNode));
       }
       updateInput(node, nextInput);

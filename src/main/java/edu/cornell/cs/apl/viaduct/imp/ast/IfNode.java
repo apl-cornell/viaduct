@@ -3,7 +3,7 @@ package edu.cornell.cs.apl.viaduct.imp.ast;
 import edu.cornell.cs.apl.viaduct.imp.visitors.StmtVisitor;
 
 /** If statement. */
-public class IfNode implements StmtNode {
+public class IfNode extends StmtNode {
   private final ExpressionNode guard;
   private final StmtNode thenBranch;
   private final StmtNode elseBranch;

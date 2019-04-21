@@ -11,32 +11,32 @@ import java.util.Set;
  * variables (storage) or computations (compute nodes) edge (A,B) represents a "read" of PDG node A
  * by PDG node B
  */
-public class ProgramDependencyGraph {
-  HashSet<PdgNode> nodes;
+public class ProgramDependencyGraph<T extends AstNode> {
+  HashSet<PdgNode<T>> nodes;
 
   public ProgramDependencyGraph() {
-    this.nodes = new HashSet<PdgNode>();
+    this.nodes = new HashSet<PdgNode<T>>();
   }
 
-  public void addNode(PdgNode node) {
+  public void addNode(PdgNode<T> node) {
     this.nodes.add(node);
   }
 
-  public Set<PdgNode> getNodes() {
+  public Set<PdgNode<T>> getNodes() {
     return this.nodes;
   }
 
   @Override
   public String toString() {
-    List<PdgNode> sortedNodes = new ArrayList<PdgNode>(this.nodes);
+    List<PdgNode<T>> sortedNodes = new ArrayList<PdgNode<T>>(this.nodes);
     Collections.sort(sortedNodes);
 
     StringBuffer buf = new StringBuffer();
-    for (PdgNode node : sortedNodes) {
+    for (PdgNode<T> node : sortedNodes) {
       buf.append(node.toString());
       buf.append(" (outedges:");
 
-      for (PdgNode outNode : node.getOutNodes()) {
+      for (PdgNode<T> outNode : node.getOutNodes()) {
         buf.append(" " + outNode.getLineNumber().toString());
       }
       buf.append(")\n");

@@ -1,13 +1,11 @@
 package edu.cornell.cs.apl.viaduct;
 
-import edu.cornell.cs.apl.viaduct.imp.ast.AstNode;
-
 /** PDG compute node, which represents expressions or statements. */
-public class PdgComputeNode extends PdgNode {
+public class PdgComputeNode<T extends AstNode> extends PdgNode<T> {
   boolean isDowngrade;
 
   /** constructor for non-downgrade nodes. */
-  public PdgComputeNode(AstNode astNode, AbstractLineNumber lineno, Label label) {
+  public PdgComputeNode(T astNode, AbstractLineNumber lineno, Label label) {
     super(astNode, lineno);
     this.setInLabel(label);
     this.setOutLabel(label);
@@ -15,7 +13,7 @@ public class PdgComputeNode extends PdgNode {
   }
 
   /** constructor for downgrade nodes. */
-  public PdgComputeNode(AstNode astNode, AbstractLineNumber lineno, Label inLabel, Label outLabel) {
+  public PdgComputeNode(T astNode, AbstractLineNumber lineno, Label inLabel, Label outLabel) {
     super(astNode, lineno);
     this.setInLabel(inLabel);
     this.setOutLabel(outLabel);

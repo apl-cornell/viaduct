@@ -5,7 +5,7 @@ import edu.cornell.cs.apl.viaduct.imp.visitors.StmtVisitor;
 // TODO: remove since BlockNode([]) is the same thing.
 
 /** does nothing. */
-public class SkipNode implements StmtNode {
+public class SkipNode extends StmtNode {
   public <R> R accept(StmtVisitor<R> v) {
     return v.visit(this);
   }

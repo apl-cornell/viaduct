@@ -5,7 +5,7 @@ package edu.cornell.cs.apl.viaduct.imp.ast;
  *
  * <p>Literals of specific types (like integer or boolean) should inherit from this class.
  */
-public abstract class LiteralNode<V> implements ExpressionNode {
+public abstract class LiteralNode<V> extends ExpressionNode {
   private final V value;
 
   public LiteralNode(V value) {

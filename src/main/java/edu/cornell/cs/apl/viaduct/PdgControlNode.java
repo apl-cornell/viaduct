@@ -1,11 +1,9 @@
 package edu.cornell.cs.apl.viaduct;
 
-import edu.cornell.cs.apl.viaduct.imp.ast.AstNode;
-
 /** PDG node for control flow statements. */
-public class PdgControlNode extends PdgNode {
+public class PdgControlNode<T extends AstNode> extends PdgNode<T> {
   /** constructor that sets in and out labels to be the same. */
-  public PdgControlNode(AstNode astNode, AbstractLineNumber lineno, Label label) {
+  public PdgControlNode(T astNode, AbstractLineNumber lineno, Label label) {
     super(astNode, lineno);
     this.setInLabel(label);
     this.setOutLabel(label);

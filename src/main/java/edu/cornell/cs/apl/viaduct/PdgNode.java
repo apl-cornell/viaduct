@@ -1,21 +1,20 @@
 package edu.cornell.cs.apl.viaduct;
 
-import edu.cornell.cs.apl.viaduct.imp.ast.AstNode;
 import java.util.HashSet;
 import java.util.Set;
 
 /** node in a program dependence graph. */
-public abstract class PdgNode implements Comparable<PdgNode> {
-  AstNode astNode;
+public abstract class PdgNode<T extends AstNode> implements Comparable<PdgNode<T>> {
+  T astNode;
   AbstractLineNumber lineNumber;
-  Set<PdgNode> inNodes;
-  Set<PdgNode> outNodes;
+  Set<PdgNode<T>> inNodes;
+  Set<PdgNode<T>> outNodes;
   Label inLabel;
   Label outLabel;
 
   /** constructor. */
   public PdgNode(
-      AstNode astNode, AbstractLineNumber lineno, Set<PdgNode> inNodes, Set<PdgNode> outNodes) {
+      T astNode, AbstractLineNumber lineno, Set<PdgNode<T>> inNodes, Set<PdgNode<T>> outNodes) {
 
     this.astNode = astNode;
     this.lineNumber = lineno;
@@ -26,15 +25,15 @@ public abstract class PdgNode implements Comparable<PdgNode> {
   }
 
   /** constructor, defaults to no edges. */
-  public PdgNode(AstNode astNode, AbstractLineNumber lineno) {
-    this(astNode, lineno, new HashSet<PdgNode>(), new HashSet<PdgNode>());
+  public PdgNode(T astNode, AbstractLineNumber lineno) {
+    this(astNode, lineno, new HashSet<PdgNode<T>>(), new HashSet<PdgNode<T>>());
   }
 
-  public AstNode getAstNode() {
+  public T getAstNode() {
     return this.astNode;
   }
 
-  public void setAstNode(AstNode node) {
+  public void setAstNode(T node) {
     this.astNode = node;
   }
 
@@ -46,27 +45,27 @@ public abstract class PdgNode implements Comparable<PdgNode> {
     this.lineNumber = lineno;
   }
 
-  public void addInNode(PdgNode node) {
+  public void addInNode(PdgNode<T> node) {
     this.inNodes.add(node);
   }
 
-  public void addInNodes(Set<PdgNode> nodes) {
+  public void addInNodes(Set<PdgNode<T>> nodes) {
     this.inNodes.addAll(nodes);
   }
 
-  public void addOutNode(PdgNode node) {
+  public void addOutNode(PdgNode<T> node) {
     this.outNodes.add(node);
   }
 
-  public void addOutNodes(Set<PdgNode> nodes) {
+  public void addOutNodes(Set<PdgNode<T>> nodes) {
     this.outNodes.addAll(nodes);
   }
 
-  public Set<PdgNode> getInNodes() {
+  public Set<PdgNode<T>> getInNodes() {
     return this.inNodes;
   }
 
-  public Set<PdgNode> getOutNodes() {
+  public Set<PdgNode<T>> getOutNodes() {
     return this.outNodes;
   }
 
@@ -75,9 +74,9 @@ public abstract class PdgNode implements Comparable<PdgNode> {
    * for conditionals, where to model read channels the PC of the conditional has to be "written" to
    * storage nodes read in its branches.
    */
-  public Set<PdgNode> getStorageNodeInputs() {
-    Set<PdgNode> storageInputs = new HashSet<PdgNode>();
-    for (PdgNode inNode : this.inNodes) {
+  public Set<PdgNode<T>> getStorageNodeInputs() {
+    Set<PdgNode<T>> storageInputs = new HashSet<PdgNode<T>>();
+    for (PdgNode<T> inNode : this.inNodes) {
       if (inNode.isStorageNode()) {
         storageInputs.add(inNode);
 
@@ -113,14 +112,14 @@ public abstract class PdgNode implements Comparable<PdgNode> {
 
   public abstract boolean isControlNode();
 
-  public int compareTo(PdgNode other) {
+  public int compareTo(PdgNode<T> other) {
     return this.lineNumber.compareTo(other.lineNumber);
   }
 
   @Override
   public boolean equals(Object o) {
-    if (o instanceof PdgNode) {
-      PdgNode otherPdg = (PdgNode) o;
+    if (o instanceof PdgNode<?>) {
+      PdgNode<T> otherPdg = (PdgNode<T>) o;
       return this.astNode.equals(otherPdg.astNode);
 
     } else {

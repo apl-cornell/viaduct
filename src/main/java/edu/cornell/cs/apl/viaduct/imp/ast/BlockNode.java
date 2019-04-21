@@ -4,7 +4,7 @@ import edu.cornell.cs.apl.viaduct.imp.visitors.StmtVisitor;
 import java.util.List;
 
 /** Sequences a list of statements. */
-public class BlockNode implements StmtNode {
+public class BlockNode extends StmtNode {
   private final List<StmtNode> statements;
 
   public BlockNode(List<StmtNode> statements) {

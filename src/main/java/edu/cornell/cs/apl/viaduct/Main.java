@@ -1,8 +1,10 @@
 package edu.cornell.cs.apl.viaduct;
 
+import edu.cornell.cs.apl.viaduct.imp.ast.ImpAstNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.StmtNode;
 import edu.cornell.cs.apl.viaduct.imp.builders.ExpressionBuilder;
 import edu.cornell.cs.apl.viaduct.imp.builders.StmtBuilder;
+import edu.cornell.cs.apl.viaduct.imp.visitors.ImpPdgBuilderVisitor;
 import edu.cornell.cs.apl.viaduct.imp.visitors.PrintVisitor;
 
 public class Main {
@@ -42,9 +44,9 @@ public class Main {
     System.out.println(shellGameStr);
 
     // build PDG for the shell game
-    PdgBuilderVisitor pdgBuilder = new PdgBuilderVisitor();
+    ImpPdgBuilderVisitor pdgBuilder = new ImpPdgBuilderVisitor();
     shellGame.accept(pdgBuilder);
-    ProgramDependencyGraph pdg = pdgBuilder.getPdg();
+    ProgramDependencyGraph<ImpAstNode> pdg = pdgBuilder.getPdg();
     System.out.println(pdg.toString());
   }
 }

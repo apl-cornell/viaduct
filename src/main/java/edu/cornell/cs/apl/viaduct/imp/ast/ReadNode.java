@@ -3,7 +3,7 @@ package edu.cornell.cs.apl.viaduct.imp.ast;
 import edu.cornell.cs.apl.viaduct.imp.visitors.ExprVisitor;
 
 /** Read the value of a variable. */
-public class ReadNode implements ExpressionNode {
+public class ReadNode extends ExpressionNode {
   private final Variable variable;
 
   public ReadNode(Variable variable) {

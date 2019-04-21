@@ -1,15 +1,15 @@
 package edu.cornell.cs.apl.viaduct;
 
-public class PdgLabelDataflow extends PdgDataflow<Label> {
-  protected Label input(PdgNode node) {
+public class PdgLabelDataflow<T extends AstNode> extends PdgDataflow<Label, T> {
+  protected Label input(PdgNode<T> node) {
     return node.getInLabel();
   }
 
-  protected Label output(PdgNode node) {
+  protected Label output(PdgNode<T> node) {
     return node.getOutLabel();
   }
 
-  protected Label transfer(PdgNode node, Label nextInput) {
+  protected Label transfer(PdgNode<T> node, Label nextInput) {
     // if the node is a downgrade node, prevent transfer;
     // the out label is permanently the downgrade label
     if (node.isDowngradeNode()) {
@@ -19,11 +19,11 @@ public class PdgLabelDataflow extends PdgDataflow<Label> {
     }
   }
 
-  protected void updateInput(PdgNode node, Label nextInput) {
+  protected void updateInput(PdgNode<T> node, Label nextInput) {
     node.setInLabel(nextInput);
   }
 
-  protected void updateOutput(PdgNode node, Label nextOutput) {
+  protected void updateOutput(PdgNode<T> node, Label nextOutput) {
     node.setOutLabel(nextOutput);
   }
 }

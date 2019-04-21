@@ -4,7 +4,7 @@ import edu.cornell.cs.apl.viaduct.Label;
 import edu.cornell.cs.apl.viaduct.imp.visitors.ExprVisitor;
 
 /** Reduce the confidentiality and/or integrity of the result of an expression. */
-public class DowngradeNode implements ExpressionNode {
+public class DowngradeNode extends ExpressionNode {
   private final ExpressionNode expression;
   private final Label label;
 

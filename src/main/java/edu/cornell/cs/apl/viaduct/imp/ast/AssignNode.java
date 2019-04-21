@@ -3,7 +3,7 @@ package edu.cornell.cs.apl.viaduct.imp.ast;
 import edu.cornell.cs.apl.viaduct.imp.visitors.StmtVisitor;
 
 /** Variable assignment statement. */
-public class AssignNode implements StmtNode {
+public class AssignNode extends StmtNode {
   private final Variable variable;
   private final ExpressionNode rhs;
 

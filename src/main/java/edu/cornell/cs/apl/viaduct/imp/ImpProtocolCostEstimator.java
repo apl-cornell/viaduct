@@ -6,6 +6,7 @@ import edu.cornell.cs.apl.viaduct.Protocol;
 import edu.cornell.cs.apl.viaduct.ProtocolCostEstimator;
 import edu.cornell.cs.apl.viaduct.UnknownProtocolException;
 import edu.cornell.cs.apl.viaduct.imp.ast.ImpAstNode;
+import edu.cornell.cs.apl.viaduct.imp.visitors.SizeVisitor;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -13,12 +14,13 @@ import java.util.Set;
 /** cost estimator for IMP. */
 public final class ImpProtocolCostEstimator extends ProtocolCostEstimator<ImpAstNode> {
   private static Set<Protocol<ImpAstNode>> protocols = new HashSet<Protocol<ImpAstNode>>();
+  private static SizeVisitor nodeSizer = new SizeVisitor();
 
   {
-    protocols.add(ImpProtocols.Single.getInstance());
-    protocols.add(ImpProtocols.Replication.getInstance());
-    protocols.add(ImpProtocols.ZK.getInstance());
-    protocols.add(ImpProtocols.MPC.getInstance());
+    protocols.add(ImpProtocols.Single.getRepresentative());
+    protocols.add(ImpProtocols.Replication.getRepresentative());
+    protocols.add(ImpProtocols.ZK.getRepresentative());
+    protocols.add(ImpProtocols.MPC.getRepresentative());
   }
 
   public Set<Protocol<ImpAstNode>> getProtocols() {
@@ -31,14 +33,16 @@ public final class ImpProtocolCostEstimator extends ProtocolCostEstimator<ImpAst
       ProgramDependencyGraph<ImpAstNode> pdg)
       throws UnknownProtocolException
   {
+    ImpAstNode astNode = node.getAstNode();
+
     if (protocol instanceof ImpProtocols.Single) {
-      return 1;
+      return 1 * astNode.accept(nodeSizer);
     } else if (protocol instanceof ImpProtocols.Replication) {
-      return 5;
+      return 5 * astNode.accept(nodeSizer);
     } else if (protocol instanceof ImpProtocols.ZK) {
-      return 10;
+      return 10 * astNode.accept(nodeSizer);
     } else if (protocol instanceof ImpProtocols.MPC) {
-      return 100;
+      return 100 * astNode.accept(nodeSizer);
     } else {
       throw new UnknownProtocolException(protocol);
     }

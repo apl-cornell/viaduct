@@ -20,7 +20,7 @@ import edu.cornell.cs.apl.viaduct.imp.ast.StmtNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.VarDeclNode;
 
 /** Pretty-prints an AST. */
-public class PrintVisitor implements ExprVisitor<String>, StmtVisitor<String> {
+public class PrintVisitor implements AstVisitor<String> {
   private static final int INDENT_LEVEL = 4;
   private int indent;
 
@@ -42,8 +42,6 @@ public class PrintVisitor implements ExprVisitor<String>, StmtVisitor<String> {
     String rhsStr = binNode.getRhs().accept(this);
     return lhsStr + " " + op + " " + rhsStr;
   }
-
-  // TODO: remove worthless comments.
 
   /** print node. */
   public String visit(ReadNode readNode) {

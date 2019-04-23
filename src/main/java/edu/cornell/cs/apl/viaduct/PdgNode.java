@@ -119,7 +119,7 @@ public abstract class PdgNode<T extends AstNode> implements Comparable<PdgNode<T
   @Override
   public boolean equals(Object o) {
     if (o instanceof PdgNode<?>) {
-      PdgNode<T> otherPdg = (PdgNode<T>) o;
+      PdgNode<T> otherPdg = (PdgNode<T>)o;
       return this.astNode.equals(otherPdg.astNode);
 
     } else {

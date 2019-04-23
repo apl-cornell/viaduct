@@ -1,8 +1,12 @@
 package edu.cornell.cs.apl.viaduct;
 
+import java.util.Map;
+import java.util.Set;
+
 /** a protocol for instantiating a PDG node. */
 public interface Protocol<T extends AstNode> {
-  boolean canInstantiate(PdgNode<T> node);
-
-  Protocol<T> createInstance(PdgNode<T> node);
+  Set<Protocol<T>> createInstances(
+      Set<Host> hostConfig,
+      Map<PdgNode<T>,Protocol<T>> currProtoMap,
+      PdgNode<T> node);
 }

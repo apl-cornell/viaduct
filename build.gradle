@@ -21,8 +21,15 @@ application {
     mainClassName = 'edu.cornell.cs.apl.viaduct.Main'
 }
 
+jar {
+    manifest {
+        attributes 'Main-Class': 'edu.cornell.cs.apl.viaduct.Main'
+    }
+}
+
 checkstyle {
     maxWarnings 0
+    configProperties = [ "suppressionFile" : project(':').file('config/checkstyle/suppressions.xml')]
 }
 
 spotless {

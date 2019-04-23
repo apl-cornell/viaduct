@@ -1,13 +1,13 @@
 package edu.cornell.cs.apl.viaduct.imp;
 
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-
 import edu.cornell.cs.apl.viaduct.Host;
 import edu.cornell.cs.apl.viaduct.PdgNode;
 import edu.cornell.cs.apl.viaduct.Protocol;
 import edu.cornell.cs.apl.viaduct.imp.ast.ImpAstNode;
+
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 public class ImpProtocols {
   static class Single implements Protocol<ImpAstNode> {

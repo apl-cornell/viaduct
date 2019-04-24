@@ -1,8 +1,10 @@
 package edu.cornell.cs.apl.viaduct;
 
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.PriorityQueue;
 import java.util.Set;
@@ -75,6 +77,30 @@ public class ProtocolSelection<T extends AstNode> {
     Set<PdgNode<T>> nodes = pdg.getNodes();
     Set<Protocol<T>> protocols = costEstimator.getProtocols();
 
+    // the sequence in which PDG nodes will have a protocol selected.
+    // this allows massive pruning of the search space,
+    // as we will only visit maps that follow this selection order
+    // obeys toposort according to PDG
+    List<PdgNode<T>> selectionOrder = new ArrayList<>();
+    while (selectionOrder.size() < nodes.size()) {
+      for (PdgNode<T> node : nodes) {
+        if (!selectionOrder.contains(node)) {
+          if (node.isStorageNode()) {
+            selectionOrder.add(node);
+            break;
+          } else {
+            Set<PdgNode<T>> inNodes = node.getInNodes();
+            for (PdgNode<T> inNode : inNodes) {
+              if (!selectionOrder.contains(inNode)) {
+                break;
+              }
+            }
+            selectionOrder.add(node);
+          }
+        }
+      }
+    }
+
     // create open and closed sets
     ProtocolMapComparator comparator = new ProtocolMapComparator();
     PriorityQueue<ProtocolMapNode<T>> openSet =
@@ -99,43 +125,36 @@ public class ProtocolSelection<T extends AstNode> {
 
       closedSet.add(currMapNode);
 
-      // visit neighbors from edges, where edge set is cartesian product of
-      // unmmaped nodes (wrt current map) and protocol instantiations
-      for (PdgNode<T> node : nodes) {
-        // only allow edges for nodes whose inputs have selected protocols already
-        // this essentially prunes the search space so that the nodes that are
-        // candidates for protocol selection are toposorted according to the PDG
-        // (ignoring read channel edges)
-        boolean inputsSelected = true;
-        if (!node.isStorageNode()) {
-          Set<PdgNode<T>> inNodes = node.getInNodes();
-          for (PdgNode<T> inNode : inNodes) {
-            if (!mappedNodes.contains(inNode)) {
-              inputsSelected = false;
-              break;
-            }
-          }
+      // get the next node to select a protocol for,
+      // according to the selection order
+      PdgNode<T> nextNode = null;
+      for (PdgNode<T> node : selectionOrder) {
+        if (!mappedNodes.contains(node)) {
+          nextNode = node;
         }
+      }
+      // after this point, nextNode cannot be null!
+      // otherwise, that means that all PDG nodes have been mapped
+      // -- but then that means we found a goal, so we should already
+      // have returned
 
-        if (!mappedNodes.contains(node) && inputsSelected) {
-          // for each protocol, generate a set of possible instantiated protocols
-          // each instantiated protocol represents an edge from the current map
-          // to a new map with one new mapping from the PDG node to the instantiated protocol
-          for (Protocol<T> protocol : protocols) {
-            Set<Protocol<T>> protoInstances =  protocol.createInstances(hostConfig, currMap, node);
-            for (Protocol<T> protoInstance : protoInstances) {
-              // instantiate neighbor
-              HashMap<PdgNode<T>,Protocol<T>> newMap =
-                  (HashMap<PdgNode<T>,Protocol<T>>)currMap.clone();
-              newMap.put(node, protoInstance);
-              int newMapCost = this.costEstimator.estimatePdgCost(newMap, pdg);
-              ProtocolMapNode<T> newMapNode = new ProtocolMapNode<>(newMap, newMapCost);
+      // visit neighbors from edges, where edge set is set of protocol instantiations
+      // for each protocol, generate a set of possible instantiated protocols
+      // each instantiated protocol represents an edge from the current map
+      // to a new map with one new mapping from the PDG node to the instantiated protocol
+      for (Protocol<T> protocol : protocols) {
+        Set<Protocol<T>> protoInstances =  protocol.createInstances(hostConfig, currMap, nextNode);
+        for (Protocol<T> protoInstance : protoInstances) {
+          // instantiate neighbor
+          HashMap<PdgNode<T>,Protocol<T>> newMap =
+              (HashMap<PdgNode<T>,Protocol<T>>)currMap.clone();
+          newMap.put(nextNode, protoInstance);
+          int newMapCost = this.costEstimator.estimatePdgCost(newMap, pdg);
+          ProtocolMapNode<T> newMapNode = new ProtocolMapNode<>(newMap, newMapCost);
 
-              if (!closedSet.contains(newMapNode) && !openSet.contains(newMapNode)) {
-                // System.out.println(newMapNode);
-                openSet.add(newMapNode);
-              }
-            }
+          if (!closedSet.contains(newMapNode) && !openSet.contains(newMapNode)) {
+            // System.out.println(newMapNode);
+            openSet.add(newMapNode);
           }
         }
       }

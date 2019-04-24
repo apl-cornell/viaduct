@@ -11,7 +11,9 @@ import java.util.Set;
 
 public class ProtocolSelection<T extends AstNode> {
   /** represents a node in the search space. */
-  private static class ProtocolMapNode<U extends AstNode> {
+  private static class ProtocolMapNode<U extends AstNode>
+      implements Comparable<ProtocolMapNode<U>>
+  {
     final HashMap<PdgNode<U>,Protocol<U>> protocolMap;
     final int cost;
 
@@ -26,6 +28,10 @@ public class ProtocolSelection<T extends AstNode> {
 
     int getCost() {
       return this.cost;
+    }
+
+    public int compareTo(ProtocolMapNode<U> other) {
+      return this.cost - other.cost;
     }
 
     @Override
@@ -53,12 +59,6 @@ public class ProtocolSelection<T extends AstNode> {
         str.append(String.format("%s => %s%n", kv.getKey().toString(), kv.getValue().toString()));
       }
       return str.toString();
-    }
-  }
-
-  private class ProtocolMapComparator implements Comparator<ProtocolMapNode<T>> {
-    public int compare(ProtocolMapNode<T> protoMap1, ProtocolMapNode<T> protoMap2) {
-      return protoMap1.getCost() - protoMap2.getCost();
     }
   }
 
@@ -102,9 +102,7 @@ public class ProtocolSelection<T extends AstNode> {
     }
 
     // create open and closed sets
-    ProtocolMapComparator comparator = new ProtocolMapComparator();
-    PriorityQueue<ProtocolMapNode<T>> openSet =
-        new PriorityQueue<>(pdg.getNodes().size(), comparator);
+    PriorityQueue<ProtocolMapNode<T>> openSet = new PriorityQueue<>(pdg.getNodes().size());
     HashSet<ProtocolMapNode<T>> closedSet = new HashSet<>();
 
     // start node is empty map
@@ -133,6 +131,7 @@ public class ProtocolSelection<T extends AstNode> {
           nextNode = node;
         }
       }
+      assert nextNode != null : "nextNode is null";
       // after this point, nextNode cannot be null!
       // otherwise, that means that all PDG nodes have been mapped
       // -- but then that means we found a goal, so we should already

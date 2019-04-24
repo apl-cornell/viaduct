@@ -20,8 +20,8 @@ public abstract class PdgNode<T extends AstNode> implements Comparable<PdgNode<T
     this.lineNumber = lineno;
     this.inNodes = inNodes;
     this.outNodes = outNodes;
-    this.inLabel = Label.BOTTOM;
-    this.outLabel = Label.BOTTOM;
+    this.inLabel = Label.bottom();
+    this.outLabel = Label.bottom();
   }
 
   /** constructor, defaults to no edges. */

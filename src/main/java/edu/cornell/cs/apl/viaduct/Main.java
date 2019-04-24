@@ -15,23 +15,31 @@ public class Main {
   /** create shell game. */
   public static StmtNode getShellGame() {
     ExpressionBuilder e = new ExpressionBuilder();
+    Label aLabel = Label.and("A");
+    Label cLabel = Label.and("C");
+    Label acAndLabel = Label.and("A","C");
+    Label acOrLabel = Label.or("A","C");
+    Label cConf_acAndIntegLabel = new Label(cLabel, acAndLabel);
+    Label aConf_acAndIntegLabel = new Label(aLabel, acAndLabel);
+    Label acOrConf_acAndIntegLabel = new Label(acOrLabel, acAndLabel);
     StmtNode shellGame =
         (new StmtBuilder())
-            .varDecl("cinput", Label.BOTTOM)
-            .varDecl("ainput", Label.BOTTOM)
-            .varDecl("shell", Label.BOTTOM)
-            .varDecl("guess", Label.BOTTOM)
-            .varDecl("win", Label.BOTTOM)
-            .assign("shell", e.endorse(e.var("cinput"), Label.BOTTOM))
-            .assign("guess", e.endorse(e.var("ainput"), Label.BOTTOM))
+            .varDecl("cinput", cLabel)
+            .varDecl("ainput", aLabel)
+            .varDecl("shell", aConf_acAndIntegLabel)
+            .varDecl("guess", cConf_acAndIntegLabel)
+            .varDecl("win", acOrConf_acAndIntegLabel)
+            .assign("shell", e.endorse(e.var("cinput"), new Label(cLabel, acAndLabel)))
+            .assign("guess", e.endorse(e.var("ainput"), new Label(aLabel, acAndLabel)))
             .cond(
                 e.declassify(
                     e.and(e.leq(e.intLit(1), e.var("shell")), e.leq(e.var("shell"), e.intLit(3))),
-                    Label.BOTTOM),
+                    acOrConf_acAndIntegLabel),
                 (new StmtBuilder())
                     .assign(
                         "win",
-                        e.declassify(e.equals(e.var("shell"), e.var("guess")), Label.BOTTOM)),
+                        e.declassify(e.equals(e.var("shell"), e.var("guess")),
+                            acOrConf_acAndIntegLabel)),
                 (new StmtBuilder()).skip())
             .build();
 
@@ -55,8 +63,8 @@ public class Main {
     ProtocolSelection<ImpAstNode> protoSelection =
         new ProtocolSelection<>(new ImpProtocolCostEstimator());
     HashSet<Host> hostConfig = new HashSet<>();
-    hostConfig.add(new Host("A", Label.BOTTOM));
-    hostConfig.add(new Host("C", Label.BOTTOM));
+    hostConfig.add(new Host("A", Label.bottom()));
+    hostConfig.add(new Host("C", Label.bottom()));
     Map<PdgNode<ImpAstNode>,Protocol<ImpAstNode>> protocolMap =
         protoSelection.selectProtocols(hostConfig, pdg);
 

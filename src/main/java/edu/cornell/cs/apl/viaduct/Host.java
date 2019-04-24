@@ -5,7 +5,7 @@ public class Host {
   final String name;
   final Label label;
 
-  private static final Host defaultHost = new Host("__DEFAULT__", Label.BOTTOM);
+  private static final Host defaultHost = new Host("__DEFAULT__", Label.bottom());
 
   public Host(String name, Label label) {
     this.name = name;

@@ -146,7 +146,7 @@ public class ImpPdgBuilderVisitor
     AbstractLineNumber lineno = nextLineNumber();
 
     PdgNode<ImpAstNode> node =
-        new PdgComputeNode<ImpAstNode>(downgradeNode, lineno, Label.BOTTOM, label);
+        new PdgComputeNode<ImpAstNode>(downgradeNode, lineno, Label.bottom(), label);
     node.addInNodes(inNodes);
 
     // make sure to add outEdges from inNodes to the new node
@@ -185,7 +185,7 @@ public class ImpPdgBuilderVisitor
       // create new PDG node for the assignment that reads from the RHS nodes
       // and writes to the variable's storage node
       AbstractLineNumber lineno = nextLineNumber();
-      PdgNode<ImpAstNode> node = new PdgComputeNode<ImpAstNode>(assignNode, lineno, Label.BOTTOM);
+      PdgNode<ImpAstNode> node = new PdgComputeNode<ImpAstNode>(assignNode, lineno, Label.bottom());
       node.addInNodes(inNodes);
       node.addOutNode(varNode);
 
@@ -222,7 +222,7 @@ public class ImpPdgBuilderVisitor
     final Set<PdgNode<ImpAstNode>> inNodes = ifNode.getGuard().accept(this);
 
     AbstractLineNumber ifLineno = nextLineNumber();
-    PdgNode<ImpAstNode> node = new PdgControlNode<ImpAstNode>(ifNode, ifLineno, Label.BOTTOM);
+    PdgNode<ImpAstNode> node = new PdgControlNode<ImpAstNode>(ifNode, ifLineno, Label.bottom());
     this.pdg.addNode(node);
 
     // then and else branches create a new lexical scope, so

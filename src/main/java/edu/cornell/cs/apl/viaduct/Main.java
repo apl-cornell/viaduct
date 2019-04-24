@@ -1,11 +1,15 @@
 package edu.cornell.cs.apl.viaduct;
 
+import edu.cornell.cs.apl.viaduct.imp.ImpProtocolCostEstimator;
 import edu.cornell.cs.apl.viaduct.imp.ast.ImpAstNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.StmtNode;
 import edu.cornell.cs.apl.viaduct.imp.builders.ExpressionBuilder;
 import edu.cornell.cs.apl.viaduct.imp.builders.StmtBuilder;
 import edu.cornell.cs.apl.viaduct.imp.visitors.ImpPdgBuilderVisitor;
 import edu.cornell.cs.apl.viaduct.imp.visitors.PrintVisitor;
+
+import java.util.HashSet;
+import java.util.Map;
 
 public class Main {
   /** create shell game. */
@@ -47,6 +51,20 @@ public class Main {
     ImpPdgBuilderVisitor pdgBuilder = new ImpPdgBuilderVisitor();
     shellGame.accept(pdgBuilder);
     ProgramDependencyGraph<ImpAstNode> pdg = pdgBuilder.getPdg();
-    System.out.println(PdgDotPrinter.printPdgDotGraph(pdg));
+
+    ProtocolSelection<ImpAstNode> protoSelection =
+        new ProtocolSelection<>(new ImpProtocolCostEstimator());
+    HashSet<Host> hostConfig = new HashSet<>();
+    hostConfig.add(new Host("A", Label.BOTTOM));
+    hostConfig.add(new Host("C", Label.BOTTOM));
+    Map<PdgNode<ImpAstNode>,Protocol<ImpAstNode>> protocolMap =
+        protoSelection.selectProtocols(hostConfig, pdg);
+
+    System.out.println("synthesized protocol:");
+    for (Map.Entry<PdgNode<ImpAstNode>,Protocol<ImpAstNode>> kv : protocolMap.entrySet()) {
+      System.out.printf("%s => %s%n", kv.getKey().toString(), kv.getValue().toString());
+    }
+
+    // System.out.println(PdgDotPrinter.printPdgDotGraph(pdg));
   }
 }

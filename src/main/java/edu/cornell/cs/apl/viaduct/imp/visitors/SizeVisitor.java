@@ -25,78 +25,64 @@ public class SizeVisitor implements AstVisitor<Integer> {
     return 1 + binNode.getLhs().accept(this) + binNode.getRhs().accept(this);
   }
 
-  /** give node size. */
   public Integer visit(ReadNode readNode) {
     return 1;
   }
 
-  /** give node size. */
   public Integer visit(IntegerLiteralNode integerLiteralNode) {
     return 1;
   }
 
-  /** give node size. */
   public Integer visit(PlusNode plusNode) {
     return visitBinary(plusNode);
   }
 
-  /** give node size. */
   public Integer visit(BooleanLiteralNode booleanLiteralNode) {
     return 1;
   }
 
-  /** give node size. */
   public Integer visit(OrNode orNode) {
     return visitBinary(orNode);
   }
 
-  /** give node size. */
   public Integer visit(AndNode andNode) {
     return visitBinary(andNode);
   }
 
-  /** give node size. */
   public Integer visit(LessThanNode lessThanNode) {
     return visitBinary(lessThanNode);
   }
 
-  /** give node size. */
   public Integer visit(EqualNode equalNode) {
     return visitBinary(equalNode);
   }
 
-  /** give node size. */
   public Integer visit(LeqNode leqNode) {
     return visitBinary(leqNode);
   }
 
-  /** give node size. */
   public Integer visit(NotNode notNode) {
     return 1 + notNode.getExpression().accept(this);
   }
 
-  /** give node size. */
   public Integer visit(DowngradeNode downgradeNode) {
     Integer exprSize = downgradeNode.getExpression().accept(this);
     return 1 + exprSize;
   }
 
-  /** give node size. */
   public Integer visit(SkipNode skipNode) {
     return 0;
   }
 
-  /** give node size. */
   public Integer visit(VarDeclNode varDecl) {
     return 1;
   }
 
-  /** give node size. */
   public Integer visit(AssignNode assignNode) {
     return 1 + assignNode.getRhs().accept(this);
   }
 
-  /** give node size. */
+  /** give size to if node. */
   public Integer visit(IfNode ifNode) {
     Integer guardSize = ifNode.getGuard().accept(this);
     Integer thenSize = ifNode.getThenBranch().accept(this);
@@ -104,7 +90,7 @@ public class SizeVisitor implements AstVisitor<Integer> {
     return 1 + guardSize + thenSize + elseSize;
   }
 
-  /** give node size. */
+  /** give size to block node. */
   public Integer visit(BlockNode blockNode) {
     Integer size = 0;
     for (StmtNode stmt : blockNode.getStatements()) {

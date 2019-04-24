@@ -32,7 +32,7 @@ public class ProtocolSelection<T extends AstNode> {
 
       if (o instanceof ProtocolMapNode<?>) {
         ProtocolMapNode<U> onode = (ProtocolMapNode<U>)o;
-        return onode.getProtocolMap().equals(protocolMap);
+        return this.protocolMap.equals(onode.protocolMap);
 
       } else {
         return false;
@@ -42,6 +42,15 @@ public class ProtocolSelection<T extends AstNode> {
     @Override
     public int hashCode() {
       return this.protocolMap.hashCode();
+    }
+
+    @Override
+    public String toString() {
+      StringBuffer str = new StringBuffer();
+      for (Map.Entry<PdgNode<U>,Protocol<U>> kv : protocolMap.entrySet()) {
+        str.append(String.format("%s => %s%n", kv.getKey().toString(), kv.getValue().toString()));
+      }
+      return str.toString();
     }
   }
 
@@ -90,11 +99,25 @@ public class ProtocolSelection<T extends AstNode> {
 
       closedSet.add(currMapNode);
 
-      // visit neighbors from edges,
-      // where edge set is cartesian product of
+      // visit neighbors from edges, where edge set is cartesian product of
       // unmmaped nodes (wrt current map) and protocol instantiations
       for (PdgNode<T> node : nodes) {
-        if (!mappedNodes.contains(node)) {
+        // only allow edges for nodes whose inputs have selected protocols already
+        // this essentially prunes the search space so that the nodes that are
+        // candidates for protocol selection are toposorted according to the PDG
+        // (ignoring read channel edges)
+        boolean inputsSelected = true;
+        if (!node.isStorageNode()) {
+          Set<PdgNode<T>> inNodes = node.getInNodes();
+          for (PdgNode<T> inNode : inNodes) {
+            if (!mappedNodes.contains(inNode)) {
+              inputsSelected = false;
+              break;
+            }
+          }
+        }
+
+        if (!mappedNodes.contains(node) && inputsSelected) {
           // for each protocol, generate a set of possible instantiated protocols
           // each instantiated protocol represents an edge from the current map
           // to a new map with one new mapping from the PDG node to the instantiated protocol
@@ -108,7 +131,8 @@ public class ProtocolSelection<T extends AstNode> {
               int newMapCost = this.costEstimator.estimatePdgCost(newMap, pdg);
               ProtocolMapNode<T> newMapNode = new ProtocolMapNode<>(newMap, newMapCost);
 
-              if (!closedSet.contains(newMapNode)) {
+              if (!closedSet.contains(newMapNode) && !openSet.contains(newMapNode)) {
+                // System.out.println(newMapNode);
                 openSet.add(newMapNode);
               }
             }

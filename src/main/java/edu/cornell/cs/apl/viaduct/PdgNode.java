@@ -116,6 +116,7 @@ public abstract class PdgNode<T extends AstNode> implements Comparable<PdgNode<T
     return this.lineNumber.compareTo(other.lineNumber);
   }
 
+  /*
   @Override
   public boolean equals(Object o) {
     if (o instanceof PdgNode<?>) {
@@ -131,4 +132,5 @@ public abstract class PdgNode<T extends AstNode> implements Comparable<PdgNode<T
   public int hashCode() {
     return this.astNode.hashCode();
   }
+  */
 }

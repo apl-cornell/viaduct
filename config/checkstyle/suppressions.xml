@@ -6,4 +6,5 @@
 <suppressions>
     <suppress checks="AbbreviationAsWordInName" files=".*" />
     <suppress checks="LeftCurly" files=".*" />
+    <suppress checks="LocalVariableName" files=".*" />
 </suppressions>

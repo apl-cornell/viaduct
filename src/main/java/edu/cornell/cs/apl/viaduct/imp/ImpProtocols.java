@@ -1,6 +1,7 @@
 package edu.cornell.cs.apl.viaduct.imp;
 
 import edu.cornell.cs.apl.viaduct.Host;
+import edu.cornell.cs.apl.viaduct.Label;
 import edu.cornell.cs.apl.viaduct.PdgNode;
 import edu.cornell.cs.apl.viaduct.Protocol;
 import edu.cornell.cs.apl.viaduct.imp.ast.ImpAstNode;
@@ -35,7 +36,13 @@ public class ImpProtocols {
 
       HashSet<Protocol<ImpAstNode>> instances = new HashSet<>();
       for (Host h : hostConfig) {
-        instances.add(new Single(h));
+        Label hLabel = h.getLabel();
+        Label nLabel = node.getOutLabel();
+        boolean confFlowsTo = nLabel.confidentiality().flowsTo(hLabel.confidentiality());
+        boolean integFlowsTo = hLabel.integrity().flowsTo(nLabel.integrity());
+        if (confFlowsTo && integFlowsTo) {
+          instances.add(new Single(h));
+        }
       }
       return instances;
     }

@@ -13,9 +13,9 @@ public class Label implements Lattice<Label> {
 
   static {
     bottom = new Label();
+    bottom.confidentiality.add(new HashSet<String>());
 
     top = new Label();
-    top.confidentiality.add(new HashSet<String>());
     top.integrity.add(new HashSet<String>());
   }
 
@@ -127,16 +127,23 @@ public class Label implements Lattice<Label> {
         newMeet.addAll(meet1);
         newMeet.addAll(meet2);
 
-        boolean canAdd = true;
+        Set<String> toAdd = newMeet;
+        Set<String> toDelete = null;
         for (Set<String> meet : meetSet) {
           if (newMeet.containsAll(meet)) {
-            canAdd = false;
+            toAdd = null;
+            break;
+          } else if (meet.containsAll(newMeet)) {
+            toDelete = meet;
             break;
           }
         }
 
-        if (canAdd) {
-          meetSet.add(newMeet);
+        if (toAdd != null) {
+          meetSet.add(toAdd);
+        }
+        if (toDelete != null) {
+          meetSet.remove(toDelete);
         }
       }
     }
@@ -184,7 +191,7 @@ public class Label implements Lattice<Label> {
 
   /** check flows-to relation (exists a path in the hesse diagram). */
   public boolean flowsTo(Label other) {
-    boolean confFlowsTo = jomFlowsTo(this.confidentiality, other.confidentiality);
+    boolean confFlowsTo = jomFlowsTo(other.confidentiality, this.confidentiality);
     boolean integFlowsTo = jomFlowsTo(this.integrity, other.integrity);
     return confFlowsTo && integFlowsTo;
   }

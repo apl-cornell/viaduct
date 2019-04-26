@@ -33,20 +33,25 @@ public final class ImpProtocolCostEstimator extends ProtocolCostEstimator<ImpAst
       ProgramDependencyGraph<ImpAstNode> pdg)
       throws UnknownProtocolException
   {
-    ImpAstNode astNode = node.getAstNode();
+    // ImpAstNode astNode = node.getAstNode();
 
     if (protocol instanceof ImpProtocols.Single) {
       // return 1 * astNode.accept(nodeSizer);
       return 1;
+
     } else if (protocol instanceof ImpProtocols.Replication) {
       // return 5 * astNode.accept(nodeSizer);
-      return 5;
+      ImpProtocols.Replication replProto = (ImpProtocols.Replication)protocol;
+      return replProto.getRealReplicas().size() + (2*replProto.getHashReplicas().size());
+
     } else if (protocol instanceof ImpProtocols.ZK) {
       // return 10 * astNode.accept(nodeSizer);
       return 10;
+
     } else if (protocol instanceof ImpProtocols.MPC) {
       // return 100 * astNode.accept(nodeSizer);
       return 100;
+
     } else {
       throw new UnknownProtocolException(protocol);
     }

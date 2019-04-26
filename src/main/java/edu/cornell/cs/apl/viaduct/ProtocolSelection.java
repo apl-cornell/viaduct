@@ -1,6 +1,7 @@
 package edu.cornell.cs.apl.viaduct;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -81,25 +82,33 @@ public class ProtocolSelection<T extends AstNode> {
     // this allows massive pruning of the search space,
     // as we will only visit maps that follow this selection order
     // obeys toposort according to PDG
-    List<PdgNode<T>> selectionOrder = new ArrayList<>();
+    List<PdgNode<T>> selectionOrder = new ArrayList<PdgNode<T>>(nodes);
+    Collections.sort(selectionOrder);
+    /*
     while (selectionOrder.size() < nodes.size()) {
       for (PdgNode<T> node : nodes) {
         if (!selectionOrder.contains(node)) {
-          if (node.isStorageNode()) {
-            selectionOrder.add(node);
-            break;
-          } else {
-            Set<PdgNode<T>> inNodes = node.getInNodes();
+          Set<PdgNode<T>> inNodes = node.getInNodes();
+
+          boolean add = true;
+          if (!node.isStorageNode()) {
             for (PdgNode<T> inNode : inNodes) {
+              // check if all input nodes (ignoring read channel edges)
+              // are already selected
               if (!selectionOrder.contains(inNode)) {
+                add = false;
                 break;
               }
             }
+          }
+
+          if (add) {
             selectionOrder.add(node);
           }
         }
       }
     }
+    */
 
     // create open and closed sets
     PriorityQueue<ProtocolMapNode<T>> openSet = new PriorityQueue<>(pdg.getNodes().size());
@@ -110,6 +119,7 @@ public class ProtocolSelection<T extends AstNode> {
     openSet.add(new ProtocolMapNode<T>(initMap, 0));
 
     // explore nodes in open set until we find a goal node
+    ProtocolMapNode lastAddedNode = null;
     while (!openSet.isEmpty()) {
       ProtocolMapNode<T> currMapNode = openSet.remove();
       HashMap<PdgNode<T>,Protocol<T>> currMap = currMapNode.getProtocolMap();
@@ -129,6 +139,7 @@ public class ProtocolSelection<T extends AstNode> {
       for (PdgNode<T> node : selectionOrder) {
         if (!mappedNodes.contains(node)) {
           nextNode = node;
+          break;
         }
       }
       assert nextNode != null : "nextNode is null";
@@ -154,12 +165,13 @@ public class ProtocolSelection<T extends AstNode> {
           if (!closedSet.contains(newMapNode) && !openSet.contains(newMapNode)) {
             // System.out.println(newMapNode);
             openSet.add(newMapNode);
+            lastAddedNode = newMapNode;
           }
         }
       }
     }
 
     // no mapping found. should be impossible, unless available protocols + host config are bad!
-    return null;
+    return lastAddedNode.getProtocolMap();
   }
 }

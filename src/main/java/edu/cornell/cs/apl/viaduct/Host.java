@@ -30,7 +30,9 @@ public class Host {
 
     if (o instanceof Host) {
       Host ohost = (Host)o;
-      return this.name.equals(ohost.name);
+      return this.name.equals(ohost.name)
+          && this.label.equals(ohost.label);
+
     } else {
       return false;
     }

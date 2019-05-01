@@ -58,6 +58,7 @@ editorconfig {
 }
 
 dependencies {
+    implementation group: 'guru.nidi', name: 'graphviz-java', version: '0.8.3'
     testImplementation group: 'junit', name: 'junit', version: '4.12'
 }
 

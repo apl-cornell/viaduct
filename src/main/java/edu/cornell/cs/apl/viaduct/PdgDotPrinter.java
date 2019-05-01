@@ -1,5 +1,14 @@
 package edu.cornell.cs.apl.viaduct;
 
+import static guru.nidi.graphviz.model.Factory.mutGraph;
+import static guru.nidi.graphviz.model.Factory.mutNode;
+
+import guru.nidi.graphviz.attribute.Shape;
+import guru.nidi.graphviz.attribute.Style;
+import guru.nidi.graphviz.model.Link;
+import guru.nidi.graphviz.model.MutableGraph;
+import guru.nidi.graphviz.model.MutableNode;
+
 import java.util.Map;
 import java.util.Set;
 
@@ -7,15 +16,15 @@ import java.util.Set;
 public class PdgDotPrinter {
   private static enum GraphData { LABEL, PROTOCOL }
 
-  /** print a PDG into a DOT graph. */
-  protected static <T extends AstNode> String pdgDotGraph(
+  /** build DOT graph. */
+  public static <T extends AstNode> String pdgDotGraph(
       ProgramDependencyGraph<T> pdg,
       Map<PdgNode<T>,Protocol<T>> protocolMap,
       GraphData dataFormat) {
 
-    StringBuffer out = new StringBuffer("digraph {\n");
-
+    MutableGraph g = mutGraph().setDirected(true);
     Set<PdgNode<T>> nodes = pdg.getNodes();
+
     for (PdgNode<T> node : nodes) {
       String lineNumStr = node.getLineNumber().toString();
       String data = "";
@@ -42,37 +51,41 @@ public class PdgDotPrinter {
         default:
       }
 
+      Shape shape;
+      String label = "";
       if (node instanceof PdgStorageNode<?>) {
-        out.append(
-            String.format("  \"%s\" [shape=box;label=\"%s\\n%s\"];%n",
-                lineNumStr, node.getAstNode(), data));
-
-      } else if (node instanceof PdgControlNode<?>) {
-        out.append(
-            String.format("  \"%s\" [shape=diamond;label=\"%s\\n%s\"];%n",
-                lineNumStr, "CONDITIONAL", data));
-
+        shape = Shape.RECTANGLE;
+        label = String.format("%s\\n%s", node.getAstNode(), data);
       } else if (node instanceof PdgComputeNode<?>) {
-        out.append(
-            String.format("  \"%s\" [shape=oval;label=\"%s\\n%s\"];%n",
-                lineNumStr, node.getAstNode(), data));
+        shape = Shape.EGG;
+        label = String.format("%s\\n%s", node.getAstNode(), data);
+      } else {
+        shape = Shape.DIAMOND;
+        label = String.format("%s\\n%s", "CONDITIONAL", data);
       }
 
+      System.out.println(lineNumStr + node.getAstNode());
+
+      MutableNode grNode =
+          mutNode(lineNumStr).add("label", label).add(shape);
+
+      g.add(grNode);
       for (PdgNode<T> outNode : node.getOutNodes()) {
         String strOutNode = outNode.getLineNumber().toString();
+        Style style;
+        System.out.println("  " + strOutNode);
 
         // draw edge as a read channel
         if (node.isControlNode() && outNode.isStorageNode())  {
-          out.append("  \"" + lineNumStr + "\" -> \"" + strOutNode + "\"[style=dotted];\n");
-
+          style = Style.DOTTED;
         } else {
-          out.append("  \"" + lineNumStr + "\" -> \"" + strOutNode + "\";\n");
+          style = Style.SOLID;
         }
+
+        grNode.addLink(Link.to(mutNode(strOutNode)).add(style));
       }
     }
-
-    out.append("}\n");
-    return out.toString();
+    return g.toString();
   }
 
   public static <T extends AstNode> String pdgDotGraphWithLabels(

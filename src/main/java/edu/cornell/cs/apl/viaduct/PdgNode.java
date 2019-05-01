@@ -104,6 +104,14 @@ public abstract class PdgNode<T extends AstNode> implements Comparable<PdgNode<T
     this.outLabel = label;
   }
 
+  public boolean isEndorseNode() {
+    return !this.inLabel.integrity().flowsTo(this.outLabel.integrity());
+  }
+
+  public boolean isDeclassifyNode() {
+    return !this.inLabel.confidentiality().flowsTo(this.outLabel.confidentiality());
+  }
+
   public abstract boolean isStorageNode();
 
   public abstract boolean isComputeNode();

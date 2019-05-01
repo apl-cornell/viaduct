@@ -25,6 +25,8 @@ import edu.cornell.cs.apl.viaduct.imp.ast.NotNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.OrNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.PlusNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ReadNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.RecvNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.SendNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.SkipNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.StmtNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.VarDeclNode;
@@ -267,5 +269,19 @@ public class ImpPdgBuilderVisitor
     Set<PdgNode<ImpAstNode>> deps = new HashSet<PdgNode<ImpAstNode>>();
     deps.add(node);
     return deps;
+  }
+
+  /** send/recvs should not be in surface programs and
+   * thus should not be in the generated PDG.
+  */
+  public Set<PdgNode<ImpAstNode>> visit(SendNode sendNode) {
+    return new HashSet<PdgNode<ImpAstNode>>();
+  }
+
+  /** send/recvs should not be in surface programs and
+   * thus should not be in the generated PDG.
+  */
+  public Set<PdgNode<ImpAstNode>> visit(RecvNode recvNode) {
+    return new HashSet<PdgNode<ImpAstNode>>();
   }
 }

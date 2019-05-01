@@ -15,6 +15,8 @@ import edu.cornell.cs.apl.viaduct.imp.ast.NotNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.OrNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.PlusNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ReadNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.RecvNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.SendNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.SkipNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.StmtNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.VarDeclNode;
@@ -98,5 +100,15 @@ public class SizeVisitor implements AstVisitor<Integer> {
     }
 
     return size;
+  }
+
+  /** give size to send. */
+  public Integer visit(SendNode sendNode) {
+    return sendNode.getSentExpr().accept(this) + 1;
+  }
+
+  /** give size to recv. */
+  public Integer visit(RecvNode recvNode) {
+    return 1;
   }
 }

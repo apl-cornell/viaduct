@@ -123,7 +123,6 @@ public class ImpProtocols {
         Host[] hostPair = new Host[2];
         hostConfig.toArray(hostPair);
 
-        Set<ReplicaSets> possibleInstances = new HashSet<>();
         Set<Host> host1Set = new HashSet<Host>();
         host1Set.add(hostPair[0]);
         Set<Host> host2Set = new HashSet<Host>();
@@ -131,6 +130,8 @@ public class ImpProtocols {
         Set<Host> host12Set = new HashSet<Host>();
         host12Set.add(hostPair[0]);
         host12Set.add(hostPair[1]);
+
+        Set<ReplicaSets> possibleInstances = new HashSet<>();
         possibleInstances.add(new ReplicaSets(host12Set, new HashSet<Host>()));
         possibleInstances.add(new ReplicaSets(host1Set, host2Set));
         possibleInstances.add(new ReplicaSets(host2Set, host1Set));

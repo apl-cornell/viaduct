@@ -42,7 +42,7 @@ public final class ImpProtocolCostEstimator extends ProtocolCostEstimator<ImpAst
     } else if (protocol instanceof ImpProtocols.Replication) {
       // return 5 * astNode.accept(nodeSizer);
       ImpProtocols.Replication replProto = (ImpProtocols.Replication)protocol;
-      return replProto.getRealReplicas().size() + (2*replProto.getHashReplicas().size());
+      return replProto.getRealReplicas().size() + (2 * replProto.getHashReplicas().size());
 
     } else if (protocol instanceof ImpProtocols.ZK) {
       // return 10 * astNode.accept(nodeSizer);

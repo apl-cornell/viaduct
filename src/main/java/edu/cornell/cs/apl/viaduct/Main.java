@@ -69,7 +69,7 @@ public class Main {
   }
 
 
-  /** entry method. */
+  /** main function. */
   public static void main(String[] args) {
     // PrintVisitor print = new PrintVisitor();
     StmtNode program = shellGame();
@@ -105,7 +105,7 @@ public class Main {
 
     if (protocolMap != null) {
       System.out.println("synthesized protocol:");
-      System.out.println(PdgDotPrinter.pdgDotGraphWithProtocols(pdg, protocolMap));
+      System.out.println(PdgDotPrinter.pdgDotGraphWithLabels(pdg));
       System.out.println("total cost: " + costEstimator.estimatePdgCost(protocolMap, pdg));
     } else {
       System.out.println("Could not synthesize protocol!");

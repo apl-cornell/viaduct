@@ -99,7 +99,7 @@ public class PrintVisitor implements AstVisitor<String> {
   public String visit(DowngradeNode downgradeNode) {
     // TODO: special case declassfy and endorse
     String expressionStr = downgradeNode.getExpression().accept(this);
-    String labelStr = downgradeNode.getExpression().toString();
+    String labelStr = downgradeNode.getLabel().toString();
     return "downgrade(" + expressionStr + ", " + labelStr + ")";
   }
 

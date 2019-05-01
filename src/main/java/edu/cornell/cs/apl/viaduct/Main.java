@@ -11,6 +11,11 @@ import edu.cornell.cs.apl.viaduct.imp.visitors.PrintVisitor;
 import java.util.HashSet;
 import java.util.Map;
 
+import net.sourceforge.argparse4j.ArgumentParsers;
+import net.sourceforge.argparse4j.inf.ArgumentParser;
+import net.sourceforge.argparse4j.inf.ArgumentParserException;
+import net.sourceforge.argparse4j.inf.Namespace;
+
 public class Main {
   /** create shell game. */
   public static StmtNode shellGame() {
@@ -71,14 +76,26 @@ public class Main {
 
   /** main function. */
   public static void main(String[] args) {
-    // PrintVisitor print = new PrintVisitor();
+    ArgumentParser argp = ArgumentParsers.newFor("viaduct").build()
+        .defaultHelp(true)
+        .description("Optimizing, extensible MPC compiler.");
+    argp.addArgument("-s", "--source").nargs("?").setConst(true).setDefault(false)
+        .help("pretty print source program");
+    argp.addArgument("-lpdg", "--labelgraph").nargs("?").setConst(true).setDefault(false)
+        .help("output PDG with label information");
+    argp.addArgument("-ppdg", "--protograph").nargs("?").setConst(true).setDefault(false)
+        .help("output PDG with synthesized protocol information");
+    
+    Namespace ns = null;
+    try {
+      ns = argp.parseArgs(args);
+    } catch (ArgumentParserException e) {
+      argp.handleError(e);
+      System.out.println(e.getMessage());
+      System.exit(1);
+    }
+
     StmtNode program = shellGame();
-
-    // print out the AST
-    // String shellGameStr = shellGame.accept(print);
-    // System.out.println(shellGameStr);
-
-    // build PDG for the shell game
     ImpPdgBuilderVisitor pdgBuilder = new ImpPdgBuilderVisitor();
     program.accept(pdgBuilder);
     ProgramDependencyGraph<ImpAstNode> pdg = pdgBuilder.getPdg();
@@ -87,14 +104,9 @@ public class Main {
     PdgLabelDataflow<ImpAstNode> labelDataflow = new PdgLabelDataflow<>();
     labelDataflow.dataflow(pdg);
 
-    System.out.println("PDG:");
-    System.out.println(PdgDotPrinter.pdgDotGraphWithLabels(pdg));
-
     // host configration
     HashSet<Host> hostConfig = new HashSet<>();
-    // hostConfig.add(new Host("God", new Label(Label.top(),Label.bottom())));
     hostConfig.add(new Host("Alice", Label.and("A")));
-    // hostConfig.add(new Host("Bob", Label.and("B")));
     hostConfig.add(new Host("Chuck", Label.and("C")));
 
     // run protocol selection given a PDG and host config
@@ -102,13 +114,53 @@ public class Main {
     ProtocolSelection<ImpAstNode> protoSelection = new ProtocolSelection<>(costEstimator);
     Map<PdgNode<ImpAstNode>,Protocol<ImpAstNode>> protocolMap =
         protoSelection.selectProtocols(hostConfig, pdg);
+    int protocolCost = costEstimator.estimatePdgCost(protocolMap, pdg);
 
-    if (protocolMap != null) {
-      System.out.println("synthesized protocol:");
-      System.out.println(PdgDotPrinter.pdgDotGraphWithLabels(pdg));
-      System.out.println("total cost: " + costEstimator.estimatePdgCost(protocolMap, pdg));
+    PrintVisitor printer = new PrintVisitor();
+    String progStr = program.accept(printer);
+    String labelGraph = PdgDotPrinter.pdgDotGraphWithLabels(pdg);
+    String protoGraph = PdgDotPrinter.pdgDotGraphWithProtocols(pdg, protocolMap);
+
+    if (ns.getBoolean("protograph")) {
+      System.out.println(protoGraph);
+    } else if (ns.getBoolean("labelgraph")) {
+      System.out.println(labelGraph);
+    } else if (ns.getBoolean("source")) {
+      System.out.println(progStr);
     } else {
-      System.out.println("Could not synthesize protocol!");
+      System.out.println("source program:");
+      System.out.println(progStr);
+
+      System.out.println("PDG information:");
+      boolean synthesizedProto = true;
+      for (PdgNode<ImpAstNode> node : pdg.getNodes()) {
+        String astStr = node.getAstNode().toString();
+
+        Protocol<ImpAstNode> proto = protocolMap.get(node);
+        String protoStr = null;
+        if (proto == null) {
+          synthesizedProto = false;
+          protoStr = "NO PROTOCOL";
+        } else {
+          protoStr = proto.toString();
+        }
+
+        String labelStr = "";
+        if (node.isDowngradeNode()) {
+          labelStr = node.getInLabel().toString() + " / " + node.getOutLabel().toString();
+        } else {
+          labelStr = node.getOutLabel().toString();
+        }
+
+        System.out.println(
+            String.format("%s (label: %s) => %s",
+                astStr, labelStr, protoStr));
+      }
+      if (synthesizedProto) {
+        System.out.println("\nProtocol cost: " + protocolCost);
+      } else {
+        System.out.println("\nCould not synthesize protocol!");
+      }
     }
   }
 }

@@ -64,8 +64,6 @@ public class PdgDotPrinter {
         label = String.format("%s\\n%s", "CONDITIONAL", data);
       }
 
-      System.out.println(lineNumStr + node.getAstNode());
-
       MutableNode grNode =
           mutNode(lineNumStr).add("label", label).add(shape);
 
@@ -73,7 +71,6 @@ public class PdgDotPrinter {
       for (PdgNode<T> outNode : node.getOutNodes()) {
         String strOutNode = outNode.getLineNumber().toString();
         Style style;
-        System.out.println("  " + strOutNode);
 
         // draw edge as a read channel
         if (node.isControlNode() && outNode.isStorageNode())  {

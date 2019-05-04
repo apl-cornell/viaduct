@@ -1,0 +1,25 @@
+package edu.cornell.cs.apl.viaduct.imp.parser;
+
+// You might want to add types to these declarations.
+terminal IDENTIFIER;
+terminal STRING_LITERAL;
+terminal CHARACTER_LITERAL;
+terminal INTEGER_LITERAL;
+terminal TRUE, FALSE;
+terminal INT, BOOL;
+
+terminal IF, ELSE, WHILE, BREAK, RETURN, USE, LENGTH, PLUS, MINUS, TIMES,
+  DIVIDE, MODULO, NOT, LT, LEQ, GT, GEQ, AND, OR, EQUAL, NOT_EQUAL, GETS,
+  OPEN_BRACKET, CLOSE_BRACKET, OPEN_PAREN, CLOSE_PAREN, OPEN_BRACE, CLOSE_BRACE,
+  COLON, COMMA, SEMICOLON, UNDERSCORE;
+
+// You might want to add types to these declarations.
+nonterminal program;
+// Add more nonterminals here...
+
+start with program;
+
+// Recognizes "Hello World!", but not much else.
+program ::= USE IDENTIFIER IDENTIFIER OPEN_PAREN IDENTIFIER COLON
+  INT OPEN_BRACKET CLOSE_BRACKET OPEN_BRACKET CLOSE_BRACKET CLOSE_PAREN
+  OPEN_BRACE IDENTIFIER OPEN_PAREN STRING_LITERAL CLOSE_PAREN CLOSE_BRACE;

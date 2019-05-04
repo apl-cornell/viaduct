@@ -134,3 +134,5 @@ workspace/*
 
 *.dot
 *.svg
+
+bin/*

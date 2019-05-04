@@ -85,7 +85,7 @@ public class Main {
         .help("output PDG with label information");
     argp.addArgument("-ppdg", "--protograph").nargs("?").setConst(true).setDefault(false)
         .help("output PDG with synthesized protocol information");
-    
+
     Namespace ns = null;
     try {
       ns = argp.parseArgs(args);

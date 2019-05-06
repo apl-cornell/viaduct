@@ -136,3 +136,6 @@ workspace/*
 *.svg
 
 bin/*
+
+# add jars in lib/
+!lib/*

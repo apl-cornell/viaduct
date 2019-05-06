@@ -15,6 +15,8 @@ import edu.cornell.cs.apl.viaduct.imp.ast.NotNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.OrNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.PlusNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ReadNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.RecvNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.SendNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.SkipNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.StmtNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.VarDeclNode;
@@ -97,7 +99,7 @@ public class PrintVisitor implements AstVisitor<String> {
   public String visit(DowngradeNode downgradeNode) {
     // TODO: special case declassfy and endorse
     String expressionStr = downgradeNode.getExpression().accept(this);
-    String labelStr = downgradeNode.getExpression().toString();
+    String labelStr = downgradeNode.getLabel().toString();
     return "downgrade(" + expressionStr + ", " + labelStr + ")";
   }
 
@@ -153,5 +155,19 @@ public class PrintVisitor implements AstVisitor<String> {
     }
 
     return buf.toString();
+  }
+
+  /** print send. */
+  public String visit(SendNode sendNode) {
+    String exprStr = sendNode.getSentExpr().accept(this);
+    String recipStr = sendNode.getRecipient().toString();
+    return String.format("send %s to %s", exprStr, recipStr);
+  }
+
+  /** print recv. */
+  public String visit(RecvNode recvNode) {
+    String senderStr = recvNode.getSender();
+    String varStr = recvNode.getVar().toString();
+    return String.format("%s <- recv from %s", varStr, senderStr);
   }
 }

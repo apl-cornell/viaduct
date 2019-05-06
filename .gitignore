@@ -132,3 +132,10 @@ gradle-app.setting
 .vscode/*
 workspace/*
 
+*.dot
+*.svg
+
+bin/*
+
+# add jars in lib/
+!lib/*

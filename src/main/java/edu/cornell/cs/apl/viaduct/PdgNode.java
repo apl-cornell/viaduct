@@ -20,8 +20,8 @@ public abstract class PdgNode<T extends AstNode> implements Comparable<PdgNode<T
     this.lineNumber = lineno;
     this.inNodes = inNodes;
     this.outNodes = outNodes;
-    this.inLabel = Label.BOTTOM;
-    this.outLabel = Label.BOTTOM;
+    this.inLabel = Label.bottom();
+    this.outLabel = Label.bottom();
   }
 
   /** constructor, defaults to no edges. */
@@ -104,6 +104,14 @@ public abstract class PdgNode<T extends AstNode> implements Comparable<PdgNode<T
     this.outLabel = label;
   }
 
+  public boolean isEndorseNode() {
+    return !this.inLabel.integrity().flowsTo(this.outLabel.integrity());
+  }
+
+  public boolean isDeclassifyNode() {
+    return !this.inLabel.confidentiality().flowsTo(this.outLabel.confidentiality());
+  }
+
   public abstract boolean isStorageNode();
 
   public abstract boolean isComputeNode();
@@ -116,6 +124,7 @@ public abstract class PdgNode<T extends AstNode> implements Comparable<PdgNode<T
     return this.lineNumber.compareTo(other.lineNumber);
   }
 
+  /*
   @Override
   public boolean equals(Object o) {
     if (o instanceof PdgNode<?>) {
@@ -131,4 +140,5 @@ public abstract class PdgNode<T extends AstNode> implements Comparable<PdgNode<T
   public int hashCode() {
     return this.astNode.hashCode();
   }
+  */
 }

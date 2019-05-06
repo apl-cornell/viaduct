@@ -14,21 +14,21 @@ public class ShellGameTest {
     ExpressionBuilder e = new ExpressionBuilder();
     StmtNode shellGame =
         (new StmtBuilder())
-            .varDecl("cinput", Label.BOTTOM)
-            .varDecl("ainput", Label.BOTTOM)
-            .varDecl("shell", Label.BOTTOM)
-            .varDecl("guess", Label.BOTTOM)
-            .varDecl("win", Label.BOTTOM)
-            .assign("shell", e.endorse(e.var("cinput"), Label.BOTTOM))
-            .assign("guess", e.endorse(e.var("ainput"), Label.BOTTOM))
+            .varDecl("cinput", Label.bottom())
+            .varDecl("ainput", Label.bottom())
+            .varDecl("shell", Label.bottom())
+            .varDecl("guess", Label.bottom())
+            .varDecl("win", Label.bottom())
+            .assign("shell", e.endorse(e.var("cinput"), Label.bottom()))
+            .assign("guess", e.endorse(e.var("ainput"), Label.bottom()))
             .cond(
                 e.declassify(
                     e.and(e.leq(e.intLit(1), e.var("shell")), e.leq(e.var("shell"), e.intLit(3))),
-                    Label.BOTTOM),
+                    Label.bottom()),
                 (new StmtBuilder())
                     .assign(
                         "win",
-                        e.declassify(e.equals(e.var("shell"), e.var("guess")), Label.BOTTOM)),
+                        e.declassify(e.equals(e.var("shell"), e.var("guess")), Label.bottom())),
                 (new StmtBuilder()).skip())
             .build();
 

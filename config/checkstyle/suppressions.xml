@@ -6,4 +6,8 @@
 <suppressions>
     <suppress checks="AbbreviationAsWordInName" files=".*" />
     <suppress checks="LeftCurly" files=".*" />
+    <suppress checks="LocalVariableName" files=".*" />
+    <suppress checks=".*" files="ImpLexer\.java" />
+    <suppress checks=".*" files="ImpParser\.java" />
+    <suppress checks=".*" files="sym\.java" />
 </suppressions>

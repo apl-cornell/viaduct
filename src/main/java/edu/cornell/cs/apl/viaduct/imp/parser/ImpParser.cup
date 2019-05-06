@@ -1,0 +1,153 @@
+package edu.cornell.cs.apl.viaduct.imp.parser;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import edu.cornell.cs.apl.viaduct.imp.ast.*;
+import edu.cornell.cs.apl.viaduct.Label;
+
+// You might want to add types to these declarations.
+terminal String IDENT;
+terminal Integer INT_LIT;
+terminal TRUE, FALSE;
+
+// terminal PLUS, MINUS, TIMES, DIVIDE;
+terminal PLUS;
+terminal LT, LEQ, GT, GEQ, AND, ANDAND, OR, OROR, EQ, NEQ, NOT;
+terminal RARROW, LARROW, ASSIGN;
+terminal OPEN_PAREN, CLOSE_PAREN, OPEN_BRACE, CLOSE_BRACE, SEMICOLON, COLON, COMMA;
+terminal IF, ELSE, SEND, RECV, TO, FROM, SKIP, DECLASSIFY, ENDORSE;
+
+nonterminal StmtNode program;
+nonterminal List<StmtNode> stmt_list;
+nonterminal StmtNode stmt;
+nonterminal ExpressionNode expr;
+nonterminal Label label;
+
+precedence left NOT;
+precedence left PLUS, EQ, NEQ, LT, LEQ, GT, GEQ;
+precedence left ANDAND, OROR;
+
+start with program;
+
+program ::= stmt_list:slist       {: RESULT = new BlockNode(slist); :}
+  ;
+
+stmt_list ::=
+  stmt:s {:
+      ArrayList<StmtNode> slist = new ArrayList<>();
+      slist.add(s);
+      RESULT = slist;
+    :}
+
+  | stmt_list:slist SEMICOLON stmt:s {:
+      slist.add(s);
+      RESULT = slist;
+    :}
+  ;
+
+stmt ::=
+    IDENT:idv COLON label:lab {:
+      Variable var = new Variable(idv);
+      RESULT = new VarDeclNode(var, lab);
+    :}
+
+  | IDENT:idv ASSIGN expr:e {:
+      Variable var = new Variable(idv);
+      RESULT = new AssignNode(var, e);
+    :}
+
+  | SEND expr:e TO IDENT:idv {:
+      RESULT = new SendNode(idv, e);
+    :}
+
+  | IDENT:idv LARROW RECV FROM IDENT:idp {:
+      Variable var = new Variable(idv);
+      RESULT = new RecvNode(idp, var);
+    :}
+
+  | IF OPEN_PAREN expr:guard CLOSE_PAREN OPEN_BRACE stmt:sthen CLOSE_BRACE
+    ELSE OPEN_BRACE stmt:selse CLOSE_BRACE {:
+      RESULT = new IfNode(guard, sthen, selse);
+    :}
+
+  | IF OPEN_PAREN expr:guard CLOSE_PAREN OPEN_BRACE stmt:sthen CLOSE_BRACE {:
+      RESULT = new IfNode(guard, sthen, new SkipNode());
+    :}
+
+  | SKIP {: RESULT = new SkipNode(); :}
+  ;
+
+expr ::=
+    INT_LIT:ilit {:
+      RESULT = new IntegerLiteralNode(ilit);
+    :}
+
+  | IDENT:id {:
+      RESULT = new ReadNode(new Variable(id));
+    :}
+
+  | TRUE {:
+      RESULT = new BooleanLiteralNode(true);
+    :}
+
+  | FALSE {:
+      RESULT = new BooleanLiteralNode(false);
+    :}
+
+  | expr:e1 PLUS expr:e2 {:
+      RESULT = new PlusNode(e1, e2);
+    :}
+
+  | expr:e1 OROR expr:e2 {:
+      RESULT = new OrNode(e1, e2);
+    :}
+
+  | expr:e1 ANDAND expr:e2 {:
+      RESULT = new AndNode(e1, e2);
+    :}
+
+  | expr:e1 LT expr:e2 {:
+      RESULT = new LessThanNode(e1, e2);
+    :}
+
+  | expr:e1 LEQ expr:e2 {:
+      RESULT = new LeqNode(e1, e2);
+    :}
+
+  | expr:e1 GT expr:e2 {:
+      RESULT = new NotNode(new LeqNode(e1, e2));
+    :}
+
+  | expr:e1 GEQ expr:e2 {:
+      RESULT = new NotNode(new LessThanNode(e1, e2));
+    :}
+
+  | expr:e1 EQ expr:e2 {:
+      RESULT = new EqualNode(e1, e2);
+    :}
+
+  | expr:e1 NEQ expr:e2 {:
+      RESULT = new NotNode(new EqualNode(e1, e2));
+    :}
+
+  | NOT expr:e {:
+      RESULT = new NotNode(e);
+    :}
+
+  | DECLASSIFY OPEN_PAREN expr:e COMMA label:l CLOSE_PAREN {:
+      RESULT = new DowngradeNode(e, l);
+    :}
+
+  | ENDORSE OPEN_PAREN expr:e COMMA label:l CLOSE_PAREN {:
+      RESULT = new DowngradeNode(e, l);
+    :}
+
+  | OPEN_PAREN expr:e CLOSE_PAREN {:
+      RESULT = e;
+    :}
+  ;
+
+label ::=
+    OPEN_BRACE CLOSE_BRACE {: RESULT = Label.bottom(); :}
+  ;

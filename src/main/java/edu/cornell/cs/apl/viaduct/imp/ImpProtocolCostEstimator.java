@@ -13,7 +13,7 @@ import java.util.Set;
 
 /** cost estimator for IMP. */
 public final class ImpProtocolCostEstimator extends ProtocolCostEstimator<ImpAstNode> {
-  private static Set<Protocol<ImpAstNode>> protocols = new HashSet<Protocol<ImpAstNode>>();
+  private static final Set<Protocol<ImpAstNode>> protocols = new HashSet<>();
   private static SizeVisitor nodeSizer = new SizeVisitor();
 
   {
@@ -33,16 +33,25 @@ public final class ImpProtocolCostEstimator extends ProtocolCostEstimator<ImpAst
       ProgramDependencyGraph<ImpAstNode> pdg)
       throws UnknownProtocolException
   {
-    ImpAstNode astNode = node.getAstNode();
+    // ImpAstNode astNode = node.getAstNode();
 
     if (protocol instanceof ImpProtocols.Single) {
-      return 1 * astNode.accept(nodeSizer);
+      // return 1 * astNode.accept(nodeSizer);
+      return 1;
+
     } else if (protocol instanceof ImpProtocols.Replication) {
-      return 5 * astNode.accept(nodeSizer);
+      // return 5 * astNode.accept(nodeSizer);
+      ImpProtocols.Replication replProto = (ImpProtocols.Replication)protocol;
+      return replProto.getRealReplicas().size() + (2 * replProto.getHashReplicas().size());
+
     } else if (protocol instanceof ImpProtocols.ZK) {
-      return 10 * astNode.accept(nodeSizer);
+      // return 10 * astNode.accept(nodeSizer);
+      return 10;
+
     } else if (protocol instanceof ImpProtocols.MPC) {
-      return 100 * astNode.accept(nodeSizer);
+      // return 100 * astNode.accept(nodeSizer);
+      return 100;
+
     } else {
       throw new UnknownProtocolException(protocol);
     }

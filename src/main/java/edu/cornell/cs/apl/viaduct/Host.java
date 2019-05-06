@@ -5,6 +5,8 @@ public class Host {
   final String name;
   final Label label;
 
+  private static final Host defaultHost = new Host("__DEFAULT__", Label.bottom());
+
   public Host(String name, Label label) {
     this.name = name;
     this.label = label;
@@ -16,5 +18,33 @@ public class Host {
 
   public Label getLabel() {
     return this.label;
+  }
+
+  public static Host getDefault() {
+    return defaultHost;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (o == null) { return false; }
+
+    if (o instanceof Host) {
+      Host ohost = (Host)o;
+      return this.name.equals(ohost.name)
+          && this.label.equals(ohost.label);
+
+    } else {
+      return false;
+    }
+  }
+
+  @Override
+  public int hashCode() {
+    return this.name.hashCode();
+  }
+
+  @Override
+  public String toString() {
+    return this.name;
   }
 }

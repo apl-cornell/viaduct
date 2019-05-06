@@ -5,11 +5,19 @@ import edu.cornell.cs.apl.viaduct.imp.ast.ImpAstNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.StmtNode;
 import edu.cornell.cs.apl.viaduct.imp.builders.ExpressionBuilder;
 import edu.cornell.cs.apl.viaduct.imp.builders.StmtBuilder;
+import edu.cornell.cs.apl.viaduct.imp.parser.ImpLexer;
+import edu.cornell.cs.apl.viaduct.imp.parser.ImpParser;
 import edu.cornell.cs.apl.viaduct.imp.visitors.ImpPdgBuilderVisitor;
 import edu.cornell.cs.apl.viaduct.imp.visitors.PrintVisitor;
 
+import java.io.FileInputStream;
+import java.io.InputStreamReader;
 import java.util.HashSet;
 import java.util.Map;
+
+import java_cup.runtime.DefaultSymbolFactory;
+import java_cup.runtime.Scanner;
+import java_cup.runtime.SymbolFactory;
 
 import net.sourceforge.argparse4j.ArgumentParsers;
 import net.sourceforge.argparse4j.inf.ArgumentParser;
@@ -79,6 +87,8 @@ public class Main {
     ArgumentParser argp = ArgumentParsers.newFor("viaduct").build()
         .defaultHelp(true)
         .description("Optimizing, extensible MPC compiler.");
+    argp.addArgument("file")
+        .help("source file to compile");
     argp.addArgument("-s", "--source").nargs("?").setConst(true).setDefault(false)
         .help("pretty print source program");
     argp.addArgument("-lpdg", "--labelgraph").nargs("?").setConst(true).setDefault(false)
@@ -95,7 +105,20 @@ public class Main {
       System.exit(1);
     }
 
-    StmtNode program = shellGame();
+    StmtNode program = null;
+    try {
+      String filename = ns.getString("file");
+      InputStreamReader reader = new InputStreamReader(new FileInputStream(filename), "UTF-8");
+      SymbolFactory symbolFactory = new DefaultSymbolFactory();
+      Scanner lexer = new ImpLexer(reader, symbolFactory);
+      ImpParser parser = new ImpParser(lexer, symbolFactory);
+      program = (StmtNode)(parser.parse().value);
+
+    } catch (Exception e) {
+      System.out.println(e.getMessage());
+      System.exit(0);
+    }
+
     ImpPdgBuilderVisitor pdgBuilder = new ImpPdgBuilderVisitor();
     program.accept(pdgBuilder);
     ProgramDependencyGraph<ImpAstNode> pdg = pdgBuilder.getPdg();
@@ -106,8 +129,9 @@ public class Main {
 
     // host configration
     HashSet<Host> hostConfig = new HashSet<>();
+    hostConfig.add(new Host("God", Label.bottom()));
     hostConfig.add(new Host("Alice", Label.and("A")));
-    hostConfig.add(new Host("Chuck", Label.and("C")));
+    // hostConfig.add(new Host("Chuck", Label.and("C")));
 
     // run protocol selection given a PDG and host config
     ImpProtocolCostEstimator costEstimator = new ImpProtocolCostEstimator();

@@ -1,0 +1,12 @@
+cin : {};
+ain : {};
+shell : {};
+guess : {};
+win : {};
+
+shell := endorse(cin, {});
+guess := endorse(ain, {});
+
+if (declassify(1 <= shell && shell <= 3, {})) {
+    win := declassify(shell == guess, {})
+}

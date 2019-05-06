@@ -5,23 +5,45 @@
 
 package edu.cornell.cs.apl.viaduct.imp.parser;
 
+import java.io.Reader;
+
+import java_cup.runtime.SymbolFactory;
+import java_cup.runtime.Symbol;
+
 %%
 
 /* the name of your lexer class */
 %class ImpLexer
+%public
+%cup
 
 /* the type of the lexical token returned by the yylex function
    HINT: you should define your own token class that contains more information!
 */
-%type Object
+%type Symbol
 
-/* declare variables */
+/* declare variables and methods */
 %{
-  private int bar = 0;
-  private int SYM_ALPHA = 0;
-  private int SYM_NUM   = 1;
-  private int SYM_COLON = 2;
-%} 
+  /* To create a new java_cup.runtime.Symbol with information about
+      the current token, the token will have no value in this
+      case. */
+  private SymbolFactory symbolFactory;
+
+  public ImpLexer(Reader r, SymbolFactory sf) {
+    this(r);
+    symbolFactory = sf;
+  }
+
+  private Symbol symbol(int type) {
+      return symbolFactory.newSymbol(sym.terminalNames[type], type);
+  }
+
+  /* Also creates a new java_cup.runtime.Symbol with information
+      about the current token, but this object has a value. */
+  private Symbol symbol(int type, Object value) {
+      return symbolFactory.newSymbol(sym.terminalNames[type], type, value);
+  }
+%}
 
 /* switch line counting on */
 %line
@@ -30,12 +52,60 @@ package edu.cornell.cs.apl.viaduct.imp.parser;
 %state FOO
 
 /* macro */
-ALPHA=[A-Za-z]
+/* A line terminator is a \r (carriage return), \n (line feed), or
+   \r\n. */
+LineTerminator = \r|\n|\r\n
+/* White space is a line terminator, space, tab, or line feed. */
+Whitespace     = {LineTerminator} | [ \t\f]
+
+ALPHANUM=[A-Za-z]([A-Za-z0-9])*
 NUM=[0-9]
 
-%% 
+%%
 
-/* lexical rules */
-{ALPHA}  {
-  return SYM_ALPHA;
+<YYINITIAL> {
+  "+"             { return symbol(sym.PLUS); }
+  // "-"             { return symbol(sym.MINUS); }
+  // "*"             { return symbol(sym.TIMES); }
+  // "/"             { return symbol(sym.DIVIDE); }
+  "<-"            { return symbol(sym.LARROW); }
+  "->"            { return symbol(sym.RARROW); }
+  "<="            { return symbol(sym.LEQ); }
+  ">="            { return symbol(sym.GEQ); }
+  "<"             { return symbol(sym.LT); }
+  ">"             { return symbol(sym.GT); }
+  ":="            { return symbol(sym.ASSIGN); }
+  "=="            { return symbol(sym.EQ); }
+  "!="            { return symbol(sym.NEQ); }
+  "&&"            { return symbol(sym.ANDAND); }
+  "&"             { return symbol(sym.AND); }
+  "||"            { return symbol(sym.OROR); }
+  "|"             { return symbol(sym.OR); }
+  "!"             { return symbol(sym.NOT); }
+  "{"             { return symbol(sym.OPEN_BRACE); }
+  "}"             { return symbol(sym.CLOSE_BRACE); }
+  "("             { return symbol(sym.OPEN_PAREN); }
+  ")"             { return symbol(sym.CLOSE_PAREN); }
+  ";"             { return symbol(sym.SEMICOLON); }
+  ":"             { return symbol(sym.COLON); }
+  ","             { return symbol(sym.COMMA); }
+  "if"            { return symbol(sym.IF); }
+  "else"          { return symbol(sym.ELSE); }
+  "send"          { return symbol(sym.SEND); }
+  "recv"          { return symbol(sym.RECV); }
+  "to"            { return symbol(sym.TO); }
+  "from"          { return symbol(sym.FROM); }
+  "true"          { return symbol(sym.TRUE); }
+  "false"         { return symbol(sym.FALSE); }
+  "skip"          { return symbol(sym.SKIP); }
+  "declassify"    { return symbol(sym.DECLASSIFY); }
+  "endorse"       { return symbol(sym.ENDORSE); }
+
+  {NUM} { return symbol(sym.INT_LIT, new Integer(yytext())); }
+
+  {ALPHANUM}  { return symbol(sym.IDENT, yytext()); }
+
+  {Whitespace} { /* do nothing */ }
 }
+
+[^]                    { throw new Error("Illegal character <"+yytext()+">"); }

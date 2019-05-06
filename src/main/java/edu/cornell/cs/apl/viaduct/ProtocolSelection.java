@@ -119,7 +119,7 @@ public class ProtocolSelection<T extends AstNode> {
     openSet.add(new ProtocolMapNode<T>(initMap, 0));
 
     // explore nodes in open set until we find a goal node
-    ProtocolMapNode lastAddedNode = null;
+    ProtocolMapNode<T> lastAddedNode = null;
     while (!openSet.isEmpty()) {
       ProtocolMapNode<T> currMapNode = openSet.remove();
       HashMap<PdgNode<T>,Protocol<T>> currMap = currMapNode.getProtocolMap();

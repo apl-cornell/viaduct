@@ -121,7 +121,12 @@ public class ImpProtocols {
         // assume for now that there are only two hosts
         // generalize this later
         Host[] hostPair = new Host[2];
-        hostConfig.toArray(hostPair);
+        int i = 0;
+        for (Host host : hostConfig) {
+          hostPair[i] = host;
+          i++;
+          if (i == hostPair.length) break;
+        }
 
         Set<Host> host1Set = new HashSet<Host>();
         host1Set.add(hostPair[0]);
@@ -308,6 +313,13 @@ public class ImpProtocols {
       // generalize this later
       Host[] hostPair = new Host[2];
       hostConfig.toArray(hostPair);
+      int i = 0;
+      for (Host host : hostConfig) {
+        hostPair[i] = host;
+        i++;
+        if (i == hostPair.length) break;
+      }
+
       Set<PdgNode<ImpAstNode>> inNodes = node.getInNodes();
       Host hostA = hostPair[0];
       Host hostB = hostPair[1];

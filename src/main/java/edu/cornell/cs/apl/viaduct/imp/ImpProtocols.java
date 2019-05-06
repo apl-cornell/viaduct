@@ -125,7 +125,9 @@ public class ImpProtocols {
         for (Host host : hostConfig) {
           hostPair[i] = host;
           i++;
-          if (i == hostPair.length) break;
+          if (i == hostPair.length) {
+            break;
+          }
         }
 
         Set<Host> host1Set = new HashSet<Host>();
@@ -317,7 +319,9 @@ public class ImpProtocols {
       for (Host host : hostConfig) {
         hostPair[i] = host;
         i++;
-        if (i == hostPair.length) break;
+        if (i == hostPair.length) {
+          break;
+        }
       }
 
       Set<PdgNode<ImpAstNode>> inNodes = node.getInNodes();

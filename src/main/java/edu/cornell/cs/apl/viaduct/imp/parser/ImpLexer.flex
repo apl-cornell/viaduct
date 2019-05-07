@@ -28,9 +28,11 @@ import java_cup.runtime.Symbol;
       the current token, the token will have no value in this
       case. */
   private SymbolFactory symbolFactory;
+  private int commentLevel;
 
   public ImpLexer(Reader r, SymbolFactory sf) {
     this(r);
+    commentLevel = 0;
     symbolFactory = sf;
   }
 
@@ -49,7 +51,7 @@ import java_cup.runtime.Symbol;
 %line
 
 /* declare a new lexical state */
-%state FOO
+%state COMMENT
 
 /* macro */
 /* A line terminator is a \r (carriage return), \n (line feed), or
@@ -59,7 +61,9 @@ LineTerminator = \r|\n|\r\n
 Whitespace     = {LineTerminator} | [ \t\f]
 
 ALPHANUM=[A-Za-z]([A-Za-z0-9])*
+CAPALPHANUM=[A-Z]([A-Z0-9])*
 NUM=[0-9]
+ANY=.*
 
 %%
 
@@ -100,12 +104,30 @@ NUM=[0-9]
   "skip"          { return symbol(sym.SKIP); }
   "declassify"    { return symbol(sym.DECLASSIFY); }
   "endorse"       { return symbol(sym.ENDORSE); }
+  "/*"            { commentLevel++; yybegin(COMMENT); }
 
   {NUM} { return symbol(sym.INT_LIT, new Integer(yytext())); }
+
+  {CAPALPHANUM}  { return symbol(sym.CAP_IDENT, yytext()); }
 
   {ALPHANUM}  { return symbol(sym.IDENT, yytext()); }
 
   {Whitespace} { /* do nothing */ }
+}
+
+<COMMENT> {
+  "/*" { commentLevel++; }
+
+  "*/" {
+    commentLevel--;
+    if (commentLevel == 0) {
+      yybegin(YYINITIAL);
+    }
+  }
+
+  {Whitespace} { /* do nothing */ }
+
+  .            { /* do nothing */ }
 }
 
 [^]                    { throw new Error("Illegal character <"+yytext()+">"); }

@@ -53,6 +53,13 @@ public class Label implements Lattice<Label> {
     return new Label(conf, integ);
   }
 
+  /** conjunction of principals. */
+  public static Label and(Label l1, Label l2) {
+    Set<Set<String>> andConf = meetJom(l1.confidentiality, l2.confidentiality);
+    Set<Set<String>> andInteg = meetJom(l1.integrity, l2.integrity);
+    return new Label(andConf, andInteg);
+  }
+
   /** given [a,b,c,...], create label {{A},{B},{C},...}. */
   public static Label or(String... strs) {
     Set<Set<String>> conf = new HashSet<Set<String>>();
@@ -70,7 +77,13 @@ public class Label implements Lattice<Label> {
     }
 
     return new Label(conf, integ);
+  }
 
+  /** disjunction of principals. */
+  public static Label or(Label l1, Label l2) {
+    Set<Set<String>> orConf = joinJom(l1.confidentiality, l2.confidentiality);
+    Set<Set<String>> orInteg = joinJom(l1.integrity, l2.integrity);
+    return new Label(orConf, orInteg);
   }
 
   public static Label bottom() {
@@ -82,11 +95,45 @@ public class Label implements Lattice<Label> {
   }
 
   public Label confidentiality() {
-    return new Label(this.confidentiality, new HashSet<Set<String>>());
+    // Set<Set<String>> bottomInteg = Label.bottom.integrity;
+    Set<Set<String>> bottomInteg = new HashSet<>();
+    bottomInteg.add(new HashSet<>());
+    return new Label(this.confidentiality, bottomInteg);
   }
 
   public Label integrity() {
-    return new Label(new HashSet<Set<String>>(), this.integrity);
+    // Set<Set<String>> bottomConf = Label.bottom.confidentiality;
+    Set<Set<String>> bottomConf = new HashSet<>();
+    bottomConf.add(new HashSet<>());
+    return new Label(bottomConf, this.integrity);
+  }
+
+  protected static Set<Set<String>> normalizeJom(Set<Set<String>> jom) {
+    Set<Set<String>> normalizedJom = new HashSet<>();
+
+    for (Set<String> meet : jom) {
+      boolean toAdd = true;
+      Set<Set<String>> deleteSet = new HashSet<>();
+
+      /* for meets M1 and M2, if M2 \subseteq M1 then M2 subsumes M1 */
+      for (Set<String> normMeet : normalizedJom) {
+        if (meet.containsAll(normMeet)) {
+          toAdd = false;
+          break;
+        } else if (normMeet.containsAll(meet)) {
+          deleteSet.add(normMeet);
+        }
+      }
+
+      if (toAdd) {
+        normalizedJom.add(meet);
+      }
+      if (deleteSet.size() > 0) {
+        normalizedJom.removeAll(deleteSet);
+      }
+    }
+
+    return normalizedJom;
   }
 
   /** join two join-of-meets together.
@@ -94,61 +141,30 @@ public class Label implements Lattice<Label> {
    * read this to understand the algorithm:
    * https://en.wikipedia.org/wiki/Distributive_lattice#Free_distributive_lattices
   */
-  protected Set<Set<String>> joinJom(Set<Set<String>> jom1, Set<Set<String>> jom2) {
-    Set<Set<String>> joinedSet = new HashSet<Set<String>>();
-    joinedSet.addAll(jom1);
+  protected static Set<Set<String>> joinJom(Set<Set<String>> jom1, Set<Set<String>> jom2) {
+    Set<Set<String>> candidates = new HashSet<>();
+    candidates.addAll(jom1);
+    candidates.addAll(jom2);
 
-    for (Set<String> meet2 : jom2) {
-      boolean canAdd = true;
-      for (Set<String> meet1 : jom1) {
-        if (meet2.containsAll(meet1)) {
-          canAdd = false;
-          break;
-        }
-      }
-
-      if (canAdd) {
-        joinedSet.add(meet2);
-      }
-    }
-
-    return joinedSet;
+    return normalizeJom(candidates);
   }
 
   /** meet two join-of-meets together.
    *  do pairwise meets, following some rewrites applying distributivity
   */
-  protected Set<Set<String>> meetJom(Set<Set<String>> jom1, Set<Set<String>> jom2) {
-    Set<Set<String>> meetSet = new HashSet<Set<String>>();
+  protected static Set<Set<String>> meetJom(Set<Set<String>> jom1, Set<Set<String>> jom2) {
+    Set<Set<String>> candidates = new HashSet<Set<String>>();
 
     for (Set<String> meet1 : jom1) {
       for (Set<String> meet2 : jom2) {
         Set<String> newMeet = new HashSet<String>();
         newMeet.addAll(meet1);
         newMeet.addAll(meet2);
-
-        Set<String> toAdd = newMeet;
-        Set<String> toDelete = null;
-        for (Set<String> meet : meetSet) {
-          if (newMeet.containsAll(meet)) {
-            toAdd = null;
-            break;
-          } else if (meet.containsAll(newMeet)) {
-            toDelete = meet;
-            break;
-          }
-        }
-
-        if (toAdd != null) {
-          meetSet.add(toAdd);
-        }
-        if (toDelete != null) {
-          meetSet.remove(toDelete);
-        }
+        candidates.add(newMeet);
       }
     }
 
-    return meetSet;
+    return normalizeJom(candidates);
   }
 
   /** take join of labels in the label lattice. */
@@ -226,27 +242,19 @@ public class Label implements Lattice<Label> {
 
   @Override
   public String toString() {
-    if (this.equals(Label.bottom)) {
-      return "{⊥}";
+    String confStr = joinOfMeetStr(this.confidentiality);
+    String integStr = joinOfMeetStr(this.integrity);
+    if (this.confidentiality.isEmpty()) {
+      return String.format("{(%s)<-}", integStr);
 
-    } else if (this.equals(Label.top)) {
-      return "{⊤}";
+    } else if (this.integrity.isEmpty()) {
+      return String.format("{(%s)->}", confStr);
+
+    } else if (this.confidentiality.equals(this.integrity)) {
+      return String.format("{%s}", confStr);
 
     } else {
-      String confStr = joinOfMeetStr(this.confidentiality);
-      String integStr = joinOfMeetStr(this.integrity);
-      if (this.confidentiality.isEmpty()) {
-        return String.format("{(%s)<-}", integStr);
-
-      } else if (this.integrity.isEmpty()) {
-        return String.format("{(%s)->}", confStr);
-
-      } else if (this.confidentiality.equals(this.integrity)) {
-        return String.format("{%s}", confStr);
-
-      } else {
-        return String.format("{(%s)-> & (%s)<-}", confStr, integStr);
-      }
+      return String.format("{(%s)-> & (%s)<-}", confStr, integStr);
     }
   }
 }

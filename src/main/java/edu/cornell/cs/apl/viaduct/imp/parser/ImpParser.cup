@@ -7,7 +7,7 @@ import edu.cornell.cs.apl.viaduct.imp.ast.*;
 import edu.cornell.cs.apl.viaduct.Label;
 
 // You might want to add types to these declarations.
-terminal String IDENT;
+terminal String IDENT, CAP_IDENT;
 terminal Integer INT_LIT;
 terminal TRUE, FALSE;
 
@@ -20,33 +20,49 @@ terminal IF, ELSE, SEND, RECV, TO, FROM, SKIP, DECLASSIFY, ENDORSE;
 
 nonterminal StmtNode program;
 nonterminal List<StmtNode> stmt_list;
-nonterminal StmtNode stmt;
+nonterminal StmtNode stmt_basic, stmt_complex, block;
 nonterminal ExpressionNode expr;
-nonterminal Label label;
+nonterminal Label label, label_expr;
 
 precedence left NOT;
 precedence left PLUS, EQ, NEQ, LT, LEQ, GT, GEQ;
-precedence left ANDAND, OROR;
+precedence left OPEN_PAREN, CLOSE_PAREN, ANDAND, OROR, LARROW, RARROW, AND, OR;
 
 start with program;
 
-program ::= stmt_list:slist       {: RESULT = new BlockNode(slist); :}
+program ::=
+    block:b {: RESULT = b; :}
+  ;
+
+block ::=
+    stmt_list:slist {: RESULT = new BlockNode(slist); :}
   ;
 
 stmt_list ::=
-  stmt:s {:
+    stmt_basic:s SEMICOLON {:
       ArrayList<StmtNode> slist = new ArrayList<>();
       slist.add(s);
       RESULT = slist;
     :}
 
-  | stmt_list:slist SEMICOLON stmt:s {:
+  | stmt_complex:s {:
+      ArrayList<StmtNode> slist = new ArrayList<>();
+      slist.add(s);
+      RESULT = slist;
+    :}
+
+  | stmt_list:slist stmt_basic:s SEMICOLON {:
+      slist.add(s);
+      RESULT = slist;
+    :}
+
+  | stmt_list:slist stmt_complex:s {:
       slist.add(s);
       RESULT = slist;
     :}
   ;
 
-stmt ::=
+stmt_basic ::=
     IDENT:idv COLON label:lab {:
       Variable var = new Variable(idv);
       RESULT = new VarDeclNode(var, lab);
@@ -66,16 +82,18 @@ stmt ::=
       RESULT = new RecvNode(idp, var);
     :}
 
-  | IF OPEN_PAREN expr:guard CLOSE_PAREN OPEN_BRACE stmt:sthen CLOSE_BRACE
-    ELSE OPEN_BRACE stmt:selse CLOSE_BRACE {:
-      RESULT = new IfNode(guard, sthen, selse);
-    :}
-
-  | IF OPEN_PAREN expr:guard CLOSE_PAREN OPEN_BRACE stmt:sthen CLOSE_BRACE {:
-      RESULT = new IfNode(guard, sthen, new SkipNode());
-    :}
-
   | SKIP {: RESULT = new SkipNode(); :}
+  ;
+
+stmt_complex ::=
+    IF OPEN_PAREN expr:guard CLOSE_PAREN OPEN_BRACE block:bthen CLOSE_BRACE
+    ELSE OPEN_BRACE block:belse CLOSE_BRACE {:
+      RESULT = new IfNode(guard, bthen, belse);
+    :}
+
+  | IF OPEN_PAREN expr:guard CLOSE_PAREN OPEN_BRACE block:bthen CLOSE_BRACE {:
+      RESULT = new IfNode(guard, bthen, new SkipNode());
+    :}
   ;
 
 expr ::=
@@ -150,4 +168,30 @@ expr ::=
 
 label ::=
     OPEN_BRACE CLOSE_BRACE {: RESULT = Label.bottom(); :}
+
+  | OPEN_BRACE label_expr:l CLOSE_BRACE {: RESULT = l; :}
+  ;
+
+label_expr ::=
+    CAP_IDENT:id {: RESULT = Label.and(id); :}
+
+  | label_expr:l1 AND label_expr:l2 {:
+      RESULT = Label.and(l1, l2);
+    :}
+
+  | label_expr:l1 OR label_expr:l2 {:
+      RESULT = Label.or(l1, l2);
+    :}
+
+  | label_expr:l RARROW {:
+      RESULT = l.confidentiality();
+    :}
+
+  | label_expr:l LARROW {:
+      RESULT = l.integrity();
+    :}
+
+  | OPEN_PAREN label_expr:l CLOSE_PAREN {:
+      RESULT = l;
+    :}
   ;

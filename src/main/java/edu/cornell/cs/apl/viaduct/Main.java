@@ -9,16 +9,13 @@ import edu.cornell.cs.apl.viaduct.imp.parser.ImpLexer;
 import edu.cornell.cs.apl.viaduct.imp.parser.ImpParser;
 import edu.cornell.cs.apl.viaduct.imp.visitors.ImpPdgBuilderVisitor;
 import edu.cornell.cs.apl.viaduct.imp.visitors.PrintVisitor;
-
 import java.io.FileInputStream;
 import java.io.InputStreamReader;
 import java.util.HashSet;
 import java.util.Map;
-
 import java_cup.runtime.DefaultSymbolFactory;
 import java_cup.runtime.Scanner;
 import java_cup.runtime.SymbolFactory;
-
 import net.sourceforge.argparse4j.ArgumentParsers;
 import net.sourceforge.argparse4j.inf.ArgumentParser;
 import net.sourceforge.argparse4j.inf.ArgumentParserException;
@@ -29,8 +26,8 @@ public class Main {
   public static StmtNode shellGame() {
     Label aLabel = Label.and("A");
     Label cLabel = Label.and("C");
-    Label acAndLabel = Label.and("A","C");
-    Label acOrLabel = Label.or("A","C");
+    Label acAndLabel = Label.and("A", "C");
+    Label acOrLabel = Label.or("A", "C");
     Label cConf_acAndIntegLabel = new Label(cLabel, acAndLabel);
     Label aConf_acAndIntegLabel = new Label(aLabel, acAndLabel);
     Label acOrConf_acAndIntegLabel = new Label(acOrLabel, acAndLabel);
@@ -51,8 +48,8 @@ public class Main {
                 (new StmtBuilder())
                     .assign(
                         "win",
-                        e.declassify(e.equals(e.var("shell"), e.var("guess")),
-                            acOrConf_acAndIntegLabel)),
+                        e.declassify(
+                            e.equals(e.var("shell"), e.var("guess")), acOrConf_acAndIntegLabel)),
                 (new StmtBuilder()).skip())
             .build();
 
@@ -71,29 +68,38 @@ public class Main {
     Label abOrConf_abAndIntegLabel = new Label(abOrLabel, abAndLabel);
     StmtNode prog =
         (new StmtBuilder())
-        .varDecl("a", aLabel)
-        .varDecl("b", bLabel)
-        .varDecl("b_richer", abOrConf_abAndIntegLabel)
-        .assign("b_richer",
-            e.declassify(e.lt(e.var("a"), e.var("b")), abOrConf_abAndIntegLabel))
-        .build();
+            .varDecl("a", aLabel)
+            .varDecl("b", bLabel)
+            .varDecl("b_richer", abOrConf_abAndIntegLabel)
+            .assign(
+                "b_richer", e.declassify(e.lt(e.var("a"), e.var("b")), abOrConf_abAndIntegLabel))
+            .build();
 
     return prog;
   }
 
-
   /** main function. */
   public static void main(String[] args) {
-    ArgumentParser argp = ArgumentParsers.newFor("viaduct").build()
-        .defaultHelp(true)
-        .description("Optimizing, extensible MPC compiler.");
-    argp.addArgument("file")
-        .help("source file to compile");
-    argp.addArgument("-s", "--source").nargs("?").setConst(true).setDefault(false)
+    ArgumentParser argp =
+        ArgumentParsers.newFor("viaduct")
+            .build()
+            .defaultHelp(true)
+            .description("Optimizing, extensible MPC compiler.");
+    argp.addArgument("file").help("source file to compile");
+    argp.addArgument("-s", "--source")
+        .nargs("?")
+        .setConst(true)
+        .setDefault(false)
         .help("pretty print source program");
-    argp.addArgument("-lpdg", "--labelgraph").nargs("?").setConst(true).setDefault(false)
+    argp.addArgument("-lpdg", "--labelgraph")
+        .nargs("?")
+        .setConst(true)
+        .setDefault(false)
         .help("output PDG with label information");
-    argp.addArgument("-ppdg", "--protograph").nargs("?").setConst(true).setDefault(false)
+    argp.addArgument("-ppdg", "--protograph")
+        .nargs("?")
+        .setConst(true)
+        .setDefault(false)
         .help("output PDG with synthesized protocol information");
 
     Namespace ns = null;
@@ -112,7 +118,7 @@ public class Main {
       SymbolFactory symbolFactory = new DefaultSymbolFactory();
       Scanner lexer = new ImpLexer(reader, symbolFactory);
       ImpParser parser = new ImpParser(lexer, symbolFactory);
-      program = (StmtNode)(parser.parse().value);
+      program = (StmtNode) (parser.parse().value);
 
     } catch (Exception e) {
       System.out.println(e.getMessage());
@@ -136,7 +142,7 @@ public class Main {
     // run protocol selection given a PDG and host config
     ImpProtocolCostEstimator costEstimator = new ImpProtocolCostEstimator();
     ProtocolSelection<ImpAstNode> protoSelection = new ProtocolSelection<>(costEstimator);
-    Map<PdgNode<ImpAstNode>,Protocol<ImpAstNode>> protocolMap =
+    Map<PdgNode<ImpAstNode>, Protocol<ImpAstNode>> protocolMap =
         protoSelection.selectProtocols(hostConfig, pdg);
     int protocolCost = costEstimator.estimatePdgCost(protocolMap, pdg);
 
@@ -176,9 +182,7 @@ public class Main {
           labelStr = node.getOutLabel().toString();
         }
 
-        System.out.println(
-            String.format("%s (label: %s) => %s",
-                astStr, labelStr, protoStr));
+        System.out.println(String.format("%s (label: %s) => %s", astStr, labelStr, protoStr));
       }
       if (synthesizedProto) {
         System.out.println("\nProtocol cost: " + protocolCost);

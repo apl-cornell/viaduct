@@ -1,14 +1,10 @@
 import edu.cornell.cs.apl.viaduct.*;
 
-import java.util.List;
-import java.util.ArrayList;
-
-public class Test
-{
-    public void test(){
-        ExprBuilder e = new ExprBuilder();
-        StmtNode shellGame =
-            (new StmtBuilder())
+public class Test {
+  public void test() {
+    ExprBuilder e = new ExprBuilder();
+    StmtNode shellGame =
+        (new StmtBuilder())
             .varDecl("cinput", Label.BOTTOM)
             .varDecl("ainput", Label.BOTTOM)
             .varDecl("shell", Label.BOTTOM)
@@ -21,8 +17,9 @@ public class Test
                     e.and(e.leq(e.intLit(1), e.var("shell")), e.leq(e.var("shell"), e.intLit(3))),
                     Label.BOTTOM),
                 (new StmtBuilder())
-                .assign("win", e.declassify(e.equals(e.var("shell"), e.var("guess")), Label.BOTTOM))
-            )
+                    .assign(
+                        "win",
+                        e.declassify(e.equals(e.var("shell"), e.var("guess")), Label.BOTTOM)))
             .build();
-    }
+  }
 }

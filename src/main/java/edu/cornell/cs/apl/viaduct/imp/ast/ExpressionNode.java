@@ -8,6 +8,6 @@ public abstract class ExpressionNode extends ImpAstNode {
   public abstract <R> R accept(ExprVisitor<R> v);
 
   public <R> R accept(AstVisitor<R> v) {
-    return this.accept((ExprVisitor<R>)v);
+    return this.accept((ExprVisitor<R>) v);
   }
 }

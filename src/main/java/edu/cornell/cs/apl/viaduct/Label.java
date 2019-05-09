@@ -94,20 +94,6 @@ public class Label implements Lattice<Label> {
     return top;
   }
 
-  public Label confidentiality() {
-    // Set<Set<String>> bottomInteg = Label.bottom.integrity;
-    Set<Set<String>> bottomInteg = new HashSet<>();
-    bottomInteg.add(new HashSet<>());
-    return new Label(this.confidentiality, bottomInteg);
-  }
-
-  public Label integrity() {
-    // Set<Set<String>> bottomConf = Label.bottom.confidentiality;
-    Set<Set<String>> bottomConf = new HashSet<>();
-    bottomConf.add(new HashSet<>());
-    return new Label(bottomConf, this.integrity);
-  }
-
   protected static Set<Set<String>> normalizeJom(Set<Set<String>> jom) {
     Set<Set<String>> normalizedJom = new HashSet<>();
 
@@ -136,11 +122,11 @@ public class Label implements Lattice<Label> {
     return normalizedJom;
   }
 
-  /** join two join-of-meets together.
-   * this is the canonical representation of elements of a free distributive lattice
-   * read this to understand the algorithm:
+  /**
+   * join two join-of-meets together. this is the canonical representation of elements of a free
+   * distributive lattice read this to understand the algorithm:
    * https://en.wikipedia.org/wiki/Distributive_lattice#Free_distributive_lattices
-  */
+   */
   protected static Set<Set<String>> joinJom(Set<Set<String>> jom1, Set<Set<String>> jom2) {
     Set<Set<String>> candidates = new HashSet<>();
     candidates.addAll(jom1);
@@ -149,9 +135,10 @@ public class Label implements Lattice<Label> {
     return normalizeJom(candidates);
   }
 
-  /** meet two join-of-meets together.
-   *  do pairwise meets, following some rewrites applying distributivity
-  */
+  /**
+   * meet two join-of-meets together. do pairwise meets, following some rewrites applying
+   * distributivity
+   */
   protected static Set<Set<String>> meetJom(Set<Set<String>> jom1, Set<Set<String>> jom2) {
     Set<Set<String>> candidates = new HashSet<Set<String>>();
 
@@ -165,6 +152,22 @@ public class Label implements Lattice<Label> {
     }
 
     return normalizeJom(candidates);
+  }
+
+  /** Get the confidentiality component. */
+  public Label confidentiality() {
+    // Set<Set<String>> bottomInteg = Label.bottom.integrity;
+    Set<Set<String>> bottomInteg = new HashSet<>();
+    bottomInteg.add(new HashSet<>());
+    return new Label(this.confidentiality, bottomInteg);
+  }
+
+  /** Get the integrity component. */
+  public Label integrity() {
+    // Set<Set<String>> bottomConf = Label.bottom.confidentiality;
+    Set<Set<String>> bottomConf = new HashSet<>();
+    bottomConf.add(new HashSet<>());
+    return new Label(bottomConf, this.integrity);
   }
 
   /** take join of labels in the label lattice. */
@@ -216,17 +219,19 @@ public class Label implements Lattice<Label> {
   protected String joinOfMeetStr(Set<Set<String>> jom) {
     Set<String> meetStrs = new HashSet<String>();
     for (Set<String> meet : jom) {
-      meetStrs.add(String.join("&",meet));
+      meetStrs.add(String.join("&", meet));
     }
     return String.join("|", meetStrs);
   }
 
   @Override
   public boolean equals(Object o) {
-    if (o == null) { return false; }
+    if (o == null) {
+      return false;
+    }
 
     if (o instanceof Label) {
-      Label olbl = (Label)o;
+      Label olbl = (Label) o;
       boolean confEq = this.confidentiality.equals(olbl.confidentiality);
       boolean integEq = this.integrity.equals(olbl.integrity);
       return confEq && integEq;

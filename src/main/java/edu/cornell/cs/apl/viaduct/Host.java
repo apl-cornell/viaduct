@@ -26,12 +26,13 @@ public class Host {
 
   @Override
   public boolean equals(Object o) {
-    if (o == null) { return false; }
+    if (o == null) {
+      return false;
+    }
 
     if (o instanceof Host) {
-      Host ohost = (Host)o;
-      return this.name.equals(ohost.name)
-          && this.label.equals(ohost.label);
+      Host ohost = (Host) o;
+      return this.name.equals(ohost.name) && this.label.equals(ohost.label);
 
     } else {
       return false;

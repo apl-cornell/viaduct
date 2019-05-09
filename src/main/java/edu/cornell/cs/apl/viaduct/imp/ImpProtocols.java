@@ -5,7 +5,6 @@ import edu.cornell.cs.apl.viaduct.Label;
 import edu.cornell.cs.apl.viaduct.PdgNode;
 import edu.cornell.cs.apl.viaduct.Protocol;
 import edu.cornell.cs.apl.viaduct.imp.ast.ImpAstNode;
-
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
@@ -34,9 +33,9 @@ public class ImpProtocols {
     }
 
     public Set<Protocol<ImpAstNode>> createInstances(
-          Set<Host> hostConfig,
-          Map<PdgNode<ImpAstNode>,Protocol<ImpAstNode>> protocolMap,
-          PdgNode<ImpAstNode> node) {
+        Set<Host> hostConfig,
+        Map<PdgNode<ImpAstNode>, Protocol<ImpAstNode>> protocolMap,
+        PdgNode<ImpAstNode> node) {
 
       HashSet<Protocol<ImpAstNode>> instances = new HashSet<>();
       if (node.isStorageNode() || node.isEndorseNode() || !node.isDowngradeNode()) {
@@ -55,10 +54,12 @@ public class ImpProtocols {
 
     @Override
     public boolean equals(Object o) {
-      if (o == null) { return false; }
+      if (o == null) {
+        return false;
+      }
 
       if (o instanceof Single) {
-        Single osingle = (Single)o;
+        Single osingle = (Single) o;
         return this.host.equals(osingle.host);
 
       } else {
@@ -112,9 +113,9 @@ public class ImpProtocols {
     }
 
     public Set<Protocol<ImpAstNode>> createInstances(
-          Set<Host> hostConfig,
-          Map<PdgNode<ImpAstNode>,Protocol<ImpAstNode>> protocolMap,
-          PdgNode<ImpAstNode> node) {
+        Set<Host> hostConfig,
+        Map<PdgNode<ImpAstNode>, Protocol<ImpAstNode>> protocolMap,
+        PdgNode<ImpAstNode> node) {
 
       Set<Protocol<ImpAstNode>> instances = new HashSet<>();
       if (node.isStorageNode() || node.isEndorseNode() || !node.isDowngradeNode()) {
@@ -161,9 +162,8 @@ public class ImpProtocols {
               && rhLabel.integrity().flowsTo(nInLabel.integrity())
               // control nodes can't be hash replicated!
               && !(node.isControlNode() && possibleInstance.hashReplicas.size() > 0)) {
-            instances.add(new Replication(
-                possibleInstance.realReplicas,
-                possibleInstance.hashReplicas));
+            instances.add(
+                new Replication(possibleInstance.realReplicas, possibleInstance.hashReplicas));
           }
         }
       }
@@ -173,10 +173,12 @@ public class ImpProtocols {
 
     @Override
     public boolean equals(Object o) {
-      if (o == null) { return false; }
+      if (o == null) {
+        return false;
+      }
 
       if (o instanceof Replication) {
-        Replication oreplication = (Replication)o;
+        Replication oreplication = (Replication) o;
         boolean realEq = this.replicas.realReplicas.equals(oreplication.replicas.realReplicas);
         boolean hashEq = this.replicas.hashReplicas.equals(oreplication.replicas.hashReplicas);
         return realEq && hashEq;
@@ -226,9 +228,9 @@ public class ImpProtocols {
     }
 
     public Set<Protocol<ImpAstNode>> createInstances(
-          Set<Host> hostConfig,
-          Map<PdgNode<ImpAstNode>,Protocol<ImpAstNode>> protocolMap,
-          PdgNode<ImpAstNode> node) {
+        Set<Host> hostConfig,
+        Map<PdgNode<ImpAstNode>, Protocol<ImpAstNode>> protocolMap,
+        PdgNode<ImpAstNode> node) {
 
       Set<Protocol<ImpAstNode>> instances = new HashSet<>();
 
@@ -259,10 +261,12 @@ public class ImpProtocols {
 
     @Override
     public boolean equals(Object o) {
-      if (o == null) { return false; }
+      if (o == null) {
+        return false;
+      }
 
       if (o instanceof MPC) {
-        MPC ompc = (MPC)o;
+        MPC ompc = (MPC) o;
         return this.parties.equals(ompc.parties);
 
       } else {
@@ -307,9 +311,9 @@ public class ImpProtocols {
     }
 
     public Set<Protocol<ImpAstNode>> createInstances(
-          Set<Host> hostConfig,
-          Map<PdgNode<ImpAstNode>,Protocol<ImpAstNode>> protocolMap,
-          PdgNode<ImpAstNode> node) {
+        Set<Host> hostConfig,
+        Map<PdgNode<ImpAstNode>, Protocol<ImpAstNode>> protocolMap,
+        PdgNode<ImpAstNode> node) {
 
       // assume for now that there are only two hosts
       // generalize this later
@@ -336,10 +340,10 @@ public class ImpProtocols {
 
       // prover: A, verifier: B
       if (inNodes.size() == 1 && node.isDeclassifyNode()) {
-        PdgNode<ImpAstNode> inNode = (PdgNode<ImpAstNode>)inNodes.toArray()[0];
+        PdgNode<ImpAstNode> inNode = (PdgNode<ImpAstNode>) inNodes.toArray()[0];
         Protocol<ImpAstNode> inProto = protocolMap.get(inNode);
         if (inProto instanceof Replication) {
-          Replication inReplProto = (Replication)inProto;
+          Replication inReplProto = (Replication) inProto;
 
           if (nInLabel.confidentiality().flowsTo(aLabel.confidentiality())
               && !nInLabel.confidentiality().flowsTo(bLabel.confidentiality())
@@ -368,10 +372,12 @@ public class ImpProtocols {
 
     @Override
     public boolean equals(Object o) {
-      if (o == null) { return false; }
+      if (o == null) {
+        return false;
+      }
 
       if (o instanceof ZK) {
-        ZK ozk = (ZK)o;
+        ZK ozk = (ZK) o;
         boolean peq = this.prover.equals(ozk.prover);
         boolean veq = this.prover.equals(ozk.prover);
         return peq && veq;

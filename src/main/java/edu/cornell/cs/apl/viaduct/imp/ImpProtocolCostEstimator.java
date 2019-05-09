@@ -7,7 +7,6 @@ import edu.cornell.cs.apl.viaduct.ProtocolCostEstimator;
 import edu.cornell.cs.apl.viaduct.UnknownProtocolException;
 import edu.cornell.cs.apl.viaduct.imp.ast.ImpAstNode;
 import edu.cornell.cs.apl.viaduct.imp.visitors.SizeVisitor;
-
 import java.util.HashSet;
 import java.util.Set;
 
@@ -29,10 +28,10 @@ public final class ImpProtocolCostEstimator extends ProtocolCostEstimator<ImpAst
 
   /** estimate cost for a single PDG node. */
   public int estimateNodeCost(
-      Protocol<ImpAstNode> protocol, PdgNode<ImpAstNode> node,
+      Protocol<ImpAstNode> protocol,
+      PdgNode<ImpAstNode> node,
       ProgramDependencyGraph<ImpAstNode> pdg)
-      throws UnknownProtocolException
-  {
+      throws UnknownProtocolException {
     // ImpAstNode astNode = node.getAstNode();
 
     if (protocol instanceof ImpProtocols.Single) {
@@ -41,7 +40,7 @@ public final class ImpProtocolCostEstimator extends ProtocolCostEstimator<ImpAst
 
     } else if (protocol instanceof ImpProtocols.Replication) {
       // return 5 * astNode.accept(nodeSizer);
-      ImpProtocols.Replication replProto = (ImpProtocols.Replication)protocol;
+      ImpProtocols.Replication replProto = (ImpProtocols.Replication) protocol;
       return replProto.getRealReplicas().size() + (2 * replProto.getHashReplicas().size());
 
     } else if (protocol instanceof ImpProtocols.ZK) {

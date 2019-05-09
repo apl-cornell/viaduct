@@ -2,7 +2,6 @@ package edu.cornell.cs.apl.viaduct;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -13,17 +12,16 @@ import java.util.Set;
 public class ProtocolSelection<T extends AstNode> {
   /** represents a node in the search space. */
   private static class ProtocolMapNode<U extends AstNode>
-      implements Comparable<ProtocolMapNode<U>>
-  {
-    final HashMap<PdgNode<U>,Protocol<U>> protocolMap;
+      implements Comparable<ProtocolMapNode<U>> {
+    final HashMap<PdgNode<U>, Protocol<U>> protocolMap;
     final int cost;
 
-    ProtocolMapNode(HashMap<PdgNode<U>,Protocol<U>> pmap, int cost) {
+    ProtocolMapNode(HashMap<PdgNode<U>, Protocol<U>> pmap, int cost) {
       this.protocolMap = pmap;
       this.cost = cost;
     }
 
-    HashMap<PdgNode<U>,Protocol<U>> getProtocolMap() {
+    HashMap<PdgNode<U>, Protocol<U>> getProtocolMap() {
       return this.protocolMap;
     }
 
@@ -37,10 +35,12 @@ public class ProtocolSelection<T extends AstNode> {
 
     @Override
     public boolean equals(Object o) {
-      if (o == null) { return false; }
+      if (o == null) {
+        return false;
+      }
 
       if (o instanceof ProtocolMapNode<?>) {
-        ProtocolMapNode<U> onode = (ProtocolMapNode<U>)o;
+        ProtocolMapNode<U> onode = (ProtocolMapNode<U>) o;
         return this.protocolMap.equals(onode.protocolMap);
 
       } else {
@@ -56,7 +56,7 @@ public class ProtocolSelection<T extends AstNode> {
     @Override
     public String toString() {
       StringBuffer str = new StringBuffer();
-      for (Map.Entry<PdgNode<U>,Protocol<U>> kv : protocolMap.entrySet()) {
+      for (Map.Entry<PdgNode<U>, Protocol<U>> kv : protocolMap.entrySet()) {
         str.append(String.format("%s => %s%n", kv.getKey().toString(), kv.getValue().toString()));
       }
       return str.toString();
@@ -69,12 +69,12 @@ public class ProtocolSelection<T extends AstNode> {
     this.costEstimator = estimator;
   }
 
-  /** return a mapping from PDG nodes to protocols.
-   *  this uses A* search to find the cheapest protocol selection
+  /**
+   * return a mapping from PDG nodes to protocols. this uses A* search to find the cheapest protocol
+   * selection
    */
-  public Map<PdgNode<T>,Protocol<T>> selectProtocols(
-        Set<Host> hostConfig, ProgramDependencyGraph<T> pdg)
-  {
+  public Map<PdgNode<T>, Protocol<T>> selectProtocols(
+      Set<Host> hostConfig, ProgramDependencyGraph<T> pdg) {
     Set<PdgNode<T>> nodes = pdg.getNodes();
     Set<Protocol<T>> protocols = costEstimator.getProtocols();
 
@@ -115,14 +115,14 @@ public class ProtocolSelection<T extends AstNode> {
     HashSet<ProtocolMapNode<T>> closedSet = new HashSet<>();
 
     // start node is empty map
-    HashMap<PdgNode<T>,Protocol<T>> initMap = new HashMap<>();
+    HashMap<PdgNode<T>, Protocol<T>> initMap = new HashMap<>();
     openSet.add(new ProtocolMapNode<T>(initMap, 0));
 
     // explore nodes in open set until we find a goal node
     ProtocolMapNode<T> lastAddedNode = null;
     while (!openSet.isEmpty()) {
       ProtocolMapNode<T> currMapNode = openSet.remove();
-      HashMap<PdgNode<T>,Protocol<T>> currMap = currMapNode.getProtocolMap();
+      HashMap<PdgNode<T>, Protocol<T>> currMap = currMapNode.getProtocolMap();
       Set<PdgNode<T>> mappedNodes = currMap.keySet();
 
       // check if the current map is a goal node
@@ -153,11 +153,11 @@ public class ProtocolSelection<T extends AstNode> {
       // each instantiated protocol represents an edge from the current map
       // to a new map with one new mapping from the PDG node to the instantiated protocol
       for (Protocol<T> protocol : protocols) {
-        Set<Protocol<T>> protoInstances =  protocol.createInstances(hostConfig, currMap, nextNode);
+        Set<Protocol<T>> protoInstances = protocol.createInstances(hostConfig, currMap, nextNode);
         for (Protocol<T> protoInstance : protoInstances) {
           // instantiate neighbor
-          HashMap<PdgNode<T>,Protocol<T>> newMap =
-              (HashMap<PdgNode<T>,Protocol<T>>)currMap.clone();
+          HashMap<PdgNode<T>, Protocol<T>> newMap =
+              (HashMap<PdgNode<T>, Protocol<T>>) currMap.clone();
           newMap.put(nextNode, protoInstance);
           int newMapCost = this.costEstimator.estimatePdgCost(newMap, pdg);
           ProtocolMapNode<T> newMapNode = new ProtocolMapNode<>(newMap, newMapCost);

@@ -1,17 +1,16 @@
 plugins {
-    id 'com.github.johnrengelman.shadow' version '5.0.0'
     id 'java'
     id 'application'
+    id 'com.github.johnrengelman.shadow' version '5.0.0'
+
     id 'checkstyle'
-    // id "com.diffplug.gradle.spotless" version "3.18.0"
+    id "com.diffplug.gradle.spotless" version "3.18.0"
     id 'com.github.spotbugs' version '1.6.9'
     // id 'pmd'
+
     id 'jacoco'
     id "org.ec4j.editorconfig" version "0.0.3"
 }
-
-apply plugin: 'application'
-// apply plugin: 'com.github.johnrengelman.shadow'
 
 group 'edu.cornell.cs.apl'
 version '1.0-SNAPSHOT'
@@ -26,17 +25,28 @@ application {
     mainClassName = 'edu.cornell.cs.apl.viaduct.Main'
 }
 
+jar {
+    manifest {
+        attributes 'Main-Class': 'edu.cornell.cs.apl.viaduct.Main'
+    }
+}
+
+shadowJar {
+    baseName = 'viaduct'
+}
+
+
 task parser(type: Exec) {
     workingDir '.'
     inputs.file(file("src/main/java/edu/cornell/cs/apl/viaduct/imp/parser/ImpLexer.flex"))
     inputs.file(file("src/main/java/edu/cornell/cs/apl/viaduct/imp/parser/ImpParser.cup"))
-    outputs.file(file("src/main/java/edu/cornell/cs/apl/viaduct/imp/parser/ImpParser.Java"))
-    outputs.file(file("src/main/java/edu/cornell/cs/apl/viaduct/imp/parser/sym.Java"))
+    outputs.file(file("src/main/java/edu/cornell/cs/apl/viaduct/imp/parser/ImpParser.java"))
+    outputs.file(file("src/main/java/edu/cornell/cs/apl/viaduct/imp/parser/sym.java"))
     commandLine('java', '-jar', 'lib/java_cup.jar', '-destdir',
-            'src/main/java/edu/cornell/cs/apl/viaduct/imp/parser', '-package',
-            'edu.cornell.cs.viaduct.imp.parser', '-interface', '-parser', 'ImpParser',
-            'src/main/java/edu/cornell/cs/apl/viaduct/imp/parser/ImpParser.cup'
-            )
+        'src/main/java/edu/cornell/cs/apl/viaduct/imp/parser', '-package',
+        'edu.cornell.cs.viaduct.imp.parser', '-interface', '-parser', 'ImpParser',
+        'src/main/java/edu/cornell/cs/apl/viaduct/imp/parser/ImpParser.cup'
+    )
 }
 
 task lexer(type: Exec) {
@@ -47,46 +57,26 @@ task lexer(type: Exec) {
     inputs.file(file("src/main/java/edu/cornell/cs/apl/viaduct/imp/parser/ImpLexer.flex"))
     outputs.file("src/main/java/edu/cornell/cs/apl/viaduct/imp/parser/ImpLexer.java")
     commandLine('java', '-jar', 'lib/jflex-full-1.7.0.jar', '-d', 'src/main/java/edu/cornell/cs/apl/viaduct/imp/parser',
-            'src/main/java/edu/cornell/cs/apl/viaduct/imp/parser/ImpLexer.flex', '--nobak')
+        'src/main/java/edu/cornell/cs/apl/viaduct/imp/parser/ImpLexer.flex', '--nobak')
 }
-
-
-compileJava {
-    dependsOn lexer
-    dependsOn parser
-}
-
-clean {
-    delete 'src/main/java/edu/cornell/cs/apl/viaduct/imp/parser/ImpLexer.java'
-    delete 'src/main/java/edu/cornell/cs/apl/viaduct/imp/parser/ImpParser.java'
-    delete 'src/main/java/edu/cornell/cs/apl/viaduct/imp/parser/sym.java'
-}
-
-jar {
-    manifest {
-        attributes 'Main-Class': 'edu.cornell.cs.apl.viaduct.Main'
-    }
-}
-
-/*
-shadowJar {
-    baseName = 'viaduct'
-}
-*/
 
 checkstyle {
     maxWarnings 0
-    configProperties = [ "suppressionFile" : project(':').file('config/checkstyle/suppressions.xml')]
+    configProperties = ["suppressionFile": project(':').file('config/checkstyle/suppressions.xml')]
 }
 
-/*
 spotless {
     java {
+        target project.fileTree(project.rootDir) {
+            include '**/*.java'
+            exclude 'src/main/java/edu/cornell/cs/apl/viaduct/imp/parser/ImpParser.java',
+                'src/main/java/edu/cornell/cs/apl/viaduct/imp/parser/sym.java',
+                'src/main/java/edu/cornell/cs/apl/viaduct/imp/parser/ImpLexer.java'
+        }
         googleJavaFormat()
         paddedCell()
     }
 }
-*/
 
 tasks.withType(com.github.spotbugs.SpotBugsTask) {
     reports {
@@ -106,9 +96,10 @@ jacocoTestReport {
 editorconfig {
     excludes = [
         'gradlew.bat',
-        'src/main/java/edu/cornell/cs/apl/viaduct/imp/parser/*',
         'config/*',
-        'bin/*'
+        'src/main/java/edu/cornell/cs/apl/viaduct/imp/parser/ImpParser.java',
+        'src/main/java/edu/cornell/cs/apl/viaduct/imp/parser/sym.java',
+        'src/main/java/edu/cornell/cs/apl/viaduct/imp/parser/ImpLexer.java',
     ]
 }
 
@@ -120,4 +111,18 @@ dependencies {
     testImplementation group: 'junit', name: 'junit', version: '4.12'
 }
 
-check.dependsOn editorconfigCheck
+check {
+    dependsOn editorconfigCheck
+}
+
+compileJava {
+    dependsOn lexer
+    dependsOn parser
+}
+
+clean {
+    delete 'src/main/java/edu/cornell/cs/apl/viaduct/imp/parser/ImpLexer.java'
+    delete 'src/main/java/edu/cornell/cs/apl/viaduct/imp/parser/ImpParser.java'
+    delete 'src/main/java/edu/cornell/cs/apl/viaduct/imp/parser/sym.java'
+}
+

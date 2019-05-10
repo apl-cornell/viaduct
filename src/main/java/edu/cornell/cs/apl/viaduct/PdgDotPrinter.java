@@ -8,18 +8,20 @@ import guru.nidi.graphviz.attribute.Style;
 import guru.nidi.graphviz.model.Link;
 import guru.nidi.graphviz.model.MutableGraph;
 import guru.nidi.graphviz.model.MutableNode;
-
 import java.util.Map;
 import java.util.Set;
 
 /** prints a PDG into a DOT graph. */
 public class PdgDotPrinter {
-  private static enum GraphData { LABEL, PROTOCOL }
+  private static enum GraphData {
+    LABEL,
+    PROTOCOL
+  }
 
   /** build DOT graph. */
   public static <T extends AstNode> String pdgDotGraph(
       ProgramDependencyGraph<T> pdg,
-      Map<PdgNode<T>,Protocol<T>> protocolMap,
+      Map<PdgNode<T>, Protocol<T>> protocolMap,
       GraphData dataFormat) {
 
     MutableGraph g = mutGraph().setDirected(true);
@@ -64,8 +66,7 @@ public class PdgDotPrinter {
         label = String.format("%s\\n%s", "CONDITIONAL", data);
       }
 
-      MutableNode grNode =
-          mutNode(lineNumStr).add("label", label).add(shape);
+      MutableNode grNode = mutNode(lineNumStr).add("label", label).add(shape);
 
       g.add(grNode);
       for (PdgNode<T> outNode : node.getOutNodes()) {
@@ -73,7 +74,7 @@ public class PdgDotPrinter {
         Style style;
 
         // draw edge as a read channel
-        if (node.isControlNode() && outNode.isStorageNode())  {
+        if (node.isControlNode() && outNode.isStorageNode()) {
           style = Style.DOTTED;
         } else {
           style = Style.SOLID;
@@ -85,15 +86,12 @@ public class PdgDotPrinter {
     return g.toString();
   }
 
-  public static <T extends AstNode> String pdgDotGraphWithLabels(
-      ProgramDependencyGraph<T> pdg)
-  {
+  public static <T extends AstNode> String pdgDotGraphWithLabels(ProgramDependencyGraph<T> pdg) {
     return pdgDotGraph(pdg, null, GraphData.LABEL);
   }
 
   public static <T extends AstNode> String pdgDotGraphWithProtocols(
-      ProgramDependencyGraph<T> pdg, Map<PdgNode<T>,Protocol<T>> protoMap)
-  {
+      ProgramDependencyGraph<T> pdg, Map<PdgNode<T>, Protocol<T>> protoMap) {
     return pdgDotGraph(pdg, protoMap, GraphData.PROTOCOL);
   }
 }

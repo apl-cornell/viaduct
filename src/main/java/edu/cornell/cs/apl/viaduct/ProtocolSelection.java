@@ -2,7 +2,6 @@ package edu.cornell.cs.apl.viaduct;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -25,10 +24,6 @@ public class ProtocolSelection<T extends AstNode> {
 
     HashMap<PdgNode<U>,Protocol<U>> getProtocolMap() {
       return this.protocolMap;
-    }
-
-    int getCost() {
-      return this.cost;
     }
 
     public int compareTo(ProtocolMapNode<U> other) {
@@ -172,6 +167,6 @@ public class ProtocolSelection<T extends AstNode> {
     }
 
     // no mapping found. should be impossible, unless available protocols + host config are bad!
-    return lastAddedNode.getProtocolMap();
+    return lastAddedNode != null ? lastAddedNode.getProtocolMap() : null;
   }
 }

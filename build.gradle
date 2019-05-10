@@ -28,6 +28,7 @@ application {
 
 task parser(type: Exec) {
     workingDir '.'
+    inputs.file(file("src/main/java/edu/cornell/cs/apl/viaduct/imp/parser/ImpLexer.flex"))
     inputs.file(file("src/main/java/edu/cornell/cs/apl/viaduct/imp/parser/ImpParser.cup"))
     outputs.file(file("src/main/java/edu/cornell/cs/apl/viaduct/imp/parser/ImpParser.Java"))
     outputs.file(file("src/main/java/edu/cornell/cs/apl/viaduct/imp/parser/sym.Java"))

@@ -94,6 +94,7 @@ public class Label implements Lattice<Label> {
     return top;
   }
 
+  /** confidentiality projection. */
   public Label confidentiality() {
     // Set<Set<String>> bottomInteg = Label.bottom.integrity;
     Set<Set<String>> bottomInteg = new HashSet<>();
@@ -101,6 +102,7 @@ public class Label implements Lattice<Label> {
     return new Label(this.confidentiality, bottomInteg);
   }
 
+  /** integrity projection. */
   public Label integrity() {
     // Set<Set<String>> bottomConf = Label.bottom.confidentiality;
     Set<Set<String>> bottomConf = new HashSet<>();

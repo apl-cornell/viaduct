@@ -1,8 +1,10 @@
 package edu.cornell.cs.apl.viaduct;
 
 import edu.cornell.cs.apl.viaduct.imp.ImpProtocolCostEstimator;
+import edu.cornell.cs.apl.viaduct.imp.ast.BlockNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ImpAstNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.StmtNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.VarDeclNode;
 import edu.cornell.cs.apl.viaduct.imp.builders.ExpressionBuilder;
 import edu.cornell.cs.apl.viaduct.imp.builders.StmtBuilder;
 import edu.cornell.cs.apl.viaduct.imp.parser.ImpLexer;
@@ -13,7 +15,9 @@ import edu.cornell.cs.apl.viaduct.imp.visitors.PrintVisitor;
 import java.io.FileInputStream;
 import java.io.InputStreamReader;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import java_cup.runtime.DefaultSymbolFactory;
 import java_cup.runtime.Scanner;
@@ -81,6 +85,30 @@ public class Main {
     return prog;
   }
 
+  private static Set<Host> buildHostConfig(StmtNode hostProg)
+      throws Exception
+  {
+    HashSet<Host> hostConfig = new HashSet<>();
+    if (hostProg instanceof BlockNode) {
+      BlockNode hostBlock = (BlockNode)hostProg;
+      List<StmtNode> stmts = hostBlock.getStatements();
+      for (StmtNode stmt : stmts) {
+        if (stmt instanceof VarDeclNode) {
+          VarDeclNode hostDecl = (VarDeclNode)stmt;
+          String hostName = hostDecl.getVariable().toString();
+          Label hostLabel = hostDecl.getLabel();
+          hostConfig.add(new Host(hostName, hostLabel));
+        } else {
+          throw new Exception("Invalid host configuration");
+        }
+      }
+    } else {
+      throw new Exception("Invalid host configuration");
+    }
+
+    return hostConfig;
+  }
+
 
   /** main function. */
   public static void main(String[] args) {
@@ -89,6 +117,8 @@ public class Main {
         .description("Optimizing, extensible MPC compiler.");
     argp.addArgument("file")
         .help("source file to compile");
+    argp.addArgument("-hc", "--host").nargs("?").setDefault("hosts.conf")
+        .help("host configuration file");
     argp.addArgument("-s", "--source").nargs("?").setConst(true).setDefault(false)
         .help("pretty print source program");
     argp.addArgument("-lpdg", "--labelgraph").nargs("?").setConst(true).setDefault(false)
@@ -105,19 +135,37 @@ public class Main {
       System.exit(1);
     }
 
-    StmtNode program = null;
+    SymbolFactory symbolFactory = new DefaultSymbolFactory();
+
+    Set<Host> hostConfig = null;
     try {
-      String filename = ns.getString("file");
-      InputStreamReader reader = new InputStreamReader(new FileInputStream(filename), "UTF-8");
-      SymbolFactory symbolFactory = new DefaultSymbolFactory();
-      Scanner lexer = new ImpLexer(reader, symbolFactory);
-      ImpParser parser = new ImpParser(lexer, symbolFactory);
-      program = (StmtNode)(parser.parse().value);
+      String hostfile = ns.getString("host");
+      InputStreamReader reader = new InputStreamReader(new FileInputStream(hostfile), "UTF-8");
+      Scanner hostLexer = new ImpLexer(reader, symbolFactory);
+      ImpParser hostParser = new ImpParser(hostLexer, symbolFactory);
+      StmtNode hostProg = (StmtNode)(hostParser.parse().value);
+      hostConfig = buildHostConfig(hostProg);
 
     } catch (Exception e) {
       System.out.println(e.getMessage());
       System.exit(0);
     }
+
+    StmtNode program = null;
+    try {
+      String filename = ns.getString("file");
+      InputStreamReader reader = new InputStreamReader(new FileInputStream(filename), "UTF-8");
+      Scanner progLexer = new ImpLexer(reader, symbolFactory);
+      ImpParser progParser = new ImpParser(progLexer, symbolFactory);
+      program = (StmtNode)(progParser.parse().value);
+
+    } catch (Exception e) {
+      System.out.println(e.getMessage());
+      System.exit(0);
+    }
+
+    PrintVisitor printer = new PrintVisitor();
+    String progStr = program.accept(printer);
 
     ImpPdgBuilderVisitor pdgBuilder = new ImpPdgBuilderVisitor();
     program.accept(pdgBuilder);
@@ -127,12 +175,6 @@ public class Main {
     PdgLabelDataflow<ImpAstNode> labelDataflow = new PdgLabelDataflow<>();
     labelDataflow.dataflow(pdg);
 
-    // host configration
-    HashSet<Host> hostConfig = new HashSet<>();
-    hostConfig.add(new Host("God", Label.bottom()));
-    hostConfig.add(new Host("Alice", Label.and("A")));
-    // hostConfig.add(new Host("Chuck", Label.and("C")));
-
     // run protocol selection given a PDG and host config
     ImpProtocolCostEstimator costEstimator = new ImpProtocolCostEstimator();
     ProtocolSelection<ImpAstNode> protoSelection = new ProtocolSelection<>(costEstimator);
@@ -140,8 +182,6 @@ public class Main {
         protoSelection.selectProtocols(hostConfig, pdg);
     int protocolCost = costEstimator.estimatePdgCost(protocolMap, pdg);
 
-    PrintVisitor printer = new PrintVisitor();
-    String progStr = program.accept(printer);
     String labelGraph = PdgDotPrinter.pdgDotGraphWithLabels(pdg);
     String protoGraph = PdgDotPrinter.pdgDotGraphWithProtocols(pdg, protocolMap);
 

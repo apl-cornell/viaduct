@@ -93,6 +93,8 @@ ANY=.*
   ";"             { return symbol(sym.SEMICOLON); }
   ":"             { return symbol(sym.COLON); }
   ","             { return symbol(sym.COMMA); }
+  "⊤"            { return symbol(sym.TOP); }
+  "⊥"            { return symbol(sym.BOTTOM); }
   "if"            { return symbol(sym.IF); }
   "else"          { return symbol(sym.ELSE); }
   "send"          { return symbol(sym.SEND); }

@@ -16,6 +16,7 @@ terminal PLUS;
 terminal LT, LEQ, GT, GEQ, AND, ANDAND, OR, OROR, EQ, NEQ, NOT;
 terminal RARROW, LARROW, ASSIGN;
 terminal OPEN_PAREN, CLOSE_PAREN, OPEN_BRACE, CLOSE_BRACE, SEMICOLON, COLON, COMMA;
+terminal TOP, BOTTOM;
 terminal IF, ELSE, SEND, RECV, TO, FROM, SKIP, DECLASSIFY, ENDORSE;
 
 nonterminal StmtNode program;
@@ -174,6 +175,10 @@ label ::=
 
 label_expr ::=
     CAP_IDENT:id {: RESULT = Label.and(id); :}
+
+  | BOTTOM {: RESULT = Label.bottom(); :}
+
+  | TOP {: RESULT = Label.top(); :}
 
   | label_expr:l1 AND label_expr:l2 {:
       RESULT = Label.and(l1, l2);

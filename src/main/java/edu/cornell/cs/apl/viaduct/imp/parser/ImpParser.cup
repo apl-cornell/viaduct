@@ -5,6 +5,7 @@ import java.util.List;
 
 import edu.cornell.cs.apl.viaduct.imp.ast.*;
 import edu.cornell.cs.apl.viaduct.security.Label;
+import edu.cornell.cs.apl.viaduct.security.Principal;
 
 // You might want to add types to these declarations.
 terminal String IDENT, CAP_IDENT;
@@ -173,14 +174,14 @@ label ::=
   ;
 
 label_expr ::=
-    CAP_IDENT:id {: RESULT = Label.and(id); :}
+    CAP_IDENT:id {: RESULT = new Label(new Principal(id)); :}
 
   | label_expr:l1 AND label_expr:l2 {:
-      RESULT = Label.and(l1, l2);
+      RESULT = l1.and(l2);
     :}
 
   | label_expr:l1 OR label_expr:l2 {:
-      RESULT = Label.or(l1, l2);
+      RESULT = l1.or(l2);
     :}
 
   | label_expr:l RARROW {:

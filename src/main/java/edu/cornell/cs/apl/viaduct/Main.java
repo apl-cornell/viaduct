@@ -10,8 +10,10 @@ import edu.cornell.cs.apl.viaduct.imp.parser.ImpParser;
 import edu.cornell.cs.apl.viaduct.imp.visitors.ImpPdgBuilderVisitor;
 import edu.cornell.cs.apl.viaduct.imp.visitors.PrintVisitor;
 import edu.cornell.cs.apl.viaduct.security.Label;
+import edu.cornell.cs.apl.viaduct.security.Principal;
 import java.io.FileInputStream;
 import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.HashSet;
 import java.util.Map;
 import java_cup.runtime.DefaultSymbolFactory;
@@ -23,60 +25,48 @@ import net.sourceforge.argparse4j.inf.ArgumentParserException;
 import net.sourceforge.argparse4j.inf.Namespace;
 
 public class Main {
-  /** create shell game. */
-  public static StmtNode shellGame() {
-    Label aLabel = Label.and("A");
-    Label cLabel = Label.and("C");
-    Label acAndLabel = Label.and("A", "C");
-    Label acOrLabel = Label.or("A", "C");
-    Label cConf_acAndIntegLabel = new Label(cLabel, acAndLabel);
-    Label aConf_acAndIntegLabel = new Label(aLabel, acAndLabel);
-    Label acOrConf_acAndIntegLabel = new Label(acOrLabel, acAndLabel);
-    ExpressionBuilder e = new ExpressionBuilder();
-    StmtNode shellGame =
-        (new StmtBuilder())
-            .varDecl("cinput", cLabel)
-            .varDecl("ainput", aLabel)
-            .varDecl("shell", cConf_acAndIntegLabel)
-            .varDecl("guess", aConf_acAndIntegLabel)
-            .varDecl("win", acOrConf_acAndIntegLabel)
-            .assign("shell", e.endorse(e.var("cinput"), new Label(cLabel, acAndLabel)))
-            .assign("guess", e.endorse(e.var("ainput"), new Label(aLabel, acAndLabel)))
-            .cond(
-                e.declassify(
-                    e.and(e.leq(e.intLit(1), e.var("shell")), e.leq(e.var("shell"), e.intLit(3))),
-                    acOrConf_acAndIntegLabel),
-                (new StmtBuilder())
-                    .assign(
-                        "win",
-                        e.declassify(
-                            e.equals(e.var("shell"), e.var("guess")), acOrConf_acAndIntegLabel)),
-                (new StmtBuilder()).skip())
-            .build();
+  private static final Label Alice = new Label(new Principal("A"));
+  private static final Label Bob = new Label(new Principal("B"));
+  private static final Label Chuck = new Label(new Principal("C"));
 
-    return shellGame;
+  /** The cups and balls game. */
+  public static StmtNode shellGame() {
+    final Label aliceAndChuck = Alice.and(Chuck);
+    final Label aliceOrChuck = Alice.or(Chuck);
+    final Label shellLabel = Chuck.confidentiality().and(aliceAndChuck.integrity());
+    final Label guessLabel = Alice.confidentiality().and(aliceAndChuck.integrity());
+    final Label winLabel = aliceOrChuck.confidentiality().and(aliceAndChuck.integrity());
+    ExpressionBuilder e = new ExpressionBuilder();
+    return new StmtBuilder()
+        .varDecl("cinput", Chuck)
+        .varDecl("ainput", Alice)
+        .varDecl("shell", shellLabel)
+        .varDecl("guess", guessLabel)
+        .varDecl("win", winLabel)
+        .assign("shell", e.endorse(e.var("cinput"), shellLabel))
+        .assign("guess", e.endorse(e.var("ainput"), guessLabel))
+        .cond(
+            e.declassify(
+                e.and(e.leq(e.intLit(1), e.var("shell")), e.leq(e.var("shell"), e.intLit(3))),
+                winLabel),
+            (new StmtBuilder())
+                .assign("win", e.declassify(e.equals(e.var("shell"), e.var("guess")), winLabel)),
+            (new StmtBuilder()).skip())
+        .build();
   }
 
-  /** milionaire's problem. */
+  /** The millionaire's problem. */
   public static StmtNode millionaires() {
     ExpressionBuilder e = new ExpressionBuilder();
-    // Label aLabel = new Label(Label.and("A"), Label.and("A","B"));
-    // Label bLabel = new Label(Label.and("B"), Label.and("A","B"));
-    Label aLabel = Label.and("A");
-    Label bLabel = Label.and("B");
-    Label abAndLabel = Label.and("A", "B");
-    Label abOrLabel = Label.or("A", "B");
-    Label abOrConf_abAndIntegLabel = new Label(abOrLabel, abAndLabel);
-    StmtNode prog =
-        (new StmtBuilder())
-            .varDecl("a", aLabel)
-            .varDecl("b", bLabel)
-            .varDecl("b_richer", abOrConf_abAndIntegLabel)
-            .assign(
-                "b_richer", e.declassify(e.lt(e.var("a"), e.var("b")), abOrConf_abAndIntegLabel))
-            .build();
-
-    return prog;
+    final Label aliceAndBob = Alice.and(Bob);
+    final Label aliceOrBob = Alice.or(Bob);
+    final Label resultLabel = aliceOrBob.confidentiality().and(aliceAndBob.integrity());
+    return new StmtBuilder()
+        .varDecl("a", Alice)
+        .varDecl("b", Bob)
+        .varDecl("b_richer", resultLabel)
+        .assign("b_richer", e.declassify(e.lt(e.var("a"), e.var("b")), resultLabel))
+        .build();
   }
 
   /** main function. */
@@ -115,12 +105,12 @@ public class Main {
     StmtNode program = null;
     try {
       String filename = ns.getString("file");
-      InputStreamReader reader = new InputStreamReader(new FileInputStream(filename), "UTF-8");
+      InputStreamReader reader =
+          new InputStreamReader(new FileInputStream(filename), StandardCharsets.UTF_8);
       SymbolFactory symbolFactory = new DefaultSymbolFactory();
       Scanner lexer = new ImpLexer(reader, symbolFactory);
       ImpParser parser = new ImpParser(lexer, symbolFactory);
       program = (StmtNode) (parser.parse().value);
-
     } catch (Exception e) {
       System.out.println(e.getMessage());
       System.exit(0);
@@ -137,7 +127,7 @@ public class Main {
     // host configration
     HashSet<Host> hostConfig = new HashSet<>();
     hostConfig.add(new Host("God", Label.bottom()));
-    hostConfig.add(new Host("Alice", Label.and("A")));
+    hostConfig.add(new Host("Alice", Alice));
     // hostConfig.add(new Host("Chuck", Label.and("C")));
 
     // run protocol selection given a PDG and host config

@@ -1,5 +1,7 @@
 package edu.cornell.cs.apl.viaduct;
 
+import edu.cornell.cs.apl.viaduct.security.Label;
+
 /** PDG node for control flow statements. */
 public class PdgControlNode<T extends AstNode> extends PdgNode<T> {
   /** constructor that sets in and out labels to be the same. */

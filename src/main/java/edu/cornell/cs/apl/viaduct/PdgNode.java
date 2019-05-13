@@ -1,5 +1,6 @@
 package edu.cornell.cs.apl.viaduct;
 
+import edu.cornell.cs.apl.viaduct.security.Label;
 import java.util.HashSet;
 import java.util.Set;
 

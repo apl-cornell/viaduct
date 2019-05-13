@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import edu.cornell.cs.apl.viaduct.imp.ast.*;
-import edu.cornell.cs.apl.viaduct.Label;
+import edu.cornell.cs.apl.viaduct.security.Label;
 
 // You might want to add types to these declarations.
 terminal String IDENT, CAP_IDENT;

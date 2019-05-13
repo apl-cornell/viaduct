@@ -9,6 +9,7 @@ import edu.cornell.cs.apl.viaduct.imp.parser.ImpLexer;
 import edu.cornell.cs.apl.viaduct.imp.parser.ImpParser;
 import edu.cornell.cs.apl.viaduct.imp.visitors.ImpPdgBuilderVisitor;
 import edu.cornell.cs.apl.viaduct.imp.visitors.PrintVisitor;
+import edu.cornell.cs.apl.viaduct.security.Label;
 import java.io.FileInputStream;
 import java.io.InputStreamReader;
 import java.util.HashSet;

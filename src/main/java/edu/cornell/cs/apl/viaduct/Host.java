@@ -1,15 +1,20 @@
 package edu.cornell.cs.apl.viaduct;
 
+import edu.cornell.cs.apl.viaduct.security.Label;
+
 /** describes an abstract machine / principal with a given trust label. */
 public class Host {
+  private static final Host defaultHost = new Host("__DEFAULT__", Label.bottom());
   final String name;
   final Label label;
-
-  private static final Host defaultHost = new Host("__DEFAULT__", Label.bottom());
 
   public Host(String name, Label label) {
     this.name = name;
     this.label = label;
+  }
+
+  public static Host getDefault() {
+    return defaultHost;
   }
 
   public String getName() {
@@ -18,10 +23,6 @@ public class Host {
 
   public Label getLabel() {
     return this.label;
-  }
-
-  public static Host getDefault() {
-    return defaultHost;
   }
 
   @Override

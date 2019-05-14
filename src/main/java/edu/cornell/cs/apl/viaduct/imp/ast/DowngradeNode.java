@@ -1,7 +1,7 @@
 package edu.cornell.cs.apl.viaduct.imp.ast;
 
-import edu.cornell.cs.apl.viaduct.Label;
 import edu.cornell.cs.apl.viaduct.imp.visitors.ExprVisitor;
+import edu.cornell.cs.apl.viaduct.security.Label;
 
 /** Reduce the confidentiality and/or integrity of the result of an expression. */
 public class DowngradeNode extends ExpressionNode {

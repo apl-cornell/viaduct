@@ -1,15 +1,17 @@
 plugins {
     id 'java'
     id 'application'
-    id 'com.github.johnrengelman.shadow' version '5.0.0'
+//    id 'com.github.johnrengelman.shadow' version '5.0.0'
 
+    // Style checking
     id 'checkstyle'
     id "com.diffplug.gradle.spotless" version "3.18.0"
+    id "org.ec4j.editorconfig" version "0.0.3"
+
+    // Bug finding
     id 'com.github.spotbugs' version '1.6.9'
     // id 'pmd'
-
     id 'jacoco'
-    id "org.ec4j.editorconfig" version "0.0.3"
 }
 
 group 'edu.cornell.cs.apl'
@@ -31,9 +33,9 @@ jar {
     }
 }
 
-shadowJar {
-    baseName = 'viaduct'
-}
+//shadowJar {
+//    baseName = 'viaduct'
+//}
 
 
 task parser(type: Exec) {
@@ -88,8 +90,8 @@ tasks.withType(com.github.spotbugs.SpotBugsTask) {
 
 jacocoTestReport {
     reports {
-        xml.enabled true
-        html.enabled true
+        xml.enabled = true
+        html.enabled = true
     }
 }
 
@@ -104,6 +106,7 @@ editorconfig {
 }
 
 dependencies {
+    implementation group: 'io.vavr', name: 'vavr', version: '0.9.3'
     implementation group: 'guru.nidi', name: 'graphviz-java', version: '0.8.3'
     implementation group: 'net.sourceforge.argparse4j', name: 'argparse4j', version: '0.8.1'
     implementation files('lib/java_cup.jar')

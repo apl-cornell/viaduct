@@ -11,13 +11,15 @@ import edu.cornell.cs.apl.viaduct.imp.parser.ImpLexer;
 import edu.cornell.cs.apl.viaduct.imp.parser.ImpParser;
 import edu.cornell.cs.apl.viaduct.imp.visitors.ImpPdgBuilderVisitor;
 import edu.cornell.cs.apl.viaduct.imp.visitors.PrintVisitor;
+import edu.cornell.cs.apl.viaduct.security.Label;
+import edu.cornell.cs.apl.viaduct.security.Principal;
 import java.io.FileInputStream;
 import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
 import java_cup.runtime.DefaultSymbolFactory;
 import java_cup.runtime.Scanner;
 import java_cup.runtime.SymbolFactory;
@@ -27,72 +29,58 @@ import net.sourceforge.argparse4j.inf.ArgumentParserException;
 import net.sourceforge.argparse4j.inf.Namespace;
 
 public class Main {
-  /** create shell game. */
+  private static final Label Alice = new Label(new Principal("A"));
+  private static final Label Bob = new Label(new Principal("B"));
+  private static final Label Chuck = new Label(new Principal("C"));
+
+  /** The cups and balls game. */
   public static StmtNode shellGame() {
-    Label aLabel = Label.and("A");
-    Label cLabel = Label.and("C");
-    Label acAndLabel = Label.and("A", "C");
-    Label acOrLabel = Label.or("A", "C");
-    Label cConf_acAndIntegLabel = new Label(cLabel, acAndLabel);
-    Label aConf_acAndIntegLabel = new Label(aLabel, acAndLabel);
-    Label acOrConf_acAndIntegLabel = new Label(acOrLabel, acAndLabel);
+    final Label aliceAndChuck = Alice.and(Chuck);
+    final Label aliceOrChuck = Alice.or(Chuck);
+    final Label shellLabel = Chuck.confidentiality().and(aliceAndChuck.integrity());
+    final Label guessLabel = Alice.confidentiality().and(aliceAndChuck.integrity());
+    final Label winLabel = aliceOrChuck.confidentiality().and(aliceAndChuck.integrity());
     ExpressionBuilder e = new ExpressionBuilder();
-    StmtNode shellGame =
-        (new StmtBuilder())
-            .varDecl("cinput", cLabel)
-            .varDecl("ainput", aLabel)
-            .varDecl("shell", cConf_acAndIntegLabel)
-            .varDecl("guess", aConf_acAndIntegLabel)
-            .varDecl("win", acOrConf_acAndIntegLabel)
-            .assign("shell", e.endorse(e.var("cinput"), new Label(cLabel, acAndLabel)))
-            .assign("guess", e.endorse(e.var("ainput"), new Label(aLabel, acAndLabel)))
-            .cond(
-                e.declassify(
-                    e.and(e.leq(e.intLit(1), e.var("shell")), e.leq(e.var("shell"), e.intLit(3))),
-                    acOrConf_acAndIntegLabel),
-                (new StmtBuilder())
-                    .assign(
-                        "win",
-                        e.declassify(
-                            e.equals(e.var("shell"), e.var("guess")), acOrConf_acAndIntegLabel)),
-                (new StmtBuilder()).skip())
-            .build();
-
-    return shellGame;
+    return new StmtBuilder()
+        .varDecl("cinput", Chuck)
+        .varDecl("ainput", Alice)
+        .varDecl("shell", shellLabel)
+        .varDecl("guess", guessLabel)
+        .varDecl("win", winLabel)
+        .assign("shell", e.endorse(e.var("cinput"), shellLabel))
+        .assign("guess", e.endorse(e.var("ainput"), guessLabel))
+        .cond(
+            e.declassify(
+                e.and(e.leq(e.intLit(1), e.var("shell")), e.leq(e.var("shell"), e.intLit(3))),
+                winLabel),
+            (new StmtBuilder())
+                .assign("win", e.declassify(e.equals(e.var("shell"), e.var("guess")), winLabel)),
+            (new StmtBuilder()).skip())
+        .build();
   }
 
-  /** milionaire's problem. */
-  public static StmtNode millionaires() {
+  /** The millionaire's problem. */
+  public static StmtNode millionaire() {
     ExpressionBuilder e = new ExpressionBuilder();
-    // Label aLabel = new Label(Label.and("A"), Label.and("A","B"));
-    // Label bLabel = new Label(Label.and("B"), Label.and("A","B"));
-    Label aLabel = Label.and("A");
-    Label bLabel = Label.and("B");
-    Label abAndLabel = Label.and("A", "B");
-    Label abOrLabel = Label.or("A", "B");
-    Label abOrConf_abAndIntegLabel = new Label(abOrLabel, abAndLabel);
-    StmtNode prog =
-        (new StmtBuilder())
-            .varDecl("a", aLabel)
-            .varDecl("b", bLabel)
-            .varDecl("b_richer", abOrConf_abAndIntegLabel)
-            .assign(
-                "b_richer", e.declassify(e.lt(e.var("a"), e.var("b")), abOrConf_abAndIntegLabel))
-            .build();
-
-    return prog;
+    final Label aliceAndBob = Alice.and(Bob);
+    final Label aliceOrBob = Alice.or(Bob);
+    final Label resultLabel = aliceOrBob.confidentiality().and(aliceAndBob.integrity());
+    return new StmtBuilder()
+        .varDecl("a", Alice)
+        .varDecl("b", Bob)
+        .varDecl("b_richer", resultLabel)
+        .assign("b_richer", e.declassify(e.lt(e.var("a"), e.var("b")), resultLabel))
+        .build();
   }
 
-  private static Set<Host> buildHostConfig(StmtNode hostProg)
-      throws Exception
-  {
+  private static Set<Host> buildHostConfig(StmtNode hostProg) throws Exception {
     HashSet<Host> hostConfig = new HashSet<>();
     if (hostProg instanceof BlockNode) {
-      BlockNode hostBlock = (BlockNode)hostProg;
+      BlockNode hostBlock = (BlockNode) hostProg;
       List<StmtNode> stmts = hostBlock.getStatements();
       for (StmtNode stmt : stmts) {
         if (stmt instanceof VarDeclNode) {
-          VarDeclNode hostDecl = (VarDeclNode)stmt;
+          VarDeclNode hostDecl = (VarDeclNode) stmt;
           String hostName = hostDecl.getVariable().toString();
           Label hostLabel = hostDecl.getLabel();
           hostConfig.add(new Host(hostName, hostLabel));
@@ -107,17 +95,22 @@ public class Main {
     return hostConfig;
   }
 
-
-  /** main function. */
+  /** Run the compiler. */
   public static void main(String[] args) {
-    ArgumentParser argp = ArgumentParsers.newFor("viaduct").build()
-        .defaultHelp(true)
-        .description("Optimizing, extensible MPC compiler.");
-    argp.addArgument("file")
-        .help("source file to compile");
-    argp.addArgument("-hc", "--host").nargs("?").setDefault("hosts.conf")
+    ArgumentParser argp =
+        ArgumentParsers.newFor("viaduct")
+            .build()
+            .defaultHelp(true)
+            .description("Optimizing, extensible MPC compiler.");
+    argp.addArgument("file").help("source file to compile");
+    argp.addArgument("-hc", "--host")
+        .nargs("?")
+        .setDefault("hosts.conf")
         .help("host configuration file");
-    argp.addArgument("-s", "--source").nargs("?").setConst(true).setDefault(false)
+    argp.addArgument("-s", "--source")
+        .nargs("?")
+        .setConst(true)
+        .setDefault(false)
         .help("pretty print source program");
     argp.addArgument("-lpdg", "--labelgraph")
         .nargs("?")
@@ -144,10 +137,11 @@ public class Main {
     Set<Host> hostConfig = null;
     try {
       String hostfile = ns.getString("host");
-      InputStreamReader reader = new InputStreamReader(new FileInputStream(hostfile), "UTF-8");
+      InputStreamReader reader =
+          new InputStreamReader(new FileInputStream(hostfile), StandardCharsets.UTF_8);
       Scanner hostLexer = new ImpLexer(reader, symbolFactory);
       ImpParser hostParser = new ImpParser(hostLexer, symbolFactory);
-      StmtNode hostProg = (StmtNode)(hostParser.parse().value);
+      StmtNode hostProg = (StmtNode) (hostParser.parse().value);
       hostConfig = buildHostConfig(hostProg);
 
     } catch (Exception e) {
@@ -158,10 +152,11 @@ public class Main {
     StmtNode program = null;
     try {
       String filename = ns.getString("file");
-      InputStreamReader reader = new InputStreamReader(new FileInputStream(filename), "UTF-8");
+      InputStreamReader reader =
+          new InputStreamReader(new FileInputStream(filename), StandardCharsets.UTF_8);
       Scanner progLexer = new ImpLexer(reader, symbolFactory);
       ImpParser progParser = new ImpParser(progLexer, symbolFactory);
-      program = (StmtNode)(progParser.parse().value);
+      program = (StmtNode) (progParser.parse().value);
 
     } catch (Exception e) {
       System.out.println(e.getMessage());
@@ -205,7 +200,7 @@ public class Main {
         String astStr = node.getAstNode().toString();
 
         Protocol<ImpAstNode> proto = protocolMap.get(node);
-        String protoStr = null;
+        String protoStr;
         if (proto == null) {
           synthesizedProto = false;
           protoStr = "NO PROTOCOL";
@@ -213,7 +208,7 @@ public class Main {
           protoStr = proto.toString();
         }
 
-        String labelStr = "";
+        String labelStr;
         if (node.isDowngradeNode()) {
           labelStr = node.getInLabel().toString() + " / " + node.getOutLabel().toString();
         } else {

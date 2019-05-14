@@ -1,5 +1,7 @@
 package edu.cornell.cs.apl.viaduct;
 
+import edu.cornell.cs.apl.viaduct.security.Label;
+
 /** PDG storage node, which represents declared variables. */
 public class PdgStorageNode<T extends AstNode> extends PdgNode<T> {
   /** constructor that sets in and out labels to be the same. */

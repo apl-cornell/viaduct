@@ -1,7 +1,6 @@
 package edu.cornell.cs.apl.viaduct.imp.visitors;
 
 import edu.cornell.cs.apl.viaduct.AbstractLineNumber;
-import edu.cornell.cs.apl.viaduct.Label;
 import edu.cornell.cs.apl.viaduct.PdgComputeNode;
 import edu.cornell.cs.apl.viaduct.PdgControlNode;
 import edu.cornell.cs.apl.viaduct.PdgNode;
@@ -31,6 +30,7 @@ import edu.cornell.cs.apl.viaduct.imp.ast.SkipNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.StmtNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.VarDeclNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.Variable;
+import edu.cornell.cs.apl.viaduct.security.Label;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;

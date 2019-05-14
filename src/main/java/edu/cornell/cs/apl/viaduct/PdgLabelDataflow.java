@@ -1,5 +1,7 @@
 package edu.cornell.cs.apl.viaduct;
 
+import edu.cornell.cs.apl.viaduct.security.Label;
+
 public class PdgLabelDataflow<T extends AstNode> extends PdgDataflow<Label, T> {
   protected Label input(PdgNode<T> node) {
     return node.getInLabel();

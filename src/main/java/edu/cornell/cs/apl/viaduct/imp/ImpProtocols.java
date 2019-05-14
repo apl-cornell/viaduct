@@ -1,10 +1,10 @@
 package edu.cornell.cs.apl.viaduct.imp;
 
 import edu.cornell.cs.apl.viaduct.Host;
-import edu.cornell.cs.apl.viaduct.Label;
 import edu.cornell.cs.apl.viaduct.PdgNode;
 import edu.cornell.cs.apl.viaduct.Protocol;
 import edu.cornell.cs.apl.viaduct.imp.ast.ImpAstNode;
+import edu.cornell.cs.apl.viaduct.security.Label;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;

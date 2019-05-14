@@ -108,7 +108,7 @@ ANY=.*
   "endorse"       { return symbol(sym.ENDORSE); }
   "/*"            { commentLevel++; yybegin(COMMENT); }
 
-  {NUM} { return symbol(sym.INT_LIT, new Integer(yytext())); }
+  {NUM} { return symbol(sym.INT_LIT, Integer.valueOf(yytext())); }
 
   {CAPALPHANUM}  { return symbol(sym.CAP_IDENT, yytext()); }
 

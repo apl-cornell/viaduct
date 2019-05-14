@@ -1,6 +1,5 @@
 package edu.cornell.cs.apl.viaduct.imp.builders;
 
-import edu.cornell.cs.apl.viaduct.Label;
 import edu.cornell.cs.apl.viaduct.imp.ast.AssignNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.BlockNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ExpressionNode;
@@ -9,6 +8,7 @@ import edu.cornell.cs.apl.viaduct.imp.ast.SkipNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.StmtNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.VarDeclNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.Variable;
+import edu.cornell.cs.apl.viaduct.security.Label;
 import java.util.ArrayList;
 import java.util.List;
 

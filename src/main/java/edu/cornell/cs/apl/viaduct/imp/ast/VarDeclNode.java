@@ -1,7 +1,7 @@
 package edu.cornell.cs.apl.viaduct.imp.ast;
 
-import edu.cornell.cs.apl.viaduct.Label;
 import edu.cornell.cs.apl.viaduct.imp.visitors.StmtVisitor;
+import edu.cornell.cs.apl.viaduct.security.Label;
 
 /** Variable declaration. */
 public class VarDeclNode extends StmtNode {

@@ -6,12 +6,8 @@ import java.util.Objects;
  * A lattice for information flow security. It is a standard bounded lattice that additionally
  * supports confidentiality and integrity projections. Information flows from less restrictive
  * contexts to more restrictive ones.
- *
- * <p>In an information flow lattice, {@link static bottom()} is the least restrictive context and
- * corresponds to public and trusted information. Dually, {@link static top()} is private and
- * untrusted. Everything else lies in between these two extremes.
  */
-public class Label implements Lattice<Label> {
+public class Label implements Lattice<Label>, TrustLattice<Label> {
   private static final Label bottom =
       new Label(FreeDistributiveLattice.top(), FreeDistributiveLattice.bottom());
 
@@ -86,19 +82,13 @@ public class Label implements Lattice<Label> {
     return new Label(FreeDistributiveLattice.top(), this.integrity);
   }
 
-  /**
-   * Decides if {@code this} (interpreted as a principal) is trusted to enforce {@code other}'s
-   * policies.
-   */
+  @Override
   public boolean actsFor(Label other) {
     return this.confidentiality.lessThanOrEqualTo(other.confidentiality)
         && this.integrity.lessThanOrEqualTo(other.integrity);
   }
 
-  /**
-   * The least powerful principal that can act for both {@code this} and {@code with}. That is,
-   * {@code and} denotes a conjunction of authority.
-   */
+  @Override
   public Label and(Label with) {
     final FreeDistributiveLattice<Principal> confidentiality =
         this.confidentiality.meet(with.confidentiality);
@@ -106,10 +96,7 @@ public class Label implements Lattice<Label> {
     return new Label(confidentiality, integrity);
   }
 
-  /**
-   * The most powerful principal both {@code this} and {@code with} can act for. That is, {@code or}
-   * denotes a disjunction of authority.
-   */
+  @Override
   public Label or(Label with) {
     final FreeDistributiveLattice<Principal> confidentiality =
         this.confidentiality.join(with.confidentiality);

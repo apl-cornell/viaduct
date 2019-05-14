@@ -56,7 +56,7 @@ public class Main {
   }
 
   /** The millionaire's problem. */
-  public static StmtNode millionaires() {
+  public static StmtNode millionaire() {
     ExpressionBuilder e = new ExpressionBuilder();
     final Label aliceAndBob = Alice.and(Bob);
     final Label aliceOrBob = Alice.or(Bob);
@@ -69,7 +69,7 @@ public class Main {
         .build();
   }
 
-  /** main function. */
+  /** Run the compiler. */
   public static void main(String[] args) {
     ArgumentParser argp =
         ArgumentParsers.newFor("viaduct")

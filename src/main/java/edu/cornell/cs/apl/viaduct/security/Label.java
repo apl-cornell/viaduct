@@ -126,8 +126,8 @@ public class Label implements Lattice<Label>, TrustLattice<Label> {
 
   @Override
   public String toString() {
-    final String confidentialityString = this.confidentiality.toString() + "<-";
-    final String integrityString = this.integrity.toString() + "->";
+    final String confidentialityString = this.confidentiality.toString() + "->";
+    final String integrityString = this.integrity.toString() + "<-";
 
     if (this.confidentiality.equals(this.integrity)) {
       return this.confidentiality.toString();

@@ -60,8 +60,8 @@ LineTerminator = \r|\n|\r\n
 /* White space is a line terminator, space, tab, or line feed. */
 Whitespace     = {LineTerminator} | [ \t\f]
 
-ALPHANUM=[A-Za-z]([A-Za-z0-9])*
-CAPALPHANUM=[A-Z]([A-Z0-9])*
+ALPHANUM=[A-Za-z_]([A-Za-z0-9_])*
+CAPALPHANUM=[A-Z_]([A-Z0-9_])*
 NUM=[0-9]
 ANY=.*
 

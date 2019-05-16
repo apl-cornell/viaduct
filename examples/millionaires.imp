@@ -1,5 +1,5 @@
 /* the classic MPC problem */
 a : {A};
 c : {C};
-cricher : {((A|C)->) & ((A&C)<-)};
-cricher := declassify(a <= c, {((A|C)->) & ((A&C)<-)});
+c_richer : {((A|C)->) & ((A&C)<-)};
+c_richer := declassify(a <= c, {((A|C)->) & ((A&C)<-)});

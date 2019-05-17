@@ -15,8 +15,6 @@
 <FindBugsFilter>
   <!-- Ignore checking for generated parser classes -->
   <Match>
-    <Or>
-      <Package name="~.*\.parser" />
-    </Or>
+    <Package name="~.*\.parser" />
   </Match>
 </FindBugsFilter>

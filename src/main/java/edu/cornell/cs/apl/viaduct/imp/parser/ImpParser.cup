@@ -10,6 +10,7 @@ import edu.cornell.cs.apl.viaduct.security.Principal;
 // You might want to add types to these declarations.
 terminal String IDENT, CAP_IDENT;
 terminal Integer INT_LIT;
+terminal String ANNOTATION;
 terminal TRUE, FALSE;
 
 // terminal PLUS, MINUS, TIMES, DIVIDE;
@@ -95,6 +96,10 @@ stmt_complex ::=
 
   | IF OPEN_PAREN expr:guard CLOSE_PAREN OPEN_BRACE block:bthen CLOSE_BRACE {:
       RESULT = new IfNode(guard, bthen, new SkipNode());
+    :}
+
+  | ANNOTATION:annot {:
+      RESULT = new AnnotationNode(annot);
     :}
   ;
 

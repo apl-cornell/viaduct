@@ -9,6 +9,7 @@ import edu.cornell.cs.apl.viaduct.ProgramDependencyGraph;
 import edu.cornell.cs.apl.viaduct.SymbolTable;
 import edu.cornell.cs.apl.viaduct.UndeclaredVariableException;
 import edu.cornell.cs.apl.viaduct.imp.ast.AndNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.AnnotationNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.AssignNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.BinaryExpressionNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.BlockNode;
@@ -278,6 +279,10 @@ public class ImpPdgBuilderVisitor
 
   /** send/recvs should not be in surface programs and thus should not be in the generated PDG. */
   public Set<PdgNode<ImpAstNode>> visit(RecvNode recvNode) {
+    return new HashSet<PdgNode<ImpAstNode>>();
+  }
+
+  public Set<PdgNode<ImpAstNode>> visit(AnnotationNode annotNode) {
     return new HashSet<PdgNode<ImpAstNode>>();
   }
 }

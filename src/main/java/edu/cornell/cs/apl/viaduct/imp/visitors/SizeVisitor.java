@@ -1,6 +1,7 @@
 package edu.cornell.cs.apl.viaduct.imp.visitors;
 
 import edu.cornell.cs.apl.viaduct.imp.ast.AndNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.AnnotationNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.AssignNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.BinaryExpressionNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.BlockNode;
@@ -110,5 +111,10 @@ public class SizeVisitor implements AstVisitor<Integer> {
   /** give size to recv. */
   public Integer visit(RecvNode recvNode) {
     return 1;
+  }
+
+  /** give size to annotation (none). */
+  public Integer visit(AnnotationNode annotNode) {
+    return 0;
   }
 }

@@ -1,5 +1,6 @@
 package edu.cornell.cs.apl.viaduct.imp.visitors;
 
+import edu.cornell.cs.apl.viaduct.imp.ast.AnnotationNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.AssignNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.BlockNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.IfNode;
@@ -23,4 +24,6 @@ public interface StmtVisitor<R> {
   R visit(SendNode sendNode);
 
   R visit(RecvNode recvNode);
+
+  R visit(AnnotationNode annotNode);
 }

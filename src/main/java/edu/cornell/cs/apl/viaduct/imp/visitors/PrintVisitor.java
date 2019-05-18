@@ -1,6 +1,7 @@
 package edu.cornell.cs.apl.viaduct.imp.visitors;
 
 import edu.cornell.cs.apl.viaduct.imp.ast.AndNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.AnnotationNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.AssignNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.BinaryExpressionNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.BlockNode;
@@ -169,5 +170,9 @@ public class PrintVisitor implements AstVisitor<String> {
     String senderStr = recvNode.getSender();
     String varStr = recvNode.getVar().toString();
     return String.format("%s <- recv from %s", varStr, senderStr);
+  }
+
+  public String visit(AnnotationNode annotNode) {
+    return String.format("%n@%s", annotNode.getAnnotation());
   }
 }

@@ -50,8 +50,8 @@ import java_cup.runtime.Symbol;
 /* switch line counting on */
 %line
 
-/* declare a new lexical state */
-%state COMMENT
+/* declare new lexical states */
+%state COMMENT, ANNOTATION
 
 /* macro */
 /* A line terminator is a \r (carriage return), \n (line feed), or
@@ -68,6 +68,7 @@ ANY=.*
 %%
 
 <YYINITIAL> {
+  "@"            { yybegin(ANNOTATION); }
   "+"             { return symbol(sym.PLUS); }
   // "-"             { return symbol(sym.MINUS); }
   // "*"             { return symbol(sym.TIMES); }
@@ -115,6 +116,12 @@ ANY=.*
   {ALPHANUM}  { return symbol(sym.IDENT, yytext()); }
 
   {Whitespace} { /* do nothing */ }
+}
+
+<ANNOTATION> {
+  [^\R]*     { return symbol(sym.ANNOTATION, yytext()); }
+
+  {LineTerminator}         { yybegin(YYINITIAL); }
 }
 
 <COMMENT> {

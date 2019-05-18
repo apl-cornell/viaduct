@@ -10,4 +10,8 @@ public abstract class StmtNode extends ImpAstNode {
   public <R> R accept(AstVisitor<R> v) {
     return this.accept((StmtVisitor<R>) v);
   }
+
+  public boolean isAnnotation() {
+    return false;
+  }
 }

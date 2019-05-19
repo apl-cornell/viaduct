@@ -27,7 +27,8 @@ nonterminal StmtNode stmt_basic, stmt_complex, block;
 nonterminal ExpressionNode expr;
 nonterminal Label label, label_expr;
 
-precedence left PLUS, EQ, NEQ, LT, LEQ, GT, GEQ, ANDAND, OROR, LARROW, RARROW, AND, OR;
+precedence left ANDAND, OROR;
+precedence left PLUS, EQ, NEQ, LT, LEQ, GT, GEQ, LARROW, RARROW, AND, OR;
 precedence left LARROW, RARROW, NOT;
 precedence left OPEN_PAREN, CLOSE_PAREN;
 
@@ -89,17 +90,17 @@ stmt_basic ::=
   ;
 
 stmt_complex ::=
-    IF OPEN_PAREN expr:guard CLOSE_PAREN OPEN_BRACE block:bthen CLOSE_BRACE
+    ANNOTATION:annot {:
+      RESULT = new AnnotationNode(annot);
+    :}
+
+  | IF OPEN_PAREN expr:guard CLOSE_PAREN OPEN_BRACE block:bthen CLOSE_BRACE
     ELSE OPEN_BRACE block:belse CLOSE_BRACE {:
       RESULT = new IfNode(guard, bthen, belse);
     :}
 
   | IF OPEN_PAREN expr:guard CLOSE_PAREN OPEN_BRACE block:bthen CLOSE_BRACE {:
       RESULT = new IfNode(guard, bthen, new SkipNode());
-    :}
-
-  | ANNOTATION:annot {:
-      RESULT = new AnnotationNode(annot);
     :}
   ;
 

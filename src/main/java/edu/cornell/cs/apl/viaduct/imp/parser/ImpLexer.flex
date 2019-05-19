@@ -37,13 +37,13 @@ import java_cup.runtime.Symbol;
   }
 
   private Symbol symbol(int type) {
-      return symbolFactory.newSymbol(sym.terminalNames[type], type);
+    return symbolFactory.newSymbol(sym.terminalNames[type], type);
   }
 
   /* Also creates a new java_cup.runtime.Symbol with information
       about the current token, but this object has a value. */
   private Symbol symbol(int type, Object value) {
-      return symbolFactory.newSymbol(sym.terminalNames[type], type, value);
+    return symbolFactory.newSymbol(sym.terminalNames[type], type, value);
   }
 %}
 
@@ -109,19 +109,19 @@ ANY=.*
   "endorse"       { return symbol(sym.ENDORSE); }
   "/*"            { commentLevel++; yybegin(COMMENT); }
 
-  {NUM} { return symbol(sym.INT_LIT, Integer.valueOf(yytext())); }
+  {NUM}           { return symbol(sym.INT_LIT, Integer.valueOf(yytext())); }
 
-  {CAPALPHANUM}  { return symbol(sym.CAP_IDENT, yytext()); }
+  {CAPALPHANUM}   { return symbol(sym.CAP_IDENT, yytext()); }
 
-  {ALPHANUM}  { return symbol(sym.IDENT, yytext()); }
+  {ALPHANUM}      { return symbol(sym.IDENT, yytext()); }
 
-  {Whitespace} { /* do nothing */ }
+  {Whitespace}    { /* do nothing */ }
 }
 
 <ANNOTATION> {
-  [^\R]*     { return symbol(sym.ANNOTATION, yytext()); }
+  [^\n]*          { return symbol(sym.ANNOTATION, yytext()); }
 
-  {LineTerminator}         { yybegin(YYINITIAL); }
+  \n              { yybegin(YYINITIAL); }
 }
 
 <COMMENT> {

@@ -3,7 +3,9 @@ package edu.cornell.cs.apl.viaduct.imp.ast;
 import edu.cornell.cs.apl.viaduct.imp.visitors.ExprVisitor;
 
 /** Boolean literal. */
-public class BooleanLiteralNode extends LiteralNode<Boolean> {
+public class BooleanLiteralNode
+    extends LiteralNode<Boolean> implements ImpValue {
+
   public BooleanLiteralNode(boolean value) {
     super(value);
   }

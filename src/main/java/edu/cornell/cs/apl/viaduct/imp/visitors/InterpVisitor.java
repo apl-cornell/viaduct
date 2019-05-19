@@ -150,6 +150,7 @@ public class InterpVisitor
     return null;
   }
 
+  /** interpret a statement in an InterpAnnotation. */
   public Void visit(AnnotationNode annotNode) {
     ImpAnnotation annot = annotNode.getAnnotation();
     if (annot != null) {

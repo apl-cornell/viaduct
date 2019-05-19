@@ -21,6 +21,7 @@ public class ImpAnnotationProcessors {
   }
 
   public static class InterpAnnotationProcessor implements ImpAnnotationProcessor {
+    /** parse an annotation into a statement. */
     public ImpAnnotation processAnnotation(AnnotationNode annot) {
       try {
         StringReader reader = new StringReader(annot.getAnnotationString());

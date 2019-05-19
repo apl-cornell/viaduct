@@ -1,8 +1,3 @@
-/* Example JFlex grammar file
- * The generated lexer class will have an API as specified here:
- * http://jflex.de/manual.html#ScannerMethods
-**/
-
 package edu.cornell.cs.apl.viaduct.imp.parser;
 
 import java.io.Reader;

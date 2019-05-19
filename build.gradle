@@ -12,6 +12,10 @@ plugins {
     id 'com.github.spotbugs' version '1.6.9'
     // id 'pmd'
     id 'jacoco'
+
+    // Lexing & Parsing
+    id "org.xbib.gradle.plugin.jflex" version "1.2.0"
+    id "cup.gradle.cup-gradle-plugin" version "1.2"
 }
 
 group 'edu.cornell.cs.apl'
@@ -33,47 +37,28 @@ jar {
     }
 }
 
+cup {
+    args = [
+        "-package", "edu.cornell.cs.apl.viaduct.imp.parser",
+        "-interface",
+        "-parser", "ImpParser"
+    ]
+}
+
 //shadowJar {
 //    baseName = 'viaduct'
 //}
 
-
-task parser(type: Exec) {
-    workingDir '.'
-    inputs.file(file("src/main/java/edu/cornell/cs/apl/viaduct/imp/parser/ImpLexer.flex"))
-    inputs.file(file("src/main/java/edu/cornell/cs/apl/viaduct/imp/parser/ImpParser.cup"))
-    outputs.file(file("src/main/java/edu/cornell/cs/apl/viaduct/imp/parser/ImpParser.java"))
-    outputs.file(file("src/main/java/edu/cornell/cs/apl/viaduct/imp/parser/sym.java"))
-    commandLine('java', '-jar', 'lib/java_cup.jar', '-destdir',
-        'src/main/java/edu/cornell/cs/apl/viaduct/imp/parser', '-package',
-        'edu.cornell.cs.viaduct.imp.parser', '-interface', '-parser', 'ImpParser',
-        'src/main/java/edu/cornell/cs/apl/viaduct/imp/parser/ImpParser.cup'
-    )
-}
-
-task lexer(type: Exec) {
-    /* lexer uses symbols defined in parser! */
-    dependsOn parser
-
-    workingDir '.'
-    inputs.file(file("src/main/java/edu/cornell/cs/apl/viaduct/imp/parser/ImpLexer.flex"))
-    outputs.file("src/main/java/edu/cornell/cs/apl/viaduct/imp/parser/ImpLexer.java")
-    commandLine('java', '-jar', 'lib/jflex-full-1.7.0.jar', '-d', 'src/main/java/edu/cornell/cs/apl/viaduct/imp/parser',
-        'src/main/java/edu/cornell/cs/apl/viaduct/imp/parser/ImpLexer.flex', '--nobak')
-}
-
 checkstyle {
     maxWarnings 0
-    configProperties = ["suppressionFile": project(':').file('config/checkstyle/suppressions.xml')]
+    configProperties = ["suppressionFile": project.file("config/checkstyle/suppressions.xml")]
 }
 
 spotless {
     java {
         target project.fileTree(project.rootDir) {
             include '**/*.java'
-            exclude 'src/main/java/edu/cornell/cs/apl/viaduct/imp/parser/ImpParser.java',
-                'src/main/java/edu/cornell/cs/apl/viaduct/imp/parser/sym.java',
-                'src/main/java/edu/cornell/cs/apl/viaduct/imp/parser/ImpLexer.java'
+            exclude "build"
         }
         googleJavaFormat()
         paddedCell()
@@ -85,7 +70,7 @@ tasks.withType(com.github.spotbugs.SpotBugsTask) {
         xml.enabled = false
         html.enabled = true
     }
-    excludeFilter = file("$rootProject.projectDir/config/spotbugs/excludeFilter.xml")
+    excludeFilter = project.file("config/spotbugs/excludeFilter.xml")
 }
 
 jacocoTestReport {
@@ -99,33 +84,23 @@ editorconfig {
     excludes = [
         'gradlew.bat',
         'config/*',
-        'src/main/java/edu/cornell/cs/apl/viaduct/imp/parser/ImpParser.java',
-        'src/main/java/edu/cornell/cs/apl/viaduct/imp/parser/sym.java',
-        'src/main/java/edu/cornell/cs/apl/viaduct/imp/parser/ImpLexer.java',
     ]
 }
 
 dependencies {
+    // Functional data structures
     implementation group: 'io.vavr', name: 'vavr', version: '0.9.3'
-    implementation group: 'guru.nidi', name: 'graphviz-java', version: '0.8.3'
-    implementation group: 'net.sourceforge.argparse4j', name: 'argparse4j', version: '0.8.1'
-    implementation files('lib/java_cup.jar')
 
+    // DOT graph output
+    implementation group: 'guru.nidi', name: 'graphviz-java', version: '0.8.3'
+
+    // Command-line-argument parsing
+    implementation group: 'net.sourceforge.argparse4j', name: 'argparse4j', version: '0.8.1'
+
+    // Unit testing
     testImplementation group: 'junit', name: 'junit', version: '4.12'
 }
 
 check {
     dependsOn editorconfigCheck
 }
-
-compileJava {
-    dependsOn lexer
-    dependsOn parser
-}
-
-clean {
-    delete 'src/main/java/edu/cornell/cs/apl/viaduct/imp/parser/ImpLexer.java'
-    delete 'src/main/java/edu/cornell/cs/apl/viaduct/imp/parser/ImpParser.java'
-    delete 'src/main/java/edu/cornell/cs/apl/viaduct/imp/parser/sym.java'
-}
-

@@ -173,6 +173,6 @@ public class PrintVisitor implements AstVisitor<String> {
   }
 
   public String visit(AnnotationNode annotNode) {
-    return String.format("%n@%s", annotNode.getAnnotation());
+    return String.format("%n@%s", annotNode.getAnnotationString());
   }
 }

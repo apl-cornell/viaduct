@@ -1,5 +1,6 @@
 package edu.cornell.cs.apl.viaduct;
 
+import edu.cornell.cs.apl.viaduct.imp.ImpAnnotationProcessors;
 import edu.cornell.cs.apl.viaduct.imp.ImpProtocolCostEstimator;
 import edu.cornell.cs.apl.viaduct.imp.ast.BlockNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ImpAstNode;
@@ -9,6 +10,7 @@ import edu.cornell.cs.apl.viaduct.imp.ast.VarDeclNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.Variable;
 import edu.cornell.cs.apl.viaduct.imp.parser.ImpLexer;
 import edu.cornell.cs.apl.viaduct.imp.parser.ImpParser;
+import edu.cornell.cs.apl.viaduct.imp.visitors.ImpAnnotationVisitor;
 import edu.cornell.cs.apl.viaduct.imp.visitors.ImpPdgBuilderVisitor;
 import edu.cornell.cs.apl.viaduct.imp.visitors.InterpVisitor;
 import edu.cornell.cs.apl.viaduct.imp.visitors.PrintVisitor;
@@ -116,6 +118,10 @@ public class Main {
       System.out.println(e.getMessage());
       return;
     }
+
+    // process annotations
+    ImpAnnotationVisitor annotator = new ImpAnnotationVisitor();
+    program.accept(annotator);
 
     if (ns.getBoolean("interpret")) {
       InterpVisitor interpreter = new InterpVisitor();

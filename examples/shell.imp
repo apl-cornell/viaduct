@@ -2,7 +2,10 @@ cin : {C};
 ain : {A};
 shell : {C & (A<-)};
 guess : {A & (C<-)};
-win : {((A|C)->) & ((A&C)<-)};
+win : {(A|C)-> & (A&C)<-};
+
+@interp cin := 1;
+@interp ain := 1;
 
 /* Chuck and Alice must endorse their inputs to
  * shell and guess respectively */

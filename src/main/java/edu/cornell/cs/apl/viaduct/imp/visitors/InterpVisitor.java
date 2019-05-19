@@ -1,8 +1,7 @@
 package edu.cornell.cs.apl.viaduct.imp.visitors;
 
-import java.util.HashMap;
-import java.util.Map;
-
+import edu.cornell.cs.apl.viaduct.imp.ImpAnnotation;
+import edu.cornell.cs.apl.viaduct.imp.ImpAnnotations;
 import edu.cornell.cs.apl.viaduct.imp.ast.AndNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.AnnotationNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.AssignNode;
@@ -26,6 +25,10 @@ import edu.cornell.cs.apl.viaduct.imp.ast.StmtNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.VarDeclNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.Variable;
 
+import java.util.HashMap;
+import java.util.Map;
+
+
 /** interpret an IMP program. */
 public class InterpVisitor
     implements ExprVisitor<ImpValue>, StmtVisitor<Void> {
@@ -34,6 +37,7 @@ public class InterpVisitor
 
   public InterpVisitor() {}
 
+  /** interpret program. */
   public Map<Variable,ImpValue> interpret(StmtNode stmt) {
     this.store = new HashMap<>();
     stmt.accept(this);
@@ -48,6 +52,7 @@ public class InterpVisitor
     return integerLiteralNode;
   }
 
+  /** interpret plus node. */
   public ImpValue visit(PlusNode plusNode) {
     IntegerLiteralNode lval = (IntegerLiteralNode)plusNode.getLhs().accept(this);
     IntegerLiteralNode rval = (IntegerLiteralNode)plusNode.getRhs().accept(this);
@@ -58,30 +63,35 @@ public class InterpVisitor
     return booleanLiteralNode;
   }
 
+  /** interpret or node. */
   public ImpValue visit(OrNode orNode) {
     BooleanLiteralNode lval = (BooleanLiteralNode)orNode.getLhs().accept(this);
     BooleanLiteralNode rval = (BooleanLiteralNode)orNode.getRhs().accept(this);
     return new BooleanLiteralNode(lval.getValue() || rval.getValue());
   }
 
+  /** interpret and node. */
   public ImpValue visit(AndNode andNode) {
     BooleanLiteralNode lval = (BooleanLiteralNode)andNode.getLhs().accept(this);
     BooleanLiteralNode rval = (BooleanLiteralNode)andNode.getRhs().accept(this);
     return new BooleanLiteralNode(lval.getValue() && rval.getValue());
   }
 
+  /** interpret lt node. */
   public ImpValue visit(LessThanNode ltNode) {
     IntegerLiteralNode lval = (IntegerLiteralNode)ltNode.getLhs().accept(this);
     IntegerLiteralNode rval = (IntegerLiteralNode)ltNode.getRhs().accept(this);
     return new BooleanLiteralNode(lval.getValue() < rval.getValue());
   }
 
+  /** interpret equals node. */
   public ImpValue visit(EqualNode eqNode) {
     IntegerLiteralNode lval = (IntegerLiteralNode)eqNode.getLhs().accept(this);
     IntegerLiteralNode rval = (IntegerLiteralNode)eqNode.getRhs().accept(this);
     return new BooleanLiteralNode(lval.getValue() == rval.getValue());
   }
 
+  /** interpret leq node. */
   public ImpValue visit(LeqNode leqNode) {
     IntegerLiteralNode lval = (IntegerLiteralNode)leqNode.getLhs().accept(this);
     IntegerLiteralNode rval = (IntegerLiteralNode)leqNode.getRhs().accept(this);
@@ -106,12 +116,14 @@ public class InterpVisitor
     return null;
   }
 
+  /** interpret assignment node. */
   public Void visit(AssignNode assignNode) {
     ImpValue rhsVal = assignNode.getRhs().accept(this);
     this.store.put(assignNode.getVariable(), rhsVal);
     return null;
   }
 
+  /** interpret block node. */
   public Void visit(BlockNode blockNode) {
     for (StmtNode stmt : blockNode.getStatements()) {
       stmt.accept(this);
@@ -119,6 +131,7 @@ public class InterpVisitor
     return null;
   }
 
+  /** interpret conditional node. */
   public Void visit(IfNode ifNode) {
     BooleanLiteralNode guardVal = (BooleanLiteralNode)ifNode.getGuard().accept(this);
     if (guardVal.getValue()) {
@@ -138,6 +151,15 @@ public class InterpVisitor
   }
 
   public Void visit(AnnotationNode annotNode) {
+    ImpAnnotation annot = annotNode.getAnnotation();
+    if (annot != null) {
+      if (annot instanceof ImpAnnotations.InterpAnnotation) {
+        ImpAnnotations.InterpAnnotation interpAnnot =
+            (ImpAnnotations.InterpAnnotation)annot;
+        interpAnnot.getProgram().accept(this);
+      }
+    }
+
     return null;
   }
 }

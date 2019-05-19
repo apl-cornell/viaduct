@@ -81,7 +81,7 @@ stmt_basic ::=
       RESULT = new SendNode(idv, e);
     :}
 
-  | IDENT:idv LARROW RECV FROM IDENT:idp {:
+  | IDENT:idv LARROW RECV IDENT:idp {:
       Variable var = new Variable(idv);
       RESULT = new RecvNode(idp, var);
     :}

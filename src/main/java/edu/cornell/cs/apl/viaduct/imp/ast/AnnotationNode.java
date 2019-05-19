@@ -1,16 +1,26 @@
 package edu.cornell.cs.apl.viaduct.imp.ast;
 
+import edu.cornell.cs.apl.viaduct.imp.ImpAnnotation;
 import edu.cornell.cs.apl.viaduct.imp.visitors.StmtVisitor;
 
 /** annotation node. */
 public class AnnotationNode extends StmtNode {
-  String annotation;
+  String annotationStr;
+  ImpAnnotation annotation;
 
-  public AnnotationNode(String annot) {
+  public AnnotationNode(String annotStr) {
+    this.annotationStr = annotStr;
+  }
+
+  public String getAnnotationString() {
+    return this.annotationStr;
+  }
+
+  public void setAnnotation(ImpAnnotation annot) {
     this.annotation = annot;
   }
 
-  public String getAnnotation() {
+  public ImpAnnotation getAnnotation() {
     return this.annotation;
   }
 

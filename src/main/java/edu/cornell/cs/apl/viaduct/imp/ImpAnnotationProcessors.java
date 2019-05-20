@@ -1,6 +1,8 @@
 package edu.cornell.cs.apl.viaduct.imp;
 
 import edu.cornell.cs.apl.viaduct.imp.ast.AnnotationNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.ImpValue;
+import edu.cornell.cs.apl.viaduct.imp.ast.IntegerLiteralNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.StmtNode;
 import edu.cornell.cs.apl.viaduct.imp.parser.ImpLexer;
 import edu.cornell.cs.apl.viaduct.imp.parser.ImpParser;
@@ -37,11 +39,26 @@ public class ImpAnnotationProcessors {
     }
   }
 
+  public static class InputAnnotationProcessor implements ImpAnnotationProcessor {
+    /** parse an annotation into a statement. */
+    public ImpAnnotation processAnnotation(AnnotationNode annot) {
+      try {
+        Integer i = Integer.valueOf(annot.getAnnotationString());
+        ImpValue value = new IntegerLiteralNode(i);
+        return new ImpAnnotations.InputAnnotation(value);
+
+      } catch (Exception e) {
+        return null;
+      }
+    }
+  }
+
   static ImpAnnotationMapProcessor processorMap = new ImpAnnotationMapProcessor();
 
   static {
     processorMap.registerProcessor("process", new ProcessAnnotationProcessor());
     processorMap.registerProcessor("interp", new InterpAnnotationProcessor());
+    processorMap.registerProcessor("input", new InputAnnotationProcessor());
   }
 
   public static ImpAnnotationProcessor getProcessorMap() {

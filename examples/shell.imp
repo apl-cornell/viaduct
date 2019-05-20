@@ -4,8 +4,11 @@ shell : {C & (A<-)};
 guess : {A & (C<-)};
 win : {(A|C)-> & (A&C)<-};
 
-@interp cin := 1;
-@interp ain := 1;
+@input 1
+cin <- recv input;
+
+@input 2
+ain <- recv input;
 
 /* Chuck and Alice must endorse their inputs to
  * shell and guess respectively */

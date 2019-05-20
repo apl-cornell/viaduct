@@ -1,5 +1,6 @@
 package edu.cornell.cs.apl.viaduct.imp;
 
+import edu.cornell.cs.apl.viaduct.imp.ast.ImpValue;
 import edu.cornell.cs.apl.viaduct.imp.ast.StmtNode;
 
 public class ImpAnnotations {
@@ -27,6 +28,19 @@ public class ImpAnnotations {
 
     public StmtNode getProgram() {
       return this.program;
+    }
+  }
+
+  /** let process receive from INPUT channel. */
+  public static class InputAnnotation implements ImpAnnotation {
+    ImpValue value;
+
+    public InputAnnotation(ImpValue v) {
+      this.value = v;
+    }
+
+    public ImpValue getValue() {
+      return this.value;
     }
   }
 }

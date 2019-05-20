@@ -123,16 +123,31 @@ public class Main {
     ImpAnnotationVisitor annotator = new ImpAnnotationVisitor();
     program.accept(annotator);
 
+    // interpret source
     if (ns.getBoolean("interpret")) {
       InterpVisitor interpreter = new InterpVisitor();
-      Map<Variable,ImpValue> store = interpreter.interpret(program);
-      for (Map.Entry<Variable,ImpValue> kv : store.entrySet()) {
-        String str = String.format("%s => %s%n", kv.getKey().toString(), kv.getValue().toString());
-        System.out.println(str);
+      try {
+        Map<String,Map<Variable,ImpValue>> storeMap = interpreter.interpret(program);
+
+        for (Map.Entry<String, Map<Variable,ImpValue>> kv : storeMap.entrySet()) {
+          Map<Variable,ImpValue> store = kv.getValue();
+
+          System.out.println("store: " + kv.getKey());
+          for (Map.Entry<Variable,ImpValue> kvStore : store.entrySet()) {
+            String str = String.format("%s => %s",
+                kvStore.getKey().toString(), kvStore.getValue().toString());
+            System.out.println(str);
+          }
+        }
+        return;
+
+      } catch (Exception e) {
+        System.out.println(e.getMessage());
+        System.exit(0);
       }
-      return;
     }
 
+    // pretty print source
     if (ns.getBoolean("source")) {
       PrintVisitor printer = new PrintVisitor();
       String progStr = program.accept(printer);
@@ -148,6 +163,7 @@ public class Main {
     PdgLabelDataflow<ImpAstNode> labelDataflow = new PdgLabelDataflow<>();
     labelDataflow.dataflow(pdg);
 
+    // generate DOT graph of PDG with information flow labels
     if (ns.getBoolean("labelgraph")) {
       String labelGraph = PdgDotPrinter.pdgDotGraphWithLabels(pdg);
       System.out.println(labelGraph);
@@ -161,12 +177,14 @@ public class Main {
         protoSelection.selectProtocols(hostConfig, pdg);
     int protocolCost = costEstimator.estimatePdgCost(protocolMap, pdg);
 
+    // generate DOT graph of protocol selection
     if (ns.getBoolean("protograph")) {
       String protoGraph = PdgDotPrinter.pdgDotGraphWithProtocols(pdg, protocolMap);
       System.out.println(protoGraph);
       System.exit(0);
     }
 
+    // otherwise, print out protocol selection info
     System.out.println("PDG information:");
     boolean synthesizedProto = true;
     for (PdgNode<ImpAstNode> node : pdg.getNodes()) {

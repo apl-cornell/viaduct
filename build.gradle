@@ -37,14 +37,6 @@ jar {
     }
 }
 
-cup {
-    args = [
-        "-package", "edu.cornell.cs.apl.viaduct.imp.parser",
-        "-interface",
-        "-parser", "ImpParser"
-    ]
-}
-
 //shadowJar {
 //    baseName = 'viaduct'
 //}
@@ -84,6 +76,14 @@ editorconfig {
     excludes = [
         'gradlew.bat',
         'config/*',
+    ]
+}
+
+cup {
+    args = [
+        "-package", "edu.cornell.cs.apl.viaduct.imp.parser",
+        "-interface",
+        "-parser", "ImpParser"
     ]
 }
 

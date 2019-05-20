@@ -3,6 +3,7 @@ package edu.cornell.cs.apl.viaduct;
 import static guru.nidi.graphviz.model.Factory.mutGraph;
 import static guru.nidi.graphviz.model.Factory.mutNode;
 
+import edu.cornell.cs.apl.viaduct.imp.ast.AstNode;
 import guru.nidi.graphviz.attribute.Shape;
 import guru.nidi.graphviz.attribute.Style;
 import guru.nidi.graphviz.model.Link;
@@ -13,11 +14,6 @@ import java.util.Set;
 
 /** prints a PDG into a DOT graph. */
 public class PdgDotPrinter {
-  private static enum GraphData {
-    LABEL,
-    PROTOCOL
-  }
-
   /** build DOT graph. */
   public static <T extends AstNode> String pdgDotGraph(
       ProgramDependencyGraph<T> pdg,
@@ -93,5 +89,10 @@ public class PdgDotPrinter {
   public static <T extends AstNode> String pdgDotGraphWithProtocols(
       ProgramDependencyGraph<T> pdg, Map<PdgNode<T>, Protocol<T>> protoMap) {
     return pdgDotGraph(pdg, protoMap, GraphData.PROTOCOL);
+  }
+
+  private static enum GraphData {
+    LABEL,
+    PROTOCOL
   }
 }

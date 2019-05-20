@@ -1,5 +1,6 @@
 package edu.cornell.cs.apl.viaduct;
 
+import edu.cornell.cs.apl.viaduct.imp.ast.AstNode;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -10,55 +11,6 @@ import java.util.PriorityQueue;
 import java.util.Set;
 
 public class ProtocolSelection<T extends AstNode> {
-  /** represents a node in the search space. */
-  private static class ProtocolMapNode<U extends AstNode>
-      implements Comparable<ProtocolMapNode<U>> {
-    final HashMap<PdgNode<U>, Protocol<U>> protocolMap;
-    final int cost;
-
-    ProtocolMapNode(HashMap<PdgNode<U>, Protocol<U>> pmap, int cost) {
-      this.protocolMap = pmap;
-      this.cost = cost;
-    }
-
-    HashMap<PdgNode<U>, Protocol<U>> getProtocolMap() {
-      return this.protocolMap;
-    }
-
-    public int compareTo(ProtocolMapNode<U> other) {
-      return this.cost - other.cost;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (o == null) {
-        return false;
-      }
-
-      if (o instanceof ProtocolMapNode<?>) {
-        ProtocolMapNode<U> onode = (ProtocolMapNode<U>) o;
-        return this.protocolMap.equals(onode.protocolMap);
-
-      } else {
-        return false;
-      }
-    }
-
-    @Override
-    public int hashCode() {
-      return this.protocolMap.hashCode();
-    }
-
-    @Override
-    public String toString() {
-      StringBuffer str = new StringBuffer();
-      for (Map.Entry<PdgNode<U>, Protocol<U>> kv : protocolMap.entrySet()) {
-        str.append(String.format("%s => %s%n", kv.getKey().toString(), kv.getValue().toString()));
-      }
-      return str.toString();
-    }
-  }
-
   ProtocolCostEstimator<T> costEstimator;
 
   public ProtocolSelection(ProtocolCostEstimator<T> estimator) {
@@ -169,5 +121,55 @@ public class ProtocolSelection<T extends AstNode> {
 
     // no mapping found. should be impossible, unless available protocols + host config are bad!
     return lastAddedNode != null ? lastAddedNode.getProtocolMap() : null;
+  }
+
+  /** represents a node in the search space. */
+  private static class ProtocolMapNode<U extends AstNode>
+      implements Comparable<ProtocolMapNode<U>> {
+    final HashMap<PdgNode<U>, Protocol<U>> protocolMap;
+    final int cost;
+
+    ProtocolMapNode(HashMap<PdgNode<U>, Protocol<U>> pmap, int cost) {
+      this.protocolMap = pmap;
+      this.cost = cost;
+    }
+
+    HashMap<PdgNode<U>, Protocol<U>> getProtocolMap() {
+      return this.protocolMap;
+    }
+
+    @Override
+    public int compareTo(ProtocolMapNode<U> other) {
+      return this.cost - other.cost;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (o == null) {
+        return false;
+      }
+
+      if (o instanceof ProtocolMapNode<?>) {
+        ProtocolMapNode<U> onode = (ProtocolMapNode<U>) o;
+        return this.protocolMap.equals(onode.protocolMap);
+
+      } else {
+        return false;
+      }
+    }
+
+    @Override
+    public int hashCode() {
+      return this.protocolMap.hashCode();
+    }
+
+    @Override
+    public String toString() {
+      StringBuffer str = new StringBuffer();
+      for (Map.Entry<PdgNode<U>, Protocol<U>> kv : protocolMap.entrySet()) {
+        str.append(String.format("%s => %s%n", kv.getKey().toString(), kv.getValue().toString()));
+      }
+      return str.toString();
+    }
   }
 }

@@ -1,5 +1,6 @@
 package edu.cornell.cs.apl.viaduct;
 
+import edu.cornell.cs.apl.viaduct.imp.ast.AstNode;
 import edu.cornell.cs.apl.viaduct.security.Label;
 import java.util.HashSet;
 import java.util.Set;
@@ -121,6 +122,7 @@ public abstract class PdgNode<T extends AstNode> implements Comparable<PdgNode<T
 
   public abstract boolean isControlNode();
 
+  @Override
   public int compareTo(PdgNode<T> other) {
     return this.lineNumber.compareTo(other.lineNumber);
   }

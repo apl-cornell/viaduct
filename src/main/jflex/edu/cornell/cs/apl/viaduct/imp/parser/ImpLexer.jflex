@@ -114,7 +114,7 @@ ANY=.*
 }
 
 <ANNOTATION> {
-  [^\n]*          { return symbol(sym.ANNOTATION, yytext()); }
+  [^\n]+          { return symbol(sym.ANNOTATION, yytext()); }
 
   \n              { yybegin(YYINITIAL); }
 }

@@ -207,9 +207,8 @@ public class InterpVisitor
         childThread.start();
       }
 
-      Thread.currentThread().join();
-
       for (InterpThread childThread : children) {
+        childThread.join();
         InterpVisitor childInterpreter = childThread.getInterpreter();
         storeMap.put(childThread.getHost(), childInterpreter.store);
       }

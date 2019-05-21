@@ -1,6 +1,5 @@
 package edu.cornell.cs.apl.viaduct;
 
-import edu.cornell.cs.apl.viaduct.imp.ImpAnnotationProcessors;
 import edu.cornell.cs.apl.viaduct.imp.ImpProtocolCostEstimator;
 import edu.cornell.cs.apl.viaduct.imp.ast.BlockNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ImpAstNode;
@@ -135,7 +134,7 @@ public class Main {
           System.out.println("store: " + kv.getKey());
           for (Map.Entry<Variable,ImpValue> kvStore : store.entrySet()) {
             String str = String.format("%s => %s",
-                kvStore.getKey().toString(), kvStore.getValue().toString());
+                kvStore.getKey().toString(), kvStore.getValue());
             System.out.println(str);
           }
         }

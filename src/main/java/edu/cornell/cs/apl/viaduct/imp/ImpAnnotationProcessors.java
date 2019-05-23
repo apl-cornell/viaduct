@@ -4,11 +4,8 @@ import edu.cornell.cs.apl.viaduct.imp.ast.AnnotationNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ImpValue;
 import edu.cornell.cs.apl.viaduct.imp.ast.IntegerLiteralNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.StmtNode;
-import edu.cornell.cs.apl.viaduct.imp.parser.ImpLexer;
-import edu.cornell.cs.apl.viaduct.imp.parser.ImpParser;
+import edu.cornell.cs.apl.viaduct.imp.parser.Parser;
 import java.io.StringReader;
-import java_cup.runtime.ComplexSymbolFactory;
-import java_cup.runtime.Scanner;
 
 public class ImpAnnotationProcessors {
   private static ImpAnnotationMapProcessor processorMap = new ImpAnnotationMapProcessor();
@@ -38,12 +35,8 @@ public class ImpAnnotationProcessors {
     public ImpAnnotation processAnnotation(AnnotationNode annot) {
       try {
         StringReader reader = new StringReader(annot.getAnnotationString());
-        ComplexSymbolFactory symbolFactory = new ComplexSymbolFactory();
-        Scanner progLexer = new ImpLexer(reader, symbolFactory);
-        ImpParser progParser = new ImpParser(progLexer, symbolFactory);
-        StmtNode program = (StmtNode) (progParser.parse().value);
+        StmtNode program = Parser.parse(reader);
         return new ImpAnnotations.InterpAnnotation(program);
-
       } catch (Exception e) {
         return null;
       }
@@ -55,10 +48,9 @@ public class ImpAnnotationProcessors {
     @Override
     public ImpAnnotation processAnnotation(AnnotationNode annot) {
       try {
-        Integer i = Integer.valueOf(annot.getAnnotationString());
+        int i = Integer.valueOf(annot.getAnnotationString());
         ImpValue value = new IntegerLiteralNode(i);
         return new ImpAnnotations.InputAnnotation(value);
-
       } catch (Exception e) {
         return null;
       }

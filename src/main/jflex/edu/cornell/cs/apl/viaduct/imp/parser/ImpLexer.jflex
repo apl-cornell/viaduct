@@ -10,7 +10,6 @@ import java_cup.runtime.Symbol;
 
 %class ImpLexer
 %unicode
-%public
 %cup
 
 /* Type of tokens returned by the yylex function. */

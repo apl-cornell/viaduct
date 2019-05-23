@@ -14,7 +14,7 @@ import java.util.List;
 
 /** Builder for statements. Implicitly creates a sequence through a fluent interface. */
 public class StmtBuilder {
-  List<StmtNode> stmts;
+  private final List<StmtNode> stmts;
 
   public StmtBuilder() {
     this.stmts = new ArrayList<StmtNode>();

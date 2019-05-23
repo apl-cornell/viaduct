@@ -41,6 +41,7 @@ jar {
 //    baseName = 'viaduct'
 //}
 
+
 checkstyle {
     maxWarnings 0
     configProperties = ["suppressionFile": project.file("config/checkstyle/suppressions.xml")]
@@ -57,6 +58,7 @@ spotless {
     }
 }
 
+
 tasks.withType(com.github.spotbugs.SpotBugsTask) {
     reports {
         xml.enabled = false
@@ -72,10 +74,18 @@ jacocoTestReport {
     }
 }
 
+test {
+    useJUnitPlatform()
+
+    // Rerun tests when code examples change.
+    inputs.files(project.fileTree(dir: "examples"))
+}
+
+
 editorconfig {
     excludes = [
         'gradlew.bat',
-        'config/*',
+        'config/ * ',
     ]
 }
 
@@ -98,7 +108,10 @@ dependencies {
     implementation group: 'net.sourceforge.argparse4j', name: 'argparse4j', version: '0.8.1'
 
     // Unit testing
-    testImplementation group: 'junit', name: 'junit', version: '4.12'
+    testImplementation("org.junit.jupiter:junit-jupiter-api:5.4.2")
+    testImplementation("org.junit.jupiter:junit-jupiter-params:5.4.2")
+    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.4.2")
+
 }
 
 check {

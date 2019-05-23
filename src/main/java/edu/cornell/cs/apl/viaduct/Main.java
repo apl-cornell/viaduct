@@ -7,21 +7,16 @@ import edu.cornell.cs.apl.viaduct.imp.ast.ImpValue;
 import edu.cornell.cs.apl.viaduct.imp.ast.StmtNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.VarDeclNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.Variable;
-import edu.cornell.cs.apl.viaduct.imp.parser.ImpLexer;
-import edu.cornell.cs.apl.viaduct.imp.parser.ImpParser;
+import edu.cornell.cs.apl.viaduct.imp.parser.Parser;
 import edu.cornell.cs.apl.viaduct.imp.visitors.ImpAnnotationVisitor;
 import edu.cornell.cs.apl.viaduct.imp.visitors.ImpPdgBuilderVisitor;
 import edu.cornell.cs.apl.viaduct.imp.visitors.InterpVisitor;
 import edu.cornell.cs.apl.viaduct.imp.visitors.PrintVisitor;
 import edu.cornell.cs.apl.viaduct.security.Label;
-import java.io.FileInputStream;
-import java.io.InputStreamReader;
-import java.nio.charset.StandardCharsets;
+import java.io.File;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import java_cup.runtime.ComplexSymbolFactory;
-import java_cup.runtime.Scanner;
 import net.sourceforge.argparse4j.ArgumentParsers;
 import net.sourceforge.argparse4j.impl.Arguments;
 import net.sourceforge.argparse4j.inf.ArgumentParser;
@@ -75,7 +70,7 @@ public class Main {
         .action(Arguments.storeTrue())
         .help("output PDG with synthesized protocol information");
 
-    Namespace ns = null;
+    Namespace ns;
     try {
       ns = argp.parseArgs(args);
     } catch (ArgumentParserException e) {
@@ -84,32 +79,20 @@ public class Main {
       return;
     }
 
-    ComplexSymbolFactory symbolFactory = new ComplexSymbolFactory();
-
-    Set<Host> hostConfig = null;
+    Set<Host> hostConfig;
     try {
-      String hostfile = ns.getString("host");
-      InputStreamReader reader =
-          new InputStreamReader(new FileInputStream(hostfile), StandardCharsets.UTF_8);
-      Scanner hostLexer = new ImpLexer(reader, symbolFactory);
-      ImpParser hostParser = new ImpParser(hostLexer, symbolFactory);
-      StmtNode hostProg = (StmtNode) (hostParser.parse().value);
+      String hostFile = ns.getString("host");
+      StmtNode hostProg = Parser.parse(new File(hostFile));
       hostConfig = buildHostConfig(hostProg);
-
     } catch (Exception e) {
       System.out.println(e.getMessage());
       return;
     }
 
-    StmtNode program = null;
+    StmtNode program;
     try {
-      String filename = ns.getString("file");
-      InputStreamReader reader =
-          new InputStreamReader(new FileInputStream(filename), StandardCharsets.UTF_8);
-      Scanner progLexer = new ImpLexer(reader, symbolFactory);
-      ImpParser progParser = new ImpParser(progLexer, symbolFactory);
-      program = (StmtNode) (progParser.parse().value);
-
+      String sourceFile = ns.getString("file");
+      program = Parser.parse(new File(sourceFile));
     } catch (Exception e) {
       System.out.println(e.getMessage());
       return;
@@ -154,9 +137,9 @@ public class Main {
     program.accept(pdgBuilder);
     ProgramDependencyGraph<ImpAstNode> pdg = pdgBuilder.getPdg();
 
-    // run dataflow analysis to compute labels for all PDG nodes
-    PdgLabelDataflow<ImpAstNode> labelDataflow = new PdgLabelDataflow<>();
-    labelDataflow.dataflow(pdg);
+    // run data-flow analysis to compute labels for all PDG nodes
+    PdgLabelDataflow<ImpAstNode> labelDataFlow = new PdgLabelDataflow<>();
+    labelDataFlow.dataflow(pdg);
 
     // generate DOT graph of PDG with information flow labels
     if (ns.getBoolean("labelgraph")) {

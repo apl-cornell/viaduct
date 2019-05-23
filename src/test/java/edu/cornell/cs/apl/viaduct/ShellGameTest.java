@@ -7,11 +7,11 @@ import edu.cornell.cs.apl.viaduct.imp.builders.StmtBuilder;
 import edu.cornell.cs.apl.viaduct.imp.visitors.ImpPdgBuilderVisitor;
 import edu.cornell.cs.apl.viaduct.imp.visitors.PrintVisitor;
 import edu.cornell.cs.apl.viaduct.security.Label;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-public class ShellGameTest {
+class ShellGameTest {
   @Test
-  public void testShellGame() {
+  void testShellGame() {
     ExpressionBuilder e = new ExpressionBuilder();
     StmtNode shellGame =
         (new StmtBuilder())

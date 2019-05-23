@@ -4,14 +4,15 @@ import edu.cornell.cs.apl.viaduct.imp.visitors.StmtVisitor;
 
 /** send value to a process. */
 public class SendNode extends StmtNode {
-  String recipient;
-  ExpressionNode sentExpr;
+  private final ExpressionNode sentExpr;
+  private final String recipient;
 
   public SendNode(String r, ExpressionNode expr) {
-    this.recipient = r;
     this.sentExpr = expr;
+    this.recipient = r;
   }
 
+  @Override
   public <R> R accept(StmtVisitor<R> visitor) {
     return visitor.visit(this);
   }

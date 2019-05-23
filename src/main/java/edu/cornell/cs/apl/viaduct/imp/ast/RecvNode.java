@@ -4,12 +4,12 @@ import edu.cornell.cs.apl.viaduct.imp.visitors.StmtVisitor;
 
 /** receive value from a process. */
 public class RecvNode extends StmtNode {
-  String sender;
-  Variable var;
+  private final Variable var;
+  private final String sender;
 
   public RecvNode(String s, Variable v) {
-    this.sender = s;
     this.var = v;
+    this.sender = s;
   }
 
   public String getSender() {
@@ -20,6 +20,7 @@ public class RecvNode extends StmtNode {
     return this.var;
   }
 
+  @Override
   public <R> R accept(StmtVisitor<R> visitor) {
     return visitor.visit(this);
   }

@@ -24,7 +24,6 @@ import edu.cornell.cs.apl.viaduct.imp.ast.SkipNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.StmtNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.VarDeclNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.Variable;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -38,54 +37,28 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 /** interpret an IMP program. */
-public class InterpVisitor
-    implements ExprVisitor<ImpValue>, StmtVisitor<Void> {
-
-  static class InterpThread extends Thread {
-    String host;
-    InterpVisitor interpreter;
-    StmtNode program;
-
-    public InterpThread(InterpVisitor i, String h, StmtNode p) {
-      this.host = h;
-      this.interpreter = i.spawnChild(this.host);
-      this.program = p;
-    }
-
-    @Override
-    public void run() {
-      this.program.accept(this.interpreter);
-    }
-
-    public String getHost() {
-      return this.host;
-    }
-
-    public InterpVisitor getInterpreter() {
-      return this.interpreter;
-    }
-  }
+public class InterpVisitor implements ExprVisitor<ImpValue>, StmtVisitor<Void> {
 
   private static final String DEFAULT_HOST = "__DEFAULT__";
-  private static final String INPUT_CHAN  = "input";
-  private static final String OUTPUT_CHAN  = "output";
-
+  private static final String INPUT_CHAN = "input";
+  private static final String OUTPUT_CHAN = "output";
   String host;
-  Map<Variable,ImpValue> store;
-  Map<String,Map<String,Queue<ImpValue>>> msgQueues;
-
+  Map<Variable, ImpValue> store;
+  Map<String, Map<String, Queue<ImpValue>>> msgQueues;
   boolean multiprocess;
   Lock storeLock;
-  Map<String,Map<String,Condition>> nonemptyQueueConds;
+  Map<String, Map<String, Condition>> nonemptyQueueConds;
 
   public InterpVisitor() {
     host = DEFAULT_HOST;
     this.multiprocess = false;
   }
 
-  private InterpVisitor(String h, Lock sl,
-      Map<String,Map<String,Queue<ImpValue>>> q,
-      Map<String,Map<String,Condition>> nqc) {
+  private InterpVisitor(
+      String h,
+      Lock sl,
+      Map<String, Map<String, Queue<ImpValue>>> q,
+      Map<String, Map<String, Condition>> nqc) {
 
     this.store = new HashMap<>();
     this.host = h;
@@ -96,26 +69,24 @@ public class InterpVisitor
   }
 
   public InterpVisitor spawnChild(String host) {
-    return new InterpVisitor(host, this.storeLock,
-        this.msgQueues, this.nonemptyQueueConds);
+    return new InterpVisitor(host, this.storeLock, this.msgQueues, this.nonemptyQueueConds);
   }
 
   /** compute process configuration using annotations in the program. */
-  private Map<String,StmtNode> getProcessConfig(BlockNode program) {
-    Map<String,StmtNode> processConfig = new HashMap<>();
+  private Map<String, StmtNode> getProcessConfig(BlockNode program) {
+    Map<String, StmtNode> processConfig = new HashMap<>();
 
     String curHost = DEFAULT_HOST;
     List<StmtNode> curBlock = new ArrayList<>();
-    for (StmtNode stmt : program.getStatements()) {
+    for (StmtNode stmt : program) {
       boolean newProcess = false;
       if (stmt instanceof AnnotationNode) {
-        AnnotationNode annotNode = (AnnotationNode)stmt;
+        AnnotationNode annotNode = (AnnotationNode) stmt;
         ImpAnnotation annot = annotNode.getAnnotation();
 
         // demarcation of new process
         if (annot instanceof ImpAnnotations.ProcessAnnotation) {
-          ImpAnnotations.ProcessAnnotation procAnnot =
-              (ImpAnnotations.ProcessAnnotation)annot;
+          ImpAnnotations.ProcessAnnotation procAnnot = (ImpAnnotations.ProcessAnnotation) annot;
 
           // only add process mapping if there is something to execute!
           if (curBlock.size() > 0) {
@@ -142,23 +113,22 @@ public class InterpVisitor
   }
 
   /** interpret program. */
-  public Map<String, Map<Variable,ImpValue>> interpret(StmtNode stmt)
-      throws InterruptedException {
+  public Map<String, Map<Variable, ImpValue>> interpret(StmtNode stmt) throws InterruptedException {
 
     this.storeLock = new ReentrantLock();
     this.msgQueues = new HashMap<>();
     this.nonemptyQueueConds = new HashMap<>();
     this.multiprocess = false;
 
-    Map<String,StmtNode> processConfig = null;
+    Map<String, StmtNode> processConfig = null;
     if (stmt instanceof BlockNode) {
-      BlockNode programBlock = (BlockNode)stmt;
+      BlockNode programBlock = (BlockNode) stmt;
       processConfig = getProcessConfig(programBlock);
       int configSize = processConfig.size();
       this.multiprocess = configSize > 1;
 
       if (configSize == 1) {
-        this.host = (String)processConfig.keySet().toArray()[0];
+        this.host = (String) processConfig.keySet().toArray()[0];
       }
 
     } else {
@@ -168,10 +138,10 @@ public class InterpVisitor
     Set<String> hosts = processConfig.keySet();
     Set<InterpThread> children = new HashSet<>();
 
-    for (Map.Entry<String,StmtNode> kv : processConfig.entrySet()) {
+    for (Map.Entry<String, StmtNode> kv : processConfig.entrySet()) {
       // build message queue and map of conditional vars
-      Map<String,Queue<ImpValue>> msgQueue = new HashMap<>();
-      Map<String,Condition> nonemptyQueueCond = new HashMap<>();
+      Map<String, Queue<ImpValue>> msgQueue = new HashMap<>();
+      Map<String, Condition> nonemptyQueueCond = new HashMap<>();
 
       // have an input and output queue
       msgQueue.put(INPUT_CHAN, new LinkedList<>());
@@ -199,7 +169,7 @@ public class InterpVisitor
       }
     }
 
-    Map<String,Map<Variable,ImpValue>> storeMap = new HashMap<>();
+    Map<String, Map<Variable, ImpValue>> storeMap = new HashMap<>();
 
     // create a thread per host
     if (this.multiprocess) {
@@ -213,7 +183,7 @@ public class InterpVisitor
         storeMap.put(childThread.getHost(), childInterpreter.store);
       }
 
-    // only need a single process to interpret the program
+      // only need a single process to interpret the program
     } else {
       this.store = new HashMap<>();
       stmt.accept(this);
@@ -241,80 +211,94 @@ public class InterpVisitor
   }
 
   /** read a variable from the store. */
+  @Override
   public ImpValue visit(ReadNode readNode) {
     ImpValue val = this.store.get(readNode.getVariable());
     return val;
   }
 
+  @Override
   public ImpValue visit(IntegerLiteralNode integerLiteralNode) {
     return integerLiteralNode;
   }
 
   /** interpret plus node. */
+  @Override
   public ImpValue visit(PlusNode plusNode) {
-    IntegerLiteralNode lval = (IntegerLiteralNode)plusNode.getLhs().accept(this);
-    IntegerLiteralNode rval = (IntegerLiteralNode)plusNode.getRhs().accept(this);
+    IntegerLiteralNode lval = (IntegerLiteralNode) plusNode.getLhs().accept(this);
+    IntegerLiteralNode rval = (IntegerLiteralNode) plusNode.getRhs().accept(this);
     return new IntegerLiteralNode(lval.getValue() + rval.getValue());
   }
 
+  @Override
   public ImpValue visit(BooleanLiteralNode booleanLiteralNode) {
     return booleanLiteralNode;
   }
 
   /** interpret or node. */
+  @Override
   public ImpValue visit(OrNode orNode) {
-    BooleanLiteralNode lval = (BooleanLiteralNode)orNode.getLhs().accept(this);
-    BooleanLiteralNode rval = (BooleanLiteralNode)orNode.getRhs().accept(this);
+    BooleanLiteralNode lval = (BooleanLiteralNode) orNode.getLhs().accept(this);
+    BooleanLiteralNode rval = (BooleanLiteralNode) orNode.getRhs().accept(this);
     return new BooleanLiteralNode(lval.getValue() || rval.getValue());
   }
 
   /** interpret and node. */
+  @Override
   public ImpValue visit(AndNode andNode) {
-    BooleanLiteralNode lval = (BooleanLiteralNode)andNode.getLhs().accept(this);
-    BooleanLiteralNode rval = (BooleanLiteralNode)andNode.getRhs().accept(this);
+    BooleanLiteralNode lval = (BooleanLiteralNode) andNode.getLhs().accept(this);
+    BooleanLiteralNode rval = (BooleanLiteralNode) andNode.getRhs().accept(this);
     return new BooleanLiteralNode(lval.getValue() && rval.getValue());
   }
 
   /** interpret lt node. */
+  @Override
   public ImpValue visit(LessThanNode ltNode) {
-    IntegerLiteralNode lval = (IntegerLiteralNode)ltNode.getLhs().accept(this);
-    IntegerLiteralNode rval = (IntegerLiteralNode)ltNode.getRhs().accept(this);
+    IntegerLiteralNode lval = (IntegerLiteralNode) ltNode.getLhs().accept(this);
+    IntegerLiteralNode rval = (IntegerLiteralNode) ltNode.getRhs().accept(this);
     return new BooleanLiteralNode(lval.getValue() < rval.getValue());
   }
 
   /** interpret equals node. */
+  @Override
   public ImpValue visit(EqualNode eqNode) {
-    IntegerLiteralNode lval = (IntegerLiteralNode)eqNode.getLhs().accept(this);
-    IntegerLiteralNode rval = (IntegerLiteralNode)eqNode.getRhs().accept(this);
+    IntegerLiteralNode lval = (IntegerLiteralNode) eqNode.getLhs().accept(this);
+    IntegerLiteralNode rval = (IntegerLiteralNode) eqNode.getRhs().accept(this);
     return new BooleanLiteralNode(lval.getValue() == rval.getValue());
   }
 
   /** interpret leq node. */
+  @Override
   public ImpValue visit(LeqNode leqNode) {
-    IntegerLiteralNode lval = (IntegerLiteralNode)leqNode.getLhs().accept(this);
-    IntegerLiteralNode rval = (IntegerLiteralNode)leqNode.getRhs().accept(this);
+    IntegerLiteralNode lval = (IntegerLiteralNode) leqNode.getLhs().accept(this);
+    IntegerLiteralNode rval = (IntegerLiteralNode) leqNode.getRhs().accept(this);
     return new BooleanLiteralNode(lval.getValue() <= rval.getValue());
   }
 
+  @Override
   public ImpValue visit(NotNode notNode) {
-    BooleanLiteralNode val = (BooleanLiteralNode)notNode.getExpression().accept(this);
+    BooleanLiteralNode val = (BooleanLiteralNode) notNode.getExpression().accept(this);
     return new BooleanLiteralNode(!val.getValue());
   }
 
+  @Override
   public ImpValue visit(DowngradeNode downgradeNode) {
     return downgradeNode.getExpression().accept(this);
   }
 
+  @Override
   public Void visit(SkipNode skipNode) {
     return null;
   }
 
+  @Override
   public Void visit(VarDeclNode varDeclNode) {
     this.store.put(varDeclNode.getVariable(), null);
     return null;
   }
 
   /** interpret assignment node. */
+  @Override
   public Void visit(AssignNode assignNode) {
     ImpValue rhsVal = assignNode.getRhs().accept(this);
     this.store.put(assignNode.getVariable(), rhsVal);
@@ -322,16 +306,18 @@ public class InterpVisitor
   }
 
   /** interpret block node. */
+  @Override
   public Void visit(BlockNode blockNode) {
-    for (StmtNode stmt : blockNode.getStatements()) {
+    for (StmtNode stmt : blockNode) {
       stmt.accept(this);
     }
     return null;
   }
 
   /** interpret conditional node. */
+  @Override
   public Void visit(IfNode ifNode) {
-    BooleanLiteralNode guardVal = (BooleanLiteralNode)ifNode.getGuard().accept(this);
+    BooleanLiteralNode guardVal = (BooleanLiteralNode) ifNode.getGuard().accept(this);
     if (guardVal.getValue()) {
       ifNode.getThenBranch().accept(this);
     } else {
@@ -341,6 +327,7 @@ public class InterpVisitor
   }
 
   /** send value to another host. */
+  @Override
   public Void visit(SendNode sendNode) {
     ImpValue sentVal = sendNode.getSentExpr().accept(this);
     sendFrom(this.host, sendNode.getRecipient(), sentVal);
@@ -348,6 +335,7 @@ public class InterpVisitor
   }
 
   /** send value to another host. */
+  @Override
   public Void visit(RecvNode recvNode) {
     this.storeLock.lock();
 
@@ -374,19 +362,18 @@ public class InterpVisitor
   }
 
   /** execute annotation. */
+  @Override
   public Void visit(AnnotationNode annotNode) {
     ImpAnnotation annot = annotNode.getAnnotation();
     if (annot != null) {
       // interpret statement in annotation
       if (annot instanceof ImpAnnotations.InterpAnnotation) {
-        ImpAnnotations.InterpAnnotation interpAnnot =
-            (ImpAnnotations.InterpAnnotation)annot;
+        ImpAnnotations.InterpAnnotation interpAnnot = (ImpAnnotations.InterpAnnotation) annot;
         interpAnnot.getProgram().accept(this);
 
-      // put value in host's input channel
+        // put value in host's input channel
       } else if (annot instanceof ImpAnnotations.InputAnnotation) {
-        ImpAnnotations.InputAnnotation inputAnnot =
-            (ImpAnnotations.InputAnnotation)annot;
+        ImpAnnotations.InputAnnotation inputAnnot = (ImpAnnotations.InputAnnotation) annot;
         sendFrom(INPUT_CHAN, this.host, inputAnnot.getValue());
       }
     }
@@ -395,8 +382,7 @@ public class InterpVisitor
   }
 
   private void printMsgQueues() {
-    for (Map.Entry<String, Map<String,Queue<ImpValue>>> kv
-        : this.msgQueues.entrySet()) {
+    for (Map.Entry<String, Map<String, Queue<ImpValue>>> kv : this.msgQueues.entrySet()) {
 
       String recipient = kv.getKey();
       Map<String, Queue<ImpValue>> msgQueue = kv.getValue();
@@ -411,6 +397,31 @@ public class InterpVisitor
           System.out.println("empty!");
         }
       }
+    }
+  }
+
+  static class InterpThread extends Thread {
+    String host;
+    InterpVisitor interpreter;
+    StmtNode program;
+
+    public InterpThread(InterpVisitor i, String h, StmtNode p) {
+      this.host = h;
+      this.interpreter = i.spawnChild(this.host);
+      this.program = p;
+    }
+
+    @Override
+    public void run() {
+      this.program.accept(this.interpreter);
+    }
+
+    public String getHost() {
+      return this.host;
+    }
+
+    public InterpVisitor getInterpreter() {
+      return this.interpreter;
     }
   }
 }

@@ -13,8 +13,9 @@ import java.util.Objects;
  * <p>{@code a \/ (b /\ c) == (a \/ b) /\ (a \/ c)}
  */
 public final class FreeDistributiveLattice<A> implements Lattice<FreeDistributiveLattice<A>> {
-  private static final FreeDistributiveLattice bottom = new FreeDistributiveLattice<>(HashSet.of());
-  private static final FreeDistributiveLattice top =
+  private static final FreeDistributiveLattice<?> BOTTOM =
+      new FreeDistributiveLattice<>(HashSet.of());
+  private static final FreeDistributiveLattice<?> TOP =
       new FreeDistributiveLattice<>(HashSet.of(HashSet.of()));
 
   private final Set<Set<A>> joinOfMeets;
@@ -29,12 +30,12 @@ public final class FreeDistributiveLattice<A> implements Lattice<FreeDistributiv
 
   @SuppressWarnings("unchecked")
   static <T> FreeDistributiveLattice<T> top() {
-    return top;
+    return (FreeDistributiveLattice<T>) TOP;
   }
 
   @SuppressWarnings("unchecked")
   static <T> FreeDistributiveLattice<T> bottom() {
-    return bottom;
+    return (FreeDistributiveLattice<T>) BOTTOM;
   }
 
   /** Remove redundant meets according to {@link static isRedundant}. */

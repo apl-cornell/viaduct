@@ -12,6 +12,7 @@ public class Variable {
     return this.name;
   }
 
+  @Override
   public String toString() {
     return this.name;
   }

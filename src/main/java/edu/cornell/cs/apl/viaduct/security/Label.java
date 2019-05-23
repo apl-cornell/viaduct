@@ -8,10 +8,10 @@ import java.util.Objects;
  * contexts to more restrictive ones.
  */
 public class Label implements Lattice<Label>, TrustLattice<Label> {
-  private static final Label bottom =
+  private static final Label BOTTOM =
       new Label(FreeDistributiveLattice.top(), FreeDistributiveLattice.bottom());
 
-  private static final Label top =
+  private static final Label TOP =
       new Label(FreeDistributiveLattice.bottom(), FreeDistributiveLattice.top());
 
   private final FreeDistributiveLattice<Principal> confidentiality;
@@ -33,12 +33,12 @@ public class Label implements Lattice<Label>, TrustLattice<Label> {
 
   /** The least restrictive data policy, i.e. public and trusted. */
   public static Label bottom() {
-    return bottom;
+    return BOTTOM;
   }
 
   /** The most restrictive data policy, i.e. secret and untrusted. */
   public static Label top() {
-    return top;
+    return TOP;
   }
 
   /** Check if information flow from {@code this} to {@code other} is safe. */

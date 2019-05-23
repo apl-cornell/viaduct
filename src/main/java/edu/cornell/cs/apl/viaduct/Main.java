@@ -18,12 +18,10 @@ import java.io.FileInputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java_cup.runtime.DefaultSymbolFactory;
+import java_cup.runtime.ComplexSymbolFactory;
 import java_cup.runtime.Scanner;
-import java_cup.runtime.SymbolFactory;
 import net.sourceforge.argparse4j.ArgumentParsers;
 import net.sourceforge.argparse4j.impl.Arguments;
 import net.sourceforge.argparse4j.inf.ArgumentParser;
@@ -35,8 +33,7 @@ public class Main {
     HashSet<Host> hostConfig = new HashSet<>();
     if (hostProg instanceof BlockNode) {
       BlockNode hostBlock = (BlockNode) hostProg;
-      List<StmtNode> stmts = hostBlock.getStatements();
-      for (StmtNode stmt : stmts) {
+      for (StmtNode stmt : hostBlock) {
         if (stmt instanceof VarDeclNode) {
           VarDeclNode hostDecl = (VarDeclNode) stmt;
           String hostName = hostDecl.getVariable().toString();
@@ -87,7 +84,7 @@ public class Main {
       return;
     }
 
-    SymbolFactory symbolFactory = new DefaultSymbolFactory();
+    ComplexSymbolFactory symbolFactory = new ComplexSymbolFactory();
 
     Set<Host> hostConfig = null;
     try {
@@ -126,15 +123,14 @@ public class Main {
     if (ns.getBoolean("interpret")) {
       InterpVisitor interpreter = new InterpVisitor();
       try {
-        Map<String,Map<Variable,ImpValue>> storeMap = interpreter.interpret(program);
+        Map<String, Map<Variable, ImpValue>> storeMap = interpreter.interpret(program);
 
-        for (Map.Entry<String, Map<Variable,ImpValue>> kv : storeMap.entrySet()) {
-          Map<Variable,ImpValue> store = kv.getValue();
+        for (Map.Entry<String, Map<Variable, ImpValue>> kv : storeMap.entrySet()) {
+          Map<Variable, ImpValue> store = kv.getValue();
 
           System.out.println("store: " + kv.getKey());
-          for (Map.Entry<Variable,ImpValue> kvStore : store.entrySet()) {
-            String str = String.format("%s => %s",
-                kvStore.getKey().toString(), kvStore.getValue());
+          for (Map.Entry<Variable, ImpValue> kvStore : store.entrySet()) {
+            String str = String.format("%s => %s", kvStore.getKey().toString(), kvStore.getValue());
             System.out.println(str);
           }
         }

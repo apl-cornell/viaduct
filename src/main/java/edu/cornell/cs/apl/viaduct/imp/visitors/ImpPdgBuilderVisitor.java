@@ -33,7 +33,6 @@ import edu.cornell.cs.apl.viaduct.imp.ast.VarDeclNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.Variable;
 import edu.cornell.cs.apl.viaduct.security.Label;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 /**
@@ -79,6 +78,7 @@ public class ImpPdgBuilderVisitor
   }
 
   /** return PDG storage node for referenced var. */
+  @Override
   public Set<PdgNode<ImpAstNode>> visit(ReadNode varLookup) {
     if (this.storageNodes.contains(varLookup.getVariable())) {
       PdgNode<ImpAstNode> varNode = this.storageNodes.get(varLookup.getVariable());
@@ -92,46 +92,55 @@ public class ImpPdgBuilderVisitor
   }
 
   /** return empty set of dependencies. */
+  @Override
   public Set<PdgNode<ImpAstNode>> visit(IntegerLiteralNode intLit) {
     return new HashSet<PdgNode<ImpAstNode>>();
   }
 
   /** return LHS and RHS dependencies. */
+  @Override
   public Set<PdgNode<ImpAstNode>> visit(PlusNode plusNode) {
     return visitBinaryOp(plusNode);
   }
 
   /** return empty set of dependencies. */
+  @Override
   public Set<PdgNode<ImpAstNode>> visit(BooleanLiteralNode boolLit) {
     return new HashSet<PdgNode<ImpAstNode>>();
   }
 
   /** return LHS and RHS dependencies. */
+  @Override
   public Set<PdgNode<ImpAstNode>> visit(OrNode orNode) {
     return visitBinaryOp(orNode);
   }
 
   /** return LHS and RHS dependencies. */
+  @Override
   public Set<PdgNode<ImpAstNode>> visit(AndNode andNode) {
     return visitBinaryOp(andNode);
   }
 
   /** return LHS and RHS dependencies. */
+  @Override
   public Set<PdgNode<ImpAstNode>> visit(LessThanNode ltNode) {
     return visitBinaryOp(ltNode);
   }
 
   /** return LHS and RHS dependencies. */
+  @Override
   public Set<PdgNode<ImpAstNode>> visit(EqualNode eqNode) {
     return visitBinaryOp(eqNode);
   }
 
   /** return LHS and RHS dependencies. */
+  @Override
   public Set<PdgNode<ImpAstNode>> visit(LeqNode leqNode) {
     return visitBinaryOp(leqNode);
   }
 
   /** return negated expr dependencies. */
+  @Override
   public Set<PdgNode<ImpAstNode>> visit(NotNode notNode) {
     Set<PdgNode<ImpAstNode>> deps =
         new HashSet<PdgNode<ImpAstNode>>(notNode.getExpression().accept(this));
@@ -140,6 +149,7 @@ public class ImpPdgBuilderVisitor
   }
 
   /** return created PDG node for downgrade. */
+  @Override
   public Set<PdgNode<ImpAstNode>> visit(DowngradeNode downgradeNode) {
     Set<PdgNode<ImpAstNode>> inNodes = downgradeNode.getExpression().accept(this);
     Label label = downgradeNode.getLabel();
@@ -165,11 +175,13 @@ public class ImpPdgBuilderVisitor
   }
 
   /** return empty set of dependencies. */
+  @Override
   public Set<PdgNode<ImpAstNode>> visit(SkipNode skipNode) {
     return new HashSet<PdgNode<ImpAstNode>>();
   }
 
   /** return created storage node. */
+  @Override
   public Set<PdgNode<ImpAstNode>> visit(VarDeclNode varDecl) {
     AbstractLineNumber lineno = nextLineNumber();
     PdgNode<ImpAstNode> node = new PdgStorageNode<ImpAstNode>(varDecl, lineno, varDecl.getLabel());
@@ -180,6 +192,7 @@ public class ImpPdgBuilderVisitor
   }
 
   /** return created PDG compute node for assignment. */
+  @Override
   public Set<PdgNode<ImpAstNode>> visit(AssignNode assignNode) {
     if (this.storageNodes.contains(assignNode.getVariable())) {
       Set<PdgNode<ImpAstNode>> inNodes = assignNode.getRhs().accept(this);
@@ -208,10 +221,10 @@ public class ImpPdgBuilderVisitor
   }
 
   /** return dependencies of list of stmts. */
+  @Override
   public Set<PdgNode<ImpAstNode>> visit(BlockNode blockNode) {
     Set<PdgNode<ImpAstNode>> deps = new HashSet<PdgNode<ImpAstNode>>();
-    List<StmtNode> stmts = blockNode.getStatements();
-    for (StmtNode stmt : stmts) {
+    for (StmtNode stmt : blockNode) {
       Set<PdgNode<ImpAstNode>> stmtDeps = stmt.accept(this);
       deps.addAll(stmtDeps);
     }
@@ -220,6 +233,7 @@ public class ImpPdgBuilderVisitor
   }
 
   /** return created PDG compute node for conditional. */
+  @Override
   public Set<PdgNode<ImpAstNode>> visit(IfNode ifNode) {
     // add edges from guard nodes
     final Set<PdgNode<ImpAstNode>> inNodes = ifNode.getGuard().accept(this);
@@ -273,15 +287,18 @@ public class ImpPdgBuilderVisitor
   }
 
   /** send/recvs should not be in surface programs and thus should not be in the generated PDG. */
+  @Override
   public Set<PdgNode<ImpAstNode>> visit(SendNode sendNode) {
     return new HashSet<PdgNode<ImpAstNode>>();
   }
 
   /** send/recvs should not be in surface programs and thus should not be in the generated PDG. */
+  @Override
   public Set<PdgNode<ImpAstNode>> visit(RecvNode recvNode) {
     return new HashSet<PdgNode<ImpAstNode>>();
   }
 
+  @Override
   public Set<PdgNode<ImpAstNode>> visit(AnnotationNode annotNode) {
     return new HashSet<PdgNode<ImpAstNode>>();
   }

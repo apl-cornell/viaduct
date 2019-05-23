@@ -47,56 +47,67 @@ public class PrintVisitor implements AstVisitor<String> {
   }
 
   /** print node. */
+  @Override
   public String visit(ReadNode readNode) {
     return readNode.getVariable().getName();
   }
 
   /** print node. */
+  @Override
   public String visit(IntegerLiteralNode integerLiteralNode) {
     return Integer.toString(integerLiteralNode.getValue());
   }
 
   /** print node. */
+  @Override
   public String visit(PlusNode plusNode) {
     return visitBinary(plusNode, "+");
   }
 
   /** print node. */
+  @Override
   public String visit(BooleanLiteralNode booleanLiteralNode) {
     return Boolean.toString(booleanLiteralNode.getValue());
   }
 
   /** print node. */
+  @Override
   public String visit(OrNode orNode) {
     return visitBinary(orNode, "||");
   }
 
   /** print node. */
+  @Override
   public String visit(AndNode andNode) {
     return visitBinary(andNode, "&&");
   }
 
   /** print node. */
+  @Override
   public String visit(LessThanNode lessThanNode) {
     return visitBinary(lessThanNode, "<");
   }
 
   /** print node. */
+  @Override
   public String visit(EqualNode equalNode) {
     return visitBinary(equalNode, "==");
   }
 
   /** print node. */
+  @Override
   public String visit(LeqNode leqNode) {
     return visitBinary(leqNode, "<=");
   }
 
   /** print node. */
+  @Override
   public String visit(NotNode notNode) {
     return "!" + notNode.getExpression().accept(this);
   }
 
   /** print node. */
+  @Override
   public String visit(DowngradeNode downgradeNode) {
     // TODO: special case declassfy and endorse
     String expressionStr = downgradeNode.getExpression().accept(this);
@@ -105,11 +116,13 @@ public class PrintVisitor implements AstVisitor<String> {
   }
 
   /** print node. */
+  @Override
   public String visit(SkipNode skipNode) {
     return getIndent() + "skip";
   }
 
   /** print node. */
+  @Override
   public String visit(VarDeclNode varDecl) {
     String varStr = varDecl.getVariable().getName();
     String labelStr = varDecl.getLabel().toString();
@@ -117,6 +130,7 @@ public class PrintVisitor implements AstVisitor<String> {
   }
 
   /** print node. */
+  @Override
   public String visit(AssignNode assignNode) {
     String varStr = assignNode.getVariable().getName();
     String rhsStr = assignNode.getRhs().accept(this);
@@ -124,6 +138,7 @@ public class PrintVisitor implements AstVisitor<String> {
   }
 
   /** print node. */
+  @Override
   public String visit(IfNode ifNode) {
     String guardStr = ifNode.getGuard().accept(this);
     this.indent += INDENT_LEVEL;
@@ -148,9 +163,10 @@ public class PrintVisitor implements AstVisitor<String> {
   }
 
   /** print node. */
+  @Override
   public String visit(BlockNode blockNode) {
     StringBuilder buf = new StringBuilder();
-    for (StmtNode stmt : blockNode.getStatements()) {
+    for (StmtNode stmt : blockNode) {
       buf.append(stmt.accept(this));
       buf.append('\n');
     }
@@ -159,6 +175,7 @@ public class PrintVisitor implements AstVisitor<String> {
   }
 
   /** print send. */
+  @Override
   public String visit(SendNode sendNode) {
     String exprStr = sendNode.getSentExpr().accept(this);
     String recipStr = sendNode.getRecipient().toString();
@@ -166,12 +183,14 @@ public class PrintVisitor implements AstVisitor<String> {
   }
 
   /** print recv. */
+  @Override
   public String visit(RecvNode recvNode) {
     String senderStr = recvNode.getSender();
     String varStr = recvNode.getVar().toString();
     return String.format("%s <- recv from %s", varStr, senderStr);
   }
 
+  @Override
   public String visit(AnnotationNode annotNode) {
     return String.format("%n@%s", annotNode.getAnnotationString());
   }

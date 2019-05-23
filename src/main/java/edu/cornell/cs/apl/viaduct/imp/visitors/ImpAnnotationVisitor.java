@@ -42,66 +42,81 @@ public class ImpAnnotationVisitor implements AstVisitor<Void> {
     return null;
   }
 
+  @Override
   public Void visit(ReadNode readNode) {
     return null;
   }
 
+  @Override
   public Void visit(IntegerLiteralNode integerLiteralNode) {
     return null;
   }
 
+  @Override
   public Void visit(PlusNode plusNode) {
     return null;
   }
 
+  @Override
   public Void visit(BooleanLiteralNode booleanLiteralNode) {
     return null;
   }
 
+  @Override
   public Void visit(OrNode orNode) {
     return visitBinary(orNode);
   }
 
+  @Override
   public Void visit(AndNode andNode) {
     return visitBinary(andNode);
   }
 
+  @Override
   public Void visit(LessThanNode lessThanNode) {
     return visitBinary(lessThanNode);
   }
 
+  @Override
   public Void visit(EqualNode equalNode) {
     return visitBinary(equalNode);
   }
 
+  @Override
   public Void visit(LeqNode leqNode) {
     return visitBinary(leqNode);
   }
 
+  @Override
   public Void visit(NotNode notNode) {
     notNode.getExpression().accept(this);
     return null;
   }
 
+  @Override
   public Void visit(DowngradeNode downgradeNode) {
     downgradeNode.getExpression().accept(this);
     return null;
   }
 
+  @Override
   public Void visit(SkipNode skipNode) {
     return null;
   }
 
+  @Override
   public Void visit(VarDeclNode varDecl) {
     return null;
   }
 
+  @Override
   public Void visit(AssignNode assignNode) {
     assignNode.getRhs().accept(this);
     return null;
   }
 
   /** visit conditional node. */
+  @Override
   public Void visit(IfNode ifNode) {
     ifNode.getGuard().accept(this);
     ifNode.getThenBranch().accept(this);
@@ -110,24 +125,28 @@ public class ImpAnnotationVisitor implements AstVisitor<Void> {
   }
 
   /** visit block node. */
+  @Override
   public Void visit(BlockNode blockNode) {
-    for (StmtNode stmt : blockNode.getStatements()) {
+    for (StmtNode stmt : blockNode) {
       stmt.accept(this);
     }
 
     return null;
   }
 
+  @Override
   public Void visit(SendNode sendNode) {
     sendNode.getSentExpr().accept(this);
     return null;
   }
 
+  @Override
   public Void visit(RecvNode recvNode) {
     return null;
   }
 
   /** process annotation. */
+  @Override
   public Void visit(AnnotationNode annotNode) {
     ImpAnnotation annotation = processor.processAnnotation(annotNode);
     annotNode.setAnnotation(annotation);

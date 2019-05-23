@@ -28,64 +28,79 @@ public class SizeVisitor implements AstVisitor<Integer> {
     return 1 + binNode.getLhs().accept(this) + binNode.getRhs().accept(this);
   }
 
+  @Override
   public Integer visit(ReadNode readNode) {
     return 1;
   }
 
+  @Override
   public Integer visit(IntegerLiteralNode integerLiteralNode) {
     return 1;
   }
 
+  @Override
   public Integer visit(PlusNode plusNode) {
     return visitBinary(plusNode);
   }
 
+  @Override
   public Integer visit(BooleanLiteralNode booleanLiteralNode) {
     return 1;
   }
 
+  @Override
   public Integer visit(OrNode orNode) {
     return visitBinary(orNode);
   }
 
+  @Override
   public Integer visit(AndNode andNode) {
     return visitBinary(andNode);
   }
 
+  @Override
   public Integer visit(LessThanNode lessThanNode) {
     return visitBinary(lessThanNode);
   }
 
+  @Override
   public Integer visit(EqualNode equalNode) {
     return visitBinary(equalNode);
   }
 
+  @Override
   public Integer visit(LeqNode leqNode) {
     return visitBinary(leqNode);
   }
 
+  @Override
   public Integer visit(NotNode notNode) {
     return 1 + notNode.getExpression().accept(this);
   }
 
+  @Override
   public Integer visit(DowngradeNode downgradeNode) {
     Integer exprSize = downgradeNode.getExpression().accept(this);
     return 1 + exprSize;
   }
 
+  @Override
   public Integer visit(SkipNode skipNode) {
     return 0;
   }
 
+  @Override
   public Integer visit(VarDeclNode varDecl) {
     return 1;
   }
 
+  @Override
   public Integer visit(AssignNode assignNode) {
     return 1 + assignNode.getRhs().accept(this);
   }
 
   /** give size to if node. */
+  @Override
   public Integer visit(IfNode ifNode) {
     Integer guardSize = ifNode.getGuard().accept(this);
     Integer thenSize = ifNode.getThenBranch().accept(this);
@@ -94,9 +109,10 @@ public class SizeVisitor implements AstVisitor<Integer> {
   }
 
   /** give size to block node. */
+  @Override
   public Integer visit(BlockNode blockNode) {
     Integer size = 0;
-    for (StmtNode stmt : blockNode.getStatements()) {
+    for (StmtNode stmt : blockNode) {
       size += stmt.accept(this);
     }
 
@@ -104,16 +120,19 @@ public class SizeVisitor implements AstVisitor<Integer> {
   }
 
   /** give size to send. */
+  @Override
   public Integer visit(SendNode sendNode) {
     return sendNode.getSentExpr().accept(this) + 1;
   }
 
   /** give size to recv. */
+  @Override
   public Integer visit(RecvNode recvNode) {
     return 1;
   }
 
   /** give size to annotation (none). */
+  @Override
   public Integer visit(AnnotationNode annotNode) {
     return 0;
   }

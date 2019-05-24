@@ -14,7 +14,7 @@
 
 <FindBugsFilter>
   <!-- Ignore checking for generated parser classes -->
-  <Match>
-    <Package name="~.*\.parser" />
-  </Match>
+    <Match>
+        <Package name="~.*\.parser" />
+    </Match>
 </FindBugsFilter>

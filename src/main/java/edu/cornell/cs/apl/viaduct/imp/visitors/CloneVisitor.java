@@ -2,11 +2,13 @@ package edu.cornell.cs.apl.viaduct.imp.visitors;
 
 import edu.cornell.cs.apl.viaduct.imp.ast.AndNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.AnnotationNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.ArrayDeclarationNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.AssignNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.BlockNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.BooleanLiteralNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.DeclarationNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.DowngradeNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.EqualNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.EqualToNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ExpressionNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.IfNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.IntegerLiteralNode;
@@ -20,9 +22,10 @@ import edu.cornell.cs.apl.viaduct.imp.ast.RecvNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.SendNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.SkipNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.StmtNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.VarDeclNode;
 import java.util.ArrayList;
 import java.util.List;
+
+// TODO: why?
 
 /** returns a clone of the AST. */
 public class CloneVisitor implements ExprVisitor<ExpressionNode>, StmtVisitor<StmtNode> {
@@ -70,10 +73,10 @@ public class CloneVisitor implements ExprVisitor<ExpressionNode>, StmtVisitor<St
   }
 
   @Override
-  public ExpressionNode visit(EqualNode equalNode) {
-    ExpressionNode newLhs = equalNode.getLhs().accept(this);
-    ExpressionNode newRhs = equalNode.getRhs().accept(this);
-    return new EqualNode(newLhs, newRhs);
+  public ExpressionNode visit(EqualToNode equalToNode) {
+    ExpressionNode newLhs = equalToNode.getLhs().accept(this);
+    ExpressionNode newRhs = equalToNode.getRhs().accept(this);
+    return new EqualToNode(newLhs, newRhs);
   }
 
   @Override
@@ -101,8 +104,16 @@ public class CloneVisitor implements ExprVisitor<ExpressionNode>, StmtVisitor<St
   }
 
   @Override
-  public StmtNode visit(VarDeclNode varDecl) {
-    return new VarDeclNode(varDecl.getVariable(), varDecl.getLabel());
+  public StmtNode visit(DeclarationNode declarationNode) {
+    return new DeclarationNode(declarationNode.getVariable(), declarationNode.getLabel());
+  }
+
+  @Override
+  public StmtNode visit(ArrayDeclarationNode arrayDeclarationNode) {
+    return new ArrayDeclarationNode(
+        arrayDeclarationNode.getVariable(),
+        arrayDeclarationNode.getLength(),
+        arrayDeclarationNode.getLabel());
   }
 
   @Override

@@ -6,13 +6,13 @@ import edu.cornell.cs.apl.viaduct.imp.ImpAnnotationProcessors;
 import edu.cornell.cs.apl.viaduct.imp.ast.AnnotationNode;
 
 public class ImpAnnotationVisitor extends VoidVisitor {
-  ImpAnnotationProcessor processor;
+  private ImpAnnotationProcessor processor;
 
   public ImpAnnotationVisitor() {
-    processor = ImpAnnotationProcessors.getProcessorMap();
+    this(ImpAnnotationProcessors.getProcessorMap());
   }
 
-  public ImpAnnotationVisitor(ImpAnnotationProcessor annotProc) {
+  private ImpAnnotationVisitor(ImpAnnotationProcessor annotProc) {
     processor = annotProc;
   }
 

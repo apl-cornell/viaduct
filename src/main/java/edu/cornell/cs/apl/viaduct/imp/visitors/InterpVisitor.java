@@ -5,11 +5,13 @@ import edu.cornell.cs.apl.viaduct.imp.ImpAnnotation;
 import edu.cornell.cs.apl.viaduct.imp.ImpAnnotations;
 import edu.cornell.cs.apl.viaduct.imp.ast.AndNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.AnnotationNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.ArrayDeclarationNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.AssignNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.BlockNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.BooleanLiteralNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.DeclarationNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.DowngradeNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.EqualNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.EqualToNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.IfNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ImpValue;
 import edu.cornell.cs.apl.viaduct.imp.ast.IntegerLiteralNode;
@@ -23,7 +25,6 @@ import edu.cornell.cs.apl.viaduct.imp.ast.RecvNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.SendNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.SkipNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.StmtNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.VarDeclNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.Variable;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -39,16 +40,15 @@ import java.util.concurrent.locks.ReentrantLock;
 
 /** interpret an IMP program. */
 public class InterpVisitor implements ExprVisitor<ImpValue>, StmtVisitor<Void> {
-
   private static final Host INPUT_CHAN = new Host("input");
   private static final Host OUTPUT_CHAN = new Host("output");
 
-  Host host;
-  Map<Variable, ImpValue> store;
-  Map<Host, Map<Host, Queue<ImpValue>>> msgQueues;
-  boolean multiprocess;
-  Lock storeLock;
-  Map<Host, Map<Host, Condition>> nonemptyQueueConds;
+  private Host host;
+  private Map<Variable, ImpValue> store;
+  private Map<Host, Map<Host, Queue<ImpValue>>> msgQueues;
+  private boolean multiprocess;
+  private Lock storeLock;
+  private Map<Host, Map<Host, Condition>> nonemptyQueueConds;
 
   public InterpVisitor() {
     host = Host.getDefault();
@@ -214,26 +214,17 @@ public class InterpVisitor implements ExprVisitor<ImpValue>, StmtVisitor<Void> {
   /** read a variable from the store. */
   @Override
   public ImpValue visit(ReadNode readNode) {
-    ImpValue val = this.store.get(readNode.getVariable());
-    return val;
-  }
-
-  @Override
-  public ImpValue visit(IntegerLiteralNode integerLiteralNode) {
-    return integerLiteralNode;
-  }
-
-  /** interpret plus node. */
-  @Override
-  public ImpValue visit(PlusNode plusNode) {
-    IntegerLiteralNode lval = (IntegerLiteralNode) plusNode.getLhs().accept(this);
-    IntegerLiteralNode rval = (IntegerLiteralNode) plusNode.getRhs().accept(this);
-    return new IntegerLiteralNode(lval.getValue() + rval.getValue());
+    return this.store.get(readNode.getVariable());
   }
 
   @Override
   public ImpValue visit(BooleanLiteralNode booleanLiteralNode) {
     return booleanLiteralNode;
+  }
+
+  @Override
+  public ImpValue visit(IntegerLiteralNode integerLiteralNode) {
+    return integerLiteralNode;
   }
 
   /** interpret or node. */
@@ -262,7 +253,7 @@ public class InterpVisitor implements ExprVisitor<ImpValue>, StmtVisitor<Void> {
 
   /** interpret equals node. */
   @Override
-  public ImpValue visit(EqualNode eqNode) {
+  public ImpValue visit(EqualToNode eqNode) {
     IntegerLiteralNode lval = (IntegerLiteralNode) eqNode.getLhs().accept(this);
     IntegerLiteralNode rval = (IntegerLiteralNode) eqNode.getRhs().accept(this);
     return new BooleanLiteralNode(lval.getValue() == rval.getValue());
@@ -282,6 +273,14 @@ public class InterpVisitor implements ExprVisitor<ImpValue>, StmtVisitor<Void> {
     return new BooleanLiteralNode(!val.getValue());
   }
 
+  /** interpret plus node. */
+  @Override
+  public ImpValue visit(PlusNode plusNode) {
+    IntegerLiteralNode lval = (IntegerLiteralNode) plusNode.getLhs().accept(this);
+    IntegerLiteralNode rval = (IntegerLiteralNode) plusNode.getRhs().accept(this);
+    return new IntegerLiteralNode(lval.getValue() + rval.getValue());
+  }
+
   @Override
   public ImpValue visit(DowngradeNode downgradeNode) {
     return downgradeNode.getExpression().accept(this);
@@ -293,9 +292,15 @@ public class InterpVisitor implements ExprVisitor<ImpValue>, StmtVisitor<Void> {
   }
 
   @Override
-  public Void visit(VarDeclNode varDeclNode) {
-    this.store.put(varDeclNode.getVariable(), null);
+  public Void visit(DeclarationNode declarationNode) {
+    this.store.put(declarationNode.getVariable(), null);
     return null;
+  }
+
+  @Override
+  public Void visit(ArrayDeclarationNode arrayDeclarationNode) {
+    // TODO: implement
+    throw new Error("Unimplemented");
   }
 
   /** interpret assignment node. */

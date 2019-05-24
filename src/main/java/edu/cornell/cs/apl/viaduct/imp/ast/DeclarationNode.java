@@ -5,11 +5,11 @@ import edu.cornell.cs.apl.viaduct.security.Label;
 import java.util.Objects;
 
 /** Variable declaration. */
-public class VarDeclNode extends StmtNode {
+public class DeclarationNode extends StmtNode {
   private final Variable variable;
   private final Label label;
 
-  public VarDeclNode(Variable variable, Label label) {
+  public DeclarationNode(Variable variable, Label label) {
     this.variable = variable;
     this.label = label;
   }
@@ -22,6 +22,7 @@ public class VarDeclNode extends StmtNode {
     return label;
   }
 
+  @Override
   public <R> R accept(StmtVisitor<R> v) {
     return v.visit(this);
   }
@@ -32,8 +33,8 @@ public class VarDeclNode extends StmtNode {
       return false;
     }
 
-    if (other instanceof VarDeclNode) {
-      VarDeclNode otherDecl = (VarDeclNode) other;
+    if (other instanceof DeclarationNode) {
+      DeclarationNode otherDecl = (DeclarationNode) other;
       return otherDecl.variable.equals(this.variable) && otherDecl.label.equals(this.label);
 
     } else {

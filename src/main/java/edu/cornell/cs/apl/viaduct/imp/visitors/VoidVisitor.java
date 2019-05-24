@@ -2,12 +2,14 @@ package edu.cornell.cs.apl.viaduct.imp.visitors;
 
 import edu.cornell.cs.apl.viaduct.imp.ast.AndNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.AnnotationNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.ArrayDeclarationNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.AssignNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.BinaryExpressionNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.BlockNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.BooleanLiteralNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.DeclarationNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.DowngradeNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.EqualNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.EqualToNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.IfNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.IntegerLiteralNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.LeqNode;
@@ -20,7 +22,6 @@ import edu.cornell.cs.apl.viaduct.imp.ast.RecvNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.SendNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.SkipNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.StmtNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.VarDeclNode;
 
 /** do nothing. can be subclassed to do something for specific AST nodes. */
 public class VoidVisitor implements AstVisitor<Void> {
@@ -36,17 +37,12 @@ public class VoidVisitor implements AstVisitor<Void> {
   }
 
   @Override
-  public Void visit(IntegerLiteralNode integerLiteralNode) {
+  public Void visit(BooleanLiteralNode booleanLiteralNode) {
     return null;
   }
 
   @Override
-  public Void visit(PlusNode plusNode) {
-    return visitBinary(plusNode);
-  }
-
-  @Override
-  public Void visit(BooleanLiteralNode booleanLiteralNode) {
+  public Void visit(IntegerLiteralNode integerLiteralNode) {
     return null;
   }
 
@@ -57,28 +53,33 @@ public class VoidVisitor implements AstVisitor<Void> {
 
   @Override
   public Void visit(AndNode andNode) {
-    return null;
+    return visitBinary(andNode);
   }
 
   @Override
   public Void visit(LessThanNode lessThanNode) {
-    return null;
+    return visitBinary(lessThanNode);
   }
 
   @Override
-  public Void visit(EqualNode equalNode) {
-    return null;
+  public Void visit(EqualToNode equalNode) {
+    return visitBinary(equalNode);
   }
 
   @Override
   public Void visit(LeqNode leqNode) {
-    return null;
+    return visitBinary(leqNode);
   }
 
   @Override
   public Void visit(NotNode notNode) {
     notNode.getExpression().accept(this);
     return null;
+  }
+
+  @Override
+  public Void visit(PlusNode plusNode) {
+    return visitBinary(plusNode);
   }
 
   @Override
@@ -93,7 +94,13 @@ public class VoidVisitor implements AstVisitor<Void> {
   }
 
   @Override
-  public Void visit(VarDeclNode varDecl) {
+  public Void visit(DeclarationNode declarationNode) {
+    return null;
+  }
+
+  @Override
+  public Void visit(ArrayDeclarationNode arrayDeclarationNode) {
+    arrayDeclarationNode.getLength().accept(this);
     return null;
   }
 

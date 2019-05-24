@@ -3,7 +3,7 @@ package edu.cornell.cs.apl.viaduct.imp.builders;
 import edu.cornell.cs.apl.viaduct.imp.ast.AndNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.BooleanLiteralNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.DowngradeNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.EqualNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.EqualToNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ExpressionNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.IntegerLiteralNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.LeqNode;
@@ -56,7 +56,7 @@ public class ExpressionBuilder {
   }
 
   public ExpressionNode equals(ExpressionNode lhs, ExpressionNode rhs) {
-    return new EqualNode(lhs, rhs);
+    return new EqualToNode(lhs, rhs);
   }
 
   public ExpressionNode not(ExpressionNode expression) {

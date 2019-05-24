@@ -85,7 +85,7 @@ test {
 editorconfig {
     excludes = [
         'gradlew.bat',
-        'config/ * ',
+        'out',
     ]
 }
 

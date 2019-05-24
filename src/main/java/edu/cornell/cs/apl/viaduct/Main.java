@@ -2,10 +2,10 @@ package edu.cornell.cs.apl.viaduct;
 
 import edu.cornell.cs.apl.viaduct.imp.ImpProtocolCostEstimator;
 import edu.cornell.cs.apl.viaduct.imp.ast.BlockNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.DeclarationNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ImpAstNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ImpValue;
 import edu.cornell.cs.apl.viaduct.imp.ast.StmtNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.VarDeclNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.Variable;
 import edu.cornell.cs.apl.viaduct.imp.parser.Parser;
 import edu.cornell.cs.apl.viaduct.imp.visitors.ImpAnnotationVisitor;
@@ -29,8 +29,8 @@ public class Main {
     if (hostProg instanceof BlockNode) {
       BlockNode hostBlock = (BlockNode) hostProg;
       for (StmtNode stmt : hostBlock) {
-        if (stmt instanceof VarDeclNode) {
-          VarDeclNode hostDecl = (VarDeclNode) stmt;
+        if (stmt instanceof DeclarationNode) {
+          DeclarationNode hostDecl = (DeclarationNode) stmt;
           String hostName = hostDecl.getVariable().toString();
           Label hostLabel = hostDecl.getLabel();
           hostConfig.add(new Host(hostName, hostLabel));

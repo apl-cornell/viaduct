@@ -3,24 +3,22 @@ package edu.cornell.cs.apl.viaduct.imp.visitors;
 import edu.cornell.cs.apl.viaduct.Host;
 import edu.cornell.cs.apl.viaduct.imp.ast.AssignNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.BlockNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.DeclarationNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.DowngradeNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ExpressionNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.RecvNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.SendNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.SkipNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.StmtNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.VarDeclNode;
 import edu.cornell.cs.apl.viaduct.security.Label;
-
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
 
-/** postprocess protocol instantiation.
- *  - remove downgrades
- *  - remove self communication
- *  - remove security labels on variables
+/**
+ * postprocess protocol instantiation. - remove downgrades - remove self communication - remove
+ * security labels on variables
  */
 public class TargetPostprocessVisitor extends CloneVisitor {
   Host selfHost;
@@ -39,8 +37,8 @@ public class TargetPostprocessVisitor extends CloneVisitor {
   }
 
   @Override
-  public StmtNode visit(VarDeclNode varDecl) {
-    return new VarDeclNode(varDecl.getVariable(), Label.bottom());
+  public StmtNode visit(DeclarationNode declarationNode) {
+    return new DeclarationNode(declarationNode.getVariable(), Label.bottom());
   }
 
   @Override
@@ -76,7 +74,7 @@ public class TargetPostprocessVisitor extends CloneVisitor {
         emptyStmt = true;
 
       } else if (newStmt instanceof BlockNode) {
-        emptyStmt = ((BlockNode)newStmt).size() == 0;
+        emptyStmt = ((BlockNode) newStmt).size() == 0;
       }
 
       if (!emptyStmt) {

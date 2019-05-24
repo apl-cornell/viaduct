@@ -1,6 +1,5 @@
 package edu.cornell.cs.apl.viaduct.imp.visitors;
 
-import edu.cornell.cs.apl.viaduct.Binding;
 import edu.cornell.cs.apl.viaduct.FreshNameGenerator;
 import edu.cornell.cs.apl.viaduct.PdgBuilderInfo;
 import edu.cornell.cs.apl.viaduct.PdgComputeNode;
@@ -17,12 +16,14 @@ import edu.cornell.cs.apl.viaduct.SymbolTable;
 import edu.cornell.cs.apl.viaduct.UndeclaredVariableException;
 import edu.cornell.cs.apl.viaduct.imp.ast.AndNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.AnnotationNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.ArrayDeclarationNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.AssignNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.BinaryExpressionNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.BlockNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.BooleanLiteralNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.DeclarationNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.DowngradeNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.EqualNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.EqualToNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ExpressionNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.IfNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ImpAstNode;
@@ -37,10 +38,8 @@ import edu.cornell.cs.apl.viaduct.imp.ast.RecvNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.SendNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.SkipNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.StmtNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.VarDeclNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.Variable;
 import edu.cornell.cs.apl.viaduct.security.Label;
-
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -67,8 +66,8 @@ public class ImpPdgBuilderVisitor implements AstVisitor<PdgBuilderInfo<ImpAstNod
   /** generate PDG from input program. */
   public ProgramDependencyGraph<ImpAstNode> generatePDG(StmtNode program) {
     this.freshNameGenerator = new FreshNameGenerator();
-    this.storageNodes = new SymbolTable<Variable, PdgNode<ImpAstNode>>();
-    this.pdg = new ProgramDependencyGraph<ImpAstNode>();
+    this.storageNodes = new SymbolTable<>();
+    this.pdg = new ProgramDependencyGraph<>();
     program.accept(this);
 
     // replace subexpressions with variables
@@ -160,8 +159,8 @@ public class ImpPdgBuilderVisitor implements AstVisitor<PdgBuilderInfo<ImpAstNod
 
   /** return LHS and RHS dependencies. */
   @Override
-  public PdgBuilderInfo<ImpAstNode> visit(EqualNode eqNode) {
-    return visitBinaryOp(eqNode);
+  public PdgBuilderInfo<ImpAstNode> visit(EqualToNode equalToNode) {
+    return visitBinaryOp(equalToNode);
   }
 
   /** return LHS and RHS dependencies. */
@@ -185,10 +184,11 @@ public class ImpPdgBuilderVisitor implements AstVisitor<PdgBuilderInfo<ImpAstNod
     // create new PDG node
     // calculate inLabel later during dataflow analysis
     PdgNode<ImpAstNode> node =
-        new PdgComputeNode<ImpAstNode>(
+        new PdgComputeNode<>(
             downgradeNode,
             this.freshNameGenerator.getFreshName(DOWNGRADE_NODE),
-            Label.bottom(), label);
+            Label.bottom(),
+            label);
 
     inInfo.setReadNode(node);
     this.pdg.addNode(node);
@@ -204,17 +204,24 @@ public class ImpPdgBuilderVisitor implements AstVisitor<PdgBuilderInfo<ImpAstNod
 
   /** return created storage node. */
   @Override
-  public PdgBuilderInfo<ImpAstNode> visit(VarDeclNode varDecl) {
-    Variable declVar = varDecl.getVariable();
+  public PdgBuilderInfo<ImpAstNode> visit(DeclarationNode declarationNode) {
+    Variable declVar = declarationNode.getVariable();
     String nodeId = String.format("%s_%s", VARDECL_NODE, declVar.toString());
     PdgNode<ImpAstNode> node =
-        new PdgStorageNode<ImpAstNode>(varDecl,
+        new PdgStorageNode<>(
+            declarationNode,
             this.freshNameGenerator.getFreshName(nodeId),
-            varDecl.getLabel());
-    this.storageNodes.add(varDecl.getVariable(), node);
+            declarationNode.getLabel());
+    this.storageNodes.add(declarationNode.getVariable(), node);
     this.pdg.addNode(node);
 
     return new PdgBuilderInfo<>(node);
+  }
+
+  @Override
+  public PdgBuilderInfo<ImpAstNode> visit(ArrayDeclarationNode arrayDeclarationNode) {
+    // TODO: do the right thing
+    return new PdgBuilderInfo<>();
   }
 
   /** return created PDG compute node for assignment. */
@@ -227,9 +234,8 @@ public class ImpPdgBuilderVisitor implements AstVisitor<PdgBuilderInfo<ImpAstNod
       // create new PDG node for the assignment that reads from the RHS nodes
       // and writes to the variable's storage node
       PdgNode<ImpAstNode> node =
-          new PdgComputeNode<ImpAstNode>(assignNode,
-              this.freshNameGenerator.getFreshName(ASSIGN_NODE),
-              Label.bottom());
+          new PdgComputeNode<>(
+              assignNode, this.freshNameGenerator.getFreshName(ASSIGN_NODE), Label.bottom());
 
       inInfo.setReadNode(node);
       PdgWriteEdge.create(node, varNode);
@@ -277,9 +283,7 @@ public class ImpPdgBuilderVisitor implements AstVisitor<PdgBuilderInfo<ImpAstNod
     PdgBuilderInfo<ImpAstNode> inInfo = ifNode.getGuard().accept(this);
 
     PdgNode<ImpAstNode> node =
-        new PdgControlNode<ImpAstNode>(ifNode,
-            this.freshNameGenerator.getFreshName(IF_NODE),
-            Label.bottom());
+        new PdgControlNode<>(ifNode, this.freshNameGenerator.getFreshName(IF_NODE), Label.bottom());
     inInfo.setReadNode(node);
     this.pdg.addNode(node);
 
@@ -303,9 +307,7 @@ public class ImpPdgBuilderVisitor implements AstVisitor<PdgBuilderInfo<ImpAstNod
     Set<PdgNode<ImpAstNode>> readChannelStorageSet = new HashSet<>();
     PdgBuilderInfo<ImpAstNode> branchInfo = thenInfo.merge(elseInfo);
     for (PdgNode<ImpAstNode> createdNode : branchInfo.getCreatedNodes()) {
-      for (PdgNode<ImpAstNode> storage : createdNode.getStorageNodeInputs()) {
-        readChannelStorageSet.add(storage);
-      }
+      readChannelStorageSet.addAll(createdNode.getStorageNodeInputs());
     }
 
     for (PdgNode<ImpAstNode> readChannelStorage : readChannelStorageSet) {

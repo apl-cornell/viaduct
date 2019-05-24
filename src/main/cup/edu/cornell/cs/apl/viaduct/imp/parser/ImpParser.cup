@@ -25,6 +25,7 @@ nonterminal List<StmtNode> stmt_list;
 nonterminal StmtNode stmt_basic, stmt_complex, block;
 nonterminal ExpressionNode expr;
 nonterminal Label label, label_expr;
+nonterminal Host host;
 
 precedence left ANDAND, OROR;
 precedence left PLUS, EQ, NEQ, LT, LEQ, GT, GEQ, LARROW, RARROW, AND, OR;
@@ -68,7 +69,7 @@ stmt_list ::=
 stmt_basic ::=
     IDENT:idv COLON label:lab {:
       Variable var = new Variable(idv);
-      RESULT = new VarDeclNode(var, lab);
+      RESULT = new DeclarationNode(var, lab);
     :}
 
   | IDENT:idv ASSIGN expr:e {:
@@ -76,12 +77,12 @@ stmt_basic ::=
       RESULT = new AssignNode(var, e);
     :}
 
-  | SEND expr:e TO IDENT:idv {:
-      RESULT = new SendNode(new Host(idv), e);
+  | SEND expr:e TO host:host {:
+      RESULT = new SendNode(host, e);
     :}
 
-  | IDENT:idv LARROW RECV IDENT:idp {:
-      RESULT = new RecvNode(new Host(idp), new Variable(idv));
+  | IDENT:idv LARROW RECV host:host {:
+      RESULT = new RecvNode(host, new Variable(idv));
     :}
 
   | SKIP {: RESULT = new SkipNode(); :}
@@ -148,11 +149,11 @@ expr ::=
     :}
 
   | expr:e1 EQ expr:e2 {:
-      RESULT = new EqualNode(e1, e2);
+      RESULT = new EqualToNode(e1, e2);
     :}
 
   | expr:e1 NEQ expr:e2 {:
-      RESULT = new NotNode(new EqualNode(e1, e2));
+      RESULT = new NotNode(new EqualToNode(e1, e2));
     :}
 
   | NOT expr:e {:
@@ -204,4 +205,8 @@ label_expr ::=
   | OPEN_PAREN label_expr:l CLOSE_PAREN {:
       RESULT = l;
     :}
+  ;
+
+host ::=
+    IDENT:id {: RESULT = new Host(id); :}
   ;

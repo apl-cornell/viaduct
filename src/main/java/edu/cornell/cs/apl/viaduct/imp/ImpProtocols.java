@@ -10,15 +10,14 @@ import edu.cornell.cs.apl.viaduct.PdgWriteEdge;
 import edu.cornell.cs.apl.viaduct.Protocol;
 import edu.cornell.cs.apl.viaduct.ProtocolInstantiationInfo;
 import edu.cornell.cs.apl.viaduct.imp.ast.AssignNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.DeclarationNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ExpressionNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ImpAstNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.VarDeclNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.Variable;
 import edu.cornell.cs.apl.viaduct.imp.builders.ExpressionBuilder;
 import edu.cornell.cs.apl.viaduct.imp.builders.StmtBuilder;
 import edu.cornell.cs.apl.viaduct.imp.visitors.RenameVisitor;
 import edu.cornell.cs.apl.viaduct.security.Label;
-
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -28,11 +27,10 @@ import java.util.Set;
 public class ImpProtocols {
   static class Cleartext {
     protected Variable instantiateStorageNode(
-        Host host, PdgStorageNode<ImpAstNode> node,
-        ProtocolInstantiationInfo<ImpAstNode> info) {
+        Host host, PdgStorageNode<ImpAstNode> node, ProtocolInstantiationInfo<ImpAstNode> info) {
 
       // declare new variable
-      VarDeclNode varDecl = (VarDeclNode)node.getAstNode();
+      DeclarationNode varDecl = (DeclarationNode) node.getAstNode();
       Variable newVar = info.getFreshVar(varDecl.getVariable().getName());
 
       StmtBuilder builder = info.getBuilder(host);
@@ -42,12 +40,11 @@ public class ImpProtocols {
     }
 
     protected Variable instantiateComputeNode(
-        Host host, PdgComputeNode<ImpAstNode> node,
-        ProtocolInstantiationInfo<ImpAstNode> info) {
+        Host host, PdgComputeNode<ImpAstNode> node, ProtocolInstantiationInfo<ImpAstNode> info) {
 
       StmtBuilder builder = info.getBuilder(host);
       // read from inputs
-      Map<Variable,Variable> renameMap = new HashMap<>();
+      Map<Variable, Variable> renameMap = new HashMap<>();
       for (PdgInfoEdge<ImpAstNode> inEdge : node.getInInfoEdges()) {
         if (!inEdge.getSource().isControlNode()) {
           PdgNode<ImpAstNode> inNode = inEdge.getSource();
@@ -69,15 +66,14 @@ public class ImpProtocols {
       ImpAstNode astNode = node.getAstNode();
       RenameVisitor renamer = new RenameVisitor(renameMap);
       if (astNode instanceof AssignNode) {
-        AssignNode assignNode = (AssignNode)astNode;
+        AssignNode assignNode = (AssignNode) astNode;
         ExpressionNode computation = assignNode.getRhs().accept(renamer);
         builder.assign(outVar, computation);
 
       } else if (astNode instanceof ExpressionNode) {
-        ExpressionNode computation = ((ExpressionNode)astNode).accept(renamer);
+        ExpressionNode computation = ((ExpressionNode) astNode).accept(renamer);
         builder.assign(outVar, computation);
       }
-
 
       // write to storage nodes
       ExpressionBuilder e = new ExpressionBuilder();
@@ -85,7 +81,7 @@ public class ImpProtocols {
         // only write to variables, since if computations read from
         // the output of this node then it will call readFrom() anyway
         if (outEdge instanceof PdgWriteEdge<?>) {
-          PdgStorageNode<ImpAstNode> outNode = (PdgStorageNode<ImpAstNode>)outEdge.getTarget();
+          PdgStorageNode<ImpAstNode> outNode = (PdgStorageNode<ImpAstNode>) outEdge.getTarget();
           Protocol<ImpAstNode> outProto = info.getProtocol(outNode);
           outProto.writeTo(outNode, host, node, e.var(outVar), info);
         }
@@ -118,6 +114,7 @@ public class ImpProtocols {
       return this.host;
     }
 
+    @Override
     public Set<Protocol<ImpAstNode>> createInstances(
         Set<Host> hostConfig,
         Map<PdgNode<ImpAstNode>, Protocol<ImpAstNode>> protocolMap,
@@ -138,8 +135,11 @@ public class ImpProtocols {
       return instances;
     }
 
+    @Override
     public Set<Host> readFrom(
-        PdgNode<ImpAstNode> node, Host readHost, PdgNode<ImpAstNode> reader,
+        PdgNode<ImpAstNode> node,
+        Host readHost,
+        PdgNode<ImpAstNode> reader,
         ProtocolInstantiationInfo<ImpAstNode> info) {
 
       // this should not be read from unti it has been instantiated!
@@ -149,14 +149,17 @@ public class ImpProtocols {
       StmtBuilder builder = info.getBuilder(this.host);
       builder.send(readHost, e.var(this.outVar));
 
-      Set<Host> readHosts =  new HashSet<>();
+      Set<Host> readHosts = new HashSet<>();
       readHosts.add(this.host);
       return readHosts;
     }
 
+    @Override
     public void writeTo(
-        PdgNode<ImpAstNode> node, Host writeHost,
-        PdgNode<ImpAstNode> writer, ImpAstNode val,
+        PdgNode<ImpAstNode> node,
+        Host writeHost,
+        PdgNode<ImpAstNode> writer,
+        ImpAstNode val,
         ProtocolInstantiationInfo<ImpAstNode> info) {
 
       // can only write to storage nodes
@@ -167,19 +170,19 @@ public class ImpProtocols {
         StmtBuilder builder = info.getBuilder(this.host);
         StmtBuilder writerBuilder = info.getBuilder(writeHost);
 
-        writerBuilder.send(this.host, (ExpressionNode)val);
+        writerBuilder.send(this.host, (ExpressionNode) val);
         builder.recv(writeHost, this.outVar);
       }
     }
 
-    public void instantiate(PdgNode<ImpAstNode> node,
-        ProtocolInstantiationInfo<ImpAstNode> info) {
+    @Override
+    public void instantiate(PdgNode<ImpAstNode> node, ProtocolInstantiationInfo<ImpAstNode> info) {
 
       if (node.isStorageNode()) {
-        this.outVar = instantiateStorageNode(this.host, (PdgStorageNode<ImpAstNode>)node, info);
+        this.outVar = instantiateStorageNode(this.host, (PdgStorageNode<ImpAstNode>) node, info);
 
       } else if (node.isComputeNode()) {
-        this.outVar = instantiateComputeNode(this.host, (PdgComputeNode<ImpAstNode>)node, info);
+        this.outVar = instantiateComputeNode(this.host, (PdgComputeNode<ImpAstNode>) node, info);
 
       } else if (node.isControlNode()) {
         // read guard
@@ -253,6 +256,7 @@ public class ImpProtocols {
       return this.replicas.hashReplicas;
     }
 
+    @Override
     public Set<Protocol<ImpAstNode>> createInstances(
         Set<Host> hostConfig,
         Map<PdgNode<ImpAstNode>, Protocol<ImpAstNode>> protocolMap,
@@ -315,8 +319,11 @@ public class ImpProtocols {
       return instances;
     }
 
-    public Set<Host> readFrom(PdgNode<ImpAstNode> node,
-        Host h, PdgNode<ImpAstNode> reader,
+    @Override
+    public Set<Host> readFrom(
+        PdgNode<ImpAstNode> node,
+        Host h,
+        PdgNode<ImpAstNode> reader,
         ProtocolInstantiationInfo<ImpAstNode> info) {
 
       // TODO: finish
@@ -324,16 +331,18 @@ public class ImpProtocols {
     }
 
     @Override
-    public void writeTo(PdgNode<ImpAstNode> node,
-        Host h, PdgNode<ImpAstNode> writer, ImpAstNode val,
+    public void writeTo(
+        PdgNode<ImpAstNode> node,
+        Host h,
+        PdgNode<ImpAstNode> writer,
+        ImpAstNode val,
         ProtocolInstantiationInfo<ImpAstNode> info) {
 
       // TODO: finish
     }
 
     @Override
-    public void instantiate(PdgNode<ImpAstNode> node,
-        ProtocolInstantiationInfo<ImpAstNode> info) {
+    public void instantiate(PdgNode<ImpAstNode> node, ProtocolInstantiationInfo<ImpAstNode> info) {
 
       /*
       if (node.isStorageNode()) {
@@ -425,6 +434,7 @@ public class ImpProtocols {
       return rep;
     }
 
+    @Override
     public Set<Protocol<ImpAstNode>> createInstances(
         Set<Host> hostConfig,
         Map<PdgNode<ImpAstNode>, Protocol<ImpAstNode>> protocolMap,
@@ -464,8 +474,10 @@ public class ImpProtocols {
     }
 
     @Override
-    public Set<Host> readFrom(PdgNode<ImpAstNode> node,
-        Host h, PdgNode<ImpAstNode> reader,
+    public Set<Host> readFrom(
+        PdgNode<ImpAstNode> node,
+        Host h,
+        PdgNode<ImpAstNode> reader,
         ProtocolInstantiationInfo<ImpAstNode> info) {
 
       // TODO: finish
@@ -473,16 +485,18 @@ public class ImpProtocols {
     }
 
     @Override
-    public void writeTo(PdgNode<ImpAstNode> node,
-        Host h, PdgNode<ImpAstNode> writer, ImpAstNode val,
+    public void writeTo(
+        PdgNode<ImpAstNode> node,
+        Host h,
+        PdgNode<ImpAstNode> writer,
+        ImpAstNode val,
         ProtocolInstantiationInfo<ImpAstNode> info) {
 
       // TODO: finish
     }
 
     @Override
-    public void instantiate(PdgNode<ImpAstNode> node,
-        ProtocolInstantiationInfo<ImpAstNode> info) {
+    public void instantiate(PdgNode<ImpAstNode> node, ProtocolInstantiationInfo<ImpAstNode> info) {
 
       // TODO: finish
     }
@@ -538,6 +552,7 @@ public class ImpProtocols {
       return rep;
     }
 
+    @Override
     public Set<Protocol<ImpAstNode>> createInstances(
         Set<Host> hostConfig,
         Map<PdgNode<ImpAstNode>, Protocol<ImpAstNode>> protocolMap,
@@ -605,8 +620,10 @@ public class ImpProtocols {
     }
 
     @Override
-    public Set<Host> readFrom(PdgNode<ImpAstNode> node,
-        Host h, PdgNode<ImpAstNode> reader,
+    public Set<Host> readFrom(
+        PdgNode<ImpAstNode> node,
+        Host h,
+        PdgNode<ImpAstNode> reader,
         ProtocolInstantiationInfo<ImpAstNode> info) {
 
       // TODO: finish
@@ -614,16 +631,18 @@ public class ImpProtocols {
     }
 
     @Override
-    public void writeTo(PdgNode<ImpAstNode> node,
-        Host h, PdgNode<ImpAstNode> writer, ImpAstNode val,
+    public void writeTo(
+        PdgNode<ImpAstNode> node,
+        Host h,
+        PdgNode<ImpAstNode> writer,
+        ImpAstNode val,
         ProtocolInstantiationInfo<ImpAstNode> info) {
 
       // TODO: finish
     }
 
     @Override
-    public void instantiate(PdgNode<ImpAstNode> node,
-        ProtocolInstantiationInfo<ImpAstNode> info) {
+    public void instantiate(PdgNode<ImpAstNode> node, ProtocolInstantiationInfo<ImpAstNode> info) {
 
       // TODO: finish
     }

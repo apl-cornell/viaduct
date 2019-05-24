@@ -1,4 +1,4 @@
 package edu.cornell.cs.apl.viaduct.imp.ast;
 
-/** a value in IMP. */
+/** The result of evaluating an {@link ExpressionNode}. */
 public interface ImpValue {}

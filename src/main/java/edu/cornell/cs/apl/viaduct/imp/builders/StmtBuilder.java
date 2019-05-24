@@ -4,13 +4,13 @@ import edu.cornell.cs.apl.viaduct.Host;
 import edu.cornell.cs.apl.viaduct.imp.ast.AnnotationNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.AssignNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.BlockNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.DeclarationNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ExpressionNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.IfNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.RecvNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.SendNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.SkipNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.StmtNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.VarDeclNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.Variable;
 import edu.cornell.cs.apl.viaduct.security.Label;
 import java.util.ArrayList;
@@ -34,12 +34,12 @@ public class StmtBuilder {
   }
 
   public StmtBuilder varDecl(String varName, Label label) {
-    this.stmts.add(new VarDeclNode(new Variable(varName), label));
+    this.stmts.add(new DeclarationNode(new Variable(varName), label));
     return this;
   }
 
   public StmtBuilder varDecl(Variable varName, Label label) {
-    this.stmts.add(new VarDeclNode(varName, label));
+    this.stmts.add(new DeclarationNode(varName, label));
     return this;
   }
 

@@ -2,12 +2,14 @@ package edu.cornell.cs.apl.viaduct.imp.visitors;
 
 import edu.cornell.cs.apl.viaduct.imp.ast.AndNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.AnnotationNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.ArrayDeclarationNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.AssignNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.BinaryExpressionNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.BlockNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.BooleanLiteralNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.DeclarationNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.DowngradeNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.EqualNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.EqualToNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.IfNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.IntegerLiteralNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.LeqNode;
@@ -20,7 +22,6 @@ import edu.cornell.cs.apl.viaduct.imp.ast.RecvNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.SendNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.SkipNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.StmtNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.VarDeclNode;
 
 /** Pretty-prints an AST. */
 public class PrintVisitor implements AstVisitor<String> {
@@ -54,20 +55,14 @@ public class PrintVisitor implements AstVisitor<String> {
 
   /** print node. */
   @Override
-  public String visit(IntegerLiteralNode integerLiteralNode) {
-    return Integer.toString(integerLiteralNode.getValue());
-  }
-
-  /** print node. */
-  @Override
-  public String visit(PlusNode plusNode) {
-    return visitBinary(plusNode, "+");
-  }
-
-  /** print node. */
-  @Override
   public String visit(BooleanLiteralNode booleanLiteralNode) {
     return Boolean.toString(booleanLiteralNode.getValue());
+  }
+
+  /** print node. */
+  @Override
+  public String visit(IntegerLiteralNode integerLiteralNode) {
+    return Integer.toString(integerLiteralNode.getValue());
   }
 
   /** print node. */
@@ -90,8 +85,8 @@ public class PrintVisitor implements AstVisitor<String> {
 
   /** print node. */
   @Override
-  public String visit(EqualNode equalNode) {
-    return visitBinary(equalNode, "==");
+  public String visit(EqualToNode equalToNode) {
+    return visitBinary(equalToNode, "==");
   }
 
   /** print node. */
@@ -104,6 +99,12 @@ public class PrintVisitor implements AstVisitor<String> {
   @Override
   public String visit(NotNode notNode) {
     return "!" + notNode.getExpression().accept(this);
+  }
+
+  /** print node. */
+  @Override
+  public String visit(PlusNode plusNode) {
+    return visitBinary(plusNode, "+");
   }
 
   /** print node. */
@@ -123,10 +124,19 @@ public class PrintVisitor implements AstVisitor<String> {
 
   /** print node. */
   @Override
-  public String visit(VarDeclNode varDecl) {
-    String varStr = varDecl.getVariable().getName();
-    String labelStr = varDecl.getLabel().toString();
+  public String visit(DeclarationNode declarationNode) {
+    String varStr = declarationNode.getVariable().getName();
+    String labelStr = declarationNode.getLabel().toString();
     return getIndent() + varStr + " : " + labelStr;
+  }
+
+  /** print node. */
+  @Override
+  public String visit(ArrayDeclarationNode declarationNode) {
+    String varStr = declarationNode.getVariable().getName();
+    String lengthStr = declarationNode.getLength().toString();
+    String labelStr = declarationNode.getLabel().toString();
+    return getIndent() + varStr + "[" + lengthStr + "] : " + labelStr;
   }
 
   /** print node. */

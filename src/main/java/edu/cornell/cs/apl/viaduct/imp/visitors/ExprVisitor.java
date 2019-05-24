@@ -3,7 +3,7 @@ package edu.cornell.cs.apl.viaduct.imp.visitors;
 import edu.cornell.cs.apl.viaduct.imp.ast.AndNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.BooleanLiteralNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.DowngradeNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.EqualNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.EqualToNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.IntegerLiteralNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.LeqNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.LessThanNode;
@@ -16,11 +16,9 @@ import edu.cornell.cs.apl.viaduct.imp.ast.ReadNode;
 public interface ExprVisitor<R> {
   R visit(ReadNode readNode);
 
-  R visit(IntegerLiteralNode integerLiteralNode);
-
-  R visit(PlusNode plusNode);
-
   R visit(BooleanLiteralNode booleanLiteralNode);
+
+  R visit(IntegerLiteralNode integerLiteralNode);
 
   R visit(OrNode orNode);
 
@@ -28,11 +26,13 @@ public interface ExprVisitor<R> {
 
   R visit(LessThanNode ltNode);
 
-  R visit(EqualNode eqNode);
+  R visit(EqualToNode eqNode);
 
   R visit(LeqNode leqNode);
 
   R visit(NotNode notNode);
+
+  R visit(PlusNode plusNode);
 
   R visit(DowngradeNode downgradeNode);
 }

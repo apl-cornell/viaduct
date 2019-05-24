@@ -2,11 +2,13 @@ package edu.cornell.cs.apl.viaduct.imp.visitors;
 
 import edu.cornell.cs.apl.viaduct.imp.ast.AndNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.AnnotationNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.ArrayDeclarationNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.AssignNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.BlockNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.BooleanLiteralNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.DeclarationNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.DowngradeNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.EqualNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.EqualToNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ExpressionNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.IfNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ImpAstNode;
@@ -21,16 +23,17 @@ import edu.cornell.cs.apl.viaduct.imp.ast.RecvNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.SendNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.SkipNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.StmtNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.VarDeclNode;
 import java.util.ArrayList;
 import java.util.List;
 
+// TODO: get rid of this whole class.
+
 /** replaces parts of AST. */
 public class ReplaceVisitor implements AstVisitor<ImpAstNode> {
-  StmtNode curStmt;
-  StmtNode newStmt;
-  ExpressionNode curExpr;
-  ExpressionNode newExpr;
+  private StmtNode curStmt;
+  private StmtNode newStmt;
+  private ExpressionNode curExpr;
+  private ExpressionNode newExpr;
 
   /** replace an expression in the AST. */
   public ImpAstNode replaceExpr(ImpAstNode ast, ExpressionNode cexpr, ExpressionNode nexpr) {
@@ -56,6 +59,7 @@ public class ReplaceVisitor implements AstVisitor<ImpAstNode> {
       return newExpr;
 
     } else {
+      // TODO: why clone the object?
       return new ReadNode(readNode.getVariable());
     }
   }
@@ -129,14 +133,14 @@ public class ReplaceVisitor implements AstVisitor<ImpAstNode> {
   }
 
   @Override
-  public ExpressionNode visit(EqualNode equalNode) {
-    if (equalNode.equals(this.curExpr)) {
+  public ExpressionNode visit(EqualToNode equalToNode) {
+    if (equalToNode.equals(this.curExpr)) {
       return this.newExpr;
 
     } else {
-      ExpressionNode newLhs = (ExpressionNode) equalNode.getLhs().accept(this);
-      ExpressionNode newRhs = (ExpressionNode) equalNode.getRhs().accept(this);
-      return new EqualNode(newLhs, newRhs);
+      ExpressionNode newLhs = (ExpressionNode) equalToNode.getLhs().accept(this);
+      ExpressionNode newRhs = (ExpressionNode) equalToNode.getRhs().accept(this);
+      return new EqualToNode(newLhs, newRhs);
     }
   }
 
@@ -185,12 +189,22 @@ public class ReplaceVisitor implements AstVisitor<ImpAstNode> {
   }
 
   @Override
-  public StmtNode visit(VarDeclNode varDecl) {
-    if (varDecl.equals(this.curStmt)) {
+  public StmtNode visit(DeclarationNode declarationNode) {
+    if (declarationNode.equals(this.curStmt)) {
       return this.newStmt;
 
     } else {
-      return new VarDeclNode(varDecl.getVariable(), varDecl.getLabel());
+      return new DeclarationNode(declarationNode.getVariable(), declarationNode.getLabel());
+    }
+  }
+
+  @Override
+  public StmtNode visit(ArrayDeclarationNode arrayDeclarationNode) {
+    if (arrayDeclarationNode.equals(this.curStmt)) {
+      return this.newStmt;
+
+    } else {
+      return arrayDeclarationNode;
     }
   }
 

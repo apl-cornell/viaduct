@@ -1,9 +1,13 @@
 package edu.cornell.cs.apl.viaduct.imp.builders;
 
+import edu.cornell.cs.apl.viaduct.Host;
+import edu.cornell.cs.apl.viaduct.imp.ast.AnnotationNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.AssignNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.BlockNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ExpressionNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.IfNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.RecvNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.SendNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.SkipNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.StmtNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.VarDeclNode;
@@ -43,6 +47,37 @@ public class StmtBuilder {
   public StmtBuilder cond(ExpressionNode guard, StmtBuilder thenBranch, StmtBuilder elseBranch) {
     StmtNode ifNode = new IfNode(guard, thenBranch.build(), elseBranch.build());
     this.stmts.add(ifNode);
+    return this;
+  }
+
+  /** build send stmt. */
+  public StmtBuilder send(Host recipient, ExpressionNode expr) {
+    StmtNode sendNode = new SendNode(recipient, expr);
+    this.stmts.add(sendNode);
+    return this;
+  }
+
+  /** build recv stmt. */
+  public StmtBuilder recv(Host sender, Variable var) {
+    StmtNode recvNode = new RecvNode(sender, var);
+    this.stmts.add(recvNode);
+    return this;
+  }
+
+  /** build annotation. */
+  public StmtBuilder annotation(String annotStr) {
+    StmtNode annotNode = new AnnotationNode(annotStr);
+    this.stmts.add(annotNode);
+    return this;
+  }
+
+  public StmtBuilder statement(StmtNode stmt) {
+    this.stmts.add(stmt);
+    return this;
+  }
+
+  public StmtBuilder concat(StmtBuilder other) {
+    this.stmts.addAll(other.stmts);
     return this;
   }
 }

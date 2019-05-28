@@ -3,7 +3,8 @@ package edu.cornell.cs.apl.viaduct;
 import static guru.nidi.graphviz.model.Factory.mutGraph;
 import static guru.nidi.graphviz.model.Factory.mutNode;
 
-import edu.cornell.cs.apl.viaduct.imp.ast.AstNode;
+import guru.nidi.graphviz.attribute.Color;
+import guru.nidi.graphviz.attribute.Label;
 import guru.nidi.graphviz.attribute.Shape;
 import guru.nidi.graphviz.attribute.Style;
 import guru.nidi.graphviz.model.Link;
@@ -24,7 +25,7 @@ public class PdgDotPrinter {
     Set<PdgNode<T>> nodes = pdg.getNodes();
 
     for (PdgNode<T> node : nodes) {
-      String lineNumStr = node.getLineNumber().toString();
+      String nodeId = node.getId();
       String data = "";
       switch (dataFormat) {
         case LABEL:
@@ -62,11 +63,12 @@ public class PdgDotPrinter {
         label = String.format("%s\\n%s", "CONDITIONAL", data);
       }
 
-      MutableNode grNode = mutNode(lineNumStr).add("label", label).add(shape);
+      MutableNode grNode = mutNode(nodeId).add("label", label).add(shape);
 
       g.add(grNode);
-      for (PdgNode<T> outNode : node.getOutNodes()) {
-        String strOutNode = outNode.getLineNumber().toString();
+      for (PdgInfoEdge<T> infoEdge : node.getOutInfoEdges()) {
+        PdgNode<T> outNode = infoEdge.getTarget();
+        String strOutNode = outNode.getId();
         Style style;
 
         // draw edge as a read channel
@@ -76,7 +78,27 @@ public class PdgDotPrinter {
           style = Style.SOLID;
         }
 
-        grNode.addLink(Link.to(mutNode(strOutNode)).add(style));
+        String edgeLabel = infoEdge.getLabel();
+        if (edgeLabel != null) {
+          grNode.addLink(
+              Link.to(mutNode(strOutNode)).add(Label.of(edgeLabel)).add(style).add(Color.BLUE));
+
+        } else {
+          grNode.addLink(Link.to(mutNode(strOutNode)).add(style).add(Color.BLUE));
+        }
+      }
+
+      for (PdgControlEdge<T> ctrlEdge : node.getOutControlEdges()) {
+        PdgNode<T> outNode = ctrlEdge.getTarget();
+        String strOutNode = outNode.getId();
+
+        if (ctrlEdge.hasDefaultLabel()) {
+          grNode.addLink(Link.to(mutNode(strOutNode)).add(Color.RED));
+
+        } else {
+          grNode.addLink(
+              Link.to(mutNode(strOutNode)).add(Label.of(ctrlEdge.getLabel())).add(Color.RED));
+        }
       }
     }
     return g.toString();

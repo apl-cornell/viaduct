@@ -15,4 +15,24 @@ public abstract class LiteralNode<V> extends ExpressionNode {
   public V getValue() {
     return value;
   }
+
+  @Override
+  public boolean equals(Object other) {
+    if (other == null) {
+      return false;
+    }
+
+    if (other instanceof BooleanLiteralNode) {
+      LiteralNode otherLit = (LiteralNode) other;
+      return otherLit.value.equals(this.value);
+
+    } else {
+      return false;
+    }
+  }
+
+  @Override
+  public int hashCode() {
+    return this.value.hashCode();
+  }
 }

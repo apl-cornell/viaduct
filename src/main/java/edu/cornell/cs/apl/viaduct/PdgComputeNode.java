@@ -1,6 +1,5 @@
 package edu.cornell.cs.apl.viaduct;
 
-import edu.cornell.cs.apl.viaduct.imp.ast.AstNode;
 import edu.cornell.cs.apl.viaduct.security.Label;
 
 /** PDG compute node, which represents expressions or statements. */
@@ -8,16 +7,16 @@ public class PdgComputeNode<T extends AstNode> extends PdgNode<T> {
   boolean isDowngrade;
 
   /** constructor for non-downgrade nodes. */
-  public PdgComputeNode(T astNode, AbstractLineNumber lineno, Label label) {
-    super(astNode, lineno);
+  public PdgComputeNode(T astNode, String id, Label label) {
+    super(astNode, id);
     this.setInLabel(label);
     this.setOutLabel(label);
     this.isDowngrade = false;
   }
 
   /** constructor for downgrade nodes. */
-  public PdgComputeNode(T astNode, AbstractLineNumber lineno, Label inLabel, Label outLabel) {
-    super(astNode, lineno);
+  public PdgComputeNode(T astNode, String id, Label inLabel, Label outLabel) {
+    super(astNode, id);
     this.setInLabel(inLabel);
     this.setOutLabel(outLabel);
     this.isDowngrade = true;
@@ -47,17 +46,13 @@ public class PdgComputeNode<T extends AstNode> extends PdgNode<T> {
   public String toString() {
     if (this.isDowngrade) {
       return "<"
-          + this.lineNumber.toString()
+          + this.id.toString()
           + " downgrade compute node for "
           + this.astNode.toString()
           + ">";
 
     } else {
-      return "<"
-          + this.lineNumber.toString()
-          + " compute node for "
-          + this.astNode.toString()
-          + ">";
+      return "<" + this.id.toString() + " compute node for " + this.astNode.toString() + ">";
     }
   }
 }

@@ -2,6 +2,8 @@ package edu.cornell.cs.apl.viaduct.imp.ast;
 
 import edu.cornell.cs.apl.viaduct.imp.visitors.StmtVisitor;
 
+import java.util.Objects;
+
 /** If statement. */
 public class IfNode extends StmtNode {
   private final ExpressionNode guard;
@@ -36,6 +38,26 @@ public class IfNode extends StmtNode {
 
   public <R> R accept(StmtVisitor<R> v) {
     return v.visit(this);
+  }
+
+  @Override
+  public boolean equals(Object other) {
+    if (other == null) { return false; }
+
+    if (other instanceof IfNode) {
+      IfNode otherIf = (IfNode) other;
+      return otherIf.guard.equals(this.guard)
+          && otherIf.thenBranch.equals(this.thenBranch)
+          && otherIf.elseBranch.equals(this.elseBranch);
+
+    } else {
+      return false;
+    }
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(this.guard, this.thenBranch, this.elseBranch);
   }
 
   @Override

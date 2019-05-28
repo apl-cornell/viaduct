@@ -1,25 +1,35 @@
 package edu.cornell.cs.apl.viaduct;
 
-import edu.cornell.cs.apl.viaduct.imp.ast.AstNode;
 import edu.cornell.cs.apl.viaduct.security.Label;
 import java.util.HashSet;
 import java.util.Set;
 
 /** node in a program dependence graph. */
-public abstract class PdgNode<T extends AstNode> implements Comparable<PdgNode<T>> {
+public abstract class PdgNode<T extends AstNode> {
   T astNode;
-  AbstractLineNumber lineNumber;
+  String id;
   Set<PdgNode<T>> inNodes;
   Set<PdgNode<T>> outNodes;
+
+  Set<PdgInfoEdge<T>> inInfoEdges;
+  PdgControlEdge<T> inControlEdge;
+  Set<PdgInfoEdge<T>> outInfoEdges;
+  Set<PdgControlEdge<T>> outControlEdges;
   Label inLabel;
   Label outLabel;
 
-  /** constructor. */
-  public PdgNode(
-      T astNode, AbstractLineNumber lineno, Set<PdgNode<T>> inNodes, Set<PdgNode<T>> outNodes) {
+  protected PdgNode() {
+    this.inInfoEdges = new HashSet<>();
+    this.outInfoEdges = new HashSet<>();
+    this.outControlEdges = new HashSet<>();
+  }
 
+  /** constructor. */
+  public PdgNode(T astNode, String id, Set<PdgNode<T>> inNodes, Set<PdgNode<T>> outNodes) {
+
+    this();
     this.astNode = astNode;
-    this.lineNumber = lineno;
+    this.id = id;
     this.inNodes = inNodes;
     this.outNodes = outNodes;
     this.inLabel = Label.bottom();
@@ -27,8 +37,8 @@ public abstract class PdgNode<T extends AstNode> implements Comparable<PdgNode<T
   }
 
   /** constructor, defaults to no edges. */
-  public PdgNode(T astNode, AbstractLineNumber lineno) {
-    this(astNode, lineno, new HashSet<PdgNode<T>>(), new HashSet<PdgNode<T>>());
+  public PdgNode(T astNode, String id) {
+    this(astNode, id, new HashSet<PdgNode<T>>(), new HashSet<PdgNode<T>>());
   }
 
   public T getAstNode() {
@@ -39,16 +49,20 @@ public abstract class PdgNode<T extends AstNode> implements Comparable<PdgNode<T
     this.astNode = node;
   }
 
-  public AbstractLineNumber getLineNumber() {
-    return this.lineNumber;
-  }
-
-  public void setLineNumber(AbstractLineNumber lineno) {
-    this.lineNumber = lineno;
+  public String getId() {
+    return this.id;
   }
 
   public void addInNode(PdgNode<T> node) {
     this.inNodes.add(node);
+  }
+
+  public void addInInfoEdge(PdgInfoEdge<T> edge) {
+    this.inInfoEdges.add(edge);
+  }
+
+  public void setInControlEdge(PdgControlEdge<T> edge) {
+    this.inControlEdge = edge;
   }
 
   public void addInNodes(Set<PdgNode<T>> nodes) {
@@ -59,6 +73,14 @@ public abstract class PdgNode<T extends AstNode> implements Comparable<PdgNode<T
     this.outNodes.add(node);
   }
 
+  public void addOutInfoEdge(PdgInfoEdge<T> edge) {
+    this.outInfoEdges.add(edge);
+  }
+
+  public void addOutControlEdge(PdgControlEdge<T> edge) {
+    this.outControlEdges.add(edge);
+  }
+
   public void addOutNodes(Set<PdgNode<T>> nodes) {
     this.outNodes.addAll(nodes);
   }
@@ -67,8 +89,24 @@ public abstract class PdgNode<T extends AstNode> implements Comparable<PdgNode<T
     return this.inNodes;
   }
 
+  public Set<PdgInfoEdge<T>> getInInfoEdges() {
+    return this.inInfoEdges;
+  }
+
+  public PdgControlEdge<T> getInControlEdge() {
+    return this.inControlEdge;
+  }
+
   public Set<PdgNode<T>> getOutNodes() {
     return this.outNodes;
+  }
+
+  public Set<PdgInfoEdge<T>> getOutInfoEdges() {
+    return this.outInfoEdges;
+  }
+
+  public Set<PdgControlEdge<T>> getOutControlEdges() {
+    return this.outControlEdges;
   }
 
   /**
@@ -78,12 +116,14 @@ public abstract class PdgNode<T extends AstNode> implements Comparable<PdgNode<T
    */
   public Set<PdgNode<T>> getStorageNodeInputs() {
     Set<PdgNode<T>> storageInputs = new HashSet<PdgNode<T>>();
-    for (PdgNode<T> inNode : this.inNodes) {
-      if (inNode.isStorageNode()) {
-        storageInputs.add(inNode);
+
+    for (PdgInfoEdge<T> edge : this.inInfoEdges) {
+      PdgNode<T> source = edge.getSource();
+      if (source.isStorageNode()) {
+        storageInputs.add(source);
 
       } else {
-        storageInputs.addAll(inNode.getStorageNodeInputs());
+        storageInputs.addAll(source.getStorageNodeInputs());
       }
     }
 
@@ -123,15 +163,13 @@ public abstract class PdgNode<T extends AstNode> implements Comparable<PdgNode<T
   public abstract boolean isControlNode();
 
   @Override
-  public int compareTo(PdgNode<T> other) {
-    return this.lineNumber.compareTo(other.lineNumber);
-  }
+  public boolean equals(Object other) {
+    if (other == null) {
+      return false;
+    }
 
-  /*
-  @Override
-  public boolean equals(Object o) {
-    if (o instanceof PdgNode<?>) {
-      PdgNode<T> otherPdg = (PdgNode<T>)o;
+    if (other instanceof PdgNode<?>) {
+      PdgNode<T> otherPdg = (PdgNode<T>) other;
       return this.astNode.equals(otherPdg.astNode);
 
     } else {
@@ -143,5 +181,4 @@ public abstract class PdgNode<T extends AstNode> implements Comparable<PdgNode<T
   public int hashCode() {
     return this.astNode.hashCode();
   }
-  */
 }

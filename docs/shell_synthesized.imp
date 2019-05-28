@@ -1,0 +1,103 @@
+cin : {C};
+ain : {A};
+shell : {C & A<-};
+guess : {A & C<-};
+win : {(A|C)-> & (A&C)<-};
+
+@input 1
+cin <- recv input;
+
+@input 2
+ain <- recv input;
+
+/* Chuck and Alice must endorse their inputs to
+ * shell and guess respectively */
+shell := endorse(cin, {C & A<-});
+guess := endorse(ain, {A & C<-});
+
+/* without revealing the position of the shell,
+ * Chuck must prove that the shell is under one of the cups. */
+if (declassify(1 <= shell && shell <= 3, {(A|C)-> & (A&C)<-})) {
+    /* check if Alice won */
+    win := declassify(shell == guess, {(A|C)-> & (A&C)<-});
+}
+
+
+/* generated protocol */
+@process chuck
+cin;
+shell;
+guess_commit;
+win;
+
+shell := cin;
+@proto tmp1 <- COMMIT(shell)
+send tmp1 to alice;
+
+/* receive commitment for guess from alice */
+guess_commit <- recv alice;
+
+d1 := 1 <= shell && shell <= 3;
+@proto tmp2 <- ZK_CREATE({shell}, {d1,shell_commit}, shell == commit(shell_commit) && d1 == 1 <= shell && shell <= 3)
+send d1 to alice;
+send tmp2 to alice;
+
+if (d1) {
+    @proto MPC({chuck,alice}, shell == guess) tmp3
+    win := tmp3
+
+} else {
+    skip
+}
+
+
+@process alice
+ain;
+guess;
+shell_commit;
+shell_commit <- recv chuck;
+
+guess := ain;
+@proto tmp4 <- COMMIT(guess)
+send tmp4 to chuck;
+
+tmp5 <- recv chuck;
+tmp6 <- recv chuck;
+@proto ZK_ASSERT({tmp5,shell_commit}, tmp6, shell == commit(shell_commit) && tmp5 == 1 <= shell && shell <= 3)
+
+if (tmp5) {
+    @proto MPC({chuck,alice}, shell == guess) tmp7
+    win := tmp7;
+} else {
+    skip
+}
+
+
+/* alternate protocol */
+@process chuck
+cin;
+win;
+@blockproto MPC({chuck,alice})
+shell := cin;
+guess := ain;
+if (1 <= shell && shell <= 3) {
+    tmp1 := shell == guess;
+} else {
+    skip;
+}
+@endproto
+win := tmp1
+
+@process alice
+ain;
+win;
+@blockproto MPC({alice,chuck})
+shell := cin;
+guess := ain;
+if (1 <= shell && shell <= 3) {
+    tmp2 := shell == guess;
+} else {
+    skip;
+}
+@endproto
+win := tmp2;

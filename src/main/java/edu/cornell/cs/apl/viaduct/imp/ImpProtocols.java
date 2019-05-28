@@ -52,6 +52,41 @@ public class ImpProtocols {
       return instances;
     }
 
+    /*
+    public void instantiate(PdgNode<ImpAstNode> node,
+        Map<PdgNode<ImpAstNode>,Protocol<ImpAstNode>> protocolMap,
+        ProcessConfigBuilder pconfig) {
+
+      StmtBuilder builder = pconfig.getBuilder(this.host);
+      if (node.isStorageNode()) {
+        builder.statement((StmtNode)node.getAstNode());
+
+      } else if (node.isComputeNode()) {
+        // read from inputs
+        for (PdgNode<ImpAstNode> inNode : node.getInNodes()) {
+          Protocol<ImpAstNode> inNodeProto = protocolMap.get(inNode);
+          Set<Host> readHosts = inNodeProto.readFrom(this.host, node, protocolMap, pconfig);
+          for (Host readHost : readHosts) {
+            Variable readVar = pconfig.getFreshVar();
+            builder.recv(readHost, readVar);
+          }
+        }
+
+        // perform computation
+        // Variable outVar
+
+        // write to outputs
+        for (PdgNode<ImpAstNode> outNode : node.getOutNodes()) {
+          // only write to variables, since if computations read from
+          // the output of this node then it will call readFrom() anyway
+          if (outNode.isStorageNode()) {
+
+          }
+        }
+      }
+    }
+    */
+
     @Override
     public boolean equals(Object o) {
       if (o == null) {

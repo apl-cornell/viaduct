@@ -106,9 +106,9 @@ public class Main {
     if (ns.getBoolean("interpret")) {
       InterpVisitor interpreter = new InterpVisitor();
       try {
-        Map<String, Map<Variable, ImpValue>> storeMap = interpreter.interpret(program);
+        Map<Host, Map<Variable, ImpValue>> storeMap = interpreter.interpret(program);
 
-        for (Map.Entry<String, Map<Variable, ImpValue>> kv : storeMap.entrySet()) {
+        for (Map.Entry<Host, Map<Variable, ImpValue>> kv : storeMap.entrySet()) {
           Map<Variable, ImpValue> store = kv.getValue();
 
           System.out.println("store: " + kv.getKey());
@@ -134,8 +134,7 @@ public class Main {
     }
 
     ImpPdgBuilderVisitor pdgBuilder = new ImpPdgBuilderVisitor();
-    program.accept(pdgBuilder);
-    ProgramDependencyGraph<ImpAstNode> pdg = pdgBuilder.getPdg();
+    ProgramDependencyGraph<ImpAstNode> pdg = pdgBuilder.generatePDG(program);
 
     // run data-flow analysis to compute labels for all PDG nodes
     PdgLabelDataflow<ImpAstNode> labelDataFlow = new PdgLabelDataflow<>();

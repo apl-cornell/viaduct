@@ -1,5 +1,6 @@
 package edu.cornell.cs.apl.viaduct.imp;
 
+import edu.cornell.cs.apl.viaduct.Host;
 import edu.cornell.cs.apl.viaduct.imp.ast.AnnotationNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ImpValue;
 import edu.cornell.cs.apl.viaduct.imp.ast.IntegerLiteralNode;
@@ -24,7 +25,7 @@ public class ImpAnnotationProcessors {
 
     @Override
     public ImpAnnotation processAnnotation(AnnotationNode annotNode) {
-      String annotStr = annotNode.getAnnotationString();
+      Host annotStr = new Host(annotNode.getAnnotationString());
       return new ImpAnnotations.ProcessAnnotation(annotStr);
     }
   }
@@ -48,11 +49,12 @@ public class ImpAnnotationProcessors {
     @Override
     public ImpAnnotation processAnnotation(AnnotationNode annot) {
       try {
-        int i = Integer.valueOf(annot.getAnnotationString());
+        int i = Integer.parseInt(annot.getAnnotationString());
         ImpValue value = new IntegerLiteralNode(i);
         return new ImpAnnotations.InputAnnotation(value);
+
       } catch (Exception e) {
-        return null;
+        throw new RuntimeException(e);
       }
     }
   }

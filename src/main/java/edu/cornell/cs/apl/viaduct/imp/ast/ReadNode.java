@@ -19,6 +19,26 @@ public class ReadNode extends ExpressionNode {
   }
 
   @Override
+  public boolean equals(Object other) {
+    if (other == null) {
+      return false;
+    }
+
+    if (other instanceof ReadNode) {
+      ReadNode otherRead = (ReadNode) other;
+      return otherRead.variable.equals(this.variable);
+
+    } else {
+      return false;
+    }
+  }
+
+  @Override
+  public int hashCode() {
+    return this.variable.hashCode();
+  }
+
+  @Override
   public String toString() {
     return "(var " + this.getVariable().toString() + ")";
   }

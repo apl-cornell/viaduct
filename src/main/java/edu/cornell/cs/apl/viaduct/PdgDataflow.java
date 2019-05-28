@@ -1,6 +1,5 @@
 package edu.cornell.cs.apl.viaduct;
 
-import edu.cornell.cs.apl.viaduct.imp.ast.AstNode;
 import edu.cornell.cs.apl.viaduct.security.Lattice;
 import java.util.LinkedList;
 import java.util.Queue;
@@ -25,8 +24,8 @@ public abstract class PdgDataflow<T extends Lattice<T>, U extends AstNode> {
       PdgNode<U> node = worklist.remove();
 
       T nextInput = input(node);
-      for (PdgNode<U> inNode : node.getInNodes()) {
-        nextInput = nextInput.join(output(inNode));
+      for (PdgEdge<U> inEdge : node.getInInfoEdges()) {
+        nextInput = nextInput.join(output(inEdge.getSource()));
       }
       updateInput(node, nextInput);
 

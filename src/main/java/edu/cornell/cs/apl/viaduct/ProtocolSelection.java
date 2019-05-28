@@ -1,8 +1,5 @@
 package edu.cornell.cs.apl.viaduct;
 
-import edu.cornell.cs.apl.viaduct.imp.ast.AstNode;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -30,33 +27,7 @@ public class ProtocolSelection<T extends AstNode> {
     // this allows massive pruning of the search space,
     // as we will only visit maps that follow this selection order
     // obeys toposort according to PDG
-    List<PdgNode<T>> selectionOrder = new ArrayList<PdgNode<T>>(nodes);
-    Collections.sort(selectionOrder);
-    /*
-    while (selectionOrder.size() < nodes.size()) {
-      for (PdgNode<T> node : nodes) {
-        if (!selectionOrder.contains(node)) {
-          Set<PdgNode<T>> inNodes = node.getInNodes();
-
-          boolean add = true;
-          if (!node.isStorageNode()) {
-            for (PdgNode<T> inNode : inNodes) {
-              // check if all input nodes (ignoring read channel edges)
-              // are already selected
-              if (!selectionOrder.contains(inNode)) {
-                add = false;
-                break;
-              }
-            }
-          }
-
-          if (add) {
-            selectionOrder.add(node);
-          }
-        }
-      }
-    }
-    */
+    List<PdgNode<T>> selectionOrder = pdg.getOrderedNodes();
 
     // create open and closed sets
     PriorityQueue<ProtocolMapNode<T>> openSet = new PriorityQueue<>(pdg.getNodes().size());

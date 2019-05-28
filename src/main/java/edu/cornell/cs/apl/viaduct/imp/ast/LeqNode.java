@@ -13,7 +13,7 @@ public class LeqNode extends BinaryExpressionNode {
   }
 
   @Override
-  public String toString() {
-    return "(<= " + this.getLhs().toString() + " " + this.getRhs().toString() + ")";
+  public String getOpStr() {
+    return "<=";
   }
 }

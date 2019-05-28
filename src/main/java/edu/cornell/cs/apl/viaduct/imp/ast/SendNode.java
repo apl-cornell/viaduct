@@ -1,15 +1,25 @@
 package edu.cornell.cs.apl.viaduct.imp.ast;
 
+import edu.cornell.cs.apl.viaduct.Host;
 import edu.cornell.cs.apl.viaduct.imp.visitors.StmtVisitor;
+import java.util.Objects;
 
 /** send value to a process. */
 public class SendNode extends StmtNode {
   private final ExpressionNode sentExpr;
-  private final String recipient;
+  private final Host recipient;
 
-  public SendNode(String r, ExpressionNode expr) {
+  public SendNode(Host r, ExpressionNode expr) {
     this.sentExpr = expr;
     this.recipient = r;
+  }
+
+  public Host getRecipient() {
+    return this.recipient;
+  }
+
+  public ExpressionNode getSentExpr() {
+    return this.sentExpr;
   }
 
   @Override
@@ -17,11 +27,23 @@ public class SendNode extends StmtNode {
     return visitor.visit(this);
   }
 
-  public String getRecipient() {
-    return this.recipient;
+  @Override
+  public boolean equals(Object other) {
+    if (other == null) {
+      return false;
+    }
+
+    if (other instanceof SendNode) {
+      SendNode otherSend = (SendNode) other;
+      return otherSend.sentExpr.equals(this.sentExpr) && otherSend.recipient.equals(this.recipient);
+
+    } else {
+      return false;
+    }
   }
 
-  public ExpressionNode getSentExpr() {
-    return this.sentExpr;
+  @Override
+  public int hashCode() {
+    return Objects.hash(this.sentExpr, this.recipient);
   }
 }

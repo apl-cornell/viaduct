@@ -1,11 +1,10 @@
 package edu.cornell.cs.apl.viaduct;
 
-import edu.cornell.cs.apl.viaduct.imp.ast.AstNode;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.Stack;
 
 /**
  * represents dependencies (reads/writes) among part of a program. nodes represent declared
@@ -27,10 +26,41 @@ public class ProgramDependencyGraph<T extends AstNode> {
     return this.nodes;
   }
 
+  /** get PDG nodes ordered by control edges. */
+  public List<PdgNode<T>> getOrderedNodes() {
+    List<PdgNode<T>> nodeList = new ArrayList<>();
+    PdgNode<T> cur = null;
+
+    // find first node, which is the node that has no
+    // incoming control edge (root of AST)
+    for (PdgNode<T> node : nodes) {
+      if (node.getInControlEdge() == null) {
+        cur = node;
+        break;
+      }
+    }
+    assert cur != null;
+    nodeList.add(cur);
+
+    Stack<PdgNode<T>> rest = new Stack<>();
+    for (PdgControlEdge<T> ctrlEdge : cur.getOutControlEdges()) {
+      rest.add(ctrlEdge.getTarget());
+    }
+
+    while (!rest.isEmpty()) {
+      cur = rest.pop();
+      nodeList.add(cur);
+      for (PdgControlEdge<T> ctrlEdge : cur.getOutControlEdges()) {
+        rest.add(ctrlEdge.getTarget());
+      }
+    }
+
+    return nodeList;
+  }
+
   @Override
   public String toString() {
-    List<PdgNode<T>> sortedNodes = new ArrayList<PdgNode<T>>(this.nodes);
-    Collections.sort(sortedNodes);
+    List<PdgNode<T>> sortedNodes = getOrderedNodes();
 
     StringBuffer buf = new StringBuffer();
     for (PdgNode<T> node : sortedNodes) {
@@ -38,7 +68,7 @@ public class ProgramDependencyGraph<T extends AstNode> {
       buf.append(" (outedges:");
 
       for (PdgNode<T> outNode : node.getOutNodes()) {
-        buf.append(" " + outNode.getLineNumber().toString());
+        buf.append(" " + outNode.getId().toString());
       }
       buf.append(")\n");
     }

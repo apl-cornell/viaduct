@@ -8,6 +8,11 @@ public class Host {
   final String name;
   final Label label;
 
+  public Host(String name) {
+    this.name = name;
+    this.label = Label.bottom();
+  }
+
   public Host(String name, Label label) {
     this.name = name;
     this.label = label;

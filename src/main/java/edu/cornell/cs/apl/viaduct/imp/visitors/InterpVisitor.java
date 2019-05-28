@@ -1,5 +1,6 @@
 package edu.cornell.cs.apl.viaduct.imp.visitors;
 
+import edu.cornell.cs.apl.viaduct.Host;
 import edu.cornell.cs.apl.viaduct.imp.ImpAnnotation;
 import edu.cornell.cs.apl.viaduct.imp.ImpAnnotations;
 import edu.cornell.cs.apl.viaduct.imp.ast.AndNode;
@@ -39,26 +40,26 @@ import java.util.concurrent.locks.ReentrantLock;
 /** interpret an IMP program. */
 public class InterpVisitor implements ExprVisitor<ImpValue>, StmtVisitor<Void> {
 
-  private static final String DEFAULT_HOST = "__DEFAULT__";
-  private static final String INPUT_CHAN = "input";
-  private static final String OUTPUT_CHAN = "output";
-  String host;
+  private static final Host INPUT_CHAN = new Host("input");
+  private static final Host OUTPUT_CHAN = new Host("output");
+
+  Host host;
   Map<Variable, ImpValue> store;
-  Map<String, Map<String, Queue<ImpValue>>> msgQueues;
+  Map<Host, Map<Host, Queue<ImpValue>>> msgQueues;
   boolean multiprocess;
   Lock storeLock;
-  Map<String, Map<String, Condition>> nonemptyQueueConds;
+  Map<Host, Map<Host, Condition>> nonemptyQueueConds;
 
   public InterpVisitor() {
-    host = DEFAULT_HOST;
+    host = Host.getDefault();
     this.multiprocess = false;
   }
 
   private InterpVisitor(
-      String h,
+      Host h,
       Lock sl,
-      Map<String, Map<String, Queue<ImpValue>>> q,
-      Map<String, Map<String, Condition>> nqc) {
+      Map<Host, Map<Host, Queue<ImpValue>>> q,
+      Map<Host, Map<Host, Condition>> nqc) {
 
     this.store = new HashMap<>();
     this.host = h;
@@ -68,15 +69,15 @@ public class InterpVisitor implements ExprVisitor<ImpValue>, StmtVisitor<Void> {
     this.nonemptyQueueConds = nqc;
   }
 
-  public InterpVisitor spawnChild(String host) {
+  public InterpVisitor spawnChild(Host host) {
     return new InterpVisitor(host, this.storeLock, this.msgQueues, this.nonemptyQueueConds);
   }
 
   /** compute process configuration using annotations in the program. */
-  private Map<String, StmtNode> getProcessConfig(BlockNode program) {
-    Map<String, StmtNode> processConfig = new HashMap<>();
+  private Map<Host, StmtNode> getProcessConfig(BlockNode program) {
+    Map<Host, StmtNode> processConfig = new HashMap<>();
 
-    String curHost = DEFAULT_HOST;
+    Host curHost = Host.getDefault();
     List<StmtNode> curBlock = new ArrayList<>();
     for (StmtNode stmt : program) {
       boolean newProcess = false;
@@ -113,14 +114,14 @@ public class InterpVisitor implements ExprVisitor<ImpValue>, StmtVisitor<Void> {
   }
 
   /** interpret program. */
-  public Map<String, Map<Variable, ImpValue>> interpret(StmtNode stmt) throws InterruptedException {
+  public Map<Host, Map<Variable, ImpValue>> interpret(StmtNode stmt) throws InterruptedException {
 
     this.storeLock = new ReentrantLock();
     this.msgQueues = new HashMap<>();
     this.nonemptyQueueConds = new HashMap<>();
     this.multiprocess = false;
 
-    Map<String, StmtNode> processConfig = null;
+    Map<Host, StmtNode> processConfig = null;
     if (stmt instanceof BlockNode) {
       BlockNode programBlock = (BlockNode) stmt;
       processConfig = getProcessConfig(programBlock);
@@ -128,20 +129,20 @@ public class InterpVisitor implements ExprVisitor<ImpValue>, StmtVisitor<Void> {
       this.multiprocess = configSize > 1;
 
       if (configSize == 1) {
-        this.host = (String) processConfig.keySet().toArray()[0];
+        this.host = (Host) processConfig.keySet().toArray()[0];
       }
 
     } else {
       processConfig = new HashMap<>();
     }
 
-    Set<String> hosts = processConfig.keySet();
+    Set<Host> hosts = processConfig.keySet();
     Set<InterpThread> children = new HashSet<>();
 
-    for (Map.Entry<String, StmtNode> kv : processConfig.entrySet()) {
+    for (Map.Entry<Host, StmtNode> kv : processConfig.entrySet()) {
       // build message queue and map of conditional vars
-      Map<String, Queue<ImpValue>> msgQueue = new HashMap<>();
-      Map<String, Condition> nonemptyQueueCond = new HashMap<>();
+      Map<Host, Queue<ImpValue>> msgQueue = new HashMap<>();
+      Map<Host, Condition> nonemptyQueueCond = new HashMap<>();
 
       // have an input and output queue
       msgQueue.put(INPUT_CHAN, new LinkedList<>());
@@ -150,8 +151,8 @@ public class InterpVisitor implements ExprVisitor<ImpValue>, StmtVisitor<Void> {
       nonemptyQueueCond.put(OUTPUT_CHAN, this.storeLock.newCondition());
 
       // have a queue for every host
-      String host = kv.getKey();
-      for (String otherHost : hosts) {
+      Host host = kv.getKey();
+      for (Host otherHost : hosts) {
         if (!otherHost.equals(host)) {
           msgQueue.put(otherHost, new LinkedList<>());
           nonemptyQueueCond.put(otherHost, this.storeLock.newCondition());
@@ -169,7 +170,7 @@ public class InterpVisitor implements ExprVisitor<ImpValue>, StmtVisitor<Void> {
       }
     }
 
-    Map<String, Map<Variable, ImpValue>> storeMap = new HashMap<>();
+    Map<Host, Map<Variable, ImpValue>> storeMap = new HashMap<>();
 
     // create a thread per host
     if (this.multiprocess) {
@@ -193,7 +194,7 @@ public class InterpVisitor implements ExprVisitor<ImpValue>, StmtVisitor<Void> {
     return storeMap;
   }
 
-  private void sendFrom(String sender, String recipient, ImpValue val) {
+  private void sendFrom(Host sender, Host recipient, ImpValue val) {
     this.storeLock.lock();
 
     try {
@@ -340,7 +341,7 @@ public class InterpVisitor implements ExprVisitor<ImpValue>, StmtVisitor<Void> {
     this.storeLock.lock();
 
     try {
-      String sender = recvNode.getSender();
+      Host sender = recvNode.getSender();
       Queue<ImpValue> msgQueue = this.msgQueues.get(this.host).get(sender);
       Condition nonemptyCond = this.nonemptyQueueConds.get(this.host).get(sender);
       while (msgQueue.isEmpty()) {
@@ -382,11 +383,11 @@ public class InterpVisitor implements ExprVisitor<ImpValue>, StmtVisitor<Void> {
   }
 
   private void printMsgQueues() {
-    for (Map.Entry<String, Map<String, Queue<ImpValue>>> kv : this.msgQueues.entrySet()) {
+    for (Map.Entry<Host, Map<Host, Queue<ImpValue>>> kv : this.msgQueues.entrySet()) {
 
-      String recipient = kv.getKey();
-      Map<String, Queue<ImpValue>> msgQueue = kv.getValue();
-      for (Map.Entry<String, Queue<ImpValue>> rkv : msgQueue.entrySet()) {
+      Host recipient = kv.getKey();
+      Map<Host, Queue<ImpValue>> msgQueue = kv.getValue();
+      for (Map.Entry<Host, Queue<ImpValue>> rkv : msgQueue.entrySet()) {
         Queue<ImpValue> senderQueue = rkv.getValue();
         System.out.println("recipient: " + recipient + ", sender: " + rkv.getKey());
         if (senderQueue.size() > 0) {
@@ -401,11 +402,11 @@ public class InterpVisitor implements ExprVisitor<ImpValue>, StmtVisitor<Void> {
   }
 
   static class InterpThread extends Thread {
-    String host;
+    Host host;
     InterpVisitor interpreter;
     StmtNode program;
 
-    public InterpThread(InterpVisitor i, String h, StmtNode p) {
+    public InterpThread(InterpVisitor i, Host h, StmtNode p) {
       this.host = h;
       this.interpreter = i.spawnChild(this.host);
       this.program = p;
@@ -416,7 +417,7 @@ public class InterpVisitor implements ExprVisitor<ImpValue>, StmtVisitor<Void> {
       this.program.accept(this.interpreter);
     }
 
-    public String getHost() {
+    public Host getHost() {
       return this.host;
     }
 

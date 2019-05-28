@@ -4,6 +4,7 @@ import java.util.List;
 import edu.cornell.cs.apl.viaduct.imp.ast.*;
 import edu.cornell.cs.apl.viaduct.security.Label;
 import edu.cornell.cs.apl.viaduct.security.Principal;
+import edu.cornell.cs.apl.viaduct.Host;
 
 // TODO: we might want to add types to these declarations.
 terminal String IDENT, CAP_IDENT;
@@ -76,12 +77,14 @@ stmt_basic ::=
     :}
 
   | SEND expr:e TO IDENT:idv {:
-      RESULT = new SendNode(idv, e);
+      Host h = new Host(idv);
+      RESULT = new SendNode(h, e);
     :}
 
   | IDENT:idv LARROW RECV IDENT:idp {:
+      Host h = new Host(idp);
       Variable var = new Variable(idv);
-      RESULT = new RecvNode(idp, var);
+      RESULT = new RecvNode(h, var);
     :}
 
   | SKIP {: RESULT = new SkipNode(); :}

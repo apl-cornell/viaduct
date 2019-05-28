@@ -40,8 +40,8 @@ class ShellGameTest {
 
     // build PDG for the shell game
     ImpPdgBuilderVisitor pdgBuilder = new ImpPdgBuilderVisitor();
-    shellGame.accept(pdgBuilder);
-    ProgramDependencyGraph<ImpAstNode> pdg = pdgBuilder.getPdg();
+    pdgBuilder.generatePDG(shellGame);
+    ProgramDependencyGraph<ImpAstNode> pdg = pdgBuilder.generatePDG(shellGame);
     System.out.println(pdg.toString());
   }
 }

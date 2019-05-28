@@ -1,7 +1,9 @@
 package edu.cornell.cs.apl.viaduct.imp.ast;
 
+import edu.cornell.cs.apl.viaduct.Binding;
+
 /** A variable that can be read from or assigned to. */
-public class Variable {
+public class Variable implements Binding<ImpAstNode> {
   private final String name;
 
   public Variable(String name) {
@@ -9,6 +11,10 @@ public class Variable {
   }
 
   public String getName() {
+    return this.name;
+  }
+
+  public String getBinding() {
     return this.name;
   }
 

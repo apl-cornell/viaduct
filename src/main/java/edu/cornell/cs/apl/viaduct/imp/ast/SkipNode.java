@@ -11,6 +11,20 @@ public class SkipNode extends StmtNode {
   }
 
   @Override
+  public boolean equals(Object other) {
+    if (other == null) {
+      return false;
+    }
+
+    return other instanceof SkipNode;
+  }
+
+  @Override
+  public int hashCode() {
+    return toString().hashCode();
+  }
+
+  @Override
   public String toString() {
     return "(skip)";
   }

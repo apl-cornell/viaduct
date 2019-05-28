@@ -1,13 +1,12 @@
 package edu.cornell.cs.apl.viaduct;
 
-import edu.cornell.cs.apl.viaduct.imp.ast.AstNode;
 import edu.cornell.cs.apl.viaduct.security.Label;
 
 /** PDG node for control flow statements. */
 public class PdgControlNode<T extends AstNode> extends PdgNode<T> {
   /** constructor that sets in and out labels to be the same. */
-  public PdgControlNode(T astNode, AbstractLineNumber lineno, Label label) {
-    super(astNode, lineno);
+  public PdgControlNode(T astNode, String id, Label label) {
+    super(astNode, id);
     this.setInLabel(label);
     this.setOutLabel(label);
   }
@@ -34,6 +33,6 @@ public class PdgControlNode<T extends AstNode> extends PdgNode<T> {
 
   @Override
   public String toString() {
-    return "<" + this.lineNumber.toString() + " control node for " + this.astNode.toString() + ">";
+    return "<" + this.id.toString() + " control node for " + this.astNode.toString() + ">";
   }
 }

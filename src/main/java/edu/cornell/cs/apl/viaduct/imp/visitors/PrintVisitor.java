@@ -185,7 +185,7 @@ public class PrintVisitor implements AstVisitor<String> {
   /** print recv. */
   @Override
   public String visit(RecvNode recvNode) {
-    String senderStr = recvNode.getSender();
+    String senderStr = recvNode.getSender().toString();
     String varStr = recvNode.getVar().toString();
     return String.format("%s <- recv from %s", varStr, senderStr);
   }

@@ -3,6 +3,8 @@ package edu.cornell.cs.apl.viaduct;
 import static guru.nidi.graphviz.model.Factory.mutGraph;
 import static guru.nidi.graphviz.model.Factory.mutNode;
 
+import edu.cornell.cs.apl.viaduct.imp.visitors.ImpPdgBuilderVisitor;
+
 import guru.nidi.graphviz.attribute.Color;
 import guru.nidi.graphviz.attribute.Label;
 import guru.nidi.graphviz.attribute.Shape;
@@ -10,6 +12,7 @@ import guru.nidi.graphviz.attribute.Style;
 import guru.nidi.graphviz.model.Link;
 import guru.nidi.graphviz.model.MutableGraph;
 import guru.nidi.graphviz.model.MutableNode;
+
 import java.util.Map;
 import java.util.Set;
 
@@ -92,7 +95,7 @@ public class PdgDotPrinter {
         PdgNode<T> outNode = ctrlEdge.getTarget();
         String strOutNode = outNode.getId();
 
-        if (ctrlEdge.hasDefaultLabel()) {
+        if (ctrlEdge.getLabel().equals(ImpPdgBuilderVisitor.SEQ_LABEL)) {
           grNode.addLink(Link.to(mutNode(strOutNode)).add(Color.RED));
 
         } else {

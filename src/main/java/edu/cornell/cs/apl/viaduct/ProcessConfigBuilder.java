@@ -8,15 +8,13 @@ import java.util.Map;
 import java.util.Set;
 
 public class ProcessConfigBuilder {
-  static final String TMP_VAR = "tmp";
-
   Map<Host, StmtBuilder> configBuilder;
-  int varNum;
+  FreshNameGenerator freshNameGenerator;
 
   /** create statement builders for each host. */
   public ProcessConfigBuilder(Set<Host> hostConfig) {
-    this.varNum = 0;
     this.configBuilder = new HashMap<>();
+    this.freshNameGenerator = new FreshNameGenerator();
     for (Host h : hostConfig) {
       this.configBuilder.put(h, new StmtBuilder());
     }
@@ -26,11 +24,14 @@ public class ProcessConfigBuilder {
     return this.configBuilder.get(h);
   }
 
+  /** get a fresh name. */
+  public String getFreshName(String base) {
+    return this.freshNameGenerator.getFreshName(base);
+  }
+
   /** get a fresh variable. */
-  public Variable getFreshVar() {
-    varNum++;
-    String varName = String.format("%s%d", TMP_VAR, varNum);
-    return new Variable(varName);
+  public Variable getFreshVar(String base) {
+    return new Variable(getFreshName(base));
   }
 
   /** build stmt map out of the stmt builder map. */

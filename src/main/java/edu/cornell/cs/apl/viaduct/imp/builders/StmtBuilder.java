@@ -38,8 +38,18 @@ public class StmtBuilder {
     return this;
   }
 
+  public StmtBuilder varDecl(Variable varName, Label label) {
+    this.stmts.add(new VarDeclNode(varName, label));
+    return this;
+  }
+
   public StmtBuilder assign(String varName, ExpressionNode rhs) {
     this.stmts.add(new AssignNode(new Variable(varName), rhs));
+    return this;
+  }
+
+  public StmtBuilder assign(Variable varName, ExpressionNode rhs) {
+    this.stmts.add(new AssignNode(varName, rhs));
     return this;
   }
 
@@ -51,9 +61,23 @@ public class StmtBuilder {
   }
 
   /** build send stmt. */
+  public StmtBuilder send(String recipient, ExpressionNode expr) {
+    StmtNode sendNode = new SendNode(new Host(recipient), expr);
+    this.stmts.add(sendNode);
+    return this;
+  }
+
+  /** build send stmt. */
   public StmtBuilder send(Host recipient, ExpressionNode expr) {
     StmtNode sendNode = new SendNode(recipient, expr);
     this.stmts.add(sendNode);
+    return this;
+  }
+
+  /** build recv stmt. */
+  public StmtBuilder recv(String sender, String var) {
+    StmtNode recvNode = new RecvNode(new Host(sender), new Variable(var));
+    this.stmts.add(recvNode);
     return this;
   }
 

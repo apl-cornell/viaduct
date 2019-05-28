@@ -8,8 +8,6 @@ import java.util.Set;
 public abstract class PdgNode<T extends AstNode> {
   T astNode;
   String id;
-  Set<PdgNode<T>> inNodes;
-  Set<PdgNode<T>> outNodes;
 
   Set<PdgInfoEdge<T>> inInfoEdges;
   PdgControlEdge<T> inControlEdge;
@@ -25,20 +23,12 @@ public abstract class PdgNode<T extends AstNode> {
   }
 
   /** constructor. */
-  public PdgNode(T astNode, String id, Set<PdgNode<T>> inNodes, Set<PdgNode<T>> outNodes) {
-
+  public PdgNode(T astNode, String id) {
     this();
     this.astNode = astNode;
     this.id = id;
-    this.inNodes = inNodes;
-    this.outNodes = outNodes;
     this.inLabel = Label.bottom();
     this.outLabel = Label.bottom();
-  }
-
-  /** constructor, defaults to no edges. */
-  public PdgNode(T astNode, String id) {
-    this(astNode, id, new HashSet<PdgNode<T>>(), new HashSet<PdgNode<T>>());
   }
 
   public T getAstNode() {
@@ -53,24 +43,12 @@ public abstract class PdgNode<T extends AstNode> {
     return this.id;
   }
 
-  public void addInNode(PdgNode<T> node) {
-    this.inNodes.add(node);
-  }
-
   public void addInInfoEdge(PdgInfoEdge<T> edge) {
     this.inInfoEdges.add(edge);
   }
 
   public void setInControlEdge(PdgControlEdge<T> edge) {
     this.inControlEdge = edge;
-  }
-
-  public void addInNodes(Set<PdgNode<T>> nodes) {
-    this.inNodes.addAll(nodes);
-  }
-
-  public void addOutNode(PdgNode<T> node) {
-    this.outNodes.add(node);
   }
 
   public void addOutInfoEdge(PdgInfoEdge<T> edge) {
@@ -81,24 +59,12 @@ public abstract class PdgNode<T extends AstNode> {
     this.outControlEdges.add(edge);
   }
 
-  public void addOutNodes(Set<PdgNode<T>> nodes) {
-    this.outNodes.addAll(nodes);
-  }
-
-  public Set<PdgNode<T>> getInNodes() {
-    return this.inNodes;
-  }
-
   public Set<PdgInfoEdge<T>> getInInfoEdges() {
     return this.inInfoEdges;
   }
 
   public PdgControlEdge<T> getInControlEdge() {
     return this.inControlEdge;
-  }
-
-  public Set<PdgNode<T>> getOutNodes() {
-    return this.outNodes;
   }
 
   public Set<PdgInfoEdge<T>> getOutInfoEdges() {

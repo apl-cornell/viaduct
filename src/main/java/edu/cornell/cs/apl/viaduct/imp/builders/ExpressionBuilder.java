@@ -23,6 +23,10 @@ public class ExpressionBuilder {
     return new ReadNode(new Variable(name));
   }
 
+  public ExpressionNode var(Variable name) {
+    return new ReadNode(name);
+  }
+
   public ExpressionNode intLit(int value) {
     return new IntegerLiteralNode(value);
   }

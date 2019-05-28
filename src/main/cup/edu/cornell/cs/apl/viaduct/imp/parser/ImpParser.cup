@@ -77,14 +77,11 @@ stmt_basic ::=
     :}
 
   | SEND expr:e TO IDENT:idv {:
-      Host h = new Host(idv);
-      RESULT = new SendNode(h, e);
+      RESULT = new SendNode(new Host(idv), e);
     :}
 
   | IDENT:idv LARROW RECV IDENT:idp {:
-      Host h = new Host(idp);
-      Variable var = new Variable(idv);
-      RESULT = new RecvNode(h, var);
+      RESULT = new RecvNode(new Host(idp), new Variable(idv));
     :}
 
   | SKIP {: RESULT = new SkipNode(); :}

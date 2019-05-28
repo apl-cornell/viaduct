@@ -1,6 +1,8 @@
 package edu.cornell.cs.apl.viaduct;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -12,10 +14,31 @@ import java.util.Stack;
  * by PDG node B
  */
 public class ProgramDependencyGraph<T extends AstNode> {
-  HashSet<PdgNode<T>> nodes;
+  class EdgeComparator implements Comparator<PdgEdge<T>> {
+    public int compare(PdgEdge<T> e1, PdgEdge<T> e2) {
+      if (e1 != null && e2 != null) {
+        int ind1 = labelOrder.indexOf(e1.getLabel());
+        int ind2 = labelOrder.indexOf(e2.getLabel());
+        return ind1 - ind2;
 
-  public ProgramDependencyGraph() {
+      } else if (e1 == null && e2 != null) {
+        return 1;
+
+      } else if (e1 != null && e2 == null) {
+        return -1;
+
+      } else {
+        return 0;
+      }
+    }
+  }
+
+  HashSet<PdgNode<T>> nodes;
+  List<String> labelOrder;
+
+  public ProgramDependencyGraph(List<String> labels) {
     this.nodes = new HashSet<PdgNode<T>>();
+    this.labelOrder = labels;
   }
 
   public void addNode(PdgNode<T> node) {
@@ -40,17 +63,22 @@ public class ProgramDependencyGraph<T extends AstNode> {
       }
     }
     assert cur != null;
-    nodeList.add(cur);
 
+    // do a DFS traversal over control edges, which is
+    // almost equivalent to traversing the control flow graph
+    // of the original program
+    EdgeComparator edgeComparator = new EdgeComparator();
     Stack<PdgNode<T>> rest = new Stack<>();
-    for (PdgControlEdge<T> ctrlEdge : cur.getOutControlEdges()) {
-      rest.add(ctrlEdge.getTarget());
-    }
+    rest.add(cur);
 
     while (!rest.isEmpty()) {
       cur = rest.pop();
       nodeList.add(cur);
-      for (PdgControlEdge<T> ctrlEdge : cur.getOutControlEdges()) {
+      Set<PdgControlEdge<T>> edgeSet = cur.getOutControlEdges();
+      List<PdgControlEdge<T>> orderedEdges = new ArrayList<>(edgeSet);
+      Collections.sort(orderedEdges, edgeComparator);
+      Collections.reverse(orderedEdges);
+      for (PdgControlEdge<T> ctrlEdge : orderedEdges) {
         rest.add(ctrlEdge.getTarget());
       }
     }
@@ -67,8 +95,8 @@ public class ProgramDependencyGraph<T extends AstNode> {
       buf.append(node.toString());
       buf.append(" (outedges:");
 
-      for (PdgNode<T> outNode : node.getOutNodes()) {
-        buf.append(" " + outNode.getId().toString());
+      for (PdgInfoEdge<T> outEdge : node.getOutInfoEdges()) {
+        buf.append(" " + outEdge.getTarget().getId().toString());
       }
       buf.append(")\n");
     }

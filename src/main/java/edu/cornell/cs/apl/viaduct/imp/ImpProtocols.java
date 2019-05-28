@@ -1,27 +1,47 @@
 package edu.cornell.cs.apl.viaduct.imp;
 
 import edu.cornell.cs.apl.viaduct.Host;
+import edu.cornell.cs.apl.viaduct.PdgEdge;
+import edu.cornell.cs.apl.viaduct.PdgInfoEdge;
 import edu.cornell.cs.apl.viaduct.PdgNode;
+import edu.cornell.cs.apl.viaduct.PdgStorageNode;
+import edu.cornell.cs.apl.viaduct.PdgWriteEdge;
+import edu.cornell.cs.apl.viaduct.ProcessConfigBuilder;
 import edu.cornell.cs.apl.viaduct.Protocol;
+import edu.cornell.cs.apl.viaduct.imp.ast.ExpressionNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ImpAstNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.StmtNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.VarDeclNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.Variable;
+import edu.cornell.cs.apl.viaduct.imp.builders.ExpressionBuilder;
+import edu.cornell.cs.apl.viaduct.imp.builders.StmtBuilder;
 import edu.cornell.cs.apl.viaduct.security.Label;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 public class ImpProtocols {
+  static class Cleartext {
+
+
+  }
+
   static class Single implements Protocol<ImpAstNode> {
     private static final Single rep = new Single();
 
+    private PdgNode<ImpAstNode> node;
     private Host host;
+    private Variable outVar;
 
     private Single() {
       this.host = Host.getDefault();
     }
 
-    private Single(Host h) {
+    private Single(Host h, PdgNode<ImpAstNode> n) {
       this.host = h;
+      this.node = n;
     }
 
     public static Single getRepresentative() {
@@ -45,47 +65,93 @@ public class ImpProtocols {
 
           if (nInLabel.confidentiality().flowsTo(hLabel.confidentiality())
               && hLabel.integrity().flowsTo(nInLabel.integrity())) {
-            instances.add(new Single(h));
+            instances.add(new Single(h, node));
           }
         }
       }
       return instances;
     }
 
-    /*
-    public void instantiate(PdgNode<ImpAstNode> node,
+    public Set<Host> readFrom(
+        Host readHost, PdgNode<ImpAstNode> reader,
+        Map<PdgNode<ImpAstNode>,Protocol<ImpAstNode>> protocolMap,
+        ProcessConfigBuilder pconfig) {
+
+      // this should not be read from unti it has been instantiated!
+      assert this.outVar != null;
+
+      ExpressionBuilder e = new ExpressionBuilder();
+      StmtBuilder builder = pconfig.getBuilder(this.host);
+      builder.send(readHost, e.var(this.outVar));
+
+      Set<Host> readHosts =  new HashSet<>();
+      readHosts.add(this.host);
+      return readHosts;
+    }
+
+    public void writeTo(
+        Host writeHost, PdgNode<ImpAstNode> writer, ImpAstNode val,
         Map<PdgNode<ImpAstNode>,Protocol<ImpAstNode>> protocolMap,
         ProcessConfigBuilder pconfig) {
 
       StmtBuilder builder = pconfig.getBuilder(this.host);
-      if (node.isStorageNode()) {
-        builder.statement((StmtNode)node.getAstNode());
+      StmtBuilder writerBuilder = pconfig.getBuilder(writeHost);
 
-      } else if (node.isComputeNode()) {
+      // can only write to storage nodes
+      if (this.node.isStorageNode()) {
+        VarDeclNode varDecl = (VarDeclNode)this.node.getAstNode();
+        ExpressionNode exprVal = (ExpressionNode)val;
+
+        writerBuilder.send(this.host, exprVal);
+        builder.recv(writeHost, varDecl.getVariable());
+      }
+    }
+
+    public void instantiate(PdgNode<ImpAstNode> dummyNode,
+        Map<PdgNode<ImpAstNode>,Protocol<ImpAstNode>> protocolMap,
+        ProcessConfigBuilder pconfig) {
+
+      StmtBuilder builder = pconfig.getBuilder(this.host);
+      if (this.node.isStorageNode()) {
+        // declare new variable
+        builder.statement((StmtNode)this.node.getAstNode());
+
+      } else if (this.node.isComputeNode()) {
         // read from inputs
-        for (PdgNode<ImpAstNode> inNode : node.getInNodes()) {
-          Protocol<ImpAstNode> inNodeProto = protocolMap.get(inNode);
-          Set<Host> readHosts = inNodeProto.readFrom(this.host, node, protocolMap, pconfig);
-          for (Host readHost : readHosts) {
-            Variable readVar = pconfig.getFreshVar();
-            builder.recv(readHost, readVar);
+        for (PdgInfoEdge<ImpAstNode> inEdge : this.node.getInInfoEdges()) {
+          if (!inEdge.getSource().isControlNode()) {
+            Protocol<ImpAstNode> inNodeProto = protocolMap.get(inEdge.getSource());
+            Set<Host> readHosts = inNodeProto.readFrom(this.host, this.node, protocolMap, pconfig);
+            for (Host readHost : readHosts) {
+              Variable readVar = pconfig.getFreshVar(inEdge.getLabel());
+              builder.recv(readHost, readVar);
+            }
+
+            // inNodeProto.readPostprocess(this.host, node, protocolMap, pconfig);
           }
         }
 
         // perform computation
-        // Variable outVar
+        this.outVar = pconfig.getFreshVar(node.getId());
+        builder.assign(this.outVar, (ExpressionNode)node.getAstNode());
 
-        // write to outputs
-        for (PdgNode<ImpAstNode> outNode : node.getOutNodes()) {
+        // write to storage nodes
+        ExpressionBuilder e = new ExpressionBuilder();
+        for (PdgEdge<ImpAstNode> outEdge : node.getOutInfoEdges()) {
           // only write to variables, since if computations read from
           // the output of this node then it will call readFrom() anyway
-          if (outNode.isStorageNode()) {
-
+          if (outEdge instanceof PdgWriteEdge<?>) {
+            PdgStorageNode<ImpAstNode> outNode = (PdgStorageNode<ImpAstNode>)outEdge.getTarget();
+            Protocol<ImpAstNode> outProto = protocolMap.get(outNode);
+            outProto.writeTo(this.host, node, e.var(outVar), protocolMap, pconfig);
           }
         }
+
+      } else if (this.node.isControlNode()) {
+        // read guard
+
       }
     }
-    */
 
     @Override
     public boolean equals(Object o) {
@@ -207,6 +273,33 @@ public class ImpProtocols {
     }
 
     @Override
+    public Set<Host> readFrom(
+        Host h, PdgNode<ImpAstNode> node,
+        Map<PdgNode<ImpAstNode>,Protocol<ImpAstNode>> protocolMap,
+        ProcessConfigBuilder pconfig) {
+
+      // TODO: finish
+      return new HashSet<>();
+    }
+
+    @Override
+    public void writeTo(
+        Host h, PdgNode<ImpAstNode> node, ImpAstNode val,
+        Map<PdgNode<ImpAstNode>,Protocol<ImpAstNode>> protocolMap,
+        ProcessConfigBuilder pconfig) {
+
+      // TODO: finish
+    }
+
+    @Override
+    public void instantiate(PdgNode<ImpAstNode> node,
+        Map<PdgNode<ImpAstNode>,Protocol<ImpAstNode>> protocolMap,
+        ProcessConfigBuilder pconfig) {
+
+      // TODO: finish
+    }
+
+    @Override
     public boolean equals(Object o) {
       if (o == null) {
         return false;
@@ -269,7 +362,13 @@ public class ImpProtocols {
 
       Set<Protocol<ImpAstNode>> instances = new HashSet<>();
 
-      Set<PdgNode<ImpAstNode>> inNodes = node.getInNodes();
+      Set<PdgNode<ImpAstNode>> inNodes = new HashSet<>();
+      for (PdgInfoEdge<ImpAstNode> edge : node.getInInfoEdges()) {
+        PdgNode<ImpAstNode> source = edge.getSource();
+        if (!source.isControlNode()) {
+          inNodes.add(source);
+        }
+      }
       Label nOutLabel = node.getOutLabel();
 
       boolean noInputFlow = true;
@@ -292,6 +391,30 @@ public class ImpProtocols {
       }
 
       return instances;
+    }
+
+    @Override
+    public Set<Host> readFrom(
+        Host h, PdgNode<ImpAstNode> node,
+        Map<PdgNode<ImpAstNode>,Protocol<ImpAstNode>> protocolMap,
+        ProcessConfigBuilder pconfig) {
+
+      // TODO: finish
+      return new HashSet<>();
+    }
+
+    @Override
+    public void writeTo(
+        Host h, PdgNode<ImpAstNode> node, ImpAstNode val,
+        Map<PdgNode<ImpAstNode>,Protocol<ImpAstNode>> protocolMap,
+        ProcessConfigBuilder pconfig) { }
+
+    @Override
+    public void instantiate(PdgNode<ImpAstNode> node,
+        Map<PdgNode<ImpAstNode>,Protocol<ImpAstNode>> protocolMap,
+        ProcessConfigBuilder pconfig) {
+
+      // TODO: finish
     }
 
     @Override
@@ -363,7 +486,13 @@ public class ImpProtocols {
         }
       }
 
-      Set<PdgNode<ImpAstNode>> inNodes = node.getInNodes();
+      Set<PdgNode<ImpAstNode>> inNodes = new HashSet<>();
+      for (PdgInfoEdge<ImpAstNode> edge : node.getInInfoEdges()) {
+        PdgNode<ImpAstNode> source = edge.getSource();
+        if (!source.isControlNode()) {
+          inNodes.add(source);
+        }
+      }
       Host hostA = hostPair[0];
       Host hostB = hostPair[1];
       Label nInLabel = node.getInLabel();
@@ -403,6 +532,30 @@ public class ImpProtocols {
       }
 
       return instances;
+    }
+
+    @Override
+    public Set<Host> readFrom(
+        Host h, PdgNode<ImpAstNode> node,
+        Map<PdgNode<ImpAstNode>,Protocol<ImpAstNode>> protocolMap,
+        ProcessConfigBuilder pconfig) {
+
+      // TODO: finish
+      return new HashSet<>();
+    }
+
+    @Override
+    public void writeTo(
+        Host h, PdgNode<ImpAstNode> node, ImpAstNode val,
+        Map<PdgNode<ImpAstNode>,Protocol<ImpAstNode>> protocolMap,
+        ProcessConfigBuilder pconfig) { }
+
+    @Override
+    public void instantiate(PdgNode<ImpAstNode> node,
+        Map<PdgNode<ImpAstNode>,Protocol<ImpAstNode>> protocolMap,
+        ProcessConfigBuilder pconfig) {
+
+      // TODO: finish
     }
 
     @Override

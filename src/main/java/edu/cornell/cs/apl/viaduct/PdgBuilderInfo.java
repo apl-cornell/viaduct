@@ -12,27 +12,28 @@ public class PdgBuilderInfo<T extends AstNode> {
   Map<PdgNode<T>, Binding<T>> refBindingMap;
   PdgNode<T> firstCreated;
   PdgNode<T> lastCreated;
+  String defaultControlLabel;
 
   /** constructor. */
-  public PdgBuilderInfo() {
+  public PdgBuilderInfo(String ctrlLabel) {
+    this.defaultControlLabel = ctrlLabel;
     this.referencedNodes = new HashSet<>();
     this.createdNodes = new HashSet<>();
     this.refBindingMap = new HashMap<>();
   }
 
-  public PdgBuilderInfo(PdgNode<T> createdNode) {
-    this();
+  public PdgBuilderInfo(String ctrlLabel, PdgNode<T> createdNode) {
+    this(ctrlLabel);
     addCreatedNode(createdNode);
   }
 
-  public PdgBuilderInfo(PdgNode<T> createdNode, Binding<T> binding) {
-    this();
+  public PdgBuilderInfo(String ctrlLabel, PdgNode<T> createdNode, Binding<T> binding) {
+    this(ctrlLabel);
     addCreatedNode(createdNode, binding);
   }
 
-  protected PdgBuilderInfo(Set<PdgNode<T>> rnodes, Set<PdgNode<T>> cnodes) {
-
-    this();
+  protected PdgBuilderInfo(String ctrlLabel, Set<PdgNode<T>> rnodes, Set<PdgNode<T>> cnodes) {
+    this(ctrlLabel);
     this.referencedNodes = rnodes;
     this.createdNodes = cnodes;
   }
@@ -68,7 +69,8 @@ public class PdgBuilderInfo<T extends AstNode> {
     cnodes.addAll(this.createdNodes);
     cnodes.addAll(other.createdNodes);
 
-    PdgBuilderInfo<T> mergedInfo = new PdgBuilderInfo<>(rnodes, cnodes);
+    PdgBuilderInfo<T> mergedInfo =
+        new PdgBuilderInfo<>(this.defaultControlLabel, rnodes, cnodes);
     mergedInfo.firstCreated = this.firstCreated;
     mergedInfo.lastCreated = this.lastCreated;
     mergedInfo.refBindingMap.putAll(this.refBindingMap);
@@ -91,7 +93,8 @@ public class PdgBuilderInfo<T extends AstNode> {
     cnodes.addAll(this.createdNodes);
     cnodes.addAll(other.createdNodes);
 
-    PdgBuilderInfo<T> mergedInfo = new PdgBuilderInfo<>(this.referencedNodes, cnodes);
+    PdgBuilderInfo<T> mergedInfo =
+        new PdgBuilderInfo<>(this.defaultControlLabel, this.referencedNodes, cnodes);
     mergedInfo.firstCreated = this.firstCreated;
     mergedInfo.lastCreated = this.lastCreated;
     mergedInfo.refBindingMap.putAll(this.refBindingMap);
@@ -155,7 +158,7 @@ public class PdgBuilderInfo<T extends AstNode> {
     }
 
     if (this.lastCreated != null) {
-      PdgControlEdge.create(this.lastCreated, node);
+      PdgControlEdge.create(this.lastCreated, node, this.defaultControlLabel);
     }
   }
 }

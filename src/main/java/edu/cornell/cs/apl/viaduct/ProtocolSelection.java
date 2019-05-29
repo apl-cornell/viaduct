@@ -82,7 +82,6 @@ public class ProtocolSelection<T extends AstNode> {
           ProtocolMapNode<T> newMapNode = new ProtocolMapNode<>(newMap, newMapCost);
 
           if (!closedSet.contains(newMapNode) && !openSet.contains(newMapNode)) {
-            // System.out.println(newMapNode);
             openSet.add(newMapNode);
             lastAddedNode = newMapNode;
           }

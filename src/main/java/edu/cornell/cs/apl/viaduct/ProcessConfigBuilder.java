@@ -1,8 +1,12 @@
 package edu.cornell.cs.apl.viaduct;
 
+import edu.cornell.cs.apl.viaduct.imp.ImpAnnotations.ProcessAnnotation;
+import edu.cornell.cs.apl.viaduct.imp.ast.BlockNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.StmtNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.Variable;
 import edu.cornell.cs.apl.viaduct.imp.builders.StmtBuilder;
+import edu.cornell.cs.apl.viaduct.imp.visitors.TargetPostprocessVisitor;
+
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -35,21 +39,26 @@ public class ProcessConfigBuilder {
   }
 
   /** build stmt map out of the stmt builder map. */
-  public Map<Host, StmtNode> buildProcessConfig() {
+  public Map<Host, StmtNode> generateProcessConfig() {
     Map<Host, StmtNode> config = new HashMap<>();
+    TargetPostprocessVisitor postprocessor = new TargetPostprocessVisitor();
+
     for (Map.Entry<Host, StmtBuilder> kv : configBuilder.entrySet()) {
-      config.put(kv.getKey(), kv.getValue().build());
+      Host host = kv.getKey();
+      StmtNode program = kv.getValue().build();
+      StmtNode postprocessedProgram = postprocessor.postprocess(host, program);
+      config.put(host, postprocessedProgram);
     }
 
     return config;
   }
 
   /** generate a single program that represents the program for all the processes. */
-  /*
   public StmtNode generateSingleProgram() {
     StmtBuilder builder = new StmtBuilder();
+    Map<Host, StmtNode> config = generateProcessConfig();
 
-    for (Map.Entry<Host,StmtNode> kv : this.config.entrySet()) {
+    for (Map.Entry<Host,StmtNode> kv : config.entrySet()) {
       ProcessAnnotation procAnnot = new ProcessAnnotation(kv.getKey());
       builder.annotation(procAnnot.toAnnotationString());
 
@@ -66,5 +75,4 @@ public class ProcessConfigBuilder {
 
     return builder.build();
   }
-  */
 }

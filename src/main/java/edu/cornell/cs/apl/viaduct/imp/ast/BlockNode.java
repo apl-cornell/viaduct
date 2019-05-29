@@ -35,6 +35,10 @@ public class BlockNode extends StmtNode implements Iterable<StmtNode> {
   }
   */
 
+  public int size() {
+    return this.statements.size();
+  }
+
   @Override
   public <R> R accept(StmtVisitor<R> v) {
     return v.visit(this);

@@ -3,8 +3,8 @@ package edu.cornell.cs.apl.viaduct;
 import static guru.nidi.graphviz.model.Factory.mutGraph;
 import static guru.nidi.graphviz.model.Factory.mutNode;
 
-import edu.cornell.cs.apl.viaduct.imp.visitors.ImpPdgBuilderVisitor;
-
+import edu.cornell.cs.apl.viaduct.ProgramDependencyGraph.ControlLabel;
+import guru.nidi.graphviz.attribute.Arrow;
 import guru.nidi.graphviz.attribute.Color;
 import guru.nidi.graphviz.attribute.Label;
 import guru.nidi.graphviz.attribute.Shape;
@@ -75,32 +75,38 @@ public class PdgDotPrinter {
         Style style;
 
         // draw edge as a read channel
-        if (node.isControlNode() && outNode.isStorageNode()) {
+        if (infoEdge.isFlowEdge()) {
           style = Style.DOTTED;
         } else {
           style = Style.SOLID;
         }
 
+        Link link = Link.to(mutNode(strOutNode)).add(style).add(Color.BLUE);
+
         String edgeLabel = infoEdge.getLabel();
         if (edgeLabel != null) {
-          grNode.addLink(
-              Link.to(mutNode(strOutNode)).add(Label.of(edgeLabel)).add(style).add(Color.BLUE));
-
-        } else {
-          grNode.addLink(Link.to(mutNode(strOutNode)).add(style).add(Color.BLUE));
+          link.add(Label.of(edgeLabel));
         }
+
+        if (infoEdge.isWriteEdge()) {
+          link.add(Arrow.BOX);
+        }
+
+        grNode.addLink(link);
       }
 
       for (PdgControlEdge<T> ctrlEdge : node.getOutControlEdges()) {
         PdgNode<T> outNode = ctrlEdge.getTarget();
         String strOutNode = outNode.getId();
 
-        if (ctrlEdge.getLabel().equals(ImpPdgBuilderVisitor.SEQ_LABEL)) {
+        if (ctrlEdge.getLabel().equals(ControlLabel.SEQ)) {
           grNode.addLink(Link.to(mutNode(strOutNode)).add(Color.RED));
 
         } else {
           grNode.addLink(
-              Link.to(mutNode(strOutNode)).add(Label.of(ctrlEdge.getLabel())).add(Color.RED));
+              Link.to(mutNode(strOutNode))
+                  .add(Label.of(ctrlEdge.getLabel().toString()))
+                  .add(Color.RED));
         }
       }
     }

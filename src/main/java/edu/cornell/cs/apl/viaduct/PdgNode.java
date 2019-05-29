@@ -135,8 +135,11 @@ public abstract class PdgNode<T extends AstNode> {
     }
 
     if (other instanceof PdgNode<?>) {
+      return this == other;
+      /*
       PdgNode<T> otherPdg = (PdgNode<T>) other;
       return this.astNode.equals(otherPdg.astNode);
+      */
 
     } else {
       return false;

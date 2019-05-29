@@ -8,12 +8,11 @@ public interface Protocol<T extends AstNode> {
   Set<Protocol<T>> createInstances(
       Set<Host> hostConfig, Map<PdgNode<T>, Protocol<T>> currProtoMap, PdgNode<T> node);
 
-  Set<Host> readFrom(Host h, PdgNode<T> node, Map<PdgNode<T>,Protocol<T>> protocolMap,
-      ProcessConfigBuilder pconfig);
+  Set<Host> readFrom(PdgNode<T> node, Host h, PdgNode<T> reader,
+      ProtocolInstantiationInfo<T> info);
 
-  void writeTo(Host h, PdgNode<T> node, T val, Map<PdgNode<T>,Protocol<T>> protocolMap,
-      ProcessConfigBuilder pconfig);
+  void writeTo(PdgNode<T> node, Host h, PdgNode<T> writer, T val,
+      ProtocolInstantiationInfo<T> info);
 
-  void instantiate(PdgNode<T> node, Map<PdgNode<T>,Protocol<T>> protocolMap,
-      ProcessConfigBuilder pconfig);
+  void instantiate(PdgNode<T> node, ProtocolInstantiationInfo<T> info);
 }

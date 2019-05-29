@@ -4,19 +4,20 @@ import edu.cornell.cs.apl.viaduct.imp.ast.ExpressionNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ReadNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.Variable;
 
-public class RenameVisitor extends CloneVisitor {
-  Variable oldVar;
-  Variable newVar;
+import java.util.Map;
 
-  public RenameVisitor(Variable ov, Variable nv) {
-    this.oldVar = ov;
-    this.newVar = nv;
+public class RenameVisitor extends CloneVisitor {
+  Map<Variable,Variable> renameMap;
+
+  public RenameVisitor(Map<Variable,Variable> rm) {
+    this.renameMap = rm;
   }
 
   @Override
   public ExpressionNode visit(ReadNode readNode) {
-    if (readNode.getVariable().equals(this.oldVar)) {
-      return new ReadNode(this.newVar);
+    Variable var = readNode.getVariable();
+    if (this.renameMap.containsKey(var)) {
+      return new ReadNode(this.renameMap.get(var));
 
     } else {
       return new ReadNode(readNode.getVariable());

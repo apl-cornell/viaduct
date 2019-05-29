@@ -14,8 +14,19 @@ import java.util.Stack;
  * by PDG node B
  */
 public class ProgramDependencyGraph<T extends AstNode> {
-  class EdgeComparator implements Comparator<PdgEdge<T>> {
-    public int compare(PdgEdge<T> e1, PdgEdge<T> e2) {
+  public enum ControlLabel { SEQ, THEN, ELSE }
+
+  static final List<ControlLabel> labelOrder;
+
+  static {
+    labelOrder = new ArrayList<>();
+    labelOrder.add(ControlLabel.SEQ);
+    labelOrder.add(ControlLabel.ELSE);
+    labelOrder.add(ControlLabel.THEN);
+  }
+
+  class ControlEdgeComparator implements Comparator<PdgControlEdge<T>> {
+    public int compare(PdgControlEdge<T> e1, PdgControlEdge<T> e2) {
       if (e1 != null && e2 != null) {
         int ind1 = labelOrder.indexOf(e1.getLabel());
         int ind2 = labelOrder.indexOf(e2.getLabel());
@@ -34,11 +45,9 @@ public class ProgramDependencyGraph<T extends AstNode> {
   }
 
   HashSet<PdgNode<T>> nodes;
-  List<String> labelOrder;
 
-  public ProgramDependencyGraph(List<String> labels) {
+  public ProgramDependencyGraph() {
     this.nodes = new HashSet<PdgNode<T>>();
-    this.labelOrder = labels;
   }
 
   public void addNode(PdgNode<T> node) {
@@ -67,7 +76,7 @@ public class ProgramDependencyGraph<T extends AstNode> {
     // do a DFS traversal over control edges, which is
     // almost equivalent to traversing the control flow graph
     // of the original program
-    EdgeComparator edgeComparator = new EdgeComparator();
+    ControlEdgeComparator edgeComparator = new ControlEdgeComparator();
     Stack<PdgNode<T>> rest = new Stack<>();
     rest.add(cur);
 

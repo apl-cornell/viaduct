@@ -12,6 +12,7 @@ import edu.cornell.cs.apl.viaduct.PdgReadEdge;
 import edu.cornell.cs.apl.viaduct.PdgStorageNode;
 import edu.cornell.cs.apl.viaduct.PdgWriteEdge;
 import edu.cornell.cs.apl.viaduct.ProgramDependencyGraph;
+import edu.cornell.cs.apl.viaduct.ProgramDependencyGraph.ControlLabel;
 import edu.cornell.cs.apl.viaduct.SymbolTable;
 import edu.cornell.cs.apl.viaduct.UndeclaredVariableException;
 import edu.cornell.cs.apl.viaduct.imp.ast.AndNode;
@@ -40,7 +41,6 @@ import edu.cornell.cs.apl.viaduct.imp.ast.VarDeclNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.Variable;
 import edu.cornell.cs.apl.viaduct.security.Label;
 
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -52,17 +52,10 @@ import java.util.Set;
  */
 public class ImpPdgBuilderVisitor implements AstVisitor<PdgBuilderInfo<ImpAstNode>> {
 
-  public static final String THEN_LABEL = "then";
-  public static final String ELSE_LABEL = "else";
-  public static final String SEQ_LABEL   = "seq";
   private static final String DOWNGRADE_NODE = "downgrade";
   private static final String VARDECL_NODE = "decl";
   private static final String ASSIGN_NODE = "assign";
   private static final String IF_NODE = "if";
-  private static final List<String> CONTROL_LABEL_ORDER =
-      Arrays.asList(new String[]{
-        THEN_LABEL, ELSE_LABEL, SEQ_LABEL
-      });
 
   private FreshNameGenerator freshNameGenerator;
   private SymbolTable<Variable, PdgNode<ImpAstNode>> storageNodes;
@@ -75,7 +68,7 @@ public class ImpPdgBuilderVisitor implements AstVisitor<PdgBuilderInfo<ImpAstNod
   public ProgramDependencyGraph<ImpAstNode> generatePDG(StmtNode program) {
     this.freshNameGenerator = new FreshNameGenerator();
     this.storageNodes = new SymbolTable<Variable, PdgNode<ImpAstNode>>();
-    this.pdg = new ProgramDependencyGraph<ImpAstNode>(CONTROL_LABEL_ORDER);
+    this.pdg = new ProgramDependencyGraph<ImpAstNode>();
     program.accept(this);
 
     // replace subexpressions with variables
@@ -100,20 +93,6 @@ public class ImpPdgBuilderVisitor implements AstVisitor<PdgBuilderInfo<ImpAstNod
     return this.pdg;
   }
 
-  private PdgBuilderInfo<ImpAstNode> newBuilderInfo() {
-    return new PdgBuilderInfo<ImpAstNode>(SEQ_LABEL);
-  }
-
-  private PdgBuilderInfo<ImpAstNode> newBuilderInfo(PdgNode<ImpAstNode> node) {
-    return new PdgBuilderInfo<ImpAstNode>(SEQ_LABEL, node);
-  }
-
-  private PdgBuilderInfo<ImpAstNode> newBuilderInfo(
-        PdgNode<ImpAstNode> node, Binding<ImpAstNode> binding) {
-
-    return new PdgBuilderInfo<ImpAstNode>(SEQ_LABEL, node, binding);
-  }
-
   /** visit binary operation expr. */
   private PdgBuilderInfo<ImpAstNode> visitBinaryOp(BinaryExpressionNode binNode) {
     PdgBuilderInfo<ImpAstNode> lhsDeps = binNode.getLhs().accept(this);
@@ -123,7 +102,7 @@ public class ImpPdgBuilderVisitor implements AstVisitor<PdgBuilderInfo<ImpAstNod
     PdgNode<ImpAstNode> leftLast = lhsDeps.getLastCreated();
     PdgNode<ImpAstNode> rightFirst = lhsDeps.getFirstCreated();
     if (leftLast != null && rightFirst != null) {
-      PdgControlEdge.create(leftLast, rightFirst, SEQ_LABEL);
+      PdgControlEdge.create(leftLast, rightFirst, ControlLabel.SEQ);
     }
 
     return lhsDeps.merge(rhsDeps);
@@ -134,7 +113,7 @@ public class ImpPdgBuilderVisitor implements AstVisitor<PdgBuilderInfo<ImpAstNod
   public PdgBuilderInfo<ImpAstNode> visit(ReadNode varLookup) {
     if (this.storageNodes.contains(varLookup.getVariable())) {
       PdgNode<ImpAstNode> varNode = this.storageNodes.get(varLookup.getVariable());
-      PdgBuilderInfo<ImpAstNode> deps = newBuilderInfo();
+      PdgBuilderInfo<ImpAstNode> deps = new PdgBuilderInfo<>();
       deps.addReferencedNode(varNode, varLookup.getVariable());
       return deps;
 
@@ -146,7 +125,7 @@ public class ImpPdgBuilderVisitor implements AstVisitor<PdgBuilderInfo<ImpAstNod
   /** return empty set of dependencies. */
   @Override
   public PdgBuilderInfo<ImpAstNode> visit(IntegerLiteralNode intLit) {
-    return new PdgBuilderInfo<ImpAstNode>(SEQ_LABEL);
+    return new PdgBuilderInfo<>();
   }
 
   /** return LHS and RHS dependencies. */
@@ -158,7 +137,7 @@ public class ImpPdgBuilderVisitor implements AstVisitor<PdgBuilderInfo<ImpAstNod
   /** return empty set of dependencies. */
   @Override
   public PdgBuilderInfo<ImpAstNode> visit(BooleanLiteralNode boolLit) {
-    return newBuilderInfo();
+    return new PdgBuilderInfo<>();
   }
 
   /** return LHS and RHS dependencies. */
@@ -214,13 +193,13 @@ public class ImpPdgBuilderVisitor implements AstVisitor<PdgBuilderInfo<ImpAstNod
     inInfo.setReadNode(node);
     this.pdg.addNode(node);
 
-    return newBuilderInfo(node, new Variable(node.getId()));
+    return new PdgBuilderInfo<>(node, new Variable(node.getId()));
   }
 
   /** return empty set of dependencies. */
   @Override
   public PdgBuilderInfo<ImpAstNode> visit(SkipNode skipNode) {
-    return newBuilderInfo();
+    return new PdgBuilderInfo<>();
   }
 
   /** return created storage node. */
@@ -235,7 +214,7 @@ public class ImpPdgBuilderVisitor implements AstVisitor<PdgBuilderInfo<ImpAstNod
     this.storageNodes.add(varDecl.getVariable(), node);
     this.pdg.addNode(node);
 
-    return newBuilderInfo(node);
+    return new PdgBuilderInfo<>(node);
   }
 
   /** return created PDG compute node for assignment. */
@@ -256,7 +235,7 @@ public class ImpPdgBuilderVisitor implements AstVisitor<PdgBuilderInfo<ImpAstNod
       PdgWriteEdge.create(node, varNode);
       this.pdg.addNode(node);
 
-      PdgBuilderInfo<ImpAstNode> info = newBuilderInfo(node);
+      PdgBuilderInfo<ImpAstNode> info = new PdgBuilderInfo<>(node);
       return inInfo.mergeCreated(info);
 
     } else {
@@ -268,7 +247,7 @@ public class ImpPdgBuilderVisitor implements AstVisitor<PdgBuilderInfo<ImpAstNod
   @Override
   public PdgBuilderInfo<ImpAstNode> visit(BlockNode blockNode) {
     PdgBuilderInfo<ImpAstNode> lastInfo = null;
-    PdgBuilderInfo<ImpAstNode> blockInfo = newBuilderInfo();
+    PdgBuilderInfo<ImpAstNode> blockInfo = new PdgBuilderInfo<>();
 
     for (StmtNode stmt : blockNode) {
       PdgBuilderInfo<ImpAstNode> curInfo = stmt.accept(this);
@@ -278,7 +257,7 @@ public class ImpPdgBuilderVisitor implements AstVisitor<PdgBuilderInfo<ImpAstNod
         PdgNode<ImpAstNode> curFirstNode = curInfo.getFirstCreated();
 
         if (lastLastNode != null && curFirstNode != null) {
-          PdgControlEdge.create(lastLastNode, curFirstNode, SEQ_LABEL);
+          PdgControlEdge.create(lastLastNode, curFirstNode, ControlLabel.SEQ);
         }
       }
 
@@ -308,7 +287,7 @@ public class ImpPdgBuilderVisitor implements AstVisitor<PdgBuilderInfo<ImpAstNod
     PdgBuilderInfo<ImpAstNode> thenInfo = ifNode.getThenBranch().accept(this);
     PdgNode<ImpAstNode> thenFirst = thenInfo.getFirstCreated();
     if (thenFirst != null) {
-      PdgControlEdge.create(node, thenFirst, THEN_LABEL);
+      PdgControlEdge.create(node, thenFirst, ControlLabel.THEN);
       PdgReadEdge.create(node, thenFirst);
     }
 
@@ -316,7 +295,7 @@ public class ImpPdgBuilderVisitor implements AstVisitor<PdgBuilderInfo<ImpAstNod
     PdgBuilderInfo<ImpAstNode> elseInfo = ifNode.getElseBranch().accept(this);
     PdgNode<ImpAstNode> elseFirst = elseInfo.getFirstCreated();
     if (elseFirst != null) {
-      PdgControlEdge.create(node, elseFirst, ELSE_LABEL);
+      PdgControlEdge.create(node, elseFirst, ControlLabel.ELSE);
       PdgReadEdge.create(node, elseFirst);
     }
 
@@ -333,24 +312,24 @@ public class ImpPdgBuilderVisitor implements AstVisitor<PdgBuilderInfo<ImpAstNod
       PdgReadEdge.create(node, readChannelStorage);
     }
 
-    PdgBuilderInfo<ImpAstNode> info = newBuilderInfo(node);
+    PdgBuilderInfo<ImpAstNode> info = new PdgBuilderInfo<>(node);
     return inInfo.mergeCreated(info);
   }
 
   /** send/recvs should not be in surface programs and thus should not be in the generated PDG. */
   @Override
   public PdgBuilderInfo<ImpAstNode> visit(SendNode sendNode) {
-    return newBuilderInfo();
+    return new PdgBuilderInfo<>();
   }
 
   /** send/recvs should not be in surface programs and thus should not be in the generated PDG. */
   @Override
   public PdgBuilderInfo<ImpAstNode> visit(RecvNode recvNode) {
-    return newBuilderInfo();
+    return new PdgBuilderInfo<>();
   }
 
   @Override
   public PdgBuilderInfo<ImpAstNode> visit(AnnotationNode annotNode) {
-    return newBuilderInfo();
+    return new PdgBuilderInfo<>();
   }
 }

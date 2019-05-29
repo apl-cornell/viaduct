@@ -1,5 +1,7 @@
 package edu.cornell.cs.apl.viaduct;
 
+import edu.cornell.cs.apl.viaduct.ProgramDependencyGraph.ControlLabel;
+
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -12,28 +14,26 @@ public class PdgBuilderInfo<T extends AstNode> {
   Map<PdgNode<T>, Binding<T>> refBindingMap;
   PdgNode<T> firstCreated;
   PdgNode<T> lastCreated;
-  String defaultControlLabel;
 
   /** constructor. */
-  public PdgBuilderInfo(String ctrlLabel) {
-    this.defaultControlLabel = ctrlLabel;
+  public PdgBuilderInfo() {
     this.referencedNodes = new HashSet<>();
     this.createdNodes = new HashSet<>();
     this.refBindingMap = new HashMap<>();
   }
 
-  public PdgBuilderInfo(String ctrlLabel, PdgNode<T> createdNode) {
-    this(ctrlLabel);
+  public PdgBuilderInfo(PdgNode<T> createdNode) {
+    this();
     addCreatedNode(createdNode);
   }
 
-  public PdgBuilderInfo(String ctrlLabel, PdgNode<T> createdNode, Binding<T> binding) {
-    this(ctrlLabel);
+  public PdgBuilderInfo(PdgNode<T> createdNode, Binding<T> binding) {
+    this();
     addCreatedNode(createdNode, binding);
   }
 
-  protected PdgBuilderInfo(String ctrlLabel, Set<PdgNode<T>> rnodes, Set<PdgNode<T>> cnodes) {
-    this(ctrlLabel);
+  protected PdgBuilderInfo(Set<PdgNode<T>> rnodes, Set<PdgNode<T>> cnodes) {
+    this();
     this.referencedNodes = rnodes;
     this.createdNodes = cnodes;
   }
@@ -69,8 +69,7 @@ public class PdgBuilderInfo<T extends AstNode> {
     cnodes.addAll(this.createdNodes);
     cnodes.addAll(other.createdNodes);
 
-    PdgBuilderInfo<T> mergedInfo =
-        new PdgBuilderInfo<>(this.defaultControlLabel, rnodes, cnodes);
+    PdgBuilderInfo<T> mergedInfo = new PdgBuilderInfo<>(rnodes, cnodes);
     mergedInfo.firstCreated = this.firstCreated;
     mergedInfo.lastCreated = this.lastCreated;
     mergedInfo.refBindingMap.putAll(this.refBindingMap);
@@ -93,8 +92,7 @@ public class PdgBuilderInfo<T extends AstNode> {
     cnodes.addAll(this.createdNodes);
     cnodes.addAll(other.createdNodes);
 
-    PdgBuilderInfo<T> mergedInfo =
-        new PdgBuilderInfo<>(this.defaultControlLabel, this.referencedNodes, cnodes);
+    PdgBuilderInfo<T> mergedInfo = new PdgBuilderInfo<>(this.referencedNodes, cnodes);
     mergedInfo.firstCreated = this.firstCreated;
     mergedInfo.lastCreated = this.lastCreated;
     mergedInfo.refBindingMap.putAll(this.refBindingMap);
@@ -158,7 +156,7 @@ public class PdgBuilderInfo<T extends AstNode> {
     }
 
     if (this.lastCreated != null) {
-      PdgControlEdge.create(this.lastCreated, node, this.defaultControlLabel);
+      PdgControlEdge.create(this.lastCreated, node, ControlLabel.SEQ);
     }
   }
 }

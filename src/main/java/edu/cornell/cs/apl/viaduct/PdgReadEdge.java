@@ -1,5 +1,6 @@
 package edu.cornell.cs.apl.viaduct;
 
+/** represents reading from a variable or computation. */
 public class PdgReadEdge<T extends AstNode> extends PdgInfoEdge<T> {
   public PdgReadEdge(PdgNode<T> source, PdgNode<T> target, Binding<T> b) {
     super(source, target);
@@ -24,5 +25,10 @@ public class PdgReadEdge<T extends AstNode> extends PdgInfoEdge<T> {
     source.addOutInfoEdge(readEdge);
     target.addInInfoEdge(readEdge);
     return readEdge;
+  }
+
+  @Override
+  public boolean isReadEdge() {
+    return true;
   }
 }

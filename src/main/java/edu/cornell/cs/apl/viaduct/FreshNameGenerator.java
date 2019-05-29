@@ -11,7 +11,8 @@ public class FreshNameGenerator {
     this.freshNameMap = new HashMap<>();
   }
 
-  /** get fresh name from base name. */
+  /** get fresh name from base name.
+   * base name must NOT have an underscore! */
   public String getFreshName(String base) {
     Integer i = this.freshNameMap.get(base);
     if (i != null) {

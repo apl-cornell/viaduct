@@ -161,34 +161,44 @@ public class Main {
       System.exit(0);
     }
 
-    // otherwise, print out protocol selection info
-    System.out.println("PDG information:");
-    boolean synthesizedProto = true;
-    for (PdgNode<ImpAstNode> node : pdg.getNodes()) {
-      String astStr = node.getAstNode().toString();
+    // protocol synthesized!
+    if (pdg.getNodes().size() == protocolMap.size()) {
+      ProtocolInstantiation<ImpAstNode> instantiator = new ProtocolInstantiation<>();
+      StmtNode targetProg =
+          instantiator.instantiateProtocolSingleProgram(hostConfig, pdg, protocolMap);
+      PrintVisitor printer = new PrintVisitor();
+      System.out.println(targetProg.accept(printer));
 
-      Protocol<ImpAstNode> proto = protocolMap.get(node);
-      String protoStr;
-      if (proto == null) {
-        synthesizedProto = false;
-        protoStr = "NO PROTOCOL";
-      } else {
-        protoStr = proto.toString();
-      }
-
-      String labelStr;
-      if (node.isDowngradeNode()) {
-        labelStr = node.getInLabel().toString() + " / " + node.getOutLabel().toString();
-      } else {
-        labelStr = node.getOutLabel().toString();
-      }
-
-      System.out.println(String.format("%s (label: %s) => %s", astStr, labelStr, protoStr));
-    }
-    if (synthesizedProto) {
-      System.out.println("\nProtocol cost: " + protocolCost);
     } else {
-      System.out.println("\nCould not synthesize protocol!");
+      System.out.println("PDG information:");
+      boolean synthesizedProto = true;
+      for (PdgNode<ImpAstNode> node : pdg.getNodes()) {
+        String astStr = node.getAstNode().toString();
+
+        Protocol<ImpAstNode> proto = protocolMap.get(node);
+        String protoStr;
+        if (proto == null) {
+          synthesizedProto = false;
+          protoStr = "NO PROTOCOL";
+        } else {
+          protoStr = proto.toString();
+        }
+
+        String labelStr;
+        if (node.isDowngradeNode()) {
+          labelStr = node.getInLabel().toString() + " / " + node.getOutLabel().toString();
+        } else {
+          labelStr = node.getOutLabel().toString();
+        }
+
+        System.out.println(String.format("%s (label: %s) => %s", astStr, labelStr, protoStr));
+      }
+      if (synthesizedProto) {
+        System.out.println("\nProtocol cost: " + protocolCost);
+      } else {
+        System.out.println("\nCould not synthesize protocol!");
+      }
+
     }
   }
 }

@@ -60,6 +60,8 @@ public class ProtocolInstantiationInfo<T extends AstNode> {
     this.controlContext.push(hosts);
   }
 
+  /** set the current path for all hosts participating
+   * in the control structure. */
   public void setCurrentPath(ControlLabel label) {
     assert !this.controlContext.isEmpty();
 
@@ -70,6 +72,8 @@ public class ProtocolInstantiationInfo<T extends AstNode> {
     }
   }
 
+  /** finish the current execution path for all
+   * hosts participating in control structure. */
   public void finishCurrentPath() {
     assert !this.controlContext.isEmpty();
 
@@ -80,6 +84,8 @@ public class ProtocolInstantiationInfo<T extends AstNode> {
     }
   }
 
+  /** pop the current control structure for all
+   * participating hosts. */
   public void popControl() {
     assert !this.controlContext.isEmpty();
 

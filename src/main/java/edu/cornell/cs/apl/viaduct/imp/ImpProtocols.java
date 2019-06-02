@@ -204,7 +204,8 @@ public class ImpProtocols {
     }
 
     @Override
-    public Binding<ImpAstNode> readPostprocess(Map<Host,Binding<ImpAstNode>> hostBindings, Host host,
+    public Binding<ImpAstNode> readPostprocess(
+        Map<Host,Binding<ImpAstNode>> hostBindings, Host host,
         ProtocolInstantiationInfo<ImpAstNode> info) {
 
       // because this is the Single protocol, there should only
@@ -338,10 +339,12 @@ public class ImpProtocols {
           }
         }
 
+        /*
         Set<Host> host1Set = new HashSet<Host>();
         host1Set.add(hostPair[0]);
         Set<Host> host2Set = new HashSet<Host>();
         host2Set.add(hostPair[1]);
+        */
         Set<Host> host12Set = new HashSet<Host>();
         host12Set.add(hostPair[0]);
         host12Set.add(hostPair[1]);
@@ -416,7 +419,8 @@ public class ImpProtocols {
     }
 
     @Override
-    public Binding<ImpAstNode> readPostprocess(Map<Host,Binding<ImpAstNode>> hostBindings, Host host,
+    public Binding<ImpAstNode> readPostprocess(
+        Map<Host,Binding<ImpAstNode>> hostBindings, Host host,
         ProtocolInstantiationInfo<ImpAstNode> info) {
 
       // TODO: fix this
@@ -612,7 +616,8 @@ public class ImpProtocols {
     }
 
     @Override
-    public Binding<ImpAstNode> readPostprocess(Map<Host,Binding<ImpAstNode>> hostBindings, Host host,
+    public Binding<ImpAstNode> readPostprocess(
+        Map<Host,Binding<ImpAstNode>> hostBindings, Host host,
         ProtocolInstantiationInfo<ImpAstNode> info) {
 
       // because this is the Single protocol, there should only
@@ -775,7 +780,8 @@ public class ImpProtocols {
     }
 
     @Override
-    public Binding<ImpAstNode> readPostprocess(Map<Host,Binding<ImpAstNode>> hostBindings, Host host,
+    public Binding<ImpAstNode> readPostprocess(
+        Map<Host,Binding<ImpAstNode>> hostBindings, Host host,
         ProtocolInstantiationInfo<ImpAstNode> info) {
 
       // TODO: finish

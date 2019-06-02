@@ -6,8 +6,8 @@ import edu.cornell.cs.apl.viaduct.security.Label;
 /** PDG storage node, which represents declared variables. */
 public class PdgStorageNode<T extends AstNode> extends PdgNode<T> {
   /** constructor that sets in and out labels to be the same. */
-  public PdgStorageNode(T astNode, String id, Label label) {
-    super(astNode, id);
+  public PdgStorageNode(ProgramDependencyGraph<T> pdg, T astNode, String id, Label label) {
+    super(pdg, astNode, id);
     this.setInLabel(label);
     this.setOutLabel(label);
   }

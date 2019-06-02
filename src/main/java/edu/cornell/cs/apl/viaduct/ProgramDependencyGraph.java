@@ -1,6 +1,7 @@
 package edu.cornell.cs.apl.viaduct;
 
 import edu.cornell.cs.apl.viaduct.imp.ast.AstNode;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -19,9 +20,9 @@ public class ProgramDependencyGraph<T extends AstNode> {
 
   static {
     labelOrder = new ArrayList<>();
-    labelOrder.add(ControlLabel.SEQ);
-    labelOrder.add(ControlLabel.ELSE);
     labelOrder.add(ControlLabel.THEN);
+    labelOrder.add(ControlLabel.ELSE);
+    labelOrder.add(ControlLabel.SEQ);
   }
 
   HashSet<PdgNode<T>> nodes;
@@ -38,28 +39,18 @@ public class ProgramDependencyGraph<T extends AstNode> {
     return this.nodes;
   }
 
-  /** get PDG nodes ordered by control edges. */
-  public List<PdgNode<T>> getOrderedNodes() {
-    List<PdgNode<T>> nodeList = new ArrayList<>();
-    PdgNode<T> cur = null;
-
-    // find first node, which is the node that has no
-    // incoming control edge (root of AST)
-    for (PdgNode<T> node : nodes) {
-      if (node.getInControlEdge() == null) {
-        cur = node;
-        break;
-      }
-    }
-    assert cur != null;
-
-    // do a DFS traversal over control edges, which is
-    // almost equivalent to traversing the control flow graph
-    // of the original program
+  /**
+   * do a DFS traversal over control edges, which is almost equivalent to traversing the control
+   * flow graph of the original program.
+   */
+  public List<PdgNode<T>> getOrderedNodesFrom(PdgNode<T> start) {
     ControlEdgeComparator edgeComparator = new ControlEdgeComparator();
+
+    PdgNode<T> cur = start;
     Stack<PdgNode<T>> rest = new Stack<>();
     rest.add(cur);
 
+    List<PdgNode<T>> nodeList = new ArrayList<>();
     while (!rest.isEmpty()) {
       cur = rest.pop();
       nodeList.add(cur);
@@ -73,6 +64,23 @@ public class ProgramDependencyGraph<T extends AstNode> {
     }
 
     return nodeList;
+  }
+
+  /** get PDG nodes ordered by control edges. */
+  public List<PdgNode<T>> getOrderedNodes() {
+    PdgNode<T> cur = null;
+
+    // find first node, which is the node that has no
+    // incoming control edge (root of AST)
+    for (PdgNode<T> node : nodes) {
+      if (node.getInControlEdge() == null) {
+        cur = node;
+        break;
+      }
+    }
+    assert cur != null;
+
+    return getOrderedNodesFrom(cur);
   }
 
   @Override
@@ -99,9 +107,9 @@ public class ProgramDependencyGraph<T extends AstNode> {
     ELSE
   }
 
-  class ControlEdgeComparator implements Comparator<PdgControlEdge<T>> {
+  static class ControlEdgeComparator implements Comparator<PdgControlEdge>, Serializable {
     @Override
-    public int compare(PdgControlEdge<T> e1, PdgControlEdge<T> e2) {
+    public int compare(PdgControlEdge e1, PdgControlEdge e2) {
       if (e1 != null && e2 != null) {
         int ind1 = labelOrder.indexOf(e1.getLabel());
         int ind2 = labelOrder.indexOf(e2.getLabel());

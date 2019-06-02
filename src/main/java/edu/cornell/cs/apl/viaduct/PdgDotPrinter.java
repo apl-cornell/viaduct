@@ -83,9 +83,9 @@ public class PdgDotPrinter {
 
         Link link = Link.to(mutNode(strOutNode)).add(style).add(Color.BLUE);
 
-        String edgeLabel = infoEdge.getLabel();
-        if (edgeLabel != null) {
-          link.add(Label.of(edgeLabel));
+        Binding<T> infoEdgeLabel = infoEdge.getLabel();
+        if (infoEdgeLabel != null) {
+          link.add(Label.of(infoEdgeLabel.getBinding()));
         }
 
         if (infoEdge.isWriteEdge()) {

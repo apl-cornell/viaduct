@@ -3,13 +3,13 @@ package edu.cornell.cs.apl.viaduct;
 import edu.cornell.cs.apl.viaduct.imp.ast.AstNode;
 
 public abstract class PdgInfoEdge<T extends AstNode> extends PdgEdge<T> {
-  String label;
+  Binding<T> label;
 
   public PdgInfoEdge(PdgNode<T> source, PdgNode<T> target) {
     super(source, target);
   }
 
-  public String getLabel() {
+  public Binding<T> getLabel() {
     return this.label;
   }
 

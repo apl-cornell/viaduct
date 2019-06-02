@@ -30,6 +30,11 @@ public class HostTrustConfiguration implements Iterable<Tuple2<Host, Label>> {
     return this.trustLevels.keySet();
   }
 
+  /** Return the number of hosts in the configuration. */
+  public int size() {
+    return trustLevels.size();
+  }
+
   @Override
   public Iterator<Tuple2<Host, Label>> iterator() {
     return this.trustLevels.iterator();

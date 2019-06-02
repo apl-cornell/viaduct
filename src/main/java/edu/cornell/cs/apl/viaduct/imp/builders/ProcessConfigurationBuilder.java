@@ -39,6 +39,21 @@ public class ProcessConfigurationBuilder {
     return new ProcessConfigurationNode(config);
   }
 
+  /**
+   * Create a new process at the given host.
+   *
+   * @return true if a process at the host did not already exist
+   */
+  public boolean createProcess(Host h) {
+    if (!this.configBuilder.containsKey(h)) {
+      this.configBuilder.put(h, new StmtBuilder());
+      return true;
+
+    } else {
+      return false;
+    }
+  }
+
   public StmtBuilder getBuilder(Host h) {
     return this.configBuilder.get(h);
   }

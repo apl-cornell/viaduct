@@ -21,7 +21,7 @@ public class FreshNameGenerator {
 
     } else {
       this.freshNameMap.put(base, 2);
-      return base;
+      return String.format("%s_%d", base, 1);
     }
   }
 }

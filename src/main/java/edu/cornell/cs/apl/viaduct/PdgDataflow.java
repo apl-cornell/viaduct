@@ -19,7 +19,7 @@ public abstract class PdgDataflow<T extends Lattice<T>, U extends AstNode> {
 
   /** worklist algorithm. */
   public void dataflow(ProgramDependencyGraph<U> pdg) {
-    Queue<PdgNode<U>> worklist = new LinkedList<PdgNode<U>>(pdg.getNodes());
+    Queue<PdgNode<U>> worklist = new LinkedList<PdgNode<U>>(pdg.getOrderedNodes());
 
     while (worklist.size() > 0) {
       PdgNode<U> node = worklist.remove();

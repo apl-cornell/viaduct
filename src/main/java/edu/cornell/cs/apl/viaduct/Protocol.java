@@ -13,10 +13,14 @@ public interface Protocol<T extends AstNode> {
       Map<PdgNode<T>, Protocol<T>> currProtoMap,
       PdgNode<T> node);
 
-  Set<Host> readFrom(PdgNode<T> node, Host h, PdgNode<T> reader, ProtocolInstantiationInfo<T> info);
+  Set<Host> getHosts();
 
-  void writeTo(
-      PdgNode<T> node, Host h, PdgNode<T> writer, T val, ProtocolInstantiationInfo<T> info);
+  Set<Host> readFrom(PdgNode<T> node, Host h, ProtocolInstantiationInfo<T> info);
+
+  Binding<T> readPostprocess(Map<Host,Binding<T>> hostBindings, Host readHost,
+      ProtocolInstantiationInfo<T> info);
+
+  void writeTo(PdgNode<T> node, Host writeHost, T val, ProtocolInstantiationInfo<T> info);
 
   void instantiate(PdgNode<T> node, ProtocolInstantiationInfo<T> info);
 }

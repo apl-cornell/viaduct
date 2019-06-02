@@ -30,7 +30,15 @@ public class ProtocolInstantiationInfo<T extends AstNode> {
     return this.pconfig.getFreshVar(base);
   }
 
+  public Variable getFreshVar(Binding<T> base) {
+    return getFreshVar(base.getBinding());
+  }
+
   public String getFreshName(String base) {
     return this.pconfig.getFreshName(base);
+  }
+
+  public String getFreshName(Binding<T> base) {
+    return getFreshName(base.getBinding());
   }
 }

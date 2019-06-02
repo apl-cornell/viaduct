@@ -7,16 +7,18 @@ public class PdgComputeNode<T extends AstNode> extends PdgNode<T> {
   boolean isDowngrade;
 
   /** constructor for non-downgrade nodes. */
-  public PdgComputeNode(T astNode, String id, Label label) {
-    super(astNode, id);
+  public PdgComputeNode(ProgramDependencyGraph<T> pdg, T astNode, String id, Label label) {
+    super(pdg, astNode, id);
     this.setInLabel(label);
     this.setOutLabel(label);
     this.isDowngrade = false;
   }
 
   /** constructor for downgrade nodes. */
-  public PdgComputeNode(T astNode, String id, Label inLabel, Label outLabel) {
-    super(astNode, id);
+  public PdgComputeNode(ProgramDependencyGraph<T> pdg, T astNode, String id,
+      Label inLabel, Label outLabel) {
+
+    super(pdg, astNode, id);
     this.setInLabel(inLabel);
     this.setOutLabel(outLabel);
     this.isDowngrade = true;

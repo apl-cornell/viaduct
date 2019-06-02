@@ -1,13 +1,13 @@
 package edu.cornell.cs.apl.viaduct;
 
 public abstract class PdgInfoEdge<T extends AstNode> extends PdgEdge<T> {
-  String label;
+  Binding<T> label;
 
   public PdgInfoEdge(PdgNode<T> source, PdgNode<T> target) {
     super(source, target);
   }
 
-  public String getLabel() {
+  public Binding<T> getLabel() {
     return this.label;
   }
 

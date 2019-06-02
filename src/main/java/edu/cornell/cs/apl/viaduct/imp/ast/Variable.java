@@ -6,6 +6,10 @@ import edu.cornell.cs.apl.viaduct.Binding;
 public class Variable implements Binding<ImpAstNode> {
   private final String name;
 
+  public <T extends ImpAstNode> Variable(Binding<T> binding) {
+    this.name = binding.getBinding();
+  }
+
   public Variable(String name) {
     this.name = name;
   }

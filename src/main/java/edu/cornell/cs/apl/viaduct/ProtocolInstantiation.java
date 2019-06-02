@@ -8,20 +8,29 @@ import java.util.Set;
 
 /** given a protocol selection, instantiate a process configuration. */
 public class ProtocolInstantiation<T extends AstNode> {
-  /** instantiate protocols for PDG nodes in the order given
-   *  by control edges b/w PDG nodes. */
-  public Map<Host,StmtNode> instantiateProtocolConfiguration(
+  private ProcessConfigBuilder getInstantiatedBuilder(
       Set<Host> hostConfig, ProgramDependencyGraph<T> pdg,
       Map<PdgNode<T>,Protocol<T>> protocolMap) {
 
     ProcessConfigBuilder pconfig = new ProcessConfigBuilder(hostConfig);
     ProtocolInstantiationInfo<T> info =
         new ProtocolInstantiationInfo<>(pconfig, protocolMap);
+
     for (PdgNode<T> node : pdg.getOrderedNodes()) {
       Protocol<T> proto = protocolMap.get(node);
       proto.instantiate(node, info);
     }
 
+    return pconfig;
+  }
+
+  /** instantiate protocols for PDG nodes in the order given
+   *  by control edges b/w PDG nodes. */
+  public Map<Host,StmtNode> instantiateProtocolConfiguration(
+      Set<Host> hostConfig, ProgramDependencyGraph<T> pdg,
+      Map<PdgNode<T>,Protocol<T>> protocolMap) {
+
+    ProcessConfigBuilder pconfig = getInstantiatedBuilder(hostConfig, pdg, protocolMap);
     return pconfig.generateProcessConfig();
   }
 
@@ -30,14 +39,7 @@ public class ProtocolInstantiation<T extends AstNode> {
       Set<Host> hostConfig, ProgramDependencyGraph<T> pdg,
       Map<PdgNode<T>,Protocol<T>> protocolMap) {
 
-    ProcessConfigBuilder pconfig = new ProcessConfigBuilder(hostConfig);
-    ProtocolInstantiationInfo<T> info =
-        new ProtocolInstantiationInfo<>(pconfig, protocolMap);
-    for (PdgNode<T> node : pdg.getOrderedNodes()) {
-      Protocol<T> proto = protocolMap.get(node);
-      proto.instantiate(node, info);
-    }
-
+    ProcessConfigBuilder pconfig = getInstantiatedBuilder(hostConfig, pdg, protocolMap);
     return pconfig.generateSingleProgram();
   }
 }

@@ -1,11 +1,14 @@
 package edu.cornell.cs.apl.viaduct;
 
+import edu.cornell.cs.apl.viaduct.ProgramDependencyGraph.ControlLabel;
 import edu.cornell.cs.apl.viaduct.security.Label;
+
 import java.util.HashSet;
 import java.util.Set;
 
 /** node in a program dependence graph. */
 public abstract class PdgNode<T extends AstNode> {
+  ProgramDependencyGraph<T> pdg;
   T astNode;
   String id;
 
@@ -16,15 +19,16 @@ public abstract class PdgNode<T extends AstNode> {
   Label inLabel;
   Label outLabel;
 
-  protected PdgNode() {
+  protected PdgNode(ProgramDependencyGraph<T> pdg) {
+    this.pdg = pdg;
     this.inInfoEdges = new HashSet<>();
     this.outInfoEdges = new HashSet<>();
     this.outControlEdges = new HashSet<>();
   }
 
   /** constructor. */
-  public PdgNode(T astNode, String id) {
-    this();
+  public PdgNode(ProgramDependencyGraph<T> pdg, T astNode, String id) {
+    this(pdg);
     this.astNode = astNode;
     this.id = id;
     this.inLabel = Label.bottom();
@@ -63,12 +67,36 @@ public abstract class PdgNode<T extends AstNode> {
     return this.inInfoEdges;
   }
 
+  /** return incoming read edges. */
+  public Set<PdgReadEdge<T>> getReadEdges() {
+    Set<PdgReadEdge<T>> readEdges = new HashSet<>();
+    for (PdgInfoEdge<T> infoEdge : this.inInfoEdges) {
+      if (infoEdge.isReadEdge()) {
+        readEdges.add((PdgReadEdge<T>)infoEdge);
+      }
+    }
+
+    return readEdges;
+  }
+
   public PdgControlEdge<T> getInControlEdge() {
     return this.inControlEdge;
   }
 
   public Set<PdgInfoEdge<T>> getOutInfoEdges() {
     return this.outInfoEdges;
+  }
+
+  /** return outgoing write edges. */
+  public Set<PdgWriteEdge<T>> getWriteEdges() {
+    Set<PdgWriteEdge<T>> writeEdges = new HashSet<>();
+    for (PdgInfoEdge<T> infoEdge : this.outInfoEdges) {
+      if (infoEdge.isReadEdge()) {
+        writeEdges.add((PdgWriteEdge<T>)infoEdge);
+      }
+    }
+
+    return writeEdges;
   }
 
   public Set<PdgControlEdge<T>> getOutControlEdges() {
@@ -118,6 +146,54 @@ public abstract class PdgNode<T extends AstNode> {
 
   public boolean isDeclassifyNode() {
     return !this.inLabel.confidentiality().flowsTo(this.outLabel.confidentiality());
+  }
+
+  /** returns whether node marks off the beginning of a control fork.
+   *  e.g. the first node in a then brach of a condition marks off
+   * the beginning of a control fork. */
+  public boolean isStartOfControlFork() {
+    if (this.inControlEdge != null) {
+      return this.inControlEdge.getLabel() != ControlLabel.SEQ;
+
+    } else {
+      return false;
+    }
+  }
+
+  /** the node is the end of a execution path if it has
+   * no outgoing control edges. */
+  public boolean isEndOfExecutionPath() {
+    boolean hasSeqOutControlEdge = false;
+    for (PdgControlEdge<T> controlEdge : this.outControlEdges) {
+      if (controlEdge.getLabel() == ControlLabel.SEQ) {
+        hasSeqOutControlEdge = true;
+        break;
+      }
+    }
+    return !hasSeqOutControlEdge;
+  }
+
+  /** get the control node whose control structure this node resides in.
+   * returns null if there isn't such a node */
+  public PdgControlNode<T> getControlNode() {
+    PdgNode<T> cur = this;
+
+    while (cur != null) {
+      if (cur.isControlNode() && cur != this) {
+        return (PdgControlNode<T>)cur;
+
+      } else {
+        PdgControlEdge<T> controlEdge = cur.getInControlEdge();
+        if (controlEdge != null) {
+          cur = controlEdge.getSource();
+
+        } else {
+          cur = null;
+        }
+      }
+    }
+
+    return null;
   }
 
   public abstract boolean isStorageNode();

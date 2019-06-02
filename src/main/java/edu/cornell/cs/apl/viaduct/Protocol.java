@@ -11,6 +11,9 @@ public interface Protocol<T extends AstNode> {
   Set<Host> readFrom(PdgNode<T> node, Host h, PdgNode<T> reader,
       ProtocolInstantiationInfo<T> info);
 
+  Binding<T> readPostprocess(Map<Host,Binding<T>> hostBindings, Host h, PdgNode<T> node,
+      ProtocolInstantiationInfo<T> info);
+
   void writeTo(PdgNode<T> node, Host h, PdgNode<T> writer, T val,
       ProtocolInstantiationInfo<T> info);
 

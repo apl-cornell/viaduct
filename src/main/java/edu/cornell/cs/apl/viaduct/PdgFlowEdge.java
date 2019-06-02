@@ -10,4 +10,12 @@ public class PdgFlowEdge<T extends AstNode> extends PdgInfoEdge<T> {
   public boolean isFlowEdge() {
     return true;
   }
+
+  /** create edge b/w nodes. */
+  public static PdgFlowEdge create(PdgNode source, PdgNode target) {
+    PdgFlowEdge flowEdge = new PdgFlowEdge(source, target);
+    source.addOutInfoEdge(flowEdge);
+    target.addInInfoEdge(flowEdge);
+    return flowEdge;
+  }
 }

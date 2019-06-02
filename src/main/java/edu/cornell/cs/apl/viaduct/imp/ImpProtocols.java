@@ -1,10 +1,13 @@
 package edu.cornell.cs.apl.viaduct.imp;
 
+import edu.cornell.cs.apl.viaduct.Binding;
 import edu.cornell.cs.apl.viaduct.Host;
 import edu.cornell.cs.apl.viaduct.PdgComputeNode;
+import edu.cornell.cs.apl.viaduct.PdgControlNode;
 import edu.cornell.cs.apl.viaduct.PdgEdge;
 import edu.cornell.cs.apl.viaduct.PdgInfoEdge;
 import edu.cornell.cs.apl.viaduct.PdgNode;
+import edu.cornell.cs.apl.viaduct.PdgReadEdge;
 import edu.cornell.cs.apl.viaduct.PdgStorageNode;
 import edu.cornell.cs.apl.viaduct.PdgWriteEdge;
 import edu.cornell.cs.apl.viaduct.Protocol;
@@ -18,8 +21,11 @@ import edu.cornell.cs.apl.viaduct.imp.builders.ExpressionBuilder;
 import edu.cornell.cs.apl.viaduct.imp.builders.StmtBuilder;
 import edu.cornell.cs.apl.viaduct.imp.visitors.RenameVisitor;
 import edu.cornell.cs.apl.viaduct.security.Label;
+
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -31,12 +37,37 @@ public class ImpProtocols {
 
       // declare new variable
       DeclarationNode varDecl = (DeclarationNode) node.getAstNode();
-      Variable newVar = info.getFreshVar(varDecl.getVariable().getName());
+      // Variable newVar = info.getFreshVar(varDecl.getVariable().getName());
+      Variable newVar = varDecl.getVariable();
 
       StmtBuilder builder = info.getBuilder(host);
       builder.varDecl(newVar, varDecl.getLabel());
 
       return newVar;
+    }
+
+    protected Binding<ImpAstNode> performRead(
+        PdgReadEdge<ImpAstNode> readEdge,
+        Host host, PdgNode<ImpAstNode> node,
+        ProtocolInstantiationInfo<ImpAstNode> info) {
+
+      StmtBuilder builder = info.getBuilder(host);
+      PdgNode<ImpAstNode> readNode = readEdge.getSource();
+      Protocol<ImpAstNode> readNodeProto = info.getProtocol(readNode);
+      Set<Host> readHosts = readNodeProto.readFrom(readNode, host, node, info);
+
+      Map<Host,Binding<ImpAstNode>> hostBindings = new HashMap<>();
+      for (Host readHost : readHosts) {
+        Binding<ImpAstNode> edgeLabel = readEdge.getLabel();
+        Variable readVar = info.getFreshVar(edgeLabel);
+        builder.recv(readHost, readVar);
+        hostBindings.put(readHost, readVar);
+      }
+
+      Binding<ImpAstNode> binding =
+          readNodeProto.readPostprocess(hostBindings, host, node, info);
+
+      return binding;
     }
 
     protected Variable instantiateComputeNode(
@@ -45,20 +76,9 @@ public class ImpProtocols {
       StmtBuilder builder = info.getBuilder(host);
       // read from inputs
       Map<Variable, Variable> renameMap = new HashMap<>();
-      for (PdgInfoEdge<ImpAstNode> inEdge : node.getInInfoEdges()) {
-        if (!inEdge.getSource().isControlNode()) {
-          PdgNode<ImpAstNode> inNode = inEdge.getSource();
-          Protocol<ImpAstNode> inNodeProto = info.getProtocol(inNode);
-          Set<Host> readHosts = inNodeProto.readFrom(inNode, host, node, info);
-          for (Host readHost : readHosts) {
-            String edgeLabel = inEdge.getLabel();
-            Variable readVar = info.getFreshVar(edgeLabel);
-            builder.recv(readHost, readVar);
-            renameMap.put(new Variable(edgeLabel), readVar);
-          }
-
-          // inNodeProto.readPostprocess(this.host, node, protocolMap, pconfig);
-        }
+      for (PdgReadEdge<ImpAstNode> readEdge : node.getReadEdges()) {
+        Variable readVar = (Variable)performRead(readEdge, host, node, info);
+        renameMap.put((Variable)readEdge.getLabel(), readVar);
       }
 
       // perform computation
@@ -142,16 +162,28 @@ public class ImpProtocols {
         PdgNode<ImpAstNode> reader,
         ProtocolInstantiationInfo<ImpAstNode> info) {
 
-      // this should not be read from unti it has been instantiated!
+      // this should not be read from until it has been instantiated!
       assert this.outVar != null;
 
       ExpressionBuilder e = new ExpressionBuilder();
       StmtBuilder builder = info.getBuilder(this.host);
       builder.send(readHost, e.var(this.outVar));
 
-      Set<Host> readHosts = new HashSet<>();
-      readHosts.add(this.host);
-      return readHosts;
+      Set<Host> hosts = new HashSet<>();
+      hosts.add(this.host);
+      return hosts;
+    }
+
+    @Override
+    public Binding<ImpAstNode> readPostprocess(
+        Map<Host,Binding<ImpAstNode>> hostBindings,
+        Host host, PdgNode<ImpAstNode> node,
+        ProtocolInstantiationInfo<ImpAstNode> info) {
+
+      // because this is the Single protocol, there should only
+      // have been one host that the node read from
+      assert hostBindings.size() == 1;
+      return hostBindings.get(this.host);
     }
 
     @Override
@@ -177,6 +209,11 @@ public class ImpProtocols {
 
     @Override
     public void instantiate(PdgNode<ImpAstNode> node, ProtocolInstantiationInfo<ImpAstNode> info) {
+      StmtBuilder builder = info.getBuilder(this.host);
+
+      if (node.isStartOfControlFork()) {
+        builder.setCurrentPath(node.getInControlEdge().getLabel());
+      }
 
       if (node.isStorageNode()) {
         this.outVar = instantiateStorageNode(this.host, (PdgStorageNode<ImpAstNode>) node, info);
@@ -185,8 +222,33 @@ public class ImpProtocols {
         this.outVar = instantiateComputeNode(this.host, (PdgComputeNode<ImpAstNode>) node, info);
 
       } else if (node.isControlNode()) {
-        // read guard
+        ExpressionBuilder e = new ExpressionBuilder();
 
+        // the following should be done on all storage nodes in which there is
+        // a read channel from the control structure
+
+        // conditional node should only have one read input (result of the guard)
+        List<PdgReadEdge<ImpAstNode>> infoEdges = new ArrayList<>(node.getReadEdges());
+        assert infoEdges.size() == 1;
+
+        PdgReadEdge<ImpAstNode> guardEdge = infoEdges.get(0);
+        Binding<ImpAstNode> guardBinding = performRead(guardEdge, host, node, info);
+        builder.pushIf(e.var((Variable)guardBinding));
+      }
+
+      if (node.isEndOfExecutionPath()) {
+        builder.finishCurrentPath();
+      }
+
+      // check if node is the last one in the control structure;
+      // if it is, pop the control structure out
+      PdgControlNode<ImpAstNode> controlNode = node.getControlNode();
+      if (controlNode != null) {
+        // this is hilariously inefficient
+        List<PdgNode<ImpAstNode>> controlChildren = controlNode.getControlStructureNodes();
+        if (controlChildren.indexOf(node) == controlChildren.size() - 1) {
+          builder.popControl();
+        }
       }
     }
 
@@ -229,19 +291,15 @@ public class ImpProtocols {
   static class Replication extends Cleartext implements Protocol<ImpAstNode> {
     private static final Replication rep = new Replication();
     private ReplicaSets replicas;
-    // private Map<Host,Variable> storageVarMap;
-    // private Map<Host,Variable> outVarMap;
-
-    private Replication() {
-      this.replicas = new ReplicaSets(new HashSet<Host>(), new HashSet<Host>());
-      // this.storageVarMap = new HashMap<>();
-      // this.outVarMap = new HashMap<>();
-    }
+    private Map<Host,Variable> outVarMap;
 
     private Replication(Set<Host> real, Set<Host> hash) {
       this.replicas = new ReplicaSets(real, hash);
-      // this.storageVarMap = new HashMap<>();
-      // this.outVarMap = new HashMap<>();
+      this.outVarMap = new HashMap<>();
+    }
+
+    private Replication() {
+      this(new HashSet<Host>(), new HashSet<Host>());
     }
 
     public static Replication getRepresentative() {
@@ -256,6 +314,10 @@ public class ImpProtocols {
       return this.replicas.hashReplicas;
     }
 
+    public int getNumReplicas() {
+      return this.replicas.realReplicas.size() + this.replicas.hashReplicas.size();
+    }
+
     @Override
     public Set<Protocol<ImpAstNode>> createInstances(
         Set<Host> hostConfig,
@@ -263,7 +325,9 @@ public class ImpProtocols {
         PdgNode<ImpAstNode> node) {
 
       Set<Protocol<ImpAstNode>> instances = new HashSet<>();
-      if (node.isStorageNode() || node.isEndorseNode() || !node.isDowngradeNode()) {
+      if (hostConfig.size() >= 2
+          && (node.isStorageNode() || node.isEndorseNode() || !node.isDowngradeNode())) {
+
         // assume for now that there are only two hosts
         // generalize this later
         Host[] hostPair = new Host[2];
@@ -322,40 +386,84 @@ public class ImpProtocols {
     @Override
     public Set<Host> readFrom(
         PdgNode<ImpAstNode> node,
-        Host h,
+        Host readHost,
         PdgNode<ImpAstNode> reader,
         ProtocolInstantiationInfo<ImpAstNode> info) {
 
+      // should not be read from until it has been instantiated
+      assert this.outVarMap.size() == getNumReplicas();
+
+      ExpressionBuilder e = new ExpressionBuilder();
+      Set<Host> hosts = new HashSet<>();
+
+      for (Host realHost : this.replicas.realReplicas) {
+        StmtBuilder builder = info.getBuilder(realHost);
+        builder.send(readHost, e.var(this.outVarMap.get(realHost)));
+        hosts.add(realHost);
+      }
+
+      for (Host hashHost : this.replicas.hashReplicas) {
+        StmtBuilder builder = info.getBuilder(hashHost);
+        builder.send(readHost, e.var(this.outVarMap.get(hashHost)));
+        hosts.add(hashHost);
+      }
+
+      return hosts;
+    }
+
+    @Override
+    public Binding<ImpAstNode> readPostprocess(
+        Map<Host,Binding<ImpAstNode>> hostBindings,
+        Host host, PdgNode<ImpAstNode> node,
+        ProtocolInstantiationInfo<ImpAstNode> info) {
+
       // TODO: finish
-      return new HashSet<>();
+      return null;
     }
 
     @Override
     public void writeTo(
         PdgNode<ImpAstNode> node,
-        Host h,
+        Host writeHost,
         PdgNode<ImpAstNode> writer,
         ImpAstNode val,
         ProtocolInstantiationInfo<ImpAstNode> info) {
 
-      // TODO: finish
+      if (node.isStorageNode()) {
+        // node must have been instantiated before being written to
+        assert this.outVarMap.size() == getNumReplicas();
+
+        StmtBuilder writerBuilder = info.getBuilder(writeHost);
+
+        for (Host realHost : this.replicas.realReplicas) {
+          StmtBuilder builder = info.getBuilder(realHost);
+
+          writerBuilder.send(realHost, (ExpressionNode)val);
+          builder.recv(writeHost, this.outVarMap.get(realHost));
+        }
+
+        for (Host hashHost : this.replicas.realReplicas) {
+          StmtBuilder builder = info.getBuilder(hashHost);
+
+          writerBuilder.send(hashHost, (ExpressionNode)val);
+          builder.recv(writeHost, this.outVarMap.get(hashHost));
+        }
+      }
     }
 
     @Override
     public void instantiate(PdgNode<ImpAstNode> node, ProtocolInstantiationInfo<ImpAstNode> info) {
-
-      /*
       if (node.isStorageNode()) {
         for (Host realHost : this.replicas.realReplicas) {
           Variable hostStorageVar =
               instantiateStorageNode(realHost, (PdgStorageNode<ImpAstNode>)node, info);
-          this.storageVarMap.put(realHost, hostStorageVar);
+          this.outVarMap.put(realHost, hostStorageVar);
         }
 
         for (Host hashHost : this.replicas.hashReplicas) {
           Variable hostStorageVar =
               instantiateStorageNode(hashHost, (PdgStorageNode<ImpAstNode>)node, info);
-          this.storageVarMap.put(hashHost, hostStorageVar);
+          this.outVarMap.put(hashHost, hostStorageVar);
         }
 
       } else if (node.isComputeNode()) {
@@ -375,7 +483,6 @@ public class ImpProtocols {
         // read guard
 
       }
-      */
     }
 
     @Override
@@ -485,6 +592,16 @@ public class ImpProtocols {
     }
 
     @Override
+    public Binding<ImpAstNode> readPostprocess(
+        Map<Host,Binding<ImpAstNode>> hostBindings,
+        Host host, PdgNode<ImpAstNode> node,
+        ProtocolInstantiationInfo<ImpAstNode> info) {
+
+      // TODO: finish
+      return null;
+    }
+
+    @Override
     public void writeTo(
         PdgNode<ImpAstNode> node,
         Host h,
@@ -558,6 +675,10 @@ public class ImpProtocols {
         Map<PdgNode<ImpAstNode>, Protocol<ImpAstNode>> protocolMap,
         PdgNode<ImpAstNode> node) {
 
+      if (hostConfig.size() < 2) {
+        return new HashSet<>();
+      }
+
       // assume for now that there are only two hosts
       // generalize this later
       Host[] hostPair = new Host[2];
@@ -628,6 +749,16 @@ public class ImpProtocols {
 
       // TODO: finish
       return new HashSet<>();
+    }
+
+    @Override
+    public Binding<ImpAstNode> readPostprocess(
+        Map<Host,Binding<ImpAstNode>> hostBindings,
+        Host host, PdgNode<ImpAstNode> node,
+        ProtocolInstantiationInfo<ImpAstNode> info) {
+
+      // TODO: finish
+      return null;
     }
 
     @Override

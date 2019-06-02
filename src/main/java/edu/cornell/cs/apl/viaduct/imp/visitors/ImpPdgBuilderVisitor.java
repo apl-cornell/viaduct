@@ -5,9 +5,9 @@ import edu.cornell.cs.apl.viaduct.PdgBuilderInfo;
 import edu.cornell.cs.apl.viaduct.PdgComputeNode;
 import edu.cornell.cs.apl.viaduct.PdgControlEdge;
 import edu.cornell.cs.apl.viaduct.PdgControlNode;
+import edu.cornell.cs.apl.viaduct.PdgFlowEdge;
 import edu.cornell.cs.apl.viaduct.PdgInfoEdge;
 import edu.cornell.cs.apl.viaduct.PdgNode;
-import edu.cornell.cs.apl.viaduct.PdgReadEdge;
 import edu.cornell.cs.apl.viaduct.PdgStorageNode;
 import edu.cornell.cs.apl.viaduct.PdgWriteEdge;
 import edu.cornell.cs.apl.viaduct.ProgramDependencyGraph;
@@ -54,6 +54,7 @@ public class ImpPdgBuilderVisitor implements AstVisitor<PdgBuilderInfo<ImpAstNod
   private static final String DOWNGRADE_NODE = "downgrade";
   private static final String VARDECL_NODE = "decl";
   private static final String ASSIGN_NODE = "assign";
+  private static final String GUARD_NODE = "guard";
   private static final String IF_NODE = "if";
 
   private FreshNameGenerator freshNameGenerator;
@@ -185,6 +186,7 @@ public class ImpPdgBuilderVisitor implements AstVisitor<PdgBuilderInfo<ImpAstNod
     // calculate inLabel later during dataflow analysis
     PdgNode<ImpAstNode> node =
         new PdgComputeNode<>(
+            this.pdg,
             downgradeNode,
             this.freshNameGenerator.getFreshName(DOWNGRADE_NODE),
             Label.bottom(),
@@ -209,6 +211,7 @@ public class ImpPdgBuilderVisitor implements AstVisitor<PdgBuilderInfo<ImpAstNod
     String nodeId = String.format("%s_%s", VARDECL_NODE, declVar.toString());
     PdgNode<ImpAstNode> node =
         new PdgStorageNode<>(
+            this.pdg,
             declarationNode,
             this.freshNameGenerator.getFreshName(nodeId),
             declarationNode.getLabel());
@@ -235,7 +238,9 @@ public class ImpPdgBuilderVisitor implements AstVisitor<PdgBuilderInfo<ImpAstNod
       // and writes to the variable's storage node
       PdgNode<ImpAstNode> node =
           new PdgComputeNode<>(
-              assignNode, this.freshNameGenerator.getFreshName(ASSIGN_NODE), Label.bottom());
+              this.pdg, assignNode,
+              this.freshNameGenerator.getFreshName(ASSIGN_NODE),
+              Label.bottom());
 
       inInfo.setReadNode(node);
       PdgWriteEdge.create(node, varNode);
@@ -280,27 +285,47 @@ public class ImpPdgBuilderVisitor implements AstVisitor<PdgBuilderInfo<ImpAstNod
   @Override
   public PdgBuilderInfo<ImpAstNode> visit(IfNode ifNode) {
     // add edges from guard nodes
-    PdgBuilderInfo<ImpAstNode> inInfo = ifNode.getGuard().accept(this);
+    PdgBuilderInfo<ImpAstNode> guardInfo = ifNode.getGuard().accept(this);
 
-    PdgNode<ImpAstNode> node =
-        new PdgControlNode<>(ifNode, this.freshNameGenerator.getFreshName(IF_NODE), Label.bottom());
-    inInfo.setReadNode(node);
-    this.pdg.addNode(node);
+    // if there isn't exactly 1 created node from the guard, that means:
+    // - there were no nodes created
+    // - there were multiple nodes created
+    // in either case, we want to create a new guard node
+    if (guardInfo.getCreatedNodes().size() != 1) {
+      PdgNode<ImpAstNode> guardNode =
+          new PdgComputeNode<>(
+              this.pdg,
+              ifNode.getGuard(),
+              this.freshNameGenerator.getFreshName(GUARD_NODE),
+              Label.bottom());
+      guardInfo.setReadNode(guardNode);
+      this.pdg.addNode(guardNode);
+      guardInfo = new PdgBuilderInfo<>(guardNode, new Variable(guardNode.getId()));
+    }
+
+    PdgNode<ImpAstNode> controlNode =
+        new PdgControlNode<>(
+            this.pdg,
+            ifNode,
+            this.freshNameGenerator.getFreshName(IF_NODE),
+            Label.bottom());
+    guardInfo.setReadNode(controlNode);
+    this.pdg.addNode(controlNode);
 
     // add control edge to beginning of then block
     PdgBuilderInfo<ImpAstNode> thenInfo = ifNode.getThenBranch().accept(this);
     PdgNode<ImpAstNode> thenFirst = thenInfo.getFirstCreated();
     if (thenFirst != null) {
-      PdgControlEdge.create(node, thenFirst, ControlLabel.THEN);
-      PdgReadEdge.create(node, thenFirst);
+      PdgControlEdge.create(controlNode, thenFirst, ControlLabel.THEN);
+      PdgFlowEdge.create(controlNode, thenFirst);
     }
 
     // add control edge to beginning of else block
     PdgBuilderInfo<ImpAstNode> elseInfo = ifNode.getElseBranch().accept(this);
     PdgNode<ImpAstNode> elseFirst = elseInfo.getFirstCreated();
     if (elseFirst != null) {
-      PdgControlEdge.create(node, elseFirst, ControlLabel.ELSE);
-      PdgReadEdge.create(node, elseFirst);
+      PdgControlEdge.create(controlNode, elseFirst, ControlLabel.ELSE);
+      PdgFlowEdge.create(controlNode, elseFirst);
     }
 
     // add read channel edges
@@ -311,11 +336,11 @@ public class ImpPdgBuilderVisitor implements AstVisitor<PdgBuilderInfo<ImpAstNod
     }
 
     for (PdgNode<ImpAstNode> readChannelStorage : readChannelStorageSet) {
-      PdgReadEdge.create(node, readChannelStorage);
+      PdgFlowEdge.create(controlNode, readChannelStorage);
     }
 
-    PdgBuilderInfo<ImpAstNode> info = new PdgBuilderInfo<>(node);
-    return inInfo.mergeCreated(info);
+    PdgBuilderInfo<ImpAstNode> info = new PdgBuilderInfo<>(controlNode);
+    return guardInfo.mergeCreated(info);
   }
 
   /** send/recvs should not be in surface programs and thus should not be in the generated PDG. */

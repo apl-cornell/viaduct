@@ -4,7 +4,7 @@ package edu.cornell.cs.apl.viaduct;
 public class PdgReadEdge<T extends AstNode> extends PdgInfoEdge<T> {
   public PdgReadEdge(PdgNode<T> source, PdgNode<T> target, Binding<T> b) {
     super(source, target);
-    this.label = b.getBinding();
+    this.label = b;
   }
 
   public PdgReadEdge(PdgNode<T> source, PdgNode<T> target) {

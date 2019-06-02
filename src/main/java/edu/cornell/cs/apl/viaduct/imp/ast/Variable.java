@@ -14,12 +14,8 @@ public class Variable implements Binding<ImpAstNode> {
     return this.name;
   }
 
-  public String getBinding() {
-    return this.name;
-  }
-
   @Override
-  public String toString() {
+  public String getBinding() {
     return this.name;
   }
 
@@ -37,5 +33,10 @@ public class Variable implements Binding<ImpAstNode> {
   @Override
   public int hashCode() {
     return this.name.hashCode();
+  }
+
+  @Override
+  public String toString() {
+    return this.name;
   }
 }

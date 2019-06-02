@@ -1,54 +1,50 @@
 package edu.cornell.cs.apl.viaduct.imp.visitors;
 
 import edu.cornell.cs.apl.viaduct.imp.ast.AndNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.AnnotationNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ArrayDeclarationNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.AssignNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.BlockNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.BooleanLiteralNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.DeclarationNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.DowngradeNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.EqualToNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ExpressionNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.Host;
 import edu.cornell.cs.apl.viaduct.imp.ast.IfNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.IntegerLiteralNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.LeqNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.LessThanNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.LiteralNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.NotNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.OrNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.PlusNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.ProcessConfigurationNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ReadNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.RecvNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.ReceiveNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.SendNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.SkipNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.StmtNode;
-import java.util.ArrayList;
+import io.vavr.Tuple;
+import io.vavr.Tuple2;
+import java.util.LinkedList;
 import java.util.List;
 
-// TODO: why?
+/**
+ * A visitor that traverses the AST and returns it unchanged.
+ *
+ * <p>This class provides a default "change nothing" behavior, and is meant as a template for other
+ * visitors. Visitors that only change a small subset of AST nodes should inherit from this class
+ * and override only the cases that do something interesting.
+ */
+public abstract class IdentityVisitor
+    implements ExprVisitor<ExpressionNode>,
+        StmtVisitor<StmtNode>,
+        ProcessConfigurationVisitor<ProcessConfigurationNode> {
+  @Override
+  public ExpressionNode visit(LiteralNode literalNode) {
+    return literalNode;
+  }
 
-/** returns a clone of the AST. */
-public class CloneVisitor implements ExprVisitor<ExpressionNode>, StmtVisitor<StmtNode> {
   @Override
   public ExpressionNode visit(ReadNode readNode) {
-    return new ReadNode(readNode.getVariable());
-  }
-
-  @Override
-  public ExpressionNode visit(IntegerLiteralNode integerLiteralNode) {
-    return new IntegerLiteralNode(integerLiteralNode.getValue());
-  }
-
-  @Override
-  public ExpressionNode visit(PlusNode plusNode) {
-    ExpressionNode newLhs = plusNode.getLhs().accept(this);
-    ExpressionNode newRhs = plusNode.getRhs().accept(this);
-    return new PlusNode(newLhs, newRhs);
-  }
-
-  @Override
-  public ExpressionNode visit(BooleanLiteralNode booleanLiteralNode) {
-    return new BooleanLiteralNode(booleanLiteralNode.getValue());
+    return readNode;
   }
 
   @Override
@@ -93,14 +89,16 @@ public class CloneVisitor implements ExprVisitor<ExpressionNode>, StmtVisitor<St
   }
 
   @Override
-  public ExpressionNode visit(DowngradeNode downgradeNode) {
-    ExpressionNode newExpr = downgradeNode.getExpression().accept(this);
-    return new DowngradeNode(newExpr, downgradeNode.getLabel());
+  public ExpressionNode visit(PlusNode plusNode) {
+    ExpressionNode newLhs = plusNode.getLhs().accept(this);
+    ExpressionNode newRhs = plusNode.getRhs().accept(this);
+    return new PlusNode(newLhs, newRhs);
   }
 
   @Override
-  public StmtNode visit(SkipNode skipNode) {
-    return new SkipNode();
+  public ExpressionNode visit(DowngradeNode downgradeNode) {
+    ExpressionNode newExpr = downgradeNode.getExpression().accept(this);
+    return new DowngradeNode(newExpr, downgradeNode.getLabel());
   }
 
   @Override
@@ -122,7 +120,6 @@ public class CloneVisitor implements ExprVisitor<ExpressionNode>, StmtVisitor<St
     return new AssignNode(assignNode.getVariable(), newRhs);
   }
 
-  /** give traverse children and do nothing. */
   @Override
   public StmtNode visit(IfNode ifNode) {
     ExpressionNode newGuard = ifNode.getGuard().accept(this);
@@ -131,10 +128,9 @@ public class CloneVisitor implements ExprVisitor<ExpressionNode>, StmtVisitor<St
     return new IfNode(newGuard, newThen, newElse);
   }
 
-  /** traverse children and do nothing. */
   @Override
   public StmtNode visit(BlockNode blockNode) {
-    List<StmtNode> newList = new ArrayList<>();
+    List<StmtNode> newList = new LinkedList<>();
     for (StmtNode stmt : blockNode) {
       newList.add(stmt.accept(this));
     }
@@ -143,17 +139,21 @@ public class CloneVisitor implements ExprVisitor<ExpressionNode>, StmtVisitor<St
 
   @Override
   public StmtNode visit(SendNode sendNode) {
-    ExpressionNode newExpr = sendNode.getSentExpr().accept(this);
+    ExpressionNode newExpr = sendNode.getSentExpression().accept(this);
     return new SendNode(sendNode.getRecipient(), newExpr);
   }
 
   @Override
-  public StmtNode visit(RecvNode recvNode) {
-    return new RecvNode(recvNode.getSender(), recvNode.getVar());
+  public StmtNode visit(ReceiveNode receiveNode) {
+    return new ReceiveNode(receiveNode.getVariable(), receiveNode.getSender());
   }
 
   @Override
-  public StmtNode visit(AnnotationNode annotNode) {
-    return new AnnotationNode(annotNode.getAnnotationString(), annotNode.getAnnotation());
+  public ProcessConfigurationNode visit(ProcessConfigurationNode processConfigurationNode) {
+    List<Tuple2<Host, StmtNode>> newConfiguration = new LinkedList<>();
+    for (Tuple2<Host, StmtNode> process : processConfigurationNode) {
+      newConfiguration.add(Tuple.of(process._1, process._2.accept(this)));
+    }
+    return new ProcessConfigurationNode(newConfiguration);
   }
 }

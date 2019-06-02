@@ -1,21 +1,37 @@
 package edu.cornell.cs.apl.viaduct.imp.ast;
 
+import edu.cornell.cs.apl.viaduct.imp.visitors.ExprVisitor;
 import java.util.Objects;
 
-/**
- * Superclass of literal constants.
- *
- * <p>Literals of specific types (like integer or boolean) should inherit from this class.
- */
-public abstract class LiteralNode<V> extends ExpressionNode {
-  protected final V value;
+/** A literal constant. */
+public class LiteralNode extends ExpressionNode {
+  private final ImpValue value;
 
-  LiteralNode(V value) {
+  public LiteralNode(ImpValue value) {
     this.value = value;
   }
 
-  public V getValue() {
+  public ImpValue getValue() {
     return value;
+  }
+
+  @Override
+  public <R> R accept(ExprVisitor<R> v) {
+    return v.visit(this);
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    final LiteralNode that = (LiteralNode) o;
+    return Objects.equals(this.value, that.value);
   }
 
   @Override

@@ -1,32 +1,33 @@
 package edu.cornell.cs.apl.viaduct.imp.visitors;
 
 import edu.cornell.cs.apl.viaduct.imp.ast.AndNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.AnnotationNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ArrayDeclarationNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.AssignNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.BlockNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.BooleanLiteralNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.DeclarationNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.DowngradeNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.EqualToNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ExpressionNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.Host;
 import edu.cornell.cs.apl.viaduct.imp.ast.IfNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ImpAstNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.IntegerLiteralNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.LeqNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.LessThanNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.LiteralNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.NotNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.OrNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.PlusNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.ProcessConfigurationNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ReadNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.RecvNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.ReceiveNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.SendNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.SkipNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.StmtNode;
+import io.vavr.Tuple;
+import io.vavr.Tuple2;
 import java.util.ArrayList;
 import java.util.List;
 
-// TODO: get rid of this whole class.
+// TODO: get rid of this whole class (or inherit from IdentityVisitor).
 
 /** replaces parts of AST. */
 public class ReplaceVisitor implements AstVisitor<ImpAstNode> {
@@ -36,21 +37,32 @@ public class ReplaceVisitor implements AstVisitor<ImpAstNode> {
   private ExpressionNode newExpr;
 
   /** replace an expression in the AST. */
-  public ImpAstNode replaceExpr(ImpAstNode ast, ExpressionNode cexpr, ExpressionNode nexpr) {
-    this.curExpr = cexpr;
-    this.newExpr = nexpr;
+  public ImpAstNode run(
+      ImpAstNode ast, ExpressionNode oldExpression, ExpressionNode newExpression) {
+    this.curExpr = oldExpression;
+    this.newExpr = newExpression;
     this.curStmt = null;
     this.newStmt = null;
     return ast.accept(this);
   }
 
   /** replace a statement in the AST. */
-  public ImpAstNode replaceStmt(ImpAstNode ast, StmtNode cstmt, StmtNode nstmt) {
+  public ImpAstNode run(ImpAstNode ast, StmtNode oldStatement, StmtNode newStatement) {
     this.curExpr = null;
     this.newExpr = null;
-    this.curStmt = cstmt;
-    this.newStmt = nstmt;
+    this.curStmt = oldStatement;
+    this.newStmt = newStatement;
     return ast.accept(this);
+  }
+
+  @Override
+  public ExpressionNode visit(LiteralNode literalNode) {
+    if (literalNode.equals(this.curExpr)) {
+      return newExpr;
+
+    } else {
+      return literalNode;
+    }
   }
 
   @Override
@@ -59,18 +71,7 @@ public class ReplaceVisitor implements AstVisitor<ImpAstNode> {
       return newExpr;
 
     } else {
-      // TODO: why clone the object?
-      return new ReadNode(readNode.getVariable());
-    }
-  }
-
-  @Override
-  public ExpressionNode visit(IntegerLiteralNode integerLiteralNode) {
-    if (integerLiteralNode.equals(this.curExpr)) {
-      return newExpr;
-
-    } else {
-      return new IntegerLiteralNode(integerLiteralNode.getValue());
+      return readNode;
     }
   }
 
@@ -83,16 +84,6 @@ public class ReplaceVisitor implements AstVisitor<ImpAstNode> {
       ExpressionNode newLhs = (ExpressionNode) plusNode.getLhs().accept(this);
       ExpressionNode newRhs = (ExpressionNode) plusNode.getRhs().accept(this);
       return new PlusNode(newLhs, newRhs);
-    }
-  }
-
-  @Override
-  public ExpressionNode visit(BooleanLiteralNode booleanLiteralNode) {
-    if (booleanLiteralNode.equals(this.curExpr)) {
-      return this.newExpr;
-
-    } else {
-      return new BooleanLiteralNode(booleanLiteralNode.getValue());
     }
   }
 
@@ -179,16 +170,6 @@ public class ReplaceVisitor implements AstVisitor<ImpAstNode> {
   }
 
   @Override
-  public StmtNode visit(SkipNode skipNode) {
-    if (skipNode.equals(this.curStmt)) {
-      return this.newStmt;
-
-    } else {
-      return new SkipNode();
-    }
-  }
-
-  @Override
   public StmtNode visit(DeclarationNode declarationNode) {
     if (declarationNode.equals(this.curStmt)) {
       return this.newStmt;
@@ -216,6 +197,27 @@ public class ReplaceVisitor implements AstVisitor<ImpAstNode> {
     } else {
       ExpressionNode newRhs = (ExpressionNode) assignNode.getRhs().accept(this);
       return new AssignNode(assignNode.getVariable(), newRhs);
+    }
+  }
+
+  @Override
+  public StmtNode visit(SendNode sendNode) {
+    if (sendNode.equals(this.curStmt)) {
+      return this.newStmt;
+
+    } else {
+      ExpressionNode newExpr = (ExpressionNode) sendNode.getSentExpression().accept(this);
+      return new SendNode(sendNode.getRecipient(), newExpr);
+    }
+  }
+
+  @Override
+  public StmtNode visit(ReceiveNode receiveNode) {
+    if (receiveNode.equals(this.curStmt)) {
+      return this.newStmt;
+
+    } else {
+      return new ReceiveNode(receiveNode.getVariable(), receiveNode.getSender());
     }
   }
 
@@ -249,33 +251,11 @@ public class ReplaceVisitor implements AstVisitor<ImpAstNode> {
   }
 
   @Override
-  public StmtNode visit(SendNode sendNode) {
-    if (sendNode.equals(this.curStmt)) {
-      return this.newStmt;
-
-    } else {
-      ExpressionNode newExpr = (ExpressionNode) sendNode.getSentExpr().accept(this);
-      return new SendNode(sendNode.getRecipient(), newExpr);
+  public ProcessConfigurationNode visit(ProcessConfigurationNode processConfigurationNode) {
+    List<Tuple2<Host, StmtNode>> newConfiguration = new ArrayList<>();
+    for (Tuple2<Host, StmtNode> process : processConfigurationNode) {
+      newConfiguration.add(Tuple.of(process._1, (StmtNode) process._2.accept(this)));
     }
-  }
-
-  @Override
-  public StmtNode visit(RecvNode recvNode) {
-    if (recvNode.equals(this.curStmt)) {
-      return this.newStmt;
-
-    } else {
-      return new RecvNode(recvNode.getSender(), recvNode.getVar());
-    }
-  }
-
-  @Override
-  public StmtNode visit(AnnotationNode annotNode) {
-    if (annotNode.equals(this.curStmt)) {
-      return this.newStmt;
-
-    } else {
-      return new AnnotationNode(annotNode.getAnnotationString(), annotNode.getAnnotation());
-    }
+    return new ProcessConfigurationNode(newConfiguration);
   }
 }

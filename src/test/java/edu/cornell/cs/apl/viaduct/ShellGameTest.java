@@ -30,12 +30,11 @@ class ShellGameTest {
                     .assign(
                         "win",
                         e.declassify(e.equals(e.var("shell"), e.var("guess")), Label.bottom())),
-                (new StmtBuilder()).skip())
+                (new StmtBuilder()))
             .build();
 
     // print out the AST
-    PrintVisitor print = new PrintVisitor();
-    String shellGameStr = shellGame.accept(print);
+    String shellGameStr = new PrintVisitor().run(shellGame);
     System.out.println(shellGameStr);
 
     // build PDG for the shell game

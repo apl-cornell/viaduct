@@ -4,10 +4,10 @@ shell : {C & (A<-)};
 guess : {A & (C<-)};
 win : {(A|C)-> & (A&C)<-};
 
-@input 1
+@DebugValue(1)
 cin <- recv input;
 
-@input 2
+@DebugValue(2)
 ain <- recv input;
 
 /* Chuck and Alice must endorse their inputs to

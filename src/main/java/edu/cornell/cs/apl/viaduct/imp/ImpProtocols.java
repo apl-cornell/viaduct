@@ -1,6 +1,5 @@
 package edu.cornell.cs.apl.viaduct.imp;
 
-import edu.cornell.cs.apl.viaduct.Host;
 import edu.cornell.cs.apl.viaduct.PdgComputeNode;
 import edu.cornell.cs.apl.viaduct.PdgEdge;
 import edu.cornell.cs.apl.viaduct.PdgInfoEdge;
@@ -12,6 +11,7 @@ import edu.cornell.cs.apl.viaduct.ProtocolInstantiationInfo;
 import edu.cornell.cs.apl.viaduct.imp.ast.AssignNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.DeclarationNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ExpressionNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.Host;
 import edu.cornell.cs.apl.viaduct.imp.ast.ImpAstNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.Variable;
 import edu.cornell.cs.apl.viaduct.imp.builders.ExpressionBuilder;
@@ -99,7 +99,8 @@ public class ImpProtocols {
     private Variable outVar;
 
     private Single() {
-      this.host = Host.getDefault();
+      // TODO: why?
+      this(null);
     }
 
     private Single(Host h) {
@@ -116,18 +117,18 @@ public class ImpProtocols {
 
     @Override
     public Set<Protocol<ImpAstNode>> createInstances(
-        Set<Host> hostConfig,
+        HostTrustConfiguration hostConfig,
         Map<PdgNode<ImpAstNode>, Protocol<ImpAstNode>> protocolMap,
         PdgNode<ImpAstNode> node) {
 
       HashSet<Protocol<ImpAstNode>> instances = new HashSet<>();
       if (node.isStorageNode() || node.isEndorseNode() || !node.isDowngradeNode()) {
-        for (Host h : hostConfig) {
-          Label hLabel = h.getLabel();
-          Label nInLabel = node.getInLabel();
+        for (Host h : hostConfig.hosts()) {
+          Label hostLabel = hostConfig.getTrust(h);
+          Label nodeInLabel = node.getInLabel();
 
-          if (nInLabel.confidentiality().flowsTo(hLabel.confidentiality())
-              && hLabel.integrity().flowsTo(nInLabel.integrity())) {
+          if (nodeInLabel.confidentiality().flowsTo(hostLabel.confidentiality())
+              && hostLabel.integrity().flowsTo(nodeInLabel.integrity())) {
             instances.add(new Single(h));
           }
         }
@@ -258,7 +259,7 @@ public class ImpProtocols {
 
     @Override
     public Set<Protocol<ImpAstNode>> createInstances(
-        Set<Host> hostConfig,
+        HostTrustConfiguration hostConfig,
         Map<PdgNode<ImpAstNode>, Protocol<ImpAstNode>> protocolMap,
         PdgNode<ImpAstNode> node) {
 
@@ -268,7 +269,7 @@ public class ImpProtocols {
         // generalize this later
         Host[] hostPair = new Host[2];
         int i = 0;
-        for (Host host : hostConfig) {
+        for (Host host : hostConfig.hosts()) {
           hostPair[i] = host;
           i++;
           if (i == hostPair.length) {
@@ -276,16 +277,16 @@ public class ImpProtocols {
           }
         }
 
-        Set<Host> host1Set = new HashSet<Host>();
+        Set<Host> host1Set = new HashSet<>();
         host1Set.add(hostPair[0]);
-        Set<Host> host2Set = new HashSet<Host>();
+        Set<Host> host2Set = new HashSet<>();
         host2Set.add(hostPair[1]);
-        Set<Host> host12Set = new HashSet<Host>();
+        Set<Host> host12Set = new HashSet<>();
         host12Set.add(hostPair[0]);
         host12Set.add(hostPair[1]);
 
         Set<ReplicaSets> possibleInstances = new HashSet<>();
-        possibleInstances.add(new ReplicaSets(host12Set, new HashSet<Host>()));
+        possibleInstances.add(new ReplicaSets(host12Set, new HashSet<>()));
         possibleInstances.add(new ReplicaSets(host1Set, host2Set));
         possibleInstances.add(new ReplicaSets(host2Set, host1Set));
 
@@ -296,11 +297,11 @@ public class ImpProtocols {
           Label rhLabel = Label.top();
 
           for (Host real : possibleInstance.realReplicas) {
-            rLabel = rLabel.meet(real.getLabel());
-            rhLabel = rhLabel.meet(real.getLabel());
+            rLabel = rLabel.meet(hostConfig.getTrust(real));
+            rhLabel = rhLabel.meet(hostConfig.getTrust(real));
           }
           for (Host hash : possibleInstance.hashReplicas) {
-            rhLabel = rhLabel.meet(hash.getLabel());
+            rhLabel = rhLabel.meet(hostConfig.getTrust(hash));
           }
 
           if (nInLabel.confidentiality().flowsTo(rLabel.confidentiality())
@@ -436,7 +437,7 @@ public class ImpProtocols {
 
     @Override
     public Set<Protocol<ImpAstNode>> createInstances(
-        Set<Host> hostConfig,
+        HostTrustConfiguration hostConfig,
         Map<PdgNode<ImpAstNode>, Protocol<ImpAstNode>> protocolMap,
         PdgNode<ImpAstNode> node) {
 
@@ -461,12 +462,14 @@ public class ImpProtocols {
 
       if (node.isDeclassifyNode() && noInputFlow) {
         Label hsLabel = Label.top();
-        for (Host h : hostConfig) {
-          hsLabel = hsLabel.meet(h.getLabel());
+        for (Host h : hostConfig.hosts()) {
+          hsLabel = hsLabel.meet(hostConfig.getTrust(h));
         }
 
         if (nOutLabel.confidentiality().flowsTo(hsLabel.confidentiality())) {
-          instances.add(new MPC(hostConfig));
+          io.vavr.collection.HashSet<Host> hosts =
+              io.vavr.collection.HashSet.ofAll(hostConfig.hosts());
+          instances.add(new MPC(hosts.toJavaSet()));
         }
       }
 
@@ -539,8 +542,8 @@ public class ImpProtocols {
     private Host verifier;
 
     private ZK() {
-      this.prover = Host.getDefault();
-      this.verifier = Host.getDefault();
+      // TODO: Why is this a case?
+      this(null, null);
     }
 
     private ZK(Host p, Host v) {
@@ -554,16 +557,15 @@ public class ImpProtocols {
 
     @Override
     public Set<Protocol<ImpAstNode>> createInstances(
-        Set<Host> hostConfig,
+        HostTrustConfiguration hostConfig,
         Map<PdgNode<ImpAstNode>, Protocol<ImpAstNode>> protocolMap,
         PdgNode<ImpAstNode> node) {
 
       // assume for now that there are only two hosts
       // generalize this later
       Host[] hostPair = new Host[2];
-      hostConfig.toArray(hostPair);
       int i = 0;
-      for (Host host : hostConfig) {
+      for (Host host : hostConfig.hosts()) {
         hostPair[i] = host;
         i++;
         if (i == hostPair.length) {
@@ -582,8 +584,8 @@ public class ImpProtocols {
       Host hostB = hostPair[1];
       Label nInLabel = node.getInLabel();
       Label nOutLabel = node.getOutLabel();
-      Label aLabel = hostA.getLabel();
-      Label bLabel = hostB.getLabel();
+      Label aLabel = hostConfig.getTrust(hostA);
+      Label bLabel = hostConfig.getTrust(hostB);
 
       Set<Protocol<ImpAstNode>> instances = new HashSet<>();
 

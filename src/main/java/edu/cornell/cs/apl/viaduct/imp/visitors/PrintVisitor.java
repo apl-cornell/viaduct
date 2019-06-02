@@ -1,207 +1,259 @@
 package edu.cornell.cs.apl.viaduct.imp.visitors;
 
 import edu.cornell.cs.apl.viaduct.imp.ast.AndNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.AnnotationNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ArrayDeclarationNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.AssignNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.BinaryExpressionNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.BlockNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.BooleanLiteralNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.DeclarationNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.DowngradeNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.EqualToNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.Host;
 import edu.cornell.cs.apl.viaduct.imp.ast.IfNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.IntegerLiteralNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.ImpAstNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.LeqNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.LessThanNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.LiteralNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.NotNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.OrNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.PlusNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.ProcessConfigurationNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ReadNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.RecvNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.ReceiveNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.SendNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.SkipNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.StmtNode;
+import io.vavr.Tuple2;
 
 /** Pretty-prints an AST. */
-public class PrintVisitor implements AstVisitor<String> {
-  private static final int INDENT_LEVEL = 4;
-  private int indent;
+public class PrintVisitor implements AstVisitor<Void> {
+  private static final int INDENTATION_LEVEL = 4;
 
-  public PrintVisitor() {
-    this.indent = 0;
-  }
+  /** Accumulates the partially built program. */
+  private final StringBuilder buffer = new StringBuilder();
 
-  private String getIndent() {
-    StringBuilder indentStr = new StringBuilder();
-    for (int i = 0; i < this.indent; i++) {
-      indentStr.append(" ");
+  private int indentation = 0;
+
+  public PrintVisitor() {}
+
+  /** Pretty print the given AST and return it as {@code String}. */
+  public String run(ImpAstNode astNode) {
+    // TODO: explain what happens if you call it multiple times. Or change the interface.
+
+    // Don't print curly braces around the top level program
+    if (astNode instanceof BlockNode) {
+      for (StmtNode stmt : (BlockNode) astNode) {
+        stmt.accept(this);
+        buffer.append('\n');
+      }
+    } else {
+      astNode.accept(this);
     }
 
-    return indentStr.toString();
+    return buffer.toString();
   }
 
-  private String visitBinary(BinaryExpressionNode binNode, String op) {
-    String lhsStr = binNode.getLhs().accept(this);
-    String rhsStr = binNode.getRhs().accept(this);
-    return lhsStr + " " + op + " " + rhsStr;
+  /** Append current indentation to the buffer. */
+  private void addIndentation() {
+    for (int i = 0; i < this.indentation; i++) {
+      buffer.append(' ');
+    }
   }
 
-  /** print node. */
+  private Void visitBinary(BinaryExpressionNode binaryExpressionNode, String op) {
+    buffer.append('(');
+    binaryExpressionNode.getLhs().accept(this);
+
+    buffer.append(' ');
+    buffer.append(op);
+    buffer.append(' ');
+
+    binaryExpressionNode.getRhs().accept(this);
+    buffer.append(')');
+
+    return null;
+  }
+
   @Override
-  public String visit(ReadNode readNode) {
-    return readNode.getVariable().getName();
+  public Void visit(LiteralNode literalNode) {
+    buffer.append(literalNode.getValue());
+    return null;
   }
 
-  /** print node. */
   @Override
-  public String visit(BooleanLiteralNode booleanLiteralNode) {
-    return Boolean.toString(booleanLiteralNode.getValue());
+  public Void visit(ReadNode readNode) {
+    buffer.append(readNode.getVariable());
+    return null;
   }
 
-  /** print node. */
   @Override
-  public String visit(IntegerLiteralNode integerLiteralNode) {
-    return Integer.toString(integerLiteralNode.getValue());
+  public Void visit(NotNode notNode) {
+    buffer.append('!');
+    return notNode.getExpression().accept(this);
   }
 
-  /** print node. */
   @Override
-  public String visit(OrNode orNode) {
+  public Void visit(OrNode orNode) {
     return visitBinary(orNode, "||");
   }
 
-  /** print node. */
   @Override
-  public String visit(AndNode andNode) {
+  public Void visit(AndNode andNode) {
     return visitBinary(andNode, "&&");
   }
 
-  /** print node. */
   @Override
-  public String visit(LessThanNode lessThanNode) {
-    return visitBinary(lessThanNode, "<");
-  }
-
-  /** print node. */
-  @Override
-  public String visit(EqualToNode equalToNode) {
+  public Void visit(EqualToNode equalToNode) {
     return visitBinary(equalToNode, "==");
   }
 
-  /** print node. */
   @Override
-  public String visit(LeqNode leqNode) {
+  public Void visit(LessThanNode lessThanNode) {
+    return visitBinary(lessThanNode, "<");
+  }
+
+  @Override
+  public Void visit(LeqNode leqNode) {
     return visitBinary(leqNode, "<=");
   }
 
-  /** print node. */
   @Override
-  public String visit(NotNode notNode) {
-    return "!" + notNode.getExpression().accept(this);
-  }
-
-  /** print node. */
-  @Override
-  public String visit(PlusNode plusNode) {
+  public Void visit(PlusNode plusNode) {
     return visitBinary(plusNode, "+");
   }
 
-  /** print node. */
   @Override
-  public String visit(DowngradeNode downgradeNode) {
-    // TODO: special case declassfy and endorse
-    String expressionStr = downgradeNode.getExpression().accept(this);
-    String labelStr = downgradeNode.getLabel().toString();
-    return "downgrade(" + expressionStr + ", " + labelStr + ")";
+  public Void visit(DowngradeNode downgradeNode) {
+    // TODO: special case declassify and endorse
+    buffer.append("downgrade(");
+    downgradeNode.getExpression().accept(this);
+    buffer.append(", ");
+    buffer.append(downgradeNode.getLabel());
+    buffer.append(")");
+    return null;
   }
 
-  /** print node. */
   @Override
-  public String visit(SkipNode skipNode) {
-    return getIndent() + "skip";
+  public Void visit(DeclarationNode declarationNode) {
+    addIndentation();
+
+    buffer.append(declarationNode.getVariable());
+    buffer.append(" : ");
+    buffer.append(declarationNode.getLabel());
+
+    buffer.append(';');
+    return null;
   }
 
-  /** print node. */
   @Override
-  public String visit(DeclarationNode declarationNode) {
-    String varStr = declarationNode.getVariable().getName();
-    String labelStr = declarationNode.getLabel().toString();
-    return getIndent() + varStr + " : " + labelStr;
+  public Void visit(ArrayDeclarationNode declarationNode) {
+    addIndentation();
+
+    buffer.append(declarationNode.getVariable());
+
+    buffer.append('[');
+    buffer.append(declarationNode.getLength());
+    buffer.append(']');
+
+    buffer.append(" : ");
+    buffer.append(declarationNode.getLabel().toString());
+
+    buffer.append(';');
+    return null;
   }
 
-  /** print node. */
   @Override
-  public String visit(ArrayDeclarationNode declarationNode) {
-    String varStr = declarationNode.getVariable().getName();
-    String lengthStr = declarationNode.getLength().toString();
-    String labelStr = declarationNode.getLabel().toString();
-    return getIndent() + varStr + "[" + lengthStr + "] : " + labelStr;
+  public Void visit(AssignNode assignNode) {
+    addIndentation();
+
+    buffer.append(assignNode.getVariable());
+    buffer.append(" := ");
+    assignNode.getRhs().accept(this);
+
+    buffer.append(';');
+    return null;
   }
 
-  /** print node. */
   @Override
-  public String visit(AssignNode assignNode) {
-    String varStr = assignNode.getVariable().getName();
-    String rhsStr = assignNode.getRhs().accept(this);
-    return getIndent() + varStr + " <- " + rhsStr;
+  public Void visit(SendNode sendNode) {
+    addIndentation();
+
+    buffer.append("send ");
+    sendNode.getSentExpression().accept(this);
+    buffer.append(" to ");
+    buffer.append(sendNode.getRecipient());
+
+    buffer.append(';');
+    return null;
   }
 
-  /** print node. */
   @Override
-  public String visit(IfNode ifNode) {
-    String guardStr = ifNode.getGuard().accept(this);
-    this.indent += INDENT_LEVEL;
-    String thenStr = ifNode.getThenBranch().accept(this);
-    String elseStr = ifNode.getElseBranch().accept(this);
-    this.indent -= INDENT_LEVEL;
+  public Void visit(ReceiveNode receiveNode) {
+    // TODO: print annotation
 
-    String indentStr = getIndent();
-    return indentStr
-        + "if ("
-        + guardStr
-        + ") {\n"
-        + thenStr
-        + "\n"
-        + indentStr
-        + "} else {"
-        + "\n"
-        + elseStr
-        + "\n"
-        + indentStr
-        + "}";
+    addIndentation();
+
+    buffer.append(receiveNode.getVariable());
+    buffer.append(" <- ");
+    buffer.append(receiveNode.getSender());
+
+    buffer.append(';');
+    return null;
   }
 
-  /** print node. */
   @Override
-  public String visit(BlockNode blockNode) {
-    StringBuilder buf = new StringBuilder();
-    for (StmtNode stmt : blockNode) {
-      buf.append(stmt.accept(this));
-      buf.append('\n');
+  public Void visit(IfNode ifNode) {
+    addIndentation();
+
+    buffer.append("if (");
+    ifNode.getGuard().accept(this);
+    buffer.append(") ");
+
+    ifNode.getThenBranch().accept(this);
+
+    StmtNode elseBranch = ifNode.getElseBranch();
+    boolean elseEmpty = elseBranch instanceof BlockNode && ((BlockNode) elseBranch).size() == 0;
+    if (!elseEmpty) {
+      buffer.append(" else ");
+      ifNode.getElseBranch().accept(this);
     }
 
-    return buf.toString();
-  }
-
-  /** print send. */
-  @Override
-  public String visit(SendNode sendNode) {
-    String exprStr = sendNode.getSentExpr().accept(this);
-    String recipStr = sendNode.getRecipient().toString();
-    return String.format("send %s to %s", exprStr, recipStr);
-  }
-
-  /** print recv. */
-  @Override
-  public String visit(RecvNode recvNode) {
-    String senderStr = recvNode.getSender().toString();
-    String varStr = recvNode.getVar().toString();
-    return String.format("%s <- recv from %s", varStr, senderStr);
+    return null;
   }
 
   @Override
-  public String visit(AnnotationNode annotNode) {
-    return String.format("%n@%s", annotNode.getAnnotationString());
+  public Void visit(BlockNode blockNode) {
+    buffer.append("{\n");
+
+    indentation += INDENTATION_LEVEL;
+    for (StmtNode stmt : blockNode) {
+      stmt.accept(this);
+      buffer.append('\n');
+    }
+    indentation -= INDENTATION_LEVEL;
+
+    addIndentation();
+    buffer.append('}');
+
+    return null;
+  }
+
+  @Override
+  public Void visit(ProcessConfigurationNode processConfigurationNode) {
+    boolean first = true;
+    for (Tuple2<Host, StmtNode> process : processConfigurationNode) {
+      if (!first) {
+        buffer.append("\n\n");
+      }
+
+      final Host host = process._1();
+      final StmtNode statement = process._2();
+      buffer.append(host);
+      buffer.append(' ');
+      statement.accept(this);
+
+      first = false;
+    }
+
+    return null;
   }
 }

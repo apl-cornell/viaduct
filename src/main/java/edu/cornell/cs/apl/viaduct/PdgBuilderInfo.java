@@ -1,7 +1,7 @@
 package edu.cornell.cs.apl.viaduct;
 
 import edu.cornell.cs.apl.viaduct.ProgramDependencyGraph.ControlLabel;
-
+import edu.cornell.cs.apl.viaduct.imp.ast.AstNode;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;

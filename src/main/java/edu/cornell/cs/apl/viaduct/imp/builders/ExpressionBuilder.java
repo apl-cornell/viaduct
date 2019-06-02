@@ -1,13 +1,15 @@
 package edu.cornell.cs.apl.viaduct.imp.builders;
 
 import edu.cornell.cs.apl.viaduct.imp.ast.AndNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.BooleanLiteralNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.BooleanValue;
 import edu.cornell.cs.apl.viaduct.imp.ast.DowngradeNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.EqualToNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ExpressionNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.IntegerLiteralNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.ImpValue;
+import edu.cornell.cs.apl.viaduct.imp.ast.IntegerValue;
 import edu.cornell.cs.apl.viaduct.imp.ast.LeqNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.LessThanNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.LiteralNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.NotNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.OrNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.PlusNode;
@@ -20,23 +22,27 @@ public class ExpressionBuilder {
   public ExpressionBuilder() {}
 
   public ExpressionNode var(String name) {
-    return new ReadNode(new Variable(name));
+    return var(new Variable(name));
   }
 
   public ExpressionNode var(Variable name) {
     return new ReadNode(name);
   }
 
+  public ExpressionNode lit(ImpValue value) {
+    return new LiteralNode(value);
+  }
+
+  public ExpressionNode boolLit(boolean value) {
+    return lit(new BooleanValue(value));
+  }
+
   public ExpressionNode intLit(int value) {
-    return new IntegerLiteralNode(value);
+    return lit(new IntegerValue(value));
   }
 
   public ExpressionNode plus(ExpressionNode lhs, ExpressionNode rhs) {
     return new PlusNode(lhs, rhs);
-  }
-
-  public ExpressionNode boolLit(boolean value) {
-    return new BooleanLiteralNode(value);
   }
 
   public ExpressionNode or(ExpressionNode lhs, ExpressionNode rhs) {

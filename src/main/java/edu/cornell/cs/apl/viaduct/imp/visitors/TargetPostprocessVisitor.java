@@ -1,14 +1,13 @@
 package edu.cornell.cs.apl.viaduct.imp.visitors;
 
-import edu.cornell.cs.apl.viaduct.Host;
 import edu.cornell.cs.apl.viaduct.imp.ast.AssignNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.BlockNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.DeclarationNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.DowngradeNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ExpressionNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.RecvNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.Host;
+import edu.cornell.cs.apl.viaduct.imp.ast.ReceiveNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.SendNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.SkipNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.StmtNode;
 import edu.cornell.cs.apl.viaduct.security.Label;
 import java.util.ArrayList;
@@ -17,12 +16,13 @@ import java.util.List;
 import java.util.Queue;
 
 /**
- * postprocess protocol instantiation. - remove downgrades - remove self communication - remove
- * security labels on variables
+ * Postprocess protocol instantiation.
+ *
+ * <p>Remove downgrades, self communication, and security labels on variables.
  */
-public class TargetPostprocessVisitor extends CloneVisitor {
-  Host selfHost;
-  Queue<ExpressionNode> sentExprs;
+public class TargetPostprocessVisitor extends IdentityVisitor {
+  private Host selfHost;
+  private Queue<ExpressionNode> sentExprs;
 
   /** set host of current program, then postprocess. */
   public StmtNode postprocess(Host h, StmtNode program) {
@@ -44,22 +44,20 @@ public class TargetPostprocessVisitor extends CloneVisitor {
   @Override
   public StmtNode visit(SendNode sendNode) {
     if (sendNode.getRecipient().equals(this.selfHost)) {
-      this.sentExprs.add(sendNode.getSentExpr());
-      return new SkipNode();
-
+      this.sentExprs.add(sendNode.getSentExpression());
+      return new BlockNode();
     } else {
       return super.visit(sendNode);
     }
   }
 
   @Override
-  public StmtNode visit(RecvNode recvNode) {
-    if (recvNode.getSender().equals(this.selfHost)) {
+  public StmtNode visit(ReceiveNode receiveNode) {
+    if (receiveNode.getSender().equals(this.selfHost)) {
       ExpressionNode recvExpr = this.sentExprs.remove();
-      return new AssignNode(recvNode.getVar(), recvExpr);
-
+      return new AssignNode(receiveNode.getVariable(), recvExpr);
     } else {
-      return super.visit(recvNode);
+      return super.visit(receiveNode);
     }
   }
 
@@ -69,15 +67,7 @@ public class TargetPostprocessVisitor extends CloneVisitor {
     for (StmtNode stmt : block) {
       StmtNode newStmt = stmt.accept(this);
 
-      boolean emptyStmt = false;
-      if (newStmt instanceof SkipNode) {
-        emptyStmt = true;
-
-      } else if (newStmt instanceof BlockNode) {
-        emptyStmt = ((BlockNode) newStmt).size() == 0;
-      }
-
-      if (!emptyStmt) {
+      if (!(newStmt instanceof BlockNode && ((BlockNode) newStmt).size() == 0)) {
         stmts.add(newStmt);
       }
     }

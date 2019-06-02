@@ -4,6 +4,7 @@ import static guru.nidi.graphviz.model.Factory.mutGraph;
 import static guru.nidi.graphviz.model.Factory.mutNode;
 
 import edu.cornell.cs.apl.viaduct.ProgramDependencyGraph.ControlLabel;
+import edu.cornell.cs.apl.viaduct.imp.ast.AstNode;
 import guru.nidi.graphviz.attribute.Arrow;
 import guru.nidi.graphviz.attribute.Color;
 import guru.nidi.graphviz.attribute.Label;
@@ -12,7 +13,6 @@ import guru.nidi.graphviz.attribute.Style;
 import guru.nidi.graphviz.model.Link;
 import guru.nidi.graphviz.model.MutableGraph;
 import guru.nidi.graphviz.model.MutableNode;
-
 import java.util.Map;
 import java.util.Set;
 

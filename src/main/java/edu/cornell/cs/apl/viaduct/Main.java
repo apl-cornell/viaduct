@@ -1,22 +1,19 @@
 package edu.cornell.cs.apl.viaduct;
 
+import edu.cornell.cs.apl.viaduct.imp.HostTrustConfiguration;
 import edu.cornell.cs.apl.viaduct.imp.ImpProtocolCostEstimator;
-import edu.cornell.cs.apl.viaduct.imp.ast.BlockNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.DeclarationNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.Host;
 import edu.cornell.cs.apl.viaduct.imp.ast.ImpAstNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.ImpValue;
+import edu.cornell.cs.apl.viaduct.imp.ast.ProcessConfigurationNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.StmtNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.Variable;
+import edu.cornell.cs.apl.viaduct.imp.interpreter.Interpreter;
+import edu.cornell.cs.apl.viaduct.imp.interpreter.Store;
 import edu.cornell.cs.apl.viaduct.imp.parser.Parser;
-import edu.cornell.cs.apl.viaduct.imp.visitors.ImpAnnotationVisitor;
+import edu.cornell.cs.apl.viaduct.imp.parser.TrustConfigurationParser;
 import edu.cornell.cs.apl.viaduct.imp.visitors.ImpPdgBuilderVisitor;
-import edu.cornell.cs.apl.viaduct.imp.visitors.InterpVisitor;
 import edu.cornell.cs.apl.viaduct.imp.visitors.PrintVisitor;
-import edu.cornell.cs.apl.viaduct.security.Label;
 import java.io.File;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
 import net.sourceforge.argparse4j.ArgumentParsers;
 import net.sourceforge.argparse4j.impl.Arguments;
 import net.sourceforge.argparse4j.inf.ArgumentParser;
@@ -24,27 +21,6 @@ import net.sourceforge.argparse4j.inf.ArgumentParserException;
 import net.sourceforge.argparse4j.inf.Namespace;
 
 public class Main {
-  private static Set<Host> buildHostConfig(StmtNode hostProg) throws Exception {
-    HashSet<Host> hostConfig = new HashSet<>();
-    if (hostProg instanceof BlockNode) {
-      BlockNode hostBlock = (BlockNode) hostProg;
-      for (StmtNode stmt : hostBlock) {
-        if (stmt instanceof DeclarationNode) {
-          DeclarationNode hostDecl = (DeclarationNode) stmt;
-          String hostName = hostDecl.getVariable().toString();
-          Label hostLabel = hostDecl.getLabel();
-          hostConfig.add(new Host(hostName, hostLabel));
-        } else {
-          throw new Exception("Invalid host configuration");
-        }
-      }
-    } else {
-      throw new Exception("Invalid host configuration");
-    }
-
-    return hostConfig;
-  }
-
   /** Run the compiler. */
   public static void main(String[] args) {
     ArgumentParser argp =
@@ -79,17 +55,16 @@ public class Main {
       return;
     }
 
-    Set<Host> hostConfig;
+    HostTrustConfiguration hostConfig;
     try {
       String hostFile = ns.getString("host");
-      StmtNode hostProg = Parser.parse(new File(hostFile));
-      hostConfig = buildHostConfig(hostProg);
+      hostConfig = TrustConfigurationParser.parse(new File(hostFile));
     } catch (Exception e) {
       System.out.println(e.getMessage());
       return;
     }
 
-    StmtNode program;
+    ImpAstNode program;
     try {
       String sourceFile = ns.getString("file");
       program = Parser.parse(new File(sourceFile));
@@ -98,43 +73,35 @@ public class Main {
       return;
     }
 
-    // process annotations
-    ImpAnnotationVisitor annotator = new ImpAnnotationVisitor();
-    program.accept(annotator);
-
-    // interpret source
-    if (ns.getBoolean("interpret")) {
-      InterpVisitor interpreter = new InterpVisitor();
-      try {
-        Map<Host, Map<Variable, ImpValue>> storeMap = interpreter.interpret(program);
-
-        for (Map.Entry<Host, Map<Variable, ImpValue>> kv : storeMap.entrySet()) {
-          Map<Variable, ImpValue> store = kv.getValue();
-
-          System.out.println("store: " + kv.getKey());
-          for (Map.Entry<Variable, ImpValue> kvStore : store.entrySet()) {
-            String str = String.format("%s => %s", kvStore.getKey().toString(), kvStore.getValue());
-            System.out.println(str);
-          }
-        }
-        return;
-
-      } catch (Exception e) {
-        System.out.println(e.getMessage());
-        System.exit(0);
-      }
-    }
-
-    // pretty print source
+    // Pretty Print
     if (ns.getBoolean("source")) {
-      PrintVisitor printer = new PrintVisitor();
-      String progStr = program.accept(printer);
-      System.out.println(progStr);
+      System.out.println(new PrintVisitor().run(program));
       return;
     }
 
-    ImpPdgBuilderVisitor pdgBuilder = new ImpPdgBuilderVisitor();
-    ProgramDependencyGraph<ImpAstNode> pdg = pdgBuilder.generatePDG(program);
+    // Interpret
+    if (ns.getBoolean("interpret")) {
+      Interpreter interpreter = new Interpreter();
+      if (program instanceof StmtNode) {
+        Store store = interpreter.run((StmtNode) program);
+        System.out.println(store);
+      } else if (program instanceof ProcessConfigurationNode) {
+        Map<Host, Store> stores = interpreter.run((ProcessConfigurationNode) program);
+        for (Map.Entry<Host, Store> entry : stores.entrySet()) {
+          System.out.println("host " + entry.getKey() + ":");
+          System.out.println(entry.getValue());
+          System.out.println();
+        }
+      }
+      return;
+    }
+
+    if (!(program instanceof StmtNode)) {
+      return;
+    }
+
+    ProgramDependencyGraph<ImpAstNode> pdg =
+        new ImpPdgBuilderVisitor().generatePDG((StmtNode) program);
 
     // run data-flow analysis to compute labels for all PDG nodes
     PdgLabelDataflow<ImpAstNode> labelDataFlow = new PdgLabelDataflow<>();
@@ -164,8 +131,8 @@ public class Main {
     // protocol synthesized!
     if (pdg.getNodes().size() == protocolMap.size()) {
       ProtocolInstantiation<ImpAstNode> instantiator = new ProtocolInstantiation<>();
-      StmtNode targetProg =
-          instantiator.instantiateProtocolSingleProgram(hostConfig, pdg, protocolMap);
+      ProcessConfigurationNode targetProg =
+          instantiator.instantiateProtocolConfiguration(hostConfig, pdg, protocolMap);
       PrintVisitor printer = new PrintVisitor();
       System.out.println(targetProg.accept(printer));
 
@@ -198,7 +165,6 @@ public class Main {
       } else {
         System.out.println("\nCould not synthesize protocol!");
       }
-
     }
   }
 }

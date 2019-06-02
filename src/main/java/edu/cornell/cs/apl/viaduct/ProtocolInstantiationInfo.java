@@ -1,18 +1,20 @@
 package edu.cornell.cs.apl.viaduct;
 
+import edu.cornell.cs.apl.viaduct.imp.ast.AstNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.Host;
 import edu.cornell.cs.apl.viaduct.imp.ast.Variable;
+import edu.cornell.cs.apl.viaduct.imp.builders.ProcessConfigurationBuilder;
 import edu.cornell.cs.apl.viaduct.imp.builders.StmtBuilder;
-
 import java.util.Map;
 
 /** helper class for protocol instantiation. */
 public class ProtocolInstantiationInfo<T extends AstNode> {
-  final ProcessConfigBuilder pconfig;
-  final Map<PdgNode<T>,Protocol<T>> protocolMap;
+  final ProcessConfigurationBuilder pconfig;
+  final Map<PdgNode<T>, Protocol<T>> protocolMap;
 
   /** store config builder and protocol map. */
   public ProtocolInstantiationInfo(
-      ProcessConfigBuilder pc, Map<PdgNode<T>,Protocol<T>> pm) {
+      ProcessConfigurationBuilder pc, Map<PdgNode<T>, Protocol<T>> pm) {
 
     this.pconfig = pc;
     this.protocolMap = pm;

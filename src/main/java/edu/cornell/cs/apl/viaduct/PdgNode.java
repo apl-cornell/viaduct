@@ -1,5 +1,6 @@
 package edu.cornell.cs.apl.viaduct;
 
+import edu.cornell.cs.apl.viaduct.imp.ast.AstNode;
 import edu.cornell.cs.apl.viaduct.security.Label;
 import java.util.HashSet;
 import java.util.Set;
@@ -47,10 +48,6 @@ public abstract class PdgNode<T extends AstNode> {
     this.inInfoEdges.add(edge);
   }
 
-  public void setInControlEdge(PdgControlEdge<T> edge) {
-    this.inControlEdge = edge;
-  }
-
   public void addOutInfoEdge(PdgInfoEdge<T> edge) {
     this.outInfoEdges.add(edge);
   }
@@ -65,6 +62,10 @@ public abstract class PdgNode<T extends AstNode> {
 
   public PdgControlEdge<T> getInControlEdge() {
     return this.inControlEdge;
+  }
+
+  public void setInControlEdge(PdgControlEdge<T> edge) {
+    this.inControlEdge = edge;
   }
 
   public Set<PdgInfoEdge<T>> getOutInfoEdges() {

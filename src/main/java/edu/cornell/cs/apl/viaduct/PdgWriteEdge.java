@@ -1,5 +1,7 @@
 package edu.cornell.cs.apl.viaduct;
 
+import edu.cornell.cs.apl.viaduct.imp.ast.AstNode;
+
 /** represents writing to a variable. */
 public class PdgWriteEdge<T extends AstNode> extends PdgInfoEdge<T> {
   public PdgWriteEdge(PdgNode<T> source, PdgNode<T> target) {

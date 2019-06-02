@@ -1,5 +1,6 @@
 package edu.cornell.cs.apl.viaduct;
 
+import edu.cornell.cs.apl.viaduct.imp.ast.AstNode;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -14,8 +15,6 @@ import java.util.Stack;
  * by PDG node B
  */
 public class ProgramDependencyGraph<T extends AstNode> {
-  public enum ControlLabel { SEQ, THEN, ELSE }
-
   static final List<ControlLabel> labelOrder;
 
   static {
@@ -23,25 +22,6 @@ public class ProgramDependencyGraph<T extends AstNode> {
     labelOrder.add(ControlLabel.SEQ);
     labelOrder.add(ControlLabel.ELSE);
     labelOrder.add(ControlLabel.THEN);
-  }
-
-  class ControlEdgeComparator implements Comparator<PdgControlEdge<T>> {
-    public int compare(PdgControlEdge<T> e1, PdgControlEdge<T> e2) {
-      if (e1 != null && e2 != null) {
-        int ind1 = labelOrder.indexOf(e1.getLabel());
-        int ind2 = labelOrder.indexOf(e2.getLabel());
-        return ind1 - ind2;
-
-      } else if (e1 == null && e2 != null) {
-        return 1;
-
-      } else if (e1 != null && e2 == null) {
-        return -1;
-
-      } else {
-        return 0;
-      }
-    }
   }
 
   HashSet<PdgNode<T>> nodes;
@@ -111,5 +91,31 @@ public class ProgramDependencyGraph<T extends AstNode> {
     }
 
     return buf.toString();
+  }
+
+  public enum ControlLabel {
+    SEQ,
+    THEN,
+    ELSE
+  }
+
+  class ControlEdgeComparator implements Comparator<PdgControlEdge<T>> {
+    @Override
+    public int compare(PdgControlEdge<T> e1, PdgControlEdge<T> e2) {
+      if (e1 != null && e2 != null) {
+        int ind1 = labelOrder.indexOf(e1.getLabel());
+        int ind2 = labelOrder.indexOf(e2.getLabel());
+        return ind1 - ind2;
+
+      } else if (e1 == null && e2 != null) {
+        return 1;
+
+      } else if (e1 != null && e2 == null) {
+        return -1;
+
+      } else {
+        return 0;
+      }
+    }
   }
 }

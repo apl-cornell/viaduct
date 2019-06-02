@@ -21,9 +21,9 @@ public class ProgramDependencyGraph<T extends AstNode> {
 
   static {
     labelOrder = new ArrayList<>();
-    labelOrder.add(ControlLabel.SEQ);
-    labelOrder.add(ControlLabel.ELSE);
     labelOrder.add(ControlLabel.THEN);
+    labelOrder.add(ControlLabel.ELSE);
+    labelOrder.add(ControlLabel.SEQ);
   }
 
   static class ControlEdgeComparator implements Comparator<PdgControlEdge>, Serializable {

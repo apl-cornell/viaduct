@@ -18,6 +18,11 @@ public class ProtocolInstantiationInfo<T extends AstNode> {
     this.protocolMap = pm;
   }
 
+  public StmtBuilder createProcess(Host h) {
+    this.pconfig.createProcess(h);
+    return this.pconfig.getBuilder(h);
+  }
+
   public Protocol<T> getProtocol(PdgNode<T> node) {
     return this.protocolMap.get(node);
   }

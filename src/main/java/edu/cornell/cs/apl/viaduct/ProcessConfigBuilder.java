@@ -24,6 +24,19 @@ public class ProcessConfigBuilder {
     }
   }
 
+  /** create a new process at host h.
+   * returns whether a process was actually created
+   * (which means there wasn't a process at the host before) */
+  public boolean createProcess(Host h) {
+    if (!this.configBuilder.containsKey(h)) {
+      this.configBuilder.put(h, new StmtBuilder());
+      return true;
+
+    } else {
+      return false;
+    }
+  }
+
   public StmtBuilder getBuilder(Host h) {
     return this.configBuilder.get(h);
   }

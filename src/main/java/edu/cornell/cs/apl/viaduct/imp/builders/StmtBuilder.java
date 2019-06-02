@@ -106,6 +106,10 @@ public class StmtBuilder {
     return this;
   }
 
+  public boolean isControlContextEmpty() {
+    return this.controlContext.isEmpty();
+  }
+
   public StmtNode build() {
     return new BlockNode(this.stmts);
   }

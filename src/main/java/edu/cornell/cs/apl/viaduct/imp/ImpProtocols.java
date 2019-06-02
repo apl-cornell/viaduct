@@ -236,7 +236,7 @@ public class ImpProtocols {
         builder.pushIf(e.var((Variable)guardBinding));
       }
 
-      if (node.isEndOfExecutionPath()) {
+      if (node.isEndOfExecutionPath() && !builder.isControlContextEmpty()) {
         builder.finishCurrentPath();
       }
 
@@ -525,9 +525,11 @@ public class ImpProtocols {
     }
   }
 
-  static class MPC implements Protocol<ImpAstNode> {
+  static class MPC extends Cleartext implements Protocol<ImpAstNode> {
     private static final MPC rep = new MPC();
     private Set<Host> parties;
+    private Host synthesizedHost;
+    private Variable outVar;
 
     private MPC() {
       this.parties = new HashSet<Host>();
@@ -583,12 +585,20 @@ public class ImpProtocols {
     @Override
     public Set<Host> readFrom(
         PdgNode<ImpAstNode> node,
-        Host h,
+        Host readHost,
         PdgNode<ImpAstNode> reader,
         ProtocolInstantiationInfo<ImpAstNode> info) {
 
-      // TODO: finish
-      return new HashSet<>();
+      // this should not be read from until it has been instantiated!
+      assert this.outVar != null;
+
+      ExpressionBuilder e = new ExpressionBuilder();
+      StmtBuilder builder = info.getBuilder(this.synthesizedHost);
+      builder.send(readHost, e.var(this.outVar));
+
+      Set<Host> hosts = new HashSet<>();
+      hosts.add(this.synthesizedHost);
+      return hosts;
     }
 
     @Override
@@ -597,8 +607,10 @@ public class ImpProtocols {
         Host host, PdgNode<ImpAstNode> node,
         ProtocolInstantiationInfo<ImpAstNode> info) {
 
-      // TODO: finish
-      return null;
+      // because this is the Single protocol, there should only
+      // have been one host that the node read from
+      assert hostBindings.size() == 1;
+      return hostBindings.get(this.synthesizedHost);
     }
 
     @Override
@@ -609,13 +621,16 @@ public class ImpProtocols {
         ImpAstNode val,
         ProtocolInstantiationInfo<ImpAstNode> info) {
 
-      // TODO: finish
+      // MPC is only for computations, so it cannot be written to!
+      // do nothing here.
     }
 
     @Override
     public void instantiate(PdgNode<ImpAstNode> node, ProtocolInstantiationInfo<ImpAstNode> info) {
-
-      // TODO: finish
+      this.synthesizedHost = new Host(info.getFreshName(toString()));
+      info.createProcess(this.synthesizedHost);
+      this.outVar =
+          instantiateComputeNode(this.synthesizedHost, (PdgComputeNode<ImpAstNode>)node, info);
     }
 
     @Override

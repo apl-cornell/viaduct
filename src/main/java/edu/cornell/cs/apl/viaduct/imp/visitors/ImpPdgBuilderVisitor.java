@@ -53,7 +53,7 @@ public class ImpPdgBuilderVisitor implements AstVisitor<PdgBuilderInfo<ImpAstNod
 
   private static final String DOWNGRADE_NODE = "downgrade";
   private static final String VARDECL_NODE = "decl";
-  private static final String ASSIGN_NODE = "assign";
+  private static final String ASSIGN_NODE = "assgn";
   private static final String GUARD_NODE = "guard";
   private static final String IF_NODE = "if";
 

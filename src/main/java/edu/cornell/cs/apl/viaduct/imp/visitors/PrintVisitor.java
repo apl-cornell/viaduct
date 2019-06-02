@@ -144,7 +144,7 @@ public class PrintVisitor implements AstVisitor<String> {
   public String visit(AssignNode assignNode) {
     String varStr = assignNode.getVariable().getName();
     String rhsStr = assignNode.getRhs().accept(this);
-    return getIndent() + varStr + " <- " + rhsStr;
+    return getIndent() + varStr + " := " + rhsStr;
   }
 
   /** print node. */
@@ -189,7 +189,7 @@ public class PrintVisitor implements AstVisitor<String> {
   public String visit(SendNode sendNode) {
     String exprStr = sendNode.getSentExpr().accept(this);
     String recipStr = sendNode.getRecipient().toString();
-    return String.format("send %s to %s", exprStr, recipStr);
+    return String.format("%ssend %s to %s", getIndent(), exprStr, recipStr);
   }
 
   /** print recv. */
@@ -197,11 +197,11 @@ public class PrintVisitor implements AstVisitor<String> {
   public String visit(RecvNode recvNode) {
     String senderStr = recvNode.getSender().toString();
     String varStr = recvNode.getVar().toString();
-    return String.format("%s <- recv from %s", varStr, senderStr);
+    return String.format("%s%s <- recv from %s", getIndent(), varStr, senderStr);
   }
 
   @Override
   public String visit(AnnotationNode annotNode) {
-    return String.format("%n@%s", annotNode.getAnnotationString());
+    return String.format("%s%n@%s", getIndent(), annotNode.getAnnotationString());
   }
 }

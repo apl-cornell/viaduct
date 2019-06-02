@@ -1,8 +1,8 @@
 package edu.cornell.cs.apl.viaduct;
 
 import edu.cornell.cs.apl.viaduct.imp.ast.StmtNode;
-import edu.cornell.cs.apl.viaduct.imp.visitors.TargetPostprocessVisitor;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -17,8 +17,27 @@ public class ProtocolInstantiation<T extends AstNode> {
         new ProtocolInstantiationInfo<>(pconfig, protocolMap);
 
     for (PdgNode<T> node : pdg.getOrderedNodes()) {
+      if (node.isStartOfControlFork()) {
+        info.setCurrentPath(node.getInControlEdge().getLabel());
+      }
+
       Protocol<T> proto = protocolMap.get(node);
       proto.instantiate(node, info);
+
+      if (node.isEndOfExecutionPath() && !info.isControlContextEmpty()) {
+        info.finishCurrentPath();
+      }
+
+      // check if node is the last one in the control structure;
+      // if it is, pop the control structure out
+      PdgControlNode<T> controlNode = node.getControlNode();
+      if (controlNode != null) {
+        // this is hilariously inefficient
+        List<PdgNode<T>> controlChildren = controlNode.getControlStructureNodes();
+        if (controlChildren.indexOf(node) == controlChildren.size() - 1) {
+          info.popControl();
+        }
+      }
     }
 
     return pconfig;

@@ -1,14 +1,18 @@
 package edu.cornell.cs.apl.viaduct;
 
+import edu.cornell.cs.apl.viaduct.ProgramDependencyGraph.ControlLabel;
 import edu.cornell.cs.apl.viaduct.imp.ast.Variable;
 import edu.cornell.cs.apl.viaduct.imp.builders.StmtBuilder;
 
 import java.util.Map;
+import java.util.Set;
+import java.util.Stack;
 
 /** helper class for protocol instantiation. */
 public class ProtocolInstantiationInfo<T extends AstNode> {
   final ProcessConfigBuilder pconfig;
   final Map<PdgNode<T>,Protocol<T>> protocolMap;
+  final Stack<Set<Host>> controlContext;
 
   /** store config builder and protocol map. */
   public ProtocolInstantiationInfo(
@@ -16,6 +20,7 @@ public class ProtocolInstantiationInfo<T extends AstNode> {
 
     this.pconfig = pc;
     this.protocolMap = pm;
+    this.controlContext = new Stack<>();
   }
 
   public StmtBuilder createProcess(Host h) {
@@ -45,5 +50,43 @@ public class ProtocolInstantiationInfo<T extends AstNode> {
 
   public String getFreshName(Binding<T> base) {
     return getFreshName(base.getBinding());
+  }
+
+  public boolean isControlContextEmpty() {
+    return this.controlContext.isEmpty();
+  }
+
+  public void pushControlContext(Set<Host> hosts) {
+    this.controlContext.push(hosts);
+  }
+
+  public void setCurrentPath(ControlLabel label) {
+    assert !this.controlContext.isEmpty();
+
+    Set<Host> hosts = this.controlContext.peek();
+    for (Host host : hosts) {
+      StmtBuilder hostBuilder = this.pconfig.getBuilder(host);
+      hostBuilder.setCurrentPath(label);
+    }
+  }
+
+  public void finishCurrentPath() {
+    assert !this.controlContext.isEmpty();
+
+    Set<Host> hosts = this.controlContext.peek();
+    for (Host host : hosts) {
+      StmtBuilder hostBuilder = this.pconfig.getBuilder(host);
+      hostBuilder.finishCurrentPath();
+    }
+  }
+
+  public void popControl() {
+    assert !this.controlContext.isEmpty();
+
+    Set<Host> hosts = this.controlContext.peek();
+    for (Host host : hosts) {
+      StmtBuilder hostBuilder = this.pconfig.getBuilder(host);
+      hostBuilder.popControl();
+    }
   }
 }

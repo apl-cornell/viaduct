@@ -1,22 +1,16 @@
 package edu.cornell.cs.apl.viaduct.imp.visitors;
 
-import edu.cornell.cs.apl.viaduct.imp.ast.AndNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ArrayDeclarationNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.AssignNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.BinaryExpressionNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.BlockNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.DeclarationNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.DowngradeNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.EqualToNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.Host;
 import edu.cornell.cs.apl.viaduct.imp.ast.IfNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ImpAstNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.LeqNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.LessThanNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.LiteralNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.NotNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.OrNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.PlusNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ProcessConfigurationNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ReadNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ReceiveNode;
@@ -59,20 +53,6 @@ public class PrintVisitor implements AstVisitor<Void> {
     }
   }
 
-  private Void visitBinary(BinaryExpressionNode binaryExpressionNode, String op) {
-    buffer.append('(');
-    binaryExpressionNode.getLhs().accept(this);
-
-    buffer.append(' ');
-    buffer.append(op);
-    buffer.append(' ');
-
-    binaryExpressionNode.getRhs().accept(this);
-    buffer.append(')');
-
-    return null;
-  }
-
   @Override
   public Void visit(LiteralNode literalNode) {
     buffer.append(literalNode.getValue());
@@ -92,33 +72,18 @@ public class PrintVisitor implements AstVisitor<Void> {
   }
 
   @Override
-  public Void visit(OrNode orNode) {
-    return visitBinary(orNode, "||");
-  }
+  public Void visit(BinaryExpressionNode binaryExpressionNode) {
+    buffer.append('(');
+    binaryExpressionNode.getLhs().accept(this);
 
-  @Override
-  public Void visit(AndNode andNode) {
-    return visitBinary(andNode, "&&");
-  }
+    buffer.append(' ');
+    buffer.append(binaryExpressionNode.getOperator());
+    buffer.append(' ');
 
-  @Override
-  public Void visit(EqualToNode equalToNode) {
-    return visitBinary(equalToNode, "==");
-  }
+    binaryExpressionNode.getRhs().accept(this);
+    buffer.append(')');
 
-  @Override
-  public Void visit(LessThanNode lessThanNode) {
-    return visitBinary(lessThanNode, "<");
-  }
-
-  @Override
-  public Void visit(LeqNode leqNode) {
-    return visitBinary(leqNode, "<=");
-  }
-
-  @Override
-  public Void visit(PlusNode plusNode) {
-    return visitBinary(plusNode, "+");
+    return null;
   }
 
   @Override

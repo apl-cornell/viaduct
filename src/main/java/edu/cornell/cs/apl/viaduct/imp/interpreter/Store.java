@@ -31,7 +31,7 @@ public class Store implements Iterable<Tuple2<Variable, ImpValue>> {
     if (variableStore.containsKey(variable)) {
       throw new RedeclaredVariableException(variable);
     }
-    this.variableStore.put(variable, new UnavailableValue());
+    this.variableStore.put(variable, UnavailableValue.create());
   }
 
   /**

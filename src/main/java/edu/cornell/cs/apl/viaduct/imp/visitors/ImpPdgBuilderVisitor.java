@@ -14,23 +14,17 @@ import edu.cornell.cs.apl.viaduct.ProgramDependencyGraph;
 import edu.cornell.cs.apl.viaduct.ProgramDependencyGraph.ControlLabel;
 import edu.cornell.cs.apl.viaduct.SymbolTable;
 import edu.cornell.cs.apl.viaduct.UndeclaredVariableException;
-import edu.cornell.cs.apl.viaduct.imp.ast.AndNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ArrayDeclarationNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.AssignNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.BinaryExpressionNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.BlockNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.DeclarationNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.DowngradeNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.EqualToNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ExpressionNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.IfNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ImpAstNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.LeqNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.LessThanNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.LiteralNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.NotNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.OrNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.PlusNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ProcessConfigurationNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ReadNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ReceiveNode;
@@ -90,28 +84,13 @@ public class ImpPdgBuilderVisitor implements AstVisitor<PdgBuilderInfo<ImpAstNod
     return this.pdg;
   }
 
-  /** visit binary operation expr. */
-  private PdgBuilderInfo<ImpAstNode> visitBinaryOp(BinaryExpressionNode binNode) {
-    PdgBuilderInfo<ImpAstNode> lhsDeps = binNode.getLhs().accept(this);
-    PdgBuilderInfo<ImpAstNode> rhsDeps = binNode.getRhs().accept(this);
-
-    // add ordering b/w LHS and RHS
-    PdgNode<ImpAstNode> leftLast = lhsDeps.getLastCreated();
-    PdgNode<ImpAstNode> rightFirst = lhsDeps.getFirstCreated();
-    if (leftLast != null && rightFirst != null) {
-      PdgControlEdge.create(leftLast, rightFirst, ControlLabel.SEQ);
-    }
-
-    return lhsDeps.merge(rhsDeps);
-  }
-
-  /** return empty set of dependencies. */
+  /** Return empty set of dependencies. */
   @Override
   public PdgBuilderInfo<ImpAstNode> visit(LiteralNode literalNode) {
     return new PdgBuilderInfo<>();
   }
 
-  /** return PDG storage node for referenced var. */
+  /** Return PDG storage node for referenced var. */
   @Override
   public PdgBuilderInfo<ImpAstNode> visit(ReadNode varLookup) {
     if (this.storageNodes.contains(varLookup.getVariable())) {
@@ -125,49 +104,27 @@ public class ImpPdgBuilderVisitor implements AstVisitor<PdgBuilderInfo<ImpAstNod
     }
   }
 
-  /** return LHS and RHS dependencies. */
-  @Override
-  public PdgBuilderInfo<ImpAstNode> visit(PlusNode plusNode) {
-    return visitBinaryOp(plusNode);
-  }
-
-  /** return LHS and RHS dependencies. */
-  @Override
-  public PdgBuilderInfo<ImpAstNode> visit(OrNode orNode) {
-    return visitBinaryOp(orNode);
-  }
-
-  /** return LHS and RHS dependencies. */
-  @Override
-  public PdgBuilderInfo<ImpAstNode> visit(AndNode andNode) {
-    return visitBinaryOp(andNode);
-  }
-
-  /** return LHS and RHS dependencies. */
-  @Override
-  public PdgBuilderInfo<ImpAstNode> visit(LessThanNode ltNode) {
-    return visitBinaryOp(ltNode);
-  }
-
-  /** return LHS and RHS dependencies. */
-  @Override
-  public PdgBuilderInfo<ImpAstNode> visit(EqualToNode equalToNode) {
-    return visitBinaryOp(equalToNode);
-  }
-
-  /** return LHS and RHS dependencies. */
-  @Override
-  public PdgBuilderInfo<ImpAstNode> visit(LeqNode leqNode) {
-    return visitBinaryOp(leqNode);
-  }
-
-  /** return negated expr dependencies. */
   @Override
   public PdgBuilderInfo<ImpAstNode> visit(NotNode notNode) {
     return notNode.getExpression().accept(this);
   }
 
-  /** return created PDG node for downgrade. */
+  /** visit binary operation expr. */
+  @Override
+  public PdgBuilderInfo<ImpAstNode> visit(BinaryExpressionNode binNode) {
+    PdgBuilderInfo<ImpAstNode> lhsDeps = binNode.getLhs().accept(this);
+    PdgBuilderInfo<ImpAstNode> rhsDeps = binNode.getRhs().accept(this);
+
+    // add ordering b/w LHS and RHS
+    PdgNode<ImpAstNode> leftLast = lhsDeps.getLastCreated();
+    PdgNode<ImpAstNode> rightFirst = lhsDeps.getFirstCreated();
+    if (leftLast != null && rightFirst != null) {
+      PdgControlEdge.create(leftLast, rightFirst, ControlLabel.SEQ);
+    }
+
+    return lhsDeps.merge(rhsDeps);
+  }
+
   @Override
   public PdgBuilderInfo<ImpAstNode> visit(DowngradeNode downgradeNode) {
     PdgBuilderInfo<ImpAstNode> inInfo = downgradeNode.getExpression().accept(this);
@@ -189,7 +146,7 @@ public class ImpPdgBuilderVisitor implements AstVisitor<PdgBuilderInfo<ImpAstNod
     return new PdgBuilderInfo<>(node, new Variable(node.getId()));
   }
 
-  /** return created storage node. */
+  /** Return created storage node. */
   @Override
   public PdgBuilderInfo<ImpAstNode> visit(DeclarationNode declarationNode) {
     Variable declVar = declarationNode.getVariable();
@@ -223,7 +180,8 @@ public class ImpPdgBuilderVisitor implements AstVisitor<PdgBuilderInfo<ImpAstNod
       // and writes to the variable's storage node
       PdgNode<ImpAstNode> node =
           new PdgComputeNode<>(
-              this.pdg, assignNode,
+              this.pdg,
+              assignNode,
               this.freshNameGenerator.getFreshName(ASSIGN_NODE),
               Label.bottom());
 
@@ -290,10 +248,7 @@ public class ImpPdgBuilderVisitor implements AstVisitor<PdgBuilderInfo<ImpAstNod
 
     PdgNode<ImpAstNode> controlNode =
         new PdgControlNode<>(
-            this.pdg,
-            ifNode,
-            this.freshNameGenerator.getFreshName(IF_NODE),
-            Label.bottom());
+            this.pdg, ifNode, this.freshNameGenerator.getFreshName(IF_NODE), Label.bottom());
     guardInfo.setReadNode(controlNode);
     this.pdg.addNode(controlNode);
 

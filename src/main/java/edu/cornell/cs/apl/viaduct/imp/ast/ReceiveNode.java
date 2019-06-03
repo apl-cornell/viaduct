@@ -4,7 +4,7 @@ import edu.cornell.cs.apl.viaduct.imp.visitors.StmtVisitor;
 import java.util.Objects;
 
 /** Receive value from a host. */
-public class ReceiveNode extends StmtNode {
+public final class ReceiveNode extends StmtNode {
   private final Variable var;
   private final Host sender;
 
@@ -28,8 +28,8 @@ public class ReceiveNode extends StmtNode {
    * @param debugReceivedValue the value to use during debugging which sidesteps communication
    */
   public ReceiveNode(Variable variable, Host sender, ExpressionNode debugReceivedValue) {
-    this.var = variable;
-    this.sender = sender;
+    this.var = Objects.requireNonNull(variable);
+    this.sender = Objects.requireNonNull(sender);
     this.debugReceivedValue = debugReceivedValue;
   }
 
@@ -51,12 +51,12 @@ public class ReceiveNode extends StmtNode {
       return true;
     }
 
-    if (o == null || getClass() != o.getClass()) {
+    if (!(o instanceof ReceiveNode)) {
       return false;
     }
 
     final ReceiveNode that = (ReceiveNode) o;
-    return this.var.equals(that.var) && this.sender.equals(that.sender);
+    return Objects.equals(this.var, that.var) && Objects.equals(this.sender, that.sender);
   }
 
   @Override

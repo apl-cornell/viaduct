@@ -3,7 +3,7 @@ package edu.cornell.cs.apl.viaduct.imp.ast;
 import java.util.Objects;
 
 /** Boolean literal. */
-public class BooleanValue implements ImpValue {
+public final class BooleanValue implements ImpValue {
   private final boolean value;
 
   public BooleanValue(boolean value) {
@@ -20,7 +20,7 @@ public class BooleanValue implements ImpValue {
       return true;
     }
 
-    if (o == null || getClass() != o.getClass()) {
+    if (!(o instanceof BooleanValue)) {
       return false;
     }
 

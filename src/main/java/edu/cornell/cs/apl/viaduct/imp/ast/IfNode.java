@@ -1,7 +1,6 @@
 package edu.cornell.cs.apl.viaduct.imp.ast;
 
 import edu.cornell.cs.apl.viaduct.imp.visitors.StmtVisitor;
-
 import java.util.Objects;
 
 /** If statement. */
@@ -19,9 +18,19 @@ public class IfNode extends StmtNode {
    * @param elseBranch statement to execute if the guard is false
    */
   public IfNode(ExpressionNode guard, StmtNode thenBranch, StmtNode elseBranch) {
-    this.guard = guard;
-    this.thenBranch = thenBranch;
-    this.elseBranch = elseBranch;
+    this.guard = Objects.requireNonNull(guard);
+    this.thenBranch = Objects.requireNonNull(thenBranch);
+    this.elseBranch = Objects.requireNonNull(elseBranch);
+  }
+
+  /**
+   * Like {@link #IfNode(ExpressionNode, StmtNode, StmtNode)}, but do nothing if the guard is false.
+   *
+   * @param guard condition to check
+   * @param thenBranch statement to execute if guard is true
+   */
+  public IfNode(ExpressionNode guard, StmtNode thenBranch) {
+    this(guard, thenBranch, new BlockNode());
   }
 
   public ExpressionNode getGuard() {
@@ -36,23 +45,25 @@ public class IfNode extends StmtNode {
     return this.elseBranch;
   }
 
+  @Override
   public <R> R accept(StmtVisitor<R> v) {
     return v.visit(this);
   }
 
   @Override
-  public boolean equals(Object other) {
-    if (other == null) { return false; }
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
 
-    if (other instanceof IfNode) {
-      IfNode otherIf = (IfNode) other;
-      return otherIf.guard.equals(this.guard)
-          && otherIf.thenBranch.equals(this.thenBranch)
-          && otherIf.elseBranch.equals(this.elseBranch);
-
-    } else {
+    if (!(o instanceof IfNode)) {
       return false;
     }
+
+    final IfNode that = (IfNode) o;
+    return Objects.equals(this.guard, that.guard)
+        && Objects.equals(this.thenBranch, that.thenBranch)
+        && Objects.equals(this.elseBranch, that.elseBranch);
   }
 
   @Override

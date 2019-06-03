@@ -1,22 +1,17 @@
 package edu.cornell.cs.apl.viaduct.imp.visitors;
 
-import edu.cornell.cs.apl.viaduct.imp.ast.AndNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ArrayDeclarationNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.AssignNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.BinaryExpressionNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.BlockNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.DeclarationNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.DowngradeNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.EqualToNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ExpressionNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.Host;
 import edu.cornell.cs.apl.viaduct.imp.ast.IfNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ImpAstNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.LeqNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.LessThanNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.LiteralNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.NotNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.OrNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.PlusNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ProcessConfigurationNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ReadNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ReceiveNode;
@@ -36,7 +31,7 @@ public class ReplaceVisitor implements AstVisitor<ImpAstNode> {
   private ExpressionNode curExpr;
   private ExpressionNode newExpr;
 
-  /** replace an expression in the AST. */
+  /** Replace an expression in the AST. */
   public ImpAstNode run(
       ImpAstNode ast, ExpressionNode oldExpression, ExpressionNode newExpression) {
     this.curExpr = oldExpression;
@@ -46,7 +41,7 @@ public class ReplaceVisitor implements AstVisitor<ImpAstNode> {
     return ast.accept(this);
   }
 
-  /** replace a statement in the AST. */
+  /** Replace a statement in the AST. */
   public ImpAstNode run(ImpAstNode ast, StmtNode oldStatement, StmtNode newStatement) {
     this.curExpr = null;
     this.newExpr = null;
@@ -76,78 +71,6 @@ public class ReplaceVisitor implements AstVisitor<ImpAstNode> {
   }
 
   @Override
-  public ExpressionNode visit(PlusNode plusNode) {
-    if (plusNode.equals(this.curExpr)) {
-      return newExpr;
-
-    } else {
-      ExpressionNode newLhs = (ExpressionNode) plusNode.getLhs().accept(this);
-      ExpressionNode newRhs = (ExpressionNode) plusNode.getRhs().accept(this);
-      return new PlusNode(newLhs, newRhs);
-    }
-  }
-
-  @Override
-  public ExpressionNode visit(OrNode orNode) {
-    if (orNode.equals(this.curExpr)) {
-      return this.newExpr;
-
-    } else {
-      ExpressionNode newLhs = (ExpressionNode) orNode.getLhs().accept(this);
-      ExpressionNode newRhs = (ExpressionNode) orNode.getRhs().accept(this);
-      return new OrNode(newLhs, newRhs);
-    }
-  }
-
-  @Override
-  public ExpressionNode visit(AndNode andNode) {
-    if (andNode.equals(this.curExpr)) {
-      return this.newExpr;
-
-    } else {
-      ExpressionNode newLhs = (ExpressionNode) andNode.getLhs().accept(this);
-      ExpressionNode newRhs = (ExpressionNode) andNode.getRhs().accept(this);
-      return new AndNode(newLhs, newRhs);
-    }
-  }
-
-  @Override
-  public ExpressionNode visit(LessThanNode lessThanNode) {
-    if (lessThanNode.equals(this.curExpr)) {
-      return this.newExpr;
-
-    } else {
-      ExpressionNode newLhs = (ExpressionNode) lessThanNode.getLhs().accept(this);
-      ExpressionNode newRhs = (ExpressionNode) lessThanNode.getRhs().accept(this);
-      return new LessThanNode(newLhs, newRhs);
-    }
-  }
-
-  @Override
-  public ExpressionNode visit(EqualToNode equalToNode) {
-    if (equalToNode.equals(this.curExpr)) {
-      return this.newExpr;
-
-    } else {
-      ExpressionNode newLhs = (ExpressionNode) equalToNode.getLhs().accept(this);
-      ExpressionNode newRhs = (ExpressionNode) equalToNode.getRhs().accept(this);
-      return new EqualToNode(newLhs, newRhs);
-    }
-  }
-
-  @Override
-  public ExpressionNode visit(LeqNode leqNode) {
-    if (leqNode.equals(this.curExpr)) {
-      return this.newExpr;
-
-    } else {
-      ExpressionNode newLhs = (ExpressionNode) leqNode.getLhs().accept(this);
-      ExpressionNode newRhs = (ExpressionNode) leqNode.getRhs().accept(this);
-      return new LeqNode(newLhs, newRhs);
-    }
-  }
-
-  @Override
   public ExpressionNode visit(NotNode notNode) {
     if (notNode.equals(this.curExpr)) {
       return this.newExpr;
@@ -155,6 +78,17 @@ public class ReplaceVisitor implements AstVisitor<ImpAstNode> {
     } else {
       ExpressionNode newExpr = (ExpressionNode) notNode.getExpression().accept(this);
       return new NotNode(newExpr);
+    }
+  }
+
+  @Override
+  public ExpressionNode visit(BinaryExpressionNode binaryExpressionNode) {
+    if (binaryExpressionNode.equals(this.curExpr)) {
+      return newExpr;
+    } else {
+      ExpressionNode newLhs = (ExpressionNode) binaryExpressionNode.getLhs().accept(this);
+      ExpressionNode newRhs = (ExpressionNode) binaryExpressionNode.getRhs().accept(this);
+      return BinaryExpressionNode.create(newLhs, binaryExpressionNode.getOperator(), newRhs);
     }
   }
 
@@ -221,7 +155,6 @@ public class ReplaceVisitor implements AstVisitor<ImpAstNode> {
     }
   }
 
-  /** give traverse children and do nothing. */
   @Override
   public StmtNode visit(IfNode ifNode) {
     if (ifNode.equals(this.curStmt)) {
@@ -235,7 +168,6 @@ public class ReplaceVisitor implements AstVisitor<ImpAstNode> {
     }
   }
 
-  /** traverse children and do nothing. */
   @Override
   public StmtNode visit(BlockNode blockNode) {
     if (blockNode.equals(this.curStmt)) {

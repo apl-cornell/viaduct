@@ -7,7 +7,7 @@ import java.util.Objects;
 import javax.annotation.Nonnull;
 
 /** Sequences a list of statements. */
-public class BlockNode extends StmtNode implements Iterable<StmtNode> {
+public final class BlockNode extends StmtNode implements Iterable<StmtNode> {
   private final Vector<StmtNode> statements;
 
   public BlockNode(StmtNode... statements) {
@@ -18,26 +18,7 @@ public class BlockNode extends StmtNode implements Iterable<StmtNode> {
     this.statements = Vector.ofAll(statements);
   }
 
-  /** flatten nested blocks. */
-  /*
-  public BlockNode flatten() {
-    ArrayList<StmtNode> newList = new ArrayList<>();
-
-    for (StmtNode stmt : statements) {
-      if (stmt instanceof BlockNode) {
-        BlockNode block = (BlockNode) stmt;
-        block.flatten();
-        for (StmtNode blockStmt : block) {
-          newList.add(blockStmt);
-        }
-      } else {
-        newList.add(stmt);
-      }
-    }
-    return new BlockNode(newList);
-  }
-  */
-
+  /** Return the number of statements in the block. */
   public int size() {
     return this.statements.size();
   }
@@ -53,29 +34,17 @@ public class BlockNode extends StmtNode implements Iterable<StmtNode> {
   }
 
   @Override
-  public boolean equals(Object other) {
-    if (other == null) {
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+
+    if (!(o instanceof BlockNode)) {
       return false;
     }
 
-    if (other instanceof BlockNode) {
-      BlockNode otherBlock = (BlockNode) other;
-
-      if (otherBlock.statements.length() != this.statements.length()) {
-        return false;
-
-      } else {
-        boolean allEquals = true;
-        for (int i = 0; i < this.statements.length(); i++) {
-          allEquals = allEquals && otherBlock.statements.get(i).equals(this.statements.get(i));
-        }
-
-        return allEquals;
-      }
-
-    } else {
-      return false;
-    }
+    final BlockNode that = (BlockNode) o;
+    return Objects.equals(this.statements, that.statements);
   }
 
   @Override

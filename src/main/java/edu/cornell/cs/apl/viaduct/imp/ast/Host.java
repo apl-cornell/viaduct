@@ -8,7 +8,7 @@ public final class Host implements Comparable<Host> {
   private final String name;
 
   public Host(String name) {
-    this.name = name;
+    this.name = Objects.requireNonNull(name);
   }
 
   // TODO: Rolph: remove this once protocol selection doesn't depend on it.
@@ -22,12 +22,12 @@ public final class Host implements Comparable<Host> {
       return true;
     }
 
-    if (o == null || getClass() != o.getClass()) {
+    if (!(o instanceof Host)) {
       return false;
     }
 
     final Host that = (Host) o;
-    return this.name.equals(that.name);
+    return Objects.equals(this.name, that.name);
   }
 
   @Override

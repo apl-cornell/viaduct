@@ -4,28 +4,36 @@ import edu.cornell.cs.apl.viaduct.PdgNode;
 import edu.cornell.cs.apl.viaduct.ProgramDependencyGraph;
 import edu.cornell.cs.apl.viaduct.Protocol;
 import edu.cornell.cs.apl.viaduct.ProtocolCostEstimator;
+import edu.cornell.cs.apl.viaduct.ProtocolFactory;
 import edu.cornell.cs.apl.viaduct.UnknownProtocolException;
 import edu.cornell.cs.apl.viaduct.imp.ast.ImpAstNode;
+import edu.cornell.cs.apl.viaduct.imp.protocols.MPC;
+import edu.cornell.cs.apl.viaduct.imp.protocols.MPCFactory;
+import edu.cornell.cs.apl.viaduct.imp.protocols.Replication;
+import edu.cornell.cs.apl.viaduct.imp.protocols.ReplicationFactory;
+import edu.cornell.cs.apl.viaduct.imp.protocols.Single;
+import edu.cornell.cs.apl.viaduct.imp.protocols.SingleFactory;
+import edu.cornell.cs.apl.viaduct.imp.protocols.ZK;
 import edu.cornell.cs.apl.viaduct.imp.visitors.SizeVisitor;
 import java.util.HashSet;
 import java.util.Set;
 
 /** cost estimator for IMP. */
 public final class ImpProtocolCostEstimator extends ProtocolCostEstimator<ImpAstNode> {
-  private static final Set<Protocol<ImpAstNode>> protocols = new HashSet<>();
+  private static final Set<ProtocolFactory<ImpAstNode>> protocolFactories = new HashSet<>();
   private static SizeVisitor nodeSizer = new SizeVisitor();
 
   {
-    protocols.add(ImpProtocols.Single.getRepresentative());
-    protocols.add(ImpProtocols.Replication.getRepresentative());
+    protocolFactories.add(new SingleFactory());
+    protocolFactories.add(new ReplicationFactory());
     /*
     protocols.add(ImpProtocols.ZK.getRepresentative());
     */
-    protocols.add(ImpProtocols.MPC.getRepresentative());
+    protocolFactories.add(new MPCFactory());
   }
 
-  public Set<Protocol<ImpAstNode>> getProtocols() {
-    return protocols;
+  public Set<ProtocolFactory<ImpAstNode>> getProtocolFactories() {
+    return protocolFactories;
   }
 
   /** estimate cost for a single PDG node. */
@@ -36,20 +44,20 @@ public final class ImpProtocolCostEstimator extends ProtocolCostEstimator<ImpAst
       throws UnknownProtocolException {
     // ImpAstNode astNode = node.getAstNode();
 
-    if (protocol instanceof ImpProtocols.Single) {
+    if (protocol instanceof Single) {
       // return 1 * astNode.accept(nodeSizer);
       return 1;
 
-    } else if (protocol instanceof ImpProtocols.Replication) {
+    } else if (protocol instanceof Replication) {
       // return 5 * astNode.accept(nodeSizer);
-      ImpProtocols.Replication replProto = (ImpProtocols.Replication) protocol;
+      Replication replProto = (Replication) protocol;
       return replProto.getRealReplicas().size() + (2 * replProto.getHashReplicas().size());
 
-    } else if (protocol instanceof ImpProtocols.ZK) {
+    } else if (protocol instanceof ZK) {
       // return 10 * astNode.accept(nodeSizer);
       return 10;
 
-    } else if (protocol instanceof ImpProtocols.MPC) {
+    } else if (protocol instanceof MPC) {
       // return 100 * astNode.accept(nodeSizer);
       return 100;
 

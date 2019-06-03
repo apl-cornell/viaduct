@@ -23,7 +23,7 @@ public class ProtocolSelection<T extends AstNode> {
   public Map<PdgNode<T>, Protocol<T>> selectProtocols(
       HostTrustConfiguration hostConfig, ProgramDependencyGraph<T> pdg) {
     Set<PdgNode<T>> nodes = pdg.getNodes();
-    Set<Protocol<T>> protocols = costEstimator.getProtocols();
+    Set<ProtocolFactory<T>> protocolFactories = costEstimator.getProtocolFactories();
 
     // the sequence in which PDG nodes will have a protocol selected.
     // this allows massive pruning of the search space,
@@ -73,8 +73,9 @@ public class ProtocolSelection<T extends AstNode> {
       // for each protocol, generate a set of possible instantiated protocols
       // each instantiated protocol represents an edge from the current map
       // to a new map with one new mapping from the PDG node to the instantiated protocol
-      for (Protocol<T> protocol : protocols) {
-        Set<Protocol<T>> protoInstances = protocol.createInstances(hostConfig, currMap, nextNode);
+      for (ProtocolFactory<T> protocolFactory : protocolFactories) {
+        Set<Protocol<T>> protoInstances =
+            protocolFactory.createInstances(hostConfig, currMap, nextNode);
         for (Protocol<T> protoInstance : protoInstances) {
           // instantiate neighbor
           HashMap<PdgNode<T>, Protocol<T>> newMap =

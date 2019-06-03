@@ -8,7 +8,7 @@ import java.util.Set;
 public abstract class ProtocolCostEstimator<T extends AstNode> {
   protected ProtocolCostEstimator() {}
 
-  public abstract Set<Protocol<T>> getProtocols();
+  public abstract Set<ProtocolFactory<T>> getProtocolFactories();
 
   protected abstract int estimateNodeCost(
       Protocol<T> protocol, PdgNode<T> node, ProgramDependencyGraph<T> pdg)

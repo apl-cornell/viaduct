@@ -1,15 +1,24 @@
 package edu.cornell.cs.apl.viaduct.imp.ast;
 
+import edu.cornell.cs.apl.viaduct.imp.visitors.ExprVisitor;
 import java.util.Objects;
 
 /** Superclass of binary operation expressions. */
-public abstract class BinaryExpressionNode extends ExpressionNode {
+public final class BinaryExpressionNode extends ExpressionNode {
   private final ExpressionNode lhs;
   private final ExpressionNode rhs;
+  private final BinaryOperator operator;
 
-  public BinaryExpressionNode(ExpressionNode lhs, ExpressionNode rhs) {
-    this.lhs = lhs;
-    this.rhs = rhs;
+  private BinaryExpressionNode(ExpressionNode lhs, BinaryOperator operator, ExpressionNode rhs) {
+    this.lhs = Objects.requireNonNull(lhs);
+    this.rhs = Objects.requireNonNull(rhs);
+    this.operator = Objects.requireNonNull(operator);
+  }
+
+  /** Create a binary expression given the operator and its two arguments. */
+  public static BinaryExpressionNode create(
+      ExpressionNode lhs, BinaryOperator operator, ExpressionNode rhs) {
+    return new BinaryExpressionNode(lhs, operator, rhs);
   }
 
   public ExpressionNode getLhs() {
@@ -20,30 +29,39 @@ public abstract class BinaryExpressionNode extends ExpressionNode {
     return this.rhs;
   }
 
-  public abstract String getOpStr();
+  public BinaryOperator getOperator() {
+    return this.operator;
+  }
+
+  @Override
+  public <R> R accept(ExprVisitor<R> v) {
+    return v.visit(this);
+  }
 
   @Override
   public boolean equals(Object other) {
-    if (other == null) {
+    if (this == other) {
+      return true;
+    }
+
+    if (!(other instanceof BinaryExpressionNode)) {
       return false;
     }
 
-    if (other.getClass().equals(this.getClass())) {
-      BinaryExpressionNode otherBinop = (BinaryExpressionNode) other;
-      return otherBinop.lhs.equals(this.lhs) && otherBinop.rhs.equals(this.rhs);
-
-    } else {
-      return false;
-    }
+    final BinaryExpressionNode that = (BinaryExpressionNode) other;
+    return Objects.equals(this.lhs, that.lhs)
+        && Objects.equals(this.rhs, that.rhs)
+        && Objects.equals(this.operator, that.operator);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(getOpStr(), this.lhs, this.rhs);
+    return Objects.hash(this.lhs, this.rhs, this.operator);
   }
 
   @Override
   public String toString() {
-    return String.format("(%s %s %s)", getOpStr(), this.lhs.toString(), this.rhs.toString());
+    return String.format(
+        "(%s %s %s)", this.operator.toString(), this.lhs.toString(), this.rhs.toString());
   }
 }

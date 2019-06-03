@@ -1,21 +1,15 @@
 package edu.cornell.cs.apl.viaduct.imp.visitors;
 
-import edu.cornell.cs.apl.viaduct.imp.ast.AndNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ArrayDeclarationNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.AssignNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.BinaryExpressionNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.BlockNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.DeclarationNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.DowngradeNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.EqualToNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.Host;
 import edu.cornell.cs.apl.viaduct.imp.ast.IfNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.LeqNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.LessThanNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.LiteralNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.NotNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.OrNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.PlusNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ProcessConfigurationNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ReadNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ReceiveNode;
@@ -29,12 +23,6 @@ import io.vavr.Tuple2;
  * <p>Can be subclassed to do something for specific AST nodes.
  */
 public class VoidVisitor implements AstVisitor<Void> {
-  private Void visit(BinaryExpressionNode binaryExpressionNode) {
-    binaryExpressionNode.getLhs().accept(this);
-    binaryExpressionNode.getRhs().accept(this);
-    return null;
-  }
-
   @Override
   public Void visit(LiteralNode literalNode) {
     return null;
@@ -52,33 +40,10 @@ public class VoidVisitor implements AstVisitor<Void> {
   }
 
   @Override
-  public Void visit(OrNode orNode) {
-    return visit((BinaryExpressionNode) orNode);
-  }
-
-  @Override
-  public Void visit(AndNode andNode) {
-    return visit((BinaryExpressionNode) andNode);
-  }
-
-  @Override
-  public Void visit(EqualToNode equalToNode) {
-    return visit((BinaryExpressionNode) equalToNode);
-  }
-
-  @Override
-  public Void visit(LessThanNode lessThanNode) {
-    return visit((BinaryExpressionNode) lessThanNode);
-  }
-
-  @Override
-  public Void visit(LeqNode leqNode) {
-    return visit((BinaryExpressionNode) leqNode);
-  }
-
-  @Override
-  public Void visit(PlusNode plusNode) {
-    return visit((BinaryExpressionNode) plusNode);
+  public Void visit(BinaryExpressionNode binaryExpressionNode) {
+    binaryExpressionNode.getLhs().accept(this);
+    binaryExpressionNode.getRhs().accept(this);
+    return null;
   }
 
   @Override

@@ -1,18 +1,19 @@
 package edu.cornell.cs.apl.viaduct.imp.builders;
 
-import edu.cornell.cs.apl.viaduct.imp.ast.AndNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.BinaryExpressionNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.BinaryOperators.And;
+import edu.cornell.cs.apl.viaduct.imp.ast.BinaryOperators.EqualTo;
+import edu.cornell.cs.apl.viaduct.imp.ast.BinaryOperators.LessThan;
+import edu.cornell.cs.apl.viaduct.imp.ast.BinaryOperators.LessThanOrEqualTo;
+import edu.cornell.cs.apl.viaduct.imp.ast.BinaryOperators.Or;
+import edu.cornell.cs.apl.viaduct.imp.ast.BinaryOperators.Plus;
 import edu.cornell.cs.apl.viaduct.imp.ast.BooleanValue;
 import edu.cornell.cs.apl.viaduct.imp.ast.DowngradeNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.EqualToNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ExpressionNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ImpValue;
 import edu.cornell.cs.apl.viaduct.imp.ast.IntegerValue;
-import edu.cornell.cs.apl.viaduct.imp.ast.LeqNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.LessThanNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.LiteralNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.NotNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.OrNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.PlusNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ReadNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.Variable;
 import edu.cornell.cs.apl.viaduct.security.Label;
@@ -41,32 +42,32 @@ public class ExpressionBuilder {
     return lit(new IntegerValue(value));
   }
 
-  public ExpressionNode plus(ExpressionNode lhs, ExpressionNode rhs) {
-    return new PlusNode(lhs, rhs);
+  public ExpressionNode not(ExpressionNode expression) {
+    return new NotNode(expression);
   }
 
   public ExpressionNode or(ExpressionNode lhs, ExpressionNode rhs) {
-    return new OrNode(lhs, rhs);
+    return BinaryExpressionNode.create(lhs, Or.create(), rhs);
   }
 
   public ExpressionNode and(ExpressionNode lhs, ExpressionNode rhs) {
-    return new AndNode(lhs, rhs);
-  }
-
-  public ExpressionNode leq(ExpressionNode lhs, ExpressionNode rhs) {
-    return new LeqNode(lhs, rhs);
-  }
-
-  public ExpressionNode lt(ExpressionNode lhs, ExpressionNode rhs) {
-    return new LessThanNode(lhs, rhs);
+    return BinaryExpressionNode.create(lhs, And.create(), rhs);
   }
 
   public ExpressionNode equals(ExpressionNode lhs, ExpressionNode rhs) {
-    return new EqualToNode(lhs, rhs);
+    return BinaryExpressionNode.create(lhs, EqualTo.create(), rhs);
   }
 
-  public ExpressionNode not(ExpressionNode expression) {
-    return new NotNode(expression);
+  public ExpressionNode lt(ExpressionNode lhs, ExpressionNode rhs) {
+    return BinaryExpressionNode.create(lhs, LessThan.create(), rhs);
+  }
+
+  public ExpressionNode leq(ExpressionNode lhs, ExpressionNode rhs) {
+    return BinaryExpressionNode.create(lhs, LessThanOrEqualTo.create(), rhs);
+  }
+
+  public ExpressionNode plus(ExpressionNode lhs, ExpressionNode rhs) {
+    return BinaryExpressionNode.create(lhs, Plus.create(), rhs);
   }
 
   public ExpressionNode downgrade(ExpressionNode expression, Label label) {

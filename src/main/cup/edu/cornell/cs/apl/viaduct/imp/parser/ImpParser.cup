@@ -2,6 +2,7 @@ import java.util.List;
 import java.util.LinkedList;
 
 import edu.cornell.cs.apl.viaduct.imp.ast.*;
+import edu.cornell.cs.apl.viaduct.imp.ast.BinaryOperators.*;
 import edu.cornell.cs.apl.viaduct.security.Label;
 import edu.cornell.cs.apl.viaduct.security.Principal;
 
@@ -10,6 +11,7 @@ nonterminal List<StmtNode> stmt_list;
 nonterminal StmtNode stmt, stmt_basic, block;
 nonterminal ExpressionNode expr;
 nonterminal ImpValue value;
+nonterminal BinaryOperator binop;
 nonterminal Label label, label_expr;
 nonterminal Variable variable;
 nonterminal Host host;
@@ -116,40 +118,20 @@ expr ::=
       RESULT = new NotNode(e);
     :}
 
-  | expr:e1 OROR expr:e2 {:
-      RESULT = new OrNode(e1, e2);
-    :}
-
-  | expr:e1 ANDAND expr:e2 {:
-      RESULT = new AndNode(e1, e2);
-    :}
-
-  | expr:e1 EQ expr:e2 {:
-      RESULT = new EqualToNode(e1, e2);
+  | expr:e1 binop:binop expr:e2 {:
+      RESULT = BinaryExpressionNode.create(e1, binop, e2);
     :}
 
   | expr:e1 NEQ expr:e2 {:
-      RESULT = new NotNode(new EqualToNode(e1, e2));
-    :}
-
-  | expr:e1 LT expr:e2 {:
-      RESULT = new LessThanNode(e1, e2);
-    :}
-
-  | expr:e1 LEQ expr:e2 {:
-      RESULT = new LeqNode(e1, e2);
+      RESULT = new NotNode(BinaryExpressionNode.create(e1, EqualTo.create(), e2));
     :}
 
   | expr:e1 GT expr:e2 {:
-      RESULT = new NotNode(new LeqNode(e1, e2));
+      RESULT = new NotNode(BinaryExpressionNode.create(e2, LessThan.create(), e1));
     :}
 
   | expr:e1 GEQ expr:e2 {:
-      RESULT = new NotNode(new LessThanNode(e1, e2));
-    :}
-
-  | expr:e1 PLUS expr:e2 {:
-      RESULT = new PlusNode(e1, e2);
+      RESULT = new NotNode(BinaryExpressionNode.create(e2, LessThanOrEqualTo.create(), e1));
     :}
 
   | DECLASSIFY OPEN_PAREN expr:e COMMA label:l CLOSE_PAREN {:
@@ -176,6 +158,32 @@ value ::=
 
   | INT_LIT:ilit {:
       RESULT = new IntegerValue(ilit);
+    :}
+  ;
+
+binop ::=
+    OROR {:
+      RESULT = Or.create();
+    :}
+
+  | ANDAND {:
+      RESULT = And.create();;
+    :}
+
+  | EQ {:
+      RESULT = EqualTo.create();;
+    :}
+
+  | LT {:
+      RESULT = LessThan.create();;
+    :}
+
+  | LEQ {:
+      RESULT = LessThanOrEqualTo.create();;
+    :}
+
+  | PLUS {:
+      RESULT = Plus.create();
     :}
   ;
 

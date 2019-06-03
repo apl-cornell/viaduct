@@ -1,21 +1,16 @@
 package edu.cornell.cs.apl.viaduct.imp.visitors;
 
-import edu.cornell.cs.apl.viaduct.imp.ast.AndNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ArrayDeclarationNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.AssignNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.BinaryExpressionNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.BlockNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.DeclarationNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.DowngradeNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.EqualToNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ExpressionNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.Host;
 import edu.cornell.cs.apl.viaduct.imp.ast.IfNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.LeqNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.LessThanNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.LiteralNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.NotNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.OrNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.PlusNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ProcessConfigurationNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ReadNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ReceiveNode;
@@ -48,51 +43,16 @@ public abstract class IdentityVisitor
   }
 
   @Override
-  public ExpressionNode visit(OrNode orNode) {
-    ExpressionNode newLhs = orNode.getLhs().accept(this);
-    ExpressionNode newRhs = orNode.getRhs().accept(this);
-    return new OrNode(newLhs, newRhs);
-  }
-
-  @Override
-  public ExpressionNode visit(AndNode andNode) {
-    ExpressionNode newLhs = andNode.getLhs().accept(this);
-    ExpressionNode newRhs = andNode.getRhs().accept(this);
-    return new AndNode(newLhs, newRhs);
-  }
-
-  @Override
-  public ExpressionNode visit(LessThanNode lessThanNode) {
-    ExpressionNode newLhs = lessThanNode.getLhs().accept(this);
-    ExpressionNode newRhs = lessThanNode.getRhs().accept(this);
-    return new LessThanNode(newLhs, newRhs);
-  }
-
-  @Override
-  public ExpressionNode visit(EqualToNode equalToNode) {
-    ExpressionNode newLhs = equalToNode.getLhs().accept(this);
-    ExpressionNode newRhs = equalToNode.getRhs().accept(this);
-    return new EqualToNode(newLhs, newRhs);
-  }
-
-  @Override
-  public ExpressionNode visit(LeqNode leqNode) {
-    ExpressionNode newLhs = leqNode.getLhs().accept(this);
-    ExpressionNode newRhs = leqNode.getRhs().accept(this);
-    return new LeqNode(newLhs, newRhs);
-  }
-
-  @Override
   public ExpressionNode visit(NotNode notNode) {
     ExpressionNode newExpr = notNode.getExpression().accept(this);
     return new NotNode(newExpr);
   }
 
   @Override
-  public ExpressionNode visit(PlusNode plusNode) {
-    ExpressionNode newLhs = plusNode.getLhs().accept(this);
-    ExpressionNode newRhs = plusNode.getRhs().accept(this);
-    return new PlusNode(newLhs, newRhs);
+  public ExpressionNode visit(BinaryExpressionNode binaryExpressionNode) {
+    ExpressionNode newLhs = binaryExpressionNode.getLhs().accept(this);
+    ExpressionNode newRhs = binaryExpressionNode.getRhs().accept(this);
+    return BinaryExpressionNode.create(newLhs, binaryExpressionNode.getOperator(), newRhs);
   }
 
   @Override

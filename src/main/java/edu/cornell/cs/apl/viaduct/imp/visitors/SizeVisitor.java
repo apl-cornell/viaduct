@@ -1,21 +1,15 @@
 package edu.cornell.cs.apl.viaduct.imp.visitors;
 
-import edu.cornell.cs.apl.viaduct.imp.ast.AndNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ArrayDeclarationNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.AssignNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.BinaryExpressionNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.BlockNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.DeclarationNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.DowngradeNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.EqualToNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.Host;
 import edu.cornell.cs.apl.viaduct.imp.ast.IfNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.LeqNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.LessThanNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.LiteralNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.NotNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.OrNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.PlusNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ProcessConfigurationNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ReadNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ReceiveNode;
@@ -35,45 +29,16 @@ public class SizeVisitor implements AstVisitor<Integer> {
     return 1;
   }
 
-  private Integer visit(BinaryExpressionNode binaryExpressionNode) {
-    return 1
-        + binaryExpressionNode.getLhs().accept(this)
-        + binaryExpressionNode.getRhs().accept(this);
-  }
-
-  @Override
-  public Integer visit(OrNode orNode) {
-    return this.visit((BinaryExpressionNode) orNode);
-  }
-
-  @Override
-  public Integer visit(AndNode andNode) {
-    return this.visit((BinaryExpressionNode) andNode);
-  }
-
-  @Override
-  public Integer visit(LessThanNode lessThanNode) {
-    return this.visit((BinaryExpressionNode) lessThanNode);
-  }
-
-  @Override
-  public Integer visit(EqualToNode equalToNode) {
-    return this.visit((BinaryExpressionNode) equalToNode);
-  }
-
-  @Override
-  public Integer visit(LeqNode leqNode) {
-    return this.visit((BinaryExpressionNode) leqNode);
-  }
-
   @Override
   public Integer visit(NotNode notNode) {
     return 1 + notNode.getExpression().accept(this);
   }
 
   @Override
-  public Integer visit(PlusNode plusNode) {
-    return this.visit((BinaryExpressionNode) plusNode);
+  public Integer visit(BinaryExpressionNode binaryExpressionNode) {
+    return 1
+        + binaryExpressionNode.getLhs().accept(this)
+        + binaryExpressionNode.getRhs().accept(this);
   }
 
   @Override

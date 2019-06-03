@@ -1,24 +1,18 @@
 package edu.cornell.cs.apl.viaduct.imp.interpreter;
 
-import edu.cornell.cs.apl.viaduct.imp.ast.AndNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ArrayDeclarationNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.AssignNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.BinaryExpressionNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.BlockNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.BooleanValue;
 import edu.cornell.cs.apl.viaduct.imp.ast.DeclarationNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.DowngradeNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.EqualToNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ExpressionNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.Host;
 import edu.cornell.cs.apl.viaduct.imp.ast.IfNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ImpValue;
-import edu.cornell.cs.apl.viaduct.imp.ast.IntegerValue;
-import edu.cornell.cs.apl.viaduct.imp.ast.LeqNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.LessThanNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.LiteralNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.NotNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.OrNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.PlusNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ReadNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ReceiveNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.SendNode;
@@ -86,58 +80,17 @@ class InterpretProcessVisitor implements ExprVisitor<ImpValue>, StmtVisitor<Void
     }
   }
 
-  /** interpret or node. */
-  @Override
-  public ImpValue visit(OrNode orNode) {
-    BooleanValue left = (BooleanValue) orNode.getLhs().accept(this);
-    BooleanValue right = (BooleanValue) orNode.getRhs().accept(this);
-    return new BooleanValue(left.getValue() || right.getValue());
-  }
-
-  /** interpret and node. */
-  @Override
-  public ImpValue visit(AndNode andNode) {
-    BooleanValue left = (BooleanValue) andNode.getLhs().accept(this);
-    BooleanValue right = (BooleanValue) andNode.getRhs().accept(this);
-    return new BooleanValue(left.getValue() && right.getValue());
-  }
-
-  /** interpret lt node. */
-  @Override
-  public ImpValue visit(LessThanNode ltNode) {
-    IntegerValue left = (IntegerValue) ltNode.getLhs().accept(this);
-    IntegerValue right = (IntegerValue) ltNode.getRhs().accept(this);
-    return new BooleanValue(left.getValue() < right.getValue());
-  }
-
-  /** interpret equals node. */
-  @Override
-  public ImpValue visit(EqualToNode eqNode) {
-    ImpValue left = eqNode.getLhs().accept(this);
-    ImpValue right = eqNode.getRhs().accept(this);
-    return new BooleanValue(left.equals(right));
-  }
-
-  /** interpret leq node. */
-  @Override
-  public ImpValue visit(LeqNode leqNode) {
-    IntegerValue left = (IntegerValue) leqNode.getLhs().accept(this);
-    IntegerValue right = (IntegerValue) leqNode.getRhs().accept(this);
-    return new BooleanValue(left.getValue() <= right.getValue());
-  }
-
   @Override
   public ImpValue visit(NotNode notNode) {
     BooleanValue val = (BooleanValue) notNode.getExpression().accept(this);
     return new BooleanValue(!val.getValue());
   }
 
-  /** interpret plus node. */
   @Override
-  public ImpValue visit(PlusNode plusNode) {
-    IntegerValue left = (IntegerValue) plusNode.getLhs().accept(this);
-    IntegerValue right = (IntegerValue) plusNode.getRhs().accept(this);
-    return new IntegerValue(left.getValue() + right.getValue());
+  public ImpValue visit(BinaryExpressionNode binaryExpressionNode) {
+    ImpValue left = binaryExpressionNode.getLhs().accept(this);
+    ImpValue right = binaryExpressionNode.getRhs().accept(this);
+    return binaryExpressionNode.getOperator().evaluate(left, right);
   }
 
   @Override

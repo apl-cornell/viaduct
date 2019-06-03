@@ -3,14 +3,14 @@ package edu.cornell.cs.apl.viaduct.imp.ast;
 import edu.cornell.cs.apl.viaduct.imp.visitors.StmtVisitor;
 import java.util.Objects;
 
-/** send value to a process. */
-public class SendNode extends StmtNode {
+/** Send the value of an expression to a host. */
+public final class SendNode extends StmtNode {
   private final Host recipient;
   private final ExpressionNode sentExpression;
 
-  public SendNode(Host host, ExpressionNode expression) {
-    this.sentExpression = expression;
-    this.recipient = host;
+  public SendNode(Host host, ExpressionNode sentExpression) {
+    this.sentExpression = Objects.requireNonNull(sentExpression);
+    this.recipient = Objects.requireNonNull(host);
   }
 
   public Host getRecipient() {
@@ -32,12 +32,13 @@ public class SendNode extends StmtNode {
       return true;
     }
 
-    if (o == null || getClass() != o.getClass()) {
+    if (!(o instanceof SendNode)) {
       return false;
     }
 
     final SendNode that = (SendNode) o;
-    return this.recipient.equals(that.recipient) && this.sentExpression.equals(that.sentExpression);
+    return Objects.equals(this.recipient, that.recipient)
+        && Objects.equals(this.sentExpression, that.sentExpression);
   }
 
   @Override

@@ -4,13 +4,13 @@ import edu.cornell.cs.apl.viaduct.imp.visitors.StmtVisitor;
 import java.util.Objects;
 
 /** Variable assignment statement. */
-public class AssignNode extends StmtNode {
+public final class AssignNode extends StmtNode {
   private final Variable variable;
   private final ExpressionNode rhs;
 
   public AssignNode(Variable var, ExpressionNode rhs) {
-    this.variable = var;
-    this.rhs = rhs;
+    this.variable = Objects.requireNonNull(var);
+    this.rhs = Objects.requireNonNull(rhs);
   }
 
   public Variable getVariable() {
@@ -21,23 +21,23 @@ public class AssignNode extends StmtNode {
     return rhs;
   }
 
+  @Override
   public <R> R accept(StmtVisitor<R> v) {
     return v.visit(this);
   }
 
   @Override
-  public boolean equals(Object other) {
-    if (other == null) {
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+
+    if (!(o instanceof AssignNode)) {
       return false;
     }
 
-    if (other instanceof AssignNode) {
-      AssignNode otherAssign = (AssignNode) other;
-      return otherAssign.variable.equals(this.variable) && otherAssign.rhs.equals(this.rhs);
-
-    } else {
-      return false;
-    }
+    final AssignNode that = (AssignNode) o;
+    return Objects.equals(this.variable, that.variable) && Objects.equals(this.rhs, that.rhs);
   }
 
   @Override

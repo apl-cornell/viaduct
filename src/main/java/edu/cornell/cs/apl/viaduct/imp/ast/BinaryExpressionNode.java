@@ -3,7 +3,7 @@ package edu.cornell.cs.apl.viaduct.imp.ast;
 import edu.cornell.cs.apl.viaduct.imp.visitors.ExprVisitor;
 import java.util.Objects;
 
-/** Superclass of binary operation expressions. */
+/** A binary operator applied two expressions. */
 public final class BinaryExpressionNode extends ExpressionNode {
   private final ExpressionNode lhs;
   private final ExpressionNode rhs;
@@ -39,16 +39,16 @@ public final class BinaryExpressionNode extends ExpressionNode {
   }
 
   @Override
-  public boolean equals(Object other) {
-    if (this == other) {
+  public boolean equals(Object o) {
+    if (this == o) {
       return true;
     }
 
-    if (!(other instanceof BinaryExpressionNode)) {
+    if (!(o instanceof BinaryExpressionNode)) {
       return false;
     }
 
-    final BinaryExpressionNode that = (BinaryExpressionNode) other;
+    final BinaryExpressionNode that = (BinaryExpressionNode) o;
     return Objects.equals(this.lhs, that.lhs)
         && Objects.equals(this.rhs, that.rhs)
         && Objects.equals(this.operator, that.operator);

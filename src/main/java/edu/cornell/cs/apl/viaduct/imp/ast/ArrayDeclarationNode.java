@@ -4,12 +4,30 @@ import edu.cornell.cs.apl.viaduct.imp.visitors.StmtVisitor;
 import edu.cornell.cs.apl.viaduct.security.Label;
 import java.util.Objects;
 
-public class ArrayDeclarationNode extends DeclarationNode {
+public final class ArrayDeclarationNode extends StmtNode {
+  private final Variable variable;
   private final ExpressionNode length;
+  private final Label label;
 
+  /**
+   * Declare a statically allocated array with the given length.
+   *
+   * @param variable name of the array
+   * @param length number of elements in the array
+   * @param label security label of the array and all its elements
+   */
   public ArrayDeclarationNode(Variable variable, ExpressionNode length, Label label) {
-    super(variable, label);
-    this.length = length;
+    this.variable = Objects.requireNonNull(variable);
+    this.length = Objects.requireNonNull(length);
+    this.label = Objects.requireNonNull(label);
+  }
+
+  public Variable getVariable() {
+    return variable;
+  }
+
+  public Label getLabel() {
+    return label;
   }
 
   public ExpressionNode getLength() {
@@ -27,17 +45,19 @@ public class ArrayDeclarationNode extends DeclarationNode {
       return true;
     }
 
-    if (o == null || getClass() != o.getClass()) {
+    if (!(o instanceof ArrayDeclarationNode)) {
       return false;
     }
 
     final ArrayDeclarationNode that = (ArrayDeclarationNode) o;
-    return super.equals(that) && this.length.equals(that.length);
+    return Objects.equals(this.variable, that.variable)
+        && Objects.equals(this.length, that.length)
+        && Objects.equals(this.label, that.label);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(super.hashCode(), this.length);
+    return Objects.hash(this.variable, this.length, this.label);
   }
 
   @Override

@@ -4,11 +4,11 @@ import edu.cornell.cs.apl.viaduct.imp.visitors.ExprVisitor;
 import java.util.Objects;
 
 /** A literal constant. */
-public class LiteralNode extends ExpressionNode {
+public final class LiteralNode extends ExpressionNode {
   private final ImpValue value;
 
   public LiteralNode(ImpValue value) {
-    this.value = value;
+    this.value = Objects.requireNonNull(value);
   }
 
   public ImpValue getValue() {
@@ -26,7 +26,7 @@ public class LiteralNode extends ExpressionNode {
       return true;
     }
 
-    if (o == null || getClass() != o.getClass()) {
+    if (!(o instanceof LiteralNode)) {
       return false;
     }
 

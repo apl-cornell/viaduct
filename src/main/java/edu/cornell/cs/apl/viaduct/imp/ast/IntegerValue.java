@@ -3,7 +3,7 @@ package edu.cornell.cs.apl.viaduct.imp.ast;
 import java.util.Objects;
 
 /** Integer literal. */
-public class IntegerValue implements ImpValue {
+public final class IntegerValue implements ImpValue {
   private final int value;
 
   public IntegerValue(int value) {
@@ -20,7 +20,7 @@ public class IntegerValue implements ImpValue {
       return true;
     }
 
-    if (o == null || getClass() != o.getClass()) {
+    if (!(o instanceof IntegerValue)) {
       return false;
     }
 

@@ -1,41 +1,42 @@
 package edu.cornell.cs.apl.viaduct.imp.ast;
 
 import edu.cornell.cs.apl.viaduct.imp.visitors.ExprVisitor;
+import java.util.Objects;
 
 /** Read the value of a variable. */
-public class ReadNode extends ExpressionNode {
+public final class ReadNode extends ExpressionNode {
   private final Variable variable;
 
   public ReadNode(Variable variable) {
-    this.variable = variable;
+    this.variable = Objects.requireNonNull(variable);
   }
 
   public Variable getVariable() {
     return variable;
   }
 
+  @Override
   public <R> R accept(ExprVisitor<R> v) {
     return v.visit(this);
   }
 
   @Override
-  public boolean equals(Object other) {
-    if (other == null) {
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+
+    if (!(o instanceof ReadNode)) {
       return false;
     }
 
-    if (other instanceof ReadNode) {
-      ReadNode otherRead = (ReadNode) other;
-      return otherRead.variable.equals(this.variable);
-
-    } else {
-      return false;
-    }
+    final ReadNode that = (ReadNode) o;
+    return Objects.equals(this.variable, that.variable);
   }
 
   @Override
   public int hashCode() {
-    return this.variable.hashCode();
+    return Objects.hashCode(variable);
   }
 
   @Override

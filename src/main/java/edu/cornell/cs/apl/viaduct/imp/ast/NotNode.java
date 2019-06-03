@@ -4,34 +4,34 @@ import edu.cornell.cs.apl.viaduct.imp.visitors.ExprVisitor;
 import java.util.Objects;
 
 /** Boolean negation. */
-public class NotNode extends ExpressionNode {
+public final class NotNode extends ExpressionNode {
   private final ExpressionNode expression;
 
   public NotNode(ExpressionNode expression) {
-    this.expression = expression;
+    this.expression = Objects.requireNonNull(expression);
   }
 
   public ExpressionNode getExpression() {
     return expression;
   }
 
+  @Override
   public <R> R accept(ExprVisitor<R> v) {
     return v.visit(this);
   }
 
   @Override
-  public boolean equals(Object other) {
-    if (other == null) {
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+
+    if (!(o instanceof NotNode)) {
       return false;
     }
 
-    if (other instanceof NotNode) {
-      NotNode otherNot = (NotNode) other;
-      return otherNot.expression.equals(this.expression);
-
-    } else {
-      return false;
-    }
+    final NotNode that = (NotNode) o;
+    return Objects.equals(this.expression, that.expression);
   }
 
   @Override

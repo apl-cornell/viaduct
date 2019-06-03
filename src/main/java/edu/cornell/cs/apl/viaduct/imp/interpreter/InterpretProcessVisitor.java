@@ -19,6 +19,7 @@ import edu.cornell.cs.apl.viaduct.imp.ast.SendNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.StmtNode;
 import edu.cornell.cs.apl.viaduct.imp.visitors.ExprVisitor;
 import edu.cornell.cs.apl.viaduct.imp.visitors.StmtVisitor;
+import java.util.Objects;
 
 class InterpretProcessVisitor implements ExprVisitor<ImpValue>, StmtVisitor<Void> {
   /** The host to execute statements as. */
@@ -37,15 +38,16 @@ class InterpretProcessVisitor implements ExprVisitor<ImpValue>, StmtVisitor<Void
    * @param channel connects {@code host} to all other hosts involved in the computation.
    */
   InterpretProcessVisitor(Host host, Channel<ImpValue> channel) {
-    this.host = host;
-    this.channel = channel;
+    this.host = Objects.requireNonNull(host);
+    this.channel = Objects.requireNonNull(channel);
   }
 
   /**
    * Create a new interpreter that can only evaluate expression that do not send or receive values.
    */
   InterpretProcessVisitor() {
-    this(null, null);
+    this.host = null;
+    this.channel = null;
   }
 
   // TODO: bare interpreter that doesn't require host and channel.
@@ -142,7 +144,7 @@ class InterpretProcessVisitor implements ExprVisitor<ImpValue>, StmtVisitor<Void
   public Void visit(ReceiveNode receiveNode) {
     ImpValue value;
 
-    if (receiveNode.getDebugReceivedValue() != null) {
+    if (channel == null) {
       value = receiveNode.getDebugReceivedValue().accept(this);
     } else {
       try {

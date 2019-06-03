@@ -58,7 +58,7 @@ stmt ::=
     :}
 
   | IF OPEN_PAREN expr:guard CLOSE_PAREN block:thenCase {:
-      RESULT = new IfNode(guard, thenCase, new BlockNode());
+      RESULT = new IfNode(guard, thenCase);
     :}
 
   | block:block {:

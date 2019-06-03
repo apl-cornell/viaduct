@@ -13,6 +13,10 @@ import edu.cornell.cs.apl.viaduct.imp.parser.TrustConfigurationParser;
 import edu.cornell.cs.apl.viaduct.imp.visitors.ImpPdgBuilderVisitor;
 import edu.cornell.cs.apl.viaduct.imp.visitors.PrintVisitor;
 import java.io.File;
+import java.io.FileOutputStream;
+import java.io.FileWriter;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
 import java.util.Map;
 import net.sourceforge.argparse4j.ArgumentParsers;
 import net.sourceforge.argparse4j.impl.Arguments;
@@ -21,6 +25,34 @@ import net.sourceforge.argparse4j.inf.ArgumentParserException;
 import net.sourceforge.argparse4j.inf.Namespace;
 
 public class Main {
+  private static void printOrDumpToFile(String filename, String output) {
+    Writer writer = null;
+
+    try {
+      if (filename != null) {
+        File file = new File(filename);
+        writer = new OutputStreamWriter(new FileOutputStream(file), "UTF-8");
+        writer.write(output);
+
+      } else {
+        System.out.println(output);
+      }
+
+    } catch (Exception e) {
+      System.out.println(e);
+
+    } finally {
+      try {
+        if (writer != null) {
+          writer.close();
+        }
+
+      } catch (Exception e) {
+        System.out.println(e);
+      }
+    }
+  }
+
   /** Run the compiler. */
   public static void main(String[] args) {
     ArgumentParser argp =
@@ -45,6 +77,8 @@ public class Main {
     argp.addArgument("-ppdg", "--protograph")
         .action(Arguments.storeTrue())
         .help("output PDG with synthesized protocol information");
+    argp.addArgument("-f", "--outfile")
+        .help("output file");
 
     Namespace ns;
     try {
@@ -75,7 +109,7 @@ public class Main {
 
     // Pretty Print
     if (ns.getBoolean("source")) {
-      System.out.println(new PrintVisitor().run(program));
+      printOrDumpToFile(ns.getString("outfile"), new PrintVisitor().run(program));
       return;
     }
 
@@ -110,7 +144,7 @@ public class Main {
     // generate DOT graph of PDG with information flow labels
     if (ns.getBoolean("labelgraph")) {
       String labelGraph = PdgDotPrinter.pdgDotGraphWithLabels(pdg);
-      System.out.println(labelGraph);
+      printOrDumpToFile(ns.getString("outfile"), labelGraph);
       System.exit(0);
     }
 
@@ -124,7 +158,7 @@ public class Main {
     // generate DOT graph of protocol selection
     if (ns.getBoolean("protograph")) {
       String protoGraph = PdgDotPrinter.pdgDotGraphWithProtocols(pdg, protocolMap);
-      System.out.println(protoGraph);
+      printOrDumpToFile(ns.getString("outfile"), protoGraph);
       System.exit(0);
     }
 
@@ -134,7 +168,7 @@ public class Main {
       ProcessConfigurationNode targetProg =
           instantiator.instantiateProtocolConfiguration(hostConfig, pdg, protocolMap);
       PrintVisitor printer = new PrintVisitor();
-      System.out.println(printer.run(targetProg));
+      printOrDumpToFile(ns.getString("outfile"), printer.run(targetProg));
 
     } else {
       System.out.println("PDG information:");

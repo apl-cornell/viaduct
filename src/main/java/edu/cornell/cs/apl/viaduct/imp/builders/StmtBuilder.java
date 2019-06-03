@@ -1,16 +1,14 @@
 package edu.cornell.cs.apl.viaduct.imp.builders;
 
-import edu.cornell.cs.apl.viaduct.Host;
 import edu.cornell.cs.apl.viaduct.ProgramDependencyGraph.ControlLabel;
-import edu.cornell.cs.apl.viaduct.imp.ast.AnnotationNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.AssignNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.BlockNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.DeclarationNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ExpressionNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.Host;
 import edu.cornell.cs.apl.viaduct.imp.ast.IfNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.RecvNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.ReceiveNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.SendNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.SkipNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.StmtNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.Variable;
 import edu.cornell.cs.apl.viaduct.security.Label;
@@ -22,54 +20,6 @@ import java.util.Stack;
 
 /** Builder for statements. Implicitly creates a sequence through a fluent interface. */
 public class StmtBuilder {
-  private abstract static class ControlInfo {
-    final List<StmtNode> prefix;
-    final Map<ControlLabel,StmtNode> pathMap;
-    ControlLabel currentPath;
-
-    public ControlInfo(List<StmtNode> pref) {
-      this.prefix = pref;
-      this.pathMap = new HashMap<>();
-      this.currentPath = null;
-    }
-
-    public void setCurrentPath(ControlLabel label) {
-      this.currentPath = label;
-    }
-
-    public void finishCurrentPath(List<StmtNode> pathStmts) {
-      this.pathMap.put(this.currentPath, new BlockNode(pathStmts));
-      this.currentPath = null;
-    }
-
-    public List<StmtNode> pop() {
-      StmtNode controlStructure = buildControlStructure();
-      this.prefix.add(controlStructure);
-      return this.prefix;
-    }
-
-    public abstract StmtNode buildControlStructure();
-  }
-
-  private static class ConditionalControlInfo extends ControlInfo {
-    final ExpressionNode guard;
-
-    public ConditionalControlInfo(List<StmtNode> pref, ExpressionNode g) {
-      super(pref);
-      this.guard = g;
-    }
-
-    public StmtNode buildControlStructure() {
-      StmtNode thenBranch = this.pathMap.get(ControlLabel.THEN);
-      thenBranch = thenBranch != null ? thenBranch : new SkipNode();
-
-      StmtNode elseBranch = this.pathMap.get(ControlLabel.ELSE);
-      elseBranch = elseBranch != null ? elseBranch : new SkipNode();
-
-      return new IfNode(this.guard, thenBranch, elseBranch);
-    }
-  }
-
   private final Stack<ControlInfo> controlContext;
   private List<StmtNode> stmts;
 
@@ -87,7 +37,7 @@ public class StmtBuilder {
   }
 
   /** set the execution path of the current control structure. */
-  public StmtBuilder setCurrentPath(ControlLabel label)  {
+  public StmtBuilder setCurrentPath(ControlLabel label) {
     this.controlContext.peek().setCurrentPath(label);
     return this;
   }
@@ -112,11 +62,6 @@ public class StmtBuilder {
 
   public StmtNode build() {
     return new BlockNode(this.stmts);
-  }
-
-  public StmtBuilder skip() {
-    this.stmts.add(new SkipNode());
-    return this;
   }
 
   public StmtBuilder varDecl(String varName, Label label) {
@@ -162,22 +107,15 @@ public class StmtBuilder {
 
   /** build recv stmt. */
   public StmtBuilder recv(String sender, String var) {
-    StmtNode recvNode = new RecvNode(new Host(sender), new Variable(var));
+    StmtNode recvNode = new ReceiveNode(new Variable(var), new Host(sender));
     this.stmts.add(recvNode);
     return this;
   }
 
   /** build recv stmt. */
   public StmtBuilder recv(Host sender, Variable var) {
-    StmtNode recvNode = new RecvNode(sender, var);
+    StmtNode recvNode = new ReceiveNode(var, sender);
     this.stmts.add(recvNode);
-    return this;
-  }
-
-  /** build annotation. */
-  public StmtBuilder annotation(String annotStr) {
-    StmtNode annotNode = new AnnotationNode(annotStr);
-    this.stmts.add(annotNode);
     return this;
   }
 
@@ -189,5 +127,54 @@ public class StmtBuilder {
   public StmtBuilder concat(StmtBuilder other) {
     this.stmts.addAll(other.stmts);
     return this;
+  }
+
+  private abstract static class ControlInfo {
+    final List<StmtNode> prefix;
+    final Map<ControlLabel, StmtNode> pathMap;
+    ControlLabel currentPath;
+
+    public ControlInfo(List<StmtNode> pref) {
+      this.prefix = pref;
+      this.pathMap = new HashMap<>();
+      this.currentPath = null;
+    }
+
+    public void setCurrentPath(ControlLabel label) {
+      this.currentPath = label;
+    }
+
+    public void finishCurrentPath(List<StmtNode> pathStmts) {
+      this.pathMap.put(this.currentPath, new BlockNode(pathStmts));
+      this.currentPath = null;
+    }
+
+    public List<StmtNode> pop() {
+      StmtNode controlStructure = buildControlStructure();
+      this.prefix.add(controlStructure);
+      return this.prefix;
+    }
+
+    public abstract StmtNode buildControlStructure();
+  }
+
+  private static class ConditionalControlInfo extends ControlInfo {
+    final ExpressionNode guard;
+
+    public ConditionalControlInfo(List<StmtNode> pref, ExpressionNode g) {
+      super(pref);
+      this.guard = g;
+    }
+
+    @Override
+    public StmtNode buildControlStructure() {
+      StmtNode thenBranch = this.pathMap.get(ControlLabel.THEN);
+      thenBranch = thenBranch != null ? thenBranch : new BlockNode();
+
+      StmtNode elseBranch = this.pathMap.get(ControlLabel.ELSE);
+      elseBranch = elseBranch != null ? elseBranch : new BlockNode();
+
+      return new IfNode(this.guard, thenBranch, elseBranch);
+    }
   }
 }

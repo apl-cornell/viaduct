@@ -1,5 +1,7 @@
 package edu.cornell.cs.apl.viaduct;
 
+import edu.cornell.cs.apl.viaduct.imp.ast.AstNode;
+
 /** represents reading from a variable or computation. */
 public class PdgReadEdge<T extends AstNode> extends PdgInfoEdge<T> {
   public PdgReadEdge(PdgNode<T> source, PdgNode<T> target, Binding<T> b) {

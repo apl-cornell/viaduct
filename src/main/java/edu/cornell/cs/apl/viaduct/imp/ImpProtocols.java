@@ -1,7 +1,6 @@
 package edu.cornell.cs.apl.viaduct.imp;
 
 import edu.cornell.cs.apl.viaduct.Binding;
-import edu.cornell.cs.apl.viaduct.Host;
 import edu.cornell.cs.apl.viaduct.PdgComputeNode;
 import edu.cornell.cs.apl.viaduct.PdgControlNode;
 import edu.cornell.cs.apl.viaduct.PdgEdge;
@@ -15,13 +14,13 @@ import edu.cornell.cs.apl.viaduct.ProtocolInstantiationInfo;
 import edu.cornell.cs.apl.viaduct.imp.ast.AssignNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.DeclarationNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ExpressionNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.Host;
 import edu.cornell.cs.apl.viaduct.imp.ast.ImpAstNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.Variable;
 import edu.cornell.cs.apl.viaduct.imp.builders.ExpressionBuilder;
 import edu.cornell.cs.apl.viaduct.imp.builders.StmtBuilder;
 import edu.cornell.cs.apl.viaduct.imp.visitors.RenameVisitor;
 import edu.cornell.cs.apl.viaduct.security.Label;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -47,22 +46,23 @@ public class ImpProtocols {
     }
 
     protected Binding<ImpAstNode> performRead(
-        PdgNode<ImpAstNode> node, Binding<ImpAstNode> readLabel, Host host,
+        PdgNode<ImpAstNode> node,
+        Binding<ImpAstNode> readLabel,
+        Host host,
         ProtocolInstantiationInfo<ImpAstNode> info) {
 
       StmtBuilder builder = info.getBuilder(host);
       Protocol<ImpAstNode> readNodeProto = info.getProtocol(node);
       Set<Host> readHosts = readNodeProto.readFrom(node, host, info);
 
-      Map<Host,Binding<ImpAstNode>> hostBindings = new HashMap<>();
+      Map<Host, Binding<ImpAstNode>> hostBindings = new HashMap<>();
       for (Host readHost : readHosts) {
         Variable readVar = info.getFreshVar(readLabel);
         builder.recv(readHost, readVar);
         hostBindings.put(readHost, readVar);
       }
 
-      Binding<ImpAstNode> binding =
-          readNodeProto.readPostprocess(hostBindings, host, info);
+      Binding<ImpAstNode> binding = readNodeProto.readPostprocess(hostBindings, host, info);
 
       return binding;
     }
@@ -75,8 +75,8 @@ public class ImpProtocols {
       Map<Variable, Variable> renameMap = new HashMap<>();
       for (PdgReadEdge<ImpAstNode> readEdge : node.getReadEdges()) {
         Variable readVar =
-            (Variable)performRead(readEdge.getSource(), readEdge.getLabel(), host, info);
-        renameMap.put((Variable)readEdge.getLabel(), readVar);
+            (Variable) performRead(readEdge.getSource(), readEdge.getLabel(), host, info);
+        renameMap.put((Variable) readEdge.getLabel(), readVar);
       }
 
       // perform computation
@@ -108,7 +108,9 @@ public class ImpProtocols {
       return outVar;
     }
 
-    void instantiateControlNode(Set<Host> hosts, PdgControlNode<ImpAstNode> node,
+    void instantiateControlNode(
+        Set<Host> hosts,
+        PdgControlNode<ImpAstNode> node,
         ProtocolInstantiationInfo<ImpAstNode> info) {
 
       // conditional node should only have one read input (result of the guard)
@@ -132,7 +134,7 @@ public class ImpProtocols {
         StmtBuilder controlStructureBuilder = info.getBuilder(controlStructureHost);
         Binding<ImpAstNode> guardBinding =
             performRead(guardNode, guardLabel, controlStructureHost, info);
-        controlStructureBuilder.pushIf(e.var((Variable)guardBinding));
+        controlStructureBuilder.pushIf(e.var((Variable) guardBinding));
       }
     }
   }
@@ -160,6 +162,7 @@ public class ImpProtocols {
       return this.host;
     }
 
+    @Override
     public Set<Host> getHosts() {
       Set<Host> hosts = new HashSet<>();
       hosts.add(this.host);
@@ -168,14 +171,14 @@ public class ImpProtocols {
 
     @Override
     public Set<Protocol<ImpAstNode>> createInstances(
-        Set<Host> hostConfig,
+        HostTrustConfiguration hostConfig,
         Map<PdgNode<ImpAstNode>, Protocol<ImpAstNode>> protocolMap,
         PdgNode<ImpAstNode> node) {
 
       HashSet<Protocol<ImpAstNode>> instances = new HashSet<>();
       if (node.isStorageNode() || node.isEndorseNode() || !node.isDowngradeNode()) {
-        for (Host h : hostConfig) {
-          Label hLabel = h.getLabel();
+        for (Host h : hostConfig.hosts()) {
+          Label hLabel = hostConfig.getTrust(h);
           Label nInLabel = node.getInLabel();
 
           if (nInLabel.confidentiality().flowsTo(hLabel.confidentiality())
@@ -188,8 +191,8 @@ public class ImpProtocols {
     }
 
     @Override
-    public Set<Host> readFrom(PdgNode<ImpAstNode> node, Host readHost,
-        ProtocolInstantiationInfo<ImpAstNode> info) {
+    public Set<Host> readFrom(
+        PdgNode<ImpAstNode> node, Host readHost, ProtocolInstantiationInfo<ImpAstNode> info) {
 
       // this should not be read from until it has been instantiated!
       assert this.outVar != null;
@@ -205,7 +208,8 @@ public class ImpProtocols {
 
     @Override
     public Binding<ImpAstNode> readPostprocess(
-        Map<Host,Binding<ImpAstNode>> hostBindings, Host host,
+        Map<Host, Binding<ImpAstNode>> hostBindings,
+        Host host,
         ProtocolInstantiationInfo<ImpAstNode> info) {
 
       // because this is the Single protocol, there should only
@@ -215,7 +219,10 @@ public class ImpProtocols {
     }
 
     @Override
-    public void writeTo(PdgNode<ImpAstNode> node, Host writeHost, ImpAstNode val,
+    public void writeTo(
+        PdgNode<ImpAstNode> node,
+        Host writeHost,
+        ImpAstNode val,
         ProtocolInstantiationInfo<ImpAstNode> info) {
 
       // can only write to storage nodes
@@ -240,7 +247,7 @@ public class ImpProtocols {
         this.outVar = instantiateComputeNode(this.host, (PdgComputeNode<ImpAstNode>) node, info);
 
       } else if (node.isControlNode()) {
-        instantiateControlNode(getHosts(), (PdgControlNode<ImpAstNode>)node, info);
+        instantiateControlNode(getHosts(), (PdgControlNode<ImpAstNode>) node, info);
       }
     }
 
@@ -283,7 +290,7 @@ public class ImpProtocols {
   static class Replication extends Cleartext implements Protocol<ImpAstNode> {
     private static final Replication rep = new Replication();
     private ReplicaSets replicas;
-    private Map<Host,Variable> outVarMap;
+    private Map<Host, Variable> outVarMap;
 
     private Replication(Set<Host> real, Set<Host> hash) {
       this.replicas = new ReplicaSets(real, hash);
@@ -310,6 +317,7 @@ public class ImpProtocols {
       return this.replicas.realReplicas.size() + this.replicas.hashReplicas.size();
     }
 
+    @Override
     public Set<Host> getHosts() {
       Set<Host> hosts = new HashSet<>();
       hosts.addAll(this.replicas.realReplicas);
@@ -319,7 +327,7 @@ public class ImpProtocols {
 
     @Override
     public Set<Protocol<ImpAstNode>> createInstances(
-        Set<Host> hostConfig,
+        HostTrustConfiguration hostConfig,
         Map<PdgNode<ImpAstNode>, Protocol<ImpAstNode>> protocolMap,
         PdgNode<ImpAstNode> node) {
 
@@ -331,7 +339,7 @@ public class ImpProtocols {
         // generalize this later
         Host[] hostPair = new Host[2];
         int i = 0;
-        for (Host host : hostConfig) {
+        for (Host host : hostConfig.hosts()) {
           hostPair[i] = host;
           i++;
           if (i == hostPair.length) {
@@ -361,11 +369,11 @@ public class ImpProtocols {
           Label rhLabel = Label.top();
 
           for (Host real : possibleInstance.realReplicas) {
-            rLabel = rLabel.meet(real.getLabel());
-            rhLabel = rhLabel.meet(real.getLabel());
+            rLabel = rLabel.meet(hostConfig.getTrust(real));
+            rhLabel = rhLabel.meet(hostConfig.getTrust(real));
           }
           for (Host hash : possibleInstance.hashReplicas) {
-            rhLabel = rhLabel.meet(hash.getLabel());
+            rhLabel = rhLabel.meet(hostConfig.getTrust(hash));
           }
 
           if (nInLabel.confidentiality().flowsTo(rLabel.confidentiality())
@@ -385,8 +393,8 @@ public class ImpProtocols {
     }
 
     @Override
-    public Set<Host> readFrom(PdgNode<ImpAstNode> node, Host readHost,
-        ProtocolInstantiationInfo<ImpAstNode> info) {
+    public Set<Host> readFrom(
+        PdgNode<ImpAstNode> node, Host readHost, ProtocolInstantiationInfo<ImpAstNode> info) {
 
       // should not be read from until it has been instantiated
       assert this.outVarMap.size() == getNumReplicas();
@@ -420,16 +428,20 @@ public class ImpProtocols {
 
     @Override
     public Binding<ImpAstNode> readPostprocess(
-        Map<Host,Binding<ImpAstNode>> hostBindings, Host host,
+        Map<Host, Binding<ImpAstNode>> hostBindings,
+        Host host,
         ProtocolInstantiationInfo<ImpAstNode> info) {
 
       // TODO: fix this
-      Host h = (Host)hostBindings.keySet().toArray()[0];
+      Host h = (Host) hostBindings.keySet().toArray()[0];
       return hostBindings.get(h);
     }
 
     @Override
-    public void writeTo(PdgNode<ImpAstNode> node, Host writeHost, ImpAstNode val,
+    public void writeTo(
+        PdgNode<ImpAstNode> node,
+        Host writeHost,
+        ImpAstNode val,
         ProtocolInstantiationInfo<ImpAstNode> info) {
 
       if (node.isStorageNode()) {
@@ -439,13 +451,13 @@ public class ImpProtocols {
         StmtBuilder writerBuilder = info.getBuilder(writeHost);
 
         if (this.replicas.realReplicas.contains(writeHost)) {
-          writerBuilder.assign(this.outVarMap.get(writeHost), (ExpressionNode)val);
+          writerBuilder.assign(this.outVarMap.get(writeHost), (ExpressionNode) val);
 
         } else {
           for (Host realHost : this.replicas.realReplicas) {
             StmtBuilder builder = info.getBuilder(realHost);
 
-            writerBuilder.send(realHost, (ExpressionNode)val);
+            writerBuilder.send(realHost, (ExpressionNode) val);
             builder.recv(writeHost, this.outVarMap.get(realHost));
           }
         }
@@ -466,20 +478,20 @@ public class ImpProtocols {
       if (node.isStorageNode()) {
         for (Host realHost : this.replicas.realReplicas) {
           Variable hostStorageVar =
-              instantiateStorageNode(realHost, (PdgStorageNode<ImpAstNode>)node, info);
+              instantiateStorageNode(realHost, (PdgStorageNode<ImpAstNode>) node, info);
           this.outVarMap.put(realHost, hostStorageVar);
         }
 
         for (Host hashHost : this.replicas.hashReplicas) {
           Variable hostStorageVar =
-              instantiateStorageNode(hashHost, (PdgStorageNode<ImpAstNode>)node, info);
+              instantiateStorageNode(hashHost, (PdgStorageNode<ImpAstNode>) node, info);
           this.outVarMap.put(hashHost, hostStorageVar);
         }
 
       } else if (node.isComputeNode()) {
         for (Host realHost : this.replicas.realReplicas) {
           Variable hostOutVar =
-              instantiateComputeNode(realHost, (PdgComputeNode<ImpAstNode>)node, info);
+              instantiateComputeNode(realHost, (PdgComputeNode<ImpAstNode>) node, info);
           this.outVarMap.put(realHost, hostOutVar);
         }
 
@@ -492,7 +504,7 @@ public class ImpProtocols {
         */
 
       } else if (node.isControlNode()) {
-        instantiateControlNode(getHosts(), (PdgControlNode<ImpAstNode>)node, info);
+        instantiateControlNode(getHosts(), (PdgControlNode<ImpAstNode>) node, info);
       }
     }
 
@@ -554,6 +566,7 @@ public class ImpProtocols {
       return rep;
     }
 
+    @Override
     public Set<Host> getHosts() {
       Set<Host> hosts = new HashSet<>();
       hosts.addAll(this.parties);
@@ -562,7 +575,7 @@ public class ImpProtocols {
 
     @Override
     public Set<Protocol<ImpAstNode>> createInstances(
-        Set<Host> hostConfig,
+        HostTrustConfiguration hostConfig,
         Map<PdgNode<ImpAstNode>, Protocol<ImpAstNode>> protocolMap,
         PdgNode<ImpAstNode> node) {
 
@@ -587,12 +600,13 @@ public class ImpProtocols {
 
       if (node.isDeclassifyNode() && noInputFlow) {
         Label hsLabel = Label.top();
-        for (Host h : hostConfig) {
-          hsLabel = hsLabel.meet(h.getLabel());
+        for (Host h : hostConfig.hosts()) {
+          hsLabel = hsLabel.meet(hostConfig.getTrust(h));
         }
 
         if (nOutLabel.confidentiality().flowsTo(hsLabel.confidentiality())) {
-          instances.add(new MPC(hostConfig));
+          Set<Host> hosts = io.vavr.collection.HashSet.ofAll(hostConfig.hosts()).toJavaSet();
+          instances.add(new MPC(hosts));
         }
       }
 
@@ -600,8 +614,8 @@ public class ImpProtocols {
     }
 
     @Override
-    public Set<Host> readFrom(PdgNode<ImpAstNode> node, Host readHost,
-        ProtocolInstantiationInfo<ImpAstNode> info) {
+    public Set<Host> readFrom(
+        PdgNode<ImpAstNode> node, Host readHost, ProtocolInstantiationInfo<ImpAstNode> info) {
 
       // this should not be read from until it has been instantiated!
       assert this.outVar != null;
@@ -617,7 +631,8 @@ public class ImpProtocols {
 
     @Override
     public Binding<ImpAstNode> readPostprocess(
-        Map<Host,Binding<ImpAstNode>> hostBindings, Host host,
+        Map<Host, Binding<ImpAstNode>> hostBindings,
+        Host host,
         ProtocolInstantiationInfo<ImpAstNode> info) {
 
       // because this is the Single protocol, there should only
@@ -627,7 +642,10 @@ public class ImpProtocols {
     }
 
     @Override
-    public void writeTo(PdgNode<ImpAstNode> node, Host h, ImpAstNode val,
+    public void writeTo(
+        PdgNode<ImpAstNode> node,
+        Host h,
+        ImpAstNode val,
         ProtocolInstantiationInfo<ImpAstNode> info) {
 
       // MPC is only for computations, so it cannot be written to!
@@ -639,7 +657,7 @@ public class ImpProtocols {
       this.synthesizedHost = new Host(info.getFreshName(toString()));
       info.createProcess(this.synthesizedHost);
       this.outVar =
-          instantiateComputeNode(this.synthesizedHost, (PdgComputeNode<ImpAstNode>)node, info);
+          instantiateComputeNode(this.synthesizedHost, (PdgComputeNode<ImpAstNode>) node, info);
     }
 
     @Override
@@ -693,6 +711,7 @@ public class ImpProtocols {
       return rep;
     }
 
+    @Override
     public Set<Host> getHosts() {
       Set<Host> hosts = new HashSet<>();
       hosts.add(this.prover);
@@ -702,7 +721,7 @@ public class ImpProtocols {
 
     @Override
     public Set<Protocol<ImpAstNode>> createInstances(
-        Set<Host> hostConfig,
+        HostTrustConfiguration hostConfig,
         Map<PdgNode<ImpAstNode>, Protocol<ImpAstNode>> protocolMap,
         PdgNode<ImpAstNode> node) {
 
@@ -713,9 +732,10 @@ public class ImpProtocols {
       // assume for now that there are only two hosts
       // generalize this later
       Host[] hostPair = new Host[2];
-      hostConfig.toArray(hostPair);
+      // TODO: WTF does this do?
+      // hostConfig.toArray(hostPair);
       int i = 0;
-      for (Host host : hostConfig) {
+      for (Host host : hostConfig.hosts()) {
         hostPair[i] = host;
         i++;
         if (i == hostPair.length) {
@@ -734,8 +754,8 @@ public class ImpProtocols {
       Host hostB = hostPair[1];
       Label nInLabel = node.getInLabel();
       Label nOutLabel = node.getOutLabel();
-      Label aLabel = hostA.getLabel();
-      Label bLabel = hostB.getLabel();
+      Label aLabel = hostConfig.getTrust(hostA);
+      Label bLabel = hostConfig.getTrust(hostB);
 
       Set<Protocol<ImpAstNode>> instances = new HashSet<>();
 
@@ -772,8 +792,8 @@ public class ImpProtocols {
     }
 
     @Override
-    public Set<Host> readFrom(PdgNode<ImpAstNode> node, Host h,
-        ProtocolInstantiationInfo<ImpAstNode> info) {
+    public Set<Host> readFrom(
+        PdgNode<ImpAstNode> node, Host h, ProtocolInstantiationInfo<ImpAstNode> info) {
 
       // TODO: finish
       return new HashSet<>();
@@ -781,7 +801,8 @@ public class ImpProtocols {
 
     @Override
     public Binding<ImpAstNode> readPostprocess(
-        Map<Host,Binding<ImpAstNode>> hostBindings, Host host,
+        Map<Host, Binding<ImpAstNode>> hostBindings,
+        Host host,
         ProtocolInstantiationInfo<ImpAstNode> info) {
 
       // TODO: finish
@@ -789,7 +810,10 @@ public class ImpProtocols {
     }
 
     @Override
-    public void writeTo(PdgNode<ImpAstNode> node, Host h, ImpAstNode val,
+    public void writeTo(
+        PdgNode<ImpAstNode> node,
+        Host h,
+        ImpAstNode val,
         ProtocolInstantiationInfo<ImpAstNode> info) {
 
       // TODO: finish

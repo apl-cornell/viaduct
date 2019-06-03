@@ -2,7 +2,6 @@ package edu.cornell.cs.apl.viaduct.imp.ast;
 
 import edu.cornell.cs.apl.viaduct.imp.visitors.StmtVisitor;
 import io.vavr.collection.Vector;
-import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Objects;
 import javax.annotation.Nonnull;
@@ -10,6 +9,10 @@ import javax.annotation.Nonnull;
 /** Sequences a list of statements. */
 public class BlockNode extends StmtNode implements Iterable<StmtNode> {
   private final Vector<StmtNode> statements;
+
+  public BlockNode(StmtNode... statements) {
+    this.statements = Vector.of(statements);
+  }
 
   public BlockNode(Iterable<? extends StmtNode> statements) {
     this.statements = Vector.ofAll(statements);

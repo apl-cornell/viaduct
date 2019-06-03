@@ -2,6 +2,7 @@ package edu.cornell.cs.apl.viaduct;
 
 import edu.cornell.cs.apl.viaduct.ProgramDependencyGraph.ControlEdgeComparator;
 import edu.cornell.cs.apl.viaduct.ProgramDependencyGraph.ControlLabel;
+import edu.cornell.cs.apl.viaduct.imp.ast.AstNode;
 import edu.cornell.cs.apl.viaduct.security.Label;
 
 import java.util.ArrayList;

@@ -12,7 +12,7 @@ import java.util.Objects;
  *
  * <p>{@code a \/ (b /\ c) == (a \/ b) /\ (a \/ c)}
  */
-public final class FreeDistributiveLattice<A> implements Lattice<FreeDistributiveLattice<A>> {
+final class FreeDistributiveLattice<A> implements Lattice<FreeDistributiveLattice<A>> {
   private static final FreeDistributiveLattice<?> BOTTOM =
       new FreeDistributiveLattice<>(HashSet.of());
   private static final FreeDistributiveLattice<?> TOP =

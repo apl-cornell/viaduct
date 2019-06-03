@@ -15,28 +15,26 @@ import edu.cornell.cs.apl.viaduct.ProgramDependencyGraph.ControlLabel;
 import edu.cornell.cs.apl.viaduct.SymbolTable;
 import edu.cornell.cs.apl.viaduct.UndeclaredVariableException;
 import edu.cornell.cs.apl.viaduct.imp.ast.AndNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.AnnotationNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ArrayDeclarationNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.AssignNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.BinaryExpressionNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.BlockNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.BooleanLiteralNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.DeclarationNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.DowngradeNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.EqualToNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ExpressionNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.IfNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ImpAstNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.IntegerLiteralNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.LeqNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.LessThanNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.LiteralNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.NotNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.OrNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.PlusNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.ProcessConfigurationNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ReadNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.RecvNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.ReceiveNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.SendNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.SkipNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.StmtNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.Variable;
 import edu.cornell.cs.apl.viaduct.security.Label;
@@ -46,11 +44,10 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * build program dependency graph from AST. the visit methods return the set of PDG node on which
- * the AST node depends on (reads)
+ * Build program dependency graph from AST. The visit methods return the set of PDG nodes on which
+ * the AST node depends (reads).
  */
 public class ImpPdgBuilderVisitor implements AstVisitor<PdgBuilderInfo<ImpAstNode>> {
-
   private static final String DOWNGRADE_NODE = "downgrade";
   private static final String VARDECL_NODE = "decl";
   private static final String ASSIGN_NODE = "assgn";
@@ -83,7 +80,7 @@ public class ImpPdgBuilderVisitor implements AstVisitor<PdgBuilderInfo<ImpAstNod
           if (inNode.isComputeNode()) {
             ExpressionNode inExpr = (ExpressionNode) inNode.getAstNode();
             ReadNode read = new ReadNode(new Variable(inEdge.getLabel()));
-            ImpAstNode newAst = replacer.replaceExpr(node.getAstNode(), inExpr, read);
+            ImpAstNode newAst = replacer.run(node.getAstNode(), inExpr, read);
             node.setAstNode(newAst);
           }
         }
@@ -108,6 +105,12 @@ public class ImpPdgBuilderVisitor implements AstVisitor<PdgBuilderInfo<ImpAstNod
     return lhsDeps.merge(rhsDeps);
   }
 
+  /** return empty set of dependencies. */
+  @Override
+  public PdgBuilderInfo<ImpAstNode> visit(LiteralNode literalNode) {
+    return new PdgBuilderInfo<>();
+  }
+
   /** return PDG storage node for referenced var. */
   @Override
   public PdgBuilderInfo<ImpAstNode> visit(ReadNode varLookup) {
@@ -122,22 +125,10 @@ public class ImpPdgBuilderVisitor implements AstVisitor<PdgBuilderInfo<ImpAstNod
     }
   }
 
-  /** return empty set of dependencies. */
-  @Override
-  public PdgBuilderInfo<ImpAstNode> visit(IntegerLiteralNode intLit) {
-    return new PdgBuilderInfo<>();
-  }
-
   /** return LHS and RHS dependencies. */
   @Override
   public PdgBuilderInfo<ImpAstNode> visit(PlusNode plusNode) {
     return visitBinaryOp(plusNode);
-  }
-
-  /** return empty set of dependencies. */
-  @Override
-  public PdgBuilderInfo<ImpAstNode> visit(BooleanLiteralNode boolLit) {
-    return new PdgBuilderInfo<>();
   }
 
   /** return LHS and RHS dependencies. */
@@ -196,12 +187,6 @@ public class ImpPdgBuilderVisitor implements AstVisitor<PdgBuilderInfo<ImpAstNod
     this.pdg.addNode(node);
 
     return new PdgBuilderInfo<>(node, new Variable(node.getId()));
-  }
-
-  /** return empty set of dependencies. */
-  @Override
-  public PdgBuilderInfo<ImpAstNode> visit(SkipNode skipNode) {
-    return new PdgBuilderInfo<>();
   }
 
   /** return created storage node. */
@@ -351,12 +336,12 @@ public class ImpPdgBuilderVisitor implements AstVisitor<PdgBuilderInfo<ImpAstNod
 
   /** send/recvs should not be in surface programs and thus should not be in the generated PDG. */
   @Override
-  public PdgBuilderInfo<ImpAstNode> visit(RecvNode recvNode) {
+  public PdgBuilderInfo<ImpAstNode> visit(ReceiveNode receiveNode) {
     return new PdgBuilderInfo<>();
   }
 
   @Override
-  public PdgBuilderInfo<ImpAstNode> visit(AnnotationNode annotNode) {
-    return new PdgBuilderInfo<>();
+  public PdgBuilderInfo<ImpAstNode> visit(ProcessConfigurationNode processConfigurationNode) {
+    throw new Error("Cannot build PDGs out of process configurations.");
   }
 }

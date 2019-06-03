@@ -1,22 +1,24 @@
 package edu.cornell.cs.apl.viaduct;
 
 import edu.cornell.cs.apl.viaduct.ProgramDependencyGraph.ControlLabel;
+import edu.cornell.cs.apl.viaduct.imp.ast.AstNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.Host;
 import edu.cornell.cs.apl.viaduct.imp.ast.Variable;
+import edu.cornell.cs.apl.viaduct.imp.builders.ProcessConfigurationBuilder;
 import edu.cornell.cs.apl.viaduct.imp.builders.StmtBuilder;
-
 import java.util.Map;
 import java.util.Set;
 import java.util.Stack;
 
 /** helper class for protocol instantiation. */
 public class ProtocolInstantiationInfo<T extends AstNode> {
-  final ProcessConfigBuilder pconfig;
-  final Map<PdgNode<T>,Protocol<T>> protocolMap;
-  final Stack<Set<Host>> controlContext;
+  private final ProcessConfigurationBuilder pconfig;
+  private final Map<PdgNode<T>, Protocol<T>> protocolMap;
+  private final Stack<Set<Host>> controlContext;
 
   /** store config builder and protocol map. */
   public ProtocolInstantiationInfo(
-      ProcessConfigBuilder pc, Map<PdgNode<T>,Protocol<T>> pm) {
+      ProcessConfigurationBuilder pc, Map<PdgNode<T>, Protocol<T>> pm) {
 
     this.pconfig = pc;
     this.protocolMap = pm;
@@ -60,8 +62,7 @@ public class ProtocolInstantiationInfo<T extends AstNode> {
     this.controlContext.push(hosts);
   }
 
-  /** set the current path for all hosts participating
-   * in the control structure. */
+  /** set the current path for all hosts participating in the control structure. */
   public void setCurrentPath(ControlLabel label) {
     assert !this.controlContext.isEmpty();
 
@@ -72,8 +73,7 @@ public class ProtocolInstantiationInfo<T extends AstNode> {
     }
   }
 
-  /** finish the current execution path for all
-   * hosts participating in control structure. */
+  /** finish the current execution path for all hosts participating in control structure. */
   public void finishCurrentPath() {
     assert !this.controlContext.isEmpty();
 
@@ -84,8 +84,7 @@ public class ProtocolInstantiationInfo<T extends AstNode> {
     }
   }
 
-  /** pop the current control structure for all
-   * participating hosts. */
+  /** pop the current control structure for all participating hosts. */
   public void popControl() {
     assert !this.controlContext.isEmpty();
 

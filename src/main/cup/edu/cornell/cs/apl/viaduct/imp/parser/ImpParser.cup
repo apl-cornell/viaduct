@@ -1,31 +1,38 @@
-import java.util.ArrayList;
 import java.util.List;
+import java.util.LinkedList;
 
 import edu.cornell.cs.apl.viaduct.imp.ast.*;
 import edu.cornell.cs.apl.viaduct.security.Label;
 import edu.cornell.cs.apl.viaduct.security.Principal;
-import edu.cornell.cs.apl.viaduct.Host;
-
-// TODO: we might want to add types to these declarations.
-terminal String IDENT, CAP_IDENT;
-terminal Integer INT_LIT;
-terminal String ANNOTATION;
-terminal TRUE, FALSE;
-
-// terminal PLUS, MINUS, TIMES, DIVIDE;
-terminal PLUS;
-terminal LT, LEQ, GT, GEQ, AND, ANDAND, OR, OROR, EQ, NEQ, NOT;
-terminal RARROW, LARROW, ASSIGN;
-terminal OPEN_PAREN, CLOSE_PAREN, OPEN_BRACE, CLOSE_BRACE, SEMICOLON, COLON, COMMA;
-terminal TOP, BOTTOM;
-terminal IF, ELSE, SEND, RECV, TO, FROM, SKIP, DECLASSIFY, ENDORSE;
 
 nonterminal StmtNode program;
 nonterminal List<StmtNode> stmt_list;
-nonterminal StmtNode stmt_basic, stmt_complex, block;
+nonterminal StmtNode stmt, stmt_basic, block;
 nonterminal ExpressionNode expr;
+nonterminal ImpValue value;
 nonterminal Label label, label_expr;
+nonterminal Variable variable;
 nonterminal Host host;
+
+terminal String IDENT, CAP_IDENT;
+terminal Integer INT_LIT;
+terminal TRUE, FALSE;
+
+terminal COLON, ASSIGN;
+terminal IF, ELSE, SEND, TO, RECV, FROM, HOST;
+
+terminal NOT, ANDAND, OROR;
+terminal EQ, NEQ, LT, LEQ, GT, GEQ;
+terminal TOP, BOTTOM, OR, AND, RARROW, LARROW;
+
+terminal PLUS;
+// terminal PLUS, MINUS, TIMES, DIVIDE;
+
+terminal DECLASSIFY, ENDORSE;
+
+terminal OPEN_BRACE, CLOSE_BRACE, SEMICOLON, OPEN_PAREN, CLOSE_PAREN, COMMA;
+
+terminal DEBUG_VALUE;
 
 precedence left ANDAND, OROR;
 precedence left PLUS, EQ, NEQ, LT, LEQ, GT, GEQ, LARROW, RARROW, AND, OR;
@@ -34,46 +41,35 @@ precedence left OPEN_PAREN, CLOSE_PAREN;
 
 start with program;
 
-program ::=
-    block:b {: RESULT = b; :}
-  ;
 
-block ::=
+program ::=
     stmt_list:slist {: RESULT = new BlockNode(slist); :}
   ;
 
-stmt_list ::=
-    stmt_basic:s SEMICOLON {:
-      ArrayList<StmtNode> slist = new ArrayList<>();
-      slist.add(s);
-      RESULT = slist;
+stmt ::=
+    stmt_basic:stmt SEMICOLON {:
+      RESULT = stmt;
     :}
 
-  | stmt_complex:s {:
-      ArrayList<StmtNode> slist = new ArrayList<>();
-      slist.add(s);
-      RESULT = slist;
+  | IF OPEN_PAREN expr:guard CLOSE_PAREN block:thenCase ELSE block:elseCase {:
+      RESULT = new IfNode(guard, thenCase, elseCase);
     :}
 
-  | stmt_list:slist stmt_basic:s SEMICOLON {:
-      slist.add(s);
-      RESULT = slist;
+  | IF OPEN_PAREN expr:guard CLOSE_PAREN block:thenCase {:
+      RESULT = new IfNode(guard, thenCase, new BlockNode());
     :}
 
-  | stmt_list:slist stmt_complex:s {:
-      slist.add(s);
-      RESULT = slist;
+  | block:block {:
+      RESULT = block;
     :}
   ;
 
 stmt_basic ::=
-    IDENT:idv COLON label:lab {:
-      Variable var = new Variable(idv);
+    variable:var COLON label:lab {:
       RESULT = new DeclarationNode(var, lab);
     :}
 
-  | IDENT:idv ASSIGN expr:e {:
-      Variable var = new Variable(idv);
+  | variable:var ASSIGN expr:e {:
       RESULT = new AssignNode(var, e);
     :}
 
@@ -81,47 +77,43 @@ stmt_basic ::=
       RESULT = new SendNode(host, e);
     :}
 
-  | IDENT:idv LARROW RECV host:host {:
-      RESULT = new RecvNode(host, new Variable(idv));
+  | variable:var LARROW RECV host:host {:
+      RESULT = new ReceiveNode(var, host);
     :}
 
-  | SKIP {: RESULT = new SkipNode(); :}
+  | DEBUG_VALUE OPEN_PAREN expr:debug_value CLOSE_PAREN variable:var LARROW RECV host:host {:
+      RESULT = new ReceiveNode(var, host, debug_value);
+    :}
   ;
 
-stmt_complex ::=
-    ANNOTATION:annot {:
-      RESULT = new AnnotationNode(annot);
+block ::=
+    OPEN_BRACE stmt_list:slist CLOSE_BRACE {:
+      RESULT = new BlockNode(slist);
+    :}
+  ;
+
+stmt_list ::=
+    stmt_list:slist stmt:s {:
+      slist.add(s);
+      RESULT = slist;
     :}
 
-  | IF OPEN_PAREN expr:guard CLOSE_PAREN OPEN_BRACE block:bthen CLOSE_BRACE
-    ELSE OPEN_BRACE block:belse CLOSE_BRACE {:
-      RESULT = new IfNode(guard, bthen, belse);
-    :}
-
-  | IF OPEN_PAREN expr:guard CLOSE_PAREN OPEN_BRACE block:bthen CLOSE_BRACE {:
-      RESULT = new IfNode(guard, bthen, new SkipNode());
+  | /* empty */ {:
+        RESULT = new LinkedList<>();
     :}
   ;
 
 expr ::=
-    INT_LIT:ilit {:
-      RESULT = new IntegerLiteralNode(ilit);
+    value:value {:
+      RESULT = new LiteralNode(value);
     :}
 
-  | IDENT:id {:
-      RESULT = new ReadNode(new Variable(id));
+  | variable:var {:
+      RESULT = new ReadNode(var);
     :}
 
-  | TRUE {:
-      RESULT = new BooleanLiteralNode(true);
-    :}
-
-  | FALSE {:
-      RESULT = new BooleanLiteralNode(false);
-    :}
-
-  | expr:e1 PLUS expr:e2 {:
-      RESULT = new PlusNode(e1, e2);
+  | NOT expr:e {:
+      RESULT = new NotNode(e);
     :}
 
   | expr:e1 OROR expr:e2 {:
@@ -130,6 +122,14 @@ expr ::=
 
   | expr:e1 ANDAND expr:e2 {:
       RESULT = new AndNode(e1, e2);
+    :}
+
+  | expr:e1 EQ expr:e2 {:
+      RESULT = new EqualToNode(e1, e2);
+    :}
+
+  | expr:e1 NEQ expr:e2 {:
+      RESULT = new NotNode(new EqualToNode(e1, e2));
     :}
 
   | expr:e1 LT expr:e2 {:
@@ -148,16 +148,8 @@ expr ::=
       RESULT = new NotNode(new LessThanNode(e1, e2));
     :}
 
-  | expr:e1 EQ expr:e2 {:
-      RESULT = new EqualToNode(e1, e2);
-    :}
-
-  | expr:e1 NEQ expr:e2 {:
-      RESULT = new NotNode(new EqualToNode(e1, e2));
-    :}
-
-  | NOT expr:e {:
-      RESULT = new NotNode(e);
+  | expr:e1 PLUS expr:e2 {:
+      RESULT = new PlusNode(e1, e2);
     :}
 
   | DECLASSIFY OPEN_PAREN expr:e COMMA label:l CLOSE_PAREN {:
@@ -173,6 +165,20 @@ expr ::=
     :}
   ;
 
+value ::=
+    TRUE {:
+      RESULT = new BooleanValue(true);
+    :}
+
+  | FALSE {:
+      RESULT = new BooleanValue(false);
+    :}
+
+  | INT_LIT:ilit {:
+      RESULT = new IntegerValue(ilit);
+    :}
+  ;
+
 label ::=
     OPEN_BRACE CLOSE_BRACE {: RESULT = Label.bottom(); :}
 
@@ -182,16 +188,16 @@ label ::=
 label_expr ::=
     CAP_IDENT:id {: RESULT = new Label(new Principal(id)); :}
 
-  | BOTTOM {: RESULT = Label.bottom(); :}
-
   | TOP {: RESULT = Label.top(); :}
 
-  | label_expr:l1 AND label_expr:l2 {:
-      RESULT = l1.and(l2);
-    :}
+  | BOTTOM {: RESULT = Label.bottom(); :}
 
   | label_expr:l1 OR label_expr:l2 {:
       RESULT = l1.or(l2);
+    :}
+
+  | label_expr:l1 AND label_expr:l2 {:
+      RESULT = l1.and(l2);
     :}
 
   | label_expr:l RARROW {:
@@ -205,6 +211,10 @@ label_expr ::=
   | OPEN_PAREN label_expr:l CLOSE_PAREN {:
       RESULT = l;
     :}
+  ;
+
+variable ::=
+    IDENT:id  {: RESULT = new Variable(id); :}
   ;
 
 host ::=

@@ -1,5 +1,6 @@
 package edu.cornell.cs.apl.viaduct;
 
+import edu.cornell.cs.apl.viaduct.imp.ast.AstNode;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -15,8 +16,6 @@ import java.util.Stack;
  * by PDG node B
  */
 public class ProgramDependencyGraph<T extends AstNode> {
-  public enum ControlLabel { SEQ, THEN, ELSE }
-
   static final List<ControlLabel> labelOrder;
 
   static {
@@ -24,25 +23,6 @@ public class ProgramDependencyGraph<T extends AstNode> {
     labelOrder.add(ControlLabel.THEN);
     labelOrder.add(ControlLabel.ELSE);
     labelOrder.add(ControlLabel.SEQ);
-  }
-
-  static class ControlEdgeComparator implements Comparator<PdgControlEdge>, Serializable {
-    public int compare(PdgControlEdge e1, PdgControlEdge e2) {
-      if (e1 != null && e2 != null) {
-        int ind1 = labelOrder.indexOf(e1.getLabel());
-        int ind2 = labelOrder.indexOf(e2.getLabel());
-        return ind1 - ind2;
-
-      } else if (e1 == null && e2 != null) {
-        return 1;
-
-      } else if (e1 != null && e2 == null) {
-        return -1;
-
-      } else {
-        return 0;
-      }
-    }
   }
 
   HashSet<PdgNode<T>> nodes;
@@ -59,9 +39,10 @@ public class ProgramDependencyGraph<T extends AstNode> {
     return this.nodes;
   }
 
-  /** do a DFS traversal over control edges, which is
-  *   almost equivalent to traversing the control flow graph
-  *   of the original program. */
+  /**
+   * do a DFS traversal over control edges, which is almost equivalent to traversing the control
+   * flow graph of the original program.
+   */
   public List<PdgNode<T>> getOrderedNodesFrom(PdgNode<T> start) {
     ControlEdgeComparator edgeComparator = new ControlEdgeComparator();
 
@@ -83,7 +64,6 @@ public class ProgramDependencyGraph<T extends AstNode> {
     }
 
     return nodeList;
-
   }
 
   /** get PDG nodes ordered by control edges. */
@@ -119,5 +99,31 @@ public class ProgramDependencyGraph<T extends AstNode> {
     }
 
     return buf.toString();
+  }
+
+  public enum ControlLabel {
+    SEQ,
+    THEN,
+    ELSE
+  }
+
+  static class ControlEdgeComparator implements Comparator<PdgControlEdge>, Serializable {
+    @Override
+    public int compare(PdgControlEdge e1, PdgControlEdge e2) {
+      if (e1 != null && e2 != null) {
+        int ind1 = labelOrder.indexOf(e1.getLabel());
+        int ind2 = labelOrder.indexOf(e2.getLabel());
+        return ind1 - ind2;
+
+      } else if (e1 == null && e2 != null) {
+        return 1;
+
+      } else if (e1 != null && e2 == null) {
+        return -1;
+
+      } else {
+        return 0;
+      }
+    }
   }
 }

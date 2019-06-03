@@ -1,20 +1,21 @@
 package edu.cornell.cs.apl.viaduct;
 
-import edu.cornell.cs.apl.viaduct.imp.ast.StmtNode;
-
+import edu.cornell.cs.apl.viaduct.imp.HostTrustConfiguration;
+import edu.cornell.cs.apl.viaduct.imp.ast.AstNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.ProcessConfigurationNode;
+import edu.cornell.cs.apl.viaduct.imp.builders.ProcessConfigurationBuilder;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 /** given a protocol selection, instantiate a process configuration. */
 public class ProtocolInstantiation<T extends AstNode> {
-  private ProcessConfigBuilder getInstantiatedBuilder(
-      Set<Host> hostConfig, ProgramDependencyGraph<T> pdg,
-      Map<PdgNode<T>,Protocol<T>> protocolMap) {
+  private ProcessConfigurationBuilder getInstantiatedBuilder(
+      HostTrustConfiguration hostConfig,
+      ProgramDependencyGraph<T> pdg,
+      Map<PdgNode<T>, Protocol<T>> protocolMap) {
 
-    ProcessConfigBuilder pconfig = new ProcessConfigBuilder(hostConfig);
-    ProtocolInstantiationInfo<T> info =
-        new ProtocolInstantiationInfo<>(pconfig, protocolMap);
+    ProcessConfigurationBuilder pconfig = new ProcessConfigurationBuilder(hostConfig);
+    ProtocolInstantiationInfo<T> info = new ProtocolInstantiationInfo<>(pconfig, protocolMap);
 
     for (PdgNode<T> node : pdg.getOrderedNodes()) {
       if (node.isStartOfControlFork()) {
@@ -43,22 +44,13 @@ public class ProtocolInstantiation<T extends AstNode> {
     return pconfig;
   }
 
-  /** instantiate protocols for PDG nodes in the order given
-   *  by control edges b/w PDG nodes. */
-  public Map<Host,StmtNode> instantiateProtocolConfiguration(
-      Set<Host> hostConfig, ProgramDependencyGraph<T> pdg,
-      Map<PdgNode<T>,Protocol<T>> protocolMap) {
+  /** Instantiate protocols for PDG nodes in the order given by control edges b/w PDG nodes. */
+  public ProcessConfigurationNode instantiateProtocolConfiguration(
+      HostTrustConfiguration hostConfig,
+      ProgramDependencyGraph<T> pdg,
+      Map<PdgNode<T>, Protocol<T>> protocolMap) {
 
-    ProcessConfigBuilder pconfig = getInstantiatedBuilder(hostConfig, pdg, protocolMap);
-    return pconfig.generateProcessConfig();
-  }
-
-  /** generate a single program containing process configuration. */
-  public StmtNode instantiateProtocolSingleProgram(
-      Set<Host> hostConfig, ProgramDependencyGraph<T> pdg,
-      Map<PdgNode<T>,Protocol<T>> protocolMap) {
-
-    ProcessConfigBuilder pconfig = getInstantiatedBuilder(hostConfig, pdg, protocolMap);
-    return pconfig.generateSingleProgram();
+    ProcessConfigurationBuilder pconfig = getInstantiatedBuilder(hostConfig, pdg, protocolMap);
+    return pconfig.build();
   }
 }

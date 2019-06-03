@@ -1,5 +1,7 @@
 package edu.cornell.cs.apl.viaduct;
 
+import edu.cornell.cs.apl.viaduct.imp.HostTrustConfiguration;
+import edu.cornell.cs.apl.viaduct.imp.ast.AstNode;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -19,7 +21,7 @@ public class ProtocolSelection<T extends AstNode> {
    * selection
    */
   public Map<PdgNode<T>, Protocol<T>> selectProtocols(
-      Set<Host> hostConfig, ProgramDependencyGraph<T> pdg) {
+      HostTrustConfiguration hostConfig, ProgramDependencyGraph<T> pdg) {
     Set<PdgNode<T>> nodes = pdg.getNodes();
     Set<Protocol<T>> protocols = costEstimator.getProtocols();
 

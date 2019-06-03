@@ -193,7 +193,7 @@ public class PrintVisitor implements AstVisitor<Void> {
     addIndentation();
 
     buffer.append(receiveNode.getVariable());
-    buffer.append(" <- ");
+    buffer.append(" <- recv ");
     buffer.append(receiveNode.getSender());
 
     buffer.append(';');

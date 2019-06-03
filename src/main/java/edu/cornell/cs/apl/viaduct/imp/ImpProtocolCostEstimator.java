@@ -17,8 +17,8 @@ public final class ImpProtocolCostEstimator extends ProtocolCostEstimator<ImpAst
 
   {
     protocols.add(ImpProtocols.Single.getRepresentative());
-    /*
     protocols.add(ImpProtocols.Replication.getRepresentative());
+    /*
     protocols.add(ImpProtocols.ZK.getRepresentative());
     */
     protocols.add(ImpProtocols.MPC.getRepresentative());

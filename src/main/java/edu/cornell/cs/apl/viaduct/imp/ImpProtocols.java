@@ -9,6 +9,7 @@ import edu.cornell.cs.apl.viaduct.PdgNode;
 import edu.cornell.cs.apl.viaduct.PdgReadEdge;
 import edu.cornell.cs.apl.viaduct.PdgStorageNode;
 import edu.cornell.cs.apl.viaduct.PdgWriteEdge;
+import edu.cornell.cs.apl.viaduct.PowersetIterator;
 import edu.cornell.cs.apl.viaduct.Protocol;
 import edu.cornell.cs.apl.viaduct.ProtocolInstantiationInfo;
 import edu.cornell.cs.apl.viaduct.imp.ast.AssignNode;
@@ -332,42 +333,15 @@ public class ImpProtocols {
         PdgNode<ImpAstNode> node) {
 
       Set<Protocol<ImpAstNode>> instances = new HashSet<>();
-      if (hostConfig.size() >= 2
-          && (node.isStorageNode() || node.isEndorseNode() || !node.isDowngradeNode())) {
-
-        // assume for now that there are only two hosts
-        // generalize this later
-        Host[] hostPair = new Host[2];
-        int i = 0;
-        for (Host host : hostConfig.hosts()) {
-          hostPair[i] = host;
-          i++;
-          if (i == hostPair.length) {
-            break;
-          }
-        }
-
-        /*
-        Set<Host> host1Set = new HashSet<Host>();
-        host1Set.add(hostPair[0]);
-        Set<Host> host2Set = new HashSet<Host>();
-        host2Set.add(hostPair[1]);
-        */
-        Set<Host> host12Set = new HashSet<Host>();
-        host12Set.add(hostPair[0]);
-        host12Set.add(hostPair[1]);
-
-        Set<ReplicaSets> possibleInstances = new HashSet<>();
-        possibleInstances.add(new ReplicaSets(host12Set, new HashSet<Host>()));
-        // possibleInstances.add(new ReplicaSets(host1Set, host2Set));
-        // possibleInstances.add(new ReplicaSets(host2Set, host1Set));
-
+      if (node.isStorageNode() || node.isEndorseNode() || !node.isDowngradeNode()) {
         Label nInLabel = node.getInLabel();
 
-        for (ReplicaSets possibleInstance : possibleInstances) {
+        PowersetIterator<Host> hostPowerset = new PowersetIterator<Host>(hostConfig.hostSet());
+        for (Set<Host> hostSet : hostPowerset) {
           Label rLabel = Label.top();
-          Label rhLabel = Label.top();
 
+          /*
+          Label rhLabel = Label.top();
           for (Host real : possibleInstance.realReplicas) {
             rLabel = rLabel.meet(hostConfig.getTrust(real));
             rhLabel = rhLabel.meet(hostConfig.getTrust(real));
@@ -375,16 +349,21 @@ public class ImpProtocols {
           for (Host hash : possibleInstance.hashReplicas) {
             rhLabel = rhLabel.meet(hostConfig.getTrust(hash));
           }
+          */
+
+          for (Host real : hostSet) {
+            rLabel = rLabel.meet(hostConfig.getTrust(real));
+          }
 
           if (nInLabel.confidentiality().flowsTo(rLabel.confidentiality())
-              && rhLabel.integrity().flowsTo(nInLabel.integrity())
+              && rLabel.integrity().flowsTo(nInLabel.integrity())
+              && hostSet.size() > 1) {
               // control nodes can't be hash replicated!
-              && !(node.isControlNode() && possibleInstance.hashReplicas.size() > 0)
+              // && !(node.isControlNode() && possibleInstance.hashReplicas.size() > 0)
               // has to be more than 1 replica to actually be replicated
-              && possibleInstance.realReplicas.size() + possibleInstance.hashReplicas.size() > 1) {
+              // && possibleInstance.realReplicas.size() + possibleInstance.hashReplicas.size() > 1) {
 
-            instances.add(
-                new Replication(possibleInstance.realReplicas, possibleInstance.hashReplicas));
+            instances.add(new Replication(hostSet, new HashSet<>()));
           }
         }
       }
@@ -599,14 +578,18 @@ public class ImpProtocols {
       }
 
       if (node.isDeclassifyNode() && noInputFlow) {
-        Label hsLabel = Label.top();
-        for (Host h : hostConfig.hosts()) {
-          hsLabel = hsLabel.meet(hostConfig.getTrust(h));
-        }
+        PowersetIterator<Host> hostPowerset = new PowersetIterator<>(hostConfig.hostSet());
+        for (Set<Host> hostSet : hostPowerset) {
+          if (hostSet.size() > 1) {
+            Label hsLabel = Label.top();
+            for (Host h : hostSet) {
+              hsLabel = hsLabel.meet(hostConfig.getTrust(h));
+            }
 
-        if (nOutLabel.confidentiality().flowsTo(hsLabel.confidentiality())) {
-          Set<Host> hosts = io.vavr.collection.HashSet.ofAll(hostConfig.hosts()).toJavaSet();
-          instances.add(new MPC(hosts));
+            if (nOutLabel.confidentiality().flowsTo(hsLabel.confidentiality())) {
+              instances.add(new MPC(hostSet));
+            }
+          }
         }
       }
 

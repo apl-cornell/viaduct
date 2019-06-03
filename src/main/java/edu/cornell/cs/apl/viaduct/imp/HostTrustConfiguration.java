@@ -7,6 +7,7 @@ import io.vavr.collection.SortedMap;
 import io.vavr.collection.TreeMap;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
+import java.util.Set;
 
 /**
  * Associates each host with a label that determines maximum trust that can be placed in that host.
@@ -28,6 +29,10 @@ public class HostTrustConfiguration implements Iterable<Tuple2<Host, Label>> {
   /** Return a list of all hosts in the configuration. */
   public Iterable<Host> hosts() {
     return this.trustLevels.keySet();
+  }
+
+  public Set<Host> hostSet() {
+    return this.trustLevels.keySet().toJavaSet();
   }
 
   /** Return the number of hosts in the configuration. */

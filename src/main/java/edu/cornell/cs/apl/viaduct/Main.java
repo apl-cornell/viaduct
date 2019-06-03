@@ -134,7 +134,7 @@ public class Main {
       ProcessConfigurationNode targetProg =
           instantiator.instantiateProtocolConfiguration(hostConfig, pdg, protocolMap);
       PrintVisitor printer = new PrintVisitor();
-      System.out.println(targetProg.accept(printer));
+      System.out.println(printer.run(targetProg));
 
     } else {
       System.out.println("PDG information:");

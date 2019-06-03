@@ -5,9 +5,8 @@ import java.util.Iterator;
 import java.util.Set;
 import java.util.TreeSet;
 
-/**
- * @author st0le
- * https://stackoverflow.com/a/3078491
+/** iterates through powerset of a set (see https://stackoverflow.com/a/3078491).
+ *  @author st0le
  */
 public class PowersetIterator<E> implements Iterator<Set<E>>, Iterable<Set<E>> {
   private E[] arr = null;

@@ -25,14 +25,14 @@ public class MPCFactory implements ProtocolFactory<ImpAstNode> {
     Set<Protocol<ImpAstNode>> instances = new HashSet<>();
 
     Set<PdgNode<ImpAstNode>> inNodes = new HashSet<>();
-    for (PdgInfoEdge<ImpAstNode> edge : node.getInInfoEdges()) {
+    for (PdgInfoEdge<ImpAstNode> edge : node.getReadEdges()) {
       PdgNode<ImpAstNode> source = edge.getSource();
       if (!source.isControlNode()) {
         inNodes.add(source);
       }
     }
-    Label nOutLabel = node.getOutLabel();
 
+    Label nOutLabel = node.getOutLabel();
     boolean noInputFlow = true;
     for (PdgNode<ImpAstNode> inNode : inNodes) {
       if (inNode.getOutLabel().confidentiality().flowsTo(nOutLabel.confidentiality())) {
@@ -41,21 +41,48 @@ public class MPCFactory implements ProtocolFactory<ImpAstNode> {
       }
     }
 
-    if (node.isDeclassifyNode() && noInputFlow) {
-      PowersetIterator<Host> hostPowerset = new PowersetIterator<>(hostConfig.hostSet());
-      for (Set<Host> hostSet : hostPowerset) {
-        if (hostSet.size() > 1) {
-          Label hsLabel = Label.top();
-          for (Host h : hostSet) {
-            hsLabel = hsLabel.meet(hostConfig.getTrust(h));
-          }
+    if (!node.isDeclassifyNode() || !noInputFlow) {
+      return instances;
+    }
 
-          if (nOutLabel.confidentiality().flowsTo(hsLabel.confidentiality())) {
-            instances.add(new MPC(hostSet));
-          }
+    Set<Host> inHosts = new HashSet<>();
+    for (PdgNode<ImpAstNode> inNode : inNodes) {
+      Protocol<ImpAstNode> inProto = protocolMap.get(inNode);
+      if (inProto instanceof Single) {
+        inHosts.addAll(inProto.getHosts());
+
+      } else  {
+        return instances;
+      }
+    }
+
+    if (inHosts.size() <= 1) {
+      return instances;
+    }
+
+    Label hsLabel = Label.top();
+    for (Host h : inHosts) {
+      hsLabel = hsLabel.meet(hostConfig.getTrust(h));
+    }
+
+    if (nOutLabel.confidentiality().flowsTo(hsLabel.confidentiality())) {
+      instances.add(new MPC(inHosts));
+    }
+    /*
+    PowersetIterator<Host> hostPowerset = new PowersetIterator<>(hostConfig.hostSet());
+    for (Set<Host> hostSet : hostPowerset) {
+      if (hostSet.size() > 1) {
+        Label hsLabel = Label.top();
+        for (Host h : hostSet) {
+          hsLabel = hsLabel.meet(hostConfig.getTrust(h));
+        }
+
+        if (nOutLabel.confidentiality().flowsTo(hsLabel.confidentiality())) {
+          instances.add(new MPC(hostSet));
         }
       }
     }
+    */
 
     return instances;
   }

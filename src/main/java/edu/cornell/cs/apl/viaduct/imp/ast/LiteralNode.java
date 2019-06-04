@@ -21,6 +21,11 @@ public final class LiteralNode extends ExpressionNode {
   }
 
   @Override
+  public String toString() {
+    return this.value.toString();
+  }
+
+  @Override
   public boolean equals(Object o) {
     if (this == o) {
       return true;

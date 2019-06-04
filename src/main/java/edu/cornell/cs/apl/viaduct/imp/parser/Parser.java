@@ -6,6 +6,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.io.StringReader;
 import java.nio.charset.StandardCharsets;
 import java_cup.runtime.ComplexSymbolFactory;
 import java_cup.runtime.Scanner;
@@ -18,6 +19,11 @@ public class Parser {
         new BufferedReader(
             new InputStreamReader(new FileInputStream(source), StandardCharsets.UTF_8));
     return parse(reader);
+  }
+
+  /** Parse the given string and return the AST. */
+  public static ImpAstNode parse(String source) throws Exception {
+    return parse(new StringReader(source));
   }
 
   /** Parse the given input stream and return the AST. */

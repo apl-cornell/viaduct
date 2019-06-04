@@ -30,7 +30,7 @@ terminal TOP, BOTTOM, OR, AND, RARROW, LARROW;
 terminal PLUS;
 // terminal PLUS, MINUS, TIMES, DIVIDE;
 
-terminal DECLASSIFY, ENDORSE;
+terminal DECLASSIFY, ENDORSE, DOWNGRADE;
 
 terminal OPEN_BRACE, CLOSE_BRACE, SEMICOLON, OPEN_PAREN, CLOSE_PAREN, COMMA;
 
@@ -139,6 +139,10 @@ expr ::=
     :}
 
   | ENDORSE OPEN_PAREN expr:e COMMA label:l CLOSE_PAREN {:
+      RESULT = new DowngradeNode(e, l);
+    :}
+
+  | DOWNGRADE OPEN_PAREN expr:e COMMA label:l CLOSE_PAREN {:
       RESULT = new DowngradeNode(e, l);
     :}
 

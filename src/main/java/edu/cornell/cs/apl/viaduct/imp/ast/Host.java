@@ -4,16 +4,10 @@ import java.util.Objects;
 
 /** An abstract location or actor that can send and receive messages. */
 public final class Host implements Comparable<Host> {
-  private static final Host DEFAULT_HOST = new Host("__DEFAULT__");
   private final String name;
 
   public Host(String name) {
     this.name = Objects.requireNonNull(name);
-  }
-
-  // TODO: Rolph: remove this once protocol selection doesn't depend on it.
-  public static Host getDefault() {
-    return DEFAULT_HOST;
   }
 
   @Override

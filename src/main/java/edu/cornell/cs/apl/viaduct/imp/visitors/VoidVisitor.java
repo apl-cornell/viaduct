@@ -1,6 +1,7 @@
 package edu.cornell.cs.apl.viaduct.imp.visitors;
 
 import edu.cornell.cs.apl.viaduct.imp.ast.ArrayDeclarationNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.AssertNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.AssignNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.BinaryExpressionNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.BlockNode;
@@ -101,6 +102,12 @@ public class VoidVisitor implements AstVisitor<Void> {
     for (Tuple2<Host, StmtNode> process : processConfigurationNode) {
       process._2.accept(this);
     }
+    return null;
+  }
+
+  @Override
+  public Void visit(AssertNode assertNode) {
+    assertNode.getExpression().accept(this);
     return null;
   }
 }

@@ -1,6 +1,7 @@
 package edu.cornell.cs.apl.viaduct.imp.visitors;
 
 import edu.cornell.cs.apl.viaduct.imp.ast.ArrayDeclarationNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.AssertNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.AssignNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.BinaryExpressionNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.BlockNode;
@@ -115,5 +116,11 @@ public abstract class IdentityVisitor
       newConfiguration.add(Tuple.of(process._1, process._2.accept(this)));
     }
     return new ProcessConfigurationNode(newConfiguration);
+  }
+
+  @Override
+  public StmtNode visit(AssertNode assertNode) {
+    ExpressionNode newExpr = assertNode.getExpression().accept(this);
+    return new AssertNode(newExpr);
   }
 }

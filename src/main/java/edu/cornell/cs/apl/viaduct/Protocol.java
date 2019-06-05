@@ -1,6 +1,5 @@
 package edu.cornell.cs.apl.viaduct;
 
-import edu.cornell.cs.apl.viaduct.imp.ast.AstNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.Host;
 import java.util.Map;
 import java.util.Set;

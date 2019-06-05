@@ -1,6 +1,7 @@
 package edu.cornell.cs.apl.viaduct.imp.visitors;
 
 import edu.cornell.cs.apl.viaduct.imp.ast.ArrayDeclarationNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.AssertNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.AssignNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.BlockNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.DeclarationNode;
@@ -23,4 +24,6 @@ public interface StmtVisitor<R> {
   R visit(IfNode ifNode);
 
   R visit(BlockNode blockNode);
+
+  R visit(AssertNode assertNode);
 }

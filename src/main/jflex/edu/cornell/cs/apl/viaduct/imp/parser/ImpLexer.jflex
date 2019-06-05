@@ -85,6 +85,7 @@ ANY         = .*
   "to"            { return symbol(sym.TO); }
   "recv"          { return symbol(sym.RECV); }
   "from"          { return symbol(sym.FROM); }
+  "assert"          { return symbol(sym.ASSERT); }
 
   /* Expressions */
   "true"          { return symbol(sym.TRUE); }

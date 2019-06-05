@@ -1,7 +1,6 @@
 package edu.cornell.cs.apl.viaduct;
 
 import edu.cornell.cs.apl.viaduct.imp.HostTrustConfiguration;
-import edu.cornell.cs.apl.viaduct.imp.ast.AstNode;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;

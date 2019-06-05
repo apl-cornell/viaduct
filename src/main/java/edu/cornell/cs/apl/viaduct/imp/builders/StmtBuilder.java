@@ -1,6 +1,7 @@
 package edu.cornell.cs.apl.viaduct.imp.builders;
 
 import edu.cornell.cs.apl.viaduct.ProgramDependencyGraph.ControlLabel;
+import edu.cornell.cs.apl.viaduct.imp.ast.AssertNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.AssignNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.BlockNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.DeclarationNode;
@@ -119,16 +120,26 @@ public class StmtBuilder {
     return this;
   }
 
+  /** build assertion stmt. */
+  public StmtBuilder assertion(ExpressionNode assertExpr) {
+    StmtNode assertNode = new AssertNode(assertExpr);
+    this.stmts.add(assertNode);
+    return this;
+  }
+
+  /** build generic stmt. */
   public StmtBuilder statement(StmtNode stmt) {
     this.stmts.add(stmt);
     return this;
   }
 
+  /** concat two builders together. */
   public StmtBuilder concat(StmtBuilder other) {
     this.stmts.addAll(other.stmts);
     return this;
   }
 
+  /** control context information. */
   private abstract static class ControlInfo {
     final List<StmtNode> prefix;
     final Map<ControlLabel, StmtNode> pathMap;
@@ -158,6 +169,7 @@ public class StmtBuilder {
     public abstract StmtNode buildControlStructure();
   }
 
+  /** control context info about if statements. */
   private static class ConditionalControlInfo extends ControlInfo {
     final ExpressionNode guard;
 

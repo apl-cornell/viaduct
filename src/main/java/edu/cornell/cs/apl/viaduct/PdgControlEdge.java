@@ -1,7 +1,6 @@
 package edu.cornell.cs.apl.viaduct;
 
 import edu.cornell.cs.apl.viaduct.ProgramDependencyGraph.ControlLabel;
-import edu.cornell.cs.apl.viaduct.imp.ast.AstNode;
 
 /* represents control flow relationship between nodes. */
 public class PdgControlEdge<T extends AstNode> extends PdgEdge<T> {

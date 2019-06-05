@@ -1,7 +1,6 @@
 package edu.cornell.cs.apl.viaduct;
 
 import edu.cornell.cs.apl.viaduct.ProgramDependencyGraph.ControlLabel;
-import edu.cornell.cs.apl.viaduct.imp.ast.AstNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.Host;
 import edu.cornell.cs.apl.viaduct.imp.ast.Variable;
 import edu.cornell.cs.apl.viaduct.imp.builders.ProcessConfigurationBuilder;

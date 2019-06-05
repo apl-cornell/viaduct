@@ -1,7 +1,6 @@
 package edu.cornell.cs.apl.viaduct;
 
 import edu.cornell.cs.apl.viaduct.imp.HostTrustConfiguration;
-import edu.cornell.cs.apl.viaduct.imp.ast.AstNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ProcessConfigurationNode;
 import edu.cornell.cs.apl.viaduct.imp.builders.ProcessConfigurationBuilder;
 import java.util.List;

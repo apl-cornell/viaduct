@@ -1,6 +1,7 @@
 package edu.cornell.cs.apl.viaduct.imp.visitors;
 
 import edu.cornell.cs.apl.viaduct.imp.ast.ArrayDeclarationNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.AssertNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.AssignNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.BinaryExpressionNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.BlockNode;
@@ -219,6 +220,16 @@ public class PrintVisitor implements AstVisitor<Void> {
       first = false;
     }
 
+    return null;
+  }
+
+  @Override
+  public Void visit(AssertNode assertNode) {
+    addIndentation();
+
+    buffer.append("assert ");
+    assertNode.getExpression().accept(this);
+    buffer.append(';');
     return null;
   }
 }

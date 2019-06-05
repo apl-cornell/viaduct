@@ -1,6 +1,7 @@
 package edu.cornell.cs.apl.viaduct.imp.interpreter;
 
 import edu.cornell.cs.apl.viaduct.imp.ast.ArrayDeclarationNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.AssertNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.AssignNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.BinaryExpressionNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.BlockNode;
@@ -181,6 +182,23 @@ class InterpretProcessVisitor implements ExprVisitor<ImpValue>, StmtVisitor<Void
     for (StmtNode stmt : blockNode) {
       stmt.accept(this);
     }
+    return null;
+  }
+
+  @Override
+  public Void visit(AssertNode assertNode) {
+    ExpressionNode assertExpr = assertNode.getExpression();
+    ImpValue assertVal = assertExpr.accept(this);
+
+    if (assertVal instanceof BooleanValue) {
+      BooleanValue assertBoolVal = (BooleanValue)assertVal;
+      if (!assertBoolVal.getValue()) {
+        throw new Error(new AssertionFailureException(assertExpr));
+      }
+    } else {
+      throw new Error("Assertion expression is not a boolean: " + assertExpr);
+    }
+
     return null;
   }
 }

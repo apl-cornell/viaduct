@@ -20,6 +20,7 @@ terminal String IDENT, CAP_IDENT;
 terminal Integer INT_LIT;
 terminal TRUE, FALSE;
 
+terminal ASSERT;
 terminal COLON, ASSIGN;
 terminal IF, ELSE, SEND, TO, RECV, FROM, HOST;
 
@@ -85,6 +86,10 @@ stmt_basic ::=
 
   | DEBUG_VALUE OPEN_PAREN expr:debug_value CLOSE_PAREN variable:var LARROW RECV host:host {:
       RESULT = new ReceiveNode(var, host, debug_value);
+    :}
+
+  | ASSERT expr:e {:
+      RESULT = new AssertNode(e);
     :}
   ;
 

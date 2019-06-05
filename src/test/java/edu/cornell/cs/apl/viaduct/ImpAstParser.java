@@ -1,6 +1,5 @@
 package edu.cornell.cs.apl.viaduct;
 
-import edu.cornell.cs.apl.viaduct.imp.ast.AstNode;
 import edu.cornell.cs.apl.viaduct.imp.parser.Parser;
 import java.io.File;
 import org.junit.jupiter.api.extension.ParameterContext;

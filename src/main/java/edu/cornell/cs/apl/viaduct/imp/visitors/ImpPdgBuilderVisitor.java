@@ -15,6 +15,7 @@ import edu.cornell.cs.apl.viaduct.ProgramDependencyGraph.ControlLabel;
 import edu.cornell.cs.apl.viaduct.SymbolTable;
 import edu.cornell.cs.apl.viaduct.UndeclaredVariableException;
 import edu.cornell.cs.apl.viaduct.imp.ast.ArrayDeclarationNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.AssertNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.AssignNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.BinaryExpressionNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.BlockNode;
@@ -298,5 +299,10 @@ public class ImpPdgBuilderVisitor implements AstVisitor<PdgBuilderInfo<ImpAstNod
   @Override
   public PdgBuilderInfo<ImpAstNode> visit(ProcessConfigurationNode processConfigurationNode) {
     throw new Error("Cannot build PDGs out of process configurations.");
+  }
+
+  @Override
+  public PdgBuilderInfo<ImpAstNode> visit(AssertNode assertNode) {
+    return new PdgBuilderInfo<>();
   }
 }

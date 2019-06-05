@@ -1,6 +1,7 @@
 package edu.cornell.cs.apl.viaduct.imp.visitors;
 
 import edu.cornell.cs.apl.viaduct.imp.ast.ArrayDeclarationNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.AssertNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.AssignNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.BinaryExpressionNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.BlockNode;
@@ -96,5 +97,10 @@ public class SizeVisitor implements AstVisitor<Integer> {
       size += process._2().accept(this);
     }
     return size;
+  }
+
+  @Override
+  public Integer visit(AssertNode assertNode) {
+    return 1 + assertNode.getExpression().accept(this);
   }
 }

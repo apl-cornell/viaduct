@@ -7,10 +7,10 @@ import edu.cornell.cs.apl.viaduct.Protocol;
 import edu.cornell.cs.apl.viaduct.ProtocolInstantiationInfo;
 import edu.cornell.cs.apl.viaduct.imp.ast.Host;
 import edu.cornell.cs.apl.viaduct.imp.ast.ImpAstNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.ProcessName;
 import edu.cornell.cs.apl.viaduct.imp.ast.Variable;
 import edu.cornell.cs.apl.viaduct.imp.builders.ExpressionBuilder;
 import edu.cornell.cs.apl.viaduct.imp.builders.StmtBuilder;
-
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -27,21 +27,19 @@ public class MPC extends Cleartext implements Protocol<ImpAstNode> {
 
   @Override
   public Set<Host> getHosts() {
-    Set<Host> hosts = new HashSet<>();
-    hosts.addAll(this.parties);
-    return hosts;
+    return new HashSet<>(this.parties);
   }
 
   @Override
-  public Set<Host> readFrom(PdgNode<ImpAstNode> node, Host readHost,
-      ProtocolInstantiationInfo<ImpAstNode> info) {
+  public Set<Host> readFrom(
+      PdgNode<ImpAstNode> node, Host readHost, ProtocolInstantiationInfo<ImpAstNode> info) {
 
     // this should not be read from until it has been instantiated!
     assert this.outVar != null;
 
     ExpressionBuilder e = new ExpressionBuilder();
     StmtBuilder builder = info.getBuilder(this.synthesizedHost);
-    builder.send(readHost, e.var(this.outVar));
+    builder.send(new ProcessName(readHost), e.var(this.outVar));
 
     Set<Host> hosts = new HashSet<>();
     hosts.add(this.synthesizedHost);
@@ -49,8 +47,10 @@ public class MPC extends Cleartext implements Protocol<ImpAstNode> {
   }
 
   @Override
-  public Binding<ImpAstNode> readPostprocess(Map<Host, Binding<ImpAstNode>> hostBindings,
-      Host host, ProtocolInstantiationInfo<ImpAstNode> info) {
+  public Binding<ImpAstNode> readPostprocess(
+      Map<Host, Binding<ImpAstNode>> hostBindings,
+      Host host,
+      ProtocolInstantiationInfo<ImpAstNode> info) {
 
     // because this is the Single protocol, there should only
     // have been one host that the node read from
@@ -59,7 +59,10 @@ public class MPC extends Cleartext implements Protocol<ImpAstNode> {
   }
 
   @Override
-  public void writeTo(PdgNode<ImpAstNode> node, Host h, ImpAstNode val,
+  public void writeTo(
+      PdgNode<ImpAstNode> node,
+      Host h,
+      ImpAstNode val,
       ProtocolInstantiationInfo<ImpAstNode> info) {
 
     // MPC is only for computations, so it cannot be written to!

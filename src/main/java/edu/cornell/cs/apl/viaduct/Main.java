@@ -2,10 +2,9 @@ package edu.cornell.cs.apl.viaduct;
 
 import edu.cornell.cs.apl.viaduct.imp.HostTrustConfiguration;
 import edu.cornell.cs.apl.viaduct.imp.ImpProtocolCostEstimator;
-import edu.cornell.cs.apl.viaduct.imp.ast.Host;
 import edu.cornell.cs.apl.viaduct.imp.ast.ImpAstNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.ProcessConfigurationNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.StmtNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.ProcessName;
+import edu.cornell.cs.apl.viaduct.imp.ast.ProgramNode;
 import edu.cornell.cs.apl.viaduct.imp.interpreter.Interpreter;
 import edu.cornell.cs.apl.viaduct.imp.interpreter.Store;
 import edu.cornell.cs.apl.viaduct.imp.parser.Parser;
@@ -16,6 +15,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import net.sourceforge.argparse4j.ArgumentParsers;
 import net.sourceforge.argparse4j.impl.Arguments;
@@ -30,7 +30,7 @@ public class Main {
     try {
       if (filename != null) {
         File file = new File(filename);
-        writer = new OutputStreamWriter(new FileOutputStream(file), "UTF-8");
+        writer = new OutputStreamWriter(new FileOutputStream(file), StandardCharsets.UTF_8);
         writer.write(output);
 
       } else {
@@ -38,16 +38,14 @@ public class Main {
       }
 
     } catch (Exception e) {
-      System.out.println(e);
-
+      throw new Error(e);
     } finally {
       try {
         if (writer != null) {
           writer.close();
         }
-
       } catch (Exception e) {
-        System.out.println(e);
+        e.printStackTrace();
       }
     }
   }
@@ -60,10 +58,7 @@ public class Main {
             .defaultHelp(true)
             .description("Optimizing, extensible MPC compiler.");
     argp.addArgument("file").help("source file to compile");
-    argp.addArgument("-hc", "--host")
-        .nargs("?")
-        .setDefault("hosts.conf")
-        .help("host configuration file");
+    argp.addArgument("-hc", "--host").nargs("?").help("host configuration file");
     argp.addArgument("-i", "--interpret")
         .action(Arguments.storeTrue())
         .help("interpret surface program");
@@ -76,33 +71,35 @@ public class Main {
     argp.addArgument("-ppdg", "--protograph")
         .action(Arguments.storeTrue())
         .help("output PDG with synthesized protocol information");
-    argp.addArgument("-f", "--outfile")
-        .help("output file");
+    argp.addArgument("-f", "--outfile").help("output file");
 
-    Namespace ns;
+    final Namespace ns;
     try {
       ns = argp.parseArgs(args);
     } catch (ArgumentParserException e) {
       argp.handleError(e);
       System.out.println(e.getMessage());
+      System.exit(-1);
       return;
     }
 
-    HostTrustConfiguration hostConfig;
+    final ProgramNode program;
     try {
-      String hostFile = ns.getString("host");
-      hostConfig = TrustConfigurationParser.parse(new File(hostFile));
-    } catch (Exception e) {
-      System.out.println(e.getMessage());
-      return;
-    }
+      final String hostFile = ns.getString("host");
+      final HostTrustConfiguration parsedHostConfig;
+      if (hostFile != null) {
+        parsedHostConfig = TrustConfigurationParser.parse(new File(hostFile));
+      } else {
+        parsedHostConfig = HostTrustConfiguration.builder().build();
+      }
 
-    ImpAstNode program;
-    try {
-      String sourceFile = ns.getString("file");
-      program = Parser.parse(new File(sourceFile));
+      final String programFile = ns.getString("file");
+      final ProgramNode parsedProgram = Parser.parse(new File(programFile));
+
+      program = ProgramNode.builder().addAll(parsedProgram).addHosts(parsedHostConfig).build();
     } catch (Exception e) {
       System.out.println(e.getMessage());
+      System.exit(-1);
       return;
     }
 
@@ -114,27 +111,17 @@ public class Main {
 
     // Interpret
     if (ns.getBoolean("interpret")) {
-      Interpreter interpreter = new Interpreter();
-      if (program instanceof StmtNode) {
-        Store store = interpreter.run((StmtNode) program);
-        System.out.println(store);
-      } else if (program instanceof ProcessConfigurationNode) {
-        Map<Host, Store> stores = interpreter.run((ProcessConfigurationNode) program);
-        for (Map.Entry<Host, Store> entry : stores.entrySet()) {
-          System.out.println("host " + entry.getKey() + ":");
-          System.out.println(entry.getValue());
-          System.out.println();
-        }
+      Map<ProcessName, Store> stores = new Interpreter().run(program);
+      for (Map.Entry<ProcessName, Store> entry : stores.entrySet()) {
+        System.out.println("process " + entry.getKey() + ":");
+        System.out.println(entry.getValue());
+        System.out.println();
       }
       return;
     }
 
-    if (!(program instanceof StmtNode)) {
-      return;
-    }
-
     ProgramDependencyGraph<ImpAstNode> pdg =
-        new ImpPdgBuilderVisitor().generatePDG((StmtNode) program);
+        new ImpPdgBuilderVisitor().generatePDG(program.getProcessCode(ProcessName.getMain()));
 
     // run data-flow analysis to compute labels for all PDG nodes
     PdgLabelDataflow<ImpAstNode> labelDataFlow = new PdgLabelDataflow<>();
@@ -151,7 +138,7 @@ public class Main {
     ImpProtocolCostEstimator costEstimator = new ImpProtocolCostEstimator();
     ProtocolSelection<ImpAstNode> protoSelection = new ProtocolSelection<>(costEstimator);
     Map<PdgNode<ImpAstNode>, Protocol<ImpAstNode>> protocolMap =
-        protoSelection.selectProtocols(hostConfig, pdg);
+        protoSelection.selectProtocols(program.getHostTrustConfiguration(), pdg);
     int protocolCost = costEstimator.estimatePdgCost(protocolMap, pdg);
 
     // generate DOT graph of protocol selection
@@ -164,8 +151,9 @@ public class Main {
     // protocol synthesized!
     if (pdg.getNodes().size() == protocolMap.size()) {
       ProtocolInstantiation<ImpAstNode> instantiator = new ProtocolInstantiation<>();
-      ProcessConfigurationNode targetProg =
-          instantiator.instantiateProtocolConfiguration(hostConfig, pdg, protocolMap);
+      ProgramNode targetProg =
+          instantiator.instantiateProtocolConfiguration(
+              program.getHostTrustConfiguration(), pdg, protocolMap);
       PrintVisitor printer = new PrintVisitor();
       printOrDumpToFile(ns.getString("outfile"), printer.run(targetProg));
 
@@ -197,6 +185,7 @@ public class Main {
         System.out.println("\nProtocol cost: " + protocolCost);
       } else {
         System.out.println("\nCould not synthesize protocol!");
+        System.exit(-1);
       }
     }
   }

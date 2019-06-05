@@ -3,46 +3,28 @@ package edu.cornell.cs.apl.viaduct.imp.ast;
 import edu.cornell.cs.apl.viaduct.imp.visitors.StmtVisitor;
 import java.util.Objects;
 
-/** Receive value from a host. */
+/** Receive a value from a host. */
 public final class ReceiveNode extends StmtNode {
   private final Variable var;
-  private final Host sender;
-
-  /**
-   * Receive the value of this expression during interpretation (if not {@code null}) instead of
-   * waiting for a message from {@code sender}.
-   *
-   * <p>Specified using annotations in the source code. Used for debugging purposes.
-   */
-  private final ExpressionNode debugReceivedValue;
-
-  public ReceiveNode(Variable variable, Host sender) {
-    this(variable, sender, null);
-  }
+  private final ProcessName sender;
 
   /**
    * Receive a value from {@code sender} and store it in {@code variable}.
    *
    * @param variable variable to store the received value in
-   * @param sender host to receive the value from
-   * @param debugReceivedValue the value to use during debugging which sidesteps communication
+   * @param sender process to receive the value from
    */
-  public ReceiveNode(Variable variable, Host sender, ExpressionNode debugReceivedValue) {
+  public ReceiveNode(Variable variable, ProcessName sender) {
     this.var = Objects.requireNonNull(variable);
     this.sender = Objects.requireNonNull(sender);
-    this.debugReceivedValue = debugReceivedValue;
   }
 
-  public Host getSender() {
+  public ProcessName getSender() {
     return this.sender;
   }
 
   public Variable getVariable() {
     return this.var;
-  }
-
-  public ExpressionNode getDebugReceivedValue() {
-    return this.debugReceivedValue;
   }
 
   @Override

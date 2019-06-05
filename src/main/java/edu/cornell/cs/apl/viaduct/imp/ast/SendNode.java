@@ -5,15 +5,21 @@ import java.util.Objects;
 
 /** Send the value of an expression to a host. */
 public final class SendNode extends StmtNode {
-  private final Host recipient;
+  private final ProcessName recipient;
   private final ExpressionNode sentExpression;
 
-  public SendNode(Host host, ExpressionNode sentExpression) {
+  /**
+   * Send the value of {@code sentExpression} to {@code recipient}.
+   *
+   * @param recipient process to send the value to
+   * @param sentExpression the value to send
+   */
+  public SendNode(ProcessName recipient, ExpressionNode sentExpression) {
     this.sentExpression = Objects.requireNonNull(sentExpression);
-    this.recipient = Objects.requireNonNull(host);
+    this.recipient = Objects.requireNonNull(recipient);
   }
 
-  public Host getRecipient() {
+  public ProcessName getRecipient() {
     return this.recipient;
   }
 

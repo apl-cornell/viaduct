@@ -1,9 +1,9 @@
 package edu.cornell.cs.apl.viaduct.imp.interpreter;
 
 import edu.cornell.cs.apl.viaduct.imp.ast.ExpressionNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.Host;
 import edu.cornell.cs.apl.viaduct.imp.ast.ImpValue;
-import edu.cornell.cs.apl.viaduct.imp.ast.ProcessConfigurationNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.ProcessName;
+import edu.cornell.cs.apl.viaduct.imp.ast.ProgramNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.StmtNode;
 import java.util.Map;
 
@@ -22,7 +22,7 @@ public class Interpreter {
   }
 
   /** Execute the code on all processes in the configuration, and return their local stores. */
-  public Map<Host, Store> run(ProcessConfigurationNode configuration) {
-    return new InterpretProcessConfiguration(configuration).run();
+  public Map<ProcessName, Store> run(ProgramNode configuration) {
+    return new InterpretProgramVisitor().run(configuration);
   }
 }

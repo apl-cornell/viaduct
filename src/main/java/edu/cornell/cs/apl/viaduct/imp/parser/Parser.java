@@ -1,6 +1,6 @@
 package edu.cornell.cs.apl.viaduct.imp.parser;
 
-import edu.cornell.cs.apl.viaduct.imp.ast.ImpAstNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.ProgramNode;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
@@ -14,7 +14,7 @@ import java_cup.runtime.Scanner;
 /** Parser for Imp source code. */
 public class Parser {
   /** Read and parse the given Imp source file and return the AST. */
-  public static ImpAstNode parse(File source) throws Exception {
+  public static ProgramNode parse(File source) throws Exception {
     BufferedReader reader =
         new BufferedReader(
             new InputStreamReader(new FileInputStream(source), StandardCharsets.UTF_8));
@@ -22,15 +22,15 @@ public class Parser {
   }
 
   /** Parse the given string and return the AST. */
-  public static ImpAstNode parse(String source) throws Exception {
+  public static ProgramNode parse(String source) throws Exception {
     return parse(new StringReader(source));
   }
 
   /** Parse the given input stream and return the AST. */
-  public static ImpAstNode parse(Reader reader) throws Exception {
+  public static ProgramNode parse(Reader reader) throws Exception {
     ComplexSymbolFactory symbolFactory = new ComplexSymbolFactory();
     Scanner scanner = new ImpLexer(reader, symbolFactory);
     ImpParser parser = new ImpParser(scanner, symbolFactory);
-    return (ImpAstNode) parser.parse().value;
+    return (ProgramNode) parser.parse().value;
   }
 }

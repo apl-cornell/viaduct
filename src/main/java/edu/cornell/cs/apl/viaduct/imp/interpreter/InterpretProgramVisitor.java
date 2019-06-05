@@ -1,9 +1,10 @@
 package edu.cornell.cs.apl.viaduct.imp.interpreter;
 
-import edu.cornell.cs.apl.viaduct.imp.ast.Host;
 import edu.cornell.cs.apl.viaduct.imp.ast.ImpValue;
-import edu.cornell.cs.apl.viaduct.imp.ast.ProcessConfigurationNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.ProcessName;
+import edu.cornell.cs.apl.viaduct.imp.ast.ProgramNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.StmtNode;
+import edu.cornell.cs.apl.viaduct.imp.visitors.ProgramVisitor;
 import io.vavr.Tuple2;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -16,17 +17,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
-class InterpretProcessConfiguration {
-  /** ProcessConfigurationNode to interpret. */
-  private final ProcessConfigurationNode processConfigurationNode;
-
-  /** Channels that hosts use to communicate. */
-  private final Channel<ImpValue> channel;
-
-  InterpretProcessConfiguration(ProcessConfigurationNode processConfigurationNode) {
-    this.processConfigurationNode = processConfigurationNode;
-    this.channel = new Channel<>(processConfigurationNode.hosts());
-  }
+class InterpretProgramVisitor implements ProgramVisitor<Map<ProcessName, Store>> {
+  InterpretProgramVisitor() {}
 
   /** Create a map given a list of keys and a separate list of values. */
   private static <K, V> Map<K, V> zipMap(Iterable<K> keys, Iterable<V> values) {
@@ -41,13 +33,22 @@ class InterpretProcessConfiguration {
     return result;
   }
 
-  /** Execute the code on all processes in the configuration, and return their local stores. */
-  Map<Host, Store> run() {
+  /** Run all processes in the given configuration concurrently, and return their local stores. */
+  Map<ProcessName, Store> run(ProgramNode program) {
+    return this.visit(program);
+  }
+
+  @Override
+  public Map<ProcessName, Store> visit(ProgramNode program) {
+    final Channel<ImpValue> channel = new Channel<>(program.processes());
+
     final ExecutorService pool = Executors.newCachedThreadPool();
 
     final List<ProcessExecutor> processExecutors = new ArrayList<>();
-    for (Tuple2<Host, StmtNode> process : processConfigurationNode) {
-      processExecutors.add(new ProcessExecutor(process._1, process._2));
+    for (Tuple2<ProcessName, StmtNode> process : program) {
+      final ProcessName processName = process._1();
+      final StmtNode code = process._2();
+      processExecutors.add(new ProcessExecutor(processName, code, channel));
     }
 
     final List<Store> results = new ArrayList<>();
@@ -61,23 +62,29 @@ class InterpretProcessConfiguration {
     }
 
     pool.shutdown();
-    // TODO: error if channel is not empty.
-    return zipMap(processConfigurationNode.hosts(), results);
+
+    if (!channel.isEmpty()) {
+      throw new Error("Some sent messages were never received.");
+    }
+
+    return zipMap(program.processes(), results);
   }
 
   /** Execute a single process. Should be run on its own thread. */
-  private class ProcessExecutor implements Callable<Store> {
-    private final Host host;
+  private static final class ProcessExecutor implements Callable<Store> {
+    private final ProcessName process;
+    private final Channel<ImpValue> channel;
     private final StmtNode code;
 
-    ProcessExecutor(Host host, StmtNode code) {
-      this.host = host;
+    ProcessExecutor(ProcessName process, StmtNode code, Channel<ImpValue> channel) {
+      this.process = process;
       this.code = code;
+      this.channel = channel;
     }
 
     @Override
     public Store call() {
-      final InterpretProcessVisitor interpreter = new InterpretProcessVisitor(host, channel);
+      final InterpretProcessVisitor interpreter = new InterpretProcessVisitor(process, channel);
       return interpreter.run(code);
     }
   }

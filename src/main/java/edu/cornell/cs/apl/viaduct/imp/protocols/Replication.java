@@ -10,10 +10,10 @@ import edu.cornell.cs.apl.viaduct.ProtocolInstantiationInfo;
 import edu.cornell.cs.apl.viaduct.imp.ast.ExpressionNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.Host;
 import edu.cornell.cs.apl.viaduct.imp.ast.ImpAstNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.ProcessName;
 import edu.cornell.cs.apl.viaduct.imp.ast.Variable;
 import edu.cornell.cs.apl.viaduct.imp.builders.ExpressionBuilder;
 import edu.cornell.cs.apl.viaduct.imp.builders.StmtBuilder;
-
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -43,8 +43,8 @@ public class Replication extends Cleartext implements Protocol<ImpAstNode> {
   }
 
   @Override
-  public Set<Host> readFrom(PdgNode<ImpAstNode> node, Host readHost,
-      ProtocolInstantiationInfo<ImpAstNode> info) {
+  public Set<Host> readFrom(
+      PdgNode<ImpAstNode> node, Host readHost, ProtocolInstantiationInfo<ImpAstNode> info) {
 
     // should not be read from until it has been instantiated
     assert this.outVarMap.size() == getNumReplicas();
@@ -54,13 +54,13 @@ public class Replication extends Cleartext implements Protocol<ImpAstNode> {
 
     if (this.replicas.realReplicas.contains(readHost)) {
       StmtBuilder builder = info.getBuilder(readHost);
-      builder.send(readHost, e.var(this.outVarMap.get(readHost)));
+      builder.send(new ProcessName(readHost), e.var(this.outVarMap.get(readHost)));
       hosts.add(readHost);
 
     } else {
       for (Host realHost : this.replicas.realReplicas) {
         StmtBuilder builder = info.getBuilder(realHost);
-        builder.send(readHost, e.var(this.outVarMap.get(realHost)));
+        builder.send(new ProcessName(readHost), e.var(this.outVarMap.get(realHost)));
         hosts.add(realHost);
       }
     }
@@ -77,8 +77,10 @@ public class Replication extends Cleartext implements Protocol<ImpAstNode> {
   }
 
   @Override
-  public Binding<ImpAstNode> readPostprocess(Map<Host, Binding<ImpAstNode>> hostBindings,
-      Host host, ProtocolInstantiationInfo<ImpAstNode> info) {
+  public Binding<ImpAstNode> readPostprocess(
+      Map<Host, Binding<ImpAstNode>> hostBindings,
+      Host host,
+      ProtocolInstantiationInfo<ImpAstNode> info) {
 
     // TODO: fix this
     Host h = (Host) hostBindings.keySet().toArray()[0];
@@ -105,8 +107,8 @@ public class Replication extends Cleartext implements Protocol<ImpAstNode> {
         for (Host realHost : this.replicas.realReplicas) {
           StmtBuilder builder = info.getBuilder(realHost);
 
-          writerBuilder.send(realHost, (ExpressionNode) val);
-          builder.recv(writeHost, this.outVarMap.get(realHost));
+          writerBuilder.send(new ProcessName(realHost), (ExpressionNode) val);
+          builder.recv(new ProcessName(writeHost), this.outVarMap.get(realHost));
         }
       }
 
@@ -203,11 +205,11 @@ public class Replication extends Cleartext implements Protocol<ImpAstNode> {
     return hosts;
   }
 
-  static class ReplicaSets {
-    public Set<Host> realReplicas;
-    public Set<Host> hashReplicas;
+  private static class ReplicaSets {
+    private Set<Host> realReplicas;
+    private Set<Host> hashReplicas;
 
-    public ReplicaSets(Set<Host> real, Set<Host> hash) {
+    private ReplicaSets(Set<Host> real, Set<Host> hash) {
       this.realReplicas = real;
       this.hashReplicas = hash;
     }

@@ -121,7 +121,7 @@ public class PdgDotPrinter {
     return pdgDotGraph(pdg, protoMap, GraphData.PROTOCOL);
   }
 
-  private static enum GraphData {
+  private enum GraphData {
     LABEL,
     PROTOCOL
   }

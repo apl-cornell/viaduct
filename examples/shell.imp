@@ -1,23 +1,34 @@
-cin : {C};
-ain : {A};
-shell : {C & (A<-)};
-guess : {A & (C<-)};
-win : {(A|C)-> & (A&C)<-};
+process main {
+  cin : {C};
+  ain : {A};
+  shell : {C & A<-};
+  guess : {A & C<-};
+  win : {(A | C)-> & (A & C)<-};
 
-@DebugValue(1)
-cin <- recv input;
+  cin <- recv chuck_main;
+  ain <- recv alice_main;
 
-@DebugValue(2)
-ain <- recv input;
+  /* Chuck and Alice must endorse their inputs to `shell` and `guess`, respectively. */
+  shell := endorse(cin, {C & A<-});
+  guess := endorse(ain, {A & C<-});
 
-/* Chuck and Alice must endorse their inputs to
- * shell and guess respectively */
-shell := endorse(cin, {C & A<-});
-guess := endorse(ain, {A & C<-});
+  /* Chuck must prove that `shell` is valid without revealing its value. */
+  if (declassify(1 <= shell && shell <= 3, {(A | C)-> & (A & C)<-})) {
+    /* Check if Alice won. */
+    win := declassify(shell == guess, {(A | C)-> & (A & C)<-});
+  }
 
-/* without revealing the position of the shell,
- * Chuck must prove that the shell is under one of the cups. */
-if (declassify(1 <= shell && shell <= 3, {(A|C)-> & (A&C)<-})) {
-    /* check if Alice won */
-    win := declassify(shell == guess, {(A|C)-> & (A&C)<-});
+  assert !win;
 }
+
+process chuck_main {
+  send 1 to main;
+}
+
+process alice_main {
+  send 2 to main;
+}
+
+/* Declare the actual machines (i.e. hosts) we have. */
+host alice : {A};
+host chuck : {C};

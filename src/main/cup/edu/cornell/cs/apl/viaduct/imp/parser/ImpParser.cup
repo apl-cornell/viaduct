@@ -6,7 +6,8 @@ import edu.cornell.cs.apl.viaduct.imp.ast.BinaryOperators.*;
 import edu.cornell.cs.apl.viaduct.security.Label;
 import edu.cornell.cs.apl.viaduct.security.Principal;
 
-nonterminal StmtNode program;
+nonterminal ProgramNode program;
+nonterminal ProgramNode.Builder declaration_list;
 nonterminal List<StmtNode> stmt_list;
 nonterminal StmtNode stmt, stmt_basic, block;
 nonterminal ExpressionNode expr;
@@ -15,14 +16,15 @@ nonterminal BinaryOperator binop;
 nonterminal Label label, label_expr;
 nonterminal Variable variable;
 nonterminal Host host;
+nonterminal ProcessName process_name;
 
 terminal String IDENT, CAP_IDENT;
 terminal Integer INT_LIT;
 terminal TRUE, FALSE;
 
-terminal ASSERT;
 terminal COLON, ASSIGN;
-terminal IF, ELSE, SEND, TO, RECV, FROM, HOST;
+terminal ASSERT, SEND, TO, RECV, FROM, IF, ELSE;
+terminal HOST, PROCESS, PROTOCOL, IDEAL;
 
 terminal NOT, ANDAND, OROR;
 terminal EQ, NEQ, LT, LEQ, GT, GEQ;
@@ -35,18 +37,34 @@ terminal DECLASSIFY, ENDORSE, DOWNGRADE;
 
 terminal OPEN_BRACE, CLOSE_BRACE, SEMICOLON, OPEN_PAREN, CLOSE_PAREN, COMMA;
 
-terminal DEBUG_VALUE;
-
-precedence left ANDAND, OROR;
-precedence left PLUS, EQ, NEQ, LT, LEQ, GT, GEQ, LARROW, RARROW, AND, OR;
+precedence left ANDAND, OROR, AND, OR;
+precedence nonassoc EQ, NEQ, LT, LEQ, GT, GEQ;
+precedence left PLUS;
+precedence right NOT;
 precedence left LARROW, RARROW, NOT;
-precedence left OPEN_PAREN, CLOSE_PAREN;
+precedence nonassoc OPEN_PAREN, CLOSE_PAREN;
 
 start with program;
 
 
 program ::=
-    stmt_list:slist {: RESULT = new BlockNode(slist); :}
+    declaration_list:declarations {: RESULT = declarations.build(); :}
+  ;
+
+declaration_list ::=
+    HOST host:host COLON label:trust SEMICOLON declaration_list:declarations {:
+      declarations.addHost(host, trust);
+      RESULT = declarations;
+    :}
+
+  | PROCESS process_name:processName block:block declaration_list:declarations {:
+      declarations.addProcess(processName, block);
+      RESULT = declarations;
+    :}
+
+  | /* empty */ {:
+      RESULT = ProgramNode.builder();
+  :}
   ;
 
 stmt ::=
@@ -76,16 +94,12 @@ stmt_basic ::=
       RESULT = new AssignNode(var, e);
     :}
 
-  | SEND expr:e TO host:host {:
-      RESULT = new SendNode(host, e);
+  | SEND expr:e TO process_name:processName {:
+      RESULT = new SendNode(processName, e);
     :}
 
-  | variable:var LARROW RECV host:host {:
-      RESULT = new ReceiveNode(var, host);
-    :}
-
-  | DEBUG_VALUE OPEN_PAREN expr:debug_value CLOSE_PAREN variable:var LARROW RECV host:host {:
-      RESULT = new ReceiveNode(var, host, debug_value);
+  | variable:var LARROW RECV process_name:processName {:
+      RESULT = new ReceiveNode(var, processName);
     :}
 
   | ASSERT expr:e {:
@@ -165,8 +179,8 @@ value ::=
       RESULT = new BooleanValue(false);
     :}
 
-  | INT_LIT:ilit {:
-      RESULT = new IntegerValue(ilit);
+  | INT_LIT:lit {:
+      RESULT = new IntegerValue(lit);
     :}
   ;
 
@@ -236,4 +250,8 @@ variable ::=
 
 host ::=
     IDENT:id {: RESULT = new Host(id); :}
+  ;
+
+process_name ::=
+    IDENT:id {: RESULT = new ProcessName(id); :}
   ;

@@ -16,11 +16,11 @@ import edu.cornell.cs.apl.viaduct.imp.ast.DeclarationNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ExpressionNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.Host;
 import edu.cornell.cs.apl.viaduct.imp.ast.ImpAstNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.ProcessName;
 import edu.cornell.cs.apl.viaduct.imp.ast.Variable;
 import edu.cornell.cs.apl.viaduct.imp.builders.ExpressionBuilder;
 import edu.cornell.cs.apl.viaduct.imp.builders.StmtBuilder;
 import edu.cornell.cs.apl.viaduct.imp.visitors.RenameVisitor;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -56,13 +56,11 @@ public abstract class Cleartext {
     Map<Host, Binding<ImpAstNode>> hostBindings = new HashMap<>();
     for (Host readHost : readHosts) {
       Variable readVar = info.getFreshVar(readLabel);
-      builder.recv(readHost, readVar);
+      builder.recv(new ProcessName(readHost), readVar);
       hostBindings.put(readHost, readVar);
     }
 
-    Binding<ImpAstNode> binding = readNodeProto.readPostprocess(hostBindings, host, info);
-
-    return binding;
+    return readNodeProto.readPostprocess(hostBindings, host, info);
   }
 
   protected Variable instantiateComputeNode(
@@ -116,8 +114,7 @@ public abstract class Cleartext {
     assert infoEdges.size() == 1;
 
     // create conditional in all nodes that have a read channel from the control node
-    Set<Host> controlStructureHosts = new HashSet<>();
-    controlStructureHosts.addAll(hosts);
+    Set<Host> controlStructureHosts = new HashSet<>(hosts);
     for (PdgInfoEdge<ImpAstNode> infoEdge : node.getOutInfoEdges()) {
       controlStructureHosts.addAll(info.getProtocol(infoEdge.getTarget()).getHosts());
     }

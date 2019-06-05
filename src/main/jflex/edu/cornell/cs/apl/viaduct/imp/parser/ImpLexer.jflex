@@ -60,7 +60,7 @@ Whitespace     = {LineTerminator} | [ \t\f]
 
 ALPHANUM    = [A-Za-z_]([A-Za-z0-9_])*
 CAPALPHANUM = [A-Z_]([A-Z0-9_])*
-NUM         = [0-9]
+NUM         = [1-9][0-9]*
 ANY         = .*
 
 %eofval{
@@ -75,6 +75,9 @@ ANY         = .*
 
 <YYINITIAL> {
   "host"          { return symbol(sym.HOST); }
+  "process"       { return symbol(sym.PROCESS); }
+  "protocol"      { return symbol(sym.PROTOCOL); }
+  "Ideal"         { return symbol(sym.IDEAL); }
 
   /* Statements */
   ":"             { return symbol(sym.COLON); }
@@ -85,7 +88,7 @@ ANY         = .*
   "to"            { return symbol(sym.TO); }
   "recv"          { return symbol(sym.RECV); }
   "from"          { return symbol(sym.FROM); }
-  "assert"          { return symbol(sym.ASSERT); }
+  "assert"        { return symbol(sym.ASSERT); }
 
   /* Expressions */
   "true"          { return symbol(sym.TRUE); }
@@ -128,9 +131,6 @@ ANY         = .*
   "("             { return symbol(sym.OPEN_PAREN); }
   ")"             { return symbol(sym.CLOSE_PAREN); }
   ","             { return symbol(sym.COMMA); }
-
-  /* Annotations */
-  "@DebugValue"   { return symbol(sym.DEBUG_VALUE); }
 
   /* Identifiers */
   {CAPALPHANUM}   { return symbol(sym.CAP_IDENT, yytext()); }

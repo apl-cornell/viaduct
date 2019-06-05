@@ -3,7 +3,6 @@ package edu.cornell.cs.apl.viaduct;
 import edu.cornell.cs.apl.viaduct.ProgramDependencyGraph.ControlEdgeComparator;
 import edu.cornell.cs.apl.viaduct.ProgramDependencyGraph.ControlLabel;
 import edu.cornell.cs.apl.viaduct.security.Label;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -37,9 +36,10 @@ public class PdgControlNode<T extends AstNode> extends PdgNode<T> {
     return true;
   }
 
-  /** get nodes associated with the control structure.
-   * e.g. if the control node represents an if statement,
-   * this returns all the nodes (in order) in the branches */
+  /**
+   * get nodes associated with the control structure. e.g. if the control node represents an if
+   * statement, this returns all the nodes (in order) in the branches
+   */
   public List<PdgNode<T>> getControlStructureNodes() {
     List<PdgControlEdge<T>> pathStarts = new ArrayList<>();
     for (PdgControlEdge<T> controlEdge : getOutControlEdges()) {
@@ -63,6 +63,6 @@ public class PdgControlNode<T extends AstNode> extends PdgNode<T> {
 
   @Override
   public String toString() {
-    return "<" + this.id.toString() + " control node for " + this.astNode.toString() + ">";
+    return "<" + this.id + " control node for " + this.astNode.toString() + ">";
   }
 }

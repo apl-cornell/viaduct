@@ -1,5 +1,6 @@
 package edu.cornell.cs.apl.viaduct.imp.visitors;
 
+import edu.cornell.cs.apl.viaduct.imp.DuplicateProcessDefinitionException;
 import edu.cornell.cs.apl.viaduct.imp.ast.ArrayDeclarationNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.AssertNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.AssignNode;
@@ -8,16 +9,15 @@ import edu.cornell.cs.apl.viaduct.imp.ast.BlockNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.DeclarationNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.DowngradeNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ExpressionNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.Host;
 import edu.cornell.cs.apl.viaduct.imp.ast.IfNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.LiteralNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.NotNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.ProcessConfigurationNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.ProcessName;
+import edu.cornell.cs.apl.viaduct.imp.ast.ProgramNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ReadNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ReceiveNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.SendNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.StmtNode;
-import io.vavr.Tuple;
 import io.vavr.Tuple2;
 import java.util.LinkedList;
 import java.util.List;
@@ -30,9 +30,7 @@ import java.util.List;
  * and override only the cases that do something interesting.
  */
 public abstract class IdentityVisitor
-    implements ExprVisitor<ExpressionNode>,
-        StmtVisitor<StmtNode>,
-        ProcessConfigurationVisitor<ProcessConfigurationNode> {
+    implements ExprVisitor<ExpressionNode>, StmtVisitor<StmtNode>, ProgramVisitor<ProgramNode> {
   @Override
   public ExpressionNode visit(LiteralNode literalNode) {
     return literalNode;
@@ -110,12 +108,18 @@ public abstract class IdentityVisitor
   }
 
   @Override
-  public ProcessConfigurationNode visit(ProcessConfigurationNode processConfigurationNode) {
-    List<Tuple2<Host, StmtNode>> newConfiguration = new LinkedList<>();
-    for (Tuple2<Host, StmtNode> process : processConfigurationNode) {
-      newConfiguration.add(Tuple.of(process._1, process._2.accept(this)));
+  public ProgramNode visit(ProgramNode programNode) {
+    final ProgramNode.Builder builder = ProgramNode.builder();
+    try {
+      for (Tuple2<ProcessName, StmtNode> process : programNode) {
+        builder.addProcess(process._1, process._2.accept(this));
+      }
+    } catch (DuplicateProcessDefinitionException e) {
+      // This is impossible
+      throw new Error(e);
     }
-    return new ProcessConfigurationNode(newConfiguration);
+    builder.addHosts(programNode.getHostTrustConfiguration());
+    return builder.build();
   }
 
   @Override

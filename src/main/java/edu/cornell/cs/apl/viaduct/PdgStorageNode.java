@@ -33,6 +33,6 @@ public class PdgStorageNode<T extends AstNode> extends PdgNode<T> {
 
   @Override
   public String toString() {
-    return "<" + this.id.toString() + " storage node for " + this.astNode.toString() + ">";
+    return "<" + this.id + " storage node for " + this.astNode.toString() + ">";
   }
 }

@@ -1,5 +1,7 @@
 package edu.cornell.cs.apl.viaduct.imp.builders;
 
+import edu.cornell.cs.apl.viaduct.AstNode;
+import edu.cornell.cs.apl.viaduct.Binding;
 import edu.cornell.cs.apl.viaduct.imp.ast.BinaryExpressionNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.BinaryOperators.And;
 import edu.cornell.cs.apl.viaduct.imp.ast.BinaryOperators.EqualTo;
@@ -24,6 +26,10 @@ public class ExpressionBuilder {
 
   public ExpressionNode var(String name) {
     return var(new Variable(name));
+  }
+
+  public <T extends AstNode> ExpressionNode var(Binding<T> binding) {
+    return var(new Variable(binding.getBinding()));
   }
 
   public ExpressionNode var(Variable name) {

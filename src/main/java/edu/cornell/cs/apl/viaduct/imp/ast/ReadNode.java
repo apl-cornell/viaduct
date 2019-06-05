@@ -1,5 +1,6 @@
 package edu.cornell.cs.apl.viaduct.imp.ast;
 
+import edu.cornell.cs.apl.viaduct.Binding;
 import edu.cornell.cs.apl.viaduct.imp.visitors.ExprVisitor;
 import java.util.Objects;
 
@@ -9,6 +10,10 @@ public final class ReadNode extends ExpressionNode {
 
   public ReadNode(Variable variable) {
     this.variable = Objects.requireNonNull(variable);
+  }
+
+  public ReadNode(Binding<ImpAstNode> binding) {
+    this.variable = new Variable(Objects.requireNonNull(binding));
   }
 
   public Variable getVariable() {

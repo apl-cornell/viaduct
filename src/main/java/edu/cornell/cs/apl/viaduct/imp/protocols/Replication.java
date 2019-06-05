@@ -80,7 +80,32 @@ public class Replication extends Cleartext implements Protocol<ImpAstNode> {
   public Binding<ImpAstNode> readPostprocess(Map<Host, Binding<ImpAstNode>> hostBindings,
       Host host, ProtocolInstantiationInfo<ImpAstNode> info) {
 
-    // TODO: fix this
+    assert hostBindings.size() >= 1;
+
+    if (hostBindings.size() > 1) {
+      Binding<ImpAstNode> curBinding = null;
+      ExpressionNode curExpr = null;
+      ExpressionBuilder e = new ExpressionBuilder();
+      for (Binding<ImpAstNode> binding : hostBindings.values()) {
+        if (curBinding == null) {
+          curBinding = binding;
+
+        } else {
+          if (curExpr == null) {
+            curExpr = e.equals(e.var(curBinding), e.var(binding));
+            curBinding = binding;
+
+          } else {
+            curExpr = e.and(curExpr, e.equals(e.var(curBinding), e.var(binding)));
+            curBinding = binding;
+          }
+        }
+      }
+
+      StmtBuilder builder = info.getBuilder(host);
+      builder.assertion(curExpr);
+    }
+
     Host h = (Host) hostBindings.keySet().toArray()[0];
     return hostBindings.get(h);
   }

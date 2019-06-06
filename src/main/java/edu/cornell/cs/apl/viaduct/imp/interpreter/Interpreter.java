@@ -9,20 +9,20 @@ import java.util.Map;
 
 /** Interpreter for Imp programs. */
 public class Interpreter {
-  public Interpreter() {}
+  private Interpreter() {}
 
   /** Return the value the given expression evaluates to. */
-  public ImpValue run(ExpressionNode expression) {
+  public static ImpValue run(ExpressionNode expression) {
     return new InterpretProcessVisitor().run(expression);
   }
 
   /** Execute the given statement and return the resulting store. */
-  public Store run(StmtNode statement) {
+  public static Store run(StmtNode statement) {
     return new InterpretProcessVisitor().run(statement);
   }
 
   /** Execute the code on all processes in the configuration, and return their local stores. */
-  public Map<ProcessName, Store> run(ProgramNode configuration) {
+  public static Map<ProcessName, Store> run(ProgramNode configuration) {
     return new InterpretProgramVisitor().run(configuration);
   }
 }

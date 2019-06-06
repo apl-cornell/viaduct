@@ -12,7 +12,7 @@ import org.junit.jupiter.params.provider.ArgumentsSource;
 class ImpPdgBuilderVisitorTest {
   @ParameterizedTest
   @ArgumentsSource(ExamplesProvider.class)
-  void testGeneratePDG(@ConvertWith(ImpAstParser.class) ImpAstNode ast) throws Exception {
+  void testGeneratePDG(@ConvertWith(ImpAstParser.class) ImpAstNode ast) {
     final ProgramNode program = (ProgramNode) ast;
     new ImpPdgBuilderVisitor().generatePDG(program.getProcessCode(ProcessName.getMain()));
   }

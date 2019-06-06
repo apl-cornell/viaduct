@@ -111,11 +111,17 @@ public class Main {
 
     // Interpret
     if (ns.getBoolean("interpret")) {
-      Map<ProcessName, Store> stores = new Interpreter().run(program);
+      Map<ProcessName, Store> stores = Interpreter.run(program);
+      boolean first = true;
       for (Map.Entry<ProcessName, Store> entry : stores.entrySet()) {
+        if (!first) {
+          System.out.println();
+        }
+
         System.out.println("process " + entry.getKey() + ":");
         System.out.println(entry.getValue());
-        System.out.println();
+
+        first = false;
       }
       return;
     }

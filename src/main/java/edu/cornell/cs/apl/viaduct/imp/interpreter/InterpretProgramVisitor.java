@@ -57,8 +57,11 @@ class InterpretProgramVisitor implements ProgramVisitor<Map<ProcessName, Store>>
       for (Future<Store> futureResult : futureResults) {
         results.add(futureResult.get());
       }
-    } catch (InterruptedException | ExecutionException e) {
+    } catch (InterruptedException e) {
       throw new RuntimeException(e);
+    } catch (ExecutionException e) {
+      pool.shutdownNow();
+      throw new Error(e);
     }
 
     pool.shutdown();

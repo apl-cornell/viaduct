@@ -183,17 +183,11 @@ class InterpretProcessVisitor implements ExprVisitor<ImpValue>, StmtVisitor<Void
   @Override
   public Void visit(AssertNode assertNode) {
     ExpressionNode assertExpr = assertNode.getExpression();
-    ImpValue assertVal = assertExpr.accept(this);
+    ImpValue assertion = assertExpr.accept(this);
 
-    if (assertVal instanceof BooleanValue) {
-      BooleanValue assertBoolVal = (BooleanValue) assertVal;
-      if (!assertBoolVal.getValue()) {
-        throw new Error(new AssertionFailureException(assertExpr));
-      }
-    } else {
-      throw new Error("Assertion expression is not a boolean: " + assertExpr);
+    if (!((BooleanValue) assertion).getValue()) {
+      throw new Error(new AssertionFailureException(assertExpr));
     }
-
     return null;
   }
 }

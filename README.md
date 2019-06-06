@@ -5,7 +5,7 @@
 
 Secure program partitioning.
 
-# Development
+## Development
 
 We use [Gradle](https://gradle.org/) for builds.
 You do not have to install Gradle manually; you only need to have

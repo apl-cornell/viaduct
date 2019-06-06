@@ -45,4 +45,9 @@ public final class SendNode extends StmtNode {
   public int hashCode() {
     return Objects.hash(this.recipient, this.sentExpression);
   }
+
+  @Override
+  public String toString() {
+    return String.format("(send %s to %s)", this.sentExpression, this.recipient);
+  }
 }

@@ -6,6 +6,7 @@ import edu.cornell.cs.apl.viaduct.imp.ast.Host;
 import edu.cornell.cs.apl.viaduct.imp.ast.ProcessConfigurationNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.StmtNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.Variable;
+import edu.cornell.cs.apl.viaduct.imp.dataflow.CopyPropagation;
 import edu.cornell.cs.apl.viaduct.imp.visitors.TargetPostprocessVisitor;
 import java.util.HashMap;
 import java.util.Map;
@@ -29,11 +30,13 @@ public class ProcessConfigurationBuilder {
     Map<Host, StmtNode> config = new HashMap<>();
     TargetPostprocessVisitor postprocessor = new TargetPostprocessVisitor();
 
+    CopyPropagation copyProp = new CopyPropagation();
     for (Map.Entry<Host, StmtBuilder> kv : configBuilder.entrySet()) {
       Host host = kv.getKey();
       StmtNode program = kv.getValue().build();
       StmtNode postprocessedProgram = postprocessor.postprocess(host, program);
-      config.put(host, postprocessedProgram);
+      StmtNode postprocessedProgram2 = copyProp.propagateCopies(postprocessedProgram);
+      config.put(host, postprocessedProgram2);
     }
 
     return new ProcessConfigurationNode(config);

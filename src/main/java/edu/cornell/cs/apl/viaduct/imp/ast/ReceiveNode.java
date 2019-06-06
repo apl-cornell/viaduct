@@ -68,4 +68,9 @@ public final class ReceiveNode extends StmtNode {
   public <R> R accept(StmtVisitor<R> visitor) {
     return visitor.visit(this);
   }
+
+  @Override
+  public String toString() {
+    return String.format("(receive %s from %s)", this.var, this.sender);
+  }
 }

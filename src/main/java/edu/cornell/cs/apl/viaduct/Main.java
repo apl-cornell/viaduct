@@ -12,6 +12,7 @@ import edu.cornell.cs.apl.viaduct.imp.parser.Parser;
 import edu.cornell.cs.apl.viaduct.imp.parser.TrustConfigurationParser;
 import edu.cornell.cs.apl.viaduct.imp.visitors.ImpPdgBuilderVisitor;
 import edu.cornell.cs.apl.viaduct.imp.visitors.PrintVisitor;
+
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.OutputStreamWriter;
@@ -138,7 +139,7 @@ public class Main {
 
     // run data-flow analysis to compute labels for all PDG nodes
     PdgLabelDataflow<ImpAstNode> labelDataFlow = new PdgLabelDataflow<>();
-    labelDataFlow.dataflow(pdg);
+    labelDataFlow.dataflow(pdg.getOrderedNodes());
 
     // generate DOT graph of PDG with information flow labels
     if (ns.getBoolean("labelgraph")) {

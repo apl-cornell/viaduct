@@ -13,7 +13,7 @@ You do not have to install Gradle manually; you only need to have
 
 Once you have Java installed, just run
 
-```
+```shell
 ./gradlew build
 ```
 

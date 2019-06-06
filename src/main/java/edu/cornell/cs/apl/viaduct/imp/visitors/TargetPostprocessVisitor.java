@@ -6,6 +6,7 @@ import edu.cornell.cs.apl.viaduct.imp.ast.DeclarationNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.DowngradeNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ExpressionNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.Host;
+import edu.cornell.cs.apl.viaduct.imp.ast.ProcessName;
 import edu.cornell.cs.apl.viaduct.imp.ast.ReceiveNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.SendNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.StmtNode;
@@ -43,7 +44,7 @@ public class TargetPostprocessVisitor extends IdentityVisitor {
 
   @Override
   public StmtNode visit(SendNode sendNode) {
-    if (sendNode.getRecipient().equals(this.selfHost)) {
+    if (sendNode.getRecipient().equals(new ProcessName(this.selfHost))) {
       this.sentExprs.add(sendNode.getSentExpression());
       return new BlockNode();
     } else {
@@ -53,7 +54,7 @@ public class TargetPostprocessVisitor extends IdentityVisitor {
 
   @Override
   public StmtNode visit(ReceiveNode receiveNode) {
-    if (receiveNode.getSender().equals(this.selfHost)) {
+    if (receiveNode.getSender().equals(new ProcessName(this.selfHost))) {
       ExpressionNode recvExpr = this.sentExprs.remove();
       return new AssignNode(receiveNode.getVariable(), recvExpr);
     } else {

@@ -6,8 +6,8 @@ import edu.cornell.cs.apl.viaduct.imp.ast.AssignNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.BlockNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.DeclarationNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ExpressionNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.Host;
 import edu.cornell.cs.apl.viaduct.imp.ast.IfNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.ProcessName;
 import edu.cornell.cs.apl.viaduct.imp.ast.ReceiveNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.SendNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.StmtNode;
@@ -94,29 +94,23 @@ public class StmtBuilder {
 
   /** build send stmt. */
   public StmtBuilder send(String recipient, ExpressionNode expr) {
-    StmtNode sendNode = new SendNode(new Host(recipient), expr);
-    this.stmts.add(sendNode);
-    return this;
+    return send(new ProcessName(recipient), expr);
   }
 
   /** build send stmt. */
-  public StmtBuilder send(Host recipient, ExpressionNode expr) {
-    StmtNode sendNode = new SendNode(recipient, expr);
-    this.stmts.add(sendNode);
+  public StmtBuilder send(ProcessName recipient, ExpressionNode expr) {
+    this.stmts.add(new SendNode(recipient, expr));
     return this;
   }
 
   /** build recv stmt. */
   public StmtBuilder recv(String sender, String var) {
-    StmtNode recvNode = new ReceiveNode(new Variable(var), new Host(sender));
-    this.stmts.add(recvNode);
-    return this;
+    return recv(new ProcessName(sender), new Variable(var));
   }
 
   /** build recv stmt. */
-  public StmtBuilder recv(Host sender, Variable var) {
-    StmtNode recvNode = new ReceiveNode(var, sender);
-    this.stmts.add(recvNode);
+  public StmtBuilder recv(ProcessName sender, Variable var) {
+    this.stmts.add(new ReceiveNode(var, sender));
     return this;
   }
 

@@ -1,15 +1,19 @@
 package edu.cornell.cs.apl.viaduct.imp.builders;
 
 import edu.cornell.cs.apl.viaduct.FreshNameGenerator;
+import edu.cornell.cs.apl.viaduct.imp.DuplicateProcessDefinitionException;
 import edu.cornell.cs.apl.viaduct.imp.HostTrustConfiguration;
 import edu.cornell.cs.apl.viaduct.imp.ast.Host;
-import edu.cornell.cs.apl.viaduct.imp.ast.ProcessConfigurationNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.ProcessName;
+import edu.cornell.cs.apl.viaduct.imp.ast.ProgramNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.StmtNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.Variable;
 import edu.cornell.cs.apl.viaduct.imp.dataflow.CopyPropagation;
 import edu.cornell.cs.apl.viaduct.imp.visitors.TargetPostprocessVisitor;
 import java.util.HashMap;
 import java.util.Map;
+
+// TODO: roll into ProgramNode.Builder
 
 /** Builds process configurations. */
 public class ProcessConfigurationBuilder {
@@ -26,20 +30,24 @@ public class ProcessConfigurationBuilder {
   }
 
   /** Retrieve the process configuration. */
-  public ProcessConfigurationNode build() {
-    Map<Host, StmtNode> config = new HashMap<>();
+  public ProgramNode build() {
+    ProgramNode.Builder programBuilder = ProgramNode.builder();
     TargetPostprocessVisitor postprocessor = new TargetPostprocessVisitor();
 
-    CopyPropagation copyProp = new CopyPropagation();
-    for (Map.Entry<Host, StmtBuilder> kv : configBuilder.entrySet()) {
-      Host host = kv.getKey();
-      StmtNode program = kv.getValue().build();
-      StmtNode postprocessedProgram = postprocessor.postprocess(host, program);
-      StmtNode postprocessedProgram2 = copyProp.propagateCopies(postprocessedProgram);
-      config.put(host, postprocessedProgram2);
+    try {
+      CopyPropagation copyProp = new CopyPropagation();
+      for (Map.Entry<Host, StmtBuilder> kv : configBuilder.entrySet()) {
+        Host host = kv.getKey();
+        StmtNode program = kv.getValue().build();
+        StmtNode postprocessedProgram = postprocessor.postprocess(host, program);
+        StmtNode postprocessedProgram2 = copyProp.propagateCopies(postprocessedProgram);
+        programBuilder.addProcess(new ProcessName(host), postprocessedProgram2);
+      }
+    } catch (DuplicateProcessDefinitionException e) {
+      throw new Error(e);
     }
 
-    return new ProcessConfigurationNode(config);
+    return programBuilder.build();
   }
 
   /**

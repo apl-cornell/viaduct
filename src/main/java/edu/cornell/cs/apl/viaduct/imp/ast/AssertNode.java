@@ -1,15 +1,14 @@
 package edu.cornell.cs.apl.viaduct.imp.ast;
 
 import edu.cornell.cs.apl.viaduct.imp.visitors.StmtVisitor;
-
 import java.util.Objects;
 
-/** assert that an expression is true. */
+/** Assert that an expression is true. */
 public final class AssertNode extends StmtNode {
   private final ExpressionNode expression;
 
-  public AssertNode(ExpressionNode e) {
-    this.expression = e;
+  public AssertNode(ExpressionNode expression) {
+    this.expression = Objects.requireNonNull(expression);
   }
 
   public ExpressionNode getExpression() {

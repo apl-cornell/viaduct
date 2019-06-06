@@ -7,11 +7,11 @@ import edu.cornell.cs.apl.viaduct.imp.ast.BinaryExpressionNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.BlockNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.DeclarationNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.DowngradeNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.Host;
 import edu.cornell.cs.apl.viaduct.imp.ast.IfNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.LiteralNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.NotNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.ProcessConfigurationNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.ProcessName;
+import edu.cornell.cs.apl.viaduct.imp.ast.ProgramNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ReadNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ReceiveNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.SendNode;
@@ -98,8 +98,8 @@ public class VoidVisitor implements AstVisitor<Void> {
   }
 
   @Override
-  public Void visit(ProcessConfigurationNode processConfigurationNode) {
-    for (Tuple2<Host, StmtNode> process : processConfigurationNode) {
+  public Void visit(ProgramNode programNode) {
+    for (Tuple2<ProcessName, StmtNode> process : programNode) {
       process._2.accept(this);
     }
     return null;

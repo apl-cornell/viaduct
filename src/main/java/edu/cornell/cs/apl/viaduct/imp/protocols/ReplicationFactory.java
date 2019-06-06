@@ -8,7 +8,6 @@ import edu.cornell.cs.apl.viaduct.imp.HostTrustConfiguration;
 import edu.cornell.cs.apl.viaduct.imp.ast.Host;
 import edu.cornell.cs.apl.viaduct.imp.ast.ImpAstNode;
 import edu.cornell.cs.apl.viaduct.security.Label;
-
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -24,7 +23,7 @@ public class ReplicationFactory implements ProtocolFactory<ImpAstNode> {
     if (node.isStorageNode() || node.isEndorseNode() || !node.isDowngradeNode()) {
       Label nInLabel = node.getInLabel();
 
-      PowersetIterator<Host> hostPowerset = new PowersetIterator<Host>(hostConfig.hostSet());
+      PowersetIterator<Host> hostPowerset = new PowersetIterator<>(hostConfig.hostSet());
       for (Set<Host> hostSet : hostPowerset) {
         Label rLabel = Label.top();
 

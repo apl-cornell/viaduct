@@ -12,11 +12,13 @@ import edu.cornell.cs.apl.viaduct.imp.ast.IfNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ImpAstNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.LiteralNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.NotNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.ProcessConfigurationNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.ProcessName;
+import edu.cornell.cs.apl.viaduct.imp.ast.ProgramNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ReadNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ReceiveNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.SendNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.StmtNode;
+import edu.cornell.cs.apl.viaduct.security.Label;
 import io.vavr.Tuple2;
 
 /** Pretty-prints an AST. */
@@ -33,17 +35,7 @@ public class PrintVisitor implements AstVisitor<Void> {
   /** Pretty print the given AST and return it as {@code String}. */
   public String run(ImpAstNode astNode) {
     // TODO: explain what happens if you call it multiple times. Or change the interface.
-
-    // Don't print curly braces around the top level program
-    if (astNode instanceof BlockNode) {
-      for (StmtNode stmt : (BlockNode) astNode) {
-        stmt.accept(this);
-        buffer.append('\n');
-      }
-    } else {
-      astNode.accept(this);
-    }
-
+    astNode.accept(this);
     return buffer.toString();
   }
 
@@ -167,6 +159,16 @@ public class PrintVisitor implements AstVisitor<Void> {
   }
 
   @Override
+  public Void visit(AssertNode assertNode) {
+    addIndentation();
+
+    buffer.append("assert ");
+    assertNode.getExpression().accept(this);
+    buffer.append(';');
+    return null;
+  }
+
+  @Override
   public Void visit(IfNode ifNode) {
     addIndentation();
 
@@ -204,32 +206,44 @@ public class PrintVisitor implements AstVisitor<Void> {
   }
 
   @Override
-  public Void visit(ProcessConfigurationNode processConfigurationNode) {
+  public Void visit(ProgramNode programNode) {
     boolean first = true;
-    for (Tuple2<Host, StmtNode> process : processConfigurationNode) {
+
+    for (Tuple2<ProcessName, StmtNode> process : programNode) {
       if (!first) {
         buffer.append("\n\n");
       }
 
-      final Host host = process._1();
+      final ProcessName processName = process._1();
       final StmtNode statement = process._2();
-      buffer.append(host);
+      buffer.append("process ");
+      buffer.append(processName);
       buffer.append(' ');
       statement.accept(this);
 
       first = false;
     }
 
-    return null;
-  }
+    if (!first) {
+      buffer.append("\n");
+    }
 
-  @Override
-  public Void visit(AssertNode assertNode) {
-    addIndentation();
+    for (Tuple2<Host, Label> host : programNode.getHostTrustConfiguration()) {
+      if (!first) {
+        buffer.append("\n");
+      }
 
-    buffer.append("assert ");
-    assertNode.getExpression().accept(this);
-    buffer.append(';');
+      final Host hostName = host._1();
+      final Label trust = host._2();
+      buffer.append("host ");
+      buffer.append(hostName);
+      buffer.append(" : ");
+      buffer.append(trust);
+      buffer.append(";");
+
+      first = false;
+    }
+
     return null;
   }
 }

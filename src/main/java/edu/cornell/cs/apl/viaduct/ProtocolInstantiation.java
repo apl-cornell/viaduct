@@ -1,7 +1,7 @@
 package edu.cornell.cs.apl.viaduct;
 
 import edu.cornell.cs.apl.viaduct.imp.HostTrustConfiguration;
-import edu.cornell.cs.apl.viaduct.imp.ast.ProcessConfigurationNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.ProgramNode;
 import edu.cornell.cs.apl.viaduct.imp.builders.ProcessConfigurationBuilder;
 import java.util.List;
 import java.util.Map;
@@ -44,7 +44,7 @@ public class ProtocolInstantiation<T extends AstNode> {
   }
 
   /** Instantiate protocols for PDG nodes in the order given by control edges b/w PDG nodes. */
-  public ProcessConfigurationNode instantiateProtocolConfiguration(
+  public ProgramNode instantiateProtocolConfiguration(
       HostTrustConfiguration hostConfig,
       ProgramDependencyGraph<T> pdg,
       Map<PdgNode<T>, Protocol<T>> protocolMap) {

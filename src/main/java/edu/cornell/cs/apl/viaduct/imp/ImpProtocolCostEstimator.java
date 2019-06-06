@@ -23,7 +23,7 @@ public final class ImpProtocolCostEstimator extends ProtocolCostEstimator<ImpAst
   private static final Set<ProtocolFactory<ImpAstNode>> protocolFactories = new HashSet<>();
   private static SizeVisitor nodeSizer = new SizeVisitor();
 
-  {
+  static {
     protocolFactories.add(new SingleFactory());
     protocolFactories.add(new ReplicationFactory());
     /*
@@ -32,11 +32,13 @@ public final class ImpProtocolCostEstimator extends ProtocolCostEstimator<ImpAst
     protocolFactories.add(new MPCFactory());
   }
 
+  @Override
   public Set<ProtocolFactory<ImpAstNode>> getProtocolFactories() {
     return protocolFactories;
   }
 
   /** estimate cost for a single PDG node. */
+  @Override
   public int estimateNodeCost(
       Protocol<ImpAstNode> protocol,
       PdgNode<ImpAstNode> node,

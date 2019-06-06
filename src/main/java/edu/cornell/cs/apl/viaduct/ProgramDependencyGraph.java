@@ -92,7 +92,7 @@ public class ProgramDependencyGraph<T extends AstNode> {
       buf.append(" (outedges:");
 
       for (PdgInfoEdge<T> outEdge : node.getOutInfoEdges()) {
-        buf.append(" " + outEdge.getTarget().getId().toString());
+        buf.append(" " + outEdge.getTarget().getId());
       }
       buf.append(")\n");
     }

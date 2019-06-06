@@ -2,12 +2,16 @@ package edu.cornell.cs.apl.viaduct.imp.ast;
 
 import java.util.Objects;
 
-/** An abstract location or actor that can send and receive messages. */
+/** A location that can run (one or more) processes. */
 public final class Host implements Comparable<Host> {
   private final String name;
 
   public Host(String name) {
     this.name = Objects.requireNonNull(name);
+  }
+
+  public String getName() {
+    return name;
   }
 
   @Override

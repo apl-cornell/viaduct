@@ -9,11 +9,11 @@ import edu.cornell.cs.apl.viaduct.imp.ast.BooleanValue;
 import edu.cornell.cs.apl.viaduct.imp.ast.DeclarationNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.DowngradeNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ExpressionNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.Host;
 import edu.cornell.cs.apl.viaduct.imp.ast.IfNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ImpValue;
 import edu.cornell.cs.apl.viaduct.imp.ast.LiteralNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.NotNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.ProcessName;
 import edu.cornell.cs.apl.viaduct.imp.ast.ReadNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ReceiveNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.SendNode;
@@ -23,35 +23,34 @@ import edu.cornell.cs.apl.viaduct.imp.visitors.StmtVisitor;
 import java.util.Objects;
 
 class InterpretProcessVisitor implements ExprVisitor<ImpValue>, StmtVisitor<Void> {
-  /** The host to execute statements as. */
-  private final Host host;
+  /** The process to execute the statements as. */
+  private final ProcessName processName;
 
-  /** The (multi-way) channel that connects {@code host} to all other hosts. */
+  /** The (multi-way) channel that connects {@code processName} to all other processes. */
   private final Channel<ImpValue> channel;
 
   /** Maps variables to their values. */
   private final Store store = new Store();
 
   /**
-   * Create a new interpreter that acts as {@code host} and uses {@code channel} to communicate.
+   * Create a new interpreter that acts as {@code processName} and uses {@code channel} to
+   * communicate.
    *
-   * @param host the host to run statements as.
-   * @param channel connects {@code host} to all other hosts involved in the computation.
+   * @param process the process to run the statements as
+   * @param channel connects {@code processName} to all other hosts involved in the computation
    */
-  InterpretProcessVisitor(Host host, Channel<ImpValue> channel) {
-    this.host = Objects.requireNonNull(host);
+  InterpretProcessVisitor(ProcessName process, Channel<ImpValue> channel) {
+    this.processName = Objects.requireNonNull(process);
     this.channel = Objects.requireNonNull(channel);
   }
 
   /**
-   * Create a new interpreter that can only evaluate expression that do not send or receive values.
+   * Create a new interpreter that can only evaluate statements that do not send or receive values.
    */
   InterpretProcessVisitor() {
-    this.host = null;
+    this.processName = null;
     this.channel = null;
   }
-
-  // TODO: bare interpreter that doesn't require host and channel.
 
   /** Return the value of the given expression in the current context. */
   ImpValue run(ExpressionNode expression) {
@@ -132,8 +131,8 @@ class InterpretProcessVisitor implements ExprVisitor<ImpValue>, StmtVisitor<Void
   public Void visit(SendNode sendNode) {
     ImpValue value = sendNode.getSentExpression().accept(this);
     try {
-      this.channel.send(this.host, sendNode.getRecipient(), value);
-    } catch (UnknownHostException e) {
+      this.channel.send(this.processName, sendNode.getRecipient(), value);
+    } catch (UnknownProcessException e) {
       throw new Error(e);
     } catch (InterruptedException e) {
       throw new RuntimeException(e);
@@ -145,16 +144,12 @@ class InterpretProcessVisitor implements ExprVisitor<ImpValue>, StmtVisitor<Void
   public Void visit(ReceiveNode receiveNode) {
     ImpValue value;
 
-    if (channel == null) {
-      value = receiveNode.getDebugReceivedValue().accept(this);
-    } else {
-      try {
-        value = this.channel.receive(receiveNode.getSender(), this.host);
-      } catch (UnknownHostException e) {
-        throw new Error(e);
-      } catch (InterruptedException e) {
-        throw new RuntimeException(e);
-      }
+    try {
+      value = this.channel.receive(receiveNode.getSender(), this.processName);
+    } catch (UnknownProcessException e) {
+      throw new Error(e);
+    } catch (InterruptedException e) {
+      throw new RuntimeException(e);
     }
 
     try {
@@ -188,17 +183,11 @@ class InterpretProcessVisitor implements ExprVisitor<ImpValue>, StmtVisitor<Void
   @Override
   public Void visit(AssertNode assertNode) {
     ExpressionNode assertExpr = assertNode.getExpression();
-    ImpValue assertVal = assertExpr.accept(this);
+    ImpValue assertion = assertExpr.accept(this);
 
-    if (assertVal instanceof BooleanValue) {
-      BooleanValue assertBoolVal = (BooleanValue)assertVal;
-      if (!assertBoolVal.getValue()) {
-        throw new Error(new AssertionFailureException(assertExpr));
-      }
-    } else {
-      throw new Error("Assertion expression is not a boolean: " + assertExpr);
+    if (!((BooleanValue) assertion).getValue()) {
+      throw new Error(new AssertionFailureException(assertExpr));
     }
-
     return null;
   }
 }

@@ -102,7 +102,6 @@ public class CopyPropagation extends Dataflow<CopyPropagation.CopyPropInfo, CFGN
     final ControlFlowGraph cfg;
     final Queue<CopyPropInfo> inInfoQueue;
     final Queue<CopyPropInfo> outInfoQueue;
-    final VarEqualSets eqSets;
 
     public CopyPropVisitor(ControlFlowGraph cfg,
         Queue<CopyPropInfo> iniq, Queue<CopyPropInfo> outiq) {
@@ -110,7 +109,6 @@ public class CopyPropagation extends Dataflow<CopyPropagation.CopyPropInfo, CFGN
       this.cfg = cfg;
       this.inInfoQueue = iniq;
       this.outInfoQueue = outiq;
-      this.eqSets = new VarEqualSets(cfg);
     }
 
     public StmtNode propagateCopies(StmtNode program) {
@@ -136,8 +134,8 @@ public class CopyPropagation extends Dataflow<CopyPropagation.CopyPropInfo, CFGN
       CopyPropInfo inInfo = this.inInfoQueue.remove();
       CopyPropInfo outInfo = this.outInfoQueue.remove();
 
-      Map<Variable,Variable> inRenameMap = eqSets.processCopyPropInfo(inInfo);
-      Map<Variable,Variable> outRenameMap = eqSets.processCopyPropInfo(outInfo);
+      Map<Variable,Variable> inRenameMap = processCopyPropInfo(inInfo);
+      Map<Variable,Variable> outRenameMap = processCopyPropInfo(outInfo);
       Set<Variable> renamedVars = outRenameMap.keySet();
 
       // one of the variables to be erased; remove it
@@ -155,7 +153,7 @@ public class CopyPropagation extends Dataflow<CopyPropagation.CopyPropInfo, CFGN
     public StmtNode visit(IfNode ifNode) {
       CopyPropInfo info = this.inInfoQueue.remove();
       this.outInfoQueue.remove();
-      Map<Variable,Variable> renameMap = eqSets.processCopyPropInfo(info);
+      Map<Variable,Variable> renameMap = processCopyPropInfo(info);
       RenameVisitor renamer = new RenameVisitor(renameMap);
 
       ExpressionNode newGuard = ifNode.getGuard().accept(renamer);
@@ -199,22 +197,11 @@ public class CopyPropagation extends Dataflow<CopyPropagation.CopyPropInfo, CFGN
       this.outInfoQueue.remove();
       return super.visit(assertNode);
     }
-  }
-
-  static class VarEqualSets {
-    final Set<Variable> declaredVars;
-    final Set<Variable> tempVars;
-    final List<Variable> vars;
-
-    public VarEqualSets(ControlFlowGraph cfg) {
-      this.declaredVars = cfg.getDeclaredVars();
-      this.tempVars = cfg.getTempVars();
-      this.vars = cfg.getVars();
-    }
 
     /** return rename map of variables. */
-    public Map<Variable,Variable> processCopyPropInfo(CopyPropInfo info) {
-      Set<VarEquals> equalities = info.getEqualities();
+    private Map<Variable,Variable> processCopyPropInfo(CopyPropInfo info) {
+      final List<Variable> vars = this.cfg.getVars();
+      final Set<VarEquals> equalities = info.getEqualities();
       List<Set<Variable>> eqSets = new ArrayList<>();
 
       // compute equivalence class of variables
@@ -271,14 +258,14 @@ public class CopyPropagation extends Dataflow<CopyPropagation.CopyPropInfo, CFGN
       for (Set<Variable> eqSet : eqSets) {
         int repInd = -1;
         for (Variable var : eqSet) {
-          int varInd = this.vars.indexOf(var);
+          int varInd = vars.indexOf(var);
 
           if (repInd > varInd || repInd < 0) {
             repInd = varInd;
           }
         }
 
-        Variable repVar = this.vars.get(repInd);
+        Variable repVar = vars.get(repInd);
         repMap.put(repVar, eqSet);
       }
 

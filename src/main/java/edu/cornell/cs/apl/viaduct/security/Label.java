@@ -130,12 +130,18 @@ public class Label implements Lattice<Label>, TrustLattice<Label> {
     final String integrityString = this.integrity.toString() + "<-";
 
     String expression;
-    if (this.confidentiality.equals(this.integrity)) {
+    if (this.equals(BOTTOM)) {
+      expression = "";
+
+    } else if (this.confidentiality.equals(this.integrity)) {
       expression = this.confidentiality.toString();
+
     } else if (this.equals(this.confidentiality())) {
       expression = confidentialityString;
+
     } else if (this.equals(this.integrity())) {
       expression = integrityString;
+
     } else {
       expression = String.format("%s & %s", confidentialityString, integrityString);
     }

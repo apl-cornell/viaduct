@@ -73,7 +73,7 @@ public class CopyPropagation extends Dataflow<CopyPropagation.CopyPropInfo, CFGN
   }
 
   /** run analysis and remove redundant temporaries. */
-  public StmtNode propagateCopies(StmtNode program) {
+  public StmtNode run(StmtNode program) {
     CFGVisitor cfgVisitor = new CFGVisitor();
     ControlFlowGraph cfg = cfgVisitor.createCFG(program);
     List<CFGNode> nodes = cfg.getNodes();

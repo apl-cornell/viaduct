@@ -1,5 +1,8 @@
 package edu.cornell.cs.apl.viaduct;
 
+import com.beust.jcommander.ParameterException;
+import edu.cornell.cs.apl.viaduct.cli.ArgumentParser;
+import edu.cornell.cs.apl.viaduct.cli.Command;
 import edu.cornell.cs.apl.viaduct.imp.HostTrustConfiguration;
 import edu.cornell.cs.apl.viaduct.imp.ImpProtocolCostEstimator;
 import edu.cornell.cs.apl.viaduct.imp.ast.ImpAstNode;
@@ -11,7 +14,6 @@ import edu.cornell.cs.apl.viaduct.imp.parser.Parser;
 import edu.cornell.cs.apl.viaduct.imp.parser.TrustConfigurationParser;
 import edu.cornell.cs.apl.viaduct.imp.visitors.ImpPdgBuilderVisitor;
 import edu.cornell.cs.apl.viaduct.imp.visitors.PrintVisitor;
-
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.OutputStreamWriter;
@@ -20,7 +22,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import net.sourceforge.argparse4j.ArgumentParsers;
 import net.sourceforge.argparse4j.impl.Arguments;
-import net.sourceforge.argparse4j.inf.ArgumentParser;
 import net.sourceforge.argparse4j.inf.ArgumentParserException;
 import net.sourceforge.argparse4j.inf.Namespace;
 
@@ -52,8 +53,39 @@ public class Main {
   }
 
   /** Run the compiler. */
-  public static void main(String[] args) {
-    ArgumentParser argp =
+  public static void main(String... args) {
+    try {
+      Command command = ArgumentParser.parse(args);
+      command.run();
+    } catch (Exception e) {
+      failWith(e);
+    }
+  }
+
+  /**
+   * Print a useful error message based on the exception and terminate with a non-zero exit code.
+   */
+  private static void failWith(Exception e) {
+    if (e instanceof ParameterException) {
+      // Invalid command-line arguments; print the problem and usage information.
+      final StringBuilder usage = new StringBuilder();
+      ((ParameterException) e).getJCommander().usage(usage);
+      System.err.println(e.getLocalizedMessage());
+      System.err.println();
+      System.err.println(usage);
+    } else if (e instanceof RuntimeException) {
+      // Indicates developer error; give more detail.
+      e.printStackTrace();
+    } else {
+      // User error; print short message.
+      System.err.println(e.getLocalizedMessage());
+    }
+    System.exit(-1);
+  }
+
+  /** Run the compiler. */
+  public static void main2(String[] args) {
+    net.sourceforge.argparse4j.inf.ArgumentParser argp =
         ArgumentParsers.newFor("viaduct")
             .build()
             .defaultHelp(true)

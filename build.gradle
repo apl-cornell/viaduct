@@ -1,3 +1,5 @@
+import com.github.spotbugs.SpotBugsTask
+
 plugins {
     id 'java'
     id 'application'
@@ -10,7 +12,7 @@ plugins {
 
     // Bug finding
     id 'com.github.spotbugs' version '1.6.9'
-    // id 'pmd'
+//    id 'pmd'
     id 'jacoco'
 
     // Lexing & Parsing
@@ -19,7 +21,7 @@ plugins {
 }
 
 group 'edu.cornell.cs.apl'
-version '1.0-SNAPSHOT'
+version '0.1'
 
 sourceCompatibility = 1.8
 
@@ -58,8 +60,7 @@ spotless {
     }
 }
 
-
-tasks.withType(com.github.spotbugs.SpotBugsTask) {
+tasks.withType(SpotBugsTask) {
     reports {
         xml.enabled = false
         html.enabled = true
@@ -105,6 +106,8 @@ dependencies {
     implementation group: 'guru.nidi', name: 'graphviz-java', version: '0.8.3'
 
     // Command-line-argument parsing
+    implementation group: 'com.beust', name: 'jcommander', version: '1.72'
+    implementation group: 'com.github.rvesse', name: 'airline', version: '2.7.0'
     implementation group: 'net.sourceforge.argparse4j', name: 'argparse4j', version: '0.8.1'
 
     // Unit testing

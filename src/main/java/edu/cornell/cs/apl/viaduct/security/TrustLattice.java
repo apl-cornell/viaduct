@@ -6,7 +6,7 @@ package edu.cornell.cs.apl.viaduct.security;
  * below another, than the lower principal is trusted to enforce the higher principal's security
  * policies.
  */
-interface TrustLattice<T extends TrustLattice<T>> {
+public interface TrustLattice<T extends TrustLattice<T>> {
   /** Decide if {@code this} is trusted to enforce {@code that}'s security policies. */
   boolean actsFor(T that);
 

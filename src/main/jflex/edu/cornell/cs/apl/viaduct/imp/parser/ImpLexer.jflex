@@ -21,13 +21,22 @@ import java_cup.runtime.Symbol;
 
 
 %{
+  private String inputSource;
   private ComplexSymbolFactory symbolFactory;
   private int commentLevel;
 
-  public ImpLexer(Reader r, ComplexSymbolFactory sf) {
+  /**
+  * Construct a new lexer.
+  *
+  * @param inputLocation description of where {@code r} originated from
+  * @param r the input character stream
+  * @param sf generates symbols with source location information
+  */
+  public ImpLexer(String inputSource, Reader r, ComplexSymbolFactory sf) {
     this(r);
-    commentLevel = 0;
+    this.inputSource = inputSource;
     symbolFactory = sf;
+    commentLevel = 0;
   }
 
   /**
@@ -42,8 +51,8 @@ import java_cup.runtime.Symbol;
    * Additionally stores a value.
    */
   private Symbol symbol(int code, Object value) {
-    Location left = new Location(yyline + 1, yycolumn + 1 - yylength());
-    Location right = new Location(yyline + 1, yycolumn + 1);
+    Location left = new Location(inputSource, yyline + 1, yycolumn + 1);
+    Location right = new Location(inputSource, yyline + 1, yycolumn + 1 + yylength());
     return symbolFactory.newSymbol(sym.terminalNames[code], code, left, right, value);
   }
 %}
@@ -58,8 +67,8 @@ LineTerminator = \r | \n | \r\n
 /* White space is a line terminator, space, tab, or line feed. */
 Whitespace     = {LineTerminator} | [ \t\f]
 
-ALPHANUM    = [A-Za-z_]([A-Za-z0-9_])*
-CAPALPHANUM = [A-Z_]([A-Z0-9_])*
+ALPHANUM    = [a-z]([A-Za-z0-9_])*
+CAPALPHANUM = [A-Z]([A-Za-z0-9_])*
 NUM         = ([1-9][0-9]*) | [0-9]
 ANY         = .*
 

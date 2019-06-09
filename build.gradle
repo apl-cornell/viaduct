@@ -102,13 +102,14 @@ dependencies {
     // Functional data structures
     implementation group: 'io.vavr', name: 'vavr', version: '0.9.3'
 
+    // Command-line-argument parsing
+    implementation group: 'com.github.rvesse', name: 'airline', version: '2.7.0'
+
     // DOT graph output
     implementation group: 'guru.nidi', name: 'graphviz-java', version: '0.8.3'
 
-    // Command-line-argument parsing
-    implementation group: 'com.beust', name: 'jcommander', version: '1.72'
-    implementation group: 'com.github.rvesse', name: 'airline', version: '2.7.0'
-    implementation group: 'net.sourceforge.argparse4j', name: 'argparse4j', version: '0.8.1'
+    // Logging (disabled for now using the NOP engine)
+    implementation group: 'org.slf4j', name: 'slf4j-nop', version: '1.8.0-beta4'
 
     // Unit testing
     testImplementation("org.junit.jupiter:junit-jupiter-api:5.4.2")

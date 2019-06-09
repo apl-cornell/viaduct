@@ -18,7 +18,7 @@ import java.util.Set;
 /** prints a PDG into a DOT graph. */
 public class PdgDotPrinter {
   /** build DOT graph. */
-  public static <T extends AstNode> String pdgDotGraph(
+  private static <T extends AstNode> MutableGraph pdgDotGraph(
       ProgramDependencyGraph<T> pdg,
       Map<PdgNode<T>, Protocol<T>> protocolMap,
       GraphData dataFormat) {
@@ -109,14 +109,15 @@ public class PdgDotPrinter {
         }
       }
     }
-    return g.toString();
+    return g;
   }
 
-  public static <T extends AstNode> String pdgDotGraphWithLabels(ProgramDependencyGraph<T> pdg) {
+  public static <T extends AstNode> MutableGraph pdgDotGraphWithLabels(
+      ProgramDependencyGraph<T> pdg) {
     return pdgDotGraph(pdg, null, GraphData.LABEL);
   }
 
-  public static <T extends AstNode> String pdgDotGraphWithProtocols(
+  public static <T extends AstNode> MutableGraph pdgDotGraphWithProtocols(
       ProgramDependencyGraph<T> pdg, Map<PdgNode<T>, Protocol<T>> protoMap) {
     return pdgDotGraph(pdg, protoMap, GraphData.PROTOCOL);
   }

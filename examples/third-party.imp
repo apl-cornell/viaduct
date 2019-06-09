@@ -1,0 +1,15 @@
+/* Millionaire's problem with a trusted third party. */
+process main {
+  a : {A & B<-};
+  b : {B & A<-};
+  b_richer : {A & B};
+
+  a := 5;
+  b := 10;
+
+  b_richer := a <= b;
+
+  assert b_richer;
+}
+
+host trusted : {A & B};

@@ -20,6 +20,11 @@ public class Store implements Iterable<Tuple2<Variable, ImpValue>> {
   /** Create an empty store. */
   Store() {}
 
+  /** Return {@code true} if no variables are declared in the store. */
+  public boolean isEmpty() {
+    return variableStore.isEmpty();
+  }
+
   /**
    * Declare a new variable. No value is associated with the variable, and attempting to read it
    * without assigning to it first will result in an exception.

@@ -1,5 +1,7 @@
 package edu.cornell.cs.apl.viaduct;
 
+import edu.cornell.cs.apl.viaduct.protocol.Protocol;
+
 public class UnknownProtocolException extends RuntimeException {
   Protocol<? extends AstNode> protocol;
 

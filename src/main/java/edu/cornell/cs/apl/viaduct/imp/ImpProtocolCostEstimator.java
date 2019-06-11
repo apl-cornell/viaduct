@@ -1,10 +1,5 @@
 package edu.cornell.cs.apl.viaduct.imp;
 
-import edu.cornell.cs.apl.viaduct.PdgNode;
-import edu.cornell.cs.apl.viaduct.ProgramDependencyGraph;
-import edu.cornell.cs.apl.viaduct.Protocol;
-import edu.cornell.cs.apl.viaduct.ProtocolCostEstimator;
-import edu.cornell.cs.apl.viaduct.ProtocolFactory;
 import edu.cornell.cs.apl.viaduct.UnknownProtocolException;
 import edu.cornell.cs.apl.viaduct.imp.ast.ImpAstNode;
 import edu.cornell.cs.apl.viaduct.imp.protocols.MPC;
@@ -15,6 +10,12 @@ import edu.cornell.cs.apl.viaduct.imp.protocols.Single;
 import edu.cornell.cs.apl.viaduct.imp.protocols.SingleFactory;
 import edu.cornell.cs.apl.viaduct.imp.protocols.ZK;
 import edu.cornell.cs.apl.viaduct.imp.visitors.SizeVisitor;
+import edu.cornell.cs.apl.viaduct.pdg.PdgNode;
+import edu.cornell.cs.apl.viaduct.pdg.ProgramDependencyGraph;
+import edu.cornell.cs.apl.viaduct.protocol.Protocol;
+import edu.cornell.cs.apl.viaduct.protocol.ProtocolCostEstimator;
+import edu.cornell.cs.apl.viaduct.protocol.ProtocolFactory;
+
 import java.util.HashSet;
 import java.util.Set;
 

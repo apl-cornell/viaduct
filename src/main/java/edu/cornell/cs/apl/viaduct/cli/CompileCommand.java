@@ -3,14 +3,8 @@ package edu.cornell.cs.apl.viaduct.cli;
 import com.github.rvesse.airline.annotations.Command;
 import com.github.rvesse.airline.annotations.Option;
 
-import edu.cornell.cs.apl.viaduct.ConfidentialityDataflow;
-import edu.cornell.cs.apl.viaduct.IntegrityDataflow;
-import edu.cornell.cs.apl.viaduct.PdgDotPrinter;
-import edu.cornell.cs.apl.viaduct.PdgNode;
-import edu.cornell.cs.apl.viaduct.ProgramDependencyGraph;
-import edu.cornell.cs.apl.viaduct.Protocol;
-import edu.cornell.cs.apl.viaduct.ProtocolInstantiation;
-import edu.cornell.cs.apl.viaduct.ProtocolSelection;
+import edu.cornell.cs.apl.viaduct.dataflow.ConfidentialityDataflow;
+import edu.cornell.cs.apl.viaduct.dataflow.IntegrityDataflow;
 import edu.cornell.cs.apl.viaduct.imp.HostTrustConfiguration;
 import edu.cornell.cs.apl.viaduct.imp.ImpProtocolCostEstimator;
 import edu.cornell.cs.apl.viaduct.imp.ast.ImpAstNode;
@@ -20,12 +14,20 @@ import edu.cornell.cs.apl.viaduct.imp.ast.StmtNode;
 import edu.cornell.cs.apl.viaduct.imp.parser.TrustConfigurationParser;
 import edu.cornell.cs.apl.viaduct.imp.visitors.ImpPdgBuilderVisitor;
 import edu.cornell.cs.apl.viaduct.imp.visitors.PrintVisitor;
+import edu.cornell.cs.apl.viaduct.pdg.PdgDotPrinter;
+import edu.cornell.cs.apl.viaduct.pdg.PdgNode;
+import edu.cornell.cs.apl.viaduct.pdg.ProgramDependencyGraph;
+import edu.cornell.cs.apl.viaduct.protocol.Protocol;
+import edu.cornell.cs.apl.viaduct.protocol.ProtocolInstantiation;
+import edu.cornell.cs.apl.viaduct.protocol.ProtocolSelection;
+
 import guru.nidi.graphviz.engine.Format;
 import guru.nidi.graphviz.engine.Graphviz;
 import guru.nidi.graphviz.engine.GraphvizCmdLineEngine;
 import guru.nidi.graphviz.engine.GraphvizServerEngine;
 import guru.nidi.graphviz.engine.GraphvizV8Engine;
 import guru.nidi.graphviz.model.MutableGraph;
+
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -35,6 +37,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Supplier;
+
 import org.apache.commons.io.FilenameUtils;
 
 @Command(name = "compile", description = "Compile ideal protocol to secure distributed program")
@@ -159,7 +162,7 @@ public class CompileCommand extends BaseCommand {
       }
 
       int protocolCost = costEstimator.estimatePdgCost(protocolMap, pdg);
-      System.err.println("Protocol cost: " + protocolCost);
+      System.out.println("Protocol cost: " + protocolCost);
     } else {
       // We couldn't find protocols for some nodes.
       final StringBuilder error = new StringBuilder();

@@ -1,14 +1,15 @@
 package edu.cornell.cs.apl.viaduct.imp.builders;
 
-import edu.cornell.cs.apl.viaduct.FreshNameGenerator;
-import edu.cornell.cs.apl.viaduct.TargetPostprocessor;
 import edu.cornell.cs.apl.viaduct.imp.DuplicateProcessDefinitionException;
 import edu.cornell.cs.apl.viaduct.imp.HostTrustConfiguration;
+import edu.cornell.cs.apl.viaduct.imp.TargetPostprocessor;
 import edu.cornell.cs.apl.viaduct.imp.ast.Host;
 import edu.cornell.cs.apl.viaduct.imp.ast.ProcessName;
 import edu.cornell.cs.apl.viaduct.imp.ast.ProgramNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.StmtNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.Variable;
+import edu.cornell.cs.apl.viaduct.util.FreshNameGenerator;
+
 import java.util.HashMap;
 import java.util.Map;
 

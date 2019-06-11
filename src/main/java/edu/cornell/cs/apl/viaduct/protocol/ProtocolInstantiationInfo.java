@@ -1,10 +1,14 @@
-package edu.cornell.cs.apl.viaduct;
+package edu.cornell.cs.apl.viaduct.protocol;
 
-import edu.cornell.cs.apl.viaduct.ProgramDependencyGraph.ControlLabel;
+import edu.cornell.cs.apl.viaduct.AstNode;
+import edu.cornell.cs.apl.viaduct.Binding;
 import edu.cornell.cs.apl.viaduct.imp.ast.Host;
 import edu.cornell.cs.apl.viaduct.imp.ast.Variable;
 import edu.cornell.cs.apl.viaduct.imp.builders.ProcessConfigurationBuilder;
 import edu.cornell.cs.apl.viaduct.imp.builders.StmtBuilder;
+import edu.cornell.cs.apl.viaduct.pdg.PdgNode;
+import edu.cornell.cs.apl.viaduct.pdg.ProgramDependencyGraph.ControlLabel;
+
 import java.util.Map;
 import java.util.Set;
 import java.util.Stack;

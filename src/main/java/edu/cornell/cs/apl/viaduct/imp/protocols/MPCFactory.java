@@ -1,13 +1,14 @@
 package edu.cornell.cs.apl.viaduct.imp.protocols;
 
-import edu.cornell.cs.apl.viaduct.PdgInfoEdge;
-import edu.cornell.cs.apl.viaduct.PdgNode;
-import edu.cornell.cs.apl.viaduct.Protocol;
-import edu.cornell.cs.apl.viaduct.ProtocolFactory;
 import edu.cornell.cs.apl.viaduct.imp.HostTrustConfiguration;
 import edu.cornell.cs.apl.viaduct.imp.ast.Host;
 import edu.cornell.cs.apl.viaduct.imp.ast.ImpAstNode;
+import edu.cornell.cs.apl.viaduct.pdg.PdgInfoEdge;
+import edu.cornell.cs.apl.viaduct.pdg.PdgNode;
+import edu.cornell.cs.apl.viaduct.protocol.Protocol;
+import edu.cornell.cs.apl.viaduct.protocol.ProtocolFactory;
 import edu.cornell.cs.apl.viaduct.security.Label;
+
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;

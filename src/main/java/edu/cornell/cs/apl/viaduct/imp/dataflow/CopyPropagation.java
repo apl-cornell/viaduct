@@ -1,6 +1,6 @@
 package edu.cornell.cs.apl.viaduct.imp.dataflow;
 
-import edu.cornell.cs.apl.viaduct.Dataflow;
+import edu.cornell.cs.apl.viaduct.dataflow.Dataflow;
 import edu.cornell.cs.apl.viaduct.imp.ast.ArrayDeclarationNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.AssertNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.AssignNode;

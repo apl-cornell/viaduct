@@ -1,5 +1,6 @@
-package edu.cornell.cs.apl.viaduct;
+package edu.cornell.cs.apl.viaduct.pdg;
 
+import edu.cornell.cs.apl.viaduct.AstNode;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;

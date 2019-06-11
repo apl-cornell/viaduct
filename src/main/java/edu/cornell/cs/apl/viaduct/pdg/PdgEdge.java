@@ -1,4 +1,6 @@
-package edu.cornell.cs.apl.viaduct;
+package edu.cornell.cs.apl.viaduct.pdg;
+
+import edu.cornell.cs.apl.viaduct.AstNode;
 
 public abstract class PdgEdge<T extends AstNode> {
   PdgNode<T> source;

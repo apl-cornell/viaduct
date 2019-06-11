@@ -1,4 +1,7 @@
-package edu.cornell.cs.apl.viaduct;
+package edu.cornell.cs.apl.viaduct.pdg;
+
+import edu.cornell.cs.apl.viaduct.AstNode;
+import edu.cornell.cs.apl.viaduct.Binding;
 
 public abstract class PdgInfoEdge<T extends AstNode> extends PdgEdge<T> {
   Binding<T> label;

@@ -1,4 +1,4 @@
-package edu.cornell.cs.apl.viaduct;
+package edu.cornell.cs.apl.viaduct.util;
 
 import java.util.BitSet;
 import java.util.Iterator;

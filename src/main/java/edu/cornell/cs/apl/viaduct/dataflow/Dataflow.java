@@ -1,4 +1,4 @@
-package edu.cornell.cs.apl.viaduct;
+package edu.cornell.cs.apl.viaduct.dataflow;
 
 import edu.cornell.cs.apl.viaduct.security.Lattice;
 

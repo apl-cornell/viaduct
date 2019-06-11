@@ -1,4 +1,6 @@
-package edu.cornell.cs.apl.viaduct;
+package edu.cornell.cs.apl.viaduct.pdg;
+
+import edu.cornell.cs.apl.viaduct.AstNode;
 
 /** represents information flow between nodes. no reads or writes. */
 public class PdgFlowEdge<T extends AstNode> extends PdgInfoEdge<T> {

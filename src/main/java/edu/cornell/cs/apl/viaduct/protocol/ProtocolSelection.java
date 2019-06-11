@@ -1,6 +1,9 @@
-package edu.cornell.cs.apl.viaduct;
+package edu.cornell.cs.apl.viaduct.protocol;
 
+import edu.cornell.cs.apl.viaduct.AstNode;
 import edu.cornell.cs.apl.viaduct.imp.HostTrustConfiguration;
+import edu.cornell.cs.apl.viaduct.pdg.PdgNode;
+import edu.cornell.cs.apl.viaduct.pdg.ProgramDependencyGraph;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;

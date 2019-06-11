@@ -1,16 +1,6 @@
 package edu.cornell.cs.apl.viaduct.imp.protocols;
 
 import edu.cornell.cs.apl.viaduct.Binding;
-import edu.cornell.cs.apl.viaduct.PdgComputeNode;
-import edu.cornell.cs.apl.viaduct.PdgControlNode;
-import edu.cornell.cs.apl.viaduct.PdgEdge;
-import edu.cornell.cs.apl.viaduct.PdgInfoEdge;
-import edu.cornell.cs.apl.viaduct.PdgNode;
-import edu.cornell.cs.apl.viaduct.PdgReadEdge;
-import edu.cornell.cs.apl.viaduct.PdgStorageNode;
-import edu.cornell.cs.apl.viaduct.PdgWriteEdge;
-import edu.cornell.cs.apl.viaduct.Protocol;
-import edu.cornell.cs.apl.viaduct.ProtocolInstantiationInfo;
 import edu.cornell.cs.apl.viaduct.imp.ast.AssignNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.DeclarationNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ExpressionNode;
@@ -21,6 +11,17 @@ import edu.cornell.cs.apl.viaduct.imp.ast.Variable;
 import edu.cornell.cs.apl.viaduct.imp.builders.ExpressionBuilder;
 import edu.cornell.cs.apl.viaduct.imp.builders.StmtBuilder;
 import edu.cornell.cs.apl.viaduct.imp.visitors.RenameVisitor;
+import edu.cornell.cs.apl.viaduct.pdg.PdgComputeNode;
+import edu.cornell.cs.apl.viaduct.pdg.PdgControlNode;
+import edu.cornell.cs.apl.viaduct.pdg.PdgEdge;
+import edu.cornell.cs.apl.viaduct.pdg.PdgInfoEdge;
+import edu.cornell.cs.apl.viaduct.pdg.PdgNode;
+import edu.cornell.cs.apl.viaduct.pdg.PdgReadEdge;
+import edu.cornell.cs.apl.viaduct.pdg.PdgStorageNode;
+import edu.cornell.cs.apl.viaduct.pdg.PdgWriteEdge;
+import edu.cornell.cs.apl.viaduct.protocol.Protocol;
+import edu.cornell.cs.apl.viaduct.protocol.ProtocolInstantiationInfo;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;

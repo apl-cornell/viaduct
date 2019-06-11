@@ -1,5 +1,6 @@
-package edu.cornell.cs.apl.viaduct;
+package edu.cornell.cs.apl.viaduct.pdg;
 
+import edu.cornell.cs.apl.viaduct.AstNode;
 import edu.cornell.cs.apl.viaduct.security.Label;
 
 /** PDG compute node, which represents expressions or statements. */

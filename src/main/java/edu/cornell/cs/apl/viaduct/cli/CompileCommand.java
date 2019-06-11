@@ -2,7 +2,6 @@ package edu.cornell.cs.apl.viaduct.cli;
 
 import com.github.rvesse.airline.annotations.Command;
 import com.github.rvesse.airline.annotations.Option;
-
 import edu.cornell.cs.apl.viaduct.dataflow.ConfidentialityDataflow;
 import edu.cornell.cs.apl.viaduct.dataflow.IntegrityDataflow;
 import edu.cornell.cs.apl.viaduct.imp.HostTrustConfiguration;
@@ -20,14 +19,12 @@ import edu.cornell.cs.apl.viaduct.pdg.ProgramDependencyGraph;
 import edu.cornell.cs.apl.viaduct.protocol.Protocol;
 import edu.cornell.cs.apl.viaduct.protocol.ProtocolInstantiation;
 import edu.cornell.cs.apl.viaduct.protocol.ProtocolSelection;
-
 import guru.nidi.graphviz.engine.Format;
 import guru.nidi.graphviz.engine.Graphviz;
 import guru.nidi.graphviz.engine.GraphvizCmdLineEngine;
 import guru.nidi.graphviz.engine.GraphvizServerEngine;
 import guru.nidi.graphviz.engine.GraphvizV8Engine;
 import guru.nidi.graphviz.model.MutableGraph;
-
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -37,7 +34,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Supplier;
-
 import org.apache.commons.io.FilenameUtils;
 
 @Command(name = "compile", description = "Compile ideal protocol to secure distributed program")
@@ -161,8 +157,9 @@ public class CompileCommand extends BaseCommand {
         writer.newLine();
       }
 
-      int protocolCost = costEstimator.estimatePdgCost(protocolMap, pdg);
-      System.out.println("Protocol cost: " + protocolCost);
+      // TODO: This gets printed in between System.out
+      // int protocolCost = costEstimator.estimatePdgCost(protocolMap, pdg);
+      // System.err.println("Protocol cost: " + protocolCost);
     } else {
       // We couldn't find protocols for some nodes.
       final StringBuilder error = new StringBuilder();

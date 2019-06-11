@@ -32,6 +32,10 @@ public class CopyPropagation extends Dataflow<CopyPropagation.CopyPropInfo, CFGN
   Map<CFGNode,CopyPropInfo> inputMap;
   Map<CFGNode,CopyPropInfo> outputMap;
 
+  public CopyPropagation() {
+    super(DataflowType.FORWARD);
+  }
+
   @Override
   protected CopyPropInfo input(CFGNode node) {
     if (this.inputMap.containsKey(node)) {
@@ -70,6 +74,10 @@ public class CopyPropagation extends Dataflow<CopyPropagation.CopyPropInfo, CFGN
 
   protected Set<CFGNode> getInNodes(CFGNode node) {
     return node.getInNodes();
+  }
+
+  protected Set<CFGNode> getOutNodes(CFGNode node) {
+    return node.getOutNodes();
   }
 
   /** run analysis and remove redundant temporaries. */

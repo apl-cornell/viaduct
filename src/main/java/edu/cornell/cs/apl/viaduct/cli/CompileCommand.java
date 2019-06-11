@@ -2,8 +2,10 @@ package edu.cornell.cs.apl.viaduct.cli;
 
 import com.github.rvesse.airline.annotations.Command;
 import com.github.rvesse.airline.annotations.Option;
+
+import edu.cornell.cs.apl.viaduct.ConfidentialityDataflow;
+import edu.cornell.cs.apl.viaduct.IntegrityDataflow;
 import edu.cornell.cs.apl.viaduct.PdgDotPrinter;
-import edu.cornell.cs.apl.viaduct.PdgLabelDataflow;
 import edu.cornell.cs.apl.viaduct.PdgNode;
 import edu.cornell.cs.apl.viaduct.ProgramDependencyGraph;
 import edu.cornell.cs.apl.viaduct.Protocol;
@@ -130,7 +132,9 @@ public class CompileCommand extends BaseCommand {
     final ProgramDependencyGraph<ImpAstNode> pdg = new ImpPdgBuilderVisitor().generatePDG(main);
 
     // Run data-flow analysis to compute labels for all PDG nodes.
-    new PdgLabelDataflow<ImpAstNode>().dataflow(pdg.getOrderedNodes());
+    List<PdgNode<ImpAstNode>> nodes = pdg.getOrderedNodes();
+    new ConfidentialityDataflow<ImpAstNode>().dataflow(nodes);
+    new IntegrityDataflow<ImpAstNode>().dataflow(nodes);
 
     // Dump PDG with information flow labels to a file (if requested).
     dumpGraph(() -> PdgDotPrinter.pdgDotGraphWithLabels(pdg), labelGraphOutput);

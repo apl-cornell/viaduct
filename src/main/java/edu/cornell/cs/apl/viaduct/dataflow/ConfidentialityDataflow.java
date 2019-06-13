@@ -4,11 +4,19 @@ import edu.cornell.cs.apl.viaduct.AstNode;
 import edu.cornell.cs.apl.viaduct.pdg.PdgNode;
 import edu.cornell.cs.apl.viaduct.security.Label;
 
+/** dataflow analysis to compute the confidentiality requirements of PDG nodes.
+ * note that starting from the top of the trust lattice (weakest principal)
+ * and going down (meet) until fixpoint, the analysis computes the weakest
+ * principal necessary to perform the computation / store the variable
+ * represented by the PDG node.
+ *
+ * confidentiality analysis is a forward analysis that goes UP the IF lattice.
+ */
 public class ConfidentialityDataflow<T extends AstNode>
     extends PdgLabelDataflow<T> {
 
   public ConfidentialityDataflow() {
-    super(DataflowType.FORWARD);
+    super(DataflowType.FORWARD, DataflowDirection.UP);
   }
 
   @Override

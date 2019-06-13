@@ -32,8 +32,8 @@ public abstract class PdgNode<T extends AstNode> {
     this(pdg);
     this.astNode = astNode;
     this.id = id;
-    this.inLabel = Label.bottom();
-    this.outLabel = Label.bottom();
+    this.inLabel = Label.weakestPrincipal();
+    this.outLabel = Label.weakestPrincipal();
   }
 
   public T getAstNode() {

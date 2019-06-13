@@ -11,8 +11,8 @@ import java.util.Set;
 public abstract class PdgLabelDataflow<T extends AstNode>
     extends Dataflow<Label, PdgNode<T>> {
 
-  public PdgLabelDataflow(DataflowType type) {
-    super(type);
+  protected PdgLabelDataflow(DataflowType type, DataflowDirection dir) {
+    super(type, dir);
   }
 
   @Override

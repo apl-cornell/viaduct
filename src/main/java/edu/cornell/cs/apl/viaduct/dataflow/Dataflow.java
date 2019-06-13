@@ -12,10 +12,19 @@ import java.util.Set;
 public abstract class Dataflow<T extends Lattice<T>, N> {
   public enum DataflowType { FORWARD, BACKWARD }
 
+  public enum DataflowDirection { UP, DOWN }
+
   protected DataflowType type;
 
-  protected Dataflow(DataflowType dt) {
+  protected DataflowDirection dir;
+
+  protected Dataflow(DataflowType dt, DataflowDirection dd) {
     this.type = dt;
+    this.dir = dd;
+  }
+
+  protected Dataflow(DataflowType dt) {
+    this(dt, DataflowDirection.UP);
   }
 
   protected abstract T input(N node);
@@ -50,7 +59,12 @@ public abstract class Dataflow<T extends Lattice<T>, N> {
       T nextInput = input(node);
 
       for (N inNode : getInNodes(node)) {
-        nextInput = nextInput.join(output(inNode));
+        if (this.dir == DataflowDirection.UP) {
+          nextInput = nextInput.join(output(inNode));
+
+        } else {
+          nextInput = nextInput.meet(output(inNode));
+        }
       }
       updateInput(node, nextInput);
 
@@ -74,7 +88,12 @@ public abstract class Dataflow<T extends Lattice<T>, N> {
       N node = worklist.remove();
       T nextOutput = output(node);
       for (N outNode : getOutNodes(node)) {
-        nextOutput = nextOutput.join(input(outNode));
+        if (this.dir == DataflowDirection.UP) {
+          nextOutput = nextOutput.join(input(outNode));
+
+        } else {
+          nextOutput = nextOutput.meet(input(outNode));
+        }
       }
       updateOutput(node, nextOutput);
 

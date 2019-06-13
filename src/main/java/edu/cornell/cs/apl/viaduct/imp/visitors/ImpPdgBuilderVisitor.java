@@ -138,7 +138,7 @@ public class ImpPdgBuilderVisitor implements AstVisitor<PdgBuilderInfo<ImpAstNod
             this.pdg,
             downgradeNode,
             this.freshNameGenerator.getFreshName(DOWNGRADE_NODE),
-            Label.bottom(),
+            Label.weakestPrincipal(),
             label);
 
     inInfo.setReadNode(node);
@@ -184,7 +184,7 @@ public class ImpPdgBuilderVisitor implements AstVisitor<PdgBuilderInfo<ImpAstNod
               this.pdg,
               assignNode,
               this.freshNameGenerator.getFreshName(ASSIGN_NODE),
-              Label.bottom());
+              Label.weakestPrincipal());
 
       inInfo.setReadNode(node);
       PdgWriteEdge.create(node, varNode);
@@ -241,7 +241,7 @@ public class ImpPdgBuilderVisitor implements AstVisitor<PdgBuilderInfo<ImpAstNod
               this.pdg,
               ifNode.getGuard(),
               this.freshNameGenerator.getFreshName(GUARD_NODE),
-              Label.bottom());
+              Label.weakestPrincipal());
       guardInfo.setReadNode(guardNode);
       this.pdg.addNode(guardNode);
       guardInfo = new PdgBuilderInfo<>(guardNode, new Variable(guardNode.getId()));
@@ -249,7 +249,7 @@ public class ImpPdgBuilderVisitor implements AstVisitor<PdgBuilderInfo<ImpAstNod
 
     PdgNode<ImpAstNode> controlNode =
         new PdgControlNode<>(
-            this.pdg, ifNode, this.freshNameGenerator.getFreshName(IF_NODE), Label.bottom());
+            this.pdg, ifNode, this.freshNameGenerator.getFreshName(IF_NODE), Label.weakestPrincipal());
     guardInfo.setReadNode(controlNode);
     this.pdg.addNode(controlNode);
 

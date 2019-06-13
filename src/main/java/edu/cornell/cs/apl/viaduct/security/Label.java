@@ -14,6 +14,12 @@ public class Label implements Lattice<Label>, TrustLattice<Label> {
   private static final Label TOP =
       new Label(FreeDistributiveLattice.bottom(), FreeDistributiveLattice.top());
 
+  private static final Label WEAKEST =
+      new Label(FreeDistributiveLattice.top(), FreeDistributiveLattice.top());
+
+  private static final Label STRONGEST =
+      new Label(FreeDistributiveLattice.bottom(), FreeDistributiveLattice.bottom());
+
   private final FreeDistributiveLattice<Principal> confidentiality;
   private final FreeDistributiveLattice<Principal> integrity;
 
@@ -39,6 +45,16 @@ public class Label implements Lattice<Label>, TrustLattice<Label> {
   /** The most restrictive data policy, i.e. secret and untrusted. */
   public static Label top() {
     return TOP;
+  }
+
+  /** The least powerful principal, i.e. public and untrusted. */
+  public static Label weakestPrincipal() {
+    return WEAKEST;
+  }
+
+  /** The most powerful principal, i.e. secret and trusted. */
+  public static Label strongestPrincipal() {
+    return STRONGEST;
   }
 
   /** Check if information flow from {@code this} to {@code other} is safe. */
@@ -126,8 +142,8 @@ public class Label implements Lattice<Label>, TrustLattice<Label> {
 
   @Override
   public String toString() {
-    final String confidentialityString = this.confidentiality.toString() + "->";
-    final String integrityString = this.integrity.toString() + "<-";
+    final String confidentialityString = this.confidentiality.toString() + "→";
+    final String integrityString = this.integrity.toString() + "←";
 
     String expression;
     if (this.equals(BOTTOM)) {

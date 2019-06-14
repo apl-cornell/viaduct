@@ -13,7 +13,6 @@ import java.util.Set;
  * and going down (meet) until fixpoint, the analysis computes the weakest
  * principal necessary to perform the computation / store the variable
  * represented by the PDG node.
- *
  * integrity analysis is a backwards analysis that goes DOWN the IF lattice
  */
 public class IntegrityDataflow<T extends AstNode>

@@ -142,8 +142,8 @@ public class Label implements Lattice<Label>, TrustLattice<Label> {
 
   @Override
   public String toString() {
-    final String confidentialityString = this.confidentiality.toString() + "→";
-    final String integrityString = this.integrity.toString() + "←";
+    final String confidentialityString = this.confidentiality.toString() + "->";
+    final String integrityString = this.integrity.toString() + "<-";
 
     String expression;
     if (this.equals(BOTTOM)) {
@@ -152,10 +152,10 @@ public class Label implements Lattice<Label>, TrustLattice<Label> {
     } else if (this.confidentiality.equals(this.integrity)) {
       expression = this.confidentiality.toString();
 
-    } else if (this.equals(this.confidentiality())) {
+    } else if (STRONGEST.integrity().equals(this.integrity())) {
       expression = confidentialityString;
 
-    } else if (this.equals(this.integrity())) {
+    } else if (STRONGEST.confidentiality().equals(this.confidentiality())) {
       expression = integrityString;
 
     } else {

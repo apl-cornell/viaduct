@@ -9,7 +9,6 @@ import edu.cornell.cs.apl.viaduct.security.Label;
  * and going down (meet) until fixpoint, the analysis computes the weakest
  * principal necessary to perform the computation / store the variable
  * represented by the PDG node.
- *
  * confidentiality analysis is a forward analysis that goes UP the IF lattice.
  */
 public class ConfidentialityDataflow<T extends AstNode>

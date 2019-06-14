@@ -249,7 +249,8 @@ public class ImpPdgBuilderVisitor implements AstVisitor<PdgBuilderInfo<ImpAstNod
 
     PdgNode<ImpAstNode> controlNode =
         new PdgControlNode<>(
-            this.pdg, ifNode, this.freshNameGenerator.getFreshName(IF_NODE), Label.weakestPrincipal());
+            this.pdg, ifNode, this.freshNameGenerator.getFreshName(IF_NODE),
+            Label.weakestPrincipal());
     guardInfo.setReadNode(controlNode);
     this.pdg.addNode(controlNode);
 

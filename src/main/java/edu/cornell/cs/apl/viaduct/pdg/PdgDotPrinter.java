@@ -79,8 +79,12 @@ public class PdgDotPrinter {
         Style style;
 
         // draw edge as a read channel
-        if (infoEdge.isFlowEdge()) {
+        if (infoEdge.isReadChannelEdge()) {
           style = Style.DOTTED;
+
+        } else if (infoEdge.isPcFlowEdge()) {
+          style = Style.DASHED;
+
         } else {
           style = Style.SOLID;
         }

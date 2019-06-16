@@ -1,6 +1,7 @@
 package edu.cornell.cs.apl.viaduct.dataflow;
 
 import edu.cornell.cs.apl.viaduct.AstNode;
+import edu.cornell.cs.apl.viaduct.pdg.PdgInfoEdge;
 import edu.cornell.cs.apl.viaduct.pdg.PdgNode;
 import edu.cornell.cs.apl.viaduct.security.Label;
 
@@ -16,6 +17,11 @@ public class ConfidentialityDataflow<T extends AstNode>
 
   public ConfidentialityDataflow() {
     super(DataflowType.FORWARD, DataflowDirection.UP);
+  }
+
+  @Override
+  protected boolean includeInfoEdge(PdgInfoEdge<T> edge) {
+    return true;
   }
 
   @Override

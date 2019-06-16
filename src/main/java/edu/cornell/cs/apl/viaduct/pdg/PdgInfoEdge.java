@@ -22,7 +22,11 @@ public abstract class PdgInfoEdge<T extends AstNode> extends PdgEdge<T> {
     return false;
   }
 
-  public boolean isFlowEdge() {
+  public boolean isReadChannelEdge() {
+    return false;
+  }
+
+  public boolean isPcFlowEdge() {
     return false;
   }
 }

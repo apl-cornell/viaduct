@@ -23,9 +23,10 @@ import edu.cornell.cs.apl.viaduct.pdg.PdgBuilderInfo;
 import edu.cornell.cs.apl.viaduct.pdg.PdgComputeNode;
 import edu.cornell.cs.apl.viaduct.pdg.PdgControlEdge;
 import edu.cornell.cs.apl.viaduct.pdg.PdgControlNode;
-import edu.cornell.cs.apl.viaduct.pdg.PdgFlowEdge;
 import edu.cornell.cs.apl.viaduct.pdg.PdgInfoEdge;
 import edu.cornell.cs.apl.viaduct.pdg.PdgNode;
+import edu.cornell.cs.apl.viaduct.pdg.PdgPcFlowEdge;
+import edu.cornell.cs.apl.viaduct.pdg.PdgReadChannelEdge;
 import edu.cornell.cs.apl.viaduct.pdg.PdgStorageNode;
 import edu.cornell.cs.apl.viaduct.pdg.PdgWriteEdge;
 import edu.cornell.cs.apl.viaduct.pdg.ProgramDependencyGraph;
@@ -259,7 +260,6 @@ public class ImpPdgBuilderVisitor implements AstVisitor<PdgBuilderInfo<ImpAstNod
     PdgNode<ImpAstNode> thenFirst = thenInfo.getFirstCreated();
     if (thenFirst != null) {
       PdgControlEdge.create(controlNode, thenFirst, ControlLabel.THEN);
-      PdgFlowEdge.create(controlNode, thenFirst);
     }
 
     // add control edge to beginning of else block
@@ -267,18 +267,24 @@ public class ImpPdgBuilderVisitor implements AstVisitor<PdgBuilderInfo<ImpAstNod
     PdgNode<ImpAstNode> elseFirst = elseInfo.getFirstCreated();
     if (elseFirst != null) {
       PdgControlEdge.create(controlNode, elseFirst, ControlLabel.ELSE);
-      PdgFlowEdge.create(controlNode, elseFirst);
     }
 
     // add read channel edges
     Set<PdgNode<ImpAstNode>> readChannelStorageSet = new HashSet<>();
+    Set<PdgNode<ImpAstNode>> pcFlowSet = new HashSet<>();
+
     PdgBuilderInfo<ImpAstNode> branchInfo = thenInfo.merge(elseInfo);
     for (PdgNode<ImpAstNode> createdNode : branchInfo.getCreatedNodes()) {
+      pcFlowSet.add(createdNode);
       readChannelStorageSet.addAll(createdNode.getStorageNodeInputs());
     }
 
-    for (PdgNode<ImpAstNode> readChannelStorage : readChannelStorageSet) {
-      PdgFlowEdge.create(controlNode, readChannelStorage);
+    for (PdgNode<ImpAstNode> readChannelStorageNode : readChannelStorageSet) {
+      PdgReadChannelEdge.create(controlNode, readChannelStorageNode);
+    }
+
+    for (PdgNode<ImpAstNode> pcFlowNode : pcFlowSet) {
+      PdgPcFlowEdge.create(controlNode, pcFlowNode);
     }
 
     PdgBuilderInfo<ImpAstNode> info = new PdgBuilderInfo<>(controlNode);

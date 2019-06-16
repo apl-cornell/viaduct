@@ -1,7 +1,7 @@
 package edu.cornell.cs.apl.viaduct.dataflow;
 
 import edu.cornell.cs.apl.viaduct.AstNode;
-import edu.cornell.cs.apl.viaduct.pdg.PdgEdge;
+import edu.cornell.cs.apl.viaduct.pdg.PdgInfoEdge;
 import edu.cornell.cs.apl.viaduct.pdg.PdgNode;
 import edu.cornell.cs.apl.viaduct.security.Label;
 
@@ -15,11 +15,15 @@ public abstract class PdgLabelDataflow<T extends AstNode>
     super(type, dir);
   }
 
+  protected abstract boolean includeInfoEdge(PdgInfoEdge<T> edge);
+
   @Override
   protected Set<PdgNode<T>> getInNodes(PdgNode<T> node) {
     Set<PdgNode<T>> inNodes = new HashSet<>();
-    for (PdgEdge<T> inEdge : node.getInInfoEdges()) {
-      inNodes.add(inEdge.getSource());
+    for (PdgInfoEdge<T> inEdge : node.getInInfoEdges()) {
+      if (includeInfoEdge(inEdge)) {
+        inNodes.add(inEdge.getSource());
+      }
     }
 
     return inNodes;
@@ -28,8 +32,10 @@ public abstract class PdgLabelDataflow<T extends AstNode>
   @Override
   protected Set<PdgNode<T>> getOutNodes(PdgNode<T> node)  {
     Set<PdgNode<T>> outNodes = new HashSet<>();
-    for (PdgEdge<T> outEdge : node.getOutInfoEdges()) {
-      outNodes.add(outEdge.getTarget());
+    for (PdgInfoEdge<T> outEdge : node.getOutInfoEdges()) {
+      if (includeInfoEdge(outEdge)) {
+        outNodes.add(outEdge.getTarget());
+      }
     }
 
     return outNodes;

@@ -5,9 +5,6 @@ import edu.cornell.cs.apl.viaduct.pdg.PdgInfoEdge;
 import edu.cornell.cs.apl.viaduct.pdg.PdgNode;
 import edu.cornell.cs.apl.viaduct.security.Label;
 
-import java.util.HashSet;
-import java.util.Set;
-
 /** dataflow analysis to compute the integrity requirements of PDG nodes.
  * note that starting from the top of the trust lattice (weakest principal)
  * and going down (meet) until fixpoint, the analysis computes the weakest
@@ -23,15 +20,8 @@ public class IntegrityDataflow<T extends AstNode>
   }
 
   @Override
-  protected Set<PdgNode<T>> getOutNodes(PdgNode<T> node)  {
-    Set<PdgNode<T>> outNodes = new HashSet<>();
-    for (PdgInfoEdge<T> outEdge : node.getOutInfoEdges()) {
-      if (!outEdge.isFlowEdge()) {
-        outNodes.add(outEdge.getTarget());
-      }
-    }
-
-    return outNodes;
+  protected boolean includeInfoEdge(PdgInfoEdge<T> edge) {
+    return !edge.isReadChannelEdge();
   }
 
   @Override

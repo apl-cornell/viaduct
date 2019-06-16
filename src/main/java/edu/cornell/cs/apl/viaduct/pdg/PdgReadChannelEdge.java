@@ -3,19 +3,19 @@ package edu.cornell.cs.apl.viaduct.pdg;
 import edu.cornell.cs.apl.viaduct.AstNode;
 
 /** represents information flow between nodes. no reads or writes. */
-public class PdgFlowEdge<T extends AstNode> extends PdgInfoEdge<T> {
-  public PdgFlowEdge(PdgNode<T> source, PdgNode<T> target) {
+public class PdgReadChannelEdge<T extends AstNode> extends PdgInfoEdge<T> {
+  public PdgReadChannelEdge(PdgNode<T> source, PdgNode<T> target) {
     super(source, target);
   }
 
   @Override
-  public boolean isFlowEdge() {
+  public boolean isReadChannelEdge() {
     return true;
   }
 
   /** create edge b/w nodes. */
-  public static PdgFlowEdge create(PdgNode source, PdgNode target) {
-    PdgFlowEdge flowEdge = new PdgFlowEdge(source, target);
+  public static PdgReadChannelEdge create(PdgNode source, PdgNode target) {
+    PdgReadChannelEdge flowEdge = new PdgReadChannelEdge(source, target);
     source.addOutInfoEdge(flowEdge);
     target.addInInfoEdge(flowEdge);
     return flowEdge;

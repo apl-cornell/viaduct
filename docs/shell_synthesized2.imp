@@ -1,0 +1,66 @@
+process chuck protocol Single(Chuck) {
+  c_input;
+  shell;
+  hshell;
+  hguess;
+  win;
+
+  shell := c_input;
+  hshell := commit(shell);
+  send hshell to alice;
+  hguess <- recv alice;
+
+  guard <- 1 <= shell <= 3;
+  pf <- zk_create(
+    // These only bind the variables that can be used in the proposition
+    {v_shell}, {v_hshell, v_guard}, commitment_valid(v_hshell, v_shell) && v_guard == (1 <= v_shell <= 3))
+    (shell)(hshell, guard);
+  send guard to alice;
+  send pf to alice;
+
+  if (guard) {
+    send shell to mpc;
+    send hguess to mpc;
+    win <- recv mpc;
+  }
+}
+
+process alice protocol Single(Alice) {
+  a_input;
+  hshell;
+  guess;
+  hguess;
+  win;
+
+  hshell <- recv chuck;
+  guess := a_input;
+  hguess := commit(guess);
+  send hguess to chuck;
+
+  guard <- recv chuck;
+  pf <- recv chuck;
+  zk_assert(
+    {v_shell}, {v_hshell, v_guard}, commitment_valid(v_hshell, v_shell) && v_guard == (1 <= v_shell <= 3))
+    (pf)(hshell, guard);
+
+  if (guard) {
+    send hshell to mpc;
+    send guess to mpc;
+    win <- recv mpc;
+  }
+}
+
+process mpc protocol MPC(Alice, Chuck) {
+  shell  <- recv chuck;
+  hshell <- recv alice;
+  guess  <- recv alice;
+  hguess <- recv chuck;
+
+  assert commitment_valid(shell, hshell);
+  assert commitment_valid(guess, hguess);
+
+  win := shell == guess;
+
+  send win to chuck;
+  send win to alice;
+}

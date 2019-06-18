@@ -8,7 +8,6 @@ import edu.cornell.cs.apl.viaduct.pdg.PdgNode;
 import edu.cornell.cs.apl.viaduct.protocol.Protocol;
 import edu.cornell.cs.apl.viaduct.protocol.ProtocolFactory;
 import edu.cornell.cs.apl.viaduct.security.Label;
-
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -57,7 +56,7 @@ public class ZKFactory implements ProtocolFactory<ImpAstNode> {
 
     // prover: A, verifier: B
     if (inNodes.size() == 1 && node.isDeclassifyNode()) {
-      PdgNode<ImpAstNode> inNode = (PdgNode<ImpAstNode>) inNodes.toArray()[0];
+      PdgNode<ImpAstNode> inNode = inNodes.iterator().next();
       Protocol<ImpAstNode> inProto = protocolMap.get(inNode);
       if (inProto instanceof Replication) {
         Replication inReplProto = (Replication) inProto;

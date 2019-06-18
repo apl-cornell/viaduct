@@ -5,16 +5,17 @@ import edu.cornell.cs.apl.viaduct.pdg.ProgramDependencyGraph.ControlLabel;
 
 /* represents control flow relationship between nodes. */
 public class PdgControlEdge<T extends AstNode> extends PdgEdge<T> {
-  ControlLabel label;
+  private ControlLabel label;
 
-  public PdgControlEdge(PdgNode<T> s, PdgNode<T> t, ControlLabel l) {
+  private PdgControlEdge(PdgNode<T> s, PdgNode<T> t, ControlLabel l) {
     super(s, t);
     this.label = l;
   }
 
   /** create a control edge b/w nodes. */
-  public static PdgControlEdge create(PdgNode source, PdgNode target, ControlLabel label) {
-    PdgControlEdge controlEdge = new PdgControlEdge(source, target, label);
+  public static <T extends AstNode> PdgControlEdge create(
+      PdgNode<T> source, PdgNode<T> target, ControlLabel label) {
+    PdgControlEdge<T> controlEdge = new PdgControlEdge<>(source, target, label);
     source.addOutControlEdge(controlEdge);
     target.setInControlEdge(controlEdge);
     return controlEdge;

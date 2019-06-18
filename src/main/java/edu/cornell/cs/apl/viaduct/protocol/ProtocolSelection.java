@@ -80,6 +80,8 @@ public class ProtocolSelection<T extends AstNode> {
             protocolFactory.createInstances(hostConfig, currMap, nextNode);
         for (Protocol<T> protoInstance : protoInstances) {
           // instantiate neighbor
+          @SuppressWarnings("unchecked")
+          // TODO: use functional data structures
           HashMap<PdgNode<T>, Protocol<T>> newMap =
               (HashMap<PdgNode<T>, Protocol<T>>) currMap.clone();
           newMap.put(nextNode, protoInstance);
@@ -125,6 +127,7 @@ public class ProtocolSelection<T extends AstNode> {
       }
 
       if (o instanceof ProtocolMapNode<?>) {
+        @SuppressWarnings("unchecked")
         ProtocolMapNode<U> onode = (ProtocolMapNode<U>) o;
         return this.protocolMap.equals(onode.protocolMap);
 

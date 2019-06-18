@@ -36,6 +36,14 @@ public abstract class IdentityVisitor
     return literalNode;
   }
 
+  public ExpressionNode run(ExpressionNode expr) {
+    return expr.accept(this);
+  }
+
+  public StmtNode run(StmtNode stmt) {
+    return stmt.accept(this);
+  }
+
   @Override
   public ExpressionNode visit(ReadNode readNode) {
     return readNode;

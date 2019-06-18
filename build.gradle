@@ -30,12 +30,12 @@ repositories {
 }
 
 application {
-    mainClassName = 'edu.cornell.cs.apl.viaduct.Main'
+    mainClassName = "${project.group}.${project.name}.Main"
 }
 
 jar {
     manifest {
-        attributes 'Main-Class': 'edu.cornell.cs.apl.viaduct.Main'
+        attributes 'Main-Class': application.mainClassName
     }
 }
 

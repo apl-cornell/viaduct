@@ -187,9 +187,12 @@ public class CopyPropagation extends Dataflow<CopyPropagation.CopyPropInfo, CFGN
 
     @Override
     public StmtNode visit(SendNode sendNode) {
-      this.inInfoQueue.remove();
+      CopyPropInfo inInfo = this.inInfoQueue.remove();
       this.outInfoQueue.remove();
-      return super.visit(sendNode);
+
+      Map<Variable,Variable> inRenameMap = processCopyPropInfo(inInfo);
+      RenameVisitor renamer = new RenameVisitor(inRenameMap);
+      return sendNode.accept(renamer);
     }
 
     @Override

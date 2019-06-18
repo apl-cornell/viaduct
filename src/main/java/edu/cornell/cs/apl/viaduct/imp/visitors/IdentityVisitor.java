@@ -31,10 +31,6 @@ import java.util.List;
  */
 public abstract class IdentityVisitor
     implements ExprVisitor<ExpressionNode>, StmtVisitor<StmtNode>, ProgramVisitor<ProgramNode> {
-  @Override
-  public ExpressionNode visit(LiteralNode literalNode) {
-    return literalNode;
-  }
 
   public ExpressionNode run(ExpressionNode expr) {
     return expr.accept(this);
@@ -42,6 +38,11 @@ public abstract class IdentityVisitor
 
   public StmtNode run(StmtNode stmt) {
     return stmt.accept(this);
+  }
+
+  @Override
+  public ExpressionNode visit(LiteralNode literalNode) {
+    return literalNode;
   }
 
   @Override

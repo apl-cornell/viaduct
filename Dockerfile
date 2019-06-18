@@ -24,4 +24,3 @@ COPY examples examples
 ## Add viaduct binary to PATH
 COPY --from=builder /root/build/install /usr/local/
 RUN ["ln", "-s", "/usr/local/viaduct/bin/viaduct", "/usr/local/bin" ]
-

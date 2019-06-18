@@ -1,0 +1,17 @@
+# Ignore everything by default. So this is a "Docker include" file.
+*
+
+!LICENSE
+!README.ms
+
+# Gradle
+!.editorconfig
+!build.gradle
+!config
+!gradle
+!gradlew
+!settings.gradle
+
+# Code
+!examples
+!src

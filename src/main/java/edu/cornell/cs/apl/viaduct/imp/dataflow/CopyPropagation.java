@@ -8,13 +8,15 @@ import edu.cornell.cs.apl.viaduct.imp.ast.BlockNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.DeclarationNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ExpressionNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.IfNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.ImpValue;
+import edu.cornell.cs.apl.viaduct.imp.ast.LiteralNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ReadNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ReceiveNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.SendNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.StmtNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.Variable;
 import edu.cornell.cs.apl.viaduct.imp.visitors.IdentityVisitor;
-import edu.cornell.cs.apl.viaduct.imp.visitors.RenameVisitor;
+import edu.cornell.cs.apl.viaduct.imp.visitors.ReplaceVisitor;
 import edu.cornell.cs.apl.viaduct.security.Lattice;
 
 import java.util.ArrayList;
@@ -142,8 +144,8 @@ public class CopyPropagation extends Dataflow<CopyPropagation.CopyPropInfo, CFGN
       CopyPropInfo inInfo = this.inInfoQueue.remove();
       CopyPropInfo outInfo = this.outInfoQueue.remove();
 
-      Map<Variable,Variable> inRenameMap = processCopyPropInfo(inInfo);
-      Map<Variable,Variable> outRenameMap = processCopyPropInfo(outInfo);
+      Map<Variable,ExpressionNode> inRenameMap = processCopyPropInfo(inInfo);
+      Map<Variable,ExpressionNode> outRenameMap = processCopyPropInfo(outInfo);
       Set<Variable> renamedVars = outRenameMap.keySet();
 
       // one of the variables to be erased; remove it
@@ -152,7 +154,7 @@ public class CopyPropagation extends Dataflow<CopyPropagation.CopyPropInfo, CFGN
 
       // otherwise, rename all variables in the assignment
       } else {
-        RenameVisitor renamer = new RenameVisitor(inRenameMap);
+        ReplaceVisitor renamer = new ReplaceVisitor(inRenameMap);
         return assignNode.accept(renamer);
       }
     }
@@ -161,8 +163,8 @@ public class CopyPropagation extends Dataflow<CopyPropagation.CopyPropInfo, CFGN
     public StmtNode visit(IfNode ifNode) {
       CopyPropInfo info = this.inInfoQueue.remove();
       this.outInfoQueue.remove();
-      Map<Variable,Variable> renameMap = processCopyPropInfo(info);
-      RenameVisitor renamer = new RenameVisitor(renameMap);
+      Map<Variable,ExpressionNode> renameMap = processCopyPropInfo(info);
+      ReplaceVisitor renamer = new ReplaceVisitor(renameMap);
 
       ExpressionNode newGuard = ifNode.getGuard().accept(renamer);
       StmtNode newThenBranch = ifNode.getThenBranch().accept(this);
@@ -190,8 +192,8 @@ public class CopyPropagation extends Dataflow<CopyPropagation.CopyPropInfo, CFGN
       CopyPropInfo inInfo = this.inInfoQueue.remove();
       this.outInfoQueue.remove();
 
-      Map<Variable,Variable> inRenameMap = processCopyPropInfo(inInfo);
-      RenameVisitor renamer = new RenameVisitor(inRenameMap);
+      Map<Variable,ExpressionNode> inRenameMap = processCopyPropInfo(inInfo);
+      ReplaceVisitor renamer = new ReplaceVisitor(inRenameMap);
       return sendNode.accept(renamer);
     }
 
@@ -210,15 +212,14 @@ public class CopyPropagation extends Dataflow<CopyPropagation.CopyPropInfo, CFGN
     }
 
     /** return rename map of variables. */
-    private Map<Variable,Variable> processCopyPropInfo(CopyPropInfo info) {
+    private Map<Variable,ExpressionNode> processCopyPropInfo(CopyPropInfo info) {
       final List<Variable> vars = this.cfg.getVars();
-      final Set<VarEquals> equalities = info.getEqualities();
       List<Set<Variable>> eqSets = new ArrayList<>();
 
       // compute equivalence class of variables
-      for (VarEquals eq : equalities) {
-        Variable var1 = eq.getVar1();
-        Variable var2 = eq.getVar2();
+      for (VarEqualsVar eq : info.getVarEqualities()) {
+        Variable var1 = eq.getVar();
+        Variable var2 = eq.getRhs();
         int ind1 = -1;
         int ind2 = -1;
 
@@ -281,35 +282,40 @@ public class CopyPropagation extends Dataflow<CopyPropagation.CopyPropInfo, CFGN
       }
 
       // build rename map from rep map
-      Map<Variable,Variable> renameMap = new HashMap<>();
+      Map<Variable,ExpressionNode> replaceMap = new HashMap<>();
       for (Map.Entry<Variable,Set<Variable>> kv : repMap.entrySet()) {
         Variable repVar = kv.getKey();
         for (Variable var : kv.getValue()) {
           if (!var.equals(repVar)) {
-            renameMap.put(var, repVar);
+            replaceMap.put(var, new ReadNode(repVar));
           }
         }
       }
 
-      return renameMap;
+      // propagate constants as well
+      for (VarEqualsVal valEq : info.getValEqualities()) {
+        replaceMap.put(valEq.getVar(), new LiteralNode(valEq.getRhs()));
+      }
+
+      return replaceMap;
     }
   }
 
-  static class VarEquals {
-    private final Variable var1;
-    private final Variable var2;
+  abstract static class VarEquals<T> {
+    private final Variable var;
+    private final T rhs;
 
-    public VarEquals(Variable v1, Variable v2) {
-      this.var1 = v1;
-      this.var2 = v2;
+    public VarEquals(Variable v, T rhs) {
+      this.var = v;
+      this.rhs = rhs;
     }
 
-    public Variable getVar1() {
-      return this.var1;
+    public Variable getVar() {
+      return this.var;
     }
 
-    public Variable getVar2() {
-      return this.var2;
+    public T getRhs() {
+      return this.rhs;
     }
 
     @Override
@@ -323,50 +329,84 @@ public class CopyPropagation extends Dataflow<CopyPropagation.CopyPropInfo, CFGN
       }
 
       final VarEquals that = (VarEquals) o;
-      return Objects.equals(this.var1, that.var1) && Objects.equals(this.var2, that.var2);
+      return Objects.equals(this.var, that.var) && Objects.equals(this.rhs, that.rhs);
     }
 
     @Override
     public int hashCode() {
-      return Objects.hash(this.var1, this.var2);
+      return Objects.hash(this.var, this.rhs);
     }
 
     @Override
     public String toString() {
-      return String.format("%s=%s", this.var1, this.var2);
+      return String.format("%s=%s", this.var, this.rhs);
+    }
+  }
+
+  static class VarEqualsVar extends VarEquals<Variable> {
+    public VarEqualsVar(Variable v, Variable rhs) {
+      super(v,rhs);
+    }
+  }
+
+  static class VarEqualsVal extends VarEquals<ImpValue> {
+    public VarEqualsVal(Variable v, ImpValue rhs) {
+      super(v,rhs);
     }
   }
 
   static class CopyPropInfo implements Lattice<CopyPropInfo> {
-    Set<VarEquals> equalities;
+    Set<VarEqualsVar> varEqualities;
+    Set<VarEqualsVal> valEqualities;
 
     public CopyPropInfo() {
-      this.equalities = new HashSet<>();
+      this.varEqualities = new HashSet<>();
+      this.valEqualities = new HashSet<>();
     }
 
-    public CopyPropInfo(Set<VarEquals> es) {
-      this.equalities = es;
+    public CopyPropInfo(Set<VarEqualsVar> varEqs, Set<VarEqualsVal> valEqs) {
+      this.varEqualities = varEqs;
+      this.valEqualities = valEqs;
     }
 
-    public Set<VarEquals> getEqualities() {
-      return this.equalities;
+    public Set<VarEqualsVar> getVarEqualities() {
+      return this.varEqualities;
+    }
+
+    public Set<VarEqualsVal> getValEqualities() {
+      return this.valEqualities;
     }
 
     public CopyPropInfo removeVar(Variable v) {
-      Set<VarEquals> es = new HashSet<>(this.equalities);
-      for (VarEquals eq : this.equalities) {
-        if (eq.getVar1().equals(v) || eq.getVar2().equals(v)) {
-          es.remove(eq);
+      Set<VarEqualsVar> varEqs = new HashSet<>(this.varEqualities);
+      for (VarEqualsVar eq : this.varEqualities) {
+        if (eq.getVar().equals(v) || eq.getRhs().equals(v)) {
+          varEqs.remove(eq);
         }
       }
-      return new CopyPropInfo(es);
+
+      Set<VarEqualsVal> valEqs = new HashSet<>(this.valEqualities);
+      for (VarEqualsVal eq : this.valEqualities) {
+        if (eq.getVar().equals(v)) {
+          valEqs.remove(eq);
+        }
+      }
+
+      return new CopyPropInfo(varEqs, valEqs);
     }
 
-    public CopyPropInfo add(Variable v1, Variable v2) {
-      Set<VarEquals> es = new HashSet<>(this.equalities);
-      VarEquals ve = new VarEquals(v1, v2);
-      es.add(ve);
-      return new CopyPropInfo(es);
+    public CopyPropInfo addVar(Variable v1, Variable v2) {
+      Set<VarEqualsVar> varEqs = new HashSet<>(this.varEqualities);
+      VarEqualsVar ve = new VarEqualsVar(v1, v2);
+      varEqs.add(ve);
+      return new CopyPropInfo(varEqs, this.valEqualities);
+    }
+
+    public CopyPropInfo addVal(Variable var, ImpValue val) {
+      Set<VarEqualsVal> valEqs = new HashSet<>(this.valEqualities);
+      VarEqualsVal ve = new VarEqualsVal(var, val);
+      valEqs.add(ve);
+      return new CopyPropInfo(this.varEqualities, valEqs);
     }
 
     public CopyPropInfo kill(CFGNode node) {
@@ -391,7 +431,10 @@ public class CopyPropagation extends Dataflow<CopyPropagation.CopyPropInfo, CFGN
         ExpressionNode rhs = assignNode.getRhs();
         if (rhs instanceof ReadNode) {
           ReadNode rhsRead = (ReadNode) rhs;
-          return this.add(assignNode.getVariable(), rhsRead.getVariable());
+          return addVar(assignNode.getVariable(), rhsRead.getVariable());
+        } else if (rhs instanceof LiteralNode) {
+          LiteralNode rhsLit = (LiteralNode)rhs;
+          return addVal(assignNode.getVariable(), rhsLit.getValue());
         }
       }
 
@@ -400,21 +443,29 @@ public class CopyPropagation extends Dataflow<CopyPropagation.CopyPropInfo, CFGN
 
     @Override
     public boolean lessThanOrEqualTo(CopyPropInfo other) {
-      return other.equalities.containsAll(this.equalities);
+      return other.varEqualities.containsAll(this.varEqualities);
     }
 
     @Override
     public CopyPropInfo join(CopyPropInfo that) {
-      Set<VarEquals> es = new HashSet<>(this.equalities);
-      es.addAll(that.equalities);
-      return new CopyPropInfo(es);
+      Set<VarEqualsVar> varEqs = new HashSet<>(this.varEqualities);
+      varEqs.addAll(that.varEqualities);
+
+      Set<VarEqualsVal> valEqs = new HashSet<>(this.valEqualities);
+      valEqs.addAll(that.valEqualities);
+
+      return new CopyPropInfo(varEqs, valEqs);
     }
 
     @Override
     public CopyPropInfo meet(CopyPropInfo that) {
-      Set<VarEquals> es = new HashSet<>(this.equalities);
-      es.retainAll(that.equalities);
-      return new CopyPropInfo(es);
+      Set<VarEqualsVar> varEqs = new HashSet<>(this.varEqualities);
+      varEqs.retainAll(that.varEqualities);
+
+      Set<VarEqualsVal> valEqs = new HashSet<>(this.valEqualities);
+      valEqs.retainAll(that.valEqualities);
+
+      return new CopyPropInfo(varEqs, valEqs);
     }
 
     @Override
@@ -428,22 +479,30 @@ public class CopyPropagation extends Dataflow<CopyPropagation.CopyPropInfo, CFGN
       }
 
       final CopyPropInfo that = (CopyPropInfo) o;
-      return Objects.equals(this.equalities, that.equalities);
+      return Objects.equals(this.varEqualities, that.varEqualities)
+          && Objects.equals(this.valEqualities, that.valEqualities);
     }
 
     @Override
     public int hashCode() {
-      return this.equalities.hashCode();
+      return Objects.hash(this.varEqualities.hashCode(), this.valEqualities.hashCode());
     }
 
     @Override
     public String toString() {
-      Set<String> strEqualities = new HashSet<>();
-      for (VarEquals eq : this.equalities) {
-        strEqualities.add(eq.toString());
+      Set<String> strVarEqs = new HashSet<>();
+      for (VarEqualsVar eq : this.varEqualities) {
+        strVarEqs.add(eq.toString());
       }
-      String body = String.join(", ", strEqualities);
-      return String.format("{%s}", body);
+      String varBody = String.join(", ", strVarEqs);
+
+      Set<String> strValEqs = new HashSet<>();
+      for (VarEqualsVal eq : this.valEqualities) {
+        strValEqs.add(eq.toString());
+      }
+      String valBody = String.join(", ", strValEqs);
+
+      return String.format("{%s} {%s}", varBody, valBody);
     }
   }
 }

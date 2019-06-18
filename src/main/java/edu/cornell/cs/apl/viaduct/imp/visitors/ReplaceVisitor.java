@@ -19,6 +19,7 @@ import edu.cornell.cs.apl.viaduct.imp.ast.ReadNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ReceiveNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.SendNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.StmtNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.Variable;
 import io.vavr.Tuple2;
 import java.util.HashMap;
 import java.util.Map;
@@ -37,6 +38,16 @@ public class ReplaceVisitor extends IdentityVisitor {
   public ReplaceVisitor(Map<ExpressionNode,ExpressionNode> emap, Map<StmtNode,StmtNode> smap) {
     this.exprMap = emap;
     this.stmtMap = smap;
+  }
+
+  /** build visitor from substitution of vars. */
+  public ReplaceVisitor(Map<Variable,ExpressionNode> vmap) {
+    this.exprMap = new HashMap<>();
+    this.stmtMap = new HashMap<>();
+
+    for (Map.Entry<Variable,ExpressionNode> kv : vmap.entrySet()) {
+      this.exprMap.put(new ReadNode(kv.getKey()), kv.getValue());
+    }
   }
 
   private ImpAstNode run(ImpAstNode ast) {

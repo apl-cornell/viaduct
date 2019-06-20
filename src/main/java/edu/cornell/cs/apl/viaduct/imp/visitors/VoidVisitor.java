@@ -1,5 +1,6 @@
 package edu.cornell.cs.apl.viaduct.imp.visitors;
 
+import edu.cornell.cs.apl.viaduct.imp.ast.ArrayAccessNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ArrayDeclarationNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.AssertNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.AssignNode;
@@ -16,6 +17,7 @@ import edu.cornell.cs.apl.viaduct.imp.ast.ReadNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ReceiveNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.SendNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.StmtNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.WhileNode;
 import io.vavr.Tuple2;
 
 /**
@@ -54,6 +56,12 @@ public class VoidVisitor implements AstVisitor<Void> {
   }
 
   @Override
+  public Void visit(ArrayAccessNode arrAccessNode) {
+    arrAccessNode.getIndex().accept(this);
+    return null;
+  }
+
+  @Override
   public Void visit(DeclarationNode declarationNode) {
     return null;
   }
@@ -86,6 +94,13 @@ public class VoidVisitor implements AstVisitor<Void> {
     ifNode.getGuard().accept(this);
     ifNode.getThenBranch().accept(this);
     ifNode.getElseBranch().accept(this);
+    return null;
+  }
+
+  @Override
+  public Void visit(WhileNode whileNode) {
+    whileNode.getGuard().accept(this);
+    whileNode.getBody().accept(this);
     return null;
   }
 

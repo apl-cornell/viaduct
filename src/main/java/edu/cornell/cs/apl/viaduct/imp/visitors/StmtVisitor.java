@@ -8,6 +8,7 @@ import edu.cornell.cs.apl.viaduct.imp.ast.DeclarationNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.IfNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ReceiveNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.SendNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.WhileNode;
 
 /** Statement visitor. */
 public interface StmtVisitor<R> {
@@ -22,6 +23,8 @@ public interface StmtVisitor<R> {
   R visit(ReceiveNode receiveNode);
 
   R visit(IfNode ifNode);
+
+  R visit(WhileNode whileNode);
 
   R visit(BlockNode blockNode);
 

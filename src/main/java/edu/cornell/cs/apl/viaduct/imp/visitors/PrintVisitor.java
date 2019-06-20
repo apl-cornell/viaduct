@@ -1,5 +1,6 @@
 package edu.cornell.cs.apl.viaduct.imp.visitors;
 
+import edu.cornell.cs.apl.viaduct.imp.ast.ArrayAccessNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ArrayDeclarationNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.AssertNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.AssignNode;
@@ -18,6 +19,7 @@ import edu.cornell.cs.apl.viaduct.imp.ast.ReadNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ReceiveNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.SendNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.StmtNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.WhileNode;
 import edu.cornell.cs.apl.viaduct.security.Label;
 import io.vavr.Tuple2;
 
@@ -87,6 +89,15 @@ public class PrintVisitor implements AstVisitor<Void> {
     buffer.append(", ");
     buffer.append(downgradeNode.getLabel());
     buffer.append(")");
+    return null;
+  }
+
+  @Override
+  public Void visit(ArrayAccessNode arrAccessNode) {
+    buffer.append(arrAccessNode.getVariable().toString());
+    buffer.append("[");
+    arrAccessNode.getIndex().accept(this);
+    buffer.append("]");
     return null;
   }
 
@@ -184,6 +195,19 @@ public class PrintVisitor implements AstVisitor<Void> {
       buffer.append(" else ");
       ifNode.getElseBranch().accept(this);
     }
+
+    return null;
+  }
+
+  @Override
+  public Void visit(WhileNode whileNode) {
+    addIndentation();
+
+    buffer.append("while (");
+    whileNode.getGuard().accept(this);
+    buffer.append(") ");
+
+    whileNode.getBody().accept(this);
 
     return null;
   }

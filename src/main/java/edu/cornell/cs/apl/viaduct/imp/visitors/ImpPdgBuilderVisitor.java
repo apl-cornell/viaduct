@@ -1,6 +1,7 @@
 package edu.cornell.cs.apl.viaduct.imp.visitors;
 
 import edu.cornell.cs.apl.viaduct.UndeclaredVariableException;
+import edu.cornell.cs.apl.viaduct.imp.ast.ArrayAccessNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ArrayDeclarationNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.AssertNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.AssignNode;
@@ -19,6 +20,7 @@ import edu.cornell.cs.apl.viaduct.imp.ast.ReceiveNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.SendNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.StmtNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.Variable;
+import edu.cornell.cs.apl.viaduct.imp.ast.WhileNode;
 import edu.cornell.cs.apl.viaduct.pdg.PdgBuilderInfo;
 import edu.cornell.cs.apl.viaduct.pdg.PdgComputeNode;
 import edu.cornell.cs.apl.viaduct.pdg.PdgControlEdge;
@@ -146,6 +148,12 @@ public class ImpPdgBuilderVisitor implements AstVisitor<PdgBuilderInfo<ImpAstNod
     this.pdg.addNode(node);
 
     return new PdgBuilderInfo<>(node, new Variable(node.getId()));
+  }
+
+  @Override
+  public PdgBuilderInfo<ImpAstNode> visit(ArrayAccessNode arrAccessNode) {
+    // TODO: do the right thing
+    return new PdgBuilderInfo<>();
   }
 
   /** Return created storage node. */
@@ -289,6 +297,13 @@ public class ImpPdgBuilderVisitor implements AstVisitor<PdgBuilderInfo<ImpAstNod
 
     PdgBuilderInfo<ImpAstNode> info = new PdgBuilderInfo<>(controlNode);
     return guardInfo.mergeCreated(info);
+  }
+
+  /** return created PDG compute node for while loops. */
+  @Override
+  public PdgBuilderInfo<ImpAstNode> visit(WhileNode whileNode) {
+    // TODO: do the right thing
+    return new PdgBuilderInfo<>();
   }
 
   /** send/recvs should not be in surface programs and thus should not be in the generated PDG. */

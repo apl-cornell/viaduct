@@ -1,5 +1,6 @@
 package edu.cornell.cs.apl.viaduct.imp.interpreter;
 
+import edu.cornell.cs.apl.viaduct.imp.ast.ArrayAccessNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ArrayDeclarationNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.AssertNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.AssignNode;
@@ -18,6 +19,7 @@ import edu.cornell.cs.apl.viaduct.imp.ast.ReadNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ReceiveNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.SendNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.StmtNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.WhileNode;
 import edu.cornell.cs.apl.viaduct.imp.visitors.ExprVisitor;
 import edu.cornell.cs.apl.viaduct.imp.visitors.StmtVisitor;
 import java.util.Objects;
@@ -101,6 +103,13 @@ class InterpretProcessVisitor implements ExprVisitor<ImpValue>, StmtVisitor<Void
   }
 
   @Override
+  public ImpValue visit(ArrayAccessNode arrAccessNode) {
+    // TODO: fix this
+    ImpValue indexVal = arrAccessNode.getIndex().accept(this);
+    return indexVal;
+  }
+
+  @Override
   public Void visit(DeclarationNode declarationNode) {
     try {
       store.declare(declarationNode.getVariable());
@@ -166,9 +175,21 @@ class InterpretProcessVisitor implements ExprVisitor<ImpValue>, StmtVisitor<Void
     BooleanValue guardVal = (BooleanValue) ifNode.getGuard().accept(this);
     if (guardVal.getValue()) {
       ifNode.getThenBranch().accept(this);
+
     } else {
       ifNode.getElseBranch().accept(this);
     }
+    return null;
+  }
+
+  @Override
+  public Void visit(WhileNode whileNode) {
+    BooleanValue guardVal = (BooleanValue) whileNode.getGuard().accept(this);
+    if (guardVal.getValue()) {
+      whileNode.getBody().accept(this);
+      visit(whileNode);
+    }
+
     return null;
   }
 

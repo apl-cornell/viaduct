@@ -10,6 +10,7 @@ import edu.cornell.cs.apl.viaduct.imp.ast.ReceiveNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.SendNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.StmtNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.Variable;
+import edu.cornell.cs.apl.viaduct.imp.ast.WhileNode;
 import edu.cornell.cs.apl.viaduct.imp.visitors.StmtVisitor;
 
 import java.util.ArrayList;
@@ -50,7 +51,7 @@ public class CFGVisitor implements StmtVisitor<Void> {
     return null;
   }
 
-  protected Void visitSingleStatement(StmtNode stmt) {
+  protected CFGNode visitSingleStatement(StmtNode stmt) {
     CFGNode node = new CFGNode(stmt);
 
     for (CFGNode lastNode : this.lastNodes) {
@@ -58,10 +59,9 @@ public class CFGVisitor implements StmtVisitor<Void> {
       lastNode.addOutNode(node);
     }
 
-    setLastNodes(node);
-
     this.nodes.add(node);
-    return null;
+    setLastNodes(node);
+    return node;
   }
 
   @Override
@@ -131,6 +131,25 @@ public class CFGVisitor implements StmtVisitor<Void> {
   }
 
   @Override
+  public Void visit(WhileNode whileNode) {
+    StmtNode newWhile = new WhileNode(whileNode.getGuard(), whileNode.getBody());
+    CFGNode whileCfg = visitSingleStatement(newWhile);
+
+    whileNode.getBody().accept(this);
+    final Set<CFGNode> bodyLastNodes = new HashSet<>(this.lastNodes);
+
+    for (CFGNode bodyLastNode : bodyLastNodes) {
+      bodyLastNode.addOutNode(whileCfg);
+      whileCfg.addInNode(bodyLastNode);
+    }
+
+    this.lastNodes.clear();
+    this.lastNodes.addAll(bodyLastNodes);
+
+    return null;
+  }
+
+  @Override
   public Void visit(BlockNode blockNode) {
     for (StmtNode stmt : blockNode) {
       stmt.accept(this);
@@ -140,6 +159,7 @@ public class CFGVisitor implements StmtVisitor<Void> {
 
   @Override
   public Void visit(AssertNode assertNode) {
-    return visitSingleStatement(assertNode);
+    // visitSingleStatement(assertNode);
+    return null;
   }
 }

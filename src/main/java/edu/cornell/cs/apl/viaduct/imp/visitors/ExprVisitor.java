@@ -1,5 +1,6 @@
 package edu.cornell.cs.apl.viaduct.imp.visitors;
 
+import edu.cornell.cs.apl.viaduct.imp.ast.ArrayAccessNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.BinaryExpressionNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.DowngradeNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.LiteralNode;
@@ -17,4 +18,6 @@ public interface ExprVisitor<R> {
   R visit(BinaryExpressionNode binaryExpressionNode);
 
   R visit(DowngradeNode downgradeNode);
+
+  R visit(ArrayAccessNode arrAccessNode);
 }

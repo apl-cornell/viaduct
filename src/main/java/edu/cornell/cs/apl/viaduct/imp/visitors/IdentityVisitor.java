@@ -1,6 +1,7 @@
 package edu.cornell.cs.apl.viaduct.imp.visitors;
 
 import edu.cornell.cs.apl.viaduct.imp.DuplicateProcessDefinitionException;
+import edu.cornell.cs.apl.viaduct.imp.ast.ArrayAccessNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ArrayDeclarationNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.AssertNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.AssignNode;
@@ -18,6 +19,7 @@ import edu.cornell.cs.apl.viaduct.imp.ast.ReadNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ReceiveNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.SendNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.StmtNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.WhileNode;
 import io.vavr.Tuple2;
 import java.util.LinkedList;
 import java.util.List;
@@ -70,6 +72,12 @@ public abstract class IdentityVisitor
   }
 
   @Override
+  public ExpressionNode visit(ArrayAccessNode arrAccessNode) {
+    ExpressionNode newIndex = arrAccessNode.getIndex().accept(this);
+    return new ArrayAccessNode(arrAccessNode.getVariable(), newIndex);
+  }
+
+  @Override
   public StmtNode visit(DeclarationNode declarationNode) {
     return new DeclarationNode(declarationNode.getVariable(), declarationNode.getLabel());
   }
@@ -94,6 +102,13 @@ public abstract class IdentityVisitor
     StmtNode newThen = ifNode.getThenBranch().accept(this);
     StmtNode newElse = ifNode.getElseBranch().accept(this);
     return new IfNode(newGuard, newThen, newElse);
+  }
+
+  @Override
+  public StmtNode visit(WhileNode whileNode) {
+    ExpressionNode newGuard = whileNode.getGuard().accept(this);
+    StmtNode newBody = whileNode.getBody().accept(this);
+    return new WhileNode(newGuard, newBody);
   }
 
   @Override

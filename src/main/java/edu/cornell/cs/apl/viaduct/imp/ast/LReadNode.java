@@ -13,6 +13,10 @@ public final class LReadNode extends AbstractReadNode implements LExpressionNode
     super(binding);
   }
 
+  public LReadNode(String name) {
+    super(name);
+  }
+
   @Override
   public <R> R accept(LExprVisitor<R> v) {
     return v.visit(this);

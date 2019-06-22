@@ -15,6 +15,10 @@ public abstract class AbstractReadNode {
     this.variable = new Variable(Objects.requireNonNull(binding));
   }
 
+  public AbstractReadNode(String name) {
+    this.variable = new Variable(name);
+  }
+
   public Variable getVariable() {
     return variable;
   }

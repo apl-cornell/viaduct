@@ -120,12 +120,15 @@ public class Store implements Iterable<Tuple2<Variable, ImpValue>> {
     }
   }
 
-  void update(Variable var, int index, ImpValue val)
+  void updateArray(Variable var, int index, ImpValue val)
       throws UndeclaredVariableException
   {
     final ImpValue[] array = this.arrayStore.get(var);
     if (array == null) {
       throw new UndeclaredVariableException(var);
+
+    } else {
+      array[index] = val;
     }
   }
 

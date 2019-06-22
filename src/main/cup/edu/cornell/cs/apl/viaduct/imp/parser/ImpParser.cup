@@ -11,6 +11,7 @@ nonterminal ProgramNode.Builder declaration_list;
 nonterminal List<StmtNode> stmt_list;
 nonterminal StmtNode stmt, stmt_basic, block;
 nonterminal ExpressionNode expr;
+nonterminal LExpressionNode lexpr;
 nonterminal ImpValue value;
 nonterminal Label label, label_expr;
 nonterminal Variable variable;
@@ -22,7 +23,7 @@ terminal Integer INT_LIT;
 terminal TRUE, FALSE;
 
 terminal COLON, ASSIGN;
-terminal ASSERT, SEND, TO, RECV, FROM, IF, ELSE;
+terminal ASSERT, SEND, TO, RECV, FROM, IF, ELSE, WHILE;
 terminal HOST, PROCESS, PROTOCOL, IDEAL;
 
 terminal NOT, ANDAND, OROR;
@@ -34,7 +35,7 @@ terminal PLUS;
 
 terminal DECLASSIFY, ENDORSE, DOWNGRADE;
 
-terminal OPEN_BRACE, CLOSE_BRACE, SEMICOLON, OPEN_PAREN, CLOSE_PAREN, COMMA;
+terminal OPEN_BRACE, CLOSE_BRACE, OPEN_SQBRACE, CLOSE_SQBRACE, SEMICOLON, OPEN_PAREN, CLOSE_PAREN, COMMA;
 
 precedence left ANDAND, OROR, AND, OR;
 precedence nonassoc EQ, NEQ, LT, LEQ, GT, GEQ;
@@ -79,6 +80,10 @@ stmt ::=
       RESULT = new IfNode(guard, thenCase);
     :}
 
+  | WHILE OPEN_PAREN expr:guard CLOSE_PAREN block:body {:
+      RESULT = new WhileNode(guard, body);
+    :}
+
   | block:block {:
       RESULT = block;
     :}
@@ -89,8 +94,12 @@ stmt_basic ::=
       RESULT = new DeclarationNode(var, lab);
     :}
 
-  | variable:var ASSIGN expr:e {:
-      RESULT = new AssignNode(var, e);
+  | variable:var OPEN_SQBRACE expr:e CLOSE_SQBRACE COLON label:lab {:
+      RESULT = new ArrayDeclarationNode(var, e, lab);
+    :}
+
+  | lexpr:lexpr ASSIGN expr:e {:
+      RESULT = new AssignNode(lexpr, e);
     :}
 
   | SEND expr:e TO process_name:processName {:
@@ -123,9 +132,23 @@ stmt_list ::=
     :}
   ;
 
+lexpr ::=
+    variable:var OPEN_SQBRACE expr:e CLOSE_SQBRACE {:
+       RESULT = new ArrayIndexNode(var, e);
+    :}
+
+  | variable:var {:
+      RESULT = new LReadNode(var);
+    :}
+  ;
+
 expr ::=
     value:value {:
       RESULT = new LiteralNode(value);
+    :}
+
+  | variable:var OPEN_SQBRACE expr:e CLOSE_SQBRACE {:
+       RESULT = new ArrayAccessNode(var, e);
     :}
 
   | variable:var {:

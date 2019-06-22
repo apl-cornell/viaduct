@@ -31,7 +31,9 @@ import edu.cornell.cs.apl.viaduct.imp.visitors.LExprVisitor;
 import edu.cornell.cs.apl.viaduct.imp.visitors.StmtVisitor;
 import java.util.Objects;
 
-class InterpretProcessVisitor implements ExprVisitor<ImpValue>, StmtVisitor<Void>, LExprVisitor<ImpLValue> {
+class InterpretProcessVisitor implements ExprVisitor<ImpValue>, StmtVisitor<Void>,
+    LExprVisitor<ImpLValue> {
+
   /** The process to execute the statements as. */
   private final ProcessName processName;
 
@@ -183,12 +185,22 @@ class InterpretProcessVisitor implements ExprVisitor<ImpValue>, StmtVisitor<Void
 
   @Override
   public Void visit(AssignNode assignNode) {
+    ImpLValue lvalue = assignNode.getLhs().accept(this);
     ImpValue value = assignNode.getRhs().accept(this);
+
     try {
-      store.update(assignNode.getVariable(), value);
-    } catch (UndeclaredVariableException e) {
+      if (lvalue instanceof Variable) {
+        store.update((Variable)lvalue, value);
+
+      } else if (lvalue instanceof ArrayIndexValue) {
+        ArrayIndexValue arrIndex = ((ArrayIndexValue) lvalue);
+        store.updateArray(arrIndex.getVariable(), arrIndex.getIndex(), value);
+      }
+
+    } catch (Exception e) {
       throw new Error(e);
     }
+
     return null;
   }
 

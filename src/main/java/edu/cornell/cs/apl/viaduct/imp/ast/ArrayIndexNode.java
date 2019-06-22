@@ -1,6 +1,5 @@
 package edu.cornell.cs.apl.viaduct.imp.ast;
 
-import edu.cornell.cs.apl.viaduct.imp.visitors.ExprVisitor;
 import edu.cornell.cs.apl.viaduct.imp.visitors.LExprVisitor;
 
 /** array access interpreted as an lvalue (i.e. an array position). */

@@ -88,7 +88,7 @@ public abstract class IdentityVisitor implements ExprVisitor<ExpressionNode>, St
 
   @Override
   public LExpressionNode visit(LReadNode lreadNode) {
-    return new LReadNode(lreadNode.getVariable());
+    return lreadNode;
   }
 
   @Override
@@ -106,8 +106,9 @@ public abstract class IdentityVisitor implements ExprVisitor<ExpressionNode>, St
 
   @Override
   public StmtNode visit(AssignNode assignNode) {
+    LExpressionNode newLhs = assignNode.getLhs().accept(this);
     ExpressionNode newRhs = assignNode.getRhs().accept(this);
-    return new AssignNode(assignNode.getVariable(), newRhs);
+    return new AssignNode(newLhs, newRhs);
   }
 
   @Override

@@ -9,6 +9,8 @@ import edu.cornell.cs.apl.viaduct.imp.ast.DeclarationNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ExpressionNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.IfNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ImpValue;
+import edu.cornell.cs.apl.viaduct.imp.ast.LExpressionNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.LReadNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.LiteralNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ReadNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ReceiveNode;
@@ -148,7 +150,7 @@ public class CopyPropagation extends Dataflow<CopyPropagation.CopyPropInfo, CFGN
       Set<Variable> renamedVars = outRenameMap.keySet();
 
       // one of the variables to be erased; remove it
-      if (renamedVars.contains(assignNode.getVariable())) {
+      if (renamedVars.contains(assignNode.getLhs())) {
         return new BlockNode();
 
       // otherwise, rename all variables in the assignment
@@ -418,7 +420,15 @@ public class CopyPropagation extends Dataflow<CopyPropagation.CopyPropInfo, CFGN
       StmtNode stmt = node.getStatement();
       if (stmt instanceof AssignNode) {
         AssignNode assignNode = (AssignNode) stmt;
-        return this.removeVar(assignNode.getVariable());
+        LExpressionNode lhs = assignNode.getLhs();
+
+        if (lhs instanceof LReadNode) {
+          Variable var = ((LReadNode)lhs).getVariable();
+          return this.removeVar(var);
+
+        } else {
+          return this;
+        }
 
       } else if (stmt instanceof ReceiveNode) {
         ReceiveNode recvNode = (ReceiveNode) stmt;
@@ -433,13 +443,19 @@ public class CopyPropagation extends Dataflow<CopyPropagation.CopyPropInfo, CFGN
       StmtNode stmt = node.getStatement();
       if (stmt instanceof AssignNode) {
         AssignNode assignNode = (AssignNode) stmt;
+        LExpressionNode lhs = assignNode.getLhs();
         ExpressionNode rhs = assignNode.getRhs();
-        if (rhs instanceof ReadNode) {
-          ReadNode rhsRead = (ReadNode) rhs;
-          return addVar(assignNode.getVariable(), rhsRead.getVariable());
-        } else if (rhs instanceof LiteralNode) {
-          LiteralNode rhsLit = (LiteralNode)rhs;
-          return addVal(assignNode.getVariable(), rhsLit.getValue());
+
+        if (lhs instanceof LReadNode) {
+          Variable var = ((LReadNode)lhs).getVariable();
+          if (rhs instanceof ReadNode) {
+            ReadNode rhsRead = (ReadNode) rhs;
+            return addVar(var, rhsRead.getVariable());
+
+          } else if (rhs instanceof LiteralNode) {
+            LiteralNode rhsLit = (LiteralNode)rhs;
+            return addVal(var, rhsLit.getValue());
+          }
         }
       }
 

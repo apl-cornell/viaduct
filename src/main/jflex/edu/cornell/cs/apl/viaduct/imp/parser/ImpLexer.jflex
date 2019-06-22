@@ -93,6 +93,7 @@ ANY         = .*
   ":="            { return symbol(sym.ASSIGN); }
   "if"            { return symbol(sym.IF); }
   "else"          { return symbol(sym.ELSE); }
+  "while"         { return symbol(sym.WHILE); }
   "send"          { return symbol(sym.SEND); }
   "to"            { return symbol(sym.TO); }
   "recv"          { return symbol(sym.RECV); }
@@ -136,7 +137,8 @@ ANY         = .*
   ";"             { return symbol(sym.SEMICOLON); }
   "{"             { return symbol(sym.OPEN_BRACE); }
   "}"             { return symbol(sym.CLOSE_BRACE); }
-
+  "["             { return symbol(sym.OPEN_SQBRACE); }
+  "]"             { return symbol(sym.CLOSE_SQBRACE); }
   "("             { return symbol(sym.OPEN_PAREN); }
   ")"             { return symbol(sym.CLOSE_PAREN); }
   ","             { return symbol(sym.COMMA); }

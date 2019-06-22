@@ -5,20 +5,24 @@ import java.util.Objects;
 
 /** Variable assignment statement. */
 public final class AssignNode implements StmtNode {
-  private final Variable variable;
+  private final LExpressionNode lhs;
   private final ExpressionNode rhs;
 
-  public AssignNode(Variable var, ExpressionNode rhs) {
-    this.variable = Objects.requireNonNull(var);
+  public AssignNode(LExpressionNode lhs, ExpressionNode rhs) {
+    this.lhs = Objects.requireNonNull(lhs);
     this.rhs = Objects.requireNonNull(rhs);
   }
 
-  public Variable getVariable() {
-    return variable;
+  public AssignNode(Variable var, ExpressionNode rhs) {
+    this(new LReadNode(var), rhs);
+  }
+
+  public LExpressionNode getLhs() {
+    return this.lhs;
   }
 
   public ExpressionNode getRhs() {
-    return rhs;
+    return this.rhs;
   }
 
   @Override
@@ -37,16 +41,16 @@ public final class AssignNode implements StmtNode {
     }
 
     final AssignNode that = (AssignNode) o;
-    return Objects.equals(this.variable, that.variable) && Objects.equals(this.rhs, that.rhs);
+    return Objects.equals(this.lhs, that.lhs) && Objects.equals(this.rhs, that.rhs);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(this.variable, this.rhs);
+    return Objects.hash(this.lhs, this.rhs);
   }
 
   @Override
   public String toString() {
-    return "(assign " + this.getVariable().toString() + " to " + this.getRhs().toString() + ")";
+    return "(assign " + this.getLhs().toString() + " to " + this.getRhs().toString() + ")";
   }
 }

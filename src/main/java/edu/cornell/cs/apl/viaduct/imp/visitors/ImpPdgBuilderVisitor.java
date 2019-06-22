@@ -13,6 +13,7 @@ import edu.cornell.cs.apl.viaduct.imp.ast.DowngradeNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ExpressionNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.IfNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ImpAstNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.LExpressionNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.LReadNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.LiteralNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.NotNode;
@@ -199,28 +200,37 @@ public class ImpPdgBuilderVisitor implements ExprVisitor<PdgBuilderInfo<ImpAstNo
   /** return created PDG compute node for assignment. */
   @Override
   public PdgBuilderInfo<ImpAstNode> visit(AssignNode assignNode) {
-    if (this.storageNodes.contains(assignNode.getVariable())) {
-      PdgBuilderInfo<ImpAstNode> inInfo = assignNode.getRhs().accept(this);
-      PdgNode<ImpAstNode> varNode = this.storageNodes.get(assignNode.getVariable());
+    LExpressionNode lhs = assignNode.getLhs();
 
-      // create new PDG node for the assignment that reads from the RHS nodes
-      // and writes to the variable's storage node
-      PdgNode<ImpAstNode> node =
-          new PdgComputeNode<>(
-              this.pdg,
-              assignNode,
-              this.freshNameGenerator.getFreshName(ASSIGN_NODE),
-              Label.weakestPrincipal());
+    if (lhs instanceof LReadNode) {
+      Variable var = ((LReadNode)lhs).getVariable();
+      if (this.storageNodes.contains(var)) {
+        PdgBuilderInfo<ImpAstNode> inInfo = assignNode.getRhs().accept(this);
+        PdgNode<ImpAstNode> varNode = this.storageNodes.get(var);
 
-      inInfo.setReadNode(node);
-      PdgWriteEdge.create(node, varNode);
-      this.pdg.addNode(node);
+        // create new PDG node for the assignment that reads from the RHS nodes
+        // and writes to the variable's storage node
+        PdgNode<ImpAstNode> node =
+            new PdgComputeNode<>(
+                this.pdg,
+                assignNode,
+                this.freshNameGenerator.getFreshName(ASSIGN_NODE),
+                Label.weakestPrincipal());
 
-      PdgBuilderInfo<ImpAstNode> info = new PdgBuilderInfo<>(node);
-      return inInfo.mergeCreated(info);
+        inInfo.setReadNode(node);
+        PdgWriteEdge.create(node, varNode);
+        this.pdg.addNode(node);
+
+        PdgBuilderInfo<ImpAstNode> info = new PdgBuilderInfo<>(node);
+        return inInfo.mergeCreated(info);
+
+      } else {
+        throw new UndeclaredVariableException(var);
+      }
 
     } else {
-      throw new UndeclaredVariableException(assignNode.getVariable());
+      // TODO: actually implement this
+      return new PdgBuilderInfo<>();
     }
   }
 

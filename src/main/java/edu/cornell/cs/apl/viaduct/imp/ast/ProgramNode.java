@@ -81,6 +81,15 @@ public final class ProgramNode implements ImpAstNode, Iterable<Tuple2<ProcessNam
     return Objects.hash(this.processes, trustConfiguration);
   }
 
+  @Override
+  public String toString() {
+    StringBuffer buffer = new StringBuffer();
+    for (Tuple2<ProcessName,StmtNode> proc : this.processes) {
+      buffer.append(String.format("(process %s %s)\n", proc._1(), proc._2()));
+    }
+    return buffer.toString();
+  }
+
   public static final class Builder {
     private final Map<ProcessName, StmtNode> processes = new HashMap<>();
     private final HostTrustConfiguration.Builder hostConfigBuilder =

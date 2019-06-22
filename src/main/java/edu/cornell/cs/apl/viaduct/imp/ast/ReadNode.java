@@ -13,6 +13,10 @@ public final class ReadNode extends AbstractReadNode implements ExpressionNode {
     super(binding);
   }
 
+  public ReadNode(String name) {
+    super(name);
+  }
+
   @Override
   public <R> R accept(ExprVisitor<R> v) {
     return v.visit(this);

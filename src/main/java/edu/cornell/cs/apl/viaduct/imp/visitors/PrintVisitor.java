@@ -14,7 +14,6 @@ import edu.cornell.cs.apl.viaduct.imp.ast.DowngradeNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ExpressionNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.Host;
 import edu.cornell.cs.apl.viaduct.imp.ast.IfNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.ImpAstNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.LReadNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.LiteralNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.NotNode;
@@ -74,6 +73,14 @@ public class PrintVisitor implements ExprVisitor<Void>, StmtVisitor<Void>,
     return null;
   }
 
+  private Void visitArrayAccess(AbstractArrayAccessNode arrAccessNode) {
+    buffer.append(arrAccessNode.getVariable().toString());
+    buffer.append("[");
+    arrAccessNode.getIndex().accept(this);
+    buffer.append("]");
+    return null;
+  }
+
   @Override
   public Void visit(LiteralNode literalNode) {
     buffer.append(literalNode.getValue());
@@ -114,14 +121,6 @@ public class PrintVisitor implements ExprVisitor<Void>, StmtVisitor<Void>,
     buffer.append(", ");
     buffer.append(downgradeNode.getLabel());
     buffer.append(")");
-    return null;
-  }
-
-  protected Void visitArrayAccess(AbstractArrayAccessNode arrAccessNode) {
-    buffer.append(arrAccessNode.getVariable().toString());
-    buffer.append("[");
-    arrAccessNode.getIndex().accept(this);
-    buffer.append("]");
     return null;
   }
 
@@ -173,7 +172,7 @@ public class PrintVisitor implements ExprVisitor<Void>, StmtVisitor<Void>,
   public Void visit(AssignNode assignNode) {
     addIndentation();
 
-    buffer.append(assignNode.getVariable());
+    assignNode.getLhs().accept(this);
     buffer.append(" := ");
     assignNode.getRhs().accept(this);
 

@@ -1,5 +1,6 @@
 package edu.cornell.cs.apl.viaduct.imp.ast;
 
+import edu.cornell.cs.apl.viaduct.AstNode;
 import edu.cornell.cs.apl.viaduct.Binding;
 import java.util.Objects;
 
@@ -7,7 +8,7 @@ import java.util.Objects;
 public final class Variable implements Binding<ImpAstNode>, ImpLValue {
   private final String name;
 
-  public <T extends ImpAstNode> Variable(Binding<T> binding) {
+  public <T extends AstNode> Variable(Binding<T> binding) {
     this.name = binding.getBinding();
   }
 

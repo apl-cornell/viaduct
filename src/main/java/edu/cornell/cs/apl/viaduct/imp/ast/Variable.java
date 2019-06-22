@@ -4,7 +4,7 @@ import edu.cornell.cs.apl.viaduct.Binding;
 import java.util.Objects;
 
 /** A variable that can be read from or assigned to. */
-public final class Variable implements Binding<ImpAstNode> {
+public final class Variable implements Binding<ImpAstNode>, ImpLValue {
   private final String name;
 
   public <T extends ImpAstNode> Variable(Binding<T> binding) {

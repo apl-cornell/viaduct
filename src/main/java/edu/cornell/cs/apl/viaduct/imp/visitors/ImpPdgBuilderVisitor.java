@@ -3,6 +3,7 @@ package edu.cornell.cs.apl.viaduct.imp.visitors;
 import edu.cornell.cs.apl.viaduct.UndeclaredVariableException;
 import edu.cornell.cs.apl.viaduct.imp.ast.ArrayAccessNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ArrayDeclarationNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.ArrayIndexNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.AssertNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.AssignNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.BinaryExpressionNode;
@@ -12,6 +13,7 @@ import edu.cornell.cs.apl.viaduct.imp.ast.DowngradeNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ExpressionNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.IfNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ImpAstNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.LReadNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.LiteralNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.NotNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ProgramNode;
@@ -45,7 +47,10 @@ import java.util.Set;
  * Build program dependency graph from AST. The visit methods return the set of PDG nodes on which
  * the AST node depends (reads).
  */
-public class ImpPdgBuilderVisitor implements AstVisitor<PdgBuilderInfo<ImpAstNode>> {
+public class ImpPdgBuilderVisitor implements ExprVisitor<PdgBuilderInfo<ImpAstNode>>,
+    StmtVisitor<PdgBuilderInfo<ImpAstNode>>, LExprVisitor<PdgBuilderInfo<ImpAstNode>>,
+    ProgramVisitor<PdgBuilderInfo<ImpAstNode>> {
+
   private static final String DOWNGRADE_NODE = "downgrade";
   private static final String VARDECL_NODE = "decl";
   private static final String ASSIGN_NODE = "assgn";
@@ -152,6 +157,18 @@ public class ImpPdgBuilderVisitor implements AstVisitor<PdgBuilderInfo<ImpAstNod
 
   @Override
   public PdgBuilderInfo<ImpAstNode> visit(ArrayAccessNode arrAccessNode) {
+    // TODO: do the right thing
+    return new PdgBuilderInfo<>();
+  }
+
+  @Override
+  public PdgBuilderInfo<ImpAstNode> visit(ArrayIndexNode arrIndexNode) {
+    // TODO: do the right thing
+    return new PdgBuilderInfo<>();
+  }
+
+  @Override
+  public PdgBuilderInfo<ImpAstNode> visit(LReadNode lreadNode) {
     // TODO: do the right thing
     return new PdgBuilderInfo<>();
   }

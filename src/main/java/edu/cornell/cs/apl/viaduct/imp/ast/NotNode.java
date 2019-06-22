@@ -4,7 +4,7 @@ import edu.cornell.cs.apl.viaduct.imp.visitors.ExprVisitor;
 import java.util.Objects;
 
 /** Boolean negation. */
-public final class NotNode extends ExpressionNode {
+public final class NotNode implements ExpressionNode {
   private final ExpressionNode expression;
 
   public NotNode(ExpressionNode expression) {

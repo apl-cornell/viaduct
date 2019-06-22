@@ -134,9 +134,9 @@ public class CopyPropagation extends Dataflow<CopyPropagation.CopyPropInfo, CFGN
 
     @Override
     public StmtNode visit(ArrayDeclarationNode arrayDeclNode) {
-      this.inInfoQueue.remove();
+      CopyPropInfo inInfo = this.inInfoQueue.remove();
       this.outInfoQueue.remove();
-      return super.visit(arrayDeclNode);
+      return rename(arrayDeclNode, inInfo);
     }
 
     @Override
@@ -144,7 +144,6 @@ public class CopyPropagation extends Dataflow<CopyPropagation.CopyPropInfo, CFGN
       CopyPropInfo inInfo = this.inInfoQueue.remove();
       CopyPropInfo outInfo = this.outInfoQueue.remove();
 
-      Map<Variable,ExpressionNode> inRenameMap = processCopyPropInfo(inInfo);
       Map<Variable,ExpressionNode> outRenameMap = processCopyPropInfo(outInfo);
       Set<Variable> renamedVars = outRenameMap.keySet();
 
@@ -154,8 +153,7 @@ public class CopyPropagation extends Dataflow<CopyPropagation.CopyPropInfo, CFGN
 
       // otherwise, rename all variables in the assignment
       } else {
-        ReplaceVisitor renamer = new ReplaceVisitor(inRenameMap);
-        return assignNode.accept(renamer);
+        return rename(assignNode, inInfo);
       }
     }
 
@@ -163,10 +161,8 @@ public class CopyPropagation extends Dataflow<CopyPropagation.CopyPropInfo, CFGN
     public StmtNode visit(IfNode ifNode) {
       CopyPropInfo info = this.inInfoQueue.remove();
       this.outInfoQueue.remove();
-      Map<Variable,ExpressionNode> renameMap = processCopyPropInfo(info);
-      ReplaceVisitor renamer = new ReplaceVisitor(renameMap);
 
-      ExpressionNode newGuard = ifNode.getGuard().accept(renamer);
+      ExpressionNode newGuard = rename(ifNode.getGuard(), info);
       StmtNode newThenBranch = ifNode.getThenBranch().accept(this);
       StmtNode newElseBranch = ifNode.getElseBranch().accept(this);
 
@@ -191,10 +187,7 @@ public class CopyPropagation extends Dataflow<CopyPropagation.CopyPropInfo, CFGN
     public StmtNode visit(SendNode sendNode) {
       CopyPropInfo inInfo = this.inInfoQueue.remove();
       this.outInfoQueue.remove();
-
-      Map<Variable,ExpressionNode> inRenameMap = processCopyPropInfo(inInfo);
-      ReplaceVisitor renamer = new ReplaceVisitor(inRenameMap);
-      return sendNode.accept(renamer);
+      return rename(sendNode, inInfo);
     }
 
     @Override
@@ -209,6 +202,18 @@ public class CopyPropagation extends Dataflow<CopyPropagation.CopyPropInfo, CFGN
       this.inInfoQueue.remove();
       this.outInfoQueue.remove();
       return super.visit(assertNode);
+    }
+
+    private StmtNode rename(StmtNode stmt, CopyPropInfo info) {
+      Map<Variable,ExpressionNode> renameMap = processCopyPropInfo(info);
+      ReplaceVisitor renamer = new ReplaceVisitor(renameMap);
+      return stmt.accept(renamer);
+    }
+
+    private ExpressionNode rename(ExpressionNode expr, CopyPropInfo info) {
+      Map<Variable,ExpressionNode> renameMap = processCopyPropInfo(info);
+      ReplaceVisitor renamer = new ReplaceVisitor(renameMap);
+      return expr.accept(renamer);
     }
 
     /** return rename map of variables. */

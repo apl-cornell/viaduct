@@ -4,7 +4,7 @@ import edu.cornell.cs.apl.viaduct.imp.visitors.ExprVisitor;
 import java.util.Objects;
 
 /** A binary operator applied two expressions. */
-public final class BinaryExpressionNode extends ExpressionNode {
+public final class BinaryExpressionNode implements ExpressionNode {
   private final ExpressionNode lhs;
   private final ExpressionNode rhs;
   private final BinaryOperator operator;

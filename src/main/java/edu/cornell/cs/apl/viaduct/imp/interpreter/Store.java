@@ -4,8 +4,11 @@ import edu.cornell.cs.apl.viaduct.imp.ast.ImpValue;
 import edu.cornell.cs.apl.viaduct.imp.ast.UnavailableValue;
 import edu.cornell.cs.apl.viaduct.imp.ast.Variable;
 import io.vavr.Tuple2;
+
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import javax.annotation.Nonnull;
 
@@ -53,10 +56,12 @@ public class Store implements Iterable<Tuple2<Variable, ImpValue>> {
 
     if (value == null) {
       throw new UndeclaredVariableException(variable);
+
     } else if (value instanceof UnavailableValue) {
       throw new UnassignedVariableException(variable);
+
     } else {
-      return variableStore.get(variable);
+      return value;
     }
   }
 
@@ -72,6 +77,56 @@ public class Store implements Iterable<Tuple2<Variable, ImpValue>> {
       throw new UndeclaredVariableException(variable);
     }
     variableStore.put(variable, newValue);
+  }
+
+  /**
+   * declare a new array.
+   *
+   * @param var the variable to associate with the new array.
+   * @param length the length of the array.
+   */
+  void declareArray(Variable var, int length) throws RedeclaredVariableException {
+    if (this.arrayStore.containsKey(var)) {
+      throw new RedeclaredVariableException(var);
+    }
+    ImpValue[] array = new ImpValue[length];
+    this.arrayStore.put(var, array);
+  }
+
+  /**
+   * return value of array at a particular index.
+   *
+   * @param var the array variable
+   * @param index the index to lookup
+   * @throws UndeclaredVariableException if the array variable was not declared.
+   * @throws UnassignedVariableException if the array was never assigned a value at the index.
+   * */
+  ImpValue lookupArray(Variable var, int index)
+      throws UndeclaredVariableException, ImpArrayOutOfBoundsException,
+          UnassignedVariableException
+  {
+    final ImpValue[] array = this.arrayStore.get(var);
+    if (array == null) {
+      throw new UndeclaredVariableException(var);
+
+    } else if (index < 0 || index >= array.length) {
+      throw new ImpArrayOutOfBoundsException(var, index);
+
+    } else if (array[index] instanceof UnavailableValue) {
+      throw new UnassignedVariableException(var);
+
+    } else {
+      return array[index];
+    }
+  }
+
+  void update(Variable var, int index, ImpValue val)
+      throws UndeclaredVariableException
+  {
+    final ImpValue[] array = this.arrayStore.get(var);
+    if (array == null) {
+      throw new UndeclaredVariableException(var);
+    }
   }
 
   @Override
@@ -92,6 +147,26 @@ public class Store implements Iterable<Tuple2<Variable, ImpValue>> {
       buffer.append(entry.getKey());
       buffer.append(" => ");
       buffer.append(entry.getValue());
+
+      first = false;
+    }
+
+    for (Map.Entry<Variable, ImpValue[]> entry : arrayStore.entrySet()) {
+      if (!first) {
+        buffer.append("\n");
+      }
+
+      buffer.append(entry.getKey());
+      buffer.append(" => ");
+      buffer.append("{");
+      List<String> arrayStr = new ArrayList<>();
+      for (ImpValue val : entry.getValue()) {
+        if (val != null) {
+          arrayStr.add(val.toString());
+        }
+      }
+      buffer.append(String.join(", ", arrayStr));
+      buffer.append("}");
 
       first = false;
     }

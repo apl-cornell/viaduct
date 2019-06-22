@@ -4,7 +4,7 @@ import edu.cornell.cs.apl.viaduct.imp.visitors.StmtVisitor;
 import java.util.Objects;
 
 /** Assert that an expression is true. */
-public final class AssertNode extends StmtNode {
+public final class AssertNode implements StmtNode {
   private final ExpressionNode expression;
 
   public AssertNode(ExpressionNode expression) {

@@ -2,6 +2,8 @@ package edu.cornell.cs.apl.viaduct.imp.interpreter;
 
 import edu.cornell.cs.apl.viaduct.imp.ast.ArrayAccessNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ArrayDeclarationNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.ArrayIndexNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.ArrayIndexValue;
 import edu.cornell.cs.apl.viaduct.imp.ast.AssertNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.AssignNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.BinaryExpressionNode;
@@ -11,7 +13,10 @@ import edu.cornell.cs.apl.viaduct.imp.ast.DeclarationNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.DowngradeNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ExpressionNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.IfNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.ImpLValue;
 import edu.cornell.cs.apl.viaduct.imp.ast.ImpValue;
+import edu.cornell.cs.apl.viaduct.imp.ast.IntegerValue;
+import edu.cornell.cs.apl.viaduct.imp.ast.LReadNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.LiteralNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.NotNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ProcessName;
@@ -19,12 +24,14 @@ import edu.cornell.cs.apl.viaduct.imp.ast.ReadNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ReceiveNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.SendNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.StmtNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.Variable;
 import edu.cornell.cs.apl.viaduct.imp.ast.WhileNode;
 import edu.cornell.cs.apl.viaduct.imp.visitors.ExprVisitor;
+import edu.cornell.cs.apl.viaduct.imp.visitors.LExprVisitor;
 import edu.cornell.cs.apl.viaduct.imp.visitors.StmtVisitor;
 import java.util.Objects;
 
-class InterpretProcessVisitor implements ExprVisitor<ImpValue>, StmtVisitor<Void> {
+class InterpretProcessVisitor implements ExprVisitor<ImpValue>, StmtVisitor<Void>, LExprVisitor<ImpLValue> {
   /** The process to execute the statements as. */
   private final ProcessName processName;
 
@@ -104,9 +111,43 @@ class InterpretProcessVisitor implements ExprVisitor<ImpValue>, StmtVisitor<Void
 
   @Override
   public ImpValue visit(ArrayAccessNode arrAccessNode) {
-    // TODO: fix this
+    Variable var = arrAccessNode.getVariable();
     ImpValue indexVal = arrAccessNode.getIndex().accept(this);
-    return indexVal;
+
+    try {
+      if (indexVal instanceof IntegerValue) {
+        int index = ((IntegerValue)indexVal).getValue();
+        return this.store.lookupArray(var, index);
+
+      } else {
+        throw new NonIntegerIndexException(var, indexVal);
+      }
+    } catch (Exception e) {
+      throw new Error(e);
+    }
+  }
+
+  @Override
+  public ImpLValue visit(LReadNode lreadNode) {
+    return lreadNode.getVariable();
+  }
+
+  @Override
+  public ImpLValue visit(ArrayIndexNode arrAccessNode) {
+    Variable var = arrAccessNode.getVariable();
+    ImpValue indexVal = arrAccessNode.getIndex().accept(this);
+
+    try {
+      if (indexVal instanceof IntegerValue) {
+        int index = ((IntegerValue)indexVal).getValue();
+        return new ArrayIndexValue(var, index);
+
+      } else {
+        throw new NonIntegerIndexException(var, indexVal);
+      }
+    } catch (Exception e) {
+      throw new Error(e);
+    }
   }
 
   @Override
@@ -120,9 +161,24 @@ class InterpretProcessVisitor implements ExprVisitor<ImpValue>, StmtVisitor<Void
   }
 
   @Override
-  public Void visit(ArrayDeclarationNode arrayDeclarationNode) {
-    // TODO: implement
-    throw new Error("Unimplemented");
+  public Void visit(ArrayDeclarationNode arrayDeclNode) {
+    try {
+      Variable var = arrayDeclNode.getVariable();
+      ImpValue length = arrayDeclNode.getLength().accept(this);
+
+      if (length instanceof IntegerValue) {
+        int intLength = ((IntegerValue)length).getValue();
+        store.declareArray(var, intLength);
+
+      } else {
+        throw new NonIntegerIndexException(var, length);
+      }
+
+    } catch (Exception e) {
+      throw new Error(e);
+    }
+
+    return null;
   }
 
   @Override

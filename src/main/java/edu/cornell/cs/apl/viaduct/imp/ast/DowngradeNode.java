@@ -5,7 +5,7 @@ import edu.cornell.cs.apl.viaduct.security.Label;
 import java.util.Objects;
 
 /** Reduce the confidentiality and/or integrity of the result of an expression. */
-public final class DowngradeNode extends ExpressionNode {
+public final class DowngradeNode implements ExpressionNode {
   private final ExpressionNode expression;
   private final Label label;
 

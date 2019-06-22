@@ -4,7 +4,7 @@ import edu.cornell.cs.apl.viaduct.imp.visitors.StmtVisitor;
 import java.util.Objects;
 
 /** Variable assignment statement. */
-public final class AssignNode extends StmtNode {
+public final class AssignNode implements StmtNode {
   private final Variable variable;
   private final ExpressionNode rhs;
 

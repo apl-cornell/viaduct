@@ -4,7 +4,7 @@ import edu.cornell.cs.apl.viaduct.imp.visitors.StmtVisitor;
 import java.util.Objects;
 
 /** If statement. */
-public class WhileNode extends StmtNode {
+public class WhileNode implements StmtNode {
   private final ExpressionNode guard;
   private final StmtNode body;
 

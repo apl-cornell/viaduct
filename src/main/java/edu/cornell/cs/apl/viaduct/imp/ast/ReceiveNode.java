@@ -4,7 +4,7 @@ import edu.cornell.cs.apl.viaduct.imp.visitors.StmtVisitor;
 import java.util.Objects;
 
 /** Receive a value from a host. */
-public final class ReceiveNode extends StmtNode {
+public final class ReceiveNode implements StmtNode {
   private final Variable var;
   private final ProcessName sender;
 

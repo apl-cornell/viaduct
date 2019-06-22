@@ -3,6 +3,7 @@ package edu.cornell.cs.apl.viaduct.imp.visitors;
 import edu.cornell.cs.apl.viaduct.imp.DuplicateProcessDefinitionException;
 import edu.cornell.cs.apl.viaduct.imp.ast.ArrayAccessNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ArrayDeclarationNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.ArrayIndexNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.AssertNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.AssignNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.BinaryExpressionNode;
@@ -11,6 +12,8 @@ import edu.cornell.cs.apl.viaduct.imp.ast.DeclarationNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.DowngradeNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ExpressionNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.IfNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.LExpressionNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.LReadNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.LiteralNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.NotNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ProcessName;
@@ -31,8 +34,8 @@ import java.util.List;
  * visitors. Visitors that only change a small subset of AST nodes should inherit from this class
  * and override only the cases that do something interesting.
  */
-public abstract class IdentityVisitor
-    implements ExprVisitor<ExpressionNode>, StmtVisitor<StmtNode>, ProgramVisitor<ProgramNode> {
+public abstract class IdentityVisitor implements ExprVisitor<ExpressionNode>, StmtVisitor<StmtNode>,
+    LExprVisitor<LExpressionNode>, ProgramVisitor<ProgramNode> {
 
   public ExpressionNode run(ExpressionNode expr) {
     return expr.accept(this);
@@ -75,6 +78,17 @@ public abstract class IdentityVisitor
   public ExpressionNode visit(ArrayAccessNode arrAccessNode) {
     ExpressionNode newIndex = arrAccessNode.getIndex().accept(this);
     return new ArrayAccessNode(arrAccessNode.getVariable(), newIndex);
+  }
+
+  @Override
+  public LExpressionNode visit(ArrayIndexNode arrIndexNode) {
+    ExpressionNode newIndex = arrIndexNode.getIndex().accept(this);
+    return new ArrayIndexNode(arrIndexNode.getVariable(), newIndex);
+  }
+
+  @Override
+  public LExpressionNode visit(LReadNode lreadNode) {
+    return new LReadNode(lreadNode.getVariable());
   }
 
   @Override

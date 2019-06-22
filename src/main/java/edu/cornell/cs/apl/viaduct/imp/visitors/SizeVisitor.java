@@ -1,7 +1,9 @@
 package edu.cornell.cs.apl.viaduct.imp.visitors;
 
+import edu.cornell.cs.apl.viaduct.imp.ast.AbstractArrayAccessNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ArrayAccessNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ArrayDeclarationNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.ArrayIndexNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.AssertNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.AssignNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.BinaryExpressionNode;
@@ -9,6 +11,7 @@ import edu.cornell.cs.apl.viaduct.imp.ast.BlockNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.DeclarationNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.DowngradeNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.IfNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.LReadNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.LiteralNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.NotNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ProcessName;
@@ -21,7 +24,14 @@ import edu.cornell.cs.apl.viaduct.imp.ast.WhileNode;
 import io.vavr.Tuple2;
 
 /** gives the size of an AST node. */
-public class SizeVisitor implements AstVisitor<Integer> {
+public class SizeVisitor implements ExprVisitor<Integer>, StmtVisitor<Integer>,
+    LExprVisitor<Integer>, ProgramVisitor<Integer> {
+
+  protected Integer visitArrayAccess(AbstractArrayAccessNode arrAccessNode) {
+    Integer indexSize = arrAccessNode.getIndex().accept(this);
+    return 1 + indexSize;
+  }
+
   @Override
   public Integer visit(ReadNode readNode) {
     return 1;
@@ -52,8 +62,17 @@ public class SizeVisitor implements AstVisitor<Integer> {
 
   @Override
   public Integer visit(ArrayAccessNode arrAccessNode) {
-    Integer indexSize = arrAccessNode.getIndex().accept(this);
-    return 1 + indexSize;
+    return visitArrayAccess(arrAccessNode);
+  }
+
+  @Override
+  public Integer visit(ArrayIndexNode arrIndexNode) {
+    return visitArrayAccess(arrIndexNode);
+  }
+
+  @Override
+  public Integer visit(LReadNode lreadNode) {
+    return 1;
   }
 
   @Override

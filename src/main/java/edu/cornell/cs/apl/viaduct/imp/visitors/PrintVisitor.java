@@ -1,16 +1,21 @@
 package edu.cornell.cs.apl.viaduct.imp.visitors;
 
+import edu.cornell.cs.apl.viaduct.imp.ast.AbstractArrayAccessNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.AbstractReadNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ArrayAccessNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ArrayDeclarationNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.ArrayIndexNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.AssertNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.AssignNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.BinaryExpressionNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.BlockNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.DeclarationNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.DowngradeNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.ExpressionNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.Host;
 import edu.cornell.cs.apl.viaduct.imp.ast.IfNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ImpAstNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.LReadNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.LiteralNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.NotNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ProcessName;
@@ -24,7 +29,9 @@ import edu.cornell.cs.apl.viaduct.security.Label;
 import io.vavr.Tuple2;
 
 /** Pretty-prints an AST. */
-public class PrintVisitor implements AstVisitor<Void> {
+public class PrintVisitor implements ExprVisitor<Void>, StmtVisitor<Void>,
+    LExprVisitor<Void>, ProgramVisitor<Void> {
+
   private static final int INDENTATION_LEVEL = 4;
 
   /** Accumulates the partially built program. */
@@ -35,9 +42,23 @@ public class PrintVisitor implements AstVisitor<Void> {
   public PrintVisitor() {}
 
   /** Pretty print the given AST and return it as {@code String}. */
-  public String run(ImpAstNode astNode) {
+  public String run(StmtNode stmt) {
     // TODO: explain what happens if you call it multiple times. Or change the interface.
-    astNode.accept(this);
+    stmt.accept(this);
+    return buffer.toString();
+  }
+
+  /** Pretty print the given AST and return it as {@code String}. */
+  public String run(ExpressionNode expr) {
+    // TODO: explain what happens if you call it multiple times. Or change the interface.
+    expr.accept(this);
+    return buffer.toString();
+  }
+
+  /** Pretty print the given AST and return it as {@code String}. */
+  public String run(ProgramNode prog) {
+    // TODO: explain what happens if you call it multiple times. Or change the interface.
+    prog.accept(this);
     return buffer.toString();
   }
 
@@ -48,6 +69,11 @@ public class PrintVisitor implements AstVisitor<Void> {
     }
   }
 
+  private Void visitRead(AbstractReadNode readNode) {
+    buffer.append(readNode.getVariable());
+    return null;
+  }
+
   @Override
   public Void visit(LiteralNode literalNode) {
     buffer.append(literalNode.getValue());
@@ -56,8 +82,7 @@ public class PrintVisitor implements AstVisitor<Void> {
 
   @Override
   public Void visit(ReadNode readNode) {
-    buffer.append(readNode.getVariable());
-    return null;
+    return visitRead(readNode);
   }
 
   @Override
@@ -92,13 +117,27 @@ public class PrintVisitor implements AstVisitor<Void> {
     return null;
   }
 
-  @Override
-  public Void visit(ArrayAccessNode arrAccessNode) {
+  protected Void visitArrayAccess(AbstractArrayAccessNode arrAccessNode) {
     buffer.append(arrAccessNode.getVariable().toString());
     buffer.append("[");
     arrAccessNode.getIndex().accept(this);
     buffer.append("]");
     return null;
+  }
+
+  @Override
+  public Void visit(ArrayAccessNode arrAccessNode) {
+    return visitArrayAccess(arrAccessNode);
+  }
+
+  @Override
+  public Void visit(ArrayIndexNode arrIndexNode) {
+    return visitArrayAccess(arrIndexNode);
+  }
+
+  @Override
+  public Void visit(LReadNode lreadNode) {
+    return visitRead(lreadNode);
   }
 
   @Override

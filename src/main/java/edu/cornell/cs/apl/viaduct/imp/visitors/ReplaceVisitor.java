@@ -1,7 +1,9 @@
 package edu.cornell.cs.apl.viaduct.imp.visitors;
 
 import edu.cornell.cs.apl.viaduct.imp.DuplicateProcessDefinitionException;
+import edu.cornell.cs.apl.viaduct.imp.ast.ArrayAccessNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ArrayDeclarationNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.ArrayIndexNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.AssertNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.AssignNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.BinaryExpressionNode;
@@ -20,6 +22,7 @@ import edu.cornell.cs.apl.viaduct.imp.ast.ReceiveNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.SendNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.StmtNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.Variable;
+import edu.cornell.cs.apl.viaduct.imp.ast.WhileNode;
 import io.vavr.Tuple2;
 import java.util.HashMap;
 import java.util.Map;
@@ -122,6 +125,16 @@ public class ReplaceVisitor extends IdentityVisitor {
   }
 
   @Override
+  public ExpressionNode visit(ArrayAccessNode arrAccessNode) {
+    if (this.exprMap.containsKey(arrAccessNode)) {
+      return this.exprMap.get(arrAccessNode);
+
+    } else {
+      return super.visit(arrAccessNode);
+    }
+  }
+
+  @Override
   public StmtNode visit(DeclarationNode declarationNode) {
     if (this.stmtMap.containsKey(declarationNode)) {
       return this.stmtMap.get(declarationNode);
@@ -178,6 +191,16 @@ public class ReplaceVisitor extends IdentityVisitor {
 
     } else {
       return super.visit(ifNode);
+    }
+  }
+
+  @Override
+  public StmtNode visit(WhileNode whileNode) {
+    if (this.stmtMap.containsKey(whileNode)) {
+      return this.stmtMap.get(whileNode);
+
+    } else {
+      return super.visit(whileNode);
     }
   }
 

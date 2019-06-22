@@ -3,7 +3,6 @@ package edu.cornell.cs.apl.viaduct.imp.ast;
 import edu.cornell.cs.apl.viaduct.imp.DuplicateHostDeclarationException;
 import edu.cornell.cs.apl.viaduct.imp.DuplicateProcessDefinitionException;
 import edu.cornell.cs.apl.viaduct.imp.HostTrustConfiguration;
-import edu.cornell.cs.apl.viaduct.imp.visitors.AstVisitor;
 import edu.cornell.cs.apl.viaduct.imp.visitors.ProgramVisitor;
 import edu.cornell.cs.apl.viaduct.security.Label;
 import io.vavr.Tuple2;
@@ -20,8 +19,7 @@ import javax.annotation.Nonnull;
  * A program is a set of process definitions and a host trust configuration. It associates with each
  * process, the code running on that process, and with each host, its trustworthiness.
  */
-public final class ProgramNode extends ImpAstNode
-    implements Iterable<Tuple2<ProcessName, StmtNode>> {
+public final class ProgramNode implements ImpAstNode, Iterable<Tuple2<ProcessName, StmtNode>> {
   private final SortedMap<ProcessName, StmtNode> processes;
   private final HostTrustConfiguration trustConfiguration;
 
@@ -61,11 +59,6 @@ public final class ProgramNode extends ImpAstNode
 
   public <R> R accept(ProgramVisitor<R> v) {
     return v.visit(this);
-  }
-
-  @Override
-  public <R> R accept(AstVisitor<R> v) {
-    return this.accept((ProgramVisitor<R>) v);
   }
 
   @Override

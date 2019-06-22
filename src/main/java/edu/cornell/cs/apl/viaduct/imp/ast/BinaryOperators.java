@@ -15,7 +15,7 @@ public class BinaryOperators {
     @Override
     public ImpValue evaluate(ImpValue left, ImpValue right) {
       boolean leftV = ((BooleanValue) left).getValue();
-      boolean rightV = ((BooleanValue) left).getValue();
+      boolean rightV = ((BooleanValue) right).getValue();
       return new BooleanValue(leftV || rightV);
     }
 
@@ -38,7 +38,7 @@ public class BinaryOperators {
     @Override
     public ImpValue evaluate(ImpValue left, ImpValue right) {
       boolean leftV = ((BooleanValue) left).getValue();
-      boolean rightV = ((BooleanValue) left).getValue();
+      boolean rightV = ((BooleanValue) right).getValue();
       return new BooleanValue(leftV && rightV);
     }
 
@@ -82,7 +82,7 @@ public class BinaryOperators {
     @Override
     public ImpValue evaluate(ImpValue left, ImpValue right) {
       int leftV = ((IntegerValue) left).getValue();
-      int rightV = ((IntegerValue) left).getValue();
+      int rightV = ((IntegerValue) right).getValue();
       return new BooleanValue(leftV < rightV);
     }
 
@@ -105,7 +105,7 @@ public class BinaryOperators {
     @Override
     public ImpValue evaluate(ImpValue left, ImpValue right) {
       int leftV = ((IntegerValue) left).getValue();
-      int rightV = ((IntegerValue) left).getValue();
+      int rightV = ((IntegerValue) right).getValue();
       return new BooleanValue(leftV <= rightV);
     }
 
@@ -128,7 +128,7 @@ public class BinaryOperators {
     @Override
     public ImpValue evaluate(ImpValue left, ImpValue right) {
       int leftV = ((IntegerValue) left).getValue();
-      int rightV = ((IntegerValue) left).getValue();
+      int rightV = ((IntegerValue) right).getValue();
       return new IntegerValue(leftV + rightV);
     }
 

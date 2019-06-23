@@ -150,13 +150,16 @@ public class CopyPropagation extends Dataflow<CopyPropagation.CopyPropInfo, CFGN
       Set<Variable> renamedVars = outRenameMap.keySet();
 
       // one of the variables to be erased; remove it
-      if (renamedVars.contains(assignNode.getLhs())) {
-        return new BlockNode();
+      LExpressionNode lhs = assignNode.getLhs();
+      if (lhs instanceof LReadNode) {
+        Variable var = ((LReadNode)lhs).getVariable();
+        if (renamedVars.contains(var)) {
+          return new BlockNode();
+        }
+      }
 
       // otherwise, rename all variables in the assignment
-      } else {
-        return rename(assignNode, inInfo);
-      }
+      return rename(assignNode, inInfo);
     }
 
     @Override

@@ -29,7 +29,7 @@ public abstract class AbstractReadNode {
       return true;
     }
 
-    if (!(o instanceof ReadNode)) {
+    if (!(o instanceof AbstractReadNode)) {
       return false;
     }
 

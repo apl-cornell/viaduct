@@ -85,7 +85,7 @@ public final class ProgramNode implements ImpAstNode, Iterable<Tuple2<ProcessNam
   public String toString() {
     StringBuffer buffer = new StringBuffer();
     for (Tuple2<ProcessName,StmtNode> proc : this.processes) {
-      buffer.append(String.format("(process %s %s)\n", proc._1(), proc._2()));
+      buffer.append(String.format("(process %s %s)%n", proc._1(), proc._2()));
     }
     return buffer.toString();
   }

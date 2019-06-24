@@ -1,0 +1,66 @@
+process main {
+    /* board cell value is: -1 if empty, otherwise i, where i is the index of a player's ship */
+    alice_board[100] : {A & B<-};
+    bob_board[100]   : {B & A<-};
+
+    alice_input : {A};
+    alice_move : {(A|B)-> & (A&B)<-};
+    alice_score : {(A|B)-> & (A&B)<-};
+    alice_score := 0;
+
+    bob_input : {B};
+    bob_move : {(A|B)-> & (A&B)<-};
+    bob_score : {(A|B)-> & (A&B)<-};
+    bob_score := 0;
+
+    /* array of ships. a "true" value at index i means ship i is still alive */
+    alice_ships[5] : {(A|B)-> & (A&B)<-};
+    bob_ships[5] : {(A|B)-> & (A&B)<-};
+
+    /* initialize ships */
+    i : {(A|B)-> & (A&B)<-};
+    i := 0;
+    while (i < 5) {
+        alice_ships[i] := true;
+        bob_ships[i] := true;
+        i := i + 1;
+    }
+
+    done : {(A|B)-> & (A&B)<-};
+    done := false;
+    while (!done) {
+        /* alice moves */
+        alice_input <- recv alice;
+        alice_move := downgrade(alice_input, {(A|B)-> & (A&B)<-});
+        bob_cell : {(A|B)-> & (A&B)<-};
+        bob_cell := declassify(bob_board[alice_move], {(A|B)-> & (A&B)<-});
+        if (bob_cell >= 0) {
+            if (bob_ships[bob_cell]) {
+                bob_ships[bob_cell] := false;
+                alice_score := alice_score + 1;
+                if (alice_score == 5) {
+                    done := true;
+                }
+            }
+        }
+
+        if (!done) {
+            /* bob moves */
+            bob_input <- recv bob;
+            bob_move := downgrade(bob_input, {(A|B)-> & (A&B)<-});
+            alice_cell : {(A|B)-> & (A&B)<-};
+            alice_cell := declassify(alice_board[bob_move], {(A|B)-> & (A&B)<-});
+            if (alice_cell >= 0) {
+                if (alice_ships[alice_cell]) {
+                    alice_ships[alice_cell] := false;
+                    bob_score := bob_score + 1;
+                    if (bob_score == 5) {
+                        done := true;
+                    }
+                }
+            }
+        }
+    }
+
+    assert (bob_score == 5 && alice_score < 5) || (bob_score < 5 && alice_score == 5);
+}

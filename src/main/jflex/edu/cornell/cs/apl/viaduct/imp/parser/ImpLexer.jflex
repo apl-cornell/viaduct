@@ -90,7 +90,6 @@ ANY         = .*
 
   /* Statements */
   ":"             { return symbol(sym.COLON); }
-  ":="            { return symbol(sym.ASSIGN); }
   "if"            { return symbol(sym.IF); }
   "else"          { return symbol(sym.ELSE); }
   "while"         { return symbol(sym.WHILE); }
@@ -114,12 +113,13 @@ ANY         = .*
   "-"             { return symbol(sym.MINUS); }
   "*"             { return symbol(sym.TIMES); }
   // "/"             { return symbol(sym.DIVIDE); }
-  "=="            { return symbol(sym.EQ); }
+  "=="            { return symbol(sym.EQEQ); }
   "!="            { return symbol(sym.NEQ); }
   "<"             { return symbol(sym.LT); }
   "<="            { return symbol(sym.LEQ); }
   ">"             { return symbol(sym.GT); }
   ">="            { return symbol(sym.GEQ); }
+  "="             { return symbol(sym.EQ); }
 
   "declassify"    { return symbol(sym.DECLASSIFY); }
   "endorse"       { return symbol(sym.ENDORSE); }

@@ -22,12 +22,12 @@ terminal String IDENT, CAP_IDENT;
 terminal Integer INT_LIT;
 terminal TRUE, FALSE;
 
-terminal COLON, ASSIGN;
+terminal COLON;
 terminal ASSERT, SEND, TO, RECV, FROM, IF, ELSE, WHILE;
 terminal HOST, PROCESS, PROTOCOL, IDEAL;
 
 terminal NOT, ANDAND, OROR;
-terminal EQ, NEQ, LT, LEQ, GT, GEQ;
+terminal EQ, EQEQ, NEQ, LT, LEQ, GT, GEQ;
 terminal TOP, BOTTOM, OR, AND, RARROW, LARROW;
 terminal SQCUP, SQCAP, WEDGE, VEE;
 
@@ -39,7 +39,7 @@ terminal DECLASSIFY, ENDORSE, DOWNGRADE;
 terminal OPEN_BRACE, CLOSE_BRACE, OPEN_SQBRACE, CLOSE_SQBRACE, SEMICOLON, OPEN_PAREN, CLOSE_PAREN, COMMA;
 
 precedence left ANDAND, OROR, AND, OR, SQCUP, SQCAP, WEDGE, VEE;
-precedence nonassoc EQ, NEQ, LT, LEQ, GT, GEQ;
+precedence nonassoc EQEQ, NEQ, LT, LEQ, GT, GEQ;
 precedence left PLUS, MINUS;
 precedence left TIMES;
 precedence right NOT;
@@ -100,7 +100,7 @@ stmt_basic ::=
       RESULT = new ArrayDeclarationNode(var, e, lab);
     :}
 
-  | lexpr:lexpr ASSIGN expr:e {:
+  | lexpr:lexpr EQ expr:e {:
       RESULT = new AssignNode(lexpr, e);
     :}
 
@@ -169,7 +169,7 @@ expr ::=
       RESULT = BinaryExpressionNode.create(e1, And.create(), e2);
     :}
 
-  | expr:e1 EQ expr:e2 {:
+  | expr:e1 EQEQ expr:e2 {:
       RESULT = BinaryExpressionNode.create(e1, EqualTo.create(), e2);
     :}
 

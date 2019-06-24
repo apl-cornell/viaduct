@@ -173,7 +173,7 @@ public class PrintVisitor implements ExprVisitor<Void>, StmtVisitor<Void>,
     addIndentation();
 
     assignNode.getLhs().accept(this);
-    buffer.append(" := ");
+    buffer.append(" = ");
     assignNode.getRhs().accept(this);
 
     buffer.append(';');

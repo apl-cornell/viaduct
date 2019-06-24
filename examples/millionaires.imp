@@ -10,10 +10,10 @@ process main {
   a_endorsed : {A & B<-};
   b_endorsed : {B & A<-};
 
-  a_endorsed := endorse(a, {A & B<-});
-  b_endorsed := endorse(b, {B & A<-});
+  a_endorsed = endorse(a, {A & B<-});
+  b_endorsed = endorse(b, {B & A<-});
 
-  b_richer := declassify(a_endorsed <= b_endorsed, {(A | B)-> & (A & B)<-});
+  b_richer = declassify(a_endorsed <= b_endorsed, {(A | B)-> & (A & B)<-});
   assert b_richer;
 }
 

@@ -93,6 +93,7 @@ ANY         = .*
   "if"            { return symbol(sym.IF); }
   "else"          { return symbol(sym.ELSE); }
   "while"         { return symbol(sym.WHILE); }
+  "for"           { return symbol(sym.FOR); }
   "send"          { return symbol(sym.SEND); }
   "to"            { return symbol(sym.TO); }
   "recv"          { return symbol(sym.RECV); }
@@ -109,10 +110,17 @@ ANY         = .*
   "&&"            { return symbol(sym.ANDAND); }
   "||"            { return symbol(sym.OROR); }
 
+  "++"             { return symbol(sym.PLUSPLUS); }
+  "+="             { return symbol(sym.PLUSEQ); }
+  "--"             { return symbol(sym.MINUSMINUS); }
+  "-="             { return symbol(sym.MINUSEQ); }
+  "*="             { return symbol(sym.TIMESEQ); }
+
   "+"             { return symbol(sym.PLUS); }
   "-"             { return symbol(sym.MINUS); }
   "*"             { return symbol(sym.TIMES); }
   // "/"             { return symbol(sym.DIVIDE); }
+
   "=="            { return symbol(sym.EQEQ); }
   "!="            { return symbol(sym.NEQ); }
   "<"             { return symbol(sym.LT); }

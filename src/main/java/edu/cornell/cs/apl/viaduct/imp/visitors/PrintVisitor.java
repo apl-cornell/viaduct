@@ -12,6 +12,7 @@ import edu.cornell.cs.apl.viaduct.imp.ast.BlockNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.DeclarationNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.DowngradeNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ExpressionNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.ForNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.Host;
 import edu.cornell.cs.apl.viaduct.imp.ast.IfNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.LReadNode;
@@ -28,8 +29,8 @@ import edu.cornell.cs.apl.viaduct.security.Label;
 import io.vavr.Tuple2;
 
 /** Pretty-prints an AST. */
-public class PrintVisitor implements ExprVisitor<Void>, StmtVisitor<Void>,
-    LExprVisitor<Void>, ProgramVisitor<Void> {
+public class PrintVisitor
+    implements ExprVisitor<Void>, StmtVisitor<Void>, LExprVisitor<Void>, ProgramVisitor<Void> {
 
   private static final int INDENTATION_LEVEL = 4;
 
@@ -38,7 +39,16 @@ public class PrintVisitor implements ExprVisitor<Void>, StmtVisitor<Void>,
 
   private int indentation = 0;
 
-  public PrintVisitor() {}
+  // toggle indentation
+  private boolean indentOn;
+
+  // toggle adding a separator (;) after statements
+  private boolean lineModeOn;
+
+  public PrintVisitor() {
+    this.indentOn = true;
+    this.lineModeOn = true;
+  }
 
   /** Pretty print the given AST and return it as {@code String}. */
   public String run(StmtNode stmt) {
@@ -63,8 +73,16 @@ public class PrintVisitor implements ExprVisitor<Void>, StmtVisitor<Void>,
 
   /** Append current indentation to the buffer. */
   private void addIndentation() {
-    for (int i = 0; i < this.indentation; i++) {
-      buffer.append(' ');
+    if (this.indentOn) {
+      for (int i = 0; i < this.indentation; i++) {
+        buffer.append(' ');
+      }
+    }
+  }
+
+  private void addSeparator() {
+    if (this.lineModeOn) {
+      buffer.append(';');
     }
   }
 
@@ -147,7 +165,7 @@ public class PrintVisitor implements ExprVisitor<Void>, StmtVisitor<Void>,
     buffer.append(" : ");
     buffer.append(declarationNode.getLabel());
 
-    buffer.append(';');
+    addSeparator();
     return null;
   }
 
@@ -164,7 +182,7 @@ public class PrintVisitor implements ExprVisitor<Void>, StmtVisitor<Void>,
     buffer.append(" : ");
     buffer.append(declarationNode.getLabel().toString());
 
-    buffer.append(';');
+    addSeparator();
     return null;
   }
 
@@ -176,7 +194,7 @@ public class PrintVisitor implements ExprVisitor<Void>, StmtVisitor<Void>,
     buffer.append(" = ");
     assignNode.getRhs().accept(this);
 
-    buffer.append(';');
+    addSeparator();
     return null;
   }
 
@@ -189,21 +207,19 @@ public class PrintVisitor implements ExprVisitor<Void>, StmtVisitor<Void>,
     buffer.append(" to ");
     buffer.append(sendNode.getRecipient());
 
-    buffer.append(';');
+    addSeparator();
     return null;
   }
 
   @Override
   public Void visit(ReceiveNode receiveNode) {
-    // TODO: print annotation
-
     addIndentation();
 
     buffer.append(receiveNode.getVariable());
     buffer.append(" <- recv ");
     buffer.append(receiveNode.getSender());
 
-    buffer.append(';');
+    addSeparator();
     return null;
   }
 
@@ -213,7 +229,8 @@ public class PrintVisitor implements ExprVisitor<Void>, StmtVisitor<Void>,
 
     buffer.append("assert ");
     assertNode.getExpression().accept(this);
-    buffer.append(';');
+
+    addSeparator();
     return null;
   }
 
@@ -247,6 +264,28 @@ public class PrintVisitor implements ExprVisitor<Void>, StmtVisitor<Void>,
 
     whileNode.getBody().accept(this);
 
+    return null;
+  }
+
+  @Override
+  public Void visit(ForNode forNode) {
+    addIndentation();
+
+    this.indentOn = false;
+    this.lineModeOn = false;
+
+    buffer.append("for (");
+    forNode.getInitialize().accept(this);
+    buffer.append("; ");
+    forNode.getGuard().accept(this);
+    buffer.append("; ");
+    forNode.getUpdate().accept(this);
+    buffer.append(")");
+
+    this.indentOn = true;
+    this.lineModeOn = true;
+
+    forNode.getBody().accept(this);
     return null;
   }
 

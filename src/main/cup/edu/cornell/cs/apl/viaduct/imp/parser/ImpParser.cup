@@ -1,3 +1,4 @@
+import java.util.ArrayList;
 import java.util.List;
 import java.util.LinkedList;
 
@@ -23,15 +24,15 @@ terminal Integer INT_LIT;
 terminal TRUE, FALSE;
 
 terminal COLON;
-terminal ASSERT, SEND, TO, RECV, FROM, IF, ELSE, WHILE;
+terminal ASSERT, SEND, TO, RECV, FROM, IF, ELSE, WHILE, FOR;
 terminal HOST, PROCESS, PROTOCOL, IDEAL;
 
 terminal NOT, ANDAND, OROR;
-terminal EQ, EQEQ, NEQ, LT, LEQ, GT, GEQ;
+terminal EQ, EQEQ, NEQ, LT, LEQ, GT, GEQ, PLUSEQ, MINUSEQ, TIMESEQ;
 terminal TOP, BOTTOM, OR, AND, RARROW, LARROW;
 terminal SQCUP, SQCAP, WEDGE, VEE;
 
-terminal PLUS, MINUS, TIMES;
+terminal PLUS, MINUS, TIMES, PLUSPLUS, MINUSMINUS;
 // terminal PLUS, MINUS, TIMES, DIVIDE;
 
 terminal DECLASSIFY, ENDORSE, DOWNGRADE;
@@ -86,6 +87,24 @@ stmt ::=
       RESULT = new WhileNode(guard, body);
     :}
 
+  | FOR OPEN_PAREN stmt_basic:init SEMICOLON expr:guard SEMICOLON stmt_basic:update CLOSE_PAREN block:body {:
+      RESULT = new ForNode(init, guard, update, body);
+
+      // elaborate for loop directly in the parser
+      /*
+      List<StmtNode> whileBody = new ArrayList<>();
+      whileBody.add(body);
+      whileBody.add(update);
+      StmtNode whileLoop = new WhileNode(guard, new BlockNode(whileBody));
+
+      List<StmtNode> block = new ArrayList<>();
+      block.add(init);
+      block.add(whileLoop);
+
+      RESULT = new BlockNode(block);
+      */
+    :}
+
   | block:block {:
       RESULT = block;
     :}
@@ -102,6 +121,31 @@ stmt_basic ::=
 
   | lexpr:lexpr EQ expr:e {:
       RESULT = new AssignNode(lexpr, e);
+    :}
+
+  | lexpr:lexpr PLUSEQ expr:e {:
+      ExpressionNode rhs = BinaryExpressionNode.create(lexpr.toExpression(), Plus.create(), e);
+      RESULT = new AssignNode(lexpr, rhs);
+    :}
+
+  | lexpr:lexpr MINUSEQ expr:e {:
+      ExpressionNode rhs = BinaryExpressionNode.create(lexpr.toExpression(), Minus.create(), e);
+      RESULT = new AssignNode(lexpr, rhs);
+    :}
+
+  | lexpr:lexpr TIMESEQ expr:e {:
+      ExpressionNode rhs = BinaryExpressionNode.create(lexpr.toExpression(), Times.create(), e);
+      RESULT = new AssignNode(lexpr, rhs);
+    :}
+
+  | lexpr:lexpr PLUSPLUS {:
+      ExpressionNode rhs = BinaryExpressionNode.create(lexpr.toExpression(), Plus.create(), new LiteralNode(new IntegerValue(1)));
+      RESULT = new AssignNode(lexpr, rhs);
+    :}
+
+  | lexpr:lexpr MINUSMINUS {:
+      ExpressionNode rhs = BinaryExpressionNode.create(lexpr.toExpression(), Minus.create(), new LiteralNode(new IntegerValue(1)));
+      RESULT = new AssignNode(lexpr, rhs);
     :}
 
   | SEND expr:e TO process_name:processName {:

@@ -5,6 +5,8 @@ import edu.cornell.cs.apl.viaduct.imp.ast.ImpValue;
 import edu.cornell.cs.apl.viaduct.imp.ast.ProcessName;
 import edu.cornell.cs.apl.viaduct.imp.ast.ProgramNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.StmtNode;
+import edu.cornell.cs.apl.viaduct.imp.visitors.ElaborationVisitor;
+
 import java.util.Map;
 
 /** Interpreter for Imp programs. */
@@ -17,12 +19,16 @@ public class Interpreter {
   }
 
   /** Execute the given statement and return the resulting store. */
-  public static Store run(StmtNode statement) {
-    return new InterpretProcessVisitor().run(statement);
+  public static Store run(StmtNode stmt) {
+    ElaborationVisitor elaborator = new ElaborationVisitor();
+    stmt = elaborator.run(stmt);
+    return new InterpretProcessVisitor().run(stmt);
   }
 
   /** Execute the code on all processes in the configuration, and return their local stores. */
   public static Map<ProcessName, Store> run(ProgramNode configuration) {
+    ElaborationVisitor elaborator = new ElaborationVisitor();
+    configuration = elaborator.run(configuration);
     return new InterpretProgramVisitor().run(configuration);
   }
 }

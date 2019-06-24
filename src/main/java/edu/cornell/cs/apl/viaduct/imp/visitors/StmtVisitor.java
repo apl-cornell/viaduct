@@ -5,6 +5,7 @@ import edu.cornell.cs.apl.viaduct.imp.ast.AssertNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.AssignNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.BlockNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.DeclarationNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.ForNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.IfNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ReceiveNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.SendNode;
@@ -25,6 +26,8 @@ public interface StmtVisitor<R> {
   R visit(IfNode ifNode);
 
   R visit(WhileNode whileNode);
+
+  R visit(ForNode forNode);
 
   R visit(BlockNode blockNode);
 

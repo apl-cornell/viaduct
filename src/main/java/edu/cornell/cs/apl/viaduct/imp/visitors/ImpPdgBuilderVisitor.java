@@ -1,6 +1,7 @@
 package edu.cornell.cs.apl.viaduct.imp.visitors;
 
 import edu.cornell.cs.apl.viaduct.UndeclaredVariableException;
+import edu.cornell.cs.apl.viaduct.imp.ElaborationException;
 import edu.cornell.cs.apl.viaduct.imp.ast.ArrayAccessNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ArrayDeclarationNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ArrayIndexNode;
@@ -11,6 +12,7 @@ import edu.cornell.cs.apl.viaduct.imp.ast.BlockNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.DeclarationNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.DowngradeNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ExpressionNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.ForNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.IfNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ImpAstNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.LExpressionNode;
@@ -48,9 +50,11 @@ import java.util.Set;
  * Build program dependency graph from AST. The visit methods return the set of PDG nodes on which
  * the AST node depends (reads).
  */
-public class ImpPdgBuilderVisitor implements ExprVisitor<PdgBuilderInfo<ImpAstNode>>,
-    StmtVisitor<PdgBuilderInfo<ImpAstNode>>, LExprVisitor<PdgBuilderInfo<ImpAstNode>>,
-    ProgramVisitor<PdgBuilderInfo<ImpAstNode>> {
+public class ImpPdgBuilderVisitor
+    implements ExprVisitor<PdgBuilderInfo<ImpAstNode>>,
+        StmtVisitor<PdgBuilderInfo<ImpAstNode>>,
+        LExprVisitor<PdgBuilderInfo<ImpAstNode>>,
+        ProgramVisitor<PdgBuilderInfo<ImpAstNode>> {
 
   private static final String DOWNGRADE_NODE = "downgrade";
   private static final String VARDECL_NODE = "decl";
@@ -70,6 +74,9 @@ public class ImpPdgBuilderVisitor implements ExprVisitor<PdgBuilderInfo<ImpAstNo
     this.freshNameGenerator = new FreshNameGenerator();
     this.storageNodes = new SymbolTable<>();
     this.pdg = new ProgramDependencyGraph<>();
+
+    ElaborationVisitor elaborator = new ElaborationVisitor();
+    program = elaborator.run(program);
     program.accept(this);
 
     // replace subexpressions with variables
@@ -203,7 +210,7 @@ public class ImpPdgBuilderVisitor implements ExprVisitor<PdgBuilderInfo<ImpAstNo
     LExpressionNode lhs = assignNode.getLhs();
 
     if (lhs instanceof LReadNode) {
-      Variable var = ((LReadNode)lhs).getVariable();
+      Variable var = ((LReadNode) lhs).getVariable();
       if (this.storageNodes.contains(var)) {
         PdgBuilderInfo<ImpAstNode> inInfo = assignNode.getRhs().accept(this);
         PdgNode<ImpAstNode> varNode = this.storageNodes.get(var);
@@ -285,7 +292,9 @@ public class ImpPdgBuilderVisitor implements ExprVisitor<PdgBuilderInfo<ImpAstNo
 
     PdgNode<ImpAstNode> controlNode =
         new PdgControlNode<>(
-            this.pdg, ifNode, this.freshNameGenerator.getFreshName(IF_NODE),
+            this.pdg,
+            ifNode,
+            this.freshNameGenerator.getFreshName(IF_NODE),
             Label.weakestPrincipal());
     guardInfo.setReadNode(controlNode);
     this.pdg.addNode(controlNode);
@@ -331,6 +340,11 @@ public class ImpPdgBuilderVisitor implements ExprVisitor<PdgBuilderInfo<ImpAstNo
   public PdgBuilderInfo<ImpAstNode> visit(WhileNode whileNode) {
     // TODO: do the right thing
     return new PdgBuilderInfo<>();
+  }
+
+  @Override
+  public PdgBuilderInfo<ImpAstNode> visit(ForNode forNode) {
+    throw new Error(new ElaborationException());
   }
 
   /** send/recvs should not be in surface programs and thus should not be in the generated PDG. */

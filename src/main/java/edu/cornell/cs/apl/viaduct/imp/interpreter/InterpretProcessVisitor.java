@@ -1,5 +1,6 @@
 package edu.cornell.cs.apl.viaduct.imp.interpreter;
 
+import edu.cornell.cs.apl.viaduct.imp.ElaborationException;
 import edu.cornell.cs.apl.viaduct.imp.ast.ArrayAccessNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ArrayDeclarationNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ArrayIndexNode;
@@ -12,6 +13,7 @@ import edu.cornell.cs.apl.viaduct.imp.ast.BooleanValue;
 import edu.cornell.cs.apl.viaduct.imp.ast.DeclarationNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.DowngradeNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ExpressionNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.ForNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.IfNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ImpLValue;
 import edu.cornell.cs.apl.viaduct.imp.ast.ImpValue;
@@ -31,8 +33,8 @@ import edu.cornell.cs.apl.viaduct.imp.visitors.LExprVisitor;
 import edu.cornell.cs.apl.viaduct.imp.visitors.StmtVisitor;
 import java.util.Objects;
 
-class InterpretProcessVisitor implements ExprVisitor<ImpValue>, StmtVisitor<Void>,
-    LExprVisitor<ImpLValue> {
+class InterpretProcessVisitor
+    implements ExprVisitor<ImpValue>, StmtVisitor<Void>, LExprVisitor<ImpLValue> {
 
   /** The process to execute the statements as. */
   private final ProcessName processName;
@@ -118,7 +120,7 @@ class InterpretProcessVisitor implements ExprVisitor<ImpValue>, StmtVisitor<Void
 
     try {
       if (indexVal instanceof IntegerValue) {
-        int index = ((IntegerValue)indexVal).getValue();
+        int index = ((IntegerValue) indexVal).getValue();
         return this.store.lookupArray(var, index);
 
       } else {
@@ -141,7 +143,7 @@ class InterpretProcessVisitor implements ExprVisitor<ImpValue>, StmtVisitor<Void
 
     try {
       if (indexVal instanceof IntegerValue) {
-        int index = ((IntegerValue)indexVal).getValue();
+        int index = ((IntegerValue) indexVal).getValue();
         return new ArrayIndexValue(var, index);
 
       } else {
@@ -169,7 +171,7 @@ class InterpretProcessVisitor implements ExprVisitor<ImpValue>, StmtVisitor<Void
       ImpValue length = arrayDeclNode.getLength().accept(this);
 
       if (length instanceof IntegerValue) {
-        int intLength = ((IntegerValue)length).getValue();
+        int intLength = ((IntegerValue) length).getValue();
         store.declareArray(var, intLength);
 
       } else {
@@ -190,7 +192,7 @@ class InterpretProcessVisitor implements ExprVisitor<ImpValue>, StmtVisitor<Void
 
     try {
       if (lvalue instanceof Variable) {
-        store.update((Variable)lvalue, value);
+        store.update((Variable) lvalue, value);
 
       } else if (lvalue instanceof ArrayIndexValue) {
         ArrayIndexValue arrIndex = ((ArrayIndexValue) lvalue);
@@ -259,6 +261,11 @@ class InterpretProcessVisitor implements ExprVisitor<ImpValue>, StmtVisitor<Void
     }
 
     return null;
+  }
+
+  @Override
+  public Void visit(ForNode forNode) {
+    throw new Error(new ElaborationException());
   }
 
   @Override

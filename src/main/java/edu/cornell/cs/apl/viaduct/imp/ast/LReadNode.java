@@ -18,6 +18,11 @@ public final class LReadNode extends AbstractReadNode implements LExpressionNode
   }
 
   @Override
+  public ExpressionNode toExpression() {
+    return new ReadNode(this.variable);
+  }
+
+  @Override
   public <R> R accept(LExprVisitor<R> v) {
     return v.visit(this);
   }

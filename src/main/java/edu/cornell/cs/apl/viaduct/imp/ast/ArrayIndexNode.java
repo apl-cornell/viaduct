@@ -3,11 +3,15 @@ package edu.cornell.cs.apl.viaduct.imp.ast;
 import edu.cornell.cs.apl.viaduct.imp.visitors.LExprVisitor;
 
 /** array access interpreted as an lvalue (i.e. an array position). */
-public final class ArrayIndexNode extends AbstractArrayAccessNode
-    implements LExpressionNode {
+public final class ArrayIndexNode extends AbstractArrayAccessNode implements LExpressionNode {
 
   public ArrayIndexNode(Variable v, ExpressionNode ind) {
     super(v, ind);
+  }
+
+  @Override
+  public ExpressionNode toExpression() {
+    return new ArrayAccessNode(this.variable, this.index);
   }
 
   @Override

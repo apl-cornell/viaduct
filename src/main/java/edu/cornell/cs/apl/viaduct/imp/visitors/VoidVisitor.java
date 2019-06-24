@@ -9,6 +9,7 @@ import edu.cornell.cs.apl.viaduct.imp.ast.BinaryExpressionNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.BlockNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.DeclarationNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.DowngradeNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.ForNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.IfNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.LReadNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.LiteralNode;
@@ -27,8 +28,8 @@ import io.vavr.Tuple2;
  *
  * <p>Can be subclassed to do something for specific AST nodes.
  */
-public class VoidVisitor implements ExprVisitor<Void>, StmtVisitor<Void>,
-    LExprVisitor<Void>, ProgramVisitor<Void> {
+public class VoidVisitor
+    implements ExprVisitor<Void>, StmtVisitor<Void>, LExprVisitor<Void>, ProgramVisitor<Void> {
 
   @Override
   public Void visit(LiteralNode literalNode) {
@@ -116,6 +117,15 @@ public class VoidVisitor implements ExprVisitor<Void>, StmtVisitor<Void>,
   public Void visit(WhileNode whileNode) {
     whileNode.getGuard().accept(this);
     whileNode.getBody().accept(this);
+    return null;
+  }
+
+  @Override
+  public Void visit(ForNode forNode) {
+    forNode.getInitialize().accept(this);
+    forNode.getGuard().accept(this);
+    forNode.getUpdate().accept(this);
+    forNode.getBody().accept(this);
     return null;
   }
 

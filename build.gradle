@@ -49,6 +49,7 @@ spotless {
         // TODO: spotlessCheck doesn't check anything! spotlessApply will reformat though. Ugh.
         googleJavaFormat()
         paddedCell()
+        target 'src/**/*.java'
     }
 }
 

@@ -10,6 +10,7 @@ import edu.cornell.cs.apl.viaduct.imp.ast.BinaryExpressionNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.BlockNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.DeclarationNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.DowngradeNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.ForNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.IfNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.LReadNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.LiteralNode;
@@ -24,8 +25,11 @@ import edu.cornell.cs.apl.viaduct.imp.ast.WhileNode;
 import io.vavr.Tuple2;
 
 /** gives the size of an AST node. */
-public class SizeVisitor implements ExprVisitor<Integer>, StmtVisitor<Integer>,
-    LExprVisitor<Integer>, ProgramVisitor<Integer> {
+public class SizeVisitor
+    implements ExprVisitor<Integer>,
+        StmtVisitor<Integer>,
+        LExprVisitor<Integer>,
+        ProgramVisitor<Integer> {
 
   protected Integer visitArrayAccess(AbstractArrayAccessNode arrAccessNode) {
     Integer indexSize = arrAccessNode.getIndex().accept(this);
@@ -113,6 +117,15 @@ public class SizeVisitor implements ExprVisitor<Integer>, StmtVisitor<Integer>,
     Integer guardSize = whileNode.getGuard().accept(this);
     Integer bodySize = whileNode.getBody().accept(this);
     return 1 + guardSize + bodySize;
+  }
+
+  @Override
+  public Integer visit(ForNode forNode) {
+    Integer initSize = forNode.getInitialize().accept(this);
+    Integer guardSize = forNode.getGuard().accept(this);
+    Integer updateSize = forNode.getUpdate().accept(this);
+    Integer bodySize = forNode.getBody().accept(this);
+    return 1 + initSize + guardSize + updateSize + bodySize;
   }
 
   @Override

@@ -11,6 +11,7 @@ import edu.cornell.cs.apl.viaduct.imp.ast.BlockNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.DeclarationNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.DowngradeNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ExpressionNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.ForNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.IfNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.LExpressionNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.LReadNode;
@@ -34,8 +35,11 @@ import java.util.List;
  * visitors. Visitors that only change a small subset of AST nodes should inherit from this class
  * and override only the cases that do something interesting.
  */
-public abstract class IdentityVisitor implements ExprVisitor<ExpressionNode>, StmtVisitor<StmtNode>,
-    LExprVisitor<LExpressionNode>, ProgramVisitor<ProgramNode> {
+public abstract class IdentityVisitor
+    implements ExprVisitor<ExpressionNode>,
+        StmtVisitor<StmtNode>,
+        LExprVisitor<LExpressionNode>,
+        ProgramVisitor<ProgramNode> {
 
   public ExpressionNode run(ExpressionNode expr) {
     return expr.accept(this);
@@ -124,6 +128,15 @@ public abstract class IdentityVisitor implements ExprVisitor<ExpressionNode>, St
     ExpressionNode newGuard = whileNode.getGuard().accept(this);
     StmtNode newBody = whileNode.getBody().accept(this);
     return new WhileNode(newGuard, newBody);
+  }
+
+  @Override
+  public StmtNode visit(ForNode forNode) {
+    StmtNode newInit = forNode.getInitialize().accept(this);
+    ExpressionNode newGuard = forNode.getGuard().accept(this);
+    StmtNode newUpdate = forNode.getUpdate().accept(this);
+    StmtNode newBody = forNode.getBody().accept(this);
+    return new ForNode(newInit, newGuard, newUpdate, newBody);
   }
 
   @Override

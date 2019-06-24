@@ -1,10 +1,12 @@
 package edu.cornell.cs.apl.viaduct.imp.dataflow;
 
+import edu.cornell.cs.apl.viaduct.imp.ElaborationException;
 import edu.cornell.cs.apl.viaduct.imp.ast.ArrayDeclarationNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.AssertNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.AssignNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.BlockNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.DeclarationNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.ForNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.IfNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.LExpressionNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.LReadNode;
@@ -14,7 +16,6 @@ import edu.cornell.cs.apl.viaduct.imp.ast.StmtNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.Variable;
 import edu.cornell.cs.apl.viaduct.imp.ast.WhileNode;
 import edu.cornell.cs.apl.viaduct.imp.visitors.StmtVisitor;
-
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -89,7 +90,7 @@ public class CFGVisitor implements StmtVisitor<Void> {
     LExpressionNode lhs = assignNode.getLhs();
 
     if (lhs instanceof LReadNode) {
-      Variable var = ((LReadNode)lhs).getVariable();
+      Variable var = ((LReadNode) lhs).getVariable();
       if (!this.declaredVars.contains(var)) {
         this.tempVars.add(var);
         this.vars.add(var);
@@ -154,6 +155,11 @@ public class CFGVisitor implements StmtVisitor<Void> {
     this.lastNodes.addAll(bodyLastNodes);
 
     return null;
+  }
+
+  @Override
+  public Void visit(ForNode forNode) {
+    throw new Error(new ElaborationException());
   }
 
   @Override

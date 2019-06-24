@@ -29,17 +29,19 @@ terminal HOST, PROCESS, PROTOCOL, IDEAL;
 terminal NOT, ANDAND, OROR;
 terminal EQ, NEQ, LT, LEQ, GT, GEQ;
 terminal TOP, BOTTOM, OR, AND, RARROW, LARROW;
+terminal SQCUP, SQCAP, WEDGE, VEE;
 
-terminal PLUS;
+terminal PLUS, MINUS, TIMES;
 // terminal PLUS, MINUS, TIMES, DIVIDE;
 
 terminal DECLASSIFY, ENDORSE, DOWNGRADE;
 
 terminal OPEN_BRACE, CLOSE_BRACE, OPEN_SQBRACE, CLOSE_SQBRACE, SEMICOLON, OPEN_PAREN, CLOSE_PAREN, COMMA;
 
-precedence left ANDAND, OROR, AND, OR;
+precedence left ANDAND, OROR, AND, OR, SQCUP, SQCAP, WEDGE, VEE;
 precedence nonassoc EQ, NEQ, LT, LEQ, GT, GEQ;
-precedence left PLUS;
+precedence left PLUS, MINUS;
+precedence left TIMES;
 precedence right NOT;
 precedence left LARROW, RARROW, NOT;
 precedence nonassoc OPEN_PAREN, CLOSE_PAREN;
@@ -195,6 +197,14 @@ expr ::=
       RESULT = BinaryExpressionNode.create(e1, Plus.create(), e2);
     :}
 
+  | expr:e1 MINUS expr:e2 {:
+      RESULT = BinaryExpressionNode.create(e1, Minus.create(), e2);
+    :}
+
+  | expr:e1 TIMES expr:e2 {:
+      RESULT = BinaryExpressionNode.create(e1, Times.create(), e2);
+    :}
+
   | DECLASSIFY OPEN_PAREN expr:e COMMA label:l CLOSE_PAREN {:
       RESULT = new DowngradeNode(e, l);
     :}
@@ -243,8 +253,32 @@ label_expr ::=
       RESULT = l1.or(l2);
     :}
 
+  | label_expr:l1 VEE label_expr:l2 {:
+      RESULT = l1.or(l2);
+    :}
+
+  | label_expr:l1 OROR label_expr:l2 {:
+      RESULT = l1.join(l2);
+    :}
+
+  | label_expr:l1 SQCUP label_expr:l2 {:
+      RESULT = l1.join(l2);
+    :}
+
   | label_expr:l1 AND label_expr:l2 {:
       RESULT = l1.and(l2);
+    :}
+
+  | label_expr:l1 WEDGE label_expr:l2 {:
+      RESULT = l1.and(l2);
+    :}
+
+  | label_expr:l1 ANDAND label_expr:l2 {:
+      RESULT = l1.meet(l2);
+    :}
+
+  | label_expr:l1 SQCAP label_expr:l2 {:
+      RESULT = l1.meet(l2);
     :}
 
   | label_expr:l RARROW {:

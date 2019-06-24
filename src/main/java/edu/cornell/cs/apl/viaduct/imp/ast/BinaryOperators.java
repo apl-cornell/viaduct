@@ -137,4 +137,50 @@ public class BinaryOperators {
       return "+";
     }
   }
+
+  public static final class Minus extends BinaryOperator {
+    private static final Minus INSTANCE = new Minus();
+
+    private Minus() {}
+
+    /** Create an instance of this class. */
+    public static Minus create() {
+      return INSTANCE;
+    }
+
+    @Override
+    public ImpValue evaluate(ImpValue left, ImpValue right) {
+      int leftV = ((IntegerValue) left).getValue();
+      int rightV = ((IntegerValue) right).getValue();
+      return new IntegerValue(leftV - rightV);
+    }
+
+    @Override
+    public String toString() {
+      return "-";
+    }
+  }
+
+  public static final class Times extends BinaryOperator {
+    private static final Times INSTANCE = new Times();
+
+    private Times() {}
+
+    /** Create an instance of this class. */
+    public static Times create() {
+      return INSTANCE;
+    }
+
+    @Override
+    public ImpValue evaluate(ImpValue left, ImpValue right) {
+      int leftV = ((IntegerValue) left).getValue();
+      int rightV = ((IntegerValue) right).getValue();
+      return new IntegerValue(leftV * rightV);
+    }
+
+    @Override
+    public String toString() {
+      return "*";
+    }
+  }
 }

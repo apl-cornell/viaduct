@@ -111,8 +111,8 @@ ANY         = .*
   "||"            { return symbol(sym.OROR); }
 
   "+"             { return symbol(sym.PLUS); }
-  // "-"             { return symbol(sym.MINUS); }
-  // "*"             { return symbol(sym.TIMES); }
+  "-"             { return symbol(sym.MINUS); }
+  "*"             { return symbol(sym.TIMES); }
   // "/"             { return symbol(sym.DIVIDE); }
   "=="            { return symbol(sym.EQ); }
   "!="            { return symbol(sym.NEQ); }
@@ -127,13 +127,17 @@ ANY         = .*
 
   /* Labels */
   "<-"            { return symbol(sym.LARROW); }
+  "←"             { return symbol(sym.LARROW); }
   "->"            { return symbol(sym.RARROW); }
-  "⊤"             { return symbol(sym.TOP); }
+  "→"             { return symbol(sym.RARROW); }
   "|"             { return symbol(sym.OR); }
   "&"             { return symbol(sym.AND); }
+  "⊔"             { return symbol(sym.SQCUP); }
+  "⊓"             { return symbol(sym.SQCAP); }
+  "⊤"             { return symbol(sym.TOP); }
   "⊥"             { return symbol(sym.BOTTOM); }
 
-  /* Grouping */
+/* Grouping */
   ";"             { return symbol(sym.SEMICOLON); }
   "{"             { return symbol(sym.OPEN_BRACE); }
   "}"             { return symbol(sym.CLOSE_BRACE); }

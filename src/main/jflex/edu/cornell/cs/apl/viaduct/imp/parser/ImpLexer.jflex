@@ -88,6 +88,10 @@ ANY         = .*
   "protocol"      { return symbol(sym.PROTOCOL); }
   "Ideal"         { return symbol(sym.IDEAL); }
 
+  /* types */
+  "int"           { return symbol(sym.INT); }
+  "bool"           { return symbol(sym.BOOL); }
+
   /* Statements */
   ":"             { return symbol(sym.COLON); }
   "if"            { return symbol(sym.IF); }

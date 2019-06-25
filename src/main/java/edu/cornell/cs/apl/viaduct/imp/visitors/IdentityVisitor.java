@@ -96,16 +96,17 @@ public abstract class IdentityVisitor
   }
 
   @Override
-  public StmtNode visit(DeclarationNode declarationNode) {
-    return new DeclarationNode(declarationNode.getVariable(), declarationNode.getLabel());
+  public StmtNode visit(DeclarationNode declNode) {
+    return new DeclarationNode(declNode.getVariable(), declNode.getType(), declNode.getLabel());
   }
 
   @Override
-  public StmtNode visit(ArrayDeclarationNode arrayDeclarationNode) {
+  public StmtNode visit(ArrayDeclarationNode arrayDeclNode) {
     return new ArrayDeclarationNode(
-        arrayDeclarationNode.getVariable(),
-        arrayDeclarationNode.getLength(),
-        arrayDeclarationNode.getLabel());
+        arrayDeclNode.getVariable(),
+        arrayDeclNode.getLength(),
+        arrayDeclNode.getType(),
+        arrayDeclNode.getLabel());
   }
 
   @Override

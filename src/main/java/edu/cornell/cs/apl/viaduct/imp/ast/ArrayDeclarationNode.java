@@ -7,6 +7,7 @@ import java.util.Objects;
 public final class ArrayDeclarationNode implements StmtNode {
   private final Variable variable;
   private final ExpressionNode length;
+  private final ImpType type;
   private final Label label;
 
   /**
@@ -16,14 +17,19 @@ public final class ArrayDeclarationNode implements StmtNode {
    * @param length number of elements in the array
    * @param label security label of the array and all its elements
    */
-  public ArrayDeclarationNode(Variable variable, ExpressionNode length, Label label) {
+  public ArrayDeclarationNode(Variable variable, ExpressionNode length, ImpType type, Label label) {
     this.variable = Objects.requireNonNull(variable);
     this.length = Objects.requireNonNull(length);
+    this.type = Objects.requireNonNull(type);
     this.label = Objects.requireNonNull(label);
   }
 
   public Variable getVariable() {
     return variable;
+  }
+
+  public ImpType getType() {
+    return type;
   }
 
   public Label getLabel() {
@@ -52,22 +58,18 @@ public final class ArrayDeclarationNode implements StmtNode {
     final ArrayDeclarationNode that = (ArrayDeclarationNode) o;
     return Objects.equals(this.variable, that.variable)
         && Objects.equals(this.length, that.length)
+        && Objects.equals(this.type, that.type)
         && Objects.equals(this.label, that.label);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(this.variable, this.length, this.label);
+    return Objects.hash(this.variable, this.length, this.type, this.label);
   }
 
   @Override
   public String toString() {
-    return "(arrayDeclaration "
-        + this.getVariable()
-        + "["
-        + this.getLength()
-        + "] as "
-        + this.getLabel()
-        + ")";
+    return String.format(
+        "(arrayDeclaration %s[%s] as %s %s)", this.variable, this.length, this.type, this.label);
   }
 }

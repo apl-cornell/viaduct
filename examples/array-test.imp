@@ -1,14 +1,14 @@
 process main {
-    a[10] : {};
-    b[10] : {};
+    a[10] : int{};
+    b[10] : int{};
 
-    i : {};
+    i : int{};
     for (i = 0; i < 10; i++) {
         a[i] = i;
         b[9-i] = i;
     }
 
     for (i = 0; i < 10; i++) {
-        b[a[i]] = a[i] * 2;
+        b[a[i]] *= 2;
     }
 }

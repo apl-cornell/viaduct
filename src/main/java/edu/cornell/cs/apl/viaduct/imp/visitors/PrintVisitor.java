@@ -163,6 +163,7 @@ public class PrintVisitor
 
     buffer.append(declarationNode.getVariable());
     buffer.append(" : ");
+    buffer.append(declarationNode.getType());
     buffer.append(declarationNode.getLabel());
 
     addSeparator();
@@ -180,7 +181,8 @@ public class PrintVisitor
     buffer.append(']');
 
     buffer.append(" : ");
-    buffer.append(declarationNode.getLabel().toString());
+    buffer.append(declarationNode.getType());
+    buffer.append(declarationNode.getLabel());
 
     addSeparator();
     return null;

@@ -1,14 +1,14 @@
 /* The classic MPC problem */
 process main {
-  a : {A};
-  b : {B};
-  b_richer : {(A | B)-> & (A & B)<-};
+  a : int{A};
+  b : int{B};
+  b_richer : bool{(A | B)-> & (A & B)<-};
 
   a <- recv alice_main;
   b <- recv bob_main;
 
-  a_endorsed : {A & B<-};
-  b_endorsed : {B & A<-};
+  a_endorsed : int{A & B<-};
+  b_endorsed : int{B & A<-};
 
   a_endorsed = endorse(a, {A & B<-});
   b_endorsed = endorse(b, {B & A<-});

@@ -21,7 +21,6 @@ import edu.cornell.cs.apl.viaduct.pdg.PdgStorageNode;
 import edu.cornell.cs.apl.viaduct.pdg.PdgWriteEdge;
 import edu.cornell.cs.apl.viaduct.protocol.Protocol;
 import edu.cornell.cs.apl.viaduct.protocol.ProtocolInstantiationInfo;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -39,7 +38,7 @@ public abstract class Cleartext {
     Variable newVar = varDecl.getVariable();
 
     StmtBuilder builder = info.getBuilder(host);
-    builder.varDecl(newVar, varDecl.getLabel());
+    builder.varDecl(newVar, varDecl.getType(), varDecl.getLabel());
 
     return newVar;
   }

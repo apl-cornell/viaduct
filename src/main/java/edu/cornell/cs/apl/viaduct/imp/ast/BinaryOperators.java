@@ -1,8 +1,30 @@
 package edu.cornell.cs.apl.viaduct.imp.ast;
 
+import edu.cornell.cs.apl.viaduct.imp.TypeCheckException;
+import edu.cornell.cs.apl.viaduct.imp.ast.BinaryOperators.BinaryLogicalOperator;
+
 /** Enumerates binary operators in the language. */
 public class BinaryOperators {
-  public static final class Or extends BinaryOperator {
+  abstract static class BinaryLogicalOperator extends BinaryOperator {
+    @Override
+    public ImpType typeCheck(ImpType lhs, ImpType rhs) throws TypeCheckException {
+      if (!(lhs instanceof BoolType)) {
+        throw new TypeCheckException(
+            String.format(
+                "%s operator expected %s in LHS type, got %s", this, BoolType.instance(), lhs));
+
+      } else if (!(rhs instanceof BoolType)) {
+        throw new TypeCheckException(
+            String.format(
+                "%s operator expected %s in RHS type, got %s", this, BoolType.instance(), rhs));
+
+      } else {
+        return BoolType.instance();
+      }
+    }
+  }
+
+  public static final class Or extends BinaryLogicalOperator {
     private static final Or INSTANCE = new Or();
 
     private Or() {}
@@ -25,7 +47,7 @@ public class BinaryOperators {
     }
   }
 
-  public static final class And extends BinaryOperator {
+  public static final class And extends BinaryLogicalOperator {
     private static final And INSTANCE = new And();
 
     private And() {}
@@ -48,7 +70,26 @@ public class BinaryOperators {
     }
   }
 
-  public static final class EqualTo extends BinaryOperator {
+  abstract static class ArithComparisonOperator extends BinaryOperator {
+    @Override
+    public ImpType typeCheck(ImpType lhs, ImpType rhs) throws TypeCheckException {
+      if (!(lhs instanceof IntType)) {
+        throw new TypeCheckException(
+            String.format(
+                "%s operator expected %s in LHS type, got %s", this, IntType.instance(), lhs));
+
+      } else if (!(rhs instanceof IntType)) {
+        throw new TypeCheckException(
+            String.format(
+                "%s operator expected %s in RHS type, got %s", this, IntType.instance(), rhs));
+
+      } else {
+        return BoolType.instance();
+      }
+    }
+  }
+
+  public static final class EqualTo extends ArithComparisonOperator {
     private static final EqualTo INSTANCE = new EqualTo();
 
     private EqualTo() {}
@@ -69,7 +110,7 @@ public class BinaryOperators {
     }
   }
 
-  public static final class LessThan extends BinaryOperator {
+  public static final class LessThan extends ArithComparisonOperator {
     private static final LessThan INSTANCE = new LessThan();
 
     private LessThan() {}
@@ -92,7 +133,7 @@ public class BinaryOperators {
     }
   }
 
-  public static final class LessThanOrEqualTo extends BinaryOperator {
+  public static final class LessThanOrEqualTo extends ArithComparisonOperator {
     private static final LessThanOrEqualTo INSTANCE = new LessThanOrEqualTo();
 
     private LessThanOrEqualTo() {}
@@ -115,7 +156,26 @@ public class BinaryOperators {
     }
   }
 
-  public static final class Plus extends BinaryOperator {
+  abstract static class ArithmeticOperator extends BinaryOperator {
+    @Override
+    public ImpType typeCheck(ImpType lhs, ImpType rhs) throws TypeCheckException {
+      if (!(lhs instanceof IntType)) {
+        throw new TypeCheckException(
+            String.format(
+                "%s operator expected %s in LHS type, got %s", this, IntType.instance(), lhs));
+
+      } else if (!(rhs instanceof IntType)) {
+        throw new TypeCheckException(
+            String.format(
+                "%s operator expected %s in RHS type, got %s", this, IntType.instance(), rhs));
+
+      } else {
+        return IntType.instance();
+      }
+    }
+  }
+
+  public static final class Plus extends ArithmeticOperator {
     private static final Plus INSTANCE = new Plus();
 
     private Plus() {}
@@ -138,7 +198,7 @@ public class BinaryOperators {
     }
   }
 
-  public static final class Minus extends BinaryOperator {
+  public static final class Minus extends ArithmeticOperator {
     private static final Minus INSTANCE = new Minus();
 
     private Minus() {}
@@ -161,7 +221,7 @@ public class BinaryOperators {
     }
   }
 
-  public static final class Times extends BinaryOperator {
+  public static final class Times extends ArithmeticOperator {
     private static final Times INSTANCE = new Times();
 
     private Times() {}

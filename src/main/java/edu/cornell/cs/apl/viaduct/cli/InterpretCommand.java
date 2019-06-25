@@ -5,6 +5,8 @@ import edu.cornell.cs.apl.viaduct.imp.ast.ProcessName;
 import edu.cornell.cs.apl.viaduct.imp.ast.ProgramNode;
 import edu.cornell.cs.apl.viaduct.imp.interpreter.Interpreter;
 import edu.cornell.cs.apl.viaduct.imp.interpreter.Store;
+import edu.cornell.cs.apl.viaduct.imp.visitors.TypeCheckVisitor;
+
 import java.io.BufferedWriter;
 import java.util.Map;
 
@@ -12,7 +14,14 @@ import java.util.Map;
 public class InterpretCommand extends BaseCommand {
   @Override
   public Void call() throws Exception {
+    // parse
     final ProgramNode program = this.input.parse();
+
+    // typecheck
+    final TypeCheckVisitor typeChecker = new TypeCheckVisitor();
+    typeChecker.run(program);
+
+    // interpret
     final Map<ProcessName, Store> stores = Interpreter.run(program);
 
     try (BufferedWriter writer = this.output.newOutputWriter()) {

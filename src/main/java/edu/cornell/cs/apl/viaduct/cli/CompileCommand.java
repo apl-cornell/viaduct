@@ -13,6 +13,7 @@ import edu.cornell.cs.apl.viaduct.imp.ast.StmtNode;
 import edu.cornell.cs.apl.viaduct.imp.parser.TrustConfigurationParser;
 import edu.cornell.cs.apl.viaduct.imp.visitors.ImpPdgBuilderVisitor;
 import edu.cornell.cs.apl.viaduct.imp.visitors.PrintVisitor;
+import edu.cornell.cs.apl.viaduct.imp.visitors.TypeCheckVisitor;
 import edu.cornell.cs.apl.viaduct.pdg.PdgDotPrinter;
 import edu.cornell.cs.apl.viaduct.pdg.PdgNode;
 import edu.cornell.cs.apl.viaduct.pdg.ProgramDependencyGraph;
@@ -124,6 +125,10 @@ public class CompileCommand extends BaseCommand {
   @Override
   public Void call() throws Exception {
     final ProgramNode program = this.parse();
+
+    final TypeCheckVisitor typeChecker = new TypeCheckVisitor();
+    typeChecker.run(program);
+
     final StmtNode main = program.getProcessCode(ProcessName.getMain());
     final HostTrustConfiguration trustConfiguration = program.getHostTrustConfiguration();
 

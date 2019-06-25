@@ -1,9 +1,9 @@
 process main {
-  cin : {C};
-  ain : {A};
-  shell : {C & A<-};
-  guess : {A & C<-};
-  win : {(A | C)-> & (A & C)<-};
+  cin : int{C};
+  ain : int{A};
+  shell : int{C & A<-};
+  guess : int{A & C<-};
+  win : bool{(A | C)-> & (A & C)<-};
 
   cin <- recv chuck_main;
   ain <- recv alice_main;

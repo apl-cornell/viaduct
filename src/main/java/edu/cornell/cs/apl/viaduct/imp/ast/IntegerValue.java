@@ -15,6 +15,11 @@ public final class IntegerValue implements ImpValue {
   }
 
   @Override
+  public ImpType getType() {
+    return IntegerType.create();
+  }
+
+  @Override
   public boolean equals(Object o) {
     if (this == o) {
       return true;

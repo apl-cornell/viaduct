@@ -1,18 +1,14 @@
 package edu.cornell.cs.apl.viaduct.imp.visitors;
 
-import edu.cornell.cs.apl.viaduct.imp.ast.AbstractArrayAccessNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.ArrayAccessNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ArrayDeclarationNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.ArrayIndexNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.ArrayIndex;
 import edu.cornell.cs.apl.viaduct.imp.ast.AssertNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.AssignNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.BinaryExpressionNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.BlockNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.DeclarationNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.DowngradeNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ForNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.IfNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.LReadNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.LiteralNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.NotNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ProcessName;
@@ -21,24 +17,31 @@ import edu.cornell.cs.apl.viaduct.imp.ast.ReadNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ReceiveNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.SendNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.StmtNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.Variable;
+import edu.cornell.cs.apl.viaduct.imp.ast.VariableDeclarationNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.WhileNode;
 import io.vavr.Tuple2;
 
 /** gives the size of an AST node. */
 public class SizeVisitor
-    implements ExprVisitor<Integer>,
+    implements ReferenceVisitor<Integer>,
+        ExprVisitor<Integer>,
         StmtVisitor<Integer>,
-        LExprVisitor<Integer>,
         ProgramVisitor<Integer> {
 
-  protected Integer visitArrayAccess(AbstractArrayAccessNode arrAccessNode) {
-    Integer indexSize = arrAccessNode.getIndex().accept(this);
-    return 1 + indexSize;
+  @Override
+  public Integer visit(Variable variable) {
+    return 1;
+  }
+
+  @Override
+  public Integer visit(ArrayIndex arrayIndex) {
+    return 1 + arrayIndex.getIndex().accept(this);
   }
 
   @Override
   public Integer visit(ReadNode readNode) {
-    return 1;
+    return readNode.getReference().accept(this);
   }
 
   @Override
@@ -65,22 +68,7 @@ public class SizeVisitor
   }
 
   @Override
-  public Integer visit(ArrayAccessNode arrAccessNode) {
-    return visitArrayAccess(arrAccessNode);
-  }
-
-  @Override
-  public Integer visit(ArrayIndexNode arrIndexNode) {
-    return visitArrayAccess(arrIndexNode);
-  }
-
-  @Override
-  public Integer visit(LReadNode lreadNode) {
-    return 1;
-  }
-
-  @Override
-  public Integer visit(DeclarationNode varDecl) {
+  public Integer visit(VariableDeclarationNode varDecl) {
     return 1;
   }
 
@@ -91,7 +79,7 @@ public class SizeVisitor
 
   @Override
   public Integer visit(AssignNode assignNode) {
-    return 1 + assignNode.getRhs().accept(this);
+    return 1 + assignNode.getLhs().accept(this) + assignNode.getRhs().accept(this);
   }
 
   @Override

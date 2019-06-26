@@ -158,7 +158,7 @@ public class CompileCommand extends BaseCommand {
               .instantiateProtocolConfiguration(trustConfiguration, pdg, protocolMap);
 
       try (BufferedWriter writer = output.newOutputWriter()) {
-        writer.write(new PrintVisitor().run(generatedProgram));
+        writer.write(PrintVisitor.run(generatedProgram));
         writer.newLine();
       }
 

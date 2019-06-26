@@ -2,12 +2,12 @@ package edu.cornell.cs.apl.viaduct.imp.protocols;
 
 import edu.cornell.cs.apl.viaduct.Binding;
 import edu.cornell.cs.apl.viaduct.imp.ast.AssignNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.DeclarationNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ExpressionNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.Host;
 import edu.cornell.cs.apl.viaduct.imp.ast.ImpAstNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ProcessName;
 import edu.cornell.cs.apl.viaduct.imp.ast.Variable;
+import edu.cornell.cs.apl.viaduct.imp.ast.VariableDeclarationNode;
 import edu.cornell.cs.apl.viaduct.imp.builders.ExpressionBuilder;
 import edu.cornell.cs.apl.viaduct.imp.builders.StmtBuilder;
 import edu.cornell.cs.apl.viaduct.imp.visitors.RenameVisitor;
@@ -33,7 +33,7 @@ public abstract class Cleartext {
       Host host, PdgStorageNode<ImpAstNode> node, ProtocolInstantiationInfo<ImpAstNode> info) {
 
     // declare new variable
-    DeclarationNode varDecl = (DeclarationNode) node.getAstNode();
+    VariableDeclarationNode varDecl = (VariableDeclarationNode) node.getAstNode();
     // Variable newVar = info.getFreshVar(varDecl.getVariable().getName());
     Variable newVar = varDecl.getVariable();
 

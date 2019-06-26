@@ -3,21 +3,17 @@ package edu.cornell.cs.apl.viaduct.imp.ast;
 import edu.cornell.cs.apl.viaduct.imp.visitors.StmtVisitor;
 import java.util.Objects;
 
-/** Variable assignment statement. */
+/** Update the value associated with a reference. */
 public final class AssignNode implements StmtNode {
-  private final LExpressionNode lhs;
+  private final Reference lhs;
   private final ExpressionNode rhs;
 
-  public AssignNode(LExpressionNode lhs, ExpressionNode rhs) {
+  public AssignNode(Reference lhs, ExpressionNode rhs) {
     this.lhs = Objects.requireNonNull(lhs);
     this.rhs = Objects.requireNonNull(rhs);
   }
 
-  public AssignNode(Variable var, ExpressionNode rhs) {
-    this(new LReadNode(var), rhs);
-  }
-
-  public LExpressionNode getLhs() {
+  public Reference getLhs() {
     return this.lhs;
   }
 

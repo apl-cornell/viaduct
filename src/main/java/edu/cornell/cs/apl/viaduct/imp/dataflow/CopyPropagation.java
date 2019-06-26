@@ -5,22 +5,20 @@ import edu.cornell.cs.apl.viaduct.imp.ast.ArrayDeclarationNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.AssertNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.AssignNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.BlockNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.DeclarationNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ExpressionNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.IfNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ImpValue;
-import edu.cornell.cs.apl.viaduct.imp.ast.LExpressionNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.LReadNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.LiteralNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ReadNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ReceiveNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.Reference;
 import edu.cornell.cs.apl.viaduct.imp.ast.SendNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.StmtNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.Variable;
+import edu.cornell.cs.apl.viaduct.imp.ast.VariableDeclarationNode;
 import edu.cornell.cs.apl.viaduct.imp.visitors.IdentityVisitor;
 import edu.cornell.cs.apl.viaduct.imp.visitors.ReplaceVisitor;
 import edu.cornell.cs.apl.viaduct.security.Lattice;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -33,8 +31,8 @@ import java.util.Set;
 
 /** analysis that removes unnecessary temporaries. */
 public class CopyPropagation extends Dataflow<CopyPropagation.CopyPropInfo, CFGNode> {
-  Map<CFGNode,CopyPropInfo> inputMap;
-  Map<CFGNode,CopyPropInfo> outputMap;
+  private Map<CFGNode, CopyPropInfo> inputMap;
+  private Map<CFGNode, CopyPropInfo> outputMap;
 
   public CopyPropagation() {
     super(DataflowType.FORWARD);
@@ -64,22 +62,27 @@ public class CopyPropagation extends Dataflow<CopyPropagation.CopyPropInfo, CFGN
     }
   }
 
+  @Override
   protected CopyPropInfo transfer(CFGNode node, CopyPropInfo nextInput) {
     return nextInput.kill(node).gen(node);
   }
 
+  @Override
   protected void updateInput(CFGNode node, CopyPropInfo nextInput) {
     this.inputMap.put(node, nextInput);
   }
 
+  @Override
   protected void updateOutput(CFGNode node, CopyPropInfo nextInput) {
     this.outputMap.put(node, nextInput);
   }
 
+  @Override
   protected Set<CFGNode> getInNodes(CFGNode node) {
     return node.getInNodes();
   }
 
+  @Override
   protected Set<CFGNode> getOutNodes(CFGNode node) {
     return node.getOutNodes();
   }
@@ -115,8 +118,8 @@ public class CopyPropagation extends Dataflow<CopyPropagation.CopyPropInfo, CFGN
     final Queue<CopyPropInfo> inInfoQueue;
     final Queue<CopyPropInfo> outInfoQueue;
 
-    public CopyPropVisitor(ControlFlowGraph cfg,
-        Queue<CopyPropInfo> iniq, Queue<CopyPropInfo> outiq) {
+    public CopyPropVisitor(
+        ControlFlowGraph cfg, Queue<CopyPropInfo> iniq, Queue<CopyPropInfo> outiq) {
 
       this.cfg = cfg;
       this.inInfoQueue = iniq;
@@ -128,7 +131,7 @@ public class CopyPropagation extends Dataflow<CopyPropagation.CopyPropInfo, CFGN
     }
 
     @Override
-    public StmtNode visit(DeclarationNode declNode) {
+    public StmtNode visit(VariableDeclarationNode declNode) {
       this.inInfoQueue.remove();
       this.outInfoQueue.remove();
       return super.visit(declNode);
@@ -146,13 +149,13 @@ public class CopyPropagation extends Dataflow<CopyPropagation.CopyPropInfo, CFGN
       CopyPropInfo inInfo = this.inInfoQueue.remove();
       CopyPropInfo outInfo = this.outInfoQueue.remove();
 
-      Map<Variable,ExpressionNode> outRenameMap = processCopyPropInfo(outInfo);
+      Map<Variable, ExpressionNode> outRenameMap = processCopyPropInfo(outInfo);
       Set<Variable> renamedVars = outRenameMap.keySet();
 
       // one of the variables to be erased; remove it
-      LExpressionNode lhs = assignNode.getLhs();
-      if (lhs instanceof LReadNode) {
-        Variable var = ((LReadNode)lhs).getVariable();
+      Reference lhs = assignNode.getLhs();
+      if (lhs instanceof Variable) {
+        Variable var = (Variable) lhs;
         if (renamedVars.contains(var)) {
           return new BlockNode();
         }
@@ -180,7 +183,7 @@ public class CopyPropagation extends Dataflow<CopyPropagation.CopyPropInfo, CFGN
 
       for (StmtNode stmt : block) {
         StmtNode newStmt = stmt.accept(this);
-        if (!(newStmt instanceof BlockNode && ((BlockNode)newStmt).size() == 0)) {
+        if (!(newStmt instanceof BlockNode && ((BlockNode) newStmt).size() == 0)) {
           newStmts.add(newStmt);
         }
       }
@@ -210,19 +213,19 @@ public class CopyPropagation extends Dataflow<CopyPropagation.CopyPropInfo, CFGN
     }
 
     private StmtNode rename(StmtNode stmt, CopyPropInfo info) {
-      Map<Variable,ExpressionNode> renameMap = processCopyPropInfo(info);
+      Map<Variable, ExpressionNode> renameMap = processCopyPropInfo(info);
       ReplaceVisitor renamer = new ReplaceVisitor(renameMap);
       return stmt.accept(renamer);
     }
 
     private ExpressionNode rename(ExpressionNode expr, CopyPropInfo info) {
-      Map<Variable,ExpressionNode> renameMap = processCopyPropInfo(info);
+      Map<Variable, ExpressionNode> renameMap = processCopyPropInfo(info);
       ReplaceVisitor renamer = new ReplaceVisitor(renameMap);
       return expr.accept(renamer);
     }
 
     /** return rename map of variables. */
-    private Map<Variable,ExpressionNode> processCopyPropInfo(CopyPropInfo info) {
+    private Map<Variable, ExpressionNode> processCopyPropInfo(CopyPropInfo info) {
       final List<Variable> vars = this.cfg.getVars();
       List<Set<Variable>> eqSets = new ArrayList<>();
 
@@ -246,7 +249,7 @@ public class CopyPropagation extends Dataflow<CopyPropagation.CopyPropInfo, CFGN
         // both vars are already in the same set; do nothing
         if (ind1 == ind2 && ind1 >= 0 && ind2 >= 0) {
 
-        // vars are in different sets; merge them
+          // vars are in different sets; merge them
         } else if (ind1 != ind2 && ind1 >= 0 && ind2 >= 0) {
           Set<Variable> mergeSet1 = eqSets.get(ind1);
           Set<Variable> mergeSet2 = eqSets.get(ind2);
@@ -255,17 +258,17 @@ public class CopyPropagation extends Dataflow<CopyPropagation.CopyPropInfo, CFGN
           mergeSet1.addAll(mergeSet2);
           eqSets.add(mergeSet1);
 
-        // add var1 to var2's set
+          // add var1 to var2's set
         } else if (ind1 < 0 && ind2 >= 0) {
           Set<Variable> mergeSet2 = eqSets.get(ind2);
           mergeSet2.add(var1);
 
-        // add var2 to var1's set
+          // add var2 to var1's set
         } else if (ind1 >= 0 && ind2 < 0) {
           Set<Variable> mergeSet1 = eqSets.get(ind1);
           mergeSet1.add(var2);
 
-        // both vars are not seen before; add new set containing both
+          // both vars are not seen before; add new set containing both
         } else if (ind1 < 0 && ind2 < 0) {
           Set<Variable> mergeSet = new HashSet<>();
           mergeSet.add(var1);
@@ -276,7 +279,7 @@ public class CopyPropagation extends Dataflow<CopyPropagation.CopyPropInfo, CFGN
 
       // find representatives for each equivalence class
       // representative is earliest variable assigned/declared
-      Map<Variable,Set<Variable>> repMap = new HashMap<>();
+      Map<Variable, Set<Variable>> repMap = new HashMap<>();
       for (Set<Variable> eqSet : eqSets) {
         int repInd = -1;
         for (Variable var : eqSet) {
@@ -292,8 +295,8 @@ public class CopyPropagation extends Dataflow<CopyPropagation.CopyPropInfo, CFGN
       }
 
       // build rename map from rep map
-      Map<Variable,ExpressionNode> replaceMap = new HashMap<>();
-      for (Map.Entry<Variable,Set<Variable>> kv : repMap.entrySet()) {
+      Map<Variable, ExpressionNode> replaceMap = new HashMap<>();
+      for (Map.Entry<Variable, Set<Variable>> kv : repMap.entrySet()) {
         Variable repVar = kv.getKey();
         for (Variable var : kv.getValue()) {
           if (!var.equals(repVar)) {
@@ -355,13 +358,13 @@ public class CopyPropagation extends Dataflow<CopyPropagation.CopyPropInfo, CFGN
 
   static class VarEqualsVar extends VarEquals<Variable> {
     public VarEqualsVar(Variable v, Variable rhs) {
-      super(v,rhs);
+      super(v, rhs);
     }
   }
 
   static class VarEqualsVal extends VarEquals<ImpValue> {
     public VarEqualsVal(Variable v, ImpValue rhs) {
-      super(v,rhs);
+      super(v, rhs);
     }
   }
 
@@ -423,10 +426,10 @@ public class CopyPropagation extends Dataflow<CopyPropagation.CopyPropInfo, CFGN
       StmtNode stmt = node.getStatement();
       if (stmt instanceof AssignNode) {
         AssignNode assignNode = (AssignNode) stmt;
-        LExpressionNode lhs = assignNode.getLhs();
+        Reference lhs = assignNode.getLhs();
 
-        if (lhs instanceof LReadNode) {
-          Variable var = ((LReadNode)lhs).getVariable();
+        if (lhs instanceof Variable) {
+          Variable var = (Variable) lhs;
           return this.removeVar(var);
 
         } else {
@@ -446,17 +449,17 @@ public class CopyPropagation extends Dataflow<CopyPropagation.CopyPropInfo, CFGN
       StmtNode stmt = node.getStatement();
       if (stmt instanceof AssignNode) {
         AssignNode assignNode = (AssignNode) stmt;
-        LExpressionNode lhs = assignNode.getLhs();
+        Reference lhs = assignNode.getLhs();
         ExpressionNode rhs = assignNode.getRhs();
 
-        if (lhs instanceof LReadNode) {
-          Variable var = ((LReadNode)lhs).getVariable();
-          if (rhs instanceof ReadNode) {
-            ReadNode rhsRead = (ReadNode) rhs;
-            return addVar(var, rhsRead.getVariable());
+        if (lhs instanceof Variable) {
+          Variable var = (Variable) lhs;
+          if (rhs instanceof ReadNode && ((ReadNode) rhs).getReference() instanceof Variable) {
+            Variable rhsVar = (Variable) ((ReadNode) rhs).getReference();
+            return addVar(var, rhsVar);
 
           } else if (rhs instanceof LiteralNode) {
-            LiteralNode rhsLit = (LiteralNode)rhs;
+            LiteralNode rhsLit = (LiteralNode) rhs;
             return addVal(var, rhsLit.getValue());
           }
         }

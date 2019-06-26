@@ -3,7 +3,7 @@ package edu.cornell.cs.apl.viaduct.imp.ast;
 import edu.cornell.cs.apl.viaduct.imp.visitors.StmtVisitor;
 import java.util.Objects;
 
-/** If statement. */
+/** While loops. */
 public class WhileNode implements StmtNode {
   private final ExpressionNode guard;
   private final StmtNode body;
@@ -12,7 +12,7 @@ public class WhileNode implements StmtNode {
    * If {@code guard} evaluates to true, execute {@code body}, then loop; otherwise skip.
    *
    * @param guard loop guard
-   * @param body  loop body
+   * @param body loop body
    */
   public WhileNode(ExpressionNode guard, StmtNode body) {
     this.guard = guard;
@@ -43,8 +43,7 @@ public class WhileNode implements StmtNode {
     }
 
     final WhileNode that = (WhileNode) o;
-    return Objects.equals(this.guard, that.guard)
-        && Objects.equals(this.body, that.body);
+    return Objects.equals(this.guard, that.guard) && Objects.equals(this.body, that.body);
   }
 
   @Override

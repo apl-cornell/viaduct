@@ -5,13 +5,13 @@ import edu.cornell.cs.apl.viaduct.security.Label;
 import java.util.Objects;
 
 /** Variable declaration. */
-public final class DeclarationNode implements StmtNode {
+public final class VariableDeclarationNode implements StmtNode {
   private final Variable variable;
   private final ImpType type;
   private final Label label;
 
   /** constructor. */
-  public DeclarationNode(Variable variable, ImpType type, Label label) {
+  public VariableDeclarationNode(Variable variable, ImpType type, Label label) {
     this.variable = Objects.requireNonNull(variable);
     this.type = type;
     this.label = Objects.requireNonNull(label);
@@ -40,11 +40,11 @@ public final class DeclarationNode implements StmtNode {
       return true;
     }
 
-    if (!(o instanceof DeclarationNode)) {
+    if (!(o instanceof VariableDeclarationNode)) {
       return false;
     }
 
-    final DeclarationNode that = (DeclarationNode) o;
+    final VariableDeclarationNode that = (VariableDeclarationNode) o;
     return Objects.equals(this.variable, that.variable)
         && Objects.equals(this.type, that.type)
         && Objects.equals(this.label, that.label);

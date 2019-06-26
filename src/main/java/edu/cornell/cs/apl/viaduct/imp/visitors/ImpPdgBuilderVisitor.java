@@ -1,30 +1,27 @@
 package edu.cornell.cs.apl.viaduct.imp.visitors;
 
-import edu.cornell.cs.apl.viaduct.UndeclaredVariableException;
 import edu.cornell.cs.apl.viaduct.imp.ElaborationException;
-import edu.cornell.cs.apl.viaduct.imp.ast.ArrayAccessNode;
+import edu.cornell.cs.apl.viaduct.imp.UndeclaredVariableException;
 import edu.cornell.cs.apl.viaduct.imp.ast.ArrayDeclarationNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.ArrayIndexNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.AssertNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.AssignNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.BinaryExpressionNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.BlockNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.DeclarationNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.DowngradeNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ExpressionNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ForNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.IfNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ImpAstNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.LExpressionNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.LReadNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.LiteralNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.NotNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ProgramNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ReadNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ReceiveNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.Reference;
 import edu.cornell.cs.apl.viaduct.imp.ast.SendNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.StmtNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.Variable;
+import edu.cornell.cs.apl.viaduct.imp.ast.VariableDeclarationNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.WhileNode;
 import edu.cornell.cs.apl.viaduct.pdg.PdgBuilderInfo;
 import edu.cornell.cs.apl.viaduct.pdg.PdgComputeNode;
@@ -53,7 +50,6 @@ import java.util.Set;
 public class ImpPdgBuilderVisitor
     implements ExprVisitor<PdgBuilderInfo<ImpAstNode>>,
         StmtVisitor<PdgBuilderInfo<ImpAstNode>>,
-        LExprVisitor<PdgBuilderInfo<ImpAstNode>>,
         ProgramVisitor<PdgBuilderInfo<ImpAstNode>> {
 
   private static final String DOWNGRADE_NODE = "downgrade";
@@ -109,15 +105,20 @@ public class ImpPdgBuilderVisitor
 
   /** Return PDG storage node for referenced var. */
   @Override
-  public PdgBuilderInfo<ImpAstNode> visit(ReadNode varLookup) {
-    if (this.storageNodes.contains(varLookup.getVariable())) {
-      PdgNode<ImpAstNode> varNode = this.storageNodes.get(varLookup.getVariable());
-      PdgBuilderInfo<ImpAstNode> deps = new PdgBuilderInfo<>();
-      deps.addReferencedNode(varNode, varLookup.getVariable());
-      return deps;
-
+  public PdgBuilderInfo<ImpAstNode> visit(ReadNode readNode) {
+    if (readNode.getReference() instanceof Variable) {
+      Variable variable = (Variable) readNode.getReference();
+      if (this.storageNodes.contains(variable)) {
+        PdgNode<ImpAstNode> varNode = this.storageNodes.get(variable);
+        PdgBuilderInfo<ImpAstNode> deps = new PdgBuilderInfo<>();
+        deps.addReferencedNode(varNode, variable);
+        return deps;
+      } else {
+        throw new UndeclaredVariableException(variable);
+      }
     } else {
-      throw new UndeclaredVariableException(varLookup.getVariable());
+      // TODO: do the right thing
+      return new PdgBuilderInfo<>();
     }
   }
 
@@ -163,36 +164,18 @@ public class ImpPdgBuilderVisitor
     return new PdgBuilderInfo<>(node, new Variable(node.getId()));
   }
 
-  @Override
-  public PdgBuilderInfo<ImpAstNode> visit(ArrayAccessNode arrAccessNode) {
-    // TODO: do the right thing
-    return new PdgBuilderInfo<>();
-  }
-
-  @Override
-  public PdgBuilderInfo<ImpAstNode> visit(ArrayIndexNode arrIndexNode) {
-    // TODO: do the right thing
-    return new PdgBuilderInfo<>();
-  }
-
-  @Override
-  public PdgBuilderInfo<ImpAstNode> visit(LReadNode lreadNode) {
-    // TODO: do the right thing
-    return new PdgBuilderInfo<>();
-  }
-
   /** Return created storage node. */
   @Override
-  public PdgBuilderInfo<ImpAstNode> visit(DeclarationNode declarationNode) {
-    Variable declVar = declarationNode.getVariable();
+  public PdgBuilderInfo<ImpAstNode> visit(VariableDeclarationNode variableDeclarationNode) {
+    Variable declVar = variableDeclarationNode.getVariable();
     String nodeId = String.format("%s_%s", VARDECL_NODE, declVar.toString());
     PdgNode<ImpAstNode> node =
         new PdgStorageNode<>(
             this.pdg,
-            declarationNode,
+            variableDeclarationNode,
             this.freshNameGenerator.getFreshName(nodeId),
-            declarationNode.getLabel());
-    this.storageNodes.add(declarationNode.getVariable(), node);
+            variableDeclarationNode.getLabel());
+    this.storageNodes.add(variableDeclarationNode.getVariable(), node);
     this.pdg.addNode(node);
 
     return new PdgBuilderInfo<>(node);
@@ -207,10 +190,10 @@ public class ImpPdgBuilderVisitor
   /** return created PDG compute node for assignment. */
   @Override
   public PdgBuilderInfo<ImpAstNode> visit(AssignNode assignNode) {
-    LExpressionNode lhs = assignNode.getLhs();
+    Reference lhs = assignNode.getLhs();
 
-    if (lhs instanceof LReadNode) {
-      Variable var = ((LReadNode) lhs).getVariable();
+    if (lhs instanceof Variable) {
+      Variable var = (Variable) lhs;
       if (this.storageNodes.contains(var)) {
         PdgBuilderInfo<ImpAstNode> inInfo = assignNode.getRhs().accept(this);
         PdgNode<ImpAstNode> varNode = this.storageNodes.get(var);

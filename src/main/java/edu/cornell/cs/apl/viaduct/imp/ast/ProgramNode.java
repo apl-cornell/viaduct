@@ -17,7 +17,7 @@ import javax.annotation.Nonnull;
 
 /**
  * A program is a set of process definitions and a host trust configuration. It associates with each
- * process, the code running on that process, and with each host, its trustworthiness.
+ * process the code running on that process, and with each host its trustworthiness.
  */
 public final class ProgramNode implements ImpAstNode, Iterable<Tuple2<ProcessName, StmtNode>> {
   private final SortedMap<ProcessName, StmtNode> processes;
@@ -84,7 +84,7 @@ public final class ProgramNode implements ImpAstNode, Iterable<Tuple2<ProcessNam
   @Override
   public String toString() {
     StringBuffer buffer = new StringBuffer();
-    for (Tuple2<ProcessName,StmtNode> proc : this.processes) {
+    for (Tuple2<ProcessName, StmtNode> proc : this.processes) {
       buffer.append(String.format("(process %s %s)%n", proc._1(), proc._2()));
     }
     return buffer.toString();

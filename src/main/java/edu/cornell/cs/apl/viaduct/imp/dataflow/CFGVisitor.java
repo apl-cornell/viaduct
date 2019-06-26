@@ -5,29 +5,29 @@ import edu.cornell.cs.apl.viaduct.imp.ast.ArrayDeclarationNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.AssertNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.AssignNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.BlockNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.DeclarationNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ForNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.IfNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.LExpressionNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.LReadNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ReceiveNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.Reference;
 import edu.cornell.cs.apl.viaduct.imp.ast.SendNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.StmtNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.Variable;
+import edu.cornell.cs.apl.viaduct.imp.ast.VariableDeclarationNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.WhileNode;
 import edu.cornell.cs.apl.viaduct.imp.visitors.StmtVisitor;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
 /** builds a CFG from an AST. */
 public class CFGVisitor implements StmtVisitor<Void> {
-  List<CFGNode> nodes;
-  Set<CFGNode> lastNodes;
-  Set<Variable> declaredVars;
-  Set<Variable> tempVars;
-  List<Variable> vars;
+  private List<CFGNode> nodes;
+  private Set<CFGNode> lastNodes;
+  private Set<Variable> declaredVars;
+  private Set<Variable> tempVars;
+  private List<Variable> vars;
 
   /** constructor. */
   public CFGVisitor() {
@@ -47,9 +47,7 @@ public class CFGVisitor implements StmtVisitor<Void> {
 
   protected Void setLastNodes(CFGNode... nodes) {
     this.lastNodes.clear();
-    for (CFGNode node : nodes) {
-      this.lastNodes.add(node);
-    }
+    Collections.addAll(this.lastNodes, nodes);
 
     return null;
   }
@@ -68,7 +66,7 @@ public class CFGVisitor implements StmtVisitor<Void> {
   }
 
   @Override
-  public Void visit(DeclarationNode declNode) {
+  public Void visit(VariableDeclarationNode declNode) {
     Variable var = declNode.getVariable();
     this.declaredVars.add(var);
     this.vars.add(var);
@@ -87,10 +85,10 @@ public class CFGVisitor implements StmtVisitor<Void> {
 
   @Override
   public Void visit(AssignNode assignNode) {
-    LExpressionNode lhs = assignNode.getLhs();
+    Reference lhs = assignNode.getLhs();
 
-    if (lhs instanceof LReadNode) {
-      Variable var = ((LReadNode) lhs).getVariable();
+    if (lhs instanceof Variable) {
+      Variable var = (Variable) lhs;
       if (!this.declaredVars.contains(var)) {
         this.tempVars.add(var);
         this.vars.add(var);

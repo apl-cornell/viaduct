@@ -11,8 +11,8 @@ nonterminal ProgramNode program;
 nonterminal ProgramNode.Builder declaration_list;
 nonterminal List<StmtNode> stmt_list;
 nonterminal StmtNode stmt, stmt_basic, block;
+nonterminal Reference reference;
 nonterminal ExpressionNode expr;
-nonterminal LExpressionNode lexpr;
 nonterminal ImpValue value;
 nonterminal Label label, label_expr;
 nonterminal Variable variable;
@@ -74,8 +74,8 @@ declaration_list ::=
   ;
 
 type ::=
-    INT {: RESULT = IntType.instance(); :}
-  | BOOL {: RESULT = BoolType.instance(); :}
+    INT {: RESULT = IntegerType.create(); :}
+  | BOOL {: RESULT = BooleanType.create(); :}
   ;
 
 stmt ::=
@@ -95,22 +95,8 @@ stmt ::=
       RESULT = new WhileNode(guard, body);
     :}
 
-  | FOR OPEN_PAREN stmt_basic:init SEMICOLON expr:guard SEMICOLON stmt_basic:update CLOSE_PAREN block:body {:
-      RESULT = new ForNode(init, guard, update, body);
-
-      // elaborate for loop directly in the parser
-      /*
-      List<StmtNode> whileBody = new ArrayList<>();
-      whileBody.add(body);
-      whileBody.add(update);
-      StmtNode whileLoop = new WhileNode(guard, new BlockNode(whileBody));
-
-      List<StmtNode> block = new ArrayList<>();
-      block.add(init);
-      block.add(whileLoop);
-
-      RESULT = new BlockNode(block);
-      */
+  | FOR OPEN_PAREN stmt_basic:initialzer SEMICOLON expr:guard SEMICOLON stmt_basic:update CLOSE_PAREN block:body {:
+      RESULT = new ForNode(initialzer, guard, update, body);
     :}
 
   | block:block {:
@@ -120,40 +106,40 @@ stmt ::=
 
 stmt_basic ::=
     variable:var COLON type:ty label:lab {:
-      RESULT = new DeclarationNode(var, ty, lab);
+      RESULT = new VariableDeclarationNode(var, ty, lab);
     :}
 
   | variable:var OPEN_SQBRACE expr:e CLOSE_SQBRACE COLON type:ty label:lab {:
       RESULT = new ArrayDeclarationNode(var, e, ty, lab);
     :}
 
-  | lexpr:lexpr EQ expr:e {:
-      RESULT = new AssignNode(lexpr, e);
+  | reference:ref EQ expr:e {:
+      RESULT = new AssignNode(ref, e);
     :}
 
-  | lexpr:lexpr PLUSEQ expr:e {:
-      ExpressionNode rhs = BinaryExpressionNode.create(lexpr.toExpression(), Plus.create(), e);
-      RESULT = new AssignNode(lexpr, rhs);
+  | reference:ref PLUSEQ expr:e {:
+      ExpressionNode rhs = BinaryExpressionNode.create(new ReadNode(ref), Plus.create(), e);
+      RESULT = new AssignNode(ref, rhs);
     :}
 
-  | lexpr:lexpr MINUSEQ expr:e {:
-      ExpressionNode rhs = BinaryExpressionNode.create(lexpr.toExpression(), Minus.create(), e);
-      RESULT = new AssignNode(lexpr, rhs);
+  | reference:ref MINUSEQ expr:e {:
+      ExpressionNode rhs = BinaryExpressionNode.create(new ReadNode(ref), Minus.create(), e);
+      RESULT = new AssignNode(ref, rhs);
     :}
 
-  | lexpr:lexpr TIMESEQ expr:e {:
-      ExpressionNode rhs = BinaryExpressionNode.create(lexpr.toExpression(), Times.create(), e);
-      RESULT = new AssignNode(lexpr, rhs);
+  | reference:ref TIMESEQ expr:e {:
+      ExpressionNode rhs = BinaryExpressionNode.create(new ReadNode(ref), Times.create(), e);
+      RESULT = new AssignNode(ref, rhs);
     :}
 
-  | lexpr:lexpr PLUSPLUS {:
-      ExpressionNode rhs = BinaryExpressionNode.create(lexpr.toExpression(), Plus.create(), new LiteralNode(new IntegerValue(1)));
-      RESULT = new AssignNode(lexpr, rhs);
+  | reference:ref PLUSPLUS {:
+      ExpressionNode rhs = BinaryExpressionNode.create(new ReadNode(ref), Plus.create(), new LiteralNode(new IntegerValue(1)));
+      RESULT = new AssignNode(ref, rhs);
     :}
 
-  | lexpr:lexpr MINUSMINUS {:
-      ExpressionNode rhs = BinaryExpressionNode.create(lexpr.toExpression(), Minus.create(), new LiteralNode(new IntegerValue(1)));
-      RESULT = new AssignNode(lexpr, rhs);
+  | reference:ref MINUSMINUS {:
+      ExpressionNode rhs = BinaryExpressionNode.create(new ReadNode(ref), Minus.create(), new LiteralNode(new IntegerValue(1)));
+      RESULT = new AssignNode(ref, rhs);
     :}
 
   | SEND expr:e TO process_name:processName {:
@@ -186,13 +172,14 @@ stmt_list ::=
     :}
   ;
 
-lexpr ::=
+reference ::=
     variable:var OPEN_SQBRACE expr:e CLOSE_SQBRACE {:
-       RESULT = new ArrayIndexNode(var, e);
+      RESULT = new ArrayIndex(var, e);
+
     :}
 
   | variable:var {:
-      RESULT = new LReadNode(var);
+      RESULT = var;
     :}
   ;
 
@@ -201,12 +188,8 @@ expr ::=
       RESULT = new LiteralNode(value);
     :}
 
-  | variable:var OPEN_SQBRACE expr:e CLOSE_SQBRACE {:
-       RESULT = new ArrayAccessNode(var, e);
-    :}
-
-  | variable:var {:
-      RESULT = new ReadNode(var);
+  | reference:ref {:
+       RESULT = new ReadNode(ref);
     :}
 
   | NOT expr:e {:

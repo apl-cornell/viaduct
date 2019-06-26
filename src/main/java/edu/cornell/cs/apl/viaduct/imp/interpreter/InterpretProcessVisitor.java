@@ -1,24 +1,19 @@
 package edu.cornell.cs.apl.viaduct.imp.interpreter;
 
 import edu.cornell.cs.apl.viaduct.imp.ElaborationException;
-import edu.cornell.cs.apl.viaduct.imp.ast.ArrayAccessNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ArrayDeclarationNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.ArrayIndexNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.ArrayIndexValue;
+import edu.cornell.cs.apl.viaduct.imp.ast.ArrayIndex;
 import edu.cornell.cs.apl.viaduct.imp.ast.AssertNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.AssignNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.BinaryExpressionNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.BlockNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.BooleanValue;
-import edu.cornell.cs.apl.viaduct.imp.ast.DeclarationNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.DowngradeNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ExpressionNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ForNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.IfNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.ImpLValue;
 import edu.cornell.cs.apl.viaduct.imp.ast.ImpValue;
 import edu.cornell.cs.apl.viaduct.imp.ast.IntegerValue;
-import edu.cornell.cs.apl.viaduct.imp.ast.LReadNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.LiteralNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.NotNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ProcessName;
@@ -27,14 +22,14 @@ import edu.cornell.cs.apl.viaduct.imp.ast.ReceiveNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.SendNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.StmtNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.Variable;
+import edu.cornell.cs.apl.viaduct.imp.ast.VariableDeclarationNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.WhileNode;
 import edu.cornell.cs.apl.viaduct.imp.visitors.ExprVisitor;
-import edu.cornell.cs.apl.viaduct.imp.visitors.LExprVisitor;
+import edu.cornell.cs.apl.viaduct.imp.visitors.ReferenceVisitor;
 import edu.cornell.cs.apl.viaduct.imp.visitors.StmtVisitor;
 import java.util.Objects;
 
-class InterpretProcessVisitor
-    implements ExprVisitor<ImpValue>, StmtVisitor<Void>, LExprVisitor<ImpLValue> {
+class InterpretProcessVisitor implements ExprVisitor<ImpValue>, StmtVisitor<Void> {
 
   /** The process to execute the statements as. */
   private final ProcessName processName;
@@ -65,6 +60,19 @@ class InterpretProcessVisitor
     this.channel = null;
   }
 
+  /**
+   * Given a value that is meant to be an index into an array, check that it can be cast to an
+   * integer and return this integer. Throw an appropriate exception otherwise.
+   */
+  private static int getIntValueOfIndex(ImpValue impValue, Variable array)
+      throws NonIntegerIndexException {
+    if (impValue instanceof IntegerValue) {
+      return ((IntegerValue) impValue).getValue();
+    } else {
+      throw new NonIntegerIndexException(array, impValue);
+    }
+  }
+
   /** Return the value of the given expression in the current context. */
   ImpValue run(ExpressionNode expression) {
     return expression.accept(this);
@@ -88,11 +96,7 @@ class InterpretProcessVisitor
 
   @Override
   public ImpValue visit(ReadNode readNode) {
-    try {
-      return store.lookup(readNode.getVariable());
-    } catch (UndeclaredVariableException | UnassignedVariableException e) {
-      throw new Error(e);
-    }
+    return readNode.getReference().accept(new ReadReferenceVisitor());
   }
 
   @Override
@@ -114,95 +118,24 @@ class InterpretProcessVisitor
   }
 
   @Override
-  public ImpValue visit(ArrayAccessNode arrAccessNode) {
-    Variable var = arrAccessNode.getVariable();
-    ImpValue indexVal = arrAccessNode.getIndex().accept(this);
-
-    try {
-      if (indexVal instanceof IntegerValue) {
-        int index = ((IntegerValue) indexVal).getValue();
-        return this.store.lookupArray(var, index);
-
-      } else {
-        throw new NonIntegerIndexException(var, indexVal);
-      }
-    } catch (Exception e) {
-      throw new Error(e);
-    }
-  }
-
-  @Override
-  public ImpLValue visit(LReadNode lreadNode) {
-    return lreadNode.getVariable();
-  }
-
-  @Override
-  public ImpLValue visit(ArrayIndexNode arrAccessNode) {
-    Variable var = arrAccessNode.getVariable();
-    ImpValue indexVal = arrAccessNode.getIndex().accept(this);
-
-    try {
-      if (indexVal instanceof IntegerValue) {
-        int index = ((IntegerValue) indexVal).getValue();
-        return new ArrayIndexValue(var, index);
-
-      } else {
-        throw new NonIntegerIndexException(var, indexVal);
-      }
-    } catch (Exception e) {
-      throw new Error(e);
-    }
-  }
-
-  @Override
-  public Void visit(DeclarationNode declarationNode) {
-    try {
-      store.declare(declarationNode.getVariable());
-    } catch (RedeclaredVariableException e) {
-      throw new Error(e);
-    }
+  public Void visit(VariableDeclarationNode variableDeclarationNode) {
+    store.declare(variableDeclarationNode.getVariable());
     return null;
   }
 
   @Override
   public Void visit(ArrayDeclarationNode arrayDeclNode) {
-    try {
-      Variable var = arrayDeclNode.getVariable();
-      ImpValue length = arrayDeclNode.getLength().accept(this);
-
-      if (length instanceof IntegerValue) {
-        int intLength = ((IntegerValue) length).getValue();
-        store.declareArray(var, intLength);
-
-      } else {
-        throw new NonIntegerIndexException(var, length);
-      }
-
-    } catch (Exception e) {
-      throw new Error(e);
-    }
-
+    Variable array = arrayDeclNode.getVariable();
+    ImpValue lengthValue = arrayDeclNode.getLength().accept(this);
+    int length = getIntValueOfIndex(lengthValue, array);
+    store.declareArray(array, length);
     return null;
   }
 
   @Override
   public Void visit(AssignNode assignNode) {
-    ImpLValue lvalue = assignNode.getLhs().accept(this);
     ImpValue value = assignNode.getRhs().accept(this);
-
-    try {
-      if (lvalue instanceof Variable) {
-        store.update((Variable) lvalue, value);
-
-      } else if (lvalue instanceof ArrayIndexValue) {
-        ArrayIndexValue arrIndex = ((ArrayIndexValue) lvalue);
-        store.updateArray(arrIndex.getVariable(), arrIndex.getIndex(), value);
-      }
-
-    } catch (Exception e) {
-      throw new Error(e);
-    }
-
+    assignNode.getLhs().accept(new WriteReferenceVisitor(value));
     return null;
   }
 
@@ -211,8 +144,6 @@ class InterpretProcessVisitor
     ImpValue value = sendNode.getSentExpression().accept(this);
     try {
       this.channel.send(this.processName, sendNode.getRecipient(), value);
-    } catch (UnknownProcessException e) {
-      throw new Error(e);
     } catch (InterruptedException e) {
       throw new RuntimeException(e);
     }
@@ -225,17 +156,11 @@ class InterpretProcessVisitor
 
     try {
       value = this.channel.receive(receiveNode.getSender(), this.processName);
-    } catch (UnknownProcessException e) {
-      throw new Error(e);
     } catch (InterruptedException e) {
       throw new RuntimeException(e);
     }
 
-    try {
-      store.update(receiveNode.getVariable(), value);
-    } catch (UndeclaredVariableException e) {
-      throw new Error(e);
-    }
+    store.update(receiveNode.getVariable(), value);
 
     return null;
   }
@@ -245,7 +170,6 @@ class InterpretProcessVisitor
     BooleanValue guardVal = (BooleanValue) ifNode.getGuard().accept(this);
     if (guardVal.getValue()) {
       ifNode.getThenBranch().accept(this);
-
     } else {
       ifNode.getElseBranch().accept(this);
     }
@@ -265,7 +189,7 @@ class InterpretProcessVisitor
 
   @Override
   public Void visit(ForNode forNode) {
-    throw new Error(new ElaborationException());
+    throw new ElaborationException();
   }
 
   @Override
@@ -282,8 +206,46 @@ class InterpretProcessVisitor
     ImpValue assertion = assertExpr.accept(this);
 
     if (!((BooleanValue) assertion).getValue()) {
-      throw new Error(new AssertionFailureException(assertExpr));
+      throw new AssertionFailureException(assertExpr);
     }
     return null;
+  }
+
+  /** Read the value stored at a reference. */
+  private class ReadReferenceVisitor implements ReferenceVisitor<ImpValue> {
+    @Override
+    public ImpValue visit(Variable variable) {
+      return store.lookup(variable);
+    }
+
+    @Override
+    public ImpValue visit(ArrayIndex arrayIndex) {
+      ImpValue indexValue = arrayIndex.getIndex().accept(InterpretProcessVisitor.this);
+      int index = getIntValueOfIndex(indexValue, arrayIndex.getArray());
+      return store.lookupArray(arrayIndex.getArray(), index);
+    }
+  }
+
+  /** Update the value stored at a reference. */
+  private class WriteReferenceVisitor implements ReferenceVisitor<Void> {
+    private final ImpValue newValue;
+
+    WriteReferenceVisitor(ImpValue newValue) {
+      this.newValue = Objects.requireNonNull(newValue);
+    }
+
+    @Override
+    public Void visit(Variable variable) {
+      store.update(variable, newValue);
+      return null;
+    }
+
+    @Override
+    public Void visit(ArrayIndex arrayIndex) {
+      ImpValue indexValue = arrayIndex.getIndex().accept(InterpretProcessVisitor.this);
+      int index = getIntValueOfIndex(indexValue, arrayIndex.getArray());
+      store.updateArray(arrayIndex.getArray(), index, newValue);
+      return null;
+    }
   }
 }

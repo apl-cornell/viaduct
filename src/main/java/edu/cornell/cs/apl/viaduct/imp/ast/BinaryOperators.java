@@ -1,25 +1,24 @@
 package edu.cornell.cs.apl.viaduct.imp.ast;
 
 import edu.cornell.cs.apl.viaduct.imp.TypeCheckException;
-import edu.cornell.cs.apl.viaduct.imp.ast.BinaryOperators.BinaryLogicalOperator;
 
 /** Enumerates binary operators in the language. */
 public class BinaryOperators {
   abstract static class BinaryLogicalOperator extends BinaryOperator {
     @Override
     public ImpType typeCheck(ImpType lhs, ImpType rhs) throws TypeCheckException {
-      if (!(lhs instanceof BoolType)) {
+      if (!(lhs instanceof BooleanType)) {
         throw new TypeCheckException(
             String.format(
-                "%s operator expected %s in LHS type, got %s", this, BoolType.instance(), lhs));
+                "%s operator expected %s in LHS type, got %s", this, BooleanType.create(), lhs));
 
-      } else if (!(rhs instanceof BoolType)) {
+      } else if (!(rhs instanceof BooleanType)) {
         throw new TypeCheckException(
             String.format(
-                "%s operator expected %s in RHS type, got %s", this, BoolType.instance(), rhs));
+                "%s operator expected %s in RHS type, got %s", this, BooleanType.create(), rhs));
 
       } else {
-        return BoolType.instance();
+        return BooleanType.create();
       }
     }
   }
@@ -73,18 +72,18 @@ public class BinaryOperators {
   abstract static class ArithComparisonOperator extends BinaryOperator {
     @Override
     public ImpType typeCheck(ImpType lhs, ImpType rhs) throws TypeCheckException {
-      if (!(lhs instanceof IntType)) {
+      if (!(lhs instanceof IntegerType)) {
         throw new TypeCheckException(
             String.format(
-                "%s operator expected %s in LHS type, got %s", this, IntType.instance(), lhs));
+                "%s operator expected %s in LHS type, got %s", this, IntegerType.create(), lhs));
 
-      } else if (!(rhs instanceof IntType)) {
+      } else if (!(rhs instanceof IntegerType)) {
         throw new TypeCheckException(
             String.format(
-                "%s operator expected %s in RHS type, got %s", this, IntType.instance(), rhs));
+                "%s operator expected %s in RHS type, got %s", this, IntegerType.create(), rhs));
 
       } else {
-        return BoolType.instance();
+        return BooleanType.create();
       }
     }
   }
@@ -159,18 +158,18 @@ public class BinaryOperators {
   abstract static class ArithmeticOperator extends BinaryOperator {
     @Override
     public ImpType typeCheck(ImpType lhs, ImpType rhs) throws TypeCheckException {
-      if (!(lhs instanceof IntType)) {
+      if (!(lhs instanceof IntegerType)) {
         throw new TypeCheckException(
             String.format(
-                "%s operator expected %s in LHS type, got %s", this, IntType.instance(), lhs));
+                "%s operator expected %s in LHS type, got %s", this, IntegerType.create(), lhs));
 
-      } else if (!(rhs instanceof IntType)) {
+      } else if (!(rhs instanceof IntegerType)) {
         throw new TypeCheckException(
             String.format(
-                "%s operator expected %s in RHS type, got %s", this, IntType.instance(), rhs));
+                "%s operator expected %s in RHS type, got %s", this, IntegerType.create(), rhs));
 
       } else {
-        return IntType.instance();
+        return IntegerType.create();
       }
     }
   }

@@ -1,28 +1,27 @@
 package edu.cornell.cs.apl.viaduct.imp.visitors;
 
 import edu.cornell.cs.apl.viaduct.imp.DuplicateProcessDefinitionException;
-import edu.cornell.cs.apl.viaduct.imp.ast.ArrayAccessNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ArrayDeclarationNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.ArrayIndexNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.ArrayIndex;
 import edu.cornell.cs.apl.viaduct.imp.ast.AssertNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.AssignNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.BinaryExpressionNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.BlockNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.DeclarationNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.DowngradeNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ExpressionNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ForNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.IfNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.LExpressionNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.LReadNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.LiteralNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.NotNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ProcessName;
 import edu.cornell.cs.apl.viaduct.imp.ast.ProgramNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ReadNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ReceiveNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.Reference;
 import edu.cornell.cs.apl.viaduct.imp.ast.SendNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.StmtNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.Variable;
+import edu.cornell.cs.apl.viaduct.imp.ast.VariableDeclarationNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.WhileNode;
 import io.vavr.Tuple2;
 import java.util.LinkedList;
@@ -36,17 +35,36 @@ import java.util.List;
  * and override only the cases that do something interesting.
  */
 public abstract class IdentityVisitor
-    implements ExprVisitor<ExpressionNode>,
+    implements ReferenceVisitor<Reference>,
+        ExprVisitor<ExpressionNode>,
         StmtVisitor<StmtNode>,
-        LExprVisitor<LExpressionNode>,
         ProgramVisitor<ProgramNode> {
 
-  public ExpressionNode run(ExpressionNode expr) {
-    return expr.accept(this);
+  public Reference run(Reference reference) {
+    return reference.accept(this);
   }
 
-  public StmtNode run(StmtNode stmt) {
-    return stmt.accept(this);
+  public ExpressionNode run(ExpressionNode expression) {
+    return expression.accept(this);
+  }
+
+  public StmtNode run(StmtNode statement) {
+    return statement.accept(this);
+  }
+
+  public ProgramNode run(ProgramNode program) {
+    return program.accept(this);
+  }
+
+  @Override
+  public Reference visit(Variable variable) {
+    return variable;
+  }
+
+  @Override
+  public Reference visit(ArrayIndex arrayIndex) {
+    ExpressionNode newIndex = arrayIndex.getIndex().accept(this);
+    return new ArrayIndex(arrayIndex.getArray(), newIndex);
   }
 
   @Override
@@ -56,7 +74,8 @@ public abstract class IdentityVisitor
 
   @Override
   public ExpressionNode visit(ReadNode readNode) {
-    return readNode;
+    Reference newReference = readNode.getReference().accept(this);
+    return new ReadNode(newReference);
   }
 
   @Override
@@ -79,25 +98,9 @@ public abstract class IdentityVisitor
   }
 
   @Override
-  public ExpressionNode visit(ArrayAccessNode arrAccessNode) {
-    ExpressionNode newIndex = arrAccessNode.getIndex().accept(this);
-    return new ArrayAccessNode(arrAccessNode.getVariable(), newIndex);
-  }
-
-  @Override
-  public LExpressionNode visit(ArrayIndexNode arrIndexNode) {
-    ExpressionNode newIndex = arrIndexNode.getIndex().accept(this);
-    return new ArrayIndexNode(arrIndexNode.getVariable(), newIndex);
-  }
-
-  @Override
-  public LExpressionNode visit(LReadNode lreadNode) {
-    return lreadNode;
-  }
-
-  @Override
-  public StmtNode visit(DeclarationNode declNode) {
-    return new DeclarationNode(declNode.getVariable(), declNode.getType(), declNode.getLabel());
+  public StmtNode visit(VariableDeclarationNode declNode) {
+    return new VariableDeclarationNode(
+        declNode.getVariable(), declNode.getType(), declNode.getLabel());
   }
 
   @Override
@@ -111,7 +114,7 @@ public abstract class IdentityVisitor
 
   @Override
   public StmtNode visit(AssignNode assignNode) {
-    LExpressionNode newLhs = assignNode.getLhs().accept(this);
+    Reference newLhs = assignNode.getLhs().accept(this);
     ExpressionNode newRhs = assignNode.getRhs().accept(this);
     return new AssignNode(newLhs, newRhs);
   }
@@ -169,7 +172,7 @@ public abstract class IdentityVisitor
       }
     } catch (DuplicateProcessDefinitionException e) {
       // This is impossible
-      throw new Error(e);
+      throw new RuntimeException(e);
     }
     builder.addHosts(programNode.getHostTrustConfiguration());
     return builder.build();

@@ -1,10 +1,14 @@
 package edu.cornell.cs.apl.viaduct.imp;
 
+import edu.cornell.cs.apl.viaduct.CompilationException;
 import edu.cornell.cs.apl.viaduct.imp.ast.ImpAstNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ImpType;
 import edu.cornell.cs.apl.viaduct.imp.ast.Variable;
 
-public class TypeCheckException extends Exception {
+// TODO: this is horrible. Pull different cases into separate classes like we do with the
+//   interpreter.
+
+public class TypeCheckException extends CompilationException {
   /** AST node has unexpected type. */
   public TypeCheckException(ImpAstNode ast, ImpType expected, ImpType actual) {
     super(String.format("type check error for %s: expected %s, found %s", ast, expected, actual));

@@ -1,21 +1,16 @@
 package edu.cornell.cs.apl.viaduct.imp.visitors;
 
-import edu.cornell.cs.apl.viaduct.imp.ast.AbstractArrayAccessNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.AbstractReadNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.ArrayAccessNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ArrayDeclarationNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.ArrayIndexNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.ArrayIndex;
 import edu.cornell.cs.apl.viaduct.imp.ast.AssertNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.AssignNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.BinaryExpressionNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.BlockNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.DeclarationNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.DowngradeNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ExpressionNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ForNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.Host;
 import edu.cornell.cs.apl.viaduct.imp.ast.IfNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.LReadNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.LiteralNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.NotNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ProcessName;
@@ -24,56 +19,58 @@ import edu.cornell.cs.apl.viaduct.imp.ast.ReadNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ReceiveNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.SendNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.StmtNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.Variable;
+import edu.cornell.cs.apl.viaduct.imp.ast.VariableDeclarationNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.WhileNode;
 import edu.cornell.cs.apl.viaduct.security.Label;
 import io.vavr.Tuple2;
 
 /** Pretty-prints an AST. */
 public class PrintVisitor
-    implements ExprVisitor<Void>, StmtVisitor<Void>, LExprVisitor<Void>, ProgramVisitor<Void> {
+    implements ReferenceVisitor<Void>, ExprVisitor<Void>, StmtVisitor<Void>, ProgramVisitor<Void> {
 
   private static final int INDENTATION_LEVEL = 4;
 
-  /** Accumulates the partially built program. */
+  /** Accumulates the partially printed program. */
   private final StringBuilder buffer = new StringBuilder();
 
+  /** Add indentation only if set to true. */
+  private boolean indentationEnabled = true;
+
+  /** Terminate statements with a semicolon (;) only if set to true. */
+  private boolean statementTerminatorsEnabled;
+
+  /** Current indentation level. */
   private int indentation = 0;
 
-  // toggle indentation
-  private boolean indentOn;
-
-  // toggle adding a separator (;) after statements
-  private boolean lineModeOn;
-
-  public PrintVisitor() {
-    this.indentOn = true;
-    this.lineModeOn = true;
+  private PrintVisitor(boolean statementTerminatorsEnabled) {
+    this.statementTerminatorsEnabled = statementTerminatorsEnabled;
   }
 
-  /** Pretty print the given AST and return it as {@code String}. */
-  public String run(StmtNode stmt) {
-    // TODO: explain what happens if you call it multiple times. Or change the interface.
-    stmt.accept(this);
-    return buffer.toString();
+  /** Pretty print an expression. */
+  public static String run(ExpressionNode expr) {
+    final PrintVisitor v = new PrintVisitor(false);
+    expr.accept(v);
+    return v.buffer.toString();
   }
 
-  /** Pretty print the given AST and return it as {@code String}. */
-  public String run(ExpressionNode expr) {
-    // TODO: explain what happens if you call it multiple times. Or change the interface.
-    expr.accept(this);
-    return buffer.toString();
+  /** Pretty print a statement. */
+  public static String run(StmtNode stmt) {
+    final PrintVisitor v = new PrintVisitor(false);
+    stmt.accept(v);
+    return v.buffer.toString();
   }
 
-  /** Pretty print the given AST and return it as {@code String}. */
-  public String run(ProgramNode prog) {
-    // TODO: explain what happens if you call it multiple times. Or change the interface.
-    prog.accept(this);
-    return buffer.toString();
+  /** Pretty print a program. */
+  public static String run(ProgramNode prog) {
+    final PrintVisitor v = new PrintVisitor(true);
+    prog.accept(v);
+    return v.buffer.toString();
   }
 
   /** Append current indentation to the buffer. */
   private void addIndentation() {
-    if (this.indentOn) {
+    if (this.indentationEnabled) {
       for (int i = 0; i < this.indentation; i++) {
         buffer.append(' ');
       }
@@ -81,20 +78,22 @@ public class PrintVisitor
   }
 
   private void addSeparator() {
-    if (this.lineModeOn) {
+    if (this.statementTerminatorsEnabled) {
       buffer.append(';');
     }
   }
 
-  private Void visitRead(AbstractReadNode readNode) {
-    buffer.append(readNode.getVariable());
+  @Override
+  public Void visit(Variable variable) {
+    buffer.append(variable);
     return null;
   }
 
-  private Void visitArrayAccess(AbstractArrayAccessNode arrAccessNode) {
-    buffer.append(arrAccessNode.getVariable().toString());
+  @Override
+  public Void visit(ArrayIndex arrayIndex) {
+    buffer.append(arrayIndex.getArray());
     buffer.append("[");
-    arrAccessNode.getIndex().accept(this);
+    arrayIndex.getIndex().accept(this);
     buffer.append("]");
     return null;
   }
@@ -107,7 +106,7 @@ public class PrintVisitor
 
   @Override
   public Void visit(ReadNode readNode) {
-    return visitRead(readNode);
+    return readNode.getReference().accept(this);
   }
 
   @Override
@@ -143,28 +142,13 @@ public class PrintVisitor
   }
 
   @Override
-  public Void visit(ArrayAccessNode arrAccessNode) {
-    return visitArrayAccess(arrAccessNode);
-  }
-
-  @Override
-  public Void visit(ArrayIndexNode arrIndexNode) {
-    return visitArrayAccess(arrIndexNode);
-  }
-
-  @Override
-  public Void visit(LReadNode lreadNode) {
-    return visitRead(lreadNode);
-  }
-
-  @Override
-  public Void visit(DeclarationNode declarationNode) {
+  public Void visit(VariableDeclarationNode variableDeclarationNode) {
     addIndentation();
 
-    buffer.append(declarationNode.getVariable());
+    buffer.append(variableDeclarationNode.getVariable());
     buffer.append(" : ");
-    buffer.append(declarationNode.getType());
-    buffer.append(declarationNode.getLabel());
+    buffer.append(variableDeclarationNode.getType());
+    buffer.append(variableDeclarationNode.getLabel());
 
     addSeparator();
     return null;
@@ -273,8 +257,8 @@ public class PrintVisitor
   public Void visit(ForNode forNode) {
     addIndentation();
 
-    this.indentOn = false;
-    this.lineModeOn = false;
+    this.indentationEnabled = false;
+    this.statementTerminatorsEnabled = false;
 
     buffer.append("for (");
     forNode.getInitialize().accept(this);
@@ -284,8 +268,8 @@ public class PrintVisitor
     forNode.getUpdate().accept(this);
     buffer.append(")");
 
-    this.indentOn = true;
-    this.lineModeOn = true;
+    this.indentationEnabled = true;
+    this.statementTerminatorsEnabled = true;
 
     forNode.getBody().accept(this);
     return null;

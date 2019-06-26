@@ -14,7 +14,7 @@ class PrintVisitorTest {
   @ParameterizedTest
   @ArgumentsSource(ExamplesProvider.class)
   void testDualToParser(@ConvertWith(ImpAstParser.class) ProgramNode prog) throws Exception {
-    final String printedAst = new PrintVisitor().run(prog);
+    final String printedAst = PrintVisitor.run(prog);
     assertEquals(prog, Parser.parse(printedAst));
   }
 }

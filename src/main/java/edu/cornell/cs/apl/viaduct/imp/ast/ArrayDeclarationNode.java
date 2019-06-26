@@ -15,6 +15,7 @@ public final class ArrayDeclarationNode implements StmtNode {
    *
    * @param variable name of the array
    * @param length number of elements in the array
+   * @param type type of the elements in the array
    * @param label security label of the array and all its elements
    */
   public ArrayDeclarationNode(Variable variable, ExpressionNode length, ImpType type, Label label) {

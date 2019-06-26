@@ -13,8 +13,20 @@
   -->
 
 <FindBugsFilter>
-  <!-- Ignore checking for generated parser classes -->
+    <!-- Ignore generated parser classes. -->
     <Match>
-        <Package name="~.*\.parser" />
+        <Class name="~.*\.parser\.ImpParser.*"/>
+    </Match>
+    <Match>
+        <Class name="~.*\.parser\.ImpLexer.*"/>
+    </Match>
+    <Match>
+        <Class name="~.*\.parser\.sym"/>
+    </Match>
+
+    <!-- TODO: we have a lot of unchecked exception classes whose names end with "Exception". -->
+    <!--      We should probably rename them... -->
+    <Match>
+        <Bug pattern="NM_CLASS_NOT_EXCEPTION"/>
     </Match>
 </FindBugsFilter>

@@ -3,7 +3,6 @@ package edu.cornell.cs.apl.viaduct.imp.builders;
 import edu.cornell.cs.apl.viaduct.imp.ast.AssertNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.AssignNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.BlockNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.DeclarationNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ExpressionNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.IfNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ImpType;
@@ -12,6 +11,7 @@ import edu.cornell.cs.apl.viaduct.imp.ast.ReceiveNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.SendNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.StmtNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.Variable;
+import edu.cornell.cs.apl.viaduct.imp.ast.VariableDeclarationNode;
 import edu.cornell.cs.apl.viaduct.pdg.ProgramDependencyGraph.ControlLabel;
 import edu.cornell.cs.apl.viaduct.security.Label;
 import java.util.ArrayList;
@@ -67,12 +67,12 @@ public class StmtBuilder {
   }
 
   public StmtBuilder varDecl(String varName, ImpType type, Label label) {
-    this.stmts.add(new DeclarationNode(new Variable(varName), type, label));
+    this.stmts.add(new VariableDeclarationNode(new Variable(varName), type, label));
     return this;
   }
 
   public StmtBuilder varDecl(Variable varName, ImpType type, Label label) {
-    this.stmts.add(new DeclarationNode(varName, type, label));
+    this.stmts.add(new VariableDeclarationNode(varName, type, label));
     return this;
   }
 

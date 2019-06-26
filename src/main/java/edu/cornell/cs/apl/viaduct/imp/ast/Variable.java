@@ -2,10 +2,11 @@ package edu.cornell.cs.apl.viaduct.imp.ast;
 
 import edu.cornell.cs.apl.viaduct.AstNode;
 import edu.cornell.cs.apl.viaduct.Binding;
+import edu.cornell.cs.apl.viaduct.imp.visitors.ReferenceVisitor;
 import java.util.Objects;
 
-/** A variable that can be read from or assigned to. */
-public final class Variable implements Binding<ImpAstNode>, ImpLValue {
+/** A mutable variable that names a memory location. */
+public final class Variable implements Reference, Binding<ImpAstNode> {
   private final String name;
 
   public <T extends AstNode> Variable(Binding<T> binding) {
@@ -23,6 +24,11 @@ public final class Variable implements Binding<ImpAstNode>, ImpLValue {
   @Override
   public String getBinding() {
     return this.name;
+  }
+
+  @Override
+  public <R> R accept(ReferenceVisitor<R> v) {
+    return v.visit(this);
   }
 
   @Override

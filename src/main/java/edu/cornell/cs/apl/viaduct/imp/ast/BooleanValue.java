@@ -15,6 +15,11 @@ public final class BooleanValue implements ImpValue {
   }
 
   @Override
+  public ImpType getType() {
+    return BooleanType.create();
+  }
+
+  @Override
   public boolean equals(Object o) {
     if (this == o) {
       return true;

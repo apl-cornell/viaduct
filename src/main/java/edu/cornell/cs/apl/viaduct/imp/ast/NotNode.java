@@ -3,6 +3,8 @@ package edu.cornell.cs.apl.viaduct.imp.ast;
 import edu.cornell.cs.apl.viaduct.imp.visitors.ExprVisitor;
 import java.util.Objects;
 
+// TODO: add unary operators (just like we did with binary operators) and refactor this class.
+
 /** Boolean negation. */
 public final class NotNode implements ExpressionNode {
   private final ExpressionNode expression;

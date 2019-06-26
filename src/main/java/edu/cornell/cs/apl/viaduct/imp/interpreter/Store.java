@@ -1,11 +1,13 @@
 package edu.cornell.cs.apl.viaduct.imp.interpreter;
 
+import edu.cornell.cs.apl.viaduct.imp.RedeclaredVariableException;
+import edu.cornell.cs.apl.viaduct.imp.UndeclaredVariableException;
 import edu.cornell.cs.apl.viaduct.imp.ast.ImpValue;
 import edu.cornell.cs.apl.viaduct.imp.ast.UnavailableValue;
 import edu.cornell.cs.apl.viaduct.imp.ast.Variable;
 import io.vavr.Tuple2;
-
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -80,55 +82,69 @@ public class Store implements Iterable<Tuple2<Variable, ImpValue>> {
   }
 
   /**
-   * declare a new array.
+   * Declare a new array with the given length. No value is associated to any index, and attempting
+   * to access an index before assigning a value will throw an exception.
    *
-   * @param var the variable to associate with the new array.
-   * @param length the length of the array.
+   * @param variable variable naming the new array
+   * @param length length of the array
    */
-  void declareArray(Variable var, int length) throws RedeclaredVariableException {
-    if (this.arrayStore.containsKey(var)) {
-      throw new RedeclaredVariableException(var);
+  void declareArray(Variable variable, int length) throws RedeclaredVariableException {
+    if (this.arrayStore.containsKey(variable)) {
+      throw new RedeclaredVariableException(variable);
     }
     ImpValue[] array = new ImpValue[length];
-    this.arrayStore.put(var, array);
+    Arrays.fill(array, UnavailableValue.create());
+    this.arrayStore.put(variable, array);
   }
 
   /**
-   * return value of array at a particular index.
+   * Return the value of an array at a particular index.
    *
-   * @param var the array variable
+   * @param variable the array variable
    * @param index the index to lookup
-   * @throws UndeclaredVariableException if the array variable was not declared.
+   * @throws UndeclaredVariableException if the array was not declared.
    * @throws UnassignedVariableException if the array was never assigned a value at the index.
-   * */
-  ImpValue lookupArray(Variable var, int index)
-      throws UndeclaredVariableException, ImpArrayOutOfBoundsException,
-          UnassignedVariableException
-  {
-    final ImpValue[] array = this.arrayStore.get(var);
-    if (array == null) {
-      throw new UndeclaredVariableException(var);
+   * @throws ImpArrayOutOfBoundsException if the index lies outside the array bounds.
+   */
+  ImpValue lookupArray(Variable variable, int index)
+      throws UndeclaredVariableException, UnassignedVariableException,
+          ImpArrayOutOfBoundsException {
+    final ImpValue[] array = this.arrayStore.get(variable);
 
-    } else if (index < 0 || index >= array.length) {
-      throw new ImpArrayOutOfBoundsException(var, index);
-
-    } else if (array[index] instanceof UnavailableValue) {
-      throw new UnassignedVariableException(var);
-
-    } else {
-      return array[index];
+    try {
+      if (array == null) {
+        throw new UndeclaredVariableException(variable);
+      } else if (array[index] instanceof UnavailableValue) {
+        throw new UnassignedVariableException(variable);
+      } else {
+        return array[index];
+      }
+    } catch (ArrayIndexOutOfBoundsException e) {
+      throw new ImpArrayOutOfBoundsException(variable, index);
     }
   }
 
-  void updateArray(Variable var, int index, ImpValue val)
-      throws UndeclaredVariableException
-  {
-    final ImpValue[] array = this.arrayStore.get(var);
-    if (array == null) {
-      throw new UndeclaredVariableException(var);
+  /**
+   * Update the value of an array at a particular index.
+   *
+   * @param variable the array whose value should be updated
+   * @param index the index at which the array should be updated
+   * @param newValue the new value to associate with the index
+   * @throws UndeclaredVariableException if the variable was not declared.
+   * @throws ImpArrayOutOfBoundsException if the index lies outside the array bounds.
+   */
+  void updateArray(Variable variable, int index, ImpValue newValue)
+      throws UndeclaredVariableException, ImpArrayOutOfBoundsException {
+    final ImpValue[] array = this.arrayStore.get(variable);
 
-    } else {
-      array[index] = val;
+    if (array == null) {
+      throw new UndeclaredVariableException(variable);
+    }
+
+    try {
+      array[index] = newValue;
+    } catch (ArrayIndexOutOfBoundsException e) {
+      throw new ImpArrayOutOfBoundsException(variable, index);
     }
   }
 

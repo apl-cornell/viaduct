@@ -15,6 +15,7 @@ import java.util.Objects;
 final class FreeDistributiveLattice<A> implements Lattice<FreeDistributiveLattice<A>> {
   private static final FreeDistributiveLattice<?> BOTTOM =
       new FreeDistributiveLattice<>(HashSet.of());
+
   private static final FreeDistributiveLattice<?> TOP =
       new FreeDistributiveLattice<>(HashSet.of(HashSet.of()));
 

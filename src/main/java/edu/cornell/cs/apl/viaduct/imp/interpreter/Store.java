@@ -5,6 +5,7 @@ import edu.cornell.cs.apl.viaduct.imp.UndeclaredVariableException;
 import edu.cornell.cs.apl.viaduct.imp.ast.ImpValue;
 import edu.cornell.cs.apl.viaduct.imp.ast.UnavailableValue;
 import edu.cornell.cs.apl.viaduct.imp.ast.Variable;
+import edu.cornell.cs.apl.viaduct.util.SymbolTable;
 import io.vavr.Tuple2;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -18,6 +19,9 @@ import javax.annotation.Nonnull;
 public class Store implements Iterable<Tuple2<Variable, ImpValue>> {
   /** Maps variables to their values. */
   private final Map<Variable, ImpValue> variableStore = new HashMap<>();
+
+  /** Maps temporaries to values. */
+  private final SymbolTable<Variable, ImpValue> tempStore = new SymbolTable<>();
 
   /** Maps array variables to Java arrays storing the contents. */
   private final Map<Variable, ImpValue[]> arrayStore = new HashMap<>();
@@ -57,7 +61,8 @@ public class Store implements Iterable<Tuple2<Variable, ImpValue>> {
     final ImpValue value = variableStore.get(variable);
 
     if (value == null) {
-      throw new UndeclaredVariableException(variable);
+      // might be a temporary; check the temp store
+      return this.tempStore.get(variable);
 
     } else if (value instanceof UnavailableValue) {
       throw new UnassignedVariableException(variable);
@@ -191,5 +196,41 @@ public class Store implements Iterable<Tuple2<Variable, ImpValue>> {
     }
 
     return buffer.toString();
+  }
+
+  /** push new context for temporary stores. */
+  void pushTempContext() {
+    this.tempStore.push();
+  }
+
+  void popTempContext() {
+    this.tempStore.push();
+  }
+
+  /**
+   * Declare a new temporary variable.
+   *
+   * @param var temp variable to declare
+   * @param val value of temporary
+   */
+  void declareTemp(Variable var, ImpValue val) throws RedeclaredVariableException {
+    if (this.tempStore.contains(var)) {
+      throw new RedeclaredVariableException(var);
+    }
+    this.tempStore.add(var, val);
+  }
+
+  /**
+   * Lookup a temporary variable.
+   *
+   * @param var the temporary variable to lookup
+   * @throws UndeclaredVariableException if the variable was not declared.
+   */
+  @Nonnull
+  ImpValue lookupTemp(Variable var) {
+    if (this.tempStore.contains(var)) {
+      return this.tempStore.get(var);
+    }
+    throw new UndeclaredVariableException(var);
   }
 }

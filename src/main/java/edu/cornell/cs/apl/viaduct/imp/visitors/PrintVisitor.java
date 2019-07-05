@@ -11,6 +11,7 @@ import edu.cornell.cs.apl.viaduct.imp.ast.ExpressionNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ForNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.Host;
 import edu.cornell.cs.apl.viaduct.imp.ast.IfNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.LetBindingNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.LiteralNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.NotNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ProcessName;
@@ -167,6 +168,19 @@ public class PrintVisitor
     buffer.append(" : ");
     buffer.append(declarationNode.getType());
     buffer.append(declarationNode.getLabel());
+
+    addSeparator();
+    return null;
+  }
+
+  @Override
+  public Void visit(LetBindingNode letBindingNode) {
+    addIndentation();
+
+    buffer.append("let ");
+    buffer.append(letBindingNode.getVariable());
+    buffer.append(" = ");
+    letBindingNode.getRhs().accept(this);
 
     addSeparator();
     return null;

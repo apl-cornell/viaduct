@@ -8,6 +8,7 @@ import edu.cornell.cs.apl.viaduct.imp.ast.BlockNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ExpressionNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.IfNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ImpValue;
+import edu.cornell.cs.apl.viaduct.imp.ast.LetBindingNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.LiteralNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ReadNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ReceiveNode;
@@ -142,6 +143,24 @@ public class CopyPropagation extends Dataflow<CopyPropagation.CopyPropInfo, CFGN
       CopyPropInfo inInfo = this.inInfoQueue.remove();
       this.outInfoQueue.remove();
       return rename(arrayDeclNode, inInfo);
+    }
+
+    @Override
+    public StmtNode visit(LetBindingNode letBindingNode) {
+      CopyPropInfo inInfo = this.inInfoQueue.remove();
+      CopyPropInfo outInfo = this.outInfoQueue.remove();
+
+      Map<Variable, ExpressionNode> outRenameMap = processCopyPropInfo(outInfo);
+      Set<Variable> renamedVars = outRenameMap.keySet();
+
+      // this is one of the variables to be erased; remove it
+      Variable var = letBindingNode.getVariable();
+      if (renamedVars.contains(var)) {
+        return new BlockNode();
+      }
+
+      // otherwise, rename all variables in the assignment
+      return rename(letBindingNode, inInfo);
     }
 
     @Override
@@ -454,14 +473,31 @@ public class CopyPropagation extends Dataflow<CopyPropagation.CopyPropInfo, CFGN
 
         if (lhs instanceof Variable) {
           Variable var = (Variable) lhs;
+          // x = y
           if (rhs instanceof ReadNode && ((ReadNode) rhs).getReference() instanceof Variable) {
             Variable rhsVar = (Variable) ((ReadNode) rhs).getReference();
             return addVar(var, rhsVar);
 
+          // x = n
           } else if (rhs instanceof LiteralNode) {
             LiteralNode rhsLit = (LiteralNode) rhs;
             return addVal(var, rhsLit.getValue());
           }
+        }
+      } else if (stmt instanceof LetBindingNode) {
+        LetBindingNode letBindingNode = (LetBindingNode)stmt;
+        Variable var = letBindingNode.getVariable();
+        ExpressionNode rhs = letBindingNode.getRhs();
+
+        // let x = y
+        if (rhs instanceof ReadNode && ((ReadNode) rhs).getReference() instanceof Variable) {
+          Variable rhsVar = (Variable) ((ReadNode) rhs).getReference();
+          return addVar(var, rhsVar);
+
+        // let x = n
+        } else if (rhs instanceof LiteralNode) {
+          LiteralNode rhsLit = (LiteralNode) rhs;
+          return addVal(var, rhsLit.getValue());
         }
       }
 

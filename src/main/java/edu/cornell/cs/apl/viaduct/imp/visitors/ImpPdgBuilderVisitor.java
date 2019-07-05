@@ -12,6 +12,7 @@ import edu.cornell.cs.apl.viaduct.imp.ast.ExpressionNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ForNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.IfNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ImpAstNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.LetBindingNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.LiteralNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.NotNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ProgramNode;
@@ -183,6 +184,12 @@ public class ImpPdgBuilderVisitor
 
   @Override
   public PdgBuilderInfo<ImpAstNode> visit(ArrayDeclarationNode arrayDeclarationNode) {
+    // TODO: do the right thing
+    return new PdgBuilderInfo<>();
+  }
+
+  @Override
+  public PdgBuilderInfo<ImpAstNode> visit(LetBindingNode letBindingNode) {
     // TODO: do the right thing
     return new PdgBuilderInfo<>();
   }

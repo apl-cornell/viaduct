@@ -9,6 +9,7 @@ import edu.cornell.cs.apl.viaduct.imp.ast.BlockNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.DowngradeNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ForNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.IfNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.LetBindingNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.LiteralNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.NotNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ProcessName;
@@ -78,6 +79,12 @@ public class VoidVisitor
   @Override
   public Void visit(ArrayDeclarationNode arrayDeclarationNode) {
     arrayDeclarationNode.getLength().accept(this);
+    return null;
+  }
+
+  @Override
+  public Void visit(LetBindingNode letBindingNode) {
+    letBindingNode.getRhs().accept(this);
     return null;
   }
 

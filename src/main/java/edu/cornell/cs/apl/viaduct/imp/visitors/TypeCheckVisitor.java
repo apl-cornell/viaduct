@@ -16,6 +16,7 @@ import edu.cornell.cs.apl.viaduct.imp.ast.ForNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.IfNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ImpType;
 import edu.cornell.cs.apl.viaduct.imp.ast.IntegerType;
+import edu.cornell.cs.apl.viaduct.imp.ast.LetBindingNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.LiteralNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.NotNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ProcessName;
@@ -41,9 +42,11 @@ public class TypeCheckVisitor
         ProgramVisitor<Void> {
 
   private final SymbolTable<Variable, ImpType> symbolTable;
+  private final SymbolTable<Variable, ImpType> tempSymbolTable;
 
   public TypeCheckVisitor() {
     this.symbolTable = new SymbolTable<>();
+    this.tempSymbolTable = new SymbolTable<>();
   }
 
   public void run(ExpressionNode expr) {
@@ -140,6 +143,13 @@ public class TypeCheckVisitor
   }
 
   @Override
+  public Void visit(LetBindingNode letBindingNode) {
+    ImpType rhsType = letBindingNode.getRhs().accept(this);
+    this.tempSymbolTable.add(letBindingNode.getVariable(), rhsType);
+    return null;
+  }
+
+  @Override
   public Void visit(AssignNode assignNode) {
     ImpType lhsType = assignNode.getLhs().accept(this);
     assertHasType(assignNode.getRhs(), lhsType);
@@ -197,12 +207,14 @@ public class TypeCheckVisitor
   @Override
   public Void visit(BlockNode blockNode) {
     this.symbolTable.push();
+    this.tempSymbolTable.push();
 
     for (StmtNode stmt : blockNode) {
       stmt.accept(this);
     }
 
     this.symbolTable.pop();
+    this.tempSymbolTable.pop();
 
     return null;
   }

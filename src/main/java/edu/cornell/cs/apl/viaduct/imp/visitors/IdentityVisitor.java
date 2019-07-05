@@ -11,6 +11,7 @@ import edu.cornell.cs.apl.viaduct.imp.ast.DowngradeNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ExpressionNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ForNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.IfNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.LetBindingNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.LiteralNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.NotNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ProcessName;
@@ -110,6 +111,13 @@ public abstract class IdentityVisitor
         arrayDeclNode.getLength(),
         arrayDeclNode.getType(),
         arrayDeclNode.getLabel());
+  }
+
+  @Override
+  public StmtNode visit(LetBindingNode letBindingNode) {
+    return new LetBindingNode(
+        letBindingNode.getVariable(),
+        letBindingNode.getRhs());
   }
 
   @Override

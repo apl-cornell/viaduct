@@ -9,6 +9,7 @@ import edu.cornell.cs.apl.viaduct.imp.ast.BlockNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.DowngradeNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ForNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.IfNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.LetBindingNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.LiteralNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.NotNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ProcessName;
@@ -75,6 +76,11 @@ public class SizeVisitor
   @Override
   public Integer visit(ArrayDeclarationNode arrayDeclarationNode) {
     return arrayDeclarationNode.getLength().accept(this);
+  }
+
+  @Override
+  public Integer visit(LetBindingNode letBindingNode) {
+    return letBindingNode.getRhs().accept(this) + 1;
   }
 
   @Override

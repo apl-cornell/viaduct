@@ -7,6 +7,7 @@ import edu.cornell.cs.apl.viaduct.imp.ast.AssignNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.BlockNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ForNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.IfNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.LetBindingNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ReceiveNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.Reference;
 import edu.cornell.cs.apl.viaduct.imp.ast.SendNode;
@@ -80,6 +81,15 @@ public class CFGVisitor implements StmtVisitor<Void> {
     this.declaredVars.add(var);
     this.vars.add(var);
     visitSingleStatement(arrayDeclNode);
+    return null;
+  }
+
+  @Override
+  public Void visit(LetBindingNode letBindingNode) {
+    Variable var = letBindingNode.getVariable();
+    this.tempVars.add(var);
+    this.vars.add(var);
+    visitSingleStatement(letBindingNode);
     return null;
   }
 

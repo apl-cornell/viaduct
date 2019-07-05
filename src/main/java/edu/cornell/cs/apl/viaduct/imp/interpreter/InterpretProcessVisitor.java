@@ -14,6 +14,7 @@ import edu.cornell.cs.apl.viaduct.imp.ast.ForNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.IfNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ImpValue;
 import edu.cornell.cs.apl.viaduct.imp.ast.IntegerValue;
+import edu.cornell.cs.apl.viaduct.imp.ast.LetBindingNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.LiteralNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.NotNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ProcessName;
@@ -133,6 +134,13 @@ class InterpretProcessVisitor implements ExprVisitor<ImpValue>, StmtVisitor<Void
   }
 
   @Override
+  public Void visit(LetBindingNode letBindingNode) {
+    ImpValue value = letBindingNode.getRhs().accept(this);
+    store.declareTemp(letBindingNode.getVariable(), value);
+    return null;
+  }
+
+  @Override
   public Void visit(AssignNode assignNode) {
     ImpValue value = assignNode.getRhs().accept(this);
     assignNode.getLhs().accept(new WriteReferenceVisitor(value));
@@ -194,9 +202,11 @@ class InterpretProcessVisitor implements ExprVisitor<ImpValue>, StmtVisitor<Void
 
   @Override
   public Void visit(BlockNode blockNode) {
+    store.pushTempContext();
     for (StmtNode stmt : blockNode) {
       stmt.accept(this);
     }
+    store.popTempContext();
     return null;
   }
 

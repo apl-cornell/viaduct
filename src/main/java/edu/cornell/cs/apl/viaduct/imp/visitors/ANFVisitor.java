@@ -93,8 +93,11 @@ public class ANFVisitor extends IdentityVisitor {
         return readNode;
       }
 
-    } else {
-      return addBinding(readNode);
+    } else { // array index
+      ArrayIndex arrayInd = (ArrayIndex)ref;
+      ExpressionNode newInd = arrayInd.getIndex().accept(this);
+      ReadNode newRead = new ReadNode(new ArrayIndex(arrayInd.getArray(), newInd));
+      return addBinding(newRead);
     }
   }
 

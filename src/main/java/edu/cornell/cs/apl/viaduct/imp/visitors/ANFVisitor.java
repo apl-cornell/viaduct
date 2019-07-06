@@ -29,7 +29,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /** translation to A-normal form. */
-public class ANFVisitor extends IdentityVisitor {
+public class ANFVisitor extends FormatBlockVisitor {
   private static final String TMP_NAME = "tmp";
   private final FreshNameGenerator nameGenerator;
   private final SymbolTable<Variable,Boolean> declaredVars;
@@ -198,26 +198,12 @@ public class ANFVisitor extends IdentityVisitor {
 
   @Override
   public StmtNode visit(BlockNode blockNode) {
-    List<StmtNode> stmtList = new ArrayList<>();
-
     // flatten nested blocks
     this.declaredVars.push();
-    for (StmtNode stmt : blockNode) {
-      StmtNode newStmt = stmt.accept(this);
-
-      if (newStmt instanceof BlockNode) {
-        BlockNode newBlock = (BlockNode)newStmt;
-        for (StmtNode newBlockStmt : newBlock) {
-          stmtList.add(newBlockStmt);
-        }
-
-      } else {
-        stmtList.add(stmt);
-      }
-    }
+    StmtNode newBlock = super.visit(blockNode);
     this.declaredVars.pop();
 
-    return new BlockNode(stmtList);
+    return newBlock;
   }
 
   @Override

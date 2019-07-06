@@ -6,7 +6,7 @@ import edu.cornell.cs.apl.viaduct.imp.ast.StmtNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.WhileNode;
 
 /** Elaborate derived AST nodes into internal ones.. */
-public class ElaborationVisitor extends IdentityVisitor {
+public class ElaborationVisitor extends FormatBlockVisitor {
   /** Rewrite for loops into while loops. */
   @Override
   public StmtNode visit(ForNode forNode) {

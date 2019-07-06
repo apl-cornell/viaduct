@@ -17,7 +17,7 @@ public final class BreakNode implements StmtNode {
 
   @Override
   public <R> R accept(StmtVisitor<R> visitor) {
-    return visitor.accept(this);
+    return visitor.visit(this);
   }
 
   @Override

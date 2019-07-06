@@ -8,6 +8,7 @@ import edu.cornell.cs.apl.viaduct.imp.ast.AssignNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.BinaryExpressionNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.BlockNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.BooleanValue;
+import edu.cornell.cs.apl.viaduct.imp.ast.BreakNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.DowngradeNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ExpressionNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ForNode;
@@ -16,6 +17,7 @@ import edu.cornell.cs.apl.viaduct.imp.ast.ImpValue;
 import edu.cornell.cs.apl.viaduct.imp.ast.IntegerValue;
 import edu.cornell.cs.apl.viaduct.imp.ast.LetBindingNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.LiteralNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.LoopNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.NotNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ProcessName;
 import edu.cornell.cs.apl.viaduct.imp.ast.ReadNode;
@@ -198,6 +200,18 @@ class InterpretProcessVisitor implements ExprVisitor<ImpValue>, StmtVisitor<Void
   @Override
   public Void visit(ForNode forNode) {
     throw new ElaborationException();
+  }
+
+  @Override
+  public Void visit(LoopNode loopNode) {
+    loopNode.getBody().accept(this);
+    return null;
+  }
+
+  @Override
+  public Void visit(BreakNode breakNode) {
+    // TODO: do the right thing
+    return null;
   }
 
   @Override

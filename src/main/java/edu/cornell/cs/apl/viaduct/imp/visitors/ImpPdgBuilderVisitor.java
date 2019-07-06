@@ -7,6 +7,7 @@ import edu.cornell.cs.apl.viaduct.imp.ast.AssertNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.AssignNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.BinaryExpressionNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.BlockNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.BreakNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.DowngradeNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ExpressionNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ForNode;
@@ -14,6 +15,7 @@ import edu.cornell.cs.apl.viaduct.imp.ast.IfNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ImpAstNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.LetBindingNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.LiteralNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.LoopNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.NotNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ProgramNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ReadNode;
@@ -335,6 +337,18 @@ public class ImpPdgBuilderVisitor
   @Override
   public PdgBuilderInfo<ImpAstNode> visit(ForNode forNode) {
     throw new Error(new ElaborationException());
+  }
+
+  @Override
+  public PdgBuilderInfo<ImpAstNode> visit(LoopNode loopNode) {
+    // TODO: do the right thing
+    return new PdgBuilderInfo<>();
+  }
+
+  @Override
+  public PdgBuilderInfo<ImpAstNode> visit(BreakNode breakNode) {
+    // TODO: do the right thing
+    return new PdgBuilderInfo<>();
   }
 
   /** send/recvs should not be in surface programs and thus should not be in the generated PDG. */

@@ -7,12 +7,14 @@ import edu.cornell.cs.apl.viaduct.imp.ast.AssertNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.AssignNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.BinaryExpressionNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.BlockNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.BreakNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.DowngradeNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ExpressionNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ForNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.IfNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.LetBindingNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.LiteralNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.LoopNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.NotNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ProcessName;
 import edu.cornell.cs.apl.viaduct.imp.ast.ProgramNode;
@@ -149,6 +151,18 @@ public abstract class IdentityVisitor
     StmtNode newUpdate = forNode.getUpdate().accept(this);
     StmtNode newBody = forNode.getBody().accept(this);
     return new ForNode(newInit, newGuard, newUpdate, newBody);
+  }
+
+  @Override
+  public StmtNode visit(LoopNode loopNode) {
+    StmtNode newBody = loopNode.getBody().accept(this);
+    return new LoopNode(newBody);
+  }
+
+  @Override
+  public StmtNode visit(BreakNode breakNode) {
+    ExpressionNode newLevel = breakNode.getLevel().accept(this);
+    return new BreakNode(newLevel);
   }
 
   @Override

@@ -10,6 +10,7 @@ import edu.cornell.cs.apl.viaduct.imp.ast.AssignNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.BinaryExpressionNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.BlockNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.BooleanType;
+import edu.cornell.cs.apl.viaduct.imp.ast.BreakNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.DowngradeNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ExpressionNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ForNode;
@@ -18,6 +19,7 @@ import edu.cornell.cs.apl.viaduct.imp.ast.ImpType;
 import edu.cornell.cs.apl.viaduct.imp.ast.IntegerType;
 import edu.cornell.cs.apl.viaduct.imp.ast.LetBindingNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.LiteralNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.LoopNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.NotNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ProcessName;
 import edu.cornell.cs.apl.viaduct.imp.ast.ProgramNode;
@@ -185,7 +187,9 @@ public class TypeCheckVisitor
   @Override
   public Void visit(WhileNode whileNode) {
     assertHasType(whileNode.getGuard(), BooleanType.create());
+    this.symbolTable.push();
     whileNode.getBody().accept(this);
+    this.symbolTable.pop();
 
     return null;
   }
@@ -201,6 +205,21 @@ public class TypeCheckVisitor
     forNode.getBody().accept(this);
 
     this.symbolTable.pop();
+    return null;
+  }
+
+  @Override
+  public Void visit(LoopNode loopNode) {
+    this.symbolTable.push();
+    loopNode.getBody().accept(this);
+    this.symbolTable.pop();
+
+    return null;
+  }
+
+  @Override
+  public Void visit(BreakNode breakNode) {
+    assertHasType(breakNode.getLevel(), IntegerType.create());
     return null;
   }
 

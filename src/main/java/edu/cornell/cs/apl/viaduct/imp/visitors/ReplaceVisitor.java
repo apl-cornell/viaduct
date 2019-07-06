@@ -5,11 +5,14 @@ import edu.cornell.cs.apl.viaduct.imp.ast.AssertNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.AssignNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.BinaryExpressionNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.BlockNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.BreakNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.DowngradeNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ExpressionNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.ForNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.IfNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ImpAstNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.LiteralNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.LoopNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.NotNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ReadNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ReceiveNode;
@@ -185,6 +188,36 @@ public class ReplaceVisitor extends IdentityVisitor {
 
     } else {
       return super.visit(whileNode);
+    }
+  }
+
+  @Override
+  public StmtNode visit(ForNode forNode) {
+    if (this.stmtMap.containsKey(forNode)) {
+      return this.stmtMap.get(forNode);
+
+    } else {
+      return super.visit(forNode);
+    }
+  }
+
+  @Override
+  public StmtNode visit(LoopNode loopNode) {
+    if (this.stmtMap.containsKey(loopNode)) {
+      return this.stmtMap.get(loopNode);
+
+    } else {
+      return super.visit(loopNode);
+    }
+  }
+
+  @Override
+  public StmtNode visit(BreakNode breakNode) {
+    if (this.stmtMap.containsKey(breakNode)) {
+      return this.stmtMap.get(breakNode);
+
+    } else {
+      return super.visit(breakNode);
     }
   }
 

@@ -5,9 +5,11 @@ import edu.cornell.cs.apl.viaduct.imp.ast.ArrayDeclarationNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.AssertNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.AssignNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.BlockNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.BreakNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ForNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.IfNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.LetBindingNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.LoopNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ReceiveNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.Reference;
 import edu.cornell.cs.apl.viaduct.imp.ast.SendNode;
@@ -148,7 +150,7 @@ public class CFGVisitor implements StmtVisitor<Void> {
 
   @Override
   public Void visit(WhileNode whileNode) {
-    StmtNode newWhile = new WhileNode(whileNode.getGuard(), whileNode.getBody());
+    StmtNode newWhile = new WhileNode(whileNode.getGuard(), new BlockNode());
     CFGNode whileCfg = visitSingleStatement(newWhile);
 
     whileNode.getBody().accept(this);
@@ -164,10 +166,34 @@ public class CFGVisitor implements StmtVisitor<Void> {
 
     return null;
   }
-
   @Override
   public Void visit(ForNode forNode) {
     throw new Error(new ElaborationException());
+  }
+
+  @Override
+  public Void visit(LoopNode loopNode) {
+    StmtNode newLoop = new LoopNode(new BlockNode());
+    CFGNode loopCfg = visitSingleStatement(newLoop);
+
+    loopNode.getBody().accept(this);
+    final Set<CFGNode> bodyLastNodes = new HashSet<>(this.lastNodes);
+
+    for (CFGNode bodyLastNode : bodyLastNodes) {
+      bodyLastNode.addOutNode(loopCfg);
+      loopCfg.addInNode(bodyLastNode);
+    }
+
+    this.lastNodes.clear();
+    this.lastNodes.addAll(bodyLastNodes);
+
+    return null;
+  }
+
+  @Override
+  public Void visit(BreakNode breakNode) {
+    visitSingleStatement(breakNode);
+    return null;
   }
 
   @Override

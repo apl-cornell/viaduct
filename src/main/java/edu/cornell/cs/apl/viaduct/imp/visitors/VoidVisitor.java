@@ -6,11 +6,13 @@ import edu.cornell.cs.apl.viaduct.imp.ast.AssertNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.AssignNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.BinaryExpressionNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.BlockNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.BreakNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.DowngradeNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ForNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.IfNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.LetBindingNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.LiteralNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.LoopNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.NotNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ProcessName;
 import edu.cornell.cs.apl.viaduct.imp.ast.ProgramNode;
@@ -127,6 +129,18 @@ public class VoidVisitor
     forNode.getGuard().accept(this);
     forNode.getUpdate().accept(this);
     forNode.getBody().accept(this);
+    return null;
+  }
+
+  @Override
+  public Void visit(LoopNode loopNode) {
+    loopNode.getBody().accept(this);
+    return null;
+  }
+
+  @Override
+  public Void visit(BreakNode breakNode) {
+    breakNode.getLevel().accept(this);
     return null;
   }
 

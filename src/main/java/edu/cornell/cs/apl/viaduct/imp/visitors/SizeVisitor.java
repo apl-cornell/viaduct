@@ -6,11 +6,13 @@ import edu.cornell.cs.apl.viaduct.imp.ast.AssertNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.AssignNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.BinaryExpressionNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.BlockNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.BreakNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.DowngradeNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ForNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.IfNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.LetBindingNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.LiteralNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.LoopNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.NotNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ProcessName;
 import edu.cornell.cs.apl.viaduct.imp.ast.ProgramNode;
@@ -120,6 +122,16 @@ public class SizeVisitor
     Integer updateSize = forNode.getUpdate().accept(this);
     Integer bodySize = forNode.getBody().accept(this);
     return 1 + initSize + guardSize + updateSize + bodySize;
+  }
+
+  @Override
+  public Integer visit(LoopNode loopNode) {
+    return 1 + loopNode.getBody().accept(this);
+  }
+
+  @Override
+  public Integer visit(BreakNode breakNode) {
+    return 1;
   }
 
   @Override

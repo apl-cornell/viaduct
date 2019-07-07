@@ -119,7 +119,7 @@ public abstract class IdentityVisitor
   public StmtNode visit(LetBindingNode letBindingNode) {
     return new LetBindingNode(
         letBindingNode.getVariable(),
-        letBindingNode.getRhs());
+        letBindingNode.getRhs().accept(this));
   }
 
   @Override

@@ -41,6 +41,6 @@ public final class BreakNode implements StmtNode {
 
   @Override
   public String toString() {
-    return String.format("(break %d)", this.level);
+    return String.format("(break %s)", this.level);
   }
 }

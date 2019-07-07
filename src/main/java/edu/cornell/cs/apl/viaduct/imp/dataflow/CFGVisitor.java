@@ -11,13 +11,13 @@ import edu.cornell.cs.apl.viaduct.imp.ast.IfNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.LetBindingNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.LoopNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ReceiveNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.Reference;
 import edu.cornell.cs.apl.viaduct.imp.ast.SendNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.StmtNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.Variable;
 import edu.cornell.cs.apl.viaduct.imp.ast.VariableDeclarationNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.WhileNode;
 import edu.cornell.cs.apl.viaduct.imp.visitors.StmtVisitor;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
@@ -97,6 +97,7 @@ public class CFGVisitor implements StmtVisitor<Void> {
 
   @Override
   public Void visit(AssignNode assignNode) {
+    /*
     Reference lhs = assignNode.getLhs();
 
     if (lhs instanceof Variable) {
@@ -106,6 +107,7 @@ public class CFGVisitor implements StmtVisitor<Void> {
         this.vars.add(var);
       }
     }
+    */
 
     visitSingleStatement(assignNode);
     return null;
@@ -150,27 +152,12 @@ public class CFGVisitor implements StmtVisitor<Void> {
 
   @Override
   public Void visit(WhileNode whileNode) {
-    // TODO: throw elaboration exception instead
-    StmtNode newWhile = new WhileNode(whileNode.getGuard(), new BlockNode());
-    CFGNode whileCfg = visitSingleStatement(newWhile);
-
-    whileNode.getBody().accept(this);
-    final Set<CFGNode> bodyLastNodes = new HashSet<>(this.lastNodes);
-
-    for (CFGNode bodyLastNode : bodyLastNodes) {
-      bodyLastNode.addOutNode(whileCfg);
-      whileCfg.addInNode(bodyLastNode);
-    }
-
-    this.lastNodes.clear();
-    this.lastNodes.addAll(bodyLastNodes);
-
-    return null;
+    throw new ElaborationException();
   }
 
   @Override
   public Void visit(ForNode forNode) {
-    throw new Error(new ElaborationException());
+    throw new ElaborationException();
   }
 
   @Override
@@ -187,7 +174,7 @@ public class CFGVisitor implements StmtVisitor<Void> {
     }
 
     this.lastNodes.clear();
-    this.lastNodes.addAll(bodyLastNodes);
+    this.lastNodes.add(loopCfg);
 
     return null;
   }

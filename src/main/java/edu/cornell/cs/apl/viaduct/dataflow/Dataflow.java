@@ -23,10 +23,6 @@ public abstract class Dataflow<T extends Lattice<T>, N> {
     this.dir = dd;
   }
 
-  protected Dataflow(DataflowType dt) {
-    this(dt, DataflowDirection.UP);
-  }
-
   protected abstract T input(N node);
 
   protected abstract T output(N node);

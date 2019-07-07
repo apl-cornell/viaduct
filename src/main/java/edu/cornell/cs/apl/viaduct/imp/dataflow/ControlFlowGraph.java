@@ -37,4 +37,30 @@ public class ControlFlowGraph {
   public List<Variable> getVars() {
     return this.vars;
   }
+
+  @Override
+  public String toString() {
+    StringBuilder builder = new StringBuilder();
+    for (CFGNode node : this.nodes) {
+      builder.append('\n');
+      builder.append(node.getStatement());
+      builder.append('\n');
+
+      builder.append("IN NODES:");
+      for (CFGNode inNode : node.getInNodes()) {
+        builder.append(inNode.getStatement());
+        builder.append(" ");
+      }
+
+      builder.append('\n');
+      builder.append("OUT NODES:");
+      for (CFGNode outNode : node.getOutNodes()) {
+        builder.append(outNode.getStatement());
+        builder.append(" ");
+      }
+      builder.append('\n');
+    }
+
+    return builder.toString();
+  }
 }

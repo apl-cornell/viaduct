@@ -11,6 +11,7 @@ import edu.cornell.cs.apl.viaduct.imp.ast.ExpressionNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ForNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.IfNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ImpAstNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.LetBindingNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.LiteralNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.LoopNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.NotNode;
@@ -138,6 +139,16 @@ public class ReplaceVisitor extends IdentityVisitor {
 
     } else {
       return super.visit(arrayDeclarationNode);
+    }
+  }
+
+  @Override
+  public StmtNode visit(LetBindingNode letBindingNode) {
+    if (this.stmtMap.containsKey(letBindingNode)) {
+      return this.stmtMap.get(letBindingNode);
+
+    } else {
+      return super.visit(letBindingNode);
     }
   }
 

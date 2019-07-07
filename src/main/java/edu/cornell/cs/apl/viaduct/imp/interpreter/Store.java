@@ -13,6 +13,8 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+
 import javax.annotation.Nonnull;
 
 /** Maps variables to their values. */
@@ -153,51 +155,6 @@ public class Store implements Iterable<Tuple2<Variable, ImpValue>> {
     }
   }
 
-  @Override
-  public @Nonnull Iterator<Tuple2<Variable, ImpValue>> iterator() {
-    return io.vavr.collection.HashMap.ofAll(variableStore).iterator();
-  }
-
-  @Override
-  public String toString() {
-    final StringBuilder buffer = new StringBuilder();
-
-    boolean first = true;
-    for (Map.Entry<Variable, ImpValue> entry : variableStore.entrySet()) {
-      if (!first) {
-        buffer.append("\n");
-      }
-
-      buffer.append(entry.getKey());
-      buffer.append(" => ");
-      buffer.append(entry.getValue());
-
-      first = false;
-    }
-
-    for (Map.Entry<Variable, ImpValue[]> entry : arrayStore.entrySet()) {
-      if (!first) {
-        buffer.append("\n");
-      }
-
-      buffer.append(entry.getKey());
-      buffer.append(" => ");
-      buffer.append("{");
-      List<String> arrayStr = new ArrayList<>();
-      for (ImpValue val : entry.getValue()) {
-        if (val != null) {
-          arrayStr.add(val.toString());
-        }
-      }
-      buffer.append(String.join(", ", arrayStr));
-      buffer.append("}");
-
-      first = false;
-    }
-
-    return buffer.toString();
-  }
-
   /** push new context for temporary stores. */
   void pushTempContext() {
     this.tempStore.push();
@@ -256,5 +213,87 @@ public class Store implements Iterable<Tuple2<Variable, ImpValue>> {
    */
   void restoreTempStore(SymbolTable<Variable,ImpValue> tempStore) {
     this.tempStore = tempStore;
+  }
+
+  @Override
+  public @Nonnull Iterator<Tuple2<Variable, ImpValue>> iterator() {
+    return io.vavr.collection.HashMap.ofAll(variableStore).iterator();
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+
+    if (!(o instanceof Store)) {
+      return false;
+    }
+
+    Store that = (Store)o;
+
+    // arrays use == for equals(), so we need to compare the values manually
+    if (this.arrayStore.size() == that.arrayStore.size()) {
+      for (Map.Entry<Variable,ImpValue[]> kv : this.arrayStore.entrySet()) {
+        if (that.arrayStore.containsKey(kv.getKey())) {
+          ImpValue[] thatVal = that.arrayStore.get(kv.getKey());
+          if (!Arrays.equals(kv.getValue(), thatVal)) {
+            return false;
+          }
+
+        } else {
+          return false;
+        }
+      }
+    } else {
+      return false;
+    }
+
+    return Objects.equals(this.variableStore, that.variableStore);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(this.variableStore, this.arrayStore);
+  }
+
+  @Override
+  public String toString() {
+    final StringBuilder buffer = new StringBuilder();
+
+    boolean first = true;
+    for (Map.Entry<Variable, ImpValue> entry : variableStore.entrySet()) {
+      if (!first) {
+        buffer.append("\n");
+      }
+
+      buffer.append(entry.getKey());
+      buffer.append(" => ");
+      buffer.append(entry.getValue());
+
+      first = false;
+    }
+
+    for (Map.Entry<Variable, ImpValue[]> entry : arrayStore.entrySet()) {
+      if (!first) {
+        buffer.append("\n");
+      }
+
+      buffer.append(entry.getKey());
+      buffer.append(" => ");
+      buffer.append("{");
+      List<String> arrayStr = new ArrayList<>();
+      for (ImpValue val : entry.getValue()) {
+        if (val != null) {
+          arrayStr.add(val.toString());
+        }
+      }
+      buffer.append(String.join(", ", arrayStr));
+      buffer.append("}");
+
+      first = false;
+    }
+
+    return buffer.toString();
   }
 }

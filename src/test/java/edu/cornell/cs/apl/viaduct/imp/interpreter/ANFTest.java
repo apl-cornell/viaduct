@@ -1,5 +1,7 @@
 package edu.cornell.cs.apl.viaduct.imp.interpreter;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 import edu.cornell.cs.apl.viaduct.ExamplesProvider;
 import edu.cornell.cs.apl.viaduct.ImpAstParser;
 import edu.cornell.cs.apl.viaduct.imp.ast.ImpAstNode;
@@ -7,8 +9,6 @@ import edu.cornell.cs.apl.viaduct.imp.ast.ProcessName;
 import edu.cornell.cs.apl.viaduct.imp.ast.ProgramNode;
 import edu.cornell.cs.apl.viaduct.imp.visitors.ANFVisitor;
 import edu.cornell.cs.apl.viaduct.imp.visitors.ElaborationVisitor;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.util.Map;
 

@@ -6,8 +6,12 @@ import java.util.NoSuchElementException;
 import java.util.Stack;
 
 /** A generic data structure for a stack of maps, useful for maintaining lexical scoping. */
-public class SymbolTable<V, T> {
+public final class SymbolTable<V, T> implements Cloneable {
   private final Stack<Map<V, T>> tableStack;
+
+  private SymbolTable(Stack<Map<V,T>> tableStack) {
+    this.tableStack = tableStack;
+  }
 
   public SymbolTable() {
     this.tableStack = new Stack<>();
@@ -36,6 +40,12 @@ public class SymbolTable<V, T> {
 
   public void pop() {
     this.tableStack.pop();
+  }
+
+  @Override
+  public Object clone() throws CloneNotSupportedException {
+    Stack<Map<V,T>> tableStack = (Stack<Map<V,T>>)this.tableStack.clone();
+    return new SymbolTable<V,T>(tableStack);
   }
 
   @Override

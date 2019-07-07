@@ -3,9 +3,13 @@ package edu.cornell.cs.apl.viaduct.imp.builders;
 import edu.cornell.cs.apl.viaduct.imp.ast.AssertNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.AssignNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.BlockNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.BreakNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ExpressionNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.IfNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ImpType;
+import edu.cornell.cs.apl.viaduct.imp.ast.IntegerValue;
+import edu.cornell.cs.apl.viaduct.imp.ast.LiteralNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.LoopNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ProcessName;
 import edu.cornell.cs.apl.viaduct.imp.ast.ReceiveNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.SendNode;
@@ -90,6 +94,20 @@ public class StmtBuilder {
   public StmtBuilder cond(ExpressionNode guard, StmtBuilder thenBranch, StmtBuilder elseBranch) {
     StmtNode ifNode = new IfNode(guard, thenBranch.build(), elseBranch.build());
     this.stmts.add(ifNode);
+    return this;
+  }
+
+  /** create loops. */
+  public StmtBuilder loop(StmtBuilder bodyBuilder) {
+    StmtNode loop = new LoopNode(bodyBuilder.build());
+    this.stmts.add(loop);
+    return this;
+  }
+
+  /** create break. */
+  public StmtBuilder loopBreak() {
+    StmtNode loopBreak = new BreakNode(new LiteralNode(new IntegerValue(0)));
+    this.stmts.add(loopBreak);
     return this;
   }
 

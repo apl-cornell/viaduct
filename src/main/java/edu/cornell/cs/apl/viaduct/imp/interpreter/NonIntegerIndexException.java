@@ -8,4 +8,8 @@ class NonIntegerIndexException extends CompilationException {
   NonIntegerIndexException(Variable array, ImpValue index) {
     super(String.format("Index for array %s is not an integer: %s", array, index));
   }
+
+  NonIntegerIndexException(ImpValue index) {
+    super(String.format("Index for break is not an integer: %s", index));
+  }
 }

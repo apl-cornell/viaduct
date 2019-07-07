@@ -34,8 +34,8 @@ import edu.cornell.cs.apl.viaduct.util.SymbolTable;
 import io.vavr.Tuple2;
 
 /**
- * Check that value types are cohesive (e.g. only integers are added together). Label checking is a
- * separate step.
+ * Check that value types are cohesive (e.g. only integers are added together).
+ * Label checking is a separate step.
  */
 public class TypeCheckVisitor
     implements ReferenceVisitor<ImpType>,
@@ -45,21 +45,27 @@ public class TypeCheckVisitor
 
   private final SymbolTable<Variable, ImpType> symbolTable;
   private final SymbolTable<Variable, ImpType> tempSymbolTable;
+  private int loopLevel;
 
+  /** constructor. */
   public TypeCheckVisitor() {
     this.symbolTable = new SymbolTable<>();
     this.tempSymbolTable = new SymbolTable<>();
+    this.loopLevel = 0;
   }
 
   public void run(ExpressionNode expr) {
+    this.loopLevel = 0;
     expr.accept(this);
   }
 
   public void run(StmtNode stmt) {
+    this.loopLevel = 0;
     stmt.accept(this);
   }
 
   public void run(ProgramNode program) {
+    this.loopLevel = 0;
     program.accept(this);
   }
 
@@ -211,7 +217,9 @@ public class TypeCheckVisitor
   @Override
   public Void visit(LoopNode loopNode) {
     this.symbolTable.push();
+    this.loopLevel++;
     loopNode.getBody().accept(this);
+    this.loopLevel--;
     this.symbolTable.pop();
 
     return null;
@@ -219,8 +227,13 @@ public class TypeCheckVisitor
 
   @Override
   public Void visit(BreakNode breakNode) {
-    assertHasType(breakNode.getLevel(), IntegerType.create());
-    return null;
+    if (this.loopLevel > 0) {
+      assertHasType(breakNode.getLevel(), IntegerType.create());
+      return null;
+
+    } else {
+      throw new TypeCheckException("Break is outside of loop");
+    }
   }
 
   @Override

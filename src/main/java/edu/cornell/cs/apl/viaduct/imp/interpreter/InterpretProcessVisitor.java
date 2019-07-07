@@ -30,6 +30,8 @@ import edu.cornell.cs.apl.viaduct.imp.ast.WhileNode;
 import edu.cornell.cs.apl.viaduct.imp.visitors.ExprVisitor;
 import edu.cornell.cs.apl.viaduct.imp.visitors.ReferenceVisitor;
 import edu.cornell.cs.apl.viaduct.imp.visitors.StmtVisitor;
+import edu.cornell.cs.apl.viaduct.util.SymbolTable;
+
 import java.util.Objects;
 
 class InterpretProcessVisitor implements ExprVisitor<ImpValue>, StmtVisitor<Void> {
@@ -204,14 +206,34 @@ class InterpretProcessVisitor implements ExprVisitor<ImpValue>, StmtVisitor<Void
 
   @Override
   public Void visit(LoopNode loopNode) {
-    loopNode.getBody().accept(this);
+    SymbolTable<Variable,ImpValue> tempStore = this.store.saveTempStore();
+    try {
+      loopNode.getBody().accept(this);
+
+    } catch (BreakSignal breakSignal) {
+      if (breakSignal.getLevel() == 0) {
+        this.store.restoreTempStore(tempStore);
+        return null;
+
+      } else {
+        int newLevel = breakSignal.getLevel() - 1;
+        throw new BreakSignal(newLevel);
+      }
+    }
+    loopNode.accept(this);
     return null;
   }
 
   @Override
   public Void visit(BreakNode breakNode) {
-    // TODO: do the right thing
-    return null;
+    ImpValue val = breakNode.getLevel().accept(this);
+    if (val instanceof IntegerValue) {
+      IntegerValue intVal = (IntegerValue)val;
+      throw new BreakSignal(intVal.getValue());
+
+    } else {
+      throw new NonIntegerIndexException(val);
+    }
   }
 
   @Override

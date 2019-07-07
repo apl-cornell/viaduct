@@ -150,6 +150,7 @@ public class CFGVisitor implements StmtVisitor<Void> {
 
   @Override
   public Void visit(WhileNode whileNode) {
+    // TODO: throw elaboration exception instead
     StmtNode newWhile = new WhileNode(whileNode.getGuard(), new BlockNode());
     CFGNode whileCfg = visitSingleStatement(newWhile);
 
@@ -166,6 +167,7 @@ public class CFGVisitor implements StmtVisitor<Void> {
 
     return null;
   }
+
   @Override
   public Void visit(ForNode forNode) {
     throw new Error(new ElaborationException());

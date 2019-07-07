@@ -1,6 +1,5 @@
 package edu.cornell.cs.apl.viaduct.imp.visitors;
 
-import edu.cornell.cs.apl.viaduct.imp.ElaborationException;
 import edu.cornell.cs.apl.viaduct.imp.ast.ArrayDeclarationNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ArrayIndex;
 import edu.cornell.cs.apl.viaduct.imp.ast.AssertNode;
@@ -34,12 +33,14 @@ public class ANFVisitor extends FormatBlockVisitor {
   private final FreshNameGenerator nameGenerator;
   private final SymbolTable<Variable,Boolean> declaredVars;
   private List<LetBindingNode> currentBindings;
+  private boolean doAppend;
 
   /** constructor. */
   public ANFVisitor() {
     this.nameGenerator = new FreshNameGenerator();
     this.declaredVars = new SymbolTable<>();
     this.currentBindings = new ArrayList<>();
+    this.doAppend = true;
   }
 
   private List<LetBindingNode> flushBindingMap() {
@@ -48,11 +49,16 @@ public class ANFVisitor extends FormatBlockVisitor {
     return oldBindingList;
   }
 
-  private BlockNode appendBindings(StmtNode stmt) {
-    List<StmtNode> stmtList = new ArrayList<>();
-    stmtList.addAll(flushBindingMap());
-    stmtList.add(stmt);
-    return new BlockNode(stmtList);
+  private StmtNode appendBindings(StmtNode stmt) {
+    if (this.doAppend) {
+      List<StmtNode> stmtList = new ArrayList<>();
+      stmtList.addAll(flushBindingMap());
+      stmtList.add(stmt);
+      return new BlockNode(stmtList);
+
+    } else {
+      return stmt;
+    }
   }
 
   private ReadNode addBinding(ExpressionNode expr) {
@@ -187,13 +193,33 @@ public class ANFVisitor extends FormatBlockVisitor {
     // TODO: figure out how loop guards get converted to A-normal form...
     // they're not as straightforward as translating guards for conditionals
     // since the guard is evaluated multiple times
+    ExpressionNode newGuard = whileNode.getGuard().accept(this);
+    List<LetBindingNode> guardBindings = flushBindingMap();
+
     StmtNode newBody = whileNode.getBody().accept(this);
-    return new WhileNode(whileNode.getGuard(), newBody);
+
+    List<StmtNode> stmtList = new ArrayList<>();
+    stmtList.addAll(guardBindings);
+    stmtList.add(new WhileNode(newGuard, newBody));
+    return new BlockNode(stmtList);
   }
 
   @Override
   public StmtNode visit(ForNode forNode) {
-    throw new ElaborationException();
+    // TODO: not correct, as in while loop! fix this
+    this.doAppend = false;
+    StmtNode newInit = forNode.getInitialize().accept(this);
+    ExpressionNode newGuard = forNode.getGuard();
+    StmtNode newUpdate = forNode.getUpdate().accept(this);
+    this.doAppend = true;
+    List<LetBindingNode> forBindings = flushBindingMap();
+
+    StmtNode newBody = forNode.getBody().accept(this);
+
+    List<StmtNode> stmtList = new ArrayList<>();
+    stmtList.addAll(forBindings);
+    stmtList.add(new ForNode(newInit, newGuard, newUpdate, newBody));
+    return new BlockNode(stmtList);
   }
 
   @Override

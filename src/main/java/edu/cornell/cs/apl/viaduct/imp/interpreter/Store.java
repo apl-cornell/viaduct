@@ -21,7 +21,7 @@ public class Store implements Iterable<Tuple2<Variable, ImpValue>> {
   private final Map<Variable, ImpValue> variableStore = new HashMap<>();
 
   /** Maps temporaries to values. */
-  private final SymbolTable<Variable, ImpValue> tempStore = new SymbolTable<>();
+  private SymbolTable<Variable, ImpValue> tempStore = new SymbolTable<>();
 
   /** Maps array variables to Java arrays storing the contents. */
   private final Map<Variable, ImpValue[]> arrayStore = new HashMap<>();
@@ -204,7 +204,7 @@ public class Store implements Iterable<Tuple2<Variable, ImpValue>> {
   }
 
   void popTempContext() {
-    this.tempStore.push();
+    this.tempStore.pop();
   }
 
   /**
@@ -232,5 +232,29 @@ public class Store implements Iterable<Tuple2<Variable, ImpValue>> {
       return this.tempStore.get(var);
     }
     throw new UndeclaredVariableException(var);
+  }
+
+  /**
+   * Save a temp table (used by non-local control structures).
+   */
+  SymbolTable<Variable,ImpValue> saveTempStore() {
+    try {
+      return (SymbolTable<Variable,ImpValue>)this.tempStore.clone();
+
+    } catch (CloneNotSupportedException exn) { // impossible
+
+    }
+
+    // impossible to reach
+    return null;
+  }
+
+  /**
+   * Restore a saved temp table.
+   *
+   * @param tempStore the temp table to restore
+   */
+  void restoreTempStore(SymbolTable<Variable,ImpValue> tempStore) {
+    this.tempStore = tempStore;
   }
 }

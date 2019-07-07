@@ -3,8 +3,8 @@ package edu.cornell.cs.apl.viaduct.imp;
 import edu.cornell.cs.apl.viaduct.imp.ast.Host;
 import edu.cornell.cs.apl.viaduct.imp.ast.StmtNode;
 import edu.cornell.cs.apl.viaduct.imp.dataflow.CopyPropagation;
-import edu.cornell.cs.apl.viaduct.imp.visitors.FormatBlockVisitor;
 import edu.cornell.cs.apl.viaduct.imp.visitors.EraseSecurityVisitor;
+import edu.cornell.cs.apl.viaduct.imp.visitors.FormatBlockVisitor;
 import edu.cornell.cs.apl.viaduct.imp.visitors.SelfCommunicationVisitor;
 
 /**

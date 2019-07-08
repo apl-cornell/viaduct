@@ -4,7 +4,7 @@ import edu.cornell.cs.apl.viaduct.imp.visitors.StmtVisitor;
 import java.util.Objects;
 
 /** Unguarded loop. */
-public class LoopNode implements StmtNode {
+public class LoopNode extends StmtNode {
   private final StmtNode body;
 
   public LoopNode(StmtNode body) {

@@ -2,6 +2,7 @@ package edu.cornell.cs.apl.viaduct.dataflow;
 
 import edu.cornell.cs.apl.viaduct.security.Lattice;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
@@ -77,8 +78,9 @@ public abstract class Dataflow<T extends Lattice<T>, N> {
 
   /** worklist algorithm for backwards dataflow analysis. */
   private void dataflowBackward(List<N> nodes) {
-    Collections.reverse(nodes);
-    Queue<N> worklist = new LinkedList<N>(nodes);
+    List<N> revNodes = new ArrayList<>(nodes);
+    Collections.reverse(revNodes);
+    Queue<N> worklist = new LinkedList<N>(revNodes);
 
     while (worklist.size() > 0) {
       N node = worklist.remove();

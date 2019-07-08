@@ -4,7 +4,7 @@ import edu.cornell.cs.apl.viaduct.imp.visitors.StmtVisitor;
 import java.util.Objects;
 
 /** Send the value of an expression to a host. */
-public final class SendNode implements StmtNode {
+public final class SendNode extends StmtNode {
   private final ProcessName recipient;
   private final ExpressionNode sentExpression;
 

@@ -4,6 +4,7 @@ import edu.cornell.cs.apl.viaduct.AstNode;
 import edu.cornell.cs.apl.viaduct.imp.HostTrustConfiguration;
 import edu.cornell.cs.apl.viaduct.pdg.PdgNode;
 import edu.cornell.cs.apl.viaduct.pdg.ProgramDependencyGraph;
+
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -24,17 +25,16 @@ public class ProtocolSelection<T extends AstNode> {
    */
   public Map<PdgNode<T>, Protocol<T>> selectProtocols(
       HostTrustConfiguration hostConfig, ProgramDependencyGraph<T> pdg) {
-    Set<PdgNode<T>> nodes = pdg.getNodes();
-    Set<ProtocolFactory<T>> protocolFactories = costEstimator.getProtocolFactories();
 
     // the sequence in which PDG nodes will have a protocol selected.
     // this allows massive pruning of the search space,
     // as we will only visit maps that follow this selection order
     // obeys toposort according to PDG
-    List<PdgNode<T>> selectionOrder = pdg.getOrderedNodes();
+    List<PdgNode<T>> nodes = pdg.getOrderedNodes();
+    Set<ProtocolFactory<T>> protocolFactories = costEstimator.getProtocolFactories();
 
     // create open and closed sets
-    PriorityQueue<ProtocolMapNode<T>> openSet = new PriorityQueue<>(pdg.getNodes().size());
+    PriorityQueue<ProtocolMapNode<T>> openSet = new PriorityQueue<>(nodes.size());
     HashSet<ProtocolMapNode<T>> closedSet = new HashSet<>();
 
     // start node is empty map
@@ -59,7 +59,7 @@ public class ProtocolSelection<T extends AstNode> {
       // get the next node to select a protocol for,
       // according to the selection order
       PdgNode<T> nextNode = null;
-      for (PdgNode<T> node : selectionOrder) {
+      for (PdgNode<T> node : nodes) {
         if (!mappedNodes.contains(node)) {
           nextNode = node;
           break;

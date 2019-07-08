@@ -151,7 +151,7 @@ public class CompileCommand extends BaseCommand {
     // Dump PDG with protocol information to a file (if requested).
     dumpGraph(() -> PdgDotPrinter.pdgDotGraphWithProtocols(pdg, protocolMap), protocolGraphOutput);
 
-    if (pdg.getNodes().size() == protocolMap.size()) {
+    if (pdg.getOrderedNodes().size() == protocolMap.size()) {
       // Found a protocol for every node! Output synthesized distributed program.
       final ProgramNode generatedProgram =
           new ProtocolInstantiation<ImpAstNode>()
@@ -170,7 +170,7 @@ public class CompileCommand extends BaseCommand {
       final StringBuilder error = new StringBuilder();
 
       error.append("Could not find protocols for some nodes.\r\n");
-      for (PdgNode<ImpAstNode> node : pdg.getNodes()) {
+      for (PdgNode<ImpAstNode> node : pdg.getOrderedNodes()) {
         final String astStr = node.getAstNode().toString();
 
         final Protocol<ImpAstNode> protocol = protocolMap.get(node);

@@ -4,7 +4,7 @@ import edu.cornell.cs.apl.viaduct.imp.visitors.StmtVisitor;
 
 import java.util.Objects;
 
-public final class BreakNode implements StmtNode {
+public final class BreakNode extends StmtNode {
   private final ExpressionNode level;
 
   public BreakNode(ExpressionNode level) {

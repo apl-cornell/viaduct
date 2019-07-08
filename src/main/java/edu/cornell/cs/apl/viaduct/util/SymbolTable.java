@@ -42,6 +42,11 @@ public final class SymbolTable<V, T> implements Cloneable {
     this.tableStack.pop();
   }
 
+  public void clear() {
+    this.tableStack.clear();
+    this.tableStack.push(HashMap.empty());
+  }
+
   @Override
   public Object clone() throws CloneNotSupportedException {
     Stack<Map<V,T>> tableStack = (Stack<Map<V,T>>)this.tableStack.clone();

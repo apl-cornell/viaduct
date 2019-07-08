@@ -93,7 +93,15 @@ public class ANFVisitor extends FormatBlockVisitor {
 
       // treat non-temp variable read as an object query
       if (this.declaredVars.contains(refVar)) {
+        // adding a binding just to read a variable might be
+        // not a good idea, as it makes the PDG bigger.
+        // on the other hand, having it keeps the compiler
+        // consistent with the intermediate representation
+        // we have developed.
         return addBinding(readNode);
+
+        // don't add the binding, leave the variable read in place
+        // return readNode;
 
       } else {
         return readNode;

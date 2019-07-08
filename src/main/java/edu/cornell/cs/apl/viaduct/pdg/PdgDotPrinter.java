@@ -17,8 +17,8 @@ import guru.nidi.graphviz.model.Link;
 import guru.nidi.graphviz.model.MutableGraph;
 import guru.nidi.graphviz.model.MutableNode;
 
+import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 /** prints a PDG into a DOT graph. */
 public class PdgDotPrinter {
@@ -29,7 +29,7 @@ public class PdgDotPrinter {
       GraphData dataFormat) {
 
     MutableGraph g = mutGraph().setDirected(true);
-    Set<PdgNode<T>> nodes = pdg.getNodes();
+    List<PdgNode<T>> nodes = pdg.getOrderedNodes();
 
     for (PdgNode<T> node : nodes) {
       String nodeId = node.getId();
@@ -67,7 +67,7 @@ public class PdgDotPrinter {
         label = String.format("%s\\n%s", node.getAstNode(), data);
       } else {
         shape = Shape.DIAMOND;
-        label = String.format("%s\\n%s", "CONDITIONAL", data);
+        label = String.format("%s\\n%s", node.getId(), data);
       }
 
       MutableNode grNode = mutNode(nodeId).add("label", label).add(shape);

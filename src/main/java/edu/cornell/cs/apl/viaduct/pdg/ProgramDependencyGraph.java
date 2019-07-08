@@ -5,7 +5,6 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.Stack;
@@ -25,18 +24,14 @@ public class ProgramDependencyGraph<T extends AstNode> {
     labelOrder.add(ControlLabel.SEQ);
   }
 
-  HashSet<PdgNode<T>> nodes;
+  List<PdgNode<T>> nodes;
 
   public ProgramDependencyGraph() {
-    this.nodes = new HashSet<PdgNode<T>>();
+    this.nodes = new ArrayList<PdgNode<T>>();
   }
 
   public void addNode(PdgNode<T> node) {
     this.nodes.add(node);
-  }
-
-  public Set<PdgNode<T>> getNodes() {
-    return this.nodes;
   }
 
   /**
@@ -68,6 +63,8 @@ public class ProgramDependencyGraph<T extends AstNode> {
 
   /** get PDG nodes ordered by control edges. */
   public List<PdgNode<T>> getOrderedNodes() {
+    return this.nodes;
+    /*
     PdgNode<T> cur = null;
 
     // find first node, which is the node that has no
@@ -81,6 +78,7 @@ public class ProgramDependencyGraph<T extends AstNode> {
     assert cur != null;
 
     return getOrderedNodesFrom(cur);
+    */
   }
 
   @Override

@@ -5,7 +5,7 @@ import edu.cornell.cs.apl.viaduct.imp.visitors.StmtVisitor;
 import java.util.Objects;
 
 /** declare and assign temporary variables. */
-public final class LetBindingNode implements StmtNode {
+public final class LetBindingNode extends StmtNode {
   private final Variable variable;
   private final ExpressionNode rhs;
 

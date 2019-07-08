@@ -1,8 +1,8 @@
 package edu.cornell.cs.apl.viaduct.imp.visitors;
 
 import edu.cornell.cs.apl.viaduct.imp.ElaborationException;
-import edu.cornell.cs.apl.viaduct.imp.UndeclaredVariableException;
 import edu.cornell.cs.apl.viaduct.imp.ast.ArrayDeclarationNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.ArrayIndex;
 import edu.cornell.cs.apl.viaduct.imp.ast.AssertNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.AssignNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.BinaryExpressionNode;
@@ -17,7 +17,6 @@ import edu.cornell.cs.apl.viaduct.imp.ast.LetBindingNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.LiteralNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.LoopNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.NotNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.ProgramNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ReadNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ReceiveNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.Reference;
@@ -26,350 +25,401 @@ import edu.cornell.cs.apl.viaduct.imp.ast.StmtNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.Variable;
 import edu.cornell.cs.apl.viaduct.imp.ast.VariableDeclarationNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.WhileNode;
-import edu.cornell.cs.apl.viaduct.pdg.PdgBuilderInfo;
 import edu.cornell.cs.apl.viaduct.pdg.PdgComputeNode;
-import edu.cornell.cs.apl.viaduct.pdg.PdgControlEdge;
 import edu.cornell.cs.apl.viaduct.pdg.PdgControlNode;
-import edu.cornell.cs.apl.viaduct.pdg.PdgInfoEdge;
 import edu.cornell.cs.apl.viaduct.pdg.PdgNode;
 import edu.cornell.cs.apl.viaduct.pdg.PdgPcFlowEdge;
 import edu.cornell.cs.apl.viaduct.pdg.PdgReadChannelEdge;
+import edu.cornell.cs.apl.viaduct.pdg.PdgReadEdge;
 import edu.cornell.cs.apl.viaduct.pdg.PdgStorageNode;
 import edu.cornell.cs.apl.viaduct.pdg.PdgWriteEdge;
 import edu.cornell.cs.apl.viaduct.pdg.ProgramDependencyGraph;
-import edu.cornell.cs.apl.viaduct.pdg.ProgramDependencyGraph.ControlLabel;
 import edu.cornell.cs.apl.viaduct.security.Label;
 import edu.cornell.cs.apl.viaduct.util.FreshNameGenerator;
 import edu.cornell.cs.apl.viaduct.util.SymbolTable;
-import java.util.Collections;
+
+import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
-/**
- * Build program dependency graph from AST. The visit methods return the set of PDG nodes on which
- * the AST node depends (reads).
- */
+/** build a PDG from an IMP program. */
 public class ImpPdgBuilderVisitor
-    implements ExprVisitor<PdgBuilderInfo<ImpAstNode>>,
-        StmtVisitor<PdgBuilderInfo<ImpAstNode>>,
-        ProgramVisitor<PdgBuilderInfo<ImpAstNode>> {
+    implements StmtVisitor<Set<PdgNode<ImpAstNode>>> {
 
-  private static final String DOWNGRADE_NODE = "downgrade";
   private static final String VARDECL_NODE = "decl";
   private static final String ASSIGN_NODE = "assgn";
-  private static final String GUARD_NODE = "guard";
   private static final String IF_NODE = "if";
+  private static final String LOOP_NODE = "loop";
+  private static final String BREAK_NODE = "break";
 
-  private FreshNameGenerator freshNameGenerator;
-  private SymbolTable<Variable, PdgNode<ImpAstNode>> storageNodes;
+  private final FreshNameGenerator nameGenerator = new FreshNameGenerator();
+  private final SymbolTable<Variable,Boolean> declaredVars;
+  private final SymbolTable<Variable,String> varDeclMap;
+  private final Map<String,PdgNode<ImpAstNode>> nodeMap;
+  private final QuerySetVisitor querySetVisitor;
+  private final TempSetVisitor tempSetVisitor;
   private ProgramDependencyGraph<ImpAstNode> pdg;
 
-  /** constructor that initializes to default "empty" state. */
-  public ImpPdgBuilderVisitor() {}
+  /** constructor. */
+  public ImpPdgBuilderVisitor() {
+    this.declaredVars = new SymbolTable<>();
+    this.varDeclMap = new SymbolTable<>();
+    this.nodeMap = new HashMap<>();
+    this.querySetVisitor = new QuerySetVisitor();
+    this.tempSetVisitor = new TempSetVisitor();
+  }
 
-  /** generate PDG from input program. */
+  /** generate a PDG from a program. */
   public ProgramDependencyGraph<ImpAstNode> generatePDG(StmtNode program) {
-    this.freshNameGenerator = new FreshNameGenerator();
-    this.storageNodes = new SymbolTable<>();
+    this.declaredVars.clear();
+    this.varDeclMap.clear();
+    this.nodeMap.clear();
     this.pdg = new ProgramDependencyGraph<>();
+
+    ImpPdgBuilderPreprocessVisitor preprocessor = new ImpPdgBuilderPreprocessVisitor();
+    program = preprocessor.run(program);
 
     ElaborationVisitor elaborator = new ElaborationVisitor();
     program = elaborator.run(program);
+
+    ANFVisitor anfRewriter = new ANFVisitor();
+    program = anfRewriter.run(program);
+
     program.accept(this);
-
-    // replace subexpressions with variables
-    ReplaceVisitor replacer = new ReplaceVisitor();
-    List<PdgNode<ImpAstNode>> orderedNodes = this.pdg.getOrderedNodes();
-    Collections.reverse(orderedNodes);
-
-    for (PdgNode<ImpAstNode> node : orderedNodes) {
-      if (node.isComputeNode()) {
-        for (PdgInfoEdge<ImpAstNode> inEdge : node.getInInfoEdges()) {
-          PdgNode<ImpAstNode> inNode = inEdge.getSource();
-          if (inNode.isComputeNode()) {
-            ExpressionNode inExpr = (ExpressionNode) inNode.getAstNode();
-            ReadNode read = new ReadNode(new Variable(inEdge.getLabel()));
-            ImpAstNode newAst = replacer.run(node.getAstNode(), inExpr, read);
-            node.setAstNode(newAst);
-          }
-        }
-      }
-    }
-
     return this.pdg;
   }
 
-  /** Return empty set of dependencies. */
-  @Override
-  public PdgBuilderInfo<ImpAstNode> visit(LiteralNode literalNode) {
-    return new PdgBuilderInfo<>();
+  private Set<PdgNode<ImpAstNode>> addNode(String name, PdgNode<ImpAstNode> node, StmtNode stmt) {
+    this.pdg.addNode(node);
+    this.nodeMap.put(name, node);
+    stmt.setId(name);
+
+    Set<PdgNode<ImpAstNode>> createdNodes = new HashSet<>();
+    createdNodes.add(node);
+    return createdNodes;
   }
 
-  /** Return PDG storage node for referenced var. */
+  private void createReadEdges(Set<Variable> temps, Set<Reference> queries,
+      PdgNode<ImpAstNode> node) {
+
+    for (Variable temp : temps) {
+      PdgNode<ImpAstNode> readNode = this.nodeMap.get(temp.getBinding());
+      PdgReadEdge.create(readNode, node, temp);
+    }
+
+    for (Reference query : queries) {
+      // TODO: add index information to read edge
+      Variable queryVar = query.accept(new ReferenceVisitor<Variable>() {
+        public Variable visit(Variable var) {
+          return var;
+        }
+
+        public Variable visit(ArrayIndex arrayIndex) {
+          return arrayIndex.getArray();
+        }
+      });
+      String readNodeName = this.varDeclMap.get(queryVar);
+      PdgNode<ImpAstNode> readNode = this.nodeMap.get(readNodeName);
+      PdgReadEdge.create(readNode, node, queryVar);
+    }
+  }
+
+  private PdgNode<ImpAstNode> getVariableNode(Variable var) {
+    String name = this.varDeclMap.get(var);
+    PdgNode<ImpAstNode> node = this.nodeMap.get(name);
+    return node;
+  }
+
   @Override
-  public PdgBuilderInfo<ImpAstNode> visit(ReadNode readNode) {
-    if (readNode.getReference() instanceof Variable) {
-      Variable variable = (Variable) readNode.getReference();
-      if (this.storageNodes.contains(variable)) {
-        PdgNode<ImpAstNode> varNode = this.storageNodes.get(variable);
-        PdgBuilderInfo<ImpAstNode> deps = new PdgBuilderInfo<>();
-        deps.addReferencedNode(varNode, variable);
-        return deps;
-      } else {
-        throw new UndeclaredVariableException(variable);
-      }
+  public Set<PdgNode<ImpAstNode>> visit(VariableDeclarationNode varDecl) {
+    Variable var = varDecl.getVariable();
+    String name = this.nameGenerator.getFreshName(VARDECL_NODE);
+    PdgStorageNode<ImpAstNode> node =
+        new PdgStorageNode<>(this.pdg, varDecl, name, varDecl.getLabel());
+
+    this.varDeclMap.add(var, name);
+    this.declaredVars.add(var, true);
+    return addNode(name, node, varDecl);
+  }
+
+  @Override
+  public Set<PdgNode<ImpAstNode>> visit(ArrayDeclarationNode arrayDecl) {
+    Variable var = arrayDecl.getVariable();
+    String name = this.nameGenerator.getFreshName(VARDECL_NODE);
+    PdgStorageNode<ImpAstNode> node =
+        new PdgStorageNode<>(this.pdg, arrayDecl, name, arrayDecl.getLabel());
+
+    this.varDeclMap.add(var, name);
+    this.declaredVars.add(var, true);
+    return addNode(name, node, arrayDecl);
+  }
+
+  @Override
+  public Set<PdgNode<ImpAstNode>> visit(LetBindingNode letBindingNode) {
+    String name = letBindingNode.getVariable().getBinding();
+    PdgComputeNode<ImpAstNode> node;
+    ExpressionNode rhs = letBindingNode.getRhs();
+    if (rhs instanceof DowngradeNode) {
+      DowngradeNode downgradeNode = (DowngradeNode)rhs;
+      node = new PdgComputeNode<>(this.pdg, downgradeNode, name,
+                Label.weakestPrincipal(), downgradeNode.getLabel());
+
     } else {
-      // TODO: do the right thing
-      return new PdgBuilderInfo<>();
-    }
-  }
-
-  @Override
-  public PdgBuilderInfo<ImpAstNode> visit(NotNode notNode) {
-    return notNode.getExpression().accept(this);
-  }
-
-  /** visit binary operation expr. */
-  @Override
-  public PdgBuilderInfo<ImpAstNode> visit(BinaryExpressionNode binNode) {
-    PdgBuilderInfo<ImpAstNode> lhsDeps = binNode.getLhs().accept(this);
-    PdgBuilderInfo<ImpAstNode> rhsDeps = binNode.getRhs().accept(this);
-
-    // add ordering b/w LHS and RHS
-    PdgNode<ImpAstNode> leftLast = lhsDeps.getLastCreated();
-    PdgNode<ImpAstNode> rightFirst = lhsDeps.getFirstCreated();
-    if (leftLast != null && rightFirst != null) {
-      PdgControlEdge.create(leftLast, rightFirst, ControlLabel.SEQ);
+      node = new PdgComputeNode<>(this.pdg,
+          letBindingNode.getRhs(), name, Label.weakestPrincipal());
     }
 
-    return lhsDeps.merge(rhsDeps);
+    Set<Variable> temps = this.tempSetVisitor.run(letBindingNode.getRhs());
+    Set<Reference> queries = this.querySetVisitor.run(letBindingNode.getRhs());
+    createReadEdges(temps, queries, node);
+
+    // in A-normal form, there should be at most one query
+    // assert queries.size() <= 1;
+
+    return addNode(name, node, letBindingNode);
   }
 
   @Override
-  public PdgBuilderInfo<ImpAstNode> visit(DowngradeNode downgradeNode) {
-    PdgBuilderInfo<ImpAstNode> inInfo = downgradeNode.getExpression().accept(this);
-    Label label = downgradeNode.getLabel();
-
-    // create new PDG node
-    // calculate inLabel later during dataflow analysis
-    PdgNode<ImpAstNode> node =
-        new PdgComputeNode<>(
-            this.pdg,
-            downgradeNode,
-            this.freshNameGenerator.getFreshName(DOWNGRADE_NODE),
-            Label.weakestPrincipal(),
-            label);
-
-    inInfo.setReadNode(node);
-    this.pdg.addNode(node);
-
-    return new PdgBuilderInfo<>(node, new Variable(node.getId()));
-  }
-
-  /** Return created storage node. */
-  @Override
-  public PdgBuilderInfo<ImpAstNode> visit(VariableDeclarationNode variableDeclarationNode) {
-    Variable declVar = variableDeclarationNode.getVariable();
-    String nodeId = String.format("%s_%s", VARDECL_NODE, declVar.toString());
-    PdgNode<ImpAstNode> node =
-        new PdgStorageNode<>(
-            this.pdg,
-            variableDeclarationNode,
-            this.freshNameGenerator.getFreshName(nodeId),
-            variableDeclarationNode.getLabel());
-    this.storageNodes.add(variableDeclarationNode.getVariable(), node);
-    this.pdg.addNode(node);
-
-    return new PdgBuilderInfo<>(node);
-  }
-
-  @Override
-  public PdgBuilderInfo<ImpAstNode> visit(ArrayDeclarationNode arrayDeclarationNode) {
-    // TODO: do the right thing
-    return new PdgBuilderInfo<>();
-  }
-
-  @Override
-  public PdgBuilderInfo<ImpAstNode> visit(LetBindingNode letBindingNode) {
-    // TODO: do the right thing
-    return new PdgBuilderInfo<>();
-  }
-
-  /** return created PDG compute node for assignment. */
-  @Override
-  public PdgBuilderInfo<ImpAstNode> visit(AssignNode assignNode) {
+  public Set<PdgNode<ImpAstNode>> visit(AssignNode assignNode) {
     Reference lhs = assignNode.getLhs();
 
-    if (lhs instanceof Variable) {
-      Variable var = (Variable) lhs;
-      if (this.storageNodes.contains(var)) {
-        PdgBuilderInfo<ImpAstNode> inInfo = assignNode.getRhs().accept(this);
-        PdgNode<ImpAstNode> varNode = this.storageNodes.get(var);
+    Set<Variable> lhsTemps = this.tempSetVisitor.run(lhs);
+    Set<Variable> rhsTemps = this.tempSetVisitor.run(assignNode.getRhs());
+    Set<Variable> temps = new HashSet<>(lhsTemps);
+    temps.addAll(rhsTemps);
 
-        // create new PDG node for the assignment that reads from the RHS nodes
-        // and writes to the variable's storage node
-        PdgNode<ImpAstNode> node =
-            new PdgComputeNode<>(
-                this.pdg,
-                assignNode,
-                this.freshNameGenerator.getFreshName(ASSIGN_NODE),
-                Label.weakestPrincipal());
+    Set<Reference> queries = new HashSet<>();
+    Set<Reference> lhsQueries = this.querySetVisitor.run(lhs);
+    Set<Reference> rhsQueries  = this.querySetVisitor.run(assignNode.getRhs());
+    queries.addAll(lhsQueries);
+    queries.addAll(rhsQueries);
+    queries.remove(lhs);
 
-        inInfo.setReadNode(node);
+    // there should be NO queries for assignments in A-normal form!
+    // assert queries.size() == 0;
+
+    String name = this.nameGenerator.getFreshName(ASSIGN_NODE);
+    PdgComputeNode<ImpAstNode> node =
+        new PdgComputeNode<>(this.pdg, assignNode, name, Label.weakestPrincipal());
+
+    createReadEdges(temps, queries, node);
+
+    // add write edge
+    lhs.accept(new ReferenceVisitor<Set<PdgNode<ImpAstNode>>>() {
+      public Set<PdgNode<ImpAstNode>> visit(Variable var) {
+        PdgNode<ImpAstNode> varNode = ImpPdgBuilderVisitor.this.getVariableNode(var);
         PdgWriteEdge.create(node, varNode);
-        this.pdg.addNode(node);
+        return null;
+      }
 
-        PdgBuilderInfo<ImpAstNode> info = new PdgBuilderInfo<>(node);
-        return inInfo.mergeCreated(info);
+      // TODO: add array data later
+      public Set<PdgNode<ImpAstNode>> visit(ArrayIndex arrayIndex) {
+        Variable arrayVar = arrayIndex.getArray();
+        PdgNode<ImpAstNode> varNode = ImpPdgBuilderVisitor.this.getVariableNode(arrayVar);
+        PdgWriteEdge.create(node, varNode);
+        return null;
+      }
+    });
+
+    return addNode(name, node, assignNode);
+  }
+
+  @Override
+  public Set<PdgNode<ImpAstNode>> visit(SendNode sendNode) {
+    return new HashSet<>();
+  }
+
+  @Override
+  public Set<PdgNode<ImpAstNode>> visit(ReceiveNode receiveNode) {
+    return new HashSet<>();
+  }
+
+  @Override
+  public Set<PdgNode<ImpAstNode>> visit(IfNode ifNode) {
+    String name = this.nameGenerator.getFreshName(IF_NODE);
+    PdgControlNode<ImpAstNode> node =
+        new PdgControlNode<>(this.pdg, ifNode, name, Label.weakestPrincipal());
+
+    Set<Variable> temps = this.tempSetVisitor.run(ifNode.getGuard());
+    Set<Reference> queries = new HashSet<>();
+    createReadEdges(temps, queries, node);
+
+    Set<PdgNode<ImpAstNode>> thenNodes = ifNode.getThenBranch().accept(this);
+    Set<PdgNode<ImpAstNode>> elseNodes = ifNode.getElseBranch().accept(this);
+    Set<PdgNode<ImpAstNode>> branchNodes = new HashSet<>(thenNodes);
+    branchNodes.addAll(elseNodes);
+
+    Set<PdgNode<ImpAstNode>> readChannelNodes = new HashSet<>();
+    for (PdgNode<ImpAstNode> branchNode : branchNodes) {
+      PdgPcFlowEdge.create(node, branchNode);
+      readChannelNodes.addAll(branchNode.getStorageNodeInputs());
+    }
+
+    for (PdgNode<ImpAstNode> readChannelNode : readChannelNodes) {
+      PdgReadChannelEdge.create(node, readChannelNode);
+    }
+
+    Set<PdgNode<ImpAstNode>> createdNodes = addNode(name, node, ifNode);
+    createdNodes.addAll(branchNodes);
+    return createdNodes;
+  }
+
+  @Override
+  public Set<PdgNode<ImpAstNode>> visit(WhileNode whileNode) {
+    throw new ElaborationException();
+  }
+
+  @Override
+  public Set<PdgNode<ImpAstNode>> visit(ForNode forNode) {
+    throw new ElaborationException();
+  }
+
+  @Override
+  public Set<PdgNode<ImpAstNode>> visit(LoopNode loopNode) {
+    String name = this.nameGenerator.getFreshName(LOOP_NODE);
+    PdgControlNode<ImpAstNode> node =
+        new PdgControlNode<>(this.pdg, loopNode, name, Label.weakestPrincipal());
+
+    Set<PdgNode<ImpAstNode>> bodyNodes = loopNode.getBody().accept(this);
+    Set<PdgNode<ImpAstNode>> createdNodes = addNode(name, node, loopNode);
+    createdNodes.addAll(bodyNodes);
+    return createdNodes;
+  }
+
+  @Override
+  public Set<PdgNode<ImpAstNode>> visit(BreakNode breakNode) {
+    // TODO: figure out the edges we need to create here
+    String name = this.nameGenerator.getFreshName(BREAK_NODE);
+    PdgControlNode<ImpAstNode> node =
+        new PdgControlNode<>(this.pdg, breakNode, name, Label.weakestPrincipal());
+    return addNode(name, node, breakNode);
+  }
+
+  @Override
+  public Set<PdgNode<ImpAstNode>> visit(BlockNode blockNode) {
+    this.declaredVars.push();
+    this.varDeclMap.push();
+
+    Set<PdgNode<ImpAstNode>> createdNodes = new HashSet<>();
+    for (StmtNode stmt : blockNode) {
+      createdNodes.addAll(stmt.accept(this));
+    }
+
+    this.declaredVars.pop();
+    this.varDeclMap.pop();
+
+    return createdNodes;
+  }
+
+  @Override
+  public Set<PdgNode<ImpAstNode>> visit(AssertNode assertNode) {
+    return new HashSet<>();
+  }
+
+  abstract class ReadSetVisitor<T>
+      implements ReferenceVisitor<Set<T>>, ExprVisitor<Set<T>> {
+
+    public Set<T> run(ExpressionNode expr) {
+      return expr.accept(this);
+    }
+
+    public Set<T> run(Reference ref) {
+      return ref.accept(this);
+    }
+
+    public abstract Set<T> visit(Variable var);
+
+    public abstract Set<T> visit(ArrayIndex arrayIndex);
+
+    @Override
+    public Set<T> visit(ReadNode readNode) {
+      return readNode.getReference().accept(this);
+    }
+
+    @Override
+    public Set<T> visit(LiteralNode literalNode) {
+      return new HashSet<>();
+    }
+
+    @Override
+    public Set<T> visit(NotNode notNode) {
+      return notNode.getExpression().accept(this);
+    }
+
+    @Override
+    public Set<T> visit(BinaryExpressionNode binaryExpressionNode) {
+      Set<T> lhsReads = binaryExpressionNode.getLhs().accept(this);
+      Set<T> rhsReads = binaryExpressionNode.getRhs().accept(this);
+      Set<T> reads = new HashSet<>();
+      reads.addAll(lhsReads);
+      reads.addAll(rhsReads);
+      return reads;
+    }
+
+    @Override
+    public Set<T> visit(DowngradeNode downgradeNode) {
+      return downgradeNode.getExpression().accept(this);
+    }
+  }
+
+  class TempSetVisitor extends ReadSetVisitor<Variable> {
+    @Override
+    public Set<Variable> visit(Variable var) {
+      if (declaredVars.contains(var)) {
+        return new HashSet<>();
 
       } else {
-        throw new UndeclaredVariableException(var);
-      }
-
-    } else {
-      // TODO: actually implement this
-      return new PdgBuilderInfo<>();
-    }
-  }
-
-  /** return dependencies of list of stmts. */
-  @Override
-  public PdgBuilderInfo<ImpAstNode> visit(BlockNode blockNode) {
-    PdgBuilderInfo<ImpAstNode> lastInfo = null;
-    PdgBuilderInfo<ImpAstNode> blockInfo = new PdgBuilderInfo<>();
-
-    for (StmtNode stmt : blockNode) {
-      PdgBuilderInfo<ImpAstNode> curInfo = stmt.accept(this);
-
-      if (lastInfo != null) {
-        PdgNode<ImpAstNode> lastLastNode = lastInfo.getLastCreated();
-        PdgNode<ImpAstNode> curFirstNode = curInfo.getFirstCreated();
-
-        if (lastLastNode != null && curFirstNode != null) {
-          PdgControlEdge.create(lastLastNode, curFirstNode, ControlLabel.SEQ);
-        }
-      }
-
-      if (curInfo.getCreatedNodes().size() > 0) {
-        lastInfo = curInfo;
-        blockInfo = blockInfo.mergeCreated(curInfo);
+        Set<Variable> reads = new HashSet<>();
+        reads.add(var);
+        return reads;
       }
     }
 
-    return blockInfo;
+    @Override
+    public Set<Variable> visit(ArrayIndex arrayIndex) {
+      return arrayIndex.getIndex().accept(this);
+    }
   }
 
-  /** return created PDG compute node for conditional. */
-  @Override
-  public PdgBuilderInfo<ImpAstNode> visit(IfNode ifNode) {
-    // add edges from guard nodes
-    PdgBuilderInfo<ImpAstNode> guardInfo = ifNode.getGuard().accept(this);
+  class QuerySetVisitor extends ReadSetVisitor<Reference> {
+    @Override
+    public Set<Reference> visit(Variable var) {
+      if (declaredVars.contains(var)) {
+        Set<Reference> reads = new HashSet<>();
+        reads.add(var);
+        return reads;
 
-    // if there isn't exactly 1 created node from the guard, that means:
-    // - there were no nodes created
-    // - there were multiple nodes created
-    // in either case, we want to create a new guard node
-    if (guardInfo.getCreatedNodes().size() != 1) {
-      PdgNode<ImpAstNode> guardNode =
-          new PdgComputeNode<>(
-              this.pdg,
-              ifNode.getGuard(),
-              this.freshNameGenerator.getFreshName(GUARD_NODE),
-              Label.weakestPrincipal());
-      guardInfo.setReadNode(guardNode);
-      this.pdg.addNode(guardNode);
-      guardInfo = new PdgBuilderInfo<>(guardNode, new Variable(guardNode.getId()));
+      } else {
+        return new HashSet<>();
+      }
     }
 
-    PdgNode<ImpAstNode> controlNode =
-        new PdgControlNode<>(
-            this.pdg,
-            ifNode,
-            this.freshNameGenerator.getFreshName(IF_NODE),
-            Label.weakestPrincipal());
-    guardInfo.setReadNode(controlNode);
-    this.pdg.addNode(controlNode);
+    @Override
+    public Set<Reference> visit(ArrayIndex arrayIndex) {
+      // we're assuming the AST is in A-normal form, so there's no need
+      // to traverse the index since it's guaranteed to be an atomic expr
+      Set<Reference> reads = new HashSet<>();
+      reads.add(arrayIndex);
+      return reads;
+    }
+  }
 
-    // add control edge to beginning of then block
-    PdgBuilderInfo<ImpAstNode> thenInfo = ifNode.getThenBranch().accept(this);
-    PdgNode<ImpAstNode> thenFirst = thenInfo.getFirstCreated();
-    if (thenFirst != null) {
-      PdgControlEdge.create(controlNode, thenFirst, ControlLabel.THEN);
+  /** remove communication and asserts in program. */
+  static class ImpPdgBuilderPreprocessVisitor extends FormatBlockVisitor {
+    @Override
+    public StmtNode visit(SendNode sendNode) {
+      return new BlockNode();
     }
 
-    // add control edge to beginning of else block
-    PdgBuilderInfo<ImpAstNode> elseInfo = ifNode.getElseBranch().accept(this);
-    PdgNode<ImpAstNode> elseFirst = elseInfo.getFirstCreated();
-    if (elseFirst != null) {
-      PdgControlEdge.create(controlNode, elseFirst, ControlLabel.ELSE);
+    @Override
+    public StmtNode visit(ReceiveNode recvNode) {
+      return new BlockNode();
     }
 
-    // add read channel edges
-    Set<PdgNode<ImpAstNode>> readChannelStorageSet = new HashSet<>();
-    Set<PdgNode<ImpAstNode>> pcFlowSet = new HashSet<>();
-
-    PdgBuilderInfo<ImpAstNode> branchInfo = thenInfo.merge(elseInfo);
-    for (PdgNode<ImpAstNode> createdNode : branchInfo.getCreatedNodes()) {
-      pcFlowSet.add(createdNode);
-      readChannelStorageSet.addAll(createdNode.getStorageNodeInputs());
+    @Override
+    public StmtNode visit(AssertNode assertNode) {
+      return new BlockNode();
     }
-
-    for (PdgNode<ImpAstNode> readChannelStorageNode : readChannelStorageSet) {
-      PdgReadChannelEdge.create(controlNode, readChannelStorageNode);
-    }
-
-    for (PdgNode<ImpAstNode> pcFlowNode : pcFlowSet) {
-      PdgPcFlowEdge.create(controlNode, pcFlowNode);
-    }
-
-    PdgBuilderInfo<ImpAstNode> info = new PdgBuilderInfo<>(controlNode);
-    return guardInfo.mergeCreated(info);
-  }
-
-  /** return created PDG compute node for while loops. */
-  @Override
-  public PdgBuilderInfo<ImpAstNode> visit(WhileNode whileNode) {
-    // TODO: do the right thing
-    return new PdgBuilderInfo<>();
-  }
-
-  @Override
-  public PdgBuilderInfo<ImpAstNode> visit(ForNode forNode) {
-    throw new Error(new ElaborationException());
-  }
-
-  @Override
-  public PdgBuilderInfo<ImpAstNode> visit(LoopNode loopNode) {
-    // TODO: do the right thing
-    return new PdgBuilderInfo<>();
-  }
-
-  @Override
-  public PdgBuilderInfo<ImpAstNode> visit(BreakNode breakNode) {
-    // TODO: do the right thing
-    return new PdgBuilderInfo<>();
-  }
-
-  /** send/recvs should not be in surface programs and thus should not be in the generated PDG. */
-  @Override
-  public PdgBuilderInfo<ImpAstNode> visit(SendNode sendNode) {
-    return new PdgBuilderInfo<>();
-  }
-
-  /** send/recvs should not be in surface programs and thus should not be in the generated PDG. */
-  @Override
-  public PdgBuilderInfo<ImpAstNode> visit(ReceiveNode receiveNode) {
-    return new PdgBuilderInfo<>();
-  }
-
-  @Override
-  public PdgBuilderInfo<ImpAstNode> visit(ProgramNode programNode) {
-    throw new Error("Cannot build PDGs out of process configurations.");
-  }
-
-  @Override
-  public PdgBuilderInfo<ImpAstNode> visit(AssertNode assertNode) {
-    return new PdgBuilderInfo<>();
   }
 }

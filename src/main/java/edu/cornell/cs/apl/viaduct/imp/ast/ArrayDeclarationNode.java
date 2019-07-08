@@ -4,7 +4,7 @@ import edu.cornell.cs.apl.viaduct.imp.visitors.StmtVisitor;
 import edu.cornell.cs.apl.viaduct.security.Label;
 import java.util.Objects;
 
-public final class ArrayDeclarationNode implements StmtNode {
+public final class ArrayDeclarationNode extends StmtNode {
   private final Variable variable;
   private final ExpressionNode length;
   private final ImpType type;

@@ -5,7 +5,7 @@ import edu.cornell.cs.apl.viaduct.security.Label;
 import java.util.Objects;
 
 /** Variable declaration. */
-public final class VariableDeclarationNode implements StmtNode {
+public final class VariableDeclarationNode extends StmtNode {
   private final Variable variable;
   private final ImpType type;
   private final Label label;

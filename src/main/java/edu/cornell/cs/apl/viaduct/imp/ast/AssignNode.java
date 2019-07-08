@@ -4,7 +4,7 @@ import edu.cornell.cs.apl.viaduct.imp.visitors.StmtVisitor;
 import java.util.Objects;
 
 /** Update the value associated with a reference. */
-public final class AssignNode implements StmtNode {
+public final class AssignNode extends StmtNode {
   private final Reference lhs;
   private final ExpressionNode rhs;
 

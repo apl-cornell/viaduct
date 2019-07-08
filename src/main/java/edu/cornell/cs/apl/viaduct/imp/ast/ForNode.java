@@ -4,7 +4,7 @@ import edu.cornell.cs.apl.viaduct.imp.visitors.StmtVisitor;
 import java.util.Objects;
 
 /** For loop. */
-public class ForNode implements StmtNode {
+public class ForNode extends StmtNode {
   private final StmtNode initialize;
   private final ExpressionNode guard;
   private final StmtNode update;

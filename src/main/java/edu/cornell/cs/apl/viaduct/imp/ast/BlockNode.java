@@ -7,7 +7,7 @@ import java.util.Objects;
 import javax.annotation.Nonnull;
 
 /** Sequences a list of statements. */
-public final class BlockNode implements StmtNode, Iterable<StmtNode> {
+public final class BlockNode extends StmtNode implements Iterable<StmtNode> {
   private final Vector<StmtNode> statements;
 
   public BlockNode(StmtNode... statements) {

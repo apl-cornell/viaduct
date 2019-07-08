@@ -9,7 +9,7 @@ public class PdgWriteEdge<T extends AstNode> extends PdgInfoEdge<T> {
   }
 
   /** create edge b/w nodes. */
-  public static <T extends AstNode> PdgWriteEdge create(PdgNode<T> source, PdgNode<T> target) {
+  public static <T extends AstNode> PdgWriteEdge<T> create(PdgNode<T> source, PdgNode<T> target) {
     PdgWriteEdge<T> writeEdge = new PdgWriteEdge<>(source, target);
     source.addOutInfoEdge(writeEdge);
     target.addInInfoEdge(writeEdge);

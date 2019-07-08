@@ -9,7 +9,7 @@ public class PdgReadChannelEdge<T extends AstNode> extends PdgInfoEdge<T> {
   }
 
   /** create edge b/w nodes. */
-  public static <T extends AstNode> PdgReadChannelEdge create(
+  public static <T extends AstNode> PdgReadChannelEdge<T> create(
       PdgNode<T> source, PdgNode<T> target) {
     PdgReadChannelEdge<T> flowEdge = new PdgReadChannelEdge<>(source, target);
     source.addOutInfoEdge(flowEdge);

@@ -230,14 +230,17 @@ public class ImpPdgBuilderVisitor
     PdgControlNode<ImpAstNode> node =
         new PdgControlNode<>(ifNode, name, Label.weakestPrincipal());
 
+
     Set<Variable> temps = this.tempSetVisitor.run(ifNode.getGuard());
     Set<Reference> queries = new HashSet<>();
     createReadEdges(temps, queries, node);
 
+    Set<PdgNode<ImpAstNode>> createdNodes = addNode(name, node, ifNode);
     Set<PdgNode<ImpAstNode>> thenNodes = ifNode.getThenBranch().accept(this);
     Set<PdgNode<ImpAstNode>> elseNodes = ifNode.getElseBranch().accept(this);
     Set<PdgNode<ImpAstNode>> branchNodes = new HashSet<>(thenNodes);
     branchNodes.addAll(elseNodes);
+    createdNodes.addAll(branchNodes);
 
     Set<PdgNode<ImpAstNode>> readChannelNodes = new HashSet<>();
     for (PdgNode<ImpAstNode> branchNode : branchNodes) {
@@ -249,8 +252,6 @@ public class ImpPdgBuilderVisitor
       PdgReadChannelEdge.create(node, readChannelNode);
     }
 
-    Set<PdgNode<ImpAstNode>> createdNodes = addNode(name, node, ifNode);
-    createdNodes.addAll(branchNodes);
     return createdNodes;
   }
 
@@ -270,8 +271,8 @@ public class ImpPdgBuilderVisitor
     PdgControlNode<ImpAstNode> node =
         new PdgControlNode<>(loopNode, name, Label.weakestPrincipal());
 
-    Set<PdgNode<ImpAstNode>> bodyNodes = loopNode.getBody().accept(this);
     Set<PdgNode<ImpAstNode>> createdNodes = addNode(name, node, loopNode);
+    Set<PdgNode<ImpAstNode>> bodyNodes = loopNode.getBody().accept(this);
     createdNodes.addAll(bodyNodes);
     return createdNodes;
   }

@@ -15,7 +15,7 @@ public class PdgReadEdge<T extends AstNode> extends PdgInfoEdge<T> {
   }
 
   /** create edge b/w nodes. */
-  public static <T extends AstNode> PdgReadEdge create(PdgNode<T> source, PdgNode<T> target) {
+  public static <T extends AstNode> PdgReadEdge<T> create(PdgNode<T> source, PdgNode<T> target) {
     PdgReadEdge<T> readEdge = new PdgReadEdge<>(source, target);
     source.addOutInfoEdge(readEdge);
     target.addInInfoEdge(readEdge);
@@ -23,8 +23,9 @@ public class PdgReadEdge<T extends AstNode> extends PdgInfoEdge<T> {
   }
 
   /** create edge b/w nodes. */
-  public static <T extends AstNode> PdgReadEdge create(
+  public static <T extends AstNode> PdgReadEdge<T> create(
       PdgNode<T> source, PdgNode<T> target, Binding<T> binding) {
+
     PdgReadEdge<T> readEdge = new PdgReadEdge<>(source, target, binding);
     source.addOutInfoEdge(readEdge);
     target.addInInfoEdge(readEdge);

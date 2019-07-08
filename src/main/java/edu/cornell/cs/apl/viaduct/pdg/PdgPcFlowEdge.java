@@ -9,7 +9,7 @@ public class PdgPcFlowEdge<T extends AstNode> extends PdgInfoEdge<T> {
   }
 
   /** create edge b/w nodes. */
-  public static <T extends AstNode> PdgPcFlowEdge create(PdgNode<T> source, PdgNode<T> target) {
+  public static <T extends AstNode> PdgPcFlowEdge<T> create(PdgNode<T> source, PdgNode<T> target) {
     PdgPcFlowEdge<T> flowEdge = new PdgPcFlowEdge<>(source, target);
     source.addOutInfoEdge(flowEdge);
     target.addInInfoEdge(flowEdge);

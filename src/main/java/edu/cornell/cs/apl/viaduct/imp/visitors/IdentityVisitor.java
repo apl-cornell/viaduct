@@ -190,7 +190,7 @@ public abstract class IdentityVisitor
     final ProgramNode.Builder builder = ProgramNode.builder();
     try {
       for (Tuple2<ProcessName, StmtNode> process : programNode) {
-        builder.addProcess(process._1, process._2.accept(this));
+        builder.addProcess(process._1, run(process._2));
       }
     } catch (DuplicateProcessDefinitionException e) {
       // This is impossible

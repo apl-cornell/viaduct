@@ -1,18 +1,14 @@
 package edu.cornell.cs.apl.viaduct.pdg;
 
 import edu.cornell.cs.apl.viaduct.AstNode;
-import edu.cornell.cs.apl.viaduct.pdg.ProgramDependencyGraph.ControlEdgeComparator;
-import edu.cornell.cs.apl.viaduct.pdg.ProgramDependencyGraph.ControlLabel;
 import edu.cornell.cs.apl.viaduct.security.Label;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 /** PDG node for control flow statements. */
 public class PdgControlNode<T extends AstNode> extends PdgNode<T> {
   /** constructor that sets in and out labels to be the same. */
-  public PdgControlNode(ProgramDependencyGraph<T> pdg, T astNode, String id, Label label) {
-    super(pdg, astNode, id);
+  public PdgControlNode(T astNode, String id, Label label) {
+    super(astNode, id);
     this.setInLabel(label);
     this.setOutLabel(label);
   }
@@ -42,6 +38,7 @@ public class PdgControlNode<T extends AstNode> extends PdgNode<T> {
    * statement, this returns all the nodes (in order) in the branches
    */
   public List<PdgNode<T>> getControlStructureNodes() {
+    /*
     List<PdgControlEdge<T>> pathStarts = new ArrayList<>();
     for (PdgControlEdge<T> controlEdge : getOutControlEdges()) {
       if (controlEdge.getLabel() != ControlLabel.SEQ) {
@@ -60,6 +57,8 @@ public class PdgControlNode<T extends AstNode> extends PdgNode<T> {
     }
 
     return nodeList;
+    */
+    return null;
   }
 
   @Override

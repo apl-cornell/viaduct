@@ -8,6 +8,7 @@ import edu.cornell.cs.apl.viaduct.imp.ast.ExpressionNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.IfNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ImpType;
 import edu.cornell.cs.apl.viaduct.imp.ast.IntegerValue;
+import edu.cornell.cs.apl.viaduct.imp.ast.LetBindingNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.LiteralNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.LoopNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ProcessName;
@@ -77,6 +78,11 @@ public class StmtBuilder {
 
   public StmtBuilder varDecl(Variable varName, ImpType type, Label label) {
     this.stmts.add(new VariableDeclarationNode(varName, type, label));
+    return this;
+  }
+
+  public StmtBuilder let(Variable varName, ExpressionNode rhs) {
+    this.stmts.add(new LetBindingNode(varName, rhs));
     return this;
   }
 

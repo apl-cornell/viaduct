@@ -11,14 +11,15 @@ import edu.cornell.cs.apl.viaduct.imp.ast.ProcessName;
 import edu.cornell.cs.apl.viaduct.imp.ast.ProgramNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.StmtNode;
 import edu.cornell.cs.apl.viaduct.imp.parser.TrustConfigurationParser;
+import edu.cornell.cs.apl.viaduct.imp.visitors.ImpPdgBuilderPreprocessVisitor;
 import edu.cornell.cs.apl.viaduct.imp.visitors.ImpPdgBuilderVisitor;
+import edu.cornell.cs.apl.viaduct.imp.visitors.ImpProtocolInstantiationVisitor;
 import edu.cornell.cs.apl.viaduct.imp.visitors.PrintVisitor;
 import edu.cornell.cs.apl.viaduct.imp.visitors.TypeCheckVisitor;
 import edu.cornell.cs.apl.viaduct.pdg.PdgDotPrinter;
 import edu.cornell.cs.apl.viaduct.pdg.PdgNode;
 import edu.cornell.cs.apl.viaduct.pdg.ProgramDependencyGraph;
 import edu.cornell.cs.apl.viaduct.protocol.Protocol;
-import edu.cornell.cs.apl.viaduct.protocol.ProtocolInstantiation;
 import edu.cornell.cs.apl.viaduct.protocol.ProtocolSelection;
 import guru.nidi.graphviz.engine.Format;
 import guru.nidi.graphviz.engine.Graphviz;
@@ -129,8 +130,11 @@ public class CompileCommand extends BaseCommand {
     final TypeCheckVisitor typeChecker = new TypeCheckVisitor();
     typeChecker.run(program);
 
-    final StmtNode main = program.getProcessCode(ProcessName.getMain());
     final HostTrustConfiguration trustConfiguration = program.getHostTrustConfiguration();
+
+    StmtNode main = program.getProcessCode(ProcessName.getMain());
+    ImpPdgBuilderPreprocessVisitor preprocessor = new ImpPdgBuilderPreprocessVisitor();
+    main = preprocessor.run(main);
 
     // Generate program dependency graph.
     final ProgramDependencyGraph<ImpAstNode> pdg = new ImpPdgBuilderVisitor().generatePDG(main);
@@ -154,8 +158,8 @@ public class CompileCommand extends BaseCommand {
     if (pdg.getOrderedNodes().size() == protocolMap.size()) {
       // Found a protocol for every node! Output synthesized distributed program.
       final ProgramNode generatedProgram =
-          new ProtocolInstantiation<ImpAstNode>()
-              .instantiateProtocolConfiguration(trustConfiguration, pdg, protocolMap);
+          new ImpProtocolInstantiationVisitor(trustConfiguration, pdg, protocolMap, main)
+              .run();
 
       try (BufferedWriter writer = output.newOutputWriter()) {
         writer.write(PrintVisitor.run(generatedProgram));

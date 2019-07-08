@@ -82,11 +82,11 @@ public abstract class Cleartext {
     if (astNode instanceof AssignNode) {
       AssignNode assignNode = (AssignNode) astNode;
       ExpressionNode computation = assignNode.getRhs().accept(renamer);
-      builder.assign(outVar, computation);
+      builder.let(outVar, computation);
 
     } else if (astNode instanceof ExpressionNode) {
       ExpressionNode computation = ((ExpressionNode) astNode).accept(renamer);
-      builder.assign(outVar, computation);
+      builder.let(outVar, computation);
     }
 
     // write to storage nodes

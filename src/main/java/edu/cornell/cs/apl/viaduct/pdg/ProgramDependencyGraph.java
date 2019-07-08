@@ -1,13 +1,10 @@
 package edu.cornell.cs.apl.viaduct.pdg;
 
 import edu.cornell.cs.apl.viaduct.AstNode;
-import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
-import java.util.Set;
-import java.util.Stack;
+import java.util.Map;
 
 /**
  * represents dependencies (reads/writes) among part of a program. nodes represent declared
@@ -15,23 +12,23 @@ import java.util.Stack;
  * by PDG node B
  */
 public class ProgramDependencyGraph<T extends AstNode> {
-  static final List<ControlLabel> labelOrder;
-
-  static {
-    labelOrder = new ArrayList<>();
-    labelOrder.add(ControlLabel.THEN);
-    labelOrder.add(ControlLabel.ELSE);
-    labelOrder.add(ControlLabel.SEQ);
-  }
+  public enum ControlLabel { SEQ, THEN, ELSE, BODY }
 
   List<PdgNode<T>> nodes;
+  Map<String,PdgNode<T>> nodeMap;
 
   public ProgramDependencyGraph() {
-    this.nodes = new ArrayList<PdgNode<T>>();
+    this.nodes = new ArrayList<>();
+    this.nodeMap = new HashMap<>();
   }
 
   public void addNode(PdgNode<T> node) {
     this.nodes.add(node);
+    this.nodeMap.put(node.getId(), node);
+  }
+
+  public PdgNode<T> getNode(String id) {
+    return this.nodeMap.get(id);
   }
 
   /**
@@ -39,6 +36,7 @@ public class ProgramDependencyGraph<T extends AstNode> {
    * flow graph of the original program.
    */
   public List<PdgNode<T>> getOrderedNodesFrom(PdgNode<T> start) {
+    /*
     ControlEdgeComparator edgeComparator = new ControlEdgeComparator();
 
     PdgNode<T> cur = start;
@@ -59,6 +57,8 @@ public class ProgramDependencyGraph<T extends AstNode> {
     }
 
     return nodeList;
+    */
+    return null;
   }
 
   /** get PDG nodes ordered by control edges. */
@@ -97,31 +97,5 @@ public class ProgramDependencyGraph<T extends AstNode> {
     }
 
     return buf.toString();
-  }
-
-  public enum ControlLabel {
-    SEQ,
-    THEN,
-    ELSE
-  }
-
-  static class ControlEdgeComparator implements Comparator<PdgControlEdge>, Serializable {
-    @Override
-    public int compare(PdgControlEdge e1, PdgControlEdge e2) {
-      if (e1 != null && e2 != null) {
-        int ind1 = labelOrder.indexOf(e1.getLabel());
-        int ind2 = labelOrder.indexOf(e2.getLabel());
-        return ind1 - ind2;
-
-      } else if (e1 == null && e2 != null) {
-        return 1;
-
-      } else if (e1 != null && e2 == null) {
-        return -1;
-
-      } else {
-        return 0;
-      }
-    }
   }
 }

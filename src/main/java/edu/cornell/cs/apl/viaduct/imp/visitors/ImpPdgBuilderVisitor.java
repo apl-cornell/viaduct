@@ -76,16 +76,6 @@ public class ImpPdgBuilderVisitor
     this.varDeclMap.clear();
     this.nodeMap.clear();
     this.pdg = new ProgramDependencyGraph<>();
-
-    ImpPdgBuilderPreprocessVisitor preprocessor = new ImpPdgBuilderPreprocessVisitor();
-    program = preprocessor.run(program);
-
-    ElaborationVisitor elaborator = new ElaborationVisitor();
-    program = elaborator.run(program);
-
-    ANFVisitor anfRewriter = new ANFVisitor();
-    program = anfRewriter.run(program);
-
     program.accept(this);
     return this.pdg;
   }
@@ -136,7 +126,7 @@ public class ImpPdgBuilderVisitor
     Variable var = varDecl.getVariable();
     String name = this.nameGenerator.getFreshName(VARDECL_NODE);
     PdgStorageNode<ImpAstNode> node =
-        new PdgStorageNode<>(this.pdg, varDecl, name, varDecl.getLabel());
+        new PdgStorageNode<>(varDecl, name, varDecl.getLabel());
 
     this.varDeclMap.add(var, name);
     this.declaredVars.add(var, true);
@@ -148,7 +138,7 @@ public class ImpPdgBuilderVisitor
     Variable var = arrayDecl.getVariable();
     String name = this.nameGenerator.getFreshName(VARDECL_NODE);
     PdgStorageNode<ImpAstNode> node =
-        new PdgStorageNode<>(this.pdg, arrayDecl, name, arrayDecl.getLabel());
+        new PdgStorageNode<>(arrayDecl, name, arrayDecl.getLabel());
 
     this.varDeclMap.add(var, name);
     this.declaredVars.add(var, true);
@@ -162,12 +152,11 @@ public class ImpPdgBuilderVisitor
     ExpressionNode rhs = letBindingNode.getRhs();
     if (rhs instanceof DowngradeNode) {
       DowngradeNode downgradeNode = (DowngradeNode)rhs;
-      node = new PdgComputeNode<>(this.pdg, downgradeNode, name,
+      node = new PdgComputeNode<>(downgradeNode, name,
                 Label.weakestPrincipal(), downgradeNode.getLabel());
 
     } else {
-      node = new PdgComputeNode<>(this.pdg,
-          letBindingNode.getRhs(), name, Label.weakestPrincipal());
+      node = new PdgComputeNode<>(rhs, name, Label.weakestPrincipal());
     }
 
     Set<Variable> temps = this.tempSetVisitor.run(letBindingNode.getRhs());
@@ -201,7 +190,7 @@ public class ImpPdgBuilderVisitor
 
     String name = this.nameGenerator.getFreshName(ASSIGN_NODE);
     PdgComputeNode<ImpAstNode> node =
-        new PdgComputeNode<>(this.pdg, assignNode, name, Label.weakestPrincipal());
+        new PdgComputeNode<>(assignNode, name, Label.weakestPrincipal());
 
     createReadEdges(temps, queries, node);
 
@@ -239,7 +228,7 @@ public class ImpPdgBuilderVisitor
   public Set<PdgNode<ImpAstNode>> visit(IfNode ifNode) {
     String name = this.nameGenerator.getFreshName(IF_NODE);
     PdgControlNode<ImpAstNode> node =
-        new PdgControlNode<>(this.pdg, ifNode, name, Label.weakestPrincipal());
+        new PdgControlNode<>(ifNode, name, Label.weakestPrincipal());
 
     Set<Variable> temps = this.tempSetVisitor.run(ifNode.getGuard());
     Set<Reference> queries = new HashSet<>();
@@ -279,7 +268,7 @@ public class ImpPdgBuilderVisitor
   public Set<PdgNode<ImpAstNode>> visit(LoopNode loopNode) {
     String name = this.nameGenerator.getFreshName(LOOP_NODE);
     PdgControlNode<ImpAstNode> node =
-        new PdgControlNode<>(this.pdg, loopNode, name, Label.weakestPrincipal());
+        new PdgControlNode<>(loopNode, name, Label.weakestPrincipal());
 
     Set<PdgNode<ImpAstNode>> bodyNodes = loopNode.getBody().accept(this);
     Set<PdgNode<ImpAstNode>> createdNodes = addNode(name, node, loopNode);
@@ -292,7 +281,7 @@ public class ImpPdgBuilderVisitor
     // TODO: figure out the edges we need to create here
     String name = this.nameGenerator.getFreshName(BREAK_NODE);
     PdgControlNode<ImpAstNode> node =
-        new PdgControlNode<>(this.pdg, breakNode, name, Label.weakestPrincipal());
+        new PdgControlNode<>(breakNode, name, Label.weakestPrincipal());
     return addNode(name, node, breakNode);
   }
 
@@ -402,24 +391,6 @@ public class ImpPdgBuilderVisitor
       Set<Reference> reads = new HashSet<>();
       reads.add(arrayIndex);
       return reads;
-    }
-  }
-
-  /** remove communication and asserts in program. */
-  static class ImpPdgBuilderPreprocessVisitor extends FormatBlockVisitor {
-    @Override
-    public StmtNode visit(SendNode sendNode) {
-      return new BlockNode();
-    }
-
-    @Override
-    public StmtNode visit(ReceiveNode recvNode) {
-      return new BlockNode();
-    }
-
-    @Override
-    public StmtNode visit(AssertNode assertNode) {
-      return new BlockNode();
     }
   }
 }

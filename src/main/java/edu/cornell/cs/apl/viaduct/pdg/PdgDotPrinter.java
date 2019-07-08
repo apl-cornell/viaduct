@@ -102,21 +102,6 @@ public class PdgDotPrinter {
 
         grNode.addLink(link);
       }
-
-      for (PdgControlEdge<T> ctrlEdge : node.getOutControlEdges()) {
-        PdgNode<T> outNode = ctrlEdge.getTarget();
-        String strOutNode = outNode.getId();
-
-        if (ctrlEdge.getLabel().equals(ControlLabel.SEQ)) {
-          grNode.addLink(Link.to(mutNode(strOutNode)).add(Color.RED));
-
-        } else {
-          grNode.addLink(
-              Link.to(mutNode(strOutNode))
-                  .add(Label.of(ctrlEdge.getLabel().toString()))
-                  .add(Color.RED));
-        }
-      }
     }
     return g;
   }

@@ -1,7 +1,6 @@
 package edu.cornell.cs.apl.viaduct.pdg;
 
 import edu.cornell.cs.apl.viaduct.AstNode;
-import edu.cornell.cs.apl.viaduct.pdg.ProgramDependencyGraph.ControlLabel;
 import edu.cornell.cs.apl.viaduct.security.Label;
 
 import java.util.HashSet;
@@ -9,39 +8,26 @@ import java.util.Set;
 
 /** node in a program dependence graph. */
 public abstract class PdgNode<T extends AstNode> {
-  ProgramDependencyGraph<T> pdg;
-  T astNode;
-  String id;
+  final T astNode;
+  final String id;
 
-  Set<PdgInfoEdge<T>> inInfoEdges;
-  PdgControlEdge<T> inControlEdge;
-  Set<PdgInfoEdge<T>> outInfoEdges;
-  Set<PdgControlEdge<T>> outControlEdges;
+  final Set<PdgInfoEdge<T>> inInfoEdges;
+  final Set<PdgInfoEdge<T>> outInfoEdges;
   Label inLabel;
   Label outLabel;
 
-  protected PdgNode(ProgramDependencyGraph<T> pdg) {
-    this.pdg = pdg;
+  /** constructor. */
+  public PdgNode(T astNode, String id) {
     this.inInfoEdges = new HashSet<>();
     this.outInfoEdges = new HashSet<>();
-    this.outControlEdges = new HashSet<>();
-  }
-
-  /** constructor. */
-  public PdgNode(ProgramDependencyGraph<T> pdg, T astNode, String id) {
-    this(pdg);
-    this.astNode = astNode;
-    this.id = id;
     this.inLabel = Label.weakestPrincipal();
     this.outLabel = Label.weakestPrincipal();
+    this.astNode = astNode;
+    this.id = id;
   }
 
   public T getAstNode() {
     return this.astNode;
-  }
-
-  public void setAstNode(T node) {
-    this.astNode = node;
   }
 
   public String getId() {
@@ -54,10 +40,6 @@ public abstract class PdgNode<T extends AstNode> {
 
   public void addOutInfoEdge(PdgInfoEdge<T> edge) {
     this.outInfoEdges.add(edge);
-  }
-
-  public void addOutControlEdge(PdgControlEdge<T> edge) {
-    this.outControlEdges.add(edge);
   }
 
   public Set<PdgInfoEdge<T>> getInInfoEdges() {
@@ -76,14 +58,6 @@ public abstract class PdgNode<T extends AstNode> {
     return readEdges;
   }
 
-  public PdgControlEdge<T> getInControlEdge() {
-    return this.inControlEdge;
-  }
-
-  public void setInControlEdge(PdgControlEdge<T> edge) {
-    this.inControlEdge = edge;
-  }
-
   public Set<PdgInfoEdge<T>> getOutInfoEdges() {
     return this.outInfoEdges;
   }
@@ -98,10 +72,6 @@ public abstract class PdgNode<T extends AstNode> {
     }
 
     return writeEdges;
-  }
-
-  public Set<PdgControlEdge<T>> getOutControlEdges() {
-    return this.outControlEdges;
   }
 
   /**
@@ -153,17 +123,21 @@ public abstract class PdgNode<T extends AstNode> {
    *  e.g. the first node in a then brach of a condition marks off
    * the beginning of a control fork. */
   public boolean isStartOfControlFork() {
+    /*
     if (this.inControlEdge != null) {
       return this.inControlEdge.getLabel() != ControlLabel.SEQ;
 
     } else {
       return false;
     }
+    */
+    return false;
   }
 
   /** the node is the end of a execution path if it has
    * no outgoing control edges. */
   public boolean isEndOfExecutionPath() {
+    /*
     boolean hasSeqOutControlEdge = false;
     for (PdgControlEdge<T> controlEdge : this.outControlEdges) {
       if (controlEdge.getLabel() == ControlLabel.SEQ) {
@@ -172,11 +146,15 @@ public abstract class PdgNode<T extends AstNode> {
       }
     }
     return !hasSeqOutControlEdge;
+    */
+
+    return false;
   }
 
   /** get the control node whose control structure this node resides in.
    * returns null if there isn't such a node */
   public PdgControlNode<T> getControlNode() {
+    /*
     PdgNode<T> cur = this;
 
     while (cur != null) {
@@ -193,6 +171,7 @@ public abstract class PdgNode<T extends AstNode> {
         }
       }
     }
+    */
 
     return null;
   }
@@ -226,5 +205,17 @@ public abstract class PdgNode<T extends AstNode> {
   @Override
   public int hashCode() {
     return this.astNode.hashCode();
+  }
+
+  @Override
+  public String toString() {
+    if (isDowngradeNode()) {
+      return String.format("(pdg-node '%s' for '%s' with labels %s %s)",
+          this.id, this.astNode, this.inLabel, this.outLabel);
+
+    } else {
+      return String.format("(pdg-node '%s' for '%s' with label %s)",
+          this.id, this.astNode, this.outLabel);
+    }
   }
 }

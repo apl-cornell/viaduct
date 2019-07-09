@@ -1,5 +1,6 @@
 package edu.cornell.cs.apl.viaduct.imp.visitors;
 
+import edu.cornell.cs.apl.viaduct.imp.ElaborationException;
 import edu.cornell.cs.apl.viaduct.imp.ast.ArrayDeclarationNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ArrayIndex;
 import edu.cornell.cs.apl.viaduct.imp.ast.AssertNode;
@@ -28,19 +29,19 @@ import java.util.ArrayList;
 import java.util.List;
 
 /** translation to A-normal form. */
-public class ANFVisitor extends FormatBlockVisitor {
+public class AnfVisitor extends FormatBlockVisitor {
   private static final String TMP_NAME = "tmp";
   private final FreshNameGenerator nameGenerator;
   private final SymbolTable<Variable,Boolean> declaredVars;
+  private final ANFChecker anfChecker = new ANFChecker();
+  private final AtomicChecker atomicChecker = new AtomicChecker();
   private List<LetBindingNode> currentBindings;
-  private boolean doAppend;
 
   /** constructor. */
-  public ANFVisitor() {
+  public AnfVisitor() {
     this.nameGenerator = new FreshNameGenerator();
     this.declaredVars = new SymbolTable<>();
     this.currentBindings = new ArrayList<>();
-    this.doAppend = true;
   }
 
   private List<LetBindingNode> flushBindingMap() {
@@ -49,23 +50,19 @@ public class ANFVisitor extends FormatBlockVisitor {
     return oldBindingList;
   }
 
-  private StmtNode appendBindings(StmtNode stmt) {
-    if (this.doAppend) {
-      List<StmtNode> stmtList = new ArrayList<>();
-      stmtList.addAll(flushBindingMap());
-      stmtList.add(stmt);
-      return new BlockNode(stmtList);
-
-    } else {
-      return stmt;
-    }
+  private StmtNode prependBindings(StmtNode stmt) {
+    List<StmtNode> stmtList = new ArrayList<>();
+    stmtList.addAll(flushBindingMap());
+    stmtList.add(stmt);
+    return new BlockNode(stmtList);
   }
 
   private ReadNode addBinding(ExpressionNode expr) {
     Variable tmpVar = new Variable(this.nameGenerator.getFreshName(TMP_NAME));
     LetBindingNode letBinding = new LetBindingNode(tmpVar, expr);
     this.currentBindings.add(letBinding);
-    return new ReadNode(new Variable(tmpVar));
+    Reference newVar = new Variable(tmpVar);
+    return new ReadNode(newVar);
   }
 
   @Override
@@ -86,32 +83,14 @@ public class ANFVisitor extends FormatBlockVisitor {
 
   @Override
   public ExpressionNode visit(ReadNode readNode) {
-    Reference ref = readNode.getReference();
+    Reference oldRef = readNode.getReference();
 
-    if (ref instanceof Variable) {
-      Variable refVar = (Variable)ref;
+    if (this.atomicChecker.run(oldRef)) {
+      return readNode;
 
-      // treat non-temp variable read as an object query
-      if (this.declaredVars.contains(refVar)) {
-        // adding a binding just to read a variable might be
-        // not a good idea, as it makes the PDG bigger.
-        // on the other hand, having it keeps the compiler
-        // consistent with the intermediate representation
-        // we have developed.
-        return addBinding(readNode);
-
-        // don't add the binding, leave the variable read in place
-        // return readNode;
-
-      } else {
-        return readNode;
-      }
-
-    } else { // array index
-      ArrayIndex arrayInd = (ArrayIndex)ref;
-      ExpressionNode newInd = arrayInd.getIndex().accept(this);
-      ReadNode newRead = new ReadNode(new ArrayIndex(arrayInd.getArray(), newInd));
-      return addBinding(newRead);
+    } else {
+      Reference newRef = oldRef.accept(this);
+      return addBinding(new ReadNode(newRef));
     }
   }
 
@@ -155,31 +134,49 @@ public class ANFVisitor extends FormatBlockVisitor {
         newLength,
         arrayDeclNode.getType(),
         arrayDeclNode.getLabel());
-    return appendBindings(newStmt);
+    return prependBindings(newStmt);
   }
 
   @Override
   public StmtNode visit(LetBindingNode letBindingNode) {
-    ExpressionNode newRhs = letBindingNode.getRhs().accept(this);
-    return appendBindings(new LetBindingNode(letBindingNode.getVariable(), newRhs));
+    ExpressionNode oldRhs = letBindingNode.getRhs();
+    ExpressionNode newRhs = this.anfChecker.run(oldRhs) ? oldRhs : oldRhs.accept(this);
+    return prependBindings(new LetBindingNode(letBindingNode.getVariable(), newRhs));
   }
 
   @Override
   public StmtNode visit(AssignNode assignNode) {
-    Reference newRef = assignNode.getLhs().accept(this);
+    Reference newLhs = assignNode.getLhs().accept(this);
     ExpressionNode newRhs = assignNode.getRhs().accept(this);
-    return appendBindings(new AssignNode(newRef, newRhs));
+    return prependBindings(new AssignNode(newLhs, newRhs));
   }
 
   @Override
   public StmtNode visit(SendNode sendNode) {
     ExpressionNode newExpr = sendNode.getSentExpression().accept(this);
-    return appendBindings(new SendNode(sendNode.getRecipient(), newExpr));
+    return prependBindings(new SendNode(sendNode.getRecipient(), newExpr));
   }
 
   @Override
-  public StmtNode visit(ReceiveNode receiveNode) {
-    return receiveNode;
+  public StmtNode visit(ReceiveNode recvNode) {
+    Variable recvVar = recvNode.getVariable();
+
+    // are we assigning to a temporary or a declared var?
+    // if we are assigning to a declared var, create a new temp
+    // and bind that first before assiging to the declared var
+    if (this.atomicChecker.run(recvVar)) {
+      return recvNode;
+
+    } else {
+      Variable tmpVar = new Variable(this.nameGenerator.getFreshName(TMP_NAME));
+      List<StmtNode> stmtList = new ArrayList<>();
+      stmtList.add(new ReceiveNode(
+          tmpVar,
+          recvNode.getRecvType(),
+          recvNode.getSender()));
+      stmtList.add(new AssignNode(recvVar, new ReadNode(tmpVar)));
+      return new BlockNode(stmtList);
+    }
   }
 
   @Override
@@ -198,36 +195,12 @@ public class ANFVisitor extends FormatBlockVisitor {
 
   @Override
   public StmtNode visit(WhileNode whileNode) {
-    // TODO: figure out how loop guards get converted to A-normal form...
-    // they're not as straightforward as translating guards for conditionals
-    // since the guard is evaluated multiple times
-    ExpressionNode newGuard = whileNode.getGuard().accept(this);
-    List<LetBindingNode> guardBindings = flushBindingMap();
-
-    StmtNode newBody = whileNode.getBody().accept(this);
-
-    List<StmtNode> stmtList = new ArrayList<>();
-    stmtList.addAll(guardBindings);
-    stmtList.add(new WhileNode(newGuard, newBody));
-    return new BlockNode(stmtList);
+    throw new ElaborationException();
   }
 
   @Override
   public StmtNode visit(ForNode forNode) {
-    // TODO: not correct, as in while loop! fix this
-    this.doAppend = false;
-    StmtNode newInit = forNode.getInitialize().accept(this);
-    ExpressionNode newGuard = forNode.getGuard();
-    StmtNode newUpdate = forNode.getUpdate().accept(this);
-    this.doAppend = true;
-    List<LetBindingNode> forBindings = flushBindingMap();
-
-    StmtNode newBody = forNode.getBody().accept(this);
-
-    List<StmtNode> stmtList = new ArrayList<>();
-    stmtList.addAll(forBindings);
-    stmtList.add(new ForNode(newInit, newGuard, newUpdate, newBody));
-    return new BlockNode(stmtList);
+    throw new ElaborationException();
   }
 
   @Override
@@ -243,6 +216,85 @@ public class ANFVisitor extends FormatBlockVisitor {
   @Override
   public StmtNode visit(AssertNode assertNode) {
     ExpressionNode newExpr = assertNode.getExpression().accept(this);
-    return appendBindings(new AssertNode(newExpr));
+    return prependBindings(new AssertNode(newExpr));
+  }
+
+  /** check if an expression is in ANF. */
+  class ANFChecker implements ExprVisitor<Boolean>, ReferenceVisitor<Boolean> {
+    public Boolean run(ExpressionNode expr) {
+      return expr.accept(this);
+    }
+
+    public Boolean run(Reference ref) {
+      return ref.accept(this);
+    }
+
+    public Boolean visit(Variable var) {
+      return true;
+    }
+
+    public Boolean visit(ArrayIndex arrayIndex) {
+      return AnfVisitor.this.atomicChecker.run(arrayIndex.getIndex());
+    }
+
+    public Boolean visit(LiteralNode literalNode) {
+      return true;
+    }
+
+    public Boolean visit(ReadNode readNode) {
+      return readNode.getReference().accept(this);
+    }
+
+    public Boolean visit(NotNode notNode) {
+      return AnfVisitor.this.atomicChecker.run(notNode.getExpression());
+    }
+
+    public Boolean visit(BinaryExpressionNode binExprNode) {
+      Boolean lhsAnf = AnfVisitor.this.atomicChecker.run(binExprNode.getLhs());
+      Boolean rhsAnf = AnfVisitor.this.atomicChecker.run(binExprNode.getRhs());
+      return lhsAnf && rhsAnf;
+    }
+
+    public Boolean visit(DowngradeNode downgradeNode) {
+      return AnfVisitor.this.atomicChecker.run(downgradeNode.getExpression());
+    }
+  }
+
+  class AtomicChecker implements ExprVisitor<Boolean>, ReferenceVisitor<Boolean> {
+    public Boolean run(ExpressionNode expr) {
+      return expr.accept(this);
+    }
+
+    public Boolean run(Reference ref) {
+      return ref.accept(this);
+    }
+
+    public Boolean visit(Variable var) {
+      return !AnfVisitor.this.declaredVars.contains(var);
+    }
+
+    public Boolean visit(ArrayIndex arrayIndex) {
+      return false;
+    }
+
+    public Boolean visit(LiteralNode literalNode) {
+      return true;
+    }
+
+    public Boolean visit(ReadNode readNode) {
+      return readNode.getReference().accept(this);
+    }
+
+    public Boolean visit(NotNode notNode) {
+      return false;
+    }
+
+    public Boolean visit(BinaryExpressionNode binExprNode) {
+      return false;
+    }
+
+    public Boolean visit(DowngradeNode downgradeNode) {
+      return false;
+    }
   }
 }

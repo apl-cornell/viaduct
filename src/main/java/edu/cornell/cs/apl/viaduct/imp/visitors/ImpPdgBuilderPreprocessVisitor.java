@@ -20,7 +20,7 @@ public class ImpPdgBuilderPreprocessVisitor extends FormatBlockVisitor {
     ElaborationVisitor elaborator = new ElaborationVisitor();
     preprocessedProgram = elaborator.run(preprocessedProgram);
 
-    ANFVisitor anfRewriter = new ANFVisitor();
+    AnfVisitor anfRewriter = new AnfVisitor();
     preprocessedProgram = anfRewriter.run(preprocessedProgram);
 
     return preprocessedProgram;

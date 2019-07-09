@@ -42,6 +42,8 @@ class InterpretProcessVisitor implements ExprVisitor<ImpValue>, StmtVisitor<Void
   /** The (multi-way) channel that connects {@code processName} to all other processes. */
   private final Channel<ImpValue> channel;
 
+  private final SymbolTable<Variable,Boolean> declaredVars;
+
   /** Maps variables to their values. */
   private final Store store = new Store();
 
@@ -55,6 +57,7 @@ class InterpretProcessVisitor implements ExprVisitor<ImpValue>, StmtVisitor<Void
   InterpretProcessVisitor(ProcessName process, Channel<ImpValue> channel) {
     this.processName = Objects.requireNonNull(process);
     this.channel = Objects.requireNonNull(channel);
+    this.declaredVars = new SymbolTable<>();
   }
 
   /**
@@ -63,6 +66,7 @@ class InterpretProcessVisitor implements ExprVisitor<ImpValue>, StmtVisitor<Void
   InterpretProcessVisitor() {
     this.processName = null;
     this.channel = null;
+    this.declaredVars = new SymbolTable<>();
   }
 
   /**
@@ -123,8 +127,10 @@ class InterpretProcessVisitor implements ExprVisitor<ImpValue>, StmtVisitor<Void
   }
 
   @Override
-  public Void visit(VariableDeclarationNode variableDeclarationNode) {
-    store.declare(variableDeclarationNode.getVariable());
+  public Void visit(VariableDeclarationNode varDeclNode) {
+    Variable var = varDeclNode.getVariable();
+    store.declare(var);
+    this.declaredVars.add(var,true);
     return null;
   }
 
@@ -134,6 +140,7 @@ class InterpretProcessVisitor implements ExprVisitor<ImpValue>, StmtVisitor<Void
     ImpValue lengthValue = arrayDeclNode.getLength().accept(this);
     int length = getIntValueOfIndex(lengthValue, array);
     store.declareArray(array, length);
+    this.declaredVars.add(array, true);
     return null;
   }
 
@@ -172,7 +179,13 @@ class InterpretProcessVisitor implements ExprVisitor<ImpValue>, StmtVisitor<Void
       throw new RuntimeException(e);
     }
 
-    store.update(receiveNode.getVariable(), value);
+    Variable var = receiveNode.getVariable();
+    if (this.declaredVars.contains(var)) {
+      store.update(receiveNode.getVariable(), value);
+
+    } else {
+      store.declareTemp(var, value);
+    }
 
     return null;
   }
@@ -238,10 +251,12 @@ class InterpretProcessVisitor implements ExprVisitor<ImpValue>, StmtVisitor<Void
 
   @Override
   public Void visit(BlockNode blockNode) {
+    this.declaredVars.push();
     store.pushTempContext();
     for (StmtNode stmt : blockNode) {
       stmt.accept(this);
     }
+    this.declaredVars.pop();
     store.popTempContext();
     return null;
   }

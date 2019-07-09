@@ -139,6 +139,17 @@ public class StmtBuilder {
     return this;
   }
 
+  /** build recv stmt. */
+  public StmtBuilder recv(String sender, ImpType recvType, String var) {
+    return recv(new ProcessName(sender), recvType, new Variable(var));
+  }
+
+  /** build recv stmt. */
+  public StmtBuilder recv(ProcessName sender, ImpType recvType, Variable var) {
+    this.stmts.add(new ReceiveNode(var, recvType, sender));
+    return this;
+  }
+
   /** build assertion stmt. */
   public StmtBuilder assertion(ExpressionNode assertExpr) {
     StmtNode assertNode = new AssertNode(assertExpr);

@@ -6,6 +6,7 @@ import java.util.Objects;
 /** Receive a value from a host. */
 public final class ReceiveNode extends StmtNode {
   private final Variable var;
+  private final ImpType recvType;
   private final ProcessName sender;
 
   /**
@@ -16,11 +17,23 @@ public final class ReceiveNode extends StmtNode {
    */
   public ReceiveNode(Variable variable, ProcessName sender) {
     this.var = Objects.requireNonNull(variable);
+    this.recvType = null;
+    this.sender = Objects.requireNonNull(sender);
+  }
+
+  /** constructor. */
+  public ReceiveNode(Variable variable, ImpType recvType, ProcessName sender) {
+    this.var = Objects.requireNonNull(variable);
+    this.recvType = recvType;
     this.sender = Objects.requireNonNull(sender);
   }
 
   public ProcessName getSender() {
     return this.sender;
+  }
+
+  public ImpType getRecvType() {
+    return this.recvType;
   }
 
   public Variable getVariable() {
@@ -53,6 +66,11 @@ public final class ReceiveNode extends StmtNode {
 
   @Override
   public String toString() {
-    return String.format("(receive %s from %s)", this.var, this.sender);
+    if (this.recvType == null) {
+      return String.format("(receive %s from %s)", this.var, this.sender);
+
+    } else {
+      return String.format("(receive %s %s from %s)", this.var, this.recvType, this.sender);
+    }
   }
 }

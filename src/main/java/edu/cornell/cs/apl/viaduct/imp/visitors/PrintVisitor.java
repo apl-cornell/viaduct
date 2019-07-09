@@ -12,6 +12,7 @@ import edu.cornell.cs.apl.viaduct.imp.ast.ExpressionNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ForNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.Host;
 import edu.cornell.cs.apl.viaduct.imp.ast.IfNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.ImpType;
 import edu.cornell.cs.apl.viaduct.imp.ast.LetBindingNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.LiteralNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.LoopNode;
@@ -219,6 +220,13 @@ public class PrintVisitor
 
     buffer.append(receiveNode.getVariable());
     buffer.append(" <- recv ");
+
+    ImpType recvType = receiveNode.getRecvType();
+    if (recvType != null) {
+      buffer.append(recvType);
+      buffer.append(" ");
+    }
+
     buffer.append(receiveNode.getSender());
 
     addSeparator();

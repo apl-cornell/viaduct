@@ -175,9 +175,16 @@ public class TypeCheckVisitor
   }
 
   @Override
-  public Void visit(ReceiveNode receiveNode) {
+  public Void visit(ReceiveNode recvNode) {
     // you need session types to type check this properly...
     // OTOH surface programs shouldn't really even have send and recvs
+
+    // receives are either a binding form (like let) or assignment to a declared variable
+    Variable recvVar = recvNode.getVariable();
+    ImpType recvType = recvNode.getRecvType();
+    if (!this.symbolTable.contains(recvVar)) { // binding to a temporary
+      this.tempSymbolTable.add(recvVar, recvType);
+    }
     return null;
   }
 

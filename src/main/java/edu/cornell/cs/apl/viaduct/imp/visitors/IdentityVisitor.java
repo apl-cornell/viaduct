@@ -182,7 +182,10 @@ public abstract class IdentityVisitor
 
   @Override
   public StmtNode visit(ReceiveNode receiveNode) {
-    return new ReceiveNode(receiveNode.getVariable(), receiveNode.getSender());
+    return new ReceiveNode(
+        receiveNode.getVariable(),
+        receiveNode.getRecvType(),
+        receiveNode.getSender());
   }
 
   @Override

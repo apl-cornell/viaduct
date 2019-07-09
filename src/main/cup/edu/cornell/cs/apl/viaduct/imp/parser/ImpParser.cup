@@ -150,6 +150,10 @@ stmt_basic ::=
       RESULT = new ReceiveNode(var, processName);
     :}
 
+  | variable:var LARROW RECV type:ty process_name:processName {:
+      RESULT = new ReceiveNode(var, ty, processName);
+    :}
+
   | ASSERT expr:e {:
       RESULT = new AssertNode(e);
     :}

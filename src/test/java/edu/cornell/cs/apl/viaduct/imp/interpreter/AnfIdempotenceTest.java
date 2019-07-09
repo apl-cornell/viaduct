@@ -5,12 +5,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import edu.cornell.cs.apl.viaduct.ExamplesProvider;
 import edu.cornell.cs.apl.viaduct.ImpAstParser;
 import edu.cornell.cs.apl.viaduct.imp.ast.ImpAstNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.ProcessName;
 import edu.cornell.cs.apl.viaduct.imp.ast.ProgramNode;
 import edu.cornell.cs.apl.viaduct.imp.visitors.AnfVisitor;
 import edu.cornell.cs.apl.viaduct.imp.visitors.ElaborationVisitor;
-
-import java.util.Map;
 
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.converter.ConvertWith;

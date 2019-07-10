@@ -1,5 +1,7 @@
 package edu.cornell.cs.apl.viaduct.imp.builders;
 
+import edu.cornell.cs.apl.viaduct.imp.ast.ArrayDeclarationNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.ArrayIndex;
 import edu.cornell.cs.apl.viaduct.imp.ast.AssertNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.AssignNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.BlockNode;
@@ -19,6 +21,7 @@ import edu.cornell.cs.apl.viaduct.imp.ast.Variable;
 import edu.cornell.cs.apl.viaduct.imp.ast.VariableDeclarationNode;
 import edu.cornell.cs.apl.viaduct.pdg.ProgramDependencyGraph.ControlLabel;
 import edu.cornell.cs.apl.viaduct.security.Label;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -81,6 +84,16 @@ public class StmtBuilder {
     return this;
   }
 
+  public StmtBuilder arrayDecl(String varName, ExpressionNode length, ImpType type, Label label) {
+    this.stmts.add(new ArrayDeclarationNode(new Variable(varName), length, type, label));
+    return this;
+  }
+
+  public StmtBuilder arrayDecl(Variable varName, ExpressionNode length, ImpType type, Label label) {
+    this.stmts.add(new ArrayDeclarationNode(varName, length, type, label));
+    return this;
+  }
+
   public StmtBuilder let(Variable varName, ExpressionNode rhs) {
     this.stmts.add(new LetBindingNode(varName, rhs));
     return this;
@@ -93,6 +106,11 @@ public class StmtBuilder {
 
   public StmtBuilder assign(Variable varName, ExpressionNode rhs) {
     this.stmts.add(new AssignNode(varName, rhs));
+    return this;
+  }
+
+  public StmtBuilder assign(Variable arrName, ExpressionNode idx, ExpressionNode rhs) {
+    this.stmts.add(new AssignNode(new ArrayIndex(arrName, idx), rhs));
     return this;
   }
 

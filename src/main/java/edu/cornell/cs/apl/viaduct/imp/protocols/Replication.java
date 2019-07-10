@@ -17,6 +17,7 @@ import edu.cornell.cs.apl.viaduct.protocol.ProtocolInstantiationInfo;
 
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -44,8 +45,8 @@ public class Replication extends Cleartext implements Protocol<ImpAstNode> {
   }
 
   @Override
-  public Set<Host> readFrom(
-      PdgNode<ImpAstNode> node, Host readHost, ProtocolInstantiationInfo<ImpAstNode> info) {
+  public Set<Host> readFrom(PdgNode<ImpAstNode> node, Host readHost,
+      int nargs, ProtocolInstantiationInfo<ImpAstNode> info) {
 
     // should not be read from until it has been instantiated
     assert this.outVarMap.size() == getNumReplicas();
@@ -117,23 +118,23 @@ public class Replication extends Cleartext implements Protocol<ImpAstNode> {
   public void writeTo(
       PdgNode<ImpAstNode> node,
       Host writeHost,
-      ImpAstNode val,
+      List<ImpAstNode> args,
       ProtocolInstantiationInfo<ImpAstNode> info) {
 
     if (node.isStorageNode()) {
       // node must have been instantiated before being written to
       assert this.outVarMap.size() == getNumReplicas();
 
-      StmtBuilder writerBuilder = info.getBuilder(writeHost);
+      // StmtBuilder writerBuilder = info.getBuilder(writeHost);
 
       if (this.replicas.realReplicas.contains(writeHost)) {
-        writerBuilder.assign(this.outVarMap.get(writeHost), (ExpressionNode) val);
+        // writerBuilder.assign(this.outVarMap.get(writeHost), (ExpressionNode) val);
 
       } else {
         for (Host realHost : this.replicas.realReplicas) {
           StmtBuilder builder = info.getBuilder(realHost);
 
-          writerBuilder.send(new ProcessName(realHost), (ExpressionNode) val);
+          // writerBuilder.send(new ProcessName(realHost), (ExpressionNode) val);
           builder.recv(new ProcessName(writeHost), this.outVarMap.get(realHost));
         }
       }

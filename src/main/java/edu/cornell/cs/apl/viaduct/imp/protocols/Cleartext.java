@@ -1,25 +1,34 @@
 package edu.cornell.cs.apl.viaduct.imp.protocols;
 
 import edu.cornell.cs.apl.viaduct.Binding;
+import edu.cornell.cs.apl.viaduct.imp.ast.ArrayDeclarationNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.ArrayIndex;
 import edu.cornell.cs.apl.viaduct.imp.ast.AssignNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ExpressionNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.Host;
 import edu.cornell.cs.apl.viaduct.imp.ast.ImpAstNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ProcessName;
+import edu.cornell.cs.apl.viaduct.imp.ast.ReadNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.StmtNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.Variable;
 import edu.cornell.cs.apl.viaduct.imp.ast.VariableDeclarationNode;
 import edu.cornell.cs.apl.viaduct.imp.builders.ExpressionBuilder;
 import edu.cornell.cs.apl.viaduct.imp.builders.StmtBuilder;
+import edu.cornell.cs.apl.viaduct.imp.visitors.ReferenceVisitor;
 import edu.cornell.cs.apl.viaduct.imp.visitors.RenameVisitor;
+import edu.cornell.cs.apl.viaduct.imp.visitors.ReplaceVisitor;
+import edu.cornell.cs.apl.viaduct.pdg.PdgComputeEdge;
 import edu.cornell.cs.apl.viaduct.pdg.PdgComputeNode;
 import edu.cornell.cs.apl.viaduct.pdg.PdgControlNode;
 import edu.cornell.cs.apl.viaduct.pdg.PdgEdge;
 import edu.cornell.cs.apl.viaduct.pdg.PdgInfoEdge;
 import edu.cornell.cs.apl.viaduct.pdg.PdgNode;
+import edu.cornell.cs.apl.viaduct.pdg.PdgQueryEdge;
 import edu.cornell.cs.apl.viaduct.pdg.PdgReadEdge;
 import edu.cornell.cs.apl.viaduct.pdg.PdgStorageNode;
 import edu.cornell.cs.apl.viaduct.pdg.PdgWriteEdge;
 import edu.cornell.cs.apl.viaduct.protocol.Protocol;
+import edu.cornell.cs.apl.viaduct.protocol.ProtocolInstantiationException;
 import edu.cornell.cs.apl.viaduct.protocol.ProtocolInstantiationInfo;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -33,30 +42,66 @@ public abstract class Cleartext {
       Host host, PdgStorageNode<ImpAstNode> node, ProtocolInstantiationInfo<ImpAstNode> info) {
 
     // declare new variable
-    VariableDeclarationNode varDecl = (VariableDeclarationNode) node.getAstNode();
-    // Variable newVar = info.getFreshVar(varDecl.getVariable().getName());
-    Variable newVar = varDecl.getVariable();
-
+    ImpAstNode astNode = node.getAstNode();
     StmtBuilder builder = info.getBuilder(host);
-    builder.varDecl(newVar, varDecl.getType(), varDecl.getLabel());
+    Variable newVar = null;
+
+    if (astNode instanceof VariableDeclarationNode) {
+      VariableDeclarationNode varDecl = (VariableDeclarationNode)astNode;
+      newVar = varDecl.getVariable();
+      builder.varDecl(newVar, varDecl.getType(), varDecl.getLabel());
+
+    } else if (astNode instanceof ArrayDeclarationNode) {
+      ArrayDeclarationNode arrayDecl = (ArrayDeclarationNode)astNode;
+      newVar = arrayDecl.getVariable();
+      builder.arrayDecl(newVar, arrayDecl.getLength(), arrayDecl.getType(), arrayDecl.getLabel());
+
+    } else {
+      throw new ProtocolInstantiationException(
+          "storage node not associated with var or array declaration");
+    }
 
     return newVar;
+  }
+
+  protected ExpressionNode getReadValue(
+      PdgNode<ImpAstNode> node, List<Variable> readArgs, Variable outVar) {
+
+    if (node.isStorageNode()) {
+      StmtNode stmt = (StmtNode)node.getAstNode();
+      if (stmt instanceof VariableDeclarationNode) { // variable read
+        return new ReadNode(outVar);
+
+      } else { // array access
+        Variable idx = readArgs.get(0);
+        return new ReadNode(new ArrayIndex(outVar, new ReadNode(idx)));
+      }
+    } else {
+      return new ReadNode(outVar);
+    }
   }
 
   protected Binding<ImpAstNode> performRead(
       PdgNode<ImpAstNode> node,
       Binding<ImpAstNode> readLabel,
       Host host,
+      List<ImpAstNode> args,
       ProtocolInstantiationInfo<ImpAstNode> info) {
 
     StmtBuilder builder = info.getBuilder(host);
     Protocol<ImpAstNode> readNodeProto = info.getProtocol(node);
-    Set<Host> readHosts = readNodeProto.readFrom(node, host, info);
+    Set<Host> readHosts = readNodeProto.readFrom(node, host, args.size(), info);
 
     Map<Host, Binding<ImpAstNode>> hostBindings = new HashMap<>();
     for (Host readHost : readHosts) {
+      ProcessName readHostProc = new ProcessName(readHost);
+
+      for (ImpAstNode arg : args) {
+        builder.send(readHostProc, (ExpressionNode)arg);
+      }
+
       Variable readVar = info.getFreshVar(readLabel);
-      builder.recv(new ProcessName(readHost), readVar);
+      builder.recv(readHostProc, readVar);
       hostBindings.put(readHost, readVar);
     }
 
@@ -67,37 +112,84 @@ public abstract class Cleartext {
       Host host, PdgComputeNode<ImpAstNode> node, ProtocolInstantiationInfo<ImpAstNode> info) {
 
     StmtBuilder builder = info.getBuilder(host);
-    // read from inputs
-    Map<Variable, Variable> renameMap = new HashMap<>();
+    // read from other compute nodes
+    Map<Variable, Variable> computeRenameMap = new HashMap<>();
     for (PdgReadEdge<ImpAstNode> readEdge : node.getReadEdges()) {
-      Variable readVar =
-          (Variable) performRead(readEdge.getSource(), readEdge.getLabel(), host, info);
-      renameMap.put((Variable) readEdge.getLabel(), readVar);
+      if (readEdge.isComputeEdge()) {
+        PdgComputeEdge<ImpAstNode> computeEdge = (PdgComputeEdge<ImpAstNode>)readEdge;
+        Variable edgeBinding = (Variable)computeEdge.getBinding();
+        Variable readVar =
+            (Variable) performRead(computeEdge.getSource(), edgeBinding,
+                host, new ArrayList<>(), info);
+        computeRenameMap.put(edgeBinding, readVar);
+      }
     }
 
-    // perform computation
-    Variable outVar = info.getFreshVar(node.getId());
-    ImpAstNode astNode = node.getAstNode();
-    RenameVisitor renamer = new RenameVisitor(renameMap);
-    if (astNode instanceof AssignNode) {
-      AssignNode assignNode = (AssignNode) astNode;
-      ExpressionNode computation = assignNode.getRhs().accept(renamer);
-      builder.let(outVar, computation);
+    RenameVisitor computeRenamer = new RenameVisitor(computeRenameMap);
 
-    } else if (astNode instanceof ExpressionNode) {
-      ExpressionNode computation = ((ExpressionNode) astNode).accept(renamer);
-      builder.let(outVar, computation);
+    // perform queries (read from storage nodes)
+    Map<ExpressionNode, ExpressionNode> queryRenameMap = new HashMap<>();
+    for (PdgReadEdge<ImpAstNode> readEdge : node.getReadEdges()) {
+      if (readEdge.isQueryEdge()) {
+        PdgQueryEdge<ImpAstNode> queryEdge = (PdgQueryEdge<ImpAstNode>)readEdge;
+
+        ReadNode queryRead = (ReadNode)queryEdge.getQuery();
+        List<ImpAstNode> renamedArgs = queryRead.getReference().accept(
+            new ReferenceVisitor<List<ImpAstNode>>() {
+              public List<ImpAstNode> visit(Variable var) {
+                return new ArrayList<>();
+              }
+
+              public List<ImpAstNode> visit(ArrayIndex arrayIndex) {
+                ExpressionNode renamedInd = computeRenamer.run(arrayIndex.getIndex());
+                List<ImpAstNode> arrayArgs = new ArrayList<>();
+                arrayArgs.add(renamedInd);
+                return arrayArgs;
+              }
+            });
+
+        Variable readVar =
+            (Variable) performRead(queryEdge.getSource(), new Variable("query"),
+                host, renamedArgs, info);
+
+        queryRenameMap.put(queryRead, new ReadNode(readVar));
+      }
+    }
+
+    ReplaceVisitor queryRenamer = new ReplaceVisitor(queryRenameMap, new HashMap<>());
+
+    // perform computation
+    ImpAstNode astNode = node.getAstNode();
+    astNode = computeRenamer.run(astNode);
+    astNode = queryRenamer.run(astNode);
+
+    Variable outVar = info.getFreshVar(node.getId());
+
+    if (astNode instanceof ExpressionNode) {
+      builder.let(outVar, (ExpressionNode) astNode);
+
+    } else if (astNode instanceof AssignNode) {
+      AssignNode assignNode = (AssignNode)astNode;
+      builder.let(outVar, assignNode.getRhs());
     }
 
     // write to storage nodes
-    ExpressionBuilder e = new ExpressionBuilder();
     for (PdgEdge<ImpAstNode> outEdge : node.getOutInfoEdges()) {
       // only write to variables, since if computations read from
       // the output of this node then it will call readFrom() anyway
       if (outEdge instanceof PdgWriteEdge<?>) {
+        PdgWriteEdge<ImpAstNode> writeEdge = (PdgWriteEdge<ImpAstNode>)outEdge;
+
+        List<ImpAstNode> renamedArgs = new ArrayList<>();
+        for (ImpAstNode arg : writeEdge.getCommandArgs()) {
+          ImpAstNode renamedArg = computeRenamer.run(arg);
+          renamedArg = queryRenamer.run(renamedArg);
+          renamedArgs.add(renamedArg);
+        }
+
         PdgStorageNode<ImpAstNode> outNode = (PdgStorageNode<ImpAstNode>) outEdge.getTarget();
         Protocol<ImpAstNode> outProto = info.getProtocol(outNode);
-        outProto.writeTo(outNode, host, e.var(outVar), info);
+        outProto.writeTo(outNode, host, renamedArgs, info);
       }
     }
 
@@ -124,11 +216,11 @@ public abstract class Cleartext {
     ExpressionBuilder e = new ExpressionBuilder();
     PdgReadEdge<ImpAstNode> guardEdge = infoEdges.get(0);
     PdgNode<ImpAstNode> guardNode = guardEdge.getSource();
-    Binding<ImpAstNode> guardLabel = guardEdge.getLabel();
+    Binding<ImpAstNode> guardLabel = ((PdgComputeEdge<ImpAstNode>)guardEdge).getBinding();
     for (Host controlStructureHost : controlStructureHosts) {
       StmtBuilder controlStructureBuilder = info.getBuilder(controlStructureHost);
       Binding<ImpAstNode> guardBinding =
-          performRead(guardNode, guardLabel, controlStructureHost, info);
+          performRead(guardNode, guardLabel, controlStructureHost, new ArrayList<>(), info);
       controlStructureBuilder.pushIf(e.var((Variable) guardBinding));
     }
   }

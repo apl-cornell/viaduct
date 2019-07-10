@@ -15,6 +15,7 @@ import edu.cornell.cs.apl.viaduct.imp.ast.LetBindingNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.LiteralNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.LoopNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.NotNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.ProgramNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ReadNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ReceiveNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.SendNode;
@@ -51,12 +52,16 @@ public class ReplaceVisitor extends IdentityVisitor {
     }
   }
 
-  private ImpAstNode run(ImpAstNode ast) {
+  /** run visitor. */
+  public ImpAstNode run(ImpAstNode ast) {
     if (ast instanceof ExpressionNode) {
       return ((ExpressionNode) ast).accept(this);
 
-    } else {
+    } else if (ast instanceof StmtNode) {
       return ((StmtNode) ast).accept(this);
+
+    } else {
+      return ((ProgramNode) ast).accept(this);
     }
   }
 

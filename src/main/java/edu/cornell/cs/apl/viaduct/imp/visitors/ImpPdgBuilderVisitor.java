@@ -25,12 +25,13 @@ import edu.cornell.cs.apl.viaduct.imp.ast.StmtNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.Variable;
 import edu.cornell.cs.apl.viaduct.imp.ast.VariableDeclarationNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.WhileNode;
+import edu.cornell.cs.apl.viaduct.pdg.PdgComputeEdge;
 import edu.cornell.cs.apl.viaduct.pdg.PdgComputeNode;
 import edu.cornell.cs.apl.viaduct.pdg.PdgControlNode;
 import edu.cornell.cs.apl.viaduct.pdg.PdgNode;
 import edu.cornell.cs.apl.viaduct.pdg.PdgPcFlowEdge;
+import edu.cornell.cs.apl.viaduct.pdg.PdgQueryEdge;
 import edu.cornell.cs.apl.viaduct.pdg.PdgReadChannelEdge;
-import edu.cornell.cs.apl.viaduct.pdg.PdgReadEdge;
 import edu.cornell.cs.apl.viaduct.pdg.PdgStorageNode;
 import edu.cornell.cs.apl.viaduct.pdg.PdgWriteEdge;
 import edu.cornell.cs.apl.viaduct.pdg.ProgramDependencyGraph;
@@ -95,12 +96,11 @@ public class ImpPdgBuilderVisitor
 
     for (Variable temp : temps) {
       PdgNode<ImpAstNode> readNode = this.nodeMap.get(temp.getBinding());
-      PdgReadEdge.create(readNode, node, temp);
+      PdgComputeEdge.create(readNode, node, temp);
     }
 
     for (Reference query : queries) {
-      // TODO: add index information to read edge
-      Variable queryVar = query.accept(new ReferenceVisitor<Variable>() {
+      Variable var = query.accept(new ReferenceVisitor<Variable>() {
         public Variable visit(Variable var) {
           return var;
         }
@@ -109,9 +109,9 @@ public class ImpPdgBuilderVisitor
           return arrayIndex.getArray();
         }
       });
-      String readNodeName = this.varDeclMap.get(queryVar);
+      String readNodeName = this.varDeclMap.get(var);
       PdgNode<ImpAstNode> readNode = this.nodeMap.get(readNodeName);
-      PdgReadEdge.create(readNode, node, queryVar);
+      PdgQueryEdge.create(readNode, node, new ReadNode(query));
     }
   }
 
@@ -159,8 +159,8 @@ public class ImpPdgBuilderVisitor
       node = new PdgComputeNode<>(rhs, name, Label.weakestPrincipal());
     }
 
-    Set<Variable> temps = this.tempSetVisitor.run(letBindingNode.getRhs());
-    Set<Reference> queries = this.querySetVisitor.run(letBindingNode.getRhs());
+    Set<Variable> temps = this.tempSetVisitor.run(rhs);
+    Set<Reference> queries = this.querySetVisitor.run(rhs);
     createReadEdges(temps, queries, node);
 
     // in A-normal form, there should be at most one query
@@ -172,18 +172,21 @@ public class ImpPdgBuilderVisitor
   @Override
   public Set<PdgNode<ImpAstNode>> visit(AssignNode assignNode) {
     Reference lhs = assignNode.getLhs();
+    ExpressionNode rhs = assignNode.getRhs();
 
     Set<Variable> lhsTemps = this.tempSetVisitor.run(lhs);
-    Set<Variable> rhsTemps = this.tempSetVisitor.run(assignNode.getRhs());
+    Set<Variable> rhsTemps = this.tempSetVisitor.run(rhs);
     Set<Variable> temps = new HashSet<>(lhsTemps);
     temps.addAll(rhsTemps);
 
     Set<Reference> queries = new HashSet<>();
+    /*
     Set<Reference> lhsQueries = this.querySetVisitor.run(lhs);
-    Set<Reference> rhsQueries  = this.querySetVisitor.run(assignNode.getRhs());
+    Set<Reference> rhsQueries  = this.querySetVisitor.run(rhs);
     queries.addAll(lhsQueries);
     queries.addAll(rhsQueries);
     queries.remove(lhs);
+    */
 
     // there should be NO queries for assignments in A-normal form!
     // assert queries.size() == 0;
@@ -198,15 +201,14 @@ public class ImpPdgBuilderVisitor
     lhs.accept(new ReferenceVisitor<Set<PdgNode<ImpAstNode>>>() {
       public Set<PdgNode<ImpAstNode>> visit(Variable var) {
         PdgNode<ImpAstNode> varNode = ImpPdgBuilderVisitor.this.getVariableNode(var);
-        PdgWriteEdge.create(node, varNode);
+        PdgWriteEdge.create(node, varNode, "set", rhs);
         return null;
       }
 
-      // TODO: add array data later
       public Set<PdgNode<ImpAstNode>> visit(ArrayIndex arrayIndex) {
         Variable arrayVar = arrayIndex.getArray();
         PdgNode<ImpAstNode> varNode = ImpPdgBuilderVisitor.this.getVariableNode(arrayVar);
-        PdgWriteEdge.create(node, varNode);
+        PdgWriteEdge.create(node, varNode, "set", arrayIndex.getIndex(), rhs);
         return null;
       }
     });
@@ -230,9 +232,9 @@ public class ImpPdgBuilderVisitor
     PdgControlNode<ImpAstNode> node =
         new PdgControlNode<>(ifNode, name, Label.weakestPrincipal());
 
-
-    Set<Variable> temps = this.tempSetVisitor.run(ifNode.getGuard());
-    Set<Reference> queries = new HashSet<>();
+    ExpressionNode guard = ifNode.getGuard();
+    Set<Variable> temps = this.tempSetVisitor.run(guard);
+    Set<Reference> queries = this.querySetVisitor.run(guard);
     createReadEdges(temps, queries, node);
 
     Set<PdgNode<ImpAstNode>> createdNodes = addNode(name, node, ifNode);
@@ -390,7 +392,7 @@ public class ImpPdgBuilderVisitor
       // we're assuming the AST is in A-normal form, so there's no need
       // to traverse the index since it's guaranteed to be an atomic expr
       Set<Reference> reads = new HashSet<>();
-      reads.add(arrayIndex);
+      reads.add(arrayIndex.getArray());
       return reads;
     }
   }

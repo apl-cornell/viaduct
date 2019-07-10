@@ -8,6 +8,7 @@ import edu.cornell.cs.apl.viaduct.protocol.Protocol;
 import edu.cornell.cs.apl.viaduct.protocol.ProtocolInstantiationInfo;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -32,7 +33,7 @@ public class ZK implements Protocol<ImpAstNode> {
 
   @Override
   public Set<Host> readFrom(
-      PdgNode<ImpAstNode> node, Host h, ProtocolInstantiationInfo<ImpAstNode> info) {
+      PdgNode<ImpAstNode> node, Host h, int nargs, ProtocolInstantiationInfo<ImpAstNode> info) {
 
     // TODO: finish
     return new HashSet<>();
@@ -52,7 +53,7 @@ public class ZK implements Protocol<ImpAstNode> {
   public void writeTo(
       PdgNode<ImpAstNode> node,
       Host h,
-      ImpAstNode val,
+      List<ImpAstNode> args,
       ProtocolInstantiationInfo<ImpAstNode> info) {
 
     // TODO: finish

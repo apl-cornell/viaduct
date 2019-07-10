@@ -12,12 +12,15 @@ import edu.cornell.cs.apl.viaduct.pdg.PdgNode;
 import edu.cornell.cs.apl.viaduct.protocol.Protocol;
 import edu.cornell.cs.apl.viaduct.protocol.ProtocolInstantiationInfo;
 
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 /** multiparty computation protocol. */
 public class MPC extends Cleartext implements Protocol<ImpAstNode> {
+  private static Map<Set<Host>,Host> synthesizedHostMap = new HashMap<>();
   private Set<Host> parties;
   private Host synthesizedHost;
   private Variable outVar;
@@ -32,8 +35,8 @@ public class MPC extends Cleartext implements Protocol<ImpAstNode> {
   }
 
   @Override
-  public Set<Host> readFrom(
-      PdgNode<ImpAstNode> node, Host readHost, ProtocolInstantiationInfo<ImpAstNode> info) {
+  public Set<Host> readFrom(PdgNode<ImpAstNode> node, Host readHost,
+      int nargs, ProtocolInstantiationInfo<ImpAstNode> info) {
 
     // this should not be read from until it has been instantiated!
     assert this.outVar != null;
@@ -63,7 +66,7 @@ public class MPC extends Cleartext implements Protocol<ImpAstNode> {
   public void writeTo(
       PdgNode<ImpAstNode> node,
       Host h,
-      ImpAstNode val,
+      List<ImpAstNode> args,
       ProtocolInstantiationInfo<ImpAstNode> info) {
 
     // MPC is only for computations, so it cannot be written to!
@@ -72,8 +75,14 @@ public class MPC extends Cleartext implements Protocol<ImpAstNode> {
 
   @Override
   public void instantiate(PdgNode<ImpAstNode> node, ProtocolInstantiationInfo<ImpAstNode> info) {
-    this.synthesizedHost = new Host(info.getFreshName(toString()));
-    info.createProcess(this.synthesizedHost);
+    if (synthesizedHostMap.containsKey(this.parties)) {
+      this.synthesizedHost = synthesizedHostMap.get(this.parties);
+
+    } else {
+      this.synthesizedHost = new Host(info.getFreshName(toString()));
+      synthesizedHostMap.put(this.parties, this.synthesizedHost);
+      info.createProcess(this.synthesizedHost);
+    }
     this.outVar =
         instantiateComputeNode(this.synthesizedHost, (PdgComputeNode<ImpAstNode>) node, info);
   }
@@ -106,6 +115,6 @@ public class MPC extends Cleartext implements Protocol<ImpAstNode> {
     }
 
     String strList = String.join(",", strs);
-    return String.format("MPC({%s})", strList);
+    return String.format("MPC(%s)", strList);
   }
 }

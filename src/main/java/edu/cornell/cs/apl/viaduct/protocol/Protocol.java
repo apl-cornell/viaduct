@@ -5,6 +5,7 @@ import edu.cornell.cs.apl.viaduct.Binding;
 import edu.cornell.cs.apl.viaduct.imp.ast.Host;
 import edu.cornell.cs.apl.viaduct.pdg.PdgNode;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -12,12 +13,12 @@ import java.util.Set;
 public interface Protocol<T extends AstNode> {
   Set<Host> getHosts();
 
-  Set<Host> readFrom(PdgNode<T> node, Host h, ProtocolInstantiationInfo<T> info);
+  Set<Host> readFrom(PdgNode<T> node, Host h, int nargs, ProtocolInstantiationInfo<T> info);
 
   Binding<T> readPostprocess(Map<Host,Binding<T>> hostBindings, Host readHost,
       ProtocolInstantiationInfo<T> info);
 
-  void writeTo(PdgNode<T> node, Host writeHost, T val, ProtocolInstantiationInfo<T> info);
+  void writeTo(PdgNode<T> node, Host writeHost, List<T> args, ProtocolInstantiationInfo<T> info);
 
   void instantiate(PdgNode<T> node, ProtocolInstantiationInfo<T> info);
 }

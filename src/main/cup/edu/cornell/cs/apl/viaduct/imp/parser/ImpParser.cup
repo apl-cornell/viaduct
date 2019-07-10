@@ -280,9 +280,9 @@ label ::=
 label_expr ::=
     CAP_IDENT:id {: RESULT = new Label(new Principal(id)); :}
 
-  | TOP {: RESULT = Label.top(); :}
+  | TOP {: RESULT = Label.weakest(); :}
 
-  | BOTTOM {: RESULT = Label.bottom(); :}
+  | BOTTOM {: RESULT = Label.strongest(); :}
 
   | label_expr:l1 OR label_expr:l2 {:
       RESULT = l1.or(l2);
@@ -292,20 +292,20 @@ label_expr ::=
       RESULT = l1.or(l2);
     :}
 
-  | label_expr:l1 OROR label_expr:l2 {:
-      RESULT = l1.join(l2);
-    :}
-
-  | label_expr:l1 SQCUP label_expr:l2 {:
-      RESULT = l1.join(l2);
-    :}
-
   | label_expr:l1 AND label_expr:l2 {:
       RESULT = l1.and(l2);
     :}
 
   | label_expr:l1 WEDGE label_expr:l2 {:
       RESULT = l1.and(l2);
+    :}
+
+  | label_expr:l1 OROR label_expr:l2 {:
+      RESULT = l1.join(l2);
+    :}
+
+  | label_expr:l1 SQCUP label_expr:l2 {:
+      RESULT = l1.join(l2);
     :}
 
   | label_expr:l1 ANDAND label_expr:l2 {:

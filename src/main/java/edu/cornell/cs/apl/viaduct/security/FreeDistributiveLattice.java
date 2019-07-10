@@ -91,12 +91,12 @@ final class FreeDistributiveLattice<A> implements Lattice<FreeDistributiveLattic
       return true;
     }
 
-    if (o == null || getClass() != o.getClass()) {
+    if (!(o instanceof FreeDistributiveLattice)) {
       return false;
     }
 
     final FreeDistributiveLattice that = (FreeDistributiveLattice) o;
-    return this.joinOfMeets.equals(that.joinOfMeets);
+    return Objects.equals(this.joinOfMeets, that.joinOfMeets);
   }
 
   @Override

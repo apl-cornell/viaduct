@@ -48,12 +48,12 @@ public class Label implements Lattice<Label>, TrustLattice<Label> {
   }
 
   /** The least powerful principal, i.e. public and untrusted. */
-  public static Label weakestPrincipal() {
+  public static Label weakest() {
     return WEAKEST;
   }
 
   /** The most powerful principal, i.e. secret and trusted. */
-  public static Label strongestPrincipal() {
+  public static Label strongest() {
     return STRONGEST;
   }
 
@@ -126,13 +126,13 @@ public class Label implements Lattice<Label>, TrustLattice<Label> {
       return true;
     }
 
-    if (o == null || getClass() != o.getClass()) {
+    if (!(o instanceof Label)) {
       return false;
     }
 
     final Label that = (Label) o;
-    return this.confidentiality.equals(that.confidentiality)
-        && this.integrity.equals(that.integrity);
+    return Objects.equals(this.confidentiality, that.confidentiality)
+        && Objects.equals(this.integrity, that.integrity);
   }
 
   @Override
@@ -146,16 +146,16 @@ public class Label implements Lattice<Label>, TrustLattice<Label> {
     final String integrityString = this.integrity.toString() + "<-";
 
     String expression;
-    if (this.equals(BOTTOM)) {
+    if (this.equals(bottom())) {
       expression = "";
 
     } else if (this.confidentiality.equals(this.integrity)) {
       expression = this.confidentiality.toString();
 
-    } else if (STRONGEST.integrity().equals(this.integrity())) {
+    } else if (this.equals(this.confidentiality())) {
       expression = confidentialityString;
 
-    } else if (STRONGEST.confidentiality().equals(this.confidentiality())) {
+    } else if (this.equals(this.integrity())) {
       expression = integrityString;
 
     } else {

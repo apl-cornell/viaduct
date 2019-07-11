@@ -16,12 +16,12 @@ public class Principal implements Comparable<Principal> {
       return true;
     }
 
-    if (o == null || getClass() != o.getClass()) {
+    if (!(o instanceof Principal)) {
       return false;
     }
 
     final Principal that = (Principal) o;
-    return this.name.equals(that.name);
+    return Objects.equals(this.name, that.name);
   }
 
   @Override

@@ -2,7 +2,6 @@ package edu.cornell.cs.apl.viaduct.pdg;
 
 import edu.cornell.cs.apl.viaduct.AstNode;
 import edu.cornell.cs.apl.viaduct.security.Label;
-
 import java.util.HashSet;
 import java.util.Set;
 
@@ -20,8 +19,8 @@ public abstract class PdgNode<T extends AstNode> {
   public PdgNode(T astNode, String id) {
     this.inInfoEdges = new HashSet<>();
     this.outInfoEdges = new HashSet<>();
-    this.inLabel = Label.weakestPrincipal();
-    this.outLabel = Label.weakestPrincipal();
+    this.inLabel = Label.weakest();
+    this.outLabel = Label.weakest();
     this.astNode = astNode;
     this.id = id;
   }
@@ -51,7 +50,7 @@ public abstract class PdgNode<T extends AstNode> {
     Set<PdgReadEdge<T>> readEdges = new HashSet<>();
     for (PdgInfoEdge<T> infoEdge : this.inInfoEdges) {
       if (infoEdge.isReadEdge()) {
-        readEdges.add((PdgReadEdge<T>)infoEdge);
+        readEdges.add((PdgReadEdge<T>) infoEdge);
       }
     }
 
@@ -67,7 +66,7 @@ public abstract class PdgNode<T extends AstNode> {
     Set<PdgWriteEdge<T>> writeEdges = new HashSet<>();
     for (PdgInfoEdge<T> infoEdge : this.outInfoEdges) {
       if (infoEdge.isReadEdge()) {
-        writeEdges.add((PdgWriteEdge<T>)infoEdge);
+        writeEdges.add((PdgWriteEdge<T>) infoEdge);
       }
     }
 
@@ -119,9 +118,10 @@ public abstract class PdgNode<T extends AstNode> {
     return !this.inLabel.confidentiality().flowsTo(this.outLabel.confidentiality());
   }
 
-  /** returns whether node marks off the beginning of a control fork.
-   *  e.g. the first node in a then brach of a condition marks off
-   * the beginning of a control fork. */
+  /**
+   * returns whether node marks off the beginning of a control fork. e.g. the first node in a then
+   * brach of a condition marks off the beginning of a control fork.
+   */
   public boolean isStartOfControlFork() {
     /*
     if (this.inControlEdge != null) {
@@ -134,8 +134,7 @@ public abstract class PdgNode<T extends AstNode> {
     return false;
   }
 
-  /** the node is the end of a execution path if it has
-   * no outgoing control edges. */
+  /** the node is the end of a execution path if it has no outgoing control edges. */
   public boolean isEndOfExecutionPath() {
     /*
     boolean hasSeqOutControlEdge = false;
@@ -151,8 +150,10 @@ public abstract class PdgNode<T extends AstNode> {
     return false;
   }
 
-  /** get the control node whose control structure this node resides in.
-   * returns null if there isn't such a node */
+  /**
+   * get the control node whose control structure this node resides in. returns null if there isn't
+   * such a node
+   */
   public PdgControlNode<T> getControlNode() {
     /*
     PdgNode<T> cur = this;
@@ -210,12 +211,13 @@ public abstract class PdgNode<T extends AstNode> {
   @Override
   public String toString() {
     if (isDowngradeNode()) {
-      return String.format("(pdg-node '%s' for '%s' with labels %s %s)",
+      return String.format(
+          "(pdg-node '%s' for '%s' with labels %s %s)",
           this.id, this.astNode, this.inLabel, this.outLabel);
 
     } else {
-      return String.format("(pdg-node '%s' for '%s' with label %s)",
-          this.id, this.astNode, this.outLabel);
+      return String.format(
+          "(pdg-node '%s' for '%s' with label %s)", this.id, this.astNode, this.outLabel);
     }
   }
 }

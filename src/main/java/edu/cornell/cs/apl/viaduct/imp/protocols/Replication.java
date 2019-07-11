@@ -46,7 +46,7 @@ public class Replication extends Cleartext implements Protocol<ImpAstNode> {
 
   @Override
   public Set<Host> readFrom(PdgNode<ImpAstNode> node, Host readHost,
-      int nargs, ProtocolInstantiationInfo<ImpAstNode> info) {
+      List<ImpAstNode>  args, ProtocolInstantiationInfo<ImpAstNode> info) {
 
     // should not be read from until it has been instantiated
     assert this.outVarMap.size() == getNumReplicas();

@@ -48,24 +48,25 @@ public class Single extends Cleartext implements Protocol<ImpAstNode> {
   public Set<Host> readFrom(
       PdgNode<ImpAstNode> node,
       Host readHost,
-      int nargs,
+      List<ImpAstNode> args,
       ProtocolInstantiationInfo<ImpAstNode> info) {
 
     // this should not be read from until it has been instantiated!
     assert this.outVar != null;
 
     StmtBuilder builder = info.getBuilder(this.host);
-    ProcessName readHostProc = new ProcessName(readHost);
-
+    StmtBuilder readBuilder = info.getBuilder(readHost);
     List<Variable> readArgs = new ArrayList<>();
-    for (int i = 0; i < nargs; i++) {
+    for (ImpAstNode arg : args) {
+      readBuilder.send(this.host, (ExpressionNode)arg);
+
       Variable readArgVar = info.getFreshVar("arg");
       readArgs.add(readArgVar);
-      builder.recv(readHostProc, readArgVar);
+      builder.recv(readHost, readArgVar);
     }
 
     ExpressionNode readVal = getReadValue(node, readArgs, this.outVar);
-    builder.send(readHostProc, readVal);
+    builder.send(readHost, readVal);
 
     Set<Host> hosts = new HashSet<>();
     hosts.add(this.host);
@@ -105,25 +106,29 @@ public class Single extends Cleartext implements Protocol<ImpAstNode> {
 
       if (stmt instanceof VariableDeclarationNode) {
         assert args.size() == 1;
+
         ExpressionNode val = (ExpressionNode)args.get(0);
         writerBuilder.send(hostProc, val);
         builder.recv(writeHostProc, this.outVar);
 
       } else if (stmt instanceof ArrayDeclarationNode) {
         assert args.size() == 2;
+
         ExpressionNode idx = (ExpressionNode)args.get(0);
         ExpressionNode val = (ExpressionNode)args.get(1);
         writerBuilder.send(hostProc, idx);
         writerBuilder.send(hostProc, val);
-        Variable idxVar = info.getFreshVar("arr_idx");
-        Variable valVar = info.getFreshVar("arr_val");
+
+        Variable arrayVar = ((ArrayDeclarationNode)stmt).getVariable();
+        Variable idxVar = info.getFreshVar(String.format("%s_idx", arrayVar));
+        Variable valVar = info.getFreshVar(String.format("%s_val", arrayVar));
         builder.recv(writeHostProc, idxVar);
         builder.recv(writeHostProc, valVar);
         builder.assign(this.outVar, e.var(idxVar), e.var(valVar));
 
       } else {
         throw new ProtocolInstantiationException(
-            "storage node not associated with var or array declaration");
+          "storage node not associated with var or array declaration");
       }
     }
   }

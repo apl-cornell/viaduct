@@ -36,7 +36,7 @@ public class MPC extends Cleartext implements Protocol<ImpAstNode> {
 
   @Override
   public Set<Host> readFrom(PdgNode<ImpAstNode> node, Host readHost,
-      int nargs, ProtocolInstantiationInfo<ImpAstNode> info) {
+      List<ImpAstNode> args, ProtocolInstantiationInfo<ImpAstNode> info) {
 
     // this should not be read from until it has been instantiated!
     assert this.outVar != null;

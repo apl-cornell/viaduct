@@ -13,7 +13,7 @@ import java.util.Set;
 public interface Protocol<T extends AstNode> {
   Set<Host> getHosts();
 
-  Set<Host> readFrom(PdgNode<T> node, Host h, int nargs, ProtocolInstantiationInfo<T> info);
+  Set<Host> readFrom(PdgNode<T> node, Host h, List<T> args, ProtocolInstantiationInfo<T> info);
 
   Binding<T> readPostprocess(Map<Host,Binding<T>> hostBindings, Host readHost,
       ProtocolInstantiationInfo<T> info);

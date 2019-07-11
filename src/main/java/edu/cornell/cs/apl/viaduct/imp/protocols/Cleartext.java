@@ -52,6 +52,8 @@ public abstract class Cleartext {
       builder.varDecl(newVar, varDecl.getType(), varDecl.getLabel());
 
     } else if (astNode instanceof ArrayDeclarationNode) {
+      // TODO: PERFORM THE READS FOR THE INDEX!
+
       ArrayDeclarationNode arrayDecl = (ArrayDeclarationNode)astNode;
       newVar = arrayDecl.getVariable();
       builder.arrayDecl(newVar, arrayDecl.getLength(), arrayDecl.getType(), arrayDecl.getLabel());
@@ -72,9 +74,13 @@ public abstract class Cleartext {
       if (stmt instanceof VariableDeclarationNode) { // variable read
         return new ReadNode(outVar);
 
-      } else { // array access
+      } else if (stmt instanceof ArrayDeclarationNode) { // array access
         Variable idx = readArgs.get(0);
         return new ReadNode(new ArrayIndex(outVar, new ReadNode(idx)));
+
+      } else {
+        throw new ProtocolInstantiationException(
+            "storage node not associated with var or array declaration");
       }
     } else {
       return new ReadNode(outVar);
@@ -90,15 +96,11 @@ public abstract class Cleartext {
 
     StmtBuilder builder = info.getBuilder(host);
     Protocol<ImpAstNode> readNodeProto = info.getProtocol(node);
-    Set<Host> readHosts = readNodeProto.readFrom(node, host, args.size(), info);
+    Set<Host> readHosts = readNodeProto.readFrom(node, host, args, info);
 
     Map<Host, Binding<ImpAstNode>> hostBindings = new HashMap<>();
     for (Host readHost : readHosts) {
       ProcessName readHostProc = new ProcessName(readHost);
-
-      for (ImpAstNode arg : args) {
-        builder.send(readHostProc, (ExpressionNode)arg);
-      }
 
       Variable readVar = info.getFreshVar(readLabel);
       builder.recv(readHostProc, readVar);
@@ -134,6 +136,7 @@ public abstract class Cleartext {
         PdgQueryEdge<ImpAstNode> queryEdge = (PdgQueryEdge<ImpAstNode>)readEdge;
 
         ReadNode queryRead = (ReadNode)queryEdge.getQuery();
+        queryRead = (ReadNode)computeRenamer.run(queryRead);
         List<ImpAstNode> renamedArgs = queryRead.getReference().accept(
             new ReferenceVisitor<List<ImpAstNode>>() {
               public List<ImpAstNode> visit(Variable var) {
@@ -141,7 +144,7 @@ public abstract class Cleartext {
               }
 
               public List<ImpAstNode> visit(ArrayIndex arrayIndex) {
-                ExpressionNode renamedInd = computeRenamer.run(arrayIndex.getIndex());
+                ExpressionNode renamedInd = arrayIndex.getIndex();
                 List<ImpAstNode> arrayArgs = new ArrayList<>();
                 arrayArgs.add(renamedInd);
                 return arrayArgs;
@@ -149,7 +152,7 @@ public abstract class Cleartext {
             });
 
         Variable readVar =
-            (Variable) performRead(queryEdge.getSource(), new Variable("query"),
+            (Variable) performRead(queryEdge.getSource(), new Variable(node.getId()),
                 host, renamedArgs, info);
 
         queryRenameMap.put(queryRead, new ReadNode(readVar));
@@ -200,6 +203,8 @@ public abstract class Cleartext {
       Set<Host> hosts,
       PdgControlNode<ImpAstNode> node,
       ProtocolInstantiationInfo<ImpAstNode> info) {
+
+    // TODO: GENERALIZE THIS TO LOOPS AS WELL!
 
     // conditional node should only have one read input (result of the guard)
     List<PdgReadEdge<ImpAstNode>> infoEdges = new ArrayList<>(node.getReadEdges());

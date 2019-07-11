@@ -392,7 +392,7 @@ public class ImpPdgBuilderVisitor
       // we're assuming the AST is in A-normal form, so there's no need
       // to traverse the index since it's guaranteed to be an atomic expr
       Set<Reference> reads = new HashSet<>();
-      reads.add(arrayIndex.getArray());
+      reads.add(arrayIndex);
       return reads;
     }
   }

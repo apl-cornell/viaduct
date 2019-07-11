@@ -7,6 +7,7 @@ import edu.cornell.cs.apl.viaduct.imp.ast.AssignNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.BlockNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.BreakNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ExpressionNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.Host;
 import edu.cornell.cs.apl.viaduct.imp.ast.IfNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ImpType;
 import edu.cornell.cs.apl.viaduct.imp.ast.IntegerValue;
@@ -141,6 +142,12 @@ public class StmtBuilder {
   }
 
   /** build send stmt. */
+  public StmtBuilder send(Host host, ExpressionNode expr) {
+    this.stmts.add(new SendNode(new ProcessName(host), expr));
+    return this;
+  }
+
+  /** build send stmt. */
   public StmtBuilder send(ProcessName recipient, ExpressionNode expr) {
     this.stmts.add(new SendNode(recipient, expr));
     return this;
@@ -149,6 +156,12 @@ public class StmtBuilder {
   /** build recv stmt. */
   public StmtBuilder recv(String sender, String var) {
     return recv(new ProcessName(sender), new Variable(var));
+  }
+
+  /** build recv stmt. */
+  public StmtBuilder recv(Host host, Variable var) {
+    this.stmts.add(new ReceiveNode(var, new ProcessName(host)));
+    return this;
   }
 
   /** build recv stmt. */

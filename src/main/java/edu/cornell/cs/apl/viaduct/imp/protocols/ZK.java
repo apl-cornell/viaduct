@@ -32,8 +32,8 @@ public class ZK implements Protocol<ImpAstNode> {
   }
 
   @Override
-  public Set<Host> readFrom(
-      PdgNode<ImpAstNode> node, Host h, int nargs, ProtocolInstantiationInfo<ImpAstNode> info) {
+  public Set<Host> readFrom(PdgNode<ImpAstNode> node, Host h,
+      List<ImpAstNode> args, ProtocolInstantiationInfo<ImpAstNode> info) {
 
     // TODO: finish
     return new HashSet<>();

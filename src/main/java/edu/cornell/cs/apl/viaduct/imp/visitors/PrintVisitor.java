@@ -110,7 +110,8 @@ public class PrintVisitor
 
   @Override
   public Void visit(ReadNode readNode) {
-    return readNode.getReference().accept(this);
+    readNode.getReference().accept(this);
+    return null;
   }
 
   @Override
@@ -159,18 +160,18 @@ public class PrintVisitor
   }
 
   @Override
-  public Void visit(ArrayDeclarationNode declarationNode) {
+  public Void visit(ArrayDeclarationNode arrayDecl) {
     addIndentation();
 
-    buffer.append(declarationNode.getVariable());
+    buffer.append(arrayDecl.getVariable());
 
     buffer.append('[');
-    buffer.append(declarationNode.getLength());
+    arrayDecl.getLength().accept(this);
     buffer.append(']');
 
     buffer.append(" : ");
-    buffer.append(declarationNode.getType());
-    buffer.append(declarationNode.getLabel());
+    buffer.append(arrayDecl.getType());
+    buffer.append(arrayDecl.getLabel());
 
     addSeparator();
     return null;

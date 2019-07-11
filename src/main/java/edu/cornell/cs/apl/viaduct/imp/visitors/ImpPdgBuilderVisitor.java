@@ -142,6 +142,13 @@ public class ImpPdgBuilderVisitor
 
     this.varDeclMap.add(var, name);
     this.declaredVars.add(var, true);
+
+    ExpressionNode length = arrayDecl.getLength();
+    Set<Variable> temps = this.tempSetVisitor.run(length);
+    Set<Reference> queries = this.querySetVisitor.run(length);
+
+    createReadEdges(temps, queries, node);
+
     return addNode(name, node, arrayDecl);
   }
 

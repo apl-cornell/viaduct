@@ -38,34 +38,6 @@ import java.util.Map;
 import java.util.Set;
 
 public abstract class Cleartext {
-  protected Variable instantiateStorageNode(
-      Host host, PdgStorageNode<ImpAstNode> node, ProtocolInstantiationInfo<ImpAstNode> info) {
-
-    // declare new variable
-    ImpAstNode astNode = node.getAstNode();
-    StmtBuilder builder = info.getBuilder(host);
-    Variable newVar = null;
-
-    if (astNode instanceof VariableDeclarationNode) {
-      VariableDeclarationNode varDecl = (VariableDeclarationNode)astNode;
-      newVar = varDecl.getVariable();
-      builder.varDecl(newVar, varDecl.getType(), varDecl.getLabel());
-
-    } else if (astNode instanceof ArrayDeclarationNode) {
-      // TODO: PERFORM THE READS FOR THE INDEX!
-
-      ArrayDeclarationNode arrayDecl = (ArrayDeclarationNode)astNode;
-      newVar = arrayDecl.getVariable();
-      builder.arrayDecl(newVar, arrayDecl.getLength(), arrayDecl.getType(), arrayDecl.getLabel());
-
-    } else {
-      throw new ProtocolInstantiationException(
-          "storage node not associated with var or array declaration");
-    }
-
-    return newVar;
-  }
-
   protected ExpressionNode getReadValue(
       PdgNode<ImpAstNode> node, List<Variable> readArgs, Variable outVar) {
 
@@ -110,10 +82,10 @@ public abstract class Cleartext {
     return readNodeProto.readPostprocess(hostBindings, host, info);
   }
 
-  protected Variable instantiateComputeNode(
-      Host host, PdgComputeNode<ImpAstNode> node, ProtocolInstantiationInfo<ImpAstNode> info) {
-
-    StmtBuilder builder = info.getBuilder(host);
+  protected Map<Variable,Variable> performComputeReads(
+      Host host, PdgNode<ImpAstNode> node,
+      ProtocolInstantiationInfo<ImpAstNode> info)
+  {
     // read from other compute nodes
     Map<Variable, Variable> computeRenameMap = new HashMap<>();
     for (PdgReadEdge<ImpAstNode> readEdge : node.getReadEdges()) {
@@ -127,6 +99,46 @@ public abstract class Cleartext {
       }
     }
 
+    return computeRenameMap;
+  }
+
+  protected Variable instantiateStorageNode(
+      Host host, PdgStorageNode<ImpAstNode> node, ProtocolInstantiationInfo<ImpAstNode> info) {
+
+    // declare new variable
+    ImpAstNode astNode = node.getAstNode();
+    StmtBuilder builder = info.getBuilder(host);
+    Variable newVar = null;
+
+    if (astNode instanceof VariableDeclarationNode) {
+      VariableDeclarationNode varDecl = (VariableDeclarationNode)astNode;
+      newVar = varDecl.getVariable();
+      builder.varDecl(newVar, varDecl.getType(), varDecl.getLabel());
+
+    } else if (astNode instanceof ArrayDeclarationNode) {
+      Map<Variable,Variable> computeRenameMap = performComputeReads(host, node, info);
+      RenameVisitor computeRenamer = new RenameVisitor(computeRenameMap);
+      astNode = computeRenamer.run(astNode);
+
+      ArrayDeclarationNode arrayDecl = (ArrayDeclarationNode)astNode;
+      newVar = arrayDecl.getVariable();
+      builder.arrayDecl(newVar, arrayDecl.getLength(), arrayDecl.getType(), arrayDecl.getLabel());
+
+    } else {
+      throw new ProtocolInstantiationException(
+          "storage node not associated with var or array declaration");
+    }
+
+    return newVar;
+  }
+
+
+  protected Variable instantiateComputeNode(
+      Host host, PdgComputeNode<ImpAstNode> node,
+      ProtocolInstantiationInfo<ImpAstNode> info)
+  {
+    // read from other compute nodes
+    Map<Variable,Variable> computeRenameMap = performComputeReads(host, node, info);
     RenameVisitor computeRenamer = new RenameVisitor(computeRenameMap);
 
     // perform queries (read from storage nodes)
@@ -166,6 +178,7 @@ public abstract class Cleartext {
     astNode = computeRenamer.run(astNode);
     astNode = queryRenamer.run(astNode);
 
+    StmtBuilder builder = info.getBuilder(host);
     Variable outVar = info.getFreshVar(node.getId());
 
     if (astNode instanceof ExpressionNode) {

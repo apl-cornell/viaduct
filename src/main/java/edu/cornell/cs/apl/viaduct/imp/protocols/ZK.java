@@ -32,17 +32,9 @@ public class ZK implements Protocol<ImpAstNode> {
   }
 
   @Override
-  public Set<Host> readFrom(PdgNode<ImpAstNode> node, Host h,
-      List<ImpAstNode> args, ProtocolInstantiationInfo<ImpAstNode> info) {
-
-    // TODO: finish
-    return new HashSet<>();
-  }
-
-  @Override
-  public Binding<ImpAstNode> readPostprocess(
-      Map<Host, Binding<ImpAstNode>> hostBindings,
-      Host host,
+  public Binding<ImpAstNode> readFrom(
+      PdgNode<ImpAstNode> node, Host h,
+      Binding<ImpAstNode> readLabel, List<ImpAstNode> args,
       ProtocolInstantiationInfo<ImpAstNode> info) {
 
     // TODO: finish

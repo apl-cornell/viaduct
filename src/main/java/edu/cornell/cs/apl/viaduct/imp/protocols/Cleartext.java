@@ -33,6 +33,7 @@ import edu.cornell.cs.apl.viaduct.pdg.PdgWriteEdge;
 import edu.cornell.cs.apl.viaduct.protocol.Protocol;
 import edu.cornell.cs.apl.viaduct.protocol.ProtocolInstantiationException;
 import edu.cornell.cs.apl.viaduct.protocol.ProtocolInstantiationInfo;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -64,25 +65,74 @@ public abstract class Cleartext {
 
   protected Binding<ImpAstNode> performRead(
       PdgNode<ImpAstNode> node,
+      Host readHost,
       Binding<ImpAstNode> readLabel,
-      Host host,
+      Host outHost,
+      Binding<ImpAstNode> outVar,
       List<ImpAstNode> args,
       ProtocolInstantiationInfo<ImpAstNode> info) {
 
-    StmtBuilder builder = info.getBuilder(host);
-    Protocol<ImpAstNode> readNodeProto = info.getProtocol(node);
-    Set<Host> readHosts = readNodeProto.readFrom(node, host, args, info);
+    StmtBuilder builder = info.getBuilder(outHost);
+    StmtBuilder readBuilder = info.getBuilder(readHost);
+    List<Variable> readArgs = new ArrayList<>();
+    for (ImpAstNode arg : args) {
+      readBuilder.send(outHost, (ExpressionNode)arg);
 
-    Map<Host, Binding<ImpAstNode>> hostBindings = new HashMap<>();
-    for (Host readHost : readHosts) {
-      ProcessName readHostProc = new ProcessName(readHost);
-
-      Variable readVar = info.getFreshVar(readLabel);
-      builder.recv(readHostProc, readVar);
-      hostBindings.put(readHost, readVar);
+      Variable readArgVar = info.getFreshVar("arg");
+      readArgs.add(readArgVar);
+      builder.recv(readHost, readArgVar);
     }
 
-    return readNodeProto.readPostprocess(hostBindings, host, info);
+    ExpressionNode readVal = getReadValue(node, readArgs, (Variable)outVar);
+    builder.send(readHost, readVal);
+
+    Variable readVar = info.getFreshVar(readLabel);
+    readBuilder.recv(outHost, readVar);
+
+    return readVar;
+  }
+
+  protected void performWrite(
+      PdgNode<ImpAstNode> node,
+      Host writeHost,
+      Host inHost,
+      Binding<ImpAstNode> storageVar,
+      List<ImpAstNode> args,
+      ProtocolInstantiationInfo<ImpAstNode> info) {
+
+    ExpressionBuilder e = new ExpressionBuilder();
+    StmtBuilder builder = info.getBuilder(inHost);
+    StmtBuilder writerBuilder = info.getBuilder(writeHost);
+    StmtNode stmt = (StmtNode)node.getAstNode();
+    ProcessName hostProc = new ProcessName(inHost);
+    ProcessName writeHostProc = new ProcessName(writeHost);
+
+    if (stmt instanceof VariableDeclarationNode) {
+      assert args.size() == 1;
+
+      ExpressionNode val = (ExpressionNode)args.get(0);
+      writerBuilder.send(hostProc, val);
+      builder.recv(writeHostProc, (Variable)storageVar);
+
+    } else if (stmt instanceof ArrayDeclarationNode) {
+      assert args.size() == 2;
+
+      ExpressionNode idx = (ExpressionNode)args.get(0);
+      ExpressionNode val = (ExpressionNode)args.get(1);
+      writerBuilder.send(hostProc, idx);
+      writerBuilder.send(hostProc, val);
+
+      Variable arrayVar = ((ArrayDeclarationNode)stmt).getVariable();
+      Variable idxVar = info.getFreshVar(String.format("%s_idx", arrayVar));
+      Variable valVar = info.getFreshVar(String.format("%s_val", arrayVar));
+      builder.recv(writeHostProc, idxVar);
+      builder.recv(writeHostProc, valVar);
+      builder.assign((Variable)storageVar, e.var(idxVar), e.var(valVar));
+
+    } else {
+      throw new ProtocolInstantiationException(
+        "storage node not associated with var or array declaration");
+    }
   }
 
   protected Map<Variable,Variable> performComputeReads(
@@ -94,11 +144,13 @@ public abstract class Cleartext {
     for (PdgReadEdge<ImpAstNode> readEdge : node.getReadEdges()) {
       if (readEdge.isComputeEdge()) {
         PdgComputeEdge<ImpAstNode> computeEdge = (PdgComputeEdge<ImpAstNode>)readEdge;
-        Variable edgeBinding = (Variable)computeEdge.getBinding();
+        Variable readLabel = (Variable)computeEdge.getBinding();
+        PdgNode<ImpAstNode> readNode = computeEdge.getSource();
+        Protocol<ImpAstNode> readProto = info.getProtocol(readNode);
         Variable readVar =
-            (Variable) performRead(computeEdge.getSource(), edgeBinding,
-                host, new ArrayList<>(), info);
-        computeRenameMap.put(edgeBinding, readVar);
+            (Variable) readProto.readFrom(readNode, host,
+                readLabel, new ArrayList<>(), info);
+        computeRenameMap.put(readLabel, readVar);
       }
     }
 
@@ -166,9 +218,11 @@ public abstract class Cleartext {
               }
             });
 
+        PdgNode<ImpAstNode> queryNode = queryEdge.getSource();
+        Protocol<ImpAstNode> queryProto = info.getProtocol(queryNode);
         Variable readVar =
-            (Variable) performRead(queryEdge.getSource(), new Variable(node.getId()),
-                host, renamedArgs, info);
+            (Variable) queryProto.readFrom(queryEdge.getSource(), host,
+                new Variable(node.getId()), renamedArgs, info);
 
         queryRenameMap.put(queryRead, new ReadNode(readVar));
       }

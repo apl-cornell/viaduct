@@ -6,17 +6,14 @@ import edu.cornell.cs.apl.viaduct.imp.ast.Host;
 import edu.cornell.cs.apl.viaduct.pdg.PdgNode;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 /** A cryptographic protocol for instantiating a PDG node. */
 public interface Protocol<T extends AstNode> {
   Set<Host> getHosts();
 
-  Set<Host> readFrom(PdgNode<T> node, Host h, List<T> args, ProtocolInstantiationInfo<T> info);
-
-  Binding<T> readPostprocess(Map<Host,Binding<T>> hostBindings, Host readHost,
-      ProtocolInstantiationInfo<T> info);
+  Binding<T> readFrom(PdgNode<T> node, Host readHost,
+      Binding<T> readLabel, List<T> args, ProtocolInstantiationInfo<T> info);
 
   void writeTo(PdgNode<T> node, Host writeHost, List<T> args, ProtocolInstantiationInfo<T> info);
 

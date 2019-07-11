@@ -4,7 +4,6 @@ import edu.cornell.cs.apl.viaduct.Binding;
 import edu.cornell.cs.apl.viaduct.imp.ast.ExpressionNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.Host;
 import edu.cornell.cs.apl.viaduct.imp.ast.ImpAstNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.ProcessName;
 import edu.cornell.cs.apl.viaduct.imp.ast.Variable;
 import edu.cornell.cs.apl.viaduct.imp.builders.ExpressionBuilder;
 import edu.cornell.cs.apl.viaduct.imp.builders.StmtBuilder;
@@ -13,6 +12,7 @@ import edu.cornell.cs.apl.viaduct.pdg.PdgControlNode;
 import edu.cornell.cs.apl.viaduct.pdg.PdgNode;
 import edu.cornell.cs.apl.viaduct.pdg.PdgStorageNode;
 import edu.cornell.cs.apl.viaduct.protocol.Protocol;
+import edu.cornell.cs.apl.viaduct.protocol.ProtocolInstantiationException;
 import edu.cornell.cs.apl.viaduct.protocol.ProtocolInstantiationInfo;
 
 import java.util.HashMap;
@@ -45,26 +45,33 @@ public class Replication extends Cleartext implements Protocol<ImpAstNode> {
   }
 
   @Override
-  public Set<Host> readFrom(PdgNode<ImpAstNode> node, Host readHost,
-      List<ImpAstNode>  args, ProtocolInstantiationInfo<ImpAstNode> info) {
+  public Binding<ImpAstNode> readFrom(
+      PdgNode<ImpAstNode> node,
+      Host readHost,
+      Binding<ImpAstNode> readLabel,
+      List<ImpAstNode> args,
+      ProtocolInstantiationInfo<ImpAstNode> info) {
 
     // should not be read from until it has been instantiated
     assert this.outVarMap.size() == getNumReplicas();
 
-    ExpressionBuilder e = new ExpressionBuilder();
-    Set<Host> hosts = new HashSet<>();
+    Map<Host, Binding<ImpAstNode>> hostBindings = new HashMap<>();
+    StmtBuilder readBuilder = info.getBuilder(readHost);
+    Set<Host> outHosts = new HashSet<>();
 
     if (this.replicas.realReplicas.contains(readHost)) {
-      StmtBuilder builder = info.getBuilder(readHost);
-      builder.send(new ProcessName(readHost), e.var(this.outVarMap.get(readHost)));
-      hosts.add(readHost);
+      outHosts.add(readHost);
 
     } else {
-      for (Host realHost : this.replicas.realReplicas) {
-        StmtBuilder builder = info.getBuilder(realHost);
-        builder.send(new ProcessName(readHost), e.var(this.outVarMap.get(realHost)));
-        hosts.add(realHost);
-      }
+      outHosts.addAll(this.replicas.realReplicas);
+    }
+
+    for (Host outHost : outHosts) {
+      Variable outVar = this.outVarMap.get(outHost);
+      Binding<ImpAstNode> readVar =
+          performRead(node, readHost, readLabel,
+            outHost, outVar, args, info);
+      hostBindings.put(outHost, readVar);
     }
 
     /*
@@ -74,17 +81,6 @@ public class Replication extends Cleartext implements Protocol<ImpAstNode> {
       hosts.add(hashHost);
     }
     */
-
-    return hosts;
-  }
-
-  @Override
-  public Binding<ImpAstNode> readPostprocess(
-      Map<Host, Binding<ImpAstNode>> hostBindings,
-      Host host,
-      ProtocolInstantiationInfo<ImpAstNode> info) {
-
-    assert hostBindings.size() >= 1;
 
     if (hostBindings.size() > 1) {
       Binding<ImpAstNode> curBinding = null;
@@ -106,8 +102,7 @@ public class Replication extends Cleartext implements Protocol<ImpAstNode> {
         }
       }
 
-      StmtBuilder builder = info.getBuilder(host);
-      builder.assertion(curExpr);
+      readBuilder.assertion(curExpr);
     }
 
     Host h = (Host) hostBindings.keySet().toArray()[0];
@@ -125,18 +120,21 @@ public class Replication extends Cleartext implements Protocol<ImpAstNode> {
       // node must have been instantiated before being written to
       assert this.outVarMap.size() == getNumReplicas();
 
+      Set<Host> inHosts = new HashSet<>();
+
       // StmtBuilder writerBuilder = info.getBuilder(writeHost);
 
       if (this.replicas.realReplicas.contains(writeHost)) {
+        inHosts.add(writeHost);
         // writerBuilder.assign(this.outVarMap.get(writeHost), (ExpressionNode) val);
 
       } else {
-        for (Host realHost : this.replicas.realReplicas) {
-          StmtBuilder builder = info.getBuilder(realHost);
+        inHosts.addAll(this.replicas.realReplicas);
+      }
 
-          // writerBuilder.send(new ProcessName(realHost), (ExpressionNode) val);
-          builder.recv(new ProcessName(writeHost), this.outVarMap.get(realHost));
-        }
+      for (Host inHost : inHosts) {
+        Variable storageVar = this.outVarMap.get(inHost);
+        performWrite(node, writeHost, inHost, storageVar, args, info);
       }
 
       /*
@@ -147,6 +145,9 @@ public class Replication extends Cleartext implements Protocol<ImpAstNode> {
         builder.recv(writeHost, this.outVarMap.get(hashHost));
       }
       */
+    } else {
+      throw new ProtocolInstantiationException(
+          "attempted to write to a non storage node");
     }
   }
 

@@ -1,14 +1,17 @@
 process main {
-    a[10] : int{};
-    b[10] : int{};
+    a[10] : int{A};
+    b[10] : int{B};
 
-    i : int{};
+    i : int{A};
     for (i = 0; i < 10; i++) {
-        a[i] = i;
-        b[9-i] = i;
+        a[i] = i * 50;
     }
 
-    for (i = 0; i < 10; i++) {
-        b[a[i]] *= 2;
+    j : int{B};
+    for (j = 0; j < 10; j++) {
+        b[j] = j * 100;
     }
 }
+
+host alice : {A};
+host bob   : {B};

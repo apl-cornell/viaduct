@@ -47,6 +47,14 @@ public class StmtBuilder {
     return this;
   }
 
+  /** push a loop into the builder control context. */
+  public StmtBuilder pushLoop() {
+    ControlInfo execPath = new LoopControlInfo(this.stmts);
+    this.controlContext.push(execPath);
+    this.stmts = new ArrayList<>();
+    return this;
+  }
+
   /** set the execution path of the current control structure. */
   public StmtBuilder setCurrentPath(ControlLabel label) {
     this.controlContext.peek().setCurrentPath(label);
@@ -248,6 +256,19 @@ public class StmtBuilder {
       elseBranch = elseBranch != null ? elseBranch : new BlockNode();
 
       return new IfNode(this.guard, thenBranch, elseBranch);
+    }
+  }
+
+  private static class LoopControlInfo extends ControlInfo {
+    public LoopControlInfo(List<StmtNode> pref) {
+      super(pref);
+    }
+
+    @Override
+    public StmtNode buildControlStructure() {
+      StmtNode body = this.pathMap.get(ControlLabel.BODY);
+      body = body != null ? body : new BlockNode();
+      return new LoopNode(body);
     }
   }
 }

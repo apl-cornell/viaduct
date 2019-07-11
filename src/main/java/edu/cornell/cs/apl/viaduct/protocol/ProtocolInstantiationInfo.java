@@ -18,6 +18,7 @@ public class ProtocolInstantiationInfo<T extends AstNode> {
   private final ProcessConfigurationBuilder pconfig;
   private final Map<PdgNode<T>, Protocol<T>> protocolMap;
   private final Stack<Set<Host>> controlContext;
+  private final Stack<Set<Host>> loopControlContext;
 
   /** store config builder and protocol map. */
   public ProtocolInstantiationInfo(
@@ -26,6 +27,7 @@ public class ProtocolInstantiationInfo<T extends AstNode> {
     this.pconfig = pc;
     this.protocolMap = pm;
     this.controlContext = new Stack<>();
+    this.loopControlContext = new Stack<>();
   }
 
   public StmtBuilder createProcess(Host h) {
@@ -57,8 +59,41 @@ public class ProtocolInstantiationInfo<T extends AstNode> {
     return getFreshName(base.getBinding());
   }
 
+  public boolean isLoopControlContextEmpty() {
+    return this.loopControlContext.isEmpty();
+  }
+
+  /** get hosts in loop control context. */
+  public Set<Host> getCurrentLoopControlContext() {
+    if (!this.loopControlContext.isEmpty()) {
+      return this.loopControlContext.peek();
+
+    } else {
+      throw new ProtocolInstantiationException(
+          "attempting to peek empty loop control context stack");
+    }
+  }
+
+  public void pushLoopControlContext(Set<Host> hosts) {
+    this.loopControlContext.push(hosts);
+  }
+
+  public void popLoopControlContext() {
+    this.loopControlContext.pop();
+  }
+
   public boolean isControlContextEmpty() {
     return this.controlContext.isEmpty();
+  }
+
+  /** get the hosts participating in the control context. */
+  public Set<Host> getCurrentControlContext() {
+    if (!this.controlContext.isEmpty()) {
+      return this.controlContext.peek();
+
+    } else {
+      throw new ProtocolInstantiationException("attempting to peek empty control context stack");
+    }
   }
 
   public void pushControlContext(Set<Host> hosts) {
@@ -88,7 +123,7 @@ public class ProtocolInstantiationInfo<T extends AstNode> {
   }
 
   /** pop the current control structure for all participating hosts. */
-  public void popControl() {
+  public void popControlContext() {
     assert !this.controlContext.isEmpty();
 
     Set<Host> hosts = this.controlContext.peek();

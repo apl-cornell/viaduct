@@ -98,7 +98,6 @@ public class ImpPdgBuilderVisitor implements StmtVisitor<Set<PdgNode<ImpAstNode>
     }
 
     for (Reference query : queries) {
-      // TODO: add index information to read edge
       Variable queryVar =
           query.accept(
               new ReferenceVisitor<Variable>() {
@@ -204,22 +203,20 @@ public class ImpPdgBuilderVisitor implements StmtVisitor<Set<PdgNode<ImpAstNode>
     createReadEdges(temps, queries, node);
 
     // add write edge
-    lhs.accept(
-      new ReferenceVisitor<Set<PdgNode<ImpAstNode>>>() {
-        public Set<PdgNode<ImpAstNode>> visit(Variable var) {
-          PdgNode<ImpAstNode> varNode = ImpPdgBuilderVisitor.this.getVariableNode(var);
-          PdgWriteEdge.create(node, varNode, "set", rhs);
-          return null;
-        }
-
-        public Set<PdgNode<ImpAstNode>> visit(ArrayIndex arrayIndex) {
-          Variable arrayVar = arrayIndex.getArray();
-          PdgNode<ImpAstNode> varNode = ImpPdgBuilderVisitor.this.getVariableNode(arrayVar);
-          PdgWriteEdge.create(node, varNode, "set", arrayIndex.getIndex(), rhs);
-          return null;
-        }
+    lhs.accept(new ReferenceVisitor<Set<PdgNode<ImpAstNode>>>() {
+      public Set<PdgNode<ImpAstNode>> visit(Variable var) {
+        PdgNode<ImpAstNode> varNode = ImpPdgBuilderVisitor.this.getVariableNode(var);
+        PdgWriteEdge.create(node, varNode, "set", rhs);
+        return null;
       }
-    );
+
+      public Set<PdgNode<ImpAstNode>> visit(ArrayIndex arrayIndex) {
+        Variable arrayVar = arrayIndex.getArray();
+        PdgNode<ImpAstNode> varNode = ImpPdgBuilderVisitor.this.getVariableNode(arrayVar);
+        PdgWriteEdge.create(node, varNode, "set", arrayIndex.getIndex(), rhs);
+        return null;
+      }
+    });
 
     return addNode(name, node, assignNode);
   }
@@ -282,6 +279,11 @@ public class ImpPdgBuilderVisitor implements StmtVisitor<Set<PdgNode<ImpAstNode>
     Set<PdgNode<ImpAstNode>> createdNodes = addNode(name, node, loopNode);
     Set<PdgNode<ImpAstNode>> bodyNodes = loopNode.getBody().accept(this);
     createdNodes.addAll(bodyNodes);
+
+    for (PdgNode<ImpAstNode> bodyNode : bodyNodes) {
+      PdgPcFlowEdge.create(node, bodyNode);
+    }
+
     return createdNodes;
   }
 

@@ -107,7 +107,7 @@ public class ImpProtocolInstantiationVisitor implements StmtVisitor<Void> {
     ifNode.getElseBranch().accept(this);
     info.finishCurrentPath();
 
-    info.popControl();
+    info.popControlContext();
     return null;
   }
 
@@ -124,8 +124,13 @@ public class ImpProtocolInstantiationVisitor implements StmtVisitor<Void> {
   @Override
   public Void visit(LoopNode loopNode) {
     visitSingleAstNode(loopNode.getId());
+
+    info.setCurrentPath(ControlLabel.BODY);
     loopNode.getBody().accept(this);
-    info.popControl();
+    info.finishCurrentPath();
+
+    info.popControlContext();
+    info.popLoopControlContext();
     return null;
   }
 

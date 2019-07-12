@@ -41,7 +41,7 @@ jar {
 
 checkstyle {
     maxWarnings 0
-    configProperties = ["suppressionFile": project.file("config/checkstyle/suppressions.xml")]
+    configDir project.file("config/checkstyle")
 }
 
 spotless {

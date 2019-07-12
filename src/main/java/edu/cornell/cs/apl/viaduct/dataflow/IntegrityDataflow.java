@@ -16,12 +16,12 @@ public class IntegrityDataflow<T extends AstNode>
     extends PdgLabelDataflow<T> {
 
   public IntegrityDataflow() {
-    super(DataflowType.BACKWARD, DataflowDirection.DOWN);
+    super(DataflowType.BACKWARD, DataflowDirection.UP);
   }
 
   @Override
   protected boolean includeInfoEdge(PdgInfoEdge<T> edge) {
-    return !edge.isReadChannelEdge();
+    return !edge.isReadChannelEdge() && !edge.isPcFlowEdge();
   }
 
   @Override

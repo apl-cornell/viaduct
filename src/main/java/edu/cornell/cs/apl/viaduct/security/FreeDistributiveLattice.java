@@ -57,8 +57,9 @@ final class FreeDistributiveLattice<A> implements Lattice<FreeDistributiveLattic
     return false;
   }
 
-  private static <A> String meetToString(Set<A> meet) {
-    final String body = String.join(" & ", meet.toArray().map(Objects::toString));
+  private static <A> String meetToString(Set<A> meet, String meetOp) {
+    String meetStr = String.format(" %s ", meetOp);
+    final String body = String.join(meetStr, meet.toArray().map(Objects::toString));
     return meet.length() > 1 ? "(" + body + ")" : body;
   }
 
@@ -106,13 +107,20 @@ final class FreeDistributiveLattice<A> implements Lattice<FreeDistributiveLattic
 
   @Override
   public String toString() {
+    return toString("|","&");
+  }
+
+  public String toString(String joinOp, String meetOp) {
     if (this.equals(top())) {
       return "⊤";
     } else if (this.equals(bottom())) {
       return "⊥";
     } else {
+      String joinStr = String.format(" %s ", joinOp);
       final String body =
-          String.join(" | ", this.joinOfMeets.toArray().map(FreeDistributiveLattice::meetToString));
+          String.join(joinStr, this.joinOfMeets.toArray().map(meet -> {
+            return meetToString(meet, meetOp);
+          }));
       return this.joinOfMeets.length() > 1 ? "(" + body + ")" : body;
     }
   }

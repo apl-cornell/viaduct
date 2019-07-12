@@ -9,16 +9,16 @@ import java.util.Objects;
  */
 public class Label implements Lattice<Label>, TrustLattice<Label> {
   private static final Label BOTTOM =
-      new Label(FreeDistributiveLattice.top(), FreeDistributiveLattice.bottom());
-
-  private static final Label TOP =
       new Label(FreeDistributiveLattice.bottom(), FreeDistributiveLattice.top());
 
+  private static final Label TOP =
+      new Label(FreeDistributiveLattice.top(), FreeDistributiveLattice.bottom());
+
   private static final Label WEAKEST =
-      new Label(FreeDistributiveLattice.top(), FreeDistributiveLattice.top());
+      new Label(FreeDistributiveLattice.bottom(), FreeDistributiveLattice.bottom());
 
   private static final Label STRONGEST =
-      new Label(FreeDistributiveLattice.bottom(), FreeDistributiveLattice.bottom());
+      new Label(FreeDistributiveLattice.top(), FreeDistributiveLattice.top());
 
   private final FreeDistributiveLattice<Principal> confidentiality;
   private final FreeDistributiveLattice<Principal> integrity;
@@ -71,13 +71,13 @@ public class Label implements Lattice<Label>, TrustLattice<Label> {
   @Override
   public Label join(Label with) {
     return new Label(
-        this.confidentiality.meet(with.confidentiality), this.integrity.join(with.integrity));
+        this.confidentiality.join(with.confidentiality), this.integrity.meet(with.integrity));
   }
 
   @Override
   public Label meet(Label with) {
     return new Label(
-        this.confidentiality.join(with.confidentiality), this.integrity.meet(with.integrity));
+        this.confidentiality.meet(with.confidentiality), this.integrity.join(with.integrity));
   }
 
   /**
@@ -86,7 +86,7 @@ public class Label implements Lattice<Label>, TrustLattice<Label> {
    * <p>Keeps confidentiality the same while setting integrity to minimum.
    */
   public Label confidentiality() {
-    return new Label(this.confidentiality, FreeDistributiveLattice.top());
+    return new Label(this.confidentiality, FreeDistributiveLattice.bottom());
   }
 
   /**
@@ -95,7 +95,7 @@ public class Label implements Lattice<Label>, TrustLattice<Label> {
    * <p>Keeps integrity the same while setting confidentiality to minimum.
    */
   public Label integrity() {
-    return new Label(FreeDistributiveLattice.top(), this.integrity);
+    return new Label(FreeDistributiveLattice.bottom(), this.integrity);
   }
 
   @Override
@@ -107,16 +107,16 @@ public class Label implements Lattice<Label>, TrustLattice<Label> {
   @Override
   public Label and(Label with) {
     final FreeDistributiveLattice<Principal> confidentiality =
-        this.confidentiality.meet(with.confidentiality);
-    final FreeDistributiveLattice<Principal> integrity = this.integrity.meet(with.integrity);
+        this.confidentiality.join(with.confidentiality);
+    final FreeDistributiveLattice<Principal> integrity = this.integrity.join(with.integrity);
     return new Label(confidentiality, integrity);
   }
 
   @Override
   public Label or(Label with) {
     final FreeDistributiveLattice<Principal> confidentiality =
-        this.confidentiality.join(with.confidentiality);
-    final FreeDistributiveLattice<Principal> integrity = this.integrity.join(with.integrity);
+        this.confidentiality.meet(with.confidentiality);
+    final FreeDistributiveLattice<Principal> integrity = this.integrity.meet(with.integrity);
     return new Label(confidentiality, integrity);
   }
 
@@ -142,24 +142,24 @@ public class Label implements Lattice<Label>, TrustLattice<Label> {
 
   @Override
   public String toString() {
-    final String confidentialityString = this.confidentiality.toString() + "->";
-    final String integrityString = this.integrity.toString() + "<-";
+    final String confidentialityStr = this.confidentiality.toString("&", "|");
+    final String integrityStr = this.integrity.toString("&", "|");
 
     String expression;
-    if (this.equals(bottom())) {
+    if (this.equals(weakest())) {
       expression = "";
 
     } else if (this.confidentiality.equals(this.integrity)) {
-      expression = this.confidentiality.toString();
+      expression = confidentialityStr;
 
     } else if (this.equals(this.confidentiality())) {
-      expression = confidentialityString;
+      expression = String.format("%s->", confidentialityStr);
 
     } else if (this.equals(this.integrity())) {
-      expression = integrityString;
+      expression = String.format("%s<-", integrityStr);
 
     } else {
-      expression = String.format("%s & %s", confidentialityString, integrityString);
+      expression = String.format("%s-> & %s<-", confidentialityStr, integrityStr);
     }
 
     return String.format("{%s}", expression);

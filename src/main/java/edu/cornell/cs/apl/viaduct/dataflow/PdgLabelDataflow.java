@@ -50,4 +50,14 @@ public abstract class PdgLabelDataflow<T extends AstNode>
   protected Label output(PdgNode<T> node) {
     return node.getOutLabel();
   }
+
+  @Override
+  protected Label join(Label label1, Label label2) {
+    return label1.and(label2);
+  }
+
+  @Override
+  protected Label meet(Label label1, Label label2) {
+    return label1.or(label2);
+  }
 }

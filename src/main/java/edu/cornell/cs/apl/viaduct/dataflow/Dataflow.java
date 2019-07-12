@@ -24,6 +24,14 @@ public abstract class Dataflow<T extends Lattice<T>, N> {
     this.dir = dd;
   }
 
+  protected T join(T elem1, T elem2) {
+    return elem1.join(elem2);
+  }
+
+  protected T meet(T elem1, T elem2) {
+    return elem1.meet(elem2);
+  }
+
   protected abstract T input(N node);
 
   protected abstract T output(N node);
@@ -57,10 +65,10 @@ public abstract class Dataflow<T extends Lattice<T>, N> {
 
       for (N inNode : getInNodes(node)) {
         if (this.dir == DataflowDirection.UP) {
-          nextInput = nextInput.join(output(inNode));
+          nextInput = join(nextInput, output(inNode));
 
         } else {
-          nextInput = nextInput.meet(output(inNode));
+          nextInput = meet(nextInput, output(inNode));
         }
       }
       updateInput(node, nextInput);
@@ -87,10 +95,10 @@ public abstract class Dataflow<T extends Lattice<T>, N> {
       T nextOutput = output(node);
       for (N outNode : getOutNodes(node)) {
         if (this.dir == DataflowDirection.UP) {
-          nextOutput = nextOutput.join(input(outNode));
+          nextOutput = join(nextOutput, input(outNode));
 
         } else {
-          nextOutput = nextOutput.meet(input(outNode));
+          nextOutput = meet(nextOutput, input(outNode));
         }
       }
       updateOutput(node, nextOutput);

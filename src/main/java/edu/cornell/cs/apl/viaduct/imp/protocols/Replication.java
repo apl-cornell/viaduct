@@ -45,6 +45,46 @@ public class Replication extends Cleartext implements Protocol<ImpAstNode> {
   }
 
   @Override
+  public void initialize(PdgNode<ImpAstNode> node, ProtocolInstantiationInfo<ImpAstNode> info) {
+    return;
+  }
+
+  @Override
+  public void instantiate(PdgNode<ImpAstNode> node, ProtocolInstantiationInfo<ImpAstNode> info) {
+    if (node.isStorageNode()) {
+      for (Host realHost : this.replicas.realReplicas) {
+        Variable hostStorageVar =
+            instantiateStorageNode(realHost, (PdgStorageNode<ImpAstNode>) node, info);
+        this.outVarMap.put(realHost, hostStorageVar);
+      }
+
+      for (Host hashHost : this.replicas.hashReplicas) {
+        Variable hostStorageVar =
+            instantiateStorageNode(hashHost, (PdgStorageNode<ImpAstNode>) node, info);
+        this.outVarMap.put(hashHost, hostStorageVar);
+      }
+
+    } else if (node.isComputeNode()) {
+      for (Host realHost : this.replicas.realReplicas) {
+        Variable hostOutVar =
+            instantiateComputeNode(realHost, (PdgComputeNode<ImpAstNode>) node, info);
+        this.outVarMap.put(realHost, hostOutVar);
+      }
+
+      /*
+      for (Host hashHost : this.replicas.hashReplicas) {
+        Variable hostOutVar =
+            instantiateComputeNode(hashHost, (PdgComputeNode<ImpAstNode>)node, info);
+        this.outVarMap.put(hashHost, hostOutVar);
+      }
+      */
+
+    } else if (node.isControlNode()) {
+      instantiateControlNode(getHosts(), (PdgControlNode<ImpAstNode>) node, info);
+    }
+  }
+
+  @Override
   public Binding<ImpAstNode> readFrom(
       PdgNode<ImpAstNode> node,
       Host readHost,
@@ -151,40 +191,6 @@ public class Replication extends Cleartext implements Protocol<ImpAstNode> {
     }
   }
 
-  @Override
-  public void instantiate(PdgNode<ImpAstNode> node, ProtocolInstantiationInfo<ImpAstNode> info) {
-    if (node.isStorageNode()) {
-      for (Host realHost : this.replicas.realReplicas) {
-        Variable hostStorageVar =
-            instantiateStorageNode(realHost, (PdgStorageNode<ImpAstNode>) node, info);
-        this.outVarMap.put(realHost, hostStorageVar);
-      }
-
-      for (Host hashHost : this.replicas.hashReplicas) {
-        Variable hostStorageVar =
-            instantiateStorageNode(hashHost, (PdgStorageNode<ImpAstNode>) node, info);
-        this.outVarMap.put(hashHost, hostStorageVar);
-      }
-
-    } else if (node.isComputeNode()) {
-      for (Host realHost : this.replicas.realReplicas) {
-        Variable hostOutVar =
-            instantiateComputeNode(realHost, (PdgComputeNode<ImpAstNode>) node, info);
-        this.outVarMap.put(realHost, hostOutVar);
-      }
-
-      /*
-      for (Host hashHost : this.replicas.hashReplicas) {
-        Variable hostOutVar =
-            instantiateComputeNode(hashHost, (PdgComputeNode<ImpAstNode>)node, info);
-        this.outVarMap.put(hashHost, hostOutVar);
-      }
-      */
-
-    } else if (node.isControlNode()) {
-      instantiateControlNode(getHosts(), (PdgControlNode<ImpAstNode>) node, info);
-    }
-  }
 
   @Override
   public boolean equals(Object o) {

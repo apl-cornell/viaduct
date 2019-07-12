@@ -50,14 +50,4 @@ public abstract class PdgLabelDataflow<T extends AstNode>
   protected Label output(PdgNode<T> node) {
     return node.getOutLabel();
   }
-
-  @Override
-  protected void updateInput(PdgNode<T> node, Label nextInput) {
-    node.setInLabel(nextInput);
-  }
-
-  @Override
-  protected void updateOutput(PdgNode<T> node, Label nextOutput) {
-    node.setOutLabel(nextOutput);
-  }
 }

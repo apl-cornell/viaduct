@@ -37,6 +37,7 @@ public class ImpProtocolInstantiationVisitor implements StmtVisitor<Void> {
   final StmtNode main;
   final ProcessConfigurationBuilder pconfig;
   final ProtocolInstantiationInfo<ImpAstNode> info;
+  final ImpProtocolInitializationVisitor initializer;
 
   /** constructor. */
   public ImpProtocolInstantiationVisitor(
@@ -51,9 +52,12 @@ public class ImpProtocolInstantiationVisitor implements StmtVisitor<Void> {
     this.main = main;
     this.pconfig = new ProcessConfigurationBuilder(hostConfig);
     this.info = new ProtocolInstantiationInfo<>(pconfig, this.protocolMap);
+    this.initializer = new ImpProtocolInitializationVisitor();
   }
 
+  /** constructor. */
   public ProgramNode run() {
+    this.main.accept(this.initializer);
     this.main.accept(this);
     return this.pconfig.build();
   }
@@ -150,5 +154,87 @@ public class ImpProtocolInstantiationVisitor implements StmtVisitor<Void> {
   @Override
   public Void visit(AssertNode assertNode) {
     throw new ProtocolInstantiationException("asserts should have been removed from PDG");
+  }
+
+  class ImpProtocolInitializationVisitor implements StmtVisitor<Void> {
+    private Void visitSingleAstNode(String id) {
+      PdgNode<ImpAstNode> node = pdg.getNode(id);
+      Protocol<ImpAstNode> protocol = info.getProtocol(node);
+      protocol.initialize(node, info);
+      return null;
+    }
+
+    @Override
+    public Void visit(VariableDeclarationNode varDeclNode) {
+      return visitSingleAstNode(varDeclNode.getId());
+    }
+
+    @Override
+    public Void visit(ArrayDeclarationNode arrayDeclNode) {
+      return visitSingleAstNode(arrayDeclNode.getId());
+    }
+
+    @Override
+    public Void visit(LetBindingNode letBindingNode) {
+      return visitSingleAstNode(letBindingNode.getId());
+    }
+
+    @Override
+    public Void visit(AssignNode assignNode) {
+      return visitSingleAstNode(assignNode.getId());
+    }
+
+    @Override
+    public Void visit(SendNode sendNode) {
+      throw new ProtocolInstantiationException("send not removed in PDG!");
+    }
+
+    @Override
+    public Void visit(ReceiveNode receiveNode) {
+      throw new ProtocolInstantiationException("recv not removed in PDG!");
+    }
+
+    @Override
+    public Void visit(IfNode ifNode) {
+      visitSingleAstNode(ifNode.getId());
+      ifNode.getThenBranch().accept(this);
+      ifNode.getElseBranch().accept(this);
+      return null;
+    }
+
+    @Override
+    public Void visit(WhileNode whileNode) {
+      throw new ElaborationException();
+    }
+
+    @Override
+    public Void visit(ForNode forNode) {
+      throw new ElaborationException();
+    }
+
+    @Override
+    public Void visit(LoopNode loopNode) {
+      visitSingleAstNode(loopNode.getId());
+      loopNode.getBody().accept(this);
+      return null;
+    }
+
+    @Override
+    public Void visit(BreakNode breakNode) {
+      return visitSingleAstNode(breakNode.getId());
+    }
+
+    @Override
+    public Void visit(BlockNode blockNode) {
+      for (StmtNode stmt : blockNode) {
+        stmt.accept(this);
+      }
+      return null;
+    }
+
+    @Override
+    public Void visit(AssertNode assertNode) {
+      throw new ProtocolInstantiationException("asserts should have been removed from PDG");
+    }
   }
 }

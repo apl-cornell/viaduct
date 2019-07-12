@@ -27,9 +27,33 @@ public class MPC extends Cleartext implements Protocol<ImpAstNode> {
     this.parties = ps;
   }
 
+  public Set<Host> getParties() {
+    return this.parties;
+  }
+
   @Override
   public Set<Host> getHosts() {
-    return new HashSet<>(this.parties);
+    Set<Host> hosts = new HashSet<>();
+    hosts.add(this.synthesizedHost);
+    return hosts;
+  }
+
+  @Override
+  public void initialize(PdgNode<ImpAstNode> node, ProtocolInstantiationInfo<ImpAstNode> info) {
+    if (synthesizedHostMap.containsKey(this.parties)) {
+      this.synthesizedHost = synthesizedHostMap.get(this.parties);
+
+    } else {
+      this.synthesizedHost = new Host(info.getFreshName(toString()));
+      synthesizedHostMap.put(this.parties, this.synthesizedHost);
+      info.createProcess(this.synthesizedHost);
+    }
+  }
+
+  @Override
+  public void instantiate(PdgNode<ImpAstNode> node, ProtocolInstantiationInfo<ImpAstNode> info) {
+    this.outVar =
+        instantiateComputeNode(this.synthesizedHost, (PdgComputeNode<ImpAstNode>) node, info);
   }
 
   @Override
@@ -56,19 +80,6 @@ public class MPC extends Cleartext implements Protocol<ImpAstNode> {
     throw new ProtocolInstantiationException("MPC protocol cannot be written to!");
   }
 
-  @Override
-  public void instantiate(PdgNode<ImpAstNode> node, ProtocolInstantiationInfo<ImpAstNode> info) {
-    if (synthesizedHostMap.containsKey(this.parties)) {
-      this.synthesizedHost = synthesizedHostMap.get(this.parties);
-
-    } else {
-      this.synthesizedHost = new Host(info.getFreshName(toString()));
-      synthesizedHostMap.put(this.parties, this.synthesizedHost);
-      info.createProcess(this.synthesizedHost);
-    }
-    this.outVar =
-        instantiateComputeNode(this.synthesizedHost, (PdgComputeNode<ImpAstNode>) node, info);
-  }
 
   @Override
   public boolean equals(Object o) {

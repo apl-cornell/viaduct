@@ -87,9 +87,9 @@ public class CompileCommand extends BaseCommand {
    * @param graph graph to output
    * @param file name of the file to output to
    */
-  private static void dumpGraph(Supplier<MutableGraph> graph, String file) throws Exception {
+  private static boolean dumpGraph(Supplier<MutableGraph> graph, String file) throws Exception {
     if (file == null) {
-      return;
+      return false;
     }
 
     String fileExtension = FilenameUtils.getExtension(file);
@@ -103,6 +103,8 @@ public class CompileCommand extends BaseCommand {
       Format format = formatFromExtension(fileExtension);
       Graphviz.fromGraph(graph.get()).render(format).toFile(new File(file));
     }
+
+    return true;
   }
 
   /** Compute graph output format from the file extension. */
@@ -145,7 +147,9 @@ public class CompileCommand extends BaseCommand {
     new IntegrityDataflow<ImpAstNode>().dataflow(nodes);
 
     // Dump PDG with information flow labels to a file (if requested).
-    dumpGraph(() -> PdgDotPrinter.pdgDotGraphWithLabels(pdg), labelGraphOutput);
+    if (dumpGraph(() -> PdgDotPrinter.pdgDotGraphWithLabels(pdg), labelGraphOutput)) {
+      return null;
+    }
 
     // Select cryptographic protocols for each node.
     final ImpProtocolCostEstimator costEstimator = new ImpProtocolCostEstimator();
@@ -153,7 +157,11 @@ public class CompileCommand extends BaseCommand {
         new ProtocolSelection<>(costEstimator).selectProtocols(trustConfiguration, pdg);
 
     // Dump PDG with protocol information to a file (if requested).
-    dumpGraph(() -> PdgDotPrinter.pdgDotGraphWithProtocols(pdg, protocolMap), protocolGraphOutput);
+    if (dumpGraph(() ->
+        PdgDotPrinter.pdgDotGraphWithProtocols(pdg, protocolMap), protocolGraphOutput)) {
+
+      return null;
+    }
 
     if (pdg.getOrderedNodes().size() == protocolMap.size()) {
       // Found a protocol for every node! Output synthesized distributed program.

@@ -27,10 +27,9 @@ import java.util.HashMap;
 import java.util.Map;
 
 /** replaces parts of AST. */
-public class ReplaceVisitor extends IdentityVisitor {
-
-  private final Map<StmtNode, StmtNode> stmtMap;
-  private final Map<ExpressionNode, ExpressionNode> exprMap;
+public class ReplaceVisitor extends FormatBlockVisitor {
+  protected final Map<StmtNode, StmtNode> stmtMap;
+  protected final Map<ExpressionNode, ExpressionNode> exprMap;
 
   public ReplaceVisitor() {
     this.stmtMap = new HashMap<>();

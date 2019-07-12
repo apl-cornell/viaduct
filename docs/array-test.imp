@@ -1,0 +1,14 @@
+process main {
+    a[10] : int{A};
+    b[10] : int{B};
+    sum : int{(A | B)-> & (A & B)<-};
+
+    i : int{(A | B)-> & (A & B)<-};
+    sum = 0;
+    for (i = 0; i < 10; i++) {
+        sum = downgrade(a[i] * b[i], {(A|B)-> & (A&B)<-});
+    }
+}
+
+host alice : {A};
+host bob   : {B};

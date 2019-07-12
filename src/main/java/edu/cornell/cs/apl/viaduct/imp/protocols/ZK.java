@@ -32,6 +32,15 @@ public class ZK implements Protocol<ImpAstNode> {
   }
 
   @Override
+  public void initialize(PdgNode<ImpAstNode> node, ProtocolInstantiationInfo<ImpAstNode> info) {}
+
+  @Override
+  public void instantiate(PdgNode<ImpAstNode> node, ProtocolInstantiationInfo<ImpAstNode> info) {
+
+    // TODO: finish
+  }
+
+  @Override
   public Binding<ImpAstNode> readFrom(
       PdgNode<ImpAstNode> node, Host h,
       Binding<ImpAstNode> readLabel, List<ImpAstNode> args,
@@ -51,11 +60,6 @@ public class ZK implements Protocol<ImpAstNode> {
     // TODO: finish
   }
 
-  @Override
-  public void instantiate(PdgNode<ImpAstNode> node, ProtocolInstantiationInfo<ImpAstNode> info) {
-
-    // TODO: finish
-  }
 
   @Override
   public boolean equals(Object o) {

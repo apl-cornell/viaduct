@@ -29,8 +29,11 @@ public class MPCFactory implements ProtocolFactory<ImpAstNode> {
         PdgNode<ImpAstNode> inNode = edge.getSource();
         if (!inNode.isControlNode()) {
           Protocol<ImpAstNode> inProto = protocolMap.get(inNode);
-          if (inProto instanceof Single || inProto instanceof MPC) {
+          if (inProto instanceof Single) {
             inHosts.addAll(inProto.getHosts());
+
+          } else if (inProto instanceof MPC) {
+            inHosts.addAll(((MPC)inProto).getParties());
 
           } else {
             return instances;

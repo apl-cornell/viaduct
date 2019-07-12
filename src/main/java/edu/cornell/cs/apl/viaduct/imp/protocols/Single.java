@@ -36,6 +36,24 @@ public class Single extends Cleartext implements Protocol<ImpAstNode> {
   }
 
   @Override
+  public void initialize(PdgNode<ImpAstNode> node, ProtocolInstantiationInfo<ImpAstNode> info) {
+    return;
+  }
+
+  @Override
+  public void instantiate(PdgNode<ImpAstNode> node, ProtocolInstantiationInfo<ImpAstNode> info) {
+    if (node.isStorageNode()) {
+      this.outVar = instantiateStorageNode(this.host, (PdgStorageNode<ImpAstNode>) node, info);
+
+    } else if (node.isComputeNode()) {
+      this.outVar = instantiateComputeNode(this.host, (PdgComputeNode<ImpAstNode>) node, info);
+
+    } else if (node.isControlNode()) {
+      instantiateControlNode(getHosts(), (PdgControlNode<ImpAstNode>) node, info);
+    }
+  }
+
+  @Override
   public Binding<ImpAstNode> readFrom(
       PdgNode<ImpAstNode> node,
       Host readHost,
@@ -69,18 +87,6 @@ public class Single extends Cleartext implements Protocol<ImpAstNode> {
     }
   }
 
-  @Override
-  public void instantiate(PdgNode<ImpAstNode> node, ProtocolInstantiationInfo<ImpAstNode> info) {
-    if (node.isStorageNode()) {
-      this.outVar = instantiateStorageNode(this.host, (PdgStorageNode<ImpAstNode>) node, info);
-
-    } else if (node.isComputeNode()) {
-      this.outVar = instantiateComputeNode(this.host, (PdgComputeNode<ImpAstNode>) node, info);
-
-    } else if (node.isControlNode()) {
-      instantiateControlNode(getHosts(), (PdgControlNode<ImpAstNode>) node, info);
-    }
-  }
 
   @Override
   public boolean equals(Object o) {

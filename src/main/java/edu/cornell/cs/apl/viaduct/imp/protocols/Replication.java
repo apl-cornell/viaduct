@@ -8,7 +8,6 @@ import edu.cornell.cs.apl.viaduct.imp.ast.Variable;
 import edu.cornell.cs.apl.viaduct.imp.builders.ExpressionBuilder;
 import edu.cornell.cs.apl.viaduct.imp.builders.StmtBuilder;
 import edu.cornell.cs.apl.viaduct.pdg.PdgComputeNode;
-import edu.cornell.cs.apl.viaduct.pdg.PdgControlNode;
 import edu.cornell.cs.apl.viaduct.pdg.PdgNode;
 import edu.cornell.cs.apl.viaduct.pdg.PdgStorageNode;
 import edu.cornell.cs.apl.viaduct.protocol.Protocol;
@@ -79,8 +78,8 @@ public class Replication extends Cleartext implements Protocol<ImpAstNode> {
       }
       */
 
-    } else if (node.isControlNode()) {
-      instantiateControlNode(getHosts(), (PdgControlNode<ImpAstNode>) node, info);
+    } else {
+      throw new ProtocolInstantiationException("control nodes must have Control protocol");
     }
   }
 

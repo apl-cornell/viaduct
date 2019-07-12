@@ -20,8 +20,9 @@ public class SingleFactory implements ProtocolFactory<ImpAstNode> {
       Map<PdgNode<ImpAstNode>, Protocol<ImpAstNode>> protocolMap,
       PdgNode<ImpAstNode> node) {
 
-    HashSet<Protocol<ImpAstNode>> instances = new HashSet<>();
-    if (node.isStorageNode() || node.isEndorseNode() || !node.isDowngradeNode()) {
+    Set<Protocol<ImpAstNode>> instances = new HashSet<>();
+
+    if (!node.isControlNode()) {
       for (Host h : hostConfig.hosts()) {
         Label hostLabel = hostConfig.getTrust(h);
         Label nodeInLabel = node.getInLabel();
@@ -33,6 +34,7 @@ public class SingleFactory implements ProtocolFactory<ImpAstNode> {
         }
       }
     }
+
     return instances;
   }
 }

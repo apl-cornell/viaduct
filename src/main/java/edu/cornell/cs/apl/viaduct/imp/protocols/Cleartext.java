@@ -4,12 +4,9 @@ import edu.cornell.cs.apl.viaduct.Binding;
 import edu.cornell.cs.apl.viaduct.imp.ast.ArrayDeclarationNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ArrayIndex;
 import edu.cornell.cs.apl.viaduct.imp.ast.AssignNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.BreakNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ExpressionNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.Host;
-import edu.cornell.cs.apl.viaduct.imp.ast.IfNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ImpAstNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.LoopNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ProcessName;
 import edu.cornell.cs.apl.viaduct.imp.ast.ReadNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.StmtNode;
@@ -22,9 +19,7 @@ import edu.cornell.cs.apl.viaduct.imp.visitors.RenameVisitor;
 import edu.cornell.cs.apl.viaduct.imp.visitors.ReplaceVisitor;
 import edu.cornell.cs.apl.viaduct.pdg.PdgComputeEdge;
 import edu.cornell.cs.apl.viaduct.pdg.PdgComputeNode;
-import edu.cornell.cs.apl.viaduct.pdg.PdgControlNode;
 import edu.cornell.cs.apl.viaduct.pdg.PdgEdge;
-import edu.cornell.cs.apl.viaduct.pdg.PdgInfoEdge;
 import edu.cornell.cs.apl.viaduct.pdg.PdgNode;
 import edu.cornell.cs.apl.viaduct.pdg.PdgQueryEdge;
 import edu.cornell.cs.apl.viaduct.pdg.PdgReadEdge;
@@ -36,10 +31,8 @@ import edu.cornell.cs.apl.viaduct.protocol.ProtocolInstantiationInfo;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 public abstract class Cleartext {
   protected ExpressionNode getReadValue(
@@ -267,61 +260,5 @@ public abstract class Cleartext {
     }
 
     return outVar;
-  }
-
-  void instantiateControlNode(
-      Set<Host> hosts,
-      PdgControlNode<ImpAstNode> node,
-      ProtocolInstantiationInfo<ImpAstNode> info) {
-
-    ImpAstNode astNode = node.getAstNode();
-
-    // TODO: this only works for single-level breaks for now
-    if (astNode instanceof BreakNode) {
-      Set<Host> breakHosts = info.getCurrentLoopControlContext();
-      for (Host breakHost : breakHosts) {
-        StmtBuilder breakHostBuilder = info.getBuilder(breakHost);
-        breakHostBuilder.loopBreak();
-      }
-
-      return;
-    }
-
-    List<PdgReadEdge<ImpAstNode>> infoEdges = new ArrayList<>(node.getReadEdges());
-
-    // create control structure in all nodes that have a read channel from the control node
-    // TODO: this should really compute a transitive closure
-    Set<Host> controlStructureHosts = new HashSet<>(hosts);
-    for (PdgInfoEdge<ImpAstNode> infoEdge : node.getOutInfoEdges()) {
-      controlStructureHosts.addAll(info.getProtocol(infoEdge.getTarget()).getHosts());
-    }
-
-    info.pushControlContext(controlStructureHosts);
-
-    if (astNode instanceof IfNode) {
-      // conditional node should only have one read input (result of the guard)
-      assert infoEdges.size() == 1;
-
-      IfNode ifNode = (IfNode)astNode;
-      for (Host controlStructureHost : controlStructureHosts) {
-        StmtBuilder controlStructureBuilder = info.getBuilder(controlStructureHost);
-        Map<Variable,Variable> guardRenameMap =
-            performComputeReads(controlStructureHost, node, info);
-        RenameVisitor guardRenamer = new RenameVisitor(guardRenameMap);
-        IfNode newIfNode = (IfNode)guardRenamer.run(ifNode);
-        controlStructureBuilder.pushIf(newIfNode.getGuard());
-      }
-
-    } else if (astNode instanceof LoopNode) {
-      info.pushLoopControlContext(controlStructureHosts);
-      for (Host controlStructureHost : controlStructureHosts) {
-        StmtBuilder controlStructureBuilder = info.getBuilder(controlStructureHost);
-        controlStructureBuilder.pushLoop();
-      }
-
-    } else {
-      throw new ProtocolInstantiationException(
-          "control node not associated with control structure");
-    }
   }
 }

@@ -2,6 +2,8 @@ package edu.cornell.cs.apl.viaduct.imp;
 
 import edu.cornell.cs.apl.viaduct.UnknownProtocolException;
 import edu.cornell.cs.apl.viaduct.imp.ast.ImpAstNode;
+import edu.cornell.cs.apl.viaduct.imp.protocols.ControlFactory;
+import edu.cornell.cs.apl.viaduct.imp.protocols.ControlProtocol;
 import edu.cornell.cs.apl.viaduct.imp.protocols.MPC;
 import edu.cornell.cs.apl.viaduct.imp.protocols.MPCFactory;
 import edu.cornell.cs.apl.viaduct.imp.protocols.Replication;
@@ -31,6 +33,7 @@ public final class ImpProtocolCostEstimator extends ProtocolCostEstimator<ImpAst
     protocols.add(ImpProtocols.ZK.getRepresentative());
     */
     protocolFactories.add(new MPCFactory());
+    protocolFactories.add(new ControlFactory());
   }
 
   @Override
@@ -63,6 +66,9 @@ public final class ImpProtocolCostEstimator extends ProtocolCostEstimator<ImpAst
     } else if (protocol instanceof MPC) {
       // return 100 * astNode.accept(nodeSizer);
       return 100;
+
+    } else if (protocol instanceof ControlProtocol) {
+      return 0;
 
     } else {
       throw new UnknownProtocolException(protocol);

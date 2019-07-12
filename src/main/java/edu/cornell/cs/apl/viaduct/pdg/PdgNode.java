@@ -82,12 +82,14 @@ public abstract class PdgNode<T extends AstNode> {
     Set<PdgNode<T>> storageInputs = new HashSet<PdgNode<T>>();
 
     for (PdgInfoEdge<T> edge : this.inInfoEdges) {
-      PdgNode<T> source = edge.getSource();
-      if (source.isStorageNode()) {
-        storageInputs.add(source);
+      if (edge.isReadChannelEdge()) {
+        PdgNode<T> source = edge.getSource();
+        if (source.isStorageNode()) {
+          storageInputs.add(source);
 
-      } else {
-        storageInputs.addAll(source.getStorageNodeInputs());
+        } else {
+          storageInputs.addAll(source.getStorageNodeInputs());
+        }
       }
     }
 

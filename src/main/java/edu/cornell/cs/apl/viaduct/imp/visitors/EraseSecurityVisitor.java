@@ -19,6 +19,7 @@ public class EraseSecurityVisitor extends IdentityVisitor {
     return downgradeNode.getExpression().accept(this);
   }
 
+  /*
   @Override
   public StmtNode visit(VariableDeclarationNode declNode) {
     return new VariableDeclarationNode(declNode.getVariable(), declNode.getType(), Label.bottom());
@@ -30,4 +31,5 @@ public class EraseSecurityVisitor extends IdentityVisitor {
         arrayDeclNode.getVariable(), arrayDeclNode.getLength(),
         arrayDeclNode.getType(), Label.bottom());
   }
+  */
 }

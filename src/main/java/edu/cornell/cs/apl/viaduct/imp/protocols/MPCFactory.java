@@ -22,22 +22,18 @@ public class MPCFactory implements ProtocolFactory<ImpAstNode> {
       PdgNode<ImpAstNode> node) {
 
     Set<Protocol<ImpAstNode>> instances = new HashSet<>();
+    PowersetIterator<Host> hostPowerset = new PowersetIterator<>(hostConfig.hostSet());
+    for (Set<Host> hostSet : hostPowerset) {
+      if (hostSet.size() > 1) {
+        Label hsLabel = Label.weakest();
+        for (Host h : hostSet) {
+          hsLabel = hsLabel.and(hostConfig.getTrust(h));
+        }
 
-    if (!node.isControlNode()) {
-      PowersetIterator<Host> hostPowerset = new PowersetIterator<>(hostConfig.hostSet());
-      for (Set<Host> hostSet : hostPowerset) {
-        if (hostSet.size() > 1) {
-          Label hsLabel = Label.weakest();
-          for (Host h : hostSet) {
-            hsLabel = hsLabel.and(hostConfig.getTrust(h));
-          }
-
-          if (node.getInLabel().confidentiality().flowsTo(hsLabel.confidentiality())) {
-            instances.add(new MPC(hostSet));
-          }
+        if (node.getInLabel().confidentiality().flowsTo(hsLabel.confidentiality())) {
+          instances.add(new MPC(hostSet));
         }
       }
-
     }
 
     return instances;

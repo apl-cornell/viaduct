@@ -13,10 +13,10 @@ import java.util.PriorityQueue;
 import java.util.Set;
 
 public class ProtocolSelection<T extends AstNode> {
-  ProtocolCostEstimator<T> costEstimator;
+  ProtocolSearchStrategy<T> strategy;
 
-  public ProtocolSelection(ProtocolCostEstimator<T> estimator) {
-    this.costEstimator = estimator;
+  public ProtocolSelection(ProtocolSearchStrategy<T> strategy) {
+    this.strategy = strategy;
   }
 
   /**
@@ -31,7 +31,6 @@ public class ProtocolSelection<T extends AstNode> {
     // as we will only visit maps that follow this selection order
     // obeys toposort according to PDG
     List<PdgNode<T>> nodes = pdg.getOrderedNodes();
-    Set<ProtocolFactory<T>> protocolFactories = costEstimator.getProtocolFactories();
 
     // create open and closed sets
     PriorityQueue<ProtocolMapNode<T>> openSet = new PriorityQueue<>(nodes.size());
@@ -75,23 +74,21 @@ public class ProtocolSelection<T extends AstNode> {
       // for each protocol, generate a set of possible instantiated protocols
       // each instantiated protocol represents an edge from the current map
       // to a new map with one new mapping from the PDG node to the instantiated protocol
-      for (ProtocolFactory<T> protocolFactory : protocolFactories) {
-        Set<Protocol<T>> protoInstances =
-            protocolFactory.createInstances(hostConfig, currMap, nextNode);
-        for (Protocol<T> protoInstance : protoInstances) {
-          // instantiate neighbor
-          @SuppressWarnings("unchecked")
-          // TODO: use functional data structures
-          HashMap<PdgNode<T>, Protocol<T>> newMap =
-              (HashMap<PdgNode<T>, Protocol<T>>) currMap.clone();
-          newMap.put(nextNode, protoInstance);
-          int newMapCost = this.costEstimator.estimatePdgCost(newMap, pdg);
-          ProtocolMapNode<T> newMapNode = new ProtocolMapNode<>(newMap, newMapCost);
+      Set<Protocol<T>> protoInstances =
+          this.strategy.createProtocolInstances(hostConfig, currMap, nextNode);
+      for (Protocol<T> protoInstance : protoInstances) {
+        // instantiate neighbor
+        @SuppressWarnings("unchecked")
+        // TODO: use functional data structures
+        HashMap<PdgNode<T>, Protocol<T>> newMap =
+            (HashMap<PdgNode<T>, Protocol<T>>) currMap.clone();
+        newMap.put(nextNode, protoInstance);
+        int newMapCost = this.strategy.estimatePdgCost(newMap, pdg);
+        ProtocolMapNode<T> newMapNode = new ProtocolMapNode<>(newMap, newMapCost);
 
-          if (!closedSet.contains(newMapNode) && !openSet.contains(newMapNode)) {
-            openSet.add(newMapNode);
-            lastAddedNode = newMapNode;
-          }
+        if (!closedSet.contains(newMapNode) && !openSet.contains(newMapNode)) {
+          openSet.add(newMapNode);
+          lastAddedNode = newMapNode;
         }
       }
     }

@@ -5,7 +5,7 @@ import com.github.rvesse.airline.annotations.Option;
 import edu.cornell.cs.apl.viaduct.dataflow.ConfidentialityDataflow;
 import edu.cornell.cs.apl.viaduct.dataflow.IntegrityDataflow;
 import edu.cornell.cs.apl.viaduct.imp.HostTrustConfiguration;
-import edu.cornell.cs.apl.viaduct.imp.ImpProtocolCostEstimator;
+import edu.cornell.cs.apl.viaduct.imp.ImpProtocolSearchStrategy;
 import edu.cornell.cs.apl.viaduct.imp.ast.ImpAstNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ProcessName;
 import edu.cornell.cs.apl.viaduct.imp.ast.ProgramNode;
@@ -152,9 +152,9 @@ public class CompileCommand extends BaseCommand {
     }
 
     // Select cryptographic protocols for each node.
-    final ImpProtocolCostEstimator costEstimator = new ImpProtocolCostEstimator();
+    final ImpProtocolSearchStrategy strategy = new ImpProtocolSearchStrategy();
     final Map<PdgNode<ImpAstNode>, Protocol<ImpAstNode>> protocolMap =
-        new ProtocolSelection<>(costEstimator).selectProtocols(trustConfiguration, pdg);
+        new ProtocolSelection<>(strategy).selectProtocols(trustConfiguration, pdg);
 
     // Dump PDG with protocol information to a file (if requested).
     if (dumpGraph(() ->

@@ -65,7 +65,7 @@ public abstract class PdgNode<T extends AstNode> {
   public Set<PdgWriteEdge<T>> getWriteEdges() {
     Set<PdgWriteEdge<T>> writeEdges = new HashSet<>();
     for (PdgInfoEdge<T> infoEdge : this.outInfoEdges) {
-      if (infoEdge.isReadEdge()) {
+      if (infoEdge.isWriteEdge()) {
         writeEdges.add((PdgWriteEdge<T>) infoEdge);
       }
     }

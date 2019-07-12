@@ -44,12 +44,14 @@ public class TypeCheckVisitor
         ProgramVisitor<Void> {
 
   private final SymbolTable<Variable, ImpType> symbolTable;
+  private final SymbolTable<Variable, ImpType> arraySymbolTable;
   private final SymbolTable<Variable, ImpType> tempSymbolTable;
   private int loopLevel;
 
   /** constructor. */
   public TypeCheckVisitor() {
     this.symbolTable = new SymbolTable<>();
+    this.arraySymbolTable = new SymbolTable<>();
     this.tempSymbolTable = new SymbolTable<>();
     this.loopLevel = 0;
   }
@@ -78,6 +80,18 @@ public class TypeCheckVisitor
     }
   }
 
+  private void enterLexicalScope() {
+    this.symbolTable.push();
+    this.arraySymbolTable.push();
+    this.tempSymbolTable.push();
+  }
+
+  private void leaveLexicalScope() {
+    this.symbolTable.pop();
+    this.arraySymbolTable.pop();
+    this.tempSymbolTable.pop();
+  }
+
   @Override
   public ImpType visit(Variable variable) {
     if (this.symbolTable.contains(variable)) {
@@ -93,11 +107,16 @@ public class TypeCheckVisitor
     ExpressionNode index = arrayIndex.getIndex();
     ImpType indexType = index.accept(this);
 
-    if (indexType instanceof IntegerType) {
-      return this.visit(var);
-    } else {
+    if (!(indexType instanceof IntegerType)) {
       throw new TypeCheckException(
           String.format("Index %s of array %s not an integer", index, var));
+
+    } else if (!this.arraySymbolTable.contains(var)) {
+      throw new TypeCheckException(
+          String.format("Array %s not declared", var));
+
+    } else {
+      return this.arraySymbolTable.get(var);
     }
   }
 
@@ -142,11 +161,10 @@ public class TypeCheckVisitor
   public Void visit(ArrayDeclarationNode arrDeclNode) {
     assertHasType(arrDeclNode.getLength(), IntegerType.create());
 
-    if (this.symbolTable.contains(arrDeclNode.getVariable())) {
+    if (this.arraySymbolTable.contains(arrDeclNode.getVariable())) {
       throw new RedeclaredVariableException(arrDeclNode.getVariable());
     }
-    // TODO: this should be a separate table, or we should have array types.
-    this.symbolTable.add(arrDeclNode.getVariable(), arrDeclNode.getType());
+    this.arraySymbolTable.add(arrDeclNode.getVariable(), arrDeclNode.getType());
     return null;
   }
 
@@ -200,35 +218,24 @@ public class TypeCheckVisitor
   @Override
   public Void visit(WhileNode whileNode) {
     assertHasType(whileNode.getGuard(), BooleanType.create());
-    this.symbolTable.push();
     whileNode.getBody().accept(this);
-    this.symbolTable.pop();
-
     return null;
   }
 
   @Override
   public Void visit(ForNode forNode) {
-    // TODO: check that this is the right way to scope this.
-    this.symbolTable.push();
-
     assertHasType(forNode.getGuard(), BooleanType.create());
     forNode.getInitialize().accept(this);
     forNode.getUpdate().accept(this);
     forNode.getBody().accept(this);
-
-    this.symbolTable.pop();
     return null;
   }
 
   @Override
   public Void visit(LoopNode loopNode) {
-    this.symbolTable.push();
     this.loopLevel++;
     loopNode.getBody().accept(this);
     this.loopLevel--;
-    this.symbolTable.pop();
-
     return null;
   }
 
@@ -245,16 +252,11 @@ public class TypeCheckVisitor
 
   @Override
   public Void visit(BlockNode blockNode) {
-    this.symbolTable.push();
-    this.tempSymbolTable.push();
-
+    enterLexicalScope();
     for (StmtNode stmt : blockNode) {
       stmt.accept(this);
     }
-
-    this.symbolTable.pop();
-    this.tempSymbolTable.pop();
-
+    leaveLexicalScope();
     return null;
   }
 

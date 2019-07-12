@@ -6,13 +6,10 @@ import edu.cornell.cs.apl.viaduct.pdg.PdgNode;
 import edu.cornell.cs.apl.viaduct.pdg.ProgramDependencyGraph;
 
 import java.util.Map;
-import java.util.Set;
 
 /** estimates cost for a mapping from PDG nodes to protocols. */
 public abstract class ProtocolCostEstimator<T extends AstNode> {
   protected ProtocolCostEstimator() {}
-
-  public abstract Set<ProtocolFactory<T>> getProtocolFactories();
 
   protected abstract int estimateNodeCost(
       Protocol<T> protocol, PdgNode<T> node, ProgramDependencyGraph<T> pdg)

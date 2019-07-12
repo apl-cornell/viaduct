@@ -1,11 +1,5 @@
 package edu.cornell.cs.apl.viaduct.imp.protocols;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
 import edu.cornell.cs.apl.viaduct.Binding;
 import edu.cornell.cs.apl.viaduct.imp.ast.BreakNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.Host;
@@ -23,9 +17,16 @@ import edu.cornell.cs.apl.viaduct.protocol.Protocol;
 import edu.cornell.cs.apl.viaduct.protocol.ProtocolInstantiationException;
 import edu.cornell.cs.apl.viaduct.protocol.ProtocolInstantiationInfo;
 
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 /** protocol for control structures. */
 public class ControlProtocol extends Cleartext implements Protocol<ImpAstNode> {
   private static ControlProtocol instance = new ControlProtocol();
+
   private ControlProtocol() {}
 
   public static ControlProtocol getInstance() {

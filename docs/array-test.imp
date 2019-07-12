@@ -1,18 +1,36 @@
 process main {
     a[100] : int{A};
     b[100] : int{B};
-    prodsum : int{A && B};
 
-    prodsum_secret : int{A & B};
-    prodsum_secret = downgrade(a, {A & B}) + downgrade(b, {A & B});
-    /*
-    j : int{A & B};
-    for (j = 0; j < 10; j++) {
-        prodsum_secret += 10*j;
+    a_sum : int{A};
+    a_sum = 0;
+
+    ai : int{A};
+    for (ai = 0; ai < 100; ai++) {
+        a_sum += a[ai];
     }
 
-    prodsum = downgrade(prodsum_secret, {A && B});
-    */
+    b_sum : int{B};
+    b_sum = 0;
+
+    bi : int{B};
+    for (bi = 0; bi < 100; bi++) {
+        b_sum += b[bi];
+    }
+
+    scale : int{A & B};
+    scale = downgrade(a_sum, {A & B}) + downgrade(b_sum, {A & B});
+
+    sum : int{A & B};
+    sum = 0;
+
+    j : int{A & B};
+    for (j = 0; j < 100; j++) {
+        sum += scale * j;
+    }
+
+    prodsum : int{(A|B)-> & (A&B)<-};
+    prodsum = downgrade(sum, {A && B});
 }
 
 host alice : {A};

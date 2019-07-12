@@ -6,19 +6,23 @@ import java.util.Objects;
  * A lattice for information flow security. It is a standard bounded lattice that additionally
  * supports confidentiality and integrity projections. Information flows from less restrictive
  * contexts to more restrictive ones.
+ *
+ * <p>{@link #top()}, {@link #bottom()}, {@link #meet(Label)}, and {@link #join(Label)} talk about
+ * information flow.
+ *
+ * <p>{@link #strongest()}, {@link #weakest()}, {@link #and(Label)}, and {@link #or(Label)} talk
+ * about trust.
  */
 public class Label implements Lattice<Label>, TrustLattice<Label> {
-  private static final Label BOTTOM =
-      new Label(FreeDistributiveLattice.bottom(), FreeDistributiveLattice.top());
-
-  private static final Label TOP =
-      new Label(FreeDistributiveLattice.top(), FreeDistributiveLattice.bottom());
-
   private static final Label WEAKEST =
       new Label(FreeDistributiveLattice.bottom(), FreeDistributiveLattice.bottom());
 
   private static final Label STRONGEST =
       new Label(FreeDistributiveLattice.top(), FreeDistributiveLattice.top());
+
+  private static final Label BOTTOM = new Label(weakest().confidentiality, strongest().integrity);
+
+  private static final Label TOP = new Label(strongest().confidentiality, weakest().integrity);
 
   private final FreeDistributiveLattice<Principal> confidentiality;
   private final FreeDistributiveLattice<Principal> integrity;
@@ -47,25 +51,33 @@ public class Label implements Lattice<Label>, TrustLattice<Label> {
     return TOP;
   }
 
-  /** The least powerful principal, i.e. public and untrusted. */
+  /**
+   * The least powerful principal, i.e. public and untrusted.
+   *
+   * <p>This is represented as ⊥, and is the unit for {@link #and(Label)}.
+   */
   public static Label weakest() {
     return WEAKEST;
   }
 
-  /** The most powerful principal, i.e. secret and trusted. */
+  /**
+   * The most powerful principal, i.e. secret and trusted.
+   *
+   * <p>This is represented as ⊤, and is the unit for {@link #or(Label)}.
+   */
   public static Label strongest() {
     return STRONGEST;
   }
 
   /** Check if information flow from {@code this} to {@code other} is safe. */
   public boolean flowsTo(Label other) {
-    return this.lessThanOrEqualTo(other);
+    return this.confidentiality.lessThanOrEqualTo(other.confidentiality)
+        && other.integrity.lessThanOrEqualTo(this.integrity);
   }
 
   @Override
   public boolean lessThanOrEqualTo(Label other) {
-    return other.confidentiality.lessThanOrEqualTo(this.confidentiality)
-        && this.integrity.lessThanOrEqualTo(other.integrity);
+    return this.flowsTo(other);
   }
 
   @Override
@@ -86,7 +98,7 @@ public class Label implements Lattice<Label>, TrustLattice<Label> {
    * <p>Keeps confidentiality the same while setting integrity to minimum.
    */
   public Label confidentiality() {
-    return new Label(this.confidentiality, FreeDistributiveLattice.bottom());
+    return new Label(this.confidentiality, weakest().integrity);
   }
 
   /**
@@ -95,13 +107,13 @@ public class Label implements Lattice<Label>, TrustLattice<Label> {
    * <p>Keeps integrity the same while setting confidentiality to minimum.
    */
   public Label integrity() {
-    return new Label(FreeDistributiveLattice.bottom(), this.integrity);
+    return new Label(weakest().confidentiality, this.integrity);
   }
 
   @Override
   public boolean actsFor(Label other) {
-    return this.confidentiality.lessThanOrEqualTo(other.confidentiality)
-        && this.integrity.lessThanOrEqualTo(other.integrity);
+    return other.confidentiality.lessThanOrEqualTo(this.confidentiality)
+        && other.integrity.lessThanOrEqualTo(this.integrity);
   }
 
   @Override

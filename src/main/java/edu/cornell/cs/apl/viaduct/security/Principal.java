@@ -1,41 +1,23 @@
 package edu.cornell.cs.apl.viaduct.security;
 
-import java.util.Objects;
+import com.google.auto.value.AutoValue;
 
 /** An actor with an associated security label. */
-public class Principal implements Comparable<Principal> {
-  private final String name;
+@AutoValue
+public abstract class Principal implements Comparable<Principal> {
+  public static Principal create(String name) {
+    return new AutoValue_Principal(name);
+  }
 
-  public Principal(String name) {
-    this.name = name;
+  abstract String getName();
+
+  @Override
+  public final int compareTo(Principal that) {
+    return this.getName().compareTo(that.getName());
   }
 
   @Override
-  public boolean equals(Object o) {
-    if (this == o) {
-      return true;
-    }
-
-    if (!(o instanceof Principal)) {
-      return false;
-    }
-
-    final Principal that = (Principal) o;
-    return Objects.equals(this.name, that.name);
-  }
-
-  @Override
-  public int hashCode() {
-    return Objects.hash(this.name);
-  }
-
-  @Override
-  public int compareTo(Principal o) {
-    return this.name.compareTo(o.name);
-  }
-
-  @Override
-  public String toString() {
-    return this.name;
+  public final String toString() {
+    return getName();
   }
 }

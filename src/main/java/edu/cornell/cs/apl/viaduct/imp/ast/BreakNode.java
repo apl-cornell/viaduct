@@ -1,46 +1,18 @@
 package edu.cornell.cs.apl.viaduct.imp.ast;
 
+import com.google.auto.value.AutoValue;
 import edu.cornell.cs.apl.viaduct.imp.visitors.StmtVisitor;
 
-import java.util.Objects;
-
-public final class BreakNode extends StmtNode {
-  private final ExpressionNode level;
-
-  public BreakNode(ExpressionNode level) {
-    this.level = level;
+@AutoValue
+public abstract class BreakNode extends StmtNode {
+  public static BreakNode create(ExpressionNode level) {
+    return new AutoValue_BreakNode(level);
   }
 
-  public ExpressionNode getLevel() {
-    return this.level;
-  }
+  public abstract ExpressionNode getLevel();
 
   @Override
-  public <R> R accept(StmtVisitor<R> visitor) {
+  public final <R> R accept(StmtVisitor<R> visitor) {
     return visitor.visit(this);
-  }
-
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) {
-      return true;
-    }
-
-    if (!(o instanceof BreakNode)) {
-      return false;
-    }
-
-    BreakNode that = (BreakNode)o;
-    return this.level == that.level;
-  }
-
-  @Override
-  public int hashCode() {
-    return Objects.hash(this.level);
-  }
-
-  @Override
-  public String toString() {
-    return String.format("(break %s)", this.level);
   }
 }

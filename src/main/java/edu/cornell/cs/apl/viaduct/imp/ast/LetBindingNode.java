@@ -1,53 +1,21 @@
 package edu.cornell.cs.apl.viaduct.imp.ast;
 
+import com.google.auto.value.AutoValue;
 import edu.cornell.cs.apl.viaduct.imp.visitors.StmtVisitor;
 
-import java.util.Objects;
-
 /** declare and assign temporary variables. */
-public final class LetBindingNode extends StmtNode {
-  private final Variable variable;
-  private final ExpressionNode rhs;
-
-  public LetBindingNode(Variable var, ExpressionNode rhs) {
-    this.variable = var;
-    this.rhs = rhs;
+@AutoValue
+public abstract class LetBindingNode extends StmtNode {
+  public static LetBindingNode create(Variable var, ExpressionNode rhs) {
+    return new AutoValue_LetBindingNode(var, rhs);
   }
 
-  public Variable getVariable() {
-    return this.variable;
-  }
+  public abstract Variable getVariable();
 
-  public ExpressionNode getRhs() {
-    return this.rhs;
-  }
+  public abstract ExpressionNode getRhs();
 
-  public <R> R accept(StmtVisitor<R> visitor) {
+  @Override
+  public final <R> R accept(StmtVisitor<R> visitor) {
     return visitor.visit(this);
-  }
-
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) {
-      return true;
-    }
-
-    if (!(o instanceof LetBindingNode)) {
-      return false;
-    }
-
-    LetBindingNode that = (LetBindingNode)o;
-    return Objects.equals(this.variable, that.variable)
-        && Objects.equals(this.rhs, that.rhs);
-  }
-
-  @Override
-  public int hashCode() {
-    return Objects.hash(this.variable, this.rhs);
-  }
-
-  @Override
-  public String toString() {
-    return String.format("(let %s as %s)", this.variable, this.rhs);
   }
 }

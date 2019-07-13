@@ -9,7 +9,6 @@ import edu.cornell.cs.apl.viaduct.pdg.PdgNode;
 import edu.cornell.cs.apl.viaduct.protocol.Protocol;
 import edu.cornell.cs.apl.viaduct.protocol.ProtocolInstantiationException;
 import edu.cornell.cs.apl.viaduct.protocol.ProtocolInstantiationInfo;
-
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -18,7 +17,7 @@ import java.util.Set;
 
 /** multiparty computation protocol. */
 public class MPC extends Cleartext implements Protocol<ImpAstNode> {
-  private static Map<Set<Host>,Host> synthesizedHostMap = new HashMap<>();
+  private static Map<Set<Host>, Host> synthesizedHostMap = new HashMap<>();
   private Set<Host> parties;
   private Host synthesizedHost;
   private Variable outVar;
@@ -44,7 +43,7 @@ public class MPC extends Cleartext implements Protocol<ImpAstNode> {
       this.synthesizedHost = synthesizedHostMap.get(this.parties);
 
     } else {
-      this.synthesizedHost = new Host(info.getFreshName(toString()));
+      this.synthesizedHost = Host.create(info.getFreshName(toString()));
       synthesizedHostMap.put(this.parties, this.synthesizedHost);
       info.createProcess(this.synthesizedHost);
     }
@@ -58,14 +57,15 @@ public class MPC extends Cleartext implements Protocol<ImpAstNode> {
 
   @Override
   public Binding<ImpAstNode> readFrom(
-      PdgNode<ImpAstNode> node, Host readHost,
-      Binding<ImpAstNode> readLabel, List<ImpAstNode> args,
+      PdgNode<ImpAstNode> node,
+      Host readHost,
+      Binding<ImpAstNode> readLabel,
+      List<ImpAstNode> args,
       ProtocolInstantiationInfo<ImpAstNode> info) {
 
     // this should not be read from until it has been instantiated!
     assert this.outVar != null;
-    return performRead(node, readHost, readLabel,
-        this.synthesizedHost, this.outVar, args, info);
+    return performRead(node, readHost, readLabel, this.synthesizedHost, this.outVar, args, info);
   }
 
   @Override
@@ -79,7 +79,6 @@ public class MPC extends Cleartext implements Protocol<ImpAstNode> {
     // do nothing here.
     throw new ProtocolInstantiationException("MPC protocol cannot be written to!");
   }
-
 
   @Override
   public boolean equals(Object o) {

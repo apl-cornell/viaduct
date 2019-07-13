@@ -21,12 +21,13 @@ public class EraseSecurityVisitor extends IdentityVisitor {
 
   @Override
   public StmtNode visit(VariableDeclarationNode declNode) {
-    return new VariableDeclarationNode(declNode.getVariable(), declNode.getType(), Label.bottom());
+    return VariableDeclarationNode.create(
+        declNode.getVariable(), declNode.getType(), Label.bottom());
   }
 
   @Override
   public StmtNode visit(ArrayDeclarationNode arrayDeclNode) {
-    return new ArrayDeclarationNode(
+    return ArrayDeclarationNode.create(
         arrayDeclNode.getVariable(), arrayDeclNode.getLength(),
         arrayDeclNode.getType(), Label.bottom());
   }

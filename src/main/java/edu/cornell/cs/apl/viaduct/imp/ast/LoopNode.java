@@ -1,46 +1,19 @@
 package edu.cornell.cs.apl.viaduct.imp.ast;
 
+import com.google.auto.value.AutoValue;
 import edu.cornell.cs.apl.viaduct.imp.visitors.StmtVisitor;
-import java.util.Objects;
 
 /** Unguarded loop. */
-public class LoopNode extends StmtNode {
-  private final StmtNode body;
-
-  public LoopNode(StmtNode body) {
-    this.body = body;
+@AutoValue
+public abstract class LoopNode extends StmtNode {
+  public static LoopNode create(StmtNode body) {
+    return new AutoValue_LoopNode(body);
   }
 
-  public StmtNode getBody() {
-    return this.body;
-  }
+  public abstract StmtNode getBody();
 
   @Override
-  public <R> R accept(StmtVisitor<R> visitor) {
+  public final <R> R accept(StmtVisitor<R> visitor) {
     return visitor.visit(this);
-  }
-
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) {
-      return true;
-    }
-
-    if (!(o instanceof LoopNode)) {
-      return false;
-    }
-
-    LoopNode that = (LoopNode)o;
-    return Objects.equals(this.body, that.body);
-  }
-
-  @Override
-  public int hashCode() {
-    return Objects.hash(this.body);
-  }
-
-  @Override
-  public String toString() {
-    return String.format("(loop %s)", this.body);
   }
 }

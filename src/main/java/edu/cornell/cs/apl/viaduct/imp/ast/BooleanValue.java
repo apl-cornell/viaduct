@@ -1,45 +1,23 @@
 package edu.cornell.cs.apl.viaduct.imp.ast;
 
-import java.util.Objects;
+import com.google.auto.value.AutoValue;
 
 /** Boolean literal. */
-public final class BooleanValue implements ImpValue {
-  private final boolean value;
-
-  public BooleanValue(boolean value) {
-    this.value = value;
+@AutoValue
+public abstract class BooleanValue implements ImpValue {
+  public static BooleanValue create(boolean value) {
+    return new AutoValue_BooleanValue(value);
   }
 
-  public boolean getValue() {
-    return this.value;
-  }
+  public abstract boolean getValue();
 
   @Override
-  public ImpType getType() {
+  public final ImpType getType() {
     return BooleanType.create();
   }
 
   @Override
-  public boolean equals(Object o) {
-    if (this == o) {
-      return true;
-    }
-
-    if (!(o instanceof BooleanValue)) {
-      return false;
-    }
-
-    final BooleanValue that = (BooleanValue) o;
-    return this.value == that.value;
-  }
-
-  @Override
-  public int hashCode() {
-    return Objects.hash(this.value);
-  }
-
-  @Override
-  public String toString() {
+  public final String toString() {
     return Boolean.toString(this.getValue());
   }
 }

@@ -22,7 +22,6 @@ import edu.cornell.cs.apl.viaduct.imp.ast.Variable;
 import edu.cornell.cs.apl.viaduct.imp.ast.VariableDeclarationNode;
 import edu.cornell.cs.apl.viaduct.pdg.ProgramDependencyGraph.ControlLabel;
 import edu.cornell.cs.apl.viaduct.security.Label;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -80,118 +79,118 @@ public class StmtBuilder {
   }
 
   public StmtNode build() {
-    return new BlockNode(this.stmts);
+    return BlockNode.create(this.stmts);
   }
 
   public StmtBuilder varDecl(String varName, ImpType type, Label label) {
-    this.stmts.add(new VariableDeclarationNode(new Variable(varName), type, label));
+    this.stmts.add(VariableDeclarationNode.create(Variable.create(varName), type, label));
     return this;
   }
 
   public StmtBuilder varDecl(Variable varName, ImpType type, Label label) {
-    this.stmts.add(new VariableDeclarationNode(varName, type, label));
+    this.stmts.add(VariableDeclarationNode.create(varName, type, label));
     return this;
   }
 
   public StmtBuilder arrayDecl(String varName, ExpressionNode length, ImpType type, Label label) {
-    this.stmts.add(new ArrayDeclarationNode(new Variable(varName), length, type, label));
+    this.stmts.add(ArrayDeclarationNode.create(Variable.create(varName), length, type, label));
     return this;
   }
 
   public StmtBuilder arrayDecl(Variable varName, ExpressionNode length, ImpType type, Label label) {
-    this.stmts.add(new ArrayDeclarationNode(varName, length, type, label));
+    this.stmts.add(ArrayDeclarationNode.create(varName, length, type, label));
     return this;
   }
 
   public StmtBuilder let(Variable varName, ExpressionNode rhs) {
-    this.stmts.add(new LetBindingNode(varName, rhs));
+    this.stmts.add(LetBindingNode.create(varName, rhs));
     return this;
   }
 
   public StmtBuilder assign(String varName, ExpressionNode rhs) {
-    this.stmts.add(new AssignNode(new Variable(varName), rhs));
+    this.stmts.add(AssignNode.create(Variable.create(varName), rhs));
     return this;
   }
 
   public StmtBuilder assign(Variable varName, ExpressionNode rhs) {
-    this.stmts.add(new AssignNode(varName, rhs));
+    this.stmts.add(AssignNode.create(varName, rhs));
     return this;
   }
 
   public StmtBuilder assign(Variable arrName, ExpressionNode idx, ExpressionNode rhs) {
-    this.stmts.add(new AssignNode(new ArrayIndex(arrName, idx), rhs));
+    this.stmts.add(AssignNode.create(ArrayIndex.create(arrName, idx), rhs));
     return this;
   }
 
   /** Creates conditional/if nodes. */
   public StmtBuilder cond(ExpressionNode guard, StmtBuilder thenBranch, StmtBuilder elseBranch) {
-    StmtNode ifNode = new IfNode(guard, thenBranch.build(), elseBranch.build());
+    StmtNode ifNode = IfNode.create(guard, thenBranch.build(), elseBranch.build());
     this.stmts.add(ifNode);
     return this;
   }
 
   /** create loops. */
   public StmtBuilder loop(StmtBuilder bodyBuilder) {
-    StmtNode loop = new LoopNode(bodyBuilder.build());
+    StmtNode loop = LoopNode.create(bodyBuilder.build());
     this.stmts.add(loop);
     return this;
   }
 
   /** create break. */
   public StmtBuilder loopBreak() {
-    StmtNode loopBreak = new BreakNode(new LiteralNode(new IntegerValue(0)));
+    StmtNode loopBreak = BreakNode.create(LiteralNode.create(IntegerValue.create(0)));
     this.stmts.add(loopBreak);
     return this;
   }
 
   /** build send stmt. */
   public StmtBuilder send(String recipient, ExpressionNode expr) {
-    return send(new ProcessName(recipient), expr);
+    return send(ProcessName.create(recipient), expr);
   }
 
   /** build send stmt. */
   public StmtBuilder send(Host host, ExpressionNode expr) {
-    this.stmts.add(new SendNode(new ProcessName(host), expr));
+    this.stmts.add(SendNode.create(ProcessName.create(host), expr));
     return this;
   }
 
   /** build send stmt. */
   public StmtBuilder send(ProcessName recipient, ExpressionNode expr) {
-    this.stmts.add(new SendNode(recipient, expr));
+    this.stmts.add(SendNode.create(recipient, expr));
     return this;
   }
 
   /** build recv stmt. */
   public StmtBuilder recv(String sender, String var) {
-    return recv(new ProcessName(sender), new Variable(var));
+    return recv(ProcessName.create(sender), Variable.create(var));
   }
 
   /** build recv stmt. */
   public StmtBuilder recv(Host host, Variable var) {
-    this.stmts.add(new ReceiveNode(var, new ProcessName(host)));
+    this.stmts.add(ReceiveNode.create(var, ProcessName.create(host)));
     return this;
   }
 
   /** build recv stmt. */
   public StmtBuilder recv(ProcessName sender, Variable var) {
-    this.stmts.add(new ReceiveNode(var, sender));
+    this.stmts.add(ReceiveNode.create(var, sender));
     return this;
   }
 
   /** build recv stmt. */
   public StmtBuilder recv(String sender, ImpType recvType, String var) {
-    return recv(new ProcessName(sender), recvType, new Variable(var));
+    return recv(ProcessName.create(sender), recvType, Variable.create(var));
   }
 
   /** build recv stmt. */
   public StmtBuilder recv(ProcessName sender, ImpType recvType, Variable var) {
-    this.stmts.add(new ReceiveNode(var, recvType, sender));
+    this.stmts.add(ReceiveNode.create(var, recvType, sender));
     return this;
   }
 
   /** build assertion stmt. */
   public StmtBuilder assertion(ExpressionNode assertExpr) {
-    StmtNode assertNode = new AssertNode(assertExpr);
+    StmtNode assertNode = AssertNode.create(assertExpr);
     this.stmts.add(assertNode);
     return this;
   }
@@ -225,7 +224,7 @@ public class StmtBuilder {
     }
 
     public void finishCurrentPath(List<StmtNode> pathStmts) {
-      this.pathMap.put(this.currentPath, new BlockNode(pathStmts));
+      this.pathMap.put(this.currentPath, BlockNode.create(pathStmts));
       this.currentPath = null;
     }
 
@@ -250,12 +249,12 @@ public class StmtBuilder {
     @Override
     public StmtNode buildControlStructure() {
       StmtNode thenBranch = this.pathMap.get(ControlLabel.THEN);
-      thenBranch = thenBranch != null ? thenBranch : new BlockNode();
+      thenBranch = thenBranch != null ? thenBranch : BlockNode.create();
 
       StmtNode elseBranch = this.pathMap.get(ControlLabel.ELSE);
-      elseBranch = elseBranch != null ? elseBranch : new BlockNode();
+      elseBranch = elseBranch != null ? elseBranch : BlockNode.create();
 
-      return new IfNode(this.guard, thenBranch, elseBranch);
+      return IfNode.create(this.guard, thenBranch, elseBranch);
     }
   }
 
@@ -267,8 +266,8 @@ public class StmtBuilder {
     @Override
     public StmtNode buildControlStructure() {
       StmtNode body = this.pathMap.get(ControlLabel.BODY);
-      body = body != null ? body : new BlockNode();
-      return new LoopNode(body);
+      body = body != null ? body : BlockNode.create();
+      return LoopNode.create(body);
     }
   }
 }

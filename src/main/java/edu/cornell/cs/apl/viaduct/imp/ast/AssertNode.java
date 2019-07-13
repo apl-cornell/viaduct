@@ -1,46 +1,19 @@
 package edu.cornell.cs.apl.viaduct.imp.ast;
 
+import com.google.auto.value.AutoValue;
 import edu.cornell.cs.apl.viaduct.imp.visitors.StmtVisitor;
-import java.util.Objects;
 
 /** Assert that an expression is true. */
-public final class AssertNode extends StmtNode {
-  private final ExpressionNode expression;
-
-  public AssertNode(ExpressionNode expression) {
-    this.expression = Objects.requireNonNull(expression);
+@AutoValue
+public abstract class AssertNode extends StmtNode {
+  public static AssertNode create(ExpressionNode expression) {
+    return new AutoValue_AssertNode(expression);
   }
 
-  public ExpressionNode getExpression() {
-    return this.expression;
-  }
+  public abstract ExpressionNode getExpression();
 
   @Override
-  public <R> R accept(StmtVisitor<R> v) {
+  public final <R> R accept(StmtVisitor<R> v) {
     return v.visit(this);
-  }
-
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) {
-      return true;
-    }
-
-    if (!(o instanceof AssertNode)) {
-      return false;
-    }
-
-    final AssertNode that = (AssertNode) o;
-    return Objects.equals(this.expression, that.expression);
-  }
-
-  @Override
-  public int hashCode() {
-    return Objects.hash("ASSERT", this.expression);
-  }
-
-  @Override
-  public String toString() {
-    return "(assert " + this.expression.toString() + ")";
   }
 }

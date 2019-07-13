@@ -1,48 +1,21 @@
 package edu.cornell.cs.apl.viaduct.imp.ast;
 
+import com.google.auto.value.AutoValue;
 import edu.cornell.cs.apl.viaduct.imp.visitors.ExprVisitor;
-import java.util.Objects;
 
 // TODO: add unary operators (just like we did with binary operators) and refactor this class.
 
 /** Boolean negation. */
-public final class NotNode implements ExpressionNode {
-  private final ExpressionNode expression;
-
-  public NotNode(ExpressionNode expression) {
-    this.expression = Objects.requireNonNull(expression);
+@AutoValue
+public abstract class NotNode implements ExpressionNode {
+  public static NotNode create(ExpressionNode expression) {
+    return new AutoValue_NotNode(expression);
   }
 
-  public ExpressionNode getExpression() {
-    return expression;
-  }
+  public abstract ExpressionNode getExpression();
 
   @Override
-  public <R> R accept(ExprVisitor<R> v) {
+  public final <R> R accept(ExprVisitor<R> v) {
     return v.visit(this);
-  }
-
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) {
-      return true;
-    }
-
-    if (!(o instanceof NotNode)) {
-      return false;
-    }
-
-    final NotNode that = (NotNode) o;
-    return Objects.equals(this.expression, that.expression);
-  }
-
-  @Override
-  public int hashCode() {
-    return Objects.hash("!", this.expression);
-  }
-
-  @Override
-  public String toString() {
-    return "(! " + this.getExpression().toString() + ")";
   }
 }

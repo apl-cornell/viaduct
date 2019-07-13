@@ -104,6 +104,10 @@ dependencies {
     // Logging (disabled for now using the NOP engine)
     implementation group: 'org.slf4j', name: 'slf4j-nop', version: '1.8.0-beta4'
 
+    // Google's AutoValue
+    compile group: 'com.google.auto.value', name: 'auto-value-annotations', version: '1.6.2'
+    annotationProcessor group: 'com.google.auto.value', name: 'auto-value', version: '1.6.2'
+
     // Unit testing
     testImplementation("org.junit.jupiter:junit-jupiter-api:5.4.2")
     testImplementation("org.junit.jupiter:junit-jupiter-params:5.4.2")

@@ -1,14 +1,11 @@
 package edu.cornell.cs.apl.viaduct.imp.ast;
 
+import com.google.auto.value.AutoValue;
 import edu.cornell.cs.apl.viaduct.imp.visitors.StmtVisitor;
-import java.util.Objects;
 
 /** If statement. */
-public class IfNode extends StmtNode {
-  private final ExpressionNode guard;
-  private final StmtNode thenBranch;
-  private final StmtNode elseBranch;
-
+@AutoValue
+public abstract class IfNode extends StmtNode {
   /**
    * If {@code guard} evaluates to true, execute {@code thenBranch}, otherwise, execute {@code
    * elseBranch}.
@@ -17,68 +14,28 @@ public class IfNode extends StmtNode {
    * @param thenBranch statement to execute if the guard is true
    * @param elseBranch statement to execute if the guard is false
    */
-  public IfNode(ExpressionNode guard, StmtNode thenBranch, StmtNode elseBranch) {
-    this.guard = Objects.requireNonNull(guard);
-    this.thenBranch = Objects.requireNonNull(thenBranch);
-    this.elseBranch = Objects.requireNonNull(elseBranch);
+  public static IfNode create(ExpressionNode guard, StmtNode thenBranch, StmtNode elseBranch) {
+    return new AutoValue_IfNode(guard, thenBranch, elseBranch);
   }
 
   /**
-   * Like {@link #IfNode(ExpressionNode, StmtNode, StmtNode)}, but do nothing if the guard is false.
+   * Like {@link #create(ExpressionNode, StmtNode, StmtNode)}, but do nothing if the guard is false.
    *
    * @param guard condition to check
    * @param thenBranch statement to execute if guard is true
    */
-  public IfNode(ExpressionNode guard, StmtNode thenBranch) {
-    this(guard, thenBranch, new BlockNode());
+  public static IfNode create(ExpressionNode guard, StmtNode thenBranch) {
+    return create(guard, thenBranch, BlockNode.create());
   }
 
-  public ExpressionNode getGuard() {
-    return this.guard;
-  }
+  public abstract ExpressionNode getGuard();
 
-  public StmtNode getThenBranch() {
-    return this.thenBranch;
-  }
+  public abstract StmtNode getThenBranch();
 
-  public StmtNode getElseBranch() {
-    return this.elseBranch;
-  }
+  public abstract StmtNode getElseBranch();
 
   @Override
-  public <R> R accept(StmtVisitor<R> v) {
+  public final <R> R accept(StmtVisitor<R> v) {
     return v.visit(this);
-  }
-
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) {
-      return true;
-    }
-
-    if (!(o instanceof IfNode)) {
-      return false;
-    }
-
-    final IfNode that = (IfNode) o;
-    return Objects.equals(this.guard, that.guard)
-        && Objects.equals(this.thenBranch, that.thenBranch)
-        && Objects.equals(this.elseBranch, that.elseBranch);
-  }
-
-  @Override
-  public int hashCode() {
-    return Objects.hash(this.guard, this.thenBranch, this.elseBranch);
-  }
-
-  @Override
-  public String toString() {
-    return "(if "
-        + this.getGuard().toString()
-        + " then "
-        + this.getThenBranch()
-        + " else "
-        + this.getElseBranch()
-        + ")";
   }
 }

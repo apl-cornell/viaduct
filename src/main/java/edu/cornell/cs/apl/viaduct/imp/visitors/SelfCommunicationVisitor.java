@@ -13,7 +13,6 @@ import edu.cornell.cs.apl.viaduct.imp.ast.StmtNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.Variable;
 import edu.cornell.cs.apl.viaduct.imp.ast.VariableDeclarationNode;
 import edu.cornell.cs.apl.viaduct.util.SymbolTable;
-
 import java.util.LinkedList;
 import java.util.Queue;
 
@@ -21,7 +20,7 @@ import java.util.Queue;
 public class SelfCommunicationVisitor extends IdentityVisitor {
   private Host selfHost;
   private Queue<ExpressionNode> sentExprs;
-  private SymbolTable<Variable,Boolean> declaredVars;
+  private SymbolTable<Variable, Boolean> declaredVars;
 
   /** run visitor. */
   public StmtNode run(Host host, StmtNode program) {
@@ -45,9 +44,9 @@ public class SelfCommunicationVisitor extends IdentityVisitor {
 
   @Override
   public StmtNode visit(SendNode sendNode) {
-    if (sendNode.getRecipient().equals(new ProcessName(this.selfHost))) {
+    if (sendNode.getRecipient().equals(ProcessName.create(this.selfHost))) {
       this.sentExprs.add(sendNode.getSentExpression());
-      return new BlockNode();
+      return BlockNode.create();
 
     } else {
       return super.visit(sendNode);
@@ -56,14 +55,14 @@ public class SelfCommunicationVisitor extends IdentityVisitor {
 
   @Override
   public StmtNode visit(ReceiveNode recvNode) {
-    if (recvNode.getSender().equals(new ProcessName(this.selfHost))) {
+    if (recvNode.getSender().equals(ProcessName.create(this.selfHost))) {
       ExpressionNode recvExpr = this.sentExprs.remove();
       Variable recvVar = recvNode.getVariable();
       if (this.declaredVars.contains(recvVar)) {
-        return new AssignNode(recvVar, recvExpr);
+        return AssignNode.create(recvVar, recvExpr);
 
       } else {
-        return new LetBindingNode(recvVar, recvExpr);
+        return LetBindingNode.create(recvVar, recvExpr);
       }
     } else {
       return super.visit(recvNode);

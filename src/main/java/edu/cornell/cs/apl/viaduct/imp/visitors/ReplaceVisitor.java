@@ -47,7 +47,7 @@ public class ReplaceVisitor extends FormatBlockVisitor {
     this.stmtMap = new HashMap<>();
 
     for (Map.Entry<Variable, ExpressionNode> kv : vmap.entrySet()) {
-      this.exprMap.put(new ReadNode(kv.getKey()), kv.getValue());
+      this.exprMap.put(ReadNode.create(kv.getKey()), kv.getValue());
     }
   }
 

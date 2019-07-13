@@ -1,57 +1,35 @@
 package edu.cornell.cs.apl.viaduct.imp.ast;
 
+import com.google.auto.value.AutoValue;
 import edu.cornell.cs.apl.viaduct.AstNode;
 import edu.cornell.cs.apl.viaduct.Binding;
 import edu.cornell.cs.apl.viaduct.imp.visitors.ReferenceVisitor;
-import java.util.Objects;
 
 /** A mutable variable that names a memory location. */
-public final class Variable implements Reference, Binding<ImpAstNode> {
-  private final String name;
-
-  public <T extends AstNode> Variable(Binding<T> binding) {
-    this.name = binding.getBinding();
+@AutoValue
+public abstract class Variable implements Reference, Binding<ImpAstNode> {
+  public static Variable create(String name) {
+    return new AutoValue_Variable(name);
   }
 
-  public Variable(String name) {
-    this.name = Objects.requireNonNull(name);
+  public static <T extends AstNode> Variable create(Binding<T> binding) {
+    return create(binding.getBinding());
   }
 
-  public String getName() {
-    return this.name;
+  public abstract String getName();
+
+  @Override
+  public final String getBinding() {
+    return getName();
   }
 
   @Override
-  public String getBinding() {
-    return this.name;
-  }
-
-  @Override
-  public <R> R accept(ReferenceVisitor<R> v) {
+  public final <R> R accept(ReferenceVisitor<R> v) {
     return v.visit(this);
   }
 
   @Override
-  public boolean equals(Object o) {
-    if (this == o) {
-      return true;
-    }
-
-    if (!(o instanceof Variable)) {
-      return false;
-    }
-
-    final Variable that = (Variable) o;
-    return Objects.equals(this.name, that.name);
-  }
-
-  @Override
-  public int hashCode() {
-    return Objects.hash(name);
-  }
-
-  @Override
-  public String toString() {
-    return this.name;
+  public final String toString() {
+    return getName();
   }
 }

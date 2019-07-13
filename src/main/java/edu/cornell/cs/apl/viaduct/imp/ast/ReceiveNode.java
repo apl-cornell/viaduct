@@ -1,76 +1,37 @@
 package edu.cornell.cs.apl.viaduct.imp.ast;
 
+import com.google.auto.value.AutoValue;
 import edu.cornell.cs.apl.viaduct.imp.visitors.StmtVisitor;
-import java.util.Objects;
+import javax.annotation.Nullable;
 
 /** Receive a value from a host. */
-public final class ReceiveNode extends StmtNode {
-  private final Variable var;
-  private final ImpType recvType;
-  private final ProcessName sender;
-
+@AutoValue
+public abstract class ReceiveNode extends StmtNode {
   /**
    * Receive a value from {@code sender} and store it in {@code variable}.
    *
    * @param variable variable to store the received value in
    * @param sender process to receive the value from
    */
-  public ReceiveNode(Variable variable, ProcessName sender) {
-    this.var = Objects.requireNonNull(variable);
-    this.recvType = null;
-    this.sender = Objects.requireNonNull(sender);
+  public static ReceiveNode create(Variable variable, ProcessName sender) {
+    return create(variable, null, sender);
   }
 
   /** constructor. */
-  public ReceiveNode(Variable variable, ImpType recvType, ProcessName sender) {
-    this.var = Objects.requireNonNull(variable);
-    this.recvType = recvType;
-    this.sender = Objects.requireNonNull(sender);
+  public static ReceiveNode create(
+      Variable variable, @Nullable ImpType recvType, ProcessName sender) {
+    return new AutoValue_ReceiveNode(variable, recvType, sender);
   }
 
-  public ProcessName getSender() {
-    return this.sender;
-  }
+  public abstract Variable getVariable();
 
-  public ImpType getRecvType() {
-    return this.recvType;
-  }
+  // TODO: remove this. Type information should be stored somewhere else.
+  public abstract @Nullable ImpType getRecvType();
 
-  public Variable getVariable() {
-    return this.var;
-  }
+  public abstract ProcessName getSender();
 
   @Override
-  public boolean equals(Object o) {
-    if (this == o) {
-      return true;
-    }
-
-    if (!(o instanceof ReceiveNode)) {
-      return false;
-    }
-
-    final ReceiveNode that = (ReceiveNode) o;
-    return Objects.equals(this.var, that.var) && Objects.equals(this.sender, that.sender);
-  }
-
-  @Override
-  public int hashCode() {
-    return Objects.hash(this.var, this.sender);
-  }
-
-  @Override
-  public <R> R accept(StmtVisitor<R> visitor) {
+  public final <R> R accept(StmtVisitor<R> visitor) {
     return visitor.visit(this);
-  }
-
-  @Override
-  public String toString() {
-    if (this.recvType == null) {
-      return String.format("(receive %s from %s)", this.var, this.sender);
-
-    } else {
-      return String.format("(receive %s %s from %s)", this.var, this.recvType, this.sender);
-    }
   }
 }

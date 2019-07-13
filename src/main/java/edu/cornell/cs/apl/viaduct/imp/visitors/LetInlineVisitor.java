@@ -13,7 +13,7 @@ public class LetInlineVisitor extends ReplaceVisitor {
   public StmtNode visit(LetBindingNode letBinding) {
     Variable var = letBinding.getVariable();
     ExpressionNode newRhs = letBinding.getRhs().accept(this);
-    this.exprMap.put(new ReadNode(var), newRhs);
-    return new BlockNode();
+    this.exprMap.put(ReadNode.create(var), newRhs);
+    return BlockNode.create();
   }
 }

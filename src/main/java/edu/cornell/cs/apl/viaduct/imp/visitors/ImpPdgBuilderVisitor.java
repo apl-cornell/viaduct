@@ -113,7 +113,7 @@ public class ImpPdgBuilderVisitor implements StmtVisitor<Set<PdgNode<ImpAstNode>
               });
       String readNodeName = this.varDeclMap.get(queryVar);
       PdgNode<ImpAstNode> readNode = this.nodeMap.get(readNodeName);
-      PdgQueryEdge.create(readNode, node, new ReadNode(query));
+      PdgQueryEdge.create(readNode, node, ReadNode.create(query));
     }
   }
 
@@ -203,20 +203,23 @@ public class ImpPdgBuilderVisitor implements StmtVisitor<Set<PdgNode<ImpAstNode>
     createReadEdges(temps, queries, node);
 
     // add write edge
-    lhs.accept(new ReferenceVisitor<Set<PdgNode<ImpAstNode>>>() {
-      public Set<PdgNode<ImpAstNode>> visit(Variable var) {
-        PdgNode<ImpAstNode> varNode = ImpPdgBuilderVisitor.this.getVariableNode(var);
-        PdgWriteEdge.create(node, varNode, "set", rhs);
-        return null;
-      }
+    lhs.accept(
+        new ReferenceVisitor<Set<PdgNode<ImpAstNode>>>() {
+          @Override
+          public Set<PdgNode<ImpAstNode>> visit(Variable var) {
+            PdgNode<ImpAstNode> varNode = ImpPdgBuilderVisitor.this.getVariableNode(var);
+            PdgWriteEdge.create(node, varNode, "set", rhs);
+            return null;
+          }
 
-      public Set<PdgNode<ImpAstNode>> visit(ArrayIndex arrayIndex) {
-        Variable arrayVar = arrayIndex.getArray();
-        PdgNode<ImpAstNode> varNode = ImpPdgBuilderVisitor.this.getVariableNode(arrayVar);
-        PdgWriteEdge.create(node, varNode, "set", arrayIndex.getIndex(), rhs);
-        return null;
-      }
-    });
+          @Override
+          public Set<PdgNode<ImpAstNode>> visit(ArrayIndex arrayIndex) {
+            Variable arrayVar = arrayIndex.getArray();
+            PdgNode<ImpAstNode> varNode = ImpPdgBuilderVisitor.this.getVariableNode(arrayVar);
+            PdgWriteEdge.create(node, varNode, "set", arrayIndex.getIndex(), rhs);
+            return null;
+          }
+        });
 
     return addNode(name, node, assignNode);
   }

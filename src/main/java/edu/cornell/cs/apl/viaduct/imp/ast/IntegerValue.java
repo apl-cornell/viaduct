@@ -1,45 +1,23 @@
 package edu.cornell.cs.apl.viaduct.imp.ast;
 
-import java.util.Objects;
+import com.google.auto.value.AutoValue;
 
 /** Integer literal. */
-public final class IntegerValue implements ImpValue {
-  private final int value;
-
-  public IntegerValue(int value) {
-    this.value = value;
+@AutoValue
+public abstract class IntegerValue implements ImpValue {
+  public static IntegerValue create(int value) {
+    return new AutoValue_IntegerValue(value);
   }
 
-  public int getValue() {
-    return this.value;
-  }
+  public abstract int getValue();
 
   @Override
-  public ImpType getType() {
+  public final ImpType getType() {
     return IntegerType.create();
   }
 
   @Override
-  public boolean equals(Object o) {
-    if (this == o) {
-      return true;
-    }
-
-    if (!(o instanceof IntegerValue)) {
-      return false;
-    }
-
-    final IntegerValue that = (IntegerValue) o;
-    return this.value == that.value;
-  }
-
-  @Override
-  public int hashCode() {
-    return Objects.hash(this.value);
-  }
-
-  @Override
-  public String toString() {
+  public final String toString() {
     return Integer.toString(this.getValue());
   }
 }

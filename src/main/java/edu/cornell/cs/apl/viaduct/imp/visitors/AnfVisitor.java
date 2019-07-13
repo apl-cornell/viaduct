@@ -24,7 +24,6 @@ import edu.cornell.cs.apl.viaduct.imp.ast.VariableDeclarationNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.WhileNode;
 import edu.cornell.cs.apl.viaduct.util.FreshNameGenerator;
 import edu.cornell.cs.apl.viaduct.util.SymbolTable;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -32,7 +31,7 @@ import java.util.List;
 public class AnfVisitor extends FormatBlockVisitor {
   private static final String TMP_NAME = "tmp";
   private final FreshNameGenerator nameGenerator;
-  private final SymbolTable<Variable,Boolean> declaredVars;
+  private final SymbolTable<Variable, Boolean> declaredVars;
   private final ANFChecker anfChecker = new ANFChecker();
   private final AtomicChecker atomicChecker = new AtomicChecker();
   private List<LetBindingNode> currentBindings;
@@ -54,15 +53,15 @@ public class AnfVisitor extends FormatBlockVisitor {
     List<StmtNode> stmtList = new ArrayList<>();
     stmtList.addAll(flushBindingMap());
     stmtList.add(stmt);
-    return new BlockNode(stmtList);
+    return BlockNode.create(stmtList);
   }
 
   private ReadNode addBinding(ExpressionNode expr) {
-    Variable tmpVar = new Variable(this.nameGenerator.getFreshName(TMP_NAME));
-    LetBindingNode letBinding = new LetBindingNode(tmpVar, expr);
+    Variable tmpVar = Variable.create(this.nameGenerator.getFreshName(TMP_NAME));
+    LetBindingNode letBinding = LetBindingNode.create(tmpVar, expr);
     this.currentBindings.add(letBinding);
-    Reference newVar = new Variable(tmpVar);
-    return new ReadNode(newVar);
+    Reference newVar = Variable.create(tmpVar);
+    return ReadNode.create(newVar);
   }
 
   @Override
@@ -73,7 +72,7 @@ public class AnfVisitor extends FormatBlockVisitor {
   @Override
   public Reference visit(ArrayIndex arrayInd) {
     ExpressionNode newIndex = arrayInd.getIndex().accept(this);
-    return new ArrayIndex(arrayInd.getArray(), newIndex);
+    return ArrayIndex.create(arrayInd.getArray(), newIndex);
   }
 
   @Override
@@ -90,14 +89,14 @@ public class AnfVisitor extends FormatBlockVisitor {
 
     } else {
       Reference newRef = oldRef.accept(this);
-      return addBinding(new ReadNode(newRef));
+      return addBinding(ReadNode.create(newRef));
     }
   }
 
   @Override
   public ExpressionNode visit(NotNode notNode) {
     ExpressionNode newExpr = notNode.getExpression().accept(this);
-    return addBinding(new NotNode(newExpr));
+    return addBinding(NotNode.create(newExpr));
   }
 
   @Override
@@ -112,28 +111,27 @@ public class AnfVisitor extends FormatBlockVisitor {
   @Override
   public ExpressionNode visit(DowngradeNode downgradeNode) {
     ExpressionNode newExpr = downgradeNode.getExpression().accept(this);
-    ExpressionNode newDowngrade = new DowngradeNode(newExpr, downgradeNode.getLabel());
+    ExpressionNode newDowngrade = DowngradeNode.create(newExpr, downgradeNode.getLabel());
     return addBinding(newDowngrade);
   }
 
   @Override
   public StmtNode visit(VariableDeclarationNode varDeclNode) {
     this.declaredVars.add(varDeclNode.getVariable(), true);
-    return new VariableDeclarationNode(
-        varDeclNode.getVariable(),
-        varDeclNode.getType(),
-        varDeclNode.getLabel());
+    return VariableDeclarationNode.create(
+        varDeclNode.getVariable(), varDeclNode.getType(), varDeclNode.getLabel());
   }
 
   @Override
   public StmtNode visit(ArrayDeclarationNode arrayDeclNode) {
     this.declaredVars.add(arrayDeclNode.getVariable(), true);
     ExpressionNode newLength = arrayDeclNode.getLength().accept(this);
-    StmtNode newStmt = new ArrayDeclarationNode(
-        arrayDeclNode.getVariable(),
-        newLength,
-        arrayDeclNode.getType(),
-        arrayDeclNode.getLabel());
+    StmtNode newStmt =
+        ArrayDeclarationNode.create(
+            arrayDeclNode.getVariable(),
+            newLength,
+            arrayDeclNode.getType(),
+            arrayDeclNode.getLabel());
     return prependBindings(newStmt);
   }
 
@@ -141,20 +139,20 @@ public class AnfVisitor extends FormatBlockVisitor {
   public StmtNode visit(LetBindingNode letBindingNode) {
     ExpressionNode oldRhs = letBindingNode.getRhs();
     ExpressionNode newRhs = this.anfChecker.run(oldRhs) ? oldRhs : oldRhs.accept(this);
-    return prependBindings(new LetBindingNode(letBindingNode.getVariable(), newRhs));
+    return prependBindings(LetBindingNode.create(letBindingNode.getVariable(), newRhs));
   }
 
   @Override
   public StmtNode visit(AssignNode assignNode) {
     Reference newLhs = assignNode.getLhs().accept(this);
     ExpressionNode newRhs = assignNode.getRhs().accept(this);
-    return prependBindings(new AssignNode(newLhs, newRhs));
+    return prependBindings(AssignNode.create(newLhs, newRhs));
   }
 
   @Override
   public StmtNode visit(SendNode sendNode) {
     ExpressionNode newExpr = sendNode.getSentExpression().accept(this);
-    return prependBindings(new SendNode(sendNode.getRecipient(), newExpr));
+    return prependBindings(SendNode.create(sendNode.getRecipient(), newExpr));
   }
 
   @Override
@@ -168,14 +166,11 @@ public class AnfVisitor extends FormatBlockVisitor {
       return recvNode;
 
     } else {
-      Variable tmpVar = new Variable(this.nameGenerator.getFreshName(TMP_NAME));
+      Variable tmpVar = Variable.create(this.nameGenerator.getFreshName(TMP_NAME));
       List<StmtNode> stmtList = new ArrayList<>();
-      stmtList.add(new ReceiveNode(
-          tmpVar,
-          recvNode.getRecvType(),
-          recvNode.getSender()));
-      stmtList.add(new AssignNode(recvVar, new ReadNode(tmpVar)));
-      return new BlockNode(stmtList);
+      stmtList.add(ReceiveNode.create(tmpVar, recvNode.getRecvType(), recvNode.getSender()));
+      stmtList.add(AssignNode.create(recvVar, ReadNode.create(tmpVar)));
+      return BlockNode.create(stmtList);
     }
   }
 
@@ -189,8 +184,8 @@ public class AnfVisitor extends FormatBlockVisitor {
 
     List<StmtNode> stmtList = new ArrayList<>();
     stmtList.addAll(guardBindings);
-    stmtList.add(new IfNode(newGuard, newThen, newElse));
-    return new BlockNode(stmtList);
+    stmtList.add(IfNode.create(newGuard, newThen, newElse));
+    return BlockNode.create(stmtList);
   }
 
   @Override
@@ -216,7 +211,7 @@ public class AnfVisitor extends FormatBlockVisitor {
   @Override
   public StmtNode visit(AssertNode assertNode) {
     ExpressionNode newExpr = assertNode.getExpression().accept(this);
-    return prependBindings(new AssertNode(newExpr));
+    return prependBindings(AssertNode.create(newExpr));
   }
 
   /** check if an expression is in ANF. */
@@ -229,32 +224,39 @@ public class AnfVisitor extends FormatBlockVisitor {
       return ref.accept(this);
     }
 
+    @Override
     public Boolean visit(Variable var) {
       return true;
     }
 
+    @Override
     public Boolean visit(ArrayIndex arrayIndex) {
       return AnfVisitor.this.atomicChecker.run(arrayIndex.getIndex());
     }
 
+    @Override
     public Boolean visit(LiteralNode literalNode) {
       return true;
     }
 
+    @Override
     public Boolean visit(ReadNode readNode) {
       return readNode.getReference().accept(this);
     }
 
+    @Override
     public Boolean visit(NotNode notNode) {
       return AnfVisitor.this.atomicChecker.run(notNode.getExpression());
     }
 
+    @Override
     public Boolean visit(BinaryExpressionNode binExprNode) {
       Boolean lhsAnf = AnfVisitor.this.atomicChecker.run(binExprNode.getLhs());
       Boolean rhsAnf = AnfVisitor.this.atomicChecker.run(binExprNode.getRhs());
       return lhsAnf && rhsAnf;
     }
 
+    @Override
     public Boolean visit(DowngradeNode downgradeNode) {
       return AnfVisitor.this.atomicChecker.run(downgradeNode.getExpression());
     }
@@ -269,30 +271,37 @@ public class AnfVisitor extends FormatBlockVisitor {
       return ref.accept(this);
     }
 
+    @Override
     public Boolean visit(Variable var) {
       return !AnfVisitor.this.declaredVars.contains(var);
     }
 
+    @Override
     public Boolean visit(ArrayIndex arrayIndex) {
       return false;
     }
 
+    @Override
     public Boolean visit(LiteralNode literalNode) {
       return true;
     }
 
+    @Override
     public Boolean visit(ReadNode readNode) {
       return readNode.getReference().accept(this);
     }
 
+    @Override
     public Boolean visit(NotNode notNode) {
       return false;
     }
 
+    @Override
     public Boolean visit(BinaryExpressionNode binExprNode) {
       return false;
     }
 
+    @Override
     public Boolean visit(DowngradeNode downgradeNode) {
       return false;
     }

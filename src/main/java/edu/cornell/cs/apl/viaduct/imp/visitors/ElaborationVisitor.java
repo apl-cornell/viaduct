@@ -18,20 +18,20 @@ public class ElaborationVisitor extends FormatBlockVisitor {
   public StmtNode visit(WhileNode whileNode) {
     ExpressionNode newGuard = whileNode.getGuard().accept(this);
     StmtNode newBody = whileNode.getBody().accept(this);
-    BreakNode loopBreak = new BreakNode(new LiteralNode(new IntegerValue(0)));
-    IfNode ifNode = new IfNode(newGuard, newBody, new BlockNode(loopBreak));
-    LoopNode loop = new LoopNode(new BlockNode(ifNode));
+    BreakNode loopBreak = BreakNode.create(LiteralNode.create(IntegerValue.create(0)));
+    IfNode ifNode = IfNode.create(newGuard, newBody, BlockNode.create(loopBreak));
+    LoopNode loop = LoopNode.create(BlockNode.create(ifNode));
     return loop;
   }
 
   /** Rewrite for loops into while loops. */
   @Override
   public StmtNode visit(ForNode forNode) {
-    BlockNode whileBody = new BlockNode(forNode.getBody(), forNode.getUpdate());
-    WhileNode whileLoop = new WhileNode(forNode.getGuard(), whileBody);
+    BlockNode whileBody = BlockNode.create(forNode.getBody(), forNode.getUpdate());
+    WhileNode whileLoop = WhileNode.create(forNode.getGuard(), whileBody);
 
     StmtNode newInit = forNode.getInitialize().accept(this);
     StmtNode elaboratedWhile = whileLoop.accept(this);
-    return new BlockNode(newInit, elaboratedWhile);
+    return BlockNode.create(newInit, elaboratedWhile);
   }
 }

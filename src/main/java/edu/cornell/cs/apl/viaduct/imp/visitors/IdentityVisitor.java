@@ -67,7 +67,7 @@ public abstract class IdentityVisitor
   @Override
   public Reference visit(ArrayIndex arrayIndex) {
     ExpressionNode newIndex = arrayIndex.getIndex().accept(this);
-    return new ArrayIndex(arrayIndex.getArray(), newIndex);
+    return ArrayIndex.create(arrayIndex.getArray(), newIndex);
   }
 
   @Override
@@ -78,13 +78,13 @@ public abstract class IdentityVisitor
   @Override
   public ExpressionNode visit(ReadNode readNode) {
     Reference newReference = readNode.getReference().accept(this);
-    return new ReadNode(newReference);
+    return ReadNode.create(newReference);
   }
 
   @Override
   public ExpressionNode visit(NotNode notNode) {
     ExpressionNode newExpr = notNode.getExpression().accept(this);
-    return new NotNode(newExpr);
+    return NotNode.create(newExpr);
   }
 
   @Override
@@ -97,18 +97,18 @@ public abstract class IdentityVisitor
   @Override
   public ExpressionNode visit(DowngradeNode downgradeNode) {
     ExpressionNode newExpr = downgradeNode.getExpression().accept(this);
-    return new DowngradeNode(newExpr, downgradeNode.getLabel());
+    return DowngradeNode.create(newExpr, downgradeNode.getLabel());
   }
 
   @Override
   public StmtNode visit(VariableDeclarationNode declNode) {
-    return new VariableDeclarationNode(
+    return VariableDeclarationNode.create(
         declNode.getVariable(), declNode.getType(), declNode.getLabel());
   }
 
   @Override
   public StmtNode visit(ArrayDeclarationNode arrayDeclNode) {
-    return new ArrayDeclarationNode(
+    return ArrayDeclarationNode.create(
         arrayDeclNode.getVariable(),
         arrayDeclNode.getLength(),
         arrayDeclNode.getType(),
@@ -117,16 +117,15 @@ public abstract class IdentityVisitor
 
   @Override
   public StmtNode visit(LetBindingNode letBindingNode) {
-    return new LetBindingNode(
-        letBindingNode.getVariable(),
-        letBindingNode.getRhs().accept(this));
+    return LetBindingNode.create(
+        letBindingNode.getVariable(), letBindingNode.getRhs().accept(this));
   }
 
   @Override
   public StmtNode visit(AssignNode assignNode) {
     Reference newLhs = assignNode.getLhs().accept(this);
     ExpressionNode newRhs = assignNode.getRhs().accept(this);
-    return new AssignNode(newLhs, newRhs);
+    return AssignNode.create(newLhs, newRhs);
   }
 
   @Override
@@ -134,14 +133,14 @@ public abstract class IdentityVisitor
     ExpressionNode newGuard = ifNode.getGuard().accept(this);
     StmtNode newThen = ifNode.getThenBranch().accept(this);
     StmtNode newElse = ifNode.getElseBranch().accept(this);
-    return new IfNode(newGuard, newThen, newElse);
+    return IfNode.create(newGuard, newThen, newElse);
   }
 
   @Override
   public StmtNode visit(WhileNode whileNode) {
     ExpressionNode newGuard = whileNode.getGuard().accept(this);
     StmtNode newBody = whileNode.getBody().accept(this);
-    return new WhileNode(newGuard, newBody);
+    return WhileNode.create(newGuard, newBody);
   }
 
   @Override
@@ -150,19 +149,19 @@ public abstract class IdentityVisitor
     ExpressionNode newGuard = forNode.getGuard().accept(this);
     StmtNode newUpdate = forNode.getUpdate().accept(this);
     StmtNode newBody = forNode.getBody().accept(this);
-    return new ForNode(newInit, newGuard, newUpdate, newBody);
+    return ForNode.create(newInit, newGuard, newUpdate, newBody);
   }
 
   @Override
   public StmtNode visit(LoopNode loopNode) {
     StmtNode newBody = loopNode.getBody().accept(this);
-    return new LoopNode(newBody);
+    return LoopNode.create(newBody);
   }
 
   @Override
   public StmtNode visit(BreakNode breakNode) {
     ExpressionNode newLevel = breakNode.getLevel().accept(this);
-    return new BreakNode(newLevel);
+    return BreakNode.create(newLevel);
   }
 
   @Override
@@ -171,21 +170,19 @@ public abstract class IdentityVisitor
     for (StmtNode stmt : blockNode) {
       newList.add(stmt.accept(this));
     }
-    return new BlockNode(newList);
+    return BlockNode.create(newList);
   }
 
   @Override
   public StmtNode visit(SendNode sendNode) {
     ExpressionNode newExpr = sendNode.getSentExpression().accept(this);
-    return new SendNode(sendNode.getRecipient(), newExpr);
+    return SendNode.create(sendNode.getRecipient(), newExpr);
   }
 
   @Override
   public StmtNode visit(ReceiveNode receiveNode) {
-    return new ReceiveNode(
-        receiveNode.getVariable(),
-        receiveNode.getRecvType(),
-        receiveNode.getSender());
+    return ReceiveNode.create(
+        receiveNode.getVariable(), receiveNode.getRecvType(), receiveNode.getSender());
   }
 
   @Override
@@ -206,6 +203,6 @@ public abstract class IdentityVisitor
   @Override
   public StmtNode visit(AssertNode assertNode) {
     ExpressionNode newExpr = assertNode.getExpression().accept(this);
-    return new AssertNode(newExpr);
+    return AssertNode.create(newExpr);
   }
 }

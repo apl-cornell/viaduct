@@ -4,7 +4,6 @@ import edu.cornell.cs.apl.viaduct.imp.ast.Host;
 import edu.cornell.cs.apl.viaduct.imp.ast.ImpAstNode;
 import edu.cornell.cs.apl.viaduct.pdg.PdgNode;
 import edu.cornell.cs.apl.viaduct.protocol.ProtocolInstantiationInfo;
-
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -12,7 +11,7 @@ import java.util.Set;
 
 /** multiparty computation protocol. */
 public class MPC extends AbstractSingle {
-  private static Map<Set<Host>,Host> synthesizedHostMap = new HashMap<>();
+  private static Map<Set<Host>, Host> synthesizedHostMap = new HashMap<>();
   private Set<Host> parties;
   private Host synthesizedHost;
 
@@ -42,7 +41,7 @@ public class MPC extends AbstractSingle {
       this.synthesizedHost = synthesizedHostMap.get(this.parties);
 
     } else {
-      this.synthesizedHost = new Host(info.getFreshName(toString()));
+      this.synthesizedHost = Host.create(info.getFreshName(toString()));
       synthesizedHostMap.put(this.parties, this.synthesizedHost);
       info.createProcess(this.synthesizedHost);
     }

@@ -131,5 +131,6 @@ public class ProtocolInstantiationInfo<T extends AstNode> {
       StmtBuilder hostBuilder = this.pconfig.getBuilder(host);
       hostBuilder.popControl();
     }
+    this.controlContext.pop();
   }
 }

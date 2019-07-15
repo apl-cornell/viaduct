@@ -28,7 +28,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Stack;
 
-/** Builder for statements. Implicitly creates a sequence through a fluent interface. */
+/**
+ * Builder for statements. Implicitly creates a sequence through a fluent
+ * interface.
+ */
 public class StmtBuilder {
   private final Stack<ControlInfo> controlContext;
   private List<StmtNode> stmts;
@@ -79,6 +82,7 @@ public class StmtBuilder {
   }
 
   public StmtNode build() {
+    assert this.controlContext.empty();
     return BlockNode.create(this.stmts);
   }
 
@@ -224,6 +228,7 @@ public class StmtBuilder {
     }
 
     public void finishCurrentPath(List<StmtNode> pathStmts) {
+      assert this.currentPath != null;
       this.pathMap.put(this.currentPath, BlockNode.create(pathStmts));
       this.currentPath = null;
     }
@@ -249,11 +254,7 @@ public class StmtBuilder {
     @Override
     public StmtNode buildControlStructure() {
       StmtNode thenBranch = this.pathMap.get(ControlLabel.THEN);
-      thenBranch = thenBranch != null ? thenBranch : BlockNode.create();
-
       StmtNode elseBranch = this.pathMap.get(ControlLabel.ELSE);
-      elseBranch = elseBranch != null ? elseBranch : BlockNode.create();
-
       return IfNode.create(this.guard, thenBranch, elseBranch);
     }
   }
@@ -266,7 +267,6 @@ public class StmtBuilder {
     @Override
     public StmtNode buildControlStructure() {
       StmtNode body = this.pathMap.get(ControlLabel.BODY);
-      body = body != null ? body : BlockNode.create();
       return LoopNode.create(body);
     }
   }

@@ -73,6 +73,14 @@ public abstract class PdgNode<T extends AstNode> {
     return writeEdges;
   }
 
+  /** return all info edges. */
+  public Set<PdgInfoEdge<T>> getInfoEdges() {
+    Set<PdgInfoEdge<T>> infoEdges = new HashSet<>();
+    infoEdges.addAll(this.inInfoEdges);
+    infoEdges.addAll(this.outInfoEdges);
+    return infoEdges;
+  }
+
   /**
    * returns all storage nodes that this PDG node transitively reads. this is used for compute nodes
    * for conditionals, where to model read channels the PC of the conditional has to be "written" to

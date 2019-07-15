@@ -29,8 +29,11 @@ process main {
         sum += scale * j;
     }
 
-    prodsum : int{(A|B)-> & (A&B)<-};
-    prodsum = downgrade(sum, {A && B});
+    prodsum_A : int{A};
+    prodsum_A = downgrade(sum, {A && B});
+
+    prodsum_B : int{B};
+    prodsum_B = downgrade(sum, {A && B});
 }
 
 host alice : {A};

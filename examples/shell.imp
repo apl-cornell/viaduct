@@ -13,7 +13,7 @@ process main {
   guess = endorse(ain, {A & C<-});
 
   /* Chuck must prove that `shell` is valid without revealing its value. */
-  if (declassify(1 <= shell && shell <= 3, {(A | C)-> & (A & C)<-})) {
+  if (1 <= shell && shell <= 3) {
     /* Check if Alice won. */
     win = declassify(shell == guess, {(A | C)-> & (A & C)<-});
   }

@@ -23,6 +23,15 @@ public final class BlockNode extends StmtNode implements Iterable<StmtNode> {
     return this.statements.size();
   }
 
+  public StmtNode getFirstStmt() {
+    return this.statements.head();
+  }
+
+  public StmtNode getLastStmt() {
+    return this.statements.last();
+  }
+
+
   @Override
   public <R> R accept(StmtVisitor<R> v) {
     return v.visit(this);

@@ -7,6 +7,7 @@ import edu.cornell.cs.apl.viaduct.imp.visitors.EraseSecurityVisitor;
 import edu.cornell.cs.apl.viaduct.imp.visitors.FormatBlockVisitor;
 import edu.cornell.cs.apl.viaduct.imp.visitors.LetInlineVisitor;
 import edu.cornell.cs.apl.viaduct.imp.visitors.SelfCommunicationVisitor;
+import edu.cornell.cs.apl.viaduct.imp.visitors.UnelaborationVisitor;
 
 /**
  * Postprocess protocol instantiation.
@@ -19,6 +20,7 @@ public class TargetPostprocessor {
   private static final CopyPropagation copyProp;
   private static final FormatBlockVisitor formatBlock;
   private static final LetInlineVisitor letInline;
+  private static final UnelaborationVisitor unelaborator;
 
   static {
     selfComm = new SelfCommunicationVisitor();
@@ -26,6 +28,7 @@ public class TargetPostprocessor {
     copyProp = new CopyPropagation();
     formatBlock = new FormatBlockVisitor();
     letInline = new LetInlineVisitor();
+    unelaborator = new UnelaborationVisitor();
   }
 
   /** set host of current program, then postprocess. */
@@ -35,6 +38,7 @@ public class TargetPostprocessor {
     // processedProgram = copyProp.run(processedProgram);
     processedProgram = formatBlock.run(processedProgram);
     processedProgram = letInline.run(processedProgram);
+    processedProgram = unelaborator.run(processedProgram);
     return processedProgram;
   }
 }

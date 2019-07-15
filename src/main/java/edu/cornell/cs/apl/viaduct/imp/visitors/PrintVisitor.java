@@ -33,7 +33,7 @@ import io.vavr.Tuple2;
 public class PrintVisitor
     implements ReferenceVisitor<Void>, ExprVisitor<Void>, StmtVisitor<Void>, ProgramVisitor<Void> {
 
-  private static final int INDENTATION_LEVEL = 4;
+  private static final int INDENTATION_LEVEL = 2;
 
   /** Accumulates the partially printed program. */
   private final StringBuilder buffer = new StringBuilder();

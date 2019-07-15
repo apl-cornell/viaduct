@@ -17,7 +17,7 @@ import java.util.LinkedList;
 import java.util.Queue;
 
 /** remove self communication. */
-public class SelfCommunicationVisitor extends IdentityVisitor {
+public class SelfCommunicationVisitor extends FormatBlockVisitor {
   private Host selfHost;
   private Queue<ExpressionNode> sentExprs;
   private SymbolTable<Variable, Boolean> declaredVars;

@@ -136,6 +136,7 @@ ANY         = .*
   "declassify"    { return symbol(sym.DECLASSIFY); }
   "endorse"       { return symbol(sym.ENDORSE); }
   "downgrade"     { return symbol(sym.DOWNGRADE); }
+  "let"           { return symbol(sym.LET); }
 
   /* Labels */
   "<-"            { return symbol(sym.LARROW); }

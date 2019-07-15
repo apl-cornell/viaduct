@@ -4,7 +4,6 @@ import edu.cornell.cs.apl.viaduct.imp.ast.Host;
 import edu.cornell.cs.apl.viaduct.imp.ast.StmtNode;
 import edu.cornell.cs.apl.viaduct.imp.dataflow.CopyPropagation;
 import edu.cornell.cs.apl.viaduct.imp.visitors.EraseSecurityVisitor;
-import edu.cornell.cs.apl.viaduct.imp.visitors.FormatBlockVisitor;
 import edu.cornell.cs.apl.viaduct.imp.visitors.LetInlineVisitor;
 import edu.cornell.cs.apl.viaduct.imp.visitors.SelfCommunicationVisitor;
 import edu.cornell.cs.apl.viaduct.imp.visitors.UnelaborationVisitor;
@@ -18,7 +17,6 @@ public class TargetPostprocessor {
   private static final SelfCommunicationVisitor selfComm;
   private static final EraseSecurityVisitor eraseSecurity;
   private static final CopyPropagation copyProp;
-  private static final FormatBlockVisitor formatBlock;
   private static final LetInlineVisitor letInline;
   private static final UnelaborationVisitor unelaborator;
 
@@ -26,7 +24,6 @@ public class TargetPostprocessor {
     selfComm = new SelfCommunicationVisitor();
     eraseSecurity = new EraseSecurityVisitor();
     copyProp = new CopyPropagation();
-    formatBlock = new FormatBlockVisitor();
     letInline = new LetInlineVisitor();
     unelaborator = new UnelaborationVisitor();
   }
@@ -36,7 +33,6 @@ public class TargetPostprocessor {
     StmtNode processedProgram = selfComm.run(h, program);
     processedProgram = eraseSecurity.run(processedProgram);
     // processedProgram = copyProp.run(processedProgram);
-    processedProgram = formatBlock.run(processedProgram);
     processedProgram = letInline.run(processedProgram);
     processedProgram = unelaborator.run(processedProgram);
     return processedProgram;

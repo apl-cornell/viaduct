@@ -39,6 +39,7 @@ terminal PLUS, MINUS, TIMES, PLUSPLUS, MINUSMINUS;
 // terminal PLUS, MINUS, TIMES, DIVIDE;
 
 terminal DECLASSIFY, ENDORSE, DOWNGRADE;
+terminal LET;
 
 terminal OPEN_BRACE, CLOSE_BRACE, OPEN_SQBRACE, CLOSE_SQBRACE, SEMICOLON, OPEN_PAREN, CLOSE_PAREN, COMMA;
 
@@ -111,6 +112,10 @@ stmt_basic ::=
 
   | variable:var OPEN_SQBRACE expr:e CLOSE_SQBRACE COLON type:ty label:lab {:
       RESULT = ArrayDeclarationNode.create(var, e, ty, lab);
+    :}
+
+  | LET variable:var EQ expr:e {:
+      RESULT = LetBindingNode.create(var, e);
     :}
 
   | reference:ref EQ expr:e {:

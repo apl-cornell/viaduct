@@ -93,11 +93,15 @@ public class TypeCheckVisitor
   }
 
   @Override
-  public ImpType visit(Variable variable) {
-    if (this.symbolTable.contains(variable)) {
-      return this.symbolTable.get(variable);
+  public ImpType visit(Variable var) {
+    if (this.symbolTable.contains(var)) {
+      return this.symbolTable.get(var);
+
+    } else if (this.tempSymbolTable.contains(var)) {
+      return this.tempSymbolTable.get(var);
+
     } else {
-      throw new UndeclaredVariableException(variable);
+      throw new UndeclaredVariableException(var);
     }
   }
 

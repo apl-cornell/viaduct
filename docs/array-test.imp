@@ -1,12 +1,14 @@
 process main {
-    a[100] : int{A};
-    b[100] : int{B};
+    let len = 100;
+
+    a[len] : int{A};
+    b[len] : int{B};
 
     a_sum : int{A};
     a_sum = 0;
 
     ai : int{A};
-    for (ai = 0; ai < 100; ai++) {
+    for (ai = 0; ai < len; ai++) {
         a_sum += a[ai];
     }
 
@@ -14,7 +16,7 @@ process main {
     b_sum = 0;
 
     bi : int{B};
-    for (bi = 0; bi < 100; bi++) {
+    for (bi = 0; bi < len; bi++) {
         b_sum += b[bi];
     }
 
@@ -25,15 +27,12 @@ process main {
     sum = 0;
 
     j : int{A & B};
-    for (j = 0; j < 100; j++) {
+    for (j = 0; j < len; j++) {
         sum += scale * j;
     }
 
-    prodsum_A : int{A};
-    prodsum_A = downgrade(sum, {A && B});
-
-    prodsum_B : int{B};
-    prodsum_B = downgrade(sum, {A && B});
+    prodsum : int{A && B};
+    prodsum = downgrade(sum, {A && B});
 }
 
 host alice : {A};

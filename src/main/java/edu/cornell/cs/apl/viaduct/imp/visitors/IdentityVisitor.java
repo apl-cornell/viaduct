@@ -108,9 +108,10 @@ public abstract class IdentityVisitor
 
   @Override
   public StmtNode visit(ArrayDeclarationNode arrayDeclNode) {
+    ExpressionNode newLength = arrayDeclNode.getLength().accept(this);
     return ArrayDeclarationNode.create(
         arrayDeclNode.getVariable(),
-        arrayDeclNode.getLength(),
+        newLength,
         arrayDeclNode.getType(),
         arrayDeclNode.getLabel());
   }

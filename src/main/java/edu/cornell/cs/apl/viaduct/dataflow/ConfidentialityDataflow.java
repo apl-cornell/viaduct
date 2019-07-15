@@ -26,14 +26,18 @@ public class ConfidentialityDataflow<T extends AstNode>
 
   @Override
   protected void updateInput(PdgNode<T> node, Label nextInput) {
-    Label curLabel = node.getInLabel();
-    node.setInLabel(nextInput.confidentiality().and(curLabel.integrity()));
+    // Label curLabel = node.getInLabel();
+    // node.setInLabel(nextInput.confidentiality().and(curLabel.integrity()));
+
+    node.setInLabel(nextInput.confidentiality());
   }
 
   @Override
   protected void updateOutput(PdgNode<T> node, Label nextOutput) {
-    Label curLabel = node.getOutLabel();
-    node.setOutLabel(nextOutput.confidentiality().and(curLabel.integrity()));
+    // Label curLabel = node.getOutLabel();
+    // node.setOutLabel(nextOutput.confidentiality().and(curLabel.integrity()));
+
+    node.setOutLabel(nextOutput);
   }
 
   @Override
@@ -43,8 +47,10 @@ public class ConfidentialityDataflow<T extends AstNode>
     if (node.isDowngradeNode()) {
       return node.getOutLabel();
     } else {
-      Label cur = node.getOutLabel();
-      return next.confidentiality().and(cur.integrity());
+      // Label cur = node.getOutLabel();
+      // return next.confidentiality().and(cur.integrity());
+
+      return next;
     }
   }
 }

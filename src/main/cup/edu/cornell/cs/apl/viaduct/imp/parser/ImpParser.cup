@@ -244,6 +244,13 @@ expr ::=
       RESULT = BinaryExpressionNode.create(e1, Times.create(), e2);
     :}
 
+  | MINUS expr:e {:
+      RESULT = BinaryExpressionNode.create(
+        LiteralNode.create(IntegerValue.create(0)),
+        Minus.create(),
+        e);
+    :}
+
   | DECLASSIFY OPEN_PAREN expr:e COMMA label:l CLOSE_PAREN {:
       RESULT = DowngradeNode.create(e, l);
     :}

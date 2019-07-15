@@ -3,7 +3,7 @@ process main {
   ain : int{A};
   shell : int{C & A<-};
   guess : int{A & C<-};
-  win : bool{(A | C)-> & (A & C)<-};
+  win : int{(A | C)-> & (A & C)<-};
 
   cin <- recv chuck_main;
   ain <- recv alice_main;
@@ -13,12 +13,20 @@ process main {
   guess = endorse(ain, {A & C<-});
 
   /* Chuck must prove that `shell` is valid without revealing its value. */
+  win_secret : int{A & C};
   if (1 <= shell && shell <= 3) {
-    /* Check if Alice won. */
-    win = declassify(shell == guess, {(A | C)-> & (A & C)<-});
+    if (shell == guess) {
+      win_secret = 1;
+
+    } else {
+      win_secret = 0;
+    }
+
+  } else {
+      win_secret = -1;
   }
 
-  assert !win;
+  win = declassify(win_secret, {(A | C)-> & (A & C)<-});
 }
 
 process chuck_main {

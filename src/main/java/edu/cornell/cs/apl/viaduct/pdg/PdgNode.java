@@ -96,6 +96,21 @@ public abstract class PdgNode<T extends AstNode> {
     return storageInputs;
   }
 
+  /** get all the nodes (transitively) read by this node. */
+  public Set<PdgNode<T>> getReadNodes() {
+    Set<PdgNode<T>> readNodes = new HashSet<>();
+
+    for (PdgInfoEdge<T> edge : this.inInfoEdges) {
+      if (edge.isReadEdge()) {
+        PdgNode<T> source = edge.getSource();
+        readNodes.add(source);
+        readNodes.addAll(source.getReadNodes());
+      }
+    }
+
+    return readNodes;
+  }
+
   public Label getInLabel() {
     return this.inLabel;
   }

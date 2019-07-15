@@ -1,5 +1,6 @@
 package edu.cornell.cs.apl.viaduct.imp.visitors;
 
+import edu.cornell.cs.apl.viaduct.AstPrinter;
 import edu.cornell.cs.apl.viaduct.imp.ast.ArrayDeclarationNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ArrayIndex;
 import edu.cornell.cs.apl.viaduct.imp.ast.AssertNode;
@@ -12,6 +13,7 @@ import edu.cornell.cs.apl.viaduct.imp.ast.ExpressionNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ForNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.Host;
 import edu.cornell.cs.apl.viaduct.imp.ast.IfNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.ImpAstNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ImpType;
 import edu.cornell.cs.apl.viaduct.imp.ast.LetBindingNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.LiteralNode;
@@ -31,15 +33,17 @@ import io.vavr.Tuple2;
 
 /** Pretty-prints an AST. */
 public class PrintVisitor
-    implements ReferenceVisitor<Void>, ExprVisitor<Void>, StmtVisitor<Void>, ProgramVisitor<Void> {
+    implements ReferenceVisitor<Void>, ExprVisitor<Void>,
+        StmtVisitor<Void>, ProgramVisitor<Void>,
+        AstPrinter<ImpAstNode> {
 
   private static final int INDENTATION_LEVEL = 2;
 
   /** Accumulates the partially printed program. */
-  private final StringBuilder buffer = new StringBuilder();
+  private StringBuilder buffer;
 
   /** Add indentation only if set to true. */
-  private boolean indentationEnabled = true;
+  private boolean indentationEnabled;
 
   /** Terminate statements with a semicolon (;) only if set to true. */
   private boolean statementTerminatorsEnabled;
@@ -47,7 +51,10 @@ public class PrintVisitor
   /** Current indentation level. */
   private int indentation = 0;
 
-  private PrintVisitor(boolean statementTerminatorsEnabled) {
+  /** constructor. */
+  public PrintVisitor(boolean statementTerminatorsEnabled) {
+    this.buffer = new StringBuilder();
+    this.indentationEnabled = true;
     this.statementTerminatorsEnabled = statementTerminatorsEnabled;
   }
 
@@ -85,6 +92,23 @@ public class PrintVisitor
     if (this.statementTerminatorsEnabled) {
       buffer.append(';');
     }
+  }
+
+  @Override
+  public String print(ImpAstNode astNode) {
+    if (astNode instanceof ExpressionNode) {
+      ((ExpressionNode)astNode).accept(this);
+
+    } else if (astNode instanceof StmtNode) {
+      ((StmtNode)astNode).accept(this);
+
+    } else {
+      ((ProgramNode)astNode).accept(this);
+    }
+
+    String str = this.buffer.toString();
+    this.buffer = new StringBuilder();
+    return str;
   }
 
   @Override

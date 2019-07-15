@@ -1,6 +1,7 @@
 package edu.cornell.cs.apl.viaduct.pdg;
 
 import edu.cornell.cs.apl.viaduct.AstNode;
+import edu.cornell.cs.apl.viaduct.AstPrinter;
 
 public abstract class PdgInfoEdge<T extends AstNode> extends PdgEdge<T> {
   public PdgInfoEdge(PdgNode<T> source, PdgNode<T> target) {
@@ -23,7 +24,7 @@ public abstract class PdgInfoEdge<T extends AstNode> extends PdgEdge<T> {
     return false;
   }
 
-  public String getLabel() {
+  public String getLabel(AstPrinter<T> printer) {
     return "";
   }
 }

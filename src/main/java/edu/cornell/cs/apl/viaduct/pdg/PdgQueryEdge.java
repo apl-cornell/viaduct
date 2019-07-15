@@ -1,6 +1,7 @@
 package edu.cornell.cs.apl.viaduct.pdg;
 
 import edu.cornell.cs.apl.viaduct.AstNode;
+import edu.cornell.cs.apl.viaduct.AstPrinter;
 
 /** a read from a storage node. */
 public final class PdgQueryEdge<T extends AstNode> extends PdgReadEdge<T> {
@@ -36,7 +37,7 @@ public final class PdgQueryEdge<T extends AstNode> extends PdgReadEdge<T> {
   }
 
   @Override
-  public String getLabel() {
-    return this.query.toString();
+  public String getLabel(AstPrinter<T> printer) {
+    return printer.print(this.query);
   }
 }

@@ -1,6 +1,7 @@
 package edu.cornell.cs.apl.viaduct.pdg;
 
 import edu.cornell.cs.apl.viaduct.AstNode;
+import edu.cornell.cs.apl.viaduct.AstPrinter;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -42,10 +43,10 @@ public class PdgWriteEdge<T extends AstNode> extends PdgInfoEdge<T> {
   }
 
   @Override
-  public String getLabel() {
+  public String getLabel(AstPrinter<T> printer) {
     List<String> argStrs = new ArrayList<>();
     for (T arg : this.commandArgs) {
-      argStrs.add(arg.toString());
+      argStrs.add(printer.print(arg));
     }
 
     String argStr = String.join(",", argStrs);

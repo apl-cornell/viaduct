@@ -4,8 +4,7 @@ import static guru.nidi.graphviz.model.Factory.mutGraph;
 import static guru.nidi.graphviz.model.Factory.mutNode;
 
 import edu.cornell.cs.apl.viaduct.AstNode;
-import edu.cornell.cs.apl.viaduct.Binding;
-import edu.cornell.cs.apl.viaduct.pdg.ProgramDependencyGraph.ControlLabel;
+import edu.cornell.cs.apl.viaduct.AstPrinter;
 import edu.cornell.cs.apl.viaduct.protocol.Protocol;
 
 import guru.nidi.graphviz.attribute.Arrow;
@@ -26,6 +25,7 @@ public class PdgDotPrinter {
   private static <T extends AstNode> MutableGraph pdgDotGraph(
       ProgramDependencyGraph<T> pdg,
       Map<PdgNode<T>, Protocol<T>> protocolMap,
+      AstPrinter<T> printer,
       GraphData dataFormat) {
 
     MutableGraph g = mutGraph().setDirected(true);
@@ -61,10 +61,10 @@ public class PdgDotPrinter {
       String label = "";
       if (node instanceof PdgStorageNode<?>) {
         shape = Shape.RECTANGLE;
-        label = String.format("%s\\n%s", node.getAstNode(), data);
+        label = String.format("%s\\n%s", printer.print(node.getAstNode()), data);
       } else if (node instanceof PdgComputeNode<?>) {
         shape = Shape.EGG;
-        label = String.format("%s\\n%s", node.getAstNode(), data);
+        label = String.format("%s\\n%s", printer.print(node.getAstNode()), data);
       } else {
         shape = Shape.DIAMOND;
         label = String.format("%s\\n%s", node.getId(), data);
@@ -91,7 +91,7 @@ public class PdgDotPrinter {
 
         Link link = Link.to(mutNode(strOutNode)).add(style).add(Color.BLUE);
 
-        String infoEdgeLabel = infoEdge.getLabel();
+        String infoEdgeLabel = infoEdge.getLabel(printer);
         if (infoEdgeLabel != null) {
           link.add(Label.of(infoEdgeLabel));
         }
@@ -107,13 +107,15 @@ public class PdgDotPrinter {
   }
 
   public static <T extends AstNode> MutableGraph pdgDotGraphWithLabels(
-      ProgramDependencyGraph<T> pdg) {
-    return pdgDotGraph(pdg, null, GraphData.LABEL);
+      ProgramDependencyGraph<T> pdg, AstPrinter<T> printer) {
+    return pdgDotGraph(pdg, null, printer, GraphData.LABEL);
   }
 
   public static <T extends AstNode> MutableGraph pdgDotGraphWithProtocols(
-      ProgramDependencyGraph<T> pdg, Map<PdgNode<T>, Protocol<T>> protoMap) {
-    return pdgDotGraph(pdg, protoMap, GraphData.PROTOCOL);
+      ProgramDependencyGraph<T> pdg,
+      Map<PdgNode<T>, Protocol<T>> protoMap,
+      AstPrinter<T> printer) {
+    return pdgDotGraph(pdg, protoMap, printer, GraphData.PROTOCOL);
   }
 
   private enum GraphData {

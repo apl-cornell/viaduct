@@ -144,8 +144,10 @@ public class CompileCommand extends BaseCommand {
     new ConfidentialityDataflow<ImpAstNode>().dataflow(nodes);
     new IntegrityDataflow<ImpAstNode>().dataflow(nodes);
 
+    PrintVisitor printer = new PrintVisitor(false);
     // Dump PDG with information flow labels to a file (if requested).
-    dumpGraph(() -> PdgDotPrinter.pdgDotGraphWithLabels(pdg), labelGraphOutput);
+    dumpGraph(() -> PdgDotPrinter.pdgDotGraphWithLabels(pdg, printer),
+        labelGraphOutput);
 
     // Select cryptographic protocols for each node.
     final ImpProtocolSearchStrategy strategy = new ImpProtocolSearchStrategy();
@@ -153,7 +155,8 @@ public class CompileCommand extends BaseCommand {
         new ProtocolSelection<>(strategy).selectProtocols(trustConfiguration, pdg);
 
     // Dump PDG with protocol information to a file (if requested).
-    dumpGraph(() -> PdgDotPrinter.pdgDotGraphWithProtocols(pdg, protocolMap), protocolGraphOutput);
+    dumpGraph(() -> PdgDotPrinter.pdgDotGraphWithProtocols(pdg, protocolMap, printer),
+        protocolGraphOutput);
 
     if (pdg.getOrderedNodes().size() == protocolMap.size()) {
       // Found a protocol for every node! Output synthesized distributed program.

@@ -1,6 +1,7 @@
 package edu.cornell.cs.apl.viaduct.pdg;
 
 import edu.cornell.cs.apl.viaduct.AstNode;
+import edu.cornell.cs.apl.viaduct.AstPrinter;
 import edu.cornell.cs.apl.viaduct.Binding;
 
 /** a read from a computation / subexpression. */
@@ -37,7 +38,7 @@ public final class PdgComputeEdge<T extends AstNode> extends PdgReadEdge<T> {
   }
 
   @Override
-  public String getLabel() {
+  public String getLabel(AstPrinter<T> printer) {
     return this.binding.getBinding();
   }
 }

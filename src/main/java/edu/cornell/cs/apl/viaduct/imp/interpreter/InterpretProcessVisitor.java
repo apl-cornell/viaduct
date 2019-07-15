@@ -31,7 +31,6 @@ import edu.cornell.cs.apl.viaduct.imp.visitors.ExprVisitor;
 import edu.cornell.cs.apl.viaduct.imp.visitors.ReferenceVisitor;
 import edu.cornell.cs.apl.viaduct.imp.visitors.StmtVisitor;
 import edu.cornell.cs.apl.viaduct.util.SymbolTable;
-
 import java.util.Objects;
 
 class InterpretProcessVisitor implements ExprVisitor<ImpValue>, StmtVisitor<Void> {
@@ -42,7 +41,7 @@ class InterpretProcessVisitor implements ExprVisitor<ImpValue>, StmtVisitor<Void
   /** The (multi-way) channel that connects {@code processName} to all other processes. */
   private final Channel<ImpValue> channel;
 
-  private final SymbolTable<Variable,Boolean> declaredVars;
+  private final SymbolTable<Variable, Boolean> declaredVars;
 
   /** Maps variables to their values. */
   private final Store store = new Store();
@@ -111,7 +110,7 @@ class InterpretProcessVisitor implements ExprVisitor<ImpValue>, StmtVisitor<Void
   @Override
   public ImpValue visit(NotNode notNode) {
     BooleanValue val = (BooleanValue) notNode.getExpression().accept(this);
-    return new BooleanValue(!val.getValue());
+    return BooleanValue.create(!val.getValue());
   }
 
   @Override
@@ -130,7 +129,7 @@ class InterpretProcessVisitor implements ExprVisitor<ImpValue>, StmtVisitor<Void
   public Void visit(VariableDeclarationNode varDeclNode) {
     Variable var = varDeclNode.getVariable();
     store.declare(var);
-    this.declaredVars.add(var,true);
+    this.declaredVars.add(var, true);
     return null;
   }
 
@@ -219,7 +218,7 @@ class InterpretProcessVisitor implements ExprVisitor<ImpValue>, StmtVisitor<Void
 
   @Override
   public Void visit(LoopNode loopNode) {
-    SymbolTable<Variable,ImpValue> tempStore = this.store.saveTempStore();
+    SymbolTable<Variable, ImpValue> tempStore = this.store.saveTempStore();
     try {
       loopNode.getBody().accept(this);
 
@@ -241,7 +240,7 @@ class InterpretProcessVisitor implements ExprVisitor<ImpValue>, StmtVisitor<Void
   public Void visit(BreakNode breakNode) {
     ImpValue val = breakNode.getLevel().accept(this);
     if (val instanceof IntegerValue) {
-      IntegerValue intVal = (IntegerValue)val;
+      IntegerValue intVal = (IntegerValue) val;
       throw new BreakSignal(intVal.getValue());
 
     } else {

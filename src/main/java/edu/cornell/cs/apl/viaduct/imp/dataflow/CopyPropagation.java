@@ -26,7 +26,6 @@ import edu.cornell.cs.apl.viaduct.imp.visitors.IdentityVisitor;
 import edu.cornell.cs.apl.viaduct.imp.visitors.ReplaceVisitor;
 import edu.cornell.cs.apl.viaduct.security.Lattice;
 import io.vavr.Tuple2;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -178,7 +177,7 @@ public class CopyPropagation extends Dataflow<CopyPropagation.CopyPropInfo, CFGN
       // this is one of the variables to be erased; remove it
       Variable var = letBindingNode.getVariable();
       if (renamedVars.contains(var)) {
-        return new BlockNode();
+        return BlockNode.create();
       }
 
       // otherwise, rename all variables in the assignment
@@ -217,7 +216,7 @@ public class CopyPropagation extends Dataflow<CopyPropagation.CopyPropInfo, CFGN
       StmtNode newThenBranch = ifNode.getThenBranch().accept(this);
       StmtNode newElseBranch = ifNode.getElseBranch().accept(this);
 
-      return new IfNode(newGuard, newThenBranch, newElseBranch);
+      return IfNode.create(newGuard, newThenBranch, newElseBranch);
     }
 
     @Override
@@ -245,7 +244,7 @@ public class CopyPropagation extends Dataflow<CopyPropagation.CopyPropInfo, CFGN
         }
       }
 
-      return new BlockNode(newStmts);
+      return BlockNode.create(newStmts);
     }
 
     @Override
@@ -357,14 +356,14 @@ public class CopyPropagation extends Dataflow<CopyPropagation.CopyPropInfo, CFGN
         Variable repVar = kv.getKey();
         for (Variable var : kv.getValue()) {
           if (!var.equals(repVar)) {
-            replaceMap.put(var, new ReadNode(repVar));
+            replaceMap.put(var, ReadNode.create(repVar));
           }
         }
       }
 
       // propagate constants as well
       for (VarEqualsVal valEq : info.getValEqualities()) {
-        replaceMap.put(valEq.getVar(), new LiteralNode(valEq.getRhs()));
+        replaceMap.put(valEq.getVar(), LiteralNode.create(valEq.getRhs()));
       }
 
       return replaceMap;
@@ -499,7 +498,7 @@ public class CopyPropagation extends Dataflow<CopyPropagation.CopyPropInfo, CFGN
         }
 
       } else if (stmt instanceof LetBindingNode) {
-        LetBindingNode letBindingNode = (LetBindingNode)stmt;
+        LetBindingNode letBindingNode = (LetBindingNode) stmt;
         Variable var = letBindingNode.getVariable();
         return this.removeVar(var);
 
@@ -526,14 +525,14 @@ public class CopyPropagation extends Dataflow<CopyPropagation.CopyPropInfo, CFGN
             Variable rhsVar = (Variable) ((ReadNode) rhs).getReference();
             return addVar(var, rhsVar);
 
-          // x = n
+            // x = n
           } else if (rhs instanceof LiteralNode) {
             LiteralNode rhsLit = (LiteralNode) rhs;
             return addVal(var, rhsLit.getValue());
           }
         }
       } else if (stmt instanceof LetBindingNode) {
-        LetBindingNode letBindingNode = (LetBindingNode)stmt;
+        LetBindingNode letBindingNode = (LetBindingNode) stmt;
         Variable var = letBindingNode.getVariable();
         ExpressionNode rhs = letBindingNode.getRhs();
 
@@ -542,7 +541,7 @@ public class CopyPropagation extends Dataflow<CopyPropagation.CopyPropInfo, CFGN
           Variable rhsVar = (Variable) ((ReadNode) rhs).getReference();
           return addVar(var, rhsVar);
 
-        // let x = n
+          // let x = n
         } else if (rhs instanceof LiteralNode) {
           LiteralNode rhsLit = (LiteralNode) rhs;
           return addVal(var, rhsLit.getValue());
@@ -618,8 +617,7 @@ public class CopyPropagation extends Dataflow<CopyPropagation.CopyPropInfo, CFGN
 
     @Override
     public int hashCode() {
-      return Objects.hash(this.varEqualities.hashCode(),
-                this.valEqualities.hashCode(), this.isTop);
+      return Objects.hash(this.varEqualities.hashCode(), this.valEqualities.hashCode(), this.isTop);
     }
 
     @Override

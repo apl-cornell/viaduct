@@ -11,7 +11,7 @@ import org.junit.jupiter.params.provider.ArgumentsSource;
 class ImpAstNodeTest {
   @ParameterizedTest
   @ArgumentsSource(ExamplesProvider.class)
-  void testEqualsIsReflexive(@ConvertWith(ImpAstParser.class) ImpAstNode ast) throws Exception {
+  void testEqualsIsReflexive(@ConvertWith(ImpAstParser.class) ImpAstNode ast) {
     assertEquals(ast, ast);
   }
 }

@@ -17,7 +17,6 @@ import edu.cornell.cs.apl.viaduct.imp.ast.Variable;
 import edu.cornell.cs.apl.viaduct.imp.ast.VariableDeclarationNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.WhileNode;
 import edu.cornell.cs.apl.viaduct.imp.visitors.StmtVisitor;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
@@ -132,7 +131,7 @@ public class CFGVisitor implements StmtVisitor<Void> {
 
   @Override
   public Void visit(IfNode ifNode) {
-    StmtNode newIf = new IfNode(ifNode.getGuard(), new BlockNode(), new BlockNode());
+    StmtNode newIf = IfNode.create(ifNode.getGuard(), BlockNode.create(), BlockNode.create());
     visitSingleStatement(newIf);
     final Set<CFGNode> ifLastNodes = new HashSet<>(this.lastNodes);
 
@@ -162,7 +161,7 @@ public class CFGVisitor implements StmtVisitor<Void> {
 
   @Override
   public Void visit(LoopNode loopNode) {
-    StmtNode newLoop = new LoopNode(new BlockNode());
+    StmtNode newLoop = LoopNode.create(BlockNode.create());
     CFGNode loopCfg = visitSingleStatement(newLoop);
 
     loopNode.getBody().accept(this);

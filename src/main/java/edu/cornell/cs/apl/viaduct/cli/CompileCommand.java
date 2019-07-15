@@ -87,9 +87,9 @@ public class CompileCommand extends BaseCommand {
    * @param graph graph to output
    * @param file name of the file to output to
    */
-  private static boolean dumpGraph(Supplier<MutableGraph> graph, String file) throws Exception {
+  private static void dumpGraph(Supplier<MutableGraph> graph, String file) throws Exception {
     if (file == null) {
-      return false;
+      return;
     }
 
     String fileExtension = FilenameUtils.getExtension(file);
@@ -103,8 +103,6 @@ public class CompileCommand extends BaseCommand {
       Format format = formatFromExtension(fileExtension);
       Graphviz.fromGraph(graph.get()).render(format).toFile(new File(file));
     }
-
-    return true;
   }
 
   /** Compute graph output format from the file extension. */
@@ -147,9 +145,7 @@ public class CompileCommand extends BaseCommand {
     new IntegrityDataflow<ImpAstNode>().dataflow(nodes);
 
     // Dump PDG with information flow labels to a file (if requested).
-    if (dumpGraph(() -> PdgDotPrinter.pdgDotGraphWithLabels(pdg), labelGraphOutput)) {
-      return null;
-    }
+    dumpGraph(() -> PdgDotPrinter.pdgDotGraphWithLabels(pdg), labelGraphOutput);
 
     // Select cryptographic protocols for each node.
     final ImpProtocolSearchStrategy strategy = new ImpProtocolSearchStrategy();
@@ -157,17 +153,12 @@ public class CompileCommand extends BaseCommand {
         new ProtocolSelection<>(strategy).selectProtocols(trustConfiguration, pdg);
 
     // Dump PDG with protocol information to a file (if requested).
-    if (dumpGraph(() ->
-        PdgDotPrinter.pdgDotGraphWithProtocols(pdg, protocolMap), protocolGraphOutput)) {
-
-      return null;
-    }
+    dumpGraph(() -> PdgDotPrinter.pdgDotGraphWithProtocols(pdg, protocolMap), protocolGraphOutput);
 
     if (pdg.getOrderedNodes().size() == protocolMap.size()) {
       // Found a protocol for every node! Output synthesized distributed program.
       final ProgramNode generatedProgram =
-          new ImpProtocolInstantiationVisitor(trustConfiguration, pdg, protocolMap, main)
-              .run();
+          new ImpProtocolInstantiationVisitor(trustConfiguration, pdg, protocolMap, main).run();
 
       try (BufferedWriter writer = output.newOutputWriter()) {
         writer.write(PrintVisitor.run(generatedProgram));

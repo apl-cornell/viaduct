@@ -84,19 +84,19 @@ stmt ::=
     :}
 
   | IF OPEN_PAREN expr:guard CLOSE_PAREN block:thenCase ELSE block:elseCase {:
-      RESULT = new IfNode(guard, thenCase, elseCase);
+      RESULT = IfNode.create(guard, thenCase, elseCase);
     :}
 
   | IF OPEN_PAREN expr:guard CLOSE_PAREN block:thenCase {:
-      RESULT = new IfNode(guard, thenCase);
+      RESULT = IfNode.create(guard, thenCase);
     :}
 
   | WHILE OPEN_PAREN expr:guard CLOSE_PAREN block:body {:
-      RESULT = new WhileNode(guard, body);
+      RESULT = WhileNode.create(guard, body);
     :}
 
   | FOR OPEN_PAREN stmt_basic:initialzer SEMICOLON expr:guard SEMICOLON stmt_basic:update CLOSE_PAREN block:body {:
-      RESULT = new ForNode(initialzer, guard, update, body);
+      RESULT = ForNode.create(initialzer, guard, update, body);
     :}
 
   | block:block {:
@@ -106,62 +106,62 @@ stmt ::=
 
 stmt_basic ::=
     variable:var COLON type:ty label:lab {:
-      RESULT = new VariableDeclarationNode(var, ty, lab);
+      RESULT = VariableDeclarationNode.create(var, ty, lab);
     :}
 
   | variable:var OPEN_SQBRACE expr:e CLOSE_SQBRACE COLON type:ty label:lab {:
-      RESULT = new ArrayDeclarationNode(var, e, ty, lab);
+      RESULT = ArrayDeclarationNode.create(var, e, ty, lab);
     :}
 
   | reference:ref EQ expr:e {:
-      RESULT = new AssignNode(ref, e);
+      RESULT = AssignNode.create(ref, e);
     :}
 
   | reference:ref PLUSEQ expr:e {:
-      ExpressionNode rhs = BinaryExpressionNode.create(new ReadNode(ref), Plus.create(), e);
-      RESULT = new AssignNode(ref, rhs);
+      ExpressionNode rhs = BinaryExpressionNode.create(ReadNode.create(ref), Plus.create(), e);
+      RESULT = AssignNode.create(ref, rhs);
     :}
 
   | reference:ref MINUSEQ expr:e {:
-      ExpressionNode rhs = BinaryExpressionNode.create(new ReadNode(ref), Minus.create(), e);
-      RESULT = new AssignNode(ref, rhs);
+      ExpressionNode rhs = BinaryExpressionNode.create(ReadNode.create(ref), Minus.create(), e);
+      RESULT = AssignNode.create(ref, rhs);
     :}
 
   | reference:ref TIMESEQ expr:e {:
-      ExpressionNode rhs = BinaryExpressionNode.create(new ReadNode(ref), Times.create(), e);
-      RESULT = new AssignNode(ref, rhs);
+      ExpressionNode rhs = BinaryExpressionNode.create(ReadNode.create(ref), Times.create(), e);
+      RESULT = AssignNode.create(ref, rhs);
     :}
 
   | reference:ref PLUSPLUS {:
-      ExpressionNode rhs = BinaryExpressionNode.create(new ReadNode(ref), Plus.create(), new LiteralNode(new IntegerValue(1)));
-      RESULT = new AssignNode(ref, rhs);
+      ExpressionNode rhs = BinaryExpressionNode.create(ReadNode.create(ref), Plus.create(), LiteralNode.create(IntegerValue.create(1)));
+      RESULT = AssignNode.create(ref, rhs);
     :}
 
   | reference:ref MINUSMINUS {:
-      ExpressionNode rhs = BinaryExpressionNode.create(new ReadNode(ref), Minus.create(), new LiteralNode(new IntegerValue(1)));
-      RESULT = new AssignNode(ref, rhs);
+      ExpressionNode rhs = BinaryExpressionNode.create(ReadNode.create(ref), Minus.create(), LiteralNode.create(IntegerValue.create(1)));
+      RESULT = AssignNode.create(ref, rhs);
     :}
 
   | SEND expr:e TO process_name:processName {:
-      RESULT = new SendNode(processName, e);
+      RESULT = SendNode.create(processName, e);
     :}
 
   | variable:var LARROW RECV process_name:processName {:
-      RESULT = new ReceiveNode(var, processName);
+      RESULT = ReceiveNode.create(var, processName);
     :}
 
   | variable:var LARROW RECV type:ty process_name:processName {:
-      RESULT = new ReceiveNode(var, ty, processName);
+      RESULT = ReceiveNode.create(var, ty, processName);
     :}
 
   | ASSERT expr:e {:
-      RESULT = new AssertNode(e);
+      RESULT = AssertNode.create(e);
     :}
   ;
 
 block ::=
     OPEN_BRACE stmt_list:slist CLOSE_BRACE {:
-      RESULT = new BlockNode(slist);
+      RESULT = BlockNode.create(slist);
     :}
   ;
 
@@ -178,7 +178,7 @@ stmt_list ::=
 
 reference ::=
     variable:var OPEN_SQBRACE expr:e CLOSE_SQBRACE {:
-      RESULT = new ArrayIndex(var, e);
+      RESULT = ArrayIndex.create(var, e);
 
     :}
 
@@ -189,15 +189,15 @@ reference ::=
 
 expr ::=
     value:value {:
-      RESULT = new LiteralNode(value);
+      RESULT = LiteralNode.create(value);
     :}
 
   | reference:ref {:
-       RESULT = new ReadNode(ref);
+       RESULT = ReadNode.create(ref);
     :}
 
   | NOT expr:e {:
-      RESULT = new NotNode(e);
+      RESULT = NotNode.create(e);
     :}
 
   | expr:e1 OROR expr:e2 {:
@@ -213,7 +213,7 @@ expr ::=
     :}
 
   | expr:e1 NEQ expr:e2 {:
-      RESULT = new NotNode(BinaryExpressionNode.create(e1, EqualTo.create(), e2));
+      RESULT = NotNode.create(BinaryExpressionNode.create(e1, EqualTo.create(), e2));
     :}
 
   | expr:e1 LT expr:e2 {:
@@ -225,11 +225,11 @@ expr ::=
     :}
 
   | expr:e1 GT expr:e2 {:
-      RESULT = new NotNode(BinaryExpressionNode.create(e2, LessThan.create(), e1));
+      RESULT = NotNode.create(BinaryExpressionNode.create(e2, LessThan.create(), e1));
     :}
 
   | expr:e1 GEQ expr:e2 {:
-      RESULT = new NotNode(BinaryExpressionNode.create(e2, LessThanOrEqualTo.create(), e1));
+      RESULT = NotNode.create(BinaryExpressionNode.create(e2, LessThanOrEqualTo.create(), e1));
     :}
 
   | expr:e1 PLUS expr:e2 {:
@@ -245,15 +245,15 @@ expr ::=
     :}
 
   | DECLASSIFY OPEN_PAREN expr:e COMMA label:l CLOSE_PAREN {:
-      RESULT = new DowngradeNode(e, l);
+      RESULT = DowngradeNode.create(e, l);
     :}
 
   | ENDORSE OPEN_PAREN expr:e COMMA label:l CLOSE_PAREN {:
-      RESULT = new DowngradeNode(e, l);
+      RESULT = DowngradeNode.create(e, l);
     :}
 
   | DOWNGRADE OPEN_PAREN expr:e COMMA label:l CLOSE_PAREN {:
-      RESULT = new DowngradeNode(e, l);
+      RESULT = DowngradeNode.create(e, l);
     :}
 
   | OPEN_PAREN expr:e CLOSE_PAREN {:
@@ -263,15 +263,15 @@ expr ::=
 
 value ::=
     TRUE {:
-      RESULT = new BooleanValue(true);
+      RESULT = BooleanValue.create(true);
     :}
 
   | FALSE {:
-      RESULT = new BooleanValue(false);
+      RESULT = BooleanValue.create(false);
     :}
 
   | INT_LIT:lit {:
-      RESULT = new IntegerValue(lit);
+      RESULT = IntegerValue.create(lit);
     :}
   ;
 
@@ -282,7 +282,7 @@ label ::=
   ;
 
 label_expr ::=
-    CAP_IDENT:id {: RESULT = new Label(new Principal(id)); :}
+    CAP_IDENT:id {: RESULT = new Label(Principal.create(id)); :}
 
   | TOP {: RESULT = Label.strongest(); :}
 
@@ -334,13 +334,13 @@ label_expr ::=
   ;
 
 variable ::=
-    IDENT:id  {: RESULT = new Variable(id); :}
+    IDENT:id  {: RESULT = Variable.create(id); :}
   ;
 
 host ::=
-    IDENT:id {: RESULT = new Host(id); :}
+    IDENT:id {: RESULT = Host.create(id); :}
   ;
 
 process_name ::=
-    IDENT:id {: RESULT = new ProcessName(id); :}
+    IDENT:id {: RESULT = ProcessName.create(id); :}
   ;

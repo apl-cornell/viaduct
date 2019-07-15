@@ -25,31 +25,31 @@ public class ExpressionBuilder {
   public ExpressionBuilder() {}
 
   public ExpressionNode var(String name) {
-    return var(new Variable(name));
+    return var(Variable.create(name));
   }
 
   public <T extends AstNode> ExpressionNode var(Binding<T> binding) {
-    return var(new Variable(binding.getBinding()));
+    return var(Variable.create(binding.getBinding()));
   }
 
   public ExpressionNode var(Variable name) {
-    return new ReadNode(name);
+    return ReadNode.create(name);
   }
 
   public ExpressionNode lit(ImpValue value) {
-    return new LiteralNode(value);
+    return LiteralNode.create(value);
   }
 
   public ExpressionNode boolLit(boolean value) {
-    return lit(new BooleanValue(value));
+    return lit(BooleanValue.create(value));
   }
 
   public ExpressionNode intLit(int value) {
-    return lit(new IntegerValue(value));
+    return lit(IntegerValue.create(value));
   }
 
   public ExpressionNode not(ExpressionNode expression) {
-    return new NotNode(expression);
+    return NotNode.create(expression);
   }
 
   public ExpressionNode or(ExpressionNode lhs, ExpressionNode rhs) {
@@ -77,7 +77,7 @@ public class ExpressionBuilder {
   }
 
   public ExpressionNode downgrade(ExpressionNode expression, Label label) {
-    return new DowngradeNode(expression, label);
+    return DowngradeNode.create(expression, label);
   }
 
   public ExpressionNode declassify(ExpressionNode expression, Label label) {

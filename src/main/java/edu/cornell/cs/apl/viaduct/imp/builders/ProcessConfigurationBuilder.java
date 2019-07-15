@@ -9,7 +9,6 @@ import edu.cornell.cs.apl.viaduct.imp.ast.ProgramNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.StmtNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.Variable;
 import edu.cornell.cs.apl.viaduct.util.FreshNameGenerator;
-
 import java.util.HashMap;
 import java.util.Map;
 
@@ -38,7 +37,7 @@ public class ProcessConfigurationBuilder {
         Host host = kv.getKey();
         StmtNode program = kv.getValue().build();
         StmtNode postprocessedProgram = TargetPostprocessor.postprocess(host, program);
-        programBuilder.addProcess(new ProcessName(host), postprocessedProgram);
+        programBuilder.addProcess(ProcessName.create(host), postprocessedProgram);
       }
     } catch (DuplicateProcessDefinitionException e) {
       throw new Error(e);
@@ -73,6 +72,6 @@ public class ProcessConfigurationBuilder {
 
   /** Get a fresh variable. */
   public Variable getFreshVar(String base) {
-    return new Variable(getFreshName(base));
+    return Variable.create(getFreshName(base));
   }
 }

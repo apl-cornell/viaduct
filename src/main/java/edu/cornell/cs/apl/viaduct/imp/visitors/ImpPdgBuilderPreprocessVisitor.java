@@ -6,14 +6,13 @@ import edu.cornell.cs.apl.viaduct.imp.ast.ReceiveNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.SendNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.StmtNode;
 
-/** preprocess AST before generating PDG.
- *  this does the following:
- *  - remove communication and asserts in program
- *  - elaborate derived forms
- *  - convert to A-normal form
- * */
+/**
+ * preprocess AST before generating PDG. this does the following: - remove communication and asserts
+ * in program - elaborate derived forms - convert to A-normal form
+ */
 public class ImpPdgBuilderPreprocessVisitor extends FormatBlockVisitor {
   /** run the visitor. */
+  @Override
   public StmtNode run(StmtNode program) {
     StmtNode preprocessedProgram = program.accept(this);
 
@@ -28,16 +27,16 @@ public class ImpPdgBuilderPreprocessVisitor extends FormatBlockVisitor {
 
   @Override
   public StmtNode visit(SendNode sendNode) {
-    return new BlockNode();
+    return BlockNode.create();
   }
 
   @Override
   public StmtNode visit(ReceiveNode recvNode) {
-    return new BlockNode();
+    return BlockNode.create();
   }
 
   @Override
   public StmtNode visit(AssertNode assertNode) {
-    return new BlockNode();
+    return BlockNode.create();
   }
 }

@@ -48,7 +48,7 @@ public class UnelaborationVisitor extends FormatBlockVisitor {
 
             ExpressionNode whileGuard = ifNode.getGuard();
             StmtNode whileBody = ifNode.getThenBranch();
-            return new WhileNode(whileGuard, whileBody);
+            return WhileNode.create(whileGuard, whileBody);
           }
         }
       }

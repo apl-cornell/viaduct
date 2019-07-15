@@ -25,11 +25,11 @@ public abstract class BlockNode extends StmtNode implements Iterable<StmtNode> {
   }
 
   public StmtNode getFirstStmt() {
-    return this.statements.head();
+    return getStatements().head();
   }
 
   public StmtNode getLastStmt() {
-    return this.statements.last();
+    return getStatements().last();
   }
 
 

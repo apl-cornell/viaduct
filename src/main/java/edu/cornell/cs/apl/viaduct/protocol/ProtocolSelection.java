@@ -40,9 +40,14 @@ public class ProtocolSelection<T extends AstNode> {
     HashMap<PdgNode<T>, Protocol<T>> initMap = new HashMap<>();
     openSet.add(new ProtocolMapNode<T>(initMap, 0));
 
+    ProtocolSelectionProfiler<T> profiler =
+        new ProtocolSelectionProfiler<>(100, 100);
+
     // explore nodes in open set until we find a goal node
     ProtocolMapNode<T> lastAddedNode = null;
     while (!openSet.isEmpty()) {
+      profiler.probe(lastAddedNode, openSet, closedSet);
+
       ProtocolMapNode<T> currMapNode = openSet.remove();
       HashMap<PdgNode<T>, Protocol<T>> currMap = currMapNode.getProtocolMap();
       Set<PdgNode<T>> mappedNodes = currMap.keySet();
@@ -50,6 +55,7 @@ public class ProtocolSelection<T extends AstNode> {
       // check if the current map is a goal node
       // (i.e. it has a mapping for all nodes in the PDG)
       if (mappedNodes.size() == nodes.size()) {
+        profiler.exitProfile();
         return currMap;
       }
 
@@ -92,6 +98,8 @@ public class ProtocolSelection<T extends AstNode> {
         }
       }
     }
+
+    profiler.exitProfile();
 
     // no mapping found. should be impossible, unless available protocols + host config are bad!
     return lastAddedNode != null ? lastAddedNode.getProtocolMap() : null;
@@ -145,6 +153,55 @@ public class ProtocolSelection<T extends AstNode> {
         str.append(String.format("%s => %s%n", kv.getKey().toString(), kv.getValue().toString()));
       }
       return str.toString();
+    }
+  }
+
+  /** profiler for protocol search. */
+  private static class ProtocolSelectionProfiler<U extends AstNode> {
+    int interval; // how much to increase the threshold
+    int threshold; // how big the open set must be to profile
+    Map<Integer,Integer> openSetSizeHistogram;
+    int bucketSize; // bucket size for the histogram
+
+    public ProtocolSelectionProfiler(int i, int bucketSize) {
+      this.interval = i;
+      this.threshold = i;
+      this.openSetSizeHistogram = new HashMap<>();
+      this.bucketSize = bucketSize;
+    }
+
+    public void probe(
+        ProtocolMapNode<U> lastAddedNode,
+        PriorityQueue<ProtocolMapNode<U>> openSet,
+        Set<ProtocolMapNode<U>> closedSet) {
+
+      int openSetSize = openSet.size();
+      int bucket = openSetSize / this.bucketSize;
+      int bucketCount = 0;
+
+      if (this.openSetSizeHistogram.containsKey(bucket)) {
+        bucketCount = this.openSetSizeHistogram.get(bucket);
+      }
+
+      this.openSetSizeHistogram.put(bucket, bucketCount + 1);
+
+      if (openSetSize >= threshold) {
+        System.out.println(String.format("size of open set: %d", openSetSize));
+        this.threshold += this.interval;
+      }
+    }
+
+    public void exitProfile() {
+      System.out.println("EXIT PROFILE FOR PROTOCOL SELECTION");
+      for (Map.Entry<Integer,Integer> kv : this.openSetSizeHistogram.entrySet()) {
+        int bucket = kv.getKey();
+        int bucketCount = kv.getValue();
+        System.out.println(
+            String.format("open set size %d - %d: %d",
+                this.bucketSize * bucket,
+                (this.bucketSize * (bucket + 1)) - 1,
+                bucketCount));
+      }
     }
   }
 }

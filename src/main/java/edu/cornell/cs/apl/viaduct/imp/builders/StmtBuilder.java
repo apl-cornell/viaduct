@@ -59,7 +59,16 @@ public class StmtBuilder {
 
   /** set the execution path of the current control structure. */
   public StmtBuilder setCurrentPath(ControlLabel label) {
-    this.controlContext.peek().setCurrentPath(label);
+    ControlInfo controlInfo = this.controlContext.peek();
+
+    // hack; there could be statements added before the current path was set;
+    // in which case, those statements belong to the prefix, not the path
+    if (this.stmts.size() > 0) {
+      controlInfo.prefix.addAll(this.stmts);
+      this.stmts = new ArrayList<>();
+    }
+
+    controlInfo.setCurrentPath(label);
     return this;
   }
 

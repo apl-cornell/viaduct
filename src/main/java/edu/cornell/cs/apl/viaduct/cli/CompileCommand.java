@@ -5,6 +5,7 @@ import com.github.rvesse.airline.annotations.Option;
 import edu.cornell.cs.apl.viaduct.dataflow.ConfidentialityDataflow;
 import edu.cornell.cs.apl.viaduct.dataflow.IntegrityDataflow;
 import edu.cornell.cs.apl.viaduct.imp.HostTrustConfiguration;
+import edu.cornell.cs.apl.viaduct.imp.ImpCommunicationCostEstimator;
 import edu.cornell.cs.apl.viaduct.imp.ImpProtocolSearchStrategy;
 import edu.cornell.cs.apl.viaduct.imp.ast.ImpAstNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ProcessName;
@@ -150,12 +151,16 @@ public class CompileCommand extends BaseCommand {
         labelGraphOutput);
 
     // Select cryptographic protocols for each node.
-    final ImpProtocolSearchStrategy strategy = new ImpProtocolSearchStrategy();
+    final ImpProtocolSearchStrategy strategy =
+        new ImpProtocolSearchStrategy(new ImpCommunicationCostEstimator());
     final Map<PdgNode<ImpAstNode>, Protocol<ImpAstNode>> protocolMap =
         new ProtocolSelection<>(strategy).selectProtocols(trustConfiguration, pdg);
 
+    System.out.println("SYNTHESIZED PROTOCOL:");
+    System.out.println(strategy.estimatePdgCost(protocolMap, pdg));
+
     // Dump PDG with protocol information to a file (if requested).
-    dumpGraph(() -> PdgDotPrinter.pdgDotGraphWithProtocols(pdg, protocolMap, printer),
+    dumpGraph(() -> PdgDotPrinter.pdgDotGraphWithProtocols(pdg, protocolMap, strategy, printer),
         protocolGraphOutput);
 
     if (pdg.getOrderedNodes().size() == protocolMap.size()) {

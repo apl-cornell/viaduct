@@ -6,7 +6,7 @@ import static guru.nidi.graphviz.model.Factory.mutNode;
 import edu.cornell.cs.apl.viaduct.AstNode;
 import edu.cornell.cs.apl.viaduct.AstPrinter;
 import edu.cornell.cs.apl.viaduct.protocol.Protocol;
-
+import edu.cornell.cs.apl.viaduct.protocol.ProtocolCostEstimator;
 import guru.nidi.graphviz.attribute.Arrow;
 import guru.nidi.graphviz.attribute.Color;
 import guru.nidi.graphviz.attribute.Label;
@@ -25,6 +25,7 @@ public class PdgDotPrinter {
   private static <T extends AstNode> MutableGraph pdgDotGraph(
       ProgramDependencyGraph<T> pdg,
       Map<PdgNode<T>, Protocol<T>> protocolMap,
+      ProtocolCostEstimator<T> costEstimator,
       AstPrinter<T> printer,
       GraphData dataFormat) {
 
@@ -47,8 +48,15 @@ public class PdgDotPrinter {
 
         case PROTOCOL:
           Protocol<T> nodeProto = protocolMap.get(node);
-          if (nodeProto != null) {
+          if (nodeProto != null && costEstimator != null) {
+            data =
+              nodeProto.toString()
+              + "\n"
+              + costEstimator.estimateNodeCost(node, protocolMap, pdg);
+
+          } else if (nodeProto != null) {
             data = nodeProto.toString();
+
           } else {
             data = "NO PROTOCOL";
           }
@@ -82,25 +90,29 @@ public class PdgDotPrinter {
         if (infoEdge.isReadChannelEdge()) {
           style = Style.DOTTED;
 
+        /*
         } else if (infoEdge.isPcFlowEdge()) {
           style = Style.DASHED;
+        */
 
         } else {
           style = Style.SOLID;
         }
 
-        Link link = Link.to(mutNode(strOutNode)).add(style).add(Color.BLUE);
+        if (!infoEdge.isPcFlowEdge()) {
+          Link link = Link.to(mutNode(strOutNode)).add(style).add(Color.BLUE);
 
-        String infoEdgeLabel = infoEdge.getLabel(printer);
-        if (infoEdgeLabel != null) {
-          link.add(Label.of(infoEdgeLabel));
+          String infoEdgeLabel = infoEdge.getLabel(printer);
+          if (infoEdgeLabel != null) {
+            link.add(Label.of(infoEdgeLabel));
+          }
+
+          if (infoEdge.isWriteEdge()) {
+            link.add(Arrow.BOX);
+          }
+
+          grNode.addLink(link);
         }
-
-        if (infoEdge.isWriteEdge()) {
-          link.add(Arrow.BOX);
-        }
-
-        grNode.addLink(link);
       }
     }
     return g;
@@ -108,14 +120,15 @@ public class PdgDotPrinter {
 
   public static <T extends AstNode> MutableGraph pdgDotGraphWithLabels(
       ProgramDependencyGraph<T> pdg, AstPrinter<T> printer) {
-    return pdgDotGraph(pdg, null, printer, GraphData.LABEL);
+    return pdgDotGraph(pdg, null, null, printer, GraphData.LABEL);
   }
 
   public static <T extends AstNode> MutableGraph pdgDotGraphWithProtocols(
       ProgramDependencyGraph<T> pdg,
       Map<PdgNode<T>, Protocol<T>> protoMap,
+      ProtocolCostEstimator<T> costEstimator,
       AstPrinter<T> printer) {
-    return pdgDotGraph(pdg, protoMap, printer, GraphData.PROTOCOL);
+    return pdgDotGraph(pdg, protoMap, costEstimator, printer, GraphData.PROTOCOL);
   }
 
   private enum GraphData {

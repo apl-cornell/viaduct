@@ -5,11 +5,9 @@ import edu.cornell.cs.apl.viaduct.imp.ast.ImpAstNode;
 import edu.cornell.cs.apl.viaduct.imp.protocols.ControlProtocol;
 import edu.cornell.cs.apl.viaduct.imp.protocols.MPC;
 import edu.cornell.cs.apl.viaduct.imp.protocols.MPCFactory;
-import edu.cornell.cs.apl.viaduct.imp.protocols.Replication;
 import edu.cornell.cs.apl.viaduct.imp.protocols.ReplicationFactory;
 import edu.cornell.cs.apl.viaduct.imp.protocols.Single;
 import edu.cornell.cs.apl.viaduct.imp.protocols.SingleFactory;
-import edu.cornell.cs.apl.viaduct.imp.protocols.ZK;
 import edu.cornell.cs.apl.viaduct.imp.protocols.ZKFactory;
 import edu.cornell.cs.apl.viaduct.pdg.PdgNode;
 import edu.cornell.cs.apl.viaduct.pdg.PdgWriteEdge;
@@ -17,6 +15,7 @@ import edu.cornell.cs.apl.viaduct.pdg.ProgramDependencyGraph;
 import edu.cornell.cs.apl.viaduct.protocol.Protocol;
 import edu.cornell.cs.apl.viaduct.protocol.ProtocolCostEstimator;
 import edu.cornell.cs.apl.viaduct.protocol.ProtocolSearchStrategy;
+
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -25,43 +24,30 @@ import java.util.Set;
 public class ImpProtocolSearchStrategy extends ProtocolCostEstimator<ImpAstNode>
     implements ProtocolSearchStrategy<ImpAstNode> {
 
-  private final SingleFactory singleFactory = new SingleFactory();
-  private final ReplicationFactory replicationFactory = new ReplicationFactory();
-  private final MPCFactory mpcFactory = new MPCFactory();
-  private final ZKFactory zkFactory = new ZKFactory();
+  private final SingleFactory singleFactory;
+  private final ReplicationFactory replicationFactory;
+  private final MPCFactory mpcFactory;
+  private final ZKFactory zkFactory;
+  private final ProtocolCostEstimator<ImpAstNode> costEstimator;
+
+  /** constructor. */
+  public ImpProtocolSearchStrategy(ProtocolCostEstimator<ImpAstNode> costEstimator) {
+    this.singleFactory = new SingleFactory();
+    this.replicationFactory = new ReplicationFactory();
+    this.mpcFactory = new MPCFactory();
+    this.zkFactory = new ZKFactory();
+    this.costEstimator = costEstimator;
+  }
 
   /** estimate cost for a single PDG node. */
   @Override
   public int estimateNodeCost(
-      Protocol<ImpAstNode> protocol,
       PdgNode<ImpAstNode> node,
+      Map<PdgNode<ImpAstNode>, Protocol<ImpAstNode>> protocolMap,
       ProgramDependencyGraph<ImpAstNode> pdg)
       throws UnknownProtocolException {
-    // ImpAstNode astNode = node.getAstNode();
 
-    if (protocol instanceof Single) {
-      // return 1 * astNode.accept(nodeSizer);
-      return 1;
-
-    } else if (protocol instanceof Replication) {
-      // return 5 * astNode.accept(nodeSizer);
-      Replication replProto = (Replication) protocol;
-      return replProto.getRealReplicas().size() + (2 * replProto.getHashReplicas().size());
-
-    } else if (protocol instanceof ZK) {
-      // return 10 * astNode.accept(nodeSizer);
-      return 10;
-
-    } else if (protocol instanceof MPC) {
-      // return 100 * astNode.accept(nodeSizer);
-      return 100;
-
-    } else if (protocol instanceof ControlProtocol) {
-      return 0;
-
-    } else {
-      throw new UnknownProtocolException(protocol);
-    }
+    return this.costEstimator.estimateNodeCost(node, protocolMap, pdg);
   }
 
   @Override

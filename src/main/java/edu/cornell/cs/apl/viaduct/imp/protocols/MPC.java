@@ -17,10 +17,15 @@ public class MPC extends AbstractSingle {
 
   public MPC(Set<Host> ps) {
     this.parties = ps;
+    this.synthesizedHost = Host.create(toString());
   }
 
   public Set<Host> getParties() {
     return this.parties;
+  }
+
+  public Host getHost() {
+    return this.synthesizedHost;
   }
 
   @Override

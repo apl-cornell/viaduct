@@ -1,5 +1,6 @@
 package edu.cornell.cs.apl.viaduct.security;
 
+import edu.cornell.cs.apl.viaduct.util.Lattice;
 import io.vavr.collection.HashSet;
 import io.vavr.collection.Set;
 import java.util.Objects;
@@ -12,7 +13,7 @@ import java.util.Objects;
  *
  * <p>{@code a \/ (b /\ c) == (a \/ b) /\ (a \/ c)}
  */
-final class FreeDistributiveLattice<A> implements Lattice<FreeDistributiveLattice<A>> {
+public final class FreeDistributiveLattice<A> implements Lattice<FreeDistributiveLattice<A>> {
   private static final FreeDistributiveLattice<?> BOTTOM =
       new FreeDistributiveLattice<>(HashSet.of());
 
@@ -30,12 +31,12 @@ final class FreeDistributiveLattice<A> implements Lattice<FreeDistributiveLattic
   }
 
   @SuppressWarnings("unchecked")
-  static <T> FreeDistributiveLattice<T> top() {
+  public static <T> FreeDistributiveLattice<T> top() {
     return (FreeDistributiveLattice<T>) TOP;
   }
 
   @SuppressWarnings("unchecked")
-  static <T> FreeDistributiveLattice<T> bottom() {
+  public static <T> FreeDistributiveLattice<T> bottom() {
     return (FreeDistributiveLattice<T>) BOTTOM;
   }
 
@@ -107,9 +108,15 @@ final class FreeDistributiveLattice<A> implements Lattice<FreeDistributiveLattic
 
   @Override
   public String toString() {
-    return toString("|","&");
+    return toString("|", "&");
   }
 
+  /**
+   * Return string representation using the given symbols for join and meet.
+   *
+   * @param joinOp symbol to use for {@link #join}
+   * @param meetOp symbol to use for {@link #meet}
+   */
   public String toString(String joinOp, String meetOp) {
     if (this.equals(top())) {
       return "⊤";
@@ -118,9 +125,7 @@ final class FreeDistributiveLattice<A> implements Lattice<FreeDistributiveLattic
     } else {
       String joinStr = String.format(" %s ", joinOp);
       final String body =
-          String.join(joinStr, this.joinOfMeets.toArray().map(meet -> {
-            return meetToString(meet, meetOp);
-          }));
+          String.join(joinStr, this.joinOfMeets.toArray().map(meet -> meetToString(meet, meetOp)));
       return this.joinOfMeets.length() > 1 ? "(" + body + ")" : body;
     }
   }

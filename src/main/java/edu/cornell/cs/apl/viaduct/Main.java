@@ -10,7 +10,7 @@ public class Main {
     try {
       final Callable<Void> command = CommandLineInterface.parser().parse(args);
       command.call();
-    } catch (Exception e) {
+    } catch (Throwable e) {
       failWith(e);
     }
   }
@@ -18,7 +18,7 @@ public class Main {
   /**
    * Print a useful error message based on the exception and terminate with a non-zero exit code.
    */
-  private static void failWith(Exception e) {
+  private static void failWith(Throwable e) {
     if (e instanceof ParseException) {
       // Invalid command-line arguments; print the problem and usage information.
       System.err.println(e.getLocalizedMessage());

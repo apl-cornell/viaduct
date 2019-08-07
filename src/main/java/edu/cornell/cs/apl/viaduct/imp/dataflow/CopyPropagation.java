@@ -24,7 +24,7 @@ import edu.cornell.cs.apl.viaduct.imp.ast.Variable;
 import edu.cornell.cs.apl.viaduct.imp.ast.VariableDeclarationNode;
 import edu.cornell.cs.apl.viaduct.imp.visitors.IdentityVisitor;
 import edu.cornell.cs.apl.viaduct.imp.visitors.ReplaceVisitor;
-import edu.cornell.cs.apl.viaduct.security.Lattice;
+import edu.cornell.cs.apl.viaduct.util.Lattice;
 import io.vavr.Tuple2;
 import java.util.ArrayList;
 import java.util.HashMap;

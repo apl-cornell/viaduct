@@ -1,11 +1,6 @@
 package edu.cornell.cs.apl.viaduct.security;
 
-/**
- * A lattice whose elements are interpreted as principals. Bottom is the most powerful and the most
- * trusted principal, whereas top is the least powerful and the least trusted. If a principal lies
- * below another, than the lower principal is trusted to enforce the higher principal's security
- * policies.
- */
+/** A lattice whose elements are interpreted as principals. */
 public interface TrustLattice<T extends TrustLattice<T>> {
   /** Decide if {@code this} is trusted to enforce {@code that}'s security policies. */
   boolean actsFor(T that);

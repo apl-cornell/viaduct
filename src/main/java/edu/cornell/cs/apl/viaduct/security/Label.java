@@ -1,5 +1,6 @@
 package edu.cornell.cs.apl.viaduct.security;
 
+import edu.cornell.cs.apl.viaduct.util.Lattice;
 import java.util.Objects;
 
 /**

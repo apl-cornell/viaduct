@@ -1,7 +1,6 @@
 package edu.cornell.cs.apl.viaduct.dataflow;
 
-import edu.cornell.cs.apl.viaduct.security.Lattice;
-
+import edu.cornell.cs.apl.viaduct.util.Lattice;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedList;
@@ -11,12 +10,7 @@ import java.util.Set;
 
 /** generic dataflow class using the worklist algorithm. */
 public abstract class Dataflow<T extends Lattice<T>, N> {
-  public enum DataflowType { FORWARD, BACKWARD }
-
-  public enum DataflowDirection { UP, DOWN }
-
   protected DataflowType type;
-
   protected DataflowDirection dir;
 
   protected Dataflow(DataflowType dt, DataflowDirection dd) {
@@ -111,5 +105,15 @@ public abstract class Dataflow<T extends Lattice<T>, N> {
         worklist.add(node);
       }
     }
+  }
+
+  public enum DataflowType {
+    FORWARD,
+    BACKWARD
+  }
+
+  public enum DataflowDirection {
+    UP,
+    DOWN
   }
 }

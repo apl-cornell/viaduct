@@ -21,29 +21,32 @@ public class DataFlow<
 
   private final A bottom;
 
-  private Graph<NodeT, EdgeT> graph;
-  private Map<NodeT, A> nodeOutValues;
-  private Map<EdgeT, A> edgeOutValues;
+  private final Graph<NodeT, EdgeT> graph;
 
-  /**
-   * Construct a data flow solver.
-   *
-   * @param bottom least possible {@code A}
-   */
-  public DataFlow(A bottom) {
+  private final Map<NodeT, A> nodeOutValues = new HashMap<>();
+  private final Map<EdgeT, A> edgeOutValues = new HashMap<>();
+
+  private DataFlow(A bottom, Graph<NodeT, EdgeT> graph) {
     this.bottom = bottom;
+    this.graph = graph;
   }
 
   /**
    * Run data flow analysis on the given graph and return the computed solution for each node.
    *
+   * @param bottom least possible {@code A}
    * @param graph data flow graph to run the analysis on
    */
-  public Map<NodeT, A> solve(Graph<NodeT, EdgeT> graph) throws T {
-    this.graph = graph;
-    this.nodeOutValues = new HashMap<>();
-    this.edgeOutValues = new HashMap<>();
+  public static <
+          A extends JoinSemiLattice<A>,
+          T extends Throwable,
+          NodeT extends DataFlowNode<A, T>,
+          EdgeT extends DataFlowEdge<A>>
+      Map<NodeT, A> solve(A bottom, Graph<NodeT, EdgeT> graph) throws T {
+    return new DataFlow<>(bottom, graph).run();
+  }
 
+  private Map<NodeT, A> run() throws T {
     // Initialize nodes
     for (NodeT node : graph.vertexSet()) {
       setNodeOutValue(node, node.initialize());

@@ -35,10 +35,7 @@ public class ConstraintSystem<A extends JoinSemiLattice<A>> {
    */
   public Map<VariableTerm, A> solve() throws UnsatisfiableConstraintException {
     // Use data flow analysis to find a solution for all nodes.
-    Map<ConstraintValue<A>, A> solutions =
-        new DataFlow<A, UnsatisfiableConstraintException, ConstraintValue<A>, DataFlowEdge<A>>(
-                bottom)
-            .solve(constraints);
+    Map<ConstraintValue<A>, A> solutions = DataFlow.solve(bottom, constraints);
 
     // Only return solutions for nodes that correspond to variables.
     final Map<VariableTerm, A> variableSolutions = new HashMap<>();

@@ -14,19 +14,16 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-
 import javax.annotation.Nonnull;
 
 /** Maps variables to their values. */
 public class Store implements Iterable<Tuple2<Variable, ImpValue>> {
   /** Maps variables to their values. */
   private final Map<Variable, ImpValue> variableStore = new HashMap<>();
-
-  /** Maps temporaries to values. */
-  private SymbolTable<Variable, ImpValue> tempStore = new SymbolTable<>();
-
   /** Maps array variables to Java arrays storing the contents. */
   private final Map<Variable, ImpValue[]> arrayStore = new HashMap<>();
+  /** Maps temporaries to values. */
+  private SymbolTable<Variable, ImpValue> tempStore = new SymbolTable<>();
 
   /** Create an empty store. */
   Store() {}
@@ -191,12 +188,10 @@ public class Store implements Iterable<Tuple2<Variable, ImpValue>> {
     throw new UndeclaredVariableException(var);
   }
 
-  /**
-   * Save a temp table (used by non-local control structures).
-   */
-  SymbolTable<Variable,ImpValue> saveTempStore() {
+  /** Save a temp table (used by non-local control structures). */
+  SymbolTable<Variable, ImpValue> saveTempStore() {
     try {
-      return (SymbolTable<Variable,ImpValue>)this.tempStore.clone();
+      return (SymbolTable<Variable, ImpValue>) this.tempStore.clone();
 
     } catch (CloneNotSupportedException exn) { // impossible
 
@@ -211,7 +206,7 @@ public class Store implements Iterable<Tuple2<Variable, ImpValue>> {
    *
    * @param tempStore the temp table to restore
    */
-  void restoreTempStore(SymbolTable<Variable,ImpValue> tempStore) {
+  void restoreTempStore(SymbolTable<Variable, ImpValue> tempStore) {
     this.tempStore = tempStore;
   }
 
@@ -230,11 +225,13 @@ public class Store implements Iterable<Tuple2<Variable, ImpValue>> {
       return false;
     }
 
-    Store that = (Store)o;
+    Store that = (Store) o;
 
+    // TODO: this is almost certainly broken because it doesn't match hashCode.
+    //  also, there are functions for this.
     // arrays use == for equals(), so we need to compare the values manually
     if (this.arrayStore.size() == that.arrayStore.size()) {
-      for (Map.Entry<Variable,ImpValue[]> kv : this.arrayStore.entrySet()) {
+      for (Map.Entry<Variable, ImpValue[]> kv : this.arrayStore.entrySet()) {
         if (that.arrayStore.containsKey(kv.getKey())) {
           ImpValue[] thatVal = that.arrayStore.get(kv.getKey());
           if (!Arrays.equals(kv.getValue(), thatVal)) {

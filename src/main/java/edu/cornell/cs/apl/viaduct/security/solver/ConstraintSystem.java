@@ -1,12 +1,21 @@
 package edu.cornell.cs.apl.viaduct.security.solver;
 
 import edu.cornell.cs.apl.viaduct.util.JoinSemiLattice;
+import edu.cornell.cs.apl.viaduct.util.PartialOrder;
 import edu.cornell.cs.apl.viaduct.util.dataflow.DataFlow;
 import edu.cornell.cs.apl.viaduct.util.dataflow.DataFlowEdge;
 import java.util.HashMap;
 import java.util.Map;
 import org.jgrapht.graph.DirectedPseudograph;
 
+/**
+ * Given a set of constraints of the form {@code t1 <= t2}, finds the unique minimum solution, if it
+ * exists.
+ *
+ * <p>A solution to a set of constraints is an assignment of values to all variables in the system.
+ * A minimum solution assigns the smallest possible value to each variable, where smallest is with
+ * respect to {@link PartialOrder#lessThanOrEqualTo(Object)}.
+ */
 public class ConstraintSystem<A extends JoinSemiLattice<A>> {
   /**
    * Maintain constraints as a graph. Each vertex corresponds to an atomic term (a variable or a

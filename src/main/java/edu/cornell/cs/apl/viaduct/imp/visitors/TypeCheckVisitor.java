@@ -34,8 +34,8 @@ import edu.cornell.cs.apl.viaduct.util.SymbolTable;
 import io.vavr.Tuple2;
 
 /**
- * Check that value types are cohesive (e.g. only integers are added together).
- * Label checking is a separate step.
+ * Check that value types are cohesive (e.g. only integers are added together). Label checking is a
+ * separate step.
  */
 public class TypeCheckVisitor
     implements ReferenceVisitor<ImpType>,
@@ -116,8 +116,7 @@ public class TypeCheckVisitor
           String.format("Index %s of array %s not an integer", index, var));
 
     } else if (!this.arraySymbolTable.contains(var)) {
-      throw new TypeCheckException(
-          String.format("Array %s not declared", var));
+      throw new TypeCheckException(String.format("Array %s not declared", var));
 
     } else {
       return this.arraySymbolTable.get(var);
@@ -157,7 +156,7 @@ public class TypeCheckVisitor
     if (this.symbolTable.contains(varDecl.getVariable())) {
       throw new RedeclaredVariableException(varDecl.getVariable());
     }
-    this.symbolTable.add(varDecl.getVariable(), varDecl.getType());
+    this.symbolTable.put(varDecl.getVariable(), varDecl.getType());
     return null;
   }
 
@@ -168,14 +167,14 @@ public class TypeCheckVisitor
     if (this.arraySymbolTable.contains(arrDeclNode.getVariable())) {
       throw new RedeclaredVariableException(arrDeclNode.getVariable());
     }
-    this.arraySymbolTable.add(arrDeclNode.getVariable(), arrDeclNode.getType());
+    this.arraySymbolTable.put(arrDeclNode.getVariable(), arrDeclNode.getType());
     return null;
   }
 
   @Override
   public Void visit(LetBindingNode letBindingNode) {
     ImpType rhsType = letBindingNode.getRhs().accept(this);
-    this.tempSymbolTable.add(letBindingNode.getVariable(), rhsType);
+    this.tempSymbolTable.put(letBindingNode.getVariable(), rhsType);
     return null;
   }
 
@@ -205,7 +204,7 @@ public class TypeCheckVisitor
     Variable recvVar = recvNode.getVariable();
     ImpType recvType = recvNode.getRecvType();
     if (!this.symbolTable.contains(recvVar)) { // binding to a temporary
-      this.tempSymbolTable.add(recvVar, recvType);
+      this.tempSymbolTable.put(recvVar, recvType);
     }
     return null;
   }

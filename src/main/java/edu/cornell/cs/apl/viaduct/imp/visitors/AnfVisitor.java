@@ -117,14 +117,14 @@ public class AnfVisitor extends FormatBlockVisitor {
 
   @Override
   public StmtNode visit(VariableDeclarationNode varDeclNode) {
-    this.declaredVars.add(varDeclNode.getVariable(), true);
+    this.declaredVars.put(varDeclNode.getVariable(), true);
     return VariableDeclarationNode.create(
         varDeclNode.getVariable(), varDeclNode.getType(), varDeclNode.getLabel());
   }
 
   @Override
   public StmtNode visit(ArrayDeclarationNode arrayDeclNode) {
-    this.declaredVars.add(arrayDeclNode.getVariable(), true);
+    this.declaredVars.put(arrayDeclNode.getVariable(), true);
     ExpressionNode newLength = arrayDeclNode.getLength().accept(this);
     StmtNode newStmt =
         ArrayDeclarationNode.create(

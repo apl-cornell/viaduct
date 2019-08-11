@@ -5,7 +5,7 @@ import edu.cornell.cs.apl.viaduct.imp.visitors.ExprVisitor;
 
 /** A literal constant. */
 @AutoValue
-public abstract class LiteralNode implements ExpressionNode {
+public abstract class LiteralNode extends ExpressionNode {
   public static LiteralNode create(ImpValue value) {
     return new AutoValue_LiteralNode(value);
   }

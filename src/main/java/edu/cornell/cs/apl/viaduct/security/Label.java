@@ -35,7 +35,7 @@ public class Label implements Lattice<Label>, TrustLattice<Label> {
     this.integrity = component;
   }
 
-  private Label(
+  public Label(
       FreeDistributiveLattice<Principal> confidentiality,
       FreeDistributiveLattice<Principal> integrity) {
     this.confidentiality = confidentiality;
@@ -70,6 +70,24 @@ public class Label implements Lattice<Label>, TrustLattice<Label> {
     return STRONGEST;
   }
 
+  /**
+   * Return the confidentiality component in the underlying lattice.
+   *
+   * <p>Unlike {@link #confidentiality()}, the result is not a {@link Label}.
+   */
+  public FreeDistributiveLattice<Principal> getConfidentiality() {
+    return confidentiality;
+  }
+
+  /**
+   * Return the integrity component in the underlying lattice.
+   *
+   * <p>Unlike {@link #integrity()}, the result is not a {@link Label}.
+   */
+  public FreeDistributiveLattice<Principal> getIntegrity() {
+    return integrity;
+  }
+
   /** Check if information flow from {@code this} to {@code other} is safe. */
   public boolean flowsTo(Label other) {
     return this.confidentiality.lessThanOrEqualTo(other.confidentiality)
@@ -96,7 +114,7 @@ public class Label implements Lattice<Label>, TrustLattice<Label> {
   /**
    * The confidentiality component.
    *
-   * <p>Keeps confidentiality the same while setting integrity to minimum.
+   * <p>Keeps confidentiality the same while setting integrity to weakest integrity.
    */
   public Label confidentiality() {
     return new Label(this.confidentiality, weakest().integrity);
@@ -105,7 +123,7 @@ public class Label implements Lattice<Label>, TrustLattice<Label> {
   /**
    * The integrity component.
    *
-   * <p>Keeps integrity the same while setting confidentiality to minimum.
+   * <p>Keeps integrity the same while setting confidentiality to weakest confidentiality.
    */
   public Label integrity() {
     return new Label(weakest().confidentiality, this.integrity);

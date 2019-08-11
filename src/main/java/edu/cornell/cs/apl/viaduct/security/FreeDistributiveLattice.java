@@ -1,6 +1,6 @@
 package edu.cornell.cs.apl.viaduct.security;
 
-import edu.cornell.cs.apl.viaduct.util.Lattice;
+import edu.cornell.cs.apl.viaduct.util.CoHeytingAlgebra;
 import io.vavr.collection.HashSet;
 import io.vavr.collection.Set;
 import java.util.Objects;
@@ -13,7 +13,8 @@ import java.util.Objects;
  *
  * <p>{@code a \/ (b /\ c) == (a \/ b) /\ (a \/ c)}
  */
-public final class FreeDistributiveLattice<A> implements Lattice<FreeDistributiveLattice<A>> {
+public final class FreeDistributiveLattice<A>
+    implements CoHeytingAlgebra<FreeDistributiveLattice<A>> {
   private static final FreeDistributiveLattice<?> BOTTOM =
       new FreeDistributiveLattice<>(HashSet.of());
 
@@ -85,6 +86,12 @@ public final class FreeDistributiveLattice<A> implements Lattice<FreeDistributiv
     }
 
     return new FreeDistributiveLattice<>(candidates);
+  }
+
+  @Override
+  public FreeDistributiveLattice<A> subtract(FreeDistributiveLattice<A> that) {
+    // TODO: implement
+    return null;
   }
 
   @Override

@@ -19,32 +19,31 @@ public class UnelaborationVisitor extends FormatBlockVisitor {
     StmtNode firstLoopStmt = null;
 
     if (body instanceof BlockNode) {
-      firstLoopStmt = ((BlockNode)body).getFirstStmt();
+      firstLoopStmt = ((BlockNode) body).getFirstStmt();
 
     } else {
       firstLoopStmt = body;
     }
 
     if (firstLoopStmt != null && firstLoopStmt instanceof IfNode) {
-      IfNode ifNode = (IfNode)firstLoopStmt;
-      StmtNode elseNode = (StmtNode)ifNode.getElseBranch();
+      IfNode ifNode = (IfNode) firstLoopStmt;
+      StmtNode elseNode = ifNode.getElseBranch();
       StmtNode lastElse = null;
       if (elseNode instanceof BlockNode) {
-        lastElse = ((BlockNode)elseNode).getLastStmt();
+        lastElse = ((BlockNode) elseNode).getLastStmt();
 
       } else {
         lastElse = elseNode;
       }
 
       if (lastElse != null && lastElse instanceof BreakNode) {
-        BreakNode elseBreak = (BreakNode)lastElse;
+        BreakNode elseBreak = (BreakNode) lastElse;
         ExpressionNode elseBreakLevel = elseBreak.getLevel();
         if (elseBreakLevel instanceof LiteralNode) {
-          ImpValue levelVal = ((LiteralNode)elseBreakLevel).getValue();
+          ImpValue levelVal = ((LiteralNode) elseBreakLevel).getValue();
 
           // decompile loop into a while loop
-          if (levelVal instanceof IntegerValue
-              && ((IntegerValue)levelVal).getValue() == 0) {
+          if (levelVal instanceof IntegerValue && ((IntegerValue) levelVal).getValue() == 0) {
 
             ExpressionNode whileGuard = ifNode.getGuard();
             StmtNode whileBody = ifNode.getThenBranch();

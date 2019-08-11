@@ -7,7 +7,7 @@ import edu.cornell.cs.apl.viaduct.imp.visitors.ExprVisitor;
 
 /** Boolean negation. */
 @AutoValue
-public abstract class NotNode implements ExpressionNode {
+public abstract class NotNode extends ExpressionNode {
   public static NotNode create(ExpressionNode expression) {
     return new AutoValue_NotNode(expression);
   }

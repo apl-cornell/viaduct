@@ -1,24 +1,50 @@
 package edu.cornell.cs.apl.viaduct.security.solver;
 
 import com.google.auto.value.AutoValue;
-import edu.cornell.cs.apl.viaduct.util.PartialOrder;
+import edu.cornell.cs.apl.viaduct.util.CoHeytingAlgebra;
 
 /** Term that represents a constant element. */
 @AutoValue
-public abstract class ConstantTerm<A extends PartialOrder<A>> implements ConstraintValue<A> {
-  public ConstantTerm<A> create(A value) {
+public abstract class ConstantTerm<A extends CoHeytingAlgebra<A>> implements ConstraintValue<A> {
+  public static <A extends CoHeytingAlgebra<A>> ConstantTerm<A> create(A value) {
     return new AutoValue_ConstantTerm<>(value);
   }
 
   public abstract A getValue();
 
+  /** Return a term that represents the meet of {@code this} and {@code that}. */
+  public final LeftHandTerm<A> meet(ConstraintValue<A> that) {
+    if (that instanceof ConstantTerm) {
+      final ConstantTerm<A> other = (ConstantTerm<A>) that;
+      return ConstantTerm.create(this.getValue().meet(other.getValue()));
+    } else if (that instanceof ConstraintSystem.VariableTerm) {
+      final ConstraintSystem<A>.VariableTerm other = (ConstraintSystem<A>.VariableTerm) that;
+      return ConstantMeetVariableTerm.create(this.getValue(), other);
+    } else {
+      throw new IllegalArgumentException("Argument must be a variable or a constant.");
+    }
+  }
+
+  /** Return a term that represents the join of {@code this} and {@code that}. */
+  public final RightHandTerm<A> join(ConstraintValue<A> that) {
+    if (that instanceof ConstantTerm) {
+      final ConstantTerm<A> other = (ConstantTerm<A>) that;
+      return ConstantTerm.create(this.getValue().join(other.getValue()));
+    } else if (that instanceof ConstraintSystem.VariableTerm) {
+      final ConstraintSystem<A>.VariableTerm other = (ConstraintSystem<A>.VariableTerm) that;
+      return ConstantJoinVariableTerm.create(this.getValue(), other);
+    } else {
+      throw new IllegalArgumentException("Argument must be a variable or a constant.");
+    }
+  }
+
   @Override
-  public A initialize() {
+  public final A initialize() {
     return getValue();
   }
 
   @Override
-  public A transfer(A newValue) {
+  public final A transfer(A newValue) {
     if (!newValue.lessThanOrEqualTo(getValue())) {
       // Constants cannot be updated, so there is no way to satisfy the constraint.
       throw new UnsatisfiableConstraintException(this);

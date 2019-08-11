@@ -5,7 +5,7 @@ import edu.cornell.cs.apl.viaduct.imp.visitors.ExprVisitor;
 
 /** A binary operator applied two expressions. */
 @AutoValue
-public abstract class BinaryExpressionNode implements ExpressionNode {
+public abstract class BinaryExpressionNode extends ExpressionNode {
   /** Create a binary expression given the operator and its two arguments. */
   public static BinaryExpressionNode create(
       ExpressionNode lhs, BinaryOperator operator, ExpressionNode rhs) {

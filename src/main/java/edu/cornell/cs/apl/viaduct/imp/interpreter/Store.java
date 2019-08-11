@@ -171,7 +171,7 @@ public class Store implements Iterable<Tuple2<Variable, ImpValue>> {
     if (this.tempStore.contains(var)) {
       throw new RedeclaredVariableException(var);
     }
-    this.tempStore.add(var, val);
+    this.tempStore.put(var, val);
   }
 
   /**

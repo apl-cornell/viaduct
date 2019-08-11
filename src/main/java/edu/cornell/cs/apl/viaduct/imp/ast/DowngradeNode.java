@@ -6,7 +6,7 @@ import edu.cornell.cs.apl.viaduct.security.Label;
 
 /** Reduce the confidentiality and/or integrity of the result of an expression. */
 @AutoValue
-public abstract class DowngradeNode implements ExpressionNode {
+public abstract class DowngradeNode extends ExpressionNode {
   public static DowngradeNode create(ExpressionNode expression, Label label) {
     return new AutoValue_DowngradeNode(expression, label);
   }

@@ -129,8 +129,8 @@ public class ImpPdgBuilderVisitor implements StmtVisitor<Set<PdgNode<ImpAstNode>
     String name = this.nameGenerator.getFreshName(VARDECL_NODE);
     PdgStorageNode<ImpAstNode> node = new PdgStorageNode<>(varDecl, name, varDecl.getLabel());
 
-    this.varDeclMap.add(var, name);
-    this.declaredVars.add(var, true);
+    this.varDeclMap.put(var, name);
+    this.declaredVars.put(var, true);
     return addNode(name, node, varDecl);
   }
 
@@ -140,8 +140,8 @@ public class ImpPdgBuilderVisitor implements StmtVisitor<Set<PdgNode<ImpAstNode>
     String name = this.nameGenerator.getFreshName(VARDECL_NODE);
     PdgStorageNode<ImpAstNode> node = new PdgStorageNode<>(arrayDecl, name, arrayDecl.getLabel());
 
-    this.varDeclMap.add(var, name);
-    this.declaredVars.add(var, true);
+    this.varDeclMap.put(var, name);
+    this.declaredVars.put(var, true);
 
     ExpressionNode length = arrayDecl.getLength();
     Set<Variable> temps = this.tempSetVisitor.run(length);

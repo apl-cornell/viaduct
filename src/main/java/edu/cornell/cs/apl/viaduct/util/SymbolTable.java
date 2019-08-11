@@ -6,16 +6,16 @@ import java.util.NoSuchElementException;
 import java.util.Stack;
 
 /** A generic data structure for a stack of maps, useful for maintaining lexical scoping. */
-public final class SymbolTable<K, V> implements Cloneable {
+public class SymbolTable<K, V> implements Cloneable {
   private final Stack<Map<K, V>> tableStack;
-
-  private SymbolTable(Stack<Map<K, V>> tableStack) {
-    this.tableStack = tableStack;
-  }
 
   public SymbolTable() {
     this.tableStack = new Stack<>();
     this.tableStack.push(HashMap.empty());
+  }
+
+  private SymbolTable(Stack<Map<K, V>> tableStack) {
+    this.tableStack = tableStack;
   }
 
   public void clear() {
@@ -27,7 +27,11 @@ public final class SymbolTable<K, V> implements Cloneable {
     return this.tableStack.peek().containsKey(key);
   }
 
-  /** Get the value associated with the given key in the current (i.e. topmost/innermost) scope. */
+  /**
+   * Get the value associated with the given key in the current (i.e. topmost/innermost) scope.
+   *
+   * @throws NoSuchElementException if the key is not in the table
+   */
   public V get(K key) {
     return this.tableStack
         .peek()
@@ -35,8 +39,11 @@ public final class SymbolTable<K, V> implements Cloneable {
         .getOrElseThrow(() -> new NoSuchElementException(key.toString()));
   }
 
-  /** Add the given key with the given value to the current scope. */
-  public void add(K key, V value) {
+  /**
+   * Add the given key with the given value to the current scope. Replaces the current mapping if
+   * one exists.
+   */
+  public void put(K key, V value) {
     this.tableStack.push(this.tableStack.pop().put(key, value));
   }
 
@@ -50,10 +57,13 @@ public final class SymbolTable<K, V> implements Cloneable {
     this.tableStack.pop();
   }
 
+  // TODO: delete this
   @Override
-  public Object clone() throws CloneNotSupportedException {
-    Stack<Map<K, V>> tableStack = (Stack<Map<K, V>>) this.tableStack.clone();
-    return new SymbolTable<>(tableStack);
+  public SymbolTable<K, V> clone() throws CloneNotSupportedException {
+    super.clone(); // Shut SpotBugs up
+    Stack<Map<K, V>> newStack = new Stack<>();
+    newStack.addAll(this.tableStack);
+    return new SymbolTable<>(newStack);
   }
 
   @Override

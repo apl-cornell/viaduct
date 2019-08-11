@@ -19,7 +19,8 @@ import javax.annotation.Nonnull;
  * A program is a set of process definitions and a host trust configuration. It associates with each
  * process the code running on that process, and with each host its trustworthiness.
  */
-public final class ProgramNode implements ImpAstNode, Iterable<Tuple2<ProcessName, StmtNode>> {
+public final class ProgramNode extends ImpAstNode
+    implements Iterable<Tuple2<ProcessName, StmtNode>> {
   private final SortedMap<ProcessName, StmtNode> processes;
   private final HostTrustConfiguration trustConfiguration;
 

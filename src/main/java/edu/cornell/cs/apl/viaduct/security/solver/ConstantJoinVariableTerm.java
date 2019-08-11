@@ -8,7 +8,8 @@ import edu.cornell.cs.apl.viaduct.util.dataflow.DataFlowEdge;
 @AutoValue
 public abstract class ConstantJoinVariableTerm<A extends CoHeytingAlgebra<A>>
     implements RightHandTerm<A> {
-  public ConstantJoinVariableTerm<A> create(A lhs, ConstraintSystem<A>.VariableTerm rhs) {
+  public static <A extends CoHeytingAlgebra<A>> ConstantJoinVariableTerm<A> create(
+      A lhs, ConstraintSystem<A>.VariableTerm rhs) {
     return new AutoValue_ConstantJoinVariableTerm<>(lhs, rhs);
   }
 
@@ -17,12 +18,12 @@ public abstract class ConstantJoinVariableTerm<A extends CoHeytingAlgebra<A>>
   protected abstract ConstraintSystem<A>.VariableTerm getRhs();
 
   @Override
-  public ConstraintValue<A> getNode() {
+  public final ConstraintValue<A> getNode() {
     return getRhs();
   }
 
   @Override
-  public DataFlowEdge<A> getInEdge() {
+  public final DataFlowEdge<A> getInEdge() {
     return new SubtractionEdge<>(getLhs());
   }
 }

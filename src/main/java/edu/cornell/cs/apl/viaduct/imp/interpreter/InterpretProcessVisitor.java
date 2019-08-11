@@ -129,7 +129,7 @@ class InterpretProcessVisitor implements ExprVisitor<ImpValue>, StmtVisitor<Void
   public Void visit(VariableDeclarationNode varDeclNode) {
     Variable var = varDeclNode.getVariable();
     store.declare(var);
-    this.declaredVars.add(var, true);
+    this.declaredVars.put(var, true);
     return null;
   }
 
@@ -139,7 +139,7 @@ class InterpretProcessVisitor implements ExprVisitor<ImpValue>, StmtVisitor<Void
     ImpValue lengthValue = arrayDeclNode.getLength().accept(this);
     int length = getIntValueOfIndex(lengthValue, array);
     store.declareArray(array, length);
-    this.declaredVars.add(array, true);
+    this.declaredVars.put(array, true);
     return null;
   }
 

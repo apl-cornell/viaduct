@@ -12,15 +12,11 @@ public abstract class PdgNode<T extends AstNode> {
 
   final Set<PdgInfoEdge<T>> inInfoEdges;
   final Set<PdgInfoEdge<T>> outInfoEdges;
-  Label inLabel;
-  Label outLabel;
 
   /** constructor. */
   public PdgNode(T astNode, String id) {
     this.inInfoEdges = new HashSet<>();
     this.outInfoEdges = new HashSet<>();
-    this.inLabel = Label.weakest();
-    this.outLabel = Label.weakest();
     this.astNode = astNode;
     this.id = id;
   }
@@ -119,96 +115,13 @@ public abstract class PdgNode<T extends AstNode> {
     return readNodes;
   }
 
-  public Label getInLabel() {
-    // return this.inLabel;
+  public Label getLabel() {
     return this.astNode.getTrustLabel();
-  }
-
-  public void setInLabel(Label label) {
-    this.inLabel = label;
-  }
-
-  public Label getOutLabel() {
-    // return this.outLabel;
-    return this.astNode.getTrustLabel();
-  }
-
-  public void setOutLabel(Label label) {
-    this.outLabel = label;
-  }
-
-  public boolean isEndorseNode() {
-    return !this.inLabel.integrity().flowsTo(this.outLabel.integrity());
-  }
-
-  public boolean isDeclassifyNode() {
-    return !this.inLabel.confidentiality().flowsTo(this.outLabel.confidentiality());
-  }
-
-  /**
-   * returns whether node marks off the beginning of a control fork. e.g. the first node in a then
-   * brach of a condition marks off the beginning of a control fork.
-   */
-  public boolean isStartOfControlFork() {
-    /*
-    if (this.inControlEdge != null) {
-      return this.inControlEdge.getLabel() != ControlLabel.SEQ;
-
-    } else {
-      return false;
-    }
-    */
-    return false;
-  }
-
-  /** the node is the end of a execution path if it has no outgoing control edges. */
-  public boolean isEndOfExecutionPath() {
-    /*
-    boolean hasSeqOutControlEdge = false;
-    for (PdgControlEdge<T> controlEdge : this.outControlEdges) {
-      if (controlEdge.getLabel() == ControlLabel.SEQ) {
-        hasSeqOutControlEdge = true;
-        break;
-      }
-    }
-    return !hasSeqOutControlEdge;
-    */
-
-    return false;
-  }
-
-  /**
-   * get the control node whose control structure this node resides in. returns null if there isn't
-   * such a node
-   */
-  public PdgControlNode<T> getControlNode() {
-    /*
-    PdgNode<T> cur = this;
-
-    while (cur != null) {
-      if (cur.isControlNode() && cur != this) {
-        return (PdgControlNode<T>)cur;
-
-      } else {
-        PdgControlEdge<T> controlEdge = cur.getInControlEdge();
-        if (controlEdge != null) {
-          cur = controlEdge.getSource();
-
-        } else {
-          cur = null;
-        }
-      }
-    }
-    */
-
-    return null;
   }
 
   public abstract boolean isStorageNode();
 
   public abstract boolean isComputeNode();
-
-  public abstract boolean isDowngradeNode();
 
   public abstract boolean isControlNode();
 
@@ -237,14 +150,8 @@ public abstract class PdgNode<T extends AstNode> {
 
   @Override
   public String toString() {
-    if (isDowngradeNode()) {
-      return String.format(
-          "(pdg-node '%s' for '%s' with labels %s %s)",
-          this.id, this.astNode, this.inLabel, this.outLabel);
-
-    } else {
-      return String.format(
-          "(pdg-node '%s' for '%s' with label %s)", this.id, this.astNode, this.outLabel);
-    }
+    return String.format(
+        "(pdg-node '%s' for '%s' with label %s)",
+        this.id, this.astNode, getLabel());
   }
 }

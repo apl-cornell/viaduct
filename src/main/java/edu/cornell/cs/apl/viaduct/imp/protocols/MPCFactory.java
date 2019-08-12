@@ -30,7 +30,7 @@ public class MPCFactory implements ProtocolFactory<ImpAstNode> {
           hsLabel = hsLabel.and(hostConfig.getTrust(h));
         }
 
-        if (node.getInLabel().confidentiality().flowsTo(hsLabel.confidentiality())) {
+        if (node.getLabel().confidentiality().flowsTo(hsLabel.confidentiality())) {
           instances.add(new MPC(hostSet));
         }
       }

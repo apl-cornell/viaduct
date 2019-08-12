@@ -2,8 +2,6 @@ package edu.cornell.cs.apl.viaduct.cli;
 
 import com.github.rvesse.airline.annotations.Command;
 import com.github.rvesse.airline.annotations.Option;
-import edu.cornell.cs.apl.viaduct.dataflow.ConfidentialityDataflow;
-import edu.cornell.cs.apl.viaduct.dataflow.IntegrityDataflow;
 import edu.cornell.cs.apl.viaduct.imp.HostTrustConfiguration;
 import edu.cornell.cs.apl.viaduct.imp.ImpCommunicationCostEstimator;
 import edu.cornell.cs.apl.viaduct.imp.ImpProtocolSearchStrategy;
@@ -138,18 +136,11 @@ public class CompileCommand extends BaseCommand {
     ImpPdgBuilderPreprocessVisitor preprocessor = new ImpPdgBuilderPreprocessVisitor();
     main = preprocessor.run(main);
 
-    // perform information flow constraint solving
+    // information flow constraint solving
     InformationFlowChecker.run(main);
 
     // Generate program dependency graph.
     final ProgramDependencyGraph<ImpAstNode> pdg = new ImpPdgBuilderVisitor().generatePDG(main);
-
-    // Run data-flow analysis to compute labels for all PDG nodes.
-    /*
-    List<PdgNode<ImpAstNode>> nodes = pdg.getOrderedNodes();
-    new ConfidentialityDataflow<ImpAstNode>().dataflow(nodes);
-    new IntegrityDataflow<ImpAstNode>().dataflow(nodes);
-    */
 
     PrintVisitor printer = new PrintVisitor(false);
     // Dump PDG with information flow labels to a file (if requested).
@@ -193,12 +184,7 @@ public class CompileCommand extends BaseCommand {
         final Protocol<ImpAstNode> protocol = protocolMap.get(node);
         final String protocolStr = protocol == null ? "NO PROTOCOL" : protocol.toString();
 
-        final String labelStr;
-        if (node.isDowngradeNode()) {
-          labelStr = node.getInLabel().toString() + " / " + node.getOutLabel().toString();
-        } else {
-          labelStr = node.getOutLabel().toString();
-        }
+        final String labelStr = node.getLabel().toString();
 
         error.append("\r\n");
         error.append(String.format("%s (label: %s) => %s", astStr, labelStr, protocolStr));

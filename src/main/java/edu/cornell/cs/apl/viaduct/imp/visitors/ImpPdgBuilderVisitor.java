@@ -38,6 +38,7 @@ import edu.cornell.cs.apl.viaduct.pdg.ProgramDependencyGraph;
 import edu.cornell.cs.apl.viaduct.security.Label;
 import edu.cornell.cs.apl.viaduct.util.FreshNameGenerator;
 import edu.cornell.cs.apl.viaduct.util.SymbolTable;
+
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -127,7 +128,7 @@ public class ImpPdgBuilderVisitor implements StmtVisitor<Set<PdgNode<ImpAstNode>
   public Set<PdgNode<ImpAstNode>> visit(VariableDeclarationNode varDecl) {
     Variable var = varDecl.getVariable();
     String name = this.nameGenerator.getFreshName(VARDECL_NODE);
-    PdgStorageNode<ImpAstNode> node = new PdgStorageNode<>(varDecl, name, varDecl.getLabel());
+    PdgStorageNode<ImpAstNode> node = new PdgStorageNode<>(varDecl, name);
 
     this.varDeclMap.put(var, name);
     this.declaredVars.put(var, true);
@@ -138,7 +139,7 @@ public class ImpPdgBuilderVisitor implements StmtVisitor<Set<PdgNode<ImpAstNode>
   public Set<PdgNode<ImpAstNode>> visit(ArrayDeclarationNode arrayDecl) {
     Variable var = arrayDecl.getVariable();
     String name = this.nameGenerator.getFreshName(VARDECL_NODE);
-    PdgStorageNode<ImpAstNode> node = new PdgStorageNode<>(arrayDecl, name, arrayDecl.getLabel());
+    PdgStorageNode<ImpAstNode> node = new PdgStorageNode<>(arrayDecl, name);
 
     this.varDeclMap.put(var, name);
     this.declaredVars.put(var, true);
@@ -159,10 +160,10 @@ public class ImpPdgBuilderVisitor implements StmtVisitor<Set<PdgNode<ImpAstNode>
     ExpressionNode rhs = letBindingNode.getRhs();
     if (rhs instanceof DowngradeNode) {
       DowngradeNode downgradeNode = (DowngradeNode) rhs;
-      node = new PdgComputeNode<>(downgradeNode, name, Label.weakest(), downgradeNode.getLabel());
+      node = new PdgComputeNode<>(downgradeNode, name);
 
     } else {
-      node = new PdgComputeNode<>(rhs, name, Label.weakest());
+      node = new PdgComputeNode<>(rhs, name);
     }
 
     Set<Variable> temps = this.tempSetVisitor.run(rhs);
@@ -198,7 +199,7 @@ public class ImpPdgBuilderVisitor implements StmtVisitor<Set<PdgNode<ImpAstNode>
     // assert queries.size() == 0;
 
     String name = this.nameGenerator.getFreshName(ASSIGN_NODE);
-    PdgComputeNode<ImpAstNode> node = new PdgComputeNode<>(assignNode, name, Label.weakest());
+    PdgComputeNode<ImpAstNode> node = new PdgComputeNode<>(assignNode, name);
 
     createReadEdges(temps, queries, node);
 
@@ -237,7 +238,7 @@ public class ImpPdgBuilderVisitor implements StmtVisitor<Set<PdgNode<ImpAstNode>
   @Override
   public Set<PdgNode<ImpAstNode>> visit(IfNode ifNode) {
     String name = this.nameGenerator.getFreshName(IF_NODE);
-    PdgControlNode<ImpAstNode> node = new PdgControlNode<>(ifNode, name, Label.weakest());
+    PdgControlNode<ImpAstNode> node = new PdgControlNode<>(ifNode, name);
 
     ExpressionNode guard = ifNode.getGuard();
     Set<Variable> temps = this.tempSetVisitor.run(guard);
@@ -277,7 +278,7 @@ public class ImpPdgBuilderVisitor implements StmtVisitor<Set<PdgNode<ImpAstNode>
   @Override
   public Set<PdgNode<ImpAstNode>> visit(LoopNode loopNode) {
     String name = this.nameGenerator.getFreshName(LOOP_NODE);
-    PdgControlNode<ImpAstNode> node = new PdgControlNode<>(loopNode, name, Label.weakest());
+    PdgControlNode<ImpAstNode> node = new PdgControlNode<>(loopNode, name);
 
     Set<PdgNode<ImpAstNode>> createdNodes = addNode(name, node, loopNode);
     Set<PdgNode<ImpAstNode>> bodyNodes = loopNode.getBody().accept(this);
@@ -294,7 +295,7 @@ public class ImpPdgBuilderVisitor implements StmtVisitor<Set<PdgNode<ImpAstNode>
   public Set<PdgNode<ImpAstNode>> visit(BreakNode breakNode) {
     // TODO: figure out the edges we need to create here
     String name = this.nameGenerator.getFreshName(BREAK_NODE);
-    PdgControlNode<ImpAstNode> node = new PdgControlNode<>(breakNode, name, Label.weakest());
+    PdgControlNode<ImpAstNode> node = new PdgControlNode<>(breakNode, name);
     return addNode(name, node, breakNode);
   }
 

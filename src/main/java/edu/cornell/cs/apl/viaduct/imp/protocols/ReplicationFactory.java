@@ -23,7 +23,7 @@ public class ReplicationFactory implements ProtocolFactory<ImpAstNode> {
     Set<Protocol<ImpAstNode>> instances = new HashSet<>();
 
     if (!node.isControlNode()) {
-      Label nInLabel = node.getInLabel();
+      Label nInLabel = node.getLabel();
       PowersetIterator<Host> hostPowerset = new PowersetIterator<>(hostConfig.hostSet());
       for (Set<Host> hostSet : hostPowerset) {
         if (hostSet.size() > 1) {

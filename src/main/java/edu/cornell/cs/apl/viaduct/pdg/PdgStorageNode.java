@@ -1,15 +1,12 @@
 package edu.cornell.cs.apl.viaduct.pdg;
 
 import edu.cornell.cs.apl.viaduct.AstNode;
-import edu.cornell.cs.apl.viaduct.security.Label;
 
 /** PDG storage node, which represents declared variables. */
 public class PdgStorageNode<T extends AstNode> extends PdgNode<T> {
-  /** constructor that sets in and out labels to be the same. */
-  public PdgStorageNode(T astNode, String id, Label label) {
+  /** constructor. */
+  public PdgStorageNode(T astNode, String id) {
     super(astNode, id);
-    this.setInLabel(label);
-    this.setOutLabel(label);
   }
 
   @Override
@@ -23,17 +20,12 @@ public class PdgStorageNode<T extends AstNode> extends PdgNode<T> {
   }
 
   @Override
-  public boolean isDowngradeNode() {
-    return false;
-  }
-
-  @Override
   public boolean isControlNode() {
     return false;
   }
 
   @Override
   public String toString() {
-    return "<" + this.id + " storage node for " + this.astNode.toString() + ">";
+    return "(" + this.id + " storage node for " + this.astNode.toString() + ")";
   }
 }

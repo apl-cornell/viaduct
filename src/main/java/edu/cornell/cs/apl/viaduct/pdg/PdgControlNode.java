@@ -1,16 +1,12 @@
 package edu.cornell.cs.apl.viaduct.pdg;
 
 import edu.cornell.cs.apl.viaduct.AstNode;
-import edu.cornell.cs.apl.viaduct.security.Label;
-import java.util.List;
 
 /** PDG node for control flow statements. */
 public class PdgControlNode<T extends AstNode> extends PdgNode<T> {
-  /** constructor that sets in and out labels to be the same. */
-  public PdgControlNode(T astNode, String id, Label label) {
+  /** constructor. */
+  public PdgControlNode(T astNode, String id) {
     super(astNode, id);
-    this.setInLabel(label);
-    this.setOutLabel(label);
   }
 
   @Override
@@ -24,45 +20,12 @@ public class PdgControlNode<T extends AstNode> extends PdgNode<T> {
   }
 
   @Override
-  public boolean isDowngradeNode() {
-    return false;
-  }
-
-  @Override
   public boolean isControlNode() {
     return true;
   }
 
-  /**
-   * get nodes associated with the control structure. e.g. if the control node represents an if
-   * statement, this returns all the nodes (in order) in the branches
-   */
-  public List<PdgNode<T>> getControlStructureNodes() {
-    /*
-    List<PdgControlEdge<T>> pathStarts = new ArrayList<>();
-    for (PdgControlEdge<T> controlEdge : getOutControlEdges()) {
-      if (controlEdge.getLabel() != ControlLabel.SEQ) {
-        pathStarts.add(controlEdge);
-      }
-    }
-
-    ControlEdgeComparator edgeComparator = new ControlEdgeComparator();
-    Collections.sort(pathStarts, edgeComparator);
-
-    List<PdgNode<T>> nodeList = new ArrayList<>();
-    for (PdgControlEdge<T> pathStart : pathStarts) {
-      PdgNode<T> pathStartNode = pathStart.getTarget();
-      List<PdgNode<T>> pathNodes = this.pdg.getOrderedNodesFrom(pathStartNode);
-      nodeList.addAll(pathNodes);
-    }
-
-    return nodeList;
-    */
-    return null;
-  }
-
   @Override
   public String toString() {
-    return "<" + this.id + " control node for " + this.astNode.toString() + ">";
+    return "(" + this.id + " control node for " + this.astNode.toString() + ")";
   }
 }

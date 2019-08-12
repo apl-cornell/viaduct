@@ -20,6 +20,8 @@ public class ZKFactory implements ProtocolFactory<ImpAstNode> {
       Map<PdgNode<ImpAstNode>, Protocol<ImpAstNode>> protocolMap,
       PdgNode<ImpAstNode> node) {
 
+    /*
+
     if (hostConfig.size() < 2) {
       return new HashSet<>();
     }
@@ -47,12 +49,10 @@ public class ZKFactory implements ProtocolFactory<ImpAstNode> {
     }
     Host hostA = hostPair[0];
     Host hostB = hostPair[1];
-    Label nInLabel = node.getInLabel();
+    Label nInLabel = node.getLabel();
     Label nOutLabel = node.getOutLabel();
     Label aLabel = hostConfig.getTrust(hostA);
     Label bLabel = hostConfig.getTrust(hostB);
-
-    Set<Protocol<ImpAstNode>> instances = new HashSet<>();
 
     // prover: A, verifier: B
     if (inNodes.size() == 1 && node.isDeclassifyNode()) {
@@ -84,5 +84,8 @@ public class ZKFactory implements ProtocolFactory<ImpAstNode> {
     }
 
     return instances;
+    */
+
+    return new HashSet<>();
   }
 }

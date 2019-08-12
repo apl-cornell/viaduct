@@ -23,11 +23,10 @@ public class SingleFactory implements ProtocolFactory<ImpAstNode> {
     Set<Protocol<ImpAstNode>> instances = new HashSet<>();
     for (Host h : hostConfig.hosts()) {
       Label hostLabel = hostConfig.getTrust(h);
-      Label nodeInLabel = node.getInLabel();
-      Label nodeOutLabel = node.getOutLabel();
+      Label nodeLabel = node.getLabel();
 
-      if (nodeInLabel.confidentiality().flowsTo(hostLabel.confidentiality())
-          && hostLabel.integrity().flowsTo(nodeOutLabel.integrity())) {
+      if (nodeLabel.confidentiality().flowsTo(hostLabel.confidentiality())
+          && hostLabel.integrity().flowsTo(nodeLabel.integrity())) {
         instances.add(new Single(h));
       }
     }

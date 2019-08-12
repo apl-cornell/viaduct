@@ -37,13 +37,7 @@ public class PdgDotPrinter {
       String data = "";
       switch (dataFormat) {
         case LABEL:
-          if (node.isDowngradeNode()) {
-            String inLabelStr = node.getInLabel().toString();
-            String outLabelStr = node.getOutLabel().toString();
-            data = inLabelStr + " / " + outLabelStr;
-          } else {
-            data = node.getOutLabel().toString();
-          }
+          data = node.getLabel().toString();
           break;
 
         case PROTOCOL:

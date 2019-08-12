@@ -19,6 +19,7 @@ public abstract class ImpAstNode implements AstNode {
    *
    * @throws NullPointerException if called before label is set
    */
+  @Override
   public final Label getTrustLabel() {
     return trustLabel.getValue();
   }

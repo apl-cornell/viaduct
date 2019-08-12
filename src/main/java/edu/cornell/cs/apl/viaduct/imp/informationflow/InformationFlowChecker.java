@@ -32,8 +32,8 @@ import edu.cornell.cs.apl.viaduct.security.Label;
 import edu.cornell.cs.apl.viaduct.security.Principal;
 import edu.cornell.cs.apl.viaduct.security.solver.ConstantTerm;
 import edu.cornell.cs.apl.viaduct.security.solver.ConstraintSystem;
-import edu.cornell.cs.apl.viaduct.security.solver.ConstraintSystem.VariableTerm;
 import edu.cornell.cs.apl.viaduct.security.solver.UnsatisfiableConstraintException;
+import edu.cornell.cs.apl.viaduct.security.solver.VariableTerm;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -96,11 +96,21 @@ public class InformationFlowChecker
     constraintSystem.addLessThanOrEqualToConstraint(rhs.getIntegrity(), lhs.getIntegrity());
   }
 
+  private LabelConstant createLabelConstant(Label label) {
+    ConstantTerm<FreeDistributiveLattice<Principal>> confidentiality =
+        this.constraintSystem.addNewConstant(label.getConfidentiality());
+    ConstantTerm<FreeDistributiveLattice<Principal>> integrity =
+        this.constraintSystem.addNewConstant(label.getIntegrity());
+    LabelConstant constant = new LabelConstant(confidentiality, integrity);
+    return constant;
+  }
+
   @Override
   public LabelTerm visit(Variable variable) {
     final LabelTerm l = declarations.get(variable);
 
     // We leak the pc every time we read or write a variable.
+    // TODO: need to distinguish b/w let-binding variables and assignables
     addFlowsToConstraint(pc, l);
 
     return l;
@@ -129,7 +139,7 @@ public class InformationFlowChecker
 
   @Override
   public LabelTerm visit(ReadNode readNode) {
-    final LabelTerm l = readNode.accept(this);
+    final LabelTerm l = readNode.getReference().accept(this);
     readNode.setTrustLabel(l);
     return l;
   }
@@ -160,13 +170,14 @@ public class InformationFlowChecker
 
   @Override
   public LabelTerm visit(DowngradeNode downgradeNode) {
-    final LabelConstant l = new LabelConstant(downgradeNode.getLabel());
+    final LabelConstant l = createLabelConstant(downgradeNode.getLabel());
     downgradeNode.setTrustLabel(l);
 
     // pc is leaked to the output label
     addFlowsToConstraint(pc, l);
 
     // Non-malleable downgrade constraints
+    /*
     final ConstantTerm<FreeDistributiveLattice<Principal>> dc = l.getConfidentiality();
     final ConstantTerm<FreeDistributiveLattice<Principal>> di = l.getIntegrity();
     final LabelTerm e = downgradeNode.getExpression().accept(this);
@@ -180,13 +191,14 @@ public class InformationFlowChecker
         di.meet(pc.getConfidentiality()), e.getIntegrity());
     constraintSystem.addLessThanOrEqualToConstraint(
         di.meet(e.getConfidentiality()), e.getIntegrity());
+    */
 
     return l;
   }
 
   @Override
   public LabelTerm visit(VariableDeclarationNode variableDeclarationNode) {
-    final LabelConstant l = new LabelConstant(variableDeclarationNode.getLabel());
+    final LabelConstant l = createLabelConstant(variableDeclarationNode.getLabel());
     variableDeclarationNode.setTrustLabel(l);
 
     declarations.put(variableDeclarationNode.getVariable(), l);
@@ -196,7 +208,7 @@ public class InformationFlowChecker
 
   @Override
   public LabelTerm visit(ArrayDeclarationNode arrayDeclarationNode) {
-    final LabelConstant l = new LabelConstant(arrayDeclarationNode.getLabel());
+    final LabelConstant l = createLabelConstant(arrayDeclarationNode.getLabel());
     arrayDeclarationNode.setTrustLabel(l);
 
     final LabelTerm e = arrayDeclarationNode.getLength().accept(this);
@@ -326,10 +338,10 @@ public class InformationFlowChecker
 
   /** A variable that will be solved for. */
   private final class LabelVariable extends LabelTerm {
-    private final ConstraintSystem<FreeDistributiveLattice<Principal>>.VariableTerm
+    private final VariableTerm<FreeDistributiveLattice<Principal>>
         confidentiality = constraintSystem.addNewVariable();
 
-    private final ConstraintSystem<FreeDistributiveLattice<Principal>>.VariableTerm integrity =
+    private final VariableTerm<FreeDistributiveLattice<Principal>> integrity =
         constraintSystem.addNewVariable();
 
     @Override
@@ -340,12 +352,12 @@ public class InformationFlowChecker
     }
 
     @Override
-    public ConstraintSystem<FreeDistributiveLattice<Principal>>.VariableTerm getConfidentiality() {
+    public VariableTerm<FreeDistributiveLattice<Principal>> getConfidentiality() {
       return confidentiality;
     }
 
     @Override
-    public ConstraintSystem<FreeDistributiveLattice<Principal>>.VariableTerm getIntegrity() {
+    public VariableTerm<FreeDistributiveLattice<Principal>> getIntegrity() {
       return integrity;
     }
   }

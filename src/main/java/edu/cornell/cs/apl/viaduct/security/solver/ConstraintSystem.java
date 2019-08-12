@@ -1,6 +1,6 @@
 package edu.cornell.cs.apl.viaduct.security.solver;
 
-import edu.cornell.cs.apl.viaduct.util.JoinSemiLattice;
+import edu.cornell.cs.apl.viaduct.util.CoHeytingAlgebra;
 import edu.cornell.cs.apl.viaduct.util.PartialOrder;
 import edu.cornell.cs.apl.viaduct.util.dataflow.DataFlow;
 import edu.cornell.cs.apl.viaduct.util.dataflow.DataFlowEdge;
@@ -16,7 +16,7 @@ import org.jgrapht.graph.DirectedPseudograph;
  * A minimum solution assigns the smallest possible value to each variable, where smallest is with
  * respect to {@link PartialOrder#lessThanOrEqualTo(Object)}.
  */
-public class ConstraintSystem<A extends JoinSemiLattice<A>> {
+public class ConstraintSystem<A extends CoHeytingAlgebra<A>> {
   /**
    * Maintain constraints as a graph. Each vertex corresponds to an atomic term (a variable or a
    * constant), and an edge from term {@code t1} to {@code t2} corresponds to the constraint {@code
@@ -42,15 +42,15 @@ public class ConstraintSystem<A extends JoinSemiLattice<A>> {
    *
    * @return Mapping from variables to the smallest values that satisfy all constraints
    */
-  public Map<VariableTerm, A> solve() throws UnsatisfiableConstraintException {
+  public Map<VariableTerm<A>, A> solve() throws UnsatisfiableConstraintException {
     // Use data flow analysis to find a solution for all nodes.
     Map<ConstraintValue<A>, A> solutions = DataFlow.solve(bottom, constraints);
 
     // Only return solutions for nodes that correspond to variables.
-    final Map<VariableTerm, A> variableSolutions = new HashMap<>();
+    final Map<VariableTerm<A>, A> variableSolutions = new HashMap<>();
     for (Map.Entry<ConstraintValue<A>, A> entry : solutions.entrySet()) {
-      if (entry.getKey() instanceof ConstraintSystem.VariableTerm) {
-        variableSolutions.put(((VariableTerm) entry.getKey()), entry.getValue());
+      if (entry.getKey() instanceof VariableTerm) {
+        variableSolutions.put(((VariableTerm<A>) entry.getKey()), entry.getValue());
       }
     }
 
@@ -58,8 +58,17 @@ public class ConstraintSystem<A extends JoinSemiLattice<A>> {
   }
 
   /** Create a fresh variable and add it to the system. */
-  public VariableTerm addNewVariable() {
-    return new VariableTerm();
+  public VariableTerm<A> addNewVariable() {
+    VariableTerm<A> term = new VariableTerm<>(this.bottom);
+    this.constraints.addVertex(term);
+    return term;
+  }
+
+  /** create a new constant term and add it to the system. */
+  public ConstantTerm<A> addNewConstant(A constant) {
+    ConstantTerm<A> constantTerm = ConstantTerm.create(constant);
+    this.constraints.addVertex(constantTerm);
+    return constantTerm;
   }
 
   /** Add the constraint {@code lhs <= rhs} to the system. */
@@ -71,21 +80,6 @@ public class ConstraintSystem<A extends JoinSemiLattice<A>> {
     } else {
       throw new IllegalArgumentException(
           "Either the left-hand or the right-hand side needs to be an atomic term.");
-    }
-  }
-
-  /** A variable for the solver to find a value for. */
-  public final class VariableTerm implements ConstraintValue<A> {
-    private VariableTerm() {}
-
-    @Override
-    public A initialize() {
-      return bottom;
-    }
-
-    @Override
-    public A transfer(A newValue) {
-      return newValue;
     }
   }
 }

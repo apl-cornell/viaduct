@@ -11,6 +11,7 @@ import edu.cornell.cs.apl.viaduct.imp.ast.ImpAstNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ProcessName;
 import edu.cornell.cs.apl.viaduct.imp.ast.ProgramNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.StmtNode;
+import edu.cornell.cs.apl.viaduct.imp.informationflow.InformationFlowChecker;
 import edu.cornell.cs.apl.viaduct.imp.parser.TrustConfigurationParser;
 import edu.cornell.cs.apl.viaduct.imp.visitors.ImpPdgBuilderPreprocessVisitor;
 import edu.cornell.cs.apl.viaduct.imp.visitors.ImpPdgBuilderVisitor;
@@ -137,13 +138,18 @@ public class CompileCommand extends BaseCommand {
     ImpPdgBuilderPreprocessVisitor preprocessor = new ImpPdgBuilderPreprocessVisitor();
     main = preprocessor.run(main);
 
+    // perform information flow constraint solving
+    InformationFlowChecker.run(main);
+
     // Generate program dependency graph.
     final ProgramDependencyGraph<ImpAstNode> pdg = new ImpPdgBuilderVisitor().generatePDG(main);
 
     // Run data-flow analysis to compute labels for all PDG nodes.
+    /*
     List<PdgNode<ImpAstNode>> nodes = pdg.getOrderedNodes();
     new ConfidentialityDataflow<ImpAstNode>().dataflow(nodes);
     new IntegrityDataflow<ImpAstNode>().dataflow(nodes);
+    */
 
     PrintVisitor printer = new PrintVisitor(false);
     // Dump PDG with information flow labels to a file (if requested).

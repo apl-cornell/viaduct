@@ -120,7 +120,8 @@ public abstract class PdgNode<T extends AstNode> {
   }
 
   public Label getInLabel() {
-    return this.inLabel;
+    // return this.inLabel;
+    return this.astNode.getTrustLabel();
   }
 
   public void setInLabel(Label label) {
@@ -128,7 +129,8 @@ public abstract class PdgNode<T extends AstNode> {
   }
 
   public Label getOutLabel() {
-    return this.outLabel;
+    // return this.outLabel;
+    return this.astNode.getTrustLabel();
   }
 
   public void setOutLabel(Label label) {

@@ -88,6 +88,7 @@ public class ImpProtocolSearchStrategy extends ProtocolCostEstimator<ImpAstNode>
 
       // prune search space by not selecting MPC unless absolutely necessary
       // ie. only use MPC when neither Single nor Replication protocols can instantiate the node
+      // if (instances.size() > 0 && node.isStorageNode()) {
       if (instances.size() > 0) {
         return instances;
       }

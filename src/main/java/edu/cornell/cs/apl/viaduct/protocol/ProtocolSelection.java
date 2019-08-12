@@ -162,12 +162,14 @@ public class ProtocolSelection<T extends AstNode> {
     int threshold; // how big the open set must be to profile
     Map<Integer,Integer> openSetSizeHistogram;
     int bucketSize; // bucket size for the histogram
+    boolean printProgress;
 
     public ProtocolSelectionProfiler(int i, int bucketSize) {
       this.interval = i;
       this.threshold = i;
       this.openSetSizeHistogram = new HashMap<>();
       this.bucketSize = bucketSize;
+      this.printProgress = false;
     }
 
     public void probe(
@@ -185,8 +187,10 @@ public class ProtocolSelection<T extends AstNode> {
 
       this.openSetSizeHistogram.put(bucket, bucketCount + 1);
 
-      if (openSetSize >= threshold) {
-        System.out.println(String.format("size of open set: %d", openSetSize));
+      if (openSetSize >= this.threshold) {
+        if (this.printProgress) {
+          System.out.println(String.format("size of open set: %d", openSetSize));
+        }
         this.threshold += this.interval;
       }
     }

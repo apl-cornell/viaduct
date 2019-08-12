@@ -1,6 +1,6 @@
 
 process main {
-    num : int{A};
+    num : int{A && B};
     num = 100;
 
     arr[100]    : int{A};
@@ -15,7 +15,7 @@ process main {
     m           : int{B};
 
     /* sort adjacent windows for increasing window sizes */
-    for (k = 1; k < 100; k = k*2) {
+    for (k = 1; k < num; k = k*2) {
         /* iterate through all windows for a particular size */
         for (left = 0; left+k < num; left += k*2 ) {
             rstart = left + k;
@@ -31,18 +31,21 @@ process main {
 
             /* merge adjacent windows */
             while (i < rstart && j < rend) {
+                /*
                 if (arr[i] <= arr[j]) {
                     tmp[m] = arr[i];
                     i++;
-
                 } else {
                     tmp[m] = arr[j];
                     j++;
                 }
                 m++;
+                */
+                arr[downgrade(i,{A && B})] = tmp[downgrade(j,{A && B})];
             }
 
             /* append the rest of the left to the end */
+            /*
             while (i < rstart) {
                 tmp[m] = arr[i];
                 i++; m++;
@@ -58,6 +61,7 @@ process main {
             for (m = left; m < rend; m++) {
                 arr[m] = tmp[m];
             }
+            */
         }
     }
 }

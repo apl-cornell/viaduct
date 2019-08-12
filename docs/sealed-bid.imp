@@ -1,0 +1,19 @@
+process main {
+    a_bid : int{A & B<-};
+    b_bid : int{B & A<-};
+
+    sealed_a_bid : int{A & B};
+    sealed_b_bid : int{A & B};
+
+    sealed_a_bid = a_bid;
+    sealed_b_bid = b_bid;
+
+    opened_a_bid : int{B & A<-};
+    opened_b_bid : int{A & B<-};
+
+    opened_b_bid = downgrade(sealed_b_bid, {A && B});
+    opened_a_bid = downgrade(sealed_a_bid, {A && B});
+}
+
+host alice  : {A & B<-};
+host bob    : {B & A<-};

@@ -1,0 +1,54 @@
+process main {
+    len : int{A && B};
+    len = 64;
+
+    a[len] : int{A & B<-};
+    b[len] : int{B & A<-};
+
+    ai : int{A};
+    ai = 0;
+
+    aj : int{A};
+    aj = len;
+
+    am : int{A};
+
+    bi : int{B};
+    bi = 0;
+
+    bj : int{B};
+    bj = len;
+
+    bm : int{B};
+
+    median : int{A && B};
+    cont : bool{A && B};
+    cont = true;
+    while (downgrade(aj != ai, {A && B}) && downgrade(bj != bi, {A && B}) && cont) {
+        /* TODO: these should be divisions! */
+        am = (aj - ai) * 2;
+        bm = (bj - bi) * 2;
+
+        cmp : int{A && B};
+        cmp = downgrade(a[am] - b[bm], {A && B});
+
+        if (cmp == 0) { /* a[am] == b[bm] */
+            median = downgrade(a[am], {A && B});
+            cont = false;
+
+        } else {
+            /* TODO: SHOULD BE DIVISIONS */
+            if (cmp < 0) { /* a[am] < b[bm] */
+                ai = (aj - ai) * 2;
+                bj = (bj - ai) * 2;
+
+            } else {  /* a[am] > b[bm] */
+                aj = (aj - ai) * 2;
+                bi = (bj - bi) * 2;
+            }
+        }
+    }
+}
+
+host alice  : {A & B<-};
+host bob    : {B & A<-};

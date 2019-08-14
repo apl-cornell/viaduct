@@ -35,7 +35,6 @@ import edu.cornell.cs.apl.viaduct.pdg.PdgReadChannelEdge;
 import edu.cornell.cs.apl.viaduct.pdg.PdgStorageNode;
 import edu.cornell.cs.apl.viaduct.pdg.PdgWriteEdge;
 import edu.cornell.cs.apl.viaduct.pdg.ProgramDependencyGraph;
-import edu.cornell.cs.apl.viaduct.security.Label;
 import edu.cornell.cs.apl.viaduct.util.FreshNameGenerator;
 import edu.cornell.cs.apl.viaduct.util.SymbolTable;
 

@@ -45,7 +45,8 @@ public abstract class ConstantTerm<A extends CoHeytingAlgebra<A>> implements Con
 
   @Override
   public final A transfer(A newValue) {
-    if (!newValue.lessThanOrEqualTo(getValue())) {
+    if (!getValue().lessThanOrEqualTo(newValue)) {
+      System.out.println(newValue);
       // Constants cannot be updated, so there is no way to satisfy the constraint.
       throw new UnsatisfiableConstraintException(this);
     }

@@ -37,7 +37,10 @@ public class PdgDotPrinter {
       String data = "";
       switch (dataFormat) {
         case LABEL:
-          data = node.getLabel().toString();
+          edu.cornell.cs.apl.viaduct.security.Label label = node.getLabel();
+          if (label != null) {
+            data = label.toString();
+          }
           break;
 
         case PROTOCOL:

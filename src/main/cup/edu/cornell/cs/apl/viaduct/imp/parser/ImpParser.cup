@@ -296,9 +296,9 @@ label ::=
 label_expr ::=
     CAP_IDENT:id {: RESULT = new Label(Principal.create(id)); :}
 
-  | TOP {: RESULT = Label.strongest(); :}
+  | TOP {: RESULT = Label.weakest(); :}
 
-  | BOTTOM {: RESULT = Label.weakest(); :}
+  | BOTTOM {: RESULT = Label.strongest(); :}
 
   | label_expr:l1 OR label_expr:l2 {:
       RESULT = l1.or(l2);

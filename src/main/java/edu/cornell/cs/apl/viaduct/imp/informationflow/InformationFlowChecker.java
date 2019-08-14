@@ -52,7 +52,7 @@ public class InformationFlowChecker
   private final VariableContext<LabelTerm> declarations = new VariableContext<>();
 
   private final ConstraintSystem<FreeDistributiveLattice<Principal>> constraintSystem =
-      new ConstraintSystem<>(FreeDistributiveLattice.bottom());
+      new ConstraintSystem<>(FreeDistributiveLattice.top());
 
   /**
    * Solutions for all variables are added to this map at the end. This is then used by {@link
@@ -98,9 +98,9 @@ public class InformationFlowChecker
 
   private LabelConstant createLabelConstant(Label label) {
     ConstantTerm<FreeDistributiveLattice<Principal>> confidentiality =
-        this.constraintSystem.addNewConstant(label.getConfidentiality());
+        this.constraintSystem.addNewConstant(label.confidentialityComponent());
     ConstantTerm<FreeDistributiveLattice<Principal>> integrity =
-        this.constraintSystem.addNewConstant(label.getIntegrity());
+        this.constraintSystem.addNewConstant(label.integrityComponent());
     LabelConstant constant = new LabelConstant(confidentiality, integrity);
     return constant;
   }
@@ -237,8 +237,8 @@ public class InformationFlowChecker
     final LabelVariable l = new LabelVariable();
     assignNode.setTrustLabel(l);
 
-    final LabelTerm e = assignNode.getRhs().accept(this);
-    addFlowsToConstraint(e, l);
+    final LabelTerm rhsLabel = assignNode.getRhs().accept(this);
+    addFlowsToConstraint(rhsLabel, l);
 
     addFlowsToConstraint(l, assignNode.getLhs().accept(this));
 
@@ -302,13 +302,18 @@ public class InformationFlowChecker
   public LabelTerm visit(LoopNode loopNode) {
     // TODO: need to maintain a stack of new pc labels.
     //   see IfNode for an example of how we change the pc.
-    return null;
+    final LabelVariable l = new LabelVariable();
+    loopNode.setTrustLabel(l);
+    loopNode.getBody().accept(this);
+    return l;
   }
 
   @Override
   public LabelTerm visit(BreakNode breakNode) {
     // TODO: leak pc to the broken loop
-    return null;
+    final LabelVariable l = new LabelVariable();
+    breakNode.setTrustLabel(l);
+    return new LabelVariable();
   }
 
   @Override

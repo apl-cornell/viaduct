@@ -3,7 +3,9 @@ package edu.cornell.cs.apl.viaduct.security.solver;
 import edu.cornell.cs.apl.viaduct.util.CoHeytingAlgebra;
 import edu.cornell.cs.apl.viaduct.util.PartialOrder;
 import edu.cornell.cs.apl.viaduct.util.dataflow.DataFlow;
+import edu.cornell.cs.apl.viaduct.util.dataflow.DataFlow.DataflowDirection;
 import edu.cornell.cs.apl.viaduct.util.dataflow.DataFlowEdge;
+
 import java.util.HashMap;
 import java.util.Map;
 import org.jgrapht.graph.DirectedPseudograph;
@@ -26,15 +28,15 @@ public class ConstraintSystem<A extends CoHeytingAlgebra<A>> {
       new DirectedPseudograph<>(null);
 
   /** Least element of {@code A}. */
-  private final A bottom;
+  private final A init;
 
   /**
    * Create a new constraint system.
    *
-   * @param bottom least element of type {@code A}
+   * @param init initial value of variables {@code A}
    */
-  public ConstraintSystem(A bottom) {
-    this.bottom = bottom;
+  public ConstraintSystem(A init) {
+    this.init = init;
   }
 
   /**
@@ -44,7 +46,8 @@ public class ConstraintSystem<A extends CoHeytingAlgebra<A>> {
    */
   public Map<VariableTerm<A>, A> solve() throws UnsatisfiableConstraintException {
     // Use data flow analysis to find a solution for all nodes.
-    Map<ConstraintValue<A>, A> solutions = DataFlow.solve(bottom, constraints);
+    Map<ConstraintValue<A>, A> solutions =
+        DataFlow.solve(init, constraints, DataflowDirection.DOWN);
 
     // Only return solutions for nodes that correspond to variables.
     final Map<VariableTerm<A>, A> variableSolutions = new HashMap<>();
@@ -59,7 +62,7 @@ public class ConstraintSystem<A extends CoHeytingAlgebra<A>> {
 
   /** Create a fresh variable and add it to the system. */
   public VariableTerm<A> addNewVariable() {
-    VariableTerm<A> term = new VariableTerm<>(this.bottom);
+    VariableTerm<A> term = new VariableTerm<>(this.init);
     this.constraints.addVertex(term);
     return term;
   }

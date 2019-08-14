@@ -15,14 +15,18 @@ import java.util.Objects;
  * about trust.
  */
 public class Label implements Lattice<Label>, TrustLattice<Label> {
+  // public untrusted
   private static final Label WEAKEST =
-      new Label(FreeDistributiveLattice.bottom(), FreeDistributiveLattice.bottom());
-
-  private static final Label STRONGEST =
       new Label(FreeDistributiveLattice.top(), FreeDistributiveLattice.top());
 
+  // secret trusted
+  private static final Label STRONGEST =
+      new Label(FreeDistributiveLattice.bottom(), FreeDistributiveLattice.bottom());
+
+  // public trusted
   private static final Label BOTTOM = new Label(weakest().confidentiality, strongest().integrity);
 
+  // secret untrusted
   private static final Label TOP = new Label(strongest().confidentiality, weakest().integrity);
 
   private final FreeDistributiveLattice<Principal> confidentiality;
@@ -55,7 +59,7 @@ public class Label implements Lattice<Label>, TrustLattice<Label> {
   /**
    * The least powerful principal, i.e. public and untrusted.
    *
-   * <p>This is represented as ⊥, and is the unit for {@link #and(Label)}.
+   * <p>This is represented as 1, and is the unit for {@link #and(Label)}.
    */
   public static Label weakest() {
     return WEAKEST;
@@ -64,7 +68,7 @@ public class Label implements Lattice<Label>, TrustLattice<Label> {
   /**
    * The most powerful principal, i.e. secret and trusted.
    *
-   * <p>This is represented as ⊤, and is the unit for {@link #or(Label)}.
+   * <p>This is represented as 0, and is the unit for {@link #or(Label)}.
    */
   public static Label strongest() {
     return STRONGEST;
@@ -75,7 +79,7 @@ public class Label implements Lattice<Label>, TrustLattice<Label> {
    *
    * <p>Unlike {@link #confidentiality()}, the result is not a {@link Label}.
    */
-  public FreeDistributiveLattice<Principal> getConfidentiality() {
+  public FreeDistributiveLattice<Principal> confidentialityComponent() {
     return confidentiality;
   }
 
@@ -84,14 +88,18 @@ public class Label implements Lattice<Label>, TrustLattice<Label> {
    *
    * <p>Unlike {@link #integrity()}, the result is not a {@link Label}.
    */
-  public FreeDistributiveLattice<Principal> getIntegrity() {
+  public FreeDistributiveLattice<Principal> integrityComponent() {
     return integrity;
   }
 
   /** Check if information flow from {@code this} to {@code other} is safe. */
   public boolean flowsTo(Label other) {
+    /*
     return this.confidentiality.lessThanOrEqualTo(other.confidentiality)
         && other.integrity.lessThanOrEqualTo(this.integrity);
+    */
+    return other.confidentiality().and(this.integrity()).actsFor(
+        this.confidentiality().and(other.integrity()));
   }
 
   @Override
@@ -101,14 +109,20 @@ public class Label implements Lattice<Label>, TrustLattice<Label> {
 
   @Override
   public Label join(Label with) {
+    /*
     return new Label(
         this.confidentiality.join(with.confidentiality), this.integrity.meet(with.integrity));
+    */
+    return this.and(with).confidentiality().and(this.or(with).integrity());
   }
 
   @Override
   public Label meet(Label with) {
+    /*
     return new Label(
         this.confidentiality.meet(with.confidentiality), this.integrity.join(with.integrity));
+    */
+    return this.or(with).confidentiality().and(this.and(with).integrity());
   }
 
   /**
@@ -131,23 +145,23 @@ public class Label implements Lattice<Label>, TrustLattice<Label> {
 
   @Override
   public boolean actsFor(Label other) {
-    return other.confidentiality.lessThanOrEqualTo(this.confidentiality)
-        && other.integrity.lessThanOrEqualTo(this.integrity);
+    return this.confidentiality.lessThanOrEqualTo(other.confidentiality)
+        && this.integrity.lessThanOrEqualTo(other.integrity);
   }
 
   @Override
   public Label and(Label with) {
     final FreeDistributiveLattice<Principal> confidentiality =
-        this.confidentiality.join(with.confidentiality);
-    final FreeDistributiveLattice<Principal> integrity = this.integrity.join(with.integrity);
+        this.confidentiality.meet(with.confidentiality);
+    final FreeDistributiveLattice<Principal> integrity = this.integrity.meet(with.integrity);
     return new Label(confidentiality, integrity);
   }
 
   @Override
   public Label or(Label with) {
     final FreeDistributiveLattice<Principal> confidentiality =
-        this.confidentiality.meet(with.confidentiality);
-    final FreeDistributiveLattice<Principal> integrity = this.integrity.meet(with.integrity);
+        this.confidentiality.join(with.confidentiality);
+    final FreeDistributiveLattice<Principal> integrity = this.integrity.join(with.integrity);
     return new Label(confidentiality, integrity);
   }
 
@@ -173,8 +187,8 @@ public class Label implements Lattice<Label>, TrustLattice<Label> {
 
   @Override
   public String toString() {
-    final String confidentialityStr = this.confidentiality.toString("&", "|");
-    final String integrityStr = this.integrity.toString("&", "|");
+    final String confidentialityStr = this.confidentiality.toString("|", "&");
+    final String integrityStr = this.integrity.toString("|", "&");
 
     String expression;
     if (this.equals(weakest())) {

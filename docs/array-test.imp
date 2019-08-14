@@ -19,7 +19,7 @@ process main {
     }
 
     scale : int{A & B};
-    scale = downgrade(a_sum, {A & B}) + downgrade(b_sum, {A & B});
+    scale = endorse(a_sum, {A & B<-}) + endorse(b_sum, {B & A<-});
 
     sum : int{A & B};
     sum = 0;
@@ -30,7 +30,7 @@ process main {
     }
 
     prodsum : int{A && B};
-    prodsum = downgrade(sum, {A && B});
+    prodsum = declassify(sum, {A && B});
 }
 
 host alice : {A};

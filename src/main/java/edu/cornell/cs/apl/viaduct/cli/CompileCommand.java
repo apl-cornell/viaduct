@@ -2,6 +2,7 @@ package edu.cornell.cs.apl.viaduct.cli;
 
 import com.github.rvesse.airline.annotations.Command;
 import com.github.rvesse.airline.annotations.Option;
+
 import edu.cornell.cs.apl.viaduct.imp.HostTrustConfiguration;
 import edu.cornell.cs.apl.viaduct.imp.ImpCommunicationCostEstimator;
 import edu.cornell.cs.apl.viaduct.imp.ImpProtocolSearchStrategy;
@@ -21,21 +22,26 @@ import edu.cornell.cs.apl.viaduct.pdg.PdgNode;
 import edu.cornell.cs.apl.viaduct.pdg.ProgramDependencyGraph;
 import edu.cornell.cs.apl.viaduct.protocol.Protocol;
 import edu.cornell.cs.apl.viaduct.protocol.ProtocolSelection;
+
 import guru.nidi.graphviz.engine.Format;
 import guru.nidi.graphviz.engine.Graphviz;
 import guru.nidi.graphviz.engine.GraphvizCmdLineEngine;
 import guru.nidi.graphviz.engine.GraphvizServerEngine;
 import guru.nidi.graphviz.engine.GraphvizV8Engine;
 import guru.nidi.graphviz.model.MutableGraph;
+
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.OutputStreamWriter;
+import java.io.StringWriter;
 import java.io.Writer;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
+
 import org.apache.commons.io.FilenameUtils;
 
 @Command(name = "compile", description = "Compile ideal protocol to secure distributed program")
@@ -47,7 +53,7 @@ public class CompileCommand extends BaseCommand {
   }
 
   @Option(
-      name = {"-c", "--hosts"},
+      name = {"-h", "--hosts"},
       title = "files",
       description =
           "Read host trust configuration from <files>."
@@ -80,6 +86,13 @@ public class CompileCommand extends BaseCommand {
   // @com.github.rvesse.airline.annotations.restrictions.File(readable = false)
   private String protocolGraphOutput = null;
 
+  @Option(
+      name = {"-c", "--constraint-graph"},
+      title = "file.ext",
+      description =
+          "Write label constraint graph to <file.ext>.")
+  private String constraintGraphOutput = null;
+
   /**
    * Write the given graph to the output file if the filename is not {@code null}. Do nothing
    * otherwise. The output format is determined automatically from the file extension.
@@ -102,6 +115,27 @@ public class CompileCommand extends BaseCommand {
     } else {
       Format format = formatFromExtension(fileExtension);
       Graphviz.fromGraph(graph.get()).render(format).toFile(new File(file));
+    }
+  }
+
+  private static void dumpConstraints(Consumer<Writer> graph, String file) throws Exception {
+    if (file == null) {
+      return;
+    }
+
+    String fileExtension = FilenameUtils.getExtension(file);
+    if (fileExtension.equals("dot")) {
+      try (Writer writer =
+          new BufferedWriter(
+              new OutputStreamWriter(new FileOutputStream(file), StandardCharsets.UTF_8))) {
+        graph.accept(writer);
+      }
+
+    } else {
+      Format format = formatFromExtension(fileExtension);
+      Writer writer = new StringWriter();
+      graph.accept(writer);
+      Graphviz.fromString(writer.toString()).render(format).toFile(new File(file));
     }
   }
 
@@ -137,7 +171,9 @@ public class CompileCommand extends BaseCommand {
     typeChecker.run(main);
 
     // information flow constraint solving
-    InformationFlowChecker.run(main);
+    InformationFlowChecker checker = InformationFlowChecker.run(main);
+    // Dump PDG with information flow labels to a file (if requested).
+    dumpConstraints((writer) -> { checker.exportDotGraph(writer); }, constraintGraphOutput);
 
     // Generate program dependency graph.
     final ProgramDependencyGraph<ImpAstNode> pdg = new ImpPdgBuilderVisitor().generatePDG(main);

@@ -97,6 +97,7 @@ dependencies {
 
     // Graphs
     implementation group: 'org.jgrapht', name: 'jgrapht-core', version: '1.3.1'
+    implementation group: 'org.jgrapht', name: 'jgrapht-io', version: '1.3.1'
 
     // Command-line-argument parsing
     implementation group: 'com.github.rvesse', name: 'airline', version: '2.7.0'

@@ -13,6 +13,10 @@ class PseudocomplementEdge<A extends BrouwerianLattice<A>> extends DefaultEdge
     this.rhs = rhs;
   }
 
+  public A getPseudocomplementedConstant() {
+    return this.rhs;
+  }
+
   @Override
   public A propagate(A lhs) {
     return lhs.relativePseudocomplement(rhs);

@@ -12,6 +12,10 @@ class JoinEdge<A extends Lattice<A>> extends DefaultEdge implements DataFlowEdge
     this.lhs = lhs;
   }
 
+  public A getJoinConstant() {
+    return this.lhs;
+  }
+
   @Override
   public A propagate(A rhs) {
     return lhs.join(rhs);

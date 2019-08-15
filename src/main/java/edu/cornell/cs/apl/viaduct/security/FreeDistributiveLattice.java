@@ -88,35 +88,36 @@ public final class FreeDistributiveLattice<A>
     return new FreeDistributiveLattice<>(candidates);
   }
 
-  @Override
-  /** returns the relative pseudocomplement of that relative to this.
-   * the relative pseudocomplement is greatest x s.t. that & x <= this.
+  /**
+   * <p>Returns the relative pseudocomplement of {@code that} relative to {@code this}.
+   * the relative pseudocomplement is greatest x s.t. {@code that & x <= this}.</p>
    *
-   * how does this work? we are dealing with constraints of the form
+   * <p>How does this work? we are dealing with constraints of the form</p>
    *
    * {@code (A1 | ... | Am) & x <= B1 | ... | Bn}
    *
-   * which can be rewritten as
+   * <p>which can be rewritten as</p>
    *
    * {@code (A1&x) | ... | (Am&x) <= B1 | ... | Bn}
    *
-   * this inequality only holds true if every meet on the left can be "covered" on the right
+   * <p>This inequality only holds true if every meet on the left can be "covered" on the right
    * s.t. a meet on the right side is a subset of the meet in the left side.
-   * for every meet on the left Ai, we complement it with every meet on the right Bj.
+   * For every meet on the left Ai, we complement it with every meet on the right Bj.
    * because we want the greatest solution, we join these complements together,
-   * arriving at an upper bound for x:
+   * arriving at an upper bound for x:</p>
    *
    * {@code x <= Ci1 | ... | Cin}
    *
-   * where {@code Cij = Bj \ Ai}.
+   * <p>where {@code Cij = Bj \ Ai}.</p>
    *
-   * But we have to do the same process for all meets on the left, so we get m upper bounds.
-   * these have to be all simultaneously satisfied, so we take the meet of the upper bounds:
+   * <p>But we have to do the same process for all meets on the left, so we get m upper bounds.
+   * these have to be all simultaneously satisfied, so we take the meet of the upper bounds:</p>
    *
    * {@code x = (C11 | ... | C1n) & ... & (Cm1 | ... | Cmn)}
    *
-   * the algorithm below computes exactly this.
+   * <p>The algorithm below computes exactly this.</p>
    * */
+  @Override
   public FreeDistributiveLattice<A> relativePseudocomplement(FreeDistributiveLattice<A> that) {
     return that.joinOfMeets.foldRight(top(), (thatMeet, acc) -> {
       Set<Set<A>> newJoinOfMeets = this.joinOfMeets.map((thisMeet) -> thisMeet.removeAll(thatMeet));

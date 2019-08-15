@@ -56,4 +56,9 @@ class FreeDistributiveLatticeTest {
   void testRelativePseudocomplement9() {
     assertEquals(bottom.relativePseudocomplement(elemA), bottom);
   }
+
+  @Test
+  void testRelativePseudocomplement10() {
+    assertEquals(elemA.join(elemB).relativePseudocomplement(elemA), top);
+  }
 }

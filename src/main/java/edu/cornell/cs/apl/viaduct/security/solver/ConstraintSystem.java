@@ -1,6 +1,6 @@
 package edu.cornell.cs.apl.viaduct.security.solver;
 
-import edu.cornell.cs.apl.viaduct.util.CoHeytingAlgebra;
+import edu.cornell.cs.apl.viaduct.util.BrouwerianLattice;
 import edu.cornell.cs.apl.viaduct.util.PartialOrder;
 import edu.cornell.cs.apl.viaduct.util.dataflow.DataFlow;
 import edu.cornell.cs.apl.viaduct.util.dataflow.DataFlow.DataflowDirection;
@@ -18,7 +18,7 @@ import org.jgrapht.graph.DirectedPseudograph;
  * A minimum solution assigns the smallest possible value to each variable, where smallest is with
  * respect to {@link PartialOrder#lessThanOrEqualTo(Object)}.
  */
-public class ConstraintSystem<A extends CoHeytingAlgebra<A>> {
+public class ConstraintSystem<A extends BrouwerianLattice<A>> {
   /**
    * Maintain constraints as a graph. Each vertex corresponds to an atomic term (a variable or a
    * constant), and an edge from term {@code t1} to {@code t2} corresponds to the constraint {@code
@@ -77,9 +77,11 @@ public class ConstraintSystem<A extends CoHeytingAlgebra<A>> {
   /** Add the constraint {@code lhs <= rhs} to the system. */
   public void addLessThanOrEqualToConstraint(LeftHandTerm<A> lhs, RightHandTerm<A> rhs) {
     if (rhs instanceof ConstraintValue) {
-      constraints.addEdge(lhs.getNode(), (ConstraintValue<A>) rhs, lhs.getOutEdge());
+      constraints.addEdge((ConstraintValue<A>)rhs, lhs.getNode(), lhs.getInEdge());
+
     } else if (lhs instanceof ConstraintValue) {
-      constraints.addEdge((ConstraintValue<A>) lhs, rhs.getNode(), rhs.getInEdge());
+      constraints.addEdge(rhs.getNode(), (ConstraintValue<A>)lhs, rhs.getOutEdge());
+
     } else {
       throw new IllegalArgumentException(
           "Either the left-hand or the right-hand side needs to be an atomic term.");

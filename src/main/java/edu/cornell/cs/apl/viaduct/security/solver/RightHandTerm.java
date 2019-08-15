@@ -6,7 +6,7 @@ import edu.cornell.cs.apl.viaduct.util.dataflow.DataFlowEdge;
 public interface RightHandTerm<A> extends ConstraintTerm<A> {
   /**
    * Return an edge that captures the operation preformed by this term. In the constraint graph,
-   * this will become an incoming edge of {@link #getNode()}.
+   * this will become an outgoing edge of {@link #getNode()}.
    */
-  DataFlowEdge<A> getInEdge();
+  DataFlowEdge<A> getOutEdge();
 }

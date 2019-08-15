@@ -1,12 +1,12 @@
 package edu.cornell.cs.apl.viaduct.security.solver;
 
 import com.google.auto.value.AutoValue;
-import edu.cornell.cs.apl.viaduct.util.CoHeytingAlgebra;
+import edu.cornell.cs.apl.viaduct.util.BrouwerianLattice;
 
 /** Term that represents a constant element. */
 @AutoValue
-public abstract class ConstantTerm<A extends CoHeytingAlgebra<A>> implements ConstraintValue<A> {
-  static <A extends CoHeytingAlgebra<A>> ConstantTerm<A> create(A value) {
+public abstract class ConstantTerm<A extends BrouwerianLattice<A>> implements ConstraintValue<A> {
+  static <A extends BrouwerianLattice<A>> ConstantTerm<A> create(A value) {
     return new AutoValue_ConstantTerm<>(value);
   }
 

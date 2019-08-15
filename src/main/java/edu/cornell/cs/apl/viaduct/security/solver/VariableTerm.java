@@ -1,9 +1,9 @@
 package edu.cornell.cs.apl.viaduct.security.solver;
 
-import edu.cornell.cs.apl.viaduct.util.CoHeytingAlgebra;
+import edu.cornell.cs.apl.viaduct.util.BrouwerianLattice;
 
 /** A variable for the solver to find a value for. */
-public final class VariableTerm<A extends CoHeytingAlgebra<A>> implements ConstraintValue<A> {
+public final class VariableTerm<A extends BrouwerianLattice<A>> implements ConstraintValue<A> {
   private final A bottom;
 
   VariableTerm(A bottom) {

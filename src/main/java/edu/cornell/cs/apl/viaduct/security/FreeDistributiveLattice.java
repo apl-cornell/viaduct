@@ -1,6 +1,6 @@
 package edu.cornell.cs.apl.viaduct.security;
 
-import edu.cornell.cs.apl.viaduct.util.CoHeytingAlgebra;
+import edu.cornell.cs.apl.viaduct.util.BrouwerianLattice;
 import io.vavr.collection.HashSet;
 import io.vavr.collection.Set;
 import java.util.Objects;
@@ -14,7 +14,7 @@ import java.util.Objects;
  * <p>{@code a \/ (b /\ c) == (a \/ b) /\ (a \/ c)}
  */
 public final class FreeDistributiveLattice<A>
-    implements CoHeytingAlgebra<FreeDistributiveLattice<A>> {
+    implements BrouwerianLattice<FreeDistributiveLattice<A>> {
   private static final FreeDistributiveLattice<?> BOTTOM =
       new FreeDistributiveLattice<>(HashSet.of());
 
@@ -89,9 +89,13 @@ public final class FreeDistributiveLattice<A>
   }
 
   @Override
-  public FreeDistributiveLattice<A> subtract(FreeDistributiveLattice<A> that) {
-    // TODO: implement
-    return null;
+  /** returns the relative pseudocomplement of that relative to this.
+   * the relative pseudocomplement is greatest x s.t. that & x <= this */
+  public FreeDistributiveLattice<A> relativePseudocomplement(FreeDistributiveLattice<A> that) {
+    return that.joinOfMeets.foldRight(top(), (thatMeet, acc) -> {
+      Set<Set<A>> newJoinOfMeets = this.joinOfMeets.map((thisMeet) -> thisMeet.removeAll(thatMeet));
+      return acc.meet(new FreeDistributiveLattice<>(newJoinOfMeets));
+    });
   }
 
   @Override

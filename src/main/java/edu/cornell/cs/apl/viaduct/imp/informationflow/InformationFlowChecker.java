@@ -32,6 +32,7 @@ import edu.cornell.cs.apl.viaduct.security.Label;
 import edu.cornell.cs.apl.viaduct.security.Principal;
 import edu.cornell.cs.apl.viaduct.security.solver.ConstantTerm;
 import edu.cornell.cs.apl.viaduct.security.solver.ConstraintSystem;
+import edu.cornell.cs.apl.viaduct.security.solver.ConstraintValue;
 import edu.cornell.cs.apl.viaduct.security.solver.UnsatisfiableConstraintException;
 import edu.cornell.cs.apl.viaduct.security.solver.VariableTerm;
 import java.util.HashMap;
@@ -92,8 +93,8 @@ public class InformationFlowChecker
   private void addFlowsToConstraint(LabelTerm lhs, LabelTerm rhs) {
     // NOTE: it is very important these constraints mirror those in {@link Label#flowsTo(Label)}.
     constraintSystem.addLessThanOrEqualToConstraint(
-        lhs.getConfidentiality(), rhs.getConfidentiality());
-    constraintSystem.addLessThanOrEqualToConstraint(rhs.getIntegrity(), lhs.getIntegrity());
+        rhs.getConfidentiality(), lhs.getConfidentiality());
+    constraintSystem.addLessThanOrEqualToConstraint(lhs.getIntegrity(), rhs.getIntegrity());
   }
 
   private LabelConstant createLabelConstant(Label label) {
@@ -177,21 +178,18 @@ public class InformationFlowChecker
     addFlowsToConstraint(pc, l);
 
     // Non-malleable downgrade constraints
-    /*
+    final LabelTerm e = downgradeNode.getExpression().accept(this);
+    final ConstraintValue<FreeDistributiveLattice<Principal>> ec = e.getConfidentiality();
+    final ConstraintValue<FreeDistributiveLattice<Principal>> ei = e.getIntegrity();
+    final ConstraintValue<FreeDistributiveLattice<Principal>> pcc = pc.getConfidentiality();
+    final ConstraintValue<FreeDistributiveLattice<Principal>> pci = pc.getIntegrity();
     final ConstantTerm<FreeDistributiveLattice<Principal>> dc = l.getConfidentiality();
     final ConstantTerm<FreeDistributiveLattice<Principal>> di = l.getIntegrity();
-    final LabelTerm e = downgradeNode.getExpression().accept(this);
 
-    constraintSystem.addLessThanOrEqualToConstraint(
-        e.getConfidentiality(), dc.join(pc.getIntegrity()));
-    constraintSystem.addLessThanOrEqualToConstraint(
-        e.getConfidentiality(), dc.join(e.getIntegrity()));
-
-    constraintSystem.addLessThanOrEqualToConstraint(
-        di.meet(pc.getConfidentiality()), e.getIntegrity());
-    constraintSystem.addLessThanOrEqualToConstraint(
-        di.meet(e.getConfidentiality()), e.getIntegrity());
-    */
+    constraintSystem.addLessThanOrEqualToConstraint(dc.meet(pci), ec);
+    constraintSystem.addLessThanOrEqualToConstraint(dc.meet(ei), ec);
+    constraintSystem.addLessThanOrEqualToConstraint(ei, di.join(pcc));
+    constraintSystem.addLessThanOrEqualToConstraint(ei, di.join(ec));
 
     return l;
   }

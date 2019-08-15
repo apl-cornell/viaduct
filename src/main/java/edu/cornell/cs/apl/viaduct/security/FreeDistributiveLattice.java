@@ -90,7 +90,33 @@ public final class FreeDistributiveLattice<A>
 
   @Override
   /** returns the relative pseudocomplement of that relative to this.
-   * the relative pseudocomplement is greatest x s.t. that & x <= this */
+   * the relative pseudocomplement is greatest x s.t. that & x <= this.
+   *
+   * how does this work? we are dealing with constraints of the form
+   *
+   * {@code (A1 | ... | Am) & x <= B1 | ... | Bn}
+   *
+   * which can be rewritten as
+   *
+   * {@code (A1&x) | ... | (Am&x) <= B1 | ... | Bn}
+   *
+   * this inequality only holds true if every meet on the left can be "covered" on the right
+   * s.t. a meet on the right side is a subset of the meet in the left side.
+   * for every meet on the left Ai, we complement it with every meet on the right Bj.
+   * because we want the greatest solution, we join these complements together,
+   * arriving at an upper bound for x:
+   *
+   * {@code x <= Ci1 | ... | Cin}
+   *
+   * where {@code Cij = Bj \ Ai}.
+   *
+   * But we have to do the same process for all meets on the left, so we get m upper bounds.
+   * these have to be all simultaneously satisfied, so we take the meet of the upper bounds:
+   *
+   * {@code x = (C11 | ... | C1n) & ... & (Cm1 | ... | Cmn)}
+   *
+   * the algorithm below computes exactly this.
+   * */
   public FreeDistributiveLattice<A> relativePseudocomplement(FreeDistributiveLattice<A> that) {
     return that.joinOfMeets.foldRight(top(), (thatMeet, acc) -> {
       Set<Set<A>> newJoinOfMeets = this.joinOfMeets.map((thisMeet) -> thisMeet.removeAll(thatMeet));

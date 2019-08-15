@@ -106,33 +106,33 @@ stmt ::=
   ;
 
 stmt_basic ::=
-    variable:var COLON type:ty label:lab {:
+    type:ty label:lab variable:var {:
       RESULT = VariableDeclarationNode.create(var, ty, lab);
     :}
 
-  | variable:var COLON type:ty {:
+  | type:ty variable:var {:
       RESULT = VariableDeclarationNode.create(var, ty, null);
     :}
 
-  | variable:var COLON type:ty label:lab EQ expr:e {:
+  | type:ty label:lab variable:var EQ expr:e {:
       List<StmtNode> stmts = new ArrayList<>();
       stmts.add(VariableDeclarationNode.create(var, ty, lab));
       stmts.add(AssignNode.create(var, e));
       RESULT = BlockNode.create(stmts);
     :}
 
-  | variable:var COLON type:ty EQ expr:e {:
+  | type:ty variable:var EQ expr:e {:
       List<StmtNode> stmts = new ArrayList<>();
       stmts.add(VariableDeclarationNode.create(var, ty, null));
       stmts.add(AssignNode.create(var, e));
       RESULT = BlockNode.create(stmts);
     :}
 
-  | variable:var OPEN_SQBRACE expr:e CLOSE_SQBRACE COLON type:ty label:lab {:
+  | type:ty label:lab variable:var OPEN_SQBRACE expr:e CLOSE_SQBRACE {:
       RESULT = ArrayDeclarationNode.create(var, e, ty, lab);
     :}
 
-  | variable:var OPEN_SQBRACE expr:e CLOSE_SQBRACE COLON type:ty {:
+  | type:ty variable:var OPEN_SQBRACE expr:e CLOSE_SQBRACE {:
       RESULT = ArrayDeclarationNode.create(var, e, ty, null);
     :}
 

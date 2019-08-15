@@ -1,26 +1,24 @@
 process main {
-    a[100] : int{A};
-    b[100] : int{B};
+    int{A} a[100];
+    int{B} b[100];
 
-    a_sum : int{A} = 0;
-    for (ai : int = 0; ai < 100; ai++) {
+    int{A} a_sum = 0;
+    for (int ai = 0; ai < 100; ai++) {
         a_sum += a[ai];
     }
 
-    b_sum : int{B} = 0;
-    for (bi : int{B} = 0; bi < 100; bi++) {
+    int{B} b_sum = 0;
+    for (int{B} bi = 0; bi < 100; bi++) {
         b_sum += b[bi];
     }
 
-    scale : int{A & B};
-    scale = endorse(a_sum, {A & B<-}) + endorse(b_sum, {B & A<-});
-
-    sum : int{A & B} = 0;
-    for (j : int{A&B} = 0; j < 100; j++) {
+    int{A & B} scale = endorse(a_sum, {A & B<-}) + endorse(b_sum, {B & A<-});
+    int{A & B} sum = 0;
+    for (int{A & B} j = 0; j < 100; j++) {
         sum += scale * j;
     }
 
-    prodsum : int{A && B} = declassify(sum, {A && B});
+    int{A && B} prodsum = declassify(sum, {A && B});
 }
 
 host alice : {A};

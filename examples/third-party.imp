@@ -1,8 +1,8 @@
 /* Millionaire's problem with a trusted third party. */
 process main {
-  a : int{A & B<-};
-  b : int{B & A<-};
-  b_richer : bool{A & B};
+  int{A & B<-} a;
+  int{B & A<-} b;
+  bool{A & B} b_richer;
 
   a = 5;
   b = 10;

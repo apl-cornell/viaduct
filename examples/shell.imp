@@ -1,9 +1,9 @@
 process main {
-  cin : int{C};
-  ain : int{A};
-  shell : int{C & A<-};
-  guess : int{A & C<-};
-  win : int{(A | C)-> & (A & C)<-};
+  int{C} cin;
+  int{A} ain;
+  int{C & A<-} shell;
+  int{A & C<-} guess;
+  int{(A | C)-> & (A & C)<-} win;
 
   cin <- recv chuck_main;
   ain <- recv alice_main;
@@ -13,7 +13,7 @@ process main {
   guess = endorse(ain, {A & C<-});
 
   /* Chuck must prove that `shell` is valid without revealing its value. */
-  win_secret : int{A & C};
+  int{A & C} win_secret;
   if (1 <= shell && shell <= 3) {
     if (shell == guess) {
       win_secret = 1;

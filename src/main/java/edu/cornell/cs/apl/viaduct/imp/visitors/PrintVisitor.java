@@ -174,14 +174,14 @@ public class PrintVisitor
   public Void visit(VariableDeclarationNode varDeclNode) {
     addIndentation();
 
-    buffer.append(varDeclNode.getVariable());
-    buffer.append(" : ");
     buffer.append(varDeclNode.getType());
 
     Label label = varDeclNode.getLabel();
     if (label != null) {
       buffer.append(label);
     }
+
+    buffer.append(varDeclNode.getVariable());
 
     addSeparator();
     return null;
@@ -191,19 +191,18 @@ public class PrintVisitor
   public Void visit(ArrayDeclarationNode arrayDecl) {
     addIndentation();
 
-    buffer.append(arrayDecl.getVariable());
-
-    buffer.append('[');
-    arrayDecl.getLength().accept(this);
-    buffer.append(']');
-
-    buffer.append(" : ");
     buffer.append(arrayDecl.getType());
 
     Label label = arrayDecl.getLabel();
     if (label != null) {
       buffer.append(label);
     }
+
+    buffer.append(arrayDecl.getVariable());
+
+    buffer.append('[');
+    arrayDecl.getLength().accept(this);
+    buffer.append(']');
 
     addSeparator();
     return null;

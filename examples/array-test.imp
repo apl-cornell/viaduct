@@ -1,13 +1,13 @@
 process main {
-    a[10] : int{A};
-    b[10] : int{B};
+    int{A} a[10];
+    int{B} b[10];
 
-    i : int{A};
+    int{A} i;
     for (i = 0; i < 10; i++) {
         a[i] = i * 50;
     }
 
-    j : int{B};
+    int{B} j;
     for (j = 0; j < 10; j++) {
         b[j] = j * 100;
     }

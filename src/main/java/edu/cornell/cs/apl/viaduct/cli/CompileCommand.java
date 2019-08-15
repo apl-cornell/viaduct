@@ -127,14 +127,14 @@ public class CompileCommand extends BaseCommand {
   public Void call() throws Exception {
     final ProgramNode program = this.parse();
 
-    final TypeCheckVisitor typeChecker = new TypeCheckVisitor();
-    typeChecker.run(program);
-
     final HostTrustConfiguration trustConfiguration = program.getHostTrustConfiguration();
 
     StmtNode main = program.getProcessCode(ProcessName.getMain());
     ImpPdgBuilderPreprocessVisitor preprocessor = new ImpPdgBuilderPreprocessVisitor();
     main = preprocessor.run(main);
+
+    final TypeCheckVisitor typeChecker = new TypeCheckVisitor();
+    typeChecker.run(main);
 
     // information flow constraint solving
     InformationFlowChecker.run(main);

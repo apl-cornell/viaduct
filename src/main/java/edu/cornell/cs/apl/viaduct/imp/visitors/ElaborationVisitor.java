@@ -32,6 +32,6 @@ public class ElaborationVisitor extends FormatBlockVisitor {
 
     StmtNode newInit = forNode.getInitialize().accept(this);
     StmtNode elaboratedWhile = whileLoop.accept(this);
-    return BlockNode.create(newInit, elaboratedWhile);
+    return BlockNode.create(newInit, elaboratedWhile).accept(this);
   }
 }

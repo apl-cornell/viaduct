@@ -5,7 +5,7 @@ process main {
     a_sum : int{A};
     a_sum = 0;
 
-    ai : int{A};
+    ai : int;
     for (ai = 0; ai < 100; ai++) {
         a_sum += a[ai];
     }

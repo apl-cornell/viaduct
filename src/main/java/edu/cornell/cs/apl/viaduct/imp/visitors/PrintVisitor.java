@@ -171,13 +171,17 @@ public class PrintVisitor
   }
 
   @Override
-  public Void visit(VariableDeclarationNode variableDeclarationNode) {
+  public Void visit(VariableDeclarationNode varDeclNode) {
     addIndentation();
 
-    buffer.append(variableDeclarationNode.getVariable());
+    buffer.append(varDeclNode.getVariable());
     buffer.append(" : ");
-    buffer.append(variableDeclarationNode.getType());
-    buffer.append(variableDeclarationNode.getLabel());
+    buffer.append(varDeclNode.getType());
+
+    Label label = varDeclNode.getLabel();
+    if (label != null) {
+      buffer.append(label);
+    }
 
     addSeparator();
     return null;
@@ -195,7 +199,11 @@ public class PrintVisitor
 
     buffer.append(" : ");
     buffer.append(arrayDecl.getType());
-    buffer.append(arrayDecl.getLabel());
+
+    Label label = arrayDecl.getLabel();
+    if (label != null) {
+      buffer.append(label);
+    }
 
     addSeparator();
     return null;

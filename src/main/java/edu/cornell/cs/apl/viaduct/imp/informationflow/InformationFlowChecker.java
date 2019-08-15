@@ -195,24 +195,40 @@ public class InformationFlowChecker
   }
 
   @Override
-  public LabelTerm visit(VariableDeclarationNode variableDeclarationNode) {
-    final LabelConstant l = createLabelConstant(variableDeclarationNode.getLabel());
-    variableDeclarationNode.setTrustLabel(l);
+  public LabelTerm visit(VariableDeclarationNode varDeclNode) {
+    final Label varLabel = varDeclNode.getLabel();
 
-    declarations.put(variableDeclarationNode.getVariable(), l);
+    LabelTerm l;
+    if (varLabel != null) {
+      l = createLabelConstant(varDeclNode.getLabel());
+
+    } else {
+      l = new LabelVariable();
+    }
+
+    varDeclNode.setTrustLabel(l);
+    declarations.put(varDeclNode.getVariable(), l);
 
     return l;
   }
 
   @Override
-  public LabelTerm visit(ArrayDeclarationNode arrayDeclarationNode) {
-    final LabelConstant l = createLabelConstant(arrayDeclarationNode.getLabel());
-    arrayDeclarationNode.setTrustLabel(l);
+  public LabelTerm visit(ArrayDeclarationNode arrayDeclNode) {
+    final Label arrayLabel = arrayDeclNode.getLabel();
 
-    final LabelTerm e = arrayDeclarationNode.getLength().accept(this);
+    LabelTerm l;
+    if (arrayLabel != null) {
+      l = createLabelConstant(arrayDeclNode.getLabel());
+
+    } else {
+      l = new LabelVariable();
+    }
+
+    arrayDeclNode.setTrustLabel(l);
+    final LabelTerm e = arrayDeclNode.getLength().accept(this);
     addFlowsToConstraint(e, l);
 
-    declarations.put(arrayDeclarationNode.getVariable(), l);
+    declarations.put(arrayDeclNode.getVariable(), l);
 
     return l;
   }

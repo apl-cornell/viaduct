@@ -1,8 +1,12 @@
 package edu.cornell.cs.apl.viaduct.imp.ast;
 
 import com.google.auto.value.AutoValue;
+
 import edu.cornell.cs.apl.viaduct.imp.visitors.StmtVisitor;
 import edu.cornell.cs.apl.viaduct.security.Label;
+
+import javax.annotation.Nullable;
+
 
 @AutoValue
 public abstract class ArrayDeclarationNode extends StmtNode {
@@ -15,7 +19,7 @@ public abstract class ArrayDeclarationNode extends StmtNode {
    * @param label security label of the array and all its elements
    */
   public static ArrayDeclarationNode create(
-      Variable variable, ExpressionNode length, ImpType type, Label label) {
+      Variable variable, ExpressionNode length, ImpType type, @Nullable Label label) {
     return new AutoValue_ArrayDeclarationNode(variable, length, type, label);
   }
 
@@ -25,6 +29,7 @@ public abstract class ArrayDeclarationNode extends StmtNode {
 
   public abstract ImpType getType();
 
+  @Nullable
   public abstract Label getLabel();
 
   @Override

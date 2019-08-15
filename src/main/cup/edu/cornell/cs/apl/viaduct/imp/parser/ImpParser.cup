@@ -110,8 +110,16 @@ stmt_basic ::=
       RESULT = VariableDeclarationNode.create(var, ty, lab);
     :}
 
+  | variable:var COLON type:ty {:
+      RESULT = VariableDeclarationNode.create(var, ty, null);
+    :}
+
   | variable:var OPEN_SQBRACE expr:e CLOSE_SQBRACE COLON type:ty label:lab {:
       RESULT = ArrayDeclarationNode.create(var, e, ty, lab);
+    :}
+
+  | variable:var OPEN_SQBRACE expr:e CLOSE_SQBRACE COLON type:ty {:
+      RESULT = ArrayDeclarationNode.create(var, e, ty, null);
     :}
 
   | LET variable:var EQ expr:e {:

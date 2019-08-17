@@ -93,6 +93,14 @@ public class CompileCommand extends BaseCommand {
           "Write label constraint graph to <file.ext>.")
   private String constraintGraphOutput = null;
 
+  @Option(
+      name = {"-s", "--skip"},
+      description =
+          "End compilation early. With this option enabled, Viaduct will"
+            + " end as soon as the last debugging option (e.g. graph dump)"
+            + " has been executed")
+  private boolean skip;
+
   /**
    * Write the given graph to the output file if the filename is not {@code null}. Do nothing
    * otherwise. The output format is determined automatically from the file extension.
@@ -175,6 +183,10 @@ public class CompileCommand extends BaseCommand {
     // Dump PDG with information flow labels to a file (if requested).
     dumpConstraints((writer) -> { checker.exportDotGraph(writer); }, constraintGraphOutput);
 
+    if (this.skip && labelGraphOutput == null && protocolGraphOutput == null) {
+      return null;
+    }
+
     // Generate program dependency graph.
     final ProgramDependencyGraph<ImpAstNode> pdg = new ImpPdgBuilderVisitor().generatePDG(main);
 
@@ -182,6 +194,10 @@ public class CompileCommand extends BaseCommand {
     // Dump PDG with information flow labels to a file (if requested).
     dumpGraph(() -> PdgDotPrinter.pdgDotGraphWithLabels(pdg, printer),
         labelGraphOutput);
+
+    if (this.skip && protocolGraphOutput == null) {
+      return null;
+    }
 
     // Select cryptographic protocols for each node.
     final ImpProtocolSearchStrategy strategy =
@@ -195,6 +211,10 @@ public class CompileCommand extends BaseCommand {
     // Dump PDG with protocol information to a file (if requested).
     dumpGraph(() -> PdgDotPrinter.pdgDotGraphWithProtocols(pdg, protocolMap, strategy, printer),
         protocolGraphOutput);
+
+    if (this.skip) {
+      return null;
+    }
 
     if (pdg.getOrderedNodes().size() == protocolMap.size()) {
       // Found a protocol for every node! Output synthesized distributed program.

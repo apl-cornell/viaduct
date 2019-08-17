@@ -2,11 +2,13 @@ package edu.cornell.cs.apl.viaduct.util.dataflow;
 
 import edu.cornell.cs.apl.viaduct.util.Lattice;
 import edu.cornell.cs.apl.viaduct.util.UniqueQueue;
+
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
+
 import org.jgrapht.Graph;
 import org.jgrapht.Graphs;
 import org.jgrapht.alg.connectivity.KosarajuStrongConnectivityInspector;

@@ -1,9 +1,9 @@
 package edu.cornell.cs.apl.viaduct.security.solver;
 
-import edu.cornell.cs.apl.viaduct.util.BrouwerianLattice;
+import edu.cornell.cs.apl.viaduct.util.HeytingAlgebra;
 
 /** A variable for the solver to find a value for. */
-public final class VariableTerm<A extends BrouwerianLattice<A>> implements ConstraintValue<A> {
+public final class VariableTerm<A extends HeytingAlgebra<A>> implements ConstraintValue<A> {
   private final String id;
   private final String label;
   private final A bottom;

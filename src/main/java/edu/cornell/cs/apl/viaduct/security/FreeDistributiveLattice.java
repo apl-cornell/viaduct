@@ -1,6 +1,6 @@
 package edu.cornell.cs.apl.viaduct.security;
 
-import edu.cornell.cs.apl.viaduct.util.BrouwerianLattice;
+import edu.cornell.cs.apl.viaduct.util.HeytingAlgebra;
 import io.vavr.collection.HashSet;
 import io.vavr.collection.Set;
 import java.util.Objects;
@@ -14,7 +14,7 @@ import java.util.Objects;
  * <p>{@code a \/ (b /\ c) == (a \/ b) /\ (a \/ c)}
  */
 public final class FreeDistributiveLattice<A>
-    implements BrouwerianLattice<FreeDistributiveLattice<A>> {
+    implements HeytingAlgebra<FreeDistributiveLattice<A>> {
   private static final FreeDistributiveLattice<?> BOTTOM =
       new FreeDistributiveLattice<>(HashSet.of());
 
@@ -89,8 +89,8 @@ public final class FreeDistributiveLattice<A>
   }
 
   /**
-   * <p>Returns the relative pseudocomplement of {@code that} relative to {@code this}.
-   * the relative pseudocomplement is greatest x s.t. {@code that & x <= this}.</p>
+   * <p>Returns the relative pseudocomplement of {@code this} relative to {@code that}.
+   * the relative pseudocomplement is greatest x s.t. {@code this & x <= that}.</p>
    *
    * <p>How does this work? we are dealing with constraints of the form</p>
    *
@@ -115,12 +115,12 @@ public final class FreeDistributiveLattice<A>
    *
    * {@code x = (C11 | ... | C1n) & ... & (Cm1 | ... | Cmn)}
    *
-   * <p>The algorithm below computes exactly this.</p>
+   * <p>The algorithm below computes exactly this solution.</p>
    * */
   @Override
   public FreeDistributiveLattice<A> relativePseudocomplement(FreeDistributiveLattice<A> that) {
-    return that.joinOfMeets.foldRight(top(), (thatMeet, acc) -> {
-      Set<Set<A>> newJoinOfMeets = this.joinOfMeets.map((thisMeet) -> thisMeet.removeAll(thatMeet));
+    return this.joinOfMeets.foldRight(top(), (thisMeet, acc) -> {
+      Set<Set<A>> newJoinOfMeets = that.joinOfMeets.map((thatMeet) -> thatMeet.removeAll(thisMeet));
       return acc.meet(new FreeDistributiveLattice<>(newJoinOfMeets));
     });
   }

@@ -6,18 +6,18 @@ import org.jgrapht.graph.DefaultEdge;
 
 /** Applies meet with a constant before passing on the incoming value. */
 class JoinEdge<A extends Lattice<A>> extends DefaultEdge implements DataFlowEdge<A> {
-  private final A lhs;
+  private final A elem;
 
-  JoinEdge(A lhs) {
-    this.lhs = lhs;
+  JoinEdge(A elem) {
+    this.elem = elem;
   }
 
   public A getJoinConstant() {
-    return this.lhs;
+    return this.elem;
   }
 
   @Override
-  public A propagate(A rhs) {
-    return lhs.join(rhs);
+  public A propagate(A other) {
+    return this.elem.join(other);
   }
 }

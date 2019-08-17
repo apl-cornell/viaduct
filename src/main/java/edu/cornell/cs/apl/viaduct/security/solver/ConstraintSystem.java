@@ -1,7 +1,7 @@
 package edu.cornell.cs.apl.viaduct.security.solver;
 
-import edu.cornell.cs.apl.viaduct.util.BrouwerianLattice;
 import edu.cornell.cs.apl.viaduct.util.FreshNameGenerator;
+import edu.cornell.cs.apl.viaduct.util.HeytingAlgebra;
 import edu.cornell.cs.apl.viaduct.util.PartialOrder;
 import edu.cornell.cs.apl.viaduct.util.dataflow.DataFlow;
 import edu.cornell.cs.apl.viaduct.util.dataflow.DataFlow.DataflowDirection;
@@ -24,7 +24,7 @@ import org.jgrapht.io.DOTExporter;
  * A minimum solution assigns the smallest possible value to each variable, where smallest is with
  * respect to {@link PartialOrder#lessThanOrEqualTo(Object)}.
  */
-public class ConstraintSystem<A extends BrouwerianLattice<A>> {
+public class ConstraintSystem<A extends HeytingAlgebra<A>> {
   /**
    * Maintain constraints as a graph. Each vertex corresponds to an atomic term (a variable or a
    * constant), and an edge from term {@code t1} to {@code t2} corresponds to the constraint {@code
@@ -154,7 +154,7 @@ public class ConstraintSystem<A extends BrouwerianLattice<A>> {
             } else if (edge instanceof PseudocomplementEdge) {
               PseudocomplementEdge<A> psEdge = (PseudocomplementEdge<A>)edge;
               A constant = psEdge.getPseudocomplementedConstant();
-              return String.format(" -> %s", constant);
+              return String.format("%s -> _", constant);
 
             } else {
               throw new Error("unknown edge in constraint system");

@@ -77,10 +77,7 @@ test {
 
 
 editorconfig {
-    excludes = [
-        'gradlew.bat',
-        'out',
-    ]
+    includes = ['src/**/*.java', 'build.gradle']
 }
 
 cup {

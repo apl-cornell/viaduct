@@ -14,7 +14,7 @@ nonterminal StmtNode stmt, stmt_basic, block;
 nonterminal Reference reference;
 nonterminal ExpressionNode expr;
 nonterminal ImpValue value;
-nonterminal Label label, label_expr;
+nonterminal Label label, label_expr, optto;
 nonterminal Variable variable;
 nonterminal Host host;
 nonterminal ProcessName process_name;
@@ -274,12 +274,12 @@ expr ::=
         e);
     :}
 
-  | DECLASSIFY OPEN_PAREN expr:e COMMA label:l CLOSE_PAREN {:
-      RESULT = DowngradeNode.create(e, l);
+  | DECLASSIFY OPEN_PAREN expr:e COMMA label:l optto:lt CLOSE_PAREN {:
+      RESULT = DowngradeNode.create(e, lt == null ? l : lt);
     :}
 
-  | ENDORSE OPEN_PAREN expr:e COMMA label:l CLOSE_PAREN {:
-      RESULT = DowngradeNode.create(e, l);
+  | ENDORSE OPEN_PAREN expr:e COMMA label:l optto:lt CLOSE_PAREN {:
+      RESULT = DowngradeNode.create(e, lt == null ? l : lt);
     :}
 
   | DOWNGRADE OPEN_PAREN expr:e COMMA label:l CLOSE_PAREN {:
@@ -290,6 +290,15 @@ expr ::=
       RESULT = e;
     :}
   ;
+
+optto ::= /* nothing */ {:
+        RESULT = null;
+    :}
+   | TO label:l {:
+        RESULT = l;
+    :}
+
+   ;
 
 value ::=
     TRUE {:

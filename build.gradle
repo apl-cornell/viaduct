@@ -80,6 +80,10 @@ editorconfig {
     excludes = [
         'gradlew.bat',
         'out',
+        '.*.swp',
+        '.*.swo',
+        '.*.*.swp',
+        '.*.*.swo'
     ]
 }
 

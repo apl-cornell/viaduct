@@ -26,7 +26,7 @@ process main {
       win_secret = -1;
   }
 
-  win = declassify(win_secret, {(A | C)-> & (A & C)<-});
+  win = declassify(win_secret, { A&&C });
 }
 
 process chuck_main {

@@ -111,6 +111,8 @@ ANY         = .*
   {NUM}           { return symbol(sym.INT_LIT, Integer.valueOf(yytext())); }
 
   "!"             { return symbol(sym.NOT); }
+  "&&"            { return symbol(sym.ANDAND); }
+  "||"            { return symbol(sym.OROR); }
 
   "++"             { return symbol(sym.PLUSPLUS); }
   "+="             { return symbol(sym.PLUSEQ); }
@@ -143,14 +145,12 @@ ANY         = .*
   "→"             { return symbol(sym.RARROW); }
   "|"             { return symbol(sym.OR); }
   "&"             { return symbol(sym.AND); }
-  "∧"             { return symbol(sym.WEDGE); }
   "∨"             { return symbol(sym.VEE); }
+  "∧"             { return symbol(sym.WEDGE); }
   "⊔"             { return symbol(sym.SQCUP); }
   "⊓"             { return symbol(sym.SQCAP); }
   "⊤"             { return symbol(sym.TOP); }
   "⊥"             { return symbol(sym.BOTTOM); }
-  "join"          { return symbol(sym.JOIN); }
-  "meet"          { return symbol(sym.MEET); }
 
 /* Grouping */
   ";"             { return symbol(sym.SEMICOLON); }

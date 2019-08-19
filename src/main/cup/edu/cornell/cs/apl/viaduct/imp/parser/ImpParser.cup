@@ -30,7 +30,7 @@ terminal COLON;
 terminal ASSERT, SEND, TO, RECV, FROM, IF, ELSE, WHILE, FOR;
 terminal HOST, PROCESS, PROTOCOL, IDEAL;
 
-terminal NOT;
+terminal NOT, ANDAND, OROR;
 terminal EQ, EQEQ, NEQ, LT, LEQ, GT, GEQ, PLUSEQ, MINUSEQ, TIMESEQ;
 terminal TOP, BOTTOM, OR, AND, RARROW, LARROW;
 terminal SQCUP, SQCAP, WEDGE, VEE, JOIN, MEET;
@@ -43,7 +43,7 @@ terminal LET;
 
 terminal OPEN_BRACE, CLOSE_BRACE, OPEN_SQBRACE, CLOSE_SQBRACE, SEMICOLON, OPEN_PAREN, CLOSE_PAREN, COMMA;
 
-precedence left AND, OR, SQCUP, SQCAP, WEDGE, VEE, JOIN, MEET;
+precedence left ANDAND, OROR, AND, OR, SQCUP, SQCAP, WEDGE, VEE, JOIN, MEET;
 precedence nonassoc EQEQ, NEQ, LT, LEQ, GT, GEQ;
 precedence left PLUS, MINUS;
 precedence left TIMES;
@@ -225,6 +225,10 @@ expr ::=
 
   | NOT expr:e {:
       RESULT = NotNode.create(e);
+    :}
+
+  | expr:e1 ANDAND expr:e2 {:
+      RESULT = BinaryExpressionNode.create(e1, And.create(), e2);
     :}
 
   | expr:e1 EQEQ expr:e2 {:

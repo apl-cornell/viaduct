@@ -181,6 +181,7 @@ public class PrintVisitor
       buffer.append(label);
     }
 
+    buffer.append(" ");
     buffer.append(varDeclNode.getVariable());
 
     addSeparator();
@@ -198,6 +199,7 @@ public class PrintVisitor
       buffer.append(label);
     }
 
+    buffer.append(" ");
     buffer.append(arrayDecl.getVariable());
 
     buffer.append('[');

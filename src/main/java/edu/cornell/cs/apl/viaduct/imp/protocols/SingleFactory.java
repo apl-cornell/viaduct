@@ -21,12 +21,11 @@ public class SingleFactory implements ProtocolFactory<ImpAstNode> {
       PdgNode<ImpAstNode> node) {
 
     Set<Protocol<ImpAstNode>> instances = new HashSet<>();
+    Label nodeLabel = node.getLabel();
     for (Host h : hostConfig.hosts()) {
       Label hostLabel = hostConfig.getTrust(h);
-      Label nodeLabel = node.getLabel();
 
-      if (nodeLabel.confidentiality().flowsTo(hostLabel.confidentiality())
-          && hostLabel.integrity().flowsTo(nodeLabel.integrity())) {
+      if (hostLabel.actsFor(nodeLabel)) {
         instances.add(new Single(h));
       }
     }

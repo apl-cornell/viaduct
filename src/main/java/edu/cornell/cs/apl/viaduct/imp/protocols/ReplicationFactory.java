@@ -22,38 +22,17 @@ public class ReplicationFactory implements ProtocolFactory<ImpAstNode> {
 
     Set<Protocol<ImpAstNode>> instances = new HashSet<>();
 
-    if (!node.isControlNode()) {
-      Label nInLabel = node.getLabel();
-      PowersetIterator<Host> hostPowerset = new PowersetIterator<>(hostConfig.hostSet());
-      for (Set<Host> hostSet : hostPowerset) {
-        if (hostSet.size() > 1) {
-          Label rLabel = Label.top();
+    Label nodeLabel = node.getLabel();
+    PowersetIterator<Host> hostPowerset = new PowersetIterator<>(hostConfig.hostSet());
+    for (Set<Host> hostSet : hostPowerset) {
+      if (hostSet.size() > 1) {
+        Label rLabel = Label.weakest();
+        for (Host real : hostSet) {
+          rLabel = rLabel.meet(hostConfig.getTrust(real));
+        }
 
-          /*
-          Label rhLabel = Label.top();
-          for (Host real : possibleInstance.realReplicas) {
-            rLabel = rLabel.meet(hostConfig.getTrust(real));
-            rhLabel = rhLabel.meet(hostConfig.getTrust(real));
-          }
-          for (Host hash : possibleInstance.hashReplicas) {
-            rhLabel = rhLabel.meet(hostConfig.getTrust(hash));
-          }
-          */
-
-          for (Host real : hostSet) {
-            rLabel = rLabel.meet(hostConfig.getTrust(real));
-          }
-
-          if (nInLabel.confidentiality().flowsTo(rLabel.confidentiality())
-              && rLabel.integrity().flowsTo(nInLabel.integrity())) {
-
-            // control nodes can't be hash replicated!
-            // && !(node.isControlNode() && possibleInstance.hashReplicas.size() > 0)
-            // has to be more than 1 replica to actually be replicated
-            // && possibleInstance.realReplicas.size() + possibleInstance.hashReplicas.size() > 1) {
-
-            instances.add(new Replication(hostSet, new HashSet<>()));
-          }
+        if (rLabel.actsFor(nodeLabel)) {
+          instances.add(new Replication(hostSet, new HashSet<>()));
         }
       }
     }

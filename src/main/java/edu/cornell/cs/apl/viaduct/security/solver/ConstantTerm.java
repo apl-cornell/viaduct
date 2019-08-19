@@ -1,16 +1,25 @@
 package edu.cornell.cs.apl.viaduct.security.solver;
 
 import com.google.auto.value.AutoValue;
+
+import edu.cornell.cs.apl.viaduct.util.FreshNameGenerator;
 import edu.cornell.cs.apl.viaduct.util.HeytingAlgebra;
 
 /** Term that represents a constant element. */
 @AutoValue
-public abstract class ConstantTerm<A extends HeytingAlgebra<A>> implements ConstraintValue<A> {
-  static <A extends HeytingAlgebra<A>> ConstantTerm<A> create(A value) {
-    return new AutoValue_ConstantTerm<>(value);
-  }
+public abstract class ConstantTerm<A extends HeytingAlgebra<A>> extends ConstraintValue<A> {
+  private static final String CONST_ID = "const";
+  private static final FreshNameGenerator nameGenerator = new FreshNameGenerator();
 
   public abstract A getValue();
+
+  protected ConstantTerm() {
+    super(nameGenerator.getFreshName(CONST_ID));
+  }
+
+  public static <V extends HeytingAlgebra<V>> ConstantTerm<V> create(V value) {
+    return new AutoValue_ConstantTerm<>(value);
+  }
 
   /** Return a term that represents the meet of {@code this} and {@code that}. */
   public final LeftHandTerm<A> meet(ConstraintValue<A> that) {
@@ -46,9 +55,8 @@ public abstract class ConstantTerm<A extends HeytingAlgebra<A>> implements Const
   @Override
   public final A transfer(A newValue) {
     if (!getValue().lessThanOrEqualTo(newValue)) {
-      System.out.println(newValue);
       // Constants cannot be updated, so there is no way to satisfy the constraint.
-      throw new UnsatisfiableConstraintException(this);
+      throw new UnsatisfiableConstraintException(this, getValue(), newValue);
     }
 
     return getValue();

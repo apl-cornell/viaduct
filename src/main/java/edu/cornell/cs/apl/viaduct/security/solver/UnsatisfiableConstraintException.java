@@ -4,7 +4,8 @@ import edu.cornell.cs.apl.viaduct.CompilationException;
 
 public class UnsatisfiableConstraintException extends CompilationException {
   // TODO: better error location reporting
-  public UnsatisfiableConstraintException(RightHandTerm location) {
-    super("Unsatisfiable constraint for term: " + location);
+  public UnsatisfiableConstraintException(ConstraintValue val, Object oldVal, Object newVal) {
+    super(String.format("Unsatisfied constraint node %s has value %s, expected %s",
+            val.getId(), oldVal, newVal));
   }
 }

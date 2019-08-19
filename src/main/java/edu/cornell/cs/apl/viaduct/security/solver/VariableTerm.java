@@ -3,19 +3,18 @@ package edu.cornell.cs.apl.viaduct.security.solver;
 import edu.cornell.cs.apl.viaduct.util.HeytingAlgebra;
 
 /** A variable for the solver to find a value for. */
-public final class VariableTerm<A extends HeytingAlgebra<A>> implements ConstraintValue<A> {
-  private final String id;
+public final class VariableTerm<A extends HeytingAlgebra<A>> extends ConstraintValue<A> {
   private final String label;
   private final A bottom;
 
   VariableTerm(String id, A bottom) {
-    this.id = id;
+    super(id);
     this.label = id;
     this.bottom = bottom;
   }
 
   VariableTerm(String id, String label, A bottom) {
-    this.id = id;
+    super(id);
     this.label = label;
     this.bottom = bottom;
   }

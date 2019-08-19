@@ -87,29 +87,25 @@ public class PdgDotPrinter {
         if (infoEdge.isReadChannelEdge()) {
           style = Style.DOTTED;
 
-        /*
         } else if (infoEdge.isPcFlowEdge()) {
           style = Style.DASHED;
-        */
 
         } else {
           style = Style.SOLID;
         }
 
-        if (!infoEdge.isPcFlowEdge()) {
-          Link link = Link.to(mutNode(strOutNode)).add(style).add(Color.BLUE);
+        Link link = Link.to(mutNode(strOutNode)).add(style).add(Color.BLUE);
 
-          String infoEdgeLabel = infoEdge.getLabel(printer);
-          if (infoEdgeLabel != null) {
-            link.add(Label.of(infoEdgeLabel));
-          }
-
-          if (infoEdge.isWriteEdge()) {
-            link.add(Arrow.BOX);
-          }
-
-          grNode.addLink(link);
+        String infoEdgeLabel = infoEdge.getLabel(printer);
+        if (infoEdgeLabel != null) {
+          link.add(Label.of(infoEdgeLabel));
         }
+
+        if (infoEdge.isWriteEdge()) {
+          link.add(Arrow.BOX);
+        }
+
+        grNode.addLink(link);
       }
     }
     return g;

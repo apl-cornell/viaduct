@@ -34,14 +34,12 @@ import edu.cornell.cs.apl.viaduct.security.Principal;
 import edu.cornell.cs.apl.viaduct.security.solver.ConstantTerm;
 import edu.cornell.cs.apl.viaduct.security.solver.ConstraintSystem;
 import edu.cornell.cs.apl.viaduct.security.solver.ConstraintValue;
-import edu.cornell.cs.apl.viaduct.security.solver.UnsatisfiableConstraintException;
 import edu.cornell.cs.apl.viaduct.security.solver.VariableTerm;
 import edu.cornell.cs.apl.viaduct.util.FreshNameGenerator;
 
 import java.io.Writer;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Objects;
 
 /**
  * Check that all flows of information within the program are safe.
@@ -51,7 +49,7 @@ import java.util.Objects;
  * secure.
  */
 public class InformationFlowChecker
-    implements ReferenceVisitor<LabelTerm>, ExprVisitor<LabelTerm>, StmtVisitor<LabelTerm> {
+    implements ReferenceVisitor<LabelTerm>, ExprVisitor<LabelTerm>, StmtVisitor<Void> {
 
   /** Variable declarations that are in scope. */
   private final VariableContext<LabelTerm> declarations;
@@ -71,32 +69,27 @@ public class InformationFlowChecker
 
   /** Current program counter label. */
   private LabelVariable pc;
+  private LabelVariable breakLabel;
 
-  private InformationFlowChecker() {
+  /** constructor. create fresh PC and break labels. */
+  public InformationFlowChecker() {
     this.declarations = new VariableContext<>();
     this.constraintSystem = new ConstraintSystem<>(FreeDistributiveLattice.top());
     this.nameGenerator = new FreshNameGenerator();
     this.pc = new LabelVariable(this.nameGenerator.getFreshName("pc"));
+    this.breakLabel = new LabelVariable(this.nameGenerator.getFreshName("break"));
   }
 
   /** Check and decorate an expression. */
-  public static InformationFlowChecker run(ExpressionNode expression)
-      throws UnsatisfiableConstraintException
-  {
-    final InformationFlowChecker checker = new InformationFlowChecker();
-    expression.accept(checker);
-    checker.solutions.putAll(checker.constraintSystem.solve());
-    return checker;
+  public void run(ExpressionNode expr) {
+    expr.accept(this);
+    this.solutions.putAll(this.constraintSystem.solve());
   }
 
   /** Check and decorate a statement. */
-  public static InformationFlowChecker run(StmtNode statement)
-      throws UnsatisfiableConstraintException
-  {
-    final InformationFlowChecker checker = new InformationFlowChecker();
-    statement.accept(checker);
-    checker.solutions.putAll(checker.constraintSystem.solve());
-    return checker;
+  public void run(StmtNode stmt) {
+    stmt.accept(this);
+    this.solutions.putAll(this.constraintSystem.solve());
   }
 
   //  /** Check and decorate a program. */
@@ -227,7 +220,7 @@ public class InformationFlowChecker
   }
 
   @Override
-  public LabelTerm visit(VariableDeclarationNode varDeclNode) {
+  public Void visit(VariableDeclarationNode varDeclNode) {
     final Label varLabel = varDeclNode.getLabel();
 
     LabelTerm l;
@@ -241,11 +234,11 @@ public class InformationFlowChecker
     varDeclNode.setTrustLabel(l);
     declarations.put(varDeclNode.getVariable(), l);
 
-    return l;
+    return null;
   }
 
   @Override
-  public LabelTerm visit(ArrayDeclarationNode arrayDeclNode) {
+  public Void visit(ArrayDeclarationNode arrayDeclNode) {
     final Label arrayLabel = arrayDeclNode.getLabel();
 
     LabelTerm l;
@@ -262,11 +255,11 @@ public class InformationFlowChecker
 
     declarations.put(arrayDeclNode.getVariable(), l);
 
-    return l;
+    return null;
   }
 
   @Override
-  public LabelTerm visit(LetBindingNode letBindingNode) {
+  public Void visit(LetBindingNode letBindingNode) {
     final LabelVariable l = new LabelVariable(letBindingNode.getVariable().toString());
     letBindingNode.setTrustLabel(l);
 
@@ -275,11 +268,11 @@ public class InformationFlowChecker
 
     declarations.put(letBindingNode.getVariable(), l);
 
-    return l;
+    return null;
   }
 
   @Override
-  public LabelTerm visit(AssignNode assignNode) {
+  public Void visit(AssignNode assignNode) {
     final LabelVariable l =
         new LabelVariable(
             this.nameGenerator.getFreshName("assign"),
@@ -288,14 +281,13 @@ public class InformationFlowChecker
 
     final LabelTerm rhsLabel = assignNode.getRhs().accept(this);
     addFlowsToConstraint(rhsLabel, l);
-
     addFlowsToConstraint(l, assignNode.getLhs().accept(this));
 
-    return l;
+    return null;
   }
 
   @Override
-  public LabelTerm visit(SendNode sendNode) {
+  public Void visit(SendNode sendNode) {
     // TODO: we need global types to do this properly.
 
     // At least we can check that the expression is sensible.
@@ -305,7 +297,7 @@ public class InformationFlowChecker
   }
 
   @Override
-  public LabelTerm visit(ReceiveNode receiveNode) {
+  public Void visit(ReceiveNode receiveNode) {
     // TODO: we need global types to do this properly.
 
     // At least we can check that the variable access is sensible.
@@ -315,7 +307,7 @@ public class InformationFlowChecker
   }
 
   @Override
-  public LabelTerm visit(IfNode ifNode) {
+  public Void visit(IfNode ifNode) {
     final LabelTerm guard = ifNode.getGuard().accept(this);
     ifNode.setTrustLabel(guard);
 
@@ -323,7 +315,7 @@ public class InformationFlowChecker
     final LabelVariable oldPc = this.pc;
 
     // Update pc to include guard
-    this.pc = new LabelVariable(this.nameGenerator.getFreshName("pc"));
+    this.pc = new LabelVariable(this.nameGenerator.getFreshName("pc_if"));
     addFlowsToConstraint(oldPc, pc);
     addFlowsToConstraint(guard, pc);
 
@@ -334,43 +326,47 @@ public class InformationFlowChecker
     // Recover old pc
     this.pc = oldPc;
 
-    return guard;
+    return null;
   }
 
   @Override
-  public LabelTerm visit(WhileNode whileNode) {
+  public Void visit(WhileNode whileNode) {
     throw new ElaborationException();
   }
 
   @Override
-  public LabelTerm visit(ForNode forNode) {
+  public Void visit(ForNode forNode) {
     throw new ElaborationException();
   }
 
   @Override
-  public LabelTerm visit(LoopNode loopNode) {
-    // TODO: need to maintain a stack of new pc labels.
-    //   see IfNode for an example of how we change the pc.
-    final LabelVariable l =
-        new LabelVariable(this.nameGenerator.getFreshName("loop"));
-    loopNode.setTrustLabel(l);
+  public Void visit(LoopNode loopNode) {
+    final LabelVariable oldBreakLabel = this.breakLabel;
+    final LabelVariable oldPc = this.pc;
+
+    final LabelVariable l = new LabelVariable(this.nameGenerator.getFreshName("break"));
+    this.breakLabel = l;
+    this.pc = l;
+
+    addFlowsToConstraint(oldPc, this.breakLabel);
+    loopNode.setTrustLabel(this.breakLabel);
     loopNode.getBody().accept(this);
-    return l;
+
+    this.breakLabel = oldBreakLabel;
+    this.pc = oldPc;
+    return null;
   }
 
   @Override
-  public LabelTerm visit(BreakNode breakNode) {
-    // TODO: leak pc to the broken loop
-    final LabelVariable l =
-        new LabelVariable(this.nameGenerator.getFreshName("break"));
-    breakNode.setTrustLabel(l);
-    return l;
+  public Void visit(BreakNode breakNode) {
+    breakNode.setTrustLabel(this.pc);
+    addFlowsToConstraint(this.pc, this.breakLabel);
+    return null;
   }
 
   @Override
-  public LabelTerm visit(BlockNode blockNode) {
-    final LabelVariable l = pc;
-    blockNode.setTrustLabel(l);
+  public Void visit(BlockNode blockNode) {
+    blockNode.setTrustLabel(this.pc);
 
     declarations.push();
     for (StmtNode stmt : blockNode) {
@@ -378,16 +374,15 @@ public class InformationFlowChecker
     }
     declarations.pop();
 
-    return l;
+    return null;
   }
 
   @Override
-  public LabelTerm visit(AssertNode assertNode) {
-    // TODO: Not sure about how much integrity we need and if this affects pc.
-    final LabelTerm l = assertNode.getExpression().accept(this);
+  public Void visit(AssertNode assertNode) {
+    final LabelVariable l =
+        new LabelVariable(this.nameGenerator.getFreshName("assert"));
     assertNode.setTrustLabel(l);
-
-    return l;
+    return null;
   }
 
   // TODO: add visit(ProgramNode)?
@@ -415,8 +410,10 @@ public class InformationFlowChecker
 
     @Override
     public Label getValue() {
-      FreeDistributiveLattice<Principal> c = Objects.requireNonNull(solutions.get(confidentiality));
-      FreeDistributiveLattice<Principal> i = Objects.requireNonNull(solutions.get(integrity));
+      // solution could be null since we might want to output variables
+      // even when no solution is found, for debugging purposes
+      FreeDistributiveLattice<Principal> c = solutions.get(confidentiality);
+      FreeDistributiveLattice<Principal> i = solutions.get(integrity);
       return new Label(c, i);
     }
 

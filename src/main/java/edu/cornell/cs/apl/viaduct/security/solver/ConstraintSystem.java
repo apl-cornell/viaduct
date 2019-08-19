@@ -103,37 +103,29 @@ public class ConstraintSystem<A extends HeytingAlgebra<A>> {
 
   /** output constraint system as a DOT graph. */
   public void exportDotGraph(Map<VariableTerm<A>,A> solutions, Writer writer) {
-    FreshNameGenerator nameGenerator = new FreshNameGenerator();
-
     ComponentNameProvider<ConstraintValue<A>> vertexIdProvider =
         new ComponentNameProvider<ConstraintValue<A>>() {
           public String getName(ConstraintValue<A> val) {
-            if (val instanceof VariableTerm) {
-              return ((VariableTerm<A>)val).getId();
-
-            } else if (val instanceof ConstantTerm) {
-              return nameGenerator.getFreshName("const");
-
-            } else {
-              throw new Error("unknown vertex type in constraint system");
-            }
+            return val.getId();
           }
         };
 
     ComponentNameProvider<ConstraintValue<A>> vertexLabelProvider =
         new ComponentNameProvider<ConstraintValue<A>>() {
           public String getName(ConstraintValue<A> val) {
-            String id =  val.getNode().toString();
+            String id = "";
             String label = "";
 
-            if (solutions != null) {
-              if (val instanceof VariableTerm) {
-                VariableTerm<A> var = (VariableTerm<A>)val;
+            if (val instanceof VariableTerm) {
+              id =  val.getNode().toString();
+              VariableTerm<A> var = (VariableTerm<A>)val;
+              if (solutions != null && solutions.containsKey(var)) {
                 label = solutions.get(var).toString();
-
-              } else {
-                return val.getNode().toString();
               }
+
+            } else {
+              id = val.getId();
+              label = val.getNode().toString();
             }
 
             return id + '\n' + label;

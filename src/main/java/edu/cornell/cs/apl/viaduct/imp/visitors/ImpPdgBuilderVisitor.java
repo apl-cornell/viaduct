@@ -56,6 +56,7 @@ public class ImpPdgBuilderVisitor implements StmtVisitor<Set<PdgNode<ImpAstNode>
   private final SymbolTable<Variable, Boolean> declaredVars;
   private final SymbolTable<Variable, String> varDeclMap;
   private final Map<String, PdgNode<ImpAstNode>> nodeMap;
+  private final Map<Variable,Variable> downgradeMap;
   private final QuerySetVisitor querySetVisitor;
   private final TempSetVisitor tempSetVisitor;
   private ProgramDependencyGraph<ImpAstNode> pdg;
@@ -67,6 +68,7 @@ public class ImpPdgBuilderVisitor implements StmtVisitor<Set<PdgNode<ImpAstNode>
     this.nodeMap = new HashMap<>();
     this.querySetVisitor = new QuerySetVisitor();
     this.tempSetVisitor = new TempSetVisitor();
+    this.downgradeMap = new HashMap<>();
   }
 
   /** generate a PDG from a program. */
@@ -154,17 +156,11 @@ public class ImpPdgBuilderVisitor implements StmtVisitor<Set<PdgNode<ImpAstNode>
 
   @Override
   public Set<PdgNode<ImpAstNode>> visit(LetBindingNode letBindingNode) {
-    String name = letBindingNode.getVariable().getBinding();
-    PdgComputeNode<ImpAstNode> node;
+    Variable letVar = letBindingNode.getVariable();
+    String name = letVar.getBinding();
     ExpressionNode rhs = letBindingNode.getRhs();
-    if (rhs instanceof DowngradeNode) {
-      DowngradeNode downgradeNode = (DowngradeNode) rhs;
-      node = new PdgComputeNode<>(downgradeNode, name);
 
-    } else {
-      node = new PdgComputeNode<>(rhs, name);
-    }
-
+    PdgComputeNode<ImpAstNode> node = new PdgComputeNode<>(rhs, name);
     Set<Variable> temps = this.tempSetVisitor.run(rhs);
     Set<Reference> queries = this.querySetVisitor.run(rhs);
     createReadEdges(temps, queries, node);
@@ -374,7 +370,13 @@ public class ImpPdgBuilderVisitor implements StmtVisitor<Set<PdgNode<ImpAstNode>
 
       } else {
         Set<Variable> reads = new HashSet<>();
-        reads.add(var);
+
+        if (ImpPdgBuilderVisitor.this.downgradeMap.containsKey(var)) {
+          reads.add(ImpPdgBuilderVisitor.this.downgradeMap.get(var));
+
+        } else {
+          reads.add(var);
+        }
         return reads;
       }
     }

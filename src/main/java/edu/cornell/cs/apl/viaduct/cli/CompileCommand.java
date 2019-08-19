@@ -22,7 +22,7 @@ import edu.cornell.cs.apl.viaduct.pdg.PdgNode;
 import edu.cornell.cs.apl.viaduct.pdg.ProgramDependencyGraph;
 import edu.cornell.cs.apl.viaduct.protocol.Protocol;
 import edu.cornell.cs.apl.viaduct.protocol.ProtocolSelection;
-
+import edu.cornell.cs.apl.viaduct.security.solver.UnsatisfiableConstraintException;
 import guru.nidi.graphviz.engine.Format;
 import guru.nidi.graphviz.engine.Graphviz;
 import guru.nidi.graphviz.engine.GraphvizCmdLineEngine;
@@ -179,9 +179,17 @@ public class CompileCommand extends BaseCommand {
     typeChecker.run(main);
 
     // information flow constraint solving
-    InformationFlowChecker checker = InformationFlowChecker.run(main);
-    // Dump PDG with information flow labels to a file (if requested).
-    dumpConstraints((writer) -> { checker.exportDotGraph(writer); }, constraintGraphOutput);
+    final InformationFlowChecker checker = new InformationFlowChecker();
+    try {
+      checker.run(main);
+
+    } catch (UnsatisfiableConstraintException unsatConstraint) {
+      System.out.println(unsatConstraint);
+
+    } finally {
+      // Dump PDG with information flow labels to a file (if requested).
+      dumpConstraints((writer) -> { checker.exportDotGraph(writer); }, constraintGraphOutput);
+    }
 
     if (this.skip && labelGraphOutput == null && protocolGraphOutput == null) {
       return null;

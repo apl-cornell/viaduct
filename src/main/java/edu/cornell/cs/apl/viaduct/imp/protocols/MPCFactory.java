@@ -22,7 +22,9 @@ public class MPCFactory implements ProtocolFactory<ImpAstNode> {
       PdgNode<ImpAstNode> node) {
 
     Set<Protocol<ImpAstNode>> instances = new HashSet<>();
+
     PowersetIterator<Host> hostPowerset = new PowersetIterator<>(hostConfig.hostSet());
+    Label nodeLabel = node.getLabel();
     for (Set<Host> hostSet : hostPowerset) {
       if (hostSet.size() > 1) {
         Label hsLabel = Label.weakest();
@@ -30,7 +32,7 @@ public class MPCFactory implements ProtocolFactory<ImpAstNode> {
           hsLabel = hsLabel.and(hostConfig.getTrust(h));
         }
 
-        if (node.getLabel().confidentiality().flowsTo(hsLabel.confidentiality())) {
+        if (hsLabel.actsFor(nodeLabel)) {
           instances.add(new MPC(hostSet));
         }
       }

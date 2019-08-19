@@ -5,21 +5,33 @@ import edu.cornell.cs.apl.viaduct.util.dataflow.DataFlowNode;
 import edu.cornell.cs.apl.viaduct.util.dataflow.IdentityEdge;
 
 /** Atomic constraint terms such as constants and variables, but not expressions. */
-public interface ConstraintValue<A>
-    extends LeftHandTerm<A>, RightHandTerm<A>, DataFlowNode<A, UnsatisfiableConstraintException> {
+public abstract class ConstraintValue<A> implements
+    LeftHandTerm<A>, RightHandTerm<A>,
+    DataFlowNode<A, UnsatisfiableConstraintException>
+{
+
+  protected String id;
+
+  protected ConstraintValue(String id) {
+    this.id = id;
+  }
+
+  public String getId() {
+    return this.id;
+  }
 
   @Override
-  default ConstraintValue<A> getNode() {
+  public ConstraintValue<A> getNode() {
     return this;
   }
 
   @Override
-  default DataFlowEdge<A> getOutEdge() {
+  public DataFlowEdge<A> getOutEdge() {
     return new IdentityEdge<>();
   }
 
   @Override
-  default DataFlowEdge<A> getInEdge() {
+  public DataFlowEdge<A> getInEdge() {
     return new IdentityEdge<>();
   }
 }

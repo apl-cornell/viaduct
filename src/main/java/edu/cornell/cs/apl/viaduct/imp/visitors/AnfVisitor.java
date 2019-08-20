@@ -111,7 +111,12 @@ public class AnfVisitor extends FormatBlockVisitor {
   @Override
   public ExpressionNode visit(DowngradeNode downgradeNode) {
     ExpressionNode newExpr = downgradeNode.getExpression().accept(this);
-    ExpressionNode newDowngrade = DowngradeNode.create(newExpr, downgradeNode.getLabel());
+    ExpressionNode newDowngrade =
+        DowngradeNode.create(
+            newExpr,
+            downgradeNode.getFromLabel(),
+            downgradeNode.getLabel(),
+            downgradeNode.getDowngradeType());
     return addBinding(newDowngrade);
   }
 

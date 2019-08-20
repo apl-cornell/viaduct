@@ -196,11 +196,11 @@ public class InformationFlowChecker
 
   @Override
   public LabelTerm visit(DowngradeNode downgradeNode) {
-    final LabelConstant l = createLabelConstant(downgradeNode.getLabel());
-    downgradeNode.setTrustLabel(l);
+    final LabelConstant toLabel = createLabelConstant(downgradeNode.getLabel());
+    downgradeNode.setTrustLabel(toLabel);
 
     // pc is leaked to the output label
-    addFlowsToConstraint(pc, l);
+    addFlowsToConstraint(pc, toLabel);
 
     // Non-malleable downgrade constraints
     final LabelTerm e = downgradeNode.getExpression().accept(this);
@@ -208,15 +208,41 @@ public class InformationFlowChecker
     final ConstraintValue<FreeDistributiveLattice<Principal>> ei = e.getIntegrity();
     final ConstraintValue<FreeDistributiveLattice<Principal>> pcc = pc.getConfidentiality();
     final ConstraintValue<FreeDistributiveLattice<Principal>> pci = pc.getIntegrity();
-    final ConstantTerm<FreeDistributiveLattice<Principal>> dc = l.getConfidentiality();
-    final ConstantTerm<FreeDistributiveLattice<Principal>> di = l.getIntegrity();
+    final ConstantTerm<FreeDistributiveLattice<Principal>> dc = toLabel.getConfidentiality();
+    final ConstantTerm<FreeDistributiveLattice<Principal>> di = toLabel.getIntegrity();
 
     constraintSystem.addLessThanOrEqualToConstraint(dc.meet(pci), ec);
     constraintSystem.addLessThanOrEqualToConstraint(dc.meet(ei), ec);
     constraintSystem.addLessThanOrEqualToConstraint(ei, di.join(pcc));
     constraintSystem.addLessThanOrEqualToConstraint(ei, di.join(ec));
 
-    return l;
+    // if there is a from label, then it has to equal e
+    final Label fromLabel = downgradeNode.getFromLabel();
+    if (fromLabel != null) {
+      final LabelTerm fromLabelTerm = createLabelConstant(fromLabel);
+      addFlowsToConstraint(fromLabelTerm, e);
+      addFlowsToConstraint(e, fromLabelTerm);
+
+    } else { // no from label, but we want to enforce single-dimensional downgrades also
+      switch (downgradeNode.getDowngradeType()) {
+        case ENDORSE: // confidentiality must remain the same
+          constraintSystem.addLessThanOrEqualToConstraint(ec, dc);
+          constraintSystem.addLessThanOrEqualToConstraint(dc, ec);
+          break;
+
+        case DECLASSIFY: // integrity must remain the same
+          constraintSystem.addLessThanOrEqualToConstraint(ei, di);
+          constraintSystem.addLessThanOrEqualToConstraint(di, ei);
+          break;
+
+        case BOTH: // no extra constraints for simultaneous downgrades
+        default:
+          break;
+      }
+
+    }
+
+    return toLabel;
   }
 
   @Override
@@ -316,8 +342,8 @@ public class InformationFlowChecker
 
     // Update pc to include guard
     this.pc = new LabelVariable(this.nameGenerator.getFreshName("pc_if"));
-    addFlowsToConstraint(oldPc, pc);
-    addFlowsToConstraint(guard, pc);
+    addFlowsToConstraint(oldPc, this.pc);
+    addFlowsToConstraint(guard, this.pc);
 
     // Check branches
     ifNode.getThenBranch().accept(this);

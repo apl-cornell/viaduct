@@ -1,8 +1,8 @@
 process main {
   int{C} cin;
   int{A} ain;
-  int{C ⊓ A←} shell;
-  int{A ⊓ C←} guess;
+  int{C & A<-} shell;
+  int{A & C<-} guess;
   int{A ⊓ C} win;
 
   cin <- recv chuck_main;
@@ -11,9 +11,9 @@ process main {
   /* Chuck and Alice must endorse their inputs to `shell` and `guess`, respectively. */
 
   /* Chuck must prove that `shell` is valid without revealing its value. */
-  int{A ∧ C} win_secret;
-  shell = endorse(cin, {C ⊓ A←});
-  guess = endorse(ain, {A ⊓ C←});
+  int{A & C} win_secret;
+  shell = endorse(cin, {C & A<-});
+  guess = endorse(ain, {A & C<-});
 
   /* Chuck must prove that `shell` is valid without revealing its value. */
   if (declassify(1 <= shell && shell <= 3, {A ⊓ C})) {
@@ -25,7 +25,7 @@ process main {
     }
 
   } else {
-      win_secret = -1;
+    win_secret = -1;
   }
 
   win = declassify(win_secret, { A ⊓ C });

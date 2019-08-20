@@ -11,6 +11,7 @@ import edu.cornell.cs.apl.viaduct.imp.ast.BinaryOperators.Or;
 import edu.cornell.cs.apl.viaduct.imp.ast.BinaryOperators.Plus;
 import edu.cornell.cs.apl.viaduct.imp.ast.BooleanValue;
 import edu.cornell.cs.apl.viaduct.imp.ast.DowngradeNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.DowngradeNode.DowngradeType;
 import edu.cornell.cs.apl.viaduct.imp.ast.ExpressionNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ImpValue;
 import edu.cornell.cs.apl.viaduct.imp.ast.IntegerValue;
@@ -76,17 +77,24 @@ public class ExpressionBuilder {
     return BinaryExpressionNode.create(lhs, Plus.create(), rhs);
   }
 
-  public ExpressionNode downgrade(ExpressionNode expression, Label label) {
-    return DowngradeNode.create(expression, label);
+  public ExpressionNode downgrade(
+      ExpressionNode expression, Label fromLabel, Label toLabel, DowngradeType downgradeType) {
+    return DowngradeNode.create(expression, fromLabel, toLabel, downgradeType);
   }
 
   public ExpressionNode declassify(ExpressionNode expression, Label label) {
-    // TODO: assert integrity does not change
-    return this.downgrade(expression, label);
+    return this.downgrade(expression, null, label, DowngradeType.DECLASSIFY);
+  }
+
+  public ExpressionNode declassify(ExpressionNode expression, Label fromLabel, Label toLabel) {
+    return this.downgrade(expression, fromLabel, toLabel, DowngradeType.DECLASSIFY);
   }
 
   public ExpressionNode endorse(ExpressionNode expression, Label label) {
-    // TODO: assert confidentiality does not change
-    return this.downgrade(expression, label);
+    return this.downgrade(expression, null, label, DowngradeType.ENDORSE);
+  }
+
+  public ExpressionNode endorse(ExpressionNode expression, Label fromLabel, Label toLabel) {
+    return this.downgrade(expression, fromLabel, toLabel, DowngradeType.ENDORSE);
   }
 }

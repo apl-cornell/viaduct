@@ -12,15 +12,6 @@ import javax.annotation.Nullable;
 public abstract class DowngradeNode extends ExpressionNode {
   public enum DowngradeType { DECLASSIFY, ENDORSE, BOTH }
 
-  public static DowngradeNode create(ExpressionNode expression, Label toLabel) {
-    return new AutoValue_DowngradeNode(expression, null, toLabel, DowngradeType.BOTH);
-  }
-
-  public static DowngradeNode create(
-      ExpressionNode expression, @Nullable Label fromLabel, Label toLabel) {
-    return new AutoValue_DowngradeNode(expression, fromLabel, toLabel, DowngradeType.BOTH);
-  }
-
   public static DowngradeNode create(
       ExpressionNode expression, Label toLabel, DowngradeType downgradeType) {
     return new AutoValue_DowngradeNode(expression, null, toLabel, downgradeType);

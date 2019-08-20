@@ -146,7 +146,7 @@ public class ConstraintSystem<A extends HeytingAlgebra<A>> {
             } else if (edge instanceof PseudocomplementEdge) {
               PseudocomplementEdge<A> psEdge = (PseudocomplementEdge<A>)edge;
               A constant = psEdge.getPseudocomplementedConstant();
-              return String.format("%s -> _", constant);
+              return String.format("%s ---> _", constant);
 
             } else {
               throw new Error("unknown edge in constraint system");

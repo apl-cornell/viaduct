@@ -9,6 +9,7 @@ import edu.cornell.cs.apl.viaduct.imp.ast.BinaryExpressionNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.BlockNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.BreakNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.DowngradeNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.DowngradeNode.DowngradeType;
 import edu.cornell.cs.apl.viaduct.imp.ast.ExpressionNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ForNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.IfNode;
@@ -26,7 +27,10 @@ import edu.cornell.cs.apl.viaduct.imp.ast.StmtNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.Variable;
 import edu.cornell.cs.apl.viaduct.imp.ast.VariableDeclarationNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.WhileNode;
+import edu.cornell.cs.apl.viaduct.security.Label;
+
 import io.vavr.Tuple2;
+
 import java.util.LinkedList;
 import java.util.List;
 
@@ -96,8 +100,11 @@ public abstract class IdentityVisitor
 
   @Override
   public ExpressionNode visit(DowngradeNode downgradeNode) {
-    ExpressionNode newExpr = downgradeNode.getExpression().accept(this);
-    return DowngradeNode.create(newExpr, downgradeNode.getLabel());
+    final ExpressionNode newExpr = downgradeNode.getExpression().accept(this);
+    final Label fromLabel = downgradeNode.getFromLabel();
+    final Label toLabel = downgradeNode.getLabel();
+    final DowngradeType downgradeType = downgradeNode.getDowngradeType();
+    return DowngradeNode.create(newExpr, fromLabel, toLabel, downgradeType);
   }
 
   @Override

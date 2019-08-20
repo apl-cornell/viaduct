@@ -14,7 +14,7 @@ nonterminal StmtNode stmt, stmt_basic, block;
 nonterminal Reference reference;
 nonterminal ExpressionNode expr;
 nonterminal ImpValue value;
-nonterminal Label label, label_expr;
+nonterminal Label label, label_expr, optto;
 nonterminal Variable variable;
 nonterminal Host host;
 nonterminal ProcessName process_name;
@@ -33,7 +33,7 @@ terminal HOST, PROCESS, PROTOCOL, IDEAL;
 terminal NOT, ANDAND, OROR;
 terminal EQ, EQEQ, NEQ, LT, LEQ, GT, GEQ, PLUSEQ, MINUSEQ, TIMESEQ;
 terminal TOP, BOTTOM, OR, AND, RARROW, LARROW;
-terminal SQCUP, SQCAP, WEDGE, VEE;
+terminal SQCUP, SQCAP, WEDGE, VEE, JOIN, MEET;
 
 terminal PLUS, MINUS, TIMES, PLUSPLUS, MINUSMINUS;
 // terminal PLUS, MINUS, TIMES, DIVIDE;
@@ -43,7 +43,7 @@ terminal LET;
 
 terminal OPEN_BRACE, CLOSE_BRACE, OPEN_SQBRACE, CLOSE_SQBRACE, SEMICOLON, OPEN_PAREN, CLOSE_PAREN, COMMA;
 
-precedence left ANDAND, OROR, AND, OR, SQCUP, SQCAP, WEDGE, VEE;
+precedence left ANDAND, OROR, AND, OR, SQCUP, SQCAP, WEDGE, VEE, JOIN, MEET;
 precedence nonassoc EQEQ, NEQ, LT, LEQ, GT, GEQ;
 precedence left PLUS, MINUS;
 precedence left TIMES;
@@ -227,10 +227,6 @@ expr ::=
       RESULT = NotNode.create(e);
     :}
 
-  | expr:e1 OROR expr:e2 {:
-      RESULT = BinaryExpressionNode.create(e1, Or.create(), e2);
-    :}
-
   | expr:e1 ANDAND expr:e2 {:
       RESULT = BinaryExpressionNode.create(e1, And.create(), e2);
     :}
@@ -278,12 +274,12 @@ expr ::=
         e);
     :}
 
-  | DECLASSIFY OPEN_PAREN expr:e COMMA label:l CLOSE_PAREN {:
-      RESULT = DowngradeNode.create(e, l);
+  | DECLASSIFY OPEN_PAREN expr:e COMMA label:l optto:lt CLOSE_PAREN {:
+      RESULT = DowngradeNode.create(e, lt == null ? l : lt);
     :}
 
-  | ENDORSE OPEN_PAREN expr:e COMMA label:l CLOSE_PAREN {:
-      RESULT = DowngradeNode.create(e, l);
+  | ENDORSE OPEN_PAREN expr:e COMMA label:l optto:lt CLOSE_PAREN {:
+      RESULT = DowngradeNode.create(e, lt == null ? l : lt);
     :}
 
   | DOWNGRADE OPEN_PAREN expr:e COMMA label:l CLOSE_PAREN {:
@@ -294,6 +290,15 @@ expr ::=
       RESULT = e;
     :}
   ;
+
+optto ::= /* nothing */ {:
+        RESULT = null;
+    :}
+   | TO label:l {:
+        RESULT = l;
+    :}
+
+   ;
 
 value ::=
     TRUE {:
@@ -338,19 +343,19 @@ label_expr ::=
       RESULT = l1.and(l2);
     :}
 
-  | label_expr:l1 OROR label_expr:l2 {:
-      RESULT = l1.join(l2);
-    :}
-
   | label_expr:l1 SQCUP label_expr:l2 {:
       RESULT = l1.join(l2);
     :}
 
-  | label_expr:l1 ANDAND label_expr:l2 {:
-      RESULT = l1.meet(l2);
+  | label_expr:l1 JOIN label_expr:l2 {:
+      RESULT = l1.join(l2);
     :}
 
   | label_expr:l1 SQCAP label_expr:l2 {:
+      RESULT = l1.meet(l2);
+    :}
+
+  | label_expr:l1 MEET label_expr:l2 {:
       RESULT = l1.meet(l2);
     :}
 

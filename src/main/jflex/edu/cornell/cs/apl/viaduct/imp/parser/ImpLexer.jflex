@@ -145,6 +145,8 @@ ANY         = .*
   "→"             { return symbol(sym.RARROW); }
   "|"             { return symbol(sym.OR); }
   "&"             { return symbol(sym.AND); }
+  "∨"             { return symbol(sym.VEE); }
+  "∧"             { return symbol(sym.WEDGE); }
   "⊔"             { return symbol(sym.SQCUP); }
   "⊓"             { return symbol(sym.SQCAP); }
   "⊤"             { return symbol(sym.TOP); }

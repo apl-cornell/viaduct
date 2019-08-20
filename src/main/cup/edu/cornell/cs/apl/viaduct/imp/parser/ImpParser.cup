@@ -3,6 +3,7 @@ import java.util.List;
 import java.util.LinkedList;
 
 import edu.cornell.cs.apl.viaduct.imp.ast.*;
+import edu.cornell.cs.apl.viaduct.imp.ast.DowngradeNode.DowngradeType;
 import edu.cornell.cs.apl.viaduct.imp.ast.BinaryOperators.*;
 import edu.cornell.cs.apl.viaduct.security.Label;
 import edu.cornell.cs.apl.viaduct.security.Principal;
@@ -275,15 +276,30 @@ expr ::=
     :}
 
   | DECLASSIFY OPEN_PAREN expr:e COMMA label:l optto:lt CLOSE_PAREN {:
-      RESULT = DowngradeNode.create(e, lt == null ? l : lt);
+      if (lt == null) {
+        RESULT = DowngradeNode.create(e, l, DowngradeType.DECLASSIFY);
+
+      } else {
+        RESULT = DowngradeNode.create(e, lt, l, DowngradeType.DECLASSIFY);
+      }
     :}
 
   | ENDORSE OPEN_PAREN expr:e COMMA label:l optto:lt CLOSE_PAREN {:
-      RESULT = DowngradeNode.create(e, lt == null ? l : lt);
+      if (lt == null) {
+        RESULT = DowngradeNode.create(e, l, DowngradeType.ENDORSE);
+
+      } else {
+        RESULT = DowngradeNode.create(e, lt, l, DowngradeType.ENDORSE);
+      }
     :}
 
-  | DOWNGRADE OPEN_PAREN expr:e COMMA label:l CLOSE_PAREN {:
-      RESULT = DowngradeNode.create(e, l);
+  | DOWNGRADE OPEN_PAREN expr:e COMMA label:l optto:lt CLOSE_PAREN {:
+      if (lt == null) {
+        RESULT = DowngradeNode.create(e, l, DowngradeType.BOTH);
+
+      } else {
+        RESULT = DowngradeNode.create(e, lt, l, DowngradeType.BOTH);
+      }
     :}
 
   | OPEN_PAREN expr:e CLOSE_PAREN {:

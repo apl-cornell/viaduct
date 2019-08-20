@@ -18,7 +18,7 @@ process main {
         sum += scale * j;
     }
 
-    int{A && B} prodsum = declassify(sum, {A && B});
+    int{A ⊓ B} prodsum = declassify(sum, {A ⊓ B});
 }
 
 host alice : {A};

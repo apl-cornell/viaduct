@@ -161,11 +161,36 @@ public class PrintVisitor
 
   @Override
   public Void visit(DowngradeNode downgradeNode) {
-    // TODO: special case declassify and endorse
-    buffer.append("downgrade(");
+    switch (downgradeNode.getDowngradeType()) {
+      case ENDORSE:
+        buffer.append("endorse");
+        break;
+
+      case DECLASSIFY:
+        buffer.append("declassify");
+        break;
+
+      case BOTH:
+        buffer.append("downgrade");
+        break;
+
+      default:
+        break;
+    }
+    buffer.append("(");
     downgradeNode.getExpression().accept(this);
     buffer.append(", ");
-    buffer.append(downgradeNode.getLabel());
+
+    Label fromLabel = downgradeNode.getFromLabel();
+    Label toLabel = downgradeNode.getLabel();
+    if (fromLabel != null) {
+      buffer.append(fromLabel);
+      buffer.append(" to ");
+      buffer.append(toLabel);
+
+    } else {
+      buffer.append(toLabel);
+    }
     buffer.append(")");
     return null;
   }

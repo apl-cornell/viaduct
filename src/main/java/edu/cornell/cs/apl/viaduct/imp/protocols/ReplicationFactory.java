@@ -26,7 +26,7 @@ public class ReplicationFactory implements ProtocolFactory<ImpAstNode> {
     PowersetIterator<Host> hostPowerset = new PowersetIterator<>(hostConfig.hostSet());
     for (Set<Host> hostSet : hostPowerset) {
       if (hostSet.size() > 1) {
-        Label rLabel = Label.weakest();
+        Label rLabel = Label.top();
         for (Host real : hostSet) {
           rLabel = rLabel.meet(hostConfig.getTrust(real));
         }

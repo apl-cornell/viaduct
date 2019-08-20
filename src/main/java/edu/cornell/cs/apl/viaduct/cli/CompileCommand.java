@@ -101,6 +101,11 @@ public class CompileCommand extends BaseCommand {
             + " has been executed")
   private boolean skip;
 
+  @Option(
+      name = {"-r", "--profile"},
+      description = "Enable profiling for protocol selection.")
+  private boolean enableProfiling;
+
   /**
    * Write the given graph to the output file if the filename is not {@code null}. Do nothing
    * otherwise. The output format is determined automatically from the file extension.
@@ -211,7 +216,8 @@ public class CompileCommand extends BaseCommand {
     final ImpProtocolSearchStrategy strategy =
         new ImpProtocolSearchStrategy(new ImpCommunicationCostEstimator());
     final Map<PdgNode<ImpAstNode>, Protocol<ImpAstNode>> protocolMap =
-        new ProtocolSelection<>(strategy).selectProtocols(trustConfiguration, pdg);
+        new ProtocolSelection<>(this.enableProfiling, strategy)
+        .selectProtocols(trustConfiguration, pdg);
 
     System.out.println("SYNTHESIZED PROTOCOL:");
     System.out.println(strategy.estimatePdgCost(protocolMap, pdg));

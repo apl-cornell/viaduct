@@ -29,6 +29,11 @@ public class MPC extends AbstractSingle {
   }
 
   @Override
+  public String getId() {
+    return "MPC";
+  }
+
+  @Override
   protected Host getActualHost() {
     return this.synthesizedHost;
   }

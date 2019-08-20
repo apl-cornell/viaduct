@@ -44,6 +44,11 @@ public class Replication extends Cleartext implements Protocol<ImpAstNode> {
   }
 
   @Override
+  public String getId() {
+    return "Replication";
+  }
+
+  @Override
   public void initialize(PdgNode<ImpAstNode> node, ProtocolInstantiationInfo<ImpAstNode> info) {
     return;
   }
@@ -198,10 +203,12 @@ public class Replication extends Cleartext implements Protocol<ImpAstNode> {
     }
 
     if (o instanceof Replication) {
-      Replication oreplication = (Replication) o;
-      boolean realEq = this.replicas.realReplicas.equals(oreplication.replicas.realReplicas);
-      boolean hashEq = this.replicas.hashReplicas.equals(oreplication.replicas.hashReplicas);
-      return realEq && hashEq;
+      Replication other = (Replication) o;
+      boolean realEq = this.replicas.realReplicas.equals(other.replicas.realReplicas);
+      return realEq;
+
+      // boolean hashEq = this.replicas.hashReplicas.equals(oreplication.replicas.hashReplicas);
+      // return realEq && hashEq;
 
     } else {
       return false;
@@ -210,7 +217,8 @@ public class Replication extends Cleartext implements Protocol<ImpAstNode> {
 
   @Override
   public int hashCode() {
-    return Objects.hash(this.replicas.realReplicas, this.replicas.hashReplicas);
+    // return Objects.hash(this.replicas.realReplicas, this.replicas.hashReplicas);
+    return Objects.hash(this.replicas.realReplicas);
   }
 
   @Override

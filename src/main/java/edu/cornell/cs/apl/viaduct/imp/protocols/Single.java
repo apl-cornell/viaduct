@@ -25,6 +25,11 @@ public class Single extends AbstractSingle {
   }
 
   @Override
+  public String getId() {
+    return "Single";
+  }
+
+  @Override
   public Set<Host> getHosts() {
     Set<Host> hosts = new HashSet<>();
     hosts.add(this.host);

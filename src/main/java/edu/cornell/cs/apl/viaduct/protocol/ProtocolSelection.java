@@ -12,10 +12,14 @@ import java.util.Map;
 import java.util.PriorityQueue;
 import java.util.Set;
 
-public class ProtocolSelection<T extends AstNode> {
-  ProtocolSearchStrategy<T> strategy;
+public final class ProtocolSelection<T extends AstNode> {
+  private final ProtocolSearchStrategy<T> strategy;
+  private final boolean enableProfiling;
 
-  public ProtocolSelection(ProtocolSearchStrategy<T> strategy) {
+  public ProtocolSelection(
+        boolean enableProfiling, ProtocolSearchStrategy<T> strategy)
+  {
+    this.enableProfiling = enableProfiling;
     this.strategy = strategy;
   }
 
@@ -41,7 +45,7 @@ public class ProtocolSelection<T extends AstNode> {
     openSet.add(new ProtocolMapNode<T>(initMap, 0));
 
     ProtocolSelectionProfiler<T> profiler =
-        new ProtocolSelectionProfiler<>(100, 100);
+        new ProtocolSelectionProfiler<>(this.enableProfiling, nodes.size(), 100, 100);
 
     // explore nodes in open set until we find a goal node
     ProtocolMapNode<T> lastAddedNode = null;
@@ -83,6 +87,8 @@ public class ProtocolSelection<T extends AstNode> {
       Set<Protocol<T>> protoInstances =
           this.strategy.createProtocolInstances(hostConfig, currMap, nextNode);
       for (Protocol<T> protoInstance : protoInstances) {
+        profiler.recordProtocol(protoInstance);
+
         // instantiate neighbor
         @SuppressWarnings("unchecked")
         // TODO: use functional data structures
@@ -158,18 +164,22 @@ public class ProtocolSelection<T extends AstNode> {
 
   /** profiler for protocol search. */
   private static class ProtocolSelectionProfiler<U extends AstNode> {
-    int interval; // how much to increase the threshold
-    int threshold; // how big the open set must be to profile
-    Map<Integer,Integer> openSetSizeHistogram;
-    int bucketSize; // bucket size for the histogram
-    boolean printProgress;
+    private final int interval; // how much to increase the threshold
+    private final Map<Integer,Integer> openSetSizeHistogram;
+    private final Map<String, Integer> protocolHistogram;
+    private final int bucketSize; // bucket size for the histogram
+    private final int numNodes;
+    private final boolean enabled;
+    private int threshold; // how big the open set must be to profile
 
-    public ProtocolSelectionProfiler(int i, int bucketSize) {
+    public ProtocolSelectionProfiler(boolean enabled, int numNodes, int i, int bucketSize) {
       this.interval = i;
       this.threshold = i;
       this.openSetSizeHistogram = new HashMap<>();
+      this.protocolHistogram = new HashMap<>();
       this.bucketSize = bucketSize;
-      this.printProgress = false;
+      this.numNodes = numNodes;
+      this.enabled = enabled;
     }
 
     public void probe(
@@ -177,34 +187,59 @@ public class ProtocolSelection<T extends AstNode> {
         PriorityQueue<ProtocolMapNode<U>> openSet,
         Set<ProtocolMapNode<U>> closedSet) {
 
-      int openSetSize = openSet.size();
-      int bucket = openSetSize / this.bucketSize;
-      int bucketCount = 0;
+      if (this.enabled) {
+        int openSetSize = openSet.size();
+        int bucket = openSetSize / this.bucketSize;
+        int bucketCount = 0;
 
-      if (this.openSetSizeHistogram.containsKey(bucket)) {
-        bucketCount = this.openSetSizeHistogram.get(bucket);
-      }
-
-      this.openSetSizeHistogram.put(bucket, bucketCount + 1);
-
-      if (openSetSize >= this.threshold) {
-        if (this.printProgress) {
-          System.out.println(String.format("size of open set: %d", openSetSize));
+        if (this.openSetSizeHistogram.containsKey(bucket)) {
+          bucketCount = this.openSetSizeHistogram.get(bucket);
         }
-        this.threshold += this.interval;
+
+        this.openSetSizeHistogram.put(bucket, bucketCount + 1);
+
+        if (openSetSize >= this.threshold) {
+          System.out.println("PROBE START");
+          System.out.println(String.format("size of open set: %d", openSetSize));
+          System.out.println(
+              String.format("completion of last added node: %d out of %d protocols selected",
+                lastAddedNode.getProtocolMap().size(), this.numNodes));
+
+          for (Map.Entry<String,Integer> kv : this.protocolHistogram.entrySet()) {
+            System.out.println(String.format("protocol %s: %d", kv.getKey(), kv.getValue()));
+          }
+          this.threshold += this.interval;
+
+          System.out.println("PROBE END");
+        }
+      }
+    }
+
+    public void recordProtocol(Protocol<U> protocol) {
+      String id = protocol.getId();
+
+      if (this.protocolHistogram.containsKey(id)) {
+        Integer prev = this.protocolHistogram.get(id);
+        this.protocolHistogram.put(id, prev + 1);
+
+      } else {
+        this.protocolHistogram.put(id, 1);
+
       }
     }
 
     public void exitProfile() {
-      System.out.println("EXIT PROFILE FOR PROTOCOL SELECTION");
-      for (Map.Entry<Integer,Integer> kv : this.openSetSizeHistogram.entrySet()) {
-        int bucket = kv.getKey();
-        int bucketCount = kv.getValue();
-        System.out.println(
-            String.format("open set size %d - %d: %d",
-                this.bucketSize * bucket,
-                (this.bucketSize * (bucket + 1)) - 1,
-                bucketCount));
+      if (this.enabled) {
+        System.out.println("EXIT PROFILE FOR PROTOCOL SELECTION");
+        for (Map.Entry<Integer,Integer> kv : this.openSetSizeHistogram.entrySet()) {
+          int bucket = kv.getKey();
+          int bucketCount = kv.getValue();
+          System.out.println(
+              String.format("open set size %d - %d: %d",
+                  this.bucketSize * bucket,
+                  (this.bucketSize * (bucket + 1)) - 1,
+                  bucketCount));
+        }
       }
     }
   }

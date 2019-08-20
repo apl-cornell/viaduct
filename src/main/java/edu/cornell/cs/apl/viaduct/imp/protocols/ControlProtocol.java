@@ -97,6 +97,12 @@ public class ControlProtocol extends Cleartext implements Protocol<ImpAstNode> {
     }
   }
 
+  @Override
+  public String getId() {
+    return "Control";
+  }
+
+  @Override
   public Set<Host> getHosts() {
     return new HashSet<>();
   }

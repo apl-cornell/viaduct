@@ -14,7 +14,8 @@ process main {
 
   /* Chuck must prove that `shell` is valid without revealing its value. */
   int{A & C} win_secret;
-  if (declassify(1 <= shell && shell <= 3, {A && C})) {
+  bool{A && C} guard = declassify(1 <= shell && shell <= 3, {A && C});
+  if (guard) {
     if (shell == guess) {
       win_secret = 1;
 

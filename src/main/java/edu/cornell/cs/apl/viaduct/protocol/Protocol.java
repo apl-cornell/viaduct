@@ -10,6 +10,8 @@ import java.util.Set;
 
 /** A cryptographic protocol for instantiating a PDG node. */
 public interface Protocol<T extends AstNode> {
+  String getId();
+
   Set<Host> getHosts();
 
   void initialize(PdgNode<T> node, ProtocolInstantiationInfo<T> info);

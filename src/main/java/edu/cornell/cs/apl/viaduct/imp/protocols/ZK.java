@@ -23,6 +23,11 @@ public class ZK implements Protocol<ImpAstNode> {
   }
 
   @Override
+  public String getId() {
+    return "ZK";
+  }
+
+  @Override
   public Set<Host> getHosts() {
     Set<Host> hosts = new HashSet<>();
     hosts.add(this.prover);

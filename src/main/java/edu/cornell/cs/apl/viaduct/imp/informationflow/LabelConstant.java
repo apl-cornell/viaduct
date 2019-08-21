@@ -9,20 +9,17 @@ import edu.cornell.cs.apl.viaduct.security.solver.ConstantTerm;
 final class LabelConstant extends LabelTerm {
   private final ConstantTerm<FreeDistributiveLattice<Principal>> confidentiality;
   private final ConstantTerm<FreeDistributiveLattice<Principal>> integrity;
-  private final Label value;
 
   LabelConstant(
       ConstantTerm<FreeDistributiveLattice<Principal>> confidentiality,
-      ConstantTerm<FreeDistributiveLattice<Principal>> integrity)
-  {
+      ConstantTerm<FreeDistributiveLattice<Principal>> integrity) {
     this.confidentiality = confidentiality;
     this.integrity = integrity;
-    this.value = new Label(confidentiality.getValue(), integrity.getValue());
   }
 
   @Override
   public Label getValue() {
-    return value;
+    return new Label(confidentiality.getValue(), integrity.getValue());
   }
 
   @Override

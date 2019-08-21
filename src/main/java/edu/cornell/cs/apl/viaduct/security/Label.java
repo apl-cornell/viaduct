@@ -42,8 +42,8 @@ public class Label implements Lattice<Label>, TrustLattice<Label> {
   public Label(
       FreeDistributiveLattice<Principal> confidentiality,
       FreeDistributiveLattice<Principal> integrity) {
-    this.confidentiality = confidentiality;
-    this.integrity = integrity;
+    this.confidentiality = Objects.requireNonNull(confidentiality);
+    this.integrity = Objects.requireNonNull(integrity);
   }
 
   /** The least restrictive data policy, i.e. public and trusted. */
@@ -98,8 +98,10 @@ public class Label implements Lattice<Label>, TrustLattice<Label> {
     return this.confidentiality.lessThanOrEqualTo(other.confidentiality)
         && other.integrity.lessThanOrEqualTo(this.integrity);
     */
-    return other.confidentiality().and(this.integrity()).actsFor(
-        this.confidentiality().and(other.integrity()));
+    return other
+        .confidentiality()
+        .and(this.integrity())
+        .actsFor(this.confidentiality().and(other.integrity()));
   }
 
   @Override

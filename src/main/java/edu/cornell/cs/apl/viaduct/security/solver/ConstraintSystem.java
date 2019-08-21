@@ -1,27 +1,23 @@
 package edu.cornell.cs.apl.viaduct.security.solver;
 
-import edu.cornell.cs.apl.viaduct.util.FreshNameGenerator;
 import edu.cornell.cs.apl.viaduct.util.HeytingAlgebra;
 import edu.cornell.cs.apl.viaduct.util.PartialOrder;
 import edu.cornell.cs.apl.viaduct.util.dataflow.DataFlow;
-import edu.cornell.cs.apl.viaduct.util.dataflow.DataFlow.DataflowDirection;
 import edu.cornell.cs.apl.viaduct.util.dataflow.DataFlowEdge;
 import edu.cornell.cs.apl.viaduct.util.dataflow.IdentityEdge;
-
 import java.io.Writer;
 import java.util.HashMap;
 import java.util.Map;
-
 import org.jgrapht.graph.DirectedPseudograph;
 import org.jgrapht.io.ComponentNameProvider;
 import org.jgrapht.io.DOTExporter;
 
 /**
- * Given a set of constraints of the form {@code t1 <= t2}, finds the unique minimum solution, if it
+ * Given a set of constraints of the form {@code t1 <= t2}, finds the unique maximum solution, if it
  * exists.
  *
  * <p>A solution to a set of constraints is an assignment of values to all variables in the system.
- * A minimum solution assigns the smallest possible value to each variable, where smallest is with
+ * A maximum solution assigns the greatest possible value to each variable, where greatest is with
  * respect to {@link PartialOrder#lessThanOrEqualTo(Object)}.
  */
 public class ConstraintSystem<A extends HeytingAlgebra<A>> {
@@ -33,27 +29,26 @@ public class ConstraintSystem<A extends HeytingAlgebra<A>> {
   private final DirectedPseudograph<ConstraintValue<A>, DataFlowEdge<A>> constraints =
       new DirectedPseudograph<>(null);
 
-  /** Least element of {@code A}. */
-  private final A init;
+  /** Greatest element of {@code A}. */
+  private final A top;
 
   /**
    * Create a new constraint system.
    *
-   * @param init initial value of variables {@code A}
+   * @param top greatest element of {@code A}
    */
-  public ConstraintSystem(A init) {
-    this.init = init;
+  public ConstraintSystem(A top) {
+    this.top = top;
   }
 
   /**
-   * Find a least solution to the set of constraints in the system.
+   * Find a greatest solution to the set of constraints in the system.
    *
-   * @return Mapping from variables to the smallest values that satisfy all constraints
+   * @return Mapping from variables to the greatest values that satisfy all constraints
    */
   public Map<VariableTerm<A>, A> solve() throws UnsatisfiableConstraintException {
     // Use data flow analysis to find a solution for all nodes.
-    Map<ConstraintValue<A>,A> solutions =
-        DataFlow.solve(init, constraints, DataflowDirection.DOWN);
+    Map<ConstraintValue<A>, A> solutions = DataFlow.solve(top, constraints);
 
     // Only return solutions for nodes that correspond to variables.
     final Map<VariableTerm<A>, A> variableSolutions = new HashMap<>();
@@ -68,14 +63,14 @@ public class ConstraintSystem<A extends HeytingAlgebra<A>> {
 
   /** Create a fresh variable and add it to the system. */
   public VariableTerm<A> addNewVariable(String id) {
-    VariableTerm<A> term = new VariableTerm<>(id, this.init);
+    VariableTerm<A> term = new VariableTerm<>(id, this.top);
     this.constraints.addVertex(term);
     return term;
   }
 
   /** Create a fresh variable and add it to the system. */
   public VariableTerm<A> addNewVariable(String id, String label) {
-    VariableTerm<A> term = new VariableTerm<>(id, label, this.init);
+    VariableTerm<A> term = new VariableTerm<>(id, label, this.top);
     this.constraints.addVertex(term);
     return term;
   }
@@ -90,10 +85,10 @@ public class ConstraintSystem<A extends HeytingAlgebra<A>> {
   /** Add the constraint {@code lhs <= rhs} to the system. */
   public void addLessThanOrEqualToConstraint(LeftHandTerm<A> lhs, RightHandTerm<A> rhs) {
     if (rhs instanceof ConstraintValue) {
-      constraints.addEdge((ConstraintValue<A>)rhs, lhs.getNode(), lhs.getInEdge());
+      constraints.addEdge((ConstraintValue<A>) rhs, lhs.getNode(), lhs.getInEdge());
 
     } else if (lhs instanceof ConstraintValue) {
-      constraints.addEdge(rhs.getNode(), (ConstraintValue<A>)lhs, rhs.getOutEdge());
+      constraints.addEdge(rhs.getNode(), (ConstraintValue<A>) lhs, rhs.getOutEdge());
 
     } else {
       throw new IllegalArgumentException(
@@ -101,10 +96,12 @@ public class ConstraintSystem<A extends HeytingAlgebra<A>> {
     }
   }
 
+  // TODO: clean this up
   /** output constraint system as a DOT graph. */
-  public void exportDotGraph(Map<VariableTerm<A>,A> solutions, Writer writer) {
+  public void exportDotGraph(Map<VariableTerm<A>, A> solutions, Writer writer) {
     ComponentNameProvider<ConstraintValue<A>> vertexIdProvider =
         new ComponentNameProvider<ConstraintValue<A>>() {
+          @Override
           public String getName(ConstraintValue<A> val) {
             return val.getId();
           }
@@ -112,13 +109,14 @@ public class ConstraintSystem<A extends HeytingAlgebra<A>> {
 
     ComponentNameProvider<ConstraintValue<A>> vertexLabelProvider =
         new ComponentNameProvider<ConstraintValue<A>>() {
+          @Override
           public String getName(ConstraintValue<A> val) {
             String id = "";
             String label = "";
 
             if (val instanceof VariableTerm) {
-              id =  val.getNode().toString();
-              VariableTerm<A> var = (VariableTerm<A>)val;
+              id = val.getNode().toString();
+              VariableTerm<A> var = (VariableTerm<A>) val;
               if (solutions != null && solutions.containsKey(var)) {
                 label = solutions.get(var).toString();
               }
@@ -134,17 +132,18 @@ public class ConstraintSystem<A extends HeytingAlgebra<A>> {
 
     ComponentNameProvider<DataFlowEdge<A>> edgeLabelProvider =
         new ComponentNameProvider<DataFlowEdge<A>>() {
+          @Override
           public String getName(DataFlowEdge<A> edge) {
             if (edge instanceof IdentityEdge) {
               return "";
 
             } else if (edge instanceof JoinEdge) {
-              JoinEdge<A> joinEdge = (JoinEdge<A>)edge;
+              JoinEdge<A> joinEdge = (JoinEdge<A>) edge;
               A joinConstant = joinEdge.getJoinConstant();
               return String.format(" | %s", joinConstant);
 
             } else if (edge instanceof PseudocomplementEdge) {
-              PseudocomplementEdge<A> psEdge = (PseudocomplementEdge<A>)edge;
+              PseudocomplementEdge<A> psEdge = (PseudocomplementEdge<A>) edge;
               A constant = psEdge.getPseudocomplementedConstant();
               return String.format("%s ---> _", constant);
 
@@ -154,7 +153,7 @@ public class ConstraintSystem<A extends HeytingAlgebra<A>> {
           }
         };
 
-    DOTExporter<ConstraintValue<A>,DataFlowEdge<A>> exporter =
+    DOTExporter<ConstraintValue<A>, DataFlowEdge<A>> exporter =
         new DOTExporter<>(vertexIdProvider, vertexLabelProvider, edgeLabelProvider);
     exporter.exportGraph(constraints, writer);
   }

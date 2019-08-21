@@ -21,12 +21,7 @@ public abstract class ImpAstNode implements AstNode {
    */
   @Override
   public final Label getTrustLabel() {
-    if (this.trustLabel != null) {
-      return trustLabel.getValue();
-
-    } else {
-      return null;
-    }
+    return trustLabel.getValue();
   }
 
   /**

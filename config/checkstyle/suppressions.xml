@@ -9,7 +9,5 @@
     <suppress checks="LeftCurly" files=".*" />
     <suppress checks="LocalVariableName" files=".*" />
     <suppress checks="SingleLineJavadoc" files=".*" />
-    <suppress checks=".*" files="ImpLexer\.java" />
-    <suppress checks=".*" files="ImpParser\.java" />
-    <suppress checks=".*" files="sym\.java" />
+    <suppress checks=".*" files="build/generated*" />
 </suppressions>

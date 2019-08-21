@@ -36,7 +36,6 @@ import edu.cornell.cs.apl.viaduct.security.solver.ConstraintSystem;
 import edu.cornell.cs.apl.viaduct.security.solver.ConstraintValue;
 import edu.cornell.cs.apl.viaduct.security.solver.VariableTerm;
 import edu.cornell.cs.apl.viaduct.util.FreshNameGenerator;
-
 import java.io.Writer;
 import java.util.HashMap;
 import java.util.Map;
@@ -63,12 +62,12 @@ public class InformationFlowChecker
    * LabelVariable#getValue()}.
    */
   private final Map<
-      VariableTerm<FreeDistributiveLattice<Principal>>,
-      FreeDistributiveLattice<Principal>>
+          VariableTerm<FreeDistributiveLattice<Principal>>, FreeDistributiveLattice<Principal>>
       solutions = new HashMap<>();
 
   /** Current program counter label. */
   private LabelVariable pc;
+
   private LabelVariable breakLabel;
 
   /** constructor. create fresh PC and break labels. */
@@ -109,13 +108,21 @@ public class InformationFlowChecker
     constraintSystem.addLessThanOrEqualToConstraint(lhs.getIntegrity(), rhs.getIntegrity());
   }
 
+  /**
+   * Add constraints to {@link #constraintSystem} that assert {@code l1} and {@code l2} are the same
+   * label.
+   */
+  private void addEqualToConstraint(LabelTerm l1, LabelTerm l2) {
+    addFlowsToConstraint(l1, l2);
+    addFlowsToConstraint(l2, l1);
+  }
+
   private LabelConstant createLabelConstant(Label label) {
     ConstantTerm<FreeDistributiveLattice<Principal>> confidentiality =
         this.constraintSystem.addNewConstant(label.confidentialityComponent());
     ConstantTerm<FreeDistributiveLattice<Principal>> integrity =
         this.constraintSystem.addNewConstant(label.integrityComponent());
-    LabelConstant constant = new LabelConstant(confidentiality, integrity);
-    return constant;
+    return new LabelConstant(confidentiality, integrity);
   }
 
   public void exportDotGraph(Writer writer) {
@@ -151,8 +158,7 @@ public class InformationFlowChecker
   public LabelTerm visit(LiteralNode literalNode) {
     final LabelVariable l =
         new LabelVariable(
-            this.nameGenerator.getFreshName("lit"),
-            literalNode.getValue().toString());
+            this.nameGenerator.getFreshName("lit"), literalNode.getValue().toString());
     literalNode.setTrustLabel(l);
     return l;
   }
@@ -167,9 +173,7 @@ public class InformationFlowChecker
   @Override
   public LabelTerm visit(NotNode notNode) {
     final LabelVariable l =
-        new LabelVariable(
-            this.nameGenerator.getFreshName("not"),
-            PrintVisitor.run(notNode));
+        new LabelVariable(this.nameGenerator.getFreshName("not"), PrintVisitor.run(notNode));
     notNode.setTrustLabel(l);
 
     final LabelTerm expLabel = notNode.getExpression().accept(this);
@@ -181,9 +185,7 @@ public class InformationFlowChecker
   @Override
   public LabelTerm visit(BinaryExpressionNode binExprNode) {
     final LabelVariable l =
-        new LabelVariable(
-            this.nameGenerator.getFreshName("binop"),
-            PrintVisitor.run(binExprNode));
+        new LabelVariable(this.nameGenerator.getFreshName("binop"), PrintVisitor.run(binExprNode));
     binExprNode.setTrustLabel(l);
 
     final LabelTerm lhsLabel = binExprNode.getLhs().accept(this);
@@ -220,8 +222,7 @@ public class InformationFlowChecker
     final Label fromLabel = downgradeNode.getFromLabel();
     if (fromLabel != null) {
       final LabelTerm fromLabelTerm = createLabelConstant(fromLabel);
-      addFlowsToConstraint(fromLabelTerm, e);
-      addFlowsToConstraint(e, fromLabelTerm);
+      addEqualToConstraint(fromLabelTerm, e);
 
     } else { // no from label, but we want to enforce single-dimensional downgrades also
       switch (downgradeNode.getDowngradeType()) {
@@ -239,7 +240,6 @@ public class InformationFlowChecker
         default:
           break;
       }
-
     }
 
     return toLabel;
@@ -300,9 +300,7 @@ public class InformationFlowChecker
   @Override
   public Void visit(AssignNode assignNode) {
     final LabelVariable l =
-        new LabelVariable(
-            this.nameGenerator.getFreshName("assign"),
-            PrintVisitor.run(assignNode));
+        new LabelVariable(this.nameGenerator.getFreshName("assign"), PrintVisitor.run(assignNode));
     assignNode.setTrustLabel(l);
 
     final LabelTerm rhsLabel = assignNode.getRhs().accept(this);
@@ -405,8 +403,7 @@ public class InformationFlowChecker
 
   @Override
   public Void visit(AssertNode assertNode) {
-    final LabelVariable l =
-        new LabelVariable(this.nameGenerator.getFreshName("assert"));
+    final LabelVariable l = new LabelVariable(this.nameGenerator.getFreshName("assert"));
     assertNode.setTrustLabel(l);
     return null;
   }
@@ -419,10 +416,8 @@ public class InformationFlowChecker
     private final VariableTerm<FreeDistributiveLattice<Principal>> integrity;
 
     LabelVariable(String id) {
-      this.confidentiality =
-          constraintSystem.addNewVariable(String.format("conf_%s", id));
-      this.integrity =
-          constraintSystem.addNewVariable(String.format("integ_%s", id));
+      this.confidentiality = constraintSystem.addNewVariable(String.format("conf_%s", id));
+      this.integrity = constraintSystem.addNewVariable(String.format("integ_%s", id));
     }
 
     LabelVariable(String id, String label) {
@@ -431,15 +426,17 @@ public class InformationFlowChecker
               String.format("conf_%s", id), String.format("conf_%s", label));
       this.integrity =
           constraintSystem.addNewVariable(
-                String.format("integ_%s", id), String.format("integ_%s", label));
+              String.format("integ_%s", id), String.format("integ_%s", label));
     }
 
     @Override
     public Label getValue() {
-      // solution could be null since we might want to output variables
-      // even when no solution is found, for debugging purposes
       FreeDistributiveLattice<Principal> c = solutions.get(confidentiality);
       FreeDistributiveLattice<Principal> i = solutions.get(integrity);
+      // The output is only null if no solution was found. We allow this for debugging purposes.
+      if (c == null || i == null) {
+        return null;
+      }
       return new Label(c, i);
     }
 

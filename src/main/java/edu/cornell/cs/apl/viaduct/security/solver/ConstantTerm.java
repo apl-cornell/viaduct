@@ -1,7 +1,6 @@
 package edu.cornell.cs.apl.viaduct.security.solver;
 
 import com.google.auto.value.AutoValue;
-
 import edu.cornell.cs.apl.viaduct.util.FreshNameGenerator;
 import edu.cornell.cs.apl.viaduct.util.HeytingAlgebra;
 
@@ -11,8 +10,6 @@ public abstract class ConstantTerm<A extends HeytingAlgebra<A>> extends Constrai
   private static final String CONST_ID = "const";
   private static final FreshNameGenerator nameGenerator = new FreshNameGenerator();
 
-  public abstract A getValue();
-
   protected ConstantTerm() {
     super(nameGenerator.getFreshName(CONST_ID));
   }
@@ -20,6 +17,8 @@ public abstract class ConstantTerm<A extends HeytingAlgebra<A>> extends Constrai
   public static <V extends HeytingAlgebra<V>> ConstantTerm<V> create(V value) {
     return new AutoValue_ConstantTerm<>(value);
   }
+
+  public abstract A getValue();
 
   /** Return a term that represents the meet of {@code this} and {@code that}. */
   public final LeftHandTerm<A> meet(ConstraintValue<A> that) {

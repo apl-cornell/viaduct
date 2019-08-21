@@ -5,20 +5,21 @@ import edu.cornell.cs.apl.viaduct.util.HeytingAlgebra;
 /** A variable for the solver to find a value for. */
 public final class VariableTerm<A extends HeytingAlgebra<A>> extends ConstraintValue<A> {
   private final String label;
-  private final A bottom;
+  private final A top;
 
-  VariableTerm(String id, A bottom) {
+  VariableTerm(String id, A top) {
     super(id);
     this.label = id;
-    this.bottom = bottom;
+    this.top = top;
   }
 
-  VariableTerm(String id, String label, A bottom) {
+  VariableTerm(String id, String label, A top) {
     super(id);
     this.label = label;
-    this.bottom = bottom;
+    this.top = top;
   }
 
+  @Override
   public String getId() {
     return this.id;
   }
@@ -29,7 +30,7 @@ public final class VariableTerm<A extends HeytingAlgebra<A>> extends ConstraintV
 
   @Override
   public A initialize() {
-    return this.bottom;
+    return this.top;
   }
 
   @Override

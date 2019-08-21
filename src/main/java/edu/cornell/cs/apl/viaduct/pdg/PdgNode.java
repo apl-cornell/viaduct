@@ -115,8 +115,13 @@ public abstract class PdgNode<T extends AstNode> {
     return readNodes;
   }
 
+  /** Get label. */
   public Label getLabel() {
-    return this.astNode.getTrustLabel();
+    try {
+      return this.astNode.getTrustLabel();
+    } catch (NullPointerException e) {
+      return null;
+    }
   }
 
   public abstract boolean isStorageNode();
@@ -151,7 +156,6 @@ public abstract class PdgNode<T extends AstNode> {
   @Override
   public String toString() {
     return String.format(
-        "(pdg-node '%s' for '%s' with label %s)",
-        this.id, this.astNode, getLabel());
+        "(pdg-node '%s' for '%s' with label %s)", this.id, this.astNode, getLabel());
   }
 }

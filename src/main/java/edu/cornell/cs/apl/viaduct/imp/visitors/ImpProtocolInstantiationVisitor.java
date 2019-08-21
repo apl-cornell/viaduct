@@ -24,6 +24,7 @@ import edu.cornell.cs.apl.viaduct.pdg.PdgNode;
 import edu.cornell.cs.apl.viaduct.pdg.ProgramDependencyGraph;
 import edu.cornell.cs.apl.viaduct.pdg.ProgramDependencyGraph.ControlLabel;
 import edu.cornell.cs.apl.viaduct.protocol.Protocol;
+import edu.cornell.cs.apl.viaduct.protocol.ProtocolCommunicationStrategy;
 import edu.cornell.cs.apl.viaduct.protocol.ProtocolInstantiationException;
 import edu.cornell.cs.apl.viaduct.protocol.ProtocolInstantiationInfo;
 
@@ -42,6 +43,7 @@ public class ImpProtocolInstantiationVisitor implements StmtVisitor<Void> {
   /** constructor. */
   public ImpProtocolInstantiationVisitor(
       HostTrustConfiguration hostConfig,
+      ProtocolCommunicationStrategy<ImpAstNode> communicationStrategy,
       ProgramDependencyGraph<ImpAstNode> pdg,
       Map<PdgNode<ImpAstNode>, Protocol<ImpAstNode>> protocolMap,
       StmtNode main) {
@@ -51,7 +53,9 @@ public class ImpProtocolInstantiationVisitor implements StmtVisitor<Void> {
     this.protocolMap = protocolMap;
     this.main = main;
     this.pconfig = new ProcessConfigurationBuilder(hostConfig);
-    this.info = new ProtocolInstantiationInfo<>(pconfig, this.protocolMap);
+    this.info =
+        new ProtocolInstantiationInfo<>(
+            hostConfig, communicationStrategy, pconfig, this.protocolMap);
     this.initializer = new ImpProtocolInitializationVisitor();
   }
 

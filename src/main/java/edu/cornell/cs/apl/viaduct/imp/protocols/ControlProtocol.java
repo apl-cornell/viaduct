@@ -124,6 +124,7 @@ public class ControlProtocol extends Cleartext implements Protocol<ImpAstNode> {
   @Override
   public Binding<ImpAstNode> readFrom(
       PdgNode<ImpAstNode> node,
+      PdgNode<ImpAstNode> readNode,
       Host readHost,
       Binding<ImpAstNode> readLabel,
       List<ImpAstNode> args,
@@ -135,6 +136,7 @@ public class ControlProtocol extends Cleartext implements Protocol<ImpAstNode> {
   @Override
   public void writeTo(
       PdgNode<ImpAstNode> node,
+      PdgNode<ImpAstNode> writeNode,
       Host writeHost,
       List<ImpAstNode> args,
       ProtocolInstantiationInfo<ImpAstNode> info) {

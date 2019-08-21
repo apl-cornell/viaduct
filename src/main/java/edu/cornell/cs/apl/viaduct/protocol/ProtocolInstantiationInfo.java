@@ -2,6 +2,7 @@ package edu.cornell.cs.apl.viaduct.protocol;
 
 import edu.cornell.cs.apl.viaduct.AstNode;
 import edu.cornell.cs.apl.viaduct.Binding;
+import edu.cornell.cs.apl.viaduct.imp.HostTrustConfiguration;
 import edu.cornell.cs.apl.viaduct.imp.ast.Host;
 import edu.cornell.cs.apl.viaduct.imp.ast.Variable;
 import edu.cornell.cs.apl.viaduct.imp.builders.ProcessConfigurationBuilder;
@@ -9,12 +10,15 @@ import edu.cornell.cs.apl.viaduct.imp.builders.StmtBuilder;
 import edu.cornell.cs.apl.viaduct.pdg.PdgNode;
 import edu.cornell.cs.apl.viaduct.pdg.ProgramDependencyGraph.ControlLabel;
 
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.Stack;
 
 /** helper class for protocol instantiation. */
 public class ProtocolInstantiationInfo<T extends AstNode> {
+  private final HostTrustConfiguration hostConfig;
+  private final ProtocolCommunicationStrategy<T> communicationStrategy;
   private final ProcessConfigurationBuilder pconfig;
   private final Map<PdgNode<T>, Protocol<T>> protocolMap;
   private final Stack<Set<Host>> controlContext;
@@ -22,12 +26,44 @@ public class ProtocolInstantiationInfo<T extends AstNode> {
 
   /** store config builder and protocol map. */
   public ProtocolInstantiationInfo(
-      ProcessConfigurationBuilder pc, Map<PdgNode<T>, Protocol<T>> pm) {
+      HostTrustConfiguration hostConfig,
+      ProtocolCommunicationStrategy<T> communicationStrategy,
+      ProcessConfigurationBuilder processConfig,
+      Map<PdgNode<T>, Protocol<T>> protocolMap) {
 
-    this.pconfig = pc;
-    this.protocolMap = pm;
+    this.hostConfig = hostConfig;
+    this.communicationStrategy = communicationStrategy;
+    this.pconfig = processConfig;
+    this.protocolMap = protocolMap;
     this.controlContext = new Stack<>();
     this.loopControlContext = new Stack<>();
+  }
+
+  /** get the set of hosts to read from. */
+  public Set<Host> getReadSet(PdgNode<T> writeNode, PdgNode<T> readNode, Host readHost) {
+    final Protocol<T> fromProtocol = this.protocolMap.get(writeNode);
+    final Protocol<T> toProtocol = this.protocolMap.get(readNode);
+    return
+        this.communicationStrategy
+          .getCommunication(this.hostConfig, fromProtocol, toProtocol)
+          .get(readHost);
+  }
+
+  /** get the set of hosts to write to. */
+  public Set<Host> getWriteSet(PdgNode<T> writeNode, PdgNode<T> readNode, Host writeHost) {
+    final Protocol<T> fromProtocol = this.protocolMap.get(writeNode);
+    final Protocol<T> toProtocol = this.protocolMap.get(readNode);
+    final Map<Host,Set<Host>> communicationMap =
+        this.communicationStrategy.getCommunication(this.hostConfig, fromProtocol, toProtocol);
+
+    Set<Host> writeSet = new HashSet<>();
+    for (Map.Entry<Host,Set<Host>> kv : communicationMap.entrySet()) {
+      if (kv.getValue().contains(writeHost)) {
+        writeSet.add(kv.getKey());
+      }
+    }
+
+    return writeSet;
   }
 
   public StmtBuilder createProcess(Host h) {

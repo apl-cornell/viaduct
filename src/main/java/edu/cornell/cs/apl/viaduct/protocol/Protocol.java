@@ -18,8 +18,11 @@ public interface Protocol<T extends AstNode> {
 
   void instantiate(PdgNode<T> node, ProtocolInstantiationInfo<T> info);
 
-  Binding<T> readFrom(PdgNode<T> node, Host readHost,
-      Binding<T> readLabel, List<T> args, ProtocolInstantiationInfo<T> info);
+  Binding<T> readFrom(
+      PdgNode<T> node, PdgNode<T> readNode, Host readHost, Binding<T> readLabel,
+      List<T> args, ProtocolInstantiationInfo<T> info);
 
-  void writeTo(PdgNode<T> node, Host writeHost, List<T> args, ProtocolInstantiationInfo<T> info);
+  void writeTo(
+      PdgNode<T> node, PdgNode<T> writeNode, Host writeHost,
+      List<T> args, ProtocolInstantiationInfo<T> info);
 }

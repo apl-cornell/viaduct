@@ -4,14 +4,15 @@ import com.github.rvesse.airline.annotations.Command;
 import com.github.rvesse.airline.annotations.Option;
 
 import edu.cornell.cs.apl.viaduct.imp.HostTrustConfiguration;
-import edu.cornell.cs.apl.viaduct.imp.ImpCommunicationCostEstimator;
-import edu.cornell.cs.apl.viaduct.imp.ImpProtocolSearchStrategy;
 import edu.cornell.cs.apl.viaduct.imp.ast.ImpAstNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ProcessName;
 import edu.cornell.cs.apl.viaduct.imp.ast.ProgramNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.StmtNode;
 import edu.cornell.cs.apl.viaduct.imp.informationflow.InformationFlowChecker;
 import edu.cornell.cs.apl.viaduct.imp.parser.TrustConfigurationParser;
+import edu.cornell.cs.apl.viaduct.imp.protocols.ImpCommunicationCostEstimator;
+import edu.cornell.cs.apl.viaduct.imp.protocols.ImpProtocolCommunicationStrategy;
+import edu.cornell.cs.apl.viaduct.imp.protocols.ImpProtocolSearchStrategy;
 import edu.cornell.cs.apl.viaduct.imp.visitors.ImpPdgBuilderPreprocessVisitor;
 import edu.cornell.cs.apl.viaduct.imp.visitors.ImpPdgBuilderVisitor;
 import edu.cornell.cs.apl.viaduct.imp.visitors.ImpProtocolInstantiationVisitor;
@@ -20,6 +21,7 @@ import edu.cornell.cs.apl.viaduct.imp.visitors.TypeCheckVisitor;
 import edu.cornell.cs.apl.viaduct.pdg.PdgDotPrinter;
 import edu.cornell.cs.apl.viaduct.pdg.PdgNode;
 import edu.cornell.cs.apl.viaduct.pdg.ProgramDependencyGraph;
+import edu.cornell.cs.apl.viaduct.protocol.MemoizedProtocolCommunicationStrategy;
 import edu.cornell.cs.apl.viaduct.protocol.Protocol;
 import edu.cornell.cs.apl.viaduct.protocol.ProtocolSelection;
 import edu.cornell.cs.apl.viaduct.security.solver.UnsatisfiableConstraintException;
@@ -213,8 +215,15 @@ public class CompileCommand extends BaseCommand {
     }
 
     // Select cryptographic protocols for each node.
+    final MemoizedProtocolCommunicationStrategy<ImpAstNode> communicationStrategy =
+        new MemoizedProtocolCommunicationStrategy<>(new ImpProtocolCommunicationStrategy());
+
+    final ImpCommunicationCostEstimator costEstimator =
+        new ImpCommunicationCostEstimator(communicationStrategy);
+
     final ImpProtocolSearchStrategy strategy =
-        new ImpProtocolSearchStrategy(new ImpCommunicationCostEstimator());
+        new ImpProtocolSearchStrategy(costEstimator);
+
     final Map<PdgNode<ImpAstNode>, Protocol<ImpAstNode>> protocolMap =
         new ProtocolSelection<>(this.enableProfiling, strategy)
         .selectProtocols(trustConfiguration, pdg);
@@ -233,7 +242,9 @@ public class CompileCommand extends BaseCommand {
     if (pdg.getOrderedNodes().size() == protocolMap.size()) {
       // Found a protocol for every node! Output synthesized distributed program.
       final ProgramNode generatedProgram =
-          new ImpProtocolInstantiationVisitor(trustConfiguration, pdg, protocolMap, main).run();
+          new ImpProtocolInstantiationVisitor(
+              trustConfiguration, communicationStrategy, pdg, protocolMap, main)
+          .run();
 
       try (BufferedWriter writer = output.newOutputWriter()) {
         writer.write(PrintVisitor.run(generatedProgram));

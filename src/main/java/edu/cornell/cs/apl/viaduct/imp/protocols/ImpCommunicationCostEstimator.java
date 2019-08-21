@@ -1,4 +1,4 @@
-package edu.cornell.cs.apl.viaduct.imp;
+package edu.cornell.cs.apl.viaduct.imp.protocols;
 
 import edu.cornell.cs.apl.viaduct.UnknownProtocolException;
 import edu.cornell.cs.apl.viaduct.imp.ast.AssignNode;
@@ -16,6 +16,7 @@ import edu.cornell.cs.apl.viaduct.pdg.PdgInfoEdge;
 import edu.cornell.cs.apl.viaduct.pdg.PdgNode;
 import edu.cornell.cs.apl.viaduct.pdg.ProgramDependencyGraph;
 import edu.cornell.cs.apl.viaduct.protocol.Protocol;
+import edu.cornell.cs.apl.viaduct.protocol.ProtocolCommunicationStrategy;
 import edu.cornell.cs.apl.viaduct.protocol.ProtocolCostEstimator;
 
 import java.util.HashSet;
@@ -28,6 +29,14 @@ public class ImpCommunicationCostEstimator
 
   private static final int COMMUNICATION_COST = 1;
   private static final int BASE_STORAGE_COST = 0;
+
+  private final ProtocolCommunicationStrategy<ImpAstNode> communicationStrategy;
+
+  public ImpCommunicationCostEstimator(
+      ProtocolCommunicationStrategy<ImpAstNode> communicationStrategy)
+  {
+    this.communicationStrategy = communicationStrategy;
+  }
 
   private int estimateSingleCost(
       Map<PdgNode<ImpAstNode>,Protocol<ImpAstNode>> protocolMap,
@@ -171,7 +180,6 @@ public class ImpCommunicationCostEstimator
     }
   }
 
-  /** estimate cost for a single PDG node. */
   @Override
   public int estimateNodeCost(
       PdgNode<ImpAstNode> node,

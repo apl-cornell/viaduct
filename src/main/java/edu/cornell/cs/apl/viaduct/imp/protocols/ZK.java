@@ -46,7 +46,8 @@ public class ZK implements Protocol<ImpAstNode> {
 
   @Override
   public Binding<ImpAstNode> readFrom(
-      PdgNode<ImpAstNode> node, Host h,
+      PdgNode<ImpAstNode> node,
+      PdgNode<ImpAstNode> readNode, Host readHost,
       Binding<ImpAstNode> readLabel, List<ImpAstNode> args,
       ProtocolInstantiationInfo<ImpAstNode> info) {
 
@@ -57,7 +58,8 @@ public class ZK implements Protocol<ImpAstNode> {
   @Override
   public void writeTo(
       PdgNode<ImpAstNode> node,
-      Host h,
+      PdgNode<ImpAstNode> writeNode,
+      Host writeHost,
       List<ImpAstNode> args,
       ProtocolInstantiationInfo<ImpAstNode> info) {
 

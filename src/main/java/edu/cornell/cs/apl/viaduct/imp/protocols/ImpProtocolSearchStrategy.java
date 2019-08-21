@@ -1,6 +1,7 @@
-package edu.cornell.cs.apl.viaduct.imp;
+package edu.cornell.cs.apl.viaduct.imp.protocols;
 
 import edu.cornell.cs.apl.viaduct.UnknownProtocolException;
+import edu.cornell.cs.apl.viaduct.imp.HostTrustConfiguration;
 import edu.cornell.cs.apl.viaduct.imp.ast.ImpAstNode;
 import edu.cornell.cs.apl.viaduct.imp.protocols.ControlProtocol;
 import edu.cornell.cs.apl.viaduct.imp.protocols.MPC;
@@ -93,6 +94,10 @@ public class ImpProtocolSearchStrategy extends ProtocolCostEstimator<ImpAstNode>
       }
 
       instances.addAll(this.replicationFactory.createInstances(hostConfig, protocolMap, node));
+
+      if (instances.size() > 0) {
+        return instances;
+      }
 
       instances.addAll(this.mpcFactory.createInstances(hostConfig, protocolMap, node));
       // instances.addAll(this.zkFactory.createInstances(hostConfig, protocolMap, node));

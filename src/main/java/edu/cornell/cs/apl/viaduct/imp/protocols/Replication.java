@@ -75,14 +75,6 @@ public class Replication extends Cleartext implements Protocol<ImpAstNode> {
         this.outVarMap.put(realHost, hostOutVar);
       }
 
-      /*
-      for (Host hashHost : this.replicas.hashReplicas) {
-        Variable hostOutVar =
-            instantiateComputeNode(hashHost, (PdgComputeNode<ImpAstNode>)node, info);
-        this.outVarMap.put(hashHost, hostOutVar);
-      }
-      */
-
     } else {
       throw new ProtocolInstantiationException("control nodes must have Control protocol");
     }
@@ -91,6 +83,7 @@ public class Replication extends Cleartext implements Protocol<ImpAstNode> {
   @Override
   public Binding<ImpAstNode> readFrom(
       PdgNode<ImpAstNode> node,
+      PdgNode<ImpAstNode> readNode,
       Host readHost,
       Binding<ImpAstNode> readLabel,
       List<ImpAstNode> args,
@@ -101,14 +94,7 @@ public class Replication extends Cleartext implements Protocol<ImpAstNode> {
 
     Map<Host, Binding<ImpAstNode>> hostBindings = new HashMap<>();
     StmtBuilder readBuilder = info.getBuilder(readHost);
-    Set<Host> outHosts = new HashSet<>();
-
-    if (this.replicas.realReplicas.contains(readHost)) {
-      outHosts.add(readHost);
-
-    } else {
-      outHosts.addAll(this.replicas.realReplicas);
-    }
+    Set<Host> outHosts = info.getReadSet(node, readNode, readHost);
 
     for (Host outHost : outHosts) {
       Variable outVar = this.outVarMap.get(outHost);
@@ -117,14 +103,6 @@ public class Replication extends Cleartext implements Protocol<ImpAstNode> {
             outHost, outVar, args, info);
       hostBindings.put(outHost, readVar);
     }
-
-    /*
-    for (Host hashHost : this.replicas.hashReplicas) {
-      StmtBuilder builder = info.getBuilder(hashHost);
-      builder.send(readHost, e.var(this.outVarMap.get(hashHost)));
-      hosts.add(hashHost);
-    }
-    */
 
     if (hostBindings.size() > 1) {
       Binding<ImpAstNode> curBinding = null;
@@ -156,6 +134,7 @@ public class Replication extends Cleartext implements Protocol<ImpAstNode> {
   @Override
   public void writeTo(
       PdgNode<ImpAstNode> node,
+      PdgNode<ImpAstNode> writeNode,
       Host writeHost,
       List<ImpAstNode> args,
       ProtocolInstantiationInfo<ImpAstNode> info) {
@@ -164,31 +143,12 @@ public class Replication extends Cleartext implements Protocol<ImpAstNode> {
       // node must have been instantiated before being written to
       assert this.outVarMap.size() == getNumReplicas();
 
-      Set<Host> inHosts = new HashSet<>();
-
-      // StmtBuilder writerBuilder = info.getBuilder(writeHost);
-
-      if (this.replicas.realReplicas.contains(writeHost)) {
-        inHosts.add(writeHost);
-        // writerBuilder.assign(this.outVarMap.get(writeHost), (ExpressionNode) val);
-
-      } else {
-        inHosts.addAll(this.replicas.realReplicas);
-      }
-
+      Set<Host> inHosts = info.getWriteSet(writeNode, node, writeHost);
       for (Host inHost : inHosts) {
         Variable storageVar = this.outVarMap.get(inHost);
         performWrite(node, writeHost, inHost, storageVar, args, info);
       }
 
-      /*
-      for (Host hashHost : this.replicas.hashReplicas) {
-        StmtBuilder builder = info.getBuilder(hashHost);
-
-        writerBuilder.send(hashHost, (ExpressionNode)val);
-        builder.recv(writeHost, this.outVarMap.get(hashHost));
-      }
-      */
     } else {
       throw new ProtocolInstantiationException(
           "attempted to write to a non storage node");
@@ -206,9 +166,6 @@ public class Replication extends Cleartext implements Protocol<ImpAstNode> {
       Replication other = (Replication) o;
       boolean realEq = this.replicas.realReplicas.equals(other.replicas.realReplicas);
       return realEq;
-
-      // boolean hashEq = this.replicas.hashReplicas.equals(oreplication.replicas.hashReplicas);
-      // return realEq && hashEq;
 
     } else {
       return false;

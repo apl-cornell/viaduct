@@ -138,7 +138,7 @@ public abstract class Cleartext {
         PdgNode<ImpAstNode> readNode = computeEdge.getSource();
         Protocol<ImpAstNode> readProto = info.getProtocol(readNode);
         Variable readVar =
-            (Variable) readProto.readFrom(readNode, host, readLabel, new ArrayList<>(), info);
+            (Variable) readProto.readFrom(readNode, node, host, readLabel, new ArrayList<>(), info);
         computeRenameMap.put(readLabel, readVar);
       }
     }
@@ -211,10 +211,10 @@ public abstract class Cleartext {
 
         PdgNode<ImpAstNode> queryNode = queryEdge.getSource();
         Protocol<ImpAstNode> queryProto = info.getProtocol(queryNode);
-        Variable readVar =
-            (Variable)
-                queryProto.readFrom(
-                    queryEdge.getSource(), host, Variable.create(node.getId()), renamedArgs, info);
+        Variable readVar = (Variable)
+            queryProto.readFrom(
+                queryEdge.getSource(), node, host, Variable.create(node.getId()),
+                renamedArgs, info);
 
         queryRenameMap.put(queryRead, ReadNode.create(readVar));
       }
@@ -254,7 +254,7 @@ public abstract class Cleartext {
 
         PdgStorageNode<ImpAstNode> outNode = (PdgStorageNode<ImpAstNode>) outEdge.getTarget();
         Protocol<ImpAstNode> outProto = info.getProtocol(outNode);
-        outProto.writeTo(outNode, host, renamedArgs, info);
+        outProto.writeTo(outNode, node, host, renamedArgs, info);
       }
     }
 

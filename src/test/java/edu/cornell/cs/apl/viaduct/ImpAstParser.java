@@ -2,6 +2,7 @@ package edu.cornell.cs.apl.viaduct;
 
 import edu.cornell.cs.apl.viaduct.imp.ast.ProgramNode;
 import edu.cornell.cs.apl.viaduct.imp.parser.Parser;
+import edu.cornell.cs.apl.viaduct.imp.parser.SourceFile;
 import java.io.File;
 import org.junit.jupiter.api.extension.ParameterContext;
 import org.junit.jupiter.params.converter.ArgumentConversionException;
@@ -14,7 +15,7 @@ public class ImpAstParser implements ArgumentConverter {
       throws ArgumentConversionException {
     try {
       File path = (File) source;
-      return Parser.parse(path);
+      return Parser.parse(SourceFile.from(path));
     } catch (Exception e) {
       throw new ArgumentConversionException(e.getMessage());
     }

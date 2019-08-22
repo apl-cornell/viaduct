@@ -2,13 +2,13 @@ package edu.cornell.cs.apl.viaduct.cli;
 
 import com.github.rvesse.airline.annotations.Command;
 import com.github.rvesse.airline.annotations.Option;
-
 import edu.cornell.cs.apl.viaduct.imp.HostTrustConfiguration;
 import edu.cornell.cs.apl.viaduct.imp.ast.ImpAstNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ProcessName;
 import edu.cornell.cs.apl.viaduct.imp.ast.ProgramNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.StmtNode;
 import edu.cornell.cs.apl.viaduct.imp.informationflow.InformationFlowChecker;
+import edu.cornell.cs.apl.viaduct.imp.parser.SourceFile;
 import edu.cornell.cs.apl.viaduct.imp.parser.TrustConfigurationParser;
 import edu.cornell.cs.apl.viaduct.imp.protocols.ImpCommunicationCostEstimator;
 import edu.cornell.cs.apl.viaduct.imp.protocols.ImpProtocolCommunicationStrategy;
@@ -24,14 +24,12 @@ import edu.cornell.cs.apl.viaduct.pdg.ProgramDependencyGraph;
 import edu.cornell.cs.apl.viaduct.protocol.Protocol;
 import edu.cornell.cs.apl.viaduct.protocol.ProtocolSelection;
 import edu.cornell.cs.apl.viaduct.security.solver.UnsatisfiableConstraintException;
-
 import guru.nidi.graphviz.engine.Format;
 import guru.nidi.graphviz.engine.Graphviz;
 import guru.nidi.graphviz.engine.GraphvizCmdLineEngine;
 import guru.nidi.graphviz.engine.GraphvizServerEngine;
 import guru.nidi.graphviz.engine.GraphvizV8Engine;
 import guru.nidi.graphviz.model.MutableGraph;
-
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -43,7 +41,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
-
 import org.apache.commons.io.FilenameUtils;
 
 @Command(name = "compile", description = "Compile ideal protocol to secure distributed program")
@@ -91,16 +88,15 @@ public class CompileCommand extends BaseCommand {
   @Option(
       name = {"-c", "--constraint-graph"},
       title = "file.ext",
-      description =
-          "Write label constraint graph to <file.ext>.")
+      description = "Write label constraint graph to <file.ext>.")
   private String constraintGraphOutput = null;
 
   @Option(
       name = {"-s", "--skip"},
       description =
           "End compilation early. With this option enabled, Viaduct will"
-            + " end as soon as the last debugging option (e.g. graph dump)"
-            + " has been executed")
+              + " end as soon as the last debugging option (e.g. graph dump)"
+              + " has been executed")
   private boolean skip;
 
   @Option(
@@ -195,7 +191,11 @@ public class CompileCommand extends BaseCommand {
 
     } finally {
       // Dump PDG with information flow labels to a file (if requested).
-      dumpConstraints((writer) -> { checker.exportDotGraph(writer); }, constraintGraphOutput);
+      dumpConstraints(
+          (writer) -> {
+            checker.exportDotGraph(writer);
+          },
+          constraintGraphOutput);
     }
 
     if (this.skip && labelGraphOutput == null && protocolGraphOutput == null) {
@@ -207,8 +207,7 @@ public class CompileCommand extends BaseCommand {
 
     PrintVisitor printer = new PrintVisitor(false);
     // Dump PDG with information flow labels to a file (if requested).
-    dumpGraph(() -> PdgDotPrinter.pdgDotGraphWithLabels(pdg, printer),
-        labelGraphOutput);
+    dumpGraph(() -> PdgDotPrinter.pdgDotGraphWithLabels(pdg, printer), labelGraphOutput);
 
     if (this.skip && protocolGraphOutput == null) {
       return null;
@@ -221,18 +220,17 @@ public class CompileCommand extends BaseCommand {
     final ImpCommunicationCostEstimator costEstimator =
         new ImpCommunicationCostEstimator(hostConfig, communicationStrategy);
 
-    final ImpProtocolSearchStrategy strategy =
-        new ImpProtocolSearchStrategy(costEstimator);
+    final ImpProtocolSearchStrategy strategy = new ImpProtocolSearchStrategy(costEstimator);
 
     final Map<PdgNode<ImpAstNode>, Protocol<ImpAstNode>> protocolMap =
-        new ProtocolSelection<>(this.enableProfiling, strategy)
-        .selectProtocols(hostConfig, pdg);
+        new ProtocolSelection<>(this.enableProfiling, strategy).selectProtocols(hostConfig, pdg);
 
     System.out.println("SYNTHESIZED PROTOCOL:");
     System.out.println(strategy.estimatePdgCost(protocolMap, pdg));
 
     // Dump PDG with protocol information to a file (if requested).
-    dumpGraph(() -> PdgDotPrinter.pdgDotGraphWithProtocols(pdg, protocolMap, strategy, printer),
+    dumpGraph(
+        () -> PdgDotPrinter.pdgDotGraphWithProtocols(pdg, protocolMap, strategy, printer),
         protocolGraphOutput);
 
     if (this.skip) {
@@ -243,8 +241,8 @@ public class CompileCommand extends BaseCommand {
       // Found a protocol for every node! Output synthesized distributed program.
       final ProgramNode generatedProgram =
           new ImpProtocolInstantiationVisitor(
-              hostConfig, communicationStrategy, pdg, protocolMap, main)
-          .run();
+                  hostConfig, communicationStrategy, pdg, protocolMap, main)
+              .run();
 
       try (BufferedWriter writer = output.newOutputWriter()) {
         writer.write(PrintVisitor.run(generatedProgram));
@@ -285,7 +283,7 @@ public class CompileCommand extends BaseCommand {
     // Append trust configurations.
     if (hostConfigurationFiles != null) {
       for (String hostConfig : hostConfigurationFiles) {
-        builder.addHosts(TrustConfigurationParser.parse(new File(hostConfig)));
+        builder.addHosts(TrustConfigurationParser.parse(SourceFile.from(new File(hostConfig))));
       }
     }
 

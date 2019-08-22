@@ -8,7 +8,7 @@ import org.junit.jupiter.params.provider.ArgumentsSource;
 class ImpParserTest {
   @ParameterizedTest
   @ArgumentsSource(ExamplesProvider.class)
-  void testParse(File source) throws Exception {
-    Parser.parse(source);
+  void testParse(File file) throws Exception {
+    Parser.parse(SourceFile.from(file));
   }
 }

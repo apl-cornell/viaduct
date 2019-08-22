@@ -4,6 +4,7 @@ import com.github.rvesse.airline.annotations.Arguments;
 import com.github.rvesse.airline.annotations.restrictions.Once;
 import edu.cornell.cs.apl.viaduct.imp.ast.ProgramNode;
 import edu.cornell.cs.apl.viaduct.imp.parser.Parser;
+import edu.cornell.cs.apl.viaduct.imp.parser.SourceFile;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
@@ -30,7 +31,7 @@ final class InputFileModule {
   ProgramNode parse() throws Exception {
     try (Reader reader = newInputReader()) {
       final String inputSource = getInput() == null ? "<stdin>" : getInput().getPath();
-      return Parser.parse(reader, inputSource);
+      return Parser.parse(SourceFile.from(inputSource, reader));
     }
   }
 

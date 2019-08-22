@@ -433,10 +433,7 @@ public class InformationFlowChecker
     public Label getValue() {
       FreeDistributiveLattice<Principal> c = solutions.get(confidentiality);
       FreeDistributiveLattice<Principal> i = solutions.get(integrity);
-      // The output is only null if no solution was found. We allow this for debugging purposes.
-      if (c == null || i == null) {
-        return null;
-      }
+      // Note: this will fail if either component is null.
       return new Label(c, i);
     }
 

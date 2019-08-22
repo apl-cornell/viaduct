@@ -2,8 +2,6 @@ package edu.cornell.cs.apl.viaduct.imp.parser;
 
 import java.io.Reader;
 
-import java_cup.runtime.ComplexSymbolFactory;
-import java_cup.runtime.ComplexSymbolFactory.Location;
 import java_cup.runtime.Symbol;
 
 %%
@@ -13,36 +11,32 @@ import java_cup.runtime.Symbol;
 %cup
 
 /* Type of tokens returned by the yylex function. */
-%type Symbol
+%type ComplexSymbol
 
-/* Turn on line and column counting to get access to source locations. */
-%line
-%column
+/* Turn on character counting to get access to source locations. */
+%char
 
 
 %{
-  private String inputSource;
   private ComplexSymbolFactory symbolFactory;
   private int commentLevel;
 
   /**
   * Construct a new lexer.
   *
-  * @param inputLocation description of where {@code r} originated from
-  * @param r the input character stream
+  * @param r input character stream
   * @param sf generates symbols with source location information
   */
-  public ImpLexer(String inputSource, Reader r, ComplexSymbolFactory sf) {
+  public ImpLexer(Reader r, ComplexSymbolFactory sf) {
     this(r);
-    this.inputSource = inputSource;
-    symbolFactory = sf;
+    this.symbolFactory = sf;
     commentLevel = 0;
   }
 
   /**
    * Construct a Symbol with information about source location.
    */
-  private Symbol symbol(int code) {
+  private ComplexSymbol symbol(int code) {
     return symbol(code, null);
   }
 
@@ -50,9 +44,9 @@ import java_cup.runtime.Symbol;
    * Construct a Symbol with information about source location.
    * Additionally stores a value.
    */
-  private Symbol symbol(int code, Object value) {
-    Location left = new Location(inputSource, yyline + 1, yycolumn + 1);
-    Location right = new Location(inputSource, yyline + 1, yycolumn + 1 + yylength());
+  private ComplexSymbol symbol(int code, Object value) {
+    int left = yychar;
+    int right = yychar + yylength();
     return symbolFactory.newSymbol(sym.terminalNames[code], code, left, right, value);
   }
 %}
@@ -90,7 +84,7 @@ ANY         = .*
 
   /* types */
   "int"           { return symbol(sym.INT); }
-  "bool"           { return symbol(sym.BOOL); }
+  "bool"          { return symbol(sym.BOOL); }
 
   /* Statements */
   ":"             { return symbol(sym.COLON); }
@@ -114,11 +108,11 @@ ANY         = .*
   "&&"            { return symbol(sym.ANDAND); }
   "||"            { return symbol(sym.OROR); }
 
-  "++"             { return symbol(sym.PLUSPLUS); }
-  "+="             { return symbol(sym.PLUSEQ); }
-  "--"             { return symbol(sym.MINUSMINUS); }
-  "-="             { return symbol(sym.MINUSEQ); }
-  "*="             { return symbol(sym.TIMESEQ); }
+  "++"            { return symbol(sym.PLUSPLUS); }
+  "+="            { return symbol(sym.PLUSEQ); }
+  "--"            { return symbol(sym.MINUSMINUS); }
+  "-="            { return symbol(sym.MINUSEQ); }
+  "*="            { return symbol(sym.TIMESEQ); }
 
   "+"             { return symbol(sym.PLUS); }
   "-"             { return symbol(sym.MINUS); }

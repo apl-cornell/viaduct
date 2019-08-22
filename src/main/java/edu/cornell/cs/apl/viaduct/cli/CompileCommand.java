@@ -176,7 +176,7 @@ public class CompileCommand extends BaseCommand {
   public Void call() throws Exception {
     final ProgramNode program = this.parse();
 
-    final HostTrustConfiguration trustConfiguration = program.getHostTrustConfiguration();
+    final HostTrustConfiguration hostConfig = program.getHostTrustConfiguration();
 
     StmtNode main = program.getProcessCode(ProcessName.getMain());
     ImpPdgBuilderPreprocessVisitor preprocessor = new ImpPdgBuilderPreprocessVisitor();
@@ -219,14 +219,14 @@ public class CompileCommand extends BaseCommand {
         new ImpProtocolCommunicationStrategy();
 
     final ImpCommunicationCostEstimator costEstimator =
-        new ImpCommunicationCostEstimator(communicationStrategy);
+        new ImpCommunicationCostEstimator(hostConfig, communicationStrategy);
 
     final ImpProtocolSearchStrategy strategy =
         new ImpProtocolSearchStrategy(costEstimator);
 
     final Map<PdgNode<ImpAstNode>, Protocol<ImpAstNode>> protocolMap =
         new ProtocolSelection<>(this.enableProfiling, strategy)
-        .selectProtocols(trustConfiguration, pdg);
+        .selectProtocols(hostConfig, pdg);
 
     System.out.println("SYNTHESIZED PROTOCOL:");
     System.out.println(strategy.estimatePdgCost(protocolMap, pdg));
@@ -243,7 +243,7 @@ public class CompileCommand extends BaseCommand {
       // Found a protocol for every node! Output synthesized distributed program.
       final ProgramNode generatedProgram =
           new ImpProtocolInstantiationVisitor(
-              trustConfiguration, communicationStrategy, pdg, protocolMap, main)
+              hostConfig, communicationStrategy, pdg, protocolMap, main)
           .run();
 
       try (BufferedWriter writer = output.newOutputWriter()) {

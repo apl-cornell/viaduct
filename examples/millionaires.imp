@@ -7,13 +7,10 @@ process main {
   a <- recv alice_main;
   b <- recv bob_main;
 
-  int{A & B<-} a_endorsed;
-  int{B & A<-} b_endorsed;
+  int{A & B<-} a_endorsed = endorse(a, {A & B<-});
+  int{B & A<-} b_endorsed = endorse(b, {B & A<-});
 
-  a_endorsed = endorse(a, {A & B<-});
-  b_endorsed = endorse(b, {B & A<-});
-
-  b_richer = declassify(a_endorsed <= b_endorsed, {(A | B)-> & (A & B)<-});
+  b_richer = declassify(a_endorsed <= b_endorsed, {(A|B)-> & (A&B)<-});
   assert b_richer;
 }
 process alice_main {

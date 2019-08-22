@@ -11,19 +11,20 @@ import java.util.Map;
 import java.util.Set;
 
 /** memoize protocol communication strategy into a map. */
-public class MemoizedProtocolCommunicationStrategy<T extends AstNode>
+public abstract class MemoizedProtocolCommunicationStrategy<T extends AstNode>
     implements ProtocolCommunicationStrategy<T>
 {
   private final Map<Tuple2<Protocol<T>,Protocol<T>>, Map<Host,Set<Host>>> communicationMap;
-  private final ProtocolCommunicationStrategy<T> strategy;
 
-  public MemoizedProtocolCommunicationStrategy(ProtocolCommunicationStrategy<T> strategy) {
+  public MemoizedProtocolCommunicationStrategy() {
     this.communicationMap = new HashMap<>();
-    this.strategy = strategy;
   }
 
-  @Override
-  public Map<Host, Set<Host>> getCommunication(
+  protected abstract Map<Host, Set<Host>> computeCommunicationMap(
+      HostTrustConfiguration hostConfig,
+      Protocol<T> fromProtocol, Protocol<T> toProtocol);
+
+  protected Map<Host, Set<Host>> getCommunicationMap(
       HostTrustConfiguration hostConfig,
       Protocol<T> fromProtocol, Protocol<T> toProtocol) {
 
@@ -33,7 +34,7 @@ public class MemoizedProtocolCommunicationStrategy<T extends AstNode>
 
     } else {
       Map<Host, Set<Host>> communication =
-          this.strategy.getCommunication(hostConfig, fromProtocol, toProtocol);
+          computeCommunicationMap(hostConfig, fromProtocol, toProtocol);
       this.communicationMap.put(protocolPair, communication);
       return communication;
     }

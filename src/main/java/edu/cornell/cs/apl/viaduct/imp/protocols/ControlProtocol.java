@@ -16,6 +16,7 @@ import edu.cornell.cs.apl.viaduct.pdg.PdgReadEdge;
 import edu.cornell.cs.apl.viaduct.protocol.Protocol;
 import edu.cornell.cs.apl.viaduct.protocol.ProtocolInstantiationException;
 import edu.cornell.cs.apl.viaduct.protocol.ProtocolInstantiationInfo;
+import edu.cornell.cs.apl.viaduct.security.Label;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -105,6 +106,11 @@ public class ControlProtocol extends Cleartext implements Protocol<ImpAstNode> {
   @Override
   public Set<Host> getHosts() {
     return new HashSet<>();
+  }
+
+  @Override
+  public Label getTrust() {
+    throw new ProtocolInstantiationException("control protocol has no associated trust");
   }
 
   @Override

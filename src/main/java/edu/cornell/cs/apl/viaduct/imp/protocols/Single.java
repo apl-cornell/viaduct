@@ -1,22 +1,32 @@
 package edu.cornell.cs.apl.viaduct.imp.protocols;
 
+import edu.cornell.cs.apl.viaduct.imp.HostTrustConfiguration;
 import edu.cornell.cs.apl.viaduct.imp.ast.Host;
 import edu.cornell.cs.apl.viaduct.imp.ast.ImpAstNode;
 import edu.cornell.cs.apl.viaduct.pdg.PdgNode;
 import edu.cornell.cs.apl.viaduct.protocol.ProtocolInstantiationInfo;
+import edu.cornell.cs.apl.viaduct.security.Label;
 
 import java.util.HashSet;
 import java.util.Set;
 
 public class Single extends AbstractSingle {
-  private Host host;
+  private final Host host;
+  private final Label trust;
 
-  public Single(Host h) {
+  /** constructor. */
+  public Single(HostTrustConfiguration hostConfig, Host h) {
     this.host = h;
+    this.trust = hostConfig.getTrust(h);
   }
 
   public Host getHost() {
     return this.host;
+  }
+
+  @Override
+  public Label getTrust() {
+    return this.trust;
   }
 
   @Override

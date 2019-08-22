@@ -21,10 +21,10 @@ import edu.cornell.cs.apl.viaduct.imp.visitors.TypeCheckVisitor;
 import edu.cornell.cs.apl.viaduct.pdg.PdgDotPrinter;
 import edu.cornell.cs.apl.viaduct.pdg.PdgNode;
 import edu.cornell.cs.apl.viaduct.pdg.ProgramDependencyGraph;
-import edu.cornell.cs.apl.viaduct.protocol.MemoizedProtocolCommunicationStrategy;
 import edu.cornell.cs.apl.viaduct.protocol.Protocol;
 import edu.cornell.cs.apl.viaduct.protocol.ProtocolSelection;
 import edu.cornell.cs.apl.viaduct.security.solver.UnsatisfiableConstraintException;
+
 import guru.nidi.graphviz.engine.Format;
 import guru.nidi.graphviz.engine.Graphviz;
 import guru.nidi.graphviz.engine.GraphvizCmdLineEngine;
@@ -215,8 +215,8 @@ public class CompileCommand extends BaseCommand {
     }
 
     // Select cryptographic protocols for each node.
-    final MemoizedProtocolCommunicationStrategy<ImpAstNode> communicationStrategy =
-        new MemoizedProtocolCommunicationStrategy<>(new ImpProtocolCommunicationStrategy());
+    final ImpProtocolCommunicationStrategy communicationStrategy =
+        new ImpProtocolCommunicationStrategy();
 
     final ImpCommunicationCostEstimator costEstimator =
         new ImpCommunicationCostEstimator(communicationStrategy);

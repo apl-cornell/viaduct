@@ -74,11 +74,11 @@ public class ImpProtocolSearchStrategy extends ProtocolCostEstimator<ImpAstNode>
         Protocol<ImpAstNode> targetProto = protocolMap.get(targetNode);
 
         if (targetProto instanceof Single) {
-          instances.add(new Single(((Single) targetProto).getHost()));
+          instances.add(new Single(hostConfig, ((Single) targetProto).getHost()));
           return instances;
 
         } else if (targetProto instanceof MPC) {
-          instances.add(new MPC(((MPC) targetProto).getParties()));
+          instances.add(new MPC(hostConfig, ((MPC) targetProto).getParties()));
           return instances;
         }
       }
@@ -94,10 +94,6 @@ public class ImpProtocolSearchStrategy extends ProtocolCostEstimator<ImpAstNode>
       }
 
       instances.addAll(this.replicationFactory.createInstances(hostConfig, protocolMap, node));
-
-      if (instances.size() > 0) {
-        return instances;
-      }
 
       instances.addAll(this.mpcFactory.createInstances(hostConfig, protocolMap, node));
       // instances.addAll(this.zkFactory.createInstances(hostConfig, protocolMap, node));

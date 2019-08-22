@@ -1,6 +1,7 @@
 package edu.cornell.cs.apl.viaduct.imp.protocols;
 
 import edu.cornell.cs.apl.viaduct.Binding;
+import edu.cornell.cs.apl.viaduct.imp.HostTrustConfiguration;
 import edu.cornell.cs.apl.viaduct.imp.ast.ExpressionNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.Host;
 import edu.cornell.cs.apl.viaduct.imp.ast.ImpAstNode;
@@ -13,6 +14,7 @@ import edu.cornell.cs.apl.viaduct.pdg.PdgStorageNode;
 import edu.cornell.cs.apl.viaduct.protocol.Protocol;
 import edu.cornell.cs.apl.viaduct.protocol.ProtocolInstantiationException;
 import edu.cornell.cs.apl.viaduct.protocol.ProtocolInstantiationInfo;
+import edu.cornell.cs.apl.viaduct.security.Label;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -23,24 +25,38 @@ import java.util.Set;
 
 /** replication protocol. */
 public class Replication extends Cleartext implements Protocol<ImpAstNode> {
-  private ReplicaSets replicas;
-  private Map<Host, Variable> outVarMap;
+  private final Set<Host> replicas;
+  private final Label trust;
+  private final Map<Host, Variable> outVarMap;
 
-  public Replication(Set<Host> real, Set<Host> hash) {
-    this.replicas = new ReplicaSets(real, hash);
+  /** constructor. */
+  public Replication(HostTrustConfiguration hostConfig, Set<Host> replicas) {
+    this.replicas = replicas;
     this.outVarMap = new HashMap<>();
+
+    Label label = Label.top();
+    for (Host replica : replicas) {
+      label = label.meet(hostConfig.getTrust(replica));
+    }
+    this.trust = label;
   }
 
-  public Set<Host> getRealReplicas() {
-    return this.replicas.realReplicas;
-  }
-
-  public Set<Host> getHashReplicas() {
-    return this.replicas.hashReplicas;
+  public Set<Host> getReplicas() {
+    return this.replicas;
   }
 
   public int getNumReplicas() {
-    return this.replicas.realReplicas.size() + this.replicas.hashReplicas.size();
+    return this.replicas.size();
+  }
+
+  @Override
+  public Set<Host> getHosts() {
+    return this.replicas;
+  }
+
+  @Override
+  public Label getTrust() {
+    return this.trust;
   }
 
   @Override
@@ -56,20 +72,14 @@ public class Replication extends Cleartext implements Protocol<ImpAstNode> {
   @Override
   public void instantiate(PdgNode<ImpAstNode> node, ProtocolInstantiationInfo<ImpAstNode> info) {
     if (node.isStorageNode()) {
-      for (Host realHost : this.replicas.realReplicas) {
+      for (Host realHost : this.replicas) {
         Variable hostStorageVar =
             instantiateStorageNode(realHost, (PdgStorageNode<ImpAstNode>) node, info);
         this.outVarMap.put(realHost, hostStorageVar);
       }
 
-      for (Host hashHost : this.replicas.hashReplicas) {
-        Variable hostStorageVar =
-            instantiateStorageNode(hashHost, (PdgStorageNode<ImpAstNode>) node, info);
-        this.outVarMap.put(hashHost, hostStorageVar);
-      }
-
     } else if (node.isComputeNode()) {
-      for (Host realHost : this.replicas.realReplicas) {
+      for (Host realHost : this.replicas) {
         Variable hostOutVar =
             instantiateComputeNode(realHost, (PdgComputeNode<ImpAstNode>) node, info);
         this.outVarMap.put(realHost, hostOutVar);
@@ -164,7 +174,7 @@ public class Replication extends Cleartext implements Protocol<ImpAstNode> {
 
     if (o instanceof Replication) {
       Replication other = (Replication) o;
-      boolean realEq = this.replicas.realReplicas.equals(other.replicas.realReplicas);
+      boolean realEq = this.replicas.equals(other.replicas);
       return realEq;
 
     } else {
@@ -174,42 +184,17 @@ public class Replication extends Cleartext implements Protocol<ImpAstNode> {
 
   @Override
   public int hashCode() {
-    // return Objects.hash(this.replicas.realReplicas, this.replicas.hashReplicas);
-    return Objects.hash(this.replicas.realReplicas);
+    return Objects.hash(this.replicas);
   }
 
   @Override
   public String toString() {
     HashSet<String> realStrs = new HashSet<>();
-    for (Host real : this.replicas.realReplicas) {
+    for (Host real : this.replicas) {
       realStrs.add(real.toString());
     }
 
-    HashSet<String> hashStrs = new HashSet<>();
-    for (Host hash : this.replicas.hashReplicas) {
-      hashStrs.add(hash.toString());
-    }
-
     String realList = String.join(",", realStrs);
-    String hashList = String.join(",", hashStrs);
-    return String.format("Replication({%s},{%s})", realList, hashList);
-  }
-
-  @Override
-  public Set<Host> getHosts() {
-    Set<Host> hosts = new HashSet<>();
-    hosts.addAll(this.replicas.realReplicas);
-    hosts.addAll(this.replicas.hashReplicas);
-    return hosts;
-  }
-
-  private static class ReplicaSets {
-    private Set<Host> realReplicas;
-    private Set<Host> hashReplicas;
-
-    private ReplicaSets(Set<Host> real, Set<Host> hash) {
-      this.realReplicas = real;
-      this.hashReplicas = hash;
-    }
+    return String.format("Replication({%s})", realList);
   }
 }

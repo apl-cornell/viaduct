@@ -6,10 +6,16 @@ import com.google.auto.value.AutoValue;
 @AutoValue
 public abstract class Host implements Comparable<Host> {
   public static Host create(String name) {
-    return new AutoValue_Host(name);
+    return new AutoValue_Host(name, false);
+  }
+
+  public static Host create(String name, boolean isSynthetic) {
+    return new AutoValue_Host(name, isSynthetic);
   }
 
   public abstract String getName();
+
+  public abstract boolean isSynthetic();
 
   @Override
   public final int compareTo(Host that) {

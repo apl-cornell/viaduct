@@ -78,7 +78,7 @@ public class ImpCommunicationCostEstimator
   {
     Replication replProto = (Replication) protocol;
     if (node.isStorageNode()) {
-      return replProto.getRealReplicas().size() * BASE_STORAGE_COST;
+      return replProto.getReplicas().size() * BASE_STORAGE_COST;
 
     } else if (node.isComputeNode()) {
       // compute communication costs

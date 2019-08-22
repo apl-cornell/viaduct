@@ -1,9 +1,12 @@
 package edu.cornell.cs.apl.viaduct.imp.protocols;
 
+import edu.cornell.cs.apl.viaduct.imp.HostTrustConfiguration;
 import edu.cornell.cs.apl.viaduct.imp.ast.Host;
 import edu.cornell.cs.apl.viaduct.imp.ast.ImpAstNode;
 import edu.cornell.cs.apl.viaduct.pdg.PdgNode;
 import edu.cornell.cs.apl.viaduct.protocol.ProtocolInstantiationInfo;
+import edu.cornell.cs.apl.viaduct.security.Label;
+
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -11,13 +14,21 @@ import java.util.Set;
 
 /** multiparty computation protocol. */
 public class MPC extends AbstractSingle {
-  private static Map<Set<Host>, Host> synthesizedHostMap = new HashMap<>();
-  private Set<Host> parties;
+  private static final Map<Set<Host>, Host> synthesizedHostMap = new HashMap<>();
+  private final Set<Host> parties;
+  private final Label trust;
   private Host synthesizedHost;
 
-  public MPC(Set<Host> ps) {
+  /** constructor. */
+  public MPC(HostTrustConfiguration hostConfig, Set<Host> ps) {
     this.parties = ps;
     this.synthesizedHost = Host.create(toString());
+
+    Label label = Label.weakest();
+    for (Host party : this.parties) {
+      label = label.and(hostConfig.getTrust(party));
+    }
+    this.trust = label;
   }
 
   public Set<Host> getParties() {
@@ -26,6 +37,11 @@ public class MPC extends AbstractSingle {
 
   public Host getHost() {
     return this.synthesizedHost;
+  }
+
+  @Override
+  public Label getTrust() {
+    return trust;
   }
 
   @Override
@@ -51,7 +67,7 @@ public class MPC extends AbstractSingle {
       this.synthesizedHost = synthesizedHostMap.get(this.parties);
 
     } else {
-      this.synthesizedHost = Host.create(info.getFreshName(toString()));
+      this.synthesizedHost = Host.create(info.getFreshName(toString()), true);
       synthesizedHostMap.put(this.parties, this.synthesizedHost);
       info.createProcess(this.synthesizedHost);
     }

@@ -10,7 +10,6 @@ import edu.cornell.cs.apl.viaduct.imp.builders.StmtBuilder;
 import edu.cornell.cs.apl.viaduct.pdg.PdgNode;
 import edu.cornell.cs.apl.viaduct.pdg.ProgramDependencyGraph.ControlLabel;
 
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.Stack;
@@ -40,30 +39,17 @@ public class ProtocolInstantiationInfo<T extends AstNode> {
   }
 
   /** get the set of hosts to read from. */
-  public Set<Host> getReadSet(PdgNode<T> writeNode, PdgNode<T> readNode, Host readHost) {
+  public Set<Host> getReadSet(PdgNode<T> writeNode, PdgNode<T> readNode, Host host) {
     final Protocol<T> fromProtocol = this.protocolMap.get(writeNode);
     final Protocol<T> toProtocol = this.protocolMap.get(readNode);
-    return
-        this.communicationStrategy
-          .getCommunication(this.hostConfig, fromProtocol, toProtocol)
-          .get(readHost);
+    return this.communicationStrategy.getReadSet(this.hostConfig, fromProtocol, toProtocol, host);
   }
 
   /** get the set of hosts to write to. */
-  public Set<Host> getWriteSet(PdgNode<T> writeNode, PdgNode<T> readNode, Host writeHost) {
+  public Set<Host> getWriteSet(PdgNode<T> writeNode, PdgNode<T> readNode, Host host) {
     final Protocol<T> fromProtocol = this.protocolMap.get(writeNode);
     final Protocol<T> toProtocol = this.protocolMap.get(readNode);
-    final Map<Host,Set<Host>> communicationMap =
-        this.communicationStrategy.getCommunication(this.hostConfig, fromProtocol, toProtocol);
-
-    Set<Host> writeSet = new HashSet<>();
-    for (Map.Entry<Host,Set<Host>> kv : communicationMap.entrySet()) {
-      if (kv.getValue().contains(writeHost)) {
-        writeSet.add(kv.getKey());
-      }
-    }
-
-    return writeSet;
+    return this.communicationStrategy.getWriteSet(this.hostConfig, fromProtocol, toProtocol, host);
   }
 
   public StmtBuilder createProcess(Host h) {

@@ -1,11 +1,13 @@
 package edu.cornell.cs.apl.viaduct.imp.protocols;
 
 import edu.cornell.cs.apl.viaduct.Binding;
+import edu.cornell.cs.apl.viaduct.imp.HostTrustConfiguration;
 import edu.cornell.cs.apl.viaduct.imp.ast.Host;
 import edu.cornell.cs.apl.viaduct.imp.ast.ImpAstNode;
 import edu.cornell.cs.apl.viaduct.pdg.PdgNode;
 import edu.cornell.cs.apl.viaduct.protocol.Protocol;
 import edu.cornell.cs.apl.viaduct.protocol.ProtocolInstantiationInfo;
+import edu.cornell.cs.apl.viaduct.security.Label;
 
 import java.util.HashSet;
 import java.util.List;
@@ -14,12 +16,15 @@ import java.util.Set;
 
 /** non-interactive zero-knowledge proof. */
 public class ZK implements Protocol<ImpAstNode> {
-  private Host prover;
-  private Host verifier;
+  private final Host prover;
+  private final Host verifier;
+  private final Label trust;
 
-  public ZK(Host p, Host v) {
+  /** constructor. */
+  public ZK(HostTrustConfiguration hostConfig, Host p, Host v) {
     this.prover = p;
     this.verifier = v;
+    this.trust = hostConfig.getTrust(p).and(hostConfig.getTrust(v).integrity());
   }
 
   @Override
@@ -33,6 +38,11 @@ public class ZK implements Protocol<ImpAstNode> {
     hosts.add(this.prover);
     hosts.add(this.verifier);
     return hosts;
+  }
+
+  @Override
+  public Label getTrust() {
+    return this.trust;
   }
 
   @Override

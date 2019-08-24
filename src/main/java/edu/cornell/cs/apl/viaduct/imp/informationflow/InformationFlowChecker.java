@@ -304,6 +304,7 @@ public class InformationFlowChecker
     assignNode.setTrustLabel(l);
 
     final LabelTerm rhsLabel = assignNode.getRhs().accept(this);
+    addFlowsToConstraint(this.pc, l);
     addFlowsToConstraint(rhsLabel, l);
     addFlowsToConstraint(l, assignNode.getLhs().accept(this));
 

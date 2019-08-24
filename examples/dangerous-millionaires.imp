@@ -1,0 +1,28 @@
+/* The classic MPC problem, with a twist */
+process main {
+  int{A & B<-} a;
+  int{B & A<-} b;
+  bool{(A | B)-> & (A & B)<-} b_richer;
+
+  a <- recv alice_main;
+  b <- recv bob_main;
+
+  b_richer = declassify(a <= b, {(A|B)-> & (A&B)<-});
+
+  if (b_richer) {
+      a = 0;
+
+  } else {
+      b = 0;
+  }
+}
+process alice_main {
+  send 20 to main;
+}
+
+process bob_main {
+  send 40 to main;
+}
+
+host alice : {A & B<-};
+host bob : {B & A<-};

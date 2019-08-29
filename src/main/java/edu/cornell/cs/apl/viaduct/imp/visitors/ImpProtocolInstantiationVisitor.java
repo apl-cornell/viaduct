@@ -15,11 +15,10 @@ import edu.cornell.cs.apl.viaduct.imp.ast.LoopNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ProgramNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ReceiveNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.SendNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.StmtNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.StatementNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.VariableDeclarationNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.WhileNode;
 import edu.cornell.cs.apl.viaduct.imp.builders.ProcessConfigurationBuilder;
-import edu.cornell.cs.apl.viaduct.imp.visitors.StmtVisitor;
 import edu.cornell.cs.apl.viaduct.pdg.PdgNode;
 import edu.cornell.cs.apl.viaduct.pdg.ProgramDependencyGraph;
 import edu.cornell.cs.apl.viaduct.pdg.ProgramDependencyGraph.ControlLabel;
@@ -27,7 +26,6 @@ import edu.cornell.cs.apl.viaduct.protocol.Protocol;
 import edu.cornell.cs.apl.viaduct.protocol.ProtocolCommunicationStrategy;
 import edu.cornell.cs.apl.viaduct.protocol.ProtocolInstantiationException;
 import edu.cornell.cs.apl.viaduct.protocol.ProtocolInstantiationInfo;
-
 import java.util.Map;
 
 /** instantiate process configuration from selected protocols. */
@@ -35,7 +33,7 @@ public class ImpProtocolInstantiationVisitor implements StmtVisitor<Void> {
   final HostTrustConfiguration hostConfig;
   final ProgramDependencyGraph<ImpAstNode> pdg;
   final Map<PdgNode<ImpAstNode>, Protocol<ImpAstNode>> protocolMap;
-  final StmtNode main;
+  final StatementNode main;
   final ProcessConfigurationBuilder pconfig;
   final ProtocolInstantiationInfo<ImpAstNode> info;
   final ImpProtocolInitializationVisitor initializer;
@@ -46,7 +44,7 @@ public class ImpProtocolInstantiationVisitor implements StmtVisitor<Void> {
       ProtocolCommunicationStrategy<ImpAstNode> communicationStrategy,
       ProgramDependencyGraph<ImpAstNode> pdg,
       Map<PdgNode<ImpAstNode>, Protocol<ImpAstNode>> protocolMap,
-      StmtNode main) {
+      StatementNode main) {
 
     this.hostConfig = hostConfig;
     this.pdg = pdg;
@@ -149,7 +147,7 @@ public class ImpProtocolInstantiationVisitor implements StmtVisitor<Void> {
 
   @Override
   public Void visit(BlockNode blockNode) {
-    for (StmtNode stmt : blockNode) {
+    for (StatementNode stmt : blockNode) {
       stmt.accept(this);
     }
     return null;
@@ -230,7 +228,7 @@ public class ImpProtocolInstantiationVisitor implements StmtVisitor<Void> {
 
     @Override
     public Void visit(BlockNode blockNode) {
-      for (StmtNode stmt : blockNode) {
+      for (StatementNode stmt : blockNode) {
         stmt.accept(this);
       }
       return null;

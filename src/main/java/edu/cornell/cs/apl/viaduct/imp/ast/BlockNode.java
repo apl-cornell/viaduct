@@ -8,30 +8,29 @@ import javax.annotation.Nonnull;
 
 /** Sequences a list of statements. */
 @AutoValue
-public abstract class BlockNode extends StmtNode implements Iterable<StmtNode> {
-  public static BlockNode create(StmtNode... statements) {
+public abstract class BlockNode extends StatementNode implements Iterable<StatementNode> {
+  public static BlockNode create(StatementNode... statements) {
     return new AutoValue_BlockNode(Vector.of(statements));
   }
 
-  public static BlockNode create(Iterable<? extends StmtNode> statements) {
+  public static BlockNode create(Iterable<? extends StatementNode> statements) {
     return new AutoValue_BlockNode(Vector.ofAll(statements));
   }
 
-  abstract Vector<StmtNode> getStatements();
+  abstract Vector<StatementNode> getStatements();
 
   /** Return the number of statements in the block. */
   public final int size() {
     return getStatements().size();
   }
 
-  public StmtNode getFirstStmt() {
+  public StatementNode getFirstStmt() {
     return getStatements().head();
   }
 
-  public StmtNode getLastStmt() {
+  public StatementNode getLastStmt() {
     return getStatements().last();
   }
-
 
   @Override
   public final <R> R accept(StmtVisitor<R> v) {
@@ -39,7 +38,7 @@ public abstract class BlockNode extends StmtNode implements Iterable<StmtNode> {
   }
 
   @Override
-  public final @Nonnull Iterator<StmtNode> iterator() {
+  public final @Nonnull Iterator<StatementNode> iterator() {
     return getStatements().iterator();
   }
 }

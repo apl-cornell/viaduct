@@ -18,7 +18,7 @@ import edu.cornell.cs.apl.viaduct.imp.ast.ReadNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ReceiveNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.Reference;
 import edu.cornell.cs.apl.viaduct.imp.ast.SendNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.StmtNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.StatementNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.Variable;
 import edu.cornell.cs.apl.viaduct.imp.ast.VariableDeclarationNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.WhileNode;
@@ -49,8 +49,8 @@ public class AnfVisitor extends FormatBlockVisitor {
     return oldBindingList;
   }
 
-  private StmtNode prependBindings(StmtNode stmt) {
-    List<StmtNode> stmtList = new ArrayList<>();
+  private StatementNode prependBindings(StatementNode stmt) {
+    List<StatementNode> stmtList = new ArrayList<>();
     stmtList.addAll(flushBindingMap());
     stmtList.add(stmt);
     return BlockNode.create(stmtList);
@@ -115,23 +115,23 @@ public class AnfVisitor extends FormatBlockVisitor {
         DowngradeNode.create(
             newExpr,
             downgradeNode.getFromLabel(),
-            downgradeNode.getLabel(),
+            downgradeNode.getToLabel(),
             downgradeNode.getDowngradeType());
     return addBinding(newDowngrade);
   }
 
   @Override
-  public StmtNode visit(VariableDeclarationNode varDeclNode) {
+  public StatementNode visit(VariableDeclarationNode varDeclNode) {
     this.declaredVars.put(varDeclNode.getVariable(), true);
     return VariableDeclarationNode.create(
         varDeclNode.getVariable(), varDeclNode.getType(), varDeclNode.getLabel());
   }
 
   @Override
-  public StmtNode visit(ArrayDeclarationNode arrayDeclNode) {
+  public StatementNode visit(ArrayDeclarationNode arrayDeclNode) {
     this.declaredVars.put(arrayDeclNode.getVariable(), true);
     ExpressionNode newLength = arrayDeclNode.getLength().accept(this);
-    StmtNode newStmt =
+    StatementNode newStmt =
         ArrayDeclarationNode.create(
             arrayDeclNode.getVariable(),
             newLength,
@@ -141,27 +141,27 @@ public class AnfVisitor extends FormatBlockVisitor {
   }
 
   @Override
-  public StmtNode visit(LetBindingNode letBindingNode) {
+  public StatementNode visit(LetBindingNode letBindingNode) {
     ExpressionNode oldRhs = letBindingNode.getRhs();
     ExpressionNode newRhs = this.anfChecker.run(oldRhs) ? oldRhs : oldRhs.accept(this);
     return prependBindings(LetBindingNode.create(letBindingNode.getVariable(), newRhs));
   }
 
   @Override
-  public StmtNode visit(AssignNode assignNode) {
+  public StatementNode visit(AssignNode assignNode) {
     Reference newLhs = assignNode.getLhs().accept(this);
     ExpressionNode newRhs = assignNode.getRhs().accept(this);
     return prependBindings(AssignNode.create(newLhs, newRhs));
   }
 
   @Override
-  public StmtNode visit(SendNode sendNode) {
+  public StatementNode visit(SendNode sendNode) {
     ExpressionNode newExpr = sendNode.getSentExpression().accept(this);
     return prependBindings(SendNode.create(sendNode.getRecipient(), newExpr));
   }
 
   @Override
-  public StmtNode visit(ReceiveNode recvNode) {
+  public StatementNode visit(ReceiveNode recvNode) {
     Variable recvVar = recvNode.getVariable();
 
     // are we assigning to a temporary or a declared var?
@@ -172,7 +172,7 @@ public class AnfVisitor extends FormatBlockVisitor {
 
     } else {
       Variable tmpVar = Variable.create(this.nameGenerator.getFreshName(TMP_NAME));
-      List<StmtNode> stmtList = new ArrayList<>();
+      List<StatementNode> stmtList = new ArrayList<>();
       stmtList.add(ReceiveNode.create(tmpVar, recvNode.getRecvType(), recvNode.getSender()));
       stmtList.add(AssignNode.create(recvVar, ReadNode.create(tmpVar)));
       return BlockNode.create(stmtList);
@@ -180,41 +180,41 @@ public class AnfVisitor extends FormatBlockVisitor {
   }
 
   @Override
-  public StmtNode visit(IfNode ifNode) {
+  public StatementNode visit(IfNode ifNode) {
     ExpressionNode newGuard = ifNode.getGuard().accept(this);
     List<LetBindingNode> guardBindings = flushBindingMap();
 
-    StmtNode newThen = ifNode.getThenBranch().accept(this);
-    StmtNode newElse = ifNode.getElseBranch().accept(this);
+    StatementNode newThen = ifNode.getThenBranch().accept(this);
+    StatementNode newElse = ifNode.getElseBranch().accept(this);
 
-    List<StmtNode> stmtList = new ArrayList<>();
+    List<StatementNode> stmtList = new ArrayList<>();
     stmtList.addAll(guardBindings);
     stmtList.add(IfNode.create(newGuard, newThen, newElse));
     return BlockNode.create(stmtList);
   }
 
   @Override
-  public StmtNode visit(WhileNode whileNode) {
+  public StatementNode visit(WhileNode whileNode) {
     throw new ElaborationException();
   }
 
   @Override
-  public StmtNode visit(ForNode forNode) {
+  public StatementNode visit(ForNode forNode) {
     throw new ElaborationException();
   }
 
   @Override
-  public StmtNode visit(BlockNode blockNode) {
+  public StatementNode visit(BlockNode blockNode) {
     // flatten nested blocks
     this.declaredVars.push();
-    StmtNode newBlock = super.visit(blockNode);
+    StatementNode newBlock = super.visit(blockNode);
     this.declaredVars.pop();
 
     return newBlock;
   }
 
   @Override
-  public StmtNode visit(AssertNode assertNode) {
+  public StatementNode visit(AssertNode assertNode) {
     ExpressionNode newExpr = assertNode.getExpression().accept(this);
     return prependBindings(AssertNode.create(newExpr));
   }

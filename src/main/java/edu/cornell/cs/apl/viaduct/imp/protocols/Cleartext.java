@@ -9,7 +9,7 @@ import edu.cornell.cs.apl.viaduct.imp.ast.Host;
 import edu.cornell.cs.apl.viaduct.imp.ast.ImpAstNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ProcessName;
 import edu.cornell.cs.apl.viaduct.imp.ast.ReadNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.StmtNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.StatementNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.Variable;
 import edu.cornell.cs.apl.viaduct.imp.ast.VariableDeclarationNode;
 import edu.cornell.cs.apl.viaduct.imp.builders.ExpressionBuilder;
@@ -38,7 +38,7 @@ public abstract class Cleartext {
       PdgNode<ImpAstNode> node, List<Variable> readArgs, Variable outVar) {
 
     if (node.isStorageNode()) {
-      StmtNode stmt = (StmtNode) node.getAstNode();
+      StatementNode stmt = (StatementNode) node.getAstNode();
       if (stmt instanceof VariableDeclarationNode) { // variable read
         return ReadNode.create(outVar);
 
@@ -95,7 +95,7 @@ public abstract class Cleartext {
     ExpressionBuilder e = new ExpressionBuilder();
     StmtBuilder builder = info.getBuilder(inHost);
     StmtBuilder writerBuilder = info.getBuilder(writeHost);
-    StmtNode stmt = (StmtNode) node.getAstNode();
+    StatementNode stmt = (StatementNode) node.getAstNode();
     ProcessName hostProc = ProcessName.create(inHost);
     ProcessName writeHostProc = ProcessName.create(writeHost);
 
@@ -211,10 +211,15 @@ public abstract class Cleartext {
 
         PdgNode<ImpAstNode> queryNode = queryEdge.getSource();
         Protocol<ImpAstNode> queryProto = info.getProtocol(queryNode);
-        Variable readVar = (Variable)
-            queryProto.readFrom(
-                queryEdge.getSource(), node, host, Variable.create(node.getId()),
-                renamedArgs, info);
+        Variable readVar =
+            (Variable)
+                queryProto.readFrom(
+                    queryEdge.getSource(),
+                    node,
+                    host,
+                    Variable.create(node.getId()),
+                    renamedArgs,
+                    info);
 
         queryRenameMap.put(queryRead, ReadNode.create(readVar));
       }

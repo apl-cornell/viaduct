@@ -1,7 +1,7 @@
 package edu.cornell.cs.apl.viaduct.imp;
 
 import edu.cornell.cs.apl.viaduct.imp.ast.Host;
-import edu.cornell.cs.apl.viaduct.imp.ast.StmtNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.StatementNode;
 import edu.cornell.cs.apl.viaduct.imp.visitors.EraseSecurityVisitor;
 import edu.cornell.cs.apl.viaduct.imp.visitors.LetInlineVisitor;
 import edu.cornell.cs.apl.viaduct.imp.visitors.SelfCommunicationVisitor;
@@ -26,8 +26,8 @@ public class TargetPostprocessor {
   }
 
   /** set host of current program, then postprocess. */
-  public static StmtNode postprocess(Host h, StmtNode program) {
-    StmtNode processedProgram = selfComm.run(h, program);
+  public static StatementNode postprocess(Host h, StatementNode program) {
+    StatementNode processedProgram = selfComm.run(h, program);
     processedProgram = eraseSecurity.run(processedProgram);
     processedProgram = letInline.run(processedProgram);
     processedProgram = unelaborator.run(processedProgram);

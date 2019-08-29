@@ -9,7 +9,7 @@ import edu.cornell.cs.apl.viaduct.imp.ast.LetBindingNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ProcessName;
 import edu.cornell.cs.apl.viaduct.imp.ast.ReceiveNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.SendNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.StmtNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.StatementNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.Variable;
 import edu.cornell.cs.apl.viaduct.imp.ast.VariableDeclarationNode;
 import edu.cornell.cs.apl.viaduct.util.SymbolTable;
@@ -23,7 +23,7 @@ public class SelfCommunicationVisitor extends FormatBlockVisitor {
   private SymbolTable<Variable, Boolean> declaredVars;
 
   /** run visitor. */
-  public StmtNode run(Host host, StmtNode program) {
+  public StatementNode run(Host host, StatementNode program) {
     this.selfHost = host;
     this.sentExprs = new LinkedList<>();
     this.declaredVars = new SymbolTable<>();
@@ -31,19 +31,19 @@ public class SelfCommunicationVisitor extends FormatBlockVisitor {
   }
 
   @Override
-  public StmtNode visit(VariableDeclarationNode varDeclNode) {
+  public StatementNode visit(VariableDeclarationNode varDeclNode) {
     this.declaredVars.put(varDeclNode.getVariable(), true);
     return super.visit(varDeclNode);
   }
 
   @Override
-  public StmtNode visit(ArrayDeclarationNode arrayDeclNode) {
+  public StatementNode visit(ArrayDeclarationNode arrayDeclNode) {
     this.declaredVars.put(arrayDeclNode.getVariable(), true);
     return super.visit(arrayDeclNode);
   }
 
   @Override
-  public StmtNode visit(SendNode sendNode) {
+  public StatementNode visit(SendNode sendNode) {
     if (sendNode.getRecipient().equals(ProcessName.create(this.selfHost))) {
       this.sentExprs.add(sendNode.getSentExpression());
       return BlockNode.create();
@@ -54,7 +54,7 @@ public class SelfCommunicationVisitor extends FormatBlockVisitor {
   }
 
   @Override
-  public StmtNode visit(ReceiveNode recvNode) {
+  public StatementNode visit(ReceiveNode recvNode) {
     if (recvNode.getSender().equals(ProcessName.create(this.selfHost))) {
       ExpressionNode recvExpr = this.sentExprs.remove();
       Variable recvVar = recvNode.getVariable();
@@ -70,9 +70,9 @@ public class SelfCommunicationVisitor extends FormatBlockVisitor {
   }
 
   @Override
-  public StmtNode visit(BlockNode blockNode) {
+  public StatementNode visit(BlockNode blockNode) {
     this.declaredVars.push();
-    StmtNode newBlock = super.visit(blockNode);
+    StatementNode newBlock = super.visit(blockNode);
     this.declaredVars.pop();
     return newBlock;
   }

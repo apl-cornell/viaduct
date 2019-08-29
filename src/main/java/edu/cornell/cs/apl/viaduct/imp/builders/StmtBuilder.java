@@ -17,7 +17,7 @@ import edu.cornell.cs.apl.viaduct.imp.ast.LoopNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ProcessName;
 import edu.cornell.cs.apl.viaduct.imp.ast.ReceiveNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.SendNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.StmtNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.StatementNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.Variable;
 import edu.cornell.cs.apl.viaduct.imp.ast.VariableDeclarationNode;
 import edu.cornell.cs.apl.viaduct.pdg.ProgramDependencyGraph.ControlLabel;
@@ -28,13 +28,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Stack;
 
-/**
- * Builder for statements. Implicitly creates a sequence through a fluent
- * interface.
- */
+/** Builder for statements. Implicitly creates a sequence through a fluent interface. */
 public class StmtBuilder {
   private final Stack<ControlInfo> controlContext;
-  private List<StmtNode> stmts;
+  private List<StatementNode> stmts;
 
   public StmtBuilder() {
     this.controlContext = new Stack<>();
@@ -90,7 +87,7 @@ public class StmtBuilder {
     return this.controlContext.isEmpty();
   }
 
-  public StmtNode build() {
+  public StatementNode build() {
     assert this.controlContext.empty();
     return BlockNode.create(this.stmts);
   }
@@ -137,21 +134,21 @@ public class StmtBuilder {
 
   /** Creates conditional/if nodes. */
   public StmtBuilder cond(ExpressionNode guard, StmtBuilder thenBranch, StmtBuilder elseBranch) {
-    StmtNode ifNode = IfNode.create(guard, thenBranch.build(), elseBranch.build());
+    StatementNode ifNode = IfNode.create(guard, thenBranch.build(), elseBranch.build());
     this.stmts.add(ifNode);
     return this;
   }
 
   /** create loops. */
   public StmtBuilder loop(StmtBuilder bodyBuilder) {
-    StmtNode loop = LoopNode.create(bodyBuilder.build());
+    StatementNode loop = LoopNode.create(bodyBuilder.build());
     this.stmts.add(loop);
     return this;
   }
 
   /** create break. */
   public StmtBuilder loopBreak() {
-    StmtNode loopBreak = BreakNode.create(LiteralNode.create(IntegerValue.create(0)));
+    StatementNode loopBreak = BreakNode.create(LiteralNode.create(IntegerValue.create(0)));
     this.stmts.add(loopBreak);
     return this;
   }
@@ -203,13 +200,13 @@ public class StmtBuilder {
 
   /** build assertion stmt. */
   public StmtBuilder assertion(ExpressionNode assertExpr) {
-    StmtNode assertNode = AssertNode.create(assertExpr);
+    StatementNode assertNode = AssertNode.create(assertExpr);
     this.stmts.add(assertNode);
     return this;
   }
 
   /** build generic stmt. */
-  public StmtBuilder statement(StmtNode stmt) {
+  public StmtBuilder statement(StatementNode stmt) {
     this.stmts.add(stmt);
     return this;
   }
@@ -222,11 +219,11 @@ public class StmtBuilder {
 
   /** control context information. */
   private abstract static class ControlInfo {
-    final List<StmtNode> prefix;
-    final Map<ControlLabel, StmtNode> pathMap;
+    final List<StatementNode> prefix;
+    final Map<ControlLabel, StatementNode> pathMap;
     ControlLabel currentPath;
 
-    public ControlInfo(List<StmtNode> pref) {
+    public ControlInfo(List<StatementNode> pref) {
       this.prefix = pref;
       this.pathMap = new HashMap<>();
       this.currentPath = null;
@@ -236,46 +233,46 @@ public class StmtBuilder {
       this.currentPath = label;
     }
 
-    public void finishCurrentPath(List<StmtNode> pathStmts) {
+    public void finishCurrentPath(List<StatementNode> pathStmts) {
       assert this.currentPath != null;
       this.pathMap.put(this.currentPath, BlockNode.create(pathStmts));
       this.currentPath = null;
     }
 
-    public List<StmtNode> pop() {
-      StmtNode controlStructure = buildControlStructure();
+    public List<StatementNode> pop() {
+      StatementNode controlStructure = buildControlStructure();
       this.prefix.add(controlStructure);
       return this.prefix;
     }
 
-    public abstract StmtNode buildControlStructure();
+    public abstract StatementNode buildControlStructure();
   }
 
   /** control context info about if statements. */
   private static class ConditionalControlInfo extends ControlInfo {
     final ExpressionNode guard;
 
-    public ConditionalControlInfo(List<StmtNode> pref, ExpressionNode g) {
+    public ConditionalControlInfo(List<StatementNode> pref, ExpressionNode g) {
       super(pref);
       this.guard = g;
     }
 
     @Override
-    public StmtNode buildControlStructure() {
-      StmtNode thenBranch = this.pathMap.get(ControlLabel.THEN);
-      StmtNode elseBranch = this.pathMap.get(ControlLabel.ELSE);
+    public StatementNode buildControlStructure() {
+      StatementNode thenBranch = this.pathMap.get(ControlLabel.THEN);
+      StatementNode elseBranch = this.pathMap.get(ControlLabel.ELSE);
       return IfNode.create(this.guard, thenBranch, elseBranch);
     }
   }
 
   private static class LoopControlInfo extends ControlInfo {
-    public LoopControlInfo(List<StmtNode> pref) {
+    public LoopControlInfo(List<StatementNode> pref) {
       super(pref);
     }
 
     @Override
-    public StmtNode buildControlStructure() {
-      StmtNode body = this.pathMap.get(ControlLabel.BODY);
+    public StatementNode buildControlStructure() {
+      StatementNode body = this.pathMap.get(ControlLabel.BODY);
       return LoopNode.create(body);
     }
   }

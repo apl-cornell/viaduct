@@ -5,7 +5,7 @@ import edu.cornell.cs.apl.viaduct.imp.visitors.StmtVisitor;
 
 /** declare and assign temporary variables. */
 @AutoValue
-public abstract class LetBindingNode extends StmtNode {
+public abstract class LetBindingNode extends StatementNode {
   public static LetBindingNode create(Variable var, ExpressionNode rhs) {
     return new AutoValue_LetBindingNode(var, rhs);
   }

@@ -6,7 +6,7 @@ import edu.cornell.cs.apl.viaduct.imp.TargetPostprocessor;
 import edu.cornell.cs.apl.viaduct.imp.ast.Host;
 import edu.cornell.cs.apl.viaduct.imp.ast.ProcessName;
 import edu.cornell.cs.apl.viaduct.imp.ast.ProgramNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.StmtNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.StatementNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.Variable;
 import edu.cornell.cs.apl.viaduct.util.FreshNameGenerator;
 import java.util.HashMap;
@@ -35,8 +35,8 @@ public class ProcessConfigurationBuilder {
     try {
       for (Map.Entry<Host, StmtBuilder> kv : configBuilder.entrySet()) {
         Host host = kv.getKey();
-        StmtNode program = kv.getValue().build();
-        StmtNode postprocessedProgram = TargetPostprocessor.postprocess(host, program);
+        StatementNode program = kv.getValue().build();
+        StatementNode postprocessedProgram = TargetPostprocessor.postprocess(host, program);
         programBuilder.addProcess(ProcessName.create(host), postprocessedProgram);
       }
     } catch (DuplicateProcessDefinitionException e) {

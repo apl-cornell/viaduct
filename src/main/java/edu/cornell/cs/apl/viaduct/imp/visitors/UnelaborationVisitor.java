@@ -8,15 +8,15 @@ import edu.cornell.cs.apl.viaduct.imp.ast.ImpValue;
 import edu.cornell.cs.apl.viaduct.imp.ast.IntegerValue;
 import edu.cornell.cs.apl.viaduct.imp.ast.LiteralNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.LoopNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.StmtNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.StatementNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.WhileNode;
 
 /** turn unguarded loops into while and for loops. */
 public class UnelaborationVisitor extends FormatBlockVisitor {
   @Override
-  public StmtNode visit(LoopNode loop) {
-    StmtNode body = loop.getBody().accept(this);
-    StmtNode firstLoopStmt = null;
+  public StatementNode visit(LoopNode loop) {
+    StatementNode body = loop.getBody().accept(this);
+    StatementNode firstLoopStmt = null;
 
     if (body instanceof BlockNode) {
       firstLoopStmt = ((BlockNode) body).getFirstStmt();
@@ -27,8 +27,8 @@ public class UnelaborationVisitor extends FormatBlockVisitor {
 
     if (firstLoopStmt != null && firstLoopStmt instanceof IfNode) {
       IfNode ifNode = (IfNode) firstLoopStmt;
-      StmtNode elseNode = ifNode.getElseBranch();
-      StmtNode lastElse = null;
+      StatementNode elseNode = ifNode.getElseBranch();
+      StatementNode lastElse = null;
       if (elseNode instanceof BlockNode) {
         lastElse = ((BlockNode) elseNode).getLastStmt();
 
@@ -46,7 +46,7 @@ public class UnelaborationVisitor extends FormatBlockVisitor {
           if (levelVal instanceof IntegerValue && ((IntegerValue) levelVal).getValue() == 0) {
 
             ExpressionNode whileGuard = ifNode.getGuard();
-            StmtNode whileBody = ifNode.getThenBranch();
+            StatementNode whileBody = ifNode.getThenBranch();
             return WhileNode.create(whileGuard, whileBody);
           }
         }

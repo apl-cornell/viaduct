@@ -6,7 +6,7 @@ import edu.cornell.cs.apl.viaduct.imp.HostTrustConfiguration;
 import edu.cornell.cs.apl.viaduct.imp.ast.ImpAstNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ProcessName;
 import edu.cornell.cs.apl.viaduct.imp.ast.ProgramNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.StmtNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.StatementNode;
 import edu.cornell.cs.apl.viaduct.imp.informationflow.InformationFlowChecker;
 import edu.cornell.cs.apl.viaduct.imp.parser.SourceFile;
 import edu.cornell.cs.apl.viaduct.imp.parser.TrustConfigurationParser;
@@ -174,7 +174,7 @@ public class CompileCommand extends BaseCommand {
 
     final HostTrustConfiguration hostConfig = program.getHostTrustConfiguration();
 
-    StmtNode main = program.getProcessCode(ProcessName.getMain());
+    StatementNode main = program.getProcessCode(ProcessName.getMain());
     ImpPdgBuilderPreprocessVisitor preprocessor = new ImpPdgBuilderPreprocessVisitor();
     main = preprocessor.run(main);
 
@@ -191,11 +191,7 @@ public class CompileCommand extends BaseCommand {
 
     } finally {
       // Dump PDG with information flow labels to a file (if requested).
-      dumpConstraints(
-          (writer) -> {
-            checker.exportDotGraph(writer);
-          },
-          constraintGraphOutput);
+      dumpConstraints(checker::exportDotGraph, constraintGraphOutput);
     }
 
     if (this.skip && labelGraphOutput == null && protocolGraphOutput == null) {

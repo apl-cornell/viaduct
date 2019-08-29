@@ -1,13 +1,10 @@
 package edu.cornell.cs.apl.viaduct.imp.protocols;
 
 import edu.cornell.cs.apl.viaduct.imp.HostTrustConfiguration;
-import edu.cornell.cs.apl.viaduct.imp.ast.Host;
 import edu.cornell.cs.apl.viaduct.imp.ast.ImpAstNode;
-import edu.cornell.cs.apl.viaduct.pdg.PdgInfoEdge;
 import edu.cornell.cs.apl.viaduct.pdg.PdgNode;
 import edu.cornell.cs.apl.viaduct.protocol.Protocol;
 import edu.cornell.cs.apl.viaduct.protocol.ProtocolFactory;
-import edu.cornell.cs.apl.viaduct.security.Label;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -49,7 +46,7 @@ public class ZKFactory implements ProtocolFactory<ImpAstNode> {
     }
     Host hostA = hostPair[0];
     Host hostB = hostPair[1];
-    Label nInLabel = node.getLabel();
+    Label nInLabel = node.getToLabel();
     Label nOutLabel = node.getOutLabel();
     Label aLabel = hostConfig.getTrust(hostA);
     Label bLabel = hostConfig.getTrust(hostB);

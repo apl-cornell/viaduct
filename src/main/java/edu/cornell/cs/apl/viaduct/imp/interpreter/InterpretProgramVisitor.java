@@ -3,7 +3,7 @@ package edu.cornell.cs.apl.viaduct.imp.interpreter;
 import edu.cornell.cs.apl.viaduct.imp.ast.ImpValue;
 import edu.cornell.cs.apl.viaduct.imp.ast.ProcessName;
 import edu.cornell.cs.apl.viaduct.imp.ast.ProgramNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.StmtNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.StatementNode;
 import edu.cornell.cs.apl.viaduct.imp.visitors.ProgramVisitor;
 import io.vavr.Tuple2;
 import java.util.ArrayList;
@@ -45,9 +45,9 @@ class InterpretProgramVisitor implements ProgramVisitor<Map<ProcessName, Store>>
     final ExecutorService pool = Executors.newCachedThreadPool();
 
     final List<ProcessExecutor> processExecutors = new ArrayList<>();
-    for (Tuple2<ProcessName, StmtNode> process : program) {
+    for (Tuple2<ProcessName, StatementNode> process : program) {
       final ProcessName processName = process._1();
-      final StmtNode code = process._2();
+      final StatementNode code = process._2();
       processExecutors.add(new ProcessExecutor(processName, code, channel));
     }
 
@@ -77,9 +77,9 @@ class InterpretProgramVisitor implements ProgramVisitor<Map<ProcessName, Store>>
   private static final class ProcessExecutor implements Callable<Store> {
     private final ProcessName process;
     private final Channel<ImpValue> channel;
-    private final StmtNode code;
+    private final StatementNode code;
 
-    ProcessExecutor(ProcessName process, StmtNode code, Channel<ImpValue> channel) {
+    ProcessExecutor(ProcessName process, StatementNode code, Channel<ImpValue> channel) {
       this.process = process;
       this.code = code;
       this.channel = channel;

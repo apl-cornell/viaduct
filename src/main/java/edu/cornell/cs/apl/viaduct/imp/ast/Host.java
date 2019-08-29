@@ -6,7 +6,7 @@ import com.google.auto.value.AutoValue;
 @AutoValue
 public abstract class Host implements Comparable<Host> {
   public static Host create(String name) {
-    return new AutoValue_Host(name, false);
+    return create(name, false);
   }
 
   public static Host create(String name, boolean isSynthetic) {
@@ -15,6 +15,7 @@ public abstract class Host implements Comparable<Host> {
 
   public abstract String getName();
 
+  // TODO: this will interact badly with .equals(). For example, compareTo is broken as is.
   public abstract boolean isSynthetic();
 
   @Override

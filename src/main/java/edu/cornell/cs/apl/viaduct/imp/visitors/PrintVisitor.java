@@ -24,7 +24,7 @@ import edu.cornell.cs.apl.viaduct.imp.ast.ProgramNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ReadNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ReceiveNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.SendNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.StmtNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.StatementNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.Variable;
 import edu.cornell.cs.apl.viaduct.imp.ast.VariableDeclarationNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.WhileNode;
@@ -33,8 +33,10 @@ import io.vavr.Tuple2;
 
 /** Pretty-prints an AST. */
 public class PrintVisitor
-    implements ReferenceVisitor<Void>, ExprVisitor<Void>,
-        StmtVisitor<Void>, ProgramVisitor<Void>,
+    implements ReferenceVisitor<Void>,
+        ExprVisitor<Void>,
+        StmtVisitor<Void>,
+        ProgramVisitor<Void>,
         AstPrinter<ImpAstNode> {
 
   private static final int INDENTATION_LEVEL = 2;
@@ -66,7 +68,7 @@ public class PrintVisitor
   }
 
   /** Pretty print a statement. */
-  public static String run(StmtNode stmt) {
+  public static String run(StatementNode stmt) {
     final PrintVisitor v = new PrintVisitor(false);
     stmt.accept(v);
     return v.buffer.toString();
@@ -97,13 +99,13 @@ public class PrintVisitor
   @Override
   public String print(ImpAstNode astNode) {
     if (astNode instanceof ExpressionNode) {
-      ((ExpressionNode)astNode).accept(this);
+      ((ExpressionNode) astNode).accept(this);
 
-    } else if (astNode instanceof StmtNode) {
-      ((StmtNode)astNode).accept(this);
+    } else if (astNode instanceof StatementNode) {
+      ((StatementNode) astNode).accept(this);
 
     } else {
-      ((ProgramNode)astNode).accept(this);
+      ((ProgramNode) astNode).accept(this);
     }
 
     String str = this.buffer.toString();
@@ -182,7 +184,7 @@ public class PrintVisitor
     buffer.append(", ");
 
     Label fromLabel = downgradeNode.getFromLabel();
-    Label toLabel = downgradeNode.getLabel();
+    Label toLabel = downgradeNode.getToLabel();
     if (fromLabel != null) {
       buffer.append(fromLabel);
       buffer.append(" to ");
@@ -313,7 +315,7 @@ public class PrintVisitor
 
     ifNode.getThenBranch().accept(this);
 
-    StmtNode elseBranch = ifNode.getElseBranch();
+    StatementNode elseBranch = ifNode.getElseBranch();
     boolean elseEmpty = elseBranch instanceof BlockNode && ((BlockNode) elseBranch).size() == 0;
     if (!elseEmpty) {
       buffer.append(" else ");
@@ -380,7 +382,7 @@ public class PrintVisitor
     buffer.append("{\n");
 
     indentation += INDENTATION_LEVEL;
-    for (StmtNode stmt : blockNode) {
+    for (StatementNode stmt : blockNode) {
       stmt.accept(this);
       buffer.append('\n');
     }
@@ -396,13 +398,13 @@ public class PrintVisitor
   public Void visit(ProgramNode programNode) {
     boolean first = true;
 
-    for (Tuple2<ProcessName, StmtNode> process : programNode) {
+    for (Tuple2<ProcessName, StatementNode> process : programNode) {
       if (!first) {
         buffer.append("\n\n");
       }
 
       final ProcessName processName = process._1();
-      final StmtNode statement = process._2();
+      final StatementNode statement = process._2();
       buffer.append("process ");
       buffer.append(processName);
       buffer.append(' ');

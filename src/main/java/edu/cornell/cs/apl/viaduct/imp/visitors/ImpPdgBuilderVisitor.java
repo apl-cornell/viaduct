@@ -21,7 +21,7 @@ import edu.cornell.cs.apl.viaduct.imp.ast.ReadNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ReceiveNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.Reference;
 import edu.cornell.cs.apl.viaduct.imp.ast.SendNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.StmtNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.StatementNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.Variable;
 import edu.cornell.cs.apl.viaduct.imp.ast.VariableDeclarationNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.WhileNode;
@@ -37,7 +37,6 @@ import edu.cornell.cs.apl.viaduct.pdg.PdgWriteEdge;
 import edu.cornell.cs.apl.viaduct.pdg.ProgramDependencyGraph;
 import edu.cornell.cs.apl.viaduct.util.FreshNameGenerator;
 import edu.cornell.cs.apl.viaduct.util.SymbolTable;
-
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -56,7 +55,7 @@ public class ImpPdgBuilderVisitor implements StmtVisitor<Set<PdgNode<ImpAstNode>
   private final SymbolTable<Variable, Boolean> declaredVars;
   private final SymbolTable<Variable, String> varDeclMap;
   private final Map<String, PdgNode<ImpAstNode>> nodeMap;
-  private final Map<Variable,Variable> downgradeMap;
+  private final Map<Variable, Variable> downgradeMap;
   private final QuerySetVisitor querySetVisitor;
   private final TempSetVisitor tempSetVisitor;
   private ProgramDependencyGraph<ImpAstNode> pdg;
@@ -72,7 +71,7 @@ public class ImpPdgBuilderVisitor implements StmtVisitor<Set<PdgNode<ImpAstNode>
   }
 
   /** generate a PDG from a program. */
-  public ProgramDependencyGraph<ImpAstNode> generatePDG(StmtNode program) {
+  public ProgramDependencyGraph<ImpAstNode> generatePDG(StatementNode program) {
     this.declaredVars.clear();
     this.varDeclMap.clear();
     this.nodeMap.clear();
@@ -81,7 +80,8 @@ public class ImpPdgBuilderVisitor implements StmtVisitor<Set<PdgNode<ImpAstNode>
     return this.pdg;
   }
 
-  private Set<PdgNode<ImpAstNode>> addNode(String name, PdgNode<ImpAstNode> node, StmtNode stmt) {
+  private Set<PdgNode<ImpAstNode>> addNode(
+      String name, PdgNode<ImpAstNode> node, StatementNode stmt) {
     this.pdg.addNode(node);
     this.nodeMap.put(name, node);
     stmt.setId(name);
@@ -300,7 +300,7 @@ public class ImpPdgBuilderVisitor implements StmtVisitor<Set<PdgNode<ImpAstNode>
     this.varDeclMap.push();
 
     Set<PdgNode<ImpAstNode>> createdNodes = new HashSet<>();
-    for (StmtNode stmt : blockNode) {
+    for (StatementNode stmt : blockNode) {
       createdNodes.addAll(stmt.accept(this));
     }
 

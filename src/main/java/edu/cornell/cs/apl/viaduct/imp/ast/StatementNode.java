@@ -3,7 +3,7 @@ package edu.cornell.cs.apl.viaduct.imp.ast;
 import edu.cornell.cs.apl.viaduct.imp.visitors.StmtVisitor;
 
 /** A statement node that supports visitors. */
-public abstract class StmtNode extends ImpAstNode {
+public abstract class StatementNode extends ImpAstNode {
   private String id;
 
   public String getId() {

@@ -4,7 +4,7 @@ import com.google.auto.value.AutoValue;
 import edu.cornell.cs.apl.viaduct.imp.visitors.StmtVisitor;
 
 @AutoValue
-public abstract class BreakNode extends StmtNode {
+public abstract class BreakNode extends StatementNode {
   public static BreakNode create(ExpressionNode level) {
     return new AutoValue_BreakNode(level);
   }

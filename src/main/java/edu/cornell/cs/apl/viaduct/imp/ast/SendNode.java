@@ -5,7 +5,7 @@ import edu.cornell.cs.apl.viaduct.imp.visitors.StmtVisitor;
 
 /** Send the value of an expression to a host. */
 @AutoValue
-public abstract class SendNode extends StmtNode {
+public abstract class SendNode extends StatementNode {
   /**
    * Send the value of {@code sentExpression} to {@code recipient}.
    *

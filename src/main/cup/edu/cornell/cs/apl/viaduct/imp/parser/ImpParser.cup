@@ -10,8 +10,8 @@ import edu.cornell.cs.apl.viaduct.security.Principal;
 
 nonterminal ProgramNode program;
 nonterminal ProgramNode.Builder declaration_list;
-nonterminal List<StmtNode> stmt_list;
-nonterminal StmtNode stmt, stmt_basic, block;
+nonterminal List<StatementNode> stmt_list;
+nonterminal StatementNode stmt, stmt_basic, block;
 nonterminal Reference reference;
 nonterminal ExpressionNode expr;
 nonterminal ImpValue value;
@@ -116,14 +116,14 @@ stmt_basic ::=
     :}
 
   | type:ty label:lab variable:var EQ expr:e {:
-      List<StmtNode> stmts = new ArrayList<>();
+      List<StatementNode> stmts = new ArrayList<>();
       stmts.add(VariableDeclarationNode.create(var, ty, lab));
       stmts.add(AssignNode.create(var, e));
       RESULT = BlockNode.create(stmts);
     :}
 
   | type:ty variable:var EQ expr:e {:
-      List<StmtNode> stmts = new ArrayList<>();
+      List<StatementNode> stmts = new ArrayList<>();
       stmts.add(VariableDeclarationNode.create(var, ty, null));
       stmts.add(AssignNode.create(var, e));
       RESULT = BlockNode.create(stmts);

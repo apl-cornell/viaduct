@@ -1,15 +1,12 @@
 package edu.cornell.cs.apl.viaduct.imp.ast;
 
 import com.google.auto.value.AutoValue;
-
 import edu.cornell.cs.apl.viaduct.imp.visitors.StmtVisitor;
 import edu.cornell.cs.apl.viaduct.security.Label;
-
 import javax.annotation.Nullable;
 
-
 @AutoValue
-public abstract class ArrayDeclarationNode extends StmtNode {
+public abstract class ArrayDeclarationNode extends StatementNode {
   /**
    * Declare a statically allocated array with the given length.
    *

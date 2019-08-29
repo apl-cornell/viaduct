@@ -23,14 +23,12 @@ import edu.cornell.cs.apl.viaduct.imp.ast.ReadNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ReceiveNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.Reference;
 import edu.cornell.cs.apl.viaduct.imp.ast.SendNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.StmtNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.StatementNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.Variable;
 import edu.cornell.cs.apl.viaduct.imp.ast.VariableDeclarationNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.WhileNode;
 import edu.cornell.cs.apl.viaduct.security.Label;
-
 import io.vavr.Tuple2;
-
 import java.util.LinkedList;
 import java.util.List;
 
@@ -44,7 +42,7 @@ import java.util.List;
 public abstract class IdentityVisitor
     implements ReferenceVisitor<Reference>,
         ExprVisitor<ExpressionNode>,
-        StmtVisitor<StmtNode>,
+        StmtVisitor<StatementNode>,
         ProgramVisitor<ProgramNode> {
 
   public Reference run(Reference reference) {
@@ -55,7 +53,7 @@ public abstract class IdentityVisitor
     return expression.accept(this);
   }
 
-  public StmtNode run(StmtNode statement) {
+  public StatementNode run(StatementNode statement) {
     return statement.accept(this);
   }
 
@@ -102,93 +100,90 @@ public abstract class IdentityVisitor
   public ExpressionNode visit(DowngradeNode downgradeNode) {
     final ExpressionNode newExpr = downgradeNode.getExpression().accept(this);
     final Label fromLabel = downgradeNode.getFromLabel();
-    final Label toLabel = downgradeNode.getLabel();
+    final Label toLabel = downgradeNode.getToLabel();
     final DowngradeType downgradeType = downgradeNode.getDowngradeType();
     return DowngradeNode.create(newExpr, fromLabel, toLabel, downgradeType);
   }
 
   @Override
-  public StmtNode visit(VariableDeclarationNode declNode) {
+  public StatementNode visit(VariableDeclarationNode declNode) {
     return VariableDeclarationNode.create(
         declNode.getVariable(), declNode.getType(), declNode.getLabel());
   }
 
   @Override
-  public StmtNode visit(ArrayDeclarationNode arrayDeclNode) {
+  public StatementNode visit(ArrayDeclarationNode arrayDeclNode) {
     ExpressionNode newLength = arrayDeclNode.getLength().accept(this);
     return ArrayDeclarationNode.create(
-        arrayDeclNode.getVariable(),
-        newLength,
-        arrayDeclNode.getType(),
-        arrayDeclNode.getLabel());
+        arrayDeclNode.getVariable(), newLength, arrayDeclNode.getType(), arrayDeclNode.getLabel());
   }
 
   @Override
-  public StmtNode visit(LetBindingNode letBindingNode) {
+  public StatementNode visit(LetBindingNode letBindingNode) {
     return LetBindingNode.create(
         letBindingNode.getVariable(), letBindingNode.getRhs().accept(this));
   }
 
   @Override
-  public StmtNode visit(AssignNode assignNode) {
+  public StatementNode visit(AssignNode assignNode) {
     Reference newLhs = assignNode.getLhs().accept(this);
     ExpressionNode newRhs = assignNode.getRhs().accept(this);
     return AssignNode.create(newLhs, newRhs);
   }
 
   @Override
-  public StmtNode visit(IfNode ifNode) {
+  public StatementNode visit(IfNode ifNode) {
     ExpressionNode newGuard = ifNode.getGuard().accept(this);
-    StmtNode newThen = ifNode.getThenBranch().accept(this);
-    StmtNode newElse = ifNode.getElseBranch().accept(this);
+    StatementNode newThen = ifNode.getThenBranch().accept(this);
+    StatementNode newElse = ifNode.getElseBranch().accept(this);
     return IfNode.create(newGuard, newThen, newElse);
   }
 
   @Override
-  public StmtNode visit(WhileNode whileNode) {
+  public StatementNode visit(WhileNode whileNode) {
     ExpressionNode newGuard = whileNode.getGuard().accept(this);
-    StmtNode newBody = whileNode.getBody().accept(this);
+    StatementNode newBody = whileNode.getBody().accept(this);
     return WhileNode.create(newGuard, newBody);
   }
 
   @Override
-  public StmtNode visit(ForNode forNode) {
-    StmtNode newInit = forNode.getInitialize().accept(this);
+  public StatementNode visit(ForNode forNode) {
+    StatementNode newInit = forNode.getInitialize().accept(this);
     ExpressionNode newGuard = forNode.getGuard().accept(this);
-    StmtNode newUpdate = forNode.getUpdate().accept(this);
-    StmtNode newBody = forNode.getBody().accept(this);
+    StatementNode newUpdate = forNode.getUpdate().accept(this);
+    StatementNode newBody = forNode.getBody().accept(this);
     return ForNode.create(newInit, newGuard, newUpdate, newBody);
   }
 
   @Override
-  public StmtNode visit(LoopNode loopNode) {
-    StmtNode newBody = loopNode.getBody().accept(this);
+  public StatementNode visit(LoopNode loopNode) {
+    StatementNode newBody = loopNode.getBody().accept(this);
     return LoopNode.create(newBody);
   }
 
   @Override
-  public StmtNode visit(BreakNode breakNode) {
+  public StatementNode visit(BreakNode breakNode) {
     ExpressionNode newLevel = breakNode.getLevel().accept(this);
     return BreakNode.create(newLevel);
   }
 
   @Override
-  public StmtNode visit(BlockNode blockNode) {
-    List<StmtNode> newList = new LinkedList<>();
-    for (StmtNode stmt : blockNode) {
+  public StatementNode visit(BlockNode blockNode) {
+    List<StatementNode> newList = new LinkedList<>();
+    for (StatementNode stmt : blockNode) {
       newList.add(stmt.accept(this));
     }
     return BlockNode.create(newList);
   }
 
   @Override
-  public StmtNode visit(SendNode sendNode) {
+  public StatementNode visit(SendNode sendNode) {
     ExpressionNode newExpr = sendNode.getSentExpression().accept(this);
     return SendNode.create(sendNode.getRecipient(), newExpr);
   }
 
   @Override
-  public StmtNode visit(ReceiveNode receiveNode) {
+  public StatementNode visit(ReceiveNode receiveNode) {
     return ReceiveNode.create(
         receiveNode.getVariable(), receiveNode.getRecvType(), receiveNode.getSender());
   }
@@ -197,7 +192,7 @@ public abstract class IdentityVisitor
   public ProgramNode visit(ProgramNode programNode) {
     final ProgramNode.Builder builder = ProgramNode.builder();
     try {
-      for (Tuple2<ProcessName, StmtNode> process : programNode) {
+      for (Tuple2<ProcessName, StatementNode> process : programNode) {
         builder.addProcess(process._1, run(process._2));
       }
     } catch (DuplicateProcessDefinitionException e) {
@@ -209,7 +204,7 @@ public abstract class IdentityVisitor
   }
 
   @Override
-  public StmtNode visit(AssertNode assertNode) {
+  public StatementNode visit(AssertNode assertNode) {
     ExpressionNode newExpr = assertNode.getExpression().accept(this);
     return AssertNode.create(newExpr);
   }

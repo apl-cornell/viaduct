@@ -20,14 +20,14 @@ import javax.annotation.Nonnull;
  * process the code running on that process, and with each host its trustworthiness.
  */
 public final class ProgramNode extends ImpAstNode
-    implements Iterable<Tuple2<ProcessName, StmtNode>> {
-  private final SortedMap<ProcessName, StmtNode> processes;
+    implements Iterable<Tuple2<ProcessName, StatementNode>> {
+  private final SortedMap<ProcessName, StatementNode> processes;
   private final HostTrustConfiguration trustConfiguration;
 
   // TODO: add mapping to protocols.
 
   private ProgramNode(
-      SortedMap<ProcessName, StmtNode> processes, HostTrustConfiguration trustConfiguration) {
+      SortedMap<ProcessName, StatementNode> processes, HostTrustConfiguration trustConfiguration) {
     this.processes = processes;
     this.trustConfiguration = trustConfiguration;
   }
@@ -37,7 +37,7 @@ public final class ProgramNode extends ImpAstNode
   }
 
   /** Return the code to be executed on the given process. */
-  public StmtNode getProcessCode(ProcessName processName) {
+  public StatementNode getProcessCode(ProcessName processName) {
     return processes
         .get(processName)
         .getOrElseThrow(() -> new NoSuchElementException(processName.toString()));
@@ -54,7 +54,7 @@ public final class ProgramNode extends ImpAstNode
   }
 
   @Override
-  public @Nonnull Iterator<Tuple2<ProcessName, StmtNode>> iterator() {
+  public @Nonnull Iterator<Tuple2<ProcessName, StatementNode>> iterator() {
     return this.processes.iterator();
   }
 
@@ -85,14 +85,14 @@ public final class ProgramNode extends ImpAstNode
   @Override
   public String toString() {
     StringBuffer buffer = new StringBuffer();
-    for (Tuple2<ProcessName, StmtNode> proc : this.processes) {
+    for (Tuple2<ProcessName, StatementNode> proc : this.processes) {
       buffer.append(String.format("(process %s %s)%n", proc._1(), proc._2()));
     }
     return buffer.toString();
   }
 
   public static final class Builder {
-    private final Map<ProcessName, StmtNode> processes = new HashMap<>();
+    private final Map<ProcessName, StatementNode> processes = new HashMap<>();
     private final HostTrustConfiguration.Builder hostConfigBuilder =
         HostTrustConfiguration.builder();
 
@@ -110,7 +110,7 @@ public final class ProgramNode extends ImpAstNode
      * @param statement code to be executed by this process
      * @throws DuplicateProcessDefinitionException if the process was added previously
      */
-    public Builder addProcess(ProcessName processName, StmtNode statement)
+    public Builder addProcess(ProcessName processName, StatementNode statement)
         throws DuplicateProcessDefinitionException {
       Objects.requireNonNull(processName);
       Objects.requireNonNull(statement);

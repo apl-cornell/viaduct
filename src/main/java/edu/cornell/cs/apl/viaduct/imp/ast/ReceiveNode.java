@@ -6,7 +6,7 @@ import javax.annotation.Nullable;
 
 /** Receive a value from a host. */
 @AutoValue
-public abstract class ReceiveNode extends StmtNode {
+public abstract class ReceiveNode extends StatementNode {
   /**
    * Receive a value from {@code sender} and store it in {@code variable}.
    *

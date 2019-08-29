@@ -26,7 +26,7 @@ import edu.cornell.cs.apl.viaduct.imp.ast.ProgramNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ReadNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ReceiveNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.SendNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.StmtNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.StatementNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.Variable;
 import edu.cornell.cs.apl.viaduct.imp.ast.VariableDeclarationNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.WhileNode;
@@ -61,7 +61,7 @@ public class TypeCheckVisitor
     expr.accept(this);
   }
 
-  public void run(StmtNode stmt) {
+  public void run(StatementNode stmt) {
     this.loopLevel = 0;
     stmt.accept(this);
   }
@@ -256,7 +256,7 @@ public class TypeCheckVisitor
   @Override
   public Void visit(BlockNode blockNode) {
     enterLexicalScope();
-    for (StmtNode stmt : blockNode) {
+    for (StatementNode stmt : blockNode) {
       stmt.accept(this);
     }
     leaveLexicalScope();
@@ -271,7 +271,7 @@ public class TypeCheckVisitor
 
   @Override
   public Void visit(ProgramNode programNode) {
-    for (Tuple2<ProcessName, StmtNode> process : programNode) {
+    for (Tuple2<ProcessName, StatementNode> process : programNode) {
       process._2().accept(this);
     }
     return null;

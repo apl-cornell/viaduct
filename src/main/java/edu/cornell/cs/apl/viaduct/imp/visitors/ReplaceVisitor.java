@@ -19,7 +19,7 @@ import edu.cornell.cs.apl.viaduct.imp.ast.ProgramNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ReadNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ReceiveNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.SendNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.StmtNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.StatementNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.Variable;
 import edu.cornell.cs.apl.viaduct.imp.ast.VariableDeclarationNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.WhileNode;
@@ -28,7 +28,7 @@ import java.util.Map;
 
 /** replaces parts of AST. */
 public class ReplaceVisitor extends FormatBlockVisitor {
-  protected final Map<StmtNode, StmtNode> stmtMap;
+  protected final Map<StatementNode, StatementNode> stmtMap;
   protected final Map<ExpressionNode, ExpressionNode> exprMap;
 
   public ReplaceVisitor() {
@@ -36,7 +36,8 @@ public class ReplaceVisitor extends FormatBlockVisitor {
     this.exprMap = new HashMap<>();
   }
 
-  public ReplaceVisitor(Map<ExpressionNode, ExpressionNode> emap, Map<StmtNode, StmtNode> smap) {
+  public ReplaceVisitor(
+      Map<ExpressionNode, ExpressionNode> emap, Map<StatementNode, StatementNode> smap) {
     this.exprMap = emap;
     this.stmtMap = smap;
   }
@@ -56,8 +57,8 @@ public class ReplaceVisitor extends FormatBlockVisitor {
     if (ast instanceof ExpressionNode) {
       return ((ExpressionNode) ast).accept(this);
 
-    } else if (ast instanceof StmtNode) {
-      return ((StmtNode) ast).accept(this);
+    } else if (ast instanceof StatementNode) {
+      return ((StatementNode) ast).accept(this);
 
     } else {
       return ((ProgramNode) ast).accept(this);
@@ -71,7 +72,7 @@ public class ReplaceVisitor extends FormatBlockVisitor {
   }
 
   /** Replace a statement in the AST. */
-  public ImpAstNode run(ImpAstNode ast, StmtNode oldStmt, StmtNode newStmt) {
+  public ImpAstNode run(ImpAstNode ast, StatementNode oldStmt, StatementNode newStmt) {
     this.stmtMap.put(oldStmt, newStmt);
     return run(ast);
   }
@@ -127,7 +128,7 @@ public class ReplaceVisitor extends FormatBlockVisitor {
   }
 
   @Override
-  public StmtNode visit(VariableDeclarationNode variableDeclarationNode) {
+  public StatementNode visit(VariableDeclarationNode variableDeclarationNode) {
     if (this.stmtMap.containsKey(variableDeclarationNode)) {
       return this.stmtMap.get(variableDeclarationNode);
 
@@ -137,7 +138,7 @@ public class ReplaceVisitor extends FormatBlockVisitor {
   }
 
   @Override
-  public StmtNode visit(ArrayDeclarationNode arrayDeclarationNode) {
+  public StatementNode visit(ArrayDeclarationNode arrayDeclarationNode) {
     if (this.stmtMap.containsKey(arrayDeclarationNode)) {
       return this.stmtMap.get(arrayDeclarationNode);
 
@@ -147,7 +148,7 @@ public class ReplaceVisitor extends FormatBlockVisitor {
   }
 
   @Override
-  public StmtNode visit(LetBindingNode letBindingNode) {
+  public StatementNode visit(LetBindingNode letBindingNode) {
     if (this.stmtMap.containsKey(letBindingNode)) {
       return this.stmtMap.get(letBindingNode);
 
@@ -157,7 +158,7 @@ public class ReplaceVisitor extends FormatBlockVisitor {
   }
 
   @Override
-  public StmtNode visit(AssignNode assignNode) {
+  public StatementNode visit(AssignNode assignNode) {
     if (this.stmtMap.containsKey(assignNode)) {
       return this.stmtMap.get(assignNode);
 
@@ -167,7 +168,7 @@ public class ReplaceVisitor extends FormatBlockVisitor {
   }
 
   @Override
-  public StmtNode visit(SendNode sendNode) {
+  public StatementNode visit(SendNode sendNode) {
     if (this.stmtMap.containsKey(sendNode)) {
       return this.stmtMap.get(sendNode);
 
@@ -177,7 +178,7 @@ public class ReplaceVisitor extends FormatBlockVisitor {
   }
 
   @Override
-  public StmtNode visit(ReceiveNode receiveNode) {
+  public StatementNode visit(ReceiveNode receiveNode) {
     if (this.stmtMap.containsKey(receiveNode)) {
       return this.stmtMap.get(receiveNode);
 
@@ -187,7 +188,7 @@ public class ReplaceVisitor extends FormatBlockVisitor {
   }
 
   @Override
-  public StmtNode visit(IfNode ifNode) {
+  public StatementNode visit(IfNode ifNode) {
     if (this.stmtMap.containsKey(ifNode)) {
       return this.stmtMap.get(ifNode);
 
@@ -197,7 +198,7 @@ public class ReplaceVisitor extends FormatBlockVisitor {
   }
 
   @Override
-  public StmtNode visit(WhileNode whileNode) {
+  public StatementNode visit(WhileNode whileNode) {
     if (this.stmtMap.containsKey(whileNode)) {
       return this.stmtMap.get(whileNode);
 
@@ -207,7 +208,7 @@ public class ReplaceVisitor extends FormatBlockVisitor {
   }
 
   @Override
-  public StmtNode visit(ForNode forNode) {
+  public StatementNode visit(ForNode forNode) {
     if (this.stmtMap.containsKey(forNode)) {
       return this.stmtMap.get(forNode);
 
@@ -217,7 +218,7 @@ public class ReplaceVisitor extends FormatBlockVisitor {
   }
 
   @Override
-  public StmtNode visit(LoopNode loopNode) {
+  public StatementNode visit(LoopNode loopNode) {
     if (this.stmtMap.containsKey(loopNode)) {
       return this.stmtMap.get(loopNode);
 
@@ -227,7 +228,7 @@ public class ReplaceVisitor extends FormatBlockVisitor {
   }
 
   @Override
-  public StmtNode visit(BreakNode breakNode) {
+  public StatementNode visit(BreakNode breakNode) {
     if (this.stmtMap.containsKey(breakNode)) {
       return this.stmtMap.get(breakNode);
 
@@ -237,7 +238,7 @@ public class ReplaceVisitor extends FormatBlockVisitor {
   }
 
   @Override
-  public StmtNode visit(BlockNode blockNode) {
+  public StatementNode visit(BlockNode blockNode) {
     if (this.stmtMap.containsKey(blockNode)) {
       return this.stmtMap.get(blockNode);
 
@@ -247,7 +248,7 @@ public class ReplaceVisitor extends FormatBlockVisitor {
   }
 
   @Override
-  public StmtNode visit(AssertNode assertNode) {
+  public StatementNode visit(AssertNode assertNode) {
     if (this.stmtMap.containsKey(assertNode)) {
       return this.stmtMap.get(assertNode);
 

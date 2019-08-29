@@ -23,7 +23,7 @@ import edu.cornell.cs.apl.viaduct.imp.ast.ProcessName;
 import edu.cornell.cs.apl.viaduct.imp.ast.ReadNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ReceiveNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.SendNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.StmtNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.StatementNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.Variable;
 import edu.cornell.cs.apl.viaduct.imp.ast.VariableDeclarationNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.WhileNode;
@@ -92,7 +92,7 @@ class InterpretProcessVisitor implements ExprVisitor<ImpValue>, StmtVisitor<Void
    * <p>If this function is called multiple times, it will behave as if the statements were
    * sequentially composed.
    */
-  Store run(StmtNode statement) {
+  Store run(StatementNode statement) {
     statement.accept(this);
     return store;
   }
@@ -252,7 +252,7 @@ class InterpretProcessVisitor implements ExprVisitor<ImpValue>, StmtVisitor<Void
   public Void visit(BlockNode blockNode) {
     this.declaredVars.push();
     store.pushTempContext();
-    for (StmtNode stmt : blockNode) {
+    for (StatementNode stmt : blockNode) {
       stmt.accept(this);
     }
     this.declaredVars.pop();

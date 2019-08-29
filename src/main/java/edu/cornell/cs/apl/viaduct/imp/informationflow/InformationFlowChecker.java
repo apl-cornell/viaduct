@@ -20,7 +20,7 @@ import edu.cornell.cs.apl.viaduct.imp.ast.NotNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ReadNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ReceiveNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.SendNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.StmtNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.StatementNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.Variable;
 import edu.cornell.cs.apl.viaduct.imp.ast.VariableDeclarationNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.WhileNode;
@@ -86,7 +86,7 @@ public class InformationFlowChecker
   }
 
   /** Check and decorate a statement. */
-  public void run(StmtNode stmt) {
+  public void run(StatementNode stmt) {
     stmt.accept(this);
     this.solutions.putAll(this.constraintSystem.solve());
   }
@@ -198,7 +198,7 @@ public class InformationFlowChecker
 
   @Override
   public LabelTerm visit(DowngradeNode downgradeNode) {
-    final LabelConstant toLabel = createLabelConstant(downgradeNode.getLabel());
+    final LabelConstant toLabel = createLabelConstant(downgradeNode.getToLabel());
     downgradeNode.setTrustLabel(toLabel);
 
     // pc is leaked to the output label
@@ -394,7 +394,7 @@ public class InformationFlowChecker
     blockNode.setTrustLabel(this.pc);
 
     declarations.push();
-    for (StmtNode stmt : blockNode) {
+    for (StatementNode stmt : blockNode) {
       stmt.accept(this);
     }
     declarations.pop();

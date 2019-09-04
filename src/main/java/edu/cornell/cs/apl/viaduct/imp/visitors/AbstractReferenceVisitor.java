@@ -19,8 +19,9 @@ import edu.cornell.cs.apl.viaduct.imp.ast.Variable;
  * be reverted once we switch back to the parent visitor.
  *
  * <p>Third, this class supports inheritance. {@code enter} and {@code leave} methods by default
- * delegate to {@link #enter(ReferenceNode)} and {@link #leave(ReferenceNode, SelfT)} methods. So,
- * for uniform functionality, you may only need to override as little as a single methods.
+ * delegate to {@link #enter(ReferenceNode)} and {@link #leave(ReferenceNode,
+ * AbstractReferenceVisitor)} methods. So, for uniform functionality, you may only need to override
+ * as little as a single methods.
  *
  * @param <SelfT> concrete implementation subclass
  * @param <ReferenceResultT> return type for reference nodes

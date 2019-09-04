@@ -9,13 +9,13 @@ import javax.annotation.Nullable;
 @AutoValue
 public abstract class VariableDeclarationNode extends StatementNode {
   public static VariableDeclarationNode create(
-      Variable variable, ImpType type, @Nullable Label label) {
+      Variable variable, ImpBaseType type, @Nullable Label label) {
     return new AutoValue_VariableDeclarationNode(variable, type, label);
   }
 
   public abstract Variable getVariable();
 
-  public abstract ImpType getType();
+  public abstract ImpBaseType getType();
 
   @Nullable
   public abstract Label getLabel();

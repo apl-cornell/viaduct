@@ -1,8 +1,8 @@
 package edu.cornell.cs.apl.viaduct.imp.visitors;
 
-import edu.cornell.cs.apl.viaduct.imp.ElaborationException;
+import edu.cornell.cs.apl.viaduct.errors.ElaborationException;
 import edu.cornell.cs.apl.viaduct.imp.ast.ArrayDeclarationNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.ArrayIndex;
+import edu.cornell.cs.apl.viaduct.imp.ast.ArrayIndexingNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.AssertNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.AssignNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.BinaryExpressionNode;
@@ -16,7 +16,7 @@ import edu.cornell.cs.apl.viaduct.imp.ast.LiteralNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.NotNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ReadNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ReceiveNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.Reference;
+import edu.cornell.cs.apl.viaduct.imp.ast.ReferenceNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.SendNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.StatementNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.Variable;
@@ -60,19 +60,19 @@ public class AnfVisitor extends FormatBlockVisitor {
     Variable tmpVar = Variable.create(this.nameGenerator.getFreshName(TMP_NAME));
     LetBindingNode letBinding = LetBindingNode.create(tmpVar, expr);
     this.currentBindings.add(letBinding);
-    Reference newVar = Variable.create(tmpVar);
+    ReferenceNode newVar = Variable.create(tmpVar);
     return ReadNode.create(newVar);
   }
 
   @Override
-  public Reference visit(Variable var) {
+  public ReferenceNode visit(Variable var) {
     return var;
   }
 
   @Override
-  public Reference visit(ArrayIndex arrayInd) {
+  public ReferenceNode visit(ArrayIndexingNode arrayInd) {
     ExpressionNode newIndex = arrayInd.getIndex().accept(this);
-    return ArrayIndex.create(arrayInd.getArray(), newIndex);
+    return ArrayIndexingNode.create(arrayInd.getArray(), newIndex);
   }
 
   @Override
@@ -82,13 +82,13 @@ public class AnfVisitor extends FormatBlockVisitor {
 
   @Override
   public ExpressionNode visit(ReadNode readNode) {
-    Reference oldRef = readNode.getReference();
+    ReferenceNode oldRef = readNode.getReference();
 
     if (this.atomicChecker.run(oldRef)) {
       return readNode;
 
     } else {
-      Reference newRef = oldRef.accept(this);
+      ReferenceNode newRef = oldRef.accept(this);
       return addBinding(ReadNode.create(newRef));
     }
   }
@@ -135,7 +135,7 @@ public class AnfVisitor extends FormatBlockVisitor {
         ArrayDeclarationNode.create(
             arrayDeclNode.getVariable(),
             newLength,
-            arrayDeclNode.getType(),
+            arrayDeclNode.getElementType(),
             arrayDeclNode.getLabel());
     return prependBindings(newStmt);
   }
@@ -149,7 +149,7 @@ public class AnfVisitor extends FormatBlockVisitor {
 
   @Override
   public StatementNode visit(AssignNode assignNode) {
-    Reference newLhs = assignNode.getLhs().accept(this);
+    ReferenceNode newLhs = assignNode.getLhs().accept(this);
     ExpressionNode newRhs = assignNode.getRhs().accept(this);
     return prependBindings(AssignNode.create(newLhs, newRhs));
   }
@@ -162,21 +162,26 @@ public class AnfVisitor extends FormatBlockVisitor {
 
   @Override
   public StatementNode visit(ReceiveNode recvNode) {
-    Variable recvVar = recvNode.getVariable();
+    return recvNode;
 
-    // are we assigning to a temporary or a declared var?
-    // if we are assigning to a declared var, create a new temp
-    // and bind that first before assiging to the declared var
-    if (this.atomicChecker.run(recvVar)) {
-      return recvNode;
+    // TODO: this is broken because receive only works with already declared variables.
 
-    } else {
-      Variable tmpVar = Variable.create(this.nameGenerator.getFreshName(TMP_NAME));
-      List<StatementNode> stmtList = new ArrayList<>();
-      stmtList.add(ReceiveNode.create(tmpVar, recvNode.getRecvType(), recvNode.getSender()));
-      stmtList.add(AssignNode.create(recvVar, ReadNode.create(tmpVar)));
-      return BlockNode.create(stmtList);
-    }
+    //    Variable recvVar = recvNode.getVariable();
+    //
+    //    // are we assigning to a temporary or a declared var?
+    //    // if we are assigning to a declared var, create a new temp
+    //    // and bind that first before assiging to the declared var
+    //    if (this.atomicChecker.run(recvVar)) {
+    //      return recvNode;
+    //
+    //    } else {
+    //      Variable tmpVar = Variable.create(this.nameGenerator.getFreshName(TMP_NAME));
+    //      List<StatementNode> stmtList = new ArrayList<>();
+    //      stmtList.add(ReceiveNode.create(tmpVar, recvNode.getReceiveType(),
+    // recvNode.getSender()));
+    //      stmtList.add(AssignNode.create(recvVar, ReadNode.create(tmpVar)));
+    //      return BlockNode.create(stmtList);
+    //    }
   }
 
   @Override
@@ -225,7 +230,7 @@ public class AnfVisitor extends FormatBlockVisitor {
       return expr.accept(this);
     }
 
-    public Boolean run(Reference ref) {
+    public Boolean run(ReferenceNode ref) {
       return ref.accept(this);
     }
 
@@ -235,8 +240,8 @@ public class AnfVisitor extends FormatBlockVisitor {
     }
 
     @Override
-    public Boolean visit(ArrayIndex arrayIndex) {
-      return AnfVisitor.this.atomicChecker.run(arrayIndex.getIndex());
+    public Boolean visit(ArrayIndexingNode arrayIndexingNode) {
+      return AnfVisitor.this.atomicChecker.run(arrayIndexingNode.getIndex());
     }
 
     @Override
@@ -272,7 +277,7 @@ public class AnfVisitor extends FormatBlockVisitor {
       return expr.accept(this);
     }
 
-    public Boolean run(Reference ref) {
+    public Boolean run(ReferenceNode ref) {
       return ref.accept(this);
     }
 
@@ -282,7 +287,7 @@ public class AnfVisitor extends FormatBlockVisitor {
     }
 
     @Override
-    public Boolean visit(ArrayIndex arrayIndex) {
+    public Boolean visit(ArrayIndexingNode arrayIndexingNode) {
       return false;
     }
 

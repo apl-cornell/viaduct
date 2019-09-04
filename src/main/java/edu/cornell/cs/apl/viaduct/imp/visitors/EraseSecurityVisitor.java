@@ -21,7 +21,7 @@ public class EraseSecurityVisitor extends IdentityVisitor {
   public StatementNode visit(ArrayDeclarationNode arrayDeclNode) {
     return ArrayDeclarationNode.create(
         arrayDeclNode.getVariable(), arrayDeclNode.getLength(),
-        arrayDeclNode.getType(), Label.bottom());
+        arrayDeclNode.getElementType(), Label.bottom());
   }
   */
 }

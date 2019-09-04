@@ -12,7 +12,7 @@ import edu.cornell.cs.apl.viaduct.pdg.PdgComputeNode;
 import edu.cornell.cs.apl.viaduct.pdg.PdgNode;
 import edu.cornell.cs.apl.viaduct.pdg.PdgStorageNode;
 import edu.cornell.cs.apl.viaduct.protocol.Protocol;
-import edu.cornell.cs.apl.viaduct.protocol.ProtocolInstantiationException;
+import edu.cornell.cs.apl.viaduct.protocol.ProtocolInstantiationError;
 import edu.cornell.cs.apl.viaduct.protocol.ProtocolInstantiationInfo;
 import edu.cornell.cs.apl.viaduct.security.Label;
 
@@ -86,7 +86,7 @@ public class Replication extends Cleartext implements Protocol<ImpAstNode> {
       }
 
     } else {
-      throw new ProtocolInstantiationException("control nodes must have Control protocol");
+      throw new ProtocolInstantiationError("control nodes must have Control protocol");
     }
   }
 
@@ -160,7 +160,7 @@ public class Replication extends Cleartext implements Protocol<ImpAstNode> {
       }
 
     } else {
-      throw new ProtocolInstantiationException(
+      throw new ProtocolInstantiationError(
           "attempted to write to a non storage node");
     }
   }

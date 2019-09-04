@@ -3,12 +3,15 @@ package edu.cornell.cs.apl.viaduct.imp.ast;
 import edu.cornell.cs.apl.viaduct.AstNode;
 import edu.cornell.cs.apl.viaduct.imp.informationflow.InformationFlowChecker;
 import edu.cornell.cs.apl.viaduct.imp.informationflow.LabelTerm;
+import edu.cornell.cs.apl.viaduct.imp.parser.Located;
+import edu.cornell.cs.apl.viaduct.imp.parser.SourceRange;
 import edu.cornell.cs.apl.viaduct.security.Label;
 import java.util.Objects;
 
 /** A node in the abstract syntax tree of IMP programs. */
-public abstract class ImpAstNode implements AstNode {
+public abstract class ImpAstNode implements AstNode, Located {
   private LabelTerm trustLabel;
+  private SourceRange sourceLocation;
 
   /**
    * Get the trust label associated with this node. This is the minimum trust the host executing
@@ -35,5 +38,15 @@ public abstract class ImpAstNode implements AstNode {
       throw new IllegalArgumentException("Node label already set.");
     }
     trustLabel = Objects.requireNonNull(value);
+  }
+
+  @Override
+  public final SourceRange getSourceLocation() {
+    return sourceLocation;
+  }
+
+  public ImpAstNode setSourceLocation(SourceRange sourceLocation) {
+    this.sourceLocation = sourceLocation;
+    return this;
   }
 }

@@ -4,9 +4,6 @@ import edu.cornell.cs.apl.viaduct.imp.ast.BlockNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.BreakNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ExpressionNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.IfNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.ImpValue;
-import edu.cornell.cs.apl.viaduct.imp.ast.IntegerValue;
-import edu.cornell.cs.apl.viaduct.imp.ast.LiteralNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.LoopNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.StatementNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.WhileNode;
@@ -15,41 +12,30 @@ import edu.cornell.cs.apl.viaduct.imp.ast.WhileNode;
 public class UnelaborationVisitor extends FormatBlockVisitor {
   @Override
   public StatementNode visit(LoopNode loop) {
-    StatementNode body = loop.getBody().accept(this);
-    StatementNode firstLoopStmt = null;
+    final StatementNode body = loop.getBody().accept(this);
+    StatementNode firstLoopStmt;
 
-    if (body instanceof BlockNode) {
+    if (body instanceof BlockNode && ((BlockNode) body).size() >= 1) {
       firstLoopStmt = ((BlockNode) body).getFirstStmt();
-
     } else {
       firstLoopStmt = body;
     }
 
-    if (firstLoopStmt != null && firstLoopStmt instanceof IfNode) {
+    if (firstLoopStmt instanceof IfNode) {
       IfNode ifNode = (IfNode) firstLoopStmt;
       StatementNode elseNode = ifNode.getElseBranch();
-      StatementNode lastElse = null;
-      if (elseNode instanceof BlockNode) {
-        lastElse = ((BlockNode) elseNode).getLastStmt();
+      StatementNode lastElse;
 
+      if (elseNode instanceof BlockNode && ((BlockNode) elseNode).size() >= 1) {
+        lastElse = ((BlockNode) elseNode).getLastStmt();
       } else {
         lastElse = elseNode;
       }
 
-      if (lastElse != null && lastElse instanceof BreakNode) {
-        BreakNode elseBreak = (BreakNode) lastElse;
-        ExpressionNode elseBreakLevel = elseBreak.getLevel();
-        if (elseBreakLevel instanceof LiteralNode) {
-          ImpValue levelVal = ((LiteralNode) elseBreakLevel).getValue();
-
-          // decompile loop into a while loop
-          if (levelVal instanceof IntegerValue && ((IntegerValue) levelVal).getValue() == 0) {
-
-            ExpressionNode whileGuard = ifNode.getGuard();
-            StatementNode whileBody = ifNode.getThenBranch();
-            return WhileNode.create(whileGuard, whileBody);
-          }
-        }
+      if (lastElse instanceof BreakNode && ((BreakNode) lastElse).getLevel() == 1) {
+        ExpressionNode whileGuard = ifNode.getGuard();
+        StatementNode whileBody = ifNode.getThenBranch();
+        return WhileNode.create(whileGuard, whileBody);
       }
     }
 

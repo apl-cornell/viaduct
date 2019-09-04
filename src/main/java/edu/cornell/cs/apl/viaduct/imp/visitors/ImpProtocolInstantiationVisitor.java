@@ -1,6 +1,6 @@
 package edu.cornell.cs.apl.viaduct.imp.visitors;
 
-import edu.cornell.cs.apl.viaduct.imp.ElaborationException;
+import edu.cornell.cs.apl.viaduct.errors.ElaborationException;
 import edu.cornell.cs.apl.viaduct.imp.HostTrustConfiguration;
 import edu.cornell.cs.apl.viaduct.imp.ast.ArrayDeclarationNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.AssertNode;
@@ -24,7 +24,7 @@ import edu.cornell.cs.apl.viaduct.pdg.ProgramDependencyGraph;
 import edu.cornell.cs.apl.viaduct.pdg.ProgramDependencyGraph.ControlLabel;
 import edu.cornell.cs.apl.viaduct.protocol.Protocol;
 import edu.cornell.cs.apl.viaduct.protocol.ProtocolCommunicationStrategy;
-import edu.cornell.cs.apl.viaduct.protocol.ProtocolInstantiationException;
+import edu.cornell.cs.apl.viaduct.protocol.ProtocolInstantiationError;
 import edu.cornell.cs.apl.viaduct.protocol.ProtocolInstantiationInfo;
 import java.util.Map;
 
@@ -93,12 +93,12 @@ public class ImpProtocolInstantiationVisitor implements StmtVisitor<Void> {
 
   @Override
   public Void visit(SendNode sendNode) {
-    throw new ProtocolInstantiationException("send not removed in PDG!");
+    throw new ProtocolInstantiationError("send not removed in PDG!");
   }
 
   @Override
   public Void visit(ReceiveNode receiveNode) {
-    throw new ProtocolInstantiationException("recv not removed in PDG!");
+    throw new ProtocolInstantiationError("recv not removed in PDG!");
   }
 
   @Override
@@ -155,7 +155,7 @@ public class ImpProtocolInstantiationVisitor implements StmtVisitor<Void> {
 
   @Override
   public Void visit(AssertNode assertNode) {
-    throw new ProtocolInstantiationException("asserts should have been removed from PDG");
+    throw new ProtocolInstantiationError("asserts should have been removed from PDG");
   }
 
   class ImpProtocolInitializationVisitor implements StmtVisitor<Void> {
@@ -188,12 +188,12 @@ public class ImpProtocolInstantiationVisitor implements StmtVisitor<Void> {
 
     @Override
     public Void visit(SendNode sendNode) {
-      throw new ProtocolInstantiationException("send not removed in PDG!");
+      throw new ProtocolInstantiationError("send not removed in PDG!");
     }
 
     @Override
     public Void visit(ReceiveNode receiveNode) {
-      throw new ProtocolInstantiationException("recv not removed in PDG!");
+      throw new ProtocolInstantiationError("recv not removed in PDG!");
     }
 
     @Override
@@ -236,7 +236,7 @@ public class ImpProtocolInstantiationVisitor implements StmtVisitor<Void> {
 
     @Override
     public Void visit(AssertNode assertNode) {
-      throw new ProtocolInstantiationException("asserts should have been removed from PDG");
+      throw new ProtocolInstantiationError("asserts should have been removed from PDG");
     }
   }
 }

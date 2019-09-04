@@ -21,8 +21,12 @@ public abstract class SourceRange {
   /** End (rightmost) position. */
   public abstract SourcePosition getEnd();
 
-  public final SourceFile getSourceFile() {
+  private SourceFile getSourceFile() {
     return getStart().getSourceFile();
+  }
+
+  public final String getSourcePath() {
+    return getStart().getSourceFile().getPath();
   }
 
   @Override

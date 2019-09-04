@@ -14,7 +14,7 @@ public abstract class SourcePosition implements Comparable<SourcePosition> {
     return new AutoValue_SourcePosition(sourceFile, offset);
   }
 
-  public abstract SourceFile getSourceFile();
+  abstract SourceFile getSourceFile();
 
   /**
    * Number of {@link char}s (unicode code units, not code points) before this position, counting
@@ -30,6 +30,10 @@ public abstract class SourcePosition implements Comparable<SourcePosition> {
   /** Column number of this position. 1 indexed. */
   public final int getColumn() {
     return getSourceFile().getColumn(getOffset());
+  }
+
+  public final String getSourcePath() {
+    return getSourceFile().getPath();
   }
 
   @Override

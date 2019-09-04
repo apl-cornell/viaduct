@@ -14,7 +14,7 @@ public final class UnavailableValue implements ImpValue {
   }
 
   @Override
-  public ImpType getType() {
+  public ImpBaseType getType() {
     throw new RuntimeException(this.toString() + " values do not have a specific type.");
   }
 

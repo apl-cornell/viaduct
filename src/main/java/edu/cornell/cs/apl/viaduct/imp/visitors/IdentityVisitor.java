@@ -1,8 +1,8 @@
 package edu.cornell.cs.apl.viaduct.imp.visitors;
 
-import edu.cornell.cs.apl.viaduct.imp.DuplicateProcessDefinitionException;
+import edu.cornell.cs.apl.viaduct.errors.NameClashError;
 import edu.cornell.cs.apl.viaduct.imp.ast.ArrayDeclarationNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.ArrayIndex;
+import edu.cornell.cs.apl.viaduct.imp.ast.ArrayIndexingNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.AssertNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.AssignNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.BinaryExpressionNode;
@@ -21,7 +21,7 @@ import edu.cornell.cs.apl.viaduct.imp.ast.ProcessName;
 import edu.cornell.cs.apl.viaduct.imp.ast.ProgramNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ReadNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ReceiveNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.Reference;
+import edu.cornell.cs.apl.viaduct.imp.ast.ReferenceNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.SendNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.StatementNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.Variable;
@@ -40,12 +40,12 @@ import java.util.List;
  * and override only the cases that do something interesting.
  */
 public abstract class IdentityVisitor
-    implements ReferenceVisitor<Reference>,
+    implements ReferenceVisitor<ReferenceNode>,
         ExprVisitor<ExpressionNode>,
         StmtVisitor<StatementNode>,
         ProgramVisitor<ProgramNode> {
 
-  public Reference run(Reference reference) {
+  public ReferenceNode run(ReferenceNode reference) {
     return reference.accept(this);
   }
 
@@ -62,14 +62,14 @@ public abstract class IdentityVisitor
   }
 
   @Override
-  public Reference visit(Variable variable) {
+  public ReferenceNode visit(Variable variable) {
     return variable;
   }
 
   @Override
-  public Reference visit(ArrayIndex arrayIndex) {
-    ExpressionNode newIndex = arrayIndex.getIndex().accept(this);
-    return ArrayIndex.create(arrayIndex.getArray(), newIndex);
+  public ReferenceNode visit(ArrayIndexingNode arrayIndexingNode) {
+    ExpressionNode newIndex = arrayIndexingNode.getIndex().accept(this);
+    return ArrayIndexingNode.create(arrayIndexingNode.getArray(), newIndex);
   }
 
   @Override
@@ -79,7 +79,7 @@ public abstract class IdentityVisitor
 
   @Override
   public ExpressionNode visit(ReadNode readNode) {
-    Reference newReference = readNode.getReference().accept(this);
+    ReferenceNode newReference = readNode.getReference().accept(this);
     return ReadNode.create(newReference);
   }
 
@@ -115,7 +115,10 @@ public abstract class IdentityVisitor
   public StatementNode visit(ArrayDeclarationNode arrayDeclNode) {
     ExpressionNode newLength = arrayDeclNode.getLength().accept(this);
     return ArrayDeclarationNode.create(
-        arrayDeclNode.getVariable(), newLength, arrayDeclNode.getType(), arrayDeclNode.getLabel());
+        arrayDeclNode.getVariable(),
+        newLength,
+        arrayDeclNode.getElementType(),
+        arrayDeclNode.getLabel());
   }
 
   @Override
@@ -126,7 +129,7 @@ public abstract class IdentityVisitor
 
   @Override
   public StatementNode visit(AssignNode assignNode) {
-    Reference newLhs = assignNode.getLhs().accept(this);
+    ReferenceNode newLhs = assignNode.getLhs().accept(this);
     ExpressionNode newRhs = assignNode.getRhs().accept(this);
     return AssignNode.create(newLhs, newRhs);
   }
@@ -163,8 +166,7 @@ public abstract class IdentityVisitor
 
   @Override
   public StatementNode visit(BreakNode breakNode) {
-    ExpressionNode newLevel = breakNode.getLevel().accept(this);
-    return BreakNode.create(newLevel);
+    return breakNode;
   }
 
   @Override
@@ -185,7 +187,7 @@ public abstract class IdentityVisitor
   @Override
   public StatementNode visit(ReceiveNode receiveNode) {
     return ReceiveNode.create(
-        receiveNode.getVariable(), receiveNode.getRecvType(), receiveNode.getSender());
+        receiveNode.getVariable(), receiveNode.getReceiveType(), receiveNode.getSender());
   }
 
   @Override
@@ -195,7 +197,7 @@ public abstract class IdentityVisitor
       for (Tuple2<ProcessName, StatementNode> process : programNode) {
         builder.addProcess(process._1, run(process._2));
       }
-    } catch (DuplicateProcessDefinitionException e) {
+    } catch (NameClashError e) {
       // This is impossible
       throw new RuntimeException(e);
     }

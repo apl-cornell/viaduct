@@ -7,7 +7,7 @@ import edu.cornell.cs.apl.viaduct.imp.visitors.ReferenceVisitor;
 
 /** A mutable variable that names a memory location. */
 @AutoValue
-public abstract class Variable implements Reference, Binding<ImpAstNode> {
+public abstract class Variable extends ReferenceNode implements Binding<ImpAstNode>, Name {
   public static Variable create(String name) {
     return new AutoValue_Variable(name);
   }
@@ -16,7 +16,10 @@ public abstract class Variable implements Reference, Binding<ImpAstNode> {
     return create(binding.getBinding());
   }
 
-  public abstract String getName();
+  @Override
+  public final String getNameCategory() {
+    return "variable";
+  }
 
   @Override
   public final String getBinding() {

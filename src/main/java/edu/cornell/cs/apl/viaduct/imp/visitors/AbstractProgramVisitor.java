@@ -8,20 +8,22 @@ import io.vavr.Tuple2;
 import java.util.LinkedList;
 import java.util.List;
 
+/**
+ * Skeletal implementation of the {@link ProgramVisitor} interface.
+ *
+ * <p>See {@link AbstractReferenceVisitor} for a detailed explanation of available methods.
+ *
+ * @param <SelfT> concrete implementation subclass
+ * @param <StmtResultT> return type for statement nodes
+ */
 public abstract class AbstractProgramVisitor<
-        SelfT extends
-            AbstractProgramVisitor<
-                    SelfT, ReferenceResultT, ExprResultT, StmtResultT, ProgramResultT>,
-        ReferenceResultT,
-        ExprResultT,
+        SelfT extends AbstractProgramVisitor<SelfT, StmtResultT, ProgramResultT>,
         StmtResultT,
         ProgramResultT>
-    extends AbstractStmtVisitor<SelfT, ReferenceResultT, ExprResultT, StmtResultT>
     implements ProgramVisitor<ProgramResultT> {
 
-  public final ProgramResultT traverse(ProgramNode node) {
-    return node.accept(this);
-  }
+  /** Return the visitor that will be used for statement sub-nodes. */
+  protected abstract StmtVisitor<StmtResultT> getStatementVisitor();
 
   /* ENTER  */
 
@@ -41,7 +43,7 @@ public abstract class AbstractProgramVisitor<
 
     for (Tuple2<ProcessName, StatementNode> process : node) {
       final SelfT visitor = enter(process._1(), process._2());
-      processes.add(Tuple.of(process._1(), visitor.traverse(process._2())));
+      processes.add(Tuple.of(process._1(), process._2().accept(visitor.getStatementVisitor())));
     }
 
     return leave(node, processes);

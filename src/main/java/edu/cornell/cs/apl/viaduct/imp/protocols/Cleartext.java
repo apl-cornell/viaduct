@@ -2,7 +2,7 @@ package edu.cornell.cs.apl.viaduct.imp.protocols;
 
 import edu.cornell.cs.apl.viaduct.Binding;
 import edu.cornell.cs.apl.viaduct.imp.ast.ArrayDeclarationNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.ArrayIndex;
+import edu.cornell.cs.apl.viaduct.imp.ast.ArrayIndexingNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.AssignNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ExpressionNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.Host;
@@ -26,7 +26,7 @@ import edu.cornell.cs.apl.viaduct.pdg.PdgReadEdge;
 import edu.cornell.cs.apl.viaduct.pdg.PdgStorageNode;
 import edu.cornell.cs.apl.viaduct.pdg.PdgWriteEdge;
 import edu.cornell.cs.apl.viaduct.protocol.Protocol;
-import edu.cornell.cs.apl.viaduct.protocol.ProtocolInstantiationException;
+import edu.cornell.cs.apl.viaduct.protocol.ProtocolInstantiationError;
 import edu.cornell.cs.apl.viaduct.protocol.ProtocolInstantiationInfo;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -44,10 +44,10 @@ public abstract class Cleartext {
 
       } else if (stmt instanceof ArrayDeclarationNode) { // array access
         Variable idx = readArgs.get(0);
-        return ReadNode.create(ArrayIndex.create(outVar, ReadNode.create(idx)));
+        return ReadNode.create(ArrayIndexingNode.create(outVar, ReadNode.create(idx)));
 
       } else {
-        throw new ProtocolInstantiationException(
+        throw new ProtocolInstantiationError(
             "storage node not associated with var or array declaration");
       }
     } else {
@@ -122,7 +122,7 @@ public abstract class Cleartext {
       builder.assign((Variable) storageVar, e.var(idxVar), e.var(valVar));
 
     } else {
-      throw new ProtocolInstantiationException(
+      throw new ProtocolInstantiationError(
           "storage node not associated with var or array declaration");
     }
   }
@@ -166,10 +166,11 @@ public abstract class Cleartext {
 
       ArrayDeclarationNode arrayDecl = (ArrayDeclarationNode) astNode;
       newVar = arrayDecl.getVariable();
-      builder.arrayDecl(newVar, arrayDecl.getLength(), arrayDecl.getType(), arrayDecl.getLabel());
+      builder.arrayDecl(
+          newVar, arrayDecl.getLength(), arrayDecl.getElementType(), arrayDecl.getLabel());
 
     } else {
-      throw new ProtocolInstantiationException(
+      throw new ProtocolInstantiationError(
           "storage node not associated with var or array declaration");
     }
 
@@ -201,7 +202,7 @@ public abstract class Cleartext {
                       }
 
                       @Override
-                      public List<ImpAstNode> visit(ArrayIndex arrayIndex) {
+                      public List<ImpAstNode> visit(ArrayIndexingNode arrayIndex) {
                         ExpressionNode renamedInd = arrayIndex.getIndex();
                         List<ImpAstNode> arrayArgs = new ArrayList<>();
                         arrayArgs.add(renamedInd);

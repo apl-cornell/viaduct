@@ -1,5 +1,6 @@
 package edu.cornell.cs.apl.viaduct.imp.interpreter;
 
+import edu.cornell.cs.apl.viaduct.errors.UndefinedNameError;
 import edu.cornell.cs.apl.viaduct.imp.ast.ProcessName;
 import io.vavr.Tuple;
 import io.vavr.Tuple2;
@@ -13,7 +14,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 /**
  * A channel that connects any number of processes with private binary channels between them.
  * Messages between different processes never mix, and they are only visible to their intended
- * recipient.
+ * recipients.
  *
  * <p>Essentially maintains two unidirectional queues between each pair of processes.
  *
@@ -21,7 +22,7 @@ import java.util.concurrent.LinkedBlockingQueue;
  *
  * @param <M> type of messages
  */
-class Channel<M> {
+final class Channel<M> {
   /** Set of hosts this channel connects. */
   private final SortedSet<ProcessName> processes;
 
@@ -60,11 +61,14 @@ class Channel<M> {
    *
    * <p>Enqueues a new message to the corresponding queue.
    */
-  void send(ProcessName sender, ProcessName receiver, M message)
-      throws UnknownProcessException, InterruptedException {
+  void send(ProcessName sender, ProcessName receiver, M message) throws UndefinedNameError {
     assertProcess(sender);
     assertProcess(receiver);
-    queues.get(Tuple.of(sender, receiver)).get().put(message);
+    try {
+      queues.get(Tuple.of(sender, receiver)).get().put(message);
+    } catch (InterruptedException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   /**
@@ -72,17 +76,20 @@ class Channel<M> {
    *
    * <p>Pops the next message from the corresponding queue.
    */
-  M receive(ProcessName sender, ProcessName receiver)
-      throws UnknownProcessException, InterruptedException {
+  M receive(ProcessName sender, ProcessName receiver) throws UndefinedNameError {
     assertProcess(sender);
     assertProcess(receiver);
-    return queues.get(Tuple.of(sender, receiver)).get().take();
+    try {
+      return queues.get(Tuple.of(sender, receiver)).get().take();
+    } catch (InterruptedException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   /** Assert that the specified process is connected to this channel. */
-  private void assertProcess(ProcessName processName) throws UnknownProcessException {
+  private void assertProcess(ProcessName processName) throws UndefinedNameError {
     if (!this.processes.contains(processName)) {
-      throw new UnknownProcessException(processName);
+      throw new UndefinedNameError(processName);
     }
   }
 }

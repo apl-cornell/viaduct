@@ -1,6 +1,8 @@
 package edu.cornell.cs.apl.viaduct.imp;
 
+import edu.cornell.cs.apl.viaduct.errors.NameClashError;
 import edu.cornell.cs.apl.viaduct.imp.ast.Host;
+import edu.cornell.cs.apl.viaduct.imp.parser.Located;
 import edu.cornell.cs.apl.viaduct.security.Label;
 import io.vavr.Tuple2;
 import io.vavr.collection.SortedMap;
@@ -106,15 +108,20 @@ public final class HostTrustConfiguration implements Iterable<Tuple2<Host, Label
      *
      * @param host host to declare a trust level for
      * @param trust trust label to associate with {@code host}
-     * @throws DuplicateHostDeclarationException if {@code host} already had an associated trust
-     *     level
+     * @throws NameClashError if {@code host} already had an associated trust level
      */
-    public Builder addHost(Host host, Label trust) throws DuplicateHostDeclarationException {
+    public Builder addHost(Host host, Label trust) throws NameClashError {
       Objects.requireNonNull(host);
       Objects.requireNonNull(trust);
 
       if (hosts.containsKey(host)) {
-        throw new DuplicateHostDeclarationException(host);
+        // TODO: do a better job of recovering this
+        final Located previousDeclaration =
+            hosts.keySet().stream()
+                .filter(host::equals)
+                .findAny()
+                .orElseThrow(NullPointerException::new);
+        throw new NameClashError(previousDeclaration, host);
       }
       hosts.put(host, trust);
 

@@ -2,7 +2,7 @@ package edu.cornell.cs.apl.viaduct.imp.visitors;
 
 import edu.cornell.cs.apl.viaduct.AstPrinter;
 import edu.cornell.cs.apl.viaduct.imp.ast.ArrayDeclarationNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.ArrayIndex;
+import edu.cornell.cs.apl.viaduct.imp.ast.ArrayIndexingNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.AssertNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.AssignNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.BinaryExpressionNode;
@@ -120,10 +120,10 @@ public class PrintVisitor
   }
 
   @Override
-  public Void visit(ArrayIndex arrayIndex) {
-    buffer.append(arrayIndex.getArray());
+  public Void visit(ArrayIndexingNode arrayIndexingNode) {
+    buffer.append(arrayIndexingNode.getArray());
     buffer.append("[");
-    arrayIndex.getIndex().accept(this);
+    arrayIndexingNode.getIndex().accept(this);
     buffer.append("]");
     return null;
   }
@@ -219,7 +219,7 @@ public class PrintVisitor
   public Void visit(ArrayDeclarationNode arrayDecl) {
     addIndentation();
 
-    buffer.append(arrayDecl.getType());
+    buffer.append(arrayDecl.getElementType());
 
     Label label = arrayDecl.getLabel();
     if (label != null) {
@@ -282,7 +282,7 @@ public class PrintVisitor
     buffer.append(receiveNode.getVariable());
     buffer.append(" <- recv ");
 
-    ImpType recvType = receiveNode.getRecvType();
+    ImpType recvType = receiveNode.getReceiveType();
     if (recvType != null) {
       buffer.append(recvType);
       buffer.append(" ");
@@ -371,8 +371,11 @@ public class PrintVisitor
   @Override
   public Void visit(BreakNode breakNode) {
     addIndentation();
-    buffer.append("break ");
-    breakNode.getLevel().accept(this);
+    buffer.append("break");
+    if (breakNode.getLevel() > 1) {
+      buffer.append(' ');
+      buffer.append(breakNode.getLevel());
+    }
     addSeparator();
     return null;
   }

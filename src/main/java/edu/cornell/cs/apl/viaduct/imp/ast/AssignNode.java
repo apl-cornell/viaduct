@@ -6,11 +6,11 @@ import edu.cornell.cs.apl.viaduct.imp.visitors.StmtVisitor;
 /** Update the value associated with a reference. */
 @AutoValue
 public abstract class AssignNode extends StatementNode {
-  public static AssignNode create(Reference lhs, ExpressionNode rhs) {
+  public static AssignNode create(ReferenceNode lhs, ExpressionNode rhs) {
     return new AutoValue_AssignNode(lhs, rhs);
   }
 
-  public abstract Reference getLhs();
+  public abstract ReferenceNode getLhs();
 
   public abstract ExpressionNode getRhs();
 

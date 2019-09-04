@@ -5,9 +5,9 @@ import edu.cornell.cs.apl.viaduct.imp.visitors.ReferenceVisitor;
 
 /** Reference to an index in an array. */
 @AutoValue
-public abstract class ArrayIndex implements Reference {
-  public static ArrayIndex create(Variable array, ExpressionNode index) {
-    return new AutoValue_ArrayIndex(array, index);
+public abstract class ArrayIndexingNode extends ReferenceNode {
+  public static ArrayIndexingNode create(Variable array, ExpressionNode index) {
+    return new AutoValue_ArrayIndexingNode(array, index);
   }
 
   public abstract Variable getArray();

@@ -8,7 +8,7 @@ import edu.cornell.cs.apl.viaduct.pdg.PdgComputeNode;
 import edu.cornell.cs.apl.viaduct.pdg.PdgNode;
 import edu.cornell.cs.apl.viaduct.pdg.PdgStorageNode;
 import edu.cornell.cs.apl.viaduct.protocol.Protocol;
-import edu.cornell.cs.apl.viaduct.protocol.ProtocolInstantiationException;
+import edu.cornell.cs.apl.viaduct.protocol.ProtocolInstantiationError;
 import edu.cornell.cs.apl.viaduct.protocol.ProtocolInstantiationInfo;
 
 import java.util.List;
@@ -33,7 +33,7 @@ public abstract class AbstractSingle extends Cleartext implements Protocol<ImpAs
       this.outVar = instantiateComputeNode(host, (PdgComputeNode<ImpAstNode>) node, info);
 
     } else {
-      throw new ProtocolInstantiationException("control nodes must have Control protocol");
+      throw new ProtocolInstantiationError("control nodes must have Control protocol");
     }
   }
 
@@ -66,7 +66,7 @@ public abstract class AbstractSingle extends Cleartext implements Protocol<ImpAs
       performWrite(node, writeHost, getActualHost(), this.outVar, args, info);
 
     } else {
-      throw new ProtocolInstantiationException(
+      throw new ProtocolInstantiationError(
           "attempted to write to a non storage node");
     }
   }

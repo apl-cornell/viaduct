@@ -1,9 +1,9 @@
 package edu.cornell.cs.apl.viaduct.imp.informationflow;
 
-import edu.cornell.cs.apl.viaduct.imp.ElaborationException;
+import edu.cornell.cs.apl.viaduct.errors.ElaborationException;
 import edu.cornell.cs.apl.viaduct.imp.VariableContext;
 import edu.cornell.cs.apl.viaduct.imp.ast.ArrayDeclarationNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.ArrayIndex;
+import edu.cornell.cs.apl.viaduct.imp.ast.ArrayIndexingNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.AssertNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.AssignNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.BinaryExpressionNode;
@@ -92,7 +92,7 @@ public class InformationFlowChecker
   }
 
   //  /** Check and decorate a program. */
-  //  public static void run(ProgramNode program) throws UnsatisfiableConstraintException {
+  //  public static void run(ProgramNode program) throws UnsatisfiableConstraintError {
   //    final InformationFlowChecker checker = new InformationFlowChecker();
   //    program.accept(checker);
   //    checker.solutions.putAll(checker.constraintSystem.solve());
@@ -141,14 +141,14 @@ public class InformationFlowChecker
   }
 
   @Override
-  public LabelTerm visit(ArrayIndex arrayIndex) {
-    final LabelTerm l = declarations.get(arrayIndex.getArray());
+  public LabelTerm visit(ArrayIndexingNode arrayIndexingNode) {
+    final LabelTerm l = declarations.get(arrayIndexingNode.getArray());
 
     // We leak the pc every time we read or write a variable.
     addFlowsToConstraint(pc, l);
 
     // Same with the index we are looking up.
-    final LabelTerm e = arrayIndex.getIndex().accept(this);
+    final LabelTerm e = arrayIndexingNode.getIndex().accept(this);
     addFlowsToConstraint(e, l);
 
     return l;

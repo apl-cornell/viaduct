@@ -1,7 +1,7 @@
 package edu.cornell.cs.apl.viaduct.imp.builders;
 
 import edu.cornell.cs.apl.viaduct.imp.ast.ArrayDeclarationNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.ArrayIndex;
+import edu.cornell.cs.apl.viaduct.imp.ast.ArrayIndexingNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.AssertNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.AssignNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.BlockNode;
@@ -9,10 +9,8 @@ import edu.cornell.cs.apl.viaduct.imp.ast.BreakNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ExpressionNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.Host;
 import edu.cornell.cs.apl.viaduct.imp.ast.IfNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.ImpType;
-import edu.cornell.cs.apl.viaduct.imp.ast.IntegerValue;
+import edu.cornell.cs.apl.viaduct.imp.ast.ImpBaseType;
 import edu.cornell.cs.apl.viaduct.imp.ast.LetBindingNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.LiteralNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.LoopNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ProcessName;
 import edu.cornell.cs.apl.viaduct.imp.ast.ReceiveNode;
@@ -92,22 +90,24 @@ public class StmtBuilder {
     return BlockNode.create(this.stmts);
   }
 
-  public StmtBuilder varDecl(String varName, ImpType type, Label label) {
+  public StmtBuilder varDecl(String varName, ImpBaseType type, Label label) {
     this.stmts.add(VariableDeclarationNode.create(Variable.create(varName), type, label));
     return this;
   }
 
-  public StmtBuilder varDecl(Variable varName, ImpType type, Label label) {
+  public StmtBuilder varDecl(Variable varName, ImpBaseType type, Label label) {
     this.stmts.add(VariableDeclarationNode.create(varName, type, label));
     return this;
   }
 
-  public StmtBuilder arrayDecl(String varName, ExpressionNode length, ImpType type, Label label) {
+  public StmtBuilder arrayDecl(
+      String varName, ExpressionNode length, ImpBaseType type, Label label) {
     this.stmts.add(ArrayDeclarationNode.create(Variable.create(varName), length, type, label));
     return this;
   }
 
-  public StmtBuilder arrayDecl(Variable varName, ExpressionNode length, ImpType type, Label label) {
+  public StmtBuilder arrayDecl(
+      Variable varName, ExpressionNode length, ImpBaseType type, Label label) {
     this.stmts.add(ArrayDeclarationNode.create(varName, length, type, label));
     return this;
   }
@@ -128,7 +128,7 @@ public class StmtBuilder {
   }
 
   public StmtBuilder assign(Variable arrName, ExpressionNode idx, ExpressionNode rhs) {
-    this.stmts.add(AssignNode.create(ArrayIndex.create(arrName, idx), rhs));
+    this.stmts.add(AssignNode.create(ArrayIndexingNode.create(arrName, idx), rhs));
     return this;
   }
 
@@ -148,7 +148,7 @@ public class StmtBuilder {
 
   /** create break. */
   public StmtBuilder loopBreak() {
-    StatementNode loopBreak = BreakNode.create(LiteralNode.create(IntegerValue.create(0)));
+    StatementNode loopBreak = BreakNode.create(1);
     this.stmts.add(loopBreak);
     return this;
   }
@@ -188,12 +188,12 @@ public class StmtBuilder {
   }
 
   /** build recv stmt. */
-  public StmtBuilder recv(String sender, ImpType recvType, String var) {
+  public StmtBuilder recv(String sender, ImpBaseType recvType, String var) {
     return recv(ProcessName.create(sender), recvType, Variable.create(var));
   }
 
   /** build recv stmt. */
-  public StmtBuilder recv(ProcessName sender, ImpType recvType, Variable var) {
+  public StmtBuilder recv(ProcessName sender, ImpBaseType recvType, Variable var) {
     this.stmts.add(ReceiveNode.create(var, recvType, sender));
     return this;
   }

@@ -55,7 +55,7 @@ public abstract class ConstantTerm<A extends HeytingAlgebra<A>> extends Constrai
   public final A transfer(A newValue) {
     if (!getValue().lessThanOrEqualTo(newValue)) {
       // Constants cannot be updated, so there is no way to satisfy the constraint.
-      throw new UnsatisfiableConstraintException(this, getValue(), newValue);
+      throw new UnsatisfiableConstraintError(this, getValue(), newValue);
     }
 
     return getValue();

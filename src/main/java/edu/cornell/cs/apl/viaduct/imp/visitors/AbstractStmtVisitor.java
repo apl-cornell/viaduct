@@ -22,7 +22,7 @@ import java.util.List;
  *
  * <p>See {@link AbstractReferenceVisitor} for a detailed explanation of available methods.
  *
- * @param <SelfT> the concrete implementation subclass
+ * @param <SelfT> concrete implementation subclass
  * @param <ReferenceResultT> return type for reference nodes
  * @param <ExprResultT> return type for expression nodes
  * @param <StmtResultT> return type for statement nodes
@@ -32,12 +32,13 @@ public abstract class AbstractStmtVisitor<
         ReferenceResultT,
         ExprResultT,
         StmtResultT>
-    extends AbstractExprVisitor<SelfT, ReferenceResultT, ExprResultT>
     implements StmtVisitor<StmtResultT> {
 
-  public final StmtResultT traverse(StatementNode node) {
-    return node.accept(this);
-  }
+  /** Return the visitor that will be used for reference sub-nodes. */
+  protected abstract ReferenceVisitor<ReferenceResultT> getReferenceVisitor();
+
+  /** Return the visitor that will be used for expression sub-nodes. */
+  protected abstract ExprVisitor<ExprResultT> getExpressionVisitor();
 
   /* ENTER  */
 
@@ -97,7 +98,9 @@ public abstract class AbstractStmtVisitor<
 
   /* LEAVE  */
 
-  protected abstract StmtResultT leave(StatementNode node, SelfT visitor);
+  protected StmtResultT leave(StatementNode node, SelfT visitor) {
+    throw new MissingCaseError(node);
+  }
 
   protected StmtResultT leave(VariableDeclarationNode node, SelfT visitor) {
     return leave((StatementNode) node, visitor);
@@ -120,7 +123,7 @@ public abstract class AbstractStmtVisitor<
     return leave((StatementNode) node, visitor);
   }
 
-  protected StmtResultT leave(ReceiveNode node, SelfT visitor) {
+  protected StmtResultT leave(ReceiveNode node, SelfT visitor, ReferenceResultT lhs) {
     return leave((StatementNode) node, visitor);
   }
 
@@ -174,69 +177,71 @@ public abstract class AbstractStmtVisitor<
   @Override
   public StmtResultT visit(ArrayDeclarationNode node) {
     final SelfT visitor = enter(node);
-    final ExprResultT length = visitor.traverse(node.getLength());
+    final ExprResultT length = node.getLength().accept(visitor.getExpressionVisitor());
     return leave(node, visitor, length);
   }
 
   @Override
   public StmtResultT visit(LetBindingNode node) {
     final SelfT visitor = enter(node);
-    final ExprResultT rhs = visitor.traverse(node.getRhs());
+    final ExprResultT rhs = node.getRhs().accept(visitor.getExpressionVisitor());
     return leave(node, visitor, rhs);
   }
 
   @Override
   public StmtResultT visit(AssignNode node) {
     final SelfT visitor = enter(node);
-    final ReferenceResultT lhs = visitor.traverse(node.getLhs());
-    final ExprResultT rhs = visitor.traverse(node.getRhs());
+    final ReferenceResultT lhs = node.getLhs().accept(visitor.getReferenceVisitor());
+    final ExprResultT rhs = node.getRhs().accept(visitor.getExpressionVisitor());
     return leave(node, visitor, lhs, rhs);
   }
 
   @Override
   public StmtResultT visit(SendNode node) {
     final SelfT visitor = enter(node);
-    final ExprResultT sentExpression = visitor.traverse(node.getSentExpression());
+    final ExprResultT sentExpression =
+        node.getSentExpression().accept(visitor.getExpressionVisitor());
     return leave(node, visitor, sentExpression);
   }
 
   @Override
   public StmtResultT visit(ReceiveNode node) {
     final SelfT visitor = enter(node);
-    return leave(node, visitor);
+    final ReferenceResultT lhs = node.getVariable().accept(visitor.getReferenceVisitor());
+    return leave(node, visitor, lhs);
   }
 
   @Override
   public StmtResultT visit(IfNode node) {
     final SelfT visitor = enter(node);
-    final ExprResultT guard = visitor.traverse(node.getGuard());
-    final StmtResultT thenBranch = visitor.traverse(node.getThenBranch());
-    final StmtResultT elseBranch = visitor.traverse(node.getElseBranch());
+    final ExprResultT guard = node.getGuard().accept(visitor.getExpressionVisitor());
+    final StmtResultT thenBranch = node.getThenBranch().accept(visitor);
+    final StmtResultT elseBranch = node.getElseBranch().accept(visitor);
     return leave(node, visitor, guard, thenBranch, elseBranch);
   }
 
   @Override
   public StmtResultT visit(WhileNode node) {
     final SelfT visitor = enter(node);
-    final ExprResultT guard = visitor.traverse(node.getGuard());
-    final StmtResultT body = visitor.traverse(node.getBody());
+    final ExprResultT guard = node.getGuard().accept(visitor.getExpressionVisitor());
+    final StmtResultT body = node.getBody().accept(visitor);
     return leave(node, visitor, guard, body);
   }
 
   @Override
   public StmtResultT visit(ForNode node) {
     final SelfT visitor = enter(node);
-    final StmtResultT initialize = visitor.traverse(node.getInitialize());
-    final ExprResultT guard = visitor.traverse(node.getGuard());
-    final StmtResultT update = visitor.traverse(node.getUpdate());
-    final StmtResultT body = visitor.traverse(node.getBody());
+    final StmtResultT initialize = node.getInitialize().accept(visitor);
+    final ExprResultT guard = node.getGuard().accept(visitor.getExpressionVisitor());
+    final StmtResultT update = node.getUpdate().accept(visitor);
+    final StmtResultT body = node.getBody().accept(visitor);
     return leave(node, visitor, initialize, guard, update, body);
   }
 
   @Override
   public StmtResultT visit(LoopNode node) {
     final SelfT visitor = enter(node);
-    final StmtResultT body = visitor.traverse(node.getBody());
+    final StmtResultT body = node.getBody().accept(visitor);
     return leave(node, visitor, body);
   }
 
@@ -251,7 +256,7 @@ public abstract class AbstractStmtVisitor<
     final SelfT visitor = enter(node);
     final List<StmtResultT> statements = new LinkedList<>();
     for (StatementNode stmt : node) {
-      statements.add(visitor.traverse(stmt));
+      statements.add(stmt.accept(visitor));
     }
     return leave(node, visitor, statements);
   }
@@ -259,7 +264,7 @@ public abstract class AbstractStmtVisitor<
   @Override
   public StmtResultT visit(AssertNode node) {
     final SelfT visitor = enter(node);
-    final ExprResultT expression = visitor.traverse(node.getExpression());
+    final ExprResultT expression = node.getExpression().accept(visitor.getExpressionVisitor());
     return leave(node, visitor, expression);
   }
 }

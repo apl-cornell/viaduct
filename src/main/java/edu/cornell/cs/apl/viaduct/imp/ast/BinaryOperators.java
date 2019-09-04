@@ -1,25 +1,12 @@
 package edu.cornell.cs.apl.viaduct.imp.ast;
 
-import edu.cornell.cs.apl.viaduct.imp.TypeCheckException;
-
 /** Enumerates binary operators in the language. */
 public class BinaryOperators {
-  abstract static class BinaryLogicalOperator extends BinaryOperator {
+  private abstract static class BinaryLogicalOperator extends BinaryOperator {
     @Override
-    public ImpType typeCheck(ImpType lhs, ImpType rhs) throws TypeCheckException {
-      if (!(lhs instanceof BooleanType)) {
-        throw new TypeCheckException(
-            String.format(
-                "%s operator expected %s in LHS type, got %s", this, BooleanType.create(), lhs));
-
-      } else if (!(rhs instanceof BooleanType)) {
-        throw new TypeCheckException(
-            String.format(
-                "%s operator expected %s in RHS type, got %s", this, BooleanType.create(), rhs));
-
-      } else {
-        return BooleanType.create();
-      }
+    public BinaryOperatorType getType() {
+      final ImpBaseType bool = BooleanType.create();
+      return BinaryOperatorType.create(bool, bool, bool);
     }
   }
 
@@ -69,25 +56,16 @@ public class BinaryOperators {
     }
   }
 
-  abstract static class ArithComparisonOperator extends BinaryOperator {
+  private abstract static class ArithComparisonOperator extends BinaryOperator {
     @Override
-    public ImpType typeCheck(ImpType lhs, ImpType rhs) throws TypeCheckException {
-      if (!(lhs instanceof IntegerType)) {
-        throw new TypeCheckException(
-            String.format(
-                "%s operator expected %s in LHS type, got %s", this, IntegerType.create(), lhs));
-
-      } else if (!(rhs instanceof IntegerType)) {
-        throw new TypeCheckException(
-            String.format(
-                "%s operator expected %s in RHS type, got %s", this, IntegerType.create(), rhs));
-
-      } else {
-        return BooleanType.create();
-      }
+    public BinaryOperatorType getType() {
+      final ImpBaseType bool = BooleanType.create();
+      final ImpBaseType integer = IntegerType.create();
+      return BinaryOperatorType.create(bool, integer, integer);
     }
   }
 
+  // TODO: this should also work with booleans
   public static final class EqualTo extends ArithComparisonOperator {
     private static final EqualTo INSTANCE = new EqualTo();
 
@@ -155,22 +133,11 @@ public class BinaryOperators {
     }
   }
 
-  abstract static class ArithmeticOperator extends BinaryOperator {
+  private abstract static class ArithmeticOperator extends BinaryOperator {
     @Override
-    public ImpType typeCheck(ImpType lhs, ImpType rhs) throws TypeCheckException {
-      if (!(lhs instanceof IntegerType)) {
-        throw new TypeCheckException(
-            String.format(
-                "%s operator expected %s in LHS type, got %s", this, IntegerType.create(), lhs));
-
-      } else if (!(rhs instanceof IntegerType)) {
-        throw new TypeCheckException(
-            String.format(
-                "%s operator expected %s in RHS type, got %s", this, IntegerType.create(), rhs));
-
-      } else {
-        return IntegerType.create();
-      }
+    public BinaryOperatorType getType() {
+      final ImpBaseType integer = IntegerType.create();
+      return BinaryOperatorType.create(integer, integer, integer);
     }
   }
 

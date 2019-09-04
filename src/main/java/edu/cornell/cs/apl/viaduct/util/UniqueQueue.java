@@ -11,9 +11,11 @@ import java.util.Set;
 import javax.annotation.Nonnull;
 
 /**
- * A queue implementation that keeps only one copy of each element. Trying to insert an element that
- * is already in the queue will ignore the new copy, keeping the old. Specifically, the element is
- * not moved to the end of the queue, it maintains its original position.
+ * A queue implementation that keeps only one copy of each element.
+ *
+ * <p>Trying to insert an element that is already in the queue will ignore the new copy, keeping the
+ * old. Additionally, the element will keep its original position in the queue, and is <em>not</em>
+ * moved to the end of the queue.
  */
 public class UniqueQueue<E> extends AbstractQueue<E> implements Queue<E> {
   private final Queue<E> queue = new LinkedList<>();

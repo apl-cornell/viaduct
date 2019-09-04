@@ -5,8 +5,6 @@ import edu.cornell.cs.apl.viaduct.imp.ast.BreakNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ExpressionNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ForNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.IfNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.IntegerValue;
-import edu.cornell.cs.apl.viaduct.imp.ast.LiteralNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.LoopNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.StatementNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.WhileNode;
@@ -18,7 +16,7 @@ public class ElaborationVisitor extends FormatBlockVisitor {
   public StatementNode visit(WhileNode whileNode) {
     ExpressionNode newGuard = whileNode.getGuard().accept(this);
     StatementNode newBody = whileNode.getBody().accept(this);
-    BreakNode loopBreak = BreakNode.create(LiteralNode.create(IntegerValue.create(0)));
+    BreakNode loopBreak = BreakNode.create(1);
     IfNode ifNode = IfNode.create(newGuard, newBody, BlockNode.create(loopBreak));
     LoopNode loop = LoopNode.create(BlockNode.create(ifNode));
     return loop;

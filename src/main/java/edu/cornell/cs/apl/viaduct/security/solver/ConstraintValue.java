@@ -7,7 +7,7 @@ import edu.cornell.cs.apl.viaduct.util.dataflow.IdentityEdge;
 /** Atomic constraint terms such as constants and variables, but not expressions. */
 public abstract class ConstraintValue<A> implements
     LeftHandTerm<A>, RightHandTerm<A>,
-    DataFlowNode<A, UnsatisfiableConstraintException>
+    DataFlowNode<A, UnsatisfiableConstraintError>
 {
 
   protected String id;

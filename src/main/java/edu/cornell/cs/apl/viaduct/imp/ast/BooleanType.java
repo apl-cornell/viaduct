@@ -1,6 +1,6 @@
 package edu.cornell.cs.apl.viaduct.imp.ast;
 
-public final class BooleanType implements ImpType {
+public final class BooleanType implements ImpBaseType {
   private static final BooleanType INSTANCE = new BooleanType();
 
   private BooleanType() {}

@@ -12,7 +12,7 @@ public abstract class BooleanValue implements ImpValue {
   public abstract boolean getValue();
 
   @Override
-  public final ImpType getType() {
+  public final ImpBaseType getType() {
     return BooleanType.create();
   }
 

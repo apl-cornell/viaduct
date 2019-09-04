@@ -1,8 +1,8 @@
 package edu.cornell.cs.apl.viaduct.imp.visitors;
 
-import edu.cornell.cs.apl.viaduct.imp.ElaborationException;
+import edu.cornell.cs.apl.viaduct.errors.ElaborationException;
 import edu.cornell.cs.apl.viaduct.imp.ast.ArrayDeclarationNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.ArrayIndex;
+import edu.cornell.cs.apl.viaduct.imp.ast.ArrayIndexingNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.AssertNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.AssignNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.BinaryExpressionNode;
@@ -19,7 +19,7 @@ import edu.cornell.cs.apl.viaduct.imp.ast.LoopNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.NotNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ReadNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ReceiveNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.Reference;
+import edu.cornell.cs.apl.viaduct.imp.ast.ReferenceNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.SendNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.StatementNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.Variable;
@@ -92,14 +92,14 @@ public class ImpPdgBuilderVisitor implements StmtVisitor<Set<PdgNode<ImpAstNode>
   }
 
   private void createReadEdges(
-      Set<Variable> temps, Set<Reference> queries, PdgNode<ImpAstNode> node) {
+      Set<Variable> temps, Set<ReferenceNode> queries, PdgNode<ImpAstNode> node) {
 
     for (Variable temp : temps) {
       PdgNode<ImpAstNode> readNode = this.nodeMap.get(temp.getBinding());
       PdgComputeEdge.create(readNode, node, temp);
     }
 
-    for (Reference query : queries) {
+    for (ReferenceNode query : queries) {
       Variable queryVar =
           query.accept(
               new ReferenceVisitor<Variable>() {
@@ -109,7 +109,7 @@ public class ImpPdgBuilderVisitor implements StmtVisitor<Set<PdgNode<ImpAstNode>
                 }
 
                 @Override
-                public Variable visit(ArrayIndex arrayIndex) {
+                public Variable visit(ArrayIndexingNode arrayIndex) {
                   return arrayIndex.getArray();
                 }
               });
@@ -147,7 +147,7 @@ public class ImpPdgBuilderVisitor implements StmtVisitor<Set<PdgNode<ImpAstNode>
 
     ExpressionNode length = arrayDecl.getLength();
     Set<Variable> temps = this.tempSetVisitor.run(length);
-    Set<Reference> queries = this.querySetVisitor.run(length);
+    Set<ReferenceNode> queries = this.querySetVisitor.run(length);
 
     createReadEdges(temps, queries, node);
 
@@ -162,7 +162,7 @@ public class ImpPdgBuilderVisitor implements StmtVisitor<Set<PdgNode<ImpAstNode>
 
     PdgComputeNode<ImpAstNode> node = new PdgComputeNode<>(rhs, name);
     Set<Variable> temps = this.tempSetVisitor.run(rhs);
-    Set<Reference> queries = this.querySetVisitor.run(rhs);
+    Set<ReferenceNode> queries = this.querySetVisitor.run(rhs);
     createReadEdges(temps, queries, node);
 
     // in A-normal form, there should be at most one query
@@ -173,7 +173,7 @@ public class ImpPdgBuilderVisitor implements StmtVisitor<Set<PdgNode<ImpAstNode>
 
   @Override
   public Set<PdgNode<ImpAstNode>> visit(AssignNode assignNode) {
-    Reference lhs = assignNode.getLhs();
+    ReferenceNode lhs = assignNode.getLhs();
     ExpressionNode rhs = assignNode.getRhs();
 
     Set<Variable> lhsTemps = this.tempSetVisitor.run(lhs);
@@ -181,10 +181,10 @@ public class ImpPdgBuilderVisitor implements StmtVisitor<Set<PdgNode<ImpAstNode>
     Set<Variable> temps = new HashSet<>(lhsTemps);
     temps.addAll(rhsTemps);
 
-    Set<Reference> queries = new HashSet<>();
+    Set<ReferenceNode> queries = new HashSet<>();
     /*
-    Set<Reference> lhsQueries = this.querySetVisitor.run(lhs);
-    Set<Reference> rhsQueries  = this.querySetVisitor.run(rhs);
+    Set<ReferenceNode> lhsQueries = this.querySetVisitor.run(lhs);
+    Set<ReferenceNode> rhsQueries  = this.querySetVisitor.run(rhs);
     queries.addAll(lhsQueries);
     queries.addAll(rhsQueries);
     queries.remove(lhs);
@@ -209,10 +209,10 @@ public class ImpPdgBuilderVisitor implements StmtVisitor<Set<PdgNode<ImpAstNode>
           }
 
           @Override
-          public Set<PdgNode<ImpAstNode>> visit(ArrayIndex arrayIndex) {
-            Variable arrayVar = arrayIndex.getArray();
+          public Set<PdgNode<ImpAstNode>> visit(ArrayIndexingNode arrayIndexingNode) {
+            Variable arrayVar = arrayIndexingNode.getArray();
             PdgNode<ImpAstNode> varNode = ImpPdgBuilderVisitor.this.getVariableNode(arrayVar);
-            PdgWriteEdge.create(node, varNode, "set", arrayIndex.getIndex(), rhs);
+            PdgWriteEdge.create(node, varNode, "set", arrayIndexingNode.getIndex(), rhs);
             return null;
           }
         });
@@ -237,7 +237,7 @@ public class ImpPdgBuilderVisitor implements StmtVisitor<Set<PdgNode<ImpAstNode>
 
     ExpressionNode guard = ifNode.getGuard();
     Set<Variable> temps = this.tempSetVisitor.run(guard);
-    Set<Reference> queries = this.querySetVisitor.run(guard);
+    Set<ReferenceNode> queries = this.querySetVisitor.run(guard);
     createReadEdges(temps, queries, node);
 
     Set<PdgNode<ImpAstNode>> createdNodes = addNode(name, node, ifNode);
@@ -321,7 +321,7 @@ public class ImpPdgBuilderVisitor implements StmtVisitor<Set<PdgNode<ImpAstNode>
       return expr.accept(this);
     }
 
-    public Set<T> run(Reference ref) {
+    public Set<T> run(ReferenceNode ref) {
       return ref.accept(this);
     }
 
@@ -329,7 +329,7 @@ public class ImpPdgBuilderVisitor implements StmtVisitor<Set<PdgNode<ImpAstNode>
     public abstract Set<T> visit(Variable var);
 
     @Override
-    public abstract Set<T> visit(ArrayIndex arrayIndex);
+    public abstract Set<T> visit(ArrayIndexingNode arrayIndexingNode);
 
     @Override
     public Set<T> visit(ReadNode readNode) {
@@ -382,16 +382,16 @@ public class ImpPdgBuilderVisitor implements StmtVisitor<Set<PdgNode<ImpAstNode>
     }
 
     @Override
-    public Set<Variable> visit(ArrayIndex arrayIndex) {
-      return arrayIndex.getIndex().accept(this);
+    public Set<Variable> visit(ArrayIndexingNode arrayIndexingNode) {
+      return arrayIndexingNode.getIndex().accept(this);
     }
   }
 
-  class QuerySetVisitor extends ReadSetVisitor<Reference> {
+  class QuerySetVisitor extends ReadSetVisitor<ReferenceNode> {
     @Override
-    public Set<Reference> visit(Variable var) {
+    public Set<ReferenceNode> visit(Variable var) {
       if (declaredVars.contains(var)) {
-        Set<Reference> reads = new HashSet<>();
+        Set<ReferenceNode> reads = new HashSet<>();
         reads.add(var);
         return reads;
 
@@ -401,11 +401,11 @@ public class ImpPdgBuilderVisitor implements StmtVisitor<Set<PdgNode<ImpAstNode>
     }
 
     @Override
-    public Set<Reference> visit(ArrayIndex arrayIndex) {
+    public Set<ReferenceNode> visit(ArrayIndexingNode arrayIndexingNode) {
       // we're assuming the AST is in A-normal form, so there's no need
       // to traverse the index since it's guaranteed to be an atomic expr
-      Set<Reference> reads = new HashSet<>();
-      reads.add(arrayIndex);
+      Set<ReferenceNode> reads = new HashSet<>();
+      reads.add(arrayIndexingNode);
       return reads;
     }
   }

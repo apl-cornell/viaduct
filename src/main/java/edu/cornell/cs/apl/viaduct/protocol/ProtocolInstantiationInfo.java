@@ -91,7 +91,7 @@ public class ProtocolInstantiationInfo<T extends AstNode> {
       return this.loopControlContext.peek();
 
     } else {
-      throw new ProtocolInstantiationException(
+      throw new ProtocolInstantiationError(
           "attempting to peek empty loop control context stack");
     }
   }
@@ -114,7 +114,7 @@ public class ProtocolInstantiationInfo<T extends AstNode> {
       return this.controlContext.peek();
 
     } else {
-      throw new ProtocolInstantiationException("attempting to peek empty control context stack");
+      throw new ProtocolInstantiationError("attempting to peek empty control context stack");
     }
   }
 

@@ -7,6 +7,6 @@ import edu.cornell.cs.apl.viaduct.imp.visitors.ReferenceVisitor;
  *
  * <p>References can be written to or read from.
  */
-public interface Reference {
-  <R> R accept(ReferenceVisitor<R> v);
+public abstract class ReferenceNode extends ImpAstNode {
+  public abstract <R> R accept(ReferenceVisitor<R> v);
 }

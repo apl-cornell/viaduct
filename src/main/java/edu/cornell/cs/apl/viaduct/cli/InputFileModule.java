@@ -5,11 +5,8 @@ import com.github.rvesse.airline.annotations.restrictions.Once;
 import edu.cornell.cs.apl.viaduct.imp.ast.ProgramNode;
 import edu.cornell.cs.apl.viaduct.imp.parser.Parser;
 import edu.cornell.cs.apl.viaduct.imp.parser.SourceFile;
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.InputStream;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.nio.charset.StandardCharsets;
@@ -29,16 +26,18 @@ final class InputFileModule {
 
   /** Parse the input file and return the AST. */
   ProgramNode parse() throws Exception {
-    try (Reader reader = newInputReader()) {
-      final String inputSource = getInput() == null ? "<stdin>" : getInput().getPath();
-      return Parser.parse(SourceFile.from(inputSource, reader));
-    }
+    return Parser.parse(newSourceFile());
   }
 
-  /** Create an efficient {@link Reader} from the specified input file. */
-  private Reader newInputReader() throws FileNotFoundException {
+  /** Create a new {@link SourceFile} from the specified input file. */
+  private SourceFile newSourceFile() throws IOException {
     final File file = getInput();
-    InputStream stream = file == null ? System.in : new FileInputStream(file);
-    return new BufferedReader(new InputStreamReader(stream, StandardCharsets.UTF_8));
+    if (file == null) {
+      try (Reader reader = new InputStreamReader(System.in, StandardCharsets.UTF_8)) {
+        return SourceFile.from("<stdin>", reader);
+      }
+    } else {
+      return SourceFile.from(file);
+    }
   }
 }

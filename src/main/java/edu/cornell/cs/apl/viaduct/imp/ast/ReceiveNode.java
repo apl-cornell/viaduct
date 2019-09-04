@@ -17,16 +17,22 @@ public abstract class ReceiveNode extends StatementNode {
     return create(variable, null, sender);
   }
 
-  /** constructor. */
+  /**
+   * Similar to {@link #create(Variable, ProcessName)}, but also provide the expected type of the
+   * received value.
+   *
+   * @param receiveType expected type of the received value
+   */
   public static ReceiveNode create(
-      Variable variable, @Nullable ImpType recvType, ProcessName sender) {
-    return new AutoValue_ReceiveNode(variable, recvType, sender);
+      Variable variable, @Nullable ImpBaseType receiveType, ProcessName sender) {
+    return new AutoValue_ReceiveNode(variable, receiveType, sender);
   }
 
+  // TODO: turn into a reference node
   public abstract Variable getVariable();
 
   // TODO: remove this. Type information should be stored somewhere else.
-  public abstract @Nullable ImpType getRecvType();
+  public abstract @Nullable ImpBaseType getReceiveType();
 
   public abstract ProcessName getSender();
 

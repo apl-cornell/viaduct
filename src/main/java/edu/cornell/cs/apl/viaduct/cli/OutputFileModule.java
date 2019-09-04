@@ -1,14 +1,12 @@
 package edu.cornell.cs.apl.viaduct.cli;
 
 import com.github.rvesse.airline.annotations.Option;
-import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-import java.io.Writer;
+import java.io.IOException;
+import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
+import org.fusesource.jansi.AnsiConsole;
+import org.fusesource.jansi.AnsiPrintStream;
 
 /** Provides an output file option for commands. */
 final class OutputFileModule {
@@ -26,10 +24,14 @@ final class OutputFileModule {
     return output != null ? new File(output) : null;
   }
 
-  /** Create an efficient {@link Writer} to the specified output file. */
-  BufferedWriter newOutputWriter() throws FileNotFoundException {
+  /** Create a {@link PrintStream} that expects ANSI color codes to the specified output file. */
+  PrintStream newOutputStream() throws IOException {
     final File file = getOutput();
-    final OutputStream stream = file == null ? System.out : new FileOutputStream(file);
-    return new BufferedWriter(new OutputStreamWriter(stream, StandardCharsets.UTF_8));
+    if (file == null) {
+      return AnsiConsole.out();
+    } else {
+      // TODO: PrintStream doesn't throw errors when writing. These will fail silently.
+      return new AnsiPrintStream(new PrintStream(file, StandardCharsets.UTF_8));
+    }
   }
 }

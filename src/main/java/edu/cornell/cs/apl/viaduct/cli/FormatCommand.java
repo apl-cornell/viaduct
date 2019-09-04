@@ -2,12 +2,11 @@ package edu.cornell.cs.apl.viaduct.cli;
 
 import com.github.rvesse.airline.annotations.Command;
 import com.github.rvesse.airline.annotations.Option;
-
 import edu.cornell.cs.apl.viaduct.imp.ast.ProgramNode;
 import edu.cornell.cs.apl.viaduct.imp.visitors.AnfVisitor;
 import edu.cornell.cs.apl.viaduct.imp.visitors.ElaborationVisitor;
 import edu.cornell.cs.apl.viaduct.imp.visitors.PrintVisitor;
-import java.io.BufferedWriter;
+import java.io.PrintStream;
 
 @Command(name = "format", description = "Pretty print source program")
 public class FormatCommand extends BaseCommand {
@@ -26,12 +25,8 @@ public class FormatCommand extends BaseCommand {
     // parse
     ProgramNode program = this.input.parse();
 
-    // typecheck
-    // final TypeCheckVisitor typeChecker = new TypeCheckVisitor();
-    // typeChecker.run(program);
-
     // print (de-parse)
-    try (BufferedWriter writer = this.output.newOutputWriter()) {
+    try (PrintStream writer = this.output.newOutputStream()) {
       if (this.enableElaboration) {
         program = new ElaborationVisitor().run(program);
       }
@@ -40,8 +35,7 @@ public class FormatCommand extends BaseCommand {
         program = new AnfVisitor().run(program);
       }
 
-      writer.write(PrintVisitor.run(program));
-      writer.newLine();
+      writer.println(PrintVisitor.run(program));
     }
     return null;
   }

@@ -1,10 +1,13 @@
 package edu.cornell.cs.apl.viaduct.imp.ast;
 
 import com.google.auto.value.AutoValue;
+import edu.cornell.cs.apl.viaduct.errors.TodoException;
+import edu.cornell.cs.apl.viaduct.imp.parser.Located;
+import edu.cornell.cs.apl.viaduct.imp.parser.SourceRange;
 
 /** Process names. Processes execute code, and can send and receive messages. */
 @AutoValue
-public abstract class ProcessName implements Comparable<ProcessName> {
+public abstract class ProcessName implements Name, Located, Comparable<ProcessName> {
   private static final ProcessName MAIN = ProcessName.create("main");
 
   public static ProcessName create(String name) {
@@ -21,7 +24,15 @@ public abstract class ProcessName implements Comparable<ProcessName> {
     return MAIN;
   }
 
-  public abstract String getName();
+  @Override
+  public final String getNameCategory() {
+    return "process";
+  }
+
+  @Override
+  public final SourceRange getSourceLocation() {
+    throw new TodoException();
+  }
 
   @Override
   public final int compareTo(ProcessName that) {

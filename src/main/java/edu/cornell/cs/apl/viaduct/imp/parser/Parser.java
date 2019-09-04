@@ -5,7 +5,7 @@ import java.io.StringReader;
 import java_cup.runtime.Scanner;
 
 /** Parser for Imp source code. */
-public class Parser {
+public final class Parser {
   /** Parse the given string and return the AST. */
   public static ProgramNode parse(String source) throws Exception {
     return parse(SourceFile.from("<string>", new StringReader(source)));

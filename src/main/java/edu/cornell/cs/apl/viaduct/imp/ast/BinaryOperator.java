@@ -1,13 +1,12 @@
 package edu.cornell.cs.apl.viaduct.imp.ast;
 
-import edu.cornell.cs.apl.viaduct.imp.TypeCheckException;
-
 /** Represents functions that take two values and return a value. */
 public abstract class BinaryOperator {
-  public abstract ImpValue evaluate(ImpValue left, ImpValue right);
+  public abstract ImpValue evaluate(ImpValue lhs, ImpValue rhs);
 
-  public abstract ImpType typeCheck(ImpType lhs, ImpType rhs) throws TypeCheckException;
+  public abstract BinaryOperatorType getType();
 
+  // Force override in subclasses.
   @Override
   public abstract String toString();
 }

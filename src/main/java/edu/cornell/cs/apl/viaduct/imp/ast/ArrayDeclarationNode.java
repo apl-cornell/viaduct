@@ -12,19 +12,19 @@ public abstract class ArrayDeclarationNode extends StatementNode {
    *
    * @param variable name of the array
    * @param length number of elements in the array
-   * @param type type of the elements in the array
+   * @param elementType type of the elements in the array
    * @param label security label of the array and all its elements
    */
   public static ArrayDeclarationNode create(
-      Variable variable, ExpressionNode length, ImpType type, @Nullable Label label) {
-    return new AutoValue_ArrayDeclarationNode(variable, length, type, label);
+      Variable variable, ExpressionNode length, ImpBaseType elementType, @Nullable Label label) {
+    return new AutoValue_ArrayDeclarationNode(variable, length, elementType, label);
   }
 
   public abstract Variable getVariable();
 
   public abstract ExpressionNode getLength();
 
-  public abstract ImpType getType();
+  public abstract ImpBaseType getElementType();
 
   @Nullable
   public abstract Label getLabel();

@@ -12,14 +12,14 @@ nonterminal ProgramNode program;
 nonterminal ProgramNode.Builder declaration_list;
 nonterminal List<StatementNode> stmt_list;
 nonterminal StatementNode stmt, stmt_basic, block;
-nonterminal Reference reference;
+nonterminal ReferenceNode reference;
 nonterminal ExpressionNode expr;
 nonterminal ImpValue value;
 nonterminal Label label, label_expr, optto;
 nonterminal Variable variable;
 nonterminal Host host;
 nonterminal ProcessName process_name;
-nonterminal ImpType type;
+nonterminal ImpBaseType type;
 
 terminal String IDENT, CAP_IDENT;
 terminal Integer INT_LIT;
@@ -206,7 +206,7 @@ stmt_list ::=
 
 reference ::=
     variable:var OPEN_SQBRACE expr:e CLOSE_SQBRACE {:
-      RESULT = ArrayIndex.create(var, e);
+      RESULT = ArrayIndexingNode.create(var, e);
 
     :}
 

@@ -46,7 +46,7 @@ public class ConstraintSystem<A extends HeytingAlgebra<A>> {
    *
    * @return Mapping from variables to the greatest values that satisfy all constraints
    */
-  public Map<VariableTerm<A>, A> solve() throws UnsatisfiableConstraintException {
+  public Map<VariableTerm<A>, A> solve() throws UnsatisfiableConstraintError {
     // Use data flow analysis to find a solution for all nodes.
     Map<ConstraintValue<A>, A> solutions = DataFlow.solve(top, constraints);
 

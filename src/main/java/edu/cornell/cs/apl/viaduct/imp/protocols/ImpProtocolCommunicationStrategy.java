@@ -5,7 +5,7 @@ import edu.cornell.cs.apl.viaduct.imp.ast.Host;
 import edu.cornell.cs.apl.viaduct.imp.ast.ImpAstNode;
 import edu.cornell.cs.apl.viaduct.protocol.MemoizedProtocolCommunicationStrategy;
 import edu.cornell.cs.apl.viaduct.protocol.Protocol;
-import edu.cornell.cs.apl.viaduct.protocol.ProtocolInstantiationException;
+import edu.cornell.cs.apl.viaduct.protocol.ProtocolInstantiationError;
 import edu.cornell.cs.apl.viaduct.security.Label;
 import edu.cornell.cs.apl.viaduct.util.PowersetIterator;
 
@@ -82,7 +82,7 @@ public final class ImpProtocolCommunicationStrategy
           return fromHostSet;
         }
       }
-      throw new ProtocolInstantiationException("control node cannot read with enough integrity");
+      throw new ProtocolInstantiationError("control node cannot read with enough integrity");
 
     } else {
       Map<Host,Set<Host>> communicationMap =
@@ -98,7 +98,7 @@ public final class ImpProtocolCommunicationStrategy
       Host host)
   {
     if (toProtocol instanceof ControlProtocol) {
-      throw new ProtocolInstantiationException("control protocol is selected for storage node");
+      throw new ProtocolInstantiationError("control protocol is selected for storage node");
 
     } else if (fromProtocol instanceof MPC) {
       return toProtocol.getHosts();

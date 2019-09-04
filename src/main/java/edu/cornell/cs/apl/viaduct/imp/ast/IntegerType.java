@@ -1,6 +1,6 @@
 package edu.cornell.cs.apl.viaduct.imp.ast;
 
-public final class IntegerType implements ImpType {
+public final class IntegerType implements ImpBaseType {
   private static final IntegerType INSTANCE = new IntegerType();
 
   private IntegerType() {}

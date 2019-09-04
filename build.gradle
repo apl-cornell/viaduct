@@ -23,7 +23,7 @@ plugins {
 group 'edu.cornell.cs.apl'
 version '0.1'
 
-sourceCompatibility = 1.8
+sourceCompatibility = 1.10
 
 repositories {
     jcenter()
@@ -108,6 +108,9 @@ dependencies {
 
     // Command-line-argument parsing
     implementation group: 'com.github.rvesse', name: 'airline', version: '2.7.0'
+
+    // Colored terminal output
+    implementation group: 'org.fusesource.jansi', name: 'jansi', version: '1.18'
 
     // DOT graph output
     implementation group: 'guru.nidi', name: 'graphviz-java', version: '0.8.3'

@@ -1,8 +1,8 @@
 package edu.cornell.cs.apl.viaduct.imp.ast;
 
-import edu.cornell.cs.apl.viaduct.imp.DuplicateHostDeclarationException;
-import edu.cornell.cs.apl.viaduct.imp.DuplicateProcessDefinitionException;
+import edu.cornell.cs.apl.viaduct.errors.NameClashError;
 import edu.cornell.cs.apl.viaduct.imp.HostTrustConfiguration;
+import edu.cornell.cs.apl.viaduct.imp.parser.Located;
 import edu.cornell.cs.apl.viaduct.imp.visitors.ProgramVisitor;
 import edu.cornell.cs.apl.viaduct.security.Label;
 import io.vavr.Tuple2;
@@ -108,15 +108,21 @@ public final class ProgramNode extends ImpAstNode
      *
      * @param processName name of the process
      * @param statement code to be executed by this process
-     * @throws DuplicateProcessDefinitionException if the process was added previously
+     * @throws NameClashError if the process was added previously
      */
     public Builder addProcess(ProcessName processName, StatementNode statement)
-        throws DuplicateProcessDefinitionException {
+        throws NameClashError {
       Objects.requireNonNull(processName);
       Objects.requireNonNull(statement);
 
       if (processes.containsKey(processName)) {
-        throw new DuplicateProcessDefinitionException(processName);
+        // TODO: do a better job of recovering this
+        final Located previousDeclaration =
+            processes.keySet().stream()
+                .filter(processName::equals)
+                .findAny()
+                .orElseThrow(NullPointerException::new);
+        throw new NameClashError(previousDeclaration, processName);
       }
       processes.put(processName, statement);
 
@@ -124,7 +130,7 @@ public final class ProgramNode extends ImpAstNode
     }
 
     /** Add a host trust declaration. */
-    public Builder addHost(Host host, Label trust) throws DuplicateHostDeclarationException {
+    public Builder addHost(Host host, Label trust) throws NameClashError {
       hostConfigBuilder.addHost(host, trust);
       return this;
     }

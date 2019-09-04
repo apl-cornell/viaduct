@@ -13,17 +13,17 @@ import edu.cornell.cs.apl.viaduct.imp.parser.TrustConfigurationParser;
 import edu.cornell.cs.apl.viaduct.imp.protocols.ImpCommunicationCostEstimator;
 import edu.cornell.cs.apl.viaduct.imp.protocols.ImpProtocolCommunicationStrategy;
 import edu.cornell.cs.apl.viaduct.imp.protocols.ImpProtocolSearchStrategy;
+import edu.cornell.cs.apl.viaduct.imp.typing.TypeChecker;
 import edu.cornell.cs.apl.viaduct.imp.visitors.ImpPdgBuilderPreprocessVisitor;
 import edu.cornell.cs.apl.viaduct.imp.visitors.ImpPdgBuilderVisitor;
 import edu.cornell.cs.apl.viaduct.imp.visitors.ImpProtocolInstantiationVisitor;
 import edu.cornell.cs.apl.viaduct.imp.visitors.PrintVisitor;
-import edu.cornell.cs.apl.viaduct.imp.visitors.TypeCheckVisitor;
 import edu.cornell.cs.apl.viaduct.pdg.PdgDotPrinter;
 import edu.cornell.cs.apl.viaduct.pdg.PdgNode;
 import edu.cornell.cs.apl.viaduct.pdg.ProgramDependencyGraph;
 import edu.cornell.cs.apl.viaduct.protocol.Protocol;
 import edu.cornell.cs.apl.viaduct.protocol.ProtocolSelection;
-import edu.cornell.cs.apl.viaduct.security.solver.UnsatisfiableConstraintException;
+import edu.cornell.cs.apl.viaduct.security.solver.UnsatisfiableConstraintError;
 import guru.nidi.graphviz.engine.Format;
 import guru.nidi.graphviz.engine.Graphviz;
 import guru.nidi.graphviz.engine.GraphvizCmdLineEngine;
@@ -34,6 +34,7 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.OutputStreamWriter;
+import java.io.PrintStream;
 import java.io.StringWriter;
 import java.io.Writer;
 import java.nio.charset.StandardCharsets;
@@ -178,15 +179,14 @@ public class CompileCommand extends BaseCommand {
     ImpPdgBuilderPreprocessVisitor preprocessor = new ImpPdgBuilderPreprocessVisitor();
     main = preprocessor.run(main);
 
-    final TypeCheckVisitor typeChecker = new TypeCheckVisitor();
-    typeChecker.run(main);
+    TypeChecker.run(main);
 
     // information flow constraint solving
     final InformationFlowChecker checker = new InformationFlowChecker();
     try {
       checker.run(main);
 
-    } catch (UnsatisfiableConstraintException unsatConstraint) {
+    } catch (UnsatisfiableConstraintError unsatConstraint) {
       System.out.println(unsatConstraint);
 
     } finally {
@@ -240,9 +240,8 @@ public class CompileCommand extends BaseCommand {
                   hostConfig, communicationStrategy, pdg, protocolMap, main)
               .run();
 
-      try (BufferedWriter writer = output.newOutputWriter()) {
-        writer.write(PrintVisitor.run(generatedProgram));
-        writer.newLine();
+      try (PrintStream writer = output.newOutputStream()) {
+        writer.println(PrintVisitor.run(generatedProgram));
       }
 
       // TODO: This gets printed in between System.out

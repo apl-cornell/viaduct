@@ -1,7 +1,7 @@
 package edu.cornell.cs.apl.viaduct.imp.visitors;
 
-import edu.cornell.cs.apl.viaduct.imp.ast.ArrayIndex;
-import edu.cornell.cs.apl.viaduct.imp.ast.Reference;
+import edu.cornell.cs.apl.viaduct.imp.ast.ArrayIndexingNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.ReferenceNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.Variable;
 
 /**
@@ -12,53 +12,54 @@ import edu.cornell.cs.apl.viaduct.imp.ast.Variable;
  * returned by traversing the children.
  *
  * <p>Second, the {@code visit(node)} methods are split into {@code enter(node)} and {@code
- * leave(node, visitor, children...)} methods. {@code enter(node)} methods are executed before the
+ * leave(node, visitor, children...)} methods. {@code enter} methods are executed before the
  * children of the node are traversed, and allow you to provide a different visitor while traversing
  * the children. This is useful, for example, for scope management: you can create a new visitor
  * that maintains its own context information (copied from the parent visitor), and the context will
- * be reverted once we switch back to using the parent visitor.
+ * be reverted once we switch back to the parent visitor.
  *
- * <p>Third, this class supports inheritance. {@code enter(node)} and {@code leave(...)} methods by
- * default delegate to {@link #enter(Reference)} and {@link #leave(Reference, SelfT)} methods. So
+ * <p>Third, this class supports inheritance. {@code enter} and {@code leave} methods by default
+ * delegate to {@link #enter(ReferenceNode)} and {@link #leave(ReferenceNode, SelfT)} methods. So,
  * for uniform functionality, you may only need to override as little as a single methods.
  *
- * @param <SelfT> the concrete implementation subclass
+ * @param <SelfT> concrete implementation subclass
  * @param <ReferenceResultT> return type for reference nodes
  * @param <ExprResultT> return type for expression nodes
  */
 public abstract class AbstractReferenceVisitor<
-        SelfT extends AbstractExprVisitor<SelfT, ReferenceResultT, ExprResultT>,
+        SelfT extends AbstractReferenceVisitor<SelfT, ReferenceResultT, ExprResultT>,
         ReferenceResultT,
         ExprResultT>
     implements ReferenceVisitor<ReferenceResultT> {
 
-  public final ReferenceResultT traverse(Reference node) {
-    return node.accept(this);
-  }
+  /** Return the visitor that will be used for expression sub-nodes. */
+  protected abstract ExprVisitor<ExprResultT> getExpressionVisitor();
 
   /* ENTER  */
 
-  protected abstract SelfT enter(Reference node);
+  protected abstract SelfT enter(ReferenceNode node);
 
   protected SelfT enter(Variable node) {
-    return enter((Reference) node);
+    return enter((ReferenceNode) node);
   }
 
-  protected SelfT enter(ArrayIndex node) {
-    return enter((Reference) node);
+  protected SelfT enter(ArrayIndexingNode node) {
+    return enter((ReferenceNode) node);
   }
 
   /* LEAVE  */
 
-  protected abstract ReferenceResultT leave(Reference node, SelfT visitor);
+  protected ReferenceResultT leave(ReferenceNode node, SelfT visitor) {
+    throw new MissingCaseError(node);
+  }
 
   protected ReferenceResultT leave(Variable node, SelfT visitor) {
-    return leave((Reference) node, visitor);
+    return leave((ReferenceNode) node, visitor);
   }
 
   protected ReferenceResultT leave(
-      ArrayIndex node, SelfT visitor, ReferenceResultT array, ExprResultT index) {
-    return leave((Reference) node, visitor);
+      ArrayIndexingNode node, SelfT visitor, ReferenceResultT array, ExprResultT index) {
+    return leave((ReferenceNode) node, visitor);
   }
 
   /* VISIT  */
@@ -70,10 +71,10 @@ public abstract class AbstractReferenceVisitor<
   }
 
   @Override
-  public ReferenceResultT visit(ArrayIndex node) {
+  public ReferenceResultT visit(ArrayIndexingNode node) {
     final SelfT visitor = enter(node);
-    final ReferenceResultT array = visitor.traverse(node.getArray());
-    final ExprResultT index = visitor.traverse(node.getIndex());
+    final ReferenceResultT array = node.getArray().accept(visitor);
+    final ExprResultT index = node.getIndex().accept(visitor.getExpressionVisitor());
     return leave(node, visitor, array, index);
   }
 }

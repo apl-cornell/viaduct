@@ -14,7 +14,7 @@ import edu.cornell.cs.apl.viaduct.pdg.PdgInfoEdge;
 import edu.cornell.cs.apl.viaduct.pdg.PdgNode;
 import edu.cornell.cs.apl.viaduct.pdg.PdgReadEdge;
 import edu.cornell.cs.apl.viaduct.protocol.Protocol;
-import edu.cornell.cs.apl.viaduct.protocol.ProtocolInstantiationException;
+import edu.cornell.cs.apl.viaduct.protocol.ProtocolInstantiationError;
 import edu.cornell.cs.apl.viaduct.protocol.ProtocolInstantiationInfo;
 import edu.cornell.cs.apl.viaduct.security.Label;
 
@@ -93,7 +93,7 @@ public class ControlProtocol extends Cleartext implements Protocol<ImpAstNode> {
       }
 
     } else {
-      throw new ProtocolInstantiationException(
+      throw new ProtocolInstantiationError(
           "control node not associated with control structure");
     }
   }
@@ -110,7 +110,7 @@ public class ControlProtocol extends Cleartext implements Protocol<ImpAstNode> {
 
   @Override
   public Label getTrust() {
-    throw new ProtocolInstantiationException("control protocol has no associated trust");
+    throw new ProtocolInstantiationError("control protocol has no associated trust");
   }
 
   @Override
@@ -122,7 +122,7 @@ public class ControlProtocol extends Cleartext implements Protocol<ImpAstNode> {
       instantiateControlNode((PdgControlNode<ImpAstNode>) node, info);
 
     } else {
-      throw new ProtocolInstantiationException(
+      throw new ProtocolInstantiationError(
           "control protocol must be associated with a control node");
     }
   }
@@ -136,7 +136,7 @@ public class ControlProtocol extends Cleartext implements Protocol<ImpAstNode> {
       List<ImpAstNode> args,
       ProtocolInstantiationInfo<ImpAstNode> info) {
 
-    throw new ProtocolInstantiationException("cannot read from a control protocol");
+    throw new ProtocolInstantiationError("cannot read from a control protocol");
   }
 
   @Override
@@ -147,7 +147,7 @@ public class ControlProtocol extends Cleartext implements Protocol<ImpAstNode> {
       List<ImpAstNode> args,
       ProtocolInstantiationInfo<ImpAstNode> info) {
 
-    throw new ProtocolInstantiationException("cannot write to a control protocol");
+    throw new ProtocolInstantiationError("cannot write to a control protocol");
   }
 
   @Override

@@ -1,5 +1,7 @@
 package edu.cornell.cs.apl.viaduct.imp;
 
+import edu.cornell.cs.apl.viaduct.errors.NameClashError;
+import edu.cornell.cs.apl.viaduct.errors.UndefinedNameError;
 import edu.cornell.cs.apl.viaduct.imp.ast.Variable;
 import edu.cornell.cs.apl.viaduct.util.SymbolTable;
 import java.util.NoSuchElementException;
@@ -11,14 +13,14 @@ public class VariableContext<V> extends SymbolTable<Variable, V> {
     try {
       return super.get(v);
     } catch (NoSuchElementException e) {
-      throw new UndeclaredVariableException(v);
+      throw new UndefinedNameError(v);
     }
   }
 
   @Override
   public void put(Variable v, V value) {
     if (this.contains(v)) {
-      throw new RedeclaredVariableException(v);
+      throw new NameClashError(v, v);
     }
     super.put(v, value);
   }

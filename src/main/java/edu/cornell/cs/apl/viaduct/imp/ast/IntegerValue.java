@@ -12,7 +12,7 @@ public abstract class IntegerValue implements ImpValue {
   public abstract int getValue();
 
   @Override
-  public final ImpType getType() {
+  public final ImpBaseType getType() {
     return IntegerType.create();
   }
 

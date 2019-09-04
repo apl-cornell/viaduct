@@ -1,6 +1,6 @@
 package edu.cornell.cs.apl.viaduct.imp.builders;
 
-import edu.cornell.cs.apl.viaduct.imp.DuplicateProcessDefinitionException;
+import edu.cornell.cs.apl.viaduct.errors.NameClashError;
 import edu.cornell.cs.apl.viaduct.imp.HostTrustConfiguration;
 import edu.cornell.cs.apl.viaduct.imp.TargetPostprocessor;
 import edu.cornell.cs.apl.viaduct.imp.ast.Host;
@@ -39,7 +39,7 @@ public class ProcessConfigurationBuilder {
         StatementNode postprocessedProgram = TargetPostprocessor.postprocess(host, program);
         programBuilder.addProcess(ProcessName.create(host), postprocessedProgram);
       }
-    } catch (DuplicateProcessDefinitionException e) {
+    } catch (NameClashError e) {
       throw new Error(e);
     }
 

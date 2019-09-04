@@ -28,7 +28,8 @@ public abstract class CompilationError extends Error {
    * AnsiPrintStream}.
    */
   public void print(PrintStream output) {
-    // Print title line by default
+    // Print title line
+
     final String title = "-- " + getCategory().toUpperCase() + " - ";
     final int paddingLength = PrintUtil.LINE_WIDTH - getSource().length() - title.length();
     final String padding = StringUtils.repeat('-', paddingLength);

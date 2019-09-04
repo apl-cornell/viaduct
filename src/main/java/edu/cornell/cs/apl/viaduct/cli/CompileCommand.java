@@ -175,11 +175,13 @@ public class CompileCommand extends BaseCommand {
 
     final HostTrustConfiguration hostConfig = program.getHostTrustConfiguration();
 
+    // check
+    TypeChecker.run(program);
+    // TODO: check IF here for the entire program, not just main and not after elaboration.
+
     StatementNode main = program.getProcessCode(ProcessName.getMain());
     ImpPdgBuilderPreprocessVisitor preprocessor = new ImpPdgBuilderPreprocessVisitor();
     main = preprocessor.run(main);
-
-    TypeChecker.run(main);
 
     // information flow constraint solving
     final InformationFlowChecker checker = new InformationFlowChecker();

@@ -4,7 +4,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import edu.cornell.cs.apl.viaduct.ExamplesProvider;
 import edu.cornell.cs.apl.viaduct.ImpAstParser;
-import edu.cornell.cs.apl.viaduct.imp.ast.ImpAstNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ProcessName;
 import edu.cornell.cs.apl.viaduct.imp.ast.ProgramNode;
 import edu.cornell.cs.apl.viaduct.imp.visitors.AnfVisitor;
@@ -18,10 +17,10 @@ import org.junit.jupiter.params.provider.ArgumentsSource;
 class AnfEquivalenceTest {
   @ParameterizedTest
   @ArgumentsSource(ExamplesProvider.class)
-  void testRun(@ConvertWith(ImpAstParser.class) ImpAstNode ast) {
+  void testRun(@ConvertWith(ImpAstParser.class) ProgramNode ast) {
     // Ensure that A-normal form translation is semantics preserving.
 
-    final ProgramNode program = new ElaborationVisitor().run((ProgramNode) ast);
+    final ProgramNode program = new ElaborationVisitor().run(ast);
     final AnfVisitor anfRewriter = new AnfVisitor();
 
     ProgramNode anfProgram = anfRewriter.run(program);

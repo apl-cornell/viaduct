@@ -1,4 +1,4 @@
-package edu.cornell.cs.apl.viaduct.imp.interpreter;
+package edu.cornell.cs.apl.viaduct.imp.typing;
 
 import edu.cornell.cs.apl.viaduct.ExamplesProvider;
 import edu.cornell.cs.apl.viaduct.ImpAstParser;
@@ -7,12 +7,10 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.converter.ConvertWith;
 import org.junit.jupiter.params.provider.ArgumentsSource;
 
-class InterpreterTest {
+class TypeCheckerTest {
   @ParameterizedTest
   @ArgumentsSource(ExamplesProvider.class)
-  void testRun(@ConvertWith(ImpAstParser.class) ProgramNode ast) {
-    // Interpret example programs to completion.
-    // We do no check any outputs; programs should include assert statements.
-    Interpreter.run(ast);
+  void testParse(@ConvertWith(ImpAstParser.class) ProgramNode program) {
+    TypeChecker.run(program);
   }
 }

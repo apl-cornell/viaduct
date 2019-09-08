@@ -1,13 +1,14 @@
 package edu.cornell.cs.apl.viaduct.imp.ast;
 
 import com.google.auto.value.AutoValue;
+import edu.cornell.cs.apl.viaduct.imp.ast.values.ImpValue;
 import edu.cornell.cs.apl.viaduct.imp.visitors.ExprVisitor;
 
 /** A literal constant. */
 @AutoValue
 public abstract class LiteralNode extends ExpressionNode {
   public static Builder builder() {
-    return new AutoValue_LiteralNode.Builder();
+    return new AutoValue_LiteralNode.Builder().setDefaults();
   }
 
   public abstract Builder toBuilder();

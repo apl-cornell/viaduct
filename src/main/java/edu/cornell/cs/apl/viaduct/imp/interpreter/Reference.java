@@ -1,6 +1,6 @@
 package edu.cornell.cs.apl.viaduct.imp.interpreter;
 
-import edu.cornell.cs.apl.viaduct.imp.ast.ImpValue;
+import edu.cornell.cs.apl.viaduct.imp.ast.values.ImpValue;
 
 /** A reference to a mutable cell (containing a simple value) or an array. */
 abstract class Reference {

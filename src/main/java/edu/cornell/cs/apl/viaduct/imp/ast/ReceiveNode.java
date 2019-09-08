@@ -1,6 +1,7 @@
 package edu.cornell.cs.apl.viaduct.imp.ast;
 
 import com.google.auto.value.AutoValue;
+import edu.cornell.cs.apl.viaduct.imp.ast.types.ImpBaseType;
 import edu.cornell.cs.apl.viaduct.imp.visitors.StmtVisitor;
 import javax.annotation.Nullable;
 
@@ -8,7 +9,7 @@ import javax.annotation.Nullable;
 @AutoValue
 public abstract class ReceiveNode extends StatementNode {
   public static Builder builder() {
-    return new AutoValue_ReceiveNode.Builder();
+    return new AutoValue_ReceiveNode.Builder().setDefaults();
   }
 
   public abstract Builder toBuilder();

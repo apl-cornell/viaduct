@@ -9,7 +9,7 @@ import edu.cornell.cs.apl.viaduct.imp.visitors.ExprVisitor;
 @AutoValue
 public abstract class NotNode extends ExpressionNode {
   public static Builder builder() {
-    return new AutoValue_NotNode.Builder();
+    return new AutoValue_NotNode.Builder().setDefaults();
   }
 
   public abstract Builder toBuilder();

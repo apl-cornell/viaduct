@@ -3,11 +3,12 @@ import java.util.List;
 import java.util.LinkedList;
 
 import edu.cornell.cs.apl.viaduct.imp.ast.*;
+import edu.cornell.cs.apl.viaduct.imp.ast.types.*;
+import edu.cornell.cs.apl.viaduct.imp.ast.values.*;
 import edu.cornell.cs.apl.viaduct.imp.ast.DowngradeNode.DowngradeType;
 import edu.cornell.cs.apl.viaduct.imp.ast.BinaryOperators.*;
 import edu.cornell.cs.apl.viaduct.security.Label;
 import edu.cornell.cs.apl.viaduct.security.Principal;
-
 
 
 action code {:
@@ -45,7 +46,39 @@ action code {:
             .setSourceLocation(compute)
             .build();
     }
+
+
+    /**
+     * Create a downgrade node. From and to labels are determined based on whether the user
+     * specified one or two labels.
+     */
+    private DowngradeNode downgrade(
+        DowngradeType downgradeType,
+        ExpressionNode e,
+        Label first,
+        Label second,
+        SourceRange location) {
+
+        Label from;
+        Label to;
+        if (second != null) {
+            from = first;
+            to = second;
+        } else {
+            from = null;
+            to = first;
+        }
+
+        return DowngradeNode.builder()
+            .setDowngradeType(downgradeType)
+            .setExpression(e)
+            .setFromLabel(from)
+            .setToLabel(to)
+            .setSourceLocation(location)
+            .build();
+    }
 :}
+
 
 nonterminal ProgramNode program;
 nonterminal ProgramNode.Builder declaration_list;
@@ -361,34 +394,16 @@ expr ::=
       RESULT = binary(Minus.create(), zero, e);
     :}
 
-  | DECLASSIFY:begin OPEN_PAREN expr:e COMMA label:from optional_to:to CLOSE_PAREN:end {:
-      RESULT = DowngradeNode.builder()
-          .setDowngradeType(DowngradeType.DECLASSIFY)
-          .setExpression(e)
-          .setFromLabel(from)
-          .setToLabel(to)
-          .setSourceLocation(location(beginleft, endright))
-          .build();
+  | DECLASSIFY:begin OPEN_PAREN expr:e COMMA label:first optional_to:second CLOSE_PAREN:end {:
+      RESULT = downgrade(DowngradeType.DECLASSIFY, e, first, second, location(beginleft, endright));
     :}
 
-  | ENDORSE:begin OPEN_PAREN expr:e COMMA label:from optional_to:to CLOSE_PAREN:end {:
-      RESULT = DowngradeNode.builder()
-          .setDowngradeType(DowngradeType.ENDORSE)
-          .setExpression(e)
-          .setFromLabel(from)
-          .setToLabel(to)
-          .setSourceLocation(location(beginleft, endright))
-          .build();
+  | ENDORSE:begin OPEN_PAREN expr:e COMMA label:first optional_to:second CLOSE_PAREN:end {:
+      RESULT = downgrade(DowngradeType.ENDORSE, e, first, second, location(beginleft, endright));
     :}
 
-  | DOWNGRADE:begin OPEN_PAREN expr:e COMMA label:from optional_to:to CLOSE_PAREN:end {:
-      RESULT = DowngradeNode.builder()
-          .setDowngradeType(DowngradeType.BOTH)
-          .setExpression(e)
-          .setFromLabel(from)
-          .setToLabel(to)
-          .setSourceLocation(location(beginleft, endright))
-          .build();
+  | DOWNGRADE:begin OPEN_PAREN expr:e COMMA label:first optional_to:second CLOSE_PAREN:end {:
+      RESULT = downgrade(DowngradeType.BOTH, e, first, second, location(beginleft, endright));
     :}
 
   | OPEN_PAREN expr:e CLOSE_PAREN {:

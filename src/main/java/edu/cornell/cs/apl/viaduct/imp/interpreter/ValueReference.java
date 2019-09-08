@@ -1,7 +1,7 @@
 package edu.cornell.cs.apl.viaduct.imp.interpreter;
 
-import edu.cornell.cs.apl.viaduct.imp.ast.ImpValue;
-import edu.cornell.cs.apl.viaduct.imp.ast.UnavailableValue;
+import edu.cornell.cs.apl.viaduct.imp.ast.values.ImpValue;
+import edu.cornell.cs.apl.viaduct.imp.ast.values.UnavailableValue;
 
 /** Reference to a mutable cell that contains a simple (non-array) value. */
 final class ValueReference extends AllocatedObject {

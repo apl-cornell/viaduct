@@ -1,8 +1,8 @@
 package edu.cornell.cs.apl.viaduct.imp.interpreter;
 
 import com.google.auto.value.AutoValue;
-import edu.cornell.cs.apl.viaduct.imp.ast.ImpValue;
 import edu.cornell.cs.apl.viaduct.imp.ast.Variable;
+import edu.cornell.cs.apl.viaduct.imp.ast.values.ImpValue;
 import io.vavr.Tuple2;
 import io.vavr.collection.Map;
 import io.vavr.collection.Set;

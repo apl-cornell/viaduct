@@ -1,4 +1,4 @@
-package edu.cornell.cs.apl.viaduct.imp.ast;
+package edu.cornell.cs.apl.viaduct.imp.ast.types;
 
 import com.google.auto.value.AutoValue;
 

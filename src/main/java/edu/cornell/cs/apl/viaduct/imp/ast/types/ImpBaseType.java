@@ -1,4 +1,4 @@
-package edu.cornell.cs.apl.viaduct.imp.ast;
+package edu.cornell.cs.apl.viaduct.imp.ast.types;
 
 /**
  * Simple type like integer or boolean. Base types can be stored in variables and sent to other

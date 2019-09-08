@@ -1,6 +1,7 @@
 package edu.cornell.cs.apl.viaduct.imp.ast;
 
 import com.google.auto.value.AutoValue;
+import edu.cornell.cs.apl.viaduct.imp.ast.types.ImpBaseType;
 import edu.cornell.cs.apl.viaduct.imp.visitors.StmtVisitor;
 import edu.cornell.cs.apl.viaduct.security.Label;
 import javax.annotation.Nullable;
@@ -9,7 +10,7 @@ import javax.annotation.Nullable;
 @AutoValue
 public abstract class VariableDeclarationNode extends StatementNode {
   public static Builder builder() {
-    return new AutoValue_VariableDeclarationNode.Builder();
+    return new AutoValue_VariableDeclarationNode.Builder().setDefaults();
   }
 
   public abstract Builder toBuilder();

@@ -7,7 +7,7 @@ import edu.cornell.cs.apl.viaduct.security.Label;
 @AutoValue
 public abstract class HostDeclarationNode extends TopLevelDeclarationNode {
   public static Builder builder() {
-    return new AutoValue_HostDeclarationNode.Builder();
+    return new AutoValue_HostDeclarationNode.Builder().setDefaults();
   }
 
   public abstract Builder toBuilder();

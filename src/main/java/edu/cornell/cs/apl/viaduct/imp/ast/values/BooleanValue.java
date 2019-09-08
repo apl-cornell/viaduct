@@ -1,6 +1,8 @@
-package edu.cornell.cs.apl.viaduct.imp.ast;
+package edu.cornell.cs.apl.viaduct.imp.ast.values;
 
 import com.google.auto.value.AutoValue;
+import edu.cornell.cs.apl.viaduct.imp.ast.types.BooleanType;
+import edu.cornell.cs.apl.viaduct.imp.ast.types.ImpBaseType;
 
 /** Boolean literal. */
 @AutoValue

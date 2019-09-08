@@ -1,5 +1,13 @@
 package edu.cornell.cs.apl.viaduct.imp.ast;
 
+import edu.cornell.cs.apl.viaduct.imp.ast.types.BinaryOperatorType;
+import edu.cornell.cs.apl.viaduct.imp.ast.types.BooleanType;
+import edu.cornell.cs.apl.viaduct.imp.ast.types.ImpBaseType;
+import edu.cornell.cs.apl.viaduct.imp.ast.types.IntegerType;
+import edu.cornell.cs.apl.viaduct.imp.ast.values.BooleanValue;
+import edu.cornell.cs.apl.viaduct.imp.ast.values.ImpValue;
+import edu.cornell.cs.apl.viaduct.imp.ast.values.IntegerValue;
+
 /** Enumerates binary operators in the language. */
 public class BinaryOperators {
   private abstract static class BinaryLogicalOperator extends BinaryOperator {

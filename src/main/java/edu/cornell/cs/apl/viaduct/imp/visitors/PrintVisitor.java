@@ -14,7 +14,6 @@ import edu.cornell.cs.apl.viaduct.imp.ast.ForNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.HostDeclarationNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.IfNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ImpAstNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.ImpType;
 import edu.cornell.cs.apl.viaduct.imp.ast.LetBindingNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.LiteralNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.LoopNode;
@@ -29,7 +28,10 @@ import edu.cornell.cs.apl.viaduct.imp.ast.TopLevelDeclarationNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.Variable;
 import edu.cornell.cs.apl.viaduct.imp.ast.VariableDeclarationNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.WhileNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.types.ImpType;
+import edu.cornell.cs.apl.viaduct.imp.parser.Located;
 import edu.cornell.cs.apl.viaduct.security.Label;
+import edu.cornell.cs.apl.viaduct.util.PrintUtil;
 
 /** Pretty-prints an AST. */
 public class PrintVisitor
@@ -40,7 +42,8 @@ public class PrintVisitor
         ProgramVisitor<Void>,
         AstPrinter<ImpAstNode> {
 
-  private static final int INDENTATION_LEVEL = 2;
+  /** Print source locations only if set to true. */
+  private static final boolean sourceLocationsEnabled = false;
 
   /** Accumulates the partially printed program. */
   private StringBuilder buffer;
@@ -54,7 +57,11 @@ public class PrintVisitor
   /** Current indentation level. */
   private int indentation = 0;
 
-  /** constructor. */
+  /**
+   * Constructor a printer.
+   *
+   * @param statementTerminatorsEnabled print semicolons (;) only if set to {@code true}
+   */
   public PrintVisitor(boolean statementTerminatorsEnabled) {
     this.buffer = new StringBuilder();
     this.indentationEnabled = true;
@@ -82,7 +89,7 @@ public class PrintVisitor
     return v.buffer.toString();
   }
 
-  /** Append current indentation to the buffer. */
+  /** Append current indentation to the buffer (if indentation is enabled). */
   private void addIndentation() {
     if (this.indentationEnabled) {
       for (int i = 0; i < this.indentation; i++) {
@@ -91,14 +98,31 @@ public class PrintVisitor
     }
   }
 
+  /** Print a statement terminator (if terminators are enabled). */
   private void addSeparator() {
     if (this.statementTerminatorsEnabled) {
       buffer.append(';');
     }
   }
 
+  /**
+   * Print the source location of the given node on a new line (if source locations are enabled).
+   */
+  private void addSourceLocation(Located node) {
+    if (this.sourceLocationsEnabled
+        && this.statementTerminatorsEnabled
+        && node.getSourceLocation() != null) {
+      addIndentation();
+      buffer.append("/* ");
+      buffer.append(node.getSourceLocation());
+      buffer.append(" */ ");
+      buffer.append("\n");
+    }
+  }
+
   @Override
   public String print(ImpAstNode astNode) {
+    // TODO: use ImpAstNodeVisitor
     if (astNode instanceof ExpressionNode) {
       ((ExpressionNode) astNode).accept(this);
 
@@ -184,22 +208,20 @@ public class PrintVisitor
     downgradeNode.getExpression().accept(this);
     buffer.append(", ");
 
-    Label fromLabel = downgradeNode.getFromLabel();
-    Label toLabel = downgradeNode.getToLabel();
+    final Label fromLabel = downgradeNode.getFromLabel();
     if (fromLabel != null) {
       buffer.append(fromLabel);
       buffer.append(" to ");
-      buffer.append(toLabel);
-
-    } else {
-      buffer.append(toLabel);
     }
+    buffer.append(downgradeNode.getToLabel());
+
     buffer.append(")");
     return null;
   }
 
   @Override
   public Void visit(VariableDeclarationNode varDeclNode) {
+    addSourceLocation(varDeclNode);
     addIndentation();
 
     buffer.append(varDeclNode.getType());
@@ -218,6 +240,7 @@ public class PrintVisitor
 
   @Override
   public Void visit(ArrayDeclarationNode arrayDecl) {
+    addSourceLocation(arrayDecl);
     addIndentation();
 
     buffer.append(arrayDecl.getElementType());
@@ -234,17 +257,13 @@ public class PrintVisitor
     arrayDecl.getLength().accept(this);
     buffer.append(']');
 
-    // TODO: remove
-    buffer.append(" /* ");
-    buffer.append(arrayDecl.getSourceLocation());
-    buffer.append(" */ ");
-
     addSeparator();
     return null;
   }
 
   @Override
   public Void visit(LetBindingNode letBindingNode) {
+    addSourceLocation(letBindingNode);
     addIndentation();
 
     buffer.append("let ");
@@ -258,6 +277,7 @@ public class PrintVisitor
 
   @Override
   public Void visit(AssignNode assignNode) {
+    addSourceLocation(assignNode);
     addIndentation();
 
     assignNode.getLhs().accept(this);
@@ -270,6 +290,7 @@ public class PrintVisitor
 
   @Override
   public Void visit(SendNode sendNode) {
+    addSourceLocation(sendNode);
     addIndentation();
 
     buffer.append("send ");
@@ -283,6 +304,7 @@ public class PrintVisitor
 
   @Override
   public Void visit(ReceiveNode receiveNode) {
+    addSourceLocation(receiveNode);
     addIndentation();
 
     buffer.append(receiveNode.getVariable());
@@ -302,6 +324,7 @@ public class PrintVisitor
 
   @Override
   public Void visit(AssertNode assertNode) {
+    addSourceLocation(assertNode);
     addIndentation();
 
     buffer.append("assert ");
@@ -313,6 +336,7 @@ public class PrintVisitor
 
   @Override
   public Void visit(IfNode ifNode) {
+    addSourceLocation(ifNode);
     addIndentation();
 
     buffer.append("if (");
@@ -331,6 +355,7 @@ public class PrintVisitor
 
   @Override
   public Void visit(WhileNode whileNode) {
+    addSourceLocation(whileNode);
     addIndentation();
 
     buffer.append("while (");
@@ -344,6 +369,7 @@ public class PrintVisitor
 
   @Override
   public Void visit(ForNode forNode) {
+    addSourceLocation(forNode);
     addIndentation();
 
     this.indentationEnabled = false;
@@ -366,21 +392,27 @@ public class PrintVisitor
 
   @Override
   public Void visit(LoopNode loopNode) {
+    addSourceLocation(loopNode);
     addIndentation();
+
     buffer.append("loop ");
     loopNode.getBody().accept(this);
+
     return null;
   }
 
   @Override
   public Void visit(BreakNode breakNode) {
+    addSourceLocation(breakNode);
     addIndentation();
+
     buffer.append("break");
     if (breakNode.getLevel() > 1) {
       buffer.append(' ');
       buffer.append(breakNode.getLevel());
     }
     addSeparator();
+
     return null;
   }
 
@@ -388,12 +420,12 @@ public class PrintVisitor
   public Void visit(BlockNode blockNode) {
     buffer.append("{\n");
 
-    indentation += INDENTATION_LEVEL;
+    indentation += PrintUtil.INDENTATION_LEVEL;
     for (StatementNode stmt : blockNode) {
       stmt.accept(this);
       buffer.append('\n');
     }
-    indentation -= INDENTATION_LEVEL;
+    indentation -= PrintUtil.INDENTATION_LEVEL;
 
     addIndentation();
     buffer.append('}');
@@ -403,20 +435,26 @@ public class PrintVisitor
 
   @Override
   public Void visit(ProcessDeclarationNode processDeclarationNode) {
+    addSourceLocation(processDeclarationNode);
+
     buffer.append("process ");
     buffer.append(processDeclarationNode.getName());
     buffer.append(' ');
     processDeclarationNode.getBody().accept(this);
+
     return null;
   }
 
   @Override
   public Void visit(HostDeclarationNode hostDeclarationNode) {
+    addSourceLocation(hostDeclarationNode);
+
     buffer.append("host ");
     buffer.append(hostDeclarationNode.getName());
     buffer.append(" : ");
     buffer.append(hostDeclarationNode.getTrust());
     buffer.append(";");
+
     return null;
   }
 

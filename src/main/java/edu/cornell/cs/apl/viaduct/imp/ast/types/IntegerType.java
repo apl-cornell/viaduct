@@ -1,4 +1,4 @@
-package edu.cornell.cs.apl.viaduct.imp.ast;
+package edu.cornell.cs.apl.viaduct.imp.ast.types;
 
 public final class IntegerType implements ImpBaseType {
   private static final IntegerType INSTANCE = new IntegerType();

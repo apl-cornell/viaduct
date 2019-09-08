@@ -9,7 +9,7 @@ import edu.cornell.cs.apl.viaduct.imp.visitors.ReferenceVisitor;
 @AutoValue
 public abstract class Variable extends ReferenceNode implements Binding<ImpAstNode>, Name {
   public static Builder builder() {
-    return new AutoValue_Variable.Builder();
+    return new AutoValue_Variable.Builder().setDefaults();
   }
 
   public static Variable create(String name) {

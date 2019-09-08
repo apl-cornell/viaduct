@@ -57,9 +57,6 @@ public class SourceFile {
         break;
       }
     }
-
-    System.out.print("Line Offsets: ");
-    System.out.println(lineOffsets);
   }
 
   /**

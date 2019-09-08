@@ -9,15 +9,15 @@ import edu.cornell.cs.apl.viaduct.imp.ast.BinaryOperators.LessThan;
 import edu.cornell.cs.apl.viaduct.imp.ast.BinaryOperators.LessThanOrEqualTo;
 import edu.cornell.cs.apl.viaduct.imp.ast.BinaryOperators.Or;
 import edu.cornell.cs.apl.viaduct.imp.ast.BinaryOperators.Plus;
-import edu.cornell.cs.apl.viaduct.imp.ast.BooleanValue;
 import edu.cornell.cs.apl.viaduct.imp.ast.ExpressionNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.ImpValue;
-import edu.cornell.cs.apl.viaduct.imp.ast.IntegerValue;
 import edu.cornell.cs.apl.viaduct.imp.ast.LiteralNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.NotNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ReadNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ReferenceNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.Variable;
+import edu.cornell.cs.apl.viaduct.imp.ast.values.BooleanValue;
+import edu.cornell.cs.apl.viaduct.imp.ast.values.ImpValue;
+import edu.cornell.cs.apl.viaduct.imp.ast.values.IntegerValue;
 
 /** Builds expressions. */
 public final class ExpressionBuilder {

@@ -10,6 +10,9 @@ public final class PrintUtil {
   /** Maximum number of characters to put on one line. */
   public static final int LINE_WIDTH = 80;
 
+  /** How much to indent lines that need indentation. */
+  public static final int INDENTATION_LEVEL = 2;
+
   /**
    * Capture the result of a color printer as a string. The printer is allowed to output ANSI color
    * codes, but these will be stripped before generating the string.

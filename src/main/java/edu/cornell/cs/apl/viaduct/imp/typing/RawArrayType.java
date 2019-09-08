@@ -1,6 +1,6 @@
 package edu.cornell.cs.apl.viaduct.imp.typing;
 
-import edu.cornell.cs.apl.viaduct.imp.ast.ImpType;
+import edu.cornell.cs.apl.viaduct.imp.ast.types.ImpType;
 
 /**
  * Type of arrays where element type is not specified.

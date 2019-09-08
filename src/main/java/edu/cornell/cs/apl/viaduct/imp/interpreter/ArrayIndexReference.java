@@ -1,6 +1,6 @@
 package edu.cornell.cs.apl.viaduct.imp.interpreter;
 
-import edu.cornell.cs.apl.viaduct.imp.ast.ImpValue;
+import edu.cornell.cs.apl.viaduct.imp.ast.values.ImpValue;
 
 /** Reference to a specific index in an array. */
 final class ArrayIndexReference extends Reference {

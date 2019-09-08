@@ -43,22 +43,30 @@ public abstract class ImpAstNode implements AstNode, Located {
 
   @Override
   public final @Nullable SourceRange getSourceLocation() {
-    return getSourceLocationMetadata() == null ? null : getSourceLocationMetadata().getData();
+    return getSourceLocationMetadata().getData();
   }
 
   /** Used internally to wrap/unwrap {@link Metadata}. */
-  protected abstract @Nullable Metadata<SourceRange> getSourceLocationMetadata();
+  protected abstract Metadata<SourceRange> getSourceLocationMetadata();
 
   public abstract <R> R accept(ImpAstVisitor<R> visitor);
 
   protected abstract static class Builder<SelfT> {
     public final SelfT setSourceLocation(@Nullable SourceRange sourceLocation) {
-      return setSourceLocationMetadata(
-          sourceLocation == null ? null : new Metadata<>(sourceLocation));
+      return setSourceLocationMetadata(new Metadata<>(sourceLocation));
     }
 
     public final SelfT setSourceLocation(Located node) {
       return setSourceLocation(node.getSourceLocation());
+    }
+
+    /**
+     * Set fields with defaults to their default values.
+     *
+     * <p>NOTE: Unfortunately, this needs to be called manually by every subclass.
+     */
+    protected final SelfT setDefaults() {
+      return setSourceLocationMetadata(new Metadata<>(null));
     }
 
     /** Used internally to wrap/unwrap {@link Metadata}. */

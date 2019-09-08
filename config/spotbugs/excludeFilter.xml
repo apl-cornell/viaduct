@@ -24,12 +24,6 @@
         <Class name="~.*\.parser\.sym"/>
     </Match>
 
-    <!-- TODO: we have a lot of unchecked exception classes whose names end with "Exception". -->
-    <!--      We should probably rename them... -->
-    <Match>
-        <Bug pattern="NM_CLASS_NOT_EXCEPTION"/>
-    </Match>
-
     <!-- This causes SpotBugs to complain about try-with-resources blocks. See https://github.com/spotbugs/spotbugs/issues/600.  -->
     <Match>
         <Bug pattern="RCN_REDUNDANT_NULLCHECK_WOULD_HAVE_BEEN_A_NPE"/>

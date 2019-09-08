@@ -56,8 +56,8 @@ public abstract class SourceRange {
       final String columns = startColumn + "-" + endColumn;
       return getSourcePath() + ":" + getStart().getLine() + ":" + columns;
     } else {
-      final String start = getStart().getLine() + ":" + startColumn;
-      final String end = getEnd().getLine() + ":" + endColumn;
+      final String start = "(" + getStart().getLine() + ":" + startColumn + ")";
+      final String end = "(" + getEnd().getLine() + ":" + endColumn + ")";
       return getSourcePath() + ":" + start + "-" + end;
     }
   }

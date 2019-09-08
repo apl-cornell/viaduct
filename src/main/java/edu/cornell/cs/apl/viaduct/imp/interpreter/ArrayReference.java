@@ -1,7 +1,7 @@
 package edu.cornell.cs.apl.viaduct.imp.interpreter;
 
-import edu.cornell.cs.apl.viaduct.imp.ast.ImpValue;
-import edu.cornell.cs.apl.viaduct.imp.ast.UnavailableValue;
+import edu.cornell.cs.apl.viaduct.imp.ast.values.ImpValue;
+import edu.cornell.cs.apl.viaduct.imp.ast.values.UnavailableValue;
 import io.vavr.collection.Array;
 import java.util.Arrays;
 

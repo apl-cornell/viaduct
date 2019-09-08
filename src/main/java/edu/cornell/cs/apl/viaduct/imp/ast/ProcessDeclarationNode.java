@@ -6,7 +6,7 @@ import edu.cornell.cs.apl.viaduct.imp.visitors.TopLevelDeclarationVisitor;
 @AutoValue
 public abstract class ProcessDeclarationNode extends TopLevelDeclarationNode {
   public static Builder builder() {
-    return new AutoValue_ProcessDeclarationNode.Builder();
+    return new AutoValue_ProcessDeclarationNode.Builder().setDefaults();
   }
 
   public abstract Builder toBuilder();

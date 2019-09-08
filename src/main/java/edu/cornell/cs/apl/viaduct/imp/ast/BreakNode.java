@@ -6,7 +6,7 @@ import edu.cornell.cs.apl.viaduct.imp.visitors.StmtVisitor;
 @AutoValue
 public abstract class BreakNode extends StatementNode {
   public static Builder builder() {
-    return new AutoValue_BreakNode.Builder().setLevel(1);
+    return new AutoValue_BreakNode.Builder().setLevel(1).setDefaults();
   }
 
   public abstract Builder toBuilder();

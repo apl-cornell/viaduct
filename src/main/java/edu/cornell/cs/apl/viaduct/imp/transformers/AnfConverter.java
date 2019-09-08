@@ -1,5 +1,7 @@
 package edu.cornell.cs.apl.viaduct.imp.transformers;
 
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Iterables;
 import edu.cornell.cs.apl.viaduct.errors.ElaborationException;
 import edu.cornell.cs.apl.viaduct.imp.ast.ArrayDeclarationNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ArrayIndexingNode;
@@ -44,15 +46,10 @@ import java.util.List;
  * constants or variables.
  */
 public class AnfConverter {
-  private static final String TMP_NAME = "tmp";
+  private static final String TMP_NAME = "TMP";
 
   public static ProgramNode run(ProgramNode program) {
     return program.accept(new AnfProgramVisitor());
-  }
-
-  // TODO: we should never need this.
-  public static StatementNode run(StatementNode program) {
-    return program.accept(new AnfStmtVisitor());
   }
 
   /** Create a read node from a reference while maintaining source location. */
@@ -60,9 +57,19 @@ public class AnfConverter {
     return ReadNode.builder().setReference(reference).setSourceLocation(reference).build();
   }
 
-  /** Create a block node from a single statement. */
-  private static BlockNode single(StatementNode statement) {
-    return BlockNode.builder().add(statement).build();
+  /** Create an iterable containing a single statement. */
+  private static Iterable<StatementNode> single(StatementNode statement) {
+    return ImmutableList.of(statement);
+  }
+
+  /** Create a list of statements builder. */
+  private static ImmutableList.Builder<StatementNode> listBuilder() {
+    return ImmutableList.builder();
+  }
+
+  /** Extract a block node from a list that contains a single block node. */
+  private static BlockNode getBlock(Iterable<? extends StatementNode> statements) {
+    return (BlockNode) Iterables.getOnlyElement(statements);
   }
 
   private static final class AnfProgramVisitor
@@ -93,7 +100,8 @@ public class AnfConverter {
 
     @Override
     public TopLevelDeclarationNode visit(ProcessDeclarationNode node) {
-      return node.toBuilder().setBody(node.getBody().accept(new AnfStmtVisitor())).build();
+      final Iterable<StatementNode> newBody = node.getBody().accept(new AnfStmtVisitor());
+      return node.toBuilder().setBody(getBlock(newBody)).build();
     }
 
     @Override
@@ -102,111 +110,111 @@ public class AnfConverter {
     }
   }
 
-  private static final class AnfStmtVisitor implements StmtVisitor<BlockNode> {
+  private static final class AnfStmtVisitor implements StmtVisitor<Iterable<StatementNode>> {
     private final FreshNameGenerator nameGenerator = new FreshNameGenerator();
 
     @Override
-    public BlockNode visit(VariableDeclarationNode node) {
+    public Iterable<StatementNode> visit(VariableDeclarationNode node) {
       return single(node);
     }
 
     @Override
-    public BlockNode visit(ArrayDeclarationNode node) {
+    public Iterable<StatementNode> visit(ArrayDeclarationNode node) {
       final AtomicExprVisitor atomicConverter = new AtomicExprVisitor();
       final ExpressionNode length = atomicConverter.run(node.getLength());
-      return BlockNode.builder()
+      return listBuilder()
           .addAll(atomicConverter.getBindings())
           .add(node.toBuilder().setLength(length).build())
           .build();
     }
 
     @Override
-    public BlockNode visit(LetBindingNode node) {
+    public Iterable<StatementNode> visit(LetBindingNode node) {
       final AnfExprVisitor anfConverter = new AnfExprVisitor();
       final ExpressionNode rhs = anfConverter.run(node.getRhs());
-      return BlockNode.builder()
+      return listBuilder()
           .addAll(anfConverter.getBindings())
           .add(node.toBuilder().setRhs(rhs).build())
           .build();
     }
 
     @Override
-    public BlockNode visit(AssignNode node) {
+    public Iterable<StatementNode> visit(AssignNode node) {
       final AnfExprVisitor anfConverter = new AnfExprVisitor();
       final ReferenceNode lhs = anfConverter.run(node.getLhs());
       final ExpressionNode rhs = anfConverter.run(node.getRhs());
-      return BlockNode.builder()
+      return listBuilder()
           .addAll(anfConverter.getBindings())
           .add(node.toBuilder().setLhs(lhs).setRhs(rhs).build())
           .build();
     }
 
     @Override
-    public BlockNode visit(SendNode node) {
+    public Iterable<StatementNode> visit(SendNode node) {
       final AtomicExprVisitor atomicConverter = new AtomicExprVisitor();
       final ExpressionNode sentExpression = atomicConverter.run(node.getSentExpression());
-      return BlockNode.builder()
+      return listBuilder()
           .addAll(atomicConverter.getBindings())
           .add(node.toBuilder().setSentExpression(sentExpression).build())
           .build();
     }
 
     @Override
-    public BlockNode visit(ReceiveNode node) {
+    public Iterable<StatementNode> visit(ReceiveNode node) {
       return single(node);
     }
 
     @Override
-    public BlockNode visit(IfNode node) {
+    public Iterable<StatementNode> visit(IfNode node) {
       final AtomicExprVisitor atomicConverter = new AtomicExprVisitor();
       final ExpressionNode guard = atomicConverter.run(node.getGuard());
-      return BlockNode.builder()
+      return listBuilder()
           .addAll(atomicConverter.getBindings())
           .add(
               node.toBuilder()
                   .setGuard(guard)
-                  .setThenBranch(node.getThenBranch().accept(this))
-                  .setElseBranch(node.getElseBranch().accept(this))
+                  .setThenBranch(getBlock(node.getThenBranch().accept(this)))
+                  .setElseBranch(getBlock(node.getElseBranch().accept(this)))
                   .build())
           .build();
     }
 
     @Override
-    public BlockNode visit(WhileNode whileNode) {
+    public Iterable<StatementNode> visit(WhileNode whileNode) {
       throw new ElaborationException();
     }
 
     @Override
-    public BlockNode visit(ForNode forNode) {
+    public Iterable<StatementNode> visit(ForNode forNode) {
       throw new ElaborationException();
     }
 
     @Override
-    public BlockNode visit(LoopNode node) {
-      final BlockNode body = node.getBody().accept(this);
+    public Iterable<StatementNode> visit(LoopNode node) {
+      final BlockNode body = getBlock(node.getBody().accept(this));
       return single(node.toBuilder().setBody(body).build());
     }
 
     @Override
-    public BlockNode visit(BreakNode node) {
+    public Iterable<StatementNode> visit(BreakNode node) {
       return single(node);
     }
 
     @Override
-    public BlockNode visit(BlockNode node) {
-      // Flatten nested blocks (all of them are generated by this class)
-      final List<StatementNode> body = new LinkedList<>();
+    public Iterable<StatementNode> visit(BlockNode node) {
+      // Flatten one level of nested blocks (these are generated by this class)
+      final ImmutableList.Builder<StatementNode> body = listBuilder();
       for (StatementNode statement : node) {
-        body.addAll(statement.accept(this).getStatements());
+        body.addAll(statement.accept(this));
       }
-      return node.toBuilder().setStatements(body).build();
+      return single(node.toBuilder().setStatements(body.build()).build());
     }
 
     @Override
-    public BlockNode visit(AssertNode node) {
+    public Iterable<StatementNode> visit(AssertNode node) {
       final AtomicExprVisitor atomicConverter = new AtomicExprVisitor();
       final ExpressionNode expression = atomicConverter.run(node.getExpression());
-      return BlockNode.builder()
+      return listBuilder()
           .addAll(atomicConverter.getBindings())
           .add(node.toBuilder().setExpression(expression).build())
           .build();

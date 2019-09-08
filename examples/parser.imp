@@ -29,7 +29,7 @@ process main {
   /* Check that variables in blocks go out of scope */
   /* bool{A | B} tmp = a2 > a1; */
   bool{A | B} tmp;
-  tmp = a2 > a1;
+  tmp = a2 > a;
   assert tmp;
 
   tmp <- recv alice_main;

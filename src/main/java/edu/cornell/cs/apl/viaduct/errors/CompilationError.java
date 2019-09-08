@@ -30,11 +30,11 @@ public abstract class CompilationError extends Error {
   public void print(PrintStream output) {
     // Print title line
 
-    final String title = "-- " + getCategory().toUpperCase() + " - ";
-    final int paddingLength = PrintUtil.LINE_WIDTH - getSource().length() - title.length();
+    final String title = "-- " + getCategory().toUpperCase() + " -";
+    final int paddingLength = PrintUtil.LINE_WIDTH - getSource().length() - title.length() - 1;
     final String padding = StringUtils.repeat('-', paddingLength);
 
-    output.println(Ansi.ansi().fg(Color.CYAN).a(title).a(padding).a(getSource()).reset());
+    output.println(Ansi.ansi().fg(Color.CYAN).a(title).a(padding).a(' ').a(getSource()).reset());
     output.println();
   }
 

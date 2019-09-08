@@ -89,6 +89,24 @@ public class PrintVisitor
     return v.buffer.toString();
   }
 
+  @Override
+  public String print(ImpAstNode astNode) {
+    // TODO: use ImpAstNodeVisitor
+    if (astNode instanceof ExpressionNode) {
+      ((ExpressionNode) astNode).accept(this);
+
+    } else if (astNode instanceof StatementNode) {
+      ((StatementNode) astNode).accept(this);
+
+    } else {
+      ((ProgramNode) astNode).accept(this);
+    }
+
+    String str = this.buffer.toString();
+    this.buffer = new StringBuilder();
+    return str;
+  }
+
   /** Append current indentation to the buffer (if indentation is enabled). */
   private void addIndentation() {
     if (this.indentationEnabled) {
@@ -109,7 +127,7 @@ public class PrintVisitor
    * Print the source location of the given node on a new line (if source locations are enabled).
    */
   private void addSourceLocation(Located node) {
-    if (this.sourceLocationsEnabled
+    if (sourceLocationsEnabled
         && this.statementTerminatorsEnabled
         && node.getSourceLocation() != null) {
       addIndentation();
@@ -120,22 +138,19 @@ public class PrintVisitor
     }
   }
 
-  @Override
-  public String print(ImpAstNode astNode) {
-    // TODO: use ImpAstNodeVisitor
-    if (astNode instanceof ExpressionNode) {
-      ((ExpressionNode) astNode).accept(this);
+  /** Print a block node without adding indentation before the opening brace. */
+  private void printChildBlock(BlockNode node) {
+    buffer.append("{\n");
 
-    } else if (astNode instanceof StatementNode) {
-      ((StatementNode) astNode).accept(this);
-
-    } else {
-      ((ProgramNode) astNode).accept(this);
+    indentation += PrintUtil.INDENTATION_LEVEL;
+    for (StatementNode stmt : node) {
+      stmt.accept(this);
+      buffer.append('\n');
     }
+    indentation -= PrintUtil.INDENTATION_LEVEL;
 
-    String str = this.buffer.toString();
-    this.buffer = new StringBuilder();
-    return str;
+    addIndentation();
+    buffer.append('}');
   }
 
   @Override
@@ -343,11 +358,11 @@ public class PrintVisitor
     ifNode.getGuard().accept(this);
     buffer.append(") ");
 
-    ifNode.getThenBranch().accept(this);
+    printChildBlock(ifNode.getThenBranch());
 
     if (ifNode.getElseBranch().getStatements().size() > 0) {
       buffer.append(" else ");
-      ifNode.getElseBranch().accept(this);
+      printChildBlock(ifNode.getElseBranch());
     }
 
     return null;
@@ -362,7 +377,7 @@ public class PrintVisitor
     whileNode.getGuard().accept(this);
     buffer.append(") ");
 
-    whileNode.getBody().accept(this);
+    printChildBlock(whileNode.getBody());
 
     return null;
   }
@@ -386,7 +401,7 @@ public class PrintVisitor
     this.indentationEnabled = true;
     this.statementTerminatorsEnabled = true;
 
-    forNode.getBody().accept(this);
+    printChildBlock(forNode.getBody());
     return null;
   }
 
@@ -396,7 +411,7 @@ public class PrintVisitor
     addIndentation();
 
     buffer.append("loop ");
-    loopNode.getBody().accept(this);
+    printChildBlock(loopNode.getBody());
 
     return null;
   }
@@ -418,18 +433,10 @@ public class PrintVisitor
 
   @Override
   public Void visit(BlockNode blockNode) {
-    buffer.append("{\n");
-
-    indentation += PrintUtil.INDENTATION_LEVEL;
-    for (StatementNode stmt : blockNode) {
-      stmt.accept(this);
-      buffer.append('\n');
-    }
-    indentation -= PrintUtil.INDENTATION_LEVEL;
-
+    addSourceLocation(blockNode);
     addIndentation();
-    buffer.append('}');
 
+    printChildBlock(blockNode);
     return null;
   }
 
@@ -440,7 +447,7 @@ public class PrintVisitor
     buffer.append("process ");
     buffer.append(processDeclarationNode.getName());
     buffer.append(' ');
-    processDeclarationNode.getBody().accept(this);
+    printChildBlock(processDeclarationNode.getBody());
 
     return null;
   }

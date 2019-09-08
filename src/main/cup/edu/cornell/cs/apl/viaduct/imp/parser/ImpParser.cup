@@ -346,6 +346,10 @@ expr ::=
       RESULT = binary(And.create(), e1, e2);
     :}
 
+  | expr:e1 OROR expr:e2 {:
+      RESULT = binary(Or.create(), e1, e2);
+    :}
+
   | expr:e1 EQEQ expr:e2 {:
       RESULT = binary(EqualTo.create(), e1, e2);
     :}

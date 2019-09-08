@@ -25,6 +25,7 @@ public final class PrintUtil {
     try (PrintStream printStream =
         new AnsiPrintStream(new PrintStream(byteStream, false, Charset.defaultCharset()))) {
       printer.accept(printStream);
+      printStream.flush();
       return new String(byteStream.toByteArray(), Charset.defaultCharset());
     }
   }

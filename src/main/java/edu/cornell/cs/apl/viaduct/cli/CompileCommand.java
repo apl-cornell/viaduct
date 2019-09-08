@@ -8,6 +8,7 @@ import edu.cornell.cs.apl.viaduct.imp.ast.ProcessName;
 import edu.cornell.cs.apl.viaduct.imp.ast.ProgramNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.StatementNode;
 import edu.cornell.cs.apl.viaduct.imp.informationflow.InformationFlowChecker;
+import edu.cornell.cs.apl.viaduct.imp.parsing.Printer;
 import edu.cornell.cs.apl.viaduct.imp.parsing.SourceFile;
 import edu.cornell.cs.apl.viaduct.imp.parsing.TrustConfigurationParser;
 import edu.cornell.cs.apl.viaduct.imp.protocols.ImpCommunicationCostEstimator;
@@ -19,7 +20,6 @@ import edu.cornell.cs.apl.viaduct.imp.transformers.ImpPdgBuilderPreprocessor;
 import edu.cornell.cs.apl.viaduct.imp.typing.TypeChecker;
 import edu.cornell.cs.apl.viaduct.imp.visitors.ImpPdgBuilderVisitor;
 import edu.cornell.cs.apl.viaduct.imp.visitors.ImpProtocolInstantiationVisitor;
-import edu.cornell.cs.apl.viaduct.imp.visitors.PrintVisitor;
 import edu.cornell.cs.apl.viaduct.pdg.PdgDotPrinter;
 import edu.cornell.cs.apl.viaduct.pdg.PdgNode;
 import edu.cornell.cs.apl.viaduct.pdg.ProgramDependencyGraph;
@@ -204,9 +204,8 @@ public class CompileCommand extends BaseCommand {
     // Generate program dependency graph.
     final ProgramDependencyGraph<ImpAstNode> pdg = new ImpPdgBuilderVisitor().generatePDG(main);
 
-    final PrintVisitor printer = new PrintVisitor(false);
     // Dump PDG with information flow labels to a file (if requested).
-    dumpGraph(() -> PdgDotPrinter.pdgDotGraphWithLabels(pdg, printer), labelGraphOutput);
+    dumpGraph(() -> PdgDotPrinter.pdgDotGraphWithLabels(pdg, new Printer()), labelGraphOutput);
 
     if (this.skip && protocolGraphOutput == null) {
       return null;
@@ -229,7 +228,7 @@ public class CompileCommand extends BaseCommand {
 
     // Dump PDG with protocol information to a file (if requested).
     dumpGraph(
-        () -> PdgDotPrinter.pdgDotGraphWithProtocols(pdg, protocolMap, strategy, printer),
+        () -> PdgDotPrinter.pdgDotGraphWithProtocols(pdg, protocolMap, strategy, new Printer()),
         protocolGraphOutput);
 
     if (this.skip) {
@@ -244,7 +243,7 @@ public class CompileCommand extends BaseCommand {
               .run();
 
       try (PrintStream writer = output.newOutputStream()) {
-        writer.println(PrintVisitor.run(generatedProgram));
+        Printer.run(generatedProgram, writer);
       }
     } else {
       // We couldn't find protocols for some nodes.

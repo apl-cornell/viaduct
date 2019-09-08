@@ -24,8 +24,8 @@ import edu.cornell.cs.apl.viaduct.imp.ast.StatementNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.Variable;
 import edu.cornell.cs.apl.viaduct.imp.ast.VariableDeclarationNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.WhileNode;
+import edu.cornell.cs.apl.viaduct.imp.parsing.Printer;
 import edu.cornell.cs.apl.viaduct.imp.visitors.ExprVisitor;
-import edu.cornell.cs.apl.viaduct.imp.visitors.PrintVisitor;
 import edu.cornell.cs.apl.viaduct.imp.visitors.ReferenceVisitor;
 import edu.cornell.cs.apl.viaduct.imp.visitors.StmtVisitor;
 import edu.cornell.cs.apl.viaduct.security.FreeDistributiveLattice;
@@ -173,7 +173,7 @@ public class InformationFlowChecker
   @Override
   public LabelTerm visit(NotNode notNode) {
     final LabelVariable l =
-        new LabelVariable(this.nameGenerator.getFreshName("not"), PrintVisitor.run(notNode));
+        new LabelVariable(this.nameGenerator.getFreshName("not"), Printer.run(notNode));
     notNode.setTrustLabel(l);
 
     final LabelTerm expLabel = notNode.getExpression().accept(this);
@@ -185,7 +185,7 @@ public class InformationFlowChecker
   @Override
   public LabelTerm visit(BinaryExpressionNode binExprNode) {
     final LabelVariable l =
-        new LabelVariable(this.nameGenerator.getFreshName("binop"), PrintVisitor.run(binExprNode));
+        new LabelVariable(this.nameGenerator.getFreshName("binop"), Printer.run(binExprNode));
     binExprNode.setTrustLabel(l);
 
     final LabelTerm lhsLabel = binExprNode.getLhs().accept(this);
@@ -300,7 +300,7 @@ public class InformationFlowChecker
   @Override
   public Void visit(AssignNode assignNode) {
     final LabelVariable l =
-        new LabelVariable(this.nameGenerator.getFreshName("assign"), PrintVisitor.run(assignNode));
+        new LabelVariable(this.nameGenerator.getFreshName("assign"), Printer.run(assignNode));
     assignNode.setTrustLabel(l);
 
     final LabelTerm rhsLabel = assignNode.getRhs().accept(this);

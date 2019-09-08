@@ -1,6 +1,5 @@
-package edu.cornell.cs.apl.viaduct.imp.visitors;
+package edu.cornell.cs.apl.viaduct.imp.parsing;
 
-import edu.cornell.cs.apl.viaduct.AstPrinter;
 import edu.cornell.cs.apl.viaduct.imp.ast.ArrayDeclarationNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ArrayIndexingNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.AssertNode;
@@ -9,14 +8,13 @@ import edu.cornell.cs.apl.viaduct.imp.ast.BinaryExpressionNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.BlockNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.BreakNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.DowngradeNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.ExpressionNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ForNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.HostDeclarationNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.IfNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.ImpAstNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.LetBindingNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.LiteralNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.LoopNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.Name;
 import edu.cornell.cs.apl.viaduct.imp.ast.NotNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ProcessDeclarationNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ProgramNode;
@@ -29,27 +27,34 @@ import edu.cornell.cs.apl.viaduct.imp.ast.Variable;
 import edu.cornell.cs.apl.viaduct.imp.ast.VariableDeclarationNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.WhileNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.types.ImpType;
-import edu.cornell.cs.apl.viaduct.imp.parsing.Located;
+import edu.cornell.cs.apl.viaduct.imp.ast.values.ImpValue;
+import edu.cornell.cs.apl.viaduct.imp.visitors.ExprVisitor;
+import edu.cornell.cs.apl.viaduct.imp.visitors.ProgramVisitor;
+import edu.cornell.cs.apl.viaduct.imp.visitors.ReferenceVisitor;
+import edu.cornell.cs.apl.viaduct.imp.visitors.StmtVisitor;
+import edu.cornell.cs.apl.viaduct.imp.visitors.TopLevelDeclarationVisitor;
 import edu.cornell.cs.apl.viaduct.security.Label;
 import edu.cornell.cs.apl.viaduct.util.PrintUtil;
+import java.io.PrintStream;
+import org.apache.commons.lang3.StringUtils;
+import org.fusesource.jansi.Ansi;
+import org.fusesource.jansi.Ansi.Color;
 
-/** Pretty-prints an AST. */
-public class PrintVisitor
+final class PrintVisitor
     implements ReferenceVisitor<Void>,
         ExprVisitor<Void>,
         StmtVisitor<Void>,
         TopLevelDeclarationVisitor<Void>,
-        ProgramVisitor<Void>,
-        AstPrinter<ImpAstNode> {
+        ProgramVisitor<Void> {
 
   /** Print source locations only if set to true. */
   private static final boolean sourceLocationsEnabled = false;
 
   /** Accumulates the partially printed program. */
-  private StringBuilder buffer;
+  private PrintStream output;
 
   /** Add indentation only if set to true. */
-  private boolean indentationEnabled;
+  private boolean indentationEnabled = true;
 
   /** Terminate statements with a semicolon (;) only if set to true. */
   private boolean statementTerminatorsEnabled;
@@ -58,68 +63,27 @@ public class PrintVisitor
   private int indentation = 0;
 
   /**
-   * Constructor a printer.
+   * Constructor a print visitor.
    *
+   * @param output stream to print to
    * @param statementTerminatorsEnabled print semicolons (;) only if set to {@code true}
    */
-  public PrintVisitor(boolean statementTerminatorsEnabled) {
-    this.buffer = new StringBuilder();
-    this.indentationEnabled = true;
+  PrintVisitor(PrintStream output, boolean statementTerminatorsEnabled) {
+    this.output = output;
     this.statementTerminatorsEnabled = statementTerminatorsEnabled;
   }
 
-  /** Pretty print an expression. */
-  public static String run(ExpressionNode expr) {
-    final PrintVisitor v = new PrintVisitor(false);
-    expr.accept(v);
-    return v.buffer.toString();
-  }
-
-  /** Pretty print a statement. */
-  public static String run(StatementNode stmt) {
-    final PrintVisitor v = new PrintVisitor(false);
-    stmt.accept(v);
-    return v.buffer.toString();
-  }
-
-  /** Pretty print a program. */
-  public static String run(ProgramNode prog) {
-    final PrintVisitor v = new PrintVisitor(true);
-    prog.accept(v);
-    return v.buffer.toString();
-  }
-
-  @Override
-  public String print(ImpAstNode astNode) {
-    // TODO: use ImpAstNodeVisitor
-    if (astNode instanceof ExpressionNode) {
-      ((ExpressionNode) astNode).accept(this);
-
-    } else if (astNode instanceof StatementNode) {
-      ((StatementNode) astNode).accept(this);
-
-    } else {
-      ((ProgramNode) astNode).accept(this);
-    }
-
-    String str = this.buffer.toString();
-    this.buffer = new StringBuilder();
-    return str;
-  }
-
-  /** Append current indentation to the buffer (if indentation is enabled). */
+  /** Append current indentation to the output (if indentation is enabled). */
   private void addIndentation() {
-    if (this.indentationEnabled) {
-      for (int i = 0; i < this.indentation; i++) {
-        buffer.append(' ');
-      }
+    if (indentationEnabled) {
+      output.print(StringUtils.repeat(' ', this.indentation));
     }
   }
 
   /** Print a statement terminator (if terminators are enabled). */
   private void addSeparator() {
     if (this.statementTerminatorsEnabled) {
-      buffer.append(';');
+      output.print(';');
     }
   }
 
@@ -131,46 +95,81 @@ public class PrintVisitor
         && this.statementTerminatorsEnabled
         && node.getSourceLocation() != null) {
       addIndentation();
-      buffer.append("/* ");
-      buffer.append(node.getSourceLocation());
-      buffer.append(" */ ");
-      buffer.append("\n");
+      printComment(node.getSourceLocation().toString());
+      output.println();
     }
+  }
+
+  /** Print a comment. */
+  private void printComment(String comment) {
+    output.print(Ansi.ansi().fgBright(Color.GREEN).a("/* ").a(comment).a(" */").reset());
+  }
+
+  /**
+   * Print a literal constant. Use for things such as:
+   *
+   * <ul>
+   *   <li>Strings: {@code "this is a string"}
+   *   <li>Characters: {@code 'c', '\n'}
+   *   <li>Numbers: {@code 234, 2.3e10, 0xff}
+   *   <li>Booleans: {@code true, false}
+   * </ul>
+   */
+  private void printConstant(ImpValue constant) {
+    output.print(Ansi.ansi().fg(Color.CYAN).a(constant).reset());
+  }
+
+  /** Print a name. */
+  private void printIdentifier(Name identifier) {
+    output.print(Ansi.ansi().fg(Color.BLUE).a(identifier).reset());
+  }
+
+  /** Print a builtin keyword or operator. */
+  private void printKeyword(Object keyword) {
+    output.print(Ansi.ansi().fg(Color.GREEN).a(keyword).reset());
+  }
+
+  /**
+   * Print a type annotation. Use for things such as {@code int}, {@code string}, security labels,
+   * etc.
+   */
+  private void printTypeAnnotation(Object annotation) {
+    output.print(Ansi.ansi().fg(Color.YELLOW).a(annotation).reset());
   }
 
   /** Print a block node without adding indentation before the opening brace. */
   private void printChildBlock(BlockNode node) {
-    buffer.append("{\n");
+    output.println("{");
 
     indentation += PrintUtil.INDENTATION_LEVEL;
     for (StatementNode stmt : node) {
       stmt.accept(this);
-      buffer.append('\n');
+      output.println();
     }
     indentation -= PrintUtil.INDENTATION_LEVEL;
 
     addIndentation();
-    buffer.append('}');
+    output.print('}');
   }
 
   @Override
   public Void visit(Variable variable) {
-    buffer.append(variable);
+    printIdentifier(variable);
     return null;
   }
 
   @Override
   public Void visit(ArrayIndexingNode arrayIndexingNode) {
-    buffer.append(arrayIndexingNode.getArray());
-    buffer.append("[");
+    printIdentifier(arrayIndexingNode.getArray());
+    output.print("[");
     arrayIndexingNode.getIndex().accept(this);
-    buffer.append("]");
+    output.print("]");
     return null;
   }
 
   @Override
   public Void visit(LiteralNode literalNode) {
-    buffer.append(literalNode.getValue());
+    printConstant(literalNode.getValue());
     return null;
   }
 
@@ -182,55 +181,40 @@ public class PrintVisitor
 
   @Override
   public Void visit(NotNode notNode) {
-    buffer.append('!');
+    printKeyword('!');
     return notNode.getExpression().accept(this);
   }
 
   @Override
   public Void visit(BinaryExpressionNode binaryExpressionNode) {
-    buffer.append('(');
+    output.print('(');
     binaryExpressionNode.getLhs().accept(this);
 
-    buffer.append(' ');
-    buffer.append(binaryExpressionNode.getOperator());
-    buffer.append(' ');
+    output.print(' ');
+    printKeyword(binaryExpressionNode.getOperator());
+    output.print(' ');
 
     binaryExpressionNode.getRhs().accept(this);
-    buffer.append(')');
+    output.print(')');
 
     return null;
   }
 
   @Override
   public Void visit(DowngradeNode downgradeNode) {
-    switch (downgradeNode.getDowngradeType()) {
-      case ENDORSE:
-        buffer.append("endorse");
-        break;
-
-      case DECLASSIFY:
-        buffer.append("declassify");
-        break;
-
-      case BOTH:
-        buffer.append("downgrade");
-        break;
-
-      default:
-        break;
-    }
-    buffer.append("(");
+    printKeyword(downgradeNode.getDowngradeType());
+    output.print("(");
     downgradeNode.getExpression().accept(this);
-    buffer.append(", ");
+    output.print(", ");
 
     final Label fromLabel = downgradeNode.getFromLabel();
     if (fromLabel != null) {
-      buffer.append(fromLabel);
-      buffer.append(" to ");
+      printTypeAnnotation(fromLabel);
+      printKeyword(" to ");
     }
-    buffer.append(downgradeNode.getToLabel());
+    printTypeAnnotation(downgradeNode.getToLabel());
 
-    buffer.append(")");
+    output.print(")");
     return null;
   }
 
@@ -239,15 +223,15 @@ public class PrintVisitor
     addSourceLocation(varDeclNode);
     addIndentation();
 
-    buffer.append(varDeclNode.getType());
+    printTypeAnnotation(varDeclNode.getType());
 
     Label label = varDeclNode.getLabel();
     if (label != null) {
-      buffer.append(label);
+      printTypeAnnotation(label);
     }
 
-    buffer.append(" ");
-    buffer.append(varDeclNode.getVariable());
+    output.print(" ");
+    varDeclNode.getVariable().accept(this);
 
     addSeparator();
     return null;
@@ -258,19 +242,19 @@ public class PrintVisitor
     addSourceLocation(arrayDecl);
     addIndentation();
 
-    buffer.append(arrayDecl.getElementType());
+    printTypeAnnotation(arrayDecl.getElementType());
 
     Label label = arrayDecl.getLabel();
     if (label != null) {
-      buffer.append(label);
+      printTypeAnnotation(label);
     }
 
-    buffer.append(" ");
-    buffer.append(arrayDecl.getVariable());
+    output.print(" ");
+    arrayDecl.getVariable().accept(this);
 
-    buffer.append('[');
+    output.print('[');
     arrayDecl.getLength().accept(this);
-    buffer.append(']');
+    output.print(']');
 
     addSeparator();
     return null;
@@ -281,9 +265,9 @@ public class PrintVisitor
     addSourceLocation(letBindingNode);
     addIndentation();
 
-    buffer.append("let ");
-    buffer.append(letBindingNode.getVariable());
-    buffer.append(" = ");
+    printKeyword("let ");
+    letBindingNode.getVariable().accept(this);
+    output.print(" = ");
     letBindingNode.getRhs().accept(this);
 
     addSeparator();
@@ -296,7 +280,7 @@ public class PrintVisitor
     addIndentation();
 
     assignNode.getLhs().accept(this);
-    buffer.append(" = ");
+    output.print(" = ");
     assignNode.getRhs().accept(this);
 
     addSeparator();
@@ -308,10 +292,10 @@ public class PrintVisitor
     addSourceLocation(sendNode);
     addIndentation();
 
-    buffer.append("send ");
+    printKeyword("send ");
     sendNode.getSentExpression().accept(this);
-    buffer.append(" to ");
-    buffer.append(sendNode.getRecipient());
+    printKeyword(" to ");
+    output.print(sendNode.getRecipient());
 
     addSeparator();
     return null;
@@ -322,16 +306,17 @@ public class PrintVisitor
     addSourceLocation(receiveNode);
     addIndentation();
 
-    buffer.append(receiveNode.getVariable());
-    buffer.append(" <- recv ");
+    printIdentifier(receiveNode.getVariable());
+    output.print(" <- ");
+    printKeyword("recv ");
 
-    ImpType recvType = receiveNode.getReceiveType();
+    final ImpType recvType = receiveNode.getReceiveType();
     if (recvType != null) {
-      buffer.append(recvType);
-      buffer.append(" ");
+      printTypeAnnotation(recvType);
+      output.print(" ");
     }
 
-    buffer.append(receiveNode.getSender());
+    output.print(receiveNode.getSender());
 
     addSeparator();
     return null;
@@ -342,7 +327,7 @@ public class PrintVisitor
     addSourceLocation(assertNode);
     addIndentation();
 
-    buffer.append("assert ");
+    printKeyword("assert ");
     assertNode.getExpression().accept(this);
 
     addSeparator();
@@ -354,14 +339,15 @@ public class PrintVisitor
     addSourceLocation(ifNode);
     addIndentation();
 
-    buffer.append("if (");
+    printKeyword("if");
+    output.println(" (");
     ifNode.getGuard().accept(this);
-    buffer.append(") ");
+    output.print(") ");
 
     printChildBlock(ifNode.getThenBranch());
 
     if (ifNode.getElseBranch().getStatements().size() > 0) {
-      buffer.append(" else ");
+      printKeyword(" else ");
       printChildBlock(ifNode.getElseBranch());
     }
 
@@ -373,9 +359,10 @@ public class PrintVisitor
     addSourceLocation(whileNode);
     addIndentation();
 
-    buffer.append("while (");
+    printKeyword("while");
+    output.print(" (");
     whileNode.getGuard().accept(this);
-    buffer.append(") ");
+    output.print(") ");
 
     printChildBlock(whileNode.getBody());
 
@@ -390,13 +377,14 @@ public class PrintVisitor
     this.indentationEnabled = false;
     this.statementTerminatorsEnabled = false;
 
-    buffer.append("for (");
+    printKeyword("for");
+    output.print(" (");
     forNode.getInitialize().accept(this);
-    buffer.append("; ");
+    output.print("; ");
     forNode.getGuard().accept(this);
-    buffer.append("; ");
+    output.print("; ");
     forNode.getUpdate().accept(this);
-    buffer.append(")");
+    output.print(")");
 
     this.indentationEnabled = true;
     this.statementTerminatorsEnabled = true;
@@ -410,7 +398,7 @@ public class PrintVisitor
     addSourceLocation(loopNode);
     addIndentation();
 
-    buffer.append("loop ");
+    printKeyword("loop ");
     printChildBlock(loopNode.getBody());
 
     return null;
@@ -421,10 +409,10 @@ public class PrintVisitor
     addSourceLocation(breakNode);
     addIndentation();
 
-    buffer.append("break");
+    printKeyword("break");
     if (breakNode.getLevel() > 1) {
-      buffer.append(' ');
-      buffer.append(breakNode.getLevel());
+      output.print(' ');
+      output.print(breakNode.getLevel());
     }
     addSeparator();
 
@@ -444,9 +432,9 @@ public class PrintVisitor
   public Void visit(ProcessDeclarationNode processDeclarationNode) {
     addSourceLocation(processDeclarationNode);
 
-    buffer.append("process ");
-    buffer.append(processDeclarationNode.getName());
-    buffer.append(' ');
+    printKeyword("process ");
+    output.print(processDeclarationNode.getName());
+    output.print(' ');
     printChildBlock(processDeclarationNode.getBody());
 
     return null;
@@ -456,11 +444,11 @@ public class PrintVisitor
   public Void visit(HostDeclarationNode hostDeclarationNode) {
     addSourceLocation(hostDeclarationNode);
 
-    buffer.append("host ");
-    buffer.append(hostDeclarationNode.getName());
-    buffer.append(" : ");
-    buffer.append(hostDeclarationNode.getTrust());
-    buffer.append(";");
+    printKeyword("host ");
+    output.print(hostDeclarationNode.getName());
+    output.print(" : ");
+    printTypeAnnotation(hostDeclarationNode.getTrust());
+    output.print(";");
 
     return null;
   }
@@ -470,7 +458,7 @@ public class PrintVisitor
     boolean first = true;
     for (TopLevelDeclarationNode declaration : programNode) {
       if (!first) {
-        buffer.append("\n\n");
+        output.print("\n\n");
       }
 
       declaration.accept(this);

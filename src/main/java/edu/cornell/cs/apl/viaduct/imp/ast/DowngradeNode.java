@@ -29,9 +29,24 @@ public abstract class DowngradeNode extends ExpressionNode {
   }
 
   public enum DowngradeType {
-    DECLASSIFY,
-    ENDORSE,
-    BOTH
+    DECLASSIFY {
+      @Override
+      public String toString() {
+        return "declassify";
+      }
+    },
+    ENDORSE {
+      @Override
+      public String toString() {
+        return "endorse";
+      }
+    },
+    BOTH {
+      @Override
+      public String toString() {
+        return "downgrade";
+      }
+    }
   }
 
   @AutoValue.Builder

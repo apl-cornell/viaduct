@@ -3,9 +3,9 @@ package edu.cornell.cs.apl.viaduct.cli;
 import com.github.rvesse.airline.annotations.Command;
 import com.github.rvesse.airline.annotations.Option;
 import edu.cornell.cs.apl.viaduct.imp.ast.ProgramNode;
+import edu.cornell.cs.apl.viaduct.imp.parsing.Printer;
 import edu.cornell.cs.apl.viaduct.imp.transformers.AnfConverter;
 import edu.cornell.cs.apl.viaduct.imp.transformers.Elaborator;
-import edu.cornell.cs.apl.viaduct.imp.visitors.PrintVisitor;
 import java.io.PrintStream;
 
 @Command(name = "format", description = "Pretty print source program")
@@ -35,7 +35,7 @@ public class FormatCommand extends BaseCommand {
         program = AnfConverter.run(program);
       }
 
-      writer.println(PrintVisitor.run(program));
+      Printer.run(program, writer);
     }
     return null;
   }

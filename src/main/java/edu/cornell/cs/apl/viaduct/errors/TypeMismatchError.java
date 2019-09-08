@@ -1,7 +1,7 @@
 package edu.cornell.cs.apl.viaduct.errors;
 
 import edu.cornell.cs.apl.viaduct.imp.ast.types.ImpType;
-import edu.cornell.cs.apl.viaduct.imp.parser.Located;
+import edu.cornell.cs.apl.viaduct.imp.parsing.Located;
 
 public class TypeMismatchError extends CompilationError {
   private final Located node;

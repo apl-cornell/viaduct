@@ -1,7 +1,7 @@
 package edu.cornell.cs.apl.viaduct.errors;
 
 import edu.cornell.cs.apl.viaduct.imp.ast.Name;
-import edu.cornell.cs.apl.viaduct.imp.parser.Located;
+import edu.cornell.cs.apl.viaduct.imp.parsing.Located;
 
 /** A (variable, host, process etc.) name declared multiple times. */
 public class NameClashError extends CompilationError {

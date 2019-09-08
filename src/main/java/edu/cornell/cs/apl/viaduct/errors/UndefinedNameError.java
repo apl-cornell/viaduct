@@ -1,7 +1,7 @@
 package edu.cornell.cs.apl.viaduct.errors;
 
 import edu.cornell.cs.apl.viaduct.imp.ast.Name;
-import edu.cornell.cs.apl.viaduct.imp.parser.Located;
+import edu.cornell.cs.apl.viaduct.imp.parsing.Located;
 import java.io.PrintStream;
 
 /** A name that is referenced before it is ever defined. */

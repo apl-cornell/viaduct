@@ -1,8 +1,8 @@
 package edu.cornell.cs.apl.viaduct;
 
 import edu.cornell.cs.apl.viaduct.imp.ast.ProgramNode;
-import edu.cornell.cs.apl.viaduct.imp.parser.Parser;
-import edu.cornell.cs.apl.viaduct.imp.parser.SourceFile;
+import edu.cornell.cs.apl.viaduct.imp.parsing.Parser;
+import edu.cornell.cs.apl.viaduct.imp.parsing.SourceFile;
 import java.io.File;
 import org.junit.jupiter.api.extension.ParameterContext;
 import org.junit.jupiter.params.converter.ArgumentConversionException;

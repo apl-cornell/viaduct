@@ -15,13 +15,13 @@
 <FindBugsFilter>
     <!-- Ignore generated parser classes. -->
     <Match>
-        <Class name="~.*\.parser\.ImpParser.*"/>
+        <Class name="~.*\.parsing\.ImpParser.*"/>
     </Match>
     <Match>
-        <Class name="~.*\.parser\.ImpLexer.*"/>
+        <Class name="~.*\.parsing\.ImpLexer.*"/>
     </Match>
     <Match>
-        <Class name="~.*\.parser\.sym"/>
+        <Class name="~.*\.parsing\.sym"/>
     </Match>
 
     <!-- This causes SpotBugs to complain about try-with-resources blocks. See https://github.com/spotbugs/spotbugs/issues/600.  -->

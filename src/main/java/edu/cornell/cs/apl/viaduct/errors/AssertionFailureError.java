@@ -1,7 +1,7 @@
 package edu.cornell.cs.apl.viaduct.errors;
 
 import edu.cornell.cs.apl.viaduct.imp.ast.AssertNode;
-import edu.cornell.cs.apl.viaduct.imp.parser.Located;
+import edu.cornell.cs.apl.viaduct.imp.parsing.Located;
 
 /** Raised when an assertion in Imp source code fails during evaluation. */
 public final class AssertionFailureError extends CompilationError {

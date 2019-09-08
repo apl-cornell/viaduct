@@ -41,7 +41,6 @@ jar {
 
 cup {
     args = [
-        "-package", "edu.cornell.cs.apl.viaduct.imp.parser",
         "-parser", "ImpParser",
         "-interface"
     ]

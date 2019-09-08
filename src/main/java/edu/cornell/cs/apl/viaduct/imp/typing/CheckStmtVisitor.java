@@ -30,7 +30,7 @@ import edu.cornell.cs.apl.viaduct.imp.ast.types.BooleanType;
 import edu.cornell.cs.apl.viaduct.imp.ast.types.ImpBaseType;
 import edu.cornell.cs.apl.viaduct.imp.ast.types.ImpType;
 import edu.cornell.cs.apl.viaduct.imp.ast.types.IntegerType;
-import edu.cornell.cs.apl.viaduct.imp.parser.Located;
+import edu.cornell.cs.apl.viaduct.imp.parsing.Located;
 import edu.cornell.cs.apl.viaduct.imp.visitors.AbstractExprVisitor;
 import edu.cornell.cs.apl.viaduct.imp.visitors.AbstractReferenceVisitor;
 import edu.cornell.cs.apl.viaduct.imp.visitors.ContextStmtVisitor;

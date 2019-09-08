@@ -2,8 +2,8 @@ package edu.cornell.cs.apl.viaduct.imp.ast;
 
 import com.google.auto.value.AutoValue;
 import edu.cornell.cs.apl.viaduct.errors.TodoException;
-import edu.cornell.cs.apl.viaduct.imp.parser.Located;
-import edu.cornell.cs.apl.viaduct.imp.parser.SourceRange;
+import edu.cornell.cs.apl.viaduct.imp.parsing.Located;
+import edu.cornell.cs.apl.viaduct.imp.parsing.SourceRange;
 
 /** Process names. Processes execute code, and can send and receive messages. */
 @AutoValue

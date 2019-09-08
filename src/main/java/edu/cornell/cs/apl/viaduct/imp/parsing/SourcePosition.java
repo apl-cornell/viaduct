@@ -1,4 +1,4 @@
-package edu.cornell.cs.apl.viaduct.imp.parser;
+package edu.cornell.cs.apl.viaduct.imp.parsing;
 
 import com.google.auto.value.AutoValue;
 

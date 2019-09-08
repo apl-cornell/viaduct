@@ -1,4 +1,4 @@
-package edu.cornell.cs.apl.viaduct.imp.parser;
+package edu.cornell.cs.apl.viaduct.imp.parsing;
 
 import java.io.Reader;
 

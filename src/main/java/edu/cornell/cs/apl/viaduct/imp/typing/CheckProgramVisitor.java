@@ -1,35 +1,51 @@
 package edu.cornell.cs.apl.viaduct.imp.typing;
 
-import edu.cornell.cs.apl.viaduct.imp.ast.ProcessName;
 import edu.cornell.cs.apl.viaduct.imp.ast.ProgramNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.StatementNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.TopLevelDeclarationNode;
 import edu.cornell.cs.apl.viaduct.imp.visitors.AbstractProgramVisitor;
+import edu.cornell.cs.apl.viaduct.imp.visitors.AbstractTopLevelDeclarationVisitor;
 import edu.cornell.cs.apl.viaduct.imp.visitors.StmtVisitor;
-import io.vavr.Tuple2;
+import edu.cornell.cs.apl.viaduct.imp.visitors.TopLevelDeclarationVisitor;
 
 /**
  * Check that value types are cohesive (e.g. only integers are added together). Label checking is a
  * separate step.
  */
 final class CheckProgramVisitor extends AbstractProgramVisitor<CheckProgramVisitor, Void, Void> {
-  private final CheckStmtVisitor statementVisitor;
+  private final CheckDeclarationVisitor declarationVisitor = new CheckDeclarationVisitor();
 
-  CheckProgramVisitor() {
-    this.statementVisitor = new CheckStmtVisitor();
+  @Override
+  protected TopLevelDeclarationVisitor<Void> getDeclarationVisitor() {
+    return declarationVisitor;
   }
 
   @Override
-  public StmtVisitor<Void> getStatementVisitor() {
-    return statementVisitor;
+  protected CheckProgramVisitor enter(ProgramNode node) {
+    return this;
   }
 
   @Override
-  protected CheckProgramVisitor enter(ProcessName process, StatementNode body) {
-    return new CheckProgramVisitor();
-  }
-
-  @Override
-  protected Void leave(ProgramNode node, Iterable<Tuple2<ProcessName, Void>> processes) {
+  protected Void leave(ProgramNode node, CheckProgramVisitor visitor, Iterable<Void> declarations) {
     return null;
+  }
+
+  private static final class CheckDeclarationVisitor
+      extends AbstractTopLevelDeclarationVisitor<CheckDeclarationVisitor, Void, Void> {
+    private final CheckStmtVisitor statementVisitor = new CheckStmtVisitor();
+
+    @Override
+    protected StmtVisitor<Void> getStatementVisitor() {
+      return statementVisitor;
+    }
+
+    @Override
+    protected CheckDeclarationVisitor enter(TopLevelDeclarationNode node) {
+      return this;
+    }
+
+    @Override
+    protected Void leave(TopLevelDeclarationNode node, CheckDeclarationVisitor visitor) {
+      return null;
+    }
   }
 }

@@ -4,13 +4,13 @@ import edu.cornell.cs.apl.viaduct.errors.CompilationError;
 import edu.cornell.cs.apl.viaduct.imp.ast.BlockNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ExpressionNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ImpValue;
+import edu.cornell.cs.apl.viaduct.imp.ast.ProcessDeclarationNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ProcessName;
 import edu.cornell.cs.apl.viaduct.imp.ast.ProgramNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.StatementNode;
-import edu.cornell.cs.apl.viaduct.imp.visitors.ElaborationVisitor;
+import edu.cornell.cs.apl.viaduct.imp.transformers.Elaborator;
 import edu.cornell.cs.apl.viaduct.imp.visitors.ExprVisitor;
 import edu.cornell.cs.apl.viaduct.util.MapUtil;
-import io.vavr.Tuple2;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -42,7 +42,8 @@ public final class Interpreter {
             ? new InterpretStmtVisitor()
             : new InterpretStmtVisitor(process, channel);
 
-    statement = new ElaborationVisitor().run(statement);
+    // TODO: maybe move somewhere else
+    statement = Elaborator.run(statement);
 
     if (statement instanceof BlockNode) {
       // Blocks create new scope. If we don't do this, we will get an empty store.
@@ -58,14 +59,14 @@ public final class Interpreter {
 
   /** Execute the code on all processes in the configuration, and return their local stores. */
   public static Map<ProcessName, Store> run(ProgramNode program) {
-    final Channel<ImpValue> channel = new Channel<>(program.processes());
+    final Channel<ImpValue> channel = new Channel<>(program.processes().keySet());
 
     final ExecutorService pool = Executors.newCachedThreadPool();
 
     // Add each process in the program to a task list
     final List<ProcessExecutor> processExecutors = new ArrayList<>();
-    for (Tuple2<ProcessName, StatementNode> process : program) {
-      processExecutors.add(new ProcessExecutor(process._1(), process._2(), channel));
+    for (ProcessDeclarationNode process : program.processes().values()) {
+      processExecutors.add(new ProcessExecutor(process.getName(), process.getBody(), channel));
     }
 
     final List<Store> results = new ArrayList<>();
@@ -88,11 +89,11 @@ public final class Interpreter {
     }
 
     if (!channel.isEmpty()) {
-      // TODO: turn into CompilationError
+      // TODO: remove once session types ensure this won't happen.
       throw new Error("Some sent messages were never received.");
     }
 
-    return MapUtil.zip(program.processes(), results);
+    return MapUtil.zip(program.processes().keySet(), results);
   }
 
   /** Execute a single process. Should be run on its own thread. */

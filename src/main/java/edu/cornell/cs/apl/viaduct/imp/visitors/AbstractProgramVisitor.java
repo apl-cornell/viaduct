@@ -1,10 +1,7 @@
 package edu.cornell.cs.apl.viaduct.imp.visitors;
 
-import edu.cornell.cs.apl.viaduct.imp.ast.ProcessName;
 import edu.cornell.cs.apl.viaduct.imp.ast.ProgramNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.StatementNode;
-import io.vavr.Tuple;
-import io.vavr.Tuple2;
+import edu.cornell.cs.apl.viaduct.imp.ast.TopLevelDeclarationNode;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -14,38 +11,37 @@ import java.util.List;
  * <p>See {@link AbstractReferenceVisitor} for a detailed explanation of available methods.
  *
  * @param <SelfT> concrete implementation subclass
- * @param <StmtResultT> return type for statement nodes
+ * @param <DeclarationResultT> return type for top level declaration nodes
  */
 public abstract class AbstractProgramVisitor<
-        SelfT extends AbstractProgramVisitor<SelfT, StmtResultT, ProgramResultT>,
-        StmtResultT,
+        SelfT extends AbstractProgramVisitor<SelfT, DeclarationResultT, ProgramResultT>,
+        DeclarationResultT,
         ProgramResultT>
     implements ProgramVisitor<ProgramResultT> {
 
-  /** Return the visitor that will be used for statement sub-nodes. */
-  protected abstract StmtVisitor<StmtResultT> getStatementVisitor();
+  /** Return the visitor that will be used for top level declarations. */
+  protected abstract TopLevelDeclarationVisitor<DeclarationResultT> getDeclarationVisitor();
 
   /* ENTER  */
 
-  /** Enter a process declaration. */
-  protected abstract SelfT enter(ProcessName process, StatementNode body);
+  protected abstract SelfT enter(ProgramNode node);
 
   /* LEAVE  */
 
   protected abstract ProgramResultT leave(
-      ProgramNode node, Iterable<Tuple2<ProcessName, StmtResultT>> processes);
+      ProgramNode node, SelfT visitor, Iterable<DeclarationResultT> declarations);
 
   /* VISIT  */
 
   @Override
   public ProgramResultT visit(ProgramNode node) {
-    final List<Tuple2<ProcessName, StmtResultT>> processes = new LinkedList<>();
+    final SelfT visitor = enter(node);
+    final List<DeclarationResultT> declarations = new LinkedList<>();
 
-    for (Tuple2<ProcessName, StatementNode> process : node) {
-      final SelfT visitor = enter(process._1(), process._2());
-      processes.add(Tuple.of(process._1(), process._2().accept(visitor.getStatementVisitor())));
+    for (TopLevelDeclarationNode declaration : node) {
+      declarations.add(declaration.accept(visitor.getDeclarationVisitor()));
     }
 
-    return leave(node, processes);
+    return leave(node, visitor, declarations);
   }
 }

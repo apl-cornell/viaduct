@@ -8,14 +8,23 @@ import edu.cornell.cs.apl.viaduct.imp.visitors.ExprVisitor;
 /** Boolean negation. */
 @AutoValue
 public abstract class NotNode extends ExpressionNode {
-  public static NotNode create(ExpressionNode expression) {
-    return new AutoValue_NotNode(expression);
+  public static Builder builder() {
+    return new AutoValue_NotNode.Builder();
   }
+
+  public abstract Builder toBuilder();
 
   public abstract ExpressionNode getExpression();
 
   @Override
   public final <R> R accept(ExprVisitor<R> v) {
     return v.visit(this);
+  }
+
+  @AutoValue.Builder
+  public abstract static class Builder extends ImpAstNode.Builder<Builder> {
+    public abstract Builder setExpression(ExpressionNode expression);
+
+    public abstract NotNode build();
   }
 }

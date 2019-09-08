@@ -1,7 +1,7 @@
 package edu.cornell.cs.apl.viaduct.imp.protocols;
 
 import edu.cornell.cs.apl.viaduct.Binding;
-import edu.cornell.cs.apl.viaduct.imp.ast.Host;
+import edu.cornell.cs.apl.viaduct.imp.ast.HostName;
 import edu.cornell.cs.apl.viaduct.imp.ast.ImpAstNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.Variable;
 import edu.cornell.cs.apl.viaduct.pdg.PdgComputeNode;
@@ -10,13 +10,12 @@ import edu.cornell.cs.apl.viaduct.pdg.PdgStorageNode;
 import edu.cornell.cs.apl.viaduct.protocol.Protocol;
 import edu.cornell.cs.apl.viaduct.protocol.ProtocolInstantiationError;
 import edu.cornell.cs.apl.viaduct.protocol.ProtocolInstantiationInfo;
-
 import java.util.List;
 
 public abstract class AbstractSingle extends Cleartext implements Protocol<ImpAstNode> {
   private Variable outVar;
 
-  protected abstract Host getActualHost();
+  protected abstract HostName getActualHost();
 
   @Override
   public void initialize(PdgNode<ImpAstNode> node, ProtocolInstantiationInfo<ImpAstNode> info) {
@@ -25,7 +24,7 @@ public abstract class AbstractSingle extends Cleartext implements Protocol<ImpAs
 
   @Override
   public void instantiate(PdgNode<ImpAstNode> node, ProtocolInstantiationInfo<ImpAstNode> info) {
-    Host host = getActualHost();
+    HostName host = getActualHost();
     if (node.isStorageNode()) {
       this.outVar = instantiateStorageNode(host, (PdgStorageNode<ImpAstNode>) node, info);
 
@@ -41,7 +40,7 @@ public abstract class AbstractSingle extends Cleartext implements Protocol<ImpAs
   public Binding<ImpAstNode> readFrom(
       PdgNode<ImpAstNode> node,
       PdgNode<ImpAstNode> readNode,
-      Host readHost,
+      HostName readHost,
       Binding<ImpAstNode> readLabel,
       List<ImpAstNode> args,
       ProtocolInstantiationInfo<ImpAstNode> info) {
@@ -55,7 +54,7 @@ public abstract class AbstractSingle extends Cleartext implements Protocol<ImpAs
   public void writeTo(
       PdgNode<ImpAstNode> node,
       PdgNode<ImpAstNode> readNode,
-      Host writeHost,
+      HostName writeHost,
       List<ImpAstNode> args,
       ProtocolInstantiationInfo<ImpAstNode> info) {
 
@@ -66,8 +65,7 @@ public abstract class AbstractSingle extends Cleartext implements Protocol<ImpAs
       performWrite(node, writeHost, getActualHost(), this.outVar, args, info);
 
     } else {
-      throw new ProtocolInstantiationError(
-          "attempted to write to a non storage node");
+      throw new ProtocolInstantiationError("attempted to write to a non storage node");
     }
   }
 }

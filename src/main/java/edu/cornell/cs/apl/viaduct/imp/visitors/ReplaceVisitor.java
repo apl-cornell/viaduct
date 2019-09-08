@@ -1,259 +1,86 @@
 package edu.cornell.cs.apl.viaduct.imp.visitors;
 
-import edu.cornell.cs.apl.viaduct.imp.ast.ArrayDeclarationNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.AssertNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.AssignNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.BinaryExpressionNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.BlockNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.BreakNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.DowngradeNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ExpressionNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.ForNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.IfNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.ImpAstNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.LetBindingNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.LiteralNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.LoopNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.NotNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.ProgramNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.ReadNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.ReceiveNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.SendNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.ReferenceNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.StatementNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.Variable;
-import edu.cornell.cs.apl.viaduct.imp.ast.VariableDeclarationNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.WhileNode;
 import java.util.HashMap;
 import java.util.Map;
 
-/** replaces parts of AST. */
-public class ReplaceVisitor extends FormatBlockVisitor {
-  protected final Map<StatementNode, StatementNode> stmtMap;
-  protected final Map<ExpressionNode, ExpressionNode> exprMap;
+// TODO: every place this is useful, there is a better way of doing this. Remove.
+
+/** Find and replace for AST nodes. */
+public class ReplaceVisitor extends IdentityProgramVisitor {
+  protected final Map<StatementNode, StatementNode> stmtReplacements;
+  protected final Map<ExpressionNode, ExpressionNode> exprReplacements;
+
+  private final ExprVisitor<ExpressionNode> expressionVisitor = new ReplaceExprVisitor();
+  private final StmtVisitor<StatementNode> statementVisitor = new ReplaceStmtVisitor();
 
   public ReplaceVisitor() {
-    this.stmtMap = new HashMap<>();
-    this.exprMap = new HashMap<>();
+    this.stmtReplacements = new HashMap<>();
+    this.exprReplacements = new HashMap<>();
   }
 
   public ReplaceVisitor(
-      Map<ExpressionNode, ExpressionNode> emap, Map<StatementNode, StatementNode> smap) {
-    this.exprMap = emap;
-    this.stmtMap = smap;
-  }
-
-  /** build visitor from substitution of vars. */
-  public ReplaceVisitor(Map<Variable, ExpressionNode> vmap) {
-    this.exprMap = new HashMap<>();
-    this.stmtMap = new HashMap<>();
-
-    for (Map.Entry<Variable, ExpressionNode> kv : vmap.entrySet()) {
-      this.exprMap.put(ReadNode.create(kv.getKey()), kv.getValue());
-    }
-  }
-
-  /** run visitor. */
-  public ImpAstNode run(ImpAstNode ast) {
-    if (ast instanceof ExpressionNode) {
-      return ((ExpressionNode) ast).accept(this);
-
-    } else if (ast instanceof StatementNode) {
-      return ((StatementNode) ast).accept(this);
-
-    } else {
-      return ((ProgramNode) ast).accept(this);
-    }
-  }
-
-  /** Replace an expression in the AST. */
-  public ImpAstNode run(ImpAstNode ast, ExpressionNode oldExpr, ExpressionNode newExpr) {
-    this.exprMap.put(oldExpr, newExpr);
-    return run(ast);
-  }
-
-  /** Replace a statement in the AST. */
-  public ImpAstNode run(ImpAstNode ast, StatementNode oldStmt, StatementNode newStmt) {
-    this.stmtMap.put(oldStmt, newStmt);
-    return run(ast);
+      Map<ExpressionNode, ExpressionNode> expressionReplacements,
+      Map<StatementNode, StatementNode> statementReplacements) {
+    this.exprReplacements = expressionReplacements;
+    this.stmtReplacements = statementReplacements;
   }
 
   @Override
-  public ExpressionNode visit(LiteralNode literalNode) {
-    if (this.exprMap.containsKey(literalNode)) {
-      return this.exprMap.get(literalNode);
-
-    } else {
-      return super.visit(literalNode);
-    }
+  protected ExprVisitor<ExpressionNode> getExpressionVisitor() {
+    return expressionVisitor;
   }
 
   @Override
-  public ExpressionNode visit(ReadNode readNode) {
-    if (this.exprMap.containsKey(readNode)) {
-      return this.exprMap.get(readNode);
+  protected StmtVisitor<StatementNode> getStatementVisitor() {
+    return statementVisitor;
+  }
 
-    } else {
-      return super.visit(readNode);
+  protected class ReplaceExprVisitor
+      extends AbstractExprVisitor<ReplaceExprVisitor, ReferenceNode, ExpressionNode> {
+
+    @Override
+    protected ReferenceVisitor<ReferenceNode> getReferenceVisitor() {
+      return ReplaceVisitor.this.getReferenceVisitor();
+    }
+
+    @Override
+    protected ReplaceExprVisitor enter(ExpressionNode node) {
+      return this;
+    }
+
+    @Override
+    protected ExpressionNode leave(ExpressionNode node, ReplaceExprVisitor visitor) {
+      final ExpressionNode replacement = exprReplacements.get(node);
+      return replacement != null ? replacement : node;
     }
   }
 
-  @Override
-  public ExpressionNode visit(NotNode notNode) {
-    if (this.exprMap.containsKey(notNode)) {
-      return this.exprMap.get(notNode);
+  protected class ReplaceStmtVisitor
+      extends AbstractStmtVisitor<
+          ReplaceStmtVisitor, ReferenceNode, ExpressionNode, StatementNode> {
 
-    } else {
-      return super.visit(notNode);
+    @Override
+    protected ReferenceVisitor<ReferenceNode> getReferenceVisitor() {
+      return ReplaceVisitor.this.getReferenceVisitor();
     }
-  }
 
-  @Override
-  public ExpressionNode visit(BinaryExpressionNode binaryExpressionNode) {
-    if (this.exprMap.containsKey(binaryExpressionNode)) {
-      return this.exprMap.get(binaryExpressionNode);
-
-    } else {
-      return super.visit(binaryExpressionNode);
+    @Override
+    protected ExprVisitor<ExpressionNode> getExpressionVisitor() {
+      return ReplaceVisitor.this.getExpressionVisitor();
     }
-  }
 
-  @Override
-  public ExpressionNode visit(DowngradeNode downgradeNode) {
-    if (this.exprMap.containsKey(downgradeNode)) {
-      return this.exprMap.get(downgradeNode);
-
-    } else {
-      return super.visit(downgradeNode);
+    @Override
+    protected ReplaceStmtVisitor enter(StatementNode node) {
+      return this;
     }
-  }
 
-  @Override
-  public StatementNode visit(VariableDeclarationNode variableDeclarationNode) {
-    if (this.stmtMap.containsKey(variableDeclarationNode)) {
-      return this.stmtMap.get(variableDeclarationNode);
-
-    } else {
-      return super.visit(variableDeclarationNode);
-    }
-  }
-
-  @Override
-  public StatementNode visit(ArrayDeclarationNode arrayDeclarationNode) {
-    if (this.stmtMap.containsKey(arrayDeclarationNode)) {
-      return this.stmtMap.get(arrayDeclarationNode);
-
-    } else {
-      return super.visit(arrayDeclarationNode);
-    }
-  }
-
-  @Override
-  public StatementNode visit(LetBindingNode letBindingNode) {
-    if (this.stmtMap.containsKey(letBindingNode)) {
-      return this.stmtMap.get(letBindingNode);
-
-    } else {
-      return super.visit(letBindingNode);
-    }
-  }
-
-  @Override
-  public StatementNode visit(AssignNode assignNode) {
-    if (this.stmtMap.containsKey(assignNode)) {
-      return this.stmtMap.get(assignNode);
-
-    } else {
-      return super.visit(assignNode);
-    }
-  }
-
-  @Override
-  public StatementNode visit(SendNode sendNode) {
-    if (this.stmtMap.containsKey(sendNode)) {
-      return this.stmtMap.get(sendNode);
-
-    } else {
-      return super.visit(sendNode);
-    }
-  }
-
-  @Override
-  public StatementNode visit(ReceiveNode receiveNode) {
-    if (this.stmtMap.containsKey(receiveNode)) {
-      return this.stmtMap.get(receiveNode);
-
-    } else {
-      return super.visit(receiveNode);
-    }
-  }
-
-  @Override
-  public StatementNode visit(IfNode ifNode) {
-    if (this.stmtMap.containsKey(ifNode)) {
-      return this.stmtMap.get(ifNode);
-
-    } else {
-      return super.visit(ifNode);
-    }
-  }
-
-  @Override
-  public StatementNode visit(WhileNode whileNode) {
-    if (this.stmtMap.containsKey(whileNode)) {
-      return this.stmtMap.get(whileNode);
-
-    } else {
-      return super.visit(whileNode);
-    }
-  }
-
-  @Override
-  public StatementNode visit(ForNode forNode) {
-    if (this.stmtMap.containsKey(forNode)) {
-      return this.stmtMap.get(forNode);
-
-    } else {
-      return super.visit(forNode);
-    }
-  }
-
-  @Override
-  public StatementNode visit(LoopNode loopNode) {
-    if (this.stmtMap.containsKey(loopNode)) {
-      return this.stmtMap.get(loopNode);
-
-    } else {
-      return super.visit(loopNode);
-    }
-  }
-
-  @Override
-  public StatementNode visit(BreakNode breakNode) {
-    if (this.stmtMap.containsKey(breakNode)) {
-      return this.stmtMap.get(breakNode);
-
-    } else {
-      return super.visit(breakNode);
-    }
-  }
-
-  @Override
-  public StatementNode visit(BlockNode blockNode) {
-    if (this.stmtMap.containsKey(blockNode)) {
-      return this.stmtMap.get(blockNode);
-
-    } else {
-      return super.visit(blockNode);
-    }
-  }
-
-  @Override
-  public StatementNode visit(AssertNode assertNode) {
-    if (this.stmtMap.containsKey(assertNode)) {
-      return this.stmtMap.get(assertNode);
-
-    } else {
-      return super.visit(assertNode);
+    @Override
+    protected StatementNode leave(StatementNode node, ReplaceStmtVisitor visitor) {
+      final StatementNode replacement = stmtReplacements.get(node);
+      return replacement != null ? replacement : node;
     }
   }
 }

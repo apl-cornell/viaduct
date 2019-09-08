@@ -3,12 +3,12 @@ process main {
     int{B} b[10];
 
     int{A} i;
-    for (i = 0; i < 10; i++) {
+    for (i = 0; i < 10; i += 1) {
         a[i] = i * 50;
     }
 
     int{B} j;
-    for (j = 0; j < 10; j++) {
+    for (j = 0; j < 10; j += 1) {
         b[j] = j * 100;
     }
 }

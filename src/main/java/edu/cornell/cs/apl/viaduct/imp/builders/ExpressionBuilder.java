@@ -1,8 +1,8 @@
 package edu.cornell.cs.apl.viaduct.imp.builders;
 
-import edu.cornell.cs.apl.viaduct.AstNode;
 import edu.cornell.cs.apl.viaduct.Binding;
 import edu.cornell.cs.apl.viaduct.imp.ast.BinaryExpressionNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.BinaryOperator;
 import edu.cornell.cs.apl.viaduct.imp.ast.BinaryOperators.And;
 import edu.cornell.cs.apl.viaduct.imp.ast.BinaryOperators.EqualTo;
 import edu.cornell.cs.apl.viaduct.imp.ast.BinaryOperators.LessThan;
@@ -10,35 +10,33 @@ import edu.cornell.cs.apl.viaduct.imp.ast.BinaryOperators.LessThanOrEqualTo;
 import edu.cornell.cs.apl.viaduct.imp.ast.BinaryOperators.Or;
 import edu.cornell.cs.apl.viaduct.imp.ast.BinaryOperators.Plus;
 import edu.cornell.cs.apl.viaduct.imp.ast.BooleanValue;
-import edu.cornell.cs.apl.viaduct.imp.ast.DowngradeNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.DowngradeNode.DowngradeType;
 import edu.cornell.cs.apl.viaduct.imp.ast.ExpressionNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ImpValue;
 import edu.cornell.cs.apl.viaduct.imp.ast.IntegerValue;
 import edu.cornell.cs.apl.viaduct.imp.ast.LiteralNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.NotNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ReadNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.ReferenceNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.Variable;
-import edu.cornell.cs.apl.viaduct.security.Label;
 
 /** Builds expressions. */
-public class ExpressionBuilder {
+public final class ExpressionBuilder {
   public ExpressionBuilder() {}
 
   public ExpressionNode var(String name) {
     return var(Variable.create(name));
   }
 
-  public <T extends AstNode> ExpressionNode var(Binding<T> binding) {
-    return var(Variable.create(binding.getBinding()));
+  public ExpressionNode var(Binding<?> binding) {
+    return var(Variable.create(binding));
   }
 
-  public ExpressionNode var(Variable name) {
-    return ReadNode.create(name);
+  public ExpressionNode var(Variable variable) {
+    return ReadNode.builder().setReference(variable).build();
   }
 
   public ExpressionNode lit(ImpValue value) {
-    return LiteralNode.create(value);
+    return LiteralNode.builder().setValue(value).build();
   }
 
   public ExpressionNode boolLit(boolean value) {
@@ -49,52 +47,39 @@ public class ExpressionBuilder {
     return lit(IntegerValue.create(value));
   }
 
+  public ExpressionNode read(ReferenceNode ref) {
+    return ReadNode.builder().setReference(ref).build();
+  }
+
   public ExpressionNode not(ExpressionNode expression) {
-    return NotNode.create(expression);
+    return NotNode.builder().setExpression(expression).build();
+  }
+
+  private ExpressionNode binop(BinaryOperator op, ExpressionNode lhs, ExpressionNode rhs) {
+    return BinaryExpressionNode.builder().setOperator(op).setLhs(lhs).setRhs(rhs).build();
   }
 
   public ExpressionNode or(ExpressionNode lhs, ExpressionNode rhs) {
-    return BinaryExpressionNode.create(lhs, Or.create(), rhs);
+    return binop(Or.create(), lhs, rhs);
   }
 
   public ExpressionNode and(ExpressionNode lhs, ExpressionNode rhs) {
-    return BinaryExpressionNode.create(lhs, And.create(), rhs);
+    return binop(And.create(), lhs, rhs);
   }
 
   public ExpressionNode equals(ExpressionNode lhs, ExpressionNode rhs) {
-    return BinaryExpressionNode.create(lhs, EqualTo.create(), rhs);
+    return binop(EqualTo.create(), lhs, rhs);
   }
 
   public ExpressionNode lt(ExpressionNode lhs, ExpressionNode rhs) {
-    return BinaryExpressionNode.create(lhs, LessThan.create(), rhs);
+    return binop(LessThan.create(), lhs, rhs);
   }
 
   public ExpressionNode leq(ExpressionNode lhs, ExpressionNode rhs) {
-    return BinaryExpressionNode.create(lhs, LessThanOrEqualTo.create(), rhs);
+    return binop(LessThanOrEqualTo.create(), lhs, rhs);
   }
 
   public ExpressionNode plus(ExpressionNode lhs, ExpressionNode rhs) {
-    return BinaryExpressionNode.create(lhs, Plus.create(), rhs);
-  }
-
-  public ExpressionNode downgrade(
-      ExpressionNode expression, Label fromLabel, Label toLabel, DowngradeType downgradeType) {
-    return DowngradeNode.create(expression, fromLabel, toLabel, downgradeType);
-  }
-
-  public ExpressionNode declassify(ExpressionNode expression, Label label) {
-    return this.downgrade(expression, null, label, DowngradeType.DECLASSIFY);
-  }
-
-  public ExpressionNode declassify(ExpressionNode expression, Label fromLabel, Label toLabel) {
-    return this.downgrade(expression, fromLabel, toLabel, DowngradeType.DECLASSIFY);
-  }
-
-  public ExpressionNode endorse(ExpressionNode expression, Label label) {
-    return this.downgrade(expression, null, label, DowngradeType.ENDORSE);
-  }
-
-  public ExpressionNode endorse(ExpressionNode expression, Label fromLabel, Label toLabel) {
-    return this.downgrade(expression, fromLabel, toLabel, DowngradeType.ENDORSE);
+    return binop(Plus.create(), lhs, rhs);
   }
 }

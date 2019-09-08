@@ -13,8 +13,10 @@ import edu.cornell.cs.apl.viaduct.imp.parser.TrustConfigurationParser;
 import edu.cornell.cs.apl.viaduct.imp.protocols.ImpCommunicationCostEstimator;
 import edu.cornell.cs.apl.viaduct.imp.protocols.ImpProtocolCommunicationStrategy;
 import edu.cornell.cs.apl.viaduct.imp.protocols.ImpProtocolSearchStrategy;
+import edu.cornell.cs.apl.viaduct.imp.transformers.AnfConverter;
+import edu.cornell.cs.apl.viaduct.imp.transformers.Elaborator;
+import edu.cornell.cs.apl.viaduct.imp.transformers.ImpPdgBuilderPreprocessor;
 import edu.cornell.cs.apl.viaduct.imp.typing.TypeChecker;
-import edu.cornell.cs.apl.viaduct.imp.visitors.ImpPdgBuilderPreprocessVisitor;
 import edu.cornell.cs.apl.viaduct.imp.visitors.ImpPdgBuilderVisitor;
 import edu.cornell.cs.apl.viaduct.imp.visitors.ImpProtocolInstantiationVisitor;
 import edu.cornell.cs.apl.viaduct.imp.visitors.PrintVisitor;
@@ -171,26 +173,25 @@ public class CompileCommand extends BaseCommand {
 
   @Override
   public Void call() throws Exception {
-    final ProgramNode program = this.parse();
-
-    final HostTrustConfiguration hostConfig = program.getHostTrustConfiguration();
+    final ProgramNode program = this.input.parse();
+    final HostTrustConfiguration hostConfig = this.parseHostConfig(program);
 
     // check
     TypeChecker.run(program);
     // TODO: check IF here for the entire program, not just main and not after elaboration.
 
-    StatementNode main = program.getProcessCode(ProcessName.getMain());
-    ImpPdgBuilderPreprocessVisitor preprocessor = new ImpPdgBuilderPreprocessVisitor();
-    main = preprocessor.run(main);
+    final ProgramNode processedProgram =
+        ImpPdgBuilderPreprocessor.run(AnfConverter.run(Elaborator.run(program)));
+
+    final StatementNode main = processedProgram.processes().get(ProcessName.getMain()).getBody();
 
     // information flow constraint solving
     final InformationFlowChecker checker = new InformationFlowChecker();
     try {
       checker.run(main);
-
     } catch (UnsatisfiableConstraintError unsatConstraint) {
-      System.out.println(unsatConstraint);
-
+      // TODO: better error reporting
+      unsatConstraint.printStackTrace();
     } finally {
       // Dump PDG with information flow labels to a file (if requested).
       dumpConstraints(checker::exportDotGraph, constraintGraphOutput);
@@ -203,7 +204,7 @@ public class CompileCommand extends BaseCommand {
     // Generate program dependency graph.
     final ProgramDependencyGraph<ImpAstNode> pdg = new ImpPdgBuilderVisitor().generatePDG(main);
 
-    PrintVisitor printer = new PrintVisitor(false);
+    final PrintVisitor printer = new PrintVisitor(false);
     // Dump PDG with information flow labels to a file (if requested).
     dumpGraph(() -> PdgDotPrinter.pdgDotGraphWithLabels(pdg, printer), labelGraphOutput);
 
@@ -245,10 +246,6 @@ public class CompileCommand extends BaseCommand {
       try (PrintStream writer = output.newOutputStream()) {
         writer.println(PrintVisitor.run(generatedProgram));
       }
-
-      // TODO: This gets printed in between System.out
-      // int protocolCost = costEstimator.estimatePdgCost(protocolMap, pdg);
-      // System.err.println("Protocol cost: " + protocolCost);
     } else {
       // We couldn't find protocols for some nodes.
       final StringBuilder error = new StringBuilder();
@@ -272,17 +269,25 @@ public class CompileCommand extends BaseCommand {
     return null;
   }
 
-  /** Parse input program as well as all host configuration files, and return them in one bundle. */
-  private ProgramNode parse() throws Exception {
-    final ProgramNode.Builder builder = ProgramNode.builder();
-    builder.addAll(this.input.parse());
+  /**
+   * Parse all host configuration files, add host declarations from the main program, and return
+   * them in one bundle.
+   */
+  private HostTrustConfiguration parseHostConfig(ProgramNode program) throws Exception {
+    final HostTrustConfiguration.Builder builder = HostTrustConfiguration.builder();
 
-    // Append trust configurations.
+    // Parse and concatenate trust configurations.
     if (hostConfigurationFiles != null) {
       for (String hostConfig : hostConfigurationFiles) {
-        builder.addHosts(TrustConfigurationParser.parse(SourceFile.from(new File(hostConfig))));
+        // TODO: check that there are no collisions within each file.
+        //    Collisions across files are meant to have an overwriting semantic.
+        final SourceFile hostConfigFile = SourceFile.from(new File(hostConfig));
+        builder.addAll(TrustConfigurationParser.parse(hostConfigFile));
       }
     }
+
+    // Add declarations from the main program.
+    builder.addAll(program.hosts().values());
 
     return builder.build();
   }

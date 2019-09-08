@@ -8,18 +8,59 @@ import edu.cornell.cs.apl.viaduct.imp.ast.BinaryOperators.*;
 import edu.cornell.cs.apl.viaduct.security.Label;
 import edu.cornell.cs.apl.viaduct.security.Principal;
 
+
+
+action code {:
+    /** Generate source location information for a node given left and right character offsets. */
+    private SourceRange location(int left, int right) {
+        final SourceFile source = ((ImpLexer) getScanner()).getSourceFile();
+        final SourcePosition start = SourcePosition.create(source, left);
+        final SourcePosition end = SourcePosition.create(source, right);
+        return SourceRange.create(start, end);
+    }
+
+    /** Construct a binary expression node with source location inferred from the arguments. */
+    private BinaryExpressionNode binary(BinaryOperator op, ExpressionNode lhs, ExpressionNode rhs) {
+        return BinaryExpressionNode.builder()
+            .setOperator(op)
+            .setLhs(lhs)
+            .setRhs(rhs)
+            .setSourceLocation(lhs.getSourceLocation().merge(rhs.getSourceLocation()))
+            .build();
+    }
+
+    /**
+     * Construct an assignment node that applies an operation with source location inferred from
+     * the arguments.
+     */
+    private AssignNode opAssign(BinaryOperator op, ReferenceNode lhs, ExpressionNode rhs) {
+        final ExpressionNode readLhs = ReadNode.builder()
+            .setReference(lhs)
+            .setSourceLocation(lhs)
+            .build();
+        final ExpressionNode compute = binary(op, readLhs, rhs);
+        return AssignNode.builder()
+            .setLhs(lhs)
+            .setRhs(compute)
+            .setSourceLocation(compute)
+            .build();
+    }
+:}
+
 nonterminal ProgramNode program;
 nonterminal ProgramNode.Builder declaration_list;
-nonterminal List<StatementNode> stmt_list;
-nonterminal StatementNode stmt, stmt_basic, block;
+nonterminal TopLevelDeclarationNode declaration;
+nonterminal StatementNode stmt, stmt_basic;
+nonterminal BlockNode block;
+nonterminal BlockNode.Builder stmt_list;
 nonterminal ReferenceNode reference;
 nonterminal ExpressionNode expr;
 nonterminal ImpValue value;
-nonterminal Label label, label_expr, optto;
+nonterminal Label label, label_expr, optional_label, optional_to;
 nonterminal Variable variable;
-nonterminal Host host;
+nonterminal HostName host;
 nonterminal ProcessName process_name;
-nonterminal ImpBaseType type;
+nonterminal ImpBaseType type, optional_type;
 
 terminal String IDENT, CAP_IDENT;
 terminal Integer INT_LIT;
@@ -56,18 +97,16 @@ start with program;
 
 
 program ::=
-    declaration_list:declarations {: RESULT = declarations.build(); :}
+    declaration_list:declarations {:
+      RESULT = declarations
+          .setSourceLocation(location(declarationsleft, declarationsright))
+          .build();
+  :}
   ;
 
 declaration_list ::=
-    HOST host:host COLON label:trust SEMICOLON declaration_list:declarations {:
-      declarations.addHost(host, trust);
-      RESULT = declarations;
-    :}
-
-  | PROCESS process_name:processName block:block declaration_list:declarations {:
-      declarations.addProcess(processName, block);
-      RESULT = declarations;
+    declaration_list:declarations declaration:declaration {:
+      RESULT = declarations.add(declaration);
     :}
 
   | /* empty */ {:
@@ -75,30 +114,63 @@ declaration_list ::=
   :}
   ;
 
-type ::=
-    INT {: RESULT = IntegerType.create(); :}
-  | BOOL {: RESULT = BooleanType.create(); :}
+declaration ::=
+    HOST:begin host:host COLON label:trust SEMICOLON:end {:
+      RESULT = HostDeclarationNode.builder()
+          .setName(host)
+          .setTrust(trust)
+          .setSourceLocation(location(beginleft, endright))
+          .build();
+    :}
+
+  | PROCESS:begin process_name:processName block:body {:
+      RESULT = ProcessDeclarationNode.builder()
+          .setName(processName)
+          .setBody(body)
+          .setSourceLocation(location(beginleft, bodyright))
+          .build();
+    :}
   ;
+
 
 stmt ::=
     stmt_basic:stmt SEMICOLON {:
       RESULT = stmt;
     :}
 
-  | IF OPEN_PAREN expr:guard CLOSE_PAREN block:thenCase ELSE block:elseCase {:
-      RESULT = IfNode.create(guard, thenCase, elseCase);
+  | IF:begin OPEN_PAREN expr:guard CLOSE_PAREN block:thenCase ELSE block:elseCase {:
+      RESULT = IfNode.builder()
+          .setGuard(guard)
+          .setThenBranch(thenCase)
+          .setElseBranch(elseCase)
+          .setSourceLocation(location(beginleft, elseCaseright))
+          .build();
     :}
 
-  | IF OPEN_PAREN expr:guard CLOSE_PAREN block:thenCase {:
-      RESULT = IfNode.create(guard, thenCase);
+  | IF:begin OPEN_PAREN expr:guard CLOSE_PAREN block:thenCase {:
+      RESULT = IfNode.builder()
+          .setGuard(guard)
+          .setThenBranch(thenCase)
+          .setSourceLocation(location(beginleft, thenCaseright))
+          .build();
     :}
 
-  | WHILE OPEN_PAREN expr:guard CLOSE_PAREN block:body {:
-      RESULT = WhileNode.create(guard, body);
+  | WHILE:begin OPEN_PAREN expr:guard CLOSE_PAREN block:body {:
+      RESULT = WhileNode.builder()
+          .setGuard(guard)
+          .setBody(body)
+          .setSourceLocation(location(beginleft, bodyright))
+          .build();
     :}
 
-  | FOR OPEN_PAREN stmt_basic:initialzer SEMICOLON expr:guard SEMICOLON stmt_basic:update CLOSE_PAREN block:body {:
-      RESULT = ForNode.create(initialzer, guard, update, body);
+  | FOR:begin OPEN_PAREN stmt_basic:initializer SEMICOLON expr:guard SEMICOLON stmt_basic:update CLOSE_PAREN block:body {:
+      RESULT = ForNode.builder()
+          .setInitialize(initializer)
+          .setGuard(guard)
+          .setUpdate(update)
+          .setBody(body)
+          .setSourceLocation(location(beginleft, bodyright))
+          .build();
     :}
 
   | block:block {:
@@ -107,12 +179,13 @@ stmt ::=
   ;
 
 stmt_basic ::=
-    type:ty label:lab variable:var {:
-      RESULT = VariableDeclarationNode.create(var, ty, lab);
-    :}
-
-  | type:ty variable:var {:
-      RESULT = VariableDeclarationNode.create(var, ty, null);
+    type:ty optional_label:lab variable:var {:
+      RESULT = VariableDeclarationNode.builder()
+          .setVariable(var)
+          .setType(ty)
+          .setLabel(lab)
+          .setSourceLocation(location(tyleft, varright))
+          .build();
     :}
 
 //  | type:ty label:lab variable:var EQ expr:e {:
@@ -122,92 +195,93 @@ stmt_basic ::=
 //      RESULT = BlockNode.create(stmts);
 //    :}
 
-  | type:ty variable:var EQ expr:e {:
-      List<StatementNode> stmts = new ArrayList<>();
-      stmts.add(VariableDeclarationNode.create(var, ty, null));
-      stmts.add(AssignNode.create(var, e));
-      RESULT = BlockNode.create(stmts);
+  | type:ty optional_label:lab variable:var OPEN_SQBRACE expr:e CLOSE_SQBRACE:end {:
+      RESULT = ArrayDeclarationNode.builder()
+          .setVariable(var)
+          .setLength(e)
+          .setElementType(ty)
+          .setLabel(lab)
+          .setSourceLocation(location(tyleft, endright))
+          .build();
     :}
 
-  | type:ty label:lab variable:var OPEN_SQBRACE expr:e CLOSE_SQBRACE {:
-      RESULT = ArrayDeclarationNode.create(var, e, ty, lab);
-    :}
-
-  | type:ty variable:var OPEN_SQBRACE expr:e CLOSE_SQBRACE {:
-      RESULT = ArrayDeclarationNode.create(var, e, ty, null);
-    :}
-
-  | LET variable:var EQ expr:e {:
-      RESULT = LetBindingNode.create(var, e);
+  | LET:begin variable:var EQ expr:e {:
+      RESULT = LetBindingNode.builder()
+          .setVariable(var)
+          .setRhs(e)
+          .setSourceLocation(location(beginleft, eright))
+          .build();
     :}
 
   | reference:ref EQ expr:e {:
-      RESULT = AssignNode.create(ref, e);
+      RESULT = AssignNode.builder()
+          .setLhs(ref)
+          .setRhs(e)
+          .setSourceLocation(location(refleft, eright))
+          .build();
     :}
 
   | reference:ref PLUSEQ expr:e {:
-      ExpressionNode rhs = BinaryExpressionNode.create(ReadNode.create(ref), Plus.create(), e);
-      RESULT = AssignNode.create(ref, rhs);
+      RESULT = opAssign(Plus.create(), ref, e);
     :}
 
   | reference:ref MINUSEQ expr:e {:
-      ExpressionNode rhs = BinaryExpressionNode.create(ReadNode.create(ref), Minus.create(), e);
-      RESULT = AssignNode.create(ref, rhs);
+      RESULT = opAssign(Minus.create(), ref, e);
     :}
 
   | reference:ref TIMESEQ expr:e {:
-      ExpressionNode rhs = BinaryExpressionNode.create(ReadNode.create(ref), Times.create(), e);
-      RESULT = AssignNode.create(ref, rhs);
+      RESULT = opAssign(Times.create(), ref, e);
     :}
 
-  | reference:ref PLUSPLUS {:
-      ExpressionNode rhs = BinaryExpressionNode.create(ReadNode.create(ref), Plus.create(), LiteralNode.create(IntegerValue.create(1)));
-      RESULT = AssignNode.create(ref, rhs);
+  | SEND:begin expr:e TO process_name:recipient {:
+      RESULT = SendNode.builder()
+          .setRecipient(recipient)
+          .setSentExpression(e)
+          .setSourceLocation(location(beginleft, recipientright))
+          .build();
     :}
 
-  | reference:ref MINUSMINUS {:
-      ExpressionNode rhs = BinaryExpressionNode.create(ReadNode.create(ref), Minus.create(), LiteralNode.create(IntegerValue.create(1)));
-      RESULT = AssignNode.create(ref, rhs);
+  | variable:var LARROW RECV optional_type:ty process_name:sender {:
+      RESULT = ReceiveNode.builder()
+          .setVariable(var)
+          .setReceiveType(ty)
+          .setSender(sender)
+          .setSourceLocation(location(varleft, senderright))
+          .build();
     :}
 
-  | SEND expr:e TO process_name:processName {:
-      RESULT = SendNode.create(processName, e);
-    :}
-
-  | variable:var LARROW RECV process_name:processName {:
-      RESULT = ReceiveNode.create(var, processName);
-    :}
-
-  | variable:var LARROW RECV type:ty process_name:processName {:
-      RESULT = ReceiveNode.create(var, ty, processName);
-    :}
-
-  | ASSERT expr:e {:
-      RESULT = AssertNode.create(e);
+  | ASSERT:begin expr:e {:
+      RESULT = AssertNode.builder()
+          .setExpression(e)
+          .setSourceLocation(location(beginleft, eright))
+          .build();
     :}
   ;
 
 block ::=
-    OPEN_BRACE stmt_list:slist CLOSE_BRACE {:
-      RESULT = BlockNode.create(slist);
+    OPEN_BRACE:begin stmt_list:slist CLOSE_BRACE:end {:
+      RESULT = slist.setSourceLocation(location(beginleft, endright)).build();
     :}
   ;
 
 stmt_list ::=
     stmt_list:slist stmt:s {:
-      slist.add(s);
-      RESULT = slist;
+      RESULT = slist.add(s);
     :}
 
   | /* empty */ {:
-        RESULT = new LinkedList<>();
+      RESULT = BlockNode.builder();
     :}
   ;
 
-reference ::=
-    variable:var OPEN_SQBRACE expr:e CLOSE_SQBRACE {:
-      RESULT = ArrayIndexingNode.create(var, e);
 
+reference ::=
+    variable:var OPEN_SQBRACE expr:e CLOSE_SQBRACE:end {:
+      RESULT = ArrayIndexingNode.builder()
+          .setArray(var)
+          .setIndex(e)
+          .setSourceLocation(location(varleft, endright))
+          .build();
     :}
 
   | variable:var {:
@@ -215,106 +289,112 @@ reference ::=
     :}
   ;
 
+
 expr ::=
     value:value {:
-      RESULT = LiteralNode.create(value);
+      RESULT = LiteralNode.builder()
+          .setValue(value)
+          .setSourceLocation(location(valueleft, valueright))
+          .build();
     :}
 
   | reference:ref {:
-       RESULT = ReadNode.create(ref);
+       RESULT = ReadNode.builder().setReference(ref).setSourceLocation(ref).build();
     :}
 
-  | NOT expr:e {:
-      RESULT = NotNode.create(e);
+  | NOT:begin expr:e {:
+      RESULT = NotNode.builder()
+          .setExpression(e)
+          .setSourceLocation(location(beginleft, eright))
+          .build();
     :}
 
   | expr:e1 ANDAND expr:e2 {:
-      RESULT = BinaryExpressionNode.create(e1, And.create(), e2);
+      RESULT = binary(And.create(), e1, e2);
     :}
 
   | expr:e1 EQEQ expr:e2 {:
-      RESULT = BinaryExpressionNode.create(e1, EqualTo.create(), e2);
+      RESULT = binary(EqualTo.create(), e1, e2);
     :}
 
   | expr:e1 NEQ expr:e2 {:
-      RESULT = NotNode.create(BinaryExpressionNode.create(e1, EqualTo.create(), e2));
+      final ExpressionNode eq = binary(EqualTo.create(), e1, e2);
+      RESULT = NotNode.builder()
+          .setExpression(eq)
+          .setSourceLocation(eq)
+          .build();
     :}
 
   | expr:e1 LT expr:e2 {:
-      RESULT = BinaryExpressionNode.create(e1, LessThan.create(), e2);
+      RESULT = binary(LessThan.create(), e1, e2);
     :}
 
   | expr:e1 LEQ expr:e2 {:
-      RESULT = BinaryExpressionNode.create(e1, LessThanOrEqualTo.create(), e2);
+      RESULT = binary(LessThanOrEqualTo.create(), e1, e2);
     :}
 
   | expr:e1 GT expr:e2 {:
-      RESULT = NotNode.create(BinaryExpressionNode.create(e2, LessThan.create(), e1));
+      RESULT = binary(LessThan.create(), e2, e1);
     :}
 
   | expr:e1 GEQ expr:e2 {:
-      RESULT = NotNode.create(BinaryExpressionNode.create(e2, LessThanOrEqualTo.create(), e1));
+      RESULT = binary(LessThanOrEqualTo.create(), e2, e1);
     :}
 
   | expr:e1 PLUS expr:e2 {:
-      RESULT = BinaryExpressionNode.create(e1, Plus.create(), e2);
+      RESULT = binary(Plus.create(), e1, e2);
     :}
 
   | expr:e1 MINUS expr:e2 {:
-      RESULT = BinaryExpressionNode.create(e1, Minus.create(), e2);
+      RESULT = binary(Minus.create(), e1, e2);
     :}
 
   | expr:e1 TIMES expr:e2 {:
-      RESULT = BinaryExpressionNode.create(e1, Times.create(), e2);
+      RESULT = binary(Times.create(), e1, e2);
     :}
 
-  | MINUS expr:e {:
-      RESULT = BinaryExpressionNode.create(
-        LiteralNode.create(IntegerValue.create(0)),
-        Minus.create(),
-        e);
+  | MINUS:begin expr:e {:
+      final LiteralNode zero = LiteralNode.builder()
+          .setValue(IntegerValue.create(0))
+          .setSourceLocation(location(beginleft, beginright))
+          .build();
+      RESULT = binary(Minus.create(), zero, e);
     :}
 
-  | DECLASSIFY OPEN_PAREN expr:e COMMA label:l optto:lt CLOSE_PAREN {:
-      if (lt == null) {
-        RESULT = DowngradeNode.create(e, l, DowngradeType.DECLASSIFY);
-
-      } else {
-        RESULT = DowngradeNode.create(e, l, lt, DowngradeType.DECLASSIFY);
-      }
+  | DECLASSIFY:begin OPEN_PAREN expr:e COMMA label:from optional_to:to CLOSE_PAREN:end {:
+      RESULT = DowngradeNode.builder()
+          .setDowngradeType(DowngradeType.DECLASSIFY)
+          .setExpression(e)
+          .setFromLabel(from)
+          .setToLabel(to)
+          .setSourceLocation(location(beginleft, endright))
+          .build();
     :}
 
-  | ENDORSE OPEN_PAREN expr:e COMMA label:l optto:lt CLOSE_PAREN {:
-      if (lt == null) {
-        RESULT = DowngradeNode.create(e, l, DowngradeType.ENDORSE);
-
-      } else {
-        RESULT = DowngradeNode.create(e, l, lt, DowngradeType.ENDORSE);
-      }
+  | ENDORSE:begin OPEN_PAREN expr:e COMMA label:from optional_to:to CLOSE_PAREN:end {:
+      RESULT = DowngradeNode.builder()
+          .setDowngradeType(DowngradeType.ENDORSE)
+          .setExpression(e)
+          .setFromLabel(from)
+          .setToLabel(to)
+          .setSourceLocation(location(beginleft, endright))
+          .build();
     :}
 
-  | DOWNGRADE OPEN_PAREN expr:e COMMA label:l optto:lt CLOSE_PAREN {:
-      if (lt == null) {
-        RESULT = DowngradeNode.create(e, l, DowngradeType.BOTH);
-
-      } else {
-        RESULT = DowngradeNode.create(e, l, lt, DowngradeType.BOTH);
-      }
+  | DOWNGRADE:begin OPEN_PAREN expr:e COMMA label:from optional_to:to CLOSE_PAREN:end {:
+      RESULT = DowngradeNode.builder()
+          .setDowngradeType(DowngradeType.BOTH)
+          .setExpression(e)
+          .setFromLabel(from)
+          .setToLabel(to)
+          .setSourceLocation(location(beginleft, endright))
+          .build();
     :}
 
   | OPEN_PAREN expr:e CLOSE_PAREN {:
       RESULT = e;
     :}
   ;
-
-optto ::= /* nothing */ {:
-        RESULT = null;
-    :}
-   | TO label:l {:
-        RESULT = l;
-    :}
-
-   ;
 
 value ::=
     TRUE {:
@@ -330,10 +410,43 @@ value ::=
     :}
   ;
 
-label ::=
-    OPEN_BRACE CLOSE_BRACE {: RESULT = Label.bottom(); :}
 
-  | OPEN_BRACE label_expr:l CLOSE_BRACE {: RESULT = l; :}
+optional_type ::=
+    type:ty {:
+        RESULT = ty;
+    :}
+  | /* nothing */ {:
+        RESULT = null;
+    :}
+  ;
+
+optional_label ::=
+    label:l {:
+        RESULT = l;
+    :}
+  | /* nothing */ {:
+        RESULT = null;
+    :}
+  ;
+
+optional_to ::=
+    TO label:l {:
+        RESULT = l;
+    :}
+  | /* nothing */ {:
+        RESULT = null;
+    :}
+  ;
+
+
+type ::=
+    INT {: RESULT = IntegerType.create(); :}
+  | BOOL {: RESULT = BooleanType.create(); :}
+  ;
+
+
+label ::=
+    OPEN_BRACE label_expr:l CLOSE_BRACE {: RESULT = l; :}
   ;
 
 label_expr ::=
@@ -388,14 +501,22 @@ label_expr ::=
     :}
   ;
 
+
 variable ::=
-    IDENT:id  {: RESULT = Variable.create(id); :}
+    IDENT:id  {:
+      RESULT = Variable.builder()
+          .setName(id)
+          .setSourceLocation(location(idleft, idright))
+          .build();
+  :}
   ;
 
 host ::=
-    IDENT:id {: RESULT = Host.create(id); :}
+    // TODO: add source location
+    IDENT:id {: RESULT = HostName.create(id); :}
   ;
 
 process_name ::=
+    // TODO: add source location
     IDENT:id {: RESULT = ProcessName.create(id); :}
   ;

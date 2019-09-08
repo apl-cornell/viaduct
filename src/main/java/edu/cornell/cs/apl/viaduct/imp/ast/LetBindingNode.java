@@ -3,12 +3,14 @@ package edu.cornell.cs.apl.viaduct.imp.ast;
 import com.google.auto.value.AutoValue;
 import edu.cornell.cs.apl.viaduct.imp.visitors.StmtVisitor;
 
-/** declare and assign temporary variables. */
+/** Declare and assign temporary variables. */
 @AutoValue
 public abstract class LetBindingNode extends StatementNode {
-  public static LetBindingNode create(Variable var, ExpressionNode rhs) {
-    return new AutoValue_LetBindingNode(var, rhs);
+  public static Builder builder() {
+    return new AutoValue_LetBindingNode.Builder();
   }
+
+  public abstract Builder toBuilder();
 
   public abstract Variable getVariable();
 
@@ -17,5 +19,14 @@ public abstract class LetBindingNode extends StatementNode {
   @Override
   public final <R> R accept(StmtVisitor<R> visitor) {
     return visitor.visit(this);
+  }
+
+  @AutoValue.Builder
+  public abstract static class Builder extends ImpAstNode.Builder<Builder> {
+    public abstract Builder setVariable(Variable variable);
+
+    public abstract Builder setRhs(ExpressionNode rhs);
+
+    public abstract LetBindingNode build();
   }
 }

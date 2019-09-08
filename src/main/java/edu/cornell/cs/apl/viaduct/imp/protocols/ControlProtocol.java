@@ -2,7 +2,7 @@ package edu.cornell.cs.apl.viaduct.imp.protocols;
 
 import edu.cornell.cs.apl.viaduct.Binding;
 import edu.cornell.cs.apl.viaduct.imp.ast.BreakNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.Host;
+import edu.cornell.cs.apl.viaduct.imp.ast.HostName;
 import edu.cornell.cs.apl.viaduct.imp.ast.IfNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ImpAstNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.LoopNode;
@@ -17,7 +17,6 @@ import edu.cornell.cs.apl.viaduct.protocol.Protocol;
 import edu.cornell.cs.apl.viaduct.protocol.ProtocolInstantiationError;
 import edu.cornell.cs.apl.viaduct.protocol.ProtocolInstantiationInfo;
 import edu.cornell.cs.apl.viaduct.security.Label;
-
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -35,15 +34,14 @@ public class ControlProtocol extends Cleartext implements Protocol<ImpAstNode> {
   }
 
   void instantiateControlNode(
-      PdgControlNode<ImpAstNode> node,
-      ProtocolInstantiationInfo<ImpAstNode> info) {
+      PdgControlNode<ImpAstNode> node, ProtocolInstantiationInfo<ImpAstNode> info) {
 
     ImpAstNode astNode = node.getAstNode();
 
     // TODO: this only works for single-level breaks for now
     if (astNode instanceof BreakNode) {
-      Set<Host> breakHosts = info.getCurrentLoopControlContext();
-      for (Host breakHost : breakHosts) {
+      Set<HostName> breakHosts = info.getCurrentLoopControlContext();
+      for (HostName breakHost : breakHosts) {
         StmtBuilder breakHostBuilder = info.getBuilder(breakHost);
         breakHostBuilder.loopBreak();
       }
@@ -55,7 +53,7 @@ public class ControlProtocol extends Cleartext implements Protocol<ImpAstNode> {
 
     // create control structure in all nodes that have a read channel from the control node
     // TODO: this should really compute a transitive closure
-    Set<Host> controlStructureHosts = new HashSet<>();
+    Set<HostName> controlStructureHosts = new HashSet<>();
     for (PdgInfoEdge<ImpAstNode> infoEdge : node.getInfoEdges()) {
       PdgNode<ImpAstNode> target = infoEdge.getTarget();
       controlStructureHosts.addAll(info.getProtocol(target).getHosts());
@@ -75,26 +73,25 @@ public class ControlProtocol extends Cleartext implements Protocol<ImpAstNode> {
       // conditional node should only have one read input (result of the guard)
       assert infoEdges.size() == 1;
 
-      IfNode ifNode = (IfNode)astNode;
-      for (Host controlStructureHost : controlStructureHosts) {
+      IfNode ifNode = (IfNode) astNode;
+      for (HostName controlStructureHost : controlStructureHosts) {
         StmtBuilder controlStructureBuilder = info.getBuilder(controlStructureHost);
-        Map<Variable,Variable> guardRenameMap =
+        Map<Variable, Variable> guardRenameMap =
             performComputeReads(controlStructureHost, node, info);
         RenameVisitor guardRenamer = new RenameVisitor(guardRenameMap);
-        IfNode newIfNode = (IfNode)guardRenamer.run(ifNode);
+        IfNode newIfNode = (IfNode) guardRenamer.run(ifNode);
         controlStructureBuilder.pushIf(newIfNode.getGuard());
       }
 
     } else if (astNode instanceof LoopNode) {
       info.pushLoopControlContext(controlStructureHosts);
-      for (Host controlStructureHost : controlStructureHosts) {
+      for (HostName controlStructureHost : controlStructureHosts) {
         StmtBuilder controlStructureBuilder = info.getBuilder(controlStructureHost);
         controlStructureBuilder.pushLoop();
       }
 
     } else {
-      throw new ProtocolInstantiationError(
-          "control node not associated with control structure");
+      throw new ProtocolInstantiationError("control node not associated with control structure");
     }
   }
 
@@ -104,7 +101,7 @@ public class ControlProtocol extends Cleartext implements Protocol<ImpAstNode> {
   }
 
   @Override
-  public Set<Host> getHosts() {
+  public Set<HostName> getHosts() {
     return new HashSet<>();
   }
 
@@ -131,7 +128,7 @@ public class ControlProtocol extends Cleartext implements Protocol<ImpAstNode> {
   public Binding<ImpAstNode> readFrom(
       PdgNode<ImpAstNode> node,
       PdgNode<ImpAstNode> readNode,
-      Host readHost,
+      HostName readHost,
       Binding<ImpAstNode> readLabel,
       List<ImpAstNode> args,
       ProtocolInstantiationInfo<ImpAstNode> info) {
@@ -143,7 +140,7 @@ public class ControlProtocol extends Cleartext implements Protocol<ImpAstNode> {
   public void writeTo(
       PdgNode<ImpAstNode> node,
       PdgNode<ImpAstNode> writeNode,
-      Host writeHost,
+      HostName writeHost,
       List<ImpAstNode> args,
       ProtocolInstantiationInfo<ImpAstNode> info) {
 

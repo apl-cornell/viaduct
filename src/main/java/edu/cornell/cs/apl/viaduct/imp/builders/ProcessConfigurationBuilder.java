@@ -1,13 +1,13 @@
 package edu.cornell.cs.apl.viaduct.imp.builders;
 
-import edu.cornell.cs.apl.viaduct.errors.NameClashError;
 import edu.cornell.cs.apl.viaduct.imp.HostTrustConfiguration;
-import edu.cornell.cs.apl.viaduct.imp.TargetPostprocessor;
-import edu.cornell.cs.apl.viaduct.imp.ast.Host;
+import edu.cornell.cs.apl.viaduct.imp.ast.BlockNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.HostName;
+import edu.cornell.cs.apl.viaduct.imp.ast.ProcessDeclarationNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ProcessName;
 import edu.cornell.cs.apl.viaduct.imp.ast.ProgramNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.StatementNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.Variable;
+import edu.cornell.cs.apl.viaduct.imp.transformers.TargetPostprocessor;
 import edu.cornell.cs.apl.viaduct.util.FreshNameGenerator;
 import java.util.HashMap;
 import java.util.Map;
@@ -16,14 +16,14 @@ import java.util.Map;
 
 /** Builds process configurations. */
 public class ProcessConfigurationBuilder {
-  private final Map<Host, StmtBuilder> configBuilder;
+  private final Map<HostName, StmtBuilder> configBuilder;
   private final FreshNameGenerator freshNameGenerator;
 
   /** create statement builders for each host. */
   public ProcessConfigurationBuilder(HostTrustConfiguration config) {
     this.configBuilder = new HashMap<>();
     this.freshNameGenerator = new FreshNameGenerator();
-    for (Host h : config.hosts()) {
+    for (HostName h : config.hosts()) {
       this.configBuilder.put(h, new StmtBuilder());
     }
   }
@@ -32,18 +32,13 @@ public class ProcessConfigurationBuilder {
   public ProgramNode build() {
     ProgramNode.Builder programBuilder = ProgramNode.builder();
 
-    try {
-      for (Map.Entry<Host, StmtBuilder> kv : configBuilder.entrySet()) {
-        Host host = kv.getKey();
-        StatementNode program = kv.getValue().build();
-        StatementNode postprocessedProgram = TargetPostprocessor.postprocess(host, program);
-        programBuilder.addProcess(ProcessName.create(host), postprocessedProgram);
-      }
-    } catch (NameClashError e) {
-      throw new Error(e);
+    for (Map.Entry<HostName, StmtBuilder> kv : configBuilder.entrySet()) {
+      ProcessName name = ProcessName.create(kv.getKey());
+      BlockNode body = (BlockNode) kv.getValue().build();
+      programBuilder.add(ProcessDeclarationNode.builder().setName(name).setBody(body).build());
     }
 
-    return programBuilder.build();
+    return TargetPostprocessor.run(programBuilder.build());
   }
 
   /**
@@ -51,7 +46,7 @@ public class ProcessConfigurationBuilder {
    *
    * @return true if a process at the host did not already exist
    */
-  public boolean createProcess(Host h) {
+  public boolean createProcess(HostName h) {
     if (!this.configBuilder.containsKey(h)) {
       this.configBuilder.put(h, new StmtBuilder());
       return true;
@@ -61,7 +56,7 @@ public class ProcessConfigurationBuilder {
     }
   }
 
-  public StmtBuilder getBuilder(Host h) {
+  public StmtBuilder getBuilder(HostName h) {
     return this.configBuilder.get(h);
   }
 
@@ -72,6 +67,6 @@ public class ProcessConfigurationBuilder {
 
   /** Get a fresh variable. */
   public Variable getFreshVar(String base) {
-    return Variable.create(getFreshName(base));
+    return Variable.builder().setName(getFreshName(base)).build();
   }
 }

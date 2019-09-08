@@ -11,7 +11,7 @@ import edu.cornell.cs.apl.viaduct.imp.ast.BreakNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.DowngradeNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ExpressionNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ForNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.Host;
+import edu.cornell.cs.apl.viaduct.imp.ast.HostDeclarationNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.IfNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ImpAstNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ImpType;
@@ -19,23 +19,24 @@ import edu.cornell.cs.apl.viaduct.imp.ast.LetBindingNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.LiteralNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.LoopNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.NotNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.ProcessName;
+import edu.cornell.cs.apl.viaduct.imp.ast.ProcessDeclarationNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ProgramNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ReadNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ReceiveNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.SendNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.StatementNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.TopLevelDeclarationNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.Variable;
 import edu.cornell.cs.apl.viaduct.imp.ast.VariableDeclarationNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.WhileNode;
 import edu.cornell.cs.apl.viaduct.security.Label;
-import io.vavr.Tuple2;
 
 /** Pretty-prints an AST. */
 public class PrintVisitor
     implements ReferenceVisitor<Void>,
         ExprVisitor<Void>,
         StmtVisitor<Void>,
+        TopLevelDeclarationVisitor<Void>,
         ProgramVisitor<Void>,
         AstPrinter<ImpAstNode> {
 
@@ -233,6 +234,11 @@ public class PrintVisitor
     arrayDecl.getLength().accept(this);
     buffer.append(']');
 
+    // TODO: remove
+    buffer.append(" /* ");
+    buffer.append(arrayDecl.getSourceLocation());
+    buffer.append(" */ ");
+
     addSeparator();
     return null;
   }
@@ -315,9 +321,7 @@ public class PrintVisitor
 
     ifNode.getThenBranch().accept(this);
 
-    StatementNode elseBranch = ifNode.getElseBranch();
-    boolean elseEmpty = elseBranch instanceof BlockNode && ((BlockNode) elseBranch).size() == 0;
-    if (!elseEmpty) {
+    if (ifNode.getElseBranch().getStatements().size() > 0) {
       buffer.append(" else ");
       ifNode.getElseBranch().accept(this);
     }
@@ -398,40 +402,33 @@ public class PrintVisitor
   }
 
   @Override
+  public Void visit(ProcessDeclarationNode processDeclarationNode) {
+    buffer.append("process ");
+    buffer.append(processDeclarationNode.getName());
+    buffer.append(' ');
+    processDeclarationNode.getBody().accept(this);
+    return null;
+  }
+
+  @Override
+  public Void visit(HostDeclarationNode hostDeclarationNode) {
+    buffer.append("host ");
+    buffer.append(hostDeclarationNode.getName());
+    buffer.append(" : ");
+    buffer.append(hostDeclarationNode.getTrust());
+    buffer.append(";");
+    return null;
+  }
+
+  @Override
   public Void visit(ProgramNode programNode) {
     boolean first = true;
-
-    for (Tuple2<ProcessName, StatementNode> process : programNode) {
+    for (TopLevelDeclarationNode declaration : programNode) {
       if (!first) {
         buffer.append("\n\n");
       }
 
-      final ProcessName processName = process._1();
-      final StatementNode statement = process._2();
-      buffer.append("process ");
-      buffer.append(processName);
-      buffer.append(' ');
-      statement.accept(this);
-
-      first = false;
-    }
-
-    if (!first) {
-      buffer.append("\n");
-    }
-
-    for (Tuple2<Host, Label> host : programNode.getHostTrustConfiguration()) {
-      if (!first) {
-        buffer.append("\n");
-      }
-
-      final Host hostName = host._1();
-      final Label trust = host._2();
-      buffer.append("host ");
-      buffer.append(hostName);
-      buffer.append(" : ");
-      buffer.append(trust);
-      buffer.append(";");
+      declaration.accept(this);
 
       first = false;
     }

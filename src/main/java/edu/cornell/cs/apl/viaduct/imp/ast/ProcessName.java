@@ -15,7 +15,7 @@ public abstract class ProcessName implements Name, Located, Comparable<ProcessNa
   }
 
   /** Get the default process name that corresponds to a host. */
-  public static ProcessName create(Host host) {
+  public static ProcessName create(HostName host) {
     return create(host.getName());
   }
 

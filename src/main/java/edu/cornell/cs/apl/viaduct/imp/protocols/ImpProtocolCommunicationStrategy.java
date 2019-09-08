@@ -1,14 +1,13 @@
 package edu.cornell.cs.apl.viaduct.imp.protocols;
 
 import edu.cornell.cs.apl.viaduct.imp.HostTrustConfiguration;
-import edu.cornell.cs.apl.viaduct.imp.ast.Host;
+import edu.cornell.cs.apl.viaduct.imp.ast.HostName;
 import edu.cornell.cs.apl.viaduct.imp.ast.ImpAstNode;
 import edu.cornell.cs.apl.viaduct.protocol.MemoizedProtocolCommunicationStrategy;
 import edu.cornell.cs.apl.viaduct.protocol.Protocol;
 import edu.cornell.cs.apl.viaduct.protocol.ProtocolInstantiationError;
 import edu.cornell.cs.apl.viaduct.security.Label;
 import edu.cornell.cs.apl.viaduct.util.PowersetIterator;
-
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -16,29 +15,28 @@ import java.util.Set;
 
 /** read from smallest host set that has enough required integrity. */
 public final class ImpProtocolCommunicationStrategy
-    extends MemoizedProtocolCommunicationStrategy<ImpAstNode>
-{
+    extends MemoizedProtocolCommunicationStrategy<ImpAstNode> {
   public ImpProtocolCommunicationStrategy() {
     super();
   }
 
   @Override
-  protected Map<Host,Set<Host>> computeCommunicationMap(
+  protected Map<HostName, Set<HostName>> computeCommunicationMap(
       HostTrustConfiguration hostConfig,
-      Protocol<ImpAstNode> fromProtocol, Protocol<ImpAstNode> toProtocol)
-  {
-    PowersetIterator<Host> fromHostPowerset = new PowersetIterator<>(fromProtocol.getHosts());
-    Set<Host> toHostSet = toProtocol.getHosts();
-    Map<Host,Set<Host>> communicationMap = new HashMap<>();
+      Protocol<ImpAstNode> fromProtocol,
+      Protocol<ImpAstNode> toProtocol) {
+    PowersetIterator<HostName> fromHostPowerset = new PowersetIterator<>(fromProtocol.getHosts());
+    Set<HostName> toHostSet = toProtocol.getHosts();
+    Map<HostName, Set<HostName>> communicationMap = new HashMap<>();
 
-    for (Set<Host> fromHostSet : fromHostPowerset) {
+    for (Set<HostName> fromHostSet : fromHostPowerset) {
       Label fromLabel = Label.top();
-      for (Host fromHost : fromHostSet) {
+      for (HostName fromHost : fromHostSet) {
         fromLabel = fromLabel.meet(hostConfig.getTrust(fromHost));
       }
 
       // assign the first (smallest) subset of the fromHosts that have
-      for (Host toHost : toHostSet) {
+      for (HostName toHost : toHostSet) {
         if (!communicationMap.containsKey(toHost)) {
           Label toLabel = hostConfig.getTrust(toHost);
           if (fromLabel.integrity().actsFor(toLabel.integrity())) {
@@ -57,11 +55,11 @@ public final class ImpProtocolCommunicationStrategy
   }
 
   @Override
-  public Set<Host> getReadSet(
+  public Set<HostName> getReadSet(
       HostTrustConfiguration hostConfig,
-      Protocol<ImpAstNode> fromProtocol, Protocol<ImpAstNode> toProtocol,
-      Host host)
-  {
+      Protocol<ImpAstNode> fromProtocol,
+      Protocol<ImpAstNode> toProtocol,
+      HostName host) {
     // if the fromProtocol is MPC, just read directly from the synthesized host
     // otherwise, we will try to look for the synthesized host's trust in the
     // host configuration, but it will not exist!
@@ -69,12 +67,12 @@ public final class ImpProtocolCommunicationStrategy
       return fromProtocol.getHosts();
 
     } else if (toProtocol instanceof ControlProtocol) {
-      PowersetIterator<Host> fromHostPowerset = new PowersetIterator<>(fromProtocol.getHosts());
+      PowersetIterator<HostName> fromHostPowerset = new PowersetIterator<>(fromProtocol.getHosts());
       Label hostLabel = hostConfig.getTrust(host);
 
-      for (Set<Host> fromHostSet : fromHostPowerset) {
+      for (Set<HostName> fromHostSet : fromHostPowerset) {
         Label fromLabel = Label.top();
-        for (Host fromHost : fromHostSet) {
+        for (HostName fromHost : fromHostSet) {
           fromLabel = fromLabel.meet(hostConfig.getTrust(fromHost));
         }
 
@@ -85,18 +83,18 @@ public final class ImpProtocolCommunicationStrategy
       throw new ProtocolInstantiationError("control node cannot read with enough integrity");
 
     } else {
-      Map<Host,Set<Host>> communicationMap =
+      Map<HostName, Set<HostName>> communicationMap =
           getCommunicationMap(hostConfig, fromProtocol, toProtocol);
       return communicationMap.get(host);
     }
   }
 
   @Override
-  public Set<Host> getWriteSet(
+  public Set<HostName> getWriteSet(
       HostTrustConfiguration hostConfig,
-      Protocol<ImpAstNode> fromProtocol, Protocol<ImpAstNode> toProtocol,
-      Host host)
-  {
+      Protocol<ImpAstNode> fromProtocol,
+      Protocol<ImpAstNode> toProtocol,
+      HostName host) {
     if (toProtocol instanceof ControlProtocol) {
       throw new ProtocolInstantiationError("control protocol is selected for storage node");
 
@@ -104,10 +102,10 @@ public final class ImpProtocolCommunicationStrategy
       return toProtocol.getHosts();
 
     } else {
-      Map<Host,Set<Host>> communicationMap =
+      Map<HostName, Set<HostName>> communicationMap =
           getCommunicationMap(hostConfig, fromProtocol, toProtocol);
-      Set<Host> writeSet = new HashSet<>();
-      for (Map.Entry<Host,Set<Host>> kv : communicationMap.entrySet()) {
+      Set<HostName> writeSet = new HashSet<>();
+      for (Map.Entry<HostName, Set<HostName>> kv : communicationMap.entrySet()) {
         if (kv.getValue().contains(host)) {
           writeSet.add(kv.getKey());
         }

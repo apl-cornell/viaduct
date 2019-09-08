@@ -5,32 +5,43 @@ import edu.cornell.cs.apl.viaduct.imp.visitors.StmtVisitor;
 import edu.cornell.cs.apl.viaduct.security.Label;
 import javax.annotation.Nullable;
 
+/** A statically allocated array with a dynamically determined length. */
 @AutoValue
 public abstract class ArrayDeclarationNode extends StatementNode {
-  /**
-   * Declare a statically allocated array with the given length.
-   *
-   * @param variable name of the array
-   * @param length number of elements in the array
-   * @param elementType type of the elements in the array
-   * @param label security label of the array and all its elements
-   */
-  public static ArrayDeclarationNode create(
-      Variable variable, ExpressionNode length, ImpBaseType elementType, @Nullable Label label) {
-    return new AutoValue_ArrayDeclarationNode(variable, length, elementType, label);
+  public static Builder builder() {
+    return new AutoValue_ArrayDeclarationNode.Builder();
   }
 
+  public abstract Builder toBuilder();
+
+  /** Name of the array. */
   public abstract Variable getVariable();
 
+  /** Number of elements in the array. */
   public abstract ExpressionNode getLength();
 
+  /** Type of elements in the array. */
   public abstract ImpBaseType getElementType();
 
+  /** Security label of the array and all its elements. Will be inferred if {@code null}. */
   @Nullable
   public abstract Label getLabel();
 
   @Override
   public final <R> R accept(StmtVisitor<R> v) {
     return v.visit(this);
+  }
+
+  @AutoValue.Builder
+  public abstract static class Builder extends ImpAstNode.Builder<Builder> {
+    public abstract Builder setVariable(Variable variable);
+
+    public abstract Builder setLength(ExpressionNode length);
+
+    public abstract Builder setElementType(ImpBaseType elementType);
+
+    public abstract Builder setLabel(Label label);
+
+    public abstract ArrayDeclarationNode build();
   }
 }

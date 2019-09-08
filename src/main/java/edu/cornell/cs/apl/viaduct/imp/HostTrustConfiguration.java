@@ -1,143 +1,85 @@
 package edu.cornell.cs.apl.viaduct.imp;
 
-import edu.cornell.cs.apl.viaduct.errors.NameClashError;
-import edu.cornell.cs.apl.viaduct.imp.ast.Host;
-import edu.cornell.cs.apl.viaduct.imp.parser.Located;
+import com.google.auto.value.AutoValue;
+import com.google.common.collect.ImmutableMap;
+import edu.cornell.cs.apl.viaduct.imp.ast.HostDeclarationNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.HostName;
 import edu.cornell.cs.apl.viaduct.security.Label;
-import io.vavr.Tuple2;
-import io.vavr.collection.SortedMap;
-import io.vavr.collection.TreeMap;
-import java.util.HashMap;
 import java.util.Iterator;
-import java.util.Map;
 import java.util.NoSuchElementException;
-import java.util.Objects;
 import java.util.Set;
 import javax.annotation.Nonnull;
 
 /**
  * Associates each host with a label that determines maximum trust that can be placed in that host.
  */
-public final class HostTrustConfiguration implements Iterable<Tuple2<Host, Label>> {
-  private final SortedMap<Host, Label> trustLevels;
-
-  /** Construct a configuration from a list of host, statement pairs. */
-  private HostTrustConfiguration(SortedMap<Host, Label> trustLevels) {
-    this.trustLevels = trustLevels;
-  }
-
+@AutoValue
+public abstract class HostTrustConfiguration implements Iterable<HostDeclarationNode> {
   public static Builder builder() {
-    return new Builder();
+    return new AutoValue_HostTrustConfiguration.Builder();
   }
+
+  public abstract Builder toBuilder();
+
+  public abstract ImmutableMap<HostName, HostDeclarationNode> getDeclarations();
 
   /** Return the trust associated with a host. */
-  public Label getTrust(Host host) throws NoSuchElementException {
-    return trustLevels.get(host).getOrElseThrow(() -> new NoSuchElementException(host.toString()));
-  }
-
-  /** Return a list of all hosts in the configuration. */
-  public Iterable<Host> hosts() {
-    return this.trustLevels.keySet();
-  }
-
-  public Set<Host> hostSet() {
-    return this.trustLevels.keySet().toJavaSet();
-  }
-
-  /** Return the number of hosts in the configuration. */
-  public int size() {
-    return trustLevels.size();
-  }
-
-  @Override
-  public @Nonnull Iterator<Tuple2<Host, Label>> iterator() {
-    return this.trustLevels.iterator();
-  }
-
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) {
-      return true;
+  public Label getTrust(HostName host) throws NoSuchElementException {
+    final HostDeclarationNode declaration = getDeclarations().get(host);
+    if (declaration == null) {
+      throw new NoSuchElementException(host.toString());
     }
+    return declaration.getTrust();
+  }
 
-    if (!(o instanceof HostTrustConfiguration)) {
-      return false;
-    }
-
-    final HostTrustConfiguration that = (HostTrustConfiguration) o;
-    return Objects.equals(this.trustLevels, that.trustLevels);
+  /** Return the set of all hosts in the configuration. */
+  public Set<HostName> hosts() {
+    return getDeclarations().keySet();
   }
 
   @Override
-  public int hashCode() {
-    return Objects.hash(this.trustLevels);
+  public @Nonnull Iterator<HostDeclarationNode> iterator() {
+    return getDeclarations().values().iterator();
   }
 
   @Override
   public String toString() {
     final StringBuilder buffer = new StringBuilder();
 
-    boolean first = true;
-    for (Tuple2<Host, Label> entry : trustLevels) {
-      if (!first) {
-        buffer.append("\n");
-      }
-
-      buffer.append(entry._1());
+    for (HostDeclarationNode declaration : this) {
+      buffer.append(declaration.getName());
       buffer.append(" : ");
-      buffer.append(entry._2());
-
-      first = false;
+      buffer.append(declaration.getTrust());
+      buffer.append('\n');
     }
 
     return buffer.toString();
   }
 
-  public static final class Builder {
-    private final Map<Host, Label> hosts = new HashMap<>();
+  @AutoValue.Builder
+  public abstract static class Builder {
+    abstract ImmutableMap.Builder<HostName, HostDeclarationNode> declarationsBuilder();
 
-    private Builder() {}
-
-    /** Return the built trust configuration. */
-    public HostTrustConfiguration build() {
-      return new HostTrustConfiguration(TreeMap.ofAll(hosts));
+    /**
+     * Add the given declaration to the configuration, overwriting any existing trust declarations
+     * for the same host.
+     */
+    public final Builder add(HostDeclarationNode declaration) {
+      this.declarationsBuilder().put(declaration.getName(), declaration);
+      return this;
     }
 
     /**
-     * Add a host to the configuration with the given trust level.
-     *
-     * @param host host to declare a trust level for
-     * @param trust trust label to associate with {@code host}
-     * @throws NameClashError if {@code host} already had an associated trust level
+     * Add the given declarations to the configuration, overwriting existing declarations for
+     * clashing hosts.
      */
-    public Builder addHost(Host host, Label trust) throws NameClashError {
-      Objects.requireNonNull(host);
-      Objects.requireNonNull(trust);
-
-      if (hosts.containsKey(host)) {
-        // TODO: do a better job of recovering this
-        final Located previousDeclaration =
-            hosts.keySet().stream()
-                .filter(host::equals)
-                .findAny()
-                .orElseThrow(NullPointerException::new);
-        throw new NameClashError(previousDeclaration, host);
+    public final Builder addAll(Iterable<? extends HostDeclarationNode> declarations) {
+      for (HostDeclarationNode declaration : declarations) {
+        this.add(declaration);
       }
-      hosts.put(host, trust);
-
       return this;
     }
 
-    /**
-     * Add all declarations in the given trust configuration. Overwrites existing declarations with
-     * the new ones if there are clashes instead of throwing an exception.
-     */
-    public Builder addAll(HostTrustConfiguration declarations) {
-      Objects.requireNonNull(declarations);
-
-      hosts.putAll(declarations.trustLevels.toJavaMap());
-
-      return this;
-    }
+    public abstract HostTrustConfiguration build();
   }
 }

@@ -1,7 +1,11 @@
 package edu.cornell.cs.apl.viaduct.imp.parser;
 
+import edu.cornell.cs.apl.viaduct.errors.ProcessDeclarationInTrustFileError;
 import edu.cornell.cs.apl.viaduct.imp.HostTrustConfiguration;
+import edu.cornell.cs.apl.viaduct.imp.ast.HostDeclarationNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.ProcessDeclarationNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ProgramNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.TopLevelDeclarationNode;
 
 /** Parser for host trust configurations. */
 public class TrustConfigurationParser {
@@ -16,9 +20,16 @@ public class TrustConfigurationParser {
    * processes.
    */
   private static HostTrustConfiguration extractHostTrustConfiguration(ProgramNode program) {
-    if (program.iterator().hasNext()) {
-      throw new Error("Trust configuration file contains process definitions.");
+    final HostTrustConfiguration.Builder configuration = HostTrustConfiguration.builder();
+
+    for (TopLevelDeclarationNode declaration : program) {
+      if (declaration instanceof HostDeclarationNode) {
+        configuration.add((HostDeclarationNode) declaration);
+      } else {
+        throw new ProcessDeclarationInTrustFileError((ProcessDeclarationNode) declaration);
+      }
     }
-    return program.getHostTrustConfiguration();
+
+    return configuration.build();
   }
 }

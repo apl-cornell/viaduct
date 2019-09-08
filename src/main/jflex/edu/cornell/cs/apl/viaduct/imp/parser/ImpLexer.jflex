@@ -2,6 +2,8 @@ package edu.cornell.cs.apl.viaduct.imp.parser;
 
 import java.io.Reader;
 
+import java_cup.runtime.ComplexSymbolFactory;
+import java_cup.runtime.ComplexSymbolFactory.Location;
 import java_cup.runtime.Symbol;
 
 %%
@@ -10,33 +12,37 @@ import java_cup.runtime.Symbol;
 %unicode
 %cup
 
-/* Type of tokens returned by the yylex function. */
-%type ComplexSymbol
-
 /* Turn on character counting to get access to source locations. */
 %char
 
 
 %{
+  private SourceFile sourceFile;
   private ComplexSymbolFactory symbolFactory;
   private int commentLevel;
 
   /**
   * Construct a new lexer.
   *
-  * @param r input character stream
+  * @param source input file
   * @param sf generates symbols with source location information
   */
-  public ImpLexer(Reader r, ComplexSymbolFactory sf) {
-    this(r);
+  public ImpLexer(SourceFile source, ComplexSymbolFactory sf) {
+    this(source.getReader());
+    this.sourceFile = source;
     this.symbolFactory = sf;
     commentLevel = 0;
+  }
+
+  /** Return the source file currently being scanned. */
+  final SourceFile getSourceFile() {
+    return this.sourceFile;
   }
 
   /**
    * Construct a Symbol with information about source location.
    */
-  private ComplexSymbol symbol(int code) {
+  private Symbol symbol(int code) {
     return symbol(code, null);
   }
 
@@ -44,9 +50,14 @@ import java_cup.runtime.Symbol;
    * Construct a Symbol with information about source location.
    * Additionally stores a value.
    */
-  private ComplexSymbol symbol(int code, Object value) {
-    int left = yychar;
-    int right = yychar + yylength();
+  private Symbol symbol(int code, Object value) {
+    final int leftOffset = yychar;
+    final int rightOffset = yychar + yylength();
+
+    // TODO: make sure line and column numbers are never used, or give them nice values.
+    final Location left = new Location(-1, -1, leftOffset);
+    final Location right = new Location(-1, -1, rightOffset);
+
     return symbolFactory.newSymbol(sym.terminalNames[code], code, left, right, value);
   }
 %}

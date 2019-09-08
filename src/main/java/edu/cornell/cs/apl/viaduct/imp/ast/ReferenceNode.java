@@ -1,5 +1,6 @@
 package edu.cornell.cs.apl.viaduct.imp.ast;
 
+import edu.cornell.cs.apl.viaduct.imp.visitors.ImpAstVisitor;
 import edu.cornell.cs.apl.viaduct.imp.visitors.ReferenceVisitor;
 
 /**
@@ -9,4 +10,9 @@ import edu.cornell.cs.apl.viaduct.imp.visitors.ReferenceVisitor;
  */
 public abstract class ReferenceNode extends ImpAstNode {
   public abstract <R> R accept(ReferenceVisitor<R> v);
+
+  @Override
+  public final <R> R accept(ImpAstVisitor<R> visitor) {
+    return visitor.visit(this);
+  }
 }

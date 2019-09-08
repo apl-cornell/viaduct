@@ -25,11 +25,11 @@ public class ZKFactory implements ProtocolFactory<ImpAstNode> {
 
     // assume for now that there are only two hosts
     // generalize this later
-    Host[] hostPair = new Host[2];
+    HostName[] hostPair = new HostName[2];
     // TODO: WTF does this do?
     // hostConfig.toArray(hostPair);
     int i = 0;
-    for (Host host : hostConfig.hosts()) {
+    for (HostName host : hostConfig.hosts()) {
       hostPair[i] = host;
       i++;
       if (i == hostPair.length) {
@@ -44,8 +44,8 @@ public class ZKFactory implements ProtocolFactory<ImpAstNode> {
         inNodes.add(source);
       }
     }
-    Host hostA = hostPair[0];
-    Host hostB = hostPair[1];
+    HostName hostA = hostPair[0];
+    HostName hostB = hostPair[1];
     Label nInLabel = node.getToLabel();
     Label nOutLabel = node.getOutLabel();
     Label aLabel = hostConfig.getTrust(hostA);

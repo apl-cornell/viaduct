@@ -11,7 +11,7 @@ public final class PrintUtil {
   public static final int LINE_WIDTH = 80;
 
   /**
-   * Capture result of a color printer as a string. The printer is allowed to output ANSI color
+   * Capture the result of a color printer as a string. The printer is allowed to output ANSI color
    * codes, but these will be stripped before generating the string.
    *
    * @param printer a printer that generates output with ANSI color codes

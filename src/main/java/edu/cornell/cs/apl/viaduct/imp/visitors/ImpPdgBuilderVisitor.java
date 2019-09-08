@@ -115,7 +115,7 @@ public class ImpPdgBuilderVisitor implements StmtVisitor<Set<PdgNode<ImpAstNode>
               });
       String readNodeName = this.varDeclMap.get(queryVar);
       PdgNode<ImpAstNode> readNode = this.nodeMap.get(readNodeName);
-      PdgQueryEdge.create(readNode, node, ReadNode.create(query));
+      PdgQueryEdge.create(readNode, node, ReadNode.builder().setReference(query).build());
     }
   }
 

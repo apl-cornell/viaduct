@@ -7,7 +7,7 @@ import edu.cornell.cs.apl.viaduct.imp.ast.AssignNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.BlockNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.BreakNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ExpressionNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.Host;
+import edu.cornell.cs.apl.viaduct.imp.ast.HostName;
 import edu.cornell.cs.apl.viaduct.imp.ast.IfNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ImpBaseType;
 import edu.cornell.cs.apl.viaduct.imp.ast.LetBindingNode;
@@ -27,6 +27,7 @@ import java.util.Map;
 import java.util.Stack;
 
 /** Builder for statements. Implicitly creates a sequence through a fluent interface. */
+// TODO: remove once everthing is converted to builders.
 public class StmtBuilder {
   private final Stack<ControlInfo> controlContext;
   private List<StatementNode> stmts;
@@ -87,121 +88,90 @@ public class StmtBuilder {
 
   public StatementNode build() {
     assert this.controlContext.empty();
-    return BlockNode.create(this.stmts);
+    return BlockNode.builder().setStatements(this.stmts).build();
   }
 
-  public StmtBuilder varDecl(String varName, ImpBaseType type, Label label) {
-    this.stmts.add(VariableDeclarationNode.create(Variable.create(varName), type, label));
-    return this;
-  }
-
+  /** Declare a new variable. */
   public StmtBuilder varDecl(Variable varName, ImpBaseType type, Label label) {
-    this.stmts.add(VariableDeclarationNode.create(varName, type, label));
+    this.stmts.add(
+        VariableDeclarationNode.builder()
+            .setVariable(varName)
+            .setType(type)
+            .setLabel(label)
+            .build());
     return this;
   }
 
-  public StmtBuilder arrayDecl(
-      String varName, ExpressionNode length, ImpBaseType type, Label label) {
-    this.stmts.add(ArrayDeclarationNode.create(Variable.create(varName), length, type, label));
-    return this;
-  }
-
+  /** Add array declaration node. */
   public StmtBuilder arrayDecl(
       Variable varName, ExpressionNode length, ImpBaseType type, Label label) {
-    this.stmts.add(ArrayDeclarationNode.create(varName, length, type, label));
+    this.stmts.add(
+        ArrayDeclarationNode.builder()
+            .setVariable(varName)
+            .setLength(length)
+            .setElementType(type)
+            .setLabel(label)
+            .build());
     return this;
   }
 
   public StmtBuilder let(Variable varName, ExpressionNode rhs) {
-    this.stmts.add(LetBindingNode.create(varName, rhs));
-    return this;
-  }
-
-  public StmtBuilder assign(String varName, ExpressionNode rhs) {
-    this.stmts.add(AssignNode.create(Variable.create(varName), rhs));
+    this.stmts.add(LetBindingNode.builder().setVariable(varName).setRhs(rhs).build());
     return this;
   }
 
   public StmtBuilder assign(Variable varName, ExpressionNode rhs) {
-    this.stmts.add(AssignNode.create(varName, rhs));
+    this.stmts.add(AssignNode.builder().setLhs(varName).setRhs(rhs).build());
     return this;
   }
 
+  /** Assign to an array index. */
   public StmtBuilder assign(Variable arrName, ExpressionNode idx, ExpressionNode rhs) {
-    this.stmts.add(AssignNode.create(ArrayIndexingNode.create(arrName, idx), rhs));
-    return this;
-  }
-
-  /** Creates conditional/if nodes. */
-  public StmtBuilder cond(ExpressionNode guard, StmtBuilder thenBranch, StmtBuilder elseBranch) {
-    StatementNode ifNode = IfNode.create(guard, thenBranch.build(), elseBranch.build());
-    this.stmts.add(ifNode);
-    return this;
-  }
-
-  /** create loops. */
-  public StmtBuilder loop(StmtBuilder bodyBuilder) {
-    StatementNode loop = LoopNode.create(bodyBuilder.build());
-    this.stmts.add(loop);
+    this.stmts.add(
+        AssignNode.builder()
+            .setLhs(ArrayIndexingNode.builder().setArray(arrName).setIndex(idx).build())
+            .setRhs(rhs)
+            .build());
     return this;
   }
 
   /** create break. */
   public StmtBuilder loopBreak() {
-    StatementNode loopBreak = BreakNode.create(1);
-    this.stmts.add(loopBreak);
+    this.stmts.add(BreakNode.builder().build());
     return this;
   }
 
-  /** build send stmt. */
   public StmtBuilder send(String recipient, ExpressionNode expr) {
     return send(ProcessName.create(recipient), expr);
   }
 
-  /** build send stmt. */
-  public StmtBuilder send(Host host, ExpressionNode expr) {
-    this.stmts.add(SendNode.create(ProcessName.create(host), expr));
-    return this;
+  public StmtBuilder send(HostName host, ExpressionNode expr) {
+    return send(ProcessName.create(host), expr);
   }
 
-  /** build send stmt. */
   public StmtBuilder send(ProcessName recipient, ExpressionNode expr) {
-    this.stmts.add(SendNode.create(recipient, expr));
+    this.stmts.add(SendNode.builder().setRecipient(recipient).setSentExpression(expr).build());
     return this;
   }
 
-  /** build recv stmt. */
-  public StmtBuilder recv(String sender, String var) {
-    return recv(ProcessName.create(sender), Variable.create(var));
+  public StmtBuilder recv(HostName host, Variable var) {
+    return recv(ProcessName.create(host), var);
   }
 
-  /** build recv stmt. */
-  public StmtBuilder recv(Host host, Variable var) {
-    this.stmts.add(ReceiveNode.create(var, ProcessName.create(host)));
-    return this;
-  }
-
-  /** build recv stmt. */
   public StmtBuilder recv(ProcessName sender, Variable var) {
-    this.stmts.add(ReceiveNode.create(var, sender));
-    return this;
-  }
-
-  /** build recv stmt. */
-  public StmtBuilder recv(String sender, ImpBaseType recvType, String var) {
-    return recv(ProcessName.create(sender), recvType, Variable.create(var));
+    return recv(sender, null, var);
   }
 
   /** build recv stmt. */
   public StmtBuilder recv(ProcessName sender, ImpBaseType recvType, Variable var) {
-    this.stmts.add(ReceiveNode.create(var, recvType, sender));
+    this.stmts.add(
+        ReceiveNode.builder().setVariable(var).setReceiveType(recvType).setSender(sender).build());
     return this;
   }
 
   /** build assertion stmt. */
   public StmtBuilder assertion(ExpressionNode assertExpr) {
-    StatementNode assertNode = AssertNode.create(assertExpr);
-    this.stmts.add(assertNode);
+    this.stmts.add(AssertNode.builder().setExpression(assertExpr).build());
     return this;
   }
 
@@ -211,16 +181,10 @@ public class StmtBuilder {
     return this;
   }
 
-  /** concat two builders together. */
-  public StmtBuilder concat(StmtBuilder other) {
-    this.stmts.addAll(other.stmts);
-    return this;
-  }
-
   /** control context information. */
   private abstract static class ControlInfo {
     final List<StatementNode> prefix;
-    final Map<ControlLabel, StatementNode> pathMap;
+    final Map<ControlLabel, BlockNode> pathMap;
     ControlLabel currentPath;
 
     public ControlInfo(List<StatementNode> pref) {
@@ -235,7 +199,7 @@ public class StmtBuilder {
 
     public void finishCurrentPath(List<StatementNode> pathStmts) {
       assert this.currentPath != null;
-      this.pathMap.put(this.currentPath, BlockNode.create(pathStmts));
+      this.pathMap.put(this.currentPath, BlockNode.builder().setStatements(pathStmts).build());
       this.currentPath = null;
     }
 
@@ -259,9 +223,13 @@ public class StmtBuilder {
 
     @Override
     public StatementNode buildControlStructure() {
-      StatementNode thenBranch = this.pathMap.get(ControlLabel.THEN);
-      StatementNode elseBranch = this.pathMap.get(ControlLabel.ELSE);
-      return IfNode.create(this.guard, thenBranch, elseBranch);
+      BlockNode thenBranch = this.pathMap.get(ControlLabel.THEN);
+      BlockNode elseBranch = this.pathMap.get(ControlLabel.ELSE);
+      return IfNode.builder()
+          .setGuard(guard)
+          .setThenBranch(thenBranch)
+          .setElseBranch(elseBranch)
+          .build();
     }
   }
 
@@ -272,8 +240,8 @@ public class StmtBuilder {
 
     @Override
     public StatementNode buildControlStructure() {
-      StatementNode body = this.pathMap.get(ControlLabel.BODY);
-      return LoopNode.create(body);
+      BlockNode body = this.pathMap.get(ControlLabel.BODY);
+      return LoopNode.builder().setBody(body).build();
     }
   }
 }

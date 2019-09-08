@@ -1,5 +1,6 @@
 package edu.cornell.cs.apl.viaduct.imp.parser;
 
+import edu.cornell.cs.apl.viaduct.util.UnicodeUtil;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -27,6 +28,8 @@ public class SourceFile {
    */
   private final ArrayList<Integer> lineOffsets;
 
+  private final ArrayList<String> lines;
+
   private SourceFile(String path, String contents) {
     this.path = Objects.requireNonNull(path);
     this.contents = Objects.requireNonNull(contents);
@@ -35,8 +38,10 @@ public class SourceFile {
     String rest = contents;
     lineOffsets = new ArrayList<>();
     lineOffsets.add(0);
+    lines = new ArrayList<>();
     while (true) {
       String[] splits = rest.split("\\R", 2);
+      lines.add(splits[0]);
       if (splits.length == 2) {
         final int lastOffset = lineOffsets.get(lineOffsets.size() - 1);
 
@@ -52,6 +57,9 @@ public class SourceFile {
         break;
       }
     }
+
+    System.out.print("Line Offsets: ");
+    System.out.println(lineOffsets);
   }
 
   /**
@@ -70,7 +78,7 @@ public class SourceFile {
   /**
    * Construct a {@link SourceFile} by consuming a reader.
    *
-   * @param path description of where reader came from (e.g. "stdin")
+   * @param path description of where reader came from (e.g. file path, "stdin", etc.)
    * @param reader object to get the file contents from
    */
   public static SourceFile from(String path, Reader reader) throws IOException {
@@ -81,6 +89,14 @@ public class SourceFile {
   /** Return the number of {@link char}s (unicode code units) in the file. */
   public int length() {
     return contents.length();
+  }
+
+  /**
+   * Return the number of lines in the file. This is equal to the number of line breaks plus 1. That
+   * is, every file (including the empty one) has at least one line.
+   */
+  public int numberOfLines() {
+    return lineOffsets.size();
   }
 
   /** Get the description of where the source file came from (e.g. a file path, "stdin", etc.). */
@@ -94,19 +110,26 @@ public class SourceFile {
   }
 
   /**
-   * Return the column number corresponding to the given offset. Columns are 1 indexed.
+   * Return the column number corresponding to the given offset. Columns are 1 indexed; for example,
+   * offset 0 is on column 1.
    *
    * @param offset number of {@link char}s counting from the beginning of the file
    * @throws IndexOutOfBoundsException if offset is outside the file
    */
   int getColumn(int offset) {
-    // TODO: count code points not code units...
-    final int line = getLine(offset);
-    return 1 + offset - lineOffsets.get(line);
+    final int lineOffset = getLine(offset) - 1;
+    final int columnOffset = offset - lineOffsets.get(lineOffset);
+
+    final int column =
+        1 + UnicodeUtil.countGraphemeClusters(lines.get(lineOffset).substring(0, columnOffset));
+
+    assert 1 <= column;
+    return column;
   }
 
   /**
-   * Return the line number corresponding to the given offset. Offset 0 is on line 1.
+   * Return the line number corresponding to the given offset. Lines are 1 indexed; for example,
+   * offset 0 is on line 1.
    *
    * @param offset number of {@link char}s counting from the beginning of the file
    * @throws IndexOutOfBoundsException if offset is outside the file
@@ -116,6 +139,9 @@ public class SourceFile {
       throw new IndexOutOfBoundsException();
     }
     final int index = Collections.binarySearch(lineOffsets, offset);
-    return index < 0 ? -index : index + 1;
+    final int line = index < 0 ? -(index + 1) : index + 1;
+
+    assert 1 <= line && line <= numberOfLines();
+    return line;
   }
 }

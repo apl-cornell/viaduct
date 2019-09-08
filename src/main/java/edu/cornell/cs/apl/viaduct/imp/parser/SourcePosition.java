@@ -27,7 +27,12 @@ public abstract class SourcePosition implements Comparable<SourcePosition> {
     return getSourceFile().getLine(getOffset());
   }
 
-  /** Column number of this position. 1 indexed. */
+  /**
+   * Column number of <em>the character that comes after</em> this position. 1 indexed.
+   *
+   * <p>Note that even though each position has a line number, it does not have a column number
+   * since columns correspond to characters not the spaces between them.
+   */
   public final int getColumn() {
     return getSourceFile().getColumn(getOffset());
   }

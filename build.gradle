@@ -39,14 +39,12 @@ jar {
     }
 }
 
-sourceSets {
-    main {
-        java {
-            srcDirs += [
-                'build/generated/sources/annotationProcessor/java/main',
-            ]
-        }
-    }
+cup {
+    args = [
+        "-package", "edu.cornell.cs.apl.viaduct.imp.parser",
+        "-parser", "ImpParser",
+        "-interface"
+    ]
 }
 
 checkstyle {
@@ -71,6 +69,11 @@ tasks.withType(SpotBugsTask) {
     excludeFilter = project.file("config/spotbugs/excludeFilter.xml")
 }
 
+editorconfig {
+    includes = ['src/**/*.java', 'build.gradle']
+}
+
+
 jacocoTestReport {
     reports {
         xml.enabled = true
@@ -85,26 +88,28 @@ test {
     inputs.files(project.fileTree(dir: "examples"))
 }
 
-
-editorconfig {
-    includes = ['src/**/*.java', 'build.gradle']
-}
-
-cup {
-    args = [
-        "-package", "edu.cornell.cs.apl.viaduct.imp.parser",
-        "-interface",
-        "-parser", "ImpParser"
-    ]
+run {
+    // Enable assertions during manual testing
+    enableAssertions = true
 }
 
 dependencies {
     // Functional data structures
     implementation group: 'io.vavr', name: 'vavr', version: '0.9.3'
 
+    // Google's Guava (core data structures)
+    implementation group: 'com.google.guava', name: 'guava', version: '28.1-jre'
+
+    // Google's AutoValue for creating immutable classes
+    implementation group: 'com.google.auto.value', name: 'auto-value-annotations', version: '1.6.2'
+    annotationProcessor group: 'com.google.auto.value', name: 'auto-value', version: '1.6.2'
+
     // Graphs
     implementation group: 'org.jgrapht', name: 'jgrapht-core', version: '1.3.1'
     implementation group: 'org.jgrapht', name: 'jgrapht-io', version: '1.3.1'
+
+    // Unicode support
+    implementation group: 'com.ibm.icu', name: 'icu4j', version: '64.2'
 
     // Command-line-argument parsing
     implementation group: 'com.github.rvesse', name: 'airline', version: '2.7.0'
@@ -117,10 +122,6 @@ dependencies {
 
     // Logging (disabled for now using the NOP engine)
     implementation group: 'org.slf4j', name: 'slf4j-nop', version: '1.8.0-beta4'
-
-    // Google's AutoValue
-    compile group: 'com.google.auto.value', name: 'auto-value-annotations', version: '1.6.2'
-    annotationProcessor group: 'com.google.auto.value', name: 'auto-value', version: '1.6.2'
 
     // Unit testing
     testImplementation("org.junit.jupiter:junit-jupiter-api:5.4.2")

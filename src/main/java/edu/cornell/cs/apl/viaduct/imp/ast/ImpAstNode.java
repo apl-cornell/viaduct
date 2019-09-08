@@ -5,13 +5,14 @@ import edu.cornell.cs.apl.viaduct.imp.informationflow.InformationFlowChecker;
 import edu.cornell.cs.apl.viaduct.imp.informationflow.LabelTerm;
 import edu.cornell.cs.apl.viaduct.imp.parser.Located;
 import edu.cornell.cs.apl.viaduct.imp.parser.SourceRange;
+import edu.cornell.cs.apl.viaduct.imp.visitors.ImpAstVisitor;
 import edu.cornell.cs.apl.viaduct.security.Label;
 import java.util.Objects;
+import javax.annotation.Nullable;
 
 /** A node in the abstract syntax tree of IMP programs. */
 public abstract class ImpAstNode implements AstNode, Located {
   private LabelTerm trustLabel;
-  private SourceRange sourceLocation;
 
   /**
    * Get the trust label associated with this node. This is the minimum trust the host executing
@@ -41,12 +42,27 @@ public abstract class ImpAstNode implements AstNode, Located {
   }
 
   @Override
-  public final SourceRange getSourceLocation() {
-    return sourceLocation;
+  public final @Nullable SourceRange getSourceLocation() {
+    return getSourceLocationMetadata() == null ? null : getSourceLocationMetadata().getData();
   }
 
-  public ImpAstNode setSourceLocation(SourceRange sourceLocation) {
-    this.sourceLocation = sourceLocation;
-    return this;
+  /** Used internally to wrap/unwrap {@link Metadata}. */
+  protected abstract @Nullable Metadata<SourceRange> getSourceLocationMetadata();
+
+  public abstract <R> R accept(ImpAstVisitor<R> visitor);
+
+  protected abstract static class Builder<SelfT> {
+    public final SelfT setSourceLocation(@Nullable SourceRange sourceLocation) {
+      return setSourceLocationMetadata(
+          sourceLocation == null ? null : new Metadata<>(sourceLocation));
+    }
+
+    public final SelfT setSourceLocation(Located node) {
+      return setSourceLocation(node.getSourceLocation());
+    }
+
+    /** Used internally to wrap/unwrap {@link Metadata}. */
+    protected abstract SelfT setSourceLocationMetadata(
+        Metadata<SourceRange> sourceLocationMetadata);
   }
 }

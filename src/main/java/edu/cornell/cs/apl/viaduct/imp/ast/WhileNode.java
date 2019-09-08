@@ -6,22 +6,29 @@ import edu.cornell.cs.apl.viaduct.imp.visitors.StmtVisitor;
 /** While loops. */
 @AutoValue
 public abstract class WhileNode extends StatementNode {
-  /**
-   * If {@code guard} evaluates to true, execute {@code body}, then loop; otherwise skip.
-   *
-   * @param guard loop guard
-   * @param body loop body
-   */
-  public static WhileNode create(ExpressionNode guard, StatementNode body) {
-    return new AutoValue_WhileNode(guard, body);
+  public static Builder builder() {
+    return new AutoValue_WhileNode.Builder();
   }
+
+  public abstract Builder toBuilder();
 
   public abstract ExpressionNode getGuard();
 
-  public abstract StatementNode getBody();
+  public abstract BlockNode getBody();
 
   @Override
   public final <R> R accept(StmtVisitor<R> visitor) {
     return visitor.visit(this);
+  }
+
+  @AutoValue.Builder
+  public abstract static class Builder extends ImpAstNode.Builder<Builder> {
+    public abstract Builder setGuard(ExpressionNode guard);
+
+    public abstract Builder setBody(BlockNode body);
+
+    public abstract BlockNode.Builder bodyBuilder();
+
+    public abstract WhileNode build();
   }
 }

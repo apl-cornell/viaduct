@@ -5,7 +5,7 @@ import edu.cornell.cs.apl.viaduct.imp.ast.ArrayDeclarationNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ArrayIndexingNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.AssignNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ExpressionNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.Host;
+import edu.cornell.cs.apl.viaduct.imp.ast.HostName;
 import edu.cornell.cs.apl.viaduct.imp.ast.ImpAstNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ProcessName;
 import edu.cornell.cs.apl.viaduct.imp.ast.ReadNode;
@@ -40,26 +40,32 @@ public abstract class Cleartext {
     if (node.isStorageNode()) {
       StatementNode stmt = (StatementNode) node.getAstNode();
       if (stmt instanceof VariableDeclarationNode) { // variable read
-        return ReadNode.create(outVar);
+        return ReadNode.builder().setReference(outVar).build();
 
       } else if (stmt instanceof ArrayDeclarationNode) { // array access
         Variable idx = readArgs.get(0);
-        return ReadNode.create(ArrayIndexingNode.create(outVar, ReadNode.create(idx)));
+        return ReadNode.builder()
+            .setReference(
+                ArrayIndexingNode.builder()
+                    .setArray(outVar)
+                    .setIndex(ReadNode.builder().setReference(idx).build())
+                    .build())
+            .build();
 
       } else {
         throw new ProtocolInstantiationError(
             "storage node not associated with var or array declaration");
       }
     } else {
-      return ReadNode.create(outVar);
+      return ReadNode.builder().setReference(outVar).build();
     }
   }
 
   protected Binding<ImpAstNode> performRead(
       PdgNode<ImpAstNode> node,
-      Host readHost,
+      HostName readHost,
       Binding<ImpAstNode> readLabel,
-      Host outHost,
+      HostName outHost,
       Binding<ImpAstNode> outVar,
       List<ImpAstNode> args,
       ProtocolInstantiationInfo<ImpAstNode> info) {
@@ -86,8 +92,8 @@ public abstract class Cleartext {
 
   protected void performWrite(
       PdgNode<ImpAstNode> node,
-      Host writeHost,
-      Host inHost,
+      HostName writeHost,
+      HostName inHost,
       Binding<ImpAstNode> storageVar,
       List<ImpAstNode> args,
       ProtocolInstantiationInfo<ImpAstNode> info) {
@@ -128,7 +134,7 @@ public abstract class Cleartext {
   }
 
   protected Map<Variable, Variable> performComputeReads(
-      Host host, PdgNode<ImpAstNode> node, ProtocolInstantiationInfo<ImpAstNode> info) {
+      HostName host, PdgNode<ImpAstNode> node, ProtocolInstantiationInfo<ImpAstNode> info) {
     // read from other compute nodes
     Map<Variable, Variable> computeRenameMap = new HashMap<>();
     for (PdgReadEdge<ImpAstNode> readEdge : node.getReadEdges()) {
@@ -147,7 +153,7 @@ public abstract class Cleartext {
   }
 
   protected Variable instantiateStorageNode(
-      Host host, PdgStorageNode<ImpAstNode> node, ProtocolInstantiationInfo<ImpAstNode> info) {
+      HostName host, PdgStorageNode<ImpAstNode> node, ProtocolInstantiationInfo<ImpAstNode> info) {
 
     // declare new variable
     ImpAstNode astNode = node.getAstNode();
@@ -178,7 +184,7 @@ public abstract class Cleartext {
   }
 
   protected Variable instantiateComputeNode(
-      Host host, PdgComputeNode<ImpAstNode> node, ProtocolInstantiationInfo<ImpAstNode> info) {
+      HostName host, PdgComputeNode<ImpAstNode> node, ProtocolInstantiationInfo<ImpAstNode> info) {
     // read from other compute nodes
     Map<Variable, Variable> computeRenameMap = performComputeReads(host, node, info);
     RenameVisitor computeRenamer = new RenameVisitor(computeRenameMap);
@@ -222,7 +228,7 @@ public abstract class Cleartext {
                     renamedArgs,
                     info);
 
-        queryRenameMap.put(queryRead, ReadNode.create(readVar));
+        queryRenameMap.put(queryRead, ReadNode.builder().setReference(readVar).build());
       }
     }
 

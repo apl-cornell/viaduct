@@ -7,13 +7,13 @@ import edu.cornell.cs.apl.viaduct.imp.parser.SourceRange;
 
 /** A location that can run (one or more) processes. */
 @AutoValue
-public abstract class Host implements Name, Located, Comparable<Host> {
-  public static Host create(String name) {
+public abstract class HostName implements Name, Located, Comparable<HostName> {
+  public static HostName create(String name) {
     return create(name, false);
   }
 
-  public static Host create(String name, boolean isSynthetic) {
-    return new AutoValue_Host(name, isSynthetic);
+  public static HostName create(String name, boolean isSynthetic) {
+    return new AutoValue_HostName(name, isSynthetic);
   }
 
   // TODO: this will interact badly with .equals(). For example, compareTo is broken as is.
@@ -30,7 +30,7 @@ public abstract class Host implements Name, Located, Comparable<Host> {
   }
 
   @Override
-  public final int compareTo(Host that) {
+  public final int compareTo(HostName that) {
     return this.getName().compareTo(that.getName());
   }
 

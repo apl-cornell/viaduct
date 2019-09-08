@@ -7,7 +7,7 @@ import com.github.rvesse.airline.annotations.restrictions.global.CommandRequired
 import com.github.rvesse.airline.annotations.restrictions.global.NoUnexpectedArguments;
 import com.github.rvesse.airline.help.Help;
 import java.io.IOException;
-import java.io.OutputStream;
+import java.io.PrintStream;
 import java.util.LinkedList;
 import java.util.concurrent.Callable;
 
@@ -53,7 +53,7 @@ public class CommandLineInterface {
    *
    * @param output output stream to print usage information
    */
-  public static void usage(OutputStream output) {
+  public static void usage(PrintStream output) {
     try {
       Help.help(parser().getMetadata(), new LinkedList<>(), output);
     } catch (IOException e) {

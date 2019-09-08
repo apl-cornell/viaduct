@@ -1,6 +1,7 @@
 package edu.cornell.cs.apl.viaduct.imp.ast;
 
 import com.google.auto.value.AutoValue;
+import com.google.common.base.Preconditions;
 import edu.cornell.cs.apl.viaduct.imp.visitors.StmtVisitor;
 
 @AutoValue
@@ -34,9 +35,7 @@ public abstract class BreakNode extends StatementNode {
      */
     public final BreakNode build() {
       final BreakNode node = this.autoBuild();
-      if (node.getLevel() < 1) {
-        throw new IllegalArgumentException("Break level must be at least 1.");
-      }
+      Preconditions.checkArgument(node.getLevel() >= 1, "Break level must be at least 1.");
       return node;
     }
   }

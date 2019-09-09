@@ -57,6 +57,8 @@ public class SourceFile {
         break;
       }
     }
+
+    assert lineOffsets.size() == lines.size();
   }
 
   /**
@@ -83,19 +85,6 @@ public class SourceFile {
     return new SourceFile(path, contents);
   }
 
-  /** Return the number of {@link char}s (unicode code units) in the file. */
-  public int length() {
-    return contents.length();
-  }
-
-  /**
-   * Return the number of lines in the file. This is equal to the number of line breaks plus 1. That
-   * is, every file (including the empty one) has at least one line.
-   */
-  public int numberOfLines() {
-    return lineOffsets.size();
-  }
-
   /** Get the description of where the source file came from (e.g. a file path, "stdin", etc.). */
   public String getPath() {
     return path;
@@ -106,6 +95,19 @@ public class SourceFile {
     return new StringReader(contents);
   }
 
+  /** Return the number of {@link char}s (unicode code units) in the file. */
+  int length() {
+    return contents.length();
+  }
+
+  /**
+   * Return the number of lines in the file. This is equal to the number of line breaks plus 1. That
+   * is, every file (including the empty one) has at least one line.
+   */
+  int numberOfLines() {
+    return lines.size();
+  }
+
   /**
    * Return the column number corresponding to the given offset. Columns are 1 indexed; for example,
    * offset 0 is on column 1.
@@ -113,12 +115,12 @@ public class SourceFile {
    * @param offset number of {@link char}s counting from the beginning of the file
    * @throws IndexOutOfBoundsException if offset is outside the file
    */
-  int getColumn(int offset) {
-    final int lineOffset = getLine(offset) - 1;
-    final int columnOffset = offset - lineOffsets.get(lineOffset);
+  int getColumnNumber(int offset) {
+    final int line = getLineNumber(offset);
+    final int columnOffset = offset - lineOffsets.get(line - 1);
 
     final int column =
-        1 + UnicodeUtil.countGraphemeClusters(lines.get(lineOffset).substring(0, columnOffset));
+        1 + UnicodeUtil.countGraphemeClusters(getLine(line).substring(0, columnOffset));
 
     assert 1 <= column;
     return column;
@@ -131,7 +133,7 @@ public class SourceFile {
    * @param offset number of {@link char}s counting from the beginning of the file
    * @throws IndexOutOfBoundsException if offset is outside the file
    */
-  int getLine(int offset) throws IndexOutOfBoundsException {
+  int getLineNumber(int offset) throws IndexOutOfBoundsException {
     if (offset < 0 || offset > contents.length()) {
       throw new IndexOutOfBoundsException();
     }
@@ -140,5 +142,13 @@ public class SourceFile {
 
     assert 1 <= line && line <= numberOfLines();
     return line;
+  }
+
+  /**
+   * Get contents on the given line. Note that this is 1 indexed to match {@link
+   * #getLineNumber(int)}.
+   */
+  String getLine(int lineNumber) {
+    return lines.get(lineNumber - 1);
   }
 }

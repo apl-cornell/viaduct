@@ -14,7 +14,6 @@ import edu.cornell.cs.apl.viaduct.imp.ast.IfNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.LetBindingNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.LiteralNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.LoopNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.Name;
 import edu.cornell.cs.apl.viaduct.imp.ast.NotNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ProcessDeclarationNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ProgramNode;
@@ -27,7 +26,6 @@ import edu.cornell.cs.apl.viaduct.imp.ast.Variable;
 import edu.cornell.cs.apl.viaduct.imp.ast.VariableDeclarationNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.WhileNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.types.ImpType;
-import edu.cornell.cs.apl.viaduct.imp.ast.values.ImpValue;
 import edu.cornell.cs.apl.viaduct.imp.visitors.ExprVisitor;
 import edu.cornell.cs.apl.viaduct.imp.visitors.ProgramVisitor;
 import edu.cornell.cs.apl.viaduct.imp.visitors.ReferenceVisitor;
@@ -105,25 +103,6 @@ final class PrintVisitor
     output.print(Ansi.ansi().fgBright(Color.GREEN).a("/* ").a(comment).a(" */").reset());
   }
 
-  /**
-   * Print a literal constant. Use for things such as:
-   *
-   * <ul>
-   *   <li>Strings: {@code "this is a string"}
-   *   <li>Characters: {@code 'c', '\n'}
-   *   <li>Numbers: {@code 234, 2.3e10, 0xff}
-   *   <li>Booleans: {@code true, false}
-   * </ul>
-   */
-  private void printConstant(ImpValue constant) {
-    output.print(Ansi.ansi().fg(Color.CYAN).a(constant).reset());
-  }
-
-  /** Print a name. */
-  private void printIdentifier(Name identifier) {
-    output.print(Ansi.ansi().fg(Color.BLUE).a(identifier).reset());
-  }
-
   /** Print a builtin keyword. */
   private void printKeyword(String keyword) {
     output.print(Ansi.ansi().fg(Color.GREEN).a(keyword).reset());
@@ -154,13 +133,13 @@ final class PrintVisitor
 
   @Override
   public Void visit(Variable variable) {
-    printIdentifier(variable);
+    variable.print(output);
     return null;
   }
 
   @Override
   public Void visit(ArrayIndexingNode arrayIndexingNode) {
-    printIdentifier(arrayIndexingNode.getArray());
+    arrayIndexingNode.getArray().print(output);
     output.print("[");
     arrayIndexingNode.getIndex().accept(this);
     output.print("]");
@@ -169,7 +148,7 @@ final class PrintVisitor
 
   @Override
   public Void visit(LiteralNode literalNode) {
-    printConstant(literalNode.getValue());
+    literalNode.getValue().print(output);
     return null;
   }
 
@@ -306,7 +285,7 @@ final class PrintVisitor
     addSourceLocation(receiveNode);
     addIndentation();
 
-    printIdentifier(receiveNode.getVariable());
+    receiveNode.getVariable().print(output);
     output.print(" <- ");
     printKeyword("recv ");
 

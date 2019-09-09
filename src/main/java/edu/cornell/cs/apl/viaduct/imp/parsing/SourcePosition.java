@@ -24,7 +24,7 @@ public abstract class SourcePosition implements Comparable<SourcePosition> {
 
   /** Line number of this position. 1 indexed. */
   public final int getLine() {
-    return getSourceFile().getLine(getOffset());
+    return getSourceFile().getLineNumber(getOffset());
   }
 
   /**
@@ -34,7 +34,7 @@ public abstract class SourcePosition implements Comparable<SourcePosition> {
    * since columns correspond to characters not the spaces between them.
    */
   public final int getColumn() {
-    return getSourceFile().getColumn(getOffset());
+    return getSourceFile().getColumnNumber(getOffset());
   }
 
   public final String getSourcePath() {

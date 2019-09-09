@@ -2,16 +2,17 @@ package edu.cornell.cs.apl.viaduct.errors;
 
 import edu.cornell.cs.apl.viaduct.imp.ast.Name;
 import edu.cornell.cs.apl.viaduct.imp.parsing.Located;
+import edu.cornell.cs.apl.viaduct.imp.parsing.SourceRange;
 import java.io.PrintStream;
 
 /** A name that is referenced before it is ever defined. */
 public final class UndefinedNameError extends CompilationError {
   private final Name name;
-  private final Located location;
+  private final SourceRange location;
 
   public <N extends Located & Name> UndefinedNameError(N name) {
     this.name = name;
-    this.location = name;
+    this.location = name.getSourceLocation();
   }
 
   @Override
@@ -21,13 +22,20 @@ public final class UndefinedNameError extends CompilationError {
 
   @Override
   protected String getSource() {
-    return location.getSourceLocation().getSourcePath();
+    return location.getSourcePath();
   }
 
   @Override
   public void print(PrintStream output) {
     super.print(output);
-    // TODO: improve
-    output.println("Undefined name: " + name.getName());
+
+    output.print("I cannot find a " + name.getNameCategory() + " named ");
+    name.print(output);
+    output.println(':');
+
+    output.println();
+    location.showInSource(output);
+
+    // TODO: show similar names in context
   }
 }

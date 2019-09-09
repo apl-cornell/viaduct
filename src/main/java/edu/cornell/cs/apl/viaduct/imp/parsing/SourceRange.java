@@ -1,7 +1,11 @@
 package edu.cornell.cs.apl.viaduct.imp.parsing;
 
 import com.google.auto.value.AutoValue;
+import java.io.PrintStream;
 import org.apache.commons.lang3.ObjectUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.fusesource.jansi.Ansi;
+import org.fusesource.jansi.Ansi.Color;
 
 /**
  * Denotes a nonempty set of consecutive characters in a source file. Empty ranges are not allowed,
@@ -37,7 +41,11 @@ public abstract class SourceRange {
 
   /** Description of where the source file came from. */
   public final String getSourcePath() {
-    return getStart().getSourcePath();
+    return getSourceFile().getPath();
+  }
+
+  private SourceFile getSourceFile() {
+    return getStart().getSourceFile();
   }
 
   /** Combine two ranges to create a range that spans both. */
@@ -60,5 +68,65 @@ public abstract class SourceRange {
       final String end = "(" + getEnd().getLine() + ":" + endColumn + ")";
       return getSourcePath() + ":" + start + "-" + end;
     }
+  }
+
+  /**
+   * Print the relevant portions of the source file and highlight the region that corresponds to
+   * this location.
+   *
+   * @param output where to print the output
+   * @param contextLines number of lines before and after the relevant region to display to give
+   *     more context to the user
+   */
+  public void showInSource(PrintStream output, int contextLines) {
+    final int startLine = getStart().getLine();
+    final int endLine = getEnd().getLine();
+
+    // Number of characters it takes to represent the largest line number.
+    final int lineNumberWidth = Integer.toString(endLine).length();
+
+    // True if we are highlighting multiple lines; false otherwise.
+    final boolean multiLineMode = startLine != endLine;
+
+    // Print relevant lines
+    final int firstLine = Math.max(1, startLine - contextLines);
+    final int lastLine = Math.min(getSourceFile().numberOfLines(), endLine + contextLines);
+    for (int line = firstLine; line <= lastLine; line++) {
+      final String lineNumber = String.format("%" + lineNumberWidth + "d|", line);
+      final boolean highlight = startLine <= line && line <= endLine;
+
+      // Print line number
+      output.print(lineNumber);
+
+      // Print multiline error indicator
+      if (multiLineMode) {
+        if (highlight) {
+          output.print(Ansi.ansi().fg(Color.RED).a('>').reset());
+        } else {
+          output.print(" ");
+        }
+      }
+
+      // Print space between line numbers and line contents
+      output.print(" ");
+
+      // Print the actual line
+      output.println(getSourceFile().getLine(line));
+
+      // Print error indicator for single-line mode
+      if (highlight) {
+        final int highlightStartColumn = lineNumber.length() + 1 + getStart().getColumn();
+        final int highlightLength = getEnd().getColumn() - getStart().getColumn();
+        output.print(StringUtils.repeat(' ', highlightStartColumn - 1));
+        output.println(
+            Ansi.ansi().fg(Color.RED).a(StringUtils.repeat('^', highlightLength)).reset());
+      }
+    }
+  }
+
+  /** Similar as {@link #showInSource(PrintStream, int)}, but with context set to a good default. */
+  public void showInSource(PrintStream output) {
+    final int contextLines = getStart().getLine() == getEnd().getLine() ? 0 : 1;
+    showInSource(output, contextLines);
   }
 }

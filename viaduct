@@ -1,0 +1,3 @@
+#!/usr/bin/env sh
+
+(./gradlew install > /dev/null) && ./build/install/viaduct/bin/viaduct "$@"

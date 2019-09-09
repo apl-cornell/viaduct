@@ -1,4 +1,4 @@
-# viaduct
+# Viaduct
 
 [![Build Status](https://travis-ci.com/apl-cornell/viaduct.svg?branch=master)](https://travis-ci.com/apl-cornell/viaduct)
 [![Codecov](https://codecov.io/gh/apl-cornell/viaduct/branch/master/graph/badge.svg)](https://codecov.io/gh/apl-cornell/viaduct)
@@ -17,7 +17,17 @@ Once you have Java installed, just run
 ./gradlew build
 ```
 
-to build the code.
+to build the code. This will also run all tests, so if this command works,
+you are good to go.
+
+On Unix environments, you can run the compiler using `./viaduct` from project
+root. This will use Gradle to automatically rebuild the application as
+necessary, so you do not have to worry about calling `./gradlew build` each
+time you change something. To start, try
+
+```shell
+./viaduct help
+```
 
 ## Debugging
 
@@ -26,7 +36,6 @@ Viaduct uses several libraries (CUP parser, JFlex, Google AutoValue) that
 generate source code, and these need to be added to classpath.
 
 An example `.classpath` file (tested in VS Code) is listed below.
-
 
 ````
 <?xml version="1.0" encoding="UTF-8"?>
@@ -66,4 +75,3 @@ An example `.classpath` file (tested in VS Code) is listed below.
 	<classpathentry kind="output" path="bin/default"/>
 </classpath>
 ```
-

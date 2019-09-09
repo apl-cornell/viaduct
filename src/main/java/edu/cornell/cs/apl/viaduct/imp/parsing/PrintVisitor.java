@@ -124,8 +124,8 @@ final class PrintVisitor
     output.print(Ansi.ansi().fg(Color.BLUE).a(identifier).reset());
   }
 
-  /** Print a builtin keyword or operator. */
-  private void printKeyword(Object keyword) {
+  /** Print a builtin keyword. */
+  private void printKeyword(String keyword) {
     output.print(Ansi.ansi().fg(Color.GREEN).a(keyword).reset());
   }
 
@@ -181,7 +181,7 @@ final class PrintVisitor
 
   @Override
   public Void visit(NotNode notNode) {
-    printKeyword('!');
+    output.print('!');
     return notNode.getExpression().accept(this);
   }
 
@@ -191,7 +191,7 @@ final class PrintVisitor
     binaryExpressionNode.getLhs().accept(this);
 
     output.print(' ');
-    printKeyword(binaryExpressionNode.getOperator());
+    output.print(binaryExpressionNode.getOperator());
     output.print(' ');
 
     binaryExpressionNode.getRhs().accept(this);
@@ -202,7 +202,7 @@ final class PrintVisitor
 
   @Override
   public Void visit(DowngradeNode downgradeNode) {
-    printKeyword(downgradeNode.getDowngradeType());
+    printKeyword(downgradeNode.getDowngradeType().toString());
     output.print("(");
     downgradeNode.getExpression().accept(this);
     output.print(", ");

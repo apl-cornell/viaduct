@@ -9,7 +9,7 @@ import javax.annotation.Nullable;
 @AutoValue
 public abstract class DowngradeNode extends ExpressionNode {
   public static Builder builder() {
-    return new AutoValue_DowngradeNode.Builder().setDefaults();
+    return new AutoValue_DowngradeNode.Builder();
   }
 
   public abstract Builder toBuilder();

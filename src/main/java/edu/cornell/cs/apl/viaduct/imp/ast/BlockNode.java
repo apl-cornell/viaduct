@@ -12,7 +12,7 @@ public abstract class BlockNode extends StatementNode implements Iterable<Statem
   private static final BlockNode EMPTY_BLOCK = BlockNode.builder().build();
 
   public static Builder builder() {
-    return new AutoValue_BlockNode.Builder().setDefaults();
+    return new AutoValue_BlockNode.Builder();
   }
 
   /** The empty block node. */

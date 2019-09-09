@@ -1,7 +1,7 @@
 package edu.cornell.cs.apl.viaduct.errors;
 
 import edu.cornell.cs.apl.viaduct.imp.ast.Name;
-import edu.cornell.cs.apl.viaduct.imp.parsing.Located;
+import edu.cornell.cs.apl.viaduct.imp.parsing.HasLocation;
 import edu.cornell.cs.apl.viaduct.imp.parsing.SourceRange;
 import java.io.PrintStream;
 
@@ -10,7 +10,7 @@ public final class UndefinedNameError extends CompilationError {
   private final Name name;
   private final SourceRange location;
 
-  public <N extends Located & Name> UndefinedNameError(N name) {
+  public <N extends HasLocation & Name> UndefinedNameError(N name) {
     this.name = name;
     this.location = name.getSourceLocation();
   }

@@ -8,7 +8,7 @@ import edu.cornell.cs.apl.viaduct.imp.ast.ForNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.LetBindingNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.Variable;
 import edu.cornell.cs.apl.viaduct.imp.ast.VariableDeclarationNode;
-import edu.cornell.cs.apl.viaduct.imp.parsing.Located;
+import edu.cornell.cs.apl.viaduct.imp.parsing.HasLocation;
 import io.vavr.collection.HashMap;
 import io.vavr.collection.Map;
 
@@ -124,7 +124,7 @@ public abstract class ContextStmtVisitor<
   /** Add a mapping from a variable to a value. */
   private void put(Variable variable, ContextValueT value) {
     if (context.containsKey(variable)) {
-      final Located previousDeclaration = context.keySet().find(variable::equals).getOrNull();
+      final HasLocation previousDeclaration = context.keySet().find(variable::equals).getOrNull();
       throw new NameClashError(previousDeclaration, variable);
     }
     context = context.put(variable, value);

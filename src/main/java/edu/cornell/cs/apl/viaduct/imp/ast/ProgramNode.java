@@ -15,7 +15,7 @@ import javax.annotation.Nonnull;
 @AutoValue
 public abstract class ProgramNode extends ImpAstNode implements Iterable<TopLevelDeclarationNode> {
   public static Builder builder() {
-    return new $AutoValue_ProgramNode.Builder().setDefaults();
+    return new $AutoValue_ProgramNode.Builder();
   }
 
   public abstract Builder toBuilder();

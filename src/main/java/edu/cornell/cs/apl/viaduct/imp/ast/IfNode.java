@@ -7,7 +7,7 @@ import edu.cornell.cs.apl.viaduct.imp.visitors.StmtVisitor;
 @AutoValue
 public abstract class IfNode extends StatementNode {
   public static Builder builder() {
-    return new AutoValue_IfNode.Builder().setDefaults();
+    return new AutoValue_IfNode.Builder();
   }
 
   public abstract Builder toBuilder();

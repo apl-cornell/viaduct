@@ -533,11 +533,19 @@ variable ::=
   ;
 
 host ::=
-    // TODO: add source location
-    IDENT:id {: RESULT = HostName.create(id); :}
+    IDENT:id {:
+      RESULT = HostName.builder()
+          .setName(id)
+          .setSourceLocation(location(idleft, idright))
+          .build();
+  :}
   ;
 
 process_name ::=
-    // TODO: add source location
-    IDENT:id {: RESULT = ProcessName.create(id); :}
+    IDENT:id {:
+      RESULT = ProcessName.builder()
+          .setName(id)
+          .setSourceLocation(location(idleft, idright))
+          .build();
+  :}
   ;

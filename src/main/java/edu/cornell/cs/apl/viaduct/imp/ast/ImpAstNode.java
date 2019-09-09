@@ -3,15 +3,12 @@ package edu.cornell.cs.apl.viaduct.imp.ast;
 import edu.cornell.cs.apl.viaduct.AstNode;
 import edu.cornell.cs.apl.viaduct.imp.informationflow.InformationFlowChecker;
 import edu.cornell.cs.apl.viaduct.imp.informationflow.LabelTerm;
-import edu.cornell.cs.apl.viaduct.imp.parsing.Located;
-import edu.cornell.cs.apl.viaduct.imp.parsing.SourceRange;
 import edu.cornell.cs.apl.viaduct.imp.visitors.ImpAstVisitor;
 import edu.cornell.cs.apl.viaduct.security.Label;
 import java.util.Objects;
-import javax.annotation.Nullable;
 
 /** A node in the abstract syntax tree of IMP programs. */
-public abstract class ImpAstNode implements AstNode, Located {
+public abstract class ImpAstNode extends Located implements AstNode {
   private LabelTerm trustLabel;
 
   /**
@@ -41,36 +38,5 @@ public abstract class ImpAstNode implements AstNode, Located {
     trustLabel = Objects.requireNonNull(value);
   }
 
-  @Override
-  public final @Nullable SourceRange getSourceLocation() {
-    return getSourceLocationMetadata().getData();
-  }
-
-  /** Used internally to wrap/unwrap {@link Metadata}. */
-  protected abstract Metadata<SourceRange> getSourceLocationMetadata();
-
   public abstract <R> R accept(ImpAstVisitor<R> visitor);
-
-  protected abstract static class Builder<SelfT> {
-    public final SelfT setSourceLocation(@Nullable SourceRange sourceLocation) {
-      return setSourceLocationMetadata(new Metadata<>(sourceLocation));
-    }
-
-    public final SelfT setSourceLocation(Located node) {
-      return setSourceLocation(node.getSourceLocation());
-    }
-
-    /**
-     * Set fields with defaults to their default values.
-     *
-     * <p>NOTE: Unfortunately, this needs to be called manually by every subclass.
-     */
-    protected final SelfT setDefaults() {
-      return setSourceLocationMetadata(new Metadata<>(null));
-    }
-
-    /** Used internally to wrap/unwrap {@link Metadata}. */
-    protected abstract SelfT setSourceLocationMetadata(
-        Metadata<SourceRange> sourceLocationMetadata);
-  }
 }

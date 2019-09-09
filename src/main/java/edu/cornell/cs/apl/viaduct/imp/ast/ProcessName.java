@@ -1,28 +1,31 @@
 package edu.cornell.cs.apl.viaduct.imp.ast;
 
 import com.google.auto.value.AutoValue;
-import edu.cornell.cs.apl.viaduct.errors.TodoException;
-import edu.cornell.cs.apl.viaduct.imp.parsing.Located;
-import edu.cornell.cs.apl.viaduct.imp.parsing.SourceRange;
 
 /** Process names. Processes execute code, and can send and receive messages. */
 @AutoValue
-public abstract class ProcessName implements Name, Located, Comparable<ProcessName> {
+public abstract class ProcessName extends Located implements Name {
   private static final ProcessName MAIN = ProcessName.create("main");
-
-  public static ProcessName create(String name) {
-    return new AutoValue_ProcessName(name);
-  }
-
-  /** Get the default process name that corresponds to a host. */
-  public static ProcessName create(HostName host) {
-    return create(host.getName());
-  }
 
   /** Name of the entry process. */
   public static ProcessName getMain() {
     return MAIN;
   }
+
+  public static ProcessName create(String name) {
+    return builder().setName(name).build();
+  }
+
+  /** Get the default process name that corresponds to a host. */
+  public static ProcessName create(HostName host) {
+    return builder().setName(host.getName()).setSourceLocation(host).build();
+  }
+
+  public static Builder builder() {
+    return new AutoValue_ProcessName.Builder();
+  }
+
+  public abstract Builder toBuilder();
 
   @Override
   public final String getNameCategory() {
@@ -30,17 +33,14 @@ public abstract class ProcessName implements Name, Located, Comparable<ProcessNa
   }
 
   @Override
-  public final SourceRange getSourceLocation() {
-    throw new TodoException();
-  }
-
-  @Override
-  public final int compareTo(ProcessName that) {
-    return getName().compareTo(that.getName());
-  }
-
-  @Override
   public final String toString() {
     return getName();
+  }
+
+  @AutoValue.Builder
+  public abstract static class Builder extends Located.Builder<Builder> {
+    public abstract Builder setName(String name);
+
+    public abstract ProcessName build();
   }
 }

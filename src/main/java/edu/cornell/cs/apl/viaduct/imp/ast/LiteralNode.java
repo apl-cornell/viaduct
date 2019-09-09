@@ -8,7 +8,7 @@ import edu.cornell.cs.apl.viaduct.imp.visitors.ExprVisitor;
 @AutoValue
 public abstract class LiteralNode extends ExpressionNode {
   public static Builder builder() {
-    return new AutoValue_LiteralNode.Builder().setDefaults();
+    return new AutoValue_LiteralNode.Builder();
   }
 
   public abstract Builder toBuilder();

@@ -1,20 +1,23 @@
 package edu.cornell.cs.apl.viaduct.imp.ast;
 
 import com.google.auto.value.AutoValue;
-import edu.cornell.cs.apl.viaduct.errors.TodoException;
-import edu.cornell.cs.apl.viaduct.imp.parsing.Located;
-import edu.cornell.cs.apl.viaduct.imp.parsing.SourceRange;
 
 /** A location that can run (one or more) processes. */
 @AutoValue
-public abstract class HostName implements Name, Located, Comparable<HostName> {
+public abstract class HostName extends Located implements Name {
   public static HostName create(String name) {
     return create(name, false);
   }
 
   public static HostName create(String name, boolean isSynthetic) {
-    return new AutoValue_HostName(name, isSynthetic);
+    return builder().setName(name).setSynthetic(isSynthetic).build();
   }
+
+  public static Builder builder() {
+    return new AutoValue_HostName.Builder().setSynthetic(false);
+  }
+
+  public abstract Builder toBuilder();
 
   // TODO: this will interact badly with .equals(). For example, compareTo is broken as is.
   public abstract boolean isSynthetic();
@@ -25,17 +28,16 @@ public abstract class HostName implements Name, Located, Comparable<HostName> {
   }
 
   @Override
-  public final SourceRange getSourceLocation() {
-    throw new TodoException();
-  }
-
-  @Override
-  public final int compareTo(HostName that) {
-    return this.getName().compareTo(that.getName());
-  }
-
-  @Override
   public final String toString() {
     return getName();
+  }
+
+  @AutoValue.Builder
+  public abstract static class Builder extends Located.Builder<Builder> {
+    public abstract Builder setName(String name);
+
+    public abstract Builder setSynthetic(boolean isSynthetic);
+
+    public abstract HostName build();
   }
 }

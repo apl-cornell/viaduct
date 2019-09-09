@@ -7,7 +7,7 @@ import edu.cornell.cs.apl.viaduct.imp.visitors.ReferenceVisitor;
 @AutoValue
 public abstract class ArrayIndexingNode extends ReferenceNode {
   public static Builder builder() {
-    return new AutoValue_ArrayIndexingNode.Builder().setDefaults();
+    return new AutoValue_ArrayIndexingNode.Builder();
   }
 
   public abstract Builder toBuilder();

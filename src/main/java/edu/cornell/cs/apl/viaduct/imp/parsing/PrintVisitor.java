@@ -88,7 +88,7 @@ final class PrintVisitor
   /**
    * Print the source location of the given node on a new line (if source locations are enabled).
    */
-  private void addSourceLocation(Located node) {
+  private void addSourceLocation(HasLocation node) {
     if (sourceLocationsEnabled
         && this.statementTerminatorsEnabled
         && node.getSourceLocation() != null) {

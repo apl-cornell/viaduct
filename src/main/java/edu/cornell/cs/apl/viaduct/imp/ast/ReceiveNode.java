@@ -9,7 +9,7 @@ import javax.annotation.Nullable;
 @AutoValue
 public abstract class ReceiveNode extends StatementNode {
   public static Builder builder() {
-    return new AutoValue_ReceiveNode.Builder().setDefaults();
+    return new AutoValue_ReceiveNode.Builder();
   }
 
   public abstract Builder toBuilder();

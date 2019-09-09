@@ -7,7 +7,7 @@ import edu.cornell.cs.apl.viaduct.imp.visitors.StmtVisitor;
 @AutoValue
 public abstract class WhileNode extends StatementNode {
   public static Builder builder() {
-    return new AutoValue_WhileNode.Builder().setDefaults();
+    return new AutoValue_WhileNode.Builder();
   }
 
   public abstract Builder toBuilder();

@@ -1,13 +1,11 @@
 package edu.cornell.cs.apl.viaduct.imp.interpreter;
 
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import edu.cornell.cs.apl.viaduct.errors.UndefinedNameError;
 import edu.cornell.cs.apl.viaduct.imp.ast.ProcessName;
 import io.vavr.Tuple;
 import io.vavr.Tuple2;
-import io.vavr.collection.HashMap;
-import io.vavr.collection.Map;
-import io.vavr.collection.SortedSet;
-import io.vavr.collection.TreeSet;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
@@ -24,10 +22,10 @@ import java.util.concurrent.LinkedBlockingQueue;
  */
 final class Channel<M> {
   /** Set of hosts this channel connects. */
-  private final SortedSet<ProcessName> processes;
+  private final ImmutableSet<ProcessName> processes;
 
   /** Map from (sender, receiver) to the queue that accumulates the messages between the two. */
-  private final Map<Tuple2<ProcessName, ProcessName>, BlockingQueue<M>> queues;
+  private final ImmutableMap<Tuple2<ProcessName, ProcessName>, BlockingQueue<M>> queues;
 
   /**
    * Create an empty channel given the processes to connect.
@@ -35,21 +33,22 @@ final class Channel<M> {
    * @param processes processes this channel connects.
    */
   Channel(Iterable<? extends ProcessName> processes) {
-    this.processes = TreeSet.ofAll(processes);
+    this.processes = ImmutableSet.copyOf(processes);
 
-    Map<Tuple2<ProcessName, ProcessName>, BlockingQueue<M>> queuesBuilder = HashMap.empty();
+    final ImmutableMap.Builder<Tuple2<ProcessName, ProcessName>, BlockingQueue<M>> queuesBuilder =
+        ImmutableMap.builder();
     for (ProcessName sender : processes) {
       for (ProcessName receiver : processes) {
-        queuesBuilder = queuesBuilder.put(Tuple.of(sender, receiver), new LinkedBlockingQueue<>());
+        queuesBuilder.put(Tuple.of(sender, receiver), new LinkedBlockingQueue<>());
       }
     }
-    this.queues = queuesBuilder;
+    this.queues = queuesBuilder.build();
   }
 
   /** Returns {@code true} if all queues in the channel are empty. */
   synchronized boolean isEmpty() {
-    for (Tuple2<?, BlockingQueue<M>> entry : this.queues) {
-      if (!entry._2.isEmpty()) {
+    for (BlockingQueue<M> queue : this.queues.values()) {
+      if (!queue.isEmpty()) {
         return false;
       }
     }
@@ -65,7 +64,7 @@ final class Channel<M> {
     assertProcess(sender);
     assertProcess(receiver);
     try {
-      queues.get(Tuple.of(sender, receiver)).get().put(message);
+      queues.get(Tuple.of(sender, receiver)).put(message);
     } catch (InterruptedException e) {
       throw new RuntimeException(e);
     }
@@ -80,7 +79,7 @@ final class Channel<M> {
     assertProcess(sender);
     assertProcess(receiver);
     try {
-      return queues.get(Tuple.of(sender, receiver)).get().take();
+      return queues.get(Tuple.of(sender, receiver)).take();
     } catch (InterruptedException e) {
       throw new RuntimeException(e);
     }

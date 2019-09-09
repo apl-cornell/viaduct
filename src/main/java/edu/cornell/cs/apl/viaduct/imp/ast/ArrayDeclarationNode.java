@@ -10,7 +10,7 @@ import javax.annotation.Nullable;
 @AutoValue
 public abstract class ArrayDeclarationNode extends StatementNode {
   public static Builder builder() {
-    return new AutoValue_ArrayDeclarationNode.Builder().setDefaults();
+    return new AutoValue_ArrayDeclarationNode.Builder();
   }
 
   public abstract Builder toBuilder();

@@ -7,7 +7,7 @@ import edu.cornell.cs.apl.viaduct.imp.visitors.StmtVisitor;
 @AutoValue
 public abstract class LoopNode extends StatementNode {
   public static Builder builder() {
-    return new AutoValue_LoopNode.Builder().setDefaults();
+    return new AutoValue_LoopNode.Builder();
   }
 
   public abstract Builder toBuilder();

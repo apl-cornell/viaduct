@@ -7,7 +7,7 @@ import edu.cornell.cs.apl.viaduct.imp.visitors.ExprVisitor;
 @AutoValue
 public abstract class BinaryExpressionNode extends ExpressionNode {
   public static Builder builder() {
-    return new AutoValue_BinaryExpressionNode.Builder().setDefaults();
+    return new AutoValue_BinaryExpressionNode.Builder();
   }
 
   public abstract Builder toBuilder();

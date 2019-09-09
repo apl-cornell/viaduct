@@ -7,7 +7,7 @@ import edu.cornell.cs.apl.viaduct.imp.visitors.StmtVisitor;
 @AutoValue
 public abstract class SendNode extends StatementNode {
   public static Builder builder() {
-    return new AutoValue_SendNode.Builder().setDefaults();
+    return new AutoValue_SendNode.Builder();
   }
 
   public abstract Builder toBuilder();

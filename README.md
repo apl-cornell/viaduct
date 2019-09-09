@@ -37,7 +37,7 @@ generate source code, and these need to be added to classpath.
 
 An example `.classpath` file (tested in VS Code) is listed below.
 
-````
+```xml
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
   <classpathentry kind="src" output="bin/main" path="build/generated/sources/annotationProcessor/java/main">

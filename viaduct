@@ -1,3 +1,7 @@
 #!/usr/bin/env sh
+set -e
 
-(./gradlew install > /dev/null) && ./build/install/viaduct/bin/viaduct "$@"
+# Directory containing this file
+DIR=$(cd "$(dirname "$0")" && pwd -P)
+
+(cd "$DIR" ./gradlew install > /dev/null) && "$DIR/build/install/viaduct/bin/viaduct" "$@"

@@ -13,7 +13,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ArgumentsSource;
 
 class ErrorsTest {
-  @DisplayName("Bad programs should cause an error when checked and/or interpreted.")
+  @DisplayName("Bad programs should cause an error when parsed, checked, and/or interpreted.")
   @ParameterizedTest
   @ArgumentsSource(ErroneousExamplesProvider.class)
   void testRun(File file) {
@@ -22,6 +22,9 @@ class ErrorsTest {
         () -> {
           final ProgramNode program = Parser.parse(SourceFile.from(file));
           TypeChecker.run(program);
+          // TODO: add IF and name checking.
+          // TODO: add tests for process and host name conflicts.
+          // TODO: add tests for sends to and receives from unknown hosts.
           Interpreter.run(program);
         });
   }

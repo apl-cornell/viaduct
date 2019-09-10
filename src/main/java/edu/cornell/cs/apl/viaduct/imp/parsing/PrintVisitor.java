@@ -14,6 +14,7 @@ import edu.cornell.cs.apl.viaduct.imp.ast.IfNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.LetBindingNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.LiteralNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.LoopNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.Name;
 import edu.cornell.cs.apl.viaduct.imp.ast.NotNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ProcessDeclarationNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ProgramNode;
@@ -26,6 +27,7 @@ import edu.cornell.cs.apl.viaduct.imp.ast.Variable;
 import edu.cornell.cs.apl.viaduct.imp.ast.VariableDeclarationNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.WhileNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.types.ImpType;
+import edu.cornell.cs.apl.viaduct.imp.ast.values.ImpValue;
 import edu.cornell.cs.apl.viaduct.imp.visitors.ExprVisitor;
 import edu.cornell.cs.apl.viaduct.imp.visitors.ProgramVisitor;
 import edu.cornell.cs.apl.viaduct.imp.visitors.ReferenceVisitor;
@@ -98,6 +100,26 @@ final class PrintVisitor
     }
   }
 
+  /** Print a name. */
+  public void print(Name name) {
+    output.print(Ansi.ansi().fg(Color.BLUE).a(name.getName()).reset());
+  }
+
+  /** Print a literal constant. */
+  public void print(ImpValue value) {
+    output.print(Ansi.ansi().fg(Color.CYAN).a(value).reset());
+  }
+
+  /** Print a type. */
+  public void print(ImpType type) {
+    output.print(Ansi.ansi().fg(Color.YELLOW).a(type).reset());
+  }
+
+  /** Print a label. */
+  public void print(Label label) {
+    output.print(Ansi.ansi().fg(Color.YELLOW).a(label).reset());
+  }
+
   /** Print a comment. */
   private void printComment(String comment) {
     output.print(Ansi.ansi().fgBright(Color.GREEN).a("/* ").a(comment).a(" */").reset());
@@ -125,13 +147,13 @@ final class PrintVisitor
 
   @Override
   public Void visit(Variable variable) {
-    variable.print(output);
+    print(variable);
     return null;
   }
 
   @Override
   public Void visit(ArrayIndexingNode arrayIndexingNode) {
-    arrayIndexingNode.getArray().print(output);
+    arrayIndexingNode.getArray().accept(this);
     output.print("[");
     arrayIndexingNode.getIndex().accept(this);
     output.print("]");
@@ -140,7 +162,7 @@ final class PrintVisitor
 
   @Override
   public Void visit(LiteralNode literalNode) {
-    literalNode.getValue().print(output);
+    print(literalNode.getValue());
     return null;
   }
 
@@ -180,10 +202,10 @@ final class PrintVisitor
 
     final Label fromLabel = downgradeNode.getFromLabel();
     if (fromLabel != null) {
-      fromLabel.print(output);
+      print(fromLabel);
       printKeyword(" to ");
     }
-    downgradeNode.getToLabel().print(output);
+    print(downgradeNode.getToLabel());
 
     output.print(")");
     return null;
@@ -194,11 +216,11 @@ final class PrintVisitor
     addSourceLocation(varDeclNode);
     addIndentation();
 
-    varDeclNode.getType().print(output);
+    print(varDeclNode.getType());
 
-    Label label = varDeclNode.getLabel();
+    final Label label = varDeclNode.getLabel();
     if (label != null) {
-      label.print(output);
+      print(label);
     }
 
     output.print(" ");
@@ -213,11 +235,11 @@ final class PrintVisitor
     addSourceLocation(arrayDecl);
     addIndentation();
 
-    arrayDecl.getElementType().print(output);
+    print(arrayDecl.getElementType());
 
-    Label label = arrayDecl.getLabel();
+    final Label label = arrayDecl.getLabel();
     if (label != null) {
-      label.print(output);
+      print(label);
     }
 
     output.print(" ");
@@ -277,13 +299,13 @@ final class PrintVisitor
     addSourceLocation(receiveNode);
     addIndentation();
 
-    receiveNode.getVariable().print(output);
+    print(receiveNode.getVariable());
     output.print(" <- ");
     printKeyword("recv ");
 
     final ImpType recvType = receiveNode.getReceiveType();
     if (recvType != null) {
-      recvType.print(output);
+      print(recvType);
       output.print(" ");
     }
 
@@ -418,7 +440,7 @@ final class PrintVisitor
     printKeyword("host ");
     output.print(hostDeclarationNode.getName());
     output.print(" : ");
-    hostDeclarationNode.getTrust().print(output);
+    print(hostDeclarationNode.getTrust());
     output.print(";");
 
     return null;

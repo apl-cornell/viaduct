@@ -2,6 +2,7 @@ package edu.cornell.cs.apl.viaduct.errors;
 
 import edu.cornell.cs.apl.viaduct.imp.ast.types.ImpType;
 import edu.cornell.cs.apl.viaduct.imp.parsing.HasLocation;
+import edu.cornell.cs.apl.viaduct.imp.parsing.Printer;
 import java.io.PrintStream;
 
 public class TypeMismatchError extends CompilationError {
@@ -41,18 +42,17 @@ public class TypeMismatchError extends CompilationError {
     output.println();
     node.getSourceLocation().showInSource(output);
 
-    output.println();
     output.println("It has type:");
     output.println();
     addIndentation(output);
-    actualType.print(output);
+    Printer.run(actualType, output);
     output.println();
 
     output.println();
     output.println("But it should have type:");
     output.println();
     addIndentation(output);
-    expectedType.print(output);
+    Printer.run(expectedType, output);
     output.println();
 
     output.println();

@@ -2,6 +2,7 @@ package edu.cornell.cs.apl.viaduct.errors;
 
 import edu.cornell.cs.apl.viaduct.imp.ast.AssertNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.values.BooleanValue;
+import edu.cornell.cs.apl.viaduct.imp.parsing.Printer;
 import java.io.PrintStream;
 
 /** Raised when an assertion in Imp source code fails during evaluation. */
@@ -27,7 +28,7 @@ public final class AssertionFailureError extends CompilationError {
     super.print(output);
 
     output.print("This assertion evaluated to ");
-    BooleanValue.create(false).print(output);
+    Printer.run(BooleanValue.create(false), output);
     output.println(":");
 
     output.println();

@@ -3,11 +3,15 @@ package edu.cornell.cs.apl.viaduct.imp.parsing;
 import edu.cornell.cs.apl.viaduct.AstPrinter;
 import edu.cornell.cs.apl.viaduct.imp.ast.ExpressionNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ImpAstNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.Name;
 import edu.cornell.cs.apl.viaduct.imp.ast.ProgramNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ReferenceNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.StatementNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.TopLevelDeclarationNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.types.ImpType;
+import edu.cornell.cs.apl.viaduct.imp.ast.values.ImpValue;
 import edu.cornell.cs.apl.viaduct.imp.visitors.ImpAstVisitor;
+import edu.cornell.cs.apl.viaduct.security.Label;
 import edu.cornell.cs.apl.viaduct.util.PrintUtil;
 import java.io.PrintStream;
 
@@ -49,6 +53,26 @@ public final class Printer implements AstPrinter<ImpAstNode> {
             return null;
           }
         });
+  }
+
+  /** Pretty print a name. */
+  public static void run(Name name, PrintStream output) {
+    new PrintVisitor(output, false).print(name);
+  }
+
+  /** Pretty print a literal constant. */
+  public static void run(ImpValue value, PrintStream output) {
+    new PrintVisitor(output, false).print(value);
+  }
+
+  /** Pretty print a type. */
+  public static void run(ImpType type, PrintStream output) {
+    new PrintVisitor(output, false).print(type);
+  }
+
+  /** Pretty print a label. */
+  public static void run(Label label, PrintStream output) {
+    new PrintVisitor(output, false).print(label);
   }
 
   /** Pretty print an AST node and return the result as a string. */

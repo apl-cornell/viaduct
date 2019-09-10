@@ -2,6 +2,7 @@ package edu.cornell.cs.apl.viaduct.errors;
 
 import edu.cornell.cs.apl.viaduct.imp.ast.ArrayIndexingNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.values.IntegerValue;
+import edu.cornell.cs.apl.viaduct.imp.parsing.Printer;
 import java.io.PrintStream;
 
 /** Raised when an illegal array index is accessed during evaluation. */
@@ -44,9 +45,9 @@ public class ImpArrayOutOfBoundsError extends CompilationError {
     node.getSourceLocation().showInSource(output);
 
     output.print("Index was ");
-    IntegerValue.create(index).print(output);
+    Printer.run(IntegerValue.create(index), output);
     output.print(". Array had size ");
-    IntegerValue.create(arrayLength).print(output);
+    Printer.run(IntegerValue.create(arrayLength), output);
     output.println(".");
 
     output.println();

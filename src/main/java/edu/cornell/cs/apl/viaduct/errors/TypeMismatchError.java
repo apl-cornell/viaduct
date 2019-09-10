@@ -2,6 +2,7 @@ package edu.cornell.cs.apl.viaduct.errors;
 
 import edu.cornell.cs.apl.viaduct.imp.ast.types.ImpType;
 import edu.cornell.cs.apl.viaduct.imp.parsing.HasLocation;
+import java.io.PrintStream;
 
 public class TypeMismatchError extends CompilationError {
   private final HasLocation node;
@@ -29,5 +30,31 @@ public class TypeMismatchError extends CompilationError {
   @Override
   protected String getSource() {
     return node.getSourceLocation().getSourcePath();
+  }
+
+  @Override
+  public void print(PrintStream output) {
+    super.print(output);
+
+    output.println("This term does not have the type I expect:");
+
+    output.println();
+    node.getSourceLocation().showInSource(output);
+
+    output.println();
+    output.println("It has type:");
+    output.println();
+    addIndentation(output);
+    actualType.print(output);
+    output.println();
+
+    output.println();
+    output.println("But it should have type:");
+    output.println();
+    addIndentation(output);
+    expectedType.print(output);
+    output.println();
+
+    output.println();
   }
 }

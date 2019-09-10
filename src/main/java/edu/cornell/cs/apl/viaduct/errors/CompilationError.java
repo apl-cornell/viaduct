@@ -38,6 +38,11 @@ public abstract class CompilationError extends Error {
     output.println();
   }
 
+  /** Add the default amount of information to the output. */
+  protected void addIndentation(PrintStream output) {
+    output.print(StringUtils.repeat(' ', PrintUtil.INDENTATION_LEVEL));
+  }
+
   @Override
   public final String toString() {
     return PrintUtil.printToString(this::print);

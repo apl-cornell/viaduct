@@ -108,14 +108,6 @@ final class PrintVisitor
     output.print(Ansi.ansi().fg(Color.GREEN).a(keyword).reset());
   }
 
-  /**
-   * Print a type annotation. Use for things such as {@code int}, {@code string}, security labels,
-   * etc.
-   */
-  private void printTypeAnnotation(Object annotation) {
-    output.print(Ansi.ansi().fg(Color.YELLOW).a(annotation).reset());
-  }
-
   /** Print a block node without adding indentation before the opening brace. */
   private void printChildBlock(BlockNode node) {
     output.println("{");
@@ -188,10 +180,10 @@ final class PrintVisitor
 
     final Label fromLabel = downgradeNode.getFromLabel();
     if (fromLabel != null) {
-      printTypeAnnotation(fromLabel);
+      fromLabel.print(output);
       printKeyword(" to ");
     }
-    printTypeAnnotation(downgradeNode.getToLabel());
+    downgradeNode.getToLabel().print(output);
 
     output.print(")");
     return null;
@@ -202,11 +194,11 @@ final class PrintVisitor
     addSourceLocation(varDeclNode);
     addIndentation();
 
-    printTypeAnnotation(varDeclNode.getType());
+    varDeclNode.getType().print(output);
 
     Label label = varDeclNode.getLabel();
     if (label != null) {
-      printTypeAnnotation(label);
+      label.print(output);
     }
 
     output.print(" ");
@@ -221,11 +213,11 @@ final class PrintVisitor
     addSourceLocation(arrayDecl);
     addIndentation();
 
-    printTypeAnnotation(arrayDecl.getElementType());
+    arrayDecl.getElementType().print(output);
 
     Label label = arrayDecl.getLabel();
     if (label != null) {
-      printTypeAnnotation(label);
+      label.print(output);
     }
 
     output.print(" ");
@@ -291,7 +283,7 @@ final class PrintVisitor
 
     final ImpType recvType = receiveNode.getReceiveType();
     if (recvType != null) {
-      printTypeAnnotation(recvType);
+      recvType.print(output);
       output.print(" ");
     }
 
@@ -426,7 +418,7 @@ final class PrintVisitor
     printKeyword("host ");
     output.print(hostDeclarationNode.getName());
     output.print(" : ");
-    printTypeAnnotation(hostDeclarationNode.getTrust());
+    hostDeclarationNode.getTrust().print(output);
     output.print(";");
 
     return null;

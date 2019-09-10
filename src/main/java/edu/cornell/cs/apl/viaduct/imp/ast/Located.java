@@ -10,7 +10,7 @@ import javax.annotation.Nullable;
  */
 abstract class Located implements HasLocation {
   @Override
-  public final @Nullable SourceRange getSourceLocation() {
+  public final SourceRange getSourceLocation() {
     return getSourceLocationMetadata().getData();
   }
 

@@ -14,7 +14,7 @@ public class ImpAstParser implements ArgumentConverter {
   public ProgramNode convert(Object source, ParameterContext context)
       throws ArgumentConversionException {
     try {
-      File path = (File) source;
+      final File path = (File) source;
       return Parser.parse(SourceFile.from(path));
     } catch (Exception e) {
       throw new ArgumentConversionException(e.getMessage());

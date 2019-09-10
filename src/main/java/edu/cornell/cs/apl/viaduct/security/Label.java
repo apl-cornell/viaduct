@@ -1,7 +1,10 @@
 package edu.cornell.cs.apl.viaduct.security;
 
 import edu.cornell.cs.apl.viaduct.util.Lattice;
+import java.io.PrintStream;
 import java.util.Objects;
+import org.fusesource.jansi.Ansi;
+import org.fusesource.jansi.Ansi.Color;
 
 /**
  * A lattice for information flow security. It is a standard bounded lattice that additionally
@@ -210,5 +213,10 @@ public class Label implements Lattice<Label>, TrustLattice<Label> {
     }
 
     return String.format("{%s}", expression);
+  }
+
+  /** Print this label to the given stream with colors. */
+  public void print(PrintStream output) {
+    output.print(Ansi.ansi().fg(Color.YELLOW).a(this).reset());
   }
 }

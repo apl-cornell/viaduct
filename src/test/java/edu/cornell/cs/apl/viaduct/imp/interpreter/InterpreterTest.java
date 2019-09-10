@@ -10,9 +10,9 @@ import org.junit.jupiter.params.provider.ArgumentsSource;
 class InterpreterTest {
   @ParameterizedTest
   @ArgumentsSource(ExamplesProvider.class)
-  void testRun(@ConvertWith(ImpAstParser.class) ProgramNode ast) {
+  void testRun(@ConvertWith(ImpAstParser.class) ProgramNode program) {
     // Interpret example programs to completion.
     // We do no check any outputs; programs should include assert statements.
-    Interpreter.run(ast);
+    Interpreter.run(program);
   }
 }

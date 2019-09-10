@@ -1,11 +1,12 @@
 package edu.cornell.cs.apl.viaduct.errors;
 
 import edu.cornell.cs.apl.viaduct.imp.ast.AssertNode;
-import edu.cornell.cs.apl.viaduct.imp.parsing.HasLocation;
+import edu.cornell.cs.apl.viaduct.imp.ast.values.BooleanValue;
+import java.io.PrintStream;
 
 /** Raised when an assertion in Imp source code fails during evaluation. */
 public final class AssertionFailureError extends CompilationError {
-  private final HasLocation assertion;
+  private final AssertNode assertion;
 
   public AssertionFailureError(AssertNode assertion) {
     this.assertion = assertion;
@@ -19,5 +20,17 @@ public final class AssertionFailureError extends CompilationError {
   @Override
   protected String getSource() {
     return assertion.getSourceLocation().getSourcePath();
+  }
+
+  @Override
+  public void print(PrintStream output) {
+    super.print(output);
+
+    output.print("This assertion expression evaluated to ");
+    BooleanValue.create(false).print(output);
+    output.println(":");
+
+    output.println();
+    assertion.getSourceLocation().showInSource(output);
   }
 }

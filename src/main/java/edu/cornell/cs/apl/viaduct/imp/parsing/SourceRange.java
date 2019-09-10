@@ -115,12 +115,20 @@ public abstract class SourceRange {
 
       // Print error indicator for single-line mode
       if (highlight) {
-        final int highlightStartColumn = lineNumber.length() + 1 + getStart().getColumn();
-        final int highlightLength = getEnd().getColumn() - getStart().getColumn();
+        final int startColumn = getStart().getColumn();
+        final int endColumn = getEnd().getColumn();
+        final int highlightStartColumn = lineNumber.length() + 1 + startColumn;
+        final int highlightLength = endColumn - startColumn;
         output.print(StringUtils.repeat(' ', highlightStartColumn - 1));
         output.println(
             Ansi.ansi().fg(Color.RED).a(StringUtils.repeat('^', highlightLength)).reset());
       }
+    }
+
+    // Make sure there is uniform vertical space after the displayed source code.
+    if (multiLineMode || contextLines > 0) {
+      // Last line did not have an underline. Add blank line instead.
+      output.println();
     }
   }
 

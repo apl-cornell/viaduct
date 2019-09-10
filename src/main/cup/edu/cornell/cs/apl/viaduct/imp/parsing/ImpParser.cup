@@ -16,10 +16,7 @@ import edu.cornell.cs.apl.viaduct.security.Principal;
 action code {:
     /** Generate source location information for a node given left and right character offsets. */
     private SourceRange location(int left, int right) {
-        final SourceFile source = ((ImpLexer) getScanner()).getSourceFile();
-        final SourcePosition start = SourcePosition.create(source, left);
-        final SourcePosition end = SourcePosition.create(source, right);
-        return SourceRange.create(start, end);
+        return ((ImpLexer) getScanner()).location(left, right);
     }
 
     /** Construct a binary expression node with source location inferred from the arguments. */

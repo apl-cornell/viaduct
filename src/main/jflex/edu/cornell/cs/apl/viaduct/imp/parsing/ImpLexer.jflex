@@ -1,5 +1,7 @@
 package edu.cornell.cs.apl.viaduct.imp.parsing;
 
+import edu.cornell.cs.apl.viaduct.errors.IllegalCharacterError;
+
 import java.io.Reader;
 
 import java_cup.runtime.ComplexSymbolFactory;
@@ -15,28 +17,26 @@ import java_cup.runtime.Symbol;
 /* Turn on character counting to get access to source locations. */
 %char
 
-
 %{
-  private SourceFile sourceFile;
-  private ComplexSymbolFactory symbolFactory;
+  private final SourceFile sourceFile;
+  private final ComplexSymbolFactory symbolFactory;
   private int commentLevel;
 
   /**
   * Construct a new lexer.
   *
-  * @param source input file
-  * @param sf generates symbols with source location information
+  * @param sourceFile input file
+  * @param symbolFactory generates symbols with source location information
   */
-  public ImpLexer(SourceFile source, ComplexSymbolFactory sf) {
-    this(source.getReader());
-    this.sourceFile = source;
-    this.symbolFactory = sf;
-    commentLevel = 0;
+  public ImpLexer(SourceFile sourceFile, ComplexSymbolFactory symbolFactory) {
+    this(sourceFile.getReader(), sourceFile, symbolFactory);
   }
 
-  /** Return the source file currently being scanned. */
-  final SourceFile getSourceFile() {
-    return this.sourceFile;
+  /** Generate a source location given left and right character offsets. */
+  public SourceRange location(int left, int right) {
+    final SourcePosition start = SourcePosition.create(sourceFile, left);
+    final SourcePosition end = SourcePosition.create(sourceFile, right);
+    return SourceRange.create(start, end);
   }
 
   /**
@@ -63,23 +63,24 @@ import java_cup.runtime.Symbol;
 %}
 
 
-/*
- * A line terminator is a Carriage Return (\r), a Line Feed (\n), or a Carriage Return
- * followd by Line Feed.
- */
-LineTerminator = \r | \n | \r\n
+/* Add these as arguments to the constructor. */
+%ctorarg SourceFile sourceFile
+%ctorarg ComplexSymbolFactory symbolFactory
 
-/* White space is a line terminator, space, tab, or line feed. */
-Whitespace     = {LineTerminator} | [ \t\f]
+%init{
+  this.sourceFile = sourceFile;
+  this.symbolFactory = symbolFactory;
+  commentLevel = 0;
+%init}
+
+
+/* White space is a line terminator, space, or tab. */
+Whitespace     = \R | [ \t\f]
 
 ALPHANUM    = [a-z]([A-Za-z0-9_])*
 CAPALPHANUM = [A-Z]([A-Za-z0-9_])*
 NUM         = ((-)?[1-9][0-9]*) | 0
-ANY         = .*
 
-%eofval{
-    return symbol(sym.EOF);
-%eofval}
 
 /* Lexer states in addition to the default. */
 %state COMMENT
@@ -186,9 +187,11 @@ ANY         = .*
     }
   }
 
-  {Whitespace} { /* do nothing */ }
-
   .            { /* do nothing */ }
+
+  \R           { /* do nothing */ }
 }
 
-[^]                    { throw new Error("Illegal character <" + yytext() + ">"); }
+<<EOF>>        { return symbol(sym.EOF); }
+
+[^]            { throw new IllegalCharacterError(location(yychar, yychar + yylength())); }

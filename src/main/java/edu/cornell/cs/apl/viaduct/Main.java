@@ -10,7 +10,7 @@ public class Main {
   /** Run the compiler. */
   public static void main(String... args) {
     try {
-      CommandLineInterface.parser().parse(args).call();
+      CommandLineInterface.parse(args).call();
     } catch (Throwable e) {
       failWith(e);
     }

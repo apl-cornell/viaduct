@@ -38,24 +38,19 @@ public class CommandLineInterface {
   private static final com.github.rvesse.airline.Cli<Callable<Void>> PARSER =
       new com.github.rvesse.airline.Cli<>(CommandLineInterface.class);
 
-  /**
-   * Return the command line parser.
-   *
-   * <p>Calling {@link com.github.rvesse.airline.Cli#parse(String...)} with command-line arguments
-   * will return a {@link Callable} that will execute the task determined by the arguments.
-   */
-  public static com.github.rvesse.airline.Cli<Callable<Void>> parser() {
-    return PARSER;
+  /** Parse the given arguments into a runnable task. */
+  public static Callable<Void> parse(String... args) {
+    return PARSER.parse(args);
   }
 
   /**
    * Print usage information to the given output stream.
    *
-   * @param output output stream to print usage information
+   * @param output stream to print usage information
    */
   public static void usage(PrintStream output) {
     try {
-      Help.help(parser().getMetadata(), new LinkedList<>(), output);
+      Help.help(PARSER.getMetadata(), new LinkedList<>(), output);
     } catch (IOException e) {
       e.printStackTrace();
     }

@@ -22,7 +22,7 @@ public class FormatCommand extends BaseCommand {
   private boolean enableAnf;
 
   @Override
-  public Void call() throws IOException {
+  public void run() throws IOException {
     // parse
     ProgramNode program = this.input.parse();
 
@@ -38,6 +38,5 @@ public class FormatCommand extends BaseCommand {
 
       Printer.run(program, writer);
     }
-    return null;
   }
 }

@@ -13,7 +13,7 @@ import java.util.Map;
 @Command(name = "interpret", description = "Execute program and print its final state")
 public class InterpretCommand extends BaseCommand {
   @Override
-  public Void call() throws IOException {
+  public void run() throws IOException {
     // parse
     final ProgramNode program = this.input.parse();
 
@@ -36,6 +36,5 @@ public class InterpretCommand extends BaseCommand {
         first = false;
       }
     }
-    return null;
   }
 }

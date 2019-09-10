@@ -173,7 +173,7 @@ public class CompileCommand extends BaseCommand {
   }
 
   @Override
-  public Void call() throws IOException {
+  public void run() throws IOException {
     final ProgramNode program = this.input.parse();
     final HostTrustConfiguration hostConfig = this.parseHostConfig(program);
 
@@ -199,7 +199,7 @@ public class CompileCommand extends BaseCommand {
     }
 
     if (this.skip && labelGraphOutput == null && protocolGraphOutput == null) {
-      return null;
+      return;
     }
 
     // Generate program dependency graph.
@@ -209,7 +209,7 @@ public class CompileCommand extends BaseCommand {
     dumpGraph(() -> PdgDotPrinter.pdgDotGraphWithLabels(pdg, new Printer()), labelGraphOutput);
 
     if (this.skip && protocolGraphOutput == null) {
-      return null;
+      return;
     }
 
     // Select cryptographic protocols for each node.
@@ -233,7 +233,7 @@ public class CompileCommand extends BaseCommand {
         protocolGraphOutput);
 
     if (this.skip) {
-      return null;
+      return;
     }
 
     if (pdg.getOrderedNodes().size() == protocolMap.size()) {
@@ -266,8 +266,6 @@ public class CompileCommand extends BaseCommand {
       // TODO: this should be reported better.
       throw new Error(error.toString());
     }
-
-    return null;
   }
 
   /**

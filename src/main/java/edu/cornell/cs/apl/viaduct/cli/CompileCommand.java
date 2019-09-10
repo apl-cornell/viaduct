@@ -35,6 +35,7 @@ import guru.nidi.graphviz.model.MutableGraph;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.PrintStream;
 import java.io.StringWriter;
@@ -114,7 +115,7 @@ public class CompileCommand extends BaseCommand {
    * @param graph graph to output
    * @param file name of the file to output to
    */
-  private static void dumpGraph(Supplier<MutableGraph> graph, String file) throws Exception {
+  private static void dumpGraph(Supplier<MutableGraph> graph, String file) throws IOException {
     if (file == null) {
       return;
     }
@@ -132,7 +133,7 @@ public class CompileCommand extends BaseCommand {
     }
   }
 
-  private static void dumpConstraints(Consumer<Writer> graph, String file) throws Exception {
+  private static void dumpConstraints(Consumer<Writer> graph, String file) throws IOException {
     if (file == null) {
       return;
     }
@@ -154,7 +155,7 @@ public class CompileCommand extends BaseCommand {
   }
 
   /** Compute graph output format from the file extension. */
-  private static Format formatFromExtension(String extension) throws Exception {
+  private static Format formatFromExtension(String extension) {
     switch (extension.toLowerCase()) {
       case "json":
         return Format.JSON0;
@@ -167,12 +168,12 @@ public class CompileCommand extends BaseCommand {
       case "xdot":
         return Format.XDOT;
       default:
-        throw new Exception("Unknown extension: " + extension);
+        throw new Error("Unknown extension: " + extension);
     }
   }
 
   @Override
-  public Void call() throws Exception {
+  public Void call() throws IOException {
     final ProgramNode program = this.input.parse();
     final HostTrustConfiguration hostConfig = this.parseHostConfig(program);
 
@@ -262,7 +263,8 @@ public class CompileCommand extends BaseCommand {
         error.append(String.format("%s (label: %s) => %s", astStr, labelStr, protocolStr));
       }
 
-      throw new Exception(error.toString());
+      // TODO: this should be reported better.
+      throw new Error(error.toString());
     }
 
     return null;
@@ -272,7 +274,7 @@ public class CompileCommand extends BaseCommand {
    * Parse all host configuration files, add host declarations from the main program, and return
    * them in one bundle.
    */
-  private HostTrustConfiguration parseHostConfig(ProgramNode program) throws Exception {
+  private HostTrustConfiguration parseHostConfig(ProgramNode program) throws IOException {
     final HostTrustConfiguration.Builder builder = HostTrustConfiguration.builder();
 
     // Parse and concatenate trust configurations.

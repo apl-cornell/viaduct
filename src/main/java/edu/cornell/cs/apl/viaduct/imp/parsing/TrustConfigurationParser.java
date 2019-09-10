@@ -10,7 +10,7 @@ import edu.cornell.cs.apl.viaduct.imp.ast.TopLevelDeclarationNode;
 /** Parser for host trust configurations. */
 public class TrustConfigurationParser {
   /** Parse a host trust configuration from the given source file. */
-  public static HostTrustConfiguration parse(SourceFile source) throws Exception {
+  public static HostTrustConfiguration parse(SourceFile source) {
     ProgramNode program = Parser.parse(source);
     return extractHostTrustConfiguration(program);
   }

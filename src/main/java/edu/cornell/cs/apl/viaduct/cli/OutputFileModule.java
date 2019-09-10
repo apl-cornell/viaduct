@@ -19,19 +19,14 @@ final class OutputFileModule {
   // @com.github.rvesse.airline.annotations.restrictions.File(readable = false)
   private String output = null;
 
-  /** Return the output file specified by the user, or {@code null} if none specified. */
-  File getOutput() {
-    return output != null ? new File(output) : null;
-  }
-
-  /** Create a {@link PrintStream} that expects ANSI color codes to the specified output file. */
+  /** Create a {@link PrintStream} (which expects ANSI color codes) to the specified output file. */
   PrintStream newOutputStream() throws IOException {
-    final File file = getOutput();
-    if (file == null) {
+    if (output == null) {
+      // Read from standard input.
       return AnsiConsole.out();
     } else {
       // TODO: PrintStream doesn't throw errors when writing. These will fail silently.
-      return new AnsiPrintStream(new PrintStream(file, StandardCharsets.UTF_8));
+      return new AnsiPrintStream(new PrintStream(new File(output), StandardCharsets.UTF_8));
     }
   }
 }

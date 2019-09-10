@@ -3,6 +3,7 @@ package edu.cornell.cs.apl.viaduct;
 import com.github.rvesse.airline.parser.errors.ParseException;
 import edu.cornell.cs.apl.viaduct.cli.CommandLineInterface;
 import edu.cornell.cs.apl.viaduct.errors.CompilationError;
+import java.io.IOException;
 import org.fusesource.jansi.AnsiConsole;
 
 public class Main {
@@ -24,14 +25,14 @@ public class Main {
       AnsiConsole.err.println(e.getLocalizedMessage());
       AnsiConsole.err.println();
       CommandLineInterface.usage(AnsiConsole.err);
+    } else if (e instanceof IOException) {
+      AnsiConsole.err.println(e.getLocalizedMessage());
     } else if (e instanceof CompilationError) {
       // User error; print short, pretty message.
-      ((CompilationError) e).print(AnsiConsole.err());
-    } else if (e instanceof RuntimeException) {
+      ((CompilationError) e).print(AnsiConsole.err);
+    } else {
       // Developer error; give more detail.
       e.printStackTrace();
-    } else {
-      AnsiConsole.err.println(e.getLocalizedMessage());
     }
     System.exit(1);
   }

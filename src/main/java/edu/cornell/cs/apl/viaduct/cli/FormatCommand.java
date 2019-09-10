@@ -6,6 +6,7 @@ import edu.cornell.cs.apl.viaduct.imp.ast.ProgramNode;
 import edu.cornell.cs.apl.viaduct.imp.parsing.Printer;
 import edu.cornell.cs.apl.viaduct.imp.transformers.AnfConverter;
 import edu.cornell.cs.apl.viaduct.imp.transformers.Elaborator;
+import java.io.IOException;
 import java.io.PrintStream;
 
 @Command(name = "format", description = "Pretty print source program")
@@ -21,7 +22,7 @@ public class FormatCommand extends BaseCommand {
   private boolean enableAnf;
 
   @Override
-  public Void call() throws Exception {
+  public Void call() throws IOException {
     // parse
     ProgramNode program = this.input.parse();
 

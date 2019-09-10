@@ -19,25 +19,19 @@ final class InputFileModule {
   // @com.github.rvesse.airline.annotations.restrictions.File(mustExist = true, writable = false)
   private String input = null;
 
-  /** Return the input file specified by the user, or {@code null} if none specified. */
-  File getInput() {
-    return input != null ? new File(input) : null;
-  }
-
   /** Parse the input file and return the AST. */
-  ProgramNode parse() throws Exception {
+  ProgramNode parse() throws IOException {
     return Parser.parse(newSourceFile());
   }
 
   /** Create a new {@link SourceFile} from the specified input file. */
   private SourceFile newSourceFile() throws IOException {
-    final File file = getInput();
-    if (file == null) {
+    if (input == null) {
       try (Reader reader = new InputStreamReader(System.in, StandardCharsets.UTF_8)) {
         return SourceFile.from("<stdin>", reader);
       }
     } else {
-      return SourceFile.from(file);
+      return SourceFile.from(new File(input));
     }
   }
 }

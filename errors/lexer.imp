@@ -1,5 +1,5 @@
 /* Weird symbols the lexer doesn't know about. */
 ~#`
 
-program main {
+process main {
 }

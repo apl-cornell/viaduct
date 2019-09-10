@@ -20,7 +20,7 @@ import java_cup.runtime.Symbol;
 %{
   private final SourceFile sourceFile;
   private final ComplexSymbolFactory symbolFactory;
-  private int commentLevel;
+  private int commentLevel = 0;
 
   /**
   * Construct a new lexer.
@@ -70,7 +70,6 @@ import java_cup.runtime.Symbol;
 %init{
   this.sourceFile = sourceFile;
   this.symbolFactory = symbolFactory;
-  commentLevel = 0;
 %init}
 
 

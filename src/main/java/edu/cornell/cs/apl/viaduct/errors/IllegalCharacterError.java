@@ -3,7 +3,7 @@ package edu.cornell.cs.apl.viaduct.errors;
 import edu.cornell.cs.apl.viaduct.imp.parsing.SourceRange;
 import java.io.PrintStream;
 
-/** Throws when the lexer encounters an illegal character. */
+/** Thrown when the lexer encounters an illegal character. */
 public class IllegalCharacterError extends CompilationError {
   private final SourceRange location;
 
@@ -25,7 +25,7 @@ public class IllegalCharacterError extends CompilationError {
   public void print(PrintStream output) {
     super.print(output);
 
-    output.println("I cannot interpreter this character:");
+    output.println("I ran into a character I did not expect:");
 
     output.println();
     location.showInSource(output);

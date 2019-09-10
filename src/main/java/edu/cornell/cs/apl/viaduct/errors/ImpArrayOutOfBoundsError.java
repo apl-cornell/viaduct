@@ -38,7 +38,7 @@ public class ImpArrayOutOfBoundsError extends CompilationError {
   public void print(PrintStream output) {
     super.print(output);
 
-    output.println("This code tried to access an invalid index:");
+    output.println("This code tried to access an invalid array index:");
 
     output.println();
     node.getSourceLocation().showInSource(output);

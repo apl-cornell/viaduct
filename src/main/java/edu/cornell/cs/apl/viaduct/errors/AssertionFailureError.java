@@ -26,7 +26,7 @@ public final class AssertionFailureError extends CompilationError {
   public void print(PrintStream output) {
     super.print(output);
 
-    output.print("This assertion expression evaluated to ");
+    output.print("This assertion evaluated to ");
     BooleanValue.create(false).print(output);
     output.println(":");
 

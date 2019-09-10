@@ -25,7 +25,7 @@ public class ProcessDeclarationInTrustFileError extends CompilationError {
   public void print(PrintStream output) {
     super.print(output);
 
-    output.println("I encountered a process declaration is a host configuration file:");
+    output.println("I encountered a process declaration in a host configuration file.");
 
     output.println();
     declaration.getName().getSourceLocation().showInSource(output);

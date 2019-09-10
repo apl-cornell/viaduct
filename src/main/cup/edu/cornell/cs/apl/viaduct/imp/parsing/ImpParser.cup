@@ -1,9 +1,6 @@
 package edu.cornell.cs.apl.viaduct.imp.parsing;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.LinkedList;
-
+import edu.cornell.cs.apl.viaduct.errors.ParsingError;
 import edu.cornell.cs.apl.viaduct.imp.ast.*;
 import edu.cornell.cs.apl.viaduct.imp.ast.types.*;
 import edu.cornell.cs.apl.viaduct.imp.ast.values.*;
@@ -12,13 +9,14 @@ import edu.cornell.cs.apl.viaduct.imp.ast.BinaryOperators.*;
 import edu.cornell.cs.apl.viaduct.security.Label;
 import edu.cornell.cs.apl.viaduct.security.Principal;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.LinkedList;
+
+import java_cup.runtime.Symbol;
+
 
 action code {:
-    /** Generate source location information for a node given left and right character offsets. */
-    private SourceRange location(int left, int right) {
-        return ((ImpLexer) getScanner()).location(left, right);
-    }
-
     /** Construct a binary expression node with source location inferred from the arguments. */
     private BinaryExpressionNode binary(BinaryOperator op, ExpressionNode lhs, ExpressionNode rhs) {
         return BinaryExpressionNode.builder()
@@ -78,6 +76,31 @@ action code {:
     }
 :}
 
+parser code {:
+    /** Generate source location information for a node given left and right character offsets. */
+    private SourceRange location(int left, int right) {
+        return ((ImpLexer) getScanner()).location(left, right);
+    }
+
+    @Override
+    public void report_error(String message, Object info) {
+        report_fatal_error(message, info);
+    }
+
+    @Override
+    public void report_fatal_error(String message, Object info) {
+        done_parsing();
+
+        final Symbol infoSymbol = (Symbol) info;
+        final SourceRange errorLocation = location(infoSymbol.left, infoSymbol.right);
+        final String actualToken = symbl_name_from_id(infoSymbol.sym);
+        final List<String> expectedTokens = new LinkedList<>();
+        for (Integer id : expected_token_ids()) {
+            expectedTokens.add(symbl_name_from_id(id));
+        }
+        throw new ParsingError(errorLocation, actualToken, expectedTokens);
+    }
+:}
 
 nonterminal ProgramNode program;
 nonterminal ProgramNode.Builder declaration_list;

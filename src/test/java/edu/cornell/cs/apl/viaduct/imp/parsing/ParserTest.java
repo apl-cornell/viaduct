@@ -5,7 +5,7 @@ import java.io.File;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ArgumentsSource;
 
-class ImpParserTest {
+class ParserTest {
   @ParameterizedTest
   @ArgumentsSource(ExamplesProvider.class)
   void testParse(File file) throws Exception {

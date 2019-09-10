@@ -10,7 +10,7 @@ import org.junit.jupiter.params.provider.ArgumentsSource;
 class TypeCheckerTest {
   @ParameterizedTest
   @ArgumentsSource(ExamplesProvider.class)
-  void testParse(@ConvertWith(ImpAstParser.class) ProgramNode program) {
+  void testTypeChecker(@ConvertWith(ImpAstParser.class) ProgramNode program) {
     TypeChecker.run(program);
   }
 }

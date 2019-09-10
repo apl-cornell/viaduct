@@ -1,25 +1,36 @@
-package edu.cornell.cs.apl.viaduct.imp.interpreter;
+package edu.cornell.cs.apl.viaduct.imp.transformers;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import edu.cornell.cs.apl.viaduct.ExamplesProvider;
 import edu.cornell.cs.apl.viaduct.ImpAstParser;
 import edu.cornell.cs.apl.viaduct.imp.ast.ProcessName;
 import edu.cornell.cs.apl.viaduct.imp.ast.ProgramNode;
-import edu.cornell.cs.apl.viaduct.imp.transformers.AnfConverter;
-import edu.cornell.cs.apl.viaduct.imp.transformers.Elaborator;
+import edu.cornell.cs.apl.viaduct.imp.interpreter.Interpreter;
+import edu.cornell.cs.apl.viaduct.imp.interpreter.Store;
 import java.util.Map;
 import java.util.Map.Entry;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.converter.ConvertWith;
 import org.junit.jupiter.params.provider.ArgumentsSource;
 
-class AnfEquivalenceTest {
+class AnfConverterTest {
   @ParameterizedTest
   @ArgumentsSource(ExamplesProvider.class)
-  void testRun(@ConvertWith(ImpAstParser.class) ProgramNode ast) {
-    // Ensure that A-normal form translation is semantics preserving.
+  void testIdempotent(@ConvertWith(ImpAstParser.class) ProgramNode ast) {
+    final ProgramNode program = Elaborator.run(ast);
+    final ProgramNode anfProgram = AnfConverter.run(program);
+    final ProgramNode anfAnfProgram = AnfConverter.run(anfProgram);
 
+    assertEquals(anfProgram, anfAnfProgram);
+  }
+
+  @DisplayName("ANF translation must preserve dynamic semantics.")
+  @ParameterizedTest
+  @ArgumentsSource(ExamplesProvider.class)
+  void testPreservesSemantics(@ConvertWith(ImpAstParser.class) ProgramNode ast) {
     final ProgramNode program = Elaborator.run(ast);
     final ProgramNode anfProgram = AnfConverter.run(program);
 

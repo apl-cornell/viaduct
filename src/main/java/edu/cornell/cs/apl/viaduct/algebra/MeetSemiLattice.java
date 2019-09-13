@@ -1,4 +1,4 @@
-package edu.cornell.cs.apl.viaduct.util;
+package edu.cornell.cs.apl.viaduct.algebra;
 
 /** A set that supports binary greatest lower bounds. */
 public interface MeetSemiLattice<T extends MeetSemiLattice<T>> extends PartialOrder<T> {

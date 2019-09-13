@@ -1,19 +1,22 @@
 package edu.cornell.cs.apl.viaduct.util.dataflow;
 
-/** Nodes of a data flow graph. */
-public interface DataFlowNode<A, T extends Throwable> {
+import java.util.Optional;
+
+/** Nodes in a data flow graph. */
+public interface DataFlowNode<A> {
   /**
-   * Initial guess for the value of this node. This is required to be a lower bound on the actual
+   * Initial guess for the value of this node. This is required to be an upper bound on the actual
    * solution.
    */
   A initialize();
 
   /**
-   * Given the join of the values from the incoming edges, compute the outgoing value. The final
-   * outgoing value for this node will be returned as the solution for this node.
+   * This function will be called for each incoming edge, and allows the node to modify incoming
+   * values. The overall outgoing value of this node will be the meet of all values produced by this
+   * function.
    *
-   * <p>This function is allowed to throw an exception, in which case data flow analysis aborts with
-   * the same exception.
+   * <p>This function is allowed to return an empty optional, in which case data flow analysis is
+   * aborted, and the edge that caused the empty value is reported as the cause of error.
    */
-  A transfer(A in) throws T;
+  Optional<A> transfer(A in);
 }

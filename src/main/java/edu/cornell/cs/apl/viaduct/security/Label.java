@@ -1,49 +1,59 @@
 package edu.cornell.cs.apl.viaduct.security;
 
-import edu.cornell.cs.apl.viaduct.util.Lattice;
-import java.util.Objects;
+import com.google.auto.value.AutoValue;
+import edu.cornell.cs.apl.viaduct.algebra.FreeDistributiveLattice;
+import edu.cornell.cs.apl.viaduct.algebra.Lattice;
 
 /**
- * A lattice for information flow security. It is a standard bounded lattice that additionally
+ * A lattice for information flow security. This is a standard bounded lattice that additionally
  * supports confidentiality and integrity projections. Information flows from less restrictive
  * contexts to more restrictive ones.
  *
  * <p>{@link #top()}, {@link #bottom()}, {@link #meet(Label)}, and {@link #join(Label)} talk about
  * information flow.
  *
- * <p>{@link #strongest()}, {@link #weakest()}, {@link #and(Label)}, and {@link #or(Label)} talk
+ * <p>{@link #weakest()}, {@link #strongest()}, {@link #and(Label)}, and {@link #or(Label)} talk
  * about trust.
  */
-public class Label implements Lattice<Label>, TrustLattice<Label> {
-  // public untrusted
+@AutoValue
+public abstract class Label implements Lattice<Label>, TrustLattice<Label> {
+  // public, untrusted
   private static final Label WEAKEST =
-      new Label(FreeDistributiveLattice.top(), FreeDistributiveLattice.top());
+      create(FreeDistributiveLattice.top(), FreeDistributiveLattice.top());
 
-  // secret trusted
+  // secret, trusted
   private static final Label STRONGEST =
-      new Label(FreeDistributiveLattice.bottom(), FreeDistributiveLattice.bottom());
+      create(FreeDistributiveLattice.bottom(), FreeDistributiveLattice.bottom());
 
-  // public trusted
-  private static final Label BOTTOM = new Label(weakest().confidentiality, strongest().integrity);
+  // public, trusted
+  private static final Label BOTTOM =
+      create(weakest().getConfidentialityComponent(), strongest().getIntegrityComponent());
 
-  // secret untrusted
-  private static final Label TOP = new Label(strongest().confidentiality, weakest().integrity);
+  // secret, untrusted
+  private static final Label TOP =
+      create(strongest().getConfidentialityComponent(), weakest().getIntegrityComponent());
 
-  private final FreeDistributiveLattice<Principal> confidentiality;
-  private final FreeDistributiveLattice<Principal> integrity;
-
-  /** Label corresponding to a single given principal. */
-  public Label(Principal principal) {
-    final FreeDistributiveLattice<Principal> component = new FreeDistributiveLattice<>(principal);
-    this.confidentiality = component;
-    this.integrity = component;
+  /** Constructs a label corresponding to a single given principal. */
+  public static Label create(Principal principal) {
+    final FreeDistributiveLattice<Principal> component = FreeDistributiveLattice.create(principal);
+    return create(component, component);
   }
 
-  public Label(
+  /** Constructs a label given the confidentiality and integrity components. */
+  public static Label create(
       FreeDistributiveLattice<Principal> confidentiality,
       FreeDistributiveLattice<Principal> integrity) {
-    this.confidentiality = Objects.requireNonNull(confidentiality);
-    this.integrity = Objects.requireNonNull(integrity);
+    return new AutoValue_Label(confidentiality, integrity);
+  }
+
+  /** Constructs a label given only the confidentiality component. Integrity is set to minimum. */
+  public static Label fromConfidentiality(FreeDistributiveLattice<Principal> confidentiality) {
+    return Label.create(confidentiality, Label.weakest().getIntegrityComponent());
+  }
+
+  /** Construct a label given only the integrity component. Confidentiality is set to minimum. */
+  public static Label fromIntegrity(FreeDistributiveLattice<Principal> integrity) {
+    return Label.create(Label.weakest().getConfidentialityComponent(), integrity);
   }
 
   /** The least restrictive data policy, i.e. public and trusted. */
@@ -79,134 +89,109 @@ public class Label implements Lattice<Label>, TrustLattice<Label> {
    *
    * <p>Unlike {@link #confidentiality()}, the result is not a {@link Label}.
    */
-  public FreeDistributiveLattice<Principal> confidentialityComponent() {
-    return confidentiality;
-  }
+  public abstract FreeDistributiveLattice<Principal> getConfidentialityComponent();
 
   /**
    * Return the integrity component in the underlying lattice.
    *
    * <p>Unlike {@link #integrity()}, the result is not a {@link Label}.
    */
-  public FreeDistributiveLattice<Principal> integrityComponent() {
-    return integrity;
-  }
+  public abstract FreeDistributiveLattice<Principal> getIntegrityComponent();
 
-  /** Check if information flow from {@code this} to {@code other} is safe. */
-  public boolean flowsTo(Label other) {
-    /*
-    return this.confidentiality.lessThanOrEqualTo(other.confidentiality)
-        && other.integrity.lessThanOrEqualTo(this.integrity);
-    */
-    return other
-        .confidentiality()
+  /** Check if information flow from {@code this} to {@code that} is safe. */
+  public final boolean flowsTo(Label that) {
+    return that.confidentiality()
         .and(this.integrity())
-        .actsFor(this.confidentiality().and(other.integrity()));
+        .actsFor(this.confidentiality().and(that.integrity()));
   }
 
   @Override
-  public boolean lessThanOrEqualTo(Label other) {
-    return this.flowsTo(other);
+  public final boolean lessThanOrEqualTo(Label that) {
+    return this.flowsTo(that);
   }
 
   @Override
-  public Label join(Label with) {
-    /*
-    return new Label(
-        this.confidentiality.join(with.confidentiality), this.integrity.meet(with.integrity));
-    */
+  public final Label join(Label with) {
     return this.and(with).confidentiality().and(this.or(with).integrity());
   }
 
   @Override
-  public Label meet(Label with) {
-    /*
-    return new Label(
-        this.confidentiality.meet(with.confidentiality), this.integrity.join(with.integrity));
-    */
+  public final Label meet(Label with) {
     return this.or(with).confidentiality().and(this.and(with).integrity());
   }
 
   /**
    * The confidentiality component.
    *
-   * <p>Keeps confidentiality the same while setting integrity to weakest integrity.
+   * <p>Keeps confidentiality the same while setting integrity to the weakest level.
    */
-  public Label confidentiality() {
-    return new Label(this.confidentiality, weakest().integrity);
+  public final Label confidentiality() {
+    return create(this.getConfidentialityComponent(), weakest().getIntegrityComponent());
   }
 
   /**
    * The integrity component.
    *
-   * <p>Keeps integrity the same while setting confidentiality to weakest confidentiality.
+   * <p>Keeps integrity the same while setting confidentiality to the weakest level.
    */
-  public Label integrity() {
-    return new Label(weakest().confidentiality, this.integrity);
+  public final Label integrity() {
+    return create(weakest().getConfidentialityComponent(), this.getIntegrityComponent());
   }
 
   @Override
-  public boolean actsFor(Label other) {
-    return this.confidentiality.lessThanOrEqualTo(other.confidentiality)
-        && this.integrity.lessThanOrEqualTo(other.integrity);
+  public final boolean actsFor(Label other) {
+    return this.getConfidentialityComponent().lessThanOrEqualTo(other.getConfidentialityComponent())
+        && this.getIntegrityComponent().lessThanOrEqualTo(other.getIntegrityComponent());
   }
 
   @Override
-  public Label and(Label with) {
+  public final Label and(Label with) {
     final FreeDistributiveLattice<Principal> confidentiality =
-        this.confidentiality.meet(with.confidentiality);
-    final FreeDistributiveLattice<Principal> integrity = this.integrity.meet(with.integrity);
-    return new Label(confidentiality, integrity);
+        this.getConfidentialityComponent().meet(with.getConfidentialityComponent());
+    final FreeDistributiveLattice<Principal> integrity =
+        this.getIntegrityComponent().meet(with.getIntegrityComponent());
+    return create(confidentiality, integrity);
   }
 
   @Override
-  public Label or(Label with) {
+  public final Label or(Label with) {
     final FreeDistributiveLattice<Principal> confidentiality =
-        this.confidentiality.join(with.confidentiality);
-    final FreeDistributiveLattice<Principal> integrity = this.integrity.join(with.integrity);
-    return new Label(confidentiality, integrity);
+        this.getConfidentialityComponent().join(with.getConfidentialityComponent());
+    final FreeDistributiveLattice<Principal> integrity =
+        this.getIntegrityComponent().join(with.getIntegrityComponent());
+    return create(confidentiality, integrity);
+  }
+
+  /**
+   * Switch the confidentiality and integrity components.
+   *
+   * <p>This is used to enforce robust declassification and transparent endorsement (a.k.a.
+   * non-malleable information flow).
+   */
+  public final Label swap() {
+    return Label.create(getIntegrityComponent(), getConfidentialityComponent());
   }
 
   @Override
-  public boolean equals(Object o) {
-    if (this == o) {
-      return true;
-    }
-
-    if (!(o instanceof Label)) {
-      return false;
-    }
-
-    final Label that = (Label) o;
-    return Objects.equals(this.confidentiality, that.confidentiality)
-        && Objects.equals(this.integrity, that.integrity);
-  }
-
-  @Override
-  public int hashCode() {
-    return Objects.hash(this.confidentiality, this.integrity);
-  }
-
-  @Override
-  public String toString() {
-    final String confidentialityStr = this.confidentiality.toString("|", "&");
-    final String integrityStr = this.integrity.toString("|", "&");
+  public final String toString() {
+    final String confidentialityStr = this.getConfidentialityComponent().toString();
+    final String integrityStr = this.getIntegrityComponent().toString();
 
     String expression;
     if (this.equals(weakest())) {
       expression = "";
 
-    } else if (this.confidentiality.equals(this.integrity)) {
+    } else if (this.getConfidentialityComponent().equals(this.getIntegrityComponent())) {
       expression = confidentialityStr;
 
     } else if (this.equals(this.confidentiality())) {
-      expression = String.format("%s->", confidentialityStr);
+      expression = confidentialityStr + "->";
 
     } else if (this.equals(this.integrity())) {
-      expression = String.format("%s<-", integrityStr);
+      expression = integrityStr + "<-";
 
     } else {
-      expression = String.format("%s-> & %s<-", confidentialityStr, integrityStr);
+      expression = String.format("%s-> ∧ %s<-", confidentialityStr, integrityStr);
     }
 
     return String.format("{%s}", expression);

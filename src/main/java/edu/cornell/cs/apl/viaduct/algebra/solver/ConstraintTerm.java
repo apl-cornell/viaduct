@@ -1,7 +1,7 @@
-package edu.cornell.cs.apl.viaduct.security.solver;
+package edu.cornell.cs.apl.viaduct.algebra.solver;
 
 /** Terms that appear in constraints. */
 public interface ConstraintTerm<A> {
   /** Return the node that will represent this term in the constraint graph. */
-  ConstraintValue<A> getNode();
+  AtomicTerm<A> getNode();
 }

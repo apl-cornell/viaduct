@@ -1,4 +1,4 @@
-package edu.cornell.cs.apl.viaduct.security.solver;
+package edu.cornell.cs.apl.viaduct.algebra.solver;
 
 import edu.cornell.cs.apl.viaduct.util.dataflow.DataFlowEdge;
 

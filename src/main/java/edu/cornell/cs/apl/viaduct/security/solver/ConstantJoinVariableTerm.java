@@ -1,29 +1,45 @@
 package edu.cornell.cs.apl.viaduct.security.solver;
 
 import com.google.auto.value.AutoValue;
-import edu.cornell.cs.apl.viaduct.util.HeytingAlgebra;
-import edu.cornell.cs.apl.viaduct.util.dataflow.DataFlowEdge;
+import edu.cornell.cs.apl.viaduct.algebra.FreeDistributiveLattice;
+import edu.cornell.cs.apl.viaduct.algebra.solver.LeftHandTerm;
+import edu.cornell.cs.apl.viaduct.algebra.solver.RightHandTerm;
+import edu.cornell.cs.apl.viaduct.security.Label;
+import edu.cornell.cs.apl.viaduct.security.Principal;
+import java.util.Map;
 
-/** Join of a constant element and a variable. */
 @AutoValue
-public abstract class ConstantJoinVariableTerm<A extends HeytingAlgebra<A>>
-    implements RightHandTerm<A> {
-  public static <A extends HeytingAlgebra<A>> ConstantJoinVariableTerm<A> create(
-      A lhs, VariableTerm<A> rhs) {
-    return new AutoValue_ConstantJoinVariableTerm<>(lhs, rhs);
+abstract class ConstantJoinVariableTerm extends LabelTerm {
+  static ConstantJoinVariableTerm create(Label lhs, LabelVariable rhs) {
+    return new AutoValue_ConstantJoinVariableTerm(lhs, rhs);
   }
 
-  protected abstract A getLhs();
+  abstract Label getLhs();
 
-  protected abstract VariableTerm<A> getRhs();
+  abstract LabelVariable getRhs();
 
   @Override
-  public final ConstraintValue<A> getNode() {
-    return getRhs();
+  public final Label getValue(Map<LabelVariable, Label> solution) {
+    return getLhs().join(getRhs().getValue(solution));
   }
 
   @Override
-  public final DataFlowEdge<A> getOutEdge() {
-    return new PseudocomplementEdge<>(getLhs());
+  public LabelTerm confidentiality() {
+    return create(getLhs().confidentiality(), getRhs().confidentiality());
+  }
+
+  @Override
+  public LabelTerm integrity() {
+    return create(getLhs().integrity(), getRhs().integrity());
+  }
+
+  @Override
+  final LeftHandTerm<FreeDistributiveLattice<Principal>> getConfidentialityComponent() {
+    return getRhs().getConfidentialityComponent().meet(getLhs().getConfidentialityComponent());
+  }
+
+  @Override
+  final RightHandTerm<FreeDistributiveLattice<Principal>> getIntegrityComponent() {
+    return getRhs().getIntegrityComponent().join(getLhs().getIntegrityComponent());
   }
 }

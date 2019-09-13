@@ -1,7 +1,8 @@
 package edu.cornell.cs.apl.viaduct.util.dataflow;
 
-import edu.cornell.cs.apl.viaduct.util.MeetSemiLattice;
+import edu.cornell.cs.apl.viaduct.algebra.MeetSemiLattice;
 import edu.cornell.cs.apl.viaduct.util.UniqueQueue;
+import io.vavr.control.Either;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -13,11 +14,9 @@ import org.jgrapht.alg.connectivity.KosarajuStrongConnectivityInspector;
 import org.jgrapht.graph.DefaultEdge;
 import org.jgrapht.traverse.TopologicalOrderIterator;
 
+/** A solver that computes the greatest solution to a set of data flow equations. */
 public class DataFlow<
-    A extends MeetSemiLattice<A>,
-    T extends Throwable,
-    NodeT extends DataFlowNode<A, T>,
-    EdgeT extends DataFlowEdge<A>> {
+    A extends MeetSemiLattice<A>, NodeT extends DataFlowNode<A>, EdgeT extends DataFlowEdge<A>> {
 
   private final A top;
 
@@ -39,14 +38,14 @@ public class DataFlow<
    */
   public static <
           A extends MeetSemiLattice<A>,
-          T extends Throwable,
-          NodeT extends DataFlowNode<A, T>,
+          NodeT extends DataFlowNode<A>,
           EdgeT extends DataFlowEdge<A>>
-      Map<NodeT, A> solve(A top, Graph<NodeT, EdgeT> graph) throws T {
+      Either<DataFlowError<A, NodeT, EdgeT>, Map<NodeT, A>> solve(
+          A top, Graph<NodeT, EdgeT> graph) {
     return new DataFlow<>(top, graph).run();
   }
 
-  private Map<NodeT, A> run() throws T {
+  private Either<DataFlowError<A, NodeT, EdgeT>, Map<NodeT, A>> run() {
     // Initialize nodes
     for (NodeT node : graph.vertexSet()) {
       setNodeOutValue(node, node.initialize());
@@ -56,14 +55,20 @@ public class DataFlow<
     final Graph<Graph<NodeT, EdgeT>, DefaultEdge> stronglyConnectedComponents =
         new KosarajuStrongConnectivityInspector<>(graph).getCondensation();
 
-    // Solve components in topological order (i.e. visiting dependencies before dependents)
-    Iterator<Graph<NodeT, EdgeT>> topologicalIterator =
-        new TopologicalOrderIterator<>(stronglyConnectedComponents);
-    while (topologicalIterator.hasNext()) {
-      solveComponent(topologicalIterator.next());
+    try {
+      // Solve components in topological order (i.e. visiting dependencies before dependents)
+      Iterator<Graph<NodeT, EdgeT>> topologicalIterator =
+          new TopologicalOrderIterator<>(stronglyConnectedComponents);
+      while (topologicalIterator.hasNext()) {
+        solveComponent(topologicalIterator.next());
+      }
+    } catch (UnsatisfiableEqualityException e) {
+      @SuppressWarnings("unchecked")
+      final EdgeT edge = (EdgeT) e.getEdge();
+      return Either.left(new DataFlowError<>(edge, nodeOutValues));
     }
 
-    return nodeOutValues;
+    return Either.right(nodeOutValues);
   }
 
   /**
@@ -94,25 +99,25 @@ public class DataFlow<
    * <p>Assumes that all other components that have edges into this component have already been
    * solved.
    */
-  private void solveComponent(Graph<NodeT, EdgeT> component) throws T {
+  private void solveComponent(Graph<NodeT, EdgeT> component) throws UnsatisfiableEqualityException {
     final Queue<NodeT> workList = new UniqueQueue<>(component.vertexSet());
 
     while (!workList.isEmpty()) {
       final NodeT node = workList.remove();
 
       // Find incoming edges, which represent data dependencies.
-      // NOTE: using the original graph not the component!
+      // NOTE: we have to use the global graph not the component!
       final Set<EdgeT> incomingEdges = graph.incomingEdgesOf(node);
 
-      // Compute in value for the current node.
-      A inValue = top;
+      // Compute the out value for the current node.
+      A outValue = nodeOutValues.get(node);
       for (EdgeT inEdge : incomingEdges) {
-        A inEdgeValue = edgeOutValues.get(inEdge);
-        inValue = inValue.meet(inEdgeValue);
+        final A inEdgeValue = edgeOutValues.get(inEdge);
+        final A outEdgeValue =
+            node.transfer(inEdgeValue)
+                .orElseThrow(() -> new UnsatisfiableEqualityException(inEdge));
+        outValue = outValue.meet(outEdgeValue);
       }
-
-      // Derive out value from the in value.
-      final A outValue = node.transfer(inValue);
 
       if (setNodeOutValue(node, outValue)) {
         // NOTE: unlike before, we use the local graph when computing successors.

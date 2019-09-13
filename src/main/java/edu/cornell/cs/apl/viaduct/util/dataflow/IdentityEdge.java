@@ -8,4 +8,9 @@ public class IdentityEdge<A> extends DefaultEdge implements DataFlowEdge<A> {
   public A propagate(A in) {
     return in;
   }
+
+  @Override
+  public String toString() {
+    return "";
+  }
 }

@@ -53,7 +53,7 @@ public class Elaborator {
             IfNode.builder()
                 .setGuard(guard)
                 .setThenBranch((BlockNode) body)
-                .setElseBranch(BlockNode.builder().add(breakNode).build())
+                .setElseBranch(BlockNode.builder().add(breakNode).setSourceLocation(node).build())
                 .setSourceLocation(node)
                 .build();
         return LoopNode.builder()
@@ -97,12 +97,15 @@ public class Elaborator {
             IfNode.builder()
                 .setGuard(guard)
                 .setThenBranch(resultBody)
-                .setElseBranch(BlockNode.builder().add(breakNode).build())
+                .setElseBranch(BlockNode.builder().add(breakNode).setSourceLocation(node).build())
                 .setSourceLocation(node)
                 .build();
 
         result.add(
-            LoopNode.builder().setBody(BlockNode.builder().add(resultLoopBody).build()).build());
+            LoopNode.builder()
+                .setBody(BlockNode.builder().add(resultLoopBody).setSourceLocation(node).build())
+                .setSourceLocation(node)
+                .build());
 
         return result.build();
       }

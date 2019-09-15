@@ -126,7 +126,7 @@ public abstract class Label implements Lattice<Label>, TrustLattice<Label> {
    * <p>Keeps confidentiality the same while setting integrity to the weakest level.
    */
   public final Label confidentiality() {
-    return create(this.getConfidentialityComponent(), weakest().getIntegrityComponent());
+    return fromConfidentiality(this.getConfidentialityComponent());
   }
 
   /**
@@ -135,7 +135,7 @@ public abstract class Label implements Lattice<Label>, TrustLattice<Label> {
    * <p>Keeps integrity the same while setting confidentiality to the weakest level.
    */
   public final Label integrity() {
-    return create(weakest().getConfidentialityComponent(), this.getIntegrityComponent());
+    return fromIntegrity(this.getIntegrityComponent());
   }
 
   @Override

@@ -3,7 +3,6 @@ package edu.cornell.cs.apl.viaduct.algebra.solver;
 import edu.cornell.cs.apl.viaduct.algebra.HeytingAlgebra;
 import java.util.Map;
 import java.util.Optional;
-import javax.annotation.Nullable;
 
 /**
  * A variable for the solver to find a value for.
@@ -20,7 +19,7 @@ public final class VariableTerm<A extends HeytingAlgebra<A>> extends AtomicTerm<
    * @param top top element of {@code A}
    * @param label an arbitrary object to use as a label (useful for debugging)
    */
-  VariableTerm(A top, @Nullable Object label) {
+  VariableTerm(A top, Object label) {
     this.top = top;
     this.label = label;
   }
@@ -52,10 +51,6 @@ public final class VariableTerm<A extends HeytingAlgebra<A>> extends AtomicTerm<
 
   @Override
   public String toString() {
-    if (label != null) {
-      return label.toString();
-    } else {
-      return super.toString();
-    }
+    return label.toString();
   }
 }

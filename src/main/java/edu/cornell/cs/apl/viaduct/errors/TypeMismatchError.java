@@ -5,13 +5,14 @@ import edu.cornell.cs.apl.viaduct.imp.parsing.HasLocation;
 import edu.cornell.cs.apl.viaduct.imp.parsing.Printer;
 import java.io.PrintStream;
 
+/** Thrown when the inferred type of an AST node does nat match its expected type. */
 public class TypeMismatchError extends CompilationError {
   private final HasLocation node;
   private final ImpType actualType;
   private final ImpType expectedType;
 
   /**
-   * Captures the information that a node has an incorrect type.
+   * Indicates that an AST node has an incorrect type.
    *
    * @param node node that has the incorrect type
    * @param actualType inferred type for the node

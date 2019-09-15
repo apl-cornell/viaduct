@@ -1,10 +1,12 @@
 package edu.cornell.cs.apl.viaduct.imp.ast;
 
 import com.google.auto.value.AutoValue;
+import java.util.Comparator;
+import javax.annotation.Nonnull;
 
 /** A location that can run (one or more) processes. */
 @AutoValue
-public abstract class HostName extends Located implements Name {
+public abstract class HostName extends Located implements Comparable<HostName>, Name {
   public static HostName create(String name) {
     return create(name, false);
   }
@@ -25,6 +27,13 @@ public abstract class HostName extends Located implements Name {
   @Override
   public final String getNameCategory() {
     return "host";
+  }
+
+  @Override
+  public int compareTo(@Nonnull HostName that) {
+    return Comparator.comparing(HostName::getName)
+        .thenComparing(HostName::isSynthetic)
+        .compare(this, that);
   }
 
   @Override

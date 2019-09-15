@@ -6,6 +6,7 @@ import edu.cornell.cs.apl.viaduct.algebra.solver.VariableTerm;
 import edu.cornell.cs.apl.viaduct.security.Label;
 import edu.cornell.cs.apl.viaduct.security.Principal;
 import io.vavr.Function2;
+import java.io.Writer;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -85,6 +86,11 @@ public final class ConstraintSolver<T extends Throwable> {
     addFlowsToConstraint(rhs, lhs, (to, from) -> failWith.apply(from, to));
   }
 
+  /** Output the constraints as a DOT graph. */
+  public void exportDotGraph(Writer writer) {
+    constraintSystem.exportDotGraph(writer);
+  }
+
   /**
    * Add the constraint {@code lhs.confidentiality().flowsTo(rhs.confidentiality())}.
    *
@@ -122,7 +128,8 @@ public final class ConstraintSolver<T extends Throwable> {
 
     @Override
     public String toString() {
-      return "confidentiality " + label.toString();
+      // return "(confidentiality) " + label.toString();
+      return "(c) " + label.toString();
     }
   }
 
@@ -136,7 +143,8 @@ public final class ConstraintSolver<T extends Throwable> {
 
     @Override
     public String toString() {
-      return "integrity " + label.toString();
+      // return "(integrity) " + label.toString();
+      return "(i) " + label.toString();
     }
   }
 }

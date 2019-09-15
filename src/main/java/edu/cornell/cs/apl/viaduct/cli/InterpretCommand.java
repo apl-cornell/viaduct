@@ -3,8 +3,10 @@ package edu.cornell.cs.apl.viaduct.cli;
 import com.github.rvesse.airline.annotations.Command;
 import edu.cornell.cs.apl.viaduct.imp.ast.ProcessName;
 import edu.cornell.cs.apl.viaduct.imp.ast.ProgramNode;
+import edu.cornell.cs.apl.viaduct.imp.informationflow.InformationFlowChecker;
 import edu.cornell.cs.apl.viaduct.imp.interpreter.Interpreter;
 import edu.cornell.cs.apl.viaduct.imp.interpreter.Store;
+import edu.cornell.cs.apl.viaduct.imp.transformers.Elaborator;
 import edu.cornell.cs.apl.viaduct.imp.typing.TypeChecker;
 import java.io.IOException;
 import java.io.PrintStream;
@@ -19,6 +21,7 @@ public class InterpretCommand extends BaseCommand {
 
     // typecheck
     TypeChecker.run(program);
+    InformationFlowChecker.run(Elaborator.run(program));
 
     // interpret
     final Map<ProcessName, Store> stores = Interpreter.run(program);

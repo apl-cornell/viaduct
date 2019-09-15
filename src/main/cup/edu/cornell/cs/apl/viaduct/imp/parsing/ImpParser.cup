@@ -491,7 +491,7 @@ label ::=
   ;
 
 label_expr ::=
-    CAP_IDENT:id {: RESULT = new Label(Principal.create(id)); :}
+    CAP_IDENT:id {: RESULT = Label.create(Principal.create(id)); :}
 
   | TOP {: RESULT = Label.weakest(); :}
 

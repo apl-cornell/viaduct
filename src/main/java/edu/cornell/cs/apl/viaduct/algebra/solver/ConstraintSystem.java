@@ -4,12 +4,17 @@ import edu.cornell.cs.apl.viaduct.algebra.HeytingAlgebra;
 import edu.cornell.cs.apl.viaduct.algebra.PartialOrder;
 import edu.cornell.cs.apl.viaduct.util.dataflow.DataFlow;
 import edu.cornell.cs.apl.viaduct.util.dataflow.DataFlowEdge;
+import edu.cornell.cs.apl.viaduct.util.dataflow.DataFlowError;
+import edu.cornell.cs.apl.viaduct.util.dataflow.IdentityEdge;
 import io.vavr.Function2;
 import java.io.Writer;
 import java.util.HashMap;
 import java.util.Map;
 import org.jgrapht.graph.DirectedPseudograph;
+import org.jgrapht.io.ComponentAttributeProvider;
+import org.jgrapht.io.ComponentNameProvider;
 import org.jgrapht.io.DOTExporter;
+import org.jgrapht.io.DefaultAttribute;
 import org.jgrapht.io.IntegerComponentNameProvider;
 
 /**
@@ -56,8 +61,8 @@ public final class ConstraintSystem<A extends HeytingAlgebra<A>, T extends Throw
   /**
    * Find the greatest solution to the set of constraints in the system.
    *
-   * @throws T if there are unsatisfiable constraints
    * @return mapping from variables to the greatest values that satisfy all constraints
+   * @throws T if there are unsatisfiable constraints
    */
   public Map<VariableTerm<A>, A> solve() throws T {
     // Use data flow analysis to find a solution for all nodes.
@@ -66,9 +71,10 @@ public final class ConstraintSystem<A extends HeytingAlgebra<A>, T extends Throw
             .getOrElseThrow(
                 (error) -> {
                   final DataFlowEdge<A> edge = error.getUnsatisfiableEdge();
-                  final A lhs =
-                      error.getSuboptimalAssignments().get(constraints.getEdgeSource(edge));
+                  // Note: these are reversed since edges go in the opposite direction.
                   final A rhs =
+                      error.getSuboptimalAssignments().get(constraints.getEdgeSource(edge));
+                  final A lhs =
                       error.getSuboptimalAssignments().get(constraints.getEdgeTarget(edge));
                   return failures.get(edge).apply(lhs, rhs);
                 });
@@ -105,6 +111,9 @@ public final class ConstraintSystem<A extends HeytingAlgebra<A>, T extends Throw
    */
   public void addLessThanOrEqualToConstraint(
       AtomicTerm<A> lhs, RightHandTerm<A> rhs, Function2<A, A, T> failWith) {
+    if (isTriviallyTrue(lhs, rhs)) {
+      return;
+    }
     final DataFlowEdge<A> edge = rhs.getOutEdge();
     addEdge(rhs.getNode(), lhs, edge);
     failures.put(edge, failWith);
@@ -118,17 +127,34 @@ public final class ConstraintSystem<A extends HeytingAlgebra<A>, T extends Throw
    */
   public void addLessThanOrEqualToConstraint(
       LeftHandTerm<A> lhs, AtomicTerm<A> rhs, Function2<A, A, T> failWith) {
+    if (isTriviallyTrue(lhs, rhs)) {
+      return;
+    }
     final DataFlowEdge<A> edge = lhs.getInEdge();
     addEdge(rhs, lhs.getNode(), edge);
     failures.put(edge, failWith);
   }
 
   /**
+   * Identifies constraints that universally hold and can be safely ignored. Used to simplify the
+   * constraint graph so it is more readable.
+   */
+  private boolean isTriviallyTrue(LeftHandTerm<A> lhs, RightHandTerm<A> rhs) {
+    if (lhs instanceof ConstantTerm && rhs instanceof ConstantTerm) {
+      final A leftValue = ((ConstantTerm<A>) lhs).getValue();
+      final A rightValue = ((ConstantTerm<A>) rhs).getValue();
+      return leftValue.lessThanOrEqualTo(rightValue);
+    } else {
+      return false;
+    }
+  }
+
+  /**
    * Add the given vertex to the constraint graph, but only if it's a constant.
    *
    * <p>Variable vertexes are added when they are created, and we do not want to add them
-   * automatically in case the programmer passes in variables created for a different constraint
-   * system.
+   * automatically, since we want to catch it if the programmer passes in variables created for a
+   * different constraint system.
    */
   private void addVertexIfConstant(AtomicTerm<A> vertex) {
     if (vertex instanceof ConstantTerm) {
@@ -148,9 +174,49 @@ public final class ConstraintSystem<A extends HeytingAlgebra<A>, T extends Throw
 
   /** Output the constraint system as a DOT graph. */
   public void exportDotGraph(Writer writer) {
-    // TODO: add solutions to the graph.
+    final Map<AtomicTerm<A>, A> solutions =
+        DataFlow.solve(top, constraints).getOrElseGet(DataFlowError::getSuboptimalAssignments);
+
+    final ComponentNameProvider<AtomicTerm<A>> vertexLabelProvider =
+        (vertex) -> {
+          if (vertex instanceof VariableTerm) {
+            return vertex.toString() + "\n" + solutions.get(vertex);
+          } else {
+            return vertex.toString();
+          }
+        };
+
+    final ComponentAttributeProvider<AtomicTerm<A>> vertexAttributeProvider =
+        (vertex) -> {
+          if (vertex instanceof ConstantTerm) {
+            return Map.of(
+                "color",
+                DefaultAttribute.createAttribute("#AAAAAA"),
+                "style",
+                DefaultAttribute.createAttribute("filled"));
+          }
+
+          return null;
+        };
+
+    final ComponentAttributeProvider<DataFlowEdge<A>> edgeAttributeProvider =
+        (edge) -> {
+          if (!(edge instanceof IdentityEdge)) {
+            return Map.of(
+                "color",
+                DefaultAttribute.createAttribute("#0074D9"),
+                "fontcolor",
+                DefaultAttribute.createAttribute("#0074D9"));
+          }
+          return null;
+        };
+
     new DOTExporter<AtomicTerm<A>, DataFlowEdge<A>>(
-            new IntegerComponentNameProvider<>(), AtomicTerm::toString, DataFlowEdge::toString)
+            new IntegerComponentNameProvider<>(),
+            vertexLabelProvider,
+            DataFlowEdge::toString,
+            vertexAttributeProvider,
+            edgeAttributeProvider)
         .exportGraph(constraints, writer);
   }
 }

@@ -1,13 +1,17 @@
 package edu.cornell.cs.apl.viaduct.imp.interpreter;
 
-final class BreakSignal extends RuntimeException {
-  private final int level;
+import edu.cornell.cs.apl.viaduct.imp.ast.JumpLabel;
+import javax.annotation.Nullable;
 
-  BreakSignal(int level) {
-    this.level = level;
+final class BreakSignal extends RuntimeException {
+  private final JumpLabel label;
+
+  BreakSignal(@Nullable JumpLabel label) {
+    this.label = label;
   }
 
-  int getLevel() {
-    return this.level;
+  @Nullable
+  JumpLabel getLabel() {
+    return this.label;
   }
 }

@@ -45,7 +45,7 @@ public class ReverseElaborator {
           return super.leave(node, visitor, bodyStatement);
         }
         final StatementNode elseBranch = Iterables.getOnlyElement(ifNode.getElseBranch());
-        if (!(elseBranch instanceof BreakNode) || ((BreakNode) elseBranch).getLevel() != 1) {
+        if (!(elseBranch instanceof BreakNode) || ((BreakNode) elseBranch).getJumpLabel() != null) {
           return super.leave(node, visitor, bodyStatement);
         }
 

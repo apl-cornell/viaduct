@@ -1,10 +1,11 @@
 package edu.cornell.cs.apl.viaduct.imp.ast;
 
 import com.google.auto.value.AutoValue;
+import javax.annotation.Nonnull;
 
 /** Process names. Processes execute code, and can send and receive messages. */
 @AutoValue
-public abstract class ProcessName extends Located implements Name {
+public abstract class ProcessName extends Located implements Comparable<ProcessName>, Name {
   private static final ProcessName MAIN = ProcessName.create("main");
 
   /** Name of the entry process. */
@@ -30,6 +31,11 @@ public abstract class ProcessName extends Located implements Name {
   @Override
   public final String getNameCategory() {
     return "process";
+  }
+
+  @Override
+  public int compareTo(@Nonnull ProcessName that) {
+    return this.getName().compareTo(that.getName());
   }
 
   @Override

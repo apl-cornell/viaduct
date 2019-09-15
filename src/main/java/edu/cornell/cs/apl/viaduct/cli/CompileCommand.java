@@ -25,7 +25,6 @@ import edu.cornell.cs.apl.viaduct.pdg.PdgNode;
 import edu.cornell.cs.apl.viaduct.pdg.ProgramDependencyGraph;
 import edu.cornell.cs.apl.viaduct.protocol.Protocol;
 import edu.cornell.cs.apl.viaduct.protocol.ProtocolSelection;
-import edu.cornell.cs.apl.viaduct.security.solver.UnsatisfiableConstraintError;
 import guru.nidi.graphviz.engine.Format;
 import guru.nidi.graphviz.engine.Graphviz;
 import guru.nidi.graphviz.engine.GraphvizCmdLineEngine;
@@ -177,26 +176,19 @@ public class CompileCommand extends BaseCommand {
     final ProgramNode program = this.input.parse();
     final HostTrustConfiguration hostConfig = this.parseHostConfig(program);
 
-    // check
     TypeChecker.run(program);
-    // TODO: check IF here for the entire program, not just main and not after elaboration.
 
     final ProgramNode processedProgram =
         ImpPdgBuilderPreprocessor.run(AnfConverter.run(Elaborator.run(program)));
 
     final StatementNode main = processedProgram.processes().get(ProcessName.getMain()).getBody();
 
-    // information flow constraint solving
-    final InformationFlowChecker checker = new InformationFlowChecker();
-    try {
-      checker.run(main);
-    } catch (UnsatisfiableConstraintError unsatConstraint) {
-      // TODO: better error reporting
-      unsatConstraint.printStackTrace();
-    } finally {
-      // Dump PDG with information flow labels to a file (if requested).
-      dumpConstraints(checker::exportDotGraph, constraintGraphOutput);
-    }
+    // Dump constraint graph to a file if requested.
+    dumpConstraints(
+        (output) -> InformationFlowChecker.exportDotGraph(main, output), constraintGraphOutput);
+
+    // Check information flow and inject trust labels into the AST.
+    InformationFlowChecker.run(processedProgram);
 
     if (this.skip && labelGraphOutput == null && protocolGraphOutput == null) {
       return;

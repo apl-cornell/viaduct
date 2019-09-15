@@ -41,18 +41,14 @@ final class CheckStmtVisitor
     extends ContextStmtVisitor<CheckStmtVisitor, ImpType, ImpType, ImpBaseType, Void> {
   private final CheckReferenceVisitor referenceVisitor = new CheckReferenceVisitor();
   private final CheckExprVisitor expressionVisitor = new CheckExprVisitor();
-  private final int loopLevel;
 
-  CheckStmtVisitor() {
-    this.loopLevel = 0;
-  }
+  CheckStmtVisitor() {}
 
   /** Create a new visitor where the context is copied from the given visitor. */
   private CheckStmtVisitor(
-      ContextStmtVisitor<CheckStmtVisitor, ImpType, ImpType, ImpBaseType, Void> contextStmtVisitor,
-      int loopLevel) {
+      ContextStmtVisitor<CheckStmtVisitor, ImpType, ImpType, ImpBaseType, Void>
+          contextStmtVisitor) {
     super(contextStmtVisitor);
-    this.loopLevel = loopLevel;
   }
 
   @Override
@@ -90,7 +86,7 @@ final class CheckStmtVisitor
 
   @Override
   protected CheckStmtVisitor newScope() {
-    return new CheckStmtVisitor(this, loopLevel);
+    return new CheckStmtVisitor(this);
   }
 
   @Override
@@ -167,7 +163,6 @@ final class CheckStmtVisitor
 
   @Override
   protected Void leave(LoopNode node, CheckStmtVisitor visitor, Void body) {
-    // TODO: increase loop counter for the body
     return null;
   }
 

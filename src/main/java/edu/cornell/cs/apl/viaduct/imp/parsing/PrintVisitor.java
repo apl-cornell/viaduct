@@ -333,7 +333,7 @@ final class PrintVisitor
     addIndentation();
 
     printKeyword("if");
-    output.println(" (");
+    output.print(" (");
     ifNode.getGuard().accept(this);
     output.print(") ");
 
@@ -403,9 +403,9 @@ final class PrintVisitor
     addIndentation();
 
     printKeyword("break");
-    if (breakNode.getLevel() > 1) {
+    if (breakNode.getJumpLabel() != null) {
       output.print(' ');
-      output.print(breakNode.getLevel());
+      print(breakNode.getJumpLabel());
     }
     addSeparator();
 

@@ -33,6 +33,7 @@ public abstract class ContextStmtVisitor<
         StmtResultT>
     extends AbstractStmtVisitor<SelfT, ReferenceResultT, ExprResultT, StmtResultT> {
 
+  // NOTE: It is very important that this is a persistent (i.e. functional) map!
   private Map<Variable, ContextValueT> context;
 
   /** Construct a visitor with empty context. */

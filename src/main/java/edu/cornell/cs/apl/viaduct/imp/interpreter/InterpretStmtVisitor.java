@@ -14,6 +14,7 @@ import edu.cornell.cs.apl.viaduct.imp.ast.DowngradeNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ExpressionNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ForNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.IfNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.JumpLabel;
 import edu.cornell.cs.apl.viaduct.imp.ast.LetBindingNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.LiteralNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.LoopNode;
@@ -157,14 +158,11 @@ final class InterpretStmtVisitor
       lhs.set(value);
       return null;
     }
-
-    // TODO: Rolph auto declares the variable if it weren't already. We don't want that.
-    //    But it might require changes to the code generator.
   }
 
   @Override
   protected Void leave(BreakNode node, InterpretStmtVisitor visitor) {
-    throw new BreakSignal(node.getLevel());
+    throw new BreakSignal(node.getJumpLabel());
   }
 
   @Override
@@ -203,9 +201,7 @@ final class InterpretStmtVisitor
         node.getBody().accept(visitor);
       }
     } catch (BreakSignal e) {
-      if (e.getLevel() > 1) {
-        throw new BreakSignal(e.getLevel() - 1);
-      }
+      maybePropagate(e, node.getJumpLabel());
     }
 
     return null;
@@ -226,12 +222,17 @@ final class InterpretStmtVisitor
         node.getBody().accept(visitor);
       }
     } catch (BreakSignal e) {
-      if (e.getLevel() > 1) {
-        throw new BreakSignal(e.getLevel() - 1);
-      }
+      maybePropagate(e, node.getJumpLabel());
     }
 
     return null;
+  }
+
+  /** Propagate the break signal if it is intended for an outer loop. */
+  private void maybePropagate(BreakSignal signal, JumpLabel loopLabel) throws BreakSignal {
+    if (signal.getLabel() != null && !signal.getLabel().equals(loopLabel)) {
+      throw signal;
+    }
   }
 
   private final class InterpretReferenceVisitor

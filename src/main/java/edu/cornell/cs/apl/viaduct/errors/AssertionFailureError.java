@@ -6,7 +6,7 @@ import edu.cornell.cs.apl.viaduct.imp.parsing.Printer;
 import java.io.PrintStream;
 
 /** Raised when an assertion in Imp source code fails during evaluation. */
-public final class AssertionFailureError extends CompilationError {
+public class AssertionFailureError extends CompilationError {
   private final AssertNode assertion;
 
   public AssertionFailureError(AssertNode assertion) {

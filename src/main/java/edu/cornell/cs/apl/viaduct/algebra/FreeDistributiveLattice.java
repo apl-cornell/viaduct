@@ -1,6 +1,7 @@
 package edu.cornell.cs.apl.viaduct.algebra;
 
 import com.google.auto.value.AutoValue;
+import io.vavr.collection.Array;
 import io.vavr.collection.HashSet;
 import io.vavr.collection.Set;
 import java.util.function.Function;
@@ -105,6 +106,7 @@ public abstract class FreeDistributiveLattice<A>
    */
   @Override
   public final FreeDistributiveLattice<A> imply(FreeDistributiveLattice<A> that) {
+    // TODO: make sure this is correct
     return this.getJoinOfMeets()
         .foldRight(
             top(),
@@ -119,7 +121,8 @@ public abstract class FreeDistributiveLattice<A>
   public String toString() {
     final Function<Set<A>, String> meetToString =
         (meet) -> {
-          final String body = String.join(" ∧ ", meet.toArray().map(Object::toString));
+          final Array<String> elements = meet.toArray().sorted().map(Object::toString);
+          final String body = String.join(" ∧ ", elements);
           return meet.length() > 1 ? "(" + body + ")" : body;
         };
 
@@ -128,7 +131,8 @@ public abstract class FreeDistributiveLattice<A>
     } else if (this.equals(bottom())) {
       return "⊥";
     } else {
-      final String body = String.join(" ∨ ", getJoinOfMeets().toArray().map(meetToString));
+      final Array<String> meets = getJoinOfMeets().toArray().map(meetToString).sorted();
+      final String body = String.join(" ∨ ", meets);
       return getJoinOfMeets().length() > 1 ? "(" + body + ")" : body;
     }
   }

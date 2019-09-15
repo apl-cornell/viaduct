@@ -36,7 +36,7 @@ import edu.cornell.cs.apl.viaduct.imp.ast.WhileNode;
  * visitors. Visitors that only change a small subset of AST nodes should inherit from this class
  * and override only the cases that do something interesting.
  */
-public abstract class IdentityProgramVisitor
+public class IdentityProgramVisitor
     extends AbstractProgramVisitor<IdentityProgramVisitor, TopLevelDeclarationNode, ProgramNode> {
   private final RunVisitor runner = new RunVisitor();
 
@@ -119,7 +119,7 @@ public abstract class IdentityProgramVisitor
     @Override
     protected TopLevelDeclarationNode leave(
         HostDeclarationNode node, IdentityDeclarationVisitor visitor) {
-      return node;
+      return node.toBuilder().build();
     }
   }
 
@@ -144,7 +144,7 @@ public abstract class IdentityProgramVisitor
 
     @Override
     protected StatementNode leave(VariableDeclarationNode node, IdentityStmtVisitor visitor) {
-      return node;
+      return node.toBuilder().build();
     }
 
     @Override
@@ -220,7 +220,7 @@ public abstract class IdentityProgramVisitor
 
     @Override
     protected StatementNode leave(BreakNode node, IdentityStmtVisitor visitor) {
-      return node;
+      return node.toBuilder().build();
     }
 
     @Override
@@ -251,7 +251,7 @@ public abstract class IdentityProgramVisitor
 
     @Override
     protected ExpressionNode leave(LiteralNode node, IdentityExprVisitor visitor) {
-      return node;
+      return node.toBuilder().build();
     }
 
     @Override
@@ -297,7 +297,7 @@ public abstract class IdentityProgramVisitor
 
     @Override
     protected ReferenceNode leave(Variable node, IdentityReferenceVisitor visitor) {
-      return node;
+      return node.toBuilder().build();
     }
 
     @Override

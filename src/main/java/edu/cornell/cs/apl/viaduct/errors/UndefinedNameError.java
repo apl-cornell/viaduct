@@ -7,7 +7,7 @@ import edu.cornell.cs.apl.viaduct.imp.parsing.SourceRange;
 import java.io.PrintStream;
 
 /** A name that is referenced before it is ever defined. */
-public final class UndefinedNameError extends CompilationError {
+public class UndefinedNameError extends CompilationError {
   private final Name name;
   private final SourceRange location;
 

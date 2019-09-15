@@ -21,6 +21,6 @@ public abstract class LabelTerm {
   /** Return a term representing the confidentiality component. */
   abstract LeftHandTerm<FreeDistributiveLattice<Principal>> getConfidentialityComponent();
 
-  /** Return a term representing the integrity component */
+  /** Return a term representing the integrity component. */
   abstract RightHandTerm<FreeDistributiveLattice<Principal>> getIntegrityComponent();
 }

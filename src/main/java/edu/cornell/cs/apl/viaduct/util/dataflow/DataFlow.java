@@ -2,7 +2,6 @@ package edu.cornell.cs.apl.viaduct.util.dataflow;
 
 import edu.cornell.cs.apl.viaduct.algebra.MeetSemiLattice;
 import edu.cornell.cs.apl.viaduct.util.UniqueQueue;
-import io.vavr.control.Either;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -31,7 +30,9 @@ public class DataFlow<
   }
 
   /**
-   * Run data flow analysis on the given graph and return the computed solution for each node.
+   * Run data flow analysis on the given graph and return the computed solution for each node. The
+   * solution for a node is the return value of the last call to {@link
+   * DataFlowNode#transfer(Object)}.
    *
    * @param top greatest element of {@code A}
    * @param graph data flow graph to run the analysis on
@@ -40,35 +41,28 @@ public class DataFlow<
           A extends MeetSemiLattice<A>,
           NodeT extends DataFlowNode<A>,
           EdgeT extends DataFlowEdge<A>>
-      Either<DataFlowError<A, NodeT, EdgeT>, Map<NodeT, A>> solve(
-          A top, Graph<NodeT, EdgeT> graph) {
+      Map<NodeT, A> solve(A top, Graph<NodeT, EdgeT> graph) {
     return new DataFlow<>(top, graph).run();
   }
 
-  private Either<DataFlowError<A, NodeT, EdgeT>, Map<NodeT, A>> run() {
+  private Map<NodeT, A> run() {
     // Initialize nodes
     for (NodeT node : graph.vertexSet()) {
-      setNodeOutValue(node, node.initialize());
+      setNodeOutValue(node, node.transfer(top));
     }
 
     // Break into strongly connected components for efficiency
     final Graph<Graph<NodeT, EdgeT>, DefaultEdge> stronglyConnectedComponents =
         new KosarajuStrongConnectivityInspector<>(graph).getCondensation();
 
-    try {
-      // Solve components in topological order (i.e. visiting dependencies before dependents)
-      Iterator<Graph<NodeT, EdgeT>> topologicalIterator =
-          new TopologicalOrderIterator<>(stronglyConnectedComponents);
-      while (topologicalIterator.hasNext()) {
-        solveComponent(topologicalIterator.next());
-      }
-    } catch (UnsatisfiableEqualityException e) {
-      @SuppressWarnings("unchecked")
-      final EdgeT edge = (EdgeT) e.getEdge();
-      return Either.left(new DataFlowError<>(edge, nodeOutValues));
+    // Solve components in topological order (i.e. visiting dependencies before dependents)
+    Iterator<Graph<NodeT, EdgeT>> topologicalIterator =
+        new TopologicalOrderIterator<>(stronglyConnectedComponents);
+    while (topologicalIterator.hasNext()) {
+      solveComponent(topologicalIterator.next());
     }
 
-    return Either.right(nodeOutValues);
+    return nodeOutValues;
   }
 
   /**
@@ -99,7 +93,7 @@ public class DataFlow<
    * <p>Assumes that all other components that have edges into this component have already been
    * solved.
    */
-  private void solveComponent(Graph<NodeT, EdgeT> component) throws UnsatisfiableEqualityException {
+  private void solveComponent(Graph<NodeT, EdgeT> component) {
     final Queue<NodeT> workList = new UniqueQueue<>(component.vertexSet());
 
     while (!workList.isEmpty()) {
@@ -109,15 +103,15 @@ public class DataFlow<
       // NOTE: we have to use the global graph not the component!
       final Set<EdgeT> incomingEdges = graph.incomingEdgesOf(node);
 
-      // Compute the out value for the current node.
-      A outValue = nodeOutValues.get(node);
+      // Compute the incoming value for the current node.
+      A inValue = top;
       for (EdgeT inEdge : incomingEdges) {
         final A inEdgeValue = edgeOutValues.get(inEdge);
-        final A outEdgeValue =
-            node.transfer(inEdgeValue)
-                .orElseThrow(() -> new UnsatisfiableEqualityException(inEdge));
-        outValue = outValue.meet(outEdgeValue);
+        inValue = inValue.meet(inEdgeValue);
       }
+
+      // Derive the out value from the in value.
+      final A outValue = node.transfer(inValue);
 
       if (setNodeOutValue(node, outValue)) {
         // NOTE: unlike before, we use the local graph when computing successors.

@@ -2,25 +2,21 @@ package edu.cornell.cs.apl.viaduct.algebra.solver;
 
 import edu.cornell.cs.apl.viaduct.algebra.HeytingAlgebra;
 import java.util.Map;
-import java.util.Optional;
 
 /**
  * A variable for the solver to find a value for.
  *
- * @see ConstraintSystem#addNewVariable(Object) for generating instances.
+ * @see ConstraintSystem#newVariable(Object) for generating instances.
  */
 public final class VariableTerm<A extends HeytingAlgebra<A>> extends AtomicTerm<A> {
-  private final A top;
   private final Object label;
 
   /**
    * Create a fresh variable.
    *
-   * @param top top element of {@code A}
    * @param label an arbitrary object to use as a label (useful for debugging)
    */
-  VariableTerm(A top, Object label) {
-    this.top = top;
+  VariableTerm(Object label) {
     this.label = label;
   }
 
@@ -40,13 +36,8 @@ public final class VariableTerm<A extends HeytingAlgebra<A>> extends AtomicTerm<
   }
 
   @Override
-  public A initialize() {
-    return this.top;
-  }
-
-  @Override
-  public Optional<A> transfer(A in) {
-    return Optional.of(in);
+  public A transfer(A in) {
+    return in;
   }
 
   @Override

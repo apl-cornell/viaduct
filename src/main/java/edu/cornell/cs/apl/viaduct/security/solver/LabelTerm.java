@@ -18,9 +18,9 @@ public abstract class LabelTerm {
   /** Term that corresponds to performing {@link Label#integrity()}. */
   public abstract LabelTerm integrity();
 
-  /** Return a term representing the confidentiality component. */
+  /** Returns a term representing the confidentiality component. */
   abstract LeftHandTerm<FreeDistributiveLattice<Principal>> getConfidentialityComponent();
 
-  /** Return a term representing the integrity component. */
+  /** Returns a term representing the integrity component. */
   abstract RightHandTerm<FreeDistributiveLattice<Principal>> getIntegrityComponent();
 }

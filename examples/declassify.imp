@@ -1,0 +1,9 @@
+process main {
+    int{A & B} secret;
+    secret = 1;
+
+    int{A & B<-} a;
+    a = declassify(secret, {A & B<-});
+}
+
+host trusted : {A & B};

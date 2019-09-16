@@ -405,11 +405,12 @@ final class CheckStmtVisitor
     @Override
     protected AtomicLabelTerm leave(
         DowngradeNode node, CheckExprVisitor visitor, AtomicLabelTerm expression) {
-
       final AtomicLabelTerm from =
           node.getFromLabel() != null ? LabelConstant.create(node.getFromLabel()) : expression;
-
       final LabelConstant to = LabelConstant.create(node.getToLabel());
+
+      // TODO: Should this be from or to?
+      setTrustLabel(node, from);
 
       // pc is always leaked to the output label
       addPcFlowsToConstraint(node, to);

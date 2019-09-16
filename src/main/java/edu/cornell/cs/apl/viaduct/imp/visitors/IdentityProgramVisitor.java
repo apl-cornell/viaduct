@@ -36,6 +36,7 @@ import edu.cornell.cs.apl.viaduct.imp.ast.WhileNode;
  * visitors. Visitors that only change a small subset of AST nodes should inherit from this class
  * and override only the cases that do something interesting.
  */
+// TODO: make abstract once we stop using this as a replacement for clone().
 public class IdentityProgramVisitor
     extends AbstractProgramVisitor<IdentityProgramVisitor, TopLevelDeclarationNode, ProgramNode> {
   private final RunVisitor runner = new RunVisitor();

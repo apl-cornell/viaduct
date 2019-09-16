@@ -1,0 +1,10 @@
+process main {
+  int{(A & B)<-} a;
+  a = 42;
+  int{C<-} c;
+  c = endorse(a, {C<-});
+}
+
+host alice : {A};
+host bob   : {B};
+host chuck : {C};

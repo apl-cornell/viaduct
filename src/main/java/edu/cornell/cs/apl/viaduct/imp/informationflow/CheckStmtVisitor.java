@@ -372,7 +372,9 @@ final class CheckStmtVisitor
     @Override
     protected AtomicLabelTerm leave(
         ReadNode node, CheckExprVisitor visitor, AtomicLabelTerm reference) {
-      setTrustLabel(node, reference);
+      final LabelVariable l = setTrustLabelToFreshVariable(node);
+
+      addOutputFlowsToConstraint(node.getReference(), reference, l);
 
       // We leak the pc every time we read a variable.
       // TODO: this checks integrity also. Do we need that?

@@ -2,6 +2,7 @@ package edu.cornell.cs.apl.viaduct.algebra.solver;
 
 import edu.cornell.cs.apl.viaduct.algebra.HeytingAlgebra;
 import edu.cornell.cs.apl.viaduct.algebra.PartialOrder;
+import edu.cornell.cs.apl.viaduct.util.Colors;
 import edu.cornell.cs.apl.viaduct.util.dataflow.DataFlow;
 import edu.cornell.cs.apl.viaduct.util.dataflow.DataFlowEdge;
 import edu.cornell.cs.apl.viaduct.util.dataflow.IdentityEdge;
@@ -11,6 +12,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
 import org.jgrapht.graph.DirectedMultigraph;
+import org.jgrapht.io.Attribute;
 import org.jgrapht.io.ComponentAttributeProvider;
 import org.jgrapht.io.ComponentNameProvider;
 import org.jgrapht.io.DOTExporter;
@@ -89,13 +91,17 @@ public final class ConstraintSystem<A extends HeytingAlgebra<A>, T extends Throw
   }
 
   /**
-   * Create and return a fresh variable.
+   * Create a fresh variable and add it to the system.
    *
    * @param label an arbitrary object to use as a label during debugging
    * @return the freshly created variable
    */
-  public VariableTerm<A> newVariable(Object label) {
-    return new VariableTerm<>(label);
+  public VariableTerm<A> addNewVariable(Object label) {
+    final VariableTerm<A> variable = new VariableTerm<>(label);
+    // Add the variable to the graph so we return a solution for it even if it doesn't appear in
+    // any constraints.
+    constraints.addVertex(variable);
+    return variable;
   }
 
   /**
@@ -186,35 +192,36 @@ public final class ConstraintSystem<A extends HeytingAlgebra<A>, T extends Throw
           }
         };
 
+    // Differentiate constants from variables
     final ComponentAttributeProvider<AtomicTerm<A>> vertexAttributeProvider =
         (vertex) -> {
-          // Differentiate constants from variables
+          final Map<String, Attribute> attributes = new HashMap<>();
+          attributes.put("color", DefaultAttribute.createAttribute(Colors.BLACK));
+          attributes.put("fontcolor", DefaultAttribute.createAttribute(Colors.BLACK));
           if (vertex instanceof ConstantTerm) {
-            return Map.of(
-                "color",
-                DefaultAttribute.createAttribute("#AAAAAA"),
-                "style",
-                DefaultAttribute.createAttribute("filled"));
+            attributes.put("color", DefaultAttribute.createAttribute(Colors.GRAY));
+            attributes.put("style", DefaultAttribute.createAttribute("filled"));
           }
-          return null;
+          return attributes;
         };
 
+    // Highlight violated constraints
     final ComponentAttributeProvider<DataFlowEdge<A>> edgeAttributeProvider =
         (edge) -> {
           final String color;
           if (isConstraintViolated(edge, solution)) {
-            color = "#FF4136"; // Red
+            color = Colors.RED;
           } else if (!(edge instanceof IdentityEdge)) {
-            color = "#0074D9"; // Blue
+            color = Colors.BLUE;
           } else {
-            color = "#111111"; // Black
+            color = Colors.BLACK;
           }
 
           return Map.of(
               "color",
               DefaultAttribute.createAttribute(color),
               "fontcolor",
-              DefaultAttribute.createAttribute("#0074D9"));
+              DefaultAttribute.createAttribute(color));
         };
 
     new DOTExporter<>(

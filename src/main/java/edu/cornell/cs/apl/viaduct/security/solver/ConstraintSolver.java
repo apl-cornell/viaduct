@@ -56,8 +56,8 @@ public final class ConstraintSolver<T extends Throwable> {
   public LabelVariable addNewVariable(Object label) {
     final LabelVariable variable =
         LabelVariable.create(
-            constraintSystem.newVariable(new ConfidentialityWrapper(label)),
-            constraintSystem.newVariable(new IntegrityWrapper(label)));
+            constraintSystem.addNewVariable(new ConfidentialityWrapper(label)),
+            constraintSystem.addNewVariable(new IntegrityWrapper(label)));
     this.variables.add(variable);
     return variable;
   }

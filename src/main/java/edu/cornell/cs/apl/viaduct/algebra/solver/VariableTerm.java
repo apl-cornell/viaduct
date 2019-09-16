@@ -6,7 +6,7 @@ import java.util.Map;
 /**
  * A variable for the solver to find a value for.
  *
- * @see ConstraintSystem#newVariable(Object) for generating instances.
+ * @see ConstraintSystem#addNewVariable(Object) for generating instances.
  */
 public final class VariableTerm<A extends HeytingAlgebra<A>> extends AtomicTerm<A> {
   private final Object label;

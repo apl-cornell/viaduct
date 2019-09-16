@@ -177,15 +177,17 @@ public class CompileCommand extends BaseCommand {
     final HostTrustConfiguration hostConfig = this.parseHostConfig(program);
 
     TypeChecker.run(program);
-
-    final ProgramNode processedProgram =
-        ImpPdgBuilderPreprocessor.run(AnfConverter.run(Elaborator.run(program)));
-
-    final StatementNode main = processedProgram.processes().get(ProcessName.getMain()).getBody();
+    // TODO: run information flow checking here.
 
     // Dump constraint graph to a file if requested.
     dumpConstraints(
-        (output) -> InformationFlowChecker.exportDotGraph(main, output), constraintGraphOutput);
+        (output) ->
+            InformationFlowChecker.exportDotGraph(
+                Elaborator.run(program).processes().get(ProcessName.getMain()).getBody(), output),
+        constraintGraphOutput);
+
+    final ProgramNode processedProgram =
+        ImpPdgBuilderPreprocessor.run(AnfConverter.run(Elaborator.run(program)));
 
     // Check information flow and inject trust labels into the AST.
     InformationFlowChecker.run(processedProgram);
@@ -193,6 +195,8 @@ public class CompileCommand extends BaseCommand {
     if (this.skip && labelGraphOutput == null && protocolGraphOutput == null) {
       return;
     }
+
+    final StatementNode main = processedProgram.processes().get(ProcessName.getMain()).getBody();
 
     // Generate program dependency graph.
     final ProgramDependencyGraph<ImpAstNode> pdg = new ImpPdgBuilderVisitor().generatePDG(main);

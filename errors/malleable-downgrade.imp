@@ -1,6 +1,6 @@
 process main {
-  int{} a;
+  int{A->} a;
   a = 42;
-  int{A} b;
-  b = downgrade(a, {A});
+  int{A<-} b;
+  b = downgrade(a, {A<-});
 }

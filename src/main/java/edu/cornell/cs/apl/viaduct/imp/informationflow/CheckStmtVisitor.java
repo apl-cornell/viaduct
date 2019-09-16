@@ -237,9 +237,9 @@ final class CheckStmtVisitor
       AssignNode node, CheckStmtVisitor visitor, AtomicLabelTerm lhs, AtomicLabelTerm rhs) {
     final LabelVariable l = setTrustLabelToFreshVariable(node);
 
-    addPcFlowsToConstraint(node, l);
+    addPcFlowsToConstraint(node.getRhs(), l);
     addOutputFlowsToConstraint(node.getRhs(), rhs, l);
-    addOutputFlowsToConstraint(node, l, lhs);
+    addOutputFlowsToConstraint(node.getRhs(), l, lhs);
     return null;
   }
 

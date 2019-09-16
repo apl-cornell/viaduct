@@ -27,7 +27,7 @@ public class MalleableDowngradeError extends InformationFlowError {
   public void print(PrintStream output) {
     super.print(output);
 
-    output.println("This downgrade node violates the non-malleability condition:");
+    output.println("This downgrade expression violates the non-malleability condition:");
 
     output.println();
     node.getSourceLocation().showInSource(output);

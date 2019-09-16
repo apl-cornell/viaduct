@@ -487,7 +487,8 @@ type ::=
 
 
 label ::=
-    OPEN_BRACE label_expr:l CLOSE_BRACE {: RESULT = l; :}
+    OPEN_BRACE CLOSE_BRACE {: RESULT = Label.weakest(); :}
+  | OPEN_BRACE label_expr:l CLOSE_BRACE {: RESULT = l; :}
   ;
 
 label_expr ::=

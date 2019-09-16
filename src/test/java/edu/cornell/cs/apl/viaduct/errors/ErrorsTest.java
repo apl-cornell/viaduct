@@ -2,9 +2,11 @@ package edu.cornell.cs.apl.viaduct.errors;
 
 import edu.cornell.cs.apl.viaduct.ErroneousExamplesProvider;
 import edu.cornell.cs.apl.viaduct.imp.ast.ProgramNode;
+import edu.cornell.cs.apl.viaduct.imp.informationflow.InformationFlowChecker;
 import edu.cornell.cs.apl.viaduct.imp.interpreter.Interpreter;
 import edu.cornell.cs.apl.viaduct.imp.parsing.Parser;
 import edu.cornell.cs.apl.viaduct.imp.parsing.SourceFile;
+import edu.cornell.cs.apl.viaduct.imp.transformers.Elaborator;
 import edu.cornell.cs.apl.viaduct.imp.typing.TypeChecker;
 import edu.cornell.cs.apl.viaduct.util.PrintUtil;
 import java.io.File;
@@ -15,13 +17,15 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ArgumentsSource;
 
 class ErrorsTest {
+  // TODO: add tests for process and host name conflicts.
+  // TODO: add tests for sends to and receives from unknown hosts.
+
   /** Parse, check, and interpret an Imp program. */
   private static void run(File file) throws IOException {
     final ProgramNode program = Parser.parse(SourceFile.from(file));
+    // TODO: add name checking.
     TypeChecker.run(program);
-    // TODO: add IF and name checking.
-    // TODO: add tests for process and host name conflicts.
-    // TODO: add tests for sends to and receives from unknown hosts.
+    InformationFlowChecker.run(Elaborator.run(program));
     Interpreter.run(program);
   }
 

@@ -6,6 +6,9 @@ import edu.cornell.cs.apl.viaduct.imp.ast.values.ImpValue;
 import io.vavr.Tuple2;
 import io.vavr.collection.Map;
 import io.vavr.collection.Set;
+import io.vavr.collection.SortedMap;
+import io.vavr.collection.SortedSet;
+import io.vavr.collection.TreeMap;
 import java.io.PrintStream;
 
 /**
@@ -18,7 +21,9 @@ import java.io.PrintStream;
 @AutoValue
 public abstract class Store {
   static Store create(Map<Variable, AllocatedObject> store) {
-    return new AutoValue_Store(store.mapValues(AllocatedObject::getImmutableValue));
+    final Map<Variable, Object> values = store.mapValues(AllocatedObject::getImmutableValue);
+    // Use a sorted map for easier to read output.
+    return new AutoValue_Store(TreeMap.ofAll(values.toJavaMap()));
   }
 
   /**
@@ -26,7 +31,7 @@ public abstract class Store {
    *
    * <p>Here, the values are either an {@link ImpValue} or an array of {@link ImpValue}s.
    */
-  abstract Map<Variable, Object> getMap();
+  abstract SortedMap<Variable, Object> getMap();
 
   /** Return {@code true} if no variables are declared in the store. */
   public boolean isEmpty() {
@@ -34,7 +39,7 @@ public abstract class Store {
   }
 
   /** Return the set of variables in the store. */
-  public Set<Variable> variableSet() {
+  public SortedSet<Variable> variableSet() {
     return getMap().keySet();
   }
 

@@ -51,12 +51,12 @@ public class InsecureDataFlowError extends InformationFlowError {
 
     if (!nodeLabel.confidentiality().flowsTo(to.confidentiality())) {
       // Confidentiality is the problem
-      output.println("This term is too secret:");
+      output.println("This term is flowing to a place that does not have enough confidentiality:");
 
       output.println();
       node.getSourceLocation().showInSource(output);
 
-      output.println("Its confidentiality label is:");
+      output.println("The term's confidentiality label is:");
       output.println();
       addIndentation(output);
       Printer.run(nodeLabel.confidentiality(), output);

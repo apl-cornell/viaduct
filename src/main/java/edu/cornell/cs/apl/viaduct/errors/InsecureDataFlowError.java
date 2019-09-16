@@ -3,10 +3,7 @@ package edu.cornell.cs.apl.viaduct.errors;
 import edu.cornell.cs.apl.viaduct.imp.parsing.HasLocation;
 import edu.cornell.cs.apl.viaduct.imp.parsing.Printer;
 import edu.cornell.cs.apl.viaduct.security.Label;
-import edu.cornell.cs.apl.viaduct.security.solver.LabelConstant;
-import edu.cornell.cs.apl.viaduct.security.solver.LabelTerm;
 import java.io.PrintStream;
-import javax.annotation.Nullable;
 
 /** Thrown when data from an AST node might flow to place that would violate security. */
 public class InsecureDataFlowError extends InformationFlowError {
@@ -25,14 +22,6 @@ public class InsecureDataFlowError extends InformationFlowError {
     this.node = node;
     this.nodeLabel = nodeLabel;
     this.to = to;
-  }
-
-  private @Nullable Label getLabel(LabelTerm term) {
-    if (term instanceof LabelConstant) {
-      return ((LabelConstant) term).getValue();
-    } else {
-      return null;
-    }
   }
 
   @Override

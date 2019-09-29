@@ -380,7 +380,7 @@ final class CheckStmtVisitor
       // TODO: this checks integrity also. Do we need that?
       addPcFlowsToConstraint(node.getReference(), reference);
 
-      return reference;
+      return l;
     }
 
     @Override

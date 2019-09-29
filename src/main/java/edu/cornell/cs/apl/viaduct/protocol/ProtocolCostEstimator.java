@@ -1,6 +1,7 @@
 package edu.cornell.cs.apl.viaduct.protocol;
 
 import edu.cornell.cs.apl.viaduct.AstNode;
+import edu.cornell.cs.apl.viaduct.InvalidProtocolException;
 import edu.cornell.cs.apl.viaduct.UnknownProtocolException;
 import edu.cornell.cs.apl.viaduct.pdg.PdgNode;
 import edu.cornell.cs.apl.viaduct.pdg.ProgramDependencyGraph;
@@ -14,7 +15,7 @@ public abstract class ProtocolCostEstimator<T extends AstNode> {
       PdgNode<T> node,
       Map<PdgNode<T>,Protocol<T>> protocolMap,
       ProgramDependencyGraph<T> pdg)
-      throws UnknownProtocolException;
+      throws UnknownProtocolException, InvalidProtocolException;
 
   /** estimate the cost of the pdg given a protocol mapping. */
   public int estimatePdgCost(
@@ -24,8 +25,13 @@ public abstract class ProtocolCostEstimator<T extends AstNode> {
 
     // next, tally all the costs for each node
     int cost = 0;
-    for (Map.Entry<PdgNode<T>, Protocol<T>> kv : protocolMap.entrySet()) {
-      cost += estimateNodeCost(kv.getKey(), protocolMap, pdg);
+    try {
+      for (Map.Entry<PdgNode<T>, Protocol<T>> kv : protocolMap.entrySet()) {
+        cost += estimateNodeCost(kv.getKey(), protocolMap, pdg);
+      }
+
+    } catch (InvalidProtocolException invalidProto) {
+      return -1;
     }
 
     return cost;

@@ -1,8 +1,8 @@
 package edu.cornell.cs.apl.viaduct.imp.transformers;
 
-import edu.cornell.cs.apl.viaduct.imp.ast.AssignNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.BlockNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ExpressionNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.LetBindingNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ProcessDeclarationNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ProcessName;
 import edu.cornell.cs.apl.viaduct.imp.ast.ReceiveNode;
@@ -16,8 +16,6 @@ import java.util.LinkedList;
 import java.util.Queue;
 
 /** Turn self communication into assignment. */
-// TODO: this is broken because it moves expressions from where they are sent to where they
-//    are received, but expressions can evaluate to different values later.
 class SelfCommunicationVisitor extends IdentityProgramVisitor {
   private final StmtVisitor<StatementNode> statementVisitor;
   private final SelfCommunicationDeclarationVisitor declarationVisitor =
@@ -82,7 +80,7 @@ class SelfCommunicationVisitor extends IdentityProgramVisitor {
 
       final Variable var = node.getVariable();
       final ExpressionNode received = selfSentExpressions.remove();
-      return AssignNode.builder().setLhs(var).setRhs(received).build();
+      return LetBindingNode.builder().setVariable(var).setRhs(received).build();
     }
   }
 }

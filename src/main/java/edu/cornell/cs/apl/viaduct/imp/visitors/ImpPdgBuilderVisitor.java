@@ -182,13 +182,11 @@ public class ImpPdgBuilderVisitor implements StmtVisitor<Set<PdgNode<ImpAstNode>
     temps.addAll(rhsTemps);
 
     Set<ReferenceNode> queries = new HashSet<>();
-    /*
     Set<ReferenceNode> lhsQueries = this.querySetVisitor.run(lhs);
     Set<ReferenceNode> rhsQueries  = this.querySetVisitor.run(rhs);
     queries.addAll(lhsQueries);
     queries.addAll(rhsQueries);
     queries.remove(lhs);
-    */
 
     // there should be NO queries for assignments in A-normal form!
     // assert queries.size() == 0;

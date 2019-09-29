@@ -96,11 +96,15 @@ public final class ProtocolSelection<T extends AstNode> {
             (HashMap<PdgNode<T>, Protocol<T>>) currMap.clone();
         newMap.put(nextNode, protoInstance);
         int newMapCost = this.strategy.estimatePdgCost(newMap, pdg);
-        ProtocolMapNode<T> newMapNode = new ProtocolMapNode<>(newMap, newMapCost);
 
-        if (!closedSet.contains(newMapNode) && !openSet.contains(newMapNode)) {
-          openSet.add(newMapNode);
-          lastAddedNode = newMapNode;
+        // if cost is < 0, then we consider the map invalid
+        if (newMapCost >= 0) {
+          ProtocolMapNode<T> newMapNode = new ProtocolMapNode<>(newMap, newMapCost);
+
+          if (!closedSet.contains(newMapNode) && !openSet.contains(newMapNode)) {
+            openSet.add(newMapNode);
+            lastAddedNode = newMapNode;
+          }
         }
       }
     }

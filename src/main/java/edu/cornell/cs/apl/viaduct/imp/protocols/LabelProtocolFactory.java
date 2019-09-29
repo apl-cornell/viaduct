@@ -21,7 +21,8 @@ public abstract class LabelProtocolFactory<T extends AstNode, I>
       HostTrustConfiguration hostConfig, I hostInfo);
 
   protected Label getProtocolLabel(HostTrustConfiguration hostConfig, I hostInfo) {
-    return createInstanceFromHostInfo(hostConfig, hostInfo).getTrust();
+    Protocol<T> protocolInstance = createInstanceFromHostInfo(hostConfig, hostInfo);
+    return protocolInstance != null ? protocolInstance.getTrust() : null;
   }
 
   @Override

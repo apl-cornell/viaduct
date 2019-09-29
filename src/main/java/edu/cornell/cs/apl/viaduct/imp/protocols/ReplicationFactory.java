@@ -11,6 +11,6 @@ public class ReplicationFactory extends PowersetProtocolFactory<ImpAstNode> {
   @Override
   protected Protocol<ImpAstNode> createInstanceFromHostInfo(
       HostTrustConfiguration hostConfig, Set<HostName> hostSet) {
-    return new Replication(hostConfig, hostSet);
+    return hostSet.size() >= 2 ? new Replication(hostConfig, hostSet) : null;
   }
 }

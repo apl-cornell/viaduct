@@ -9,8 +9,11 @@ import edu.cornell.cs.apl.viaduct.imp.ast.ProcessName;
 import edu.cornell.cs.apl.viaduct.imp.ast.ProgramNode;
 import edu.cornell.cs.apl.viaduct.imp.interpreter.Interpreter;
 import edu.cornell.cs.apl.viaduct.imp.interpreter.Store;
+import edu.cornell.cs.apl.viaduct.imp.parsing.Printer;
+
 import java.util.Map;
 import java.util.Map.Entry;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.converter.ConvertWith;
@@ -23,6 +26,12 @@ class AnfConverterTest {
     final ProgramNode program = Elaborator.run(ast);
     final ProgramNode anfProgram = AnfConverter.run(program);
     final ProgramNode anfAnfProgram = AnfConverter.run(anfProgram);
+
+    System.out.println("ANF once:");
+    Printer.run(anfProgram, System.out, false);
+
+    System.out.println("\nANF twice:");
+    Printer.run(anfAnfProgram, System.out, false);
 
     assertEquals(anfProgram, anfAnfProgram);
   }

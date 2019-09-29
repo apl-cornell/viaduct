@@ -18,41 +18,49 @@ import java.io.PrintStream;
 /** Pretty-prints an AST. */
 public final class Printer implements AstPrinter<ImpAstNode> {
   /**
-   * Pretty print an AST node to the given output stream (with colors).
+   * Pretty print an AST node to the given output stream.
    *
    * @param node AST node to print
    * @param output output stream that can handle ANSI colors
+   * @param colorEnabled toggle coloring keywords
    */
-  public static void run(ImpAstNode node, PrintStream output) {
+  public static void run(ImpAstNode node, PrintStream output, boolean colorEnabled) {
     node.accept(
         new ImpAstVisitor<Void>() {
           @Override
           public Void visit(ReferenceNode referenceNode) {
-            return referenceNode.accept(new PrintVisitor(output, false));
+            return referenceNode.accept(new PrintVisitor(output, false, colorEnabled));
           }
 
           @Override
           public Void visit(ExpressionNode expressionNode) {
-            return expressionNode.accept(new PrintVisitor(output, false));
+            return expressionNode.accept(new PrintVisitor(output, false, colorEnabled));
           }
 
           @Override
           public Void visit(StatementNode statementNode) {
-            return statementNode.accept(new PrintVisitor(output, false));
+            return statementNode.accept(new PrintVisitor(output, false, colorEnabled));
           }
 
           @Override
           public Void visit(TopLevelDeclarationNode declarationNode) {
-            return declarationNode.accept(new PrintVisitor(output, true));
+            return declarationNode.accept(new PrintVisitor(output, true, colorEnabled));
           }
 
           @Override
           public Void visit(ProgramNode programNode) {
-            programNode.accept(new PrintVisitor(output, true));
+            programNode.accept(new PrintVisitor(output, true, colorEnabled));
             output.println();
             return null;
           }
         });
+  }
+
+  /**
+   * Pretty print an AST node to the given output stream.
+   */
+  public static void run(ImpAstNode node, PrintStream output) {
+    run(node, output, true);
   }
 
   /** Pretty print a name. */

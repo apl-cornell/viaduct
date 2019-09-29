@@ -1,5 +1,6 @@
 package edu.cornell.cs.apl.viaduct.imp.protocols;
 
+import edu.cornell.cs.apl.viaduct.InvalidProtocolException;
 import edu.cornell.cs.apl.viaduct.imp.HostTrustConfiguration;
 import edu.cornell.cs.apl.viaduct.imp.ast.HostName;
 import edu.cornell.cs.apl.viaduct.imp.ast.ImpAstNode;
@@ -24,7 +25,8 @@ public final class ImpProtocolCommunicationStrategy
   protected Map<HostName, Set<HostName>> computeCommunicationMap(
       HostTrustConfiguration hostConfig,
       Protocol<ImpAstNode> fromProtocol,
-      Protocol<ImpAstNode> toProtocol) {
+      Protocol<ImpAstNode> toProtocol)
+      throws InvalidProtocolException {
     PowersetIterator<HostName> fromHostPowerset = new PowersetIterator<>(fromProtocol.getHosts());
     Set<HostName> toHostSet = toProtocol.getHosts();
     Map<HostName, Set<HostName>> communicationMap = new HashMap<>();
@@ -45,12 +47,15 @@ public final class ImpProtocolCommunicationStrategy
         }
       }
 
-      if (communicationMap.size() == toHostSet.size()) {
+      if (communicationMap.keySet().size() == toHostSet.size()) {
         break;
       }
     }
 
-    assert (communicationMap.size() == toHostSet.size());
+    if (communicationMap.keySet().size() != toHostSet.size()) {
+      throw new InvalidProtocolException(null, toProtocol);
+    }
+
     return communicationMap;
   }
 
@@ -59,7 +64,8 @@ public final class ImpProtocolCommunicationStrategy
       HostTrustConfiguration hostConfig,
       Protocol<ImpAstNode> fromProtocol,
       Protocol<ImpAstNode> toProtocol,
-      HostName host) {
+      HostName host)
+      throws InvalidProtocolException {
     // if the fromProtocol is MPC, just read directly from the synthesized host
     // otherwise, we will try to look for the synthesized host's trust in the
     // host configuration, but it will not exist!
@@ -85,7 +91,8 @@ public final class ImpProtocolCommunicationStrategy
     } else {
       Map<HostName, Set<HostName>> communicationMap =
           getCommunicationMap(hostConfig, fromProtocol, toProtocol);
-      return communicationMap.get(host);
+      Set<HostName> toHosts = communicationMap.get(host);
+      return toHosts;
     }
   }
 
@@ -94,7 +101,8 @@ public final class ImpProtocolCommunicationStrategy
       HostTrustConfiguration hostConfig,
       Protocol<ImpAstNode> fromProtocol,
       Protocol<ImpAstNode> toProtocol,
-      HostName host) {
+      HostName host)
+      throws InvalidProtocolException {
     if (toProtocol instanceof ControlProtocol) {
       throw new ProtocolInstantiationError("control protocol is selected for storage node");
 

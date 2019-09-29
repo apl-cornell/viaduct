@@ -3,7 +3,6 @@ package edu.cornell.cs.apl.viaduct.imp.protocols;
 import edu.cornell.cs.apl.viaduct.Binding;
 import edu.cornell.cs.apl.viaduct.imp.ast.ArrayDeclarationNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ArrayIndexingNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.AssignNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ExpressionNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.HostName;
 import edu.cornell.cs.apl.viaduct.imp.ast.ImpAstNode;
@@ -110,7 +109,9 @@ public abstract class Cleartext {
 
       ExpressionNode val = (ExpressionNode) args.get(0);
       writerBuilder.send(hostProc, val);
-      builder.recv(writeHostProc, (Variable) storageVar);
+      Variable valVar = info.getFreshVar(String.format("%s_val", storageVar));
+      builder.recv(writeHostProc, valVar);
+      builder.assign((Variable) storageVar, e.var(valVar));
 
     } else if (stmt instanceof ArrayDeclarationNode) {
       assert args.size() == 2;
@@ -245,10 +246,16 @@ public abstract class Cleartext {
     if (astNode instanceof ExpressionNode) {
       builder.let(outVar, (ExpressionNode) astNode);
 
+    }
+    // there's no need to let-bind assignments since the
+    // the protocol for the storage node being written to will do it
+    // in its writeTo function
+    /*
     } else if (astNode instanceof AssignNode) {
       AssignNode assignNode = (AssignNode) astNode;
       builder.let(outVar, assignNode.getRhs());
     }
+    */
 
     // write to storage nodes
     for (PdgEdge<ImpAstNode> outEdge : node.getOutInfoEdges()) {

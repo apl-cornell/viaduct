@@ -50,8 +50,10 @@ final class PrintVisitor
   /** Print source locations only if set to true. */
   private static final boolean sourceLocationsEnabled = false;
 
+  private final boolean colorEnabled;
+
   /** Accumulates the partially printed program. */
-  private PrintStream output;
+  private final PrintStream output;
 
   /** Add indentation only if set to true. */
   private boolean indentationEnabled = true;
@@ -67,10 +69,22 @@ final class PrintVisitor
    *
    * @param output stream to print to
    * @param statementTerminatorsEnabled print semicolons (;) only if set to {@code true}
+   * @param colorEnabled print semicolons (;) only if set to {@code true}
    */
-  PrintVisitor(PrintStream output, boolean statementTerminatorsEnabled) {
+  PrintVisitor(PrintStream output, boolean statementTerminatorsEnabled, boolean colorEnabled) {
     this.output = output;
     this.statementTerminatorsEnabled = statementTerminatorsEnabled;
+    this.colorEnabled = colorEnabled;
+  }
+
+  /**
+   * Constructor a print visitor.
+   *
+   * @param output stream to print to
+   * @param statementTerminatorsEnabled print semicolons (;) only if set to {@code true}
+   */
+  PrintVisitor(PrintStream output, boolean statementTerminatorsEnabled) {
+    this(output, statementTerminatorsEnabled, true);
   }
 
   /** Append current indentation to the output (if indentation is enabled). */
@@ -100,34 +114,56 @@ final class PrintVisitor
     }
   }
 
+  /** Toggle between printing with color or not. */
+  private void printToggleColor(Ansi colorStr, String str) {
+    if (this.colorEnabled) {
+      output.print(colorStr);
+
+    } else {
+      output.print(str);
+    }
+  }
+
   /** Print a name. */
   public void print(Name name) {
-    output.print(Ansi.ansi().fg(Color.BLUE).a(name.getName()).reset());
+    printToggleColor(
+        Ansi.ansi().fg(Color.BLUE).a(name.getName()).reset(),
+        name.getName());
   }
 
   /** Print a literal constant. */
   public void print(ImpValue value) {
-    output.print(Ansi.ansi().fg(Color.CYAN).a(value).reset());
+    printToggleColor(
+        Ansi.ansi().fg(Color.CYAN).a(value).reset(),
+        value.toString());
   }
 
   /** Print a type. */
   public void print(ImpType type) {
-    output.print(Ansi.ansi().fg(Color.YELLOW).a(type).reset());
+    printToggleColor(
+        Ansi.ansi().fg(Color.YELLOW).a(type).reset(),
+        type.toString());
   }
 
   /** Print a label. */
   public void print(Label label) {
-    output.print(Ansi.ansi().fg(Color.YELLOW).a(label).reset());
+    printToggleColor(
+        Ansi.ansi().fg(Color.YELLOW).a(label).reset(),
+        label.toString());
   }
 
   /** Print a comment. */
   private void printComment(String comment) {
-    output.print(Ansi.ansi().fgBright(Color.GREEN).a("/* ").a(comment).a(" */").reset());
+    printToggleColor(
+        Ansi.ansi().fgBright(Color.GREEN).a("/* ").a(comment).a(" */").reset(),
+        comment);
   }
 
   /** Print a builtin keyword. */
   private void printKeyword(String keyword) {
-    output.print(Ansi.ansi().fg(Color.GREEN).a(keyword).reset());
+    printToggleColor(
+        Ansi.ansi().fg(Color.GREEN).a(keyword).reset(),
+        keyword);
   }
 
   /** Print a block node without adding indentation before the opening brace. */

@@ -1,6 +1,7 @@
 package edu.cornell.cs.apl.viaduct.protocol;
 
 import edu.cornell.cs.apl.viaduct.AstNode;
+import edu.cornell.cs.apl.viaduct.InvalidProtocolException;
 import edu.cornell.cs.apl.viaduct.imp.HostTrustConfiguration;
 import edu.cornell.cs.apl.viaduct.imp.ast.HostName;
 import java.util.Set;
@@ -12,12 +13,12 @@ public interface ProtocolCommunicationStrategy<T extends AstNode> {
       HostTrustConfiguration hostConfig,
       Protocol<T> fromProtocol,
       Protocol<T> toProtocol,
-      HostName host);
+      HostName host) throws InvalidProtocolException;
 
   /* get the set of hosts to write to. */
   Set<HostName> getWriteSet(
       HostTrustConfiguration hostConfig,
       Protocol<T> fromProtocol,
       Protocol<T> toProtocol,
-      HostName host);
+      HostName host) throws InvalidProtocolException;
 }

@@ -8,8 +8,6 @@ import edu.cornell.cs.apl.viaduct.imp.ast.StatementNode;
 import edu.cornell.cs.apl.viaduct.imp.visitors.ReplaceVisitor;
 import edu.cornell.cs.apl.viaduct.imp.visitors.StmtVisitor;
 
-// TODO: Inlining variables changes (most likely reduces) security. Change compilation and remove.
-
 /** Inline let statements. */
 class LetInlineVisitor extends ReplaceVisitor {
   private final StmtVisitor<StatementNode> statementVisitor = new InlineStmtVisitor();

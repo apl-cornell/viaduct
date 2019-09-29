@@ -128,6 +128,9 @@ public abstract class ContextStmtVisitor<
       final HasLocation previousDeclaration = context.keySet().find(variable::equals).getOrNull();
       throw new NameClashError(previousDeclaration, variable);
     }
-    context = context.put(variable, value);
+
+    if (value != null) {
+      context = context.put(variable, value);
+    }
   }
 }

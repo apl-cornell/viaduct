@@ -12,6 +12,6 @@ public class MPCFactory extends PowersetProtocolFactory<ImpAstNode> {
   @Override
   protected Protocol<ImpAstNode> createInstanceFromHostInfo(
       HostTrustConfiguration hostConfig, Set<HostName> hostSet) {
-    return new MPC(hostConfig, hostSet);
+    return hostSet.size() >= 2 ? new MPC(hostConfig, hostSet) : null;
   }
 }

@@ -109,6 +109,11 @@ final class InterpretStmtVisitor
   }
 
   @Override
+  protected AllocatedObject extract(ReceiveNode node) {
+    return ValueReference.allocate();
+  }
+
+  @Override
   protected InterpretStmtVisitor newScope() {
     return new InterpretStmtVisitor(this);
   }

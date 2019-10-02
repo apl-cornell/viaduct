@@ -184,6 +184,11 @@ final class CheckStmtVisitor
   }
 
   @Override
+  protected AtomicLabelTerm extract(ReceiveNode node) {
+    return setTrustLabelToFreshVariable(node);
+  }
+
+  @Override
   protected LabelVariable extract(WhileNode node) {
     throw new ElaborationException();
   }

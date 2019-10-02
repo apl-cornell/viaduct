@@ -6,6 +6,7 @@ import edu.cornell.cs.apl.viaduct.imp.ast.ArrayDeclarationNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.BlockNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ForNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.LetBindingNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.ReceiveNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.Variable;
 import edu.cornell.cs.apl.viaduct.imp.ast.VariableDeclarationNode;
 import edu.cornell.cs.apl.viaduct.imp.parsing.HasLocation;
@@ -75,6 +76,8 @@ public abstract class ContextStmtVisitor<
 
   protected abstract ContextValueT extract(LetBindingNode node, ExprResultT rhs);
 
+  protected abstract ContextValueT extract(ReceiveNode node);
+
   /**
    * Return a clone of this visitor. This function is called when entering a new scope. Cloning the
    * visitor ensures exiting scope restores the previous context.
@@ -119,6 +122,21 @@ public abstract class ContextStmtVisitor<
     final ExprResultT rhs = node.getRhs().accept(visitor.getExpressionVisitor());
     final StmtResultT result = leave(node, visitor, rhs);
     put(node.getVariable(), extract(node, rhs));
+    return result;
+  }
+
+  @Override
+  public final StmtResultT visit(ReceiveNode node) {
+    final SelfT visitor = enter(node);
+    final Variable var = node.getVariable();
+    final ReferenceResultT lhs = var.accept(visitor.getReferenceVisitor());
+    final StmtResultT result = leave(node, visitor, lhs);
+
+    // assignment into a new temporary
+    if (!this.context.containsKey(var)) {
+      put(var, extract(node));
+    }
+
     return result;
   }
 

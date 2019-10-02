@@ -2,6 +2,7 @@ package edu.cornell.cs.apl.viaduct.imp.transformers;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
+
 import edu.cornell.cs.apl.viaduct.errors.ElaborationException;
 import edu.cornell.cs.apl.viaduct.imp.ast.ArrayDeclarationNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ArrayIndexingNode;
@@ -33,12 +34,13 @@ import edu.cornell.cs.apl.viaduct.imp.ast.WhileNode;
 import edu.cornell.cs.apl.viaduct.imp.visitors.AbstractExprVisitor;
 import edu.cornell.cs.apl.viaduct.imp.visitors.AbstractProgramVisitor;
 import edu.cornell.cs.apl.viaduct.imp.visitors.AbstractReferenceVisitor;
+import edu.cornell.cs.apl.viaduct.imp.visitors.ContextStmtVisitor;
 import edu.cornell.cs.apl.viaduct.imp.visitors.ExprVisitor;
 import edu.cornell.cs.apl.viaduct.imp.visitors.ReferenceVisitor;
-import edu.cornell.cs.apl.viaduct.imp.visitors.StmtVisitor;
 import edu.cornell.cs.apl.viaduct.imp.visitors.TopLevelDeclarationVisitor;
 import edu.cornell.cs.apl.viaduct.util.FreshNameGenerator;
-import edu.cornell.cs.apl.viaduct.util.SymbolTable;
+
+import io.vavr.collection.Map;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -112,153 +114,182 @@ public class AnfConverter {
     }
   }
 
-  private static final class AnfStmtVisitor implements StmtVisitor<Iterable<StatementNode>> {
-    private final FreshNameGenerator nameGenerator = new FreshNameGenerator();
+  private static final class AnfStmtVisitor
+      extends ContextStmtVisitor<
+                AnfStmtVisitor,
+                Boolean,
+                ReferenceNode,
+                ExpressionNode,
+                Iterable<StatementNode>>
+  {
+    private final FreshNameGenerator nameGenerator;
 
-    /** track variables declared. */
-    private SymbolTable<Variable, Boolean> varDeclTable = new SymbolTable<>();
+    private AnfExprVisitor exprVisitor;
 
-    /** track temporaries declared in let-bindings. */
-    private SymbolTable<Variable, Boolean> tempTable = new SymbolTable<>();
+    AnfStmtVisitor() {
+      super();
+      this.nameGenerator = new FreshNameGenerator();
+      this.exprVisitor = new AnfExprVisitor();
+    }
+
+    private AnfStmtVisitor(AnfStmtVisitor that, AnfExprVisitor exprVisitor) {
+      super(that);
+      this.nameGenerator = that.nameGenerator;
+      this.exprVisitor = exprVisitor;
+    }
+
+    private AnfStmtVisitor(AnfStmtVisitor that) {
+      this(that, that.exprVisitor);
+    }
+
+    private List<LetBindingNode> getBindings() {
+      return this.exprVisitor.getBindings();
+    }
 
     @Override
-    public Iterable<StatementNode> visit(VariableDeclarationNode node) {
-      this.varDeclTable.put(node.getVariable(), true);
+    protected AnfStmtVisitor newScope() {
+      return new AnfStmtVisitor(this);
+    }
+
+    @Override
+    protected ReferenceVisitor<ReferenceNode> getReferenceVisitor() {
+      return this.exprVisitor;
+    }
+
+    @Override
+    protected ExprVisitor<ExpressionNode> getExpressionVisitor() {
+      return this.exprVisitor;
+    }
+
+    @Override
+    protected Boolean extract(VariableDeclarationNode node) {
+      return true;
+    }
+
+    @Override
+    protected Boolean extract(ArrayDeclarationNode node, ExpressionNode length) {
+      return true;
+    }
+
+    @Override
+    protected Boolean extract(LetBindingNode node, ExpressionNode rhs) {
+      return false;
+    }
+
+    @Override
+    protected Boolean extract(ReceiveNode node) {
+      return false;
+    }
+
+    @Override
+    protected AnfStmtVisitor enter(StatementNode node) {
+      // reset list of created bindings
+      return new AnfStmtVisitor(this, new AnfExprVisitor());
+    }
+
+    @Override
+    public Iterable<StatementNode> leave(VariableDeclarationNode node, AnfStmtVisitor visitor) {
       return single(node);
     }
 
     @Override
-    public Iterable<StatementNode> visit(ArrayDeclarationNode node) {
-      final AtomicExprVisitor atomicConverter = new AtomicExprVisitor(this.tempTable);
-      final ExpressionNode length = atomicConverter.run(node.getLength());
-      this.varDeclTable.put(node.getVariable(), true);
+    public Iterable<StatementNode> leave(ArrayDeclarationNode node, AnfStmtVisitor visitor,
+        ExpressionNode length) {
       return listBuilder()
-          .addAll(atomicConverter.getBindings())
+          .addAll(visitor.getBindings())
           .add(node.toBuilder().setLength(length).build())
           .build();
     }
 
     @Override
-    public Iterable<StatementNode> visit(LetBindingNode node) {
-      final AnfExprVisitor anfConverter = new AnfExprVisitor(this.tempTable);
-      final ExpressionNode rhs = anfConverter.run(node.getRhs());
-      this.tempTable.put(node.getVariable(), true);
+    public Iterable<StatementNode> leave(LetBindingNode node, AnfStmtVisitor visitor,
+        ExpressionNode rhs) {
       return listBuilder()
-          .addAll(anfConverter.getBindings())
+          .addAll(visitor.getBindings())
           .add(node.toBuilder().setRhs(rhs).build())
           .build();
     }
 
     @Override
-    public Iterable<StatementNode> visit(AssignNode node) {
-      final AnfExprVisitor anfConverter = new AnfExprVisitor(this.tempTable);
-      final ExpressionNode rhs = anfConverter.run(node.getRhs());
-      final ReferenceNode lhs = anfConverter.run(node.getLhs());
-
+    public Iterable<StatementNode> leave(AssignNode node, AnfStmtVisitor visitor,
+        ReferenceNode lhs, ExpressionNode rhs) {
       return listBuilder()
-          .addAll(anfConverter.getBindings())
+          .addAll(visitor.getBindings())
           .add(node.toBuilder().setLhs(lhs).setRhs(rhs).build())
           .build();
     }
 
     @Override
-    public Iterable<StatementNode> visit(SendNode node) {
-      final AtomicExprVisitor atomicConverter = new AtomicExprVisitor(this.tempTable);
-      final ExpressionNode sentExpression = atomicConverter.run(node.getSentExpression());
+    public Iterable<StatementNode> leave(SendNode node, AnfStmtVisitor visitor,
+        ExpressionNode sentExpr) {
       return listBuilder()
-          .addAll(atomicConverter.getBindings())
-          .add(node.toBuilder().setSentExpression(sentExpression).build())
+          .addAll(visitor.getBindings())
+          .add(node.toBuilder().setSentExpression(sentExpr).build())
           .build();
     }
 
     @Override
-    public Iterable<StatementNode> visit(ReceiveNode node) {
-      if (!this.varDeclTable.contains(node.getVariable())) {
-        this.tempTable.put(node.getVariable(), true);
-      }
-
+    public Iterable<StatementNode> leave(ReceiveNode node, AnfStmtVisitor visitor,
+        ReferenceNode lhs) {
       return single(node);
-
-      /*
-      if (!this.varDeclTable.contains(node.getVariable())) {
-        this.tempTable.put(node.getVariable(), true);
-        return single(node);
-
-      } else { // receiving into an assignable; create a new temp and then assign there
-        Variable tmpVar =
-            Variable.builder()
-            .setName(this.nameGenerator.getFreshName(TMP_NAME))
-            .setSourceLocation(node.getVariable().getSourceLocation())
-            .build();
-
-        return listBuilder()
-            .add(node.toBuilder().setVariable(tmpVar).build())
-            .add(AssignNode.builder()
-                .setLhs(node.getVariable())
-                .setRhs(read(tmpVar))
-                .build())
-            .build();
-      }
-      */
     }
 
     @Override
-    public Iterable<StatementNode> visit(IfNode node) {
-      final AtomicExprVisitor atomicConverter = new AtomicExprVisitor(this.tempTable);
-      final ExpressionNode guard = atomicConverter.run(node.getGuard());
+    public Iterable<StatementNode> leave(IfNode node, AnfStmtVisitor visitor,
+        ExpressionNode guard, Iterable<StatementNode> thenBranch,
+        Iterable<StatementNode> elseBranch) {
       return listBuilder()
-          .addAll(atomicConverter.getBindings())
+          .addAll(visitor.getBindings())
           .add(
               node.toBuilder()
                   .setGuard(guard)
-                  .setThenBranch(getBlock(node.getThenBranch().accept(this)))
-                  .setElseBranch(getBlock(node.getElseBranch().accept(this)))
+                  .setThenBranch(getBlock(thenBranch))
+                  .setElseBranch(getBlock(elseBranch))
                   .build())
           .build();
     }
 
     @Override
-    public Iterable<StatementNode> visit(WhileNode whileNode) {
+    public Iterable<StatementNode> leave(WhileNode whileNode, AnfStmtVisitor visitor,
+        ExpressionNode guard, Iterable<StatementNode> body) {
       throw new ElaborationException();
     }
 
     @Override
-    public Iterable<StatementNode> visit(ForNode forNode) {
+    public Iterable<StatementNode> leave(ForNode forNode, AnfStmtVisitor visitor,
+        Iterable<StatementNode> init, ExpressionNode guard,
+        Iterable<StatementNode> update, Iterable<StatementNode> body) {
       throw new ElaborationException();
     }
 
     @Override
-    public Iterable<StatementNode> visit(LoopNode node) {
-      final BlockNode body = getBlock(node.getBody().accept(this));
-      return single(node.toBuilder().setBody(body).build());
+    public Iterable<StatementNode> leave(LoopNode node, AnfStmtVisitor visitor,
+        Iterable<StatementNode> body) {
+      return single(node.toBuilder().setBody(getBlock(body)).build());
     }
 
     @Override
-    public Iterable<StatementNode> visit(BreakNode node) {
+    public Iterable<StatementNode> leave(BreakNode node, AnfStmtVisitor visitor) {
       return single(node);
     }
 
     @Override
-    public Iterable<StatementNode> visit(BlockNode node) {
+    public Iterable<StatementNode> leave(BlockNode node, AnfStmtVisitor visitor,
+        Iterable<Iterable<StatementNode>> statements) {
       // Flatten one level of nested blocks (these are generated by this class)
-      this.varDeclTable.push();
-      this.tempTable.push();
       final ImmutableList.Builder<StatementNode> body = listBuilder();
-      for (StatementNode statement : node) {
-        body.addAll(statement.accept(this));
+      for (Iterable<StatementNode> statement : statements) {
+        body.addAll(statement);
       }
-      this.varDeclTable.pop();
-      this.tempTable.pop();
       return single(node.toBuilder().setStatements(body.build()).build());
     }
 
     @Override
-    public Iterable<StatementNode> visit(AssertNode node) {
-      final AtomicExprVisitor atomicConverter = new AtomicExprVisitor(this.tempTable);
-      final ExpressionNode expression = atomicConverter.run(node.getExpression());
+    public Iterable<StatementNode> leave(AssertNode node, AnfStmtVisitor visitor,
+        ExpressionNode expr) {
       return listBuilder()
-          .addAll(atomicConverter.getBindings())
-          .add(node.toBuilder().setExpression(expression).build())
+          .addAll(visitor.getBindings())
+          .add(node.toBuilder().setExpression(expr).build())
           .build();
     }
 
@@ -271,19 +302,8 @@ public class AnfConverter {
      */
     private final class AnfExprVisitor
         implements ReferenceVisitor<ReferenceNode>, ExprVisitor<ExpressionNode> {
-      private final AtomicExprVisitor atomicConverter;
 
-      AnfExprVisitor(SymbolTable<Variable, Boolean> tempTable) {
-        this.atomicConverter = new AtomicExprVisitor(tempTable);
-      }
-
-      ReferenceNode run(ReferenceNode reference) {
-        return reference.accept(this);
-      }
-
-      ExpressionNode run(ExpressionNode expression) {
-        return expression.accept(this);
-      }
+      private final AtomicExprVisitor atomicConverter = new AtomicExprVisitor();
 
       /**
        * Returns all binding statements that need to be executed before the expression returned by
@@ -337,14 +357,10 @@ public class AnfConverter {
 
     /** Produce an atomic expression. */
     private final class AtomicExprVisitor
-        extends AbstractExprVisitor<AtomicExprVisitor, Variable, ExpressionNode> {
+        extends AbstractExprVisitor<AtomicExprVisitor, ReferenceNode, ExpressionNode> {
+
       private final AtomicReferenceVisitor referenceVisitor = new AtomicReferenceVisitor();
       private final List<LetBindingNode> bindings = new LinkedList<>();
-      private final SymbolTable<Variable, Boolean> tempTable;
-
-      AtomicExprVisitor(SymbolTable<Variable, Boolean> tempTable) {
-        this.tempTable = tempTable;
-      }
 
       ExpressionNode run(ExpressionNode expression) {
         return expression.accept(this);
@@ -379,8 +395,8 @@ public class AnfConverter {
       }
 
       @Override
-      protected ReferenceVisitor<Variable> getReferenceVisitor() {
-        return referenceVisitor;
+      protected ReferenceVisitor<ReferenceNode> getReferenceVisitor() {
+        return this.referenceVisitor;
       }
 
       @Override
@@ -394,7 +410,8 @@ public class AnfConverter {
       }
 
       @Override
-      protected ExpressionNode leave(ReadNode node, AtomicExprVisitor visitor, Variable reference) {
+      protected ExpressionNode leave(ReadNode node, AtomicExprVisitor visitor,
+          ReferenceNode reference) {
         return node.toBuilder().setReference(reference).build();
       }
 
@@ -420,7 +437,7 @@ public class AnfConverter {
       }
 
       private final class AtomicReferenceVisitor
-          extends AbstractReferenceVisitor<AtomicReferenceVisitor, Variable, ExpressionNode> {
+          extends AbstractReferenceVisitor<AtomicReferenceVisitor, ReferenceNode, ExpressionNode> {
 
         @Override
         protected ExprVisitor<ExpressionNode> getExpressionVisitor() {
@@ -433,27 +450,29 @@ public class AnfConverter {
         }
 
         @Override
-        public Variable visit(ArrayIndexingNode node) {
+        public ReferenceNode visit(ArrayIndexingNode node) {
           final AtomicReferenceVisitor visitor = enter(node);
           final ExpressionNode index = node.getIndex().accept(visitor.getExpressionVisitor());
           return leave(node, visitor, node.getArray(), index);
         }
 
         @Override
-        protected Variable leave(Variable node, AtomicReferenceVisitor visitor) {
-          if (AtomicExprVisitor.this.tempTable.contains(node)) {
-            return node;
+        protected ReferenceNode leave(Variable node, AtomicReferenceVisitor visitor) {
+          final Map<Variable, Boolean> context = AnfStmtVisitor.this.getContext();
+
+          if (context.getOrElse(node, false)) {
+            return addBinding(read(node));
 
           } else {
-            return addBinding(read(node));
+            return node;
           }
         }
 
         @Override
-        protected Variable leave(
+        protected ReferenceNode leave(
             ArrayIndexingNode node,
             AtomicReferenceVisitor visitor,
-            Variable array,
+            ReferenceNode array,
             ExpressionNode index) {
           return addBinding(read(node.toBuilder().setIndex(index).build()));
         }

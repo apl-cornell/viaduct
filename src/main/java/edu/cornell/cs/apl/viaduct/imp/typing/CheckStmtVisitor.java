@@ -85,6 +85,11 @@ final class CheckStmtVisitor
   }
 
   @Override
+  protected ImpType extract(ReceiveNode node) {
+    return node.getReceiveType();
+  }
+
+  @Override
   protected CheckStmtVisitor newScope() {
     return new CheckStmtVisitor(this);
   }

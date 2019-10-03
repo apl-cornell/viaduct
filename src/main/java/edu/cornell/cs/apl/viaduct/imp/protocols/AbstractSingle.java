@@ -13,7 +13,7 @@ import edu.cornell.cs.apl.viaduct.protocol.ProtocolInstantiationInfo;
 import java.util.List;
 
 public abstract class AbstractSingle extends Cleartext implements Protocol<ImpAstNode> {
-  private Variable outVar;
+  protected Variable outVar;
 
   protected abstract HostName getActualHost();
 

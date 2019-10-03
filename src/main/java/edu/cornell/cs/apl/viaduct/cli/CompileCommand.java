@@ -24,7 +24,7 @@ import edu.cornell.cs.apl.viaduct.pdg.PdgDotPrinter;
 import edu.cornell.cs.apl.viaduct.pdg.PdgNode;
 import edu.cornell.cs.apl.viaduct.pdg.ProgramDependencyGraph;
 import edu.cornell.cs.apl.viaduct.protocol.Protocol;
-import edu.cornell.cs.apl.viaduct.protocol.ProtocolSelection;
+import edu.cornell.cs.apl.viaduct.protocol.ProtocolSearchSelection;
 import guru.nidi.graphviz.engine.Format;
 import guru.nidi.graphviz.engine.Graphviz;
 import guru.nidi.graphviz.engine.GraphvizCmdLineEngine;
@@ -218,7 +218,8 @@ public class CompileCommand extends BaseCommand {
     final ImpProtocolSearchStrategy strategy = new ImpProtocolSearchStrategy(costEstimator);
 
     final Map<PdgNode<ImpAstNode>, Protocol<ImpAstNode>> protocolMap =
-        new ProtocolSelection<>(this.enableProfiling, strategy).selectProtocols(hostConfig, pdg);
+        (new ProtocolSearchSelection<>(this.enableProfiling, strategy))
+            .selectProtocols(hostConfig, pdg);
 
     System.out.println("SYNTHESIZED PROTOCOL:");
     System.out.println(strategy.estimatePdgCost(protocolMap, pdg));

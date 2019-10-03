@@ -34,7 +34,8 @@ import java.util.Map;
 
 public abstract class Cleartext {
   protected ExpressionNode getReadValue(
-      PdgNode<ImpAstNode> node, List<Variable> readArgs, Variable outVar) {
+      PdgNode<ImpAstNode> node, List<Variable> readArgs, Variable outVar,
+      ProtocolInstantiationInfo<ImpAstNode> info) {
 
     if (node.isStorageNode()) {
       StatementNode stmt = (StatementNode) node.getAstNode();
@@ -80,7 +81,7 @@ public abstract class Cleartext {
       builder.recv(readHost, readArgVar);
     }
 
-    ExpressionNode readVal = getReadValue(node, readArgs, (Variable) outVar);
+    ExpressionNode readVal = getReadValue(node, readArgs, (Variable) outVar, info);
     builder.send(readHost, readVal);
 
     Variable readVar = info.getFreshVar(readLabel);

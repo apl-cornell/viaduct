@@ -200,9 +200,9 @@ public class ReplaceVisitor extends IdentityProgramVisitor {
     protected StatementNode leave(
         ForNode node,
         ReplaceStmtVisitor visitor,
-        StatementNode initialize,
+        Iterable<StatementNode> initialize,
         ExpressionNode guard,
-        StatementNode update,
+        Iterable<StatementNode> update,
         StatementNode body) {
       return
           replace(

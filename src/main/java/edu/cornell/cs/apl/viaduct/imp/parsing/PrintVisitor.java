@@ -35,7 +35,11 @@ import edu.cornell.cs.apl.viaduct.imp.visitors.StmtVisitor;
 import edu.cornell.cs.apl.viaduct.imp.visitors.TopLevelDeclarationVisitor;
 import edu.cornell.cs.apl.viaduct.security.Label;
 import edu.cornell.cs.apl.viaduct.util.PrintUtil;
+
 import java.io.PrintStream;
+import java.util.ArrayList;
+import java.util.List;
+
 import org.apache.commons.lang3.StringUtils;
 import org.fusesource.jansi.Ansi;
 import org.fusesource.jansi.Ansi.Color;
@@ -173,7 +177,10 @@ final class PrintVisitor
     indentation += PrintUtil.INDENTATION_LEVEL;
     for (StatementNode stmt : node) {
       stmt.accept(this);
-      output.println();
+
+      if (this.indentationEnabled) {
+        output.println();
+      }
     }
     indentation -= PrintUtil.INDENTATION_LEVEL;
 
@@ -408,11 +415,42 @@ final class PrintVisitor
 
     printKeyword("for");
     output.print(" (");
-    forNode.getInitialize().accept(this);
+
+    List<StatementNode> initList = new ArrayList<>();
+    for (StatementNode initStmt : forNode.getInitialize()) {
+      initList.add(initStmt);
+    }
+    if (initList.size() == 1) {
+      initList.get(0).accept(this);
+
+    } else {
+      output.print("{");
+      for (StatementNode initStmt : initList) {
+        initStmt.accept(this);
+        output.print(";");
+      }
+      output.print("}");
+    }
+
     output.print("; ");
     forNode.getGuard().accept(this);
     output.print("; ");
-    forNode.getUpdate().accept(this);
+
+    List<StatementNode> updateList = new ArrayList<>();
+    for (StatementNode updateStmt : forNode.getUpdate()) {
+      updateList.add(updateStmt);
+    }
+    if (updateList.size() == 1) {
+      updateList.get(0).accept(this);
+
+    } else {
+      output.print("{");
+      for (StatementNode updateStmt : updateList) {
+        updateStmt.accept(this);
+        output.print("; ");
+      }
+      output.print("}");
+    }
     output.print(")");
 
     this.indentationEnabled = true;

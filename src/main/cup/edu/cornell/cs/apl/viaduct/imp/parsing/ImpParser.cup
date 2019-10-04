@@ -1,5 +1,7 @@
 package edu.cornell.cs.apl.viaduct.imp.parsing;
 
+import com.google.common.collect.ImmutableList;
+
 import edu.cornell.cs.apl.viaduct.errors.ParsingError;
 import edu.cornell.cs.apl.viaduct.imp.ast.*;
 import edu.cornell.cs.apl.viaduct.imp.ast.types.*;
@@ -74,6 +76,16 @@ action code {:
             .setSourceLocation(location)
             .build();
     }
+
+    /** Create an iterable containing a single statement. */
+    private Iterable<StatementNode> single(StatementNode statement) {
+        return ImmutableList.of(statement);
+    }
+
+    /** Create a list of statements builder. */
+    private ImmutableList.Builder<StatementNode> listBuilder() {
+        return ImmutableList.builder();
+    }
 :}
 
 parser code {:
@@ -105,7 +117,7 @@ parser code {:
 nonterminal ProgramNode program;
 nonterminal ProgramNode.Builder declaration_list;
 nonterminal TopLevelDeclarationNode declaration;
-nonterminal StatementNode stmt, stmt_basic;
+nonterminal Iterable<StatementNode> stmt, stmt_basic, stmt_noncontrol;
 nonterminal BlockNode block;
 nonterminal BlockNode.Builder stmt_list;
 nonterminal ReferenceNode reference;
@@ -194,122 +206,155 @@ stmt ::=
     :}
 
   | IF:begin OPEN_PAREN expr:guard CLOSE_PAREN block:thenCase ELSE block:elseCase {:
-      RESULT = IfNode.builder()
+      RESULT = single(
+          IfNode.builder()
           .setGuard(guard)
           .setThenBranch(thenCase)
           .setElseBranch(elseCase)
           .setSourceLocation(location(beginleft, elseCaseright))
-          .build();
+          .build());
     :}
 
   | IF:begin OPEN_PAREN expr:guard CLOSE_PAREN block:thenCase {:
-      RESULT = IfNode.builder()
+      RESULT = single(
+          IfNode.builder()
           .setGuard(guard)
           .setThenBranch(thenCase)
           .setSourceLocation(location(beginleft, thenCaseright))
-          .build();
+          .build());
     :}
 
   | WHILE:begin OPEN_PAREN expr:guard CLOSE_PAREN block:body {:
-      RESULT = WhileNode.builder()
+      RESULT = single(
+          WhileNode.builder()
           .setGuard(guard)
           .setBody(body)
           .setSourceLocation(location(beginleft, bodyright))
-          .build();
+          .build());
     :}
 
-  | FOR:begin OPEN_PAREN stmt_basic:initializer SEMICOLON expr:guard SEMICOLON stmt_basic:update CLOSE_PAREN block:body {:
-      RESULT = ForNode.builder()
-          .setInitialize(initializer)
+  | FOR:begin OPEN_PAREN stmt_noncontrol:initList SEMICOLON expr:guard SEMICOLON stmt_noncontrol:updateList CLOSE_PAREN block:body {:
+      RESULT = single(
+          ForNode.builder()
+          .setInitialize(initList)
           .setGuard(guard)
-          .setUpdate(update)
+          .setUpdate(updateList)
           .setBody(body)
           .setSourceLocation(location(beginleft, bodyright))
-          .build();
+          .build());
     :}
 
   | block:block {:
-      RESULT = block;
+      RESULT = single(block);
     :}
   ;
 
+stmt_noncontrol ::=
+    stmt_basic:stmt_list {:
+        RESULT = stmt_list;
+      :}
+
+    | block:block {:
+        RESULT = block.getStatements();
+      :}
+    ;
+
 stmt_basic ::=
     type:ty optional_label:lab variable:var {:
-      RESULT = VariableDeclarationNode.builder()
+      RESULT = single(
+           VariableDeclarationNode.builder()
           .setVariable(var)
           .setType(ty)
           .setLabel(lab)
           .setSourceLocation(location(tyleft, varright))
-          .build();
+          .build());
     :}
 
-//  | type:ty label:lab variable:var EQ expr:e {:
-//      List<StatementNode> stmts = new ArrayList<>();
-//      stmts.add(VariableDeclarationNode.create(var, ty, lab));
-//      stmts.add(AssignNode.create(var, e));
-//      RESULT = BlockNode.create(stmts);
-//    :}
+  | type:ty optional_label:lab variable:var EQ expr:e {:
+      RESULT =
+        listBuilder()
+        .add(
+            VariableDeclarationNode.builder()
+            .setVariable(var)
+            .setType(ty)
+            .setLabel(lab)
+            .build()
+        )
+        .add(
+            AssignNode.builder()
+            .setLhs(var)
+            .setRhs(e)
+            .build()
+        )
+        .build();
+    :}
 
   | type:ty optional_label:lab variable:var OPEN_SQBRACE expr:e CLOSE_SQBRACE:end {:
-      RESULT = ArrayDeclarationNode.builder()
+      RESULT = single(
+          ArrayDeclarationNode.builder()
           .setVariable(var)
           .setLength(e)
           .setElementType(ty)
           .setLabel(lab)
           .setSourceLocation(location(tyleft, endright))
-          .build();
+          .build());
     :}
 
   | LET:begin variable:var EQ expr:e {:
-      RESULT = LetBindingNode.builder()
+      RESULT = single(
+          LetBindingNode.builder()
           .setVariable(var)
           .setRhs(e)
           .setSourceLocation(location(beginleft, eright))
-          .build();
+          .build());
     :}
 
   | reference:ref EQ expr:e {:
-      RESULT = AssignNode.builder()
+      RESULT = single(
+           AssignNode.builder()
           .setLhs(ref)
           .setRhs(e)
           .setSourceLocation(location(refleft, eright))
-          .build();
+          .build());
     :}
 
   | reference:ref PLUSEQ expr:e {:
-      RESULT = opAssign(Plus.create(), ref, e);
+      RESULT = single(opAssign(Plus.create(), ref, e));
     :}
 
   | reference:ref MINUSEQ expr:e {:
-      RESULT = opAssign(Minus.create(), ref, e);
+      RESULT = single(opAssign(Minus.create(), ref, e));
     :}
 
   | reference:ref TIMESEQ expr:e {:
-      RESULT = opAssign(Times.create(), ref, e);
+      RESULT = single(opAssign(Times.create(), ref, e));
     :}
 
   | SEND:begin expr:e TO process_name:recipient {:
-      RESULT = SendNode.builder()
+      RESULT = single(
+          SendNode.builder()
           .setRecipient(recipient)
           .setSentExpression(e)
           .setSourceLocation(location(beginleft, recipientright))
-          .build();
+          .build());
     :}
 
   | variable:var LARROW RECV optional_type:ty process_name:sender {:
-      RESULT = ReceiveNode.builder()
+      RESULT = single(
+          ReceiveNode.builder()
           .setVariable(var)
           .setReceiveType(ty)
           .setSender(sender)
           .setSourceLocation(location(varleft, senderright))
-          .build();
+          .build());
     :}
 
   | ASSERT:begin expr:e {:
-      RESULT = AssertNode.builder()
+      RESULT = single(
+          AssertNode.builder()
           .setExpression(e)
           .setSourceLocation(location(beginleft, eright))
-          .build();
+          .build());
     :}
   ;
 
@@ -321,7 +366,7 @@ block ::=
 
 stmt_list ::=
     stmt_list:slist stmt:s {:
-      RESULT = slist.add(s);
+      RESULT = slist.addAll(s);
     :}
 
   | /* empty */ {:

@@ -2,6 +2,7 @@ package edu.cornell.cs.apl.viaduct.imp.ast;
 
 import com.google.auto.value.AutoValue;
 import edu.cornell.cs.apl.viaduct.imp.visitors.StmtVisitor;
+
 import javax.annotation.Nullable;
 
 /** For loop. */
@@ -16,13 +17,13 @@ public abstract class ForNode extends StatementNode {
   public abstract @Nullable JumpLabel getJumpLabel();
 
   /** Initializer for loop variables. */
-  public abstract StatementNode getInitialize();
+  public abstract Iterable<StatementNode> getInitialize();
 
   /** Loop until this becomes false. */
   public abstract ExpressionNode getGuard();
 
   /** Statement that updates loop variables. */
-  public abstract StatementNode getUpdate();
+  public abstract Iterable<StatementNode> getUpdate();
 
   /** Code to execute each time we go around the loop. */
   public abstract BlockNode getBody();
@@ -34,13 +35,13 @@ public abstract class ForNode extends StatementNode {
 
   @AutoValue.Builder
   public abstract static class Builder extends ImpAstNode.Builder<Builder> {
-    public abstract Builder setInitialize(StatementNode initialize);
+    public abstract Builder setInitialize(Iterable<StatementNode> initialize);
 
     public abstract Builder setJumpLabel(JumpLabel jumpLabel);
 
     public abstract Builder setGuard(ExpressionNode guard);
 
-    public abstract Builder setUpdate(StatementNode update);
+    public abstract Builder setUpdate(Iterable<StatementNode> update);
 
     public abstract Builder setBody(BlockNode body);
 

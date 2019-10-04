@@ -202,9 +202,9 @@ public class IdentityProgramVisitor
     protected StatementNode leave(
         ForNode node,
         IdentityStmtVisitor visitor,
-        StatementNode initialize,
+        Iterable<StatementNode> initialize,
         ExpressionNode guard,
-        StatementNode update,
+        Iterable<StatementNode> update,
         StatementNode body) {
       return node.toBuilder()
           .setInitialize(initialize)

@@ -257,8 +257,8 @@ public class AnfConverter {
 
     @Override
     public Iterable<StatementNode> leave(ForNode forNode, AnfStmtVisitor visitor,
-        Iterable<StatementNode> init, ExpressionNode guard,
-        Iterable<StatementNode> update, Iterable<StatementNode> body) {
+        Iterable<Iterable<StatementNode>> init, ExpressionNode guard,
+        Iterable<Iterable<StatementNode>> update, Iterable<StatementNode> body) {
       throw new ElaborationException();
     }
 

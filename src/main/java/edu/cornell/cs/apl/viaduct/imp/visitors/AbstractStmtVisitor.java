@@ -14,6 +14,8 @@ import edu.cornell.cs.apl.viaduct.imp.ast.SendNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.StatementNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.VariableDeclarationNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.WhileNode;
+
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -143,9 +145,9 @@ public abstract class AbstractStmtVisitor<
   protected StmtResultT leave(
       ForNode node,
       SelfT visitor,
-      StmtResultT initialize,
+      Iterable<StmtResultT> initialize,
       ExprResultT guard,
-      StmtResultT update,
+      Iterable<StmtResultT> update,
       StmtResultT body) {
     return leave((StatementNode) node, visitor);
   }
@@ -231,9 +233,18 @@ public abstract class AbstractStmtVisitor<
   @Override
   public StmtResultT visit(ForNode node) {
     final SelfT visitor = enter(node);
-    final StmtResultT initialize = node.getInitialize().accept(visitor);
+    final List<StmtResultT> initialize = new ArrayList<>();
+    for (StatementNode initStmt : node.getInitialize()) {
+      initialize.add(initStmt.accept(visitor));
+    }
+
     final ExprResultT guard = node.getGuard().accept(visitor.getExpressionVisitor());
-    final StmtResultT update = node.getUpdate().accept(visitor);
+
+    final List<StmtResultT> update = new ArrayList<>();
+    for (StatementNode updateStmt : node.getUpdate()) {
+      update.add(updateStmt.accept(visitor));
+    }
+
     final StmtResultT body = node.getBody().accept(visitor);
     return leave(node, visitor, initialize, guard, update, body);
   }

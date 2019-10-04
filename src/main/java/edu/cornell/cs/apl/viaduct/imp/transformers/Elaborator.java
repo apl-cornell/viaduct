@@ -66,9 +66,9 @@ public class Elaborator {
       protected StatementNode leave(
           ForNode node,
           IdentityStmtVisitor visitor,
-          StatementNode initialize,
+          Iterable<StatementNode> initialize,
           ExpressionNode guard,
-          StatementNode update,
+          Iterable<StatementNode> update,
           StatementNode body) {
 
         /*
@@ -89,10 +89,10 @@ public class Elaborator {
 
         final BlockNode.Builder result = BlockNode.builder().setSourceLocation(node);
 
-        result.add(initialize);
+        result.addAll(initialize);
 
         final BreakNode breakNode = BreakNode.builder().setSourceLocation(node).build();
-        final BlockNode resultBody = ((BlockNode) body).toBuilder().add(update).build();
+        final BlockNode resultBody = ((BlockNode) body).toBuilder().addAll(update).build();
         final IfNode resultLoopBody =
             IfNode.builder()
                 .setGuard(guard)

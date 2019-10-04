@@ -10,9 +10,13 @@ import edu.cornell.cs.apl.viaduct.imp.ast.LoopNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.StatementNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.WhileNode;
 import edu.cornell.cs.apl.viaduct.imp.parsing.HasLocation;
+
 import io.vavr.collection.HashMap;
 import io.vavr.collection.Map;
 import io.vavr.control.Option;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * This is a visitor similar to {@link ContextStmtVisitor}, but additionally maintains a mapping
@@ -80,9 +84,9 @@ public abstract class LoopContextStmtVisitor<
   protected SelfT enterBody(
       ForNode node,
       LoopValueT loopValue,
-      StmtResultT initialize,
+      Iterable<StmtResultT> initialize,
       ExprResultT guard,
-      StmtResultT update) {
+      Iterable<StmtResultT> update) {
     return enter((StatementNode) node);
   }
 
@@ -126,9 +130,17 @@ public abstract class LoopContextStmtVisitor<
     final SelfT visitor = enter(node);
     final LoopValueT loopValue = extract(node);
 
-    final StmtResultT initialize = node.getInitialize().accept(visitor);
+    final List<StmtResultT> initialize = new ArrayList<>();
+    for (StatementNode initStmt : node.getInitialize()) {
+      initialize.add(initStmt.accept(visitor));
+    }
+
     final ExprResultT guard = node.getGuard().accept(visitor.getExpressionVisitor());
-    final StmtResultT update = node.getUpdate().accept(visitor);
+
+    final List<StmtResultT> update = new ArrayList<>();
+    for (StatementNode updateStmt : node.getUpdate()) {
+      update.add(updateStmt.accept(visitor));
+    }
 
     // Traverse body
     final SelfT bodyVisitor1 = visitor.newScope();

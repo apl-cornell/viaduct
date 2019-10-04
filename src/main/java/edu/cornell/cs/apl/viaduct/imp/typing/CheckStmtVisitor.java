@@ -158,9 +158,9 @@ final class CheckStmtVisitor
   protected Void leave(
       ForNode node,
       CheckStmtVisitor visitor,
-      Void initialize,
+      Iterable<Void> initialize,
       ImpBaseType guardType,
-      Void update,
+      Iterable<Void> update,
       Void body) {
     assertHasType(node.getGuard(), guardType, BooleanType.create());
     return null;

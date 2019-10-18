@@ -15,8 +15,8 @@ import edu.cornell.cs.apl.viaduct.protocol.Protocol;
 import edu.cornell.cs.apl.viaduct.protocol.ProtocolInstantiationError;
 import edu.cornell.cs.apl.viaduct.protocol.ProtocolInstantiationInfo;
 import edu.cornell.cs.apl.viaduct.security.Label;
+
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -24,33 +24,19 @@ import java.util.Set;
 
 /** replication protocol. */
 public class Replication extends Cleartext implements Protocol<ImpAstNode> {
-  private final Set<HostName> replicas;
   private final Label trust;
   private final Map<HostName, Variable> outVarMap;
 
   /** constructor. */
-  public Replication(HostTrustConfiguration hostConfig, Set<HostName> replicas) {
-    this.replicas = replicas;
-    this.outVarMap = new HashMap<>();
+  public Replication(HostTrustConfiguration hostConfig, Set<HostName> hosts) {
+    super(hosts);
 
+    this.outVarMap = new HashMap<>();
     Label label = Label.top();
-    for (HostName replica : replicas) {
-      label = label.meet(hostConfig.getTrust(replica));
+    for (HostName host : this.hosts) {
+      label = label.meet(hostConfig.getTrust(host));
     }
     this.trust = label;
-  }
-
-  public Set<HostName> getReplicas() {
-    return this.replicas;
-  }
-
-  public int getNumReplicas() {
-    return this.replicas.size();
-  }
-
-  @Override
-  public Set<HostName> getHosts() {
-    return this.replicas;
   }
 
   @Override
@@ -71,14 +57,14 @@ public class Replication extends Cleartext implements Protocol<ImpAstNode> {
   @Override
   public void instantiate(PdgNode<ImpAstNode> node, ProtocolInstantiationInfo<ImpAstNode> info) {
     if (node.isStorageNode()) {
-      for (HostName realHost : this.replicas) {
+      for (HostName realHost : this.hosts) {
         Variable hostStorageVar =
             instantiateStorageNode(realHost, (PdgStorageNode<ImpAstNode>) node, info);
         this.outVarMap.put(realHost, hostStorageVar);
       }
 
     } else if (node.isComputeNode()) {
-      for (HostName realHost : this.replicas) {
+      for (HostName realHost : this.hosts) {
         Variable hostOutVar =
             instantiateComputeNode(realHost, (PdgComputeNode<ImpAstNode>) node, info);
         this.outVarMap.put(realHost, hostOutVar);
@@ -99,7 +85,7 @@ public class Replication extends Cleartext implements Protocol<ImpAstNode> {
       ProtocolInstantiationInfo<ImpAstNode> info) {
 
     // should not be read from until it has been instantiated
-    assert this.outVarMap.size() == getNumReplicas();
+    assert this.outVarMap.size() == this.hosts.size();
 
     Map<HostName, Binding<ImpAstNode>> hostBindings = new HashMap<>();
     StmtBuilder readBuilder = info.getBuilder(readHost);
@@ -149,7 +135,7 @@ public class Replication extends Cleartext implements Protocol<ImpAstNode> {
 
     if (node.isStorageNode()) {
       // node must have been instantiated before being written to
-      assert this.outVarMap.size() == getNumReplicas();
+      assert this.outVarMap.size() == this.hosts.size();
 
       Set<HostName> inHosts = info.getWriteSet(writeNode, node, writeHost);
       for (HostName inHost : inHosts) {
@@ -170,7 +156,7 @@ public class Replication extends Cleartext implements Protocol<ImpAstNode> {
 
     if (o instanceof Replication) {
       Replication other = (Replication) o;
-      boolean realEq = this.replicas.equals(other.replicas);
+      boolean realEq = this.hosts.equals(other.hosts);
       return realEq;
 
     } else {
@@ -180,17 +166,6 @@ public class Replication extends Cleartext implements Protocol<ImpAstNode> {
 
   @Override
   public int hashCode() {
-    return Objects.hash(this.replicas);
-  }
-
-  @Override
-  public String toString() {
-    HashSet<String> realStrs = new HashSet<>();
-    for (HostName real : this.replicas) {
-      realStrs.add(real.toString());
-    }
-
-    String realList = String.join(",", realStrs);
-    return String.format("Replication({%s})", realList);
+    return Objects.hash(this.hosts);
   }
 }

@@ -1,29 +1,29 @@
-package edu.cornell.cs.apl.viaduct.imp.protocols;
+package edu.cornell.cs.apl.viaduct.imp.backend.mamba;
 
 import edu.cornell.cs.apl.viaduct.imp.HostTrustConfiguration;
 import edu.cornell.cs.apl.viaduct.imp.ast.HostName;
+import edu.cornell.cs.apl.viaduct.imp.protocols.AbstractSingle;
 import edu.cornell.cs.apl.viaduct.security.Label;
 
 import java.util.Set;
 
-/** multiparty computation protocol. */
-public class MPC extends AbstractSynthesizedSingle {
+/** cleartext MAMBA protocol. */
+public class MambaPublic extends AbstractSingle {
   private static Label computeLabel(HostTrustConfiguration hostConfig, Set<HostName> hosts) {
-    Label label = Label.weakest();
+    Label label = Label.top();
     for (HostName party : hosts) {
-      label = label.and(hostConfig.getTrust(party));
+      label = label.meet(hostConfig.getTrust(party));
     }
     return label;
   }
 
-  /** constructor. */
-  public MPC(HostTrustConfiguration hostConfig, Set<HostName> ps) {
-    super(ps, computeLabel(hostConfig, ps));
+  public MambaPublic(HostTrustConfiguration hostConfig, Set<HostName> hosts) {
+    super(hosts, computeLabel(hostConfig, hosts));
   }
 
   @Override
   public String getId() {
-    return "MPC";
+    return "MambaPublic";
   }
 
   @Override
@@ -32,9 +32,9 @@ public class MPC extends AbstractSynthesizedSingle {
       return false;
     }
 
-    if (o instanceof MPC) {
-      MPC ompc = (MPC) o;
-      return this.hosts.equals(ompc.hosts);
+    if (o instanceof MambaPublic) {
+      MambaPublic omp = (MambaPublic)o;
+      return this.hosts.equals(omp.hosts);
 
     } else {
       return false;

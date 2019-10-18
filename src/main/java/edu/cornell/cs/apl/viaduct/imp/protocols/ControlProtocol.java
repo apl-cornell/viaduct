@@ -17,6 +17,7 @@ import edu.cornell.cs.apl.viaduct.protocol.Protocol;
 import edu.cornell.cs.apl.viaduct.protocol.ProtocolInstantiationError;
 import edu.cornell.cs.apl.viaduct.protocol.ProtocolInstantiationInfo;
 import edu.cornell.cs.apl.viaduct.security.Label;
+
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -27,7 +28,9 @@ import java.util.Set;
 public class ControlProtocol extends Cleartext implements Protocol<ImpAstNode> {
   private static ControlProtocol instance = new ControlProtocol();
 
-  private ControlProtocol() {}
+  private ControlProtocol() {
+    super(new HashSet<>());
+  }
 
   public static ControlProtocol getInstance() {
     return instance;

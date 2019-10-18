@@ -10,10 +10,8 @@ import edu.cornell.cs.apl.viaduct.pdg.PdgNode;
 import edu.cornell.cs.apl.viaduct.protocol.ProtocolInstantiationInfo;
 import edu.cornell.cs.apl.viaduct.security.Label;
 
-import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
-import java.util.Set;
 
 /** protocol that corresponds to how the ideal functionality for a specification program acts;
  * the protocol interacts with a simulator process as dictated by a given corruption label.
@@ -21,37 +19,19 @@ import java.util.Set;
 public class IdealFunctionality extends AbstractSingle {
   private static final String CORRUPTED_VALUE = "CORRUPT";
 
-  private final HostName host;
   private final HostName simulator;
   private final Label corruptionLabel;
 
   /** constructor. */
   public IdealFunctionality(HostName host, HostName simulator, Label corruptionLabel) {
-    this.host = host;
+    super(host, Label.strongest());
     this.simulator = simulator;
     this.corruptionLabel = corruptionLabel;
   }
 
   @Override
-  public Label getTrust() {
-    return Label.strongest();
-  }
-
-  @Override
-  protected HostName getActualHost() {
-    return this.host;
-  }
-
-  @Override
   public String getId() {
     return "IdealFunctionality";
-  }
-
-  @Override
-  public Set<HostName> getHosts() {
-    Set<HostName> hosts = new HashSet<>();
-    hosts.add(this.host);
-    return hosts;
   }
 
   @Override
@@ -68,7 +48,7 @@ public class IdealFunctionality extends AbstractSingle {
 
     // receive corrupted value from simulator if integrity of corruption label is high enough
     if (this.corruptionLabel.integrity().actsFor(node.getLabel().integrity())) {
-      StmtBuilder builder = info.getBuilder(this.host);
+      StmtBuilder builder = info.getBuilder(this.actualHost);
       final Variable corruptedVar = info.getFreshVar(CORRUPTED_VALUE);
       builder.recv(this.simulator, corruptedVar);
       return ReadNode.builder().setReference(corruptedVar).build();
@@ -91,7 +71,7 @@ public class IdealFunctionality extends AbstractSingle {
 
     // broadcast to simulator if confidentiality of corruption label is high enough
     if (this.corruptionLabel.confidentiality().actsFor(node.getLabel().confidentiality())) {
-      StmtBuilder builder = info.getBuilder(this.host);
+      StmtBuilder builder = info.getBuilder(this.actualHost);
       builder.send(this.simulator, ReadNode.builder().setReference(this.outVar).build());
     }
   }
@@ -104,7 +84,7 @@ public class IdealFunctionality extends AbstractSingle {
 
     if (o instanceof IdealFunctionality) {
       IdealFunctionality that = (IdealFunctionality)o;
-      return this.host.equals(that.host)
+      return this.actualHost.equals(that.actualHost)
         && this.simulator.equals(that.simulator);
 
     } else {
@@ -114,12 +94,12 @@ public class IdealFunctionality extends AbstractSingle {
 
   @Override
   public int hashCode() {
-    return Objects.hash(this.host, this.simulator);
+    return Objects.hash(this.actualHost, this.simulator);
   }
 
   @Override
   public String toString() {
     return String.format("IdealFunctionality(%s,%s)",
-        this.host.toString(), this.simulator.toString());
+        this.actualHost.toString(), this.simulator.toString());
   }
 }

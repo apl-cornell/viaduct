@@ -24,15 +24,26 @@ import edu.cornell.cs.apl.viaduct.pdg.PdgQueryEdge;
 import edu.cornell.cs.apl.viaduct.pdg.PdgReadEdge;
 import edu.cornell.cs.apl.viaduct.pdg.PdgStorageNode;
 import edu.cornell.cs.apl.viaduct.pdg.PdgWriteEdge;
+import edu.cornell.cs.apl.viaduct.protocol.AbstractProtocol;
 import edu.cornell.cs.apl.viaduct.protocol.Protocol;
 import edu.cornell.cs.apl.viaduct.protocol.ProtocolInstantiationError;
 import edu.cornell.cs.apl.viaduct.protocol.ProtocolInstantiationInfo;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
-public abstract class Cleartext {
+public abstract class Cleartext extends AbstractProtocol<ImpAstNode> {
+  protected Cleartext(Set<HostName> hosts) {
+    super(hosts);
+  }
+
+  protected Cleartext(HostName host) {
+    super(host);
+  }
+
   protected ExpressionNode getReadValue(
       PdgNode<ImpAstNode> node, List<Variable> readArgs, Variable outVar,
       ProtocolInstantiationInfo<ImpAstNode> info) {

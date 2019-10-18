@@ -15,6 +15,7 @@ import edu.cornell.cs.apl.viaduct.pdg.ProgramDependencyGraph;
 import edu.cornell.cs.apl.viaduct.protocol.Protocol;
 import edu.cornell.cs.apl.viaduct.protocol.ProtocolCommunicationStrategy;
 import edu.cornell.cs.apl.viaduct.protocol.ProtocolCostEstimator;
+
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -38,7 +39,8 @@ public class ImpCommunicationCostEstimator extends ProtocolCostEstimator<ImpAstN
       Map<PdgNode<ImpAstNode>, Protocol<ImpAstNode>> protocolMap,
       PdgNode<ImpAstNode> node,
       Single protocol) {
-    HostName host = ((Single) protocol).getHost();
+
+    HostName host = ((Single) protocol).getActualHost();
     if (node.isStorageNode()) {
       return BASE_STORAGE_COST;
 
@@ -74,7 +76,7 @@ public class ImpCommunicationCostEstimator extends ProtocolCostEstimator<ImpAstN
       PdgNode<ImpAstNode> node, Replication protocol) {
     Replication replProto = (Replication) protocol;
     if (node.isStorageNode()) {
-      return replProto.getReplicas().size() * BASE_STORAGE_COST;
+      return replProto.getHosts().size() * BASE_STORAGE_COST;
 
     } else if (node.isComputeNode()) {
       // compute communication costs
@@ -123,8 +125,9 @@ public class ImpCommunicationCostEstimator extends ProtocolCostEstimator<ImpAstN
       Protocol<ImpAstNode>> protocolMap,
       PdgNode<ImpAstNode> node,
       MPC protocol) {
-    HostName host = protocol.getHost();
-    int partySize = protocol.getParties().size();
+
+    HostName host = protocol.getActualHost();
+    int partySize = protocol.getHosts().size();
 
     if (node.isStorageNode()) {
       return BASE_STORAGE_COST;
@@ -206,6 +209,7 @@ public class ImpCommunicationCostEstimator extends ProtocolCostEstimator<ImpAstN
       } else {
         throw new UnknownProtocolException(protocol);
       }
+
     } catch (InvalidProtocolException invalidProto)  {
       throw new InvalidProtocolException(node, invalidProto.getProtocol());
     }

@@ -74,11 +74,11 @@ public class ImpProtocolSearchStrategy extends ProtocolCostEstimator<ImpAstNode>
         Protocol<ImpAstNode> targetProto = protocolMap.get(targetNode);
 
         if (targetProto instanceof Single) {
-          instances.add(new Single(hostConfig, ((Single) targetProto).getHost()));
+          instances.add(new Single(hostConfig, ((Single) targetProto).getActualHost()));
           return instances;
 
         } else if (targetProto instanceof MPC) {
-          instances.add(new MPC(hostConfig, ((MPC) targetProto).getParties()));
+          instances.add(new MPC(hostConfig, ((MPC) targetProto).getHosts()));
           return instances;
         }
       }
@@ -86,14 +86,13 @@ public class ImpProtocolSearchStrategy extends ProtocolCostEstimator<ImpAstNode>
       // general case: get instances from Single, Replication, ZK, and MPC in that order
       instances.addAll(this.singleFactory.createInstances(hostConfig, protocolMap, node));
 
+      instances.addAll(this.replicationFactory.createInstances(hostConfig, protocolMap, node));
+
       // prune search space by not selecting MPC unless absolutely necessary
       // ie. only use MPC when neither Single nor Replication protocols can instantiate the node
-      // if (instances.size() > 0 && node.isStorageNode()) {
-      if (instances.size() > 0) {
+      if (instances.size() > 0 && node.isStorageNode()) {
         return instances;
       }
-
-      instances.addAll(this.replicationFactory.createInstances(hostConfig, protocolMap, node));
 
       instances.addAll(this.mpcFactory.createInstances(hostConfig, protocolMap, node));
       // instances.addAll(this.zkFactory.createInstances(hostConfig, protocolMap, node));

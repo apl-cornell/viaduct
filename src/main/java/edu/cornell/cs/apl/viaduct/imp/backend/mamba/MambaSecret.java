@@ -23,7 +23,7 @@ public class MambaSecret extends AbstractSynthesizedSingle {
 
   @Override
   public String getId() {
-    return "MambaPrivate";
+    return "MambaSecret";
   }
 
   @Override

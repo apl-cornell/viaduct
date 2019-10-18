@@ -4,11 +4,14 @@ import edu.cornell.cs.apl.viaduct.InvalidProtocolException;
 import edu.cornell.cs.apl.viaduct.imp.HostTrustConfiguration;
 import edu.cornell.cs.apl.viaduct.imp.ast.HostName;
 import edu.cornell.cs.apl.viaduct.imp.ast.ImpAstNode;
+import edu.cornell.cs.apl.viaduct.imp.backend.mamba.MambaPublic;
+import edu.cornell.cs.apl.viaduct.imp.backend.mamba.MambaSecret;
 import edu.cornell.cs.apl.viaduct.protocol.MemoizedProtocolCommunicationStrategy;
 import edu.cornell.cs.apl.viaduct.protocol.Protocol;
 import edu.cornell.cs.apl.viaduct.protocol.ProtocolInstantiationError;
 import edu.cornell.cs.apl.viaduct.security.Label;
 import edu.cornell.cs.apl.viaduct.util.PowersetIterator;
+
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -69,7 +72,10 @@ public final class ImpProtocolCommunicationStrategy
     // if the fromProtocol is MPC, just read directly from the synthesized host
     // otherwise, we will try to look for the synthesized host's trust in the
     // host configuration, but it will not exist!
-    if (fromProtocol instanceof MPC || toProtocol instanceof MPC || host.isSynthetic()) {
+    if (fromProtocol instanceof MPC || toProtocol instanceof MPC
+        || fromProtocol instanceof MambaPublic || toProtocol instanceof MambaPublic
+        || fromProtocol instanceof MambaSecret || toProtocol instanceof MambaSecret
+        || host.isSynthetic()) {
       return fromProtocol.getHosts();
 
     } else if (toProtocol instanceof ControlProtocol) {
@@ -106,7 +112,10 @@ public final class ImpProtocolCommunicationStrategy
     if (toProtocol instanceof ControlProtocol) {
       throw new ProtocolInstantiationError("control protocol is selected for storage node");
 
-    } else if (fromProtocol instanceof MPC) {
+    } else if (fromProtocol instanceof MPC
+              || fromProtocol instanceof MambaPublic
+              || fromProtocol instanceof MambaSecret)
+    {
       return toProtocol.getHosts();
 
     } else {

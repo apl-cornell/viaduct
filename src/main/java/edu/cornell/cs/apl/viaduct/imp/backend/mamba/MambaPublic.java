@@ -2,13 +2,13 @@ package edu.cornell.cs.apl.viaduct.imp.backend.mamba;
 
 import edu.cornell.cs.apl.viaduct.imp.HostTrustConfiguration;
 import edu.cornell.cs.apl.viaduct.imp.ast.HostName;
-import edu.cornell.cs.apl.viaduct.imp.protocols.AbstractSingle;
+import edu.cornell.cs.apl.viaduct.imp.protocols.AbstractSynthesizedSingle;
 import edu.cornell.cs.apl.viaduct.security.Label;
 
 import java.util.Set;
 
 /** cleartext MAMBA protocol. */
-public class MambaPublic extends AbstractSingle {
+public class MambaPublic extends AbstractSynthesizedSingle {
   private static Label computeLabel(HostTrustConfiguration hostConfig, Set<HostName> hosts) {
     Label label = Label.top();
     for (HostName party : hosts) {

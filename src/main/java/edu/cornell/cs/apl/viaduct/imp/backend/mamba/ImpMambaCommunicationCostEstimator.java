@@ -1,4 +1,4 @@
-package edu.cornell.cs.apl.viaduct.imp.protocols;
+package edu.cornell.cs.apl.viaduct.imp.backend.mamba;
 
 import edu.cornell.cs.apl.viaduct.InvalidProtocolException;
 import edu.cornell.cs.apl.viaduct.UnknownProtocolException;
@@ -9,72 +9,30 @@ import edu.cornell.cs.apl.viaduct.imp.ast.BinaryOperators;
 import edu.cornell.cs.apl.viaduct.imp.ast.ExpressionNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.HostName;
 import edu.cornell.cs.apl.viaduct.imp.ast.ImpAstNode;
+import edu.cornell.cs.apl.viaduct.imp.protocols.ImpCommunicationCostEstimator;
 import edu.cornell.cs.apl.viaduct.pdg.PdgInfoEdge;
 import edu.cornell.cs.apl.viaduct.pdg.PdgNode;
 import edu.cornell.cs.apl.viaduct.pdg.ProgramDependencyGraph;
 import edu.cornell.cs.apl.viaduct.protocol.Protocol;
 import edu.cornell.cs.apl.viaduct.protocol.ProtocolCommunicationStrategy;
-import edu.cornell.cs.apl.viaduct.protocol.ProtocolCostEstimator;
 
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-/** model cost as the communication complexity of a protocol. */
-public class ImpCommunicationCostEstimator extends ProtocolCostEstimator<ImpAstNode> {
-  protected static final int COMMUNICATION_COST = 1;
-  protected static final int BASE_STORAGE_COST = 0;
-
-  protected final HostTrustConfiguration hostConfig;
-  protected final ProtocolCommunicationStrategy<ImpAstNode> communicationStrategy;
-
-  public ImpCommunicationCostEstimator(HostTrustConfiguration hostConfig,
-      ProtocolCommunicationStrategy<ImpAstNode> communicationStrategy) {
-    this.hostConfig = hostConfig;
-    this.communicationStrategy = communicationStrategy;
+public class ImpMambaCommunicationCostEstimator extends ImpCommunicationCostEstimator {
+  public ImpMambaCommunicationCostEstimator(
+      HostTrustConfiguration hostConfig,
+      ProtocolCommunicationStrategy<ImpAstNode> communicationStrategy)
+  {
+    super(hostConfig, communicationStrategy);
   }
 
-  protected int estimateSingleCost(
+  // copied directly from estimateReplicationCost
+  protected int estimateMambaPublicCost(
       Map<PdgNode<ImpAstNode>, Protocol<ImpAstNode>> protocolMap,
       PdgNode<ImpAstNode> node,
-      Single protocol) {
-
-    HostName host = ((Single) protocol).getActualHost();
-    if (node.isStorageNode()) {
-      return BASE_STORAGE_COST;
-
-    } else if (node.isComputeNode()) {
-      // compute communication costs
-      int numCommunications = 0;
-
-      for (PdgInfoEdge<ImpAstNode> infoEdge : node.getReadEdges()) {
-        Protocol<ImpAstNode> srcProto = protocolMap.get(infoEdge.getSource());
-        Set<HostName> readSet = new HashSet<>(
-            this.communicationStrategy.getReadSet(this.hostConfig, srcProto, protocol, host));
-        readSet.remove(host);
-        numCommunications += readSet.size();
-      }
-
-      for (PdgInfoEdge<ImpAstNode> infoEdge : node.getWriteEdges()) {
-        Protocol<ImpAstNode> dstProto = protocolMap.get(infoEdge.getTarget());
-        Set<HostName> writeSet = new HashSet<>(
-            this.communicationStrategy.getReadSet(this.hostConfig, protocol, dstProto, host));
-        writeSet.remove(host);
-        numCommunications += writeSet.size();
-      }
-
-      return numCommunications * COMMUNICATION_COST;
-
-    } else {
-      // punt on costs of control nodes for now
-      return 0;
-    }
-  }
-
-  protected int estimateReplicationCost(
-      Map<PdgNode<ImpAstNode>, Protocol<ImpAstNode>> protocolMap,
-      PdgNode<ImpAstNode> node,
-      Replication protocol)
+      MambaPublic protocol)
   {
     if (node.isStorageNode()) {
       return protocol.getHosts().size() * BASE_STORAGE_COST;
@@ -110,28 +68,20 @@ public class ImpCommunicationCostEstimator extends ProtocolCostEstimator<ImpAstN
     } else {
       return 0;
     }
+
   }
 
-  protected int estimateZKCost(
-      Map<PdgNode<ImpAstNode>,
-      Protocol<ImpAstNode>> protocolMap,
+  // copied directly from estimateMpcCost
+  protected int estimateMambaSecretCost(
+      Map<PdgNode<ImpAstNode>, Protocol<ImpAstNode>> protocolMap,
       PdgNode<ImpAstNode> node,
-      ZK protocol) {
-    // TODO: we're not doing ZK yet
-    return 0;
-  }
-
-  protected int estimateMpcCost(
-      Map<PdgNode<ImpAstNode>,
-      Protocol<ImpAstNode>> protocolMap,
-      PdgNode<ImpAstNode> node,
-      MPC protocol) {
-
+      MambaSecret protocol)
+  {
     HostName host = protocol.getActualHost();
     int partySize = protocol.getHosts().size();
 
     if (node.isStorageNode()) {
-      return BASE_STORAGE_COST;
+      return 10;
 
     } else if (node.isComputeNode()) {
       // compute communication costs
@@ -188,31 +138,21 @@ public class ImpCommunicationCostEstimator extends ProtocolCostEstimator<ImpAstN
       Map<PdgNode<ImpAstNode>,
       Protocol<ImpAstNode>> protocolMap,
       ProgramDependencyGraph<ImpAstNode> pdg)
-      throws UnknownProtocolException, InvalidProtocolException {
-
+      throws UnknownProtocolException, InvalidProtocolException
+  {
     try {
       Protocol<ImpAstNode> protocol = protocolMap.get(node);
-      if (protocol instanceof Single) {
-        return estimateSingleCost(protocolMap, node, (Single) protocol);
+      if (protocol instanceof MambaPublic) {
+        return estimateMambaPublicCost(protocolMap, node, (MambaPublic) protocol);
 
-      } else if (protocol instanceof Replication) {
-        return estimateReplicationCost(protocolMap, node, (Replication) protocol);
-
-      } else if (protocol instanceof ZK) {
-        return estimateZKCost(protocolMap, node, (ZK) protocol);
-
-      } else if (protocol instanceof MPC) {
-        return estimateMpcCost(protocolMap, node, (MPC) protocol);
-
-      } else if (protocol instanceof ControlProtocol) {
-        return 0;
-
-      } else {
-        throw new UnknownProtocolException(protocol);
+      } else if (protocol instanceof MambaSecret) {
+        return estimateMambaSecretCost(protocolMap, node, (MambaSecret) protocol);
       }
 
     } catch (InvalidProtocolException invalidProto)  {
       throw new InvalidProtocolException(node, invalidProto.getProtocol());
     }
+
+    return super.estimateNodeCost(node, protocolMap, pdg);
   }
 }

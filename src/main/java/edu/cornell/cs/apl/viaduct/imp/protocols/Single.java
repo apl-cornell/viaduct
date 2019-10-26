@@ -3,6 +3,7 @@ package edu.cornell.cs.apl.viaduct.imp.protocols;
 import edu.cornell.cs.apl.viaduct.imp.HostTrustConfiguration;
 import edu.cornell.cs.apl.viaduct.imp.ast.HostName;
 import edu.cornell.cs.apl.viaduct.imp.ast.ImpAstNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.ProcessName;
 import edu.cornell.cs.apl.viaduct.pdg.PdgNode;
 import edu.cornell.cs.apl.viaduct.protocol.ProtocolInstantiationInfo;
 
@@ -12,12 +13,21 @@ public class Single extends AbstractSingle {
   /** constructor. */
   public Single(HostTrustConfiguration hostConfig, HostName h) {
     super(h, hostConfig.getTrust(h));
-    this.actualHost = h;
+    this.process = ProcessName.create(h);
+  }
+
+  public HostName getHost() {
+    return (HostName) this.hosts.toArray()[0];
   }
 
   @Override
   public String getId() {
     return "Single";
+  }
+
+  @Override
+  public boolean hasSyntheticProcesses() {
+    return false;
   }
 
   @Override
@@ -33,7 +43,7 @@ public class Single extends AbstractSingle {
 
     if (o instanceof Single) {
       Single osingle = (Single) o;
-      return this.actualHost.equals(osingle.actualHost);
+      return this.process.equals(osingle.process);
 
     } else {
       return false;
@@ -42,6 +52,6 @@ public class Single extends AbstractSingle {
 
   @Override
   public int hashCode() {
-    return this.actualHost.hashCode();
+    return this.process.hashCode();
   }
 }

@@ -74,55 +74,53 @@ public abstract class Cleartext extends AbstractProtocol<ImpAstNode> {
 
   protected Binding<ImpAstNode> performRead(
       PdgNode<ImpAstNode> node,
-      HostName readHost,
+      ProcessName readProcess,
       Binding<ImpAstNode> readLabel,
-      HostName outHost,
+      ProcessName outProcess,
       Binding<ImpAstNode> outVar,
       List<ImpAstNode> args,
       ProtocolInstantiationInfo<ImpAstNode> info) {
 
-    StmtBuilder builder = info.getBuilder(outHost);
-    StmtBuilder readBuilder = info.getBuilder(readHost);
+    StmtBuilder builder = info.getBuilder(outProcess);
+    StmtBuilder readBuilder = info.getBuilder(readProcess);
     List<Variable> readArgs = new ArrayList<>();
     for (ImpAstNode arg : args) {
-      readBuilder.send(outHost, (ExpressionNode) arg);
+      readBuilder.send(outProcess, (ExpressionNode) arg);
 
       Variable readArgVar = info.getFreshVar("arg");
       readArgs.add(readArgVar);
-      builder.recv(readHost, readArgVar);
+      builder.recv(readProcess, readArgVar);
     }
 
     ExpressionNode readVal = getReadValue(node, readArgs, (Variable) outVar, info);
-    builder.send(readHost, readVal);
+    builder.send(readProcess, readVal);
 
     Variable readVar = info.getFreshVar(readLabel);
-    readBuilder.recv(outHost, readVar);
+    readBuilder.recv(outProcess, readVar);
 
     return readVar;
   }
 
   protected void performWrite(
       PdgNode<ImpAstNode> node,
-      HostName writeHost,
-      HostName inHost,
+      ProcessName writeProcess,
+      ProcessName inProcess,
       Binding<ImpAstNode> storageVar,
       List<ImpAstNode> args,
       ProtocolInstantiationInfo<ImpAstNode> info) {
 
     ExpressionBuilder e = new ExpressionBuilder();
-    StmtBuilder builder = info.getBuilder(inHost);
-    StmtBuilder writerBuilder = info.getBuilder(writeHost);
+    StmtBuilder builder = info.getBuilder(inProcess);
+    StmtBuilder writerBuilder = info.getBuilder(writeProcess);
     StatementNode stmt = (StatementNode) node.getAstNode();
-    ProcessName hostProc = ProcessName.create(inHost);
-    ProcessName writeHostProc = ProcessName.create(writeHost);
 
     if (stmt instanceof VariableDeclarationNode) {
       assert args.size() == 1;
 
       ExpressionNode val = (ExpressionNode) args.get(0);
-      writerBuilder.send(hostProc, val);
+      writerBuilder.send(inProcess, val);
       Variable valVar = info.getFreshVar(String.format("%s_val", storageVar));
-      builder.recv(writeHostProc, valVar);
+      builder.recv(writeProcess, valVar);
       builder.assign((Variable) storageVar, e.var(valVar));
 
     } else if (stmt instanceof ArrayDeclarationNode) {
@@ -130,14 +128,14 @@ public abstract class Cleartext extends AbstractProtocol<ImpAstNode> {
 
       ExpressionNode idx = (ExpressionNode) args.get(0);
       ExpressionNode val = (ExpressionNode) args.get(1);
-      writerBuilder.send(hostProc, idx);
-      writerBuilder.send(hostProc, val);
+      writerBuilder.send(inProcess, idx);
+      writerBuilder.send(inProcess, val);
 
       Variable arrayVar = ((ArrayDeclarationNode) stmt).getVariable();
       Variable idxVar = info.getFreshVar(String.format("%s_idx", arrayVar));
       Variable valVar = info.getFreshVar(String.format("%s_val", arrayVar));
-      builder.recv(writeHostProc, idxVar);
-      builder.recv(writeHostProc, valVar);
+      builder.recv(writeProcess, idxVar);
+      builder.recv(writeProcess, valVar);
       builder.assign((Variable) storageVar, e.var(idxVar), e.var(valVar));
 
     } else {
@@ -147,7 +145,7 @@ public abstract class Cleartext extends AbstractProtocol<ImpAstNode> {
   }
 
   protected Map<Variable, Variable> performComputeReads(
-      HostName host, PdgNode<ImpAstNode> node, ProtocolInstantiationInfo<ImpAstNode> info) {
+      ProcessName process, PdgNode<ImpAstNode> node, ProtocolInstantiationInfo<ImpAstNode> info) {
     // read from other compute nodes
     Map<Variable, Variable> computeRenameMap = new HashMap<>();
     for (PdgReadEdge<ImpAstNode> readEdge : node.getReadEdges()) {
@@ -157,7 +155,8 @@ public abstract class Cleartext extends AbstractProtocol<ImpAstNode> {
         PdgNode<ImpAstNode> readNode = computeEdge.getSource();
         Protocol<ImpAstNode> readProto = info.getProtocol(readNode);
         Variable readVar =
-            (Variable) readProto.readFrom(readNode, node, host, readLabel, new ArrayList<>(), info);
+            (Variable) readProto.readFrom(
+                readNode, node, process, readLabel, new ArrayList<>(), info);
         computeRenameMap.put(readLabel, readVar);
       }
     }
@@ -166,11 +165,14 @@ public abstract class Cleartext extends AbstractProtocol<ImpAstNode> {
   }
 
   protected Variable instantiateStorageNode(
-      HostName host, PdgStorageNode<ImpAstNode> node, ProtocolInstantiationInfo<ImpAstNode> info) {
+      ProcessName process,
+      PdgStorageNode<ImpAstNode> node,
+      ProtocolInstantiationInfo<ImpAstNode> info)
+  {
 
     // declare new variable
     ImpAstNode astNode = node.getAstNode();
-    StmtBuilder builder = info.getBuilder(host);
+    StmtBuilder builder = info.getBuilder(process);
     Variable newVar = null;
 
     if (astNode instanceof VariableDeclarationNode) {
@@ -179,7 +181,7 @@ public abstract class Cleartext extends AbstractProtocol<ImpAstNode> {
       builder.varDecl(newVar, varDecl.getType(), varDecl.getLabel());
 
     } else if (astNode instanceof ArrayDeclarationNode) {
-      Map<Variable, Variable> computeRenameMap = performComputeReads(host, node, info);
+      Map<Variable, Variable> computeRenameMap = performComputeReads(process, node, info);
       RenameVisitor computeRenamer = new RenameVisitor(computeRenameMap);
       astNode = computeRenamer.run(astNode);
 
@@ -197,9 +199,12 @@ public abstract class Cleartext extends AbstractProtocol<ImpAstNode> {
   }
 
   protected Variable instantiateComputeNode(
-      HostName host, PdgComputeNode<ImpAstNode> node, ProtocolInstantiationInfo<ImpAstNode> info) {
+      ProcessName process,
+      PdgComputeNode<ImpAstNode> node,
+      ProtocolInstantiationInfo<ImpAstNode> info)
+  {
     // read from other compute nodes
-    Map<Variable, Variable> computeRenameMap = performComputeReads(host, node, info);
+    Map<Variable, Variable> computeRenameMap = performComputeReads(process, node, info);
     RenameVisitor computeRenamer = new RenameVisitor(computeRenameMap);
 
     // perform queries (read from storage nodes)
@@ -236,7 +241,7 @@ public abstract class Cleartext extends AbstractProtocol<ImpAstNode> {
                 queryProto.readFrom(
                     queryEdge.getSource(),
                     node,
-                    host,
+                    process,
                     Variable.create(node.getId()),
                     renamedArgs,
                     info);
@@ -252,7 +257,7 @@ public abstract class Cleartext extends AbstractProtocol<ImpAstNode> {
     astNode = computeRenamer.run(astNode);
     astNode = queryRenamer.run(astNode);
 
-    StmtBuilder builder = info.getBuilder(host);
+    StmtBuilder builder = info.getBuilder(process);
     Variable outVar = info.getFreshVar(node.getId());
 
     if (astNode instanceof ExpressionNode) {
@@ -285,7 +290,7 @@ public abstract class Cleartext extends AbstractProtocol<ImpAstNode> {
 
         PdgStorageNode<ImpAstNode> outNode = (PdgStorageNode<ImpAstNode>) outEdge.getTarget();
         Protocol<ImpAstNode> outProto = info.getProtocol(outNode);
-        outProto.writeTo(outNode, node, host, renamedArgs, info);
+        outProto.writeTo(outNode, node, process, renamedArgs, info);
       }
     }
 

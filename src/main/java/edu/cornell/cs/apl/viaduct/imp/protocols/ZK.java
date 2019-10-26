@@ -4,10 +4,12 @@ import edu.cornell.cs.apl.viaduct.Binding;
 import edu.cornell.cs.apl.viaduct.imp.HostTrustConfiguration;
 import edu.cornell.cs.apl.viaduct.imp.ast.HostName;
 import edu.cornell.cs.apl.viaduct.imp.ast.ImpAstNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.ProcessName;
 import edu.cornell.cs.apl.viaduct.pdg.PdgNode;
 import edu.cornell.cs.apl.viaduct.protocol.Protocol;
 import edu.cornell.cs.apl.viaduct.protocol.ProtocolInstantiationInfo;
 import edu.cornell.cs.apl.viaduct.security.Label;
+
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
@@ -40,6 +42,18 @@ public class ZK implements Protocol<ImpAstNode> {
   }
 
   @Override
+  public Set<ProcessName> getProcesses() {
+    // TODO: do properly
+    Set<ProcessName> processes = new HashSet<>();
+    return processes;
+  }
+
+  @Override
+  public boolean hasSyntheticProcesses() {
+    return true;
+  }
+
+  @Override
   public Label getTrust() {
     return this.trust;
   }
@@ -57,7 +71,7 @@ public class ZK implements Protocol<ImpAstNode> {
   public Binding<ImpAstNode> readFrom(
       PdgNode<ImpAstNode> node,
       PdgNode<ImpAstNode> readNode,
-      HostName readHost,
+      ProcessName readProcess,
       Binding<ImpAstNode> readLabel,
       List<ImpAstNode> args,
       ProtocolInstantiationInfo<ImpAstNode> info) {
@@ -70,7 +84,7 @@ public class ZK implements Protocol<ImpAstNode> {
   public void writeTo(
       PdgNode<ImpAstNode> node,
       PdgNode<ImpAstNode> writeNode,
-      HostName writeHost,
+      ProcessName writeProcess,
       List<ImpAstNode> args,
       ProtocolInstantiationInfo<ImpAstNode> info) {
 

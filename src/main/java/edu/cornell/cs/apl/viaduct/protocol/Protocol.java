@@ -3,6 +3,7 @@ package edu.cornell.cs.apl.viaduct.protocol;
 import edu.cornell.cs.apl.viaduct.AstNode;
 import edu.cornell.cs.apl.viaduct.Binding;
 import edu.cornell.cs.apl.viaduct.imp.ast.HostName;
+import edu.cornell.cs.apl.viaduct.imp.ast.ProcessName;
 import edu.cornell.cs.apl.viaduct.pdg.PdgNode;
 import edu.cornell.cs.apl.viaduct.security.Label;
 import java.util.List;
@@ -14,6 +15,10 @@ public interface Protocol<T extends AstNode> {
 
   Set<HostName> getHosts();
 
+  Set<ProcessName> getProcesses();
+
+  boolean hasSyntheticProcesses();
+
   Label getTrust();
 
   void initialize(PdgNode<T> node, ProtocolInstantiationInfo<T> info);
@@ -23,7 +28,7 @@ public interface Protocol<T extends AstNode> {
   Binding<T> readFrom(
       PdgNode<T> node,
       PdgNode<T> readNode,
-      HostName readHost,
+      ProcessName readProcess,
       Binding<T> readLabel,
       List<T> args,
       ProtocolInstantiationInfo<T> info);
@@ -31,7 +36,7 @@ public interface Protocol<T extends AstNode> {
   void writeTo(
       PdgNode<T> node,
       PdgNode<T> writeNode,
-      HostName writeHost,
+      ProcessName writeProcess,
       List<T> args,
       ProtocolInstantiationInfo<T> info);
 }

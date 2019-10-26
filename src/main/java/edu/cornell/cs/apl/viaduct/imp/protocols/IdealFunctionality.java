@@ -3,6 +3,7 @@ package edu.cornell.cs.apl.viaduct.imp.protocols;
 import edu.cornell.cs.apl.viaduct.imp.ast.ExpressionNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.HostName;
 import edu.cornell.cs.apl.viaduct.imp.ast.ImpAstNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.ProcessName;
 import edu.cornell.cs.apl.viaduct.imp.ast.ReadNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.Variable;
 import edu.cornell.cs.apl.viaduct.imp.builders.StmtBuilder;
@@ -35,6 +36,11 @@ public class IdealFunctionality extends AbstractSingle {
   }
 
   @Override
+  public boolean hasSyntheticProcesses() {
+    return false;
+  }
+
+  @Override
   public void initialize(PdgNode<ImpAstNode> node, ProtocolInstantiationInfo<ImpAstNode> info) {
     return;
   }
@@ -48,7 +54,7 @@ public class IdealFunctionality extends AbstractSingle {
 
     // receive corrupted value from simulator if integrity of corruption label is high enough
     if (this.corruptionLabel.integrity().actsFor(node.getLabel().integrity())) {
-      StmtBuilder builder = info.getBuilder(this.actualHost);
+      StmtBuilder builder = info.getBuilder(this.process);
       final Variable corruptedVar = info.getFreshVar(CORRUPTED_VALUE);
       builder.recv(this.simulator, corruptedVar);
       return ReadNode.builder().setReference(corruptedVar).build();
@@ -63,15 +69,15 @@ public class IdealFunctionality extends AbstractSingle {
   public void writeTo(
       PdgNode<ImpAstNode> node,
       PdgNode<ImpAstNode> readNode,
-      HostName writeHost,
+      ProcessName writeProcess,
       List<ImpAstNode> args,
       ProtocolInstantiationInfo<ImpAstNode> info) {
 
-    super.writeTo(node, readNode, writeHost, args, info);
+    super.writeTo(node, readNode, writeProcess, args, info);
 
     // broadcast to simulator if confidentiality of corruption label is high enough
     if (this.corruptionLabel.confidentiality().actsFor(node.getLabel().confidentiality())) {
-      StmtBuilder builder = info.getBuilder(this.actualHost);
+      StmtBuilder builder = info.getBuilder(this.process);
       builder.send(this.simulator, ReadNode.builder().setReference(this.outVar).build());
     }
   }
@@ -84,7 +90,7 @@ public class IdealFunctionality extends AbstractSingle {
 
     if (o instanceof IdealFunctionality) {
       IdealFunctionality that = (IdealFunctionality)o;
-      return this.actualHost.equals(that.actualHost)
+      return this.process.equals(that.process)
         && this.simulator.equals(that.simulator);
 
     } else {
@@ -94,12 +100,12 @@ public class IdealFunctionality extends AbstractSingle {
 
   @Override
   public int hashCode() {
-    return Objects.hash(this.actualHost, this.simulator);
+    return Objects.hash(this.process, this.simulator);
   }
 
   @Override
   public String toString() {
     return String.format("IdealFunctionality(%s,%s)",
-        this.actualHost.toString(), this.simulator.toString());
+        this.process.toString(), this.simulator.toString());
   }
 }

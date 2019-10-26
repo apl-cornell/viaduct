@@ -101,14 +101,14 @@ public abstract class ContextStmtVisitor<
   }
 
   @Override
-  public final StmtResultT visit(VariableDeclarationNode node) {
+  public StmtResultT visit(VariableDeclarationNode node) {
     final StmtResultT result = super.visit(node);
     put(node.getVariable(), extract(node));
     return result;
   }
 
   @Override
-  public final StmtResultT visit(ArrayDeclarationNode node) {
+  public StmtResultT visit(ArrayDeclarationNode node) {
     final SelfT visitor = enter(node);
     final ExprResultT length = node.getLength().accept(visitor.getExpressionVisitor());
     final StmtResultT result = leave(node, visitor, length);
@@ -117,7 +117,7 @@ public abstract class ContextStmtVisitor<
   }
 
   @Override
-  public final StmtResultT visit(LetBindingNode node) {
+  public StmtResultT visit(LetBindingNode node) {
     final SelfT visitor = enter(node);
     final ExprResultT rhs = node.getRhs().accept(visitor.getExpressionVisitor());
     final StmtResultT result = leave(node, visitor, rhs);
@@ -126,7 +126,7 @@ public abstract class ContextStmtVisitor<
   }
 
   @Override
-  public final StmtResultT visit(ReceiveNode node) {
+  public StmtResultT visit(ReceiveNode node) {
     final SelfT visitor = enter(node);
     final Variable var = node.getVariable();
     final ReferenceResultT lhs = var.accept(visitor.getReferenceVisitor());
@@ -141,7 +141,7 @@ public abstract class ContextStmtVisitor<
   }
 
   /** Add a mapping from a variable to a value. */
-  private void put(Variable variable, ContextValueT value) {
+  protected void put(Variable variable, ContextValueT value) {
     if (context.containsKey(variable)) {
       final HasLocation previousDeclaration = context.keySet().find(variable::equals).getOrNull();
       throw new NameClashError(previousDeclaration, variable);

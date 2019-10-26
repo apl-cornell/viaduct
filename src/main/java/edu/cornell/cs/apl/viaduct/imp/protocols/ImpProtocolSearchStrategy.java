@@ -74,7 +74,7 @@ public class ImpProtocolSearchStrategy extends ProtocolCostEstimator<ImpAstNode>
         Protocol<ImpAstNode> targetProto = protocolMap.get(targetNode);
 
         if (targetProto instanceof Single) {
-          instances.add(new Single(hostConfig, ((Single) targetProto).getActualHost()));
+          instances.add(new Single(hostConfig, ((Single) targetProto).getHost()));
           return instances;
 
         } else if (targetProto instanceof MPC) {

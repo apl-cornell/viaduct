@@ -7,8 +7,8 @@ import edu.cornell.cs.apl.viaduct.imp.ast.AssignNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.BinaryExpressionNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.BinaryOperators;
 import edu.cornell.cs.apl.viaduct.imp.ast.ExpressionNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.HostName;
 import edu.cornell.cs.apl.viaduct.imp.ast.ImpAstNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.ProcessName;
 import edu.cornell.cs.apl.viaduct.pdg.PdgInfoEdge;
 import edu.cornell.cs.apl.viaduct.pdg.PdgNode;
 import edu.cornell.cs.apl.viaduct.pdg.ProgramDependencyGraph;
@@ -39,7 +39,7 @@ public class ImpCommunicationCostEstimator extends ProtocolCostEstimator<ImpAstN
       PdgNode<ImpAstNode> node,
       Single protocol) {
 
-    HostName host = ((Single) protocol).getActualHost();
+    ProcessName process = protocol.getProcess();
     if (node.isStorageNode()) {
       return BASE_STORAGE_COST;
 
@@ -49,17 +49,17 @@ public class ImpCommunicationCostEstimator extends ProtocolCostEstimator<ImpAstN
 
       for (PdgInfoEdge<ImpAstNode> infoEdge : node.getReadEdges()) {
         Protocol<ImpAstNode> srcProto = protocolMap.get(infoEdge.getSource());
-        Set<HostName> readSet = new HashSet<>(
-            this.communicationStrategy.getReadSet(this.hostConfig, srcProto, protocol, host));
-        readSet.remove(host);
+        Set<ProcessName> readSet = new HashSet<>(
+            this.communicationStrategy.getReadSet(this.hostConfig, srcProto, protocol, process));
+        readSet.remove(process);
         numCommunications += readSet.size();
       }
 
       for (PdgInfoEdge<ImpAstNode> infoEdge : node.getWriteEdges()) {
         Protocol<ImpAstNode> dstProto = protocolMap.get(infoEdge.getTarget());
-        Set<HostName> writeSet = new HashSet<>(
-            this.communicationStrategy.getReadSet(this.hostConfig, protocol, dstProto, host));
-        writeSet.remove(host);
+        Set<ProcessName> writeSet = new HashSet<>(
+            this.communicationStrategy.getReadSet(this.hostConfig, protocol, dstProto, process));
+        writeSet.remove(process);
         numCommunications += writeSet.size();
       }
 
@@ -77,19 +77,19 @@ public class ImpCommunicationCostEstimator extends ProtocolCostEstimator<ImpAstN
       Replication protocol)
   {
     if (node.isStorageNode()) {
-      return protocol.getHosts().size() * BASE_STORAGE_COST;
+      return protocol.getProcesses().size() * BASE_STORAGE_COST;
 
     } else if (node.isComputeNode()) {
       // compute communication costs
-      final Set<HostName> hosts = protocol.getHosts();
+      final Set<ProcessName> processes = protocol.getProcesses();
       int numCommunications = 0;
       for (PdgInfoEdge<ImpAstNode> infoEdge : node.getReadEdges()) {
         final Protocol<ImpAstNode> srcProto = protocolMap.get(infoEdge.getSource());
 
-        for (HostName host : hosts) {
-          final Set<HostName> readSet = new HashSet<>(
-              this.communicationStrategy.getReadSet(hostConfig, srcProto, protocol, host));
-          readSet.remove(host);
+        for (ProcessName process : processes) {
+          final Set<ProcessName> readSet = new HashSet<>(
+              this.communicationStrategy.getReadSet(hostConfig, srcProto, protocol, process));
+          readSet.remove(process);
           numCommunications += readSet.size();
         }
       }
@@ -97,10 +97,10 @@ public class ImpCommunicationCostEstimator extends ProtocolCostEstimator<ImpAstN
       for (PdgInfoEdge<ImpAstNode> infoEdge : node.getWriteEdges()) {
         Protocol<ImpAstNode> dstProto = protocolMap.get(infoEdge.getTarget());
 
-        for (HostName host : hosts) {
-          final Set<HostName> writeSet = new HashSet<>(
-              this.communicationStrategy.getReadSet(hostConfig, protocol, dstProto, host));
-          writeSet.remove(host);
+        for (ProcessName process : processes) {
+          final Set<ProcessName> writeSet = new HashSet<>(
+              this.communicationStrategy.getReadSet(hostConfig, protocol, dstProto, process));
+          writeSet.remove(process);
           numCommunications += writeSet.size();
         }
       }
@@ -127,7 +127,7 @@ public class ImpCommunicationCostEstimator extends ProtocolCostEstimator<ImpAstN
       PdgNode<ImpAstNode> node,
       MPC protocol) {
 
-    HostName host = protocol.getActualHost();
+    ProcessName process = protocol.getProcess();
     int partySize = protocol.getHosts().size();
 
     if (node.isStorageNode()) {
@@ -139,17 +139,17 @@ public class ImpCommunicationCostEstimator extends ProtocolCostEstimator<ImpAstN
 
       for (PdgInfoEdge<ImpAstNode> infoEdge : node.getReadEdges()) {
         Protocol<ImpAstNode> srcProto = protocolMap.get(infoEdge.getSource());
-        Set<HostName> readSet = new HashSet<>(
-            this.communicationStrategy.getReadSet(this.hostConfig, srcProto, protocol, host));
-        readSet.remove(host);
+        Set<ProcessName> readSet = new HashSet<>(
+            this.communicationStrategy.getReadSet(this.hostConfig, srcProto, protocol, process));
+        readSet.remove(process);
         numCommunications += readSet.size();
       }
 
       for (PdgInfoEdge<ImpAstNode> infoEdge : node.getWriteEdges()) {
         Protocol<ImpAstNode> dstProto = protocolMap.get(infoEdge.getTarget());
-        Set<HostName> writeSet = new HashSet<>(
-            this.communicationStrategy.getReadSet(this.hostConfig, protocol, dstProto, host));
-        writeSet.remove(host);
+        Set<ProcessName> writeSet = new HashSet<>(
+            this.communicationStrategy.getReadSet(this.hostConfig, protocol, dstProto, process));
+        writeSet.remove(process);
         numCommunications += writeSet.size();
       }
 

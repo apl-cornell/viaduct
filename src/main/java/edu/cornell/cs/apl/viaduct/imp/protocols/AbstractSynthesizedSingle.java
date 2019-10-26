@@ -2,6 +2,7 @@ package edu.cornell.cs.apl.viaduct.imp.protocols;
 
 import edu.cornell.cs.apl.viaduct.imp.ast.HostName;
 import edu.cornell.cs.apl.viaduct.imp.ast.ImpAstNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.ProcessName;
 import edu.cornell.cs.apl.viaduct.pdg.PdgNode;
 import edu.cornell.cs.apl.viaduct.protocol.ProtocolInstantiationInfo;
 import edu.cornell.cs.apl.viaduct.security.Label;
@@ -42,7 +43,7 @@ public abstract class AbstractSynthesizedSingle extends AbstractSingle {
     }
   }
 
-  private static final Map<SynthesizedHostInfo, HostName> synthesizedHostMap = new HashMap<>();
+  private static final Map<SynthesizedHostInfo, ProcessName> synthesizedHostMap = new HashMap<>();
 
   protected AbstractSynthesizedSingle(Set<HostName> hosts, Label trust) {
     super(hosts, trust);
@@ -53,16 +54,21 @@ public abstract class AbstractSynthesizedSingle extends AbstractSingle {
   }
 
   @Override
+  public boolean hasSyntheticProcesses() {
+    return true;
+  }
+
+  @Override
   public void initialize(PdgNode<ImpAstNode> node, ProtocolInstantiationInfo<ImpAstNode> info) {
     SynthesizedHostInfo synthesizedHostInfo = new SynthesizedHostInfo(getId(), this.hosts);
 
     if (synthesizedHostMap.containsKey(synthesizedHostInfo)) {
-      this.actualHost = synthesizedHostMap.get(synthesizedHostInfo);
+      this.process = synthesizedHostMap.get(synthesizedHostInfo);
 
     } else {
-      this.actualHost = HostName.create(info.getFreshName(toString()), true);
-      synthesizedHostMap.put(synthesizedHostInfo, this.actualHost);
-      info.createProcess(this.actualHost);
+      this.process = ProcessName.create(info.getFreshName(toString()));
+      synthesizedHostMap.put(synthesizedHostInfo, this.process);
+      info.createProcess(this.process);
     }
   }
 }

@@ -16,15 +16,15 @@ import java.util.Map;
 
 /** Builds process configurations. */
 public class ProcessConfigurationBuilder {
-  private final Map<HostName, StmtBuilder> configBuilder;
+  private final Map<ProcessName, StmtBuilder> configBuilder;
   private final FreshNameGenerator freshNameGenerator;
 
   /** create statement builders for each host. */
   public ProcessConfigurationBuilder(HostTrustConfiguration config) {
     this.configBuilder = new HashMap<>();
     this.freshNameGenerator = new FreshNameGenerator();
-    for (HostName h : config.hosts()) {
-      this.configBuilder.put(h, new StmtBuilder());
+    for (HostName host : config.hosts()) {
+      this.configBuilder.put(ProcessName.create(host), new StmtBuilder());
     }
   }
 
@@ -32,8 +32,8 @@ public class ProcessConfigurationBuilder {
   public ProgramNode build() {
     ProgramNode.Builder programBuilder = ProgramNode.builder();
 
-    for (Map.Entry<HostName, StmtBuilder> kv : configBuilder.entrySet()) {
-      ProcessName name = ProcessName.create(kv.getKey());
+    for (Map.Entry<ProcessName, StmtBuilder> kv : configBuilder.entrySet()) {
+      ProcessName name = kv.getKey();
       BlockNode body = (BlockNode) kv.getValue().build();
       programBuilder.add(ProcessDeclarationNode.builder().setName(name).setBody(body).build());
     }
@@ -46,9 +46,9 @@ public class ProcessConfigurationBuilder {
    *
    * @return true if a process at the host did not already exist
    */
-  public boolean createProcess(HostName h) {
-    if (!this.configBuilder.containsKey(h)) {
-      this.configBuilder.put(h, new StmtBuilder());
+  public boolean createProcess(ProcessName process) {
+    if (!this.configBuilder.containsKey(process)) {
+      this.configBuilder.put(process, new StmtBuilder());
       return true;
 
     } else {
@@ -56,8 +56,8 @@ public class ProcessConfigurationBuilder {
     }
   }
 
-  public StmtBuilder getBuilder(HostName h) {
-    return this.configBuilder.get(h);
+  public StmtBuilder getBuilder(ProcessName process) {
+    return this.configBuilder.get(process);
   }
 
   /** Get a fresh name. */

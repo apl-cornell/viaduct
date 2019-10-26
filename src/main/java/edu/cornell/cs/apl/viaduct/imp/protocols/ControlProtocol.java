@@ -6,6 +6,7 @@ import edu.cornell.cs.apl.viaduct.imp.ast.HostName;
 import edu.cornell.cs.apl.viaduct.imp.ast.IfNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ImpAstNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.LoopNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.ProcessName;
 import edu.cornell.cs.apl.viaduct.imp.ast.Variable;
 import edu.cornell.cs.apl.viaduct.imp.builders.StmtBuilder;
 import edu.cornell.cs.apl.viaduct.imp.visitors.RenameVisitor;
@@ -43,9 +44,9 @@ public class ControlProtocol extends Cleartext implements Protocol<ImpAstNode> {
 
     // TODO: this only works for single-level breaks for now
     if (astNode instanceof BreakNode) {
-      Set<HostName> breakHosts = info.getCurrentLoopControlContext();
-      for (HostName breakHost : breakHosts) {
-        StmtBuilder breakHostBuilder = info.getBuilder(breakHost);
+      Set<ProcessName> breakProcesses = info.getCurrentLoopControlContext();
+      for (ProcessName breakProcess : breakProcesses) {
+        StmtBuilder breakHostBuilder = info.getBuilder(breakProcess);
         breakHostBuilder.loopBreak();
       }
 
@@ -56,40 +57,40 @@ public class ControlProtocol extends Cleartext implements Protocol<ImpAstNode> {
 
     // create control structure in all nodes that have a read channel from the control node
     // TODO: this should really compute a transitive closure
-    Set<HostName> controlStructureHosts = new HashSet<>();
+    Set<ProcessName> controlStructureProcesses = new HashSet<>();
     for (PdgInfoEdge<ImpAstNode> infoEdge : node.getInfoEdges()) {
       PdgNode<ImpAstNode> target = infoEdge.getTarget();
-      controlStructureHosts.addAll(info.getProtocol(target).getHosts());
+      controlStructureProcesses.addAll(info.getProtocol(target).getProcesses());
 
       for (PdgNode<ImpAstNode> targetReadNode : target.getReadNodes()) {
-        controlStructureHosts.addAll(info.getProtocol(targetReadNode).getHosts());
+        controlStructureProcesses.addAll(info.getProtocol(targetReadNode).getProcesses());
       }
 
       for (PdgInfoEdge<ImpAstNode> writeEdge : target.getWriteEdges()) {
-        controlStructureHosts.addAll(info.getProtocol(writeEdge.getTarget()).getHosts());
+        controlStructureProcesses.addAll(info.getProtocol(writeEdge.getTarget()).getProcesses());
       }
     }
 
-    info.pushControlContext(controlStructureHosts);
+    info.pushControlContext(controlStructureProcesses);
 
     if (astNode instanceof IfNode) {
       // conditional node should only have one read input (result of the guard)
       assert infoEdges.size() == 1;
 
       IfNode ifNode = (IfNode) astNode;
-      for (HostName controlStructureHost : controlStructureHosts) {
-        StmtBuilder controlStructureBuilder = info.getBuilder(controlStructureHost);
+      for (ProcessName controlStructureProcess : controlStructureProcesses) {
+        StmtBuilder controlStructureBuilder = info.getBuilder(controlStructureProcess);
         Map<Variable, Variable> guardRenameMap =
-            performComputeReads(controlStructureHost, node, info);
+            performComputeReads(controlStructureProcess, node, info);
         RenameVisitor guardRenamer = new RenameVisitor(guardRenameMap);
         IfNode newIfNode = (IfNode) guardRenamer.run(ifNode);
         controlStructureBuilder.pushIf(newIfNode.getGuard());
       }
 
     } else if (astNode instanceof LoopNode) {
-      info.pushLoopControlContext(controlStructureHosts);
-      for (HostName controlStructureHost : controlStructureHosts) {
-        StmtBuilder controlStructureBuilder = info.getBuilder(controlStructureHost);
+      info.pushLoopControlContext(controlStructureProcesses);
+      for (ProcessName controlStructureProcess : controlStructureProcesses) {
+        StmtBuilder controlStructureBuilder = info.getBuilder(controlStructureProcess);
         controlStructureBuilder.pushLoop();
       }
 
@@ -106,6 +107,16 @@ public class ControlProtocol extends Cleartext implements Protocol<ImpAstNode> {
   @Override
   public Set<HostName> getHosts() {
     return new HashSet<>();
+  }
+
+  @Override
+  public Set<ProcessName> getProcesses() {
+    return new HashSet<>();
+  }
+
+  @Override
+  public boolean hasSyntheticProcesses() {
+    return false;
   }
 
   @Override
@@ -131,7 +142,7 @@ public class ControlProtocol extends Cleartext implements Protocol<ImpAstNode> {
   public Binding<ImpAstNode> readFrom(
       PdgNode<ImpAstNode> node,
       PdgNode<ImpAstNode> readNode,
-      HostName readHost,
+      ProcessName readProcess,
       Binding<ImpAstNode> readLabel,
       List<ImpAstNode> args,
       ProtocolInstantiationInfo<ImpAstNode> info) {
@@ -143,7 +154,7 @@ public class ControlProtocol extends Cleartext implements Protocol<ImpAstNode> {
   public void writeTo(
       PdgNode<ImpAstNode> node,
       PdgNode<ImpAstNode> writeNode,
-      HostName writeHost,
+      ProcessName writeProcess,
       List<ImpAstNode> args,
       ProtocolInstantiationInfo<ImpAstNode> info) {
 

@@ -3,7 +3,7 @@ package edu.cornell.cs.apl.viaduct.protocol;
 import edu.cornell.cs.apl.viaduct.AstNode;
 import edu.cornell.cs.apl.viaduct.Binding;
 import edu.cornell.cs.apl.viaduct.imp.HostTrustConfiguration;
-import edu.cornell.cs.apl.viaduct.imp.ast.HostName;
+import edu.cornell.cs.apl.viaduct.imp.ast.ProcessName;
 import edu.cornell.cs.apl.viaduct.imp.ast.Variable;
 import edu.cornell.cs.apl.viaduct.imp.builders.ProcessConfigurationBuilder;
 import edu.cornell.cs.apl.viaduct.imp.builders.StmtBuilder;
@@ -19,8 +19,8 @@ public class ProtocolInstantiationInfo<T extends AstNode> {
   private final ProtocolCommunicationStrategy<T> communicationStrategy;
   private final ProcessConfigurationBuilder pconfig;
   private final Map<PdgNode<T>, Protocol<T>> protocolMap;
-  private final Stack<Set<HostName>> controlContext;
-  private final Stack<Set<HostName>> loopControlContext;
+  private final Stack<Set<ProcessName>> controlContext;
+  private final Stack<Set<ProcessName>> loopControlContext;
 
   /** store config builder and protocol map. */
   public ProtocolInstantiationInfo(
@@ -38,30 +38,40 @@ public class ProtocolInstantiationInfo<T extends AstNode> {
   }
 
   /** get the set of hosts to read from. */
-  public Set<HostName> getReadSet(PdgNode<T> writeNode, PdgNode<T> readNode, HostName host) {
+  public Set<ProcessName> getReadSet(
+      PdgNode<T> writeNode,
+      PdgNode<T> readNode,
+      ProcessName process)
+  {
     final Protocol<T> fromProtocol = this.protocolMap.get(writeNode);
     final Protocol<T> toProtocol = this.protocolMap.get(readNode);
-    return this.communicationStrategy.getReadSet(this.hostConfig, fromProtocol, toProtocol, host);
+    return this.communicationStrategy.getReadSet(
+        this.hostConfig, fromProtocol, toProtocol, process);
   }
 
   /** get the set of hosts to write to. */
-  public Set<HostName> getWriteSet(PdgNode<T> writeNode, PdgNode<T> readNode, HostName host) {
+  public Set<ProcessName> getWriteSet(
+      PdgNode<T> writeNode,
+      PdgNode<T> readNode,
+      ProcessName process)
+  {
     final Protocol<T> fromProtocol = this.protocolMap.get(writeNode);
     final Protocol<T> toProtocol = this.protocolMap.get(readNode);
-    return this.communicationStrategy.getWriteSet(this.hostConfig, fromProtocol, toProtocol, host);
+    return this.communicationStrategy.getWriteSet(
+        this.hostConfig, fromProtocol, toProtocol, process);
   }
 
-  public StmtBuilder createProcess(HostName h) {
-    this.pconfig.createProcess(h);
-    return this.pconfig.getBuilder(h);
+  public StmtBuilder createProcess(ProcessName process) {
+    this.pconfig.createProcess(process);
+    return this.pconfig.getBuilder(process);
   }
 
   public Protocol<T> getProtocol(PdgNode<T> node) {
     return this.protocolMap.get(node);
   }
 
-  public StmtBuilder getBuilder(HostName h) {
-    return this.pconfig.getBuilder(h);
+  public StmtBuilder getBuilder(ProcessName process) {
+    return this.pconfig.getBuilder(process);
   }
 
   public Variable getFreshVar(String base) {
@@ -85,7 +95,7 @@ public class ProtocolInstantiationInfo<T extends AstNode> {
   }
 
   /** get hosts in loop control context. */
-  public Set<HostName> getCurrentLoopControlContext() {
+  public Set<ProcessName> getCurrentLoopControlContext() {
     if (!this.loopControlContext.isEmpty()) {
       return this.loopControlContext.peek();
 
@@ -94,8 +104,8 @@ public class ProtocolInstantiationInfo<T extends AstNode> {
     }
   }
 
-  public void pushLoopControlContext(Set<HostName> hosts) {
-    this.loopControlContext.push(hosts);
+  public void pushLoopControlContext(Set<ProcessName> processes) {
+    this.loopControlContext.push(processes);
   }
 
   public void popLoopControlContext() {
@@ -107,7 +117,7 @@ public class ProtocolInstantiationInfo<T extends AstNode> {
   }
 
   /** get the hosts participating in the control context. */
-  public Set<HostName> getCurrentControlContext() {
+  public Set<ProcessName> getCurrentControlContext() {
     if (!this.controlContext.isEmpty()) {
       return this.controlContext.peek();
 
@@ -116,17 +126,17 @@ public class ProtocolInstantiationInfo<T extends AstNode> {
     }
   }
 
-  public void pushControlContext(Set<HostName> hosts) {
-    this.controlContext.push(hosts);
+  public void pushControlContext(Set<ProcessName> processes) {
+    this.controlContext.push(processes);
   }
 
   /** set the current path for all hosts participating in the control structure. */
   public void setCurrentPath(ControlLabel label) {
     assert !this.controlContext.isEmpty();
 
-    Set<HostName> hosts = this.controlContext.peek();
-    for (HostName host : hosts) {
-      StmtBuilder hostBuilder = this.pconfig.getBuilder(host);
+    Set<ProcessName> processes = this.controlContext.peek();
+    for (ProcessName process : processes) {
+      StmtBuilder hostBuilder = this.pconfig.getBuilder(process);
       hostBuilder.setCurrentPath(label);
     }
   }
@@ -135,9 +145,9 @@ public class ProtocolInstantiationInfo<T extends AstNode> {
   public void finishCurrentPath() {
     assert !this.controlContext.isEmpty();
 
-    Set<HostName> hosts = this.controlContext.peek();
-    for (HostName host : hosts) {
-      StmtBuilder hostBuilder = this.pconfig.getBuilder(host);
+    Set<ProcessName> processes = this.controlContext.peek();
+    for (ProcessName process : processes) {
+      StmtBuilder hostBuilder = this.pconfig.getBuilder(process);
       hostBuilder.finishCurrentPath();
     }
   }
@@ -146,9 +156,9 @@ public class ProtocolInstantiationInfo<T extends AstNode> {
   public void popControlContext() {
     assert !this.controlContext.isEmpty();
 
-    Set<HostName> hosts = this.controlContext.peek();
-    for (HostName host : hosts) {
-      StmtBuilder hostBuilder = this.pconfig.getBuilder(host);
+    Set<ProcessName> processes = this.controlContext.peek();
+    for (ProcessName process : processes) {
+      StmtBuilder hostBuilder = this.pconfig.getBuilder(process);
       hostBuilder.popControl();
     }
     this.controlContext.pop();

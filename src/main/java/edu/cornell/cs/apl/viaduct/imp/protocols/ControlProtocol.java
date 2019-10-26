@@ -58,7 +58,7 @@ public class ControlProtocol extends Cleartext implements Protocol<ImpAstNode> {
     // create control structure in all nodes that have a read channel from the control node
     // TODO: this should really compute a transitive closure
     Set<ProcessName> controlStructureProcesses = new HashSet<>();
-    for (PdgInfoEdge<ImpAstNode> infoEdge : node.getInfoEdges()) {
+    for (PdgInfoEdge<ImpAstNode> infoEdge : node.getOutInfoEdges()) {
       PdgNode<ImpAstNode> target = infoEdge.getTarget();
       controlStructureProcesses.addAll(info.getProtocol(target).getProcesses());
 

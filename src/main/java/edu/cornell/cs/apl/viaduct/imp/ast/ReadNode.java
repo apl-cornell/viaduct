@@ -1,11 +1,16 @@
 package edu.cornell.cs.apl.viaduct.imp.ast;
 
 import com.google.auto.value.AutoValue;
+
 import edu.cornell.cs.apl.viaduct.imp.visitors.ExprVisitor;
 
 /** Read the value pointed to by a reference. */
 @AutoValue
 public abstract class ReadNode extends ExpressionNode {
+  public static ReadNode create(ReferenceNode ref) {
+    return builder().setReference(ref).build();
+  }
+
   public static Builder builder() {
     return new AutoValue_ReadNode.Builder();
   }

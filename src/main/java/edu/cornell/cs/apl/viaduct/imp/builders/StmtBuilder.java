@@ -38,16 +38,16 @@ public class StmtBuilder {
   }
 
   /** push a conditional into the builder control context. */
-  public StmtBuilder pushIf(ExpressionNode guard) {
-    ControlInfo execPath = new ConditionalControlInfo(this.stmts, guard);
+  public StmtBuilder pushIf(IfNode ifNode) {
+    ControlInfo execPath = new ConditionalControlInfo(this.stmts, ifNode);
     this.controlContext.push(execPath);
     this.stmts = new ArrayList<>();
     return this;
   }
 
   /** push a loop into the builder control context. */
-  public StmtBuilder pushLoop() {
-    ControlInfo execPath = new LoopControlInfo(this.stmts);
+  public StmtBuilder pushLoop(LoopNode loopNode) {
+    ControlInfo execPath = new LoopControlInfo(this.stmts, loopNode);
     this.controlContext.push(execPath);
     this.stmts = new ArrayList<>();
     return this;
@@ -214,11 +214,11 @@ public class StmtBuilder {
 
   /** control context info about if statements. */
   private static class ConditionalControlInfo extends ControlInfo {
-    final ExpressionNode guard;
+    final IfNode ifNode;
 
-    public ConditionalControlInfo(List<StatementNode> pref, ExpressionNode g) {
+    public ConditionalControlInfo(List<StatementNode> pref, IfNode ifNode) {
       super(pref);
-      this.guard = g;
+      this.ifNode = ifNode;
     }
 
     @Override
@@ -226,22 +226,30 @@ public class StmtBuilder {
       BlockNode thenBranch = this.pathMap.get(ControlLabel.THEN);
       BlockNode elseBranch = this.pathMap.get(ControlLabel.ELSE);
       return IfNode.builder()
-          .setGuard(guard)
+          .setGuard(this.ifNode.getGuard())
           .setThenBranch(thenBranch)
           .setElseBranch(elseBranch)
+          .setSourceLocation(this.ifNode.getSourceLocation())
           .build();
     }
   }
 
   private static class LoopControlInfo extends ControlInfo {
-    public LoopControlInfo(List<StatementNode> pref) {
+    final LoopNode loopNode;
+
+    public LoopControlInfo(List<StatementNode> pref, LoopNode loopNode) {
       super(pref);
+      this.loopNode = loopNode;
     }
 
     @Override
     public StatementNode buildControlStructure() {
       BlockNode body = this.pathMap.get(ControlLabel.BODY);
-      return LoopNode.builder().setBody(body).build();
+      return
+          LoopNode.builder()
+          .setBody(body)
+          .setSourceLocation(this.loopNode.getSourceLocation())
+          .build();
     }
   }
 }

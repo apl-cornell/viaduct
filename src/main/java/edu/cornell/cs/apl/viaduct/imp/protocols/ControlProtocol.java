@@ -84,14 +84,15 @@ public class ControlProtocol extends Cleartext implements Protocol<ImpAstNode> {
             performComputeReads(controlStructureProcess, node, info);
         RenameVisitor guardRenamer = new RenameVisitor(guardRenameMap);
         IfNode newIfNode = (IfNode) guardRenamer.run(ifNode);
-        controlStructureBuilder.pushIf(newIfNode.getGuard());
+        controlStructureBuilder.pushIf(newIfNode);
       }
 
     } else if (astNode instanceof LoopNode) {
       info.pushLoopControlContext(controlStructureProcesses);
+      LoopNode loopNode = (LoopNode) astNode;
       for (ProcessName controlStructureProcess : controlStructureProcesses) {
         StmtBuilder controlStructureBuilder = info.getBuilder(controlStructureProcess);
-        controlStructureBuilder.pushLoop();
+        controlStructureBuilder.pushLoop(loopNode);
       }
 
     } else {

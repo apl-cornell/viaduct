@@ -1,4 +1,4 @@
-package edu.cornell.cs.apl.viaduct.backend.mamba;
+package edu.cornell.cs.apl.viaduct.backend.mamba.protocols;
 
 import edu.cornell.cs.apl.viaduct.imp.HostTrustConfiguration;
 import edu.cornell.cs.apl.viaduct.imp.ast.HostName;

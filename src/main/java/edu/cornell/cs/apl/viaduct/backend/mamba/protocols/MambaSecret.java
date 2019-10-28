@@ -1,38 +1,31 @@
-package edu.cornell.cs.apl.viaduct.backend.mamba;
+package edu.cornell.cs.apl.viaduct.backend.mamba.protocols;
 
 import edu.cornell.cs.apl.viaduct.imp.HostTrustConfiguration;
 import edu.cornell.cs.apl.viaduct.imp.ast.HostName;
-import edu.cornell.cs.apl.viaduct.imp.ast.ProcessName;
 import edu.cornell.cs.apl.viaduct.imp.protocols.AbstractSynthesizedSingle;
 import edu.cornell.cs.apl.viaduct.security.Label;
 
-import java.util.HashSet;
 import java.util.Set;
 
-/** cleartext MAMBA protocol. */
-public class MambaPublic extends AbstractSynthesizedSingle {
+/** secret MAMBA protocol. */
+public class MambaSecret extends AbstractSynthesizedSingle {
+  public static final String PROTOCOL_ID = "MambaSecret";
+
   private static Label computeLabel(HostTrustConfiguration hostConfig, Set<HostName> hosts) {
-    Label label = Label.top();
+    Label label = Label.weakest();
     for (HostName party : hosts) {
-      label = label.meet(hostConfig.getTrust(party));
+      label = label.and(hostConfig.getTrust(party));
     }
     return label;
   }
 
-  public MambaPublic(HostTrustConfiguration hostConfig, Set<HostName> hosts) {
+  public MambaSecret(HostTrustConfiguration hostConfig, Set<HostName> hosts) {
     super(hosts, computeLabel(hostConfig, hosts));
   }
 
   @Override
   public String getId() {
-    return "MambaPublic";
-  }
-
-  @Override
-  public Set<ProcessName> getProcesses() {
-    Set<ProcessName> processes = new HashSet<>();
-    processes.add(this.process);
-    return processes;
+    return PROTOCOL_ID;
   }
 
   @Override
@@ -41,8 +34,8 @@ public class MambaPublic extends AbstractSynthesizedSingle {
       return false;
     }
 
-    if (o instanceof MambaPublic) {
-      MambaPublic omp = (MambaPublic)o;
+    if (o instanceof MambaSecret) {
+      MambaSecret omp = (MambaSecret)o;
       return this.hosts.equals(omp.hosts);
 
     } else {

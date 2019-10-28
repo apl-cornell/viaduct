@@ -8,6 +8,7 @@ import edu.cornell.cs.apl.viaduct.errors.InsecureDataFlowError;
 import edu.cornell.cs.apl.viaduct.errors.IntegrityChangingDeclassificationError;
 import edu.cornell.cs.apl.viaduct.errors.LabelMismatchError;
 import edu.cornell.cs.apl.viaduct.errors.MalleableDowngradeError;
+import edu.cornell.cs.apl.viaduct.errors.UndefinedNameError;
 import edu.cornell.cs.apl.viaduct.imp.ast.ArrayDeclarationNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ArrayIndexingNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.AssertNode;
@@ -18,6 +19,8 @@ import edu.cornell.cs.apl.viaduct.imp.ast.BreakNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.DowngradeNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ExpressionNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ForNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.HostDeclarationNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.HostName;
 import edu.cornell.cs.apl.viaduct.imp.ast.IfNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ImpAstNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.LetBindingNode;
@@ -58,6 +61,8 @@ final class CheckStmtVisitor
   private final CheckReferenceVisitor referenceVisitor = new CheckReferenceVisitor();
   private final CheckExprVisitor expressionVisitor = new CheckExprVisitor();
 
+  private final Map<HostName, HostDeclarationNode> hosts;
+
   private final ConstraintSolver<InformationFlowError> constraintSystem;
 
   private final FreshNameGenerator nameGenerator;
@@ -71,7 +76,8 @@ final class CheckStmtVisitor
   /** Current program counter label. */
   private final LabelVariable pc;
 
-  private CheckStmtVisitor() {
+  private CheckStmtVisitor(Map<HostName, HostDeclarationNode> hosts) {
+    this.hosts = hosts;
     this.constraintSystem = new ConstraintSolver<>();
     this.nameGenerator = new FreshNameGenerator();
     this.solutions = new HashMap<>();
@@ -84,6 +90,7 @@ final class CheckStmtVisitor
    */
   private CheckStmtVisitor(CheckStmtVisitor visitor, LabelVariable pc) {
     super(visitor);
+    this.hosts = visitor.hosts;
     this.constraintSystem = visitor.constraintSystem;
     this.nameGenerator = visitor.nameGenerator;
     this.solutions = visitor.solutions;
@@ -91,17 +98,18 @@ final class CheckStmtVisitor
   }
 
   /** Check the given statement node and annotate it with inferred labels. */
-  static void run(StatementNode statement) {
-    final CheckStmtVisitor visitor = new CheckStmtVisitor();
+  static void run(StatementNode statement, Map<HostName, HostDeclarationNode> hosts) {
+    final CheckStmtVisitor visitor = new CheckStmtVisitor(hosts);
     statement.accept(visitor);
     visitor.solutions.putAll(visitor.constraintSystem.solve());
   }
 
   /** Generate the constraint graph for a statement and write it as a DOT file to {@code output}. */
-  static void exportDotGraph(StatementNode statement, Writer output) {
+  static void exportDotGraph(
+      StatementNode statement, Map<HostName, HostDeclarationNode> hosts, Writer output) {
     // Copy the statement so we don't overwrite the trust labels in the original.
     final StatementNode freshStatement = new IdentityProgramVisitor().run(statement);
-    final CheckStmtVisitor visitor = new CheckStmtVisitor();
+    final CheckStmtVisitor visitor = new CheckStmtVisitor(hosts);
     freshStatement.accept(visitor);
     visitor.constraintSystem.exportDotGraph(output);
   }
@@ -109,6 +117,16 @@ final class CheckStmtVisitor
   /** Set the trust label of a node to the (future) value of a constraint term. */
   private void setTrustLabel(ImpAstNode node, LabelTerm term) {
     node.setTrustLabel(() -> term.getValue(this.solutions));
+  }
+
+  /** Return the declared label of a host. */
+  private Label getHostLabel(HostName host) {
+    final HostDeclarationNode declaration = hosts.get(host);
+    if (declaration != null) {
+      return declaration.getTrust();
+    } else {
+      throw new UndefinedNameError(host);
+    }
   }
 
   /**
@@ -250,15 +268,30 @@ final class CheckStmtVisitor
 
   @Override
   protected Void leave(SendNode node, CheckStmtVisitor visitor, AtomicLabelTerm sentExpression) {
-    // TODO: we need session types to do this properly.
-    setTrustLabelToFreshVariable(node);
+    final LabelVariable l = setTrustLabelToFreshVariable(node);
+    final LabelConstant hostLabel =
+        LabelConstant.create(getHostLabel(node.getRecipient().toHostName()));
+
+    // Assume the host expects data at its label.
+    addPcFlowsToConstraint(node.getSentExpression(), l);
+    addOutputFlowsToConstraint(node.getSentExpression(), sentExpression, l);
+    addOutputFlowsToConstraint(node.getSentExpression(), l, hostLabel);
     return null;
   }
 
   @Override
   protected Void leave(ReceiveNode node, CheckStmtVisitor visitor, AtomicLabelTerm lhs) {
-    // TODO: we need session types to do this properly.
-    setTrustLabelToFreshVariable(node);
+    final LabelVariable l = setTrustLabelToFreshVariable(node);
+    final LabelConstant hostLabel =
+        LabelConstant.create(getHostLabel(node.getSender().toHostName()));
+
+    // Assume the received data has the same label as the host.
+    addPcFlowsToConstraint(node.getSender(), l);
+    addOutputFlowsToConstraint(node.getSender(), hostLabel, l);
+    addOutputFlowsToConstraint(node.getSender(), l, lhs);
+
+    // We leak the pc to the host even when we receive from them.
+    addPcFlowsToConstraint(node.getSender(), hostLabel);
     return null;
   }
 

@@ -2,6 +2,8 @@ package edu.cornell.cs.apl.viaduct.backend.mamba;
 
 import edu.cornell.cs.apl.viaduct.InvalidProtocolException;
 import edu.cornell.cs.apl.viaduct.UnknownProtocolException;
+import edu.cornell.cs.apl.viaduct.backend.mamba.protocols.MambaPublic;
+import edu.cornell.cs.apl.viaduct.backend.mamba.protocols.MambaSecret;
 import edu.cornell.cs.apl.viaduct.imp.HostTrustConfiguration;
 import edu.cornell.cs.apl.viaduct.imp.ast.AssignNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.BinaryExpressionNode;

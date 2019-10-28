@@ -1,6 +1,8 @@
 package edu.cornell.cs.apl.viaduct.backend.mamba;
 
 import edu.cornell.cs.apl.viaduct.UnknownProtocolException;
+import edu.cornell.cs.apl.viaduct.backend.mamba.protocols.MambaPublicFactory;
+import edu.cornell.cs.apl.viaduct.backend.mamba.protocols.MambaSecretFactory;
 import edu.cornell.cs.apl.viaduct.imp.HostTrustConfiguration;
 import edu.cornell.cs.apl.viaduct.imp.ast.ImpAstNode;
 import edu.cornell.cs.apl.viaduct.imp.protocols.ControlProtocol;

@@ -17,7 +17,7 @@ import java.util.Stack;
 public class ProtocolInstantiationInfo<T extends AstNode> {
   private final HostTrustConfiguration hostConfig;
   private final ProtocolCommunicationStrategy<T> communicationStrategy;
-  private final ProcessConfigurationBuilder pconfig;
+  private final ProcessConfigurationBuilder<T> pconfig;
   private final Map<PdgNode<T>, Protocol<T>> protocolMap;
   private final Stack<Set<ProcessName>> controlContext;
   private final Stack<Set<ProcessName>> loopControlContext;
@@ -26,7 +26,7 @@ public class ProtocolInstantiationInfo<T extends AstNode> {
   public ProtocolInstantiationInfo(
       HostTrustConfiguration hostConfig,
       ProtocolCommunicationStrategy<T> communicationStrategy,
-      ProcessConfigurationBuilder processConfig,
+      ProcessConfigurationBuilder<T> processConfig,
       Map<PdgNode<T>, Protocol<T>> protocolMap) {
 
     this.hostConfig = hostConfig;
@@ -63,6 +63,11 @@ public class ProtocolInstantiationInfo<T extends AstNode> {
 
   public StmtBuilder createProcess(ProcessName process) {
     this.pconfig.createProcess(process);
+    return this.pconfig.getBuilder(process);
+  }
+
+  public StmtBuilder createProcess(ProcessName process, Protocol<T> protocol) {
+    this.pconfig.createProcess(process, protocol);
     return this.pconfig.getBuilder(process);
   }
 

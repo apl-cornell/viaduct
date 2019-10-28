@@ -1,5 +1,6 @@
 package edu.cornell.cs.apl.viaduct.imp.builders;
 
+import edu.cornell.cs.apl.viaduct.AstNode;
 import edu.cornell.cs.apl.viaduct.imp.HostTrustConfiguration;
 import edu.cornell.cs.apl.viaduct.imp.ast.BlockNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.HostName;
@@ -8,6 +9,7 @@ import edu.cornell.cs.apl.viaduct.imp.ast.ProcessName;
 import edu.cornell.cs.apl.viaduct.imp.ast.ProgramNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.Variable;
 import edu.cornell.cs.apl.viaduct.imp.transformers.TargetPostprocessor;
+import edu.cornell.cs.apl.viaduct.protocol.Protocol;
 import edu.cornell.cs.apl.viaduct.util.FreshNameGenerator;
 import java.util.HashMap;
 import java.util.Map;
@@ -15,13 +17,15 @@ import java.util.Map;
 // TODO: roll into ProgramNode.Builder
 
 /** Builds process configurations. */
-public class ProcessConfigurationBuilder {
+public class ProcessConfigurationBuilder<T extends AstNode> {
   private final Map<ProcessName, StmtBuilder> configBuilder;
+  private final Map<ProcessName, Protocol<T>> processProtocolMap;
   private final FreshNameGenerator freshNameGenerator;
 
   /** create statement builders for each host. */
   public ProcessConfigurationBuilder(HostTrustConfiguration config) {
     this.configBuilder = new HashMap<>();
+    this.processProtocolMap = new HashMap<>();
     this.freshNameGenerator = new FreshNameGenerator();
     for (HostName host : config.hosts()) {
       this.configBuilder.put(ProcessName.create(host), new StmtBuilder());
@@ -35,7 +39,17 @@ public class ProcessConfigurationBuilder {
     for (Map.Entry<ProcessName, StmtBuilder> kv : configBuilder.entrySet()) {
       ProcessName name = kv.getKey();
       BlockNode body = (BlockNode) kv.getValue().build();
-      programBuilder.add(ProcessDeclarationNode.builder().setName(name).setBody(body).build());
+
+      ProcessDeclarationNode.Builder processBuilder =
+          ProcessDeclarationNode.builder()
+          .setName(name)
+          .setBody(body);
+
+      if (this.processProtocolMap.containsKey(name)) {
+        processBuilder.setProtocol(this.processProtocolMap.get(name));
+      }
+
+      programBuilder.add(processBuilder.build());
     }
 
     return TargetPostprocessor.run(programBuilder.build());
@@ -49,6 +63,22 @@ public class ProcessConfigurationBuilder {
   public boolean createProcess(ProcessName process) {
     if (!this.configBuilder.containsKey(process)) {
       this.configBuilder.put(process, new StmtBuilder());
+      return true;
+
+    } else {
+      return false;
+    }
+  }
+
+  /**
+   * Create a new process at the given host.
+   *
+   * @return true if a process at the host did not already exist
+   */
+  public boolean createProcess(ProcessName process, Protocol<T> protocol) {
+    if (!this.configBuilder.containsKey(process)) {
+      this.configBuilder.put(process, new StmtBuilder());
+      this.processProtocolMap.put(process, protocol);
       return true;
 
     } else {

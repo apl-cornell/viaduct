@@ -68,17 +68,20 @@ public final class MambaPublicSecretProcessMerger {
     int publicProcessSize = publicProcess.size();
     int secretProcessSize = secretProcess.size();
 
-    while (publicIndex < publicProcessSize || secretIndex < secretProcessSize ) {
-      StatementNode publicStmt = publicIndex < publicProcessSize ? publicProcess.get(publicIndex) : null;
-      StatementNode secretStmt = secretIndex < secretProcessSize ? secretProcess.get(secretIndex) : null;
+    while (publicIndex < publicProcessSize || secretIndex < secretProcessSize) {
+      StatementNode publicStmt =
+          publicIndex < publicProcessSize ? publicProcess.get(publicIndex) : null;
+      StatementNode secretStmt =
+          secretIndex < secretProcessSize ? secretProcess.get(secretIndex) : null;
 
-      SourcePosition publicStmtLocation = publicStmt != null ? publicStmt.getSourceLocation().getStart() : null;
-      SourcePosition secretStmtLocation = secretStmt != null ? secretStmt.getSourceLocation().getStart() : null;
+      SourcePosition publicStmtLocation =
+          publicStmt != null ? publicStmt.getSourceLocation().getStart() : null;
+      SourcePosition secretStmtLocation =
+          secretStmt != null ? secretStmt.getSourceLocation().getStart() : null;
 
       int compareLocations =
-        publicStmtLocation != null && secretStmtLocation != null ?
-            publicStmtLocation.compareTo(secretStmtLocation) :
-            0;
+          publicStmtLocation != null && secretStmtLocation != null
+          ? publicStmtLocation.compareTo(secretStmtLocation) : 0;
 
       // public stmt is ordered before secret stmt
       if (compareLocations < 0 || secretIndex >= secretProcessSize) {

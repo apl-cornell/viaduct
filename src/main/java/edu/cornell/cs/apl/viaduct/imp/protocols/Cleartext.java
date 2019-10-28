@@ -96,7 +96,6 @@ public abstract class Cleartext extends AbstractProtocol<ImpAstNode> {
       List<ImpAstNode> args,
       ProtocolInstantiationInfo<ImpAstNode> info) {
 
-    ImpAstNode astNode = node.getAstNode();
     StmtBuilder builder = info.getBuilder(outProcess);
     StmtBuilder readBuilder = info.getBuilder(readProcess);
     List<Variable> readArgs = new ArrayList<>();

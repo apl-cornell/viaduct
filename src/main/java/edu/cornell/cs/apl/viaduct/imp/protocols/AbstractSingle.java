@@ -78,7 +78,8 @@ public abstract class AbstractSingle extends Cleartext {
 
     // this should not be read from until it has been instantiated!
     assert this.outVar != null;
-    return performRead(node, readNode, readProcess, readLabel, this.process, this.outVar, args, info);
+    return performRead(
+        node, readNode, readProcess, readLabel, this.process, this.outVar, args, info);
   }
 
   @Override

@@ -1,5 +1,6 @@
 package edu.cornell.cs.apl.viaduct.imp.parsing;
 
+import edu.cornell.cs.apl.viaduct.AstNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ArrayDeclarationNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ArrayIndexingNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.AssertNode;
@@ -33,6 +34,7 @@ import edu.cornell.cs.apl.viaduct.imp.visitors.ProgramVisitor;
 import edu.cornell.cs.apl.viaduct.imp.visitors.ReferenceVisitor;
 import edu.cornell.cs.apl.viaduct.imp.visitors.StmtVisitor;
 import edu.cornell.cs.apl.viaduct.imp.visitors.TopLevelDeclarationVisitor;
+import edu.cornell.cs.apl.viaduct.protocol.Protocol;
 import edu.cornell.cs.apl.viaduct.security.Label;
 import edu.cornell.cs.apl.viaduct.util.PrintUtil;
 
@@ -501,7 +503,17 @@ final class PrintVisitor
 
     printKeyword("process ");
     output.print(processDeclarationNode.getName());
+
+    Protocol<? extends AstNode> processProtocol = processDeclarationNode.getProtocol();
+    if (processProtocol != null) {
+      output.print(" : ");
+      output.print(processProtocol.toString());
+      output.print(" ");
+
+    } else {
     output.print(' ');
+    }
+
     printChildBlock(processDeclarationNode.getBody());
 
     return null;

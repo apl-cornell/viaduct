@@ -111,7 +111,7 @@ public class Replication extends Cleartext implements Protocol<ImpAstNode> {
     for (ProcessName outProcess : outProcesses) {
       Variable outVar = this.outVarMap.get(outProcess);
       Binding<ImpAstNode> readVar =
-          performRead(node, readProcess, readLabel, outProcess, outVar, args, info);
+          performRead(node, readNode, readProcess, readLabel, outProcess, outVar, args, info);
       processBindings.put(outProcess, readVar);
     }
 
@@ -157,7 +157,7 @@ public class Replication extends Cleartext implements Protocol<ImpAstNode> {
       Set<ProcessName> inProcesses = info.getWriteSet(writeNode, node, writeProcess);
       for (ProcessName inProcess : inProcesses) {
         Variable storageVar = this.outVarMap.get(inProcess);
-        performWrite(node, writeProcess, inProcess, storageVar, args, info);
+        performWrite(node, writeNode, writeProcess, inProcess, storageVar, args, info);
       }
 
     } else {

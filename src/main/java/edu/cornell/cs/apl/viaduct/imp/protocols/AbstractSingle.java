@@ -78,13 +78,13 @@ public abstract class AbstractSingle extends Cleartext {
 
     // this should not be read from until it has been instantiated!
     assert this.outVar != null;
-    return performRead(node, readProcess, readLabel, this.process, this.outVar, args, info);
+    return performRead(node, readNode, readProcess, readLabel, this.process, this.outVar, args, info);
   }
 
   @Override
   public void writeTo(
       PdgNode<ImpAstNode> node,
-      PdgNode<ImpAstNode> readNode,
+      PdgNode<ImpAstNode> writeNode,
       ProcessName writeProcess,
       List<ImpAstNode> args,
       ProtocolInstantiationInfo<ImpAstNode> info) {
@@ -93,7 +93,7 @@ public abstract class AbstractSingle extends Cleartext {
     if (node.isStorageNode()) {
       // node must have been instantiated before being written to
       assert this.outVar != null;
-      performWrite(node, writeProcess, this.process, this.outVar, args, info);
+      performWrite(node, writeNode, writeProcess, this.process, this.outVar, args, info);
 
     } else {
       throw new ProtocolInstantiationError("attempted to write to a non storage node");

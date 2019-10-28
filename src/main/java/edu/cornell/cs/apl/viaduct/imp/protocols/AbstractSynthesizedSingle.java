@@ -66,9 +66,9 @@ public abstract class AbstractSynthesizedSingle extends AbstractSingle {
       this.process = synthesizedHostMap.get(synthesizedHostInfo);
 
     } else {
-      this.process = ProcessName.create(info.getFreshName(toString()));
+      this.process = ProcessName.createFreshName();
       synthesizedHostMap.put(synthesizedHostInfo, this.process);
-      info.createProcess(this.process);
+      info.createProcess(this.process, this);
     }
   }
 }

@@ -3,14 +3,8 @@ process main {
   int a;
   bool{B} b;
 
-  /* TODO: add assign declare nodes
-   * int{A} a2 = (22 - 1) * 2;
-   * bool b2 = true || false;
-   */
-  int{A} a2;
-  bool b2;
-  a2 = (22 - 1) * 2;
-  b2 = true || false;
+  int{A} a2 = (22 - 1) * 2;
+  bool b2 = true || false;
 
   assert a2 == 42;
   assert b2;
@@ -27,9 +21,7 @@ process main {
   }
 
   /* Check that variables in blocks go out of scope */
-  /* bool{A | B} tmp = a2 > a1; */
-  bool{A & B->} tmp;
-  tmp = a2 > a;
+  bool{A & B->} tmp = a2 > a;
   assert tmp;
 
   tmp <- recv alice_main;

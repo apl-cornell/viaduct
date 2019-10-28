@@ -82,7 +82,7 @@ action code {:
         return ImmutableList.of(statement);
     }
 
-    /** Create a list of statements builder. */
+    /** Create a statement list builder. */
     private ImmutableList.Builder<StatementNode> listBuilder() {
         return ImmutableList.builder();
     }

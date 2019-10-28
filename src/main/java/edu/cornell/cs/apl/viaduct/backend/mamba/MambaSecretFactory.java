@@ -1,4 +1,4 @@
-package edu.cornell.cs.apl.viaduct.imp.backend.mamba;
+package edu.cornell.cs.apl.viaduct.backend.mamba;
 
 import edu.cornell.cs.apl.viaduct.imp.HostTrustConfiguration;
 import edu.cornell.cs.apl.viaduct.imp.ast.HostName;
@@ -9,10 +9,10 @@ import edu.cornell.cs.apl.viaduct.protocol.Protocol;
 import java.util.Set;
 
 /** cleartext data in a MAMBA program. */
-public class MambaPublicFactory extends AllHostsProtocolFactory<ImpAstNode> {
+public class MambaSecretFactory extends AllHostsProtocolFactory<ImpAstNode> {
   protected Protocol<ImpAstNode> createInstanceFromHostInfo(
       HostTrustConfiguration hostConfig, Set<HostName> hostSet)
   {
-    return hostSet.size() >= 2 ? new MambaPublic(hostConfig, hostSet) : null;
+    return hostSet.size() >= 2 ? new MambaSecret(hostConfig, hostSet) : null;
   }
 }

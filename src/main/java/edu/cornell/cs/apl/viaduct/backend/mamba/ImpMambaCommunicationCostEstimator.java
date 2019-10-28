@@ -1,4 +1,4 @@
-package edu.cornell.cs.apl.viaduct.imp.backend.mamba;
+package edu.cornell.cs.apl.viaduct.backend.mamba;
 
 import edu.cornell.cs.apl.viaduct.InvalidProtocolException;
 import edu.cornell.cs.apl.viaduct.UnknownProtocolException;

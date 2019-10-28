@@ -5,8 +5,6 @@ import edu.cornell.cs.apl.viaduct.imp.HostTrustConfiguration;
 import edu.cornell.cs.apl.viaduct.imp.ast.HostName;
 import edu.cornell.cs.apl.viaduct.imp.ast.ImpAstNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ProcessName;
-import edu.cornell.cs.apl.viaduct.imp.backend.mamba.MambaPublic;
-import edu.cornell.cs.apl.viaduct.imp.backend.mamba.MambaSecret;
 import edu.cornell.cs.apl.viaduct.protocol.MemoizedProtocolCommunicationStrategy;
 import edu.cornell.cs.apl.viaduct.protocol.Protocol;
 import edu.cornell.cs.apl.viaduct.protocol.ProtocolInstantiationError;
@@ -127,10 +125,7 @@ public final class ImpProtocolCommunicationStrategy
     if (toProtocol instanceof ControlProtocol) {
       throw new ProtocolInstantiationError("control protocol is selected for storage node");
 
-    } else if (fromProtocol instanceof MPC
-              || fromProtocol instanceof MambaPublic
-              || fromProtocol instanceof MambaSecret)
-    {
+    } else if (fromProtocol.hasSyntheticProcesses()) {
       return toProtocol.getProcesses();
 
     } else {

@@ -8,6 +8,7 @@ import edu.cornell.cs.apl.viaduct.imp.ast.SendNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.StatementNode;
 import edu.cornell.cs.apl.viaduct.imp.visitors.IdentityProgramVisitor;
 import edu.cornell.cs.apl.viaduct.imp.visitors.StmtVisitor;
+
 import java.util.LinkedList;
 import java.util.List;
 

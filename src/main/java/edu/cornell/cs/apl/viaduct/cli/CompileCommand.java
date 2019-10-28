@@ -2,13 +2,14 @@ package edu.cornell.cs.apl.viaduct.cli;
 
 import com.github.rvesse.airline.annotations.Command;
 import com.github.rvesse.airline.annotations.Option;
+
+import edu.cornell.cs.apl.viaduct.backend.mamba.ImpMambaCommunicationCostEstimator;
+import edu.cornell.cs.apl.viaduct.backend.mamba.ImpMambaProtocolSearchStrategy;
 import edu.cornell.cs.apl.viaduct.imp.HostTrustConfiguration;
 import edu.cornell.cs.apl.viaduct.imp.ast.ImpAstNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ProcessName;
 import edu.cornell.cs.apl.viaduct.imp.ast.ProgramNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.StatementNode;
-import edu.cornell.cs.apl.viaduct.imp.backend.mamba.ImpMambaCommunicationCostEstimator;
-import edu.cornell.cs.apl.viaduct.imp.backend.mamba.ImpMambaProtocolSearchStrategy;
 import edu.cornell.cs.apl.viaduct.imp.informationflow.InformationFlowChecker;
 import edu.cornell.cs.apl.viaduct.imp.parsing.Printer;
 import edu.cornell.cs.apl.viaduct.imp.parsing.SourceFile;
@@ -29,12 +30,14 @@ import edu.cornell.cs.apl.viaduct.protocol.Protocol;
 import edu.cornell.cs.apl.viaduct.protocol.ProtocolCostEstimator;
 import edu.cornell.cs.apl.viaduct.protocol.ProtocolSearchSelection;
 import edu.cornell.cs.apl.viaduct.protocol.ProtocolSearchStrategy;
+
 import guru.nidi.graphviz.engine.Format;
 import guru.nidi.graphviz.engine.Graphviz;
 import guru.nidi.graphviz.engine.GraphvizCmdLineEngine;
 import guru.nidi.graphviz.engine.GraphvizServerEngine;
 import guru.nidi.graphviz.engine.GraphvizV8Engine;
 import guru.nidi.graphviz.model.MutableGraph;
+
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -48,6 +51,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
+
 import org.apache.commons.io.FilenameUtils;
 
 @Command(name = "compile", description = "Compile ideal protocol to secure distributed program")

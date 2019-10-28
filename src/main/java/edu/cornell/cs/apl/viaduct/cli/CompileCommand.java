@@ -5,6 +5,7 @@ import com.github.rvesse.airline.annotations.Option;
 
 import edu.cornell.cs.apl.viaduct.backend.mamba.ImpMambaCommunicationCostEstimator;
 import edu.cornell.cs.apl.viaduct.backend.mamba.ImpMambaProtocolSearchStrategy;
+import edu.cornell.cs.apl.viaduct.backend.mamba.MambaTranslator;
 import edu.cornell.cs.apl.viaduct.imp.HostTrustConfiguration;
 import edu.cornell.cs.apl.viaduct.imp.ast.ImpAstNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ProcessName;
@@ -259,6 +260,8 @@ public class CompileCommand extends BaseCommand {
 
       try (PrintStream writer = output.newOutputStream()) {
         Printer.run(generatedProgram, writer);
+
+        (new MambaTranslator()).translate(generatedProgram);
       }
     } else {
       // We couldn't find protocols for some nodes.

@@ -1,6 +1,6 @@
 process main {
   int{A} secret;
   secret = 42;
-  int{A->} b;
+  int{A & B<-} b;
   b = declassify(secret, {A->});
 }

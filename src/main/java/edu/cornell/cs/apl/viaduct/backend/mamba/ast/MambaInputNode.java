@@ -5,18 +5,16 @@ import com.google.auto.value.AutoValue;
 import edu.cornell.cs.apl.viaduct.backend.mamba.visitors.MambaStatementVisitor;
 
 @AutoValue
-public abstract class MambaRegIntDeclarationNode implements MambaStatementNode {
-  public enum RegisterType { SECRET, CLEAR }
-
+public abstract class MambaInputNode implements MambaStatementNode {
   public static Builder builder() {
-    return new AutoValue_MambaRegIntDeclarationNode.Builder();
+    return new AutoValue_MambaInputNode.Builder();
   }
 
   public abstract Builder toBuilder();
 
   public abstract MambaVariable getVariable();
 
-  public abstract RegisterType getRegisterType();
+  public abstract int getPlayer();
 
   @Override
   public <R> R accept(MambaStatementVisitor<R> v) {
@@ -25,10 +23,10 @@ public abstract class MambaRegIntDeclarationNode implements MambaStatementNode {
 
   @AutoValue.Builder
   public abstract static class Builder {
-    public abstract Builder setVariable(MambaVariable variable);
+    public abstract Builder setVariable(MambaVariable var);
 
-    public abstract Builder setRegisterType(RegisterType regType);
+    public abstract Builder setPlayer(int player);
 
-    public abstract MambaRegIntDeclarationNode build();
+    public abstract MambaInputNode build();
   }
 }

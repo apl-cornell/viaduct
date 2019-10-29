@@ -6,6 +6,10 @@ import edu.cornell.cs.apl.viaduct.backend.mamba.visitors.MambaExpressionVisitor;
 
 @AutoValue
 public abstract class MambaIntLiteralNode implements MambaExpressionNode {
+  public static MambaIntLiteralNode create(int n) {
+    return builder().setValue(n).build();
+  }
+
   public static Builder builder() {
     return new AutoValue_MambaIntLiteralNode.Builder();
   }

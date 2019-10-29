@@ -16,6 +16,8 @@ public abstract class MambaBinaryExpressionNode implements MambaExpressionNode {
 
   public abstract MambaExpressionNode getRhs();
 
+  public abstract MambaBinaryOperator getOperator();
+
   @Override
   public final <R> R accept(MambaExpressionVisitor<R> v) {
     return v.visit(this);
@@ -26,6 +28,8 @@ public abstract class MambaBinaryExpressionNode implements MambaExpressionNode {
     public abstract Builder setLhs(MambaExpressionNode lhs);
 
     public abstract Builder setRhs(MambaExpressionNode rhs);
+
+    public abstract Builder setOperator(MambaBinaryOperator operator);
 
     public abstract MambaBinaryExpressionNode build();
   }

@@ -3,13 +3,13 @@ package edu.cornell.cs.apl.viaduct.backend.mamba;
 import com.google.common.collect.ImmutableMap;
 
 import edu.cornell.cs.apl.viaduct.AstNode;
+import edu.cornell.cs.apl.viaduct.backend.mamba.ast.MambaStatementNode;
 import edu.cornell.cs.apl.viaduct.backend.mamba.protocols.MambaPublic;
 import edu.cornell.cs.apl.viaduct.backend.mamba.protocols.MambaSecret;
+import edu.cornell.cs.apl.viaduct.backend.mamba.visitors.MambaPrintVisitor;
 import edu.cornell.cs.apl.viaduct.imp.ast.ProcessDeclarationNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ProcessName;
 import edu.cornell.cs.apl.viaduct.imp.ast.ProgramNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.StatementNode;
-import edu.cornell.cs.apl.viaduct.imp.parsing.Printer;
 import edu.cornell.cs.apl.viaduct.protocol.Protocol;
 
 import java.util.Map;
@@ -48,10 +48,9 @@ public final class MambaTranslator {
 
     // public and secret mamba processes exist; merge them
     if (publicProcessName != null && secretProcessName != null) {
-      StatementNode mergedProcess =
+      MambaStatementNode mergedProcess =
           MambaPublicSecretProcessMerger.run(program, publicProcessName, secretProcessName);
-
-      System.out.println(Printer.run(mergedProcess));
+      System.out.println(MambaPrintVisitor.run(mergedProcess));
     }
   }
 }

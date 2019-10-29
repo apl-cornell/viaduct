@@ -1,38 +1,38 @@
 process main {
+  /* Chuck hides the ball under a shell; Alice guesses the shell. */
   int{C} cin;
   int{A} ain;
-  int{C & A<-} shell;
-  int{A & C<-} guess;
-  int{A ⊓ C} win;
+  cin <- recv @chuck;
+  ain <- recv @alice;
 
-  cin <- recv chuck_main;
-  ain <- recv alice_main;
+  /* Alice and Chuck can select their inputs however; they are trusted implicitly. */
+  int{C & A<-} shell = endorse(cin, {C & A<-});
+  int{A & C<-} guess = endorse(ain, {A & C<-});
 
-  /* Chuck and Alice must endorse their inputs to `shell` and `guess`, respectively. */
-  int{A & C} win_secret;
-  shell = endorse(cin, {C & A<-});
-  guess = endorse(ain, {A & C<-});
+  bool{A & C} win_secret;
 
   /* Chuck must prove that `shell` is valid without revealing its value. */
   if (declassify(1 <= shell && shell <= 3, {A ⊓ C})) {
-    if (shell == guess) {
-      win_secret = 1;
-    } else {
-      win_secret = 0;
-    }
+    win_secret = shell == guess;
   } else {
-    win_secret = -1;
+    win_secret = true;
   }
 
-  win = declassify(win_secret, { A ⊓ C });
+  bool{A ⊓ C} win = declassify(win_secret, { A ⊓ C });
+  send win to @alice;
+  send win to @chuck;
 }
 
-process chuck_main {
+process @chuck {
   send 1 to main;
+  bool win;
+  win <- recv main;
 }
 
-process alice_main {
+process @alice {
   send 2 to main;
+  bool win;
+  win <- recv main;
 }
 
 /* Declare the actual machines (i.e. hosts) we have. */

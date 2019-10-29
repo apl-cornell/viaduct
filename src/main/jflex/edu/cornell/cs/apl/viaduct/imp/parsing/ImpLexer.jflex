@@ -93,7 +93,7 @@ NUM         = ((-)?[1-9][0-9]*) | 0
   "protocol"      { return symbol(sym.PROTOCOL); }
   "Ideal"         { return symbol(sym.IDEAL); }
 
-  /* types */
+  /* Types */
   "int"           { return symbol(sym.INT); }
   "bool"          { return symbol(sym.BOOL); }
 
@@ -170,6 +170,7 @@ NUM         = ((-)?[1-9][0-9]*) | 0
   /* Identifiers */
   {CAPALPHANUM}   { return symbol(sym.CAP_IDENT, yytext()); }
   {ALPHANUM}      { return symbol(sym.IDENT, yytext()); }
+  "@"             { return symbol(sym.AT); }
 
   /* Comments and Whitespace */
   "/*"            { commentLevel++; yybegin(COMMENT); }

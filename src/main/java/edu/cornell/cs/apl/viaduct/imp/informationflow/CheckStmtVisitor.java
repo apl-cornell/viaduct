@@ -269,29 +269,37 @@ final class CheckStmtVisitor
   @Override
   protected Void leave(SendNode node, CheckStmtVisitor visitor, AtomicLabelTerm sentExpression) {
     final LabelVariable l = setTrustLabelToFreshVariable(node);
-    final LabelConstant hostLabel =
-        LabelConstant.create(getHostLabel(node.getRecipient().toHostName()));
 
-    // Assume the host expects data at its label.
     addPcFlowsToConstraint(node.getSentExpression(), l);
     addOutputFlowsToConstraint(node.getSentExpression(), sentExpression, l);
-    addOutputFlowsToConstraint(node.getSentExpression(), l, hostLabel);
+
+    if (node.getRecipient().isHost()) {
+      final LabelConstant hostLabel =
+          LabelConstant.create(getHostLabel(node.getRecipient().toHostName()));
+
+      // Assume the host expects data at its label.
+      addOutputFlowsToConstraint(node.getSentExpression(), l, hostLabel);
+    }
     return null;
   }
 
   @Override
   protected Void leave(ReceiveNode node, CheckStmtVisitor visitor, AtomicLabelTerm lhs) {
     final LabelVariable l = setTrustLabelToFreshVariable(node);
-    final LabelConstant hostLabel =
-        LabelConstant.create(getHostLabel(node.getSender().toHostName()));
 
-    // Assume the received data has the same label as the host.
     addPcFlowsToConstraint(node.getSender(), l);
-    addOutputFlowsToConstraint(node.getSender(), hostLabel, l);
     addOutputFlowsToConstraint(node.getSender(), l, lhs);
 
-    // We leak the pc to the host even when we receive from them.
-    addPcFlowsToConstraint(node.getSender(), hostLabel);
+    if (node.getSender().isHost()) {
+      final LabelConstant hostLabel =
+          LabelConstant.create(getHostLabel(node.getSender().toHostName()));
+
+      // Assume the received data has the same label as the host.
+      addOutputFlowsToConstraint(node.getSender(), hostLabel, l);
+
+      // We leak the pc to the host even when we receive from them.
+      addPcFlowsToConstraint(node.getSender(), hostLabel);
+    }
     return null;
   }
 

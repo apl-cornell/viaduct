@@ -5,7 +5,7 @@ import edu.cornell.cs.apl.viaduct.imp.ast.types.ImpBaseType;
 import edu.cornell.cs.apl.viaduct.imp.visitors.StmtVisitor;
 import javax.annotation.Nullable;
 
-/** Receive a value from a host. */
+/** Receive a value from a process. */
 @AutoValue
 public abstract class ReceiveNode extends StatementNode {
   public static Builder builder() {
@@ -18,7 +18,7 @@ public abstract class ReceiveNode extends StatementNode {
   // TODO: turn into a reference node
   public abstract Variable getVariable();
 
-  /** Expected type of the to be received value. */
+  /** Expected type of the value to be received. */
   // TODO: remove this. Type information should be stored somewhere else.
   public abstract @Nullable ImpBaseType getReceiveType();
 

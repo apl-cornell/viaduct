@@ -15,24 +15,32 @@ process main {
   assert a == -42;
   assert !b;
 
-  {
-    int{C} tmp;
-    tmp <- recv alice_main;
-  }
-
   /* Check that variables in blocks go out of scope */
+  {
+    int{C} tmp = 5;
+  }
   bool{A & B->} tmp = a2 > a;
   assert tmp;
 
-  tmp <- recv alice_main;
-  assert !tmp;
+  /* Communication */
+  int tmp1;
+  bool tmp2;
+  tmp1 <- recv @alice;
+  tmp2 <- recv @alice;
+  assert tmp1 == 5;
+  assert !tmp2;
+
+  send 42 to @alice;
 }
 
 host alice : {A};
 
-process alice_main {
-  send 1 to main;
+process @alice {
+  send 5 to main;
   send false to main;
+  int result;
+  result <- recv main;
+  assert result == 42;
 }
 
-host trusted : {A & B};
+host trusted : {A & B & C};

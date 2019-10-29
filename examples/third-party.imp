@@ -1,15 +1,35 @@
 /* Millionaire's problem with a trusted third party. */
 process main {
-  int{A & B<-} a;
-  int{B & A<-} b;
-  bool{A & B} b_richer;
+  int{A} a;
+  int{B} b;
 
-  a = 5;
-  b = 10;
+  a <- recv @alice;
+  b <- recv @bob;
 
-  b_richer = a <= b;
+  /* Alice and Bob are free to provide any input; we'll just trust it. */
+  int{A & B<-} a_endorsed;
+  int{B & A<-} b_endorsed;
+  a_endorsed = endorse(a, {A & B<-});
+  b_endorsed = endorse(b, {B & A<-});
 
-  assert b_richer;
+  bool bob_richer;
+  bob_richer = declassify(a_endorsed <= b_endorsed, {(A|B)-> & (A&B)<-});
+  send bob_richer to @alice;
+  send bob_richer to @bob;
 }
 
+process @alice {
+  send 5 to main;
+  bool bob_richer;
+  bob_richer <- recv main;
+}
+
+process @bob {
+  send 10 to main;
+  bool bob_richer;
+  bob_richer <- recv main;
+}
+
+host alice : {A};
+host bob : {B};
 host trusted : {A & B};

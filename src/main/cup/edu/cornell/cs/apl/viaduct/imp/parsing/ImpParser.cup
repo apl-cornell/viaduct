@@ -130,6 +130,7 @@ nonterminal ProcessName process_name;
 nonterminal ImpBaseType type, optional_type;
 
 terminal String IDENT, CAP_IDENT;
+terminal AT;
 terminal Integer INT_LIT;
 terminal TRUE, FALSE;
 
@@ -613,5 +614,9 @@ process_name ::=
           .setName(id)
           .setSourceLocation(location(idleft, idright))
           .build();
-  :}
+    :}
+
+  | AT host:host {:
+      RESULT = ProcessName.create(host);
+    :}
   ;

@@ -6,8 +6,8 @@ import edu.cornell.cs.apl.viaduct.AstNode;
 import edu.cornell.cs.apl.viaduct.backend.mamba.ast.MambaStatementNode;
 import edu.cornell.cs.apl.viaduct.backend.mamba.protocols.MambaPublic;
 import edu.cornell.cs.apl.viaduct.backend.mamba.protocols.MambaSecret;
-import edu.cornell.cs.apl.viaduct.backend.mamba.visitors.MambaConditionalMuxer;
 import edu.cornell.cs.apl.viaduct.backend.mamba.visitors.MambaPrintVisitor;
+import edu.cornell.cs.apl.viaduct.backend.mamba.visitors.MambaSecretConditionalConverter;
 import edu.cornell.cs.apl.viaduct.imp.ast.ProcessDeclarationNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ProcessName;
 import edu.cornell.cs.apl.viaduct.imp.ast.ProgramNode;
@@ -51,7 +51,7 @@ public final class MambaTranslator {
     if (publicProcessName != null && secretProcessName != null) {
       MambaStatementNode mergedProcess =
           MambaPublicSecretProcessMerger.run(program, publicProcessName, secretProcessName);
-      mergedProcess = MambaConditionalMuxer.run(mergedProcess);
+      mergedProcess = MambaSecretConditionalConverter.run(mergedProcess);
       System.out.println(MambaPrintVisitor.run(mergedProcess));
     }
   }

@@ -27,11 +27,8 @@ public class MambaConditionalMuxer
 
   MambaVariable guardVariable;
 
-  public static MambaStatementNode run(MambaStatementNode stmt) {
-    return
-        MambaBlockNode.builder()
-        .addAll(stmt.accept(new MambaConditionalMuxer()))
-        .build();
+  public static Iterable<MambaStatementNode> run(MambaStatementNode stmt) {
+    return stmt.accept(new MambaConditionalMuxer());
   }
 
   private MambaConditionalMuxer() {

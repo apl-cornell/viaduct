@@ -37,11 +37,9 @@ import edu.cornell.cs.apl.viaduct.imp.visitors.TopLevelDeclarationVisitor;
 import edu.cornell.cs.apl.viaduct.protocol.Protocol;
 import edu.cornell.cs.apl.viaduct.security.Label;
 import edu.cornell.cs.apl.viaduct.util.PrintUtil;
-
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.List;
-
 import org.apache.commons.lang3.StringUtils;
 import org.fusesource.jansi.Ansi;
 import org.fusesource.jansi.Ansi.Color;
@@ -132,44 +130,33 @@ final class PrintVisitor
 
   /** Print a name. */
   public void print(Name name) {
-    printToggleColor(
-        Ansi.ansi().fg(Color.BLUE).a(name.getName()).reset(),
-        name.getName());
+    printToggleColor(Ansi.ansi().fg(Color.BLUE).a(name.getName()).reset(), name.getName());
   }
 
   /** Print a literal constant. */
   public void print(ImpValue value) {
-    printToggleColor(
-        Ansi.ansi().fg(Color.CYAN).a(value).reset(),
-        value.toString());
+    printToggleColor(Ansi.ansi().fg(Color.CYAN).a(value).reset(), value.toString());
   }
 
   /** Print a type. */
   public void print(ImpType type) {
-    printToggleColor(
-        Ansi.ansi().fg(Color.YELLOW).a(type).reset(),
-        type.toString());
+    printToggleColor(Ansi.ansi().fg(Color.YELLOW).a(type).reset(), type.toString());
   }
 
   /** Print a label. */
   public void print(Label label) {
-    printToggleColor(
-        Ansi.ansi().fg(Color.YELLOW).a(label).reset(),
-        label.toString());
+    printToggleColor(Ansi.ansi().fg(Color.YELLOW).a(label).reset(), label.toString());
   }
 
   /** Print a comment. */
   private void printComment(String comment) {
     printToggleColor(
-        Ansi.ansi().fgBright(Color.GREEN).a("/* ").a(comment).a(" */").reset(),
-        comment);
+        Ansi.ansi().fgBright(Color.GREEN).a("/* ").a(comment).a(" */").reset(), comment);
   }
 
   /** Print a builtin keyword. */
   private void printKeyword(String keyword) {
-    printToggleColor(
-        Ansi.ansi().fg(Color.GREEN).a(keyword).reset(),
-        keyword);
+    printToggleColor(Ansi.ansi().fg(Color.GREEN).a(keyword).reset(), keyword);
   }
 
   /** Print a block node without adding indentation before the opening brace. */
@@ -511,7 +498,7 @@ final class PrintVisitor
       output.print(" ");
 
     } else {
-    output.print(' ');
+      output.print(' ');
     }
 
     printChildBlock(processDeclarationNode.getBody());

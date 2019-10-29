@@ -1,9 +1,7 @@
 package edu.cornell.cs.apl.viaduct.imp.ast;
 
 import com.google.auto.value.AutoValue;
-
 import edu.cornell.cs.apl.viaduct.util.FreshNameGenerator;
-
 import javax.annotation.Nonnull;
 
 /** Process names. Processes execute code, and can send and receive messages. */
@@ -11,10 +9,9 @@ import javax.annotation.Nonnull;
 public abstract class ProcessName extends Located implements Comparable<ProcessName>, Name {
   private static final ProcessName MAIN = ProcessName.create("main");
 
+  // TODO: this shouldn't be here.
   private static final String freshProcessBaseName = "process";
   private static final FreshNameGenerator nameGenerator = new FreshNameGenerator();
-
-  public abstract boolean isHost();
 
   /** Name of the entry process. */
   public static ProcessName getMain() {
@@ -38,6 +35,9 @@ public abstract class ProcessName extends Located implements Comparable<ProcessN
   public static Builder builder() {
     return new AutoValue_ProcessName.Builder().setHost(false);
   }
+
+  // TODO: Ugh, don't do this.
+  public abstract boolean isHost();
 
   public abstract Builder toBuilder();
 

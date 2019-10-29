@@ -30,13 +30,13 @@ import java.util.Map;
 
 /** instantiate process configuration from selected protocols. */
 public class ImpProtocolInstantiationVisitor implements StmtVisitor<Void> {
-  final HostTrustConfiguration hostConfig;
-  final ProgramDependencyGraph<ImpAstNode> pdg;
-  final Map<PdgNode<ImpAstNode>, Protocol<ImpAstNode>> protocolMap;
-  final StatementNode main;
-  final ProcessConfigurationBuilder pconfig;
-  final ProtocolInstantiationInfo<ImpAstNode> info;
-  final ImpProtocolInitializationVisitor initializer;
+  private final HostTrustConfiguration hostConfig;
+  private final ProgramDependencyGraph<ImpAstNode> pdg;
+  private final Map<PdgNode<ImpAstNode>, Protocol<ImpAstNode>> protocolMap;
+  private final StatementNode main;
+  private final ProcessConfigurationBuilder<ImpAstNode> pconfig;
+  private final ProtocolInstantiationInfo<ImpAstNode> info;
+  private final ImpProtocolInitializationVisitor initializer;
 
   /** constructor. */
   public ImpProtocolInstantiationVisitor(
@@ -50,7 +50,7 @@ public class ImpProtocolInstantiationVisitor implements StmtVisitor<Void> {
     this.pdg = pdg;
     this.protocolMap = protocolMap;
     this.main = main;
-    this.pconfig = new ProcessConfigurationBuilder(hostConfig);
+    this.pconfig = new ProcessConfigurationBuilder<>(hostConfig);
     this.info =
         new ProtocolInstantiationInfo<>(
             hostConfig, communicationStrategy, pconfig, this.protocolMap);

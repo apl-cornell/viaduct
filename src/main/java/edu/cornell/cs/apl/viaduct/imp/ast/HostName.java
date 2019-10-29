@@ -8,21 +8,14 @@ import javax.annotation.Nonnull;
 @AutoValue
 public abstract class HostName extends Located implements Comparable<HostName>, Name {
   public static HostName create(String name) {
-    return create(name, false);
-  }
-
-  public static HostName create(String name, boolean isSynthetic) {
-    return builder().setName(name).setSynthetic(isSynthetic).build();
+    return builder().setName(name).build();
   }
 
   public static Builder builder() {
-    return new AutoValue_HostName.Builder().setSynthetic(false);
+    return new AutoValue_HostName.Builder();
   }
 
   public abstract Builder toBuilder();
-
-  // TODO: this will interact badly with .equals(). For example, compareTo is broken as is.
-  public abstract boolean isSynthetic();
 
   @Override
   public final String getNameCategory() {
@@ -31,9 +24,7 @@ public abstract class HostName extends Located implements Comparable<HostName>, 
 
   @Override
   public int compareTo(@Nonnull HostName that) {
-    return Comparator.comparing(HostName::getName)
-        .thenComparing(HostName::isSynthetic)
-        .compare(this, that);
+    return Comparator.comparing(HostName::getName).compare(this, that);
   }
 
   @Override
@@ -44,8 +35,6 @@ public abstract class HostName extends Located implements Comparable<HostName>, 
   @AutoValue.Builder
   public abstract static class Builder extends Located.Builder<Builder> {
     public abstract Builder setName(String name);
-
-    public abstract Builder setSynthetic(boolean isSynthetic);
 
     public abstract HostName build();
   }

@@ -6,6 +6,8 @@ import edu.cornell.cs.apl.viaduct.backend.mamba.ast.MambaBlockNode;
 import edu.cornell.cs.apl.viaduct.backend.mamba.ast.MambaIfNode;
 import edu.cornell.cs.apl.viaduct.backend.mamba.ast.MambaInputNode;
 import edu.cornell.cs.apl.viaduct.backend.mamba.ast.MambaIntLiteralNode;
+import edu.cornell.cs.apl.viaduct.backend.mamba.ast.MambaMuxNode;
+import edu.cornell.cs.apl.viaduct.backend.mamba.ast.MambaNegationNode;
 import edu.cornell.cs.apl.viaduct.backend.mamba.ast.MambaOutputNode;
 import edu.cornell.cs.apl.viaduct.backend.mamba.ast.MambaReadNode;
 import edu.cornell.cs.apl.viaduct.backend.mamba.ast.MambaRegIntDeclarationNode;
@@ -68,11 +70,24 @@ public final class MambaPrintVisitor
   }
 
   @Override
+  public String visit(MambaNegationNode node) {
+    return String.format("~(%s)", node.getExpression().accept(this));
+  }
+
+  @Override
   public String visit(MambaRevealNode node) {
     String exprStr = node.getRevealedExpr().accept(this);
     return String.format("(%s).reveal()", exprStr);
   }
 
+  @Override
+  public String visit(MambaMuxNode node) {
+    String guardStr = node.getGuard().accept(this);
+    String thenStr = node.getThenValue().accept(this);
+    String elseStr = node.getElseValue().accept(this);
+
+    return String.format("(%s).if_else(%s,%s)", guardStr, thenStr, elseStr);
+  }
 
   @Override
   public String visit(MambaRegIntDeclarationNode node) {

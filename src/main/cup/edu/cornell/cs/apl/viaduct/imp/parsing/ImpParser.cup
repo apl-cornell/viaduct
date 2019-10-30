@@ -118,6 +118,7 @@ nonterminal ProgramNode program;
 nonterminal ProgramNode.Builder declaration_list;
 nonterminal TopLevelDeclarationNode declaration;
 nonterminal Iterable<StatementNode> stmt, stmt_basic, stmt_noncontrol;
+nonterminal VariableDeclarationNode variable_declaration;
 nonterminal BlockNode block;
 nonterminal BlockNode.Builder stmt_list;
 nonterminal ReferenceNode reference;
@@ -261,30 +262,18 @@ stmt_noncontrol ::=
     ;
 
 stmt_basic ::=
-    type:ty optional_label:lab variable:var {:
-      RESULT = single(
-           VariableDeclarationNode.builder()
-          .setVariable(var)
-          .setType(ty)
-          .setLabel(lab)
-          .setSourceLocation(location(tyleft, varright))
-          .build());
+    variable_declaration:decl {:
+      RESULT = single(decl);
     :}
 
-  | type:ty optional_label:lab variable:var EQ expr:e {:
-      RESULT =
-        listBuilder()
-        .add(
-            VariableDeclarationNode.builder()
-            .setVariable(var)
-            .setType(ty)
-            .setLabel(lab)
-            .build()
-        )
+  | variable_declaration:decl EQ expr:e {:
+      RESULT = listBuilder()
+        .add(decl)
         .add(
             AssignNode.builder()
-            .setLhs(var)
+            .setLhs(decl.getVariable())
             .setRhs(e)
+            .setSourceLocation(location(declleft, eright))
             .build()
         )
         .build();
@@ -350,12 +339,36 @@ stmt_basic ::=
           .build());
     :}
 
+  | variable_declaration:decl LARROW RECV optional_type:ty process_name:sender {:
+      RESULT = listBuilder()
+          .add(decl)
+          .add(ReceiveNode.builder()
+              .setVariable(decl.getVariable())
+              .setReceiveType(ty)
+              .setSender(sender)
+              .setSourceLocation(location(declleft, senderright))
+              .build()
+          )
+          .build();
+    :}
+
   | ASSERT:begin expr:e {:
       RESULT = single(
           AssertNode.builder()
           .setExpression(e)
           .setSourceLocation(location(beginleft, eright))
           .build());
+    :}
+  ;
+
+variable_declaration ::=
+    type:ty optional_label:lab variable:var {:
+      RESULT = VariableDeclarationNode.builder()
+          .setVariable(var)
+          .setType(ty)
+          .setLabel(lab)
+          .setSourceLocation(location(tyleft, varright))
+          .build();
     :}
   ;
 

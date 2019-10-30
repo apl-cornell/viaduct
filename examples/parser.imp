@@ -24,9 +24,8 @@ process main {
 
   /* Communication */
   int tmp1;
-  bool tmp2;
   tmp1 <- recv @alice;
-  tmp2 <- recv @alice;
+  bool tmp2 <- recv @alice;
   assert tmp1 == 5;
   assert !tmp2;
 
@@ -38,8 +37,7 @@ host alice : {A};
 process @alice {
   send 5 to main;
   send false to main;
-  int result;
-  result <- recv main;
+  int result <- recv main;
   assert result == 42;
 }
 

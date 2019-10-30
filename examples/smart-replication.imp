@@ -1,7 +1,6 @@
 process main {
   /* Alice provides some input. */
-  int{A} a;
-  a <- recv @alice;
+  int{A} a <- recv @alice;
 
   /* The input is public, and Bob implicitly trusts it. */
   int{(A & B)<-} replicated = endorse(declassify(a, {A<-}), {(A & B)<-});
@@ -17,8 +16,7 @@ process @alice {
 }
 
 process @chuck {
-  int result;
-  result <- recv main;
+  int result <- recv main;
   assert result == 42;
 }
 

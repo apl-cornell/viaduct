@@ -1,9 +1,7 @@
 process main {
   /* Chuck hides the ball under a shell; Alice guesses the shell. */
-  int{C} cin;
-  int{A} ain;
-  cin <- recv @chuck;
-  ain <- recv @alice;
+  int{C} cin <- recv @chuck;
+  int{A} ain <- recv @alice;
 
   /* Alice and Chuck can select their inputs however; they are trusted implicitly. */
   int{C & A<-} shell = endorse(cin, {C & A<-});
@@ -23,16 +21,15 @@ process main {
   send win to @chuck;
 }
 
-process @chuck {
-  send 1 to main;
-  bool win;
-  win <- recv main;
-}
-
 process @alice {
   send 2 to main;
-  bool win;
-  win <- recv main;
+  bool alice_wins <- recv main;
+}
+
+process @chuck {
+  send 1 to main;
+  bool alice_wins <- recv main;
+  assert !alice_wins;
 }
 
 /* Declare the actual machines (i.e. hosts) we have. */

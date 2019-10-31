@@ -94,6 +94,11 @@ parser code {:
         return ((ImpLexer) getScanner()).location(left, right);
     }
 
+    /** Generate source location information for a node given left node and right character offset. */
+    private SourceRange location(HasLocation left, int right) {
+        return location(left.getSourceLocation().getStart().getOffset(), right);
+    }
+
     @Override
     public void report_error(String message, Object info) {
         report_fatal_error(message, info);
@@ -273,7 +278,7 @@ stmt_basic ::=
             AssignNode.builder()
             .setLhs(decl.getVariable())
             .setRhs(e)
-            .setSourceLocation(location(declleft, eright))
+            .setSourceLocation(location(decl.getVariable(), eright))
             .build()
         )
         .build();
@@ -346,7 +351,7 @@ stmt_basic ::=
               .setVariable(decl.getVariable())
               .setReceiveType(ty)
               .setSender(sender)
-              .setSourceLocation(location(declleft, senderright))
+              .setSourceLocation(location(decl.getVariable(), senderright))
               .build()
           )
           .build();

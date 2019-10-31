@@ -131,21 +131,32 @@ public class MambaConditionalMuxer
       negCondAssign = negatedGuard;
     }
 
-    return
-      listBuilder()
-      .add(
-          MambaAssignNode.builder()
-          .setVariable(condVar)
-          .setRhs(condAssign)
-          .build())
-      .add(
-          MambaAssignNode.builder()
-          .setVariable(negCondVar)
-          .setRhs(negCondAssign)
-          .build())
-      .addAll(node.getThenBranch().accept(new MambaConditionalMuxer(condVar)))
-      .addAll(node.getElseBranch().accept(new MambaConditionalMuxer(negCondVar)))
-      .build();
+    MambaBlockNode thenBranch = node.getThenBranch();
+    MambaBlockNode elseBranch = node.getElseBranch();
+
+    ImmutableList.Builder<MambaStatementNode> builder = listBuilder();
+
+    if (thenBranch.getStatements().size() > 0) {
+      builder
+        .add(
+            MambaAssignNode.builder()
+            .setVariable(condVar)
+            .setRhs(condAssign)
+            .build())
+        .addAll(node.getThenBranch().accept(new MambaConditionalMuxer(condVar)));
+    }
+
+    if (elseBranch.getStatements().size() > 0) {
+      builder
+          .add(
+              MambaAssignNode.builder()
+              .setVariable(negCondVar)
+              .setRhs(negCondAssign)
+              .build())
+          .addAll(node.getElseBranch().accept(new MambaConditionalMuxer(negCondVar)));
+    }
+
+    return builder.build();
   }
 
   @Override

@@ -30,8 +30,8 @@ class ErrorsTest {
   }
 
   /**
-   * Check if a line only contains space and carrot ({@code '^'}) characters. Carrots are considered
-   * blank since they are used to underline portions of the previous line.
+   * Check if a line is blank, i.e. contains only space and carrot ({@code '^'}) characters. Carrots
+   * are considered blank since they are used to underline portions of the previous line.
    */
   private static boolean isBlank(String line) {
     return line.chars().allMatch((c) -> c == ' ' || c == '^');

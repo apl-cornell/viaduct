@@ -2,6 +2,7 @@ package edu.cornell.cs.apl.viaduct.imp.ast;
 
 import com.google.auto.value.AutoValue;
 import edu.cornell.cs.apl.viaduct.util.FreshNameGenerator;
+import java.util.Comparator;
 import javax.annotation.Nonnull;
 
 /** Process names. Processes execute code, and can send and receive messages. */
@@ -9,7 +10,7 @@ import javax.annotation.Nonnull;
 public abstract class ProcessName extends Located implements Comparable<ProcessName>, Name {
   private static final ProcessName MAIN = ProcessName.create("main");
 
-  // TODO: this shouldn't be here.
+  // TODO: random name generation does not belong here.
   private static final String freshProcessBaseName = "process";
   private static final FreshNameGenerator nameGenerator = new FreshNameGenerator();
 
@@ -36,20 +37,15 @@ public abstract class ProcessName extends Located implements Comparable<ProcessN
     return new AutoValue_ProcessName.Builder().setHost(false);
   }
 
-  // TODO: Ugh, don't do this.
+  // TODO: try to get rid of this.
   public abstract boolean isHost();
 
   public abstract Builder toBuilder();
 
-  /** convert process name to host name. */
+  /** Convert process name to host name. */
   public HostName toHostName() {
-    if (isHost()) {
-      return HostName.create(getName());
-
-    } else {
-      // TODO: use the correct exception type
-      throw new Error(String.format("process %s is not a host", getName()));
-    }
+    assert isHost();
+    return HostName.builder().setName(getName()).setSourceLocation(this).build();
   }
 
   @Override
@@ -59,12 +55,14 @@ public abstract class ProcessName extends Located implements Comparable<ProcessN
 
   @Override
   public int compareTo(@Nonnull ProcessName that) {
-    return this.getName().compareTo(that.getName());
+    return Comparator.comparing(ProcessName::isHost)
+        .thenComparing(ProcessName::getName)
+        .compare(this, that);
   }
 
   @Override
   public final String toString() {
-    return getName();
+    return (isHost() ? "@" : "") + getName();
   }
 
   @AutoValue.Builder

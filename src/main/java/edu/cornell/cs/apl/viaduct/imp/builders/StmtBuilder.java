@@ -159,13 +159,7 @@ public class StmtBuilder {
   }
 
   public StmtBuilder recv(ProcessName sender, Variable var) {
-    return recv(sender, null, var);
-  }
-
-  /** build recv stmt. */
-  public StmtBuilder recv(ProcessName sender, ImpBaseType recvType, Variable var) {
-    this.stmts.add(
-        ReceiveNode.builder().setVariable(var).setReceiveType(recvType).setSender(sender).build());
+    this.stmts.add(ReceiveNode.builder().setVariable(var).setSender(sender).build());
     return this;
   }
 
@@ -245,8 +239,7 @@ public class StmtBuilder {
     @Override
     public StatementNode buildControlStructure() {
       BlockNode body = this.pathMap.get(ControlLabel.BODY);
-      return
-          LoopNode.builder()
+      return LoopNode.builder()
           .setBody(body)
           .setSourceLocation(this.loopNode.getSourceLocation())
           .build();

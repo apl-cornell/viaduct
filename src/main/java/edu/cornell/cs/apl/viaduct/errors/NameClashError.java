@@ -41,9 +41,9 @@ public class NameClashError extends CompilationError {
   public void print(PrintStream output) {
     super.print(output);
 
-    output.print("This file has multiple ");
+    output.print("This file has multiple declarations of ");
     Printer.run(name, output);
-    output.println(" declarations. One here:");
+    output.println(". One here:");
 
     output.println();
     firstDeclaration.showInSource(output);

@@ -1,6 +1,7 @@
 package edu.cornell.cs.apl.viaduct.util;
 
-import java.util.ArrayList;
+import io.vavr.collection.List;
+
 
 /** Used for maintaining ordering information about PDG nodes. */
 public class AbstractLineNumber implements Comparable<AbstractLineNumber> {
@@ -22,15 +23,14 @@ public class AbstractLineNumber implements Comparable<AbstractLineNumber> {
     }
   }
 
-  ArrayList<LineNumberComponent> componentList;
+  List<LineNumberComponent> componentList;
 
   private AbstractLineNumber() {
-    this.componentList = new ArrayList<LineNumberComponent>();
+    this.componentList = List.empty();
   }
 
   public AbstractLineNumber(String main) {
-    this();
-    this.componentList.add(new LineNumberComponent(main, 1));
+    this.componentList = List.of(new LineNumberComponent(main, 1));
   }
 
   /** returns a clone but with the last component's sequence number incremented. */
@@ -38,11 +38,8 @@ public class AbstractLineNumber implements Comparable<AbstractLineNumber> {
     AbstractLineNumber newLn = new AbstractLineNumber();
 
     int n = this.componentList.size();
-    for (int i = 0; i < n - 1; i++) {
-      newLn.componentList.add(this.componentList.get(i));
-    }
     LineNumberComponent last = this.componentList.get(n - 1);
-    newLn.componentList.add(new LineNumberComponent(last.getMarker(), last.getSequenceNum() + 1));
+    newLn.componentList = this.componentList.append(new LineNumberComponent(last.getMarker(), last.getSequenceNum() + 1));
 
     return newLn;
   }
@@ -50,11 +47,7 @@ public class AbstractLineNumber implements Comparable<AbstractLineNumber> {
   /** returns a clone but with a new component appended. */
   public AbstractLineNumber addBranch(String branch) {
     AbstractLineNumber newLn = new AbstractLineNumber();
-    for (int i = 0; i < this.componentList.size(); i++) {
-      newLn.componentList.add(this.componentList.get(i));
-    }
-    newLn.componentList.add(new LineNumberComponent(branch, 1));
-
+    newLn.componentList = this.componentList.append(new LineNumberComponent(branch, 1));
     return newLn;
   }
 

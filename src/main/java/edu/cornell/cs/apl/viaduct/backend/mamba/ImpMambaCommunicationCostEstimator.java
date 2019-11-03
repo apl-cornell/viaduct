@@ -23,6 +23,9 @@ import java.util.Map;
 import java.util.Set;
 
 public class ImpMambaCommunicationCostEstimator extends ImpCommunicationCostEstimator {
+  private static int PUBLIC_COST = 1;
+  private static int SECRET_COST = 10;
+
   public ImpMambaCommunicationCostEstimator(
       HostTrustConfiguration hostConfig,
       ProtocolCommunicationStrategy<ImpAstNode> communicationStrategy)
@@ -37,7 +40,7 @@ public class ImpMambaCommunicationCostEstimator extends ImpCommunicationCostEsti
       MambaPublic protocol)
   {
     if (node.isStorageNode()) {
-      return protocol.getHosts().size() * BASE_STORAGE_COST;
+      return PUBLIC_COST;
 
     } else if (node.isComputeNode()) {
       // compute communication costs
@@ -65,7 +68,7 @@ public class ImpMambaCommunicationCostEstimator extends ImpCommunicationCostEsti
         }
       }
 
-      return numCommunications * COMMUNICATION_COST;
+      return PUBLIC_COST + (numCommunications * COMMUNICATION_COST);
 
     } else {
       return 0;
@@ -83,7 +86,7 @@ public class ImpMambaCommunicationCostEstimator extends ImpCommunicationCostEsti
     int partySize = protocol.getHosts().size();
 
     if (node.isStorageNode()) {
-      return 10;
+      return SECRET_COST;
 
     } else if (node.isComputeNode()) {
       // compute communication costs
@@ -123,7 +126,7 @@ public class ImpMambaCommunicationCostEstimator extends ImpCommunicationCostEsti
           }
         }
 
-        return numCommunications * COMMUNICATION_COST;
+        return SECRET_COST + (numCommunications * COMMUNICATION_COST);
 
       } else {
         throw new Error("Compute node not associated with expression");

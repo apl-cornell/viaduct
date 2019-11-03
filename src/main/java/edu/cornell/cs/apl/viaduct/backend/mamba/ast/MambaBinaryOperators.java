@@ -13,7 +13,7 @@ public class MambaBinaryOperators {
 
     @Override
     public String toString() {
-      return "+";
+      return "|";
     }
   }
 
@@ -28,7 +28,7 @@ public class MambaBinaryOperators {
 
     @Override
     public String toString() {
-      return "*";
+      return "&";
     }
   }
 

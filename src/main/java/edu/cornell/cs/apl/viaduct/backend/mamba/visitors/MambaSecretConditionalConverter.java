@@ -13,11 +13,11 @@ import edu.cornell.cs.apl.viaduct.backend.mamba.ast.MambaNegationNode;
 import edu.cornell.cs.apl.viaduct.backend.mamba.ast.MambaOutputNode;
 import edu.cornell.cs.apl.viaduct.backend.mamba.ast.MambaReadNode;
 import edu.cornell.cs.apl.viaduct.backend.mamba.ast.MambaRegIntDeclarationNode;
-import edu.cornell.cs.apl.viaduct.backend.mamba.ast.MambaRegIntDeclarationNode.RegisterType;
 import edu.cornell.cs.apl.viaduct.backend.mamba.ast.MambaRevealNode;
+import edu.cornell.cs.apl.viaduct.backend.mamba.ast.MambaSecurityType;
 import edu.cornell.cs.apl.viaduct.backend.mamba.ast.MambaStatementNode;
 import edu.cornell.cs.apl.viaduct.backend.mamba.ast.MambaVariable;
-
+import edu.cornell.cs.apl.viaduct.backend.mamba.ast.MambaWhileNode;
 import io.vavr.collection.HashSet;
 import io.vavr.collection.Set;
 
@@ -57,7 +57,7 @@ public class MambaSecretConditionalConverter
 
   @Override
   public Iterable<MambaStatementNode> visit(MambaRegIntDeclarationNode node) {
-    if (node.getRegisterType() == RegisterType.SECRET) {
+    if (node.getRegisterType() == MambaSecurityType.SECRET) {
       addSecretVariable(node.getVariable());
     }
     return single(node);
@@ -98,15 +98,20 @@ public class MambaSecretConditionalConverter
               MambaIfNode.builder()
               .setGuard(node.getGuard())
               .setThenBranch(
-                  MambaBlockNode.builder()
-                  .addAll(node.getThenBranch().accept(newConverter))
-                  .build())
+                  MambaBlockNode.create(node.getThenBranch().accept(newConverter)))
               .setElseBranch(
-                  MambaBlockNode.builder()
-                  .addAll(node.getElseBranch().accept(newConverter))
-                  .build())
+                  MambaBlockNode.create(node.getElseBranch().accept(newConverter)))
               .build());
     }
+  }
+
+  @Override
+  public Iterable<MambaStatementNode> visit(MambaWhileNode node) {
+    return
+        single(
+            node.toBuilder()
+            .setBody(MambaBlockNode.create(node.getBody().accept(this)))
+            .build());
   }
 
   @Override

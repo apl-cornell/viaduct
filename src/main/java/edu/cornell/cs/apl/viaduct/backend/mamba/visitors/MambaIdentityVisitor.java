@@ -14,9 +14,7 @@ import edu.cornell.cs.apl.viaduct.backend.mamba.ast.MambaReadNode;
 import edu.cornell.cs.apl.viaduct.backend.mamba.ast.MambaRegIntDeclarationNode;
 import edu.cornell.cs.apl.viaduct.backend.mamba.ast.MambaRevealNode;
 import edu.cornell.cs.apl.viaduct.backend.mamba.ast.MambaStatementNode;
-import edu.cornell.cs.apl.viaduct.backend.mamba.ast.MambaVariable;
-
-import io.vavr.collection.Map;
+import edu.cornell.cs.apl.viaduct.backend.mamba.ast.MambaWhileNode;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -106,6 +104,15 @@ public class MambaIdentityVisitor
         .setThenBranch((MambaBlockNode) node.getThenBranch().accept(this))
         .setElseBranch((MambaBlockNode) node.getElseBranch().accept(this))
         .build();
+  }
+
+  @Override
+  public MambaStatementNode visit(MambaWhileNode node) {
+    return
+      node.toBuilder()
+      .setGuard(node.getGuard().accept(this))
+      .setBody((MambaBlockNode) node.getBody().accept(this))
+      .build();
   }
 
   @Override

@@ -6,10 +6,6 @@ import edu.cornell.cs.apl.viaduct.backend.mamba.visitors.MambaExpressionVisitor;
 
 @AutoValue
 public abstract class MambaIntLiteralNode implements MambaExpressionNode {
-  public static MambaIntLiteralNode create(int n) {
-    return builder().setValue(n).build();
-  }
-
   public static Builder builder() {
     return new AutoValue_MambaIntLiteralNode.Builder();
   }
@@ -17,6 +13,8 @@ public abstract class MambaIntLiteralNode implements MambaExpressionNode {
   public abstract Builder toBuilder();
 
   public abstract int getValue();
+
+  public abstract MambaSecurityType getSecurityType();
 
   @Override
   public final <R> R accept(MambaExpressionVisitor<R> v) {
@@ -26,6 +24,8 @@ public abstract class MambaIntLiteralNode implements MambaExpressionNode {
   @AutoValue.Builder
   public abstract static class Builder {
     public abstract Builder setValue(int value);
+
+    public abstract Builder setSecurityType(MambaSecurityType type);
 
     public abstract MambaIntLiteralNode build();
   }

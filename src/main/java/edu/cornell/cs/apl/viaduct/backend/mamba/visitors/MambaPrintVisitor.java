@@ -2,7 +2,10 @@ package edu.cornell.cs.apl.viaduct.backend.mamba.visitors;
 
 import edu.cornell.cs.apl.viaduct.backend.mamba.ast.MambaAssignNode;
 import edu.cornell.cs.apl.viaduct.backend.mamba.ast.MambaBinaryExpressionNode;
+import edu.cornell.cs.apl.viaduct.backend.mamba.ast.MambaBinaryOperator;
+import edu.cornell.cs.apl.viaduct.backend.mamba.ast.MambaBinaryOperators;
 import edu.cornell.cs.apl.viaduct.backend.mamba.ast.MambaBlockNode;
+import edu.cornell.cs.apl.viaduct.backend.mamba.ast.MambaExpressionNode;
 import edu.cornell.cs.apl.viaduct.backend.mamba.ast.MambaIfNode;
 import edu.cornell.cs.apl.viaduct.backend.mamba.ast.MambaInputNode;
 import edu.cornell.cs.apl.viaduct.backend.mamba.ast.MambaIntLiteralNode;
@@ -12,8 +15,10 @@ import edu.cornell.cs.apl.viaduct.backend.mamba.ast.MambaOutputNode;
 import edu.cornell.cs.apl.viaduct.backend.mamba.ast.MambaReadNode;
 import edu.cornell.cs.apl.viaduct.backend.mamba.ast.MambaRegIntDeclarationNode;
 import edu.cornell.cs.apl.viaduct.backend.mamba.ast.MambaRevealNode;
+import edu.cornell.cs.apl.viaduct.backend.mamba.ast.MambaSecurityType;
 import edu.cornell.cs.apl.viaduct.backend.mamba.ast.MambaStatementNode;
 import edu.cornell.cs.apl.viaduct.backend.mamba.ast.MambaVariable;
+import edu.cornell.cs.apl.viaduct.backend.mamba.ast.MambaWhileNode;
 import edu.cornell.cs.apl.viaduct.util.FreshNameGenerator;
 
 import org.apache.commons.lang3.StringUtils;
@@ -24,8 +29,8 @@ public final class MambaPrintVisitor
   private static int INDENTATION_LEVEL = 2;
   private static String THEN_BODY_NAME = "then_body";
   private static String ELSE_BODY_NAME = "else_body";
+  private static String WHILE_BODY_NAME = "while_body";
   private static String OBJ_NAME = "obj";
-  private static String WRAPPER_NAME = "wrapper";
   private static String TEMPLATE = OBJ_NAME + " = {}\n%s";
 
   private int indentation = -INDENTATION_LEVEL;
@@ -59,18 +64,31 @@ public final class MambaPrintVisitor
     return String.format("%s[\"%s\"]", OBJ_NAME, var.getName());
   }
 
-  private String visitConditionalBranch(String bodyName, MambaBlockNode branch) {
+  private String visitControlBlock(
+      String bodyName,
+      String args,
+      MambaBlockNode block,
+      MambaExpressionNode returnExpr)
+  {
     StringBuilder builder = new StringBuilder();
     builder.append('\n');
     builder.append(addIndentation());
-    builder.append(String.format("def %s(%s):\n", bodyName, OBJ_NAME));
+    builder.append(String.format("def %s(%s):%n", bodyName, args));
 
-    this.indentation += INDENTATION_LEVEL;
-    builder.append(addIndentation());
-    builder.append(String.format("def %s():", WRAPPER_NAME));
+    if (block.getStatements().size() > 0) {
+      this.indentation += INDENTATION_LEVEL;
+      builder.append(addIndentation());
+      builder.append(String.format("global %s%n", OBJ_NAME));
+      this.indentation -= INDENTATION_LEVEL;
 
-    if (branch.getStatements().size() > 0) {
-      builder.append(visitChildBlock(branch));
+      builder.append(visitChildBlock(block));
+
+      if (returnExpr != null) {
+        this.indentation += INDENTATION_LEVEL;
+        builder.append(addIndentation());
+        builder.append(String.format("return %s%n", returnExpr.accept(this)));
+        this.indentation -= INDENTATION_LEVEL;
+      }
 
     } else {
       this.indentation += INDENTATION_LEVEL;
@@ -79,22 +97,24 @@ public final class MambaPrintVisitor
       this.indentation -= INDENTATION_LEVEL;
     }
 
-    builder.append('\n');
-    builder.append(addIndentation());
-    builder.append(String.format("return %s\n", WRAPPER_NAME));
-    this.indentation -= INDENTATION_LEVEL;
-
     return builder.toString();
   }
 
   @Override
   public String visit(MambaIntLiteralNode node) {
-    return String.format("%s", String.valueOf(node.getValue()));
+    String intStr = String.valueOf(node.getValue());
+
+    if (node.getSecurityType() == MambaSecurityType.CLEAR) {
+      return String.format("regint(%s)", intStr);
+
+    } else {
+      return String.format("sregint(%s)", intStr);
+    }
   }
 
   @Override
   public String visit(MambaReadNode node) {
-    return visitVariable(node.getVariable());
+    return String.format("%s.read()", visitVariable(node.getVariable()));
   }
 
   @Override
@@ -112,7 +132,7 @@ public final class MambaPrintVisitor
 
   @Override
   public String visit(MambaNegationNode node) {
-    return String.format("((1-(%s)) > 0)", node.getExpression().accept(this));
+    return String.format("(1-%s)", node.getExpression().accept(this));
   }
 
   @Override
@@ -127,7 +147,7 @@ public final class MambaPrintVisitor
     String thenStr = node.getThenValue().accept(this);
     String elseStr = node.getElseValue().accept(this);
 
-    return String.format("(%s + ((%s > 0) * (%s - %s)))", elseStr, guardStr, thenStr, elseStr);
+    return String.format("((%s * (%s - %s)) + %s)", guardStr, thenStr, elseStr, elseStr);
   }
 
   @Override
@@ -137,12 +157,14 @@ public final class MambaPrintVisitor
 
     switch (node.getRegisterType()) {
       case SECRET:
-        builder.append(String.format("%s = sint()", visitVariable(node.getVariable())));
+        builder.append(
+            String.format("%s = MemValue(sregint())", visitVariable(node.getVariable())));
         break;
 
       case CLEAR:
       default:
-        builder.append(String.format("%s = cint()", visitVariable(node.getVariable())));
+        builder.append(
+            String.format("%s = MemValue(regint())", visitVariable(node.getVariable())));
         break;
     }
 
@@ -151,11 +173,25 @@ public final class MambaPrintVisitor
 
   @Override
   public String visit(MambaAssignNode node) {
+    MambaExpressionNode rhs = node.getRhs();
+
     StringBuilder builder = new StringBuilder();
+    String template = null;
+
+    if (IsBooleanExpr.run(rhs)) {
+      // TODO: BROKEN! switch between secret and clear as needed
+      template = "%s.write(sregint(1) & %s)";
+
+    } else {
+      template = "%s.write(%s)";
+    }
+
     builder.append(addIndentation());
-    builder.append(visitVariable(node.getVariable()));
-    builder.append(" = ");
-    builder.append(node.getRhs().accept(this));
+    builder.append(
+        String.format(template,
+            visitVariable(node.getVariable()),
+            rhs.accept(this)));
+
     return builder.toString();
   }
 
@@ -169,10 +205,15 @@ public final class MambaPrintVisitor
     int player = node.getPlayer();
     // if player < 0, then it is public input
     if (player < 0) {
-      builder.append("cint.get_input()");
+      builder.append("MemValue(cint.get_input())");
+
+    } else if (node.getSecurityContext() == MambaSecurityType.SECRET) {
+      builder.append(
+          String.format("MemValue(get_input(%d))", player));
 
     } else {
-      builder.append(String.format("sint.get_private_input_from(%d)", player));
+      builder.append(
+          String.format("MemValue(get_input(%d).reveal())", player));
     }
 
     return builder.toString();
@@ -202,17 +243,31 @@ public final class MambaPrintVisitor
     StringBuilder builder = new StringBuilder();
 
     String thenBodyName = this.nameGenerator.getFreshName(THEN_BODY_NAME);
-    builder.append(visitConditionalBranch(thenBodyName, node.getThenBranch()));
+    builder.append(visitControlBlock(thenBodyName, "", node.getThenBranch(), null));
 
     String elseBodyName = this.nameGenerator.getFreshName(ELSE_BODY_NAME);
-    builder.append(visitConditionalBranch(elseBodyName, node.getElseBranch()));
+    builder.append(visitControlBlock(elseBodyName, "", node.getElseBranch(), null));
 
     builder.append('\n');
     String guardStr = node.getGuard().accept(this);
     builder.append(addIndentation());
-    builder.append(
-        String.format("if_statement(%s,%s(%s),%s(%s))",
-            guardStr, thenBodyName, OBJ_NAME, elseBodyName, OBJ_NAME));
+    builder.append(String.format("if_statement(%s,%s,%s)", guardStr, thenBodyName, elseBodyName));
+
+    return builder.toString();
+  }
+
+  @Override
+  public String visit(MambaWhileNode node) {
+    StringBuilder builder = new StringBuilder();
+
+    String whileBodyName = nameGenerator.getFreshName(WHILE_BODY_NAME);
+    builder.append(visitControlBlock(whileBodyName, "cond", node.getBody(), node.getGuard()));
+
+    String guardStr = node.getGuard().accept(this);
+
+    builder.append('\n');
+    builder.append(addIndentation());
+    builder.append(String.format("do_loop(%s, %s)", guardStr, whileBodyName));
 
     return builder.toString();
   }
@@ -224,6 +279,71 @@ public final class MambaPrintVisitor
     builder.append(visitChildBlock(node));
 
     return builder.toString();
+  }
+
+  private static class IsBooleanExpr implements MambaExpressionVisitor<Boolean> {
+    private IsBooleanExpr() {}
+
+    public static Boolean run(MambaExpressionNode expr) {
+      return expr.accept(new IsBooleanExpr());
+    }
+
+    @Override
+    public Boolean visit(MambaIntLiteralNode node) {
+      return false;
+    }
+
+    @Override
+    public Boolean visit(MambaReadNode node) {
+      return false;
+    }
+
+    @Override
+    public Boolean visit(MambaBinaryExpressionNode node) {
+      MambaBinaryOperator binOp = node.getOperator();
+      if (binOp instanceof MambaBinaryOperators.Or) {
+        return true;
+
+      } else if (binOp instanceof MambaBinaryOperators.And) {
+        return true;
+
+      } else if (binOp instanceof MambaBinaryOperators.EqualTo) {
+        return true;
+
+      } else if (binOp instanceof MambaBinaryOperators.LessThan) {
+        return true;
+
+      } else if (binOp instanceof MambaBinaryOperators.LessThanOrEqualTo) {
+        return true;
+
+      } else if (binOp instanceof MambaBinaryOperators.Plus) {
+        return false;
+
+      } else if (binOp instanceof MambaBinaryOperators.Minus) {
+        return false;
+
+      } else if (binOp instanceof MambaBinaryOperators.Times) {
+        return false;
+
+      } else {
+        throw new Error("unknown MAMBA binary operator");
+      }
+    }
+
+    @Override
+    public Boolean visit(MambaNegationNode node) {
+      return true;
+    }
+
+    @Override
+    public Boolean visit(MambaRevealNode node) {
+      return false;
+    }
+
+    @Override
+    public Boolean visit(MambaMuxNode node) {
+      return false;
+    }
   }
 }
 

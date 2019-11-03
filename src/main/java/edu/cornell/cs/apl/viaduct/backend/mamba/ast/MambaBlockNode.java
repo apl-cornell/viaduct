@@ -13,6 +13,10 @@ import javax.annotation.Nonnull;
 public abstract class MambaBlockNode implements MambaStatementNode, Iterable<MambaStatementNode> {
   private static final MambaBlockNode EMPTY_BLOCK = MambaBlockNode.builder().build();
 
+  public static MambaBlockNode create(Iterable<MambaStatementNode> stmts) {
+    return builder().addAll(stmts).build();
+  }
+
   public static Builder builder() {
     return new AutoValue_MambaBlockNode.Builder();
   }

@@ -12,9 +12,10 @@ import edu.cornell.cs.apl.viaduct.backend.mamba.ast.MambaIntLiteralNode;
 import edu.cornell.cs.apl.viaduct.backend.mamba.ast.MambaOutputNode;
 import edu.cornell.cs.apl.viaduct.backend.mamba.ast.MambaReadNode;
 import edu.cornell.cs.apl.viaduct.backend.mamba.ast.MambaRegIntDeclarationNode;
-import edu.cornell.cs.apl.viaduct.backend.mamba.ast.MambaRegIntDeclarationNode.RegisterType;
+import edu.cornell.cs.apl.viaduct.backend.mamba.ast.MambaSecurityType;
 import edu.cornell.cs.apl.viaduct.backend.mamba.ast.MambaStatementNode;
 import edu.cornell.cs.apl.viaduct.backend.mamba.ast.MambaVariable;
+import edu.cornell.cs.apl.viaduct.backend.mamba.ast.MambaWhileNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ArrayDeclarationNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ArrayIndexingNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.AssertNode;
@@ -74,6 +75,10 @@ public final class ImpToMambaTranslator
     this.isSecret = isSecret;
   }
 
+  private MambaSecurityType getSecurityContext() {
+    return this.isSecret ? MambaSecurityType.SECRET : MambaSecurityType.CLEAR;
+  }
+
   @Override
   public MambaVariable visit(Variable var) {
     return MambaVariable.create(var.getName());
@@ -99,7 +104,11 @@ public final class ImpToMambaTranslator
       n = intValue.getValue();
     }
 
-    return MambaIntLiteralNode.create(n);
+    return
+        MambaIntLiteralNode.builder()
+        .setSecurityType(getSecurityContext())
+        .setValue(n)
+        .build();
   }
 
   @Override
@@ -129,7 +138,7 @@ public final class ImpToMambaTranslator
       mambaBinOp = MambaBinaryOperators.EqualTo.create();
 
     } else if (binOp instanceof BinaryOperators.LessThan) {
-      mambaBinOp = MambaBinaryOperators.EqualTo.create();
+      mambaBinOp = MambaBinaryOperators.LessThan.create();
 
     } else if (binOp instanceof BinaryOperators.LessThanOrEqualTo) {
       mambaBinOp = MambaBinaryOperators.LessThanOrEqualTo.create();
@@ -164,7 +173,7 @@ public final class ImpToMambaTranslator
   public MambaStatementNode visit(VariableDeclarationNode node) {
     return
         MambaRegIntDeclarationNode.builder()
-        .setRegisterType(this.isSecret ? RegisterType.SECRET : RegisterType.CLEAR)
+        .setRegisterType(getSecurityContext())
         .setVariable(node.getVariable().accept(this))
         .build();
   }
@@ -210,6 +219,7 @@ public final class ImpToMambaTranslator
         MambaInputNode.builder()
         .setVariable(node.getVariable().accept(this))
         .setPlayer(0) // TODO: fix this
+        .setSecurityContext(getSecurityContext())
         .build();
   }
 
@@ -225,7 +235,11 @@ public final class ImpToMambaTranslator
 
   @Override
   public MambaStatementNode visit(WhileNode node) {
-    throw new Error("translation not implemented");
+    return
+      MambaWhileNode.builder()
+      .setGuard(node.getGuard().accept(this))
+      .setBody((MambaBlockNode) node.getBody().accept(this))
+      .build();
   }
 
   @Override

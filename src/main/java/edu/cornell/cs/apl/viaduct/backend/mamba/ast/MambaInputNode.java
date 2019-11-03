@@ -16,6 +16,8 @@ public abstract class MambaInputNode implements MambaStatementNode {
 
   public abstract int getPlayer();
 
+  public abstract MambaSecurityType getSecurityContext();
+
   @Override
   public <R> R accept(MambaStatementVisitor<R> v) {
     return v.visit(this);
@@ -26,6 +28,8 @@ public abstract class MambaInputNode implements MambaStatementNode {
     public abstract Builder setVariable(MambaVariable var);
 
     public abstract Builder setPlayer(int player);
+
+    public abstract Builder setSecurityContext(MambaSecurityType type);
 
     public abstract MambaInputNode build();
   }

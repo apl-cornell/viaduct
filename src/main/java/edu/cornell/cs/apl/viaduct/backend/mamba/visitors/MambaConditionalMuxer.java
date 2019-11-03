@@ -14,8 +14,10 @@ import edu.cornell.cs.apl.viaduct.backend.mamba.ast.MambaNegationNode;
 import edu.cornell.cs.apl.viaduct.backend.mamba.ast.MambaOutputNode;
 import edu.cornell.cs.apl.viaduct.backend.mamba.ast.MambaReadNode;
 import edu.cornell.cs.apl.viaduct.backend.mamba.ast.MambaRegIntDeclarationNode;
+import edu.cornell.cs.apl.viaduct.backend.mamba.ast.MambaSecurityType;
 import edu.cornell.cs.apl.viaduct.backend.mamba.ast.MambaStatementNode;
 import edu.cornell.cs.apl.viaduct.backend.mamba.ast.MambaVariable;
+import edu.cornell.cs.apl.viaduct.backend.mamba.ast.MambaWhileNode;
 import edu.cornell.cs.apl.viaduct.util.FreshNameGenerator;
 
 /** convert conditional statements into straightline code with muxes. */
@@ -139,6 +141,11 @@ public class MambaConditionalMuxer
     if (thenBranch.getStatements().size() > 0) {
       builder
         .add(
+            MambaRegIntDeclarationNode.builder()
+            .setVariable(condVar)
+            .setRegisterType(MambaSecurityType.SECRET)
+            .build())
+        .add(
             MambaAssignNode.builder()
             .setVariable(condVar)
             .setRhs(condAssign)
@@ -148,6 +155,11 @@ public class MambaConditionalMuxer
 
     if (elseBranch.getStatements().size() > 0) {
       builder
+        .add(
+            MambaRegIntDeclarationNode.builder()
+            .setVariable(negCondVar)
+            .setRegisterType(MambaSecurityType.SECRET)
+            .build())
           .add(
               MambaAssignNode.builder()
               .setVariable(negCondVar)
@@ -157,6 +169,14 @@ public class MambaConditionalMuxer
     }
 
     return builder.build();
+  }
+
+  @Override
+  public Iterable<MambaStatementNode> visit(MambaWhileNode node) {
+    return single(
+        node.toBuilder()
+        .setBody(MambaBlockNode.create(node.getBody().accept(this)))
+        .build());
   }
 
   @Override

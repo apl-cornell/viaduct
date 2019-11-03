@@ -6,6 +6,7 @@ import edu.cornell.cs.apl.viaduct.backend.mamba.ast.MambaIfNode;
 import edu.cornell.cs.apl.viaduct.backend.mamba.ast.MambaInputNode;
 import edu.cornell.cs.apl.viaduct.backend.mamba.ast.MambaOutputNode;
 import edu.cornell.cs.apl.viaduct.backend.mamba.ast.MambaRegIntDeclarationNode;
+import edu.cornell.cs.apl.viaduct.backend.mamba.ast.MambaWhileNode;
 
 public interface MambaStatementVisitor<R> {
   R visit(MambaRegIntDeclarationNode node);
@@ -17,6 +18,8 @@ public interface MambaStatementVisitor<R> {
   R visit(MambaOutputNode node);
 
   R visit(MambaIfNode node);
+
+  R visit(MambaWhileNode node);
 
   R visit(MambaBlockNode node);
 }

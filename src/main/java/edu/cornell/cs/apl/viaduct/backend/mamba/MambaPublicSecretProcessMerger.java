@@ -168,7 +168,7 @@ public final class MambaPublicSecretProcessMerger {
             MambaExpressionNode mambaExpr =
                 MambaInliner.run(
                     inlineMap,
-                    ImpToMambaTranslator.run(false, publicSend.getSentExpression()));
+                    ImpToMambaTranslator.run(true, publicSend.getSentExpression()));
 
             inlineMap = inlineMap.put(mambaVar, mambaExpr);
             /*
@@ -205,7 +205,7 @@ public final class MambaPublicSecretProcessMerger {
               mergePublicSecretProcesses(
                   inlineMap,
                   publicProcessName, publicIf.getThenBranch().getStatements(),
-                  secretProcessName, secretIf.getElseBranch().getStatements());
+                  secretProcessName, secretIf.getThenBranch().getStatements());
 
           Iterable<MambaStatementNode> newElseBranch =
               mergePublicSecretProcesses(

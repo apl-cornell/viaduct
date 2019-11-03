@@ -6,6 +6,7 @@ import edu.cornell.cs.apl.viaduct.AstNode;
 import edu.cornell.cs.apl.viaduct.backend.mamba.ast.MambaStatementNode;
 import edu.cornell.cs.apl.viaduct.backend.mamba.protocols.MambaPublic;
 import edu.cornell.cs.apl.viaduct.backend.mamba.protocols.MambaSecret;
+import edu.cornell.cs.apl.viaduct.backend.mamba.visitors.ImpToMambaTranslator;
 import edu.cornell.cs.apl.viaduct.backend.mamba.visitors.MambaPrintVisitor;
 import edu.cornell.cs.apl.viaduct.backend.mamba.visitors.MambaSecretConditionalConverter;
 import edu.cornell.cs.apl.viaduct.imp.ast.ProcessDeclarationNode;
@@ -47,12 +48,25 @@ public final class MambaTranslator {
       }
     }
 
+    MambaStatementNode mambaProcess = null;
+
     // public and secret mamba processes exist; merge them
     if (publicProcessName != null && secretProcessName != null) {
-      MambaStatementNode mergedProcess =
+      mambaProcess =
           MambaPublicSecretProcessMerger.run(program, publicProcessName, secretProcessName);
-      mergedProcess = MambaSecretConditionalConverter.run(mergedProcess);
-      System.out.println(MambaPrintVisitor.run(mergedProcess));
+
+    } else if (publicProcessName != null) {
+      mambaProcess =
+          ImpToMambaTranslator.run(false, processes.get(publicProcessName).getBody());
+
+    } else if (secretProcessName != null) {
+      mambaProcess =
+          ImpToMambaTranslator.run(false, processes.get(secretProcessName).getBody());
+    }
+
+    if (mambaProcess != null) {
+      mambaProcess = MambaSecretConditionalConverter.run(mambaProcess);
+      System.out.println(MambaPrintVisitor.run(mambaProcess));
     }
   }
 }

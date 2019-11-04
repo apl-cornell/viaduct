@@ -9,6 +9,8 @@ import edu.cornell.cs.apl.viaduct.backend.mamba.protocols.MambaSecret;
 import edu.cornell.cs.apl.viaduct.backend.mamba.visitors.ImpToMambaTranslator;
 import edu.cornell.cs.apl.viaduct.backend.mamba.visitors.MambaPrintVisitor;
 import edu.cornell.cs.apl.viaduct.backend.mamba.visitors.MambaSecretConditionalConverter;
+import edu.cornell.cs.apl.viaduct.backend.mamba.visitors.MambaSecretInputChecker;
+import edu.cornell.cs.apl.viaduct.backend.mamba.visitors.MambaSecretVariablesVisitor;
 import edu.cornell.cs.apl.viaduct.imp.ast.ProcessDeclarationNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ProcessName;
 import edu.cornell.cs.apl.viaduct.imp.ast.ProgramNode;
@@ -65,8 +67,10 @@ public final class MambaTranslator {
     }
 
     if (mambaProcess != null) {
-      mambaProcess = MambaSecretConditionalConverter.run(mambaProcess);
-      System.out.println(MambaPrintVisitor.run(mambaProcess));
+      MambaSecretInputChecker secretChecker =
+          new MambaSecretInputChecker(MambaSecretVariablesVisitor.run(mambaProcess));
+      mambaProcess = MambaSecretConditionalConverter.run(secretChecker, mambaProcess);
+      System.out.println(MambaPrintVisitor.run(secretChecker, mambaProcess));
     }
   }
 }

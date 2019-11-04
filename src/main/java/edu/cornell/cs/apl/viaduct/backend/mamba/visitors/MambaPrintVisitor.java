@@ -33,14 +33,21 @@ public final class MambaPrintVisitor
   private static String OBJ_NAME = "obj";
   private static String TEMPLATE = OBJ_NAME + " = {}\n%s";
 
-  private int indentation = -INDENTATION_LEVEL;
-  private FreshNameGenerator nameGenerator = new FreshNameGenerator();
+  private final FreshNameGenerator nameGenerator = new FreshNameGenerator();
+  private final MambaSecretInputChecker secretChecker;
 
-  public static String run(MambaStatementNode mambaProgram) {
-    return String.format(TEMPLATE, mambaProgram.accept(new MambaPrintVisitor()));
+  private int indentation = -INDENTATION_LEVEL;
+
+  /** print. */
+  public static String run(MambaSecretInputChecker secretChecker, MambaStatementNode mambaProgram) {
+    return
+        String.format(TEMPLATE,
+            mambaProgram.accept(new MambaPrintVisitor(secretChecker)));
   }
 
-  private MambaPrintVisitor() {}
+  private MambaPrintVisitor(MambaSecretInputChecker secretChecker) {
+    this.secretChecker = secretChecker;
+  }
 
   private String addIndentation() {
     return StringUtils.repeat(' ', this.indentation);
@@ -178,9 +185,11 @@ public final class MambaPrintVisitor
     StringBuilder builder = new StringBuilder();
     String template = null;
 
-    if (IsBooleanExpr.run(rhs)) {
-      // TODO: BROKEN! switch between secret and clear as needed
+    if (IsBooleanExpr.run(rhs) && rhs.accept(this.secretChecker)) {
       template = "%s.write(sregint(1) & %s)";
+
+    } else if (IsBooleanExpr.run(rhs) && !rhs.accept(this.secretChecker)) {
+      template = "%s.write(regint(1) & %s)";
 
     } else {
       template = "%s.write(%s)";

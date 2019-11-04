@@ -116,14 +116,14 @@ final class PrintVisitor
       AbstractLineNumber absLineNo = node.getLogicalPosition();
 
       if (srcLoc != null || absLineNo != null) {
-      addIndentation();
+        addIndentation();
         printComment(
             String.format("%s, %s",
                 srcLoc != null ? srcLoc.toString() : "",
                 absLineNo != null ? absLineNo.toString() : ""));
-      output.println();
+        output.println();
+      }
     }
-  }
   }
 
   /** Toggle between printing with color or not. */

@@ -136,8 +136,8 @@ public class StmtBuilder {
   }
 
   /** create break. */
-  public StmtBuilder loopBreak() {
-    this.stmts.add(BreakNode.builder().build());
+  public StmtBuilder loopBreak(BreakNode node) {
+    this.stmts.add(node.toBuilder().build());
     return this;
   }
 
@@ -223,7 +223,7 @@ public class StmtBuilder {
           .setGuard(this.ifNode.getGuard())
           .setThenBranch(thenBranch)
           .setElseBranch(elseBranch)
-          .setSourceLocation(this.ifNode.getSourceLocation())
+          .setLocation(this.ifNode)
           .build();
     }
   }
@@ -241,7 +241,7 @@ public class StmtBuilder {
       BlockNode body = this.pathMap.get(ControlLabel.BODY);
       return LoopNode.builder()
           .setBody(body)
-          .setSourceLocation(this.loopNode.getSourceLocation())
+          .setLocation(this.loopNode)
           .build();
     }
   }

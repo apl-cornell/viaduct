@@ -36,6 +36,7 @@ import edu.cornell.cs.apl.viaduct.imp.visitors.StmtVisitor;
 import edu.cornell.cs.apl.viaduct.imp.visitors.TopLevelDeclarationVisitor;
 import edu.cornell.cs.apl.viaduct.protocol.Protocol;
 import edu.cornell.cs.apl.viaduct.security.Label;
+import edu.cornell.cs.apl.viaduct.util.AbstractLineNumber;
 import edu.cornell.cs.apl.viaduct.util.PrintUtil;
 import java.io.PrintStream;
 import java.util.ArrayList;
@@ -106,16 +107,23 @@ final class PrintVisitor
   }
 
   /**
-   * Print the source location of the given node on a new line (if source locations are enabled).
+   * Print the source location of the given node on a new line (if source
+   * locations are enabled).
    */
   private void addSourceLocation(HasLocation node) {
-    if (sourceLocationsEnabled
-        && this.statementTerminatorsEnabled
-        && node.getSourceLocation() != null) {
+    if (sourceLocationsEnabled && this.statementTerminatorsEnabled) {
+      SourceRange srcLoc = node.getSourceLocation();
+      AbstractLineNumber absLineNo = node.getLogicalPosition();
+
+      if (srcLoc != null || absLineNo != null) {
       addIndentation();
-      printComment(node.getSourceLocation().toString());
+        printComment(
+            String.format("%s, %s",
+                srcLoc != null ? srcLoc.toString() : "",
+                absLineNo != null ? absLineNo.toString() : ""));
       output.println();
     }
+  }
   }
 
   /** Toggle between printing with color or not. */

@@ -58,7 +58,7 @@ public abstract class Cleartext extends AbstractProtocol<ImpAstNode> {
         return
           ReadNode.builder()
           .setReference(outVar)
-          .setSourceLocation(stmt.getSourceLocation())
+          .setLocation(stmt)
           .build();
 
       } else if (stmt instanceof ArrayDeclarationNode) { // array access
@@ -70,7 +70,7 @@ public abstract class Cleartext extends AbstractProtocol<ImpAstNode> {
                 .setArray(outVar)
                 .setIndex(ReadNode.builder().setReference(idx).build())
                 .build())
-            .setSourceLocation(stmt.getSourceLocation())
+            .setLocation(stmt)
             .build();
 
       } else {
@@ -81,7 +81,7 @@ public abstract class Cleartext extends AbstractProtocol<ImpAstNode> {
       return
           ReadNode.builder()
           .setReference(outVar)
-          .setSourceLocation(node.getAstNode().getSourceLocation())
+          .setLocation(node.getAstNode())
           .build();
     }
   }
@@ -108,7 +108,7 @@ public abstract class Cleartext extends AbstractProtocol<ImpAstNode> {
           ReceiveNode.builder()
           .setSender(readProcess)
           .setVariable(readArgVar)
-          .setSourceLocation(arg.getSourceLocation())
+          .setLocation(arg)
           .build());
     }
 
@@ -117,7 +117,7 @@ public abstract class Cleartext extends AbstractProtocol<ImpAstNode> {
         SendNode.builder()
         .setRecipient(readProcess)
         .setSentExpression(readVal)
-        .setSourceLocation(readNode.getAstNode().getSourceLocation())
+        .setLocation(readNode.getAstNode())
         .build());
 
     Variable readVar = info.getFreshVar(readLabel);
@@ -125,7 +125,7 @@ public abstract class Cleartext extends AbstractProtocol<ImpAstNode> {
         ReceiveNode.builder()
         .setSender(outProcess)
         .setVariable(readVar)
-        .setSourceLocation(readNode.getAstNode().getSourceLocation())
+        .setLocation(readNode.getAstNode())
         .build());
 
     return readVar;
@@ -152,20 +152,20 @@ public abstract class Cleartext extends AbstractProtocol<ImpAstNode> {
           SendNode.builder()
           .setRecipient(inProcess)
           .setSentExpression(val)
-          .setSourceLocation(val.getSourceLocation())
+          .setLocation(val)
           .build());
       Variable valVar = info.getFreshVar(String.format("%s_val", storageVar));
       builder.statement(
           ReceiveNode.builder()
           .setSender(writeProcess)
           .setVariable(valVar)
-          .setSourceLocation(val.getSourceLocation())
+          .setLocation(val)
           .build());
       builder.statement(
           AssignNode.builder()
           .setLhs((Variable) storageVar)
           .setRhs(ReadNode.create(valVar))
-          .setSourceLocation(writeNode.getAstNode().getSourceLocation())
+          .setLocation(writeNode.getAstNode())
           .build());
 
     } else if (stmt instanceof ArrayDeclarationNode) {
@@ -177,13 +177,13 @@ public abstract class Cleartext extends AbstractProtocol<ImpAstNode> {
           SendNode.builder()
           .setRecipient(inProcess)
           .setSentExpression(idx)
-          .setSourceLocation(idx.getSourceLocation())
+          .setLocation(idx)
           .build());
       writerBuilder.statement(
           SendNode.builder()
           .setRecipient(inProcess)
           .setSentExpression(val)
-          .setSourceLocation(val.getSourceLocation())
+          .setLocation(val)
           .build());
 
       Variable arrayVar = ((ArrayDeclarationNode) stmt).getVariable();
@@ -193,13 +193,13 @@ public abstract class Cleartext extends AbstractProtocol<ImpAstNode> {
           ReceiveNode.builder()
           .setSender(writeProcess)
           .setVariable(idxVar)
-          .setSourceLocation(idx.getSourceLocation())
+          .setLocation(idx)
           .build());
       builder.statement(
           ReceiveNode.builder()
           .setSender(writeProcess)
           .setVariable(valVar)
-          .setSourceLocation(val.getSourceLocation())
+          .setLocation(val)
           .build());
       builder.statement(
           AssignNode.builder()
@@ -209,7 +209,7 @@ public abstract class Cleartext extends AbstractProtocol<ImpAstNode> {
               .setIndex(ReadNode.create(idxVar))
               .build())
           .setRhs(ReadNode.create(valVar))
-          .setSourceLocation(writeNode.getAstNode().getSourceLocation())
+          .setLocation(writeNode.getAstNode())
           .build());
 
     } else {
@@ -257,7 +257,7 @@ public abstract class Cleartext extends AbstractProtocol<ImpAstNode> {
           .setVariable(newVar)
           .setType(varDecl.getType())
           .setLabel(varDecl.getLabel())
-          .setSourceLocation(varDecl.getSourceLocation())
+          .setLocation(varDecl)
           .build());
 
     } else if (astNode instanceof ArrayDeclarationNode) {
@@ -274,7 +274,7 @@ public abstract class Cleartext extends AbstractProtocol<ImpAstNode> {
           .setLength(arrayDecl.getLength())
           .setElementType(arrayDecl.getElementType())
           .setLabel(arrayDecl.getLabel())
-          .setSourceLocation(astNode.getSourceLocation())
+          .setLocation(astNode)
           .build());
 
     } else {
@@ -351,7 +351,7 @@ public abstract class Cleartext extends AbstractProtocol<ImpAstNode> {
           LetBindingNode.builder()
           .setVariable(outVar)
           .setRhs((ExpressionNode) renamedAstNode)
-          .setSourceLocation(astNode.getSourceLocation())
+          .setLocation(astNode)
           .build());
     }
     // there's no need to let-bind assignments since the

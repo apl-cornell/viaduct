@@ -1,5 +1,7 @@
 package edu.cornell.cs.apl.viaduct.backend.mamba.visitors;
 
+import com.google.common.collect.ImmutableList;
+
 import edu.cornell.cs.apl.viaduct.backend.mamba.ast.MambaAssignNode;
 import edu.cornell.cs.apl.viaduct.backend.mamba.ast.MambaBinaryExpressionNode;
 import edu.cornell.cs.apl.viaduct.backend.mamba.ast.MambaBinaryOperator;
@@ -47,20 +49,39 @@ import edu.cornell.cs.apl.viaduct.imp.ast.values.IntegerValue;
 import edu.cornell.cs.apl.viaduct.imp.visitors.ExprVisitor;
 import edu.cornell.cs.apl.viaduct.imp.visitors.ReferenceVisitor;
 import edu.cornell.cs.apl.viaduct.imp.visitors.StmtVisitor;
-
-import java.util.ArrayList;
-import java.util.List;
+import edu.cornell.cs.apl.viaduct.util.FreshNameGenerator;
 
 public final class ImpToMambaTranslator
     implements
         ExprVisitor<MambaExpressionNode>,
-        StmtVisitor<MambaStatementNode>,
+        StmtVisitor<Iterable<MambaStatementNode>>,
         ReferenceVisitor<MambaVariable>
 {
-  private boolean isSecret;
+  private static FreshNameGenerator nameGenerator = new FreshNameGenerator();
+  private static String LOOP_VAR = "loop_cond";
+
+  private final boolean isSecret;
+  private final MambaVariable currentLoopVar;
 
   public static MambaStatementNode run(boolean isSecret, StatementNode stmt) {
-    return stmt.accept(new ImpToMambaTranslator(isSecret));
+    return MambaBlockNode.create(stmt.accept(new ImpToMambaTranslator(isSecret)));
+  }
+
+  /** run under context where loopVar is the guard of the current loop. */
+  public static MambaStatementNode run(
+      boolean isSecret,
+      MambaVariable loopVar,
+      StatementNode stmt) {
+
+    ImmutableList<MambaStatementNode> mambaStmts =
+        ImmutableList.copyOf(stmt.accept(new ImpToMambaTranslator(isSecret, loopVar)));
+
+    if (mambaStmts.size() == 1) {
+      return mambaStmts.get(0);
+
+    } else {
+      return MambaBlockNode.create(mambaStmts);
+    }
   }
 
   public static MambaExpressionNode run(boolean isSecret, ExpressionNode expr) {
@@ -71,8 +92,26 @@ public final class ImpToMambaTranslator
     return ref.accept(new ImpToMambaTranslator(isSecret));
   }
 
+  public static MambaVariable getFreshLoopVariable() {
+    return MambaVariable.create(nameGenerator.getFreshName(LOOP_VAR));
+  }
+
+  private static Iterable<MambaStatementNode> single(MambaStatementNode stmt) {
+    return ImmutableList.of(stmt);
+  }
+
+  private static ImmutableList.Builder<MambaStatementNode> listBuilder() {
+    return ImmutableList.builder();
+  }
+
   private ImpToMambaTranslator(boolean isSecret) {
     this.isSecret = isSecret;
+    this.currentLoopVar = null;
+  }
+
+  private ImpToMambaTranslator(boolean isSecret, MambaVariable loopVar) {
+    this.isSecret = isSecret;
+    this.currentLoopVar = loopVar;
   }
 
   private MambaSecurityType getSecurityContext() {
@@ -170,104 +209,151 @@ public final class ImpToMambaTranslator
   }
 
   @Override
-  public MambaStatementNode visit(VariableDeclarationNode node) {
+  public Iterable<MambaStatementNode> visit(VariableDeclarationNode node) {
     return
-        MambaRegIntDeclarationNode.builder()
-        .setRegisterType(getSecurityContext())
-        .setVariable(node.getVariable().accept(this))
-        .build();
+        single(
+            MambaRegIntDeclarationNode.builder()
+            .setRegisterType(getSecurityContext())
+            .setVariable(node.getVariable().accept(this))
+            .build());
   }
 
   @Override
-  public MambaStatementNode visit(ArrayDeclarationNode node) {
+  public Iterable<MambaStatementNode> visit(ArrayDeclarationNode node) {
     throw new Error("translation not implemented");
   }
 
   @Override
-  public MambaStatementNode visit(LetBindingNode node) {
+  public Iterable<MambaStatementNode> visit(LetBindingNode node) {
     MambaExpressionNode mambaRhs = node.getRhs().accept(this);
     return
-        MambaAssignNode.builder()
-        .setVariable(node.getVariable().accept(this))
-        .setRhs(mambaRhs)
-        .build();
+        single(
+            MambaAssignNode.builder()
+            .setVariable(node.getVariable().accept(this))
+            .setRhs(mambaRhs)
+            .build());
   }
 
   @Override
-  public MambaStatementNode visit(AssignNode node) {
+  public Iterable<MambaStatementNode> visit(AssignNode node) {
     MambaVariable mambaVar = node.getLhs().accept(this);
     MambaExpressionNode mambaRhs = node.getRhs().accept(this);
     return
-        MambaAssignNode.builder()
-        .setVariable(mambaVar)
-        .setRhs(mambaRhs)
-        .build();
+        single(
+            MambaAssignNode.builder()
+            .setVariable(mambaVar)
+            .setRhs(mambaRhs)
+            .build());
   }
 
   @Override
-  public MambaStatementNode visit(SendNode node) {
+  public Iterable<MambaStatementNode> visit(SendNode node) {
     return
-        MambaOutputNode.builder()
-        .setExpression(node.getSentExpression().accept(this))
-        .setPlayer(0) // TODO: fix this
-        .build();
+        single(
+            MambaOutputNode.builder()
+            .setExpression(node.getSentExpression().accept(this))
+            .setPlayer(0) // TODO: fix this
+            .build());
   }
 
   @Override
-  public MambaStatementNode visit(ReceiveNode node) {
+  public Iterable<MambaStatementNode> visit(ReceiveNode node) {
     return
-        MambaInputNode.builder()
-        .setVariable(node.getVariable().accept(this))
-        .setPlayer(0) // TODO: fix this
-        .setSecurityContext(getSecurityContext())
-        .build();
+        single(
+            MambaInputNode.builder()
+            .setVariable(node.getVariable().accept(this))
+            .setPlayer(0) // TODO: fix this
+            .setSecurityContext(getSecurityContext())
+            .build());
   }
 
   @Override
-  public MambaStatementNode visit(IfNode node) {
+  public Iterable<MambaStatementNode> visit(IfNode node) {
     return
-      MambaIfNode.builder()
-      .setGuard(node.getGuard().accept(this))
-      .setThenBranch((MambaBlockNode) node.getThenBranch().accept(this))
-      .setElseBranch((MambaBlockNode) node.getElseBranch().accept(this))
-      .build();
+        single(
+            MambaIfNode.builder()
+            .setGuard(node.getGuard().accept(this))
+            .setThenBranch(MambaBlockNode.create(node.getThenBranch().accept(this)))
+            .setElseBranch(MambaBlockNode.create(node.getElseBranch().accept(this)))
+            .build());
   }
 
   @Override
-  public MambaStatementNode visit(WhileNode node) {
+  public Iterable<MambaStatementNode> visit(WhileNode node) {
     return
-      MambaWhileNode.builder()
-      .setGuard(node.getGuard().accept(this))
-      .setBody((MambaBlockNode) node.getBody().accept(this))
-      .build();
+        single(
+            MambaWhileNode.builder()
+            .setGuard(node.getGuard().accept(this))
+            .setBody(MambaBlockNode.create(node.getBody().accept(this)))
+            .build());
   }
 
   @Override
-  public MambaStatementNode visit(ForNode node) {
+  public Iterable<MambaStatementNode> visit(ForNode node) {
     throw new Error("translation not implemented");
   }
 
   @Override
-  public MambaStatementNode visit(LoopNode node) {
-    throw new Error("translation not implemented");
+  public Iterable<MambaStatementNode> visit(LoopNode node) {
+    // convert to while loop by generating a new loop variable
+    MambaVariable loopVar = getFreshLoopVariable();
+    Iterable<MambaStatementNode> body =
+        node.getBody().accept(new ImpToMambaTranslator(isSecret, loopVar));
+
+    return
+        listBuilder()
+        .add(
+            MambaRegIntDeclarationNode.builder()
+            .setRegisterType(getSecurityContext())
+            .setVariable(loopVar)
+            .build())
+        .add(
+            MambaAssignNode.builder()
+            .setVariable(loopVar)
+            .setRhs(
+                MambaIntLiteralNode.builder()
+                .setSecurityType(getSecurityContext())
+                .setValue(1)
+                .build())
+            .build())
+        .add(
+            MambaWhileNode.builder()
+            .setGuard(MambaReadNode.create(loopVar))
+            .setBody(MambaBlockNode.create(body))
+            .build())
+        .build();
   }
 
   @Override
-  public MambaStatementNode visit(BreakNode node) {
-    throw new Error("translation not implemented");
-  }
+  public Iterable<MambaStatementNode> visit(BreakNode node) {
+    if (this.currentLoopVar != null) {
+      return
+          single(
+              MambaAssignNode.builder()
+              .setVariable(this.currentLoopVar)
+              .setRhs(
+                  MambaIntLiteralNode.builder()
+                  .setSecurityType(getSecurityContext())
+                  .setValue(0)
+                  .build())
+              .build());
 
-  @Override
-  public MambaStatementNode visit(BlockNode node) {
-    List<MambaStatementNode> mambaStmts = new ArrayList<>();
-    for (StatementNode stmt : node) {
-      mambaStmts.add(stmt.accept(this));
+    } else {
+      throw new Error("cannot break outside of a loop");
     }
-    return MambaBlockNode.builder().addAll(mambaStmts).build();
   }
 
   @Override
-  public MambaStatementNode visit(AssertNode node) {
+  public Iterable<MambaStatementNode> visit(BlockNode node) {
+    ImmutableList.Builder<MambaStatementNode> builder = ImmutableList.builder();
+    for (StatementNode stmt : node) {
+      builder.addAll(stmt.accept(this));
+    }
+    return builder.build();
+  }
+
+  @Override
+  public Iterable<MambaStatementNode> visit(AssertNode node) {
     throw new Error("translation not implemented");
   }
 }

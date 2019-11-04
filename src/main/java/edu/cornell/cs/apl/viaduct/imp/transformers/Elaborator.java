@@ -14,13 +14,18 @@ import edu.cornell.cs.apl.viaduct.imp.visitors.StmtVisitor;
 
 /** Elaborate derived AST nodes into internal ones. */
 public class Elaborator {
+  /** elaborate. */
   public static ProgramNode run(ProgramNode program) {
-    return new ElaborationProgramVisitor().run(program);
+    ProgramNode elaboratedProgram = (new ElaborationProgramVisitor()).run(program);
+    elaboratedProgram = LogicalPositionInjector.run(elaboratedProgram);
+    return elaboratedProgram;
   }
 
-  // TODO: we shouldn't need this
+  /** elaborate. */
   public static StatementNode run(StatementNode statement) {
-    return new ElaborationProgramVisitor().run(statement);
+    StatementNode elaboratedStmt = new ElaborationProgramVisitor().run(statement);
+    elaboratedStmt = LogicalPositionInjector.run(elaboratedStmt);
+    return elaboratedStmt;
   }
 
   private static class ElaborationProgramVisitor extends IdentityProgramVisitor {

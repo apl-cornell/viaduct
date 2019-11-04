@@ -47,7 +47,7 @@ public class ControlProtocol extends Cleartext implements Protocol<ImpAstNode> {
       Set<ProcessName> breakProcesses = info.getCurrentLoopControlContext();
       for (ProcessName breakProcess : breakProcesses) {
         StmtBuilder breakHostBuilder = info.getBuilder(breakProcess);
-        breakHostBuilder.loopBreak();
+        breakHostBuilder.loopBreak((BreakNode) astNode);
       }
 
       return;

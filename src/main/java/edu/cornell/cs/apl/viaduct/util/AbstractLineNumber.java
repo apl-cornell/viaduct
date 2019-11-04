@@ -2,9 +2,10 @@ package edu.cornell.cs.apl.viaduct.util;
 
 import io.vavr.collection.List;
 
-
 /** Used for maintaining ordering information about PDG nodes. */
 public class AbstractLineNumber implements Comparable<AbstractLineNumber> {
+  public enum RelativePosition { BEFORE, EQUAL, AFTER, UNORDERED }
+
   static class LineNumberComponent {
     String marker;
     int seqNum;
@@ -39,7 +40,11 @@ public class AbstractLineNumber implements Comparable<AbstractLineNumber> {
 
     int n = this.componentList.size();
     LineNumberComponent last = this.componentList.get(n - 1);
-    newLn.componentList = this.componentList.append(new LineNumberComponent(last.getMarker(), last.getSequenceNum() + 1));
+    newLn.componentList =
+        this.componentList
+        .pop()
+        .append(
+            new LineNumberComponent(last.getMarker(), last.getSequenceNum() + 1));
 
     return newLn;
   }
@@ -51,12 +56,13 @@ public class AbstractLineNumber implements Comparable<AbstractLineNumber> {
     return newLn;
   }
 
+
   /**
    * Compares ordering between abstract line numbers.
    *
    * @return 1 (greater than), 0 (unordered), or -1 (less than)
    */
-  public int compareTo(AbstractLineNumber other) {
+  public RelativePosition comparePositionTo(AbstractLineNumber other) {
     int sizeThis = this.componentList.size();
     int sizeOther = other.componentList.size();
     int size = sizeThis > sizeOther ? sizeOther : sizeThis;
@@ -72,21 +78,38 @@ public class AbstractLineNumber implements Comparable<AbstractLineNumber> {
         int otherSeq = otherComp.getSequenceNum();
 
         if (thisSeq > otherSeq) {
-          return 1;
+          return RelativePosition.AFTER;
         } else if (thisSeq < otherSeq) {
-          return -1;
+          return RelativePosition.BEFORE;
         } else {
           continue;
         }
 
       } else {
-        return 0;
+        // unordered
+        return RelativePosition.UNORDERED;
       }
     }
 
     // we can only reach this if all components are equal,
     // thus at this point we know line numbers are equal
-    return 0;
+    return RelativePosition.EQUAL;
+  }
+
+  @Override
+  public int compareTo(AbstractLineNumber other) {
+    switch (this.comparePositionTo(other)) {
+      case BEFORE:
+        return -1;
+
+      case AFTER:
+        return 1;
+
+      case EQUAL:
+      case UNORDERED:
+      default:
+        return 0;
+    }
   }
 
   @Override

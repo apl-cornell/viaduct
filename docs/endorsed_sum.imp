@@ -1,0 +1,13 @@
+process main {
+    int{(A|B)-> & A<-} a;
+    int{(A|B)-> & B<-} b;
+
+    int{A ⊓ B} c = endorse(a, {A ⊓ B}) + endorse(b, {A ⊓ B});
+    int{A ⊓ B} sum = 0;
+    for (int i = 0; i < 100; i+=1) {
+        sum += c * c;
+    }
+}
+
+host alice : {A};
+host bob   : {B};

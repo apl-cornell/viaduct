@@ -53,7 +53,7 @@ public class ReverseElaborator {
         return WhileNode.builder()
             .setGuard(ifNode.getGuard())
             .setBody(ifNode.getThenBranch())
-            .setSourceLocation(node)
+            .setLocation(node)
             .build();
       }
     }

@@ -1,0 +1,12 @@
+process main {
+    int{A & B<-} a = 1;
+    int{B & A<-} b = 1;
+    int{A ⊓ B} c = 0;
+
+    for (int i = 0; i < 100; i+=1) {
+        c = c + declassify(a + b, {A ⊓ B});
+    }
+}
+
+host alice : {A};
+host bob   : {B};

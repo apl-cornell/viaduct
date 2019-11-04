@@ -58,7 +58,7 @@ public class AnfConverter {
 
   /** Create a read node from a reference while maintaining source location. */
   private static ExpressionNode read(ReferenceNode reference) {
-    return ReadNode.builder().setReference(reference).setSourceLocation(reference).build();
+    return ReadNode.builder().setReference(reference).setLocation(reference).build();
   }
 
   /** Create an iterable containing a single statement. */
@@ -401,13 +401,13 @@ public class AnfConverter {
         final Variable tmpVar =
             Variable.builder()
                 .setName(AnfStmtVisitor.this.nameGenerator.getFreshName(TMP_NAME))
-                .setSourceLocation(expression)
+                .setLocation(expression)
                 .build();
         final LetBindingNode binding =
             LetBindingNode.builder()
                 .setVariable(tmpVar)
                 .setRhs(expression)
-                .setSourceLocation(expression)
+                .setLocation(expression)
                 .build();
         bindings.add(binding);
         return tmpVar;

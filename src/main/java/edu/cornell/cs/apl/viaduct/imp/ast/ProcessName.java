@@ -30,7 +30,7 @@ public abstract class ProcessName extends Located implements Comparable<ProcessN
 
   /** Get the default process name that corresponds to a host. */
   public static ProcessName create(HostName host) {
-    return builder().setName(host.getName()).setHost(true).setSourceLocation(host).build();
+    return builder().setName(host.getName()).setHost(true).setLocation(host).build();
   }
 
   public static Builder builder() {
@@ -45,7 +45,7 @@ public abstract class ProcessName extends Located implements Comparable<ProcessN
   /** Convert process name to host name. */
   public HostName toHostName() {
     assert isHost();
-    return HostName.builder().setName(getName()).setSourceLocation(this).build();
+    return HostName.builder().setName(getName()).setLocation(this).build();
   }
 
   @Override

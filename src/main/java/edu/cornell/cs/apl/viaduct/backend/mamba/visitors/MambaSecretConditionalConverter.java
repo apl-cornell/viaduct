@@ -2,6 +2,8 @@ package edu.cornell.cs.apl.viaduct.backend.mamba.visitors;
 
 import com.google.common.collect.ImmutableList;
 
+import edu.cornell.cs.apl.viaduct.backend.mamba.ast.MambaArrayDeclarationNode;
+import edu.cornell.cs.apl.viaduct.backend.mamba.ast.MambaArrayStoreNode;
 import edu.cornell.cs.apl.viaduct.backend.mamba.ast.MambaAssignNode;
 import edu.cornell.cs.apl.viaduct.backend.mamba.ast.MambaBlockNode;
 import edu.cornell.cs.apl.viaduct.backend.mamba.ast.MambaIfNode;
@@ -46,7 +48,17 @@ public class MambaSecretConditionalConverter
   }
 
   @Override
+  public Iterable<MambaStatementNode> visit(MambaArrayDeclarationNode node) {
+    return single(node);
+  }
+
+  @Override
   public Iterable<MambaStatementNode> visit(MambaAssignNode node) {
+    return single(node);
+  }
+
+  @Override
+  public Iterable<MambaStatementNode> visit(MambaArrayStoreNode node) {
     return single(node);
   }
 

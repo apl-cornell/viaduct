@@ -4,6 +4,7 @@ import com.google.common.collect.ImmutableMap;
 
 import edu.cornell.cs.apl.viaduct.AstNode;
 import edu.cornell.cs.apl.viaduct.backend.mamba.ast.MambaStatementNode;
+import edu.cornell.cs.apl.viaduct.backend.mamba.ast.MambaVariable;
 import edu.cornell.cs.apl.viaduct.backend.mamba.protocols.MambaPublic;
 import edu.cornell.cs.apl.viaduct.backend.mamba.protocols.MambaSecret;
 import edu.cornell.cs.apl.viaduct.backend.mamba.visitors.ImpToMambaTranslator;
@@ -15,6 +16,7 @@ import edu.cornell.cs.apl.viaduct.imp.ast.ProcessDeclarationNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ProcessName;
 import edu.cornell.cs.apl.viaduct.imp.ast.ProgramNode;
 import edu.cornell.cs.apl.viaduct.protocol.Protocol;
+import io.vavr.collection.Set;
 
 import java.util.Map;
 
@@ -67,10 +69,10 @@ public final class MambaTranslator {
     }
 
     if (mambaProcess != null) {
-      MambaSecretInputChecker secretChecker =
-          new MambaSecretInputChecker(MambaSecretVariablesVisitor.run(mambaProcess));
+      Set<MambaVariable> secretVariables = MambaSecretVariablesVisitor.run(mambaProcess);
+      MambaSecretInputChecker secretChecker = new MambaSecretInputChecker(secretVariables);
       mambaProcess = MambaSecretConditionalConverter.run(secretChecker, mambaProcess);
-      System.out.println(MambaPrintVisitor.run(secretChecker, mambaProcess));
+      System.out.println(MambaPrintVisitor.run(secretVariables, mambaProcess));
     }
   }
 }

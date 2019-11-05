@@ -1,5 +1,6 @@
 package edu.cornell.cs.apl.viaduct.backend.mamba.visitors;
 
+import edu.cornell.cs.apl.viaduct.backend.mamba.ast.MambaArrayLoadNode;
 import edu.cornell.cs.apl.viaduct.backend.mamba.ast.MambaBinaryExpressionNode;
 import edu.cornell.cs.apl.viaduct.backend.mamba.ast.MambaIntLiteralNode;
 import edu.cornell.cs.apl.viaduct.backend.mamba.ast.MambaMuxNode;
@@ -26,6 +27,11 @@ public class MambaSecretInputChecker implements MambaExpressionVisitor<Boolean> 
   @Override
   public Boolean visit(MambaReadNode node) {
     return this.secretVariables.contains(node.getVariable());
+  }
+
+  @Override
+  public Boolean visit(MambaArrayLoadNode node) {
+    return this.secretVariables.contains(node.getArray());
   }
 
   @Override

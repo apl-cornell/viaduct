@@ -2,6 +2,9 @@ package edu.cornell.cs.apl.viaduct.backend.mamba.visitors;
 
 import com.google.common.collect.ImmutableList;
 
+import edu.cornell.cs.apl.viaduct.backend.mamba.ast.MambaArrayDeclarationNode;
+import edu.cornell.cs.apl.viaduct.backend.mamba.ast.MambaArrayLoadNode;
+import edu.cornell.cs.apl.viaduct.backend.mamba.ast.MambaArrayStoreNode;
 import edu.cornell.cs.apl.viaduct.backend.mamba.ast.MambaAssignNode;
 import edu.cornell.cs.apl.viaduct.backend.mamba.ast.MambaBinaryExpressionNode;
 import edu.cornell.cs.apl.viaduct.backend.mamba.ast.MambaBinaryOperators;
@@ -55,6 +58,11 @@ public class MambaConditionalMuxer
   }
 
   @Override
+  public Iterable<MambaStatementNode> visit(MambaArrayDeclarationNode node) {
+    return single(node);
+  }
+
+  @Override
   public Iterable<MambaStatementNode> visit(MambaAssignNode node) {
     MambaExpressionNode newRhs;
 
@@ -76,6 +84,35 @@ public class MambaConditionalMuxer
           .setVariable(node.getVariable())
           .setRhs(newRhs)
           .build());
+  }
+
+  @Override
+  public Iterable<MambaStatementNode> visit(MambaArrayStoreNode node) {
+    MambaExpressionNode newValue;
+
+    if (this.guardVariable != null) {
+      newValue =
+          MambaMuxNode.builder()
+          .setGuard(MambaReadNode.create(this.guardVariable))
+          .setThenValue(node.getValue())
+          .setElseValue(
+              MambaArrayLoadNode.builder()
+              .setArray(node.getArray())
+              .setIndex(node.getIndex())
+              .build())
+          .build();
+
+    } else {
+      newValue = node.getValue();
+    }
+
+    return
+        single(
+            MambaArrayStoreNode.builder()
+            .setArray(node.getArray())
+            .setIndex(node.getIndex())
+            .setValue(newValue)
+            .build());
   }
 
   @Override

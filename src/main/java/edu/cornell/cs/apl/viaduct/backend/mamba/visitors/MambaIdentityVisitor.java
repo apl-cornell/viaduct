@@ -1,5 +1,8 @@
 package edu.cornell.cs.apl.viaduct.backend.mamba.visitors;
 
+import edu.cornell.cs.apl.viaduct.backend.mamba.ast.MambaArrayDeclarationNode;
+import edu.cornell.cs.apl.viaduct.backend.mamba.ast.MambaArrayLoadNode;
+import edu.cornell.cs.apl.viaduct.backend.mamba.ast.MambaArrayStoreNode;
 import edu.cornell.cs.apl.viaduct.backend.mamba.ast.MambaAssignNode;
 import edu.cornell.cs.apl.viaduct.backend.mamba.ast.MambaBinaryExpressionNode;
 import edu.cornell.cs.apl.viaduct.backend.mamba.ast.MambaBlockNode;
@@ -36,12 +39,20 @@ public class MambaIdentityVisitor
   }
 
   @Override
+  public MambaExpressionNode visit(MambaArrayLoadNode node) {
+    return
+        node.toBuilder()
+        .setIndex(node.getIndex().accept(this))
+        .build();
+  }
+
+  @Override
   public MambaExpressionNode visit(MambaBinaryExpressionNode node) {
     return
-      node.toBuilder()
-      .setLhs(node.getLhs().accept(this))
-      .setRhs(node.getRhs().accept(this))
-      .build();
+        node.toBuilder()
+        .setLhs(node.getLhs().accept(this))
+        .setRhs(node.getRhs().accept(this))
+        .build();
   }
 
   @Override
@@ -76,10 +87,27 @@ public class MambaIdentityVisitor
   }
 
   @Override
+  public MambaStatementNode visit(MambaArrayDeclarationNode node) {
+    return
+        node.toBuilder()
+        .setLength(node.getLength().accept(this))
+        .build();
+  }
+
+  @Override
   public MambaStatementNode visit(MambaAssignNode node) {
     return
         node.toBuilder()
         .setRhs(node.getRhs().accept(this))
+        .build();
+  }
+
+  @Override
+  public MambaStatementNode visit(MambaArrayStoreNode node) {
+    return
+        node.toBuilder()
+        .setIndex(node.getIndex().accept(this))
+        .setValue(node.getValue().accept(this))
         .build();
   }
 

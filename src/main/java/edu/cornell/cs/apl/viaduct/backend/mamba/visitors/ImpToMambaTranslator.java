@@ -2,6 +2,9 @@ package edu.cornell.cs.apl.viaduct.backend.mamba.visitors;
 
 import com.google.common.collect.ImmutableList;
 
+import edu.cornell.cs.apl.viaduct.backend.mamba.ast.MambaArrayDeclarationNode;
+import edu.cornell.cs.apl.viaduct.backend.mamba.ast.MambaArrayLoadNode;
+import edu.cornell.cs.apl.viaduct.backend.mamba.ast.MambaArrayStoreNode;
 import edu.cornell.cs.apl.viaduct.backend.mamba.ast.MambaAssignNode;
 import edu.cornell.cs.apl.viaduct.backend.mamba.ast.MambaBinaryExpressionNode;
 import edu.cornell.cs.apl.viaduct.backend.mamba.ast.MambaBinaryOperator;
@@ -37,7 +40,6 @@ import edu.cornell.cs.apl.viaduct.imp.ast.LoopNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.NotNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ReadNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ReceiveNode;
-import edu.cornell.cs.apl.viaduct.imp.ast.ReferenceNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.SendNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.StatementNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.Variable;
@@ -54,8 +56,7 @@ import edu.cornell.cs.apl.viaduct.util.FreshNameGenerator;
 public final class ImpToMambaTranslator
     implements
         ExprVisitor<MambaExpressionNode>,
-        StmtVisitor<Iterable<MambaStatementNode>>,
-        ReferenceVisitor<MambaVariable>
+        StmtVisitor<Iterable<MambaStatementNode>>
 {
   private static FreshNameGenerator nameGenerator = new FreshNameGenerator();
   private static String LOOP_VAR = "loop_cond";
@@ -88,12 +89,12 @@ public final class ImpToMambaTranslator
     return expr.accept(new ImpToMambaTranslator(isSecret));
   }
 
-  public static MambaVariable run(boolean isSecret, ReferenceNode ref) {
-    return ref.accept(new ImpToMambaTranslator(isSecret));
-  }
-
   public static MambaVariable getFreshLoopVariable() {
     return MambaVariable.create(nameGenerator.getFreshName(LOOP_VAR));
+  }
+
+  public static MambaVariable visitVariable(Variable var) {
+    return MambaVariable.create(var.getName());
   }
 
   private static Iterable<MambaStatementNode> single(MambaStatementNode stmt) {
@@ -116,16 +117,6 @@ public final class ImpToMambaTranslator
 
   private MambaSecurityType getSecurityContext() {
     return this.isSecret ? MambaSecurityType.SECRET : MambaSecurityType.CLEAR;
-  }
-
-  @Override
-  public MambaVariable visit(Variable var) {
-    return MambaVariable.create(var.getName());
-  }
-
-  @Override
-  public MambaVariable visit(ArrayIndexingNode arrayIndex) {
-    throw new Error("translation not implemented");
   }
 
   @Override
@@ -152,7 +143,24 @@ public final class ImpToMambaTranslator
 
   @Override
   public MambaExpressionNode visit(ReadNode node) {
-    return MambaReadNode.create(node.getReference().accept(this));
+    ImpToMambaTranslator translator = this;
+    return
+      node.getReference().accept(
+          new ReferenceVisitor<MambaExpressionNode>() {
+              @Override
+              public MambaExpressionNode visit(Variable variable) {
+                return MambaReadNode.create(visitVariable(variable));
+              }
+
+              @Override
+              public MambaExpressionNode visit(ArrayIndexingNode node) {
+                return
+                    MambaArrayLoadNode.builder()
+                    .setArray(visitVariable(node.getArray()))
+                    .setIndex(node.getIndex().accept(translator))
+                    .build();
+            }
+          });
   }
 
   @Override
@@ -214,13 +222,21 @@ public final class ImpToMambaTranslator
         single(
             MambaRegIntDeclarationNode.builder()
             .setRegisterType(getSecurityContext())
-            .setVariable(node.getVariable().accept(this))
+            .setVariable(visitVariable(node.getVariable()))
             .build());
   }
 
   @Override
   public Iterable<MambaStatementNode> visit(ArrayDeclarationNode node) {
-    throw new Error("translation not implemented");
+    return
+        single(
+            MambaArrayDeclarationNode.builder()
+            .setVariable(visitVariable(node.getVariable()))
+            .setLength(
+                node.getLength()
+                .accept(new ImpToMambaTranslator(false, this.currentLoopVar)))
+            .setRegisterType(getSecurityContext())
+            .build());
   }
 
   @Override
@@ -229,21 +245,39 @@ public final class ImpToMambaTranslator
     return
         single(
             MambaAssignNode.builder()
-            .setVariable(node.getVariable().accept(this))
+            .setVariable(visitVariable(node.getVariable()))
             .setRhs(mambaRhs)
             .build());
   }
 
   @Override
   public Iterable<MambaStatementNode> visit(AssignNode node) {
-    MambaVariable mambaVar = node.getLhs().accept(this);
     MambaExpressionNode mambaRhs = node.getRhs().accept(this);
-    return
-        single(
-            MambaAssignNode.builder()
-            .setVariable(mambaVar)
-            .setRhs(mambaRhs)
-            .build());
+    ImpToMambaTranslator translator = this;
+    MambaStatementNode mambaStmt =
+        node.getLhs().accept(
+            new ReferenceVisitor<MambaStatementNode>() {
+                @Override
+                public MambaStatementNode visit(Variable variable) {
+                  return
+                      MambaAssignNode.builder()
+                      .setVariable(visitVariable(variable))
+                      .setRhs(mambaRhs)
+                      .build();
+                }
+
+                @Override
+                public MambaStatementNode visit(ArrayIndexingNode node) {
+                  return
+                      MambaArrayStoreNode.builder()
+                      .setArray(visitVariable(node.getArray()))
+                      .setIndex(node.getIndex().accept(translator))
+                      .setValue(mambaRhs)
+                      .build();
+                }
+            });
+
+    return single(mambaStmt);
   }
 
   @Override
@@ -261,7 +295,7 @@ public final class ImpToMambaTranslator
     return
         single(
             MambaInputNode.builder()
-            .setVariable(node.getVariable().accept(this))
+            .setVariable(visitVariable(node.getVariable()))
             .setPlayer(0) // TODO: fix this
             .setSecurityContext(getSecurityContext())
             .build());

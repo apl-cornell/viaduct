@@ -1,5 +1,7 @@
 package edu.cornell.cs.apl.viaduct.backend.mamba.visitors;
 
+import edu.cornell.cs.apl.viaduct.backend.mamba.ast.MambaArrayDeclarationNode;
+import edu.cornell.cs.apl.viaduct.backend.mamba.ast.MambaArrayStoreNode;
 import edu.cornell.cs.apl.viaduct.backend.mamba.ast.MambaAssignNode;
 import edu.cornell.cs.apl.viaduct.backend.mamba.ast.MambaBlockNode;
 import edu.cornell.cs.apl.viaduct.backend.mamba.ast.MambaIfNode;
@@ -11,7 +13,11 @@ import edu.cornell.cs.apl.viaduct.backend.mamba.ast.MambaWhileNode;
 public interface MambaStatementVisitor<R> {
   R visit(MambaRegIntDeclarationNode node);
 
+  R visit(MambaArrayDeclarationNode node);
+
   R visit(MambaAssignNode node);
+
+  R visit(MambaArrayStoreNode node);
 
   R visit(MambaInputNode node);
 

@@ -1,5 +1,7 @@
 package edu.cornell.cs.apl.viaduct.backend.mamba.visitors;
 
+import edu.cornell.cs.apl.viaduct.backend.mamba.ast.MambaArrayDeclarationNode;
+import edu.cornell.cs.apl.viaduct.backend.mamba.ast.MambaArrayStoreNode;
 import edu.cornell.cs.apl.viaduct.backend.mamba.ast.MambaAssignNode;
 import edu.cornell.cs.apl.viaduct.backend.mamba.ast.MambaBlockNode;
 import edu.cornell.cs.apl.viaduct.backend.mamba.ast.MambaIfNode;
@@ -33,7 +35,22 @@ public class MambaSecretVariablesVisitor
   }
 
   @Override
+  public Set<MambaVariable> visit(MambaArrayDeclarationNode node) {
+    if (node.getRegisterType() == MambaSecurityType.SECRET) {
+      return HashSet.of(node.getVariable());
+
+    } else {
+      return HashSet.empty();
+    }
+  }
+
+  @Override
   public Set<MambaVariable> visit(MambaAssignNode node) {
+    return HashSet.empty();
+  }
+
+  @Override
+  public Set<MambaVariable> visit(MambaArrayStoreNode node) {
     return HashSet.empty();
   }
 

@@ -37,8 +37,6 @@ public class AbstractLineNumber implements Comparable<AbstractLineNumber> {
   /** returns a clone but with the last component's sequence number incremented. */
   public AbstractLineNumber increment() {
     AbstractLineNumber newLn = new AbstractLineNumber();
-
-    int n = this.componentList.size();
     LineNumberComponent last = this.componentList.head();
     newLn.componentList =
         this.componentList
@@ -67,7 +65,7 @@ public class AbstractLineNumber implements Comparable<AbstractLineNumber> {
     int sizeOther = other.componentList.size();
     int size = sizeThis > sizeOther ? sizeOther : sizeThis;
 
-    for (int i = size-1; i >= 0; i--) {
+    for (int i = size - 1; i >= 0; i--) {
       LineNumberComponent thisComp = this.componentList.get(i);
       LineNumberComponent otherComp = other.componentList.get(i);
 

@@ -1,5 +1,8 @@
 package edu.cornell.cs.apl.viaduct.backend.mamba.visitors;
 
+import edu.cornell.cs.apl.viaduct.backend.mamba.ast.MambaArrayDeclarationNode;
+import edu.cornell.cs.apl.viaduct.backend.mamba.ast.MambaArrayLoadNode;
+import edu.cornell.cs.apl.viaduct.backend.mamba.ast.MambaArrayStoreNode;
 import edu.cornell.cs.apl.viaduct.backend.mamba.ast.MambaAssignNode;
 import edu.cornell.cs.apl.viaduct.backend.mamba.ast.MambaBinaryExpressionNode;
 import edu.cornell.cs.apl.viaduct.backend.mamba.ast.MambaBinaryOperator;
@@ -20,6 +23,7 @@ import edu.cornell.cs.apl.viaduct.backend.mamba.ast.MambaStatementNode;
 import edu.cornell.cs.apl.viaduct.backend.mamba.ast.MambaVariable;
 import edu.cornell.cs.apl.viaduct.backend.mamba.ast.MambaWhileNode;
 import edu.cornell.cs.apl.viaduct.util.FreshNameGenerator;
+import io.vavr.collection.Set;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -34,19 +38,19 @@ public final class MambaPrintVisitor
   private static String TEMPLATE = OBJ_NAME + " = {}\n%s";
 
   private final FreshNameGenerator nameGenerator = new FreshNameGenerator();
-  private final MambaSecretInputChecker secretChecker;
+  private final Set<MambaVariable> secretVariables;
 
   private int indentation = -INDENTATION_LEVEL;
 
   /** print. */
-  public static String run(MambaSecretInputChecker secretChecker, MambaStatementNode mambaProgram) {
+  public static String run(Set<MambaVariable> secretVariables, MambaStatementNode mambaProgram) {
     return
         String.format(TEMPLATE,
-            mambaProgram.accept(new MambaPrintVisitor(secretChecker)));
+            mambaProgram.accept(new MambaPrintVisitor(secretVariables)));
   }
 
-  private MambaPrintVisitor(MambaSecretInputChecker secretChecker) {
-    this.secretChecker = secretChecker;
+  private MambaPrintVisitor(Set<MambaVariable> secretVariables) {
+    this.secretVariables = secretVariables;
   }
 
   private String addIndentation() {
@@ -125,6 +129,27 @@ public final class MambaPrintVisitor
   }
 
   @Override
+  public String visit(MambaArrayLoadNode node) {
+    MambaVariable array = node.getArray();
+    StringBuilder builder = new StringBuilder();
+
+    if (this.secretVariables.contains(array)) {
+      builder.append(
+          String.format("secret_load(%s, %s)",
+              visitVariable(array),
+              node.getIndex().accept(this)));
+
+    } else {
+      builder.append(
+          String.format("clear_load(%s, %s)",
+              visitVariable(array),
+              node.getIndex().accept(this)));
+    }
+
+    return builder.toString();
+  }
+
+  @Override
   public String visit(MambaBinaryExpressionNode node) {
     StringBuilder builder = new StringBuilder();
     builder.append("(");
@@ -179,16 +204,31 @@ public final class MambaPrintVisitor
   }
 
   @Override
+  public String visit(MambaArrayDeclarationNode node) {
+    StringBuilder builder = new StringBuilder();
+    builder.append(addIndentation());
+    builder.append(
+        String.format("%s = array_alloc(%s)",
+            visitVariable(node.getVariable()),
+            node.getLength().accept(this)));
+
+    return builder.toString();
+  }
+
+  @Override
   public String visit(MambaAssignNode node) {
     MambaExpressionNode rhs = node.getRhs();
 
     StringBuilder builder = new StringBuilder();
     String template = null;
 
-    if (IsBooleanExpr.run(rhs) && rhs.accept(this.secretChecker)) {
+    boolean isBooleanExpr = IsBooleanExpr.run(rhs);
+    boolean isSecretVariable = this.secretVariables.contains(node.getVariable());
+
+    if (isBooleanExpr && isSecretVariable) {
       template = "%s.write(sregint(1) & %s)";
 
-    } else if (IsBooleanExpr.run(rhs) && !rhs.accept(this.secretChecker)) {
+    } else if (isBooleanExpr && isSecretVariable) {
       template = "%s.write(regint(1) & %s)";
 
     } else {
@@ -199,7 +239,41 @@ public final class MambaPrintVisitor
     builder.append(
         String.format(template,
             visitVariable(node.getVariable()),
-            rhs.accept(this)));
+            node.getRhs().accept(this)));
+
+    return builder.toString();
+  }
+
+  @Override
+  public String visit(MambaArrayStoreNode node) {
+    MambaVariable array = node.getArray();
+    MambaExpressionNode value = node.getValue();
+
+    StringBuilder builder = new StringBuilder();
+    String template = null;
+
+    boolean isBooleanExpr = IsBooleanExpr.run(value);
+    boolean isSecretArray = this.secretVariables.contains(array);
+
+    if (isBooleanExpr && isSecretArray) {
+      template = "secret_store(%s, %s, sregint(1) & %s)";
+
+    } else if (isBooleanExpr && !isSecretArray) {
+      template = "clear_store(%s, %s, regint(1) & %s)";
+
+    } else if (!isBooleanExpr && isSecretArray) {
+      template = "secret_store(%s, %s, %s)";
+
+    } else {
+      template = "clear_store(%s, %s, %s)";
+    }
+
+    builder.append(addIndentation());
+    builder.append(
+        String.format(template,
+            array,
+            node.getIndex().accept(this),
+            node.getValue().accept(this)));
 
     return builder.toString();
   }
@@ -304,6 +378,11 @@ public final class MambaPrintVisitor
 
     @Override
     public Boolean visit(MambaReadNode node) {
+      return false;
+    }
+
+    @Override
+    public Boolean visit(MambaArrayLoadNode node) {
       return false;
     }
 

@@ -101,7 +101,10 @@ public final class LogicalPositionInjector
 
   @Override
   public ReferenceNode visit(Variable var) {
-    return var;
+    return
+        var.toBuilder()
+        .setLogicalPosition(getNextPosition())
+        .build();
   }
 
   @Override
@@ -109,6 +112,7 @@ public final class LogicalPositionInjector
     return
         node.toBuilder()
         .setIndex(node.getIndex().accept(this))
+        .setLogicalPosition(getNextPosition())
         .build();
   }
 
@@ -122,10 +126,13 @@ public final class LogicalPositionInjector
 
   @Override
   public ExpressionNode visit(ReadNode node) {
-    return
+    ReadNode newNode =
         node.toBuilder()
+        .setReference(node.getReference().accept(this))
         .setLogicalPosition(getNextPosition())
         .build();
+
+    return newNode;
   }
 
   @Override

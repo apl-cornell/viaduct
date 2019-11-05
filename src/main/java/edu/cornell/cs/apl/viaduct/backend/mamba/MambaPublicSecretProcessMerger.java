@@ -17,7 +17,6 @@ import edu.cornell.cs.apl.viaduct.backend.mamba.ast.MambaVariable;
 import edu.cornell.cs.apl.viaduct.backend.mamba.ast.MambaWhileNode;
 import edu.cornell.cs.apl.viaduct.backend.mamba.visitors.ImpToMambaTranslator;
 import edu.cornell.cs.apl.viaduct.backend.mamba.visitors.MambaInliner;
-import edu.cornell.cs.apl.viaduct.imp.ast.BlockNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.BreakNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.IfNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.LoopNode;
@@ -27,7 +26,6 @@ import edu.cornell.cs.apl.viaduct.imp.ast.ProgramNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ReceiveNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.SendNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.StatementNode;
-import edu.cornell.cs.apl.viaduct.imp.parsing.SourcePosition;
 import edu.cornell.cs.apl.viaduct.util.AbstractLineNumber;
 import edu.cornell.cs.apl.viaduct.util.AbstractLineNumber.RelativePosition;
 import io.vavr.collection.HashMap;
@@ -133,7 +131,7 @@ public final class MambaPublicSecretProcessMerger {
           if (publicRecv.getSender().equals(secretProcessName)
               && secretSend.getRecipient().equals(publicProcessName))
           {
-            MambaVariable mambaVar = ImpToMambaTranslator.run(false, publicRecv.getVariable());
+            MambaVariable mambaVar = ImpToMambaTranslator.visitVariable(publicRecv.getVariable());
             MambaExpressionNode mambaRhs =
                 MambaRevealNode.builder()
                 .setRevealedExpr(
@@ -171,9 +169,7 @@ public final class MambaPublicSecretProcessMerger {
           if (secretRecv.getSender().equals(publicProcessName)
               && publicSend.getRecipient().equals(secretProcessName))
           {
-            MambaVariable mambaVar =
-                ImpToMambaTranslator.run(true, secretRecv.getVariable());
-
+            MambaVariable mambaVar = ImpToMambaTranslator.visitVariable(secretRecv.getVariable());
             MambaExpressionNode mambaExpr =
                 MambaInliner.run(
                     inlineMap,

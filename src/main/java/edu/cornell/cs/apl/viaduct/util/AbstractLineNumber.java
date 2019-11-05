@@ -39,11 +39,11 @@ public class AbstractLineNumber implements Comparable<AbstractLineNumber> {
     AbstractLineNumber newLn = new AbstractLineNumber();
 
     int n = this.componentList.size();
-    LineNumberComponent last = this.componentList.get(n - 1);
+    LineNumberComponent last = this.componentList.head();
     newLn.componentList =
         this.componentList
         .pop()
-        .append(
+        .push(
             new LineNumberComponent(last.getMarker(), last.getSequenceNum() + 1));
 
     return newLn;
@@ -52,7 +52,7 @@ public class AbstractLineNumber implements Comparable<AbstractLineNumber> {
   /** returns a clone but with a new component appended. */
   public AbstractLineNumber addBranch(String branch) {
     AbstractLineNumber newLn = new AbstractLineNumber();
-    newLn.componentList = this.componentList.append(new LineNumberComponent(branch, 1));
+    newLn.componentList = this.componentList.push(new LineNumberComponent(branch, 1));
     return newLn;
   }
 
@@ -67,7 +67,7 @@ public class AbstractLineNumber implements Comparable<AbstractLineNumber> {
     int sizeOther = other.componentList.size();
     int size = sizeThis > sizeOther ? sizeOther : sizeThis;
 
-    for (int i = 0; i < size; i++) {
+    for (int i = size-1; i >= 0; i--) {
       LineNumberComponent thisComp = this.componentList.get(i);
       LineNumberComponent otherComp = other.componentList.get(i);
 
@@ -131,7 +131,7 @@ public class AbstractLineNumber implements Comparable<AbstractLineNumber> {
   public String toString() {
     StringBuilder buf = new StringBuilder();
     buf.append("[");
-    for (LineNumberComponent comp : this.componentList) {
+    for (LineNumberComponent comp : this.componentList.reverse()) {
       buf.append("(" + comp.getMarker() + ":" + comp.getSequenceNum() + ")");
     }
     buf.append("]");

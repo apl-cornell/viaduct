@@ -271,7 +271,7 @@ public final class MambaPrintVisitor
     builder.append(addIndentation());
     builder.append(
         String.format(template,
-            array,
+            visitVariable(array),
             node.getIndex().accept(this),
             node.getValue().accept(this)));
 

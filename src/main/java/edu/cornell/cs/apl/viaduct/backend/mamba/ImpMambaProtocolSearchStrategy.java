@@ -63,11 +63,18 @@ public class ImpMambaProtocolSearchStrategy extends ProtocolCostEstimator<ImpAst
 
       // prune search space by not selecting MPC unless absolutely necessary
       // ie. only use MPC when neither Single nor Replication protocols can instantiate the node
-      if (instances.size() > 0 && node.isStorageNode()) {
+      // if (instances.size() > 0 && node.isStorageNode()) {
+      if (instances.size() > 0) {
         return instances;
       }
 
       instances.addAll(this.mambaPublicFactory.createInstances(hostConfig, protocolMap, node));
+
+      // prune search space by not selecting MPC unless absolutely necessary
+      // ie. only use MPC when neither Single nor Replication protocols can instantiate the node
+      if (instances.size() > 0) {
+        return instances;
+      }
 
       instances.addAll(this.mambaSecretFactory.createInstances(hostConfig, protocolMap, node));
 

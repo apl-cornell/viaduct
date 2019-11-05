@@ -13,6 +13,7 @@ import edu.cornell.cs.apl.viaduct.imp.ast.IfNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.LetBindingNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.LoopNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.NotNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.ReadNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ReceiveNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ReferenceNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.SendNode;
@@ -76,6 +77,12 @@ public class ReplaceVisitor extends IdentityProgramVisitor {
     protected ExpressionNode leave(ExpressionNode node, ReplaceExprVisitor visitor) {
       final ExpressionNode replacement = exprReplacements.get(node);
       return replacement != null ? replacement : node;
+    }
+
+    @Override
+    protected ExpressionNode leave(
+        ReadNode node, ReplaceExprVisitor visitor, ReferenceNode reference) {
+      return replace(node, node.toBuilder().setReference(reference).build());
     }
 
     @Override

@@ -135,18 +135,12 @@ public final class MambaPublicSecretProcessMerger {
             MambaExpressionNode mambaRhs =
                 MambaRevealNode.builder()
                 .setRevealedExpr(
-                    ImpToMambaTranslator.run(true, secretSend.getSentExpression()))
+                      MambaInliner.run(
+                          inlineMap,
+                          ImpToMambaTranslator.run(true, secretSend.getSentExpression())))
                 .build();
 
             inlineMap = inlineMap.put(mambaVar, mambaRhs);
-            /*
-            MambaStatementNode newStmt =
-                MambaAssignNode.builder()
-                .setVariable(mambaVar)
-                .setRhs(mambaRhs)
-                .build();
-            mambaStmtList.add(newStmt);
-            */
 
           } else {
             // order arbitrarily
@@ -176,14 +170,6 @@ public final class MambaPublicSecretProcessMerger {
                     ImpToMambaTranslator.run(true, publicSend.getSentExpression()));
 
             inlineMap = inlineMap.put(mambaVar, mambaExpr);
-            /*
-            MambaStatementNode newStmt =
-                MambaAssignNode.builder()
-                .setVariable(mambaVar)
-                .setRhs(mambaExpr)
-                .build();
-            mambaStmtList.add(newStmt);
-            */
 
           } else {
             // order arbitrarily
@@ -224,7 +210,8 @@ public final class MambaPublicSecretProcessMerger {
               .setThenBranch(MambaBlockNode.builder().addAll(newThenBranch).build())
               .setElseBranch(MambaBlockNode.builder().addAll(newElseBranch).build())
               .build();
-          mambaStmtList.add(newIf);
+
+          mambaStmtList.add(MambaInliner.run(inlineMap, newIf));
 
         // loop
         } else if (publicStmt instanceof LoopNode && secretStmt instanceof LoopNode) {
@@ -239,27 +226,33 @@ public final class MambaPublicSecretProcessMerger {
                   secretProcessName, secretLoop.getBody().getStatements());
 
           mambaStmtList.add(
-              MambaRegIntDeclarationNode.builder()
-              .setRegisterType(MambaSecurityType.CLEAR)
-              .setVariable(newLoopVar)
-              .build());
+              MambaInliner.run(inlineMap,
+                  MambaRegIntDeclarationNode.builder()
+                  .setRegisterType(MambaSecurityType.CLEAR)
+                  .setVariable(newLoopVar)
+                  .build()));
           mambaStmtList.add(
-              MambaAssignNode.builder()
-              .setVariable(newLoopVar)
-              .setRhs(
-                  MambaIntLiteralNode.builder()
-                  .setSecurityType(MambaSecurityType.CLEAR)
-                  .setValue(1)
-                  .build())
-              .build());
+              MambaInliner.run(inlineMap,
+                  MambaAssignNode.builder()
+                  .setVariable(newLoopVar)
+                  .setRhs(
+                      MambaIntLiteralNode.builder()
+                      .setSecurityType(MambaSecurityType.CLEAR)
+                      .setValue(1)
+                      .build())
+                  .build()));
           mambaStmtList.add(
-              MambaWhileNode.builder()
-              .setGuard(MambaReadNode.create(newLoopVar))
-              .setBody(MambaBlockNode.create(newBody))
-              .build());
+              MambaInliner.run(inlineMap,
+                  MambaWhileNode.builder()
+                  .setGuard(MambaReadNode.create(newLoopVar))
+                  .setBody(MambaBlockNode.create(newBody))
+                  .build()));
 
         } else if (publicStmt instanceof BreakNode && secretStmt instanceof BreakNode) {
-          mambaStmtList.add(ImpToMambaTranslator.run(false, loopVar, publicStmt));
+          mambaStmtList.add(
+              MambaInliner.run(
+                  inlineMap,
+                  ImpToMambaTranslator.run(false, loopVar, publicStmt)));
 
         } else {
           throw new Error("merge error!");

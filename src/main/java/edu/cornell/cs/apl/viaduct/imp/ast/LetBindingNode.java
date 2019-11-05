@@ -16,6 +16,8 @@ public abstract class LetBindingNode extends StatementNode {
 
   public abstract ExpressionNode getRhs();
 
+  public abstract boolean isArrayIndex();
+
   @Override
   public final <R> R accept(StmtVisitor<R> visitor) {
     return visitor.visit(this);
@@ -26,6 +28,8 @@ public abstract class LetBindingNode extends StatementNode {
     public abstract Builder setVariable(Variable variable);
 
     public abstract Builder setRhs(ExpressionNode rhs);
+
+    public abstract Builder setArrayIndex(boolean isArrayIndex);
 
     public abstract LetBindingNode build();
   }

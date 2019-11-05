@@ -229,6 +229,7 @@ public final class LogicalPositionInjector
         .setElseBranch(
             (BlockNode) node.getElseBranch()
             .accept(new LogicalPositionInjector(curPosition, "else")))
+        .setLoopGuard(node.isLoopGuard())
         .build();
   }
 

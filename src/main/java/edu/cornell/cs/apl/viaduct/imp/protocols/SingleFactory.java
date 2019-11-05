@@ -3,6 +3,7 @@ package edu.cornell.cs.apl.viaduct.imp.protocols;
 import edu.cornell.cs.apl.viaduct.imp.HostTrustConfiguration;
 import edu.cornell.cs.apl.viaduct.imp.ast.HostName;
 import edu.cornell.cs.apl.viaduct.imp.ast.ImpAstNode;
+import edu.cornell.cs.apl.viaduct.pdg.PdgNode;
 import edu.cornell.cs.apl.viaduct.protocol.Protocol;
 import edu.cornell.cs.apl.viaduct.protocol.SingleHostProtocolFactory;
 
@@ -10,7 +11,10 @@ import edu.cornell.cs.apl.viaduct.protocol.SingleHostProtocolFactory;
 public class SingleFactory extends SingleHostProtocolFactory<ImpAstNode> {
   @Override
   protected Protocol<ImpAstNode> createInstanceFromHostInfo(
-      HostTrustConfiguration hostConfig, HostName host) {
+      PdgNode<ImpAstNode> node,
+      HostTrustConfiguration hostConfig,
+      HostName host)
+  {
     return new Single(hostConfig, host);
   }
 }

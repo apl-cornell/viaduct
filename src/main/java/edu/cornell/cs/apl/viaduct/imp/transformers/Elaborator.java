@@ -60,6 +60,7 @@ public class Elaborator {
                 .setThenBranch((BlockNode) body)
                 .setElseBranch(BlockNode.builder().add(breakNode).setSourceLocation(node).build())
                 .setSourceLocation(node)
+                .setLoopGuard(true)
                 .build();
         return LoopNode.builder()
             .setBody(BlockNode.builder().add(resultGuard).build())
@@ -104,6 +105,7 @@ public class Elaborator {
                 .setThenBranch(resultBody)
                 .setElseBranch(BlockNode.builder().add(breakNode).setSourceLocation(node).build())
                 .setSourceLocation(node)
+                .setLoopGuard(true)
                 .build();
 
         result.add(

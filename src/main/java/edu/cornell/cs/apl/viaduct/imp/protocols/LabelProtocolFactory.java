@@ -18,10 +18,14 @@ public abstract class LabelProtocolFactory<T extends AstNode, I>
   protected abstract Iterable<I> getHostInfo(HostTrustConfiguration hostConfig);
 
   protected abstract Protocol<T> createInstanceFromHostInfo(
-      HostTrustConfiguration hostConfig, I hostInfo);
+      PdgNode<T> node, HostTrustConfiguration hostConfig, I hostInfo);
 
-  protected Label getProtocolLabel(HostTrustConfiguration hostConfig, I hostInfo) {
-    Protocol<T> protocolInstance = createInstanceFromHostInfo(hostConfig, hostInfo);
+  protected Label getProtocolLabel(
+      PdgNode<T> node,
+      HostTrustConfiguration hostConfig,
+      I hostInfo)
+  {
+    Protocol<T> protocolInstance = createInstanceFromHostInfo(node, hostConfig, hostInfo);
     return protocolInstance != null ? protocolInstance.getTrust() : null;
   }
 
@@ -33,9 +37,9 @@ public abstract class LabelProtocolFactory<T extends AstNode, I>
     Iterable<I> hostInfos = getHostInfo(hostConfig);
 
     for (I hostInfo : hostInfos) {
-      Label protocolLabel = getProtocolLabel(hostConfig, hostInfo);
+      Label protocolLabel = getProtocolLabel(node, hostConfig, hostInfo);
       if (protocolLabel != null && protocolLabel.actsFor(node.getLabel())) {
-        instances.add(createInstanceFromHostInfo(hostConfig, hostInfo));
+        instances.add(createInstanceFromHostInfo(node, hostConfig, hostInfo));
       }
     }
 

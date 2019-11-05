@@ -189,6 +189,7 @@ public class IdentityProgramVisitor
           .setGuard(guard)
           .setThenBranch((BlockNode) thenBranch)
           .setElseBranch((BlockNode) elseBranch)
+          .setLoopGuard(node.isLoopGuard())
           .build();
     }
 

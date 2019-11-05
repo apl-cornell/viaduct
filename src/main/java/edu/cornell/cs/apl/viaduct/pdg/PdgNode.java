@@ -13,12 +13,17 @@ public abstract class PdgNode<T extends AstNode> {
   final Set<PdgInfoEdge<T>> inInfoEdges;
   final Set<PdgInfoEdge<T>> outInfoEdges;
 
+  boolean isLoopGuard;
+  boolean isArrayIndex;
+
   /** constructor. */
   public PdgNode(T astNode, String id) {
     this.inInfoEdges = new HashSet<>();
     this.outInfoEdges = new HashSet<>();
     this.astNode = astNode;
     this.id = id;
+    this.isLoopGuard = false;
+    this.isArrayIndex = false;
   }
 
   public T getAstNode() {
@@ -122,6 +127,22 @@ public abstract class PdgNode<T extends AstNode> {
     } catch (NullPointerException e) {
       return null;
     }
+  }
+
+  public boolean isLoopGuard() {
+    return this.isLoopGuard;
+  }
+
+  public boolean isArrayIndex() {
+    return this.isArrayIndex;
+  }
+
+  public void setLoopGuard(boolean isLoopGuard) {
+    this.isLoopGuard = isLoopGuard;
+  }
+
+  public void setArrayIndex(boolean isArrayIndex) {
+    this.isArrayIndex = isArrayIndex;
   }
 
   public abstract boolean isStorageNode();

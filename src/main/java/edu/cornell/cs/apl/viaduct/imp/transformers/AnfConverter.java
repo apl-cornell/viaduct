@@ -263,6 +263,7 @@ public class AnfConverter {
                   .setGuard(guard)
                   .setThenBranch(getBlock(thenBranch))
                   .setElseBranch(getBlock(elseBranch))
+                  .setLoopGuard(node.isLoopGuard())
                   .build())
           .build();
     }
@@ -338,7 +339,7 @@ public class AnfConverter {
 
       @Override
       public ReferenceNode visit(ArrayIndexingNode node) {
-        final ExpressionNode index = atomicConverter.run(node.getIndex());
+        final ExpressionNode index = atomicConverter.run(true, node.getIndex());
         return node.toBuilder().setIndex(index).build();
       }
 
@@ -356,20 +357,20 @@ public class AnfConverter {
 
       @Override
       public ExpressionNode visit(NotNode node) {
-        final ExpressionNode expression = atomicConverter.run(node.getExpression());
+        final ExpressionNode expression = atomicConverter.run(false, node.getExpression());
         return node.toBuilder().setExpression(expression).build();
       }
 
       @Override
       public ExpressionNode visit(BinaryExpressionNode node) {
-        final ExpressionNode lhs = atomicConverter.run(node.getLhs());
-        final ExpressionNode rhs = atomicConverter.run(node.getRhs());
+        final ExpressionNode lhs = atomicConverter.run(false, node.getLhs());
+        final ExpressionNode rhs = atomicConverter.run(false, node.getRhs());
         return node.toBuilder().setLhs(lhs).setRhs(rhs).build();
       }
 
       @Override
       public ExpressionNode visit(DowngradeNode node) {
-        final ExpressionNode expression = atomicConverter.run(node.getExpression());
+        final ExpressionNode expression = atomicConverter.run(false, node.getExpression());
         return node.toBuilder().setExpression(expression).build();
       }
     }
@@ -381,8 +382,13 @@ public class AnfConverter {
       private final AtomicReferenceVisitor referenceVisitor = new AtomicReferenceVisitor();
       private final List<LetBindingNode> bindings = new LinkedList<>();
 
-      ExpressionNode run(ExpressionNode expression) {
-        return expression.accept(this);
+      protected boolean isArrayIndex = false;
+
+      ExpressionNode run(boolean isArrayIndex, ExpressionNode expr) {
+        this.isArrayIndex = isArrayIndex;
+        ExpressionNode newExpr = expr.accept(this);
+        this.isArrayIndex = false;
+        return newExpr;
       }
 
       /**
@@ -408,6 +414,7 @@ public class AnfConverter {
                 .setVariable(tmpVar)
                 .setRhs(expression)
                 .setLocation(expression)
+                .setArrayIndex(this.isArrayIndex)
                 .build();
         bindings.add(binding);
         return tmpVar;
@@ -471,7 +478,12 @@ public class AnfConverter {
         @Override
         public ReferenceNode visit(ArrayIndexingNode node) {
           final AtomicReferenceVisitor visitor = enter(node);
+
+          boolean arrayIndexPrev = AtomicExprVisitor.this.isArrayIndex;
+          AtomicExprVisitor.this.isArrayIndex = true;
           final ExpressionNode index = node.getIndex().accept(visitor.getExpressionVisitor());
+          AtomicExprVisitor.this.isArrayIndex = arrayIndexPrev;
+
           return leave(node, visitor, node.getArray(), index);
         }
 

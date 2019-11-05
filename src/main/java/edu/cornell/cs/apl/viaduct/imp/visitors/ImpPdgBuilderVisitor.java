@@ -168,6 +168,10 @@ public class ImpPdgBuilderVisitor implements StmtVisitor<Set<PdgNode<ImpAstNode>
     // in A-normal form, there should be at most one query
     // assert queries.size() <= 1;
 
+    if (letBindingNode.isArrayIndex()) {
+      node.setArrayIndex(true);
+    }
+
     return addNode(name, node, letBindingNode);
   }
 
@@ -189,7 +193,7 @@ public class ImpPdgBuilderVisitor implements StmtVisitor<Set<PdgNode<ImpAstNode>
     queries.remove(lhs);
 
     // there should be NO queries for assignments in A-normal form!
-    // assert queries.size() == 0;
+    assert queries.size() == 0;
 
     String name = this.nameGenerator.getFreshName(ASSIGN_NODE);
     PdgComputeNode<ImpAstNode> node = new PdgComputeNode<>(assignNode, name);
@@ -198,16 +202,16 @@ public class ImpPdgBuilderVisitor implements StmtVisitor<Set<PdgNode<ImpAstNode>
 
     // add write edge
     lhs.accept(
-        new ReferenceVisitor<Set<PdgNode<ImpAstNode>>>() {
+        new ReferenceVisitor<Void>() {
           @Override
-          public Set<PdgNode<ImpAstNode>> visit(Variable var) {
+          public Void visit(Variable var) {
             PdgNode<ImpAstNode> varNode = ImpPdgBuilderVisitor.this.getVariableNode(var);
             PdgWriteEdge.create(node, varNode, "set", rhs);
             return null;
           }
 
           @Override
-          public Set<PdgNode<ImpAstNode>> visit(ArrayIndexingNode arrayIndexingNode) {
+          public Void visit(ArrayIndexingNode arrayIndexingNode) {
             Variable arrayVar = arrayIndexingNode.getArray();
             PdgNode<ImpAstNode> varNode = ImpPdgBuilderVisitor.this.getVariableNode(arrayVar);
             PdgWriteEdge.create(node, varNode, "set", arrayIndexingNode.getIndex(), rhs);
@@ -253,6 +257,15 @@ public class ImpPdgBuilderVisitor implements StmtVisitor<Set<PdgNode<ImpAstNode>
 
     for (PdgNode<ImpAstNode> readChannelNode : readChannelNodes) {
       PdgReadChannelEdge.create(node, readChannelNode);
+    }
+
+    // if the conditional is a loop guard, mark guard nodes
+    if (ifNode.isLoopGuard()) {
+      for (PdgNode<ImpAstNode> readNode : node.getReadNodes()) {
+        if (readNode.isComputeNode()) {
+          readNode.setLoopGuard(true);
+        }
+      }
     }
 
     return createdNodes;

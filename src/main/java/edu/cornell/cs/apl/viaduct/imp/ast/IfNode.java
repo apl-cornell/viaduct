@@ -7,7 +7,7 @@ import edu.cornell.cs.apl.viaduct.imp.visitors.StmtVisitor;
 @AutoValue
 public abstract class IfNode extends StatementNode {
   public static Builder builder() {
-    return new AutoValue_IfNode.Builder();
+    return new AutoValue_IfNode.Builder().setLoopGuard(false);
   }
 
   public abstract Builder toBuilder();
@@ -19,6 +19,9 @@ public abstract class IfNode extends StatementNode {
 
   /** Statement to execute if the guard is false. */
   public abstract BlockNode getElseBranch();
+
+  /** true when the conditional is an elaborated loop guard. */
+  public abstract boolean isLoopGuard();
 
   @Override
   public final <R> R accept(StmtVisitor<R> v) {
@@ -32,6 +35,8 @@ public abstract class IfNode extends StatementNode {
     public abstract Builder setThenBranch(BlockNode body);
 
     public abstract Builder setElseBranch(BlockNode body);
+
+    public abstract Builder setLoopGuard(boolean loopGuard);
 
     public abstract BlockNode.Builder thenBranchBuilder();
 

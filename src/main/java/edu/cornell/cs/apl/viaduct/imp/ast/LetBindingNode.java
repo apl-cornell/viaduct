@@ -7,7 +7,7 @@ import edu.cornell.cs.apl.viaduct.imp.visitors.StmtVisitor;
 @AutoValue
 public abstract class LetBindingNode extends StatementNode {
   public static Builder builder() {
-    return new AutoValue_LetBindingNode.Builder();
+    return new AutoValue_LetBindingNode.Builder().setArrayIndex(false);
   }
 
   public abstract Builder toBuilder();

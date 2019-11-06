@@ -1,6 +1,7 @@
 package edu.cornell.cs.apl.viaduct.backend.mamba.visitors;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 
 import edu.cornell.cs.apl.viaduct.backend.mamba.ast.MambaArrayDeclarationNode;
 import edu.cornell.cs.apl.viaduct.backend.mamba.ast.MambaArrayLoadNode;
@@ -38,6 +39,7 @@ import edu.cornell.cs.apl.viaduct.imp.ast.LetBindingNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.LiteralNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.LoopNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.NotNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.ProcessName;
 import edu.cornell.cs.apl.viaduct.imp.ast.ReadNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ReceiveNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.SendNode;
@@ -62,20 +64,26 @@ public final class ImpToMambaTranslator
   private static String LOOP_VAR = "loop_cond";
 
   private final boolean isSecret;
+  private final ImmutableMap<ProcessName, Integer> hostNameMap;
   private final MambaVariable currentLoopVar;
 
-  public static MambaStatementNode run(boolean isSecret, StatementNode stmt) {
-    return MambaBlockNode.create(stmt.accept(new ImpToMambaTranslator(isSecret)));
+  public static MambaStatementNode run(
+      boolean isSecret,
+      ImmutableMap<ProcessName, Integer> hostNameMap,
+      StatementNode stmt) {
+
+    return MambaBlockNode.create(stmt.accept(new ImpToMambaTranslator(isSecret, hostNameMap)));
   }
 
   /** run under context where loopVar is the guard of the current loop. */
   public static MambaStatementNode run(
       boolean isSecret,
+      ImmutableMap<ProcessName, Integer> hostNameMap,
       MambaVariable loopVar,
       StatementNode stmt) {
 
     ImmutableList<MambaStatementNode> mambaStmts =
-        ImmutableList.copyOf(stmt.accept(new ImpToMambaTranslator(isSecret, loopVar)));
+        ImmutableList.copyOf(stmt.accept(new ImpToMambaTranslator(isSecret, hostNameMap, loopVar)));
 
     if (mambaStmts.size() == 1) {
       return mambaStmts.get(0);
@@ -85,8 +93,12 @@ public final class ImpToMambaTranslator
     }
   }
 
-  public static MambaExpressionNode run(boolean isSecret, ExpressionNode expr) {
-    return expr.accept(new ImpToMambaTranslator(isSecret));
+  public static MambaExpressionNode run(
+      boolean isSecret,
+      ImmutableMap<ProcessName, Integer> hostNameMap,
+      ExpressionNode expr) {
+
+    return expr.accept(new ImpToMambaTranslator(isSecret, hostNameMap));
   }
 
   public static MambaVariable getFreshLoopVariable() {
@@ -105,13 +117,19 @@ public final class ImpToMambaTranslator
     return ImmutableList.builder();
   }
 
-  private ImpToMambaTranslator(boolean isSecret) {
+  private ImpToMambaTranslator(boolean isSecret, ImmutableMap<ProcessName, Integer> hostNameMap) {
     this.isSecret = isSecret;
+    this.hostNameMap = hostNameMap;
     this.currentLoopVar = null;
   }
 
-  private ImpToMambaTranslator(boolean isSecret, MambaVariable loopVar) {
+  private ImpToMambaTranslator(
+      boolean isSecret,
+      ImmutableMap<ProcessName, Integer> hostNameMap,
+      MambaVariable loopVar) {
+
     this.isSecret = isSecret;
+    this.hostNameMap = hostNameMap;
     this.currentLoopVar = loopVar;
   }
 
@@ -234,7 +252,7 @@ public final class ImpToMambaTranslator
             .setVariable(visitVariable(node.getVariable()))
             .setLength(
                 node.getLength()
-                .accept(new ImpToMambaTranslator(false, this.currentLoopVar)))
+                .accept(new ImpToMambaTranslator(false, this.hostNameMap, this.currentLoopVar)))
             .setRegisterType(getSecurityContext())
             .build());
   }
@@ -286,7 +304,7 @@ public final class ImpToMambaTranslator
         single(
             MambaOutputNode.builder()
             .setExpression(node.getSentExpression().accept(this))
-            .setPlayer(0) // TODO: fix this
+            .setPlayer(this.hostNameMap.get(node.getRecipient()))
             .build());
   }
 
@@ -296,7 +314,7 @@ public final class ImpToMambaTranslator
         single(
             MambaInputNode.builder()
             .setVariable(visitVariable(node.getVariable()))
-            .setPlayer(0) // TODO: fix this
+            .setPlayer(this.hostNameMap.get(node.getSender()))
             .setSecurityContext(getSecurityContext())
             .build());
   }
@@ -332,7 +350,7 @@ public final class ImpToMambaTranslator
     // convert to while loop by generating a new loop variable
     MambaVariable loopVar = getFreshLoopVariable();
     Iterable<MambaStatementNode> body =
-        node.getBody().accept(new ImpToMambaTranslator(isSecret, loopVar));
+        node.getBody().accept(new ImpToMambaTranslator(this.isSecret, this.hostNameMap, loopVar));
 
     return
         listBuilder()

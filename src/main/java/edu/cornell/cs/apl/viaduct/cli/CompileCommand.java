@@ -2,9 +2,10 @@ package edu.cornell.cs.apl.viaduct.cli;
 
 import com.github.rvesse.airline.annotations.Command;
 import com.github.rvesse.airline.annotations.Option;
+
 import edu.cornell.cs.apl.viaduct.backend.mamba.ImpMambaCommunicationCostEstimator;
 import edu.cornell.cs.apl.viaduct.backend.mamba.ImpMambaProtocolSearchStrategy;
-import edu.cornell.cs.apl.viaduct.backend.mamba.MambaTranslator;
+import edu.cornell.cs.apl.viaduct.backend.mamba.MambaBackend;
 import edu.cornell.cs.apl.viaduct.imp.HostTrustConfiguration;
 import edu.cornell.cs.apl.viaduct.imp.ast.ImpAstNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ProcessName;
@@ -27,12 +28,14 @@ import edu.cornell.cs.apl.viaduct.pdg.ProgramDependencyGraph;
 import edu.cornell.cs.apl.viaduct.protocol.Protocol;
 import edu.cornell.cs.apl.viaduct.protocol.ProtocolCostEstimator;
 import edu.cornell.cs.apl.viaduct.protocol.ProtocolSearchSelection;
+
 import guru.nidi.graphviz.engine.Format;
 import guru.nidi.graphviz.engine.Graphviz;
 import guru.nidi.graphviz.engine.GraphvizCmdLineEngine;
 import guru.nidi.graphviz.engine.GraphvizServerEngine;
 import guru.nidi.graphviz.engine.GraphvizV8Engine;
 import guru.nidi.graphviz.model.MutableGraph;
+
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -46,6 +49,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
+
 import org.apache.commons.io.FilenameUtils;
 
 @Command(name = "compile", description = "Compile ideal protocol to secure distributed program")
@@ -248,15 +252,20 @@ public class CompileCommand extends BaseCommand {
 
     if (pdg.getOrderedNodes().size() == protocolMap.size()) {
       // Found a protocol for every node! Output synthesized distributed program.
-      final ProgramNode generatedProgram =
+      ImpProtocolInstantiationVisitor protocolInstantiator =
           new ImpProtocolInstantiationVisitor(
-                  hostConfig, communicationStrategy, pdg, protocolMap, main)
-              .run();
+                  hostConfig, communicationStrategy, pdg, protocolMap, main);
+
+      final ProgramNode generatedProgram =
+          protocolInstantiator.run()
+          .toBuilder()
+          .addAll(hostConfig.getDeclarations().values())
+          .build();
 
       try (PrintStream writer = output.newOutputStream()) {
         Printer.run(generatedProgram, writer);
 
-        (new MambaTranslator()).translate(generatedProgram);
+        (new MambaBackend()).compile(generatedProgram);
       }
     } else {
       // We couldn't find protocols for some nodes.

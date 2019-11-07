@@ -16,6 +16,7 @@ import edu.cornell.cs.apl.viaduct.imp.parsing.Printer;
 import edu.cornell.cs.apl.viaduct.imp.parsing.SourceFile;
 import edu.cornell.cs.apl.viaduct.imp.parsing.TrustConfigurationParser;
 import edu.cornell.cs.apl.viaduct.imp.protocols.ImpProtocolCommunicationStrategy;
+import edu.cornell.cs.apl.viaduct.imp.protocols.ImpProtocolSearchSelection;
 import edu.cornell.cs.apl.viaduct.imp.transformers.AnfConverter;
 import edu.cornell.cs.apl.viaduct.imp.transformers.Elaborator;
 import edu.cornell.cs.apl.viaduct.imp.transformers.ImpPdgBuilderPreprocessor;
@@ -276,7 +277,7 @@ public class CompileCommand extends BaseCommand {
     }
 
     final Map<PdgNode<ImpAstNode>, Protocol<ImpAstNode>> protocolMap =
-        (new ProtocolSearchSelection<>(this.enableProfiling, strategy))
+        (new ImpProtocolSearchSelection(this.enableProfiling, strategy))
             .selectProtocols(hostConfig, pdg);
 
     // Dump PDG with protocol information to a file (if requested).

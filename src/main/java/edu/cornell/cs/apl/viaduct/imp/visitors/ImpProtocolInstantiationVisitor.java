@@ -93,12 +93,12 @@ public class ImpProtocolInstantiationVisitor implements StmtVisitor<Void> {
 
   @Override
   public Void visit(SendNode sendNode) {
-    throw new ProtocolInstantiationError("send not removed in PDG!");
+    return visitSingleAstNode(sendNode.getId());
   }
 
   @Override
-  public Void visit(ReceiveNode receiveNode) {
-    throw new ProtocolInstantiationError("recv not removed in PDG!");
+  public Void visit(ReceiveNode recvNode) {
+    return visitSingleAstNode(recvNode.getId());
   }
 
   @Override
@@ -188,12 +188,12 @@ public class ImpProtocolInstantiationVisitor implements StmtVisitor<Void> {
 
     @Override
     public Void visit(SendNode sendNode) {
-      throw new ProtocolInstantiationError("send not removed in PDG!");
+      return visitSingleAstNode(sendNode.getId());
     }
 
     @Override
-    public Void visit(ReceiveNode receiveNode) {
-      throw new ProtocolInstantiationError("recv not removed in PDG!");
+    public Void visit(ReceiveNode recvNode) {
+      return visitSingleAstNode(recvNode.getId());
     }
 
     @Override

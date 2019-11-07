@@ -12,18 +12,23 @@ import java.util.Map;
 import java.util.PriorityQueue;
 import java.util.Set;
 
-public final class ProtocolSearchSelection<T extends AstNode>
+public abstract class ProtocolSearchSelection<T extends AstNode>
     implements ProtocolSelection<T> {
 
   private final ProtocolSearchStrategy<T> strategy;
   private final boolean enableProfiling;
 
   public ProtocolSearchSelection(
-        boolean enableProfiling, ProtocolSearchStrategy<T> strategy)
+      boolean enableProfiling, ProtocolSearchStrategy<T> strategy)
   {
     this.enableProfiling = enableProfiling;
     this.strategy = strategy;
   }
+
+  /** return an initial protocol map to perform search over. */
+  protected abstract HashMap<PdgNode<T>, Protocol<T>> getInitialProtocolMap(
+      HostTrustConfiguration hostConfig,
+      ProgramDependencyGraph<T> pdg);
 
   /**
    * return a mapping from PDG nodes to protocols. this uses A* search to find the cheapest protocol
@@ -43,7 +48,7 @@ public final class ProtocolSearchSelection<T extends AstNode>
     HashSet<ProtocolMapNode<T>> closedSet = new HashSet<>();
 
     // start node is empty map
-    HashMap<PdgNode<T>, Protocol<T>> initMap = new HashMap<>();
+    HashMap<PdgNode<T>, Protocol<T>> initMap = getInitialProtocolMap(hostConfig, pdg);
     openSet.add(new ProtocolMapNode<T>(initMap, 0));
 
     ProtocolSelectionProfiler<T> profiler =

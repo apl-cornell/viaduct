@@ -8,8 +8,11 @@ import javax.annotation.Nullable;
 /** Receive a value from a process. */
 @AutoValue
 public abstract class ReceiveNode extends StatementNode {
+  /** default is *not* external communication, unless explicitly set. */
   public static Builder builder() {
-    return new AutoValue_ReceiveNode.Builder();
+    return
+        new AutoValue_ReceiveNode.Builder()
+        .setExternalCommunication(false);
   }
 
   public abstract Builder toBuilder();
@@ -25,6 +28,9 @@ public abstract class ReceiveNode extends StatementNode {
   /** Process to receive a value from. */
   public abstract ProcessName getSender();
 
+  /** flag for external communication with a host. */
+  public abstract boolean isExternalCommunication();
+
   @Override
   public final <R> R accept(StmtVisitor<R> visitor) {
     return visitor.visit(this);
@@ -37,6 +43,8 @@ public abstract class ReceiveNode extends StatementNode {
     public abstract Builder setReceiveType(ImpBaseType receivedType);
 
     public abstract Builder setSender(ProcessName sender);
+
+    public abstract Builder setExternalCommunication(boolean external);
 
     public abstract ReceiveNode build();
   }

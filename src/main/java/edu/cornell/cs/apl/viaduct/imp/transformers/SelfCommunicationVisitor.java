@@ -63,7 +63,7 @@ class SelfCommunicationVisitor extends IdentityProgramVisitor {
     @Override
     protected StatementNode leave(
         SendNode node, IdentityStmtVisitor visitor, ExpressionNode sentExpression) {
-      if (node.getRecipient().equals(selfProcess)) {
+      if (node.getRecipient().equals(selfProcess) && !node.isExternalCommunication()) {
         selfSentExpressions.add(sentExpression);
         return BlockNode.empty();
       } else {
@@ -74,7 +74,7 @@ class SelfCommunicationVisitor extends IdentityProgramVisitor {
     @Override
     protected StatementNode leave(
         ReceiveNode node, IdentityStmtVisitor visitor, ReferenceNode lhs) {
-      if (!node.getSender().equals(selfProcess)) {
+      if (!node.getSender().equals(selfProcess) || node.isExternalCommunication()) {
         return super.leave(node, visitor, lhs);
       }
 

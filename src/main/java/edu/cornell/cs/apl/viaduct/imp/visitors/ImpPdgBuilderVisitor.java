@@ -47,6 +47,8 @@ public class ImpPdgBuilderVisitor implements StmtVisitor<Set<PdgNode<ImpAstNode>
 
   private static final String VARDECL_NODE = "decl";
   private static final String ASSIGN_NODE = "assgn";
+  private static final String SEND_NODE = "send";
+  private static final String RECV_NODE = "recv";
   private static final String IF_NODE = "if";
   private static final String LOOP_NODE = "loop";
   private static final String BREAK_NODE = "break";
@@ -224,12 +226,31 @@ public class ImpPdgBuilderVisitor implements StmtVisitor<Set<PdgNode<ImpAstNode>
 
   @Override
   public Set<PdgNode<ImpAstNode>> visit(SendNode sendNode) {
-    return new HashSet<>();
+    ExpressionNode sentExpr = sendNode.getSentExpression();
+
+    Set<Variable> temps = this.tempSetVisitor.run(sentExpr);
+    Set<ReferenceNode> queries = this.querySetVisitor.run(sentExpr);
+
+    // there should be NO queries for assignments in A-normal form!
+    assert queries.size() == 0;
+
+    String name = this.nameGenerator.getFreshName(SEND_NODE);
+    PdgComputeNode<ImpAstNode> node = new PdgComputeNode<>(sendNode, name);
+
+    createReadEdges(temps, queries, node);
+
+    return addNode(name, node, sendNode);
   }
 
   @Override
-  public Set<PdgNode<ImpAstNode>> visit(ReceiveNode receiveNode) {
-    return new HashSet<>();
+  public Set<PdgNode<ImpAstNode>> visit(ReceiveNode recvNode) {
+    String name = this.nameGenerator.getFreshName(RECV_NODE);
+    PdgComputeNode<ImpAstNode> node = new PdgComputeNode<>(recvNode, name);
+
+    PdgNode<ImpAstNode> varNode = this.getVariableNode(recvNode.getVariable());
+    PdgWriteEdge.create(node, varNode, "set");
+
+    return addNode(name, node, recvNode);
   }
 
   @Override

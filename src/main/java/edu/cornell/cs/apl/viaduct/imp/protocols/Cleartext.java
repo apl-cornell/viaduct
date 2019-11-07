@@ -145,28 +145,43 @@ public abstract class Cleartext extends AbstractProtocol<ImpAstNode> {
     StatementNode stmt = (StatementNode) node.getAstNode();
 
     if (stmt instanceof VariableDeclarationNode) {
-      assert args.size() == 1;
+      ImpAstNode writeAstNode = writeNode.getAstNode();
 
-      ExpressionNode val = (ExpressionNode) args.get(0);
-      writerBuilder.statement(
-          SendNode.builder()
-          .setRecipient(inProcess)
-          .setSentExpression(val)
-          .setLocation(val)
-          .build());
-      Variable valVar = info.getFreshVar(String.format("%s_val", storageVar));
-      builder.statement(
-          ReceiveNode.builder()
-          .setSender(writeProcess)
-          .setVariable(valVar)
-          .setLocation(val)
-          .build());
-      builder.statement(
-          AssignNode.builder()
-          .setLhs((Variable) storageVar)
-          .setRhs(ReadNode.create(valVar))
-          .setLocation(writeNode.getAstNode())
-          .build());
+      if (writeAstNode instanceof ReceiveNode) {
+        ReceiveNode recvNode = (ReceiveNode) writeAstNode;
+        builder.statement(
+            ReceiveNode.builder()
+            .setVariable((Variable) storageVar)
+            .setReceiveType(recvNode.getReceiveType())
+            .setSender(recvNode.getSender())
+            .setExternalCommunication(recvNode.isExternalCommunication())
+            .setLocation(recvNode)
+            .build());
+
+      } else {
+        assert args.size() == 1;
+
+        ExpressionNode val = (ExpressionNode) args.get(0);
+        writerBuilder.statement(
+            SendNode.builder()
+            .setRecipient(inProcess)
+            .setSentExpression(val)
+            .setLocation(val)
+            .build());
+        Variable valVar = info.getFreshVar(String.format("%s_val", storageVar));
+        builder.statement(
+            ReceiveNode.builder()
+            .setSender(writeProcess)
+            .setVariable(valVar)
+            .setLocation(val)
+            .build());
+        builder.statement(
+            AssignNode.builder()
+            .setLhs((Variable) storageVar)
+            .setRhs(ReadNode.create(valVar))
+            .setLocation(writeNode.getAstNode())
+            .build());
+      }
 
     } else if (stmt instanceof ArrayDeclarationNode) {
       assert args.size() == 2;
@@ -352,6 +367,16 @@ public abstract class Cleartext extends AbstractProtocol<ImpAstNode> {
           .setVariable(outVar)
           .setRhs((ExpressionNode) renamedAstNode)
           .setLocation(astNode)
+          .build());
+
+    } else if (astNode instanceof SendNode) {
+      SendNode sendNode = (SendNode) renamedAstNode;
+      builder.statement(
+          SendNode.builder()
+          .setRecipient(sendNode.getRecipient())
+          .setSentExpression(sendNode.getSentExpression())
+          .setExternalCommunication(sendNode.isExternalCommunication())
+          .setLocation(sendNode)
           .build());
     }
     // there's no need to let-bind assignments since the

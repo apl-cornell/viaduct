@@ -5,6 +5,8 @@ import edu.cornell.cs.apl.viaduct.backend.mamba.protocols.MambaPublicFactory;
 import edu.cornell.cs.apl.viaduct.backend.mamba.protocols.MambaSecretFactory;
 import edu.cornell.cs.apl.viaduct.imp.HostTrustConfiguration;
 import edu.cornell.cs.apl.viaduct.imp.ast.ImpAstNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.ReceiveNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.SendNode;
 import edu.cornell.cs.apl.viaduct.imp.protocols.ControlProtocol;
 import edu.cornell.cs.apl.viaduct.imp.protocols.SingleFactory;
 import edu.cornell.cs.apl.viaduct.pdg.PdgNode;
@@ -43,7 +45,21 @@ public class ImpMambaProtocolSearchStrategy extends ProtocolCostEstimator<ImpAst
       ProgramDependencyGraph<ImpAstNode> pdg)
       throws UnknownProtocolException {
 
-    return this.costEstimator.estimateNodeCost(node, protocolMap, pdg);
+    ImpAstNode astNode = node.getAstNode();
+
+    // don't attempt to estimate cost for external communication;
+    // the protocols for these are fixed and should not be factored into
+    // the cost of the overall protocol. also, fixing the protocols for
+    // external communication breaks the invariant that all of a node's
+    // dependencies will have a protocol by the time the node's protocol
+    // gets selected, so this is actually necessary to prevent stuff
+    // from breaking
+    if (astNode instanceof ReceiveNode || astNode instanceof SendNode) {
+      return 0;
+
+    } else {
+      return this.costEstimator.estimateNodeCost(node, protocolMap, pdg);
+    }
   }
 
   @Override

@@ -3,7 +3,6 @@ import com.github.spotbugs.SpotBugsTask
 plugins {
     id 'java'
     id 'application'
-//    id 'com.github.johnrengelman.shadow' version '5.0.0'
 
     // Style checking
     id 'checkstyle'
@@ -117,7 +116,7 @@ dependencies {
     implementation group: 'org.fusesource.jansi', name: 'jansi', version: '1.18'
 
     // DOT graph output
-    implementation group: 'guru.nidi', name: 'graphviz-java', version: '0.8.3'
+    implementation group: 'guru.nidi', name: 'graphviz-java', version: '0.11.0'
 
     // Logging (disabled for now using the NOP engine)
     implementation group: 'org.slf4j', name: 'slf4j-nop', version: '1.8.0-beta4'

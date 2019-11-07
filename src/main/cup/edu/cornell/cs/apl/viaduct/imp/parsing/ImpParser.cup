@@ -330,6 +330,7 @@ stmt_basic ::=
           SendNode.builder()
           .setRecipient(recipient)
           .setSentExpression(e)
+           .setExternalCommunication(true)
           .setSourceLocation(location(beginleft, recipientright))
           .build());
     :}
@@ -340,6 +341,7 @@ stmt_basic ::=
           .setVariable(var)
           .setReceiveType(ty)
           .setSender(sender)
+          .setExternalCommunication(true)
           .setSourceLocation(location(varleft, senderright))
           .build());
     :}
@@ -351,6 +353,7 @@ stmt_basic ::=
               .setVariable(decl.getVariable())
               .setReceiveType(ty)
               .setSender(sender)
+              .setExternalCommunication(true)
               .setSourceLocation(location(decl.getVariable(), senderright))
               .build()
           )

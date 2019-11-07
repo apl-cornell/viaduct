@@ -23,8 +23,8 @@ import java.util.Map;
 import java.util.Set;
 
 public class ImpMambaCommunicationCostEstimator extends ImpCommunicationCostEstimator {
-  private static int PUBLIC_COST = 1;
-  private static int SECRET_COST = 10;
+  private static int PUBLIC_COST = 100;
+  private static int SECRET_COST = 1000;
 
   public ImpMambaCommunicationCostEstimator(
       HostTrustConfiguration hostConfig,

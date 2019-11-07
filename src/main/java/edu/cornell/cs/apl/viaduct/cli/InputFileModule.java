@@ -17,7 +17,7 @@ final class InputFileModule {
   @Once
   // TODO: this generates a badly-formatted huge dump of text in help. Enable when fixed.
   // @com.github.rvesse.airline.annotations.restrictions.File(mustExist = true, writable = false)
-  private String input = null;
+  protected String input = null;
 
   /** Parse the input file and return the AST. */
   ProgramNode parse() throws IOException {

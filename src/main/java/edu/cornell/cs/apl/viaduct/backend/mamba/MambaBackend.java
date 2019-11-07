@@ -23,8 +23,15 @@ import edu.cornell.cs.apl.viaduct.protocol.Protocol;
 import io.vavr.collection.HashSet;
 import io.vavr.collection.Set;
 
+import java.io.File;
+import java.io.IOException;
+import java.io.PrintStream;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.Optional;
+
+import org.fusesource.jansi.AnsiConsole;
+import org.fusesource.jansi.AnsiPrintStream;
 
 /** translate Viaduct process configuration to a MAMBA program. */
 public final class MambaBackend {
@@ -42,7 +49,7 @@ public final class MambaBackend {
   }
 
   /** compile generated IMP program into MAMBA backend. */
-  public void compile(ProgramNode program) {
+  public void compile(ProgramNode program, String outputDir) {
     // number hosts
     ImmutableMap<HostName, HostDeclarationNode> hosts = program.hosts();
     ImmutableMap.Builder<ProcessName, Integer> hostNameMapBuilder = ImmutableMap.builder();
@@ -54,23 +61,76 @@ public final class MambaBackend {
     }
 
     ImmutableMap<ProcessName, Integer> hostNameMap = hostNameMapBuilder.build();
-
     ImmutableMap<ProcessName, ProcessDeclarationNode> processes = program.processes();
     MambaCompilationInfo mambaInfo = generateMambaProcess(program, hostNameMap);
 
-    System.out.println("printing processes...");
-    for (Map.Entry<HostName, HostDeclarationNode> kv : hosts.entrySet()) {
-      ProcessDeclarationNode hostProcess = processes.get(ProcessName.create(kv.getKey()));
-      String pythonProcess = ImpPythonPrintVisitor.run(hostProcess.getBody());
+    try {
+      if (outputDir == null) {
+        printToStdout(hostNameMap, processes, mambaInfo);
 
-      System.out.println(String.format("process %s:", kv.getKey().getName()));
-      System.out.println(pythonProcess);
-      System.out.println("");
+      } else {
+        printToOutputDir(outputDir, hostNameMap, processes, mambaInfo);
+      }
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
+  }
+
+  private void printToOutputDir(
+      String outputDirname,
+      ImmutableMap<ProcessName, Integer> hostNameMap,
+      ImmutableMap<ProcessName, ProcessDeclarationNode> processes,
+      MambaCompilationInfo mambaInfo) throws IOException {
+
+    File outputDir = new File(outputDirname);
+    if (!outputDir.mkdirs()) {
+      throw new IOException(
+          String.format("failed to create output directory %s", outputDirname));
+    }
+
+    for (Map.Entry<ProcessName, Integer> kv : hostNameMap.entrySet()) {
+      ProcessDeclarationNode hostProcess = processes.get(kv.getKey());
+      String pythonProcessStr = ImpPythonPrintVisitor.run(hostProcess.getBody());
+
+      String filename = String.format("player_%d.py", kv.getValue());
+      File file = new File(outputDir, filename);
+      PrintStream out = new AnsiPrintStream(new PrintStream(file, StandardCharsets.UTF_8));
+      out.print(pythonProcessStr);
+      out.close();
     }
 
     if (mambaInfo.mambaProcess.isPresent()) {
-      System.out.println("mamba process:");
-      System.out.println(
+      String mambaProcessStr =
+          MambaPrintVisitor.run(mambaInfo.secretVariables, mambaInfo.mambaProcess.get());
+
+      String filename = String.format("%s.mpc", outputDir);
+      PrintStream out =
+          new AnsiPrintStream(
+              new PrintStream(new File(outputDir, filename), StandardCharsets.UTF_8));
+      out.print(mambaProcessStr);
+      out.close();
+    }
+  }
+
+  private void printToStdout(
+      ImmutableMap<ProcessName, Integer> hostNameMap,
+      ImmutableMap<ProcessName, ProcessDeclarationNode> processes,
+      MambaCompilationInfo mambaInfo) throws IOException {
+
+    PrintStream stdout = AnsiConsole.out();
+
+    for (Map.Entry<ProcessName, Integer> kv : hostNameMap.entrySet()) {
+      ProcessDeclarationNode hostProcess = processes.get(kv.getKey());
+      String pythonProcess = ImpPythonPrintVisitor.run(hostProcess.getBody());
+
+      stdout.println(String.format("process %s:", kv.getKey().getName()));
+      stdout.println(pythonProcess);
+      stdout.println("");
+    }
+
+    if (mambaInfo.mambaProcess.isPresent()) {
+      stdout.println("mamba process:");
+      stdout.println(
           MambaPrintVisitor.run(mambaInfo.secretVariables, mambaInfo.mambaProcess.get()));
     }
   }

@@ -27,7 +27,7 @@ public class FormatCommand extends BaseCommand {
     ProgramNode program = this.input.parse();
 
     // print
-    try (PrintStream writer = this.output.newOutputStream()) {
+    try (PrintStream writer = this.output.newOutputStream("")) {
       if (this.enableElaboration || this.enableAnf) {
         program = Elaborator.run(program);
       }

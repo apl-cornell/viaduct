@@ -12,7 +12,7 @@ import javax.inject.Inject;
 abstract class BaseCommand implements Callable<Void> {
   @Inject InputFileModule input = new InputFileModule();
 
-  @Inject OutputFileModule output = new OutputFileModule();
+  @Inject OutputDirModule output = new OutputDirModule();
 
   /** Execute the command. */
   abstract void run() throws IOException;

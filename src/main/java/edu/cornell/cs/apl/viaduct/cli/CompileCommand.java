@@ -51,6 +51,8 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 import org.apache.commons.io.FilenameUtils;
+import org.fusesource.jansi.AnsiConsole;
+import org.fusesource.jansi.AnsiPrintStream;
 
 @Command(name = "compile", description = "Compile ideal protocol to secure distributed program")
 public class CompileCommand extends BaseCommand {
@@ -101,17 +103,29 @@ public class CompileCommand extends BaseCommand {
   private String constraintGraphOutput = null;
 
   @Option(
-      name = {"-s", "--skip"},
+      name = {"--skip"},
       description =
-          "End compilation early. With this option enabled, Viaduct will"
-              + " end as soon as the last debugging option (e.g. graph dump)"
-              + " has been executed")
+          "Compilation will stop after the last debugging information (e.g. graph dump)"
+              + " option is generated.")
   private boolean skip;
 
   @Option(
-      name = {"-r", "--profile"},
+      name = {"-prof", "--profile"},
       description = "Enable profiling for protocol selection.")
   private boolean enableProfiling;
+
+  @Option(
+      name = {"--imp"},
+      title = "output.imp",
+      description =
+          "Output synthesized protocol in an intermediate representation.")
+  private String intermediateOutput;
+
+  @Option(
+      name = {"-v", "--verbose"},
+      description =
+          "Print information throughout the compilation process.")
+  private boolean verbose;
 
   /**
    * Write the given graph to the output file if the filename is not {@code null}. Do nothing
@@ -179,11 +193,35 @@ public class CompileCommand extends BaseCommand {
 
   @Override
   public void run() throws IOException {
+    if (this.verbose) {
+      System.out.println(String.format("parsing input file %s...", this.input.input));
+    }
+
     final ProgramNode program = this.input.parse();
     final HostTrustConfiguration hostConfig = this.parseHostConfig(program);
 
+    if (this.verbose) {
+      System.out.println("type checking...");
+    }
+
     TypeChecker.run(program);
-    // TODO: run information flow checking here.
+
+    if (this.verbose) {
+      System.out.println("elaborating derived forms...");
+      System.out.println("converting to A-normal form...");
+      System.out.println("removing uncompilable syntactic forms...");
+    }
+
+    final ProgramNode processedProgram =
+        ImpPdgBuilderPreprocessor.run(AnfConverter.run(Elaborator.run(program)));
+
+    if (this.verbose) {
+      System.out.println("checking information flow constraints...");
+      System.out.println("generating minimum authority solution...");
+    }
+
+    // Check information flow and inject trust labels into the AST.
+    InformationFlowChecker.run(processedProgram);
 
     // Dump constraint graph to a file if requested.
     dumpConstraints(
@@ -194,17 +232,16 @@ public class CompileCommand extends BaseCommand {
                 output),
         constraintGraphOutput);
 
-    final ProgramNode processedProgram =
-        ImpPdgBuilderPreprocessor.run(AnfConverter.run(Elaborator.run(program)));
-
-    // Check information flow and inject trust labels into the AST.
-    InformationFlowChecker.run(processedProgram);
-
-    if (this.skip && labelGraphOutput == null && protocolGraphOutput == null) {
+    if (this.skip && labelGraphOutput == null
+        && protocolGraphOutput == null && this.intermediateOutput == null) {
       return;
     }
 
     final StatementNode main = processedProgram.processes().get(ProcessName.getMain()).getBody();
+
+    if (this.verbose) {
+      System.out.println("generating information dependency graph...");
+    }
 
     // Generate program dependency graph.
     final ProgramDependencyGraph<ImpAstNode> pdg = new ImpPdgBuilderVisitor().generatePDG(main);
@@ -212,7 +249,7 @@ public class CompileCommand extends BaseCommand {
     // Dump PDG with information flow labels to a file (if requested).
     dumpGraph(() -> PdgDotPrinter.pdgDotGraphWithLabels(pdg, new Printer()), labelGraphOutput);
 
-    if (this.skip && protocolGraphOutput == null) {
+    if (this.skip && protocolGraphOutput == null && this.intermediateOutput == null) {
       return;
     }
 
@@ -234,23 +271,31 @@ public class CompileCommand extends BaseCommand {
     final ImpMambaProtocolSearchStrategy strategy =
         new ImpMambaProtocolSearchStrategy(costEstimator);
 
+    if (this.verbose) {
+      System.out.println("selecting protocols...");
+    }
+
     final Map<PdgNode<ImpAstNode>, Protocol<ImpAstNode>> protocolMap =
         (new ProtocolSearchSelection<>(this.enableProfiling, strategy))
             .selectProtocols(hostConfig, pdg);
-
-    System.out.println("SYNTHESIZED PROTOCOL:");
-    System.out.println(strategy.estimatePdgCost(protocolMap, pdg));
 
     // Dump PDG with protocol information to a file (if requested).
     dumpGraph(
         () -> PdgDotPrinter.pdgDotGraphWithProtocols(pdg, protocolMap, strategy, new Printer()),
         protocolGraphOutput);
 
-    if (this.skip) {
+    if (this.skip && this.intermediateOutput == null) {
       return;
     }
 
     if (pdg.getOrderedNodes().size() == protocolMap.size()) {
+      if (this.verbose) {
+        System.out.println(
+            String.format(
+                "protocols selected! estimated cost: %d",
+                strategy.estimatePdgCost(protocolMap, pdg)));
+      }
+
       // Found a protocol for every node! Output synthesized distributed program.
       ImpProtocolInstantiationVisitor protocolInstantiator =
           new ImpProtocolInstantiationVisitor(
@@ -262,11 +307,28 @@ public class CompileCommand extends BaseCommand {
           .addAll(hostConfig.getDeclarations().values())
           .build();
 
-      try (PrintStream writer = output.newOutputStream()) {
+      if (this.intermediateOutput != null) {
+        PrintStream writer =
+            new AnsiPrintStream(
+                new PrintStream(new File(this.intermediateOutput), StandardCharsets.UTF_8));
+
         Printer.run(generatedProgram, writer);
 
-        (new MambaBackend()).compile(generatedProgram);
+      } else if (this.intermediateOutput == null && this.verbose) {
+        PrintStream writer = AnsiConsole.out();
+        Printer.run(generatedProgram, writer);
       }
+
+      if (this.skip && this.intermediateOutput != null) {
+        return;
+      }
+
+      if (this.verbose) {
+        System.out.println("compiling to MAMBA backend...");
+      }
+
+      (new MambaBackend()).compile(generatedProgram, output.outputDir);
+
     } else {
       // We couldn't find protocols for some nodes.
       final StringBuilder error = new StringBuilder();

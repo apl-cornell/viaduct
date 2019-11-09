@@ -2,6 +2,7 @@ package edu.cornell.cs.apl.viaduct.backend.mamba.visitors;
 
 import edu.cornell.cs.apl.viaduct.backend.mamba.ast.MambaArrayLoadNode;
 import edu.cornell.cs.apl.viaduct.backend.mamba.ast.MambaBinaryExpressionNode;
+import edu.cornell.cs.apl.viaduct.backend.mamba.ast.MambaExpressionNode;
 import edu.cornell.cs.apl.viaduct.backend.mamba.ast.MambaIntLiteralNode;
 import edu.cornell.cs.apl.viaduct.backend.mamba.ast.MambaMuxNode;
 import edu.cornell.cs.apl.viaduct.backend.mamba.ast.MambaNegationNode;
@@ -14,6 +15,10 @@ import io.vavr.collection.Set;
 /** check if secret data is used in an expression. */
 public class MambaSecretInputChecker implements MambaExpressionVisitor<Boolean> {
   private final Set<MambaVariable> secretVariables;
+
+  public static boolean run(Set<MambaVariable> secretVars, MambaExpressionNode expr) {
+    return expr.accept(new MambaSecretInputChecker(secretVars));
+  }
 
   public MambaSecretInputChecker(Set<MambaVariable> secretVariables) {
     this.secretVariables = secretVariables;

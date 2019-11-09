@@ -35,7 +35,6 @@ public final class MambaPrintVisitor
   private static String ELSE_BODY_NAME = "else_body";
   private static String WHILE_BODY_NAME = "while_body";
   private static String OBJ_NAME = "obj";
-  private static String TEMPLATE = OBJ_NAME + " = {}\n%s";
 
   private final FreshNameGenerator nameGenerator = new FreshNameGenerator();
   private final Set<MambaVariable> secretVariables;
@@ -44,9 +43,7 @@ public final class MambaPrintVisitor
 
   /** print. */
   public static String run(Set<MambaVariable> secretVariables, MambaStatementNode mambaProgram) {
-    return
-        String.format(TEMPLATE,
-            mambaProgram.accept(new MambaPrintVisitor(secretVariables)));
+    return mambaProgram.accept(new MambaPrintVisitor(secretVariables));
   }
 
   private MambaPrintVisitor(Set<MambaVariable> secretVariables) {
@@ -307,15 +304,17 @@ public final class MambaPrintVisitor
     StringBuilder builder = new StringBuilder();
     builder.append(addIndentation());
 
-    String exprStr = node.getExpression().accept(this);
+    MambaExpressionNode expr = node.getExpression();
+    boolean isSecretExpr = MambaSecretInputChecker.run(this.secretVariables, expr);
 
+    String exprStr = node.getExpression().accept(this);
     int player = node.getPlayer();
-    if (player < 0) {
-      builder.append(String.format("(%s).public_output()", exprStr));
+
+    if (isSecretExpr) {
+      builder.append(String.format("send_secret_output(%s, %d)", exprStr, player));
 
     } else {
-      builder.append(String.format("(%s).reveal_to(%d)", exprStr, player));
-
+      builder.append(String.format("send_public_output(%s, %d)", exprStr, player));
     }
 
     return builder.toString();

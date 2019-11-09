@@ -19,6 +19,7 @@ import edu.cornell.cs.apl.viaduct.imp.ast.LetBindingNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.LiteralNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.LoopNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.NotNode;
+import edu.cornell.cs.apl.viaduct.imp.ast.ProcessName;
 import edu.cornell.cs.apl.viaduct.imp.ast.ReadNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ReceiveNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.SendNode;
@@ -35,6 +36,7 @@ import edu.cornell.cs.apl.viaduct.imp.ast.values.IntegerValue;
 import edu.cornell.cs.apl.viaduct.imp.visitors.ExprVisitor;
 import edu.cornell.cs.apl.viaduct.imp.visitors.ReferenceVisitor;
 import edu.cornell.cs.apl.viaduct.imp.visitors.StmtVisitor;
+import io.vavr.collection.Set;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -47,13 +49,22 @@ public final class ImpPythonPrintVisitor
 {
   private static int INDENTATION_LEVEL = 2;
 
+  private final ProcessName selfProcess;
+  private final Set<ProcessName> mambaProcesses;
+
   private int indentation;
 
-  public static String run(BlockNode block) {
-    return block.accept(new ImpPythonPrintVisitor());
+  public static String run(
+      BlockNode block,
+      ProcessName selfProcess,
+      Set<ProcessName> mambaProcesses)
+  {
+    return block.accept(new ImpPythonPrintVisitor(selfProcess, mambaProcesses));
   }
 
-  private ImpPythonPrintVisitor() {
+  private ImpPythonPrintVisitor(ProcessName selfProcess, Set<ProcessName> mambaProcesses) {
+    this.selfProcess = selfProcess;
+    this.mambaProcesses = mambaProcesses;
     this.indentation = -INDENTATION_LEVEL;
   }
 
@@ -242,25 +253,46 @@ public final class ImpPythonPrintVisitor
 
   @Override
   public String visit(SendNode node) {
+    ProcessName recipient = node.getRecipient();
+    String template;
+
+    if (this.selfProcess.equals(recipient)) {
+      template = "user_output(%s)";
+
+    } else if (this.mambaProcesses.contains(recipient)) {
+      template = "mamba_input(%s)";
+
+    } else {
+      // TODO: new exception
+      throw new Error("direct communication between hosts currently not supported");
+    }
+
     return
         getBuilder()
-        .append(
-            String.format(
-                "send(%s, \"%s\")",
-                node.getSentExpression().accept(this),
-                node.getRecipient().getName()))
+        .append(String.format(template, node.getSentExpression().accept(this)))
         .toString();
   }
 
   @Override
   public String visit(ReceiveNode node) {
+    ProcessName sender = node.getSender();
+    String variableStr = node.getVariable().accept(this);
+    String template;
+
+    if (this.selfProcess.equals(sender)) {
+      template = "%s = user_input(\"" + variableStr + "\")";
+
+    } else if (this.mambaProcesses.contains(sender)) {
+      template = "%s = mamba_output()";
+
+    } else {
+      // TODO: new exception
+      throw new Error("direct communication between hosts currently not supported");
+    }
+
     return
         getBuilder()
-        .append(
-            String.format(
-                "%s = receive(\"%s\")",
-                node.getVariable().accept(this),
-                node.getSender().getName()))
+        .append(String.format(template, variableStr))
         .toString();
   }
 

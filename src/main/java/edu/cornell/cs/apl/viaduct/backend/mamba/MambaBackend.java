@@ -37,14 +37,32 @@ import org.fusesource.jansi.AnsiPrintStream;
 public final class MambaBackend {
   private static class MambaCompilationInfo {
     final Set<MambaVariable> secretVariables;
+    final Optional<ProcessName> publicProcess;
+    final Optional<ProcessName> secretProcess;
     final Optional<MambaStatementNode> mambaProcess;
 
     MambaCompilationInfo(
         Set<MambaVariable> secretVariables,
+        Optional<ProcessName> publicProcess,
+        Optional<ProcessName> secretProcess,
         Optional<MambaStatementNode> mambaProcess)
     {
       this.secretVariables = secretVariables;
+      this.publicProcess = publicProcess;
+      this.secretProcess = secretProcess;
       this.mambaProcess = mambaProcess;
+    }
+
+    public Set<ProcessName> getMambaProcesses() {
+      Set<ProcessName> mambaProcesses = HashSet.empty();
+      if (this.publicProcess.isPresent()) {
+        mambaProcesses = mambaProcesses.add(this.publicProcess.get());
+      }
+      if (this.secretProcess.isPresent()) {
+        mambaProcesses = mambaProcesses.add(this.secretProcess.get());
+      }
+
+      return mambaProcesses;
     }
   }
 
@@ -89,8 +107,11 @@ public final class MambaBackend {
     }
 
     for (Map.Entry<ProcessName, Integer> kv : hostNameMap.entrySet()) {
-      ProcessDeclarationNode hostProcess = processes.get(kv.getKey());
-      String pythonProcessStr = ImpPythonPrintVisitor.run(hostProcess.getBody());
+      ProcessName hostProcessName = kv.getKey();
+      ProcessDeclarationNode hostProcess = processes.get(hostProcessName);
+      String pythonProcessStr =
+          ImpPythonPrintVisitor.run(
+              hostProcess.getBody(), hostProcessName, mambaInfo.getMambaProcesses());
 
       String filename = String.format("player_%d.py", kv.getValue());
       File file = new File(outputDir, filename);
@@ -120,8 +141,11 @@ public final class MambaBackend {
     PrintStream stdout = AnsiConsole.out();
 
     for (Map.Entry<ProcessName, Integer> kv : hostNameMap.entrySet()) {
-      ProcessDeclarationNode hostProcess = processes.get(kv.getKey());
-      String pythonProcess = ImpPythonPrintVisitor.run(hostProcess.getBody());
+      ProcessName hostProcessName = kv.getKey();
+      ProcessDeclarationNode hostProcess = processes.get(hostProcessName);
+      String pythonProcess =
+          ImpPythonPrintVisitor.run(
+              hostProcess.getBody(), hostProcessName, mambaInfo.getMambaProcesses());
 
       stdout.println(String.format("process %s:", kv.getKey().getName()));
       stdout.println(pythonProcess);
@@ -200,6 +224,8 @@ public final class MambaBackend {
               MambaSecretConditionalConverter.run(secretChecker, mambaProcess.get()));
     }
 
-    return new MambaCompilationInfo(secretVariables, mambaProcess);
+    return
+        new MambaCompilationInfo(
+            secretVariables, publicProcessName, secretProcessName, mambaProcess);
   }
 }

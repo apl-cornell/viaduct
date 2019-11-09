@@ -34,22 +34,22 @@ in_queue = Queue()
 mamba_thread = MambaOutThread(mamba_proc, in_queue)
 
 
-def get_user_input(var):
+def user_input(var):
   print "input", var, ":",
   x = raw_input()
   return x
 
 
-def send_mamba_input(val):
+def mamba_input(val):
   mamba_proc.stdin.write(val + "\n")
 
 
-def get_mamba_output():
+def mamba_output():
   val = in_queue.get()
   return val
 
 
-def send_user_output(val):
+def user_output(val):
   print "output:", val
 
 

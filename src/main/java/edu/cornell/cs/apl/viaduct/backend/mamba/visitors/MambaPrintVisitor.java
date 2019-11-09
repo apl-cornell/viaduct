@@ -314,7 +314,7 @@ public final class MambaPrintVisitor
       builder.append(String.format("send_secret_output(%s, %d)", exprStr, player));
 
     } else {
-      builder.append(String.format("send_public_output(%s, %d)", exprStr, player));
+      builder.append(String.format("send_clear_output(%s, %d)", exprStr, player));
     }
 
     return builder.toString();

@@ -144,21 +144,20 @@ public abstract class Cleartext extends AbstractProtocol<ImpAstNode> {
     StmtBuilder writerBuilder = info.getBuilder(writeProcess);
     StatementNode stmt = (StatementNode) node.getAstNode();
 
-    if (stmt instanceof VariableDeclarationNode) {
-      ImpAstNode writeAstNode = writeNode.getAstNode();
+    ImpAstNode writeAstNode = writeNode.getAstNode();
+    if (writeAstNode instanceof ReceiveNode) {
+      ReceiveNode recvNode = (ReceiveNode) writeAstNode;
+      builder.statement(
+          ReceiveNode.builder()
+          .setVariable((Variable) storageVar)
+          .setReceiveType(recvNode.getReceiveType())
+          .setSender(recvNode.getSender())
+          .setExternalCommunication(recvNode.isExternalCommunication())
+          .setLocation(recvNode)
+          .build());
 
-      if (writeAstNode instanceof ReceiveNode) {
-        ReceiveNode recvNode = (ReceiveNode) writeAstNode;
-        builder.statement(
-            ReceiveNode.builder()
-            .setVariable((Variable) storageVar)
-            .setReceiveType(recvNode.getReceiveType())
-            .setSender(recvNode.getSender())
-            .setExternalCommunication(recvNode.isExternalCommunication())
-            .setLocation(recvNode)
-            .build());
-
-      } else {
+    } else {
+      if (stmt instanceof VariableDeclarationNode) {
         assert args.size() == 1;
 
         ExpressionNode val = (ExpressionNode) args.get(0);
@@ -181,55 +180,55 @@ public abstract class Cleartext extends AbstractProtocol<ImpAstNode> {
             .setRhs(ReadNode.create(valVar))
             .setLocation(writeNode.getAstNode())
             .build());
+
+      } else if (stmt instanceof ArrayDeclarationNode) {
+        assert args.size() == 2;
+
+        ExpressionNode idx = (ExpressionNode) args.get(0);
+        ExpressionNode val = (ExpressionNode) args.get(1);
+        writerBuilder.statement(
+            SendNode.builder()
+            .setRecipient(inProcess)
+            .setSentExpression(idx)
+            .setLocation(idx)
+            .build());
+        writerBuilder.statement(
+            SendNode.builder()
+            .setRecipient(inProcess)
+            .setSentExpression(val)
+            .setLocation(val)
+            .build());
+
+        Variable arrayVar = ((ArrayDeclarationNode) stmt).getVariable();
+        Variable idxVar = info.getFreshVar(String.format("%s_idx", arrayVar));
+        Variable valVar = info.getFreshVar(String.format("%s_val", arrayVar));
+        builder.statement(
+            ReceiveNode.builder()
+            .setSender(writeProcess)
+            .setVariable(idxVar)
+            .setLocation(idx)
+            .build());
+        builder.statement(
+            ReceiveNode.builder()
+            .setSender(writeProcess)
+            .setVariable(valVar)
+            .setLocation(val)
+            .build());
+        builder.statement(
+            AssignNode.builder()
+            .setLhs(
+                ArrayIndexingNode.builder()
+                .setArray((Variable) storageVar)
+                .setIndex(ReadNode.create(idxVar))
+                .build())
+            .setRhs(ReadNode.create(valVar))
+            .setLocation(writeNode.getAstNode())
+            .build());
+
+      } else {
+        throw new ProtocolInstantiationError(
+            "storage node not associated with var or array declaration");
       }
-
-    } else if (stmt instanceof ArrayDeclarationNode) {
-      assert args.size() == 2;
-
-      ExpressionNode idx = (ExpressionNode) args.get(0);
-      ExpressionNode val = (ExpressionNode) args.get(1);
-      writerBuilder.statement(
-          SendNode.builder()
-          .setRecipient(inProcess)
-          .setSentExpression(idx)
-          .setLocation(idx)
-          .build());
-      writerBuilder.statement(
-          SendNode.builder()
-          .setRecipient(inProcess)
-          .setSentExpression(val)
-          .setLocation(val)
-          .build());
-
-      Variable arrayVar = ((ArrayDeclarationNode) stmt).getVariable();
-      Variable idxVar = info.getFreshVar(String.format("%s_idx", arrayVar));
-      Variable valVar = info.getFreshVar(String.format("%s_val", arrayVar));
-      builder.statement(
-          ReceiveNode.builder()
-          .setSender(writeProcess)
-          .setVariable(idxVar)
-          .setLocation(idx)
-          .build());
-      builder.statement(
-          ReceiveNode.builder()
-          .setSender(writeProcess)
-          .setVariable(valVar)
-          .setLocation(val)
-          .build());
-      builder.statement(
-          AssignNode.builder()
-          .setLhs(
-              ArrayIndexingNode.builder()
-              .setArray((Variable) storageVar)
-              .setIndex(ReadNode.create(idxVar))
-              .build())
-          .setRhs(ReadNode.create(valVar))
-          .setLocation(writeNode.getAstNode())
-          .build());
-
-    } else {
-      throw new ProtocolInstantiationError(
-          "storage node not associated with var or array declaration");
     }
   }
 

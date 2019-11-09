@@ -3,7 +3,9 @@ package edu.cornell.cs.apl.viaduct.protocol;
 import edu.cornell.cs.apl.viaduct.AstNode;
 import edu.cornell.cs.apl.viaduct.imp.HostTrustConfiguration;
 import edu.cornell.cs.apl.viaduct.pdg.PdgNode;
-import java.util.Map;
+
+import io.vavr.collection.Map;
+
 import java.util.Set;
 
 /** determines whether to create protocol instances during protocol selection. */

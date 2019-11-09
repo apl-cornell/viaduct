@@ -5,12 +5,12 @@ import edu.cornell.cs.apl.viaduct.imp.HostTrustConfiguration;
 import edu.cornell.cs.apl.viaduct.pdg.PdgNode;
 import edu.cornell.cs.apl.viaduct.pdg.ProgramDependencyGraph;
 
-import java.util.HashMap;
-import java.util.HashSet;
+import io.vavr.Tuple2;
+import io.vavr.collection.Map;
+import io.vavr.collection.Set;
+
 import java.util.List;
-import java.util.Map;
 import java.util.PriorityQueue;
-import java.util.Set;
 
 public abstract class ProtocolSearchSelection<T extends AstNode>
     implements ProtocolSelection<T> {
@@ -26,7 +26,7 @@ public abstract class ProtocolSearchSelection<T extends AstNode>
   }
 
   /** return an initial protocol map to perform search over. */
-  protected abstract HashMap<PdgNode<T>, Protocol<T>> getInitialProtocolMap(
+  protected abstract Map<PdgNode<T>, Protocol<T>> getInitialProtocolMap(
       HostTrustConfiguration hostConfig,
       ProgramDependencyGraph<T> pdg);
 
@@ -45,10 +45,10 @@ public abstract class ProtocolSearchSelection<T extends AstNode>
 
     // create open and closed sets
     PriorityQueue<ProtocolMapNode<T>> openSet = new PriorityQueue<>(nodes.size());
-    HashSet<ProtocolMapNode<T>> closedSet = new HashSet<>();
+    java.util.Set<ProtocolMapNode<T>> closedSet = new java.util.HashSet<>();
 
     // start node is empty map
-    HashMap<PdgNode<T>, Protocol<T>> initMap = getInitialProtocolMap(hostConfig, pdg);
+    Map<PdgNode<T>, Protocol<T>> initMap = getInitialProtocolMap(hostConfig, pdg);
     openSet.add(new ProtocolMapNode<T>(initMap, 0));
 
     ProtocolSelectionProfiler<T> profiler =
@@ -60,7 +60,7 @@ public abstract class ProtocolSearchSelection<T extends AstNode>
       profiler.probe(lastAddedNode, openSet, closedSet);
 
       ProtocolMapNode<T> currMapNode = openSet.remove();
-      HashMap<PdgNode<T>, Protocol<T>> currMap = currMapNode.getProtocolMap();
+      Map<PdgNode<T>, Protocol<T>> currMap = currMapNode.getProtocolMap();
       Set<PdgNode<T>> mappedNodes = currMap.keySet();
 
       // check if the current map is a goal node
@@ -91,17 +91,14 @@ public abstract class ProtocolSearchSelection<T extends AstNode>
       // for each protocol, generate a set of possible instantiated protocols
       // each instantiated protocol represents an edge from the current map
       // to a new map with one new mapping from the PDG node to the instantiated protocol
-      Set<Protocol<T>> protoInstances =
+      java.util.Set<Protocol<T>> protoInstances =
           this.strategy.createProtocolInstances(hostConfig, currMap, nextNode);
       for (Protocol<T> protoInstance : protoInstances) {
         profiler.recordProtocol(protoInstance);
 
         // instantiate neighbor
         @SuppressWarnings("unchecked")
-        // TODO: use functional data structures
-        HashMap<PdgNode<T>, Protocol<T>> newMap =
-            (HashMap<PdgNode<T>, Protocol<T>>) currMap.clone();
-        newMap.put(nextNode, protoInstance);
+        Map<PdgNode<T>, Protocol<T>> newMap = currMap.put(nextNode, protoInstance);
         int newMapCost = this.strategy.estimatePdgCost(newMap, pdg);
 
         // if cost is < 0, then we consider the map invalid
@@ -125,15 +122,15 @@ public abstract class ProtocolSearchSelection<T extends AstNode>
   /** represents a node in the search space. */
   private static class ProtocolMapNode<U extends AstNode>
       implements Comparable<ProtocolMapNode<U>> {
-    final HashMap<PdgNode<U>, Protocol<U>> protocolMap;
+    final Map<PdgNode<U>, Protocol<U>> protocolMap;
     final int cost;
 
-    ProtocolMapNode(HashMap<PdgNode<U>, Protocol<U>> pmap, int cost) {
+    ProtocolMapNode(Map<PdgNode<U>, Protocol<U>> pmap, int cost) {
       this.protocolMap = pmap;
       this.cost = cost;
     }
 
-    HashMap<PdgNode<U>, Protocol<U>> getProtocolMap() {
+    Map<PdgNode<U>, Protocol<U>> getProtocolMap() {
       return this.protocolMap;
     }
 
@@ -166,8 +163,8 @@ public abstract class ProtocolSearchSelection<T extends AstNode>
     @Override
     public String toString() {
       StringBuffer str = new StringBuffer();
-      for (Map.Entry<PdgNode<U>, Protocol<U>> kv : protocolMap.entrySet()) {
-        str.append(String.format("%s => %s%n", kv.getKey().toString(), kv.getValue().toString()));
+      for (Tuple2<PdgNode<U>, Protocol<U>> kv : protocolMap.iterator()) {
+        str.append(String.format("%s => %s%n", kv._1().toString(), kv._2().toString()));
       }
       return str.toString();
     }
@@ -176,8 +173,8 @@ public abstract class ProtocolSearchSelection<T extends AstNode>
   /** profiler for protocol search. */
   private static class ProtocolSelectionProfiler<U extends AstNode> {
     private final int interval; // how much to increase the threshold
-    private final Map<Integer,Integer> openSetSizeHistogram;
-    private final Map<String, Integer> protocolHistogram;
+    private final java.util.Map<Integer,Integer> openSetSizeHistogram;
+    private final java.util.Map<String, Integer> protocolHistogram;
     private final int bucketSize; // bucket size for the histogram
     private final int numNodes;
     private final boolean enabled;
@@ -186,8 +183,8 @@ public abstract class ProtocolSearchSelection<T extends AstNode>
     public ProtocolSelectionProfiler(boolean enabled, int numNodes, int i, int bucketSize) {
       this.interval = i;
       this.threshold = i;
-      this.openSetSizeHistogram = new HashMap<>();
-      this.protocolHistogram = new HashMap<>();
+      this.openSetSizeHistogram = new java.util.HashMap<>();
+      this.protocolHistogram = new java.util.HashMap<>();
       this.bucketSize = bucketSize;
       this.numNodes = numNodes;
       this.enabled = enabled;
@@ -196,7 +193,7 @@ public abstract class ProtocolSearchSelection<T extends AstNode>
     public void probe(
         ProtocolMapNode<U> lastAddedNode,
         PriorityQueue<ProtocolMapNode<U>> openSet,
-        Set<ProtocolMapNode<U>> closedSet) {
+        java.util.Set<ProtocolMapNode<U>> closedSet) {
 
       if (this.enabled) {
         int openSetSize = openSet.size();
@@ -216,7 +213,7 @@ public abstract class ProtocolSearchSelection<T extends AstNode>
               String.format("completion of last added node: %d out of %d protocols selected",
                 lastAddedNode.getProtocolMap().size(), this.numNodes));
 
-          for (Map.Entry<String,Integer> kv : this.protocolHistogram.entrySet()) {
+          for (java.util.Map.Entry<String,Integer> kv : this.protocolHistogram.entrySet()) {
             System.out.println(String.format("protocol %s: %d", kv.getKey(), kv.getValue()));
           }
           this.threshold += this.interval;
@@ -242,7 +239,7 @@ public abstract class ProtocolSearchSelection<T extends AstNode>
     public void exitProfile() {
       if (this.enabled) {
         System.out.println("EXIT PROFILE FOR PROTOCOL SELECTION");
-        for (Map.Entry<Integer,Integer> kv : this.openSetSizeHistogram.entrySet()) {
+        for (java.util.Map.Entry<Integer,Integer> kv : this.openSetSizeHistogram.entrySet()) {
           int bucket = kv.getKey();
           int bucketCount = kv.getValue();
           System.out.println(

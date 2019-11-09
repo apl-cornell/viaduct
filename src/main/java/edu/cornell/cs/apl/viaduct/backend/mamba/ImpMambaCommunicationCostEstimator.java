@@ -18,8 +18,9 @@ import edu.cornell.cs.apl.viaduct.pdg.ProgramDependencyGraph;
 import edu.cornell.cs.apl.viaduct.protocol.Protocol;
 import edu.cornell.cs.apl.viaduct.protocol.ProtocolCommunicationStrategy;
 
+import io.vavr.collection.Map;
+
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 
 public class ImpMambaCommunicationCostEstimator extends ImpCommunicationCostEstimator {
@@ -47,7 +48,7 @@ public class ImpMambaCommunicationCostEstimator extends ImpCommunicationCostEsti
       final Set<ProcessName> processes = protocol.getProcesses();
       int numCommunications = 0;
       for (PdgInfoEdge<ImpAstNode> infoEdge : node.getReadEdges()) {
-        final Protocol<ImpAstNode> srcProto = protocolMap.get(infoEdge.getSource());
+        final Protocol<ImpAstNode> srcProto = protocolMap.getOrElse(infoEdge.getSource(), null);
 
         for (ProcessName process : processes) {
           final Set<ProcessName> readSet = new HashSet<>(
@@ -58,7 +59,7 @@ public class ImpMambaCommunicationCostEstimator extends ImpCommunicationCostEsti
       }
 
       for (PdgInfoEdge<ImpAstNode> infoEdge : node.getWriteEdges()) {
-        Protocol<ImpAstNode> dstProto = protocolMap.get(infoEdge.getTarget());
+        Protocol<ImpAstNode> dstProto = protocolMap.getOrElse(infoEdge.getTarget(), null);
 
         for (ProcessName process : processes) {
           final Set<ProcessName> writeSet = new HashSet<>(
@@ -93,7 +94,7 @@ public class ImpMambaCommunicationCostEstimator extends ImpCommunicationCostEsti
       int numCommunications = 0;
 
       for (PdgInfoEdge<ImpAstNode> infoEdge : node.getReadEdges()) {
-        Protocol<ImpAstNode> srcProto = protocolMap.get(infoEdge.getSource());
+        Protocol<ImpAstNode> srcProto = protocolMap.getOrElse(infoEdge.getSource(), null);
         Set<ProcessName> readSet = new HashSet<>(
             this.communicationStrategy.getReadSet(this.hostConfig, srcProto, protocol, process));
         readSet.remove(process);
@@ -101,7 +102,7 @@ public class ImpMambaCommunicationCostEstimator extends ImpCommunicationCostEsti
       }
 
       for (PdgInfoEdge<ImpAstNode> infoEdge : node.getWriteEdges()) {
-        Protocol<ImpAstNode> dstProto = protocolMap.get(infoEdge.getTarget());
+        Protocol<ImpAstNode> dstProto = protocolMap.getOrElse(infoEdge.getTarget(), null);
         Set<ProcessName> writeSet = new HashSet<>(
             this.communicationStrategy.getReadSet(this.hostConfig, protocol, dstProto, process));
         writeSet.remove(process);
@@ -146,7 +147,7 @@ public class ImpMambaCommunicationCostEstimator extends ImpCommunicationCostEsti
       throws UnknownProtocolException, InvalidProtocolException
   {
     try {
-      Protocol<ImpAstNode> protocol = protocolMap.get(node);
+      Protocol<ImpAstNode> protocol = protocolMap.getOrElse(node, null);
       if (protocol instanceof MambaPublic) {
         return estimateMambaPublicCost(protocolMap, node, (MambaPublic) protocol);
 

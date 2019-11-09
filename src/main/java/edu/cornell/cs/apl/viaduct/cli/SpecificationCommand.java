@@ -25,10 +25,11 @@ import edu.cornell.cs.apl.viaduct.protocol.Protocol;
 import edu.cornell.cs.apl.viaduct.security.Label;
 import edu.cornell.cs.apl.viaduct.security.Principal;
 
+import io.vavr.collection.HashMap;
+import io.vavr.collection.Map;
+
 import java.io.IOException;
 import java.io.PrintStream;
-import java.util.HashMap;
-import java.util.Map;
 
 @Command(
     name = "specification",
@@ -71,7 +72,7 @@ public class SpecificationCommand extends BaseCommand {
     final ProgramDependencyGraph<ImpAstNode> pdg = new ImpPdgBuilderVisitor().generatePDG(main);
 
     // all data and computation is in the IdealFunctionality protocol
-    final Map<PdgNode<ImpAstNode>, Protocol<ImpAstNode>> protocolMap = new HashMap<>();
+    final Map<PdgNode<ImpAstNode>, Protocol<ImpAstNode>> protocolMap = HashMap.empty();
     for (PdgNode<ImpAstNode> node : pdg.getOrderedNodes()) {
       if (node.isControlNode()) {
         protocolMap.put(node, ControlProtocol.getInstance());

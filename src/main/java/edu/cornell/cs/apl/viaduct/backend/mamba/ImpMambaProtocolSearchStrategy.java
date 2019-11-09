@@ -15,8 +15,9 @@ import edu.cornell.cs.apl.viaduct.protocol.Protocol;
 import edu.cornell.cs.apl.viaduct.protocol.ProtocolCostEstimator;
 import edu.cornell.cs.apl.viaduct.protocol.ProtocolSearchStrategy;
 
+import io.vavr.collection.Map;
+
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 
 public class ImpMambaProtocolSearchStrategy extends ProtocolCostEstimator<ImpAstNode>

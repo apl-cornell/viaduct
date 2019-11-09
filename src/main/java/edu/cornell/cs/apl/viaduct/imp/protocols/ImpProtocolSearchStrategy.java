@@ -17,8 +17,9 @@ import edu.cornell.cs.apl.viaduct.protocol.Protocol;
 import edu.cornell.cs.apl.viaduct.protocol.ProtocolCostEstimator;
 import edu.cornell.cs.apl.viaduct.protocol.ProtocolSearchStrategy;
 
+import io.vavr.collection.Map;
+
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 
 /** create protocol instances and estimate protocol cost for IMP programs. */
@@ -71,7 +72,7 @@ public class ImpProtocolSearchStrategy extends ProtocolCostEstimator<ImpAstNode>
       if (numWriteEdges == 1) {
         PdgWriteEdge<ImpAstNode> writeEdge = writeEdges.iterator().next();
         PdgNode<ImpAstNode> targetNode = writeEdge.getTarget();
-        Protocol<ImpAstNode> targetProto = protocolMap.get(targetNode);
+        Protocol<ImpAstNode> targetProto = protocolMap.getOrElse(targetNode, null);
 
         if (targetProto instanceof Single) {
           instances.add(new Single(hostConfig, ((Single) targetProto).getHost()));

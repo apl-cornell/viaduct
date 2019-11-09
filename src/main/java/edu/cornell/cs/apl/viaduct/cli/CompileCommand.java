@@ -37,6 +37,8 @@ import guru.nidi.graphviz.engine.GraphvizServerEngine;
 import guru.nidi.graphviz.engine.GraphvizV8Engine;
 import guru.nidi.graphviz.model.MutableGraph;
 
+import io.vavr.collection.Map;
+
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -47,7 +49,6 @@ import java.io.StringWriter;
 import java.io.Writer;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
-import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
@@ -338,7 +339,7 @@ public class CompileCommand extends BaseCommand {
       for (PdgNode<ImpAstNode> node : pdg.getOrderedNodes()) {
         final String astStr = node.getAstNode().toString();
 
-        final Protocol<ImpAstNode> protocol = protocolMap.get(node);
+        final Protocol<ImpAstNode> protocol = protocolMap.getOrElse(node, null);
         final String protocolStr = protocol == null ? "NO PROTOCOL" : protocol.toString();
 
         final String labelStr = node.getLabel().toString();

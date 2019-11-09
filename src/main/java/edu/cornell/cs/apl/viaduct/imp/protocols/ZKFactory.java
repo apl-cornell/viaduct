@@ -5,8 +5,10 @@ import edu.cornell.cs.apl.viaduct.imp.ast.ImpAstNode;
 import edu.cornell.cs.apl.viaduct.pdg.PdgNode;
 import edu.cornell.cs.apl.viaduct.protocol.Protocol;
 import edu.cornell.cs.apl.viaduct.protocol.ProtocolFactory;
+
+import io.vavr.collection.Map;
+
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 
 /** contains ZK information flow constraints. */

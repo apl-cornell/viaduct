@@ -4,14 +4,13 @@ import edu.cornell.cs.apl.viaduct.imp.HostTrustConfiguration;
 import edu.cornell.cs.apl.viaduct.imp.ast.ImpAstNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ReceiveNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.SendNode;
-import edu.cornell.cs.apl.viaduct.imp.protocols.Single;
 import edu.cornell.cs.apl.viaduct.pdg.PdgNode;
 import edu.cornell.cs.apl.viaduct.pdg.ProgramDependencyGraph;
 import edu.cornell.cs.apl.viaduct.protocol.Protocol;
 import edu.cornell.cs.apl.viaduct.protocol.ProtocolSearchSelection;
 import edu.cornell.cs.apl.viaduct.protocol.ProtocolSearchStrategy;
-
-import java.util.HashMap;
+import io.vavr.collection.HashMap;
+import io.vavr.collection.Map;
 
 public final class ImpProtocolSearchSelection extends ProtocolSearchSelection<ImpAstNode> {
   public ImpProtocolSearchSelection(
@@ -21,19 +20,19 @@ public final class ImpProtocolSearchSelection extends ProtocolSearchSelection<Im
   }
 
   @Override
-  protected HashMap<PdgNode<ImpAstNode>,Protocol<ImpAstNode>> getInitialProtocolMap(
+  protected Map<PdgNode<ImpAstNode>,Protocol<ImpAstNode>> getInitialProtocolMap(
       HostTrustConfiguration hostConfig, ProgramDependencyGraph<ImpAstNode> pdg)
   {
-    HashMap<PdgNode<ImpAstNode>,Protocol<ImpAstNode>> initMap = new HashMap<>();
+    Map<PdgNode<ImpAstNode>,Protocol<ImpAstNode>> initMap = HashMap.empty();
     for (PdgNode<ImpAstNode> node : pdg.getOrderedNodes()) {
       ImpAstNode astNode = node.getAstNode();
       if (astNode instanceof ReceiveNode) {
         ReceiveNode recvNode = (ReceiveNode) astNode;
-        initMap.put(node, new Single(hostConfig, recvNode.getSender().toHostName()));
+        initMap = initMap.put(node, new Single(hostConfig, recvNode.getSender().toHostName()));
 
       } else if (astNode instanceof SendNode) {
         SendNode sendNode = (SendNode) astNode;
-        initMap.put(node, new Single(hostConfig, sendNode.getRecipient().toHostName()));
+        initMap = initMap.put(node, new Single(hostConfig, sendNode.getRecipient().toHostName()));
       }
     }
 

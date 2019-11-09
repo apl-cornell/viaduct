@@ -26,7 +26,8 @@ import edu.cornell.cs.apl.viaduct.protocol.Protocol;
 import edu.cornell.cs.apl.viaduct.protocol.ProtocolCommunicationStrategy;
 import edu.cornell.cs.apl.viaduct.protocol.ProtocolInstantiationError;
 import edu.cornell.cs.apl.viaduct.protocol.ProtocolInstantiationInfo;
-import java.util.Map;
+
+import io.vavr.collection.Map;
 
 /** instantiate process configuration from selected protocols. */
 public class ImpProtocolInstantiationVisitor implements StmtVisitor<Void> {

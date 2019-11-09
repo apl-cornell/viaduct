@@ -9,7 +9,9 @@ import edu.cornell.cs.apl.viaduct.imp.builders.ProcessConfigurationBuilder;
 import edu.cornell.cs.apl.viaduct.imp.builders.StmtBuilder;
 import edu.cornell.cs.apl.viaduct.pdg.PdgNode;
 import edu.cornell.cs.apl.viaduct.pdg.ProgramDependencyGraph.ControlLabel;
-import java.util.Map;
+
+import io.vavr.collection.Map;
+
 import java.util.Set;
 import java.util.Stack;
 
@@ -43,8 +45,8 @@ public class ProtocolInstantiationInfo<T extends AstNode> {
       PdgNode<T> readNode,
       ProcessName process)
   {
-    final Protocol<T> fromProtocol = this.protocolMap.get(writeNode);
-    final Protocol<T> toProtocol = this.protocolMap.get(readNode);
+    final Protocol<T> fromProtocol = this.protocolMap.getOrElse(writeNode, null);
+    final Protocol<T> toProtocol = this.protocolMap.getOrElse(readNode, null);
     return this.communicationStrategy.getReadSet(
         this.hostConfig, fromProtocol, toProtocol, process);
   }
@@ -55,8 +57,8 @@ public class ProtocolInstantiationInfo<T extends AstNode> {
       PdgNode<T> readNode,
       ProcessName process)
   {
-    final Protocol<T> fromProtocol = this.protocolMap.get(writeNode);
-    final Protocol<T> toProtocol = this.protocolMap.get(readNode);
+    final Protocol<T> fromProtocol = this.protocolMap.getOrElse(writeNode, null);
+    final Protocol<T> toProtocol = this.protocolMap.getOrElse(readNode, null);
     return this.communicationStrategy.getWriteSet(
         this.hostConfig, fromProtocol, toProtocol, process);
   }
@@ -72,7 +74,7 @@ public class ProtocolInstantiationInfo<T extends AstNode> {
   }
 
   public Protocol<T> getProtocol(PdgNode<T> node) {
-    return this.protocolMap.get(node);
+    return this.protocolMap.getOrElse(node, null);
   }
 
   public StmtBuilder getBuilder(ProcessName process) {

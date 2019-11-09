@@ -7,8 +7,9 @@ import edu.cornell.cs.apl.viaduct.protocol.Protocol;
 import edu.cornell.cs.apl.viaduct.protocol.ProtocolFactory;
 import edu.cornell.cs.apl.viaduct.security.Label;
 
+import io.vavr.collection.Map;
+
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 
 /** Protocol factory for protocols that can be summarized by a single label. */

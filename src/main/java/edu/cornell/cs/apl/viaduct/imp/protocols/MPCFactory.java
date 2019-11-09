@@ -6,6 +6,7 @@ import edu.cornell.cs.apl.viaduct.imp.ast.ImpAstNode;
 import edu.cornell.cs.apl.viaduct.pdg.PdgNode;
 import edu.cornell.cs.apl.viaduct.protocol.PowersetProtocolFactory;
 import edu.cornell.cs.apl.viaduct.protocol.Protocol;
+
 import java.util.Set;
 
 /** contains MPC information flow constraints. */

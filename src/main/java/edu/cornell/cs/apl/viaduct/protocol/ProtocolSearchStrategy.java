@@ -6,7 +6,8 @@ import edu.cornell.cs.apl.viaduct.imp.HostTrustConfiguration;
 import edu.cornell.cs.apl.viaduct.pdg.PdgNode;
 import edu.cornell.cs.apl.viaduct.pdg.ProgramDependencyGraph;
 
-import java.util.Map;
+import io.vavr.collection.Map;
+
 import java.util.Set;
 
 public interface ProtocolSearchStrategy<T extends AstNode> {

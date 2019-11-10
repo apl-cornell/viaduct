@@ -302,8 +302,8 @@ public final class ImpPythonPrintVisitor
       getBuilder()
       .append(String.format("if %s:%n", node.getGuard().accept(this)))
       .append(visitChildBlock(node.getThenBranch()))
-      .append(addIndentation())
       .append("\n")
+      .append(addIndentation())
       .append("else:\n")
       .append(visitChildBlock(node.getElseBranch()))
       .toString();

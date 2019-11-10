@@ -218,10 +218,13 @@ public final class LogicalPositionInjector
 
   @Override
   public StatementNode visit(IfNode node) {
+    IfNode.Builder builder =
+        node.toBuilder()
+        .setGuard(node.getGuard().accept(this));
+
     AbstractLineNumber curPosition = getNextPosition();
     return
-        node.toBuilder()
-        .setGuard(node.getGuard().accept(this))
+        builder
         .setLogicalPosition(curPosition)
         .setThenBranch(
             (BlockNode) node.getThenBranch()

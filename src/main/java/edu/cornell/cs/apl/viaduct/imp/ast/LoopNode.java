@@ -6,7 +6,7 @@ import javax.annotation.Nullable;
 
 /** Unguarded loop. */
 @AutoValue
-public abstract class LoopNode extends StatementNode {
+public abstract class LoopNode extends StatementNode implements ControlNode {
   public static Builder builder() {
     return new AutoValue_LoopNode.Builder();
   }

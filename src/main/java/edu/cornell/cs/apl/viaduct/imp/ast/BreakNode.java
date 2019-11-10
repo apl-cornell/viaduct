@@ -5,7 +5,7 @@ import edu.cornell.cs.apl.viaduct.imp.visitors.StmtVisitor;
 import javax.annotation.Nullable;
 
 @AutoValue
-public abstract class BreakNode extends StatementNode {
+public abstract class BreakNode extends StatementNode implements ControlNode {
   public static Builder builder() {
     return new AutoValue_BreakNode.Builder();
   }

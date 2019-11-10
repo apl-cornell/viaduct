@@ -70,6 +70,10 @@ public class ControlProtocol extends Cleartext implements Protocol<ImpAstNode> {
         controlStructureProcesses.addAll(info.getProtocol(writeEdge.getTarget()).getProcesses());
       }
     }
+    // TODO: this is a monkey patch...do an actual fix
+    if (!info.isLoopControlContextEmpty()) {
+      controlStructureProcesses.addAll(info.getCurrentLoopControlContext());
+    }
 
     info.pushControlContext(controlStructureProcesses);
 

@@ -8,7 +8,9 @@ import javax.annotation.Nullable;
 
 /** A statically allocated array with a dynamically determined length. */
 @AutoValue
-public abstract class ArrayDeclarationNode extends StatementNode {
+public abstract class ArrayDeclarationNode
+    extends StatementNode implements DeclarationNode
+{
   public static Builder builder() {
     return new AutoValue_ArrayDeclarationNode.Builder();
   }

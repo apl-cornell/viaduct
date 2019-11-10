@@ -66,6 +66,7 @@ public class ImpProtocolSearchStrategy extends ProtocolCostEstimator<ImpAstNode>
     } else {
       // special case: if compute node is an assignment, set its protocol to the protocol
       // of the storage node it is writing to, given that it is not replicated.
+      /*
       Set<PdgWriteEdge<ImpAstNode>> writeEdges = node.getWriteEdges();
       int numWriteEdges = writeEdges.size();
       assert numWriteEdges <= 1;
@@ -83,6 +84,7 @@ public class ImpProtocolSearchStrategy extends ProtocolCostEstimator<ImpAstNode>
           return instances;
         }
       }
+      */
 
       // general case: get instances from Single, Replication, ZK, and MPC in that order
       instances.addAll(this.singleFactory.createInstances(hostConfig, protocolMap, node));

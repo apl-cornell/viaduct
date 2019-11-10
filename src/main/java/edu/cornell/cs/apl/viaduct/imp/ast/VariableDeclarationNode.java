@@ -8,7 +8,9 @@ import javax.annotation.Nullable;
 
 /** Variable declaration. */
 @AutoValue
-public abstract class VariableDeclarationNode extends StatementNode {
+public abstract class VariableDeclarationNode
+    extends StatementNode implements DeclarationNode
+{
   public static Builder builder() {
     return new AutoValue_VariableDeclarationNode.Builder();
   }

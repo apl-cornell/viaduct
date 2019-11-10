@@ -5,7 +5,7 @@ import edu.cornell.cs.apl.viaduct.imp.visitors.StmtVisitor;
 
 /** If statement. */
 @AutoValue
-public abstract class IfNode extends StatementNode {
+public abstract class IfNode extends StatementNode implements ControlNode {
   public static Builder builder() {
     return new AutoValue_IfNode.Builder().setLoopGuard(false);
   }

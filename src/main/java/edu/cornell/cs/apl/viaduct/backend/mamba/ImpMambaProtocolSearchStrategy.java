@@ -23,11 +23,11 @@ import java.util.Set;
 public class ImpMambaProtocolSearchStrategy extends ProtocolCostEstimator<ImpAstNode>
     implements ProtocolSearchStrategy<ImpAstNode>
 {
-  private final ProtocolCostEstimator<ImpAstNode> costEstimator;
+  protected final ProtocolCostEstimator<ImpAstNode> costEstimator;
 
-  private final SingleFactory singleFactory;
-  private final MambaPublicFactory mambaPublicFactory;
-  private final MambaSecretFactory mambaSecretFactory;
+  protected final SingleFactory singleFactory;
+  protected final MambaPublicFactory mambaPublicFactory;
+  protected final MambaSecretFactory mambaSecretFactory;
 
   /** constructor. */
   public ImpMambaProtocolSearchStrategy(ProtocolCostEstimator<ImpAstNode> costEstimator) {
@@ -36,7 +36,6 @@ public class ImpMambaProtocolSearchStrategy extends ProtocolCostEstimator<ImpAst
     this.mambaSecretFactory = new MambaSecretFactory();
     this.costEstimator = costEstimator;
   }
-
 
   /** estimate cost for a single PDG node. */
   @Override
@@ -57,10 +56,17 @@ public class ImpMambaProtocolSearchStrategy extends ProtocolCostEstimator<ImpAst
     // from breaking
     if (astNode instanceof ReceiveNode || astNode instanceof SendNode) {
       return 0;
-
-    } else {
-      return this.costEstimator.estimateNodeCost(node, protocolMap, pdg);
     }
+
+    // check if all inputs to the node have protocols;
+    // if not, don't estimate node cost yet
+    for (PdgNode<ImpAstNode> readNode : node.getReadNodes()) {
+      if (!protocolMap.containsKey(readNode)) {
+        return 0;
+      }
+    }
+
+    return this.costEstimator.estimateNodeCost(node, protocolMap, pdg);
   }
 
   @Override

@@ -256,7 +256,8 @@ public class AnfConverter {
     public Iterable<StatementNode> leave(IfNode node, AnfStmtVisitor visitor,
         ExpressionNode guard, Iterable<StatementNode> thenBranch,
         Iterable<StatementNode> elseBranch) {
-      return listBuilder()
+      return
+          listBuilder()
           .addAll(visitor.getBindings())
           .add(
               node.toBuilder()
@@ -358,20 +359,20 @@ public class AnfConverter {
       @Override
       public ExpressionNode visit(NotNode node) {
         final ExpressionNode expression = atomicConverter.run(false, node.getExpression());
-        return node.toBuilder().setExpression(expression).build();
+        return this.atomicConverter.run(false, node.toBuilder().setExpression(expression).build());
       }
 
       @Override
       public ExpressionNode visit(BinaryExpressionNode node) {
         final ExpressionNode lhs = atomicConverter.run(false, node.getLhs());
         final ExpressionNode rhs = atomicConverter.run(false, node.getRhs());
-        return node.toBuilder().setLhs(lhs).setRhs(rhs).build();
+        return this.atomicConverter.run(false, node.toBuilder().setLhs(lhs).setRhs(rhs).build());
       }
 
       @Override
       public ExpressionNode visit(DowngradeNode node) {
         final ExpressionNode expression = atomicConverter.run(false, node.getExpression());
-        return node.toBuilder().setExpression(expression).build();
+        return this.atomicConverter.run(false, node.toBuilder().setExpression(expression).build());
       }
     }
 

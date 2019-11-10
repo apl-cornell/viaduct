@@ -4,6 +4,7 @@ import com.github.rvesse.airline.annotations.Command;
 import com.github.rvesse.airline.annotations.Option;
 
 import edu.cornell.cs.apl.viaduct.backend.mamba.ImpMambaCommunicationCostEstimator;
+import edu.cornell.cs.apl.viaduct.backend.mamba.ImpMambaMpcProtocolSearchStrategy;
 import edu.cornell.cs.apl.viaduct.backend.mamba.ImpMambaProtocolSearchStrategy;
 import edu.cornell.cs.apl.viaduct.backend.mamba.MambaBackend;
 import edu.cornell.cs.apl.viaduct.imp.HostTrustConfiguration;
@@ -28,8 +29,7 @@ import edu.cornell.cs.apl.viaduct.pdg.PdgNode;
 import edu.cornell.cs.apl.viaduct.pdg.ProgramDependencyGraph;
 import edu.cornell.cs.apl.viaduct.protocol.Protocol;
 import edu.cornell.cs.apl.viaduct.protocol.ProtocolCostEstimator;
-import edu.cornell.cs.apl.viaduct.protocol.ProtocolSearchSelection;
-
+import edu.cornell.cs.apl.viaduct.protocol.ProtocolSelection;
 import guru.nidi.graphviz.engine.Format;
 import guru.nidi.graphviz.engine.Graphviz;
 import guru.nidi.graphviz.engine.GraphvizCmdLineEngine;
@@ -121,7 +121,20 @@ public class CompileCommand extends BaseCommand {
       title = "output.imp",
       description =
           "Output synthesized protocol in an intermediate representation.")
-  private String intermediateOutput;
+  private String intermediateOutput = null;
+
+  @Option(
+      name = {"--template"},
+      title = "template.py",
+      description =
+          "Compilation template for MAMBA programs.")
+  private String mambaCompilationTemplate = "template.py";
+
+  @Option(
+      name = {"--mpc"},
+      description =
+          "Compile entire protocol in MPC.")
+  private boolean compileToMpc;
 
   @Option(
       name = {"-v", "--verbose"},
@@ -271,7 +284,9 @@ public class CompileCommand extends BaseCommand {
         new ImpMambaCommunicationCostEstimator(hostConfig, communicationStrategy);
 
     final ImpMambaProtocolSearchStrategy strategy =
-        new ImpMambaProtocolSearchStrategy(costEstimator);
+        this.compileToMpc
+        ? new ImpMambaMpcProtocolSearchStrategy(costEstimator)
+        : new ImpMambaProtocolSearchStrategy(costEstimator);
 
     if (this.verbose) {
       System.out.println("selecting protocols...");
@@ -279,7 +294,7 @@ public class CompileCommand extends BaseCommand {
 
     final Map<PdgNode<ImpAstNode>, Protocol<ImpAstNode>> protocolMap =
         (new ImpProtocolSearchSelection(this.enableProfiling, strategy))
-            .selectProtocols(hostConfig, pdg);
+        .selectProtocols(hostConfig, pdg);
 
     // Dump PDG with protocol information to a file (if requested).
     dumpGraph(
@@ -329,7 +344,8 @@ public class CompileCommand extends BaseCommand {
         System.out.println("compiling to MAMBA backend...");
       }
 
-      (new MambaBackend()).compile(generatedProgram, output.outputDir);
+      (new MambaBackend())
+      .compile(this.mambaCompilationTemplate, generatedProgram, output.outputDir);
 
     } else {
       // We couldn't find protocols for some nodes.

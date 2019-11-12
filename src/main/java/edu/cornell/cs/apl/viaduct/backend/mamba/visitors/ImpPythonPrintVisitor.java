@@ -90,6 +90,7 @@ public final class ImpPythonPrintVisitor
     }
 
     if (stmts.size() == 0) {
+      builder.append(addIndentation());
       builder.append("pass");
     }
 

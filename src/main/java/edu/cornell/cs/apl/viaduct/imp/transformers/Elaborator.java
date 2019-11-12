@@ -16,16 +16,12 @@ import edu.cornell.cs.apl.viaduct.imp.visitors.StmtVisitor;
 public class Elaborator {
   /** elaborate. */
   public static ProgramNode run(ProgramNode program) {
-    ProgramNode elaboratedProgram = (new ElaborationProgramVisitor()).run(program);
-    elaboratedProgram = LogicalPositionInjector.run(elaboratedProgram);
-    return elaboratedProgram;
+    return (new ElaborationProgramVisitor()).run(program);
   }
 
   /** elaborate. */
   public static StatementNode run(StatementNode statement) {
-    StatementNode elaboratedStmt = new ElaborationProgramVisitor().run(statement);
-    elaboratedStmt = LogicalPositionInjector.run(elaboratedStmt);
-    return elaboratedStmt;
+    return (new ElaborationProgramVisitor()).run(statement);
   }
 
   private static class ElaborationProgramVisitor extends IdentityProgramVisitor {

@@ -214,51 +214,26 @@ public final class MambaPrintVisitor
 
   @Override
   public String visit(MambaAssignNode node) {
-    MambaExpressionNode rhs = node.getRhs();
-
-    StringBuilder builder = new StringBuilder();
-    String template = null;
-
-    boolean isBooleanExpr = IsBooleanExpr.run(rhs);
-    boolean isSecretVariable = this.secretVariables.contains(node.getVariable());
-
-    if (isBooleanExpr && isSecretVariable) {
-      template = "%s.write(sregint(1) & %s)";
-
-    } else if (isBooleanExpr && isSecretVariable) {
-      template = "%s.write(regint(1) & %s)";
-
-    } else {
-      template = "%s.write(%s)";
-    }
-
-    builder.append(addIndentation());
-    builder.append(
-        String.format(template,
-            visitVariable(node.getVariable()),
-            node.getRhs().accept(this)));
-
-    return builder.toString();
+    return
+      (new StringBuilder())
+      .append(addIndentation())
+      .append(
+          String.format("reg_write(%s, %s)",
+              visitVariable(node.getVariable()),
+              node.getRhs().accept(this)))
+      .toString();
   }
 
   @Override
   public String visit(MambaArrayStoreNode node) {
     MambaVariable array = node.getArray();
-    MambaExpressionNode value = node.getValue();
 
     StringBuilder builder = new StringBuilder();
     String template = null;
 
-    boolean isBooleanExpr = IsBooleanExpr.run(value);
     boolean isSecretArray = this.secretVariables.contains(array);
 
-    if (isBooleanExpr && isSecretArray) {
-      template = "secret_store(%s, %s, sregint(1) & %s)";
-
-    } else if (isBooleanExpr && !isSecretArray) {
-      template = "clear_store(%s, %s, regint(1) & %s)";
-
-    } else if (!isBooleanExpr && isSecretArray) {
+    if (isSecretArray) {
       template = "secret_store(%s, %s, %s)";
 
     } else {

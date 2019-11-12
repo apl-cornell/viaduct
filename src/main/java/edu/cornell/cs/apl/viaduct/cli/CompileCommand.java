@@ -21,6 +21,7 @@ import edu.cornell.cs.apl.viaduct.imp.protocols.ImpProtocolSearchSelection;
 import edu.cornell.cs.apl.viaduct.imp.transformers.AnfConverter;
 import edu.cornell.cs.apl.viaduct.imp.transformers.Elaborator;
 import edu.cornell.cs.apl.viaduct.imp.transformers.ImpPdgBuilderPreprocessor;
+import edu.cornell.cs.apl.viaduct.imp.transformers.LogicalPositionInjector;
 import edu.cornell.cs.apl.viaduct.imp.typing.TypeChecker;
 import edu.cornell.cs.apl.viaduct.imp.visitors.ImpPdgBuilderVisitor;
 import edu.cornell.cs.apl.viaduct.imp.visitors.ImpProtocolInstantiationVisitor;
@@ -228,7 +229,10 @@ public class CompileCommand extends BaseCommand {
     }
 
     final ProgramNode processedProgram =
-        ImpPdgBuilderPreprocessor.run(AnfConverter.run(Elaborator.run(program)));
+        ImpPdgBuilderPreprocessor.run(
+            LogicalPositionInjector.run(
+                AnfConverter.run(
+                    Elaborator.run(program))));
 
     if (this.verbose) {
       System.out.println("checking information flow constraints...");

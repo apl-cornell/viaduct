@@ -182,9 +182,10 @@ public abstract class LoopContextStmtVisitor<
 
   /** Set the value attached to a loop label. */
   final void put(JumpLabel label, LoopValueT value) {
-    if (labelContext.containsKey(label)) {
+    if (label != null && labelContext.containsKey(label)) {
       final HasLocation previousDeclaration = labelContext.keySet().find(label::equals).getOrNull();
       throw new NameClashError(previousDeclaration, label);
+
     }
     labelContext = labelContext.put(label, value);
     lastLoopValue = Option.some(value);

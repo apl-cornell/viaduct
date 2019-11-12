@@ -15,6 +15,7 @@ import edu.cornell.cs.apl.viaduct.backend.mamba.ast.MambaExpressionNode;
 import edu.cornell.cs.apl.viaduct.backend.mamba.ast.MambaIfNode;
 import edu.cornell.cs.apl.viaduct.backend.mamba.ast.MambaInputNode;
 import edu.cornell.cs.apl.viaduct.backend.mamba.ast.MambaIntLiteralNode;
+import edu.cornell.cs.apl.viaduct.backend.mamba.ast.MambaNegationNode;
 import edu.cornell.cs.apl.viaduct.backend.mamba.ast.MambaOutputNode;
 import edu.cornell.cs.apl.viaduct.backend.mamba.ast.MambaReadNode;
 import edu.cornell.cs.apl.viaduct.backend.mamba.ast.MambaRegIntDeclarationNode;
@@ -183,7 +184,10 @@ public final class ImpToMambaTranslator
 
   @Override
   public MambaExpressionNode visit(NotNode node) {
-    throw new Error("translation not implemented");
+    return
+        MambaNegationNode.builder()
+        .setExpression(node.getExpression().accept(this))
+        .build();
   }
 
   @Override

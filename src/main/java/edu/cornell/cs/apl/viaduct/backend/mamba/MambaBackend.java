@@ -106,9 +106,11 @@ public final class MambaBackend {
       MambaCompilationInfo mambaInfo) throws IOException {
 
     File outputDir = new File(outputDirname);
-    if (!outputDir.mkdirs()) {
-      throw new IOException(
-          String.format("failed to create output directory %s", outputDirname));
+    if (!outputDir.exists()) {
+      if (!outputDir.mkdirs()) {
+        throw new IOException(
+            String.format("failed to create output directory %s", outputDirname));
+      }
     }
 
     for (Map.Entry<ProcessName, Integer> kv : hostNameMap.entrySet()) {

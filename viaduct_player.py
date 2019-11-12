@@ -1,11 +1,15 @@
 #!/usr/bin/env python
 
+import json
 from Queue import Queue
-import threading
+import os
 import subprocess
 import sys
-import os
+import threading
 
+if len(sys.argv) != 3 and len(sys.argv) != 4:
+  print "usage: viaduct_player.py player_num program [profile_file]"
+  exit(0)
 
 class MambaOutThread (threading.Thread):
   def __init__(self, mamba_proc, in_queue, prof_data):
@@ -30,13 +34,14 @@ class MambaOutThread (threading.Thread):
         data_sent = int(data[3])
         data_received = int(data[4])
 
-        if player not in prof_data["network"]:
-          prof_data["network"][player] = {}
+        if player not in prof_data:
+          prof_data[player] = {}
 
-        prof_data["network"][player][thread_num] = {
-          "sent": data_sent,
-          "received": data_received
-        }
+        if thread_num not in prof_data[player]:
+          prof_data[player][thread_num] = {}
+
+        prof_data[player][thread_num]["data_sent"] = data_sent
+        prof_data[player][thread_num]["data_received"] = data_received
 
       elif "VIADUCT_PROFILE_RESOURCE" in line:
         data = line.split()
@@ -45,17 +50,18 @@ class MambaOutThread (threading.Thread):
         process_num = data[3]
         maxrss = int(data[4])
 
-        if player not in prof_data["resource"]:
-          prof_data["resource"][player] = {}
+        if player not in prof_data:
+          prof_data[player] = {}
 
-        prof_data["resource"][player][thread_num] = {
-          "maxrss": maxrss
-        }
+        if thread_num not in prof_data[player]:
+          prof_data[player][thread_num] = {}
+
+        prof_data[player][thread_num]["maxrss"] = maxrss
         
 
 player_num  = sys.argv[1]
 program     = sys.argv[2]
-prof_data   = { "network": {}, "resource": {} }
+prof_data   = {}
 
 mamba_proc = \
     subprocess.Popen(["./Player.x", player_num, program], \
@@ -106,24 +112,24 @@ def user_output(val):
 
 
 def print_profile_info(data):
-  for player, player_data in data["network"].iteritems():
+  for player, player_data in data.iteritems():
     bytes_sent = 0
     bytes_received = 0
-
-    for thread, thread_data in player_data.iteritems():
-      bytes_sent += thread_data["sent"]
-      bytes_received += thread_data["received"]
-
-    print "player {}, bytes sent: {}, bytes received: {}".format(player, bytes_sent, bytes_received)
-
-  for player, player_data in data["resource"].iteritems():
     maxrss = 0
 
     for thread, thread_data in player_data.iteritems():
+      bytes_sent += thread_data["data_sent"]
+      bytes_received += thread_data["data_received"]
       maxrss += thread_data["maxrss"]
 
-    print "player {}, maxrss: {}".format(player, maxrss)
+    print "player {}, bytes sent: {}, bytes received: {}, maxrss: {}".format( \
+        player, bytes_sent, bytes_received, maxrss)
 
+
+# dump profile info into json file
+def dump_profile_info(data, filename):
+  with open(filename, "w") as f:
+    f.write(json.dumps(data))
 
 mamba_thread.start()
 
@@ -132,5 +138,10 @@ execfile(local_proc)
 
 mamba_thread.join()
 
-print_profile_info(prof_data)
+if len(sys.argv) == 3:
+  print_profile_info(prof_data)
+
+elif len(sys.argv) == 4:
+  filename = sys.argv[3]
+  dump_profile_info(prof_data, filename)
 

@@ -1,66 +1,66 @@
 process main {
-    /* board cell value is: -1 if empty, otherwise i, where i is the index of a player's ship */
-    alice_board[100] : {A & B<-};
-    bob_board[100]   : {B & A<-};
+    int{A} ainput[5];
+    int{B} binput[5];
+    ainput <- recv @alice;
+    binput <- recv @bob;
 
-    alice_input : {A};
-    alice_move : {(A|B)-> & (A&B)<-};
-    alice_score : {(A|B)-> & (A&B)<-};
-    alice_score := 0;
-
-    bob_input : {B};
-    bob_move : {(A|B)-> & (A&B)<-};
-    bob_score : {(A|B)-> & (A&B)<-};
-    bob_score := 0;
-
-    /* array of ships. a "true" value at index i means ship i is still alive */
-    alice_ships[5] : {(A|B)-> & (A&B)<-};
-    bob_ships[5] : {(A|B)-> & (A&B)<-};
-
-    /* initialize ships */
-    i : {(A|B)-> & (A&B)<-};
-    i := 0;
-    while (i < 5) {
-        alice_ships[i] := true;
-        bob_ships[i] := true;
-        i := i + 1;
+    int{A & B<-} aships[5];
+    int{B & A<-} bships[5];
+    for (int{A ⊓ B} i = 0; i < 5; i+=1) {
+        aships[i] = endorse(ainput[i], {A & B<-});
+        bships[i] = endorse(binput[i], {B & A<-});
     }
 
-    done : {(A|B)-> & (A&B)<-};
-    done := false;
-    while (!done) {
-        /* alice moves */
-        alice_input <- recv alice;
-        alice_move := downgrade(alice_input, {(A|B)-> & (A&B)<-});
-        bob_cell : {(A|B)-> & (A&B)<-};
-        bob_cell := declassify(bob_board[alice_move], {(A|B)-> & (A&B)<-});
-        if (bob_cell >= 0) {
-            if (bob_ships[bob_cell]) {
-                bob_ships[bob_cell] := false;
-                alice_score := alice_score + 1;
-                if (alice_score == 5) {
-                    done := true;
+    int{(A|B)-> & (A&B)<-} ascore = 0;
+    int{(A|B)-> & (A&B)<-} bscore = 0;
+
+    bool{(A|B)-> & (A&B)<-} playing = true;
+    bool{(A|B)-> & (A&B)<-} aturn = true;
+
+    while (playing) {
+        if (aturn) {
+            int{A} amove_in <- recv @alice;
+            int{A & B<-} amove_trusted = endorse(amove_in, {A & B<-});
+            int{A ⊓ B} amove = declassify(amove_trusted, {A ⊓ B});
+            bool{A ⊓ B} ahit = false;
+            for (int aj = 0; aj < 5; aj+=1) {
+                if (declassify(bships[aj] == amove, {A ⊓ B})) {
+                    ascore += 1;
+                    bships[aj] = 0;
+                    ahit = true;
                 }
             }
+
+            send ahit to @alice;
+            send ahit to @bob;
+            aturn = false;
+
+        } else {
+            int{B} bmove_in <- recv @bob;
+            int{B & A<-} bmove_trusted = endorse(bmove_in, {B & A<-});
+            int{A ⊓ B} bmove = declassify(bmove_trusted, {A ⊓ B});
+            bool{A ⊓ B} bhit = false;
+
+            for (int bj = 0; bj < 5; bj+=1) {
+                if (declassify(aships[bj] == bmove, {A ⊓ B})) {
+                    bscore += 1;
+                    aships[bj] = 0;
+                    bhit = true;
+                }
+            }
+
+            send bhit to @alice;
+            send bhit to @bob;
+            aturn = true;
         }
 
-        if (!done) {
-            /* bob moves */
-            bob_input <- recv bob;
-            bob_move := downgrade(bob_input, {(A|B)-> & (A&B)<-});
-            alice_cell : {(A|B)-> & (A&B)<-};
-            alice_cell := declassify(alice_board[bob_move], {(A|B)-> & (A&B)<-});
-            if (alice_cell >= 0) {
-                if (alice_ships[alice_cell]) {
-                    alice_ships[alice_cell] := false;
-                    bob_score := bob_score + 1;
-                    if (bob_score == 5) {
-                        done := true;
-                    }
-                }
-            }
-        }
+        playing = ascore < 5 && bscore < 5;
     }
 
-    assert (bob_score == 5 && alice_score < 5) || (bob_score < 5 && alice_score == 5);
+    bool{(A|B)-> & (A&B)<-} awins = ascore == 5;
+    send awins to @alice;
+    send awins to @bob;
 }
+
+host alice  : {A};
+host bob    : {B};

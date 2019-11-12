@@ -34,14 +34,36 @@ in_queue = Queue()
 mamba_thread = MambaOutThread(mamba_proc, in_queue)
 
 
-def user_input(var):
-  print "input", var, ":",
+def user_input(varname, var):
+  print "input", varname, ":",
   x = raw_input()
-  return x
+  arr = x.split()
+
+  try:
+    parsed_input = [int(val) for val in arr]
+    if type(var) == int or type(var) == bool:
+      if len(parsed_input) == 1:
+        return parsed_input[0]
+
+      else:
+        raise ValueError("expecting single number as input")
+
+    else:
+      if len(var) == len(parsed_input):
+        return parsed_input
+
+      else:
+        raise ValueError("expecting array of length " + str(len(var)) + " as input")
+      
+
+  except ValueError as err:
+    print err
+    print "please enter new valid input"
+    return user_input(varname, var)
 
 
 def mamba_input(val):
-  mamba_proc.stdin.write(val + "\n")
+  mamba_proc.stdin.write(str(val) + "\n")
 
 
 def mamba_output():

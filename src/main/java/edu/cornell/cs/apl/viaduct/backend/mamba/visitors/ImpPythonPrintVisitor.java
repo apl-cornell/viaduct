@@ -100,7 +100,7 @@ public final class ImpPythonPrintVisitor
 
   private String getDefaultValue(ImpBaseType type) {
     if (type instanceof BooleanType) {
-      return "False";
+      return "0";
 
     } else if (type instanceof IntegerType) {
       return "0";
@@ -129,7 +129,7 @@ public final class ImpPythonPrintVisitor
   public String visit(LiteralNode node) {
     ImpValue val = node.getValue();
     if (val instanceof BooleanValue) {
-      return ((BooleanValue)val).getValue() ? "True" : "False";
+      return ((BooleanValue)val).getValue() ? "1" : "0";
 
     } else if (val instanceof IntegerValue) {
       return String.valueOf(((IntegerValue)val).getValue());
@@ -202,8 +202,6 @@ public final class ImpPythonPrintVisitor
 
   @Override
   public String visit(VariableDeclarationNode node) {
-    return "";
-    /*
     return
         getBuilder()
         .append(
@@ -212,7 +210,6 @@ public final class ImpPythonPrintVisitor
                 node.getVariable().accept(this),
                 getDefaultValue(node.getType())))
         .toString();
-    */
   }
 
   @Override
@@ -278,23 +275,27 @@ public final class ImpPythonPrintVisitor
   public String visit(ReceiveNode node) {
     ProcessName sender = node.getSender();
     String variableStr = node.getVariable().accept(this);
-    String template;
 
     if (this.selfProcess.equals(sender)) {
-      template = "%s = user_input(\"" + variableStr + "\")";
+      return
+          getBuilder()
+          .append(
+              String.format(
+                  "%s = user_input(\"%s\", %s)",
+                  variableStr, variableStr, variableStr))
+          .toString();
 
     } else if (this.mambaProcesses.contains(sender)) {
-      template = "%s = mamba_output()";
+      return
+          getBuilder()
+          .append(
+              String.format("%s = mamba_output()", variableStr))
+          .toString();
 
     } else {
       // TODO: new exception
       throw new Error("direct communication between hosts currently not supported");
     }
-
-    return
-        getBuilder()
-        .append(String.format(template, variableStr))
-        .toString();
   }
 
   @Override

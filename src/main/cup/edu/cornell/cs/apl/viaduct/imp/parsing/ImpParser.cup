@@ -285,14 +285,35 @@ stmt_basic ::=
     :}
 
   | type:ty optional_label:lab variable:var OPEN_SQBRACE expr:e CLOSE_SQBRACE:end {:
-      RESULT = single(
-          ArrayDeclarationNode.builder()
-          .setVariable(var)
-          .setLength(e)
-          .setElementType(ty)
-          .setLabel(lab)
-          .setSourceLocation(location(tyleft, endright))
-          .build());
+        RESULT =
+            single(
+                ArrayDeclarationNode.builder()
+                .setVariable(var)
+                .setLength(e)
+                .setElementType(ty)
+                .setLabel(lab)
+                .setSourceLocation(location(tyleft, endright))
+                .build());
+    :}
+
+  | type:ty optional_label:lab variable:var OPEN_SQBRACE expr:e CLOSE_SQBRACE:end LARROW RECV optional_type:recvty process_name:sender {:
+        RESULT = listBuilder()
+            .add(
+                ArrayDeclarationNode.builder()
+                .setVariable(var)
+                .setLength(e)
+                .setElementType(ty)
+                .setLabel(lab)
+                .setSourceLocation(location(tyleft, endright))
+                .build())
+            .add(ReceiveNode.builder()
+                .setVariable(var)
+                .setReceiveType(recvty)
+                .setSender(sender)
+                .setExternalCommunication(true)
+                .setSourceLocation(location(var, senderright))
+                .build())
+            .build();
     :}
 
   | LET:begin variable:var EQ expr:e {:
@@ -317,8 +338,28 @@ stmt_basic ::=
       RESULT = single(opAssign(Plus.create(), ref, e));
     :}
 
+  | reference:ref PLUSPLUS {:
+      RESULT =
+          single(
+            opAssign(Plus.create(), ref,
+                LiteralNode.builder()
+                .setValue(IntegerValue.create(1))
+                .setSourceLocation(location(refleft, refright))
+                .build()));
+    :}
+
   | reference:ref MINUSEQ expr:e {:
       RESULT = single(opAssign(Minus.create(), ref, e));
+    :}
+
+  | reference:ref MINUSMINUS {:
+      RESULT =
+          single(
+            opAssign(Minus.create(), ref,
+                LiteralNode.builder()
+                .setValue(IntegerValue.create(1))
+                .setSourceLocation(location(refleft, refright))
+                .build()));
     :}
 
   | reference:ref TIMESEQ expr:e {:

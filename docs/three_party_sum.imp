@@ -1,0 +1,31 @@
+process main {
+    int{A} a[10] <- recv @alice;
+    int{B} b[10] <- recv @bob;
+    int{C} c[10] <- recv @chuck;
+
+    int a_sum = 0;
+    for (int ai = 0; ai < 10; ai++) {
+        a_sum += a[ai];
+    }
+
+    int b_sum = 0;
+    for (int bi = 0; bi < 10; bi++) {
+        b_sum += b[bi];
+    }
+
+    int c_sum = 0;
+    for (int ci = 0; ci < 10; ci++) {
+        c_sum += c[ci];
+    }
+
+    int prodsums = endorse(a_sum, {A & B<- & C<-}) * endorse(b_sum, {B & A<- & C<-}) * endorse(c_sum, {C & B<- & A<-});
+    int result = declassify(prodsums * 3, {A ⊓ B ⊓ C});
+
+    send result to @alice;
+    send result to @bob;
+    send result to @chuck;
+}
+
+host alice  : {A};
+host bob    : {B};
+host chuck  : {C};

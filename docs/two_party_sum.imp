@@ -1,0 +1,27 @@
+process main {
+    int{A} a[5] <- recv @alice;
+    int{B} b[5] <- recv @bob;
+
+    int a_sum = 0;
+    for (int ai = 0; ai < 5; ai += 1) {
+        a_sum += a[ai];
+    }
+
+    int b_sum = 0;
+    for (int bi = 0; bi < 5; bi += 1) {
+        b_sum += b[bi];
+    }
+
+    int scale = endorse(a_sum, {A & B<-}) + endorse(b_sum, {B & A<-});
+    int sum = 0;
+    for (int j = 0; j < 5; j += 1) {
+        sum += scale * j;
+    }
+
+    int{A ⊓ B} prodsum = declassify(sum, {A ⊓ B});
+    send prodsum to @alice;
+    send prodsum to @bob;
+}
+
+host alice : {A};
+host bob   : {B};

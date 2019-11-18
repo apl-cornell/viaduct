@@ -52,4 +52,9 @@ public class ZK extends AbstractSynthesizedSingle {
   public int hashCode() {
     return Objects.hash(this.prover, this.verifier);
   }
+
+  @Override
+  public String toString() {
+    return String.format("%s(%s,%s)", getId(), this.prover.getName(), this.verifier.getName());
+  }
 }

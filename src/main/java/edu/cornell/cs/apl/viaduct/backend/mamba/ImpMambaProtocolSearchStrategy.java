@@ -4,6 +4,7 @@ import edu.cornell.cs.apl.viaduct.UnknownProtocolException;
 import edu.cornell.cs.apl.viaduct.backend.mamba.protocols.MambaPublicFactory;
 import edu.cornell.cs.apl.viaduct.backend.mamba.protocols.MambaSecretFactory;
 import edu.cornell.cs.apl.viaduct.imp.HostTrustConfiguration;
+import edu.cornell.cs.apl.viaduct.imp.ast.DowngradeNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ImpAstNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ReceiveNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.SendNode;
@@ -81,6 +82,16 @@ public class ImpMambaProtocolSearchStrategy extends ProtocolCostEstimator<ImpAst
       return instances;
 
     } else {
+      ImpAstNode astNode = node.getAstNode();
+      if (astNode instanceof DowngradeNode) {
+        Set<PdgNode<ImpAstNode>> readNodes = node.getReadNodes();
+        assert readNodes.size() == 1;
+
+        PdgNode<ImpAstNode> readNode = (PdgNode<ImpAstNode>) readNodes.toArray()[0];
+        instances.add(protocolMap.getOrElse(readNode, null));
+        return instances;
+      }
+
       // general case: get instances from Single, Replication, ZK, and MPC in that order
       instances.addAll(this.singleFactory.createInstances(hostConfig, protocolMap, node));
 

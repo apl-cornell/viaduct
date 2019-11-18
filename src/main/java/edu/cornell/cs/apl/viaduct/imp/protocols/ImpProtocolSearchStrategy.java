@@ -2,6 +2,7 @@ package edu.cornell.cs.apl.viaduct.imp.protocols;
 
 import edu.cornell.cs.apl.viaduct.UnknownProtocolException;
 import edu.cornell.cs.apl.viaduct.imp.HostTrustConfiguration;
+import edu.cornell.cs.apl.viaduct.imp.ast.DowngradeNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ImpAstNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ReceiveNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.SendNode;
@@ -81,27 +82,15 @@ public class ImpProtocolSearchStrategy extends ProtocolCostEstimator<ImpAstNode>
       return instances;
 
     } else {
-      // special case: if compute node is an assignment, set its protocol to the protocol
-      // of the storage node it is writing to, given that it is not replicated.
-      /*
-      Set<PdgWriteEdge<ImpAstNode>> writeEdges = node.getWriteEdges();
-      int numWriteEdges = writeEdges.size();
-      assert numWriteEdges <= 1;
-      if (numWriteEdges == 1) {
-        PdgWriteEdge<ImpAstNode> writeEdge = writeEdges.iterator().next();
-        PdgNode<ImpAstNode> targetNode = writeEdge.getTarget();
-        Protocol<ImpAstNode> targetProto = protocolMap.getOrElse(targetNode, null);
+      ImpAstNode astNode = node.getAstNode();
+      if (astNode instanceof DowngradeNode) {
+        Set<PdgNode<ImpAstNode>> readNodes = node.getReadNodes();
+        assert readNodes.size() == 1;
 
-        if (targetProto instanceof Single) {
-          instances.add(new Single(hostConfig, ((Single) targetProto).getHost()));
-          return instances;
-
-        } else if (targetProto instanceof MPC) {
-          instances.add(new MPC(hostConfig, ((MPC) targetProto).getHosts()));
-          return instances;
-        }
+        PdgNode<ImpAstNode> readNode = (PdgNode<ImpAstNode>) readNodes.toArray()[0];
+        instances.add(protocolMap.getOrElse(readNode, null));
+        return instances;
       }
-      */
 
       // general case: get instances from Single, Replication, and MPC in that order
       instances.addAll(this.singleFactory.createInstances(hostConfig, protocolMap, node));

@@ -24,6 +24,11 @@ public class MambaSecret extends AbstractSynthesizedSingle {
   }
 
   @Override
+  protected Object getProcessIdentity() {
+    return this.hosts;
+  }
+
+  @Override
   public String getId() {
     return PROTOCOL_ID;
   }

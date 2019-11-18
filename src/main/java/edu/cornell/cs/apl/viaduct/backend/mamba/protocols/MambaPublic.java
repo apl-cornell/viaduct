@@ -26,15 +26,13 @@ public class MambaPublic extends AbstractSynthesizedSingle {
   }
 
   @Override
-  public String getId() {
-    return PROTOCOL_ID;
+  protected Object getProcessIdentity() {
+    return this.hosts;
   }
 
   @Override
-  public Set<ProcessName> getProcesses() {
-    Set<ProcessName> processes = new HashSet<>();
-    processes.add(this.process);
-    return processes;
+  public String getId() {
+    return PROTOCOL_ID;
   }
 
   @Override

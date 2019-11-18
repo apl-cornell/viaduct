@@ -1,0 +1,23 @@
+process main {
+  int{C} cin1 <- recv @chuck;
+  int{C} cin2 <- recv @chuck;
+
+  int{C & A<-} add = endorse(cin1, {C & A<-});
+  int{C & A<-} minus = endorse(cin2, {C & A<-});
+  bool{A} meets_threshold = declassify(add - minus > 100, {A ⊓ C});
+
+  send meets_threshold to @alice;
+}
+
+process @alice {
+  bool meets_threshold <- recv main;
+}
+
+process @chuck {
+  send 1 to main;
+  send 2 to main;
+}
+
+/* Declare the actual machines (i.e. hosts) we have. */
+host alice : {A};
+host chuck : {C};

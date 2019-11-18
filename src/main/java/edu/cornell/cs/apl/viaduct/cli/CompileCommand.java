@@ -18,6 +18,7 @@ import edu.cornell.cs.apl.viaduct.imp.parsing.SourceFile;
 import edu.cornell.cs.apl.viaduct.imp.parsing.TrustConfigurationParser;
 import edu.cornell.cs.apl.viaduct.imp.protocols.ImpProtocolCommunicationStrategy;
 import edu.cornell.cs.apl.viaduct.imp.protocols.ImpProtocolSearchSelection;
+import edu.cornell.cs.apl.viaduct.imp.protocols.ImpZKProtocolSearchStrategy;
 import edu.cornell.cs.apl.viaduct.imp.transformers.AnfConverter;
 import edu.cornell.cs.apl.viaduct.imp.transformers.Elaborator;
 import edu.cornell.cs.apl.viaduct.imp.transformers.ImpPdgBuilderPreprocessor;
@@ -29,8 +30,9 @@ import edu.cornell.cs.apl.viaduct.pdg.PdgDotPrinter;
 import edu.cornell.cs.apl.viaduct.pdg.PdgNode;
 import edu.cornell.cs.apl.viaduct.pdg.ProgramDependencyGraph;
 import edu.cornell.cs.apl.viaduct.protocol.Protocol;
+import edu.cornell.cs.apl.viaduct.protocol.ProtocolCommunicationStrategy;
 import edu.cornell.cs.apl.viaduct.protocol.ProtocolCostEstimator;
-import edu.cornell.cs.apl.viaduct.protocol.ProtocolSelection;
+import edu.cornell.cs.apl.viaduct.protocol.ProtocolSearchStrategy;
 import guru.nidi.graphviz.engine.Format;
 import guru.nidi.graphviz.engine.Graphviz;
 import guru.nidi.graphviz.engine.GraphvizCmdLineEngine;
@@ -121,8 +123,8 @@ public class CompileCommand extends BaseCommand {
       name = {"--imp"},
       title = "output.imp",
       description =
-          "Output synthesized protocol in an intermediate representation.")
-  private String intermediateOutput = null;
+          "Output synthesized protocol in an intermediate representation only.")
+  private boolean impOnly;
 
   @Option(
       name = {"--template"},
@@ -132,10 +134,10 @@ public class CompileCommand extends BaseCommand {
   private String mambaCompilationTemplate = "template.py";
 
   @Option(
-      name = {"--mpc"},
+      name = {"--strategy"},
       description =
-          "Compile entire protocol in MPC.")
-  private boolean compileToMpc;
+          "Compilation strategy. Current available options: opt, zk, mpc")
+  private String strategy = "opt";
 
   @Option(
       name = {"-v", "--verbose"},
@@ -207,6 +209,31 @@ public class CompileCommand extends BaseCommand {
     }
   }
 
+  private ProtocolSearchStrategy<ImpAstNode> getSearchStrategy(
+      HostTrustConfiguration hostConfig,
+      ProtocolCommunicationStrategy<ImpAstNode> communicationStrategy,
+      ProtocolCostEstimator<ImpAstNode> costEstimator)
+  {
+    switch (this.strategy) {
+      case "opt":
+        return new ImpMambaProtocolSearchStrategy(costEstimator);
+
+      case "mpc":
+        return new ImpMambaMpcProtocolSearchStrategy(costEstimator);
+
+      case "zk":
+        return new ImpZKProtocolSearchStrategy(costEstimator);
+
+      default:
+        // TODO: better exception type
+        throw new Error(String.format("unknown compilation strategy: %s", this.strategy));
+    }
+  }
+
+  private boolean canCompileToMamba() {
+    return this.strategy.equals("opt") || this.strategy.equals("mpc");
+  }
+
   @Override
   public void run() throws IOException {
     if (this.verbose) {
@@ -251,8 +278,7 @@ public class CompileCommand extends BaseCommand {
                 output),
         constraintGraphOutput);
 
-    if (this.skip && labelGraphOutput == null
-        && protocolGraphOutput == null && this.intermediateOutput == null) {
+    if (this.skip && labelGraphOutput == null && protocolGraphOutput == null) {
       return;
     }
 
@@ -268,7 +294,7 @@ public class CompileCommand extends BaseCommand {
     // Dump PDG with information flow labels to a file (if requested).
     dumpGraph(() -> PdgDotPrinter.pdgDotGraphWithLabels(pdg, new Printer()), labelGraphOutput);
 
-    if (this.skip && protocolGraphOutput == null && this.intermediateOutput == null) {
+    if (this.skip && protocolGraphOutput == null) {
       return;
     }
 
@@ -287,10 +313,8 @@ public class CompileCommand extends BaseCommand {
     final ProtocolCostEstimator<ImpAstNode> costEstimator =
         new ImpMambaCommunicationCostEstimator(hostConfig, communicationStrategy);
 
-    final ImpMambaProtocolSearchStrategy strategy =
-        this.compileToMpc
-        ? new ImpMambaMpcProtocolSearchStrategy(costEstimator)
-        : new ImpMambaProtocolSearchStrategy(costEstimator);
+    final ProtocolSearchStrategy<ImpAstNode> strategy =
+        getSearchStrategy(hostConfig, communicationStrategy, costEstimator);
 
     if (this.verbose) {
       System.out.println("selecting protocols...");
@@ -302,10 +326,11 @@ public class CompileCommand extends BaseCommand {
 
     // Dump PDG with protocol information to a file (if requested).
     dumpGraph(
-        () -> PdgDotPrinter.pdgDotGraphWithProtocols(pdg, protocolMap, strategy, new Printer()),
+        () -> PdgDotPrinter.pdgDotGraphWithProtocols(
+                pdg, protocolMap, costEstimator, new Printer()),
         protocolGraphOutput);
 
-    if (this.skip && this.intermediateOutput == null) {
+    if (this.skip) {
       return;
     }
 
@@ -328,19 +353,14 @@ public class CompileCommand extends BaseCommand {
           .addAll(hostConfig.getDeclarations().values())
           .build();
 
-      if (this.intermediateOutput != null) {
-        PrintStream writer =
-            new AnsiPrintStream(
-                new PrintStream(new File(this.intermediateOutput), StandardCharsets.UTF_8));
+      if (this.impOnly || this.verbose) {
+        System.out.println("process configuration:");
 
-        Printer.run(generatedProgram, writer);
-
-      } else if (this.intermediateOutput == null && this.verbose) {
         PrintStream writer = AnsiConsole.out();
         Printer.run(generatedProgram, writer);
       }
 
-      if (this.skip && this.intermediateOutput != null) {
+      if (this.impOnly) {
         return;
       }
 
@@ -348,8 +368,10 @@ public class CompileCommand extends BaseCommand {
         System.out.println("compiling to MAMBA backend...");
       }
 
-      (new MambaBackend())
-      .compile(this.mambaCompilationTemplate, generatedProgram, output.outputDir);
+      if (canCompileToMamba()) {
+        (new MambaBackend())
+        .compile(this.mambaCompilationTemplate, generatedProgram, output.outputDir);
+      }
 
     } else {
       // We couldn't find protocols for some nodes.

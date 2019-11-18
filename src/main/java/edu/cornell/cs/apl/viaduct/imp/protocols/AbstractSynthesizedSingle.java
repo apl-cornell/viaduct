@@ -10,16 +10,15 @@ import edu.cornell.cs.apl.viaduct.security.Label;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
 
 public abstract class AbstractSynthesizedSingle extends AbstractSingle {
   private static class SynthesizedHostInfo {
-    public String protocolId;
-    public Set<HostName> hosts;
+    public final String protocolId;
+    public final Object processIdentity;
 
-    public SynthesizedHostInfo(String protocolId, Set<HostName> hosts) {
+    public SynthesizedHostInfo(String protocolId, Object processIdentity) {
       this.protocolId = protocolId;
-      this.hosts = hosts;
+      this.processIdentity = processIdentity;
     }
 
     @Override
@@ -30,7 +29,8 @@ public abstract class AbstractSynthesizedSingle extends AbstractSingle {
 
       if (o instanceof SynthesizedHostInfo) {
         SynthesizedHostInfo oinfo = (SynthesizedHostInfo) o;
-        return this.protocolId.equals(oinfo.protocolId) && this.hosts.equals(oinfo.hosts);
+        return this.protocolId.equals(oinfo.protocolId)
+              && this.processIdentity.equals(oinfo.processIdentity);
 
       } else {
         return false;
@@ -39,19 +39,21 @@ public abstract class AbstractSynthesizedSingle extends AbstractSingle {
 
     @Override
     public int hashCode() {
-      return Objects.hash(protocolId, hosts);
+      return Objects.hash(protocolId, this.processIdentity);
     }
   }
 
   private static final Map<SynthesizedHostInfo, ProcessName> synthesizedHostMap = new HashMap<>();
 
-  protected AbstractSynthesizedSingle(Set<HostName> hosts, Label trust) {
+  protected AbstractSynthesizedSingle(java.util.Set<HostName> hosts, Label trust) {
     super(hosts, trust);
   }
 
   protected AbstractSynthesizedSingle(HostName host, Label trust) {
     super(host, trust);
   }
+
+  protected abstract Object getProcessIdentity();
 
   @Override
   public boolean hasSyntheticProcesses() {
@@ -60,7 +62,8 @@ public abstract class AbstractSynthesizedSingle extends AbstractSingle {
 
   @Override
   public void initialize(PdgNode<ImpAstNode> node, ProtocolInstantiationInfo<ImpAstNode> info) {
-    SynthesizedHostInfo synthesizedHostInfo = new SynthesizedHostInfo(getId(), this.hosts);
+    SynthesizedHostInfo synthesizedHostInfo =
+        new SynthesizedHostInfo(getId(), getProcessIdentity());
 
     if (synthesizedHostMap.containsKey(synthesizedHostInfo)) {
       this.process = synthesizedHostMap.get(synthesizedHostInfo);

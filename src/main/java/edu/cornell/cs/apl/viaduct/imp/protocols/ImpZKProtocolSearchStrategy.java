@@ -6,9 +6,8 @@ import edu.cornell.cs.apl.viaduct.imp.ast.ImpAstNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ReceiveNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.SendNode;
 import edu.cornell.cs.apl.viaduct.imp.protocols.ControlProtocol;
-import edu.cornell.cs.apl.viaduct.imp.protocols.MPCFactory;
-import edu.cornell.cs.apl.viaduct.imp.protocols.ReplicationFactory;
 import edu.cornell.cs.apl.viaduct.imp.protocols.SingleFactory;
+import edu.cornell.cs.apl.viaduct.imp.protocols.ZKFactory;
 import edu.cornell.cs.apl.viaduct.pdg.PdgNode;
 import edu.cornell.cs.apl.viaduct.pdg.ProgramDependencyGraph;
 import edu.cornell.cs.apl.viaduct.protocol.Protocol;
@@ -21,19 +20,19 @@ import java.util.HashSet;
 import java.util.Set;
 
 /** create protocol instances and estimate protocol cost for IMP programs. */
-public class ImpProtocolSearchStrategy extends ProtocolCostEstimator<ImpAstNode>
+public class ImpZKProtocolSearchStrategy extends ProtocolCostEstimator<ImpAstNode>
     implements ProtocolSearchStrategy<ImpAstNode> {
 
   private final SingleFactory singleFactory;
-  private final ReplicationFactory replicationFactory;
-  private final MPCFactory mpcFactory;
+  private final ZKFactory zkFactory;
+  private final CommitmentFactory commitmentFactory;
   private final ProtocolCostEstimator<ImpAstNode> costEstimator;
 
   /** constructor. */
-  public ImpProtocolSearchStrategy(ProtocolCostEstimator<ImpAstNode> costEstimator) {
+  public ImpZKProtocolSearchStrategy(ProtocolCostEstimator<ImpAstNode> costEstimator) {
     this.singleFactory = new SingleFactory();
-    this.replicationFactory = new ReplicationFactory();
-    this.mpcFactory = new MPCFactory();
+    this.zkFactory = new ZKFactory();
+    this.commitmentFactory = new CommitmentFactory();
     this.costEstimator = costEstimator;
   }
 
@@ -81,41 +80,19 @@ public class ImpProtocolSearchStrategy extends ProtocolCostEstimator<ImpAstNode>
       return instances;
 
     } else {
-      // special case: if compute node is an assignment, set its protocol to the protocol
-      // of the storage node it is writing to, given that it is not replicated.
-      /*
-      Set<PdgWriteEdge<ImpAstNode>> writeEdges = node.getWriteEdges();
-      int numWriteEdges = writeEdges.size();
-      assert numWriteEdges <= 1;
-      if (numWriteEdges == 1) {
-        PdgWriteEdge<ImpAstNode> writeEdge = writeEdges.iterator().next();
-        PdgNode<ImpAstNode> targetNode = writeEdge.getTarget();
-        Protocol<ImpAstNode> targetProto = protocolMap.getOrElse(targetNode, null);
-
-        if (targetProto instanceof Single) {
-          instances.add(new Single(hostConfig, ((Single) targetProto).getHost()));
-          return instances;
-
-        } else if (targetProto instanceof MPC) {
-          instances.add(new MPC(hostConfig, ((MPC) targetProto).getHosts()));
-          return instances;
-        }
-      }
-      */
-
-      // general case: get instances from Single, Replication, and MPC in that order
       instances.addAll(this.singleFactory.createInstances(hostConfig, protocolMap, node));
 
-      instances.addAll(this.replicationFactory.createInstances(hostConfig, protocolMap, node));
-
-      // prune search space by not selecting MPC unless absolutely necessary
-      // ie. only use MPC when neither Single nor Replication protocols can instantiate the node
-      if (instances.size() > 0 && node.isStorageNode()) {
+      if (instances.size() > 0) {
         return instances;
       }
 
-      instances.addAll(this.mpcFactory.createInstances(hostConfig, protocolMap, node));
-      // instances.addAll(this.zkFactory.createInstances(hostConfig, protocolMap, node));
+      instances.addAll(this.commitmentFactory.createInstances(hostConfig, protocolMap, node));
+
+      if (instances.size() > 0) {
+        return instances;
+      }
+
+      instances.addAll(this.zkFactory.createInstances(hostConfig, protocolMap, node));
 
       return instances;
     }

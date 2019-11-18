@@ -113,12 +113,19 @@ public class ImpCommunicationCostEstimator extends ProtocolCostEstimator<ImpAstN
     }
   }
 
+  protected int estimateCommitmentCost(
+      Map<PdgNode<ImpAstNode>,
+      Protocol<ImpAstNode>> protocolMap,
+      PdgNode<ImpAstNode> node,
+      Commitment protocol) {
+    return BASE_STORAGE_COST;
+  }
+
   protected int estimateZKCost(
       Map<PdgNode<ImpAstNode>,
       Protocol<ImpAstNode>> protocolMap,
       PdgNode<ImpAstNode> node,
       ZK protocol) {
-    // TODO: we're not doing ZK yet
     return 0;
   }
 
@@ -198,6 +205,9 @@ public class ImpCommunicationCostEstimator extends ProtocolCostEstimator<ImpAstN
 
       } else if (protocol instanceof Replication) {
         return estimateReplicationCost(protocolMap, node, (Replication) protocol);
+
+      } else if (protocol instanceof Commitment) {
+        return estimateCommitmentCost(protocolMap, node, (Commitment) protocol);
 
       } else if (protocol instanceof ZK) {
         return estimateZKCost(protocolMap, node, (ZK) protocol);

@@ -7,9 +7,6 @@ import edu.cornell.cs.apl.viaduct.imp.ast.ImpAstNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ReceiveNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.SendNode;
 import edu.cornell.cs.apl.viaduct.imp.protocols.ControlProtocol;
-import edu.cornell.cs.apl.viaduct.imp.protocols.MPCFactory;
-import edu.cornell.cs.apl.viaduct.imp.protocols.ReplicationFactory;
-import edu.cornell.cs.apl.viaduct.imp.protocols.SingleFactory;
 import edu.cornell.cs.apl.viaduct.pdg.PdgNode;
 import edu.cornell.cs.apl.viaduct.pdg.ProgramDependencyGraph;
 import edu.cornell.cs.apl.viaduct.protocol.Protocol;
@@ -22,19 +19,13 @@ import java.util.HashSet;
 import java.util.Set;
 
 /** create protocol instances and estimate protocol cost for IMP programs. */
-public class ImpProtocolSearchStrategy extends ProtocolCostEstimator<ImpAstNode>
+public abstract class ImpProtocolSearchStrategy extends ProtocolCostEstimator<ImpAstNode>
     implements ProtocolSearchStrategy<ImpAstNode> {
 
-  private final SingleFactory singleFactory;
-  private final ReplicationFactory replicationFactory;
-  private final MPCFactory mpcFactory;
   private final ProtocolCostEstimator<ImpAstNode> costEstimator;
 
   /** constructor. */
   public ImpProtocolSearchStrategy(ProtocolCostEstimator<ImpAstNode> costEstimator) {
-    this.singleFactory = new SingleFactory();
-    this.replicationFactory = new ReplicationFactory();
-    this.mpcFactory = new MPCFactory();
     this.costEstimator = costEstimator;
   }
 
@@ -70,6 +61,12 @@ public class ImpProtocolSearchStrategy extends ProtocolCostEstimator<ImpAstNode>
     return this.costEstimator.estimateNodeCost(node, protocolMap, pdg);
   }
 
+  /** select protocols in the normal case: e.g., not for control, downgrades, etc. */
+  protected abstract Set<Protocol<ImpAstNode>> createNormalProtocolInstances(
+      HostTrustConfiguration hostConfig,
+      Map<PdgNode<ImpAstNode>, Protocol<ImpAstNode>> protocolMap,
+      PdgNode<ImpAstNode> node);
+
   @Override
   public Set<Protocol<ImpAstNode>> createProtocolInstances(
       HostTrustConfiguration hostConfig,
@@ -92,21 +89,7 @@ public class ImpProtocolSearchStrategy extends ProtocolCostEstimator<ImpAstNode>
         return instances;
       }
 
-      // general case: get instances from Single, Replication, and MPC in that order
-      instances.addAll(this.singleFactory.createInstances(hostConfig, protocolMap, node));
-
-      instances.addAll(this.replicationFactory.createInstances(hostConfig, protocolMap, node));
-
-      // prune search space by not selecting MPC unless absolutely necessary
-      // ie. only use MPC when neither Single nor Replication protocols can instantiate the node
-      if (instances.size() > 0 && node.isStorageNode()) {
-        return instances;
-      }
-
-      instances.addAll(this.mpcFactory.createInstances(hostConfig, protocolMap, node));
-      // instances.addAll(this.zkFactory.createInstances(hostConfig, protocolMap, node));
-
-      return instances;
+      return createNormalProtocolInstances(hostConfig, protocolMap, node);
     }
   }
 }

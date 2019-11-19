@@ -1,7 +1,5 @@
 package edu.cornell.cs.apl.viaduct.imp.protocols;
 
-import java.util.Set;
-
 import edu.cornell.cs.apl.viaduct.imp.HostTrustConfiguration;
 import edu.cornell.cs.apl.viaduct.imp.ast.ArrayIndexingNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.HostName;
@@ -14,7 +12,10 @@ import edu.cornell.cs.apl.viaduct.pdg.PdgNode;
 import edu.cornell.cs.apl.viaduct.pdg.PdgWriteEdge;
 import edu.cornell.cs.apl.viaduct.protocol.PairProtocolFactory;
 import edu.cornell.cs.apl.viaduct.protocol.Protocol;
+
 import io.vavr.Tuple2;
+
+import java.util.Set;
 
 /** contains ZK information flow constraints. */
 public class CommitmentFactory extends PairProtocolFactory<ImpAstNode> {
@@ -67,7 +68,7 @@ public class CommitmentFactory extends PairProtocolFactory<ImpAstNode> {
             public Protocol<ImpAstNode> visit(ArrayIndexingNode arrayIndex) {
               return null;
             }
-        });
+          });
       }
     }
 

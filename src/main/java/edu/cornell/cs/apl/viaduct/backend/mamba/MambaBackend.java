@@ -131,7 +131,7 @@ public final class MambaBackend {
       String mambaProcessStr =
           MambaPrintVisitor.run(mambaInfo.secretVariables, mambaInfo.mambaProcess.get());
 
-      String filename = String.format("%s.mpc", outputDir);
+      String filename = String.format("%s.mpc", outputDir.getName());
       PrintStream out =
           new AnsiPrintStream(
               new PrintStream(new File(outputDir, filename), StandardCharsets.UTF_8));

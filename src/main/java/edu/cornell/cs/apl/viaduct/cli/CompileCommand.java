@@ -6,6 +6,7 @@ import com.github.rvesse.airline.annotations.Option;
 import edu.cornell.cs.apl.viaduct.backend.mamba.ImpMambaCommunicationCostEstimator;
 import edu.cornell.cs.apl.viaduct.backend.mamba.ImpMambaMpcProtocolSearchStrategy;
 import edu.cornell.cs.apl.viaduct.backend.mamba.ImpMambaProtocolSearchStrategy;
+import edu.cornell.cs.apl.viaduct.backend.mamba.ImpMambaReplProtocolSearchStrategy;
 import edu.cornell.cs.apl.viaduct.backend.mamba.MambaBackend;
 import edu.cornell.cs.apl.viaduct.imp.HostTrustConfiguration;
 import edu.cornell.cs.apl.viaduct.imp.ast.ImpAstNode;
@@ -57,7 +58,6 @@ import java.util.function.Supplier;
 
 import org.apache.commons.io.FilenameUtils;
 import org.fusesource.jansi.AnsiConsole;
-import org.fusesource.jansi.AnsiPrintStream;
 
 @Command(name = "compile", description = "Compile ideal protocol to secure distributed program")
 public class CompileCommand extends BaseCommand {
@@ -220,6 +220,9 @@ public class CompileCommand extends BaseCommand {
 
       case "mpc":
         return new ImpMambaMpcProtocolSearchStrategy(costEstimator);
+
+      case "repl":
+        return new ImpMambaReplProtocolSearchStrategy(costEstimator);
 
       case "zk":
         return new ImpZKProtocolSearchStrategy(costEstimator);

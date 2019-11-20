@@ -19,28 +19,35 @@ public abstract class LabelProtocolFactory<T extends AstNode, I>
   protected abstract Iterable<I> getHostInfo(HostTrustConfiguration hostConfig);
 
   protected abstract Protocol<T> createInstanceFromHostInfo(
-      PdgNode<T> node, HostTrustConfiguration hostConfig, I hostInfo);
+      PdgNode<T> node, Map<PdgNode<T>,Protocol<T>> protoMap,
+      HostTrustConfiguration hostConfig, I hostInfo);
 
   protected Label getProtocolLabel(
       PdgNode<T> node,
+      Map<PdgNode<T>, Protocol<T>> protoMap,
       HostTrustConfiguration hostConfig,
       I hostInfo)
   {
-    Protocol<T> protocolInstance = createInstanceFromHostInfo(node, hostConfig, hostInfo);
+    Protocol<T> protocolInstance = createInstanceFromHostInfo(node, protoMap, hostConfig, hostInfo);
     return protocolInstance != null ? protocolInstance.getTrust() : null;
   }
 
   @Override
-  public Set<Protocol<T>> createInstances(HostTrustConfiguration hostConfig,
-      Map<PdgNode<T>, Protocol<T>> currProtoMap, PdgNode<T> node)
+  public Set<Protocol<T>> createInstances(
+      HostTrustConfiguration hostConfig,
+      Map<PdgNode<T>, Protocol<T>> protoMap,
+      PdgNode<T> node)
   {
     Set<Protocol<T>> instances = new HashSet<>();
     Iterable<I> hostInfos = getHostInfo(hostConfig);
 
     for (I hostInfo : hostInfos) {
-      Label protocolLabel = getProtocolLabel(node, hostConfig, hostInfo);
+      Label protocolLabel = getProtocolLabel(node, protoMap, hostConfig, hostInfo);
       if (protocolLabel != null && protocolLabel.actsFor(node.getLabel())) {
-        instances.add(createInstanceFromHostInfo(node, hostConfig, hostInfo));
+        Protocol<T> instance = createInstanceFromHostInfo(node, protoMap, hostConfig, hostInfo);
+        if (instance != null) {
+          instances.add(instance);
+        }
       }
     }
 

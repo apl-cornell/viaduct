@@ -6,12 +6,16 @@ import edu.cornell.cs.apl.viaduct.imp.ast.ImpAstNode;
 import edu.cornell.cs.apl.viaduct.pdg.PdgNode;
 import edu.cornell.cs.apl.viaduct.protocol.PowersetProtocolFactory;
 import edu.cornell.cs.apl.viaduct.protocol.Protocol;
+
+import io.vavr.collection.Map;
+
 import java.util.Set;
 
 public class ReplicationFactory extends PowersetProtocolFactory<ImpAstNode> {
   @Override
   protected Protocol<ImpAstNode> createInstanceFromHostInfo(
       PdgNode<ImpAstNode> node,
+      Map<PdgNode<ImpAstNode>, Protocol<ImpAstNode>> protoMap,
       HostTrustConfiguration hostConfig,
       Set<HostName> hostSet)
   {

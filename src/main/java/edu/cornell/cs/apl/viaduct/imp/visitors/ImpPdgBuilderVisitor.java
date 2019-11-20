@@ -274,18 +274,19 @@ public class ImpPdgBuilderVisitor implements StmtVisitor<Set<PdgNode<ImpAstNode>
     for (PdgNode<ImpAstNode> branchNode : branchNodes) {
       PdgPcFlowEdge.create(node, branchNode);
       readChannelNodes.addAll(branchNode.getStorageNodeInputs());
+      branchNode.addConditionalNodeToStack(node);
     }
 
     for (PdgNode<ImpAstNode> readChannelNode : readChannelNodes) {
       PdgReadChannelEdge.create(node, readChannelNode);
     }
 
-    // if the conditional is a loop guard, mark guard nodes
-    if (ifNode.isLoopGuard()) {
-      for (PdgNode<ImpAstNode> readNode : node.getReadNodes()) {
-        if (readNode.isComputeNode()) {
-          readNode.setLoopGuard(true);
-        }
+    // mark guard nodes with metadata from conditional
+    boolean isLoopGuard = ifNode.isLoopGuard();
+    for (PdgNode<ImpAstNode> readNode : node.getReadNodes()) {
+      if (readNode.isComputeNode()) {
+        readNode.setGuard(true);
+        readNode.setLoopGuard(isLoopGuard);
       }
     }
 

@@ -27,7 +27,9 @@ public class ImpMambaMpcProtocolSearchStrategy extends ImpMambaProtocolSearchStr
 
     instances.addAll(this.mambaSecretFactory.createInstances(hostConfig, protocolMap, node));
 
-    if (instances.size() > 0) {
+    // because muxing secret conditionals can cause backtracking, don't prune away
+    // replication protocols immediately for loop guards
+    if (instances.size() > 0 && !node.isGuard()) {
       return instances;
     }
     instances.addAll(this.mambaPublicFactory.createInstances(hostConfig, protocolMap, node));

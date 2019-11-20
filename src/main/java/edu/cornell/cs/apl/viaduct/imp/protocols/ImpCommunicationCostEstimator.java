@@ -50,18 +50,22 @@ public class ImpCommunicationCostEstimator extends ProtocolCostEstimator<ImpAstN
 
       for (PdgInfoEdge<ImpAstNode> infoEdge : node.getReadEdges()) {
         Protocol<ImpAstNode> srcProto = protocolMap.getOrElse(infoEdge.getSource(), null);
-        Set<ProcessName> readSet = new HashSet<>(
-            this.communicationStrategy.getReadSet(this.hostConfig, srcProto, protocol, process));
-        readSet.remove(process);
-        numCommunications += readSet.size();
+        if (srcProto != null) {
+          Set<ProcessName> readSet = new HashSet<>(
+              this.communicationStrategy.getReadSet(this.hostConfig, srcProto, protocol, process));
+          readSet.remove(process);
+          numCommunications += readSet.size();
+        }
       }
 
       for (PdgInfoEdge<ImpAstNode> infoEdge : node.getWriteEdges()) {
         Protocol<ImpAstNode> dstProto = protocolMap.getOrElse(infoEdge.getTarget(), null);
-        Set<ProcessName> writeSet = new HashSet<>(
-            this.communicationStrategy.getReadSet(this.hostConfig, protocol, dstProto, process));
-        writeSet.remove(process);
-        numCommunications += writeSet.size();
+        if (dstProto != null) {
+          Set<ProcessName> writeSet = new HashSet<>(
+              this.communicationStrategy.getReadSet(this.hostConfig, protocol, dstProto, process));
+          writeSet.remove(process);
+          numCommunications += writeSet.size();
+        }
       }
 
       return numCommunications * COMMUNICATION_COST;

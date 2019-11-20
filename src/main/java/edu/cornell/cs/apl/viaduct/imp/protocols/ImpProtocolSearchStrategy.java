@@ -85,7 +85,9 @@ public abstract class ImpProtocolSearchStrategy extends ProtocolCostEstimator<Im
         assert readNodes.size() == 1;
 
         PdgNode<ImpAstNode> readNode = (PdgNode<ImpAstNode>) readNodes.toArray()[0];
-        instances.add(protocolMap.getOrElse(readNode, null));
+        Protocol<ImpAstNode> downgradeNodeProto = protocolMap.getOrElse(readNode, null);
+        assert downgradeNodeProto != null;
+        instances.add(downgradeNodeProto);
         return instances;
       }
 

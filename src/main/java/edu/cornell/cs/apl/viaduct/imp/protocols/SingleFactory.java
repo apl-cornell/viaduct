@@ -6,12 +6,14 @@ import edu.cornell.cs.apl.viaduct.imp.ast.ImpAstNode;
 import edu.cornell.cs.apl.viaduct.pdg.PdgNode;
 import edu.cornell.cs.apl.viaduct.protocol.Protocol;
 import edu.cornell.cs.apl.viaduct.protocol.SingleHostProtocolFactory;
+import io.vavr.collection.Map;
 
 /** contains Single protocol information flow constraints. */
 public class SingleFactory extends SingleHostProtocolFactory<ImpAstNode> {
   @Override
   protected Protocol<ImpAstNode> createInstanceFromHostInfo(
       PdgNode<ImpAstNode> node,
+      Map<PdgNode<ImpAstNode>,Protocol<ImpAstNode>> protoMap,
       HostTrustConfiguration hostConfig,
       HostName host)
   {

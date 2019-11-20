@@ -6,8 +6,11 @@ import edu.cornell.cs.apl.viaduct.imp.visitors.StmtVisitor;
 /** If statement. */
 @AutoValue
 public abstract class IfNode extends StatementNode implements ControlNode {
+  /** builder with metadata flags turned off by default. */
   public static Builder builder() {
-    return new AutoValue_IfNode.Builder().setLoopGuard(false);
+    return
+        (new AutoValue_IfNode.Builder())
+        .setLoopGuard(false);
   }
 
   public abstract Builder toBuilder();

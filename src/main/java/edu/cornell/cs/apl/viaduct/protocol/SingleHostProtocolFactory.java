@@ -7,6 +7,8 @@ import edu.cornell.cs.apl.viaduct.imp.protocols.LabelProtocolFactory;
 import edu.cornell.cs.apl.viaduct.pdg.PdgNode;
 import edu.cornell.cs.apl.viaduct.security.Label;
 
+import io.vavr.collection.Map;
+
 public abstract class SingleHostProtocolFactory<T extends AstNode>
     extends LabelProtocolFactory<T, HostName> {
   @Override
@@ -17,6 +19,7 @@ public abstract class SingleHostProtocolFactory<T extends AstNode>
   @Override
   protected Label getProtocolLabel(
       PdgNode<T> node,
+      Map<PdgNode<T>, Protocol<T>> protocolMap,
       HostTrustConfiguration hostConfig,
       HostName host)
   {

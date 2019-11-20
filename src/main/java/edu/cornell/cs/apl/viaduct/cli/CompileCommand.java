@@ -234,7 +234,9 @@ public class CompileCommand extends BaseCommand {
   }
 
   private boolean canCompileToMamba() {
-    return this.strategy.equals("opt") || this.strategy.equals("mpc");
+    return this.strategy.equals("opt")
+        || this.strategy.equals("mpc")
+        || this.strategy.equals("repl");
   }
 
   @Override

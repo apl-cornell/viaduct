@@ -2,7 +2,10 @@ package edu.cornell.cs.apl.viaduct.pdg;
 
 import edu.cornell.cs.apl.viaduct.AstNode;
 import edu.cornell.cs.apl.viaduct.security.Label;
+
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 /** node in a program dependence graph. */
@@ -13,6 +16,10 @@ public abstract class PdgNode<T extends AstNode> {
   final Set<PdgInfoEdge<T>> inInfoEdges;
   final Set<PdgInfoEdge<T>> outInfoEdges;
 
+  final List<PdgControlNode<T>> conditionalNodeStack;
+
+  // syntactic metadata needed for protocol selection
+  boolean isGuard;
   boolean isLoopGuard;
   boolean isArrayIndex;
 
@@ -22,8 +29,10 @@ public abstract class PdgNode<T extends AstNode> {
     this.outInfoEdges = new HashSet<>();
     this.astNode = astNode;
     this.id = id;
+    this.isGuard = false;
     this.isLoopGuard = false;
     this.isArrayIndex = false;
+    this.conditionalNodeStack = new ArrayList<>();
   }
 
   public T getAstNode() {
@@ -129,6 +138,10 @@ public abstract class PdgNode<T extends AstNode> {
     }
   }
 
+  public boolean isGuard() {
+    return this.isGuard;
+  }
+
   public boolean isLoopGuard() {
     return this.isLoopGuard;
   }
@@ -137,12 +150,24 @@ public abstract class PdgNode<T extends AstNode> {
     return this.isArrayIndex;
   }
 
+  public List<PdgControlNode<T>> getConditionalNodeStack() {
+    return this.conditionalNodeStack;
+  }
+
+  public void setGuard(boolean isGuard) {
+    this.isGuard = isGuard;
+  }
+
   public void setLoopGuard(boolean isLoopGuard) {
     this.isLoopGuard = isLoopGuard;
   }
 
   public void setArrayIndex(boolean isArrayIndex) {
     this.isArrayIndex = isArrayIndex;
+  }
+
+  public void addConditionalNodeToStack(PdgControlNode<T> node) {
+    this.conditionalNodeStack.add(node);
   }
 
   public abstract boolean isStorageNode();

@@ -9,19 +9,18 @@ import edu.cornell.cs.apl.viaduct.pdg.PdgControlNode;
 import edu.cornell.cs.apl.viaduct.pdg.PdgNode;
 import edu.cornell.cs.apl.viaduct.pdg.PdgReadEdge;
 import edu.cornell.cs.apl.viaduct.pdg.PdgWriteEdge;
-import edu.cornell.cs.apl.viaduct.protocol.AllHostsProtocolFactory;
 import edu.cornell.cs.apl.viaduct.protocol.Protocol;
+import edu.cornell.cs.apl.viaduct.protocol.SingleHostProtocolFactory;
+
 import io.vavr.collection.Map;
 
-import java.util.Set;
-
 /** cleartext data in a MAMBA program. */
-public class MambaSecretFactory extends AllHostsProtocolFactory<ImpAstNode> {
+public class MambaSingleFactory extends SingleHostProtocolFactory<ImpAstNode> {
   protected Protocol<ImpAstNode> createInstanceFromHostInfo(
       PdgNode<ImpAstNode> node,
-      Map<PdgNode<ImpAstNode>,Protocol<ImpAstNode>> protoMap,
+      Map<PdgNode<ImpAstNode>, Protocol<ImpAstNode>> protoMap,
       HostTrustConfiguration hostConfig,
-      Set<HostName> hostSet)
+      HostName host)
   {
     boolean inSecretConditional = false;
     for (PdgControlNode<ImpAstNode> controlNode : node.getConditionalNodeStack()) {
@@ -37,7 +36,7 @@ public class MambaSecretFactory extends AllHostsProtocolFactory<ImpAstNode> {
     if (inSecretConditional) {
       for (PdgReadEdge<ImpAstNode> readEdge : node.getReadEdges()) {
         Protocol<ImpAstNode> readProto = protoMap.getOrElse(readEdge.getSource(), null);
-        if (readProto != null && readProto instanceof Single) {
+        if (readProto != null && readProto instanceof MambaSecret) {
           hasHostCommunication = true;
           break;
         }
@@ -45,7 +44,7 @@ public class MambaSecretFactory extends AllHostsProtocolFactory<ImpAstNode> {
 
       for (PdgWriteEdge<ImpAstNode> writeEdge : node.getWriteEdges()) {
         Protocol<ImpAstNode> writeProto = protoMap.getOrElse(writeEdge.getTarget(), null);
-        if (writeProto != null && writeProto instanceof Single) {
+        if (writeProto != null && writeProto instanceof MambaSecret) {
           hasHostCommunication = true;
           break;
         }
@@ -56,9 +55,8 @@ public class MambaSecretFactory extends AllHostsProtocolFactory<ImpAstNode> {
       }
     }
 
-    if (!node.isArrayIndex() && !node.isLoopGuard()
-        && !(inSecretConditional && hasHostCommunication)) {
-      return hostSet.size() >= 2 ? new MambaSecret(hostConfig, hostSet) : null;
+    if (!(inSecretConditional && hasHostCommunication)) {
+      return new Single(hostConfig, host);
 
     } else {
       return null;

@@ -311,7 +311,10 @@ public final class MambaPublicSecretProcessMerger {
         }
 
       } else {
-        throw new Error("attempting to merge nodes in different execution paths");
+        String msg =
+            String.format("attempting to merge nodes in different execution paths: %s and %s",
+                publicStmtLocation, secretStmtLocation);
+        throw new Error(msg);
       }
     }
 

@@ -100,7 +100,12 @@ public abstract class Cleartext extends AbstractProtocol<ImpAstNode> {
     StmtBuilder readBuilder = info.getBuilder(readProcess);
     List<Variable> readArgs = new ArrayList<>();
     for (ImpAstNode arg : args) {
-      readBuilder.send(outProcess, (ExpressionNode) arg);
+      readBuilder.statement(
+          SendNode.builder()
+          .setRecipient(outProcess)
+          .setSentExpression((ExpressionNode) arg)
+          .setLocation(arg)
+          .build());
 
       Variable readArgVar = info.getFreshVar("arg");
       readArgs.add(readArgVar);

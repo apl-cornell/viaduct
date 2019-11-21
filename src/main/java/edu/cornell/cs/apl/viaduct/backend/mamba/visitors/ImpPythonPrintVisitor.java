@@ -182,6 +182,9 @@ public final class ImpPythonPrintVisitor
     } else if (op instanceof BinaryOperators.Times) {
       opStr = "*";
 
+    } else if (op instanceof BinaryOperators.Divide) {
+      opStr = "/";
+
     } else {
       // TODO: add actual exception
       throw new Error("unknown binary operator");

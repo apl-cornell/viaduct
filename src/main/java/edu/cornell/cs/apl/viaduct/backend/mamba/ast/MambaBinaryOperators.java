@@ -121,4 +121,19 @@ public class MambaBinaryOperators {
       return "*";
     }
   }
+
+  public static final class Divide implements MambaBinaryOperator {
+    private static final Divide INSTANCE = new Divide();
+
+    private Divide() {}
+
+    public static Divide create() {
+      return INSTANCE;
+    }
+
+    @Override
+    public String toString() {
+      return "/";
+    }
+  }
 }

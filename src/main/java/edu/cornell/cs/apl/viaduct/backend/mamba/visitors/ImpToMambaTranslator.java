@@ -221,6 +221,9 @@ public final class ImpToMambaTranslator
     } else if (binOp instanceof BinaryOperators.Times) {
       mambaBinOp = MambaBinaryOperators.Times.create();
 
+    } else if (binOp instanceof BinaryOperators.Divide) {
+      mambaBinOp = MambaBinaryOperators.Divide.create();
+
     } else {
       throw new Error("translation of binary operator not implemented");
     }

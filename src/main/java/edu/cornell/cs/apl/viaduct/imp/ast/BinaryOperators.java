@@ -217,4 +217,27 @@ public class BinaryOperators {
       return "*";
     }
   }
+
+  public static final class Divide extends ArithmeticOperator {
+    private static final Divide INSTANCE = new Divide();
+
+    private Divide() {}
+
+    /** Create an instance of this class. */
+    public static Divide create() {
+      return INSTANCE;
+    }
+
+    @Override
+    public ImpValue evaluate(ImpValue left, ImpValue right) {
+      int leftV = ((IntegerValue) left).getValue();
+      int rightV = ((IntegerValue) right).getValue();
+      return IntegerValue.create(leftV / rightV);
+    }
+
+    @Override
+    public String toString() {
+      return "/";
+    }
+  }
 }

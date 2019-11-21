@@ -128,7 +128,7 @@ NUM         = ((-)?[1-9][0-9]*) | 0
   "+"             { return symbol(sym.PLUS); }
   "-"             { return symbol(sym.MINUS); }
   "*"             { return symbol(sym.TIMES); }
-  // "/"             { return symbol(sym.DIVIDE); }
+  "/"             { return symbol(sym.DIVIDE); }
 
   "=="            { return symbol(sym.EQEQ); }
   "!="            { return symbol(sym.NEQ); }

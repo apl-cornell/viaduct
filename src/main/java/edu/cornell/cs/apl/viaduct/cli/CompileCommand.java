@@ -379,24 +379,8 @@ public class CompileCommand extends BaseCommand {
       }
 
     } else {
-      // We couldn't find protocols for some nodes.
-      final StringBuilder error = new StringBuilder();
-
-      error.append("Could not find protocols for some nodes.\r\n");
-      for (PdgNode<ImpAstNode> node : pdg.getOrderedNodes()) {
-        final String astStr = node.getAstNode().toString();
-
-        final Protocol<ImpAstNode> protocol = protocolMap.getOrElse(node, null);
-        final String protocolStr = protocol == null ? "NO PROTOCOL" : protocol.toString();
-
-        final String labelStr = node.getLabel().toString();
-
-        error.append("\r\n");
-        error.append(String.format("%s (label: %s) => %s", astStr, labelStr, protocolStr));
-      }
-
       // TODO: this should be reported better.
-      throw new Error(error.toString());
+      throw new Error("Could not synthesize protocol");
     }
   }
 

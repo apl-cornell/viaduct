@@ -6,15 +6,12 @@ import edu.cornell.cs.apl.viaduct.imp.ast.DowngradeNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ImpAstNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ReceiveNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.SendNode;
-import edu.cornell.cs.apl.viaduct.imp.protocols.ControlProtocol;
 import edu.cornell.cs.apl.viaduct.pdg.PdgNode;
 import edu.cornell.cs.apl.viaduct.pdg.ProgramDependencyGraph;
 import edu.cornell.cs.apl.viaduct.protocol.Protocol;
 import edu.cornell.cs.apl.viaduct.protocol.ProtocolCostEstimator;
 import edu.cornell.cs.apl.viaduct.protocol.ProtocolSearchStrategy;
-
 import io.vavr.collection.Map;
-
 import java.util.HashSet;
 import java.util.Set;
 

@@ -3,7 +3,6 @@ package edu.cornell.cs.apl.viaduct.imp.protocols;
 import edu.cornell.cs.apl.viaduct.imp.HostTrustConfiguration;
 import edu.cornell.cs.apl.viaduct.imp.ast.HostName;
 import io.vavr.Tuple2;
-
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;

@@ -1,7 +1,6 @@
 package edu.cornell.cs.apl.viaduct.backend.mamba;
 
 import com.google.common.collect.ImmutableMap;
-
 import edu.cornell.cs.apl.viaduct.AstNode;
 import edu.cornell.cs.apl.viaduct.backend.mamba.ast.MambaStatementNode;
 import edu.cornell.cs.apl.viaduct.backend.mamba.ast.MambaVariable;
@@ -19,10 +18,8 @@ import edu.cornell.cs.apl.viaduct.imp.ast.ProcessDeclarationNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ProcessName;
 import edu.cornell.cs.apl.viaduct.imp.ast.ProgramNode;
 import edu.cornell.cs.apl.viaduct.protocol.Protocol;
-
 import io.vavr.collection.HashSet;
 import io.vavr.collection.Set;
-
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
@@ -31,7 +28,6 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Map;
 import java.util.Optional;
-
 import org.fusesource.jansi.AnsiConsole;
 import org.fusesource.jansi.AnsiPrintStream;
 
@@ -47,8 +43,7 @@ public final class MambaBackend {
         Set<MambaVariable> secretVariables,
         Optional<ProcessName> publicProcess,
         Optional<ProcessName> secretProcess,
-        Optional<MambaStatementNode> mambaProcess)
-    {
+        Optional<MambaStatementNode> mambaProcess) {
       this.secretVariables = secretVariables;
       this.publicProcess = publicProcess;
       this.secretProcess = secretProcess;
@@ -103,13 +98,13 @@ public final class MambaBackend {
       String outputDirname,
       ImmutableMap<ProcessName, Integer> hostNameMap,
       ImmutableMap<ProcessName, ProcessDeclarationNode> processes,
-      MambaCompilationInfo mambaInfo) throws IOException {
+      MambaCompilationInfo mambaInfo)
+      throws IOException {
 
     File outputDir = new File(outputDirname);
     if (!outputDir.exists()) {
       if (!outputDir.mkdirs()) {
-        throw new IOException(
-            String.format("failed to create output directory %s", outputDirname));
+        throw new IOException(String.format("failed to create output directory %s", outputDirname));
       }
     }
 
@@ -146,7 +141,8 @@ public final class MambaBackend {
       String mambaCompilationTemplate,
       ImmutableMap<ProcessName, Integer> hostNameMap,
       ImmutableMap<ProcessName, ProcessDeclarationNode> processes,
-      MambaCompilationInfo mambaInfo) throws IOException {
+      MambaCompilationInfo mambaInfo)
+      throws IOException {
 
     PrintStream stdout = AnsiConsole.out();
 
@@ -171,8 +167,7 @@ public final class MambaBackend {
   }
 
   private MambaCompilationInfo generateMambaProcess(
-        ProgramNode program, ImmutableMap<ProcessName, Integer> hostNameMap)
-  {
+      ProgramNode program, ImmutableMap<ProcessName, Integer> hostNameMap) {
     ImmutableMap<ProcessName, ProcessDeclarationNode> processes = program.processes();
     Optional<ProcessName> publicProcessName = Optional.empty();
     Optional<ProcessName> secretProcessName = Optional.empty();
@@ -207,36 +202,33 @@ public final class MambaBackend {
     if (publicProcessName.isPresent() && secretProcessName.isPresent()) {
       mambaProcess =
           Optional.of(
-              MambaPublicSecretProcessMerger
-              .run(program, hostNameMap, publicProcessName.get(), secretProcessName.get()));
+              MambaPublicSecretProcessMerger.run(
+                  program, hostNameMap, publicProcessName.get(), secretProcessName.get()));
 
     } else if (publicProcessName.isPresent()) {
       mambaProcess =
           Optional.of(
-              ImpToMambaTranslator
-              .run(false, hostNameMap, processes.get(publicProcessName.get()).getBody()));
+              ImpToMambaTranslator.run(
+                  false, hostNameMap, processes.get(publicProcessName.get()).getBody()));
 
     } else if (secretProcessName.isPresent()) {
       mambaProcess =
           Optional.of(
-              ImpToMambaTranslator
-              .run(false, hostNameMap, processes.get(secretProcessName.get()).getBody()));
+              ImpToMambaTranslator.run(
+                  false, hostNameMap, processes.get(secretProcessName.get()).getBody()));
     }
 
     // mux secret conditionals
     Set<MambaVariable> secretVariables = HashSet.empty();
     if (mambaProcess.isPresent()) {
-      secretVariables = secretVariables.addAll(
-          MambaSecretVariablesVisitor.run(mambaProcess.get()));
+      secretVariables = secretVariables.addAll(MambaSecretVariablesVisitor.run(mambaProcess.get()));
 
       MambaSecretInputChecker secretChecker = new MambaSecretInputChecker(secretVariables);
       mambaProcess =
-          Optional.of(
-              MambaSecretConditionalConverter.run(secretChecker, mambaProcess.get()));
+          Optional.of(MambaSecretConditionalConverter.run(secretChecker, mambaProcess.get()));
     }
 
-    return
-        new MambaCompilationInfo(
-            secretVariables, publicProcessName, secretProcessName, mambaProcess);
+    return new MambaCompilationInfo(
+        secretVariables, publicProcessName, secretProcessName, mambaProcess);
   }
 }

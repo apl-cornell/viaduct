@@ -1,7 +1,6 @@
 package edu.cornell.cs.apl.viaduct.backend.mamba.visitors;
 
 import com.google.common.collect.ImmutableList;
-
 import edu.cornell.cs.apl.viaduct.errors.ElaborationException;
 import edu.cornell.cs.apl.viaduct.imp.ast.ArrayDeclarationNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ArrayIndexingNode;
@@ -37,16 +36,11 @@ import edu.cornell.cs.apl.viaduct.imp.visitors.ExprVisitor;
 import edu.cornell.cs.apl.viaduct.imp.visitors.ReferenceVisitor;
 import edu.cornell.cs.apl.viaduct.imp.visitors.StmtVisitor;
 import io.vavr.collection.Set;
-
 import org.apache.commons.lang3.StringUtils;
 
 /** convert imp programs to python programs. */
 public final class ImpPythonPrintVisitor
-    implements
-        ReferenceVisitor<String>,
-        ExprVisitor<String>,
-        StmtVisitor<String>
-{
+    implements ReferenceVisitor<String>, ExprVisitor<String>, StmtVisitor<String> {
   private static int INDENTATION_LEVEL = 2;
 
   private final ProcessName selfProcess;
@@ -55,10 +49,7 @@ public final class ImpPythonPrintVisitor
   private int indentation;
 
   public static String run(
-      BlockNode block,
-      ProcessName selfProcess,
-      Set<ProcessName> mambaProcesses)
-  {
+      BlockNode block, ProcessName selfProcess, Set<ProcessName> mambaProcesses) {
     return block.accept(new ImpPythonPrintVisitor(selfProcess, mambaProcesses));
   }
 
@@ -118,21 +109,17 @@ public final class ImpPythonPrintVisitor
 
   @Override
   public String visit(ArrayIndexingNode node) {
-    return
-        String.format(
-            "%s[%s]",
-            node.getArray().accept(this),
-            node.getIndex().accept(this));
+    return String.format("%s[%s]", node.getArray().accept(this), node.getIndex().accept(this));
   }
 
   @Override
   public String visit(LiteralNode node) {
     ImpValue val = node.getValue();
     if (val instanceof BooleanValue) {
-      return ((BooleanValue)val).getValue() ? "1" : "0";
+      return ((BooleanValue) val).getValue() ? "1" : "0";
 
     } else if (val instanceof IntegerValue) {
-      return String.valueOf(((IntegerValue)val).getValue());
+      return String.valueOf(((IntegerValue) val).getValue());
 
     } else {
       // TODO: add new exception type
@@ -187,12 +174,8 @@ public final class ImpPythonPrintVisitor
       throw new Error("unknown binary operator");
     }
 
-    return
-      String.format(
-          "(%s %s %s)",
-          node.getLhs().accept(this),
-          opStr,
-          node.getRhs().accept(this));
+    return String.format(
+        "(%s %s %s)", node.getLhs().accept(this), opStr, node.getRhs().accept(this));
   }
 
   @Override
@@ -202,20 +185,16 @@ public final class ImpPythonPrintVisitor
 
   @Override
   public String visit(VariableDeclarationNode node) {
-    return
-        getBuilder()
+    return getBuilder()
         .append(
             String.format(
-                "%s = %s",
-                node.getVariable().accept(this),
-                getDefaultValue(node.getType())))
+                "%s = %s", node.getVariable().accept(this), getDefaultValue(node.getType())))
         .toString();
   }
 
   @Override
   public String visit(ArrayDeclarationNode node) {
-    return
-        getBuilder()
+    return getBuilder()
         .append(
             String.format(
                 "%s = [%s for _ in range(%s)]",
@@ -227,25 +206,16 @@ public final class ImpPythonPrintVisitor
 
   @Override
   public String visit(LetBindingNode node) {
-    return
-      getBuilder()
-      .append(
-          String.format(
-              "%s = %s",
-              node.getVariable().accept(this),
-              node.getRhs().accept(this)))
-      .toString();
+    return getBuilder()
+        .append(
+            String.format("%s = %s", node.getVariable().accept(this), node.getRhs().accept(this)))
+        .toString();
   }
 
   @Override
   public String visit(AssignNode node) {
-    return
-        getBuilder()
-        .append(
-            String.format(
-                "%s = %s",
-                node.getLhs().accept(this),
-                node.getRhs().accept(this)))
+    return getBuilder()
+        .append(String.format("%s = %s", node.getLhs().accept(this), node.getRhs().accept(this)))
         .toString();
   }
 
@@ -265,8 +235,7 @@ public final class ImpPythonPrintVisitor
       throw new Error("direct communication between hosts currently not supported");
     }
 
-    return
-        getBuilder()
+    return getBuilder()
         .append(String.format(template, node.getSentExpression().accept(this)))
         .toString();
   }
@@ -277,20 +246,13 @@ public final class ImpPythonPrintVisitor
     String variableStr = node.getVariable().accept(this);
 
     if (this.selfProcess.equals(sender)) {
-      return
-          getBuilder()
+      return getBuilder()
           .append(
-              String.format(
-                  "%s = user_input(\"%s\", %s)",
-                  variableStr, variableStr, variableStr))
+              String.format("%s = user_input(\"%s\", %s)", variableStr, variableStr, variableStr))
           .toString();
 
     } else if (this.mambaProcesses.contains(sender)) {
-      return
-          getBuilder()
-          .append(
-              String.format("%s = mamba_output()", variableStr))
-          .toString();
+      return getBuilder().append(String.format("%s = mamba_output()", variableStr)).toString();
 
     } else {
       // TODO: new exception
@@ -300,24 +262,22 @@ public final class ImpPythonPrintVisitor
 
   @Override
   public String visit(IfNode node) {
-    return
-      getBuilder()
-      .append(String.format("if %s:%n", node.getGuard().accept(this)))
-      .append(visitChildBlock(node.getThenBranch()))
-      .append("\n")
-      .append(addIndentation())
-      .append("else:\n")
-      .append(visitChildBlock(node.getElseBranch()))
-      .toString();
+    return getBuilder()
+        .append(String.format("if %s:%n", node.getGuard().accept(this)))
+        .append(visitChildBlock(node.getThenBranch()))
+        .append("\n")
+        .append(addIndentation())
+        .append("else:\n")
+        .append(visitChildBlock(node.getElseBranch()))
+        .toString();
   }
 
   @Override
   public String visit(WhileNode node) {
-    return
-      getBuilder()
-      .append(String.format("while %s:%n", node.getGuard().accept(this)))
-      .append(visitChildBlock(node.getBody()))
-      .toString();
+    return getBuilder()
+        .append(String.format("while %s:%n", node.getGuard().accept(this)))
+        .append(visitChildBlock(node.getBody()))
+        .toString();
   }
 
   @Override
@@ -327,11 +287,7 @@ public final class ImpPythonPrintVisitor
 
   @Override
   public String visit(LoopNode node) {
-    return
-      getBuilder()
-      .append("while True:\n")
-      .append(visitChildBlock(node.getBody()))
-      .toString();
+    return getBuilder().append("while True:\n").append(visitChildBlock(node.getBody())).toString();
   }
 
   @Override
@@ -346,8 +302,7 @@ public final class ImpPythonPrintVisitor
 
   @Override
   public String visit(AssertNode node) {
-    return
-        getBuilder()
+    return getBuilder()
         .append(String.format("assert %s", node.getExpression().accept(this)))
         .toString();
   }

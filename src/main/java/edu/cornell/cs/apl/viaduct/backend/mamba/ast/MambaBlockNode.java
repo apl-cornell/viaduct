@@ -2,11 +2,8 @@ package edu.cornell.cs.apl.viaduct.backend.mamba.ast;
 
 import com.google.auto.value.AutoValue;
 import com.google.common.collect.ImmutableList;
-
 import edu.cornell.cs.apl.viaduct.backend.mamba.visitors.MambaStatementVisitor;
-
 import java.util.Iterator;
-
 import javax.annotation.Nonnull;
 
 @AutoValue

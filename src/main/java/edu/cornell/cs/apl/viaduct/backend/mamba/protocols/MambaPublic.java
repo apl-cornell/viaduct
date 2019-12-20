@@ -4,7 +4,6 @@ import edu.cornell.cs.apl.viaduct.imp.HostTrustConfiguration;
 import edu.cornell.cs.apl.viaduct.imp.ast.HostName;
 import edu.cornell.cs.apl.viaduct.imp.protocols.AbstractSynthesizedSingle;
 import edu.cornell.cs.apl.viaduct.security.Label;
-
 import java.util.Set;
 
 /** cleartext MAMBA protocol. */
@@ -40,7 +39,7 @@ public class MambaPublic extends AbstractSynthesizedSingle {
     }
 
     if (o instanceof MambaPublic) {
-      MambaPublic omp = (MambaPublic)o;
+      MambaPublic omp = (MambaPublic) o;
       return this.hosts.equals(omp.hosts);
 
     } else {

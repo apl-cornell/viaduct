@@ -10,13 +10,13 @@ import edu.cornell.cs.apl.viaduct.imp.builders.StmtBuilder;
 import edu.cornell.cs.apl.viaduct.pdg.PdgNode;
 import edu.cornell.cs.apl.viaduct.protocol.ProtocolInstantiationInfo;
 import edu.cornell.cs.apl.viaduct.security.Label;
-
 import java.util.List;
 import java.util.Objects;
 
-/** protocol that corresponds to how the ideal functionality for a specification program acts;
- * the protocol interacts with a simulator process as dictated by a given corruption label.
-*/
+/**
+ * protocol that corresponds to how the ideal functionality for a specification program acts; the
+ * protocol interacts with a simulator process as dictated by a given corruption label.
+ */
 public class IdealFunctionality extends AbstractSingle {
   private static final String CORRUPTED_VALUE = "CORRUPT";
 
@@ -47,7 +47,9 @@ public class IdealFunctionality extends AbstractSingle {
 
   @Override
   protected ExpressionNode getReadValue(
-      PdgNode<ImpAstNode> node, List<Variable> readArgs, Variable outVar,
+      PdgNode<ImpAstNode> node,
+      List<Variable> readArgs,
+      Variable outVar,
       ProtocolInstantiationInfo<ImpAstNode> info) {
 
     ExpressionNode actualReadVal = super.getReadValue(node, readArgs, outVar, info);
@@ -89,9 +91,8 @@ public class IdealFunctionality extends AbstractSingle {
     }
 
     if (o instanceof IdealFunctionality) {
-      IdealFunctionality that = (IdealFunctionality)o;
-      return this.process.equals(that.process)
-        && this.simulator.equals(that.simulator);
+      IdealFunctionality that = (IdealFunctionality) o;
+      return this.process.equals(that.process) && this.simulator.equals(that.simulator);
 
     } else {
       return false;
@@ -105,7 +106,7 @@ public class IdealFunctionality extends AbstractSingle {
 
   @Override
   public String toString() {
-    return String.format("IdealFunctionality(%s,%s)",
-        this.process.toString(), this.simulator.toString());
+    return String.format(
+        "IdealFunctionality(%s,%s)", this.process.toString(), this.simulator.toString());
   }
 }

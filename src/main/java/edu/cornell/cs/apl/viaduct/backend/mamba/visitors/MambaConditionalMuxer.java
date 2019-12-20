@@ -1,7 +1,6 @@
 package edu.cornell.cs.apl.viaduct.backend.mamba.visitors;
 
 import com.google.common.collect.ImmutableList;
-
 import edu.cornell.cs.apl.viaduct.backend.mamba.ast.MambaArrayDeclarationNode;
 import edu.cornell.cs.apl.viaduct.backend.mamba.ast.MambaArrayLoadNode;
 import edu.cornell.cs.apl.viaduct.backend.mamba.ast.MambaArrayStoreNode;
@@ -24,9 +23,7 @@ import edu.cornell.cs.apl.viaduct.backend.mamba.ast.MambaWhileNode;
 import edu.cornell.cs.apl.viaduct.util.FreshNameGenerator;
 
 /** convert conditional statements into straightline code with muxes. */
-public class MambaConditionalMuxer
-    implements MambaStatementVisitor<Iterable<MambaStatementNode>>
-{
+public class MambaConditionalMuxer implements MambaStatementVisitor<Iterable<MambaStatementNode>> {
   static final String GUARD_VAR_NAME = "guard";
   static final FreshNameGenerator nameGenerator = new FreshNameGenerator();
 
@@ -69,21 +66,16 @@ public class MambaConditionalMuxer
     if (this.guardVariable != null) {
       newRhs =
           MambaMuxNode.builder()
-          .setGuard(MambaReadNode.create(this.guardVariable))
-          .setThenValue(node.getRhs())
-          .setElseValue(MambaReadNode.create(node.getVariable()))
-          .build();
+              .setGuard(MambaReadNode.create(this.guardVariable))
+              .setThenValue(node.getRhs())
+              .setElseValue(MambaReadNode.create(node.getVariable()))
+              .build();
 
     } else {
       newRhs = node.getRhs();
     }
 
-    return
-      single(
-          MambaAssignNode.builder()
-          .setVariable(node.getVariable())
-          .setRhs(newRhs)
-          .build());
+    return single(MambaAssignNode.builder().setVariable(node.getVariable()).setRhs(newRhs).build());
   }
 
   @Override
@@ -93,22 +85,21 @@ public class MambaConditionalMuxer
     if (this.guardVariable != null) {
       newValue =
           MambaMuxNode.builder()
-          .setGuard(MambaReadNode.create(this.guardVariable))
-          .setThenValue(node.getValue())
-          .setElseValue(
-              MambaArrayLoadNode.builder()
-              .setArray(node.getArray())
-              .setIndex(node.getIndex())
-              .build())
-          .build();
+              .setGuard(MambaReadNode.create(this.guardVariable))
+              .setThenValue(node.getValue())
+              .setElseValue(
+                  MambaArrayLoadNode.builder()
+                      .setArray(node.getArray())
+                      .setIndex(node.getIndex())
+                      .build())
+              .build();
 
     } else {
       newValue = node.getValue();
     }
 
-    return
-        single(
-            MambaArrayStoreNode.builder()
+    return single(
+        MambaArrayStoreNode.builder()
             .setArray(node.getArray())
             .setIndex(node.getIndex())
             .setValue(newValue)
@@ -138,32 +129,27 @@ public class MambaConditionalMuxer
   @Override
   public Iterable<MambaStatementNode> visit(MambaIfNode node) {
     MambaExpressionNode guard = node.getGuard();
-    MambaExpressionNode negatedGuard =
-        MambaNegationNode.builder()
-        .setExpression(guard)
-        .build();
+    MambaExpressionNode negatedGuard = MambaNegationNode.builder().setExpression(guard).build();
 
-    MambaVariable condVar =
-        MambaVariable.create(nameGenerator.getFreshName(GUARD_VAR_NAME));
-    MambaVariable negCondVar =
-        MambaVariable.create(nameGenerator.getFreshName(GUARD_VAR_NAME));
+    MambaVariable condVar = MambaVariable.create(nameGenerator.getFreshName(GUARD_VAR_NAME));
+    MambaVariable negCondVar = MambaVariable.create(nameGenerator.getFreshName(GUARD_VAR_NAME));
 
     MambaExpressionNode condAssign;
     MambaExpressionNode negCondAssign;
     if (this.guardVariable != null) {
       condAssign =
-        MambaBinaryExpressionNode.builder()
-        .setLhs(MambaReadNode.create(this.guardVariable))
-        .setOperator(MambaBinaryOperators.And.create())
-        .setRhs(guard)
-        .build();
+          MambaBinaryExpressionNode.builder()
+              .setLhs(MambaReadNode.create(this.guardVariable))
+              .setOperator(MambaBinaryOperators.And.create())
+              .setRhs(guard)
+              .build();
 
       negCondAssign =
-        MambaBinaryExpressionNode.builder()
-        .setLhs(MambaReadNode.create(this.guardVariable))
-        .setOperator(MambaBinaryOperators.And.create())
-        .setRhs(negatedGuard)
-        .build();
+          MambaBinaryExpressionNode.builder()
+              .setLhs(MambaReadNode.create(this.guardVariable))
+              .setOperator(MambaBinaryOperators.And.create())
+              .setRhs(negatedGuard)
+              .build();
 
     } else {
       condAssign = guard;
@@ -177,31 +163,23 @@ public class MambaConditionalMuxer
 
     if (thenBranch.getStatements().size() > 0) {
       builder
-        .add(
-            MambaRegIntDeclarationNode.builder()
-            .setVariable(condVar)
-            .setRegisterType(MambaSecurityType.SECRET)
-            .build())
-        .add(
-            MambaAssignNode.builder()
-            .setVariable(condVar)
-            .setRhs(condAssign)
-            .build())
-        .addAll(node.getThenBranch().accept(new MambaConditionalMuxer(condVar)));
+          .add(
+              MambaRegIntDeclarationNode.builder()
+                  .setVariable(condVar)
+                  .setRegisterType(MambaSecurityType.SECRET)
+                  .build())
+          .add(MambaAssignNode.builder().setVariable(condVar).setRhs(condAssign).build())
+          .addAll(node.getThenBranch().accept(new MambaConditionalMuxer(condVar)));
     }
 
     if (elseBranch.getStatements().size() > 0) {
       builder
-        .add(
-            MambaRegIntDeclarationNode.builder()
-            .setVariable(negCondVar)
-            .setRegisterType(MambaSecurityType.SECRET)
-            .build())
           .add(
-              MambaAssignNode.builder()
-              .setVariable(negCondVar)
-              .setRhs(negCondAssign)
-              .build())
+              MambaRegIntDeclarationNode.builder()
+                  .setVariable(negCondVar)
+                  .setRegisterType(MambaSecurityType.SECRET)
+                  .build())
+          .add(MambaAssignNode.builder().setVariable(negCondVar).setRhs(negCondAssign).build())
           .addAll(node.getElseBranch().accept(new MambaConditionalMuxer(negCondVar)));
     }
 
@@ -211,9 +189,7 @@ public class MambaConditionalMuxer
   @Override
   public Iterable<MambaStatementNode> visit(MambaWhileNode node) {
     return single(
-        node.toBuilder()
-        .setBody(MambaBlockNode.create(node.getBody().accept(this)))
-        .build());
+        node.toBuilder().setBody(MambaBlockNode.create(node.getBody().accept(this))).build());
   }
 
   @Override

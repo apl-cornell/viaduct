@@ -11,7 +11,6 @@ import edu.cornell.cs.apl.viaduct.pdg.PdgReadEdge;
 import edu.cornell.cs.apl.viaduct.pdg.PdgWriteEdge;
 import edu.cornell.cs.apl.viaduct.protocol.Protocol;
 import edu.cornell.cs.apl.viaduct.protocol.SingleHostProtocolFactory;
-
 import io.vavr.collection.Map;
 
 /** cleartext data in a MAMBA program. */
@@ -20,8 +19,7 @@ public class MambaSingleFactory extends SingleHostProtocolFactory<ImpAstNode> {
       PdgNode<ImpAstNode> node,
       Map<PdgNode<ImpAstNode>, Protocol<ImpAstNode>> protoMap,
       HostTrustConfiguration hostConfig,
-      HostName host)
-  {
+      HostName host) {
     boolean inSecretConditional = false;
     for (PdgControlNode<ImpAstNode> controlNode : node.getConditionalNodeStack()) {
       for (PdgReadEdge<ImpAstNode> controlReadEdge : controlNode.getReadEdges()) {

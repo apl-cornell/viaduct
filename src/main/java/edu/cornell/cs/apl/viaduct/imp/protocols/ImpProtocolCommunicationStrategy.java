@@ -10,7 +10,6 @@ import edu.cornell.cs.apl.viaduct.protocol.Protocol;
 import edu.cornell.cs.apl.viaduct.protocol.ProtocolInstantiationError;
 import edu.cornell.cs.apl.viaduct.security.Label;
 import edu.cornell.cs.apl.viaduct.util.PowersetIterator;
-
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -41,7 +40,6 @@ public final class ImpProtocolCommunicationStrategy
         fromLabel = fromLabel.meet(hostConfig.getTrust(fromHost));
         fromProcessSet.add(ProcessName.create(fromHost));
       }
-
 
       // assign the first (smallest) subset of the fromHosts that have
       for (HostName toHost : toHostSet) {

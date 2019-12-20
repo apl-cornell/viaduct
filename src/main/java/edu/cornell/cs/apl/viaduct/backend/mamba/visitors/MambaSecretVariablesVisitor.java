@@ -15,9 +15,7 @@ import edu.cornell.cs.apl.viaduct.backend.mamba.ast.MambaWhileNode;
 import io.vavr.collection.HashSet;
 import io.vavr.collection.Set;
 
-public class MambaSecretVariablesVisitor
-    implements MambaStatementVisitor<Set<MambaVariable>>
-{
+public class MambaSecretVariablesVisitor implements MambaStatementVisitor<Set<MambaVariable>> {
   public static Set<MambaVariable> run(MambaStatementNode stmt) {
     return stmt.accept(new MambaSecretVariablesVisitor());
   }
@@ -71,9 +69,7 @@ public class MambaSecretVariablesVisitor
 
   @Override
   public Set<MambaVariable> visit(MambaIfNode node) {
-    return
-      node.getThenBranch().accept(this)
-      .union(node.getElseBranch().accept(this));
+    return node.getThenBranch().accept(this).union(node.getElseBranch().accept(this));
   }
 
   @Override

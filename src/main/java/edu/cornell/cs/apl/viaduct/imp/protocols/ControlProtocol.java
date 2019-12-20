@@ -18,7 +18,6 @@ import edu.cornell.cs.apl.viaduct.protocol.Protocol;
 import edu.cornell.cs.apl.viaduct.protocol.ProtocolInstantiationError;
 import edu.cornell.cs.apl.viaduct.protocol.ProtocolInstantiationInfo;
 import edu.cornell.cs.apl.viaduct.security.Label;
-
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;

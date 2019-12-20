@@ -12,17 +12,15 @@ import edu.cornell.cs.apl.viaduct.pdg.PdgWriteEdge;
 import edu.cornell.cs.apl.viaduct.protocol.AllHostsProtocolFactory;
 import edu.cornell.cs.apl.viaduct.protocol.Protocol;
 import io.vavr.collection.Map;
-
 import java.util.Set;
 
 /** cleartext data in a MAMBA program. */
 public class MambaSecretFactory extends AllHostsProtocolFactory<ImpAstNode> {
   protected Protocol<ImpAstNode> createInstanceFromHostInfo(
       PdgNode<ImpAstNode> node,
-      Map<PdgNode<ImpAstNode>,Protocol<ImpAstNode>> protoMap,
+      Map<PdgNode<ImpAstNode>, Protocol<ImpAstNode>> protoMap,
       HostTrustConfiguration hostConfig,
-      Set<HostName> hostSet)
-  {
+      Set<HostName> hostSet) {
     boolean inSecretConditional = false;
     for (PdgControlNode<ImpAstNode> controlNode : node.getConditionalNodeStack()) {
       for (PdgReadEdge<ImpAstNode> controlReadEdge : controlNode.getReadEdges()) {
@@ -56,7 +54,8 @@ public class MambaSecretFactory extends AllHostsProtocolFactory<ImpAstNode> {
       }
     }
 
-    if (!node.isArrayIndex() && !node.isLoopGuard()
+    if (!node.isArrayIndex()
+        && !node.isLoopGuard()
         && !(inSecretConditional && hasHostCommunication)) {
       return hostSet.size() >= 2 ? new MambaSecret(hostConfig, hostSet) : null;
 

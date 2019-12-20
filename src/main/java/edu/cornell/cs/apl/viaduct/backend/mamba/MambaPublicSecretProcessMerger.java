@@ -2,7 +2,6 @@ package edu.cornell.cs.apl.viaduct.backend.mamba;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-
 import edu.cornell.cs.apl.viaduct.backend.mamba.ast.MambaAssignNode;
 import edu.cornell.cs.apl.viaduct.backend.mamba.ast.MambaBlockNode;
 import edu.cornell.cs.apl.viaduct.backend.mamba.ast.MambaExpressionNode;
@@ -32,7 +31,6 @@ import edu.cornell.cs.apl.viaduct.util.AbstractLineNumber;
 import edu.cornell.cs.apl.viaduct.util.AbstractLineNumber.RelativePosition;
 import io.vavr.collection.HashMap;
 import io.vavr.collection.Map;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -45,13 +43,10 @@ public final class MambaPublicSecretProcessMerger {
       ProgramNode program,
       ImmutableMap<ProcessName, Integer> hostNameMap,
       ProcessName publicProcessName,
-      ProcessName secretProcessName)
-  {
-    return
-        (new MambaPublicSecretProcessMerger())
-            .mergePublicSecret(
-                program, hostNameMap, HashMap.empty(),
-                publicProcessName, secretProcessName);
+      ProcessName secretProcessName) {
+    return (new MambaPublicSecretProcessMerger())
+        .mergePublicSecret(
+            program, hostNameMap, HashMap.empty(), publicProcessName, secretProcessName);
   }
 
   /** merge mamba public and secret processes from a generated program. */
@@ -60,8 +55,7 @@ public final class MambaPublicSecretProcessMerger {
       ImmutableMap<ProcessName, Integer> hostNameMap,
       Map<MambaVariable, MambaExpressionNode> inlineMap,
       ProcessName publicProcessName,
-      ProcessName secretProcessName)
-  {
+      ProcessName secretProcessName) {
     ImmutableMap<ProcessName, ProcessDeclarationNode> processes = program.processes();
 
     ProcessDeclarationNode publicProcess = processes.get(publicProcessName);
@@ -72,10 +66,13 @@ public final class MambaPublicSecretProcessMerger {
 
     Iterable<MambaStatementNode> mambaStmtList =
         mergePublicSecretProcesses(
-            inlineMap, hostNameMap,
+            inlineMap,
+            hostNameMap,
             null,
-            publicProcessName, publicStmtList,
-            secretProcessName, secretStmtList);
+            publicProcessName,
+            publicStmtList,
+            secretProcessName,
+            secretStmtList);
 
     return MambaBlockNode.builder().addAll(mambaStmtList).build();
   }
@@ -87,8 +84,7 @@ public final class MambaPublicSecretProcessMerger {
       ProcessName publicProcessName,
       ImmutableList<StatementNode> publicProcess,
       ProcessName secretProcessName,
-      ImmutableList<StatementNode> secretProcess)
-  {
+      ImmutableList<StatementNode> secretProcess) {
     List<MambaStatementNode> mambaStmtList = new ArrayList<>();
 
     int publicIndex = 0;
@@ -109,27 +105,26 @@ public final class MambaPublicSecretProcessMerger {
 
       RelativePosition compareLocations =
           publicStmtLocation != null && secretStmtLocation != null
-          ? publicStmtLocation.comparePositionTo(secretStmtLocation) : RelativePosition.UNORDERED;
+              ? publicStmtLocation.comparePositionTo(secretStmtLocation)
+              : RelativePosition.UNORDERED;
 
       // public stmt is ordered before secret stmt
       if (compareLocations == RelativePosition.BEFORE || secretIndex >= secretProcessSize) {
         mambaStmtList.add(
             MambaInliner.run(
-                inlineMap,
-                ImpToMambaTranslator.run(false, hostNameMap, loopVar, publicStmt)));
+                inlineMap, ImpToMambaTranslator.run(false, hostNameMap, loopVar, publicStmt)));
 
         publicIndex++;
 
-      // secret stmt is ordered before public stmt
+        // secret stmt is ordered before public stmt
       } else if (compareLocations == RelativePosition.AFTER || publicIndex >= publicProcessSize) {
         mambaStmtList.add(
             MambaInliner.run(
-              inlineMap,
-              ImpToMambaTranslator.run(true, hostNameMap, loopVar, secretStmt)));
+                inlineMap, ImpToMambaTranslator.run(true, hostNameMap, loopVar, secretStmt)));
 
         secretIndex++;
 
-      // statements came from the same source location;
+        // statements came from the same source location;
       } else if (compareLocations == RelativePosition.EQUAL) {
         // public recv, secret send (add reveal node here!)
         if (publicStmt instanceof ReceiveNode && secretStmt instanceof SendNode) {
@@ -137,19 +132,17 @@ public final class MambaPublicSecretProcessMerger {
           SendNode secretSend = (SendNode) secretStmt;
 
           if (publicRecv.getSender().equals(secretProcessName)
-              && secretSend.getRecipient().equals(publicProcessName))
-          {
-            MambaVariable mambaVar =
-                ImpToMambaTranslator.visitVariable(publicRecv.getVariable());
+              && secretSend.getRecipient().equals(publicProcessName)) {
+            MambaVariable mambaVar = ImpToMambaTranslator.visitVariable(publicRecv.getVariable());
 
             MambaExpressionNode mambaRhs =
                 MambaRevealNode.builder()
-                .setRevealedExpr(
-                      MambaInliner.run(
-                          inlineMap,
-                          ImpToMambaTranslator
-                          .run(true, hostNameMap, secretSend.getSentExpression())))
-                .build();
+                    .setRevealedExpr(
+                        MambaInliner.run(
+                            inlineMap,
+                            ImpToMambaTranslator.run(
+                                true, hostNameMap, secretSend.getSentExpression())))
+                    .build();
 
             inlineMap = inlineMap.put(mambaVar, mambaRhs);
             publicIndex++;
@@ -159,9 +152,7 @@ public final class MambaPublicSecretProcessMerger {
             if (publicRecv.getSender().equals(secretProcessName)) {
               mambaStmtList.add(
                   MambaInliner.run(
-                      inlineMap,
-                      ImpToMambaTranslator
-                      .run(true, hostNameMap, loopVar, secretSend)));
+                      inlineMap, ImpToMambaTranslator.run(true, hostNameMap, loopVar, secretSend)));
 
               secretIndex++;
 
@@ -169,21 +160,19 @@ public final class MambaPublicSecretProcessMerger {
               mambaStmtList.add(
                   MambaInliner.run(
                       inlineMap,
-                      ImpToMambaTranslator
-                      .run(false, hostNameMap, loopVar, publicRecv)));
+                      ImpToMambaTranslator.run(false, hostNameMap, loopVar, publicRecv)));
 
               publicIndex++;
             }
           }
 
-        // public send, secret recv
+          // public send, secret recv
         } else if (publicStmt instanceof SendNode && secretStmt instanceof ReceiveNode) {
           SendNode publicSend = (SendNode) publicStmt;
           ReceiveNode secretRecv = (ReceiveNode) secretStmt;
 
           if (secretRecv.getSender().equals(publicProcessName)
-              && publicSend.getRecipient().equals(secretProcessName))
-          {
+              && publicSend.getRecipient().equals(secretProcessName)) {
             MambaVariable mambaVar = ImpToMambaTranslator.visitVariable(secretRecv.getVariable());
             MambaExpressionNode mambaExpr =
                 MambaInliner.run(
@@ -197,55 +186,63 @@ public final class MambaPublicSecretProcessMerger {
           } else {
             if (secretRecv.getSender().equals(publicProcessName)) {
               mambaStmtList.add(
-                  MambaInliner.run(inlineMap,
+                  MambaInliner.run(
+                      inlineMap,
                       ImpToMambaTranslator.run(false, hostNameMap, loopVar, publicSend)));
 
               publicIndex++;
 
             } else {
               mambaStmtList.add(
-                  MambaInliner.run(inlineMap,
-                      ImpToMambaTranslator.run(true, hostNameMap, loopVar, secretRecv)));
+                  MambaInliner.run(
+                      inlineMap, ImpToMambaTranslator.run(true, hostNameMap, loopVar, secretRecv)));
 
               secretIndex++;
             }
           }
 
-        // conditional
+          // conditional
         } else if (publicStmt instanceof IfNode && secretStmt instanceof IfNode) {
           IfNode publicIf = (IfNode) publicStmt;
           IfNode secretIf = (IfNode) secretStmt;
 
           MambaExpressionNode newGuard =
               MambaInliner.run(
-                inlineMap,
-                ImpToMambaTranslator.run(false, hostNameMap, publicIf.getGuard()));
+                  inlineMap, ImpToMambaTranslator.run(false, hostNameMap, publicIf.getGuard()));
 
           Iterable<MambaStatementNode> newThenBranch =
               mergePublicSecretProcesses(
-                  inlineMap, hostNameMap, loopVar,
-                  publicProcessName, publicIf.getThenBranch().getStatements(),
-                  secretProcessName, secretIf.getThenBranch().getStatements());
+                  inlineMap,
+                  hostNameMap,
+                  loopVar,
+                  publicProcessName,
+                  publicIf.getThenBranch().getStatements(),
+                  secretProcessName,
+                  secretIf.getThenBranch().getStatements());
 
           Iterable<MambaStatementNode> newElseBranch =
               mergePublicSecretProcesses(
-                  inlineMap, hostNameMap, loopVar,
-                  publicProcessName, publicIf.getElseBranch().getStatements(),
-                  secretProcessName, secretIf.getElseBranch().getStatements());
+                  inlineMap,
+                  hostNameMap,
+                  loopVar,
+                  publicProcessName,
+                  publicIf.getElseBranch().getStatements(),
+                  secretProcessName,
+                  secretIf.getElseBranch().getStatements());
 
           MambaIfNode newIf =
               MambaIfNode.builder()
-              .setGuard(newGuard)
-              .setThenBranch(MambaBlockNode.builder().addAll(newThenBranch).build())
-              .setElseBranch(MambaBlockNode.builder().addAll(newElseBranch).build())
-              .build();
+                  .setGuard(newGuard)
+                  .setThenBranch(MambaBlockNode.builder().addAll(newThenBranch).build())
+                  .setElseBranch(MambaBlockNode.builder().addAll(newElseBranch).build())
+                  .build();
 
           mambaStmtList.add(MambaInliner.run(inlineMap, newIf));
 
           publicIndex++;
           secretIndex++;
 
-        // loop
+          // loop
         } else if (publicStmt instanceof LoopNode && secretStmt instanceof LoopNode) {
           LoopNode publicLoop = (LoopNode) publicStmt;
           LoopNode secretLoop = (LoopNode) secretStmt;
@@ -253,32 +250,39 @@ public final class MambaPublicSecretProcessMerger {
 
           Iterable<MambaStatementNode> newBody =
               mergePublicSecretProcesses(
-                  inlineMap, hostNameMap, newLoopVar,
-                  publicProcessName, publicLoop.getBody().getStatements(),
-                  secretProcessName, secretLoop.getBody().getStatements());
+                  inlineMap,
+                  hostNameMap,
+                  newLoopVar,
+                  publicProcessName,
+                  publicLoop.getBody().getStatements(),
+                  secretProcessName,
+                  secretLoop.getBody().getStatements());
 
           mambaStmtList.add(
-              MambaInliner.run(inlineMap,
+              MambaInliner.run(
+                  inlineMap,
                   MambaRegIntDeclarationNode.builder()
-                  .setRegisterType(MambaSecurityType.CLEAR)
-                  .setVariable(newLoopVar)
-                  .build()));
+                      .setRegisterType(MambaSecurityType.CLEAR)
+                      .setVariable(newLoopVar)
+                      .build()));
           mambaStmtList.add(
-              MambaInliner.run(inlineMap,
+              MambaInliner.run(
+                  inlineMap,
                   MambaAssignNode.builder()
-                  .setVariable(newLoopVar)
-                  .setRhs(
-                      MambaIntLiteralNode.builder()
-                      .setSecurityType(MambaSecurityType.CLEAR)
-                      .setValue(1)
-                      .build())
-                  .build()));
+                      .setVariable(newLoopVar)
+                      .setRhs(
+                          MambaIntLiteralNode.builder()
+                              .setSecurityType(MambaSecurityType.CLEAR)
+                              .setValue(1)
+                              .build())
+                      .build()));
           mambaStmtList.add(
-              MambaInliner.run(inlineMap,
+              MambaInliner.run(
+                  inlineMap,
                   MambaWhileNode.builder()
-                  .setGuard(MambaReadNode.create(newLoopVar))
-                  .setBody(MambaBlockNode.create(newBody))
-                  .build()));
+                      .setGuard(MambaReadNode.create(newLoopVar))
+                      .setBody(MambaBlockNode.create(newBody))
+                      .build()));
 
           publicIndex++;
           secretIndex++;
@@ -286,23 +290,22 @@ public final class MambaPublicSecretProcessMerger {
         } else if (publicStmt instanceof BreakNode && secretStmt instanceof BreakNode) {
           mambaStmtList.add(
               MambaInliner.run(
-                  inlineMap,
-                  ImpToMambaTranslator.run(false, hostNameMap, loopVar, publicStmt)));
+                  inlineMap, ImpToMambaTranslator.run(false, hostNameMap, loopVar, publicStmt)));
 
           publicIndex++;
           secretIndex++;
 
         } else if (publicStmt instanceof CommunicationNode && secretStmt instanceof ControlNode) {
           mambaStmtList.add(
-              MambaInliner.run(inlineMap,
-                  ImpToMambaTranslator.run(false, hostNameMap, loopVar, publicStmt)));
+              MambaInliner.run(
+                  inlineMap, ImpToMambaTranslator.run(false, hostNameMap, loopVar, publicStmt)));
 
           publicIndex++;
 
         } else if (publicStmt instanceof ControlNode && secretStmt instanceof CommunicationNode) {
           mambaStmtList.add(
-              MambaInliner.run(inlineMap,
-                  ImpToMambaTranslator.run(true, hostNameMap, loopVar, secretStmt)));
+              MambaInliner.run(
+                  inlineMap, ImpToMambaTranslator.run(true, hostNameMap, loopVar, secretStmt)));
 
           secretIndex++;
 
@@ -312,7 +315,8 @@ public final class MambaPublicSecretProcessMerger {
 
       } else {
         String msg =
-            String.format("attempting to merge nodes in different execution paths: %s and %s",
+            String.format(
+                "attempting to merge nodes in different execution paths: %s and %s",
                 publicStmtLocation, secretStmtLocation);
         throw new Error(msg);
       }

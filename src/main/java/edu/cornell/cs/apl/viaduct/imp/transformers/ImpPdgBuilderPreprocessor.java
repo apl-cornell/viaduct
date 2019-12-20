@@ -8,7 +8,6 @@ import edu.cornell.cs.apl.viaduct.imp.ast.ProgramNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.StatementNode;
 import edu.cornell.cs.apl.viaduct.imp.visitors.IdentityProgramVisitor;
 import edu.cornell.cs.apl.viaduct.imp.visitors.StmtVisitor;
-
 import java.util.LinkedList;
 import java.util.List;
 
@@ -33,8 +32,7 @@ public class ImpPdgBuilderPreprocessor {
           IdentityStmtVisitor visitor,
           ExpressionNode guard,
           StatementNode thenBranch,
-          StatementNode elseBranch)
-      {
+          StatementNode elseBranch) {
         return node.toBuilder()
             .setGuard(guard)
             .setThenBranch((BlockNode) thenBranch)

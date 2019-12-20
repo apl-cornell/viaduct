@@ -10,11 +10,9 @@ import edu.cornell.cs.apl.viaduct.imp.ast.LoopNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.StatementNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.WhileNode;
 import edu.cornell.cs.apl.viaduct.imp.parsing.HasLocation;
-
 import io.vavr.collection.HashMap;
 import io.vavr.collection.Map;
 import io.vavr.control.Option;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -185,7 +183,6 @@ public abstract class LoopContextStmtVisitor<
     if (label != null && labelContext.containsKey(label)) {
       final HasLocation previousDeclaration = labelContext.keySet().find(label::equals).getOrNull();
       throw new NameClashError(previousDeclaration, label);
-
     }
     labelContext = labelContext.put(label, value);
     lastLoopValue = Option.some(value);

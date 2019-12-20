@@ -6,7 +6,6 @@ import edu.cornell.cs.apl.viaduct.imp.ast.ProcessName;
 import edu.cornell.cs.apl.viaduct.pdg.PdgNode;
 import edu.cornell.cs.apl.viaduct.protocol.ProtocolInstantiationInfo;
 import edu.cornell.cs.apl.viaduct.security.Label;
-
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -30,7 +29,7 @@ public abstract class AbstractSynthesizedSingle extends AbstractSingle {
       if (o instanceof SynthesizedHostInfo) {
         SynthesizedHostInfo oinfo = (SynthesizedHostInfo) o;
         return this.protocolId.equals(oinfo.protocolId)
-              && this.processIdentity.equals(oinfo.processIdentity);
+            && this.processIdentity.equals(oinfo.processIdentity);
 
       } else {
         return false;

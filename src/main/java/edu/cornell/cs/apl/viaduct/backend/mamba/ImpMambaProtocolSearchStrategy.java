@@ -9,9 +9,7 @@ import edu.cornell.cs.apl.viaduct.imp.protocols.ImpProtocolSearchStrategy;
 import edu.cornell.cs.apl.viaduct.pdg.PdgNode;
 import edu.cornell.cs.apl.viaduct.protocol.Protocol;
 import edu.cornell.cs.apl.viaduct.protocol.ProtocolCostEstimator;
-
 import io.vavr.collection.Map;
-
 import java.util.HashSet;
 import java.util.Set;
 

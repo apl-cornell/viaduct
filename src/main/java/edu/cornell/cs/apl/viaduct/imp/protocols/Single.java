@@ -7,8 +7,7 @@ import edu.cornell.cs.apl.viaduct.imp.ast.ProcessName;
 import edu.cornell.cs.apl.viaduct.pdg.PdgNode;
 import edu.cornell.cs.apl.viaduct.protocol.ProtocolInstantiationInfo;
 
-/** protocol where data and computation is stored/performed
- * in cleatext in a single host. */
+/** protocol where data and computation is stored/performed in cleatext in a single host. */
 public class Single extends AbstractSingle {
   /** constructor. */
   public Single(HostTrustConfiguration hostConfig, HostName h) {

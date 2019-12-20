@@ -9,9 +9,7 @@ import edu.cornell.cs.apl.viaduct.imp.builders.ProcessConfigurationBuilder;
 import edu.cornell.cs.apl.viaduct.imp.builders.StmtBuilder;
 import edu.cornell.cs.apl.viaduct.pdg.PdgNode;
 import edu.cornell.cs.apl.viaduct.pdg.ProgramDependencyGraph.ControlLabel;
-
 import io.vavr.collection.Map;
-
 import java.util.Set;
 import java.util.Stack;
 
@@ -41,10 +39,7 @@ public class ProtocolInstantiationInfo<T extends AstNode> {
 
   /** get the set of hosts to read from. */
   public Set<ProcessName> getReadSet(
-      PdgNode<T> writeNode,
-      PdgNode<T> readNode,
-      ProcessName process)
-  {
+      PdgNode<T> writeNode, PdgNode<T> readNode, ProcessName process) {
     final Protocol<T> fromProtocol = this.protocolMap.getOrElse(writeNode, null);
     final Protocol<T> toProtocol = this.protocolMap.getOrElse(readNode, null);
     return this.communicationStrategy.getReadSet(
@@ -53,10 +48,7 @@ public class ProtocolInstantiationInfo<T extends AstNode> {
 
   /** get the set of hosts to write to. */
   public Set<ProcessName> getWriteSet(
-      PdgNode<T> writeNode,
-      PdgNode<T> readNode,
-      ProcessName process)
-  {
+      PdgNode<T> writeNode, PdgNode<T> readNode, ProcessName process) {
     final Protocol<T> fromProtocol = this.protocolMap.getOrElse(writeNode, null);
     final Protocol<T> toProtocol = this.protocolMap.getOrElse(readNode, null);
     return this.communicationStrategy.getWriteSet(

@@ -56,9 +56,7 @@ public final class Printer implements AstPrinter<ImpAstNode> {
         });
   }
 
-  /**
-   * Pretty print an AST node to the given output stream.
-   */
+  /** Pretty print an AST node to the given output stream. */
   public static void run(ImpAstNode node, PrintStream output) {
     run(node, output, true);
   }

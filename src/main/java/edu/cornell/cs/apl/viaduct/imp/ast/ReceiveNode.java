@@ -7,14 +7,10 @@ import javax.annotation.Nullable;
 
 /** Receive a value from a process. */
 @AutoValue
-public abstract class ReceiveNode
-    extends StatementNode implements CommunicationNode
-{
+public abstract class ReceiveNode extends StatementNode implements CommunicationNode {
   /** default is *not* external communication, unless explicitly set. */
   public static Builder builder() {
-    return
-        new AutoValue_ReceiveNode.Builder()
-        .setExternalCommunication(false);
+    return new AutoValue_ReceiveNode.Builder().setExternalCommunication(false);
   }
 
   public abstract Builder toBuilder();

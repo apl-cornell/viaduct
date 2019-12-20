@@ -1,7 +1,6 @@
 package edu.cornell.cs.apl.viaduct.imp.transformers;
 
 import com.google.common.collect.ImmutableList;
-
 import edu.cornell.cs.apl.viaduct.errors.ElaborationException;
 import edu.cornell.cs.apl.viaduct.imp.ast.ArrayDeclarationNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ArrayIndexingNode;
@@ -39,13 +38,11 @@ import edu.cornell.cs.apl.viaduct.util.AbstractLineNumber;
 
 /** inject logical position information to elaborated AST. */
 public final class LogicalPositionInjector
-    implements
-        ProgramVisitor<ProgramNode>,
+    implements ProgramVisitor<ProgramNode>,
         TopLevelDeclarationVisitor<TopLevelDeclarationNode>,
         StmtVisitor<StatementNode>,
         ExprVisitor<ExpressionNode>,
-        ReferenceVisitor<ReferenceNode>
-{
+        ReferenceVisitor<ReferenceNode> {
   AbstractLineNumber nextPosition;
 
   public static ProgramNode run(ProgramNode node) {
@@ -91,26 +88,21 @@ public final class LogicalPositionInjector
 
   @Override
   public TopLevelDeclarationNode visit(ProcessDeclarationNode node) {
-    return
-        node.toBuilder()
+    return node.toBuilder()
         .setBody(
-            (BlockNode) node.getBody()
-            .accept(new LogicalPositionInjector(node.getName().getName())))
+            (BlockNode)
+                node.getBody().accept(new LogicalPositionInjector(node.getName().getName())))
         .build();
   }
 
   @Override
   public ReferenceNode visit(Variable var) {
-    return
-        var.toBuilder()
-        .setLogicalPosition(getNextPosition())
-        .build();
+    return var.toBuilder().setLogicalPosition(getNextPosition()).build();
   }
 
   @Override
   public ReferenceNode visit(ArrayIndexingNode node) {
-    return
-        node.toBuilder()
+    return node.toBuilder()
         .setIndex(node.getIndex().accept(this))
         .setLogicalPosition(getNextPosition())
         .build();
@@ -118,27 +110,23 @@ public final class LogicalPositionInjector
 
   @Override
   public ExpressionNode visit(LiteralNode node) {
-    return
-        node.toBuilder()
-        .setLogicalPosition(getNextPosition())
-        .build();
+    return node.toBuilder().setLogicalPosition(getNextPosition()).build();
   }
 
   @Override
   public ExpressionNode visit(ReadNode node) {
     ReadNode newNode =
         node.toBuilder()
-        .setReference(node.getReference().accept(this))
-        .setLogicalPosition(getNextPosition())
-        .build();
+            .setReference(node.getReference().accept(this))
+            .setLogicalPosition(getNextPosition())
+            .build();
 
     return newNode;
   }
 
   @Override
   public ExpressionNode visit(NotNode node) {
-    return
-        node.toBuilder()
+    return node.toBuilder()
         .setExpression(node.getExpression().accept(this))
         .setLogicalPosition(getNextPosition())
         .build();
@@ -146,8 +134,7 @@ public final class LogicalPositionInjector
 
   @Override
   public ExpressionNode visit(BinaryExpressionNode node) {
-    return
-        node.toBuilder()
+    return node.toBuilder()
         .setLhs(node.getLhs().accept(this))
         .setRhs(node.getRhs().accept(this))
         .setLogicalPosition(getNextPosition())
@@ -156,8 +143,7 @@ public final class LogicalPositionInjector
 
   @Override
   public ExpressionNode visit(DowngradeNode node) {
-    return
-        node.toBuilder()
+    return node.toBuilder()
         .setExpression(node.getExpression().accept(this))
         .setLogicalPosition(getNextPosition())
         .build();
@@ -165,16 +151,12 @@ public final class LogicalPositionInjector
 
   @Override
   public StatementNode visit(VariableDeclarationNode node) {
-    return
-        node.toBuilder()
-        .setLogicalPosition(getNextPosition())
-        .build();
+    return node.toBuilder().setLogicalPosition(getNextPosition()).build();
   }
 
   @Override
   public StatementNode visit(ArrayDeclarationNode node) {
-    return
-        node.toBuilder()
+    return node.toBuilder()
         .setLength(node.getLength().accept(this))
         .setLogicalPosition(getNextPosition())
         .build();
@@ -182,8 +164,7 @@ public final class LogicalPositionInjector
 
   @Override
   public StatementNode visit(LetBindingNode node) {
-    return
-        node.toBuilder()
+    return node.toBuilder()
         .setRhs(node.getRhs().accept(this))
         .setLogicalPosition(getNextPosition())
         .build();
@@ -191,8 +172,7 @@ public final class LogicalPositionInjector
 
   @Override
   public StatementNode visit(AssignNode node) {
-    return
-        node.toBuilder()
+    return node.toBuilder()
         .setLhs(node.getLhs().accept(this))
         .setRhs(node.getRhs().accept(this))
         .setLogicalPosition(getNextPosition())
@@ -201,8 +181,7 @@ public final class LogicalPositionInjector
 
   @Override
   public StatementNode visit(SendNode node) {
-    return
-        node.toBuilder()
+    return node.toBuilder()
         .setSentExpression(node.getSentExpression().accept(this))
         .setLogicalPosition(getNextPosition())
         .build();
@@ -210,28 +189,22 @@ public final class LogicalPositionInjector
 
   @Override
   public StatementNode visit(ReceiveNode node) {
-    return
-        node.toBuilder()
-        .setLogicalPosition(getNextPosition())
-        .build();
+    return node.toBuilder().setLogicalPosition(getNextPosition()).build();
   }
 
   @Override
   public StatementNode visit(IfNode node) {
-    IfNode.Builder builder =
-        node.toBuilder()
-        .setGuard(node.getGuard().accept(this));
+    IfNode.Builder builder = node.toBuilder().setGuard(node.getGuard().accept(this));
 
     AbstractLineNumber curPosition = getNextPosition();
-    return
-        builder
+    return builder
         .setLogicalPosition(curPosition)
         .setThenBranch(
-            (BlockNode) node.getThenBranch()
-            .accept(new LogicalPositionInjector(curPosition, "then")))
+            (BlockNode)
+                node.getThenBranch().accept(new LogicalPositionInjector(curPosition, "then")))
         .setElseBranch(
-            (BlockNode) node.getElseBranch()
-            .accept(new LogicalPositionInjector(curPosition, "else")))
+            (BlockNode)
+                node.getElseBranch().accept(new LogicalPositionInjector(curPosition, "else")))
         .setLoopGuard(node.isLoopGuard())
         .build();
   }
@@ -249,21 +222,16 @@ public final class LogicalPositionInjector
   @Override
   public StatementNode visit(LoopNode node) {
     AbstractLineNumber curPosition = getNextPosition();
-    return
-        node.toBuilder()
+    return node.toBuilder()
         .setLogicalPosition(curPosition)
         .setBody(
-            (BlockNode) node.getBody()
-            .accept(new LogicalPositionInjector(curPosition, "loop")))
+            (BlockNode) node.getBody().accept(new LogicalPositionInjector(curPosition, "loop")))
         .build();
   }
 
   @Override
   public StatementNode visit(BreakNode node) {
-    return
-        node.toBuilder()
-        .setLogicalPosition(getNextPosition())
-        .build();
+    return node.toBuilder().setLogicalPosition(getNextPosition()).build();
   }
 
   @Override
@@ -273,16 +241,12 @@ public final class LogicalPositionInjector
     for (StatementNode stmt : node) {
       builder.add(stmt.accept(this));
     }
-    return
-        node.toBuilder()
-        .setStatements(builder.build())
-        .build();
+    return node.toBuilder().setStatements(builder.build()).build();
   }
 
   @Override
   public StatementNode visit(AssertNode node) {
-    return
-        node.toBuilder()
+    return node.toBuilder()
         .setExpression(node.getExpression().accept(this))
         .setLogicalPosition(getNextPosition())
         .build();

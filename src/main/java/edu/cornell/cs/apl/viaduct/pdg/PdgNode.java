@@ -2,7 +2,6 @@ package edu.cornell.cs.apl.viaduct.pdg;
 
 import edu.cornell.cs.apl.viaduct.AstNode;
 import edu.cornell.cs.apl.viaduct.security.Label;
-
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;

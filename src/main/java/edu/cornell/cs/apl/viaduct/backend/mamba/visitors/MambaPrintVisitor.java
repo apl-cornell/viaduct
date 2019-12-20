@@ -24,12 +24,10 @@ import edu.cornell.cs.apl.viaduct.backend.mamba.ast.MambaVariable;
 import edu.cornell.cs.apl.viaduct.backend.mamba.ast.MambaWhileNode;
 import edu.cornell.cs.apl.viaduct.util.FreshNameGenerator;
 import io.vavr.collection.Set;
-
 import org.apache.commons.lang3.StringUtils;
 
 public final class MambaPrintVisitor
-    implements MambaExpressionVisitor<String>, MambaStatementVisitor<String>
-{
+    implements MambaExpressionVisitor<String>, MambaStatementVisitor<String> {
   private static int INDENTATION_LEVEL = 2;
   private static String THEN_BODY_NAME = "then_body";
   private static String ELSE_BODY_NAME = "else_body";
@@ -73,11 +71,7 @@ public final class MambaPrintVisitor
   }
 
   private String visitControlBlock(
-      String bodyName,
-      String args,
-      MambaBlockNode block,
-      MambaExpressionNode returnExpr)
-  {
+      String bodyName, String args, MambaBlockNode block, MambaExpressionNode returnExpr) {
     StringBuilder builder = new StringBuilder();
     builder.append('\n');
     builder.append(addIndentation());
@@ -132,15 +126,11 @@ public final class MambaPrintVisitor
 
     if (this.secretVariables.contains(array)) {
       builder.append(
-          String.format("secret_load(%s, %s)",
-              visitVariable(array),
-              node.getIndex().accept(this)));
+          String.format("secret_load(%s, %s)", visitVariable(array), node.getIndex().accept(this)));
 
     } else {
       builder.append(
-          String.format("clear_load(%s, %s)",
-              visitVariable(array),
-              node.getIndex().accept(this)));
+          String.format("clear_load(%s, %s)", visitVariable(array), node.getIndex().accept(this)));
     }
 
     return builder.toString();
@@ -192,8 +182,7 @@ public final class MambaPrintVisitor
 
       case CLEAR:
       default:
-        builder.append(
-            String.format("%s = MemValue(regint())", visitVariable(node.getVariable())));
+        builder.append(String.format("%s = MemValue(regint())", visitVariable(node.getVariable())));
         break;
     }
 
@@ -205,23 +194,21 @@ public final class MambaPrintVisitor
     StringBuilder builder = new StringBuilder();
     builder.append(addIndentation());
     builder.append(
-        String.format("%s = array_alloc(%s)",
-            visitVariable(node.getVariable()),
-            node.getLength().accept(this)));
+        String.format(
+            "%s = array_alloc(%s)",
+            visitVariable(node.getVariable()), node.getLength().accept(this)));
 
     return builder.toString();
   }
 
   @Override
   public String visit(MambaAssignNode node) {
-    return
-      (new StringBuilder())
-      .append(addIndentation())
-      .append(
-          String.format("reg_write(%s, %s)",
-              visitVariable(node.getVariable()),
-              node.getRhs().accept(this)))
-      .toString();
+    return (new StringBuilder())
+        .append(addIndentation())
+        .append(
+            String.format(
+                "reg_write(%s, %s)", visitVariable(node.getVariable()), node.getRhs().accept(this)))
+        .toString();
   }
 
   @Override
@@ -242,7 +229,8 @@ public final class MambaPrintVisitor
 
     builder.append(addIndentation());
     builder.append(
-        String.format(template,
+        String.format(
+            template,
             visitVariable(array),
             node.getIndex().accept(this),
             node.getValue().accept(this)));
@@ -263,12 +251,10 @@ public final class MambaPrintVisitor
       builder.append("MemValue(cint.get_input())");
 
     } else if (node.getSecurityContext() == MambaSecurityType.SECRET) {
-      builder.append(
-          String.format("MemValue(get_input(%d))", player));
+      builder.append(String.format("MemValue(get_input(%d))", player));
 
     } else {
-      builder.append(
-          String.format("MemValue(get_input(%d).reveal())", player));
+      builder.append(String.format("MemValue(get_input(%d).reveal())", player));
     }
 
     return builder.toString();
@@ -408,4 +394,3 @@ public final class MambaPrintVisitor
     }
   }
 }
-

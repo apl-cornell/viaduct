@@ -41,9 +41,7 @@ public class ProcessConfigurationBuilder<T extends AstNode> {
       BlockNode body = (BlockNode) kv.getValue().build();
 
       ProcessDeclarationNode.Builder processBuilder =
-          ProcessDeclarationNode.builder()
-          .setName(name)
-          .setBody(body);
+          ProcessDeclarationNode.builder().setName(name).setBody(body);
 
       if (this.processProtocolMap.containsKey(name)) {
         processBuilder.setProtocol(this.processProtocolMap.get(name));

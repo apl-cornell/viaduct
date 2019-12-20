@@ -9,7 +9,6 @@ import edu.cornell.cs.apl.viaduct.backend.mamba.ast.MambaNegationNode;
 import edu.cornell.cs.apl.viaduct.backend.mamba.ast.MambaReadNode;
 import edu.cornell.cs.apl.viaduct.backend.mamba.ast.MambaRevealNode;
 import edu.cornell.cs.apl.viaduct.backend.mamba.ast.MambaVariable;
-
 import io.vavr.collection.Set;
 
 /** check if secret data is used in an expression. */
@@ -58,8 +57,7 @@ public class MambaSecretInputChecker implements MambaExpressionVisitor<Boolean> 
 
   @Override
   public Boolean visit(MambaMuxNode node) {
-    return
-        node.getGuard().accept(this)
+    return node.getGuard().accept(this)
         || node.getThenValue().accept(this)
         || node.getElseValue().accept(this);
   }

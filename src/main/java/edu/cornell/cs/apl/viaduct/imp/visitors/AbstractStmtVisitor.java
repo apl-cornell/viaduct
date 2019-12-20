@@ -14,7 +14,6 @@ import edu.cornell.cs.apl.viaduct.imp.ast.SendNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.StatementNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.VariableDeclarationNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.WhileNode;
-
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;

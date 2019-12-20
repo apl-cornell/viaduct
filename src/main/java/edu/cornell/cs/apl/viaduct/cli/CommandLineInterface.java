@@ -21,11 +21,12 @@ import java.util.concurrent.Callable;
     name = "viaduct",
     description = "Extensible optimizing MPC compiler",
     commands = {
-        Help.class,
-        FormatCommand.class,
-        InterpretCommand.class,
-        CompileCommand.class,
-        SpecificationCommand.class},
+      Help.class,
+      FormatCommand.class,
+      InterpretCommand.class,
+      CompileCommand.class,
+      SpecificationCommand.class
+    },
     parserConfiguration =
         @Parser(
             allowCommandAbbreviation = true,

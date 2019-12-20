@@ -1,9 +1,7 @@
 package edu.cornell.cs.apl.viaduct.backend.mamba.ast;
 
 import com.google.auto.value.AutoValue;
-
 import edu.cornell.cs.apl.viaduct.backend.mamba.visitors.MambaExpressionVisitor;
-import edu.cornell.cs.apl.viaduct.backend.mamba.visitors.MambaStatementVisitor;
 
 @AutoValue
 public abstract class MambaArrayLoadNode implements MambaExpressionNode {

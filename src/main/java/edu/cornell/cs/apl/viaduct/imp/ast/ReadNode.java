@@ -1,7 +1,6 @@
 package edu.cornell.cs.apl.viaduct.imp.ast;
 
 import com.google.auto.value.AutoValue;
-
 import edu.cornell.cs.apl.viaduct.imp.visitors.ExprVisitor;
 
 /** Read the value pointed to by a reference. */

@@ -21,7 +21,6 @@ import edu.cornell.cs.apl.viaduct.imp.ast.StatementNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.Variable;
 import edu.cornell.cs.apl.viaduct.imp.ast.VariableDeclarationNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.WhileNode;
-
 import java.util.HashMap;
 import java.util.Map;
 
@@ -169,8 +168,7 @@ public class ReplaceVisitor extends IdentityProgramVisitor {
     }
 
     @Override
-    protected StatementNode leave(
-        ReceiveNode node, ReplaceStmtVisitor visitor, ReferenceNode lhs) {
+    protected StatementNode leave(ReceiveNode node, ReplaceStmtVisitor visitor, ReferenceNode lhs) {
       return replace(node, node.toBuilder().setVariable((Variable) lhs).build());
     }
 
@@ -181,10 +179,9 @@ public class ReplaceVisitor extends IdentityProgramVisitor {
         ExpressionNode guard,
         StatementNode thenBranch,
         StatementNode elseBranch) {
-      return
-          replace(
-              node,
-              node.toBuilder()
+      return replace(
+          node,
+          node.toBuilder()
               .setGuard(guard)
               .setThenBranch((BlockNode) thenBranch)
               .setElseBranch((BlockNode) elseBranch)
@@ -195,13 +192,7 @@ public class ReplaceVisitor extends IdentityProgramVisitor {
     @Override
     protected StatementNode leave(
         WhileNode node, ReplaceStmtVisitor visitor, ExpressionNode guard, StatementNode body) {
-      return
-          replace(
-              node,
-              node.toBuilder()
-              .setGuard(guard)
-              .setBody((BlockNode) body)
-              .build());
+      return replace(node, node.toBuilder().setGuard(guard).setBody((BlockNode) body).build());
     }
 
     @Override
@@ -212,15 +203,14 @@ public class ReplaceVisitor extends IdentityProgramVisitor {
         ExpressionNode guard,
         Iterable<StatementNode> update,
         StatementNode body) {
-      return
-          replace(
-            node,
-            node.toBuilder()
-            .setInitialize(initialize)
-            .setGuard(guard)
-            .setUpdate(update)
-            .setBody((BlockNode) body)
-            .build());
+      return replace(
+          node,
+          node.toBuilder()
+              .setInitialize(initialize)
+              .setGuard(guard)
+              .setUpdate(update)
+              .setBody((BlockNode) body)
+              .build());
     }
 
     @Override

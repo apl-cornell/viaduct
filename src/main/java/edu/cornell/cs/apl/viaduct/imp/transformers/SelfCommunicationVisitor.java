@@ -80,8 +80,7 @@ class SelfCommunicationVisitor extends IdentityProgramVisitor {
 
       final Variable var = node.getVariable();
       final ExpressionNode received = selfSentExpressions.remove();
-      return
-          LetBindingNode.builder()
+      return LetBindingNode.builder()
           .setVariable(var)
           .setRhs(received)
           .setLocation(received)

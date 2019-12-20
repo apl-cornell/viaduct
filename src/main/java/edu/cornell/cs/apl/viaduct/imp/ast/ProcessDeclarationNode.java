@@ -1,11 +1,9 @@
 package edu.cornell.cs.apl.viaduct.imp.ast;
 
 import com.google.auto.value.AutoValue;
-
 import edu.cornell.cs.apl.viaduct.AstNode;
 import edu.cornell.cs.apl.viaduct.imp.visitors.TopLevelDeclarationVisitor;
 import edu.cornell.cs.apl.viaduct.protocol.Protocol;
-
 import javax.annotation.Nullable;
 
 @AutoValue

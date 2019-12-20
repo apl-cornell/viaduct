@@ -4,31 +4,25 @@ import edu.cornell.cs.apl.viaduct.AstNode;
 import edu.cornell.cs.apl.viaduct.imp.HostTrustConfiguration;
 import edu.cornell.cs.apl.viaduct.pdg.PdgNode;
 import edu.cornell.cs.apl.viaduct.pdg.ProgramDependencyGraph;
-
 import io.vavr.Tuple2;
 import io.vavr.collection.Map;
 import io.vavr.collection.Set;
-
 import java.util.List;
 import java.util.PriorityQueue;
 
-public abstract class ProtocolSearchSelection<T extends AstNode>
-    implements ProtocolSelection<T> {
+public abstract class ProtocolSearchSelection<T extends AstNode> implements ProtocolSelection<T> {
 
   private final ProtocolSearchStrategy<T> strategy;
   private final boolean enableProfiling;
 
-  public ProtocolSearchSelection(
-      boolean enableProfiling, ProtocolSearchStrategy<T> strategy)
-  {
+  public ProtocolSearchSelection(boolean enableProfiling, ProtocolSearchStrategy<T> strategy) {
     this.enableProfiling = enableProfiling;
     this.strategy = strategy;
   }
 
   /** return an initial protocol map to perform search over. */
   protected abstract Map<PdgNode<T>, Protocol<T>> getInitialProtocolMap(
-      HostTrustConfiguration hostConfig,
-      ProgramDependencyGraph<T> pdg);
+      HostTrustConfiguration hostConfig, ProgramDependencyGraph<T> pdg);
 
   /**
    * return a mapping from PDG nodes to protocols. this uses A* search to find the cheapest protocol
@@ -173,7 +167,7 @@ public abstract class ProtocolSearchSelection<T extends AstNode>
   /** profiler for protocol search. */
   private static class ProtocolSelectionProfiler<U extends AstNode> {
     private final int interval; // how much to increase the threshold
-    private final java.util.Map<Integer,Integer> openSetSizeHistogram;
+    private final java.util.Map<Integer, Integer> openSetSizeHistogram;
     private final java.util.Map<String, Integer> protocolHistogram;
     private final int bucketSize; // bucket size for the histogram
     private final int numNodes;
@@ -210,10 +204,11 @@ public abstract class ProtocolSearchSelection<T extends AstNode>
           System.out.println("PROBE START");
           System.out.println(String.format("size of open set: %d", openSetSize));
           System.out.println(
-              String.format("completion of last added node: %d out of %d protocols selected",
-                lastAddedNode.getProtocolMap().size(), this.numNodes));
+              String.format(
+                  "completion of last added node: %d out of %d protocols selected",
+                  lastAddedNode.getProtocolMap().size(), this.numNodes));
 
-          for (java.util.Map.Entry<String,Integer> kv : this.protocolHistogram.entrySet()) {
+          for (java.util.Map.Entry<String, Integer> kv : this.protocolHistogram.entrySet()) {
             System.out.println(String.format("protocol %s: %d", kv.getKey(), kv.getValue()));
           }
           this.threshold += this.interval;
@@ -232,21 +227,19 @@ public abstract class ProtocolSearchSelection<T extends AstNode>
 
       } else {
         this.protocolHistogram.put(id, 1);
-
       }
     }
 
     public void exitProfile() {
       if (this.enabled) {
         System.out.println("EXIT PROFILE FOR PROTOCOL SELECTION");
-        for (java.util.Map.Entry<Integer,Integer> kv : this.openSetSizeHistogram.entrySet()) {
+        for (java.util.Map.Entry<Integer, Integer> kv : this.openSetSizeHistogram.entrySet()) {
           int bucket = kv.getKey();
           int bucketCount = kv.getValue();
           System.out.println(
-              String.format("open set size %d - %d: %d",
-                  this.bucketSize * bucket,
-                  (this.bucketSize * (bucket + 1)) - 1,
-                  bucketCount));
+              String.format(
+                  "open set size %d - %d: %d",
+                  this.bucketSize * bucket, (this.bucketSize * (bucket + 1)) - 1, bucketCount));
         }
       }
     }

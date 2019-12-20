@@ -15,9 +15,7 @@ import edu.cornell.cs.apl.viaduct.pdg.ProgramDependencyGraph;
 import edu.cornell.cs.apl.viaduct.protocol.Protocol;
 import edu.cornell.cs.apl.viaduct.protocol.ProtocolCommunicationStrategy;
 import edu.cornell.cs.apl.viaduct.protocol.ProtocolCostEstimator;
-
 import io.vavr.collection.Map;
-
 import java.util.HashSet;
 import java.util.Set;
 
@@ -29,7 +27,8 @@ public class ImpCommunicationCostEstimator extends ProtocolCostEstimator<ImpAstN
   protected final HostTrustConfiguration hostConfig;
   protected final ProtocolCommunicationStrategy<ImpAstNode> communicationStrategy;
 
-  public ImpCommunicationCostEstimator(HostTrustConfiguration hostConfig,
+  public ImpCommunicationCostEstimator(
+      HostTrustConfiguration hostConfig,
       ProtocolCommunicationStrategy<ImpAstNode> communicationStrategy) {
     this.hostConfig = hostConfig;
     this.communicationStrategy = communicationStrategy;
@@ -51,8 +50,10 @@ public class ImpCommunicationCostEstimator extends ProtocolCostEstimator<ImpAstN
       for (PdgInfoEdge<ImpAstNode> infoEdge : node.getReadEdges()) {
         Protocol<ImpAstNode> srcProto = protocolMap.getOrElse(infoEdge.getSource(), null);
         if (srcProto != null) {
-          Set<ProcessName> readSet = new HashSet<>(
-              this.communicationStrategy.getReadSet(this.hostConfig, srcProto, protocol, process));
+          Set<ProcessName> readSet =
+              new HashSet<>(
+                  this.communicationStrategy.getReadSet(
+                      this.hostConfig, srcProto, protocol, process));
           readSet.remove(process);
           numCommunications += readSet.size();
         }
@@ -61,8 +62,10 @@ public class ImpCommunicationCostEstimator extends ProtocolCostEstimator<ImpAstN
       for (PdgInfoEdge<ImpAstNode> infoEdge : node.getWriteEdges()) {
         Protocol<ImpAstNode> dstProto = protocolMap.getOrElse(infoEdge.getTarget(), null);
         if (dstProto != null) {
-          Set<ProcessName> writeSet = new HashSet<>(
-              this.communicationStrategy.getReadSet(this.hostConfig, protocol, dstProto, process));
+          Set<ProcessName> writeSet =
+              new HashSet<>(
+                  this.communicationStrategy.getReadSet(
+                      this.hostConfig, protocol, dstProto, process));
           writeSet.remove(process);
           numCommunications += writeSet.size();
         }
@@ -79,8 +82,7 @@ public class ImpCommunicationCostEstimator extends ProtocolCostEstimator<ImpAstN
   protected int estimateReplicationCost(
       Map<PdgNode<ImpAstNode>, Protocol<ImpAstNode>> protocolMap,
       PdgNode<ImpAstNode> node,
-      Replication protocol)
-  {
+      Replication protocol) {
     if (node.isStorageNode()) {
       return protocol.getProcesses().size() * BASE_STORAGE_COST;
 
@@ -92,8 +94,9 @@ public class ImpCommunicationCostEstimator extends ProtocolCostEstimator<ImpAstN
         final Protocol<ImpAstNode> srcProto = protocolMap.getOrElse(infoEdge.getSource(), null);
 
         for (ProcessName process : processes) {
-          final Set<ProcessName> readSet = new HashSet<>(
-              this.communicationStrategy.getReadSet(hostConfig, srcProto, protocol, process));
+          final Set<ProcessName> readSet =
+              new HashSet<>(
+                  this.communicationStrategy.getReadSet(hostConfig, srcProto, protocol, process));
           readSet.remove(process);
           numCommunications += readSet.size();
         }
@@ -103,8 +106,9 @@ public class ImpCommunicationCostEstimator extends ProtocolCostEstimator<ImpAstN
         Protocol<ImpAstNode> dstProto = protocolMap.getOrElse(infoEdge.getTarget(), null);
 
         for (ProcessName process : processes) {
-          final Set<ProcessName> writeSet = new HashSet<>(
-              this.communicationStrategy.getReadSet(hostConfig, protocol, dstProto, process));
+          final Set<ProcessName> writeSet =
+              new HashSet<>(
+                  this.communicationStrategy.getReadSet(hostConfig, protocol, dstProto, process));
           writeSet.remove(process);
           numCommunications += writeSet.size();
         }
@@ -118,24 +122,21 @@ public class ImpCommunicationCostEstimator extends ProtocolCostEstimator<ImpAstN
   }
 
   protected int estimateCommitmentCost(
-      Map<PdgNode<ImpAstNode>,
-      Protocol<ImpAstNode>> protocolMap,
+      Map<PdgNode<ImpAstNode>, Protocol<ImpAstNode>> protocolMap,
       PdgNode<ImpAstNode> node,
       Commitment protocol) {
     return BASE_STORAGE_COST;
   }
 
   protected int estimateZKCost(
-      Map<PdgNode<ImpAstNode>,
-      Protocol<ImpAstNode>> protocolMap,
+      Map<PdgNode<ImpAstNode>, Protocol<ImpAstNode>> protocolMap,
       PdgNode<ImpAstNode> node,
       ZK protocol) {
     return 0;
   }
 
   protected int estimateMpcCost(
-      Map<PdgNode<ImpAstNode>,
-      Protocol<ImpAstNode>> protocolMap,
+      Map<PdgNode<ImpAstNode>, Protocol<ImpAstNode>> protocolMap,
       PdgNode<ImpAstNode> node,
       MPC protocol) {
 
@@ -151,16 +152,20 @@ public class ImpCommunicationCostEstimator extends ProtocolCostEstimator<ImpAstN
 
       for (PdgInfoEdge<ImpAstNode> infoEdge : node.getReadEdges()) {
         Protocol<ImpAstNode> srcProto = protocolMap.getOrElse(infoEdge.getSource(), null);
-        Set<ProcessName> readSet = new HashSet<>(
-            this.communicationStrategy.getReadSet(this.hostConfig, srcProto, protocol, process));
+        Set<ProcessName> readSet =
+            new HashSet<>(
+                this.communicationStrategy.getReadSet(
+                    this.hostConfig, srcProto, protocol, process));
         readSet.remove(process);
         numCommunications += readSet.size();
       }
 
       for (PdgInfoEdge<ImpAstNode> infoEdge : node.getWriteEdges()) {
         Protocol<ImpAstNode> dstProto = protocolMap.getOrElse(infoEdge.getTarget(), null);
-        Set<ProcessName> writeSet = new HashSet<>(
-            this.communicationStrategy.getReadSet(this.hostConfig, protocol, dstProto, process));
+        Set<ProcessName> writeSet =
+            new HashSet<>(
+                this.communicationStrategy.getReadSet(
+                    this.hostConfig, protocol, dstProto, process));
         writeSet.remove(process);
         numCommunications += writeSet.size();
       }
@@ -197,8 +202,7 @@ public class ImpCommunicationCostEstimator extends ProtocolCostEstimator<ImpAstN
   @Override
   public int estimateNodeCost(
       PdgNode<ImpAstNode> node,
-      Map<PdgNode<ImpAstNode>,
-      Protocol<ImpAstNode>> protocolMap,
+      Map<PdgNode<ImpAstNode>, Protocol<ImpAstNode>> protocolMap,
       ProgramDependencyGraph<ImpAstNode> pdg)
       throws UnknownProtocolException, InvalidProtocolException {
 
@@ -226,7 +230,7 @@ public class ImpCommunicationCostEstimator extends ProtocolCostEstimator<ImpAstN
         throw new UnknownProtocolException(protocol);
       }
 
-    } catch (InvalidProtocolException invalidProto)  {
+    } catch (InvalidProtocolException invalidProto) {
       throw new InvalidProtocolException(node, invalidProto.getProtocol());
     }
   }

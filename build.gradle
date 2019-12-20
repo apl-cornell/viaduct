@@ -50,9 +50,7 @@ checkstyle {
 
 spotless {
     java {
-        // TODO: spotlessCheck doesn't check anything! spotlessApply will reformat though. Ugh.
         googleJavaFormat()
-        paddedCell()
         target 'src/**/*.java'
     }
     kotlin {

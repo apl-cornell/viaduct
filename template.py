@@ -11,6 +11,9 @@ def reg_write(memreg, val):
   if isinstance(val, sbit):
     val = sregint(1) & val
 
+  if isinstance(val, regint) and isinstance(memreg.register, sregint):
+    val = sregint(val)
+
   memreg.write(val)
 
 
@@ -31,6 +34,9 @@ def clear_load(arr, i):
 def secret_store(arr, i, val):
   if isinstance(val, sbit):
     val = sregint(1) & val
+
+  if isinstance(val, regint):
+    val = sregint(val)
 
   val.store_in_mem(arr + i)
 

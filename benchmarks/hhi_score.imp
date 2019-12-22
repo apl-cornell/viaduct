@@ -1,0 +1,44 @@
+/* calculates the Herfindahl-Hirschman index for market competitiveness.
+ * in this scenario, we're assessing the competitiveness of the widget market
+ * amongst three widget makers by calculating the revenue of each company
+ * (by summing up sales in 100 stores) and then calculating each company's
+ * market share and applying the HHI formula. */
+process main {
+    int{A} a[100] <- recv @companyA;
+    int{B} b[100] <- recv @companyB;
+    int{C} c[100] <- recv @companyC;
+
+    int a_rev = 0;
+    for (int ai = 0; ai < 100; ai++) {
+        a_rev += a[ai];
+    }
+
+    int b_rev = 0;
+    for (int bi = 0; bi < 100; bi++) {
+        b_rev += b[bi];
+    }
+
+    int c_rev = 0;
+    for (int ci = 0; ci < 100; ci++) {
+        c_rev += c[ci];
+    }
+
+    int a_rev_trusted = endorse(a_rev, {A & (B & C)<-});
+    int b_rev_trusted = endorse(b_rev, {B & (A & C)<-});
+    int c_rev_trusted = endorse(c_rev, {C & (A & B)<-});
+    int total_market = a_rev_trusted + b_rev_trusted + c_rev_trusted;
+
+    int a_share = (1000 * a_rev_trusted) / total_market;
+    int b_share = (1000 * b_rev_trusted) / total_market;
+    int c_share = (1000 * c_rev_trusted) / total_market;
+
+    int hhi = declassify((a_share * a_share) + (b_share * b_share) + (c_share * c_share), {A ⊓ B ⊓ C});
+
+    send hhi to @companyA;
+    send hhi to @companyB;
+    send hhi to @companyC;
+}
+
+host companyA  : {A};
+host companyB  : {B};
+host companyC  : {C};

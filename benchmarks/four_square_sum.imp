@@ -1,0 +1,43 @@
+process main {
+    int{A} a[100] <- recv @alice;
+    int{B} b[100] <- recv @bob;
+    int{C} c[100] <- recv @chuck;
+    int{D} d[100] <- recv @dexter;
+
+    int a_sum = 0;
+    for (int ai = 0; ai < 100; ai++) {
+        a_sum += a[ai] * a[ai];
+    }
+
+    int b_sum = 0;
+    for (int bi = 0; bi < 100; bi++) {
+        b_sum += b[bi] * b[bi];
+    }
+
+    int c_sum = 0;
+    for (int ci = 0; ci < 100; ci++) {
+        c_sum += c[ci] * c[ci];
+    }
+
+    int d_sum = 0;
+    for (int di = 0; di < 100; di++) {
+        d_sum += d[di] * d[di];
+    }
+
+    int sqsums =
+        endorse(a_sum, {A & (B & C & D)<-})
+        + endorse(b_sum, {B & (A & C & D)<-})
+        + endorse(c_sum, {C & (B & A & D)<-})
+        + endorse(d_sum, {D & (A & B & C)<-});
+    int result = declassify(sqsums / 4, {A ⊓ B ⊓ C ⊓ D});
+
+    send result to @alice;
+    send result to @bob;
+    send result to @chuck;
+    send result to @dexter;
+}
+
+host alice  : {A};
+host bob    : {B};
+host chuck  : {C};
+host dexter : {D};

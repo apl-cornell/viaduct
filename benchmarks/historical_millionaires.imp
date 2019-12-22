@@ -1,0 +1,26 @@
+process main {
+    int{A} a[100] <- recv @alice;
+    int{B} b[100] <- recv @bob;
+
+    int{A} a_min = 0;
+    for (int ai = 0; ai < 100; ai += 1) {
+        a_min = min(a_min, a[ai]);
+    }
+
+    int{B} b_min = 0;
+    for (int bi = 0; bi < 100; bi += 1) {
+        b_min = min(b_min, b[bi]);
+    }
+
+    int{A & (B & C)<-} a_min_trusted = endorse(a_min, {A & (B & C)<-});
+    int{B & (A & C)<-} b_min_trusted = endorse(b_min, {B & (A & C)<-});
+
+    bool{A ⊓ B ⊓ C} a_wins = declassify(a_min_trusted > b_min_trusted, {A ⊓ B ⊓ C});
+    send a_wins to @alice;
+    send a_wins to @bob;
+    send a_wins to @chuck;
+}
+
+host alice : {A};
+host bob   : {B};
+host chuck : {C};

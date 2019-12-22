@@ -1,0 +1,32 @@
+{
+  "tests_dir": "tests",
+  "tests": [
+    { "filename": "benchmarks/battleship.imp", "dirname": "battleship_opt", "strategy": "opt" },
+    { "filename": "benchmarks/battleship.imp", "dirname": "battleship_repl", "strategy": "repl" },
+    { "filename": "benchmarks/battleship.imp", "dirname": "battleship_mpc", "strategy": "mpc" },
+    { "filename": "benchmarks/filtered_sum.imp", "dirname": "filtered_sum_opt", "strategy": "opt" },
+    { "filename": "benchmarks/filtered_sum.imp", "dirname": "filtered_sum_repl", "strategy": "repl" },
+    { "filename": "benchmarks/filtered_sum.imp", "dirname": "filtered_sum_mpc", "strategy": "mpc" },
+    { "filename": "benchmarks/four_square_sum.imp", "dirname": "four_square_sum_opt", "strategy": "opt" },
+    { "filename": "benchmarks/four_square_sum.imp", "dirname": "four_square_sum_repl", "strategy": "repl" },
+    { "filename": "benchmarks/four_square_sum.imp", "dirname": "four_square_sum_mpc", "strategy": "mpc" },
+    { "filename": "benchmarks/hhi_score.imp", "dirname": "hhi_score_opt", "strategy": "opt" },
+    { "filename": "benchmarks/hhi_score.imp", "dirname": "hhi_score_repl", "strategy": "repl" },
+    { "filename": "benchmarks/hhi_score.imp", "dirname": "hhi_score_mpc", "strategy": "mpc" },
+    { "filename": "benchmarks/historical_millionaires.imp", "dirname": "historical_millionaires_opt", "strategy": "opt" },
+    { "filename": "benchmarks/historical_millionaires.imp", "dirname": "historical_millionaires_repl", "strategy": "repl" },
+    { "filename": "benchmarks/historical_millionaires.imp", "dirname": "historical_millionaires_mpc", "strategy": "mpc" },
+    { "filename": "benchmarks/purchase.imp", "dirname": "purchase_opt", "strategy": "opt" },
+    { "filename": "benchmarks/purchase.imp", "dirname": "purchase_repl", "strategy": "repl" },
+    { "filename": "benchmarks/purchase.imp", "dirname": "purchase_mpc", "strategy": "mpc" },
+    { "filename": "benchmarks/shell.imp", "dirname": "shell_opt", "strategy": "opt" },
+    { "filename": "benchmarks/shell.imp", "dirname": "shell_repl", "strategy": "repl" },
+    { "filename": "benchmarks/shell.imp", "dirname": "shell_mpc", "strategy": "mpc" },
+    { "filename": "benchmarks/three_square_sum.imp", "dirname": "three_square_sum_opt", "strategy": "opt" },
+    { "filename": "benchmarks/three_square_sum.imp", "dirname": "three_square_sum_repl", "strategy": "repl" },
+    { "filename": "benchmarks/three_square_sum.imp", "dirname": "three_square_sum_mpc", "strategy": "mpc" },
+    { "filename": "benchmarks/two_round_bidding.imp", "dirname": "two_round_bidding_opt", "strategy": "opt" },
+    { "filename": "benchmarks/two_round_bidding.imp", "dirname": "two_round_bidding_repl", "strategy": "repl" },
+    { "filename": "benchmarks/two_round_bidding.imp", "dirname": "two_round_bidding_mpc", "strategy": "mpc" }
+  ]
+}

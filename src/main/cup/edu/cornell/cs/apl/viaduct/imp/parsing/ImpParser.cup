@@ -151,8 +151,7 @@ terminal EQ, EQEQ, NEQ, LT, LEQ, GT, GEQ, PLUSEQ, MINUSEQ, TIMESEQ;
 terminal TOP, BOTTOM, OR, AND, RARROW, LARROW;
 terminal SQCUP, SQCAP, WEDGE, VEE, JOIN, MEET;
 
-terminal PLUS, MINUS, TIMES, PLUSPLUS, MINUSMINUS;
-// terminal PLUS, MINUS, TIMES, DIVIDE;
+terminal PLUS, MINUS, TIMES, PLUSPLUS, MINUSMINUS, DIVIDE, MIN;
 
 terminal DECLASSIFY, ENDORSE, DOWNGRADE;
 terminal LET;
@@ -162,8 +161,9 @@ terminal OPEN_BRACE, CLOSE_BRACE, OPEN_SQBRACE, CLOSE_SQBRACE, SEMICOLON, OPEN_P
 precedence left ANDAND, OROR, AND, OR, SQCUP, SQCAP, WEDGE, VEE, JOIN, MEET;
 precedence nonassoc EQEQ, NEQ, LT, LEQ, GT, GEQ;
 precedence left PLUS, MINUS;
-precedence left TIMES;
+precedence left TIMES, DIVIDE;
 precedence right NOT;
+precedence left MIN;
 precedence left LARROW, RARROW, NOT;
 precedence nonassoc OPEN_PAREN, CLOSE_PAREN;
 
@@ -518,6 +518,14 @@ expr ::=
 
   | expr:e1 TIMES expr:e2 {:
       RESULT = binary(Times.create(), e1, e2);
+    :}
+
+  | expr:e1 DIVIDE expr:e2 {:
+      RESULT = binary(Divide.create(), e1, e2);
+    :}
+
+  | MIN OPEN_PAREN expr:e1 COMMA expr:e2 CLOSE_PAREN {:
+      RESULT = binary(Min.create(), e1, e2);
     :}
 
   | MINUS:begin expr:e {:

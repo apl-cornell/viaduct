@@ -153,6 +153,8 @@ public final class ImpPythonPrintVisitor
   @Override
   public String visit(BinaryExpressionNode node) {
     BinaryOperator op = node.getOperator();
+    String lhsStr = node.getLhs().accept(this);
+    String rhsStr = node.getRhs().accept(this);
     String opStr;
 
     if (op instanceof BinaryOperators.Or) {
@@ -185,17 +187,16 @@ public final class ImpPythonPrintVisitor
     } else if (op instanceof BinaryOperators.Divide) {
       opStr = "/";
 
+    } else if (op instanceof BinaryOperators.Min) {
+      opStr = "/";
+      return String.format("(%s if %s < %s else %s)", lhsStr, lhsStr, rhsStr, rhsStr);
+
     } else {
       // TODO: add actual exception
       throw new Error("unknown binary operator");
     }
 
-    return
-      String.format(
-          "(%s %s %s)",
-          node.getLhs().accept(this),
-          opStr,
-          node.getRhs().accept(this));
+    return String.format("(%s %s %s)", lhsStr, opStr, rhsStr);
   }
 
   @Override

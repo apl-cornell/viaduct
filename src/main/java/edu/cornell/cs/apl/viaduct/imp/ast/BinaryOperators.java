@@ -240,4 +240,27 @@ public class BinaryOperators {
       return "/";
     }
   }
+
+  public static final class Min extends ArithmeticOperator {
+    private static final Min INSTANCE = new Min();
+
+    private Min() {}
+
+    /** Create an instance of this class. */
+    public static Min create() {
+      return INSTANCE;
+    }
+
+    @Override
+    public ImpValue evaluate(ImpValue left, ImpValue right) {
+      int leftV = ((IntegerValue) left).getValue();
+      int rightV = ((IntegerValue) right).getValue();
+      return IntegerValue.create(leftV < rightV ? leftV : rightV);
+    }
+
+    @Override
+    public String toString() {
+      return "min";
+    }
+  }
 }

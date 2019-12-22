@@ -55,7 +55,7 @@ public class MambaSingleFactory extends SingleHostProtocolFactory<ImpAstNode> {
       }
     }
 
-    if (!(inSecretConditional && hasHostCommunication)) {
+    if (!inSecretConditional) {
       return new Single(hostConfig, host);
 
     } else {

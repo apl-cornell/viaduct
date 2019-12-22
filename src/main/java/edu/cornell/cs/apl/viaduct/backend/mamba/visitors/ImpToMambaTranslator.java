@@ -15,6 +15,7 @@ import edu.cornell.cs.apl.viaduct.backend.mamba.ast.MambaExpressionNode;
 import edu.cornell.cs.apl.viaduct.backend.mamba.ast.MambaIfNode;
 import edu.cornell.cs.apl.viaduct.backend.mamba.ast.MambaInputNode;
 import edu.cornell.cs.apl.viaduct.backend.mamba.ast.MambaIntLiteralNode;
+import edu.cornell.cs.apl.viaduct.backend.mamba.ast.MambaMuxNode;
 import edu.cornell.cs.apl.viaduct.backend.mamba.ast.MambaNegationNode;
 import edu.cornell.cs.apl.viaduct.backend.mamba.ast.MambaOutputNode;
 import edu.cornell.cs.apl.viaduct.backend.mamba.ast.MambaReadNode;
@@ -223,6 +224,20 @@ public final class ImpToMambaTranslator
 
     } else if (binOp instanceof BinaryOperators.Divide) {
       mambaBinOp = MambaBinaryOperators.Divide.create();
+
+    } else if (binOp instanceof BinaryOperators.Min) {
+      mambaBinOp = MambaBinaryOperators.Divide.create();
+      return
+          MambaMuxNode.builder()
+          .setGuard(
+              MambaBinaryExpressionNode.builder()
+              .setLhs(mambaLhs)
+              .setOperator(MambaBinaryOperators.LessThan.create())
+              .setRhs(mambaRhs)
+              .build())
+          .setThenValue(mambaLhs)
+          .setElseValue(mambaRhs)
+          .build();
 
     } else {
       throw new Error("translation of binary operator not implemented");

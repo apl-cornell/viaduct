@@ -26,7 +26,7 @@ public class ImpMambaReplProtocolSearchStrategy extends ImpMambaProtocolSearchSt
     Set<Protocol<ImpAstNode>> instances = new HashSet<>();
 
     instances.addAll(this.mambaPublicFactory.createInstances(hostConfig, protocolMap, node));
-    if (instances.size() > 0) {
+    if (instances.size() > 0 && !node.isGuard()) {
       return instances;
     }
 

@@ -6,7 +6,6 @@ import edu.cornell.cs.apl.viaduct.imp.ast.ImpAstNode;
 import edu.cornell.cs.apl.viaduct.pdg.PdgNode;
 import edu.cornell.cs.apl.viaduct.protocol.PairProtocolFactory;
 import edu.cornell.cs.apl.viaduct.protocol.Protocol;
-
 import io.vavr.Tuple2;
 import io.vavr.collection.Map;
 
@@ -17,8 +16,7 @@ public class ZKFactory extends PairProtocolFactory<ImpAstNode> {
       PdgNode<ImpAstNode> node,
       Map<PdgNode<ImpAstNode>, Protocol<ImpAstNode>> protoMap,
       HostTrustConfiguration hostConfig,
-      Tuple2<HostName, HostName> hostPair)
-  {
+      Tuple2<HostName, HostName> hostPair) {
     if (node.isComputeNode()) {
       return new ZK(hostConfig, hostPair._1(), hostPair._2());
 

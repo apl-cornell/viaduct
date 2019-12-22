@@ -16,7 +16,6 @@ import edu.cornell.cs.apl.viaduct.protocol.Protocol;
 import edu.cornell.cs.apl.viaduct.protocol.ProtocolInstantiationError;
 import edu.cornell.cs.apl.viaduct.protocol.ProtocolInstantiationInfo;
 import edu.cornell.cs.apl.viaduct.security.Label;
-
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -148,8 +147,7 @@ public class Replication extends Cleartext implements Protocol<ImpAstNode> {
       PdgNode<ImpAstNode> writeNode,
       ProcessName writeProcess,
       List<ImpAstNode> args,
-      ProtocolInstantiationInfo<ImpAstNode> info)
-  {
+      ProtocolInstantiationInfo<ImpAstNode> info) {
     if (node.isStorageNode()) {
       // node must have been instantiated before being written to
       assert this.outVarMap.size() == this.hosts.size();

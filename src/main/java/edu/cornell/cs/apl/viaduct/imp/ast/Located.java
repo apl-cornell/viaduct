@@ -3,7 +3,6 @@ package edu.cornell.cs.apl.viaduct.imp.ast;
 import edu.cornell.cs.apl.viaduct.imp.parsing.HasLocation;
 import edu.cornell.cs.apl.viaduct.imp.parsing.SourceRange;
 import edu.cornell.cs.apl.viaduct.util.AbstractLineNumber;
-
 import javax.annotation.Nullable;
 
 /**

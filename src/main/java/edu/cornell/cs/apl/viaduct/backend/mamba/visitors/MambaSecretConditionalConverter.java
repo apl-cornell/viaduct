@@ -1,7 +1,6 @@
 package edu.cornell.cs.apl.viaduct.backend.mamba.visitors;
 
 import com.google.common.collect.ImmutableList;
-
 import edu.cornell.cs.apl.viaduct.backend.mamba.ast.MambaArrayDeclarationNode;
 import edu.cornell.cs.apl.viaduct.backend.mamba.ast.MambaArrayStoreNode;
 import edu.cornell.cs.apl.viaduct.backend.mamba.ast.MambaAssignNode;
@@ -15,17 +14,13 @@ import edu.cornell.cs.apl.viaduct.backend.mamba.ast.MambaWhileNode;
 
 /** convert conditionals with secret guard into straightline code by muxing them. */
 public class MambaSecretConditionalConverter
-    implements MambaStatementVisitor<Iterable<MambaStatementNode>>
-{
+    implements MambaStatementVisitor<Iterable<MambaStatementNode>> {
   private final MambaSecretInputChecker secretInputChecker;
 
   /** run visitor. */
   public static MambaStatementNode run(
-      MambaSecretInputChecker secretInputChecker,
-      MambaStatementNode stmt)
-  {
-    return
-        MambaBlockNode.builder()
+      MambaSecretInputChecker secretInputChecker, MambaStatementNode stmt) {
+    return MambaBlockNode.builder()
         .addAll(stmt.accept(new MambaSecretConditionalConverter(secretInputChecker)))
         .build();
   }
@@ -79,25 +74,19 @@ public class MambaSecretConditionalConverter
       return MambaConditionalMuxer.run(node);
 
     } else {
-      return
-          single(
-              MambaIfNode.builder()
+      return single(
+          MambaIfNode.builder()
               .setGuard(node.getGuard())
-              .setThenBranch(
-                  MambaBlockNode.create(node.getThenBranch().accept(this)))
-              .setElseBranch(
-                  MambaBlockNode.create(node.getElseBranch().accept(this)))
+              .setThenBranch(MambaBlockNode.create(node.getThenBranch().accept(this)))
+              .setElseBranch(MambaBlockNode.create(node.getElseBranch().accept(this)))
               .build());
     }
   }
 
   @Override
   public Iterable<MambaStatementNode> visit(MambaWhileNode node) {
-    return
-        single(
-            node.toBuilder()
-            .setBody(MambaBlockNode.create(node.getBody().accept(this)))
-            .build());
+    return single(
+        node.toBuilder().setBody(MambaBlockNode.create(node.getBody().accept(this))).build());
   }
 
   @Override

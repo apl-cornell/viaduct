@@ -2,7 +2,6 @@ package edu.cornell.cs.apl.viaduct.protocol;
 
 import edu.cornell.cs.apl.viaduct.AstNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.HostName;
-
 import java.util.HashSet;
 import java.util.Set;
 

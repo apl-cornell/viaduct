@@ -2,7 +2,6 @@ package edu.cornell.cs.apl.viaduct.backend.mamba.visitors;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-
 import edu.cornell.cs.apl.viaduct.backend.mamba.ast.MambaArrayDeclarationNode;
 import edu.cornell.cs.apl.viaduct.backend.mamba.ast.MambaArrayLoadNode;
 import edu.cornell.cs.apl.viaduct.backend.mamba.ast.MambaArrayStoreNode;
@@ -58,10 +57,7 @@ import edu.cornell.cs.apl.viaduct.imp.visitors.StmtVisitor;
 import edu.cornell.cs.apl.viaduct.util.FreshNameGenerator;
 
 public final class ImpToMambaTranslator
-    implements
-        ExprVisitor<MambaExpressionNode>,
-        StmtVisitor<Iterable<MambaStatementNode>>
-{
+    implements ExprVisitor<MambaExpressionNode>, StmtVisitor<Iterable<MambaStatementNode>> {
   private static FreshNameGenerator nameGenerator = new FreshNameGenerator();
   private static String LOOP_VAR = "loop_cond";
 
@@ -70,9 +66,7 @@ public final class ImpToMambaTranslator
   private final MambaVariable currentLoopVar;
 
   public static MambaStatementNode run(
-      boolean isSecret,
-      ImmutableMap<ProcessName, Integer> hostNameMap,
-      StatementNode stmt) {
+      boolean isSecret, ImmutableMap<ProcessName, Integer> hostNameMap, StatementNode stmt) {
 
     return MambaBlockNode.create(stmt.accept(new ImpToMambaTranslator(isSecret, hostNameMap)));
   }
@@ -96,9 +90,7 @@ public final class ImpToMambaTranslator
   }
 
   public static MambaExpressionNode run(
-      boolean isSecret,
-      ImmutableMap<ProcessName, Integer> hostNameMap,
-      ExpressionNode expr) {
+      boolean isSecret, ImmutableMap<ProcessName, Integer> hostNameMap, ExpressionNode expr) {
 
     return expr.accept(new ImpToMambaTranslator(isSecret, hostNameMap));
   }
@@ -126,9 +118,7 @@ public final class ImpToMambaTranslator
   }
 
   private ImpToMambaTranslator(
-      boolean isSecret,
-      ImmutableMap<ProcessName, Integer> hostNameMap,
-      MambaVariable loopVar) {
+      boolean isSecret, ImmutableMap<ProcessName, Integer> hostNameMap, MambaVariable loopVar) {
 
     this.isSecret = isSecret;
     this.hostNameMap = hostNameMap;
@@ -154,19 +144,15 @@ public final class ImpToMambaTranslator
       n = intValue.getValue();
     }
 
-    return
-        MambaIntLiteralNode.builder()
-        .setSecurityType(getSecurityContext())
-        .setValue(n)
-        .build();
+    return MambaIntLiteralNode.builder().setSecurityType(getSecurityContext()).setValue(n).build();
   }
 
   @Override
   public MambaExpressionNode visit(ReadNode node) {
     ImpToMambaTranslator translator = this;
-    return
-      node.getReference().accept(
-          new ReferenceVisitor<MambaExpressionNode>() {
+    return node.getReference()
+        .accept(
+            new ReferenceVisitor<MambaExpressionNode>() {
               @Override
               public MambaExpressionNode visit(Variable variable) {
                 return MambaReadNode.create(visitVariable(variable));
@@ -174,21 +160,17 @@ public final class ImpToMambaTranslator
 
               @Override
               public MambaExpressionNode visit(ArrayIndexingNode node) {
-                return
-                    MambaArrayLoadNode.builder()
+                return MambaArrayLoadNode.builder()
                     .setArray(visitVariable(node.getArray()))
                     .setIndex(node.getIndex().accept(translator))
                     .build();
-            }
-          });
+              }
+            });
   }
 
   @Override
   public MambaExpressionNode visit(NotNode node) {
-    return
-        MambaNegationNode.builder()
-        .setExpression(node.getExpression().accept(this))
-        .build();
+    return MambaNegationNode.builder().setExpression(node.getExpression().accept(this)).build();
   }
 
   @Override
@@ -243,8 +225,7 @@ public final class ImpToMambaTranslator
       throw new Error("translation of binary operator not implemented");
     }
 
-    return
-        MambaBinaryExpressionNode.builder()
+    return MambaBinaryExpressionNode.builder()
         .setLhs(mambaLhs)
         .setRhs(mambaRhs)
         .setOperator(mambaBinOp)
@@ -258,9 +239,8 @@ public final class ImpToMambaTranslator
 
   @Override
   public Iterable<MambaStatementNode> visit(VariableDeclarationNode node) {
-    return
-        single(
-            MambaRegIntDeclarationNode.builder()
+    return single(
+        MambaRegIntDeclarationNode.builder()
             .setRegisterType(getSecurityContext())
             .setVariable(visitVariable(node.getVariable()))
             .build());
@@ -268,13 +248,12 @@ public final class ImpToMambaTranslator
 
   @Override
   public Iterable<MambaStatementNode> visit(ArrayDeclarationNode node) {
-    return
-        single(
-            MambaArrayDeclarationNode.builder()
+    return single(
+        MambaArrayDeclarationNode.builder()
             .setVariable(visitVariable(node.getVariable()))
             .setLength(
                 node.getLength()
-                .accept(new ImpToMambaTranslator(false, this.hostNameMap, this.currentLoopVar)))
+                    .accept(new ImpToMambaTranslator(false, this.hostNameMap, this.currentLoopVar)))
             .setRegisterType(getSecurityContext())
             .build());
   }
@@ -282,9 +261,8 @@ public final class ImpToMambaTranslator
   @Override
   public Iterable<MambaStatementNode> visit(LetBindingNode node) {
     MambaExpressionNode mambaRhs = node.getRhs().accept(this);
-    return
-        single(
-            MambaAssignNode.builder()
+    return single(
+        MambaAssignNode.builder()
             .setVariable(visitVariable(node.getVariable()))
             .setRhs(mambaRhs)
             .build());
@@ -295,36 +273,34 @@ public final class ImpToMambaTranslator
     MambaExpressionNode mambaRhs = node.getRhs().accept(this);
     ImpToMambaTranslator translator = this;
     MambaStatementNode mambaStmt =
-        node.getLhs().accept(
-            new ReferenceVisitor<MambaStatementNode>() {
-                @Override
-                public MambaStatementNode visit(Variable variable) {
-                  return
-                      MambaAssignNode.builder()
-                      .setVariable(visitVariable(variable))
-                      .setRhs(mambaRhs)
-                      .build();
-                }
+        node.getLhs()
+            .accept(
+                new ReferenceVisitor<MambaStatementNode>() {
+                  @Override
+                  public MambaStatementNode visit(Variable variable) {
+                    return MambaAssignNode.builder()
+                        .setVariable(visitVariable(variable))
+                        .setRhs(mambaRhs)
+                        .build();
+                  }
 
-                @Override
-                public MambaStatementNode visit(ArrayIndexingNode node) {
-                  return
-                      MambaArrayStoreNode.builder()
-                      .setArray(visitVariable(node.getArray()))
-                      .setIndex(node.getIndex().accept(translator))
-                      .setValue(mambaRhs)
-                      .build();
-                }
-            });
+                  @Override
+                  public MambaStatementNode visit(ArrayIndexingNode node) {
+                    return MambaArrayStoreNode.builder()
+                        .setArray(visitVariable(node.getArray()))
+                        .setIndex(node.getIndex().accept(translator))
+                        .setValue(mambaRhs)
+                        .build();
+                  }
+                });
 
     return single(mambaStmt);
   }
 
   @Override
   public Iterable<MambaStatementNode> visit(SendNode node) {
-    return
-        single(
-            MambaOutputNode.builder()
+    return single(
+        MambaOutputNode.builder()
             .setExpression(node.getSentExpression().accept(this))
             .setPlayer(this.hostNameMap.get(node.getRecipient()))
             .build());
@@ -332,9 +308,8 @@ public final class ImpToMambaTranslator
 
   @Override
   public Iterable<MambaStatementNode> visit(ReceiveNode node) {
-    return
-        single(
-            MambaInputNode.builder()
+    return single(
+        MambaInputNode.builder()
             .setVariable(visitVariable(node.getVariable()))
             .setPlayer(this.hostNameMap.get(node.getSender()))
             .setSecurityContext(getSecurityContext())
@@ -343,9 +318,8 @@ public final class ImpToMambaTranslator
 
   @Override
   public Iterable<MambaStatementNode> visit(IfNode node) {
-    return
-        single(
-            MambaIfNode.builder()
+    return single(
+        MambaIfNode.builder()
             .setGuard(node.getGuard().accept(this))
             .setThenBranch(MambaBlockNode.create(node.getThenBranch().accept(this)))
             .setElseBranch(MambaBlockNode.create(node.getElseBranch().accept(this)))
@@ -354,9 +328,8 @@ public final class ImpToMambaTranslator
 
   @Override
   public Iterable<MambaStatementNode> visit(WhileNode node) {
-    return
-        single(
-            MambaWhileNode.builder()
+    return single(
+        MambaWhileNode.builder()
             .setGuard(node.getGuard().accept(this))
             .setBody(MambaBlockNode.create(node.getBody().accept(this)))
             .build());
@@ -374,42 +347,40 @@ public final class ImpToMambaTranslator
     Iterable<MambaStatementNode> body =
         node.getBody().accept(new ImpToMambaTranslator(this.isSecret, this.hostNameMap, loopVar));
 
-    return
-        listBuilder()
+    return listBuilder()
         .add(
             MambaRegIntDeclarationNode.builder()
-            .setRegisterType(getSecurityContext())
-            .setVariable(loopVar)
-            .build())
+                .setRegisterType(getSecurityContext())
+                .setVariable(loopVar)
+                .build())
         .add(
             MambaAssignNode.builder()
-            .setVariable(loopVar)
-            .setRhs(
-                MambaIntLiteralNode.builder()
-                .setSecurityType(getSecurityContext())
-                .setValue(1)
+                .setVariable(loopVar)
+                .setRhs(
+                    MambaIntLiteralNode.builder()
+                        .setSecurityType(getSecurityContext())
+                        .setValue(1)
+                        .build())
                 .build())
-            .build())
         .add(
             MambaWhileNode.builder()
-            .setGuard(MambaReadNode.create(loopVar))
-            .setBody(MambaBlockNode.create(body))
-            .build())
+                .setGuard(MambaReadNode.create(loopVar))
+                .setBody(MambaBlockNode.create(body))
+                .build())
         .build();
   }
 
   @Override
   public Iterable<MambaStatementNode> visit(BreakNode node) {
     if (this.currentLoopVar != null) {
-      return
-          single(
-              MambaAssignNode.builder()
+      return single(
+          MambaAssignNode.builder()
               .setVariable(this.currentLoopVar)
               .setRhs(
                   MambaIntLiteralNode.builder()
-                  .setSecurityType(getSecurityContext())
-                  .setValue(0)
-                  .build())
+                      .setSecurityType(getSecurityContext())
+                      .setValue(0)
+                      .build())
               .build());
 
     } else {

@@ -12,10 +12,15 @@ import java.util.Map;
  * by PDG node B
  */
 public class ProgramDependencyGraph<T extends AstNode> {
-  public enum ControlLabel { SEQ, THEN, ELSE, BODY }
+  public enum ControlLabel {
+    SEQ,
+    THEN,
+    ELSE,
+    BODY
+  }
 
   List<PdgNode<T>> nodes;
-  Map<String,PdgNode<T>> nodeMap;
+  Map<String, PdgNode<T>> nodeMap;
 
   public ProgramDependencyGraph() {
     this.nodes = new ArrayList<>();

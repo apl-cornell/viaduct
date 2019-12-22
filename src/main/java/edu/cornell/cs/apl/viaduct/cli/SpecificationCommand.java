@@ -1,7 +1,6 @@
 package edu.cornell.cs.apl.viaduct.cli;
 
 import com.github.rvesse.airline.annotations.Command;
-
 import edu.cornell.cs.apl.viaduct.imp.HostTrustConfiguration;
 import edu.cornell.cs.apl.viaduct.imp.ast.HostDeclarationNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.HostName;
@@ -24,10 +23,8 @@ import edu.cornell.cs.apl.viaduct.pdg.ProgramDependencyGraph;
 import edu.cornell.cs.apl.viaduct.protocol.Protocol;
 import edu.cornell.cs.apl.viaduct.security.Label;
 import edu.cornell.cs.apl.viaduct.security.Principal;
-
 import io.vavr.collection.HashMap;
 import io.vavr.collection.Map;
-
 import java.io.IOException;
 import java.io.PrintStream;
 
@@ -46,17 +43,13 @@ public class SpecificationCommand extends BaseCommand {
     final Label corruptionLabel = Label.create(Principal.create("A"));
     final HostTrustConfiguration hostConfig =
         HostTrustConfiguration.builder()
-        .add(
-            HostDeclarationNode.builder()
-            .setName(idealFunctionality)
-            .setTrust(Label.strongest())
-            .build())
-        .add(
-            HostDeclarationNode.builder()
-            .setName(simulator)
-            .setTrust(corruptionLabel)
-            .build())
-        .build();
+            .add(
+                HostDeclarationNode.builder()
+                    .setName(idealFunctionality)
+                    .setTrust(Label.strongest())
+                    .build())
+            .add(HostDeclarationNode.builder().setName(simulator).setTrust(corruptionLabel).build())
+            .build();
 
     TypeChecker.run(program);
 
@@ -86,9 +79,7 @@ public class SpecificationCommand extends BaseCommand {
     }
 
     final ProgramNode generatedProgram =
-        new ImpProtocolInstantiationVisitor(
-                hostConfig, null, pdg, protocolMap, main)
-            .run();
+        new ImpProtocolInstantiationVisitor(hostConfig, null, pdg, protocolMap, main).run();
 
     try (PrintStream writer = output.newOutputStream("")) {
       Printer.run(generatedProgram, writer);

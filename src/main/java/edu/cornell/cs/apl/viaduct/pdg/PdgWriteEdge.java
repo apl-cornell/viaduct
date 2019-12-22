@@ -2,7 +2,6 @@ package edu.cornell.cs.apl.viaduct.pdg;
 
 import edu.cornell.cs.apl.viaduct.AstNode;
 import edu.cornell.cs.apl.viaduct.AstPrinter;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -20,8 +19,7 @@ public class PdgWriteEdge<T extends AstNode> extends PdgInfoEdge<T> {
 
   /** create edge b/w nodes. */
   public static <T extends AstNode> PdgWriteEdge<T> create(
-        PdgNode<T> source, PdgNode<T> target,
-        String label, List<T> args) {
+      PdgNode<T> source, PdgNode<T> target, String label, List<T> args) {
 
     PdgWriteEdge<T> writeEdge = new PdgWriteEdge<>(source, target, label, args);
     source.addOutInfoEdge(writeEdge);
@@ -31,8 +29,7 @@ public class PdgWriteEdge<T extends AstNode> extends PdgInfoEdge<T> {
 
   @SafeVarargs
   public static <T extends AstNode> PdgWriteEdge<T> create(
-        PdgNode<T> source, PdgNode<T> target,
-        String label, T... args) {
+      PdgNode<T> source, PdgNode<T> target, String label, T... args) {
 
     return create(source, target, label, Arrays.asList(args));
   }

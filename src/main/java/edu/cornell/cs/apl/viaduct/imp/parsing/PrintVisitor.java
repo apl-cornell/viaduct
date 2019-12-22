@@ -107,8 +107,7 @@ final class PrintVisitor
   }
 
   /**
-   * Print the source location of the given node on a new line (if source
-   * locations are enabled).
+   * Print the source location of the given node on a new line (if source locations are enabled).
    */
   private void addSourceLocation(HasLocation node) {
     if (sourceLocationsEnabled && this.statementTerminatorsEnabled) {
@@ -118,7 +117,8 @@ final class PrintVisitor
       if (srcLoc != null || absLineNo != null) {
         addIndentation();
         printComment(
-            String.format("%s, %s",
+            String.format(
+                "%s, %s",
                 srcLoc != null ? srcLoc.toString() : "",
                 absLineNo != null ? absLineNo.toString() : ""));
         output.println();

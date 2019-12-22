@@ -46,13 +46,9 @@ public class RenameVisitor extends IdentityProgramVisitor {
     protected ReferenceNode leave(
         ArrayIndexingNode node,
         RenameReferenceVisitor visitor,
-        ReferenceNode array, ExpressionNode index)
-    {
-      return
-          node.toBuilder()
-          .setArray((Variable) array)
-          .setIndex(index)
-          .build();
+        ReferenceNode array,
+        ExpressionNode index) {
+      return node.toBuilder().setArray((Variable) array).setIndex(index).build();
     }
   }
 }

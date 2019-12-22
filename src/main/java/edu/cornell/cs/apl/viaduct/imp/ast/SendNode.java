@@ -5,14 +5,10 @@ import edu.cornell.cs.apl.viaduct.imp.visitors.StmtVisitor;
 
 /** Send the value of an expression to a process. */
 @AutoValue
-public abstract class SendNode
-    extends StatementNode implements CommunicationNode
-{
+public abstract class SendNode extends StatementNode implements CommunicationNode {
   /** default is *not* external communication, unless explicitly set. */
   public static Builder builder() {
-    return
-        new AutoValue_SendNode.Builder()
-        .setExternalCommunication(false);
+    return new AutoValue_SendNode.Builder().setExternalCommunication(false);
   }
 
   public abstract Builder toBuilder();

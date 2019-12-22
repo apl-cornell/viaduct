@@ -4,7 +4,12 @@ import io.vavr.collection.List;
 
 /** Used for maintaining ordering information about PDG nodes. */
 public class AbstractLineNumber implements Comparable<AbstractLineNumber> {
-  public enum RelativePosition { BEFORE, EQUAL, AFTER, UNORDERED }
+  public enum RelativePosition {
+    BEFORE,
+    EQUAL,
+    AFTER,
+    UNORDERED
+  }
 
   static class LineNumberComponent {
     String marker;
@@ -40,9 +45,8 @@ public class AbstractLineNumber implements Comparable<AbstractLineNumber> {
     LineNumberComponent last = this.componentList.head();
     newLn.componentList =
         this.componentList
-        .pop()
-        .push(
-            new LineNumberComponent(last.getMarker(), last.getSequenceNum() + 1));
+            .pop()
+            .push(new LineNumberComponent(last.getMarker(), last.getSequenceNum() + 1));
 
     return newLn;
   }
@@ -53,7 +57,6 @@ public class AbstractLineNumber implements Comparable<AbstractLineNumber> {
     newLn.componentList = this.componentList.push(new LineNumberComponent(branch, 1));
     return newLn;
   }
-
 
   /**
    * Compares ordering between abstract line numbers.

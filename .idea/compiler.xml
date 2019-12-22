@@ -1,5 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
+  <component name="CompilerConfiguration">
+    <annotationProcessing>
+      <profile name="Gradle Imported" enabled="true">
+        <outputRelativeToContentRoot value="true" />
+        <processorPath useClasspath="false">
+          <entry name="$PROJECT_DIR$/../.gradle/caches/modules-2/files-2.1/com.google.auto.value/auto-value/1.6.2/e7eae562942315a983eea3e191b72d755c153620/auto-value-1.6.2.jar" />
+        </processorPath>
+        <module name="viaduct.main" />
+      </profile>
+    </annotationProcessing>
+  </component>
   <component name="JavacSettings">
     <option name="ADDITIONAL_OPTIONS_STRING" value="-Xlint:unchecked" />
   </component>

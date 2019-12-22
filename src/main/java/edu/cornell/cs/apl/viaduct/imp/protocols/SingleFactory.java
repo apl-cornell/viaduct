@@ -13,10 +13,9 @@ public class SingleFactory extends SingleHostProtocolFactory<ImpAstNode> {
   @Override
   protected Protocol<ImpAstNode> createInstanceFromHostInfo(
       PdgNode<ImpAstNode> node,
-      Map<PdgNode<ImpAstNode>,Protocol<ImpAstNode>> protoMap,
+      Map<PdgNode<ImpAstNode>, Protocol<ImpAstNode>> protoMap,
       HostTrustConfiguration hostConfig,
-      HostName host)
-  {
+      HostName host) {
     return new Single(hostConfig, host);
   }
 }

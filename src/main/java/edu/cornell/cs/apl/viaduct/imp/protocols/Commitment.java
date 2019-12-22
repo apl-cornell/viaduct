@@ -4,7 +4,6 @@ import edu.cornell.cs.apl.viaduct.imp.HostTrustConfiguration;
 import edu.cornell.cs.apl.viaduct.imp.ast.HostName;
 import edu.cornell.cs.apl.viaduct.imp.ast.Variable;
 import io.vavr.Tuple3;
-
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
@@ -17,10 +16,7 @@ public class Commitment extends AbstractSynthesizedSingle {
 
   /** constructor. */
   public Commitment(
-      HostTrustConfiguration hostConfig,
-      HostName sender, HostName receiver,
-      Variable var)
-  {
+      HostTrustConfiguration hostConfig, HostName sender, HostName receiver, Variable var) {
     super(
         new HashSet<>(List.of(sender, receiver)),
         hostConfig.getTrust(sender).and(hostConfig.getTrust(receiver).integrity()));
@@ -63,8 +59,7 @@ public class Commitment extends AbstractSynthesizedSingle {
 
   @Override
   public String toString() {
-    return
-      String.format("%s(%s,%s) for %s",
-        getId(), this.sender, this.receiver, this.variable.getBinding());
+    return String.format(
+        "%s(%s,%s) for %s", getId(), this.sender, this.receiver, this.variable.getBinding());
   }
 }

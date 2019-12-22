@@ -12,10 +12,8 @@ import edu.cornell.cs.apl.viaduct.pdg.PdgNode;
 import edu.cornell.cs.apl.viaduct.pdg.PdgWriteEdge;
 import edu.cornell.cs.apl.viaduct.protocol.PairProtocolFactory;
 import edu.cornell.cs.apl.viaduct.protocol.Protocol;
-
 import io.vavr.Tuple2;
 import io.vavr.collection.Map;
-
 import java.util.Set;
 
 /** contains ZK information flow constraints. */
@@ -23,8 +21,7 @@ public class CommitmentFactory extends PairProtocolFactory<ImpAstNode> {
   private Protocol<ImpAstNode> createInstanceFromStorageNode(
       PdgNode<ImpAstNode> node,
       HostTrustConfiguration hostConfig,
-      Tuple2<HostName, HostName> hostPair)
-  {
+      Tuple2<HostName, HostName> hostPair) {
     ImpAstNode astNode = node.getAstNode();
 
     if (astNode instanceof VariableDeclarationNode) {
@@ -40,8 +37,7 @@ public class CommitmentFactory extends PairProtocolFactory<ImpAstNode> {
       PdgNode<ImpAstNode> node,
       Map<PdgNode<ImpAstNode>, Protocol<ImpAstNode>> protocolMap,
       HostTrustConfiguration hostConfig,
-      Tuple2<HostName, HostName> hostPair)
-  {
+      Tuple2<HostName, HostName> hostPair) {
     if (node.isStorageNode()) {
       return createInstanceFromStorageNode(node, hostConfig, hostPair);
 
@@ -59,18 +55,20 @@ public class CommitmentFactory extends PairProtocolFactory<ImpAstNode> {
       if (astNode instanceof ReadNode) {
         ReadNode readNode = (ReadNode) astNode;
 
-        return readNode.getReference().accept(
-          new ReferenceVisitor<Protocol<ImpAstNode>>() {
-            @Override
-            public Protocol<ImpAstNode> visit(Variable var) {
-              return new Commitment(hostConfig, hostPair._1(), hostPair._2(), var);
-            }
+        return readNode
+            .getReference()
+            .accept(
+                new ReferenceVisitor<Protocol<ImpAstNode>>() {
+                  @Override
+                  public Protocol<ImpAstNode> visit(Variable var) {
+                    return new Commitment(hostConfig, hostPair._1(), hostPair._2(), var);
+                  }
 
-            @Override
-            public Protocol<ImpAstNode> visit(ArrayIndexingNode arrayIndex) {
-              return null;
-            }
-          });
+                  @Override
+                  public Protocol<ImpAstNode> visit(ArrayIndexingNode arrayIndex) {
+                    return null;
+                  }
+                });
       }
     }
 

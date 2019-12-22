@@ -4,7 +4,6 @@ import edu.cornell.cs.apl.viaduct.AstNode;
 import edu.cornell.cs.apl.viaduct.imp.HostTrustConfiguration;
 import edu.cornell.cs.apl.viaduct.pdg.PdgNode;
 import edu.cornell.cs.apl.viaduct.pdg.ProgramDependencyGraph;
-
 import io.vavr.collection.Map;
 
 public interface ProtocolSelection<T extends AstNode> {

@@ -6,9 +6,7 @@ import edu.cornell.cs.apl.viaduct.imp.ast.ImpAstNode;
 import edu.cornell.cs.apl.viaduct.pdg.PdgNode;
 import edu.cornell.cs.apl.viaduct.protocol.PowersetProtocolFactory;
 import edu.cornell.cs.apl.viaduct.protocol.Protocol;
-
 import io.vavr.collection.Map;
-
 import java.util.Set;
 
 /** contains MPC information flow constraints. */
@@ -18,8 +16,7 @@ public class MPCFactory extends PowersetProtocolFactory<ImpAstNode> {
       PdgNode<ImpAstNode> node,
       Map<PdgNode<ImpAstNode>, Protocol<ImpAstNode>> protoMap,
       HostTrustConfiguration hostConfig,
-      Set<HostName> hostSet)
-  {
+      Set<HostName> hostSet) {
     return hostSet.size() >= 2 ? new MPC(hostConfig, hostSet) : null;
   }
 }

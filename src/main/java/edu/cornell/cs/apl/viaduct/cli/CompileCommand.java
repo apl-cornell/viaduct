@@ -2,7 +2,6 @@ package edu.cornell.cs.apl.viaduct.cli;
 
 import com.github.rvesse.airline.annotations.Command;
 import com.github.rvesse.airline.annotations.Option;
-
 import edu.cornell.cs.apl.viaduct.backend.mamba.ImpMambaCommunicationCostEstimator;
 import edu.cornell.cs.apl.viaduct.backend.mamba.ImpMambaMpcProtocolSearchStrategy;
 import edu.cornell.cs.apl.viaduct.backend.mamba.ImpMambaProtocolSearchStrategy;
@@ -40,9 +39,7 @@ import guru.nidi.graphviz.engine.GraphvizCmdLineEngine;
 import guru.nidi.graphviz.engine.GraphvizServerEngine;
 import guru.nidi.graphviz.engine.GraphvizV8Engine;
 import guru.nidi.graphviz.model.MutableGraph;
-
 import io.vavr.collection.Map;
-
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -55,7 +52,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
-
 import org.apache.commons.io.FilenameUtils;
 import org.fusesource.jansi.AnsiConsole;
 
@@ -122,27 +118,23 @@ public class CompileCommand extends BaseCommand {
   @Option(
       name = {"--imp"},
       title = "output.imp",
-      description =
-          "Output synthesized protocol in an intermediate representation only.")
+      description = "Output synthesized protocol in an intermediate representation only.")
   private boolean impOnly;
 
   @Option(
       name = {"--template"},
       title = "template.py",
-      description =
-          "Compilation template for MAMBA programs.")
+      description = "Compilation template for MAMBA programs.")
   private String mambaCompilationTemplate = "template.py";
 
   @Option(
       name = {"--strategy"},
-      description =
-          "Compilation strategy. Current available options: opt, zk, mpc")
+      description = "Compilation strategy. Current available options: opt, zk, mpc")
   private String strategy = "opt";
 
   @Option(
       name = {"-v", "--verbose"},
-      description =
-          "Print information throughout the compilation process.")
+      description = "Print information throughout the compilation process.")
   private boolean verbose;
 
   /**
@@ -212,8 +204,7 @@ public class CompileCommand extends BaseCommand {
   private ProtocolSearchStrategy<ImpAstNode> getSearchStrategy(
       HostTrustConfiguration hostConfig,
       ProtocolCommunicationStrategy<ImpAstNode> communicationStrategy,
-      ProtocolCostEstimator<ImpAstNode> costEstimator)
-  {
+      ProtocolCostEstimator<ImpAstNode> costEstimator) {
     switch (this.strategy) {
       case "opt":
         return new ImpMambaProtocolSearchStrategy(costEstimator);
@@ -262,9 +253,7 @@ public class CompileCommand extends BaseCommand {
 
     final ProgramNode processedProgram =
         ImpPdgBuilderPreprocessor.run(
-            LogicalPositionInjector.run(
-                AnfConverter.run(
-                    Elaborator.run(program))));
+            LogicalPositionInjector.run(AnfConverter.run(Elaborator.run(program))));
 
     if (this.verbose) {
       System.out.println("checking information flow constraints...");
@@ -327,12 +316,12 @@ public class CompileCommand extends BaseCommand {
 
     final Map<PdgNode<ImpAstNode>, Protocol<ImpAstNode>> protocolMap =
         (new ImpProtocolSearchSelection(this.enableProfiling, strategy))
-        .selectProtocols(hostConfig, pdg);
+            .selectProtocols(hostConfig, pdg);
 
     // Dump PDG with protocol information to a file (if requested).
     dumpGraph(
-        () -> PdgDotPrinter.pdgDotGraphWithProtocols(
-                pdg, protocolMap, costEstimator, new Printer()),
+        () ->
+            PdgDotPrinter.pdgDotGraphWithProtocols(pdg, protocolMap, costEstimator, new Printer()),
         protocolGraphOutput);
 
     if (this.skip) {
@@ -349,13 +338,14 @@ public class CompileCommand extends BaseCommand {
       // Found a protocol for every node! Output synthesized distributed program.
       ImpProtocolInstantiationVisitor protocolInstantiator =
           new ImpProtocolInstantiationVisitor(
-                  hostConfig, communicationStrategy, pdg, protocolMap, main);
+              hostConfig, communicationStrategy, pdg, protocolMap, main);
 
       final ProgramNode generatedProgram =
-          protocolInstantiator.run()
-          .toBuilder()
-          .addAll(hostConfig.getDeclarations().values())
-          .build();
+          protocolInstantiator
+              .run()
+              .toBuilder()
+              .addAll(hostConfig.getDeclarations().values())
+              .build();
 
       if (this.impOnly || this.verbose) {
         System.out.println("process configuration:");
@@ -374,7 +364,7 @@ public class CompileCommand extends BaseCommand {
 
       if (canCompileToMamba()) {
         (new MambaBackend())
-        .compile(this.mambaCompilationTemplate, generatedProgram, output.outputDir);
+            .compile(this.mambaCompilationTemplate, generatedProgram, output.outputDir);
       }
 
     } else {

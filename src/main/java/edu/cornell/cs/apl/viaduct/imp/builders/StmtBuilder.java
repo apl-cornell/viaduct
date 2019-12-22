@@ -239,10 +239,7 @@ public class StmtBuilder {
     @Override
     public StatementNode buildControlStructure() {
       BlockNode body = this.pathMap.get(ControlLabel.BODY);
-      return LoopNode.builder()
-          .setBody(body)
-          .setLocation(this.loopNode)
-          .build();
+      return LoopNode.builder().setBody(body).setLocation(this.loopNode).build();
     }
   }
 }

@@ -5,8 +5,10 @@ import java.util.Iterator;
 import java.util.Set;
 import java.util.TreeSet;
 
-/** iterates through powerset of a set (see https://stackoverflow.com/a/3078491).
- *  @author st0le
+/**
+ * iterates through powerset of a set (see https://stackoverflow.com/a/3078491).
+ *
+ * @author st0le
  */
 public class PowersetIterator<E> implements Iterator<Set<E>>, Iterable<Set<E>> {
   private E[] arr = null;
@@ -14,7 +16,7 @@ public class PowersetIterator<E> implements Iterator<Set<E>>, Iterable<Set<E>> {
 
   @SuppressWarnings("unchecked")
   public PowersetIterator(Set<E> set) {
-    arr = (E[])set.toArray();
+    arr = (E[]) set.toArray();
     bset = new BitSet(arr.length + 1);
   }
 

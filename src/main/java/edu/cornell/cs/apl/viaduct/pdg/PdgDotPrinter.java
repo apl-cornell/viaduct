@@ -7,7 +7,6 @@ import edu.cornell.cs.apl.viaduct.AstNode;
 import edu.cornell.cs.apl.viaduct.AstPrinter;
 import edu.cornell.cs.apl.viaduct.protocol.Protocol;
 import edu.cornell.cs.apl.viaduct.protocol.ProtocolCostEstimator;
-
 import guru.nidi.graphviz.attribute.Arrow;
 import guru.nidi.graphviz.attribute.Color;
 import guru.nidi.graphviz.attribute.Label;
@@ -16,9 +15,7 @@ import guru.nidi.graphviz.attribute.Style;
 import guru.nidi.graphviz.model.Link;
 import guru.nidi.graphviz.model.MutableGraph;
 import guru.nidi.graphviz.model.MutableNode;
-
 import io.vavr.collection.Map;
-
 import java.util.List;
 
 /** prints a PDG into a DOT graph. */
@@ -49,9 +46,9 @@ public class PdgDotPrinter {
           Protocol<T> nodeProto = protocolMap.getOrElse(node, null);
           if (nodeProto != null && costEstimator != null) {
             data =
-              nodeProto.toString()
-              + "\n"
-              + costEstimator.estimateNodeCost(node, protocolMap, pdg);
+                nodeProto.toString()
+                    + "\n"
+                    + costEstimator.estimateNodeCost(node, protocolMap, pdg);
 
           } else if (nodeProto != null) {
             data = nodeProto.toString();

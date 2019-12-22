@@ -189,7 +189,7 @@ public class ImpPdgBuilderVisitor implements StmtVisitor<Set<PdgNode<ImpAstNode>
 
     Set<ReferenceNode> queries = new HashSet<>();
     Set<ReferenceNode> lhsQueries = this.querySetVisitor.run(lhs);
-    Set<ReferenceNode> rhsQueries  = this.querySetVisitor.run(rhs);
+    Set<ReferenceNode> rhsQueries = this.querySetVisitor.run(rhs);
     queries.addAll(lhsQueries);
     queries.addAll(rhsQueries);
     queries.remove(lhs);

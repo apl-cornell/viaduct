@@ -11,7 +11,6 @@ import edu.cornell.cs.apl.viaduct.pdg.PdgStorageNode;
 import edu.cornell.cs.apl.viaduct.protocol.ProtocolInstantiationError;
 import edu.cornell.cs.apl.viaduct.protocol.ProtocolInstantiationInfo;
 import edu.cornell.cs.apl.viaduct.security.Label;
-
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -55,12 +54,10 @@ public abstract class AbstractSingle extends Cleartext {
   @Override
   public void instantiate(PdgNode<ImpAstNode> node, ProtocolInstantiationInfo<ImpAstNode> info) {
     if (node.isStorageNode()) {
-      this.outVar =
-          instantiateStorageNode(this.process, (PdgStorageNode<ImpAstNode>) node, info);
+      this.outVar = instantiateStorageNode(this.process, (PdgStorageNode<ImpAstNode>) node, info);
 
     } else if (node.isComputeNode()) {
-      this.outVar =
-          instantiateComputeNode(this.process, (PdgComputeNode<ImpAstNode>) node, info);
+      this.outVar = instantiateComputeNode(this.process, (PdgComputeNode<ImpAstNode>) node, info);
 
     } else {
       throw new ProtocolInstantiationError("control nodes must have Control protocol");

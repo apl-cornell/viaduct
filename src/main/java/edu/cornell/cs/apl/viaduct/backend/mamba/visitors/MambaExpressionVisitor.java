@@ -23,4 +23,3 @@ public interface MambaExpressionVisitor<R> {
 
   R visit(MambaMuxNode node);
 }
-

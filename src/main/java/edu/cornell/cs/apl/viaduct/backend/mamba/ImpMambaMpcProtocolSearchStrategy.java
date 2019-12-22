@@ -5,9 +5,7 @@ import edu.cornell.cs.apl.viaduct.imp.ast.ImpAstNode;
 import edu.cornell.cs.apl.viaduct.pdg.PdgNode;
 import edu.cornell.cs.apl.viaduct.protocol.Protocol;
 import edu.cornell.cs.apl.viaduct.protocol.ProtocolCostEstimator;
-
 import io.vavr.collection.Map;
-
 import java.util.HashSet;
 import java.util.Set;
 
@@ -21,8 +19,7 @@ public class ImpMambaMpcProtocolSearchStrategy extends ImpMambaProtocolSearchStr
   public Set<Protocol<ImpAstNode>> createNormalProtocolInstances(
       HostTrustConfiguration hostConfig,
       Map<PdgNode<ImpAstNode>, Protocol<ImpAstNode>> protocolMap,
-      PdgNode<ImpAstNode> node)
-  {
+      PdgNode<ImpAstNode> node) {
     Set<Protocol<ImpAstNode>> instances = new HashSet<>();
 
     instances.addAll(this.mambaSecretFactory.createInstances(hostConfig, protocolMap, node));

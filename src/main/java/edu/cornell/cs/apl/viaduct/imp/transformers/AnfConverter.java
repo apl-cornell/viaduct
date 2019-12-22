@@ -2,7 +2,6 @@ package edu.cornell.cs.apl.viaduct.imp.transformers;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
-
 import edu.cornell.cs.apl.viaduct.errors.ElaborationException;
 import edu.cornell.cs.apl.viaduct.imp.ast.ArrayDeclarationNode;
 import edu.cornell.cs.apl.viaduct.imp.ast.ArrayIndexingNode;
@@ -39,9 +38,7 @@ import edu.cornell.cs.apl.viaduct.imp.visitors.ExprVisitor;
 import edu.cornell.cs.apl.viaduct.imp.visitors.ReferenceVisitor;
 import edu.cornell.cs.apl.viaduct.imp.visitors.TopLevelDeclarationVisitor;
 import edu.cornell.cs.apl.viaduct.util.FreshNameGenerator;
-
 import io.vavr.collection.Map;
-
 import java.util.LinkedList;
 import java.util.List;
 
@@ -116,12 +113,7 @@ public class AnfConverter {
 
   private static final class AnfStmtVisitor
       extends ContextStmtVisitor<
-                AnfStmtVisitor,
-                Boolean,
-                ReferenceNode,
-                ExpressionNode,
-                Iterable<StatementNode>>
-  {
+          AnfStmtVisitor, Boolean, ReferenceNode, ExpressionNode, Iterable<StatementNode>> {
     private final FreshNameGenerator nameGenerator;
 
     private AnfExprVisitor exprVisitor;
@@ -204,15 +196,14 @@ public class AnfConverter {
       return result;
     }
 
-
     @Override
     public Iterable<StatementNode> leave(VariableDeclarationNode node, AnfStmtVisitor visitor) {
       return single(node);
     }
 
     @Override
-    public Iterable<StatementNode> leave(ArrayDeclarationNode node, AnfStmtVisitor visitor,
-        ExpressionNode length) {
+    public Iterable<StatementNode> leave(
+        ArrayDeclarationNode node, AnfStmtVisitor visitor, ExpressionNode length) {
       return listBuilder()
           .addAll(visitor.getBindings())
           .add(node.toBuilder().setLength(length).build())
@@ -220,8 +211,8 @@ public class AnfConverter {
     }
 
     @Override
-    public Iterable<StatementNode> leave(LetBindingNode node, AnfStmtVisitor visitor,
-        ExpressionNode rhs) {
+    public Iterable<StatementNode> leave(
+        LetBindingNode node, AnfStmtVisitor visitor, ExpressionNode rhs) {
       return listBuilder()
           .addAll(visitor.getBindings())
           .add(node.toBuilder().setRhs(rhs).build())
@@ -229,8 +220,8 @@ public class AnfConverter {
     }
 
     @Override
-    public Iterable<StatementNode> leave(AssignNode node, AnfStmtVisitor visitor,
-        ReferenceNode lhs, ExpressionNode rhs) {
+    public Iterable<StatementNode> leave(
+        AssignNode node, AnfStmtVisitor visitor, ReferenceNode lhs, ExpressionNode rhs) {
       return listBuilder()
           .addAll(visitor.getBindings())
           .add(node.toBuilder().setLhs(lhs).setRhs(rhs).build())
@@ -238,8 +229,8 @@ public class AnfConverter {
     }
 
     @Override
-    public Iterable<StatementNode> leave(SendNode node, AnfStmtVisitor visitor,
-        ExpressionNode sentExpr) {
+    public Iterable<StatementNode> leave(
+        SendNode node, AnfStmtVisitor visitor, ExpressionNode sentExpr) {
       return listBuilder()
           .addAll(visitor.getBindings())
           .add(node.toBuilder().setSentExpression(sentExpr).build())
@@ -247,17 +238,19 @@ public class AnfConverter {
     }
 
     @Override
-    public Iterable<StatementNode> leave(ReceiveNode node, AnfStmtVisitor visitor,
-        ReferenceNode lhs) {
+    public Iterable<StatementNode> leave(
+        ReceiveNode node, AnfStmtVisitor visitor, ReferenceNode lhs) {
       return single(node);
     }
 
     @Override
-    public Iterable<StatementNode> leave(IfNode node, AnfStmtVisitor visitor,
-        ExpressionNode guard, Iterable<StatementNode> thenBranch,
+    public Iterable<StatementNode> leave(
+        IfNode node,
+        AnfStmtVisitor visitor,
+        ExpressionNode guard,
+        Iterable<StatementNode> thenBranch,
         Iterable<StatementNode> elseBranch) {
-      return
-          listBuilder()
+      return listBuilder()
           .addAll(visitor.getBindings())
           .add(
               node.toBuilder()
@@ -270,21 +263,28 @@ public class AnfConverter {
     }
 
     @Override
-    public Iterable<StatementNode> leave(WhileNode whileNode, AnfStmtVisitor visitor,
-        ExpressionNode guard, Iterable<StatementNode> body) {
-      throw new ElaborationException();
-    }
-
-    @Override
-    public Iterable<StatementNode> leave(ForNode forNode, AnfStmtVisitor visitor,
-        Iterable<Iterable<StatementNode>> init, ExpressionNode guard,
-        Iterable<Iterable<StatementNode>> update, Iterable<StatementNode> body) {
-      throw new ElaborationException();
-    }
-
-    @Override
-    public Iterable<StatementNode> leave(LoopNode node, AnfStmtVisitor visitor,
+    public Iterable<StatementNode> leave(
+        WhileNode whileNode,
+        AnfStmtVisitor visitor,
+        ExpressionNode guard,
         Iterable<StatementNode> body) {
+      throw new ElaborationException();
+    }
+
+    @Override
+    public Iterable<StatementNode> leave(
+        ForNode forNode,
+        AnfStmtVisitor visitor,
+        Iterable<Iterable<StatementNode>> init,
+        ExpressionNode guard,
+        Iterable<Iterable<StatementNode>> update,
+        Iterable<StatementNode> body) {
+      throw new ElaborationException();
+    }
+
+    @Override
+    public Iterable<StatementNode> leave(
+        LoopNode node, AnfStmtVisitor visitor, Iterable<StatementNode> body) {
       return single(node.toBuilder().setBody(getBlock(body)).build());
     }
 
@@ -294,8 +294,8 @@ public class AnfConverter {
     }
 
     @Override
-    public Iterable<StatementNode> leave(BlockNode node, AnfStmtVisitor visitor,
-        Iterable<Iterable<StatementNode>> statements) {
+    public Iterable<StatementNode> leave(
+        BlockNode node, AnfStmtVisitor visitor, Iterable<Iterable<StatementNode>> statements) {
       // Flatten one level of nested blocks (these are generated by this class)
       final ImmutableList.Builder<StatementNode> body = listBuilder();
       for (Iterable<StatementNode> statement : statements) {
@@ -305,8 +305,8 @@ public class AnfConverter {
     }
 
     @Override
-    public Iterable<StatementNode> leave(AssertNode node, AnfStmtVisitor visitor,
-        ExpressionNode expr) {
+    public Iterable<StatementNode> leave(
+        AssertNode node, AnfStmtVisitor visitor, ExpressionNode expr) {
       return listBuilder()
           .addAll(visitor.getBindings())
           .add(node.toBuilder().setExpression(expr).build())
@@ -315,10 +315,8 @@ public class AnfConverter {
 
     /**
      * Produce an expression in A-normal form. An expression is in A-normal form if all children
-     * nodes are atomic.
-     * AnfExprVisitor will check if an expression is complex or atomic.
-     * If complex, it will call AtomicExprVisitor to bind it to a temporary
-     * and return an atomic expr.
+     * nodes are atomic. AnfExprVisitor will check if an expression is complex or atomic. If
+     * complex, it will call AtomicExprVisitor to bind it to a temporary and return an atomic expr.
      */
     private final class AnfExprVisitor
         implements ReferenceVisitor<ReferenceNode>, ExprVisitor<ExpressionNode> {
@@ -437,8 +435,8 @@ public class AnfConverter {
       }
 
       @Override
-      protected ExpressionNode leave(ReadNode node, AtomicExprVisitor visitor,
-          ReferenceNode reference) {
+      protected ExpressionNode leave(
+          ReadNode node, AtomicExprVisitor visitor, ReferenceNode reference) {
         return node.toBuilder().setReference(reference).build();
       }
 

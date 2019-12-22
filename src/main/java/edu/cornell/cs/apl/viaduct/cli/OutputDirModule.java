@@ -26,10 +26,8 @@ final class OutputDirModule {
       return AnsiConsole.out();
     } else {
       // TODO: PrintStream doesn't throw errors when writing. These will fail silently.
-      return
-          new AnsiPrintStream(
-              new PrintStream(
-                  new File(outputDir, name), StandardCharsets.UTF_8));
+      return new AnsiPrintStream(
+          new PrintStream(new File(outputDir, name), StandardCharsets.UTF_8));
     }
   }
 }

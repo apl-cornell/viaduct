@@ -18,17 +18,16 @@ import io.vavr.collection.Map;
 
 public final class ImpProtocolSearchSelection extends ProtocolSearchSelection<ImpAstNode> {
   public ImpProtocolSearchSelection(
-      boolean enableProfiling, ProtocolSearchStrategy<ImpAstNode> strategy)
-  {
+      boolean enableProfiling, ProtocolSearchStrategy<ImpAstNode> strategy) {
     super(enableProfiling, strategy);
   }
 
   @Override
-  protected Map<PdgNode<ImpAstNode>,Protocol<ImpAstNode>> getInitialProtocolMap(
-      HostTrustConfiguration hostConfig, ProgramDependencyGraph<ImpAstNode> pdg)
-  {
-    /** except external communication and storage of data will be executed in their
-     * respective hosts. */
+  protected Map<PdgNode<ImpAstNode>, Protocol<ImpAstNode>> getInitialProtocolMap(
+      HostTrustConfiguration hostConfig, ProgramDependencyGraph<ImpAstNode> pdg) {
+    /**
+     * except external communication and storage of data will be executed in their respective hosts.
+     */
     Map<PdgNode<ImpAstNode>, Protocol<ImpAstNode>> protoMap = HashMap.empty();
     Map<Variable, HostName> hostVariables = HashMap.empty();
     for (PdgNode<ImpAstNode> node : pdg.getOrderedNodes()) {

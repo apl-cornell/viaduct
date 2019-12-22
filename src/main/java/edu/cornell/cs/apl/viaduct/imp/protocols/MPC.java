@@ -3,7 +3,6 @@ package edu.cornell.cs.apl.viaduct.imp.protocols;
 import edu.cornell.cs.apl.viaduct.imp.HostTrustConfiguration;
 import edu.cornell.cs.apl.viaduct.imp.ast.HostName;
 import edu.cornell.cs.apl.viaduct.security.Label;
-
 import java.util.Set;
 
 /** multiparty computation protocol. */

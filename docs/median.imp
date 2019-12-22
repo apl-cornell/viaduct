@@ -1,36 +1,25 @@
 process main {
-    len : int{A && B};
-    len = 64;
+    int{A & B<-} a[4];
+    int{B & A<-} b[8];
 
-    a[len] : int{A & B<-};
-    b[len] : int{B & A<-};
+    a <- recv @alice;
+    b <- recv @bob;
 
-    ai : int{A};
-    ai = 0;
+    int{A} ai = 0;
+    int{A} aj = 3;
+    int{A} am;
 
-    aj : int{A};
-    aj = len;
+    int{B} bi = 0;
+    int{B} bj = 3;
+    int{B} bm;
 
-    am : int{A};
-
-    bi : int{B};
-    bi = 0;
-
-    bj : int{B};
-    bj = len;
-
-    bm : int{B};
-
-    median : int{A && B};
-    cont : bool{A && B};
-    cont = true;
+    int{A && B} median;
+    bool{A && B} cont = true;
     while (downgrade(aj != ai, {A && B}) && downgrade(bj != bi, {A && B}) && cont) {
-        /* TODO: these should be divisions! */
         am = (aj - ai) * 2;
         bm = (bj - bi) * 2;
 
-        cmp : int{A && B};
-        cmp = downgrade(a[am] - b[bm], {A && B});
+        int{A && B} cmp = downgrade(a[am] - b[bm], {A && B});
 
         if (cmp == 0) { /* a[am] == b[bm] */
             median = downgrade(a[am], {A && B});

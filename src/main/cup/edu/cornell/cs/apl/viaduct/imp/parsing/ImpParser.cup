@@ -164,7 +164,7 @@ precedence nonassoc EQEQ, NEQ, LT, LEQ, GT, GEQ;
 precedence left PLUS, MINUS;
 precedence left TIMES;
 precedence right NOT;
-precedence left LARROW, RARROW, NOT;
+precedence left LARROW, RARROW;
 precedence nonassoc OPEN_PAREN, CLOSE_PAREN;
 
 start with program;

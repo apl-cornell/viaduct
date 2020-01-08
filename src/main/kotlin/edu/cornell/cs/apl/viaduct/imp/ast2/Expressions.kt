@@ -3,7 +3,7 @@ package edu.cornell.cs.apl.viaduct.imp.ast2
 import edu.cornell.cs.apl.viaduct.imp.ast.values.ImpValue
 
 /** A pure computation. */
-sealed class ExpressionNode : AstNode()
+sealed class ExpressionNode : Node()
 
 /** An expression that requires no computation to reduce to a value. */
 sealed class AtomicExpressionNode : ExpressionNode()

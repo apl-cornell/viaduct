@@ -1,7 +1,5 @@
 package edu.cornell.cs.apl.viaduct.syntax.surface
 
-import edu.cornell.cs.apl.viaduct.security.Label
-import edu.cornell.cs.apl.viaduct.syntax.ObjectVariable
 import edu.cornell.cs.apl.viaduct.syntax.Operator
 import edu.cornell.cs.apl.viaduct.syntax.Query
 import edu.cornell.cs.apl.viaduct.syntax.SourceLocation
@@ -20,6 +18,7 @@ data class LiteralNode(val value: Value, override val sourceLocation: SourceLoca
     AtomicExpressionNode()
 
 /** Reading the value stored in a temporary. */
+// TODO: remove from surface.
 data class ReadNode(val temporary: Temporary, override val sourceLocation: SourceLocation) :
     AtomicExpressionNode()
 
@@ -33,7 +32,7 @@ data class OperatorApplicationNode(
 
 /** A query method call on an object. */
 data class QueryNode(
-    val variable: ObjectVariable,
+    val variable: ObjectVariableNode,
     val query: Query,
     val arguments: ImmutableList<ExpressionNode>,
     override val sourceLocation: SourceLocation
@@ -45,24 +44,24 @@ sealed class DowngradeNode : ExpressionNode() {
     abstract val expression: ExpressionNode
 
     /** The label [expression] must have before the downgrade. */
-    abstract val fromLabel: Label
+    abstract val fromLabel: LabelNode
 
     /** The label after the downgrade. */
-    abstract val toLabel: Label
+    abstract val toLabel: LabelNode
 }
 
 /** Revealing the the result of an expression (reducing confidentiality). */
 data class DeclassificationNode(
     override val expression: ExpressionNode,
-    override val fromLabel: Label,
-    override val toLabel: Label,
+    override val fromLabel: LabelNode,
+    override val toLabel: LabelNode,
     override val sourceLocation: SourceLocation
 ) : DowngradeNode()
 
 /** Trusting the the result of an expression (increasing integrity). */
 data class EndorsementNode(
     override val expression: ExpressionNode,
-    override val fromLabel: Label,
-    override val toLabel: Label,
+    override val fromLabel: LabelNode,
+    override val toLabel: LabelNode,
     override val sourceLocation: SourceLocation
 ) : DowngradeNode()

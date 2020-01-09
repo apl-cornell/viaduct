@@ -10,9 +10,8 @@ import edu.cornell.cs.apl.viaduct.syntax.SourceLocation
  * - For and while loops are elaborated into loop-until-break statements.
  * - Expressions are in A-normal form. Briefly, this means all intermediate results are stored
  *   in temporary variables.
- *
- * TODO: what else?
  */
+// TODO: what else?
 abstract class Node {
     abstract val sourceLocation: SourceLocation
 }

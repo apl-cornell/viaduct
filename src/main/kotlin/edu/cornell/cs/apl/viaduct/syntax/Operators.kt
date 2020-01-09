@@ -1,7 +1,7 @@
-package edu.cornell.cs.apl.viaduct.imp.ast2
+package edu.cornell.cs.apl.viaduct.syntax
 
-import edu.cornell.cs.apl.viaduct.imp.types.OperatorType
-import edu.cornell.cs.apl.viaduct.imp.values.Value
+import edu.cornell.cs.apl.viaduct.syntax.types.OperatorType
+import edu.cornell.cs.apl.viaduct.syntax.values.Value
 
 /**
  * Determines how operators of the same [Precedence] are grouped in the absence of parentheses.

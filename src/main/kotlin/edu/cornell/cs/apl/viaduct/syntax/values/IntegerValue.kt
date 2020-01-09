@@ -1,7 +1,7 @@
-package edu.cornell.cs.apl.viaduct.imp.values
+package edu.cornell.cs.apl.viaduct.syntax.values
 
-import edu.cornell.cs.apl.viaduct.imp.types.IntegerType
-import edu.cornell.cs.apl.viaduct.imp.types.ValueType
+import edu.cornell.cs.apl.viaduct.syntax.types.IntegerType
+import edu.cornell.cs.apl.viaduct.syntax.types.ValueType
 
 /** An integer. */
 data class IntegerValue(val value: Int) : Value {

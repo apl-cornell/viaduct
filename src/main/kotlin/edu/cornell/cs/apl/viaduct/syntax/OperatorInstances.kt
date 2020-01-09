@@ -1,16 +1,18 @@
-package edu.cornell.cs.apl.viaduct.imp.ast2
+package edu.cornell.cs.apl.viaduct.syntax
 
-import edu.cornell.cs.apl.viaduct.imp.types.BooleanType
-import edu.cornell.cs.apl.viaduct.imp.types.IntegerType
-import edu.cornell.cs.apl.viaduct.imp.types.OperatorType
-import edu.cornell.cs.apl.viaduct.imp.values.BooleanValue
-import edu.cornell.cs.apl.viaduct.imp.values.IntegerValue
-import edu.cornell.cs.apl.viaduct.imp.values.Value
+import edu.cornell.cs.apl.viaduct.syntax.types.BooleanType
+import edu.cornell.cs.apl.viaduct.syntax.types.IntegerType
+import edu.cornell.cs.apl.viaduct.syntax.types.OperatorType
+import edu.cornell.cs.apl.viaduct.syntax.values.BooleanValue
+import edu.cornell.cs.apl.viaduct.syntax.values.IntegerValue
+import edu.cornell.cs.apl.viaduct.syntax.values.Value
+import kotlinx.collections.immutable.persistentListOf
 
 /**
  * Prefix operators that take a single argument.
  */
-private interface UnaryPrefixOperator : PrefixOperator {
+private interface UnaryPrefixOperator :
+    PrefixOperator {
     override val arity: Int
         get() = 1
 
@@ -24,7 +26,8 @@ private interface UnaryPrefixOperator : PrefixOperator {
 /**
  * Infix operators that take two arguments.
  */
-private interface BinaryInfixOperator : InfixOperator {
+private interface BinaryInfixOperator :
+    InfixOperator {
     override val arity: Int
         get() = 2
 }
@@ -32,7 +35,8 @@ private interface BinaryInfixOperator : InfixOperator {
 /**
  * Left associative operators.
  */
-private interface LeftAssociativeOperator : Operator {
+private interface LeftAssociativeOperator :
+    Operator {
     override val associativity: Associativity
         get() = Associativity.LEFT
 }
@@ -40,9 +44,10 @@ private interface LeftAssociativeOperator : Operator {
 /**
  * Infix operators that take two numbers and return a number.
  */
-private interface ArithmeticOperator : BinaryInfixOperator, LeftAssociativeOperator {
+private interface ArithmeticOperator : BinaryInfixOperator,
+    LeftAssociativeOperator {
     override val type: OperatorType
-        get() = OperatorType(listOf(IntegerType, IntegerType), IntegerType)
+        get() = OperatorType(persistentListOf(IntegerType, IntegerType), IntegerType)
 
     override fun apply(arguments: List<Value>): Value {
         val arg1 = arguments[0] as IntegerValue
@@ -56,7 +61,8 @@ private interface ArithmeticOperator : BinaryInfixOperator, LeftAssociativeOpera
 /**
  * Infix operators that take two booleans and return a boolean.
  */
-private interface LogicalOperator : BinaryInfixOperator, LeftAssociativeOperator {
+private interface LogicalOperator : BinaryInfixOperator,
+    LeftAssociativeOperator {
     override fun comparePrecedenceTo(other: Operator): Precedence {
         if (other == this)
             return Precedence.EQUAL
@@ -66,7 +72,7 @@ private interface LogicalOperator : BinaryInfixOperator, LeftAssociativeOperator
     }
 
     override val type: OperatorType
-        get() = OperatorType(listOf(BooleanType, BooleanType), IntegerType)
+        get() = OperatorType(persistentListOf(BooleanType, BooleanType), IntegerType)
 
     override fun apply(arguments: List<Value>): Value {
         val arg1 = arguments[0] as BooleanValue
@@ -80,7 +86,8 @@ private interface LogicalOperator : BinaryInfixOperator, LeftAssociativeOperator
 /**
  * Infix operators that take two numbers and return a boolean.
  */
-private interface ComparisonOperator : BinaryInfixOperator {
+private interface ComparisonOperator :
+    BinaryInfixOperator {
     override val associativity: Associativity
         get() = Associativity.NON
 
@@ -91,7 +98,7 @@ private interface ComparisonOperator : BinaryInfixOperator {
     }
 
     override val type: OperatorType
-        get() = OperatorType(listOf(IntegerType, IntegerType), BooleanType)
+        get() = OperatorType(persistentListOf(IntegerType, IntegerType), BooleanType)
 
     override fun apply(arguments: List<Value>): Value {
         val arg1 = arguments[0] as IntegerValue
@@ -106,7 +113,7 @@ private interface ComparisonOperator : BinaryInfixOperator {
 
 object Negation : UnaryPrefixOperator {
     override val type: OperatorType
-        get() = OperatorType(listOf(IntegerType), IntegerType)
+        get() = OperatorType(persistentListOf(IntegerType), IntegerType)
 
     override fun apply(arguments: List<Value>): Value {
         return IntegerValue(-(arguments[0] as IntegerValue).value)
@@ -160,7 +167,9 @@ object Multiplication : ArithmeticOperator {
 
 object Division : ArithmeticOperator {
     override fun comparePrecedenceTo(other: Operator): Precedence {
-        return Multiplication.comparePrecedenceTo(other)
+        return Multiplication.comparePrecedenceTo(
+            other
+        )
     }
 
     override fun apply(left: Int, right: Int): Int {
@@ -176,7 +185,7 @@ object Division : ArithmeticOperator {
 
 object Not : UnaryPrefixOperator {
     override val type: OperatorType
-        get() = OperatorType(listOf(BooleanType), BooleanType)
+        get() = OperatorType(persistentListOf(BooleanType), BooleanType)
 
     override fun apply(arguments: List<Value>): Value {
         return BooleanValue(!(arguments[0] as BooleanValue).value)

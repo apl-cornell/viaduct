@@ -1,7 +1,7 @@
-package edu.cornell.cs.apl.viaduct.imp.values
+package edu.cornell.cs.apl.viaduct.syntax.values
 
-import edu.cornell.cs.apl.viaduct.imp.types.BooleanType
-import edu.cornell.cs.apl.viaduct.imp.types.ValueType
+import edu.cornell.cs.apl.viaduct.syntax.types.BooleanType
+import edu.cornell.cs.apl.viaduct.syntax.types.ValueType
 
 /** A boolean. */
 data class BooleanValue(val value: Boolean) : Value {

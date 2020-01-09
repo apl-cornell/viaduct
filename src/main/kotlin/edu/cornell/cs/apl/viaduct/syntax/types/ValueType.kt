@@ -1,6 +1,6 @@
-package edu.cornell.cs.apl.viaduct.imp.types
+package edu.cornell.cs.apl.viaduct.syntax.types
 
-import edu.cornell.cs.apl.viaduct.imp.values.Value
+import edu.cornell.cs.apl.viaduct.syntax.values.Value
 
 /**
  * The type of a [Value].

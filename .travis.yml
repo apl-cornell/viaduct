@@ -17,6 +17,6 @@ deploy:
   skip_cleanup: true
   github_token: $GITHUB_TOKEN
   keep_history: true
-  local_dir: build/docs/kotlin
+  local_dir: build/docs/viaduct
   on:
     branch: master

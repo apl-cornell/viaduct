@@ -143,6 +143,6 @@ compileTestKotlin {
 
 // Kotlin documentation
 dokka {
-    outputFormat = 'gfm'
+    outputFormat = 'jekyll'
     outputDirectory = "$buildDir/docs"
 }

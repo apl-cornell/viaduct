@@ -10,7 +10,7 @@ script:
   - ./gradlew check
   - ./gradlew jacocoTestReport
   - ./gradlew dokka
-  - ln -s ./viaduct/index.html build/docs/dokka/index.html
+  - ln -s viaduct/index.html build/docs/dokka/index.html
 after_success:
   - bash <(curl -s https://codecov.io/bash)
 deploy:

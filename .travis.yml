@@ -10,7 +10,7 @@ script:
   - ./gradlew check
   - ./gradlew jacocoTestReport
   - ./gradlew dokka
-  - echo "theme: jekyll-theme-hacker" > build/docs/viaduct/_config.yml
+  - cp _config.yml build/docs/viaduct/
 after_success:
   - bash <(curl -s https://codecov.io/bash)
 deploy:

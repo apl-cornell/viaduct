@@ -1,8 +1,6 @@
 package edu.cornell.cs.apl.viaduct.syntax.surface
 
-import edu.cornell.cs.apl.viaduct.syntax.SourceLocation
+import edu.cornell.cs.apl.viaduct.syntax.HasSourceLocation
 
 /** A node in the abstract syntax tree of a surface level program. */
-abstract class Node {
-    abstract val sourceLocation: SourceLocation
-}
+abstract class Node : HasSourceLocation

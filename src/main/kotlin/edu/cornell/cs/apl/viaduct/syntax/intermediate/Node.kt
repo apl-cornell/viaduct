@@ -1,6 +1,6 @@
 package edu.cornell.cs.apl.viaduct.syntax.intermediate
 
-import edu.cornell.cs.apl.viaduct.syntax.SourceLocation
+import edu.cornell.cs.apl.viaduct.syntax.HasSourceLocation
 
 /**
  * A node in the intermediate language abstract syntax tree.
@@ -12,6 +12,4 @@ import edu.cornell.cs.apl.viaduct.syntax.SourceLocation
  *   in temporary variables.
  */
 // TODO: what else?
-abstract class Node {
-    abstract val sourceLocation: SourceLocation
-}
+abstract class Node : HasSourceLocation

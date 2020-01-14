@@ -1,4 +1,4 @@
-package edu.cornell.cs.apl.viaduct.syntax.surface
+package edu.cornell.cs.apl.viaduct.syntax.intermediate
 
 import com.google.common.collect.ImmutableList
 import edu.cornell.cs.apl.viaduct.syntax.Constructor
@@ -53,51 +53,22 @@ data class SkipNode(override val sourceLocation: SourceLocation) : SimpleStateme
  * @param elseBranch Statement to execute if the guard is false.
  */
 data class IfNode(
-    val guard: ExpressionNode,
+    val guard: ReadNode,
     val thenBranch: BlockNode,
     val elseBranch: BlockNode,
     override val sourceLocation: SourceLocation
 ) : StatementNode()
 
-/** A loop statement. */
-sealed class LoopNode : StatementNode() {
-    /** A label for the loop that break nodes can refer to. */
-    abstract val jumpLabel: JumpLabel?
-
-    /** Statements to execute repeatedly. */
-    abstract val body: BlockNode
-}
-
-/** Executing a statement until a break statement is encountered. */
-data class InfiniteLoopNode(
-    override val body: BlockNode,
-    override val jumpLabel: JumpLabel? = null,
-    override val sourceLocation: SourceLocation
-) : LoopNode()
-
-/** Executing a statement repeatedly as long as a condition is true. */
-data class WhileLoopNode(
-    val guard: ExpressionNode,
-    override val body: BlockNode,
-    override val jumpLabel: JumpLabel? = null,
-    override val sourceLocation: SourceLocation
-) : LoopNode()
-
 /**
- * A for loop.
+ * A loop that is executed until a break statement is encountered.
  *
- * @param initialize Initializer for loop variables.
- * @param guard Loop until this becomes false.
- * @param update Update loop variables after each iteration.
+ * @param jumpLabel A label for the loop that break nodes can refer to.
  */
-data class ForLoopNode(
-    val initialize: SimpleStatementNode,
-    val guard: ExpressionNode,
-    val update: SimpleStatementNode,
-    override val body: BlockNode,
-    override val jumpLabel: JumpLabel? = null,
+data class InfiniteLoopNode(
+    val body: BlockNode,
+    val jumpLabel: JumpLabel? = null,
     override val sourceLocation: SourceLocation
-) : LoopNode()
+) : StatementNode()
 
 /**
  * Breaking out of a loop.
@@ -117,16 +88,42 @@ data class BlockNode(
 
 // Communication Statements
 
+/**
+ * An external input.
+ *
+ * @param temporary Store the received value to this temporary.
+ * @param type Type of the value to receive.
+ */
+data class InputNode(
+    val temporary: TemporaryNode,
+    val type: ValueTypeNode,
+    val host: HostNode,
+    override val sourceLocation: SourceLocation
+) : StatementNode()
+
 /** An external output. */
 data class OutputNode(
-    val message: ExpressionNode,
+    val message: AtomicExpressionNode,
     val host: HostNode,
+    override val sourceLocation: SourceLocation
+) : StatementNode()
+
+/**
+ * Receiving a value from another protocol.
+ *
+ * @param temporary Store the received value to this temporary.
+ * @param type Type of the value to receive.
+ */
+data class ReceiveNode(
+    val temporary: TemporaryNode,
+    val type: ValueTypeNode,
+    val protocol: ProtocolNode,
     override val sourceLocation: SourceLocation
 ) : StatementNode()
 
 /** Sending a value to another protocol. */
 data class SendNode(
-    val message: ExpressionNode,
+    val message: AtomicExpressionNode,
     val protocol: ProtocolNode,
     override val sourceLocation: SourceLocation
 ) : StatementNode()

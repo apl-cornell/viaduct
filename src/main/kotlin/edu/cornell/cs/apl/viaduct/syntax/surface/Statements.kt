@@ -18,6 +18,13 @@ sealed class SimpleStatementNode : StatementNode()
 
 // Simple Statements
 
+/** Declaring a new temporary variable. */
+data class LetNode(
+    val temporary: TemporaryNode,
+    val value: ExpressionNode,
+    override val sourceLocation: SourceLocation
+) : SimpleStatementNode()
+
 /** Constructing a new object and binding it to a variable. */
 data class DeclarationNode(
     val variable: ObjectVariableNode,
@@ -107,3 +114,57 @@ data class BlockNode(
     val statements: ImmutableList<StatementNode>,
     override val sourceLocation: SourceLocation
 ) : StatementNode()
+
+// Communication Statements
+
+/** Statements that perform external input/output. */
+sealed class IOStatementNode : StatementNode() {
+    /** Host to input from or output to. */
+    abstract val host: HostNode
+}
+
+/**
+ * An external input.
+ *
+ * @param temporary Store the received value into this variable.
+ * @param type Type of the value to receive.
+ */
+data class InputNode(
+    val temporary: TemporaryNode,
+    val type: ValueTypeNode,
+    override val host: HostNode,
+    override val sourceLocation: SourceLocation
+) : IOStatementNode()
+
+/** An external output. */
+data class OutputNode(
+    val message: ExpressionNode,
+    override val host: HostNode,
+    override val sourceLocation: SourceLocation
+) : IOStatementNode()
+
+/** Statements that send messages to or receive messages from other protocols. */
+sealed class CommunicationStatementNode : StatementNode() {
+    /** Protocol to receive from or send to. */
+    abstract val protocol: ProtocolNode
+}
+
+/**
+ * Receiving a value from another protocol.
+ *
+ * @param temporary Store the received value into this variable.
+ * @param type Type of the value to receive.
+ */
+data class ReceiveNode(
+    val temporary: TemporaryNode,
+    val type: ValueTypeNode,
+    override val protocol: ProtocolNode,
+    override val sourceLocation: SourceLocation
+) : CommunicationStatementNode()
+
+/** Sending a value to another protocol. */
+data class SendNode(
+    val message: ExpressionNode,
+    override val protocol: ProtocolNode,
+    override val sourceLocation: SourceLocation
+) : CommunicationStatementNode()

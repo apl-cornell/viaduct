@@ -25,8 +25,7 @@ data class OperatorApplicationNode(
     val operator: Operator,
     val arguments: Arguments,
     override val sourceLocation: SourceLocation
-) :
-    ExpressionNode()
+) : ExpressionNode()
 
 /** A query method applied to an object. */
 data class QueryNode(

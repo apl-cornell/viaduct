@@ -96,6 +96,7 @@ dependencies {
 
     // Functional data structures
     implementation group: 'io.vavr', name: 'vavr', version: '0.9.3'
+    implementation group: "org.jetbrains.kotlinx", name: "kotlinx-collections-immutable-jvm", version: "0.3"
 
     // Google's Guava (core data structures)
     implementation group: 'com.google.guava', name: 'guava', version: '28.1-jre'
@@ -142,6 +143,6 @@ compileTestKotlin {
 
 // Kotlin documentation
 dokka {
-    outputFormat = 'html'
-    outputDirectory = "$buildDir/docs/kotlin"
+    outputFormat = 'jekyll'
+    outputDirectory = "$buildDir/docs"
 }

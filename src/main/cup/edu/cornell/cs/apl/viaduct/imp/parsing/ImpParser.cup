@@ -520,14 +520,6 @@ expr ::=
       RESULT = binary(Times.create(), e1, e2);
     :}
 
-  | expr:e1 DIVIDE expr:e2 {:
-      RESULT = binary(Divide.create(), e1, e2);
-    :}
-
-  | MIN OPEN_PAREN expr:e1 COMMA expr:e2 CLOSE_PAREN {:
-      RESULT = binary(Min.create(), e1, e2);
-    :}
-
   | MINUS:begin expr:e {:
       final LiteralNode zero = LiteralNode.builder()
           .setValue(IntegerValue.create(0))

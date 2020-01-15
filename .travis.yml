@@ -9,7 +9,8 @@ cache:
 script:
   - ./gradlew check
   - ./gradlew jacocoTestReport
-  - ./gradlew javadoc
+  - ./gradlew dokka
+  - cp _config.yml build/docs/viaduct/
 after_success:
   - bash <(curl -s https://codecov.io/bash)
 deploy:
@@ -17,6 +18,6 @@ deploy:
   skip_cleanup: true
   github_token: $GITHUB_TOKEN
   keep_history: true
-  local_dir: build/docs/javadoc
+  local_dir: build/docs/viaduct
   on:
     branch: master

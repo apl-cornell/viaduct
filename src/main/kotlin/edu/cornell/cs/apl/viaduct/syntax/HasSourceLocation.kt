@@ -1,6 +1,6 @@
 package edu.cornell.cs.apl.viaduct.syntax
 
-/** Objects that know their [SourceLocation]. */
+/** A node in the abstract syntax tree that has a [SourceLocation]. */
 interface HasSourceLocation {
     val sourceLocation: SourceLocation
 }

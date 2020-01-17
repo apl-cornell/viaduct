@@ -1,4 +1,4 @@
 package edu.cornell.cs.apl.viaduct.syntax.types
 
-/** Types assigned to data and computations. */
+/** A type assignable to data or computations. */
 interface Type

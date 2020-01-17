@@ -1,4 +1,4 @@
 package edu.cornell.cs.apl.viaduct.syntax
 
-/** Variables are names that stand for things. */
+/** A variable is a name that stands for a value or an object instance. */
 interface Variable : Name

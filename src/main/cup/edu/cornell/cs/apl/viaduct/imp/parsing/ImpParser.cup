@@ -528,6 +528,10 @@ expr ::=
       RESULT = binary(Minus.create(), zero, e);
     :}
 
+  | MIN:begin OPEN_PAREN expr:e1 COMMA expr:e2 CLOSE_PAREN:end {:
+      RESULT = binary(Min.create(), e1, e2);
+    :}
+
   | DECLASSIFY:begin OPEN_PAREN expr:e COMMA label:first optional_to:second CLOSE_PAREN:end {:
       RESULT = downgrade(DowngradeType.DECLASSIFY, e, first, second, location(beginleft, endright));
     :}

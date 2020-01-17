@@ -331,8 +331,7 @@ public class CompileCommand extends BaseCommand {
     int protoCost = strategy.estimatePdgCost(protocolMap, pdg);
     if (pdg.getOrderedNodes().size() == protocolMap.size()) {
       if (this.verbose) {
-        System.out.println(
-            String.format("protocols selected! estimated cost: %d", protoCost));
+        System.out.println(String.format("protocols selected! estimated cost: %d", protoCost));
       }
 
       // Found a protocol for every node! Output synthesized distributed program.

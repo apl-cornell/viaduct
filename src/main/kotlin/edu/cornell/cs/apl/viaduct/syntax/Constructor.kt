@@ -1,4 +1,4 @@
 package edu.cornell.cs.apl.viaduct.syntax
 
-/** Object constructors. */
+/** An object constructor. */
 interface Constructor

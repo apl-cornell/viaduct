@@ -209,14 +209,13 @@ public final class ImpToMambaTranslator
 
     } else if (binOp instanceof BinaryOperators.Min) {
       mambaBinOp = MambaBinaryOperators.Divide.create();
-      return
-          MambaMuxNode.builder()
+      return MambaMuxNode.builder()
           .setGuard(
               MambaBinaryExpressionNode.builder()
-              .setLhs(mambaLhs)
-              .setOperator(MambaBinaryOperators.LessThan.create())
-              .setRhs(mambaRhs)
-              .build())
+                  .setLhs(mambaLhs)
+                  .setOperator(MambaBinaryOperators.LessThan.create())
+                  .setRhs(mambaRhs)
+                  .build())
           .setThenValue(mambaLhs)
           .setElseValue(mambaRhs)
           .build();

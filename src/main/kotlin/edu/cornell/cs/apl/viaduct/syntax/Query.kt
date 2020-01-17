@@ -1,4 +1,4 @@
 package edu.cornell.cs.apl.viaduct.syntax
 
-/** Read-only methods that return information about objects without modifying them. */
+/** A read-only method that returns information about the object without modifying it. */
 interface Query : Method

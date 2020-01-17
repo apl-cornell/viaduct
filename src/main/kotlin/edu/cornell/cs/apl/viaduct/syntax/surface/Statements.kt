@@ -1,10 +1,15 @@
 package edu.cornell.cs.apl.viaduct.syntax.surface
 
-import com.google.common.collect.ImmutableList
 import edu.cornell.cs.apl.viaduct.syntax.Constructor
+import edu.cornell.cs.apl.viaduct.syntax.HostNode
 import edu.cornell.cs.apl.viaduct.syntax.JumpLabel
+import edu.cornell.cs.apl.viaduct.syntax.ObjectVariableNode
+import edu.cornell.cs.apl.viaduct.syntax.ProtocolNode
 import edu.cornell.cs.apl.viaduct.syntax.SourceLocation
+import edu.cornell.cs.apl.viaduct.syntax.TemporaryNode
 import edu.cornell.cs.apl.viaduct.syntax.Update
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.persistentListOf
 
 /** A computation with side effects. */
 sealed class StatementNode : Node()
@@ -130,3 +135,7 @@ data class SendNode(
     val protocol: ProtocolNode,
     override val sourceLocation: SourceLocation
 ) : StatementNode()
+
+fun blockOf(stmt: StatementNode): BlockNode {
+    return BlockNode(persistentListOf(stmt), stmt.sourceLocation)
+}

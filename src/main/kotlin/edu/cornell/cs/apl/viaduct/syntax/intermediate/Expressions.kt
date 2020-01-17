@@ -1,5 +1,7 @@
 package edu.cornell.cs.apl.viaduct.syntax.intermediate
 
+import edu.cornell.cs.apl.viaduct.syntax.LabelNode
+import edu.cornell.cs.apl.viaduct.syntax.ObjectVariableNode
 import edu.cornell.cs.apl.viaduct.syntax.Operator
 import edu.cornell.cs.apl.viaduct.syntax.Query
 import edu.cornell.cs.apl.viaduct.syntax.SourceLocation
@@ -41,7 +43,7 @@ sealed class DowngradeNode : ExpressionNode() {
     abstract val expression: AtomicExpressionNode
 
     /** The label [expression] must have before the downgrade. */
-    abstract val fromLabel: LabelNode
+    abstract val fromLabel: LabelNode?
 
     /** The label after the downgrade. */
     abstract val toLabel: LabelNode
@@ -50,7 +52,7 @@ sealed class DowngradeNode : ExpressionNode() {
 /** Revealing the the result of an expression (reducing confidentiality). */
 data class DeclassificationNode(
     override val expression: AtomicExpressionNode,
-    override val fromLabel: LabelNode,
+    override val fromLabel: LabelNode? = null,
     override val toLabel: LabelNode,
     override val sourceLocation: SourceLocation
 ) : DowngradeNode()
@@ -58,7 +60,7 @@ data class DeclassificationNode(
 /** Trusting the result of an expression (increasing integrity). */
 data class EndorsementNode(
     override val expression: AtomicExpressionNode,
-    override val fromLabel: LabelNode,
+    override val fromLabel: LabelNode? = null,
     override val toLabel: LabelNode,
     override val sourceLocation: SourceLocation
 ) : DowngradeNode()

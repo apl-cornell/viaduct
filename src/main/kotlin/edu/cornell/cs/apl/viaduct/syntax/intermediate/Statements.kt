@@ -1,10 +1,16 @@
 package edu.cornell.cs.apl.viaduct.syntax.intermediate
 
-import com.google.common.collect.ImmutableList
 import edu.cornell.cs.apl.viaduct.syntax.Constructor
+import edu.cornell.cs.apl.viaduct.syntax.HostNode
 import edu.cornell.cs.apl.viaduct.syntax.JumpLabel
+import edu.cornell.cs.apl.viaduct.syntax.ObjectVariableNode
+import edu.cornell.cs.apl.viaduct.syntax.ProtocolNode
 import edu.cornell.cs.apl.viaduct.syntax.SourceLocation
+import edu.cornell.cs.apl.viaduct.syntax.TemporaryNode
 import edu.cornell.cs.apl.viaduct.syntax.Update
+import edu.cornell.cs.apl.viaduct.syntax.ValueTypeNode
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.persistentListOf
 
 /** A computation with side effects. */
 sealed class StatementNode : Node()
@@ -53,7 +59,7 @@ data class SkipNode(override val sourceLocation: SourceLocation) : SimpleStateme
  * @param elseBranch Statement to execute if the guard is false.
  */
 data class IfNode(
-    val guard: ReadNode,
+    val guard: AtomicExpressionNode,
     val thenBranch: BlockNode,
     val elseBranch: BlockNode,
     override val sourceLocation: SourceLocation
@@ -127,3 +133,8 @@ data class SendNode(
     val protocol: ProtocolNode,
     override val sourceLocation: SourceLocation
 ) : StatementNode()
+
+fun blockOf(stmt: StatementNode): BlockNode {
+    return BlockNode(persistentListOf(stmt), stmt.sourceLocation)
+}
+

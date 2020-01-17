@@ -74,6 +74,10 @@ class AnfTransformer {
 
     private val freshNameGenerator = FreshNameGenerator()
 
+    /** transform statement into intermediate ANF form.
+     *
+     * @param stmt the statement to transform.
+     */
     private fun transformStmt(stmt: SStatementNode): List<IStatementNode> {
         return when (stmt) {
             is SLetNode -> {
@@ -164,11 +168,21 @@ class AnfTransformer {
         }
     }
 
+    /**
+     * wrap a fresh name into a temporary.
+     */
     private fun getFreshTemporary(): Temporary {
         val varName = freshNameGenerator.getFreshName(TMP_NAME)
         return Temporary(varName)
     }
 
+    /**
+     * convert an expression's children into atomic expressions
+     * without changing the expression itself
+     *
+     * @param expr the expression to convert.
+     * @param bindings the current list of bindings to update.
+     */
     private fun transformAnfExpr(
         expr: SExpressionNode,
         bindings: MutableList<IStatementNode>
@@ -227,6 +241,13 @@ class AnfTransformer {
 
     }
 
+    /**
+     * convert an expression into an atomic expression by introducing a let binding
+     * that names the expression and replaces its occurrences with a ReadNode.
+     *
+     * @param expr the expression to convert.
+     * @param bindings current list of bindings to update.
+     */
     private fun transformAtomicExpr(
         expr: SExpressionNode,
         bindings: MutableList<IStatementNode>

@@ -1,9 +1,6 @@
 package edu.cornell.cs.apl.viaduct.syntax.transformers
 
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.blockOf
 import edu.cornell.cs.apl.viaduct.syntax.surface.*
-import kotlinx.collections.immutable.toImmutableList
-import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toPersistentList
 
 class Elaborator {
@@ -13,6 +10,11 @@ class Elaborator {
         }
     }
 
+    /**
+     * elaborate derived forms in a statement.
+     *
+     * @param stmt the statement to elaborate.
+     */
     private fun elaborate(stmt: StatementNode): StatementNode {
         return when (stmt) {
             is WhileLoopNode -> {

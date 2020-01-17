@@ -136,6 +136,11 @@ data class SendNode(
     override val sourceLocation: SourceLocation
 ) : StatementNode()
 
+/**
+ * create a singleton block from a statement.
+ *
+ * @param stmt the statement from which to create a block.
+ */
 fun blockOf(stmt: StatementNode): BlockNode {
     return BlockNode(persistentListOf(stmt), stmt.sourceLocation)
 }

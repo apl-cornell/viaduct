@@ -3,9 +3,7 @@ package edu.cornell.cs.apl.viaduct.syntax
 import edu.cornell.cs.apl.viaduct.security.Label
 import edu.cornell.cs.apl.viaduct.syntax.types.ValueType
 
-/**
- * Attaches a source location to an arbitrary type making it an abstract syntax tree node.
- */
+/** Attaches a source location to an arbitrary type. */
 data class Located<T>(val value: T, override val sourceLocation: SourceLocation) : HasSourceLocation
 
 typealias HostNode = Located<Host>

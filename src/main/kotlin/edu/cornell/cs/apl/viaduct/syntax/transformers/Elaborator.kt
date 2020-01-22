@@ -1,8 +1,15 @@
 package edu.cornell.cs.apl.viaduct.syntax.transformers
 
-import edu.cornell.cs.apl.viaduct.syntax.surface.*
+import edu.cornell.cs.apl.viaduct.syntax.surface.BlockNode
+import edu.cornell.cs.apl.viaduct.syntax.surface.BreakNode
+import edu.cornell.cs.apl.viaduct.syntax.surface.ForLoopNode
+import edu.cornell.cs.apl.viaduct.syntax.surface.IfNode
+import edu.cornell.cs.apl.viaduct.syntax.surface.InfiniteLoopNode
+import edu.cornell.cs.apl.viaduct.syntax.surface.StatementNode
+import edu.cornell.cs.apl.viaduct.syntax.surface.WhileLoopNode
 import kotlinx.collections.immutable.toPersistentList
 
+// TODO: this is broken AF. Doesn't recurse.
 class Elaborator {
     companion object {
         fun run(stmt: StatementNode): StatementNode {
@@ -19,14 +26,20 @@ class Elaborator {
         return when (stmt) {
             is WhileLoopNode -> {
                 InfiniteLoopNode(
-                    blockOf(
+                    BlockNode(
                         IfNode(
                             stmt.guard,
                             stmt.body,
-                            blockOf(BreakNode(null, stmt.sourceLocation)),
-                            stmt.sourceLocation)),
+                            BlockNode(
+                                BreakNode(sourceLocation = stmt.sourceLocation),
+                                sourceLocation = stmt.sourceLocation
+                            ),
+                            stmt.sourceLocation
+                        ), sourceLocation = stmt.sourceLocation
+                    ),
                     null,
-                    stmt.sourceLocation)
+                    stmt.sourceLocation
+                )
             }
 
             is ForLoopNode -> {
@@ -40,13 +53,16 @@ class Elaborator {
                 block.add(stmt.initialize)
                 block.add(
                     InfiniteLoopNode(
-                        blockOf(
+                        BlockNode(
                             IfNode(
                                 stmt.guard,
                                 newBody,
-                                blockOf(BreakNode(null, stmt.sourceLocation)),
+                                BlockNode(
+                                    BreakNode(null, stmt.sourceLocation),
+                                    sourceLocation = stmt.sourceLocation
+                                ),
                                 stmt.guard.sourceLocation
-                            )
+                            ), sourceLocation = stmt.sourceLocation
                         ),
                         null,
                         stmt.sourceLocation

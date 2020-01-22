@@ -9,46 +9,36 @@ import edu.cornell.cs.apl.viaduct.syntax.SourceLocation
 import edu.cornell.cs.apl.viaduct.syntax.TemporaryNode
 import edu.cornell.cs.apl.viaduct.syntax.Update
 import edu.cornell.cs.apl.viaduct.syntax.ValueTypeNode
-import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.toPersistentList
 
 /** A computation with side effects. */
 sealed class StatementNode : Node()
 
-/**
- * A statement that is _not_ a combination of other statements.
- *
- * Simple statements can show up in for loop headers.
- */
-sealed class SimpleStatementNode : StatementNode()
-
 // Simple Statements
 
 /** Binding the result of an expression to a new temporary variable. */
-data class LetNode(
+class LetNode(
     val temporary: TemporaryNode,
     val value: ExpressionNode,
     override val sourceLocation: SourceLocation
-) : SimpleStatementNode()
+) : StatementNode()
 
 /** Constructing a new object and binding it to a variable. */
-data class DeclarationNode(
+class DeclarationNode(
     val variable: ObjectVariableNode,
     val constructor: Constructor,
     val arguments: Arguments,
     override val sourceLocation: SourceLocation
-) : SimpleStatementNode()
+) : StatementNode()
 
 /** An update method applied to an object. */
-data class UpdateNode(
+class UpdateNode(
     val variable: ObjectVariableNode,
     val update: Update,
     val arguments: Arguments,
     override val sourceLocation: SourceLocation
-) : SimpleStatementNode()
-
-/** A statement that does nothing. */
-data class SkipNode(override val sourceLocation: SourceLocation) : SimpleStatementNode()
+) : StatementNode()
 
 // Compound Statements
 
@@ -58,7 +48,7 @@ data class SkipNode(override val sourceLocation: SourceLocation) : SimpleStateme
  * @param thenBranch Statement to execute if the guard is true.
  * @param elseBranch Statement to execute if the guard is false.
  */
-data class IfNode(
+class IfNode(
     val guard: AtomicExpressionNode,
     val thenBranch: BlockNode,
     val elseBranch: BlockNode,
@@ -70,7 +60,7 @@ data class IfNode(
  *
  * @param jumpLabel A label for the loop that break nodes can refer to.
  */
-data class InfiniteLoopNode(
+class InfiniteLoopNode(
     val body: BlockNode,
     val jumpLabel: JumpLabel? = null,
     override val sourceLocation: SourceLocation
@@ -81,16 +71,22 @@ data class InfiniteLoopNode(
  *
  * @param jumpLabel Label of the loop to break out of. A null value refers to the innermost loop.
  */
-data class BreakNode(
+class BreakNode(
     val jumpLabel: JumpLabel? = null,
     override val sourceLocation: SourceLocation
 ) : StatementNode()
 
 /** A sequence of statements. */
-data class BlockNode(
-    val statements: ImmutableList<StatementNode>,
+class BlockNode(
+    statements: List<StatementNode>,
     override val sourceLocation: SourceLocation
-) : StatementNode()
+) : StatementNode() {
+    // Create an immutable copy
+    val statements: List<StatementNode> = statements.toPersistentList()
+
+    constructor(vararg statements: StatementNode, sourceLocation: SourceLocation) :
+        this(persistentListOf(*statements), sourceLocation)
+}
 
 // Communication Statements
 
@@ -100,7 +96,7 @@ data class BlockNode(
  * @param temporary Store the received value to this temporary.
  * @param type Type of the value to receive.
  */
-data class InputNode(
+class InputNode(
     val temporary: TemporaryNode,
     val type: ValueTypeNode,
     val host: HostNode,
@@ -108,7 +104,7 @@ data class InputNode(
 ) : StatementNode()
 
 /** An external output. */
-data class OutputNode(
+class OutputNode(
     val message: AtomicExpressionNode,
     val host: HostNode,
     override val sourceLocation: SourceLocation
@@ -120,7 +116,7 @@ data class OutputNode(
  * @param temporary Store the received value to this temporary.
  * @param type Type of the value to receive.
  */
-data class ReceiveNode(
+class ReceiveNode(
     val temporary: TemporaryNode,
     val type: ValueTypeNode,
     val protocol: ProtocolNode,
@@ -128,18 +124,8 @@ data class ReceiveNode(
 ) : StatementNode()
 
 /** Sending a value to another protocol. */
-data class SendNode(
+class SendNode(
     val message: AtomicExpressionNode,
     val protocol: ProtocolNode,
     override val sourceLocation: SourceLocation
 ) : StatementNode()
-
-/**
- * create a singleton block from a statement.
- *
- * @param stmt the statement from which to create a block.
- */
-fun blockOf(stmt: StatementNode): BlockNode {
-    return BlockNode(persistentListOf(stmt), stmt.sourceLocation)
-}
-

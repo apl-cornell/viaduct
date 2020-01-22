@@ -1,11 +1,11 @@
 package edu.cornell.cs.apl.viaduct.syntax.transformers
 
 import edu.cornell.cs.apl.viaduct.errors.ElaborationException
+import edu.cornell.cs.apl.viaduct.syntax.Located
 import edu.cornell.cs.apl.viaduct.syntax.Temporary
 import edu.cornell.cs.apl.viaduct.util.FreshNameGenerator
 import kotlinx.collections.immutable.toImmutableList
-import kotlinx.collections.immutable.toPersistentList
-import edu.cornell.cs.apl.viaduct.syntax.Located as INodeFrom
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.Arguments as IArguments
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.AtomicExpressionNode as IAtomicExpressionNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.BlockNode as IBlockNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.BreakNode as IBreakNode
@@ -24,7 +24,6 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.QueryNode as IQueryNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ReadNode as IReadNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ReceiveNode as IReceiveNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.SendNode as ISendNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.SkipNode as ISkipNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.StatementNode as IStatementNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.UpdateNode as IUpdateNode
 import edu.cornell.cs.apl.viaduct.syntax.surface.BlockNode as SBlockNode
@@ -61,7 +60,6 @@ class AnfTransformer {
         private fun extractBlock(stmts: List<IStatementNode>): IBlockNode {
             if (stmts.size == 1) {
                 return stmts[0] as IBlockNode
-
             } else {
                 throw IllegalArgumentException("statement list must have a single element")
             }
@@ -94,7 +92,7 @@ class AnfTransformer {
                     IDeclarationNode(
                         stmt.variable,
                         stmt.constructor,
-                        newArgs.toImmutableList(),
+                        IArguments(newArgs),
                         stmt.sourceLocation
                     )
                 )
@@ -108,14 +106,14 @@ class AnfTransformer {
                     IUpdateNode(
                         stmt.variable,
                         stmt.update,
-                        newArgs.toImmutableList(),
+                        IArguments(newArgs),
                         stmt.sourceLocation
                     )
                 )
                 stmtList
             }
 
-            is SSkipNode -> listOf(ISkipNode(stmt.sourceLocation))
+            is SSkipNode -> listOf(IBlockNode(sourceLocation = stmt.sourceLocation))
 
             is SIfNode -> {
                 val stmtList = mutableListOf<IStatementNode>()
@@ -197,15 +195,19 @@ class AnfTransformer {
             }
 
             is SOperatorApplicationNode -> {
-                val newArgs = expr.arguments.map { childExpr -> transformAtomicExpr(childExpr, bindings) }
+                val newArgs =
+                    expr.arguments.map { childExpr -> transformAtomicExpr(childExpr, bindings) }
                 IOperatorApplicationNode(
-                    expr.operator, newArgs.toImmutableList(), expr.sourceLocation)
+                    expr.operator, IArguments(newArgs), expr.sourceLocation
+                )
             }
 
             is SQueryNode -> {
-                val newArgs = expr.arguments.map { childExpr -> transformAtomicExpr(childExpr, bindings) }
+                val newArgs =
+                    expr.arguments.map { childExpr -> transformAtomicExpr(childExpr, bindings) }
                 IQueryNode(
-                    expr.variable, expr.query, newArgs.toImmutableList(), expr.sourceLocation)
+                    expr.variable, expr.query, IArguments(newArgs), expr.sourceLocation
+                )
             }
 
             is SDeclassificationNode -> {
@@ -222,7 +224,10 @@ class AnfTransformer {
                 val tmp = getFreshTemporary()
                 bindings.add(
                     IInputNode(
-                        INodeFrom(tmp, expr.sourceLocation), expr.type, expr.host, expr.sourceLocation
+                        Located(tmp, expr.sourceLocation),
+                        expr.type,
+                        expr.host,
+                        expr.sourceLocation
                     )
                 )
                 IReadNode(tmp, expr.sourceLocation)
@@ -232,13 +237,15 @@ class AnfTransformer {
                 val tmp = getFreshTemporary()
                 bindings.add(
                     IReceiveNode(
-                        INodeFrom(tmp, expr.sourceLocation), expr.type, expr.protocol, expr.sourceLocation
+                        Located(tmp, expr.sourceLocation),
+                        expr.type,
+                        expr.protocol,
+                        expr.sourceLocation
                     )
                 )
                 IReadNode(tmp, expr.sourceLocation)
             }
         }
-
     }
 
     /**
@@ -257,11 +264,10 @@ class AnfTransformer {
             else -> {
                 val tmp = getFreshTemporary()
                 bindings.add(
-                    ILetNode(INodeFrom(tmp, expr.sourceLocation), newExpr, expr.sourceLocation)
+                    ILetNode(Located(tmp, expr.sourceLocation), newExpr, expr.sourceLocation)
                 )
                 IReadNode(tmp, newExpr.sourceLocation)
             }
         }
     }
 }
-

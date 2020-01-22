@@ -8,8 +8,8 @@ import edu.cornell.cs.apl.viaduct.syntax.ProtocolNode
 import edu.cornell.cs.apl.viaduct.syntax.SourceLocation
 import edu.cornell.cs.apl.viaduct.syntax.TemporaryNode
 import edu.cornell.cs.apl.viaduct.syntax.Update
-import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.toPersistentList
 
 /** A computation with side effects. */
 sealed class StatementNode : Node()
@@ -24,14 +24,14 @@ sealed class SimpleStatementNode : StatementNode()
 // Simple Statements
 
 /** Binding the result of an expression to a new temporary variable. */
-data class LetNode(
+class LetNode(
     val temporary: TemporaryNode,
     val value: ExpressionNode,
     override val sourceLocation: SourceLocation
 ) : SimpleStatementNode()
 
 /** Constructing a new object and binding it to a variable. */
-data class DeclarationNode(
+class DeclarationNode(
     val variable: ObjectVariableNode,
     val constructor: Constructor,
     val arguments: Arguments,
@@ -39,7 +39,7 @@ data class DeclarationNode(
 ) : SimpleStatementNode()
 
 /** An update method applied to an object. */
-data class UpdateNode(
+class UpdateNode(
     val variable: ObjectVariableNode,
     val update: Update,
     val arguments: Arguments,
@@ -47,7 +47,7 @@ data class UpdateNode(
 ) : SimpleStatementNode()
 
 /** A statement that does nothing. */
-data class SkipNode(override val sourceLocation: SourceLocation) : SimpleStatementNode()
+class SkipNode(override val sourceLocation: SourceLocation) : SimpleStatementNode()
 
 // Compound Statements
 
@@ -57,7 +57,7 @@ data class SkipNode(override val sourceLocation: SourceLocation) : SimpleStateme
  * @param thenBranch Statement to execute if the guard is true.
  * @param elseBranch Statement to execute if the guard is false.
  */
-data class IfNode(
+class IfNode(
     val guard: ExpressionNode,
     val thenBranch: BlockNode,
     val elseBranch: BlockNode,
@@ -74,14 +74,14 @@ sealed class LoopNode : StatementNode() {
 }
 
 /** Executing a statement until a break statement is encountered. */
-data class InfiniteLoopNode(
+class InfiniteLoopNode(
     override val body: BlockNode,
     override val jumpLabel: JumpLabel? = null,
     override val sourceLocation: SourceLocation
 ) : LoopNode()
 
 /** Executing a statement repeatedly as long as a condition is true. */
-data class WhileLoopNode(
+class WhileLoopNode(
     val guard: ExpressionNode,
     override val body: BlockNode,
     override val jumpLabel: JumpLabel? = null,
@@ -95,7 +95,7 @@ data class WhileLoopNode(
  * @param guard Loop until this becomes false.
  * @param update Update loop variables after each iteration.
  */
-data class ForLoopNode(
+class ForLoopNode(
     val initialize: SimpleStatementNode,
     val guard: ExpressionNode,
     val update: SimpleStatementNode,
@@ -109,28 +109,34 @@ data class ForLoopNode(
  *
  * @param jumpLabel Label of the loop to break out of. A null value refers to the innermost loop.
  */
-data class BreakNode(
+class BreakNode(
     val jumpLabel: JumpLabel? = null,
     override val sourceLocation: SourceLocation
 ) : StatementNode()
 
 /** A sequence of statements. */
-data class BlockNode(
-    val statements: ImmutableList<StatementNode>,
+class BlockNode(
+    statements: List<StatementNode>,
     override val sourceLocation: SourceLocation
-) : StatementNode()
+) : StatementNode(), List<StatementNode> by statements {
+    // Create an immutable copy
+    val statements: List<StatementNode> = statements.toPersistentList()
+
+    constructor(vararg statements: StatementNode, sourceLocation: SourceLocation) :
+        this(persistentListOf(*statements), sourceLocation)
+}
 
 // Communication Statements
 
 /** An external output. */
-data class OutputNode(
+class OutputNode(
     val message: ExpressionNode,
     val host: HostNode,
     override val sourceLocation: SourceLocation
 ) : StatementNode()
 
 /** Sending a value to another protocol. */
-data class SendNode(
+class SendNode(
     val message: ExpressionNode,
     val protocol: ProtocolNode,
     override val sourceLocation: SourceLocation

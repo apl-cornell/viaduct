@@ -15,22 +15,22 @@ sealed class ExpressionNode : Node()
 sealed class AtomicExpressionNode : ExpressionNode()
 
 /** A literal constant. */
-data class LiteralNode(val value: Value, override val sourceLocation: SourceLocation) :
+class LiteralNode(val value: Value, override val sourceLocation: SourceLocation) :
     AtomicExpressionNode()
 
 /** Reading the value stored in a temporary. */
-data class ReadNode(val temporary: Temporary, override val sourceLocation: SourceLocation) :
+class ReadNode(val temporary: Temporary, override val sourceLocation: SourceLocation) :
     AtomicExpressionNode()
 
 /** An n-ary operator applied to n arguments. */
-data class OperatorApplicationNode(
+class OperatorApplicationNode(
     val operator: Operator,
     val arguments: Arguments,
     override val sourceLocation: SourceLocation
 ) : ExpressionNode()
 
 /** A query method applied to an object. */
-data class QueryNode(
+class QueryNode(
     val variable: ObjectVariableNode,
     val query: Query,
     val arguments: Arguments,
@@ -50,7 +50,7 @@ sealed class DowngradeNode : ExpressionNode() {
 }
 
 /** Revealing the the result of an expression (reducing confidentiality). */
-data class DeclassificationNode(
+class DeclassificationNode(
     override val expression: AtomicExpressionNode,
     override val fromLabel: LabelNode? = null,
     override val toLabel: LabelNode,
@@ -58,7 +58,7 @@ data class DeclassificationNode(
 ) : DowngradeNode()
 
 /** Trusting the result of an expression (increasing integrity). */
-data class EndorsementNode(
+class EndorsementNode(
     override val expression: AtomicExpressionNode,
     override val fromLabel: LabelNode? = null,
     override val toLabel: LabelNode,

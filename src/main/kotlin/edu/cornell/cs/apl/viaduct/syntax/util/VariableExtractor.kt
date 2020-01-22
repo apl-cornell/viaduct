@@ -1,0 +1,46 @@
+package edu.cornell.cs.apl.viaduct.syntax.util
+
+import edu.cornell.cs.apl.viaduct.syntax.Variable
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.*
+import kotlinx.collections.immutable.PersistentList
+import kotlinx.collections.immutable.toPersistentList
+
+/** extracts variables from statements while preserving program order. */
+class VariableExtractor private constructor() {
+    companion object {
+        fun run(stmt: StatementNode): PersistentList<Variable> {
+            val variableList = mutableListOf<Variable>()
+            extractVariables(stmt, variableList)
+            return variableList.toPersistentList()
+        }
+
+        private fun extractVariables(stmt: StatementNode, variableList: MutableList<Variable>) {
+            when (stmt) {
+                is TemporaryBindingForm -> {
+                    variableList.add(stmt.temporary.value)
+                }
+
+                is DeclarationNode -> {
+                    variableList.add(stmt.variable.value)
+                }
+
+                is IfNode -> {
+                    extractVariables(stmt.thenBranch, variableList)
+                    extractVariables(stmt.elseBranch, variableList)
+                }
+
+                is InfiniteLoopNode -> {
+                    extractVariables(stmt.body, variableList)
+                }
+
+                is BlockNode -> {
+                    for (childStmt in stmt.statements) {
+                        extractVariables(childStmt, variableList)
+                    }
+                }
+
+                else -> {}
+            }
+        }
+    }
+}

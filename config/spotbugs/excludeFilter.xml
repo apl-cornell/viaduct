@@ -24,6 +24,11 @@
         <Class name="~.*\.parsing\.sym"/>
     </Match>
 
+    <!-- ignore Kotlin (*.kt) files -->
+    <Match>
+        <Source name="~.*\.kt"/>
+    </Match>
+
     <!-- This causes SpotBugs to complain about try-with-resources blocks. See https://github.com/spotbugs/spotbugs/issues/600.  -->
     <Match>
         <Bug pattern="RCN_REDUNDANT_NULLCHECK_WOULD_HAVE_BEEN_A_NPE"/>

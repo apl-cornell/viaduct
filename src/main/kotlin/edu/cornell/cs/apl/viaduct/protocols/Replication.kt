@@ -12,13 +12,13 @@ import kotlinx.collections.immutable.toPersistentSet
  * Replication increases integrity, but doing it in the clear sacrifices confidentiality.
  * Additionally, availability is lost if _any_ participating host aborts.
  */
-class Replicated(hosts: Set<Host>) : Protocol {
+class Replication(hosts: Set<Host>) : Protocol {
     init {
         require(hosts.size >= 2)
     }
 
     override val name: String
-        get() = "Replicated"
+        get() = "Replication"
 
     // Make an immutable copy
     override val hosts: Set<Host> = hosts.toPersistentSet()
@@ -27,7 +27,7 @@ class Replicated(hosts: Set<Host>) : Protocol {
         hosts.fold(Label.top()) { label, host -> label.meet(hostTrustConfiguration.getValue(host)) }
 
     override fun equals(other: Any?): Boolean =
-        other is Replicated && this.hosts == other.hosts
+        other is Replication && this.hosts == other.hosts
 
     override fun hashCode(): Int =
         hosts.hashCode()

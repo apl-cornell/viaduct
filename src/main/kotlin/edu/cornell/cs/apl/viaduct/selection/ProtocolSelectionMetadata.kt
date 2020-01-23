@@ -2,7 +2,9 @@ package edu.cornell.cs.apl.viaduct.selection
 
 import edu.cornell.cs.apl.viaduct.imp.HostTrustConfiguration
 import edu.cornell.cs.apl.viaduct.syntax.ArrayRead
+import edu.cornell.cs.apl.viaduct.syntax.ObjectVariable
 import edu.cornell.cs.apl.viaduct.syntax.Temporary
+import edu.cornell.cs.apl.viaduct.syntax.Variable
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.BlockNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ControlNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.DeclarationNode
@@ -49,11 +51,17 @@ open class ProtocolSelectionContext(
     /** computations that are loop guards. */
     private val loopGuards = mutableSetOf<Temporary>()
 
-    /* parent exprs to child exprs. */
+    /** parent exprs to child exprs. */
     private val readMap = mutableMapOf<Temporary, Set<Temporary>>()
 
-    /* child exprs to parent exprs. */
+    /** child exprs to parent exprs. */
     private val parentMap = mutableMapOf<Temporary, Temporary>()
+
+    /** temporaries to the let bindings that define them. */
+    private val letBindingMap = mutableMapOf<Temporary, LetNode>()
+
+    /** object vars to their object declarations. */
+    private val declarationMap = mutableMapOf<ObjectVariable, DeclarationNode>()
 
     /** control structures and in which the computation or declaration is defined. */
     private val controlContextMap = mutableMapOf<SimpleStatementNode, List<ControlNode>>()
@@ -106,6 +114,7 @@ open class ProtocolSelectionContext(
             is LetNode -> {
                 updateReadMap(stmt)
                 updateControlContext(stmt, controlContext)
+                letBindingMap[stmt.temporary.value] = stmt
 
                 when (val letStmt = stmt.value) {
                     is QueryNode -> {
@@ -128,6 +137,7 @@ open class ProtocolSelectionContext(
 
             is DeclarationNode -> {
                 updateControlContext(stmt, controlContext)
+                declarationMap[stmt.variable.value] = stmt
                 for (arg in stmt.arguments) {
                     when (arg) {
                         is ReadNode -> constructorArguments.add(arg.temporary)
@@ -202,7 +212,6 @@ open class ProtocolSelectionContext(
         }
 
         return false
-
     }
 
     fun inArrayIndex(tmp: Temporary): Boolean {
@@ -219,6 +228,15 @@ open class ProtocolSelectionContext(
 
     fun inConditionalGuard(tmp: Temporary): Boolean {
         return isSubexpressionInSet(tmp, conditionalGuards)
+    }
+
+    fun inLoop(v: Variable): Boolean {
+        return when (v) {
+            is Temporary -> letBindingMap[v]
+            is ObjectVariable -> declarationMap[v]
+        }?.let { stmt ->
+            controlContextMap[stmt]?.filterIsInstance<InfiniteLoopNode>()?.any()
+        } ?: false
     }
 }
 

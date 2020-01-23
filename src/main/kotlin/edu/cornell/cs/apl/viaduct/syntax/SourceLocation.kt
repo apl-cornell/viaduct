@@ -24,7 +24,6 @@ data class SourceLocation(private val location: SourceRange) {
         location.showInSource(output, contextLines)
     }
 
-    override fun toString(): String {
-        return location.toString()
-    }
+    override fun toString(): String =
+        location.toString()
 }

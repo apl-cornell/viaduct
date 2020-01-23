@@ -15,6 +15,8 @@ import kotlinx.collections.immutable.toPersistentList
 /** A computation with side effects. */
 sealed class StatementNode : Node()
 
+sealed class SimpleStatementNode : StatementNode()
+
 // Simple Statements
 
 /** Binding the result of an expression to a new temporary variable. */
@@ -22,7 +24,7 @@ class LetNode(
     val temporary: TemporaryNode,
     val value: ExpressionNode,
     override val sourceLocation: SourceLocation
-) : StatementNode()
+) : SimpleStatementNode()
 
 /** Constructing a new object and binding it to a variable. */
 class DeclarationNode(
@@ -30,7 +32,7 @@ class DeclarationNode(
     val constructor: Constructor,
     val arguments: Arguments,
     override val sourceLocation: SourceLocation
-) : StatementNode()
+) : SimpleStatementNode()
 
 /** An update method applied to an object. */
 class UpdateNode(
@@ -38,9 +40,11 @@ class UpdateNode(
     val update: Update,
     val arguments: Arguments,
     override val sourceLocation: SourceLocation
-) : StatementNode()
+) : SimpleStatementNode()
 
 // Compound Statements
+
+sealed class ControlNode : StatementNode()
 
 /**
  * Executing statements conditionally.
@@ -53,7 +57,7 @@ class IfNode(
     val thenBranch: BlockNode,
     val elseBranch: BlockNode,
     override val sourceLocation: SourceLocation
-) : StatementNode()
+) : ControlNode()
 
 /**
  * A loop that is executed until a break statement is encountered.
@@ -64,7 +68,7 @@ class InfiniteLoopNode(
     val body: BlockNode,
     val jumpLabel: JumpLabel? = null,
     override val sourceLocation: SourceLocation
-) : StatementNode()
+) : ControlNode()
 
 /**
  * Breaking out of a loop.
@@ -86,9 +90,17 @@ class BlockNode(
 
     constructor(vararg statements: StatementNode, sourceLocation: SourceLocation) :
         this(persistentListOf(*statements), sourceLocation)
+
+    fun singletonStatement(): StatementNode? {
+        return if (statements.size == 1) statements[0] else null
+    }
 }
 
 // Communication Statements
+
+sealed class CommunicationNode : SimpleStatementNode()
+
+sealed class ExternalCommunicationNode : CommunicationNode()
 
 /**
  * An external input.
@@ -101,14 +113,16 @@ class InputNode(
     val type: ValueTypeNode,
     val host: HostNode,
     override val sourceLocation: SourceLocation
-) : StatementNode()
+) : ExternalCommunicationNode()
 
 /** An external output. */
 class OutputNode(
     val message: AtomicExpressionNode,
     val host: HostNode,
     override val sourceLocation: SourceLocation
-) : StatementNode()
+) : ExternalCommunicationNode()
+
+sealed class InternalCommunicationNode : CommunicationNode()
 
 /**
  * Receiving a value from another protocol.
@@ -121,11 +135,11 @@ class ReceiveNode(
     val type: ValueTypeNode,
     val protocol: ProtocolNode,
     override val sourceLocation: SourceLocation
-) : StatementNode()
+) : InternalCommunicationNode()
 
 /** Sending a value to another protocol. */
 class SendNode(
     val message: AtomicExpressionNode,
     val protocol: ProtocolNode,
     override val sourceLocation: SourceLocation
-) : StatementNode()
+) : InternalCommunicationNode()

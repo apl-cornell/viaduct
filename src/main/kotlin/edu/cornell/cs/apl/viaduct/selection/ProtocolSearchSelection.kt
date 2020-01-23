@@ -24,7 +24,7 @@ class ProtocolSearchSelection(
 ): ProtocolSelection {
 
     override fun selectProtocols(
-        hostConfig: HostTrustConfiguration,
+        context: ProtocolSelectionContext,
         stmt: StatementNode
     ): ProtocolMap? {
         val initProtocolMap = persistentMapOf<Variable, Protocol>()
@@ -46,7 +46,7 @@ class ProtocolSearchSelection(
 
             val nextVariable = variableList[currentProtoMap.size]
             val protocolMapNeighbors =
-                searchStrategy.createProtocolInstances(hostConfig, currentProtoMap, nextVariable)
+                searchStrategy.createProtocolInstances(context, currentProtoMap, nextVariable)
 
             for (neighbor in protocolMapNeighbors) {
                 when (val estimate = costEstimator.estimateCost(neighbor)) {

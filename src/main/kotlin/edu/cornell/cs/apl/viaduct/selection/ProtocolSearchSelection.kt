@@ -1,6 +1,5 @@
 package edu.cornell.cs.apl.viaduct.selection
 
-import edu.cornell.cs.apl.viaduct.imp.HostTrustConfiguration
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
 import edu.cornell.cs.apl.viaduct.syntax.Variable
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.StatementNode
@@ -21,7 +20,7 @@ private data class ProtocolSearchNode(
 class ProtocolSearchSelection(
     val searchStrategy: ProtocolSearchStrategy,
     val costEstimator: ProtocolCostEstimator
-): ProtocolSelection {
+) : ProtocolSelection {
 
     override fun selectProtocols(
         context: ProtocolSelectionContext,

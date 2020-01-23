@@ -2,8 +2,10 @@ package edu.cornell.cs.apl.viaduct.passes
 
 import edu.cornell.cs.apl.viaduct.errors.ElaborationException
 import edu.cornell.cs.apl.viaduct.syntax.Located
+import edu.cornell.cs.apl.viaduct.syntax.ObjectVariable
 import edu.cornell.cs.apl.viaduct.syntax.Temporary
 import edu.cornell.cs.apl.viaduct.util.FreshNameGenerator
+import edu.cornell.cs.apl.viaduct.util.SymbolTable
 import kotlinx.collections.immutable.toImmutableList
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.Arguments as IArguments
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.AtomicExpressionNode as IAtomicExpressionNode
@@ -75,6 +77,7 @@ class AnfTransformer {
     }
 
     private val freshNameGenerator = FreshNameGenerator()
+    private val renameMap = SymbolTable<ObjectVariable, ObjectVariable>()
 
     /** transform statement into intermediate ANF form.
      *
@@ -91,24 +94,30 @@ class AnfTransformer {
 
             is SDeclarationNode -> {
                 val stmtList = mutableListOf<IStatementNode>()
+                val newVariableNode =
+                    stmt.variable.copy(
+                        value = ObjectVariable(
+                            freshNameGenerator.getFreshName(stmt.variable.value.name)))
                 val newArgs = stmt.arguments.map { arg -> transformAtomicExpr(arg, stmtList) }
                 stmtList.add(
                     IDeclarationNode(
-                        stmt.variable,
+                        newVariableNode,
                         stmt.constructor,
                         IArguments(newArgs),
                         stmt.sourceLocation
                     )
                 )
+                renameMap.put(stmt.variable.value, newVariableNode.value)
                 stmtList
             }
 
             is SUpdateNode -> {
                 val stmtList = mutableListOf<IStatementNode>()
+                val newVariableNode = stmt.variable.copy(value = renameMap.get(stmt.variable.value))
                 val newArgs = stmt.arguments.map { arg -> transformAtomicExpr(arg, stmtList) }
                 stmtList.add(
                     IUpdateNode(
-                        stmt.variable,
+                        newVariableNode,
                         stmt.update,
                         IArguments(newArgs),
                         stmt.sourceLocation
@@ -122,14 +131,10 @@ class AnfTransformer {
             is SIfNode -> {
                 val stmtList = mutableListOf<IStatementNode>()
                 val newGuard = transformAtomicExpr(stmt.guard, stmtList)
-                val newThenBranch =
-                    extractBlock(
-                        transformStmt(stmt.thenBranch)
-                    )
-                val newElseBranch =
-                    extractBlock(
-                        transformStmt(stmt.elseBranch)
-                    )
+
+                val newThenBranch = extractBlock(transformStmt(stmt.thenBranch))
+                val newElseBranch = extractBlock(transformStmt(stmt.elseBranch))
+
                 stmtList.add(IIfNode(newGuard, newThenBranch, newElseBranch, stmt.sourceLocation))
                 stmtList
             }
@@ -137,12 +142,9 @@ class AnfTransformer {
             is SInfiniteLoopNode -> {
                 listOf(
                     IInfiniteLoopNode(
-                        extractBlock(
-                            transformStmt(stmt.body)
-                        ),
+                        extractBlock(transformStmt(stmt.body)),
                         stmt.jumpLabel,
-                        stmt.sourceLocation
-                    )
+                        stmt.sourceLocation)
                 )
             }
 
@@ -152,9 +154,13 @@ class AnfTransformer {
 
             is SBlockNode -> {
                 val newChildren = mutableListOf<IStatementNode>()
+
+                renameMap.push()
                 for (childStmt in stmt.statements) {
                     newChildren.addAll(transformStmt(childStmt))
                 }
+                renameMap.pop()
+
                 listOf(IBlockNode(newChildren.toImmutableList(), stmt.sourceLocation))
             }
 
@@ -209,17 +215,14 @@ class AnfTransformer {
             is SOperatorApplicationNode -> {
                 val newArgs =
                     expr.arguments.map { childExpr -> transformAtomicExpr(childExpr, bindings) }
-                IOperatorApplicationNode(
-                    expr.operator, IArguments(newArgs), expr.sourceLocation
-                )
+                IOperatorApplicationNode(expr.operator, IArguments(newArgs), expr.sourceLocation)
             }
 
             is SQueryNode -> {
+                val newVariableNode = expr.variable.copy(value = renameMap.get(expr.variable.value))
                 val newArgs =
                     expr.arguments.map { childExpr -> transformAtomicExpr(childExpr, bindings) }
-                IQueryNode(
-                    expr.variable, expr.query, IArguments(newArgs), expr.sourceLocation
-                )
+                IQueryNode(newVariableNode, expr.query, IArguments(newArgs), expr.sourceLocation)
             }
 
             is SDeclassificationNode -> {

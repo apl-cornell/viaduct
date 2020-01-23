@@ -200,12 +200,12 @@ open class ProtocolSelectionContext(
         }
     }
 
+    /** check if an expression is a subexpression of a larger expr that is part of some set. */
     private fun isSubexpressionInSet(tmp: Temporary, set: Set<Temporary>): Boolean {
         var current: Temporary? = tmp
         while (current != null) {
             if (set.contains(current)) {
                 return true
-
             } else {
                 current = parentMap[current]
             }
@@ -239,4 +239,3 @@ open class ProtocolSelectionContext(
         } ?: false
     }
 }
-

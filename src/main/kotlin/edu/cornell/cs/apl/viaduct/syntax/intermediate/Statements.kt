@@ -19,12 +19,16 @@ sealed class SimpleStatementNode : StatementNode()
 
 // Simple Statements
 
+interface TemporaryBindingForm {
+    val temporary: TemporaryNode
+}
+
 /** Binding the result of an expression to a new temporary variable. */
 class LetNode(
-    val temporary: TemporaryNode,
+    override val temporary: TemporaryNode,
     val value: ExpressionNode,
     override val sourceLocation: SourceLocation
-) : SimpleStatementNode()
+) : SimpleStatementNode(), TemporaryBindingForm
 
 /** Constructing a new object and binding it to a variable. */
 class DeclarationNode(
@@ -109,11 +113,11 @@ sealed class ExternalCommunicationNode : CommunicationNode()
  * @param type Type of the value to receive.
  */
 class InputNode(
-    val temporary: TemporaryNode,
+    override val temporary: TemporaryNode,
     val type: ValueTypeNode,
     val host: HostNode,
     override val sourceLocation: SourceLocation
-) : ExternalCommunicationNode()
+) : ExternalCommunicationNode(), TemporaryBindingForm
 
 /** An external output. */
 class OutputNode(
@@ -131,11 +135,11 @@ sealed class InternalCommunicationNode : CommunicationNode()
  * @param type Type of the value to receive.
  */
 class ReceiveNode(
-    val temporary: TemporaryNode,
+    override val temporary: TemporaryNode,
     val type: ValueTypeNode,
     val protocol: ProtocolNode,
     override val sourceLocation: SourceLocation
-) : InternalCommunicationNode()
+) : InternalCommunicationNode(), TemporaryBindingForm
 
 /** Sending a value to another protocol. */
 class SendNode(

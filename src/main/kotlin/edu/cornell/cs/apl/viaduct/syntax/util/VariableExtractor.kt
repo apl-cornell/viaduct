@@ -1,7 +1,12 @@
 package edu.cornell.cs.apl.viaduct.syntax.util
 
 import edu.cornell.cs.apl.viaduct.syntax.Variable
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.*
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.BlockNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.DeclarationNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.IfNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.InfiniteLoopNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.StatementNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.TemporaryBindingForm
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.toPersistentList
 

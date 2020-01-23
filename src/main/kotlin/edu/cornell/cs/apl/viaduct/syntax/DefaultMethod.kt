@@ -21,4 +21,3 @@ object RegisterWrite : DefaultUpdate() {
 object ArrayWrite : DefaultUpdate() {
     override val arity: Int = 2
 }
-

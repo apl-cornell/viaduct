@@ -1,4 +1,4 @@
-package edu.cornell.cs.apl.viaduct.syntax.transformers
+package edu.cornell.cs.apl.viaduct.passes
 
 import edu.cornell.cs.apl.viaduct.errors.ElaborationException
 import edu.cornell.cs.apl.viaduct.syntax.Located
@@ -66,7 +66,11 @@ class AnfTransformer {
         }
 
         fun run(stmt: SStatementNode): IStatementNode {
-            return extractBlock(AnfTransformer().transformStmt(stmt))
+            return extractBlock(
+                AnfTransformer().transformStmt(
+                    stmt
+                )
+            )
         }
     }
 
@@ -118,8 +122,14 @@ class AnfTransformer {
             is SIfNode -> {
                 val stmtList = mutableListOf<IStatementNode>()
                 val newGuard = transformAtomicExpr(stmt.guard, stmtList)
-                val newThenBranch = extractBlock(transformStmt(stmt.thenBranch))
-                val newElseBranch = extractBlock(transformStmt(stmt.elseBranch))
+                val newThenBranch =
+                    extractBlock(
+                        transformStmt(stmt.thenBranch)
+                    )
+                val newElseBranch =
+                    extractBlock(
+                        transformStmt(stmt.elseBranch)
+                    )
                 stmtList.add(IIfNode(newGuard, newThenBranch, newElseBranch, stmt.sourceLocation))
                 stmtList
             }
@@ -127,7 +137,9 @@ class AnfTransformer {
             is SInfiniteLoopNode -> {
                 listOf(
                     IInfiniteLoopNode(
-                        extractBlock(transformStmt(stmt.body)),
+                        extractBlock(
+                            transformStmt(stmt.body)
+                        ),
                         stmt.jumpLabel,
                         stmt.sourceLocation
                     )

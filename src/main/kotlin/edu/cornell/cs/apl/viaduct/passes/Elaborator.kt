@@ -1,4 +1,4 @@
-package edu.cornell.cs.apl.viaduct.syntax.transformers
+package edu.cornell.cs.apl.viaduct.passes
 
 import edu.cornell.cs.apl.viaduct.syntax.surface.BlockNode
 import edu.cornell.cs.apl.viaduct.syntax.surface.BreakNode

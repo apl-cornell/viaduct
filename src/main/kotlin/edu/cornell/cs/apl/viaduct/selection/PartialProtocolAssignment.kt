@@ -16,6 +16,9 @@ abstract class PartialProtocolAssignment private constructor(
     private val costEstimator: CostEstimator,
     private val protocolAssignment: PersistentMap<Variable, Protocol>
 ) : Map<Variable, Protocol> by protocolAssignment {
+    /** Compute `hashCode()` once and store it for later. */
+    private val hashCode: Int by lazy { protocolAssignment.hashCode() }
+
     constructor(costEstimator: CostEstimator) : this(costEstimator, persistentMapOf())
 
     /**
@@ -33,4 +36,11 @@ abstract class PartialProtocolAssignment private constructor(
      * program.
      */
     abstract val cost: Cost
+
+    override fun equals(other: Any?): Boolean {
+        return other is PartialProtocolAssignment &&
+            this.protocolAssignment == other.protocolAssignment
+    }
+
+    override fun hashCode(): Int = hashCode
 }

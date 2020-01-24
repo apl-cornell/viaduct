@@ -93,7 +93,7 @@ class BlockNode(
     val statements: List<StatementNode> = statements.toPersistentList()
 
     constructor(vararg statements: StatementNode, sourceLocation: SourceLocation) :
-            this(persistentListOf(*statements), sourceLocation)
+        this(persistentListOf(*statements), sourceLocation)
 
     fun singletonStatement(): StatementNode? {
         return if (statements.size == 1) statements[0] else null
@@ -102,9 +102,13 @@ class BlockNode(
 
 // Communication Statements
 
+/** A node for sending or receiving messages. */
 sealed class CommunicationNode : SimpleStatementNode()
 
-sealed class ExternalCommunicationNode : CommunicationNode()
+/** Communication happening between a protocol and a host. */
+sealed class ExternalCommunicationNode : CommunicationNode() {
+    abstract val host: HostNode
+}
 
 /**
  * An external input.
@@ -115,18 +119,21 @@ sealed class ExternalCommunicationNode : CommunicationNode()
 class InputNode(
     override val temporary: TemporaryNode,
     val type: ValueTypeNode,
-    val host: HostNode,
+    override val host: HostNode,
     override val sourceLocation: SourceLocation
 ) : ExternalCommunicationNode(), TemporaryBindingForm
 
 /** An external output. */
 class OutputNode(
     val message: AtomicExpressionNode,
-    val host: HostNode,
+    override val host: HostNode,
     override val sourceLocation: SourceLocation
 ) : ExternalCommunicationNode()
 
-sealed class InternalCommunicationNode : CommunicationNode()
+/** Communication happening between protocols. */
+sealed class InternalCommunicationNode : CommunicationNode() {
+    abstract val protocol: ProtocolNode
+}
 
 /**
  * Receiving a value from another protocol.
@@ -137,13 +144,13 @@ sealed class InternalCommunicationNode : CommunicationNode()
 class ReceiveNode(
     override val temporary: TemporaryNode,
     val type: ValueTypeNode,
-    val protocol: ProtocolNode,
+    override val protocol: ProtocolNode,
     override val sourceLocation: SourceLocation
 ) : InternalCommunicationNode(), TemporaryBindingForm
 
 /** Sending a value to another protocol. */
 class SendNode(
     val message: AtomicExpressionNode,
-    val protocol: ProtocolNode,
+    override val protocol: ProtocolNode,
     override val sourceLocation: SourceLocation
 ) : InternalCommunicationNode()

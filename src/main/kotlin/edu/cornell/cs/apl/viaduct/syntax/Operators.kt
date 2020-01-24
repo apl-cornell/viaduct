@@ -27,7 +27,7 @@ enum class Precedence {
     LOWER, EQUAL, HIGHER, UNDETERMINED
 }
 
-/** Pure functions from values to a value. */
+/** A pure function from values to a value. */
 interface Operator {
     /** Number of arguments the operator takes. */
     val arity: Int
@@ -73,12 +73,12 @@ interface Operator {
     /** Type of this operator. */
     val type: OperatorType
 
-    /** The result of applying this operator to the given arguments. */
+    /** Computes the result of applying this operator to the given arguments. */
     fun apply(arguments: List<Value>): Value
 }
 
 /**
- * True when this operator has precedence higher than or equal to [other].
+ * Returns true when this operator has precedence higher than or equal to [other].
  *
  * This function is reflexive, that is, `x.bindsTighterThan(x)` returns true.
  * However, it is not necessarily transitive, and it does not order all operators.
@@ -96,9 +96,9 @@ fun Operator.bindsTighterThan(other: Operator): Boolean {
 }
 
 /**
- * Operators that are written before their operands.
+ * An operator that is written before its operands.
  *
- * An operator is prefix if it has an operand that comes after all its named parts.
+ * A prefix operator has an operand that comes after all its named parts.
  * For example, negation (`-x`) and if expressions (`if b then x else y`) are prefix operators.
  *
  * Prefix operators are right associative.
@@ -109,18 +109,18 @@ interface PrefixOperator : Operator {
 }
 
 /**
- * Operators that are written between their operands.
+ * An operator that is written between its operands.
  *
- * An operator is infix if it has an operand that comes before and an operand that comes after
- * all its named parts.
+ * An infix operator has an operand that comes before and an operand that comes after all its
+ * named parts.
  * For example, addition (`x + y`) and the conditional operator (`b ? x : y`) are infix operators.
  */
 interface InfixOperator : Operator
 
 /**
- * Operators that are written after their operands (e.g. factorial).
+ * An operator that is written after its operands.
  *
- * An operator is postfix if has an operand that comes before all its named parts.
+ * A postfix operator has an operand that comes before all its named parts.
  * For example, taking the factorial (`x!`) is a prefix operator.
  *
  * Postfix operators are left associative.
@@ -131,7 +131,7 @@ interface PostfixOperator : Operator {
 }
 
 /**
- * Operators that surround their operands.
+ * An operator that surrounds its operands.
  *
  * An operator is closed if all its operands are contained between its named parts.
  * For example, a pair of parentheses (`(x)`) is a closed operator.
@@ -141,4 +141,20 @@ interface PostfixOperator : Operator {
 interface ClosedOperator : Operator {
     override val associativity: Associativity
         get() = Associativity.NON
+}
+
+/**
+ * An operator that takes a single arguments.
+ */
+interface UnaryOperator : Operator {
+    override val arity: Int
+        get() = 1
+}
+
+/**
+ * An operator that takes two arguments.
+ */
+interface BinaryOperator : Operator {
+    override val arity: Int
+        get() = 2
 }

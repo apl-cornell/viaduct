@@ -119,7 +119,7 @@ class BlockNode(
     statements: List<StatementNode>,
     override val sourceLocation: SourceLocation
 ) : StatementNode(), List<StatementNode> by statements {
-    // Create an immutable copy
+    // Make an immutable copy
     val statements: List<StatementNode> = statements.toPersistentList()
 
     constructor(vararg statements: StatementNode, sourceLocation: SourceLocation) :
@@ -141,12 +141,3 @@ class SendNode(
     val protocol: ProtocolNode,
     override val sourceLocation: SourceLocation
 ) : StatementNode()
-
-/**
- * create a singleton block from a statement.
- *
- * @param stmt the statement from which to create a block.
- */
-fun blockOf(stmt: StatementNode): BlockNode {
-    return BlockNode(persistentListOf(stmt), stmt.sourceLocation)
-}

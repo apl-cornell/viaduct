@@ -89,11 +89,11 @@ class BlockNode(
     statements: List<StatementNode>,
     override val sourceLocation: SourceLocation
 ) : StatementNode() {
-    // Create an immutable copy
+    // Make an immutable copy
     val statements: List<StatementNode> = statements.toPersistentList()
 
     constructor(vararg statements: StatementNode, sourceLocation: SourceLocation) :
-        this(persistentListOf(*statements), sourceLocation)
+            this(persistentListOf(*statements), sourceLocation)
 
     fun singletonStatement(): StatementNode? {
         return if (statements.size == 1) statements[0] else null

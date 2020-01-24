@@ -7,7 +7,7 @@ import kotlinx.collections.immutable.toPersistentSet
 
 /** A list of arguments. Note that arguments are atomic expressions. */
 class Arguments(arguments: List<AtomicExpressionNode>) : List<AtomicExpressionNode> by arguments {
-    // Create an immutable copy
+    // Make an immutable copy
     val arguments: List<AtomicExpressionNode> = arguments.toPersistentList()
 
     val reads: Set<Temporary> =

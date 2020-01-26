@@ -16,6 +16,9 @@ import kotlinx.collections.immutable.persistentSetOf
  * @param name Names and distinguishes different instances.
  */
 data class Ideal(override val name: String) : Protocol {
+    override val protocolName: String
+        get() = "Ideal"
+
     override val hosts: Set<Host>
         get() = persistentSetOf()
 

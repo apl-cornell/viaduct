@@ -17,7 +17,7 @@ class Replication(hosts: Set<Host>) : Protocol {
         require(hosts.size >= 2)
     }
 
-    override val name: String
+    override val protocolName: String
         get() = "Replication"
 
     // Make an immutable copy

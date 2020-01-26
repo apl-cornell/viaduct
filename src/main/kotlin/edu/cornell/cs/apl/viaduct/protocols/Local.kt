@@ -12,7 +12,7 @@ import kotlinx.collections.immutable.persistentSetOf
  * This protocol has exactly the authority and the capabilities of the host it is tied to.
  */
 data class Local(val host: Host) : Protocol {
-    override val name: String
+    override val protocolName: String
         get() = "Local"
 
     override val hosts: Set<Host> = persistentSetOf(host)

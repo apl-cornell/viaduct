@@ -16,7 +16,7 @@ class MPCWithAbort(hosts: Set<Host>) : MPCProtocol() {
         require(hosts.size >= 2)
     }
 
-    override val name: String
+    override val protocolName: String
         get() = "MPCWithAbort"
 
     // Make an immutable copy

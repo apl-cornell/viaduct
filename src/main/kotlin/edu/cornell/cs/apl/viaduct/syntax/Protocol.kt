@@ -8,9 +8,9 @@ import edu.cornell.cs.apl.viaduct.security.Label
  * A protocol simultaneously names a location and determines the (cryptographic) mechanism for
  * executing the code placed at that location.
  */
-interface Protocol {
+interface Protocol : Name {
     /** Protocol name. */
-    val name: String
+    val protocolName: String
 
     /** Hosts involved in this protocol. */
     val hosts: Set<Host>
@@ -20,4 +20,13 @@ interface Protocol {
      * participating hosts.
      */
     fun authority(hostTrustConfiguration: HostTrustConfiguration): Label
+
+    override val name: String
+        get() {
+            val hosts: List<String> = this.hosts.sorted().map(Name::name)
+            return protocolName + hosts.joinToString(separator = ", ", prefix = "(", postfix = ")")
+        }
+
+    override val nameCategory: String
+        get() = "protocol"
 }

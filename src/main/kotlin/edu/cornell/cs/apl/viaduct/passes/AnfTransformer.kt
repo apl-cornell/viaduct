@@ -5,10 +5,6 @@ import edu.cornell.cs.apl.viaduct.syntax.ObjectVariable
 import edu.cornell.cs.apl.viaduct.syntax.ObjectVariableNode
 import edu.cornell.cs.apl.viaduct.syntax.Temporary
 import edu.cornell.cs.apl.viaduct.syntax.TemporaryNode
-import edu.cornell.cs.apl.viaduct.syntax.surface.ExpressionVisitor
-import edu.cornell.cs.apl.viaduct.syntax.surface.GeneralAbstractExpressionVisitor
-import edu.cornell.cs.apl.viaduct.syntax.surface.VariableContext
-import edu.cornell.cs.apl.viaduct.syntax.surface.VariableContextVisitor
 import edu.cornell.cs.apl.viaduct.util.FreshNameGenerator
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.Arguments as IArguments
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.AtomicExpressionNode as IAtomicExpressionNode
@@ -36,7 +32,6 @@ import edu.cornell.cs.apl.viaduct.syntax.surface.BreakNode as SBreakNode
 import edu.cornell.cs.apl.viaduct.syntax.surface.DeclarationNode as SDeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.surface.DeclassificationNode as SDeclassificationNode
 import edu.cornell.cs.apl.viaduct.syntax.surface.EndorsementNode as SEndorsementNode
-import edu.cornell.cs.apl.viaduct.syntax.surface.ExpressionNode as SExpressionNode
 import edu.cornell.cs.apl.viaduct.syntax.surface.ForLoopNode as SForLoopNode
 import edu.cornell.cs.apl.viaduct.syntax.surface.IfNode as SIfNode
 import edu.cornell.cs.apl.viaduct.syntax.surface.InfiniteLoopNode as SInfiniteLoopNode
@@ -54,35 +49,26 @@ import edu.cornell.cs.apl.viaduct.syntax.surface.StatementNode as SStatementNode
 import edu.cornell.cs.apl.viaduct.syntax.surface.UpdateNode as SUpdateNode
 import edu.cornell.cs.apl.viaduct.syntax.surface.WhileLoopNode as SWhileLoopNode
 
+import edu.cornell.cs.apl.viaduct.syntax.surface.AbstractExpressionVisitor as SAbstractExpressionVisitor
+import edu.cornell.cs.apl.viaduct.syntax.surface.ExpressionVisitor as SExpressionVisitor
+import edu.cornell.cs.apl.viaduct.syntax.surface.VariableContextVisitor as SVariableContextVisitor
+
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.ExpressionVisitor as IExpressionVisitor
+
 /**
  * Convert surface language programs into an intermediate representation
  * that enforces A-normal form syntactically.
  */
-class AnfTransformer :
-    VariableContextVisitor<AnfTransformer, IExpressionNode, List<IStatementNode>, ObjectVariable> {
+class AnfTransformer private constructor() :
+    SVariableContextVisitor<AnfTransformer, IExpressionNode, List<IStatementNode>, ObjectVariable>() {
 
-    private enum class ExprType { COMPLEX, ATOMIC }
-
-    private constructor(
-        nm: FreshNameGenerator,
-        ctx: VariableContext<ObjectVariable>,
-        et: ExprType
-    ) : super(ctx) {
-        nameGenerator = nm
-        exprVisitor = when (et) {
-            ExprType.COMPLEX -> AnfComplexExpressionVisitor()
-            ExprType.ATOMIC -> AnfAtomicExpressionVisitor()
-        }
-    }
-
-    private constructor() : super() {
-        nameGenerator = FreshNameGenerator()
-        exprVisitor = AnfComplexExpressionVisitor()
-    }
-
-    private val nameGenerator: FreshNameGenerator
+    private val complexExprVisitor = AnfComplexExpressionVisitor()
+    private val atomicExprVisitor = AnfAtomicExpressionVisitor()
+    private val nameGenerator = FreshNameGenerator()
     private val bindings: MutableList<IStatementNode> = mutableListOf()
-    override val exprVisitor: ExpressionVisitor<IExpressionNode>
+
+    override val exprVisitor: SExpressionVisitor<IExpressionNode>
+        get() = complexExprVisitor
 
     /** bind expression to a let statement. */
     private fun addBinding(bindingFunc: (Temporary) -> IStatementNode): Temporary {
@@ -96,15 +82,8 @@ class AnfTransformer :
         val stmtList = mutableListOf<IStatementNode>()
         stmtList.addAll(bindings)
         stmtList.add(stmt)
+        bindings.clear()
         return stmtList
-    }
-
-    /** Change expr visitor so it doesn't convert let bindings on the surface to atomic exprs. */
-    override fun enter(stmt: SStatementNode): AnfTransformer {
-        return when (stmt) {
-            is SLetNode -> AnfTransformer(nameGenerator, contextStack, ExprType.COMPLEX)
-            else -> AnfTransformer(nameGenerator, contextStack, ExprType.ATOMIC)
-        }
     }
 
     override fun extract(letNode: SLetNode): ObjectVariable? {
@@ -128,7 +107,7 @@ class AnfTransformer :
             IDeclarationNode(
                 ObjectVariableNode(renamedVar, stmt.variable.sourceLocation),
                 stmt.constructor,
-                IArguments(args as List<IAtomicExpressionNode>),
+                IArguments(args.map { arg -> atomicExprVisitor.visit(arg) }),
                 stmt.sourceLocation
             )
         )
@@ -157,7 +136,7 @@ class AnfTransformer :
         @Suppress("UNCHECKED_CAST")
         return withBindings(
             IIfNode(
-                guard as IAtomicExpressionNode,
+                atomicExprVisitor.visit(guard),
                 extractBlock(thenBranch),
                 extractBlock(elseBranch),
                 stmt.sourceLocation
@@ -180,31 +159,37 @@ class AnfTransformer :
     }
 
     override fun leave(stmt: SInfiniteLoopNode, body: List<IStatementNode>): List<IStatementNode> {
-        return withBindings(
-            IInfiniteLoopNode(extractBlock(body), stmt.jumpLabel, stmt.sourceLocation)
-        )
+        return listOf(IInfiniteLoopNode(extractBlock(body), stmt.jumpLabel, stmt.sourceLocation))
     }
 
     override fun leave(stmt: SBreakNode): List<IStatementNode> {
-        return withBindings(IBreakNode(stmt.jumpLabel, stmt.sourceLocation))
+        return listOf(IBreakNode(stmt.jumpLabel, stmt.sourceLocation))
     }
 
     override fun leave(
         stmt: SBlockNode,
         statements: List<List<IStatementNode>>
     ): List<IStatementNode> {
-        return withBindings(IBlockNode(statements.flatten(), stmt.sourceLocation))
+        return listOf(IBlockNode(statements.flatten(), stmt.sourceLocation))
     }
 
     override fun leave(stmt: SOutputNode, message: IExpressionNode): List<IStatementNode> {
         return withBindings(
-            IOutputNode(message as IAtomicExpressionNode, stmt.host, stmt.sourceLocation)
+            IOutputNode(
+                atomicExprVisitor.visit(message),
+                stmt.host,
+                stmt.sourceLocation
+            )
         )
     }
 
     override fun leave(stmt: SSendNode, message: IExpressionNode): List<IStatementNode> {
         return withBindings(
-            ISendNode(message as IAtomicExpressionNode, stmt.protocol, stmt.sourceLocation)
+            ISendNode(
+                atomicExprVisitor.visit(message),
+                stmt.protocol,
+                stmt.sourceLocation
+            )
         )
     }
 
@@ -213,20 +198,8 @@ class AnfTransformer :
     }
 
     /** Convert expression's children to atomic expressions. */
-    private inner class AnfComplexExpressionVisitor(
-        atomicVisitor: AnfAtomicExpressionVisitor?
-    ) : GeneralAbstractExpressionVisitor
-            <AnfAtomicExpressionVisitor, IExpressionNode, IAtomicExpressionNode> {
-
-        constructor() : this(null)
-
-        var childVisitor: AnfAtomicExpressionVisitor =
-            atomicVisitor ?: AnfAtomicExpressionVisitor(this)
-
-        override fun enter(expr: SExpressionNode): AnfAtomicExpressionVisitor {
-            return childVisitor
-        }
-
+    private inner class AnfComplexExpressionVisitor
+        : SAbstractExpressionVisitor<AnfComplexExpressionVisitor, IExpressionNode> {
         override fun leave(expr: SLiteralNode): IExpressionNode {
             return ILiteralNode(expr.value, expr.sourceLocation)
         }
@@ -237,36 +210,47 @@ class AnfTransformer :
 
         override fun leave(
             expr: SOperatorApplicationNode,
-            args: List<IAtomicExpressionNode>
+            args: List<IExpressionNode>
         ): IExpressionNode {
-            return IOperatorApplicationNode(expr.operator, IArguments(args), expr.sourceLocation)
+            return IOperatorApplicationNode(
+                expr.operator,
+                IArguments(args.map { arg -> this@AnfTransformer.atomicExprVisitor.visit(arg) }),
+                expr.sourceLocation
+            )
         }
 
-        override fun leave(expr: SQueryNode, args: List<IAtomicExpressionNode>): IExpressionNode {
+        override fun leave(expr: SQueryNode, args: List<IExpressionNode>): IExpressionNode {
             val renameVar = this@AnfTransformer.get(expr.variable.value)
             return IQueryNode(
                 ObjectVariableNode(renameVar, expr.variable.sourceLocation),
                 expr.query,
-                IArguments(args),
+                IArguments(args.map { arg -> this@AnfTransformer.atomicExprVisitor.visit(arg) }),
                 expr.sourceLocation
             )
         }
 
         override fun leave(
             expr: SDeclassificationNode,
-            downgradeExpr: IAtomicExpressionNode
+            downgradeExpr: IExpressionNode
         ): IExpressionNode {
+
             return IDeclassificationNode(
-                downgradeExpr, expr.fromLabel, expr.toLabel, expr.sourceLocation
+                this@AnfTransformer.atomicExprVisitor.visit(downgradeExpr),
+                expr.fromLabel,
+                expr.toLabel,
+                expr.sourceLocation
             )
         }
 
         override fun leave(
             expr: SEndorsementNode,
-            downgradeExpr: IAtomicExpressionNode
+            downgradeExpr: IExpressionNode
         ): IExpressionNode {
             return IEndorsementNode(
-                downgradeExpr, expr.fromLabel, expr.toLabel, expr.sourceLocation
+                this@AnfTransformer.atomicExprVisitor.visit(downgradeExpr),
+                expr.fromLabel,
+                expr.toLabel,
+                expr.sourceLocation
             )
         }
 
@@ -298,24 +282,17 @@ class AnfTransformer :
     }
 
     /** Add let binding to atomize complex expressions. */
-    private inner class AnfAtomicExpressionVisitor(
-        complexVisitor: AnfComplexExpressionVisitor?
-    ) : ExpressionVisitor<IAtomicExpressionNode> {
-
-        constructor() : this(null)
-
-        var parentVisitor: AnfComplexExpressionVisitor =
-            complexVisitor ?: AnfComplexExpressionVisitor(this)
-
-        override fun visit(expr: SExpressionNode): IAtomicExpressionNode {
-            return when (val newExpr = parentVisitor.visit(expr)) {
-                is IAtomicExpressionNode -> newExpr
+    private inner class AnfAtomicExpressionVisitor : IExpressionVisitor<IAtomicExpressionNode> {
+        override fun visit(expr: IExpressionNode): IAtomicExpressionNode {
+            return when (expr) {
+                is IAtomicExpressionNode -> expr
                 else -> {
                     val tmp = this@AnfTransformer.addBinding { tmp ->
                         ILetNode(
-                            TemporaryNode(tmp, newExpr.sourceLocation),
-                            newExpr,
-                            newExpr.sourceLocation)
+                            TemporaryNode(tmp, expr.sourceLocation),
+                            expr,
+                            expr.sourceLocation
+                        )
                     }
                     IReadNode(tmp, expr.sourceLocation)
                 }

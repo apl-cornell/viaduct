@@ -1,7 +1,7 @@
 package edu.cornell.cs.apl.viaduct.selection
 
 import edu.cornell.cs.apl.viaduct.imp.HostTrustConfiguration
-import edu.cornell.cs.apl.viaduct.syntax.ArrayRead
+import edu.cornell.cs.apl.viaduct.syntax.ArrayGet
 import edu.cornell.cs.apl.viaduct.syntax.ObjectVariable
 import edu.cornell.cs.apl.viaduct.syntax.Temporary
 import edu.cornell.cs.apl.viaduct.syntax.Variable
@@ -119,7 +119,7 @@ open class ProtocolSelectionContext(
                 when (val letStmt = stmt.value) {
                     is QueryNode -> {
                         when (letStmt.query) {
-                            is ArrayRead -> {
+                            is ArrayGet -> {
                                 when (val arg = letStmt.arguments[0]) {
                                     is ReadNode -> arrayIndices.add(arg.temporary)
                                 }

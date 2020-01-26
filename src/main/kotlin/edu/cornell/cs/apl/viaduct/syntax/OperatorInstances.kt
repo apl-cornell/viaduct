@@ -9,13 +9,9 @@ import edu.cornell.cs.apl.viaduct.syntax.values.Value
 import kotlinx.collections.immutable.persistentListOf
 
 /**
- * Prefix operators that take a single argument.
+ * A prefix operator that takes a single argument.
  */
-private interface UnaryPrefixOperator :
-    PrefixOperator {
-    override val arity: Int
-        get() = 1
-
+private interface UnaryPrefixOperator : PrefixOperator, UnaryOperator {
     override fun comparePrecedenceTo(other: Operator): Precedence {
         if (other is UnaryPrefixOperator)
             return Precedence.EQUAL
@@ -24,28 +20,22 @@ private interface UnaryPrefixOperator :
 }
 
 /**
- * Infix operators that take two arguments.
+ * An infix operator that takes two arguments.
  */
-private interface BinaryInfixOperator :
-    InfixOperator {
-    override val arity: Int
-        get() = 2
-}
+private interface BinaryInfixOperator : InfixOperator, BinaryOperator
 
 /**
  * Left associative operators.
  */
-private interface LeftAssociativeOperator :
-    Operator {
+private interface LeftAssociativeOperator : Operator {
     override val associativity: Associativity
         get() = Associativity.LEFT
 }
 
 /**
- * Infix operators that take two numbers and return a number.
+ * An infix operator that takes two numbers and returns a number.
  */
-private interface ArithmeticOperator : BinaryInfixOperator,
-    LeftAssociativeOperator {
+private interface ArithmeticOperator : BinaryInfixOperator, LeftAssociativeOperator {
     override val type: OperatorType
         get() = OperatorType(persistentListOf(IntegerType, IntegerType), IntegerType)
 
@@ -59,10 +49,9 @@ private interface ArithmeticOperator : BinaryInfixOperator,
 }
 
 /**
- * Infix operators that take two booleans and return a boolean.
+ * An infix operator that takes two booleans and returns a boolean.
  */
-private interface LogicalOperator : BinaryInfixOperator,
-    LeftAssociativeOperator {
+private interface LogicalOperator : BinaryInfixOperator, LeftAssociativeOperator {
     override fun comparePrecedenceTo(other: Operator): Precedence {
         if (other == this)
             return Precedence.EQUAL
@@ -84,10 +73,9 @@ private interface LogicalOperator : BinaryInfixOperator,
 }
 
 /**
- * Infix operators that take two numbers and return a boolean.
+ * An infix operator that takes two numbers and returns a boolean.
  */
-private interface ComparisonOperator :
-    BinaryInfixOperator {
+private interface ComparisonOperator : BinaryInfixOperator {
     override val associativity: Associativity
         get() = Associativity.NON
 

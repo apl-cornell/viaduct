@@ -13,6 +13,9 @@ interface StatementVisitor<out S> {
     fun visit(stmt: StatementNode): S
 }
 
+/** Polyglot-style visitor that allows return type of children to vary with
+ * the actual return type.
+ */
 interface GeneralAbstractExpressionVisitor<CVisitorT : ExpressionVisitor<CExprT>, ExprT, CExprT>
     : ExpressionVisitor<ExprT> {
     override fun visit(expr: ExpressionNode): ExprT {
@@ -157,6 +160,7 @@ interface AbstractStatementVisitor
     }
 }
 
+/** Visitor that maintains lexically-scoped context information. */
 abstract class ContextVisitor
 <CVisitorT : ContextVisitor<CVisitorT, ExprT, StmtT, ContextT>, ExprT, StmtT, ContextT>
     (protected var contextStack: Stack<ContextT>) :
@@ -197,6 +201,7 @@ abstract class ContextVisitor
 
 typealias VariableContext<T> = Stack<PersistentMap<Variable, T>>
 
+/** Visitor that maintains information about variables in scope. */
 abstract class VariableContextVisitor
 <SelfT : VariableContextVisitor<SelfT, ExprT, StmtT, ContextT>, ExprT, StmtT, ContextT>
     : ContextVisitor<SelfT, ExprT, StmtT, PersistentMap<Variable, ContextT>> {

@@ -13,6 +13,9 @@ interface StatementVisitor<out S> {
     fun visit(stmt: StatementNode): S
 }
 
+/** Polyglot-style visitor that allows return type of children to vary with
+ * the actual return type.
+ */
 interface GeneralAbstractExpressionVisitor<CVisitorT : ExpressionVisitor<CExprT>, ExprT, CExprT>
     : ExpressionVisitor<ExprT> {
     override fun visit(expr: ExpressionNode): ExprT {
@@ -34,6 +37,7 @@ interface GeneralAbstractExpressionVisitor<CVisitorT : ExpressionVisitor<CExprT>
         }
     }
 
+    /** The visitor that will visit expr's children. */
     fun enter(expr: ExpressionNode): CVisitorT
 
     fun leave(expr: LiteralNode): ExprT
@@ -49,6 +53,8 @@ interface GeneralAbstractExpressionVisitor<CVisitorT : ExpressionVisitor<CExprT>
     fun leave(expr: EndorsementNode, expression: CExprT): ExprT
 }
 
+/** Polyglot style-visitor where children's return type must be the same
+ * as the actual return type. */
 abstract class AbstractExpressionVisitor
 <CVisitorT : AbstractExpressionVisitor<CVisitorT, ExprT>, ExprT>
     : GeneralAbstractExpressionVisitor<CVisitorT, ExprT, ExprT> {
@@ -59,10 +65,15 @@ abstract class AbstractExpressionVisitor
     }
 }
 
+/** Polyglot-style visitor that allows return type of children to vary with
+ * the actual return type.
+ * Can be parameterized across the visitor for expressions inside statements.
+*/
 interface GeneralAbstractStatementVisitor
 <CVisitorT : StatementVisitor<CStmtT>, ExprT, StmtT, CStmtT>
     : StatementVisitor<StmtT> {
 
+    /** The visitor that will visit expressions inside of statements. */
     val exprVisitor: ExpressionVisitor<ExprT>
 
     override fun visit(stmt: StatementNode): StmtT {
@@ -98,6 +109,7 @@ interface GeneralAbstractStatementVisitor
         }
     }
 
+    /** The visitor that will visit stmt's children. */
     fun enter(stmt: StatementNode): CVisitorT
 
     fun leave(stmt: LetNode, value: ExprT): StmtT
@@ -123,6 +135,8 @@ interface GeneralAbstractStatementVisitor
     fun leave(stmt: ReceiveNode): StmtT
 }
 
+/** Polyglot style-visitor where children's return type must be the same
+ * as the actual return type. */
 interface AbstractStatementVisitor
 <CVisitorT : AbstractStatementVisitor<CVisitorT, ExprT, StmtT>, ExprT, StmtT>
     : GeneralAbstractStatementVisitor<CVisitorT, ExprT, StmtT, StmtT> {
@@ -133,6 +147,7 @@ interface AbstractStatementVisitor
     }
 }
 
+/** Visitor that maintains lexically-scoped context information. */
 abstract class ContextVisitor
 <CVisitorT : ContextVisitor<CVisitorT, ExprT, StmtT, ContextT>, ExprT, StmtT, ContextT>
     (protected var contextStack: Stack<ContextT>) :
@@ -173,6 +188,7 @@ abstract class ContextVisitor
 
 typealias VariableContext<T> = Stack<PersistentMap<Variable, T>>
 
+/** Visitor that maintains information about variables in scope. */
 abstract class VariableContextVisitor
 <SelfT : VariableContextVisitor<SelfT, ExprT, StmtT, ContextT>, ExprT, StmtT, ContextT>
     : ContextVisitor<SelfT, ExprT, StmtT, PersistentMap<Variable, ContextT>> {

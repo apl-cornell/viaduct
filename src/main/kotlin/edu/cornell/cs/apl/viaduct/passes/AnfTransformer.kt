@@ -1,12 +1,15 @@
 package edu.cornell.cs.apl.viaduct.passes
 
 import edu.cornell.cs.apl.viaduct.errors.ElaborationException
-import edu.cornell.cs.apl.viaduct.syntax.Located
 import edu.cornell.cs.apl.viaduct.syntax.ObjectVariable
+import edu.cornell.cs.apl.viaduct.syntax.ObjectVariableNode
 import edu.cornell.cs.apl.viaduct.syntax.Temporary
+import edu.cornell.cs.apl.viaduct.syntax.TemporaryNode
+import edu.cornell.cs.apl.viaduct.syntax.surface.ExpressionVisitor
+import edu.cornell.cs.apl.viaduct.syntax.surface.GeneralAbstractExpressionVisitor
+import edu.cornell.cs.apl.viaduct.syntax.surface.VariableContext
+import edu.cornell.cs.apl.viaduct.syntax.surface.VariableContextVisitor
 import edu.cornell.cs.apl.viaduct.util.FreshNameGenerator
-import edu.cornell.cs.apl.viaduct.util.SymbolTable
-import kotlinx.collections.immutable.toImmutableList
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.Arguments as IArguments
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.AtomicExpressionNode as IAtomicExpressionNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.BlockNode as IBlockNode
@@ -52,10 +55,274 @@ import edu.cornell.cs.apl.viaduct.syntax.surface.UpdateNode as SUpdateNode
 import edu.cornell.cs.apl.viaduct.syntax.surface.WhileLoopNode as SWhileLoopNode
 
 /**
- * convert surface language programs into an intermediate representation
+ * Convert surface language programs into an intermediate representation
  * that enforces A-normal form syntactically.
  */
-class AnfTransformer {
+class AnfTransformer :
+    VariableContextVisitor<AnfTransformer, IExpressionNode, List<IStatementNode>, ObjectVariable> {
+
+    private enum class ExprType { COMPLEX, ATOMIC }
+
+    private constructor(
+        nm: FreshNameGenerator,
+        ctx: VariableContext<ObjectVariable>,
+        et: ExprType
+    ) : super(ctx) {
+        nameGenerator = nm
+        exprVisitor = when (et) {
+            ExprType.COMPLEX -> AnfComplexExpressionVisitor()
+            ExprType.ATOMIC -> AnfAtomicExpressionVisitor()
+        }
+    }
+
+    private constructor() : super() {
+        nameGenerator = FreshNameGenerator()
+        exprVisitor = AnfComplexExpressionVisitor()
+    }
+
+    private val nameGenerator: FreshNameGenerator
+    private val bindings: MutableList<IStatementNode> = mutableListOf()
+    override val exprVisitor: ExpressionVisitor<IExpressionNode>
+
+    /** bind expression to a let statement. */
+    private fun addBinding(bindingFunc: (Temporary) -> IStatementNode): Temporary {
+        val tmpName = Temporary(nameGenerator.getFreshName(TMP_NAME))
+        val binding = bindingFunc(tmpName)
+        bindings.add(binding)
+        return tmpName
+    }
+
+    private fun withBindings(stmt: IStatementNode): List<IStatementNode> {
+        val stmtList = mutableListOf<IStatementNode>()
+        stmtList.addAll(bindings)
+        stmtList.add(stmt)
+        return stmtList
+    }
+
+    /** Change expr visitor so it doesn't convert let bindings on the surface to atomic exprs. */
+    override fun enter(stmt: SStatementNode): AnfTransformer {
+        return when (stmt) {
+            is SLetNode -> AnfTransformer(nameGenerator, contextStack, ExprType.COMPLEX)
+            else -> AnfTransformer(nameGenerator, contextStack, ExprType.ATOMIC)
+        }
+    }
+
+    override fun extract(letNode: SLetNode): ObjectVariable? {
+        return null
+    }
+
+    override fun extract(declarationNode: SDeclarationNode): ObjectVariable? {
+        val newName = nameGenerator.getFreshName(declarationNode.variable.value.name)
+        return ObjectVariable(newName)
+    }
+
+    override fun leave(stmt: SLetNode, value: IExpressionNode): List<IStatementNode> {
+        return withBindings(ILetNode(stmt.temporary, value, stmt.sourceLocation))
+    }
+
+    override fun leave(stmt: SDeclarationNode, args: List<IExpressionNode>): List<IStatementNode> {
+        val renamedVar = get(stmt.variable.value)
+
+        @Suppress("UNCHECKED_CAST")
+        return withBindings(
+            IDeclarationNode(
+                ObjectVariableNode(renamedVar, stmt.variable.sourceLocation),
+                stmt.constructor,
+                IArguments(args as List<IAtomicExpressionNode>),
+                stmt.sourceLocation
+            )
+        )
+    }
+
+    override fun leave(stmt: SUpdateNode, args: List<IExpressionNode>): List<IStatementNode> {
+        val renamedVar = get(stmt.variable.value)
+
+        @Suppress("UNCHECKED_CAST")
+        return withBindings(
+            IUpdateNode(
+                ObjectVariableNode(renamedVar, stmt.variable.sourceLocation),
+                stmt.update,
+                IArguments(args as List<IAtomicExpressionNode>),
+                stmt.sourceLocation
+            )
+        )
+    }
+
+    override fun leave(
+        stmt: SIfNode,
+        guard: IExpressionNode,
+        thenBranch: List<IStatementNode>,
+        elseBranch: List<IStatementNode>
+    ): List<IStatementNode> {
+        @Suppress("UNCHECKED_CAST")
+        return withBindings(
+            IIfNode(
+                guard as IAtomicExpressionNode,
+                extractBlock(thenBranch),
+                extractBlock(elseBranch),
+                stmt.sourceLocation
+            )
+        )
+    }
+
+    override fun leave(stmt: SWhileLoopNode, body: List<IStatementNode>): List<IStatementNode> {
+        throw ElaborationException()
+    }
+
+    override fun leave(
+        stmt: SForLoopNode,
+        initialize: List<IStatementNode>,
+        update: List<IStatementNode>,
+        guard: IExpressionNode,
+        body: List<IStatementNode>
+    ): List<IStatementNode> {
+        throw ElaborationException()
+    }
+
+    override fun leave(stmt: SInfiniteLoopNode, body: List<IStatementNode>): List<IStatementNode> {
+        return withBindings(
+            IInfiniteLoopNode(extractBlock(body), stmt.jumpLabel, stmt.sourceLocation)
+        )
+    }
+
+    override fun leave(stmt: SBreakNode): List<IStatementNode> {
+        return withBindings(IBreakNode(stmt.jumpLabel, stmt.sourceLocation))
+    }
+
+    override fun leave(
+        stmt: SBlockNode,
+        statements: List<List<IStatementNode>>
+    ): List<IStatementNode> {
+        return withBindings(IBlockNode(statements.flatten(), stmt.sourceLocation))
+    }
+
+    override fun leave(stmt: SOutputNode, message: IExpressionNode): List<IStatementNode> {
+        return withBindings(
+            IOutputNode(message as IAtomicExpressionNode, stmt.host, stmt.sourceLocation)
+        )
+    }
+
+    override fun leave(stmt: SSendNode, message: IExpressionNode): List<IStatementNode> {
+        return withBindings(
+            ISendNode(message as IAtomicExpressionNode, stmt.protocol, stmt.sourceLocation)
+        )
+    }
+
+    override fun leave(stmt: SSkipNode): List<IStatementNode> {
+        return listOf()
+    }
+
+    /** Convert expression's children to atomic expressions. */
+    private inner class AnfComplexExpressionVisitor(
+        atomicVisitor: AnfAtomicExpressionVisitor?
+    ) : GeneralAbstractExpressionVisitor
+            <AnfAtomicExpressionVisitor, IExpressionNode, IAtomicExpressionNode> {
+
+        constructor() : this(null)
+
+        var childVisitor: AnfAtomicExpressionVisitor =
+            atomicVisitor ?: AnfAtomicExpressionVisitor(this)
+
+        override fun enter(expr: SExpressionNode): AnfAtomicExpressionVisitor {
+            return childVisitor
+        }
+
+        override fun leave(expr: SLiteralNode): IExpressionNode {
+            return ILiteralNode(expr.value, expr.sourceLocation)
+        }
+
+        override fun leave(expr: SReadNode): IExpressionNode {
+            return IReadNode(expr.temporary, expr.sourceLocation)
+        }
+
+        override fun leave(
+            expr: SOperatorApplicationNode,
+            args: List<IAtomicExpressionNode>
+        ): IExpressionNode {
+            return IOperatorApplicationNode(expr.operator, IArguments(args), expr.sourceLocation)
+        }
+
+        override fun leave(expr: SQueryNode, args: List<IAtomicExpressionNode>): IExpressionNode {
+            val renameVar = this@AnfTransformer.get(expr.variable.value)
+            return IQueryNode(
+                ObjectVariableNode(renameVar, expr.variable.sourceLocation),
+                expr.query,
+                IArguments(args),
+                expr.sourceLocation
+            )
+        }
+
+        override fun leave(
+            expr: SDeclassificationNode,
+            downgradeExpr: IAtomicExpressionNode
+        ): IExpressionNode {
+            return IDeclassificationNode(
+                downgradeExpr, expr.fromLabel, expr.toLabel, expr.sourceLocation
+            )
+        }
+
+        override fun leave(
+            expr: SEndorsementNode,
+            downgradeExpr: IAtomicExpressionNode
+        ): IExpressionNode {
+            return IEndorsementNode(
+                downgradeExpr, expr.fromLabel, expr.toLabel, expr.sourceLocation
+            )
+        }
+
+        override fun leave(expr: SInputNode): IExpressionNode {
+            val tmpName = this@AnfTransformer.addBinding { tmp ->
+                IInputNode(
+                    TemporaryNode(tmp, expr.sourceLocation),
+                    expr.type,
+                    expr.host,
+                    expr.sourceLocation
+                )
+            }
+
+            return IReadNode(tmpName, expr.sourceLocation)
+        }
+
+        override fun leave(expr: SReceiveNode): IExpressionNode {
+            val tmpName = this@AnfTransformer.addBinding { tmp ->
+                IReceiveNode(
+                    TemporaryNode(tmp, expr.sourceLocation),
+                    expr.type,
+                    expr.protocol,
+                    expr.sourceLocation
+                )
+            }
+
+            return IReadNode(tmpName, expr.sourceLocation)
+        }
+    }
+
+    /** Add let binding to atomize complex expressions. */
+    private inner class AnfAtomicExpressionVisitor(
+        complexVisitor: AnfComplexExpressionVisitor?
+    ) : ExpressionVisitor<IAtomicExpressionNode> {
+
+        constructor() : this(null)
+
+        var parentVisitor: AnfComplexExpressionVisitor =
+            complexVisitor ?: AnfComplexExpressionVisitor(this)
+
+        override fun visit(expr: SExpressionNode): IAtomicExpressionNode {
+            return when (val newExpr = parentVisitor.visit(expr)) {
+                is IAtomicExpressionNode -> newExpr
+                else -> {
+                    val tmp = this@AnfTransformer.addBinding { tmp ->
+                        ILetNode(
+                            TemporaryNode(tmp, newExpr.sourceLocation),
+                            newExpr,
+                            newExpr.sourceLocation)
+                    }
+                    IReadNode(tmp, expr.sourceLocation)
+                }
+            }
+        }
+    }
+
     companion object {
         const val TMP_NAME: String = "TMP"
 
@@ -68,221 +335,7 @@ class AnfTransformer {
         }
 
         fun run(stmt: SStatementNode): IStatementNode {
-            return extractBlock(
-                AnfTransformer().transformStmt(
-                    stmt
-                )
-            )
-        }
-    }
-
-    private val freshNameGenerator = FreshNameGenerator()
-    private val renameMap = SymbolTable<ObjectVariable, ObjectVariable>()
-
-    /** transform statement into intermediate ANF form.
-     *
-     * @param stmt the statement to transform.
-     */
-    private fun transformStmt(stmt: SStatementNode): List<IStatementNode> {
-        return when (stmt) {
-            is SLetNode -> {
-                val stmtList = mutableListOf<IStatementNode>()
-                val newExpr = transformAnfExpr(stmt.value, stmtList)
-                stmtList.add(ILetNode(stmt.temporary, newExpr, stmt.sourceLocation))
-                stmtList
-            }
-
-            is SDeclarationNode -> {
-                val stmtList = mutableListOf<IStatementNode>()
-                val newVariableNode =
-                    stmt.variable.copy(
-                        value = ObjectVariable(
-                            freshNameGenerator.getFreshName(stmt.variable.value.name)))
-                val newArgs = stmt.arguments.map { arg -> transformAtomicExpr(arg, stmtList) }
-                stmtList.add(
-                    IDeclarationNode(
-                        newVariableNode,
-                        stmt.constructor,
-                        IArguments(newArgs),
-                        stmt.sourceLocation
-                    )
-                )
-                renameMap.put(stmt.variable.value, newVariableNode.value)
-                stmtList
-            }
-
-            is SUpdateNode -> {
-                val stmtList = mutableListOf<IStatementNode>()
-                val newVariableNode = stmt.variable.copy(value = renameMap.get(stmt.variable.value))
-                val newArgs = stmt.arguments.map { arg -> transformAtomicExpr(arg, stmtList) }
-                stmtList.add(
-                    IUpdateNode(
-                        newVariableNode,
-                        stmt.update,
-                        IArguments(newArgs),
-                        stmt.sourceLocation
-                    )
-                )
-                stmtList
-            }
-
-            is SSkipNode -> listOf(IBlockNode(sourceLocation = stmt.sourceLocation))
-
-            is SIfNode -> {
-                val stmtList = mutableListOf<IStatementNode>()
-                val newGuard = transformAtomicExpr(stmt.guard, stmtList)
-
-                val newThenBranch = extractBlock(transformStmt(stmt.thenBranch))
-                val newElseBranch = extractBlock(transformStmt(stmt.elseBranch))
-
-                stmtList.add(IIfNode(newGuard, newThenBranch, newElseBranch, stmt.sourceLocation))
-                stmtList
-            }
-
-            is SInfiniteLoopNode -> {
-                listOf(
-                    IInfiniteLoopNode(
-                        extractBlock(transformStmt(stmt.body)),
-                        stmt.jumpLabel,
-                        stmt.sourceLocation)
-                )
-            }
-
-            is SBreakNode -> {
-                listOf(IBreakNode(stmt.jumpLabel, stmt.sourceLocation))
-            }
-
-            is SBlockNode -> {
-                val newChildren = mutableListOf<IStatementNode>()
-
-                renameMap.push()
-                for (childStmt in stmt.statements) {
-                    newChildren.addAll(transformStmt(childStmt))
-                }
-                renameMap.pop()
-
-                listOf(IBlockNode(newChildren.toImmutableList(), stmt.sourceLocation))
-            }
-
-            is SOutputNode -> {
-                val stmtList = mutableListOf<IStatementNode>()
-                val newMessage = transformAtomicExpr(stmt.message, stmtList)
-                stmtList.add(IOutputNode(newMessage, stmt.host, stmt.sourceLocation))
-                stmtList
-            }
-
-            is SSendNode -> {
-                val stmtList = mutableListOf<IStatementNode>()
-                val newMessage = transformAtomicExpr(stmt.message, stmtList)
-                stmtList.add(ISendNode(newMessage, stmt.protocol, stmt.sourceLocation))
-                stmtList
-            }
-
-            is SWhileLoopNode, is SForLoopNode -> {
-                throw ElaborationException()
-            }
-        }
-    }
-
-    /**
-     * wrap a fresh name into a temporary.
-     */
-    private fun getFreshTemporary(): Temporary {
-        val varName = freshNameGenerator.getFreshName(TMP_NAME)
-        return Temporary(varName)
-    }
-
-    /**
-     * convert an expression's children into atomic expressions
-     * without changing the expression itself
-     *
-     * @param expr the expression to convert.
-     * @param bindings the current list of bindings to update.
-     */
-    private fun transformAnfExpr(
-        expr: SExpressionNode,
-        bindings: MutableList<IStatementNode>
-    ): IExpressionNode {
-        return when (expr) {
-            is SReadNode -> {
-                IReadNode(expr.temporary, expr.sourceLocation)
-            }
-
-            is SLiteralNode -> {
-                ILiteralNode(expr.value, expr.sourceLocation)
-            }
-
-            is SOperatorApplicationNode -> {
-                val newArgs =
-                    expr.arguments.map { childExpr -> transformAtomicExpr(childExpr, bindings) }
-                IOperatorApplicationNode(expr.operator, IArguments(newArgs), expr.sourceLocation)
-            }
-
-            is SQueryNode -> {
-                val newVariableNode = expr.variable.copy(value = renameMap.get(expr.variable.value))
-                val newArgs =
-                    expr.arguments.map { childExpr -> transformAtomicExpr(childExpr, bindings) }
-                IQueryNode(newVariableNode, expr.query, IArguments(newArgs), expr.sourceLocation)
-            }
-
-            is SDeclassificationNode -> {
-                val newExpr = transformAtomicExpr(expr.expression, bindings)
-                IDeclassificationNode(newExpr, expr.fromLabel, expr.toLabel, expr.sourceLocation)
-            }
-
-            is SEndorsementNode -> {
-                val newExpr = transformAtomicExpr(expr.expression, bindings)
-                IEndorsementNode(newExpr, expr.fromLabel, expr.toLabel, expr.sourceLocation)
-            }
-
-            is SInputNode -> {
-                val tmp = getFreshTemporary()
-                bindings.add(
-                    IInputNode(
-                        Located(tmp, expr.sourceLocation),
-                        expr.type,
-                        expr.host,
-                        expr.sourceLocation
-                    )
-                )
-                IReadNode(tmp, expr.sourceLocation)
-            }
-
-            is SReceiveNode -> {
-                val tmp = getFreshTemporary()
-                bindings.add(
-                    IReceiveNode(
-                        Located(tmp, expr.sourceLocation),
-                        expr.type,
-                        expr.protocol,
-                        expr.sourceLocation
-                    )
-                )
-                IReadNode(tmp, expr.sourceLocation)
-            }
-        }
-    }
-
-    /**
-     * convert an expression into an atomic expression by introducing a let binding
-     * that names the expression and replaces its occurrences with a ReadNode.
-     *
-     * @param expr the expression to convert.
-     * @param bindings current list of bindings to update.
-     */
-    private fun transformAtomicExpr(
-        expr: SExpressionNode,
-        bindings: MutableList<IStatementNode>
-    ): IAtomicExpressionNode {
-        return when (val newExpr = transformAnfExpr(expr, bindings)) {
-            is IAtomicExpressionNode -> newExpr
-            else -> {
-                val tmp = getFreshTemporary()
-                bindings.add(
-                    ILetNode(Located(tmp, expr.sourceLocation), newExpr, expr.sourceLocation)
-                )
-                IReadNode(tmp, newExpr.sourceLocation)
-            }
+            return extractBlock(AnfTransformer().visit(stmt))
         }
     }
 }

@@ -55,7 +55,7 @@ interface GeneralAbstractExpressionVisitor<CVisitorT : ExpressionVisitor<CExprT>
 
 /** Polyglot style-visitor where children's return type must be the same
  * as the actual return type. */
-abstract class AbstractExpressionVisitor
+interface AbstractExpressionVisitor
 <CVisitorT : AbstractExpressionVisitor<CVisitorT, ExprT>, ExprT>
     : GeneralAbstractExpressionVisitor<CVisitorT, ExprT, ExprT> {
 
@@ -138,13 +138,23 @@ interface GeneralAbstractStatementVisitor
 /** Polyglot style-visitor where children's return type must be the same
  * as the actual return type. */
 interface AbstractStatementVisitor
-<CVisitorT : AbstractStatementVisitor<CVisitorT, ExprT, StmtT>, ExprT, StmtT>
-    : GeneralAbstractStatementVisitor<CVisitorT, ExprT, StmtT, StmtT> {
-
+<CVisitorT : AbstractStatementVisitor<CVisitorT, ExprT, StmtT>, ExprT, StmtT> :
+    GeneralAbstractStatementVisitor<CVisitorT, ExprT, StmtT, StmtT>
+{
     @Suppress("UNCHECKED_CAST")
     override fun enter(stmt: StatementNode): CVisitorT {
         return this as CVisitorT
     }
+}
+
+/** A statement visitor that is also an expression visitor. */
+interface CombinedAbstractStatementVisitor
+<CVisitorT : CombinedAbstractStatementVisitor<CVisitorT, ExprT, StmtT>, ExprT, StmtT> :
+    AbstractStatementVisitor<CVisitorT, ExprT, StmtT>,
+    AbstractExpressionVisitor<CVisitorT, ExprT>
+{
+    override val exprVisitor: ExpressionVisitor<ExprT>
+        get() = this
 }
 
 /** Visitor that maintains lexically-scoped context information. */

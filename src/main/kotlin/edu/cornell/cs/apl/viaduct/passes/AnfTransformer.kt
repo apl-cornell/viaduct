@@ -51,6 +51,7 @@ import edu.cornell.cs.apl.viaduct.syntax.surface.WhileLoopNode as SWhileLoopNode
 
 import edu.cornell.cs.apl.viaduct.syntax.surface.AbstractExpressionVisitor as SAbstractExpressionVisitor
 import edu.cornell.cs.apl.viaduct.syntax.surface.ExpressionVisitor as SExpressionVisitor
+import edu.cornell.cs.apl.viaduct.syntax.surface.StatementVisitor as SStatementVisitor
 import edu.cornell.cs.apl.viaduct.syntax.surface.VariableContextVisitor as SVariableContextVisitor
 
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ExpressionVisitor as IExpressionVisitor
@@ -101,11 +102,10 @@ class AnfTransformer private constructor() :
 
     override fun leave(stmt: SDeclarationNode, args: List<IExpressionNode>): List<IStatementNode> {
         val renamedVar = get(stmt.variable.value)
-
-        @Suppress("UNCHECKED_CAST")
         return withBindings(
             IDeclarationNode(
                 ObjectVariableNode(renamedVar, stmt.variable.sourceLocation),
+                stmt.label,
                 stmt.constructor,
                 IArguments(args.map { arg -> atomicExprVisitor.visit(arg) }),
                 stmt.sourceLocation
@@ -116,12 +116,11 @@ class AnfTransformer private constructor() :
     override fun leave(stmt: SUpdateNode, args: List<IExpressionNode>): List<IStatementNode> {
         val renamedVar = get(stmt.variable.value)
 
-        @Suppress("UNCHECKED_CAST")
         return withBindings(
             IUpdateNode(
                 ObjectVariableNode(renamedVar, stmt.variable.sourceLocation),
                 stmt.update,
-                IArguments(args as List<IAtomicExpressionNode>),
+                IArguments(args.map { arg -> atomicExprVisitor.visit(arg) }),
                 stmt.sourceLocation
             )
         )
@@ -133,7 +132,6 @@ class AnfTransformer private constructor() :
         thenBranch: List<IStatementNode>,
         elseBranch: List<IStatementNode>
     ): List<IStatementNode> {
-        @Suppress("UNCHECKED_CAST")
         return withBindings(
             IIfNode(
                 atomicExprVisitor.visit(guard),
@@ -243,8 +241,7 @@ class AnfTransformer private constructor() :
         }
 
         override fun leave(
-            expr: SEndorsementNode,
-            downgradeExpr: IExpressionNode
+            expr: SEndorsementNode, downgradeExpr: IExpressionNode
         ): IExpressionNode {
             return IEndorsementNode(
                 this@AnfTransformer.atomicExprVisitor.visit(downgradeExpr),
@@ -300,7 +297,7 @@ class AnfTransformer private constructor() :
         }
     }
 
-    companion object {
+    companion object : SStatementVisitor<IStatementNode> {
         const val TMP_NAME: String = "TMP"
 
         private fun extractBlock(stmts: List<IStatementNode>): IBlockNode {
@@ -311,7 +308,7 @@ class AnfTransformer private constructor() :
             }
         }
 
-        fun run(stmt: SStatementNode): IStatementNode {
+        override fun visit(stmt: SStatementNode): IStatementNode {
             return extractBlock(AnfTransformer().visit(stmt))
         }
     }

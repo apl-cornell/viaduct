@@ -34,6 +34,7 @@ class LetNode(
 /** Constructing a new object and binding it to a variable. */
 class DeclarationNode(
     val variable: ObjectVariableNode,
+    // TODO: label should be in constructor.
     val label: LabelNode,
     val constructor: Constructor,
     val arguments: Arguments,

@@ -139,8 +139,7 @@ interface GeneralAbstractStatementVisitor
  * as the actual return type. */
 interface AbstractStatementVisitor
 <CVisitorT : AbstractStatementVisitor<CVisitorT, ExprT, StmtT>, ExprT, StmtT> :
-    GeneralAbstractStatementVisitor<CVisitorT, ExprT, StmtT, StmtT>
-{
+    GeneralAbstractStatementVisitor<CVisitorT, ExprT, StmtT, StmtT> {
     @Suppress("UNCHECKED_CAST")
     override fun enter(stmt: StatementNode): CVisitorT {
         return this as CVisitorT
@@ -151,8 +150,7 @@ interface AbstractStatementVisitor
 interface CombinedAbstractStatementVisitor
 <CVisitorT : CombinedAbstractStatementVisitor<CVisitorT, ExprT, StmtT>, ExprT, StmtT> :
     AbstractStatementVisitor<CVisitorT, ExprT, StmtT>,
-    AbstractExpressionVisitor<CVisitorT, ExprT>
-{
+    AbstractExpressionVisitor<CVisitorT, ExprT> {
     override val exprVisitor: ExpressionVisitor<ExprT>
         get() = this
 }

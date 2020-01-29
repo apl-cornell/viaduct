@@ -1,4 +1,4 @@
-package edu.cornell.cs.apl.viaduct.parser
+package edu.cornell.cs.apl.viaduct.parsing
 
 import edu.cornell.cs.apl.viaduct.util.graphemeClusterCount
 import kotlinx.collections.immutable.ImmutableList

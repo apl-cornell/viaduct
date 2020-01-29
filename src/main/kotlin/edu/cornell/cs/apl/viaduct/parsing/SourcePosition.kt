@@ -1,4 +1,4 @@
-package edu.cornell.cs.apl.viaduct.parser
+package edu.cornell.cs.apl.viaduct.parsing
 
 /**
  * Represents a position in a source file. Positions correspond to spaces between characters rather

@@ -1,4 +1,4 @@
-package edu.cornell.cs.apl.viaduct.parser
+package edu.cornell.cs.apl.viaduct.parsing
 
 import org.fusesource.jansi.Ansi
 import java.io.PrintStream

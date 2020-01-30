@@ -9,7 +9,12 @@ import kotlinx.collections.immutable.PersistentMap
 import kotlinx.collections.immutable.persistentMapOf
 import java.util.Stack
 
-interface ExprContextVisitor<ExprT, TmpData, ObjData> : (ExpressionNode) -> ExprT {
+/** Visitor for expressions that maintain context data for temporaries and objects. */
+interface ExprContextVisitor<ExprT, TmpData, ObjData> {
+    fun getTmpData(tmp: Temporary): TmpData
+
+    fun getObjData(obj: ObjectVariable): ObjData
+
     fun leave(expr: LiteralNode): ExprT
 
     fun leave(expr: ReadNode, data: TmpData): ExprT
@@ -21,23 +26,77 @@ interface ExprContextVisitor<ExprT, TmpData, ObjData> : (ExpressionNode) -> Expr
     fun leave(expr: DeclassificationNode, expression: ExprT): ExprT
 
     fun leave(expr: EndorsementNode, expression: ExprT): ExprT
+
+    fun visit(expr: ExpressionNode): ExprT {
+        return when (expr) {
+            is LiteralNode -> leave(expr)
+
+            is ReadNode -> leave(expr, getTmpData(expr.temporary))
+
+            is OperatorApplicationNode -> leave(expr, expr.arguments.map { arg -> visit(arg) })
+
+            is QueryNode -> {
+                leave(
+                    expr,
+                    expr.arguments.map { arg -> visit(arg) },
+                    getObjData(expr.variable.value))
+            }
+
+            is DeclassificationNode -> leave(expr, visit(expr.expression))
+
+            is EndorsementNode -> leave(expr, visit(expr.expression))
+        }
+    }
+}
+
+/** Expression visitor without context data. */
+interface ExprVisitor<ExprResult> : ExprContextVisitor<ExprResult, Unit, Unit> {
+    override fun leave(expr: ReadNode, data: Unit): ExprResult {
+        return leave(expr)
+    }
+
+    override fun leave(expr: QueryNode, arguments: List<ExprResult>, data: Unit): ExprResult {
+        return leave(expr, arguments)
+    }
+
+    fun leave(expr: ReadNode): ExprResult
+
+    fun leave(expr: QueryNode, arguments: List<ExprResult>): ExprResult
 }
 
 typealias StmtContextThunk<ExprT, StmtT, TmpData, ObjData, LoopData, HostData, ProcessData> =
         (StmtContextVisitor<ExprT, StmtT, TmpData, ObjData, LoopData, HostData, ProcessData>) -> StmtT
 
-typealias StmtThunk<ExprT, StmtT> = StmtContextThunk<ExprT, StmtT, Unit, Unit, Unit, Unit, Unit>
-
+/** Statement visitor that maintains context data for a variety of names.
+ *  This also allows custom traversal logic for control structures (loops and conditionals). */
 interface StmtContextVisitor<ExprT, StmtT, TmpData, ObjData, LoopData, HostData, ProcessData>
-    : (StatementNode) -> StmtT
+    : ExprContextVisitor<ExprT, TmpData, ObjData>
 {
-    val exprVisitor: ExprContextVisitor<ExprT, TmpData, ObjData>
-
     fun extract(stmt: LetNode, value: ExprT): TmpData
 
     fun extract(stmt: DeclarationNode, arguments: List<ExprT>): ObjData
 
     fun extract(stmt: InfiniteLoopNode): LoopData
+
+    fun putTmpData(tmp: Temporary, data: TmpData)
+
+    fun putObjData(obj: ObjectVariable, data: ObjData)
+
+    fun putLoopData(loop: JumpLabel, data: LoopData)
+
+    fun getLoopData(loop: JumpLabel): LoopData
+
+    fun putHostData(host: Host, data: HostData)
+
+    fun getHostData(host: Host): HostData
+
+    fun putProcessData(process: Protocol, data: ProcessData)
+
+    fun getProcessData(process: Protocol): ProcessData
+
+    fun pushScope()
+
+    fun popScope()
 
     fun leave(stmt: LetNode, value: ExprT, data: TmpData): StmtT
 
@@ -70,27 +129,76 @@ interface StmtContextVisitor<ExprT, StmtT, TmpData, ObjData, LoopData, HostData,
 
     fun leave(stmt: ReceiveNode, data: ProcessData): StmtT
 
-    fun visit(stmt: StatementNode): StmtT
+    fun visit(stmt: StatementNode): StmtT {
+        return when (stmt) {
+            is LetNode -> {
+                val valueResult = visit(stmt.value)
+                val data = extract(stmt, valueResult)
+                putTmpData(stmt.temporary.value, data)
+                leave(stmt, valueResult, data)
+            }
+
+            is DeclarationNode -> {
+                val argumentsResult = stmt.arguments.map { arg -> visit(arg) }
+                val data = extract(stmt, argumentsResult)
+                putObjData(stmt.variable.value, data)
+                leave(stmt, argumentsResult, data)
+            }
+
+            is UpdateNode -> {
+                leave(
+                    stmt,
+                    stmt.arguments.map { arg -> visit(arg) },
+                    getObjData(stmt.variable.value)
+                )
+            }
+
+            is IfNode -> {
+                leave(
+                    stmt,
+                    visit(stmt.guard),
+                    { v -> v.visit(stmt.thenBranch) },
+                    { v -> v.visit(stmt.elseBranch) }
+                )
+            }
+
+            is InfiniteLoopNode -> {
+                val data = extract(stmt)
+                putLoopData(stmt.jumpLabel, data)
+                leave(stmt, { v -> v.visit(stmt.body) }, data)
+            }
+
+            is BreakNode -> {
+                leave(stmt, getLoopData(stmt.jumpLabel))
+            }
+
+            is BlockNode -> {
+                pushScope()
+                val result = leave(stmt, stmt.statements.map { child -> visit(child) })
+                popScope()
+                result
+            }
+
+            is InputNode -> {
+                leave(stmt, getHostData(stmt.host.value))
+            }
+
+            is OutputNode -> {
+                leave(stmt, visit(stmt.message), getHostData(stmt.host.value))
+            }
+
+            is SendNode -> {
+                leave(stmt, visit(stmt.message), getProcessData(stmt.protocol.value))
+            }
+
+            is ReceiveNode -> {
+                leave(stmt, getProcessData(stmt.protocol.value))
+            }
+        }
+    }
 }
 
-interface ProgramContextVisitor<ExprT, StmtT, ProgramT, TmpData, ObjData, LoopData, HostData, ProcessData>
-    : (ProgramNode) -> ProgramT
-{
-    val stmtVisitor: StmtContextVisitor<ExprT, StmtT, TmpData, ObjData, LoopData, HostData, ProcessData>
-
-    fun extract(host: HostDeclarationNode): HostData
-
-    fun extract(process: ProcessDeclarationNode): ProcessData
-
-    fun leave(host: HostDeclarationNode): ProgramT
-
-    fun leave(process: ProcessDeclarationNode, body: StmtT): ProgramT
-
-    fun leave(
-        program: ProgramNode, hosts: Map<Host, ProgramT>, processes: Map<Protocol, ProgramT>
-    ): ProgramT
-}
-
+/** Statement visitor that fixes traversal logic for control structures. */
 interface StrictStmtContextVisitor<ExprT, StmtT, TmpData, ObjData, LoopData, HostData, ProcessData>
     : StmtContextVisitor<ExprT, StmtT, TmpData, ObjData, LoopData, HostData, ProcessData>
 {
@@ -116,8 +224,18 @@ interface StrictStmtContextVisitor<ExprT, StmtT, TmpData, ObjData, LoopData, Hos
     fun leave(stmt: InfiniteLoopNode, body: StmtT, data: LoopData): StmtT
 }
 
+/** Statement visitor that maintains context data for variables and loops. */
 interface VariableLoopContextVisitor<ExprT, StmtT, TmpData, ObjData, LoopData>
     : StmtContextVisitor<ExprT, StmtT, TmpData, ObjData, LoopData, Unit, Unit> {
+
+    override fun getHostData(host: Host) {}
+
+    override fun putHostData(host: Host, data: Unit) {}
+
+    override fun getProcessData(process: Protocol) {}
+
+    override fun putProcessData(process: Protocol, data: Unit) {}
+
     override fun leave(stmt: InputNode, data: Unit): StmtT {
         return leave(stmt)
     }
@@ -143,9 +261,15 @@ interface VariableLoopContextVisitor<ExprT, StmtT, TmpData, ObjData, LoopData>
     fun leave(stmt: SendNode, message: ExprT): StmtT
 }
 
+/** Statement visitor that maintains context data for variables. */
 interface VariableContextVisitor<ExprT, StmtT, TmpData, ObjData>
     : VariableLoopContextVisitor<ExprT, StmtT, TmpData, ObjData, Unit> {
+
     override fun extract(stmt: InfiniteLoopNode) {}
+
+    override fun getLoopData(loop: JumpLabel) {}
+
+    override fun putLoopData(loop: JumpLabel, data: Unit) {}
 
     override fun leave(
         stmt: InfiniteLoopNode,
@@ -167,26 +291,19 @@ interface VariableContextVisitor<ExprT, StmtT, TmpData, ObjData>
     fun leave(stmt: BreakNode): StmtT
 }
 
-interface ExprVisitor<ExprResult> : ExprContextVisitor<ExprResult, Unit, Unit> {
-    override fun leave(expr: ReadNode, data: Unit): ExprResult {
-        return leave(expr)
-    }
-
-    override fun leave(expr: QueryNode, arguments: List<ExprResult>, data: Unit): ExprResult {
-        return leave(expr, arguments)
-    }
-
-    fun leave(expr: ReadNode): ExprResult
-
-    fun leave(expr: QueryNode, arguments: List<ExprResult>): ExprResult
-}
-
+/** Statement visitor that doesn't maintain context data. */
 interface StmtVisitor<ExprT, StmtT> : VariableContextVisitor<ExprT, StmtT, Unit, Unit> {
-    override val exprVisitor: ExprVisitor<ExprT>
-
     override fun extract(stmt: LetNode, value: ExprT) {}
 
     override fun extract(stmt: DeclarationNode, arguments: List<ExprT>) {}
+
+    override fun getTmpData(tmp: Temporary) {}
+
+    override fun putTmpData(tmp: Temporary, data: Unit) {}
+
+    override fun getObjData(obj: ObjectVariable) {}
+
+    override fun putObjData(obj: ObjectVariable, data: Unit) {}
 
     override fun leave(stmt: DeclarationNode, arguments: List<ExprT>, data: Unit): StmtT {
         return leave(stmt, arguments)
@@ -201,12 +318,10 @@ interface StmtVisitor<ExprT, StmtT> : VariableContextVisitor<ExprT, StmtT, Unit,
     fun leave(stmt: UpdateNode, arguments: List<ExprT>): StmtT
 }
 
-interface ProgramVisitor<ExprT, StmtT, ProgramT>
-    : ProgramContextVisitor<ExprT, StmtT, ProgramT, Unit, Unit, Unit, Unit, Unit>
-{
-    override val stmtVisitor: StmtVisitor<ExprT, StmtT>
-}
+typealias StmtThunk<ExprT, StmtT> = StmtContextThunk<ExprT, StmtT, Unit, Unit, Unit, Unit, Unit>
 
+/** Statement visitor that doesn't maintain context data
+ * and fixes traversal logic for control structures. */
 interface StrictStmtVisitor<ExprT, StmtT> :
     StmtVisitor<ExprT, StmtT>,
     StrictStmtContextVisitor<ExprT, StmtT, Unit, Unit, Unit, Unit, Unit>
@@ -226,8 +341,50 @@ interface StrictStmtVisitor<ExprT, StmtT> :
     fun leave(stmt: InfiniteLoopNode, body: StmtT): StmtT
 }
 
-abstract class AbstractContextVisitor
-<ExprT, StmtT, TmpData, ObjData, LoopData, HostData, ProcessData>(
+/** Program visitor that extracts data from host and process top-level declarations. */
+interface ProgramContextVisitor
+<ExprT, StmtT, ProgramT, TmpData, ObjData, LoopData, HostData, ProcessData>
+{
+    val stmtVisitor: StmtContextVisitor<ExprT, StmtT, TmpData, ObjData, LoopData, HostData, ProcessData>
+
+    fun extract(host: HostDeclarationNode): HostData
+
+    fun extract(process: ProcessDeclarationNode): ProcessData
+
+    fun leave(host: HostDeclarationNode): ProgramT
+
+    fun leave(program: ProgramNode, processes: Map<Protocol, StmtT>): ProgramT
+
+    fun visit(program: ProgramNode): ProgramT {
+        for (kv in program.hosts) {
+            val hostData = extract(kv.value)
+            stmtVisitor.putHostData(kv.key, hostData)
+        }
+
+        for (kv in program.processes) {
+            val processData = extract(kv.value)
+            stmtVisitor.putProcessData(kv.key, processData)
+        }
+
+        val processResultMap = mutableMapOf<Protocol, StmtT>()
+        for (kv in program.processes) {
+            processResultMap[kv.key] = stmtVisitor.visit(kv.value.body)
+        }
+
+        return leave(program, processResultMap)
+    }
+}
+
+/** Program visitor that does not maintain context information. */
+interface ProgramVisitor<ExprT, StmtT, ProgramT>
+    : ProgramContextVisitor<ExprT, StmtT, ProgramT, Unit, Unit, Unit, Unit, Unit>
+{
+    override val stmtVisitor: StmtVisitor<ExprT, StmtT>
+}
+
+/** Statement visitor that implements context handling. */
+abstract class AbstractStmtContextVisitor
+<ExprT, StmtT, ProgramT, TmpData, ObjData, LoopData, HostData, ProcessData>(
     private val contextStack: Stack<Context<TmpData, ObjData, LoopData, HostData, ProcessData>>
 ) : StmtContextVisitor<ExprT, StmtT, TmpData, ObjData, LoopData, HostData, ProcessData> {
 
@@ -252,11 +409,11 @@ abstract class AbstractContextVisitor
         contextStack.push(Context())
     }
 
-    private fun pushScope() {
+    override fun pushScope() {
         contextStack.push(contextStack.peek())
     }
 
-    private fun popScope() {
+    override fun popScope() {
         contextStack.pop()
     }
 
@@ -267,102 +424,44 @@ abstract class AbstractContextVisitor
             contextStack.push(value)
         }
 
-    private var tmpContext: PersistentMap<Temporary, TmpData>
-        get() = context.tmp
-        set(value) {
-            context = context.copy(tmp = value)
-        }
+    override fun getTmpData(tmp: Temporary): TmpData {
+        return context.tmp[tmp]!!
+    }
 
-    private var objContext: PersistentMap<ObjectVariable, ObjData>
-        get() = context.obj
-        set(value) {
-            context = context.copy(obj = value)
-        }
+    override fun putTmpData(tmp: Temporary, data: TmpData) {
+        context = context.copy(tmp = context.tmp.put(tmp, data))
+    }
 
-    private var loopContext: PersistentMap<JumpLabel, LoopData>
-        get() = context.loop
-        set(value) {
-            context = context.copy(loop = value)
-        }
+    override fun getObjData(obj: ObjectVariable): ObjData {
+        return context.obj[obj]!!
+    }
 
-    private var hostContext: PersistentMap<Host, HostData>
-        get() = context.host
-        set(value) {
-            context = context.copy(host = value)
-        }
+    override fun putObjData(obj: ObjectVariable, data: ObjData) {
+        context = context.copy(obj = context.obj.put(obj, data))
+    }
 
-    private var processContext: PersistentMap<Protocol, ProcessData>
-        get() = context.process
-        set(value) {
-            context = context.copy(process = value)
-        }
+    override fun getLoopData(loop: JumpLabel): LoopData {
+        return context.loop[loop]!!
+    }
 
-    final override fun visit(stmt: StatementNode): StmtT {
-        return when (stmt) {
-            is LetNode -> {
-                val valueResult = exprVisitor(stmt.value)
-                val data = extract(stmt, valueResult)
-                tmpContext = tmpContext.put(stmt.temporary.value, data)
-                leave(stmt, valueResult, data)
-            }
+    override fun putLoopData(loop: JumpLabel, data: LoopData) {
+        context = context.copy(loop = context.loop.put(loop, data))
+    }
 
-            is DeclarationNode -> {
-                val argumentsResult = stmt.arguments.map { arg -> exprVisitor(arg) }
-                val data = extract(stmt, argumentsResult)
-                objContext = objContext.put(stmt.variable.value, data)
-                leave(stmt, argumentsResult, data)
-            }
+    override fun getHostData(host: Host): HostData {
+        return context.host[host]!!
+    }
 
-            is UpdateNode -> {
-                leave(
-                    stmt,
-                    stmt.arguments.map { arg -> exprVisitor(arg) },
-                    objContext[stmt.variable.value]!!
-                )
-            }
+    override fun putHostData(host: Host, data: HostData) {
+        context = context.copy(host = context.host.put(host, data))
+    }
 
-            is IfNode -> {
-                leave(
-                    stmt,
-                    exprVisitor(stmt.guard),
-                    { v -> v(stmt.thenBranch) },
-                    { v -> v(stmt.elseBranch) }
-                )
-            }
+    override fun getProcessData(process: Protocol): ProcessData {
+        return context.process[process]!!
+    }
 
-            is InfiniteLoopNode -> {
-                val data = extract(stmt)
-                loopContext = loopContext.put(stmt.jumpLabel, data)
-                leave(stmt, { v -> v(stmt.body) }, data)
-            }
-
-            is BreakNode -> {
-                leave(stmt, loopContext[stmt.jumpLabel]!!)
-            }
-
-            is BlockNode -> {
-                pushScope()
-                val result = leave(stmt, stmt.statements.map { child -> visit(child) })
-                popScope()
-                result
-            }
-
-            is InputNode -> {
-                leave(stmt, hostContext[stmt.host.value]!!)
-            }
-
-            is OutputNode -> {
-                leave(stmt, exprVisitor(stmt.message), hostContext[stmt.host.value]!!)
-            }
-
-            is SendNode -> {
-                leave(stmt, exprVisitor(stmt.message), processContext[stmt.protocol.value]!!)
-            }
-
-            is ReceiveNode -> {
-                leave(stmt, processContext[stmt.protocol.value]!!)
-            }
-        }
+    override fun putProcessData(process: Protocol, data: ProcessData) {
+        context = context.copy(process = context.process.put(process, data))
     }
 }
 

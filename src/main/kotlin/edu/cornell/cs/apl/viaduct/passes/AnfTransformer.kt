@@ -157,11 +157,11 @@ class AnfTransformer private constructor() :
     }
 
     override fun leave(stmt: SInfiniteLoopNode, body: List<IStatementNode>): List<IStatementNode> {
-        return listOf(IInfiniteLoopNode(extractBlock(body), stmt.jumpLabel, stmt.sourceLocation))
+        return listOf(IInfiniteLoopNode(extractBlock(body), stmt.jumpLabel!!, stmt.sourceLocation))
     }
 
     override fun leave(stmt: SBreakNode): List<IStatementNode> {
-        return listOf(IBreakNode(stmt.jumpLabel, stmt.sourceLocation))
+        return listOf(IBreakNode(stmt.jumpLabel!!, stmt.sourceLocation))
     }
 
     override fun leave(

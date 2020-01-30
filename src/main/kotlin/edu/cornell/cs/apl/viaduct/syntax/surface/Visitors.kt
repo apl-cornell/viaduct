@@ -3,7 +3,7 @@ package edu.cornell.cs.apl.viaduct.syntax.surface
 import edu.cornell.cs.apl.viaduct.syntax.Variable
 import kotlinx.collections.immutable.PersistentMap
 import kotlinx.collections.immutable.persistentMapOf
-import java.util.Stack
+import java.util.*
 
 interface ExpressionVisitor<out E> {
     fun visit(expr: ExpressionNode): E
@@ -62,8 +62,7 @@ interface GeneralAbstractExpressionVisitor<CVisitorT : ExpressionVisitor<CExprT>
 
 interface AbstractExpressionVisitor
 <CVisitorT : AbstractExpressionVisitor<CVisitorT, ExprT>, ExprT>
-    : GeneralAbstractExpressionVisitor<CVisitorT, ExprT, ExprT>
-{
+    : GeneralAbstractExpressionVisitor<CVisitorT, ExprT, ExprT> {
     override fun enter(expr: ExpressionNode): CVisitorT {
         @Suppress("UNCHECKED_CAST")
         return this as CVisitorT
@@ -155,8 +154,7 @@ interface GeneralAbstractStatementVisitor
  * as the actual return type. */
 interface AbstractStatementVisitor
 <CVisitorT : AbstractStatementVisitor<CVisitorT, ExprT, StmtT>, ExprT, StmtT> :
-    GeneralAbstractStatementVisitor<CVisitorT, ExprT, StmtT, StmtT>
-{
+    GeneralAbstractStatementVisitor<CVisitorT, ExprT, StmtT, StmtT> {
     override fun enter(stmt: StatementNode): CVisitorT {
         @Suppress("UNCHECKED_CAST")
         return this as CVisitorT
@@ -167,8 +165,7 @@ interface AbstractStatementVisitor
 interface CombinedAbstractStatementVisitor
 <CVisitorT : CombinedAbstractStatementVisitor<CVisitorT, ExprT, StmtT>, ExprT, StmtT> :
     AbstractStatementVisitor<CVisitorT, ExprT, StmtT>,
-    AbstractExpressionVisitor<CVisitorT, ExprT>
-{
+    AbstractExpressionVisitor<CVisitorT, ExprT> {
     override val exprVisitor: ExpressionVisitor<ExprT>
         get() = this
 }

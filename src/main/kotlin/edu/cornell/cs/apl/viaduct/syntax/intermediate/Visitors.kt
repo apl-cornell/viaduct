@@ -3,7 +3,7 @@ package edu.cornell.cs.apl.viaduct.syntax.intermediate
 import edu.cornell.cs.apl.viaduct.syntax.Variable
 import kotlinx.collections.immutable.PersistentMap
 import kotlinx.collections.immutable.persistentMapOf
-import java.util.Stack
+import java.util.*
 
 interface ExpressionVisitor<out E> {
     fun visit(expr: ExpressionNode): E
@@ -12,6 +12,7 @@ interface ExpressionVisitor<out E> {
 interface StatementVisitor<out S> {
     fun visit(stmt: StatementNode): S
 }
+
 
 /** Polyglot-style visitor that allows return type of children to vary with
  * the actual return type.
@@ -68,7 +69,7 @@ interface AbstractExpressionVisitor
 /** Polyglot-style visitor that allows return type of children to vary with
  * the actual return type.
  * Can be parameterized across the visitor for expressions inside statements.
-*/
+ */
 interface GeneralAbstractStatementVisitor
 <CVisitorT : StatementVisitor<CStmtT>, ExprT, StmtT, CStmtT>
     : StatementVisitor<StmtT> {
@@ -139,8 +140,7 @@ interface GeneralAbstractStatementVisitor
  * as the actual return type. */
 interface AbstractStatementVisitor
 <CVisitorT : AbstractStatementVisitor<CVisitorT, ExprT, StmtT>, ExprT, StmtT> :
-    GeneralAbstractStatementVisitor<CVisitorT, ExprT, StmtT, StmtT>
-{
+    GeneralAbstractStatementVisitor<CVisitorT, ExprT, StmtT, StmtT> {
     @Suppress("UNCHECKED_CAST")
     override fun enter(stmt: StatementNode): CVisitorT {
         return this as CVisitorT
@@ -151,10 +151,105 @@ interface AbstractStatementVisitor
 interface CombinedAbstractStatementVisitor
 <CVisitorT : CombinedAbstractStatementVisitor<CVisitorT, ExprT, StmtT>, ExprT, StmtT> :
     AbstractStatementVisitor<CVisitorT, ExprT, StmtT>,
-    AbstractExpressionVisitor<CVisitorT, ExprT>
-{
+    AbstractExpressionVisitor<CVisitorT, ExprT> {
     override val exprVisitor: ExpressionVisitor<ExprT>
         get() = this
+}
+
+/** A statement visitor that doesn't return anything for statements.
+ *  Useful for doing imperative computations on the AST. */
+interface VoidStatementVisitor<CVisitorT : VoidStatementVisitor<CVisitorT, ExprT>, ExprT>
+    : AbstractStatementVisitor<CVisitorT, ExprT, Unit> {
+
+    override fun leave(stmt: IfNode, guard: ExprT, thenBranch: Unit, elseBranch: Unit) {
+        leave(stmt, guard)
+    }
+
+    override fun leave(stmt: InfiniteLoopNode, body: Unit) {
+        return leave(stmt)
+    }
+
+    override fun leave(stmt: BlockNode, statements: List<Unit>) {
+        return leave(stmt)
+    }
+
+    override fun leave(stmt: BreakNode) {}
+
+    override fun leave(stmt: InputNode) {}
+
+    override fun leave(stmt: ReceiveNode) {}
+
+    fun leave(stmt: IfNode, guard: ExprT) {}
+
+    fun leave(stmt: InfiniteLoopNode) {}
+
+    fun leave(stmt: BlockNode) {}
+}
+
+/** A statement visitor that doesn't return anything for statements or expressions.
+ *  Useful for doing imperative computations on the AST. */
+interface VoidVisitor<CVisitorT : VoidVisitor<CVisitorT>> :
+    VoidStatementVisitor<CVisitorT, Unit>, CombinedAbstractStatementVisitor<CVisitorT, Unit, Unit> {
+
+    override fun leave(expr: OperatorApplicationNode, arguments: List<Unit>) {
+        return leave(expr)
+    }
+
+    override fun leave(expr: QueryNode, arguments: List<Unit>) {
+        return leave(expr)
+    }
+
+    override fun leave(expr: DeclassificationNode, expression: Unit) {
+        return leave(expr)
+    }
+
+    override fun leave(expr: EndorsementNode, expression: Unit) {
+        return leave(expr)
+    }
+
+    override fun leave(stmt: LetNode, value: Unit) {
+        return leave(stmt)
+    }
+
+    override fun leave(stmt: DeclarationNode, arguments: List<Unit>) {
+        return leave(stmt)
+    }
+
+    override fun leave(stmt: UpdateNode, arguments: List<Unit>) {
+        return leave(stmt)
+    }
+
+    override fun leave(stmt: IfNode, guard: Unit) {
+        return leave(stmt)
+    }
+
+    override fun leave(stmt: OutputNode, message: Unit) {
+        return leave(stmt)
+    }
+
+    override fun leave(stmt: SendNode, message: Unit) {
+        return leave(stmt)
+    }
+
+    fun leave(expr: OperatorApplicationNode) {}
+
+    fun leave(expr: QueryNode) {}
+
+    fun leave(expr: DeclassificationNode) {}
+
+    fun leave(expr: EndorsementNode) {}
+
+    fun leave(stmt: LetNode) {}
+
+    fun leave(stmt: DeclarationNode) {}
+
+    fun leave(stmt: UpdateNode) {}
+
+    fun leave(stmt: IfNode) {}
+
+    fun leave(stmt: OutputNode) {}
+
+    fun leave(stmt: SendNode) {}
 }
 
 /** Visitor that maintains lexically-scoped context information. */
@@ -174,20 +269,18 @@ abstract class ContextVisitor
             contextStack.push(value)
         }
 
-    private fun enterScope() {
-        contextStack.push(contextStack.peek())
-    }
+    protected open fun enterScope() {}
 
-    private fun leaveScope() {
-        contextStack.pop()
-    }
+    protected open fun leaveScope() {}
 
     override fun visit(stmt: StatementNode): StmtT {
         return when (stmt) {
             is BlockNode -> {
+                contextStack.push(contextStack.peek())
                 enterScope()
                 val result = super.visit(stmt)
                 leaveScope()
+                contextStack.pop()
                 result
             }
 
@@ -199,8 +292,8 @@ abstract class ContextVisitor
 typealias VariableContext<T> = Stack<PersistentMap<Variable, T>>
 
 /** Visitor that maintains information about variables in scope. */
-abstract class VariableContextVisitor
-<SelfT : VariableContextVisitor<SelfT, ExprT, StmtT, ContextT>, ExprT, StmtT, ContextT>
+abstract class NameContextVisitor
+<SelfT : NameContextVisitor<SelfT, ExprT, StmtT, ContextT>, ExprT, StmtT, ContextT>
     : ContextVisitor<SelfT, ExprT, StmtT, PersistentMap<Variable, ContextT>> {
     constructor(context: VariableContext<ContextT>) : super(context)
 
@@ -242,4 +335,66 @@ abstract class VariableContextVisitor
     abstract fun extract(letNode: LetNode): ContextT?
 
     abstract fun extract(declarationNode: DeclarationNode): ContextT?
+}
+
+class NothingVisitor :
+    ContextVisitor<NothingVisitor, Int, Unit, Int>(0),
+    CombinedAbstractStatementVisitor<NothingVisitor, Int, Unit>,
+    VoidStatementVisitor<NothingVisitor, Int> {
+
+    override fun enterScope() {
+        context += 1
+    }
+
+    override fun leave(expr: LiteralNode): Int {
+        return 1
+    }
+
+    override fun leave(expr: ReadNode): Int {
+        return 1
+    }
+
+    override fun leave(expr: OperatorApplicationNode, arguments: List<Int>): Int {
+        return 1 + arguments.sum()
+    }
+
+    override fun leave(expr: QueryNode, arguments: List<Int>): Int {
+        return 1 + arguments.sum()
+    }
+
+    override fun leave(expr: DeclassificationNode, expression: Int): Int {
+        return 1 + expression
+    }
+
+    override fun leave(expr: EndorsementNode, expression: Int): Int {
+        return 1 + expression
+    }
+
+    private fun checkValue(value: Int) {
+        if (context < value) throw Error("Expression deeper than context!")
+    }
+
+    override fun leave(stmt: LetNode, value: Int) {
+        checkValue(value)
+    }
+
+    override fun leave(stmt: DeclarationNode, arguments: List<Int>) {
+        checkValue(arguments.sum())
+    }
+
+    override fun leave(stmt: UpdateNode, arguments: List<Int>) {
+        checkValue(arguments.sum())
+    }
+
+    override fun leave(stmt: IfNode, guard: Int) {
+        checkValue(guard)
+    }
+
+    override fun leave(stmt: OutputNode, message: Int) {
+        checkValue(message)
+    }
+
+    override fun leave(stmt: SendNode, message: Int) {
+        checkValue(message)
+    }
 }

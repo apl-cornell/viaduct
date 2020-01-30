@@ -72,7 +72,7 @@ class IfNode(
  */
 class InfiniteLoopNode(
     val body: BlockNode,
-    val jumpLabel: JumpLabel? = null,
+    val jumpLabel: JumpLabel,
     override val sourceLocation: SourceLocation
 ) : ControlNode()
 
@@ -82,7 +82,7 @@ class InfiniteLoopNode(
  * @param jumpLabel Label of the loop to break out of. A null value refers to the innermost loop.
  */
 class BreakNode(
-    val jumpLabel: JumpLabel? = null,
+    val jumpLabel: JumpLabel,
     override val sourceLocation: SourceLocation
 ) : StatementNode()
 

@@ -41,7 +41,7 @@ data class SourceRange(private val start: SourcePosition, private val end: Sourc
      *
      * @param output where to print the output
      * @param contextLines number of lines before and after the relevant region to display to give
-     * more context to the user
+     *     more context to the user
      */
     fun showInSource(
         output: PrintStream,

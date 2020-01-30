@@ -3,7 +3,7 @@ package edu.cornell.cs.apl.viaduct.syntax.surface
 import edu.cornell.cs.apl.viaduct.syntax.Variable
 import kotlinx.collections.immutable.PersistentMap
 import kotlinx.collections.immutable.persistentMapOf
-import java.util.*
+import java.util.Stack
 
 interface ExpressionVisitor<out E> {
     fun visit(expr: ExpressionNode): E

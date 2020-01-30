@@ -3,7 +3,7 @@ package edu.cornell.cs.apl.viaduct.syntax.intermediate
 import edu.cornell.cs.apl.viaduct.syntax.Variable
 import kotlinx.collections.immutable.PersistentMap
 import kotlinx.collections.immutable.persistentMapOf
-import java.util.*
+import java.util.Stack
 
 interface ExpressionVisitor<out E> {
     fun visit(expr: ExpressionNode): E
@@ -12,7 +12,6 @@ interface ExpressionVisitor<out E> {
 interface StatementVisitor<out S> {
     fun visit(stmt: StatementNode): S
 }
-
 
 /** Polyglot-style visitor that allows return type of children to vary with
  * the actual return type.

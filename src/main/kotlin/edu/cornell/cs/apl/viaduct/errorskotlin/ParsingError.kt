@@ -1,0 +1,47 @@
+package edu.cornell.cs.apl.viaduct.errorskotlin
+
+import edu.cornell.cs.apl.viaduct.syntax.SourceLocation
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.toPersistentList
+import java.io.PrintStream
+
+/**
+ * Thrown when the parser runs into an unexpected token.
+ *
+ * @param location Source location of the unexpected token.
+ * @param actualToken Token that was encountered.
+ * @param expectedTokens Tokens that would have been valid.
+ */
+class ParsingError(
+    private val location: SourceLocation,
+    private val actualToken: String,
+    expectedTokens: List<String>
+) : CompilationError() {
+    private val expectedTokens: ImmutableList<String> = expectedTokens.toPersistentList()
+
+    override val category: String
+        get() = "Parse Error"
+
+    override val source: String
+        get() = location.sourcePath
+
+    override fun print(output: PrintStream) {
+        super.print(output)
+
+        output.println("I ran into an issue while parsing this file.")
+
+        output.println()
+        location.showInSource(output)
+
+        output.println("I was expecting one of these:")
+        output.println()
+        output.println(expectedTokens.joinToString(", "))
+
+        output.println()
+        output.println("Instead, I found:")
+        output.println()
+        output.println(actualToken)
+
+        output.println()
+    }
+}

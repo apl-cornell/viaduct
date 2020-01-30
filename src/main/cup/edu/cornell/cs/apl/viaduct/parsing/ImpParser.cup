@@ -1,0 +1,479 @@
+package edu.cornell.cs.apl.viaduct.parsing;
+
+import com.google.common.collect.ImmutableList;
+
+import edu.cornell.cs.apl.viaduct.errorskotlin.ParsingError;
+import edu.cornell.cs.apl.viaduct.protocols.*;
+import edu.cornell.cs.apl.viaduct.security.Label;
+import edu.cornell.cs.apl.viaduct.security.Principal;
+import edu.cornell.cs.apl.viaduct.syntax.*;
+import edu.cornell.cs.apl.viaduct.syntax.datatypes.*;
+import edu.cornell.cs.apl.viaduct.syntax.surface.*;
+import edu.cornell.cs.apl.viaduct.syntax.types.*;
+import edu.cornell.cs.apl.viaduct.syntax.values.*;
+
+import java.util.List;
+import java.util.LinkedList;
+import kotlin.collections.CollectionsKt;
+
+import java_cup.runtime.Symbol;
+
+
+action code {:
+    /** Construct a binary expression node. Source location is inferred from the arguments. */
+    private OperatorApplicationNode binaryExpression(BinaryOperator op, ExpressionNode lhs, ExpressionNode rhs) {
+        Arguments arguments = new Arguments(lhs, rhs);
+        SourceRange sourceLocation = lhs.getSourceLocation().merge(rhs.getSourceLocation());
+        return new OperatorApplicationNode(op, arguments, sourceLocation);
+    }
+:}
+
+parser code {:
+    /** Generate source location information for a node given left and right character offsets. */
+    private SourceRange location(int left, int right) {
+        return ((ImpLexer) getScanner()).location(left, right);
+    }
+
+    /** Generate source location information for a node given left node and right character offset. */
+    private SourceRange location(HasSourceLocation left, int right) {
+        return location(left.getSourceLocation().getStart().getOffset(), right);
+    }
+
+    @Override
+    public void report_error(String message, Object info) {
+        report_fatal_error(message, info);
+    }
+
+    @Override
+    public void report_fatal_error(String message, Object info) {
+        done_parsing();
+
+        final Symbol infoSymbol = (Symbol) info;
+        final SourceRange errorLocation = location(infoSymbol.left, infoSymbol.right);
+        final String actualToken = symbl_name_from_id(infoSymbol.sym);
+        final List<String> expectedTokens = new LinkedList<>();
+        for (Integer id : expected_token_ids()) {
+            expectedTokens.add(symbl_name_from_id(id));
+        }
+        throw new ParsingError(errorLocation, actualToken, expectedTokens);
+    }
+:}
+
+nonterminal ProgramNode program;
+nonterminal List<TopLevelDeclarationNode> declaration_list;
+nonterminal TopLevelDeclarationNode declaration;
+
+nonterminal SimpleStatementNode simple_stmt;
+nonterminal BinaryOperator compound_assignment;
+nonterminal StatementNode stmt;
+nonterminal BlockNode block;
+nonterminal List<StatementNode> stmt_list;
+
+nonterminal ExpressionNode expr;
+nonterminal Reference reference;
+
+nonterminal Value value;
+nonterminal Located<ValueType> value_type, optional_value_type;
+nonterminal Located<Label> label, optional_label;
+nonterminal Label label_expr;
+
+nonterminal Located<ObjectVariable> variable;
+nonterminal Located<Host> host;
+nonterminal Located<Protocol> protocol;
+
+terminal String IDENT, CAP_IDENT;
+terminal int INT_LIT;
+terminal TRUE, FALSE;
+
+terminal HOST, PROCESS, PROTOCOL;
+terminal AT, COLON;
+
+terminal EQ;
+terminal PLUSEQ, MINUSEQ, TIMESEQ, DIVIDEEQ;
+terminal PLUSPLUS, MINUSMINUS;
+terminal LET, VAR, VAL;
+terminal IF, ELSE, WHILE, FOR, BREAK;
+terminal INPUT, RECEIVE, FROM, OUTPUT, SEND, TO;
+terminal ASSERT;
+
+terminal NOT, ANDAND, OROR;
+terminal EQEQ, NEQ, LT, LEQ, GT, GEQ;
+terminal PLUS, MINUS, TIMES, DIVIDE;
+terminal MIN;
+
+terminal DECLASSIFY, ENDORSE, DOWNGRADE;
+
+terminal INT, BOOL;
+terminal TOP, BOTTOM, OR, AND, JOIN, MEET, RARROW, LARROW;
+
+terminal OPEN_BRACE, CLOSE_BRACE, SEMICOLON;
+terminal OPEN_SQBRACE, CLOSE_SQBRACE;
+terminal OPEN_PAREN, CLOSE_PAREN, COMMA;
+
+precedence left ANDAND, OROR, AND, OR, JOIN, MEET;
+precedence nonassoc EQEQ, NEQ, LT, LEQ, GT, GEQ;
+precedence left PLUS, MINUS;
+precedence left TIMES, DIVIDE;
+precedence right NOT;
+precedence left MIN;
+precedence left LARROW, RARROW;
+precedence nonassoc OPEN_PAREN, CLOSE_PAREN;
+
+start with program;
+
+
+program ::=
+    declaration_list:declarations {:
+      RESULT = new ProgramNode(declarations, location(declarationsleft, declarationsright));
+    :}
+  ;
+
+declaration_list ::=
+    declaration_list:declarations declaration:declaration {:
+      declarations.add(declaration);
+      RESULT = declarations;
+    :}
+
+  | /* empty */ {:
+      RESULT = CollectionsKt.mutableListOf();
+    :}
+  ;
+
+declaration ::=
+    HOST:begin host:host COLON label:authority SEMICOLON:end {:
+      RESULT = new HostDeclarationNode(host, authority, location(beginleft, endright));
+    :}
+
+  | PROCESS:begin protocol:protocol block:body {:
+      RESULT = new ProcessDeclarationNode(protocol, body, location(beginleft, bodyright));
+    :}
+  ;
+
+
+simple_stmt ::=
+    value_type:type optional_label:label variable:var {:
+      final LiteralNode initial = new LiteralNode(
+        type.getValue().getDefaultValue(),
+        type.getSourceLocation());
+      RESULT = new DeclarationNode(
+        var,
+        MutableCell.INSTANCE.getConstructor(),
+        new Arguments(initial),
+        location(typeleft, varright));
+    :}
+
+  | value_type:type optional_label:label variable:var EQ expr:initial {:
+      RESULT = new DeclarationNode(
+        var,
+        MutableCell.INSTANCE.getConstructor(),
+        new Arguments(initial),
+        location(typeleft, varright));
+    :}
+
+  | value_type:type optional_label:lab variable:var OPEN_SQBRACE expr:size CLOSE_SQBRACE:end {:
+      RESULT = new DeclarationNode(
+        var,
+        Vector.INSTANCE.getConstructor(),
+        new Arguments(size),
+        location(typeleft, endright));
+    :}
+
+  | reference:ref EQ expr:e {:
+      RESULT = ref.set(e);
+    :}
+
+  | reference:ref compound_assignment:op expr:e {:
+      RESULT = ref.modify(op, e);
+    :}
+  ;
+
+compound_assignment ::=
+    PLUSEQ   {: RESULT = Addition.INSTANCE; :}
+  | MINUSEQ  {: RESULT = Subtraction.INSTANCE; :}
+  | TIMESEQ  {: RESULT = Multiplication.INSTANCE; :}
+  | DIVIDEEQ {: RESULT = Division.INSTANCE; :}
+  ;
+
+stmt ::=
+    simple_stmt:stmt SEMICOLON {:
+      RESULT = stmt;
+    :}
+
+  | IF:begin OPEN_PAREN expr:guard CLOSE_PAREN block:thenCase ELSE block:elseCase {:
+      RESULT = new IfNode(guard, thenCase, elseCase, location(beginleft, elseCaseright));
+    :}
+
+  | IF:begin OPEN_PAREN expr:guard CLOSE_PAREN block:thenCase {:
+      SourceRange sourceLocation = location(beginleft , thenCaseright);
+      RESULT = new IfNode(
+        guard,
+        thenCase,
+        new BlockNode(CollectionsKt.listOf(), sourceLocation),
+        sourceLocation);
+    :}
+
+  | WHILE:begin OPEN_PAREN expr:guard CLOSE_PAREN block:body {:
+      RESULT = new WhileLoopNode(guard, body, null, location(beginleft, bodyright));
+    :}
+
+  | FOR:begin OPEN_PAREN simple_stmt:initialize SEMICOLON expr:guard SEMICOLON simple_stmt:update CLOSE_PAREN block:body {:
+      RESULT = new ForLoopNode(initialize, guard, update, body, null, location(beginleft, bodyright));
+    :}
+
+  | BREAK:brk {:
+      RESULT = new BreakNode(null, location(brkleft, brkright));
+    :}
+
+  | block:block {:
+      RESULT = block;
+    :}
+
+  | OUTPUT:begin expr:message TO host:recipient {:
+      RESULT = new OutputNode(message, recipient, location(beginleft, recipientright));
+    :}
+
+  | SEND:begin expr:message TO protocol:recipient {:
+      RESULT = new SendNode(message, recipient, location(beginleft, recipientright));
+    :}
+  /*
+  | ASSERT:begin expr:e {:
+      RESULT = single(
+          AssertNode.builder()
+          .setExpression(e)
+          .setSourceLocation(location(beginleft, eright))
+          .build());
+    :}
+  */
+  ;
+
+block ::=
+    OPEN_BRACE:begin stmt_list:statements CLOSE_BRACE:end {:
+      RESULT = new BlockNode(statements, location(beginleft, endright));
+    :}
+  ;
+
+stmt_list ::=
+    stmt_list:slist stmt:s {:
+      slist.add(s);
+      RESULT = slist;
+    :}
+
+  | /* empty */ {:
+      RESULT = CollectionsKt.mutableListOf();
+    :}
+  ;
+
+
+expr ::=
+    value:value {:
+      RESULT = new LiteralNode(value, location(valueleft, valueright));
+    :}
+
+  | reference:ref {:
+       RESULT = ref.get();
+    :}
+
+  | NOT:begin expr:e {:
+      RESULT = new OperatorApplicationNode(
+        Not.INSTANCE,
+        new Arguments(e),
+        location(beginleft, eright));
+    :}
+
+  | MINUS:begin expr:e {:
+      RESULT = new OperatorApplicationNode(
+        Negation.INSTANCE,
+        new Arguments(e),
+        location(beginleft, eright));
+    :}
+
+  | expr:e1 ANDAND expr:e2 {:
+      RESULT = binaryExpression(And.INSTANCE, e1, e2);
+    :}
+
+  | expr:e1 OROR expr:e2 {:
+      RESULT = binaryExpression(Or.INSTANCE, e1, e2);
+    :}
+
+  | expr:e1 EQEQ expr:e2 {:
+      RESULT = binaryExpression(EqualTo.INSTANCE, e1, e2);
+    :}
+
+  | expr:e1 NEQ expr:e2 {:
+      final ExpressionNode eq = binaryExpression(EqualTo.INSTANCE, e1, e2);
+      RESULT = new OperatorApplicationNode(Not.INSTANCE, new Arguments(eq), eq.getSourceLocation());
+    :}
+
+  | expr:e1 LT expr:e2 {:
+      RESULT = binaryExpression(LessThan.INSTANCE, e1, e2);
+    :}
+
+  | expr:e1 LEQ expr:e2 {:
+      RESULT = binaryExpression(LessThanOrEqualTo.INSTANCE, e1, e2);
+    :}
+
+  | expr:e1 GT expr:e2 {:
+      RESULT = binaryExpression(LessThan.INSTANCE, e2, e1);
+    :}
+
+  | expr:e1 GEQ expr:e2 {:
+      RESULT = binaryExpression(LessThanOrEqualTo.INSTANCE, e2, e1);
+    :}
+
+  | expr:e1 PLUS expr:e2 {:
+      RESULT = binaryExpression(Addition.INSTANCE, e1, e2);
+    :}
+
+  | expr:e1 MINUS expr:e2 {:
+      RESULT = binaryExpression(Subtraction.INSTANCE, e1, e2);
+    :}
+
+  | expr:e1 TIMES expr:e2 {:
+      RESULT = binaryExpression(Multiplication.INSTANCE, e1, e2);
+    :}
+
+  | expr:e1 DIVIDE expr:e2 {:
+      RESULT = binaryExpression(Division.INSTANCE, e1, e2);
+    :}
+
+  | MIN:begin OPEN_PAREN expr:e1 COMMA expr:e2 CLOSE_PAREN:end {:
+      RESULT = binaryExpression(Minimum.INSTANCE, e1, e2);
+    :}
+
+  | DECLASSIFY:begin OPEN_PAREN expr:e COMMA label:to CLOSE_PAREN:end {:
+      // TODO: Add from labels.
+      RESULT = new DeclassificationNode(e, null, to, location(beginleft, endright));
+    :}
+
+  | ENDORSE:begin OPEN_PAREN expr:e COMMA label:to CLOSE_PAREN:end {:
+      RESULT = new EndorsementNode(e, null, to, location(beginleft, endright));
+    :}
+
+  | INPUT:begin value_type:type FROM host:sender {:
+      RESULT = new InputNode(type, sender, location(beginleft, senderright));
+    :}
+
+  | RECEIVE:begin value_type:type FROM protocol:sender {:
+      RESULT = new ReceiveNode(type, sender, location(beginleft, senderright));
+    :}
+
+  | OPEN_PAREN expr:e CLOSE_PAREN {:
+      RESULT = e;
+    :}
+  ;
+
+reference ::=
+    variable:var {:
+      RESULT = new CellReference(var);
+    :}
+
+  | variable:var OPEN_SQBRACE expr:index CLOSE_SQBRACE:end {:
+      RESULT = new VectorReference(var, index, location(varleft, endright));
+    :}
+  ;
+
+
+value ::=
+    TRUE {:
+      RESULT = new BooleanValue(true);
+    :}
+
+  | FALSE {:
+      RESULT = new BooleanValue(false);
+    :}
+
+  | INT_LIT:literal {:
+      RESULT = new IntegerValue(literal);
+    :}
+  ;
+
+
+value_type ::=
+    INT:type {:
+      RESULT = new Located(IntegerType.INSTANCE, location(typeleft, typeright));
+    :}
+  | BOOL:type {:
+      RESULT = new Located(BooleanType.INSTANCE, location(typeleft, typeright));
+    :}
+  ;
+
+
+label ::=
+    OPEN_BRACE:begin label_expr:l CLOSE_BRACE:end {:
+      RESULT = new Located(l, location(beginleft, endright));
+    :}
+  ;
+
+label_expr ::=
+    CAP_IDENT:id {: RESULT = Label.create(Principal.create(id)); :}
+
+  | TOP {: RESULT = Label.weakest(); :}
+
+  | BOTTOM {: RESULT = Label.strongest(); :}
+
+  | label_expr:l1 OR label_expr:l2 {:
+      RESULT = l1.or(l2);
+    :}
+
+  | label_expr:l1 AND label_expr:l2 {:
+      RESULT = l1.and(l2);
+    :}
+
+  | label_expr:l1 JOIN label_expr:l2 {:
+      RESULT = l1.join(l2);
+    :}
+
+  | label_expr:l1 MEET label_expr:l2 {:
+      RESULT = l1.meet(l2);
+    :}
+
+  | label_expr:l RARROW {:
+      RESULT = l.confidentiality();
+    :}
+
+  | label_expr:l LARROW {:
+      RESULT = l.integrity();
+    :}
+
+  | OPEN_PAREN label_expr:l CLOSE_PAREN {:
+      RESULT = l;
+    :}
+  ;
+
+
+optional_value_type ::=
+    value_type:ty {:
+      RESULT = ty;
+    :}
+  | /* nothing */ {:
+      RESULT = null;
+    :}
+  ;
+
+optional_label ::=
+    label:l {:
+        RESULT = l;
+    :}
+  | /* nothing */ {:
+        RESULT = null;
+    :}
+  ;
+
+
+variable ::=
+    IDENT:id  {:
+      RESULT = new Located(new ObjectVariable(id), location(idleft, idright));
+    :}
+  ;
+
+host ::=
+    IDENT:id {:
+      RESULT = new Located(new Host(id), location(idleft, idright));
+    :}
+  ;
+
+protocol ::=
+    IDENT:id {:
+      RESULT = new Located(new Ideal(id), location(idleft, idright));
+    :}
+  ;

@@ -10,7 +10,7 @@ import java.io.PrintStream
  * @param start position that comes just before the characters in the range
  * @param end position that comes just after the characters in the range
  */
-data class SourceRange(private val start: SourcePosition, private val end: SourcePosition) {
+data class SourceRange(val start: SourcePosition, val end: SourcePosition) {
     init {
         require(start.sourceFile == end.sourceFile) { "Positions must be in the same file." }
         require(start != end) { "Source range cannot be empty." }

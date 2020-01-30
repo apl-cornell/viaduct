@@ -241,7 +241,8 @@ class AnfTransformer private constructor() :
         }
 
         override fun leave(
-            expr: SEndorsementNode, downgradeExpr: IExpressionNode
+            expr: SEndorsementNode,
+            downgradeExpr: IExpressionNode
         ): IExpressionNode {
             return IEndorsementNode(
                 this@AnfTransformer.atomicExprVisitor.visit(downgradeExpr),

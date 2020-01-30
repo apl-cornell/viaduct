@@ -351,8 +351,6 @@ interface ProgramContextVisitor
 
     fun extract(process: ProcessDeclarationNode): ProcessData
 
-    fun leave(host: HostDeclarationNode): ProgramT
-
     fun leave(program: ProgramNode, processes: Map<Protocol, StmtT>): ProgramT
 
     fun visit(program: ProgramNode): ProgramT {

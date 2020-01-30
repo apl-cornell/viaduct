@@ -4,16 +4,19 @@ import edu.cornell.cs.apl.viaduct.security.Label
 import edu.cornell.cs.apl.viaduct.syntax.types.ValueType
 
 /** Attaches a source location to an arbitrary type. */
-data class Located<T>(val value: T, override val sourceLocation: SourceLocation) : HasSourceLocation
+data class Located<out T>(val value: T, override val sourceLocation: SourceLocation) :
+    HasSourceLocation
 
 typealias HostNode = Located<Host>
 
 typealias ProtocolNode = Located<Protocol>
 
-typealias ValueTypeNode = Located<ValueType>
-
-typealias LabelNode = Located<Label>
+typealias TemporaryNode = Located<Temporary>
 
 typealias ObjectVariableNode = Located<ObjectVariable>
 
-typealias TemporaryNode = Located<Temporary>
+typealias JumpLabelNode = Located<JumpLabel>
+
+typealias ValueTypeNode = Located<ValueType>
+
+typealias LabelNode = Located<Label>

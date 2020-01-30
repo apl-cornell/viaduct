@@ -2,7 +2,7 @@ package edu.cornell.cs.apl.viaduct.syntax.intermediate
 
 import edu.cornell.cs.apl.viaduct.syntax.Constructor
 import edu.cornell.cs.apl.viaduct.syntax.HostNode
-import edu.cornell.cs.apl.viaduct.syntax.JumpLabel
+import edu.cornell.cs.apl.viaduct.syntax.JumpLabelNode
 import edu.cornell.cs.apl.viaduct.syntax.LabelNode
 import edu.cornell.cs.apl.viaduct.syntax.ObjectVariableNode
 import edu.cornell.cs.apl.viaduct.syntax.ProtocolNode
@@ -72,7 +72,7 @@ class IfNode(
  */
 class InfiniteLoopNode(
     val body: BlockNode,
-    val jumpLabel: JumpLabel,
+    val jumpLabel: JumpLabelNode,
     override val sourceLocation: SourceLocation
 ) : ControlNode()
 
@@ -82,7 +82,7 @@ class InfiniteLoopNode(
  * @param jumpLabel Label of the loop to break out of. A null value refers to the innermost loop.
  */
 class BreakNode(
-    val jumpLabel: JumpLabel,
+    val jumpLabel: JumpLabelNode,
     override val sourceLocation: SourceLocation
 ) : StatementNode()
 

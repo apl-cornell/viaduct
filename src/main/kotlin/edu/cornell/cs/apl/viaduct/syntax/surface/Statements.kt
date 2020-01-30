@@ -2,7 +2,7 @@ package edu.cornell.cs.apl.viaduct.syntax.surface
 
 import edu.cornell.cs.apl.viaduct.syntax.Constructor
 import edu.cornell.cs.apl.viaduct.syntax.HostNode
-import edu.cornell.cs.apl.viaduct.syntax.JumpLabel
+import edu.cornell.cs.apl.viaduct.syntax.JumpLabelNode
 import edu.cornell.cs.apl.viaduct.syntax.LabelNode
 import edu.cornell.cs.apl.viaduct.syntax.ObjectVariableNode
 import edu.cornell.cs.apl.viaduct.syntax.ProtocolNode
@@ -70,7 +70,7 @@ class IfNode(
 /** A loop statement. */
 sealed class LoopNode : StatementNode() {
     /** A label for the loop that break nodes can refer to. */
-    abstract val jumpLabel: JumpLabel?
+    abstract val jumpLabel: JumpLabelNode?
 
     /** Statements to execute repeatedly. */
     abstract val body: BlockNode
@@ -79,7 +79,7 @@ sealed class LoopNode : StatementNode() {
 /** Executing a statement until a break statement is encountered. */
 class InfiniteLoopNode(
     override val body: BlockNode,
-    override val jumpLabel: JumpLabel? = null,
+    override val jumpLabel: JumpLabelNode? = null,
     override val sourceLocation: SourceLocation
 ) : LoopNode()
 
@@ -87,7 +87,7 @@ class InfiniteLoopNode(
 class WhileLoopNode(
     val guard: ExpressionNode,
     override val body: BlockNode,
-    override val jumpLabel: JumpLabel? = null,
+    override val jumpLabel: JumpLabelNode? = null,
     override val sourceLocation: SourceLocation
 ) : LoopNode()
 
@@ -103,7 +103,7 @@ class ForLoopNode(
     val guard: ExpressionNode,
     val update: SimpleStatementNode,
     override val body: BlockNode,
-    override val jumpLabel: JumpLabel? = null,
+    override val jumpLabel: JumpLabelNode? = null,
     override val sourceLocation: SourceLocation
 ) : LoopNode()
 
@@ -113,7 +113,7 @@ class ForLoopNode(
  * @param jumpLabel Label of the loop to break out of. A null value refers to the innermost loop.
  */
 class BreakNode(
-    val jumpLabel: JumpLabel? = null,
+    val jumpLabel: JumpLabelNode? = null,
     override val sourceLocation: SourceLocation
 ) : StatementNode()
 

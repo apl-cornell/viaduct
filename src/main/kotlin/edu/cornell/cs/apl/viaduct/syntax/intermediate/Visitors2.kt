@@ -39,7 +39,8 @@ interface ExprContextVisitor<ExprT, TmpData, ObjData> {
                 leave(
                     expr,
                     expr.arguments.map { arg -> visit(arg) },
-                    getObjData(expr.variable.value))
+                    getObjData(expr.variable.value)
+                )
             }
 
             is DeclassificationNode -> leave(expr, visit(expr.expression))
@@ -70,8 +71,7 @@ typealias StmtContextThunk<ExprT, StmtT, TmpData, ObjData, LoopData, HostData, P
 /** Statement visitor that maintains context data for a variety of names.
  *  This also allows custom traversal logic for control structures (loops and conditionals). */
 interface StmtContextVisitor<ExprT, StmtT, TmpData, ObjData, LoopData, HostData, ProcessData>
-    : ExprContextVisitor<ExprT, TmpData, ObjData>
-{
+    : ExprContextVisitor<ExprT, TmpData, ObjData> {
     fun extract(stmt: LetNode, value: ExprT): TmpData
 
     fun extract(stmt: DeclarationNode, arguments: List<ExprT>): ObjData
@@ -164,12 +164,12 @@ interface StmtContextVisitor<ExprT, StmtT, TmpData, ObjData, LoopData, HostData,
 
             is InfiniteLoopNode -> {
                 val data = extract(stmt)
-                putLoopData(stmt.jumpLabel, data)
+                putLoopData(stmt.jumpLabel.value, data)
                 leave(stmt, { v -> v.visit(stmt.body) }, data)
             }
 
             is BreakNode -> {
-                leave(stmt, getLoopData(stmt.jumpLabel))
+                leave(stmt, getLoopData(stmt.jumpLabel.value))
             }
 
             is BlockNode -> {
@@ -200,14 +200,13 @@ interface StmtContextVisitor<ExprT, StmtT, TmpData, ObjData, LoopData, HostData,
 
 /** Statement visitor that fixes traversal logic for control structures. */
 interface StrictStmtContextVisitor<ExprT, StmtT, TmpData, ObjData, LoopData, HostData, ProcessData>
-    : StmtContextVisitor<ExprT, StmtT, TmpData, ObjData, LoopData, HostData, ProcessData>
-{
+    : StmtContextVisitor<ExprT, StmtT, TmpData, ObjData, LoopData, HostData, ProcessData> {
     override fun leave(
         stmt: IfNode,
         guard: ExprT,
         thenBranch: StmtContextThunk<ExprT, StmtT, TmpData, ObjData, LoopData, HostData, ProcessData>,
         elseBranch: StmtContextThunk<ExprT, StmtT, TmpData, ObjData, LoopData, HostData, ProcessData>
-    ) : StmtT {
+    ): StmtT {
         return leave(stmt, guard, thenBranch(this), elseBranch(this))
     }
 
@@ -215,7 +214,7 @@ interface StrictStmtContextVisitor<ExprT, StmtT, TmpData, ObjData, LoopData, Hos
         stmt: InfiniteLoopNode,
         body: StmtContextThunk<ExprT, StmtT, TmpData, ObjData, LoopData, HostData, ProcessData>,
         data: LoopData
-    ) : StmtT {
+    ): StmtT {
         return leave(stmt, body(this), data)
     }
 
@@ -275,7 +274,7 @@ interface VariableContextVisitor<ExprT, StmtT, TmpData, ObjData>
         stmt: InfiniteLoopNode,
         body: StmtContextThunk<ExprT, StmtT, TmpData, ObjData, Unit, Unit, Unit>,
         data: Unit
-    ) : StmtT {
+    ): StmtT {
         return leave(stmt, body)
     }
 
@@ -286,7 +285,7 @@ interface VariableContextVisitor<ExprT, StmtT, TmpData, ObjData>
     fun leave(
         stmt: InfiniteLoopNode,
         body: StmtContextThunk<ExprT, StmtT, TmpData, ObjData, Unit, Unit, Unit>
-    ) : StmtT
+    ): StmtT
 
     fun leave(stmt: BreakNode): StmtT
 }
@@ -324,13 +323,12 @@ typealias StmtThunk<ExprT, StmtT> = StmtContextThunk<ExprT, StmtT, Unit, Unit, U
  * and fixes traversal logic for control structures. */
 interface StrictStmtVisitor<ExprT, StmtT> :
     StmtVisitor<ExprT, StmtT>,
-    StrictStmtContextVisitor<ExprT, StmtT, Unit, Unit, Unit, Unit, Unit>
-{
+    StrictStmtContextVisitor<ExprT, StmtT, Unit, Unit, Unit, Unit, Unit> {
     override fun leave(stmt: InfiniteLoopNode, body: StmtThunk<ExprT, StmtT>, data: Unit): StmtT {
         return leave(stmt, body(this))
     }
 
-    override fun leave(stmt: InfiniteLoopNode, body: StmtThunk<ExprT, StmtT>) : StmtT {
+    override fun leave(stmt: InfiniteLoopNode, body: StmtThunk<ExprT, StmtT>): StmtT {
         return leave(stmt, body(this))
     }
 
@@ -343,8 +341,7 @@ interface StrictStmtVisitor<ExprT, StmtT> :
 
 /** Program visitor that extracts data from host and process top-level declarations. */
 interface ProgramContextVisitor
-<ExprT, StmtT, ProgramT, TmpData, ObjData, LoopData, HostData, ProcessData>
-{
+<ExprT, StmtT, ProgramT, TmpData, ObjData, LoopData, HostData, ProcessData> {
     val stmtVisitor: StmtContextVisitor<ExprT, StmtT, TmpData, ObjData, LoopData, HostData, ProcessData>
 
     fun extract(host: HostDeclarationNode): HostData
@@ -375,8 +372,7 @@ interface ProgramContextVisitor
 
 /** Program visitor that does not maintain context information. */
 interface ProgramVisitor<ExprT, StmtT, ProgramT>
-    : ProgramContextVisitor<ExprT, StmtT, ProgramT, Unit, Unit, Unit, Unit, Unit>
-{
+    : ProgramContextVisitor<ExprT, StmtT, ProgramT, Unit, Unit, Unit, Unit, Unit> {
     override val stmtVisitor: StmtVisitor<ExprT, StmtT>
 }
 
@@ -462,4 +458,3 @@ abstract class AbstractStmtContextVisitor
         context = context.copy(process = context.process.put(process, data))
     }
 }
-

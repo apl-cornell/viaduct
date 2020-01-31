@@ -371,7 +371,7 @@ interface ProgramContextVisitor
 }
 
 /** Program visitor that does not maintain context information. */
-interface ProgramVisitor<ExprT, StmtT, ProgramT>
+interface ProgramVisitorOld<ExprT, StmtT, ProgramT>
     : ProgramContextVisitor<ExprT, StmtT, ProgramT, Unit, Unit, Unit, Unit, Unit> {
     override val stmtVisitor: StmtVisitor<ExprT, StmtT>
 }

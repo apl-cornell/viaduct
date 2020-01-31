@@ -14,6 +14,7 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.DeclarationNode as IDeclar
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.DeclassificationNode as IDeclassificationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.EndorsementNode as IEndorsementNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ExpressionNode as IExpressionNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.ExpressionVisitorOld as IExpressionVisitor
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.IfNode as IIfNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.InfiniteLoopNode as IInfiniteLoopNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.InputNode as IInputNode
@@ -27,11 +28,13 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.ReceiveNode as IReceiveNod
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.SendNode as ISendNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.StatementNode as IStatementNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.UpdateNode as IUpdateNode
+import edu.cornell.cs.apl.viaduct.syntax.surface.AbstractExpressionVisitor as SAbstractExpressionVisitor
 import edu.cornell.cs.apl.viaduct.syntax.surface.BlockNode as SBlockNode
 import edu.cornell.cs.apl.viaduct.syntax.surface.BreakNode as SBreakNode
 import edu.cornell.cs.apl.viaduct.syntax.surface.DeclarationNode as SDeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.surface.DeclassificationNode as SDeclassificationNode
 import edu.cornell.cs.apl.viaduct.syntax.surface.EndorsementNode as SEndorsementNode
+import edu.cornell.cs.apl.viaduct.syntax.surface.ExpressionVisitor as SExpressionVisitor
 import edu.cornell.cs.apl.viaduct.syntax.surface.ForLoopNode as SForLoopNode
 import edu.cornell.cs.apl.viaduct.syntax.surface.IfNode as SIfNode
 import edu.cornell.cs.apl.viaduct.syntax.surface.InfiniteLoopNode as SInfiniteLoopNode
@@ -46,15 +49,10 @@ import edu.cornell.cs.apl.viaduct.syntax.surface.ReceiveNode as SReceiveNode
 import edu.cornell.cs.apl.viaduct.syntax.surface.SendNode as SSendNode
 import edu.cornell.cs.apl.viaduct.syntax.surface.SkipNode as SSkipNode
 import edu.cornell.cs.apl.viaduct.syntax.surface.StatementNode as SStatementNode
-import edu.cornell.cs.apl.viaduct.syntax.surface.UpdateNode as SUpdateNode
-import edu.cornell.cs.apl.viaduct.syntax.surface.WhileLoopNode as SWhileLoopNode
-
-import edu.cornell.cs.apl.viaduct.syntax.surface.AbstractExpressionVisitor as SAbstractExpressionVisitor
-import edu.cornell.cs.apl.viaduct.syntax.surface.ExpressionVisitor as SExpressionVisitor
 import edu.cornell.cs.apl.viaduct.syntax.surface.StatementVisitor as SStatementVisitor
+import edu.cornell.cs.apl.viaduct.syntax.surface.UpdateNode as SUpdateNode
 import edu.cornell.cs.apl.viaduct.syntax.surface.VariableContextVisitor as SVariableContextVisitor
-
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.ExpressionVisitor as IExpressionVisitor
+import edu.cornell.cs.apl.viaduct.syntax.surface.WhileLoopNode as SWhileLoopNode
 
 /**
  * Convert surface language programs into an intermediate representation

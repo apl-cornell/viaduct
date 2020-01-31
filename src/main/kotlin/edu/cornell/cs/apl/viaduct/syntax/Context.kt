@@ -15,7 +15,7 @@ import kotlinx.collections.immutable.persistentMapOf
  * @param HostData Context information attached to each [Host] declaration.
  * @param ProtocolData Context information attached to each [Protocol] declaration.
  */
-class Context<TemporaryData, ObjectData, LoopData, HostData, ProtocolData>
+internal class Context<TemporaryData, ObjectData, LoopData, HostData, ProtocolData>
 private constructor(
     // Below, [Located] tracks the source location where the [Name] was declared.
     private val temporaries: PersistentMap<Temporary, Located<TemporaryData>>,

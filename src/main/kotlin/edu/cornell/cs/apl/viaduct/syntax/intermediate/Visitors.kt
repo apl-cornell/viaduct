@@ -5,19 +5,19 @@ import kotlinx.collections.immutable.PersistentMap
 import kotlinx.collections.immutable.persistentMapOf
 import java.util.Stack
 
-interface ExpressionVisitor<out E> {
+interface ExpressionVisitorOld<out E> {
     fun visit(expr: ExpressionNode): E
 }
 
-interface StatementVisitor<out S> {
+interface StatementVisitorOld<out S> {
     fun visit(stmt: StatementNode): S
 }
 
 /** Polyglot-style visitor that allows return type of children to vary with
  * the actual return type.
  */
-interface GeneralAbstractExpressionVisitor<CVisitorT : ExpressionVisitor<CExprT>, ExprT, CExprT>
-    : ExpressionVisitor<ExprT> {
+interface GeneralAbstractExpressionVisitor<CVisitorT : ExpressionVisitorOld<CExprT>, ExprT, CExprT>
+    : ExpressionVisitorOld<ExprT> {
     override fun visit(expr: ExpressionNode): ExprT {
         val visitor = enter(expr)
         return when (expr) {
@@ -70,11 +70,11 @@ interface AbstractExpressionVisitor
  * Can be parameterized across the visitor for expressions inside statements.
  */
 interface GeneralAbstractStatementVisitor
-<CVisitorT : StatementVisitor<CStmtT>, ExprT, StmtT, CStmtT>
-    : StatementVisitor<StmtT> {
+<CVisitorT : StatementVisitorOld<CStmtT>, ExprT, StmtT, CStmtT>
+    : StatementVisitorOld<StmtT> {
 
     /** The visitor that will visit expressions inside of statements. */
-    val exprVisitor: ExpressionVisitor<ExprT>
+    val exprVisitor: ExpressionVisitorOld<ExprT>
 
     override fun visit(stmt: StatementNode): StmtT {
         val visitor = enter(stmt)
@@ -151,7 +151,7 @@ interface CombinedAbstractStatementVisitor
 <CVisitorT : CombinedAbstractStatementVisitor<CVisitorT, ExprT, StmtT>, ExprT, StmtT> :
     AbstractStatementVisitor<CVisitorT, ExprT, StmtT>,
     AbstractExpressionVisitor<CVisitorT, ExprT> {
-    override val exprVisitor: ExpressionVisitor<ExprT>
+    override val exprVisitor: ExpressionVisitorOld<ExprT>
         get() = this
 }
 

@@ -103,7 +103,6 @@ class AnfTransformer private constructor() :
         return withBindings(
             IDeclarationNode(
                 ObjectVariableNode(renamedVar, stmt.variable.sourceLocation),
-                stmt.label,
                 stmt.constructor,
                 IArguments(args.map { arg -> atomicExprVisitor.visit(arg) }),
                 stmt.sourceLocation

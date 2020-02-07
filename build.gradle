@@ -43,6 +43,11 @@ cup {
     ]
 }
 
+cupCompile {
+    loadConfig()
+    sourceSets.main.java.srcDirs += generateDir
+}
+
 checkstyle {
     maxWarnings 0
     configDir project.file("config/checkstyle")
@@ -136,6 +141,8 @@ check {
 
 compileKotlin {
     kotlinOptions.jvmTarget = "1.8"
+    dependsOn cupCompile
+    dependsOn jflex
 }
 compileTestKotlin {
     kotlinOptions.jvmTarget = "1.8"

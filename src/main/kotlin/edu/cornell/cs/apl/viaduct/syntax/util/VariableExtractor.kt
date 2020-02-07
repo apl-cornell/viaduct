@@ -10,8 +10,10 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.TemporaryBindingForm
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.toPersistentList
 
+// TODO: remove. There is a way to implement ANF transformer without this.
 /** extracts variables from statements while preserving program order. */
 class VariableExtractor private constructor() {
+    // TODO: also, why not use top level functions?
     companion object {
         fun run(stmt: StatementNode): PersistentList<Variable> {
             val variableList = mutableListOf<Variable>()
@@ -44,7 +46,8 @@ class VariableExtractor private constructor() {
                     }
                 }
 
-                else -> {}
+                else -> {
+                }
             }
         }
     }

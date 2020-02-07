@@ -12,7 +12,7 @@ import org.junit.jupiter.params.provider.ArgumentsProvider;
 public class ExamplesProvider implements ArgumentsProvider {
   @Override
   public Stream<? extends Arguments> provideArguments(ExtensionContext context) {
-    Iterable<File> files = () -> FileUtils.iterateFiles(new File("examples"), null, true);
+    Iterable<File> files = () -> FileUtils.iterateFiles(new File("examples-old"), null, true);
     return StreamSupport.stream(files.spliterator(), false).map(Arguments::of);
   }
 }

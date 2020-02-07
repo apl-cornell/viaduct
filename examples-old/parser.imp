@@ -24,20 +24,20 @@ process main {
 
   /* Communication */
   int tmp1;
-  tmp1 = input int from alice;
-  bool tmp2 = input bool from alice;
+  tmp1 <- recv @alice;
+  bool tmp2 <- recv @alice;
   assert tmp1 == 5;
   assert !tmp2;
 
-  send 42 to alice;
+  send 42 to @alice;
 }
 
 host alice : {A};
 
-process Host(alice) {
+process @alice {
   send 5 to main;
   send false to main;
-  int result = recv int from main;
+  int result <- recv main;
   assert result == 42;
 }
 

@@ -1,22 +1,22 @@
 process main {
   /* Alice provides some input. */
-  int{A} a = input int from alice;
+  int{A} a <- recv @alice;
 
   /* The input is public, and Bob implicitly trusts it. */
-  int{(A & B)<-} replicated = endorse (declassify a to {A<-}) to {(A & B)<-};
+  int{(A & B)<-} replicated = endorse(declassify(a, {A<-}), {(A & B)<-});
   /* The cheapest protocol for storing this variable is open replication. */
 
   /* Chuck wants the input; but he only needs Alice's word for it. */
-  output (endorse replicated from {A<-} to {C<-}) to chuck;
+  send endorse(replicated, {A<-} to {C<-}) to @chuck;
   /* In the final protocol, Chuck should receive the variable from Alice only. */
 }
 
-process Host(alice) {
+process @alice {
   send 42 to main;
 }
 
-process Host(chuck) {
-  int result = recv int from main;
+process @chuck {
+  int result <- recv main;
   assert result == 42;
 }
 

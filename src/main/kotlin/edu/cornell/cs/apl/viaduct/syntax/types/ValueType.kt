@@ -7,4 +7,7 @@ import edu.cornell.cs.apl.viaduct.syntax.values.Value
  *
  * Data types such as arrays are not value types.
  */
-interface ValueType : Type
+interface ValueType : Type {
+    /** The default value of this type. */
+    val defaultValue: Value
+}

@@ -3,7 +3,6 @@ package edu.cornell.cs.apl.viaduct.syntax.intermediate
 import edu.cornell.cs.apl.viaduct.syntax.Constructor
 import edu.cornell.cs.apl.viaduct.syntax.HostNode
 import edu.cornell.cs.apl.viaduct.syntax.JumpLabelNode
-import edu.cornell.cs.apl.viaduct.syntax.LabelNode
 import edu.cornell.cs.apl.viaduct.syntax.ObjectVariableNode
 import edu.cornell.cs.apl.viaduct.syntax.ProtocolNode
 import edu.cornell.cs.apl.viaduct.syntax.SourceLocation
@@ -16,13 +15,17 @@ import kotlinx.collections.immutable.toPersistentList
 /** A computation with side effects. */
 sealed class StatementNode : Node()
 
+// TODO: remove this? This was only necessary for ForNodes.
+//   Only reason to keep would be reverse elaboration.
 sealed class SimpleStatementNode : StatementNode()
 
-// Simple Statements
-
+/** A statement that defines a new temporary name. */
+// TODO: better name
 interface TemporaryBindingForm {
     val temporary: TemporaryNode
 }
+
+// Simple Statements
 
 /** Binding the result of an expression to a new temporary variable. */
 class LetNode(
@@ -34,7 +37,6 @@ class LetNode(
 /** Constructing a new object and binding it to a variable. */
 class DeclarationNode(
     val variable: ObjectVariableNode,
-    val label: LabelNode,
     val constructor: Constructor,
     val arguments: Arguments,
     override val sourceLocation: SourceLocation
@@ -50,6 +52,7 @@ class UpdateNode(
 
 // Compound Statements
 
+// TODO: remove this.
 sealed class ControlNode : StatementNode()
 
 /**
@@ -112,6 +115,11 @@ sealed class ExternalCommunicationNode : CommunicationNode() {
     abstract val host: HostNode
 }
 
+/** Communication happening between protocols. */
+sealed class InternalCommunicationNode : CommunicationNode() {
+    abstract val protocol: ProtocolNode
+}
+
 /**
  * An external input.
  *
@@ -131,11 +139,6 @@ class OutputNode(
     override val host: HostNode,
     override val sourceLocation: SourceLocation
 ) : ExternalCommunicationNode()
-
-/** Communication happening between protocols. */
-sealed class InternalCommunicationNode : CommunicationNode() {
-    abstract val protocol: ProtocolNode
-}
 
 /**
  * Receiving a value from another protocol.

@@ -5,30 +5,37 @@
  */
 process main {
   /* Round 1 */
-  int a1 = endorse (input int from alice) to {A & B<-};
-  int b1 = endorse (input int from bob) to {B & A<-};
+  int{A} a1 <- recv @alice;
+  int{B} b1 <- recv @bob;
+
+  int a1_endorsed = endorse(a1, {A & B<-});
+  int b1_endorsed = endorse(b1, {B & A<-});
 
   /* Reveal who had the higher bid. */
-  bool a1_higher = declassify (a1 > b1) to {A ⊓ B};
-  output a1_higher to alice;
-  output a1_higher to bob;
+  bool a1_higher = declassify(a1_endorsed > b1_endorsed, {A ⊓ B});
+  send a1_higher to @alice;
+  send a1_higher to @bob;
 
   /* Round 2 */
-  int a2 = endorse (input int from alice) to {A & B<-};
-  int b2 = endorse (input int from bob) to {B & A<-};
+  int{A} a2 <- recv @alice;
+  int{B} b2 <- recv @bob;
 
   /* Reveal the overall winner. */
-  bool a_higher = declassify (a1 + a2 > b1 + b2) to {A ⊓ B};
-  output a_higher to alice;
-  output a_higher to bob;
+  int a2_endorsed = endorse(a2, {A & B<-});
+  int b2_endorsed = endorse(b2, {B & A<-});
+
+  bool a_higher = declassify(a1_endorsed + a2_endorsed > b1_endorsed + b2_endorsed, {A ⊓ B});
+  send a_higher to @alice;
+  send a_higher to @bob;
 }
 
-process Host(alice) {
+
+process @alice {
   /* First bid. */
   send 10 to main;
 
   /* Adjust bid based on result of Round 1. */
-  bool a1_higher = recv bool from main;
+  bool a1_higher <- recv main;
   if (a1_higher) {
     send 5 to main;
   } else {
@@ -36,16 +43,16 @@ process Host(alice) {
   }
 
   /* See who won. */
-  bool a_higher = recv bool from main;
+  bool a_higher <- recv main;
   assert a_higher;
 }
 
-process Host(bob) {
+process @bob {
   /* First bid. */
   send 20 to main;
 
   /* Adjust bid based on result of Round 1. */
-  bool a1_higher = recv bool from main;
+  bool a1_higher <- recv main;
   if (a1_higher) {
     send 80 to main;
   } else {
@@ -53,7 +60,7 @@ process Host(bob) {
   }
 
   /* See who won. */
-  bool a_higher = recv bool from main;
+  bool a_higher <- recv main;
   assert a_higher;
 }
 

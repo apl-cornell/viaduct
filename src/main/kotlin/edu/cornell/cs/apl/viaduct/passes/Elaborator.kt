@@ -31,7 +31,7 @@ class Elaborator {
                             stmt.guard,
                             stmt.body,
                             BlockNode(
-                                BreakNode(sourceLocation = stmt.sourceLocation),
+                                BreakNode(null, sourceLocation = stmt.sourceLocation),
                                 sourceLocation = stmt.sourceLocation
                             ),
                             stmt.sourceLocation

@@ -3,7 +3,6 @@ package edu.cornell.cs.apl.viaduct.syntax.surface
 import edu.cornell.cs.apl.viaduct.syntax.Constructor
 import edu.cornell.cs.apl.viaduct.syntax.HostNode
 import edu.cornell.cs.apl.viaduct.syntax.JumpLabelNode
-import edu.cornell.cs.apl.viaduct.syntax.LabelNode
 import edu.cornell.cs.apl.viaduct.syntax.ObjectVariableNode
 import edu.cornell.cs.apl.viaduct.syntax.ProtocolNode
 import edu.cornell.cs.apl.viaduct.syntax.SourceLocation
@@ -34,8 +33,6 @@ class LetNode(
 /** Constructing a new object and binding it to a variable. */
 class DeclarationNode(
     val variable: ObjectVariableNode,
-    // TODO: label should be in constructor.
-    val label: LabelNode,
     val constructor: Constructor,
     val arguments: Arguments,
     override val sourceLocation: SourceLocation
@@ -79,7 +76,7 @@ sealed class LoopNode : StatementNode() {
 /** Executing a statement until a break statement is encountered. */
 class InfiniteLoopNode(
     override val body: BlockNode,
-    override val jumpLabel: JumpLabelNode? = null,
+    override val jumpLabel: JumpLabelNode?,
     override val sourceLocation: SourceLocation
 ) : LoopNode()
 
@@ -87,7 +84,7 @@ class InfiniteLoopNode(
 class WhileLoopNode(
     val guard: ExpressionNode,
     override val body: BlockNode,
-    override val jumpLabel: JumpLabelNode? = null,
+    override val jumpLabel: JumpLabelNode?,
     override val sourceLocation: SourceLocation
 ) : LoopNode()
 
@@ -103,7 +100,7 @@ class ForLoopNode(
     val guard: ExpressionNode,
     val update: SimpleStatementNode,
     override val body: BlockNode,
-    override val jumpLabel: JumpLabelNode? = null,
+    override val jumpLabel: JumpLabelNode?,
     override val sourceLocation: SourceLocation
 ) : LoopNode()
 
@@ -113,7 +110,7 @@ class ForLoopNode(
  * @param jumpLabel Label of the loop to break out of. A null value refers to the innermost loop.
  */
 class BreakNode(
-    val jumpLabel: JumpLabelNode? = null,
+    val jumpLabel: JumpLabelNode?,
     override val sourceLocation: SourceLocation
 ) : StatementNode()
 
@@ -136,11 +133,11 @@ class OutputNode(
     val message: ExpressionNode,
     val host: HostNode,
     override val sourceLocation: SourceLocation
-) : StatementNode()
+) : SimpleStatementNode()
 
 /** Sending a value to another protocol. */
 class SendNode(
     val message: ExpressionNode,
     val protocol: ProtocolNode,
     override val sourceLocation: SourceLocation
-) : StatementNode()
+) : SimpleStatementNode()

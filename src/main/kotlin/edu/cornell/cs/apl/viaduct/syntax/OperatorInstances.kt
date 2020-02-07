@@ -7,6 +7,7 @@ import edu.cornell.cs.apl.viaduct.syntax.values.BooleanValue
 import edu.cornell.cs.apl.viaduct.syntax.values.IntegerValue
 import edu.cornell.cs.apl.viaduct.syntax.values.Value
 import kotlinx.collections.immutable.persistentListOf
+import kotlin.math.min
 
 /**
  * A prefix operator that takes a single argument.
@@ -166,6 +167,37 @@ object Division : ArithmeticOperator {
 
     override fun toString(): String {
         return "/"
+    }
+}
+
+object Minimum : ArithmeticOperator {
+    // TODO: this is janky.
+    override fun comparePrecedenceTo(other: Operator): Precedence {
+        if (other is UnaryPrefixOperator || other is Minimum || other is Maximum)
+            return Precedence.EQUAL
+        return Precedence.HIGHER
+    }
+
+    override fun apply(left: Int, right: Int): Int {
+        return min(left, right)
+    }
+
+    override fun toString(): String {
+        return "min"
+    }
+}
+
+object Maximum : ArithmeticOperator {
+    override fun comparePrecedenceTo(other: Operator): Precedence {
+        return Minimum.comparePrecedenceTo(other)
+    }
+
+    override fun apply(left: Int, right: Int): Int {
+        return min(left, right)
+    }
+
+    override fun toString(): String {
+        return "max"
     }
 }
 

@@ -1,30 +1,7 @@
 package edu.cornell.cs.apl.viaduct.selection
 
 import edu.cornell.cs.apl.viaduct.imp.HostTrustConfiguration
-import edu.cornell.cs.apl.viaduct.syntax.ArrayGet
-import edu.cornell.cs.apl.viaduct.syntax.ObjectVariable
-import edu.cornell.cs.apl.viaduct.syntax.Temporary
-import edu.cornell.cs.apl.viaduct.syntax.Variable
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.BlockNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.ControlNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.DeclarationNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.DowngradeNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.IfNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.InfiniteLoopNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.InputNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.LetNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.OperatorApplicationNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutputNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.QueryNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.ReadNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.ReceiveNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.SendNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.SimpleStatementNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.StatementNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.UpdateNode
-import kotlinx.collections.immutable.PersistentList
-import kotlinx.collections.immutable.persistentListOf
-import kotlinx.collections.immutable.persistentSetOf
 
 /** build metadata describing syntactic information about data and computations,
  *  to be used by protocol selection. */
@@ -32,6 +9,7 @@ open class ProtocolSelectionContext(
     val hostConfig: HostTrustConfiguration,
     stmt: StatementNode
 ) {
+    /*
     init {
         buildStmtMetadata(stmt, persistentListOf())
     }
@@ -238,4 +216,5 @@ open class ProtocolSelectionContext(
             controlContextMap[stmt]?.filterIsInstance<InfiniteLoopNode>()?.any()
         } ?: false
     }
+    */
 }

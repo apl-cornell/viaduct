@@ -1,5 +1,6 @@
 package edu.cornell.cs.apl.viaduct.passes
 
+/*
 import edu.cornell.cs.apl.viaduct.errors.ElaborationException
 import edu.cornell.cs.apl.viaduct.syntax.ObjectVariable
 import edu.cornell.cs.apl.viaduct.syntax.ObjectVariableNode
@@ -312,3 +313,4 @@ class AnfTransformer private constructor() :
         }
     }
 }
+ */

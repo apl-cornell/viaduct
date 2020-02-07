@@ -1,5 +1,8 @@
 package edu.cornell.cs.apl.viaduct.syntax
 
+/*
+import edu.cornell.cs.apl.viaduct.syntax.types.ValueType
+
 /** A built-in method. */
 sealed class PrimitiveMethod : Method
 
@@ -11,6 +14,10 @@ sealed class PrimitiveQuery : PrimitiveMethod(), Query
 /** The get method for mutable cells. Reads the value stored in the cell. */
 object CellGet : PrimitiveQuery() {
     override val arity: Int = 0
+
+    override val arguments: List<ValueType> = mutableListOf()
+
+    override val result: ValueType = mutableList
 }
 
 /** The get method for arrays. Reads the value stored at the given index. */
@@ -32,3 +39,5 @@ object CellSet : PrimitiveUpdate() {
 object ArraySet : PrimitiveUpdate() {
     override val arity: Int = 2
 }
+
+*/

@@ -480,7 +480,6 @@ interface StatementVisitor<ExpressionResult, StatementResult> :
 
     fun leave(node: InfiniteLoopNode, body: StatementResult): StatementResult
 
-
     fun leave(node: UpdateNode, arguments: List<ExpressionResult>): StatementResult
 }
 

@@ -14,7 +14,7 @@ import java.io.StringReader
  * @param path Description of where the source file came from (e.g. a file path, "stdin", etc.).
  * @param contents File contents.
  */
-class SourceFile constructor(val path: String, private val contents: String) {
+class SourceFile private constructor(val path: String, private val contents: String) {
     /**
      * Starting offsets of each line.
      *
@@ -123,12 +123,21 @@ class SourceFile constructor(val path: String, private val contents: String) {
         }
 
         /**
+         * Constructs a [SourceFile] from a string.
+         *
+         * @param path Description of where the string came from (e.g. file path, "stdin", etc.)
+         * @param contents File contents.
+         */
+        fun from(path: String, contents: String): SourceFile {
+            return SourceFile(path, contents)
+        }
+
+        /**
          * Constructs a [SourceFile] by consuming a reader.
          *
          * @param path Description of where reader came from (e.g. file path, "stdin", etc.)
          * @param reader Object to read file contents from
          */
-        // TODO: do we need this?
         fun from(path: String, reader: Reader): SourceFile {
             return SourceFile(path, reader.readText())
         }

@@ -1,25 +1,22 @@
 /* The classic MPC problem. */
 process main {
-  int{A} a <- recv @alice;
-  int{B} b <- recv @bob;
-
   /* Alice and Bob are free to provide any input; we'll just trust it. */
-  int{A & B<-} a_endorsed = endorse(a, {A & B<-});
-  int{B & A<-} b_endorsed = endorse(b, {B & A<-});
+  int{A & B<-} a = endorse input int from alice to {A & B<-};
+  int{B & A<-} b = endorse input int from bob to {B & A<-};
 
-  bool bob_richer = declassify(a_endorsed <= b_endorsed, {(A|B)-> & (A&B)<-});
-  send bob_richer to @alice;
-  send bob_richer to @bob;
+  bool bob_richer = declassify a <= b to {(A | B)-> & (A & B)<-};
+  output bob_richer to alice;
+  output bob_richer to bob;
 }
 
-process @alice {
+process Host(alice) {
   send 20 to main;
-  bool bob_richer <- recv main;
+  bool bob_richer = recv bool from main;
 }
 
-process @bob {
+process Host(bob) {
   send 40 to main;
-  bool bob_richer <- recv main;
+  bool bob_richer = recv bool from main;
   assert bob_richer;
 }
 

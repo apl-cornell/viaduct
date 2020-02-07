@@ -76,7 +76,7 @@ sealed class LoopNode : StatementNode() {
 /** Executing a statement until a break statement is encountered. */
 class InfiniteLoopNode(
     override val body: BlockNode,
-    override val jumpLabel: JumpLabelNode? = null,
+    override val jumpLabel: JumpLabelNode?,
     override val sourceLocation: SourceLocation
 ) : LoopNode()
 
@@ -84,7 +84,7 @@ class InfiniteLoopNode(
 class WhileLoopNode(
     val guard: ExpressionNode,
     override val body: BlockNode,
-    override val jumpLabel: JumpLabelNode? = null,
+    override val jumpLabel: JumpLabelNode?,
     override val sourceLocation: SourceLocation
 ) : LoopNode()
 
@@ -100,7 +100,7 @@ class ForLoopNode(
     val guard: ExpressionNode,
     val update: SimpleStatementNode,
     override val body: BlockNode,
-    override val jumpLabel: JumpLabelNode? = null,
+    override val jumpLabel: JumpLabelNode?,
     override val sourceLocation: SourceLocation
 ) : LoopNode()
 
@@ -110,7 +110,7 @@ class ForLoopNode(
  * @param jumpLabel Label of the loop to break out of. A null value refers to the innermost loop.
  */
 class BreakNode(
-    val jumpLabel: JumpLabelNode? = null,
+    val jumpLabel: JumpLabelNode?,
     override val sourceLocation: SourceLocation
 ) : StatementNode()
 
@@ -133,11 +133,11 @@ class OutputNode(
     val message: ExpressionNode,
     val host: HostNode,
     override val sourceLocation: SourceLocation
-) : StatementNode()
+) : SimpleStatementNode()
 
 /** Sending a value to another protocol. */
 class SendNode(
     val message: ExpressionNode,
     val protocol: ProtocolNode,
     override val sourceLocation: SourceLocation
-) : StatementNode()
+) : SimpleStatementNode()

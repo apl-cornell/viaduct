@@ -74,7 +74,7 @@ nonterminal Reference reference;
 
 nonterminal Value value;
 nonterminal Located<ValueType> value_type, optional_value_type;
-nonterminal Located<Label> label, optional_label;
+nonterminal Located<Label> label, optional_label, optional_from_label;
 nonterminal Label label_expr;
 
 nonterminal Located<ObjectVariable> variable;
@@ -185,6 +185,19 @@ simple_stmt ::=
   | reference:ref compound_assignment:op expr:e {:
       RESULT = ref.modify(op, e);
     :}
+
+  | OUTPUT:begin expr:message TO host:recipient {:
+      RESULT = new OutputNode(message, recipient, location(beginleft, recipientright));
+    :}
+
+  | SEND:begin expr:message TO protocol:recipient {:
+      RESULT = new SendNode(message, recipient, location(beginleft, recipientright));
+    :}
+
+  | ASSERT:begin expr:e {:
+      // TODO: parse this
+      RESULT = new SkipNode(location(beginleft, eright));
+    :}
   ;
 
 compound_assignment ::=
@@ -227,23 +240,6 @@ stmt ::=
   | block:block {:
       RESULT = block;
     :}
-
-  | OUTPUT:begin expr:message TO host:recipient {:
-      RESULT = new OutputNode(message, recipient, location(beginleft, recipientright));
-    :}
-
-  | SEND:begin expr:message TO protocol:recipient {:
-      RESULT = new SendNode(message, recipient, location(beginleft, recipientright));
-    :}
-  /*
-  | ASSERT:begin expr:e {:
-      RESULT = single(
-          AssertNode.builder()
-          .setExpression(e)
-          .setSourceLocation(location(beginleft, eright))
-          .build());
-    :}
-  */
   ;
 
 block ::=
@@ -340,13 +336,13 @@ expr ::=
       RESULT = binaryExpression(Minimum.INSTANCE, e1, e2);
     :}
 
-  | DECLASSIFY:begin OPEN_PAREN expr:e COMMA label:to CLOSE_PAREN:end {:
+  | DECLASSIFY:begin expr:e optional_from_label:from TO label:to {:
       // TODO: Add from labels.
-      RESULT = new DeclassificationNode(e, null, to, location(beginleft, endright));
+      RESULT = new DeclassificationNode(e, from, to, location(beginleft, toright));
     :}
 
-  | ENDORSE:begin OPEN_PAREN expr:e COMMA label:to CLOSE_PAREN:end {:
-      RESULT = new EndorsementNode(e, null, to, location(beginleft, endright));
+  | ENDORSE:begin expr:e optional_from_label:from TO label:to {:
+      RESULT = new EndorsementNode(e, from, to, location(beginleft, toright));
     :}
 
   | INPUT:begin value_type:type FROM host:sender {:
@@ -442,21 +438,18 @@ label_expr ::=
 
 
 optional_value_type ::=
-    value_type:ty {:
-      RESULT = ty;
-    :}
-  | /* nothing */ {:
-      RESULT = null;
-    :}
+    value_type:ty {: RESULT = ty; :}
+  | /* empty */   {: RESULT = null; :}
   ;
 
 optional_label ::=
-    label:l {:
-        RESULT = l;
-    :}
-  | /* nothing */ {:
-        RESULT = null;
-    :}
+    label:l     {: RESULT = l; :}
+  | /* empty */ {: RESULT = null; :}
+  ;
+
+optional_from_label ::=
+    FROM label:l {: RESULT = l; :}
+  | /* empty */  {: RESULT = null; :}
   ;
 
 
@@ -475,5 +468,12 @@ host ::=
 protocol ::=
     IDENT:id {:
       RESULT = new Located(new Ideal(id), location(idleft, idright));
+    :}
+
+  | CAP_IDENT:protocolName OPEN_PAREN host:host CLOSE_PAREN:end {:
+      // TODO: parse this properly
+      RESULT = new Located(
+        new Ideal(host.getValue().getName()),
+        location(protocolNameleft, endright));
     :}
   ;

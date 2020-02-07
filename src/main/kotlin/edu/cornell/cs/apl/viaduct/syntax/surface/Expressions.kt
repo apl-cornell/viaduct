@@ -55,7 +55,7 @@ sealed class DowngradeNode : ExpressionNode() {
 /** Revealing the the result of an expression (reducing confidentiality). */
 class DeclassificationNode(
     override val expression: ExpressionNode,
-    override val fromLabel: LabelNode? = null,
+    override val fromLabel: LabelNode?,
     override val toLabel: LabelNode,
     override val sourceLocation: SourceLocation
 ) : DowngradeNode()
@@ -63,7 +63,7 @@ class DeclassificationNode(
 /** Trusting the result of an expression (increasing integrity). */
 class EndorsementNode(
     override val expression: ExpressionNode,
-    override val fromLabel: LabelNode? = null,
+    override val fromLabel: LabelNode?,
     override val toLabel: LabelNode,
     override val sourceLocation: SourceLocation
 ) : DowngradeNode()

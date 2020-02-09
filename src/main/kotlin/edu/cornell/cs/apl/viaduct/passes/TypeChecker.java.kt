@@ -28,7 +28,8 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.SuspendedTraversal
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.UpdateNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.traverse
 import edu.cornell.cs.apl.viaduct.syntax.types.BooleanType
-import edu.cornell.cs.apl.viaduct.syntax.types.OperatorType
+import edu.cornell.cs.apl.viaduct.syntax.types.MethodSignature
+import edu.cornell.cs.apl.viaduct.syntax.types.Type
 import edu.cornell.cs.apl.viaduct.syntax.types.UnitType
 import edu.cornell.cs.apl.viaduct.syntax.types.ValueType
 import kotlinx.collections.immutable.toImmutableList
@@ -47,13 +48,13 @@ private class TypeChecker :
         return node.value.type
     }
 
-    private fun checkApplication(
+    private fun <R : Type> checkApplication(
         applicationNode: Node,
         arguments: List<Node>,
         argumentTypes: List<ValueType>,
         paramTypes: List<ValueType>,
-        resultType: ValueType
-    ): ValueType {
+        resultType: R
+    ): R {
         if (arguments.size == argumentTypes.size && argumentTypes.size == paramTypes.size) {
             for (i in argumentTypes.indices) {
                 if (argumentTypes[i] != paramTypes[i]) {
@@ -67,8 +68,8 @@ private class TypeChecker :
         } else {
             throw TypeCheckError(
                 applicationNode,
-                OperatorType(argumentTypes.toImmutableList(), resultType),
-                OperatorType(paramTypes.toImmutableList(), resultType)
+                MethodSignature(argumentTypes.toImmutableList(), resultType),
+                MethodSignature(paramTypes.toImmutableList(), resultType)
             )
         }
 

@@ -5,22 +5,33 @@ import edu.cornell.cs.apl.viaduct.syntax.Constructor
 import edu.cornell.cs.apl.viaduct.syntax.DataType
 import edu.cornell.cs.apl.viaduct.syntax.Query
 import edu.cornell.cs.apl.viaduct.syntax.Update
+import edu.cornell.cs.apl.viaduct.syntax.types.IntegerType
+import edu.cornell.cs.apl.viaduct.syntax.types.ValueType
+
+// TODO: support boolean arrays later
 
 /** An array of mutable cells. */
 object Vector : DataType {
-    override val constructor: Constructor = object :
-        Constructor {}
+    override val constructor: Constructor = object : Constructor {
+        override val arguments: List<ValueType> = listOf(IntegerType)
+    }
 
     /** Returns the value stored at the given index. */
     object Get : Query {
         override val arity: Int
             get() = 1
+
+        override val arguments: List<ValueType> = listOf(IntegerType)
+
+        override val result: ValueType = IntegerType
     }
 
     /** Replaces the value stored at the given index with a new value. */
     object Set : Update {
         override val arity: Int
             get() = 2
+
+        override val arguments: List<ValueType> = listOf(IntegerType, IntegerType)
     }
 
     /**
@@ -30,6 +41,8 @@ object Vector : DataType {
     data class Modify(val operator: BinaryOperator) : Update {
         override val arity: Int
             get() = 2
+
+        override val arguments: List<ValueType> = listOf(IntegerType, IntegerType)
     }
 
     override val queries: Iterable<Query>

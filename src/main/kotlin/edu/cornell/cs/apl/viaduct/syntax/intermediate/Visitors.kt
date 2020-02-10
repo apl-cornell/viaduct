@@ -32,7 +32,7 @@ private fun <ExpressionResult, TemporaryData, ObjectData> ExpressionNode.travers
         is ReadNode ->
             visitor.leave(
                 this,
-                context.getTemporaryData(Located(this.temporary, this.sourceLocation))
+                context.get(Located(this.temporary, this.sourceLocation))
             )
 
         is OperatorApplicationNode ->
@@ -42,7 +42,7 @@ private fun <ExpressionResult, TemporaryData, ObjectData> ExpressionNode.travers
             visitor.leave(
                 this,
                 this.arguments.map { arg -> arg.traverse(visitor, context) },
-                context.getObjectData(this.variable)
+                context.get(this.variable)
             )
 
         is DeclassificationNode ->
@@ -73,7 +73,7 @@ private fun <ExpressionResult, StatementResult, TemporaryData, ObjectData, LoopD
 
                 // Update context
                 val data = visitor.getData(this, value)
-                context = context.putTemporaryData(this.temporary, data)
+                context = context.put(this.temporary, data)
 
                 result
             }
@@ -84,14 +84,14 @@ private fun <ExpressionResult, StatementResult, TemporaryData, ObjectData, LoopD
 
                 // Update context
                 val data = visitor.getData(this, arguments)
-                context = context.putObjectData(this.variable, data)
+                context = context.put(this.variable, data)
 
                 result
             }
 
             is UpdateNode -> {
                 val arguments = this.arguments.map { it.traverse(visitor, context) }
-                visitor.leave(this, arguments, context.getObjectData(this.variable))
+                visitor.leave(this, arguments, context.get(this.variable))
             }
 
             is IfNode -> {
@@ -109,12 +109,12 @@ private fun <ExpressionResult, StatementResult, TemporaryData, ObjectData, LoopD
 
             is InfiniteLoopNode -> {
                 val data = visitor.getData(this)
-                val contextInBody = context.putLoopData(this.jumpLabel, data)
+                val contextInBody = context.put(this.jumpLabel, data)
                 visitor.leave(this, { this.body.traverse(it, contextInBody) }, data)
             }
 
             is BreakNode -> {
-                visitor.leave(this, context.getLoopData(this.jumpLabel))
+                visitor.leave(this, context.get(this.jumpLabel))
             }
 
             is BlockNode -> {
@@ -122,35 +122,35 @@ private fun <ExpressionResult, StatementResult, TemporaryData, ObjectData, LoopD
             }
 
             is InputNode -> {
-                val hostData = context.getHostData(this.host)
+                val hostData = context.get(this.host)
                 val result = visitor.leave(this, hostData)
 
                 // Update context
                 val temporaryData = visitor.getData(this, hostData)
-                context = context.putTemporaryData(this.temporary, temporaryData)
+                context = context.put(this.temporary, temporaryData)
 
                 result
             }
 
             is OutputNode -> {
                 val message = this.message.traverse(visitor, context)
-                visitor.leave(this, message, context.getHostData(this.host))
+                visitor.leave(this, message, context.get(this.host))
             }
 
             is ReceiveNode -> {
-                val protocolData = context.getProtocolData(this.protocol)
+                val protocolData = context.get(this.protocol)
                 val result = visitor.leave(this, protocolData)
 
                 // Update context
                 val temporaryData = visitor.getData(this, protocolData)
-                context = context.putTemporaryData(this.temporary, temporaryData)
+                context = context.put(this.temporary, temporaryData)
 
                 result
             }
 
             is SendNode -> {
                 val message = this.message.traverse(visitor, context)
-                visitor.leave(this, message, context.getProtocolData(this.protocol))
+                visitor.leave(this, message, context.get(this.protocol))
             }
         }
     }
@@ -173,10 +173,10 @@ fun <ExpressionResult, StatementResult, DeclarationResult, ProgramResult, Tempor
         for (declaration in this.declarations) {
             context = when (declaration) {
                 is HostDeclarationNode ->
-                    context.putHostData(declaration.name, visitor.getData(declaration))
+                    context.put(declaration.name, visitor.getData(declaration))
 
                 is ProcessDeclarationNode ->
-                    context.putProtocolData(declaration.protocol, visitor.getData(declaration))
+                    context.put(declaration.protocol, visitor.getData(declaration))
             }
         }
         context
@@ -376,7 +376,8 @@ interface ExpressionVisitor<ExpressionResult> :
  * @see StatementVisitorWithContext
  */
 interface StatementVisitorWithVariableLoopContext<ExpressionResult, StatementResult, TemporaryData, ObjectData, LoopData>
-    : StatementVisitorWithContext<ExpressionResult, StatementResult, TemporaryData, ObjectData, LoopData, Unit, Unit> {
+    :
+    StatementVisitorWithContext<ExpressionResult, StatementResult, TemporaryData, ObjectData, LoopData, Unit, Unit> {
 
     override fun getData(node: InputNode, data: Unit): TemporaryData {
         return getData(node)
@@ -421,7 +422,8 @@ interface StatementVisitorWithVariableLoopContext<ExpressionResult, StatementRes
  * @see StatementVisitorWithContext
  */
 interface StatementVisitorWithVariableContext<ExpressionResult, StatementResult, TemporaryData, ObjectData>
-    : StatementVisitorWithVariableLoopContext<ExpressionResult, StatementResult, TemporaryData, ObjectData, Unit> {
+    :
+    StatementVisitorWithVariableLoopContext<ExpressionResult, StatementResult, TemporaryData, ObjectData, Unit> {
 
     override fun getData(node: InfiniteLoopNode) {}
 

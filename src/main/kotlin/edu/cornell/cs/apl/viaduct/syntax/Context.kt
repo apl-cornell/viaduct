@@ -38,7 +38,8 @@ private constructor(
      *
      * @throws UndefinedNameError
      */
-    fun getTemporaryData(name: TemporaryNode): TemporaryData {
+    @JvmName("getTemporaryData")
+    fun get(name: TemporaryNode): TemporaryData {
         return temporaries[name.value]?.value ?: throw UndefinedNameError(name)
     }
 
@@ -47,7 +48,8 @@ private constructor(
      *
      * @throws UndefinedNameError
      */
-    fun getObjectData(name: ObjectVariableNode): ObjectData {
+    @JvmName("getObjectData")
+    fun get(name: ObjectVariableNode): ObjectData {
         return objects[name.value]?.value ?: throw UndefinedNameError(name)
     }
 
@@ -56,7 +58,8 @@ private constructor(
      *
      * @throws UndefinedNameError
      */
-    fun getLoopData(name: JumpLabelNode): LoopData {
+    @JvmName("getLoopData")
+    fun get(name: JumpLabelNode): LoopData {
         return loops[name.value]?.value ?: throw UndefinedNameError(name)
     }
 
@@ -65,7 +68,8 @@ private constructor(
      *
      * @throws UndefinedNameError
      */
-    fun getHostData(name: HostNode): HostData {
+    @JvmName("getHostData")
+    fun get(name: HostNode): HostData {
         return hosts[name.value]?.value ?: throw UndefinedNameError(name)
     }
 
@@ -74,7 +78,8 @@ private constructor(
      *
      * @throws UndefinedNameError
      */
-    fun getProtocolData(name: ProtocolNode): ProtocolData {
+    @JvmName("getProtocolData")
+    fun get(name: ProtocolNode): ProtocolData {
         return protocols[name.value]?.value ?: throw UndefinedNameError(name)
     }
 
@@ -83,7 +88,8 @@ private constructor(
      *
      * @throws NameClashError
      */
-    fun putTemporaryData(name: TemporaryNode, data: TemporaryData):
+    @JvmName("putTemporaryData")
+    fun put(name: TemporaryNode, data: TemporaryData):
         Context<TemporaryData, ObjectData, LoopData, HostData, ProtocolData> {
         val previousDeclaration = temporaries[name.value]?.sourceLocation
         if (previousDeclaration != null) {
@@ -97,7 +103,8 @@ private constructor(
      *
      * @throws NameClashError
      */
-    fun putObjectData(name: ObjectVariableNode, data: ObjectData):
+    @JvmName("putObjectData")
+    fun put(name: ObjectVariableNode, data: ObjectData):
         Context<TemporaryData, ObjectData, LoopData, HostData, ProtocolData> {
         val previousDeclaration = objects[name.value]?.sourceLocation
         if (previousDeclaration != null) {
@@ -111,7 +118,8 @@ private constructor(
      *
      * @throws NameClashError
      */
-    fun putLoopData(name: JumpLabelNode, data: LoopData):
+    @JvmName("putLoopData")
+    fun put(name: JumpLabelNode, data: LoopData):
         Context<TemporaryData, ObjectData, LoopData, HostData, ProtocolData> {
         val previousDeclaration = loops[name.value]?.sourceLocation
         if (previousDeclaration != null) {
@@ -125,7 +133,8 @@ private constructor(
      *
      * @throws NameClashError
      */
-    fun putHostData(name: HostNode, data: HostData):
+    @JvmName("putHostData")
+    fun put(name: HostNode, data: HostData):
         Context<TemporaryData, ObjectData, LoopData, HostData, ProtocolData> {
         val previousDeclaration = hosts[name.value]?.sourceLocation
         if (previousDeclaration != null) {
@@ -139,7 +148,8 @@ private constructor(
      *
      * @throws NameClashError
      */
-    fun putProtocolData(name: ProtocolNode, data: ProtocolData):
+    @JvmName("putProtocolData")
+    fun put(name: ProtocolNode, data: ProtocolData):
         Context<TemporaryData, ObjectData, LoopData, HostData, ProtocolData> {
         val previousDeclaration = protocols[name.value]?.sourceLocation
         if (previousDeclaration != null) {

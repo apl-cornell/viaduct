@@ -1,11 +1,12 @@
 package edu.cornell.cs.apl.viaduct.syntax.intermediate
 
-import edu.cornell.cs.apl.viaduct.syntax.Context
 import edu.cornell.cs.apl.viaduct.syntax.Host
 import edu.cornell.cs.apl.viaduct.syntax.JumpLabel
 import edu.cornell.cs.apl.viaduct.syntax.Located
 import edu.cornell.cs.apl.viaduct.syntax.ObjectVariable
+import edu.cornell.cs.apl.viaduct.syntax.ProgramContext
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
+import edu.cornell.cs.apl.viaduct.syntax.StatementContext
 import edu.cornell.cs.apl.viaduct.syntax.Temporary
 
 /**
@@ -23,33 +24,30 @@ typealias SuspendedTraversal<ExpressionResult, StatementResult, TemporaryData, O
  */
 private fun <ExpressionResult, TemporaryData, ObjectData> ExpressionNode.traverse(
     visitor: ExpressionVisitorWithContext<ExpressionResult, TemporaryData, ObjectData>,
-    context: Context<TemporaryData, ObjectData, *, *, *>
+    context: StatementContext<TemporaryData, ObjectData, *>
 ): ExpressionResult {
     return when (this) {
         is LiteralNode ->
             visitor.leave(this)
 
         is ReadNode ->
-            visitor.leave(
-                this,
-                context.get(Located(this.temporary, this.sourceLocation))
-            )
+            visitor.leave(this, context.get(Located(temporary, sourceLocation)))
 
         is OperatorApplicationNode ->
-            visitor.leave(this, this.arguments.map { arg -> arg.traverse(visitor, context) })
+            visitor.leave(this, arguments.map { it.traverse(visitor, context) })
 
         is QueryNode ->
             visitor.leave(
                 this,
-                this.arguments.map { arg -> arg.traverse(visitor, context) },
+                arguments.map { it.traverse(visitor, context) },
                 context.get(this.variable)
             )
 
         is DeclassificationNode ->
-            visitor.leave(this, this.expression.traverse(visitor, context))
+            visitor.leave(this, expression.traverse(visitor, context))
 
         is EndorsementNode ->
-            visitor.leave(this, this.expression.traverse(visitor, context))
+            visitor.leave(this, expression.traverse(visitor, context))
     }
 }
 
@@ -59,103 +57,105 @@ private fun <ExpressionResult, TemporaryData, ObjectData> ExpressionNode.travers
  */
 private fun <ExpressionResult, StatementResult, TemporaryData, ObjectData, LoopData, HostData, ProtocolData> BlockNode.traverse(
     visitor: StatementVisitorWithContext<ExpressionResult, StatementResult, TemporaryData, ObjectData, LoopData, HostData, ProtocolData>,
-    context: Context<TemporaryData, ObjectData, LoopData, HostData, ProtocolData>
+    initialContext: StatementContext<TemporaryData, ObjectData, LoopData>,
+    programContext: ProgramContext<HostData, ProtocolData>
 ): StatementResult {
-    // Make [context] mutable inside the function
-    @Suppress("NAME_SHADOWING")
-    var context = context
+    var context = initialContext
 
-    fun StatementNode.go(): StatementResult {
-        return when (this) {
+    val statements: List<StatementResult> = this.statements.map {
+        when (it) {
             is LetNode -> {
-                val value = this.value.traverse(visitor, context)
-                val result = visitor.leave(this, value)
+                val value = it.value.traverse(visitor, context)
+                val result = visitor.leave(it, value)
 
                 // Update context
-                val data = visitor.getData(this, value)
-                context = context.put(this.temporary, data)
+                val data = visitor.getData(it, value)
+                context = context.put(it.temporary, data)
 
                 result
             }
 
             is DeclarationNode -> {
-                val arguments = this.arguments.map { it.traverse(visitor, context) }
-                val result = visitor.leave(this, arguments)
+                val arguments = it.arguments.map { it.traverse(visitor, context) }
+                val result = visitor.leave(it, arguments)
 
                 // Update context
-                val data = visitor.getData(this, arguments)
-                context = context.put(this.variable, data)
+                val data = visitor.getData(it, arguments)
+                context = context.put(it.variable, data)
 
                 result
             }
 
             is UpdateNode -> {
-                val arguments = this.arguments.map { it.traverse(visitor, context) }
-                visitor.leave(this, arguments, context.get(this.variable))
+                val arguments = it.arguments.map { it.traverse(visitor, context) }
+                visitor.leave(it, arguments, context.get(it.variable))
             }
 
             is IfNode -> {
-                val guard = this.guard.traverse(visitor, context)
+                val guard = it.guard.traverse(visitor, context)
                 // Kotlin differentiates between a captured var and a val.
                 // Copying into a val ensures changes to [context] will not affect the context
                 // passes to the closures.
                 val contextHere = context
                 visitor.leave(
-                    this,
+                    it,
                     guard,
-                    { this.thenBranch.traverse(it, contextHere) },
-                    { this.elseBranch.traverse(it, contextHere) })
+                    { visitor -> it.thenBranch.traverse(visitor, contextHere, programContext) },
+                    { visitor -> it.elseBranch.traverse(visitor, contextHere, programContext) })
             }
 
             is InfiniteLoopNode -> {
-                val data = visitor.getData(this)
-                val contextInBody = context.put(this.jumpLabel, data)
-                visitor.leave(this, { this.body.traverse(it, contextInBody) }, data)
+                val data = visitor.getData(it)
+                val contextInBody = context.put(it.jumpLabel, data)
+                visitor.leave(
+                    it,
+                    { visitor -> it.body.traverse(visitor, contextInBody, programContext) },
+                    data
+                )
             }
 
             is BreakNode -> {
-                visitor.leave(this, context.get(this.jumpLabel))
+                visitor.leave(it, context.get(it.jumpLabel))
             }
 
             is BlockNode -> {
-                this.traverse(visitor, context)
+                it.traverse(visitor, context, programContext)
             }
 
             is InputNode -> {
-                val hostData = context.get(this.host)
-                val result = visitor.leave(this, hostData)
+                val hostData = programContext.get(it.host)
+                val result = visitor.leave(it, hostData)
 
                 // Update context
-                val temporaryData = visitor.getData(this, hostData)
-                context = context.put(this.temporary, temporaryData)
+                val temporaryData = visitor.getData(it, hostData)
+                context = context.put(it.temporary, temporaryData)
 
                 result
             }
 
             is OutputNode -> {
-                val message = this.message.traverse(visitor, context)
-                visitor.leave(this, message, context.get(this.host))
+                val message = it.message.traverse(visitor, context)
+                visitor.leave(it, message, programContext.get(it.host))
             }
 
             is ReceiveNode -> {
-                val protocolData = context.get(this.protocol)
-                val result = visitor.leave(this, protocolData)
+                val protocolData = programContext.get(it.protocol)
+                val result = visitor.leave(it, protocolData)
 
                 // Update context
-                val temporaryData = visitor.getData(this, protocolData)
-                context = context.put(this.temporary, temporaryData)
+                val temporaryData = visitor.getData(it, protocolData)
+                context = context.put(it.temporary, temporaryData)
 
                 result
             }
 
             is SendNode -> {
-                val message = this.message.traverse(visitor, context)
-                visitor.leave(this, message, context.get(this.protocol))
+                val message = it.message.traverse(visitor, context)
+                visitor.leave(it, message, programContext.get(it.protocol))
             }
         }
     }
 
-    val statements = this.statements.map(StatementNode::go)
     return visitor.leave(this, statements)
 }
 
@@ -167,10 +167,9 @@ fun <ExpressionResult, StatementResult, DeclarationResult, ProgramResult, Tempor
     visitor: ProgramVisitorWithContext<ExpressionResult, StatementResult, DeclarationResult, ProgramResult, TemporaryData, ObjectData, LoopData, HostData, ProtocolData>
 ): ProgramResult {
     /** Host and process portions of the context. */
-    val context = run {
-        var context: Context<TemporaryData, ObjectData, LoopData, HostData, ProtocolData> =
-            Context()
-        for (declaration in this.declarations) {
+    val programContext = run {
+        var context: ProgramContext<HostData, ProtocolData> = ProgramContext()
+        for (declaration in declarations) {
             context = when (declaration) {
                 is HostDeclarationNode ->
                     context.put(declaration.name, visitor.getData(declaration))
@@ -182,13 +181,13 @@ fun <ExpressionResult, StatementResult, DeclarationResult, ProgramResult, Tempor
         context
     }
 
-    val declarations = this.declarations.map {
+    val declarations = declarations.map {
         when (it) {
             is HostDeclarationNode ->
                 visitor.leave(it)
 
             is ProcessDeclarationNode -> {
-                val body = it.body.traverse(visitor, context)
+                val body = it.body.traverse(visitor, StatementContext(), programContext)
                 visitor.leave(it, body)
             }
         }

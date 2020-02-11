@@ -44,7 +44,7 @@ fun ProgramNode.typeCheck(): Map<Temporary, ValueType> {
 }
 
 private class TypeChecker :
-    ProgramVisitorWithContext<ValueType, Unit, Unit, Map<Temporary, ValueType>, ValueType, ObjectType, Unit, Unit, Unit>,
+    ProgramVisitorWithContext<Unit, Unit, Map<Temporary, ValueType>, Unit, Unit>,
     StatementVisitorWithVariableContext<ValueType, Unit, ValueType, ObjectType> {
 
     private val typeMap: MutableMap<Temporary, ValueType> = mutableMapOf()
@@ -167,8 +167,8 @@ private class TypeChecker :
     override fun leave(
         node: IfNode,
         guard: ValueType,
-        thenBranch: SuspendedTraversal<ValueType, Unit, ValueType, ObjectType, Unit, Unit, Unit>,
-        elseBranch: SuspendedTraversal<ValueType, Unit, ValueType, ObjectType, Unit, Unit, Unit>
+        thenBranch: SuspendedTraversal<Unit, ValueType, ObjectType, Unit, Unit, Unit>,
+        elseBranch: SuspendedTraversal<Unit, ValueType, ObjectType, Unit, Unit, Unit>
     ) {
         assertHasType(node.guard, actualType = guard, expectedType = BooleanType)
         thenBranch(this)
@@ -177,8 +177,7 @@ private class TypeChecker :
 
     override fun leave(
         node: InfiniteLoopNode,
-        body: SuspendedTraversal<ValueType, Unit, ValueType, ObjectType, Unit, Unit, Unit>,
-        data: Unit
+        body: SuspendedTraversal<Unit, ValueType, ObjectType, Unit, Unit, Unit>
     ) {
         body(this)
     }
@@ -197,7 +196,12 @@ private class TypeChecker :
 
     override fun leave(node: HostDeclarationNode) {}
 
-    override fun leave(node: ProcessDeclarationNode, body: Unit) {}
+    override fun leave(
+        node: ProcessDeclarationNode,
+        body: SuspendedTraversal<Unit, *, *, *, Unit, Unit>
+    ) {
+        body(this)
+    }
 
     override fun leave(node: ProgramNode, declarations: List<Unit>): Map<Temporary, ValueType> {
         return typeMap

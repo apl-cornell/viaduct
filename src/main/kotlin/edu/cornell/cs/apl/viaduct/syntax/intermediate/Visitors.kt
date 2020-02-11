@@ -15,8 +15,8 @@ import edu.cornell.cs.apl.viaduct.syntax.Temporary
  * Note that there is no memoization, and the node will be traversed each time the function is
  * invoked. This is done deliberately to allow traversing the node multiple times.
  */
-typealias SuspendedTraversal<ExpressionResult, StatementResult, TemporaryData, ObjectData, LoopData, HostData, ProtocolData> =
-        (StatementVisitorWithContext<ExpressionResult, StatementResult, TemporaryData, ObjectData, LoopData, HostData, ProtocolData>) -> StatementResult
+typealias SuspendedTraversal<StatementResult, TemporaryData, ObjectData, LoopData, HostData, ProtocolData> =
+        (StatementVisitorWithContext<*, StatementResult, TemporaryData, ObjectData, LoopData, HostData, ProtocolData>) -> StatementResult
 
 /**
  * Traverses the expression's abstract syntax tree in depth-first order producing
@@ -76,7 +76,7 @@ private fun <ExpressionResult, StatementResult, TemporaryData, ObjectData, LoopD
             }
 
             is DeclarationNode -> {
-                val arguments = it.arguments.map { it.traverse(visitor, context) }
+                val arguments = it.arguments.map { arg -> arg.traverse(visitor, context) }
                 val result = visitor.leave(it, arguments)
 
                 // Update context
@@ -87,7 +87,7 @@ private fun <ExpressionResult, StatementResult, TemporaryData, ObjectData, LoopD
             }
 
             is UpdateNode -> {
-                val arguments = it.arguments.map { it.traverse(visitor, context) }
+                val arguments = it.arguments.map { arg -> arg.traverse(visitor, context) }
                 visitor.leave(it, arguments, context.get(it.variable))
             }
 
@@ -163,8 +163,8 @@ private fun <ExpressionResult, StatementResult, TemporaryData, ObjectData, LoopD
  * Traverses the program's abstract syntax tree in depth-first order producing
  * a result using [visitor].
  */
-fun <ExpressionResult, StatementResult, DeclarationResult, ProgramResult, TemporaryData, ObjectData, LoopData, HostData, ProtocolData> ProgramNode.traverse(
-    visitor: ProgramVisitorWithContext<ExpressionResult, StatementResult, DeclarationResult, ProgramResult, TemporaryData, ObjectData, LoopData, HostData, ProtocolData>
+fun <StatementResult, DeclarationResult, ProgramResult, HostData, ProtocolData> ProgramNode.traverse(
+    visitor: ProgramVisitorWithContext<StatementResult, DeclarationResult, ProgramResult, HostData, ProtocolData>
 ): ProgramResult {
     /** Host and process portions of the context. */
     val programContext = run {
@@ -187,8 +187,7 @@ fun <ExpressionResult, StatementResult, DeclarationResult, ProgramResult, Tempor
                 visitor.leave(it)
 
             is ProcessDeclarationNode -> {
-                val body = it.body.traverse(visitor, StatementContext(), programContext)
-                visitor.leave(it, body)
+                visitor.leave(it) { visitor -> it.body.traverse(visitor, StatementContext(), programContext) }
             }
         }
     }
@@ -285,13 +284,13 @@ interface StatementVisitorWithContext<ExpressionResult, StatementResult, Tempora
     fun leave(
         node: IfNode,
         guard: ExpressionResult,
-        thenBranch: SuspendedTraversal<ExpressionResult, StatementResult, TemporaryData, ObjectData, LoopData, HostData, ProtocolData>,
-        elseBranch: SuspendedTraversal<ExpressionResult, StatementResult, TemporaryData, ObjectData, LoopData, HostData, ProtocolData>
+        thenBranch: SuspendedTraversal<StatementResult, TemporaryData, ObjectData, LoopData, HostData, ProtocolData>,
+        elseBranch: SuspendedTraversal<StatementResult, TemporaryData, ObjectData, LoopData, HostData, ProtocolData>
     ): StatementResult
 
     fun leave(
         node: InfiniteLoopNode,
-        body: SuspendedTraversal<ExpressionResult, StatementResult, TemporaryData, ObjectData, LoopData, HostData, ProtocolData>,
+        body: SuspendedTraversal<StatementResult, TemporaryData, ObjectData, LoopData, HostData, ProtocolData>,
         data: LoopData
     ): StatementResult
 
@@ -311,19 +310,13 @@ interface StatementVisitorWithContext<ExpressionResult, StatementResult, Tempora
 /**
  * A program visitor that uses context information.
  *
- * @param ExpressionResult Data returned from each [ExpressionNode].
  * @param StatementResult Data returned from each [StatementNode].
  * @param DeclarationResult Data returned from each [TopLevelDeclarationNode].
  * @param ProgramResult Data returned from the [ProgramNode].
- * @param TemporaryData Context information attached to each [Temporary] declaration.
- * @param ObjectData Context information attached to each [ObjectVariable] declaration.
- * @param LoopData Context information attached to each [JumpLabel].
  * @param HostData Context information attached to each [Host] declaration.
  * @param ProtocolData Context information attached to each [Protocol] declaration.
  */
-interface ProgramVisitorWithContext<ExpressionResult, StatementResult, DeclarationResult, ProgramResult, TemporaryData, ObjectData, LoopData, HostData, ProtocolData>
-    :
-    StatementVisitorWithContext<ExpressionResult, StatementResult, TemporaryData, ObjectData, LoopData, HostData, ProtocolData> {
+interface ProgramVisitorWithContext<StatementResult, DeclarationResult, ProgramResult, HostData, ProtocolData> {
     /**
      * Returns the data that will be associated with the [Host] declared by [node].
      *
@@ -340,7 +333,10 @@ interface ProgramVisitorWithContext<ExpressionResult, StatementResult, Declarati
 
     fun leave(node: HostDeclarationNode): DeclarationResult
 
-    fun leave(node: ProcessDeclarationNode, body: StatementResult): DeclarationResult
+    fun leave(
+        node: ProcessDeclarationNode,
+        body: SuspendedTraversal<StatementResult, *, *, *, HostData, ProtocolData>
+    ): DeclarationResult
 
     fun leave(node: ProgramNode, declarations: List<DeclarationResult>): ProgramResult
 }
@@ -377,7 +373,6 @@ interface ExpressionVisitor<ExpressionResult> :
 interface StatementVisitorWithVariableLoopContext<ExpressionResult, StatementResult, TemporaryData, ObjectData, LoopData>
     :
     StatementVisitorWithContext<ExpressionResult, StatementResult, TemporaryData, ObjectData, LoopData, Unit, Unit> {
-
     override fun getData(node: InputNode, data: Unit): TemporaryData {
         return getData(node)
     }
@@ -423,12 +418,24 @@ interface StatementVisitorWithVariableLoopContext<ExpressionResult, StatementRes
 interface StatementVisitorWithVariableContext<ExpressionResult, StatementResult, TemporaryData, ObjectData>
     :
     StatementVisitorWithVariableLoopContext<ExpressionResult, StatementResult, TemporaryData, ObjectData, Unit> {
-
     override fun getData(node: InfiniteLoopNode) {}
+
+    override fun leave(
+        node: InfiniteLoopNode,
+        body: SuspendedTraversal<StatementResult, TemporaryData, ObjectData, Unit, Unit, Unit>,
+        data: Unit
+    ): StatementResult {
+        return leave(node, body)
+    }
 
     override fun leave(node: BreakNode, data: Unit): StatementResult {
         return leave(node)
     }
+
+    fun leave(
+        node: InfiniteLoopNode,
+        body: SuspendedTraversal<StatementResult, TemporaryData, ObjectData, Unit, Unit, Unit>
+    ): StatementResult
 
     fun leave(node: BreakNode): StatementResult
 }
@@ -440,12 +447,10 @@ interface StatementVisitorWithVariableContext<ExpressionResult, StatementResult,
  */
 interface StatementVisitor<ExpressionResult, StatementResult> :
     ExpressionVisitor<ExpressionResult>,
-    StatementVisitorWithContext<ExpressionResult, StatementResult, Unit, Unit, Unit, Unit, Unit> {
+    StatementVisitorWithVariableContext<ExpressionResult, StatementResult, Unit, Unit> {
     override fun getData(node: LetNode, value: ExpressionResult) {}
 
     override fun getData(node: DeclarationNode, arguments: List<ExpressionResult>) {}
-
-    override fun getData(node: InfiniteLoopNode) {}
 
     override fun leave(
         node: UpdateNode,
@@ -458,16 +463,15 @@ interface StatementVisitor<ExpressionResult, StatementResult> :
     override fun leave(
         node: IfNode,
         guard: ExpressionResult,
-        thenBranch: SuspendedTraversal<ExpressionResult, StatementResult, Unit, Unit, Unit, Unit, Unit>,
-        elseBranch: SuspendedTraversal<ExpressionResult, StatementResult, Unit, Unit, Unit, Unit, Unit>
+        thenBranch: SuspendedTraversal<StatementResult, Unit, Unit, Unit, Unit, Unit>,
+        elseBranch: SuspendedTraversal<StatementResult, Unit, Unit, Unit, Unit, Unit>
     ): StatementResult {
         return leave(node, guard, thenBranch(this), elseBranch(this))
     }
 
     override fun leave(
         node: InfiniteLoopNode,
-        body: SuspendedTraversal<ExpressionResult, StatementResult, Unit, Unit, Unit, Unit, Unit>,
-        data: Unit
+        body: SuspendedTraversal<StatementResult, Unit, Unit, Unit, Unit, Unit>
     ): StatementResult {
         return leave(node, body(this))
     }
@@ -490,8 +494,7 @@ interface StatementVisitor<ExpressionResult, StatementResult> :
  * @see ProgramVisitorWithContext
  */
 interface ProgramVisitor<ExpressionResult, StatementResult, DeclarationResult, ProgramResult> :
-    StatementVisitor<ExpressionResult, StatementResult>,
-    ProgramVisitorWithContext<ExpressionResult, StatementResult, DeclarationResult, ProgramResult, Unit, Unit, Unit, Unit, Unit> {
+    ProgramVisitorWithContext<StatementResult, DeclarationResult, ProgramResult, Unit, Unit> {
     override fun getData(node: HostDeclarationNode) {}
 
     override fun getData(node: ProcessDeclarationNode) {}

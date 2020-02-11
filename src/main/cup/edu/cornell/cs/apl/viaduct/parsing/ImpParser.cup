@@ -20,23 +20,27 @@ import java_cup.runtime.Symbol;
 
 
 action code {:
-    /** Construct a binary expression node. Source location is inferred from the arguments. */
+    /** Constructs a binary expression node. Source location is inferred from the arguments. */
     private OperatorApplicationNode binaryExpression(BinaryOperator op, ExpressionNode lhs, ExpressionNode rhs) {
-        Arguments arguments = new Arguments(lhs, rhs);
+        Arguments arguments = Arguments.from(lhs, rhs);
         SourceRange sourceLocation = lhs.getSourceLocation().merge(rhs.getSourceLocation());
         return new OperatorApplicationNode(op, arguments, sourceLocation);
+    }
+
+    /** Constructs a label argument list from a single optional label. */
+    private Arguments<Located<Label>> optionalLabelArgument(Located<Label> label, HasSourceLocation emptyLocation) {
+        if (label == null) {
+            return new Arguments(emptyLocation.getSourceLocation());
+        } else {
+            return Arguments.from(label);
+        }
     }
 :}
 
 parser code {:
-    /** Generate source location information for a node given left and right character offsets. */
+    /** Generates source location information for a node given left and right character offsets. */
     private SourceRange location(int left, int right) {
         return ((ImpLexer) getScanner()).location(left, right);
-    }
-
-    /** Generate source location information for a node given left node and right character offset. */
-    private SourceRange location(HasSourceLocation left, int right) {
-        return location(left.getSourceLocation().getStart().getOffset(), right);
     }
 
     @Override
@@ -151,30 +155,39 @@ declaration ::=
 
 
 simple_stmt ::=
+    /* Variable declaration. */
     value_type:type optional_label:label variable:var {:
       final LiteralNode initial = new LiteralNode(
         type.getValue().getDefaultValue(),
         type.getSourceLocation());
       RESULT = new DeclarationNode(
         var,
-        MutableCell.INSTANCE.getConstructor(),
-        new Arguments(initial),
+        new Located(PrimitivesKt.getMutableCell(), var.getSourceLocation()),
+        Arguments.from(type),
+        optionalLabelArgument(label, var),
+        Arguments.from(initial),
         location(typeleft, varright));
     :}
 
+    /* Variable declaration with initial value. */
   | value_type:type optional_label:label variable:var EQ expr:initial {:
       RESULT = new DeclarationNode(
         var,
-        MutableCell.INSTANCE.getConstructor(),
-        new Arguments(initial),
+        new Located(PrimitivesKt.getMutableCell(), var.getSourceLocation()),
+        Arguments.from(type),
+        optionalLabelArgument(label, var),
+        Arguments.from(initial),
         location(typeleft, varright));
     :}
 
-  | value_type:type optional_label:lab variable:var OPEN_SQBRACE expr:size CLOSE_SQBRACE:end {:
+    /* Array declaration. */
+  | value_type:type optional_label:label variable:var OPEN_SQBRACE expr:size CLOSE_SQBRACE:end {:
       RESULT = new DeclarationNode(
         var,
-        Vector.INSTANCE.getConstructor(),
-        new Arguments(size),
+        new Located(PrimitivesKt.getVector(), var.getSourceLocation()),
+        Arguments.from(type),
+        optionalLabelArgument(label, var),  // TODO: add label on size
+        Arguments.from(size),
         location(typeleft, endright));
     :}
 
@@ -272,14 +285,14 @@ expr ::=
   | NOT:begin expr:e {:
       RESULT = new OperatorApplicationNode(
         Not.INSTANCE,
-        new Arguments(e),
+        Arguments.from(e),
         location(beginleft, eright));
     :}
 
   | MINUS:begin expr:e {:
       RESULT = new OperatorApplicationNode(
         Negation.INSTANCE,
-        new Arguments(e),
+        Arguments.from(e),
         location(beginleft, eright));
     :}
 
@@ -297,7 +310,7 @@ expr ::=
 
   | expr:e1 NEQ expr:e2 {:
       final ExpressionNode eq = binaryExpression(EqualTo.INSTANCE, e1, e2);
-      RESULT = new OperatorApplicationNode(Not.INSTANCE, new Arguments(eq), eq.getSourceLocation());
+      RESULT = new OperatorApplicationNode(Not.INSTANCE, Arguments.from(eq), eq.getSourceLocation());
     :}
 
   | expr:e1 LT expr:e2 {:

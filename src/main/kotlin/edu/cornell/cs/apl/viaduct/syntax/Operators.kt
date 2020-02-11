@@ -1,6 +1,6 @@
 package edu.cornell.cs.apl.viaduct.syntax
 
-import edu.cornell.cs.apl.viaduct.syntax.types.OperatorType
+import edu.cornell.cs.apl.viaduct.syntax.types.FunctionType
 import edu.cornell.cs.apl.viaduct.syntax.values.Value
 
 /**
@@ -71,7 +71,7 @@ interface Operator {
     }
 
     /** Type of this operator. */
-    val type: OperatorType
+    val type: FunctionType
 
     /** Computes the result of applying this operator to the given arguments. */
     fun apply(arguments: List<Value>): Value

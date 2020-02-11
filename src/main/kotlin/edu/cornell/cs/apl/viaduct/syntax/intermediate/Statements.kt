@@ -1,14 +1,17 @@
 package edu.cornell.cs.apl.viaduct.syntax.intermediate
 
-import edu.cornell.cs.apl.viaduct.syntax.Constructor
+import edu.cornell.cs.apl.viaduct.security.Label
+import edu.cornell.cs.apl.viaduct.syntax.Arguments
+import edu.cornell.cs.apl.viaduct.syntax.ClassNameNode
 import edu.cornell.cs.apl.viaduct.syntax.HostNode
 import edu.cornell.cs.apl.viaduct.syntax.JumpLabelNode
+import edu.cornell.cs.apl.viaduct.syntax.Located
 import edu.cornell.cs.apl.viaduct.syntax.ObjectVariableNode
 import edu.cornell.cs.apl.viaduct.syntax.ProtocolNode
 import edu.cornell.cs.apl.viaduct.syntax.SourceLocation
 import edu.cornell.cs.apl.viaduct.syntax.TemporaryNode
-import edu.cornell.cs.apl.viaduct.syntax.Update
 import edu.cornell.cs.apl.viaduct.syntax.ValueTypeNode
+import edu.cornell.cs.apl.viaduct.syntax.datatypes.UpdateName
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toPersistentList
 
@@ -37,16 +40,18 @@ class LetNode(
 /** Constructing a new object and binding it to a variable. */
 class DeclarationNode(
     val variable: ObjectVariableNode,
-    val constructor: Constructor,
-    val arguments: Arguments,
+    val className: ClassNameNode,
+    val typeArguments: Arguments<ValueTypeNode>,
+    val labelArguments: Arguments<Located<Label?>>?,
+    val arguments: Arguments<ExpressionNode>,
     override val sourceLocation: SourceLocation
 ) : SimpleStatementNode()
 
 /** An update method applied to an object. */
 class UpdateNode(
     val variable: ObjectVariableNode,
-    val update: Update,
-    val arguments: Arguments,
+    val update: UpdateName,
+    val arguments: Arguments<ExpressionNode>,
     override val sourceLocation: SourceLocation
 ) : SimpleStatementNode()
 
@@ -99,10 +104,6 @@ class BlockNode(
 
     constructor(vararg statements: StatementNode, sourceLocation: SourceLocation) :
         this(persistentListOf(*statements), sourceLocation)
-
-    fun singletonStatement(): StatementNode? {
-        return if (statements.size == 1) statements[0] else null
-    }
 }
 
 // Communication Statements

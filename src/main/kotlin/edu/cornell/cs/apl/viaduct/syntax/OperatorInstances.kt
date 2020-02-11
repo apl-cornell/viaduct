@@ -1,12 +1,11 @@
 package edu.cornell.cs.apl.viaduct.syntax
 
 import edu.cornell.cs.apl.viaduct.syntax.types.BooleanType
+import edu.cornell.cs.apl.viaduct.syntax.types.FunctionType
 import edu.cornell.cs.apl.viaduct.syntax.types.IntegerType
-import edu.cornell.cs.apl.viaduct.syntax.types.OperatorType
 import edu.cornell.cs.apl.viaduct.syntax.values.BooleanValue
 import edu.cornell.cs.apl.viaduct.syntax.values.IntegerValue
 import edu.cornell.cs.apl.viaduct.syntax.values.Value
-import kotlinx.collections.immutable.persistentListOf
 import kotlin.math.min
 
 /**
@@ -37,8 +36,8 @@ private interface LeftAssociativeOperator : Operator {
  * An infix operator that takes two numbers and returns a number.
  */
 private interface ArithmeticOperator : BinaryInfixOperator, LeftAssociativeOperator {
-    override val type: OperatorType
-        get() = OperatorType(persistentListOf(IntegerType, IntegerType), IntegerType)
+    override val type: FunctionType
+        get() = FunctionType(IntegerType, IntegerType, result = IntegerType)
 
     override fun apply(arguments: List<Value>): Value {
         val arg1 = arguments[0] as IntegerValue
@@ -61,8 +60,8 @@ private interface LogicalOperator : BinaryInfixOperator, LeftAssociativeOperator
         return Precedence.LOWER
     }
 
-    override val type: OperatorType
-        get() = OperatorType(persistentListOf(BooleanType, BooleanType), IntegerType)
+    override val type: FunctionType
+        get() = FunctionType(BooleanType, BooleanType, result = IntegerType)
 
     override fun apply(arguments: List<Value>): Value {
         val arg1 = arguments[0] as BooleanValue
@@ -86,8 +85,8 @@ private interface ComparisonOperator : BinaryInfixOperator {
         return super.comparePrecedenceTo(other)
     }
 
-    override val type: OperatorType
-        get() = OperatorType(persistentListOf(IntegerType, IntegerType), BooleanType)
+    override val type: FunctionType
+        get() = FunctionType(IntegerType, IntegerType, result = BooleanType)
 
     override fun apply(arguments: List<Value>): Value {
         val arg1 = arguments[0] as IntegerValue
@@ -101,8 +100,8 @@ private interface ComparisonOperator : BinaryInfixOperator {
 // Arithmetic Operators
 
 object Negation : UnaryPrefixOperator {
-    override val type: OperatorType
-        get() = OperatorType(persistentListOf(IntegerType), IntegerType)
+    override val type: FunctionType
+        get() = FunctionType(IntegerType, result = IntegerType)
 
     override fun apply(arguments: List<Value>): Value {
         return IntegerValue(-(arguments[0] as IntegerValue).value)
@@ -204,8 +203,8 @@ object Maximum : ArithmeticOperator {
 // Logical Operators
 
 object Not : UnaryPrefixOperator {
-    override val type: OperatorType
-        get() = OperatorType(persistentListOf(BooleanType), BooleanType)
+    override val type: FunctionType
+        get() = FunctionType(BooleanType, result = BooleanType)
 
     override fun apply(arguments: List<Value>): Value {
         return BooleanValue(!(arguments[0] as BooleanValue).value)

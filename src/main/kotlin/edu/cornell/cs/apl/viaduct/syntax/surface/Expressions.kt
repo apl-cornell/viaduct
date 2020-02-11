@@ -1,14 +1,15 @@
 package edu.cornell.cs.apl.viaduct.syntax.surface
 
+import edu.cornell.cs.apl.viaduct.syntax.Arguments
 import edu.cornell.cs.apl.viaduct.syntax.HostNode
 import edu.cornell.cs.apl.viaduct.syntax.LabelNode
 import edu.cornell.cs.apl.viaduct.syntax.ObjectVariableNode
 import edu.cornell.cs.apl.viaduct.syntax.Operator
 import edu.cornell.cs.apl.viaduct.syntax.ProtocolNode
-import edu.cornell.cs.apl.viaduct.syntax.Query
 import edu.cornell.cs.apl.viaduct.syntax.SourceLocation
 import edu.cornell.cs.apl.viaduct.syntax.Temporary
 import edu.cornell.cs.apl.viaduct.syntax.ValueTypeNode
+import edu.cornell.cs.apl.viaduct.syntax.datatypes.QueryName
 import edu.cornell.cs.apl.viaduct.syntax.values.Value
 
 /** A computation that produces a result. */
@@ -28,15 +29,15 @@ class ReadNode(val temporary: Temporary, override val sourceLocation: SourceLoca
 /** An n-ary operator applied to n arguments. */
 class OperatorApplicationNode(
     val operator: Operator,
-    val arguments: Arguments,
+    val arguments: Arguments<ExpressionNode>,
     override val sourceLocation: SourceLocation
 ) : ExpressionNode()
 
 /** A query method applied to an object. */
 class QueryNode(
     val variable: ObjectVariableNode,
-    val query: Query,
-    val arguments: Arguments,
+    val query: QueryName,
+    val arguments: Arguments<ExpressionNode>,
     override val sourceLocation: SourceLocation
 ) : ExpressionNode()
 

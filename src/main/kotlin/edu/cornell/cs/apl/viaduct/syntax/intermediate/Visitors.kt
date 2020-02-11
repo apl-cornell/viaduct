@@ -187,7 +187,13 @@ fun <StatementResult, DeclarationResult, ProgramResult, HostData, ProtocolData> 
                 visitor.leave(it)
 
             is ProcessDeclarationNode -> {
-                visitor.leave(it) { visitor -> it.body.traverse(visitor, StatementContext(), programContext) }
+                visitor.leave(it) { visitor ->
+                    it.body.traverse(
+                        visitor,
+                        StatementContext(),
+                        programContext
+                    )
+                }
             }
         }
     }
@@ -493,7 +499,7 @@ interface StatementVisitor<ExpressionResult, StatementResult> :
  *
  * @see ProgramVisitorWithContext
  */
-interface ProgramVisitor<ExpressionResult, StatementResult, DeclarationResult, ProgramResult> :
+interface ProgramVisitor<StatementResult, DeclarationResult, ProgramResult> :
     ProgramVisitorWithContext<StatementResult, DeclarationResult, ProgramResult, Unit, Unit> {
     override fun getData(node: HostDeclarationNode) {}
 

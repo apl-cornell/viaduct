@@ -22,7 +22,7 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.OperatorApplicationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutputNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProcessDeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramVisitorWithContext
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramVisitor
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.QueryNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ReadNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ReceiveNode
@@ -44,7 +44,7 @@ fun ProgramNode.typeCheck(): Map<Temporary, ValueType> {
 }
 
 private class TypeChecker :
-    ProgramVisitorWithContext<Unit, Unit, Map<Temporary, ValueType>, Unit, Unit>,
+    ProgramVisitor<Unit, Unit, Map<Temporary, ValueType>>,
     StatementVisitorWithVariableContext<ValueType, Unit, ValueType, ObjectType> {
 
     private val typeMap: MutableMap<Temporary, ValueType> = mutableMapOf()
@@ -122,10 +122,6 @@ private class TypeChecker :
     override fun getData(node: ReceiveNode): ValueType {
         return node.type.value
     }
-
-    override fun getData(node: HostDeclarationNode) {}
-
-    override fun getData(node: ProcessDeclarationNode) {}
 
     override fun leave(node: LiteralNode): ValueType {
         return node.value.type

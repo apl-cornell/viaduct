@@ -1,9 +1,9 @@
 package edu.cornell.cs.apl.viaduct.prettyprinting
 
-/** An object that can be pretty printed as a [Document]. */
+/** An object that has a pretty text representation. */
 interface PrettyPrintable {
-    /** Pretty prints this object as a [Document]. */
-    fun toDocument(): Document
+    /** The pretty text representation of this object. */
+    val asDocument: Document
 }
 
 /**
@@ -15,7 +15,7 @@ interface PrettyPrintable {
  * ```
  */
 operator fun PrettyPrintable.plus(other: PrettyPrintable): Document =
-    Document(this.toDocument(), other.toDocument())
+    Document(this.asDocument, other.asDocument)
 
 /**
  * Concatenates [this] and [other] with a space in between.
@@ -72,7 +72,7 @@ operator fun PrettyPrintable.div(other: String): Document =
     this / Document(other)
 
 /**
- * Concatenates all elements together with [separator]s in between.
+ * Concatenates all the elements together with [separator]s in between.
  *
  * ```
  * val docs = listOf("lorem", "ipsum", "dolor", "sit").map { Document(it) }
@@ -83,17 +83,17 @@ operator fun PrettyPrintable.div(other: String): Document =
 fun List<PrettyPrintable>.concatenated(separator: PrettyPrintable = Document()): Document {
     return if (this.isEmpty())
         Document()
-    else reduce { acc, next -> acc + separator + next }.toDocument()
+    else reduce { acc, next -> acc + separator + next }.asDocument
 }
 
 // TODO: documentation.
 fun PrettyPrintable.nested(indentationChange: Int = 4): Document =
-    this.toDocument().nested(indentationChange)
+    this.asDocument.nested(indentationChange)
 
 // TODO: documentation.
 // TODO: test
 fun PrettyPrintable.grouped(): Document =
-    this.toDocument().grouped()
+    this.asDocument.grouped()
 
 /**
  * Returns a new document that is [this] with [style] applied.
@@ -101,4 +101,43 @@ fun PrettyPrintable.grouped(): Document =
  * Styles can be nested.
  */
 fun PrettyPrintable.styled(style: Style): Document =
-    this.toDocument().styled(style)
+    this.asDocument.styled(style)
+
+/**
+ * Concatenates all the elements separated by [separator] and enclosed in [prefix] and [postfix].
+ *
+ * The elements are laid out horizontally if that fits the page
+ * (note the extra space after [separator]s):
+ * ```
+ * val docs = listOf("1", "2", "3", "4").map { Document(it) }
+ * >>> docs.joined(separator = Document(","), prefix = Document("("), postfix = Document(")"))
+ * (1, 2, 3, 4)
+ * ```
+ *
+ * If there is not enough space, the input is split into lines entry-wise with
+ * separators at the end:
+ * ```
+ * >>> docs.joined(separator = Document(","), prefix = Document("("), postfix = Document(")"))
+ * (
+ * 1,
+ * 2,
+ * 3,
+ * 4)
+ * ```
+ * Use [nested] to add indentation when the elements are split across lines.
+ */
+fun List<PrettyPrintable>.joined(
+    separator: PrettyPrintable = Document(","),
+    prefix: PrettyPrintable = Document(),
+    postfix: PrettyPrintable = Document()
+): Document {
+    return prefix
+        .plus(Document.lineBreak)
+        .plus(this.concatenated(separator + Document.lineBreak))
+        .plus(postfix)
+        .grouped()
+}
+
+/** Liked [joined] but using commas as separators and enclosed in parentheses. */
+fun List<PrettyPrintable>.tupled(): Document =
+    this.joined(prefix = Document("("), postfix = Document(")"))

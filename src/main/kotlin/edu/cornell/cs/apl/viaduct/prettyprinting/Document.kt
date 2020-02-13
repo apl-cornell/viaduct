@@ -11,7 +11,8 @@ const val DEFAULT_LINE_WIDTH = 80
 // TODO: documentation.
 sealed class Document : PrettyPrintable {
     /** Returns this object. */
-    override fun toDocument(): Document = this
+    override val asDocument: Document
+        get() = this
 
     /** Do not use [toString]; use [print] instead. */
     final override fun toString(): String {

@@ -28,7 +28,7 @@ abstract class CompilationError : Error() {
         // Print title line
         val title = "-- ${category.toUpperCase()} -"
         val paddingLength = PrintUtil.LINE_WIDTH - source.length - title.length - 1
-        val padding = "-".repeat(paddingLength)
+        val padding = "-".repeat(paddingLength.coerceAtLeast(0))
         output.println(Ansi.ansi().fg(Ansi.Color.CYAN).a(title).a(padding).a(' ').a(source).reset())
         output.println()
     }
@@ -38,7 +38,7 @@ abstract class CompilationError : Error() {
         output.print(" ".repeat(PrintUtil.INDENTATION_LEVEL))
     }
 
-    override fun toString(): String {
+    final override fun toString(): String {
         return PrintUtil.printToString { output: PrintStream -> this.print(output) }
     }
 }

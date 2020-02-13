@@ -6,6 +6,8 @@ import java.nio.charset.Charset;
 import java.util.function.Consumer;
 import org.fusesource.jansi.AnsiPrintStream;
 
+// TODO: remove.
+
 public final class PrintUtil {
   /** Maximum number of characters to put on one line. */
   public static final int LINE_WIDTH = 80;

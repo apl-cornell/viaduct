@@ -1,4 +1,4 @@
-package edu.cornell.cs.apl.viaduct.prettyprinting
+package edu.cornell.cs.apl.prettyprinting
 
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Nested

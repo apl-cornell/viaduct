@@ -1,4 +1,4 @@
-package edu.cornell.cs.apl.viaduct.prettyprinting
+package edu.cornell.cs.apl.prettyprinting
 
 /** An object that has a pretty text representation. */
 interface PrettyPrintable {

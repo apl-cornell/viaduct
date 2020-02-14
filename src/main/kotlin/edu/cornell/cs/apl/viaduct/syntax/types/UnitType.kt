@@ -1,5 +1,7 @@
 package edu.cornell.cs.apl.viaduct.syntax.types
 
+import edu.cornell.cs.apl.prettyprinting.Document
+import edu.cornell.cs.apl.prettyprinting.styled
 import edu.cornell.cs.apl.viaduct.syntax.values.UnitValue
 import edu.cornell.cs.apl.viaduct.syntax.values.Value
 
@@ -7,7 +9,6 @@ import edu.cornell.cs.apl.viaduct.syntax.values.Value
 object UnitType : ValueType {
     override val defaultValue: Value = UnitValue
 
-    override fun toString(): String {
-        return "unit"
-    }
+    override val asDocument: Document =
+        Document("unit").styled(ValueTypeStyle)
 }

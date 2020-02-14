@@ -1,5 +1,9 @@
 package edu.cornell.cs.apl.viaduct.syntax
 
+import edu.cornell.cs.apl.prettyprinting.Document
+import edu.cornell.cs.apl.prettyprinting.nested
+import edu.cornell.cs.apl.prettyprinting.plus
+import edu.cornell.cs.apl.prettyprinting.tupled
 import edu.cornell.cs.apl.viaduct.security.Label
 
 /**
@@ -29,4 +33,10 @@ interface Protocol : Name {
 
     override val nameCategory: String
         get() = "protocol"
+
+    override val asDocument: Document
+        get() {
+            val hosts: List<Document> = this.hosts.sorted().map(Host::asDocument)
+            return Document(protocolName) + hosts.tupled().nested()
+        }
 }

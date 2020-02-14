@@ -1,5 +1,7 @@
 package edu.cornell.cs.apl.viaduct.syntax.types
 
+import edu.cornell.cs.apl.prettyprinting.Document
+import edu.cornell.cs.apl.prettyprinting.styled
 import edu.cornell.cs.apl.viaduct.syntax.values.BooleanValue
 import edu.cornell.cs.apl.viaduct.syntax.values.Value
 
@@ -8,7 +10,6 @@ object BooleanType : ValueType {
     override val defaultValue: Value
         get() = BooleanValue(false)
 
-    override fun toString(): String {
-        return "bool"
-    }
+    override val asDocument: Document =
+        Document("bool").styled(ValueTypeStyle)
 }

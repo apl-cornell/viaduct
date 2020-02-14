@@ -1,5 +1,6 @@
 package edu.cornell.cs.apl.viaduct.protocols
 
+import edu.cornell.cs.apl.prettyprinting.Document
 import edu.cornell.cs.apl.viaduct.security.Label
 import edu.cornell.cs.apl.viaduct.syntax.Host
 import edu.cornell.cs.apl.viaduct.syntax.HostTrustConfiguration
@@ -24,4 +25,7 @@ data class Ideal(override val name: String) : Protocol {
 
     override fun authority(hostTrustConfiguration: HostTrustConfiguration): Label =
         Label.strongest()
+
+    override val asDocument: Document
+        get() = Document(name)
 }

@@ -1,7 +1,9 @@
 package edu.cornell.cs.apl.viaduct.syntax
 
+import edu.cornell.cs.apl.prettyprinting.PrettyPrintable
+
 /** An object that names things. */
-interface Name {
+interface Name : PrettyPrintable {
     /** The given name. */
     val name: String
 

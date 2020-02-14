@@ -57,7 +57,7 @@ class MambaOutThread (threading.Thread):
           prof_data[player][thread_num] = {}
 
         prof_data[player][thread_num]["maxrss"] = maxrss
-        
+
 
 player_num  = sys.argv[1]
 program     = sys.argv[2]
@@ -90,7 +90,7 @@ def user_input(varname, var):
 
       else:
         raise ValueError("expecting array of length " + str(len(var)) + " as input")
-      
+
 
   except ValueError as err:
     print err

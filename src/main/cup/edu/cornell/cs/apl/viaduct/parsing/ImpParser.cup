@@ -7,6 +7,7 @@ import edu.cornell.cs.apl.viaduct.security.Principal;
 import edu.cornell.cs.apl.viaduct.syntax.*;
 import edu.cornell.cs.apl.viaduct.syntax.datatypes.*;
 import edu.cornell.cs.apl.viaduct.syntax.surface.*;
+import edu.cornell.cs.apl.viaduct.syntax.operators.*;
 import edu.cornell.cs.apl.viaduct.syntax.types.*;
 import edu.cornell.cs.apl.viaduct.syntax.values.*;
 
@@ -26,9 +27,9 @@ action code {:
     }
 
     /** Constructs a label argument list from a single optional label. */
-    private Arguments<Located<Label>> optionalLabelArgument(Located<Label> label, HasSourceLocation emptyLocation) {
+    private Arguments<Located<Label>> optionalLabelArgument(Located<Label> label) {
         if (label == null) {
-            return new Arguments(emptyLocation.getSourceLocation());
+            return null;
         } else {
             return Arguments.from(label);
         }
@@ -162,7 +163,7 @@ simple_stmt ::=
         var,
         new Located(PrimitivesKt.getMutableCell(), var.getSourceLocation()),
         Arguments.from(type),
-        optionalLabelArgument(label, var),
+        optionalLabelArgument(label),
         Arguments.from(initial),
         location(typeleft, varright));
     :}
@@ -173,7 +174,7 @@ simple_stmt ::=
         var,
         new Located(PrimitivesKt.getMutableCell(), var.getSourceLocation()),
         Arguments.from(type),
-        optionalLabelArgument(label, var),
+        optionalLabelArgument(label),
         Arguments.from(initial),
         location(typeleft, varright));
     :}
@@ -184,7 +185,7 @@ simple_stmt ::=
         var,
         new Located(PrimitivesKt.getVector(), var.getSourceLocation()),
         Arguments.from(type),
-        optionalLabelArgument(label, var),  // TODO: add label on size
+        optionalLabelArgument(label),  // TODO: add label on size
         Arguments.from(size),
         location(typeleft, endright));
     :}

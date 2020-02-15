@@ -1,5 +1,12 @@
 package edu.cornell.cs.apl.viaduct.syntax.surface
 
+import edu.cornell.cs.apl.prettyprinting.Document
+import edu.cornell.cs.apl.prettyprinting.PrettyPrintable
+import edu.cornell.cs.apl.prettyprinting.nested
+import edu.cornell.cs.apl.prettyprinting.plus
+import edu.cornell.cs.apl.prettyprinting.times
+import edu.cornell.cs.apl.prettyprinting.tupled
+import edu.cornell.cs.apl.viaduct.parsing.referenceFrom
 import edu.cornell.cs.apl.viaduct.syntax.Arguments
 import edu.cornell.cs.apl.viaduct.syntax.HostNode
 import edu.cornell.cs.apl.viaduct.syntax.LabelNode
@@ -20,18 +27,27 @@ sealed class AtomicExpressionNode : ExpressionNode()
 
 /** A literal constant. */
 class LiteralNode(val value: Value, override val sourceLocation: SourceLocation) :
-    AtomicExpressionNode()
+    AtomicExpressionNode() {
+    override val asDocument: Document
+        get() = value.asDocument
+}
 
 /** Reading the value stored in a temporary. */
 class ReadNode(val temporary: Temporary, override val sourceLocation: SourceLocation) :
-    AtomicExpressionNode()
+    AtomicExpressionNode() {
+    override val asDocument: Document
+        get() = temporary.asDocument
+}
 
 /** An n-ary operator applied to n arguments. */
 class OperatorApplicationNode(
     val operator: Operator,
     val arguments: Arguments<ExpressionNode>,
     override val sourceLocation: SourceLocation
-) : ExpressionNode()
+) : ExpressionNode() {
+    override val asDocument: Document
+        get() = Document("(") + operator.asDocument(arguments) + ")"
+}
 
 /** A query method applied to an object. */
 class QueryNode(
@@ -39,7 +55,12 @@ class QueryNode(
     val query: QueryName,
     val arguments: Arguments<ExpressionNode>,
     override val sourceLocation: SourceLocation
-) : ExpressionNode()
+) : ExpressionNode() {
+    override val asDocument: Document
+        get() =
+            referenceFrom(this)?.asDocument
+                ?: variable + "." + query + arguments.tupled().nested()
+}
 
 /** Reducing the confidentiality or increasing the integrity of the result of an expression. */
 sealed class DowngradeNode : ExpressionNode() {
@@ -51,6 +72,17 @@ sealed class DowngradeNode : ExpressionNode() {
 
     /** The label after the downgrade. */
     abstract val toLabel: LabelNode
+
+    /** Used to implement [PrettyPrintable.asDocument]. */
+    protected fun asDocument(downgradeOperation: String): Document {
+        val from = fromLabel.let {
+            if (it != null)
+                Document() * keyword("from") * it
+            else
+                Document()
+        }
+        return keyword(downgradeOperation) * expression + from * keyword("to") * toLabel
+    }
 }
 
 /** Revealing the the result of an expression (reducing confidentiality). */
@@ -59,7 +91,10 @@ class DeclassificationNode(
     override val fromLabel: LabelNode?,
     override val toLabel: LabelNode,
     override val sourceLocation: SourceLocation
-) : DowngradeNode()
+) : DowngradeNode() {
+    override val asDocument: Document
+        get() = asDocument("declassify")
+}
 
 /** Trusting the result of an expression (increasing integrity). */
 class EndorsementNode(
@@ -67,7 +102,10 @@ class EndorsementNode(
     override val fromLabel: LabelNode?,
     override val toLabel: LabelNode,
     override val sourceLocation: SourceLocation
-) : DowngradeNode()
+) : DowngradeNode() {
+    override val asDocument: Document
+        get() = asDocument("endorse")
+}
 
 // Communication Expressions
 
@@ -80,7 +118,10 @@ class InputNode(
     val type: ValueTypeNode,
     val host: HostNode,
     override val sourceLocation: SourceLocation
-) : ExpressionNode()
+) : ExpressionNode() {
+    override val asDocument: Document
+        get() = keyword("input") * type * keyword("from") * host
+}
 
 /**
  * Receiving a value from another protocol.
@@ -94,4 +135,7 @@ class ReceiveNode(
     val type: ValueTypeNode,
     val protocol: ProtocolNode,
     override val sourceLocation: SourceLocation
-) : ExpressionNode()
+) : ExpressionNode() {
+    override val asDocument: Document
+        get() = keyword("recv") * type * keyword("from") * protocol
+}

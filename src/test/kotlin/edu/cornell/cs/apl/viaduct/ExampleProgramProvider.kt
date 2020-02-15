@@ -12,6 +12,6 @@ import java.util.stream.Stream
 internal class ExampleProgramProvider : ArgumentsProvider {
     override fun provideArguments(context: ExtensionContext?): Stream<out Arguments> {
         return ExampleFileProvider().provideArguments(context)
-            .map { Arguments.of(SourceFile.from(it as File).parse()) }
+            .map { Arguments.of(SourceFile.from(it.get()[0] as File).parse()) }
     }
 }

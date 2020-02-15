@@ -42,7 +42,8 @@ class DeclarationNode(
     val variable: ObjectVariableNode,
     val className: ClassNameNode,
     val typeArguments: Arguments<ValueTypeNode>,
-    val labelArguments: Arguments<Located<Label?>>?,
+    // TODO: allow leaving out some of the labels (right now it's all or nothing)
+    val labelArguments: Arguments<Located<Label>>?,
     val arguments: Arguments<ExpressionNode>,
     override val sourceLocation: SourceLocation
 ) : SimpleStatementNode()

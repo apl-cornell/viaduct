@@ -1,8 +1,11 @@
 package edu.cornell.cs.apl.viaduct.security;
 
 import com.google.auto.value.AutoValue;
+import edu.cornell.cs.apl.prettyprinting.Document;
+import edu.cornell.cs.apl.prettyprinting.PrettyPrintable;
 import edu.cornell.cs.apl.viaduct.algebra.FreeDistributiveLattice;
 import edu.cornell.cs.apl.viaduct.algebra.Lattice;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * A lattice for information flow security. This is a standard bounded lattice that additionally
@@ -16,7 +19,7 @@ import edu.cornell.cs.apl.viaduct.algebra.Lattice;
  * about trust.
  */
 @AutoValue
-public abstract class Label implements Lattice<Label>, TrustLattice<Label> {
+public abstract class Label implements Lattice<Label>, TrustLattice<Label>, PrettyPrintable {
   // public, untrusted
   private static final Label WEAKEST =
       create(FreeDistributiveLattice.top(), FreeDistributiveLattice.top());
@@ -195,5 +198,11 @@ public abstract class Label implements Lattice<Label>, TrustLattice<Label> {
     }
 
     return String.format("{%s}", expression);
+  }
+
+  @NotNull
+  @Override
+  public Document getAsDocument() {
+    return Document.invoke(this.toString());
   }
 }

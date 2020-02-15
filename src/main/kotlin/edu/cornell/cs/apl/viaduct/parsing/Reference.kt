@@ -1,5 +1,10 @@
 package edu.cornell.cs.apl.viaduct.parsing
 
+import edu.cornell.cs.apl.prettyprinting.Document
+import edu.cornell.cs.apl.prettyprinting.PrettyPrintable
+import edu.cornell.cs.apl.prettyprinting.bracketed
+import edu.cornell.cs.apl.prettyprinting.nested
+import edu.cornell.cs.apl.prettyprinting.plus
 import edu.cornell.cs.apl.viaduct.syntax.Arguments
 import edu.cornell.cs.apl.viaduct.syntax.BinaryOperator
 import edu.cornell.cs.apl.viaduct.syntax.ObjectVariableNode
@@ -18,7 +23,7 @@ import edu.cornell.cs.apl.viaduct.syntax.surface.UpdateNode
  *
  * Used to unify reading from and writing to locations in the parser.
  */
-internal interface Reference {
+internal interface Reference : PrettyPrintable {
     /** Returns an expression that reads the value stored at the referenced location. */
     fun get(): QueryNode
 
@@ -58,6 +63,9 @@ internal class CellReference(val name: ObjectVariableNode) : Reference {
             name.sourceLocation.merge(argument.sourceLocation)
         )
     }
+
+    override val asDocument: Document
+        get() = name.asDocument
 }
 
 /** A reference to a specific index of an [Vector]. */
@@ -86,5 +94,43 @@ internal class VectorReference(
             Arguments.from(index, argument),
             sourceLocation.merge(argument.sourceLocation)
         )
+    }
+
+    override val asDocument: Document
+        get() = name + listOf(index).bracketed().nested()
+}
+
+/**
+ * Returns a [Reference] to the location [queryNode] is reading.
+ * The result is `null` if the query is not primitive.
+ */
+internal fun referenceFrom(queryNode: QueryNode): Reference? {
+    return when {
+        queryNode.query is Get && queryNode.arguments.isEmpty() ->
+            CellReference(queryNode.variable)
+
+        queryNode.query is Get && queryNode.arguments.size == 1 ->
+            VectorReference(queryNode.variable, queryNode.arguments[0], queryNode.sourceLocation)
+
+        else ->
+            null
+    }
+}
+
+/**
+ * Returns a [Reference] to the location [updateNode] is writing.
+ * The result is `null` if the update is not primitive.
+ */
+internal fun referenceFrom(updateNode: UpdateNode): Reference? {
+    val updateIsPrimitive = updateNode.update is Set || updateNode.update is Modify
+    return when {
+        updateIsPrimitive && updateNode.arguments.size == 1 ->
+            CellReference(updateNode.variable)
+
+        updateIsPrimitive && updateNode.arguments.size == 2 ->
+            VectorReference(updateNode.variable, updateNode.arguments[0], updateNode.sourceLocation)
+
+        else ->
+            null
     }
 }

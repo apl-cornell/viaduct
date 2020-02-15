@@ -1,5 +1,8 @@
 package edu.cornell.cs.apl.viaduct.syntax.surface
 
+import edu.cornell.cs.apl.prettyprinting.Document
+import edu.cornell.cs.apl.prettyprinting.plus
+import edu.cornell.cs.apl.prettyprinting.times
 import edu.cornell.cs.apl.viaduct.syntax.HostNode
 import edu.cornell.cs.apl.viaduct.syntax.LabelNode
 import edu.cornell.cs.apl.viaduct.syntax.ProtocolNode
@@ -18,7 +21,11 @@ class HostDeclarationNode(
     val name: HostNode,
     val authority: LabelNode,
     override val sourceLocation: SourceLocation
-) : TopLevelDeclarationNode()
+) : TopLevelDeclarationNode() {
+    // TODO: remove semicolon at the end
+    override val asDocument: Document
+        get() = keyword("host") * name * ":" * authority + ";"
+}
 
 /**
  * A process declaration associating a protocol with the code that process should run.
@@ -30,4 +37,7 @@ class ProcessDeclarationNode(
     val protocol: ProtocolNode,
     val body: BlockNode,
     override val sourceLocation: SourceLocation
-) : TopLevelDeclarationNode()
+) : TopLevelDeclarationNode() {
+    override val asDocument: Document
+        get() = keyword("process") * protocol * body
+}

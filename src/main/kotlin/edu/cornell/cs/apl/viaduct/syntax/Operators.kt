@@ -1,5 +1,7 @@
 package edu.cornell.cs.apl.viaduct.syntax
 
+import edu.cornell.cs.apl.prettyprinting.Document
+import edu.cornell.cs.apl.prettyprinting.PrettyPrintable
 import edu.cornell.cs.apl.viaduct.syntax.types.FunctionType
 import edu.cornell.cs.apl.viaduct.syntax.values.Value
 
@@ -23,15 +25,13 @@ enum class Associativity {
  * For example, conventionally, multiplication has higher precedence than addition, so
  * `x + y * z` is parsed as `x + (y * z)`.
  */
+// TODO: rethink precedence
 enum class Precedence {
     LOWER, EQUAL, HIGHER, UNDETERMINED
 }
 
 /** A pure function from values to a value. */
 interface Operator {
-    /** Number of arguments the operator takes. */
-    val arity: Int
-
     /**
      * Determines the grouping of consecutive operators that have the same precedence.
      *
@@ -70,11 +70,14 @@ interface Operator {
         return if (this == other) Precedence.EQUAL else Precedence.UNDETERMINED
     }
 
-    /** Type of this operator. */
+    /** The type of this operator. */
     val type: FunctionType
 
-    /** Computes the result of applying this operator to the given arguments. */
+    /** Computes the result of applying this operator to [arguments]. */
     fun apply(arguments: List<Value>): Value
+
+    /** Shows this operator applied to [arguments]. */
+    fun asDocument(arguments: List<PrettyPrintable>): Document
 }
 
 /**
@@ -144,17 +147,52 @@ interface ClosedOperator : Operator {
 }
 
 /**
- * An operator that takes a single arguments.
+ * An operator that takes a single argument.
  */
 interface UnaryOperator : Operator {
-    override val arity: Int
-        get() = 1
+    override fun apply(arguments: List<Value>): Value {
+        checkArguments(arguments)
+        return apply(arguments[0])
+    }
+
+    override fun asDocument(arguments: List<PrettyPrintable>): Document {
+        checkArguments(arguments)
+        return asDocument(arguments[0])
+    }
+
+    /** Computes the result of applying this operator to [argument]. */
+    fun apply(argument: Value): Value
+
+    /** Shows this operator applied to [argument]. */
+    fun asDocument(argument: PrettyPrintable): Document
 }
 
 /**
  * An operator that takes two arguments.
  */
 interface BinaryOperator : Operator {
-    override val arity: Int
-        get() = 2
+    override fun apply(arguments: List<Value>): Value {
+        checkArguments(arguments)
+        return apply(arguments[0], arguments[1])
+    }
+
+    override fun asDocument(arguments: List<PrettyPrintable>): Document {
+        checkArguments(arguments)
+        return asDocument(arguments[0], arguments[1])
+    }
+
+    /** Computes the result of applying this operator to [argument1] and [argument2]. */
+    fun apply(argument1: Value, argument2: Value): Value
+
+    /** Shows this operator applied to [argument1] and [argument2]. */
+    fun asDocument(argument1: PrettyPrintable, argument2: PrettyPrintable): Document
+}
+
+/** The number of arguments this operator takes. */
+val Operator.arity: Int
+    get() = type.arguments.size
+
+/** Asserts that the correct number of arguments are passed to this operator. */
+private fun Operator.checkArguments(arguments: List<*>) {
+    require(arguments.size == this.arity) { "Operator takes ${this.arity} arguments but was given ${arguments.size}." }
 }

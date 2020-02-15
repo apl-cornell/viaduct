@@ -7,6 +7,12 @@ import kotlinx.collections.immutable.PersistentMap
 import kotlinx.collections.immutable.persistentMapOf
 
 /**
+ * Mapping from a name to the piece of data associated with it along with the source location
+ * where the name was first declared.
+ */
+private typealias NameMap<Name, Data> = PersistentMap<Name, Pair<Data, SourceLocation>>
+
+/**
  * Maintains information about [Name]s in scope.
  *
  * Only maintains information about names declared at statement level.
@@ -18,10 +24,9 @@ import kotlinx.collections.immutable.persistentMapOf
  */
 internal class StatementContext<TemporaryData, ObjectData, LoopData>
 private constructor(
-    // Below, [Located] tracks the source location where the [Name] was declared.
-    private val temporaries: PersistentMap<Temporary, Located<TemporaryData>>,
-    private val objects: PersistentMap<ObjectVariable, Located<ObjectData>>,
-    private val loops: PersistentMap<JumpLabel, Located<LoopData>>
+    private val temporaries: NameMap<Temporary, TemporaryData>,
+    private val objects: NameMap<ObjectVariable, ObjectData>,
+    private val loops: NameMap<JumpLabel, LoopData>
 ) {
     /** Constructs the empty context. */
     constructor() : this(persistentMapOf(), persistentMapOf(), persistentMapOf())
@@ -33,7 +38,7 @@ private constructor(
      */
     @JvmName("getTemporaryData")
     fun get(name: TemporaryNode): TemporaryData {
-        return temporaries[name.value]?.value ?: throw UndefinedNameError(name)
+        return temporaries[name.value]?.first ?: throw UndefinedNameError(name)
     }
 
     /**
@@ -43,7 +48,7 @@ private constructor(
      */
     @JvmName("getObjectData")
     fun get(name: ObjectVariableNode): ObjectData {
-        return objects[name.value]?.value ?: throw UndefinedNameError(name)
+        return objects[name.value]?.first ?: throw UndefinedNameError(name)
     }
 
     /**
@@ -53,7 +58,7 @@ private constructor(
      */
     @JvmName("getLoopData")
     fun get(name: JumpLabelNode): LoopData {
-        return loops[name.value]?.value ?: throw UndefinedNameError(name)
+        return loops[name.value]?.first ?: throw UndefinedNameError(name)
     }
 
     /**
@@ -65,7 +70,7 @@ private constructor(
     fun put(name: TemporaryNode, data: TemporaryData):
         StatementContext<TemporaryData, ObjectData, LoopData> {
         assertNotDeclared(name, temporaries)
-        return copy(temporaries = temporaries.put(name.value, Located(data, name.sourceLocation)))
+        return copy(temporaries = temporaries.put(name.value, Pair(data, name.sourceLocation)))
     }
 
     /**
@@ -77,7 +82,7 @@ private constructor(
     fun put(name: ObjectVariableNode, data: ObjectData):
         StatementContext<TemporaryData, ObjectData, LoopData> {
         assertNotDeclared(name, objects)
-        return copy(objects = objects.put(name.value, Located(data, name.sourceLocation)))
+        return copy(objects = objects.put(name.value, Pair(data, name.sourceLocation)))
     }
 
     /**
@@ -89,14 +94,14 @@ private constructor(
     fun put(name: JumpLabelNode, data: LoopData):
         StatementContext<TemporaryData, ObjectData, LoopData> {
         assertNotDeclared(name, loops)
-        return copy(loops = loops.put(name.value, Located(data, name.sourceLocation)))
+        return copy(loops = loops.put(name.value, Pair(data, name.sourceLocation)))
     }
 
     /** Creates a copy of this object where some fields are modified. */
     private fun copy(
-        temporaries: PersistentMap<Temporary, Located<TemporaryData>> = this.temporaries,
-        objects: PersistentMap<ObjectVariable, Located<ObjectData>> = this.objects,
-        loops: PersistentMap<JumpLabel, Located<LoopData>> = this.loops
+        temporaries: NameMap<Temporary, TemporaryData> = this.temporaries,
+        objects: NameMap<ObjectVariable, ObjectData> = this.objects,
+        loops: NameMap<JumpLabel, LoopData> = this.loops
     ): StatementContext<TemporaryData, ObjectData, LoopData> {
         return StatementContext(temporaries, objects, loops)
     }
@@ -110,9 +115,8 @@ private constructor(
  */
 internal class ProgramContext<HostData, ProtocolData>
 private constructor(
-    // Below, [Located] tracks the source location where the [Name] was declared.
-    private val hosts: PersistentMap<Host, Located<HostData>>,
-    private val protocols: PersistentMap<Protocol, Located<ProtocolData>>
+    private val hosts: NameMap<Host, HostData>,
+    private val protocols: NameMap<Protocol, ProtocolData>
 ) {
     /** Constructs the empty context. */
     constructor() : this(persistentMapOf(), persistentMapOf())
@@ -124,7 +128,7 @@ private constructor(
      */
     @JvmName("getHostData")
     fun get(name: HostNode): HostData {
-        return hosts[name.value]?.value ?: throw UndefinedNameError(name)
+        return hosts[name.value]?.first ?: throw UndefinedNameError(name)
     }
 
     /**
@@ -134,7 +138,7 @@ private constructor(
      */
     @JvmName("getProtocolData")
     fun get(name: ProtocolNode): ProtocolData {
-        return protocols[name.value]?.value ?: throw UndefinedNameError(name)
+        return protocols[name.value]?.first ?: throw UndefinedNameError(name)
     }
 
     /**
@@ -145,7 +149,7 @@ private constructor(
     @JvmName("putHostData")
     fun put(name: HostNode, data: HostData): ProgramContext<HostData, ProtocolData> {
         assertNotDeclared(name, hosts)
-        return copy(hosts = hosts.put(name.value, Located(data, name.sourceLocation)))
+        return copy(hosts = hosts.put(name.value, Pair(data, name.sourceLocation)))
     }
 
     /**
@@ -156,13 +160,13 @@ private constructor(
     @JvmName("putProtocolData")
     fun put(name: ProtocolNode, data: ProtocolData): ProgramContext<HostData, ProtocolData> {
         assertNotDeclared(name, protocols)
-        return copy(protocols = protocols.put(name.value, Located(data, name.sourceLocation)))
+        return copy(protocols = protocols.put(name.value, Pair(data, name.sourceLocation)))
     }
 
     /** Creates a copy of this object where some fields are modified. */
     private fun copy(
-        hosts: PersistentMap<Host, Located<HostData>> = this.hosts,
-        protocols: PersistentMap<Protocol, Located<ProtocolData>> = this.protocols
+        hosts: NameMap<Host, HostData> = this.hosts,
+        protocols: NameMap<Protocol, ProtocolData> = this.protocols
     ): ProgramContext<HostData, ProtocolData> {
         return ProgramContext(hosts, protocols)
     }
@@ -173,8 +177,8 @@ private constructor(
  *
  * @throws NameClashError
  */
-private fun <N : Name> assertNotDeclared(name: Located<N>, declarations: Map<N, Located<*>>) {
-    val previousDeclaration = declarations[name.value]?.sourceLocation
+private fun <N : Name> assertNotDeclared(name: Located<N>, declarations: NameMap<N, *>) {
+    val previousDeclaration = declarations[name.value]?.second
     if (previousDeclaration != null) {
         throw NameClashError(name.value, previousDeclaration, name.sourceLocation)
     }

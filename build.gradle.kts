@@ -1,3 +1,9 @@
+buildscript {
+    dependencies {
+        classpath("com.github.vbmacher:java-cup:11b-20160615")
+    }
+}
+
 plugins {
     application
     kotlin("jvm") version "1.3.61"
@@ -14,7 +20,6 @@ plugins {
 
     // Lexing & Parsing
     id("org.xbib.gradle.plugin.jflex") version "1.2.0"
-    id("cup.gradle.cup-gradle-plugin") version "1.2"
 }
 
 allprojects {
@@ -108,6 +113,9 @@ dependencies {
     // TODO: remove from here if you can or move to general
     implementation("org.fusesource.jansi:jansi:1.18")
 
+    // Parsing
+    implementation("com.github.vbmacher:java-cup-runtime:11b-20160615")
+
     // DOT graph output
     implementation("guru.nidi:graphviz-java:0.11.0")
 
@@ -118,19 +126,60 @@ dependencies {
 
 /** Compilation */
 
+val compileCup by tasks.registering(CupCompileTask::class) {
+    sourceSets.main { java.srcDir(generateDir) }
+}
+
+tasks.compileJava {
+    dependsOn(compileCup)
+}
+
 tasks.compileKotlin {
-    dependsOn(tasks.cupCompile)
+    dependsOn(compileCup)
     dependsOn(tasks.jflex)
 }
 
-cup {
-    setArgs("-parser", "ImpParser", "-interface")
-}
+open class CupCompileTask : DefaultTask() {
+    @InputDirectory
+    val sourceDir: File = project.file("src/main/cup")
 
-tasks.cupCompile {
-    loadConfig()
-    sourceSets.main {
-        java.srcDir(generateDir)
+    @OutputDirectory
+    val generateDir: File = project.file("${project.buildDir}/generated-src/cup")
+
+    @Input
+    val cupArguments: List<String> = listOf("-interface")
+
+    override fun getDescription(): String {
+        return "Generates Java sources from CUP grammar files."
+    }
+
+    @TaskAction
+    fun compileAll() {
+        val cupFiles = project.fileTree(sourceDir) { include("**/*.cup") }
+        if (cupFiles.filter { !it.isDirectory }.isEmpty) {
+            logger.warn("no cup files found")
+        }
+        cupFiles.visit {
+            if (!this.isDirectory) {
+                compileFile(this.file)
+            }
+        }
+    }
+
+    private fun compileFile(cupFile: File) {
+        val packagePath = cupFile.parentFile.relativeTo(sourceDir).toPath()
+        val outputDirectory = generateDir.toPath().resolve(packagePath).toAbsolutePath()
+        val packageName: String = packagePath.toString().replace(File.separator, ".")
+        val className: String = cupFile.nameWithoutExtension
+
+        project.mkdir(outputDirectory)
+        val args: List<String> = cupArguments +
+            listOf(
+                "-destdir", outputDirectory.toString(),
+                "-package", packageName,
+                "-parser", className,
+                cupFile.absolutePath)
+        java_cup.Main.main(args.toTypedArray())
     }
 }
 

@@ -1,4 +1,4 @@
 dependencies {
-    compile(kotlin("stdlib"))
-    compile("org.fusesource.jansi:jansi:1.18")
+    implementation(kotlin("stdlib"))
+    implementation("org.fusesource.jansi:jansi:1.18")
 }

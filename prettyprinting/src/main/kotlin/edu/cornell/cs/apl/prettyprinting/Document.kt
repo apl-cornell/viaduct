@@ -59,6 +59,10 @@ sealed class Document : PrettyPrintable {
                 is Nested -> {
                     this.document.traverse(indentation + this.indentationChange, style)
                 }
+
+                is Styled -> {
+                    this.document.traverse(indentation, this.style)
+                }
             }
         }
 

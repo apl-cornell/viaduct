@@ -136,6 +136,7 @@ sealed class Document : PrettyPrintable {
          * hello world
          * ```
          */
+        @JvmStatic
         operator fun invoke(text: String): Document {
             val lines = text.split(unicodeLineBreak)
             val documents = lines.map { if (it.isEmpty()) Empty else Text(it) }

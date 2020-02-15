@@ -98,8 +98,63 @@ internal class DocumentTest {
         }
     }
 
-    /** Assert that the document is printed as [expected]. */
-    fun Document.shouldPrintTo(expected: String) {
-        assertEquals(expected, this.print())
+    @Nested
+    inner class Helpers {
+        val empty: List<Document> = listOf()
+        val single: List<Document> = listOf(Document("single"))
+        val many: List<Document> = listOf(Document("1"), Document("2"), Document("3"))
+
+        @Test
+        fun `concatenated empty`() {
+            empty.concatenated().shouldPrintTo("")
+        }
+
+        @Test
+        fun `concatenated single`() {
+            single.concatenated().shouldPrintTo("single")
+        }
+
+        @Test
+        fun `concatenated many`() {
+            many.concatenated().shouldPrintTo("123")
+        }
+
+        @Test
+        fun `joined empty`() {
+            empty.joined(prefix = Document("("), postfix = Document(")"))
+                .shouldPrintTo("()")
+        }
+
+        @Test
+        fun `joined single`() {
+            single.joined(prefix = Document("("), postfix = Document(")"))
+                .shouldPrintTo("(single)")
+        }
+
+        @Test
+        fun `joined many`() {
+            many.joined(prefix = Document("("), postfix = Document(")"))
+                .shouldPrintTo("(1, 2, 3)")
+        }
+
+        @Test
+        fun `tupled many`() {
+            many.tupled().shouldPrintTo("(1, 2, 3)")
+        }
+
+        @Test
+        fun `bracketed many`() {
+            many.bracketed().shouldPrintTo("[1, 2, 3]")
+        }
+
+        @Test
+        fun `braced many`() {
+            many.braced().shouldPrintTo("{1, 2, 3}")
+        }
     }
+}
+
+/** Asserts that this document is printed as [expected]. */
+private fun Document.shouldPrintTo(expected: String) {
+    assertEquals(expected, this.print())
 }

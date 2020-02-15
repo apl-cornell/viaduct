@@ -132,12 +132,19 @@ fun List<PrettyPrintable>.joined(
     postfix: PrettyPrintable = Document()
 ): Document {
     return prefix
-        .plus(Document.lineBreak)
         .plus(this.concatenated(separator + Document.lineBreak))
         .plus(postfix)
         .grouped()
 }
 
-/** Liked [joined] but using commas as separators and enclosed in parentheses. */
+/** Like [joined] but using commas as separators and enclosed in parentheses. */
 fun List<PrettyPrintable>.tupled(): Document =
     this.joined(prefix = Document("("), postfix = Document(")"))
+
+/** Like [joined] but using commas as separators and enclosed in square brackets. */
+fun List<PrettyPrintable>.bracketed(): Document =
+    this.joined(prefix = Document("["), postfix = Document("]"))
+
+/** Like [joined] but using commas as separators and enclosed in curly braces. */
+fun List<PrettyPrintable>.braced(): Document =
+    this.joined(prefix = Document("{"), postfix = Document("}"))

@@ -34,4 +34,16 @@ final class InputFileModule {
       return SourceFile.from(new File(input));
     }
   }
+
+  /** Creates a new source file from the specified input file. */
+  // TODO: merge once Java is gone
+  edu.cornell.cs.apl.viaduct.parsing.SourceFile newSourceFileKotlin() throws IOException {
+    if (input == null) {
+      try (Reader reader = new InputStreamReader(System.in, StandardCharsets.UTF_8)) {
+        return edu.cornell.cs.apl.viaduct.parsing.SourceFile.from("<stdin>", reader);
+      }
+    } else {
+      return edu.cornell.cs.apl.viaduct.parsing.SourceFile.from(new File(input));
+    }
+  }
 }

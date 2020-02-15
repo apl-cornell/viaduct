@@ -2,10 +2,8 @@ package edu.cornell.cs.apl.viaduct.cli;
 
 import com.github.rvesse.airline.annotations.Command;
 import com.github.rvesse.airline.annotations.Option;
-import edu.cornell.cs.apl.viaduct.imp.ast.ProgramNode;
-import edu.cornell.cs.apl.viaduct.imp.parsing.Printer;
-import edu.cornell.cs.apl.viaduct.imp.transformers.AnfConverter;
-import edu.cornell.cs.apl.viaduct.imp.transformers.Elaborator;
+import edu.cornell.cs.apl.viaduct.parsing.ParserKt;
+import edu.cornell.cs.apl.viaduct.syntax.surface.ProgramNode;
 import java.io.IOException;
 import java.io.PrintStream;
 
@@ -24,19 +22,19 @@ public class FormatCommand extends BaseCommand {
   @Override
   public void run() throws IOException {
     // parse
-    ProgramNode program = this.input.parse();
+    ProgramNode program = ParserKt.parse(this.input.newSourceFileKotlin());
 
     // print
     try (PrintStream writer = this.output.newOutputStream("")) {
-      if (this.enableElaboration || this.enableAnf) {
-        program = Elaborator.run(program);
-      }
+      //      if (this.enableElaboration || this.enableAnf) {
+      //        program = Elaborator.run(program);
+      //      }
+      //
+      //      if (this.enableAnf) {
+      //        program = AnfConverter.run(program);
+      //      }
 
-      if (this.enableAnf) {
-        program = AnfConverter.run(program);
-      }
-
-      Printer.run(program, writer);
+      program.getAsDocument().print(writer, 80, true);
     }
   }
 }

@@ -134,11 +134,6 @@ tasks.compileJava {
     dependsOn(compileCup)
 }
 
-tasks.compileKotlin {
-    dependsOn(compileCup)
-    dependsOn(tasks.jflex)
-}
-
 open class CupCompileTask : DefaultTask() {
     @InputDirectory
     val sourceDir: File = project.file("src/main/cup")

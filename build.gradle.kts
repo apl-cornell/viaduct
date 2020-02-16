@@ -173,7 +173,8 @@ open class CupCompileTask : DefaultTask() {
                 "-destdir", outputDirectory.toString(),
                 "-package", packageName,
                 "-parser", className,
-                cupFile.absolutePath)
+                cupFile.absolutePath
+            )
         java_cup.Main.main(args.toTypedArray())
     }
 }

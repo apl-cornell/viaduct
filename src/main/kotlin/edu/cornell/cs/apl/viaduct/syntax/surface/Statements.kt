@@ -115,6 +115,35 @@ class SkipNode(override val sourceLocation: SourceLocation) : SimpleStatementNod
         get() = keyword("skip")
 }
 
+/** Asserting that a condition is true, and failing otherwise. */
+class AssertionNode(val condition: ExpressionNode, override val sourceLocation: SourceLocation) :
+    SimpleStatementNode() {
+    override val asDocument: Document
+        get() = keyword("assert") * condition
+}
+
+// Communication Statements
+
+/** An external output. */
+class OutputNode(
+    val message: ExpressionNode,
+    val host: HostNode,
+    override val sourceLocation: SourceLocation
+) : SimpleStatementNode() {
+    override val asDocument: Document
+        get() = keyword("output") * message * keyword("to") * host
+}
+
+/** Sending a value to another protocol. */
+class SendNode(
+    val message: ExpressionNode,
+    val protocol: ProtocolNode,
+    override val sourceLocation: SourceLocation
+) : SimpleStatementNode() {
+    override val asDocument: Document
+        get() = keyword("send") * message * keyword("to") * protocol
+}
+
 // Compound Statements
 
 /**
@@ -223,26 +252,4 @@ class BlockNode(
             return Document("{") +
                 (Document.forcedLineBreak + body).nested() + Document.forcedLineBreak + "}"
         }
-}
-
-// Communication Statements
-
-/** An external output. */
-class OutputNode(
-    val message: ExpressionNode,
-    val host: HostNode,
-    override val sourceLocation: SourceLocation
-) : SimpleStatementNode() {
-    override val asDocument: Document
-        get() = keyword("output") * message * keyword("to") * host
-}
-
-/** Sending a value to another protocol. */
-class SendNode(
-    val message: ExpressionNode,
-    val protocol: ProtocolNode,
-    override val sourceLocation: SourceLocation
-) : SimpleStatementNode() {
-    override val asDocument: Document
-        get() = keyword("send") * message * keyword("to") * protocol
 }

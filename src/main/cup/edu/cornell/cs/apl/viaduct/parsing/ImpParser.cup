@@ -208,7 +208,7 @@ simple_stmt ::=
 
   | ASSERT:begin expr:e {:
       // TODO: parse this
-      RESULT = new SkipNode(location(beginleft, eright));
+      RESULT = new AssertionNode(e, location(beginleft, eright));
     :}
   ;
 

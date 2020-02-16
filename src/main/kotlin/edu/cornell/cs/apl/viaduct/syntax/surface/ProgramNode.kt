@@ -18,4 +18,7 @@ class ProgramNode(
         get() =
             declarations.concatenated(Document.forcedLineBreak + Document.forcedLineBreak)
                 .plus(Document.forcedLineBreak)
+
+    override fun toString(): String =
+        "Program (" + sourceLocation.sourcePath + ")"
 }

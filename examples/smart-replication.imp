@@ -20,6 +20,6 @@ process Host(chuck) {
   assert result == 42;
 }
 
-host alice : {A};
-host bob   : {B};
-host chuck : {C};
+host alice : {A}
+host bob   : {B}
+host chuck : {C}

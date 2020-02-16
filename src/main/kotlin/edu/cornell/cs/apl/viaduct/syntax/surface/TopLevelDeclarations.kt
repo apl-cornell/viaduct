@@ -1,7 +1,6 @@
 package edu.cornell.cs.apl.viaduct.syntax.surface
 
 import edu.cornell.cs.apl.prettyprinting.Document
-import edu.cornell.cs.apl.prettyprinting.plus
 import edu.cornell.cs.apl.prettyprinting.times
 import edu.cornell.cs.apl.viaduct.syntax.HostNode
 import edu.cornell.cs.apl.viaduct.syntax.LabelNode
@@ -22,9 +21,8 @@ class HostDeclarationNode(
     val authority: LabelNode,
     override val sourceLocation: SourceLocation
 ) : TopLevelDeclarationNode() {
-    // TODO: remove semicolon at the end
     override val asDocument: Document
-        get() = keyword("host") * name * ":" * authority + ";"
+        get() = keyword("host") * name * ":" * authority
 }
 
 /**

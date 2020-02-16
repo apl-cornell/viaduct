@@ -11,5 +11,5 @@ process main {
     }
 }
 
-host alice : {A};
-host bob   : {B};
+host alice : {A}
+host bob   : {B}

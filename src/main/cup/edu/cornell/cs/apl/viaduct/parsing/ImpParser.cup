@@ -143,8 +143,8 @@ declaration_list ::=
   ;
 
 declaration ::=
-    HOST:begin host:host COLON label:authority SEMICOLON:end {:
-      RESULT = new HostDeclarationNode(host, authority, location(beginleft, endright));
+    HOST:begin host:host COLON label:authority {:
+      RESULT = new HostDeclarationNode(host, authority, location(beginleft, authorityright));
     :}
 
   | PROCESS:begin protocol:protocol block:body {:

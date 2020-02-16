@@ -29,5 +29,5 @@ process Host(chuck) {
 }
 
 /* Declare the actual machines (i.e. hosts) we have. */
-host alice : {A};
-host chuck : {C};
+host alice : {A}
+host chuck : {C}

@@ -32,7 +32,7 @@ process main {
   send 42 to alice;
 }
 
-host alice : {A};
+host alice : {A}
 
 process Host(alice) {
   send 5 to main;
@@ -41,4 +41,4 @@ process Host(alice) {
   assert result == 42;
 }
 
-host trusted : {A & B & C};
+host trusted : {A & B & C}

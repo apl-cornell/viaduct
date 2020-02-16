@@ -20,5 +20,5 @@ process Host(bob) {
   assert bob_richer;
 }
 
-host alice : {A};
-host bob   : {B};
+host alice : {A}
+host bob   : {B}

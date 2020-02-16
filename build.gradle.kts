@@ -121,6 +121,9 @@ dependencies {
 
     // Logging (disabled for now using the NOP engine)
     implementation("org.slf4j:slf4j-nop:1.8.0-beta4")
+
+    // Testing
+    testImplementation(kotlin("reflect"))
 }
 
 

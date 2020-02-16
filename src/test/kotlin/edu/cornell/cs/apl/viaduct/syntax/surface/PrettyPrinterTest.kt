@@ -12,7 +12,4 @@ internal class PrettyPrinterTest {
         val printedAst = program.asDocument.print()
         assertStructurallyEquals(program, printedAst.parse())
     }
-
-    // TODO: implement
-    private fun assertStructurallyEquals(expected: ProgramNode, actual: ProgramNode) {}
 }

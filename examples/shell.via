@@ -1,9 +1,9 @@
 process main {
   /* Chuck hides the ball under a shell; Alice guesses the shell. */
-  int shell = endorse (input int from chuck) to {C & A<-};
-  int guess = endorse (input int from alice) to {A & C<-};
+  let mut shell: int = endorse (input int from chuck) to {C & A<-};
+  let mut guess: int = endorse (input int from alice) to {A & C<-};
 
-  bool{A & C} win_secret;
+  let mut win_secret: bool{A & C};
 
   /* Chuck must prove that `shell` is valid without revealing its value. */
   if (declassify (1 <= shell && shell <= 3) to {A ⊓ C}) {
@@ -12,19 +12,19 @@ process main {
     win_secret = true;
   }
 
-  bool{A ⊓ C} win = declassify win_secret to {A ⊓ C};
+  let mut win: bool{A ⊓ C} = declassify win_secret to {A ⊓ C};
   output win to alice;
   output win to chuck;
 }
 
 process Host(alice) {
   send 2 to main;
-  bool alice_wins = recv bool from main;
+  let mut alice_wins: bool = receive bool from main;
 }
 
 process Host(chuck) {
   send 1 to main;
-  bool alice_wins = recv bool from main;
+  let mut alice_wins: bool = receive bool from main;
   assert !alice_wins;
 }
 

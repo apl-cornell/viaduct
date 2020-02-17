@@ -67,6 +67,7 @@ nonterminal List<TopLevelDeclarationNode> declaration_list;
 nonterminal TopLevelDeclarationNode declaration;
 
 nonterminal SimpleStatementNode simple_stmt;
+nonterminal ExpressionNode optional_initial_value;
 nonterminal BinaryOperator compound_assignment;
 nonterminal StatementNode stmt;
 nonterminal BlockNode block;
@@ -76,7 +77,7 @@ nonterminal ExpressionNode expr;
 nonterminal Reference reference;
 
 nonterminal Value value;
-nonterminal Located<ValueType> value_type, optional_value_type;
+nonterminal Located<ValueType> value_type;
 nonterminal Located<Label> label, optional_label, optional_from_label;
 nonterminal Label label_expr;
 
@@ -89,12 +90,11 @@ terminal int INT_LIT;
 terminal TRUE, FALSE;
 
 terminal HOST, PROCESS, PROTOCOL;
-terminal AT, COLON;
+terminal COLON;
 
 terminal EQ;
 terminal PLUSEQ, MINUSEQ, TIMESEQ, DIVIDEEQ;
-terminal PLUSPLUS, MINUSMINUS;
-terminal LET, VAR, VAL;
+terminal LET, MUT;
 terminal IF, ELSE, WHILE, FOR, BREAK;
 terminal INPUT, RECEIVE, FROM, OUTPUT, SEND, TO;
 terminal ASSERT;
@@ -106,7 +106,7 @@ terminal MIN;
 
 terminal DECLASSIFY, ENDORSE, DOWNGRADE;
 
-terminal INT, BOOL;
+terminal INT, BOOL, ARRAY;
 terminal TOP, BOTTOM, OR, AND, JOIN, MEET, RARROW, LARROW;
 
 terminal OPEN_BRACE, CLOSE_BRACE, SEMICOLON;
@@ -117,8 +117,7 @@ precedence left ANDAND, OROR, AND, OR, JOIN, MEET;
 precedence nonassoc EQEQ, NEQ, LT, LEQ, GT, GEQ;
 precedence left PLUS, MINUS;
 precedence left TIMES, DIVIDE;
-precedence right NOT;
-precedence left MIN;
+precedence right NOT, MIN;
 precedence left LARROW, RARROW;
 precedence nonassoc OPEN_PAREN, CLOSE_PAREN;
 
@@ -155,39 +154,31 @@ declaration ::=
 
 simple_stmt ::=
     /* Variable declaration. */
-    value_type:type optional_label:label variable:var {:
-      final LiteralNode initial = new LiteralNode(
+    LET:begin MUT variable:var COLON value_type:type optional_label:label optional_initial_value:initial {:
+      final LiteralNode defaultValue = new LiteralNode(
         type.getValue().getDefaultValue(),
         type.getSourceLocation());
+      final ExpressionNode initialValue = (initial == null) ? defaultValue : initial;
       RESULT = new DeclarationNode(
         var,
         new Located(PrimitivesKt.getMutableCell(), var.getSourceLocation()),
         Arguments.from(type),
         optionalLabelArgument(label),
-        Arguments.from(initial),
-        location(typeleft, varright));
-    :}
-
-    /* Variable declaration with initial value. */
-  | value_type:type optional_label:label variable:var EQ expr:initial {:
-      RESULT = new DeclarationNode(
-        var,
-        new Located(PrimitivesKt.getMutableCell(), var.getSourceLocation()),
-        Arguments.from(type),
-        optionalLabelArgument(label),
-        Arguments.from(initial),
-        location(typeleft, varright));
+        Arguments.from(initialValue),
+        location(beginleft, initialright));
     :}
 
     /* Array declaration. */
-  | value_type:type optional_label:label variable:var OPEN_SQBRACE expr:size CLOSE_SQBRACE:end {:
+  | LET:begin variable:var EQ ARRAY OPEN_SQBRACE value_type:elementType CLOSE_SQBRACE
+    optional_label:label OPEN_PAREN expr:size CLOSE_PAREN:end {:
       RESULT = new DeclarationNode(
         var,
         new Located(PrimitivesKt.getVector(), var.getSourceLocation()),
-        Arguments.from(type),
+        // TODO: Argument source locations below should include the braces
+        Arguments.from(elementType),
         optionalLabelArgument(label),  // TODO: add label on size
         Arguments.from(size),
-        location(typeleft, endright));
+        location(beginleft, endright));
     :}
 
   | reference:ref EQ expr:e {:
@@ -207,9 +198,13 @@ simple_stmt ::=
     :}
 
   | ASSERT:begin expr:e {:
-      // TODO: parse this
       RESULT = new AssertionNode(e, location(beginleft, eright));
     :}
+  ;
+
+optional_initial_value ::=
+    EQ expr:e    {: RESULT = e; :}
+  | /* empty */  {: RESULT = null; :}
   ;
 
 compound_assignment ::=
@@ -448,11 +443,6 @@ label_expr ::=
     :}
   ;
 
-
-optional_value_type ::=
-    value_type:ty {: RESULT = ty; :}
-  | /* empty */   {: RESULT = null; :}
-  ;
 
 optional_label ::=
     label:l     {: RESULT = l; :}

@@ -137,5 +137,5 @@ class ReceiveNode(
     override val sourceLocation: SourceLocation
 ) : ExpressionNode() {
     override val asDocument: Document
-        get() = keyword("recv") * type * keyword("from") * protocol
+        get() = keyword("receive") * type * keyword("from") * protocol
 }

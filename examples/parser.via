@@ -1,10 +1,10 @@
 /* Parser test. Try to hit all syntactic forms. */
 process main {
-  int a;
-  bool{B} b;
+  let mut a: int;
+  let mut b: bool{B};
 
-  int{A} a2 = (22 - 1) * 2;
-  bool b2 = true || false;
+  let mut a2: int{A} = (22 - 1) * 2;
+  let mut b2: bool = true || false;
 
   assert a2 == 42;
   assert b2;
@@ -17,15 +17,15 @@ process main {
 
   /* Check that variables in blocks go out of scope */
   {
-    int{C} tmp = 5;
+    let mut tmp: int{C} = 5;
   }
-  bool{A & B->} tmp = a2 > a;
+  let mut tmp: bool{A & B->} = a2 > a;
   assert tmp;
 
   /* Communication */
-  int tmp1;
+  let mut tmp1: int;
   tmp1 = input int from alice;
-  bool tmp2 = input bool from alice;
+  let mut tmp2: bool = input bool from alice;
   assert tmp1 == 5;
   assert !tmp2;
 
@@ -37,7 +37,7 @@ host alice : {A}
 process Host(alice) {
   send 5 to main;
   send false to main;
-  int result = recv int from main;
+  let mut result: int = receive int from main;
   assert result == 42;
 }
 

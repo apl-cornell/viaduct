@@ -5,20 +5,20 @@
  */
 process main {
   /* Round 1 */
-  int a1 = endorse (input int from alice) to {A & B<-};
-  int b1 = endorse (input int from bob) to {B & A<-};
+  let mut a1: int = endorse (input int from alice) to {A & B<-};
+  let mut b1: int = endorse (input int from bob) to {B & A<-};
 
   /* Reveal who had the higher bid. */
-  bool a1_higher = declassify (a1 > b1) to {A ⊓ B};
+  let mut a1_higher: bool = declassify (a1 > b1) to {A ⊓ B};
   output a1_higher to alice;
   output a1_higher to bob;
 
   /* Round 2 */
-  int a2 = endorse (input int from alice) to {A & B<-};
-  int b2 = endorse (input int from bob) to {B & A<-};
+  let mut a2: int = endorse (input int from alice) to {A & B<-};
+  let mut b2: int = endorse (input int from bob) to {B & A<-};
 
   /* Reveal the overall winner. */
-  bool a_higher = declassify (a1 + a2 > b1 + b2) to {A ⊓ B};
+  let mut a_higher: bool = declassify (a1 + a2 > b1 + b2) to {A ⊓ B};
   output a_higher to alice;
   output a_higher to bob;
 }
@@ -28,7 +28,7 @@ process Host(alice) {
   send 10 to main;
 
   /* Adjust bid based on result of Round 1. */
-  bool a1_higher = recv bool from main;
+  let mut a1_higher: bool = receive bool from main;
   if (a1_higher) {
     send 5 to main;
   } else {
@@ -36,7 +36,7 @@ process Host(alice) {
   }
 
   /* See who won. */
-  bool a_higher = recv bool from main;
+  let mut a_higher: bool = receive bool from main;
   assert a_higher;
 }
 
@@ -45,7 +45,7 @@ process Host(bob) {
   send 20 to main;
 
   /* Adjust bid based on result of Round 1. */
-  bool a1_higher = recv bool from main;
+  let mut a1_higher: bool = receive bool from main;
   if (a1_higher) {
     send 80 to main;
   } else {
@@ -53,7 +53,7 @@ process Host(bob) {
   }
 
   /* See who won. */
-  bool a_higher = recv bool from main;
+  let mut a_higher: bool = receive bool from main;
   assert a_higher;
 }
 

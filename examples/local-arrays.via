@@ -1,12 +1,12 @@
 process main {
-    int{A} a[10];
-    int{B} b[10];
+    let a = Array[int]{A}(10);
+    let b = Array[int]{B}(10);
 
-    for (int i = 0; i < 10; i += 1) {
+    for (let mut i: int = 0; i < 10; i += 1) {
         a[i] = i * 50;
     }
 
-    for (int j = 0; j < 10; j += 1) {
+    for (let mut j: int = 0; j < 10; j += 1) {
         b[j] = j * 100;
     }
 }

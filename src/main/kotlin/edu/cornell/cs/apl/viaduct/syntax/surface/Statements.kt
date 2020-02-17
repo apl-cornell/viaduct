@@ -1,7 +1,6 @@
 package edu.cornell.cs.apl.viaduct.syntax.surface
 
 import edu.cornell.cs.apl.prettyprinting.Document
-import edu.cornell.cs.apl.prettyprinting.braced
 import edu.cornell.cs.apl.prettyprinting.bracketed
 import edu.cornell.cs.apl.prettyprinting.concatenated
 import edu.cornell.cs.apl.prettyprinting.joined
@@ -25,7 +24,6 @@ import edu.cornell.cs.apl.viaduct.syntax.datatypes.Modify
 import edu.cornell.cs.apl.viaduct.syntax.datatypes.MutableCell
 import edu.cornell.cs.apl.viaduct.syntax.datatypes.Set
 import edu.cornell.cs.apl.viaduct.syntax.datatypes.UpdateName
-import edu.cornell.cs.apl.viaduct.syntax.datatypes.Vector
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toPersistentList
 
@@ -66,19 +64,16 @@ class DeclarationNode(
             when (className.value) {
                 MutableCell -> {
                     val label = labelArguments?.get(0) ?: Document()
-                    typeArguments[0] + label * variable * "=" * arguments[0]
+                    keyword("let") * keyword("mut") * (variable + ":") * typeArguments[0] + label *
+                        "=" * arguments[0]
                 }
 
-                Vector -> {
-                    // TODO: change array syntax to be the same as other objects
-                    val label = labelArguments?.get(0) ?: Document()
-                    typeArguments[0] + label * variable + "[" + arguments[0] + "]"
-                }
                 else -> {
                     val types = typeArguments.bracketed().nested()
-                    val labels = labelArguments?.braced()?.nested() ?: Document()
+                    // TODO: labels should have braces
+                    //   val labels = labelArguments?.braced()?.nested() ?: Document()
+                    val labels = labelArguments?.joined() ?: Document()
                     val arguments = arguments.tupled().nested()
-                    // TODO: This may not work due to restrictions in parsers
                     keyword("let") * variable * "=" * className + types + labels + arguments
                 }
             }

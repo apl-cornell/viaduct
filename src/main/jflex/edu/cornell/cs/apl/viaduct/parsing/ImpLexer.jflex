@@ -95,11 +95,11 @@ NUM         = ((-)?[1-9][0-9]*) | 0
   /* Types */
   "int"           { return symbol(sym.INT); }
   "bool"          { return symbol(sym.BOOL); }
+  "Array"         { return symbol(sym.ARRAY); }
 
   /* Statements */
   "let"           { return symbol(sym.LET); }
-  "var"           { return symbol(sym.VAR); }
-  "val"           { return symbol(sym.VAL); }
+  "mut"           { return symbol(sym.MUT); }
   ":"             { return symbol(sym.COLON); }
 
   "if"            { return symbol(sym.IF); }
@@ -109,7 +109,7 @@ NUM         = ((-)?[1-9][0-9]*) | 0
   "break"         { return symbol(sym.BREAK); }
 
   "input"         { return symbol(sym.INPUT); }
-  "recv"          { return symbol(sym.RECEIVE); }
+  "receive"       { return symbol(sym.RECEIVE); }
   "from"          { return symbol(sym.FROM); }
   "output"        { return symbol(sym.OUTPUT); }
   "send"          { return symbol(sym.SEND); }
@@ -127,8 +127,6 @@ NUM         = ((-)?[1-9][0-9]*) | 0
   "&&"            { return symbol(sym.ANDAND); }
   "||"            { return symbol(sym.OROR); }
 
-  "++"            { return symbol(sym.PLUSPLUS); }
-  "--"            { return symbol(sym.MINUSMINUS); }
   "="             { return symbol(sym.EQ); }
   "+="            { return symbol(sym.PLUSEQ); }
   "-="            { return symbol(sym.MINUSEQ); }
@@ -155,16 +153,12 @@ NUM         = ((-)?[1-9][0-9]*) | 0
   /* Labels */
   "⊤"             { return symbol(sym.TOP); }
   "⊥"             { return symbol(sym.BOTTOM); }
-  "|"             { return symbol(sym.OR); }
-  "&"             { return symbol(sym.AND); }
-  "∨"             { return symbol(sym.OR); }
-  "∧"             { return symbol(sym.AND); }
+  "|" | "∨"       { return symbol(sym.OR); }
+  "&" | "∧"       { return symbol(sym.AND); }
   "⊔"             { return symbol(sym.JOIN); }
   "⊓"             { return symbol(sym.MEET); }
-  "<-"            { return symbol(sym.LARROW); }
-  "←"             { return symbol(sym.LARROW); }
-  "->"            { return symbol(sym.RARROW); }
-  "→"             { return symbol(sym.RARROW); }
+  "<-" | "←"      { return symbol(sym.LARROW); }
+  "->" | "→"      { return symbol(sym.RARROW); }
 
 /* Grouping */
   "{"             { return symbol(sym.OPEN_BRACE); }
@@ -179,7 +173,6 @@ NUM         = ((-)?[1-9][0-9]*) | 0
   /* Identifiers */
   {CAPALPHANUM}   { return symbol(sym.CAP_IDENT, yytext()); }
   {ALPHANUM}      { return symbol(sym.IDENT, yytext()); }
-  "@"             { return symbol(sym.AT); }
 
   /* Comments and Whitespace */
   "/*"            { commentLevel++; yybegin(COMMENT); }

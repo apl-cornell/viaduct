@@ -4,6 +4,7 @@ import edu.cornell.cs.apl.viaduct.errorskotlin.TypeMismatchError
 import edu.cornell.cs.apl.viaduct.security.Label
 import edu.cornell.cs.apl.viaduct.syntax.Arguments
 import edu.cornell.cs.apl.viaduct.syntax.HasSourceLocation
+import edu.cornell.cs.apl.viaduct.syntax.Protocol
 import edu.cornell.cs.apl.viaduct.syntax.Temporary
 import edu.cornell.cs.apl.viaduct.syntax.datatypes.MutableCell
 import edu.cornell.cs.apl.viaduct.syntax.datatypes.Vector
@@ -38,16 +39,38 @@ import edu.cornell.cs.apl.viaduct.syntax.types.ObjectType
 import edu.cornell.cs.apl.viaduct.syntax.types.UnitType
 import edu.cornell.cs.apl.viaduct.syntax.types.ValueType
 import edu.cornell.cs.apl.viaduct.syntax.types.VectorType
+import kotlinx.collections.immutable.ImmutableMap
+import kotlinx.collections.immutable.toImmutableMap
 
-fun ProgramNode.typeCheck(): Map<Temporary, ValueType> {
-    return this.traverse(TypeChecker())
+typealias TypeAssignment = ImmutableMap<Temporary, ValueType>
+
+fun ProgramNode.typeCheck(): Map<Protocol, TypeAssignment> {
+    return this.traverse(ProgramTypeChecker())
 }
 
-private class TypeChecker :
-    ProgramVisitor<Unit, Unit, Map<Temporary, ValueType>>,
+private class ProgramTypeChecker : ProgramVisitor<Unit, Unit, Map<Protocol, TypeAssignment>> {
+    private val processTypeAssignment: MutableMap<Protocol, TypeAssignment> = mutableMapOf()
+
+    override fun leave(node: HostDeclarationNode) {}
+
+    override fun leave(
+        node: ProcessDeclarationNode,
+        body: SuspendedTraversal<Unit, *, *, *, Unit, Unit>
+    ) {
+        val visitor = StatementTypeChecker()
+        body(visitor)
+        processTypeAssignment[node.protocol.value] = visitor.typeAssignment.toImmutableMap()
+    }
+
+    override fun leave(node: ProgramNode, declarations: List<Unit>): Map<Protocol, TypeAssignment> {
+        return processTypeAssignment.toImmutableMap()
+    }
+}
+
+private class StatementTypeChecker :
     StatementVisitorWithVariableContext<ValueType, Unit, ValueType, ObjectType> {
 
-    private val typeMap: MutableMap<Temporary, ValueType> = mutableMapOf()
+    internal val typeAssignment: MutableMap<Temporary, ValueType> = mutableMapOf()
 
     /** Infers the object type from a constructor call. */
     // TODO: move this somewhere else?
@@ -189,17 +212,4 @@ private class TypeChecker :
     override fun leave(node: ReceiveNode) {}
 
     override fun leave(node: SendNode, message: ValueType) {}
-
-    override fun leave(node: HostDeclarationNode) {}
-
-    override fun leave(
-        node: ProcessDeclarationNode,
-        body: SuspendedTraversal<Unit, *, *, *, Unit, Unit>
-    ) {
-        body(this)
-    }
-
-    override fun leave(node: ProgramNode, declarations: List<Unit>): Map<Temporary, ValueType> {
-        return typeMap
-    }
 }

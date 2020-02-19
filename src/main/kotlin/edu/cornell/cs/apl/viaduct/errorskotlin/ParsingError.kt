@@ -1,9 +1,11 @@
 package edu.cornell.cs.apl.viaduct.errorskotlin
 
+import edu.cornell.cs.apl.prettyprinting.Document
+import edu.cornell.cs.apl.prettyprinting.joined
+import edu.cornell.cs.apl.prettyprinting.plus
 import edu.cornell.cs.apl.viaduct.syntax.SourceLocation
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toPersistentList
-import java.io.PrintStream
 
 /**
  * Thrown when the parser runs into an unexpected token.
@@ -25,23 +27,12 @@ class ParsingError(
     override val source: String
         get() = location.sourcePath
 
-    override fun print(output: PrintStream) {
-        super.print(output)
-
-        output.println("I ran into an issue while parsing this file.")
-
-        output.println()
-        location.showInSource(output)
-
-        output.println("I was expecting one of these:")
-        output.println()
-        output.println(expectedTokens.joinToString(", "))
-
-        output.println()
-        output.println("Instead, I found:")
-        output.println()
-        output.println(actualToken)
-
-        output.println()
-    }
+    override val description: Document
+        get() {
+            val expected = expectedTokens.map { Document(it) }.joined()
+            return Document("I ran into an issue while parsing this file.")
+                .withSource(location) +
+                Document("I was expecting one of these:").withData(Document(actualToken)) +
+                Document("Instead, I found:").withData(expected)
+        }
 }

@@ -1,7 +1,10 @@
 package edu.cornell.cs.apl.viaduct.parsing
 
-import org.fusesource.jansi.Ansi
-import java.io.PrintStream
+import edu.cornell.cs.apl.prettyprinting.Document
+import edu.cornell.cs.apl.prettyprinting.Style
+import edu.cornell.cs.apl.prettyprinting.plus
+import edu.cornell.cs.apl.prettyprinting.styled
+import edu.cornell.cs.apl.prettyprinting.times
 
 /**
  * Denotes a nonempty set of consecutive characters in a source file. Empty ranges are not allowed,
@@ -36,64 +39,62 @@ data class SourceRange(val start: SourcePosition, val end: SourcePosition) {
     }
 
     /**
-     * Prints the relevant portions of the source file and highlights the region that corresponds to
-     * this location.
+     * Displays the portions of the source file containing this location and highlights the region
+     * corresponding to this location.
      *
-     * @param output where to print the output
-     * @param contextLines number of lines before and after the relevant region to display to give
-     *     more context to the user
+     * @param highlightStyle [Style] to use for highlighting.
+     * @param contextLines Number of lines before and after the relevant region to display to give
+     *     more context to the user.
      */
     fun showInSource(
-        output: PrintStream,
+        highlightStyle: Style,
         contextLines: Int = if (start.line == end.line) 0 else 1
-    ) {
+    ): Document {
         // Number of characters it takes to represent the largest line number.
         val lineNumberWidth = end.line.toString().length
 
         // True if we are highlighting multiple lines; false otherwise.
-        val multiLineMode = start.line != end.line
+        val multilineHighlight = start.line != end.line
 
         // Print relevant lines
         val firstLine = (start.line - contextLines).coerceAtLeast(1)
         val lastLine = (end.line + contextLines).coerceAtMost(sourceFile.numberOfLines)
+        var output: Document = Document()
         for (line in firstLine..lastLine) {
             val lineNumber = String.format("%${lineNumberWidth}d|", line)
             val highlightThisLine = line in start.line..end.line
 
             // Print line number
-            output.print(lineNumber)
+            output += lineNumber
 
             // In multiline mode, mark the entire line as relevant with an indicator
-            if (multiLineMode) {
-                if (highlightThisLine) {
-                    output.print(Ansi.ansi().fg(Ansi.Color.RED).a('>').reset())
-                } else {
-                    output.print(" ")
-                }
+            if (multilineHighlight) {
+                output +=
+                    if (highlightThisLine)
+                        Document(">").styled(highlightStyle)
+                    else Document(" ")
             }
 
-            // Print space between line numbers and line contents
-            output.print(" ")
-
-            // Print the actual line
-            output.println(sourceFile.getLine(line))
+            // Print the actual line with a space between line numbers and line contents
+            output *= sourceFile.getLine(line) + Document.forcedLineBreak
 
             // In single-line mode, underline the relevant portion
-            if (!multiLineMode && highlightThisLine) {
+            if (!multilineHighlight && highlightThisLine) {
                 val highlightStartColumn = lineNumber.length + 1 + start.column
                 val highlightLength = end.column - start.column
-                output.print(" ".repeat(highlightStartColumn - 1))
-                output.println(
-                    Ansi.ansi().fg(Ansi.Color.RED).a("^".repeat(highlightLength)).reset()
-                )
+                output += " ".repeat(highlightStartColumn - 1)
+                output += Document("^".repeat(highlightLength)).styled(highlightStyle)
+                output += Document.forcedLineBreak
             }
         }
 
         // Make sure there is uniform vertical space after the displayed source code.
-        if (multiLineMode || contextLines > 0) {
+        if (multilineHighlight || contextLines > 0) {
             // Last line did not have an underline. Add blank line instead.
-            output.println()
+            output += Document.forcedLineBreak
         }
+
+        return output
     }
 
     override fun toString(): String {

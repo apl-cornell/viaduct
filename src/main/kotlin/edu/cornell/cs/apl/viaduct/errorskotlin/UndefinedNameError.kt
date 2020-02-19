@@ -1,9 +1,11 @@
 package edu.cornell.cs.apl.viaduct.errorskotlin
 
+import edu.cornell.cs.apl.prettyprinting.Document
+import edu.cornell.cs.apl.prettyprinting.plus
+import edu.cornell.cs.apl.prettyprinting.times
 import edu.cornell.cs.apl.viaduct.syntax.Located
 import edu.cornell.cs.apl.viaduct.syntax.Name
 import edu.cornell.cs.apl.viaduct.syntax.SourceLocation
-import java.io.PrintStream
 
 /** Thrown when a [Name] is referenced before it is defined. */
 class UndefinedNameError(name: Located<Name>) : CompilationError() {
@@ -16,16 +18,9 @@ class UndefinedNameError(name: Located<Name>) : CompilationError() {
     override val source: String
         get() = location.sourcePath
 
-    override fun print(output: PrintStream) {
-        super.print(output)
-
-        output.print("I cannot find a " + name.nameCategory + " named ")
-        output.print(name.name) // TODO: Printer.run(name, output)
-        output.println(':')
-
-        output.println()
-        location.showInSource(output)
-
-        // TODO: show similar names in context
-    }
+    override val description: Document
+        get() =
+            // TODO: show similar names in context ("Did you mean: ...")
+            (Document("I cannot find a") * name.nameCategory * "named" * name + ":")
+                .withSource(location)
 }

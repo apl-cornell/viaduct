@@ -1,8 +1,9 @@
 package edu.cornell.cs.apl.viaduct.errorskotlin
 
+import edu.cornell.cs.apl.prettyprinting.Document
+import edu.cornell.cs.apl.prettyprinting.plus
 import edu.cornell.cs.apl.viaduct.syntax.HasSourceLocation
-import edu.cornell.cs.apl.viaduct.syntax.types.Type
-import java.io.PrintStream
+import edu.cornell.cs.apl.viaduct.syntax.types.ValueType
 
 /**
  * Thrown when the inferred type of an AST node does not match its expected type.
@@ -13,8 +14,8 @@ import java.io.PrintStream
  */
 class TypeMismatchError(
     private val node: HasSourceLocation,
-    private val actualType: Type,
-    private val expectedType: Type
+    private val actualType: ValueType,
+    private val expectedType: ValueType
 ) : CompilationError() {
     override val category: String
         get() = "Type Mismatch"
@@ -22,27 +23,10 @@ class TypeMismatchError(
     override val source: String
         get() = node.sourceLocation.sourcePath
 
-    override fun print(output: PrintStream) {
-        super.print(output)
-
-        output.println("This term does not have the type I expect:")
-
-        output.println()
-        node.sourceLocation.showInSource(output)
-
-        output.println("It has type:")
-        output.println()
-        addIndentation(output)
-        output.print(actualType) // TODO: Printer.run(actualType, output)
-        output.println()
-
-        output.println()
-        output.println("But it should have type:")
-        output.println()
-        addIndentation(output)
-        output.print(expectedType) // TODO: Printer.run(expectedType, output)
-        output.println()
-
-        output.println()
-    }
+    override val description: Document
+        get() =
+            Document("This term does not have the type I expect:")
+                .withSource(node.sourceLocation) +
+                Document("It has type:").withData(actualType) +
+                Document("But it should have type:").withData(expectedType)
 }

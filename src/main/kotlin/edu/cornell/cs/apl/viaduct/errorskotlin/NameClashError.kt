@@ -1,8 +1,10 @@
 package edu.cornell.cs.apl.viaduct.errorskotlin
 
+import edu.cornell.cs.apl.prettyprinting.Document
+import edu.cornell.cs.apl.prettyprinting.plus
+import edu.cornell.cs.apl.prettyprinting.times
 import edu.cornell.cs.apl.viaduct.syntax.Name
 import edu.cornell.cs.apl.viaduct.syntax.SourceLocation
-import java.io.PrintStream
 
 /** Thrown when a [Name] has multiple declarations. */
 class NameClashError(
@@ -20,20 +22,9 @@ class NameClashError(
     override val source: String
         get() = firstDeclaration.sourcePath
 
-    override fun print(output: PrintStream) {
-        super.print(output)
-
-        output.print("This file has multiple declarations of ")
-        output.print(name.name) // TODO: Printer.run(name, output)
-
-        output.println(". One here:")
-
-        output.println()
-        firstDeclaration.showInSource(output)
-
-        output.println("And another one here:")
-
-        output.println()
-        secondDeclaration.showInSource(output)
-    }
+    override val description: Document
+        get() =
+            Document("This file has multiple declarations of") * name + "." +
+                Document("One here:").withSource(firstDeclaration) +
+                Document("And another one here:").withSource(secondDeclaration)
 }

@@ -1,9 +1,17 @@
 package edu.cornell.cs.apl.viaduct.errorskotlin
 
-import edu.cornell.cs.apl.viaduct.util.PrintUtil
-import org.fusesource.jansi.Ansi
-import org.fusesource.jansi.AnsiPrintStream
-import java.io.PrintStream
+import edu.cornell.cs.apl.prettyprinting.AnsiBaseColor
+import edu.cornell.cs.apl.prettyprinting.AnsiColor
+import edu.cornell.cs.apl.prettyprinting.DEFAULT_LINE_WIDTH
+import edu.cornell.cs.apl.prettyprinting.Document
+import edu.cornell.cs.apl.prettyprinting.NormalColor
+import edu.cornell.cs.apl.prettyprinting.PrettyPrintable
+import edu.cornell.cs.apl.prettyprinting.Style
+import edu.cornell.cs.apl.prettyprinting.div
+import edu.cornell.cs.apl.prettyprinting.nested
+import edu.cornell.cs.apl.prettyprinting.plus
+import edu.cornell.cs.apl.prettyprinting.styled
+import edu.cornell.cs.apl.viaduct.syntax.SourceLocation
 
 /**
  * Superclass of all errors caused by bad user input to the compiler.
@@ -11,34 +19,47 @@ import java.io.PrintStream
  * Errors caused by bugs in the compiler do not belong here.
  * They should instead raise a (subclass of) [RuntimeException].
  */
-abstract class CompilationError : Error() {
+abstract class CompilationError : Error(), PrettyPrintable {
     /** General description (i.e. title) of the error. */
     protected abstract val category: String
 
     /** Name of the file or description of the source that caused the error. */
     protected abstract val source: String
 
+    /** Detailed description of the error. */
+    protected abstract val description: Document
+
+    private object HeaderStyle : Style {
+        override val foregroundColor: AnsiColor
+            get() = NormalColor(AnsiBaseColor.CYAN)
+    }
+
+    private object SourceHighlightingStyle : Style {
+        override val foregroundColor: AnsiColor
+            get() = NormalColor(AnsiBaseColor.RED)
+    }
+
     /**
-     * Print colored error description to the given stream.
-     *
-     * The output stream should be ready to handle ANSI color codes. If the output stream does not
-     * support color codes, they can be stripped by wrapping the output stream in [AnsiPrintStream].
+     * Displays this message followed by the portion of the source code indicated
+     * by [sourceLocation].
      */
-    open fun print(output: PrintStream) {
-        // Print title line
-        val title = "-- ${category.toUpperCase()} -"
-        val paddingLength = PrintUtil.LINE_WIDTH - source.length - title.length - 1
-        val padding = "-".repeat(paddingLength.coerceAtLeast(0))
-        output.println(Ansi.ansi().fg(Ansi.Color.CYAN).a(title).a(padding).a(' ').a(source).reset())
-        output.println()
-    }
+    protected fun Document.withSource(sourceLocation: SourceLocation): Document =
+        this / (Document.lineBreak + sourceLocation.showInSource(SourceHighlightingStyle))
 
-    /** Add the default amount of indentation to the output.  */
-    protected fun addIndentation(output: PrintStream) {
-        output.print(" ".repeat(PrintUtil.INDENTATION_LEVEL))
-    }
+    /** Displays this message followed by [body] with [body] on its own line. */
+    protected fun Document.withData(body: PrettyPrintable): Document =
+        this / (Document.lineBreak + body).nested() + Document.lineBreak + Document.lineBreak
 
-    final override fun toString(): String {
-        return PrintUtil.printToString { output: PrintStream -> this.print(output) }
-    }
+    final override val asDocument: Document
+        get() {
+            val title = "-- ${category.toUpperCase()} -"
+            val source = " " + this.source
+            val paddingLength = (DEFAULT_LINE_WIDTH - title.length - source.length).coerceAtLeast(0)
+            val padding = "-".repeat(paddingLength)
+            val header = (Document(title) + padding + source).styled(HeaderStyle)
+            return header + Document.forcedLineBreak + Document.forcedLineBreak + description
+        }
+
+    final override fun toString(): String =
+        this.asDocument.print()
 }

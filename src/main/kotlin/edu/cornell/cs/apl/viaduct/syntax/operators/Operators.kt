@@ -83,7 +83,7 @@ abstract class LogicalOperator : BinaryInfixOperator() {
     }
 
     final override val type: FunctionType
-        get() = FunctionType(BooleanType, BooleanType, result = IntegerType)
+        get() = FunctionType(BooleanType, BooleanType, result = BooleanType)
 
     final override fun apply(argument1: Value, argument2: Value): Value {
         val arg1 = argument1 as BooleanValue

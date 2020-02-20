@@ -4,8 +4,6 @@ import edu.cornell.cs.apl.viaduct.errorskotlin.TypeMismatchError
 import edu.cornell.cs.apl.viaduct.security.Label
 import edu.cornell.cs.apl.viaduct.syntax.Arguments
 import edu.cornell.cs.apl.viaduct.syntax.HasSourceLocation
-import edu.cornell.cs.apl.viaduct.syntax.Protocol
-import edu.cornell.cs.apl.viaduct.syntax.Temporary
 import edu.cornell.cs.apl.viaduct.syntax.datatypes.MutableCell
 import edu.cornell.cs.apl.viaduct.syntax.datatypes.Vector
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.BlockNode
@@ -22,8 +20,10 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.LiteralNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.OperatorApplicationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutputNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProcessDeclarationNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramAnnotationMap
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramVisitor
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramVisitorWithVariableContext
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.QueryNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ReadNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ReceiveNode
@@ -31,7 +31,7 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.SendNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.StatementVisitorWithVariableContext
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.SuspendedTraversal
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.UpdateNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.traverse
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.annotate
 import edu.cornell.cs.apl.viaduct.syntax.types.BooleanType
 import edu.cornell.cs.apl.viaduct.syntax.types.FunctionType
 import edu.cornell.cs.apl.viaduct.syntax.types.MutableCellType
@@ -39,39 +39,28 @@ import edu.cornell.cs.apl.viaduct.syntax.types.ObjectType
 import edu.cornell.cs.apl.viaduct.syntax.types.UnitType
 import edu.cornell.cs.apl.viaduct.syntax.types.ValueType
 import edu.cornell.cs.apl.viaduct.syntax.types.VectorType
-import kotlinx.collections.immutable.ImmutableMap
-import kotlinx.collections.immutable.toImmutableMap
 
-typealias TypeAssignment = ImmutableMap<Temporary, ValueType>
-
-fun ProgramNode.typeCheck(): Map<Protocol, TypeAssignment> {
-    return this.traverse(ProgramTypeChecker())
+fun ProgramNode.typeCheck(): ProgramAnnotationMap<ValueType, ObjectType> {
+    return this.annotate(ProgramTypeChecker)
 }
 
-private class ProgramTypeChecker : ProgramVisitor<Unit, Unit, Map<Protocol, TypeAssignment>> {
-    private val processTypeAssignment: MutableMap<Protocol, TypeAssignment> = mutableMapOf()
-
+private object ProgramTypeChecker :
+    ProgramVisitorWithVariableContext<Unit, Unit, Unit, ValueType, ObjectType, Unit, Unit>(),
+    ProgramVisitor<Unit, Unit, Unit> {
     override fun leave(node: HostDeclarationNode) {}
 
-    override fun leave(
+    override fun leaveProcessDeclaration(
         node: ProcessDeclarationNode,
-        body: SuspendedTraversal<Unit, *, *, *, Unit, Unit>
+        body: SuspendedTraversal<Unit, ValueType, ObjectType, *, Unit, Unit>
     ) {
-        val visitor = StatementTypeChecker()
-        body(visitor)
-        processTypeAssignment[node.protocol.value] = visitor.typeAssignment.toImmutableMap()
+        body(StatementTypeChecker)
     }
 
-    override fun leave(node: ProgramNode, declarations: List<Unit>): Map<Protocol, TypeAssignment> {
-        return processTypeAssignment.toImmutableMap()
-    }
+    override fun leave(node: ProgramNode, declarations: List<Unit>) {}
 }
 
-private class StatementTypeChecker :
+private object StatementTypeChecker :
     StatementVisitorWithVariableContext<ValueType, Unit, ValueType, ObjectType> {
-
-    internal val typeAssignment: MutableMap<Temporary, ValueType> = mutableMapOf()
-
     /** Infers the object type from a constructor call. */
     // TODO: move this somewhere else?
     private fun getObjectType(declaration: DeclarationNode): ObjectType {

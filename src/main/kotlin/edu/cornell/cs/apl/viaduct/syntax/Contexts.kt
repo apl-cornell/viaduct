@@ -173,7 +173,7 @@ private constructor(
 }
 
 /**
- * Assert that a [Name] does not have a prior declaration.
+ * Asserts that a [Name] does not have a prior declaration.
  *
  * @throws NameClashError
  */

@@ -62,27 +62,6 @@ private constructor(
     }
 
     /**
-     * Returns whether there is data associated with temporary [name].
-     */
-    fun containsTemporaryData(name: TemporaryNode): Boolean {
-        return temporaries.containsKey(name.value)
-    }
-
-    /**
-     * Returns whether there is data associated with object [name].
-     */
-    fun containsObjectData(name: ObjectVariableNode): Boolean {
-        return objects.containsKey(name.value)
-    }
-
-    /**
-     * Returns whether there is data associated with loop [name].
-     */
-    fun containsLoopData(name: JumpLabelNode): Boolean {
-        return loops.containsKey(name.value)
-    }
-
-    /**
      * Returns a new context where [name] is associated with [data].
      *
      * @throws NameClashError

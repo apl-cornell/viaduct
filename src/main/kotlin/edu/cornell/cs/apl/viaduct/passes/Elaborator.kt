@@ -1,6 +1,6 @@
 package edu.cornell.cs.apl.viaduct.passes
 
-import edu.cornell.cs.apl.viaduct.errorskotlin.InvalidJumpError
+import edu.cornell.cs.apl.viaduct.errorskotlin.JumpOutsideLoopScopeError
 import edu.cornell.cs.apl.viaduct.syntax.Arguments
 import edu.cornell.cs.apl.viaduct.syntax.JumpLabel
 import edu.cornell.cs.apl.viaduct.syntax.JumpLabelNode
@@ -67,11 +67,12 @@ fun SProgramNode.elaborate(): IProgramNode {
     return Elaborator().run(this)
 }
 
-/** Elaborates surface programs into intermediate programs by:
- * - associating each loop and break with a jump label
- * - desugaring derived forms (while and for loops)
- * - converting to A-normal form
- * - renaming all variables to prevent shadowing
+/**
+ * Elaborates surface programs into intermediate programs by:
+ * - Associating each loop and break with a jump label
+ * - Desugaring derived forms (while and for loops)
+ * - Converting to A-normal form
+ * - Renaming all variables to prevent shadowing
  */
 private class Elaborator {
     private companion object {
@@ -352,14 +353,10 @@ private class Elaborator {
                         if (!loopStack.empty()) {
                             JumpLabelNode(loopStack.peek(), stmt.sourceLocation)
                         } else {
-                            throw InvalidJumpError(stmt.sourceLocation)
+                            throw JumpOutsideLoopScopeError(stmt)
                         }
                     } else {
-                        if (context.containsLoopData(stmt.jumpLabel)) {
-                            JumpLabelNode(context.get(stmt.jumpLabel), stmt.jumpLabel.sourceLocation)
-                        } else {
-                            throw InvalidJumpError(stmt.sourceLocation)
-                        }
+                        JumpLabelNode(context.get(stmt.jumpLabel), stmt.jumpLabel.sourceLocation)
                     }
 
                 listOf(

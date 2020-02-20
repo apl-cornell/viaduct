@@ -59,7 +59,7 @@ data class SourceRange(val start: SourcePosition, val end: SourcePosition) {
         // Print relevant lines
         val firstLine = (start.line - contextLines).coerceAtLeast(1)
         val lastLine = (end.line + contextLines).coerceAtMost(sourceFile.numberOfLines)
-        var output: Document = Document()
+        var output = Document()
         for (line in firstLine..lastLine) {
             val lineNumber = String.format("%${lineNumberWidth}d|", line)
             val highlightThisLine = line in start.line..end.line
@@ -76,7 +76,7 @@ data class SourceRange(val start: SourcePosition, val end: SourcePosition) {
             }
 
             // Print the actual line with a space between line numbers and line contents
-            output *= sourceFile.getLine(line) + Document.forcedLineBreak
+            output *= Document(sourceFile.getLine(line)) + Document.forcedLineBreak
 
             // In single-line mode, underline the relevant portion
             if (!multilineHighlight && highlightThisLine) {

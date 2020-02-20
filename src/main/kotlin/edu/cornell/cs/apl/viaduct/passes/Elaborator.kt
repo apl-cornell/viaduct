@@ -318,11 +318,15 @@ private class Elaborator {
                 )
             }
 
+            // create jump labels if there aren't any
             is SInfiniteLoopNode -> {
                 val jumpLabel = stmt.jumpLabel?.value?.name ?: LOOP_NAME
                 val renamedJumpLabel = JumpLabel(nameGenerator.getFreshName(jumpLabel))
                 val jumpLabelLocation = stmt.jumpLabel?.sourceLocation ?: stmt.sourceLocation
 
+                // need to push/pop context manually because it won't be treated properly
+                // by entering/leaving block
+                val oldContext = context
                 if (stmt.jumpLabel != null) {
                     context = context.put(stmt.jumpLabel, renamedJumpLabel)
                 }
@@ -330,6 +334,8 @@ private class Elaborator {
                 loopStack.push(renamedJumpLabel)
                 val newBody = runBlock(stmt.body)
                 loopStack.pop()
+
+                context = oldContext
 
                 listOf(
                     IInfiniteLoopNode(
@@ -341,22 +347,20 @@ private class Elaborator {
             }
 
             is SBreakNode -> {
-                val jumpLabelNode: JumpLabelNode
-
-                if (stmt.jumpLabel == null) {
-                    if (!loopStack.empty()) {
-                        jumpLabelNode = JumpLabelNode(loopStack.peek(), stmt.sourceLocation)
+                val jumpLabelNode: JumpLabelNode =
+                    if (stmt.jumpLabel == null) {
+                        if (!loopStack.empty()) {
+                            JumpLabelNode(loopStack.peek(), stmt.sourceLocation)
+                        } else {
+                            throw InvalidJumpError(stmt.sourceLocation)
+                        }
                     } else {
-                        throw InvalidJumpError(stmt.sourceLocation)
-                    }
-                } else {
-                    if (context.containsLoopData(stmt.jumpLabel)) {
-                        jumpLabelNode =
+                        if (context.containsLoopData(stmt.jumpLabel)) {
                             JumpLabelNode(context.get(stmt.jumpLabel), stmt.jumpLabel.sourceLocation)
-                    } else {
-                        throw InvalidJumpError(stmt.sourceLocation)
+                        } else {
+                            throw InvalidJumpError(stmt.sourceLocation)
+                        }
                     }
-                }
 
                 listOf(
                     IBreakNode(jumpLabelNode, stmt.sourceLocation)

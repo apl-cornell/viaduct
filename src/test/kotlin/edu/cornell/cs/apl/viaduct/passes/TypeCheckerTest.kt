@@ -9,7 +9,6 @@ internal class TypeCheckerTest {
     @ParameterizedTest
     @ArgumentsSource(ExampleProgramProvider::class)
     fun `it type checks`(program: ProgramNode) {
-        // TODO: need ANF conversion
-        // program.typeCheck()
+        program.elaborate().typeCheck()
     }
 }

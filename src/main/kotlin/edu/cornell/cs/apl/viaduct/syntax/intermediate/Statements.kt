@@ -22,9 +22,8 @@ sealed class StatementNode : Node()
 //   Only reason to keep would be reverse elaboration.
 sealed class SimpleStatementNode : StatementNode()
 
-/** A statement that defines a new temporary name. */
-// TODO: better name
-interface TemporaryBindingForm {
+/** A statement that defines a new temporary. */
+interface TemporaryDefinition {
     val temporary: TemporaryNode
 }
 
@@ -35,7 +34,7 @@ class LetNode(
     override val temporary: TemporaryNode,
     val value: ExpressionNode,
     override val sourceLocation: SourceLocation
-) : SimpleStatementNode(), TemporaryBindingForm
+) : SimpleStatementNode(), TemporaryDefinition
 
 /** Constructing a new object and binding it to a variable. */
 class DeclarationNode(
@@ -133,7 +132,7 @@ class InputNode(
     val type: ValueTypeNode,
     override val host: HostNode,
     override val sourceLocation: SourceLocation
-) : ExternalCommunicationNode(), TemporaryBindingForm
+) : ExternalCommunicationNode(), TemporaryDefinition
 
 /** An external output. */
 class OutputNode(
@@ -153,7 +152,7 @@ class ReceiveNode(
     val type: ValueTypeNode,
     override val protocol: ProtocolNode,
     override val sourceLocation: SourceLocation
-) : InternalCommunicationNode(), TemporaryBindingForm
+) : InternalCommunicationNode(), TemporaryDefinition
 
 /** Sending a value to another protocol. */
 class SendNode(

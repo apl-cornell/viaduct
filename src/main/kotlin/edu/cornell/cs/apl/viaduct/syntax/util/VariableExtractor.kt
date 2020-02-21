@@ -6,7 +6,7 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.DeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.IfNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.InfiniteLoopNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.StatementNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.TemporaryBindingForm
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.TemporaryDefinition
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.toPersistentList
 
@@ -23,7 +23,7 @@ class VariableExtractor private constructor() {
 
         private fun extractVariables(stmt: StatementNode, variableList: MutableList<Variable>) {
             when (stmt) {
-                is TemporaryBindingForm -> {
+                is TemporaryDefinition -> {
                     variableList.add(stmt.temporary.value)
                 }
 

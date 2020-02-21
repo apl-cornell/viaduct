@@ -367,73 +367,14 @@ private class Elaborator {
             is SBlockNode -> listOf(runBlock(stmt))
 
             // desugar into infinite loop node with a conditional inside it
-            is SWhileLoopNode -> {
-                val jumpLabel = JumpLabel(nameGenerator.getFreshName(LOOP_NAME))
-
-                listOf(
-                    IInfiniteLoopNode(
-                        body = IBlockNode(
-                            withBindings(
-                                IIfNode(
-                                    atomize(run(stmt.guard)),
-                                    runBlock(stmt.body),
-                                    IBlockNode(
-                                        IBreakNode(
-                                            JumpLabelNode(jumpLabel, stmt.sourceLocation),
-                                            stmt.sourceLocation
-                                        ),
-                                        sourceLocation = stmt.sourceLocation
-                                    ),
-                                    sourceLocation = stmt.sourceLocation
-                                )
-                            ),
-                            sourceLocation = stmt.sourceLocation
-                        ),
-                        jumpLabel = JumpLabelNode(jumpLabel, stmt.sourceLocation),
-                        sourceLocation = stmt.sourceLocation
-                    )
-                )
-            }
+            is SWhileLoopNode ->
+                run(elaborate(stmt))
 
             // desugar into an infinite loop node
-            is SForLoopNode -> {
-                val jumpLabel = JumpLabel(nameGenerator.getFreshName(LOOP_NAME))
+            is SForLoopNode ->
+                run(elaborate(stmt))
 
-                val bodyBlock = mutableListOf<SStatementNode>()
-                bodyBlock.addAll(stmt.body.statements)
-                bodyBlock.add(stmt.update)
-
-                val newBody = SBlockNode(bodyBlock, stmt.body.sourceLocation)
-
-                val block = mutableListOf<IStatementNode>()
-                block.addAll(run(stmt.initialize))
-                block.add(
-                    IInfiniteLoopNode(
-                        IBlockNode(
-                            withBindings(
-                                IIfNode(
-                                    atomize(run(stmt.guard)),
-                                    runBlock(newBody),
-                                    IBlockNode(
-                                        IBreakNode(
-                                            JumpLabelNode(jumpLabel, stmt.sourceLocation),
-                                            stmt.sourceLocation
-                                        ),
-                                        sourceLocation = stmt.sourceLocation
-                                    ),
-                                    stmt.guard.sourceLocation
-                                )
-                            ),
-                            sourceLocation = stmt.sourceLocation
-                        ),
-                        JumpLabelNode(jumpLabel, stmt.sourceLocation),
-                        stmt.sourceLocation
-                    )
-                )
-
-                block
-            }
-
+            // TODO: preserve
             is SAssertionNode -> listOf()
         }
     }
@@ -465,3 +406,72 @@ private class Elaborator {
         return IProgramNode(newTopLevelDecls, program.sourceLocation)
     }
 }
+
+/**
+ * Rewrites a while loop into a loop-until-break statement.
+ *
+ * More specifically,
+ *
+ * ```
+ * while (guard) { body... }
+ * ```
+ *
+ * gets translated to
+ *
+ * ```
+ * loop {
+ *     if (guard) {
+ *         body...
+ *     } else {
+ *         break;
+ *     }
+ * }
+ * ```
+ */
+private fun elaborate(node: SWhileLoopNode): SInfiniteLoopNode =
+    SInfiniteLoopNode(
+        SBlockNode(
+            SIfNode(
+                guard = node.guard,
+                thenBranch = node.body,
+                elseBranch = SBlockNode(
+                    SBreakNode(jumpLabel = node.jumpLabel, sourceLocation = node.sourceLocation),
+                    sourceLocation = node.sourceLocation
+                ),
+                sourceLocation = node.sourceLocation
+            ),
+            sourceLocation = node.sourceLocation
+        ),
+        jumpLabel = node.jumpLabel,
+        sourceLocation = node.sourceLocation
+    )
+
+/**
+ * Rewrites a for loop into a while loop.
+ *
+ * More specifically,
+ *
+ * ```
+ * for (init; guard; update) { body... }
+ * ```
+ *
+ * gets translated to
+ *
+ * ```
+ * {
+ *     init;
+ *     while (guard) { body... update; }
+ * }
+ * ```
+ */
+private fun elaborate(node: SForLoopNode): SBlockNode =
+    SBlockNode(
+        node.initialize,
+        SWhileLoopNode(
+            guard = node.guard,
+            body = SBlockNode(node.body + node.update, sourceLocation = node.sourceLocation),
+            jumpLabel = node.jumpLabel,
+            sourceLocation = node.sourceLocation
+        ),
+        sourceLocation = node.sourceLocation
+    )

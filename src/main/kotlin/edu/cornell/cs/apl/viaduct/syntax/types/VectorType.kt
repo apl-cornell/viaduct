@@ -27,8 +27,14 @@ data class VectorType(val elementType: ValueType, val elementLabel: Label?, val 
         return when (update) {
             is Set ->
                 FunctionType(IntegerType, elementType, result = UnitType)
-            is Modify ->
-                TODO()
+            is Modify -> {
+                val operatorType = update.operator.type
+                if (operatorType.arguments[0] == elementType && operatorType.result == elementType) {
+                    FunctionType(IntegerType, operatorType.arguments[1], result = UnitType)
+                } else {
+                    null
+                }
+            }
             else ->
                 null
         }

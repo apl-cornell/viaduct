@@ -16,11 +16,15 @@ import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toPersistentList
 
 /** A computation with side effects. */
-sealed class StatementNode : Node()
+sealed class StatementNode : Node() {
+    abstract override fun toSurfaceNode(): edu.cornell.cs.apl.viaduct.syntax.surface.StatementNode
+}
 
 // TODO: remove this? This was only necessary for ForNodes.
 //   Only reason to keep would be reverse elaboration.
-sealed class SimpleStatementNode : StatementNode()
+sealed class SimpleStatementNode : StatementNode() {
+    abstract override fun toSurfaceNode(): edu.cornell.cs.apl.viaduct.syntax.surface.SimpleStatementNode
+}
 
 /** A statement that defines a new temporary. */
 interface TemporaryDefinition {
@@ -34,7 +38,14 @@ class LetNode(
     override val temporary: TemporaryNode,
     val value: ExpressionNode,
     override val sourceLocation: SourceLocation
-) : SimpleStatementNode(), TemporaryDefinition
+) : SimpleStatementNode(), TemporaryDefinition {
+    override fun toSurfaceNode(): edu.cornell.cs.apl.viaduct.syntax.surface.LetNode =
+        edu.cornell.cs.apl.viaduct.syntax.surface.LetNode(
+            temporary,
+            value.toSurfaceNode(),
+            sourceLocation
+        )
+}
 
 /** Constructing a new object and binding it to a variable. */
 class DeclarationNode(
@@ -45,7 +56,17 @@ class DeclarationNode(
     val labelArguments: Arguments<Located<Label>>?,
     val arguments: Arguments<ExpressionNode>,
     override val sourceLocation: SourceLocation
-) : SimpleStatementNode()
+) : SimpleStatementNode() {
+    override fun toSurfaceNode(): edu.cornell.cs.apl.viaduct.syntax.surface.DeclarationNode =
+        edu.cornell.cs.apl.viaduct.syntax.surface.DeclarationNode(
+            variable,
+            className,
+            typeArguments,
+            labelArguments,
+            Arguments(arguments.map { it.toSurfaceNode() }, arguments.sourceLocation),
+            sourceLocation
+        )
+}
 
 /** An update method applied to an object. */
 class UpdateNode(
@@ -53,7 +74,15 @@ class UpdateNode(
     val update: UpdateName,
     val arguments: Arguments<ExpressionNode>,
     override val sourceLocation: SourceLocation
-) : SimpleStatementNode()
+) : SimpleStatementNode() {
+    override fun toSurfaceNode(): edu.cornell.cs.apl.viaduct.syntax.surface.UpdateNode =
+        edu.cornell.cs.apl.viaduct.syntax.surface.UpdateNode(
+            variable,
+            update,
+            Arguments(arguments.map { it.toSurfaceNode() }, arguments.sourceLocation),
+            sourceLocation
+        )
+}
 
 // Compound Statements
 
@@ -71,7 +100,15 @@ class IfNode(
     val thenBranch: BlockNode,
     val elseBranch: BlockNode,
     override val sourceLocation: SourceLocation
-) : ControlNode()
+) : ControlNode() {
+    override fun toSurfaceNode(): edu.cornell.cs.apl.viaduct.syntax.surface.IfNode =
+        edu.cornell.cs.apl.viaduct.syntax.surface.IfNode(
+            guard.toSurfaceNode(),
+            thenBranch.toSurfaceNode(),
+            elseBranch.toSurfaceNode(),
+            sourceLocation
+        )
+}
 
 /**
  * A loop that is executed until a break statement is encountered.
@@ -82,7 +119,14 @@ class InfiniteLoopNode(
     val body: BlockNode,
     val jumpLabel: JumpLabelNode,
     override val sourceLocation: SourceLocation
-) : ControlNode()
+) : ControlNode() {
+    override fun toSurfaceNode(): edu.cornell.cs.apl.viaduct.syntax.surface.InfiniteLoopNode =
+        edu.cornell.cs.apl.viaduct.syntax.surface.InfiniteLoopNode(
+            body.toSurfaceNode(),
+            jumpLabel,
+            sourceLocation
+        )
+}
 
 /**
  * Breaking out of a loop.
@@ -92,7 +136,13 @@ class InfiniteLoopNode(
 class BreakNode(
     val jumpLabel: JumpLabelNode,
     override val sourceLocation: SourceLocation
-) : StatementNode()
+) : StatementNode() {
+    override fun toSurfaceNode(): edu.cornell.cs.apl.viaduct.syntax.surface.BreakNode =
+        edu.cornell.cs.apl.viaduct.syntax.surface.BreakNode(
+            jumpLabel,
+            sourceLocation
+        )
+}
 
 /** A sequence of statements. */
 class BlockNode(
@@ -104,6 +154,12 @@ class BlockNode(
 
     constructor(vararg statements: StatementNode, sourceLocation: SourceLocation) :
         this(persistentListOf(*statements), sourceLocation)
+
+    override fun toSurfaceNode(): edu.cornell.cs.apl.viaduct.syntax.surface.BlockNode =
+        edu.cornell.cs.apl.viaduct.syntax.surface.BlockNode(
+            statements.map { it.toSurfaceNode() },
+            sourceLocation
+        )
 }
 
 // Communication Statements
@@ -132,14 +188,28 @@ class InputNode(
     val type: ValueTypeNode,
     override val host: HostNode,
     override val sourceLocation: SourceLocation
-) : ExternalCommunicationNode(), TemporaryDefinition
+) : ExternalCommunicationNode(), TemporaryDefinition {
+    override fun toSurfaceNode(): edu.cornell.cs.apl.viaduct.syntax.surface.LetNode =
+        edu.cornell.cs.apl.viaduct.syntax.surface.LetNode(
+            temporary,
+            edu.cornell.cs.apl.viaduct.syntax.surface.InputNode(type, host, sourceLocation),
+            sourceLocation
+        )
+}
 
 /** An external output. */
 class OutputNode(
     val message: AtomicExpressionNode,
     override val host: HostNode,
     override val sourceLocation: SourceLocation
-) : ExternalCommunicationNode()
+) : ExternalCommunicationNode() {
+    override fun toSurfaceNode(): edu.cornell.cs.apl.viaduct.syntax.surface.OutputNode =
+        edu.cornell.cs.apl.viaduct.syntax.surface.OutputNode(
+            message.toSurfaceNode(),
+            host,
+            sourceLocation
+        )
+}
 
 /**
  * Receiving a value from another protocol.
@@ -152,11 +222,25 @@ class ReceiveNode(
     val type: ValueTypeNode,
     override val protocol: ProtocolNode,
     override val sourceLocation: SourceLocation
-) : InternalCommunicationNode(), TemporaryDefinition
+) : InternalCommunicationNode(), TemporaryDefinition {
+    override fun toSurfaceNode(): edu.cornell.cs.apl.viaduct.syntax.surface.LetNode =
+        edu.cornell.cs.apl.viaduct.syntax.surface.LetNode(
+            temporary,
+            edu.cornell.cs.apl.viaduct.syntax.surface.ReceiveNode(type, protocol, sourceLocation),
+            sourceLocation
+        )
+}
 
 /** Sending a value to another protocol. */
 class SendNode(
     val message: AtomicExpressionNode,
     override val protocol: ProtocolNode,
     override val sourceLocation: SourceLocation
-) : InternalCommunicationNode()
+) : InternalCommunicationNode() {
+    override fun toSurfaceNode(): edu.cornell.cs.apl.viaduct.syntax.surface.SendNode =
+        edu.cornell.cs.apl.viaduct.syntax.surface.SendNode(
+            message.toSurfaceNode(),
+            protocol,
+            sourceLocation
+        )
+}

@@ -6,7 +6,9 @@ import edu.cornell.cs.apl.viaduct.syntax.ProtocolNode
 import edu.cornell.cs.apl.viaduct.syntax.SourceLocation
 
 /** A declaration at the top level of a file. */
-sealed class TopLevelDeclarationNode : Node()
+sealed class TopLevelDeclarationNode : Node() {
+    abstract override fun toSurfaceNode(): edu.cornell.cs.apl.viaduct.syntax.surface.TopLevelDeclarationNode
+}
 
 /**
  * Declaration of a participant and their authority.
@@ -18,7 +20,14 @@ class HostDeclarationNode(
     val name: HostNode,
     val authority: LabelNode,
     override val sourceLocation: SourceLocation
-) : TopLevelDeclarationNode()
+) : TopLevelDeclarationNode() {
+    override fun toSurfaceNode(): edu.cornell.cs.apl.viaduct.syntax.surface.HostDeclarationNode =
+        edu.cornell.cs.apl.viaduct.syntax.surface.HostDeclarationNode(
+            name,
+            authority,
+            sourceLocation
+        )
+}
 
 /**
  * A process declaration associating a protocol with the code that process should run.
@@ -30,4 +39,11 @@ class ProcessDeclarationNode(
     val protocol: ProtocolNode,
     val body: BlockNode,
     override val sourceLocation: SourceLocation
-) : TopLevelDeclarationNode()
+) : TopLevelDeclarationNode() {
+    override fun toSurfaceNode(): edu.cornell.cs.apl.viaduct.syntax.surface.ProcessDeclarationNode =
+        edu.cornell.cs.apl.viaduct.syntax.surface.ProcessDeclarationNode(
+            protocol,
+            body.toSurfaceNode(),
+            sourceLocation
+        )
+}

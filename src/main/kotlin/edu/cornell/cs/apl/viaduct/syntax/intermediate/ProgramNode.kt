@@ -15,4 +15,10 @@ class ProgramNode(
 ) : Node(), List<TopLevelDeclarationNode> by declarations {
     // Make an immutable copy
     val declarations: List<TopLevelDeclarationNode> = declarations.toPersistentList()
+
+    override fun toSurfaceNode(): edu.cornell.cs.apl.viaduct.syntax.surface.ProgramNode =
+        edu.cornell.cs.apl.viaduct.syntax.surface.ProgramNode(
+            declarations.map { it.toSurfaceNode() },
+            sourceLocation
+        )
 }

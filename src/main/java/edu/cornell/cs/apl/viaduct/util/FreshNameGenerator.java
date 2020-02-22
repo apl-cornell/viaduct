@@ -3,24 +3,20 @@ package edu.cornell.cs.apl.viaduct.util;
 import java.util.HashMap;
 import java.util.Map;
 
-/** generate fresh names from base names. */
+/** Generates distinct names. Never generates the same name twice. */
 public class FreshNameGenerator {
-  Map<String, Integer> freshNameMap;
+  private final Map<String, Integer> freshNameMap = new HashMap<>();
 
-  public FreshNameGenerator() {
-    this.freshNameMap = new HashMap<>();
-  }
-
-  /** get fresh name from base name. base name must NOT have an underscore! */
+  /** Returns a new name derived from base. */
   public String getFreshName(String base) {
-    Integer i = this.freshNameMap.get(base);
+    final Integer i = this.freshNameMap.get(base);
     if (i != null) {
       this.freshNameMap.put(base, i + 1);
       return String.format("%s_%d", base, i);
 
     } else {
-      this.freshNameMap.put(base, 2);
-      return String.format("%s_%d", base, 1);
+      this.freshNameMap.put(base, 1);
+      return base;
     }
   }
 }

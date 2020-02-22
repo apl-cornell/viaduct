@@ -30,6 +30,11 @@ public class Main {
     } else if (e instanceof CompilationError) {
       // User error; print short, pretty message.
       ((CompilationError) e).print(AnsiConsole.err);
+    } else if (e instanceof edu.cornell.cs.apl.viaduct.errorskotlin.CompilationError) {
+      // User error; print short, pretty message.
+      ((edu.cornell.cs.apl.viaduct.errorskotlin.CompilationError) e)
+          .getAsDocument()
+          .print(AnsiConsole.err, 80, true);
     } else {
       // Developer error; give more detail.
       e.printStackTrace();

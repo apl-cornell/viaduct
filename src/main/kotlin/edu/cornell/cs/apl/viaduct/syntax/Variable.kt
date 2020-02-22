@@ -26,7 +26,7 @@ data class Temporary(override val name: String) : Variable() {
 /** A variable that binds an object. */
 data class ObjectVariable(override val name: String) : Variable() {
     override val nameCategory: String
-        get() = "object"
+        get() = "variable"
 }
 
 /** The display style of [Variable]s. */

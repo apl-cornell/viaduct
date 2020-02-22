@@ -5,6 +5,7 @@ import edu.cornell.cs.apl.viaduct.syntax.Arguments
 import edu.cornell.cs.apl.viaduct.syntax.JumpLabel
 import edu.cornell.cs.apl.viaduct.syntax.JumpLabelNode
 import edu.cornell.cs.apl.viaduct.syntax.Located
+import edu.cornell.cs.apl.viaduct.syntax.Name
 import edu.cornell.cs.apl.viaduct.syntax.ObjectVariable
 import edu.cornell.cs.apl.viaduct.syntax.ObjectVariableNode
 import edu.cornell.cs.apl.viaduct.syntax.StatementContext
@@ -12,7 +13,6 @@ import edu.cornell.cs.apl.viaduct.syntax.Temporary
 import edu.cornell.cs.apl.viaduct.syntax.TemporaryNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.Node
 import edu.cornell.cs.apl.viaduct.util.FreshNameGenerator
-import java.util.Stack
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.AtomicExpressionNode as IAtomicExpressionNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.BlockNode as IBlockNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.BreakNode as IBreakNode
@@ -94,34 +94,33 @@ fun SProgramNode.elaborated(): IProgramNode {
     return IProgramNode(declarations, this.sourceLocation)
 }
 
-private class StatementElaborator {
+private class StatementElaborator(
+    private val nameGenerator: FreshNameGenerator,
+
+    /** Maps old [Name]s to their new names. */
+    private var context: StatementContext<Temporary, ObjectVariable, JumpLabel>,
+
+    /** The label of the innermost loop surrounding the current context. */
+    private val surroundingLoop: JumpLabel?
+) {
     private companion object {
         const val TMP_NAME = "tmp"
         const val LOOP_NAME = "loop"
     }
 
-    private val contextStack = Stack<StatementContext<Temporary, ObjectVariable, JumpLabel>>()
-    private val loopStack = Stack<JumpLabel>()
-    private val nameGenerator = FreshNameGenerator()
+    constructor() : this(FreshNameGenerator(), StatementContext(), null)
 
-    private var context: StatementContext<Temporary, ObjectVariable, JumpLabel>
-        get() {
-            return contextStack.peek()
-        }
-        set(value) {
-            contextStack.pop()
-            contextStack.push(value)
-        }
-
-    init {
-        contextStack.push(StatementContext())
-    }
+    private fun copy(
+        context: StatementContext<Temporary, ObjectVariable, JumpLabel> = this.context,
+        surroundingLoop: JumpLabel? = this.surroundingLoop
+    ): StatementElaborator =
+        StatementElaborator(this.nameGenerator, context, surroundingLoop)
 
     /** Generates a new temporary whose name is based on [baseName]. */
     private fun freshTemporary(baseName: String? = null): Temporary =
         Temporary(nameGenerator.getFreshName(baseName ?: TMP_NAME))
 
-    /** Assigns a fresh name to [temporary] and adds mapping in [context]. */
+    /** Assigns a fresh name to [temporary] and adds a mapping to [context]. */
     private fun renameTemporary(temporary: TemporaryNode): TemporaryNode {
         val newName = freshTemporary(temporary.value.name)
         context = context.put(temporary, newName)
@@ -251,16 +250,11 @@ private class StatementElaborator {
 
     /** Converts surface block statement into an intermediate block statement. */
     fun elaborate(block: SBlockNode): IBlockNode {
-        // enter scope
-        contextStack.push(context)
+        val newScope = this.copy()
 
-        // flatten children into one big list
-        val statements = mutableListOf<IStatementNode>().apply {
-            block.forEach { statement -> this.addAll(run(statement)) }
-        }
-
-        // leave scope
-        contextStack.pop()
+        // Flatten children into one big list
+        val statements = mutableListOf<IStatementNode>()
+        block.forEach { statements.addAll(newScope.run(it)) }
 
         return IBlockNode(statements, block.sourceLocation)
     }
@@ -291,16 +285,15 @@ private class StatementElaborator {
 
                     else ->
                         withBindings { bindings ->
-                            // The value should be processed before the temporary is freshened
+                            // The value must be processed before the temporary is freshened
                             val newValue = stmt.value.toAnf(bindings)
                             ILetNode(renameTemporary(stmt.temporary), newValue, stmt.sourceLocation)
                         }
-
                 }
 
             is SDeclarationNode ->
                 withBindings { bindings ->
-                    // The arguments should be processed before the variable is freshened
+                    // The arguments must be processed before the variable is freshened
                     val newArguments =
                         Arguments(
                             stmt.arguments.map { it.toAnf(bindings).toAtomic(bindings) },
@@ -375,27 +368,22 @@ private class StatementElaborator {
             }
 
             is SInfiniteLoopNode -> {
-                // Create jump labels if there aren't any
+                // Create a jump label if there isn't one
                 val jumpLabel = stmt.jumpLabel?.value?.name ?: LOOP_NAME
                 val renamedJumpLabel = JumpLabel(nameGenerator.getFreshName(jumpLabel))
                 val jumpLabelLocation = stmt.jumpLabel?.sourceLocation ?: stmt.sourceLocation
 
-                // need to push/pop context manually because it won't be treated properly
-                // by entering/leaving block
-                val oldContext = context
-                if (stmt.jumpLabel != null) {
-                    context = context.put(stmt.jumpLabel, renamedJumpLabel)
-                }
-
-                loopStack.push(renamedJumpLabel)
-                val newBody = elaborate(stmt.body)
-                loopStack.pop()
-
-                context = oldContext
+                val newScope = this.copy(
+                    context =
+                    if (stmt.jumpLabel == null)
+                        context
+                    else context.put(stmt.jumpLabel, renamedJumpLabel),
+                    surroundingLoop = renamedJumpLabel
+                )
 
                 listOf(
                     IInfiniteLoopNode(
-                        newBody,
+                        newScope.elaborate(stmt.body),
                         JumpLabelNode(renamedJumpLabel, jumpLabelLocation),
                         stmt.sourceLocation
                     )
@@ -403,12 +391,12 @@ private class StatementElaborator {
             }
 
             is SBreakNode -> {
-                if (loopStack.empty())
+                if (surroundingLoop == null)
                     throw JumpOutsideLoopScopeError(stmt)
 
                 val jumpLabelNode: JumpLabelNode =
                     if (stmt.jumpLabel == null)
-                        JumpLabelNode(loopStack.peek(), stmt.sourceLocation)
+                        JumpLabelNode(surroundingLoop, stmt.sourceLocation)
                     else
                         JumpLabelNode(context.get(stmt.jumpLabel), stmt.jumpLabel.sourceLocation)
 

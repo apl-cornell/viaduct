@@ -63,18 +63,39 @@ import edu.cornell.cs.apl.viaduct.syntax.surface.StatementNode as SStatementNode
 import edu.cornell.cs.apl.viaduct.syntax.surface.UpdateNode as SUpdateNode
 import edu.cornell.cs.apl.viaduct.syntax.surface.WhileLoopNode as SWhileLoopNode
 
-fun SProgramNode.elaborate(): IProgramNode {
-    return Elaborator().run(this)
-}
-
 /**
  * Elaborates surface programs into intermediate programs by:
- * - Associating each loop and break with a jump label
- * - Desugaring derived forms (while and for loops)
- * - Converting to A-normal form
- * - Renaming all variables to prevent shadowing
+ * - Associating each loop and break with a jump label.
+ * - Desugaring derived forms (while and for loops).
+ * - Converting to A-normal form.
+ * - Renaming all variables to prevent shadowing.
  */
-private class Elaborator {
+fun SProgramNode.elaborated(): IProgramNode {
+    val declarations = mutableListOf<ITopLevelDeclarationNode>()
+    this.declarations.forEach {
+        val declaration = when (it) {
+            is SHostDeclarationNode -> {
+                IHostDeclarationNode(
+                    it.name,
+                    it.authority,
+                    it.sourceLocation
+                )
+            }
+
+            is SProcessDeclarationNode -> {
+                IProcessDeclarationNode(
+                    it.protocol,
+                    StatementElaborator().elaborate(it.body),
+                    it.sourceLocation
+                )
+            }
+        }
+        declarations.add(declaration)
+    }
+    return IProgramNode(declarations, this.sourceLocation)
+}
+
+private class StatementElaborator {
     private companion object {
         const val TMP_NAME = "tmp"
         const val LOOP_NAME = "loop"
@@ -222,8 +243,8 @@ private class Elaborator {
         }
     }
 
-    /** convert surface block into an intermediate block. */
-    private fun runBlock(block: SBlockNode): IBlockNode {
+    /** Converts surface block statement into an intermediate block statement. */
+    fun elaborate(block: SBlockNode): IBlockNode {
         // enter scope
         contextStack.push(context)
 
@@ -238,7 +259,7 @@ private class Elaborator {
         return IBlockNode(statements, block.sourceLocation)
     }
 
-    fun run(stmt: SStatementNode): List<IStatementNode> {
+    private fun run(stmt: SStatementNode): List<IStatementNode> {
         return when (stmt) {
             is SLetNode -> {
                 val newName = freshTemporary(stmt.temporary.value.name)
@@ -316,8 +337,8 @@ private class Elaborator {
                 withBindings { bindings ->
                     IIfNode(
                         stmt.guard.toAnf(bindings).toAtomic(bindings),
-                        runBlock(stmt.thenBranch),
-                        runBlock(stmt.elseBranch),
+                        elaborate(stmt.thenBranch),
+                        elaborate(stmt.elseBranch),
                         stmt.sourceLocation
                     )
                 }
@@ -337,7 +358,7 @@ private class Elaborator {
                 }
 
                 loopStack.push(renamedJumpLabel)
-                val newBody = runBlock(stmt.body)
+                val newBody = elaborate(stmt.body)
                 loopStack.pop()
 
                 context = oldContext
@@ -368,7 +389,7 @@ private class Elaborator {
                 )
             }
 
-            is SBlockNode -> listOf(runBlock(stmt))
+            is SBlockNode -> listOf(elaborate(stmt))
 
             // desugar into infinite loop node with a conditional inside it
             is SWhileLoopNode ->
@@ -381,33 +402,6 @@ private class Elaborator {
             // TODO: preserve
             is SAssertionNode -> listOf()
         }
-    }
-
-    /** convert surface program into intermediate program. */
-    fun run(program: SProgramNode): IProgramNode {
-        val newTopLevelDecls = mutableListOf<ITopLevelDeclarationNode>()
-        for (topLevelDecl in program) {
-            val newTopLevelDecl = when (topLevelDecl) {
-                is SHostDeclarationNode -> {
-                    IHostDeclarationNode(
-                        topLevelDecl.name,
-                        topLevelDecl.authority,
-                        topLevelDecl.sourceLocation
-                    )
-                }
-
-                is SProcessDeclarationNode -> {
-                    IProcessDeclarationNode(
-                        topLevelDecl.protocol,
-                        run(topLevelDecl.body)[0] as IBlockNode,
-                        topLevelDecl.sourceLocation
-                    )
-                }
-            }
-            newTopLevelDecls.add(newTopLevelDecl)
-        }
-
-        return IProgramNode(newTopLevelDecls, program.sourceLocation)
     }
 }
 

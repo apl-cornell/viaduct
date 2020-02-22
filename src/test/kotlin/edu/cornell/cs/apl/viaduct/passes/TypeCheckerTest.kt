@@ -9,6 +9,6 @@ internal class TypeCheckerTest {
     @ParameterizedTest
     @ArgumentsSource(ExampleProgramProvider::class)
     fun `it type checks`(program: ProgramNode) {
-        program.elaborate().typeCheck()
+        program.elaborated().typeCheck()
     }
 }

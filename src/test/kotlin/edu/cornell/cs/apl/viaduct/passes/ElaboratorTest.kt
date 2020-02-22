@@ -9,6 +9,6 @@ internal class ElaboratorTest {
     @ParameterizedTest
     @ArgumentsSource(ExampleProgramProvider::class)
     fun `it elaborates`(program: ProgramNode) {
-        program.elaborate()
+        program.elaborated()
     }
 }

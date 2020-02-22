@@ -14,7 +14,7 @@ import edu.cornell.cs.apl.viaduct.syntax.ObjectVariableNode
 import edu.cornell.cs.apl.viaduct.syntax.Operator
 import edu.cornell.cs.apl.viaduct.syntax.ProtocolNode
 import edu.cornell.cs.apl.viaduct.syntax.SourceLocation
-import edu.cornell.cs.apl.viaduct.syntax.Temporary
+import edu.cornell.cs.apl.viaduct.syntax.TemporaryNode
 import edu.cornell.cs.apl.viaduct.syntax.ValueTypeNode
 import edu.cornell.cs.apl.viaduct.syntax.datatypes.QueryName
 import edu.cornell.cs.apl.viaduct.syntax.values.Value
@@ -33,8 +33,11 @@ class LiteralNode(val value: Value, override val sourceLocation: SourceLocation)
 }
 
 /** Reading the value stored in a temporary. */
-class ReadNode(val temporary: Temporary, override val sourceLocation: SourceLocation) :
+class ReadNode(val temporary: TemporaryNode) :
     AtomicExpressionNode() {
+    override val sourceLocation: SourceLocation
+        get() = temporary.sourceLocation
+
     override val asDocument: Document
         get() = temporary.asDocument
 }

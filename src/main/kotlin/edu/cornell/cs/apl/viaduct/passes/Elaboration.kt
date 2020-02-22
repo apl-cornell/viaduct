@@ -4,7 +4,6 @@ import edu.cornell.cs.apl.viaduct.errorskotlin.JumpOutsideLoopScopeError
 import edu.cornell.cs.apl.viaduct.syntax.Arguments
 import edu.cornell.cs.apl.viaduct.syntax.JumpLabel
 import edu.cornell.cs.apl.viaduct.syntax.JumpLabelNode
-import edu.cornell.cs.apl.viaduct.syntax.Located
 import edu.cornell.cs.apl.viaduct.syntax.Name
 import edu.cornell.cs.apl.viaduct.syntax.ObjectVariable
 import edu.cornell.cs.apl.viaduct.syntax.ObjectVariableNode
@@ -146,14 +145,10 @@ private class StatementElaborator(
             is SLiteralNode ->
                 ILiteralNode(value, sourceLocation)
 
-            is SReadNode -> {
-                IReadNode(
-                    context.get(Located(temporary, sourceLocation)),
-                    sourceLocation
-                )
-            }
+            is SReadNode ->
+                IReadNode(TemporaryNode(context.get(temporary), sourceLocation))
 
-            is SOperatorApplicationNode -> {
+            is SOperatorApplicationNode ->
                 IOperatorApplicationNode(
                     operator,
                     Arguments(
@@ -162,9 +157,8 @@ private class StatementElaborator(
                     ),
                     sourceLocation
                 )
-            }
 
-            is SQueryNode -> {
+            is SQueryNode ->
                 IQueryNode(
                     ObjectVariableNode(
                         context.get(variable),
@@ -177,50 +171,33 @@ private class StatementElaborator(
                     ),
                     sourceLocation
                 )
-            }
 
-            is SDeclassificationNode -> {
+            is SDeclassificationNode ->
                 IDeclassificationNode(
                     expression.toAnf(bindings).toAtomic(bindings),
                     fromLabel,
                     toLabel,
                     sourceLocation
                 )
-            }
 
-            is SEndorsementNode -> {
+            is SEndorsementNode ->
                 IEndorsementNode(
                     expression.toAnf(bindings).toAtomic(bindings),
                     fromLabel,
                     toLabel,
                     sourceLocation
                 )
-            }
 
             is SInputNode -> {
-                val tmp = freshTemporary()
-                bindings.add(
-                    IInputNode(
-                        Located(tmp, sourceLocation),
-                        type,
-                        host,
-                        sourceLocation
-                    )
-                )
-                IReadNode(tmp, sourceLocation)
+                val tmp = TemporaryNode(freshTemporary(), sourceLocation)
+                bindings.add(IInputNode(tmp, type, host, sourceLocation))
+                IReadNode(tmp)
             }
 
             is SReceiveNode -> {
-                val tmp = freshTemporary()
-                bindings.add(
-                    IReceiveNode(
-                        Located(tmp, sourceLocation),
-                        type,
-                        protocol,
-                        sourceLocation
-                    )
-                )
-                IReadNode(tmp, sourceLocation)
+                val tmp = TemporaryNode(freshTemporary(), sourceLocation)
+                bindings.add(IReceiveNode(tmp, type, protocol, sourceLocation))
+                IReadNode(tmp)
             }
         }
     }
@@ -235,15 +212,9 @@ private class StatementElaborator(
                 this
 
             else -> {
-                val tmp = freshTemporary()
-                bindings.add(
-                    ILetNode(
-                        TemporaryNode(tmp, this.sourceLocation),
-                        this,
-                        this.sourceLocation
-                    )
-                )
-                IReadNode(tmp, this.sourceLocation)
+                val tmp = TemporaryNode(freshTemporary(), this.sourceLocation)
+                bindings.add(ILetNode(tmp, this, this.sourceLocation))
+                IReadNode(tmp)
             }
         }
     }

@@ -5,7 +5,7 @@ import edu.cornell.cs.apl.viaduct.syntax.LabelNode
 import edu.cornell.cs.apl.viaduct.syntax.ObjectVariableNode
 import edu.cornell.cs.apl.viaduct.syntax.Operator
 import edu.cornell.cs.apl.viaduct.syntax.SourceLocation
-import edu.cornell.cs.apl.viaduct.syntax.Temporary
+import edu.cornell.cs.apl.viaduct.syntax.TemporaryNode
 import edu.cornell.cs.apl.viaduct.syntax.datatypes.QueryName
 import edu.cornell.cs.apl.viaduct.syntax.values.Value
 
@@ -27,10 +27,13 @@ class LiteralNode(val value: Value, override val sourceLocation: SourceLocation)
 }
 
 /** Reading the value stored in a temporary. */
-class ReadNode(val temporary: Temporary, override val sourceLocation: SourceLocation) :
+class ReadNode(val temporary: TemporaryNode) :
     AtomicExpressionNode() {
+    override val sourceLocation: SourceLocation
+        get() = temporary.sourceLocation
+
     override fun toSurfaceNode(): edu.cornell.cs.apl.viaduct.syntax.surface.ReadNode =
-        edu.cornell.cs.apl.viaduct.syntax.surface.ReadNode(temporary, sourceLocation)
+        edu.cornell.cs.apl.viaduct.syntax.surface.ReadNode(temporary)
 }
 
 /** An n-ary operator applied to n arguments. */

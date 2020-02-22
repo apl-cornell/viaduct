@@ -2,7 +2,6 @@ package edu.cornell.cs.apl.viaduct.syntax.intermediate
 
 import edu.cornell.cs.apl.viaduct.syntax.Host
 import edu.cornell.cs.apl.viaduct.syntax.JumpLabel
-import edu.cornell.cs.apl.viaduct.syntax.Located
 import edu.cornell.cs.apl.viaduct.syntax.ObjectVariable
 import edu.cornell.cs.apl.viaduct.syntax.ProgramContext
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
@@ -31,7 +30,7 @@ private fun <ExpressionResult, TemporaryData, ObjectData> ExpressionNode.travers
             visitor.leave(this)
 
         is ReadNode ->
-            visitor.leave(this, context.get(Located(temporary, sourceLocation)))
+            visitor.leave(this, context.get(temporary))
 
         is OperatorApplicationNode ->
             visitor.leave(this, arguments.map { it.traverse(visitor, context) })

@@ -1,0 +1,4 @@
+/* NameClashError */
+
+host alice : {A}
+host alice : {A}

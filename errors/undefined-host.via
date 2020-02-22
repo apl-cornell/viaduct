@@ -1,0 +1,5 @@
+/* UndefinedNameError */
+
+process main {
+    let mut x: int = input int from alice;
+}

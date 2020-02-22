@@ -1,0 +1,4 @@
+/* NameClashError */
+
+process main {}
+process main {}

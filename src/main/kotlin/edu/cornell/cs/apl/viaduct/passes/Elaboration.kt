@@ -10,6 +10,7 @@ import edu.cornell.cs.apl.viaduct.syntax.ObjectVariableNode
 import edu.cornell.cs.apl.viaduct.syntax.StatementContext
 import edu.cornell.cs.apl.viaduct.syntax.Temporary
 import edu.cornell.cs.apl.viaduct.syntax.TemporaryNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.Node
 import edu.cornell.cs.apl.viaduct.util.FreshNameGenerator
 import java.util.Stack
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.AtomicExpressionNode as IAtomicExpressionNode
@@ -64,11 +65,9 @@ import edu.cornell.cs.apl.viaduct.syntax.surface.UpdateNode as SUpdateNode
 import edu.cornell.cs.apl.viaduct.syntax.surface.WhileLoopNode as SWhileLoopNode
 
 /**
- * Elaborates surface programs into intermediate programs by:
- * - Associating each loop and break with a jump label.
- * - Desugaring derived forms (while and for loops).
- * - Converting to A-normal form.
- * - Renaming all variables to prevent shadowing.
+ * Elaborates this surface program into a program in the intermediate representation.
+ *
+ * See [Node] for the list of transformations performed.
  */
 fun SProgramNode.elaborated(): IProgramNode {
     val declarations = mutableListOf<ITopLevelDeclarationNode>()

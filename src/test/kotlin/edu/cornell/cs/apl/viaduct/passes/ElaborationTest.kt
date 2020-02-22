@@ -5,7 +5,7 @@ import edu.cornell.cs.apl.viaduct.syntax.surface.ProgramNode
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ArgumentsSource
 
-internal class ElaboratorTest {
+internal class ElaborationTest {
     @ParameterizedTest
     @ArgumentsSource(ExampleProgramProvider::class)
     fun `it elaborates`(program: ProgramNode) {

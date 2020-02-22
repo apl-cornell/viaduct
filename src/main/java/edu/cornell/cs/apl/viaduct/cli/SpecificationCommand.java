@@ -81,7 +81,7 @@ public class SpecificationCommand extends BaseCommand {
     final ProgramNode generatedProgram =
         new ImpProtocolInstantiationVisitor(hostConfig, null, pdg, protocolMap, main).run();
 
-    try (PrintStream writer = output.newOutputStream("")) {
+    try (PrintStream writer = output.newOutputStream()) {
       Printer.run(generatedProgram, writer);
     }
   }

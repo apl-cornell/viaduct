@@ -26,7 +26,7 @@ public class InterpretCommand extends BaseCommand {
     // interpret
     final Map<ProcessName, Store> stores = Interpreter.run(program);
 
-    try (PrintStream writer = this.output.newOutputStream("")) {
+    try (PrintStream writer = this.output.newOutputStream()) {
       boolean first = true;
       for (Map.Entry<ProcessName, Store> entry : stores.entrySet()) {
         if (!first) {

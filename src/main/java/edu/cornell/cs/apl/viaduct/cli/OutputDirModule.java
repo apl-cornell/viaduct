@@ -20,14 +20,13 @@ final class OutputDirModule {
   protected String outputDir = null;
 
   /** Create a {@link PrintStream} (which expects ANSI color codes) to the specified output file. */
-  PrintStream newOutputStream(String name) throws IOException {
+  PrintStream newOutputStream() throws IOException {
     if (outputDir == null) {
       // Read from standard input.
       return AnsiConsole.out();
     } else {
       // TODO: PrintStream doesn't throw errors when writing. These will fail silently.
-      return new AnsiPrintStream(
-          new PrintStream(new File(outputDir, name), StandardCharsets.UTF_8));
+      return new AnsiPrintStream(new PrintStream(new File(outputDir), StandardCharsets.UTF_8));
     }
   }
 }

@@ -241,7 +241,10 @@ class BlockNode(
     override val asDocument: Document
         get() {
             val statements: List<Document> = statements.map {
-                if (it is SimpleStatementNode) it.asDocument + ";" else it.asDocument
+                if (it is SimpleStatementNode || it is BreakNode)
+                    it.asDocument + ";"
+                else
+                    it.asDocument
             }
             val body: Document = statements.concatenated(separator = Document.forcedLineBreak)
             return Document("{") +

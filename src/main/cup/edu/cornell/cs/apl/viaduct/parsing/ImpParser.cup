@@ -240,8 +240,8 @@ stmt ::=
       RESULT = new ForLoopNode(initialize, guard, update, body, null, location(beginleft, bodyright));
     :}
 
-  | BREAK:brk {:
-      RESULT = new BreakNode(null, location(brkleft, brkright));
+  | BREAK:brk SEMICOLON:end {:
+      RESULT = new BreakNode(null, location(brkleft, endright));
     :}
 
   | block:block {:

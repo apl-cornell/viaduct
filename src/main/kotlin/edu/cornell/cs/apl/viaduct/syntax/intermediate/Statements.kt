@@ -54,7 +54,7 @@ class DeclarationNode(
     val typeArguments: Arguments<ValueTypeNode>,
     // TODO: allow leaving out some of the labels (right now it's all or nothing)
     val labelArguments: Arguments<Located<Label>>?,
-    val arguments: Arguments<ExpressionNode>,
+    val arguments: Arguments<AtomicExpressionNode>,
     override val sourceLocation: SourceLocation
 ) : SimpleStatementNode() {
     override fun toSurfaceNode(): edu.cornell.cs.apl.viaduct.syntax.surface.DeclarationNode =
@@ -72,7 +72,7 @@ class DeclarationNode(
 class UpdateNode(
     val variable: ObjectVariableNode,
     val update: UpdateName,
-    val arguments: Arguments<ExpressionNode>,
+    val arguments: Arguments<AtomicExpressionNode>,
     override val sourceLocation: SourceLocation
 ) : SimpleStatementNode() {
     override fun toSurfaceNode(): edu.cornell.cs.apl.viaduct.syntax.surface.UpdateNode =

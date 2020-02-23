@@ -138,6 +138,7 @@ NUM         = ((-)?[1-9][0-9]*) | 0
   "*"             { return symbol(sym.TIMES); }
   "/"             { return symbol(sym.DIVIDE); }
   "min"           { return symbol(sym.MIN); }
+  "max"           { return symbol(sym.MAX); }
 
   "=="            { return symbol(sym.EQEQ); }
   "!="            { return symbol(sym.NEQ); }

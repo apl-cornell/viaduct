@@ -102,7 +102,7 @@ terminal ASSERT;
 terminal NOT, ANDAND, OROR;
 terminal EQEQ, NEQ, LT, LEQ, GT, GEQ;
 terminal PLUS, MINUS, TIMES, DIVIDE;
-terminal MIN;
+terminal MIN, MAX;
 
 terminal DECLASSIFY, ENDORSE, DOWNGRADE;
 
@@ -341,6 +341,10 @@ expr ::=
 
   | MIN:begin OPEN_PAREN expr:e1 COMMA expr:e2 CLOSE_PAREN:end {:
       RESULT = binaryExpression(Minimum.INSTANCE, e1, e2);
+    :}
+
+  | MAX:begin OPEN_PAREN expr:e1 COMMA expr:e2 CLOSE_PAREN:end {:
+      RESULT = binaryExpression(Maximum.INSTANCE, e1, e2);
     :}
 
   | DECLASSIFY:begin expr:e optional_from_label:from TO label:to {:

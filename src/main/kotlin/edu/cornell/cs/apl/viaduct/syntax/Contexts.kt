@@ -13,51 +13,95 @@ import kotlinx.collections.immutable.persistentMapOf
 private typealias NameMap<Name, Data> = PersistentMap<Name, Pair<Data, SourceLocation>>
 
 /**
- * Maintains information about [Name]s in scope.
+ * Provides information about [Name]s in scope.
  *
- * Only maintains information about names declared at statement level.
- * See [ProgramContext] for [Name]s declared at the top level.
+ * Only provides information about names declared at statement level.
+ * See [ProgramContextProvider] for [Name]s declared at the top level.
  *
  * @param TemporaryData Context information attached to each [Temporary] declaration.
  * @param ObjectData Context information attached to each [ObjectVariable] declaration.
  * @param LoopData Context information attached to each [JumpLabel].
  */
-internal class StatementContext<TemporaryData, ObjectData, LoopData>
+interface StatementContextProvider<TemporaryData, ObjectData, LoopData> {
+    /**
+     * Returns the data associated with [name].
+     *
+     * @throws UndefinedNameError
+     */
+    @Suppress("INAPPLICABLE_JVM_NAME")
+    @JvmName("getTemporaryData")
+    operator fun get(name: TemporaryNode): TemporaryData
+
+    /**
+     * Returns the data associated with [name].
+     *
+     * @throws UndefinedNameError
+     */
+    @Suppress("INAPPLICABLE_JVM_NAME")
+    @JvmName("getObjectData")
+    operator fun get(name: ObjectVariableNode): ObjectData
+
+    /**
+     * Returns the data associated with [name].
+     *
+     * @throws UndefinedNameError
+     */
+    @Suppress("INAPPLICABLE_JVM_NAME")
+    @JvmName("getLoopData")
+    operator fun get(name: JumpLabelNode): LoopData
+}
+
+/**
+ * Provides information about [Name]s that are declared at the program top level.
+ *
+ * @param HostData Context information attached to each [Host] declaration.
+ * @param ProtocolData Context information attached to each [Protocol] declaration.
+ */
+interface ProgramContextProvider<HostData, ProtocolData> {
+    /**
+     * Returns the data associated with [name].
+     *
+     * @throws UndefinedNameError
+     */
+    @Suppress("INAPPLICABLE_JVM_NAME")
+    @JvmName("getHostData")
+    operator fun get(name: HostNode): HostData
+
+    /**
+     * Returns the data associated with [name].
+     *
+     * @throws UndefinedNameError
+     */
+    @Suppress("INAPPLICABLE_JVM_NAME")
+    @JvmName("getProtocolData")
+    operator fun get(name: ProtocolNode): ProtocolData
+}
+
+/** A [StatementContextProvider] that provides update operations. */
+class StatementContext<TemporaryData, ObjectData, LoopData>
 private constructor(
     private val temporaries: NameMap<Temporary, TemporaryData>,
     private val objects: NameMap<ObjectVariable, ObjectData>,
     private val loops: NameMap<JumpLabel, LoopData>
-) {
+) : StatementContextProvider<TemporaryData, ObjectData, LoopData> {
     /** Constructs the empty context. */
     constructor() : this(persistentMapOf(), persistentMapOf(), persistentMapOf())
 
-    /**
-     * Returns the data associated with [name].
-     *
-     * @throws UndefinedNameError
-     */
+    @Suppress("INAPPLICABLE_JVM_NAME")
     @JvmName("getTemporaryData")
-    fun get(name: TemporaryNode): TemporaryData {
+    override operator fun get(name: TemporaryNode): TemporaryData {
         return temporaries[name.value]?.first ?: throw UndefinedNameError(name)
     }
 
-    /**
-     * Returns the data associated with [name].
-     *
-     * @throws UndefinedNameError
-     */
+    @Suppress("INAPPLICABLE_JVM_NAME")
     @JvmName("getObjectData")
-    fun get(name: ObjectVariableNode): ObjectData {
+    override operator fun get(name: ObjectVariableNode): ObjectData {
         return objects[name.value]?.first ?: throw UndefinedNameError(name)
     }
 
-    /**
-     * Returns the data associated with [name].
-     *
-     * @throws UndefinedNameError
-     */
+    @Suppress("INAPPLICABLE_JVM_NAME")
     @JvmName("getLoopData")
-    fun get(name: JumpLabelNode): LoopData {
+    override operator fun get(name: JumpLabelNode): LoopData {
         return loops[name.value]?.first ?: throw UndefinedNameError(name)
     }
 
@@ -113,31 +157,23 @@ private constructor(
  * @param HostData Context information attached to each [Host] declaration.
  * @param ProtocolData Context information attached to each [Protocol] declaration.
  */
-internal class ProgramContext<HostData, ProtocolData>
+class ProgramContext<HostData, ProtocolData>
 private constructor(
     private val hosts: NameMap<Host, HostData>,
     private val protocols: NameMap<Protocol, ProtocolData>
-) {
+) : ProgramContextProvider<HostData, ProtocolData> {
     /** Constructs the empty context. */
     constructor() : this(persistentMapOf(), persistentMapOf())
 
-    /**
-     * Returns the data associated with [name].
-     *
-     * @throws UndefinedNameError
-     */
+    @Suppress("INAPPLICABLE_JVM_NAME")
     @JvmName("getHostData")
-    fun get(name: HostNode): HostData {
+    override operator fun get(name: HostNode): HostData {
         return hosts[name.value]?.first ?: throw UndefinedNameError(name)
     }
 
-    /**
-     * Returns the data associated with [name].
-     *
-     * @throws UndefinedNameError
-     */
+    @Suppress("INAPPLICABLE_JVM_NAME")
     @JvmName("getProtocolData")
-    fun get(name: ProtocolNode): ProtocolData {
+    override operator fun get(name: ProtocolNode): ProtocolData {
         return protocols[name.value]?.first ?: throw UndefinedNameError(name)
     }
 
@@ -158,7 +194,10 @@ private constructor(
      * @throws NameClashError
      */
     @JvmName("putProtocolData")
-    fun put(name: ProtocolNode, data: ProtocolData): ProgramContext<HostData, ProtocolData> {
+    fun put(
+        name: ProtocolNode,
+        data: ProtocolData
+    ): ProgramContext<HostData, ProtocolData> {
         assertNotDeclared(name, protocols)
         return copy(protocols = protocols.put(name.value, Pair(data, name.sourceLocation)))
     }

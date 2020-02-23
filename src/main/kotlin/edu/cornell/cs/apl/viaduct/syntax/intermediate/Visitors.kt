@@ -1,12 +1,19 @@
 package edu.cornell.cs.apl.viaduct.syntax.intermediate
 
 import edu.cornell.cs.apl.viaduct.syntax.Host
+import edu.cornell.cs.apl.viaduct.syntax.HostNode
 import edu.cornell.cs.apl.viaduct.syntax.JumpLabel
+import edu.cornell.cs.apl.viaduct.syntax.JumpLabelNode
 import edu.cornell.cs.apl.viaduct.syntax.ObjectVariable
+import edu.cornell.cs.apl.viaduct.syntax.ObjectVariableNode
 import edu.cornell.cs.apl.viaduct.syntax.ProgramContext
+import edu.cornell.cs.apl.viaduct.syntax.ProgramContextProvider
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
+import edu.cornell.cs.apl.viaduct.syntax.ProtocolNode
 import edu.cornell.cs.apl.viaduct.syntax.StatementContext
+import edu.cornell.cs.apl.viaduct.syntax.StatementContextProvider
 import edu.cornell.cs.apl.viaduct.syntax.Temporary
+import edu.cornell.cs.apl.viaduct.syntax.TemporaryNode
 
 /**
  * A suspended traversal of a [StatementNode]. Allows the node to be traversed 0 or more times.
@@ -321,20 +328,17 @@ interface ProgramVisitor<StatementResult, DeclarationResult, ProgramResult> :
     override fun getData(node: ProcessDeclarationNode) {}
 }
 
-/**
- * Traverses the expression's abstract syntax tree in depth-first order producing
- * a result using [visitor].
- */
+/** Traverses the expression. */
 private fun <ExpressionResult, TemporaryData, ObjectData> ExpressionNode.traverse(
     visitor: ExpressionVisitorWithContext<ExpressionResult, TemporaryData, ObjectData>,
-    context: StatementContext<TemporaryData, ObjectData, *>
+    context: StatementContextProvider<TemporaryData, ObjectData, *>
 ): ExpressionResult {
     return when (this) {
         is LiteralNode ->
             visitor.leave(this)
 
         is ReadNode ->
-            visitor.leave(this, context.get(temporary))
+            visitor.leave(this, context[temporary])
 
         is OperatorApplicationNode ->
             visitor.leave(this, arguments.map { it.traverse(visitor, context) })
@@ -343,7 +347,7 @@ private fun <ExpressionResult, TemporaryData, ObjectData> ExpressionNode.travers
             visitor.leave(
                 this,
                 arguments.map { it.traverse(visitor, context) },
-                context.get(this.variable)
+                context[this.variable]
             )
 
         is DeclassificationNode ->
@@ -354,14 +358,11 @@ private fun <ExpressionResult, TemporaryData, ObjectData> ExpressionNode.travers
     }
 }
 
-/**
- * Traverses the statement's abstract syntax tree in depth-first order producing
- * a result using [visitor].
- */
+/** Traverses the block node. */
 private fun <ExpressionResult, StatementResult, TemporaryData, ObjectData, LoopData, HostData, ProtocolData> BlockNode.traverse(
     visitor: StatementVisitorWithContext<ExpressionResult, StatementResult, TemporaryData, ObjectData, LoopData, HostData, ProtocolData>,
     initialContext: StatementContext<TemporaryData, ObjectData, LoopData>,
-    programContext: ProgramContext<HostData, ProtocolData>
+    programContext: ProgramContextProvider<HostData, ProtocolData>
 ): StatementResult {
     var context = initialContext
 
@@ -391,7 +392,7 @@ private fun <ExpressionResult, StatementResult, TemporaryData, ObjectData, LoopD
 
             is UpdateNode -> {
                 val arguments = it.arguments.map { arg -> arg.traverse(visitor, context) }
-                visitor.leave(it, arguments, context.get(it.variable))
+                visitor.leave(it, arguments, context[it.variable])
             }
 
             is IfNode -> {
@@ -418,7 +419,7 @@ private fun <ExpressionResult, StatementResult, TemporaryData, ObjectData, LoopD
             }
 
             is BreakNode -> {
-                visitor.leave(it, context.get(it.jumpLabel))
+                visitor.leave(it, context[it.jumpLabel])
             }
 
             is BlockNode -> {
@@ -426,7 +427,7 @@ private fun <ExpressionResult, StatementResult, TemporaryData, ObjectData, LoopD
             }
 
             is InputNode -> {
-                val hostData = programContext.get(it.host)
+                val hostData = programContext[it.host]
                 val result = visitor.leave(it, hostData)
 
                 // Update context
@@ -438,11 +439,11 @@ private fun <ExpressionResult, StatementResult, TemporaryData, ObjectData, LoopD
 
             is OutputNode -> {
                 val message = it.message.traverse(visitor, context)
-                visitor.leave(it, message, programContext.get(it.host))
+                visitor.leave(it, message, programContext[it.host])
             }
 
             is ReceiveNode -> {
-                val protocolData = programContext.get(it.protocol)
+                val protocolData = programContext[it.protocol]
                 val result = visitor.leave(it, protocolData)
 
                 // Update context
@@ -454,7 +455,7 @@ private fun <ExpressionResult, StatementResult, TemporaryData, ObjectData, LoopD
 
             is SendNode -> {
                 val message = it.message.traverse(visitor, context)
-                visitor.leave(it, message, programContext.get(it.protocol))
+                visitor.leave(it, message, programContext[it.protocol])
             }
         }
     }
@@ -502,4 +503,53 @@ fun <StatementResult, DeclarationResult, ProgramResult, HostData, ProtocolData> 
     }
 
     return visitor.leave(this, declarations)
+}
+
+/**
+ * Traverses the statement's abstract syntax tree in depth-first order producing
+ * a result using [visitor].
+ */
+fun <ExpressionResult, StatementResult, TemporaryData, ObjectData, LoopData> BlockNode.traverse(
+    visitor: StatementVisitorWithVariableLoopContext<ExpressionResult, StatementResult, TemporaryData, ObjectData, LoopData>
+): StatementResult =
+    this.traverse(
+        visitor as StatementVisitorWithContext<ExpressionResult, StatementResult, TemporaryData, ObjectData, LoopData, Unit, Unit>,
+        StatementContext(),
+        NoProgramContext
+    )
+
+/**
+ * Traverses the expression's abstract syntax tree in depth-first order producing
+ * a result using [visitor].
+ */
+fun <ExpressionResult> ExpressionNode.traverse(visitor: ExpressionVisitor<ExpressionResult>): ExpressionResult =
+    this.traverse(
+        visitor as ExpressionVisitorWithContext<ExpressionResult, Unit, Unit>,
+        NoStatementContext
+    )
+
+/** A [StatementContextProvider] that always returns [Unit]. */
+private object NoStatementContext : StatementContextProvider<Unit, Unit, Unit> {
+    @Suppress("INAPPLICABLE_JVM_NAME")
+    @JvmName("getTemporaryData")
+    override operator fun get(name: TemporaryNode) = Unit
+
+    @Suppress("INAPPLICABLE_JVM_NAME")
+    @JvmName("getObjectData")
+    override operator fun get(name: ObjectVariableNode) = Unit
+
+    @Suppress("INAPPLICABLE_JVM_NAME")
+    @JvmName("getLoopData")
+    override operator fun get(name: JumpLabelNode) = Unit
+}
+
+/** A [ProgramContextProvider] that always returns [Unit]. */
+private object NoProgramContext : ProgramContextProvider<Unit, Unit> {
+    @Suppress("INAPPLICABLE_JVM_NAME")
+    @JvmName("getHostData")
+    override operator fun get(name: HostNode) = Unit
+
+    @Suppress("INAPPLICABLE_JVM_NAME")
+    @JvmName("getProtocolData")
+    override operator fun get(name: ProtocolNode) = Unit
 }

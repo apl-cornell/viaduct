@@ -77,7 +77,7 @@ interface ProgramContextProvider<HostData, ProtocolData> {
     operator fun get(name: ProtocolNode): ProtocolData
 }
 
-/** A [StatementContextProvider] that provides update operations. */
+/** A [StatementContextProvider] that supports updates. */
 class StatementContext<TemporaryData, ObjectData, LoopData>
 private constructor(
     private val temporaries: NameMap<Temporary, TemporaryData>,
@@ -151,12 +151,7 @@ private constructor(
     }
 }
 
-/**
- * Maintains information about [Name]s that are declared at the program top level.
- *
- * @param HostData Context information attached to each [Host] declaration.
- * @param ProtocolData Context information attached to each [Protocol] declaration.
- */
+/** A [ProgramContextProvider] that supports updates. */
 class ProgramContext<HostData, ProtocolData>
 private constructor(
     private val hosts: NameMap<Host, HostData>,

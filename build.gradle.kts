@@ -34,12 +34,9 @@ allprojects {
 
     /** Compilation */
 
-    tasks.compileKotlin {
+    tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
         kotlinOptions.jvmTarget = "1.8"
-    }
-
-    tasks.compileTestKotlin {
-        kotlinOptions.jvmTarget = "1.8"
+        kotlinOptions.allWarningsAsErrors = true
     }
 
     /** Code Style */

@@ -7,7 +7,7 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.StatementNode
  *  to be used by protocol selection. */
 open class ProtocolSelectionContext(
     val hostConfig: HostTrustConfiguration,
-    stmt: StatementNode
+    val stmt: StatementNode
 ) {
     /*
     init {

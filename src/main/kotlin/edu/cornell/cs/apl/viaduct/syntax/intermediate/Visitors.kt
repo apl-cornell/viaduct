@@ -18,6 +18,310 @@ typealias SuspendedTraversal<StatementResult, TemporaryData, ObjectData, LoopDat
         (StatementVisitorWithContext<*, StatementResult, TemporaryData, ObjectData, LoopData, HostData, ProtocolData>) -> StatementResult
 
 /**
+ * An expression visitor that uses context information.
+ *
+ * @param ExpressionResult Data returned from each [ExpressionNode].
+ * @param TemporaryData Context information attached to each [Temporary] declaration.
+ * @param ObjectData Context information attached to each [ObjectVariable] declaration.
+ */
+interface ExpressionVisitorWithContext<ExpressionResult, TemporaryData, ObjectData> {
+    fun leave(node: LiteralNode): ExpressionResult
+
+    fun leave(node: ReadNode, data: TemporaryData): ExpressionResult
+
+    fun leave(node: OperatorApplicationNode, arguments: List<ExpressionResult>): ExpressionResult
+
+    fun leave(
+        node: QueryNode,
+        arguments: List<ExpressionResult>,
+        data: ObjectData
+    ): ExpressionResult
+
+    fun leave(node: DeclassificationNode, expression: ExpressionResult): ExpressionResult
+
+    fun leave(node: EndorsementNode, expression: ExpressionResult): ExpressionResult
+}
+
+/**
+ * A statement visitor that uses context information.
+ *
+ * This visitor allows some control over the traversal logic for control nodes.
+ * @see [SuspendedTraversal].
+ *
+ * @param ExpressionResult Data returned from each [ExpressionNode].
+ * @param StatementResult Data returned from each [StatementNode].
+ * @param TemporaryData Context information attached to each [Temporary] declaration.
+ * @param ObjectData Context information attached to each [ObjectVariable] declaration.
+ * @param LoopData Context information attached to each [JumpLabel].
+ * @param HostData Context information attached to each [Host] declaration.
+ * @param ProtocolData Context information attached to each [Protocol] declaration.
+ */
+interface StatementVisitorWithContext<ExpressionResult, StatementResult, TemporaryData, ObjectData, LoopData, HostData, ProtocolData>
+    : ExpressionVisitorWithContext<ExpressionResult, TemporaryData, ObjectData> {
+    /**
+     * Returns the data that will be associated with the [Temporary] declared by [node].
+     *
+     * Guaranteed to be called immediately after [leave], and exactly once per call to [leave].
+     */
+    fun getData(node: LetNode, value: ExpressionResult): TemporaryData
+
+    /**
+     * Returns the data that will be associated with the [ObjectVariable] declared by [node].
+     *
+     * Guaranteed to be called immediately after [leave], and exactly once per call to [leave].
+     */
+    fun getData(node: DeclarationNode, arguments: List<ExpressionResult>): ObjectData
+
+    /**
+     * Returns the data that will be associated with the [JumpLabel] of [node].
+     *
+     * Guaranteed to be called immediately before [leave], and exactly once per call to [leave].
+     */
+    fun getData(node: InfiniteLoopNode): LoopData
+
+    /**
+     * Returns the data that will be associated with the [Temporary] declared by [node].
+     *
+     * Guaranteed to be called immediately after [leave], and exactly once per call to [leave].
+     */
+    fun getData(node: InputNode, data: HostData): TemporaryData
+
+    /**
+     * Returns the data that will be associated with the [Temporary] declared by [node].
+     *
+     * Guaranteed to be called immediately after [leave], and exactly once per call to [leave].
+     */
+    fun getData(node: ReceiveNode, data: ProtocolData): TemporaryData
+
+    fun leave(node: LetNode, value: ExpressionResult): StatementResult
+
+    fun leave(node: DeclarationNode, arguments: List<ExpressionResult>): StatementResult
+
+    fun leave(
+        node: UpdateNode,
+        arguments: List<ExpressionResult>,
+        data: ObjectData
+    ): StatementResult
+
+    fun leave(
+        node: IfNode,
+        guard: ExpressionResult,
+        thenBranch: SuspendedTraversal<StatementResult, TemporaryData, ObjectData, LoopData, HostData, ProtocolData>,
+        elseBranch: SuspendedTraversal<StatementResult, TemporaryData, ObjectData, LoopData, HostData, ProtocolData>
+    ): StatementResult
+
+    fun leave(
+        node: InfiniteLoopNode,
+        body: SuspendedTraversal<StatementResult, TemporaryData, ObjectData, LoopData, HostData, ProtocolData>,
+        data: LoopData
+    ): StatementResult
+
+    fun leave(node: BreakNode, data: LoopData): StatementResult
+
+    fun leave(node: BlockNode, statements: List<StatementResult>): StatementResult
+
+    fun leave(node: InputNode, data: HostData): StatementResult
+
+    fun leave(node: OutputNode, message: ExpressionResult, data: HostData): StatementResult
+
+    fun leave(node: ReceiveNode, data: ProtocolData): StatementResult
+
+    fun leave(node: SendNode, message: ExpressionResult, data: ProtocolData): StatementResult
+}
+
+/**
+ * A program visitor that uses context information.
+ *
+ * @param StatementResult Data returned from each [StatementNode].
+ * @param DeclarationResult Data returned from each [TopLevelDeclarationNode].
+ * @param ProgramResult Data returned from the [ProgramNode].
+ * @param HostData Context information attached to each [Host] declaration.
+ * @param ProtocolData Context information attached to each [Protocol] declaration.
+ */
+interface ProgramVisitorWithContext<StatementResult, DeclarationResult, ProgramResult, HostData, ProtocolData> {
+    /**
+     * Returns the data that will be associated with the [Host] declared by [node].
+     *
+     * Will be called exactly once before _all_ [leave] methods.
+     */
+    fun getData(node: HostDeclarationNode): HostData
+
+    /**
+     * Returns the data that will be associated with the [Protocol] declared by [node].
+     *
+     * Will be called exactly once before _all_ [leave] methods.
+     */
+    fun getData(node: ProcessDeclarationNode): ProtocolData
+
+    fun leave(node: HostDeclarationNode): DeclarationResult
+
+    fun leave(
+        node: ProcessDeclarationNode,
+        body: SuspendedTraversal<StatementResult, *, *, *, HostData, ProtocolData>
+    ): DeclarationResult
+
+    fun leave(node: ProgramNode, declarations: List<DeclarationResult>): ProgramResult
+}
+
+/**
+ * An expression visitor that does not use context information.
+ *
+ * @see ExpressionVisitorWithContext
+ */
+interface ExpressionVisitor<ExpressionResult> :
+    ExpressionVisitorWithContext<ExpressionResult, Unit, Unit> {
+    override fun leave(node: ReadNode, data: Unit): ExpressionResult {
+        return leave(node)
+    }
+
+    override fun leave(
+        node: QueryNode,
+        arguments: List<ExpressionResult>,
+        data: Unit
+    ): ExpressionResult {
+        return leave(node, arguments)
+    }
+
+    fun leave(node: ReadNode): ExpressionResult
+
+    fun leave(node: QueryNode, arguments: List<ExpressionResult>): ExpressionResult
+}
+
+/**
+ * A statement visitor that uses statement level context information (variables and loops),
+ * but no top level context information (hosts and protocols).
+ *
+ * @see StatementVisitorWithContext
+ */
+interface StatementVisitorWithVariableLoopContext<ExpressionResult, StatementResult, TemporaryData, ObjectData, LoopData> :
+    StatementVisitorWithContext<ExpressionResult, StatementResult, TemporaryData, ObjectData, LoopData, Unit, Unit> {
+    override fun getData(node: InputNode, data: Unit): TemporaryData {
+        return getData(node)
+    }
+
+    override fun getData(node: ReceiveNode, data: Unit): TemporaryData {
+        return getData(node)
+    }
+
+    override fun leave(node: InputNode, data: Unit): StatementResult {
+        return leave(node)
+    }
+
+    override fun leave(node: OutputNode, message: ExpressionResult, data: Unit): StatementResult {
+        return leave(node, message)
+    }
+
+    override fun leave(node: ReceiveNode, data: Unit): StatementResult {
+        return leave(node)
+    }
+
+    override fun leave(node: SendNode, message: ExpressionResult, data: Unit): StatementResult {
+        return leave(node, message)
+    }
+
+    fun getData(node: InputNode): TemporaryData
+
+    fun getData(node: ReceiveNode): TemporaryData
+
+    fun leave(node: InputNode): StatementResult
+
+    fun leave(node: OutputNode, message: ExpressionResult): StatementResult
+
+    fun leave(node: ReceiveNode): StatementResult
+
+    fun leave(node: SendNode, message: ExpressionResult): StatementResult
+}
+
+/**
+ * A statement visitor that uses context information for variables only.
+ *
+ * @see StatementVisitorWithContext
+ */
+interface StatementVisitorWithVariableContext<ExpressionResult, StatementResult, TemporaryData, ObjectData> :
+    StatementVisitorWithVariableLoopContext<ExpressionResult, StatementResult, TemporaryData, ObjectData, Unit> {
+    override fun getData(node: InfiniteLoopNode) {}
+
+    override fun leave(
+        node: InfiniteLoopNode,
+        body: SuspendedTraversal<StatementResult, TemporaryData, ObjectData, Unit, Unit, Unit>,
+        data: Unit
+    ): StatementResult {
+        return leave(node, body)
+    }
+
+    override fun leave(node: BreakNode, data: Unit): StatementResult {
+        return leave(node)
+    }
+
+    fun leave(
+        node: InfiniteLoopNode,
+        body: SuspendedTraversal<StatementResult, TemporaryData, ObjectData, Unit, Unit, Unit>
+    ): StatementResult
+
+    fun leave(node: BreakNode): StatementResult
+}
+
+/**
+ * A statement visitor that does not use context information.
+ *
+ * @see StatementVisitorWithContext
+ */
+interface StatementVisitor<ExpressionResult, StatementResult> :
+    ExpressionVisitor<ExpressionResult>,
+    StatementVisitorWithVariableContext<ExpressionResult, StatementResult, Unit, Unit> {
+    override fun getData(node: LetNode, value: ExpressionResult) {}
+
+    override fun getData(node: DeclarationNode, arguments: List<ExpressionResult>) {}
+
+    override fun leave(
+        node: UpdateNode,
+        arguments: List<ExpressionResult>,
+        data: Unit
+    ): StatementResult {
+        return leave(node, arguments)
+    }
+
+    override fun leave(
+        node: IfNode,
+        guard: ExpressionResult,
+        thenBranch: SuspendedTraversal<StatementResult, Unit, Unit, Unit, Unit, Unit>,
+        elseBranch: SuspendedTraversal<StatementResult, Unit, Unit, Unit, Unit, Unit>
+    ): StatementResult {
+        return leave(node, guard, thenBranch(this), elseBranch(this))
+    }
+
+    override fun leave(
+        node: InfiniteLoopNode,
+        body: SuspendedTraversal<StatementResult, Unit, Unit, Unit, Unit, Unit>
+    ): StatementResult {
+        return leave(node, body(this))
+    }
+
+    fun leave(
+        node: IfNode,
+        guard: ExpressionResult,
+        thenBranch: StatementResult,
+        elseBranch: StatementResult
+    ): StatementResult
+
+    fun leave(node: InfiniteLoopNode, body: StatementResult): StatementResult
+
+    fun leave(node: UpdateNode, arguments: List<ExpressionResult>): StatementResult
+}
+
+/**
+ * A program visitor that does not use context information.
+ *
+ * @see ProgramVisitorWithContext
+ */
+interface ProgramVisitor<StatementResult, DeclarationResult, ProgramResult> :
+    ProgramVisitorWithContext<StatementResult, DeclarationResult, ProgramResult, Unit, Unit> {
+    override fun getData(node: HostDeclarationNode) {}
+
+    override fun getData(node: ProcessDeclarationNode) {}
+}
+
+/**
  * Traverses the expression's abstract syntax tree in depth-first order producing
  * a result using [visitor].
  */
@@ -198,309 +502,4 @@ fun <StatementResult, DeclarationResult, ProgramResult, HostData, ProtocolData> 
     }
 
     return visitor.leave(this, declarations)
-}
-
-/**
- * An expression visitor that uses context information.
- *
- * @param ExpressionResult Data returned from each [ExpressionNode].
- * @param TemporaryData Context information attached to each [Temporary] declaration.
- * @param ObjectData Context information attached to each [ObjectVariable] declaration.
- */
-interface ExpressionVisitorWithContext<ExpressionResult, TemporaryData, ObjectData> {
-    fun leave(node: LiteralNode): ExpressionResult
-
-    fun leave(node: ReadNode, data: TemporaryData): ExpressionResult
-
-    fun leave(node: OperatorApplicationNode, arguments: List<ExpressionResult>): ExpressionResult
-
-    fun leave(
-        node: QueryNode,
-        arguments: List<ExpressionResult>,
-        data: ObjectData
-    ): ExpressionResult
-
-    fun leave(node: DeclassificationNode, expression: ExpressionResult): ExpressionResult
-
-    fun leave(node: EndorsementNode, expression: ExpressionResult): ExpressionResult
-}
-
-/**
- * A statement visitor that uses context information.
- *
- * This visitor allows some control over the traversal logic for control nodes.
- * @see [SuspendedTraversal].
- *
- * @param ExpressionResult Data returned from each [ExpressionNode].
- * @param StatementResult Data returned from each [StatementNode].
- * @param TemporaryData Context information attached to each [Temporary] declaration.
- * @param ObjectData Context information attached to each [ObjectVariable] declaration.
- * @param LoopData Context information attached to each [JumpLabel].
- * @param HostData Context information attached to each [Host] declaration.
- * @param ProtocolData Context information attached to each [Protocol] declaration.
- */
-interface StatementVisitorWithContext<ExpressionResult, StatementResult, TemporaryData, ObjectData, LoopData, HostData, ProtocolData>
-    : ExpressionVisitorWithContext<ExpressionResult, TemporaryData, ObjectData> {
-    /**
-     * Returns the data that will be associated with the [Temporary] declared by [node].
-     *
-     * Guaranteed to be called immediately after [leave], and exactly once per call to [leave].
-     */
-    fun getData(node: LetNode, value: ExpressionResult): TemporaryData
-
-    /**
-     * Returns the data that will be associated with the [ObjectVariable] declared by [node].
-     *
-     * Guaranteed to be called immediately after [leave], and exactly once per call to [leave].
-     */
-    fun getData(node: DeclarationNode, arguments: List<ExpressionResult>): ObjectData
-
-    /**
-     * Returns the data that will be associated with the [JumpLabel] of [node].
-     *
-     * Guaranteed to be called immediately before [leave], and exactly once per call to [leave].
-     */
-    fun getData(node: InfiniteLoopNode): LoopData
-
-    /**
-     * Returns the data that will be associated with the [Temporary] declared by [node].
-     *
-     * Guaranteed to be called immediately after [leave], and exactly once per call to [leave].
-     */
-    fun getData(node: InputNode, data: HostData): TemporaryData
-
-    /**
-     * Returns the data that will be associated with the [Temporary] declared by [node].
-     *
-     * Guaranteed to be called immediately after [leave], and exactly once per call to [leave].
-     */
-    fun getData(node: ReceiveNode, data: ProtocolData): TemporaryData
-
-    fun leave(node: LetNode, value: ExpressionResult): StatementResult
-
-    fun leave(node: DeclarationNode, arguments: List<ExpressionResult>): StatementResult
-
-    fun leave(
-        node: UpdateNode,
-        arguments: List<ExpressionResult>,
-        data: ObjectData
-    ): StatementResult
-
-    fun leave(
-        node: IfNode,
-        guard: ExpressionResult,
-        thenBranch: SuspendedTraversal<StatementResult, TemporaryData, ObjectData, LoopData, HostData, ProtocolData>,
-        elseBranch: SuspendedTraversal<StatementResult, TemporaryData, ObjectData, LoopData, HostData, ProtocolData>
-    ): StatementResult
-
-    fun leave(
-        node: InfiniteLoopNode,
-        body: SuspendedTraversal<StatementResult, TemporaryData, ObjectData, LoopData, HostData, ProtocolData>,
-        data: LoopData
-    ): StatementResult
-
-    fun leave(node: BreakNode, data: LoopData): StatementResult
-
-    fun leave(node: BlockNode, statements: List<StatementResult>): StatementResult
-
-    fun leave(node: InputNode, data: HostData): StatementResult
-
-    fun leave(node: OutputNode, message: ExpressionResult, data: HostData): StatementResult
-
-    fun leave(node: ReceiveNode, data: ProtocolData): StatementResult
-
-    fun leave(node: SendNode, message: ExpressionResult, data: ProtocolData): StatementResult
-}
-
-/**
- * A program visitor that uses context information.
- *
- * @param StatementResult Data returned from each [StatementNode].
- * @param DeclarationResult Data returned from each [TopLevelDeclarationNode].
- * @param ProgramResult Data returned from the [ProgramNode].
- * @param HostData Context information attached to each [Host] declaration.
- * @param ProtocolData Context information attached to each [Protocol] declaration.
- */
-interface ProgramVisitorWithContext<StatementResult, DeclarationResult, ProgramResult, HostData, ProtocolData> {
-    /**
-     * Returns the data that will be associated with the [Host] declared by [node].
-     *
-     * Will be called exactly once before _all_ [leave] methods.
-     */
-    fun getData(node: HostDeclarationNode): HostData
-
-    /**
-     * Returns the data that will be associated with the [Protocol] declared by [node].
-     *
-     * Will be called exactly once before _all_ [leave] methods.
-     */
-    fun getData(node: ProcessDeclarationNode): ProtocolData
-
-    fun leave(node: HostDeclarationNode): DeclarationResult
-
-    fun leave(
-        node: ProcessDeclarationNode,
-        body: SuspendedTraversal<StatementResult, *, *, *, HostData, ProtocolData>
-    ): DeclarationResult
-
-    fun leave(node: ProgramNode, declarations: List<DeclarationResult>): ProgramResult
-}
-
-/**
- * An expression visitor that does not use context information.
- *
- * @see ExpressionVisitorWithContext
- */
-interface ExpressionVisitor<ExpressionResult> :
-    ExpressionVisitorWithContext<ExpressionResult, Unit, Unit> {
-    override fun leave(node: ReadNode, data: Unit): ExpressionResult {
-        return leave(node)
-    }
-
-    override fun leave(
-        node: QueryNode,
-        arguments: List<ExpressionResult>,
-        data: Unit
-    ): ExpressionResult {
-        return leave(node, arguments)
-    }
-
-    fun leave(node: ReadNode): ExpressionResult
-
-    fun leave(node: QueryNode, arguments: List<ExpressionResult>): ExpressionResult
-}
-
-/**
- * A statement visitor that uses context information for variables and loops.
- *
- * @see StatementVisitorWithContext
- */
-interface StatementVisitorWithVariableLoopContext<ExpressionResult, StatementResult, TemporaryData, ObjectData, LoopData>
-    :
-    StatementVisitorWithContext<ExpressionResult, StatementResult, TemporaryData, ObjectData, LoopData, Unit, Unit> {
-    override fun getData(node: InputNode, data: Unit): TemporaryData {
-        return getData(node)
-    }
-
-    override fun getData(node: ReceiveNode, data: Unit): TemporaryData {
-        return getData(node)
-    }
-
-    override fun leave(node: InputNode, data: Unit): StatementResult {
-        return leave(node)
-    }
-
-    override fun leave(node: OutputNode, message: ExpressionResult, data: Unit): StatementResult {
-        return leave(node, message)
-    }
-
-    override fun leave(node: ReceiveNode, data: Unit): StatementResult {
-        return leave(node)
-    }
-
-    override fun leave(node: SendNode, message: ExpressionResult, data: Unit): StatementResult {
-        return leave(node, message)
-    }
-
-    fun getData(node: InputNode): TemporaryData
-
-    fun getData(node: ReceiveNode): TemporaryData
-
-    fun leave(node: InputNode): StatementResult
-
-    fun leave(node: OutputNode, message: ExpressionResult): StatementResult
-
-    fun leave(node: ReceiveNode): StatementResult
-
-    fun leave(node: SendNode, message: ExpressionResult): StatementResult
-}
-
-/**
- * A statement visitor that uses context information for variables.
- *
- * @see StatementVisitorWithContext
- */
-interface StatementVisitorWithVariableContext<ExpressionResult, StatementResult, TemporaryData, ObjectData>
-    :
-    StatementVisitorWithVariableLoopContext<ExpressionResult, StatementResult, TemporaryData, ObjectData, Unit> {
-    override fun getData(node: InfiniteLoopNode) {}
-
-    override fun leave(
-        node: InfiniteLoopNode,
-        body: SuspendedTraversal<StatementResult, TemporaryData, ObjectData, Unit, Unit, Unit>,
-        data: Unit
-    ): StatementResult {
-        return leave(node, body)
-    }
-
-    override fun leave(node: BreakNode, data: Unit): StatementResult {
-        return leave(node)
-    }
-
-    fun leave(
-        node: InfiniteLoopNode,
-        body: SuspendedTraversal<StatementResult, TemporaryData, ObjectData, Unit, Unit, Unit>
-    ): StatementResult
-
-    fun leave(node: BreakNode): StatementResult
-}
-
-/**
- * A statement visitor that does not use context information.
- *
- * @see StatementVisitorWithContext
- */
-interface StatementVisitor<ExpressionResult, StatementResult> :
-    ExpressionVisitor<ExpressionResult>,
-    StatementVisitorWithVariableContext<ExpressionResult, StatementResult, Unit, Unit> {
-    override fun getData(node: LetNode, value: ExpressionResult) {}
-
-    override fun getData(node: DeclarationNode, arguments: List<ExpressionResult>) {}
-
-    override fun leave(
-        node: UpdateNode,
-        arguments: List<ExpressionResult>,
-        data: Unit
-    ): StatementResult {
-        return leave(node, arguments)
-    }
-
-    override fun leave(
-        node: IfNode,
-        guard: ExpressionResult,
-        thenBranch: SuspendedTraversal<StatementResult, Unit, Unit, Unit, Unit, Unit>,
-        elseBranch: SuspendedTraversal<StatementResult, Unit, Unit, Unit, Unit, Unit>
-    ): StatementResult {
-        return leave(node, guard, thenBranch(this), elseBranch(this))
-    }
-
-    override fun leave(
-        node: InfiniteLoopNode,
-        body: SuspendedTraversal<StatementResult, Unit, Unit, Unit, Unit, Unit>
-    ): StatementResult {
-        return leave(node, body(this))
-    }
-
-    fun leave(
-        node: IfNode,
-        guard: ExpressionResult,
-        thenBranch: StatementResult,
-        elseBranch: StatementResult
-    ): StatementResult
-
-    fun leave(node: InfiniteLoopNode, body: StatementResult): StatementResult
-
-    fun leave(node: UpdateNode, arguments: List<ExpressionResult>): StatementResult
-}
-
-/**
- * A program visitor that does not use context information.
- *
- * @see ProgramVisitorWithContext
- */
-interface ProgramVisitor<StatementResult, DeclarationResult, ProgramResult> :
-    ProgramVisitorWithContext<StatementResult, DeclarationResult, ProgramResult, Unit, Unit> {
-    override fun getData(node: HostDeclarationNode) {}
-
-    override fun getData(node: ProcessDeclarationNode) {}
 }

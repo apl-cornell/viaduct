@@ -7,7 +7,7 @@ import kotlinx.collections.immutable.PersistentMap
 import kotlinx.collections.immutable.persistentMapOf
 
 /**
- * Mapping from a name to the piece of data associated with it along with the source location
+ * A mapping from a name to the piece of data associated with it along with the source location
  * where the name was first declared.
  */
 private typealias NameMap<Name, Data> = PersistentMap<Name, Pair<Data, SourceLocation>>

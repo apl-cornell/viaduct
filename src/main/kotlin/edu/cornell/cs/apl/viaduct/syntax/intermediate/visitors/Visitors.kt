@@ -269,7 +269,7 @@ interface StatementVisitorWithVariableLoopContext<ExpressionResult, StatementRes
  */
 interface StatementVisitorWithVariableContext<ExpressionResult, StatementResult, TemporaryData, ObjectData> :
     StatementVisitorWithVariableLoopContext<ExpressionResult, StatementResult, TemporaryData, ObjectData, Unit> {
-    override fun getData(node: InfiniteLoopNode) {}
+    override fun getData(node: InfiniteLoopNode) = Unit
 
     override fun leave(
         node: InfiniteLoopNode,
@@ -299,9 +299,13 @@ interface StatementVisitorWithVariableContext<ExpressionResult, StatementResult,
 interface StatementVisitor<ExpressionResult, StatementResult> :
     ExpressionVisitor<ExpressionResult>,
     StatementVisitorWithVariableContext<ExpressionResult, StatementResult, Unit, Unit> {
-    override fun getData(node: LetNode, value: ExpressionResult) {}
+    override fun getData(node: LetNode, value: ExpressionResult) = Unit
 
-    override fun getData(node: DeclarationNode, arguments: List<ExpressionResult>) {}
+    override fun getData(node: DeclarationNode, arguments: List<ExpressionResult>) = Unit
+
+    override fun getData(node: InputNode) = Unit
+
+    override fun getData(node: ReceiveNode) = Unit
 
     override fun leave(
         node: UpdateNode,
@@ -346,9 +350,9 @@ interface StatementVisitor<ExpressionResult, StatementResult> :
  */
 interface ProgramVisitor<StatementResult, DeclarationResult, ProgramResult> :
     ProgramVisitorWithContext<StatementResult, DeclarationResult, ProgramResult, Unit, Unit> {
-    override fun getData(node: HostDeclarationNode) {}
+    override fun getData(node: HostDeclarationNode) = Unit
 
-    override fun getData(node: ProcessDeclarationNode) {}
+    override fun getData(node: ProcessDeclarationNode) = Unit
 }
 
 /** Traverses the expression. */

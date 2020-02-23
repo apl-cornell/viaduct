@@ -1,4 +1,4 @@
-package edu.cornell.cs.apl.viaduct.syntax.intermediate
+package edu.cornell.cs.apl.viaduct.syntax.intermediate.visitors
 
 import edu.cornell.cs.apl.viaduct.errorskotlin.NameClashError
 import edu.cornell.cs.apl.viaduct.errorskotlin.UndefinedNameError
@@ -13,6 +13,14 @@ import edu.cornell.cs.apl.viaduct.syntax.SourceLocation
 import edu.cornell.cs.apl.viaduct.syntax.Temporary
 import edu.cornell.cs.apl.viaduct.syntax.TemporaryNode
 import edu.cornell.cs.apl.viaduct.syntax.Variable
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.DeclarationNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.InputNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.LetNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProcessDeclarationNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.ReceiveNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.StatementNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.TopLevelDeclarationNode
 import kotlinx.collections.immutable.PersistentMap
 import kotlinx.collections.immutable.persistentMapOf
 
@@ -25,7 +33,10 @@ import kotlinx.collections.immutable.persistentMapOf
 fun <StatementResult, DeclarationResult, ProgramResult, TemporaryData, ObjectData, HostData, ProtocolData> ProgramNode.annotate(
     visitor: ProgramVisitorWithVariableContext<StatementResult, DeclarationResult, ProgramResult, TemporaryData, ObjectData, HostData, ProtocolData>
 ): ProgramAnnotationMap<TemporaryData, ObjectData> {
-    val annotator = ProgramAnnotator(visitor)
+    val annotator =
+        ProgramAnnotator(
+            visitor
+        )
     this.traverse(annotator)
     return annotator.annotations
 }
@@ -56,7 +67,7 @@ private constructor(
      * @throws UndefinedNameError
      */
     @JvmName("getTemporaryAnnotation")
-    fun get(variable: TemporaryNode): TemporaryAnnotation {
+    operator fun get(variable: TemporaryNode): TemporaryAnnotation {
         return temporaries[variable.value]?.first ?: throw UndefinedNameError(variable)
     }
 
@@ -66,7 +77,7 @@ private constructor(
      * @throws UndefinedNameError
      */
     @JvmName("getObjectAnnotation")
-    fun get(variable: ObjectVariableNode): ObjectAnnotation {
+    operator fun get(variable: ObjectVariableNode): ObjectAnnotation {
         return objects[variable.value]?.first ?: throw UndefinedNameError(variable)
     }
 
@@ -78,7 +89,10 @@ private constructor(
     @JvmName("putTemporaryAnnotation")
     fun put(variable: TemporaryNode, annotation: TemporaryAnnotation):
         VariableAnnotationMap<TemporaryAnnotation, ObjectAnnotation> {
-        assertNotDeclared(variable, temporaries)
+        assertNotDeclared(
+            variable,
+            temporaries
+        )
         return copy(
             temporaries = temporaries.put(
                 variable.value,
@@ -95,7 +109,10 @@ private constructor(
     @JvmName("putObjectAnnotation")
     fun put(variable: ObjectVariableNode, annotation: ObjectAnnotation):
         VariableAnnotationMap<TemporaryAnnotation, ObjectAnnotation> {
-        assertNotDeclared(variable, objects)
+        assertNotDeclared(
+            variable,
+            objects
+        )
         return copy(
             objects = objects.put(
                 variable.value,
@@ -109,7 +126,10 @@ private constructor(
         temporaries: NameMap<Temporary, TemporaryAnnotation> = this.temporaries,
         objects: NameMap<ObjectVariable, ObjectAnnotation> = this.objects
     ): VariableAnnotationMap<TemporaryAnnotation, ObjectAnnotation> {
-        return VariableAnnotationMap(temporaries, objects)
+        return VariableAnnotationMap(
+            temporaries,
+            objects
+        )
     }
 }
 
@@ -130,7 +150,7 @@ private constructor(
      *
      * @throws UndefinedNameError
      */
-    fun get(protocol: ProtocolNode): VariableAnnotationMap<TemporaryAnnotation, ObjectAnnotation> {
+    operator fun get(protocol: ProtocolNode): VariableAnnotationMap<TemporaryAnnotation, ObjectAnnotation> {
         return statementAnnotations[protocol.value]?.first ?: throw UndefinedNameError(protocol)
     }
 
@@ -143,7 +163,10 @@ private constructor(
         protocol: ProtocolNode,
         annotations: VariableAnnotationMap<TemporaryAnnotation, ObjectAnnotation>
     ): ProgramAnnotationMap<TemporaryAnnotation, ObjectAnnotation> {
-        assertNotDeclared(protocol, statementAnnotations)
+        assertNotDeclared(
+            protocol,
+            statementAnnotations
+        )
         return copy(
             statementAnnotations = statementAnnotations.put(
                 protocol.value,
@@ -156,7 +179,9 @@ private constructor(
     private fun copy(
         statementAnnotations: NameMap<Protocol, VariableAnnotationMap<TemporaryAnnotation, ObjectAnnotation>> = this.statementAnnotations
     ): ProgramAnnotationMap<TemporaryAnnotation, ObjectAnnotation> {
-        return ProgramAnnotationMap(statementAnnotations)
+        return ProgramAnnotationMap(
+            statementAnnotations
+        )
     }
 }
 
@@ -193,7 +218,8 @@ abstract class ProgramVisitorWithVariableContext<StatementResult, DeclarationRes
 private class StatementAnnotator<ExpressionResult, StatementResult, TemporaryData, ObjectData, LoopData, HostData, ProtocolData>(
     val visitor: StatementVisitorWithContext<ExpressionResult, StatementResult, TemporaryData, ObjectData, LoopData, HostData, ProtocolData>
 ) : StatementVisitorWithContext<ExpressionResult, StatementResult, TemporaryData, ObjectData, LoopData, HostData, ProtocolData> by visitor {
-    val annotations = VariableAnnotationMap<TemporaryData, ObjectData>()
+    val annotations =
+        VariableAnnotationMap<TemporaryData, ObjectData>()
 
     override fun getData(node: LetNode, value: ExpressionResult): TemporaryData {
         val annotation = visitor.getData(node, value)
@@ -227,14 +253,18 @@ private class StatementAnnotator<ExpressionResult, StatementResult, TemporaryDat
 private class ProgramAnnotator<StatementResult, DeclarationResult, ProgramResult, TemporaryData, ObjectData, HostData, ProtocolData>(
     val visitor: ProgramVisitorWithVariableContext<StatementResult, DeclarationResult, ProgramResult, TemporaryData, ObjectData, HostData, ProtocolData>
 ) : ProgramVisitorWithContext<StatementResult, DeclarationResult, ProgramResult, HostData, ProtocolData> by visitor {
-    val annotations = ProgramAnnotationMap<TemporaryData, ObjectData>()
+    val annotations =
+        ProgramAnnotationMap<TemporaryData, ObjectData>()
 
     override fun leave(
         node: ProcessDeclarationNode,
         body: SuspendedTraversal<StatementResult, *, *, *, HostData, ProtocolData>
     ): DeclarationResult {
         return visitor.leaveProcessDeclaration(node) { visitor ->
-            val annotator = StatementAnnotator(visitor)
+            val annotator =
+                StatementAnnotator(
+                    visitor
+                )
             val bodyResult = body(annotator)
             annotations.put(node.protocol, annotator.annotations)
             bodyResult

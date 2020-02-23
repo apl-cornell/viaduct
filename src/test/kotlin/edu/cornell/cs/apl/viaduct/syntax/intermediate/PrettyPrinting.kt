@@ -14,4 +14,3 @@ internal class PrettyPrintingTest {
         elaborated.toSurfaceNode().asDocument.print()
     }
 }
-

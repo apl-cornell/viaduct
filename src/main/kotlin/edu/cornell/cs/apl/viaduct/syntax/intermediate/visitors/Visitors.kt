@@ -1,4 +1,4 @@
-package edu.cornell.cs.apl.viaduct.syntax.intermediate
+package edu.cornell.cs.apl.viaduct.syntax.intermediate.visitors
 
 import edu.cornell.cs.apl.viaduct.syntax.Host
 import edu.cornell.cs.apl.viaduct.syntax.HostNode
@@ -14,6 +14,29 @@ import edu.cornell.cs.apl.viaduct.syntax.StatementContext
 import edu.cornell.cs.apl.viaduct.syntax.StatementContextProvider
 import edu.cornell.cs.apl.viaduct.syntax.Temporary
 import edu.cornell.cs.apl.viaduct.syntax.TemporaryNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.BlockNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.BreakNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.DeclarationNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.DeclassificationNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.EndorsementNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.ExpressionNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.HostDeclarationNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.IfNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.InfiniteLoopNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.InputNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.LetNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.LiteralNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.OperatorApplicationNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutputNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProcessDeclarationNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.QueryNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.ReadNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.ReceiveNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.SendNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.StatementNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.TopLevelDeclarationNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.UpdateNode
 
 /**
  * A suspended traversal of a [StatementNode]. Allows the node to be traversed 0 or more times.
@@ -64,7 +87,8 @@ interface ExpressionVisitorWithContext<ExpressionResult, TemporaryData, ObjectDa
  * @param ProtocolData Context information attached to each [Protocol] declaration.
  */
 interface StatementVisitorWithContext<ExpressionResult, StatementResult, TemporaryData, ObjectData, LoopData, HostData, ProtocolData>
-    : ExpressionVisitorWithContext<ExpressionResult, TemporaryData, ObjectData> {
+    :
+    ExpressionVisitorWithContext<ExpressionResult, TemporaryData, ObjectData> {
     /**
      * Returns the data that will be associated with the [Temporary] declared by [node].
      *

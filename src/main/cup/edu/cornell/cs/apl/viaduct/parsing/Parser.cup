@@ -39,7 +39,7 @@ action code {:
 parser code {:
     /** Generates source location information for a node given left and right character offsets. */
     private SourceRange location(int left, int right) {
-        return ((ImpLexer) getScanner()).location(left, right);
+        return ((Lexer) getScanner()).location(left, right);
     }
 
     @Override

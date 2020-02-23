@@ -5,7 +5,7 @@ import java.io.File
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ArgumentsSource
 
-internal class ParserTest {
+internal class ParsingTest {
     @ParameterizedTest
     @ArgumentsSource(ExampleFileProvider::class)
     fun `it parses`(file: File) {

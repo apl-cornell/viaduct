@@ -153,6 +153,7 @@ open class CupCompileTask : DefaultTask() {
         if (cupFiles.filter { !it.isDirectory }.isEmpty) {
             logger.warn("no cup files found")
         }
+        project.delete(generateDir)
         cupFiles.visit {
             if (!this.isDirectory) {
                 compileFile(this.file)

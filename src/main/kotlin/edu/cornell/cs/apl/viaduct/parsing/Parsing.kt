@@ -9,5 +9,5 @@ fun String.parse(): ProgramNode {
 
 /** Parses this source file and returns the AST. */
 fun SourceFile.parse(): ProgramNode {
-    return Parser.parse(this)
+    return Parsing.parse(this)
 }

@@ -10,7 +10,7 @@ import java_cup.runtime.Symbol;
 
 %%
 
-%class ImpLexer
+%class Lexer
 %unicode
 %cup
 
@@ -28,7 +28,7 @@ import java_cup.runtime.Symbol;
   * @param sourceFile input file
   * @param symbolFactory generates symbols with source location information
   */
-  public ImpLexer(SourceFile sourceFile, ComplexSymbolFactory symbolFactory) {
+  public Lexer(SourceFile sourceFile, ComplexSymbolFactory symbolFactory) {
     this(sourceFile.createReader(), sourceFile, symbolFactory);
   }
 

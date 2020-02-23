@@ -3,7 +3,6 @@ package edu.cornell.cs.apl.viaduct.protocols
 import edu.cornell.cs.apl.viaduct.security.Label
 import edu.cornell.cs.apl.viaduct.syntax.Host
 import edu.cornell.cs.apl.viaduct.syntax.HostTrustConfiguration
-import kotlinx.collections.immutable.toPersistentSet
 
 /**
  * An MPC protocol that provides security against a dishonest majority.
@@ -11,7 +10,7 @@ import kotlinx.collections.immutable.toPersistentSet
  * n - 1 out of the n participating hosts are corrupted.
  * In return, availability may be lost even with a single corrupted participant.
  */
-class MPCWithAbort(hosts: Set<Host>) : MPCProtocol() {
+class MPCWithAbort(hosts: Set<Host>) : MPCProtocol, SymmetricProtocol(hosts) {
     init {
         require(hosts.size >= 2)
     }
@@ -19,9 +18,12 @@ class MPCWithAbort(hosts: Set<Host>) : MPCProtocol() {
     override val protocolName: String
         get() = "MPCWithAbort"
 
-    // Make an immutable copy
-    override val hosts: Set<Host> = hosts.toPersistentSet()
-
     override fun authority(hostTrustConfiguration: HostTrustConfiguration): Label =
-        hosts.fold(Label.weakest()) { label, host -> label.and(hostTrustConfiguration.getValue(host)) }
+        hosts.map { hostTrustConfiguration.getValue(it) }.reduce(Label::and)
+
+    override fun equals(other: Any?): Boolean =
+        other is MPCWithAbort && this.hosts == other.hosts
+
+    override fun hashCode(): Int =
+        hosts.hashCode()
 }

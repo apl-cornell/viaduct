@@ -4,7 +4,6 @@ import edu.cornell.cs.apl.viaduct.security.Label
 import edu.cornell.cs.apl.viaduct.syntax.Host
 import edu.cornell.cs.apl.viaduct.syntax.HostTrustConfiguration
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
-import kotlinx.collections.immutable.toPersistentSet
 
 /**
  * The protocol that replicates data and computations across a set of hosts in the clear.
@@ -12,7 +11,7 @@ import kotlinx.collections.immutable.toPersistentSet
  * Replication increases integrity, but doing it in the clear sacrifices confidentiality.
  * Additionally, availability is lost if _any_ participating host aborts.
  */
-class Replication(hosts: Set<Host>) : Protocol {
+class Replication(hosts: Set<Host>) : Protocol, SymmetricProtocol(hosts) {
     init {
         require(hosts.size >= 2)
     }
@@ -20,11 +19,8 @@ class Replication(hosts: Set<Host>) : Protocol {
     override val protocolName: String
         get() = "Replication"
 
-    // Make an immutable copy
-    override val hosts: Set<Host> = hosts.toPersistentSet()
-
     override fun authority(hostTrustConfiguration: HostTrustConfiguration): Label =
-        hosts.fold(Label.top()) { label, host -> label.meet(hostTrustConfiguration.getValue(host)) }
+        hosts.map { hostTrustConfiguration.getValue(it) }.reduce(Label::meet)
 
     override fun equals(other: Any?): Boolean =
         other is Replication && this.hosts == other.hosts

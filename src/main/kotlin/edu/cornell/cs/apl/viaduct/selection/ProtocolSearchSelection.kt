@@ -4,9 +4,8 @@ import edu.cornell.cs.apl.viaduct.syntax.Protocol
 import edu.cornell.cs.apl.viaduct.syntax.Variable
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.StatementNode
 import edu.cornell.cs.apl.viaduct.syntax.util.VariableExtractor
-
-import kotlinx.collections.immutable.persistentMapOf
 import java.util.PriorityQueue
+import kotlinx.collections.immutable.persistentMapOf
 
 private data class ProtocolSearchNode(
     val protocolMap: ProtocolMap,

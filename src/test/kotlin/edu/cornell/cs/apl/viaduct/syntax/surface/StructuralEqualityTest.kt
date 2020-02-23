@@ -3,12 +3,12 @@ package edu.cornell.cs.apl.viaduct.syntax.surface
 import edu.cornell.cs.apl.viaduct.ExampleFileProvider
 import edu.cornell.cs.apl.viaduct.parsing.SourceFile
 import edu.cornell.cs.apl.viaduct.parsing.parse
+import java.io.File
 import org.junit.jupiter.api.Assertions.assertNotEquals
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ArgumentsSource
-import java.io.File
 
 internal class StructuralEqualityTest {
     @ParameterizedTest

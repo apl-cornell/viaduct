@@ -1,11 +1,11 @@
 package edu.cornell.cs.apl.viaduct
 
-import org.junit.jupiter.api.extension.ExtensionContext
-import org.junit.jupiter.params.provider.Arguments
-import org.junit.jupiter.params.provider.ArgumentsProvider
 import java.io.File
 import java.util.stream.Stream
 import kotlin.streams.asStream
+import org.junit.jupiter.api.extension.ExtensionContext
+import org.junit.jupiter.params.provider.Arguments
+import org.junit.jupiter.params.provider.ArgumentsProvider
 
 /** Enumerates the paths of source files under the examples directory. */
 internal class ExampleFileProvider : ArgumentsProvider {

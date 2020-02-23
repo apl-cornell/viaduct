@@ -5,14 +5,14 @@ import edu.cornell.cs.apl.viaduct.parsing.SourceFile
 import edu.cornell.cs.apl.viaduct.parsing.parse
 import edu.cornell.cs.apl.viaduct.passes.elaborated
 import edu.cornell.cs.apl.viaduct.passes.typeCheck
+import java.io.File
+import kotlin.reflect.KClass
+import kotlin.reflect.full.isSubclassOf
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ArgumentsSource
-import java.io.File
-import kotlin.reflect.KClass
-import kotlin.reflect.full.isSubclassOf
 
 internal class ErrorsTest {
     @ParameterizedTest

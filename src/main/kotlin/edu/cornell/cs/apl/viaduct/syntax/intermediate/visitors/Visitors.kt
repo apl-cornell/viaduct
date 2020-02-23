@@ -86,8 +86,7 @@ interface ExpressionVisitorWithContext<ExpressionResult, TemporaryData, ObjectDa
  * @param HostData Context information attached to each [Host] declaration.
  * @param ProtocolData Context information attached to each [Protocol] declaration.
  */
-interface StatementVisitorWithContext<ExpressionResult, StatementResult, TemporaryData, ObjectData, LoopData, HostData, ProtocolData>
-    :
+interface StatementVisitorWithContext<ExpressionResult, StatementResult, TemporaryData, ObjectData, LoopData, HostData, ProtocolData> :
     ExpressionVisitorWithContext<ExpressionResult, TemporaryData, ObjectData> {
     /**
      * Returns the data that will be associated with the [Temporary] declared by [node].

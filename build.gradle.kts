@@ -7,16 +7,14 @@ buildscript {
 plugins {
     application
     kotlin("jvm") version "1.3.61"
-    id("org.jetbrains.dokka") version "0.10.0"
+    id("org.jetbrains.dokka") version "0.10.1"
 
     // Style checking
-    checkstyle
-    id("com.diffplug.gradle.spotless") version "3.18.0"
+    id("com.diffplug.gradle.spotless") version "3.27.1"
     id("org.ec4j.editorconfig") version "0.0.3"
 
     // Bug finding
     jacoco
-    id("com.github.spotbugs") version "1.6.9"
 
     // Lexing & Parsing
     id("org.xbib.gradle.plugin.jflex") version "1.2.0"
@@ -147,6 +145,7 @@ open class CupCompileTask : DefaultTask() {
     @Input
     val cupArguments: List<String> = listOf("-interface")
 
+    @Input
     override fun getDescription(): String {
         return "Generates Java sources from CUP grammar files."
     }
@@ -185,26 +184,12 @@ open class CupCompileTask : DefaultTask() {
 
 /** Checks */
 
-// TODO: remove once we convert all Java code
-checkstyle {
-    maxWarnings = 0
-    configDir = project.file("config/checkstyle")
-}
-
+// TODO: remove once Java is gone
 spotless {
     java {
         googleJavaFormat()
         target("src/**/*.java")
     }
-}
-
-// TODO: remove once we convert all Java code
-tasks.withType<com.github.spotbugs.SpotBugsTask> {
-    reports {
-        xml.isEnabled = false
-        html.isEnabled = true
-    }
-    excludeFilter = project.file("config/spotbugs/excludeFilter.xml")
 }
 
 editorconfig {
@@ -234,6 +219,7 @@ tasks.jacocoTestReport {
     }
 }
 
+// Enable assertions during manual testing
 tasks.named<JavaExec>("run") {
     enableAssertions = true
 }

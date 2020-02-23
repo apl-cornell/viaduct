@@ -8,8 +8,8 @@ class FunctionType(arguments: List<ValueType>, val result: ValueType) : Type {
     // Make an immutable copy
     val arguments: List<ValueType> = arguments.toPersistentList()
 
-    constructor(vararg arguments: ValueType, result: ValueType)
-        : this(persistentListOf(*arguments), result)
+    constructor(vararg arguments: ValueType, result: ValueType) :
+        this(persistentListOf(*arguments), result)
 
     override fun equals(other: Any?): Boolean {
         if (other !is FunctionType)

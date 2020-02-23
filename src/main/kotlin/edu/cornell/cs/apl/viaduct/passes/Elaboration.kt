@@ -10,8 +10,6 @@ import edu.cornell.cs.apl.viaduct.syntax.ObjectVariableNode
 import edu.cornell.cs.apl.viaduct.syntax.StatementContext
 import edu.cornell.cs.apl.viaduct.syntax.Temporary
 import edu.cornell.cs.apl.viaduct.syntax.TemporaryNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.Node
-import edu.cornell.cs.apl.viaduct.util.FreshNameGenerator
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.AtomicExpressionNode as IAtomicExpressionNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.BlockNode as IBlockNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.BreakNode as IBreakNode
@@ -25,6 +23,7 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.InfiniteLoopNode as IInfin
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.InputNode as IInputNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.LetNode as ILetNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.LiteralNode as ILiteralNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.Node
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.OperatorApplicationNode as IOperatorApplicationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutputNode as IOutputNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProcessDeclarationNode as IProcessDeclarationNode
@@ -62,6 +61,7 @@ import edu.cornell.cs.apl.viaduct.syntax.surface.SkipNode as SSkipNode
 import edu.cornell.cs.apl.viaduct.syntax.surface.StatementNode as SStatementNode
 import edu.cornell.cs.apl.viaduct.syntax.surface.UpdateNode as SUpdateNode
 import edu.cornell.cs.apl.viaduct.syntax.surface.WhileLoopNode as SWhileLoopNode
+import edu.cornell.cs.apl.viaduct.util.FreshNameGenerator
 
 /**
  * Elaborates this surface program into a program in the intermediate representation.

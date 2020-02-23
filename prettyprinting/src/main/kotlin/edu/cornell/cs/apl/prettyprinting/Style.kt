@@ -54,6 +54,8 @@ internal fun Style.toAnsi(): Ansi {
     /** Calls [normal] when color is a [NormalColor] and [bright] when it is a [BrightColor]. */
     fun setColor(color: AnsiColor, normal: (Ansi.Color) -> Ansi, bright: (Ansi.Color) -> Ansi) {
         when (color) {
+            is DefaultColor ->
+                normal(Ansi.Color.DEFAULT)
             is NormalColor ->
                 normal(color.baseColor.toAnsiColor())
             is BrightColor ->

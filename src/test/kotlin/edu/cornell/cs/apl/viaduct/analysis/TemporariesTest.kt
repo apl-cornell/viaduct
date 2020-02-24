@@ -27,4 +27,14 @@ internal class TemporariesTest {
             }
         }
     }
+
+    @ParameterizedTest
+    @ArgumentsSource(ExampleProgramProvider::class)
+    fun definitionSites(program: ProgramNode) {
+        program.elaborated().forEach {
+            if (it is ProcessDeclarationNode) {
+                definitionSites(it)
+            }
+        }
+    }
 }

@@ -3,8 +3,12 @@ package edu.cornell.cs.apl.viaduct.analysis
 import edu.cornell.cs.apl.viaduct.syntax.Temporary
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.BlockNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ExpressionNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.InputNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.LetNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProcessDeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ReadNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.ReceiveNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.SimpleStatementNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.StatementNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.visitors.StatementReducer
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.visitors.traverse
@@ -33,6 +37,36 @@ fun readers(process: ProcessDeclarationNode): Map<Temporary, Set<StatementNode>>
         reads.entries.flatMap { entry -> entry.value.map { tmp -> Pair(tmp, entry.key) } }
     val grouped = entries.groupBy({ it.first }, { it.second })
     return grouped.mapValues { it.value.toSet() }
+}
+
+/**
+ * Returns a map from [Temporary] variables declared in [process] to the statements that define
+ * them.
+ */
+fun definitionSites(process: ProcessDeclarationNode): Map<Temporary, SimpleStatementNode> {
+    val definitionSites = mutableMapOf<Temporary, SimpleStatementNode>()
+
+    process.traverse(
+        object : StatementReducer<Unit> {
+            override val initial: Unit get() = Unit
+
+            override val combine: (Unit, Unit) -> Unit = { _, _ -> Unit }
+
+            override fun leave(node: LetNode, value: Unit) {
+                definitionSites[node.temporary.value] = node
+            }
+
+            override fun leave(node: InputNode, data: Unit) {
+                definitionSites[node.temporary.value] = node
+            }
+
+            override fun leave(node: ReceiveNode) {
+                definitionSites[node.temporary.value] = node
+            }
+        }
+    )
+
+    return definitionSites
 }
 
 /**

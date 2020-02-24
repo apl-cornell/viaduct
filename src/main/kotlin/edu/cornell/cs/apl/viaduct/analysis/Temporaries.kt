@@ -47,16 +47,12 @@ fun definitionSites(process: ProcessDeclarationNode): Map<Temporary, SimpleState
     val definitionSites = mutableMapOf<Temporary, SimpleStatementNode>()
 
     process.traverse(
-        object : StatementReducer<Unit> {
-            override val initial: Unit get() = Unit
-
-            override val combine: (Unit, Unit) -> Unit = { _, _ -> Unit }
-
+        object : EffectfulStatementVisitor {
             override fun leave(node: LetNode, value: Unit) {
                 definitionSites[node.temporary.value] = node
             }
 
-            override fun leave(node: InputNode, data: Unit) {
+            override fun leave(node: InputNode) {
                 definitionSites[node.temporary.value] = node
             }
 

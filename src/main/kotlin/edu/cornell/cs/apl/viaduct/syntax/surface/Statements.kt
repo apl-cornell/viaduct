@@ -24,6 +24,7 @@ import edu.cornell.cs.apl.viaduct.syntax.datatypes.Modify
 import edu.cornell.cs.apl.viaduct.syntax.datatypes.MutableCell
 import edu.cornell.cs.apl.viaduct.syntax.datatypes.Set
 import edu.cornell.cs.apl.viaduct.syntax.datatypes.UpdateName
+import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toPersistentList
 
@@ -31,7 +32,8 @@ import kotlinx.collections.immutable.toPersistentList
 sealed class StatementNode : Node()
 
 /**
- * A statement that is _not_ a combination of other statements.
+ * A statement that is _not_ a combination of other statements, and that
+ * does not affect control flow.
  *
  * Simple statements can show up in for loop headers.
  */
@@ -228,12 +230,13 @@ class BreakNode(
 }
 
 /** A sequence of statements. */
-class BlockNode(
-    statements: List<StatementNode>,
+class BlockNode
+private constructor(
+    val statements: PersistentList<StatementNode>,
     override val sourceLocation: SourceLocation
 ) : StatementNode(), List<StatementNode> by statements {
-    // Make an immutable copy
-    val statements: List<StatementNode> = statements.toPersistentList()
+    constructor(statements: List<StatementNode>, sourceLocation: SourceLocation) :
+        this(statements.toPersistentList(), sourceLocation)
 
     constructor(vararg statements: StatementNode, sourceLocation: SourceLocation) :
         this(persistentListOf(*statements), sourceLocation)

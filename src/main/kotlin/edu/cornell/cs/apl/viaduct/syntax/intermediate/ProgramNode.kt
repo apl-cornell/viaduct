@@ -2,6 +2,7 @@ package edu.cornell.cs.apl.viaduct.syntax.intermediate
 
 import edu.cornell.cs.apl.viaduct.passes.elaborated
 import edu.cornell.cs.apl.viaduct.syntax.SourceLocation
+import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.toPersistentList
 
 /**
@@ -9,16 +10,20 @@ import kotlinx.collections.immutable.toPersistentList
  *
  * Instances are created by [elaborated].
  */
-class ProgramNode(
-    declarations: List<TopLevelDeclarationNode>,
+class ProgramNode
+private constructor(
+    val declarations: PersistentList<TopLevelDeclarationNode>,
     override val sourceLocation: SourceLocation
 ) : Node(), List<TopLevelDeclarationNode> by declarations {
-    // Make an immutable copy
-    val declarations: List<TopLevelDeclarationNode> = declarations.toPersistentList()
+    constructor(declarations: List<TopLevelDeclarationNode>, sourceLocation: SourceLocation) :
+        this(declarations.toPersistentList(), sourceLocation)
 
     override fun toSurfaceNode(): edu.cornell.cs.apl.viaduct.syntax.surface.ProgramNode =
         edu.cornell.cs.apl.viaduct.syntax.surface.ProgramNode(
             declarations.map { it.toSurfaceNode() },
             sourceLocation
         )
+
+    override fun toString(): String =
+        "Program (" + sourceLocation.sourcePath + ")"
 }

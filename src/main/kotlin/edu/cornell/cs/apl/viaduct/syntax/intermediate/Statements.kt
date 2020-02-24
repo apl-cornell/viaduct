@@ -12,6 +12,7 @@ import edu.cornell.cs.apl.viaduct.syntax.SourceLocation
 import edu.cornell.cs.apl.viaduct.syntax.TemporaryNode
 import edu.cornell.cs.apl.viaduct.syntax.ValueTypeNode
 import edu.cornell.cs.apl.viaduct.syntax.datatypes.UpdateName
+import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toPersistentList
 
@@ -20,8 +21,10 @@ sealed class StatementNode : Node() {
     abstract override fun toSurfaceNode(): edu.cornell.cs.apl.viaduct.syntax.surface.StatementNode
 }
 
-// TODO: remove this? This was only necessary for ForNodes.
-//   Only reason to keep would be reverse elaboration.
+/**
+ * A statement that is _not_ a combination of other statements, and that
+ * does not affect control flow.
+ * */
 sealed class SimpleStatementNode : StatementNode() {
     abstract override fun toSurfaceNode(): edu.cornell.cs.apl.viaduct.syntax.surface.SimpleStatementNode
 }
@@ -80,84 +83,6 @@ class UpdateNode(
             variable,
             update,
             Arguments(arguments.map { it.toSurfaceNode() }, arguments.sourceLocation),
-            sourceLocation
-        )
-}
-
-// Compound Statements
-
-// TODO: remove this.
-sealed class ControlNode : StatementNode()
-
-/**
- * Executing statements conditionally.
- *
- * @param thenBranch Statement to execute if the guard is true.
- * @param elseBranch Statement to execute if the guard is false.
- */
-class IfNode(
-    val guard: AtomicExpressionNode,
-    val thenBranch: BlockNode,
-    val elseBranch: BlockNode,
-    override val sourceLocation: SourceLocation
-) : ControlNode() {
-    override fun toSurfaceNode(): edu.cornell.cs.apl.viaduct.syntax.surface.IfNode =
-        edu.cornell.cs.apl.viaduct.syntax.surface.IfNode(
-            guard.toSurfaceNode(),
-            thenBranch.toSurfaceNode(),
-            elseBranch.toSurfaceNode(),
-            sourceLocation
-        )
-}
-
-/**
- * A loop that is executed until a break statement is encountered.
- *
- * @param jumpLabel A label for the loop that break nodes can refer to.
- */
-class InfiniteLoopNode(
-    val body: BlockNode,
-    val jumpLabel: JumpLabelNode,
-    override val sourceLocation: SourceLocation
-) : ControlNode() {
-    override fun toSurfaceNode(): edu.cornell.cs.apl.viaduct.syntax.surface.InfiniteLoopNode =
-        edu.cornell.cs.apl.viaduct.syntax.surface.InfiniteLoopNode(
-            body.toSurfaceNode(),
-            jumpLabel,
-            sourceLocation
-        )
-}
-
-/**
- * Breaking out of a loop.
- *
- * @param jumpLabel Label of the loop to break out of. A null value refers to the innermost loop.
- */
-class BreakNode(
-    val jumpLabel: JumpLabelNode,
-    override val sourceLocation: SourceLocation
-) : StatementNode() {
-    override fun toSurfaceNode(): edu.cornell.cs.apl.viaduct.syntax.surface.BreakNode =
-        edu.cornell.cs.apl.viaduct.syntax.surface.BreakNode(
-            jumpLabel,
-            sourceLocation
-        )
-}
-
-/** A sequence of statements. */
-class BlockNode(
-    statements: List<StatementNode>,
-    override val sourceLocation: SourceLocation
-) : StatementNode() {
-    // Make an immutable copy
-    val statements: List<StatementNode> = statements.toPersistentList()
-
-    constructor(vararg statements: StatementNode, sourceLocation: SourceLocation) :
-        this(persistentListOf(*statements), sourceLocation)
-
-    override fun toSurfaceNode(): edu.cornell.cs.apl.viaduct.syntax.surface.BlockNode =
-        edu.cornell.cs.apl.viaduct.syntax.surface.BlockNode(
-            statements.map { it.toSurfaceNode() },
             sourceLocation
         )
 }
@@ -241,6 +166,85 @@ class SendNode(
         edu.cornell.cs.apl.viaduct.syntax.surface.SendNode(
             message.toSurfaceNode(),
             protocol,
+            sourceLocation
+        )
+}
+
+// Compound Statements
+
+/** A statement that affects control flow. */
+sealed class ControlNode : StatementNode()
+
+/**
+ * Executing statements conditionally.
+ *
+ * @param thenBranch Statement to execute if the guard is true.
+ * @param elseBranch Statement to execute if the guard is false.
+ */
+class IfNode(
+    val guard: AtomicExpressionNode,
+    val thenBranch: BlockNode,
+    val elseBranch: BlockNode,
+    override val sourceLocation: SourceLocation
+) : ControlNode() {
+    override fun toSurfaceNode(): edu.cornell.cs.apl.viaduct.syntax.surface.IfNode =
+        edu.cornell.cs.apl.viaduct.syntax.surface.IfNode(
+            guard.toSurfaceNode(),
+            thenBranch.toSurfaceNode(),
+            elseBranch.toSurfaceNode(),
+            sourceLocation
+        )
+}
+
+/**
+ * A loop that is executed until a break statement is encountered.
+ *
+ * @param jumpLabel A label for the loop that break nodes can refer to.
+ */
+class InfiniteLoopNode(
+    val body: BlockNode,
+    val jumpLabel: JumpLabelNode,
+    override val sourceLocation: SourceLocation
+) : ControlNode() {
+    override fun toSurfaceNode(): edu.cornell.cs.apl.viaduct.syntax.surface.InfiniteLoopNode =
+        edu.cornell.cs.apl.viaduct.syntax.surface.InfiniteLoopNode(
+            body.toSurfaceNode(),
+            jumpLabel,
+            sourceLocation
+        )
+}
+
+/**
+ * Breaking out of a loop.
+ *
+ * @param jumpLabel Label of the loop to break out of. A null value refers to the innermost loop.
+ */
+class BreakNode(
+    val jumpLabel: JumpLabelNode,
+    override val sourceLocation: SourceLocation
+) : ControlNode() {
+    override fun toSurfaceNode(): edu.cornell.cs.apl.viaduct.syntax.surface.BreakNode =
+        edu.cornell.cs.apl.viaduct.syntax.surface.BreakNode(
+            jumpLabel,
+            sourceLocation
+        )
+}
+
+/** A sequence of statements. */
+class BlockNode
+private constructor(
+    val statements: PersistentList<StatementNode>,
+    override val sourceLocation: SourceLocation
+) : StatementNode() {
+    constructor(statements: List<StatementNode>, sourceLocation: SourceLocation) :
+        this(statements.toPersistentList(), sourceLocation)
+
+    constructor(vararg statements: StatementNode, sourceLocation: SourceLocation) :
+        this(persistentListOf(*statements), sourceLocation)
+
+    override fun toSurfaceNode(): edu.cornell.cs.apl.viaduct.syntax.surface.BlockNode =
+        edu.cornell.cs.apl.viaduct.syntax.surface.BlockNode(
+            statements.map { it.toSurfaceNode() },
             sourceLocation
         )
 }

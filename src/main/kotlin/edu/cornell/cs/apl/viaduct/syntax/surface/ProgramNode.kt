@@ -5,6 +5,7 @@ import edu.cornell.cs.apl.prettyprinting.concatenated
 import edu.cornell.cs.apl.prettyprinting.plus
 import edu.cornell.cs.apl.viaduct.parsing.parse
 import edu.cornell.cs.apl.viaduct.syntax.SourceLocation
+import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.toPersistentList
 
 /**
@@ -12,12 +13,13 @@ import kotlinx.collections.immutable.toPersistentList
  *
  * Instances are usually created by [parse].
  */
-class ProgramNode(
-    declarations: List<TopLevelDeclarationNode>,
+class ProgramNode
+private constructor(
+    val declarations: PersistentList<TopLevelDeclarationNode>,
     override val sourceLocation: SourceLocation
 ) : Node(), List<TopLevelDeclarationNode> by declarations {
-    // Make an immutable copy
-    val declarations: List<TopLevelDeclarationNode> = declarations.toPersistentList()
+    constructor(declarations: List<TopLevelDeclarationNode>, sourceLocation: SourceLocation) :
+        this(declarations.toPersistentList(), sourceLocation)
 
     override val asDocument: Document
         get() =

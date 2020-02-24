@@ -7,12 +7,15 @@ import edu.cornell.cs.apl.prettyprinting.tupled
 import edu.cornell.cs.apl.viaduct.syntax.Host
 import edu.cornell.cs.apl.viaduct.syntax.Name
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
+import kotlinx.collections.immutable.PersistentSet
 import kotlinx.collections.immutable.toPersistentSet
 
 /** A protocol that treats all involved hosts uniformly. */
-abstract class SymmetricProtocol(hosts: Set<Host>) : Protocol {
-    // Make an immutable copy
-    final override val hosts: Set<Host> = hosts.toPersistentSet()
+abstract class SymmetricProtocol
+private constructor(
+    override val hosts: PersistentSet<Host>
+) : Protocol {
+    constructor(hosts: Set<Host>) : this(hosts.toPersistentSet())
 
     final override val name: String
         get() {

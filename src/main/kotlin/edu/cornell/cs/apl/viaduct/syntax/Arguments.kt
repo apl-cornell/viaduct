@@ -1,16 +1,21 @@
 package edu.cornell.cs.apl.viaduct.syntax
 
+import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toPersistentList
 
 /** A list of arguments. */
-class Arguments<out T>(arguments: List<T>, override val sourceLocation: SourceLocation) :
-    HasSourceLocation, List<T> by arguments {
-    // Make an immutable copy
-    val arguments: List<T> = arguments.toPersistentList()
-
+class Arguments<out T>
+private constructor(
+    val arguments: PersistentList<T>,
+    override val sourceLocation: SourceLocation
+) : HasSourceLocation, List<T> by arguments {
     /** An empty argument list. */
-    constructor(sourceLocation: SourceLocation) : this(persistentListOf(), sourceLocation)
+    constructor(sourceLocation: SourceLocation) :
+        this(persistentListOf(), sourceLocation)
+
+    constructor(arguments: List<T>, sourceLocation: SourceLocation) :
+        this(arguments.toPersistentList(), sourceLocation)
 
     companion object {
         /**
@@ -20,6 +25,7 @@ class Arguments<out T>(arguments: List<T>, override val sourceLocation: SourceLo
          *
          * [arguments] must be non-empty.
          */
+        // TODO: what about parentheses around arguments?
         @JvmStatic
         fun <T : HasSourceLocation> from(vararg arguments: T): Arguments<T> {
             require(arguments.isNotEmpty()) { "Cannot infer source location without arguments." }

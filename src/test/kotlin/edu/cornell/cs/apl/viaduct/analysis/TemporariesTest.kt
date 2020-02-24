@@ -23,7 +23,7 @@ internal class TemporariesTest {
     fun readers(program: ProgramNode) {
         program.elaborated().forEach {
             if (it is ProcessDeclarationNode) {
-                Readers(it)
+                readers(it)
             }
         }
     }

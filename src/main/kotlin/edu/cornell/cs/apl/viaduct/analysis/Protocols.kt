@@ -38,19 +38,19 @@ import org.jgrapht.graph.SimpleDirectedGraph
  *
  * This statement must not be an [InternalCommunicationNode].
  */
-fun SimpleStatementNode.primaryProtocol(protocolAssignment: Map<Variable, Protocol>): Protocol =
+fun SimpleStatementNode.primaryProtocol(protocolAssignment: (Variable) -> Protocol): Protocol =
     when (this) {
         is LetNode ->
-            protocolAssignment.getValue(temporary.value)
+            protocolAssignment(temporary.value)
 
         is DeclarationNode ->
-            protocolAssignment.getValue(variable.value)
+            protocolAssignment(variable.value)
 
         is UpdateNode ->
-            protocolAssignment.getValue(variable.value)
+            protocolAssignment(variable.value)
 
         is InputNode ->
-            protocolAssignment.getValue(temporary.value)
+            protocolAssignment(temporary.value)
 
         is OutputNode ->
             Local(host.value)
@@ -65,7 +65,7 @@ fun SimpleStatementNode.primaryProtocol(protocolAssignment: Map<Variable, Protoc
  */
 fun protocols(
     process: ProcessDeclarationNode,
-    protocolAssignment: Map<Variable, Protocol>
+    protocolAssignment: (Variable) -> Protocol
 ): Map<StatementNode, Set<Protocol>> =
     ProtocolsCalculator(process, protocolAssignment).compute()
 
@@ -81,7 +81,7 @@ fun protocols(
  */
 private class ProtocolsCalculator(
     private val process: ProcessDeclarationNode,
-    private val protocolAssignment: Map<Variable, Protocol>
+    private val protocolAssignment: (Variable) -> Protocol
 ) {
     private val readers = readers(process)
     private val definitionSites = definitionSites(process)

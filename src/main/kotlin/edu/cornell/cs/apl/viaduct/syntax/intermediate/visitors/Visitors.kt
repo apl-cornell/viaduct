@@ -224,7 +224,7 @@ interface ExpressionVisitor<ExpressionResult> :
  *
  * @see StatementVisitorWithContext
  */
-interface StatementVisitorWithVariableLoopContext<ExpressionResult, StatementResult, TemporaryData, ObjectData, LoopData> :
+interface StatementVisitorWithLocalContext<ExpressionResult, StatementResult, TemporaryData, ObjectData, LoopData> :
     StatementVisitorWithContext<ExpressionResult, StatementResult, TemporaryData, ObjectData, LoopData, Unit, Unit> {
     override fun getData(node: InputNode, data: Unit): TemporaryData {
         return getData(node)
@@ -269,7 +269,7 @@ interface StatementVisitorWithVariableLoopContext<ExpressionResult, StatementRes
  * @see StatementVisitorWithContext
  */
 interface StatementVisitorWithVariableContext<ExpressionResult, StatementResult, TemporaryData, ObjectData> :
-    StatementVisitorWithVariableLoopContext<ExpressionResult, StatementResult, TemporaryData, ObjectData, Unit> {
+    StatementVisitorWithLocalContext<ExpressionResult, StatementResult, TemporaryData, ObjectData, Unit> {
     override fun getData(node: InfiniteLoopNode) = Unit
 
     override fun leave(
@@ -540,7 +540,7 @@ fun <StatementResult, DeclarationResult, ProgramResult, HostData, ProtocolData> 
  * Note that no top level context information is available to [visitor].
  */
 fun <ExpressionResult, StatementResult, TemporaryData, ObjectData, LoopData> ProcessDeclarationNode.traverse(
-    visitor: StatementVisitorWithVariableLoopContext<ExpressionResult, StatementResult, TemporaryData, ObjectData, LoopData>
+    visitor: StatementVisitorWithLocalContext<ExpressionResult, StatementResult, TemporaryData, ObjectData, LoopData>
 ): StatementResult =
     this.body.traverse(visitor, StatementContext(), NoProgramContext)
 

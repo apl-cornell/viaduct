@@ -21,7 +21,7 @@ private typealias NameMap<Name, Data> = PersistentMap<Name, Pair<Data, SourceLoc
  * @param ObjectData Context information attached to each [ObjectVariable] declaration.
  * @param LoopData Context information attached to each [JumpLabel].
  */
-interface StatementContextProvider<TemporaryData, ObjectData, LoopData> {
+interface StatementContextProvider<out TemporaryData, out ObjectData, out LoopData> {
     /**
      * Returns the data associated with [name].
      *
@@ -56,7 +56,7 @@ interface StatementContextProvider<TemporaryData, ObjectData, LoopData> {
  * @param HostData Context information attached to each [Host] declaration.
  * @param ProtocolData Context information attached to each [Protocol] declaration.
  */
-interface ProgramContextProvider<HostData, ProtocolData> {
+interface ProgramContextProvider<out HostData, out ProtocolData> {
     /**
      * Returns the data associated with [name].
      *
@@ -76,13 +76,47 @@ interface ProgramContextProvider<HostData, ProtocolData> {
     operator fun get(name: ProtocolNode): ProtocolData
 }
 
-/** A [StatementContextProvider] that supports updates. */
+/** A [StatementContextProvider] that supports persistent updates. */
+interface PersistentStatementContextProvider<TemporaryData, ObjectData, LoopData> :
+    StatementContextProvider<TemporaryData, ObjectData, LoopData> {
+    /**
+     * Returns a new context where [name] is associated with [data].
+     *
+     * @throws NameClashError
+     */
+    @Suppress("INAPPLICABLE_JVM_NAME")
+    @JvmName("putTemporaryData")
+    fun put(name: TemporaryNode, data: TemporaryData):
+        PersistentStatementContextProvider<TemporaryData, ObjectData, LoopData>
+
+    /**
+     * Returns a new context where [name] is associated with [data].
+     *
+     * @throws NameClashError
+     */
+    @Suppress("INAPPLICABLE_JVM_NAME")
+    @JvmName("putObjectData")
+    fun put(name: ObjectVariableNode, data: ObjectData):
+        PersistentStatementContextProvider<TemporaryData, ObjectData, LoopData>
+
+    /**
+     * Returns a new context where [name] is associated with [data].
+     *
+     * @throws NameClashError
+     */
+    @Suppress("INAPPLICABLE_JVM_NAME")
+    @JvmName("putLoopData")
+    fun put(name: JumpLabelNode, data: LoopData):
+        PersistentStatementContextProvider<TemporaryData, ObjectData, LoopData>
+}
+
+/** An implementation of [PersistentStatementContextProvider]. */
 class StatementContext<TemporaryData, ObjectData, LoopData>
 private constructor(
     private val temporaries: NameMap<Temporary, TemporaryData>,
     private val objects: NameMap<ObjectVariable, ObjectData>,
     private val loops: NameMap<JumpLabel, LoopData>
-) : StatementContextProvider<TemporaryData, ObjectData, LoopData> {
+) : PersistentStatementContextProvider<TemporaryData, ObjectData, LoopData> {
     /** Constructs the empty context. */
     constructor() : this(persistentMapOf(), persistentMapOf(), persistentMapOf())
 
@@ -104,37 +138,25 @@ private constructor(
         return loops[name.value]?.first ?: throw UndefinedNameError(name)
     }
 
-    /**
-     * Returns a new context where [name] is associated with [data].
-     *
-     * @throws NameClashError
-     */
+    @Suppress("INAPPLICABLE_JVM_NAME")
     @JvmName("putTemporaryData")
-    fun put(name: TemporaryNode, data: TemporaryData):
+    override fun put(name: TemporaryNode, data: TemporaryData):
         StatementContext<TemporaryData, ObjectData, LoopData> {
         assertNotDeclared(name, temporaries)
         return copy(temporaries = temporaries.put(name.value, Pair(data, name.sourceLocation)))
     }
 
-    /**
-     * Returns a new context where [name] is associated with [data].
-     *
-     * @throws NameClashError
-     */
+    @Suppress("INAPPLICABLE_JVM_NAME")
     @JvmName("putObjectData")
-    fun put(name: ObjectVariableNode, data: ObjectData):
+    override fun put(name: ObjectVariableNode, data: ObjectData):
         StatementContext<TemporaryData, ObjectData, LoopData> {
         assertNotDeclared(name, objects)
         return copy(objects = objects.put(name.value, Pair(data, name.sourceLocation)))
     }
 
-    /**
-     * Returns a new context where [name] is associated with [data].
-     *
-     * @throws NameClashError
-     */
+    @Suppress("INAPPLICABLE_JVM_NAME")
     @JvmName("putLoopData")
-    fun put(name: JumpLabelNode, data: LoopData):
+    override fun put(name: JumpLabelNode, data: LoopData):
         StatementContext<TemporaryData, ObjectData, LoopData> {
         assertNotDeclared(name, loops)
         return copy(loops = loops.put(name.value, Pair(data, name.sourceLocation)))

@@ -6,6 +6,7 @@ import edu.cornell.cs.apl.viaduct.syntax.JumpLabel
 import edu.cornell.cs.apl.viaduct.syntax.JumpLabelNode
 import edu.cornell.cs.apl.viaduct.syntax.ObjectVariable
 import edu.cornell.cs.apl.viaduct.syntax.ObjectVariableNode
+import edu.cornell.cs.apl.viaduct.syntax.PersistentStatementContextProvider
 import edu.cornell.cs.apl.viaduct.syntax.ProgramContext
 import edu.cornell.cs.apl.viaduct.syntax.ProgramContextProvider
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
@@ -388,7 +389,7 @@ private fun <ExpressionResult, TemporaryData, ObjectData> ExpressionNode.travers
 /** Traverses the block node. */
 private fun <ExpressionResult, StatementResult, TemporaryData, ObjectData, LoopData, HostData, ProtocolData> BlockNode.traverse(
     visitor: StatementVisitorWithContext<ExpressionResult, StatementResult, TemporaryData, ObjectData, LoopData, HostData, ProtocolData>,
-    initialContext: StatementContext<TemporaryData, ObjectData, LoopData>,
+    initialContext: PersistentStatementContextProvider<TemporaryData, ObjectData, LoopData>,
     programContext: ProgramContextProvider<HostData, ProtocolData>
 ): StatementResult {
     var context = initialContext
@@ -533,15 +534,29 @@ fun <StatementResult, DeclarationResult, ProgramResult, HostData, ProtocolData> 
 }
 
 /**
- * Traverses the statement's abstract syntax tree in depth-first order producing
+ * Traverses the abstract syntax tree of this processes' body in depth-first order producing
  * a result using [visitor].
+ *
+ * Note that no top level context information is available to [visitor].
  */
-fun <ExpressionResult, StatementResult, TemporaryData, ObjectData, LoopData> BlockNode.traverse(
+fun <ExpressionResult, StatementResult, TemporaryData, ObjectData, LoopData> ProcessDeclarationNode.traverse(
     visitor: StatementVisitorWithVariableLoopContext<ExpressionResult, StatementResult, TemporaryData, ObjectData, LoopData>
 ): StatementResult =
-    this.traverse(
-        visitor as StatementVisitorWithContext<ExpressionResult, StatementResult, TemporaryData, ObjectData, LoopData, Unit, Unit>,
-        StatementContext(),
+    this.body.traverse(visitor, StatementContext(), NoProgramContext)
+
+/**
+ * Traverses the statement's abstract syntax tree in depth-first order producing
+ * a result using [visitor].
+ *
+ * Note that no context information is available to [visitor].
+ */
+fun <ExpressionResult, StatementResult> StatementNode.traverse(
+    visitor: StatementVisitor<ExpressionResult, StatementResult>
+): StatementResult =
+    // TODO: wrapping in a block is not ideal...
+    BlockNode(this, sourceLocation = this.sourceLocation).traverse(
+        visitor,
+        NoStatementContext,
         NoProgramContext
     )
 
@@ -550,13 +565,10 @@ fun <ExpressionResult, StatementResult, TemporaryData, ObjectData, LoopData> Blo
  * a result using [visitor].
  */
 fun <ExpressionResult> ExpressionNode.traverse(visitor: ExpressionVisitor<ExpressionResult>): ExpressionResult =
-    this.traverse(
-        visitor as ExpressionVisitorWithContext<ExpressionResult, Unit, Unit>,
-        NoStatementContext
-    )
+    this.traverse(visitor, NoStatementContext)
 
-/** A [StatementContextProvider] that always returns [Unit]. */
-private object NoStatementContext : StatementContextProvider<Unit, Unit, Unit> {
+/** A [PersistentStatementContextProvider] that always returns [Unit]. */
+private object NoStatementContext : PersistentStatementContextProvider<Unit, Unit, Unit> {
     @Suppress("INAPPLICABLE_JVM_NAME")
     @JvmName("getTemporaryData")
     override operator fun get(name: TemporaryNode) = Unit
@@ -568,6 +580,18 @@ private object NoStatementContext : StatementContextProvider<Unit, Unit, Unit> {
     @Suppress("INAPPLICABLE_JVM_NAME")
     @JvmName("getLoopData")
     override operator fun get(name: JumpLabelNode) = Unit
+
+    @Suppress("INAPPLICABLE_JVM_NAME")
+    @JvmName("putTemporaryData")
+    override fun put(name: TemporaryNode, data: Unit): NoStatementContext = this
+
+    @Suppress("INAPPLICABLE_JVM_NAME")
+    @JvmName("putObjectData")
+    override fun put(name: ObjectVariableNode, data: Unit): NoStatementContext = this
+
+    @Suppress("INAPPLICABLE_JVM_NAME")
+    @JvmName("putLoopData")
+    override fun put(name: JumpLabelNode, data: Unit): NoStatementContext = this
 }
 
 /** A [ProgramContextProvider] that always returns [Unit]. */

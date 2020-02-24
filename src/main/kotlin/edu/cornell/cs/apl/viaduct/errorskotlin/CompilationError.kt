@@ -23,11 +23,15 @@ abstract class CompilationError : Error(), PrettyPrintable {
     /** General description (i.e. title) of the error. */
     protected abstract val category: String
 
-    /** Name of the file or description of the source that caused the error. */
+    /** Name of the file or description of the source that contains the error. */
     protected abstract val source: String
 
     /** Detailed description of the error. */
     protected abstract val description: Document
+
+    /** A hint that can help resolve the error. */
+    protected open val hint: Document?
+        get() = null
 
     private object HeaderStyle : Style {
         override val foregroundColor: AnsiColor
@@ -57,7 +61,10 @@ abstract class CompilationError : Error(), PrettyPrintable {
             val paddingLength = (DEFAULT_LINE_WIDTH - title.length - source.length).coerceAtLeast(0)
             val padding = "-".repeat(paddingLength)
             val header = (Document(title) + padding + source).styled(HeaderStyle)
-            return header + Document.forcedLineBreak + Document.forcedLineBreak + description
+
+            val hint = hint?.plus(Document.lineBreak + Document.lineBreak) ?: Document()
+
+            return header + Document.lineBreak + Document.lineBreak + description + hint
         }
 
     final override fun toString(): String =

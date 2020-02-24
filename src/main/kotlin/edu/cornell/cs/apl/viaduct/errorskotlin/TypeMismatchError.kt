@@ -8,9 +8,9 @@ import edu.cornell.cs.apl.viaduct.syntax.types.ValueType
 /**
  * Thrown when the inferred type of an AST node does not match its expected type.
  *
- * @param node node that has the incorrect type
- * @param actualType inferred type for the node
- * @param expectedType type the node should have
+ * @param node Node that has the incorrect type.
+ * @param actualType Inferred type for the node.
+ * @param expectedType Type the node should have.
  */
 class TypeMismatchError(
     private val node: HasSourceLocation,

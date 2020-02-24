@@ -4,7 +4,7 @@ import edu.cornell.cs.apl.prettyprinting.Document
 import edu.cornell.cs.apl.viaduct.syntax.HasSourceLocation
 
 /**
- * Thrown when a `break`, `continue`, or a similar statements occurs outside the scope of a loop.
+ * Thrown when a `break`, `continue`, or a similar statement occurs outside the scope of a loop.
  */
 class JumpOutsideLoopScopeError(val node: HasSourceLocation) : CompilationError() {
     override val category: String

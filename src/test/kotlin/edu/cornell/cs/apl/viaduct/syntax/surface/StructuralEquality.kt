@@ -5,6 +5,9 @@ import edu.cornell.cs.apl.viaduct.syntax.Located
 import edu.cornell.cs.apl.viaduct.syntax.SourceLocation
 import kotlin.reflect.KVisibility
 import kotlin.reflect.full.memberProperties
+import kotlin.reflect.jvm.javaField
+import org.junit.jupiter.api.assertThrows
+import org.opentest4j.AssertionFailedError
 
 /** Asserts that [actual] equals [expected], but ignores [SourceLocation]s. */
 internal fun assertStructurallyEquals(expected: Node, actual: Node) {
@@ -12,12 +15,20 @@ internal fun assertStructurallyEquals(expected: Node, actual: Node) {
     if (!expected::class.isInstance(actual))
         fail(expected, actual)
 
-    // Compare all public properties
+    // Compare all public properties that are backed by a field
     expected::class.memberProperties.forEach {
-        if (it.visibility == KVisibility.PUBLIC) {
+        if (it.visibility == KVisibility.PUBLIC && it.javaField != null) {
             assertEquals(it.getter.call(expected), it.getter.call(actual))
         }
     }
+}
+
+/**
+ * Asserts that [actual] differs from [expected] structurally, that is, a difference in
+ * [SourceLocation]s does not count.
+ */
+internal fun assertStructurallyNotEquals(expected: Node, actual: Node) {
+    assertThrows<AssertionFailedError> { assertStructurallyEquals(expected, actual) }
 }
 
 private fun assertEquals(expected: Any?, actual: Any?) {

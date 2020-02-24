@@ -6,7 +6,6 @@ import edu.cornell.cs.apl.viaduct.parsing.parse
 import java.io.File
 import org.junit.jupiter.api.Assertions.assertNotEquals
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ArgumentsSource
 
@@ -32,7 +31,24 @@ internal class StructuralEqualityTest {
             }
             """.trimIndent()
 
-        assertStructurallyDiffers(program1.parse(), program2.parse())
+        assertStructurallyNotEquals(program1.parse(), program2.parse())
+    }
+
+    @Test
+    fun `differentiates when arguments are not equal`() {
+        val program1 = """
+            process main {
+                let a = Array[int](2);
+            }
+            """.trimIndent()
+
+        val program2 = """
+            process main {
+                let a = Array[int](3);
+            }
+            """.trimIndent()
+
+        assertStructurallyNotEquals(program1.parse(), program2.parse())
     }
 
     @Test
@@ -59,8 +75,4 @@ internal class StructuralEqualityTest {
         val source: SourceFile = SourceFile.from(file)
         assertNotEquals(source.parse(), source.parse())
     }
-}
-
-private fun assertStructurallyDiffers(expected: Node, actual: Node) {
-    assertThrows<Throwable> { assertStructurallyEquals(expected, actual) }
 }

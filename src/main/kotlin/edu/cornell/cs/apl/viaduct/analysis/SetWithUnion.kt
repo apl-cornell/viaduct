@@ -6,7 +6,7 @@ import kotlinx.collections.immutable.persistentHashSetOf
 import kotlinx.collections.immutable.persistentSetOf
 
 /** Sets with union form a bounded meet semi lattice. */
-// TODO: we only need this to use [DataFlow]. Change that to take in a function?
+// TODO: we only need this to use [DataFlow]. Change [DataFlow] to take in a function?
 internal data class SetWithUnion<T>(val elements: PersistentSet<T>) :
     MeetSemiLattice<SetWithUnion<T>>, Set<T> by elements {
     constructor(vararg elements: T) : this(persistentHashSetOf(*elements))
@@ -28,6 +28,8 @@ internal data class SetWithUnion<T>(val elements: PersistentSet<T>) :
         }
 
     companion object {
-        fun <T> top(): SetWithUnion<T> = SetWithUnion(persistentSetOf())
+        private val EMPTY = SetWithUnion(persistentSetOf<Nothing>())
+        @Suppress("UNCHECKED_CAST")
+        fun <T> top(): SetWithUnion<T> = EMPTY as SetWithUnion<T>
     }
 }

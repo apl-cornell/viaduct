@@ -396,7 +396,7 @@ indexing ::=
       RESULT = new IndexingNode(var, new Arguments(location(varleft, varright)));
     :}
 
-  | variable:var OPEN_SQBRACE:open expr_list:indices CLOSE_SQBRACE:close {:
+  | variable:var OPEN_SQBRACE:open nonempty_expr_list:indices CLOSE_SQBRACE:close {:
       RESULT = new IndexingNode(var, new Arguments(indices, location(openleft, closeright)));
     :}
   ;

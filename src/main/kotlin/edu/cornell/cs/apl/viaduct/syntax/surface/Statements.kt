@@ -8,7 +8,6 @@ import edu.cornell.cs.apl.prettyprinting.nested
 import edu.cornell.cs.apl.prettyprinting.plus
 import edu.cornell.cs.apl.prettyprinting.times
 import edu.cornell.cs.apl.prettyprinting.tupled
-import edu.cornell.cs.apl.viaduct.parsing.referenceFrom
 import edu.cornell.cs.apl.viaduct.security.Label
 import edu.cornell.cs.apl.viaduct.syntax.Arguments
 import edu.cornell.cs.apl.viaduct.syntax.ClassNameNode
@@ -90,16 +89,16 @@ class UpdateNode(
 ) : SimpleStatementNode() {
     override val asDocument: Document
         get() {
-            val reference = referenceFrom(this)
-            return if (reference != null) {
+            val indexing = IndexingNode.from(this)
+            return if (indexing != null) {
                 val assignOp =
                     if (update.value is Modify)
-                        Document(update.value.operator.toString()) + "="
+                        Document("${update.value.operator}=")
                     else {
                         assert(update.value is Set)
                         Document("=")
                     }
-                reference * assignOp * arguments.last()
+                indexing * assignOp * arguments.last()
             } else {
                 variable + "." + update + arguments.tupled().nested()
             }

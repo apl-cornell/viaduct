@@ -74,7 +74,8 @@ nonterminal BlockNode block;
 nonterminal List<StatementNode> stmt_list;
 
 nonterminal ExpressionNode expr;
-nonterminal Reference reference;
+nonterminal List<ExpressionNode> expr_list, nonempty_expr_list;
+nonterminal IndexingNode indexing;
 
 nonterminal Value value;
 nonterminal Located<ValueType> value_type;
@@ -181,12 +182,12 @@ simple_stmt ::=
         location(beginleft, endright));
     :}
 
-  | reference:ref EQ expr:e {:
-      RESULT = ref.set(e);
+  | indexing:indexing EQ expr:e {:
+      RESULT = indexing.set(e);
     :}
 
-  | reference:ref compound_assignment:op expr:e {:
-      RESULT = ref.modify(op, e);
+  | indexing:indexing compound_assignment:op expr:e {:
+      RESULT = indexing.modify(op, e);
     :}
 
   | OUTPUT:begin expr:message TO host:recipient {:
@@ -272,8 +273,8 @@ expr ::=
       RESULT = new LiteralNode(value, location(valueleft, valueright));
     :}
 
-  | reference:ref {:
-       RESULT = ref.get();
+  | indexing:indexing {:
+       RESULT = indexing.get();
     :}
 
   | NOT:begin expr:e {:
@@ -369,13 +370,34 @@ expr ::=
     :}
   ;
 
-reference ::=
-    variable:var {:
-      RESULT = new CellReference(var);
+expr_list ::=
+    nonempty_expr_list:elist {:
+      RESULT = elist;
     :}
 
-  | variable:var OPEN_SQBRACE expr:index CLOSE_SQBRACE:end {:
-      RESULT = new VectorReference(var, index, location(varleft, endright));
+  | /* empty */ {:
+      RESULT = CollectionsKt.listOf();
+    :}
+  ;
+
+nonempty_expr_list ::=
+    nonempty_expr_list:elist COMMA expr:e {:
+      elist.add(e);
+      RESULT = elist;
+    :}
+
+  | expr:e {:
+      RESULT = CollectionsKt.mutableListOf(e);
+    :}
+  ;
+
+indexing ::=
+    variable:var {:
+      RESULT = new IndexingNode(var, new Arguments(location(varleft, varright)));
+    :}
+
+  | variable:var OPEN_SQBRACE:open expr_list:indices CLOSE_SQBRACE:close {:
+      RESULT = new IndexingNode(var, new Arguments(indices, location(openleft, closeright)));
     :}
   ;
 

@@ -6,7 +6,6 @@ import edu.cornell.cs.apl.prettyprinting.nested
 import edu.cornell.cs.apl.prettyprinting.plus
 import edu.cornell.cs.apl.prettyprinting.times
 import edu.cornell.cs.apl.prettyprinting.tupled
-import edu.cornell.cs.apl.viaduct.parsing.referenceFrom
 import edu.cornell.cs.apl.viaduct.syntax.Arguments
 import edu.cornell.cs.apl.viaduct.syntax.HostNode
 import edu.cornell.cs.apl.viaduct.syntax.LabelNode
@@ -61,7 +60,7 @@ class QueryNode(
 ) : ExpressionNode() {
     override val asDocument: Document
         get() =
-            referenceFrom(this)?.asDocument
+            IndexingNode.from(this)?.asDocument
                 ?: variable + "." + query + arguments.tupled().nested()
 }
 

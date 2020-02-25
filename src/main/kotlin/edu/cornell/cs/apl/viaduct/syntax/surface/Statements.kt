@@ -113,6 +113,7 @@ class SkipNode(override val sourceLocation: SourceLocation) : SimpleStatementNod
 }
 
 /** Asserting that a condition is true, and failing otherwise. */
+// TODO: this should not be a simple statement since it affects control flow.
 class AssertionNode(val condition: ExpressionNode, override val sourceLocation: SourceLocation) :
     SimpleStatementNode() {
     override val asDocument: Document

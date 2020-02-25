@@ -4,6 +4,7 @@ import edu.cornell.cs.apl.viaduct.errorskotlin.IllegalInternalCommunicationError
 import edu.cornell.cs.apl.viaduct.protocols.Local
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
 import edu.cornell.cs.apl.viaduct.syntax.Variable
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.AssertionNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.BlockNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.BreakNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.DeclarationNode
@@ -157,6 +158,13 @@ private class ProtocolsCalculator(
             override fun leave(node: BreakNode, data: Node): Node {
                 val graphNode = Node(node)
                 controlDependencyGraph.addEdge(data, graphNode)
+                return graphNode
+            }
+
+            override fun leave(node: AssertionNode, condition: Unit): Node {
+                val graphNode = Node(node)
+                // All protocols execute every assertion
+                controlDependencyGraph.addEdge(Node(process.body), graphNode)
                 return graphNode
             }
 

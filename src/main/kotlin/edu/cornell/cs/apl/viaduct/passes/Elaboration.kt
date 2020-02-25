@@ -10,6 +10,7 @@ import edu.cornell.cs.apl.viaduct.syntax.ObjectVariableNode
 import edu.cornell.cs.apl.viaduct.syntax.StatementContext
 import edu.cornell.cs.apl.viaduct.syntax.Temporary
 import edu.cornell.cs.apl.viaduct.syntax.TemporaryNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.AssertionNode as IAssertionNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.AtomicExpressionNode as IAtomicExpressionNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.BlockNode as IBlockNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.BreakNode as IBreakNode
@@ -303,7 +304,7 @@ private class StatementElaborator(
             is SSkipNode ->
                 listOf()
 
-            is SOutputNode -> {
+            is SOutputNode ->
                 withBindings { bindings ->
                     IOutputNode(
                         stmt.message.toAnf(bindings).toAtomic(bindings),
@@ -311,9 +312,8 @@ private class StatementElaborator(
                         stmt.sourceLocation
                     )
                 }
-            }
 
-            is SSendNode -> {
+            is SSendNode ->
                 withBindings { bindings ->
                     ISendNode(
                         stmt.message.toAnf(bindings).toAtomic(bindings),
@@ -321,11 +321,14 @@ private class StatementElaborator(
                         stmt.sourceLocation
                     )
                 }
-            }
 
-            // TODO: preserve
             is SAssertionNode ->
-                listOf()
+                withBindings { bindings ->
+                    IAssertionNode(
+                        stmt.condition.toAnf(bindings).toAtomic(bindings),
+                        stmt.sourceLocation
+                    )
+                }
 
             is SIfNode -> {
                 withBindings { bindings ->

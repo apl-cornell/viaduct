@@ -6,6 +6,7 @@ import edu.cornell.cs.apl.viaduct.syntax.Protocol
 import edu.cornell.cs.apl.viaduct.syntax.ProtocolNode
 import edu.cornell.cs.apl.viaduct.syntax.ValueTypeNode
 import edu.cornell.cs.apl.viaduct.syntax.Variable
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.AssertionNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.BlockNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.BreakNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.IfNode
@@ -96,6 +97,9 @@ fun ProcessDeclarationNode.split(
                     )
 
                 is BreakNode ->
+                    listOf(it)
+
+                is AssertionNode ->
                     listOf(it)
 
                 is BlockNode ->

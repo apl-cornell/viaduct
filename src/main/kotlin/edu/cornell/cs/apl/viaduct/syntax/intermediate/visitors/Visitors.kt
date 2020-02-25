@@ -15,6 +15,7 @@ import edu.cornell.cs.apl.viaduct.syntax.StatementContext
 import edu.cornell.cs.apl.viaduct.syntax.StatementContextProvider
 import edu.cornell.cs.apl.viaduct.syntax.Temporary
 import edu.cornell.cs.apl.viaduct.syntax.TemporaryNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.AssertionNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.BlockNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.BreakNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.DeclarationNode
@@ -148,6 +149,8 @@ interface StatementVisitorWithContext<ExpressionResult, StatementResult, Tempora
     ): StatementResult
 
     fun leave(node: BreakNode, data: LoopData): StatementResult
+
+    fun leave(node: AssertionNode, condition: ExpressionResult): StatementResult
 
     fun leave(node: BlockNode, statements: List<StatementResult>): StatementResult
 
@@ -448,6 +451,10 @@ private fun <ExpressionResult, StatementResult, TemporaryData, ObjectData, LoopD
 
             is BreakNode -> {
                 visitor.leave(it, context[it.jumpLabel])
+            }
+
+            is AssertionNode -> {
+                visitor.leave(it, it.condition.traverse(visitor, context))
             }
 
             is BlockNode -> {

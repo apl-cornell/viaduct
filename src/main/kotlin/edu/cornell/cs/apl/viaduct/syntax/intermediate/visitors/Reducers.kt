@@ -1,5 +1,6 @@
 package edu.cornell.cs.apl.viaduct.syntax.intermediate.visitors
 
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.AssertionNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.BlockNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.BreakNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.DeclarationNode
@@ -86,6 +87,9 @@ interface StatementReducer<Result> : ExpressionReducer<Result>, StatementVisitor
 
     override fun leave(node: BreakNode): Result =
         initial
+
+    override fun leave(node: AssertionNode, condition: Result): Result =
+        combine(initial, condition)
 
     override fun leave(node: BlockNode, statements: List<Result>): Result =
         statements.fold(initial, combine)

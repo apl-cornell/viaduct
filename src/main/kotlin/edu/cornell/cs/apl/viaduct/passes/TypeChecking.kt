@@ -6,6 +6,7 @@ import edu.cornell.cs.apl.viaduct.syntax.Arguments
 import edu.cornell.cs.apl.viaduct.syntax.HasSourceLocation
 import edu.cornell.cs.apl.viaduct.syntax.datatypes.MutableCell
 import edu.cornell.cs.apl.viaduct.syntax.datatypes.Vector
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.AssertionNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.BlockNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.BreakNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.DeclarationNode
@@ -40,6 +41,10 @@ import edu.cornell.cs.apl.viaduct.syntax.types.UnitType
 import edu.cornell.cs.apl.viaduct.syntax.types.ValueType
 import edu.cornell.cs.apl.viaduct.syntax.types.VectorType
 
+/**
+ * Checks [this] program for consistency and returns a map from variables in each process to their
+ * types.
+ */
 fun ProgramNode.typeCheck(): ProgramAnnotationMap<ValueType, ObjectType> {
     return this.annotate(ProgramTypeChecker)
 }
@@ -191,6 +196,10 @@ private object StatementTypeChecker :
     }
 
     override fun leave(node: BreakNode) {}
+
+    override fun leave(node: AssertionNode, condition: ValueType) {
+        assertHasType(node.condition, actualType = condition, expectedType = BooleanType)
+    }
 
     override fun leave(node: BlockNode, statements: List<Unit>) {}
 

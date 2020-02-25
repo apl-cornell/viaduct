@@ -230,6 +230,18 @@ class BreakNode(
         )
 }
 
+/** Asserting that a condition is true, and failing otherwise. */
+class AssertionNode(
+    val condition: AtomicExpressionNode,
+    override val sourceLocation: SourceLocation
+) : StatementNode() {
+    override fun toSurfaceNode(): edu.cornell.cs.apl.viaduct.syntax.surface.AssertionNode =
+        edu.cornell.cs.apl.viaduct.syntax.surface.AssertionNode(
+            condition.toSurfaceNode(),
+            sourceLocation
+        )
+}
+
 /** A sequence of statements. */
 class BlockNode
 private constructor(

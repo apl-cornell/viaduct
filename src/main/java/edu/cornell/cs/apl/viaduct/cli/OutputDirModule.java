@@ -9,6 +9,7 @@ import org.fusesource.jansi.AnsiConsole;
 import org.fusesource.jansi.AnsiPrintStream;
 
 /** Provides an output file option for commands. */
+// TODO: turn this back into OutputFileModule
 final class OutputDirModule {
   @Option(
       name = {"-o", "--output"},

@@ -1,5 +1,6 @@
 package edu.cornell.cs.apl.viaduct.passes
 
+import edu.cornell.cs.apl.viaduct.errorskotlin.IncorrectNumberOfArgumentsError
 import edu.cornell.cs.apl.viaduct.errorskotlin.TypeMismatchError
 import edu.cornell.cs.apl.viaduct.security.Label
 import edu.cornell.cs.apl.viaduct.syntax.Arguments
@@ -102,14 +103,15 @@ private object StatementTypeChecker :
 
     /** Checks that an operator or method application is well typed, and returns the result type. */
     private fun checkApplication(
-        function: FunctionType,
+        function: HasSourceLocation,
+        functionType: FunctionType,
         arguments: Arguments<HasSourceLocation>,
         argumentTypes: List<ValueType>
     ): ValueType {
         require(arguments.size == argumentTypes.size)
 
-        if (function.arguments.size != argumentTypes.size) {
-            TODO("mismatch error")
+        if (functionType.arguments.size != argumentTypes.size) {
+            throw IncorrectNumberOfArgumentsError(function, functionType.arguments.size, arguments)
         }
 
         // Check that arguments have the correct types.
@@ -117,11 +119,11 @@ private object StatementTypeChecker :
             assertHasType(
                 arguments[i],
                 actualType = argumentTypes[i],
-                expectedType = function.arguments[i]
+                expectedType = functionType.arguments[i]
             )
         }
 
-        return function.result
+        return functionType.result
     }
 
     override fun getData(node: LetNode, value: ValueType): ValueType {
@@ -145,7 +147,7 @@ private object StatementTypeChecker :
     }
 
     override fun leave(node: OperatorApplicationNode, arguments: List<ValueType>): ValueType {
-        return checkApplication(node.operator.type, node.arguments, arguments)
+        return checkApplication(node, node.operator.type, node.arguments, arguments)
     }
 
     override fun leave(node: ReadNode, data: ValueType): ValueType {
@@ -154,7 +156,9 @@ private object StatementTypeChecker :
 
     override fun leave(node: QueryNode, arguments: List<ValueType>, data: ObjectType): ValueType {
         // TODO: add no such method error
-        return checkApplication(data.getType(node.query)!!, node.arguments, arguments)
+        // TODO: we should pass the method name as the first argument not the whole node.
+        //   We can't do that now because method names do not have source locations.
+        return checkApplication(node, data.getType(node.query)!!, node.arguments, arguments)
     }
 
     override fun leave(node: DeclassificationNode, expression: ValueType): ValueType {
@@ -169,12 +173,12 @@ private object StatementTypeChecker :
 
     override fun leave(node: DeclarationNode, arguments: List<ValueType>) {
         val constructorType = FunctionType(getObjectType(node).constructorArguments, UnitType)
-        checkApplication(constructorType, node.arguments, arguments)
+        checkApplication(node.className, constructorType, node.arguments, arguments)
     }
 
     override fun leave(node: UpdateNode, arguments: List<ValueType>, data: ObjectType) {
         // TODO: add no such method error
-        checkApplication(data.getType(node.update)!!, node.arguments, arguments)
+        checkApplication(node, data.getType(node.update)!!, node.arguments, arguments)
     }
 
     override fun leave(

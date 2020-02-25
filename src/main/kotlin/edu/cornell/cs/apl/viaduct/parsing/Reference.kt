@@ -8,7 +8,9 @@ import edu.cornell.cs.apl.prettyprinting.plus
 import edu.cornell.cs.apl.viaduct.syntax.Arguments
 import edu.cornell.cs.apl.viaduct.syntax.BinaryOperator
 import edu.cornell.cs.apl.viaduct.syntax.ObjectVariableNode
+import edu.cornell.cs.apl.viaduct.syntax.QueryNameNode
 import edu.cornell.cs.apl.viaduct.syntax.SourceLocation
+import edu.cornell.cs.apl.viaduct.syntax.UpdateNameNode
 import edu.cornell.cs.apl.viaduct.syntax.datatypes.Get
 import edu.cornell.cs.apl.viaduct.syntax.datatypes.Modify
 import edu.cornell.cs.apl.viaduct.syntax.datatypes.MutableCell
@@ -43,13 +45,18 @@ internal interface Reference : PrettyPrintable {
 /** A reference to the value of a [MutableCell]. */
 internal class CellReference(val name: ObjectVariableNode) : Reference {
     override fun get(): QueryNode {
-        return QueryNode(name, Get, Arguments(name.sourceLocation), name.sourceLocation)
+        return QueryNode(
+            name,
+            QueryNameNode(Get, name.sourceLocation),
+            Arguments(name.sourceLocation),
+            name.sourceLocation
+        )
     }
 
     override fun set(value: ExpressionNode): UpdateNode {
         return UpdateNode(
             name,
-            Set,
+            UpdateNameNode(Set, name.sourceLocation),
             Arguments.from(value),
             name.sourceLocation.merge(value.sourceLocation)
         )
@@ -58,7 +65,7 @@ internal class CellReference(val name: ObjectVariableNode) : Reference {
     override fun modify(operator: BinaryOperator, argument: ExpressionNode): UpdateNode {
         return UpdateNode(
             name,
-            Modify(operator),
+            UpdateNameNode(Modify(operator), name.sourceLocation),
             Arguments.from(argument),
             name.sourceLocation.merge(argument.sourceLocation)
         )
@@ -75,13 +82,18 @@ internal class VectorReference(
     val sourceLocation: SourceLocation
 ) : Reference {
     override fun get(): QueryNode {
-        return QueryNode(name, Get, Arguments.from(index), sourceLocation)
+        return QueryNode(
+            name,
+            QueryNameNode(Get, name.sourceLocation),
+            Arguments.from(index),
+            sourceLocation
+        )
     }
 
     override fun set(value: ExpressionNode): UpdateNode {
         return UpdateNode(
             name,
-            Set,
+            UpdateNameNode(Set, name.sourceLocation),
             Arguments.from(index, value),
             sourceLocation.merge(value.sourceLocation)
         )
@@ -90,7 +102,7 @@ internal class VectorReference(
     override fun modify(operator: BinaryOperator, argument: ExpressionNode): UpdateNode {
         return UpdateNode(
             name,
-            Modify(operator),
+            UpdateNameNode(Modify(operator), name.sourceLocation),
             Arguments.from(index, argument),
             sourceLocation.merge(argument.sourceLocation)
         )
@@ -106,10 +118,10 @@ internal class VectorReference(
  */
 internal fun referenceFrom(queryNode: QueryNode): Reference? {
     return when {
-        queryNode.query is Get && queryNode.arguments.isEmpty() ->
+        queryNode.query.value is Get && queryNode.arguments.isEmpty() ->
             CellReference(queryNode.variable)
 
-        queryNode.query is Get && queryNode.arguments.size == 1 ->
+        queryNode.query.value is Get && queryNode.arguments.size == 1 ->
             VectorReference(queryNode.variable, queryNode.arguments[0], queryNode.sourceLocation)
 
         else ->
@@ -122,7 +134,7 @@ internal fun referenceFrom(queryNode: QueryNode): Reference? {
  * The result is `null` if the update is not primitive.
  */
 internal fun referenceFrom(updateNode: UpdateNode): Reference? {
-    val updateIsPrimitive = updateNode.update is Set || updateNode.update is Modify
+    val updateIsPrimitive = updateNode.update.value is Set || updateNode.update.value is Modify
     return when {
         updateIsPrimitive && updateNode.arguments.size == 1 ->
             CellReference(updateNode.variable)

@@ -4,9 +4,9 @@ import edu.cornell.cs.apl.viaduct.syntax.Arguments
 import edu.cornell.cs.apl.viaduct.syntax.LabelNode
 import edu.cornell.cs.apl.viaduct.syntax.ObjectVariableNode
 import edu.cornell.cs.apl.viaduct.syntax.Operator
+import edu.cornell.cs.apl.viaduct.syntax.QueryNameNode
 import edu.cornell.cs.apl.viaduct.syntax.SourceLocation
 import edu.cornell.cs.apl.viaduct.syntax.TemporaryNode
-import edu.cornell.cs.apl.viaduct.syntax.datatypes.QueryName
 import edu.cornell.cs.apl.viaduct.syntax.values.Value
 
 /** A computation that produces a result. */
@@ -53,7 +53,7 @@ class OperatorApplicationNode(
 /** A query method applied to an object. */
 class QueryNode(
     val variable: ObjectVariableNode,
-    val query: QueryName,
+    val query: QueryNameNode,
     val arguments: Arguments<ExpressionNode>,
     override val sourceLocation: SourceLocation
 ) : ExpressionNode() {

@@ -1,5 +1,8 @@
 package edu.cornell.cs.apl.viaduct.syntax.datatypes
 
+import edu.cornell.cs.apl.prettyprinting.AnsiBaseColor
+import edu.cornell.cs.apl.prettyprinting.AnsiColor
+import edu.cornell.cs.apl.prettyprinting.BrightColor
 import edu.cornell.cs.apl.prettyprinting.Document
 import edu.cornell.cs.apl.prettyprinting.Style
 import edu.cornell.cs.apl.prettyprinting.styled
@@ -15,4 +18,7 @@ interface MethodName : Name {
 }
 
 /** The display style of [MethodName]s. */
-object MethodNameStyle : Style
+object MethodNameStyle : Style {
+    override val foregroundColor: AnsiColor
+        get() = BrightColor(AnsiBaseColor.MAGENTA)
+}

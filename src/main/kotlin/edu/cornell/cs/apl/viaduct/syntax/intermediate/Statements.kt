@@ -10,8 +10,8 @@ import edu.cornell.cs.apl.viaduct.syntax.ObjectVariableNode
 import edu.cornell.cs.apl.viaduct.syntax.ProtocolNode
 import edu.cornell.cs.apl.viaduct.syntax.SourceLocation
 import edu.cornell.cs.apl.viaduct.syntax.TemporaryNode
+import edu.cornell.cs.apl.viaduct.syntax.UpdateNameNode
 import edu.cornell.cs.apl.viaduct.syntax.ValueTypeNode
-import edu.cornell.cs.apl.viaduct.syntax.datatypes.UpdateName
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toPersistentList
@@ -74,7 +74,7 @@ class DeclarationNode(
 /** An update method applied to an object. */
 class UpdateNode(
     val variable: ObjectVariableNode,
-    val update: UpdateName,
+    val update: UpdateNameNode,
     val arguments: Arguments<AtomicExpressionNode>,
     override val sourceLocation: SourceLocation
 ) : SimpleStatementNode() {

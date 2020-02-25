@@ -4,6 +4,9 @@ import edu.cornell.cs.apl.prettyprinting.Document
 import edu.cornell.cs.apl.prettyprinting.PrettyPrintable
 import edu.cornell.cs.apl.viaduct.security.Label
 import edu.cornell.cs.apl.viaduct.syntax.datatypes.ClassName
+import edu.cornell.cs.apl.viaduct.syntax.datatypes.MethodName
+import edu.cornell.cs.apl.viaduct.syntax.datatypes.QueryName
+import edu.cornell.cs.apl.viaduct.syntax.datatypes.UpdateName
 import edu.cornell.cs.apl.viaduct.syntax.types.ValueType
 
 /** Attaches a source location to an arbitrary type. */
@@ -20,6 +23,12 @@ typealias HostNode = Located<Host>
 typealias ProtocolNode = Located<Protocol>
 
 typealias ClassNameNode = Located<ClassName>
+
+typealias MethodNameNode = Located<MethodName>
+
+typealias QueryNameNode = Located<QueryName>
+
+typealias UpdateNameNode = Located<UpdateName>
 
 typealias TemporaryNode = Located<Temporary>
 

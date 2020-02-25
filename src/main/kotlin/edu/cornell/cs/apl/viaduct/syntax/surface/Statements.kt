@@ -19,11 +19,11 @@ import edu.cornell.cs.apl.viaduct.syntax.ObjectVariableNode
 import edu.cornell.cs.apl.viaduct.syntax.ProtocolNode
 import edu.cornell.cs.apl.viaduct.syntax.SourceLocation
 import edu.cornell.cs.apl.viaduct.syntax.TemporaryNode
+import edu.cornell.cs.apl.viaduct.syntax.UpdateNameNode
 import edu.cornell.cs.apl.viaduct.syntax.ValueTypeNode
 import edu.cornell.cs.apl.viaduct.syntax.datatypes.Modify
 import edu.cornell.cs.apl.viaduct.syntax.datatypes.MutableCell
 import edu.cornell.cs.apl.viaduct.syntax.datatypes.Set
-import edu.cornell.cs.apl.viaduct.syntax.datatypes.UpdateName
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toPersistentList
@@ -84,7 +84,7 @@ class DeclarationNode(
 /** An update method applied to an object. */
 class UpdateNode(
     val variable: ObjectVariableNode,
-    val update: UpdateName,
+    val update: UpdateNameNode,
     val arguments: Arguments<ExpressionNode>,
     override val sourceLocation: SourceLocation
 ) : SimpleStatementNode() {
@@ -93,10 +93,10 @@ class UpdateNode(
             val reference = referenceFrom(this)
             return if (reference != null) {
                 val assignOp =
-                    if (update is Modify)
-                        Document(update.operator.toString()) + "="
+                    if (update.value is Modify)
+                        Document(update.value.operator.toString()) + "="
                     else {
-                        assert(update is Set)
+                        assert(update.value is Set)
                         Document("=")
                     }
                 reference * assignOp * arguments.last()

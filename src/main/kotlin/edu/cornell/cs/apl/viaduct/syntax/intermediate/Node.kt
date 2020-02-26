@@ -1,5 +1,6 @@
 package edu.cornell.cs.apl.viaduct.syntax.intermediate
 
+import edu.cornell.cs.apl.prettyprinting.Document
 import edu.cornell.cs.apl.prettyprinting.PrettyPrintable
 import edu.cornell.cs.apl.viaduct.syntax.HasSourceLocation
 import edu.cornell.cs.apl.viaduct.syntax.JumpLabel
@@ -16,11 +17,14 @@ import edu.cornell.cs.apl.viaduct.syntax.Variable
  * - Every loop and break statement has a [JumpLabel].
  * - All [Variable]s within a process have unique names.
  */
-abstract class Node : HasSourceLocation {
+abstract class Node : HasSourceLocation, PrettyPrintable {
     /**
      * Returns a representation of this node in the surface syntax.
      *
      * This is useful, for example, for [pretty printing][PrettyPrintable].
      */
     abstract fun toSurfaceNode(): edu.cornell.cs.apl.viaduct.syntax.surface.Node
+
+    final override val asDocument: Document
+        get() = toSurfaceNode().asDocument
 }

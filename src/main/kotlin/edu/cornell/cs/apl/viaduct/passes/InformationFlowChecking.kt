@@ -109,7 +109,7 @@ private constructor(
 
     /** Returns a newly created label variable that stands in for the [Label] of [node]. */
     private fun freshLabelVariableFor(node: Node): NodeWithLabel =
-        node.withLabel(constraintSystem.addNewVariable(PrettyNodeWrapper(node.toSurfaceNode())))
+        node.withLabel(constraintSystem.addNewVariable(PrettyNodeWrapper(node)))
 
     /** Returns a newly created pc label variable. */
     private fun freshPCLabelVariable(): PCLabelVariable =
@@ -170,7 +170,7 @@ private constructor(
 
     override fun getData(node: InfiniteLoopNode): PCLabelVariable =
         freshPCLabelVariable().also {
-            pcFlowsTo(node.withLabel(it.variable))
+            pcFlowsTo(node.jumpLabel.withLabel(it.variable))
         }
 
     /* Expressions */
@@ -299,6 +299,7 @@ private constructor(
         elseBranch: SuspendedTraversal<Unit, AtomicLabelTerm, AtomicLabelTerm, PCLabelVariable, LabelConstant, Unit>
     ) {
         val newPC = freshPCLabelVariable()
+        // TODO: putting node below will make the generated graphs very ugly...
         pcFlowsTo(node.withLabel(newPC.variable))
         node.guard.withLabel(guard) flowsTo newPC.variable
 

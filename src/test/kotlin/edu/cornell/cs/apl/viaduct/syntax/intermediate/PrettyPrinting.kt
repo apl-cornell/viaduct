@@ -10,7 +10,6 @@ internal class PrettyPrintingTest {
     @ParameterizedTest
     @ArgumentsSource(ExampleProgramProvider::class)
     fun `intermediate nodes can be printed`(program: ProgramNode) {
-        val elaborated = program.elaborated()
-        elaborated.toSurfaceNode().asDocument.print()
+        program.elaborated().asDocument.print()
     }
 }

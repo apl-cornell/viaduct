@@ -1,0 +1,8 @@
+/* InsecureControlFlowError */
+
+process main {
+    let mut secret: bool{(A ∧ B)->} = true;
+    if (secret) {
+        let mut public: int{A->} = 42;
+    }
+}

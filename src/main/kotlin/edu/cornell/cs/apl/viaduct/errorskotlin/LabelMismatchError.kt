@@ -5,6 +5,8 @@ import edu.cornell.cs.apl.prettyprinting.plus
 import edu.cornell.cs.apl.viaduct.security.Label
 import edu.cornell.cs.apl.viaduct.syntax.HasSourceLocation
 
+// TODO: I don't think there is an example that throws this error...
+
 /**
  * Thrown when the inferred label of [node] does nat match its annotated label.
  *

@@ -3,6 +3,7 @@ package edu.cornell.cs.apl.viaduct.errorskotlin
 import edu.cornell.cs.apl.viaduct.ErroneousExampleFileProvider
 import edu.cornell.cs.apl.viaduct.parsing.SourceFile
 import edu.cornell.cs.apl.viaduct.parsing.parse
+import edu.cornell.cs.apl.viaduct.passes.checkInformationFlow
 import edu.cornell.cs.apl.viaduct.passes.elaborated
 import edu.cornell.cs.apl.viaduct.passes.typeCheck
 import java.io.File
@@ -44,6 +45,7 @@ internal class ErrorsTest {
 private fun run(file: File) {
     val program = SourceFile.from(file).parse().elaborated()
     program.typeCheck()
+    program.checkInformationFlow()
     // TODO: other checks and interpret
 }
 

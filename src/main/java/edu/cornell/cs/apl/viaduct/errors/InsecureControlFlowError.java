@@ -41,6 +41,7 @@ public class InsecureControlFlowError extends InformationFlowError {
 
     if (!pc.confidentiality().flowsTo(nodeLabel.confidentiality())) {
       // Confidentiality is the problem
+      // TODO: reword message (see the output of insecure-control-flow-confidentiality.via)
       output.println("Execution of this term might leak information encoded in the control flow:");
 
       output.println();
@@ -60,6 +61,7 @@ public class InsecureControlFlowError extends InformationFlowError {
       output.println();
     } else {
       // Integrity is the problem
+      // TODO: add an error test case that covers this branch.
       assert !pc.integrity().flowsTo(nodeLabel.integrity());
 
       output.println("The control flow does not have enough integrity for this term:");

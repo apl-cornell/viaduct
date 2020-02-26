@@ -23,7 +23,7 @@ class ConfidentialityChangingEndorsementError(private val node: EndorsementNode,
 
     override val description: Document
         get() =
-            Document("This endorsement changes confidentiality:")
+            Document("This endorsement modifies confidentiality:")
                 .withSource(node.sourceLocation) +
                 Document("Original confidentiality of the expression:")
                     .withData(fromConfidentiality) +

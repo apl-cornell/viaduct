@@ -1,0 +1,5 @@
+/* IntegrityChangingDeclassificationError */
+
+process main {
+    let mut result: int = declassify 42 from {A} to {(A ∧ B)<-};
+}

@@ -6,13 +6,17 @@
 
 # Gradle
 !.editorconfig
-!build.gradle
+!build.gradle.kts
 !config
 !gradle
 !gradlew
-!settings.gradle
+!settings.gradle.kts
 
 # Code
 !src
+!prettyprinting
 !examples
 !errors
+# TODO: remove these lines once Java is gone
+!examples-old
+!errors-old

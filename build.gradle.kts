@@ -191,7 +191,7 @@ spotless {
 }
 
 editorconfig {
-    excludes = listOf("$buildDir", "out", "**/*.hprof")
+    excludes = listOf("$buildDir", "out", ".kotlin", "**/*.hprof")
 }
 
 tasks.check {

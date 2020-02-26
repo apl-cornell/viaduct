@@ -8,38 +8,31 @@ import edu.cornell.cs.apl.viaduct.syntax.Name
 import edu.cornell.cs.apl.viaduct.syntax.ObjectVariable
 import edu.cornell.cs.apl.viaduct.syntax.ObjectVariableNode
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
-import edu.cornell.cs.apl.viaduct.syntax.ProtocolNode
 import edu.cornell.cs.apl.viaduct.syntax.SourceLocation
 import edu.cornell.cs.apl.viaduct.syntax.Temporary
 import edu.cornell.cs.apl.viaduct.syntax.TemporaryNode
 import edu.cornell.cs.apl.viaduct.syntax.Variable
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.DeclarationNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.HostDeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.InputNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.LetNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProcessDeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ReceiveNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.StatementNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.TopLevelDeclarationNode
 import kotlinx.collections.immutable.PersistentMap
 import kotlinx.collections.immutable.persistentMapOf
 
 /**
- * Traverses this program with [visitor] and returns annotations computed for the program.
+ * Traverses this program with [annotator] and returns the annotations computed for the program.
  *
  * Annotations are per [Protocol]. Annotations on [Variable]s are the return values of
  * [StatementVisitorWithContext.getData] calls.
  */
-fun <StatementResult, DeclarationResult, ProgramResult, TemporaryData, ObjectData, HostData, ProtocolData> ProgramNode.annotate(
-    visitor: ProgramVisitorWithVariableContext<StatementResult, DeclarationResult, ProgramResult, TemporaryData, ObjectData, HostData, ProtocolData>
-): ProgramAnnotationMap<TemporaryData, ObjectData> {
-    val annotator =
-        ProgramAnnotator(
-            visitor
-        )
+fun <StatementResult, ProcessResult, TemporaryData, ObjectData, HostData, ProtocolData> ProgramNode.annotate(
+    annotator: ProgramAnnotator<StatementResult, ProcessResult, TemporaryData, ObjectData, HostData, ProtocolData>
+): Map<Protocol, ProcessResult> =
     this.traverse(annotator)
-    return annotator.annotations
-}
 
 /**
  * A mapping from names to their annotations along with the source locations where the names were
@@ -48,7 +41,7 @@ fun <StatementResult, DeclarationResult, ProgramResult, TemporaryData, ObjectDat
 private typealias NameMap<Name, Annotation> = PersistentMap<Name, Pair<Annotation, SourceLocation>>
 
 /**
- * A mapping from [Variable]s in a statement to their annotations.
+ * A mapping from [Variable]s in a process to their annotations.
  *
  * @param TemporaryAnnotation Annotations attached to [Temporary] variables.
  * @param ObjectAnnotation Annotations attached to [ObjectVariable]s.
@@ -134,81 +127,48 @@ private constructor(
 }
 
 /**
- * A mapping from [Protocol]s to the annotations on their body.
- *
- * @see VariableAnnotationMap
- */
-class ProgramAnnotationMap<TemporaryAnnotation, ObjectAnnotation>
-private constructor(
-    private val statementAnnotations: NameMap<Protocol, VariableAnnotationMap<TemporaryAnnotation, ObjectAnnotation>>
-) {
-    /** Returns the empty map. */
-    constructor() : this(persistentMapOf())
-
-    /**
-     * Returns the annotations for the body of [protocol].
-     *
-     * @throws UndefinedNameError
-     */
-    operator fun get(protocol: ProtocolNode): VariableAnnotationMap<TemporaryAnnotation, ObjectAnnotation> {
-        return statementAnnotations[protocol.value]?.first ?: throw UndefinedNameError(protocol)
-    }
-
-    /**
-     * Returns a new map where the body of [protocol] is associated with [annotations].
-     *
-     * @throws NameClashError
-     */
-    fun put(
-        protocol: ProtocolNode,
-        annotations: VariableAnnotationMap<TemporaryAnnotation, ObjectAnnotation>
-    ): ProgramAnnotationMap<TemporaryAnnotation, ObjectAnnotation> {
-        assertNotDeclared(
-            protocol,
-            statementAnnotations
-        )
-        return copy(
-            statementAnnotations = statementAnnotations.put(
-                protocol.value,
-                Pair(annotations, protocol.sourceLocation)
-            )
-        )
-    }
-
-    /** Creates a copy of this object where some fields are modified. */
-    private fun copy(
-        statementAnnotations: NameMap<Protocol, VariableAnnotationMap<TemporaryAnnotation, ObjectAnnotation>> = this.statementAnnotations
-    ): ProgramAnnotationMap<TemporaryAnnotation, ObjectAnnotation> {
-        return ProgramAnnotationMap(
-            statementAnnotations
-        )
-    }
-}
-
-/**
- * Like [ProgramVisitorWithContext], but fixes [TemporaryData] and [ObjectData].
+ * A visitor that computes a [VariableAnnotationMap] for each [ProcessDeclarationNode] in a program.
  *
  * @param StatementResult Data returned from each [StatementNode].
- * @param DeclarationResult Data returned from each [TopLevelDeclarationNode].
- * @param ProgramResult Data returned from the [ProgramNode].
- * @param TemporaryData Context information attached to each [Temporary] declaration.
- * @param ObjectData Context information attached to each [ObjectVariable] declaration.
+ * @param ProcessResult Data returned from each [ProcessDeclarationNode].
+ * @param TemporaryData Context information and annotation attached to each [Temporary] declaration.
+ * @param ObjectData Context information and annotation attached to each [ObjectVariable] declaration.
  * @param HostData Context information attached to each [Host] declaration.
  * @param ProtocolData Context information attached to each [Protocol] declaration.
  */
-abstract class ProgramVisitorWithVariableContext<StatementResult, DeclarationResult, ProgramResult, TemporaryData, ObjectData, HostData, ProtocolData> :
-    ProgramVisitorWithContext<StatementResult, DeclarationResult, ProgramResult, HostData, ProtocolData> {
+abstract class ProgramAnnotator<StatementResult, ProcessResult, TemporaryData, ObjectData, HostData, ProtocolData> :
+    ProgramVisitorWithContext<StatementResult, ProcessResult?, Map<Protocol, ProcessResult>, HostData, ProtocolData> {
+    final override fun leave(node: HostDeclarationNode): ProcessResult? = null
+
     final override fun leave(
         node: ProcessDeclarationNode,
         body: SuspendedTraversal<StatementResult, *, *, *, HostData, ProtocolData>
-    ): DeclarationResult {
-        return leaveProcessDeclaration(node) { body(it) }
+    ): ProcessResult {
+        return leaveProcessDeclaration(node) { visitor ->
+            val annotator = StatementAnnotator(visitor)
+            body(annotator)
+            annotator.annotations
+        }
+    }
+
+    final override fun leave(
+        node: ProgramNode,
+        declarations: List<ProcessResult?>
+    ): Map<Protocol, ProcessResult> {
+        val result = mutableMapOf<Protocol, ProcessResult>()
+        node.declarations.zip(declarations) { declaration, processResult ->
+            if (declaration is ProcessDeclarationNode) {
+                result[declaration.protocol.value] = processResult!!
+            }
+        }
+        return result
     }
 
     abstract fun leaveProcessDeclaration(
         node: ProcessDeclarationNode,
-        body: SuspendedTraversal<StatementResult, TemporaryData, ObjectData, *, HostData, ProtocolData>
-    ): DeclarationResult
+        body: (StatementVisitorWithContext<*, StatementResult, TemporaryData, ObjectData, *, HostData, ProtocolData>)
+        -> VariableAnnotationMap<TemporaryData, ObjectData>
+    ): ProcessResult
 }
 
 /**
@@ -243,32 +203,6 @@ private class StatementAnnotator<ExpressionResult, StatementResult, TemporaryDat
         val annotation = visitor.getData(node, data)
         annotations.put(node.temporary, annotation)
         return annotation
-    }
-}
-
-/**
- * A wrapper for [visitor] that behaves the same, except it stores annotations computed for each
- * process body into [annotations].
- */
-private class ProgramAnnotator<StatementResult, DeclarationResult, ProgramResult, TemporaryData, ObjectData, HostData, ProtocolData>(
-    val visitor: ProgramVisitorWithVariableContext<StatementResult, DeclarationResult, ProgramResult, TemporaryData, ObjectData, HostData, ProtocolData>
-) : ProgramVisitorWithContext<StatementResult, DeclarationResult, ProgramResult, HostData, ProtocolData> by visitor {
-    val annotations =
-        ProgramAnnotationMap<TemporaryData, ObjectData>()
-
-    override fun leave(
-        node: ProcessDeclarationNode,
-        body: SuspendedTraversal<StatementResult, *, *, *, HostData, ProtocolData>
-    ): DeclarationResult {
-        return visitor.leaveProcessDeclaration(node) { visitor ->
-            val annotator =
-                StatementAnnotator(
-                    visitor
-                )
-            val bodyResult = body(annotator)
-            annotations.put(node.protocol, annotator.annotations)
-            bodyResult
-        }
     }
 }
 

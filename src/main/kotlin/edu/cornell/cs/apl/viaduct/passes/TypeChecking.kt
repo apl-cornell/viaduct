@@ -7,6 +7,7 @@ import edu.cornell.cs.apl.viaduct.syntax.Arguments
 import edu.cornell.cs.apl.viaduct.syntax.HasSourceLocation
 import edu.cornell.cs.apl.viaduct.syntax.Located
 import edu.cornell.cs.apl.viaduct.syntax.Name
+import edu.cornell.cs.apl.viaduct.syntax.Protocol
 import edu.cornell.cs.apl.viaduct.syntax.datatypes.MutableCell
 import edu.cornell.cs.apl.viaduct.syntax.datatypes.Vector
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.AssertionNode
@@ -30,11 +31,11 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.ReadNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ReceiveNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.SendNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.UpdateNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.visitors.ProgramAnnotationMap
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.visitors.ProgramVisitor
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.visitors.ProgramVisitorWithVariableContext
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.visitors.ProgramAnnotator
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.visitors.StatementVisitorWithContext
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.visitors.StatementVisitorWithVariableContext
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.visitors.SuspendedTraversal
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.visitors.VariableAnnotationMap
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.visitors.annotate
 import edu.cornell.cs.apl.viaduct.syntax.types.BooleanType
 import edu.cornell.cs.apl.viaduct.syntax.types.FunctionType
@@ -48,23 +49,21 @@ import edu.cornell.cs.apl.viaduct.syntax.types.VectorType
  * Checks [this] program for type consistency and returns a map from variables in each process to
  * their types.
  */
-fun ProgramNode.typeCheck(): ProgramAnnotationMap<ValueType, ObjectType> {
+fun ProgramNode.typeCheck(): Map<Protocol, VariableAnnotationMap<ValueType, ObjectType>> {
     return this.annotate(ProgramTypeChecker)
 }
 
 private object ProgramTypeChecker :
-    ProgramVisitorWithVariableContext<Unit, Unit, Unit, ValueType, ObjectType, Unit, Unit>(),
-    ProgramVisitor<Unit, Unit, Unit> {
-    override fun leave(node: HostDeclarationNode) {}
+    ProgramAnnotator<Unit, VariableAnnotationMap<ValueType, ObjectType>, ValueType, ObjectType, Unit, Unit>() {
+    override fun getData(node: HostDeclarationNode) = Unit
+
+    override fun getData(node: ProcessDeclarationNode) = Unit
 
     override fun leaveProcessDeclaration(
         node: ProcessDeclarationNode,
-        body: SuspendedTraversal<Unit, ValueType, ObjectType, *, Unit, Unit>
-    ) {
+        body: (StatementVisitorWithContext<*, Unit, ValueType, ObjectType, *, Unit, Unit>) -> VariableAnnotationMap<ValueType, ObjectType>
+    ): VariableAnnotationMap<ValueType, ObjectType> =
         body(StatementTypeChecker)
-    }
-
-    override fun leave(node: ProgramNode, declarations: List<Unit>) {}
 }
 
 private object StatementTypeChecker :

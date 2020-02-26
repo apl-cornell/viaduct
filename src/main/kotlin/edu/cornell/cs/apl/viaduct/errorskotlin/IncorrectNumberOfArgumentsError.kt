@@ -8,10 +8,10 @@ import edu.cornell.cs.apl.viaduct.syntax.Located
 import edu.cornell.cs.apl.viaduct.syntax.Name
 
 /**
- * Thrown when [method] is given too many or too few arguments.
+ * Thrown when a function or a method is given too many or too few arguments.
  *
- * @param expected The number of arguments expected by [method].
- * @param actual The arguments that are given to [method].
+ * @param expected The number of arguments expected by the method.
+ * @param actual The arguments that are given to the method.
  * */
 class IncorrectNumberOfArgumentsError(
     private val method: Located<Name>,

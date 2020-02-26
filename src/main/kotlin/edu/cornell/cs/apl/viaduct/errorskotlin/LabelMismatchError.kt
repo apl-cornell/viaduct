@@ -8,7 +8,7 @@ import edu.cornell.cs.apl.viaduct.syntax.HasSourceLocation
 // TODO: I don't think there is an example that throws this error...
 
 /**
- * Thrown when the inferred label of [node] does nat match its annotated label.
+ * Thrown when the inferred label of a node does not match its annotated label.
  *
  * @param actualLabel Inferred label for the node.
  * @param expectedLabel Annotated label for the node.

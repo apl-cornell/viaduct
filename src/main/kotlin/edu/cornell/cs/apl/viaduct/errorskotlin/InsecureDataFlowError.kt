@@ -6,7 +6,7 @@ import edu.cornell.cs.apl.viaduct.security.Label
 import edu.cornell.cs.apl.viaduct.syntax.HasSourceLocation
 
 /**
- * Thrown when [node]'s output flows to a location that would violate information flow security.
+ * Thrown when a term's output flows to a location that would violate information flow security.
  */
 class InsecureDataFlowError(
     private val node: HasSourceLocation,

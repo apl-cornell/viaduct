@@ -9,7 +9,7 @@ import edu.cornell.cs.apl.viaduct.syntax.HasSourceLocation
  * Thrown when the control flow influences data in a way that violates security.
  *
  * @param node AST node influenced by control flow.
- * @param nodeLabel Security label of [node].
+ * @param nodeLabel Security label of the node.
  * @param pc Security label assigned to control flow.
  */
 class InsecureControlFlowError(

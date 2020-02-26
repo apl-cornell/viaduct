@@ -27,6 +27,7 @@ class InsecureControlFlowError(
         get() {
             if (!pc.confidentiality().flowsTo(nodeLabel.confidentiality())) {
                 // Confidentiality is the problem
+                // TODO: reword message (see the output of insecure-control-flow-confidentiality.via)
                 return Document("Execution of this term might leak information encoded in the control flow:")
                     .withSource(node.sourceLocation) +
                     Document("Confidentiality label on control flow is:")
@@ -35,6 +36,7 @@ class InsecureControlFlowError(
                         .withData(nodeLabel.confidentiality())
             } else {
                 // Integrity is the problem
+                // TODO: add an error test case that covers this branch.
                 assert(!pc.integrity().flowsTo(nodeLabel.integrity()))
                 return Document("The control flow does not have enough integrity for this term:")
                     .withSource(node.sourceLocation) +

@@ -1,0 +1,4 @@
+codecov:
+  ci:
+    - travis-ci.com
+    - !travis-ci.org

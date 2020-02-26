@@ -22,6 +22,7 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.ReceiveNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.StatementNode
 import kotlinx.collections.immutable.PersistentMap
 import kotlinx.collections.immutable.persistentMapOf
+import kotlinx.collections.immutable.toPersistentMap
 
 /**
  * Traverses this program with [annotator] and returns the annotations computed for the program.
@@ -111,6 +112,23 @@ private constructor(
                 variable.value,
                 Pair(annotation, variable.sourceLocation)
             )
+        )
+    }
+
+    /**
+     * Returns a new map where annotations attached to [Temporary] variables are transformed
+     * using [temporaries], and annotations attached to [ObjectVariable]s are transformed using
+     * [objects].
+     */
+    fun <TemporaryAnnotation2, ObjectAnnotation2> map(
+        temporaries: (TemporaryAnnotation) -> TemporaryAnnotation2,
+        objects: (ObjectAnnotation) -> ObjectAnnotation2
+    ): VariableAnnotationMap<TemporaryAnnotation2, ObjectAnnotation2> {
+        return VariableAnnotationMap(
+            this.temporaries.mapValues { Pair(temporaries(it.value.first), it.value.second) }
+                .toPersistentMap(),
+            this.objects.mapValues { Pair(objects(it.value.first), it.value.second) }
+                .toPersistentMap()
         )
     }
 

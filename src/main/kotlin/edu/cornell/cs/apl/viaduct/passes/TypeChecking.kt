@@ -45,8 +45,8 @@ import edu.cornell.cs.apl.viaduct.syntax.types.ValueType
 import edu.cornell.cs.apl.viaduct.syntax.types.VectorType
 
 /**
- * Checks [this] program for consistency and returns a map from variables in each process to their
- * types.
+ * Checks [this] program for type consistency and returns a map from variables in each process to
+ * their types.
  */
 fun ProgramNode.typeCheck(): ProgramAnnotationMap<ValueType, ObjectType> {
     return this.annotate(ProgramTypeChecker)

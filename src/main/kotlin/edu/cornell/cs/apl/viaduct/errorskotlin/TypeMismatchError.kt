@@ -27,6 +27,8 @@ class TypeMismatchError(
         get() =
             Document("This term does not have the type I expect:")
                 .withSource(node.sourceLocation) +
-                Document("It has type:").withData(actualType) +
-                Document("But it should have type:").withData(expectedType)
+                Document("It has type:")
+                    .withData(actualType) +
+                Document("But it should have type:")
+                    .withData(expectedType)
 }

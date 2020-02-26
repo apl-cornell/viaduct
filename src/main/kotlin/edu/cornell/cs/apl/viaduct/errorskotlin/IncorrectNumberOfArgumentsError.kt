@@ -35,8 +35,9 @@ class IncorrectNumberOfArgumentsError(
     override val description: Document
         get() {
             val argumentsPlural = Document(if (expected == 1) "argument" else "arguments")
-            return Document("Call to") * method * "expects" * Document("$expected") *
-                argumentsPlural + Document(", but it got") * Document("${actual.size}") *
-                Document("instead.").withSource(method.sourceLocation)
+            return Document("Call to") * method *
+                "expects" * Document("$expected") * argumentsPlural +
+                Document(", but it got") * Document("${actual.size}") * Document("instead.")
+                .withSource(method.sourceLocation)
         }
 }

@@ -32,7 +32,9 @@ class ParsingError(
             val expected = expectedTokens.map { Document(it) }.joined()
             return Document("I ran into an issue while parsing this file.")
                 .withSource(location) +
-                Document("I was expecting one of these:").withData(expected) +
-                Document("Instead, I found:").withData(Document(actualToken))
+                Document("I was expecting one of these:")
+                    .withData(expected) +
+                Document("Instead, I found:")
+                    .withData(Document(actualToken))
         }
 }

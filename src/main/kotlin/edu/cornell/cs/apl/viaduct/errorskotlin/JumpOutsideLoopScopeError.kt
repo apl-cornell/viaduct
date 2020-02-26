@@ -15,5 +15,6 @@ class JumpOutsideLoopScopeError(val node: HasSourceLocation) : CompilationError(
 
     override val description: Document
         get() =
-            Document("This statement is only valid inside a loop:").withSource(node.sourceLocation)
+            Document("This statement is only valid inside a loop:")
+                .withSource(node.sourceLocation)
 }

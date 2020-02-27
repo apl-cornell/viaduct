@@ -47,18 +47,42 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.visitors.SuspendedTraversa
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.visitors.VariableAnnotationMap
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.visitors.annotate
 import edu.cornell.cs.apl.viaduct.util.FreshNameGenerator
+import java.io.Writer
 
 /**
  * Checks that [this] program does not violate information flow security, and returns a map from
  * variables in each process to their security labels.
  */
 fun ProgramNode.checkInformationFlow(): Map<Protocol, VariableAnnotationMap<Label, Label>> {
-    return this.annotate(ProgramLabelChecker())
+    return this.annotate(ProgramLabelChecker)
 }
 
-// TODO: export constraint graph
+/** Outputs a DOT representation of the constraint graph generated for [protocol] to [output]. */
+fun ProgramNode.exportConstraintGraphFor(protocol: Protocol, output: Writer) {
+    // TODO: assert the program has a process named [protocol]
+    val constraints = this.annotate(ProgramConstraintGraphGenerator)
+    constraints[protocol]?.exportDotGraph(output)
+}
 
-private class ProgramLabelChecker :
+/** Generates a constraint graph for every protocol in a program. */
+private object ProgramConstraintGraphGenerator :
+    ProgramAnnotator<Unit, ConstraintSolver<InformationFlowError>, AtomicLabelTerm, AtomicLabelTerm, LabelConstant, Unit>() {
+    override fun getData(node: HostDeclarationNode): LabelConstant =
+        LabelConstant.create(node.authority.value)
+
+    override fun getData(node: ProcessDeclarationNode) = Unit
+
+    override fun leaveProcessDeclaration(
+        node: ProcessDeclarationNode,
+        body: (StatementVisitorWithContext<*, Unit, AtomicLabelTerm, AtomicLabelTerm, *, LabelConstant, Unit>) -> VariableAnnotationMap<AtomicLabelTerm, AtomicLabelTerm>
+    ): ConstraintSolver<InformationFlowError> {
+        val visitor = StatementLabelChecker()
+        body(visitor)
+        return visitor.constraintSystem
+    }
+}
+
+private object ProgramLabelChecker :
     ProgramAnnotator<Unit, VariableAnnotationMap<Label, Label>, AtomicLabelTerm, AtomicLabelTerm, LabelConstant, Unit>() {
     override fun getData(node: HostDeclarationNode): LabelConstant =
         LabelConstant.create(node.authority.value)

@@ -39,7 +39,7 @@ class ReadNode(val temporary: TemporaryNode) :
 /** An n-ary operator applied to n arguments. */
 class OperatorApplicationNode(
     val operator: Operator,
-    val arguments: Arguments<ExpressionNode>,
+    val arguments: Arguments<AtomicExpressionNode>,
     override val sourceLocation: SourceLocation
 ) : ExpressionNode() {
     override fun toSurfaceNode(): edu.cornell.cs.apl.viaduct.syntax.surface.OperatorApplicationNode =
@@ -54,7 +54,7 @@ class OperatorApplicationNode(
 class QueryNode(
     val variable: ObjectVariableNode,
     val query: QueryNameNode,
-    val arguments: Arguments<ExpressionNode>,
+    val arguments: Arguments<AtomicExpressionNode>,
     override val sourceLocation: SourceLocation
 ) : ExpressionNode() {
     override fun toSurfaceNode(): edu.cornell.cs.apl.viaduct.syntax.surface.QueryNode =

@@ -26,6 +26,8 @@ sealed class StatementNode : Node() {
  * does not affect control flow.
  * */
 sealed class SimpleStatementNode : StatementNode() {
+    abstract override val children: Iterable<ExpressionNode>
+
     abstract override fun toSurfaceNode(): edu.cornell.cs.apl.viaduct.syntax.surface.SimpleStatementNode
 }
 
@@ -42,6 +44,9 @@ class LetNode(
     val value: ExpressionNode,
     override val sourceLocation: SourceLocation
 ) : SimpleStatementNode(), TemporaryDefinition {
+    override val children: Iterable<ExpressionNode>
+        get() = listOf(value)
+
     override fun toSurfaceNode(): edu.cornell.cs.apl.viaduct.syntax.surface.LetNode =
         edu.cornell.cs.apl.viaduct.syntax.surface.LetNode(
             temporary,
@@ -60,6 +65,9 @@ class DeclarationNode(
     val arguments: Arguments<AtomicExpressionNode>,
     override val sourceLocation: SourceLocation
 ) : SimpleStatementNode() {
+    override val children: Iterable<AtomicExpressionNode>
+        get() = arguments
+
     override fun toSurfaceNode(): edu.cornell.cs.apl.viaduct.syntax.surface.DeclarationNode =
         edu.cornell.cs.apl.viaduct.syntax.surface.DeclarationNode(
             variable,
@@ -78,6 +86,9 @@ class UpdateNode(
     val arguments: Arguments<AtomicExpressionNode>,
     override val sourceLocation: SourceLocation
 ) : SimpleStatementNode() {
+    override val children: Iterable<AtomicExpressionNode>
+        get() = arguments
+
     override fun toSurfaceNode(): edu.cornell.cs.apl.viaduct.syntax.surface.UpdateNode =
         edu.cornell.cs.apl.viaduct.syntax.surface.UpdateNode(
             variable,
@@ -114,6 +125,9 @@ class InputNode(
     override val host: HostNode,
     override val sourceLocation: SourceLocation
 ) : ExternalCommunicationNode(), TemporaryDefinition {
+    override val children: Iterable<Nothing>
+        get() = listOf()
+
     override fun toSurfaceNode(): edu.cornell.cs.apl.viaduct.syntax.surface.LetNode =
         edu.cornell.cs.apl.viaduct.syntax.surface.LetNode(
             temporary,
@@ -128,6 +142,9 @@ class OutputNode(
     override val host: HostNode,
     override val sourceLocation: SourceLocation
 ) : ExternalCommunicationNode() {
+    override val children: Iterable<AtomicExpressionNode>
+        get() = listOf(message)
+
     override fun toSurfaceNode(): edu.cornell.cs.apl.viaduct.syntax.surface.OutputNode =
         edu.cornell.cs.apl.viaduct.syntax.surface.OutputNode(
             message.toSurfaceNode(),
@@ -148,6 +165,9 @@ class ReceiveNode(
     override val protocol: ProtocolNode,
     override val sourceLocation: SourceLocation
 ) : InternalCommunicationNode(), TemporaryDefinition {
+    override val children: Iterable<Nothing>
+        get() = listOf()
+
     override fun toSurfaceNode(): edu.cornell.cs.apl.viaduct.syntax.surface.LetNode =
         edu.cornell.cs.apl.viaduct.syntax.surface.LetNode(
             temporary,
@@ -162,6 +182,9 @@ class SendNode(
     override val protocol: ProtocolNode,
     override val sourceLocation: SourceLocation
 ) : InternalCommunicationNode() {
+    override val children: Iterable<AtomicExpressionNode>
+        get() = listOf(message)
+
     override fun toSurfaceNode(): edu.cornell.cs.apl.viaduct.syntax.surface.SendNode =
         edu.cornell.cs.apl.viaduct.syntax.surface.SendNode(
             message.toSurfaceNode(),
@@ -187,6 +210,9 @@ class IfNode(
     val elseBranch: BlockNode,
     override val sourceLocation: SourceLocation
 ) : ControlNode() {
+    override val children: Iterable<Node>
+        get() = listOf(guard, thenBranch, elseBranch)
+
     override fun toSurfaceNode(): edu.cornell.cs.apl.viaduct.syntax.surface.IfNode =
         edu.cornell.cs.apl.viaduct.syntax.surface.IfNode(
             guard.toSurfaceNode(),
@@ -206,6 +232,9 @@ class InfiniteLoopNode(
     val jumpLabel: JumpLabelNode,
     override val sourceLocation: SourceLocation
 ) : ControlNode() {
+    override val children: Iterable<BlockNode>
+        get() = listOf(body)
+
     override fun toSurfaceNode(): edu.cornell.cs.apl.viaduct.syntax.surface.InfiniteLoopNode =
         edu.cornell.cs.apl.viaduct.syntax.surface.InfiniteLoopNode(
             body.toSurfaceNode(),
@@ -223,6 +252,9 @@ class BreakNode(
     val jumpLabel: JumpLabelNode,
     override val sourceLocation: SourceLocation
 ) : ControlNode() {
+    override val children: Iterable<Nothing>
+        get() = listOf()
+
     override fun toSurfaceNode(): edu.cornell.cs.apl.viaduct.syntax.surface.BreakNode =
         edu.cornell.cs.apl.viaduct.syntax.surface.BreakNode(
             jumpLabel,
@@ -235,6 +267,9 @@ class AssertionNode(
     val condition: AtomicExpressionNode,
     override val sourceLocation: SourceLocation
 ) : StatementNode() {
+    override val children: Iterable<AtomicExpressionNode>
+        get() = listOf(condition)
+
     override fun toSurfaceNode(): edu.cornell.cs.apl.viaduct.syntax.surface.AssertionNode =
         edu.cornell.cs.apl.viaduct.syntax.surface.AssertionNode(
             condition.toSurfaceNode(),
@@ -247,12 +282,15 @@ class BlockNode
 private constructor(
     val statements: PersistentList<StatementNode>,
     override val sourceLocation: SourceLocation
-) : StatementNode() {
+) : StatementNode(), List<StatementNode> by statements {
     constructor(statements: List<StatementNode>, sourceLocation: SourceLocation) :
         this(statements.toPersistentList(), sourceLocation)
 
     constructor(vararg statements: StatementNode, sourceLocation: SourceLocation) :
         this(persistentListOf(*statements), sourceLocation)
+
+    override val children: Iterable<StatementNode>
+        get() = statements
 
     override fun toSurfaceNode(): edu.cornell.cs.apl.viaduct.syntax.surface.BlockNode =
         edu.cornell.cs.apl.viaduct.syntax.surface.BlockNode(

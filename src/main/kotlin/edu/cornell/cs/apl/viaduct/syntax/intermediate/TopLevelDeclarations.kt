@@ -21,6 +21,9 @@ class HostDeclarationNode(
     val authority: LabelNode,
     override val sourceLocation: SourceLocation
 ) : TopLevelDeclarationNode() {
+    override val children: Iterable<Nothing>
+        get() = listOf()
+
     override fun toSurfaceNode(): edu.cornell.cs.apl.viaduct.syntax.surface.HostDeclarationNode =
         edu.cornell.cs.apl.viaduct.syntax.surface.HostDeclarationNode(
             name,
@@ -40,6 +43,9 @@ class ProcessDeclarationNode(
     val body: BlockNode,
     override val sourceLocation: SourceLocation
 ) : TopLevelDeclarationNode() {
+    override val children: Iterable<BlockNode>
+        get() = listOf(body)
+
     override fun toSurfaceNode(): edu.cornell.cs.apl.viaduct.syntax.surface.ProcessDeclarationNode =
         edu.cornell.cs.apl.viaduct.syntax.surface.ProcessDeclarationNode(
             protocol,

@@ -11,11 +11,16 @@ import edu.cornell.cs.apl.viaduct.syntax.values.Value
 
 /** A computation that produces a result. */
 sealed class ExpressionNode : Node() {
+    abstract override val children: Iterable<AtomicExpressionNode>
+
     abstract override fun toSurfaceNode(): edu.cornell.cs.apl.viaduct.syntax.surface.ExpressionNode
 }
 
 /** An expression that requires no computation to reduce to a value. */
 sealed class AtomicExpressionNode : ExpressionNode() {
+    final override val children: Iterable<Nothing>
+        get() = listOf()
+
     abstract override fun toSurfaceNode(): edu.cornell.cs.apl.viaduct.syntax.surface.AtomicExpressionNode
 }
 
@@ -27,8 +32,7 @@ class LiteralNode(val value: Value, override val sourceLocation: SourceLocation)
 }
 
 /** Reading the value stored in a temporary. */
-class ReadNode(val temporary: TemporaryNode) :
-    AtomicExpressionNode() {
+class ReadNode(val temporary: TemporaryNode) : AtomicExpressionNode() {
     override val sourceLocation: SourceLocation
         get() = temporary.sourceLocation
 
@@ -42,6 +46,9 @@ class OperatorApplicationNode(
     val arguments: Arguments<AtomicExpressionNode>,
     override val sourceLocation: SourceLocation
 ) : ExpressionNode() {
+    override val children: Iterable<AtomicExpressionNode>
+        get() = arguments
+
     override fun toSurfaceNode(): edu.cornell.cs.apl.viaduct.syntax.surface.OperatorApplicationNode =
         edu.cornell.cs.apl.viaduct.syntax.surface.OperatorApplicationNode(
             operator,
@@ -57,6 +64,9 @@ class QueryNode(
     val arguments: Arguments<AtomicExpressionNode>,
     override val sourceLocation: SourceLocation
 ) : ExpressionNode() {
+    override val children: Iterable<AtomicExpressionNode>
+        get() = arguments
+
     override fun toSurfaceNode(): edu.cornell.cs.apl.viaduct.syntax.surface.QueryNode =
         edu.cornell.cs.apl.viaduct.syntax.surface.QueryNode(
             variable,
@@ -76,6 +86,9 @@ sealed class DowngradeNode : ExpressionNode() {
 
     /** The label after the downgrade. */
     abstract val toLabel: LabelNode
+
+    final override val children: Iterable<AtomicExpressionNode>
+        get() = listOf(expression)
 }
 
 /** Revealing the the result of an expression (reducing confidentiality). */

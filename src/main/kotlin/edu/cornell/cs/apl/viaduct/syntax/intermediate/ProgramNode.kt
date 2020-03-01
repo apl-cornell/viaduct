@@ -18,6 +18,9 @@ private constructor(
     constructor(declarations: List<TopLevelDeclarationNode>, sourceLocation: SourceLocation) :
         this(declarations.toPersistentList(), sourceLocation)
 
+    override val children: Iterable<TopLevelDeclarationNode>
+        get() = declarations
+
     override fun toSurfaceNode(): edu.cornell.cs.apl.viaduct.syntax.surface.ProgramNode =
         edu.cornell.cs.apl.viaduct.syntax.surface.ProgramNode(
             declarations.map { it.toSurfaceNode() },

@@ -1,11 +1,10 @@
 package edu.cornell.cs.apl.viaduct.passes
 
-import edu.cornell.cs.apl.viaduct.analysis.primaryProtocol
-import edu.cornell.cs.apl.viaduct.analysis.protocols
+import edu.cornell.cs.apl.viaduct.analysis.ProtocolAnalysis
+import edu.cornell.cs.apl.viaduct.analysis.TypeAnalysis
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
 import edu.cornell.cs.apl.viaduct.syntax.ProtocolNode
 import edu.cornell.cs.apl.viaduct.syntax.ValueTypeNode
-import edu.cornell.cs.apl.viaduct.syntax.Variable
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.AssertionNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.BlockNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.BreakNode
@@ -18,8 +17,6 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.SendNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.SimpleStatementNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.StatementNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.TemporaryDefinition
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.visitors.VariableAnnotationMap
-import edu.cornell.cs.apl.viaduct.syntax.types.ValueType
 
 /**
  * Returns a map from [Protocol]s to the portions of [this] process assigned to them.
@@ -29,20 +26,17 @@ import edu.cornell.cs.apl.viaduct.syntax.types.ValueType
  * that [Protocol] erased.
  */
 fun ProcessDeclarationNode.split(
-    protocolAssignment: (Variable) -> Protocol,
-    typeAssignment: VariableAnnotationMap<ValueType, *>
+    protocolAnalysis: ProtocolAnalysis,
+    typeAnalysis: TypeAnalysis
 ): Map<Protocol, BlockNode> {
-    val protocols = protocols(this, protocolAssignment)
-
     fun BlockNode.projectFor(protocol: Protocol): BlockNode {
         val statements: List<StatementNode> = this.statements.flatMap {
-            val protocolsOfIt = protocols.getValue(it)
-            if (protocol !in protocolsOfIt)
+            if (protocol !in protocolAnalysis.protocols(it))
                 listOf()
             else when (it) {
                 is SimpleStatementNode -> {
                     val result = mutableListOf<StatementNode>()
-                    val primaryProtocol = it.primaryProtocol(protocolAssignment)
+                    val primaryProtocol = protocolAnalysis.primaryProtocol(it)
 
                     if (protocol == primaryProtocol)
                         result.add(it)
@@ -50,7 +44,7 @@ fun ProcessDeclarationNode.split(
                     if (it is TemporaryDefinition) {
                         if (protocol == primaryProtocol) {
                             // Send the temporary to everyone relevant
-                            (protocolsOfIt - protocol).forEach { protocol ->
+                            (protocolAnalysis.protocols(it) - protocol).forEach { protocol ->
                                 result.add(
                                     SendNode(
                                         ReadNode(it.temporary),
@@ -65,7 +59,7 @@ fun ProcessDeclarationNode.split(
                                 ReceiveNode(
                                     it.temporary,
                                     ValueTypeNode(
-                                        typeAssignment[it.temporary],
+                                        typeAnalysis.type(it),
                                         it.temporary.sourceLocation
                                     ),
                                     ProtocolNode(primaryProtocol, it.temporary.sourceLocation),
@@ -110,5 +104,5 @@ fun ProcessDeclarationNode.split(
         return BlockNode(statements, this.sourceLocation)
     }
 
-    return protocols.getValue(body).associateWith { body.projectFor(it) }
+    return protocolAnalysis.protocols(body).associateWith { body.projectFor(it) }
 }

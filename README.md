@@ -1,7 +1,8 @@
 # Viaduct
 
 [![Build Status](https://travis-ci.com/apl-cornell/viaduct.svg?branch=master)](https://travis-ci.com/apl-cornell/viaduct)
-[![Codecov](https://codecov.io/gh/apl-cornell/viaduct/branch/master/graph/badge.svg)](https://codecov.io/gh/apl-cornell/viaduct)
+[![Code Coverage](https://codecov.io/gh/apl-cornell/viaduct/branch/master/graph/badge.svg)](https://codecov.io/gh/apl-cornell/viaduct)
+[![Docker Build Status](https://img.shields.io/docker/cloud/build/cacay/viaduct)](https://hub.docker.com/repository/docker/cacay/viaduct)
 
 Secure program partitioning.
 

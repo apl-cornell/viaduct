@@ -91,7 +91,7 @@ private object StatementTypeChecker :
         }
     }
 
-    /** Assert that a node has the given type.  */
+    /** Asserts that [node] has type [expectedType]. */
     private fun assertHasType(
         node: HasSourceLocation,
         actualType: ValueType,

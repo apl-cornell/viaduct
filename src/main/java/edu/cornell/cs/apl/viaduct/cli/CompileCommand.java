@@ -3,9 +3,9 @@ package edu.cornell.cs.apl.viaduct.cli;
 import com.github.rvesse.airline.annotations.Command;
 import com.github.rvesse.airline.annotations.Option;
 import edu.cornell.cs.apl.viaduct.parsing.ParsingKt;
+import edu.cornell.cs.apl.viaduct.passes.CheckingKt;
 import edu.cornell.cs.apl.viaduct.passes.ElaborationKt;
 import edu.cornell.cs.apl.viaduct.passes.InformationFlowCheckingKt;
-import edu.cornell.cs.apl.viaduct.passes.TypeCheckingKt;
 import edu.cornell.cs.apl.viaduct.protocols.MainProtocolKt;
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode;
 import guru.nidi.graphviz.engine.Format;
@@ -134,7 +134,7 @@ public class CompileCommand extends BaseCommand {
         constraintGraphOutput);
 
     // Perform checks.
-    TypeCheckingKt.typeCheck(program);
+    CheckingKt.check(program);
     InformationFlowCheckingKt.checkInformationFlow(program);
 
     // TODO: compile!

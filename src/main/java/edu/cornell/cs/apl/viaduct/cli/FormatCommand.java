@@ -3,9 +3,9 @@ package edu.cornell.cs.apl.viaduct.cli;
 import com.github.rvesse.airline.annotations.Command;
 import com.github.rvesse.airline.annotations.Option;
 import edu.cornell.cs.apl.viaduct.parsing.ParsingKt;
+import edu.cornell.cs.apl.viaduct.passes.CheckingKt;
 import edu.cornell.cs.apl.viaduct.passes.ElaborationKt;
 import edu.cornell.cs.apl.viaduct.passes.InformationFlowCheckingKt;
-import edu.cornell.cs.apl.viaduct.passes.TypeCheckingKt;
 import edu.cornell.cs.apl.viaduct.syntax.surface.ProgramNode;
 import java.io.IOException;
 import java.io.PrintStream;
@@ -30,7 +30,7 @@ public class FormatCommand extends BaseCommand {
       if (this.enableChecks) {
         final edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode elaborated =
             ElaborationKt.elaborated(program);
-        TypeCheckingKt.typeCheck(elaborated);
+        CheckingKt.check(elaborated);
         InformationFlowCheckingKt.checkInformationFlow(elaborated);
         // TODO: other checks
       }

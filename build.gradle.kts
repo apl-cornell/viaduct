@@ -225,12 +225,18 @@ tasks.named<JavaExec>("run") {
 
 /** Documentation */
 
-// Kotlin documentation
 tasks.dokka {
-    outputFormat = "gfm"
-    outputDirectory = "$buildDir/docs"
-    subProjects = subprojects.map { it.name }
+    outputFormat = "html"
+    outputDirectory = "$buildDir/docs/html"
+}
 
+val dokkaGitHub by tasks.registering(org.jetbrains.dokka.gradle.DokkaTask::class) {
+    outputFormat = "gfm"
+    outputDirectory = "$buildDir/docs/markdown"
+}
+
+tasks.withType<org.jetbrains.dokka.gradle.DokkaTask>().configureEach {
+    subProjects = subprojects.map { it.name }
     configuration {
         includes = listOf("packages.md")
     }

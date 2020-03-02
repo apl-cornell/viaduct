@@ -1,11 +1,13 @@
 package edu.cornell.cs.apl.viaduct.errorskotlin
 
 import edu.cornell.cs.apl.viaduct.ErroneousExampleFileProvider
+import edu.cornell.cs.apl.viaduct.analysis.NameAnalysis
 import edu.cornell.cs.apl.viaduct.parsing.SourceFile
 import edu.cornell.cs.apl.viaduct.parsing.parse
 import edu.cornell.cs.apl.viaduct.passes.checkInformationFlow
 import edu.cornell.cs.apl.viaduct.passes.elaborated
 import edu.cornell.cs.apl.viaduct.passes.typeCheck
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.attributes.Tree
 import java.io.File
 import kotlin.reflect.KClass
 import kotlin.reflect.full.isSubclassOf
@@ -44,6 +46,8 @@ internal class ErrorsTest {
 /** Parse, check, and interpret a program. */
 private fun run(file: File) {
     val program = SourceFile.from(file).parse().elaborated()
+    val programTree = Tree(program)
+    NameAnalysis(programTree).check()
     program.typeCheck()
     program.checkInformationFlow()
     // TODO: other checks and interpret

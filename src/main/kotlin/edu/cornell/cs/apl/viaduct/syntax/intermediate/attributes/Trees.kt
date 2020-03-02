@@ -18,7 +18,7 @@ import kotlinx.collections.immutable.toPersistentList
  * @param RootNode The type of the root node of the tree.
  * @param root The root node of the tree.
  */
-class Tree<Node : TreeNode<Node>, RootNode : Node>(val root: RootNode) {
+class Tree<Node : TreeNode<Node>, out RootNode : Node>(val root: RootNode) {
     private val relations: MutableMap<Node, NodeRelations<Node>> = IdentityHashMap()
 
     init {

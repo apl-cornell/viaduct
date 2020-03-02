@@ -13,8 +13,10 @@ import edu.cornell.cs.apl.viaduct.syntax.Temporary
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.BlockNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.BreakNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.DeclarationNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.ExpressionNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ExternalCommunicationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.HostDeclarationNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.IfNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.InfiniteLoopNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.InternalCommunicationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.LetNode
@@ -23,17 +25,22 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProcessDeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.QueryNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ReadNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.StatementNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.TemporaryDefinition
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.UpdateNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.attributes.Tree
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.attributes.attribute
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.attributes.collectedAttribute
 import kotlin.properties.ReadOnlyProperty
 import kotlin.reflect.KProperty
 import kotlinx.collections.immutable.PersistentMap
+import kotlinx.collections.immutable.PersistentSet
 import kotlinx.collections.immutable.persistentMapOf
+import kotlinx.collections.immutable.persistentSetOf
 
 /**
- * Associates each use of a [Name] with its declaration.
+ * Associates each use of a [Name] with its declaration, and every [Name] declaration with the
+ * set of its uses.
  *
  * For example, [Temporary] variables are associated with [LetNode]s, [ObjectVariable]s with
  * [DeclarationNode]s, and [JumpLabel]s with [InfiniteLoopNode]s.
@@ -87,6 +94,30 @@ class NameAnalysis(val tree: Tree<Node, ProgramNode>) {
                 parent.loops.put(parent.jumpLabel, parent)
             else ->
                 parent.loops
+        }
+    }
+
+    /** Same as [readers]. */
+    private val Node.readers: Set<StatementNode> by collectedAttribute(tree) { node ->
+        if (node is StatementNode) {
+            // TODO: get rid of type cast once TemporaryDefinition is gone
+            node.reads.map { Pair(declaration(it) as Node, node) }
+        } else {
+            listOf()
+        }
+    }
+
+    /** The set of [Temporary] variables directly read by this node. */
+    private val Node.reads: PersistentSet<ReadNode> by attribute {
+        when (this) {
+            is ReadNode ->
+                persistentSetOf(this)
+            is ExpressionNode ->
+                children.fold(persistentSetOf()) { acc, child -> acc.addAll(child.reads) }
+            else ->
+                children.filterIsInstance<ExpressionNode>().fold(persistentSetOf()) { acc, child ->
+                    acc.addAll(child.reads)
+                }
         }
     }
 
@@ -146,6 +177,17 @@ class NameAnalysis(val tree: Tree<Node, ProgramNode>) {
     /** Returns the declaration of the [Protocol] in [node]. */
     fun declaration(node: InternalCommunicationNode): ProcessDeclarationNode =
         node.protocolDeclarations[node.protocol]
+
+    /**
+     * Returns the set of [StatementNode]s that read the [Temporary] defined by [node].
+     *
+     * Note that this set only includes direct reads. For example, an [IfNode] only reads the
+     * temporaries in its guard, and [BlockNode]s and [InfiniteLoopNode]s do not read any temporary.
+     */
+    fun readers(node: TemporaryDefinition): Set<StatementNode> =
+        (node as Node).readers
+
+    // TODO: readers for other types of [Name]s
 
     /**
      * Asserts that every referenced [Name] has a declaration, and that no [Name] is declared

@@ -31,7 +31,7 @@ process main {
   /* assert tmp1 == 5; */
   /* assert !tmp2; */
 
-  send 42 to alice;
+  output 42 to alice;
 }
 
 host alice : {A}

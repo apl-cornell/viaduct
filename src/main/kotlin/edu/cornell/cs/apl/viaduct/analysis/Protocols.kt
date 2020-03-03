@@ -221,7 +221,7 @@ private class ProtocolsCalculator(
                     always(SetWithUnion(statement.primaryProtocol(protocolAssignment)))
 
                 is InternalCommunicationNode ->
-                    throw IllegalInternalCommunicationError(process.protocol.value, statement)
+                    throw IllegalInternalCommunicationError(process, statement)
 
                 !is SimpleStatementNode ->
                     { it -> it }

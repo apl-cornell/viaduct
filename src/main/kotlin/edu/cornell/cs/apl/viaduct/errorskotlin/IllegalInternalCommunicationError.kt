@@ -6,6 +6,7 @@ import edu.cornell.cs.apl.viaduct.protocols.Ideal
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ExternalCommunicationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.InternalCommunicationNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProcessDeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.surface.keyword
 
 /**
@@ -14,11 +15,11 @@ import edu.cornell.cs.apl.viaduct.syntax.surface.keyword
  * These protocols are only allowed to communicate with hosts, not other protocols, so they should
  * be using [ExternalCommunicationNode]s.
  *
- * @param protocol Protocol containing the illegal statement.
+ * @param process Protocol containing the illegal statement.
  * @param illegalStatement The illegal communication statement.
  */
 class IllegalInternalCommunicationError(
-    private val protocol: Protocol,
+    private val process: ProcessDeclarationNode,
     private val illegalStatement: InternalCommunicationNode
 ) : CompilationError() {
     override val category: String
@@ -29,7 +30,7 @@ class IllegalInternalCommunicationError(
 
     override val description: Document
         get() =
-            Document("Protocol") * protocol *
+            Document("Protocol") * process.protocol *
                 Document("is not allowed to communicate with other protocols:")
                     .withSource(illegalStatement.sourceLocation)
 

@@ -4,7 +4,6 @@ import edu.cornell.cs.apl.viaduct.ErroneousExampleFileProvider
 import edu.cornell.cs.apl.viaduct.parsing.SourceFile
 import edu.cornell.cs.apl.viaduct.parsing.parse
 import edu.cornell.cs.apl.viaduct.passes.check
-import edu.cornell.cs.apl.viaduct.passes.checkInformationFlow
 import edu.cornell.cs.apl.viaduct.passes.elaborated
 import java.io.File
 import kotlin.reflect.KClass
@@ -45,8 +44,7 @@ internal class ErrorsTest {
 private fun run(file: File) {
     val program = SourceFile.from(file).parse().elaborated()
     program.check()
-    program.checkInformationFlow()
-    // TODO: other checks and interpret
+    // TODO: interpret
 }
 
 /**

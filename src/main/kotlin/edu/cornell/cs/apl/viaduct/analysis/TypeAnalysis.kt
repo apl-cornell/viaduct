@@ -7,6 +7,8 @@ import edu.cornell.cs.apl.viaduct.security.Label
 import edu.cornell.cs.apl.viaduct.syntax.Arguments
 import edu.cornell.cs.apl.viaduct.syntax.Located
 import edu.cornell.cs.apl.viaduct.syntax.Name
+import edu.cornell.cs.apl.viaduct.syntax.ObjectVariable
+import edu.cornell.cs.apl.viaduct.syntax.Temporary
 import edu.cornell.cs.apl.viaduct.syntax.Variable
 import edu.cornell.cs.apl.viaduct.syntax.datatypes.MutableCell
 import edu.cornell.cs.apl.viaduct.syntax.datatypes.Vector
@@ -118,7 +120,7 @@ class TypeAnalysis(private val nameAnalysis: NameAnalysis) {
     /** Returns the inferred type of [node]. */
     fun type(node: ExpressionNode): ValueType = node.type
 
-    /** Returns the inferred type of the temporary defined by [node]. */
+    /** Returns the inferred type of the [Temporary] defined by [node]. */
     fun type(node: TemporaryDefinition): ValueType =
         when (node) {
             is LetNode ->
@@ -131,7 +133,7 @@ class TypeAnalysis(private val nameAnalysis: NameAnalysis) {
                 TODO("Remove once [TemporaryDefinition] is gone.")
         }
 
-    /** Returns the type of the object defined by [node]. */
+    /** Returns the type of the [ObjectVariable] defined by [node]. */
     fun type(node: DeclarationNode): ObjectType = node.type
 
     /** Asserts that the program is well typed, and throws [CompilationError] otherwise. */

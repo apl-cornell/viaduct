@@ -1,5 +1,6 @@
 package edu.cornell.cs.apl.viaduct.passes
 
+import edu.cornell.cs.apl.viaduct.analysis.InformationFlowAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.NameAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.TypeAnalysis
 import edu.cornell.cs.apl.viaduct.errorskotlin.CompilationError
@@ -15,5 +16,5 @@ fun ProgramNode.check() {
     val nameAnalysis = NameAnalysis(Tree(this))
     nameAnalysis.check()
     TypeAnalysis(nameAnalysis).check()
-    // TODO: information flow checking
+    InformationFlowAnalysis(nameAnalysis).check()
 }

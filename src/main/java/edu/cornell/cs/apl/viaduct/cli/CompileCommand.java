@@ -2,12 +2,13 @@ package edu.cornell.cs.apl.viaduct.cli;
 
 import com.github.rvesse.airline.annotations.Command;
 import com.github.rvesse.airline.annotations.Option;
+import edu.cornell.cs.apl.viaduct.analysis.InformationFlowAnalysis;
+import edu.cornell.cs.apl.viaduct.analysis.NameAnalysis;
 import edu.cornell.cs.apl.viaduct.parsing.ParsingKt;
 import edu.cornell.cs.apl.viaduct.passes.CheckingKt;
 import edu.cornell.cs.apl.viaduct.passes.ElaborationKt;
-import edu.cornell.cs.apl.viaduct.passes.InformationFlowCheckingKt;
-import edu.cornell.cs.apl.viaduct.protocols.MainProtocolKt;
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode;
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.attributes.Tree;
 import guru.nidi.graphviz.engine.Format;
 import guru.nidi.graphviz.engine.Graphviz;
 import guru.nidi.graphviz.engine.GraphvizCmdLineEngine;
@@ -42,7 +43,7 @@ public class CompileCommand extends BaseCommand {
       name = {"-c", "--constraint-graph"},
       title = "file.ext",
       description =
-          "Write the label constraint graph generated for main to <file.ext>."
+          "Write the label constraint graph generated for the program to <file.ext>."
               + " File extension determines output format."
               + " Supported formats are the same as the ones in Graphviz."
               + " Most useful ones are .dot, .svg, .png, and .pdf.")
@@ -129,13 +130,12 @@ public class CompileCommand extends BaseCommand {
     // Dump label constraint graph to a file if requested.
     dumpGraph(
         (output) ->
-            InformationFlowCheckingKt.exportConstraintGraphFor(
-                program, MainProtocolKt.getMainProtocol(), output),
+            new InformationFlowAnalysis(new NameAnalysis(new Tree<>(program)))
+                .exportConstraintGraph(output),
         constraintGraphOutput);
 
     // Perform checks.
     CheckingKt.check(program);
-    InformationFlowCheckingKt.checkInformationFlow(program);
 
     // TODO: compile!
     try (PrintStream writer = this.output.newOutputStream()) {

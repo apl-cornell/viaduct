@@ -2,13 +2,13 @@ package edu.cornell.cs.apl.viaduct.cli;
 
 import com.github.rvesse.airline.annotations.Command;
 import com.github.rvesse.airline.annotations.Option;
+import edu.cornell.cs.apl.attributes.Tree;
 import edu.cornell.cs.apl.viaduct.analysis.InformationFlowAnalysis;
 import edu.cornell.cs.apl.viaduct.analysis.NameAnalysis;
 import edu.cornell.cs.apl.viaduct.parsing.ParsingKt;
 import edu.cornell.cs.apl.viaduct.passes.CheckingKt;
 import edu.cornell.cs.apl.viaduct.passes.ElaborationKt;
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode;
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.attributes.Tree;
 import guru.nidi.graphviz.engine.Format;
 import guru.nidi.graphviz.engine.Graphviz;
 import guru.nidi.graphviz.engine.GraphvizCmdLineEngine;

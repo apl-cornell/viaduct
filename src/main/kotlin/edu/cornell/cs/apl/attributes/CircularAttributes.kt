@@ -1,4 +1,4 @@
-package edu.cornell.cs.apl.viaduct.syntax.intermediate.attributes
+package edu.cornell.cs.apl.attributes
 
 import java.util.IdentityHashMap
 

@@ -1,5 +1,7 @@
 package edu.cornell.cs.apl.viaduct.analysis
 
+import edu.cornell.cs.apl.attributes.attribute
+import edu.cornell.cs.apl.attributes.circularAttribute
 import edu.cornell.cs.apl.viaduct.errorskotlin.IllegalInternalCommunicationError
 import edu.cornell.cs.apl.viaduct.protocols.Local
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
@@ -20,8 +22,6 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.SimpleStatementNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.StatementNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.TemporaryDefinition
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.UpdateNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.attributes.attribute
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.attributes.circularAttribute
 import kotlinx.collections.immutable.PersistentSet
 import kotlinx.collections.immutable.persistentHashSetOf
 import kotlinx.collections.immutable.toPersistentSet

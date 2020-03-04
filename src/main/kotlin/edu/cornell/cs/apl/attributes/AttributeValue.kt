@@ -1,4 +1,4 @@
-package edu.cornell.cs.apl.viaduct.syntax.intermediate.attributes
+package edu.cornell.cs.apl.attributes
 
 /**
  * A mutable cell that stores a partial result, which can be updated and/or finalized.

@@ -1,5 +1,6 @@
 package edu.cornell.cs.apl.viaduct.analysis
 
+import edu.cornell.cs.apl.attributes.attribute
 import edu.cornell.cs.apl.viaduct.errorskotlin.CompilationError
 import edu.cornell.cs.apl.viaduct.errorskotlin.IncorrectNumberOfArgumentsError
 import edu.cornell.cs.apl.viaduct.errorskotlin.TypeMismatchError
@@ -33,7 +34,6 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.SendNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.StatementNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.TemporaryDefinition
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.UpdateNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.attributes.attribute
 import edu.cornell.cs.apl.viaduct.syntax.types.BooleanType
 import edu.cornell.cs.apl.viaduct.syntax.types.FunctionType
 import edu.cornell.cs.apl.viaduct.syntax.types.MutableCellType

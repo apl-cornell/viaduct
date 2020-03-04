@@ -1,5 +1,8 @@
 package edu.cornell.cs.apl.viaduct.analysis
 
+import edu.cornell.cs.apl.attributes.Tree
+import edu.cornell.cs.apl.attributes.attribute
+import edu.cornell.cs.apl.attributes.collectedAttribute
 import edu.cornell.cs.apl.viaduct.errorskotlin.NameClashError
 import edu.cornell.cs.apl.viaduct.errorskotlin.UndefinedNameError
 import edu.cornell.cs.apl.viaduct.syntax.Host
@@ -28,9 +31,6 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.ReadNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.StatementNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.TemporaryDefinition
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.UpdateNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.attributes.Tree
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.attributes.attribute
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.attributes.collectedAttribute
 import kotlin.properties.ReadOnlyProperty
 import kotlin.reflect.KProperty
 import kotlinx.collections.immutable.PersistentSet

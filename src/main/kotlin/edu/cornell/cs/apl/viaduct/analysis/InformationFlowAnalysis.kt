@@ -1,5 +1,6 @@
 package edu.cornell.cs.apl.viaduct.analysis
 
+import edu.cornell.cs.apl.attributes.attribute
 import edu.cornell.cs.apl.prettyprinting.PrettyPrintable
 import edu.cornell.cs.apl.viaduct.errorskotlin.ConfidentialityChangingEndorsementError
 import edu.cornell.cs.apl.viaduct.errorskotlin.InformationFlowError
@@ -41,7 +42,6 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.SendNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.StatementNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.TemporaryDefinition
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.UpdateNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.attributes.attribute
 import edu.cornell.cs.apl.viaduct.util.FreshNameGenerator
 import java.io.Writer
 

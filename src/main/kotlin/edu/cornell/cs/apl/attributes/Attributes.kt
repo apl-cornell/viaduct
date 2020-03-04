@@ -1,10 +1,9 @@
-package edu.cornell.cs.apl.viaduct.syntax.intermediate.attributes
+package edu.cornell.cs.apl.attributes
 
 import java.util.IdentityHashMap
 import kotlin.properties.ReadOnlyProperty
 import kotlin.reflect.KProperty
 
-// TODO: move this (and everything else) to its own module since none of this is Viaduct specific.
 // TODO: make these thread safe.
 // TODO: garbage collection?
 // TODO: add more information to errors (e.g. property name which we know).

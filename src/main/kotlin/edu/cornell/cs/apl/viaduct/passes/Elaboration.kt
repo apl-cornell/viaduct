@@ -4,10 +4,9 @@ import edu.cornell.cs.apl.viaduct.errorskotlin.JumpOutsideLoopScopeError
 import edu.cornell.cs.apl.viaduct.syntax.Arguments
 import edu.cornell.cs.apl.viaduct.syntax.JumpLabel
 import edu.cornell.cs.apl.viaduct.syntax.JumpLabelNode
-import edu.cornell.cs.apl.viaduct.syntax.Name
+import edu.cornell.cs.apl.viaduct.syntax.NameMap
 import edu.cornell.cs.apl.viaduct.syntax.ObjectVariable
 import edu.cornell.cs.apl.viaduct.syntax.ObjectVariableNode
-import edu.cornell.cs.apl.viaduct.syntax.StatementContext
 import edu.cornell.cs.apl.viaduct.syntax.Temporary
 import edu.cornell.cs.apl.viaduct.syntax.TemporaryNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.AssertionNode as IAssertionNode
@@ -97,8 +96,10 @@ fun SProgramNode.elaborated(): IProgramNode {
 private class StatementElaborator(
     private val nameGenerator: FreshNameGenerator,
 
-    /** Maps old [Name]s to their new names. */
-    private var context: StatementContext<Temporary, ObjectVariable, JumpLabel>,
+    // Maps old [Name]s to their new [Name]s.
+    private var temporaryRenames: NameMap<Temporary, Temporary>,
+    private var objectRenames: NameMap<ObjectVariable, ObjectVariable>,
+    private val jumpLabelRenames: NameMap<JumpLabel, JumpLabel>,
 
     /** The label of the innermost loop surrounding the current context. */
     private val surroundingLoop: JumpLabel?
@@ -108,22 +109,28 @@ private class StatementElaborator(
         const val LOOP_NAME = "loop"
     }
 
-    constructor() : this(FreshNameGenerator(), StatementContext(), null)
+    constructor() : this(FreshNameGenerator(), NameMap(), NameMap(), NameMap(), null)
 
     private fun copy(
-        context: StatementContext<Temporary, ObjectVariable, JumpLabel> = this.context,
+        jumpLabelRenames: NameMap<JumpLabel, JumpLabel> = this.jumpLabelRenames,
         surroundingLoop: JumpLabel? = this.surroundingLoop
     ): StatementElaborator =
-        StatementElaborator(this.nameGenerator, context, surroundingLoop)
+        StatementElaborator(
+            nameGenerator,
+            temporaryRenames,
+            objectRenames,
+            jumpLabelRenames,
+            surroundingLoop
+        )
 
     /** Generates a new temporary whose name is based on [baseName]. */
     private fun freshTemporary(baseName: String? = null): Temporary =
         Temporary(nameGenerator.getFreshName(baseName ?: TMP_NAME))
 
-    /** Assigns a fresh name to [temporary] and adds a mapping to [context]. */
+    /** Assigns a fresh name to [temporary] and adds a mapping to [temporaryRenames]. */
     private fun renameTemporary(temporary: TemporaryNode): TemporaryNode {
         val newName = freshTemporary(temporary.value.name)
-        context = context.put(temporary, newName)
+        temporaryRenames = temporaryRenames.put(temporary, newName)
         return TemporaryNode(newName, temporary.sourceLocation)
     }
 
@@ -147,7 +154,7 @@ private class StatementElaborator(
                 ILiteralNode(value, sourceLocation)
 
             is SReadNode ->
-                IReadNode(TemporaryNode(context.get(temporary), sourceLocation))
+                IReadNode(TemporaryNode(temporaryRenames[temporary], sourceLocation))
 
             is SOperatorApplicationNode ->
                 IOperatorApplicationNode(
@@ -161,10 +168,7 @@ private class StatementElaborator(
 
             is SQueryNode ->
                 IQueryNode(
-                    ObjectVariableNode(
-                        context.get(variable),
-                        variable.sourceLocation
-                    ),
+                    ObjectVariableNode(objectRenames[variable], variable.sourceLocation),
                     query,
                     Arguments(
                         arguments.map { it.toAnf(bindings).toAtomic(bindings) },
@@ -273,7 +277,7 @@ private class StatementElaborator(
                         )
                     val newName =
                         ObjectVariable(nameGenerator.getFreshName(stmt.variable.value.name))
-                    context = context.put(stmt.variable, newName)
+                    objectRenames = objectRenames.put(stmt.variable, newName)
 
                     IDeclarationNode(
                         ObjectVariableNode(newName, stmt.variable.sourceLocation),
@@ -289,7 +293,7 @@ private class StatementElaborator(
                 withBindings { bindings ->
                     IUpdateNode(
                         ObjectVariableNode(
-                            context.get(stmt.variable),
+                            objectRenames[stmt.variable],
                             stmt.variable.sourceLocation
                         ),
                         stmt.update,
@@ -348,10 +352,10 @@ private class StatementElaborator(
                 val jumpLabelLocation = stmt.jumpLabel?.sourceLocation ?: stmt.sourceLocation
 
                 val newScope = this.copy(
-                    context =
+                    jumpLabelRenames =
                     if (stmt.jumpLabel == null)
-                        context
-                    else context.put(stmt.jumpLabel, renamedJumpLabel),
+                        jumpLabelRenames
+                    else jumpLabelRenames.put(stmt.jumpLabel, renamedJumpLabel),
                     surroundingLoop = renamedJumpLabel
                 )
 
@@ -372,7 +376,10 @@ private class StatementElaborator(
                     if (stmt.jumpLabel == null)
                         JumpLabelNode(surroundingLoop, stmt.sourceLocation)
                     else
-                        JumpLabelNode(context.get(stmt.jumpLabel), stmt.jumpLabel.sourceLocation)
+                        JumpLabelNode(
+                            jumpLabelRenames[stmt.jumpLabel],
+                            stmt.jumpLabel.sourceLocation
+                        )
 
                 listOf(
                     IBreakNode(jumpLabelNode, stmt.sourceLocation)

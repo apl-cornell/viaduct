@@ -29,7 +29,6 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.QueryNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ReadNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.StatementNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.TemporaryDefinition
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.UpdateNode
 import kotlin.properties.ReadOnlyProperty
 import kotlin.reflect.KProperty
@@ -73,9 +72,8 @@ class NameAnalysis(val tree: Tree<Node, ProgramNode>) {
     }
 
     /** Temporary definitions in scope for this node. */
-    // TODO: change to [LetNode] once we merge temporary definitions into one.
-    private val Node.temporaryDefinitions by Context<Temporary, TemporaryDefinition> {
-        if (it is TemporaryDefinition) Pair(it.temporary, it) else null
+    private val Node.temporaryDefinitions: NameMap<Temporary, LetNode> by Context {
+        if (it is LetNode) Pair(it.temporary, it) else null
     }
 
     /** Object declarations in scope for this node. */
@@ -98,8 +96,7 @@ class NameAnalysis(val tree: Tree<Node, ProgramNode>) {
     /** Same as [readers]. */
     private val Node.readers: Set<StatementNode> by collectedAttribute(tree) { node ->
         if (node is StatementNode) {
-            // TODO: get rid of type cast once TemporaryDefinition is gone
-            node.reads.map { Pair(declaration(it) as Node, node) }
+            node.reads.map { Pair(declaration(it), node) }
         } else {
             listOf()
         }
@@ -153,7 +150,7 @@ class NameAnalysis(val tree: Tree<Node, ProgramNode>) {
     }
 
     /** Returns the statement that defines the [Temporary] in [node]. */
-    fun declaration(node: ReadNode): TemporaryDefinition =
+    fun declaration(node: ReadNode): LetNode =
         node.temporaryDefinitions[node.temporary]
 
     /** Returns the statement that declares the [ObjectVariable] in [node]. */
@@ -170,11 +167,11 @@ class NameAnalysis(val tree: Tree<Node, ProgramNode>) {
 
     /** Returns the declaration of the [Host] in [node]. */
     fun declaration(node: ExternalCommunicationNode): HostDeclarationNode =
-        node.hostDeclarations[node.host]
+        (node as Node).hostDeclarations[node.host]
 
     /** Returns the declaration of the [Protocol] in [node]. */
     fun declaration(node: InternalCommunicationNode): ProcessDeclarationNode =
-        node.protocolDeclarations[node.protocol]
+        (node as Node).protocolDeclarations[node.protocol]
 
     /**
      * Returns the set of [StatementNode]s that read the [Temporary] defined by [node].
@@ -182,8 +179,7 @@ class NameAnalysis(val tree: Tree<Node, ProgramNode>) {
      * Note that this set only includes direct reads. For example, an [IfNode] only reads the
      * temporaries in its guard, and [BlockNode]s and [InfiniteLoopNode]s do not read any temporary.
      */
-    fun readers(node: TemporaryDefinition): Set<StatementNode> =
-        (node as Node).readers
+    fun readers(node: LetNode): Set<StatementNode> = node.readers
 
     // TODO: readers for other types of [Name]s
 
@@ -213,7 +209,7 @@ class NameAnalysis(val tree: Tree<Node, ProgramNode>) {
             }
             // Check that there are no name clashes
             when (node) {
-                is TemporaryDefinition ->
+                is LetNode ->
                     node.temporaryDefinitions.put(node.temporary, node)
                 is DeclarationNode ->
                     node.objectDeclarations.put(node.variable, node)

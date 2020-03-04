@@ -40,7 +40,6 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.ReadNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ReceiveNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.SendNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.StatementNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.TemporaryDefinition
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.UpdateNode
 import edu.cornell.cs.apl.viaduct.util.FreshNameGenerator
 import java.io.Writer
@@ -57,7 +56,7 @@ class InformationFlowAnalysis(private val nameAnalysis: NameAnalysis) {
     }
 
     /** The [LabelTerm] representing the [Label] of the temporary defined by this node. */
-    private val TemporaryDefinition.temporaryLabel: LabelVariable by attribute {
+    private val LetNode.temporaryLabel: LabelVariable by attribute {
         constraintSystem.addNewVariable(PrettyNodeWrapper(temporary))
     }
 
@@ -196,6 +195,18 @@ class InformationFlowAnalysis(private val nameAnalysis: NameAnalysis) {
 
                 assertFlowsTo(toLabel, to, this.labelVariable)
             }
+            is InputNode -> {
+                val hostLabel = LabelConstant.create(nameAnalysis.declaration(this).authority.value)
+
+                // Host learns the current pc
+                pcFlowsTo(host, hostLabel)
+
+                assertFlowsTo(host, hostLabel, this.labelVariable)
+            }
+            is ReceiveNode -> {
+                // TODO: should we leak the pc to the protocol?
+                // TODO: should we do any checks on the data?
+            }
         }
 
     /** Non-recursively add constraints relevant to this statement to [constraintSystem]. */
@@ -216,23 +227,10 @@ class InformationFlowAnalysis(private val nameAnalysis: NameAnalysis) {
                 // TODO: consult the method signature. There may be constraints on the pc or the arguments.
             }
 
-            is InputNode -> {
-                val hostLabel = LabelConstant.create(nameAnalysis.declaration(this).authority.value)
-
-                pcFlowsTo(temporary, temporaryLabel)
-                assertFlowsTo(host, hostLabel, temporaryLabel)
-
-                pcFlowsTo(host, hostLabel)
-            }
             is OutputNode -> {
                 val hostLabel = LabelConstant.create(nameAnalysis.declaration(this).authority.value)
                 pcFlowsTo(host, hostLabel)
                 message flowsTo hostLabel
-            }
-            is ReceiveNode -> {
-                pcFlowsTo(temporary, temporaryLabel)
-                // TODO: should we do any checks on the data?
-                // TODO: should we leak the pc to the protocol?
             }
             is SendNode -> {
                 // TODO: should we leak the pc to the protocol?
@@ -270,7 +268,7 @@ class InformationFlowAnalysis(private val nameAnalysis: NameAnalysis) {
     }
 
     /** Returns the inferred security label of the [Temporary] defined by [node]. */
-    fun label(node: TemporaryDefinition): Label = node.temporaryLabel.getValue(solution)
+    fun label(node: LetNode): Label = node.temporaryLabel.getValue(solution)
 
     /** Returns the inferred security label of the [ObjectVariable] declared by [node]. */
     fun label(node: DeclarationNode): Label = node.variableLabel.getValue(solution)

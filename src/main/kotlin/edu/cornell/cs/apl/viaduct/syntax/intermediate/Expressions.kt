@@ -1,12 +1,15 @@
 package edu.cornell.cs.apl.viaduct.syntax.intermediate
 
 import edu.cornell.cs.apl.viaduct.syntax.Arguments
+import edu.cornell.cs.apl.viaduct.syntax.HostNode
 import edu.cornell.cs.apl.viaduct.syntax.LabelNode
 import edu.cornell.cs.apl.viaduct.syntax.ObjectVariableNode
 import edu.cornell.cs.apl.viaduct.syntax.Operator
+import edu.cornell.cs.apl.viaduct.syntax.ProtocolNode
 import edu.cornell.cs.apl.viaduct.syntax.QueryNameNode
 import edu.cornell.cs.apl.viaduct.syntax.SourceLocation
 import edu.cornell.cs.apl.viaduct.syntax.TemporaryNode
+import edu.cornell.cs.apl.viaduct.syntax.ValueTypeNode
 import edu.cornell.cs.apl.viaduct.syntax.values.Value
 
 /** A computation that produces a result. */
@@ -121,4 +124,40 @@ class EndorsementNode(
             toLabel,
             sourceLocation
         )
+}
+
+// Communication Expressions
+
+/**
+ * An external input.
+ *
+ * @param type Type of the value to receive.
+ */
+class InputNode(
+    val type: ValueTypeNode,
+    override val host: HostNode,
+    override val sourceLocation: SourceLocation
+) : ExpressionNode(), ExternalCommunicationNode {
+    override val children: Iterable<Nothing>
+        get() = listOf()
+
+    override fun toSurfaceNode(): edu.cornell.cs.apl.viaduct.syntax.surface.InputNode =
+        edu.cornell.cs.apl.viaduct.syntax.surface.InputNode(type, host, sourceLocation)
+}
+
+/**
+ * Receiving a value from another protocol.
+ *
+ * @param type Type of the value to receive.
+ */
+class ReceiveNode(
+    val type: ValueTypeNode,
+    override val protocol: ProtocolNode,
+    override val sourceLocation: SourceLocation
+) : ExpressionNode(), InternalCommunicationNode {
+    override val children: Iterable<Nothing>
+        get() = listOf()
+
+    override fun toSurfaceNode(): edu.cornell.cs.apl.viaduct.syntax.surface.ReceiveNode =
+        edu.cornell.cs.apl.viaduct.syntax.surface.ReceiveNode(type, protocol, sourceLocation)
 }

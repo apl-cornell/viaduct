@@ -32,7 +32,6 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.ReadNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ReceiveNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.SendNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.StatementNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.TemporaryDefinition
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.UpdateNode
 import edu.cornell.cs.apl.viaduct.syntax.types.BooleanType
 import edu.cornell.cs.apl.viaduct.syntax.types.FunctionType
@@ -93,6 +92,10 @@ class TypeAnalysis(private val nameAnalysis: NameAnalysis) {
             }
             is DowngradeNode ->
                 expression.type
+            is InputNode ->
+                type.value
+            is ReceiveNode ->
+                type.value
         }
     }
 
@@ -121,17 +124,7 @@ class TypeAnalysis(private val nameAnalysis: NameAnalysis) {
     fun type(node: ExpressionNode): ValueType = node.type
 
     /** Returns the inferred type of the [Temporary] defined by [node]. */
-    fun type(node: TemporaryDefinition): ValueType =
-        when (node) {
-            is LetNode ->
-                node.value.type
-            is InputNode ->
-                node.type.value
-            is ReceiveNode ->
-                node.type.value
-            else ->
-                TODO("Remove once [TemporaryDefinition] is gone.")
-        }
+    fun type(node: LetNode): ValueType = node.value.type
 
     /** Returns the type of the [ObjectVariable] defined by [node]. */
     fun type(node: DeclarationNode): ObjectType = node.type
@@ -152,12 +145,8 @@ class TypeAnalysis(private val nameAnalysis: NameAnalysis) {
                     val methodType = nameAnalysis.declaration(node).type.getType(node.update.value)
                     checkMethodCall(node.update, methodType!!, node.arguments)
                 }
-                is InputNode ->
-                    type(node)
                 is OutputNode ->
                     node.message.type
-                is ReceiveNode ->
-                    type(node)
                 is SendNode ->
                     node.message.type
 

@@ -31,19 +31,14 @@ sealed class SimpleStatementNode : StatementNode() {
     abstract override fun toSurfaceNode(): edu.cornell.cs.apl.viaduct.syntax.surface.SimpleStatementNode
 }
 
-/** A statement that defines a new temporary. */
-interface TemporaryDefinition {
-    val temporary: TemporaryNode
-}
-
 // Simple Statements
 
 /** Binding the result of an expression to a new temporary variable. */
 class LetNode(
-    override val temporary: TemporaryNode,
+    val temporary: TemporaryNode,
     val value: ExpressionNode,
     override val sourceLocation: SourceLocation
-) : SimpleStatementNode(), TemporaryDefinition {
+) : SimpleStatementNode() {
     override val children: Iterable<ExpressionNode>
         get() = listOf(value)
 
@@ -100,48 +95,12 @@ class UpdateNode(
 
 // Communication Statements
 
-/** A node for sending or receiving messages. */
-sealed class CommunicationNode : SimpleStatementNode()
-
-/** Communication happening between a protocol and a host. */
-sealed class ExternalCommunicationNode : CommunicationNode() {
-    abstract val host: HostNode
-}
-
-/** Communication happening between protocols. */
-sealed class InternalCommunicationNode : CommunicationNode() {
-    abstract val protocol: ProtocolNode
-}
-
-/**
- * An external input.
- *
- * @param temporary Store the received value to this temporary.
- * @param type Type of the value to receive.
- */
-class InputNode(
-    override val temporary: TemporaryNode,
-    val type: ValueTypeNode,
-    override val host: HostNode,
-    override val sourceLocation: SourceLocation
-) : ExternalCommunicationNode(), TemporaryDefinition {
-    override val children: Iterable<Nothing>
-        get() = listOf()
-
-    override fun toSurfaceNode(): edu.cornell.cs.apl.viaduct.syntax.surface.LetNode =
-        edu.cornell.cs.apl.viaduct.syntax.surface.LetNode(
-            temporary,
-            edu.cornell.cs.apl.viaduct.syntax.surface.InputNode(type, host, sourceLocation),
-            sourceLocation
-        )
-}
-
 /** An external output. */
 class OutputNode(
     val message: AtomicExpressionNode,
     override val host: HostNode,
     override val sourceLocation: SourceLocation
-) : ExternalCommunicationNode() {
+) : SimpleStatementNode(), ExternalCommunicationNode {
     override val children: Iterable<AtomicExpressionNode>
         get() = listOf(message)
 
@@ -153,35 +112,12 @@ class OutputNode(
         )
 }
 
-/**
- * Receiving a value from another protocol.
- *
- * @param temporary Store the received value to this temporary.
- * @param type Type of the value to receive.
- */
-class ReceiveNode(
-    override val temporary: TemporaryNode,
-    val type: ValueTypeNode,
-    override val protocol: ProtocolNode,
-    override val sourceLocation: SourceLocation
-) : InternalCommunicationNode(), TemporaryDefinition {
-    override val children: Iterable<Nothing>
-        get() = listOf()
-
-    override fun toSurfaceNode(): edu.cornell.cs.apl.viaduct.syntax.surface.LetNode =
-        edu.cornell.cs.apl.viaduct.syntax.surface.LetNode(
-            temporary,
-            edu.cornell.cs.apl.viaduct.syntax.surface.ReceiveNode(type, protocol, sourceLocation),
-            sourceLocation
-        )
-}
-
 /** Sending a value to another protocol. */
 class SendNode(
     val message: AtomicExpressionNode,
     override val protocol: ProtocolNode,
     override val sourceLocation: SourceLocation
-) : InternalCommunicationNode() {
+) : SimpleStatementNode(), InternalCommunicationNode {
     override val children: Iterable<AtomicExpressionNode>
         get() = listOf(message)
 

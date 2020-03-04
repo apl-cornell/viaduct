@@ -18,9 +18,10 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.LetNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.Node
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutputNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProcessDeclarationNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.ReceiveNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.SendNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.SimpleStatementNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.StatementNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.TemporaryDefinition
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.UpdateNode
 import kotlinx.collections.immutable.PersistentSet
 import kotlinx.collections.immutable.persistentHashSetOf
@@ -48,28 +49,33 @@ class ProtocolAnalysis(
      */
     fun primaryProtocol(statement: SimpleStatementNode): Protocol =
         when (statement) {
-            is LetNode ->
-                protocolAssignment(statement.temporary.value)
+            is LetNode -> {
+                val protocol = protocolAssignment(statement.temporary.value)
+                when (statement.value) {
+                    is InputNode ->
+                        assert(protocol == Local(statement.value.host.value))
+                    is ReceiveNode ->
+                        throw IllegalInternalCommunicationError(statement.process, statement.value)
+                }
+                protocol
+            }
             is DeclarationNode ->
                 protocolAssignment(statement.variable.value)
             is UpdateNode ->
                 protocolAssignment(statement.variable.value)
-            is InputNode -> {
-                val protocol = protocolAssignment(statement.temporary.value)
-                assert(protocol == Local(statement.host.value))
-                protocol
-            }
             is OutputNode ->
                 Local(statement.host.value)
-            is InternalCommunicationNode ->
+            is SendNode ->
                 throw IllegalInternalCommunicationError(statement.process, statement)
         }
 
     /**
      * The [primaryProtocol]s of [SimpleStatementNode]s that read the temporary defined by this
      * statement.
+     *
+     * We define this as a separate attribute so the (potentially expensive) computation is cached.
      */
-    private val TemporaryDefinition.directReaders: PersistentSet<Protocol> by attribute {
+    private val LetNode.directReaders: PersistentSet<Protocol> by attribute {
         nameAnalysis.readers(this)
             .filterIsInstance<SimpleStatementNode>()
             .map(::primaryProtocol)
@@ -81,7 +87,7 @@ class ProtocolAnalysis(
         persistentHashSetOf()
     ) {
         when (this) {
-            is TemporaryDefinition -> {
+            is LetNode -> {
                 val indirectReaders =
                     nameAnalysis.readers(this)
                         .filter { it !is SimpleStatementNode }

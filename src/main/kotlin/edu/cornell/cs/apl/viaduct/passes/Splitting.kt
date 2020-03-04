@@ -10,13 +10,13 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.BlockNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.BreakNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.IfNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.InfiniteLoopNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.LetNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProcessDeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ReadNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ReceiveNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.SendNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.SimpleStatementNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.StatementNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.TemporaryDefinition
 
 /**
  * Returns a map from [Protocol]s to the portions of [this] process assigned to them.
@@ -41,7 +41,7 @@ fun ProcessDeclarationNode.split(
                     if (protocol == primaryProtocol)
                         result.add(it)
 
-                    if (it is TemporaryDefinition) {
+                    if (it is LetNode) {
                         if (protocol == primaryProtocol) {
                             // Send the temporary to everyone relevant
                             (protocolAnalysis.protocols(it) - protocol).forEach { protocol ->
@@ -56,13 +56,16 @@ fun ProcessDeclarationNode.split(
                         } else {
                             // Receive the temporary from the primary protocol
                             result.add(
-                                ReceiveNode(
+                                LetNode(
                                     it.temporary,
-                                    ValueTypeNode(
-                                        typeAnalysis.type(it),
-                                        it.temporary.sourceLocation
+                                    ReceiveNode(
+                                        ValueTypeNode(
+                                            typeAnalysis.type(it),
+                                            it.value.sourceLocation
+                                        ),
+                                        ProtocolNode(primaryProtocol, it.temporary.sourceLocation),
+                                        it.value.sourceLocation
                                     ),
-                                    ProtocolNode(primaryProtocol, it.temporary.sourceLocation),
                                     it.sourceLocation
                                 )
                             )

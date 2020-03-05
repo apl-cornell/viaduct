@@ -5,14 +5,15 @@ import edu.cornell.cs.apl.viaduct.parsing.SourceFile
 import edu.cornell.cs.apl.viaduct.parsing.parse
 import edu.cornell.cs.apl.viaduct.passes.check
 import edu.cornell.cs.apl.viaduct.passes.elaborated
-import java.io.File
-import kotlin.reflect.KClass
-import kotlin.reflect.full.isSubclassOf
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ArgumentsSource
+import java.io.File
+import kotlin.reflect.KClass
+import kotlin.reflect.full.isSubclassOf
 
 internal class ErrorsTest {
     @ParameterizedTest
@@ -28,14 +29,18 @@ internal class ErrorsTest {
 
     @ParameterizedTest
     @ArgumentsSource(ErroneousExampleFileProvider::class)
-    fun `error messages end in a blank line`(file: File) {
+    fun `error messages end in a single blank line`(file: File) {
         try {
             run(file)
             assert(false)
         } catch (e: CompilationError) {
             val messageLines = e.toString().split(Regex("\\R"))
-            assertTrue(isBlank(messageLines[messageLines.size - 2]))
+            // Messages should terminate with a newline character.
             assertEquals("", messageLines.last())
+            // They should have a blank line before that.
+            assertTrue(isBlank(messageLines[messageLines.size - 2]))
+            // They should have no more than one black line.
+            assertFalse(isBlank(messageLines[messageLines.size - 3]))
         }
     }
 }

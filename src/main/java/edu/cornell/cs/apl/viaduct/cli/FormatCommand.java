@@ -2,7 +2,6 @@ package edu.cornell.cs.apl.viaduct.cli;
 
 import com.github.rvesse.airline.annotations.Command;
 import com.github.rvesse.airline.annotations.Option;
-import edu.cornell.cs.apl.viaduct.parsing.ParsingKt;
 import edu.cornell.cs.apl.viaduct.passes.CheckingKt;
 import edu.cornell.cs.apl.viaduct.passes.ElaborationKt;
 import edu.cornell.cs.apl.viaduct.syntax.surface.ProgramNode;
@@ -23,7 +22,7 @@ public class FormatCommand extends BaseCommand {
 
   @Override
   public void run() throws IOException {
-    ProgramNode program = ParsingKt.parse(this.input.newSourceFileKotlin());
+    ProgramNode program = this.input.parse();
 
     if (this.enableChecks) {
       CheckingKt.check(ElaborationKt.elaborated(program));

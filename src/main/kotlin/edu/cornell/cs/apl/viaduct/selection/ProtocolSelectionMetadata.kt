@@ -1,6 +1,6 @@
 package edu.cornell.cs.apl.viaduct.selection
 
-import edu.cornell.cs.apl.viaduct.imp.HostTrustConfiguration
+import edu.cornell.cs.apl.viaduct.syntax.HostTrustConfiguration
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.StatementNode
 
 /** build metadata describing syntactic information about data and computations,

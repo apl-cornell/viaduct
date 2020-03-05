@@ -2,9 +2,9 @@ package edu.cornell.cs.apl.viaduct.cli;
 
 import com.github.rvesse.airline.annotations.Arguments;
 import com.github.rvesse.airline.annotations.restrictions.Once;
-import edu.cornell.cs.apl.viaduct.imp.ast.ProgramNode;
-import edu.cornell.cs.apl.viaduct.imp.parsing.Parser;
-import edu.cornell.cs.apl.viaduct.imp.parsing.SourceFile;
+import edu.cornell.cs.apl.viaduct.parsing.ParsingKt;
+import edu.cornell.cs.apl.viaduct.parsing.SourceFile;
+import edu.cornell.cs.apl.viaduct.syntax.surface.ProgramNode;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -21,23 +21,11 @@ final class InputFileModule {
 
   /** Parse the input file and return the AST. */
   ProgramNode parse() throws IOException {
-    return Parser.parse(newSourceFile());
-  }
-
-  /** Create a new {@link SourceFile} from the specified input file. */
-  private SourceFile newSourceFile() throws IOException {
-    if (input == null) {
-      try (Reader reader = new InputStreamReader(System.in, StandardCharsets.UTF_8)) {
-        return SourceFile.from("<stdin>", reader);
-      }
-    } else {
-      return SourceFile.from(new File(input));
-    }
+    return ParsingKt.parse(newSourceFile());
   }
 
   /** Creates a new source file from the specified input file. */
-  // TODO: merge once Java is gone
-  edu.cornell.cs.apl.viaduct.parsing.SourceFile newSourceFileKotlin() throws IOException {
+  private SourceFile newSourceFile() throws IOException {
     if (input == null) {
       try (Reader reader = new InputStreamReader(System.in, StandardCharsets.UTF_8)) {
         return edu.cornell.cs.apl.viaduct.parsing.SourceFile.from("<stdin>", reader);

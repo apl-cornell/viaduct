@@ -9,25 +9,24 @@ import org.fusesource.jansi.AnsiConsole;
 import org.fusesource.jansi.AnsiPrintStream;
 
 /** Provides an output file option for commands. */
-// TODO: turn this back into OutputFileModule
-final class OutputDirModule {
+final class OutputFileModule {
   @Option(
       name = {"-o", "--output"},
-      title = "dir",
-      description = "Write output files to <dir> (default: stdout)")
+      title = "file",
+      description = "Write output to <file> (default: stdout)")
   // TODO: these generate huge dumps of text in help. Enable when fixed.
   // @Once
   // @com.github.rvesse.airline.annotations.restrictions.File(readable = false)
-  protected String outputDir = null;
+  protected String output = null;
 
   /** Create a {@link PrintStream} (which expects ANSI color codes) to the specified output file. */
   PrintStream newOutputStream() throws IOException {
-    if (outputDir == null) {
+    if (output == null) {
       // Read from standard input.
       return AnsiConsole.out();
     } else {
       // TODO: PrintStream doesn't throw errors when writing. These will fail silently.
-      return new AnsiPrintStream(new PrintStream(new File(outputDir), StandardCharsets.UTF_8));
+      return new AnsiPrintStream(new PrintStream(new File(output), StandardCharsets.UTF_8));
     }
   }
 }

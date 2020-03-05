@@ -1,43 +1,27 @@
 package edu.cornell.cs.apl.viaduct.cli;
 
 import com.github.rvesse.airline.annotations.Command;
-import edu.cornell.cs.apl.viaduct.imp.ast.ProcessName;
-import edu.cornell.cs.apl.viaduct.imp.ast.ProgramNode;
-import edu.cornell.cs.apl.viaduct.imp.informationflow.InformationFlowChecker;
-import edu.cornell.cs.apl.viaduct.imp.interpreter.Interpreter;
-import edu.cornell.cs.apl.viaduct.imp.interpreter.Store;
-import edu.cornell.cs.apl.viaduct.imp.transformers.Elaborator;
-import edu.cornell.cs.apl.viaduct.imp.typing.TypeChecker;
+import edu.cornell.cs.apl.viaduct.passes.CheckingKt;
+import edu.cornell.cs.apl.viaduct.passes.ElaborationKt;
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode;
 import java.io.IOException;
 import java.io.PrintStream;
-import java.util.Map;
 
 @Command(name = "interpret", description = "Execute program and print its final state")
 public class InterpretCommand extends BaseCommand {
   @Override
   public void run() throws IOException {
-    // parse
-    final ProgramNode program = this.input.parse();
+    // Parse
+    final ProgramNode program = ElaborationKt.elaborated(this.input.parse());
 
-    // typecheck
-    TypeChecker.run(program);
-    InformationFlowChecker.run(Elaborator.run(program));
+    // Check
+    CheckingKt.check(program);
 
-    // interpret
-    final Map<ProcessName, Store> stores = Interpreter.run(program);
+    // Interpret
+    // TODO: interpret and print result;
 
     try (PrintStream writer = this.output.newOutputStream()) {
-      boolean first = true;
-      for (Map.Entry<ProcessName, Store> entry : stores.entrySet()) {
-        if (!first) {
-          writer.println();
-        }
-
-        writer.println("process " + entry.getKey() + ":");
-        entry.getValue().print(writer);
-
-        first = false;
-      }
+      writer.println("TODO");
     }
   }
 }

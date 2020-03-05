@@ -8,7 +8,6 @@ import edu.cornell.cs.apl.viaduct.analysis.InformationFlowAnalysis;
 import edu.cornell.cs.apl.viaduct.analysis.NameAnalysis;
 import edu.cornell.cs.apl.viaduct.analysis.ProtocolAnalysis;
 import edu.cornell.cs.apl.viaduct.analysis.TypeAnalysis;
-import edu.cornell.cs.apl.viaduct.parsing.ParsingKt;
 import edu.cornell.cs.apl.viaduct.passes.DumbProtocolSelectionKt;
 import edu.cornell.cs.apl.viaduct.passes.ElaborationKt;
 import edu.cornell.cs.apl.viaduct.passes.SplittingKt;
@@ -132,8 +131,7 @@ public class CompileCommand extends BaseCommand {
 
   @Override
   public void run() throws IOException {
-    final ProgramNode program =
-        ElaborationKt.elaborated(ParsingKt.parse(this.input.newSourceFileKotlin()));
+    final ProgramNode program = ElaborationKt.elaborated(this.input.parse());
 
     final NameAnalysis nameAnalysis = new NameAnalysis(new Tree<>(program));
     final TypeAnalysis typeAnalysis = new TypeAnalysis(nameAnalysis);

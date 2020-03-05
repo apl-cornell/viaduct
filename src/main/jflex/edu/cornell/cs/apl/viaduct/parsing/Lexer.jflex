@@ -1,6 +1,6 @@
 package edu.cornell.cs.apl.viaduct.parsing;
 
-import edu.cornell.cs.apl.viaduct.errorskotlin.IllegalCharacterError;
+import edu.cornell.cs.apl.viaduct.errors.IllegalCharacterError;
 
 import java.io.Reader;
 

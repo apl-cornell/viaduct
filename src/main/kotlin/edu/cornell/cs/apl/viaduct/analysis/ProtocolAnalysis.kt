@@ -2,7 +2,7 @@ package edu.cornell.cs.apl.viaduct.analysis
 
 import edu.cornell.cs.apl.attributes.attribute
 import edu.cornell.cs.apl.attributes.circularAttribute
-import edu.cornell.cs.apl.viaduct.errorskotlin.IllegalInternalCommunicationError
+import edu.cornell.cs.apl.viaduct.errors.IllegalInternalCommunicationError
 import edu.cornell.cs.apl.viaduct.protocols.Local
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
 import edu.cornell.cs.apl.viaduct.syntax.Variable

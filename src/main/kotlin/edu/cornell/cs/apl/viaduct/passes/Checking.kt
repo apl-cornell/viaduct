@@ -4,7 +4,7 @@ import edu.cornell.cs.apl.attributes.Tree
 import edu.cornell.cs.apl.viaduct.analysis.InformationFlowAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.NameAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.TypeAnalysis
-import edu.cornell.cs.apl.viaduct.errorskotlin.CompilationError
+import edu.cornell.cs.apl.viaduct.errors.CompilationError
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
 
 /**

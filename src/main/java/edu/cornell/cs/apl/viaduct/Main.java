@@ -2,7 +2,7 @@ package edu.cornell.cs.apl.viaduct;
 
 import com.github.rvesse.airline.parser.errors.ParseException;
 import edu.cornell.cs.apl.viaduct.cli.CommandLineInterface;
-import edu.cornell.cs.apl.viaduct.errorskotlin.CompilationError;
+import edu.cornell.cs.apl.viaduct.errors.CompilationError;
 import java.io.IOException;
 import org.fusesource.jansi.AnsiConsole;
 

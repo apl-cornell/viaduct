@@ -3,8 +3,8 @@ package edu.cornell.cs.apl.viaduct.analysis
 import edu.cornell.cs.apl.attributes.Tree
 import edu.cornell.cs.apl.attributes.attribute
 import edu.cornell.cs.apl.attributes.collectedAttribute
-import edu.cornell.cs.apl.viaduct.errorskotlin.NameClashError
-import edu.cornell.cs.apl.viaduct.errorskotlin.UndefinedNameError
+import edu.cornell.cs.apl.viaduct.errors.NameClashError
+import edu.cornell.cs.apl.viaduct.errors.UndefinedNameError
 import edu.cornell.cs.apl.viaduct.syntax.Host
 import edu.cornell.cs.apl.viaduct.syntax.JumpLabel
 import edu.cornell.cs.apl.viaduct.syntax.Located

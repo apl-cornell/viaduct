@@ -1,6 +1,6 @@
 package edu.cornell.cs.apl.viaduct.passes
 
-import edu.cornell.cs.apl.viaduct.errorskotlin.JumpOutsideLoopScopeError
+import edu.cornell.cs.apl.viaduct.errors.JumpOutsideLoopScopeError
 import edu.cornell.cs.apl.viaduct.syntax.Arguments
 import edu.cornell.cs.apl.viaduct.syntax.JumpLabel
 import edu.cornell.cs.apl.viaduct.syntax.JumpLabelNode

@@ -1,4 +1,4 @@
-package edu.cornell.cs.apl.viaduct.errorskotlin
+package edu.cornell.cs.apl.viaduct.errors
 
 import edu.cornell.cs.apl.prettyprinting.Document
 import edu.cornell.cs.apl.prettyprinting.plus

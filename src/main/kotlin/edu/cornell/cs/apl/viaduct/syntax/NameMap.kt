@@ -1,7 +1,7 @@
 package edu.cornell.cs.apl.viaduct.syntax
 
-import edu.cornell.cs.apl.viaduct.errorskotlin.NameClashError
-import edu.cornell.cs.apl.viaduct.errorskotlin.UndefinedNameError
+import edu.cornell.cs.apl.viaduct.errors.NameClashError
+import edu.cornell.cs.apl.viaduct.errors.UndefinedNameError
 import kotlinx.collections.immutable.PersistentMap
 import kotlinx.collections.immutable.persistentMapOf
 

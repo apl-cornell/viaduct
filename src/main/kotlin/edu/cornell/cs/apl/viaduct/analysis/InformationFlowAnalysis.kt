@@ -2,13 +2,13 @@ package edu.cornell.cs.apl.viaduct.analysis
 
 import edu.cornell.cs.apl.attributes.attribute
 import edu.cornell.cs.apl.prettyprinting.PrettyPrintable
-import edu.cornell.cs.apl.viaduct.errorskotlin.ConfidentialityChangingEndorsementError
-import edu.cornell.cs.apl.viaduct.errorskotlin.InformationFlowError
-import edu.cornell.cs.apl.viaduct.errorskotlin.InsecureControlFlowError
-import edu.cornell.cs.apl.viaduct.errorskotlin.InsecureDataFlowError
-import edu.cornell.cs.apl.viaduct.errorskotlin.IntegrityChangingDeclassificationError
-import edu.cornell.cs.apl.viaduct.errorskotlin.LabelMismatchError
-import edu.cornell.cs.apl.viaduct.errorskotlin.MalleableDowngradeError
+import edu.cornell.cs.apl.viaduct.errors.ConfidentialityChangingEndorsementError
+import edu.cornell.cs.apl.viaduct.errors.InformationFlowError
+import edu.cornell.cs.apl.viaduct.errors.InsecureControlFlowError
+import edu.cornell.cs.apl.viaduct.errors.InsecureDataFlowError
+import edu.cornell.cs.apl.viaduct.errors.IntegrityChangingDeclassificationError
+import edu.cornell.cs.apl.viaduct.errors.LabelMismatchError
+import edu.cornell.cs.apl.viaduct.errors.MalleableDowngradeError
 import edu.cornell.cs.apl.viaduct.security.Label
 import edu.cornell.cs.apl.viaduct.security.solver.AtomicLabelTerm
 import edu.cornell.cs.apl.viaduct.security.solver.ConstraintSolver

@@ -1,9 +1,9 @@
 package edu.cornell.cs.apl.viaduct.analysis
 
 import edu.cornell.cs.apl.attributes.attribute
-import edu.cornell.cs.apl.viaduct.errorskotlin.CompilationError
-import edu.cornell.cs.apl.viaduct.errorskotlin.IncorrectNumberOfArgumentsError
-import edu.cornell.cs.apl.viaduct.errorskotlin.TypeMismatchError
+import edu.cornell.cs.apl.viaduct.errors.CompilationError
+import edu.cornell.cs.apl.viaduct.errors.IncorrectNumberOfArgumentsError
+import edu.cornell.cs.apl.viaduct.errors.TypeMismatchError
 import edu.cornell.cs.apl.viaduct.security.Label
 import edu.cornell.cs.apl.viaduct.syntax.Arguments
 import edu.cornell.cs.apl.viaduct.syntax.Located

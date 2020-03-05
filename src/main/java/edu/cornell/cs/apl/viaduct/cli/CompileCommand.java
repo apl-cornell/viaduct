@@ -3,11 +3,18 @@ package edu.cornell.cs.apl.viaduct.cli;
 import com.github.rvesse.airline.annotations.Command;
 import com.github.rvesse.airline.annotations.Option;
 import edu.cornell.cs.apl.attributes.Tree;
+import edu.cornell.cs.apl.viaduct.analysis.DeclarationsKt;
 import edu.cornell.cs.apl.viaduct.analysis.InformationFlowAnalysis;
 import edu.cornell.cs.apl.viaduct.analysis.NameAnalysis;
+import edu.cornell.cs.apl.viaduct.analysis.ProtocolAnalysis;
+import edu.cornell.cs.apl.viaduct.analysis.TypeAnalysis;
 import edu.cornell.cs.apl.viaduct.parsing.ParsingKt;
-import edu.cornell.cs.apl.viaduct.passes.CheckingKt;
+import edu.cornell.cs.apl.viaduct.passes.DumbProtocolSelectionKt;
 import edu.cornell.cs.apl.viaduct.passes.ElaborationKt;
+import edu.cornell.cs.apl.viaduct.passes.SplittingKt;
+import edu.cornell.cs.apl.viaduct.syntax.Protocol;
+import edu.cornell.cs.apl.viaduct.syntax.Variable;
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProcessDeclarationNode;
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode;
 import guru.nidi.graphviz.engine.Format;
 import guru.nidi.graphviz.engine.Graphviz;
@@ -26,6 +33,7 @@ import java.io.Writer;
 import java.nio.charset.StandardCharsets;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
+import kotlin.jvm.functions.Function1;
 import org.apache.commons.io.FilenameUtils;
 
 @Command(name = "compile", description = "Compile ideal protocol to secure distributed program")
@@ -127,19 +135,32 @@ public class CompileCommand extends BaseCommand {
     final ProgramNode program =
         ElaborationKt.elaborated(ParsingKt.parse(this.input.newSourceFileKotlin()));
 
+    final NameAnalysis nameAnalysis = new NameAnalysis(new Tree<>(program));
+    final TypeAnalysis typeAnalysis = new TypeAnalysis(nameAnalysis);
+    final InformationFlowAnalysis informationFlowAnalysis =
+        new InformationFlowAnalysis(nameAnalysis);
+
     // Dump label constraint graph to a file if requested.
-    dumpGraph(
-        (output) ->
-            new InformationFlowAnalysis(new NameAnalysis(new Tree<>(program)))
-                .exportConstraintGraph(output),
-        constraintGraphOutput);
+    dumpGraph(informationFlowAnalysis::exportConstraintGraph, constraintGraphOutput);
 
     // Perform checks.
-    CheckingKt.check(program);
+    nameAnalysis.check();
+    typeAnalysis.check();
+    informationFlowAnalysis.check();
 
-    // TODO: compile!
+    final ProcessDeclarationNode main = DeclarationsKt.main(program);
+
+    final Function1<Variable, Protocol> protocolAssignment =
+        DumbProtocolSelectionKt.selectProtocols(main, nameAnalysis, informationFlowAnalysis);
+    final ProtocolAnalysis protocolAnalysis =
+        new ProtocolAnalysis(nameAnalysis, protocolAssignment);
+
+    final ProgramNode splitProgram = SplittingKt.splitMain(program, protocolAnalysis, typeAnalysis);
+
+    // TODO: compile to backend.
+
     try (PrintStream writer = this.output.newOutputStream()) {
-      program.getAsDocument().print(writer, 80, true);
+      splitProgram.getAsDocument().print(writer, 80, true);
     }
   }
 }

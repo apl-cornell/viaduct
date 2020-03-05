@@ -2,6 +2,8 @@ package edu.cornell.cs.apl.viaduct.passes
 
 import edu.cornell.cs.apl.viaduct.analysis.ProtocolAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.TypeAnalysis
+import edu.cornell.cs.apl.viaduct.protocols.Ideal
+import edu.cornell.cs.apl.viaduct.protocols.MainProtocol
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
 import edu.cornell.cs.apl.viaduct.syntax.ProtocolNode
 import edu.cornell.cs.apl.viaduct.syntax.ValueTypeNode
@@ -12,23 +14,24 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.IfNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.InfiniteLoopNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.LetNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProcessDeclarationNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ReadNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ReceiveNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.SendNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.SimpleStatementNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.StatementNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.TopLevelDeclarationNode
 
 /**
- * Returns a map from [Protocol]s to the portions of [this] process assigned to them.
- *
+ * Returns a list of [ProcessDeclarationNode]s that together implement [this] [Ideal] functionality.
  * The result contains an entry for each [Protocol] involved in the execution of [this] process.
- * The value mapped to each [Protocol] is the body of [this] process with parts irrelevant to
+ * The code assigned to each [Protocol] is the body of [this] process with parts irrelevant to
  * that [Protocol] erased.
  */
 fun ProcessDeclarationNode.split(
     protocolAnalysis: ProtocolAnalysis,
     typeAnalysis: TypeAnalysis
-): Map<Protocol, BlockNode> {
+): List<ProcessDeclarationNode> {
     fun BlockNode.projectFor(protocol: Protocol): BlockNode {
         val statements: List<StatementNode> = this.statements.flatMap {
             if (protocol !in protocolAnalysis.protocols(it))
@@ -107,5 +110,33 @@ fun ProcessDeclarationNode.split(
         return BlockNode(statements, this.sourceLocation)
     }
 
-    return protocolAnalysis.protocols(body).associateWith { body.projectFor(it) }
+    return protocolAnalysis.protocols(body).map {
+        ProcessDeclarationNode(
+            protocol = ProtocolNode(it, protocol.sourceLocation),
+            body = body.projectFor(it),
+            sourceLocation = sourceLocation
+        )
+    }
+}
+
+/**
+ * Splits the [MainProtocol] in this program using [ProcessDeclarationNode.split], preserving all
+ * other [TopLevelDeclarationNode]s.
+ */
+// TODO: throw error if there is no main
+// TODO: rewrite all references to main in other protocols
+// TODO: maybe generalize from main to an arbitrary process?
+fun ProgramNode.splitMain(
+    protocolAnalysis: ProtocolAnalysis,
+    typeAnalysis: TypeAnalysis
+): ProgramNode {
+    val declarations: MutableList<TopLevelDeclarationNode> = mutableListOf()
+    this.declarations.forEach {
+        if (it is ProcessDeclarationNode && it.protocol.value == MainProtocol) {
+            declarations.addAll(it.split(protocolAnalysis, typeAnalysis))
+        } else {
+            declarations.add(it)
+        }
+    }
+    return ProgramNode(declarations, this.sourceLocation)
 }

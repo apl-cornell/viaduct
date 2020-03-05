@@ -1,0 +1,5 @@
+/* NoHostDeclarationsError */
+
+process main {
+    val result: int = 42;
+}

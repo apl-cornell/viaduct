@@ -29,3 +29,5 @@ process main {
     assert true && true;
     assert false || true;
 }
+
+host god : {⊥}

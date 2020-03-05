@@ -92,7 +92,7 @@ class ProtocolAnalysis(
                     nameAnalysis.readers(this)
                         .filter { it !is SimpleStatementNode }
                         .map { it.protocols }.unions()
-                directReaders.addAll(indirectReaders)
+                directReaders.addAll(indirectReaders).add(primaryProtocol(this))
             }
 
             is SimpleStatementNode ->

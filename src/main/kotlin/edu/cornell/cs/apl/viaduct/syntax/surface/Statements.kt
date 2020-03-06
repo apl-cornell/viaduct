@@ -156,7 +156,7 @@ class IfNode(
     override val sourceLocation: SourceLocation
 ) : StatementNode() {
     override val asDocument: Document
-        get() = (keyword("if") * "(" + guard + ")") * thenBranch * "else" * elseBranch
+        get() = (keyword("if") * "(" + guard + ")") * thenBranch * keyword("else") * elseBranch
 }
 
 /** A loop statement. */

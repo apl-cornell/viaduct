@@ -1,10 +1,20 @@
 package edu.cornell.cs.apl.viaduct.errors
 
+import edu.cornell.cs.apl.attributes.Tree
 import edu.cornell.cs.apl.viaduct.ErroneousExampleFileProvider
+import edu.cornell.cs.apl.viaduct.analysis.InformationFlowAnalysis
+import edu.cornell.cs.apl.viaduct.analysis.NameAnalysis
+import edu.cornell.cs.apl.viaduct.analysis.ProtocolAnalysis
+import edu.cornell.cs.apl.viaduct.analysis.TypeAnalysis
+import edu.cornell.cs.apl.viaduct.analysis.main
 import edu.cornell.cs.apl.viaduct.parsing.SourceFile
 import edu.cornell.cs.apl.viaduct.parsing.parse
 import edu.cornell.cs.apl.viaduct.passes.check
 import edu.cornell.cs.apl.viaduct.passes.elaborated
+import edu.cornell.cs.apl.viaduct.passes.selectProtocols
+import edu.cornell.cs.apl.viaduct.passes.splitMain
+import edu.cornell.cs.apl.viaduct.protocols.MainProtocol
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
 import java.io.File
 import kotlin.reflect.KClass
 import kotlin.reflect.full.isSubclassOf
@@ -45,11 +55,26 @@ internal class ErrorsTest {
     }
 }
 
-/** Parse, check, and interpret a program. */
+/** Parses, checks, interprets, and splits a program. */
 private fun run(file: File) {
     val program = SourceFile.from(file).parse().elaborated()
     program.check()
+    program.split()
+
     // TODO: interpret
+}
+
+/** Selects protocols for and splits the [MainProtocol] in [this] program. */
+private fun ProgramNode.split() {
+    val nameAnalysis = NameAnalysis(Tree(this))
+    val typeAnalysis = TypeAnalysis(nameAnalysis)
+    val informationFlowAnalysis = InformationFlowAnalysis(nameAnalysis)
+
+    val dumpProtocolAssignment =
+        nameAnalysis.tree.root.main().selectProtocols(nameAnalysis, informationFlowAnalysis)
+    val protocolAnalysis = ProtocolAnalysis(nameAnalysis, dumpProtocolAssignment)
+
+    this.splitMain(protocolAnalysis, typeAnalysis)
 }
 
 /**

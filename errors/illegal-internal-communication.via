@@ -1,0 +1,9 @@
+/* IllegalInternalCommunicationError */
+
+process main {
+    send 42 to alice;
+}
+
+process alice {
+    let mut x: int = receive int from main;
+}

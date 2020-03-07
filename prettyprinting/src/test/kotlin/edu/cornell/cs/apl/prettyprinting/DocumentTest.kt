@@ -81,6 +81,12 @@ internal class DocumentTest {
                 .nested(2)
                 .shouldPrintTo("first\n  second\n    third")
         }
+
+        @Test
+        fun `nesting by 0 has no effect`() {
+            (Document("first") / Document("second")).nested(0)
+                .shouldPrintTo("first\nsecond")
+        }
     }
 
     @Nested

@@ -1,0 +1,7 @@
+/* ParsingError */
+
+/* TODO: the error message generated for this file does not have any expected tokens. */
+
+process main {
+    val x = 5;
+}

@@ -1,0 +1,6 @@
+/* UnknownMethodError */
+
+process main {
+    val x: int = 42;
+    x = 43;
+}

@@ -4,6 +4,7 @@ import edu.cornell.cs.apl.attributes.attribute
 import edu.cornell.cs.apl.viaduct.errors.CompilationError
 import edu.cornell.cs.apl.viaduct.errors.IncorrectNumberOfArgumentsError
 import edu.cornell.cs.apl.viaduct.errors.TypeMismatchError
+import edu.cornell.cs.apl.viaduct.errors.UnknownMethodError
 import edu.cornell.cs.apl.viaduct.syntax.Arguments
 import edu.cornell.cs.apl.viaduct.syntax.Located
 import edu.cornell.cs.apl.viaduct.syntax.Name
@@ -87,8 +88,11 @@ class TypeAnalysis(private val nameAnalysis: NameAnalysis) {
                 operator.type.result
             }
             is QueryNode -> {
-                // TODO: no such method error
-                val methodType = nameAnalysis.declaration(this).type.getType(query.value)!!
+                val methodType = nameAnalysis.declaration(this).type.getType(query.value)
+                if (methodType == null) {
+                    val objectType = type(nameAnalysis.declaration(this))
+                    throw UnknownMethodError(variable, query, objectType, arguments.map { it.type })
+                }
                 checkMethodCall(query, methodType, arguments)
             }
             is DowngradeNode ->
@@ -143,9 +147,16 @@ class TypeAnalysis(private val nameAnalysis: NameAnalysis) {
                     checkMethodCall(node.className, constructorType, node.arguments)
                 }
                 is UpdateNode -> {
-                    // TODO: no such method error
                     val methodType = nameAnalysis.declaration(node).type.getType(node.update.value)
-                    checkMethodCall(node.update, methodType!!, node.arguments)
+                    if (methodType == null) {
+                        val objectType = type(nameAnalysis.declaration(node))
+                        throw UnknownMethodError(
+                            node.variable,
+                            node.update,
+                            objectType,
+                            node.arguments.map { it.type })
+                    }
+                    checkMethodCall(node.update, methodType, node.arguments)
                 }
                 is OutputNode ->
                     node.message.type

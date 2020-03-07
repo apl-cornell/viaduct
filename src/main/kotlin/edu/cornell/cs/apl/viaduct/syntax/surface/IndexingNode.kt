@@ -42,10 +42,10 @@ internal class IndexingNode(
      * Returns a statement that changes the value stored at the indexed location to the
      * result of [value].
      */
-    fun set(value: ExpressionNode): UpdateNode {
+    fun set(value: ExpressionNode, methodSourceLocation: SourceLocation): UpdateNode {
         return UpdateNode(
             variable,
-            UpdateNameNode(Set, variable.sourceLocation),
+            UpdateNameNode(Set, methodSourceLocation),
             Arguments(
                 indices + value,
                 sourceLocation = indices.sourceLocation.merge(value.sourceLocation)
@@ -58,10 +58,14 @@ internal class IndexingNode(
      * Returns a statement that changes the value stored at the indexed location to the
      * result of `<current value> [operator] [argument]`.
      */
-    fun modify(operator: BinaryOperator, argument: ExpressionNode): UpdateNode {
+    fun modify(
+        operator: BinaryOperator,
+        argument: ExpressionNode,
+        methodSourceLocation: SourceLocation
+    ): UpdateNode {
         return UpdateNode(
             variable,
-            UpdateNameNode(Modify(operator), variable.sourceLocation),
+            UpdateNameNode(Modify(operator), methodSourceLocation),
             Arguments(
                 indices + argument,
                 sourceLocation = indices.sourceLocation.merge(argument.sourceLocation)

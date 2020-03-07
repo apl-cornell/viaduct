@@ -193,12 +193,12 @@ simple_stmt ::=
         location(beginleft, endright));
     :}
 
-  | indexing:indexing EQ expr:e {:
-      RESULT = indexing.set(e);
+  | indexing:indexing EQ:eq expr:e {:
+      RESULT = indexing.set(e, location(eqleft, eqright));
     :}
 
   | indexing:indexing compound_assignment:op expr:e {:
-      RESULT = indexing.modify(op, e);
+      RESULT = indexing.modify(op, e, location(opleft, opright));
     :}
 
   | OUTPUT:begin expr:message TO host:recipient {:

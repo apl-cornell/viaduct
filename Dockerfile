@@ -9,6 +9,11 @@ COPY gradlew .
 COPY gradle gradle
 RUN ./gradlew --version
 
+## Have Gradle download all dependencies
+COPY *.gradle.kts ./
+COPY prettyprinting/*.gradle.kts prettyprinting/
+RUN ./gradlew --no-daemon assemble || return 0
+
 ## Build the app
 COPY . .
 RUN ./gradlew --no-daemon build installDist

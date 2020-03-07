@@ -4,16 +4,19 @@
 !LICENSE
 !README.ms
 
-# Gradle
+# Configuration
 !.editorconfig
+!packages.md
+
+# Gradle
 !build.gradle.kts
-!config
+!prettyprinting/build.gradle.kts
+!settings.gradle.kts
 !gradle
 !gradlew
-!settings.gradle.kts
 
 # Code
 !src
-!prettyprinting
+!prettyprinting/src
 !examples
 !errors

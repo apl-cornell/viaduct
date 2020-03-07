@@ -27,5 +27,5 @@ necessary, so you do not have to worry about calling `./gradlew build` each
 time you change something. To start, try
 
 ```shell
-./viaduct help
+./viaduct --help
 ```

@@ -96,12 +96,21 @@ tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach 
     kotlinOptions.allWarningsAsErrors = true
 }
 
-val compileCup by tasks.registering(CupCompileTask::class) {
-    sourceSets.main { java.srcDir(generateDir) }
+val compileCup by tasks.registering(CupCompileTask::class) {}
+
+sourceSets {
+    main {
+        java.srcDir(compileCup.get().generateDir)
+    }
 }
 
 tasks.compileJava {
     dependsOn(compileCup)
+}
+
+tasks.compileKotlin {
+    dependsOn(compileCup)
+    dependsOn(tasks.jflex)
 }
 
 open class CupCompileTask : DefaultTask() {

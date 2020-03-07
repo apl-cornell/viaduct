@@ -1,6 +1,7 @@
 package edu.cornell.cs.apl.viaduct.parsing
 
 import edu.cornell.cs.apl.viaduct.syntax.surface.ProgramNode
+import java_cup.runtime.ComplexSymbolFactory
 
 /** Parses this string and returns the AST. */
 fun String.parse(): ProgramNode {
@@ -9,5 +10,8 @@ fun String.parse(): ProgramNode {
 
 /** Parses this source file and returns the AST. */
 fun SourceFile.parse(): ProgramNode {
-    return Parsing.parse(this)
+    val symbolFactory = ComplexSymbolFactory()
+    val scanner = Lexer(this, symbolFactory)
+    val parser = Parser(scanner, symbolFactory)
+    return (parser.parse().value as ProgramNode)
 }

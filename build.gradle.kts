@@ -20,44 +20,12 @@ plugins {
     id("org.xbib.gradle.plugin.jflex") version "1.2.0"
 }
 
-allprojects {
-    apply(plugin = "kotlin")
-    apply(plugin = "com.diffplug.gradle.spotless")
+group = "edu.cornell.cs.apl"
 
-    group = "edu.cornell.cs.apl"
+version = "0.1"
 
-    version = "0.1"
-
-    repositories {
-        jcenter()
-    }
-
-    /** Compilation */
-
-    tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
-        kotlinOptions.jvmTarget = "1.8"
-        kotlinOptions.allWarningsAsErrors = true
-    }
-
-    /** Code Style */
-
-    spotless {
-        kotlin {
-            ktlint()
-        }
-    }
-
-    /** Testing */
-
-    tasks.test {
-        useJUnitPlatform()
-    }
-
-    dependencies {
-        testImplementation("org.junit.jupiter:junit-jupiter-api:5.4.2")
-        testImplementation("org.junit.jupiter:junit-jupiter-params:5.4.2")
-        testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.4.2")
-    }
+repositories {
+    jcenter()
 }
 
 
@@ -77,9 +45,6 @@ tasks.jar {
 /** Dependencies */
 
 dependencies {
-    // Subprojects
-    api(project(":prettyprinting"))
-
     // Standard libraries
     implementation(kotlin("stdlib-jdk8"))
 
@@ -105,7 +70,6 @@ dependencies {
     implementation("com.github.ajalt:clikt:2.5.0")
 
     // Colored terminal output
-    // TODO: remove from here if you can or move to general
     implementation("org.fusesource.jansi:jansi:1.18")
 
     // Parsing
@@ -119,10 +83,18 @@ dependencies {
 
     // Testing
     testImplementation(kotlin("reflect"))
+    testImplementation("org.junit.jupiter:junit-jupiter-api:5.4.2")
+    testImplementation("org.junit.jupiter:junit-jupiter-params:5.4.2")
+    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.4.2")
 }
 
 
 /** Compilation */
+
+tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
+    kotlinOptions.jvmTarget = "1.8"
+    kotlinOptions.allWarningsAsErrors = true
+}
 
 val compileCup by tasks.registering(CupCompileTask::class) {
     sourceSets.main { java.srcDir(generateDir) }
@@ -188,6 +160,9 @@ spotless {
         googleJavaFormat()
         target("src/**/*.java")
     }
+    kotlin {
+        ktlint()
+    }
 }
 
 editorconfig {
@@ -209,7 +184,6 @@ tasks.test {
     inputs.files(project.fileTree("errors"))
 }
 
-// TODO: this does not cover subprojects for now.
 tasks.jacocoTestReport {
     reports {
         xml.isEnabled = true

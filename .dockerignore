@@ -10,13 +10,11 @@
 
 # Gradle
 !build.gradle.kts
-!prettyprinting/build.gradle.kts
 !settings.gradle.kts
 !gradle
 !gradlew
 
 # Code
 !src
-!prettyprinting/src
 !examples
 !errors

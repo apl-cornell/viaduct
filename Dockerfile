@@ -11,7 +11,6 @@ RUN ./gradlew --version
 
 ## Have Gradle download all dependencies
 COPY *.gradle.kts ./
-COPY prettyprinting/*.gradle.kts prettyprinting/
 RUN ./gradlew --no-daemon assemble || return 0
 
 ## Build the app

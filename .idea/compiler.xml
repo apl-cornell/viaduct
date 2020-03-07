@@ -10,6 +10,10 @@
         <module name="viaduct.main" />
       </profile>
     </annotationProcessing>
+    <bytecodeTargetLevel>
+      <module name="viaduct.prettyprinting.main" target="11" />
+      <module name="viaduct.prettyprinting.test" target="11" />
+    </bytecodeTargetLevel>
   </component>
   <component name="JavacSettings">
     <option name="ADDITIONAL_OPTIONS_STRING" value="-Xlint:unchecked" />

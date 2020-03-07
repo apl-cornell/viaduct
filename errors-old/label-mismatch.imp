@@ -1,6 +1,0 @@
-process main {
-  int{A} a;
-  a = 42;
-  int{A & B<-} trusted;
-  trusted = endorse(a, {A & B<-} to {A & B<-});
-}

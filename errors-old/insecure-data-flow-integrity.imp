@@ -1,6 +1,0 @@
-process main {
-  int{} untrusted;
-  untrusted = 42;
-  int{A<-} trusted;
-  trusted = untrusted;
-}

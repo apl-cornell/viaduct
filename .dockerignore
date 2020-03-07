@@ -17,6 +17,3 @@
 !prettyprinting
 !examples
 !errors
-# TODO: remove these lines once Java is gone
-!examples-old
-!errors-old

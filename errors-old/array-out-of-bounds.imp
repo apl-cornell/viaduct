@@ -1,4 +1,0 @@
-process main {
-  int x[10];
-  x[11] = 42;
-}

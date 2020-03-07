@@ -1,3 +1,0 @@
-process main {
-  recv main;
-}

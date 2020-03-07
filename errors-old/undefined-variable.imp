@@ -1,3 +1,0 @@
-process main {
-  x = 1;
-}

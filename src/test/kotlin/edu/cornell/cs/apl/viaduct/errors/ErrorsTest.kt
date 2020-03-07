@@ -71,7 +71,7 @@ private fun ProgramNode.split() {
     val informationFlowAnalysis = InformationFlowAnalysis(nameAnalysis)
 
     val dumpProtocolAssignment =
-        nameAnalysis.tree.root.main().selectProtocols(nameAnalysis, informationFlowAnalysis)
+        nameAnalysis.tree.root.main.selectProtocols(nameAnalysis, informationFlowAnalysis)
     val protocolAnalysis = ProtocolAnalysis(nameAnalysis, dumpProtocolAssignment)
 
     this.splitMain(protocolAnalysis, typeAnalysis)

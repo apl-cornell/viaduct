@@ -62,8 +62,7 @@ class Compile : CliktCommand(help = "Compile ideal protocol to secure distribute
         informationFlowAnalysis.check()
 
         // Select protocols.
-        val protocolAssignment =
-            program.main().selectProtocols(nameAnalysis, informationFlowAnalysis)
+        val protocolAssignment = program.main.selectProtocols(nameAnalysis, informationFlowAnalysis)
         val protocolAnalysis = ProtocolAnalysis(nameAnalysis, protocolAssignment)
 
         // Split the program.

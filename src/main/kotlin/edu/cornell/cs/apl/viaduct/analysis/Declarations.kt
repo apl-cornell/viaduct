@@ -35,14 +35,14 @@ fun Node.declarationNodes(): List<DeclarationNode> {
 
 /**
  * Returns the declaration of the [MainProtocol] in this program.
- *
- * TODO: throws blah blah
  */
-fun ProgramNode.main(): ProcessDeclarationNode {
-    this.forEach {
-        if (it is ProcessDeclarationNode && it.protocol.value == MainProtocol)
-            return it
+// TODO: throws blah blah
+val ProgramNode.main: ProcessDeclarationNode
+    get() {
+        this.forEach {
+            if (it is ProcessDeclarationNode && it.protocol.value == MainProtocol)
+                return it
+        }
+        // TODO: custom error message
+        error("No main")
     }
-    // TODO: custom error message
-    error("No main")
-}

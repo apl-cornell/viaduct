@@ -18,7 +18,7 @@ internal class ProtocolAnalysisTest {
         val informationFlowAnalysis = InformationFlowAnalysis(nameAnalysis)
 
         val dumpProtocolAssignment =
-            nameAnalysis.tree.root.main().selectProtocols(nameAnalysis, informationFlowAnalysis)
+            nameAnalysis.tree.root.main.selectProtocols(nameAnalysis, informationFlowAnalysis)
         val protocolAnalysis = ProtocolAnalysis(nameAnalysis, dumpProtocolAssignment)
 
         nameAnalysis.tree.root.declarations.forEach {

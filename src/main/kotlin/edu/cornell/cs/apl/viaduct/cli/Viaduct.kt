@@ -19,9 +19,7 @@ class Viaduct :
         // TODO: use registeredSubcommands once that is made visible
         for (commandName in this.registeredSubcommandNames()) {
             commandName.prefixes().forEach { alias ->
-                if (alias.isNotEmpty()) {
-                    aliases.getOrPut(alias) { mutableSetOf() }.add(commandName)
-                }
+                aliases.getOrPut(alias) { mutableSetOf() }.add(commandName)
             }
         }
 
@@ -29,6 +27,6 @@ class Viaduct :
     }
 }
 
-/** Returns all prefixes of [this]. */
+/** Returns all non-empty prefixes of [this]. */
 private fun String.prefixes(): Iterable<String> =
     this.indices.map { this.substring(0..it) }

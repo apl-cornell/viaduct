@@ -86,12 +86,39 @@ fun List<PrettyPrintable>.concatenated(separator: PrettyPrintable = Document()):
     else reduce { acc, next -> acc + separator + next }.asDocument
 }
 
-// TODO: documentation.
+/**
+ * Returns a new document that is [this] with the nesting level (indentation after newlines)
+ * increased by [indentationChange]. Negative values for [indentationChange] are allowed, and
+ * decrease the nesting level accordingly.
+ *
+ * ```
+ * >>> Document("hello") + (Document.lineBreak + "world").nested()
+ * hello
+ *     world
+ * ```
+ *
+ * Note that only newlines inside [this] document are affected. For example,
+ *
+ * ```
+ * >>> Document("hello") + Document.lineBreak + (Document("world")).nested()
+ * hello
+ * world
+ * ```
+ */
 fun PrettyPrintable.nested(indentationChange: Int = 4): Document =
     this.asDocument.nested(indentationChange)
 
-// TODO: documentation.
-// TODO: test
+/**
+ * Tries laying out [this] document into a single line by removing the contained
+ * [Document.lineBreak]s (and replacing them with spaces); if this does not fit the page, the
+ * document is laid out without any changes. This function is the key to layouts that adapt to
+ * available space nicely.
+ *
+ * ```
+ * >>> (Document("hello") / "world").grouped()
+ * hello world
+ * ```
+ */
 fun PrettyPrintable.grouped(): Document =
     this.asDocument.grouped()
 

@@ -1,5 +1,6 @@
 package edu.cornell.cs.apl.prettyprinting
 
+import edu.cornell.cs.apl.prettyprinting.Document.Companion.invoke
 import java.io.ByteArrayOutputStream
 import java.io.PrintStream
 import java.nio.charset.Charset
@@ -8,7 +9,16 @@ import org.fusesource.jansi.Ansi
 /** The maximum number of characters to put on one line. */
 const val DEFAULT_LINE_WIDTH = 80
 
-// TODO: documentation.
+/**
+ * Represents a pretty printed document.
+ *
+ * More specifically, a [Document] represents a non-empty set of possible layouts of a document.
+ * The [print] functions select one of these possibilities, taking into account things like the
+ * width of the output document.
+ *
+ * [Document]s are created using the [invoke] functions, but the main interface is through
+ * [PrettyPrintable].
+ */
 sealed class Document : PrettyPrintable {
     /** Returns this object. */
     override val asDocument: Document
@@ -19,7 +29,12 @@ sealed class Document : PrettyPrintable {
         throw UnsupportedOperationException("Do not use Document.toString(). Use print instead.")
     }
 
-    // TODO: documentation.
+    /**
+     * Renders this document as a string and writes it to [output]. Each line of the output
+     * will be under [lineWidth] characters if possible. If [ansi] is `true`, ANSI escape codes
+     * are output to style the document according to the [Style] annotations in the document.
+     */
+    // TODO: respect [lineWidth]
     fun print(output: PrintStream, lineWidth: Int = DEFAULT_LINE_WIDTH, ansi: Boolean = false) {
         require(lineWidth > 0)
 
@@ -122,7 +137,24 @@ sealed class Document : PrettyPrintable {
         Styled(this, style)
 
     companion object {
-        /** Returns the empty document. TODO: more to say. */
+        /**
+         * Returns the empty document. The empty document behaves the same as `Document("")`,
+         * which means it has a height of 1, not 0. For example,
+         * ```
+         * Document("hello") / Document() / Document("world")
+         * ```
+         * produces
+         * ```
+         * hello
+         *
+         * world
+         * ```
+         *
+         * The empty document is the left and right unit to [PrettyPrintable.plus]. That is
+         * ```
+         * Document() + Document("hello") == Document("hello") == Document("hello") + Document()
+         * ```
+         */
         operator fun invoke(): Document {
             return Empty
         }

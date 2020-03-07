@@ -64,7 +64,7 @@ allprojects {
 /** Application */
 
 application {
-    mainClassName = "${project.group}.${project.name}.Main"
+    mainClassName = "${project.group}.${project.name}.MainKt"
 }
 
 tasks.jar {
@@ -102,7 +102,7 @@ dependencies {
     implementation("com.ibm.icu:icu4j:64.2")
 
     // Command-line-argument parsing
-    implementation("com.github.rvesse:airline:2.7.0")
+    implementation("com.github.ajalt:clikt:2.5.0")
 
     // Colored terminal output
     // TODO: remove from here if you can or move to general

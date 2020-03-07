@@ -1,5 +1,5 @@
 /* ConfidentialityChangingEndorsementError */
 
 process main {
-    let mut result: int = endorse 42 from {A} to {A<-};
+    val result: int = endorse 42 from {A} to {A<-};
 }

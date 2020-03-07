@@ -4,7 +4,7 @@ import edu.cornell.cs.apl.viaduct.syntax.types.UnitType
 import edu.cornell.cs.apl.viaduct.syntax.types.ValueType
 
 /** The unique value of type [UnitType]. */
-object UnitValue : Value {
+object UnitValue : Value() {
     override val type: ValueType
         get() = UnitType
 

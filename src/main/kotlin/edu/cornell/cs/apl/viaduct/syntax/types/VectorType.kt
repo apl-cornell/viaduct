@@ -1,16 +1,22 @@
 package edu.cornell.cs.apl.viaduct.syntax.types
 
-import edu.cornell.cs.apl.viaduct.security.Label
+import edu.cornell.cs.apl.viaduct.syntax.datatypes.ClassName
 import edu.cornell.cs.apl.viaduct.syntax.datatypes.Get
 import edu.cornell.cs.apl.viaduct.syntax.datatypes.Modify
 import edu.cornell.cs.apl.viaduct.syntax.datatypes.QueryName
 import edu.cornell.cs.apl.viaduct.syntax.datatypes.Set
 import edu.cornell.cs.apl.viaduct.syntax.datatypes.UpdateName
+import edu.cornell.cs.apl.viaduct.syntax.datatypes.Vector
 import kotlinx.collections.immutable.persistentListOf
 
-/** The type of a vector. */
-data class VectorType(val elementType: ValueType, val elementLabel: Label?, val sizeLabel: Label?) :
-    ObjectType {
+/** The type of a [Vector] object. */
+data class VectorType(val elementType: ValueType) : ObjectType() {
+    override val className: ClassName
+        get() = Vector
+
+    override val typeArguments: List<ValueType>
+        get() = persistentListOf(elementType)
+
     override val constructorArguments: List<ValueType>
         get() = persistentListOf(IntegerType)
 

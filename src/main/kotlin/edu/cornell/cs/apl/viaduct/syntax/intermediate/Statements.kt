@@ -22,9 +22,9 @@ sealed class StatementNode : Node() {
 }
 
 /**
- * A statement that is _not_ a combination of other statements, and that
- * does not affect control flow.
- * */
+ * A statement that is _not_ a combination of other statements, and that does not affect
+ * control flow.
+ */
 sealed class SimpleStatementNode : StatementNode() {
     abstract override val children: Iterable<ExpressionNode>
 

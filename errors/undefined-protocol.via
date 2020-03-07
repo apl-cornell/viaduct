@@ -1,5 +1,5 @@
 /* UndefinedNameError */
 
 process main {
-    let mut x: int = receive int from main2;
+    val x: int = receive int from main2;
 }

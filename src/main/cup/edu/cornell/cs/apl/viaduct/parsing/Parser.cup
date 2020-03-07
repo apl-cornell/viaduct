@@ -95,7 +95,7 @@ terminal COLON;
 
 terminal EQ;
 terminal PLUSEQ, MINUSEQ, TIMESEQ, DIVIDEEQ;
-terminal LET, MUT;
+terminal LET, VAL, VAR;
 terminal IF, ELSE, WHILE, FOR, BREAK;
 terminal INPUT, RECEIVE, FROM, OUTPUT, SEND, TO;
 terminal ASSERT;
@@ -154,23 +154,34 @@ declaration ::=
 
 
 simple_stmt ::=
-    /* Variable declaration. */
-    LET:begin MUT variable:var COLON value_type:type optional_label:label optional_initial_value:initial {:
+    /* Immutable variable declaration. */
+    VAL:begin variable:var COLON value_type:type optional_label:label EQ expr:value {:
+      RESULT = new DeclarationNode(
+        var,
+        new Located(PrimitivesKt.getImmutableCell(), var.getSourceLocation()),
+        Arguments.from(type),
+        optionalLabelArgument(label),
+        Arguments.from(value),
+        location(beginleft, valueright));
+    :}
+
+    /* Mutable variable declaration. */
+  | VAR:begin variable:var COLON value_type:type optional_label:label optional_initial_value:initial {:
       final LiteralNode defaultValue = new LiteralNode(
         type.getValue().getDefaultValue(),
         type.getSourceLocation());
-      final ExpressionNode initialValue = (initial == null) ? defaultValue : initial;
+
       RESULT = new DeclarationNode(
         var,
         new Located(PrimitivesKt.getMutableCell(), var.getSourceLocation()),
         Arguments.from(type),
         optionalLabelArgument(label),
-        Arguments.from(initialValue),
+        Arguments.from((initial == null) ? defaultValue : initial),
         location(beginleft, initialright));
     :}
 
     /* Array declaration. */
-  | LET:begin variable:var EQ ARRAY OPEN_SQBRACE value_type:elementType CLOSE_SQBRACE
+  | VAL:begin variable:var EQ ARRAY OPEN_SQBRACE value_type:elementType CLOSE_SQBRACE
     optional_label:label OPEN_PAREN expr:size CLOSE_PAREN:end {:
       RESULT = new DeclarationNode(
         var,
@@ -196,10 +207,6 @@ simple_stmt ::=
 
   | SEND:begin expr:message TO protocol:recipient {:
       RESULT = new SendNode(message, recipient, location(beginleft, recipientright));
-    :}
-
-  | ASSERT:begin expr:e {:
-      RESULT = new AssertionNode(e, location(beginleft, eright));
     :}
   ;
 
@@ -241,8 +248,12 @@ stmt ::=
       RESULT = new ForLoopNode(initialize, guard, update, body, null, location(beginleft, bodyright));
     :}
 
-  | BREAK:brk SEMICOLON:end {:
-      RESULT = new BreakNode(null, location(brkleft, endright));
+  | BREAK:brk SEMICOLON {:
+      RESULT = new BreakNode(null, location(brkleft, brkright));
+    :}
+
+  | ASSERT:begin expr:e SEMICOLON {:
+      RESULT = new AssertionNode(e, location(beginleft, eright));
     :}
 
   | block:block {:

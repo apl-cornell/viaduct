@@ -21,13 +21,13 @@ internal class StructuralEqualityTest {
     fun `differentiates when not equal`() {
         val program1 = """
             process main {
-                let mut x: int = 2 + 2;
+                val x: int = 2 + 2;
             }
             """.trimIndent()
 
         val program2 = """
             process main {
-                let mut x: int = 4;
+                val x: int = 4;
             }
             """.trimIndent()
 
@@ -38,13 +38,13 @@ internal class StructuralEqualityTest {
     fun `differentiates when arguments are not equal`() {
         val program1 = """
             process main {
-                let a = Array[int](2);
+                val a = Array[int](2);
             }
             """.trimIndent()
 
         val program2 = """
             process main {
-                let a = Array[int](3);
+                val a = Array[int](3);
             }
             """.trimIndent()
 
@@ -55,14 +55,14 @@ internal class StructuralEqualityTest {
     fun `ignores source locations`() {
         val program1 = """
             process main {
-                let mut x: int = 2 + 2;
+                val x: int = 2 + 2;
             }
             """.trimIndent()
 
         val program2 = """
             process  main  {
 
-                let  mut   x :  int   =    2  +  2 ;
+                val   x :  int   =    2  +  2 ;
              }
             """.trimIndent()
 

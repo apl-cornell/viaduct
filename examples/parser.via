@@ -2,11 +2,11 @@
 /* TODO: try to bring back asserts. */
 /* TODO: I'm not sure about this file. We should break it down into smaller tests. */
 process main {
-  let mut a: int;
-  let mut b: bool{B};
+  var a: int;
+  var b: bool{B};
 
-  let mut a2: int{A} = (22 - 1) * 2;
-  let mut b2: bool = true || false;
+  val a2: int{A} = (22 - 1) * 2;
+  val b2: bool = true || false;
 
   /* assert a2 == 42; */
   /* assert b2; */
@@ -19,15 +19,15 @@ process main {
 
   /* Check that variables in blocks go out of scope */
   {
-    let mut tmp: int{C} = 5;
+    var tmp: int{C} = 5;
   }
-  let mut tmp: bool{A & B->} = a2 > a;
+  var tmp: bool{A & B->} = a2 > a;
   /* assert tmp; */
 
   /* Communication */
-  let mut tmp1: int;
+  var tmp1: int;
   tmp1 = input int from alice;
-  let mut tmp2: bool = input bool from alice;
+  val tmp2: bool = input bool from alice;
   /* assert tmp1 == 5; */
   /* assert !tmp2; */
 
@@ -39,7 +39,7 @@ host alice : {A}
 process Host(alice) {
   send 5 to main;
   send false to main;
-  let mut result: int = receive int from main;
+  val result: int = receive int from main;
   assert result == 42;
 }
 

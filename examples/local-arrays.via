@@ -1,12 +1,12 @@
 process main {
-    let a = Array[int]{A}(10);
-    let b = Array[int]{B}(10);
+    val a = Array[int]{A}(10);
+    val b = Array[int]{B}(10);
 
-    for (let mut i: int = 0; i < 10; i += 1) {
+    for (var i: int = 0; i < 10; i += 1) {
         a[i] = i * 50;
     }
 
-    for (let mut j: int = 0; j < 10; j += 1) {
+    for (var j: int = 0; j < 10; j += 1) {
         b[j] = j * 100;
     }
 }

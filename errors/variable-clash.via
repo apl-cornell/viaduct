@@ -1,6 +1,6 @@
 /* NameClashError */
 
 process main {
-    let mut x: int;
-    let mut x: int;
+    var x: int;
+    var x: int;
 }

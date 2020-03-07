@@ -1,15 +1,22 @@
 package edu.cornell.cs.apl.viaduct.syntax.types
 
-import edu.cornell.cs.apl.viaduct.security.Label
+import edu.cornell.cs.apl.viaduct.syntax.datatypes.ClassName
 import edu.cornell.cs.apl.viaduct.syntax.datatypes.Get
 import edu.cornell.cs.apl.viaduct.syntax.datatypes.Modify
+import edu.cornell.cs.apl.viaduct.syntax.datatypes.MutableCell
 import edu.cornell.cs.apl.viaduct.syntax.datatypes.QueryName
 import edu.cornell.cs.apl.viaduct.syntax.datatypes.Set
 import edu.cornell.cs.apl.viaduct.syntax.datatypes.UpdateName
 import kotlinx.collections.immutable.persistentListOf
 
-/** The type of a mutable cell. */
-data class MutableCellType(val elementType: ValueType, val elementLabel: Label?) : ObjectType {
+/** The type of a [MutableCell] object. */
+data class MutableCellType(val elementType: ValueType) : ObjectType() {
+    override val className: ClassName
+        get() = MutableCell
+
+    override val typeArguments: List<ValueType>
+        get() = persistentListOf(elementType)
+
     override val constructorArguments: List<ValueType>
         get() = persistentListOf(elementType)
 

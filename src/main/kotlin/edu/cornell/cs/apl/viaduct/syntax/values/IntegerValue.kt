@@ -4,7 +4,7 @@ import edu.cornell.cs.apl.viaduct.syntax.types.IntegerType
 import edu.cornell.cs.apl.viaduct.syntax.types.ValueType
 
 /** An integer. */
-data class IntegerValue(val value: Int) : Value {
+data class IntegerValue(val value: Int) : Value() {
     override val type: ValueType
         get() = IntegerType
 

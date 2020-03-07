@@ -1,5 +1,5 @@
 /* UndefinedNameError */
 
 process main {
-    let mut x: int = input int from alice;
+    val x: int = input int from alice;
 }

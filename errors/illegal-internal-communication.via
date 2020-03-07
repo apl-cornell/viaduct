@@ -5,5 +5,5 @@ process main {
 }
 
 process alice {
-    let mut x: int = receive int from main;
+    val x: int = receive int from main;
 }

@@ -4,7 +4,7 @@ import edu.cornell.cs.apl.viaduct.syntax.types.BooleanType
 import edu.cornell.cs.apl.viaduct.syntax.types.ValueType
 
 /** A boolean. */
-data class BooleanValue(val value: Boolean) : Value {
+data class BooleanValue(val value: Boolean) : Value() {
     override val type: ValueType
         get() = BooleanType
 

@@ -1,6 +1,6 @@
 /* InsecureDataFlowError */
 
 process main {
-    let mut secret: int{(A ∧ B)->} = 42;
-    let mut public: int{A->} = secret;
+    val secret: int{(A ∧ B)->} = 42;
+    val public: int{A->} = secret;
 }

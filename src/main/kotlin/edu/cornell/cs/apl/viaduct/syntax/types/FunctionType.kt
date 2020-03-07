@@ -17,9 +17,8 @@ private constructor(
         this(persistentListOf(*arguments), result)
 
     override fun equals(other: Any?): Boolean {
-        if (other !is FunctionType)
-            return false
-        return this.arguments == other.arguments && this.result == other.result
+        return other is FunctionType &&
+            this.arguments == other.arguments && this.result == other.result
     }
 
     override fun hashCode(): Int {

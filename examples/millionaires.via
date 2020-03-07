@@ -1,22 +1,22 @@
 /* The classic MPC problem. */
 process main {
   /* Alice and Bob are free to provide any input; we'll just trust it. */
-  let mut a: int{A & B<-} = endorse input int from alice to {A & B<-};
-  let mut b: int{B & A<-} = endorse input int from bob to {B & A<-};
+  val a: int{A & B<-} = endorse input int from alice to {A & B<-};
+  val b: int{B & A<-} = endorse input int from bob to {B & A<-};
 
-  let mut bob_richer: bool = declassify a <= b to {(A | B)-> & (A & B)<-};
+  val bob_richer: bool = declassify a <= b to {(A | B)-> & (A & B)<-};
   output bob_richer to alice;
   output bob_richer to bob;
 }
 
 process Host(alice) {
   send 20 to main;
-  let mut bob_richer: bool = receive bool from main;
+  val bob_richer: bool = receive bool from main;
 }
 
 process Host(bob) {
   send 40 to main;
-  let mut bob_richer: bool = receive bool from main;
+  val bob_richer: bool = receive bool from main;
   assert bob_richer;
 }
 

@@ -1,6 +1,6 @@
 /* TypeMismatchError */
 
 process main {
-    let mut x: int;
+    var x: int;
     x = false;
 }

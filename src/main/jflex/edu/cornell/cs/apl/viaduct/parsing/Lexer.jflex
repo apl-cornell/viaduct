@@ -99,7 +99,8 @@ NUM         = ((-)?[1-9][0-9]*) | 0
 
   /* Statements */
   "let"           { return symbol(sym.LET); }
-  "mut"           { return symbol(sym.MUT); }
+  "val"           { return symbol(sym.VAL); }
+  "var"           { return symbol(sym.VAR); }
   ":"             { return symbol(sym.COLON); }
 
   "if"            { return symbol(sym.IF); }

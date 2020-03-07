@@ -11,11 +11,11 @@ import edu.cornell.cs.apl.viaduct.syntax.surface.ExpressionNode
 import edu.cornell.cs.apl.viaduct.syntax.types.ValueType
 
 /** The result of evaluating an [ExpressionNode]. */
-interface Value : PrettyPrintable {
+abstract class Value : PrettyPrintable {
     /** The type of the value. */
-    val type: ValueType
+    abstract val type: ValueType
 
-    override val asDocument: Document
+    final override val asDocument: Document
         get() = Document(this.toString()).styled(ValueStyle)
 }
 

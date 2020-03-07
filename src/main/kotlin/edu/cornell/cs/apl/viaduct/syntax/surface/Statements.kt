@@ -20,6 +20,7 @@ import edu.cornell.cs.apl.viaduct.syntax.SourceLocation
 import edu.cornell.cs.apl.viaduct.syntax.TemporaryNode
 import edu.cornell.cs.apl.viaduct.syntax.UpdateNameNode
 import edu.cornell.cs.apl.viaduct.syntax.ValueTypeNode
+import edu.cornell.cs.apl.viaduct.syntax.datatypes.ImmutableCell
 import edu.cornell.cs.apl.viaduct.syntax.datatypes.Modify
 import edu.cornell.cs.apl.viaduct.syntax.datatypes.MutableCell
 import edu.cornell.cs.apl.viaduct.syntax.datatypes.Set
@@ -31,8 +32,8 @@ import kotlinx.collections.immutable.toPersistentList
 sealed class StatementNode : Node()
 
 /**
- * A statement that is _not_ a combination of other statements, and that
- * does not affect control flow.
+ * A statement that is _not_ a combination of other statements, and that does not affect
+ * control flow.
  *
  * Simple statements can show up in for loop headers.
  */
@@ -63,10 +64,16 @@ class DeclarationNode(
     override val asDocument: Document
         get() =
             when (className.value) {
+                ImmutableCell -> {
+                    val label = labelArguments?.get(0) ?: Document()
+                    keyword("val") * variable + Document(":") *
+                        typeArguments[0] + label * "=" * arguments[0]
+                }
+
                 MutableCell -> {
                     val label = labelArguments?.get(0) ?: Document()
-                    keyword("let") * keyword("mut") * (variable + ":") * typeArguments[0] + label *
-                        "=" * arguments[0]
+                    keyword("var") * variable + Document(":") *
+                        typeArguments[0] + label * "=" * arguments[0]
                 }
 
                 else -> {
@@ -75,7 +82,7 @@ class DeclarationNode(
                     //   val labels = labelArguments?.braced()?.nested() ?: Document()
                     val labels = labelArguments?.joined() ?: Document()
                     val arguments = arguments.tupled().nested()
-                    keyword("let") * variable * "=" * className + types + labels + arguments
+                    keyword("val") * variable * "=" * className + types + labels + arguments
                 }
             }
 }
@@ -109,14 +116,6 @@ class UpdateNode(
 class SkipNode(override val sourceLocation: SourceLocation) : SimpleStatementNode() {
     override val asDocument: Document
         get() = keyword("skip")
-}
-
-/** Asserting that a condition is true, and failing otherwise. */
-// TODO: this should not be a simple statement since it affects control flow.
-class AssertionNode(val condition: ExpressionNode, override val sourceLocation: SourceLocation) :
-    SimpleStatementNode() {
-    override val asDocument: Document
-        get() = keyword("assert") * condition
 }
 
 // Communication Statements
@@ -229,6 +228,13 @@ class BreakNode(
         get() = keyword("break")
 }
 
+/** Asserting that a condition is true, and failing otherwise. */
+class AssertionNode(val condition: ExpressionNode, override val sourceLocation: SourceLocation) :
+    StatementNode() {
+    override val asDocument: Document
+        get() = keyword("assert") * condition
+}
+
 /** A sequence of statements. */
 class BlockNode
 private constructor(
@@ -244,7 +250,7 @@ private constructor(
     override val asDocument: Document
         get() {
             val statements: List<Document> = statements.map {
-                if (it is SimpleStatementNode || it is BreakNode)
+                if (it is SimpleStatementNode || it is BreakNode || it is AssertionNode)
                     it.asDocument + ";"
                 else
                     it.asDocument

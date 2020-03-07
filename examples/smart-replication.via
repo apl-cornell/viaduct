@@ -1,9 +1,9 @@
 process main {
   /* Alice provides some input. */
-  let mut a: int{A} = input int from alice;
+  val a: int{A} = input int from alice;
 
   /* The input is public, and Bob implicitly trusts it. */
-  let mut replicated: int{(A & B)<-} = endorse (declassify a to {A<-}) to {(A & B)<-};
+  val replicated: int{(A & B)<-} = endorse (declassify a to {A<-}) to {(A & B)<-};
   /* The cheapest protocol for storing this variable is open replication. */
 
   /* Chuck wants the input; but he only needs Alice's word for it. */
@@ -16,7 +16,7 @@ process Host(alice) {
 }
 
 process Host(chuck) {
-  let mut result: int = receive int from main;
+  val result: int = receive int from main;
   assert result == 42;
 }
 

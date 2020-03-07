@@ -4,13 +4,13 @@ import edu.cornell.cs.apl.attributes.attribute
 import edu.cornell.cs.apl.viaduct.errors.CompilationError
 import edu.cornell.cs.apl.viaduct.errors.IncorrectNumberOfArgumentsError
 import edu.cornell.cs.apl.viaduct.errors.TypeMismatchError
-import edu.cornell.cs.apl.viaduct.security.Label
 import edu.cornell.cs.apl.viaduct.syntax.Arguments
 import edu.cornell.cs.apl.viaduct.syntax.Located
 import edu.cornell.cs.apl.viaduct.syntax.Name
 import edu.cornell.cs.apl.viaduct.syntax.ObjectVariable
 import edu.cornell.cs.apl.viaduct.syntax.Temporary
 import edu.cornell.cs.apl.viaduct.syntax.Variable
+import edu.cornell.cs.apl.viaduct.syntax.datatypes.ImmutableCell
 import edu.cornell.cs.apl.viaduct.syntax.datatypes.MutableCell
 import edu.cornell.cs.apl.viaduct.syntax.datatypes.Vector
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.AssertionNode
@@ -35,6 +35,7 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.StatementNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.UpdateNode
 import edu.cornell.cs.apl.viaduct.syntax.types.BooleanType
 import edu.cornell.cs.apl.viaduct.syntax.types.FunctionType
+import edu.cornell.cs.apl.viaduct.syntax.types.ImmutableCellType
 import edu.cornell.cs.apl.viaduct.syntax.types.MutableCellType
 import edu.cornell.cs.apl.viaduct.syntax.types.ObjectType
 import edu.cornell.cs.apl.viaduct.syntax.types.Type
@@ -102,18 +103,19 @@ class TypeAnalysis(private val nameAnalysis: NameAnalysis) {
     /** See [type]. */
     private val DeclarationNode.type: ObjectType by attribute {
         // TODO: move this somewhere else; unify.
+        // TODO: error messages for missing type and label arguments
         when (className.value) {
+            ImmutableCell -> {
+                val elementType: ValueType = typeArguments[0].value
+                ImmutableCellType(elementType)
+            }
             MutableCell -> {
                 val elementType: ValueType = typeArguments[0].value
-                val elementLabel: Label? = labelArguments?.get(0)?.value
-                MutableCellType(elementType, elementLabel)
+                MutableCellType(elementType)
             }
             Vector -> {
-                // TODO: error messages for missing type and label arguments
                 val elementType: ValueType = typeArguments[0].value
-                val elementLabel: Label? = labelArguments?.get(0)?.value
-                val sizeLabel: Label? = null
-                VectorType(elementType, elementLabel, sizeLabel)
+                VectorType(elementType)
             }
             else ->
                 TODO("User defined classes.")

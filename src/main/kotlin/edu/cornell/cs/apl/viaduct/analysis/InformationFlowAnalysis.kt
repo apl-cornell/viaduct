@@ -56,11 +56,9 @@ class InformationFlowAnalysis(private val nameAnalysis: NameAnalysis) {
     }
 
     /** The [LabelTerm] representing the [Label] of the temporary defined by this node. */
-    private val LetNode.temporaryLabel: LabelVariable
-        get() {
-            // Same as the label of the expression bound to the temporary.
-            return value.labelVariable
-        }
+    private val LetNode.temporaryLabel: LabelVariable by attribute {
+        constraintSystem.addNewVariable(PrettyNodeWrapper(this))
+    }
 
     /** The [LabelTerm] representing the [Label] of the object declared by this node. */
     private val DeclarationNode.variableLabel: AtomicLabelTerm by attribute {
@@ -132,11 +130,8 @@ class InformationFlowAnalysis(private val nameAnalysis: NameAnalysis) {
     /** Non-recursively add constraints relevant to this expression to [constraintSystem]. */
     private fun ExpressionNode.addConstraints(): Unit =
         when (this) {
-            is LiteralNode -> {
-                // Force the thunk to generate the fresh variable
-                labelVariable
+            is LiteralNode ->
                 Unit
-            }
             is ReadNode -> {
                 // Note: not leaking the pc since temporaries are "local".
                 val temporaryLabel = nameAnalysis.declaration(this).temporaryLabel
@@ -155,8 +150,7 @@ class InformationFlowAnalysis(private val nameAnalysis: NameAnalysis) {
                 assertFlowsTo(variable, variableLabel, this.labelVariable)
             }
             is DowngradeNode -> {
-                val from =
-                    fromLabel?.let { LabelConstant.create(it.value) } ?: expression.labelVariable
+                val from = fromLabel?.let { LabelConstant.create(it.value) } ?: expression.labelVariable
                 val to = LabelConstant.create(toLabel.value)
 
                 // The pc is always leaked to the output label
@@ -164,28 +158,23 @@ class InformationFlowAnalysis(private val nameAnalysis: NameAnalysis) {
 
                 // From label must match the expression label if it is specified
                 if (fromLabel != null) {
-                    constraintSystem.addEqualToConstraint(
-                        expression.labelVariable,
-                        from
-                    ) { actual, expected -> LabelMismatchError(expression, actual, expected) }
+                    constraintSystem.addEqualToConstraint(expression.labelVariable, from) { actual, expected ->
+                        LabelMismatchError(expression, actual, expected)
+                    }
                 }
 
                 // Non-malleable downgrade constraints
                 constraintSystem.addFlowsToConstraint(from, from.swap().join(to.value)) { _, _ ->
                     MalleableDowngradeError(this)
                 }
-                constraintSystem.addFlowsToConstraint(
-                    from,
-                    pc.variable.swap().join(to.value)
-                ) { _, _ -> MalleableDowngradeError(this) }
+                constraintSystem.addFlowsToConstraint(from, pc.variable.swap().join(to.value)) { _, _ ->
+                    MalleableDowngradeError(this)
+                }
 
                 // Check that single dimensional downgrades don't change the other dimension
                 when (this) {
                     is DeclassificationNode ->
-                        constraintSystem.addEqualToConstraint(
-                            from.integrity(),
-                            to.integrity()
-                        ) { fromLabel, _ ->
+                        constraintSystem.addEqualToConstraint(from.integrity(), to.integrity()) { fromLabel, _ ->
                             IntegrityChangingDeclassificationError(this, fromLabel)
                         }
                     is EndorsementNode ->
@@ -216,8 +205,9 @@ class InformationFlowAnalysis(private val nameAnalysis: NameAnalysis) {
     /** Non-recursively add constraints relevant to this statement to [constraintSystem]. */
     private fun StatementNode.addConstraints(): Unit =
         when (this) {
-            is LetNode ->
-                Unit
+            is LetNode -> {
+                value flowsTo temporaryLabel
+            }
             is DeclarationNode -> {
                 pcFlowsTo(variable, variableLabel)
                 arguments.forEach { it flowsTo variableLabel }

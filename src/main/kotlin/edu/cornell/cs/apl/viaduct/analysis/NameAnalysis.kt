@@ -72,12 +72,12 @@ class NameAnalysis(val tree: Tree<Node, ProgramNode>) {
     }
 
     /** Temporary definitions in scope for this node. */
-    private val Node.temporaryDefinitions: NameMap<Temporary, LetNode> by Context {
+    private val Node.temporaryDefinitions: NameMap<Temporary, LetNode> by Context(true) {
         if (it is LetNode) Pair(it.temporary, it) else null
     }
 
     /** Object declarations in scope for this node. */
-    private val Node.objectDeclarations: NameMap<ObjectVariable, DeclarationNode> by Context {
+    private val Node.objectDeclarations: NameMap<ObjectVariable, DeclarationNode> by Context(false) {
         if (it is DeclarationNode) Pair(it.variable, it) else null
     }
 
@@ -119,11 +119,14 @@ class NameAnalysis(val tree: Tree<Node, ProgramNode>) {
     /**
      * Threads a context through the program according to the scoping rules.
      *
-     * @param defines Returns the name and the context information defined by this node, or `null`
-     *   if this node does not define a new name.
+     * @param resetAtBlock True if the context map should be cleared upon entering a block.
+     * @param defines Returns the name defined by this node along with the the context information
+     *   attached to that name, or `null` if this node does not define a new name.
      */
-    private inner class Context<N : Name, Data>(defines: (Node) -> Pair<Located<N>, Data>?) :
-        ReadOnlyProperty<Node, NameMap<N, Data>> {
+    private inner class Context<N : Name, Data>(
+        resetAtBlock: Boolean,
+        defines: (Node) -> Pair<Located<N>, Data>?
+    ) : ReadOnlyProperty<Node, NameMap<N, Data>> {
         /** Context just before this node. */
         private val Node.contextIn: NameMap<N, Data> by attribute {
             val parent = tree.parent(this)
@@ -133,6 +136,8 @@ class NameAnalysis(val tree: Tree<Node, ProgramNode>) {
                     NameMap()
                 parent is BlockNode && previousSibling != null ->
                     previousSibling.contextOut
+                parent is BlockNode && previousSibling == null && resetAtBlock ->
+                    NameMap()
                 else ->
                     parent.contextIn
             }

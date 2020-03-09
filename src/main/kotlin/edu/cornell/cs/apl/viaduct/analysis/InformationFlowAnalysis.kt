@@ -56,9 +56,11 @@ class InformationFlowAnalysis(private val nameAnalysis: NameAnalysis) {
     }
 
     /** The [LabelTerm] representing the [Label] of the temporary defined by this node. */
-    private val LetNode.temporaryLabel: LabelVariable by attribute {
-        constraintSystem.addNewVariable(PrettyNodeWrapper(temporary))
-    }
+    private val LetNode.temporaryLabel: LabelVariable
+        get() {
+            // Same as the label of the expression bound to the temporary.
+            return value.labelVariable
+        }
 
     /** The [LabelTerm] representing the [Label] of the object declared by this node. */
     private val DeclarationNode.variableLabel: AtomicLabelTerm by attribute {
@@ -130,11 +132,13 @@ class InformationFlowAnalysis(private val nameAnalysis: NameAnalysis) {
     /** Non-recursively add constraints relevant to this expression to [constraintSystem]. */
     private fun ExpressionNode.addConstraints(): Unit =
         when (this) {
-            is LiteralNode ->
+            is LiteralNode -> {
+                // Force the thunk to generate the fresh variable
+                labelVariable
                 Unit
+            }
             is ReadNode -> {
                 // Note: not leaking the pc since temporaries are "local".
-                // TODO: this is unsafe if the temporary is not defined in the same scope.
                 val temporaryLabel = nameAnalysis.declaration(this).temporaryLabel
                 assertFlowsTo(temporary, temporaryLabel, this.labelVariable)
             }
@@ -212,10 +216,8 @@ class InformationFlowAnalysis(private val nameAnalysis: NameAnalysis) {
     /** Non-recursively add constraints relevant to this statement to [constraintSystem]. */
     private fun StatementNode.addConstraints(): Unit =
         when (this) {
-            is LetNode -> {
-                pcFlowsTo(temporary, temporaryLabel)
-                value flowsTo temporaryLabel
-            }
+            is LetNode ->
+                Unit
             is DeclarationNode -> {
                 pcFlowsTo(variable, variableLabel)
                 arguments.forEach { it flowsTo variableLabel }
@@ -272,6 +274,9 @@ class InformationFlowAnalysis(private val nameAnalysis: NameAnalysis) {
 
     /** Returns the inferred security label of the [ObjectVariable] declared by [node]. */
     fun label(node: DeclarationNode): Label = node.variableLabel.getValue(solution)
+
+    /** Returns the inferred security label of the result of [node]. */
+    fun label(node: ExpressionNode): Label = node.labelVariable.getValue(solution)
 
     /**
      * Asserts that the program does not violate information flow security, and throws (a subclass

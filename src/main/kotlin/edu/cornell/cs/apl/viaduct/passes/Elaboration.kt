@@ -117,7 +117,7 @@ private class StatementElaborator(
     ): StatementElaborator =
         StatementElaborator(
             nameGenerator,
-            temporaryRenames,
+            NameMap(), // Temporaries are local and reset at each block.
             objectRenames,
             jumpLabelRenames,
             surroundingLoop

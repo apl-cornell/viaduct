@@ -90,7 +90,7 @@ NUM         = ((-)?[1-9][0-9]*) | 0
 <YYINITIAL> {
   "host"          { return symbol(sym.HOST); }
   "process"       { return symbol(sym.PROCESS); }
-  "protocol"      { return symbol(sym.PROTOCOL); }
+  "Host"          { return symbol(sym.CAP_HOST); }
 
   /* Types */
   "int"           { return symbol(sym.INT); }

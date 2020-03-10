@@ -206,6 +206,7 @@ class InformationFlowAnalysis(private val nameAnalysis: NameAnalysis) {
     private fun StatementNode.addConstraints(): Unit =
         when (this) {
             is LetNode -> {
+                // Note: not leaking the pc since temporaries are "local".
                 value flowsTo temporaryLabel
             }
             is DeclarationNode -> {

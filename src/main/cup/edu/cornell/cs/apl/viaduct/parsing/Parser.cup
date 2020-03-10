@@ -90,7 +90,8 @@ terminal String IDENT, CAP_IDENT;
 terminal int INT_LIT;
 terminal TRUE, FALSE;
 
-terminal HOST, PROCESS, PROTOCOL;
+terminal HOST, PROCESS;
+terminal CAP_HOST;
 terminal COLON;
 
 terminal EQ;
@@ -509,10 +510,9 @@ protocol ::=
       RESULT = new Located(new Ideal(id), location(idleft, idright));
     :}
 
-  | CAP_IDENT:protocolName OPEN_PAREN host:host CLOSE_PAREN:end {:
-      // TODO: parse this properly
+  | CAP_HOST:begin OPEN_PAREN host:host CLOSE_PAREN:end {:
       RESULT = new Located(
-        new Ideal(host.getValue().getName()),
-        location(protocolNameleft, endright));
+        new HostInterface(host.getValue()),
+        location(beginleft, endright));
     :}
   ;

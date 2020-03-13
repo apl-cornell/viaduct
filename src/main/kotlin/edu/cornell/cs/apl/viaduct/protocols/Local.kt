@@ -15,5 +15,5 @@ data class Local(val host: Host) : Protocol, SymmetricProtocol(setOf(host)) {
         get() = "Local"
 
     override fun authority(hostTrustConfiguration: HostTrustConfiguration): Label =
-        hostTrustConfiguration.getValue(host)
+        hostTrustConfiguration(host)
 }

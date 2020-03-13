@@ -14,7 +14,6 @@ import edu.cornell.cs.apl.viaduct.syntax.HostTrustConfiguration
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
 import edu.cornell.cs.apl.viaduct.syntax.Variable
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.DeclarationNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.HostDeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.InputNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.LetNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProcessDeclarationNode
@@ -30,9 +29,7 @@ fun ProcessDeclarationNode.selectProtocols(
     nameAnalysis: NameAnalysis,
     informationFlowAnalysis: InformationFlowAnalysis
 ): (Variable) -> Protocol {
-    val hostTrustConfiguration: HostTrustConfiguration =
-        nameAnalysis.tree.root.filterIsInstance<HostDeclarationNode>()
-            .associate { Pair(it.name.value, it.authority.value) }
+    val hostTrustConfiguration = HostTrustConfiguration(nameAnalysis.tree.root)
 
     val hosts: List<Host> = hostTrustConfiguration.keys.sorted()
     val hostSubsets = hosts.subsequences().map { it.toSet() }.filter { it.size >= 2 }

@@ -19,7 +19,7 @@ class MPCWithAbort(hosts: Set<Host>) : MPCProtocol, SymmetricProtocol(hosts) {
         get() = "MPCWithAbort"
 
     override fun authority(hostTrustConfiguration: HostTrustConfiguration): Label =
-        hosts.map { hostTrustConfiguration.getValue(it) }.reduce(Label::and)
+        hosts.map { hostTrustConfiguration(it) }.reduce(Label::and)
 
     override fun equals(other: Any?): Boolean =
         other is MPCWithAbort && this.hosts == other.hosts

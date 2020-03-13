@@ -20,7 +20,7 @@ class Replication(hosts: Set<Host>) : Protocol, SymmetricProtocol(hosts) {
         get() = "Replication"
 
     override fun authority(hostTrustConfiguration: HostTrustConfiguration): Label =
-        hosts.map { hostTrustConfiguration.getValue(it) }.reduce(Label::meet)
+        hosts.map { hostTrustConfiguration(it) }.reduce(Label::meet)
 
     override fun equals(other: Any?): Boolean =
         other is Replication && this.hosts == other.hosts

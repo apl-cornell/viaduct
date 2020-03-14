@@ -15,6 +15,8 @@ import java.util.List;
 import java.util.LinkedList;
 import kotlin.collections.CollectionsKt;
 
+import java_cup.runtime.ComplexSymbolFactory;
+import java_cup.runtime.ComplexSymbolFactory.Location;
 import java_cup.runtime.Symbol;
 
 
@@ -60,7 +62,39 @@ parser code {:
         }
         throw new ParsingError(errorLocation, actualToken, expectedTokens);
     }
+
+
+    // Used to support multiple start symbols.
+    private Symbol current_symbol;
+
+    private void set_current_symbol(int symbol) {
+        final Location location = new Location(0, 0, 0);
+        current_symbol =
+            ((ComplexSymbolFactory) getSymbolFactory())
+                .newSymbol(symbl_name_from_id(symbol), symbol, location, location);
+    }
+
+    /** Parses the input as a program. */
+    public ProgramNode parseProgram() throws Exception {
+        set_current_symbol(sym.PARSE_PROGRAM);
+        return (ProgramNode) parse().value;
+    }
+
+    /** Parses the input as a security label. */
+    public Label parseLabel() throws Exception {
+        set_current_symbol(sym.PARSE_LABEL);
+        return (Label) parse().value;
+    }
 :}
+
+scan with {:
+    if (current_symbol != null) {
+        final Symbol result = current_symbol;
+        current_symbol = null;
+        return result;
+    }
+    return getScanner().next_token();
+:};
 
 nonterminal ProgramNode program;
 nonterminal List<TopLevelDeclarationNode> declaration_list;
@@ -115,6 +149,11 @@ terminal OPEN_BRACE, CLOSE_BRACE, SEMICOLON;
 terminal OPEN_SQBRACE, CLOSE_SQBRACE;
 terminal OPEN_PAREN, CLOSE_PAREN, COMMA;
 
+// Used to support multiple start symbols
+nonterminal entry_point;
+terminal Symbol PARSE_PROGRAM, PARSE_LABEL;
+
+
 precedence left ANDAND, OROR, AND, OR, JOIN, MEET;
 precedence nonassoc EQEQ, NEQ, LT, LEQ, GT, GEQ;
 precedence left PLUS, MINUS;
@@ -123,8 +162,12 @@ precedence right NOT, MIN;
 precedence left LARROW, RARROW;
 precedence nonassoc OPEN_PAREN, CLOSE_PAREN;
 
-start with program;
+start with entry_point;
 
+entry_point ::=
+     PARSE_PROGRAM program:s    {: RESULT = s; :}
+  |  PARSE_LABEL   label_expr:s {: RESULT = s; :}
+  ;
 
 program ::=
     declaration_list:declarations {:

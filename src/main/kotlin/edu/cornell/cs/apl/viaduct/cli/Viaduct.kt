@@ -6,7 +6,7 @@ import com.github.ajalt.clikt.core.subcommands
 class Viaduct :
     CliktCommand(help = "Compile high level specifications to secure distributed programs.") {
     init {
-        subcommands(Format(), Compile())
+        subcommands(Format(), Compile(), Specification())
         // TODO: Help, Interpret, Specification commands
     }
 

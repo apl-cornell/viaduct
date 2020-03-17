@@ -5,6 +5,7 @@ import edu.cornell.cs.apl.attributes.attribute
 import edu.cornell.cs.apl.attributes.collectedAttribute
 import edu.cornell.cs.apl.viaduct.errors.NameClashError
 import edu.cornell.cs.apl.viaduct.errors.UndefinedNameError
+import edu.cornell.cs.apl.viaduct.protocols.Adversary
 import edu.cornell.cs.apl.viaduct.syntax.Host
 import edu.cornell.cs.apl.viaduct.syntax.JumpLabel
 import edu.cornell.cs.apl.viaduct.syntax.Located
@@ -130,13 +131,15 @@ class NameAnalysis(val tree: Tree<Node, ProgramNode>) {
         /** Context just before this node. */
         private val Node.contextIn: NameMap<N, Data> by attribute {
             val parent = tree.parent(this)
+            val grandParent = parent?.let { tree.parent(it) }
             val previousSibling = tree.previousSibling(this)
             when {
                 parent == null ->
                     NameMap()
                 parent is BlockNode && previousSibling != null ->
                     previousSibling.contextOut
-                parent is BlockNode && previousSibling == null && resetAtBlock ->
+                parent is BlockNode && previousSibling == null && grandParent !is BlockNode && resetAtBlock ->
+                    // TODO: resetting at block is not enough to guarantee security with temporaries
                     NameMap()
                 else ->
                     parent.contextIn
@@ -210,7 +213,8 @@ class NameAnalysis(val tree: Tree<Node, ProgramNode>) {
                 is ExternalCommunicationNode ->
                     declaration(node)
                 is InternalCommunicationNode ->
-                    declaration(node)
+                    // The adversary is always (implicitly) defined
+                    if (node.protocol.value !is Adversary) declaration(node)
             }
             // Check that there are no name clashes
             when (node) {

@@ -26,6 +26,11 @@ internal class CommandLineInterfaceTest {
     }
 
     @Test
+    fun `specification command`() {
+        cli("specification", "--adversary", "A", example)
+    }
+
+    @Test
     fun aliases() {
         cli("f", example)
         cli("fo", example)

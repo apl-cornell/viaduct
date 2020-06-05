@@ -10,9 +10,13 @@ import edu.cornell.cs.apl.viaduct.analysis.NameAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.ProtocolAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.TypeAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.main
+import edu.cornell.cs.apl.viaduct.backend.BackendCompiler
 import edu.cornell.cs.apl.viaduct.passes.elaborated
 import edu.cornell.cs.apl.viaduct.passes.selectProtocols
 import edu.cornell.cs.apl.viaduct.passes.splitMain
+import edu.cornell.cs.apl.viaduct.syntax.Protocol
+import edu.cornell.cs.apl.viaduct.syntax.Variable
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
 import guru.nidi.graphviz.engine.Format
 import guru.nidi.graphviz.engine.Graphviz
 import guru.nidi.graphviz.engine.GraphvizCmdLineEngine
@@ -62,13 +66,14 @@ class Compile : CliktCommand(help = "Compile ideal protocol to secure distribute
         informationFlowAnalysis.check()
 
         // Select protocols.
-        val protocolAssignment = program.main.selectProtocols(nameAnalysis, informationFlowAnalysis)
+        val protocolAssignment: (Variable) -> Protocol =
+            program.main.selectProtocols(nameAnalysis, informationFlowAnalysis)
         val protocolAnalysis = ProtocolAnalysis(nameAnalysis, protocolAssignment)
 
         // Split the program.
-        val splitProgram = program.splitMain(protocolAnalysis, typeAnalysis)
+        val splitProgram: ProgramNode = program.splitMain(protocolAnalysis, typeAnalysis)
 
-        // TODO: compile to backend
+        BackendCompiler.compile(splitProgram, output)
 
         output.print(splitProgram)
     }

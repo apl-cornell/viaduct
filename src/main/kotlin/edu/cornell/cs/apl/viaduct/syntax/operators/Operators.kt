@@ -298,3 +298,20 @@ object LessThanOrEqualTo : ComparisonOperator() {
         return "<="
     }
 }
+
+// represents a mux / ternary operator
+object Mux : InfixOperator {
+    override val associativity: Associativity
+        get() = Associativity.NON
+
+    override val type: FunctionType
+        get() = FunctionType(BooleanType, IntegerType, IntegerType, result = IntegerType)
+
+    override fun apply(arguments: List<Value>): Value {
+        return if ((arguments[0] as BooleanValue).value) arguments[1] else arguments[2]
+    }
+
+    override fun asDocument(arguments: List<PrettyPrintable>): Document {
+        return arguments[0] * "?" * arguments[1] * ":" * arguments[2]
+    }
+}

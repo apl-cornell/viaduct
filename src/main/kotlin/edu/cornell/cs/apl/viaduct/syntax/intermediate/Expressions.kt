@@ -19,8 +19,10 @@ sealed class ExpressionNode : Node() {
     abstract override fun toSurfaceNode(): edu.cornell.cs.apl.viaduct.syntax.surface.ExpressionNode
 }
 
+sealed class PureExpressionNode : ExpressionNode()
+
 /** An expression that requires no computation to reduce to a value. */
-sealed class AtomicExpressionNode : ExpressionNode() {
+sealed class AtomicExpressionNode : PureExpressionNode() {
     final override val children: Iterable<Nothing>
         get() = listOf()
 
@@ -48,7 +50,7 @@ class OperatorApplicationNode(
     val operator: Operator,
     val arguments: Arguments<AtomicExpressionNode>,
     override val sourceLocation: SourceLocation
-) : ExpressionNode() {
+) : PureExpressionNode() {
     override val children: Iterable<AtomicExpressionNode>
         get() = arguments
 
@@ -66,7 +68,7 @@ class QueryNode(
     val query: QueryNameNode,
     val arguments: Arguments<AtomicExpressionNode>,
     override val sourceLocation: SourceLocation
-) : ExpressionNode() {
+) : PureExpressionNode() {
     override val children: Iterable<AtomicExpressionNode>
         get() = arguments
 
@@ -80,7 +82,7 @@ class QueryNode(
 }
 
 /** Reducing the confidentiality or increasing the integrity of the result of an expression. */
-sealed class DowngradeNode : ExpressionNode() {
+sealed class DowngradeNode : PureExpressionNode() {
     /** Expression whose label is being downgraded. */
     abstract val expression: AtomicExpressionNode
 

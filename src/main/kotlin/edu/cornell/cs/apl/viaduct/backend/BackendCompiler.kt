@@ -1,6 +1,5 @@
 package edu.cornell.cs.apl.viaduct.backend
 
-import edu.cornell.cs.apl.prettyprinting.Document
 import edu.cornell.cs.apl.viaduct.cli.print
 import edu.cornell.cs.apl.viaduct.syntax.Host
 import edu.cornell.cs.apl.viaduct.syntax.Operator
@@ -160,8 +159,6 @@ object BackendCompiler {
 
         val cppProgram = CppProgram(cppTopLevelDecls)
         output.print(cppProgram)
-        output.print(Document.forcedLineBreak)
-        output.print(Document.forcedLineBreak)
     }
 
     private fun protocolProcessName(protocol: Protocol): String {
@@ -364,13 +361,19 @@ object BackendCompiler {
 
     private fun compilePlaintextBlock(block: BlockNode): CppBlock {
         val cppChildrenStmts: MutableList<CppStatement> = mutableListOf()
+        val arrayDecls: MutableList<DeclarationNode> = mutableListOf()
         for (childStmt: StatementNode in block) {
-            cppChildrenStmts.addAll(compilePlaintextStmt(childStmt))
+            cppChildrenStmts.addAll(compilePlaintextStmt(childStmt, arrayDecls))
         }
+
+        for (arrayDecl: DeclarationNode in arrayDecls) {
+            cppChildrenStmts.add(CppDelete(arrayDecl.variable.value.name, isArray = true))
+        }
+
         return CppBlock(cppChildrenStmts)
     }
 
-    private fun compilePlaintextStmt(stmt: StatementNode): List<CppStatement> {
+    private fun compilePlaintextStmt(stmt: StatementNode, arrayDecls: MutableList<DeclarationNode>): List<CppStatement> {
         return when (stmt) {
             is LetNode -> {
                 when (val rhs = stmt.value) {
@@ -442,6 +445,7 @@ object BackendCompiler {
                     }
 
                     Vector -> {
+                        arrayDecls.add(stmt)
                         listOf(
                             CppArrayDecl(
                                 cppIntType,
@@ -701,13 +705,23 @@ object BackendCompiler {
 
     private fun compileMPCBlock(block: BlockNode, shareMap: MutableMap<Temporary, CppVariable>): CppBlock {
         val cppChildrenStmts: MutableList<CppStatement> = mutableListOf()
+        val arrayDecls: MutableList<DeclarationNode> = mutableListOf()
         for (childStmt: StatementNode in block) {
-            cppChildrenStmts.addAll(compileMPCStmt(childStmt, shareMap))
+            cppChildrenStmts.addAll(compileMPCStmt(childStmt, shareMap, arrayDecls))
         }
+
+        for (arrayDecl: DeclarationNode in arrayDecls) {
+            cppChildrenStmts.add(CppDelete(arrayDecl.variable.value.name, isArray = true))
+        }
+
         return CppBlock(cppChildrenStmts)
     }
 
-    private fun compileMPCStmt(stmt: StatementNode, shareMap: MutableMap<Temporary, CppVariable>): List<CppStatement> {
+    private fun compileMPCStmt(
+        stmt: StatementNode,
+        shareMap: MutableMap<Temporary, CppVariable>,
+        arrayDecls: MutableList<DeclarationNode>
+    ): List<CppStatement> {
         return when (stmt) {
             is LetNode -> {
                 when (val rhs: ExpressionNode = stmt.value) {
@@ -792,6 +806,7 @@ object BackendCompiler {
                     }
 
                     Vector -> {
+                        arrayDecls.add(stmt)
                         listOf(
                             CppArrayDecl(
                                 circuitGateType,

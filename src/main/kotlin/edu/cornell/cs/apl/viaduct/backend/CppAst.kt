@@ -270,6 +270,20 @@ object CppBreak : CppSimpleStatement() {
         get() = keyword("break")
 }
 
+data class CppDelete(
+    val name: CppIdentifier,
+    val isArray: Boolean = false
+) : CppSimpleStatement() {
+    override val asDocument: Document
+        get() {
+            return if (isArray) {
+                keyword("delete[]") * name
+            } else {
+                keyword("delete") * name
+            }
+        }
+}
+
 // top-level decls
 sealed class CppTopLevelDeclaration : CppAst()
 

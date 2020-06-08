@@ -50,6 +50,12 @@ class Compile : CliktCommand(help = "Compile ideal protocol to secure distribute
     // TODO: use this flag.
     val verbose by option("-v", "--verbose", help = "Print debugging information").flag()
 
+    // output intermediate representation instead of backend code.
+    val intermediate by
+        option("-i", "--intermediate",
+            help = "Output intermediate representation"
+        ).flag(default = false)
+
     override fun run() {
         val program = input.parse().elaborated()
 
@@ -73,9 +79,11 @@ class Compile : CliktCommand(help = "Compile ideal protocol to secure distribute
         // Split the program.
         val splitProgram: ProgramNode = program.splitMain(protocolAnalysis, typeAnalysis)
 
-        BackendCompiler.compile(splitProgram, output)
-
-        output.print(splitProgram)
+        if (!intermediate) {
+            BackendCompiler.compile(splitProgram, output)
+        } else {
+            output.print(splitProgram)
+        }
     }
 
     companion object {

@@ -31,7 +31,7 @@ internal fun ParameterHolder.outputFile(): OptionDelegate<File?> =
         "-o",
         "--output",
         help = "Write output to FILE (default: stdout)"
-    ).file(canBeDir = false, mustBeWritable = true)
+    ).file(canBeDir = false, mustExist = false)
 
 /**
  * Parses the contents of [this] file as a program. If [this] is `null`, the standard input is

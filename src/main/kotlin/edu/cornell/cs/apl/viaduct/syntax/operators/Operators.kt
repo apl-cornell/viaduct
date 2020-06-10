@@ -8,8 +8,10 @@ import edu.cornell.cs.apl.prettyprinting.times
 import edu.cornell.cs.apl.prettyprinting.tupled
 import edu.cornell.cs.apl.viaduct.syntax.Associativity
 import edu.cornell.cs.apl.viaduct.syntax.BinaryOperator
+import edu.cornell.cs.apl.viaduct.syntax.HighestPrecedence
 import edu.cornell.cs.apl.viaduct.syntax.InfixOperator
-import edu.cornell.cs.apl.viaduct.syntax.Operator
+import edu.cornell.cs.apl.viaduct.syntax.LowestPrecedence
+import edu.cornell.cs.apl.viaduct.syntax.Order
 import edu.cornell.cs.apl.viaduct.syntax.Precedence
 import edu.cornell.cs.apl.viaduct.syntax.PrefixOperator
 import edu.cornell.cs.apl.viaduct.syntax.UnaryOperator
@@ -22,13 +24,43 @@ import edu.cornell.cs.apl.viaduct.syntax.values.Value
 import kotlin.math.max
 import kotlin.math.min
 
+/** The precedence of [LogicalOperator]s. */
+object LogicalOperatorPrecedence : Precedence
+
+/** The precedence of [ComparisonOperator]s. */
+object ComparisionOperatorPrecedence : Precedence {
+    override fun compareTo(other: Precedence): Order {
+        return if (other is LogicalOperatorPrecedence)
+            Order.HIGHER
+        else
+            super.compareTo(other)
+    }
+}
+
+/** The precedence of [Addition] and [Subtraction]. */
+object AdditiveOperatorPrecedence : Precedence {
+    override fun compareTo(other: Precedence): Order {
+        return if (other is LogicalOperatorPrecedence || other is ComparisionOperatorPrecedence)
+            Order.HIGHER
+        else
+            super.compareTo(other)
+    }
+}
+
+/** The precedence of [Multiplication] and [Division]. */
+object MultiplicativeOperatorPrecedence : Precedence {
+    override fun compareTo(other: Precedence): Order {
+        return if (other is LogicalOperatorPrecedence || other is ComparisionOperatorPrecedence || other is AdditiveOperatorPrecedence)
+            Order.HIGHER
+        else
+            super.compareTo(other)
+    }
+}
+
 /** A unary prefix operator. */
 abstract class UnaryPrefixOperator : UnaryOperator, PrefixOperator {
-    final override fun comparePrecedenceTo(other: Operator): Precedence {
-        if (other is UnaryPrefixOperator)
-            return Precedence.EQUAL
-        return Precedence.HIGHER
-    }
+    final override val precedence: Precedence
+        get() = HighestPrecedence
 
     override fun asDocument(argument: PrettyPrintable): Document =
         Document(this.toString()) + argument
@@ -36,19 +68,13 @@ abstract class UnaryPrefixOperator : UnaryOperator, PrefixOperator {
 
 /** A binary prefix operator. */
 abstract class BinaryPrefixOperator : BinaryOperator, PrefixOperator {
-    final override fun asDocument(
-        argument1: PrettyPrintable,
-        argument2: PrettyPrintable
-    ): Document =
+    final override fun asDocument(argument1: PrettyPrintable, argument2: PrettyPrintable): Document =
         Document(this.toString()) + listOf(argument1, argument2).tupled().nested()
 }
 
 /** A binary infix operator. */
 abstract class BinaryInfixOperator : BinaryOperator, InfixOperator {
-    final override fun asDocument(
-        argument1: PrettyPrintable,
-        argument2: PrettyPrintable
-    ): Document =
+    final override fun asDocument(argument1: PrettyPrintable, argument2: PrettyPrintable): Document =
         argument1 * this.toString() * argument2
 }
 
@@ -74,13 +100,8 @@ abstract class LogicalOperator : BinaryInfixOperator() {
     final override val associativity: Associativity
         get() = Associativity.LEFT
 
-    final override fun comparePrecedenceTo(other: Operator): Precedence {
-        if (other == this)
-            return Precedence.EQUAL
-        if (other is LogicalOperator)
-            return Precedence.UNDETERMINED
-        return Precedence.LOWER
-    }
+    final override val precedence: Precedence
+        get() = LogicalOperatorPrecedence
 
     final override val type: FunctionType
         get() = FunctionType(BooleanType, BooleanType, result = BooleanType)
@@ -99,11 +120,8 @@ abstract class ComparisonOperator : BinaryInfixOperator() {
     final override val associativity: Associativity
         get() = Associativity.NON
 
-    final override fun comparePrecedenceTo(other: Operator): Precedence {
-        if (other is ArithmeticOperator)
-            return Precedence.LOWER
-        return super.comparePrecedenceTo(other)
-    }
+    final override val precedence: Precedence
+        get() = ComparisionOperatorPrecedence
 
     final override val type: FunctionType
         get() = FunctionType(IntegerType, IntegerType, result = BooleanType)
@@ -133,6 +151,9 @@ object Negation : UnaryPrefixOperator() {
 }
 
 object Addition : ArithmeticOperator() {
+    override val precedence: Precedence
+        get() = AdditiveOperatorPrecedence
+
     override fun apply(left: Int, right: Int): Int {
         return left + right
     }
@@ -143,9 +164,8 @@ object Addition : ArithmeticOperator() {
 }
 
 object Subtraction : ArithmeticOperator() {
-    override fun comparePrecedenceTo(other: Operator): Precedence {
-        return Addition.comparePrecedenceTo(other)
-    }
+    override val precedence: Precedence
+        get() = AdditiveOperatorPrecedence
 
     override fun apply(left: Int, right: Int): Int {
         return left - right
@@ -157,12 +177,8 @@ object Subtraction : ArithmeticOperator() {
 }
 
 object Multiplication : ArithmeticOperator() {
-    override fun comparePrecedenceTo(other: Operator): Precedence {
-        if (other is Addition || other is Subtraction) {
-            return Precedence.HIGHER
-        }
-        return super.comparePrecedenceTo(other)
-    }
+    override val precedence: Precedence
+        get() = MultiplicativeOperatorPrecedence
 
     override fun apply(left: Int, right: Int): Int {
         return left * right
@@ -174,11 +190,8 @@ object Multiplication : ArithmeticOperator() {
 }
 
 object Division : ArithmeticOperator() {
-    override fun comparePrecedenceTo(other: Operator): Precedence {
-        return Multiplication.comparePrecedenceTo(
-            other
-        )
-    }
+    override val precedence: Precedence
+        get() = MultiplicativeOperatorPrecedence
 
     override fun apply(left: Int, right: Int): Int {
         return left / right
@@ -190,12 +203,8 @@ object Division : ArithmeticOperator() {
 }
 
 object Minimum : BinaryPrefixOperator() {
-    // TODO: this is janky.
-    override fun comparePrecedenceTo(other: Operator): Precedence {
-        if (other is UnaryPrefixOperator || other is Minimum || other is Maximum)
-            return Precedence.EQUAL
-        return Precedence.HIGHER
-    }
+    override val precedence: Precedence
+        get() = HighestPrecedence
 
     override val type: FunctionType
         get() = FunctionType(IntegerType, IntegerType, result = IntegerType)
@@ -212,11 +221,8 @@ object Minimum : BinaryPrefixOperator() {
 }
 
 object Maximum : BinaryPrefixOperator() {
-    override fun comparePrecedenceTo(other: Operator): Precedence {
-        return Minimum.comparePrecedenceTo(
-            other
-        )
-    }
+    override val precedence: Precedence
+        get() = HighestPrecedence
 
     override val type: FunctionType
         get() = Minimum.type
@@ -299,8 +305,14 @@ object LessThanOrEqualTo : ComparisonOperator() {
     }
 }
 
-// represents a mux / ternary operator
+/**
+ * Cases on the first argument; evaluates to the second argument if the first argument is `true`, and to the third
+ * argument if the first argument is `false`.
+ */
 object Mux : InfixOperator {
+    override val precedence: Precedence
+        get() = LowestPrecedence
+
     override val associativity: Associativity
         get() = Associativity.NON
 

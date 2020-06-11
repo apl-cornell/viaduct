@@ -22,12 +22,53 @@ enum class Associativity {
 /**
  * Determines the order of operations in the absence of parentheses.
  *
- * For example, conventionally, multiplication has higher precedence than addition, so
+ * For example, multiplication (conventionally) has higher precedence than addition, so
  * `x + y * z` is parsed as `x + (y * z)`.
  */
-// TODO: rethink precedence
-enum class Precedence {
-    LOWER, EQUAL, HIGHER, UNDETERMINED
+interface Precedence {
+    /**
+     * Determines the [Order] of this precedence with respect to [other].
+     *
+     * The result of `x.compareTo(y)` may be [Order.UNDETERMINED], in which case the order is determined by
+     * `y.compareTo(x)`. If both of these are [Order.UNDETERMINED], then the precedences are not ordered, which is
+     * valid.
+     *
+     * This design supports extensibility. Old operators do not need to know about new operators; their precedence can
+     * (and should) compare as [Order.UNDETERMINED] to the precedence of operators they do not know about.
+     * This way, newly added operators can declare their precedence with respect to existing operators without having
+     * to change the code for existing operators.
+     *
+     * This function should satisfy the following properties:
+     *
+     * - If `x.compareTo(y)` returns [Order.LOWER], then
+     *   `y.compareTo(x)` must return [Order.HIGHER] or [Order.UNDETERMINED].
+     * - If `x.compareTo(y)` returns [Order.HIGHER], then
+     *   `y.compareTo(x)` must return [Order.LOWER] or [Order.UNDETERMINED].
+     *
+     * However, this function is not required to be transitive or total. That is, not all operators are required to be
+     * ordered with respect to each other. This design facilitates modularity
+     * (see [Parsing Mixfix Operators](https://link.springer.com/chapter/10.1007/978-3-642-24452-0_5)).
+     *
+     * Note that two different objects implementing this interface can never denote the same precedence since [Order]
+     * does not have an `EQUAL` option. If two operators have the same precedence, than [Operator.precedence] must
+     * return the same object for both.
+     */
+    fun compareTo(other: Precedence): Order = Order.UNDETERMINED
+}
+
+/** The precedence that is higher than all other precedences. */
+object HighestPrecedence : Precedence {
+    override fun compareTo(other: Precedence): Order = Order.HIGHER
+}
+
+/** The precedence that is lower than all other precedences. */
+object LowestPrecedence : Precedence {
+    override fun compareTo(other: Precedence): Order = Order.LOWER
+}
+
+/** The result of comparing two [Precedence]s. */
+enum class Order {
+    LOWER, HIGHER, UNDETERMINED
 }
 
 /** A pure function from values to a value. */
@@ -40,35 +81,13 @@ interface Operator {
     val associativity: Associativity
 
     /**
-     * Determines the [Precedence] of this operator with respect to (a subset of) other operators.
+     * Determines the order of this operator with respect to (a subset of) other operators.
      * Operators with higher precedence bind tighter than operators with lower precedence
      * (for example, multiplication has higher precedence than addition).
      *
-     * The result of `x.comparePrecedenceTo(y)` might be [Precedence.UNDETERMINED], in which
-     * case, the precedence is determined by `y.comparePrecedenceTo(x)`.
-     * If both of these are [Precedence.UNDETERMINED], then the operators are not ordered, which
-     * is valid.
-     * This design supports extensibility. Old operators do not need to know about new
-     * operators; they can (and should) return [Precedence.UNDETERMINED] for operators they
-     * do not know about, this way, newly added operators can declare their precedence with
-     * respect to existing operators.
-     *
-     * This function should satisfy the following properties:
-     *
-     * - `x.comparePrecedenceTo(x)` must return [Precedence.EQUAL]
-     * - If `x.comparePrecedenceTo(y)` returns [Precedence.LOWER], then
-     *   `y.comparePrecedenceTo(x)` must return [Precedence.HIGHER] or [Precedence.UNDETERMINED].
-     * - If `x.comparePrecedenceTo(y)` returns [Precedence.EQUAL], then
-     *   `y.comparePrecedenceTo(x)` must return [Precedence.EQUAL] or [Precedence.UNDETERMINED].
-     * - If `x.comparePrecedenceTo(y)` returns [Precedence.HIGHER], then
-     *   `y.comparePrecedenceTo(x)` must return [Precedence.LOWER] or [Precedence.UNDETERMINED].
-     *
-     * However, this function is not required to be transitive, and not all operators need to be
-     * ordered.
+     * @see Precedence
      */
-    fun comparePrecedenceTo(other: Operator): Precedence {
-        return if (this == other) Precedence.EQUAL else Precedence.UNDETERMINED
-    }
+    val precedence: Precedence
 
     /** The type of this operator. */
     val type: FunctionType
@@ -89,14 +108,10 @@ interface Operator {
  * Two operators `x` and `y` have the same precedence if `x.bindsTighterThan(y)` and
  * `y.bindsTighterThan(x)`.
  */
-fun Operator.bindsTighterThan(other: Operator): Boolean {
-    val thisToOther = this.comparePrecedenceTo(other)
-    val otherToThis = other.comparePrecedenceTo(this)
-    return thisToOther == Precedence.EQUAL ||
-        thisToOther == Precedence.HIGHER ||
-        otherToThis == Precedence.EQUAL ||
-        otherToThis == Precedence.LOWER
-}
+fun Operator.bindsTighterThan(other: Operator): Boolean =
+    this.precedence == other.precedence ||
+        this.precedence.compareTo(other.precedence) == Order.HIGHER ||
+        other.precedence.compareTo(this.precedence) == Order.LOWER
 
 /**
  * An operator that is written before its operands.
@@ -124,7 +139,7 @@ interface InfixOperator : Operator
  * An operator that is written after its operands.
  *
  * A postfix operator has an operand that comes before all its named parts.
- * For example, taking the factorial (`x!`) is a prefix operator.
+ * For example, taking the factorial (`x!`) is a postfix operator.
  *
  * Postfix operators are left associative.
  */
@@ -194,5 +209,7 @@ val Operator.arity: Int
 
 /** Asserts that the correct number of arguments are passed to this operator. */
 private fun Operator.checkArguments(arguments: List<*>) {
-    require(arguments.size == this.arity) { "Operator takes ${this.arity} arguments but was given ${arguments.size}." }
+    require(arguments.size == this.arity) {
+        "Operator takes ${this.arity} arguments but was given ${arguments.size}."
+    }
 }

@@ -3,8 +3,9 @@ package edu.cornell.cs.apl.viaduct.cli
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.core.subcommands
 
-class Viaduct :
-    CliktCommand(help = "Compile high level specifications to secure distributed programs.") {
+class Viaduct : CliktCommand(help = "Compile high level specifications to secure distributed programs.") {
+    val verbose by verbosity()
+
     init {
         subcommands(Format(), Compile(), Specification())
         // TODO: Help, Interpret, Specification commands

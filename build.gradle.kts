@@ -28,7 +28,6 @@ repositories {
     jcenter()
 }
 
-
 /** Application */
 
 application {
@@ -40,7 +39,6 @@ tasks.jar {
         attributes(Pair("Main-Class", application.mainClassName))
     }
 }
-
 
 /** Dependencies */
 
@@ -78,8 +76,10 @@ dependencies {
     // DOT graph output
     implementation("guru.nidi:graphviz-java:0.11.0")
 
-    // Logging (disabled for now using the NOP engine)
-    implementation("org.slf4j:slf4j-nop:1.8.0-beta4")
+    // Logging
+    implementation("io.github.microutils:kotlin-logging:1.7.10")
+    implementation("org.apache.logging.log4j:log4j-core:2.13.3")
+    implementation("org.apache.logging.log4j:log4j-slf4j-impl:2.13.3")
 
     // Testing
     testImplementation(kotlin("reflect"))
@@ -87,7 +87,6 @@ dependencies {
     testImplementation("org.junit.jupiter:junit-jupiter-params:5.4.2")
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.4.2")
 }
-
 
 /** Compilation */
 
@@ -160,7 +159,6 @@ open class CupCompileTask : DefaultTask() {
     }
 }
 
-
 /** Checks */
 
 // TODO: remove once Java is gone
@@ -181,7 +179,6 @@ editorconfig {
 tasks.check {
     dependsOn(tasks.editorconfigCheck)
 }
-
 
 /** Testing */
 
@@ -204,7 +201,6 @@ tasks.jacocoTestReport {
 tasks.named<JavaExec>("run") {
     enableAssertions = true
 }
-
 
 /** Documentation */
 

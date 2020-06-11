@@ -45,7 +45,7 @@ class Compile : CliktCommand(help = "Compile ideal protocol to secure distribute
             Supported formats are the same as the ones in Graphviz.
             Most common ones are svg, png, dot, and json.
         """
-    ).file(canBeDir = false, mustBeWritable = true)
+    ).file(canBeDir = false)
 
     // TODO: use this flag.
     val verbose by option("-v", "--verbose", help = "Print debugging information").flag()

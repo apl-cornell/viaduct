@@ -31,14 +31,6 @@ internal class CommandLineInterfaceTest {
     }
 
     @Test
-    fun aliases() {
-        cli("f", example)
-        cli("fo", example)
-        cli("c", example)
-        cli("comp", example)
-    }
-
-    @Test
     fun `no arguments causes error`() {
         assertThrows<PrintHelpMessage> { cli() }
     }

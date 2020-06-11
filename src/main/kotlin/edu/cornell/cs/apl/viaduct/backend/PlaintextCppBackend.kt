@@ -62,9 +62,49 @@ private typealias SendCompiler = (SendNode, Protocol, Host) -> List<CppStatement
 open class PlaintextCppBackend(
     val nameAnalysis: NameAnalysis,
     val typeAnalysis: TypeAnalysis
-) : AbstractCppBackend(), CppBackend {
+) : CppBuilder(), CppBackend {
+
+    private val localProcessType = CppTypeName("LocalProcess")
+    private val replicationProcessType = CppTypeName("ReplicationProcess")
+
     override val supportedProtocols: Set<String>
         get() = setOf(Local.protocolName, Replication.protocolName)
+
+    override val extraStartArguments: List<CppFormalDecl>
+        get() = listOf()
+
+    override fun extraFunctionArguments(protocol: Protocol): List<CppFormalDecl> = listOf()
+
+    override fun buildProcessObject(
+        protocol: Protocol,
+        procName: CppIdentifier,
+        funcName: CppIdentifier
+    ): List<CppStatement> {
+        return when (protocol) {
+            is Local -> {
+                listOf(
+                    CppVariableDecl(
+                        type = localProcessType,
+                        name = procName,
+                        arguments = listOf(read(funcName))
+                    )
+                )
+            }
+
+            is Replication -> {
+                listOf(
+                    CppVariableDecl(
+                        type = replicationProcessType,
+                        name = procName,
+                        arguments = listOf(read(funcName))
+                    )
+                )
+            }
+
+            else ->
+                throw Error("backend compilation: protocol ${protocol.protocolName} unsupported by Plaintext backend")
+        }
+    }
 
     override fun compile(block: BlockNode, protocol: Protocol, host: Host): CppBlock {
         return when (protocol) {
@@ -417,7 +457,7 @@ open class PlaintextCppBackend(
                         // check that all received values are equal
                         val assertExpr: CppExpression =
                             equalPairs.fold(
-                                initial = CppIntLiteral(1) as CppExpression,
+                                initial = CppTrue as CppExpression,
                                 operation = { acc: CppExpression, equalPair: Pair<CppIdentifier, CppIdentifier> ->
                                     val equalExpr: CppExpression =
                                         compileOperator(EqualTo, read(equalPair.first), read(equalPair.second))

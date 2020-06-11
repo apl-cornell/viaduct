@@ -58,23 +58,14 @@ import kotlinx.collections.immutable.persistentListOf
 class ABYBackend(
     val nameAnalysis: NameAnalysis,
     val typeAnalysis: TypeAnalysis
-) : AbstractCppBackend(), CppBackend {
+) : CppBuilder(), CppBackend {
 
-    override val supportedProtocols: Set<String>
-        get() = setOf(MPCWithAbort.protocolName)
+    private val abyInfoType = CppTypeName("ABYInfo")
 
-    override fun compile(block: BlockNode, protocol: Protocol, host: Host): CppBlock {
-        return when (protocol) {
-            is MPCWithAbort -> compileMPCBlock(block, host, mutableMapOf())
-            else -> throw Error("backend compilation: protocol ${protocol.protocolName} unsupported by ABY backend")
-        }
-    }
+    private val abyProcessType = CppTypeName("MPCProcess")
 
-    private val circuitIdent = "circuit"
-    private val circuitResetMethod = "Reset"
-    private val circuitBuildCircuitMethod = "BuildCircuit"
-    private val circuitExecCircuitMethod = "ExecCircuit"
-    private val circuitGetClearValueMethod = "get_clear_value<${cppIntType.name}>"
+    private val abyCachedCircuitType =
+        CppReferenceType(CppTypeName("CachedCircuit"))
 
     private val abyCircuitGateType = CppPointerType(
         CppTypeName("CircuitGate")
@@ -82,6 +73,13 @@ class ABYBackend(
     private val abySecretShareType = CppPointerType(
         CppTypeName("share")
     )
+
+    private val abyInfoIdent = "abyInfo"
+    private val circuitIdent = "circuit"
+    private val circuitResetMethod = "Reset"
+    private val circuitBuildCircuitMethod = "BuildCircuit"
+    private val circuitExecCircuitMethod = "ExecCircuit"
+    private val circuitGetClearValueMethod = "get_clear_value<${cppIntType.name}>"
 
     enum class CircuitGate(val gateMethod: CppIdentifier) {
         IN_GATE("PutINGate"),
@@ -96,6 +94,35 @@ class ABYBackend(
         GT_GATE("PutGTGate"),
         MUX_GATE("PutMUXGate"),
         INV_GATE("PutINVGate"),
+    }
+
+    override val supportedProtocols: Set<String>
+        get() = setOf(MPCWithAbort.protocolName)
+
+    override val extraStartArguments: List<CppFormalDecl>
+        get() = listOf(CppFormalDecl(abyInfoType, abyInfoIdent))
+
+    override fun extraFunctionArguments(protocol: Protocol): List<CppFormalDecl> =
+        listOf(CppFormalDecl(abyCachedCircuitType, circuitIdent))
+
+    override fun buildProcessObject(
+        protocol: Protocol,
+        procName: CppIdentifier,
+        funcName: CppIdentifier
+    ): List<CppStatement> =
+        listOf(
+            CppVariableDecl(
+                type = abyProcessType,
+                name = procName,
+                arguments = listOf(read(abyInfoIdent), read(funcName))
+            )
+        )
+
+    override fun compile(block: BlockNode, protocol: Protocol, host: Host): CppBlock {
+        return when (protocol) {
+            is MPCWithAbort -> compileMPCBlock(block, host, mutableMapOf())
+            else -> throw Error("backend compilation: protocol ${protocol.protocolName} unsupported by ABY backend")
+        }
     }
 
     private fun buildCircuitGate(gate: CircuitGate, vararg arguments: CppExpression): CppExpression =

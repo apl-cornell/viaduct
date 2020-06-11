@@ -7,5 +7,11 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.BlockNode
 interface CppBackend {
     val supportedProtocols: Set<String>
 
+    val extraStartArguments: List<CppFormalDecl>
+
+    fun extraFunctionArguments(protocol: Protocol): List<CppFormalDecl>
+
+    fun buildProcessObject(protocol: Protocol, procName: CppIdentifier, funcName: CppIdentifier): List<CppStatement>
+
     fun compile(block: BlockNode, protocol: Protocol, host: Host): CppBlock
 }

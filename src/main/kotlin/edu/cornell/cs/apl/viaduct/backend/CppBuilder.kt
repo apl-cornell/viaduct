@@ -3,7 +3,8 @@ package edu.cornell.cs.apl.viaduct.backend
 import edu.cornell.cs.apl.viaduct.syntax.Host
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
 
-abstract class AbstractCppBackend : CppBackend {
+/* Provides helper classes for building C++ ASTs during backend compilation. */
+abstract class CppBuilder {
     private fun protocolMangledName(protocol: Protocol): String {
         val processName = StringBuilder()
         processName.append(protocol.protocolName)
@@ -19,9 +20,10 @@ abstract class AbstractCppBackend : CppBackend {
         return "${protocolMangledName(protocol)}__at__${host.name}"
     }
 
-    protected val runtimeIdent = "runtime"
     protected val cppIntType = CppTypeName("int")
+    protected val cppVoidType = CppTypeName("void")
 
+    protected val runtimeIdent = "runtime"
     protected val assertFunction = "assert"
 
     // operation helpers
@@ -111,11 +113,7 @@ abstract class AbstractCppBackend : CppBackend {
         methodCallStmt(read(runtimeIdent), "output", value)
 
     fun loop(body: CppBlock) =
-        CppWhileLoop(
-            CppIntLiteral(
-                1
-            ), body
-        )
+        CppWhileLoop(CppTrue, body)
 
     fun loopBreak() = CppBreak
 

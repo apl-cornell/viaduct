@@ -134,6 +134,16 @@ data class CppIntLiteral(val value: Int) : CppExpression() {
         get() = Document(value.toString())
 }
 
+object CppTrue : CppExpression() {
+    override val asDocument: Document
+        get() = Document("true")
+}
+
+object CppFalse : CppExpression() {
+    override val asDocument: Document
+        get() = Document("false")
+}
+
 data class CppReferenceRead(val reference: CppReference) : CppExpression() {
     override val asDocument: Document
         get() = reference.asDocument
@@ -190,6 +200,10 @@ data class CppVariableDecl(
     val name: CppIdentifier,
     val arguments: List<CppExpression> = listOf()
 ) : CppSimpleStatement() {
+
+    constructor(type: CppType, name: CppIdentifier, vararg arguments: CppExpression) :
+        this(type, name, listOf(*arguments))
+
     override val asDocument: Document
         get() {
             return if (arguments.isEmpty()) {
@@ -293,10 +307,18 @@ data class CppDelete(
 // top-level decls
 sealed class CppTopLevelDeclaration : CppAst()
 
+data class CppFormalDecl(
+    val type: CppType,
+    val name: CppIdentifier
+) : CppAst() {
+    override val asDocument: Document
+        get() = type.asDocument * name
+}
+
 data class CppFunctionDecl(
     val type: CppType,
     val name: CppIdentifier,
-    val arguments: List<CppVariableDecl>,
+    val arguments: List<CppFormalDecl>,
     val body: CppBlock
 ) : CppTopLevelDeclaration() {
     override val asDocument: Document

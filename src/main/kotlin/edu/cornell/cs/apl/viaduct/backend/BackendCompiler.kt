@@ -1,62 +1,24 @@
 package edu.cornell.cs.apl.viaduct.backend
 
+import edu.cornell.cs.apl.prettyprinting.Document
+import edu.cornell.cs.apl.prettyprinting.plus
+import edu.cornell.cs.apl.prettyprinting.times
+import edu.cornell.cs.apl.viaduct.analysis.NameAnalysis
+import edu.cornell.cs.apl.viaduct.analysis.TypeAnalysis
 import edu.cornell.cs.apl.viaduct.cli.print
+import edu.cornell.cs.apl.viaduct.protocols.HostInterface
 import edu.cornell.cs.apl.viaduct.syntax.Host
-import edu.cornell.cs.apl.viaduct.syntax.Operator
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
-import edu.cornell.cs.apl.viaduct.syntax.Temporary
-import edu.cornell.cs.apl.viaduct.syntax.datatypes.Get
-import edu.cornell.cs.apl.viaduct.syntax.datatypes.ImmutableCell
-import edu.cornell.cs.apl.viaduct.syntax.datatypes.Modify
-import edu.cornell.cs.apl.viaduct.syntax.datatypes.MutableCell
-import edu.cornell.cs.apl.viaduct.syntax.datatypes.Set as SetMethod
-import edu.cornell.cs.apl.viaduct.syntax.datatypes.Vector
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.AssertionNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.AtomicExpressionNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.BlockNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.BreakNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.DeclarationNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.DeclassificationNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.EndorsementNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.ExpressionNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.HostDeclarationNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.IfNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.InfiniteLoopNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.InputNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.LetNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.LiteralNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.OperatorApplicationNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutputNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProcessDeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.PureExpressionNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.QueryNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.ReadNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.ReceiveNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.SendNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.StatementNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.TopLevelDeclarationNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.UpdateNode
-import edu.cornell.cs.apl.viaduct.syntax.operators.Addition
-import edu.cornell.cs.apl.viaduct.syntax.operators.And
-import edu.cornell.cs.apl.viaduct.syntax.operators.Division
-import edu.cornell.cs.apl.viaduct.syntax.operators.EqualTo
-import edu.cornell.cs.apl.viaduct.syntax.operators.LessThan
-import edu.cornell.cs.apl.viaduct.syntax.operators.LessThanOrEqualTo
-import edu.cornell.cs.apl.viaduct.syntax.operators.Maximum
-import edu.cornell.cs.apl.viaduct.syntax.operators.Minimum
-import edu.cornell.cs.apl.viaduct.syntax.operators.Multiplication
-import edu.cornell.cs.apl.viaduct.syntax.operators.Mux
-import edu.cornell.cs.apl.viaduct.syntax.operators.Negation
-import edu.cornell.cs.apl.viaduct.syntax.operators.Not
-import edu.cornell.cs.apl.viaduct.syntax.operators.Or
-import edu.cornell.cs.apl.viaduct.syntax.operators.Subtraction
-import edu.cornell.cs.apl.viaduct.syntax.values.BooleanValue
-import edu.cornell.cs.apl.viaduct.syntax.values.IntegerValue
-import edu.cornell.cs.apl.viaduct.syntax.values.Value
 import java.io.File
 
-object BackendCompiler {
+class BackendCompiler(
+    val nameAnalysis: NameAnalysis,
+    val typeAnalysis: TypeAnalysis
+) {
+    /*
     fun compile(splitProgram: ProgramNode, output: File?) {
         val cppHostNameDecls: MutableList<CppDefineMacro> = mutableListOf()
         val cppProtocolNameDecls: MutableList<CppDefineMacro> = mutableListOf()
@@ -161,17 +123,6 @@ object BackendCompiler {
         output.print(cppProgram)
     }
 
-    private fun protocolProcessName(protocol: Protocol): String {
-        val processName = StringBuilder()
-        processName.append(protocol.protocolName)
-        processName.append("_")
-        for (host: Host in protocol.hosts) {
-            processName.append("_")
-            processName.append(host.name)
-        }
-        return processName.toString()
-    }
-
     private fun protocolProcessFunctionName(protocol: Protocol): String {
         return "func_${protocolProcessName(protocol)}"
     }
@@ -192,6 +143,7 @@ object BackendCompiler {
     private val runtimeIdent: CppVariable = CppVariable("runtime")
     private const val runtimeReceiveMethod: CppIdentifier = "receive"
     private const val runtimeSendMethod: CppIdentifier = "send"
+    private const val runtimeBroadcastMethod: CppIdentifier = "broadcast"
     private const val runtimeHostInProtocolMethod: CppIdentifier = "isHostInProtocol"
     private const val runtimeInputMethod: CppIdentifier = "input"
     private const val runtimeOutputMethod: CppIdentifier = "output"
@@ -237,6 +189,19 @@ object BackendCompiler {
                 CppReferenceRead(runtimeIdent),
                 runtimeReceiveMethod,
                 listOf(CppReferenceRead(CppVariable(protocolProcessName(protocol))))
+            )
+        )
+    }
+
+    private fun runtimeBroadcast(protocol: Protocol, expr: CppExpression): CppCallStmt {
+        return CppCallStmt(
+            CppMethodCall(
+                CppReferenceRead(runtimeIdent),
+                runtimeBroadcastMethod,
+                listOf(
+                    CppReferenceRead(CppVariable(protocolProcessName(protocol))),
+                    expr
+                )
             )
         )
     }
@@ -373,7 +338,10 @@ object BackendCompiler {
         return CppBlock(cppChildrenStmts)
     }
 
-    private fun compilePlaintextStmt(stmt: StatementNode, arrayDecls: MutableList<DeclarationNode>): List<CppStatement> {
+    private fun compilePlaintextStmt(
+        stmt: StatementNode,
+        arrayDecls: MutableList<DeclarationNode>
+    ): List<CppStatement> {
         return when (stmt) {
             is LetNode -> {
                 when (val rhs = stmt.value) {
@@ -385,6 +353,7 @@ object BackendCompiler {
                                 rhs.protocol.value,
 
                                 // host is in sending protocol, actually receive
+                                // TODO: then broadcast to other hosts' processes
                                 CppBlock(
                                     listOf(
                                         CppAssignment(
@@ -665,7 +634,8 @@ object BackendCompiler {
                 if (useShares) { // the input will be used for computation, so use its input gate / share counterpart
                     shareMap[expr.temporary.value]?.let { CppReferenceRead(it) }
                         ?: throw Error(
-                            "backend compilation: no input gate found for temporary ${expr.temporary.value.name}")
+                            "backend compilation: no input gate found for temporary ${expr.temporary.value.name}"
+                        )
                 } else { // the input will be used for control flow or array indexing, so use its plaintext version
                     CppReferenceRead(CppVariable(expr.temporary.value.name))
                 }
@@ -963,6 +933,45 @@ object BackendCompiler {
             is BlockNode -> listOf(compileMPCBlock(stmt, shareMap))
 
             is AssertionNode -> listOf()
+        }
+    }
+     */
+
+    val backendMap: MutableMap<String, CppBackend> = mutableMapOf()
+
+    fun registerBackend(backend: CppBackend) {
+        for (protocolName: String in backend.supportedProtocols) {
+            if (backendMap.containsKey(protocolName)) {
+                throw Error("backend compilation: multiple backends registered for $protocolName")
+            } else {
+                backendMap[protocolName] = backend
+            }
+        }
+    }
+
+    fun compile(splitProgram: ProgramNode, output: File?) {
+        val hostProjectionMap: MutableMap<Protocol, MutableMap<Host, CppBlock>> = mutableMapOf()
+
+        for (decl: TopLevelDeclarationNode in splitProgram) {
+            when (decl) {
+                is ProcessDeclarationNode -> {
+                    hostProjectionMap[decl.protocol.value] = mutableMapOf()
+
+                    val protocol: Protocol = decl.protocol.value
+                    if (protocol !is HostInterface) {
+                        for (host: Host in protocol.hosts) {
+                            val hostProcess: CppBlock =
+                                backendMap[protocol.protocolName]?.let { backend: CppBackend ->
+                                    backend.compile(decl.body, protocol, host)
+                                }
+                                    ?: throw Error("backend compilation: no backend registered for ${protocol.protocolName}")
+
+                            output.print(protocol * Document("at") * host + Document.forcedLineBreak)
+                            output.print(hostProcess + Document.forcedLineBreak)
+                        }
+                    }
+                }
+            }
         }
     }
 }

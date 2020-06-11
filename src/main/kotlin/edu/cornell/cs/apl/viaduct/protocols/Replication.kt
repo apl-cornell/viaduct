@@ -16,8 +16,12 @@ class Replication(hosts: Set<Host>) : Protocol, SymmetricProtocol(hosts) {
         require(hosts.size >= 2)
     }
 
+    companion object {
+        val protocolName = "Replication"
+    }
+
     override val protocolName: String
-        get() = "Replication"
+        get() = Replication.protocolName
 
     override fun authority(hostTrustConfiguration: HostTrustConfiguration): Label =
         hosts.map { hostTrustConfiguration(it) }.reduce(Label::meet)

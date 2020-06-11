@@ -33,6 +33,9 @@ data class CppFunctionCall(
     val funcName: CppIdentifier,
     val arguments: List<CppExpression>
 ) : CppCall() {
+    constructor(funcName: CppIdentifier, vararg arguments: CppExpression) :
+        this(funcName, listOf(*arguments))
+
     override val asDocument: Document
         get() {
             val docArguments: List<Document> = arguments.map { it.asDocument }
@@ -45,6 +48,9 @@ data class CppMethodCall(
     val funcName: CppIdentifier,
     val arguments: List<CppExpression>
 ) : CppCall() {
+    constructor(receiver: CppExpression, funcName: CppIdentifier, vararg arguments: CppExpression) :
+        this(receiver, funcName, listOf(*arguments))
+
     override val asDocument: Document
         get() {
             val docArguments: List<Document> = arguments.map { it.asDocument }
@@ -202,8 +208,8 @@ data class CppArrayDecl(
 ) : CppSimpleStatement() {
     override val asDocument: Document
         get() = CppPointerType(type).asDocument * Document(name) *
-                Document("=") * Document("new") * type.asDocument +
-                (Document("[") + length.asDocument + Document("]"))
+            Document("=") * Document("new") * type.asDocument +
+            (Document("[") + length.asDocument + Document("]"))
 }
 
 data class CppVariableDeclAndAssignment(
@@ -297,8 +303,8 @@ data class CppFunctionDecl(
         get() {
             val docArguments: List<Document> = arguments.map { it.asDocument }
             return type.asDocument *
-                    (Document(name) + "(" + docArguments.concatenated(Document(", ")) + ")") *
-                    body.asDocument
+                (Document(name) + "(" + docArguments.concatenated(Document(", ")) + ")") *
+                body.asDocument
         }
 }
 

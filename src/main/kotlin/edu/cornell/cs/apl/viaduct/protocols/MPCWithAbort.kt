@@ -15,8 +15,12 @@ class MPCWithAbort(hosts: Set<Host>) : MPCProtocol, SymmetricProtocol(hosts) {
         require(hosts.size >= 2)
     }
 
+    companion object {
+        val protocolName = "MPCWithAbort"
+    }
+
     override val protocolName: String
-        get() = "MPCWithAbort"
+        get() = MPCWithAbort.protocolName
 
     override fun authority(hostTrustConfiguration: HostTrustConfiguration): Label =
         hosts.map { hostTrustConfiguration(it) }.reduce(Label::and)

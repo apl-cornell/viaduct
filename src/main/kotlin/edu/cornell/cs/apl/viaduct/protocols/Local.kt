@@ -11,8 +11,12 @@ import edu.cornell.cs.apl.viaduct.syntax.Protocol
  * This protocol has exactly the authority and the capabilities of the host it is tied to.
  */
 data class Local(val host: Host) : Protocol, SymmetricProtocol(setOf(host)) {
+    companion object {
+        val protocolName = "Local"
+    }
+
     override val protocolName: String
-        get() = "Local"
+        get() = Local.protocolName
 
     override fun authority(hostTrustConfiguration: HostTrustConfiguration): Label =
         hostTrustConfiguration(host)

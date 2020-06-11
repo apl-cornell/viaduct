@@ -10,7 +10,9 @@ import edu.cornell.cs.apl.viaduct.analysis.NameAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.ProtocolAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.TypeAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.main
+import edu.cornell.cs.apl.viaduct.backend.ABYBackend
 import edu.cornell.cs.apl.viaduct.backend.BackendCompiler
+import edu.cornell.cs.apl.viaduct.backend.PlaintextCppBackend
 import edu.cornell.cs.apl.viaduct.passes.elaborated
 import edu.cornell.cs.apl.viaduct.passes.selectProtocols
 import edu.cornell.cs.apl.viaduct.passes.splitMain
@@ -52,9 +54,10 @@ class Compile : CliktCommand(help = "Compile ideal protocol to secure distribute
 
     // output intermediate representation instead of backend code.
     val intermediate by
-        option("-i", "--intermediate",
-            help = "Output intermediate representation"
-        ).flag(default = false)
+    option(
+        "-i", "--intermediate",
+        help = "Output intermediate representation"
+    ).flag(default = false)
 
     override fun run() {
         val program = input.parse().elaborated()
@@ -80,7 +83,10 @@ class Compile : CliktCommand(help = "Compile ideal protocol to secure distribute
         val splitProgram: ProgramNode = program.splitMain(protocolAnalysis, typeAnalysis)
 
         if (!intermediate) {
-            BackendCompiler.compile(splitProgram, output)
+            val backendCompiler = BackendCompiler(nameAnalysis, typeAnalysis)
+            backendCompiler.registerBackend(PlaintextCppBackend(nameAnalysis, typeAnalysis))
+            backendCompiler.registerBackend(ABYBackend(nameAnalysis, typeAnalysis))
+            backendCompiler.compile(splitProgram, output)
         } else {
             output.print(splitProgram)
         }

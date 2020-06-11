@@ -10,7 +10,7 @@
         <module name="viaduct.main" />
       </profile>
     </annotationProcessing>
-    <bytecodeTargetLevel>
+    <bytecodeTargetLevel target="11">
       <module name="viaduct.prettyprinting.main" target="11" />
       <module name="viaduct.prettyprinting.test" target="11" />
     </bytecodeTargetLevel>

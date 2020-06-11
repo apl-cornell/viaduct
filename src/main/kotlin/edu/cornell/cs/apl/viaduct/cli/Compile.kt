@@ -50,8 +50,6 @@ class Compile : CliktCommand(help = "Compile ideal protocol to secure distribute
         """
     ).file(canBeDir = false)
 
-    val verbose by verbosity()
-
     val intermediate by option(
         "-i",
         "--intermediate",

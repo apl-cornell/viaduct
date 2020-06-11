@@ -25,6 +25,9 @@ import guru.nidi.graphviz.engine.GraphvizV8Engine
 import java.io.File
 import java.io.StringWriter
 import java.io.Writer
+import mu.KotlinLogging
+
+private val logger = KotlinLogging.logger { }
 
 class Compile : CliktCommand(help = "Compile ideal protocol to secure distributed program") {
     val input: File? by inputProgram()
@@ -47,14 +50,13 @@ class Compile : CliktCommand(help = "Compile ideal protocol to secure distribute
         """
     ).file(canBeDir = false)
 
-    // TODO: use this flag.
-    val verbose by option("-v", "--verbose", help = "Print debugging information").flag()
+    val verbose by verbosity()
 
-    // output intermediate representation instead of backend code.
-    val intermediate by
-        option("-i", "--intermediate",
-            help = "Output intermediate representation"
-        ).flag(default = false)
+    val intermediate by option(
+        "-i",
+        "--intermediate",
+        help = "Output intermediate representation instead of generating an executable"
+    ).flag(default = false)
 
     override fun run() {
         val program = input.parse().elaborated()
@@ -102,6 +104,8 @@ private fun dumpGraph(graphWriter: (Writer) -> Unit, file: File?) {
     if (file == null) {
         return
     }
+
+    logger.info { "Writing graph to $file" }
 
     when (val format = formatFromFileExtension(file)) {
         Format.DOT ->

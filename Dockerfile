@@ -15,7 +15,7 @@ RUN ./gradlew --no-daemon assemble || return 0
 
 ## Build the app
 COPY . .
-RUN ./gradlew --no-daemon build installDist
+RUN ./gradlew --no-daemon installDist
 
 
 # Stage 2: distribution container

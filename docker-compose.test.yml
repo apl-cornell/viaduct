@@ -1,0 +1,7 @@
+version: "3.4"
+services:
+  sut:
+    build:
+      context: .
+      target: builder
+    command: ./gradlew --no-daemon check

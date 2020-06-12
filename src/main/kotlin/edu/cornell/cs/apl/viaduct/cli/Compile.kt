@@ -21,9 +21,6 @@ import edu.cornell.cs.apl.viaduct.syntax.Variable
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
 import guru.nidi.graphviz.engine.Format
 import guru.nidi.graphviz.engine.Graphviz
-import guru.nidi.graphviz.engine.GraphvizCmdLineEngine
-import guru.nidi.graphviz.engine.GraphvizServerEngine
-import guru.nidi.graphviz.engine.GraphvizV8Engine
 import java.io.File
 import java.io.StringWriter
 import java.io.Writer
@@ -88,13 +85,6 @@ class Compile : CliktCommand(help = "Compile ideal protocol to secure distribute
             backendCompiler.compile(splitProgram, output)
         } else {
             output.print(splitProgram)
-        }
-    }
-
-    companion object {
-        /** Stop graphviz-java from using the deprecated Nashorn Javascript engine. */
-        init {
-            Graphviz.useEngine(GraphvizCmdLineEngine(), GraphvizV8Engine(), GraphvizServerEngine())
         }
     }
 }

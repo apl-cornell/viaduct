@@ -12,12 +12,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
 import org.jgrapht.graph.DirectedMultigraph;
-import org.jgrapht.io.Attribute;
-import org.jgrapht.io.ComponentAttributeProvider;
-import org.jgrapht.io.ComponentNameProvider;
-import org.jgrapht.io.DOTExporter;
-import org.jgrapht.io.DefaultAttribute;
-import org.jgrapht.io.IntegerComponentNameProvider;
+import org.jgrapht.io.*;
 
 /**
  * Given a set of constraints of the form {@code t1 ≤ t2}, finds the unique maximum solution if it
@@ -40,7 +35,7 @@ public final class ConstraintSystem<A extends HeytingAlgebra<A>, T extends Throw
    * solving for the greatest solution.
    */
   private final DirectedMultigraph<AtomicTerm<A>, DataFlowEdge<A>> constraints =
-      new DirectedMultigraph<>(null);
+      new DirectedMultigraph<>(null, null, false);
 
   /**
    * Maps each constraint (i.e. edge) to a function that generates the exception to be thrown if

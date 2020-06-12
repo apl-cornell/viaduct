@@ -10,7 +10,7 @@ plugins {
     id("org.jetbrains.dokka") version "0.10.1"
 
     // Style checking
-    id("com.diffplug.gradle.spotless") version "3.27.1"
+    id("com.diffplug.gradle.spotless") version "4.3.0"
     id("org.ec4j.editorconfig") version "0.0.3"
 
     // Bug finding
@@ -18,9 +18,10 @@ plugins {
 
     // Lexing & Parsing
     id("org.xbib.gradle.plugin.jflex") version "1.2.0"
-   
+
     // Dependency management
     id("com.github.ben-manes.versions") version "0.28.0"
+    id("se.patrikerdes.use-latest-versions") version "0.2.14"
 }
 
 group = "edu.cornell.cs.apl"
@@ -50,22 +51,26 @@ dependencies {
     implementation(kotlin("stdlib-jdk8"))
 
     // Functional data structures
-    implementation("io.vavr:vavr:0.9.3")
+    implementation("io.vavr:vavr:1.0.0-alpha-3")
     implementation("org.jetbrains.kotlinx:kotlinx-collections-immutable-jvm:0.3")
 
     // Google's Guava (core data structures)
-    implementation("com.google.guava:guava:28.1-jre")
+    implementation("com.google.guava:guava:29.0-jre")
 
     // Google's AutoValue for creating immutable classes
-    implementation("com.google.auto.value:auto-value-annotations:1.6.2")
-    annotationProcessor("com.google.auto.value:auto-value:1.6.2")
+    implementation("com.google.auto.value:auto-value-annotations:1.7.3")
+    annotationProcessor("com.google.auto.value:auto-value:1.7.3")
 
     // Graphs
-    implementation("org.jgrapht:jgrapht-core:1.3.1")
-    implementation("org.jgrapht:jgrapht-io:1.3.1")
+    implementation("org.jgrapht:jgrapht-core:1.4.0")
+    implementation("org.jgrapht:jgrapht-io:1.4.0")
+
+    // DOT graph output
+    implementation("guru.nidi:graphviz-java:0.16.3")
+    implementation("guru.nidi:graphviz-java-all-j2v8:0.16.3")
 
     // Unicode support
-    implementation("com.ibm.icu:icu4j:64.2")
+    implementation("com.ibm.icu:icu4j:67.1")
 
     // Command-line-argument parsing
     implementation("com.github.ajalt:clikt:2.5.0")
@@ -76,9 +81,6 @@ dependencies {
     // Parsing
     implementation("com.github.vbmacher:java-cup-runtime:11b-20160615")
 
-    // DOT graph output
-    implementation("guru.nidi:graphviz-java:0.11.0")
-
     // Logging
     implementation("io.github.microutils:kotlin-logging:1.7.10")
     implementation("org.apache.logging.log4j:log4j-core:2.13.3")
@@ -86,9 +88,9 @@ dependencies {
 
     // Testing
     testImplementation(kotlin("reflect"))
-    testImplementation("org.junit.jupiter:junit-jupiter-api:5.4.2")
-    testImplementation("org.junit.jupiter:junit-jupiter-params:5.4.2")
-    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.4.2")
+    testImplementation("org.junit.jupiter:junit-jupiter-api:5.7.0-M1")
+    testImplementation("org.junit.jupiter:junit-jupiter-params:5.7.0-M1")
+    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.7.0-M1")
 }
 
 /** Compilation */

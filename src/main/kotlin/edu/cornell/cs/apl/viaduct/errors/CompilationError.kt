@@ -43,14 +43,11 @@ abstract class CompilationError : Error(), PrettyPrintable {
             get() = NormalColor(AnsiBaseColor.RED)
     }
 
-    /**
-     * Displays this message followed by the portion of the source code indicated
-     * by [sourceLocation].
-     */
+    /** Displays [this] message followed by the portion of the source code indicated by [sourceLocation]. */
     protected fun Document.withSource(sourceLocation: SourceLocation): Document =
         this / (Document.lineBreak + sourceLocation.showInSource(SourceHighlightingStyle))
 
-    /** Displays this message followed by [body] with [body] on its own line. */
+    /** Displays [this] message followed by [body] with [body] on its own line. */
     protected fun Document.withData(body: PrettyPrintable): Document =
         this / (Document.lineBreak + body).nested() + Document.lineBreak + Document.lineBreak
 

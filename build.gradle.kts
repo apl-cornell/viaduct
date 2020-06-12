@@ -18,6 +18,9 @@ plugins {
 
     // Lexing & Parsing
     id("org.xbib.gradle.plugin.jflex") version "1.2.0"
+   
+    // Dependency management
+    id("com.github.ben-manes.versions") version "0.28.0"
 }
 
 group = "edu.cornell.cs.apl"

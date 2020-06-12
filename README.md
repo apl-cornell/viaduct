@@ -10,7 +10,8 @@ Secure program partitioning.
 
 We use [Gradle](https://gradle.org/) for builds.
 You do not have to install Gradle manually; you only need to have
-[Java](https://www.oracle.com/technetwork/java/javase/downloads/index.html) available.
+[Java](https://www.oracle.com/technetwork/java/javase/downloads/index.html)
+available.
 
 Once you have Java installed, just run
 
@@ -44,3 +45,29 @@ useful, chances are it will be relevant later.
 
 Logging is extremely easy to use.
 See [this section](https://github.com/MicroUtils/kotlin-logging#getting-started).
+
+### Updating Dependencies
+
+We use a Gradle [plugin](https://github.com/ben-manes/gradle-versions-plugin)
+for managing dependencies. Running
+
+```shell
+./gradlew dependencyUpdates
+```
+
+will give you a report listing outdated dependencies.
+You can now either manually change the Gradle
+[configuration file](build.gradle.kts), or run
+
+```shell
+./gradle useLatestVersions
+```
+
+to automatically update all dependencies.
+To update Gradle itself, run
+
+```shell
+./gradle wrapper --gradle-version <version>
+```
+
+where `<version>` comes from the above report.

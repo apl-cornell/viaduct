@@ -1,4 +1,5 @@
 language: java
+
 before_cache:
   - rm -f  $HOME/.gradle/caches/modules-2/modules-2.lock
   - rm -fr $HOME/.gradle/caches/*/plugin-resolution/
@@ -6,13 +7,20 @@ cache:
   directories:
     - $HOME/.gradle/caches/
     - $HOME/.gradle/wrapper/
+
 script:
+  # Run tests and generate test report
   - ./gradlew check
   - ./gradlew jacocoTestReport
+  # Generate API documentation
   - ./gradlew dokkaGitHub
   - cp _config.yml build/docs/markdown/viaduct/
+
 after_success:
+  # Upload coverage data to Codecov
   - bash <(curl -s https://codecov.io/bash)
+
+# Publish API documentation through GitHub
 deploy:
   provider: pages
   skip_cleanup: true

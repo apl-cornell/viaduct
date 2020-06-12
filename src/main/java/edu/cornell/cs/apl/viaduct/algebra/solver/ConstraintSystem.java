@@ -12,7 +12,9 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
 import org.jgrapht.graph.DirectedMultigraph;
-import org.jgrapht.io.*;
+import org.jgrapht.nio.Attribute;
+import org.jgrapht.nio.DefaultAttribute;
+import org.jgrapht.nio.dot.DOTExporter;
 
 /**
  * Given a set of constraints of the form {@code t1 ≤ t2}, finds the unique maximum solution if it
@@ -177,32 +179,35 @@ public final class ConstraintSystem<A extends HeytingAlgebra<A>, T extends Throw
   public void exportDotGraph(Writer writer) {
     final Map<AtomicTerm<A>, A> solution = DataFlow.solve(top, constraints);
 
-    final ComponentNameProvider<AtomicTerm<A>> vertexLabelProvider =
-        (vertex) -> {
-          if (vertex instanceof VariableTerm) {
-            // Print solutions for variables
-            return vertex.toString() + "\n" + "{" + solution.get(vertex) + "}";
-          } else {
-            return vertex.toString();
-          }
-        };
+    final DOTExporter<AtomicTerm<A>, DataFlowEdge<A>> dotExporter = new DOTExporter<>();
 
-    // Differentiate constants from variables
-    final ComponentAttributeProvider<AtomicTerm<A>> vertexAttributeProvider =
+    // Vertex labels and shape
+    dotExporter.setVertexAttributeProvider(
         (vertex) -> {
           final Map<String, Attribute> attributes = new HashMap<>();
+
+          // Include solution in the label for variables
+          final String label =
+              vertex instanceof VariableTerm
+                  ? vertex.toString() + "\n" + "{" + solution.get(vertex) + "}"
+                  : vertex.toString();
+          attributes.put("label", DefaultAttribute.createAttribute(label));
+
+          // Differentiate constant vertices from variable vertices
           attributes.put("color", DefaultAttribute.createAttribute(Colors.BLACK));
           attributes.put("fontcolor", DefaultAttribute.createAttribute(Colors.BLACK));
           if (vertex instanceof ConstantTerm) {
             attributes.put("color", DefaultAttribute.createAttribute(Colors.GRAY));
             attributes.put("style", DefaultAttribute.createAttribute("filled"));
           }
-          return attributes;
-        };
 
-    // Highlight violated constraints
-    final ComponentAttributeProvider<DataFlowEdge<A>> edgeAttributeProvider =
+          return attributes;
+        });
+
+    // Edge labels and shape
+    dotExporter.setEdgeAttributeProvider(
         (edge) -> {
+          // Highlight edges that represent violated constraints
           final String color;
           if (isConstraintViolated(edge, solution)) {
             color = Colors.RED;
@@ -213,18 +218,14 @@ public final class ConstraintSystem<A extends HeytingAlgebra<A>, T extends Throw
           }
 
           return Map.of(
+              "label",
+              DefaultAttribute.createAttribute(edge.toString()),
               "color",
               DefaultAttribute.createAttribute(color),
               "fontcolor",
               DefaultAttribute.createAttribute(color));
-        };
+        });
 
-    new DOTExporter<>(
-            new IntegerComponentNameProvider<>(),
-            vertexLabelProvider,
-            DataFlowEdge::toString,
-            vertexAttributeProvider,
-            edgeAttributeProvider)
-        .exportGraph(constraints, writer);
+    dotExporter.exportGraph(constraints, writer);
   }
 }

@@ -244,7 +244,7 @@ class ABYBackend(
     private fun compileMPCExpr(
         expr: PureExpressionNode,
         shareMap: MutableMap<Temporary, CppIdentifier>,
-        useShares: Boolean = false
+        useShares: Boolean = true
     ): CppExpression {
         return when (expr) {
             is LiteralNode -> {
@@ -335,9 +335,9 @@ class ABYBackend(
                 when (val rhs: ExpressionNode = stmt.value) {
                     is ReceiveNode -> {
                         val shareName = "${tmp.name}__share"
+                        shareMap[stmt.temporary.value] = shareName
 
                         if (rhs.protocol.value.hosts.contains(host)) {
-                            shareMap[stmt.temporary.value] = shareName
                             listOf(
                                 receive(
                                     variable = tmp.name,
@@ -365,7 +365,7 @@ class ABYBackend(
                     is InputNode -> throw Error("backend compilation: no input possible in MPC process")
 
                     is PureExpressionNode -> {
-                        shareMap[stmt.temporary.value] = tmp.name
+                        shareMap[tmp] = tmp.name
                         listOf(
                             declare(
                                 variable = tmp.name,
@@ -489,7 +489,7 @@ class ABYBackend(
             is IfNode -> {
                 listOf(
                     CppIf(
-                        guard = compileMPCExpr(stmt.guard, shareMap),
+                        guard = compileMPCExpr(stmt.guard, shareMap, useShares = false),
                         thenBranch = compileMPCBlock(stmt.thenBranch, host, shareMap),
                         elseBranch = compileMPCBlock(stmt.elseBranch, host, shareMap)
                     )

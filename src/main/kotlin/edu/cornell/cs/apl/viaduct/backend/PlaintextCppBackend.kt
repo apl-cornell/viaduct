@@ -65,7 +65,7 @@ open class PlaintextCppBackend(
 ) : CppBuilder(), CppBackend {
 
     private val localProcessType = CppTypeName("LocalProcess")
-    private val replicationProcessType = CppTypeName("ReplicationProcess")
+    private val replicationProcessType = CppTypeName("ReplicatedProcess")
 
     override val supportedProtocols: Set<String>
         get() = setOf(Local.protocolName, Replication.protocolName)

@@ -21,7 +21,7 @@ class BackendCompiler(
     private val runtimeType = CppReferenceType(CppTypeName("ViaductRuntime"))
     private val runtimeProcessType = CppReferenceType(CppTypeName("ViaductProcessRuntime"))
     private val runtimeRegisterProcessMethod = "registerProcess"
-    private val runtimeGetPartyMethod = "getParty"
+    private val runtimeRunMethod = "run"
 
     private val startFunction = "start"
 
@@ -42,9 +42,6 @@ class BackendCompiler(
             CppIntLiteral(hostId),
             read(processObj)
         )
-
-    private fun runtimeGetParty() =
-        methodCallExpr(read(runtimeIdent), runtimeGetPartyMethod)
 
     fun registerBackend(backend: CppBackend) {
         for (protocolName: String in backend.supportedProtocols) {
@@ -83,7 +80,7 @@ class BackendCompiler(
                             hostIdMap[host] ?: throw Error("backend compilation: no id for host ${host.name}")
 
                         backendMap[protocol.protocolName]?.let { backend: CppBackend ->
-                            val protocolId: CppIdentifier = protocolProjectionMangledName(protocol, host)
+                            val protocolHostId: CppIdentifier = protocolProjectionMangledName(protocol, host)
                             val functionName: CppIdentifier = processFunctionName(protocol, host)
                             val processName: CppIdentifier = processObjectName(protocol, host)
 
@@ -95,7 +92,7 @@ class BackendCompiler(
 
                             processIdDeclarations.add(
                                 CppDefineMacro(
-                                    protocolId,
+                                    protocolHostId,
                                     CppIntLiteral(procId)
                                 )
                             )
@@ -115,7 +112,7 @@ class BackendCompiler(
 
                             processRegistrations.add(
                                 runtimeRegisterProcess(
-                                    processId = processName,
+                                    processId = protocolHostId,
                                     hostId = hostId,
                                     processObj = processName
                                 )
@@ -131,6 +128,7 @@ class BackendCompiler(
         val startStmts: MutableList<CppStatement> = mutableListOf()
         startStmts.addAll(processDeclarations)
         startStmts.addAll(processRegistrations)
+        startStmts.add(methodCallStmt(read(runtimeIdent), runtimeRunMethod))
 
         val startFunction =
             CppFunctionDecl(

@@ -1,16 +1,12 @@
 process main {
-    val len: int{A ⊓ B} = 10;
-    val a = Array[int]{A}(len);
-    val b = Array[int]{B}(len);
-
-    val sums = Array[int]{A & B}(len);
     var prodsum: int{A & B};
-    for (var i: int = 0; i < len; i += 1) {
-        sums[i] = (endorse a[i] to {A & B<-}) * (endorse b[i] to {B & A<-});
-        prodsum += sums[i];
+    for (var i: int = 0; i < 3; i += 1) {
+        val a: int{A} = input int from alice;
+        val b: int{B} = input int from bob;
+        prodsum += (endorse a to {A & B<-}) * (endorse b to {B & A<-});
     }
 
-    val prodsum_public: int{A ⊓ B} = declassify prodsum to {A ⊓ B};
+    val prodsum_public: bool{A ⊓ B} = declassify prodsum < 100 to {A ⊓ B};
     output prodsum_public to alice;
     output prodsum_public to bob;
 }

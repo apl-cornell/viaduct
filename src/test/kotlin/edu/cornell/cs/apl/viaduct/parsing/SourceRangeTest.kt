@@ -48,8 +48,8 @@ internal class SourceRangeTest {
         @Test
         fun `it adds a single blank line at the end`() {
             val nodes: List<HasSourceLocation> = listOf(program1.main, program2.main, program3.main)
-            nodes.forEach { node ->
-                (0..2).forEach { contextLines ->
+            for (node in nodes) {
+                for (contextLines in 0..2) {
                     val lines = node.showInSource(contextLines).lines()
                     Assertions.assertTrue(isBlankOrUnderline(lines.last())) {
                         "Last line should be blank."

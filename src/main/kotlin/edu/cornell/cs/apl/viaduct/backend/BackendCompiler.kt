@@ -2,7 +2,7 @@ package edu.cornell.cs.apl.viaduct.backend
 
 import edu.cornell.cs.apl.viaduct.analysis.NameAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.TypeAnalysis
-import edu.cornell.cs.apl.viaduct.cli.print
+import edu.cornell.cs.apl.viaduct.cli.println
 import edu.cornell.cs.apl.viaduct.protocols.HostInterface
 import edu.cornell.cs.apl.viaduct.syntax.Host
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
@@ -153,6 +153,6 @@ class BackendCompiler(
         topLevelDecls.add(startFunction)
 
         val cppProgram = CppProgram(topLevelDecls)
-        output.print(cppProgram)
+        output.println(cppProgram)
     }
 }

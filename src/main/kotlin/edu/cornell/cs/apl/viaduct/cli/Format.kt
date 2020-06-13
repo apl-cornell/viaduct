@@ -24,6 +24,6 @@ class Format : CliktCommand(help = "Pretty print source program") {
             elaborated.check()
         }
 
-        output.print(if (elaborate) elaborated else program)
+        output.println(if (elaborate) elaborated else program)
     }
 }

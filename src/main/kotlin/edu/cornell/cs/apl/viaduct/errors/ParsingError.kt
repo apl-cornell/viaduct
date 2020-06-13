@@ -1,8 +1,8 @@
 package edu.cornell.cs.apl.viaduct.errors
 
 import edu.cornell.cs.apl.prettyprinting.Document
+import edu.cornell.cs.apl.prettyprinting.div
 import edu.cornell.cs.apl.prettyprinting.joined
-import edu.cornell.cs.apl.prettyprinting.plus
 import edu.cornell.cs.apl.viaduct.syntax.SourceLocation
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toPersistentList
@@ -31,9 +31,9 @@ class ParsingError(
         get() {
             val expected = expectedTokens.map { Document(it) }.joined()
             return Document("I ran into an issue while parsing this file.")
-                .withSource(location) +
+                .withSource(location) /
                 Document("I was expecting one of these:")
-                    .withData(expected) +
+                    .withData(expected) /
                 Document("Instead, I found:")
                     .withData(Document(actualToken))
         }

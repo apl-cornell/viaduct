@@ -8,6 +8,7 @@ import edu.cornell.cs.apl.viaduct.analysis.ProtocolAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.TypeAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.main
 import edu.cornell.cs.apl.viaduct.parsing.SourceFile
+import edu.cornell.cs.apl.viaduct.parsing.isBlankOrUnderline
 import edu.cornell.cs.apl.viaduct.parsing.parse
 import edu.cornell.cs.apl.viaduct.passes.check
 import edu.cornell.cs.apl.viaduct.passes.elaborated
@@ -45,12 +46,12 @@ internal class ErrorsTest {
             assert(false)
         } catch (e: CompilationError) {
             val messageLines = e.toString().split(Regex("\\R"))
-            // Messages should terminate with a newline character.
-            assertEquals("", messageLines.last())
-            // They should have a blank line before that.
-            assertTrue(isBlank(messageLines[messageLines.size - 2]))
-            // They should have no more than one black line.
-            assertFalse(isBlank(messageLines[messageLines.size - 3]))
+            assertTrue(isBlankOrUnderline(messageLines.last())) {
+                "Error message should end in a blank line."
+            }
+            assertFalse(isBlankOrUnderline(messageLines[messageLines.size - 2])) {
+                "Error message should have no more than one blank line at the end."
+            }
         }
     }
 }
@@ -76,13 +77,6 @@ private fun ProgramNode.split() {
 
     this.splitMain(protocolAnalysis, typeAnalysis)
 }
-
-/**
- * Returns true if [line] contains only space and carrot (^) characters.
- * Carrots are considered blank since they are used to underline portions of the previous line.
- */
-private fun isBlank(line: String): Boolean =
-    line.all { it == ' ' || it == '^' }
 
 /** Returns the subclass of [CompilationError] that running [file] is supposed to throw. */
 private fun expectedError(file: File): KClass<CompilationError> {

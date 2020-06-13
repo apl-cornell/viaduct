@@ -1,6 +1,7 @@
 package edu.cornell.cs.apl.viaduct.errors
 
 import edu.cornell.cs.apl.prettyprinting.Document
+import edu.cornell.cs.apl.prettyprinting.div
 import edu.cornell.cs.apl.prettyprinting.plus
 import edu.cornell.cs.apl.prettyprinting.times
 import edu.cornell.cs.apl.viaduct.syntax.Name
@@ -26,7 +27,7 @@ class NameClashError(
         get() =
             Document("This file has multiple declarations of") * name + Document(".") *
                 Document("One here:")
-                    .withSource(firstDeclaration) +
+                    .withSource(firstDeclaration) /
                 Document("And another one here:")
                     .withSource(secondDeclaration)
 }

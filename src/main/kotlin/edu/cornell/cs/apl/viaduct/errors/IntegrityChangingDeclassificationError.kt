@@ -1,7 +1,7 @@
 package edu.cornell.cs.apl.viaduct.errors
 
 import edu.cornell.cs.apl.prettyprinting.Document
-import edu.cornell.cs.apl.prettyprinting.plus
+import edu.cornell.cs.apl.prettyprinting.div
 import edu.cornell.cs.apl.viaduct.security.Label
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.DeclassificationNode
 
@@ -24,9 +24,9 @@ class IntegrityChangingDeclassificationError(private val node: DeclassificationN
     override val description: Document
         get() =
             Document("This declassification modifies integrity:")
-                .withSource(node.sourceLocation) +
+                .withSource(node.sourceLocation) /
                 Document("Original integrity of the expression:")
-                    .withData(fromIntegrity) +
+                    .withData(fromIntegrity) /
                 Document("Output integrity:")
                     .withData(node.toLabel.value.integrity())
 }

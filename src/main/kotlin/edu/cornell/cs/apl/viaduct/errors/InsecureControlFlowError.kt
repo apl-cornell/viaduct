@@ -1,7 +1,7 @@
 package edu.cornell.cs.apl.viaduct.errors
 
 import edu.cornell.cs.apl.prettyprinting.Document
-import edu.cornell.cs.apl.prettyprinting.plus
+import edu.cornell.cs.apl.prettyprinting.div
 import edu.cornell.cs.apl.viaduct.security.Label
 import edu.cornell.cs.apl.viaduct.syntax.HasSourceLocation
 
@@ -29,9 +29,9 @@ class InsecureControlFlowError(
                 // Confidentiality is the problem
                 // TODO: reword message (see the output of insecure-control-flow-confidentiality.via)
                 return Document("Execution of this term might leak information encoded in the control flow:")
-                    .withSource(node.sourceLocation) +
+                    .withSource(node.sourceLocation) /
                     Document("Confidentiality label on control flow is:")
-                        .withData(pc.confidentiality()) +
+                        .withData(pc.confidentiality()) /
                     Document("But the term only guarantees:")
                         .withData(nodeLabel.confidentiality())
             } else {
@@ -39,9 +39,9 @@ class InsecureControlFlowError(
                 // TODO: add an error test case that covers this branch.
                 assert(!pc.integrity().flowsTo(nodeLabel.integrity()))
                 return Document("The control flow does not have enough integrity for this term:")
-                    .withSource(node.sourceLocation) +
+                    .withSource(node.sourceLocation) /
                     Document("Integrity label on control flow is:")
-                        .withData(pc.integrity()) +
+                        .withData(pc.integrity()) /
                     Document("But it needs to be at least:")
                         .withData(nodeLabel.integrity())
             }

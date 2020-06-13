@@ -30,6 +30,6 @@ class Specification : CliktCommand(help = "Generate UC ideal functionality from 
         // Generate specification
         val specificationProgram = program.specification(adversaryLabel)
 
-        output.print(specificationProgram)
+        output.println(specificationProgram)
     }
 }

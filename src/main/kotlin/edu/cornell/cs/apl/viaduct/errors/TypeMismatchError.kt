@@ -1,7 +1,7 @@
 package edu.cornell.cs.apl.viaduct.errors
 
 import edu.cornell.cs.apl.prettyprinting.Document
-import edu.cornell.cs.apl.prettyprinting.plus
+import edu.cornell.cs.apl.prettyprinting.div
 import edu.cornell.cs.apl.viaduct.syntax.HasSourceLocation
 import edu.cornell.cs.apl.viaduct.syntax.types.ValueType
 
@@ -26,9 +26,9 @@ class TypeMismatchError(
     override val description: Document
         get() =
             Document("This term does not have the type I expect:")
-                .withSource(node.sourceLocation) +
+                .withSource(node.sourceLocation) /
                 Document("It has type:")
-                    .withData(actualType) +
+                    .withData(actualType) /
                 Document("But it should have type:")
                     .withData(expectedType)
 }

@@ -49,7 +49,7 @@ abstract class CompilationError : Error(), PrettyPrintable {
 
     /** Displays [this] message followed by [body] with [body] on its own line. */
     protected fun Document.withData(body: PrettyPrintable): Document =
-        this / (Document.lineBreak + body).nested() + Document.lineBreak + Document.lineBreak
+        this / (Document.lineBreak + body).nested() + Document.lineBreak
 
     final override val asDocument: Document
         get() {
@@ -59,7 +59,7 @@ abstract class CompilationError : Error(), PrettyPrintable {
             val padding = "-".repeat(paddingLength)
             val header = (Document(title) + padding + source).styled(HeaderStyle)
 
-            val hint = hint?.plus(Document.lineBreak + Document.lineBreak) ?: Document()
+            val hint = hint?.let { Document.lineBreak + it + Document.lineBreak } ?: Document()
 
             return header + Document.lineBreak + Document.lineBreak + description + hint
         }

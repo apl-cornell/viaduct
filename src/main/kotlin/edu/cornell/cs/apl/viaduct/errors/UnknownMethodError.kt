@@ -1,6 +1,7 @@
 package edu.cornell.cs.apl.viaduct.errors
 
 import edu.cornell.cs.apl.prettyprinting.Document
+import edu.cornell.cs.apl.prettyprinting.div
 import edu.cornell.cs.apl.prettyprinting.plus
 import edu.cornell.cs.apl.prettyprinting.times
 import edu.cornell.cs.apl.prettyprinting.tupled
@@ -32,7 +33,7 @@ class UnknownMethodError(
     override val description: Document
         get() =
             Document("This object does not have a method named") * methodName + Document(":")
-                .withSource(objectName.sourceLocation) +
-                Document("The object's type is:").withData(objectType) +
+                .withSource(objectName.sourceLocation) /
+                Document("The object's type is:").withData(objectType) /
                 Document("And the method's signature is:").withData(methodName + argumentTypes.tupled())
 }

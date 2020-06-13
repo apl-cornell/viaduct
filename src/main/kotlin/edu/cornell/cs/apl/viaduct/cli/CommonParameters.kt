@@ -10,7 +10,9 @@ import com.github.ajalt.clikt.parameters.options.counted
 import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.options.validate
 import com.github.ajalt.clikt.parameters.types.file
+import edu.cornell.cs.apl.prettyprinting.Document
 import edu.cornell.cs.apl.prettyprinting.PrettyPrintable
+import edu.cornell.cs.apl.prettyprinting.plus
 import edu.cornell.cs.apl.viaduct.parsing.SourceFile
 import edu.cornell.cs.apl.viaduct.parsing.parse
 import edu.cornell.cs.apl.viaduct.syntax.surface.ProgramNode
@@ -75,13 +77,13 @@ internal fun File?.parse(): ProgramNode =
         SourceFile.from(this)).parse()
 
 /**
- * Pretty prints [document] to [this] file. If [this] is `null`, [document] is printed to the
+ * Pretty prints [document] (plus the line separator) to [this] file. If [this] is `null`, [document] is printed to the
  * standard output instead.
  *
  * @throws IOException
  */
-internal fun File?.print(document: PrettyPrintable) {
-    this.output { document.asDocument.print(it, ansi = true) }
+internal fun File?.println(document: PrettyPrintable) {
+    this.output { (document.asDocument + Document.lineBreak).print(it, ansi = true) }
 }
 
 /**

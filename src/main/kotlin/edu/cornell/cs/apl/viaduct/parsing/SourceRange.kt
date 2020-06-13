@@ -2,6 +2,7 @@ package edu.cornell.cs.apl.viaduct.parsing
 
 import edu.cornell.cs.apl.prettyprinting.Document
 import edu.cornell.cs.apl.prettyprinting.Style
+import edu.cornell.cs.apl.prettyprinting.concatenated
 import edu.cornell.cs.apl.prettyprinting.plus
 import edu.cornell.cs.apl.prettyprinting.styled
 import edu.cornell.cs.apl.prettyprinting.times
@@ -50,51 +51,60 @@ data class SourceRange(val start: SourcePosition, val end: SourcePosition) {
         highlightStyle: Style,
         contextLines: Int = if (start.line == end.line) 0 else 1
     ): Document {
+        // List of lines to be printed
+        val relevantLines: IntRange = run {
+            val firstLine = (start.line - contextLines).coerceAtLeast(1)
+            val lastLine = (end.line + contextLines).coerceAtMost(sourceFile.numberOfLines)
+            // TODO: trim blank lines?
+            firstLine..lastLine
+        }
+
         // Number of characters it takes to represent the largest line number.
-        val lineNumberWidth = end.line.toString().length
+        val lineNumberWidth = relevantLines.last.toString().length
 
         // True if we are highlighting multiple lines; false otherwise.
-        val multilineHighlight = start.line != end.line
+        val highlightingMultipleLines = start.line != end.line
 
         // Print relevant lines
-        val firstLine = (start.line - contextLines).coerceAtLeast(1)
-        val lastLine = (end.line + contextLines).coerceAtMost(sourceFile.numberOfLines)
-        var output = Document()
-        for (line in firstLine..lastLine) {
+        val outputLines: List<Document> = relevantLines.map { line ->
+            val thisLineShouldBeHighlighted = line in start.line..end.line
+
             val lineNumber = String.format("%${lineNumberWidth}d|", line)
-            val highlightThisLine = line in start.line..end.line
 
-            // Print line number
-            output += lineNumber
-
-            // In multiline mode, mark the entire line as relevant with an indicator
-            if (multilineHighlight) {
-                output +=
-                    if (highlightThisLine)
+            // In multiline mode, we put a marker next to the line number to indicate the entire line is relevant.
+            val multilineMarker =
+                when {
+                    highlightingMultipleLines && thisLineShouldBeHighlighted ->
                         Document(">").styled(highlightStyle)
-                    else Document(" ")
-            }
+                    highlightingMultipleLines ->
+                        Document(" ")
+                    else ->
+                        Document()
+                }
 
-            // Print the actual line with a space between line numbers and line contents
-            output *= Document(sourceFile.getLine(line)) + Document.forcedLineBreak
+            // In single-line mode, we underline the relevant portion.
+            val underline =
+                if (!highlightingMultipleLines && thisLineShouldBeHighlighted) {
+                    val highlightStartColumn = lineNumber.length + 1 + start.column
+                    val highlightLength = end.column - start.column
+                    Document.forcedLineBreak +
+                        " ".repeat(highlightStartColumn - 1) +
+                        Document("^".repeat(highlightLength)).styled(highlightStyle)
+                } else Document()
 
-            // In single-line mode, underline the relevant portion
-            if (!multilineHighlight && highlightThisLine) {
-                val highlightStartColumn = lineNumber.length + 1 + start.column
-                val highlightLength = end.column - start.column
-                output += " ".repeat(highlightStartColumn - 1)
-                output += Document("^".repeat(highlightLength)).styled(highlightStyle)
-                output += Document.forcedLineBreak
-            }
+            Document(lineNumber) + multilineMarker * Document(sourceFile.getLine(line)) + underline
         }
 
-        // Make sure there is uniform vertical space after the displayed source code.
-        if (multilineHighlight || contextLines > 0) {
-            // Last line did not have an underline. Add blank line instead.
-            output += Document.forcedLineBreak
-        }
+        // Make sure there is uniform vertical spacing after the displayed source code.
+        // Note that we consider a line blank if it only contains characters used to underline.
+        val bottomPadding =
+            if (highlightingMultipleLines || end.line != relevantLines.last) {
+                // Last line did not have an underline. Add blank line instead.
+                Document.forcedLineBreak
+            } else
+                Document()
 
-        return output
+        return outputLines.concatenated(Document.forcedLineBreak) + bottomPadding
     }
 
     override fun toString(): String {

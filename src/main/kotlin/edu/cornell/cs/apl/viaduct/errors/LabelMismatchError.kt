@@ -1,7 +1,7 @@
 package edu.cornell.cs.apl.viaduct.errors
 
 import edu.cornell.cs.apl.prettyprinting.Document
-import edu.cornell.cs.apl.prettyprinting.plus
+import edu.cornell.cs.apl.prettyprinting.div
 import edu.cornell.cs.apl.viaduct.security.Label
 import edu.cornell.cs.apl.viaduct.syntax.HasSourceLocation
 
@@ -27,9 +27,9 @@ class LabelMismatchError(
     override val description: Document
         get() =
             Document("This term does not have the label I expect:")
-                .withSource(node.sourceLocation) +
+                .withSource(node.sourceLocation) /
                 Document("I inferred its label as:")
-                    .withData(actualLabel) +
+                    .withData(actualLabel) /
                 Document("But its label should be:")
                     .withData(expectedLabel)
 }

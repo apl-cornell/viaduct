@@ -84,7 +84,7 @@ class Compile : CliktCommand(help = "Compile ideal protocol to secure distribute
             backendCompiler.registerBackend(ABYBackend(nameAnalysis, typeAnalysis))
             backendCompiler.compile(splitProgram, output)
         } else {
-            output.print(splitProgram)
+            output.println(splitProgram)
         }
     }
 }

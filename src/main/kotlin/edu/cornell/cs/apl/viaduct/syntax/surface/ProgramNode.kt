@@ -22,9 +22,7 @@ private constructor(
         this(declarations.toPersistentList(), sourceLocation)
 
     override val asDocument: Document
-        get() =
-            declarations.concatenated(Document.forcedLineBreak + Document.forcedLineBreak)
-                .plus(Document.forcedLineBreak)
+        get() = declarations.concatenated(Document.forcedLineBreak + Document.forcedLineBreak)
 
     override fun toString(): String =
         "Program (" + sourceLocation.sourcePath + ")"

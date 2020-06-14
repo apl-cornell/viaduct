@@ -3,8 +3,14 @@ package edu.cornell.cs.apl.prettyprinting
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
 
 internal class DocumentTest {
+    @Test
+    fun `toString is not supported`() {
+        assertThrows<UnsupportedOperationException> { Document().toString() }
+    }
+
     @Nested
     inner class Empty {
         @Test
@@ -158,9 +164,89 @@ internal class DocumentTest {
             many.braced().shouldPrintTo("{1, 2, 3}")
         }
     }
+
+    @Nested
+    /** Note: unfortunately, all of these must be visually inspected. */
+    inner class AnsiStyling {
+        private fun Document.setForegroundColor(color: AnsiColor) =
+            this.styled(object : Style {
+                override val foregroundColor: AnsiColor
+                    get() = color
+            })
+
+        private fun Document.setBackgroundColor(color: AnsiColor) =
+            this.styled(object : Style {
+                override val backgroundColor: AnsiColor
+                    get() = color
+            })
+
+        @Test
+        fun `default foreground color`() {
+            Document("default").setForegroundColor(DefaultColor).show()
+        }
+
+        @Test
+        fun `normal foreground colors`() {
+            AnsiBaseColor.values().map { color ->
+                Document(color.name.toLowerCase()).setForegroundColor(NormalColor(color))
+            }.concatenated(separator = Document(" ")).show()
+        }
+
+        @Test
+        fun `bright foreground colors`() {
+            AnsiBaseColor.values().map { color ->
+                Document(color.name.toLowerCase()).setForegroundColor(BrightColor(color))
+            }.concatenated(separator = Document(" ")).show()
+        }
+
+        @Test
+        fun `default background color`() {
+            Document("default").setBackgroundColor(DefaultColor).show()
+        }
+
+        @Test
+        fun `normal background colors`() {
+            AnsiBaseColor.values().map { color ->
+                Document(color.name.toLowerCase()).setBackgroundColor(NormalColor(color))
+            }.concatenated(separator = Document(" ")).show()
+        }
+
+        @Test
+        fun `bright background colors`() {
+            AnsiBaseColor.values().map { color ->
+                Document(color.name.toLowerCase()).setBackgroundColor(BrightColor(color))
+            }.concatenated(separator = Document(" ")).show()
+        }
+
+        @Test
+        fun `font styles`() {
+            (Document("italic").styled(Italic) *
+                Document("bold").styled(Bold) *
+                Document("underline").styled(Underline)).show()
+        }
+    }
 }
 
 /** Asserts that this document is printed as [expected]. */
 private fun Document.shouldPrintTo(expected: String) {
     assertEquals(expected, this.print())
+}
+
+/** Prints [this] document for user inspection. */
+private fun Document.show() =
+    (this + Document.lineBreak).print(System.out, ansi = true)
+
+private object Italic : Style {
+    override val italic: Boolean
+        get() = true
+}
+
+private object Bold : Style {
+    override val bold: Boolean
+        get() = true
+}
+
+private object Underline : Style {
+    override val underline: Boolean
+        get() = true
 }

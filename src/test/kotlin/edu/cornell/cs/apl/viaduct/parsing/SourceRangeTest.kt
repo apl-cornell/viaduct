@@ -71,7 +71,7 @@ internal fun isBlankOrUnderline(line: String): Boolean =
     line.all { it == ' ' || it == '^' }
 
 /** Display an AST node in source and print what is displayed to ease debugging tests. */
-private fun HasSourceLocation.showInSource(contextLines: Int = 0) =
+private fun HasSourceLocation.showInSource(contextLines: Int = 0): String =
     this.sourceLocation.showInSource(DefaultStyle, contextLines).print().also {
         println(">>>>>\n$it\n<<<<<")
     }

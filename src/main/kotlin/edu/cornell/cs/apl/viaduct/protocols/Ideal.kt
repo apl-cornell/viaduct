@@ -24,7 +24,7 @@ data class Ideal(override val name: String) : Protocol {
         get() = persistentSetOf()
 
     override fun authority(hostTrustConfiguration: HostTrustConfiguration): Label =
-        Label.strongest()
+        Label.strongest
 
     override val asDocument: Document
         get() = Document(name)

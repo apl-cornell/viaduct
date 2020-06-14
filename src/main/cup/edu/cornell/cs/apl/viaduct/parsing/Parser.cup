@@ -489,11 +489,11 @@ label ::=
   ;
 
 label_expr ::=
-    CAP_IDENT:id {: RESULT = Label.create(Principal.create(id)); :}
+    CAP_IDENT:id {: RESULT = Label.invoke(new Principal(id)); :}
 
-  | TOP {: RESULT = Label.weakest(); :}
+  | TOP {: RESULT = Label.getWeakest(); :}
 
-  | BOTTOM {: RESULT = Label.strongest(); :}
+  | BOTTOM {: RESULT = Label.getStrongest(); :}
 
   | label_expr:l1 OR label_expr:l2 {:
       RESULT = l1.or(l2);

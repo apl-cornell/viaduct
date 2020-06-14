@@ -8,7 +8,7 @@ import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ArgumentsSource
 
 internal class SpecificationTest {
-    private val adversaryLabel = Label.create(Principal.create("A"))
+    private val adversaryLabel = Label(Principal("A"))
 
     @ParameterizedTest
     @ArgumentsSource(ExampleProgramProvider::class)

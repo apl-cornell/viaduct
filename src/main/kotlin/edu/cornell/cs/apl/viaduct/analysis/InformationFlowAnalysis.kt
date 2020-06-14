@@ -239,7 +239,7 @@ class InformationFlowAnalysis(private val nameAnalysis: NameAnalysis) {
             is AssertionNode -> {
                 // Everybody must execute assertions, so [condition] must be public and trusted.
                 // TODO: can we do any better? This seems almost impossible to achieve...
-                condition flowsTo LabelConstant.create(Label.bottom())
+                condition flowsTo LabelConstant.create(Label.bottom)
             }
             is BlockNode ->
                 Unit

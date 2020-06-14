@@ -36,13 +36,13 @@ public abstract class LabelVariable extends AtomicLabelTerm {
   public LabelVariable confidentiality() {
     return create(
         getConfidentialityComponent(),
-        ConstantTerm.create(Label.weakest().getIntegrityComponent()));
+        ConstantTerm.create(Label.getWeakest().getIntegrityComponent()));
   }
 
   @Override
   public LabelVariable integrity() {
     return create(
-        ConstantTerm.create(Label.weakest().getConfidentialityComponent()),
+        ConstantTerm.create(Label.getWeakest().getConfidentialityComponent()),
         getIntegrityComponent());
   }
 

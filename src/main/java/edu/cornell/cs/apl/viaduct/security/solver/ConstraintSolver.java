@@ -42,7 +42,7 @@ public final class ConstraintSolver<T extends Throwable> {
           variable.getConfidentialityComponent().getValue(componentSolutions);
       final FreeDistributiveLattice<Principal> integrity =
           variable.getIntegrityComponent().getValue(componentSolutions);
-      solutions.put(variable, Label.create(confidentiality, integrity));
+      solutions.put(variable, new Label(confidentiality, integrity));
     }
     return solutions;
   }

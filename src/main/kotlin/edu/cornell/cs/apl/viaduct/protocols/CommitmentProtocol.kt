@@ -24,13 +24,13 @@ class CommitmentProtocol(val sender : Host, val recievers : Set<Host>) : Protoco
         get() = protocolName
 
     override val protocolName: String
-        get() = Replication.protocolName
+        get() = CommitmentProtocol.protocolName
 
     override fun authority(hostTrustConfiguration: HostTrustConfiguration): Label =
         hostTrustConfiguration(sender) and (recievers.map { hostTrustConfiguration(it).integrity() }.reduce(Label::and)) 
 
     override fun equals(other: Any?): Boolean =
-        other is Replication && this.hosts == other.hosts
+        other is CommitmentProtocol && this.sender == other.sender && this.recievers == other.recievers
 
     override fun hashCode(): Int =
         hosts.hashCode()

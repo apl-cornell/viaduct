@@ -27,7 +27,7 @@ class CommitmentProtocol(val sender : Host, val recievers : Set<Host>) : Protoco
         get() = Replication.protocolName
 
     override fun authority(hostTrustConfiguration: HostTrustConfiguration): Label =
-        TODO("authority for commitment")
+        hostTrustConfiguration(sender) and (recievers.map { hostTrustConfiguration(it).integrity() }.reduce(Label::and)) 
 
     override fun equals(other: Any?): Boolean =
         other is Replication && this.hosts == other.hosts

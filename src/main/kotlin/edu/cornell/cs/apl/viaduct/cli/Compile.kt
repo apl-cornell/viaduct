@@ -11,6 +11,7 @@ import edu.cornell.cs.apl.viaduct.analysis.ProtocolAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.TypeAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.main
 import edu.cornell.cs.apl.viaduct.backend.ABYBackend
+import edu.cornell.cs.apl.viaduct.backend.CommitmentBackend
 import edu.cornell.cs.apl.viaduct.backend.BackendCompiler
 import edu.cornell.cs.apl.viaduct.backend.PlaintextCppBackend
 import edu.cornell.cs.apl.viaduct.passes.elaborated
@@ -82,6 +83,7 @@ class Compile : CliktCommand(help = "Compile ideal protocol to secure distribute
             val backendCompiler = BackendCompiler(nameAnalysis, typeAnalysis)
             backendCompiler.registerBackend(PlaintextCppBackend(nameAnalysis, typeAnalysis))
             backendCompiler.registerBackend(ABYBackend(nameAnalysis, typeAnalysis))
+            backendCompiler.registerBackend(CommitmentBackend(nameAnalysis, typeAnalysis))
             backendCompiler.compile(splitProgram, output)
         } else {
             output.println(splitProgram)

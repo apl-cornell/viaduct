@@ -15,8 +15,10 @@ import edu.cornell.cs.apl.viaduct.backend.BackendCompiler
 import edu.cornell.cs.apl.viaduct.backend.CommitmentBackend
 import edu.cornell.cs.apl.viaduct.backend.PlaintextCppBackend
 import edu.cornell.cs.apl.viaduct.passes.elaborated
-import edu.cornell.cs.apl.viaduct.passes.selectProtocols
 import edu.cornell.cs.apl.viaduct.passes.splitMain
+import edu.cornell.cs.apl.viaduct.protocols.SimpleSelector
+import edu.cornell.cs.apl.viaduct.protocols.simpleProtocolSort
+import edu.cornell.cs.apl.viaduct.selection.GreedySelection
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
 import edu.cornell.cs.apl.viaduct.syntax.Variable
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
@@ -73,7 +75,8 @@ class Compile : CliktCommand(help = "Compile ideal protocol to secure distribute
 
         // Select protocols.
         val protocolAssignment: (Variable) -> Protocol =
-            program.main.selectProtocols(nameAnalysis, informationFlowAnalysis)
+            GreedySelection(SimpleSelector(nameAnalysis, informationFlowAnalysis), ::simpleProtocolSort)
+                .select(program.main, nameAnalysis, informationFlowAnalysis)
         val protocolAnalysis = ProtocolAnalysis(nameAnalysis, protocolAssignment)
 
         // Split the program.

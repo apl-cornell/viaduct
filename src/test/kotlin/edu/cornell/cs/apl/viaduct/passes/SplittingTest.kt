@@ -8,6 +8,9 @@ import edu.cornell.cs.apl.viaduct.analysis.ProtocolAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.TypeAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.main
 import edu.cornell.cs.apl.viaduct.protocols.HostInterface
+import edu.cornell.cs.apl.viaduct.protocols.SimpleSelector
+import edu.cornell.cs.apl.viaduct.protocols.simpleProtocolSort
+import edu.cornell.cs.apl.viaduct.selection.GreedySelection
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProcessDeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.surface.ProgramNode
 import org.junit.jupiter.params.ParameterizedTest
@@ -22,7 +25,8 @@ internal class SplittingTest {
         val informationFlowAnalysis = InformationFlowAnalysis(nameAnalysis)
 
         val dumpProtocolAssignment =
-            nameAnalysis.tree.root.main.selectProtocols(nameAnalysis, informationFlowAnalysis)
+            GreedySelection(SimpleSelector(nameAnalysis, informationFlowAnalysis), ::simpleProtocolSort)
+                .select(nameAnalysis.tree.root.main, nameAnalysis, informationFlowAnalysis)
         val protocolAnalysis = ProtocolAnalysis(nameAnalysis, dumpProtocolAssignment)
 
         val splitProgram = nameAnalysis.tree.root.splitMain(protocolAnalysis, typeAnalysis)

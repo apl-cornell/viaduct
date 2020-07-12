@@ -12,9 +12,11 @@ import edu.cornell.cs.apl.viaduct.parsing.isBlankOrUnderline
 import edu.cornell.cs.apl.viaduct.parsing.parse
 import edu.cornell.cs.apl.viaduct.passes.check
 import edu.cornell.cs.apl.viaduct.passes.elaborated
-import edu.cornell.cs.apl.viaduct.passes.selectProtocols
 import edu.cornell.cs.apl.viaduct.passes.splitMain
 import edu.cornell.cs.apl.viaduct.protocols.MainProtocol
+import edu.cornell.cs.apl.viaduct.protocols.SimpleSelector
+import edu.cornell.cs.apl.viaduct.protocols.simpleProtocolSort
+import edu.cornell.cs.apl.viaduct.selection.GreedySelection
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
 import java.io.File
 import kotlin.reflect.KClass
@@ -72,7 +74,8 @@ private fun ProgramNode.split() {
     val informationFlowAnalysis = InformationFlowAnalysis(nameAnalysis)
 
     val dumpProtocolAssignment =
-        nameAnalysis.tree.root.main.selectProtocols(nameAnalysis, informationFlowAnalysis)
+        GreedySelection(SimpleSelector(nameAnalysis, informationFlowAnalysis), ::simpleProtocolSort)
+            .select(nameAnalysis.tree.root.main, nameAnalysis, informationFlowAnalysis)
     val protocolAnalysis = ProtocolAnalysis(nameAnalysis, dumpProtocolAssignment)
 
     this.splitMain(protocolAnalysis, typeAnalysis)

@@ -24,3 +24,10 @@ interface Protocol : Name {
     override val nameCategory: String
         get() = "protocol"
 }
+
+class SpecializedProtocol(
+    val protocol: Protocol,
+    hostTrustConfiguration: HostTrustConfiguration
+) {
+    val authority: Label = protocol.authority(hostTrustConfiguration)
+}

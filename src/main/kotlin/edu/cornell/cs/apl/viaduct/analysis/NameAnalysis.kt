@@ -83,18 +83,17 @@ class NameAnalysis(val tree: Tree<Node, ProgramNode>) {
     }
 
     /** Jump labels in scope for this node. */
-    private val Node.loops: NameMap<JumpLabel, InfiniteLoopNode> by attribute {
+    private val Node.correspondingLoops: NameMap<JumpLabel, InfiniteLoopNode> by attribute {
         when (val parent = tree.parent(this)) {
             null ->
                 NameMap()
             is InfiniteLoopNode ->
-                parent.loops.put(parent.jumpLabel, parent)
+                parent.correspondingLoops.put(parent.jumpLabel, parent)
             else ->
-                parent.loops
+                parent.correspondingLoops
         }
     }
 
-    /** Same as [readers]. */
     private val Node.readers: Set<StatementNode> by collectedAttribute(tree) { node ->
         if (node is StatementNode) {
             node.reads.map { Pair(declaration(it), node) }
@@ -170,8 +169,8 @@ class NameAnalysis(val tree: Tree<Node, ProgramNode>) {
         node.objectDeclarations[node.variable]
 
     /** Returns the loop that [node] is breaking out of. */
-    fun loop(node: BreakNode): InfiniteLoopNode =
-        node.loops[node.jumpLabel]
+    fun correspondingLoop(node: BreakNode): InfiniteLoopNode =
+        node.correspondingLoops[node.jumpLabel]
 
     /** Returns the declaration of the [Host] in [node]. */
     fun declaration(node: ExternalCommunicationNode): HostDeclarationNode =
@@ -209,7 +208,7 @@ class NameAnalysis(val tree: Tree<Node, ProgramNode>) {
                 is UpdateNode ->
                     declaration(node)
                 is BreakNode ->
-                    loop(node)
+                    correspondingLoop(node)
                 is ExternalCommunicationNode ->
                     declaration(node)
                 is InternalCommunicationNode ->
@@ -223,7 +222,7 @@ class NameAnalysis(val tree: Tree<Node, ProgramNode>) {
                 is DeclarationNode ->
                     node.objectDeclarations.put(node.variable, node)
                 is InfiniteLoopNode ->
-                    node.loops.put(node.jumpLabel, node)
+                    node.correspondingLoops.put(node.jumpLabel, node)
                 is ProgramNode -> {
                     // Forcing these thunks
                     node.hostDeclarations

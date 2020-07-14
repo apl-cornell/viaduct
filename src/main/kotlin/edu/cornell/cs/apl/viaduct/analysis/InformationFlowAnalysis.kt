@@ -235,7 +235,7 @@ class InformationFlowAnalysis(private val nameAnalysis: NameAnalysis) {
             is InfiniteLoopNode ->
                 Unit
             is BreakNode ->
-                pcFlowsTo(this, nameAnalysis.loop(this).pc.variable)
+                pcFlowsTo(this, nameAnalysis.correspondingLoop(this).pc.variable)
             is AssertionNode -> {
                 // Everybody must execute assertions, so [condition] must be public and trusted.
                 // TODO: can we do any better? This seems almost impossible to achieve...
@@ -268,6 +268,8 @@ class InformationFlowAnalysis(private val nameAnalysis: NameAnalysis) {
 
     /** Returns the inferred security label of the result of [node]. */
     fun label(node: ExpressionNode): Label = node.labelVariable.getValue(solution)
+
+    fun pcLabel(node: Node): Label = node.pc.variable.getValue(solution)
 
     /**
      * Asserts that the program does not violate information flow security, and throws (a subclass

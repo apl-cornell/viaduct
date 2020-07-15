@@ -12,79 +12,35 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.QueryNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.UpdateNode
 
-/** Returns all [LetNode]s in this node. */
-fun Node.letNodes(): List<LetNode> {
-    val result = mutableListOf<LetNode>()
-    fun traverse(node: Node) {
-        if (node is LetNode) {
-            result.add(node)
-        }
-        node.children.forEach(::traverse)
+fun Node.iterDown(f: (Node) -> Unit) {
+    this.children.forEach(f)
+    f(this)
+}
+
+fun Node.iterUp(tree: Tree<Node, ProgramNode>, f: (Node) -> Unit) {
+    f(this)
+    when (val parent = tree.parent(this)) {
+        null -> return
+        else -> parent.iterUp(tree, f)
     }
-    traverse(this)
+}
+
+inline fun <reified T : Node> Node.listOfInstances(): List<T> {
+    val result = mutableListOf<T>()
+    this.iterDown {
+        if (it is T) {
+            result.add(it)
+        }
+    }
     return result
 }
 
-/** Returns all [DeclarationNode]s in this node. */
-fun Node.declarationNodes(): List<DeclarationNode> {
-    val result = mutableListOf<DeclarationNode>()
-    fun traverse(node: Node) {
-        if (node is DeclarationNode) {
-            result.add(node)
-        }
-        node.children.forEach(::traverse)
-    }
-    traverse(this)
-    return result
-}
-
-fun Node.infiniteLoopNodes(): List<InfiniteLoopNode> {
-    val result = mutableListOf<InfiniteLoopNode>()
-    fun traverse(node: Node) {
-        if (node is InfiniteLoopNode) {
-            result.add(node)
-        }
-        node.children.forEach(::traverse)
-    }
-    traverse(this)
-    return result
-}
-
-fun Node.breakNodes(): List<BreakNode> {
-    val result = mutableListOf<BreakNode>()
-    fun traverse(node: Node) {
-        if (node is BreakNode) {
-            result.add(node)
-        }
-        node.children.forEach(::traverse)
-    }
-    traverse(this)
-    return result
-}
-
-fun Node.queryNodes(): List<QueryNode> {
-    val result = mutableListOf<QueryNode>()
-    fun traverse(node: Node) {
-        if (node is QueryNode) {
-            result.add(node)
-        }
-        node.children.forEach(::traverse)
-    }
-    traverse(this)
-    return result
-}
-
-fun Node.updateNodes(): List<UpdateNode> {
-    val result = mutableListOf<UpdateNode>()
-    fun traverse(node: Node) {
-        if (node is UpdateNode) {
-            result.add(node)
-        }
-        node.children.forEach(::traverse)
-    }
-    traverse(this)
-    return result
-}
+fun Node.letNodes(): List<LetNode> = this.listOfInstances()
+fun Node.declarationNodes(): List<DeclarationNode> = this.listOfInstances()
+fun Node.infiniteLoopNodes(): List<InfiniteLoopNode> = this.listOfInstances()
+fun Node.breakNodes(): List<BreakNode> = this.listOfInstances()
+fun Node.queryNodes(): List<QueryNode> = this.listOfInstances()
+fun Node.updateNodes(): List<UpdateNode> = this.listOfInstances()
 
 // TODO merge into nameanalysis?
 fun InfiniteLoopNode.correspondingBreaks(): List<BreakNode> {
@@ -93,22 +49,17 @@ fun InfiniteLoopNode.correspondingBreaks(): List<BreakNode> {
 
 fun Node.involvedLoops(tree: Tree<Node, ProgramNode>): List<InfiniteLoopNode> {
     val result = mutableListOf<InfiniteLoopNode>()
-    fun traverse(node: Node) {
-        if (node is InfiniteLoopNode) {
-            result.add(node)
-        }
-        when (val parent = tree.parent(node)) {
-            null -> return
-            else -> traverse(parent)
+    this.iterUp(tree) {
+        if (it is InfiniteLoopNode) {
+            result.add(it)
         }
     }
-    traverse(this)
     return result
 }
 
 fun DeclarationNode.uses(tree: Tree<Node, ProgramNode>): Set<Node> {
     return (tree.root.queryNodes().filter { it.variable == this.variable } +
-            tree.root.updateNodes().filter { it.variable == this.variable }).toSet()
+        tree.root.updateNodes().filter { it.variable == this.variable }).toSet()
 }
 
 /**

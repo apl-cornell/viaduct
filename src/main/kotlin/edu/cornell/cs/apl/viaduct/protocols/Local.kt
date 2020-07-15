@@ -10,6 +10,7 @@ import edu.cornell.cs.apl.viaduct.syntax.SpecializedProtocol
 import edu.cornell.cs.apl.viaduct.syntax.Variable
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.DeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.LetNode
+import edu.cornell.cs.apl.viaduct.syntax.specialize
 
 /**
  * The protocol that executes code on a specific host in the clear.
@@ -34,7 +35,7 @@ class LocalSelector(
 ) : ProtocolSelector {
     private val hosts: List<Host> = hostTrustConfiguration.keys.sorted()
     private val protocols: List<SpecializedProtocol> =
-        hosts.map(::Local).map { SpecializedProtocol(it, hostTrustConfiguration) }
+        hosts.map(::Local).map { it.specialize(hostTrustConfiguration) }
 
     override fun selectLet(assignment: Map<Variable, Protocol>, node: LetNode): Set<Protocol> {
         return protocols.filter { it.authority.actsFor(informationFlowAnalysis.label(node)) }.map { it.protocol }

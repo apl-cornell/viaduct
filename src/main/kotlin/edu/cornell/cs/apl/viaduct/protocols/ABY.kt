@@ -14,6 +14,7 @@ import edu.cornell.cs.apl.viaduct.syntax.SpecializedProtocol
 import edu.cornell.cs.apl.viaduct.syntax.Variable
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.DeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.LetNode
+import edu.cornell.cs.apl.viaduct.syntax.specialize
 import edu.cornell.cs.apl.viaduct.util.subsequences
 
 /**
@@ -58,7 +59,7 @@ class ABYSelector(
     private val hosts: List<Host> = hostTrustConfiguration.keys.sorted()
     private val hostSubsets = hosts.subsequences().map { it.toSet() }.filter { it.size >= 2 }
     private val protocols: List<SpecializedProtocol> =
-        hostSubsets.map(::ABY).map { SpecializedProtocol(it, hostTrustConfiguration) }
+        hostSubsets.map(::ABY).map { it.specialize(hostTrustConfiguration) }
 
     private fun LetNode.isApplicable(): Boolean {
         return nameAnalysis.readers(this).all { reader ->

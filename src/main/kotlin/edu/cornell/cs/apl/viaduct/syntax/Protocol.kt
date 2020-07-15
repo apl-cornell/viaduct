@@ -31,3 +31,5 @@ class SpecializedProtocol(
 ) {
     val authority: Label = protocol.authority(hostTrustConfiguration)
 }
+
+fun Protocol.specialize(h: HostTrustConfiguration): SpecializedProtocol = SpecializedProtocol(this, h)

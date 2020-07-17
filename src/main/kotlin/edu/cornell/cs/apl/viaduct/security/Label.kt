@@ -153,7 +153,7 @@ data class Label(
         fun fromConfidentiality(confidentiality: FreeDistributiveLattice<Principal>): Label =
             Label(confidentiality, weakest.integrityComponent)
 
-        /** Construct a label given only the integrity component. Confidentiality is set to minimum. */
+        /** Constructs a label given only the integrity component. Confidentiality is set to minimum. */
         @JvmStatic
         fun fromIntegrity(integrity: FreeDistributiveLattice<Principal>): Label =
             Label(weakest.confidentialityComponent, integrity)

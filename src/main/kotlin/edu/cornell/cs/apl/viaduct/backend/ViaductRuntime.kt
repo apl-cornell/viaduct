@@ -4,11 +4,18 @@ import edu.cornell.cs.apl.viaduct.syntax.Host
 import edu.cornell.cs.apl.viaduct.syntax.values.IntegerValue
 import edu.cornell.cs.apl.viaduct.syntax.values.Value
 
-class ViaductRuntime(host: Host) {
-    fun send(value: Value, sender: ProtocolProjection, receiver: ProtocolProjection) {
+class ViaductRuntime(@Suppress("UNUSED_PARAMETER") host: Host) {
+    fun send(
+        @Suppress("UNUSED_PARAMETER") value: Value,
+        @Suppress("UNUSED_PARAMETER") sender: ProtocolProjection,
+        @Suppress("UNUSED_PARAMETER") receiver: ProtocolProjection
+    ) {
     }
 
-    fun receive(sender: ProtocolProjection, receiver: ProtocolProjection): Value {
+    fun receive(
+        @Suppress("UNUSED_PARAMETER") sender: ProtocolProjection,
+        @Suppress("UNUSED_PARAMETER") receiver: ProtocolProjection
+    ): Value {
         return IntegerValue(0)
     }
 
@@ -16,7 +23,7 @@ class ViaductRuntime(host: Host) {
         return IntegerValue(0)
     }
 
-    fun output(value: Value) {
+    fun output(@Suppress("UNUSED_PARAMETER") value: Value) {
     }
 }
 

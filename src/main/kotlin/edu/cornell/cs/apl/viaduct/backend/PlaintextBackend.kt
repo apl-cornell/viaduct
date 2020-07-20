@@ -150,7 +150,6 @@ private class PlaintextInterpreter(
 
                 else -> throw Exception("unknown query ${query.value.name} for class ${objectType.className.name}")
             }
-
         } ?: throw Exception("object ${objectVar.value.name} not found in store")
     }
 
@@ -281,7 +280,6 @@ private class PlaintextInterpreter(
 
                 else -> throw Exception("unknown update ${update.value.name} for class ${objectType.className.name}")
             }
-
         } ?: throw Exception("object ${objectVar.value.name} not found in store")
     }
 
@@ -357,7 +355,6 @@ private class PlaintextInterpreter(
                 try {
                     run(stmt.body)
                     run(stmt)
-
                 } catch (signal: LoopBreakSignal) { // catch loop break signal
                     // this signal is for an outer loop
                     if (signal.jumpLabel != null && signal.jumpLabel != stmt.jumpLabel.value) {

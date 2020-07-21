@@ -1,8 +1,0 @@
-#!/usr/bin/env sh
-
-set -e
-
-# Directory containing this file
-DIR=$(cd "$(dirname "$0")" && pwd -P)
-
-(cd "$DIR" && ./gradlew install > /dev/null) && "$DIR/build/install/viaduct/bin/viaduct" "$@"

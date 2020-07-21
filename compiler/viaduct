@@ -1,0 +1,10 @@
+#!/usr/bin/env sh
+
+set -e
+
+# Directory containing this file
+DIR=$(cd "$(dirname "$0")" && pwd -P)
+
+PROJECT=$(basename "$DIR")
+
+(cd "$DIR" && ../gradlew installDist > /dev/null) && "$DIR/build/install/$PROJECT/bin/$PROJECT" "$@"

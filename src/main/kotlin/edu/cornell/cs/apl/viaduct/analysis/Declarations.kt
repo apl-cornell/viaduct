@@ -18,19 +18,6 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.SendNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.StatementNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.UpdateNode
 
-fun StatementNode.immediateRHS(): List<ExpressionNode> {
-    return when (this) {
-        is LetNode -> listOf(this.value)
-        is DeclarationNode -> this.arguments
-        is UpdateNode -> this.arguments
-        is OutputNode -> listOf(this.message)
-        is SendNode -> listOf(this.message)
-        is IfNode -> listOf(this.guard)
-        is AssertionNode -> listOf(this.condition)
-        else -> listOf()
-    }
-}
-
 fun Node.postorderTraverse(f: (Node) -> Unit) {
     this.children.forEach(f)
     f(this)

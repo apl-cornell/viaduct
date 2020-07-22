@@ -157,6 +157,7 @@ tasks.jacocoTestReport {
         xml.isEnabled = true
         html.isEnabled = true
     }
+    dependsOn(tasks.test)
 }
 
 // Enable assertions during manual testing

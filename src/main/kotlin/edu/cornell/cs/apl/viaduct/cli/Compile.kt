@@ -15,8 +15,10 @@ import edu.cornell.cs.apl.viaduct.backend.BackendCompiler
 import edu.cornell.cs.apl.viaduct.backend.CommitmentBackend
 import edu.cornell.cs.apl.viaduct.backend.PlaintextCppBackend
 import edu.cornell.cs.apl.viaduct.passes.elaborated
-import edu.cornell.cs.apl.viaduct.passes.selectProtocols
 import edu.cornell.cs.apl.viaduct.passes.splitMain
+import edu.cornell.cs.apl.viaduct.selection.SimpleSelection
+import edu.cornell.cs.apl.viaduct.selection.SimpleSelector
+import edu.cornell.cs.apl.viaduct.selection.simpleProtocolCost
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
 import edu.cornell.cs.apl.viaduct.syntax.Variable
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
@@ -62,7 +64,6 @@ class Compile : CliktCommand(help = "Compile ideal protocol to secure distribute
         val nameAnalysis = NameAnalysis(Tree(program))
         val typeAnalysis = TypeAnalysis(nameAnalysis)
         val informationFlowAnalysis = InformationFlowAnalysis(nameAnalysis)
-
         // Dump label constraint graph to a file if requested.
         dumpGraph(informationFlowAnalysis::exportConstraintGraph, constraintGraphOutput)
 
@@ -73,7 +74,13 @@ class Compile : CliktCommand(help = "Compile ideal protocol to secure distribute
 
         // Select protocols.
         val protocolAssignment: (Variable) -> Protocol =
-            program.main.selectProtocols(nameAnalysis, informationFlowAnalysis)
+            SimpleSelection(
+                SimpleSelector(
+                    nameAnalysis,
+                    informationFlowAnalysis
+                ), ::simpleProtocolCost
+            )
+                .select(program.main, nameAnalysis, informationFlowAnalysis)
         val protocolAnalysis = ProtocolAnalysis(nameAnalysis, protocolAssignment)
 
         // Split the program.

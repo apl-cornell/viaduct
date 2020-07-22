@@ -7,7 +7,6 @@ buildscript {
 plugins {
     application
     kotlin("jvm")
-    id("org.jetbrains.dokka") version "0.10.1"
 
     // Bug finding
     jacoco
@@ -163,23 +162,4 @@ tasks.jacocoTestReport {
 // Enable assertions during manual testing
 tasks.named<JavaExec>("run") {
     enableAssertions = true
-}
-
-/** Documentation */
-
-tasks.dokka {
-    outputFormat = "html"
-    outputDirectory = "$buildDir/docs/html"
-}
-
-val dokkaGitHub by tasks.registering(org.jetbrains.dokka.gradle.DokkaTask::class) {
-    outputFormat = "gfm"
-    outputDirectory = "$buildDir/docs/markdown"
-}
-
-tasks.withType<org.jetbrains.dokka.gradle.DokkaTask>().configureEach {
-    subProjects = subprojects.map { it.name }
-    configuration {
-        includes = listOf("packages.md")
-    }
 }

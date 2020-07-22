@@ -1,5 +1,6 @@
 plugins {
     kotlin("multiplatform") version "1.3.71" apply false
+    id("org.jetbrains.dokka") version "0.10.1"
 
     // Style checking
     id("com.diffplug.gradle.spotless") version "4.3.0"
@@ -53,4 +54,24 @@ editorconfig {
 
 tasks.check {
     dependsOn(tasks.editorconfigCheck)
+}
+
+/** Documentation */
+
+val dokkaHtml by tasks.registering(org.jetbrains.dokka.gradle.DokkaTask::class) {
+    outputFormat = "html"
+    outputDirectory = "$buildDir/docs/$outputFormat"
+}
+
+val dokkaGfm by tasks.registering(org.jetbrains.dokka.gradle.DokkaTask::class) {
+    outputFormat = "gfm"
+    outputDirectory = "$buildDir/docs/$outputFormat"
+}
+
+tasks.withType<org.jetbrains.dokka.gradle.DokkaTask>().configureEach {
+    // TODO: we will be able to remove all this with the next release of Dokka
+    subProjects = subprojects.map { it.name }
+    configuration {
+        includes = subprojects.map { it.file("packages.md") }.filter { it.exists() }.map { it.toString() }
+    }
 }

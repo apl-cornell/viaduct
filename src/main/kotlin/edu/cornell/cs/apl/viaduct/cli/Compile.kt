@@ -64,7 +64,6 @@ class Compile : CliktCommand(help = "Compile ideal protocol to secure distribute
         val nameAnalysis = NameAnalysis(Tree(program))
         val typeAnalysis = TypeAnalysis(nameAnalysis)
         val informationFlowAnalysis = InformationFlowAnalysis(nameAnalysis)
-
         // Dump label constraint graph to a file if requested.
         dumpGraph(informationFlowAnalysis::exportConstraintGraph, constraintGraphOutput)
 

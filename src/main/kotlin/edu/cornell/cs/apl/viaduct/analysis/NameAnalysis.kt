@@ -34,6 +34,7 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.UpdateNode
 import kotlin.properties.ReadOnlyProperty
 import kotlin.reflect.KProperty
 import kotlinx.collections.immutable.PersistentSet
+import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.persistentSetOf
 
 /**
@@ -94,7 +95,6 @@ class NameAnalysis(val tree: Tree<Node, ProgramNode>) {
         }
     }
 
-    /** All [BreakNode]s that correspond to a given loop node. **/
     private val InfiniteLoopNode.correspondingBreaks: Set<BreakNode> by collectedAttribute(tree) { node ->
         if (node is BreakNode) {
             listOf(node.correspondingLoops[node.jumpLabel] to node)
@@ -103,6 +103,7 @@ class NameAnalysis(val tree: Tree<Node, ProgramNode>) {
         }
     }
 
+    /** All [BreakNode]s that correspond to a given loop node. **/
     fun correspondingBreaks(node: InfiniteLoopNode): Set<BreakNode> = node.correspondingBreaks
 
     private val Node.readers: Set<StatementNode> by collectedAttribute(tree) { node ->
@@ -201,25 +202,45 @@ class NameAnalysis(val tree: Tree<Node, ProgramNode>) {
 
     // TODO: readers for other types of [Name]s
 
-    /** Iterate up the AST from the given node, perforiming the effects of [f]. **/
-    private fun Node.iterateUp(tree: Tree<Node, ProgramNode>, f: (Node) -> Unit) {
-        f(this)
-        when (val parent = tree.parent(this)) {
-            null -> return
-            else -> parent.iterateUp(tree, f)
+    private val DeclarationNode.queries: Set<QueryNode> by collectedAttribute(tree) { node ->
+        if (node is QueryNode) {
+            listOf(declaration(node) to node)
+        } else {
+            listOf()
+        }
+    }
+
+    fun queries(node: DeclarationNode): Set<QueryNode> = node.queries
+
+    private val DeclarationNode.updates: Set<UpdateNode> by collectedAttribute(tree) { node ->
+        if (node is UpdateNode) {
+            listOf(declaration(node) to node)
+        } else {
+            listOf()
+        }
+    }
+
+    fun updates(node: DeclarationNode): Set<UpdateNode> = node.updates
+
+    fun uses(node: DeclarationNode): Set<Node> =
+        queries(node).union(updates(node))
+
+    private val Node.involvedLoops: List<InfiniteLoopNode> by attribute {
+        val loopsAbove =
+            when (val parent = tree.parent(this)) {
+                null -> persistentListOf<InfiniteLoopNode>()
+                else -> parent.involvedLoops
+            }
+        if (this is InfiniteLoopNode) {
+            loopsAbove + persistentListOf(this)
+        } else {
+            loopsAbove
         }
     }
 
     /** Calculate all of the loops a given node is contained in. **/
-    fun involvedLoops(node: Node): List<InfiniteLoopNode> {
-        val result = mutableListOf<InfiniteLoopNode>()
-        node.iterateUp(tree) {
-            if (it is InfiniteLoopNode) {
-                result.add(it)
-            }
-        }
-        return result
-    }
+    fun involvedLoops(node: Node): List<InfiniteLoopNode> = node.involvedLoops
+
     /**
      * Asserts that every referenced [Name] has a declaration, and that no [Name] is declared
      * multiple times in the same scope.

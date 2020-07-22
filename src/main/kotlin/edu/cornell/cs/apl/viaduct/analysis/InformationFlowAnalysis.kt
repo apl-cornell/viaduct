@@ -269,6 +269,7 @@ class InformationFlowAnalysis(private val nameAnalysis: NameAnalysis) {
     /** Returns the inferred security label of the result of [node]. */
     fun label(node: ExpressionNode): Label = node.labelVariable.getValue(solution)
 
+    /** Returns the label of the program counter at the [node]'s program point. */
     fun pcLabel(node: Node): Label = node.pc.variable.getValue(solution)
 
     /**

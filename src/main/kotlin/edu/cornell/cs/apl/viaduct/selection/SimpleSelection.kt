@@ -13,15 +13,22 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.LetNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.Node
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProcessDeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.QueryNode
+import kotlinx.collections.immutable.PersistentMap
+import kotlinx.collections.immutable.persistentMapOf
 
-class GreedySelection(val selector: ProtocolSelector, val protocolSort: (Protocol) -> Int) {
+/* This class implements a particularly simple but ineffective protocol selection.
+    Along with a protocol selector, it takes as input a function [protocolCost] which
+    gives a total linear order on protocol cost.
+
+ */
+class SimpleSelection(val selector: ProtocolSelector, val protocolCost: (Protocol) -> Int) {
     fun select(
         processDeclaration: ProcessDeclarationNode,
         nameAnalysis: NameAnalysis,
         informationFlowAnalysis: InformationFlowAnalysis
     ): (Variable) -> Protocol {
         val hostTrustConfiguration = HostTrustConfiguration(nameAnalysis.tree.root)
-        var assignment: MutableMap<Variable, Protocol> = mutableMapOf()
+        var assignment: PersistentMap<Variable, Protocol> = persistentMapOf()
         val protocolSelection = object {
             private val LetNode.possibleProtocols: Set<Protocol> by attribute {
                 when (value) {
@@ -29,12 +36,12 @@ class GreedySelection(val selector: ProtocolSelector, val protocolSort: (Protoco
                         setOf(Local(value.host.value))
                     is QueryNode -> nameAnalysis.declaration(value).possibleProtocols
                     else ->
-                        selector.selectLet(assignment, this)
+                        selector.select(this, assignment)
                 }
             }
 
             private val DeclarationNode.possibleProtocols: Set<Protocol> by attribute {
-                selector.selectDeclaration(assignment, this)
+                selector.select(this, assignment)
             }
 
             fun possibleProtocols(node: LetNode) = node.possibleProtocols
@@ -45,16 +52,18 @@ class GreedySelection(val selector: ProtocolSelector, val protocolSort: (Protoco
         fun traverse(node: Node) {
             when (node) {
                 is LetNode -> {
-                    val p = protocolSelection.possibleProtocols(node).sortedBy(protocolSort)
+                    // TODO: proper error class
+                    val p = protocolSelection.possibleProtocols(node).sortedBy(protocolCost)
                         .firstOrNull() ?: error("protocol not found!")
                     assert(p.authority(hostTrustConfiguration).actsFor(informationFlowAnalysis.label(node)))
-                    assignment.put(node.temporary.value, p)
+                    assignment = assignment.put(node.temporary.value, p)
                 }
                 is DeclarationNode -> {
-                    val p = protocolSelection.possibleProtocols(node).sortedBy(protocolSort)
+                    // TODO: proper error class
+                    val p = protocolSelection.possibleProtocols(node).sortedBy(protocolCost)
                         .firstOrNull() ?: error("protocol not found!")
                     assert(p.authority(hostTrustConfiguration).actsFor(informationFlowAnalysis.label(node)))
-                    assignment.put(node.variable.value, p)
+                    assignment = assignment.put(node.variable.value, p)
                 }
             }
             node.children.forEach(::traverse)

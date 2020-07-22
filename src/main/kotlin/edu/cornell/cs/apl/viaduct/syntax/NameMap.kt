@@ -6,7 +6,7 @@ import kotlinx.collections.immutable.PersistentMap
 import kotlinx.collections.immutable.persistentMapOf
 
 /** A persistent map from [Name]s to [Data]. */
-class NameMap<N : Name, Data>
+internal class NameMap<N : Name, Data>
 private constructor(
     private val map: PersistentMap<N, Pair<Data, SourceLocation>>
 ) {
@@ -36,8 +36,4 @@ private constructor(
             map.put(name.value, Pair(data, name.sourceLocation))
         )
     }
-
-    val entries: Set<Pair<N, Data>> = map.entries.map {
-        Pair(it.key, it.value.first)
-    }.toSet()
 }

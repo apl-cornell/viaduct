@@ -18,35 +18,14 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.SendNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.StatementNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.UpdateNode
 
-fun StatementNode.immediateRHS(): List<ExpressionNode> {
-    return when (this) {
-        is LetNode -> listOf(this.value)
-        is DeclarationNode -> this.arguments
-        is UpdateNode -> this.arguments
-        is OutputNode -> listOf(this.message)
-        is SendNode -> listOf(this.message)
-        is IfNode -> listOf(this.guard)
-        is AssertionNode -> listOf(this.condition)
-        else -> listOf()
-    }
-}
-
-fun Node.iterDown(f: (Node) -> Unit) {
+fun Node.postorderTraverse(f: (Node) -> Unit) {
     this.children.forEach(f)
     f(this)
 }
 
-fun Node.iterUp(tree: Tree<Node, ProgramNode>, f: (Node) -> Unit) {
-    f(this)
-    when (val parent = tree.parent(this)) {
-        null -> return
-        else -> parent.iterUp(tree, f)
-    }
-}
-
 inline fun <reified T : Node> Node.listOfInstances(): List<T> {
     val result = mutableListOf<T>()
-    this.iterDown {
+    this.postorderTraverse {
         if (it is T) {
             result.add(it)
         }
@@ -60,21 +39,6 @@ fun Node.infiniteLoopNodes(): List<InfiniteLoopNode> = this.listOfInstances()
 fun Node.breakNodes(): List<BreakNode> = this.listOfInstances()
 fun Node.queryNodes(): List<QueryNode> = this.listOfInstances()
 fun Node.updateNodes(): List<UpdateNode> = this.listOfInstances()
-
-// TODO merge into nameanalysis?
-fun InfiniteLoopNode.correspondingBreaks(): List<BreakNode> {
-    return this.breakNodes().filter { it.jumpLabel == this.jumpLabel }
-}
-
-fun Node.involvedLoops(tree: Tree<Node, ProgramNode>): List<InfiniteLoopNode> {
-    val result = mutableListOf<InfiniteLoopNode>()
-    this.iterUp(tree) {
-        if (it is InfiniteLoopNode) {
-            result.add(it)
-        }
-    }
-    return result
-}
 
 fun DeclarationNode.uses(tree: Tree<Node, ProgramNode>): Set<Node> {
     return (tree.root.queryNodes().filter { it.variable == this.variable } +

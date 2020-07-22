@@ -16,11 +16,11 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.QueryNode
 import kotlinx.collections.immutable.PersistentMap
 import kotlinx.collections.immutable.persistentMapOf
 
-/* This class implements a particularly simple but ineffective protocol selection.
+/** This class implements a particularly simple but ineffective protocol selection.
     Along with a protocol selector, it takes as input a function [protocolCost] which
     gives a total linear order on protocol cost.
 
- */
+ **/
 class SimpleSelection(val selector: ProtocolSelector, val protocolCost: (Protocol) -> Int) {
     fun select(
         processDeclaration: ProcessDeclarationNode,

@@ -12,12 +12,12 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.QueryNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.UpdateNode
 
-fun Node.postorderTraverse(f: (Node) -> Unit) {
+private fun Node.postorderTraverse(f: (Node) -> Unit) {
     this.children.forEach(f)
     f(this)
 }
 
-inline fun <reified T : Node> Node.listOfInstances(): List<T> {
+private inline fun <reified T : Node> Node.listOfInstances(): List<T> {
     val result = mutableListOf<T>()
     this.postorderTraverse {
         if (it is T) {

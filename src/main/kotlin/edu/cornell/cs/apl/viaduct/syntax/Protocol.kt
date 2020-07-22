@@ -25,6 +25,9 @@ interface Protocol : Name {
         get() = "protocol"
 }
 
+/**
+ * A protocol specialized to a particular hostTrustConfiguration.
+ */
 class SpecializedProtocol(
     val protocol: Protocol,
     hostTrustConfiguration: HostTrustConfiguration

@@ -94,6 +94,17 @@ class NameAnalysis(val tree: Tree<Node, ProgramNode>) {
         }
     }
 
+    /** All [BreakNode]s that correspond to a given loop node. **/
+    private val InfiniteLoopNode.correspondingBreaks: Set<BreakNode> by collectedAttribute(tree) { node ->
+        if (node is BreakNode) {
+            listOf(node.correspondingLoops[node.jumpLabel] to node)
+        } else {
+            listOf()
+        }
+    }
+
+    fun correspondingBreaks(node: InfiniteLoopNode): Set<BreakNode> = node.correspondingBreaks
+
     private val Node.readers: Set<StatementNode> by collectedAttribute(tree) { node ->
         if (node is StatementNode) {
             node.reads.map { Pair(declaration(it), node) }
@@ -190,6 +201,25 @@ class NameAnalysis(val tree: Tree<Node, ProgramNode>) {
 
     // TODO: readers for other types of [Name]s
 
+    /** Iterate up the AST from the given node, perforiming the effects of [f]. **/
+    private fun Node.iterateUp(tree: Tree<Node, ProgramNode>, f: (Node) -> Unit) {
+        f(this)
+        when (val parent = tree.parent(this)) {
+            null -> return
+            else -> parent.iterateUp(tree, f)
+        }
+    }
+
+    /** Calculate all of the loops a given node is contained in. **/
+    fun involvedLoops(node: Node): List<InfiniteLoopNode> {
+        val result = mutableListOf<InfiniteLoopNode>()
+        node.iterateUp(tree) {
+            if (it is InfiniteLoopNode) {
+                result.add(it)
+            }
+        }
+        return result
+    }
     /**
      * Asserts that every referenced [Name] has a declaration, and that no [Name] is declared
      * multiple times in the same scope.

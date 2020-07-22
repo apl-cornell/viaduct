@@ -2,7 +2,7 @@ package edu.cornell.cs.apl.viaduct.backend
 
 import edu.cornell.cs.apl.viaduct.analysis.NameAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.TypeAnalysis
-import edu.cornell.cs.apl.viaduct.protocols.CommitmentProtocol
+import edu.cornell.cs.apl.viaduct.protocols.Commitment
 import edu.cornell.cs.apl.viaduct.syntax.Host
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.BlockNode
@@ -13,7 +13,7 @@ class CommitmentBackend(
 ) : CppBuilder(), CppBackend {
 
     override val supportedProtocols: Set<String>
-        get() = setOf(CommitmentProtocol.protocolName)
+        get() = setOf(Commitment.protocolName)
 
     override val extraStartArguments: List<CppFormalDecl>
         get() = listOf()

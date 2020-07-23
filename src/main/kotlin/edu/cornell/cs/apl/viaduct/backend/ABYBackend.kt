@@ -2,7 +2,7 @@ package edu.cornell.cs.apl.viaduct.backend
 
 import edu.cornell.cs.apl.viaduct.analysis.NameAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.TypeAnalysis
-import edu.cornell.cs.apl.viaduct.protocols.MPCWithAbort
+import edu.cornell.cs.apl.viaduct.protocols.ABY
 import edu.cornell.cs.apl.viaduct.syntax.Host
 import edu.cornell.cs.apl.viaduct.syntax.Operator
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
@@ -97,7 +97,7 @@ class ABYBackend(
     }
 
     override val supportedProtocols: Set<String>
-        get() = setOf(MPCWithAbort.protocolName)
+        get() = setOf(ABY.protocolName)
 
     override val extraStartArguments: List<CppFormalDecl>
         get() = listOf(CppFormalDecl(abyInfoType, abyInfoIdent))
@@ -120,7 +120,7 @@ class ABYBackend(
 
     override fun compile(block: BlockNode, protocol: Protocol, host: Host): CppBlock {
         return when (protocol) {
-            is MPCWithAbort -> compileMPCBlock(block, host, mutableMapOf())
+            is ABY -> compileMPCBlock(block, host, mutableMapOf())
             else -> throw Error("backend compilation: protocol ${protocol.protocolName} unsupported by ABY backend")
         }
     }

@@ -28,23 +28,17 @@ group = "edu.cornell.cs.apl"
 
 version = "0.1"
 
-repositories {
-    jcenter()
-}
-
 /** Application */
 
 application {
-    mainClassName = "${project.group}.${project.name}.MainKt"
-}
-
-tasks.jar {
-    manifest {
-        attributes(Pair("Main-Class", application.mainClassName))
-    }
+    mainClass.set("${project.group}.${project.name}.MainKt")
 }
 
 /** Dependencies */
+
+repositories {
+    jcenter()
+}
 
 dependencies {
     // Standard libraries
@@ -166,8 +160,8 @@ open class CupCompileTask : DefaultTask() {
 
 /** Checks */
 
-// TODO: remove once Java is gone
 spotless {
+    // TODO: remove once Java is gone
     java {
         googleJavaFormat()
         target("src/**/*.java")

@@ -104,7 +104,7 @@ class ProtocolAnalysis(
                 body.protocols
             is BreakNode ->
                 // Every protocol executing the loop executes the breaks in the loop.
-                nameAnalysis.loop(this).protocols
+                nameAnalysis.correspondingLoop(this).protocols
             is AssertionNode ->
                 // All protocols execute every assertion.
                 this.process.body.protocols

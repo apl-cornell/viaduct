@@ -3,8 +3,10 @@ package edu.cornell.cs.apl.viaduct.analysis
 import edu.cornell.cs.apl.attributes.Tree
 import edu.cornell.cs.apl.viaduct.ExampleProgramProvider
 import edu.cornell.cs.apl.viaduct.passes.elaborated
-import edu.cornell.cs.apl.viaduct.passes.selectProtocols
 import edu.cornell.cs.apl.viaduct.protocols.MainProtocol
+import edu.cornell.cs.apl.viaduct.selection.SimpleSelection
+import edu.cornell.cs.apl.viaduct.selection.SimpleSelector
+import edu.cornell.cs.apl.viaduct.selection.simpleProtocolCost
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProcessDeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.surface.ProgramNode
 import org.junit.jupiter.params.ParameterizedTest
@@ -18,7 +20,13 @@ internal class ProtocolAnalysisTest {
         val informationFlowAnalysis = InformationFlowAnalysis(nameAnalysis)
 
         val dumpProtocolAssignment =
-            nameAnalysis.tree.root.main.selectProtocols(nameAnalysis, informationFlowAnalysis)
+            SimpleSelection(
+                SimpleSelector(
+                    nameAnalysis,
+                    informationFlowAnalysis
+                ), ::simpleProtocolCost
+            )
+                .select(nameAnalysis.tree.root.main, nameAnalysis, informationFlowAnalysis)
         val protocolAnalysis = ProtocolAnalysis(nameAnalysis, dumpProtocolAssignment)
 
         nameAnalysis.tree.root.declarations.forEach {

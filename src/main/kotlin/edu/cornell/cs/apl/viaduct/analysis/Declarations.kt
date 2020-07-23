@@ -1,36 +1,42 @@
 package edu.cornell.cs.apl.viaduct.analysis
 
+import edu.cornell.cs.apl.attributes.Tree
 import edu.cornell.cs.apl.viaduct.protocols.MainProtocol
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.BreakNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.DeclarationNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.InfiniteLoopNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.LetNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.Node
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProcessDeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.QueryNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.UpdateNode
 
-/** Returns all [LetNode]s in this node. */
-fun Node.letNodes(): List<LetNode> {
-    val result = mutableListOf<LetNode>()
-    fun traverse(node: Node) {
-        if (node is LetNode) {
-            result.add(node)
+private fun Node.postorderTraverse(f: (Node) -> Unit) {
+    this.children.forEach(f)
+    f(this)
+}
+
+private inline fun <reified T : Node> Node.listOfInstances(): List<T> {
+    val result = mutableListOf<T>()
+    this.postorderTraverse {
+        if (it is T) {
+            result.add(it)
         }
-        node.children.forEach(::traverse)
     }
-    traverse(this)
     return result
 }
 
-/** Returns all [DeclarationNode]s in this node. */
-fun Node.declarationNodes(): List<DeclarationNode> {
-    val result = mutableListOf<DeclarationNode>()
-    fun traverse(node: Node) {
-        if (node is DeclarationNode) {
-            result.add(node)
-        }
-        node.children.forEach(::traverse)
-    }
-    traverse(this)
-    return result
+fun Node.letNodes(): List<LetNode> = this.listOfInstances()
+fun Node.declarationNodes(): List<DeclarationNode> = this.listOfInstances()
+fun Node.infiniteLoopNodes(): List<InfiniteLoopNode> = this.listOfInstances()
+fun Node.breakNodes(): List<BreakNode> = this.listOfInstances()
+fun Node.queryNodes(): List<QueryNode> = this.listOfInstances()
+fun Node.updateNodes(): List<UpdateNode> = this.listOfInstances()
+
+fun DeclarationNode.uses(tree: Tree<Node, ProgramNode>): Set<Node> {
+    return (tree.root.queryNodes().filter { it.variable == this.variable } +
+        tree.root.updateNodes().filter { it.variable == this.variable }).toSet()
 }
 
 /**

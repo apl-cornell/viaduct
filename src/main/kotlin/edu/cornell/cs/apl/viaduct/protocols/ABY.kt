@@ -1,5 +1,4 @@
 package edu.cornell.cs.apl.viaduct.protocols
-
 import edu.cornell.cs.apl.viaduct.security.Label
 import edu.cornell.cs.apl.viaduct.syntax.Host
 import edu.cornell.cs.apl.viaduct.syntax.HostTrustConfiguration
@@ -13,7 +12,7 @@ import edu.cornell.cs.apl.viaduct.util.asComparable
  * n - 1 out of the n participating hosts are corrupted.
  * In return, availability may be lost even with a single corrupted participant.
  */
-class MPCWithAbort(hosts: Set<Host>) : MPCProtocol, SymmetricProtocol(hosts) {
+class ABY(hosts: Set<Host>) : MPCProtocol, SymmetricProtocol(hosts) {
     init {
         require(hosts.size >= 2)
     }
@@ -23,13 +22,13 @@ class MPCWithAbort(hosts: Set<Host>) : MPCProtocol, SymmetricProtocol(hosts) {
     }
 
     override val protocolName: String
-        get() = MPCWithAbort.protocolName
+        get() = ABY.protocolName
 
     override fun authority(hostTrustConfiguration: HostTrustConfiguration): Label =
         hosts.map { hostTrustConfiguration(it) }.reduce(Label::and)
 
     override fun equals(other: Any?): Boolean =
-        other is MPCWithAbort && this.hosts == other.hosts
+        other is ABY && this.hosts == other.hosts
 
     override fun hashCode(): Int =
         hosts.hashCode()

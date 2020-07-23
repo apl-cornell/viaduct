@@ -34,6 +34,7 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.UpdateNode
 import kotlin.properties.ReadOnlyProperty
 import kotlin.reflect.KProperty
 import kotlinx.collections.immutable.PersistentSet
+import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.persistentSetOf
 
 /**
@@ -83,18 +84,28 @@ class NameAnalysis(val tree: Tree<Node, ProgramNode>) {
     }
 
     /** Jump labels in scope for this node. */
-    private val Node.loops: NameMap<JumpLabel, InfiniteLoopNode> by attribute {
+    private val Node.correspondingLoops: NameMap<JumpLabel, InfiniteLoopNode> by attribute {
         when (val parent = tree.parent(this)) {
             null ->
                 NameMap()
             is InfiniteLoopNode ->
-                parent.loops.put(parent.jumpLabel, parent)
+                parent.correspondingLoops.put(parent.jumpLabel, parent)
             else ->
-                parent.loops
+                parent.correspondingLoops
         }
     }
 
-    /** Same as [readers]. */
+    private val InfiniteLoopNode.correspondingBreaks: Set<BreakNode> by collectedAttribute(tree) { node ->
+        if (node is BreakNode) {
+            listOf(node.correspondingLoops[node.jumpLabel] to node)
+        } else {
+            listOf()
+        }
+    }
+
+    /** All [BreakNode]s that correspond to a given loop node. **/
+    fun correspondingBreaks(node: InfiniteLoopNode): Set<BreakNode> = node.correspondingBreaks
+
     private val Node.readers: Set<StatementNode> by collectedAttribute(tree) { node ->
         if (node is StatementNode) {
             node.reads.map { Pair(declaration(it), node) }
@@ -170,8 +181,8 @@ class NameAnalysis(val tree: Tree<Node, ProgramNode>) {
         node.objectDeclarations[node.variable]
 
     /** Returns the loop that [node] is breaking out of. */
-    fun loop(node: BreakNode): InfiniteLoopNode =
-        node.loops[node.jumpLabel]
+    fun correspondingLoop(node: BreakNode): InfiniteLoopNode =
+        node.correspondingLoops[node.jumpLabel]
 
     /** Returns the declaration of the [Host] in [node]. */
     fun declaration(node: ExternalCommunicationNode): HostDeclarationNode =
@@ -191,6 +202,45 @@ class NameAnalysis(val tree: Tree<Node, ProgramNode>) {
 
     // TODO: readers for other types of [Name]s
 
+    private val DeclarationNode.queries: Set<QueryNode> by collectedAttribute(tree) { node ->
+        if (node is QueryNode) {
+            listOf(declaration(node) to node)
+        } else {
+            listOf()
+        }
+    }
+
+    fun queries(node: DeclarationNode): Set<QueryNode> = node.queries
+
+    private val DeclarationNode.updates: Set<UpdateNode> by collectedAttribute(tree) { node ->
+        if (node is UpdateNode) {
+            listOf(declaration(node) to node)
+        } else {
+            listOf()
+        }
+    }
+
+    fun updates(node: DeclarationNode): Set<UpdateNode> = node.updates
+
+    fun uses(node: DeclarationNode): Set<Node> =
+        queries(node).union(updates(node))
+
+    private val Node.involvedLoops: List<InfiniteLoopNode> by attribute {
+        val loopsAbove =
+            when (val parent = tree.parent(this)) {
+                null -> persistentListOf<InfiniteLoopNode>()
+                else -> parent.involvedLoops
+            }
+        if (this is InfiniteLoopNode) {
+            loopsAbove + persistentListOf(this)
+        } else {
+            loopsAbove
+        }
+    }
+
+    /** Calculate all of the loops a given node is contained in. **/
+    fun involvedLoops(node: Node): List<InfiniteLoopNode> = node.involvedLoops
+
     /**
      * Asserts that every referenced [Name] has a declaration, and that no [Name] is declared
      * multiple times in the same scope.
@@ -209,7 +259,7 @@ class NameAnalysis(val tree: Tree<Node, ProgramNode>) {
                 is UpdateNode ->
                     declaration(node)
                 is BreakNode ->
-                    loop(node)
+                    correspondingLoop(node)
                 is ExternalCommunicationNode ->
                     declaration(node)
                 is InternalCommunicationNode ->
@@ -223,7 +273,7 @@ class NameAnalysis(val tree: Tree<Node, ProgramNode>) {
                 is DeclarationNode ->
                     node.objectDeclarations.put(node.variable, node)
                 is InfiniteLoopNode ->
-                    node.loops.put(node.jumpLabel, node)
+                    node.correspondingLoops.put(node.jumpLabel, node)
                 is ProgramNode -> {
                     // Forcing these thunks
                     node.hostDeclarations

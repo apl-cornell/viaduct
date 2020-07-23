@@ -24,3 +24,13 @@ interface Protocol : Name, Comparable<Protocol> {
     override val nameCategory: String
         get() = "protocol"
 }
+
+/**
+ * A protocol specialized to a particular [hostTrustConfiguration].
+ */
+class SpecializedProtocol(
+    val protocol: Protocol,
+    hostTrustConfiguration: HostTrustConfiguration
+) {
+    val authority: Label = protocol.authority(hostTrustConfiguration)
+}

@@ -1,5 +1,6 @@
 package edu.cornell.cs.apl.viaduct.backend
 
+import edu.cornell.cs.apl.viaduct.errors.ViaductInterpreterError
 import edu.cornell.cs.apl.viaduct.protocols.HostInterface
 import edu.cornell.cs.apl.viaduct.syntax.Host
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
@@ -83,7 +84,7 @@ private class ViaductReceiverThread(
                             // IntegerValue
                             valType == 1 -> IntegerValue(unparsedValue)
 
-                            else -> throw Exception("parsed invalid value type $valType")
+                            else -> throw ViaductInterpreterError("parsed invalid value type $valType")
                         }
 
                         Triple(value, sender, receiver)
@@ -92,7 +93,7 @@ private class ViaductReceiverThread(
                 runtime.send(result.first, result.second, result.third)
             }
 
-            else -> throw Exception("receiver coroutine cannot send")
+            else -> throw ViaductInterpreterError("receiver coroutine cannot send")
         }
     }
 }
@@ -122,7 +123,7 @@ private class ViaductSenderThread(
                 }
             }
 
-            else -> throw Exception("sender coroutine cannot receive")
+            else -> throw ViaductInterpreterError("sender coroutine cannot receive")
         }
     }
 }
@@ -308,7 +309,7 @@ class ViaductRuntime(
                 }
 
                 if (!connected) {
-                    throw Exception("host ${hinfo.host} failed to connect to ${hinfo2.host}")
+                    throw ViaductInterpreterError("host ${hinfo.host} failed to connect to ${hinfo2.host}")
                 }
             }
         }

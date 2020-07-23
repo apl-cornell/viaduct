@@ -2,17 +2,21 @@ package edu.cornell.cs.apl.viaduct.backend
 
 import edu.cornell.cs.apl.viaduct.analysis.NameAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.TypeAnalysis
+import edu.cornell.cs.apl.viaduct.errors.UndefinedNameError
+import edu.cornell.cs.apl.viaduct.errors.UnknownMethodError
+import edu.cornell.cs.apl.viaduct.errors.ViaductInterpreterError
 import edu.cornell.cs.apl.viaduct.protocols.Local
 import edu.cornell.cs.apl.viaduct.protocols.Replication
+import edu.cornell.cs.apl.viaduct.syntax.ClassNameNode
 import edu.cornell.cs.apl.viaduct.syntax.Host
 import edu.cornell.cs.apl.viaduct.syntax.ObjectVariable
 import edu.cornell.cs.apl.viaduct.syntax.ObjectVariableNode
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
+import edu.cornell.cs.apl.viaduct.syntax.QueryNameNode
 import edu.cornell.cs.apl.viaduct.syntax.Temporary
+import edu.cornell.cs.apl.viaduct.syntax.UpdateNameNode
 import edu.cornell.cs.apl.viaduct.syntax.datatypes.Get
 import edu.cornell.cs.apl.viaduct.syntax.datatypes.Modify
-import edu.cornell.cs.apl.viaduct.syntax.datatypes.QueryName
-import edu.cornell.cs.apl.viaduct.syntax.datatypes.UpdateName
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.BlockNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.BreakNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.DeclarationNode
@@ -64,56 +68,79 @@ class PlaintextBackend : ProtocolBackend {
         try {
             interpreter.run(process)
         } catch (signal: LoopBreakSignal) {
-            throw Exception("uncaught loop break signal with jump label ${signal.jumpLabel}")
+            throw ViaductInterpreterError(
+                "uncaught loop break signal with jump label ${signal.jumpLabel}", signal.breakNode)
         }
     }
 }
 
-sealed class PlaintextClassObject {
-    abstract fun query(query: QueryName, arguments: List<Value>): Value
+sealed class PlaintextClassObject(
+    protected val objectName: ObjectVariableNode,
+    protected val objectType: ObjectType
+) {
+    abstract fun query(query: QueryNameNode, arguments: List<Value>): Value
 
-    abstract fun update(update: UpdateName, arguments: List<Value>)
+    abstract fun update(update: UpdateNameNode, arguments: List<Value>)
 }
 
-class ImmutableCellObject(val value: Value) : PlaintextClassObject() {
-    override fun query(query: QueryName, arguments: List<Value>): Value {
-        return when (query) {
+class ImmutableCellObject(
+    val value: Value,
+    objectName: ObjectVariableNode,
+    objectType: ObjectType
+) : PlaintextClassObject(objectName, objectType) {
+    override fun query(query: QueryNameNode, arguments: List<Value>): Value {
+        return when (query.value) {
             is Get -> value
 
-            else -> throw Exception("ImmutableCellObject: unknown query $query")
+            else -> {
+                throw UnknownMethodError(objectName, query, objectType, arguments.map { arg -> arg.type })
+            }
         }
     }
 
-    override fun update(update: UpdateName, arguments: List<Value>) {
-        throw Exception("ImmutableCellObject: unknown update $update")
+    override fun update(update: UpdateNameNode, arguments: List<Value>) {
+        throw UnknownMethodError(objectName, update, objectType, arguments.map { arg -> arg.type })
     }
 }
 
-class MutableCellObject(var value: Value) : PlaintextClassObject() {
-    override fun query(query: QueryName, arguments: List<Value>): Value {
-        return when (query) {
+class MutableCellObject(
+    var value: Value,
+    objectName: ObjectVariableNode,
+    objectType: ObjectType
+) : PlaintextClassObject(objectName, objectType) {
+    override fun query(query: QueryNameNode, arguments: List<Value>): Value {
+        return when (query.value) {
             is Get -> value
 
-            else -> throw Exception("MutableCell: unknown query $query")
+            else -> {
+                throw UnknownMethodError(objectName, query, objectType, arguments.map { arg -> arg.type })
+            }
         }
     }
 
-    override fun update(update: UpdateName, arguments: List<Value>) {
-        value = when (update) {
+    override fun update(update: UpdateNameNode, arguments: List<Value>) {
+        value = when (update.value) {
             is edu.cornell.cs.apl.viaduct.syntax.datatypes.Set -> {
                 arguments[0]
             }
 
             is Modify -> {
-                update.operator.apply(value, arguments[0])
+                update.value.operator.apply(value, arguments[0])
             }
 
-            else -> throw Exception("MutableCell: unknown update $update")
+            else -> {
+                throw UnknownMethodError(objectName, update, objectType, arguments.map { arg -> arg.type })
+            }
         }
     }
 }
 
-class VectorObject(val size: Int, defaultValue: Value) : PlaintextClassObject() {
+class VectorObject(
+    val size: Int,
+    defaultValue: Value,
+    objectName: ObjectVariableNode,
+    objectType: ObjectType
+) : PlaintextClassObject(objectName, objectType) {
     val values: MutableList<Value> = mutableListOf()
 
     init {
@@ -122,30 +149,34 @@ class VectorObject(val size: Int, defaultValue: Value) : PlaintextClassObject() 
         }
     }
 
-    override fun query(query: QueryName, arguments: List<Value>): Value {
-        return when (query) {
+    override fun query(query: QueryNameNode, arguments: List<Value>): Value {
+        return when (query.value) {
             is Get -> {
                 val index = arguments[0] as IntegerValue
                 values[index.value]
             }
 
-            else -> throw Exception("VectorObject: unknown query $query")
+            else -> {
+                throw UnknownMethodError(objectName, query, objectType, arguments.map { arg -> arg.type })
+            }
         }
     }
 
-    override fun update(update: UpdateName, arguments: List<Value>) {
+    override fun update(update: UpdateNameNode, arguments: List<Value>) {
         val index = arguments[0] as IntegerValue
 
-        values[index.value] = when (update) {
+        values[index.value] = when (update.value) {
             is edu.cornell.cs.apl.viaduct.syntax.datatypes.Set -> {
                 arguments[1]
             }
 
             is Modify -> {
-                update.operator.apply(values[index.value], arguments[1])
+                update.value.operator.apply(values[index.value], arguments[1])
             }
 
-            else -> throw Exception("VectorObject: unknown update $update")
+            else -> {
+                throw UnknownMethodError(objectName, update, objectType, arguments.map { arg -> arg.type })
+            }
         }
     }
 }
@@ -196,15 +227,15 @@ private class PlaintextInterpreter(
 
             is ReadNode -> {
                 tempStore[expr.temporary.value]
-                    ?: throw Exception("temporary ${expr.temporary.value.name} not found in store")
+                    ?: throw UndefinedNameError(expr.temporary)
             }
 
             is QueryNode -> {
                 val argValues: List<Value> = expr.arguments.map { arg -> runExpr(arg) }
 
                 objectStore[expr.variable.value]?.let { obj ->
-                    obj.query(expr.query.value, argValues)
-                } ?: throw Exception("object ${expr.variable.value.name} not found in store")
+                    obj.query(expr.query, argValues)
+                } ?: throw UndefinedNameError(expr.variable)
             }
 
             is OperatorApplicationNode -> {
@@ -218,7 +249,7 @@ private class PlaintextInterpreter(
                 when (projection.protocol) {
                     is Local -> runtime.input()
 
-                    else -> throw Exception("Cannot perform I/O in non-Local protocol")
+                    else -> throw ViaductInterpreterError("Cannot perform I/O in non-Local protocol", expr)
                 }
             }
 
@@ -239,7 +270,8 @@ private class PlaintextInterpreter(
                             }
 
                             else -> {
-                                throw Exception("cannot receive from protocol ${sendProtocol.name} to $projection")
+                                throw ViaductInterpreterError(
+                                    "cannot receive from protocol ${sendProtocol.name} to $projection")
                             }
                         }
                     }
@@ -268,40 +300,45 @@ private class PlaintextInterpreter(
                                 if (finalValue == null) {
                                     finalValue = receivedValue
                                 } else if (finalValue != receivedValue) {
-                                    throw Exception("received different values")
+                                    throw ViaductInterpreterError("received different values")
                                 }
                             }
 
-                            finalValue ?: throw Exception("did not receive")
+                            finalValue ?: throw ViaductInterpreterError("did not receive")
                         }
                     }
 
-                    else -> throw Exception("cannot receive from unknown protocol $sendProtocol")
+                    else -> throw ViaductInterpreterError(
+                        "cannot receive from protocol $sendProtocol from $projection")
                 }
             }
         }
     }
 
     private fun runDeclaration(
-        objectVar: ObjectVariableNode,
+        objectName: ObjectVariableNode,
+        className: ClassNameNode,
         objectType: ObjectType,
         arguments: List<Value>
     ) {
         when (objectType) {
             is ImmutableCellType -> {
-                objectStore[objectVar.value] = ImmutableCellObject(arguments[0])
+                objectStore[objectName.value] =
+                    ImmutableCellObject(arguments[0], objectName, objectType)
             }
 
             is MutableCellType -> {
-                objectStore[objectVar.value] = MutableCellObject(arguments[0])
+                objectStore[objectName.value] =
+                    MutableCellObject(arguments[0], objectName, objectType)
             }
 
             is VectorType -> {
                 val length = arguments[0] as IntegerValue
-                objectStore[objectVar.value] = VectorObject(length.value, objectType.elementType.defaultValue)
+                objectStore[objectName.value] =
+                    VectorObject(length.value, objectType.elementType.defaultValue, objectName, objectType)
             }
 
-            else -> throw Exception("declaration: unknown object type ${objectType.className}")
+            else -> throw UndefinedNameError(className)
         }
     }
 
@@ -310,7 +347,7 @@ private class PlaintextInterpreter(
             is DeclarationNode -> {
                 val objectType: ObjectType = typeAnalysis.type(stmt)
                 val argValues: List<Value> = stmt.arguments.map { arg -> runExpr(arg) }
-                runDeclaration(stmt.variable, objectType, argValues)
+                runDeclaration(stmt.variable, stmt.className, objectType, argValues)
             }
 
             is LetNode -> {
@@ -321,9 +358,9 @@ private class PlaintextInterpreter(
             is UpdateNode -> {
                 val argValues: List<Value> = stmt.arguments.map { arg -> runExpr(arg) }
 
-                objectStore[stmt.variable.value]?.let { obj ->
-                    obj.update(stmt.update.value, argValues)
-                } ?: throw Exception("object ${stmt.variable.value.name} not found in store")
+                objectStore[stmt.variable.value]
+                    ?.update(stmt.update, argValues)
+                    ?: throw UndefinedNameError(stmt.variable)
             }
 
             is SendNode -> {
@@ -387,7 +424,7 @@ private class PlaintextInterpreter(
                 }
             }
 
-            is BreakNode -> throw LoopBreakSignal(stmt.jumpLabel.value)
+            is BreakNode -> throw LoopBreakSignal(stmt)
 
             is BlockNode -> {
                 pushContext()

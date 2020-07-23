@@ -4,6 +4,8 @@ import edu.cornell.cs.apl.viaduct.security.Label
 import edu.cornell.cs.apl.viaduct.syntax.Host
 import edu.cornell.cs.apl.viaduct.syntax.HostTrustConfiguration
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
+import edu.cornell.cs.apl.viaduct.syntax.ProtocolFactory
+import edu.cornell.cs.apl.viaduct.util.asComparable
 
 /**
  * The protocol that replicates data and computations across a set of hosts in the clear.
@@ -17,7 +19,7 @@ class Replication(hosts: Set<Host>) : Protocol, SymmetricProtocol(hosts) {
     }
 
     companion object {
-        val protocolName = "Replication"
+        const val protocolName = "Replication"
     }
 
     override val protocolName: String
@@ -31,4 +33,21 @@ class Replication(hosts: Set<Host>) : Protocol, SymmetricProtocol(hosts) {
 
     override fun hashCode(): Int =
         hosts.hashCode()
+
+    override fun compareTo(other: Protocol): Int {
+        return if (other is Replication) {
+            hosts.asComparable().compareTo(other.hosts)
+        } else {
+            protocolName.compareTo(other.protocolName)
+        }
+    }
+}
+
+class ReplicationFactory : ProtocolFactory {
+    override val protocolName: String
+        get() = Replication.protocolName
+
+    override fun buildProtocol(participants: List<Host>): Protocol {
+        return Replication(participants.toSet())
+    }
 }

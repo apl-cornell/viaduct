@@ -31,4 +31,12 @@ object Adversary : Protocol {
 
     override val asDocument: Document
         get() = Document(protocolName)
+
+    override fun compareTo(other: Protocol): Int {
+        return if (other is Adversary) {
+            0
+        } else {
+            protocolName.compareTo(other.protocolName)
+        }
+    }
 }

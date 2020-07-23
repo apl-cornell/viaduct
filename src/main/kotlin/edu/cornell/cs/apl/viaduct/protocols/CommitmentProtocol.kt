@@ -5,19 +5,20 @@ import edu.cornell.cs.apl.viaduct.security.Label
 import edu.cornell.cs.apl.viaduct.syntax.Host
 import edu.cornell.cs.apl.viaduct.syntax.HostTrustConfiguration
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
+import edu.cornell.cs.apl.viaduct.util.asComparable
 
-class CommitmentProtocol(val sender: Host, val recievers: Set<Host>) : Protocol {
+class CommitmentProtocol(val sender: Host, val receivers: Set<Host>) : Protocol {
     init {
-        require(recievers.size >= 2)
-        require(!recievers.contains(sender))
+        require(receivers.size >= 2)
+        require(!receivers.contains(sender))
     }
 
     companion object {
-        val protocolName = "Commitment"
+        const val protocolName = "Commitment"
     }
 
     override val hosts: Set<Host>
-        get() = recievers.union(setOf(sender))
+        get() = receivers.union(setOf(sender))
 
     override val name: String
         get() = protocolName
@@ -26,14 +27,27 @@ class CommitmentProtocol(val sender: Host, val recievers: Set<Host>) : Protocol 
         get() = CommitmentProtocol.protocolName
 
     override fun authority(hostTrustConfiguration: HostTrustConfiguration): Label =
-        hostTrustConfiguration(sender) and (recievers.map { hostTrustConfiguration(it).integrity() }.reduce(Label::and))
+        hostTrustConfiguration(sender) and (receivers.map { hostTrustConfiguration(it).integrity() }.reduce(Label::and))
 
     override fun equals(other: Any?): Boolean =
-        other is CommitmentProtocol && this.sender == other.sender && this.recievers == other.recievers
+        other is CommitmentProtocol && this.sender == other.sender && this.receivers == other.receivers
 
     override fun hashCode(): Int =
         hosts.hashCode()
 
     override val asDocument: Document
         get() = Document(protocolName)
+
+    override fun compareTo(other: Protocol): Int {
+        return if (other is CommitmentProtocol) {
+            val senderCmp: Int = sender.compareTo(other.sender)
+            if (senderCmp != 0) {
+                senderCmp
+            } else {
+                receivers.asComparable().compareTo(other.receivers)
+            }
+        } else {
+            protocolName.compareTo(other.protocolName)
+        }
+    }
 }

@@ -107,6 +107,7 @@ NUM         = ((-)?[1-9][0-9]*) | 0
   "else"          { return symbol(sym.ELSE); }
   "while"         { return symbol(sym.WHILE); }
   "for"           { return symbol(sym.FOR); }
+  "loop"          { return symbol(sym.LOOP); }
   "break"         { return symbol(sym.BREAK); }
 
   "input"         { return symbol(sym.INPUT); }

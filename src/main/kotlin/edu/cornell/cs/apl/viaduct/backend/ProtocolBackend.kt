@@ -8,7 +8,7 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
 interface ProtocolBackend {
     val supportedProtocols: Set<String>
 
-    fun run(
+    suspend fun run(
         nameAnalysis: NameAnalysis,
         typeAnalysis: TypeAnalysis,
         runtime: ViaductRuntime,

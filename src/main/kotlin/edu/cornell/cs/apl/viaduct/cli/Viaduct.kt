@@ -7,7 +7,7 @@ class Viaduct : CliktCommand(help = "Compile high level specifications to secure
     val verbose by verbosity()
 
     init {
-        subcommands(Format(), Compile(), Specification())
+        subcommands(Format(), Compile(), Specification(), Run())
         // TODO: Help, Interpret, Specification commands
     }
 

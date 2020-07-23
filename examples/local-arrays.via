@@ -9,6 +9,9 @@ process main {
     for (var j: int = 0; j < 10; j += 1) {
         b[j] = j * 100;
     }
+
+    output a[0] to alice;
+    output a[9] to alice;
 }
 
 host alice : {A}

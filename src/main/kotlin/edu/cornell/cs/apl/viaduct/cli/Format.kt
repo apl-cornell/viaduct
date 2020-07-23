@@ -5,6 +5,7 @@ import com.github.ajalt.clikt.parameters.options.flag
 import com.github.ajalt.clikt.parameters.options.option
 import edu.cornell.cs.apl.viaduct.passes.check
 import edu.cornell.cs.apl.viaduct.passes.elaborated
+import edu.cornell.cs.apl.viaduct.syntax.ProtocolParser
 import java.io.File
 
 class Format : CliktCommand(help = "Pretty print source program") {

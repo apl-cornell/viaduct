@@ -23,6 +23,13 @@ private constructor(
     }
 
     /**
+     * Returns whether there is a mapping for [name].
+     */
+    fun contains(name: Located<N>): Boolean {
+        return map.containsKey(name.value)
+    }
+
+    /**
      * Returns a new map where [name] is associated with [data].
      *
      * @throws NameClashError if [name] is already in the map.

@@ -28,4 +28,12 @@ data class Ideal(override val name: String) : Protocol {
 
     override val asDocument: Document
         get() = Document(name)
+
+    override fun compareTo(other: Protocol): Int {
+        return if (other is Ideal) {
+            name.compareTo(other.name)
+        } else {
+            protocolName.compareTo(other.protocolName)
+        }
+    }
 }

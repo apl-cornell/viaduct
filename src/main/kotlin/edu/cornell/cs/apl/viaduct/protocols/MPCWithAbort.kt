@@ -3,6 +3,9 @@ package edu.cornell.cs.apl.viaduct.protocols
 import edu.cornell.cs.apl.viaduct.security.Label
 import edu.cornell.cs.apl.viaduct.syntax.Host
 import edu.cornell.cs.apl.viaduct.syntax.HostTrustConfiguration
+import edu.cornell.cs.apl.viaduct.syntax.Protocol
+import edu.cornell.cs.apl.viaduct.syntax.ProtocolFactory
+import edu.cornell.cs.apl.viaduct.util.asComparable
 
 /**
  * An MPC protocol that provides security against a dishonest majority.
@@ -16,7 +19,7 @@ class MPCWithAbort(hosts: Set<Host>) : MPCProtocol, SymmetricProtocol(hosts) {
     }
 
     companion object {
-        val protocolName = "MPCWithAbort"
+        const val protocolName = "MPCWithAbort"
     }
 
     override val protocolName: String
@@ -30,4 +33,21 @@ class MPCWithAbort(hosts: Set<Host>) : MPCProtocol, SymmetricProtocol(hosts) {
 
     override fun hashCode(): Int =
         hosts.hashCode()
+
+    override fun compareTo(other: Protocol): Int {
+        return if (other is MPCWithAbort) {
+            hosts.asComparable().compareTo(other.hosts)
+        } else {
+            protocolName.compareTo(other.protocolName)
+        }
+    }
+}
+
+class MPCWithAbortFactory : ProtocolFactory {
+    override val protocolName: String
+        get() = MPCWithAbort.protocolName
+
+    override fun buildProtocol(participants: List<Host>): Protocol {
+        return MPCWithAbort(participants.toSet())
+    }
 }

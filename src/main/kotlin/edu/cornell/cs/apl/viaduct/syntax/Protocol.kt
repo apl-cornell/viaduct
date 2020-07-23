@@ -8,7 +8,7 @@ import edu.cornell.cs.apl.viaduct.security.Label
  * A protocol simultaneously names a location and determines the (cryptographic) mechanism for
  * executing the code placed at that location.
  */
-interface Protocol : Name {
+interface Protocol : Name, Comparable<Protocol> {
     /** Protocol name. */
     val protocolName: String
 

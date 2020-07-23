@@ -8,10 +8,11 @@ import edu.cornell.cs.apl.viaduct.syntax.Host
 import edu.cornell.cs.apl.viaduct.syntax.ObjectVariable
 import edu.cornell.cs.apl.viaduct.syntax.ObjectVariableNode
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
-import edu.cornell.cs.apl.viaduct.syntax.QueryNameNode
 import edu.cornell.cs.apl.viaduct.syntax.Temporary
-import edu.cornell.cs.apl.viaduct.syntax.UpdateNameNode
 import edu.cornell.cs.apl.viaduct.syntax.datatypes.Get
+import edu.cornell.cs.apl.viaduct.syntax.datatypes.Modify
+import edu.cornell.cs.apl.viaduct.syntax.datatypes.QueryName
+import edu.cornell.cs.apl.viaduct.syntax.datatypes.UpdateName
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.BlockNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.BreakNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.DeclarationNode
@@ -43,7 +44,7 @@ import java.util.Stack
 class PlaintextBackend : ProtocolBackend {
     override val supportedProtocols: Set<String> = setOf(Local.protocolName, Replication.protocolName)
 
-    override fun run(
+    override suspend fun run(
         nameAnalysis: NameAnalysis,
         typeAnalysis: TypeAnalysis,
         runtime: ViaductRuntime,
@@ -68,18 +69,83 @@ class PlaintextBackend : ProtocolBackend {
     }
 }
 
-sealed class PlaintextClassObject
+sealed class PlaintextClassObject {
+    abstract fun query(query: QueryName, arguments: List<Value>): Value
 
-class ImmutableCellObject(val value: Value) : PlaintextClassObject()
+    abstract fun update(update: UpdateName, arguments: List<Value>)
+}
 
-class MutableCellObject(var value: Value) : PlaintextClassObject()
+class ImmutableCellObject(val value: Value) : PlaintextClassObject() {
+    override fun query(query: QueryName, arguments: List<Value>): Value {
+        return when (query) {
+            is Get -> value
+
+            else -> throw Exception("ImmutableCellObject: unknown query $query")
+        }
+    }
+
+    override fun update(update: UpdateName, arguments: List<Value>) {
+        throw Exception("ImmutableCellObject: unknown update $update")
+    }
+}
+
+class MutableCellObject(var value: Value) : PlaintextClassObject() {
+    override fun query(query: QueryName, arguments: List<Value>): Value {
+        return when (query) {
+            is Get -> value
+
+            else -> throw Exception("MutableCell: unknown query $query")
+        }
+    }
+
+    override fun update(update: UpdateName, arguments: List<Value>) {
+        value = when (update) {
+            is edu.cornell.cs.apl.viaduct.syntax.datatypes.Set -> {
+                arguments[0]
+            }
+
+            is Modify -> {
+                update.operator.apply(value, arguments[0])
+            }
+
+            else -> throw Exception("MutableCell: unknown update $update")
+        }
+    }
+}
 
 class VectorObject(val size: Int, defaultValue: Value) : PlaintextClassObject() {
     val values: MutableList<Value> = mutableListOf()
 
     init {
         for (i: Int in 0 until size) {
-            values[i] = defaultValue
+            values.add(defaultValue)
+        }
+    }
+
+    override fun query(query: QueryName, arguments: List<Value>): Value {
+        return when (query) {
+            is Get -> {
+                val index = arguments[0] as IntegerValue
+                values[index.value]
+            }
+
+            else -> throw Exception("VectorObject: unknown query $query")
+        }
+    }
+
+    override fun update(update: UpdateName, arguments: List<Value>) {
+        val index = arguments[0] as IntegerValue
+
+        values[index.value] = when (update) {
+            is edu.cornell.cs.apl.viaduct.syntax.datatypes.Set -> {
+                arguments[1]
+            }
+
+            is Modify -> {
+                update.operator.apply(values[index.value], arguments[1])
+            }
+
+            else -> throw Exception("VectorObject: unknown update $update")
         }
     }
 }
@@ -124,36 +190,7 @@ private class PlaintextInterpreter(
         tempStoreStack.pop()
     }
 
-    private fun runQuery(
-        objectVar: ObjectVariableNode,
-        objectType: ObjectType,
-        query: QueryNameNode,
-        arguments: List<Value>
-    ): Value {
-        return objectStore[objectVar.value]?.let { obj ->
-            when {
-                objectType is ImmutableCellType && query.value == Get -> {
-                    val immutableCell = obj as ImmutableCellObject
-                    immutableCell.value
-                }
-
-                objectType is MutableCellType && query.value == Get -> {
-                    val mutableCell = obj as MutableCellObject
-                    mutableCell.value
-                }
-
-                objectType is VectorType && query.value == Get -> {
-                    val vector = obj as VectorObject
-                    val index = arguments[0] as IntegerValue
-                    vector.values[index.value]
-                }
-
-                else -> throw Exception("unknown query ${query.value.name} for class ${objectType.className.name}")
-            }
-        } ?: throw Exception("object ${objectVar.value.name} not found in store")
-    }
-
-    private fun runExpr(expr: ExpressionNode): Value {
+    private suspend fun runExpr(expr: ExpressionNode): Value {
         return when (expr) {
             is LiteralNode -> expr.value
 
@@ -163,10 +200,11 @@ private class PlaintextInterpreter(
             }
 
             is QueryNode -> {
-                val objectDecl: DeclarationNode = nameAnalysis.declaration(expr)
-                val objectType: ObjectType = typeAnalysis.type(objectDecl)
                 val argValues: List<Value> = expr.arguments.map { arg -> runExpr(arg) }
-                runQuery(expr.variable, objectType, expr.query, argValues)
+
+                objectStore[expr.variable.value]?.let { obj ->
+                    obj.query(expr.query.value, argValues)
+                } ?: throw Exception("object ${expr.variable.value.name} not found in store")
             }
 
             is OperatorApplicationNode -> {
@@ -250,40 +288,24 @@ private class PlaintextInterpreter(
         arguments: List<Value>
     ) {
         when (objectType) {
+            is ImmutableCellType -> {
+                objectStore[objectVar.value] = ImmutableCellObject(arguments[0])
+            }
+
+            is MutableCellType -> {
+                objectStore[objectVar.value] = MutableCellObject(arguments[0])
+            }
+
             is VectorType -> {
                 val length = arguments[0] as IntegerValue
                 objectStore[objectVar.value] = VectorObject(length.value, objectType.elementType.defaultValue)
             }
+
+            else -> throw Exception("declaration: unknown object type ${objectType.className}")
         }
     }
 
-    private fun runUpdate(
-        objectVar: ObjectVariableNode,
-        objectType: ObjectType,
-        update: UpdateNameNode,
-        arguments: List<Value>
-    ) {
-        return objectStore[objectVar.value]?.let { obj: PlaintextClassObject ->
-            when {
-                objectType is MutableCellType
-                    && update.value == edu.cornell.cs.apl.viaduct.syntax.datatypes.Set -> {
-                    val mutableCell = obj as MutableCellObject
-                    mutableCell.value = arguments[0]
-                }
-
-                objectType is VectorType
-                    && update.value == edu.cornell.cs.apl.viaduct.syntax.datatypes.Set -> {
-                    val vector = obj as VectorObject
-                    val index = arguments[0] as IntegerValue
-                    vector.values[index.value] = arguments[1]
-                }
-
-                else -> throw Exception("unknown update ${update.value.name} for class ${objectType.className.name}")
-            }
-        } ?: throw Exception("object ${objectVar.value.name} not found in store")
-    }
-
-    fun run(stmt: StatementNode) {
+    suspend fun run(stmt: StatementNode) {
         when (stmt) {
             is DeclarationNode -> {
                 val objectType: ObjectType = typeAnalysis.type(stmt)
@@ -297,9 +319,11 @@ private class PlaintextInterpreter(
             }
 
             is UpdateNode -> {
-                val objectType: ObjectType = typeAnalysis.type(nameAnalysis.declaration(stmt))
                 val argValues: List<Value> = stmt.arguments.map { arg -> runExpr(arg) }
-                runUpdate(stmt.variable, objectType, stmt.update, argValues)
+
+                objectStore[stmt.variable.value]?.let { obj ->
+                    obj.update(stmt.update.value, argValues)
+                } ?: throw Exception("object ${stmt.variable.value.name} not found in store")
             }
 
             is SendNode -> {
@@ -369,7 +393,7 @@ private class PlaintextInterpreter(
                 pushContext()
 
                 for (childStmt: StatementNode in stmt) {
-                    run(stmt)
+                    run(childStmt)
                 }
 
                 popContext()

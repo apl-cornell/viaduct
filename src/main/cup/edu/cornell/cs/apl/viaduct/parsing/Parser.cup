@@ -118,6 +118,7 @@ nonterminal Label label_expr;
 
 nonterminal Located<ObjectVariable> variable;
 nonterminal Located<Host> host;
+nonterminal List<Host> host_list;
 nonterminal Located<Protocol> protocol;
 
 terminal String IDENT, CAP_IDENT;
@@ -131,7 +132,7 @@ terminal COLON;
 terminal EQ;
 terminal PLUSEQ, MINUSEQ, TIMESEQ, DIVIDEEQ;
 terminal LET, VAL, VAR;
-terminal IF, ELSE, WHILE, FOR, BREAK;
+terminal IF, ELSE, WHILE, FOR, LOOP, BREAK;
 terminal INPUT, RECEIVE, FROM, OUTPUT, SEND, TO;
 terminal ASSERT;
 
@@ -245,6 +246,14 @@ simple_stmt ::=
       RESULT = indexing.modify(op, e, location(opleft, opright));
     :}
 
+  /* let binding */
+  | LET:begin IDENT:id EQ expr:e {:
+    RESULT = new LetNode(
+      new Located(new Temporary(id), location(idleft, idright)),
+      e,
+      location(beginleft, eright));
+    :}
+
   | OUTPUT:begin expr:message TO host:recipient {:
       RESULT = new OutputNode(message, recipient, location(beginleft, recipientright));
     :}
@@ -290,6 +299,10 @@ stmt ::=
 
   | FOR:begin OPEN_PAREN simple_stmt:initialize SEMICOLON expr:guard SEMICOLON simple_stmt:update CLOSE_PAREN block:body {:
       RESULT = new ForLoopNode(initialize, guard, update, body, null, location(beginleft, bodyright));
+    :}
+
+  | LOOP:begin block:body {:
+      RESULT = new InfiniteLoopNode(body, null, location(beginleft, bodyright));
     :}
 
   | BREAK:brk SEMICOLON {:
@@ -548,9 +561,26 @@ host ::=
     :}
   ;
 
+host_list ::=
+    | host_list:hlist COMMA host:h {:
+        hlist.add(h.getValue());
+        RESULT = hlist;
+      :}
+
+    | host:h {:
+        RESULT = CollectionsKt.mutableListOf(h.getValue());
+      :}
+    ;
+
 protocol ::=
     IDENT:id {:
       RESULT = new Located(new Ideal(id), location(idleft, idright));
+    :}
+
+  | CAP_IDENT:protocol OPEN_PAREN host_list:participants CLOSE_PAREN:end {:
+      RESULT = new Located(
+        new GenericProtocol(protocol, participants),
+        location(protocolleft, endright));
     :}
 
   | CAP_HOST:begin OPEN_PAREN host:host CLOSE_PAREN:end {:

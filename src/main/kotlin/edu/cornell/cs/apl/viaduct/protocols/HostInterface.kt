@@ -18,4 +18,12 @@ data class HostInterface(val host: Host) : Protocol, SymmetricProtocol(setOf(hos
 
     override fun authority(hostTrustConfiguration: HostTrustConfiguration): Label =
         hostTrustConfiguration.getValue(host)
+
+    override fun compareTo(other: Protocol): Int {
+        return if (other is HostInterface) {
+            host.compareTo(other.host)
+        } else {
+            protocolName.compareTo(other.protocolName)
+        }
+    }
 }

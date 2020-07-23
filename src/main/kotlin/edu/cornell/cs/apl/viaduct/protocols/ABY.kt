@@ -34,7 +34,7 @@ class ABY(hosts: Set<Host>) : MPCProtocol, SymmetricProtocol(hosts) {
         hosts.hashCode()
 
     override fun compareTo(other: Protocol): Int {
-        return if (other is MPCWithAbort) {
+        return if (other is ABY) {
             hosts.asComparable().compareTo(other.hosts)
         } else {
             protocolName.compareTo(other.protocolName)
@@ -42,11 +42,11 @@ class ABY(hosts: Set<Host>) : MPCProtocol, SymmetricProtocol(hosts) {
     }
 }
 
-class MPCWithAbortFactory : ProtocolFactory {
+class ABYFactory : ProtocolFactory {
     override val protocolName: String
-        get() = MPCWithAbort.protocolName
+        get() = ABY.protocolName
 
     override fun buildProtocol(participants: List<Host>): Protocol {
-        return MPCWithAbort(participants.toSet())
+        return ABY(participants.toSet())
     }
 }

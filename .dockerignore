@@ -6,15 +6,16 @@
 
 # Configuration
 !.editorconfig
-!packages.md
 
 # Gradle
-!build.gradle.kts
-!settings.gradle.kts
+!*.gradle.kts
+!gradle.properties
+!compiler/*.gradle.kts
+!compiler/gradle.properties
 !gradle
 !gradlew
 
 # Code
-!src
-!examples
-!errors
+!compiler/src
+!compiler/examples
+!compiler/errors

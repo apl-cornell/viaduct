@@ -25,7 +25,7 @@ class NameClashError(
 
     override val description: Document
         get() =
-            Document("This file has multiple declarations of") * name + Document(".") *
+            Document("There are multiple declarations of") * name + Document(".") *
                 Document("One here:")
                     .withSource(firstDeclaration) /
                 Document("And another one here:")

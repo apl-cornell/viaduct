@@ -63,7 +63,6 @@ private fun run(file: File) {
     val program = SourceFile.from(file).parse().elaborated()
     program.check()
     program.split()
-
     // TODO: interpret
 }
 
@@ -73,15 +72,10 @@ private fun ProgramNode.split() {
     val typeAnalysis = TypeAnalysis(nameAnalysis)
     val informationFlowAnalysis = InformationFlowAnalysis(nameAnalysis)
 
-    val dumpProtocolAssignment =
-        SimpleSelection(
-            SimpleSelector(
-                nameAnalysis,
-                informationFlowAnalysis
-            ), ::simpleProtocolCost
-        )
+    val protocolAssignment =
+        SimpleSelection(SimpleSelector(nameAnalysis, informationFlowAnalysis), ::simpleProtocolCost)
             .select(nameAnalysis.tree.root.main, nameAnalysis, informationFlowAnalysis)
-    val protocolAnalysis = ProtocolAnalysis(nameAnalysis, dumpProtocolAssignment)
+    val protocolAnalysis = ProtocolAnalysis(nameAnalysis, protocolAssignment)
 
     this.splitMain(protocolAnalysis, typeAnalysis)
 }

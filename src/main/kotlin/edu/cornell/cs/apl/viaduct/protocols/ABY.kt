@@ -1,7 +1,12 @@
 package edu.cornell.cs.apl.viaduct.protocols
+
 import edu.cornell.cs.apl.viaduct.security.Label
 import edu.cornell.cs.apl.viaduct.syntax.Host
 import edu.cornell.cs.apl.viaduct.syntax.HostTrustConfiguration
+import edu.cornell.cs.apl.viaduct.syntax.Protocol
+import edu.cornell.cs.apl.viaduct.syntax.ProtocolName
+import edu.cornell.cs.apl.viaduct.syntax.values.HostSetValue
+import edu.cornell.cs.apl.viaduct.syntax.values.Value
 
 /**
  * An MPC protocol that provides security against a dishonest majority.
@@ -9,24 +14,23 @@ import edu.cornell.cs.apl.viaduct.syntax.HostTrustConfiguration
  * n - 1 out of the n participating hosts are corrupted.
  * In return, availability may be lost even with a single corrupted participant.
  */
-class ABY(hosts: Set<Host>) : MPCProtocol, SymmetricProtocol(hosts) {
+class ABY(hosts: Set<Host>) : Protocol() {
     init {
         require(hosts.size >= 2)
     }
 
-    companion object {
-        val protocolName = "MPCWithAbort"
-    }
+    private val participants: HostSetValue = HostSetValue(hosts)
 
-    override val protocolName: String
+    override val protocolName: ProtocolName
         get() = ABY.protocolName
+
+    override val arguments: Map<String, Value>
+        get() = mapOf("hosts" to participants)
 
     override fun authority(hostTrustConfiguration: HostTrustConfiguration): Label =
         hosts.map { hostTrustConfiguration(it) }.reduce(Label::and)
 
-    override fun equals(other: Any?): Boolean =
-        other is ABY && this.hosts == other.hosts
-
-    override fun hashCode(): Int =
-        hosts.hashCode()
+    companion object {
+        val protocolName = ProtocolName("ABY")
+    }
 }

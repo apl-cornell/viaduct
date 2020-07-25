@@ -252,6 +252,12 @@ class NameAnalysis(val tree: Tree<Node, ProgramNode>) {
         fun check(node: Node) {
             // Check that name references are valid
             when (node) {
+                is ProcessDeclarationNode -> {
+                    // All hosts in a protocol name must be declared.
+                    node.protocol.value.hosts.forEach { host ->
+                        node.hostDeclarations[Located(host, node.protocol.sourceLocation)]
+                    }
+                }
                 is ReadNode ->
                     declaration(node)
                 is QueryNode ->

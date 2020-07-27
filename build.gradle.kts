@@ -80,6 +80,9 @@ dependencies {
     implementation("org.apache.logging.log4j:log4j-core:2.13.3")
     implementation("org.apache.logging.log4j:log4j-slf4j-impl:2.13.3")
 
+    // Z3
+    implementation(files("deps/com.microsoft.z3.jar"))
+
     // Testing
     testImplementation(kotlin("reflect"))
     testImplementation("org.junit.jupiter:junit-jupiter-api:5.7.0-M1")

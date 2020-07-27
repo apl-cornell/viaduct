@@ -16,9 +16,12 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.QueryNode
 import kotlinx.collections.immutable.PersistentMap
 import kotlinx.collections.immutable.persistentMapOf
 
-/** This class implements a particularly simple but ineffective protocol selection.
-    Along with a protocol selector, it takes as input a function [protocolCost] which
-    gives a total linear order on protocol cost.
+/** This class implements a particularly simple but naive protocol selection.
+Along with a protocol selector, it takes as input a function [protocolCost] which
+gives a total linear order on protocol cost.
+
+The below selection mechanism does not actually do a search based on the generated constraints,
+but instead fails is the search does not satisfy the constraints.
 
  **/
 class SimpleSelection(val selector: ProtocolSelector, val protocolCost: (Protocol) -> Int) {
@@ -27,40 +30,44 @@ class SimpleSelection(val selector: ProtocolSelector, val protocolCost: (Protoco
         nameAnalysis: NameAnalysis,
         informationFlowAnalysis: InformationFlowAnalysis
     ): (Variable) -> Protocol {
+        var constraints: SelectionConstraint = Literal(true)
         val hostTrustConfiguration = HostTrustConfiguration(nameAnalysis.tree.root)
         var assignment: PersistentMap<Variable, Protocol> = persistentMapOf()
+
         val protocolSelection = object {
-            private val LetNode.possibleProtocols: Set<Protocol> by attribute {
+            private val LetNode.viableProtocols: Set<Protocol> by attribute {
                 when (value) {
                     is InputNode ->
                         setOf(Local(value.host.value))
-                    is QueryNode -> nameAnalysis.declaration(value).possibleProtocols
+                    is QueryNode -> nameAnalysis.declaration(value).viableProtocols
                     else ->
-                        selector.select(this, assignment)
+                        selector.viableProtocols(this)
                 }
             }
 
-            private val DeclarationNode.possibleProtocols: Set<Protocol> by attribute {
-                selector.select(this, assignment)
+            private val DeclarationNode.viableProtocols: Set<Protocol> by attribute {
+                selector.viableProtocols(this)
             }
 
-            fun possibleProtocols(node: LetNode) = node.possibleProtocols
+            fun viableProtocols(node: LetNode) = node.viableProtocols
 
-            fun possibleProtocols(node: DeclarationNode) = node.possibleProtocols
+            fun viableProtocols(node: DeclarationNode) = node.viableProtocols
         }
 
         fun traverse(node: Node) {
             when (node) {
                 is LetNode -> {
+                    constraints = And(constraints, selector.constraint(node))
                     // TODO: proper error class
-                    val p = protocolSelection.possibleProtocols(node).sortedBy(protocolCost)
+                    val p = protocolSelection.viableProtocols(node).sortedBy(protocolCost)
                         .firstOrNull() ?: error("protocol not found!")
                     assert(p.authority(hostTrustConfiguration).actsFor(informationFlowAnalysis.label(node)))
                     assignment = assignment.put(node.temporary.value, p)
                 }
                 is DeclarationNode -> {
+                    constraints = And(constraints, selector.constraint(node))
                     // TODO: proper error class
-                    val p = protocolSelection.possibleProtocols(node).sortedBy(protocolCost)
+                    val p = protocolSelection.viableProtocols(node).sortedBy(protocolCost)
                         .firstOrNull() ?: error("protocol not found!")
                     assert(p.authority(hostTrustConfiguration).actsFor(informationFlowAnalysis.label(node)))
                     assignment = assignment.put(node.variable.value, p)
@@ -69,6 +76,8 @@ class SimpleSelection(val selector: ProtocolSelector, val protocolCost: (Protoco
             node.children.forEach(::traverse)
         }
         traverse(processDeclaration)
-        return assignment::getValue
+        val f = assignment::getValue
+        assert(constraints.evaluate(f))
+        return f
     }
 }

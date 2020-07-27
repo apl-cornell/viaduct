@@ -8,7 +8,6 @@ import edu.cornell.cs.apl.viaduct.syntax.Host
 import edu.cornell.cs.apl.viaduct.syntax.HostTrustConfiguration
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
 import edu.cornell.cs.apl.viaduct.syntax.SpecializedProtocol
-import edu.cornell.cs.apl.viaduct.syntax.Variable
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.DeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.LetNode
 import edu.cornell.cs.apl.viaduct.util.subsequences
@@ -54,7 +53,7 @@ class ABYSelector(
         }
     }
 
-    override fun select(node: LetNode, currentAssignment: Map<Variable, Protocol>): Set<Protocol> {
+    override fun viableProtocols(node: LetNode): Set<Protocol> {
         if (node.isApplicable()) {
             return protocols.filter { it.authority.actsFor(informationFlowAnalysis.label(node)) }.map { it.protocol }
                 .toSet()
@@ -63,7 +62,7 @@ class ABYSelector(
         }
     }
 
-    override fun select(node: DeclarationNode, currentAssignment: Map<Variable, Protocol>): Set<Protocol> {
+    override fun viableProtocols(node: DeclarationNode): Set<Protocol> {
         if (node.isApplicable()) {
             return protocols.filter { it.authority.actsFor(informationFlowAnalysis.label(node)) }.map { it.protocol }
                 .toSet()

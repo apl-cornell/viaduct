@@ -128,6 +128,20 @@ public class ViaductABYParty {
     return (cPtr == 0) ? null : new CircuitGate(cPtr, false);
   }
 
+  public CircuitGate PutMUXGate(CircuitGate guard, CircuitGate lhs, CircuitGate rhs) {
+    long cPtr =
+        ViaductABYJNI.ViaductABYParty_PutMUXGate(
+            swigCPtr,
+            this,
+            CircuitGate.getCPtr(guard),
+            guard,
+            CircuitGate.getCPtr(lhs),
+            lhs,
+            CircuitGate.getCPtr(rhs),
+            rhs);
+    return (cPtr == 0) ? null : new CircuitGate(cPtr, false);
+  }
+
   public int ExecCircuit(CircuitGate out, ABYRole out_role) {
     return ViaductABYJNI.ViaductABYParty_ExecCircuit__SWIG_0(
         swigCPtr, this, CircuitGate.getCPtr(out), out, out_role.swigValue());

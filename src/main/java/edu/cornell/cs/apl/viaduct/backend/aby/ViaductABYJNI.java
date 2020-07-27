@@ -129,6 +129,22 @@ public class ViaductABYJNI {
 
   public static final native void delete_OrGate(long jarg1);
 
+  public static final native long new_MuxGate(
+      long jarg1,
+      CircuitGate jarg1_,
+      long jarg2,
+      CircuitGate jarg2_,
+      long jarg3,
+      CircuitGate jarg3_);
+
+  public static final native void MuxGate_AddChildrenToTraversal(
+      long jarg1, MuxGate jarg1_, long jarg2);
+
+  public static final native long MuxGate_BuildGate(
+      long jarg1, MuxGate jarg1_, long jarg2, long jarg3, CircuitBuilders jarg3_);
+
+  public static final native void delete_MuxGate(long jarg1);
+
   public static final native long new_ViaductABYParty__SWIG_0(
       int jarg1, String jarg2, int jarg3, long jarg4, long jarg5, long jarg6);
 
@@ -210,6 +226,16 @@ public class ViaductABYJNI {
       long jarg3,
       CircuitGate jarg3_);
 
+  public static final native long ViaductABYParty_PutMUXGate(
+      long jarg1,
+      ViaductABYParty jarg1_,
+      long jarg2,
+      CircuitGate jarg2_,
+      long jarg3,
+      CircuitGate jarg3_,
+      long jarg4,
+      CircuitGate jarg4_);
+
   public static final native int ViaductABYParty_ExecCircuit__SWIG_0(
       long jarg1, ViaductABYParty jarg1_, long jarg2, CircuitGate jarg2_, int jarg3);
 
@@ -241,4 +267,6 @@ public class ViaductABYJNI {
   public static final native long XorGate_SWIGUpcast(long jarg1);
 
   public static final native long OrGate_SWIGUpcast(long jarg1);
+
+  public static final native long MuxGate_SWIGUpcast(long jarg1);
 }

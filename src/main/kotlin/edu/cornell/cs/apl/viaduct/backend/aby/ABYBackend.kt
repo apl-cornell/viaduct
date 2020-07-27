@@ -42,7 +42,18 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.ReceiveNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.SendNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.UpdateNode
 import edu.cornell.cs.apl.viaduct.syntax.operators.Addition
+import edu.cornell.cs.apl.viaduct.syntax.operators.And
+import edu.cornell.cs.apl.viaduct.syntax.operators.EqualTo
+import edu.cornell.cs.apl.viaduct.syntax.operators.LessThan
+import edu.cornell.cs.apl.viaduct.syntax.operators.LessThanOrEqualTo
+import edu.cornell.cs.apl.viaduct.syntax.operators.Maximum
+import edu.cornell.cs.apl.viaduct.syntax.operators.Minimum
 import edu.cornell.cs.apl.viaduct.syntax.operators.Multiplication
+import edu.cornell.cs.apl.viaduct.syntax.operators.Mux
+import edu.cornell.cs.apl.viaduct.syntax.operators.Negation
+import edu.cornell.cs.apl.viaduct.syntax.operators.Not
+import edu.cornell.cs.apl.viaduct.syntax.operators.Or
+import edu.cornell.cs.apl.viaduct.syntax.operators.Subtraction
 import edu.cornell.cs.apl.viaduct.syntax.types.BooleanType
 import edu.cornell.cs.apl.viaduct.syntax.types.ImmutableCellType
 import edu.cornell.cs.apl.viaduct.syntax.types.IntegerType
@@ -319,31 +330,54 @@ private class ABYInterpreter(
 
     fun operatorToCircuit(operator: Operator, arguments: List<CircuitGate>): CircuitGate {
         return when (operator) {
-            // is Negation ->
+            is Negation -> aby.PutSUBGate(aby.PutCONSTGate(0), arguments[0])
 
             is Addition -> aby.PutADDGate(arguments[0], arguments[1])
 
-            // is Subtraction ->
+            is Subtraction -> aby.PutSUBGate(arguments[0], arguments[1])
 
             is Multiplication -> aby.PutMULGate(arguments[0], arguments[1])
 
-            // is Minimum ->
+            is Minimum ->
+                aby.PutMUXGate(
+                    aby.PutGTGate(arguments[0], arguments[1]),
+                    arguments[1],
+                    arguments[0]
+                )
 
-            // is Maximum ->
+            is Maximum ->
+                aby.PutMUXGate(
+                    aby.PutGTGate(arguments[0], arguments[1]),
+                    arguments[0],
+                    arguments[1]
+                )
 
-            // is Not ->
+            // TODO: check if INV gate is actually NOT
+            is Not -> aby.PutINVGate(arguments[0])
 
-            // is And ->
+            is And -> aby.PutANDGate(arguments[0], arguments[1])
 
-            // is Or ->
+            is Or -> aby.PutORGate(arguments[0], arguments[1])
 
-            // is EqualTo ->
+            // (a == b) <--> (a <= b && b <= a)
+            is EqualTo ->
+                aby.PutANDGate(
+                    aby.PutINVGate(
+                        aby.PutGTGate(arguments[0], arguments[1])
+                    ),
+                    aby.PutINVGate(
+                        aby.PutGTGate(arguments[1], arguments[0])
+                    )
+                )
 
-            // is LessThan ->
+            is LessThan -> aby.PutGTGate(arguments[1], arguments[0])
 
-            // is LessThanOrEqualTo ->
+            is LessThanOrEqualTo ->
+                aby.PutINVGate(
+                    aby.PutGTGate(arguments[0], arguments[1])
+                )
 
-            // is Mux ->
+            is Mux -> aby.PutMUXGate(arguments[0], arguments[1], arguments[2])
 
             else -> throw Exception("operator $operator not supported by ABY backend")
         }

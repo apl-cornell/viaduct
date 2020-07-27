@@ -58,6 +58,9 @@ class BackendInterpreter(
                     if (protocol.hosts.contains(host)) {
                         backendMap[protocol.protocolName]?.let { backend: ProtocolBackend ->
                             val projection = ProtocolProjection(protocol, host)
+
+                            backend.initialize(connectionMap, projection)
+
                             runtime.registerProcess(projection) {
                                 backend.run(
                                     nameAnalysis, typeAnalysis,

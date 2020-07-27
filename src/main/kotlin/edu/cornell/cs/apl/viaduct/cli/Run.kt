@@ -7,7 +7,9 @@ import edu.cornell.cs.apl.viaduct.analysis.NameAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.TypeAnalysis
 import edu.cornell.cs.apl.viaduct.backend.BackendInterpreter
 import edu.cornell.cs.apl.viaduct.backend.PlaintextBackend
+import edu.cornell.cs.apl.viaduct.backend.aby.ABYBackend
 import edu.cornell.cs.apl.viaduct.passes.elaborated
+import edu.cornell.cs.apl.viaduct.protocols.ABYFactory
 import edu.cornell.cs.apl.viaduct.protocols.LocalFactory
 import edu.cornell.cs.apl.viaduct.protocols.ReplicationFactory
 import edu.cornell.cs.apl.viaduct.syntax.Host
@@ -16,21 +18,23 @@ import java.io.File
 
 class Run : CliktCommand(help = "Run compiled protocol for a single host") {
     private val hostName by
-        argument(
-            "HOSTNAME",
-            help = "Host that will run the protocol."
-        )
+    argument(
+        "HOSTNAME",
+        help = "Host that will run the protocol."
+    )
 
     val input: File? by inputProgram()
 
     private fun registerProtocols(protocolParser: ProtocolParser) {
         protocolParser.registerProtocolFactory(LocalFactory())
         protocolParser.registerProtocolFactory(ReplicationFactory())
-        // protocolParser.registerProtocolFactory(MPCWithAbortFactory())
+        protocolParser.registerProtocolFactory(ABYFactory())
+        ABYBackend()
     }
 
     private fun registerBackends(interpreter: BackendInterpreter) {
         interpreter.registerBackend(PlaintextBackend())
+        interpreter.registerBackend(ABYBackend())
     }
 
     override fun run() {

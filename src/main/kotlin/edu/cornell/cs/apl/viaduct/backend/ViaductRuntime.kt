@@ -15,6 +15,8 @@ import java.io.OutputStream
 import java.net.ConnectException
 import java.net.ServerSocket
 import java.net.Socket
+import java.util.Scanner
+import kotlin.random.Random.Default.nextInt
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
@@ -166,6 +168,8 @@ class ViaductRuntime(
     private val processBodyMap: MutableMap<Process, ProcessBody> = mutableMapOf()
     private val channelMap: Map<Process, Map<Process, Channel<Value>>>
 
+    private val stdinScanner: Scanner = Scanner(System.`in`)
+
     companion object {
         // output buffer for channels
         private const val CHANNEL_CAPACITY: Int = 100
@@ -276,8 +280,8 @@ class ViaductRuntime(
 
     suspend fun input(): Value {
         return withContext(Dispatchers.IO) {
-            // fix this
-            IntegerValue(readLine()!!.toInt())
+            // TODO: support booleans as well
+            IntegerValue(stdinScanner.nextInt())
         }
     }
 

@@ -55,7 +55,7 @@ import edu.cornell.cs.apl.viaduct.syntax.values.IntegerValue
 import edu.cornell.cs.apl.viaduct.syntax.values.Value
 import kotlinx.collections.immutable.persistentListOf
 
-class ABYBackend(
+class ABYCPPBackend(
     val nameAnalysis: NameAnalysis,
     val typeAnalysis: TypeAnalysis
 ) : CppBuilder(), CppBackend {

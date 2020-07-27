@@ -18,7 +18,7 @@ class ABY(hosts: Set<Host>) : MPCProtocol, SymmetricProtocol(hosts) {
     }
 
     companion object {
-        const val protocolName = "MPCWithAbort"
+        const val protocolName = "ABY"
     }
 
     override val protocolName: String

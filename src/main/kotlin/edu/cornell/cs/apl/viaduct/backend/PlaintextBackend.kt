@@ -3,7 +3,6 @@ package edu.cornell.cs.apl.viaduct.backend
 import edu.cornell.cs.apl.viaduct.analysis.NameAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.TypeAnalysis
 import edu.cornell.cs.apl.viaduct.errors.UndefinedNameError
-import edu.cornell.cs.apl.viaduct.errors.UnknownMethodError
 import edu.cornell.cs.apl.viaduct.errors.ViaductInterpreterError
 import edu.cornell.cs.apl.viaduct.protocols.Local
 import edu.cornell.cs.apl.viaduct.protocols.Replication
@@ -12,11 +11,7 @@ import edu.cornell.cs.apl.viaduct.syntax.Host
 import edu.cornell.cs.apl.viaduct.syntax.ObjectVariable
 import edu.cornell.cs.apl.viaduct.syntax.ObjectVariableNode
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
-import edu.cornell.cs.apl.viaduct.syntax.QueryNameNode
 import edu.cornell.cs.apl.viaduct.syntax.Temporary
-import edu.cornell.cs.apl.viaduct.syntax.UpdateNameNode
-import edu.cornell.cs.apl.viaduct.syntax.datatypes.Get
-import edu.cornell.cs.apl.viaduct.syntax.datatypes.Modify
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.BlockNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.BreakNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.DeclarationNode
@@ -58,8 +53,7 @@ class PlaintextBackend : ProtocolBackend {
     ) {
         val interpreter =
             PlaintextInterpreter(
-                nameAnalysis,
-                typeAnalysis,
+                nameAnalysis, typeAnalysis,
                 ViaductProcessRuntime(runtime, projection),
                 program,
                 projection
@@ -69,114 +63,8 @@ class PlaintextBackend : ProtocolBackend {
             interpreter.run(process)
         } catch (signal: LoopBreakSignal) {
             throw ViaductInterpreterError(
-                "uncaught loop break signal with jump label ${signal.jumpLabel}", signal.breakNode)
-        }
-    }
-}
-
-sealed class PlaintextClassObject(
-    protected val objectName: ObjectVariableNode,
-    protected val objectType: ObjectType
-) {
-    abstract fun query(query: QueryNameNode, arguments: List<Value>): Value
-
-    abstract fun update(update: UpdateNameNode, arguments: List<Value>)
-}
-
-class ImmutableCellObject(
-    val value: Value,
-    objectName: ObjectVariableNode,
-    objectType: ObjectType
-) : PlaintextClassObject(objectName, objectType) {
-    override fun query(query: QueryNameNode, arguments: List<Value>): Value {
-        return when (query.value) {
-            is Get -> value
-
-            else -> {
-                throw UnknownMethodError(objectName, query, objectType, arguments.map { arg -> arg.type })
-            }
-        }
-    }
-
-    override fun update(update: UpdateNameNode, arguments: List<Value>) {
-        throw UnknownMethodError(objectName, update, objectType, arguments.map { arg -> arg.type })
-    }
-}
-
-class MutableCellObject(
-    var value: Value,
-    objectName: ObjectVariableNode,
-    objectType: ObjectType
-) : PlaintextClassObject(objectName, objectType) {
-    override fun query(query: QueryNameNode, arguments: List<Value>): Value {
-        return when (query.value) {
-            is Get -> value
-
-            else -> {
-                throw UnknownMethodError(objectName, query, objectType, arguments.map { arg -> arg.type })
-            }
-        }
-    }
-
-    override fun update(update: UpdateNameNode, arguments: List<Value>) {
-        value = when (update.value) {
-            is edu.cornell.cs.apl.viaduct.syntax.datatypes.Set -> {
-                arguments[0]
-            }
-
-            is Modify -> {
-                update.value.operator.apply(value, arguments[0])
-            }
-
-            else -> {
-                throw UnknownMethodError(objectName, update, objectType, arguments.map { arg -> arg.type })
-            }
-        }
-    }
-}
-
-class VectorObject(
-    val size: Int,
-    defaultValue: Value,
-    objectName: ObjectVariableNode,
-    objectType: ObjectType
-) : PlaintextClassObject(objectName, objectType) {
-    val values: MutableList<Value> = mutableListOf()
-
-    init {
-        for (i: Int in 0 until size) {
-            values.add(defaultValue)
-        }
-    }
-
-    override fun query(query: QueryNameNode, arguments: List<Value>): Value {
-        return when (query.value) {
-            is Get -> {
-                val index = arguments[0] as IntegerValue
-                values[index.value]
-            }
-
-            else -> {
-                throw UnknownMethodError(objectName, query, objectType, arguments.map { arg -> arg.type })
-            }
-        }
-    }
-
-    override fun update(update: UpdateNameNode, arguments: List<Value>) {
-        val index = arguments[0] as IntegerValue
-
-        values[index.value] = when (update.value) {
-            is edu.cornell.cs.apl.viaduct.syntax.datatypes.Set -> {
-                arguments[1]
-            }
-
-            is Modify -> {
-                update.value.operator.apply(values[index.value], arguments[1])
-            }
-
-            else -> {
-                throw UnknownMethodError(objectName, update, objectType, arguments.map { arg -> arg.type })
-            }
+                "uncaught loop break signal with jump label ${signal.jumpLabel}", signal.breakNode
+            )
         }
     }
 }
@@ -271,7 +159,8 @@ private class PlaintextInterpreter(
 
                             else -> {
                                 throw ViaductInterpreterError(
-                                    "cannot receive from protocol ${sendProtocol.name} to $projection")
+                                    "cannot receive from protocol ${sendProtocol.name} to $projection"
+                                )
                             }
                         }
                     }
@@ -309,7 +198,8 @@ private class PlaintextInterpreter(
                     }
 
                     else -> throw ViaductInterpreterError(
-                        "cannot receive from protocol $sendProtocol from $projection")
+                        "cannot receive from protocol $sendProtocol from $projection"
+                    )
                 }
             }
         }

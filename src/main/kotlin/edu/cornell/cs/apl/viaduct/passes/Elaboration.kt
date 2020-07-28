@@ -9,6 +9,7 @@ import edu.cornell.cs.apl.viaduct.syntax.ObjectVariable
 import edu.cornell.cs.apl.viaduct.syntax.ObjectVariableNode
 import edu.cornell.cs.apl.viaduct.syntax.Temporary
 import edu.cornell.cs.apl.viaduct.syntax.TemporaryNode
+import edu.cornell.cs.apl.viaduct.syntax.datatypes.Get
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.AssertionNode as IAssertionNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.AtomicExpressionNode as IAtomicExpressionNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.BlockNode as IBlockNode
@@ -109,7 +110,8 @@ private class StatementElaborator(
         const val LOOP_NAME = "loop"
     }
 
-    constructor() : this(FreshNameGenerator(), NameMap(), NameMap(), NameMap(), null)
+    constructor() :
+        this(FreshNameGenerator(), NameMap(), NameMap(), NameMap(), null)
 
     private fun copy(
         jumpLabelRenames: NameMap<JumpLabel, JumpLabel> = this.jumpLabelRenames,
@@ -159,16 +161,34 @@ private class StatementElaborator(
                     sourceLocation
                 )
 
-            is SQueryNode ->
-                IQueryNode(
-                    ObjectVariableNode(objectRenames[variable], variable.sourceLocation),
-                    query,
-                    Arguments(
-                        arguments.map { it.toAnf(bindings).toAtomic(bindings) },
-                        arguments.sourceLocation
-                    ),
-                    sourceLocation
-                )
+            // this is extremely hacky---since the parser can't recognize temporary reads,
+            // we must interpret some query nodes as temporary reads
+            is SQueryNode -> {
+                val oldTemporary = TemporaryNode(Temporary(variable.value.name), variable.sourceLocation)
+
+                return when {
+                    objectRenames.contains(variable) -> {
+                        IQueryNode(
+                            ObjectVariableNode(objectRenames[variable], variable.sourceLocation),
+                            query,
+                            Arguments(
+                                arguments.map { it.toAnf(bindings).toAtomic(bindings) },
+                                arguments.sourceLocation
+                            ),
+                            sourceLocation
+                        )
+                    }
+
+                    temporaryRenames.contains(oldTemporary) &&
+                        arguments.size == 0
+                        && query.value == Get ->
+                    {
+                        IReadNode(TemporaryNode(temporaryRenames[oldTemporary], sourceLocation))
+                    }
+
+                    else -> throw Exception("unknown query")
+                }
+            }
 
             is SDeclassificationNode ->
                 IDeclassificationNode(
@@ -189,8 +209,9 @@ private class StatementElaborator(
             is SInputNode ->
                 IInputNode(type, host, sourceLocation)
 
-            is SReceiveNode ->
+            is SReceiveNode -> {
                 IReceiveNode(type, protocol, sourceLocation)
+            }
         }
     }
 

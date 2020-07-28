@@ -10,6 +10,10 @@ import edu.cornell.cs.apl.viaduct.syntax.values.HostValue
 import edu.cornell.cs.apl.viaduct.syntax.values.Value
 
 class CommitmentProtocol(val sender: Host, receivers: Set<Host>) : Protocol() {
+    companion object {
+        val protocolName = ProtocolName("Commitment")
+    }
+
     init {
         require(receivers.size >= 2)
         require(!receivers.contains(sender))
@@ -25,8 +29,4 @@ class CommitmentProtocol(val sender: Host, receivers: Set<Host>) : Protocol() {
 
     override fun authority(hostTrustConfiguration: HostTrustConfiguration): Label =
         hostTrustConfiguration(sender) and (receivers.map { hostTrustConfiguration(it).integrity() }.reduce(Label::and))
-
-    companion object {
-        val protocolName = ProtocolName("Commitment")
-    }
 }

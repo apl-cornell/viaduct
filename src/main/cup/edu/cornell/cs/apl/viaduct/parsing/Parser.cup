@@ -147,7 +147,7 @@ terminal COLON;
 terminal EQ;
 terminal PLUSEQ, MINUSEQ, TIMESEQ, DIVIDEEQ;
 terminal LET, VAL, VAR;
-terminal IF, ELSE, WHILE, FOR, BREAK;
+terminal IF, ELSE, WHILE, FOR, LOOP, BREAK;
 terminal INPUT, RECEIVE, FROM, OUTPUT, SEND, TO;
 terminal ASSERT;
 
@@ -261,6 +261,14 @@ simple_stmt ::=
       RESULT = indexing.modify(op, e, location(opleft, opright));
     :}
 
+  /* let binding */
+  | LET:begin IDENT:id EQ expr:e {:
+    RESULT = new LetNode(
+      new Located(new Temporary(id), location(idleft, idright)),
+      e,
+      location(beginleft, eright));
+    :}
+
   | OUTPUT:begin expr:message TO host:recipient {:
       RESULT = new OutputNode(message, recipient, location(beginleft, recipientright));
     :}
@@ -306,6 +314,10 @@ stmt ::=
 
   | FOR:begin OPEN_PAREN simple_stmt:initialize SEMICOLON expr:guard SEMICOLON simple_stmt:update CLOSE_PAREN block:body {:
       RESULT = new ForLoopNode(initialize, guard, update, body, null, location(beginleft, bodyright));
+    :}
+
+  | LOOP:begin block:body {:
+      RESULT = new InfiniteLoopNode(body, null, location(beginleft, bodyright));
     :}
 
   | BREAK:brk SEMICOLON {:

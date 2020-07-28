@@ -6,7 +6,7 @@ buildscript {
 
 plugins {
     application
-    kotlin("jvm") version "1.3.61"
+    kotlin("jvm") version "1.3.71"
     id("org.jetbrains.dokka") version "0.10.1"
 
     // Style checking
@@ -47,6 +47,9 @@ dependencies {
     // Functional data structures
     implementation("io.vavr:vavr:1.0.0-alpha-3")
     implementation("org.jetbrains.kotlinx:kotlinx-collections-immutable-jvm:0.3")
+
+    // coroutines
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.3.8")
 
     // Google's Guava (core data structures)
     implementation("com.google.guava:guava:29.0-jre")

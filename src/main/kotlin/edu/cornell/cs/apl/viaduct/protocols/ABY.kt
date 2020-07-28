@@ -15,6 +15,10 @@ import edu.cornell.cs.apl.viaduct.syntax.values.Value
  * In return, availability may be lost even with a single corrupted participant.
  */
 class ABY(hosts: Set<Host>) : Protocol() {
+    companion object {
+        val protocolName = ProtocolName("ABY")
+    }
+
     init {
         require(hosts.size >= 2)
     }
@@ -29,8 +33,4 @@ class ABY(hosts: Set<Host>) : Protocol() {
 
     override fun authority(hostTrustConfiguration: HostTrustConfiguration): Label =
         hosts.map { hostTrustConfiguration(it) }.reduce(Label::and)
-
-    companion object {
-        val protocolName = ProtocolName("ABY")
-    }
 }

@@ -1,7 +1,6 @@
 package edu.cornell.cs.apl.viaduct.cli
 
 import com.github.ajalt.clikt.core.CliktCommand
-import com.github.ajalt.clikt.parameters.options.flag
 import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.types.file
 import edu.cornell.cs.apl.attributes.Tree
@@ -10,10 +9,6 @@ import edu.cornell.cs.apl.viaduct.analysis.NameAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.ProtocolAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.TypeAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.main
-import edu.cornell.cs.apl.viaduct.backend.ABYBackend
-import edu.cornell.cs.apl.viaduct.backend.BackendCompiler
-import edu.cornell.cs.apl.viaduct.backend.CommitmentBackend
-import edu.cornell.cs.apl.viaduct.backend.PlaintextCppBackend
 import edu.cornell.cs.apl.viaduct.passes.elaborated
 import edu.cornell.cs.apl.viaduct.passes.splitMain
 import edu.cornell.cs.apl.viaduct.selection.SimpleSelection
@@ -52,12 +47,6 @@ class Compile : CliktCommand(help = "Compile ideal protocol to secure distribute
         """
     ).file(canBeDir = false)
 
-    val intermediate by option(
-        "-i",
-        "--intermediate",
-        help = "Output intermediate representation instead of generating an executable"
-    ).flag(default = false)
-
     override fun run() {
         val program = input.parse().elaborated()
 
@@ -85,16 +74,7 @@ class Compile : CliktCommand(help = "Compile ideal protocol to secure distribute
 
         // Split the program.
         val splitProgram: ProgramNode = program.splitMain(protocolAnalysis, typeAnalysis)
-
-        if (!intermediate) {
-            val backendCompiler = BackendCompiler(nameAnalysis, typeAnalysis)
-            backendCompiler.registerBackend(PlaintextCppBackend(nameAnalysis, typeAnalysis))
-            backendCompiler.registerBackend(ABYBackend(nameAnalysis, typeAnalysis))
-            backendCompiler.registerBackend(CommitmentBackend(nameAnalysis, typeAnalysis))
-            backendCompiler.compile(splitProgram, output)
-        } else {
-            output.println(splitProgram)
-        }
+        output.println(splitProgram)
     }
 }
 

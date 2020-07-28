@@ -18,6 +18,10 @@ import edu.cornell.cs.apl.viaduct.syntax.values.Value
  * @param identifier Names and distinguishes different instances.
  */
 class Ideal(private val identifier: String) : Protocol() {
+    companion object {
+        val protocolName = ProtocolName("Ideal")
+    }
+
     override val protocolName: ProtocolName
         get() = Ideal.protocolName
 
@@ -29,8 +33,4 @@ class Ideal(private val identifier: String) : Protocol() {
 
     override val asDocument: Document
         get() = Document(identifier)
-
-    companion object {
-        val protocolName = ProtocolName("Ideal")
-    }
 }

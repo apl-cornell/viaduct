@@ -14,6 +14,10 @@ import edu.cornell.cs.apl.viaduct.syntax.values.Value
  * This protocol has exactly the authority and the capabilities of the host it is tied to.
  */
 class Local(val host: Host) : Protocol() {
+    companion object {
+        val protocolName = ProtocolName("Local")
+    }
+
     override val protocolName: ProtocolName
         get() = Local.protocolName
 
@@ -22,8 +26,4 @@ class Local(val host: Host) : Protocol() {
 
     override fun authority(hostTrustConfiguration: HostTrustConfiguration): Label =
         hostTrustConfiguration(host)
-
-    companion object {
-        val protocolName = ProtocolName("Local")
-    }
 }

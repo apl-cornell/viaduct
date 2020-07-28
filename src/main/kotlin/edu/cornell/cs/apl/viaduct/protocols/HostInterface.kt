@@ -19,6 +19,10 @@ import edu.cornell.cs.apl.viaduct.syntax.values.Value
  * communication with an instance of this protocol is replaced with communication with the actual participating host.
  */
 data class HostInterface(val host: Host) : Protocol() {
+    companion object {
+        val protocolName = ProtocolName("Host")
+    }
+
     override val protocolName: ProtocolName
         get() = HostInterface.protocolName
 
@@ -30,8 +34,4 @@ data class HostInterface(val host: Host) : Protocol() {
 
     override val asDocument: Document
         get() = protocolName + listOf(host).tupled()
-
-    companion object {
-        val protocolName = ProtocolName("Host")
-    }
 }

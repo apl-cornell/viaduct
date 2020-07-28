@@ -9,6 +9,7 @@ import edu.cornell.cs.apl.viaduct.security.Label
 import edu.cornell.cs.apl.viaduct.syntax.values.HostSetValue
 import edu.cornell.cs.apl.viaduct.syntax.values.HostValue
 import edu.cornell.cs.apl.viaduct.syntax.values.Value
+import edu.cornell.cs.apl.viaduct.util.asComparable
 
 /**
  * An abstract location where computations can be placed.
@@ -19,7 +20,7 @@ import edu.cornell.cs.apl.viaduct.syntax.values.Value
  * A protocol is a [ProtocolName] applied to a sequence of named arguments.
  * The name and the arguments uniquely determine the protocol (see [Protocol.equals]).
  */
-abstract class Protocol : Name {
+abstract class Protocol : Name, Comparable<Protocol> {
     /** The name of the (cryptographic) protocol. */
     abstract val protocolName: ProtocolName
 
@@ -62,6 +63,43 @@ abstract class Protocol : Name {
 
     final override fun hashCode(): Int =
         Pair(protocolName, arguments).hashCode()
+
+    final override fun compareTo(other: Protocol): Int {
+        if (protocolName != other.protocolName) {
+            return protocolName.name.compareTo(other.protocolName.name)
+        } else {
+            assert(arguments.keys == other.arguments.keys)
+
+            val sortedKeys: List<String> = arguments.keys.sorted()
+            for (key: String in sortedKeys) {
+                val hostCmp: Int =
+                    // only compare host and hostSets
+                    when (val thisValue = arguments[key]) {
+                        is HostValue -> {
+                            val otherValue: HostValue = other.arguments[key] as HostValue
+                            thisValue.value.compareTo(otherValue.value)
+                        }
+
+                        is HostSetValue -> {
+                            val otherValue: HostSetValue = other.arguments[key] as HostSetValue
+                            thisValue.hosts.asComparable().compareTo(otherValue.hosts)
+                        }
+
+                        else -> 0
+                    }
+
+                // values are equal; check next pair of values
+                if (hostCmp == 0) {
+                    continue
+                } else {
+                    return hostCmp
+                }
+            }
+
+            // all keys are equal
+            return 0
+        }
+    }
 }
 
 /**

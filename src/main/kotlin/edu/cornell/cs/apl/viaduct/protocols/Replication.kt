@@ -15,6 +15,10 @@ import edu.cornell.cs.apl.viaduct.syntax.values.Value
  * Additionally, availability is lost if _any_ participating host aborts.
  */
 class Replication(hosts: Set<Host>) : Protocol() {
+    companion object {
+        val protocolName = ProtocolName("Replication")
+    }
+
     init {
         require(hosts.size >= 2)
     }
@@ -29,8 +33,4 @@ class Replication(hosts: Set<Host>) : Protocol() {
 
     override fun authority(hostTrustConfiguration: HostTrustConfiguration): Label =
         hosts.map { hostTrustConfiguration(it) }.reduce(Label::meet)
-
-    companion object {
-        val protocolName = ProtocolName("Replication")
-    }
 }

@@ -7,6 +7,7 @@ import edu.cornell.cs.apl.viaduct.protocols.Replication
 import edu.cornell.cs.apl.viaduct.syntax.Host
 import edu.cornell.cs.apl.viaduct.syntax.Operator
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
+import edu.cornell.cs.apl.viaduct.syntax.ProtocolName
 import edu.cornell.cs.apl.viaduct.syntax.Temporary
 import edu.cornell.cs.apl.viaduct.syntax.datatypes.Get
 import edu.cornell.cs.apl.viaduct.syntax.datatypes.Modify
@@ -67,7 +68,7 @@ open class PlaintextCppBackend(
     private val localProcessType = CppTypeName("LocalProcess")
     private val replicationProcessType = CppTypeName("ReplicatedProcess")
 
-    override val supportedProtocols: Set<String>
+    override val supportedProtocols: Set<ProtocolName>
         get() = setOf(Local.protocolName, Replication.protocolName)
 
     override val extraStartArguments: List<CppFormalDecl>

@@ -1,12 +1,11 @@
 package edu.cornell.cs.apl.viaduct.protocols
 
-import edu.cornell.cs.apl.prettyprinting.Document
 import edu.cornell.cs.apl.viaduct.passes.specification
 import edu.cornell.cs.apl.viaduct.security.Label
-import edu.cornell.cs.apl.viaduct.syntax.Host
 import edu.cornell.cs.apl.viaduct.syntax.HostTrustConfiguration
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
-import kotlinx.collections.immutable.persistentSetOf
+import edu.cornell.cs.apl.viaduct.syntax.ProtocolName
+import edu.cornell.cs.apl.viaduct.syntax.values.Value
 
 /**
  * The protocol that represents the adversary interface.
@@ -16,19 +15,13 @@ import kotlinx.collections.immutable.persistentSetOf
  *
  * @see specification
  */
-object Adversary : Protocol {
-    override val protocolName: String
-        get() = "Adversary"
+object Adversary : Protocol() {
+    override val protocolName: ProtocolName
+        get() = ProtocolName("Adversary")
 
-    override val hosts: Set<Host>
-        get() = persistentSetOf()
+    override val arguments: Map<String, Value>
+        get() = mapOf()
 
     override fun authority(hostTrustConfiguration: HostTrustConfiguration): Label =
         throw UnsupportedOperationException()
-
-    override val name: String
-        get() = protocolName
-
-    override val asDocument: Document
-        get() = Document(protocolName)
 }

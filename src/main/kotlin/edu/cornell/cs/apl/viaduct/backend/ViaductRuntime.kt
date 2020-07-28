@@ -159,7 +159,7 @@ typealias ProcessBody = suspend (ViaductRuntime) -> Unit
 class ViaductRuntime(
     programNode: ProgramNode,
     hostConnectionInfo: Map<Host, HostAddress>,
-    val processBodyMap: Map<Process, ProcessBody>,
+    private val processBodyMap: Map<Process, ProcessBody>,
     val host: Host
 ) {
     private val processInfoMap: Map<Process, ProcessInfo>
@@ -332,7 +332,11 @@ class ViaductRuntime(
 
     fun start() {
         // check if all processes have registered bodies
-        assert(processBodyMap.keys.containsAll(processInfoMap.keys))
+        assert(
+            processBodyMap.keys.containsAll(
+                processInfoMap.keys.filter { k -> k.host == host }
+            )
+        )
 
         val connectionMap: Map<Host, Socket> = createRemoteConnections()
 

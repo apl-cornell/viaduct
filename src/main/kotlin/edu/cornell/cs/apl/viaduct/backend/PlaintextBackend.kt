@@ -34,6 +34,7 @@ import java.util.Stack
 import kotlinx.collections.immutable.PersistentMap
 import kotlinx.collections.immutable.persistentMapOf
 
+/** Backend for Local and Replication protocols. */
 class PlaintextBackend(
     private val typeAnalysis: TypeAnalysis
 ) : ProtocolBackend {

@@ -16,7 +16,6 @@ import java.net.ConnectException
 import java.net.ServerSocket
 import java.net.Socket
 import java.util.Scanner
-import kotlin.random.Random.Default.nextInt
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
@@ -155,17 +154,17 @@ data class ProcessInfo(
 }
 
 typealias Process = ProtocolProjection
-typealias ProcessBody = suspend () -> Unit
+typealias ProcessBody = suspend (ViaductRuntime) -> Unit
 
 class ViaductRuntime(
     programNode: ProgramNode,
     hostConnectionInfo: Map<Host, HostAddress>,
+    val processBodyMap: Map<Process, ProcessBody>,
     val host: Host
 ) {
     private val processInfoMap: Map<Process, ProcessInfo>
     private val hostInfoMap: Map<Host, HostInfo>
 
-    private val processBodyMap: MutableMap<Process, ProcessBody> = mutableMapOf()
     private val channelMap: Map<Process, Map<Process, Channel<Value>>>
 
     private val stdinScanner: Scanner = Scanner(System.`in`)
@@ -247,18 +246,10 @@ class ViaductRuntime(
     }
 
     fun getHostById(id: HostId): HostInfo =
-        hostInfoMap.values
-            .filter { hinfo -> hinfo.id == id }
-            .first()
+        hostInfoMap.values.first { hinfo -> hinfo.id == id }
 
     fun getProcessById(id: ProcessId): ProcessInfo =
-        processInfoMap.values
-            .filter { pinfo -> pinfo.id == id }
-            .first()
-
-    fun registerProcess(process: Process, body: ProcessBody) {
-        processBodyMap[process] = body
-    }
+        processInfoMap.values.first { pinfo -> pinfo.id == id }
 
     suspend fun send(value: Value, sender: Process, receiver: Process) {
         if (receiver.host == host) { // local communication
@@ -369,7 +360,7 @@ class ViaductRuntime(
             val job: Job = launch {
                 for (process: Map.Entry<Process, ProcessBody> in processBodyMap) {
                     if (processInfoMap[process.key]!!.host == host) {
-                        launch { process.value() }
+                        launch { process.value(this@ViaductRuntime) }
                     }
                 }
             }

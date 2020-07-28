@@ -13,8 +13,12 @@ import com.github.ajalt.clikt.parameters.types.file
 import edu.cornell.cs.apl.prettyprinting.Document
 import edu.cornell.cs.apl.prettyprinting.PrettyPrintable
 import edu.cornell.cs.apl.prettyprinting.plus
+import edu.cornell.cs.apl.viaduct.parsing.ProtocolParser
 import edu.cornell.cs.apl.viaduct.parsing.SourceFile
+import edu.cornell.cs.apl.viaduct.parsing.defaultProtocolParsers
 import edu.cornell.cs.apl.viaduct.parsing.parse
+import edu.cornell.cs.apl.viaduct.syntax.Protocol
+import edu.cornell.cs.apl.viaduct.syntax.ProtocolName
 import edu.cornell.cs.apl.viaduct.syntax.surface.ProgramNode
 import java.io.File
 import java.io.IOException
@@ -70,11 +74,13 @@ internal fun ParameterHolder.verbosity(): OptionDelegate<Int> =
  *
  * @throws IOException
  */
-internal fun File?.parse(): ProgramNode =
+internal fun File?.parse(
+    protocolParsers: Map<ProtocolName, ProtocolParser<Protocol>> = defaultProtocolParsers
+): ProgramNode =
     (if (this == null)
         System.`in`.bufferedReader().use { SourceFile.from("<stdin>", it) }
     else
-        SourceFile.from(this)).parse()
+        SourceFile.from(this)).parse(protocolParsers)
 
 /**
  * Pretty prints [document] (plus the line separator) to [this] file. If [this] is `null`, [document] is printed to the

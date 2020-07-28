@@ -7,9 +7,6 @@ import edu.cornell.cs.apl.viaduct.syntax.JumpLabelNode
 import edu.cornell.cs.apl.viaduct.syntax.NameMap
 import edu.cornell.cs.apl.viaduct.syntax.ObjectVariable
 import edu.cornell.cs.apl.viaduct.syntax.ObjectVariableNode
-import edu.cornell.cs.apl.viaduct.syntax.Protocol
-import edu.cornell.cs.apl.viaduct.syntax.ProtocolNode
-import edu.cornell.cs.apl.viaduct.syntax.ProtocolParser
 import edu.cornell.cs.apl.viaduct.syntax.Temporary
 import edu.cornell.cs.apl.viaduct.syntax.TemporaryNode
 import edu.cornell.cs.apl.viaduct.syntax.datatypes.Get
@@ -72,7 +69,7 @@ import edu.cornell.cs.apl.viaduct.util.FreshNameGenerator
  *
  * See [Node] for the list of transformations performed.
  */
-fun SProgramNode.elaborated(protocolParser: ProtocolParser = ProtocolParser()): IProgramNode {
+fun SProgramNode.elaborated(): IProgramNode {
     val declarations = mutableListOf<ITopLevelDeclarationNode>()
     this.declarations.forEach {
         val declaration = when (it) {
@@ -85,12 +82,9 @@ fun SProgramNode.elaborated(protocolParser: ProtocolParser = ProtocolParser()): 
             }
 
             is SProcessDeclarationNode -> {
-                // parse protocol
-                val parsedProtocol: Protocol = protocolParser.parseProtocol(it.protocol.value)
-
                 IProcessDeclarationNode(
-                    ProtocolNode(parsedProtocol, it.sourceLocation),
-                    StatementElaborator(protocolParser).elaborate(it.body),
+                    it.protocol,
+                    StatementElaborator().elaborate(it.body),
                     it.sourceLocation
                 )
             }
@@ -101,7 +95,6 @@ fun SProgramNode.elaborated(protocolParser: ProtocolParser = ProtocolParser()): 
 }
 
 private class StatementElaborator(
-    private val protocolParser: ProtocolParser,
     private val nameGenerator: FreshNameGenerator,
 
     // Maps old [Name]s to their new [Name]s.
@@ -117,15 +110,14 @@ private class StatementElaborator(
         const val LOOP_NAME = "loop"
     }
 
-    constructor(protocolParser: ProtocolParser) :
-        this(protocolParser, FreshNameGenerator(), NameMap(), NameMap(), NameMap(), null)
+    constructor() :
+        this(FreshNameGenerator(), NameMap(), NameMap(), NameMap(), null)
 
     private fun copy(
         jumpLabelRenames: NameMap<JumpLabel, JumpLabel> = this.jumpLabelRenames,
         surroundingLoop: JumpLabel? = this.surroundingLoop
     ): StatementElaborator =
         StatementElaborator(
-            protocolParser,
             nameGenerator,
             NameMap(), // Temporaries are local and reset at each block.
             objectRenames,
@@ -218,13 +210,7 @@ private class StatementElaborator(
                 IInputNode(type, host, sourceLocation)
 
             is SReceiveNode -> {
-                val parsedProtocol: ProtocolNode =
-                    ProtocolNode(
-                        protocolParser.parseProtocol(protocol.value),
-                        protocol.sourceLocation
-                    )
-
-                IReceiveNode(type, parsedProtocol, sourceLocation)
+                IReceiveNode(type, protocol, sourceLocation)
             }
         }
     }
@@ -329,10 +315,7 @@ private class StatementElaborator(
                 withBindings { bindings ->
                     ISendNode(
                         stmt.message.toAnf(bindings).toAtomic(bindings),
-                        ProtocolNode(
-                            protocolParser.parseProtocol(stmt.protocol.value),
-                            stmt.protocol.sourceLocation
-                        ),
+                        stmt.protocol,
                         stmt.sourceLocation
                     )
                 }

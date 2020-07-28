@@ -4,40 +4,26 @@ import edu.cornell.cs.apl.viaduct.security.Label
 import edu.cornell.cs.apl.viaduct.syntax.Host
 import edu.cornell.cs.apl.viaduct.syntax.HostTrustConfiguration
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
-import edu.cornell.cs.apl.viaduct.syntax.ProtocolFactory
+import edu.cornell.cs.apl.viaduct.syntax.ProtocolName
+import edu.cornell.cs.apl.viaduct.syntax.values.HostValue
+import edu.cornell.cs.apl.viaduct.syntax.values.Value
 
 /**
  * The protocol that executes code on a specific host in the clear.
  *
  * This protocol has exactly the authority and the capabilities of the host it is tied to.
  */
-data class Local(val host: Host) : Protocol, SymmetricProtocol(setOf(host)) {
+class Local(val host: Host) : Protocol() {
     companion object {
-        const val protocolName = "Local"
+        val protocolName = ProtocolName("Local")
     }
 
-    override val protocolName: String
+    override val protocolName: ProtocolName
         get() = Local.protocolName
+
+    override val arguments: Map<String, Value>
+        get() = mapOf("host" to HostValue(host))
 
     override fun authority(hostTrustConfiguration: HostTrustConfiguration): Label =
         hostTrustConfiguration(host)
-
-    override fun compareTo(other: Protocol): Int {
-        return if (other is Local) {
-            host.compareTo(other.host)
-        } else {
-            protocolName.compareTo(other.protocolName)
-        }
-    }
-}
-
-class LocalFactory : ProtocolFactory {
-    override val protocolName: String
-        get() = Local.protocolName
-
-    override fun buildProtocol(participants: List<Host>): Protocol {
-        assert(participants.size == 1)
-
-        return Local(participants[0])
-    }
 }

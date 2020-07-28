@@ -7,13 +7,19 @@ import edu.cornell.cs.apl.viaduct.analysis.NameAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.TypeAnalysis
 import edu.cornell.cs.apl.viaduct.backend.BackendInterpreter
 import edu.cornell.cs.apl.viaduct.backend.PlaintextBackend
+import edu.cornell.cs.apl.viaduct.backend.ProtocolBackend
 import edu.cornell.cs.apl.viaduct.backend.aby.ABYBackend
+import edu.cornell.cs.apl.viaduct.parsing.AbyProtocolParser
+import edu.cornell.cs.apl.viaduct.parsing.LocalProtocolParser
+import edu.cornell.cs.apl.viaduct.parsing.ProtocolParser
+import edu.cornell.cs.apl.viaduct.parsing.ReplicationProtocolParser
 import edu.cornell.cs.apl.viaduct.passes.elaborated
-import edu.cornell.cs.apl.viaduct.protocols.ABYFactory
-import edu.cornell.cs.apl.viaduct.protocols.LocalFactory
-import edu.cornell.cs.apl.viaduct.protocols.ReplicationFactory
+import edu.cornell.cs.apl.viaduct.protocols.ABY
+import edu.cornell.cs.apl.viaduct.protocols.Local
+import edu.cornell.cs.apl.viaduct.protocols.Replication
 import edu.cornell.cs.apl.viaduct.syntax.Host
-import edu.cornell.cs.apl.viaduct.syntax.ProtocolParser
+import edu.cornell.cs.apl.viaduct.syntax.Protocol
+import edu.cornell.cs.apl.viaduct.syntax.ProtocolName
 import java.io.File
 
 class Run : CliktCommand(help = "Run compiled protocol for a single host") {
@@ -25,28 +31,22 @@ class Run : CliktCommand(help = "Run compiled protocol for a single host") {
 
     val input: File? by inputProgram()
 
-    private fun registerProtocols(protocolParser: ProtocolParser) {
-        protocolParser.registerProtocolFactory(LocalFactory())
-        protocolParser.registerProtocolFactory(ReplicationFactory())
-        protocolParser.registerProtocolFactory(ABYFactory())
-        ABYBackend()
-    }
+    private val protocols: Map<ProtocolName, ProtocolParser<Protocol>> =
+        mapOf(
+            Local.protocolName to LocalProtocolParser,
+            Replication.protocolName to ReplicationProtocolParser,
+            ABY.protocolName to AbyProtocolParser
+        )
 
-    private fun registerBackends(interpreter: BackendInterpreter) {
-        interpreter.registerBackend(PlaintextBackend())
-        interpreter.registerBackend(ABYBackend())
-    }
+    private val backends: List<ProtocolBackend> =
+        listOf(PlaintextBackend, ABYBackend)
 
     override fun run() {
-        val protocolParser = ProtocolParser()
-        registerProtocols(protocolParser)
-
-        val program = input.parse().elaborated(protocolParser)
+        val program = input.parse(protocols).elaborated()
         val nameAnalysis = NameAnalysis(Tree(program))
         val typeAnalysis = TypeAnalysis(nameAnalysis)
 
-        val interpreter = BackendInterpreter(nameAnalysis, typeAnalysis)
-        registerBackends(interpreter)
+        val interpreter = BackendInterpreter(nameAnalysis, typeAnalysis, backends)
 
         val host = Host(hostName)
         interpreter.run(program, host)

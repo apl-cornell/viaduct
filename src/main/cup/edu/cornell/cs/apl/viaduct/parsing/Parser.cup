@@ -13,7 +13,9 @@ import edu.cornell.cs.apl.viaduct.syntax.values.*;
 
 import java.util.List;
 import java.util.LinkedList;
+import java.util.Map;
 import kotlin.collections.CollectionsKt;
+import kotlin.Pair;
 
 import java_cup.runtime.ComplexSymbolFactory;
 import java_cup.runtime.ComplexSymbolFactory.Location;
@@ -39,6 +41,8 @@ action code {:
 :}
 
 parser code {:
+    Map<ProtocolName, ProtocolParser<Protocol>> protocolParsers;
+
     /** Generates source location information for a node given left and right character offsets. */
     private SourceRange location(int left, int right) {
         return ((Lexer) getScanner()).location(left, right);
@@ -109,6 +113,7 @@ nonterminal List<StatementNode> stmt_list;
 
 nonterminal ExpressionNode expr;
 nonterminal List<ExpressionNode> expr_list, nonempty_expr_list;
+nonterminal Located<ArgumentLabel> argument_label;
 nonterminal IndexingNode indexing;
 
 nonterminal Value value;
@@ -118,8 +123,18 @@ nonterminal Label label_expr;
 
 nonterminal Located<ObjectVariable> variable;
 nonterminal Located<Host> host;
-nonterminal List<Host> host_list;
+// nonterminal List<Located<Host>> host_list, nonempty_host_list;
+// TODO: the above type causes a parse error in the IntelliJ plugin
+nonterminal List host_list, nonempty_host_list;
+nonterminal HostSetValue host_set;
 nonterminal Located<Protocol> protocol;
+nonterminal Located<ProtocolName> protocol_name;
+// TODO: more accurate types cause parse errors in IntelliJ
+//nonterminal List<Pair<Located<ArgumentLabel>, Located<Value>>> protocol_argument_list, nonempty_protocol_argument_list;
+//nonterminal Pair<Located<ArgumentLabel>, Located<Value>> protocol_labelled_argument;
+nonterminal List protocol_argument_list, nonempty_protocol_argument_list;
+nonterminal Pair<Located, Located> protocol_labelled_argument;
+nonterminal Value protocol_argument;
 
 terminal String IDENT, CAP_IDENT;
 terminal int INT_LIT;
@@ -285,7 +300,7 @@ stmt ::=
     :}
 
   | IF:begin OPEN_PAREN expr:guard CLOSE_PAREN block:thenCase {:
-      SourceRange sourceLocation = location(beginleft , thenCaseright);
+      SourceRange sourceLocation = location(beginleft, thenCaseright);
       RESULT = new IfNode(
         guard,
         thenCase,
@@ -459,6 +474,17 @@ nonempty_expr_list ::=
     :}
   ;
 
+argument_label ::=
+    IDENT:label {:
+      RESULT = new Located(new ArgumentLabel(label), location(labelleft, labelright));
+    :}
+  /* Parse the "host" keyword as a label also. */
+  // TODO: find a more generic solution (lexer states?)
+  | HOST:label {:
+      RESULT = new Located(new ArgumentLabel("host"), location(labelleft, labelright));
+    :}
+  ;
+
 indexing ::=
     variable:var {:
       RESULT = new IndexingNode(var, new Arguments(location(varleft, varright)));
@@ -489,6 +515,7 @@ value_type ::=
     INT:type {:
       RESULT = new Located(IntegerType.INSTANCE, location(typeleft, typeright));
     :}
+
   | BOOL:type {:
       RESULT = new Located(BooleanType.INSTANCE, location(typeleft, typeright));
     :}
@@ -562,25 +589,36 @@ host ::=
   ;
 
 host_list ::=
-    | host_list:hlist COMMA host:h {:
-        hlist.add(h.getValue());
-        RESULT = hlist;
-      :}
+    nonempty_host_list:hosts COMMA host:host {:
+      hosts.add(host);
+      RESULT = hosts;
+    :}
 
-    | host:h {:
-        RESULT = CollectionsKt.mutableListOf(h.getValue());
-      :}
-    ;
+  | /* empty */ {:
+      RESULT = CollectionsKt.mutableListOf();
+    :}
+  ;
+
+nonempty_host_list ::=
+    nonempty_host_list:hosts host:host {:
+      hosts.add(host);
+      RESULT = hosts;
+    :}
+
+  | host:host {:
+      RESULT = CollectionsKt.mutableListOf(host);
+    :}
+  ;
+
+host_set ::=
+    OPEN_BRACE host_list:hosts CLOSE_BRACE {:
+      RESULT = HostSetValue.invoke(hosts);
+    :}
+  ;
 
 protocol ::=
     IDENT:id {:
       RESULT = new Located(new Ideal(id), location(idleft, idright));
-    :}
-
-  | CAP_IDENT:protocol OPEN_PAREN host_list:participants CLOSE_PAREN:end {:
-      RESULT = new Located(
-        new GenericProtocol(protocol, participants),
-        location(protocolleft, endright));
     :}
 
   | CAP_HOST:begin OPEN_PAREN host:host CLOSE_PAREN:end {:
@@ -588,4 +626,55 @@ protocol ::=
         new HostInterface(host.getValue()),
         location(beginleft, endright));
     :}
+
+  | protocol_name:protocolName OPEN_PAREN:open protocol_argument_list:arguments CLOSE_PAREN:close {:
+      RESULT = new Located(
+        ProtocolParserKt.parseProtocol(
+          protocolParsers,
+          protocolName,
+          NamedArguments.invoke(arguments, location(openleft, closeright))),
+        location(protocolNameleft, closeright));
+    :}
+  ;
+
+protocol_name ::=
+    CAP_IDENT:protocolName {:
+      RESULT = new Located(new ProtocolName(protocolName), location(protocolNameleft, protocolNameright));
+    :}
+  ;
+
+protocol_argument_list ::=
+    nonempty_protocol_argument_list:arguments {:
+      RESULT = arguments;
+    :}
+
+  | /* empty */ {:
+      RESULT = CollectionsKt.listOf();
+    :}
+  ;
+
+nonempty_protocol_argument_list ::=
+    nonempty_protocol_argument_list:arguments COMMA protocol_labelled_argument:argument {:
+      arguments.add(argument);
+      RESULT = arguments;
+    :}
+
+  | protocol_labelled_argument:argument {:
+      RESULT = CollectionsKt.mutableListOf(argument);
+    :}
+  ;
+
+protocol_labelled_argument ::=
+    argument_label:label EQ protocol_argument:value {:
+      RESULT = new Pair(
+        label,
+        new Located(value, location(valueleft, valueright))
+      );
+    :}
+  ;
+
+protocol_argument ::=
+    host:host         {: RESULT = new HostValue(host.getValue()); :}
+  | host_set:hostSet  {: RESULT = hostSet; :}
+  | value:value       {: RESULT = value; :}
   ;

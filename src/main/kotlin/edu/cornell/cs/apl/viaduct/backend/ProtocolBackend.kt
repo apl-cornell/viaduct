@@ -3,11 +3,12 @@ package edu.cornell.cs.apl.viaduct.backend
 import edu.cornell.cs.apl.viaduct.analysis.NameAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.TypeAnalysis
 import edu.cornell.cs.apl.viaduct.syntax.Host
+import edu.cornell.cs.apl.viaduct.syntax.ProtocolName
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.BlockNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
 
 interface ProtocolBackend {
-    val supportedProtocols: Set<String>
+    val supportedProtocols: Set<ProtocolName>
 
     fun initialize(connectionMap: Map<Host, HostAddress>, projection: ProtocolProjection) { }
 

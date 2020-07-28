@@ -17,7 +17,7 @@ import edu.cornell.cs.apl.viaduct.syntax.types.ValueType
  * @param methodName The unrecognized method.
  * @param objectType Inferred type of the object.
  * @param argumentTypes Types of the arguments the method was called with.
- * */
+ */
 class UnknownMethodError(
     private val objectName: ObjectVariableNode,
     private val methodName: MethodNameNode,

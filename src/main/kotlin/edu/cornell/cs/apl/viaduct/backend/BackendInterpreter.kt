@@ -5,6 +5,7 @@ import edu.cornell.cs.apl.viaduct.analysis.TypeAnalysis
 import edu.cornell.cs.apl.viaduct.protocols.HostInterface
 import edu.cornell.cs.apl.viaduct.syntax.Host
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
+import edu.cornell.cs.apl.viaduct.syntax.ProtocolName
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.HostDeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProcessDeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
@@ -12,20 +13,24 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.TopLevelDeclarationNode
 
 class BackendInterpreter(
     val nameAnalysis: NameAnalysis,
-    val typeAnalysis: TypeAnalysis
+    val typeAnalysis: TypeAnalysis,
+    backends: List<ProtocolBackend>
 ) {
-
     companion object {
         const val DEFAULT_PORT = 5000
         const val DEFAULT_ADDRESS = "127.0.0.1"
     }
 
-    private val backendMap: MutableMap<String, ProtocolBackend> = mutableMapOf()
+    private val backendMap: Map<ProtocolName, ProtocolBackend>
 
-    fun registerBackend(backend: ProtocolBackend) {
-        for (supportedProtocol: String in backend.supportedProtocols) {
-            backendMap[supportedProtocol] = backend
-        }
+    init {
+        backendMap =
+            backends.flatMap { backend ->
+                backend.supportedProtocols.map { protocol ->
+                    Pair(protocol, backend)
+                }
+            }
+            .toMap()
     }
 
     fun run(splitProgram: ProgramNode, host: Host) {
@@ -49,8 +54,7 @@ class BackendInterpreter(
                 }
                 .toMap()
 
-        val runtime = ViaductRuntime(splitProgram, connectionMap, host)
-
+        val processes: MutableMap<Process, ProcessBody> = mutableMapOf()
         for (decl: TopLevelDeclarationNode in splitProgram) {
             if (decl is ProcessDeclarationNode) {
                 val protocol: Protocol = decl.protocol.value
@@ -60,8 +64,7 @@ class BackendInterpreter(
                             val projection = ProtocolProjection(protocol, host)
 
                             backend.initialize(connectionMap, projection)
-
-                            runtime.registerProcess(projection) {
+                            processes[projection] = { runtime ->
                                 backend.run(
                                     nameAnalysis, typeAnalysis,
                                     runtime,
@@ -76,6 +79,7 @@ class BackendInterpreter(
             }
         }
 
+        val runtime = ViaductRuntime(splitProgram, connectionMap, processes, host)
         runtime.start()
     }
 }

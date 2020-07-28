@@ -2,10 +2,11 @@ package edu.cornell.cs.apl.viaduct.protocols
 
 import edu.cornell.cs.apl.prettyprinting.Document
 import edu.cornell.cs.apl.viaduct.security.Label
-import edu.cornell.cs.apl.viaduct.syntax.Host
 import edu.cornell.cs.apl.viaduct.syntax.HostTrustConfiguration
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
-import kotlinx.collections.immutable.persistentSetOf
+import edu.cornell.cs.apl.viaduct.syntax.ProtocolName
+import edu.cornell.cs.apl.viaduct.syntax.values.StringValue
+import edu.cornell.cs.apl.viaduct.syntax.values.Value
 
 /**
  * A perfectly trusted protocol.
@@ -14,26 +15,22 @@ import kotlinx.collections.immutable.persistentSetOf
  * Since it has infinite authority and it involves no hosts, there is no way to execute an ideal
  * protocol directly.
  *
- * @param name Names and distinguishes different instances.
+ * @param identifier Names and distinguishes different instances.
  */
-data class Ideal(override val name: String) : Protocol {
-    override val protocolName: String
-        get() = "Ideal"
+class Ideal(private val identifier: String) : Protocol() {
+    companion object {
+        val protocolName = ProtocolName("Ideal")
+    }
 
-    override val hosts: Set<Host>
-        get() = persistentSetOf()
+    override val protocolName: ProtocolName
+        get() = Ideal.protocolName
+
+    override val arguments: Map<String, Value>
+        get() = mapOf("name" to StringValue(identifier))
 
     override fun authority(hostTrustConfiguration: HostTrustConfiguration): Label =
         Label.strongest
 
     override val asDocument: Document
-        get() = Document(name)
-
-    override fun compareTo(other: Protocol): Int {
-        return if (other is Ideal) {
-            name.compareTo(other.name)
-        } else {
-            protocolName.compareTo(other.protocolName)
-        }
-    }
+        get() = Document(identifier)
 }

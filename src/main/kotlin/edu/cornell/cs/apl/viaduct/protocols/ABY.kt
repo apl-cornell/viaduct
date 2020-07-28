@@ -1,10 +1,12 @@
 package edu.cornell.cs.apl.viaduct.protocols
+
 import edu.cornell.cs.apl.viaduct.security.Label
 import edu.cornell.cs.apl.viaduct.syntax.Host
 import edu.cornell.cs.apl.viaduct.syntax.HostTrustConfiguration
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
-import edu.cornell.cs.apl.viaduct.syntax.ProtocolFactory
-import edu.cornell.cs.apl.viaduct.util.asComparable
+import edu.cornell.cs.apl.viaduct.syntax.ProtocolName
+import edu.cornell.cs.apl.viaduct.syntax.values.HostSetValue
+import edu.cornell.cs.apl.viaduct.syntax.values.Value
 
 /**
  * An MPC protocol that provides security against a dishonest majority.
@@ -12,41 +14,23 @@ import edu.cornell.cs.apl.viaduct.util.asComparable
  * n - 1 out of the n participating hosts are corrupted.
  * In return, availability may be lost even with a single corrupted participant.
  */
-class ABY(hosts: Set<Host>) : MPCProtocol, SymmetricProtocol(hosts) {
+class ABY(hosts: Set<Host>) : Protocol() {
+    companion object {
+        val protocolName = ProtocolName("ABY")
+    }
+
     init {
         require(hosts.size >= 2)
     }
 
-    companion object {
-        const val protocolName = "ABY"
-    }
+    private val participants: HostSetValue = HostSetValue(hosts)
 
-    override val protocolName: String
+    override val protocolName: ProtocolName
         get() = ABY.protocolName
+
+    override val arguments: Map<String, Value>
+        get() = mapOf("hosts" to participants)
 
     override fun authority(hostTrustConfiguration: HostTrustConfiguration): Label =
         hosts.map { hostTrustConfiguration(it) }.reduce(Label::and)
-
-    override fun equals(other: Any?): Boolean =
-        other is ABY && this.hosts == other.hosts
-
-    override fun hashCode(): Int =
-        hosts.hashCode()
-
-    override fun compareTo(other: Protocol): Int {
-        return if (other is ABY) {
-            hosts.asComparable().compareTo(other.hosts)
-        } else {
-            protocolName.compareTo(other.protocolName)
-        }
-    }
-}
-
-class ABYFactory : ProtocolFactory {
-    override val protocolName: String
-        get() = ABY.protocolName
-
-    override fun buildProtocol(participants: List<Host>): Protocol {
-        return ABY(participants.toSet())
-    }
 }

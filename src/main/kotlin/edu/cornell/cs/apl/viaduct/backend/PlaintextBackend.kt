@@ -11,6 +11,7 @@ import edu.cornell.cs.apl.viaduct.syntax.Host
 import edu.cornell.cs.apl.viaduct.syntax.ObjectVariable
 import edu.cornell.cs.apl.viaduct.syntax.ObjectVariableNode
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
+import edu.cornell.cs.apl.viaduct.syntax.ProtocolName
 import edu.cornell.cs.apl.viaduct.syntax.Temporary
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.BlockNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.BreakNode
@@ -40,8 +41,8 @@ import edu.cornell.cs.apl.viaduct.syntax.values.IntegerValue
 import edu.cornell.cs.apl.viaduct.syntax.values.Value
 import java.util.Stack
 
-class PlaintextBackend : ProtocolBackend {
-    override val supportedProtocols: Set<String> = setOf(Local.protocolName, Replication.protocolName)
+object PlaintextBackend : ProtocolBackend {
+    override val supportedProtocols: Set<ProtocolName> = setOf(Local.protocolName, Replication.protocolName)
 
     override suspend fun run(
         nameAnalysis: NameAnalysis,

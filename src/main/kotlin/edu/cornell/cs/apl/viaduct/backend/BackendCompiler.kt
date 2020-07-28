@@ -6,6 +6,7 @@ import edu.cornell.cs.apl.viaduct.cli.println
 import edu.cornell.cs.apl.viaduct.protocols.HostInterface
 import edu.cornell.cs.apl.viaduct.syntax.Host
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
+import edu.cornell.cs.apl.viaduct.syntax.ProtocolName
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.HostDeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProcessDeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
@@ -16,7 +17,7 @@ class BackendCompiler(
     val nameAnalysis: NameAnalysis,
     val typeAnalysis: TypeAnalysis
 ) : CppBuilder() {
-    val backendMap: MutableMap<String, CppBackend> = mutableMapOf()
+    val backendMap: MutableMap<ProtocolName, CppBackend> = mutableMapOf()
 
     private val runtimeType = CppReferenceType(CppTypeName("ViaductRuntime"))
     private val runtimeProcessType = CppReferenceType(CppTypeName("ViaductProcessRuntime"))
@@ -44,7 +45,7 @@ class BackendCompiler(
         )
 
     fun registerBackend(backend: CppBackend) {
-        for (protocolName: String in backend.supportedProtocols) {
+        for (protocolName: ProtocolName in backend.supportedProtocols) {
             if (backendMap.containsKey(protocolName)) {
                 throw Error("backend compilation: multiple backends registered for $protocolName")
             } else {

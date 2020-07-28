@@ -6,6 +6,7 @@ import edu.cornell.cs.apl.viaduct.protocols.ABY
 import edu.cornell.cs.apl.viaduct.syntax.Host
 import edu.cornell.cs.apl.viaduct.syntax.Operator
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
+import edu.cornell.cs.apl.viaduct.syntax.ProtocolName
 import edu.cornell.cs.apl.viaduct.syntax.Temporary
 import edu.cornell.cs.apl.viaduct.syntax.datatypes.Get
 import edu.cornell.cs.apl.viaduct.syntax.datatypes.Modify
@@ -96,7 +97,7 @@ class ABYCPPBackend(
         INV_GATE("PutINVGate"),
     }
 
-    override val supportedProtocols: Set<String>
+    override val supportedProtocols: Set<ProtocolName>
         get() = setOf(ABY.protocolName)
 
     override val extraStartArguments: List<CppFormalDecl>

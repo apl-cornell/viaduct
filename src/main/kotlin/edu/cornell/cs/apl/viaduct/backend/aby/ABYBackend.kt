@@ -18,6 +18,7 @@ import edu.cornell.cs.apl.viaduct.syntax.ObjectVariable
 import edu.cornell.cs.apl.viaduct.syntax.ObjectVariableNode
 import edu.cornell.cs.apl.viaduct.syntax.Operator
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
+import edu.cornell.cs.apl.viaduct.syntax.ProtocolName
 import edu.cornell.cs.apl.viaduct.syntax.QueryNameNode
 import edu.cornell.cs.apl.viaduct.syntax.Temporary
 import edu.cornell.cs.apl.viaduct.syntax.UpdateNameNode
@@ -67,20 +68,16 @@ import edu.cornell.cs.apl.viaduct.syntax.values.Value
 import java.util.SortedSet
 import java.util.Stack
 
-class ABYBackend : ProtocolBackend {
-    companion object {
-        const val DEFAULT_PORT = 7766
-    }
-
-    init {
-        System.loadLibrary("ViaductABY")
-    }
+object ABYBackend : ProtocolBackend {
+    private const val DEFAULT_PORT = 7766
 
     private var aby: ViaductABYParty? = null
 
-    override val supportedProtocols = setOf(ABY.protocolName)
+    override val supportedProtocols: Set<ProtocolName> = setOf(ABY.protocolName)
 
     override fun initialize(connectionMap: Map<Host, HostAddress>, projection: ProtocolProjection) {
+        System.loadLibrary("ViaductABY")
+
         val protocolHosts: Set<Host> = projection.protocol.hosts
         assert(protocolHosts.size == 2)
 

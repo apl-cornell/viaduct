@@ -1,0 +1,5 @@
+/* UnexpectedArgumentError */
+
+host alice : {A}
+
+process Local(host = alice, unexpected = true) {}

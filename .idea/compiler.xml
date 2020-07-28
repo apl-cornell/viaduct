@@ -5,9 +5,9 @@
       <profile name="Gradle Imported" enabled="true">
         <outputRelativeToContentRoot value="true" />
         <processorPath useClasspath="false">
-          <entry name="$USER_HOME$/.gradle/caches/modules-2/files-2.1/com.google.auto.value/auto-value/1.7.3/cbd30873f839545c7c9264bed61d500bf85bd33e/auto-value-1.7.3.jar" />
+          <entry name="$PROJECT_DIR$/../.gradle/caches/modules-2/files-2.1/com.google.auto.value/auto-value/1.7.3/cbd30873f839545c7c9264bed61d500bf85bd33e/auto-value-1.7.3.jar" />
         </processorPath>
-        <module name="viaduct.main" />
+        <module name="viaduct.compiler.main" />
       </profile>
     </annotationProcessing>
     <bytecodeTargetLevel target="11">

@@ -13,8 +13,8 @@ script:
   - ./gradlew check
   - ./gradlew jacocoTestReport
   # Generate API documentation
-  - ./gradlew dokkaGitHub
-  - cp _config.yml build/docs/markdown/viaduct/
+  - ./gradlew dokkaGfm
+  - cp _config.yml build/docs/gfm/viaduct/
 
 after_success:
   # Upload coverage data to Codecov
@@ -26,6 +26,6 @@ deploy:
   skip_cleanup: true
   github_token: $GITHUB_TOKEN
   keep_history: true
-  local_dir: build/docs/markdown/viaduct
+  local_dir: build/docs/gfm/viaduct
   on:
     branch: master

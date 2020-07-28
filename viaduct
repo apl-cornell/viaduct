@@ -5,4 +5,6 @@ set -e
 # Directory containing this file
 DIR=$(cd "$(dirname "$0")" && pwd -P)
 
-(cd "$DIR" && ./gradlew install > /dev/null) && "$DIR/build/install/viaduct/bin/viaduct" "$@"
+PROJECT=compiler
+
+(cd "$DIR" && ./gradlew :$PROJECT:installDist > /dev/null) && "$DIR/$PROJECT/build/install/$PROJECT/bin/$PROJECT" "$@"

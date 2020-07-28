@@ -184,6 +184,18 @@ private class ABYInterpreter(
         ctTempStoreStack.pop()
     }
 
+    override fun getContextMarker(): Int {
+        return objectStoreStack.size
+    }
+
+    override fun restoreContext(marker: Int) {
+        while (objectStoreStack.size > marker) {
+            objectStoreStack.pop()
+            ssTempStoreStack.pop()
+            ctTempStoreStack.pop()
+        }
+    }
+
     private fun valueToCircuit(value: Value, isInput: Boolean = false): CircuitGate {
         return when (value) {
             is BooleanValue ->
@@ -292,10 +304,10 @@ private class ABYInterpreter(
 
     // actually perform MPC protocol and declassify output
     override suspend fun runSend(stmt: SendNode) {
-        if (stmt.protocol.value.hosts.contains(projection.host)) {
+        val sendValue: Value =
             when (val msg: AtomicExpressionNode = stmt.message) {
                 is LiteralNode -> {
-                    runtime.send(msg.value, ProtocolProjection(stmt.protocol.value, projection.host))
+                    msg.value
                 }
 
                 is ReadNode -> {
@@ -306,18 +318,18 @@ private class ABYInterpreter(
                     aby.Reset()
                     val result: Int = aby.ExecCircuit(outGate)
 
-                    val resultValue: Value =
-                        when (val msgType: ValueType = typeAnalysis.type(msg)) {
-                            is BooleanType -> BooleanValue(result != 0)
+                    when (val msgType: ValueType = typeAnalysis.type(msg)) {
+                        is BooleanType -> BooleanValue(result != 0)
 
-                            is IntegerType -> IntegerValue(result)
+                        is IntegerType -> IntegerValue(result)
 
-                            else -> throw Exception("unknown type $msgType")
-                        }
-
-                    runtime.send(resultValue, ProtocolProjection(stmt.protocol.value, projection.host))
+                        else -> throw Exception("unknown type $msgType")
+                    }
                 }
             }
+
+        if (stmt.protocol.value.hosts.contains(projection.host)) {
+            runtime.send(sendValue, ProtocolProjection(stmt.protocol.value, projection.host))
         }
     }
 

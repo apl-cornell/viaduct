@@ -20,6 +20,10 @@ abstract class AbstractBackendInterpreter {
 
     abstract fun popContext()
 
+    abstract fun getContextMarker(): Int
+
+    abstract fun restoreContext(marker: Int)
+
     abstract suspend fun runAtomicExpr(expr: AtomicExpressionNode): Value
 
     abstract suspend fun runDeclaration(stmt: DeclarationNode)
@@ -56,6 +60,8 @@ abstract class AbstractBackendInterpreter {
 
             is InfiniteLoopNode -> {
                 // communicate loop break by exception
+                val contextMarker: Int = getContextMarker()
+
                 try {
                     run(stmt.body)
                     run(stmt)
@@ -63,6 +69,8 @@ abstract class AbstractBackendInterpreter {
                     // this signal is for an outer loop
                     if (signal.jumpLabel != null && signal.jumpLabel != stmt.jumpLabel.value) {
                         throw signal
+                    } else { // restore context
+                        restoreContext(contextMarker)
                     }
                 }
             }

@@ -247,6 +247,7 @@ class InformationFlowAnalysis(private val nameAnalysis: NameAnalysis) {
 
     /** Recursively add constraints relevant to this node and all its descendants. */
     private fun Node.addConstraints() {
+        this.pc // force thunk
         when (this) {
             is ExpressionNode ->
                 this.addConstraints()

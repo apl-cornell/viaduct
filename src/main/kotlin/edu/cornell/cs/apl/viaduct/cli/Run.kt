@@ -38,15 +38,23 @@ class Run : CliktCommand(help = "Run compiled protocol for a single host") {
             ABY.protocolName to AbyProtocolParser
         )
 
-    private val backends: List<ProtocolBackend> =
-        listOf(PlaintextBackend, ABYBackend)
+    private fun getBackends(typeAnalysis: TypeAnalysis): Map<ProtocolName, ProtocolBackend> {
+        val plaintextBackend = PlaintextBackend(typeAnalysis)
+
+        return mapOf(
+            Local.protocolName to plaintextBackend,
+            Replication.protocolName to plaintextBackend,
+            ABY.protocolName to ABYBackend(typeAnalysis)
+        )
+    }
 
     override fun run() {
         val program = input.parse(protocols).elaborated()
         val nameAnalysis = NameAnalysis(Tree(program))
         val typeAnalysis = TypeAnalysis(nameAnalysis)
 
-        val interpreter = BackendInterpreter(nameAnalysis, typeAnalysis, backends)
+        val backends: Map<ProtocolName, ProtocolBackend> = getBackends(typeAnalysis)
+        val interpreter = BackendInterpreter(backends)
 
         val host = Host(hostName)
         interpreter.run(program, host)

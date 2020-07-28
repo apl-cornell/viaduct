@@ -1,7 +1,5 @@
 package edu.cornell.cs.apl.viaduct.backend
 
-import edu.cornell.cs.apl.viaduct.analysis.NameAnalysis
-import edu.cornell.cs.apl.viaduct.analysis.TypeAnalysis
 import edu.cornell.cs.apl.viaduct.protocols.HostInterface
 import edu.cornell.cs.apl.viaduct.syntax.Host
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
@@ -12,25 +10,11 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.TopLevelDeclarationNode
 
 class BackendInterpreter(
-    val nameAnalysis: NameAnalysis,
-    val typeAnalysis: TypeAnalysis,
-    backends: List<ProtocolBackend>
+    private val backendMap: Map<ProtocolName, ProtocolBackend>
 ) {
     companion object {
         const val DEFAULT_PORT = 5000
         const val DEFAULT_ADDRESS = "127.0.0.1"
-    }
-
-    private val backendMap: Map<ProtocolName, ProtocolBackend>
-
-    init {
-        backendMap =
-            backends.flatMap { backend ->
-                backend.supportedProtocols.map { protocol ->
-                    Pair(protocol, backend)
-                }
-            }
-            .toMap()
     }
 
     fun run(splitProgram: ProgramNode, host: Host) {
@@ -64,13 +48,11 @@ class BackendInterpreter(
                             val projection = ProtocolProjection(protocol, host)
 
                             backend.initialize(connectionMap, projection)
+
                             processes[projection] = { runtime ->
                                 backend.run(
-                                    nameAnalysis, typeAnalysis,
-                                    runtime,
-                                    splitProgram,
-                                    decl.body,
-                                    ProtocolProjection(protocol, host)
+                                    ViaductProcessRuntime(runtime, projection),
+                                    decl.body
                                 )
                             }
                         } ?: throw Exception("no backend for protocol ${protocol.protocolName}")

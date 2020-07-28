@@ -77,16 +77,17 @@ class VectorObject(
     objectName: ObjectVariableNode,
     objectType: ObjectType
 ) : PlaintextClassObject(objectName, objectType) {
-    val values: MutableList<Value> = mutableListOf()
+    val values: ArrayList<Value> = ArrayList(size)
 
     init {
         for (i: Int in 0 until size) {
-            values.add(defaultValue)
+            values[i] = defaultValue
         }
     }
 
     override fun query(query: QueryNameNode, arguments: List<Value>): Value {
         return when (query.value) {
+            // TODO: fail silently when index is out of bounds
             is Get -> {
                 val index = arguments[0] as IntegerValue
                 values[index.value]

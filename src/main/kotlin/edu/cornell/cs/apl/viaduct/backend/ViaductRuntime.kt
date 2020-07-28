@@ -384,8 +384,8 @@ class ViaductRuntime(
 }
 
 class ViaductProcessRuntime(
-    val runtime: ViaductRuntime,
-    private val projection: ProtocolProjection
+    private val runtime: ViaductRuntime,
+    val projection: ProtocolProjection
 ) {
     suspend fun send(value: Value, receiver: ProtocolProjection) {
         runtime.send(value, projection, receiver)

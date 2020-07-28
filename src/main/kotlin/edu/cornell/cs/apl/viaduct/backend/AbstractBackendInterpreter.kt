@@ -67,7 +67,7 @@ abstract class AbstractBackendInterpreter {
                     run(stmt)
                 } catch (signal: LoopBreakSignal) { // catch loop break signal
                     // this signal is for an outer loop
-                    if (signal.jumpLabel != null && signal.jumpLabel != stmt.jumpLabel.value) {
+                    if (signal.jumpLabel != stmt.jumpLabel.value) {
                         throw signal
                     } else { // restore context
                         restoreContext(contextMarker)

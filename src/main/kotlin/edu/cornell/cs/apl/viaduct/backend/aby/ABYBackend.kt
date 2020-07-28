@@ -1,6 +1,5 @@
 package edu.cornell.cs.apl.viaduct.backend.aby
 
-import edu.cornell.cs.apl.viaduct.analysis.NameAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.TypeAnalysis
 import edu.cornell.cs.apl.viaduct.backend.AbstractBackendInterpreter
 import edu.cornell.cs.apl.viaduct.backend.HostAddress
@@ -8,7 +7,6 @@ import edu.cornell.cs.apl.viaduct.backend.LoopBreakSignal
 import edu.cornell.cs.apl.viaduct.backend.ProtocolBackend
 import edu.cornell.cs.apl.viaduct.backend.ProtocolProjection
 import edu.cornell.cs.apl.viaduct.backend.ViaductProcessRuntime
-import edu.cornell.cs.apl.viaduct.backend.ViaductRuntime
 import edu.cornell.cs.apl.viaduct.errors.UndefinedNameError
 import edu.cornell.cs.apl.viaduct.errors.UnknownMethodError
 import edu.cornell.cs.apl.viaduct.errors.ViaductInterpreterError
@@ -18,7 +16,6 @@ import edu.cornell.cs.apl.viaduct.syntax.ObjectVariable
 import edu.cornell.cs.apl.viaduct.syntax.ObjectVariableNode
 import edu.cornell.cs.apl.viaduct.syntax.Operator
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
-import edu.cornell.cs.apl.viaduct.syntax.ProtocolName
 import edu.cornell.cs.apl.viaduct.syntax.QueryNameNode
 import edu.cornell.cs.apl.viaduct.syntax.Temporary
 import edu.cornell.cs.apl.viaduct.syntax.UpdateNameNode
@@ -35,7 +32,6 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.LetNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.LiteralNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.OperatorApplicationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutputNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.PureExpressionNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.QueryNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ReadNode
@@ -67,13 +63,17 @@ import edu.cornell.cs.apl.viaduct.syntax.values.IntegerValue
 import edu.cornell.cs.apl.viaduct.syntax.values.Value
 import java.util.SortedSet
 import java.util.Stack
+import kotlinx.collections.immutable.PersistentMap
+import kotlinx.collections.immutable.persistentMapOf
 
-object ABYBackend : ProtocolBackend {
-    private const val DEFAULT_PORT = 7766
+class ABYBackend(
+    private val typeAnalysis: TypeAnalysis
+) : ProtocolBackend {
+    companion object {
+        private const val DEFAULT_PORT = 7766
+    }
 
     private var aby: ViaductABYParty? = null
-
-    override val supportedProtocols: Set<ProtocolName> = setOf(ABY.protocolName)
 
     override fun initialize(connectionMap: Map<Host, HostAddress>, projection: ProtocolProjection) {
         System.loadLibrary("ViaductABY")
@@ -98,23 +98,9 @@ object ABYBackend : ProtocolBackend {
         aby = ViaductABYParty(role, otherHostAddress.ipAddress, DEFAULT_PORT)
     }
 
-    override suspend fun run(
-        nameAnalysis: NameAnalysis,
-        typeAnalysis: TypeAnalysis,
-        runtime: ViaductRuntime,
-        program: ProgramNode,
-        process: BlockNode,
-        projection: ProtocolProjection
-    ) {
+    override suspend fun run(runtime: ViaductProcessRuntime, process: BlockNode) {
         if (aby != null) {
-            val interpreter =
-                ABYInterpreter(
-                    aby!!,
-                    nameAnalysis, typeAnalysis,
-                    ViaductProcessRuntime(runtime, projection),
-                    program,
-                    projection
-                )
+            val interpreter = ABYInterpreter(aby!!, typeAnalysis, runtime)
 
             try {
                 interpreter.run(process)
@@ -132,50 +118,63 @@ object ABYBackend : ProtocolBackend {
 }
 
 private class ABYInterpreter(
-    val aby: ViaductABYParty,
-    val nameAnalysis: NameAnalysis,
-    val typeAnalysis: TypeAnalysis,
-    val runtime: ViaductProcessRuntime,
-    val program: ProgramNode,
-    val projection: ProtocolProjection
+    private val aby: ViaductABYParty,
+    private val typeAnalysis: TypeAnalysis,
+    private val runtime: ViaductProcessRuntime
 ) : AbstractBackendInterpreter() {
+    private val projection: ProtocolProjection = runtime.projection
 
-    private val objectStoreStack: Stack<MutableMap<ObjectVariable, ABYClassObject>> = Stack()
+    private val objectStoreStack: Stack<PersistentMap<ObjectVariable, ABYClassObject>> = Stack()
 
-    private val ssObjectStore: MutableMap<ObjectVariable, ABYClassObject>
+    private var objectStore: PersistentMap<ObjectVariable, ABYClassObject>
         get() {
             assert(!objectStoreStack.empty())
             return objectStoreStack.peek()
         }
 
-    private val ssTempStoreStack: Stack<MutableMap<Temporary, CircuitGate>> = Stack()
+        set(value) {
+            objectStoreStack.pop()
+            objectStoreStack.push(value)
+        }
 
-    private val ssTempStore: MutableMap<Temporary, CircuitGate>
+    private val ssTempStoreStack: Stack<PersistentMap<Temporary, CircuitGate>> = Stack()
+
+    private var ssTempStore: PersistentMap<Temporary, CircuitGate>
         get() {
             assert(!ssTempStoreStack.empty())
             return ssTempStoreStack.peek()
         }
 
-    private val ctTempStoreStack: Stack<MutableMap<Temporary, Value>> = Stack()
+        set(value) {
+            ssTempStoreStack.pop()
+            ssTempStoreStack.push(value)
+        }
 
-    private val ctTempStore: MutableMap<Temporary, Value>
+    private val ctTempStoreStack: Stack<PersistentMap<Temporary, Value>> = Stack()
+
+    private var ctTempStore: PersistentMap<Temporary, Value>
         get() {
             assert(!ctTempStoreStack.empty())
             return ctTempStoreStack.peek()
         }
 
+        set(value) {
+            ctTempStoreStack.pop()
+            ctTempStoreStack.push(value)
+        }
+
     init {
-        objectStoreStack.push(mutableMapOf())
-        ssTempStoreStack.push(mutableMapOf())
-        ctTempStoreStack.push(mutableMapOf())
+        objectStoreStack.push(persistentMapOf())
+        ssTempStoreStack.push(persistentMapOf())
+        ctTempStoreStack.push(persistentMapOf())
 
         assert(projection.protocol is ABY)
     }
 
     override fun pushContext() {
-        objectStoreStack.push(ssObjectStore.toMutableMap())
-        ssTempStoreStack.push(ssTempStore.toMutableMap())
-        ctTempStoreStack.push(ctTempStore.toMutableMap())
+        objectStoreStack.push(objectStore)
+        ssTempStoreStack.push(ssTempStore)
+        ctTempStoreStack.push(ctTempStore)
     }
 
     override fun popContext() {
@@ -240,7 +239,7 @@ private class ABYInterpreter(
             }
 
             is QueryNode ->
-                ssObjectStore[expr.variable.value]
+                objectStore[expr.variable.value]
                     ?.query(expr.query, expr.arguments)
                     ?: throw UndefinedNameError(expr.variable)
 
@@ -254,19 +253,28 @@ private class ABYInterpreter(
 
         return when (val objectType: ObjectType = typeAnalysis.type(stmt)) {
             is ImmutableCellType -> {
-                ssObjectStore[stmt.variable.value] =
-                    ABYImmutableCellObject(argumentValues[0], stmt.variable, objectType)
+                objectStore =
+                    objectStore.put(
+                        stmt.variable.value,
+                        ABYImmutableCellObject(argumentValues[0], stmt.variable, objectType)
+                    )
             }
 
             is MutableCellType -> {
-                ssObjectStore[stmt.variable.value] =
-                    ABYMutableCellObject(argumentValues[0], stmt.variable, objectType)
+                objectStore =
+                    objectStore.put(
+                        stmt.variable.value,
+                        ABYMutableCellObject(argumentValues[0], stmt.variable, objectType)
+                    )
             }
 
             is VectorType -> {
                 val length = argumentValues[0] as IntegerValue
-                ssObjectStore[stmt.variable.value] =
-                    ABYVectorObject(length.value, objectType.elementType.defaultValue, stmt.variable, objectType)
+                objectStore =
+                    objectStore.put(
+                        stmt.variable.value,
+                        ABYVectorObject(length.value, objectType.elementType.defaultValue, stmt.variable, objectType)
+                    )
             }
 
             else -> throw UndefinedNameError(stmt.className)
@@ -282,22 +290,22 @@ private class ABYInterpreter(
                     val receivedValue: Value =
                         runtime.receive(ProtocolProjection(rhsProtocol, projection.host))
 
-                    ctTempStore[stmt.temporary.value] = receivedValue
-                    ssTempStore[stmt.temporary.value] = valueToCircuit(receivedValue, isInput = true)
+                    ctTempStore = ctTempStore.put(stmt.temporary.value, receivedValue)
+                    ssTempStore = ssTempStore.put(stmt.temporary.value, valueToCircuit(receivedValue, isInput = true))
                 } else {
-                    ssTempStore[stmt.temporary.value] = aby.PutDummyINGate()
+                    ssTempStore = ssTempStore.put(stmt.temporary.value, aby.PutDummyINGate())
                 }
             }
 
             is InputNode -> throw Exception("cannot perform I/O in non-Local protocol")
 
             is PureExpressionNode ->
-                ssTempStore[stmt.temporary.value] = runSecretSharedExpr(rhs)
+                ssTempStore = ssTempStore.put(stmt.temporary.value, runSecretSharedExpr(rhs))
         }
     }
 
     override suspend fun runUpdate(stmt: UpdateNode) {
-        ssObjectStore[stmt.variable.value]
+        objectStore[stmt.variable.value]
             ?.update(stmt.update, stmt.arguments)
             ?: throw UndefinedNameError(stmt.variable)
     }
@@ -469,11 +477,11 @@ private class ABYInterpreter(
         objectName: ObjectVariableNode,
         objectType: ObjectType
     ) : ABYClassObject(objectName, objectType) {
-        val gates: MutableList<CircuitGate> = mutableListOf()
+        val gates: ArrayList<CircuitGate> = ArrayList(size)
 
         init {
             for (i: Int in 0 until size) {
-                gates.add(valueToCircuit(defaultValue))
+                gates[i] = valueToCircuit(defaultValue)
             }
         }
 

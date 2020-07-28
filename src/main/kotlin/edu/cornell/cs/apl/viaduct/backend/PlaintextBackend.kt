@@ -1,6 +1,5 @@
 package edu.cornell.cs.apl.viaduct.backend
 
-import edu.cornell.cs.apl.viaduct.analysis.NameAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.TypeAnalysis
 import edu.cornell.cs.apl.viaduct.errors.UndefinedNameError
 import edu.cornell.cs.apl.viaduct.errors.ViaductInterpreterError
@@ -9,7 +8,6 @@ import edu.cornell.cs.apl.viaduct.protocols.Replication
 import edu.cornell.cs.apl.viaduct.syntax.Host
 import edu.cornell.cs.apl.viaduct.syntax.ObjectVariable
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
-import edu.cornell.cs.apl.viaduct.syntax.ProtocolName
 import edu.cornell.cs.apl.viaduct.syntax.Temporary
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.AtomicExpressionNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.BlockNode
@@ -21,7 +19,6 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.LetNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.LiteralNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.OperatorApplicationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutputNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.QueryNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ReadNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ReceiveNode
@@ -34,25 +31,15 @@ import edu.cornell.cs.apl.viaduct.syntax.types.VectorType
 import edu.cornell.cs.apl.viaduct.syntax.values.IntegerValue
 import edu.cornell.cs.apl.viaduct.syntax.values.Value
 import java.util.Stack
+import kotlinx.collections.immutable.PersistentMap
+import kotlinx.collections.immutable.persistentMapOf
 
-object PlaintextBackend : ProtocolBackend {
-    override val supportedProtocols: Set<ProtocolName> = setOf(Local.protocolName, Replication.protocolName)
+class PlaintextBackend(
+    private val typeAnalysis: TypeAnalysis
+) : ProtocolBackend {
 
-    override suspend fun run(
-        nameAnalysis: NameAnalysis,
-        typeAnalysis: TypeAnalysis,
-        runtime: ViaductRuntime,
-        program: ProgramNode,
-        process: BlockNode,
-        projection: ProtocolProjection
-    ) {
-        val interpreter =
-            PlaintextInterpreter(
-                nameAnalysis, typeAnalysis,
-                ViaductProcessRuntime(runtime, projection),
-                program,
-                projection
-            )
+    override suspend fun run(runtime: ViaductProcessRuntime, process: BlockNode) {
+        val interpreter = PlaintextInterpreter(typeAnalysis, runtime)
 
         try {
             interpreter.run(process)
@@ -65,38 +52,47 @@ object PlaintextBackend : ProtocolBackend {
 }
 
 private class PlaintextInterpreter(
-    val nameAnalysis: NameAnalysis,
-    val typeAnalysis: TypeAnalysis,
-    val runtime: ViaductProcessRuntime,
-    val program: ProgramNode,
-    val projection: ProtocolProjection
+    private val typeAnalysis: TypeAnalysis,
+    private val runtime: ViaductProcessRuntime
 ) : AbstractBackendInterpreter() {
-    private val objectStoreStack: Stack<MutableMap<ObjectVariable, PlaintextClassObject>> = Stack()
+    private val projection: ProtocolProjection = runtime.projection
 
-    private val objectStore: MutableMap<ObjectVariable, PlaintextClassObject>
+    private val objectStoreStack: Stack<PersistentMap<ObjectVariable, PlaintextClassObject>> = Stack()
+
+    private var objectStore: PersistentMap<ObjectVariable, PlaintextClassObject>
         get() {
             assert(!objectStoreStack.empty())
             return objectStoreStack.peek()
         }
 
-    private val tempStoreStack: Stack<MutableMap<Temporary, Value>> = Stack()
+        set(value) {
+            objectStoreStack.pop()
+            objectStoreStack.push(value)
+        }
 
-    private val tempStore: MutableMap<Temporary, Value>
+    private val tempStoreStack: Stack<PersistentMap<Temporary, Value>> = Stack()
+
+    private var tempStore: PersistentMap<Temporary, Value>
         get() {
             assert(!tempStoreStack.empty())
             return tempStoreStack.peek()
         }
 
+        set(value) {
+            tempStoreStack.pop()
+            tempStoreStack.push(value)
+        }
+
     init {
-        objectStoreStack.push(mutableMapOf())
-        tempStoreStack.push(mutableMapOf())
+        objectStoreStack.push(persistentMapOf())
+        tempStoreStack.push(persistentMapOf())
 
         assert(projection.protocol is Local || projection.protocol is Replication)
     }
 
     override fun pushContext() {
-        objectStoreStack.push(objectStore.toMutableMap())
-        tempStoreStack.push(tempStore.toMutableMap())
+        objectStoreStack.push(objectStore)
+        tempStoreStack.push(tempStore)
     }
 
     override fun popContext() {
@@ -221,19 +217,28 @@ private class PlaintextInterpreter(
 
         when (objectType) {
             is ImmutableCellType -> {
-                objectStore[stmt.variable.value] =
-                    ImmutableCellObject(arguments[0], stmt.variable, objectType)
+                objectStore =
+                    objectStore.put(
+                        stmt.variable.value,
+                        ImmutableCellObject(arguments[0], stmt.variable, objectType)
+                    )
             }
 
             is MutableCellType -> {
-                objectStore[stmt.variable.value] =
-                    MutableCellObject(arguments[0], stmt.variable, objectType)
+                objectStore =
+                    objectStore.put(
+                        stmt.variable.value,
+                        MutableCellObject(arguments[0], stmt.variable, objectType)
+                    )
             }
 
             is VectorType -> {
                 val length = arguments[0] as IntegerValue
-                objectStore[stmt.variable.value] =
-                    VectorObject(length.value, objectType.elementType.defaultValue, stmt.variable, objectType)
+                objectStore =
+                    objectStore.put(
+                        stmt.variable.value,
+                        VectorObject(length.value, objectType.elementType.defaultValue, stmt.variable, objectType)
+                    )
             }
 
             else -> throw UndefinedNameError(stmt.className)
@@ -242,7 +247,7 @@ private class PlaintextInterpreter(
 
     override suspend fun runLet(stmt: LetNode) {
         val rhsValue: Value = runExpr(stmt.value)
-        tempStore[stmt.temporary.value] = rhsValue
+        tempStore = tempStore.put(stmt.temporary.value, rhsValue)
     }
 
     override suspend fun runUpdate(stmt: UpdateNode) {

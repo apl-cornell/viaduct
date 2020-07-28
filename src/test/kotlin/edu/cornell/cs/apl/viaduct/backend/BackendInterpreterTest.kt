@@ -22,7 +22,6 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.HostDeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProcessDeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.surface.ProgramNode
 import java.util.concurrent.Executors
-import kotlinx.coroutines.ObsoleteCoroutinesApi
 import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking

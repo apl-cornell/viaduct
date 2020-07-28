@@ -129,7 +129,6 @@ private class ABYInterpreter(
 
     private var objectStore: PersistentMap<ObjectVariable, ABYClassObject>
         get() {
-            assert(!objectStoreStack.empty())
             return objectStoreStack.peek()
         }
 
@@ -142,7 +141,6 @@ private class ABYInterpreter(
 
     private var ssTempStore: PersistentMap<Temporary, CircuitGate>
         get() {
-            assert(!ssTempStoreStack.empty())
             return ssTempStoreStack.peek()
         }
 
@@ -155,7 +153,6 @@ private class ABYInterpreter(
 
     private var ctTempStore: PersistentMap<Temporary, Value>
         get() {
-            assert(!ctTempStoreStack.empty())
             return ctTempStoreStack.peek()
         }
 
@@ -165,11 +162,11 @@ private class ABYInterpreter(
         }
 
     init {
+        assert(projection.protocol is ABY)
+
         objectStoreStack.push(persistentMapOf())
         ssTempStoreStack.push(persistentMapOf())
         ctTempStoreStack.push(persistentMapOf())
-
-        assert(projection.protocol is ABY)
     }
 
     override fun pushContext() {

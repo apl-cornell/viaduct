@@ -62,7 +62,6 @@ private class PlaintextInterpreter(
 
     private var objectStore: PersistentMap<ObjectVariable, PlaintextClassObject>
         get() {
-            assert(!objectStoreStack.empty())
             return objectStoreStack.peek()
         }
 
@@ -75,7 +74,6 @@ private class PlaintextInterpreter(
 
     private var tempStore: PersistentMap<Temporary, Value>
         get() {
-            assert(!tempStoreStack.empty())
             return tempStoreStack.peek()
         }
 
@@ -85,10 +83,10 @@ private class PlaintextInterpreter(
         }
 
     init {
+        assert(projection.protocol is Local || projection.protocol is Replication)
+
         objectStoreStack.push(persistentMapOf())
         tempStoreStack.push(persistentMapOf())
-
-        assert(projection.protocol is Local || projection.protocol is Replication)
     }
 
     override fun pushContext() {

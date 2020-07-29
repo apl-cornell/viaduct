@@ -7,17 +7,21 @@ import com.uchuhimo.collections.BiMap
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
 import edu.cornell.cs.apl.viaduct.syntax.Variable
 
+
+/** Custom selection constraints specified for constraint solving during splitting. *//
 sealed class SelectionConstraint
 
 data class Literal(val literalValue: Boolean) : SelectionConstraint()
 data class Implies(val lhs: SelectionConstraint, val rhs: SelectionConstraint) : SelectionConstraint()
 data class Or(val lhs: SelectionConstraint, val rhs: SelectionConstraint) : SelectionConstraint()
+/** VariableIn(v, P) holds when v is selected to be a protocol in P **/
 data class VariableIn(val variable: Variable, val protocols: Set<Protocol>) : SelectionConstraint()
 data class Not(val rhs: SelectionConstraint) : SelectionConstraint()
 data class And(val lhs: SelectionConstraint, val rhs: SelectionConstraint) : SelectionConstraint()
 
 fun Boolean.implies(r: Boolean) = (!this) || r
 
+/** Given a protocol selection, evaluate the constraints. **/
 fun SelectionConstraint.evaluate(f: (Variable) -> Protocol): Boolean {
     return when (this) {
         is Literal -> literalValue
@@ -37,6 +41,7 @@ fun List<SelectionConstraint>.ands(): SelectionConstraint {
     return this.fold(Literal(true) as SelectionConstraint) { acc, x -> And(acc, x) }
 }
 
+/** Convert a SelectionConstraint into a Z3 BoolExpr. **/
 fun SelectionConstraint.boolExpr(
     ctx: Context,
     vmap: BiMap<Variable, IntExpr>,

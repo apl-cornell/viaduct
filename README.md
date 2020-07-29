@@ -60,14 +60,14 @@ You can now either manually change the Gradle
 [configuration file](build.gradle.kts), or run
 
 ```shell
-./gradle useLatestVersions
+./gradlew useLatestVersions
 ```
 
 to automatically update all dependencies.
 To update Gradle itself, run
 
 ```shell
-./gradle wrapper --gradle-version <version>
+./gradlew wrapper --gradle-version <version>
 ```
 
 where `<version>` comes from the above report.

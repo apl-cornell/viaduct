@@ -12,7 +12,7 @@ plugins {
     jacoco
 
     // Lexing & Parsing
-    id("org.xbib.gradle.plugin.jflex") version "1.2.0"
+    id("org.xbib.gradle.plugin.jflex") version "1.4.0"
 }
 
 /** Application */
@@ -36,12 +36,12 @@ dependencies {
     implementation("com.google.guava:guava:29.0-jre")
 
     // Google's AutoValue for creating immutable classes
-    implementation("com.google.auto.value:auto-value-annotations:1.7.3")
-    annotationProcessor("com.google.auto.value:auto-value:1.7.3")
+    implementation("com.google.auto.value:auto-value-annotations:1.7.4")
+    annotationProcessor("com.google.auto.value:auto-value:1.7.4")
 
     // Graphs
-    implementation("org.jgrapht:jgrapht-core:1.4.0")
-    implementation("org.jgrapht:jgrapht-io:1.4.0")
+    implementation("org.jgrapht:jgrapht-core:1.5.0")
+    implementation("org.jgrapht:jgrapht-io:1.5.0")
 
     // DOT graph output
     implementation("guru.nidi:graphviz-java:0.16.3")
@@ -60,7 +60,7 @@ dependencies {
     implementation("com.github.vbmacher:java-cup-runtime:11b-20160615")
 
     // Logging
-    implementation("io.github.microutils:kotlin-logging:1.7.10")
+    implementation("io.github.microutils:kotlin-logging:1.8.3")
     implementation("org.apache.logging.log4j:log4j-core:2.13.3")
     implementation("org.apache.logging.log4j:log4j-slf4j-impl:2.13.3")
 
@@ -92,7 +92,7 @@ tasks.compileJava {
 
 tasks.compileKotlin {
     dependsOn(compileCup)
-    dependsOn(tasks.jflex)
+    dependsOn(tasks.withType<org.xbib.gradle.plugin.JFlexTask>())
 }
 
 open class CupCompileTask : DefaultTask() {

@@ -54,9 +54,6 @@ dependencies {
     // Command-line-argument parsing
     implementation("com.github.ajalt:clikt:2.5.0")
 
-    // bimap
-    implementation("com.uchuhimo:kotlinx-bimap:1.2")
-
     // Colored terminal output
     implementation("org.fusesource.jansi:jansi:1.18")
 
@@ -70,9 +67,6 @@ dependencies {
     implementation("io.github.microutils:kotlin-logging:1.7.10")
     implementation("org.apache.logging.log4j:log4j-core:2.13.3")
     implementation("org.apache.logging.log4j:log4j-slf4j-impl:2.13.3")
-
-    // Z3
-    implementation(files("../deps/com.microsoft.z3.jar"))
 
     // Testing
     testImplementation(kotlin("reflect"))

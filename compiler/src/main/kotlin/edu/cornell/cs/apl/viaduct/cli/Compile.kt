@@ -11,8 +11,9 @@ import edu.cornell.cs.apl.viaduct.analysis.TypeAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.main
 import edu.cornell.cs.apl.viaduct.passes.elaborated
 import edu.cornell.cs.apl.viaduct.passes.splitMain
-import edu.cornell.cs.apl.viaduct.selection.SimpleSelection
+import edu.cornell.cs.apl.viaduct.selection.SelectionValidator
 import edu.cornell.cs.apl.viaduct.selection.SimpleSelector
+import edu.cornell.cs.apl.viaduct.selection.Z3Selection
 import edu.cornell.cs.apl.viaduct.selection.simpleProtocolCost
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
 import edu.cornell.cs.apl.viaduct.syntax.Variable
@@ -61,15 +62,23 @@ class Compile : CliktCommand(help = "Compile ideal protocol to secure distribute
         typeAnalysis.check()
         informationFlowAnalysis.check()
 
+        val selector =
+            SimpleSelector(nameAnalysis, informationFlowAnalysis)
+
         // Select protocols.
         val protocolAssignment: (Variable) -> Protocol =
-            SimpleSelection(
-                SimpleSelector(
-                    nameAnalysis,
-                    informationFlowAnalysis
-                ), ::simpleProtocolCost
-            )
-                .select(program.main, nameAnalysis, informationFlowAnalysis)
+            Z3Selection(
+                program.main,
+                informationFlowAnalysis,
+                nameAnalysis,
+                selector,
+                ::simpleProtocolCost
+            ).select()
+
+        // Perform a sanity check to ensure the protocolAssignment is valid.
+        // TODO: either remove this entirely or make it opt-in by the command line.
+        SelectionValidator(program.main, informationFlowAnalysis, nameAnalysis, selector).validate(protocolAssignment)
+
         val protocolAnalysis = ProtocolAnalysis(nameAnalysis, protocolAssignment)
 
         // Split the program.

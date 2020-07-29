@@ -19,6 +19,57 @@ allprojects {
     group = "edu.cornell.cs.apl"
 
     version = "0.1"
+    // Google's Guava (core data structures)
+    implementation("com.google.guava:guava:29.0-jre")
+
+    // Google's AutoValue for creating immutable classes
+    implementation("com.google.auto.value:auto-value-annotations:1.7.3")
+    annotationProcessor("com.google.auto.value:auto-value:1.7.3")
+
+    // Graphs
+    implementation("org.jgrapht:jgrapht-core:1.4.0")
+    implementation("org.jgrapht:jgrapht-io:1.4.0")
+
+    // DOT graph output
+    implementation("guru.nidi:graphviz-java:0.16.3")
+    implementation("guru.nidi:graphviz-java-all-j2v8:0.16.3")
+
+    // Unicode support
+    implementation("com.ibm.icu:icu4j:67.1")
+
+    // Command-line-argument parsing
+    implementation("com.github.ajalt:clikt:2.5.0")
+
+    // bimap
+    implementation("com.uchuhimo:kotlinx-bimap:1.2")
+
+    // Colored terminal output
+    implementation("org.fusesource.jansi:jansi:1.18")
+
+    // Parsing
+    implementation("com.github.vbmacher:java-cup-runtime:11b-20160615")
+
+    // Logging
+    implementation("io.github.microutils:kotlin-logging:1.7.10")
+    implementation("org.apache.logging.log4j:log4j-core:2.13.3")
+    implementation("org.apache.logging.log4j:log4j-slf4j-impl:2.13.3")
+
+    // Z3
+    implementation(files("deps/com.microsoft.z3.jar"))
+
+    // Testing
+    testImplementation(kotlin("reflect"))
+    testImplementation("org.junit.jupiter:junit-jupiter-api:5.7.0-M1")
+    testImplementation("org.junit.jupiter:junit-jupiter-params:5.7.0-M1")
+    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.7.0-M1")
+}
+
+/** Compilation */
+
+tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
+    kotlinOptions.jvmTarget = "1.8"
+    kotlinOptions.allWarningsAsErrors = true
+}
 
     repositories {
         jcenter()

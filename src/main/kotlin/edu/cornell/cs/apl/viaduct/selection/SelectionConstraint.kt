@@ -1,5 +1,9 @@
 package edu.cornell.cs.apl.viaduct.selection
 
+import com.microsoft.z3.BoolExpr
+import com.microsoft.z3.Context
+import com.microsoft.z3.IntExpr
+import com.uchuhimo.collections.BiMap
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
 import edu.cornell.cs.apl.viaduct.syntax.Variable
 
@@ -22,5 +26,34 @@ fun SelectionConstraint.evaluate(f: (Variable) -> Protocol): Boolean {
         is And -> (lhs.evaluate(f)) && (rhs.evaluate(f))
         is VariableIn -> protocols.contains(f(variable))
         is Not -> !(rhs.evaluate(f))
+    }
+}
+
+fun List<BoolExpr>.ors(ctx: Context): BoolExpr {
+    return ctx.mkOr(* this.toTypedArray())
+}
+
+fun List<SelectionConstraint>.ands(): SelectionConstraint {
+    return this.fold(Literal(true) as SelectionConstraint) { acc, x -> And(acc, x) }
+}
+
+fun SelectionConstraint.boolExpr(
+    ctx: Context,
+    vmap: BiMap<Variable, IntExpr>,
+    pmap: BiMap<Protocol, IntExpr>
+): BoolExpr {
+    return when (this) {
+        is Literal -> ctx.mkBool(literalValue)
+        is Implies -> ctx.mkImplies(lhs.boolExpr(ctx, vmap, pmap), rhs.boolExpr(ctx, vmap, pmap))
+        is Or -> ctx.mkOr(lhs.boolExpr(ctx, vmap, pmap), rhs.boolExpr(ctx, vmap, pmap))
+        is And -> ctx.mkAnd(lhs.boolExpr(ctx, vmap, pmap), rhs.boolExpr(ctx, vmap, pmap))
+        is Not -> ctx.mkNot(rhs.boolExpr(ctx, vmap, pmap))
+        is VariableIn ->
+            this.protocols.map { prot ->
+                ctx.mkEq(
+                    vmap.get(this.variable),
+                    pmap.get(prot)
+                )
+            }.ors(ctx)
     }
 }

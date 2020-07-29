@@ -13,7 +13,9 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.QueryNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.UpdateNode
 
 private fun Node.postorderTraverse(f: (Node) -> Unit) {
-    this.children.forEach(f)
+    this.children.forEach {
+        it.postorderTraverse(f)
+    }
     f(this)
 }
 

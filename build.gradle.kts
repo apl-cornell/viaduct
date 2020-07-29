@@ -69,6 +69,9 @@ dependencies {
     // Command-line-argument parsing
     implementation("com.github.ajalt:clikt:2.5.0")
 
+    // bimap
+    implementation("com.uchuhimo:kotlinx-bimap:1.2")
+
     // Colored terminal output
     implementation("org.fusesource.jansi:jansi:1.18")
 

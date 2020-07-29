@@ -59,6 +59,9 @@ dependencies {
     // Parsing
     implementation("com.github.vbmacher:java-cup-runtime:11b-20160615")
 
+    // SMT solving
+    implementation("io.github.tudo-aqua:z3-turnkey:4.8.7.1")
+
     // Logging
     implementation("io.github.microutils:kotlin-logging:1.7.10")
     implementation("org.apache.logging.log4j:log4j-core:2.13.3")

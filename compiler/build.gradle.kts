@@ -28,9 +28,10 @@ dependencies {
     implementation(kotlin("stdlib-jdk8"))
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.3.8")
 
-    // Functional data structures
+    // Data structures
     implementation("io.vavr:vavr:1.0.0-alpha-3")
     implementation("org.jetbrains.kotlinx:kotlinx-collections-immutable-jvm:0.3")
+    implementation("com.uchuhimo:kotlinx-bimap:1.2")
 
     // Google's Guava (core data structures)
     implementation("com.google.guava:guava:29.0-jre")

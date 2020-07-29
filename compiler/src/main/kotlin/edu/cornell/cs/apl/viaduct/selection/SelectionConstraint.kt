@@ -7,8 +7,7 @@ import com.uchuhimo.collections.BiMap
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
 import edu.cornell.cs.apl.viaduct.syntax.Variable
 
-
-/** Custom selection constraints specified for constraint solving during splitting. *//
+/** Custom selection constraints specified for constraint solving during splitting. */
 sealed class SelectionConstraint
 
 data class Literal(val literalValue: Boolean) : SelectionConstraint()

@@ -1,6 +1,6 @@
 package edu.cornell.cs.apl.attributes
 
-import java.util.IdentityHashMap
+import java.util.concurrent.ConcurrentHashMap
 import kotlin.properties.ReadOnlyProperty
 import kotlin.reflect.KProperty
 
@@ -63,21 +63,25 @@ fun <Node : TreeNode<Node>, T> collectedAttribute(
 }
 
 private class CachedAttribute<in Node, out T>(private val f: (Node) -> T) : Attribute<Node, T>() {
-    private val cache: MutableMap<Node, Option<T>> = IdentityHashMap()
+    private val cache: MutableMap<Node, AttributeValue<Option<T>>> = ConcurrentHashMap()
 
     override operator fun invoke(node: Node): T {
-        val previousValue = cache.putIfAbsent(node, None)
-        return if (previousValue != null) {
-            when (previousValue) {
+        val attributeValue = cache.getOrPut(node) { AttributeValue(None) }
+        return synchronized(attributeValue) {
+            when (val valueOption = attributeValue.currentValue) {
                 is Some<T> ->
-                    previousValue.value
+                    valueOption.value
                 is None ->
-                    throw CycleInAttributeDefinitionException()
+                    if (attributeValue.isVisited) {
+                        throw CycleInAttributeDefinitionException()
+                    } else {
+                        attributeValue.isVisited = true
+                        val newValue = f(node)
+                        attributeValue.currentValue = Some(newValue)
+                        attributeValue.finalize()
+                        newValue
+                    }
             }
-        } else {
-            val value = f(node)
-            cache[node] = Some(value)
-            value
         }
     }
 }

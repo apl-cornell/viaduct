@@ -1,6 +1,5 @@
 package edu.cornell.cs.apl.viaduct.analysis
 
-import edu.cornell.cs.apl.attributes.Tree
 import edu.cornell.cs.apl.viaduct.ExampleProgramProvider
 import edu.cornell.cs.apl.viaduct.passes.elaborated
 import edu.cornell.cs.apl.viaduct.syntax.surface.ProgramNode
@@ -12,15 +11,13 @@ internal class InformationFlowAnalysisTest {
     @ParameterizedTest
     @ArgumentsSource(ExampleProgramProvider::class)
     fun `it information flow checks`(program: ProgramNode) {
-        val nameAnalysis = NameAnalysis(Tree(program.elaborated()))
-        InformationFlowAnalysis(nameAnalysis).check()
+        InformationFlowAnalysis.get(program.elaborated()).check()
     }
 
     @ParameterizedTest
     @ArgumentsSource(ExampleProgramProvider::class)
     fun `it has a valid constraint graph representation`(program: ProgramNode) {
-        val nameAnalysis = NameAnalysis(Tree(program.elaborated()))
-        val informationFlowAnalysis = InformationFlowAnalysis(nameAnalysis)
+        val informationFlowAnalysis = InformationFlowAnalysis.get(program.elaborated())
         val writer = StringWriter()
         informationFlowAnalysis.exportConstraintGraph(writer)
     }

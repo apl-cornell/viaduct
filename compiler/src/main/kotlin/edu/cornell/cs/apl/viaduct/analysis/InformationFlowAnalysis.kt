@@ -1,5 +1,6 @@
 package edu.cornell.cs.apl.viaduct.analysis
 
+import edu.cornell.cs.apl.attributes.Tree
 import edu.cornell.cs.apl.attributes.attribute
 import edu.cornell.cs.apl.prettyprinting.PrettyPrintable
 import edu.cornell.cs.apl.viaduct.errors.ConfidentialityChangingEndorsementError
@@ -35,6 +36,7 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.LiteralNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.Node
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.OperatorApplicationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutputNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.QueryNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ReadNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ReceiveNode
@@ -45,7 +47,10 @@ import edu.cornell.cs.apl.viaduct.util.FreshNameGenerator
 import java.io.Writer
 
 /** Associates [Variable]s with their [Label]s. */
-class InformationFlowAnalysis(private val nameAnalysis: NameAnalysis) {
+class InformationFlowAnalysis private constructor(
+    private val tree: Tree<Node, ProgramNode>,
+    private val nameAnalysis: NameAnalysis
+) {
     private val constraintSystem = ConstraintSolver<InformationFlowError>()
     private val nameGenerator = FreshNameGenerator()
     private val solution: Map<LabelVariable, Label> by lazy { constraintSystem.solve() }
@@ -72,14 +77,14 @@ class InformationFlowAnalysis(private val nameAnalysis: NameAnalysis) {
 
     /** The program counter label at this node. */
     private val Node.pc: PCLabelVariable by attribute {
-        val parent = nameAnalysis.tree.parent(this)
+        val parent = tree.parent(this)
         when {
             parent == null ->
                 PCLabelVariable("program")
             parent is IfNode && this is BlockNode -> {
                 // TODO: two pc variables are generated per IfNode. These variables are equivalent.
                 //   Can we cut this down to one?
-                val childIndex = nameAnalysis.tree.childIndex(this)
+                val childIndex = tree.childIndex(this)
                 val newPC = PCLabelVariable("${parent.pc.path}.if.$childIndex")
                 parent.pcFlowsTo(this, newPC.variable)
                 parent.guard flowsTo newPC.variable
@@ -258,7 +263,7 @@ class InformationFlowAnalysis(private val nameAnalysis: NameAnalysis) {
     }
 
     init {
-        nameAnalysis.tree.root.addConstraints()
+        tree.root.addConstraints()
     }
 
     /** Returns the inferred security label of the [Temporary] defined by [node]. */
@@ -285,6 +290,14 @@ class InformationFlowAnalysis(private val nameAnalysis: NameAnalysis) {
     /** Outputs a DOT representation of the program's constraint graph to [output]. */
     fun exportConstraintGraph(output: Writer) {
         constraintSystem.exportDotGraph(output)
+    }
+
+    companion object : AnalysisProvider<InformationFlowAnalysis> {
+        private val ProgramNode.instance: InformationFlowAnalysis by attribute {
+            InformationFlowAnalysis(this.tree, NameAnalysis.get(this))
+        }
+
+        override fun get(program: ProgramNode): InformationFlowAnalysis = program.instance
     }
 }
 

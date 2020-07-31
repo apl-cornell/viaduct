@@ -1,6 +1,5 @@
 package edu.cornell.cs.apl.viaduct.analysis
 
-import edu.cornell.cs.apl.attributes.Tree
 import edu.cornell.cs.apl.viaduct.ExampleProgramProvider
 import edu.cornell.cs.apl.viaduct.passes.elaborated
 import edu.cornell.cs.apl.viaduct.syntax.surface.ProgramNode
@@ -11,7 +10,6 @@ internal class TypeAnalysisTest {
     @ParameterizedTest
     @ArgumentsSource(ExampleProgramProvider::class)
     fun `it type checks`(program: ProgramNode) {
-        val nameAnalysis = NameAnalysis(Tree(program.elaborated()))
-        TypeAnalysis(nameAnalysis).check()
+        TypeAnalysis.get(program.elaborated()).check()
     }
 }

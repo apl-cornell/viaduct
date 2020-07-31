@@ -9,14 +9,16 @@ import edu.cornell.cs.apl.viaduct.syntax.SpecializedProtocol
 import edu.cornell.cs.apl.viaduct.syntax.Variable
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.DeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.LetNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
 
-class LocalSelector(
-    val hostTrustConfiguration: HostTrustConfiguration,
-    val informationFlowAnalysis: InformationFlowAnalysis
-) : ProtocolSelector {
-    private val hosts: List<Host> = hostTrustConfiguration.keys.sorted()
-    private val protocols: List<SpecializedProtocol> =
+class LocalSelector(program: ProgramNode) : ProtocolSelector {
+    private val informationFlowAnalysis = InformationFlowAnalysis.get(program)
+
+    private val protocols: List<SpecializedProtocol> = run {
+        val hostTrustConfiguration = HostTrustConfiguration(program)
+        val hosts: List<Host> = hostTrustConfiguration.keys.sorted()
         hosts.map(::Local).map { SpecializedProtocol(it, hostTrustConfiguration) }
+    }
 
     override fun select(node: LetNode, currentAssignment: Map<Variable, Protocol>): Set<Protocol> {
         return protocols.filter { it.authority.actsFor(informationFlowAnalysis.label(node)) }.map { it.protocol }

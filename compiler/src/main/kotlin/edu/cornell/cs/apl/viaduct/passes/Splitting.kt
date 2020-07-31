@@ -126,14 +126,11 @@ fun ProcessDeclarationNode.split(
 // TODO: throw error if there is no main
 // TODO: rewrite all references to main in other protocols
 // TODO: maybe generalize from main to an arbitrary process?
-fun ProgramNode.splitMain(
-    protocolAnalysis: ProtocolAnalysis,
-    typeAnalysis: TypeAnalysis
-): ProgramNode {
+fun ProgramNode.splitMain(protocolAnalysis: ProtocolAnalysis): ProgramNode {
     val declarations: MutableList<TopLevelDeclarationNode> = mutableListOf()
     this.declarations.forEach {
         if (it is ProcessDeclarationNode && it.protocol.value == MainProtocol) {
-            declarations.addAll(it.split(protocolAnalysis, typeAnalysis))
+            declarations.addAll(it.split(protocolAnalysis, TypeAnalysis.get(this)))
         } else {
             declarations.add(it)
         }

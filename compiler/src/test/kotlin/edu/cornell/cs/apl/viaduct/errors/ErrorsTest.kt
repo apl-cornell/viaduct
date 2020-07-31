@@ -1,11 +1,7 @@
 package edu.cornell.cs.apl.viaduct.errors
 
-import edu.cornell.cs.apl.attributes.Tree
 import edu.cornell.cs.apl.viaduct.ErroneousExampleFileProvider
-import edu.cornell.cs.apl.viaduct.analysis.InformationFlowAnalysis
-import edu.cornell.cs.apl.viaduct.analysis.NameAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.ProtocolAnalysis
-import edu.cornell.cs.apl.viaduct.analysis.TypeAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.main
 import edu.cornell.cs.apl.viaduct.parsing.SourceFile
 import edu.cornell.cs.apl.viaduct.parsing.isBlankOrUnderline
@@ -15,8 +11,8 @@ import edu.cornell.cs.apl.viaduct.passes.elaborated
 import edu.cornell.cs.apl.viaduct.passes.splitMain
 import edu.cornell.cs.apl.viaduct.protocols.MainProtocol
 import edu.cornell.cs.apl.viaduct.selection.SimpleSelection
-import edu.cornell.cs.apl.viaduct.selection.SimpleSelector
 import edu.cornell.cs.apl.viaduct.selection.simpleProtocolCost
+import edu.cornell.cs.apl.viaduct.selection.simpleSelector
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
 import java.io.File
 import kotlin.reflect.KClass
@@ -68,16 +64,11 @@ private fun run(file: File) {
 
 /** Selects protocols for and splits the [MainProtocol] in [this] program. */
 private fun ProgramNode.split() {
-    val nameAnalysis = NameAnalysis(Tree(this))
-    val typeAnalysis = TypeAnalysis(nameAnalysis)
-    val informationFlowAnalysis = InformationFlowAnalysis(nameAnalysis)
-
     val protocolAssignment =
-        SimpleSelection(SimpleSelector(nameAnalysis, informationFlowAnalysis), ::simpleProtocolCost)
-            .select(nameAnalysis.tree.root.main, nameAnalysis, informationFlowAnalysis)
-    val protocolAnalysis = ProtocolAnalysis(nameAnalysis, protocolAssignment)
+        SimpleSelection(this, simpleSelector(this), ::simpleProtocolCost).select(this.main)
+    val protocolAnalysis = ProtocolAnalysis(this, protocolAssignment)
 
-    this.splitMain(protocolAnalysis, typeAnalysis)
+    this.splitMain(protocolAnalysis)
 }
 
 /** Returns the subclass of [CompilationError] that running [file] is supposed to throw. */

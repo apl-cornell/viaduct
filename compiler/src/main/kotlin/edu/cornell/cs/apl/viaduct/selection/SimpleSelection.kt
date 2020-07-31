@@ -3,6 +3,7 @@ package edu.cornell.cs.apl.viaduct.selection
 import edu.cornell.cs.apl.attributes.attribute
 import edu.cornell.cs.apl.viaduct.analysis.InformationFlowAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.NameAnalysis
+import edu.cornell.cs.apl.viaduct.analysis.tree
 import edu.cornell.cs.apl.viaduct.protocols.Local
 import edu.cornell.cs.apl.viaduct.syntax.HostTrustConfiguration
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
@@ -12,23 +13,25 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.InputNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.LetNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.Node
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProcessDeclarationNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.QueryNode
 import kotlinx.collections.immutable.PersistentMap
 import kotlinx.collections.immutable.persistentMapOf
 
 /** This class implements a particularly simple but ineffective protocol selection.
-    Along with a protocol selector, it takes as input a function [protocolCost] which
-    gives a total linear order on protocol cost.
+Along with a protocol selector, it takes as input a function [protocolCost] which
+gives a total linear order on protocol cost.
 
  **/
-class SimpleSelection(val selector: ProtocolSelector, val protocolCost: (Protocol) -> Int) {
-    fun select(
-        processDeclaration: ProcessDeclarationNode,
-        nameAnalysis: NameAnalysis,
-        informationFlowAnalysis: InformationFlowAnalysis
-    ): (Variable) -> Protocol {
-        val hostTrustConfiguration = HostTrustConfiguration(nameAnalysis.tree.root)
+class SimpleSelection(val program: ProgramNode, val selector: ProtocolSelector, val protocolCost: (Protocol) -> Int) {
+    private val tree = program.tree
+    private val nameAnalysis = NameAnalysis.get(program)
+    private val informationFlowAnalysis = InformationFlowAnalysis.get(program)
+    val hostTrustConfiguration = HostTrustConfiguration(program)
+
+    fun select(processDeclaration: ProcessDeclarationNode): (Variable) -> Protocol {
         var assignment: PersistentMap<Variable, Protocol> = persistentMapOf()
+
         val protocolSelection = object {
             private val LetNode.possibleProtocols: Set<Protocol> by attribute {
                 when (value) {

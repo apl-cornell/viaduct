@@ -9,16 +9,18 @@ import edu.cornell.cs.apl.viaduct.syntax.SpecializedProtocol
 import edu.cornell.cs.apl.viaduct.syntax.Variable
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.DeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.LetNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
 import edu.cornell.cs.apl.viaduct.util.subsequences
 
-class ReplicationSelector(
-    val hostTrustConfiguration: HostTrustConfiguration,
-    val informationFlowAnalysis: InformationFlowAnalysis
-) : ProtocolSelector {
-    private val hosts: List<Host> = hostTrustConfiguration.keys.sorted()
-    private val hostSubsets = hosts.subsequences().map { it.toSet() }.filter { it.size >= 2 }
-    private val protocols: List<SpecializedProtocol> =
+class ReplicationSelector(program: ProgramNode) : ProtocolSelector {
+    private val informationFlowAnalysis = InformationFlowAnalysis.get(program)
+
+    private val protocols: List<SpecializedProtocol> = run {
+        val hostTrustConfiguration = HostTrustConfiguration(program)
+        val hosts: List<Host> = hostTrustConfiguration.keys.sorted()
+        val hostSubsets = hosts.subsequences().map { it.toSet() }.filter { it.size >= 2 }
         hostSubsets.map(::Replication).map { SpecializedProtocol(it, hostTrustConfiguration) }
+    }
 
     override fun select(node: LetNode, currentAssignment: Map<Variable, Protocol>): Set<Protocol> {
         return protocols.filter { it.authority.actsFor(informationFlowAnalysis.label(node)) }.map { it.protocol }

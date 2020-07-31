@@ -1,18 +1,15 @@
 package edu.cornell.cs.apl.viaduct.backend
 
-import edu.cornell.cs.apl.attributes.Tree
 import edu.cornell.cs.apl.viaduct.ExampleProgramProvider
-import edu.cornell.cs.apl.viaduct.analysis.InformationFlowAnalysis
-import edu.cornell.cs.apl.viaduct.analysis.NameAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.ProtocolAnalysis
-import edu.cornell.cs.apl.viaduct.analysis.TypeAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.main
+import edu.cornell.cs.apl.viaduct.passes.check
 import edu.cornell.cs.apl.viaduct.passes.elaborated
 import edu.cornell.cs.apl.viaduct.passes.splitMain
 import edu.cornell.cs.apl.viaduct.protocols.HostInterface
 import edu.cornell.cs.apl.viaduct.selection.SimpleSelection
-import edu.cornell.cs.apl.viaduct.selection.SimpleSelector
 import edu.cornell.cs.apl.viaduct.selection.simpleProtocolCost
+import edu.cornell.cs.apl.viaduct.selection.simpleSelector
 import edu.cornell.cs.apl.viaduct.syntax.Host
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
 import edu.cornell.cs.apl.viaduct.syntax.ProtocolName
@@ -38,28 +35,17 @@ internal class BackendInterpreterTest {
     @ArgumentsSource(ExampleProgramProvider::class)
     fun testInterpreter(surfaceProgram: ProgramNode) {
         val program = surfaceProgram.elaborated()
-        val nameAnalysis = NameAnalysis(Tree(program))
-        val typeAnalysis = TypeAnalysis(nameAnalysis)
-        val informationFlowAnalysis = InformationFlowAnalysis(nameAnalysis)
 
         // Perform static checks.
-        nameAnalysis.check()
-        typeAnalysis.check()
-        informationFlowAnalysis.check()
+        program.check()
 
         // Select protocols.
         val protocolAssignment: (Variable) -> Protocol =
-            SimpleSelection(
-                SimpleSelector(
-                    nameAnalysis,
-                    informationFlowAnalysis
-                ), ::simpleProtocolCost
-            )
-                .select(program.main, nameAnalysis, informationFlowAnalysis)
-        val protocolAnalysis = ProtocolAnalysis(nameAnalysis, protocolAssignment)
+            SimpleSelection(program, simpleSelector(program), ::simpleProtocolCost).select(program.main)
+        val protocolAnalysis = ProtocolAnalysis(program, protocolAssignment)
 
         // Split the program.
-        val splitProgram = program.splitMain(protocolAnalysis, typeAnalysis)
+        val splitProgram = program.splitMain(protocolAnalysis)
 
         // set up backend interpreter with fake backends
         val backendMap: Map<ProtocolName, ProtocolBackend> =

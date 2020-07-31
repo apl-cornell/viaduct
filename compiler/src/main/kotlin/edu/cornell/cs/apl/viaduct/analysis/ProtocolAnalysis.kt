@@ -18,6 +18,7 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.LetNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.Node
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutputNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProcessDeclarationNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ReceiveNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.SendNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.SimpleStatementNode
@@ -28,13 +29,13 @@ import kotlinx.collections.immutable.persistentHashSetOf
 import kotlinx.collections.immutable.toPersistentSet
 
 /** Associates each [StatementNode] with the [Protocol]s involved in its execution. */
-class ProtocolAnalysis(
-    private val nameAnalysis: NameAnalysis,
-    val protocolAssignment: (Variable) -> Protocol
-) {
+class ProtocolAnalysis(val program: ProgramNode, val protocolAssignment: (Variable) -> Protocol) {
+    val tree = program.tree
+    val nameAnalysis = NameAnalysis.get(program)
+
     /** The [ProcessDeclarationNode] this [Node] is in. */
     private val Node.process: ProcessDeclarationNode by attribute {
-        when (val parent = nameAnalysis.tree.parent(this)!!) {
+        when (val parent = tree.parent(this)!!) {
             is ProcessDeclarationNode ->
                 parent
             else ->
@@ -56,6 +57,8 @@ class ProtocolAnalysis(
                         assert(protocol == Local(statement.value.host.value))
                     is ReceiveNode ->
                         throw IllegalInternalCommunicationError(statement.process, statement.value)
+                    else ->
+                        Unit
                 }
                 protocol
             }

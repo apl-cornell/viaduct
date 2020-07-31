@@ -2,8 +2,6 @@ package edu.cornell.cs.apl.viaduct.cli
 
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.parameters.arguments.argument
-import edu.cornell.cs.apl.attributes.Tree
-import edu.cornell.cs.apl.viaduct.analysis.NameAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.TypeAnalysis
 import edu.cornell.cs.apl.viaduct.backend.BackendInterpreter
 import edu.cornell.cs.apl.viaduct.backend.PlaintextBackend
@@ -50,8 +48,7 @@ class Run : CliktCommand(help = "Run compiled protocol for a single host") {
 
     override fun run() {
         val program = input.parse(protocols).elaborated()
-        val nameAnalysis = NameAnalysis(Tree(program))
-        val typeAnalysis = TypeAnalysis(nameAnalysis)
+        val typeAnalysis = TypeAnalysis.get(program)
 
         val backends: Map<ProtocolName, ProtocolBackend> = getBackends(typeAnalysis)
         val interpreter = BackendInterpreter(backends)

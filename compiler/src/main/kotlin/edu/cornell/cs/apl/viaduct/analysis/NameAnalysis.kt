@@ -44,7 +44,7 @@ import kotlinx.collections.immutable.persistentSetOf
  * For example, [Temporary] variables are associated with [LetNode]s, [ObjectVariable]s with
  * [DeclarationNode]s, and [JumpLabel]s with [InfiniteLoopNode]s.
  * */
-class NameAnalysis(val tree: Tree<Node, ProgramNode>) {
+class NameAnalysis private constructor(private val tree: Tree<Node, ProgramNode>) {
     /** Host declarations in scope for this node. */
     private val Node.hostDeclarations: NameMap<Host, HostDeclarationNode> by attribute {
         when (val parent = tree.parent(this)) {
@@ -290,5 +290,11 @@ class NameAnalysis(val tree: Tree<Node, ProgramNode>) {
             node.children.forEach(::check)
         }
         check(tree.root)
+    }
+
+    companion object : AnalysisProvider<NameAnalysis> {
+        private val ProgramNode.instance: NameAnalysis by attribute { NameAnalysis(this.tree) }
+
+        override fun get(program: ProgramNode): NameAnalysis = program.instance
     }
 }

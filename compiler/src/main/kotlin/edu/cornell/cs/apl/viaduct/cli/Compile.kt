@@ -3,17 +3,15 @@ package edu.cornell.cs.apl.viaduct.cli
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.types.file
-import edu.cornell.cs.apl.attributes.Tree
 import edu.cornell.cs.apl.viaduct.analysis.InformationFlowAnalysis
-import edu.cornell.cs.apl.viaduct.analysis.NameAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.ProtocolAnalysis
-import edu.cornell.cs.apl.viaduct.analysis.TypeAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.main
+import edu.cornell.cs.apl.viaduct.passes.check
 import edu.cornell.cs.apl.viaduct.passes.elaborated
 import edu.cornell.cs.apl.viaduct.passes.splitMain
 import edu.cornell.cs.apl.viaduct.selection.SimpleSelection
-import edu.cornell.cs.apl.viaduct.selection.SimpleSelector
 import edu.cornell.cs.apl.viaduct.selection.simpleProtocolCost
+import edu.cornell.cs.apl.viaduct.selection.simpleSelector
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
 import edu.cornell.cs.apl.viaduct.syntax.Variable
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
@@ -50,30 +48,19 @@ class Compile : CliktCommand(help = "Compile ideal protocol to secure distribute
     override fun run() {
         val program = input.parse().elaborated()
 
-        val nameAnalysis = NameAnalysis(Tree(program))
-        val typeAnalysis = TypeAnalysis(nameAnalysis)
-        val informationFlowAnalysis = InformationFlowAnalysis(nameAnalysis)
         // Dump label constraint graph to a file if requested.
-        dumpGraph(informationFlowAnalysis::exportConstraintGraph, constraintGraphOutput)
+        dumpGraph(InformationFlowAnalysis.get(program)::exportConstraintGraph, constraintGraphOutput)
 
         // Perform static checks.
-        nameAnalysis.check()
-        typeAnalysis.check()
-        informationFlowAnalysis.check()
+        program.check()
 
         // Select protocols.
         val protocolAssignment: (Variable) -> Protocol =
-            SimpleSelection(
-                SimpleSelector(
-                    nameAnalysis,
-                    informationFlowAnalysis
-                ), ::simpleProtocolCost
-            )
-                .select(program.main, nameAnalysis, informationFlowAnalysis)
-        val protocolAnalysis = ProtocolAnalysis(nameAnalysis, protocolAssignment)
+            SimpleSelection(program, simpleSelector(program), ::simpleProtocolCost).select(program.main)
+        val protocolAnalysis = ProtocolAnalysis(program, protocolAssignment)
 
         // Split the program.
-        val splitProgram: ProgramNode = program.splitMain(protocolAnalysis, typeAnalysis)
+        val splitProgram: ProgramNode = program.splitMain(protocolAnalysis)
         output.println(splitProgram)
     }
 }

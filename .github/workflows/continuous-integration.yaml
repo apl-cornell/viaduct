@@ -22,7 +22,7 @@ jobs:
       - name: Build with Gradle
         uses: eskatos/gradle-command-action@v1
         with:
-          arguments: build jacocoTestReport
+          arguments: build jacocoTestReport dokkaGfm
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v1
         with:

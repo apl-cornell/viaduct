@@ -29,12 +29,10 @@ public abstract class FreeDistributiveLattice<A>
     return new AutoValue_FreeDistributiveLattice<>(removeRedundant(joinOfMeets));
   }
 
-  @SuppressWarnings("unchecked")
   public static <A> FreeDistributiveLattice<A> top() {
     return (FreeDistributiveLattice<A>) TOP;
   }
 
-  @SuppressWarnings("unchecked")
   public static <A> FreeDistributiveLattice<A> bottom() {
     return (FreeDistributiveLattice<A>) BOTTOM;
   }
@@ -122,17 +120,17 @@ public abstract class FreeDistributiveLattice<A>
     final Function<Set<A>, String> meetToString =
         (meet) -> {
           final Array<String> elements = meet.toArray().sorted().map(Object::toString);
-          final String body = String.join(" ∧ ", elements);
+          final String body = String.join(" \u2227 ", elements);
           return meet.length() > 1 ? "(" + body + ")" : body;
         };
 
     if (this.equals(top())) {
-      return "⊤";
+      return "\u22A4";
     } else if (this.equals(bottom())) {
-      return "⊥";
+      return "\u22A5";
     } else {
       final Array<String> meets = getJoinOfMeets().toArray().map(meetToString).sorted();
-      final String body = String.join(" ∨ ", meets);
+      final String body = String.join(" \u2228 ", meets);
       return getJoinOfMeets().length() > 1 ? "(" + body + ")" : body;
     }
   }

@@ -1,3 +1,0 @@
-#!/usr/bin/env sh
-
-find src/main -name '*.kt' -o -name '*.java' -o -name '*.cup' -o -name '*.flex' | xargs wc -l

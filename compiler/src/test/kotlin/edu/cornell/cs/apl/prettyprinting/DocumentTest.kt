@@ -168,6 +168,34 @@ internal class DocumentTest {
     }
 
     @Nested
+    inner class Unicode {
+        private fun String.shouldPrintToItself() =
+            Document(this).shouldPrintTo(this)
+
+        @Test
+        fun `BMP Unicode characters (1 UTF-16 code unit)`() {
+            "⊤".shouldPrintToItself()
+            "⊥".shouldPrintToItself()
+            "∨".shouldPrintToItself()
+            "∧".shouldPrintToItself()
+            "⊔".shouldPrintToItself()
+            "⊓".shouldPrintToItself()
+            "←".shouldPrintToItself()
+            "→".shouldPrintToItself()
+        }
+
+        @Test
+        fun `SMP Unicode characters (2 UTF-16 code units)`() {
+            "\uD83D\uDC4D".shouldPrintToItself()
+        }
+
+        @Test
+        fun `grapheme clusters`() {
+            "\uD83D\uDC4D\uD83C\uDFFF".shouldPrintToItself()
+        }
+    }
+
+    @Nested
     /** Note: unfortunately, all of these must be visually inspected. */
     inner class AnsiStyling {
         private fun Document.setForegroundColor(color: AnsiColor) =

@@ -2,8 +2,6 @@ package edu.cornell.cs.apl.viaduct.selection
 
 import edu.cornell.cs.apl.viaduct.analysis.InformationFlowAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.NameAnalysis
-import edu.cornell.cs.apl.viaduct.analysis.tree
-import edu.cornell.cs.apl.viaduct.analysis.uses
 import edu.cornell.cs.apl.viaduct.protocols.ABY
 import edu.cornell.cs.apl.viaduct.syntax.Host
 import edu.cornell.cs.apl.viaduct.syntax.HostTrustConfiguration
@@ -21,7 +19,6 @@ import edu.cornell.cs.apl.viaduct.util.subsequences
 //      every break for that loop has a pc that flows to pc of selection
 
 class ABYSelector(program: ProgramNode) : ProtocolSelector {
-    private val tree = program.tree
     private val nameAnalysis = NameAnalysis.get(program)
     private val informationFlowAnalysis = InformationFlowAnalysis.get(program)
 
@@ -46,7 +43,7 @@ class ABYSelector(program: ProgramNode) : ProtocolSelector {
     }
 
     private fun DeclarationNode.isApplicable(): Boolean {
-        return this.uses(tree).all { site ->
+        return nameAnalysis.users(this).all { site ->
             val pcCheck = informationFlowAnalysis.pcLabel(site).flowsTo(informationFlowAnalysis.pcLabel(this))
             val involvedLoops = nameAnalysis.involvedLoops(site)
             val loopCheck = involvedLoops.all { loop ->

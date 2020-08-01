@@ -10,7 +10,7 @@ jobs:
 
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest]
+        os: [macos-latest, ubuntu-latest, windows-latest]
         java: [11]
 
     steps:
@@ -20,7 +20,9 @@ jobs:
         with:
           java-version: ${{ matrix.java }}
       - name: Build with Gradle
-        run: ./gradlew build jacocoTestReport
+        uses: eskatos/gradle-command-action@v1
+        with:
+          arguments: build jacocoTestReport
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v1
         with:

@@ -78,6 +78,10 @@ tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach 
     kotlinOptions.allWarningsAsErrors = true
 }
 
+jflex {
+    encoding = Charsets.UTF_8.name()
+}
+
 val compileCup by tasks.registering(CupCompileTask::class) {}
 
 sourceSets {

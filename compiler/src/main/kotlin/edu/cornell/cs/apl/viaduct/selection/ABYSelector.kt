@@ -38,7 +38,7 @@ class ABYSelector(program: ProgramNode) : ProtocolSelector {
                     informationFlowAnalysis.pcLabel(it).flowsTo(informationFlowAnalysis.pcLabel(this))
                 }
             }
-            pcCheck && loopCheck
+            true || pcCheck && loopCheck
         }
     }
 
@@ -51,7 +51,7 @@ class ABYSelector(program: ProgramNode) : ProtocolSelector {
                     informationFlowAnalysis.pcLabel(it).flowsTo(informationFlowAnalysis.pcLabel(this))
                 }
             }
-            pcCheck && loopCheck
+            true || pcCheck && loopCheck
         }
     }
 

@@ -27,26 +27,25 @@ allprojects {
     /** Style */
 
     spotless {
+        java {
+            target("src/**/*.java")
+            googleJavaFormat()
+        }
         kotlinGradle {
             ktlint()
+        }
+    }
+
+    pluginManager.withPlugin("kotlin") {
+        spotless {
+            kotlin {
+                ktlint()
+            }
         }
     }
 }
 
 /** Style */
-
-project(":compiler") {
-    spotless {
-        // TODO: remove once Java is gone
-        java {
-            target("src/**/*.java")
-            googleJavaFormat()
-        }
-        kotlin {
-            ktlint()
-        }
-    }
-}
 
 spotless {
     format("markdown") {

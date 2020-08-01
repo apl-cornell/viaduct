@@ -48,6 +48,19 @@ project(":compiler") {
     }
 }
 
+spotless {
+    format("markdown") {
+        target("**/*.md")
+        targetExclude("**/build/**")
+        prettier()
+    }
+    format("YAML") {
+        target("**/*.yml", "**/*.yaml")
+        targetExclude("**/build/**")
+        prettier()
+    }
+}
+
 editorconfig {
     excludes = listOf("$buildDir", "**/out", "gradlew", ".kotlin", "**/*.hprof")
 }

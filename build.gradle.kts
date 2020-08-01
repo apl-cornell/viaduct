@@ -11,6 +11,7 @@ plugins {
     id("se.patrikerdes.use-latest-versions") version "0.2.14"
 }
 
+
 allprojects {
     apply(plugin = "com.diffplug.spotless")
     apply(plugin = "com.github.ben-manes.versions")
@@ -27,26 +28,25 @@ allprojects {
     /** Style */
 
     spotless {
+        java {
+            target("src/**/*.java")
+            googleJavaFormat()
+        }
         kotlinGradle {
             ktlint()
+        }
+    }
+
+    pluginManager.withPlugin("kotlin") {
+        spotless {
+            kotlin {
+                ktlint()
+            }
         }
     }
 }
 
 /** Style */
-
-project(":compiler") {
-    spotless {
-        // TODO: remove once Java is gone
-        java {
-            target("src/**/*.java")
-            googleJavaFormat()
-        }
-        kotlin {
-            ktlint()
-        }
-    }
-}
 
 editorconfig {
     excludes = listOf("$buildDir", "**/out", "gradlew", ".kotlin", "**/*.hprof")

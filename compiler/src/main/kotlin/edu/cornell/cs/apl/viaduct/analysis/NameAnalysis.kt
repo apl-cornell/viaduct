@@ -83,34 +83,15 @@ class NameAnalysis private constructor(private val tree: Tree<Node, ProgramNode>
         if (it is DeclarationNode) Pair(it.variable, it) else null
     }
 
-    /** Jump labels in scope for this node. */
-    private val Node.correspondingLoops: NameMap<JumpLabel, InfiniteLoopNode> by attribute {
+    /** Loop nodes in scope for this node. */
+    private val Node.jumpTargets: NameMap<JumpLabel, InfiniteLoopNode> by attribute {
         when (val parent = tree.parent(this)) {
             null ->
                 NameMap()
             is InfiniteLoopNode ->
-                parent.correspondingLoops.put(parent.jumpLabel, parent)
+                parent.jumpTargets.put(parent.jumpLabel, parent)
             else ->
-                parent.correspondingLoops
-        }
-    }
-
-    private val InfiniteLoopNode.correspondingBreaks: Set<BreakNode> by collectedAttribute(tree) { node ->
-        if (node is BreakNode) {
-            listOf(node.correspondingLoops[node.jumpLabel] to node)
-        } else {
-            listOf()
-        }
-    }
-
-    /** All [BreakNode]s that correspond to a given loop node. **/
-    fun correspondingBreaks(node: InfiniteLoopNode): Set<BreakNode> = node.correspondingBreaks
-
-    private val Node.readers: Set<StatementNode> by collectedAttribute(tree) { node ->
-        if (node is StatementNode) {
-            node.reads.map { Pair(declaration(it), node) }
-        } else {
-            listOf()
+                parent.jumpTargets
         }
     }
 
@@ -182,7 +163,7 @@ class NameAnalysis private constructor(private val tree: Tree<Node, ProgramNode>
 
     /** Returns the loop that [node] is breaking out of. */
     fun correspondingLoop(node: BreakNode): InfiniteLoopNode =
-        node.correspondingLoops[node.jumpLabel]
+        node.jumpTargets[node.jumpLabel]
 
     /** Returns the declaration of the [Host] in [node]. */
     fun declaration(node: ExternalCommunicationNode): HostDeclarationNode =
@@ -200,7 +181,16 @@ class NameAnalysis private constructor(private val tree: Tree<Node, ProgramNode>
      */
     fun readers(node: LetNode): Set<StatementNode> = node.readers
 
-    // TODO: readers for other types of [Name]s
+    private val Node.readers: Set<StatementNode> by collectedAttribute(tree) { node ->
+        if (node is StatementNode) {
+            node.reads.map { Pair(declaration(it), node) }
+        } else {
+            listOf()
+        }
+    }
+
+    /** Returns the set of [QueryNode]s that reference the [ObjectVariable] declared by [node]. **/
+    fun queriers(node: DeclarationNode): Set<QueryNode> = node.queries
 
     private val DeclarationNode.queries: Set<QueryNode> by collectedAttribute(tree) { node ->
         if (node is QueryNode) {
@@ -210,7 +200,8 @@ class NameAnalysis private constructor(private val tree: Tree<Node, ProgramNode>
         }
     }
 
-    fun queries(node: DeclarationNode): Set<QueryNode> = node.queries
+    /** Returns the set of [UpdateNode]s that reference the [ObjectVariable] declared by [node]. **/
+    fun updaters(node: DeclarationNode): Set<UpdateNode> = node.updates
 
     private val DeclarationNode.updates: Set<UpdateNode> by collectedAttribute(tree) { node ->
         if (node is UpdateNode) {
@@ -220,10 +211,23 @@ class NameAnalysis private constructor(private val tree: Tree<Node, ProgramNode>
         }
     }
 
-    fun updates(node: DeclarationNode): Set<UpdateNode> = node.updates
+    /** Returns the set of [QueryNode]s and [UpdateNode]s that reference the [ObjectVariable] declared by [node]. **/
+    fun users(node: DeclarationNode): Set<Node> =
+        queriers(node).union(updaters(node))
 
-    fun uses(node: DeclarationNode): Set<Node> =
-        queries(node).union(updates(node))
+    /** Returns the set of [BreakNode]s that reference [node]. **/
+    fun correspondingBreaks(node: InfiniteLoopNode): Set<BreakNode> = node.correspondingBreaks
+
+    private val InfiniteLoopNode.correspondingBreaks: Set<BreakNode> by collectedAttribute(tree) { node ->
+        if (node is BreakNode) {
+            listOf(node.jumpTargets[node.jumpLabel] to node)
+        } else {
+            listOf()
+        }
+    }
+
+    /** Returns the list of [InfiniteLoopNode]s [node] is contained in. **/
+    fun involvedLoops(node: Node): List<InfiniteLoopNode> = node.involvedLoops
 
     private val Node.involvedLoops: List<InfiniteLoopNode> by attribute {
         val loopsAbove =
@@ -237,9 +241,6 @@ class NameAnalysis private constructor(private val tree: Tree<Node, ProgramNode>
             loopsAbove
         }
     }
-
-    /** Calculate all of the loops a given node is contained in. **/
-    fun involvedLoops(node: Node): List<InfiniteLoopNode> = node.involvedLoops
 
     /**
      * Asserts that every referenced [Name] has a declaration, and that no [Name] is declared
@@ -279,7 +280,7 @@ class NameAnalysis private constructor(private val tree: Tree<Node, ProgramNode>
                 is DeclarationNode ->
                     node.objectDeclarations.put(node.variable, node)
                 is InfiniteLoopNode ->
-                    node.correspondingLoops.put(node.jumpLabel, node)
+                    node.jumpTargets.put(node.jumpLabel, node)
                 is ProgramNode -> {
                     // Forcing these thunks
                     node.hostDeclarations

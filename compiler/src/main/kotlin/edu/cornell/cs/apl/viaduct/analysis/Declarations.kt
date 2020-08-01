@@ -1,6 +1,5 @@
 package edu.cornell.cs.apl.viaduct.analysis
 
-import edu.cornell.cs.apl.attributes.Tree
 import edu.cornell.cs.apl.viaduct.protocols.MainProtocol
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.BreakNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.DeclarationNode
@@ -12,11 +11,13 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.QueryNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.UpdateNode
 
+/** Recursively traverses the children of [this] node, then applies [f] to [this] node. */
 private fun Node.postorderTraverse(f: (Node) -> Unit) {
-    this.children.forEach(f)
+    this.children.forEach { it.postorderTraverse(f) }
     f(this)
 }
 
+/** Returns all instances of [T] contained in [this] node. */
 private inline fun <reified T : Node> Node.listOfInstances(): List<T> {
     val result = mutableListOf<T>()
     this.postorderTraverse {
@@ -27,21 +28,25 @@ private inline fun <reified T : Node> Node.listOfInstances(): List<T> {
     return result
 }
 
+/** Returns all [LetNode]s contained in this node. */
 fun Node.letNodes(): List<LetNode> = this.listOfInstances()
+
+/** Returns all [DeclarationNode]s contained in this node. */
 fun Node.declarationNodes(): List<DeclarationNode> = this.listOfInstances()
+
+/** Returns all [InfiniteLoopNode]s contained in this node. */
 fun Node.infiniteLoopNodes(): List<InfiniteLoopNode> = this.listOfInstances()
+
+/** Returns all [BreakNode]s contained in this node. */
 fun Node.breakNodes(): List<BreakNode> = this.listOfInstances()
+
+/** Returns all [QueryNode]s contained in this node. */
 fun Node.queryNodes(): List<QueryNode> = this.listOfInstances()
+
+/** Returns all [UpdateNode]s contained in this node. */
 fun Node.updateNodes(): List<UpdateNode> = this.listOfInstances()
 
-fun DeclarationNode.uses(tree: Tree<Node, ProgramNode>): Set<Node> {
-    return (tree.root.queryNodes().filter { it.variable == this.variable } +
-        tree.root.updateNodes().filter { it.variable == this.variable }).toSet()
-}
-
-/**
- * Returns the declaration of the [MainProtocol] in this program.
- */
+/** Returns the declaration of the [MainProtocol] in this program. */
 // TODO: throws blah blah
 val ProgramNode.main: ProcessDeclarationNode
     get() {

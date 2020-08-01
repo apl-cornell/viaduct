@@ -1,0 +1,33 @@
+name: GitHub Pages
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  documentation:
+    runs-on: ubuntu-latest
+
+    env:
+      java: 11
+      docsDir: build/docs/gfm/viaduct
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up JDK ${{ env.java }}
+        uses: actions/setup-java@v1
+        with:
+          java-version: ${{ env.java }}
+      - name: Generate documentation with Dokka
+        uses: eskatos/gradle-command-action@v1
+        with:
+          arguments: dokkaGfm
+      - name: Set Jekyll theme
+        run: |
+          echo 'theme: jekyll-theme-hacker' > ${{ env.docsDir }}/_config.yml
+      - name: Upload to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ${{ env.docsDir }}

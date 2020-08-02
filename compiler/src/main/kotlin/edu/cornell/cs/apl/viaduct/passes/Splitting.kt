@@ -2,6 +2,8 @@ package edu.cornell.cs.apl.viaduct.passes
 
 import edu.cornell.cs.apl.viaduct.analysis.ProtocolAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.TypeAnalysis
+import edu.cornell.cs.apl.viaduct.analysis.main
+import edu.cornell.cs.apl.viaduct.errors.NoMainError
 import edu.cornell.cs.apl.viaduct.protocols.Ideal
 import edu.cornell.cs.apl.viaduct.protocols.MainProtocol
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
@@ -122,11 +124,15 @@ fun ProcessDeclarationNode.split(
 /**
  * Splits the [MainProtocol] in this program using [ProcessDeclarationNode.split], preserving all
  * other [TopLevelDeclarationNode]s.
+ *
+ * @throws NoMainError if [this] program does not have a [MainProtocol].
  */
-// TODO: throw error if there is no main
 // TODO: rewrite all references to main in other protocols
 // TODO: maybe generalize from main to an arbitrary process?
 fun ProgramNode.splitMain(protocolAnalysis: ProtocolAnalysis): ProgramNode {
+    // Assert that the program has a main
+    this.main
+
     val declarations: MutableList<TopLevelDeclarationNode> = mutableListOf()
     this.declarations.forEach {
         if (it is ProcessDeclarationNode && it.protocol.value == MainProtocol) {

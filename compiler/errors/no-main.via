@@ -1,0 +1,4 @@
+/* NoMainError */
+
+host alice : {A}
+

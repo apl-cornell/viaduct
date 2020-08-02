@@ -1,5 +1,6 @@
 package edu.cornell.cs.apl.viaduct.analysis
 
+import edu.cornell.cs.apl.viaduct.errors.NoMainError
 import edu.cornell.cs.apl.viaduct.protocols.MainProtocol
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.BreakNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.DeclarationNode
@@ -46,14 +47,16 @@ fun Node.queryNodes(): List<QueryNode> = this.listOfInstances()
 /** Returns all [UpdateNode]s contained in this node. */
 fun Node.updateNodes(): List<UpdateNode> = this.listOfInstances()
 
-/** Returns the declaration of the [MainProtocol] in this program. */
-// TODO: throws blah blah
+/**
+ * Returns the declaration of the [MainProtocol] in this program.
+ *
+ * @throws NoMainError if the program has no such declaration.
+ */
 val ProgramNode.main: ProcessDeclarationNode
     get() {
         this.forEach {
             if (it is ProcessDeclarationNode && it.protocol.value == MainProtocol)
                 return it
         }
-        // TODO: custom error message
-        error("No main")
+        throw NoMainError(this.sourceLocation.sourcePath)
     }

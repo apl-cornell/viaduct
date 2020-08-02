@@ -1,0 +1,7 @@
+/* NoApplicableProtocolError */
+
+host alice : {A}
+
+process main {
+    val tooIntegral: int{A ∧ B<-} = 42;
+}

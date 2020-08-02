@@ -2,6 +2,8 @@ package edu.cornell.cs.apl.viaduct.selection
 
 import edu.cornell.cs.apl.viaduct.analysis.InformationFlowAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.NameAnalysis
+import edu.cornell.cs.apl.viaduct.errors.NoApplicableProtocolError
+import edu.cornell.cs.apl.viaduct.errors.NoHostDeclarationsError
 import edu.cornell.cs.apl.viaduct.protocols.Local
 import edu.cornell.cs.apl.viaduct.syntax.HostTrustConfiguration
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
@@ -24,7 +26,7 @@ private typealias PartialAssignment = PersistentMap<Variable, Protocol>
  * gives a total linear order on protocol cost.
  */
 class SimpleSelection(
-    program: ProgramNode,
+    private val program: ProgramNode,
     private val selector: ProtocolSelector,
     private val protocolCost: (Protocol) -> Int
 ) {
@@ -46,19 +48,24 @@ class SimpleSelection(
         selector.select(node, assignment)
 
     fun select(processDeclaration: ProcessDeclarationNode): (Variable) -> Protocol {
+        if (hostTrustConfiguration.isEmpty())
+            throw NoHostDeclarationsError(program.sourceLocation.sourcePath)
+
         var assignment: PersistentMap<Variable, Protocol> = persistentMapOf()
 
         fun traverse(node: Node) {
             when (node) {
                 is LetNode -> {
                     // TODO: proper error class
-                    val p = possibleProtocols(node, assignment).minBy(protocolCost) ?: error("protocol not found!")
+                    val p = possibleProtocols(node, assignment).minBy(protocolCost)
+                        ?: throw NoApplicableProtocolError(node.temporary)
                     assert(p.authority(hostTrustConfiguration).actsFor(informationFlowAnalysis.label(node)))
                     assignment = assignment.put(node.temporary.value, p)
                 }
                 is DeclarationNode -> {
                     // TODO: proper error class
-                    val p = possibleProtocols(node, assignment).minBy(protocolCost) ?: error("protocol not found!")
+                    val p = possibleProtocols(node, assignment).minBy(protocolCost)
+                        ?: throw NoApplicableProtocolError(node.variable)
                     assert(p.authority(hostTrustConfiguration).actsFor(informationFlowAnalysis.label(node)))
                     assignment = assignment.put(node.variable.value, p)
                 }

@@ -1,0 +1,7 @@
+/* NoApplicableProtocolError */
+
+host alice : {A}
+
+process main {
+    val containsTooConfidential: int = 2 + declassify 2 from {A<- ∧ B} to {A<- ∧ B};
+}

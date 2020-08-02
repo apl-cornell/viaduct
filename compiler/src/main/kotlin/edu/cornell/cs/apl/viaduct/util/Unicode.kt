@@ -18,3 +18,6 @@ fun CharSequence.graphemeClusterCount(): Int {
     }
     return count
 }
+
+/** A regular expression that recognizes Unicode line breaks. */
+val unicodeLineBreak: Regex = Regex("\\R")

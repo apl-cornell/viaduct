@@ -11,7 +11,6 @@ plugins {
     id("se.patrikerdes.use-latest-versions") version "0.2.14"
 }
 
-
 allprojects {
     apply(plugin = "com.diffplug.spotless")
     apply(plugin = "com.github.ben-manes.versions")
@@ -23,6 +22,17 @@ allprojects {
 
     repositories {
         jcenter()
+    }
+
+    /** Java Version */
+
+    tasks.withType<JavaCompile> {
+        sourceCompatibility = "1.8"
+        targetCompatibility = "1.8"
+    }
+
+    tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
+        kotlinOptions.jvmTarget = "1.8"
     }
 
     /** Style */

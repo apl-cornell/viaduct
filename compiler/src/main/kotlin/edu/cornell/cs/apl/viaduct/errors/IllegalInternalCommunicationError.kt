@@ -1,6 +1,7 @@
 package edu.cornell.cs.apl.viaduct.errors
 
 import edu.cornell.cs.apl.prettyprinting.Document
+import edu.cornell.cs.apl.prettyprinting.plus
 import edu.cornell.cs.apl.prettyprinting.times
 import edu.cornell.cs.apl.viaduct.protocols.Ideal
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
@@ -37,5 +38,5 @@ class IllegalInternalCommunicationError(
     override val hint: Document?
         get() =
             Document("Use") * keyword("input") * "and" * keyword("output") *
-                "if you want to communicate with hosts."
+                "if you want to communicate with hosts." + Document.lineBreak
 }

@@ -53,13 +53,15 @@ abstract class CompilationError : Error(), PrettyPrintable {
 
     final override val asDocument: Document
         get() {
-            val title = "-- ${category.toUpperCase()} -"
-            val source = " " + this.source
-            val paddingLength = (DEFAULT_LINE_WIDTH - title.length - source.length).coerceAtLeast(0)
-            val padding = "-".repeat(paddingLength)
-            val header = (Document(title) + padding + source).styled(HeaderStyle)
+            val header = run {
+                val title = "-- ${category.toUpperCase()} -"
+                val source = " " + this.source
+                val paddingLength = (DEFAULT_LINE_WIDTH - title.length - source.length).coerceAtLeast(0)
+                val padding = "-".repeat(paddingLength)
+                (Document(title) + padding + source).styled(HeaderStyle)
+            }
 
-            val hint = hint?.let { Document.lineBreak + it + Document.lineBreak } ?: Document()
+            val hint = hint?.let { Document.lineBreak + it } ?: Document()
 
             return header + Document.lineBreak + Document.lineBreak + description + hint
         }

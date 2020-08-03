@@ -1,0 +1,5 @@
+/* UndefinedNameError */
+
+process main {
+    val x: int = y;
+}

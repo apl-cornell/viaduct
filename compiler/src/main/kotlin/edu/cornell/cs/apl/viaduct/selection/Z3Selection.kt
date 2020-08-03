@@ -30,8 +30,8 @@ fun <T> List<Set<T>>.unions(): Set<T> {
 
 /**
  * This class performs splitting by using Z3. It operates as follows:
- * - First, it collects constraints on protocol selection from the selector. For each let or declaration,
- *      the selector outputs two things: first, it outputs a set of viable protocols for that variable. Second,
+ * - First, it collects constraints on protocol selection from the [ProtocolFactory]. For each let or declaration,
+ *      the factory outputs two things: first, it outputs a set of viable protocols for that variable. Second,
  *      it can output a number of custom constraints on selection for that variable which are forwarded to Z3.
  *      (For the simple selector, the custom constraints are trivial, as we have not yet constrained which protocols
  *      can talk to who.)
@@ -51,12 +51,13 @@ class Z3Selection(
     val processDeclaration: ProcessDeclarationNode,
     val informationFlowAnalysis: InformationFlowAnalysis,
     val nameAnalysis: NameAnalysis,
-    val selector: ProtocolSelector,
+    val selector: ProtocolFactory,
     val protocolCost: (Protocol) -> Int
 ) {
     private val ctx: Context = Context()
     private val hostTrustConfiguration = HostTrustConfiguration(nameAnalysis.tree.root)
 
+    // TODO: pc must be weak enough for the hosts involved in the selected protocols to read it
     private val protocolSelection = object {
         private val LetNode.viableProtocols: Set<Protocol> by attribute {
             when (value) {

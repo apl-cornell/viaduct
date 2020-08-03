@@ -9,11 +9,11 @@ import edu.cornell.cs.apl.viaduct.syntax.HostTrustConfiguration
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
 // TODO this might duplicate work for HostTrustConfiguration
 
-fun SimpleSelector(nameAnalysis: NameAnalysis, informationFlowAnalysis: InformationFlowAnalysis): ProtocolSelector {
+fun SimpleFactory(nameAnalysis: NameAnalysis, informationFlowAnalysis: InformationFlowAnalysis): ProtocolFactory {
     val hostTrustConfiguration = HostTrustConfiguration(nameAnalysis.tree.root)
-    return unions(ABYSelector(nameAnalysis, hostTrustConfiguration, informationFlowAnalysis),
-        ReplicationSelector(hostTrustConfiguration, informationFlowAnalysis),
-        LocalSelector(hostTrustConfiguration, informationFlowAnalysis))
+    return unions(ABYFactory(nameAnalysis, hostTrustConfiguration, informationFlowAnalysis),
+        ReplicationFactory(hostTrustConfiguration, informationFlowAnalysis),
+        LocalFactory(hostTrustConfiguration, informationFlowAnalysis))
 }
 
 fun simpleProtocolCost(p: Protocol): Int {

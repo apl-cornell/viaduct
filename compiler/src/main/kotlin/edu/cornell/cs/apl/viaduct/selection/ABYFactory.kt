@@ -17,11 +17,11 @@ import edu.cornell.cs.apl.viaduct.util.subsequences
 //      if it's in a loop, the loop has a break
 //      every break for that loop has a pc that flows to pc of selection
 
-class ABYSelector(
+class ABYFactory(
     val nameAnalysis: NameAnalysis,
     val hostTrustConfiguration: HostTrustConfiguration,
     val informationFlowAnalysis: InformationFlowAnalysis
-) : ProtocolSelector {
+) : ProtocolFactory {
     private val hosts: List<Host> = hostTrustConfiguration.keys.sorted()
     private val hostSubsets = hosts.subsequences().map { it.toSet() }.filter { it.size >= 2 }
     private val protocols: List<SpecializedProtocol> =

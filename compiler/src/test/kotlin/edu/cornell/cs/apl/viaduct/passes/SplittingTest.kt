@@ -8,8 +8,8 @@ import edu.cornell.cs.apl.viaduct.analysis.ProtocolAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.TypeAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.main
 import edu.cornell.cs.apl.viaduct.protocols.HostInterface
+import edu.cornell.cs.apl.viaduct.selection.SimpleFactory
 import edu.cornell.cs.apl.viaduct.selection.SimpleSelection
-import edu.cornell.cs.apl.viaduct.selection.SimpleSelector
 import edu.cornell.cs.apl.viaduct.selection.simpleProtocolCost
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProcessDeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.surface.ProgramNode
@@ -26,7 +26,7 @@ internal class SplittingTest {
 
         val dumpProtocolAssignment =
             SimpleSelection(
-                SimpleSelector(
+                SimpleFactory(
                     nameAnalysis,
                     informationFlowAnalysis
                 ), ::simpleProtocolCost

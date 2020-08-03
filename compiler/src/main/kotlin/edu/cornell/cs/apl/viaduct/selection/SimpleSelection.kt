@@ -24,7 +24,7 @@ The below selection mechanism does not actually do a search based on the generat
 but instead fails is the search does not satisfy the constraints.
 
  **/
-class SimpleSelection(val selector: ProtocolSelector, val protocolCost: (Protocol) -> Int) {
+class SimpleSelection(val selector: ProtocolFactory, val protocolCost: (Protocol) -> Int) {
     fun select(
         processDeclaration: ProcessDeclarationNode,
         nameAnalysis: NameAnalysis,

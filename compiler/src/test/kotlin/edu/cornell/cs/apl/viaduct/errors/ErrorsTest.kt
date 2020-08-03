@@ -14,8 +14,8 @@ import edu.cornell.cs.apl.viaduct.passes.check
 import edu.cornell.cs.apl.viaduct.passes.elaborated
 import edu.cornell.cs.apl.viaduct.passes.splitMain
 import edu.cornell.cs.apl.viaduct.protocols.MainProtocol
+import edu.cornell.cs.apl.viaduct.selection.SimpleFactory
 import edu.cornell.cs.apl.viaduct.selection.SimpleSelection
-import edu.cornell.cs.apl.viaduct.selection.SimpleSelector
 import edu.cornell.cs.apl.viaduct.selection.simpleProtocolCost
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
 import java.io.File
@@ -73,7 +73,7 @@ private fun ProgramNode.split() {
     val informationFlowAnalysis = InformationFlowAnalysis(nameAnalysis)
 
     val protocolAssignment =
-        SimpleSelection(SimpleSelector(nameAnalysis, informationFlowAnalysis), ::simpleProtocolCost)
+        SimpleSelection(SimpleFactory(nameAnalysis, informationFlowAnalysis), ::simpleProtocolCost)
             .select(nameAnalysis.tree.root.main, nameAnalysis, informationFlowAnalysis)
     val protocolAnalysis = ProtocolAnalysis(nameAnalysis, protocolAssignment)
 

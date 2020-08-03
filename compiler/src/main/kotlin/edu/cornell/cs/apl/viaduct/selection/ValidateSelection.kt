@@ -14,19 +14,20 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.Node
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProcessDeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.QueryNode
 
-/** This class provides a sanity check to ensure that a given protocol selection f : Variable -> Protocol
+/** This function provides a sanity check to ensure that a given protocol selection f : Variable -> Protocol
  *  satisfies all constraints required on it by the selector.
  */
 
-class SelectionValidator(
-    val processDeclaration: ProcessDeclarationNode,
-    val informationFlowAnalysis: InformationFlowAnalysis,
-    val nameAnalysis: NameAnalysis,
-    val selector: ProtocolSelector
+fun ValidateSelection(
+    processDeclaration: ProcessDeclarationNode,
+    informationFlowAnalysis: InformationFlowAnalysis,
+    nameAnalysis: NameAnalysis,
+    selector: ProtocolFactory,
+    selection: (Variable) -> Protocol
 ) {
     val hostTrustConfiguration = HostTrustConfiguration(nameAnalysis.tree.root)
 
-    private val protocolSelection = object {
+    val protocolSelection = object {
         private val LetNode.viableProtocols: Set<Protocol> by attribute {
             when (value) {
                 is InputNode ->
@@ -50,7 +51,7 @@ class SelectionValidator(
         }.toSet()
     }
 
-    private fun checkViableProtocol(selection: (Variable) -> Protocol, node: LetNode) {
+    fun checkViableProtocol(selection: (Variable) -> Protocol, node: LetNode) {
         if (!protocolSelection.viableProtocols(node).contains(selection(node.temporary.value))) {
             throw error(
                 "Bad protocol restriction for let node of ${node.temporary} = ${node.value}: viable protocols is ${selector.viableProtocols(
@@ -61,7 +62,7 @@ class SelectionValidator(
         }
     }
 
-    private fun checkAuthority(selection: (Variable) -> Protocol, node: LetNode) {
+    fun checkAuthority(selection: (Variable) -> Protocol, node: LetNode) {
         if (!(selection(node.temporary.value).authority(hostTrustConfiguration)
                 .actsFor(informationFlowAnalysis.label(node)))
         ) {
@@ -74,7 +75,7 @@ class SelectionValidator(
         }
     }
 
-    private fun checkViableProtocol(selection: (Variable) -> Protocol, node: DeclarationNode) {
+    fun checkViableProtocol(selection: (Variable) -> Protocol, node: DeclarationNode) {
         if (!protocolSelection.viableProtocols(node).contains(selection(node.variable.value))) {
             throw error(
                 "Bad protocol restriction for decl of ${node.variable}: viable protocols is ${selector.viableProtocols(
@@ -85,7 +86,7 @@ class SelectionValidator(
         }
     }
 
-    private fun checkAuthority(selection: (Variable) -> Protocol, node: DeclarationNode) {
+    fun checkAuthority(selection: (Variable) -> Protocol, node: DeclarationNode) {
         if (!(selection(node.variable.value).authority(hostTrustConfiguration)
                 .actsFor(informationFlowAnalysis.label(node)))
         ) {
@@ -98,7 +99,7 @@ class SelectionValidator(
         }
     }
 
-    private fun Node.traverse(selection: (Variable) -> Protocol) {
+    fun Node.traverse(selection: (Variable) -> Protocol) {
         when (this) {
             is LetNode -> {
                 checkViableProtocol(selection, this)
@@ -114,7 +115,7 @@ class SelectionValidator(
         }
     }
 
-    private fun Node.constraints(): Set<SelectionConstraint> {
+    fun Node.constraints(): Set<SelectionConstraint> {
         val s = when (this) {
             is LetNode ->
                 setOf(
@@ -132,8 +133,6 @@ class SelectionValidator(
         )
     }
 
-    fun validate(selection: (Variable) -> Protocol) {
-        processDeclaration.traverse(selection)
-        assert(processDeclaration.constraints().toList().ands().evaluate(selection))
-    }
+    processDeclaration.traverse(selection)
+    assert(processDeclaration.constraints().toList().ands().evaluate(selection))
 }

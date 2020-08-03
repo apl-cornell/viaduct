@@ -10,8 +10,8 @@ import edu.cornell.cs.apl.viaduct.analysis.main
 import edu.cornell.cs.apl.viaduct.passes.elaborated
 import edu.cornell.cs.apl.viaduct.passes.splitMain
 import edu.cornell.cs.apl.viaduct.protocols.HostInterface
+import edu.cornell.cs.apl.viaduct.selection.SimpleFactory
 import edu.cornell.cs.apl.viaduct.selection.SimpleSelection
-import edu.cornell.cs.apl.viaduct.selection.SimpleSelector
 import edu.cornell.cs.apl.viaduct.selection.simpleProtocolCost
 import edu.cornell.cs.apl.viaduct.syntax.Host
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
@@ -50,7 +50,7 @@ internal class BackendInterpreterTest {
         // Select protocols.
         val protocolAssignment: (Variable) -> Protocol =
             SimpleSelection(
-                SimpleSelector(
+                SimpleFactory(
                     nameAnalysis,
                     informationFlowAnalysis
                 ), ::simpleProtocolCost

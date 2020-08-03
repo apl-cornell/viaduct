@@ -18,10 +18,10 @@ data class VariableIn(val variable: Variable, val protocols: Set<Protocol>) : Se
 data class Not(val rhs: SelectionConstraint) : SelectionConstraint()
 data class And(val lhs: SelectionConstraint, val rhs: SelectionConstraint) : SelectionConstraint()
 
-fun Boolean.implies(r: Boolean) = (!this) || r
+internal fun Boolean.implies(r: Boolean) = (!this) || r
 
 /** Given a protocol selection, evaluate the constraints. **/
-fun SelectionConstraint.evaluate(f: (Variable) -> Protocol): Boolean {
+internal fun SelectionConstraint.evaluate(f: (Variable) -> Protocol): Boolean {
     return when (this) {
         is Literal -> literalValue
         is Implies -> lhs.evaluate(f).implies(rhs.evaluate(f))
@@ -32,16 +32,16 @@ fun SelectionConstraint.evaluate(f: (Variable) -> Protocol): Boolean {
     }
 }
 
-fun List<BoolExpr>.ors(ctx: Context): BoolExpr {
+internal fun List<BoolExpr>.ors(ctx: Context): BoolExpr {
     return ctx.mkOr(* this.toTypedArray())
 }
 
-fun List<SelectionConstraint>.ands(): SelectionConstraint {
+internal fun List<SelectionConstraint>.ands(): SelectionConstraint {
     return this.fold(Literal(true) as SelectionConstraint) { acc, x -> And(acc, x) }
 }
 
 /** Convert a SelectionConstraint into a Z3 BoolExpr. **/
-fun SelectionConstraint.boolExpr(
+internal fun SelectionConstraint.boolExpr(
     ctx: Context,
     vmap: BiMap<Variable, IntExpr>,
     pmap: BiMap<Protocol, IntExpr>

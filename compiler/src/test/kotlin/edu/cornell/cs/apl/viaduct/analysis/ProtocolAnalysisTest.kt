@@ -4,8 +4,8 @@ import edu.cornell.cs.apl.attributes.Tree
 import edu.cornell.cs.apl.viaduct.ExampleProgramProvider
 import edu.cornell.cs.apl.viaduct.passes.elaborated
 import edu.cornell.cs.apl.viaduct.protocols.MainProtocol
+import edu.cornell.cs.apl.viaduct.selection.SimpleFactory
 import edu.cornell.cs.apl.viaduct.selection.SimpleSelection
-import edu.cornell.cs.apl.viaduct.selection.SimpleSelector
 import edu.cornell.cs.apl.viaduct.selection.simpleProtocolCost
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProcessDeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.surface.ProgramNode
@@ -21,7 +21,7 @@ internal class ProtocolAnalysisTest {
 
         val dumpProtocolAssignment =
             SimpleSelection(
-                SimpleSelector(
+                SimpleFactory(
                     nameAnalysis,
                     informationFlowAnalysis
                 ), ::simpleProtocolCost

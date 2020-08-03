@@ -24,29 +24,39 @@ allprojects {
         jcenter()
     }
 
+    /** Java Version */
+
+    tasks.withType<JavaCompile> {
+        sourceCompatibility = "1.8"
+        targetCompatibility = "1.8"
+    }
+
+    tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
+        kotlinOptions.jvmTarget = "1.8"
+    }
+
     /** Style */
 
     spotless {
+        java {
+            target("src/**/*.java")
+            googleJavaFormat()
+        }
         kotlinGradle {
             ktlint()
+        }
+    }
+
+    pluginManager.withPlugin("kotlin") {
+        spotless {
+            kotlin {
+                ktlint()
+            }
         }
     }
 }
 
 /** Style */
-
-project(":compiler") {
-    spotless {
-        // TODO: remove once Java is gone
-        java {
-            target("src/**/*.java")
-            googleJavaFormat()
-        }
-        kotlin {
-            ktlint()
-        }
-    }
-}
 
 editorconfig {
     excludes = listOf("$buildDir", "**/out", "gradlew", ".kotlin", "**/*.hprof")

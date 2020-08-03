@@ -161,32 +161,24 @@ private class StatementElaborator(
                     sourceLocation
                 )
 
-            // this is extremely hacky---since the parser can't recognize temporary reads,
-            // we must interpret some query nodes as temporary reads
             is SQueryNode -> {
                 val oldTemporary = TemporaryNode(Temporary(variable.value.name), variable.sourceLocation)
 
-                return when {
-                    objectRenames.contains(variable) -> {
-                        IQueryNode(
-                            ObjectVariableNode(objectRenames[variable], variable.sourceLocation),
-                            query,
-                            Arguments(
-                                arguments.map { it.toAnf(bindings).toAtomic(bindings) },
-                                arguments.sourceLocation
-                            ),
-                            sourceLocation
-                        )
-                    }
-
-                    temporaryRenames.contains(oldTemporary) &&
-                        arguments.size == 0
-                        && query.value == Get ->
-                    {
-                        IReadNode(TemporaryNode(temporaryRenames[oldTemporary], sourceLocation))
-                    }
-
-                    else -> throw Exception("unknown query")
+                // The parser cannot differentiate between temporary reads and `ObjectVariable.get()`.
+                // We try to interpret variables as temporary reads first.
+                // TODO: we should distinguish temporary variables, prefixing with $ perhaps.
+                return if (temporaryRenames.contains(oldTemporary) && query.value == Get && arguments.isEmpty()) {
+                    IReadNode(TemporaryNode(temporaryRenames[oldTemporary], sourceLocation))
+                } else {
+                    IQueryNode(
+                        ObjectVariableNode(objectRenames[variable], variable.sourceLocation),
+                        query,
+                        Arguments(
+                            arguments.map { it.toAnf(bindings).toAtomic(bindings) },
+                            arguments.sourceLocation
+                        ),
+                        sourceLocation
+                    )
                 }
             }
 

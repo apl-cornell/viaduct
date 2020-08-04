@@ -33,13 +33,13 @@ fun <T> List<Set<T>>.unions(): Set<T> {
  * - First, it collects constraints on protocol selection from the [ProtocolFactory]. For each let or declaration,
  *      the factory outputs two things: first, it outputs a set of viable protocols for that variable. Second,
  *      it can output a number of custom constraints on selection for that variable which are forwarded to Z3.
- *      (For the simple selector, the custom constraints are trivial, as we have not yet constrained which protocols
+ *      (For the simple factory, the custom constraints are trivial, as we have not yet constrained which protocols
  *      can talk to who.)
  * - Second, it exports these constraints to Z3. The selection problem is encoded as follows:
  *      - We assign each possible viable protocol a unique integer index. Call this index i(p).
  *      - For each variable, we create a fresh integer constant. Call this constant c(v).
  *      - For each variable v with viable protocols P, we constrain that c(v) is contained in the image set of P under i.
- *      - For each variable v, we constrain c(v) relative to the custom constraints output by the selector.
+ *      - For each variable v, we constrain c(v) relative to the custom constraints output by the factory.
  * - Third, we ask Z3 to optimize relative to a cost metric. For now, the cost metric is the sum of costs of all protocols
  *       selected. This is particularly naive, as it regards queries/declassifies as having a cost, even though it is
  *       likely free in all backends.
@@ -48,13 +48,13 @@ fun <T> List<Set<T>>.unions(): Set<T> {
  */
 
 class Z3Selection(
+    val ctx: Context,
     val processDeclaration: ProcessDeclarationNode,
     val informationFlowAnalysis: InformationFlowAnalysis,
     val nameAnalysis: NameAnalysis,
-    val selector: ProtocolFactory,
+    val factory: ProtocolFactory,
     val protocolCost: (Protocol) -> Int
 ) {
-    private val ctx: Context = Context()
     private val hostTrustConfiguration = HostTrustConfiguration(nameAnalysis.tree.root)
 
     // TODO: pc must be weak enough for the hosts involved in the selected protocols to read it
@@ -65,12 +65,12 @@ class Z3Selection(
                     setOf(Local(value.host.value))
                 is QueryNode -> nameAnalysis.declaration(value).viableProtocols
                 else ->
-                    selector.viableProtocols(this)
+                    factory.viableProtocols(this)
             }
         }
 
         private val DeclarationNode.viableProtocols: Set<Protocol> by attribute {
-            selector.viableProtocols(this)
+            factory.viableProtocols(this)
         }
 
         fun viableProtocols(node: LetNode): Set<Protocol> = node.viableProtocols.filter {
@@ -87,12 +87,12 @@ class Z3Selection(
             is LetNode ->
                 setOf(
                     VariableIn(this.temporary.value, protocolSelection.viableProtocols(this)),
-                    selector.constraint(this)
+                    factory.constraint(this)
                 )
             is DeclarationNode ->
                 setOf(
                     VariableIn(this.variable.value, protocolSelection.viableProtocols(this)),
-                    selector.constraint(this)
+                    factory.constraint(this)
                 )
             else -> setOf()
         }
@@ -160,12 +160,16 @@ class Z3Selection(
 
         if (solver.Check() == Status.SATISFIABLE) {
             var model = solver.model
+            val interpMap: Map<Variable, Int> =
+                varMap.mapValues { e ->
+                    (model.getConstInterp(e.value) as IntNum).int
+                }
+
             fun eval(v: Variable): Protocol {
-                if (varMap.containsKey(v)) {
-                    val i = (model.getConstInterp(varMap[v]) as IntNum).int
-                    return pmap.inverse.get(i) ?: throw error("Protocol not found: $i")
+                if (interpMap.containsKey(v)) {
+                    return pmap.inverse.get(interpMap[v]) ?: throw error("Protocol now found")
                 } else {
-                    throw SelectionError("Query for variable not contained in varMap: $v ")
+                    throw SelectionError("Query for variable not contained in varMap: $v")
                 }
             }
             return ::eval
@@ -174,4 +178,18 @@ class Z3Selection(
             throw error("Solver could not find solution")
         }
     }
+}
+
+fun Z3Select(
+    processDeclaration: ProcessDeclarationNode,
+    informationFlowAnalysis: InformationFlowAnalysis,
+    nameAnalysis: NameAnalysis,
+    factory: ProtocolFactory,
+    protocolCost: (Protocol) -> Int
+): (Variable) -> Protocol {
+    val ctx = Context()
+    val ret =
+        Z3Selection(ctx, processDeclaration, informationFlowAnalysis, nameAnalysis, factory, protocolCost).select()
+    ctx.close()
+    return ret
 }

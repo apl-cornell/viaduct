@@ -127,6 +127,10 @@ nonterminal Located<Host> host;
 // TODO: the above type causes a parse error in the IntelliJ plugin
 nonterminal List host_list, nonempty_host_list;
 nonterminal HostSetValue host_set;
+nonterminal List parameter_list, nonempty_parameter_list;
+nonterminal ParameterNode parameter;
+nonterminal Located<ParameterName> parameter_name;
+nonterminal ParameterType parameter_type;
 nonterminal Located<Protocol> protocol;
 nonterminal Located<ProtocolName> protocol_name;
 // TODO: more accurate types cause parse errors in IntelliJ
@@ -142,6 +146,8 @@ terminal TRUE, FALSE;
 
 terminal HOST, PROCESS;
 terminal CAP_HOST;
+terminal FUNCTION;
+terminal OUT;
 terminal COLON;
 
 terminal EQ;
@@ -210,8 +216,72 @@ declaration ::=
   | PROCESS:begin protocol:protocol block:body {:
       RESULT = new ProcessDeclarationNode(protocol, body, location(beginleft, bodyright));
     :}
+
+  | FUNCTION:begin IDENT:funcname OPEN_PAREN parameter_list:params CLOSE_PAREN block:body {:
+      RESULT = new FunctionDeclarationNode(
+        new Located(new FunctionName(funcname), location(funcnameleft, funcnameright)),
+        new Arguments(params, location(paramsleft, paramsright)),
+        body,
+        location(beginleft, bodyright)
+      );
+  :}
   ;
 
+parameter_list ::=
+    nonempty_parameter_list:params COMMA parameter:param {:
+      params.add(param);
+      RESULT = params;
+    :}
+
+  | /* empty */ {:
+      RESULT = CollectionsKt.mutableListOf();
+    :}
+  ;
+
+nonempty_parameter_list ::=
+    nonempty_parameter_list:params COMMA parameter:param {:
+      params.add(param);
+      RESULT = params;
+    :}
+
+  | parameter:param {:
+      RESULT = CollectionsKt.mutableListOf(param);
+    :}
+  ;
+
+parameter_type ::=
+    OUT         {: RESULT = ParameterType.PARAM_OUT; :}
+  | /* empty */ {: RESULT = ParameterType.PARAM_IN; :}
+  ;
+
+parameter_name ::=
+  IDENT:id {: RESULT = new Located(new ParameterName(id), location(idleft, idright)); :}
+  ;
+
+parameter ::=
+    parameter_name:name COLON parameter_type:ptype value_type:type optional_label:label {:
+      RESULT = new ParameterNode(
+        name,
+        ptype,
+        new Located(PrimitivesKt.getImmutableCell(), name.getSourceLocation()),
+        Arguments.from(type),
+        optionalLabelArgument(label),
+        location(nameleft, labelright)
+      );
+    :}
+
+  | parameter_name:name COLON parameter_type:ptype ARRAY OPEN_SQBRACE value_type:elementType CLOSE_SQBRACE
+    optional_label:label {:
+      RESULT = new ParameterNode(
+        name,
+        ptype,
+        new Located(PrimitivesKt.getVector(), name.getSourceLocation()),
+        Arguments.from(elementType),
+        optionalLabelArgument(label),
+        location(nameleft, labelright)
+      );
+    :}
+  ;
 
 simple_stmt ::=
     /* Immutable variable declaration. */

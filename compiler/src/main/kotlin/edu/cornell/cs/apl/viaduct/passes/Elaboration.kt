@@ -18,6 +18,7 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.DeclarationNode as IDeclar
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.DeclassificationNode as IDeclassificationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.EndorsementNode as IEndorsementNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ExpressionNode as IExpressionNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.FunctionDeclarationNode as IFunctionDeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.HostDeclarationNode as IHostDeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.IfNode as IIfNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.InfiniteLoopNode as IInfiniteLoopNode
@@ -27,6 +28,7 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.LiteralNode as ILiteralNod
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.Node
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.OperatorApplicationNode as IOperatorApplicationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutputNode as IOutputNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.ParameterNode as IParameterNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProcessDeclarationNode as IProcessDeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode as IProgramNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.QueryNode as IQueryNode
@@ -44,6 +46,7 @@ import edu.cornell.cs.apl.viaduct.syntax.surface.DeclassificationNode as SDeclas
 import edu.cornell.cs.apl.viaduct.syntax.surface.EndorsementNode as SEndorsementNode
 import edu.cornell.cs.apl.viaduct.syntax.surface.ExpressionNode as SExpressionNode
 import edu.cornell.cs.apl.viaduct.syntax.surface.ForLoopNode as SForLoopNode
+import edu.cornell.cs.apl.viaduct.syntax.surface.FunctionDeclarationNode as SFunctionDeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.surface.HostDeclarationNode as SHostDeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.surface.IfNode as SIfNode
 import edu.cornell.cs.apl.viaduct.syntax.surface.InfiniteLoopNode as SInfiniteLoopNode
@@ -71,26 +74,53 @@ import edu.cornell.cs.apl.viaduct.util.FreshNameGenerator
  */
 fun SProgramNode.elaborated(): IProgramNode {
     val declarations = mutableListOf<ITopLevelDeclarationNode>()
-    this.declarations.forEach {
-        val declaration = when (it) {
+    for (declaration in this.declarations) {
+        when (declaration) {
             is SHostDeclarationNode -> {
-                IHostDeclarationNode(
-                    it.name,
-                    it.authority,
-                    it.sourceLocation
+                declarations.add(
+                    IHostDeclarationNode(
+                        declaration.name,
+                        declaration.authority,
+                        declaration.sourceLocation
+                    )
                 )
             }
 
             is SProcessDeclarationNode -> {
-                IProcessDeclarationNode(
-                    it.protocol,
-                    StatementElaborator().elaborate(it.body),
-                    it.sourceLocation
+                declarations.add(
+                    IProcessDeclarationNode(
+                        declaration.protocol,
+                        StatementElaborator().elaborate(declaration.body),
+                        declaration.sourceLocation
+                    )
+                )
+            }
+
+            is SFunctionDeclarationNode -> {
+                declarations.add(
+                    IFunctionDeclarationNode(
+                        declaration.name,
+                        Arguments(
+                            declaration.parameters.map { param ->
+                                IParameterNode(
+                                    param.name,
+                                    param.parameterType,
+                                    param.className,
+                                    param.typeArguments,
+                                    param.labelArguments,
+                                    param.sourceLocation
+                                )
+                            },
+                            declaration.parameters.sourceLocation
+                        ),
+                        StatementElaborator().elaborate(declaration.body),
+                        declaration.sourceLocation
+                    )
                 )
             }
         }
-        declarations.add(declaration)
     }
+
     return IProgramNode(declarations, this.sourceLocation)
 }
 

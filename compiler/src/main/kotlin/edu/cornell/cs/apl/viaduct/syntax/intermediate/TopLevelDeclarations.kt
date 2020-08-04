@@ -30,6 +30,9 @@ class HostDeclarationNode(
             authority,
             sourceLocation
         )
+
+    override fun copy(children: List<Node>): HostDeclarationNode =
+        HostDeclarationNode(name, authority, sourceLocation)
 }
 
 /**
@@ -52,4 +55,7 @@ class ProcessDeclarationNode(
             body.toSurfaceNode(),
             sourceLocation
         )
+
+    override fun copy(children: List<Node>): ProcessDeclarationNode =
+        ProcessDeclarationNode(protocol, children[0] as BlockNode, sourceLocation)
 }

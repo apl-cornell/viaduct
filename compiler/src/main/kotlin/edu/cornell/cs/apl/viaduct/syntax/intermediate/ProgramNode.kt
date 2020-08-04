@@ -27,6 +27,9 @@ private constructor(
             sourceLocation
         )
 
+    override fun copy(children: List<Node>): ProgramNode =
+        ProgramNode(children.map { it as TopLevelDeclarationNode }, sourceLocation)
+
     override fun toString(): String =
         "Program (" + sourceLocation.sourcePath + ")"
 }

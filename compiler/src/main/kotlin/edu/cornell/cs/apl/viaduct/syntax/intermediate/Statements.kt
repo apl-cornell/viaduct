@@ -19,6 +19,8 @@ import kotlinx.collections.immutable.toPersistentList
 /** A computation with side effects. */
 sealed class StatementNode : Node() {
     abstract override fun toSurfaceNode(): edu.cornell.cs.apl.viaduct.syntax.surface.StatementNode
+
+    abstract override fun copy(children: List<Node>): StatementNode
 }
 
 /**
@@ -29,6 +31,8 @@ sealed class SimpleStatementNode : StatementNode() {
     abstract override val children: Iterable<ExpressionNode>
 
     abstract override fun toSurfaceNode(): edu.cornell.cs.apl.viaduct.syntax.surface.SimpleStatementNode
+
+    abstract override fun copy(children: List<Node>): SimpleStatementNode
 }
 
 // Simple Statements
@@ -48,6 +52,9 @@ class LetNode(
             value.toSurfaceNode(),
             sourceLocation
         )
+
+    override fun copy(children: List<Node>): LetNode =
+        LetNode(temporary, children[0] as ExpressionNode, sourceLocation)
 }
 
 /** Constructing a new object and binding it to a variable. */
@@ -72,6 +79,16 @@ class DeclarationNode(
             Arguments(arguments.map { it.toSurfaceNode() }, arguments.sourceLocation),
             sourceLocation
         )
+
+    override fun copy(children: List<Node>): DeclarationNode =
+        DeclarationNode(
+            variable,
+            className,
+            typeArguments,
+            labelArguments,
+            Arguments(children.map { it as AtomicExpressionNode }, arguments.sourceLocation),
+            sourceLocation
+        )
 }
 
 /** An update method applied to an object. */
@@ -89,6 +106,14 @@ class UpdateNode(
             variable,
             update,
             Arguments(arguments.map { it.toSurfaceNode() }, arguments.sourceLocation),
+            sourceLocation
+        )
+
+    override fun copy(children: List<Node>): UpdateNode =
+        UpdateNode(
+            variable,
+            update,
+            Arguments(children.map { it as AtomicExpressionNode }, arguments.sourceLocation),
             sourceLocation
         )
 }
@@ -110,6 +135,9 @@ class OutputNode(
             host,
             sourceLocation
         )
+
+    override fun copy(children: List<Node>): OutputNode =
+        OutputNode(children[0] as AtomicExpressionNode, host, sourceLocation)
 }
 
 /** Sending a value to another protocol. */
@@ -127,12 +155,17 @@ class SendNode(
             protocol,
             sourceLocation
         )
+
+    override fun copy(children: List<Node>): SendNode =
+        SendNode(children[0] as AtomicExpressionNode, protocol, sourceLocation)
 }
 
 // Compound Statements
 
 /** A statement that affects control flow. */
-sealed class ControlNode : StatementNode()
+sealed class ControlNode : StatementNode() {
+    abstract override fun copy(children: List<Node>): ControlNode
+}
 
 /**
  * Executing statements conditionally.
@@ -156,6 +189,9 @@ class IfNode(
             elseBranch.toSurfaceNode(),
             sourceLocation
         )
+
+    override fun copy(children: List<Node>): IfNode =
+        IfNode(children[0] as AtomicExpressionNode, children[1] as BlockNode, children[2] as BlockNode, sourceLocation)
 }
 
 /**
@@ -177,6 +213,9 @@ class InfiniteLoopNode(
             jumpLabel,
             sourceLocation
         )
+
+    override fun copy(children: List<Node>): InfiniteLoopNode =
+        InfiniteLoopNode(children[0] as BlockNode, jumpLabel, sourceLocation)
 }
 
 /**
@@ -196,6 +235,9 @@ class BreakNode(
             jumpLabel,
             sourceLocation
         )
+
+    override fun copy(children: List<Node>): BreakNode =
+        BreakNode(jumpLabel, sourceLocation)
 }
 
 /** Asserting that a condition is true, and failing otherwise. */
@@ -211,6 +253,9 @@ class AssertionNode(
             condition.toSurfaceNode(),
             sourceLocation
         )
+
+    override fun copy(children: List<Node>): AssertionNode =
+        AssertionNode(children[0] as AtomicExpressionNode, sourceLocation)
 }
 
 /** A sequence of statements. */
@@ -233,4 +278,7 @@ private constructor(
             statements.map { it.toSurfaceNode() },
             sourceLocation
         )
+
+    override fun copy(children: List<Node>): BlockNode =
+        BlockNode(children.map { it as StatementNode }, sourceLocation)
 }

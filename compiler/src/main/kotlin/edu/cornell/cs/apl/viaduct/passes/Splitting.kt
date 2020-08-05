@@ -10,11 +10,13 @@ import edu.cornell.cs.apl.viaduct.syntax.Protocol
 import edu.cornell.cs.apl.viaduct.syntax.ProtocolNode
 import edu.cornell.cs.apl.viaduct.syntax.ValueTypeNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.AssertionNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.AtomicExpressionNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.BlockNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.BreakNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.IfNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.InfiniteLoopNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.LetNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.Node
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProcessDeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ReadNode
@@ -82,7 +84,7 @@ fun ProcessDeclarationNode.split(
                 is IfNode ->
                     listOf(
                         IfNode(
-                            it.guard,
+                            it.guard.deepCopy() as AtomicExpressionNode,
                             it.thenBranch.projectFor(protocol),
                             it.elseBranch.projectFor(protocol),
                             it.sourceLocation
@@ -99,10 +101,10 @@ fun ProcessDeclarationNode.split(
                     )
 
                 is BreakNode ->
-                    listOf(it)
+                    listOf(it.deepCopy() as StatementNode)
 
                 is AssertionNode ->
-                    listOf(it)
+                    listOf(it.deepCopy() as StatementNode)
 
                 is BlockNode ->
                     listOf(it.projectFor(protocol))
@@ -143,3 +145,7 @@ fun ProgramNode.splitMain(protocolAnalysis: ProtocolAnalysis): ProgramNode {
     }
     return ProgramNode(declarations, this.sourceLocation)
 }
+
+/** Like [Node.copy], but recursively copies all descendant nodes also.*/
+private fun Node.deepCopy(): Node =
+    this.copy(this.children.toList().map { it.deepCopy() })

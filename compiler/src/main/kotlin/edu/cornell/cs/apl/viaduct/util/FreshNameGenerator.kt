@@ -28,7 +28,6 @@ class FreshNameGenerator(
             n = freshNameMap[base] ?: 0
         } else { // strip suffix "_[num]" from base to avoid collisions
             val parsedNum: Int = match.groupValues[1].toInt()
-            println(parsedNum)
             base = input.substring(0, match.range.first)
             n = max(freshNameMap[base] ?: 0, parsedNum)
         }

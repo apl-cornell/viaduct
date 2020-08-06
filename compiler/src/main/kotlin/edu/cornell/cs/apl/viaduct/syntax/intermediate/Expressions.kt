@@ -17,6 +17,8 @@ sealed class ExpressionNode : Node() {
     abstract override val children: Iterable<AtomicExpressionNode>
 
     abstract override fun toSurfaceNode(): edu.cornell.cs.apl.viaduct.syntax.surface.ExpressionNode
+
+    abstract override fun copy(children: List<Node>): ExpressionNode
 }
 
 sealed class PureExpressionNode : ExpressionNode()
@@ -27,6 +29,8 @@ sealed class AtomicExpressionNode : PureExpressionNode() {
         get() = listOf()
 
     abstract override fun toSurfaceNode(): edu.cornell.cs.apl.viaduct.syntax.surface.AtomicExpressionNode
+
+    abstract override fun copy(children: List<Node>): AtomicExpressionNode
 }
 
 /** A literal constant. */
@@ -34,6 +38,9 @@ class LiteralNode(val value: Value, override val sourceLocation: SourceLocation)
     AtomicExpressionNode() {
     override fun toSurfaceNode(): edu.cornell.cs.apl.viaduct.syntax.surface.LiteralNode =
         edu.cornell.cs.apl.viaduct.syntax.surface.LiteralNode(value, sourceLocation)
+
+    override fun copy(children: List<Node>): LiteralNode =
+        LiteralNode(value, sourceLocation)
 }
 
 /** Reading the value stored in a temporary. */
@@ -43,6 +50,9 @@ class ReadNode(val temporary: TemporaryNode) : AtomicExpressionNode() {
 
     override fun toSurfaceNode(): edu.cornell.cs.apl.viaduct.syntax.surface.ReadNode =
         edu.cornell.cs.apl.viaduct.syntax.surface.ReadNode(temporary)
+
+    override fun copy(children: List<Node>): ReadNode =
+        ReadNode(temporary)
 }
 
 /** An n-ary operator applied to n arguments. */
@@ -58,6 +68,13 @@ class OperatorApplicationNode(
         edu.cornell.cs.apl.viaduct.syntax.surface.OperatorApplicationNode(
             operator,
             Arguments(arguments.map { it.toSurfaceNode() }, arguments.sourceLocation),
+            sourceLocation
+        )
+
+    override fun copy(children: List<Node>): OperatorApplicationNode =
+        OperatorApplicationNode(
+            operator,
+            Arguments(children.map { it as AtomicExpressionNode }, arguments.sourceLocation),
             sourceLocation
         )
 }
@@ -79,9 +96,18 @@ class QueryNode(
             Arguments(arguments.map { it.toSurfaceNode() }, arguments.sourceLocation),
             sourceLocation
         )
+
+    override fun copy(children: List<Node>): QueryNode =
+        QueryNode(
+            variable,
+            query,
+            Arguments(children.map { it as AtomicExpressionNode }, arguments.sourceLocation),
+            sourceLocation
+        )
 }
 
 /** Reducing the confidentiality or increasing the integrity of the result of an expression. */
+// TODO: downgrades are very much not pure.
 sealed class DowngradeNode : PureExpressionNode() {
     /** Expression whose label is being downgraded. */
     abstract val expression: AtomicExpressionNode
@@ -94,6 +120,8 @@ sealed class DowngradeNode : PureExpressionNode() {
 
     final override val children: Iterable<AtomicExpressionNode>
         get() = listOf(expression)
+
+    abstract override fun copy(children: List<Node>): DowngradeNode
 }
 
 /** Revealing the the result of an expression (reducing confidentiality). */
@@ -110,6 +138,9 @@ class DeclassificationNode(
             toLabel,
             sourceLocation
         )
+
+    override fun copy(children: List<Node>): DeclassificationNode =
+        DeclassificationNode(children[0] as AtomicExpressionNode, fromLabel, toLabel, sourceLocation)
 }
 
 /** Trusting the result of an expression (increasing integrity). */
@@ -126,6 +157,9 @@ class EndorsementNode(
             toLabel,
             sourceLocation
         )
+
+    override fun copy(children: List<Node>): EndorsementNode =
+        EndorsementNode(children[0] as AtomicExpressionNode, fromLabel, toLabel, sourceLocation)
 }
 
 // Communication Expressions
@@ -145,6 +179,9 @@ class InputNode(
 
     override fun toSurfaceNode(): edu.cornell.cs.apl.viaduct.syntax.surface.InputNode =
         edu.cornell.cs.apl.viaduct.syntax.surface.InputNode(type, host, sourceLocation)
+
+    override fun copy(children: List<Node>): InputNode =
+        InputNode(type, host, sourceLocation)
 }
 
 /**
@@ -162,4 +199,7 @@ class ReceiveNode(
 
     override fun toSurfaceNode(): edu.cornell.cs.apl.viaduct.syntax.surface.ReceiveNode =
         edu.cornell.cs.apl.viaduct.syntax.surface.ReceiveNode(type, protocol, sourceLocation)
+
+    override fun copy(children: List<Node>): ReceiveNode =
+        ReceiveNode(type, protocol, sourceLocation)
 }

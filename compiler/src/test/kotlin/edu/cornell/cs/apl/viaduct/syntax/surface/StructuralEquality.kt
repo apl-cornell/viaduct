@@ -10,6 +10,7 @@ import org.junit.jupiter.api.assertThrows
 import org.opentest4j.AssertionFailedError
 
 /** Asserts that [actual] equals [expected], but ignores [SourceLocation]s. */
+// TODO: extend this to also work with intermediate Nodes.
 internal fun assertStructurallyEquals(expected: Node, actual: Node) {
     // Actual must be from a compatible class
     if (!expected::class.isInstance(actual))

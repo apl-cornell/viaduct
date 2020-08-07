@@ -1,38 +1,32 @@
 package edu.cornell.cs.apl.viaduct.util
 
-import java.lang.Integer.max
-
 /** Generates distinct names. Never generates the same name twice. */
-class FreshNameGenerator(
-    names: Set<String> // the initial set of names that will populate the name map
-) {
-    private val freshNameMap: MutableMap<String, Int> = mutableMapOf()
+class FreshNameGenerator {
+    /**
+     * The keys are all the names returned by [getFreshName].
+     * The value mapped to a name is the first suffix that should be tried to distinguish that name.
+     */
+    private val returnedNames: MutableMap<String, Int> = mutableMapOf()
 
-    init {
-        for (name: String in names) {
-            getFreshName(name)
-        }
+    /**
+     * Returns a new name derived from [base]. The return name will be different from all previously returned names.
+     *
+     * If this is the first time [base] is passed to this function, then returns [base].
+     */
+    fun getFreshName(base: String): String {
+        var suffix = returnedNames[base] ?: 0
+        var proposedName: String
+
+        do {
+            proposedName = makeName(base, suffix)
+            suffix += 1
+        } while (returnedNames.containsKey(proposedName))
+
+        returnedNames[base] = suffix
+        returnedNames[proposedName] = 1
+        return proposedName
     }
 
-    constructor() : this(setOf())
-
-    /** Returns a new name derived from base. */
-    fun getFreshName(input: String): String {
-        val regex = Regex("_([0-9]+)\\z")
-        val match: MatchResult? = regex.find(input)
-
-        val base: String
-        val n: Int
-        if (match == null) {
-            base = input
-            n = freshNameMap[base] ?: 0
-        } else { // strip suffix "_[num]" from base to avoid collisions
-            val parsedNum: Int = match.groupValues[1].toInt()
-            base = input.substring(0, match.range.first)
-            n = max(freshNameMap[base] ?: 0, parsedNum)
-        }
-
-        freshNameMap[base] = n + 1
-        return if (n > 0) "${base}_$n" else base
-    }
+    private fun makeName(base: String, suffix: Int): String =
+        if (suffix == 0) base else "${base}_$suffix"
 }

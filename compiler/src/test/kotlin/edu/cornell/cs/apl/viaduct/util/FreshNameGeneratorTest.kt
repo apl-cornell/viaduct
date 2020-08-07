@@ -17,10 +17,14 @@ internal class FreshNameGeneratorTest {
     @Test
     fun `already fresh names with suffixes are unchanged`() {
         val freshNameGenerator = FreshNameGenerator()
-        val x = freshNameGenerator.getFreshName("x_0")
-        val y = freshNameGenerator.getFreshName("y_1")
-        assertEquals("x_0", x)
-        assertEquals("y_1", y)
+        val x0 = freshNameGenerator.getFreshName("x_0")
+        val x1 = freshNameGenerator.getFreshName("x_1")
+        val y1 = freshNameGenerator.getFreshName("y_1")
+        val y0 = freshNameGenerator.getFreshName("y_0")
+        assertEquals("x_0", x0)
+        assertEquals("x_1", x1)
+        assertEquals("y_0", y0)
+        assertEquals("y_1", y1)
     }
 
     @Test
@@ -28,33 +32,42 @@ internal class FreshNameGeneratorTest {
         val freshNameGenerator = FreshNameGenerator()
         val name1 = freshNameGenerator.getFreshName("tmp")
         val name2 = freshNameGenerator.getFreshName("tmp")
+        val name3 = freshNameGenerator.getFreshName("tmp")
         assertNotEquals(name1, name2)
+        assertNotEquals(name1, name3)
+        assertNotEquals(name2, name3)
     }
 
     @Test
     fun `generated names with suffixes do not collide`() {
         val freshNameGenerator = FreshNameGenerator()
-        freshNameGenerator.getFreshName("tmp")
-        val name2: String = freshNameGenerator.getFreshName("tmp_1")
-        val name3: String = freshNameGenerator.getFreshName("tmp")
+        val name1 = freshNameGenerator.getFreshName("tmp")
+        val name2 = freshNameGenerator.getFreshName("tmp_1")
+        val name3 = freshNameGenerator.getFreshName("tmp")
+        assertNotEquals(name1, name2)
+        assertNotEquals(name1, name3)
         assertNotEquals(name2, name3)
     }
 
     @Test
     fun `generated names with suffixes do not collide 2`() {
         val freshNameGenerator = FreshNameGenerator()
-        freshNameGenerator.getFreshName("tmp")
-        val name2: String = freshNameGenerator.getFreshName("tmp_01")
-        val name3: String = freshNameGenerator.getFreshName("tmp")
+        val name1 = freshNameGenerator.getFreshName("tmp")
+        val name2 = freshNameGenerator.getFreshName("tmp")
+        val name3 = freshNameGenerator.getFreshName("tmp_1")
+        assertNotEquals(name1, name2)
+        assertNotEquals(name1, name3)
         assertNotEquals(name2, name3)
     }
 
     @Test
     fun `generated names with nested suffixes do not collide`() {
         val freshNameGenerator = FreshNameGenerator()
-        freshNameGenerator.getFreshName("tmp")
-        val name2: String = freshNameGenerator.getFreshName("tmp_1_0")
-        val name3: String = freshNameGenerator.getFreshName("tmp")
+        val name1 = freshNameGenerator.getFreshName("tmp")
+        val name2 = freshNameGenerator.getFreshName("tmp_1_0")
+        val name3 = freshNameGenerator.getFreshName("tmp")
+        assertNotEquals(name1, name2)
+        assertNotEquals(name1, name3)
         assertNotEquals(name2, name3)
     }
 }

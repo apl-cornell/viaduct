@@ -6,6 +6,8 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 
 internal class DocumentTest {
+    private val nl = System.lineSeparator()
+
     @Test
     fun `toString is not supported`() {
         assertThrows<UnsupportedOperationException> { Document().toString() }
@@ -51,18 +53,18 @@ internal class DocumentTest {
     inner class LineBreaking {
         @Test
         fun `lineBreak is a line break`() {
-            Document.lineBreak.shouldPrintTo("\n")
-            Document.forcedLineBreak.shouldPrintTo("\n")
+            Document.lineBreak.shouldPrintTo(nl)
+            Document.forcedLineBreak.shouldPrintTo(nl)
         }
 
         @Test
         fun `multiple line breaks are preserved`() {
-            (Document.lineBreak + Document.lineBreak).shouldPrintTo("\n\n")
+            (Document.lineBreak + Document.lineBreak).shouldPrintTo("$nl$nl")
         }
 
         @Test
         fun `div adds a line break`() {
-            (Document("hello") / "world").shouldPrintTo("hello\nworld")
+            (Document("hello") / "world").shouldPrintTo("hello${nl}world")
         }
     }
 
@@ -78,20 +80,20 @@ internal class DocumentTest {
             listOf(Document("first"), Document("second"))
                 .concatenated(Document.lineBreak)
                 .nested(2)
-                .shouldPrintTo("first\n  second")
+                .shouldPrintTo("first$nl  second")
         }
 
         @Test
         fun `nested nesting works`() {
             (Document("first") / (Document("second") / Document("third")).nested(2))
                 .nested(2)
-                .shouldPrintTo("first\n  second\n    third")
+                .shouldPrintTo("first$nl  second$nl    third")
         }
 
         @Test
         fun `nesting by 0 has no effect`() {
             (Document("first") / Document("second")).nested(0)
-                .shouldPrintTo("first\nsecond")
+                .shouldPrintTo("first${nl}second")
         }
     }
 
@@ -106,15 +108,15 @@ internal class DocumentTest {
         fun `grouping does not change hard line breaks`() {
             (Document("hello") + Document.forcedLineBreak + "world")
                 .grouped()
-                .shouldPrintTo("hello\nworld")
+                .shouldPrintTo("hello${nl}world")
         }
     }
 
     @Nested
     inner class Helpers {
-        val empty: List<Document> = listOf()
-        val single: List<Document> = listOf(Document("single"))
-        val many: List<Document> = listOf(Document("1"), Document("2"), Document("3"))
+        private val empty: List<Document> = listOf()
+        private val single: List<Document> = listOf(Document("single"))
+        private val many: List<Document> = listOf(Document("1"), Document("2"), Document("3"))
 
         @Test
         fun `concatenated empty`() {
@@ -162,6 +164,34 @@ internal class DocumentTest {
         @Test
         fun `braced many`() {
             many.braced().shouldPrintTo("{1, 2, 3}")
+        }
+    }
+
+    @Nested
+    inner class Unicode {
+        private fun String.shouldPrintToItself() =
+            Document(this).shouldPrintTo(this)
+
+        @Test
+        fun `BMP Unicode characters (1 UTF-16 code unit)`() {
+            "⊤".shouldPrintToItself()
+            "⊥".shouldPrintToItself()
+            "∨".shouldPrintToItself()
+            "∧".shouldPrintToItself()
+            "⊔".shouldPrintToItself()
+            "⊓".shouldPrintToItself()
+            "←".shouldPrintToItself()
+            "→".shouldPrintToItself()
+        }
+
+        @Test
+        fun `SMP Unicode characters (2 UTF-16 code units)`() {
+            "\uD83D\uDC4D".shouldPrintToItself()
+        }
+
+        @Test
+        fun `grapheme clusters`() {
+            "\uD83D\uDC4D\uD83C\uDFFF".shouldPrintToItself()
         }
     }
 

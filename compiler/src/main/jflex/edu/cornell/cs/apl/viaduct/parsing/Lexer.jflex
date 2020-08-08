@@ -51,8 +51,8 @@ import java_cup.runtime.Symbol;
    * Additionally stores a value.
    */
   private Symbol symbol(int code, Object value) {
-    final int leftOffset = yychar;
-    final int rightOffset = yychar + yylength();
+    final int leftOffset = (int) yychar;
+    final int rightOffset = (int) yychar + yylength();
 
     // TODO: make sure line and column numbers are never used, or give them nice values.
     final Location left = new Location(-1, -1, leftOffset);
@@ -199,4 +199,4 @@ NUM         = ((-)?[1-9][0-9]*) | 0
 
 <<EOF>>        { return symbol(sym.EOF); }
 
-[^]            { throw new IllegalCharacterError(location(yychar, yychar + yylength())); }
+[^]            { throw new IllegalCharacterError(location((int) yychar, (int) yychar + yylength())); }

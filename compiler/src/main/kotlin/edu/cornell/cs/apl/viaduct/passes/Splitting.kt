@@ -2,17 +2,21 @@ package edu.cornell.cs.apl.viaduct.passes
 
 import edu.cornell.cs.apl.viaduct.analysis.ProtocolAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.TypeAnalysis
+import edu.cornell.cs.apl.viaduct.analysis.main
+import edu.cornell.cs.apl.viaduct.errors.NoMainError
 import edu.cornell.cs.apl.viaduct.protocols.Ideal
 import edu.cornell.cs.apl.viaduct.protocols.MainProtocol
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
 import edu.cornell.cs.apl.viaduct.syntax.ProtocolNode
 import edu.cornell.cs.apl.viaduct.syntax.ValueTypeNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.AssertionNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.AtomicExpressionNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.BlockNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.BreakNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.IfNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.InfiniteLoopNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.LetNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.Node
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProcessDeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ReadNode
@@ -80,7 +84,7 @@ fun ProcessDeclarationNode.split(
                 is IfNode ->
                     listOf(
                         IfNode(
-                            it.guard,
+                            it.guard.deepCopy() as AtomicExpressionNode,
                             it.thenBranch.projectFor(protocol),
                             it.elseBranch.projectFor(protocol),
                             it.sourceLocation
@@ -97,10 +101,10 @@ fun ProcessDeclarationNode.split(
                     )
 
                 is BreakNode ->
-                    listOf(it)
+                    listOf(it.deepCopy() as StatementNode)
 
                 is AssertionNode ->
-                    listOf(it)
+                    listOf(it.deepCopy() as StatementNode)
 
                 is BlockNode ->
                     listOf(it.projectFor(protocol))
@@ -122,21 +126,26 @@ fun ProcessDeclarationNode.split(
 /**
  * Splits the [MainProtocol] in this program using [ProcessDeclarationNode.split], preserving all
  * other [TopLevelDeclarationNode]s.
+ *
+ * @throws NoMainError if [this] program does not have a [MainProtocol].
  */
-// TODO: throw error if there is no main
 // TODO: rewrite all references to main in other protocols
 // TODO: maybe generalize from main to an arbitrary process?
-fun ProgramNode.splitMain(
-    protocolAnalysis: ProtocolAnalysis,
-    typeAnalysis: TypeAnalysis
-): ProgramNode {
+fun ProgramNode.splitMain(protocolAnalysis: ProtocolAnalysis): ProgramNode {
+    // Assert that the program has a main
+    this.main
+
     val declarations: MutableList<TopLevelDeclarationNode> = mutableListOf()
     this.declarations.forEach {
         if (it is ProcessDeclarationNode && it.protocol.value == MainProtocol) {
-            declarations.addAll(it.split(protocolAnalysis, typeAnalysis))
+            declarations.addAll(it.split(protocolAnalysis, TypeAnalysis.get(this)))
         } else {
             declarations.add(it)
         }
     }
     return ProgramNode(declarations, this.sourceLocation)
 }
+
+/** Like [Node.copy], but recursively copies all descendant nodes also.*/
+private fun Node.deepCopy(): Node =
+    this.copy(this.children.toList().map { it.deepCopy() })

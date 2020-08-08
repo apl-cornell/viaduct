@@ -66,6 +66,7 @@ class Tree<Node : TreeNode<Node>, out RootNode : Node>(val root: RootNode) {
 /** A node in a [Tree]. */
 interface TreeNode<out Node> {
     /** The list of all children nodes. This is empty for leaf nodes. */
+    // TODO: this should be a list
     val children: Iterable<Node>
 }
 

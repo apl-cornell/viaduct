@@ -1,8 +1,6 @@
 package edu.cornell.cs.apl.viaduct.passes
 
-import edu.cornell.cs.apl.attributes.Tree
 import edu.cornell.cs.apl.viaduct.analysis.InformationFlowAnalysis
-import edu.cornell.cs.apl.viaduct.analysis.NameAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.TypeAnalysis
 import edu.cornell.cs.apl.viaduct.protocols.Adversary
 import edu.cornell.cs.apl.viaduct.protocols.HostInterface
@@ -40,9 +38,8 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.StatementNode
  * Finally, processes where the protocol is a [HostInterface] are simply removed, since these processes are debug only.
  */
 fun ProgramNode.specification(adversaryLabel: Label): ProgramNode {
-    val nameAnalysis = NameAnalysis(Tree(this))
-    val typeAnalysis = TypeAnalysis(nameAnalysis)
-    val informationFlowAnalysis = InformationFlowAnalysis(nameAnalysis)
+    val typeAnalysis = TypeAnalysis.get(this)
+    val informationFlowAnalysis = InformationFlowAnalysis.get(this)
     val hostTrustConfiguration = HostTrustConfiguration(this)
 
     val declarations =

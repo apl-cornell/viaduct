@@ -2,7 +2,6 @@ package edu.cornell.cs.apl.viaduct.selection
 
 import edu.cornell.cs.apl.viaduct.analysis.InformationFlowAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.NameAnalysis
-import edu.cornell.cs.apl.viaduct.analysis.uses
 import edu.cornell.cs.apl.viaduct.protocols.ABY
 import edu.cornell.cs.apl.viaduct.syntax.Host
 import edu.cornell.cs.apl.viaduct.syntax.HostTrustConfiguration
@@ -10,6 +9,7 @@ import edu.cornell.cs.apl.viaduct.syntax.Protocol
 import edu.cornell.cs.apl.viaduct.syntax.SpecializedProtocol
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.DeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.LetNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
 import edu.cornell.cs.apl.viaduct.util.subsequences
 
 // Only select ABY for a selection if:
@@ -17,15 +17,16 @@ import edu.cornell.cs.apl.viaduct.util.subsequences
 //      if it's in a loop, the loop has a break
 //      every break for that loop has a pc that flows to pc of selection
 
-class ABYFactory(
-    val nameAnalysis: NameAnalysis,
-    val hostTrustConfiguration: HostTrustConfiguration,
-    val informationFlowAnalysis: InformationFlowAnalysis
-) : ProtocolFactory {
-    private val hosts: List<Host> = hostTrustConfiguration.keys.sorted()
-    private val hostSubsets = hosts.subsequences().map { it.toSet() }.filter { it.size >= 2 }
-    private val protocols: List<SpecializedProtocol> =
+class ABYFactory(program: ProgramNode) : ProtocolFactory {
+    private val nameAnalysis = NameAnalysis.get(program)
+    private val informationFlowAnalysis = InformationFlowAnalysis.get(program)
+
+    private val protocols: List<SpecializedProtocol> = run {
+        val hostTrustConfiguration = HostTrustConfiguration(program)
+        val hosts: List<Host> = hostTrustConfiguration.keys.sorted()
+        val hostSubsets = hosts.subsequences().map { it.toSet() }.filter { it.size >= 2 }
         hostSubsets.map(::ABY).map { SpecializedProtocol(it, hostTrustConfiguration) }
+    }
 
     private fun LetNode.isApplicable(): Boolean {
         return nameAnalysis.readers(this).all { reader ->
@@ -36,12 +37,12 @@ class ABYFactory(
                     informationFlowAnalysis.pcLabel(it).flowsTo(informationFlowAnalysis.pcLabel(this))
                 }
             }
-            pcCheck && loopCheck
+            true || pcCheck && loopCheck
         }
     }
 
     private fun DeclarationNode.isApplicable(): Boolean {
-        return this.uses(nameAnalysis.tree).all { site ->
+        return nameAnalysis.users(this).all { site ->
             val pcCheck = informationFlowAnalysis.pcLabel(site).flowsTo(informationFlowAnalysis.pcLabel(this))
             val involvedLoops = nameAnalysis.involvedLoops(site)
             val loopCheck = involvedLoops.all { loop ->
@@ -49,25 +50,21 @@ class ABYFactory(
                     informationFlowAnalysis.pcLabel(it).flowsTo(informationFlowAnalysis.pcLabel(this))
                 }
             }
-            pcCheck && loopCheck
+            true || pcCheck && loopCheck
         }
     }
 
-    override fun viableProtocols(node: LetNode): Set<Protocol> {
+    override fun viableProtocols(node: LetNode): Set<Protocol> =
         if (node.isApplicable()) {
-            return protocols.filter { it.authority.actsFor(informationFlowAnalysis.label(node)) }.map { it.protocol }
-                .toSet()
+            protocols.filter { it.authority.actsFor(informationFlowAnalysis.label(node)) }.map { it.protocol }.toSet()
         } else {
-            return setOf()
+            setOf()
         }
-    }
 
-    override fun viableProtocols(node: DeclarationNode): Set<Protocol> {
+    override fun viableProtocols(node: DeclarationNode): Set<Protocol> =
         if (node.isApplicable()) {
-            return protocols.filter { it.authority.actsFor(informationFlowAnalysis.label(node)) }.map { it.protocol }
-                .toSet()
+            protocols.filter { it.authority.actsFor(informationFlowAnalysis.label(node)) }.map { it.protocol }.toSet()
         } else {
-            return setOf()
+            setOf()
         }
-    }
 }

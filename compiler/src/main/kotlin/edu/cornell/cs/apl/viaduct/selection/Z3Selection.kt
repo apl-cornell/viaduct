@@ -22,11 +22,9 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.InputNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.LetNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.Node
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProcessDeclarationNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.QueryNode
-
-fun <T> List<Set<T>>.unions(): Set<T> {
-    return this.fold(setOf<T>()) { acc, s -> acc.union(s) }
-}
+import edu.cornell.cs.apl.viaduct.util.unions
 
 /**
  * This class performs splitting by using Z3. It operates as follows:
@@ -46,16 +44,16 @@ fun <T> List<Set<T>>.unions(): Set<T> {
  * - Finally, we ask Z3 for a model, which we may convert into a function of type Variable -> Protocol.
  *
  */
-
-class Z3Selection(
-    val ctx: Context,
-    val processDeclaration: ProcessDeclarationNode,
-    val informationFlowAnalysis: InformationFlowAnalysis,
-    val nameAnalysis: NameAnalysis,
-    val factory: ProtocolFactory,
-    val protocolCost: (Protocol) -> Int
+private class Z3Selection(
+    program: ProgramNode,
+    private val processDeclaration: ProcessDeclarationNode,
+    private val protocolFactory: ProtocolFactory,
+    private val protocolCost: (Protocol) -> Int,
+    private val ctx: Context
 ) {
-    private val hostTrustConfiguration = HostTrustConfiguration(nameAnalysis.tree.root)
+    private val nameAnalysis = NameAnalysis.get(program)
+    private val informationFlowAnalysis = InformationFlowAnalysis.get(program)
+    private val hostTrustConfiguration = HostTrustConfiguration(program)
 
     // TODO: pc must be weak enough for the hosts involved in the selected protocols to read it
     private val protocolSelection = object {
@@ -65,12 +63,12 @@ class Z3Selection(
                     setOf(Local(value.host.value))
                 is QueryNode -> nameAnalysis.declaration(value).viableProtocols
                 else ->
-                    factory.viableProtocols(this)
+                    protocolFactory.viableProtocols(this)
             }
         }
 
         private val DeclarationNode.viableProtocols: Set<Protocol> by attribute {
-            factory.viableProtocols(this)
+            protocolFactory.viableProtocols(this)
         }
 
         fun viableProtocols(node: LetNode): Set<Protocol> = node.viableProtocols.filter {
@@ -87,12 +85,12 @@ class Z3Selection(
             is LetNode ->
                 setOf(
                     VariableIn(this.temporary.value, protocolSelection.viableProtocols(this)),
-                    factory.constraint(this)
+                    protocolFactory.constraint(this)
                 )
             is DeclarationNode ->
                 setOf(
                     VariableIn(this.variable.value, protocolSelection.viableProtocols(this)),
-                    factory.constraint(this)
+                    protocolFactory.constraint(this)
                 )
             else -> setOf()
         }
@@ -180,16 +178,15 @@ class Z3Selection(
     }
 }
 
-fun Z3Select(
+fun selectProtocolsWithZ3(
+    program: ProgramNode,
     processDeclaration: ProcessDeclarationNode,
-    informationFlowAnalysis: InformationFlowAnalysis,
-    nameAnalysis: NameAnalysis,
-    factory: ProtocolFactory,
+    protocolFactory: ProtocolFactory,
     protocolCost: (Protocol) -> Int
 ): (Variable) -> Protocol {
     val ctx = Context()
     val ret =
-        Z3Selection(ctx, processDeclaration, informationFlowAnalysis, nameAnalysis, factory, protocolCost).select()
+        Z3Selection(program, processDeclaration, protocolFactory, protocolCost, ctx).select()
     ctx.close()
     return ret
 }

@@ -12,20 +12,23 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.InputNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.LetNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.Node
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProcessDeclarationNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.QueryNode
+import edu.cornell.cs.apl.viaduct.util.unions
 
 /** This function provides a sanity check to ensure that a given protocol selection f : Variable -> Protocol
  *  satisfies all constraints required on it by the selector.
  */
 
-fun ValidateSelection(
+fun validateProtocolAssignment(
+    program: ProgramNode,
     processDeclaration: ProcessDeclarationNode,
-    informationFlowAnalysis: InformationFlowAnalysis,
-    nameAnalysis: NameAnalysis,
-    selector: ProtocolFactory,
-    selection: (Variable) -> Protocol
+    protocolFactory: ProtocolFactory,
+    protocolAssignment: (Variable) -> Protocol
 ) {
-    val hostTrustConfiguration = HostTrustConfiguration(nameAnalysis.tree.root)
+    val nameAnalysis = NameAnalysis.get(program)
+    val informationFlowAnalysis = InformationFlowAnalysis.get(program)
+    val hostTrustConfiguration = HostTrustConfiguration(program)
 
     val protocolSelection = object {
         private val LetNode.viableProtocols: Set<Protocol> by attribute {
@@ -34,12 +37,12 @@ fun ValidateSelection(
                     setOf(Local(value.host.value))
                 is QueryNode -> nameAnalysis.declaration(value).viableProtocols
                 else ->
-                    selector.viableProtocols(this)
+                    protocolFactory.viableProtocols(this)
             }
         }
 
         private val DeclarationNode.viableProtocols: Set<Protocol> by attribute {
-            selector.viableProtocols(this)
+            protocolFactory.viableProtocols(this)
         }
 
         fun viableProtocols(node: LetNode): Set<Protocol> = node.viableProtocols.filter {
@@ -54,7 +57,7 @@ fun ValidateSelection(
     fun checkViableProtocol(selection: (Variable) -> Protocol, node: LetNode) {
         if (!protocolSelection.viableProtocols(node).contains(selection(node.temporary.value))) {
             throw error(
-                "Bad protocol restriction for let node of ${node.temporary} = ${node.value}: viable protocols is ${selector.viableProtocols(
+                "Bad protocol restriction for let node of ${node.temporary} = ${node.value}: viable protocols is ${protocolFactory.viableProtocols(
                     node
                 )} but selected was" +
                     "${selection(node.temporary.value)}"
@@ -78,7 +81,7 @@ fun ValidateSelection(
     fun checkViableProtocol(selection: (Variable) -> Protocol, node: DeclarationNode) {
         if (!protocolSelection.viableProtocols(node).contains(selection(node.variable.value))) {
             throw error(
-                "Bad protocol restriction for decl of ${node.variable}: viable protocols is ${selector.viableProtocols(
+                "Bad protocol restriction for decl of ${node.variable}: viable protocols is ${protocolFactory.viableProtocols(
                     node
                 )} but selected was" +
                     "${selection(node.variable.value)}"
@@ -119,11 +122,11 @@ fun ValidateSelection(
         val s = when (this) {
             is LetNode ->
                 setOf(
-                    selector.constraint(this)
+                    protocolFactory.constraint(this)
                 )
             is DeclarationNode ->
                 setOf(
-                    selector.constraint(this)
+                    protocolFactory.constraint(this)
                 )
             else -> setOf()
         }
@@ -133,6 +136,6 @@ fun ValidateSelection(
         )
     }
 
-    processDeclaration.traverse(selection)
-    assert(processDeclaration.constraints().toList().ands().evaluate(selection))
+    processDeclaration.traverse(protocolAssignment)
+    assert(processDeclaration.constraints().toList().ands().evaluate(protocolAssignment))
 }

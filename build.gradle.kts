@@ -1,18 +1,18 @@
 plugins {
-    kotlin("multiplatform") version "1.3.71" apply false
+    kotlin("multiplatform") version "1.3.72" apply false
     id("org.jetbrains.dokka") version "0.10.1"
 
     // Style checking
-    id("com.diffplug.gradle.spotless") version "4.3.0"
+    id("com.diffplug.spotless") version "5.1.0"
     id("org.ec4j.editorconfig") version "0.0.3"
 
     // Dependency management
-    id("com.github.ben-manes.versions") version "0.28.0"
+    id("com.github.ben-manes.versions") version "0.29.0"
     id("se.patrikerdes.use-latest-versions") version "0.2.14"
 }
 
 allprojects {
-    apply(plugin = "com.diffplug.gradle.spotless")
+    apply(plugin = "com.diffplug.spotless")
     apply(plugin = "com.github.ben-manes.versions")
     apply(plugin = "se.patrikerdes.use-latest-versions")
 
@@ -24,32 +24,42 @@ allprojects {
         jcenter()
     }
 
+    /** Java Version */
+
+    tasks.withType<JavaCompile> {
+        sourceCompatibility = "11"
+        targetCompatibility = "11"
+    }
+
+    tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
+        kotlinOptions.jvmTarget = "1.8"
+    }
+
     /** Style */
 
     spotless {
+        java {
+            target("src/**/*.java")
+            googleJavaFormat()
+        }
         kotlinGradle {
             ktlint()
+        }
+    }
+
+    pluginManager.withPlugin("kotlin") {
+        spotless {
+            kotlin {
+                ktlint()
+            }
         }
     }
 }
 
 /** Style */
 
-project(":compiler") {
-    spotless {
-        // TODO: remove once Java is gone
-        java {
-            target("src/**/*.java")
-            googleJavaFormat()
-        }
-        kotlin {
-            ktlint()
-        }
-    }
-}
-
 editorconfig {
-    excludes = listOf("$buildDir", "out", "gradlew", ".kotlin", "**/*.hprof")
+    excludes = listOf("$buildDir", "**/out", "gradlew", ".kotlin", "**/*.hprof")
 }
 
 tasks.check {

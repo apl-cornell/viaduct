@@ -3,18 +3,16 @@ package edu.cornell.cs.apl.viaduct.cli
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.types.file
-import edu.cornell.cs.apl.attributes.Tree
 import edu.cornell.cs.apl.viaduct.analysis.InformationFlowAnalysis
-import edu.cornell.cs.apl.viaduct.analysis.NameAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.ProtocolAnalysis
-import edu.cornell.cs.apl.viaduct.analysis.TypeAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.main
+import edu.cornell.cs.apl.viaduct.passes.check
 import edu.cornell.cs.apl.viaduct.passes.elaborated
 import edu.cornell.cs.apl.viaduct.passes.splitMain
-import edu.cornell.cs.apl.viaduct.selection.SimpleFactory
-import edu.cornell.cs.apl.viaduct.selection.ValidateSelection
-import edu.cornell.cs.apl.viaduct.selection.Z3Select
+import edu.cornell.cs.apl.viaduct.selection.selectProtocolsWithZ3
 import edu.cornell.cs.apl.viaduct.selection.simpleProtocolCost
+import edu.cornell.cs.apl.viaduct.selection.simpleProtocolFactory
+import edu.cornell.cs.apl.viaduct.selection.validateProtocolAssignment
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
 import edu.cornell.cs.apl.viaduct.syntax.Variable
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
@@ -51,38 +49,26 @@ class Compile : CliktCommand(help = "Compile ideal protocol to secure distribute
     override fun run() {
         val program = input.parse().elaborated()
 
-        val nameAnalysis = NameAnalysis(Tree(program))
-        val typeAnalysis = TypeAnalysis(nameAnalysis)
-        val informationFlowAnalysis = InformationFlowAnalysis(nameAnalysis)
         // Dump label constraint graph to a file if requested.
-        dumpGraph(informationFlowAnalysis::exportConstraintGraph, constraintGraphOutput)
+        dumpGraph(InformationFlowAnalysis.get(program)::exportConstraintGraph, constraintGraphOutput)
 
         // Perform static checks.
-        nameAnalysis.check()
-        typeAnalysis.check()
-        informationFlowAnalysis.check()
+        program.check()
 
-        val selector =
-            SimpleFactory(nameAnalysis, informationFlowAnalysis)
+        val protocolFactory = simpleProtocolFactory(program)
 
         // Select protocols.
         val protocolAssignment: (Variable) -> Protocol =
-            Z3Select(
-                program.main,
-                informationFlowAnalysis,
-                nameAnalysis,
-                selector,
-                ::simpleProtocolCost
-            )
+            selectProtocolsWithZ3(program, program.main, protocolFactory, ::simpleProtocolCost)
 
         // Perform a sanity check to ensure the protocolAssignment is valid.
         // TODO: either remove this entirely or make it opt-in by the command line.
-        ValidateSelection(program.main, informationFlowAnalysis, nameAnalysis, selector, protocolAssignment)
+        validateProtocolAssignment(program, program.main, protocolFactory, protocolAssignment)
 
-        val protocolAnalysis = ProtocolAnalysis(nameAnalysis, protocolAssignment)
+        val protocolAnalysis = ProtocolAnalysis(program, protocolAssignment)
 
         // Split the program.
-        val splitProgram: ProgramNode = program.splitMain(protocolAnalysis, typeAnalysis)
+        val splitProgram: ProgramNode = program.splitMain(protocolAnalysis)
         output.println(splitProgram)
     }
 }

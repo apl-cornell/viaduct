@@ -1,5 +1,6 @@
 package edu.cornell.cs.apl.viaduct.analysis
 
+import edu.cornell.cs.apl.attributes.Tree
 import edu.cornell.cs.apl.attributes.attribute
 import edu.cornell.cs.apl.viaduct.errors.CompilationError
 import edu.cornell.cs.apl.viaduct.errors.IncorrectNumberOfArgumentsError
@@ -25,9 +26,11 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.InfiniteLoopNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.InputNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.LetNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.LiteralNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.Node
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.OperatorApplicationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutputNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProcessDeclarationNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.QueryNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ReadNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ReceiveNode
@@ -45,7 +48,10 @@ import edu.cornell.cs.apl.viaduct.syntax.types.ValueType
 import edu.cornell.cs.apl.viaduct.syntax.types.VectorType
 
 /** Associates [Variable]s with their [Type]s. */
-class TypeAnalysis(private val nameAnalysis: NameAnalysis) {
+class TypeAnalysis private constructor(
+    private val tree: Tree<Node, ProgramNode>,
+    private val nameAnalysis: NameAnalysis
+) {
     /** Throws [TypeMismatchError] if the type of this expression is not [expectedType]. */
     private fun ExpressionNode.assertHasType(expectedType: ValueType) {
         if (type != expectedType)
@@ -178,6 +184,14 @@ class TypeAnalysis(private val nameAnalysis: NameAnalysis) {
                     node.statements.forEach { check(it) }
             }
         }
-        nameAnalysis.tree.root.filterIsInstance<ProcessDeclarationNode>().forEach { check(it.body) }
+        tree.root.filterIsInstance<ProcessDeclarationNode>().forEach { check(it.body) }
+    }
+
+    companion object : AnalysisProvider<TypeAnalysis> {
+        private val ProgramNode.instance: TypeAnalysis by attribute {
+            TypeAnalysis(this.tree, NameAnalysis.get(this))
+        }
+
+        override fun get(program: ProgramNode): TypeAnalysis = program.instance
     }
 }

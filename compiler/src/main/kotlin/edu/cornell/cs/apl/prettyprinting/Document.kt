@@ -3,7 +3,6 @@ package edu.cornell.cs.apl.prettyprinting
 import edu.cornell.cs.apl.prettyprinting.Document.Companion.invoke
 import java.io.ByteArrayOutputStream
 import java.io.PrintStream
-import java.nio.charset.Charset
 import org.fusesource.jansi.Ansi
 
 /** The maximum number of characters to put on one line. */
@@ -311,9 +310,9 @@ sealed class Document : PrettyPrintable {
      */
     fun print(lineWidth: Int = DEFAULT_LINE_WIDTH): String {
         val byteStream = ByteArrayOutputStream()
-        PrintStream(byteStream, false, Charset.defaultCharset()).use {
+        PrintStream(byteStream, false, Charsets.UTF_8).use {
             this.print(it, lineWidth, ansi = false)
-            return String(byteStream.toByteArray(), Charset.defaultCharset())
+            return String(byteStream.toByteArray(), Charsets.UTF_8)
         }
     }
 

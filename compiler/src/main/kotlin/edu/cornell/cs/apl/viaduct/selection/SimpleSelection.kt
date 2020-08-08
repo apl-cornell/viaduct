@@ -18,8 +18,6 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.QueryNode
 import kotlinx.collections.immutable.PersistentMap
 import kotlinx.collections.immutable.persistentMapOf
 
-private typealias PartialAssignment = PersistentMap<Variable, Protocol>
-
 /**
  * This class implements a particularly simple but ineffective protocol selection.
  * Along with a protocol selector, it takes as input a function [protocolCost] which
@@ -27,52 +25,51 @@ private typealias PartialAssignment = PersistentMap<Variable, Protocol>
  */
 class SimpleSelection(
     private val program: ProgramNode,
-    private val selector: ProtocolSelector,
+    private val protocolFactory: ProtocolFactory,
     private val protocolCost: (Protocol) -> Int
 ) {
     private val nameAnalysis = NameAnalysis.get(program)
     private val informationFlowAnalysis = InformationFlowAnalysis.get(program)
     private val hostTrustConfiguration = HostTrustConfiguration(program)
 
-    private fun possibleProtocols(node: LetNode, assignment: PartialAssignment): Set<Protocol> =
+    private fun viableProtocols(node: LetNode): Set<Protocol> =
         when (val value = node.value) {
             is InputNode ->
                 setOf(Local(value.host.value))
             is QueryNode ->
-                possibleProtocols(nameAnalysis.declaration(value), assignment)
+                viableProtocols(nameAnalysis.declaration(value))
             else ->
-                selector.select(node, assignment)
+                protocolFactory.viableProtocols(node)
         }
 
-    private fun possibleProtocols(node: DeclarationNode, assignment: PartialAssignment): Set<Protocol> =
-        selector.select(node, assignment)
+    private fun viableProtocols(node: DeclarationNode): Set<Protocol> =
+        protocolFactory.viableProtocols(node)
 
     fun select(processDeclaration: ProcessDeclarationNode): (Variable) -> Protocol {
         if (hostTrustConfiguration.isEmpty())
             throw NoHostDeclarationsError(program.sourceLocation.sourcePath)
 
+        var constraints: SelectionConstraint = Literal(true)
         var assignment: PersistentMap<Variable, Protocol> = persistentMapOf()
 
         fun traverse(node: Node) {
             when (node) {
                 is LetNode -> {
-                    // TODO: proper error class
-                    val p = possibleProtocols(node, assignment).minBy(protocolCost)
-                        ?: throw NoApplicableProtocolError(node.temporary)
-                    assert(p.authority(hostTrustConfiguration).actsFor(informationFlowAnalysis.label(node)))
+                    constraints = And(constraints, protocolFactory.constraint(node))
+                    val p = viableProtocols(node).minBy(protocolCost) ?: throw NoApplicableProtocolError(node.temporary)
                     assignment = assignment.put(node.temporary.value, p)
                 }
                 is DeclarationNode -> {
-                    // TODO: proper error class
-                    val p = possibleProtocols(node, assignment).minBy(protocolCost)
-                        ?: throw NoApplicableProtocolError(node.variable)
-                    assert(p.authority(hostTrustConfiguration).actsFor(informationFlowAnalysis.label(node)))
+                    constraints = And(constraints, protocolFactory.constraint(node))
+                    val p = viableProtocols(node).minBy(protocolCost) ?: throw NoApplicableProtocolError(node.variable)
                     assignment = assignment.put(node.variable.value, p)
                 }
             }
             node.children.forEach(::traverse)
         }
         traverse(processDeclaration)
-        return assignment::getValue
+        val f = assignment::getValue
+        assert(constraints.evaluate(f))
+        return f
     }
 }

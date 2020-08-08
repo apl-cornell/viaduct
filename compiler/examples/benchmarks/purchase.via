@@ -1,0 +1,74 @@
+process main {
+    /*
+     * two bidders, Alice and Bob, vie to buy an item.
+     * the seller, Chuck, will only sell to the richer person.
+     * however, Chuck personally doesn't like Alice and will charge
+     * her more if she wins. however, Alice and Chuck privately have
+     * maximum spending limits and will refuse to buy the item if
+     * it is above that limit. */
+
+    val a = Array[int]{A}(5);
+    val b = Array[int]{B}(5);
+    for (var i : int = 0; i < 5; i += 1) {
+        a[i] = input int from alice;
+    }
+    for (var i : int = 0; i < 5; i += 1) {
+        b[i] = input int from bob;
+    }
+
+
+    val a_limit : int{A} = input int from alice;
+    val b_limit : int{B} = input int from bob;
+
+    var total_price : int{C} = input int from chuck;
+
+    var a_sum : int{A} = 0;
+    for (var i : int = 0; i < 5; i += 1) {
+        a_sum += a[i];
+    }
+
+    var b_sum : int{B} = 0;
+    for (var i : int = 0; i < 5; i += 1) {
+        b_sum += b[i];
+    }
+
+    val a_richer : bool =
+        declassify (endorse a_sum to {A & B<- & C<-} > endorse b_sum to {B & A <- & C <-}) to {A ⊓ B ⊓ C};
+
+    val charge_more : bool = a_richer;
+
+    /* Chuck doesn't like Alice, so he charges her more */
+    if (charge_more) {
+        total_price += 25000;
+    }
+
+
+    val payment_due : int = endorse total_price to {C & A<- & B<-};
+
+    /* possible values
+     * result = 0   : no one buys the painting
+     * result = -1  : Alice buys the painting
+     * result = 1   : Bob buys the painting
+     */
+    var result : int {A ⊓ B ⊓ C} = 0;
+    val a_limit_trusted : int = endorse a_limit to {A & B<- & C<-};
+    val b_limit_trusted : int = endorse b_limit to {B & A<- & C<-};
+
+    if (a_richer) {
+        if (declassify (payment_due <= a_limit_trusted) to {A ⊓ B ⊓ C}) {
+            result = -1;
+        }
+    } else {
+        if (declassify (payment_due <= b_limit_trusted) to {A ⊓ B ⊓ C}) {
+            result = 1;
+        }
+    }
+
+    output result to alice;
+    output result to bob;
+    output result to chuck;
+}
+
+host alice : {A}
+host bob   : {B}
+host chuck : {C}

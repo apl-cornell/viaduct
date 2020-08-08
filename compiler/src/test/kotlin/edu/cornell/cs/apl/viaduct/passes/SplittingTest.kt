@@ -6,7 +6,7 @@ import edu.cornell.cs.apl.viaduct.analysis.main
 import edu.cornell.cs.apl.viaduct.protocols.HostInterface
 import edu.cornell.cs.apl.viaduct.selection.SimpleSelection
 import edu.cornell.cs.apl.viaduct.selection.simpleProtocolCost
-import edu.cornell.cs.apl.viaduct.selection.simpleSelector
+import edu.cornell.cs.apl.viaduct.selection.simpleProtocolFactory
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProcessDeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.surface.ProgramNode
 import org.junit.jupiter.params.ParameterizedTest
@@ -18,9 +18,9 @@ internal class SplittingTest {
     fun `it splits`(surfaceProgram: ProgramNode) {
         val program = surfaceProgram.elaborated()
 
-        val dumpProtocolAssignment =
-            SimpleSelection(program, simpleSelector(program), ::simpleProtocolCost).select(program.main)
-        val protocolAnalysis = ProtocolAnalysis(program, dumpProtocolAssignment)
+        val dumbProtocolAssignment =
+            SimpleSelection(program, simpleProtocolFactory(program), ::simpleProtocolCost).select(program.main)
+        val protocolAnalysis = ProtocolAnalysis(program, dumbProtocolAssignment)
 
         val splitProgram = program.splitMain(protocolAnalysis)
         edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode(

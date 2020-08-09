@@ -14,7 +14,7 @@ import edu.cornell.cs.apl.viaduct.syntax.FunctionNameNode
 import edu.cornell.cs.apl.viaduct.syntax.HostNode
 import edu.cornell.cs.apl.viaduct.syntax.LabelNode
 import edu.cornell.cs.apl.viaduct.syntax.Located
-import edu.cornell.cs.apl.viaduct.syntax.ParameterNameNode
+import edu.cornell.cs.apl.viaduct.syntax.ObjectVariableNode
 import edu.cornell.cs.apl.viaduct.syntax.ParameterType
 import edu.cornell.cs.apl.viaduct.syntax.ProtocolNode
 import edu.cornell.cs.apl.viaduct.syntax.SourceLocation
@@ -58,7 +58,7 @@ class ProcessDeclarationNode(
  * A parameter to a function declaration.
  */
 class ParameterNode(
-    val name: ParameterNameNode,
+    val name: ObjectVariableNode,
     val parameterType: ParameterType,
     val className: ClassNameNode,
     val typeArguments: Arguments<ValueTypeNode>,

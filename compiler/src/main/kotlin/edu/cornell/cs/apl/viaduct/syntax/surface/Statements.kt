@@ -11,6 +11,7 @@ import edu.cornell.cs.apl.prettyprinting.tupled
 import edu.cornell.cs.apl.viaduct.security.Label
 import edu.cornell.cs.apl.viaduct.syntax.Arguments
 import edu.cornell.cs.apl.viaduct.syntax.ClassNameNode
+import edu.cornell.cs.apl.viaduct.syntax.FunctionNameNode
 import edu.cornell.cs.apl.viaduct.syntax.HostNode
 import edu.cornell.cs.apl.viaduct.syntax.JumpLabelNode
 import edu.cornell.cs.apl.viaduct.syntax.Located
@@ -110,6 +111,68 @@ class UpdateNode(
                 variable + "." + update + arguments.tupled().nested()
             }
         }
+}
+
+/** Initialization for an out parameter. */
+class OutParameterInitializationNode(
+    val name: ObjectVariableNode,
+    val rhs: ExpressionNode,
+    override val sourceLocation: SourceLocation
+) : SimpleStatementNode() {
+    override val asDocument: Document
+        get() = keyword("out") * name * Document("=") * rhs
+}
+
+/** Arguments to functions. */
+sealed class FunctionArgumentNode : Node()
+
+/** Out arguments to functions. */
+sealed class FunctionReturnArgumentNode : FunctionArgumentNode()
+
+/** Function argument that is an expression. */
+class ExpressionArgumentNode(
+    val expression: ExpressionNode,
+    override val sourceLocation: SourceLocation
+) : FunctionArgumentNode() {
+    override val asDocument: Document
+        get() = expression.asDocument
+}
+
+/** Function argument that is an object reference (e.g. &a in the surface syntax). */
+class ObjectReferenceArgumentNode(
+    val variable: ObjectVariableNode,
+    override val sourceLocation: SourceLocation
+) : FunctionArgumentNode() {
+    override val asDocument: Document
+        get() = Document("&${variable.value.name}")
+}
+
+/** Declaration of a new object as a return argument of a function. */
+class ObjectDeclarationArgumentNode(
+    val variable: ObjectVariableNode,
+    override val sourceLocation: SourceLocation
+) : FunctionReturnArgumentNode() {
+    override val asDocument: Document
+        get() = keyword("val") * Document(variable.value.name)
+}
+
+/** Out parameter initialized as an out parameter to a function call. */
+class OutParameterArgumentNode(
+    val parameter: ObjectVariableNode,
+    override val sourceLocation: SourceLocation
+) : FunctionReturnArgumentNode() {
+    override val asDocument: Document
+        get() = keyword("out") * Document(parameter.value.name)
+}
+
+/** Function call. */
+class FunctionCallNode(
+    val name: FunctionNameNode,
+    val arguments: Arguments<FunctionArgumentNode>,
+    override val sourceLocation: SourceLocation
+) : SimpleStatementNode() {
+    override val asDocument: Document
+        get() = name + arguments.tupled()
 }
 
 /** A statement that does nothing. */

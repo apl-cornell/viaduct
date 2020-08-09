@@ -78,6 +78,7 @@ Whitespace     = \R | [ \t\f]
 
 ALPHANUM    = [a-z]([A-Za-z0-9_])*
 CAPALPHANUM = [A-Z]([A-Za-z0-9_])*
+TMPALPHANUM = \$[A-Z]([A-Za-z0-9_])*
 NUM         = ((-)?[1-9][0-9]*) | 0
 
 

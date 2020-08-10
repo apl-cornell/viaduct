@@ -160,7 +160,7 @@ open class PlaintextCppBackend(
         }
 
         for (arrayDecl: DeclarationNode in arrayDecls) {
-            childStmts.add(deleteArray(arrayDecl.variable.value.name))
+            childStmts.add(deleteArray(arrayDecl.name.value.name))
         }
 
         return CppBlock(childStmts)
@@ -255,7 +255,7 @@ open class PlaintextCppBackend(
                         is VectorType -> {
                             arrayDecls.add(stmt)
                             declareArray(
-                                variable = stmt.variable.value.name,
+                                variable = stmt.name.value.name,
                                 elementType = cppIntType,
                                 length = compilePlaintextExpr(stmt.arguments[0])
                             )
@@ -263,7 +263,7 @@ open class PlaintextCppBackend(
 
                         is ImmutableCellType, is MutableCellType -> {
                             declare(
-                                variable = stmt.variable.value.name,
+                                variable = stmt.name.value.name,
                                 type = cppIntType,
                                 initVal = compilePlaintextExpr(stmt.arguments[0])
                             )

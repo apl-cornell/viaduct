@@ -15,7 +15,7 @@ import edu.cornell.cs.apl.viaduct.syntax.HostNode
 import edu.cornell.cs.apl.viaduct.syntax.LabelNode
 import edu.cornell.cs.apl.viaduct.syntax.Located
 import edu.cornell.cs.apl.viaduct.syntax.ObjectVariableNode
-import edu.cornell.cs.apl.viaduct.syntax.ParameterType
+import edu.cornell.cs.apl.viaduct.syntax.ParameterDirection
 import edu.cornell.cs.apl.viaduct.syntax.ProtocolNode
 import edu.cornell.cs.apl.viaduct.syntax.SourceLocation
 import edu.cornell.cs.apl.viaduct.syntax.ValueTypeNode
@@ -59,7 +59,7 @@ class ProcessDeclarationNode(
  */
 class ParameterNode(
     val name: ObjectVariableNode,
-    val parameterType: ParameterType,
+    val parameterDirection: ParameterDirection,
     val className: ClassNameNode,
     val typeArguments: Arguments<ValueTypeNode>,
     // TODO: allow leaving out some of the labels (right now it's all or nothing)
@@ -71,7 +71,7 @@ class ParameterNode(
             return when (className.value) {
                 ImmutableCell -> {
                     val label = labelArguments?.get(0) ?: Document()
-                    name + Document(":") + parameterType * typeArguments[0] + label
+                    name + Document(":") + parameterDirection * typeArguments[0] + label
                 }
 
                 else -> {
@@ -79,7 +79,7 @@ class ParameterNode(
                     // TODO: labels should have braces
                     //   val labels = labelArguments?.braced()?.nested() ?: Document()
                     val labels = labelArguments?.joined() ?: Document()
-                    name * ":" + parameterType * className + types + labels
+                    name * ":" + parameterDirection * className + types + labels
                 }
             }
         }

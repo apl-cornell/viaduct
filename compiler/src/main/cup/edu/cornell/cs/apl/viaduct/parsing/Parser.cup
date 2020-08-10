@@ -130,7 +130,7 @@ nonterminal HostSetValue host_set;
 
 nonterminal List parameter_list, nonempty_parameter_list;
 nonterminal ParameterNode parameter;
-nonterminal ParameterType parameter_type;
+nonterminal ParameterDirection parameter_direction;
 
 nonterminal List argument_list, nonempty_argument_list;
 nonterminal FunctionArgumentNode argument;
@@ -221,10 +221,10 @@ declaration ::=
       RESULT = new ProcessDeclarationNode(protocol, body, location(beginleft, bodyright));
     :}
 
-  | FUNCTION:begin IDENT:funcname OPEN_PAREN parameter_list:params CLOSE_PAREN block:body {:
+  | FUNCTION:begin IDENT:funcname OPEN_PAREN:paramsbegin parameter_list:params CLOSE_PAREN:paramsclose block:body {:
       RESULT = new FunctionDeclarationNode(
         new Located(new FunctionName(funcname), location(funcnameleft, funcnameright)),
-        new Arguments(params, location(paramsleft, paramsright)),
+        new Arguments(params, location(paramsbeginleft, paramsbeginright)),
         body,
         location(beginleft, bodyright)
       );
@@ -253,16 +253,16 @@ nonempty_parameter_list ::=
     :}
   ;
 
-parameter_type ::=
-    OUT         {: RESULT = ParameterType.PARAM_OUT; :}
-  | /* empty */ {: RESULT = ParameterType.PARAM_IN; :}
+parameter_direction ::=
+    OUT         {: RESULT = ParameterDirection.PARAM_OUT; :}
+  | /* empty */ {: RESULT = ParameterDirection.PARAM_IN; :}
   ;
 
 parameter ::=
-    variable:name COLON parameter_type:ptype value_type:type optional_label:label {:
+    variable:name COLON parameter_direction:pdirection value_type:type optional_label:label {:
       RESULT = new ParameterNode(
         name,
-        ptype,
+        pdirection,
         new Located(PrimitivesKt.getImmutableCell(), name.getSourceLocation()),
         Arguments.from(type),
         optionalLabelArgument(label),
@@ -270,11 +270,11 @@ parameter ::=
       );
     :}
 
-  | variable:name COLON parameter_type:ptype ARRAY OPEN_SQBRACE value_type:elementType CLOSE_SQBRACE
+  | variable:name COLON parameter_direction:pdirection ARRAY OPEN_SQBRACE value_type:elementType CLOSE_SQBRACE
     optional_label:label {:
       RESULT = new ParameterNode(
         name,
-        ptype,
+        pdirection,
         new Located(PrimitivesKt.getVector(), name.getSourceLocation()),
         Arguments.from(elementType),
         optionalLabelArgument(label),
@@ -340,10 +340,10 @@ simple_stmt ::=
     :}
 
   /* function call */
-  | IDENT:funcname OPEN_PAREN argument_list:args CLOSE_PAREN:end {:
+  | IDENT:funcname OPEN_PAREN:paramsopen argument_list:args CLOSE_PAREN:end {:
       RESULT = new FunctionCallNode(
         new Located(new FunctionName(funcname), location(funcnameleft, funcnameright)),
-        new Arguments(args, location(argsleft, argsright)),
+        new Arguments(args, location(paramsopenleft, endright)),
         location(funcnameleft, endright)
       );
     :}

@@ -7,8 +7,9 @@ import edu.cornell.cs.apl.viaduct.syntax.FunctionNameNode
 import edu.cornell.cs.apl.viaduct.syntax.HostNode
 import edu.cornell.cs.apl.viaduct.syntax.LabelNode
 import edu.cornell.cs.apl.viaduct.syntax.Located
+import edu.cornell.cs.apl.viaduct.syntax.ObjectVariable
 import edu.cornell.cs.apl.viaduct.syntax.ObjectVariableNode
-import edu.cornell.cs.apl.viaduct.syntax.ParameterType
+import edu.cornell.cs.apl.viaduct.syntax.ParameterDirection
 import edu.cornell.cs.apl.viaduct.syntax.ProtocolNode
 import edu.cornell.cs.apl.viaduct.syntax.SourceLocation
 import edu.cornell.cs.apl.viaduct.syntax.ValueTypeNode
@@ -72,21 +73,24 @@ class ProcessDeclarationNode(
  * A parameter to a function declaration.
  */
 class ParameterNode(
-    val name: ObjectVariableNode,
-    val parameterType: ParameterType,
-    val className: ClassNameNode,
-    val typeArguments: Arguments<ValueTypeNode>,
+    override val name: ObjectVariableNode,
+    val parameterDirection: ParameterDirection,
+    override val className: ClassNameNode,
+    override val typeArguments: Arguments<ValueTypeNode>,
     // TODO: allow leaving out some of the labels (right now it's all or nothing)
-    val labelArguments: Arguments<Located<Label>>?,
+    override val labelArguments: Arguments<Located<Label>>?,
     override val sourceLocation: SourceLocation
-) : Node() {
+) : Node(), ObjectDeclaration {
+    override val objectDeclarationAsNode: Node
+        get() = this
+
     override val children: Iterable<BlockNode>
         get() = listOf()
 
     override fun toSurfaceNode(): edu.cornell.cs.apl.viaduct.syntax.surface.Node =
         edu.cornell.cs.apl.viaduct.syntax.surface.ParameterNode(
             name,
-            parameterType,
+            parameterDirection,
             className,
             typeArguments,
             labelArguments,
@@ -94,7 +98,13 @@ class ParameterNode(
         )
 
     override fun copy(children: List<Node>): Node =
-        ParameterNode(name, parameterType, className, typeArguments, labelArguments, sourceLocation)
+        ParameterNode(name, parameterDirection, className, typeArguments, labelArguments, sourceLocation)
+
+    val isOutParameter: Boolean
+        get() = parameterDirection == ParameterDirection.PARAM_OUT
+
+    val isInParameter: Boolean
+        get() = parameterDirection == ParameterDirection.PARAM_IN
 }
 
 /**
@@ -127,4 +137,10 @@ class FunctionDeclarationNode(
 
     override fun copy(children: List<Node>): Node =
         FunctionDeclarationNode(name, parameters, children[0] as BlockNode, sourceLocation)
+
+    fun getParameter(name: ObjectVariable): ParameterNode? =
+        parameters.firstOrNull { param -> param.name.value == name }
+
+    fun getParameterAtIndex(i: Int): ParameterNode? =
+        if (i >= 0 && i < parameters.size) parameters[i] else null
 }

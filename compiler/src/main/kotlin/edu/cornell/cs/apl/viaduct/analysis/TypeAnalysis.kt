@@ -4,13 +4,17 @@ import edu.cornell.cs.apl.attributes.Tree
 import edu.cornell.cs.apl.attributes.attribute
 import edu.cornell.cs.apl.viaduct.errors.CompilationError
 import edu.cornell.cs.apl.viaduct.errors.IncorrectNumberOfArgumentsError
+import edu.cornell.cs.apl.viaduct.errors.ParameterDirectionMismatchError
 import edu.cornell.cs.apl.viaduct.errors.TypeMismatchError
 import edu.cornell.cs.apl.viaduct.errors.UnknownMethodError
 import edu.cornell.cs.apl.viaduct.syntax.Arguments
+import edu.cornell.cs.apl.viaduct.syntax.ClassNameNode
 import edu.cornell.cs.apl.viaduct.syntax.Located
 import edu.cornell.cs.apl.viaduct.syntax.Name
 import edu.cornell.cs.apl.viaduct.syntax.ObjectVariable
+import edu.cornell.cs.apl.viaduct.syntax.ParameterDirection
 import edu.cornell.cs.apl.viaduct.syntax.Temporary
+import edu.cornell.cs.apl.viaduct.syntax.ValueTypeNode
 import edu.cornell.cs.apl.viaduct.syntax.Variable
 import edu.cornell.cs.apl.viaduct.syntax.datatypes.ImmutableCell
 import edu.cornell.cs.apl.viaduct.syntax.datatypes.MutableCell
@@ -20,17 +24,24 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.BlockNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.BreakNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.DeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.DowngradeNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.ExpressionArgumentNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ExpressionNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.FunctionCallNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.FunctionDeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.IfNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.InfiniteLoopNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.InputNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.LetNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.LiteralNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.Node
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.ObjectDeclaration
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.ObjectDeclarationArgumentNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.ObjectReferenceArgumentNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.OperatorApplicationNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutParameterArgumentNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutParameterInitializationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutputNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.ParameterNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProcessDeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.QueryNode
@@ -112,11 +123,10 @@ class TypeAnalysis private constructor(
         }
     }
 
-    /** See [type]. */
-    private val DeclarationNode.type: ObjectType by attribute {
+    private fun buildObjectType(className: ClassNameNode, typeArguments: Arguments<ValueTypeNode>): ObjectType {
         // TODO: move this somewhere else; unify.
         // TODO: error messages for missing type and label arguments
-        when (className.value) {
+        return when (className.value) {
             ImmutableCell -> {
                 val elementType: ValueType = typeArguments[0].value
                 ImmutableCellType(elementType)
@@ -134,6 +144,20 @@ class TypeAnalysis private constructor(
         }
     }
 
+    /** See [type]. */
+    private val ObjectDeclaration.type: ObjectType by attribute {
+        buildObjectType(className, typeArguments)
+    }
+
+    private val ParameterNode.type: ObjectType by attribute {
+        buildObjectType(className, typeArguments)
+    }
+
+    /** See [type]. */
+    private val OutParameterInitializationNode.type: ObjectType by attribute {
+        buildObjectType(className, typeArguments)
+    }
+
     /** Returns the inferred type of [node]. */
     fun type(node: ExpressionNode): ValueType = node.type
 
@@ -141,7 +165,7 @@ class TypeAnalysis private constructor(
     fun type(node: LetNode): ValueType = node.value.type
 
     /** Returns the type of the [ObjectVariable] defined by [node]. */
-    fun type(node: DeclarationNode): ObjectType = node.type
+    fun type(node: ObjectDeclaration): ObjectType = node.type
 
     /** Asserts that the program is well typed, and throws [CompilationError] otherwise. */
     fun check() {
@@ -167,9 +191,65 @@ class TypeAnalysis private constructor(
                     checkMethodCall(node.update, methodType, node.arguments)
                 }
 
-                is OutParameterInitializationNode -> TODO()
+                is OutParameterInitializationNode -> {
+                    val parameterDecl = nameAnalysis.declaration(node)
+                    val parameterType = parameterDecl.type
+                    val initializationType = node.type
+                    val constructorType = FunctionType(initializationType.constructorArguments, UnitType)
 
-                is FunctionCallNode -> TODO()
+                    if (parameterType != initializationType) {
+                        throw TypeMismatchError(node, initializationType, parameterType)
+                    } else {
+                        checkMethodCall(node.className, constructorType, node.arguments)
+                    }
+                }
+
+                is FunctionCallNode -> {
+                    val functionDecl = nameAnalysis.declaration(node)
+                    val parameterTypes = functionDecl.parameters.map { it.type }
+
+                    if (node.arguments.size != parameterTypes.size) {
+                        throw IncorrectNumberOfArgumentsError(node.name, node.arguments.size, node.arguments)
+                    }
+
+                    for (i in 0 until node.arguments.size) {
+                        val argument = node.arguments[i]
+
+                        // check first if the argument type matches with the parameter type
+                        // e.g. out x and val y arguments are OUT parameters,
+                        // the other two kinds of arguments are IN parameters
+                        val (argumentType: Type, isOutArgument: Boolean) =
+                            when (argument) {
+                                is ObjectDeclarationArgumentNode ->
+                                    Pair(parameterTypes[i], true)
+
+                                is OutParameterArgumentNode ->
+                                    Pair(nameAnalysis.declaration(argument).type, true)
+
+                                is ExpressionArgumentNode ->
+                                    Pair(
+                                        ImmutableCellType(argument.expression.type),
+                                        false
+                                    )
+
+                                is ObjectReferenceArgumentNode ->
+                                    Pair(nameAnalysis.declaration(argument).type, false)
+                            }
+
+                        val parameter = functionDecl.parameters[i]
+                        val expectedType = parameterTypes[i]
+
+                        if ((if (isOutArgument) ParameterDirection.PARAM_OUT else ParameterDirection.PARAM_IN)
+                            != parameter.parameterDirection
+                        ) {
+                            throw ParameterDirectionMismatchError(parameter, argument)
+                        }
+
+                        if (argumentType != expectedType) {
+                            throw TypeMismatchError(argument, argumentType, expectedType)
+                        }
+                    }
+                }
 
                 is OutputNode ->
                     node.message.type
@@ -192,6 +272,7 @@ class TypeAnalysis private constructor(
             }
         }
         tree.root.filterIsInstance<ProcessDeclarationNode>().forEach { check(it.body) }
+        tree.root.filterIsInstance<FunctionDeclarationNode>().forEach { check(it.body) }
     }
 
     companion object : AnalysisProvider<TypeAnalysis> {

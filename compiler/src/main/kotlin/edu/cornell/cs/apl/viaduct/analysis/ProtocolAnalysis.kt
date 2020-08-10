@@ -65,7 +65,7 @@ class ProtocolAnalysis(val program: ProgramNode, val protocolAssignment: (Variab
                 protocol
             }
             is DeclarationNode ->
-                protocolAssignment(statement.variable.value)
+                protocolAssignment(statement.name.value)
             is UpdateNode ->
                 protocolAssignment(statement.variable.value)
 

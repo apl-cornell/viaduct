@@ -4,12 +4,12 @@ import edu.cornell.cs.apl.viaduct.errors.JumpOutsideLoopScopeError
 import edu.cornell.cs.apl.viaduct.syntax.Arguments
 import edu.cornell.cs.apl.viaduct.syntax.JumpLabel
 import edu.cornell.cs.apl.viaduct.syntax.JumpLabelNode
+import edu.cornell.cs.apl.viaduct.syntax.Located
 import edu.cornell.cs.apl.viaduct.syntax.NameMap
 import edu.cornell.cs.apl.viaduct.syntax.ObjectVariable
 import edu.cornell.cs.apl.viaduct.syntax.ObjectVariableNode
 import edu.cornell.cs.apl.viaduct.syntax.Temporary
 import edu.cornell.cs.apl.viaduct.syntax.TemporaryNode
-import edu.cornell.cs.apl.viaduct.syntax.datatypes.Get
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.AssertionNode as IAssertionNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.AtomicExpressionNode as IAtomicExpressionNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.BlockNode as IBlockNode
@@ -70,7 +70,6 @@ import edu.cornell.cs.apl.viaduct.syntax.surface.OperatorApplicationNode as SOpe
 import edu.cornell.cs.apl.viaduct.syntax.surface.OutParameterArgumentNode as SOutParameterArgumentNode
 import edu.cornell.cs.apl.viaduct.syntax.surface.OutParameterInitializationNode as SOutParameterInitializationNode
 import edu.cornell.cs.apl.viaduct.syntax.surface.OutputNode as SOutputNode
-import edu.cornell.cs.apl.viaduct.syntax.surface.ParameterNode as SParameterNode
 import edu.cornell.cs.apl.viaduct.syntax.surface.ProcessDeclarationNode as SProcessDeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.surface.ProgramNode as SProgramNode
 import edu.cornell.cs.apl.viaduct.syntax.surface.QueryNode as SQueryNode
@@ -113,31 +112,45 @@ fun SProgramNode.elaborated(): IProgramNode {
             }
 
             is SFunctionDeclarationNode -> {
-                declarations.add(
-                    IFunctionDeclarationNode(
-                        declaration.name,
-                        Arguments(
-                            declaration.parameters.map { param ->
-                                IParameterNode(
-                                    param.name,
-                                    param.parameterType,
-                                    param.className,
-                                    param.typeArguments,
-                                    param.labelArguments,
-                                    param.sourceLocation
-                                )
-                            },
-                            declaration.parameters.sourceLocation
-                        ),
-                        StatementElaborator(declaration.parameters).elaborate(declaration.body),
-                        declaration.sourceLocation
-                    )
-                )
+                declarations.add(FunctionElaborator().elaborate(declaration))
             }
         }
     }
 
     return IProgramNode(declarations, this.sourceLocation)
+}
+
+private class FunctionElaborator {
+    fun elaborate(functionDecl: SFunctionDeclarationNode): IFunctionDeclarationNode {
+        val nameGenerator = FreshNameGenerator()
+        var objectRenames = NameMap<ObjectVariable, ObjectVariable>()
+
+        val elaboratedParameters = mutableListOf<IParameterNode>()
+        var parameterMap = NameMap<ObjectVariable, IParameterNode>()
+        for (parameter in functionDecl.parameters) {
+            val newName = ObjectVariable(nameGenerator.getFreshName(parameter.name.value.name))
+            val newLocatedName = Located(newName, parameter.name.sourceLocation)
+            objectRenames = objectRenames.put(parameter.name, newName)
+            val elaboratedParameter =
+                IParameterNode(
+                    newLocatedName,
+                    parameter.parameterDirection,
+                    parameter.className,
+                    parameter.typeArguments,
+                    parameter.labelArguments,
+                    parameter.sourceLocation
+                )
+            elaboratedParameters.add(elaboratedParameter)
+            parameterMap = parameterMap.put(newLocatedName, elaboratedParameter)
+        }
+
+        return IFunctionDeclarationNode(
+            functionDecl.name,
+            Arguments(elaboratedParameters, functionDecl.parameters.sourceLocation),
+            StatementElaborator(nameGenerator, objectRenames, parameterMap).elaborate(functionDecl.body),
+            functionDecl.sourceLocation
+        )
+    }
 }
 
 private class StatementElaborator(
@@ -152,29 +165,27 @@ private class StatementElaborator(
     private val surroundingLoop: JumpLabel?,
 
     /** Map of parameters for a function body. */
-    private val parameterMap: Map<ObjectVariable, SParameterNode>
+    private val parameterMap: NameMap<ObjectVariable, IParameterNode>
 ) {
     private companion object {
-        const val TMP_NAME = "tmp"
+        const val TMP_NAME = "${'$'}tmp"
         const val LOOP_NAME = "loop"
     }
 
     constructor() :
-        this(FreshNameGenerator(), NameMap(), NameMap(), NameMap(), null, mapOf())
+        this(FreshNameGenerator(), NameMap(), NameMap(), NameMap(), null, NameMap())
 
-    constructor(parameters: List<SParameterNode>) :
-        this(
-            FreshNameGenerator(),
-            NameMap(), NameMap(), NameMap(), null,
-            parameters
-                .map { param -> Pair<ObjectVariable, SParameterNode>(param.name.value, param) }
-                .toMap()
-        )
+    /** Constructor used by FunctionElaborator. */
+    constructor(
+        nameGenerator: FreshNameGenerator,
+        objectRenames: NameMap<ObjectVariable, ObjectVariable>,
+        parameterMap: NameMap<ObjectVariable, IParameterNode>
+    ) : this(nameGenerator, NameMap(), objectRenames, NameMap(), null, parameterMap)
 
     private fun copy(
         jumpLabelRenames: NameMap<JumpLabel, JumpLabel> = this.jumpLabelRenames,
         surroundingLoop: JumpLabel? = this.surroundingLoop,
-        parameterMap: Map<ObjectVariable, SParameterNode> = this.parameterMap
+        parameterMap: NameMap<ObjectVariable, IParameterNode> = this.parameterMap
     ): StatementElaborator =
         StatementElaborator(
             nameGenerator,
@@ -222,23 +233,15 @@ private class StatementElaborator(
                 )
 
             is SQueryNode -> {
-                val oldTemporary = TemporaryNode(Temporary(variable.value.name), variable.sourceLocation)
-
-                // The parser cannot differentiate between temporary reads and `ObjectVariable.get()`.
-                // We try to interpret variables as temporary reads first.
-                return if (temporaryRenames.contains(oldTemporary) && query.value == Get && arguments.isEmpty()) {
-                    IReadNode(TemporaryNode(temporaryRenames[oldTemporary], sourceLocation))
-                } else {
-                    IQueryNode(
-                        ObjectVariableNode(objectRenames[variable], variable.sourceLocation),
-                        query,
-                        Arguments(
-                            arguments.map { it.toAnf(bindings).toAtomic(bindings) },
-                            arguments.sourceLocation
-                        ),
-                        sourceLocation
-                    )
-                }
+                IQueryNode(
+                    ObjectVariableNode(objectRenames[variable], variable.sourceLocation),
+                    query,
+                    Arguments(
+                        arguments.map { it.toAnf(bindings).toAtomic(bindings) },
+                        arguments.sourceLocation
+                    ),
+                    sourceLocation
+                )
             }
 
             is SDeclassificationNode ->
@@ -375,10 +378,11 @@ private class StatementElaborator(
 
             is SOutParameterInitializationNode ->
                 withBindings { bindings ->
+                    val newName = Located(objectRenames[stmt.name], stmt.name.sourceLocation)
                     when (val rhs = stmt.rhs) {
                         is SConstructorCallNode ->
                             IOutParameterInitializationNode(
-                                stmt.name,
+                                newName,
                                 rhs.className,
                                 rhs.typeArguments,
                                 rhs.labelArguments,
@@ -389,19 +393,20 @@ private class StatementElaborator(
                                 stmt.sourceLocation
                             )
 
-                        else ->
-                            parameterMap[stmt.name.value]?.let { param ->
-                                IOutParameterInitializationNode(
-                                    stmt.name,
-                                    param.className,
-                                    param.typeArguments,
-                                    param.labelArguments,
-                                    Arguments.from(
-                                        rhs.toAnf(bindings).toAtomic(bindings)
-                                    ),
-                                    stmt.sourceLocation
-                                )
-                            } ?: throw Exception("param ${stmt.name.value} not found")
+                        else -> {
+                            val param = parameterMap[newName]
+
+                            IOutParameterInitializationNode(
+                                newName,
+                                param.className,
+                                param.typeArguments,
+                                param.labelArguments,
+                                Arguments.from(
+                                    rhs.toAnf(bindings).toAtomic(bindings)
+                                ),
+                                stmt.sourceLocation
+                            )
+                        }
                     }
                 }
 

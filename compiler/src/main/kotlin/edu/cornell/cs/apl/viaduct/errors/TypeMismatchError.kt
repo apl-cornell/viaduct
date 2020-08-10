@@ -3,7 +3,7 @@ package edu.cornell.cs.apl.viaduct.errors
 import edu.cornell.cs.apl.prettyprinting.Document
 import edu.cornell.cs.apl.prettyprinting.div
 import edu.cornell.cs.apl.viaduct.syntax.HasSourceLocation
-import edu.cornell.cs.apl.viaduct.syntax.types.ValueType
+import edu.cornell.cs.apl.viaduct.syntax.types.Type
 
 /**
  * Thrown when the inferred type of an AST node does not match its expected type.
@@ -14,8 +14,8 @@ import edu.cornell.cs.apl.viaduct.syntax.types.ValueType
  */
 class TypeMismatchError(
     private val node: HasSourceLocation,
-    private val actualType: ValueType,
-    private val expectedType: ValueType
+    private val actualType: Type,
+    private val expectedType: Type
 ) : CompilationError() {
     override val category: String
         get() = "Type Mismatch"

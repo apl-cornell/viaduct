@@ -39,7 +39,11 @@ class SimpleSelection(
             is InputNode ->
                 setOf(Local(value.host.value))
             is QueryNode ->
-                possibleProtocols(nameAnalysis.declaration(value), assignment)
+                // TODO: fix this later, support parameters
+                possibleProtocols(
+                    nameAnalysis.declaration(value).objectDeclarationAsNode as DeclarationNode,
+                    assignment
+                )
             else ->
                 selector.select(node, assignment)
         }
@@ -65,9 +69,9 @@ class SimpleSelection(
                 is DeclarationNode -> {
                     // TODO: proper error class
                     val p = possibleProtocols(node, assignment).minBy(protocolCost)
-                        ?: throw NoApplicableProtocolError(node.variable)
+                        ?: throw NoApplicableProtocolError(node.name)
                     assert(p.authority(hostTrustConfiguration).actsFor(informationFlowAnalysis.label(node)))
-                    assignment = assignment.put(node.variable.value, p)
+                    assignment = assignment.put(node.name.value, p)
                 }
             }
             node.children.forEach(::traverse)

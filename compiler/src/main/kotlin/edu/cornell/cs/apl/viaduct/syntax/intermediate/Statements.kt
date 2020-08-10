@@ -67,20 +67,23 @@ class LetNode(
 
 /** Constructing a new object and binding it to a variable. */
 class DeclarationNode(
-    val variable: ObjectVariableNode,
-    val className: ClassNameNode,
-    val typeArguments: Arguments<ValueTypeNode>,
+    override val name: ObjectVariableNode,
+    override val className: ClassNameNode,
+    override val typeArguments: Arguments<ValueTypeNode>,
     // TODO: allow leaving out some of the labels (right now it's all or nothing)
-    val labelArguments: Arguments<Located<Label>>?,
+    override val labelArguments: Arguments<Located<Label>>?,
     val arguments: Arguments<AtomicExpressionNode>,
     override val sourceLocation: SourceLocation
-) : SimpleStatementNode() {
+) : SimpleStatementNode(), ObjectDeclaration {
+    override val objectDeclarationAsNode: Node
+        get() = this
+
     override val children: Iterable<AtomicExpressionNode>
         get() = arguments
 
     override fun toSurfaceNode(): edu.cornell.cs.apl.viaduct.syntax.surface.DeclarationNode =
         edu.cornell.cs.apl.viaduct.syntax.surface.DeclarationNode(
-            variable,
+            name,
             className,
             typeArguments,
             labelArguments,
@@ -90,7 +93,7 @@ class DeclarationNode(
 
     override fun copy(children: List<Node>): DeclarationNode =
         DeclarationNode(
-            variable,
+            name,
             className,
             typeArguments,
             labelArguments,

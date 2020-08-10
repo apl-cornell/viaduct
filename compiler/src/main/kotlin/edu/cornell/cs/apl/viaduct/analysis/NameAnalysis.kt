@@ -6,6 +6,7 @@ import edu.cornell.cs.apl.attributes.collectedAttribute
 import edu.cornell.cs.apl.viaduct.errors.NameClashError
 import edu.cornell.cs.apl.viaduct.errors.UndefinedNameError
 import edu.cornell.cs.apl.viaduct.protocols.Adversary
+import edu.cornell.cs.apl.viaduct.syntax.FunctionName
 import edu.cornell.cs.apl.viaduct.syntax.Host
 import edu.cornell.cs.apl.viaduct.syntax.JumpLabel
 import edu.cornell.cs.apl.viaduct.syntax.Located
@@ -19,12 +20,19 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.BreakNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.DeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ExpressionNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ExternalCommunicationNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.FunctionCallNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.FunctionDeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.HostDeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.IfNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.InfiniteLoopNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.InternalCommunicationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.LetNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.Node
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.ObjectDeclaration
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.ObjectReferenceArgumentNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutParameterArgumentNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutParameterInitializationNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.ParameterNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProcessDeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.QueryNode
@@ -35,6 +43,7 @@ import kotlin.properties.ReadOnlyProperty
 import kotlin.reflect.KProperty
 import kotlinx.collections.immutable.PersistentSet
 import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.persistentMapOf
 import kotlinx.collections.immutable.persistentSetOf
 
 /**
@@ -73,14 +82,53 @@ class NameAnalysis private constructor(private val tree: Tree<Node, ProgramNode>
         }
     }
 
+    /** Function declarations in scope for this node. */
+    private val Node.functionDeclarations: NameMap<FunctionName, FunctionDeclarationNode> by attribute {
+        when (val parent = tree.parent(this)) {
+            null -> {
+                require(this is ProgramNode)
+                declarations.filterIsInstance<FunctionDeclarationNode>()
+                    .fold(NameMap()) { map, declaration ->
+                        map.put(declaration.name, declaration)
+                    }
+            }
+
+            else -> parent.functionDeclarations
+        }
+    }
+
+    /** Functions that encloses AST nodes. */
+    private val Node.enclosingFunctions: Map<Node, FunctionDeclarationNode> by attribute {
+        when (val parent = tree.parent(this)) {
+            null -> {
+                require(this is ProgramNode)
+                persistentMapOf()
+            }
+
+            is FunctionDeclarationNode -> {
+                persistentMapOf(Pair(this, parent))
+            }
+
+            else -> parent.enclosingFunctions
+        }
+    }
+
     /** Temporary definitions in scope for this node. */
     private val Node.temporaryDefinitions: NameMap<Temporary, LetNode> by Context(true) {
-        if (it is LetNode) Pair(it.temporary, it) else null
+        if (it is LetNode) listOf(Pair(it.temporary, it)) else listOf()
     }
 
     /** Object declarations in scope for this node. */
-    private val Node.objectDeclarations: NameMap<ObjectVariable, DeclarationNode> by Context(false) {
-        if (it is DeclarationNode) Pair(it.variable, it) else null
+    private val Node.objectDeclarations: NameMap<ObjectVariable, ObjectDeclaration> by Context(false) {
+        when (it) {
+            is DeclarationNode ->
+                listOf(Pair(it.name, it as ObjectDeclaration))
+
+            is FunctionDeclarationNode ->
+                it.parameters.map { param -> Pair(param.name, param as ObjectDeclaration) }
+
+            else -> listOf()
+        }
     }
 
     /** Loop nodes in scope for this node. */
@@ -118,7 +166,7 @@ class NameAnalysis private constructor(private val tree: Tree<Node, ProgramNode>
      */
     private inner class Context<N : Name, Data>(
         resetAtBlock: Boolean,
-        defines: (Node) -> Pair<Located<N>, Data>?
+        defines: (Node) -> List<Pair<Located<N>, Data>>
     ) : ReadOnlyProperty<Node, NameMap<N, Data>> {
         /** Context just before this node. */
         private val Node.contextIn: NameMap<N, Data> by attribute {
@@ -133,6 +181,8 @@ class NameAnalysis private constructor(private val tree: Tree<Node, ProgramNode>
                 parent is BlockNode && previousSibling == null && grandParent !is BlockNode && resetAtBlock ->
                     // TODO: resetting at block is not enough to guarantee security with temporaries
                     NameMap()
+                parent is FunctionDeclarationNode ->
+                    parent.contextOut
                 else ->
                     parent.contextIn
             }
@@ -140,9 +190,7 @@ class NameAnalysis private constructor(private val tree: Tree<Node, ProgramNode>
 
         /** Context just after this node. */
         private val Node.contextOut: NameMap<N, Data> by attribute {
-            defines(this).let {
-                if (it == null) contextIn else contextIn.put(it.first, it.second)
-            }
+            defines(this).fold(contextIn) { acc, pair -> acc.put(pair.first, pair.second) }
         }
 
         override fun getValue(thisRef: Node, property: KProperty<*>): NameMap<N, Data> =
@@ -154,11 +202,11 @@ class NameAnalysis private constructor(private val tree: Tree<Node, ProgramNode>
         node.temporaryDefinitions[node.temporary]
 
     /** Returns the statement that declares the [ObjectVariable] in [node]. */
-    fun declaration(node: QueryNode): DeclarationNode =
+    fun declaration(node: QueryNode): ObjectDeclaration =
         node.objectDeclarations[node.variable]
 
     /** Returns the statement that declares the [ObjectVariable] in [node]. */
-    fun declaration(node: UpdateNode): DeclarationNode =
+    fun declaration(node: UpdateNode): ObjectDeclaration =
         node.objectDeclarations[node.variable]
 
     /** Returns the loop that [node] is breaking out of. */
@@ -172,6 +220,26 @@ class NameAnalysis private constructor(private val tree: Tree<Node, ProgramNode>
     /** Returns the declaration of the [Protocol] in [node]. */
     fun declaration(node: InternalCommunicationNode): ProcessDeclarationNode =
         (node as Node).protocolDeclarations[node.protocol]
+
+    /** Returns the declaration of the out parameter in [node]. */
+    fun declaration(node: OutParameterInitializationNode): ParameterNode {
+        return when (val parameter = node.objectDeclarations[node.name]) {
+            is ParameterNode -> parameter
+            else -> throw UndefinedNameError(node.name)
+        }
+    }
+
+    /** Returns the declaration of the function being called in [node]. */
+    fun declaration(node: FunctionCallNode): FunctionDeclarationNode =
+        (node as Node).functionDeclarations[node.name]
+
+    /** Returns the object referenced by the [node] function argument. */
+    fun declaration(node: ObjectReferenceArgumentNode): ObjectDeclaration =
+        node.objectDeclarations[node.variable]
+
+    /** Returns the object referenced by the [node] function argument. */
+    fun declaration(node: OutParameterArgumentNode): ObjectDeclaration =
+        node.objectDeclarations[node.parameter]
 
     /**
      * Returns the set of [StatementNode]s that read the [Temporary] defined by [node].
@@ -194,7 +262,15 @@ class NameAnalysis private constructor(private val tree: Tree<Node, ProgramNode>
 
     private val DeclarationNode.queries: Set<QueryNode> by collectedAttribute(tree) { node ->
         if (node is QueryNode) {
-            listOf(declaration(node) to node)
+            listOf(declaration(node).objectDeclarationAsNode to node)
+        } else {
+            listOf()
+        }
+    }
+
+    private val ParameterNode.queries: Set<QueryNode> by collectedAttribute(tree) { node ->
+        if (node is QueryNode) {
+            listOf(declaration(node).objectDeclarationAsNode to node)
         } else {
             listOf()
         }
@@ -205,7 +281,15 @@ class NameAnalysis private constructor(private val tree: Tree<Node, ProgramNode>
 
     private val DeclarationNode.updates: Set<UpdateNode> by collectedAttribute(tree) { node ->
         if (node is UpdateNode) {
-            listOf(declaration(node) to node)
+            listOf(declaration(node).objectDeclarationAsNode to node)
+        } else {
+            listOf()
+        }
+    }
+
+    private val ParameterNode.updates: Set<UpdateNode> by collectedAttribute(tree) { node ->
+        if (node is UpdateNode) {
+            listOf(declaration(node).objectDeclarationAsNode to node)
         } else {
             listOf()
         }
@@ -265,6 +349,17 @@ class NameAnalysis private constructor(private val tree: Tree<Node, ProgramNode>
                     declaration(node)
                 is UpdateNode ->
                     declaration(node)
+                is OutParameterInitializationNode ->
+                    declaration(node)
+                is FunctionCallNode -> {
+                    declaration(node)
+                    for (argument in node.arguments) {
+                        when (argument) {
+                            is ObjectReferenceArgumentNode -> declaration(argument)
+                            is OutParameterArgumentNode -> declaration(argument)
+                        }
+                    }
+                }
                 is BreakNode ->
                     correspondingLoop(node)
                 is ExternalCommunicationNode ->
@@ -278,13 +373,14 @@ class NameAnalysis private constructor(private val tree: Tree<Node, ProgramNode>
                 is LetNode ->
                     node.temporaryDefinitions.put(node.temporary, node)
                 is DeclarationNode ->
-                    node.objectDeclarations.put(node.variable, node)
+                    node.objectDeclarations.put(node.name, node)
                 is InfiniteLoopNode ->
                     node.jumpTargets.put(node.jumpLabel, node)
                 is ProgramNode -> {
                     // Forcing these thunks
                     node.hostDeclarations
                     node.protocolDeclarations
+                    node.functionDeclarations
                 }
             }
             // Check the children

@@ -218,16 +218,16 @@ private class PlaintextInterpreter(
             is ImmutableCellType -> {
                 objectStore =
                     objectStore.put(
-                        stmt.variable.value,
-                        ImmutableCellObject(arguments[0], stmt.variable, objectType)
+                        stmt.name.value,
+                        ImmutableCellObject(arguments[0], stmt.name, objectType)
                     )
             }
 
             is MutableCellType -> {
                 objectStore =
                     objectStore.put(
-                        stmt.variable.value,
-                        MutableCellObject(arguments[0], stmt.variable, objectType)
+                        stmt.name.value,
+                        MutableCellObject(arguments[0], stmt.name, objectType)
                     )
             }
 
@@ -235,8 +235,8 @@ private class PlaintextInterpreter(
                 val length = arguments[0] as IntegerValue
                 objectStore =
                     objectStore.put(
-                        stmt.variable.value,
-                        VectorObject(length.value, objectType.elementType.defaultValue, stmt.variable, objectType)
+                        stmt.name.value,
+                        VectorObject(length.value, objectType.elementType.defaultValue, stmt.name, objectType)
                     )
             }
 

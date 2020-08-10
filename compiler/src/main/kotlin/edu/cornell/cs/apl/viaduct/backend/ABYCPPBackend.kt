@@ -319,7 +319,7 @@ class ABYCPPBackend(
         }
 
         for (arrayDecl: DeclarationNode in arrayDecls) {
-            childStmts.add(deleteArray(arrayDecl.variable.value.name))
+            childStmts.add(deleteArray(arrayDecl.name.value.name))
         }
 
         return CppBlock(childStmts)
@@ -388,7 +388,7 @@ class ABYCPPBackend(
                         is VectorType -> {
                             arrayDecls.add(stmt)
                             declareArray(
-                                variable = stmt.variable.value.name,
+                                variable = stmt.name.value.name,
                                 elementType = abyCircuitGateType,
                                 length = compileMPCExpr(stmt.arguments[0], shareMap, useShares = false)
                             )
@@ -396,7 +396,7 @@ class ABYCPPBackend(
 
                         is ImmutableCellType, is MutableCellType -> {
                             declare(
-                                variable = stmt.variable.value.name,
+                                variable = stmt.name.value.name,
                                 type = abyCircuitGateType,
                                 initVal = compileMPCExpr(stmt.arguments[0], shareMap)
                             )

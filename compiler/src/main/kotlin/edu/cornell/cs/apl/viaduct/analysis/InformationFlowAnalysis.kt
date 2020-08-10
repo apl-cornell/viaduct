@@ -35,6 +35,7 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.InputNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.LetNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.LiteralNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.Node
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.ObjectDeclaration
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.OperatorApplicationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutParameterInitializationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutputNode
@@ -68,12 +69,12 @@ class InformationFlowAnalysis private constructor(
     }
 
     /** The [LabelTerm] representing the [Label] of the object declared by this node. */
-    private val DeclarationNode.variableLabel: AtomicLabelTerm by attribute {
+    private val ObjectDeclaration.variableLabel: AtomicLabelTerm by attribute {
         if (labelArguments == null)
-            constraintSystem.addNewVariable(PrettyNodeWrapper(variable))
+            constraintSystem.addNewVariable(PrettyNodeWrapper(name))
         else {
             // TODO: this is hacky. How do we know it's the first label, for example?
-            LabelConstant.create(labelArguments[0].value)
+            LabelConstant.create(labelArguments!![0].value)
         }
     }
 
@@ -217,7 +218,7 @@ class InformationFlowAnalysis private constructor(
                 value flowsTo temporaryLabel
             }
             is DeclarationNode -> {
-                pcFlowsTo(variable, variableLabel)
+                pcFlowsTo(name, variableLabel)
                 arguments.forEach { it flowsTo variableLabel }
             }
             is UpdateNode -> {
@@ -227,9 +228,11 @@ class InformationFlowAnalysis private constructor(
                 // TODO: consult the method signature. There may be constraints on the pc or the arguments.
             }
 
-            is OutParameterInitializationNode -> TODO()
+            // TODO: implement this
+            is OutParameterInitializationNode -> Unit
 
-            is FunctionCallNode -> TODO()
+            // TODO: implement this
+            is FunctionCallNode -> Unit
 
             is OutputNode -> {
                 val hostLabel = LabelConstant.create(nameAnalysis.declaration(this).authority.value)
@@ -276,7 +279,7 @@ class InformationFlowAnalysis private constructor(
     fun label(node: LetNode): Label = node.temporaryLabel.getValue(solution)
 
     /** Returns the inferred security label of the [ObjectVariable] declared by [node]. */
-    fun label(node: DeclarationNode): Label = node.variableLabel.getValue(solution)
+    fun label(node: ObjectDeclaration): Label = node.variableLabel.getValue(solution)
 
     /** Returns the inferred security label of the result of [node]. */
     fun label(node: ExpressionNode): Label = node.labelVariable.getValue(solution)

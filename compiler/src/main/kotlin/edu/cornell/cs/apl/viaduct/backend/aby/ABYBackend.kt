@@ -253,16 +253,16 @@ private class ABYInterpreter(
             is ImmutableCellType -> {
                 objectStore =
                     objectStore.put(
-                        stmt.variable.value,
-                        ABYImmutableCellObject(argumentValues[0], stmt.variable, objectType)
+                        stmt.name.value,
+                        ABYImmutableCellObject(argumentValues[0], stmt.name, objectType)
                     )
             }
 
             is MutableCellType -> {
                 objectStore =
                     objectStore.put(
-                        stmt.variable.value,
-                        ABYMutableCellObject(argumentValues[0], stmt.variable, objectType)
+                        stmt.name.value,
+                        ABYMutableCellObject(argumentValues[0], stmt.name, objectType)
                     )
             }
 
@@ -270,8 +270,8 @@ private class ABYInterpreter(
                 val length = argumentValues[0] as IntegerValue
                 objectStore =
                     objectStore.put(
-                        stmt.variable.value,
-                        ABYVectorObject(length.value, objectType.elementType.defaultValue, stmt.variable, objectType)
+                        stmt.name.value,
+                        ABYVectorObject(length.value, objectType.elementType.defaultValue, stmt.name, objectType)
                     )
             }
 

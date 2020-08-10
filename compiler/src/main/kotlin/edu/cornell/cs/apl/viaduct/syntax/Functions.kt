@@ -9,7 +9,7 @@ import edu.cornell.cs.apl.viaduct.syntax.surface.KeywordStyle
 /** Specifies whether a parameter is an IN parameter (can be used)
  *  or an OUT (has to be assigned in the function body).
  */
-enum class ParameterType : PrettyPrintable {
+enum class ParameterDirection : PrettyPrintable {
     PARAM_IN {
         override val asDocument: Document = Document("")
     },

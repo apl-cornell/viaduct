@@ -39,7 +39,10 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.ObjectDeclarationArgumentN
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ObjectReferenceArgumentNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.OperatorApplicationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutParameterArgumentNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutParameterConstructorInitializerNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutParameterExpressionInitializerNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutParameterInitializationNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutParameterInitializerNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutputNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ParameterNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProcessDeclarationNode
@@ -154,8 +157,17 @@ class TypeAnalysis private constructor(
     }
 
     /** See [type]. */
-    private val OutParameterInitializationNode.type: ObjectType by attribute {
-        buildObjectType(className, typeArguments)
+    private val OutParameterInitializerNode.type: ObjectType by attribute {
+        when (this) {
+            is OutParameterExpressionInitializerNode ->
+                buildObjectType(
+                    Located(ImmutableCell, this.sourceLocation),
+                    Arguments.from(Located(this.expression.type, this.expression.sourceLocation))
+                )
+
+            is OutParameterConstructorInitializerNode ->
+                buildObjectType(this.className, this.typeArguments)
+        }
     }
 
     /** Returns the inferred type of [node]. */
@@ -194,13 +206,25 @@ class TypeAnalysis private constructor(
                 is OutParameterInitializationNode -> {
                     val parameterDecl = nameAnalysis.declaration(node)
                     val parameterType = parameterDecl.type
-                    val initializationType = node.type
+                    val initializationType = node.initializer.type
+                    val arguments =
+                        when (val initializer = node.initializer) {
+                            is OutParameterExpressionInitializerNode ->
+                                Arguments.from(initializer.expression)
+
+                            is OutParameterConstructorInitializerNode ->
+                                initializer.arguments
+                        }
                     val constructorType = FunctionType(initializationType.constructorArguments, UnitType)
 
                     if (parameterType != initializationType) {
                         throw TypeMismatchError(node, initializationType, parameterType)
                     } else {
-                        checkMethodCall(node.className, constructorType, node.arguments)
+                        checkMethodCall(
+                            Located(initializationType.className, node.initializer.sourceLocation),
+                            constructorType,
+                            arguments
+                        )
                     }
                 }
 

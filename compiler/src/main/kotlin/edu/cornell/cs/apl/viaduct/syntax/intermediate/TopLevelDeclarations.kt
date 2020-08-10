@@ -115,6 +115,7 @@ class ParameterNode(
  */
 class FunctionDeclarationNode(
     val name: FunctionNameNode,
+    val pcLabel: Located<Label>?,
     val parameters: Arguments<ParameterNode>,
     val body: BlockNode,
     override val sourceLocation: SourceLocation
@@ -125,6 +126,7 @@ class FunctionDeclarationNode(
     override fun toSurfaceNode(): edu.cornell.cs.apl.viaduct.syntax.surface.TopLevelDeclarationNode =
         edu.cornell.cs.apl.viaduct.syntax.surface.FunctionDeclarationNode(
             name,
+            pcLabel,
             Arguments(
                 parameters.map { param ->
                     param.toSurfaceNode() as edu.cornell.cs.apl.viaduct.syntax.surface.ParameterNode
@@ -136,7 +138,7 @@ class FunctionDeclarationNode(
         )
 
     override fun copy(children: List<Node>): Node =
-        FunctionDeclarationNode(name, parameters, children[0] as BlockNode, sourceLocation)
+        FunctionDeclarationNode(name, pcLabel, parameters, children[0] as BlockNode, sourceLocation)
 
     fun getParameter(name: ObjectVariable): ParameterNode? =
         parameters.firstOrNull { param -> param.name.value == name }

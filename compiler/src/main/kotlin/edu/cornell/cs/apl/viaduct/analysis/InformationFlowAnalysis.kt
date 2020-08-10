@@ -27,8 +27,10 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.DeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.DeclassificationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.DowngradeNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.EndorsementNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.ExpressionArgumentNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ExpressionNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.FunctionCallNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.FunctionDeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.IfNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.InfiniteLoopNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.InputNode
@@ -36,7 +38,12 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.LetNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.LiteralNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.Node
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ObjectDeclaration
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.ObjectDeclarationArgumentNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.ObjectReferenceArgumentNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.OperatorApplicationNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutParameterArgumentNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutParameterConstructorInitializerNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutParameterExpressionInitializerNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutParameterInitializationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutputNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
@@ -78,6 +85,11 @@ class InformationFlowAnalysis private constructor(
         }
     }
 
+    // TODO: add object declaration argument to ObjectDeclaration interface
+    private val ObjectDeclarationArgumentNode.variableLabel: AtomicLabelTerm by attribute {
+        constraintSystem.addNewVariable(PrettyNodeWrapper(name))
+    }
+
     /** The program counter label at this node. */
     private val Node.pc: PCLabelVariable by attribute {
         val parent = tree.parent(this)
@@ -97,6 +109,19 @@ class InformationFlowAnalysis private constructor(
                 val loopPC = PCLabelVariable("${parent.pc.path}.loop")
                 parent.pcFlowsTo(jumpLabel, loopPC.variable)
                 loopPC
+            }
+            this is FunctionDeclarationNode -> {
+                val funcPC = PCLabelVariable("func.${name.value}")
+
+                if (pcLabel != null) {
+                    assertEqualsTo(
+                        this,
+                        funcPC.variable,
+                        LabelConstant.create(pcLabel.value)
+                    )
+                }
+
+                funcPC
             }
             else ->
                 parent.pc
@@ -122,6 +147,15 @@ class InformationFlowAnalysis private constructor(
         }
 
     /**
+     * Adds a constraint asserting that [node] with label [nodeLabel] is equal to a location
+     * with label [to].
+     */
+    private fun assertEqualsTo(node: HasSourceLocation, nodeLabel: AtomicLabelTerm, to: AtomicLabelTerm) =
+        constraintSystem.addEqualToConstraint(nodeLabel, to) { actualNodeLabel, toLabel ->
+            InsecureDataFlowError(node, actualNodeLabel, toLabel)
+        }
+
+    /**
      * Adds a constraint asserting that the program counter label at [this] node can flow into
      * [node], which has label [nodeLabel].
      */
@@ -134,6 +168,10 @@ class InformationFlowAnalysis private constructor(
     /** Asserts that it is safe for [this] node's output to flow to a location with label [to]. */
     private infix fun ExpressionNode.flowsTo(to: LabelTerm) =
         assertFlowsTo(this, labelVariable, to)
+
+    /** Asserts that it is safe for [this] node's output to be equal to a location with label [to]. */
+    private infix fun ExpressionNode.equalsTo(to: AtomicLabelTerm) =
+        assertEqualsTo(this, labelVariable, to)
 
     /** Non-recursively add constraints relevant to this expression to [constraintSystem]. */
     private fun ExpressionNode.addConstraints(): Unit =
@@ -228,11 +266,50 @@ class InformationFlowAnalysis private constructor(
                 // TODO: consult the method signature. There may be constraints on the pc or the arguments.
             }
 
-            // TODO: implement this
-            is OutParameterInitializationNode -> Unit
+            is OutParameterInitializationNode -> {
+                val variableLabel = nameAnalysis.declaration(this).variableLabel
+                pcFlowsTo(name, variableLabel)
+                when (val initializer = this.initializer) {
+                    is OutParameterConstructorInitializerNode -> {
+                        initializer.arguments.forEach { arg -> arg flowsTo variableLabel }
+                    }
 
-            // TODO: implement this
-            is FunctionCallNode -> Unit
+                    is OutParameterExpressionInitializerNode -> {
+                        initializer.expression flowsTo variableLabel
+                    }
+                }
+            }
+
+            is FunctionCallNode -> {
+                val declaration = nameAnalysis.declaration(this)
+
+                // constraints for PC label
+                this.pcFlowsTo(declaration, declaration.pc.variable)
+
+                // constraints for arguments
+                for (pair in declaration.parameters.zip(this.arguments)) {
+                    val argumentLabel =
+                        when (val argument = pair.second) {
+                            is ExpressionArgumentNode ->
+                                argument.expression.labelVariable
+
+                            is ObjectReferenceArgumentNode ->
+                                nameAnalysis.declaration(argument).variableLabel
+
+                            is ObjectDeclarationArgumentNode ->
+                                argument.variableLabel
+
+                            is OutParameterArgumentNode ->
+                                nameAnalysis.declaration(argument).variableLabel
+                        }
+
+                    assertEqualsTo(
+                        pair.second,
+                        argumentLabel,
+                        pair.first.variableLabel
+                    )
+                }
+            }
 
             is OutputNode -> {
                 val hostLabel = LabelConstant.create(nameAnalysis.declaration(this).authority.value)

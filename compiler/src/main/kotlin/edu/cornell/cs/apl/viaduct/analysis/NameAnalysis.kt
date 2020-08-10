@@ -3,9 +3,13 @@ package edu.cornell.cs.apl.viaduct.analysis
 import edu.cornell.cs.apl.attributes.Tree
 import edu.cornell.cs.apl.attributes.attribute
 import edu.cornell.cs.apl.attributes.collectedAttribute
+import edu.cornell.cs.apl.viaduct.errors.IncorrectNumberOfArgumentsError
 import edu.cornell.cs.apl.viaduct.errors.NameClashError
 import edu.cornell.cs.apl.viaduct.errors.UndefinedNameError
 import edu.cornell.cs.apl.viaduct.protocols.Adversary
+import edu.cornell.cs.apl.viaduct.security.Label
+import edu.cornell.cs.apl.viaduct.syntax.Arguments
+import edu.cornell.cs.apl.viaduct.syntax.ClassNameNode
 import edu.cornell.cs.apl.viaduct.syntax.FunctionName
 import edu.cornell.cs.apl.viaduct.syntax.Host
 import edu.cornell.cs.apl.viaduct.syntax.JumpLabel
@@ -13,13 +17,16 @@ import edu.cornell.cs.apl.viaduct.syntax.Located
 import edu.cornell.cs.apl.viaduct.syntax.Name
 import edu.cornell.cs.apl.viaduct.syntax.NameMap
 import edu.cornell.cs.apl.viaduct.syntax.ObjectVariable
+import edu.cornell.cs.apl.viaduct.syntax.ObjectVariableNode
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
 import edu.cornell.cs.apl.viaduct.syntax.Temporary
+import edu.cornell.cs.apl.viaduct.syntax.ValueTypeNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.BlockNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.BreakNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.DeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ExpressionNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ExternalCommunicationNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.FunctionArgumentNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.FunctionCallNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.FunctionDeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.HostDeclarationNode
@@ -29,6 +36,7 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.InternalCommunicationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.LetNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.Node
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ObjectDeclaration
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.ObjectDeclarationArgumentNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ObjectReferenceArgumentNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutParameterArgumentNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutParameterInitializationNode
@@ -43,7 +51,6 @@ import kotlin.properties.ReadOnlyProperty
 import kotlin.reflect.KProperty
 import kotlinx.collections.immutable.PersistentSet
 import kotlinx.collections.immutable.persistentListOf
-import kotlinx.collections.immutable.persistentMapOf
 import kotlinx.collections.immutable.persistentSetOf
 
 /**
@@ -97,22 +104,6 @@ class NameAnalysis private constructor(private val tree: Tree<Node, ProgramNode>
         }
     }
 
-    /** Functions that encloses AST nodes. */
-    private val Node.enclosingFunctions: Map<Node, FunctionDeclarationNode> by attribute {
-        when (val parent = tree.parent(this)) {
-            null -> {
-                require(this is ProgramNode)
-                persistentMapOf()
-            }
-
-            is FunctionDeclarationNode -> {
-                persistentMapOf(Pair(this, parent))
-            }
-
-            else -> parent.enclosingFunctions
-        }
-    }
-
     /** Temporary definitions in scope for this node. */
     private val Node.temporaryDefinitions: NameMap<Temporary, LetNode> by Context(true) {
         if (it is LetNode) listOf(Pair(it.temporary, it)) else listOf()
@@ -126,6 +117,31 @@ class NameAnalysis private constructor(private val tree: Tree<Node, ProgramNode>
 
             is FunctionDeclarationNode ->
                 it.parameters.map { param -> Pair(param.name, param as ObjectDeclaration) }
+
+            is FunctionCallNode ->
+                it.arguments
+                    .filterIsInstance<ObjectDeclarationArgumentNode>()
+                    .map { arg ->
+                        val parameter = parameter(arg)
+                        val argDecl = object : ObjectDeclaration {
+                            override val name: ObjectVariableNode
+                                get() = arg.name
+
+                            override val className: ClassNameNode
+                                get() = parameter.className
+
+                            override val typeArguments: Arguments<ValueTypeNode>
+                                get() = parameter.typeArguments
+
+                            override val labelArguments: Arguments<Located<Label>>?
+                                get() = parameter.labelArguments
+
+                            override val objectDeclarationAsNode: Node
+                                get() = arg
+                        }
+
+                        Pair(arg.name, argDecl)
+                    }
 
             else -> listOf()
         }
@@ -155,6 +171,10 @@ class NameAnalysis private constructor(private val tree: Tree<Node, ProgramNode>
                     acc.addAll(child.reads)
                 }
         }
+    }
+
+    private val FunctionArgumentNode.functionCall: FunctionCallNode by attribute {
+        tree.parent(this) as FunctionCallNode
     }
 
     /**
@@ -238,8 +258,26 @@ class NameAnalysis private constructor(private val tree: Tree<Node, ProgramNode>
         node.objectDeclarations[node.variable]
 
     /** Returns the object referenced by the [node] function argument. */
-    fun declaration(node: OutParameterArgumentNode): ObjectDeclaration =
-        node.objectDeclarations[node.parameter]
+    fun declaration(node: OutParameterArgumentNode): ObjectDeclaration {
+        val parameter = node.objectDeclarations[node.parameter]
+        return when {
+            parameter is ParameterNode && parameter.isOutParameter -> parameter
+            else -> throw UndefinedNameError(parameter.name)
+        }
+    }
+
+    /** Returns the parameter for which [node] is the argument. */
+    fun parameter(node: FunctionArgumentNode): ParameterNode {
+        val functionCall = node.functionCall
+        val argumentIndex = functionCall.arguments.indexOf(node)
+        val functionDecl = declaration(functionCall)
+        return functionDecl.getParameterAtIndex(argumentIndex)
+            ?: throw IncorrectNumberOfArgumentsError(
+                functionCall.name,
+                functionDecl.parameters.size,
+                functionCall.arguments
+            )
+    }
 
     /**
      * Returns the set of [StatementNode]s that read the [Temporary] defined by [node].

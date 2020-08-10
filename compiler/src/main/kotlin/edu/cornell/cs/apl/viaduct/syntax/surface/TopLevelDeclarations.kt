@@ -93,6 +93,7 @@ class ParameterNode(
  */
 class FunctionDeclarationNode(
     val name: FunctionNameNode,
+    val pcLabel: Located<Label>?,
     val parameters: Arguments<ParameterNode>,
     val body: BlockNode,
     override val sourceLocation: SourceLocation

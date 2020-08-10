@@ -81,6 +81,9 @@ class OutParameterInitializationAnalysis private constructor(
             }
 
             // disallow out param initialization inside of loops
+            // note that this doesn't actually compute the fixpoint of the
+            // dataflow equations as needed, because that needs a CircularAttribute.
+            // TODO: handle breaks properly.
             is InfiniteLoopNode -> {
                 mapMeet(this.flowIn, this.body.flowOut)
             }
@@ -111,7 +114,7 @@ class OutParameterInitializationAnalysis private constructor(
                 val initialized = node.flowIn[node.variable.value] ?: true
                 if (!initialized) {
                     throw OutParameterInitializationError(
-                        nameAnalysis.declaration(node).objectDeclarationAsNode as ParameterNode,
+                        nameAnalysis.declaration(node) as ParameterNode,
                         node
                     )
                 }
@@ -121,7 +124,7 @@ class OutParameterInitializationAnalysis private constructor(
                 val initialized = node.flowIn[node.variable.value] ?: true
                 if (!initialized) {
                     throw OutParameterInitializationError(
-                        nameAnalysis.declaration(node).objectDeclarationAsNode as ParameterNode,
+                        nameAnalysis.declaration(node) as ParameterNode,
                         node
                     )
                 }

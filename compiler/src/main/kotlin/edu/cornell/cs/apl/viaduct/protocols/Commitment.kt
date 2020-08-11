@@ -9,20 +9,20 @@ import edu.cornell.cs.apl.viaduct.syntax.values.HostSetValue
 import edu.cornell.cs.apl.viaduct.syntax.values.HostValue
 import edu.cornell.cs.apl.viaduct.syntax.values.Value
 
-class CommitmentProtocol(val sender: Host, receivers: Set<Host>) : Protocol() {
+class Commitment(val sender: Host, receivers: Set<Host>) : Protocol() {
     companion object {
         val protocolName = ProtocolName("Commitment")
     }
 
     init {
-        require(receivers.size >= 2)
+        require(receivers.size >= 1)
         require(!receivers.contains(sender))
     }
 
     val receivers = HostSetValue(receivers)
 
     override val protocolName: ProtocolName
-        get() = CommitmentProtocol.protocolName
+        get() = Commitment.protocolName
 
     override val arguments: Map<String, Value>
         get() = mapOf("sender" to HostValue(sender), "receivers" to receivers)

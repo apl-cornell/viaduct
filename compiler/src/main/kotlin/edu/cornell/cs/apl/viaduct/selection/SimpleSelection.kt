@@ -2,6 +2,7 @@ package edu.cornell.cs.apl.viaduct.selection
 
 import edu.cornell.cs.apl.viaduct.analysis.InformationFlowAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.NameAnalysis
+import edu.cornell.cs.apl.viaduct.analysis.main
 import edu.cornell.cs.apl.viaduct.errors.NoApplicableProtocolError
 import edu.cornell.cs.apl.viaduct.errors.NoHostDeclarationsError
 import edu.cornell.cs.apl.viaduct.protocols.Local
@@ -41,7 +42,6 @@ class SimpleSelection(
             is InputNode ->
                 setOf(Local(value.host.value))
             is QueryNode ->
-                // TODO: fix this later, support parameters
                 when (val declaration = nameAnalysis.declaration(value).objectDeclarationAsNode) {
                     is DeclarationNode -> {
                         possibleProtocols(declaration, assignment)
@@ -100,7 +100,12 @@ class SimpleSelection(
             }
             node.children.forEach(::traverse)
         }
-        traverse(program)
+
+        program.declarations
+            .filterIsInstance<FunctionDeclarationNode>()
+            .forEach { function -> traverse(function) }
+        traverse(program.main)
+
         return assignment::getValue
     }
 }

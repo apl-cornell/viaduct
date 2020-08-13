@@ -114,7 +114,7 @@ class InformationFlowAnalysis private constructor(
             this is FunctionDeclarationNode -> {
                 val funcPC = PCLabelVariable("func.${name.value}")
 
-                if (pcLabel != null) {
+                if (this.pcLabel != null) {
                     assertEqualsTo(
                         this,
                         funcPC.variable,
@@ -369,7 +369,10 @@ class InformationFlowAnalysis private constructor(
     fun label(node: ExpressionNode): Label = node.labelVariable.getValue(solution)
 
     /** Returns the label of the program counter at the [node]'s program point. */
-    fun pcLabel(node: Node): Label = node.pc.variable.getValue(solution)
+    fun pcLabel(node: Node): Label {
+        println(node)
+        return node.pc.variable.getValue(solution)
+    }
 
     /**
      * Asserts that the program does not violate information flow security, and throws (a subclass

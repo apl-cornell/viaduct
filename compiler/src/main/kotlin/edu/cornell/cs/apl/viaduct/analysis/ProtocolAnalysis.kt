@@ -118,10 +118,12 @@ class ProtocolAnalysis(val program: ProgramNode, val protocolAssignment: (Variab
 
             // All protocols execute function calls;
             // also need to add primary protocols for arguments
+            // and all protocols participating in the function body
             is FunctionCallNode ->
                 this.arguments.fold(persistentSetOf<Protocol>()) { acc, arg ->
                     acc.add(primaryProtocol(nameAnalysis.parameter(arg)))
                 }
+                .addAll(nameAnalysis.declaration(this).body.protocols)
                 .addAll(this.process.body.protocols)
 
             is IfNode ->

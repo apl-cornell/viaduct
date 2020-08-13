@@ -57,19 +57,6 @@ class ABYSelector(program: ProgramNode) : ProtocolSelector {
         }
     }
 
-    private fun ParameterNode.isApplicable(): Boolean {
-        return nameAnalysis.users(this).all { site ->
-            val pcCheck = informationFlowAnalysis.pcLabel(site).flowsTo(informationFlowAnalysis.pcLabel(this))
-            val involvedLoops = nameAnalysis.involvedLoops(site)
-            val loopCheck = involvedLoops.all { loop ->
-                nameAnalysis.correspondingBreaks(loop).isNotEmpty() && nameAnalysis.correspondingBreaks(loop).all {
-                    informationFlowAnalysis.pcLabel(it).flowsTo(informationFlowAnalysis.pcLabel(this))
-                }
-            }
-            true || pcCheck && loopCheck
-        }
-    }
-
     private fun ObjectDeclarationArgumentNode.isApplicable(): Boolean {
         return nameAnalysis.users(this).all { site ->
             val pcCheck = informationFlowAnalysis.pcLabel(site).flowsTo(informationFlowAnalysis.pcLabel(this))
@@ -101,12 +88,9 @@ class ABYSelector(program: ProgramNode) : ProtocolSelector {
         }
     }
 
-    override fun select(node: ParameterNode, currentAssignment: Map<Variable, Protocol>): Set<Protocol> {
-        return if (node.isApplicable()) {
-            protocols.filter { it.authority.actsFor(informationFlowAnalysis.label(node)) }.map { it.protocol }
-                .toSet()
-        } else {
-            setOf()
-        }
-    }
+    override fun select(node: ParameterNode, currentAssignment: Map<Variable, Protocol>): Set<Protocol> =
+        protocols
+            .filter { it.authority.actsFor(informationFlowAnalysis.label(node)) }
+            .map { it.protocol }
+            .toSet()
 }

@@ -235,7 +235,7 @@ class TypeAnalysis private constructor(
                     val parameterTypes = functionDecl.parameters.map { it.type }
 
                     if (node.arguments.size != parameterTypes.size) {
-                        throw IncorrectNumberOfArgumentsError(node.name, node.arguments.size, node.arguments)
+                        throw IncorrectNumberOfArgumentsError(node.name, functionDecl.parameters.size, node.arguments)
                     }
 
                     for (i in 0 until node.arguments.size) {

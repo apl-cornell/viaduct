@@ -144,7 +144,8 @@ nonterminal List protocol_argument_list, nonempty_protocol_argument_list;
 nonterminal Pair<Located, Located> protocol_labelled_argument;
 nonterminal Value protocol_argument;
 
-terminal String IDENT, CAP_IDENT, TMP_IDENT;
+terminal String IDENT, CAP_IDENT;
+terminal String TMP_IDENT;
 terminal int INT_LIT;
 terminal TRUE, FALSE;
 
@@ -234,8 +235,7 @@ declaration ::=
   ;
 
 parameter_list ::=
-    nonempty_parameter_list:params COMMA parameter:param {:
-      params.add(param);
+    nonempty_parameter_list:params {:
       RESULT = params;
     :}
 
@@ -410,8 +410,7 @@ nonempty_argument_list ::=
   ;
 
 argument_list ::=
-    nonempty_argument_list:args COMMA argument:arg {:
-      args.add(arg);
+    nonempty_argument_list:args {:
       RESULT = args;
     :}
 

@@ -10,6 +10,7 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.FunctionDeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.IfNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.InfiniteLoopNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.Node
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.ObjectReferenceArgumentNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutParameterArgumentNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutParameterInitializationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ParameterNode
@@ -121,6 +122,16 @@ class OutParameterInitializationAnalysis private constructor(
             }
 
             is QueryNode -> {
+                val initialized = node.flowIn[node.variable.value] ?: true
+                if (!initialized) {
+                    throw OutParameterInitializationError(
+                        nameAnalysis.declaration(node) as ParameterNode,
+                        node
+                    )
+                }
+            }
+
+            is ObjectReferenceArgumentNode -> {
                 val initialized = node.flowIn[node.variable.value] ?: true
                 if (!initialized) {
                     throw OutParameterInitializationError(

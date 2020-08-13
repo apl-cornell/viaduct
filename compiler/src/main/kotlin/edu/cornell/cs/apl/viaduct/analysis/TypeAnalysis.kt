@@ -179,6 +179,8 @@ class TypeAnalysis private constructor(
     /** Returns the type of the [ObjectVariable] defined by [node]. */
     fun type(node: ObjectDeclaration): ObjectType = node.type
 
+    fun type(node: OutParameterInitializationNode): ObjectType = node.initializer.type
+
     /** Asserts that the program is well typed, and throws [CompilationError] otherwise. */
     fun check() {
         fun check(node: StatementNode): Any {

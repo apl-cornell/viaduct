@@ -17,7 +17,7 @@ internal class ProtocolAnalysisTest {
         val program = surfaceProgram.elaborated()
 
         val dumpProtocolAssignment =
-            SimpleSelection(program, simpleSelector(program), ::simpleProtocolCost).select(program.main)
+            SimpleSelection(program, simpleSelector(program), ::simpleProtocolCost).select(program)
         val protocolAnalysis = ProtocolAnalysis(program, dumpProtocolAssignment)
 
         try {

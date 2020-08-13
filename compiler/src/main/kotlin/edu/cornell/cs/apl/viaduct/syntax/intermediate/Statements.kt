@@ -208,97 +208,6 @@ class OutParameterInitializationNode(
             sourceLocation
         )
 }
-
-sealed class FunctionArgumentNode : Node()
-
-sealed class FunctionReturnArgumentNode : FunctionArgumentNode()
-
-class ExpressionArgumentNode(
-    val expression: AtomicExpressionNode,
-    override val sourceLocation: SourceLocation
-) : FunctionArgumentNode() {
-    override val children: Iterable<ExpressionNode>
-        get() = listOf(expression)
-
-    override fun copy(children: List<Node>): Node =
-        ExpressionArgumentNode(children[0] as AtomicExpressionNode, sourceLocation)
-
-    override fun toSurfaceNode(): SExpressionArgumentNode =
-        SExpressionArgumentNode(expression.toSurfaceNode(), sourceLocation)
-}
-
-class ObjectReferenceArgumentNode(
-    val variable: ObjectVariableNode,
-    override val sourceLocation: SourceLocation
-) : FunctionArgumentNode() {
-    override val children: Iterable<ExpressionNode>
-        get() = listOf()
-
-    override fun copy(children: List<Node>): Node =
-        ObjectReferenceArgumentNode(variable, sourceLocation)
-
-    override fun toSurfaceNode(): SObjectReferenceArgumentNode =
-        SObjectReferenceArgumentNode(variable, sourceLocation)
-}
-
-class ObjectDeclarationArgumentNode(
-    val name: ObjectVariableNode,
-    override val sourceLocation: SourceLocation
-) : FunctionReturnArgumentNode() {
-    override val children: Iterable<ExpressionNode>
-        get() = listOf()
-
-    override fun copy(children: List<Node>): Node =
-        ObjectDeclarationArgumentNode(name, sourceLocation)
-
-    override fun toSurfaceNode(): SObjectDeclarationArgumentNode =
-        SObjectDeclarationArgumentNode(name, sourceLocation)
-}
-
-class OutParameterArgumentNode(
-    val parameter: ObjectVariableNode,
-    override val sourceLocation: SourceLocation
-) : FunctionReturnArgumentNode() {
-    override val children: Iterable<ExpressionNode>
-        get() = listOf()
-
-    override fun copy(children: List<Node>): Node =
-        OutParameterArgumentNode(parameter, sourceLocation)
-
-    override fun toSurfaceNode(): SOutParameterArgumentNode =
-        SOutParameterArgumentNode(parameter, sourceLocation)
-}
-
-/** Function call. */
-class FunctionCallNode(
-    val name: FunctionNameNode,
-    val arguments: Arguments<FunctionArgumentNode>,
-    override val sourceLocation: SourceLocation
-) : SimpleStatementNode() {
-    override val children: Iterable<Node>
-        get() = arguments
-
-    override fun copy(children: List<Node>): FunctionCallNode =
-        FunctionCallNode(
-            name,
-            Arguments(
-                children.map { child -> child as FunctionArgumentNode },
-                arguments.sourceLocation
-            ),
-            sourceLocation
-        )
-
-    override fun toSurfaceNode(): SFunctionCallNode =
-        SFunctionCallNode(
-            name,
-            Arguments(
-                arguments.map { arg -> arg.toSurfaceNode() as SFunctionArgumentNode },
-                arguments.sourceLocation
-            ),
-            sourceLocation
-        )
-}
-
 // Communication Statements
 
 /** An external output. */
@@ -346,6 +255,98 @@ class SendNode(
 /** A statement that affects control flow. */
 sealed class ControlNode : StatementNode() {
     abstract override fun copy(children: List<Node>): ControlNode
+}
+
+sealed class FunctionArgumentNode : Node()
+
+sealed class FunctionInputArgumentNode : FunctionArgumentNode()
+
+sealed class FunctionOutputArgumentNode : FunctionArgumentNode()
+
+class ExpressionArgumentNode(
+    val expression: AtomicExpressionNode,
+    override val sourceLocation: SourceLocation
+) : FunctionInputArgumentNode() {
+    override val children: Iterable<ExpressionNode>
+        get() = listOf(expression)
+
+    override fun copy(children: List<Node>): Node =
+        ExpressionArgumentNode(children[0] as AtomicExpressionNode, sourceLocation)
+
+    override fun toSurfaceNode(): SExpressionArgumentNode =
+        SExpressionArgumentNode(expression.toSurfaceNode(), sourceLocation)
+}
+
+class ObjectReferenceArgumentNode(
+    val variable: ObjectVariableNode,
+    override val sourceLocation: SourceLocation
+) : FunctionInputArgumentNode() {
+    override val children: Iterable<ExpressionNode>
+        get() = listOf()
+
+    override fun copy(children: List<Node>): Node =
+        ObjectReferenceArgumentNode(variable, sourceLocation)
+
+    override fun toSurfaceNode(): SObjectReferenceArgumentNode =
+        SObjectReferenceArgumentNode(variable, sourceLocation)
+}
+
+class ObjectDeclarationArgumentNode(
+    val name: ObjectVariableNode,
+    override val sourceLocation: SourceLocation
+) : FunctionOutputArgumentNode() {
+    override val children: Iterable<ExpressionNode>
+        get() = listOf()
+
+    override fun copy(children: List<Node>): Node =
+        ObjectDeclarationArgumentNode(name, sourceLocation)
+
+    override fun toSurfaceNode(): SObjectDeclarationArgumentNode =
+        SObjectDeclarationArgumentNode(name, sourceLocation)
+}
+
+class OutParameterArgumentNode(
+    val parameter: ObjectVariableNode,
+    override val sourceLocation: SourceLocation
+) : FunctionOutputArgumentNode() {
+    override val children: Iterable<ExpressionNode>
+        get() = listOf()
+
+    override fun copy(children: List<Node>): Node =
+        OutParameterArgumentNode(parameter, sourceLocation)
+
+    override fun toSurfaceNode(): SOutParameterArgumentNode =
+        SOutParameterArgumentNode(parameter, sourceLocation)
+}
+
+/** Function call. */
+class FunctionCallNode(
+    val name: FunctionNameNode,
+    val arguments: Arguments<FunctionArgumentNode>,
+    override val sourceLocation: SourceLocation
+) : ControlNode() {
+    override val children: Iterable<Node>
+        get() = arguments
+
+    override fun copy(children: List<Node>): FunctionCallNode =
+        FunctionCallNode(
+            name,
+            Arguments(
+                children.map { child -> child as FunctionArgumentNode },
+                arguments.sourceLocation
+            ),
+            sourceLocation
+        )
+
+    override fun toSurfaceNode(): SFunctionCallNode =
+        SFunctionCallNode(
+            name,
+            Arguments(
+                arguments.map { arg -> arg.toSurfaceNode() as SFunctionArgumentNode },
+                arguments.sourceLocation
+            ),
+            sourceLocation
+        )
 }
 
 /**

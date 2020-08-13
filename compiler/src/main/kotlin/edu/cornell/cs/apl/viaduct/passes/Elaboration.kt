@@ -93,6 +93,7 @@ import edu.cornell.cs.apl.viaduct.util.FreshNameGenerator
 fun SProgramNode.elaborated(): IProgramNode {
     val declarations = mutableListOf<ITopLevelDeclarationNode>()
 
+    val nameGenerator = FreshNameGenerator()
     for (declaration in this.declarations) {
         when (declaration) {
             is SHostDeclarationNode -> {
@@ -109,14 +110,14 @@ fun SProgramNode.elaborated(): IProgramNode {
                 declarations.add(
                     IProcessDeclarationNode(
                         declaration.protocol,
-                        StatementElaborator().elaborate(declaration.body),
+                        StatementElaborator(nameGenerator).elaborate(declaration.body),
                         declaration.sourceLocation
                     )
                 )
             }
 
             is SFunctionDeclarationNode -> {
-                declarations.add(FunctionElaborator().elaborate(declaration))
+                declarations.add(FunctionElaborator(nameGenerator).elaborate(declaration))
             }
         }
     }
@@ -124,9 +125,10 @@ fun SProgramNode.elaborated(): IProgramNode {
     return IProgramNode(declarations, this.sourceLocation)
 }
 
-private class FunctionElaborator {
+private class FunctionElaborator(
+    val nameGenerator: FreshNameGenerator
+) {
     fun elaborate(functionDecl: SFunctionDeclarationNode): IFunctionDeclarationNode {
-        val nameGenerator = FreshNameGenerator()
         var objectRenames = NameMap<ObjectVariable, ObjectVariable>()
 
         val elaboratedParameters = mutableListOf<IParameterNode>()
@@ -174,6 +176,9 @@ private class StatementElaborator(
 
     constructor() :
         this(FreshNameGenerator(), NameMap(), NameMap(), NameMap(), null)
+
+    constructor(nameGenerator: FreshNameGenerator) :
+        this(nameGenerator, NameMap(), NameMap(), NameMap(), null)
 
     /** Constructor used by FunctionElaborator. */
     constructor(

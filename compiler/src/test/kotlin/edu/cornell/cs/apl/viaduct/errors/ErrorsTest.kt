@@ -1,14 +1,15 @@
 package edu.cornell.cs.apl.viaduct.errors
 
 import edu.cornell.cs.apl.viaduct.ErroneousExampleFileProvider
+import edu.cornell.cs.apl.viaduct.analysis.NameAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.ProtocolAnalysis
-import edu.cornell.cs.apl.viaduct.analysis.main
+import edu.cornell.cs.apl.viaduct.analysis.TypeAnalysis
 import edu.cornell.cs.apl.viaduct.parsing.SourceFile
 import edu.cornell.cs.apl.viaduct.parsing.isBlankOrUnderline
 import edu.cornell.cs.apl.viaduct.parsing.parse
+import edu.cornell.cs.apl.viaduct.passes.Splitter
 import edu.cornell.cs.apl.viaduct.passes.check
 import edu.cornell.cs.apl.viaduct.passes.elaborated
-import edu.cornell.cs.apl.viaduct.passes.splitMain
 import edu.cornell.cs.apl.viaduct.protocols.MainProtocol
 import edu.cornell.cs.apl.viaduct.selection.SimpleSelection
 import edu.cornell.cs.apl.viaduct.selection.simpleProtocolCost
@@ -65,17 +66,20 @@ private fun run(file: File) {
 /** Selects protocols for and splits the [MainProtocol] in [this] program. */
 private fun ProgramNode.split() {
     val protocolAssignment =
-        SimpleSelection(this, simpleSelector(this), ::simpleProtocolCost).select(this.main)
+        SimpleSelection(this, simpleSelector(this), ::simpleProtocolCost).select(this)
     val protocolAnalysis = ProtocolAnalysis(this, protocolAssignment)
 
-    this.splitMain(protocolAnalysis)
+    val nameAnalysis = NameAnalysis.get(this)
+    val typeAnalysis = TypeAnalysis.get(this)
+    Splitter(nameAnalysis, protocolAnalysis, typeAnalysis)
+        .splitMain(this)
 }
 
 /** Returns the subclass of [CompilationError] that running [file] is supposed to throw. */
 private fun expectedError(file: File): KClass<CompilationError> {
     val comment = file.useLines { it.first() }
     val expectedErrorName = comment.removeSurrounding("/*", "*/").trim()
-    val packageName = CompilationError::class.java.packageName
+    val packageName = CompilationError::class.java.`package`.name
     val kClass = Class.forName("$packageName.$expectedErrorName").kotlin
 
     assert(kClass.isSubclassOf(CompilationError::class))

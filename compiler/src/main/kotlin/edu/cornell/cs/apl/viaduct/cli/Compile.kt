@@ -4,11 +4,12 @@ import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.types.file
 import edu.cornell.cs.apl.viaduct.analysis.InformationFlowAnalysis
+import edu.cornell.cs.apl.viaduct.analysis.NameAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.ProtocolAnalysis
-import edu.cornell.cs.apl.viaduct.analysis.main
+import edu.cornell.cs.apl.viaduct.analysis.TypeAnalysis
+import edu.cornell.cs.apl.viaduct.passes.Splitter
 import edu.cornell.cs.apl.viaduct.passes.check
 import edu.cornell.cs.apl.viaduct.passes.elaborated
-import edu.cornell.cs.apl.viaduct.passes.splitMain
 import edu.cornell.cs.apl.viaduct.selection.SimpleSelection
 import edu.cornell.cs.apl.viaduct.selection.simpleProtocolCost
 import edu.cornell.cs.apl.viaduct.selection.simpleSelector
@@ -56,11 +57,15 @@ class Compile : CliktCommand(help = "Compile ideal protocol to secure distribute
 
         // Select protocols.
         val protocolAssignment: (Variable) -> Protocol =
-            SimpleSelection(program, simpleSelector(program), ::simpleProtocolCost).select(program.main)
+            SimpleSelection(program, simpleSelector(program), ::simpleProtocolCost).select(program)
         val protocolAnalysis = ProtocolAnalysis(program, protocolAssignment)
 
         // Split the program.
-        val splitProgram: ProgramNode = program.splitMain(protocolAnalysis)
+        val nameAnalysis = NameAnalysis.get(program)
+        val typeAnalysis = TypeAnalysis.get(program)
+        val splitProgram: ProgramNode =
+            Splitter(nameAnalysis, protocolAnalysis, typeAnalysis)
+                .splitMain(program)
         output.println(splitProgram)
     }
 }

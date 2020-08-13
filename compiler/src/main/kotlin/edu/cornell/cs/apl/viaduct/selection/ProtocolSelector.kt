@@ -4,6 +4,7 @@ import edu.cornell.cs.apl.viaduct.syntax.Protocol
 import edu.cornell.cs.apl.viaduct.syntax.Variable
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.DeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.LetNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.ParameterNode
 
 /**
 This interface specifies selectors for protocol selection. Selectors are given a partial assignment
@@ -18,6 +19,7 @@ This invariant is enforced during protocol selection.
 interface ProtocolSelector {
     fun select(node: LetNode, currentAssignment: Map<Variable, Protocol>): Set<Protocol>
     fun select(node: DeclarationNode, currentAssignment: Map<Variable, Protocol>): Set<Protocol>
+    fun select(node: ParameterNode, currentAssignment: Map<Variable, Protocol>): Set<Protocol>
 }
 
 /* Union of protocol selectors. [unions] takes a number of selectors and implements their collective union. */
@@ -27,5 +29,8 @@ fun unions(vararg selectors: ProtocolSelector): ProtocolSelector = object : Prot
         selectors.fold(setOf()) { acc, sel -> acc.union(sel.select(node, currentAssignment)) }
 
     override fun select(node: DeclarationNode, currentAssignment: Map<Variable, Protocol>): Set<Protocol> =
+        selectors.fold(setOf()) { acc, sel -> acc.union(sel.select(node, currentAssignment)) }
+
+    override fun select(node: ParameterNode, currentAssignment: Map<Variable, Protocol>): Set<Protocol> =
         selectors.fold(setOf()) { acc, sel -> acc.union(sel.select(node, currentAssignment)) }
 }

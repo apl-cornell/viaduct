@@ -9,6 +9,7 @@ import edu.cornell.cs.apl.viaduct.syntax.SpecializedProtocol
 import edu.cornell.cs.apl.viaduct.syntax.Variable
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.DeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.LetNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.ParameterNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
 
 class LocalSelector(program: ProgramNode) : ProtocolSelector {
@@ -26,6 +27,11 @@ class LocalSelector(program: ProgramNode) : ProtocolSelector {
     }
 
     override fun select(node: DeclarationNode, currentAssignment: Map<Variable, Protocol>): Set<Protocol> {
+        return protocols.filter { it.authority.actsFor(informationFlowAnalysis.label(node)) }.map { it.protocol }
+            .toSet()
+    }
+
+    override fun select(node: ParameterNode, currentAssignment: Map<Variable, Protocol>): Set<Protocol> {
         return protocols.filter { it.authority.actsFor(informationFlowAnalysis.label(node)) }.map { it.protocol }
             .toSet()
     }

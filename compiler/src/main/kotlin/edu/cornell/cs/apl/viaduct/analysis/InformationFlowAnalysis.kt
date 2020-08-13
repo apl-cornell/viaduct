@@ -46,6 +46,7 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutParameterConstructorIni
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutParameterExpressionInitializerNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutParameterInitializationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutputNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.ParameterNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.QueryNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ReadNode
@@ -356,7 +357,13 @@ class InformationFlowAnalysis private constructor(
     fun label(node: LetNode): Label = node.temporaryLabel.getValue(solution)
 
     /** Returns the inferred security label of the [ObjectVariable] declared by [node]. */
-    fun label(node: ObjectDeclaration): Label = node.variableLabel.getValue(solution)
+    fun label(node: DeclarationNode): Label = node.variableLabel.getValue(solution)
+
+    /** Returns the inferred security label of the [ObjectVariable] declared by [node]. */
+    fun label(node: ParameterNode): Label = node.variableLabel.getValue(solution)
+
+    /** Returns the inferred security label of the [ObjectVariable] declared by [node]. */
+    fun label(node: ObjectDeclarationArgumentNode): Label = node.variableLabel.getValue(solution)
 
     /** Returns the inferred security label of the result of [node]. */
     fun label(node: ExpressionNode): Label = node.labelVariable.getValue(solution)

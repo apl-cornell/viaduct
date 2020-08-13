@@ -11,6 +11,7 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.BlockNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.BreakNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.DeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.FunctionCallNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.FunctionDeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.IfNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.InfiniteLoopNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.InputNode
@@ -19,6 +20,7 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.LetNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.Node
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutParameterInitializationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutputNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.ParameterNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProcessDeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ReceiveNode
@@ -28,6 +30,7 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.StatementNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.UpdateNode
 import kotlinx.collections.immutable.PersistentSet
 import kotlinx.collections.immutable.persistentHashSetOf
+import kotlinx.collections.immutable.persistentSetOf
 import kotlinx.collections.immutable.toPersistentSet
 
 /** Associates each [StatementNode] with the [Protocol]s involved in its execution. */
@@ -69,15 +72,20 @@ class ProtocolAnalysis(val program: ProgramNode, val protocolAssignment: (Variab
             is UpdateNode ->
                 protocolAssignment(statement.variable.value)
 
-            is OutParameterInitializationNode -> TODO()
-
-            is FunctionCallNode -> TODO()
+            is OutParameterInitializationNode ->
+                protocolAssignment(statement.name.value)
 
             is OutputNode ->
                 Local(statement.host.value)
             is SendNode ->
                 throw IllegalInternalCommunicationError(statement.process, statement)
         }
+
+    /**
+     * Returns the protocol that coordinates the execution of [parameter].
+     */
+    fun primaryProtocol(parameter: ParameterNode): Protocol =
+        protocolAssignment(parameter.name.value)
 
     /**
      * The [primaryProtocol]s of [SimpleStatementNode]s that read the temporary defined by this
@@ -108,6 +116,14 @@ class ProtocolAnalysis(val program: ProgramNode, val protocolAssignment: (Variab
             is SimpleStatementNode ->
                 persistentHashSetOf(primaryProtocol(this))
 
+            // All protocols execute function calls;
+            // also need to add primary protocols for arguments
+            is FunctionCallNode ->
+                this.arguments.fold(persistentSetOf<Protocol>()) { acc, arg ->
+                    acc.add(primaryProtocol(nameAnalysis.parameter(arg)))
+                }
+                .addAll(this.process.body.protocols)
+
             is IfNode ->
                 thenBranch.protocols.addAll(elseBranch.protocols)
             is InfiniteLoopNode ->
@@ -126,6 +142,12 @@ class ProtocolAnalysis(val program: ProgramNode, val protocolAssignment: (Variab
 
     /** Returns the set of protocols that execute [statement]. */
     fun protocols(statement: StatementNode): Set<Protocol> = statement.protocols
+
+    /** Returns the set of protocols that execute [function]. */
+    fun protocols(function: FunctionDeclarationNode): Set<Protocol> =
+        function.parameters
+            .fold(persistentSetOf<Protocol>()) { acc, param -> acc.add(protocolAssignment(param.name.value)) }
+            .addAll(function.body.protocols)
 }
 
 /** Returns the union of all sets in this collection. */

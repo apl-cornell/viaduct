@@ -10,6 +10,8 @@ import edu.cornell.cs.apl.viaduct.syntax.SpecializedProtocol
 import edu.cornell.cs.apl.viaduct.syntax.Variable
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.DeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.LetNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.ObjectDeclarationArgumentNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.ParameterNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
 import edu.cornell.cs.apl.viaduct.util.subsequences
 
@@ -55,6 +57,32 @@ class ABYSelector(program: ProgramNode) : ProtocolSelector {
         }
     }
 
+    private fun ParameterNode.isApplicable(): Boolean {
+        return nameAnalysis.users(this).all { site ->
+            val pcCheck = informationFlowAnalysis.pcLabel(site).flowsTo(informationFlowAnalysis.pcLabel(this))
+            val involvedLoops = nameAnalysis.involvedLoops(site)
+            val loopCheck = involvedLoops.all { loop ->
+                nameAnalysis.correspondingBreaks(loop).isNotEmpty() && nameAnalysis.correspondingBreaks(loop).all {
+                    informationFlowAnalysis.pcLabel(it).flowsTo(informationFlowAnalysis.pcLabel(this))
+                }
+            }
+            true || pcCheck && loopCheck
+        }
+    }
+
+    private fun ObjectDeclarationArgumentNode.isApplicable(): Boolean {
+        return nameAnalysis.users(this).all { site ->
+            val pcCheck = informationFlowAnalysis.pcLabel(site).flowsTo(informationFlowAnalysis.pcLabel(this))
+            val involvedLoops = nameAnalysis.involvedLoops(site)
+            val loopCheck = involvedLoops.all { loop ->
+                nameAnalysis.correspondingBreaks(loop).isNotEmpty() && nameAnalysis.correspondingBreaks(loop).all {
+                    informationFlowAnalysis.pcLabel(it).flowsTo(informationFlowAnalysis.pcLabel(this))
+                }
+            }
+            true || pcCheck && loopCheck
+        }
+    }
+
     override fun select(node: LetNode, currentAssignment: Map<Variable, Protocol>): Set<Protocol> {
         return if (node.isApplicable()) {
             protocols.filter { it.authority.actsFor(informationFlowAnalysis.label(node)) }.map { it.protocol }
@@ -65,6 +93,15 @@ class ABYSelector(program: ProgramNode) : ProtocolSelector {
     }
 
     override fun select(node: DeclarationNode, currentAssignment: Map<Variable, Protocol>): Set<Protocol> {
+        return if (node.isApplicable()) {
+            protocols.filter { it.authority.actsFor(informationFlowAnalysis.label(node)) }.map { it.protocol }
+                .toSet()
+        } else {
+            setOf()
+        }
+    }
+
+    override fun select(node: ParameterNode, currentAssignment: Map<Variable, Protocol>): Set<Protocol> {
         return if (node.isApplicable()) {
             protocols.filter { it.authority.actsFor(informationFlowAnalysis.label(node)) }.map { it.protocol }
                 .toSet()

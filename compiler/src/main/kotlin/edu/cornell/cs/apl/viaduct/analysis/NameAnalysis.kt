@@ -306,7 +306,21 @@ class NameAnalysis private constructor(private val tree: Tree<Node, ProgramNode>
         }
     }
 
+    /** Returns the set of [QueryNode]s that reference the [ObjectVariable] declared by [node]. **/
+    fun queriers(node: ParameterNode): Set<QueryNode> = node.queries
+
     private val ParameterNode.queries: Set<QueryNode> by collectedAttribute(tree) { node ->
+        if (node is QueryNode) {
+            listOf(declaration(node).objectDeclarationAsNode to node)
+        } else {
+            listOf()
+        }
+    }
+
+    /** Returns the set of [QueryNode]s that reference the [ObjectVariable] declared by [node]. **/
+    fun queriers(node: ObjectDeclarationArgumentNode): Set<QueryNode> = node.queries
+
+    private val ObjectDeclarationArgumentNode.queries: Set<QueryNode> by collectedAttribute(tree) { node ->
         if (node is QueryNode) {
             listOf(declaration(node).objectDeclarationAsNode to node)
         } else {
@@ -325,7 +339,21 @@ class NameAnalysis private constructor(private val tree: Tree<Node, ProgramNode>
         }
     }
 
+    /** Returns the set of [UpdateNode]s that reference the [ObjectVariable] declared by [node]. **/
+    fun updaters(node: ParameterNode): Set<UpdateNode> = node.updates
+
     private val ParameterNode.updates: Set<UpdateNode> by collectedAttribute(tree) { node ->
+        if (node is UpdateNode) {
+            listOf(declaration(node).objectDeclarationAsNode to node)
+        } else {
+            listOf()
+        }
+    }
+
+    /** Returns the set of [UpdateNode]s that reference the [ObjectVariable] declared by [node]. **/
+    fun updaters(node: ObjectDeclarationArgumentNode): Set<UpdateNode> = node.updates
+
+    private val ObjectDeclarationArgumentNode.updates: Set<UpdateNode> by collectedAttribute(tree) { node ->
         if (node is UpdateNode) {
             listOf(declaration(node).objectDeclarationAsNode to node)
         } else {
@@ -335,6 +363,14 @@ class NameAnalysis private constructor(private val tree: Tree<Node, ProgramNode>
 
     /** Returns the set of [QueryNode]s and [UpdateNode]s that reference the [ObjectVariable] declared by [node]. **/
     fun users(node: DeclarationNode): Set<Node> =
+        queriers(node).union(updaters(node))
+
+    /** Returns the set of [QueryNode]s and [UpdateNode]s that reference the [ObjectVariable] declared by [node]. **/
+    fun users(node: ParameterNode): Set<Node> =
+        queriers(node).union(updaters(node))
+
+    /** Returns the set of [QueryNode]s and [UpdateNode]s that reference the [ObjectVariable] declared by [node]. **/
+    fun users(node: ObjectDeclarationArgumentNode): Set<Node> =
         queriers(node).union(updaters(node))
 
     /** Returns the set of [BreakNode]s that reference [node]. **/

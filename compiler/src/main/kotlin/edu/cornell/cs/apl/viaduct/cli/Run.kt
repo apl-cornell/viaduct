@@ -37,7 +37,7 @@ class Run : CliktCommand(help = "Run compiled protocol for a single host") {
         )
 
     private fun getBackends(typeAnalysis: TypeAnalysis): Map<ProtocolName, ProtocolBackend> {
-        val plaintextBackend = PlaintextBackend(typeAnalysis)
+        val plaintextBackend = PlaintextBackend()
 
         return mapOf(
             Local.protocolName to plaintextBackend,

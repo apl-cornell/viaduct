@@ -14,6 +14,7 @@ import edu.cornell.cs.apl.viaduct.syntax.ValueTypeNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.AssertionNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.BlockNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.BreakNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.FunctionCallNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.IfNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.InfiniteLoopNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.LetNode
@@ -114,6 +115,10 @@ private fun ProcessDeclarationNode.specification(
                 }
 
                 is SimpleStatementNode ->
+                    listOf(it)
+
+                // TODO: is this right?
+                is FunctionCallNode ->
                     listOf(it)
 
                 is IfNode ->

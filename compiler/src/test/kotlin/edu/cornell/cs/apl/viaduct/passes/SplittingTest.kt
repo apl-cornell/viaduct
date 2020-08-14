@@ -4,7 +4,7 @@ import edu.cornell.cs.apl.viaduct.ExampleProgramProvider
 import edu.cornell.cs.apl.viaduct.analysis.ProtocolAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.main
 import edu.cornell.cs.apl.viaduct.protocols.HostInterface
-import edu.cornell.cs.apl.viaduct.selection.SimpleSelection
+import edu.cornell.cs.apl.viaduct.selection.selectProtocolsWithZ3
 import edu.cornell.cs.apl.viaduct.selection.simpleProtocolCost
 import edu.cornell.cs.apl.viaduct.selection.simpleProtocolFactory
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProcessDeclarationNode
@@ -18,9 +18,11 @@ internal class SplittingTest {
     fun `it splits`(surfaceProgram: ProgramNode) {
         val program = surfaceProgram.elaborated()
 
-        val dumbProtocolAssignment =
-            SimpleSelection(program, simpleProtocolFactory(program), ::simpleProtocolCost).select(program.main)
-        val protocolAnalysis = ProtocolAnalysis(program, dumbProtocolAssignment)
+        program.check()
+
+        val protocolAssignment =
+            selectProtocolsWithZ3(program, program.main, simpleProtocolFactory(program), ::simpleProtocolCost)
+        val protocolAnalysis = ProtocolAnalysis(program, protocolAssignment)
 
         val splitProgram = program.splitMain(protocolAnalysis)
         edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode(

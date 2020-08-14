@@ -1,0 +1,16 @@
+process main {
+    val a : int = input int from alice;
+    val endorsed_a : int{A & B<-} = endorse a to {A & B<-};
+    val b : int = input int from bob;
+    val endorsed_b : int{B & A<-} = endorse b to {B & A<-};
+
+    val win : bool{A ⊓ B} =
+        (declassify endorsed_a to {A ⊓ B}) ==
+        (declassify endorsed_b to {A ⊓ B});
+    output win to bob;
+}
+
+host alice : {A}
+host bob : {B}
+
+

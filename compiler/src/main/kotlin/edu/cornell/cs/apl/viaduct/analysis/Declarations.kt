@@ -2,18 +2,26 @@ package edu.cornell.cs.apl.viaduct.analysis
 
 import edu.cornell.cs.apl.viaduct.errors.NoMainError
 import edu.cornell.cs.apl.viaduct.protocols.MainProtocol
+import edu.cornell.cs.apl.viaduct.syntax.Variable
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.AssertionNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.BreakNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.DeclarationNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.DeclassificationNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.EndorsementNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ExpressionNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.IfNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.InfiniteLoopNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.InputNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.LetNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.LiteralNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.Node
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.OperatorApplicationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutputNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProcessDeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.QueryNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.ReadNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.ReceiveNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.SendNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.StatementNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.UpdateNode
@@ -29,6 +37,19 @@ fun StatementNode.immediateRHS(): List<ExpressionNode> {
         is IfNode -> listOf(this.guard)
         is AssertionNode -> listOf(this.condition)
         else -> listOf()
+    }
+}
+
+fun ExpressionNode.involvedVariables(): List<Variable> {
+    return when (this) {
+        is ReadNode -> listOf(this.temporary.value)
+        is LiteralNode -> listOf()
+        is OperatorApplicationNode -> this.arguments.flatMap { it.involvedVariables() }
+        is QueryNode -> listOf(this.variable.value) + this.arguments.flatMap { it.involvedVariables() }
+        is DeclassificationNode -> this.expression.involvedVariables()
+        is EndorsementNode -> this.expression.involvedVariables()
+        is InputNode -> listOf()
+        is ReceiveNode -> listOf()
     }
 }
 

@@ -7,7 +7,6 @@ import com.microsoft.z3.IntNum
 import com.microsoft.z3.Status
 import com.uchuhimo.collections.BiMap
 import com.uchuhimo.collections.toBiMap
-import edu.cornell.cs.apl.attributes.attribute
 import edu.cornell.cs.apl.prettyprinting.Document
 import edu.cornell.cs.apl.prettyprinting.PrettyPrintable
 import edu.cornell.cs.apl.viaduct.analysis.InformationFlowAnalysis
@@ -57,40 +56,34 @@ private class Z3Selection(
     private val hostTrustConfiguration = HostTrustConfiguration(program)
 
     // TODO: pc must be weak enough for the hosts involved in the selected protocols to read it
-    private val protocolSelection = object {
-        private val LetNode.viableProtocols: Set<Protocol> by attribute {
-            when (value) {
-                is InputNode ->
-                    setOf(Local(value.host.value))
-                is QueryNode -> nameAnalysis.declaration(value).viableProtocols
-                else ->
-                    protocolFactory.viableProtocols(this)
-            }
-        }
 
-        private val DeclarationNode.viableProtocols: Set<Protocol> by attribute {
-            protocolFactory.viableProtocols(this)
-        }
-
-        fun viableProtocols(node: LetNode): Set<Protocol> = node.viableProtocols.filter {
+    fun viableProtocols(node: LetNode): Set<Protocol> =
+        protocolFactory.viableProtocols(node).filter {
             it.authority(hostTrustConfiguration).actsFor(informationFlowAnalysis.label(node))
         }.toSet()
 
-        fun viableProtocols(node: DeclarationNode): Set<Protocol> = node.viableProtocols.filter {
+    fun viableProtocols(node: DeclarationNode): Set<Protocol> =
+        protocolFactory.viableProtocols(node).filter {
             it.authority(hostTrustConfiguration).actsFor(informationFlowAnalysis.label(node))
         }.toSet()
-    }
 
     private fun Node.constraints(): Set<SelectionConstraint> {
         val s = when (this) {
             is LetNode ->
                 setOf(
-                    VariableIn(this.temporary.value, protocolSelection.viableProtocols(this)),
+                    VariableIn(this.temporary.value, viableProtocols(this)),
                     protocolFactory.constraint(this)
-                )
+                ) + when (this.value) {
+                    is InputNode ->
+                        setOf(VariableIn(this.temporary.value, setOf(Local(this.value.host.value))))
+                    is QueryNode ->
+                        setOf(Colocated(this.temporary.value, nameAnalysis.declaration(this.value).variable.value))
+                    else -> setOf()
+                }
+
             is DeclarationNode ->
                 setOf(
-                    VariableIn(this.variable.value, protocolSelection.viableProtocols(this)),
+                    VariableIn(this.variable.value, viableProtocols(this)),
                     protocolFactory.constraint(this)
                 )
             else -> setOf()
@@ -108,7 +101,7 @@ private class Z3Selection(
 
     // All possible viable protocols that can be selected for temporaries.
     private val tempViables: Set<Protocol> =
-        letNodes.keys.map { protocolSelection.viableProtocols(it) }.unions()
+        letNodes.keys.map { viableProtocols(it) }.unions()
 
     private val declarationNodes: Map<DeclarationNode, IntExpr> =
         processDeclaration.declarationNodes().map {
@@ -117,11 +110,13 @@ private class Z3Selection(
 
     // All possible viable protocols that can be selected for objects
     private val declViables: Set<Protocol> =
-        declarationNodes.keys.map { protocolSelection.viableProtocols(it) }.unions()
+        declarationNodes.keys.map { viableProtocols(it) }.unions()
 
-    /** Listing of all distinct protocols in question for the program. **/
+    /** Listing of all distinct protocols in question for the program. We also ensure that all local
+     * protocols are included in the map. **/
     private val pmap: BiMap<Protocol, Int> =
-        tempViables.union(declViables).withIndex().map {
+        tempViables.union(declViables).union(
+            LocalFactory.protocols(program).map { it.protocol }.toSet()).withIndex().map {
             it.value to it.index
         }.toMap().toBiMap()
 

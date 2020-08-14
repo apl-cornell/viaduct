@@ -13,8 +13,10 @@ sealed class SelectionConstraint
 data class Literal(val literalValue: Boolean) : SelectionConstraint()
 data class Implies(val lhs: SelectionConstraint, val rhs: SelectionConstraint) : SelectionConstraint()
 data class Or(val lhs: SelectionConstraint, val rhs: SelectionConstraint) : SelectionConstraint()
+
 /** VariableIn(v, P) holds when v is selected to be a protocol in P **/
 data class VariableIn(val variable: Variable, val protocols: Set<Protocol>) : SelectionConstraint()
+data class Colocated(val v1: Variable, val v2: Variable) : SelectionConstraint()
 data class Not(val rhs: SelectionConstraint) : SelectionConstraint()
 data class And(val lhs: SelectionConstraint, val rhs: SelectionConstraint) : SelectionConstraint()
 
@@ -28,8 +30,17 @@ internal fun SelectionConstraint.evaluate(f: (Variable) -> Protocol): Boolean {
         is Or -> (lhs.evaluate(f)) || (rhs.evaluate(f))
         is And -> (lhs.evaluate(f)) && (rhs.evaluate(f))
         is VariableIn -> protocols.contains(f(variable))
+        is Colocated -> f(v1) == f(v2)
         is Not -> !(rhs.evaluate(f))
     }
+}
+
+internal fun SelectionConstraint.or(other: SelectionConstraint): SelectionConstraint {
+    return Or(this, other)
+}
+
+internal fun SelectionConstraint.implies(other: SelectionConstraint): SelectionConstraint {
+    return Implies(this, other)
 }
 
 internal fun List<BoolExpr>.ors(ctx: Context): BoolExpr {
@@ -52,6 +63,8 @@ internal fun SelectionConstraint.boolExpr(
         is Or -> ctx.mkOr(lhs.boolExpr(ctx, vmap, pmap), rhs.boolExpr(ctx, vmap, pmap))
         is And -> ctx.mkAnd(lhs.boolExpr(ctx, vmap, pmap), rhs.boolExpr(ctx, vmap, pmap))
         is Not -> ctx.mkNot(rhs.boolExpr(ctx, vmap, pmap))
+        is Colocated ->
+            ctx.mkEq(vmap.get(this.v1), vmap.get(this.v2))
         is VariableIn ->
             this.protocols.map { prot ->
                 ctx.mkEq(

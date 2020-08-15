@@ -68,9 +68,7 @@ import kotlinx.collections.immutable.PersistentMap
 import kotlinx.collections.immutable.persistentMapOf
 
 /** Backend for the ABY MPC framework. */
-class ABYBackend(
-    private val typeAnalysis: TypeAnalysis
-) : ProtocolBackend {
+class ABYBackend : ProtocolBackend {
     companion object {
         private const val DEFAULT_PORT = 7766
     }
@@ -106,7 +104,7 @@ class ABYBackend(
         process: BlockNode
     ) {
         if (aby != null) {
-            val interpreter = ABYInterpreter(aby!!, typeAnalysis, program, runtime)
+            val interpreter = ABYInterpreter(aby!!, program, runtime)
 
             try {
                 interpreter.run(process)
@@ -125,10 +123,11 @@ class ABYBackend(
 
 private class ABYInterpreter(
     private val aby: ViaductABYParty,
-    private val typeAnalysis: TypeAnalysis,
     program: ProgramNode,
     private val runtime: ViaductProcessRuntime
 ) : AbstractBackendInterpreter<ABYInterpreter.ABYClassObject>(program) {
+    private val typeAnalysis = TypeAnalysis.get(program)
+
     private val ssTempStoreStack: Stack<PersistentMap<Temporary, CircuitGate>> = Stack()
 
     private var ssTempStore: PersistentMap<Temporary, CircuitGate>

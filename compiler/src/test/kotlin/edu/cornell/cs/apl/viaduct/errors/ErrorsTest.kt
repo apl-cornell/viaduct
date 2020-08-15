@@ -1,9 +1,7 @@
 package edu.cornell.cs.apl.viaduct.errors
 
 import edu.cornell.cs.apl.viaduct.ErroneousExampleFileProvider
-import edu.cornell.cs.apl.viaduct.analysis.NameAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.ProtocolAnalysis
-import edu.cornell.cs.apl.viaduct.analysis.TypeAnalysis
 import edu.cornell.cs.apl.viaduct.parsing.SourceFile
 import edu.cornell.cs.apl.viaduct.parsing.isBlankOrUnderline
 import edu.cornell.cs.apl.viaduct.parsing.parse
@@ -69,10 +67,7 @@ private fun ProgramNode.split() {
         SimpleSelection(this, simpleProtocolFactory(this), ::simpleProtocolCost).select(this)
     val protocolAnalysis = ProtocolAnalysis(this, protocolAssignment)
 
-    val nameAnalysis = NameAnalysis.get(this)
-    val typeAnalysis = TypeAnalysis.get(this)
-    Splitter(nameAnalysis, protocolAnalysis, typeAnalysis)
-        .splitMain(this)
+    Splitter(protocolAnalysis).splitMain()
 }
 
 /** Returns the subclass of [CompilationError] that running [file] is supposed to throw. */

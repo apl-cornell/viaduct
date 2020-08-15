@@ -1,9 +1,7 @@
 package edu.cornell.cs.apl.viaduct.backend
 
 import edu.cornell.cs.apl.viaduct.ExampleProgramProvider
-import edu.cornell.cs.apl.viaduct.analysis.NameAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.ProtocolAnalysis
-import edu.cornell.cs.apl.viaduct.analysis.TypeAnalysis
 import edu.cornell.cs.apl.viaduct.passes.Splitter
 import edu.cornell.cs.apl.viaduct.passes.check
 import edu.cornell.cs.apl.viaduct.passes.elaborated
@@ -50,11 +48,7 @@ internal class BackendInterpreterTest {
         val protocolAnalysis = ProtocolAnalysis(program, protocolAssignment)
 
         // Split the program.
-        val nameAnalysis = NameAnalysis.get(program)
-        val typeAnalysis = TypeAnalysis.get(program)
-        val splitProgram =
-            Splitter(nameAnalysis, protocolAnalysis, typeAnalysis)
-                .splitMain(program)
+        val splitProgram = Splitter(protocolAnalysis).splitMain()
 
         // set up backend interpreter with fake backends
         val backendMap: Map<ProtocolName, ProtocolBackend> =

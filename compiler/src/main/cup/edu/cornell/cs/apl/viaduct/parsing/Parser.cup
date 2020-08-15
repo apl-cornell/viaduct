@@ -735,8 +735,7 @@ host ::=
   ;
 
 host_list ::=
-    nonempty_host_list:hosts COMMA host:host {:
-      hosts.add(host);
+    nonempty_host_list:hosts {:
       RESULT = hosts;
     :}
 
@@ -746,7 +745,7 @@ host_list ::=
   ;
 
 nonempty_host_list ::=
-    nonempty_host_list:hosts host:host {:
+    nonempty_host_list:hosts COMMA host:host {:
       hosts.add(host);
       RESULT = hosts;
     :}

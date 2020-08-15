@@ -6,8 +6,8 @@ import edu.cornell.cs.apl.viaduct.protocols.Replication
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
 
-fun simpleSelector(program: ProgramNode): ProtocolSelector {
-    return unions(LocalSelector(program), ReplicationSelector(program), ABYSelector(program))
+fun simpleProtocolFactory(program: ProgramNode): ProtocolFactory {
+    return unions(LocalFactory(program), ReplicationFactory(program), ABYFactory(program))
 }
 
 fun simpleProtocolCost(p: Protocol): Int {

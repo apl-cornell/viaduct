@@ -24,8 +24,6 @@ import kotlinx.collections.immutable.PersistentMap
 import kotlinx.collections.immutable.persistentMapOf
 import kotlinx.collections.immutable.persistentSetOf
 
-private typealias PartialAssignment = PersistentMap<Variable, Protocol>
-
 /**
  * This class implements a particularly simple but ineffective protocol selection.
  * Along with a protocol selector, it takes as input a function [protocolCost] which
@@ -33,66 +31,65 @@ private typealias PartialAssignment = PersistentMap<Variable, Protocol>
  */
 class SimpleSelection(
     private val program: ProgramNode,
-    private val selector: ProtocolSelector,
+    private val protocolFactory: ProtocolFactory,
     private val protocolCost: (Protocol) -> Int
 ) {
     private val nameAnalysis = NameAnalysis.get(program)
     private val informationFlowAnalysis = InformationFlowAnalysis.get(program)
     private val hostTrustConfiguration = HostTrustConfiguration(program)
 
-    private fun possibleProtocols(node: LetNode, assignment: PartialAssignment): Set<Protocol> =
+    private fun viableProtocols(node: LetNode): Set<Protocol> =
         when (val value = node.value) {
             is InputNode ->
                 setOf(Local(value.host.value))
             is QueryNode ->
                 when (val declaration = nameAnalysis.declaration(value).declarationAsNode) {
                     is DeclarationNode -> {
-                        possibleProtocols(declaration, assignment)
+                        viableProtocols(declaration)
                     }
 
                     is ParameterNode -> {
-                        possibleProtocols(declaration, assignment)
+                        viableProtocols(declaration)
                     }
 
                     is ObjectDeclarationArgumentNode -> {
-                        possibleProtocols(nameAnalysis.parameter(declaration), assignment)
+                        viableProtocols(nameAnalysis.parameter(declaration))
                     }
 
                     else -> throw Exception("impossible case")
                 }
             else ->
-                selector.select(node, assignment)
+                protocolFactory.viableProtocols(node)
         }
 
-    private fun possibleProtocols(node: DeclarationNode, assignment: PartialAssignment): Set<Protocol> =
-        selector.select(node, assignment)
+    private fun viableProtocols(node: DeclarationNode): Set<Protocol> =
+        protocolFactory.viableProtocols(node)
 
-    private fun possibleProtocols(node: ParameterNode, assignment: PartialAssignment): Set<Protocol> =
-        selector.select(node, assignment)
+    private fun viableProtocols(node: ParameterNode): Set<Protocol> =
+        protocolFactory.viableProtocols(node)
 
     fun select(program: ProgramNode): (Variable) -> Protocol {
         if (hostTrustConfiguration.isEmpty()) {
             throw NoHostDeclarationsError(program.sourceLocation.sourcePath)
         }
 
+        var constraints: SelectionConstraint = Literal(true)
         var assignment: PersistentMap<Variable, Protocol> = persistentMapOf()
         fun traverse(node: Node) {
             when (node) {
                 is LetNode -> {
                     if (!assignment.containsKey(node.temporary.value)) {
-                        // TODO: proper error class
-                        val p = possibleProtocols(node, assignment).minBy(protocolCost)
-                            ?: throw NoApplicableProtocolError(node.temporary)
-                        assert(p.authority(hostTrustConfiguration).actsFor(informationFlowAnalysis.label(node)))
+                        constraints = And(constraints, protocolFactory.constraint(node))
+                        val p =
+                            viableProtocols(node).minBy(protocolCost) ?: throw NoApplicableProtocolError(node.temporary)
                         assignment = assignment.put(node.temporary.value, p)
                     }
                 }
                 is DeclarationNode -> {
                     if (!assignment.containsKey(node.name.value)) {
-                        // TODO: proper error class
-                        val p = possibleProtocols(node, assignment).minBy(protocolCost)
-                            ?: throw NoApplicableProtocolError(node.name)
-                        assert(p.authority(hostTrustConfiguration).actsFor(informationFlowAnalysis.label(node)))
+                        constraints = And(constraints, protocolFactory.constraint(node))
+                        val p =
+                            viableProtocols(node).minBy(protocolCost) ?: throw NoApplicableProtocolError(node.name)
                         assignment = assignment.put(node.name.value, p)
                     }
                 }
@@ -116,12 +113,12 @@ class SimpleSelection(
                     val correlatedVariables = mutableSetOf<Variable>()
 
                     val candidateProtocols = mutableSetOf<Protocol>()
-                    candidateProtocols.addAll(possibleProtocols(parameter, assignment))
+                    candidateProtocols.addAll(viableProtocols(parameter))
 
                     // case (2) above
                     for (parameterUseSite in nameAnalysis.parameterUses(parameter)) {
                         correlatedVariables.add(parameterUseSite.name.value)
-                        candidateProtocols.intersect(possibleProtocols(parameterUseSite, assignment))
+                        candidateProtocols.intersect(viableProtocols(parameterUseSite))
                     }
 
                     for (user in nameAnalysis.parameterUsers(parameter)) {
@@ -132,9 +129,7 @@ class SimpleSelection(
                                     nameAnalysis.reads(user).fold(persistentSetOf()) { acc2, read ->
                                         val letNode = nameAnalysis.declaration(read)
                                         correlatedVariables.add(letNode.temporary.value)
-                                        acc2.addAll(
-                                            possibleProtocols(letNode, assignment)
-                                        )
+                                        acc2.addAll(viableProtocols(letNode))
                                     }
 
                                 // case (4) above
@@ -142,12 +137,12 @@ class SimpleSelection(
                                     when (val decl = nameAnalysis.declaration(user).declarationAsNode) {
                                         is DeclarationNode -> {
                                             correlatedVariables.add(decl.name.value)
-                                            possibleProtocols(decl, assignment)
+                                            viableProtocols(decl)
                                         }
 
                                         is ParameterNode -> {
                                             correlatedVariables.add(decl.name.value)
-                                            possibleProtocols(decl, assignment)
+                                            viableProtocols(decl)
                                         }
 
                                         else -> persistentSetOf()
@@ -161,7 +156,7 @@ class SimpleSelection(
                                 is OutParameterArgumentNode -> {
                                     val outParameter = nameAnalysis.declaration(user)
                                     correlatedVariables.add(outParameter.name.value)
-                                    possibleProtocols(outParameter, assignment)
+                                    viableProtocols(outParameter)
                                 }
                             }
                         )
@@ -188,6 +183,8 @@ class SimpleSelection(
         // finally, select for main process
         traverse(program.main)
 
-        return assignment::getValue
+        val f = assignment::getValue
+        assert(constraints.evaluate(f))
+        return f
     }
 }

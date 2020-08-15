@@ -90,7 +90,11 @@ class OutParameterInitializationAnalysis private constructor(
             }
 
             is BlockNode -> {
-                this.children.last().flowOut
+                if (this.children.any()) {
+                    this.children.last().flowOut
+                } else {
+                    this.flowIn
+                }
             }
 
             else -> this.flowIn
@@ -149,6 +153,7 @@ class OutParameterInitializationAnalysis private constructor(
 
     /** Begin check at ProgramNode [tree]. */
     fun check() {
+        // TODO: turn this off for now, fix in another commit
         check(tree.root)
     }
 

@@ -13,7 +13,7 @@ import edu.cornell.cs.apl.viaduct.passes.elaborated
 import edu.cornell.cs.apl.viaduct.protocols.MainProtocol
 import edu.cornell.cs.apl.viaduct.selection.SimpleSelection
 import edu.cornell.cs.apl.viaduct.selection.simpleProtocolCost
-import edu.cornell.cs.apl.viaduct.selection.simpleSelector
+import edu.cornell.cs.apl.viaduct.selection.simpleProtocolFactory
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
 import java.io.File
 import kotlin.reflect.KClass
@@ -66,7 +66,7 @@ private fun run(file: File) {
 /** Selects protocols for and splits the [MainProtocol] in [this] program. */
 private fun ProgramNode.split() {
     val protocolAssignment =
-        SimpleSelection(this, simpleSelector(this), ::simpleProtocolCost).select(this)
+        SimpleSelection(this, simpleProtocolFactory(this), ::simpleProtocolCost).select(this)
     val protocolAnalysis = ProtocolAnalysis(this, protocolAssignment)
 
     val nameAnalysis = NameAnalysis.get(this)

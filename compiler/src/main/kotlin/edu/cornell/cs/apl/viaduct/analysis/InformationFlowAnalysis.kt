@@ -304,7 +304,7 @@ class InformationFlowAnalysis private constructor(
                                 nameAnalysis.declaration(argument).variableLabel
                         }
 
-                    assertEqualsTo(
+                    assertFlowsTo(
                         pair.second,
                         argumentLabel,
                         pair.first.variableLabel
@@ -370,7 +370,6 @@ class InformationFlowAnalysis private constructor(
 
     /** Returns the label of the program counter at the [node]'s program point. */
     fun pcLabel(node: Node): Label {
-        println(node)
         return node.pc.variable.getValue(solution)
     }
 

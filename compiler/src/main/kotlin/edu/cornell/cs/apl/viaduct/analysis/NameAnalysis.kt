@@ -136,7 +136,7 @@ class NameAnalysis private constructor(private val tree: Tree<Node, ProgramNode>
                             override val labelArguments: Arguments<Located<Label>>?
                                 get() = parameter.labelArguments
 
-                            override val objectDeclarationAsNode: Node
+                            override val declarationAsNode: Node
                                 get() = arg
                         }
 
@@ -258,7 +258,7 @@ class NameAnalysis private constructor(private val tree: Tree<Node, ProgramNode>
         node.objectDeclarations[node.variable]
 
     /** Returns the object referenced by the [node] function argument. */
-    fun declaration(node: OutParameterArgumentNode): ObjectDeclaration {
+    fun declaration(node: OutParameterArgumentNode): ParameterNode {
         val parameter = node.objectDeclarations[node.parameter]
         return when {
             parameter is ParameterNode && parameter.isOutParameter -> parameter
@@ -279,14 +279,6 @@ class NameAnalysis private constructor(private val tree: Tree<Node, ProgramNode>
             )
     }
 
-    /**
-     * Returns the set of [StatementNode]s that read the [Temporary] defined by [node].
-     *
-     * Note that this set only includes direct reads. For example, an [IfNode] only reads the
-     * temporaries in its guard, and [BlockNode]s and [InfiniteLoopNode]s do not read any temporary.
-     */
-    fun readers(node: LetNode): Set<StatementNode> = node.readers
-
     private val Node.readers: Set<StatementNode> by collectedAttribute(tree) { node ->
         if (node is StatementNode) {
             node.reads.map { Pair(declaration(it), node) }
@@ -295,34 +287,44 @@ class NameAnalysis private constructor(private val tree: Tree<Node, ProgramNode>
         }
     }
 
+    /**
+     * Returns the set of [StatementNode]s that read the [Temporary] defined by [node].
+     *
+     * Note that this set only includes direct reads. For example, an [IfNode] only reads the
+     * temporaries in its guard, and [BlockNode]s and [InfiniteLoopNode]s do not read any temporary.
+     */
+    fun readers(node: LetNode): Set<StatementNode> = node.readers
+
+    fun reads(node: Node): Set<ReadNode> = node.reads
+
+    private val Node.queries: Set<QueryNode> by collectedAttribute(tree) { node ->
+        if (node is QueryNode) {
+            listOf(declaration(node).declarationAsNode to node)
+        } else {
+            listOf()
+        }
+    }
+
     /** Returns the set of [QueryNode]s that reference the [ObjectVariable] declared by [node]. **/
     fun queriers(node: DeclarationNode): Set<QueryNode> = node.queries
 
-    private val DeclarationNode.queries: Set<QueryNode> by collectedAttribute(tree) { node ->
-        if (node is QueryNode) {
-            listOf(declaration(node).objectDeclarationAsNode to node)
-        } else {
-            listOf()
-        }
-    }
-
     /** Returns the set of [QueryNode]s that reference the [ObjectVariable] declared by [node]. **/
     fun queriers(node: ParameterNode): Set<QueryNode> = node.queries
-
-    private val ParameterNode.queries: Set<QueryNode> by collectedAttribute(tree) { node ->
-        if (node is QueryNode) {
-            listOf(declaration(node).objectDeclarationAsNode to node)
-        } else {
-            listOf()
-        }
-    }
 
     /** Returns the set of [QueryNode]s that reference the [ObjectVariable] declared by [node]. **/
     fun queriers(node: ObjectDeclarationArgumentNode): Set<QueryNode> = node.queries
 
     private val ObjectDeclarationArgumentNode.queries: Set<QueryNode> by collectedAttribute(tree) { node ->
         if (node is QueryNode) {
-            listOf(declaration(node).objectDeclarationAsNode to node)
+            listOf(declaration(node).declarationAsNode to node)
+        } else {
+            listOf()
+        }
+    }
+
+    private val Node.updates: Set<UpdateNode> by collectedAttribute(tree) { node ->
+        if (node is UpdateNode) {
+            listOf(declaration(node).declarationAsNode to node)
         } else {
             listOf()
         }
@@ -331,35 +333,11 @@ class NameAnalysis private constructor(private val tree: Tree<Node, ProgramNode>
     /** Returns the set of [UpdateNode]s that reference the [ObjectVariable] declared by [node]. **/
     fun updaters(node: DeclarationNode): Set<UpdateNode> = node.updates
 
-    private val DeclarationNode.updates: Set<UpdateNode> by collectedAttribute(tree) { node ->
-        if (node is UpdateNode) {
-            listOf(declaration(node).objectDeclarationAsNode to node)
-        } else {
-            listOf()
-        }
-    }
-
     /** Returns the set of [UpdateNode]s that reference the [ObjectVariable] declared by [node]. **/
     fun updaters(node: ParameterNode): Set<UpdateNode> = node.updates
 
-    private val ParameterNode.updates: Set<UpdateNode> by collectedAttribute(tree) { node ->
-        if (node is UpdateNode) {
-            listOf(declaration(node).objectDeclarationAsNode to node)
-        } else {
-            listOf()
-        }
-    }
-
     /** Returns the set of [UpdateNode]s that reference the [ObjectVariable] declared by [node]. **/
     fun updaters(node: ObjectDeclarationArgumentNode): Set<UpdateNode> = node.updates
-
-    private val ObjectDeclarationArgumentNode.updates: Set<UpdateNode> by collectedAttribute(tree) { node ->
-        if (node is UpdateNode) {
-            listOf(declaration(node).objectDeclarationAsNode to node)
-        } else {
-            listOf()
-        }
-    }
 
     /** Returns the set of [QueryNode]s and [UpdateNode]s that reference the [ObjectVariable] declared by [node]. **/
     fun users(node: DeclarationNode): Set<Node> =
@@ -372,6 +350,55 @@ class NameAnalysis private constructor(private val tree: Tree<Node, ProgramNode>
     /** Returns the set of [QueryNode]s and [UpdateNode]s that reference the [ObjectVariable] declared by [node]. **/
     fun users(node: ObjectDeclarationArgumentNode): Set<Node> =
         queriers(node).union(updaters(node))
+
+    /** Returns the set of arguments where [Node] is used. */
+    private val Node.argumentUses: Set<FunctionArgumentNode> by collectedAttribute(tree) { node ->
+        when (node) {
+            is ObjectReferenceArgumentNode ->
+                listOf(declaration(node).declarationAsNode to node)
+
+            is OutParameterArgumentNode ->
+                listOf(declaration(node).declarationAsNode to node)
+
+            else ->
+                listOf()
+        }
+    }
+
+    /** Returns the set of arguments where [node] is used. */
+    fun argumentUses(node: DeclarationNode): Set<FunctionArgumentNode> = node.argumentUses
+
+    /** Returns the set of arguments where [node] is used. */
+    fun argumentUses(node: ParameterNode): Set<FunctionArgumentNode> = node.argumentUses
+
+    /** Returns the set of arguments where [node] is used. */
+    fun argumentUses(node: ObjectDeclarationArgumentNode): Set<FunctionArgumentNode> = node.argumentUses
+
+    /** Returns the set of parameters for which [node] is used as an argument. */
+    fun parameterUses(node: DeclarationNode): Set<ParameterNode> =
+        node.argumentUses.map { argument -> parameter(argument) }.toSet()
+
+    /** Returns the set of parameters for which [node] is used as an argument. */
+    fun parameterUses(node: ParameterNode): Set<ParameterNode> =
+        node.argumentUses.map { argument -> parameter(argument) }.toSet()
+
+    /** Returns the set of parameters for which [node] is used as an argument. */
+    fun parameterUses(node: ObjectDeclarationArgumentNode): Set<ParameterNode> =
+        node.argumentUses.map { argument -> parameter(argument) }.toSet()
+
+    /** Returns the set of arguments for [ParameterNode]. */
+    private val ParameterNode.parameterUsers: Set<FunctionArgumentNode> by collectedAttribute(tree) { node ->
+        when (node) {
+            is FunctionArgumentNode ->
+                listOf(parameter(node) to node)
+
+            else ->
+                listOf()
+        }
+    }
+
+    /** Returns the set of arguments for [ParameterNode]. */
+    fun parameterUsers(parameter: ParameterNode): Set<FunctionArgumentNode> = parameter.parameterUsers
 
     /** Returns the set of [BreakNode]s that reference [node]. **/
     fun correspondingBreaks(node: InfiniteLoopNode): Set<BreakNode> = node.correspondingBreaks

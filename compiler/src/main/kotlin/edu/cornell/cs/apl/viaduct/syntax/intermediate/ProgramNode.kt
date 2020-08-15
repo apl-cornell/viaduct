@@ -19,11 +19,11 @@ private constructor(
     constructor(declarations: List<TopLevelDeclarationNode>, sourceLocation: SourceLocation) :
         this(declarations.toPersistentList(), sourceLocation)
 
+    val functions: Iterable<FunctionDeclarationNode> =
+        declarations.filterIsInstance<FunctionDeclarationNode>()
+
     val functionMap: Map<FunctionName, FunctionDeclarationNode> =
-        declarations
-            .filterIsInstance<FunctionDeclarationNode>()
-            .map { function -> Pair(function.name.value, function) }
-            .toMap()
+        functions.map { function -> Pair(function.name.value, function) }.toMap()
 
     override val children: Iterable<TopLevelDeclarationNode>
         get() = declarations

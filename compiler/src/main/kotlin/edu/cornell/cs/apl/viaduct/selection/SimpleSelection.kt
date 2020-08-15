@@ -10,16 +10,19 @@ import edu.cornell.cs.apl.viaduct.syntax.HostTrustConfiguration
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
 import edu.cornell.cs.apl.viaduct.syntax.Variable
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.DeclarationNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.FunctionDeclarationNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.ExpressionArgumentNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.InputNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.LetNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.Node
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ObjectDeclarationArgumentNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.ObjectReferenceArgumentNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutParameterArgumentNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ParameterNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.QueryNode
 import kotlinx.collections.immutable.PersistentMap
 import kotlinx.collections.immutable.persistentMapOf
+import kotlinx.collections.immutable.persistentSetOf
 
 private typealias PartialAssignment = PersistentMap<Variable, Protocol>
 
@@ -42,7 +45,7 @@ class SimpleSelection(
             is InputNode ->
                 setOf(Local(value.host.value))
             is QueryNode ->
-                when (val declaration = nameAnalysis.declaration(value).objectDeclarationAsNode) {
+                when (val declaration = nameAnalysis.declaration(value).declarationAsNode) {
                     is DeclarationNode -> {
                         possibleProtocols(declaration, assignment)
                     }
@@ -76,34 +79,113 @@ class SimpleSelection(
         fun traverse(node: Node) {
             when (node) {
                 is LetNode -> {
-                    // TODO: proper error class
-                    val p = possibleProtocols(node, assignment).minBy(protocolCost)
-                        ?: throw NoApplicableProtocolError(node.temporary)
-                    assert(p.authority(hostTrustConfiguration).actsFor(informationFlowAnalysis.label(node)))
-                    assignment = assignment.put(node.temporary.value, p)
+                    if (!assignment.containsKey(node.temporary.value)) {
+                        // TODO: proper error class
+                        val p = possibleProtocols(node, assignment).minBy(protocolCost)
+                            ?: throw NoApplicableProtocolError(node.temporary)
+                        assert(p.authority(hostTrustConfiguration).actsFor(informationFlowAnalysis.label(node)))
+                        assignment = assignment.put(node.temporary.value, p)
+                    }
                 }
                 is DeclarationNode -> {
-                    // TODO: proper error class
-                    val p = possibleProtocols(node, assignment).minBy(protocolCost)
-                        ?: throw NoApplicableProtocolError(node.name)
-                    assert(p.authority(hostTrustConfiguration).actsFor(informationFlowAnalysis.label(node)))
-                    assignment = assignment.put(node.name.value, p)
-                }
-                is FunctionDeclarationNode -> {
-                    for (parameter in node.parameters) {
-                        val p = possibleProtocols(parameter, assignment).minBy(protocolCost)
-                            ?: throw NoApplicableProtocolError(parameter.name)
-                        assert(p.authority(hostTrustConfiguration).actsFor(informationFlowAnalysis.label(parameter)))
-                        assignment = assignment.put(parameter.name.value, p)
+                    if (!assignment.containsKey(node.name.value)) {
+                        // TODO: proper error class
+                        val p = possibleProtocols(node, assignment).minBy(protocolCost)
+                            ?: throw NoApplicableProtocolError(node.name)
+                        assert(p.authority(hostTrustConfiguration).actsFor(informationFlowAnalysis.label(node)))
+                        assignment = assignment.put(node.name.value, p)
                     }
                 }
             }
             node.children.forEach(::traverse)
         }
 
-        program.declarations
-            .filterIsInstance<FunctionDeclarationNode>()
-            .forEach { function -> traverse(function) }
+        // select for parameters first; given f(x) and P(n) for the protocol for node n,
+        // the following scenarios induce equality constraints on protocol selection:
+        //
+        // (1) fun g(y) { f(y) } => P(x) = P(y)
+        // (2) fun f(x) { h(x) } => P(x) = P(z) where fun h(z) { ... }
+        // (3) let a = ...; f(a) => P(x) = P(a)
+        // (4) f(&obj)           => P(x) = P(obj)
+        //
+        // we induce these equality constraints by intersecting candidate protocol sets together
+        for (function in program.functions) {
+            for (parameter in function.parameters) {
+                if (!assignment.containsKey(parameter.name.value)) {
+                    // the set of variables that need to have the same protocol as the parameter
+                    val correlatedVariables = mutableSetOf<Variable>()
+
+                    val candidateProtocols = mutableSetOf<Protocol>()
+                    candidateProtocols.addAll(possibleProtocols(parameter, assignment))
+
+                    // case (2) above
+                    for (parameterUseSite in nameAnalysis.parameterUses(parameter)) {
+                        correlatedVariables.add(parameterUseSite.name.value)
+                        candidateProtocols.intersect(possibleProtocols(parameterUseSite, assignment))
+                    }
+
+                    for (user in nameAnalysis.parameterUsers(parameter)) {
+                        candidateProtocols.intersect(
+                            when (user) {
+                                // case (3) above
+                                is ExpressionArgumentNode ->
+                                    nameAnalysis.reads(user).fold(persistentSetOf()) { acc2, read ->
+                                        val letNode = nameAnalysis.declaration(read)
+                                        correlatedVariables.add(letNode.temporary.value)
+                                        acc2.addAll(
+                                            possibleProtocols(letNode, assignment)
+                                        )
+                                    }
+
+                                // case (4) above
+                                is ObjectReferenceArgumentNode -> {
+                                    when (val decl = nameAnalysis.declaration(user).declarationAsNode) {
+                                        is DeclarationNode -> {
+                                            correlatedVariables.add(decl.name.value)
+                                            possibleProtocols(decl, assignment)
+                                        }
+
+                                        is ParameterNode -> {
+                                            correlatedVariables.add(decl.name.value)
+                                            possibleProtocols(decl, assignment)
+                                        }
+
+                                        else -> persistentSetOf()
+                                    }
+                                }
+
+                                is ObjectDeclarationArgumentNode ->
+                                    persistentSetOf()
+
+                                // case (1) above
+                                is OutParameterArgumentNode -> {
+                                    val outParameter = nameAnalysis.declaration(user)
+                                    correlatedVariables.add(outParameter.name.value)
+                                    possibleProtocols(outParameter, assignment)
+                                }
+                            }
+                        )
+                    }
+
+                    val p =
+                        candidateProtocols.minBy(protocolCost)
+                        ?: throw NoApplicableProtocolError(parameter.name)
+
+                    assert(p.authority(hostTrustConfiguration).actsFor(informationFlowAnalysis.label(parameter)))
+
+                    assignment =
+                        correlatedVariables
+                            .fold(assignment.put(parameter.name.value, p)) { acc, v -> acc.put(v, p) }
+                }
+            }
+        }
+
+        // select for function bodies
+        for (function in program.functions) {
+            traverse(function.body)
+        }
+
+        // finally, select for main process
         traverse(program.main)
 
         return assignment::getValue

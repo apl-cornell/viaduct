@@ -75,7 +75,7 @@ class DeclarationNode(
     val arguments: Arguments<AtomicExpressionNode>,
     override val sourceLocation: SourceLocation
 ) : SimpleStatementNode(), ObjectDeclaration {
-    override val objectDeclarationAsNode: Node
+    override val declarationAsNode: Node
         get() = this
 
     override val children: Iterable<AtomicExpressionNode>

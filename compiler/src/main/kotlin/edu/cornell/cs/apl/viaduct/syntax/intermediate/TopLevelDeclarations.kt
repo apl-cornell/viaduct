@@ -81,7 +81,7 @@ class ParameterNode(
     override val labelArguments: Arguments<Located<Label>>?,
     override val sourceLocation: SourceLocation
 ) : Node(), ObjectDeclaration {
-    override val objectDeclarationAsNode: Node
+    override val declarationAsNode: Node
         get() = this
 
     override val children: Iterable<BlockNode>

@@ -12,5 +12,5 @@ interface ObjectDeclaration {
     val className: ClassNameNode
     val typeArguments: Arguments<ValueTypeNode>
     val labelArguments: Arguments<Located<Label>>?
-    val objectDeclarationAsNode: Node
+    val declarationAsNode: Node
 }

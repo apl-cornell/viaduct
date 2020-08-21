@@ -15,6 +15,7 @@ import edu.cornell.cs.apl.viaduct.analysis.NameAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.declarationNodes
 import edu.cornell.cs.apl.viaduct.analysis.letNodes
 import edu.cornell.cs.apl.viaduct.protocols.Local
+import edu.cornell.cs.apl.viaduct.syntax.FunctionName
 import edu.cornell.cs.apl.viaduct.syntax.HostTrustConfiguration
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
 import edu.cornell.cs.apl.viaduct.syntax.Variable
@@ -57,6 +58,10 @@ private class Z3Selection(
     private val protocolCost: (Protocol) -> Int,
     private val ctx: Context
 ) {
+    private companion object {
+        val MAIN_FUNCTION = FunctionName("#main#")
+    }
+
     private val nameAnalysis = NameAnalysis.get(program)
     private val informationFlowAnalysis = InformationFlowAnalysis.get(program)
     private val hostTrustConfiguration = HostTrustConfiguration(program)
@@ -109,32 +114,56 @@ private class Z3Selection(
         val s = when (this) {
             is LetNode ->
                 setOf(
-                    VariableIn(this.temporary.value, protocolSelection.viableProtocols(this)),
+                    VariableIn(
+                        Pair(nameAnalysis.enclosingFunctionName(this), this.temporary.value),
+                        protocolSelection.viableProtocols(this)
+                    ),
                     protocolFactory.constraint(this)
                 )
             is DeclarationNode ->
                 setOf(
-                    VariableIn(this.name.value, protocolSelection.viableProtocols(this)),
+                    VariableIn(
+                        Pair(nameAnalysis.enclosingFunctionName(this), this.name.value),
+                        protocolSelection.viableProtocols(this)
+                    ),
                     protocolFactory.constraint(this)
                 )
 
             is ExpressionArgumentNode -> {
                 val parameter = nameAnalysis.parameter(this)
+                val parameterFunctionName = nameAnalysis.functionDeclaration(parameter).name.value
                 nameAnalysis
                     .reads(this)
                     .map { read -> nameAnalysis.declaration(read) }
-                    .map { letNode -> VariableEquals(letNode.temporary.value, parameter.name.value) }
+                    .map { letNode ->
+                        VariableEquals(
+                            Pair(nameAnalysis.enclosingFunctionName(letNode), letNode.temporary.value),
+                            Pair(parameterFunctionName, parameter.name.value)
+                        )
+                    }
                     .toSet()
             }
 
             is ObjectReferenceArgumentNode -> {
                 val parameter = nameAnalysis.parameter(this)
-                setOf(VariableEquals(this.variable.value, parameter.name.value))
+                val parameterFunctionName = nameAnalysis.functionDeclaration(parameter).name.value
+                setOf(
+                    VariableEquals(
+                        Pair(nameAnalysis.enclosingFunctionName(this), this.variable.value),
+                        Pair(parameterFunctionName, parameter.name.value)
+                    )
+                )
             }
 
             is OutParameterArgumentNode -> {
                 val parameter = nameAnalysis.parameter(this)
-                setOf(VariableEquals(this.parameter.value, parameter.name.value))
+                val parameterFunctionName = nameAnalysis.functionDeclaration(parameter).name.value
+                setOf(
+                    VariableEquals(
+                        Pair(nameAnalysis.enclosingFunctionName(this), this.parameter.value),
+                        Pair(parameterFunctionName, parameter.name.value)
+                    )
+                )
             }
 
             else -> setOf()
@@ -186,16 +215,17 @@ private class Z3Selection(
     /** Listing of all distinct variables in question for the program.
      */
 
-    private val varMap: BiMap<Variable, IntExpr> =
+    private val varMap: BiMap<FunctionVariable, IntExpr> =
         (letNodes.mapKeys {
-            it.key.temporary.value
+            Pair(nameAnalysis.enclosingFunctionName(it.key), it.key.temporary.value)
         }.plus(
             declarationNodes.mapKeys {
-                it.key.name.value
+                Pair(nameAnalysis.enclosingFunctionName(it.key), it.key.name.value)
             }
         ).plus(
             parameterNodes.mapKeys {
-                it.key.name.value
+                val functionName = nameAnalysis.functionDeclaration(it.key).name.value
+                Pair(functionName, it.key.name.value)
             }
         )).toBiMap()
 
@@ -207,14 +237,19 @@ private class Z3Selection(
         }
     }
 
-    fun select(): (Variable) -> Protocol {
+    fun select(): (FunctionName, Variable) -> Protocol {
         val solver = ctx.mkOptimize()
         val constraints = mutableSetOf<SelectionConstraint>()
 
         for (function in program.functions) {
             // select for function parameters first
             for (parameter in function.parameters) {
-                constraints.add(VariableIn(parameter.name.value, protocolSelection.viableProtocols(parameter)))
+                constraints.add(
+                    VariableIn(
+                        Pair(function.name.value, parameter.name.value),
+                        protocolSelection.viableProtocols(parameter)
+                    )
+                )
                 constraints.add(protocolFactory.constraint(parameter))
             }
 
@@ -235,14 +270,15 @@ private class Z3Selection(
 
         if (solver.Check() == Status.SATISFIABLE) {
             var model = solver.model
-            val interpMap: Map<Variable, Int> =
+            val interpMap: Map<FunctionVariable, Int> =
                 varMap.mapValues { e ->
                     (model.getConstInterp(e.value) as IntNum).int
                 }
 
-            fun eval(v: Variable): Protocol {
-                if (interpMap.containsKey(v)) {
-                    return pmap.inverse.get(interpMap[v]) ?: throw error("Protocol now found")
+            fun eval(f: FunctionName, v: Variable): Protocol {
+                val fvar = Pair(f, v)
+                if (interpMap.containsKey(fvar)) {
+                    return pmap.inverse.get(interpMap[fvar]) ?: throw error("Protocol now found")
                 } else {
                     throw SelectionError("Query for variable not contained in varMap: $v")
                 }
@@ -260,7 +296,7 @@ fun selectProtocolsWithZ3(
     processDeclaration: ProcessDeclarationNode,
     protocolFactory: ProtocolFactory,
     protocolCost: (Protocol) -> Int
-): (Variable) -> Protocol {
+): (FunctionName, Variable) -> Protocol {
     val ctx = Context()
     val ret =
         Z3Selection(program, processDeclaration, protocolFactory, protocolCost, ctx).select()

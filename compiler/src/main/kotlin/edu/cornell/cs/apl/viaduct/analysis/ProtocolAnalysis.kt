@@ -4,6 +4,7 @@ import edu.cornell.cs.apl.attributes.attribute
 import edu.cornell.cs.apl.attributes.circularAttribute
 import edu.cornell.cs.apl.viaduct.errors.IllegalInternalCommunicationError
 import edu.cornell.cs.apl.viaduct.protocols.Local
+import edu.cornell.cs.apl.viaduct.syntax.FunctionName
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
 import edu.cornell.cs.apl.viaduct.syntax.Variable
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.AssertionNode
@@ -34,7 +35,10 @@ import kotlinx.collections.immutable.persistentSetOf
 import kotlinx.collections.immutable.toPersistentSet
 
 /** Associates each [StatementNode] with the [Protocol]s involved in its execution. */
-class ProtocolAnalysis(val program: ProgramNode, val protocolAssignment: (Variable) -> Protocol) {
+class ProtocolAnalysis(
+    val program: ProgramNode,
+    val protocolAssignment: (FunctionName, Variable) -> Protocol
+) {
     val tree = program.tree
     val nameAnalysis = NameAnalysis.get(program)
 
@@ -53,10 +57,11 @@ class ProtocolAnalysis(val program: ProgramNode, val protocolAssignment: (Variab
      *
      * @throws IllegalInternalCommunicationError if [statement] is an [InternalCommunicationNode].
      */
-    fun primaryProtocol(statement: SimpleStatementNode): Protocol =
-        when (statement) {
+    fun primaryProtocol(statement: SimpleStatementNode): Protocol {
+        val functionName = nameAnalysis.enclosingFunctionName(statement)
+        return when (statement) {
             is LetNode -> {
-                val protocol = protocolAssignment(statement.temporary.value)
+                val protocol = protocolAssignment(functionName, statement.temporary.value)
                 when (statement.value) {
                     is InputNode ->
                         assert(protocol == Local(statement.value.host.value))
@@ -68,24 +73,25 @@ class ProtocolAnalysis(val program: ProgramNode, val protocolAssignment: (Variab
                 protocol
             }
             is DeclarationNode ->
-                protocolAssignment(statement.name.value)
+                protocolAssignment(functionName, statement.name.value)
             is UpdateNode ->
-                protocolAssignment(statement.variable.value)
+                protocolAssignment(functionName, statement.variable.value)
 
             is OutParameterInitializationNode ->
-                protocolAssignment(statement.name.value)
+                protocolAssignment(functionName, statement.name.value)
 
             is OutputNode ->
                 Local(statement.host.value)
             is SendNode ->
                 throw IllegalInternalCommunicationError(statement.process, statement)
         }
+    }
 
     /**
      * Returns the protocol that coordinates the execution of [parameter].
      */
     fun primaryProtocol(parameter: ParameterNode): Protocol =
-        protocolAssignment(parameter.name.value)
+        protocolAssignment(nameAnalysis.functionDeclaration(parameter).name.value, parameter.name.value)
 
     /**
      * The [primaryProtocol]s of [SimpleStatementNode]s that read the temporary defined by this
@@ -148,7 +154,7 @@ class ProtocolAnalysis(val program: ProgramNode, val protocolAssignment: (Variab
     /** Returns the set of protocols that execute [function]. */
     fun protocols(function: FunctionDeclarationNode): Set<Protocol> =
         function.parameters
-            .fold(persistentSetOf<Protocol>()) { acc, param -> acc.add(protocolAssignment(param.name.value)) }
+            .fold(persistentSetOf<Protocol>()) { acc, param -> acc.add(protocolAssignment(function.name.value, param.name.value)) }
             .addAll(function.body.protocols)
 }
 

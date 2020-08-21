@@ -9,6 +9,7 @@ import edu.cornell.cs.apl.viaduct.protocols.HostInterface
 import edu.cornell.cs.apl.viaduct.selection.SimpleSelection
 import edu.cornell.cs.apl.viaduct.selection.simpleProtocolCost
 import edu.cornell.cs.apl.viaduct.selection.simpleProtocolFactory
+import edu.cornell.cs.apl.viaduct.syntax.FunctionName
 import edu.cornell.cs.apl.viaduct.syntax.Host
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
 import edu.cornell.cs.apl.viaduct.syntax.ProtocolName
@@ -30,7 +31,8 @@ private object FakeBackend : ProtocolBackend {
         runtime: ViaductProcessRuntime,
         program: edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode,
         process: BlockNode
-    ) {}
+    ) {
+    }
 }
 
 internal class BackendInterpreterTest {
@@ -43,7 +45,7 @@ internal class BackendInterpreterTest {
         program.check()
 
         // Select protocols.
-        val protocolAssignment: (Variable) -> Protocol =
+        val protocolAssignment: (FunctionName, Variable) -> Protocol =
             SimpleSelection(program, simpleProtocolFactory(program), ::simpleProtocolCost).select(program)
         val protocolAnalysis = ProtocolAnalysis(program, protocolAssignment)
 

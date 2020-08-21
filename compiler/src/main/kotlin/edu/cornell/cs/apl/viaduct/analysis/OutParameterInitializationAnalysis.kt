@@ -153,7 +153,6 @@ class OutParameterInitializationAnalysis private constructor(
 
     /** Begin check at ProgramNode [tree]. */
     fun check() {
-        // TODO: turn this off for now, fix in another commit
         check(tree.root)
     }
 

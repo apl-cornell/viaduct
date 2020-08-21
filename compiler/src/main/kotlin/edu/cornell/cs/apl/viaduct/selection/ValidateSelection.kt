@@ -4,6 +4,7 @@ import edu.cornell.cs.apl.attributes.attribute
 import edu.cornell.cs.apl.viaduct.analysis.InformationFlowAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.NameAnalysis
 import edu.cornell.cs.apl.viaduct.protocols.Local
+import edu.cornell.cs.apl.viaduct.syntax.FunctionName
 import edu.cornell.cs.apl.viaduct.syntax.HostTrustConfiguration
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
 import edu.cornell.cs.apl.viaduct.syntax.Variable
@@ -26,7 +27,7 @@ fun validateProtocolAssignment(
     program: ProgramNode,
     processDeclaration: ProcessDeclarationNode,
     protocolFactory: ProtocolFactory,
-    protocolAssignment: (Variable) -> Protocol
+    protocolAssignment: (FunctionName, Variable) -> Protocol
 ) {
     val nameAnalysis = NameAnalysis.get(program)
     val informationFlowAnalysis = InformationFlowAnalysis.get(program)
@@ -72,23 +73,26 @@ fun validateProtocolAssignment(
         }.toSet()
     }
 
-    fun checkViableProtocol(selection: (Variable) -> Protocol, node: LetNode) {
-        if (!protocolSelection.viableProtocols(node).contains(selection(node.temporary.value))) {
+    fun checkViableProtocol(selection: (FunctionName, Variable) -> Protocol, node: LetNode) {
+        val functionName = nameAnalysis.enclosingFunctionName(node)
+        val protocol = selection(functionName, node.temporary.value)
+        if (!protocolSelection.viableProtocols(node).contains(protocol)) {
             throw error(
                 "Bad protocol restriction for let node of ${node.temporary} = ${node.value}: viable protocols is ${protocolFactory.viableProtocols(
                     node
-                )} but selected was" +
-                    "${selection(node.temporary.value)}"
+                )} but selected was $protocol"
             )
         }
     }
 
-    fun checkAuthority(selection: (Variable) -> Protocol, node: LetNode) {
-        if (!(selection(node.temporary.value).authority(hostTrustConfiguration)
+    fun checkAuthority(selection: (FunctionName, Variable) -> Protocol, node: LetNode) {
+        val functionName = nameAnalysis.enclosingFunctionName(node)
+        val protocol = selection(functionName, node.temporary.value)
+        if (!(protocol.authority(hostTrustConfiguration)
                 .actsFor(informationFlowAnalysis.label(node)))
         ) {
             throw error(
-                "Bad authority for let node of ${node.temporary}: protocol's authority is ${selection(node.temporary.value).authority(
+                "Bad authority for let node of ${node.temporary}: protocol's authority is ${protocol.authority(
                     hostTrustConfiguration
                 )}" +
                     "but node's label is ${informationFlowAnalysis.label(node)}"
@@ -96,23 +100,26 @@ fun validateProtocolAssignment(
         }
     }
 
-    fun checkViableProtocol(selection: (Variable) -> Protocol, node: DeclarationNode) {
-        if (!protocolSelection.viableProtocols(node).contains(selection(node.name.value))) {
+    fun checkViableProtocol(selection: (FunctionName, Variable) -> Protocol, node: DeclarationNode) {
+        val functionName = nameAnalysis.enclosingFunctionName(node)
+        val protocol = selection(functionName, node.name.value)
+        if (!protocolSelection.viableProtocols(node).contains(protocol)) {
             throw error(
                 "Bad protocol restriction for decl of ${node.name}: viable protocols is ${protocolFactory.viableProtocols(
                     node
-                )} but selected was" +
-                    "${selection(node.name.value)}"
+                )} but selected was $protocol"
             )
         }
     }
 
-    fun checkAuthority(selection: (Variable) -> Protocol, node: DeclarationNode) {
-        if (!(selection(node.name.value).authority(hostTrustConfiguration)
+    fun checkAuthority(selection: (FunctionName, Variable) -> Protocol, node: DeclarationNode) {
+        val functionName = nameAnalysis.enclosingFunctionName(node)
+        val protocol = selection(functionName, node.name.value)
+        if (!(protocol.authority(hostTrustConfiguration)
                 .actsFor(informationFlowAnalysis.label(node)))
         ) {
             throw error(
-                "Bad authority for decl of ${node.name}: protocol's authority is ${selection(node.name.value).authority(
+                "Bad authority for decl of ${node.name}: protocol's authority is ${protocol.authority(
                     hostTrustConfiguration
                 )}" +
                     "but node's label is ${informationFlowAnalysis.label(node)}"
@@ -120,7 +127,7 @@ fun validateProtocolAssignment(
         }
     }
 
-    fun Node.traverse(selection: (Variable) -> Protocol) {
+    fun Node.traverse(selection: (FunctionName, Variable) -> Protocol) {
         when (this) {
             is LetNode -> {
                 checkViableProtocol(selection, this)

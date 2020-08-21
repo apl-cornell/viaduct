@@ -13,6 +13,7 @@ import edu.cornell.cs.apl.viaduct.selection.selectProtocolsWithZ3
 import edu.cornell.cs.apl.viaduct.selection.simpleProtocolCost
 import edu.cornell.cs.apl.viaduct.selection.simpleProtocolFactory
 import edu.cornell.cs.apl.viaduct.selection.validateProtocolAssignment
+import edu.cornell.cs.apl.viaduct.syntax.FunctionName
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
 import edu.cornell.cs.apl.viaduct.syntax.Variable
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
@@ -58,7 +59,7 @@ class Compile : CliktCommand(help = "Compile ideal protocol to secure distribute
         val protocolFactory = simpleProtocolFactory(program)
 
         // Select protocols.
-        val protocolAssignment: (Variable) -> Protocol =
+        val protocolAssignment: (FunctionName, Variable) -> Protocol =
             selectProtocolsWithZ3(program, program.main, protocolFactory, ::simpleProtocolCost)
 
         // Perform a sanity check to ensure the protocolAssignment is valid.

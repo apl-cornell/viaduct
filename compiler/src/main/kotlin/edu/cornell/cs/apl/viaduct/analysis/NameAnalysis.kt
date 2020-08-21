@@ -279,6 +279,33 @@ class NameAnalysis private constructor(private val tree: Tree<Node, ProgramNode>
             )
     }
 
+    /** Get the function declaration where the parameter is in. */
+    private val ParameterNode.functionDeclaration: FunctionDeclarationNode by attribute {
+        tree.root.functionDeclarations.values.first { f -> f.parameters.contains(this) }
+    }
+
+    fun functionDeclaration(parameter: ParameterNode): FunctionDeclarationNode = parameter.functionDeclaration
+
+    /** Get the function declaration enclosing this node. */
+    private val Node.enclosingFunction: FunctionDeclarationNode? by attribute {
+        when (this) {
+            is ProgramNode -> null
+
+            is FunctionDeclarationNode -> this
+
+            else -> tree.parent(this)!!.enclosingFunction
+        }
+    }
+
+    fun enclosingFunctionName(node: StatementNode): FunctionName =
+        node.enclosingFunction?.name?.value ?: MAIN_FUNCTION
+
+    fun enclosingFunctionName(node: ExpressionNode): FunctionName =
+        node.enclosingFunction?.name?.value ?: MAIN_FUNCTION
+
+    fun enclosingFunctionName(node: FunctionArgumentNode): FunctionName =
+        node.enclosingFunction?.name?.value ?: MAIN_FUNCTION
+
     private val Node.readers: Set<StatementNode> by collectedAttribute(tree) { node ->
         if (node is StatementNode) {
             node.reads.map { Pair(declaration(it), node) }
@@ -492,6 +519,8 @@ class NameAnalysis private constructor(private val tree: Tree<Node, ProgramNode>
 
     companion object : AnalysisProvider<NameAnalysis> {
         private val ProgramNode.instance: NameAnalysis by attribute { NameAnalysis(this.tree) }
+
+        private val MAIN_FUNCTION = FunctionName("#main#")
 
         override fun get(program: ProgramNode): NameAnalysis = program.instance
     }

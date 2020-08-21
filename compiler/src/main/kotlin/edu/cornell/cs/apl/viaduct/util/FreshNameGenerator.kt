@@ -1,12 +1,20 @@
 package edu.cornell.cs.apl.viaduct.util
 
 /** Generates distinct names. Never generates the same name twice. */
-class FreshNameGenerator {
+class FreshNameGenerator(initialNames: Set<String>) {
     /**
      * The keys are all the names returned by [getFreshName].
      * The value mapped to a name is the first suffix that should be tried to distinguish that name.
      */
     private val returnedNames: MutableMap<String, Int> = mutableMapOf()
+
+    init {
+        for (name in initialNames) {
+            getFreshName(name)
+        }
+    }
+
+    constructor() : this(setOf())
 
     /**
      * Returns a new name derived from [base]. The return name will be different from all previously returned names.

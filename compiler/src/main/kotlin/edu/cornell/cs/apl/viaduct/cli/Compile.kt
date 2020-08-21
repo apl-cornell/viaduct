@@ -9,6 +9,7 @@ import edu.cornell.cs.apl.viaduct.analysis.main
 import edu.cornell.cs.apl.viaduct.passes.Splitter
 import edu.cornell.cs.apl.viaduct.passes.check
 import edu.cornell.cs.apl.viaduct.passes.elaborated
+import edu.cornell.cs.apl.viaduct.passes.specialize
 import edu.cornell.cs.apl.viaduct.selection.selectProtocolsWithZ3
 import edu.cornell.cs.apl.viaduct.selection.simpleProtocolCost
 import edu.cornell.cs.apl.viaduct.selection.simpleProtocolFactory
@@ -48,10 +49,12 @@ class Compile : CliktCommand(help = "Compile ideal protocol to secure distribute
     ).file(canBeDir = false)
 
     override fun run() {
-        val program = input.parse().elaborated()
+        val unspecializedProgram = input.parse().elaborated()
 
         // Dump label constraint graph to a file if requested.
-        dumpGraph(InformationFlowAnalysis.get(program)::exportConstraintGraph, constraintGraphOutput)
+        dumpGraph(InformationFlowAnalysis.get(unspecializedProgram)::exportConstraintGraph, constraintGraphOutput)
+
+        val program = unspecializedProgram.specialize()
 
         // Perform static checks.
         program.check()

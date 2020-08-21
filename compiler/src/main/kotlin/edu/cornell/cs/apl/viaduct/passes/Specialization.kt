@@ -57,10 +57,16 @@ private fun specialize(
             is FunctionCallNode -> {
                 val specializedName = callingCtx[stmt.name.value]
 
+                // there are two possible cases to handle for call sites:
+                // - case 1: calling a function already specialized in the calling context (then branch).
+                //   here we just call the already specialized version of the function. this "closes the loop" for
+                //   (mutually) recursive functions and prevents unbounded specialization.
+                // - case 2: calling a function not specialized yet in the calling context.
+                //   here we create a new version of the function to specialize and add it to the worklist
                 val newName: FunctionName =
                     if (specializedName != null) {
                         specializedName
-                    } else {
+                    } else { // case 2:
                         val freshName = FunctionName(nameGenerator.getFreshName(stmt.name.value.name))
                         worklist.add(Triple(stmt.name.value, freshName, callingCtx))
                         freshName

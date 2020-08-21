@@ -23,8 +23,12 @@ import java.util.LinkedList
 import kotlinx.collections.immutable.PersistentMap
 import kotlinx.collections.immutable.persistentMapOf
 
+/** Returns an AST where every call site is specialized into new functions as much as possible.
+ *  This allows for the most liberal protocol selection possible, at the cost of redundancy.
+ *  The specializer will not specialize (mutually) recursive functions to prevent unbounded specialization.
+ */
 fun ProgramNode.specialize(): ProgramNode {
-    val (newMainBlock, newFunctions) = specialize(this.functionMap, this.main.body)
+    val (newMainBlock, newFunctions) = Specializer(this.functionMap, this.main.body).specialize()
 
     val newDeclarations = mutableListOf<TopLevelDeclarationNode>()
     newDeclarations.addAll(
@@ -44,15 +48,19 @@ fun ProgramNode.specialize(): ProgramNode {
     return ProgramNode(newDeclarations, this.sourceLocation)
 }
 
-private fun specialize(
-    functionMap: Map<FunctionName, FunctionDeclarationNode>,
-    mainProgram: BlockNode
-): Pair<BlockNode, List<FunctionDeclarationNode>> {
+private class Specializer(
+    val functionMap: Map<FunctionName, FunctionDeclarationNode>,
+    val mainProgram: BlockNode
+) {
     val nameGenerator = FreshNameGenerator(functionMap.keys.map { f -> f.name }.toSet())
-    val newFunctions = mutableListOf<FunctionDeclarationNode>()
+
+    // maintain a worklist of functions to specialize
     val worklist = LinkedList<Triple<FunctionName, FunctionName, PersistentMap<FunctionName, FunctionName>>>()
 
-    fun specializeStatement(callingCtx: PersistentMap<FunctionName, FunctionName>, stmt: StatementNode): StatementNode {
+    fun specializeStatement(
+        callingCtx: PersistentMap<FunctionName, FunctionName>,
+        stmt: StatementNode
+    ): StatementNode {
         return when (stmt) {
             is FunctionCallNode -> {
                 val specializedName = callingCtx[stmt.name.value]
@@ -110,25 +118,29 @@ private fun specialize(
         }
     }
 
-    val newMain = specializeStatement(persistentMapOf(), mainProgram) as BlockNode
+    /** Specialize by processing call site in the worklist. */
+    fun specialize(): Pair<BlockNode, List<FunctionDeclarationNode>> {
+        val newFunctions = mutableListOf<FunctionDeclarationNode>()
+        val newMain = specializeStatement(persistentMapOf(), mainProgram) as BlockNode
 
-    while (worklist.isNotEmpty()) {
-        val (origName, newName, callingCtx) = worklist.remove()
-        val currentCtx = callingCtx.put(origName, newName)
-        val function = functionMap[origName]!!
-        newFunctions.add(
-            FunctionDeclarationNode(
-                Located(newName, function.name.sourceLocation),
-                function.pcLabel,
-                Arguments(
-                    function.parameters.map { param -> param.deepCopy() as ParameterNode },
-                    function.parameters.sourceLocation
-                ),
-                specializeStatement(currentCtx, function.body) as BlockNode,
-                function.sourceLocation
+        while (worklist.isNotEmpty()) {
+            val (origName, newName, callingCtx) = worklist.remove()
+            val currentCtx = callingCtx.put(origName, newName)
+            val function = functionMap[origName]!!
+            newFunctions.add(
+                FunctionDeclarationNode(
+                    Located(newName, function.name.sourceLocation),
+                    function.pcLabel,
+                    Arguments(
+                        function.parameters.map { param -> param.deepCopy() as ParameterNode },
+                        function.parameters.sourceLocation
+                    ),
+                    specializeStatement(currentCtx, function.body) as BlockNode,
+                    function.sourceLocation
+                )
             )
-        )
-    }
+        }
 
-    return Pair(newMain, newFunctions)
+        return Pair(newMain, newFunctions)
+    }
 }

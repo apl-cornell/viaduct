@@ -7,7 +7,6 @@ import edu.cornell.cs.apl.viaduct.protocols.Ideal
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ExternalCommunicationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.InternalCommunicationNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProcessDeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.surface.keyword
 
 /**
@@ -20,7 +19,6 @@ import edu.cornell.cs.apl.viaduct.syntax.surface.keyword
  * @param illegalStatement The illegal communication statement.
  */
 class IllegalInternalCommunicationError(
-    private val process: ProcessDeclarationNode,
     private val illegalStatement: InternalCommunicationNode
 ) : CompilationError() {
     override val category: String
@@ -31,9 +29,8 @@ class IllegalInternalCommunicationError(
 
     override val description: Document
         get() =
-            Document("Protocol") * process.protocol *
-                Document("is not allowed to communicate with other protocols:")
-                    .withSource(illegalStatement.sourceLocation)
+            Document("Not allowed to communicate with other protocols:")
+                .withSource(illegalStatement.sourceLocation)
 
     override val hint: Document?
         get() =

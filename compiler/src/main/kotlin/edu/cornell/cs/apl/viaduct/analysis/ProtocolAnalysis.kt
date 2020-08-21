@@ -43,12 +43,16 @@ class ProtocolAnalysis(
     val nameAnalysis = NameAnalysis.get(program)
 
     /** The [ProcessDeclarationNode] this [Node] is in. */
-    private val Node.process: ProcessDeclarationNode by attribute {
+    private val Node.enclosingBlock: BlockNode by attribute {
         when (val parent = tree.parent(this)!!) {
             is ProcessDeclarationNode ->
-                parent
+                parent.body
+
+            is FunctionDeclarationNode ->
+                parent.body
+
             else ->
-                parent.process
+                parent.enclosingBlock
         }
     }
 
@@ -66,7 +70,7 @@ class ProtocolAnalysis(
                     is InputNode ->
                         assert(protocol == Local(statement.value.host.value))
                     is ReceiveNode ->
-                        throw IllegalInternalCommunicationError(statement.process, statement.value)
+                        throw IllegalInternalCommunicationError(statement.value)
                     else ->
                         Unit
                 }
@@ -83,7 +87,7 @@ class ProtocolAnalysis(
             is OutputNode ->
                 Local(statement.host.value)
             is SendNode ->
-                throw IllegalInternalCommunicationError(statement.process, statement)
+                throw IllegalInternalCommunicationError(statement)
         }
     }
 
@@ -130,7 +134,7 @@ class ProtocolAnalysis(
                     acc.add(primaryProtocol(nameAnalysis.parameter(arg)))
                 }
                 .addAll(nameAnalysis.declaration(this).body.protocols)
-                .addAll(this.process.body.protocols)
+                .addAll(this.enclosingBlock.protocols)
 
             is IfNode ->
                 thenBranch.protocols.addAll(elseBranch.protocols)
@@ -141,7 +145,7 @@ class ProtocolAnalysis(
                 nameAnalysis.correspondingLoop(this).protocols
             is AssertionNode ->
                 // All protocols execute every assertion.
-                this.process.body.protocols
+                this.enclosingBlock.protocols
 
             is BlockNode ->
                 statements.map { it.protocols }.unions()

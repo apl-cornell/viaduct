@@ -1,7 +1,6 @@
 package edu.cornell.cs.apl.viaduct.syntax.types
 
 import edu.cornell.cs.apl.prettyprinting.Document
-import edu.cornell.cs.apl.prettyprinting.PrettyPrintable
 import edu.cornell.cs.apl.prettyprinting.bracketed
 import edu.cornell.cs.apl.prettyprinting.nested
 import edu.cornell.cs.apl.prettyprinting.plus
@@ -10,7 +9,7 @@ import edu.cornell.cs.apl.viaduct.syntax.datatypes.QueryName
 import edu.cornell.cs.apl.viaduct.syntax.datatypes.UpdateName
 
 /** The type of an object. */
-abstract class ObjectType : Type, PrettyPrintable {
+abstract class ObjectType : Type {
     /** The class this object belongs to. */
     abstract val className: ClassName
 

@@ -4,8 +4,11 @@ import com.microsoft.z3.BoolExpr
 import com.microsoft.z3.Context
 import com.microsoft.z3.IntExpr
 import com.uchuhimo.collections.BiMap
+import edu.cornell.cs.apl.viaduct.syntax.FunctionName
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
 import edu.cornell.cs.apl.viaduct.syntax.Variable
+
+typealias FunctionVariable = Pair<FunctionName, Variable>
 
 /** Custom selection constraints specified for constraint solving during splitting. */
 sealed class SelectionConstraint
@@ -13,22 +16,28 @@ sealed class SelectionConstraint
 data class Literal(val literalValue: Boolean) : SelectionConstraint()
 data class Implies(val lhs: SelectionConstraint, val rhs: SelectionConstraint) : SelectionConstraint()
 data class Or(val lhs: SelectionConstraint, val rhs: SelectionConstraint) : SelectionConstraint()
+
 /** VariableIn(v, P) holds when v is selected to be a protocol in P **/
-data class VariableIn(val variable: Variable, val protocols: Set<Protocol>) : SelectionConstraint()
+data class VariableIn(val variable: FunctionVariable, val protocols: Set<Protocol>) : SelectionConstraint()
+
+/** Protocols for v1 and v2 are equal. */
+data class VariableEquals(val var1: FunctionVariable, val var2: FunctionVariable) : SelectionConstraint()
+
 data class Not(val rhs: SelectionConstraint) : SelectionConstraint()
 data class And(val lhs: SelectionConstraint, val rhs: SelectionConstraint) : SelectionConstraint()
 
 internal fun Boolean.implies(r: Boolean) = (!this) || r
 
 /** Given a protocol selection, evaluate the constraints. **/
-internal fun SelectionConstraint.evaluate(f: (Variable) -> Protocol): Boolean {
+internal fun SelectionConstraint.evaluate(f: (FunctionName, Variable) -> Protocol): Boolean {
     return when (this) {
         is Literal -> literalValue
         is Implies -> lhs.evaluate(f).implies(rhs.evaluate(f))
         is Or -> (lhs.evaluate(f)) || (rhs.evaluate(f))
         is And -> (lhs.evaluate(f)) && (rhs.evaluate(f))
-        is VariableIn -> protocols.contains(f(variable))
+        is VariableIn -> protocols.contains(f(variable.first, variable.second))
         is Not -> !(rhs.evaluate(f))
+        is VariableEquals -> f(var1.first, var1.second) == f(var2.first, var2.second)
     }
 }
 
@@ -43,7 +52,7 @@ internal fun List<SelectionConstraint>.ands(): SelectionConstraint {
 /** Convert a SelectionConstraint into a Z3 BoolExpr. **/
 internal fun SelectionConstraint.boolExpr(
     ctx: Context,
-    vmap: BiMap<Variable, IntExpr>,
+    vmap: BiMap<FunctionVariable, IntExpr>,
     pmap: BiMap<Protocol, IntExpr>
 ): BoolExpr {
     return when (this) {
@@ -59,5 +68,6 @@ internal fun SelectionConstraint.boolExpr(
                     pmap.get(prot)
                 )
             }.ors(ctx)
+        is VariableEquals -> ctx.mkEq(vmap.get(this.var1), vmap.get(this.var2))
     }
 }

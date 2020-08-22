@@ -9,6 +9,7 @@ import edu.cornell.cs.apl.viaduct.syntax.Protocol
 import edu.cornell.cs.apl.viaduct.syntax.SpecializedProtocol
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.DeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.LetNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.ParameterNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
 import edu.cornell.cs.apl.viaduct.util.subsequences
 
@@ -67,4 +68,10 @@ class ABYFactory(program: ProgramNode) : ProtocolFactory {
         } else {
             setOf()
         }
+
+    override fun viableProtocols(node: ParameterNode): Set<Protocol> =
+        protocols
+            .filter { it.authority.actsFor(informationFlowAnalysis.label(node)) }
+            .map { it.protocol }
+            .toSet()
 }

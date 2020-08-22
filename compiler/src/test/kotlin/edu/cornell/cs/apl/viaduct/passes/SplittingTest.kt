@@ -2,7 +2,6 @@ package edu.cornell.cs.apl.viaduct.passes
 
 import edu.cornell.cs.apl.viaduct.ExampleProgramProvider
 import edu.cornell.cs.apl.viaduct.analysis.ProtocolAnalysis
-import edu.cornell.cs.apl.viaduct.analysis.main
 import edu.cornell.cs.apl.viaduct.protocols.HostInterface
 import edu.cornell.cs.apl.viaduct.selection.SimpleSelection
 import edu.cornell.cs.apl.viaduct.selection.simpleProtocolCost
@@ -19,10 +18,10 @@ internal class SplittingTest {
         val program = surfaceProgram.elaborated()
 
         val dumbProtocolAssignment =
-            SimpleSelection(program, simpleProtocolFactory(program), ::simpleProtocolCost).select(program.main)
+            SimpleSelection(program, simpleProtocolFactory(program), ::simpleProtocolCost).select(program)
         val protocolAnalysis = ProtocolAnalysis(program, dumbProtocolAssignment)
+        val splitProgram = Splitter(protocolAnalysis).splitMain()
 
-        val splitProgram = program.splitMain(protocolAnalysis)
         edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode(
             // TODO: don't remove [HostInterface]s once [splitMain] starts renaming communication with main.
             declarations = splitProgram.filterNot { it is ProcessDeclarationNode && it.protocol.value is HostInterface },

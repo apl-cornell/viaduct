@@ -1,15 +1,16 @@
 package edu.cornell.cs.apl.viaduct.passes
 
+import edu.cornell.cs.apl.viaduct.errors.InvalidConstructorCallError
 import edu.cornell.cs.apl.viaduct.errors.JumpOutsideLoopScopeError
 import edu.cornell.cs.apl.viaduct.syntax.Arguments
 import edu.cornell.cs.apl.viaduct.syntax.JumpLabel
 import edu.cornell.cs.apl.viaduct.syntax.JumpLabelNode
+import edu.cornell.cs.apl.viaduct.syntax.Located
 import edu.cornell.cs.apl.viaduct.syntax.NameMap
 import edu.cornell.cs.apl.viaduct.syntax.ObjectVariable
 import edu.cornell.cs.apl.viaduct.syntax.ObjectVariableNode
 import edu.cornell.cs.apl.viaduct.syntax.Temporary
 import edu.cornell.cs.apl.viaduct.syntax.TemporaryNode
-import edu.cornell.cs.apl.viaduct.syntax.datatypes.Get
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.AssertionNode as IAssertionNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.AtomicExpressionNode as IAtomicExpressionNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.BlockNode as IBlockNode
@@ -17,7 +18,11 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.BreakNode as IBreakNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.DeclarationNode as IDeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.DeclassificationNode as IDeclassificationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.EndorsementNode as IEndorsementNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.ExpressionArgumentNode as IExpressionArgumentNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ExpressionNode as IExpressionNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.FunctionArgumentNode as IFunctionArgumentNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.FunctionCallNode as IFunctionCallNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.FunctionDeclarationNode as IFunctionDeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.HostDeclarationNode as IHostDeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.IfNode as IIfNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.InfiniteLoopNode as IInfiniteLoopNode
@@ -25,8 +30,15 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.InputNode as IInputNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.LetNode as ILetNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.LiteralNode as ILiteralNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.Node
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.ObjectDeclarationArgumentNode as IObjectDeclarationArgumentNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.ObjectReferenceArgumentNode as IObjectReferenceArgumentNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.OperatorApplicationNode as IOperatorApplicationNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutParameterArgumentNode as IOutParameterArgumentNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutParameterConstructorInitializerNode as IOutParameterConstructorInitializerNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutParameterExpressionInitializerNode as IOutParameterExpressionInitializerNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutParameterInitializationNode as IOutParameterInitializationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutputNode as IOutputNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.ParameterNode as IParameterNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProcessDeclarationNode as IProcessDeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode as IProgramNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.QueryNode as IQueryNode
@@ -39,18 +51,27 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.UpdateNode as IUpdateNode
 import edu.cornell.cs.apl.viaduct.syntax.surface.AssertionNode as SAssertionNode
 import edu.cornell.cs.apl.viaduct.syntax.surface.BlockNode as SBlockNode
 import edu.cornell.cs.apl.viaduct.syntax.surface.BreakNode as SBreakNode
+import edu.cornell.cs.apl.viaduct.syntax.surface.ConstructorCallNode as SConstructorCallNode
 import edu.cornell.cs.apl.viaduct.syntax.surface.DeclarationNode as SDeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.surface.DeclassificationNode as SDeclassificationNode
 import edu.cornell.cs.apl.viaduct.syntax.surface.EndorsementNode as SEndorsementNode
+import edu.cornell.cs.apl.viaduct.syntax.surface.ExpressionArgumentNode as SExpressionArgumentNode
 import edu.cornell.cs.apl.viaduct.syntax.surface.ExpressionNode as SExpressionNode
 import edu.cornell.cs.apl.viaduct.syntax.surface.ForLoopNode as SForLoopNode
+import edu.cornell.cs.apl.viaduct.syntax.surface.FunctionArgumentNode as SFunctionArgumentNode
+import edu.cornell.cs.apl.viaduct.syntax.surface.FunctionCallNode as SFunctionCallNode
+import edu.cornell.cs.apl.viaduct.syntax.surface.FunctionDeclarationNode as SFunctionDeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.surface.HostDeclarationNode as SHostDeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.surface.IfNode as SIfNode
 import edu.cornell.cs.apl.viaduct.syntax.surface.InfiniteLoopNode as SInfiniteLoopNode
 import edu.cornell.cs.apl.viaduct.syntax.surface.InputNode as SInputNode
 import edu.cornell.cs.apl.viaduct.syntax.surface.LetNode as SLetNode
 import edu.cornell.cs.apl.viaduct.syntax.surface.LiteralNode as SLiteralNode
+import edu.cornell.cs.apl.viaduct.syntax.surface.ObjectDeclarationArgumentNode as SObjectDeclarationArgumentNode
+import edu.cornell.cs.apl.viaduct.syntax.surface.ObjectReferenceArgumentNode as SObjectReferenceArgumentNode
 import edu.cornell.cs.apl.viaduct.syntax.surface.OperatorApplicationNode as SOperatorApplicationNode
+import edu.cornell.cs.apl.viaduct.syntax.surface.OutParameterArgumentNode as SOutParameterArgumentNode
+import edu.cornell.cs.apl.viaduct.syntax.surface.OutParameterInitializationNode as SOutParameterInitializationNode
 import edu.cornell.cs.apl.viaduct.syntax.surface.OutputNode as SOutputNode
 import edu.cornell.cs.apl.viaduct.syntax.surface.ProcessDeclarationNode as SProcessDeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.surface.ProgramNode as SProgramNode
@@ -71,27 +92,70 @@ import edu.cornell.cs.apl.viaduct.util.FreshNameGenerator
  */
 fun SProgramNode.elaborated(): IProgramNode {
     val declarations = mutableListOf<ITopLevelDeclarationNode>()
-    this.declarations.forEach {
-        val declaration = when (it) {
+
+    val nameGenerator = FreshNameGenerator()
+    for (declaration in this.declarations) {
+        when (declaration) {
             is SHostDeclarationNode -> {
-                IHostDeclarationNode(
-                    it.name,
-                    it.authority,
-                    it.sourceLocation
+                declarations.add(
+                    IHostDeclarationNode(
+                        declaration.name,
+                        declaration.authority,
+                        declaration.sourceLocation
+                    )
                 )
             }
 
             is SProcessDeclarationNode -> {
-                IProcessDeclarationNode(
-                    it.protocol,
-                    StatementElaborator().elaborate(it.body),
-                    it.sourceLocation
+                declarations.add(
+                    IProcessDeclarationNode(
+                        declaration.protocol,
+                        StatementElaborator(nameGenerator).elaborate(declaration.body),
+                        declaration.sourceLocation
+                    )
                 )
             }
+
+            is SFunctionDeclarationNode -> {
+                declarations.add(FunctionElaborator(nameGenerator).elaborate(declaration))
+            }
         }
-        declarations.add(declaration)
     }
+
     return IProgramNode(declarations, this.sourceLocation)
+}
+
+private class FunctionElaborator(
+    val nameGenerator: FreshNameGenerator
+) {
+    fun elaborate(functionDecl: SFunctionDeclarationNode): IFunctionDeclarationNode {
+        var objectRenames = NameMap<ObjectVariable, ObjectVariable>()
+
+        val elaboratedParameters = mutableListOf<IParameterNode>()
+        for (parameter in functionDecl.parameters) {
+            val newName = ObjectVariable(nameGenerator.getFreshName(parameter.name.value.name))
+            val newLocatedName = Located(newName, parameter.name.sourceLocation)
+            objectRenames = objectRenames.put(parameter.name, newName)
+            val elaboratedParameter =
+                IParameterNode(
+                    newLocatedName,
+                    parameter.parameterDirection,
+                    parameter.className,
+                    parameter.typeArguments,
+                    parameter.labelArguments,
+                    parameter.sourceLocation
+                )
+            elaboratedParameters.add(elaboratedParameter)
+        }
+
+        return IFunctionDeclarationNode(
+            functionDecl.name,
+            functionDecl.pcLabel,
+            Arguments(elaboratedParameters, functionDecl.parameters.sourceLocation),
+            StatementElaborator(nameGenerator, objectRenames).elaborate(functionDecl.body),
+            functionDecl.sourceLocation
+        )
+    }
 }
 
 private class StatementElaborator(
@@ -106,12 +170,21 @@ private class StatementElaborator(
     private val surroundingLoop: JumpLabel?
 ) {
     private companion object {
-        const val TMP_NAME = "tmp"
+        const val TMP_NAME = "${'$'}tmp"
         const val LOOP_NAME = "loop"
     }
 
     constructor() :
         this(FreshNameGenerator(), NameMap(), NameMap(), NameMap(), null)
+
+    constructor(nameGenerator: FreshNameGenerator) :
+        this(nameGenerator, NameMap(), NameMap(), NameMap(), null)
+
+    /** Constructor used by FunctionElaborator. */
+    constructor(
+        nameGenerator: FreshNameGenerator,
+        objectRenames: NameMap<ObjectVariable, ObjectVariable>
+    ) : this(nameGenerator, NameMap(), objectRenames, NameMap(), null)
 
     private fun copy(
         jumpLabelRenames: NameMap<JumpLabel, JumpLabel> = this.jumpLabelRenames,
@@ -162,24 +235,15 @@ private class StatementElaborator(
                 )
 
             is SQueryNode -> {
-                val oldTemporary = TemporaryNode(Temporary(variable.value.name), variable.sourceLocation)
-
-                // The parser cannot differentiate between temporary reads and `ObjectVariable.get()`.
-                // We try to interpret variables as temporary reads first.
-                // TODO: we should distinguish temporary variables, prefixing with $ perhaps.
-                return if (temporaryRenames.contains(oldTemporary) && query.value == Get && arguments.isEmpty()) {
-                    IReadNode(TemporaryNode(temporaryRenames[oldTemporary], sourceLocation))
-                } else {
-                    IQueryNode(
-                        ObjectVariableNode(objectRenames[variable], variable.sourceLocation),
-                        query,
-                        Arguments(
-                            arguments.map { it.toAnf(bindings).toAtomic(bindings) },
-                            arguments.sourceLocation
-                        ),
-                        sourceLocation
-                    )
-                }
+                IQueryNode(
+                    ObjectVariableNode(objectRenames[variable], variable.sourceLocation),
+                    query,
+                    Arguments(
+                        arguments.map { it.toAnf(bindings).toAtomic(bindings) },
+                        arguments.sourceLocation
+                    ),
+                    sourceLocation
+                )
             }
 
             is SDeclassificationNode ->
@@ -204,8 +268,41 @@ private class StatementElaborator(
             is SReceiveNode -> {
                 IReceiveNode(type, protocol, sourceLocation)
             }
+
+            is SConstructorCallNode ->
+                throw InvalidConstructorCallError(this)
         }
     }
+
+    private fun SFunctionArgumentNode.run(bindings: MutableList<in IStatementNode>): IFunctionArgumentNode =
+        when (this) {
+            is SExpressionArgumentNode ->
+                IExpressionArgumentNode(
+                    expression.toAnf(bindings).toAtomic(bindings),
+                    sourceLocation
+                )
+
+            is SObjectDeclarationArgumentNode -> {
+                val newName = ObjectVariable(nameGenerator.getFreshName(variable.value.name))
+                objectRenames = objectRenames.put(variable, newName)
+                IObjectDeclarationArgumentNode(
+                    Located(newName, variable.sourceLocation),
+                    sourceLocation
+                )
+            }
+
+            is SObjectReferenceArgumentNode ->
+                IObjectReferenceArgumentNode(
+                    Located(objectRenames[variable], variable.sourceLocation),
+                    sourceLocation
+                )
+
+            is SOutParameterArgumentNode ->
+                IOutParameterArgumentNode(
+                    Located(objectRenames[parameter], parameter.sourceLocation),
+                    sourceLocation
+                )
+        }
 
     /**
      * Convert this expression to an atomic expression by introducing a new let binding
@@ -253,26 +350,32 @@ private class StatementElaborator(
                 }
 
             is SDeclarationNode ->
-                withBindings { bindings ->
-                    // The arguments must be processed before the variable is freshened
-                    val newArguments =
-                        Arguments(
-                            stmt.arguments.map { it.toAnf(bindings).toAtomic(bindings) },
-                            stmt.arguments.sourceLocation
-                        )
+                when (val initializer = stmt.initializer) {
+                    is SConstructorCallNode ->
+                        withBindings { bindings ->
+                            // The arguments must be processed before the variable is freshened
+                            val newArguments =
+                                Arguments(
+                                    initializer.arguments.map { it.toAnf(bindings).toAtomic(bindings) },
+                                    initializer.arguments.sourceLocation
+                                )
 
-                    val newName =
-                        ObjectVariable(nameGenerator.getFreshName(stmt.variable.value.name))
-                    objectRenames = objectRenames.put(stmt.variable, newName)
+                            val newName =
+                                ObjectVariable(nameGenerator.getFreshName(stmt.variable.value.name))
+                            objectRenames = objectRenames.put(stmt.variable, newName)
 
-                    IDeclarationNode(
-                        ObjectVariableNode(newName, stmt.variable.sourceLocation),
-                        stmt.className,
-                        stmt.typeArguments,
-                        stmt.labelArguments,
-                        newArguments,
-                        stmt.sourceLocation
-                    )
+                            IDeclarationNode(
+                                ObjectVariableNode(newName, stmt.variable.sourceLocation),
+                                initializer.className,
+                                initializer.typeArguments,
+                                initializer.labelArguments,
+                                newArguments,
+                                stmt.sourceLocation
+                            )
+                        }
+
+                    else ->
+                        throw InvalidConstructorCallError(initializer, constructorNeeded = true)
                 }
 
             is SUpdateNode ->
@@ -285,6 +388,49 @@ private class StatementElaborator(
                         stmt.update,
                         Arguments(
                             stmt.arguments.map { it.toAnf(bindings).toAtomic(bindings) },
+                            stmt.arguments.sourceLocation
+                        ),
+                        stmt.sourceLocation
+                    )
+                }
+
+            is SOutParameterInitializationNode ->
+                withBindings { bindings ->
+                    val newName = Located(objectRenames[stmt.name], stmt.name.sourceLocation)
+                    val initializer =
+                        when (val rhs = stmt.rhs) {
+                            is SConstructorCallNode ->
+                                IOutParameterConstructorInitializerNode(
+                                    rhs.className,
+                                    rhs.typeArguments,
+                                    rhs.labelArguments,
+                                    Arguments(
+                                        rhs.arguments.map { it.toAnf(bindings).toAtomic(bindings) },
+                                        rhs.arguments.sourceLocation
+                                    ),
+                                    rhs.sourceLocation
+                                )
+
+                            else ->
+                                IOutParameterExpressionInitializerNode(
+                                    rhs.toAnf(bindings).toAtomic(bindings),
+                                    rhs.sourceLocation
+                                )
+                        }
+
+                    IOutParameterInitializationNode(
+                        newName,
+                        initializer,
+                        stmt.sourceLocation
+                    )
+                }
+
+            is SFunctionCallNode ->
+                withBindings { bindings ->
+                    IFunctionCallNode(
+                        stmt.name,
+                        Arguments(
+                            stmt.arguments.map { arg -> arg.run(bindings) },
                             stmt.arguments.sourceLocation
                         ),
                         stmt.sourceLocation

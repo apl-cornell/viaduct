@@ -2,7 +2,6 @@ package edu.cornell.cs.apl.viaduct.cli
 
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.parameters.arguments.argument
-import edu.cornell.cs.apl.viaduct.analysis.TypeAnalysis
 import edu.cornell.cs.apl.viaduct.backend.BackendInterpreter
 import edu.cornell.cs.apl.viaduct.backend.PlaintextBackend
 import edu.cornell.cs.apl.viaduct.backend.ProtocolBackend
@@ -36,21 +35,19 @@ class Run : CliktCommand(help = "Run compiled protocol for a single host") {
             ABY.protocolName to AbyProtocolParser
         )
 
-    private fun getBackends(typeAnalysis: TypeAnalysis): Map<ProtocolName, ProtocolBackend> {
-        val plaintextBackend = PlaintextBackend(typeAnalysis)
+    private fun getBackends(): Map<ProtocolName, ProtocolBackend> {
+        val plaintextBackend = PlaintextBackend()
 
         return mapOf(
             Local.protocolName to plaintextBackend,
             Replication.protocolName to plaintextBackend,
-            ABY.protocolName to ABYBackend(typeAnalysis)
+            ABY.protocolName to ABYBackend()
         )
     }
 
     override fun run() {
         val program = input.parse(protocols).elaborated()
-        val typeAnalysis = TypeAnalysis.get(program)
-
-        val backends: Map<ProtocolName, ProtocolBackend> = getBackends(typeAnalysis)
+        val backends: Map<ProtocolName, ProtocolBackend> = getBackends()
         val interpreter = BackendInterpreter(backends)
 
         val host = Host(hostName)

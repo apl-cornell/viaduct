@@ -2,14 +2,14 @@ package edu.cornell.cs.apl.viaduct.backend
 
 import edu.cornell.cs.apl.viaduct.ExampleProgramProvider
 import edu.cornell.cs.apl.viaduct.analysis.ProtocolAnalysis
-import edu.cornell.cs.apl.viaduct.analysis.main
+import edu.cornell.cs.apl.viaduct.passes.Splitter
 import edu.cornell.cs.apl.viaduct.passes.check
 import edu.cornell.cs.apl.viaduct.passes.elaborated
-import edu.cornell.cs.apl.viaduct.passes.splitMain
 import edu.cornell.cs.apl.viaduct.protocols.HostInterface
 import edu.cornell.cs.apl.viaduct.selection.SimpleSelection
 import edu.cornell.cs.apl.viaduct.selection.simpleProtocolCost
 import edu.cornell.cs.apl.viaduct.selection.simpleProtocolFactory
+import edu.cornell.cs.apl.viaduct.syntax.FunctionName
 import edu.cornell.cs.apl.viaduct.syntax.Host
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
 import edu.cornell.cs.apl.viaduct.syntax.ProtocolName
@@ -27,7 +27,12 @@ import org.junit.jupiter.params.provider.ArgumentsSource
 
 /** Fake protocol backend that doesn't do anything. */
 private object FakeBackend : ProtocolBackend {
-    override suspend fun run(runtime: ViaductProcessRuntime, process: BlockNode) {}
+    override suspend fun run(
+        runtime: ViaductProcessRuntime,
+        program: edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode,
+        process: BlockNode
+    ) {
+    }
 }
 
 internal class BackendInterpreterTest {
@@ -40,12 +45,12 @@ internal class BackendInterpreterTest {
         program.check()
 
         // Select protocols.
-        val protocolAssignment: (Variable) -> Protocol =
-            SimpleSelection(program, simpleProtocolFactory(program), ::simpleProtocolCost).select(program.main)
+        val protocolAssignment: (FunctionName, Variable) -> Protocol =
+            SimpleSelection(program, simpleProtocolFactory(program), ::simpleProtocolCost).select(program)
         val protocolAnalysis = ProtocolAnalysis(program, protocolAssignment)
 
         // Split the program.
-        val splitProgram = program.splitMain(protocolAnalysis)
+        val splitProgram = Splitter(protocolAnalysis).splitMain()
 
         // set up backend interpreter with fake backends
         val backendMap: Map<ProtocolName, ProtocolBackend> =

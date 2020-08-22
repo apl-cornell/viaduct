@@ -3,6 +3,7 @@ package edu.cornell.cs.apl.viaduct.selection
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.DeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.LetNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.ParameterNode
 
 /**
  *
@@ -18,11 +19,16 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.LetNode
 interface ProtocolFactory {
     fun viableProtocols(node: LetNode): Set<Protocol>
     fun viableProtocols(node: DeclarationNode): Set<Protocol>
+    fun viableProtocols(node: ParameterNode): Set<Protocol>
     fun constraint(node: LetNode): SelectionConstraint {
         return Literal(true)
     }
 
     fun constraint(node: DeclarationNode): SelectionConstraint {
+        return Literal(true)
+    }
+
+    fun constraint(node: ParameterNode): SelectionConstraint {
         return Literal(true)
     }
 }
@@ -34,6 +40,9 @@ fun unions(vararg selectors: ProtocolFactory): ProtocolFactory = object : Protoc
         selectors.fold(setOf()) { acc, sel -> acc.union(sel.viableProtocols(node)) }
 
     override fun viableProtocols(node: DeclarationNode): Set<Protocol> =
+        selectors.fold(setOf()) { acc, sel -> acc.union(sel.viableProtocols(node)) }
+
+    override fun viableProtocols(node: ParameterNode): Set<Protocol> =
         selectors.fold(setOf()) { acc, sel -> acc.union(sel.viableProtocols(node)) }
 
     override fun constraint(node: LetNode): SelectionConstraint =

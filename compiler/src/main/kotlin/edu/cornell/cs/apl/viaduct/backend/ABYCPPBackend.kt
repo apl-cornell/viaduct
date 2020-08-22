@@ -20,12 +20,14 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.DeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.DeclassificationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.EndorsementNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ExpressionNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.FunctionCallNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.IfNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.InfiniteLoopNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.InputNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.LetNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.LiteralNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.OperatorApplicationNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutParameterInitializationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutputNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.PureExpressionNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.QueryNode
@@ -317,7 +319,7 @@ class ABYCPPBackend(
         }
 
         for (arrayDecl: DeclarationNode in arrayDecls) {
-            childStmts.add(deleteArray(arrayDecl.variable.value.name))
+            childStmts.add(deleteArray(arrayDecl.name.value.name))
         }
 
         return CppBlock(childStmts)
@@ -386,7 +388,7 @@ class ABYCPPBackend(
                         is VectorType -> {
                             arrayDecls.add(stmt)
                             declareArray(
-                                variable = stmt.variable.value.name,
+                                variable = stmt.name.value.name,
                                 elementType = abyCircuitGateType,
                                 length = compileMPCExpr(stmt.arguments[0], shareMap, useShares = false)
                             )
@@ -394,7 +396,7 @@ class ABYCPPBackend(
 
                         is ImmutableCellType, is MutableCellType -> {
                             declare(
-                                variable = stmt.variable.value.name,
+                                variable = stmt.name.value.name,
                                 type = abyCircuitGateType,
                                 initVal = compileMPCExpr(stmt.arguments[0], shareMap)
                             )
@@ -447,6 +449,10 @@ class ABYCPPBackend(
                     }
                 )
             }
+
+            is OutParameterInitializationNode -> TODO()
+
+            is FunctionCallNode -> TODO()
 
             is OutputNode -> {
                 listOf(

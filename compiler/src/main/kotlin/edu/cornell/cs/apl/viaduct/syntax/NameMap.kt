@@ -30,6 +30,18 @@ private constructor(
     }
 
     /**
+     * Returns the set of keys in the map.
+     */
+    val keys: Set<N>
+        get() = map.keys
+
+    /**
+     * Returns the set of values in the map.
+     */
+    val values: Set<Data>
+        get() = map.values.map { pair -> pair.first }.toSet()
+
+    /**
      * Returns a new map where [name] is associated with [data].
      *
      * @throws NameClashError if [name] is already in the map.

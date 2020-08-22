@@ -1,5 +1,8 @@
 package edu.cornell.cs.apl.viaduct.syntax.types
 
+import edu.cornell.cs.apl.prettyprinting.Document
+import edu.cornell.cs.apl.prettyprinting.times
+import edu.cornell.cs.apl.prettyprinting.tupled
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toPersistentList
@@ -24,4 +27,7 @@ private constructor(
     override fun hashCode(): Int {
         return Pair(arguments, result).hashCode()
     }
+
+    override val asDocument: Document
+        get() = (arguments.map { arg -> arg.asDocument }.tupled()) * Document("->") * result
 }

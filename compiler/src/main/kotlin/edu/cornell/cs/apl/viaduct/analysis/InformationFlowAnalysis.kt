@@ -27,15 +27,26 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.DeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.DeclassificationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.DowngradeNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.EndorsementNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.ExpressionArgumentNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ExpressionNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.FunctionCallNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.FunctionDeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.IfNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.InfiniteLoopNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.InputNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.LetNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.LiteralNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.Node
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.ObjectDeclaration
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.ObjectDeclarationArgumentNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.ObjectReferenceArgumentNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.OperatorApplicationNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutParameterArgumentNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutParameterConstructorInitializerNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutParameterExpressionInitializerNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutParameterInitializationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutputNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.ParameterNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.QueryNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ReadNode
@@ -66,13 +77,18 @@ class InformationFlowAnalysis private constructor(
     }
 
     /** The [LabelTerm] representing the [Label] of the object declared by this node. */
-    private val DeclarationNode.variableLabel: AtomicLabelTerm by attribute {
+    private val ObjectDeclaration.variableLabel: AtomicLabelTerm by attribute {
         if (labelArguments == null)
-            constraintSystem.addNewVariable(PrettyNodeWrapper(variable))
+            constraintSystem.addNewVariable(PrettyNodeWrapper(name))
         else {
             // TODO: this is hacky. How do we know it's the first label, for example?
-            LabelConstant.create(labelArguments[0].value)
+            LabelConstant.create(labelArguments!![0].value)
         }
+    }
+
+    // TODO: add object declaration argument to ObjectDeclaration interface
+    private val ObjectDeclarationArgumentNode.variableLabel: AtomicLabelTerm by attribute {
+        constraintSystem.addNewVariable(PrettyNodeWrapper(name))
     }
 
     /** The program counter label at this node. */
@@ -94,6 +110,19 @@ class InformationFlowAnalysis private constructor(
                 val loopPC = PCLabelVariable("${parent.pc.path}.loop")
                 parent.pcFlowsTo(jumpLabel, loopPC.variable)
                 loopPC
+            }
+            this is FunctionDeclarationNode -> {
+                val funcPC = PCLabelVariable("func.${name.value}")
+
+                if (this.pcLabel != null) {
+                    assertEqualsTo(
+                        this,
+                        funcPC.variable,
+                        LabelConstant.create(pcLabel.value)
+                    )
+                }
+
+                funcPC
             }
             else ->
                 parent.pc
@@ -119,6 +148,15 @@ class InformationFlowAnalysis private constructor(
         }
 
     /**
+     * Adds a constraint asserting that [node] with label [nodeLabel] is equal to a location
+     * with label [to].
+     */
+    private fun assertEqualsTo(node: HasSourceLocation, nodeLabel: AtomicLabelTerm, to: AtomicLabelTerm) =
+        constraintSystem.addEqualToConstraint(nodeLabel, to) { actualNodeLabel, toLabel ->
+            InsecureDataFlowError(node, actualNodeLabel, toLabel)
+        }
+
+    /**
      * Adds a constraint asserting that the program counter label at [this] node can flow into
      * [node], which has label [nodeLabel].
      */
@@ -131,6 +169,10 @@ class InformationFlowAnalysis private constructor(
     /** Asserts that it is safe for [this] node's output to flow to a location with label [to]. */
     private infix fun ExpressionNode.flowsTo(to: LabelTerm) =
         assertFlowsTo(this, labelVariable, to)
+
+    /** Asserts that it is safe for [this] node's output to be equal to a location with label [to]. */
+    private infix fun ExpressionNode.equalsTo(to: AtomicLabelTerm) =
+        assertEqualsTo(this, labelVariable, to)
 
     /** Non-recursively add constraints relevant to this expression to [constraintSystem]. */
     private fun ExpressionNode.addConstraints(): Unit =
@@ -215,7 +257,7 @@ class InformationFlowAnalysis private constructor(
                 value flowsTo temporaryLabel
             }
             is DeclarationNode -> {
-                pcFlowsTo(variable, variableLabel)
+                pcFlowsTo(name, variableLabel)
                 arguments.forEach { it flowsTo variableLabel }
             }
             is UpdateNode -> {
@@ -223,6 +265,51 @@ class InformationFlowAnalysis private constructor(
                 pcFlowsTo(variable, variableLabel)
                 arguments.forEach { it flowsTo variableLabel }
                 // TODO: consult the method signature. There may be constraints on the pc or the arguments.
+            }
+
+            is OutParameterInitializationNode -> {
+                val variableLabel = nameAnalysis.declaration(this).variableLabel
+                pcFlowsTo(name, variableLabel)
+                when (val initializer = this.initializer) {
+                    is OutParameterConstructorInitializerNode -> {
+                        initializer.arguments.forEach { arg -> arg flowsTo variableLabel }
+                    }
+
+                    is OutParameterExpressionInitializerNode -> {
+                        initializer.expression flowsTo variableLabel
+                    }
+                }
+            }
+
+            is FunctionCallNode -> {
+                val declaration = nameAnalysis.declaration(this)
+
+                // constraints for PC label
+                this.pcFlowsTo(declaration, declaration.pc.variable)
+
+                // constraints for arguments
+                for (pair in declaration.parameters.zip(this.arguments)) {
+                    val argumentLabel =
+                        when (val argument = pair.second) {
+                            is ExpressionArgumentNode ->
+                                argument.expression.labelVariable
+
+                            is ObjectReferenceArgumentNode ->
+                                nameAnalysis.declaration(argument).variableLabel
+
+                            is ObjectDeclarationArgumentNode ->
+                                argument.variableLabel
+
+                            is OutParameterArgumentNode ->
+                                nameAnalysis.declaration(argument).variableLabel
+                        }
+
+                    assertFlowsTo(
+                        pair.second,
+                        argumentLabel,
+                        pair.first.variableLabel
+                    )
+                }
             }
 
             is OutputNode -> {
@@ -272,11 +359,19 @@ class InformationFlowAnalysis private constructor(
     /** Returns the inferred security label of the [ObjectVariable] declared by [node]. */
     fun label(node: DeclarationNode): Label = node.variableLabel.getValue(solution)
 
+    /** Returns the inferred security label of the [ObjectVariable] declared by [node]. */
+    fun label(node: ParameterNode): Label = node.variableLabel.getValue(solution)
+
+    /** Returns the inferred security label of the [ObjectVariable] declared by [node]. */
+    fun label(node: ObjectDeclarationArgumentNode): Label = node.variableLabel.getValue(solution)
+
     /** Returns the inferred security label of the result of [node]. */
     fun label(node: ExpressionNode): Label = node.labelVariable.getValue(solution)
 
     /** Returns the label of the program counter at the [node]'s program point. */
-    fun pcLabel(node: Node): Label = node.pc.variable.getValue(solution)
+    fun pcLabel(node: Node): Label {
+        return node.pc.variable.getValue(solution)
+    }
 
     /**
      * Asserts that the program does not violate information flow security, and throws (a subclass

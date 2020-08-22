@@ -3,6 +3,7 @@ package edu.cornell.cs.apl.viaduct.syntax.intermediate
 import edu.cornell.cs.apl.viaduct.security.Label
 import edu.cornell.cs.apl.viaduct.syntax.Arguments
 import edu.cornell.cs.apl.viaduct.syntax.ClassNameNode
+import edu.cornell.cs.apl.viaduct.syntax.FunctionNameNode
 import edu.cornell.cs.apl.viaduct.syntax.HostNode
 import edu.cornell.cs.apl.viaduct.syntax.JumpLabelNode
 import edu.cornell.cs.apl.viaduct.syntax.Located
@@ -12,6 +13,13 @@ import edu.cornell.cs.apl.viaduct.syntax.SourceLocation
 import edu.cornell.cs.apl.viaduct.syntax.TemporaryNode
 import edu.cornell.cs.apl.viaduct.syntax.UpdateNameNode
 import edu.cornell.cs.apl.viaduct.syntax.ValueTypeNode
+import edu.cornell.cs.apl.viaduct.syntax.surface.ConstructorCallNode as SConstructorCallNode
+import edu.cornell.cs.apl.viaduct.syntax.surface.ExpressionArgumentNode as SExpressionArgumentNode
+import edu.cornell.cs.apl.viaduct.syntax.surface.FunctionArgumentNode as SFunctionArgumentNode
+import edu.cornell.cs.apl.viaduct.syntax.surface.FunctionCallNode as SFunctionCallNode
+import edu.cornell.cs.apl.viaduct.syntax.surface.ObjectDeclarationArgumentNode as SObjectDeclarationArgumentNode
+import edu.cornell.cs.apl.viaduct.syntax.surface.ObjectReferenceArgumentNode as SObjectReferenceArgumentNode
+import edu.cornell.cs.apl.viaduct.syntax.surface.OutParameterArgumentNode as SOutParameterArgumentNode
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toPersistentList
@@ -28,7 +36,7 @@ sealed class StatementNode : Node() {
  * control flow.
  */
 sealed class SimpleStatementNode : StatementNode() {
-    abstract override val children: Iterable<ExpressionNode>
+    abstract override val children: Iterable<Node>
 
     abstract override fun toSurfaceNode(): edu.cornell.cs.apl.viaduct.syntax.surface.SimpleStatementNode
 
@@ -59,30 +67,36 @@ class LetNode(
 
 /** Constructing a new object and binding it to a variable. */
 class DeclarationNode(
-    val variable: ObjectVariableNode,
-    val className: ClassNameNode,
-    val typeArguments: Arguments<ValueTypeNode>,
+    override val name: ObjectVariableNode,
+    override val className: ClassNameNode,
+    override val typeArguments: Arguments<ValueTypeNode>,
     // TODO: allow leaving out some of the labels (right now it's all or nothing)
-    val labelArguments: Arguments<Located<Label>>?,
+    override val labelArguments: Arguments<Located<Label>>?,
     val arguments: Arguments<AtomicExpressionNode>,
     override val sourceLocation: SourceLocation
-) : SimpleStatementNode() {
+) : SimpleStatementNode(), ObjectDeclaration {
+    override val declarationAsNode: Node
+        get() = this
+
     override val children: Iterable<AtomicExpressionNode>
         get() = arguments
 
     override fun toSurfaceNode(): edu.cornell.cs.apl.viaduct.syntax.surface.DeclarationNode =
         edu.cornell.cs.apl.viaduct.syntax.surface.DeclarationNode(
-            variable,
-            className,
-            typeArguments,
-            labelArguments,
-            Arguments(arguments.map { it.toSurfaceNode() }, arguments.sourceLocation),
+            name,
+            SConstructorCallNode(
+                className,
+                typeArguments,
+                labelArguments,
+                Arguments(arguments.map { it.toSurfaceNode() }, arguments.sourceLocation),
+                sourceLocation
+            ),
             sourceLocation
         )
 
     override fun copy(children: List<Node>): DeclarationNode =
         DeclarationNode(
-            variable,
+            name,
             className,
             typeArguments,
             labelArguments,
@@ -118,6 +132,82 @@ class UpdateNode(
         )
 }
 
+sealed class OutParameterInitializerNode : Node()
+
+class OutParameterExpressionInitializerNode(
+    val expression: AtomicExpressionNode,
+    override val sourceLocation: SourceLocation
+) : OutParameterInitializerNode() {
+    override val children: Iterable<AtomicExpressionNode>
+        get() = listOf(expression)
+
+    override fun copy(children: List<Node>): Node =
+        OutParameterExpressionInitializerNode(
+            children[0] as AtomicExpressionNode,
+            sourceLocation
+        )
+
+    override fun toSurfaceNode(): edu.cornell.cs.apl.viaduct.syntax.surface.ExpressionNode =
+        expression.toSurfaceNode()
+}
+
+class OutParameterConstructorInitializerNode(
+    val className: ClassNameNode,
+    val typeArguments: Arguments<ValueTypeNode>,
+    val labelArguments: Arguments<Located<Label>>?,
+    val arguments: Arguments<AtomicExpressionNode>,
+    override val sourceLocation: SourceLocation
+) : OutParameterInitializerNode() {
+    override val children: Iterable<AtomicExpressionNode>
+        get() = arguments
+
+    override fun copy(children: List<Node>): OutParameterConstructorInitializerNode =
+        OutParameterConstructorInitializerNode(
+            className,
+            typeArguments,
+            labelArguments,
+            Arguments(
+                children.map { child -> child as AtomicExpressionNode },
+                arguments.sourceLocation
+            ),
+            sourceLocation
+        )
+
+    override fun toSurfaceNode(): edu.cornell.cs.apl.viaduct.syntax.surface.ExpressionNode =
+        SConstructorCallNode(
+            className,
+            typeArguments,
+            labelArguments,
+            Arguments(
+                arguments.map { arg -> arg.toSurfaceNode() },
+                arguments.sourceLocation
+            ),
+            sourceLocation
+        )
+}
+
+class OutParameterInitializationNode(
+    val name: ObjectVariableNode,
+    val initializer: OutParameterInitializerNode,
+    override val sourceLocation: SourceLocation
+) : SimpleStatementNode() {
+    override val children: Iterable<OutParameterInitializerNode>
+        get() = listOf(initializer)
+
+    override fun toSurfaceNode(): edu.cornell.cs.apl.viaduct.syntax.surface.OutParameterInitializationNode =
+        edu.cornell.cs.apl.viaduct.syntax.surface.OutParameterInitializationNode(
+            name,
+            initializer.toSurfaceNode() as edu.cornell.cs.apl.viaduct.syntax.surface.ExpressionNode,
+            sourceLocation
+        )
+
+    override fun copy(children: List<Node>): OutParameterInitializationNode =
+        OutParameterInitializationNode(
+            name,
+            children[0] as OutParameterInitializerNode,
+            sourceLocation
+        )
+}
 // Communication Statements
 
 /** An external output. */
@@ -165,6 +255,98 @@ class SendNode(
 /** A statement that affects control flow. */
 sealed class ControlNode : StatementNode() {
     abstract override fun copy(children: List<Node>): ControlNode
+}
+
+sealed class FunctionArgumentNode : Node()
+
+sealed class FunctionInputArgumentNode : FunctionArgumentNode()
+
+sealed class FunctionOutputArgumentNode : FunctionArgumentNode()
+
+class ExpressionArgumentNode(
+    val expression: AtomicExpressionNode,
+    override val sourceLocation: SourceLocation
+) : FunctionInputArgumentNode() {
+    override val children: Iterable<ExpressionNode>
+        get() = listOf(expression)
+
+    override fun copy(children: List<Node>): Node =
+        ExpressionArgumentNode(children[0] as AtomicExpressionNode, sourceLocation)
+
+    override fun toSurfaceNode(): SExpressionArgumentNode =
+        SExpressionArgumentNode(expression.toSurfaceNode(), sourceLocation)
+}
+
+class ObjectReferenceArgumentNode(
+    val variable: ObjectVariableNode,
+    override val sourceLocation: SourceLocation
+) : FunctionInputArgumentNode() {
+    override val children: Iterable<ExpressionNode>
+        get() = listOf()
+
+    override fun copy(children: List<Node>): Node =
+        ObjectReferenceArgumentNode(variable, sourceLocation)
+
+    override fun toSurfaceNode(): SObjectReferenceArgumentNode =
+        SObjectReferenceArgumentNode(variable, sourceLocation)
+}
+
+class ObjectDeclarationArgumentNode(
+    val name: ObjectVariableNode,
+    override val sourceLocation: SourceLocation
+) : FunctionOutputArgumentNode() {
+    override val children: Iterable<ExpressionNode>
+        get() = listOf()
+
+    override fun copy(children: List<Node>): Node =
+        ObjectDeclarationArgumentNode(name, sourceLocation)
+
+    override fun toSurfaceNode(): SObjectDeclarationArgumentNode =
+        SObjectDeclarationArgumentNode(name, sourceLocation)
+}
+
+class OutParameterArgumentNode(
+    val parameter: ObjectVariableNode,
+    override val sourceLocation: SourceLocation
+) : FunctionOutputArgumentNode() {
+    override val children: Iterable<ExpressionNode>
+        get() = listOf()
+
+    override fun copy(children: List<Node>): Node =
+        OutParameterArgumentNode(parameter, sourceLocation)
+
+    override fun toSurfaceNode(): SOutParameterArgumentNode =
+        SOutParameterArgumentNode(parameter, sourceLocation)
+}
+
+/** Function call. */
+class FunctionCallNode(
+    val name: FunctionNameNode,
+    val arguments: Arguments<FunctionArgumentNode>,
+    override val sourceLocation: SourceLocation
+) : ControlNode() {
+    override val children: Iterable<Node>
+        get() = arguments
+
+    override fun copy(children: List<Node>): FunctionCallNode =
+        FunctionCallNode(
+            name,
+            Arguments(
+                children.map { child -> child as FunctionArgumentNode },
+                arguments.sourceLocation
+            ),
+            sourceLocation
+        )
+
+    override fun toSurfaceNode(): SFunctionCallNode =
+        SFunctionCallNode(
+            name,
+            Arguments(
+                arguments.map { arg -> arg.toSurfaceNode() as SFunctionArgumentNode },
+                arguments.sourceLocation
+            ),
+            sourceLocation
+        )
 }
 
 /**

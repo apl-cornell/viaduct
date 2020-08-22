@@ -2,6 +2,7 @@ package edu.cornell.cs.apl.viaduct.passes
 
 import edu.cornell.cs.apl.viaduct.analysis.InformationFlowAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.NameAnalysis
+import edu.cornell.cs.apl.viaduct.analysis.OutParameterInitializationAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.TypeAnalysis
 import edu.cornell.cs.apl.viaduct.errors.CompilationError
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
@@ -14,5 +15,6 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
 fun ProgramNode.check() {
     NameAnalysis.get(this).check()
     TypeAnalysis.get(this).check()
+    OutParameterInitializationAnalysis.get(this).check()
     InformationFlowAnalysis.get(this).check()
 }

@@ -46,3 +46,5 @@ typealias ValueNode = Located<Value>
 typealias ValueTypeNode = Located<ValueType>
 
 typealias LabelNode = Located<Label>
+
+typealias FunctionNameNode = Located<FunctionName>

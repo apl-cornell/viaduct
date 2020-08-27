@@ -1,12 +1,10 @@
 package edu.cornell.cs.apl.viaduct.syntax.intermediate
 
-import edu.cornell.cs.apl.viaduct.security.Label
 import edu.cornell.cs.apl.viaduct.syntax.Arguments
 import edu.cornell.cs.apl.viaduct.syntax.ClassNameNode
 import edu.cornell.cs.apl.viaduct.syntax.FunctionNameNode
 import edu.cornell.cs.apl.viaduct.syntax.HostNode
 import edu.cornell.cs.apl.viaduct.syntax.LabelNode
-import edu.cornell.cs.apl.viaduct.syntax.Located
 import edu.cornell.cs.apl.viaduct.syntax.ObjectVariable
 import edu.cornell.cs.apl.viaduct.syntax.ObjectVariableNode
 import edu.cornell.cs.apl.viaduct.syntax.ParameterDirection
@@ -78,7 +76,7 @@ class ParameterNode(
     override val className: ClassNameNode,
     override val typeArguments: Arguments<ValueTypeNode>,
     // TODO: allow leaving out some of the labels (right now it's all or nothing)
-    override val labelArguments: Arguments<Located<Label>>?,
+    override val labelArguments: Arguments<LabelNode>?,
     override val sourceLocation: SourceLocation
 ) : Node(), ObjectDeclaration {
     override val declarationAsNode: Node
@@ -115,7 +113,7 @@ class ParameterNode(
  */
 class FunctionDeclarationNode(
     val name: FunctionNameNode,
-    val pcLabel: Located<Label>?,
+    val pcLabel: LabelNode?,
     val parameters: Arguments<ParameterNode>,
     val body: BlockNode,
     override val sourceLocation: SourceLocation

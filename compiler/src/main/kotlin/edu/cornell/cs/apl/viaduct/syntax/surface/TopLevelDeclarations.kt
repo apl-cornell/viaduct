@@ -1,19 +1,17 @@
 package edu.cornell.cs.apl.viaduct.syntax.surface
 
 import edu.cornell.cs.apl.prettyprinting.Document
+import edu.cornell.cs.apl.prettyprinting.braced
 import edu.cornell.cs.apl.prettyprinting.bracketed
-import edu.cornell.cs.apl.prettyprinting.joined
 import edu.cornell.cs.apl.prettyprinting.nested
 import edu.cornell.cs.apl.prettyprinting.plus
 import edu.cornell.cs.apl.prettyprinting.times
 import edu.cornell.cs.apl.prettyprinting.tupled
-import edu.cornell.cs.apl.viaduct.security.Label
 import edu.cornell.cs.apl.viaduct.syntax.Arguments
 import edu.cornell.cs.apl.viaduct.syntax.ClassNameNode
 import edu.cornell.cs.apl.viaduct.syntax.FunctionNameNode
 import edu.cornell.cs.apl.viaduct.syntax.HostNode
 import edu.cornell.cs.apl.viaduct.syntax.LabelNode
-import edu.cornell.cs.apl.viaduct.syntax.Located
 import edu.cornell.cs.apl.viaduct.syntax.ObjectVariableNode
 import edu.cornell.cs.apl.viaduct.syntax.ParameterDirection
 import edu.cornell.cs.apl.viaduct.syntax.ProtocolNode
@@ -36,7 +34,7 @@ class HostDeclarationNode(
     override val sourceLocation: SourceLocation
 ) : TopLevelDeclarationNode() {
     override val asDocument: Document
-        get() = keyword("host") * name * ":" * authority
+        get() = keyword("host") * name * ":" * listOf(authority).braced()
 }
 
 /**
@@ -63,14 +61,14 @@ class ParameterNode(
     val className: ClassNameNode,
     val typeArguments: Arguments<ValueTypeNode>,
     // TODO: allow leaving out some of the labels (right now it's all or nothing)
-    val labelArguments: Arguments<Located<Label>>?,
+    val labelArguments: Arguments<LabelNode>?,
     override val sourceLocation: SourceLocation
 ) : Node() {
     override val asDocument: Document
         get() {
             return when (className.value) {
                 ImmutableCell -> {
-                    val label = labelArguments?.get(0) ?: Document()
+                    val label = labelArguments?.braced() ?: Document()
                     name + Document(":") + parameterDirection * typeArguments[0] + label
                 }
 
@@ -78,7 +76,7 @@ class ParameterNode(
                     val types = typeArguments.bracketed().nested()
                     // TODO: labels should have braces
                     //   val labels = labelArguments?.braced()?.nested() ?: Document()
-                    val labels = labelArguments?.joined() ?: Document()
+                    val labels = labelArguments?.braced() ?: Document()
                     name * ":" + parameterDirection * className + types + labels
                 }
             }
@@ -93,11 +91,14 @@ class ParameterNode(
  */
 class FunctionDeclarationNode(
     val name: FunctionNameNode,
-    val pcLabel: Located<Label>?,
+    val pcLabel: LabelNode?,
     val parameters: Arguments<ParameterNode>,
     val body: BlockNode,
     override val sourceLocation: SourceLocation
 ) : TopLevelDeclarationNode() {
     override val asDocument: Document
-        get() = keyword("fun") * name + parameters.tupled() * body
+        get() =
+            keyword("fun") * name +
+                (pcLabel?.let { listOf(it).braced() } ?: Document("")) +
+                parameters.tupled() * body
 }

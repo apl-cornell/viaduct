@@ -2,8 +2,7 @@ import com.google.common.collect.ImmutableList;
 
 import edu.cornell.cs.apl.viaduct.errors.ParsingError;
 import edu.cornell.cs.apl.viaduct.protocols.*;
-import edu.cornell.cs.apl.viaduct.security.Label;
-import edu.cornell.cs.apl.viaduct.security.Principal;
+import edu.cornell.cs.apl.viaduct.security.*;
 import edu.cornell.cs.apl.viaduct.syntax.*;
 import edu.cornell.cs.apl.viaduct.syntax.datatypes.*;
 import edu.cornell.cs.apl.viaduct.syntax.surface.*;
@@ -31,7 +30,7 @@ action code {:
     }
 
     /** Constructs a label argument list from a single optional label. */
-    private Arguments<Located<Label>> optionalLabelArgument(Located<Label> label) {
+    private Arguments<Located<LabelExpression>> optionalLabelArgument(Located<LabelExpression> label) {
         if (label == null) {
             return null;
         } else {
@@ -85,9 +84,9 @@ parser code {:
     }
 
     /** Parses the input as a security label. */
-    public Label parseLabel() throws Exception {
+    public LabelExpression parseLabel() throws Exception {
         set_current_symbol(sym.PARSE_LABEL);
-        return (Label) parse().value;
+        return (LabelExpression) parse().value;
     }
 :}
 
@@ -118,8 +117,8 @@ nonterminal IndexingNode indexing;
 
 nonterminal Value value;
 nonterminal Located<ValueType> value_type;
-nonterminal Located<Label> label, optional_label, optional_from_label;
-nonterminal Label label_expr;
+nonterminal Located<LabelExpression> label, optional_label, optional_from_label;
+nonterminal LabelExpression label_expr;
 
 nonterminal Located<ObjectVariable> variable;
 nonterminal Located<Host> host;
@@ -675,34 +674,34 @@ label ::=
   ;
 
 label_expr ::=
-    CAP_IDENT:id {: RESULT = Label.invoke(new Principal(id)); :}
+    CAP_IDENT:id {: RESULT = new LabelLiteral(id); :}
 
-  | TOP {: RESULT = Label.getWeakest(); :}
+  | TOP {: RESULT = LabelTop.INSTANCE; :}
 
-  | BOTTOM {: RESULT = Label.getStrongest(); :}
+  | BOTTOM {: RESULT = LabelBottom.INSTANCE; :}
 
   | label_expr:l1 OR label_expr:l2 {:
-      RESULT = l1.or(l2);
+      RESULT = new LabelOr(l1, l2);
     :}
 
   | label_expr:l1 AND label_expr:l2 {:
-      RESULT = l1.and(l2);
+      RESULT = new LabelAnd(l1, l2);
     :}
 
   | label_expr:l1 JOIN label_expr:l2 {:
-      RESULT = l1.join(l2);
+      RESULT = new LabelJoin(l1, l2);
     :}
 
   | label_expr:l1 MEET label_expr:l2 {:
-      RESULT = l1.meet(l2);
+      RESULT = new LabelMeet(l1, l2);
     :}
 
   | label_expr:l RARROW {:
-      RESULT = l.confidentiality();
+      RESULT = new LabelConfidentiality(l);
     :}
 
   | label_expr:l LARROW {:
-      RESULT = l.integrity();
+      RESULT = new LabelIntegrity(l);
     :}
 
   | OPEN_PAREN label_expr:l CLOSE_PAREN {:

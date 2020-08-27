@@ -7,12 +7,12 @@ import edu.cornell.cs.apl.viaduct.errors.IncorrectNumberOfArgumentsError
 import edu.cornell.cs.apl.viaduct.errors.NameClashError
 import edu.cornell.cs.apl.viaduct.errors.UndefinedNameError
 import edu.cornell.cs.apl.viaduct.protocols.Adversary
-import edu.cornell.cs.apl.viaduct.security.Label
 import edu.cornell.cs.apl.viaduct.syntax.Arguments
 import edu.cornell.cs.apl.viaduct.syntax.ClassNameNode
 import edu.cornell.cs.apl.viaduct.syntax.FunctionName
 import edu.cornell.cs.apl.viaduct.syntax.Host
 import edu.cornell.cs.apl.viaduct.syntax.JumpLabel
+import edu.cornell.cs.apl.viaduct.syntax.LabelNode
 import edu.cornell.cs.apl.viaduct.syntax.Located
 import edu.cornell.cs.apl.viaduct.syntax.Name
 import edu.cornell.cs.apl.viaduct.syntax.NameMap
@@ -133,7 +133,7 @@ class NameAnalysis private constructor(private val tree: Tree<Node, ProgramNode>
                             override val typeArguments: Arguments<ValueTypeNode>
                                 get() = parameter.typeArguments
 
-                            override val labelArguments: Arguments<Located<Label>>?
+                            override val labelArguments: Arguments<LabelNode>?
                                 get() = parameter.labelArguments
 
                             override val declarationAsNode: Node

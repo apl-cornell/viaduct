@@ -1,6 +1,6 @@
 package edu.cornell.cs.apl.viaduct.parsing
 
-import edu.cornell.cs.apl.viaduct.security.Label
+import edu.cornell.cs.apl.viaduct.security.LabelExpression
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
 import edu.cornell.cs.apl.viaduct.syntax.ProtocolName
 import edu.cornell.cs.apl.viaduct.syntax.surface.ProgramNode
@@ -26,12 +26,12 @@ fun SourceFile.parse(
 }
 
 /** Parses [this] string as a security label. */
-fun String.parseLabel(path: String = "<string>"): Label {
+fun String.parseLabel(path: String = "<string>"): LabelExpression {
     return SourceFile.from(path, this).parseLabel()
 }
 
 /** Parses [this] source file as a security label. */
-fun SourceFile.parseLabel(): Label {
+fun SourceFile.parseLabel(): LabelExpression {
     val symbolFactory = ComplexSymbolFactory()
     val scanner = Lexer(this, symbolFactory)
     val parser = Parser(scanner, symbolFactory)

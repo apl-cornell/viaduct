@@ -82,7 +82,7 @@ class InformationFlowAnalysis private constructor(
             constraintSystem.addNewVariable(PrettyNodeWrapper(name))
         else {
             // TODO: this is hacky. How do we know it's the first label, for example?
-            LabelConstant.create(labelArguments!![0].value)
+            LabelConstant.create(labelArguments!![0].value.interpret())
         }
     }
 
@@ -118,7 +118,7 @@ class InformationFlowAnalysis private constructor(
                     assertEqualsTo(
                         this,
                         funcPC.variable,
-                        LabelConstant.create(pcLabel.value)
+                        LabelConstant.create(pcLabel.value.interpret())
                     )
                 }
 
@@ -197,8 +197,11 @@ class InformationFlowAnalysis private constructor(
                 assertFlowsTo(variable, variableLabel, this.labelVariable)
             }
             is DowngradeNode -> {
-                val from = fromLabel?.let { LabelConstant.create(it.value) } ?: expression.labelVariable
-                val to = LabelConstant.create(toLabel.value)
+                val from =
+                    fromLabel?.let {
+                        LabelConstant.create(it.value.interpret())
+                    } ?: expression.labelVariable
+                val to = LabelConstant.create(toLabel.value.interpret())
 
                 // The pc is always leaked to the output label
                 pcFlowsTo(toLabel, to)
@@ -236,7 +239,8 @@ class InformationFlowAnalysis private constructor(
                 assertFlowsTo(toLabel, to, this.labelVariable)
             }
             is InputNode -> {
-                val hostLabel = LabelConstant.create(nameAnalysis.declaration(this).authority.value)
+                val hostLabel =
+                    LabelConstant.create(nameAnalysis.declaration(this).authority.value.interpret())
 
                 // Host learns the current pc
                 pcFlowsTo(host, hostLabel)
@@ -313,7 +317,8 @@ class InformationFlowAnalysis private constructor(
             }
 
             is OutputNode -> {
-                val hostLabel = LabelConstant.create(nameAnalysis.declaration(this).authority.value)
+                val hostLabel =
+                    LabelConstant.create(nameAnalysis.declaration(this).authority.value.interpret())
                 pcFlowsTo(host, hostLabel)
                 message flowsTo hostLabel
             }

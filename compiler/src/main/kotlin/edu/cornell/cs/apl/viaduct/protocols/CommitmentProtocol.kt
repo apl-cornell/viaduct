@@ -1,6 +1,9 @@
 package edu.cornell.cs.apl.viaduct.protocols
 
 import edu.cornell.cs.apl.viaduct.security.Label
+import edu.cornell.cs.apl.viaduct.security.LabelAnd
+import edu.cornell.cs.apl.viaduct.security.LabelExpression
+import edu.cornell.cs.apl.viaduct.security.LabelIntegrity
 import edu.cornell.cs.apl.viaduct.syntax.Host
 import edu.cornell.cs.apl.viaduct.syntax.HostTrustConfiguration
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
@@ -28,5 +31,10 @@ class CommitmentProtocol(val sender: Host, receivers: Set<Host>) : Protocol() {
         get() = mapOf("sender" to HostValue(sender), "receivers" to receivers)
 
     override fun authority(hostTrustConfiguration: HostTrustConfiguration): Label =
-        hostTrustConfiguration(sender) and (receivers.map { hostTrustConfiguration(it).integrity() }.reduce(Label::and))
+        LabelAnd(
+            hostTrustConfiguration(sender),
+            receivers
+                .map { LabelIntegrity(hostTrustConfiguration(it)) }
+                .reduce<LabelExpression, LabelExpression> { acc, l -> LabelAnd(acc, l) }
+        ).interpret()
 }

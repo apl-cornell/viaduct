@@ -1,12 +1,11 @@
 package edu.cornell.cs.apl.viaduct.syntax.intermediate
 
-import edu.cornell.cs.apl.viaduct.security.Label
 import edu.cornell.cs.apl.viaduct.syntax.Arguments
 import edu.cornell.cs.apl.viaduct.syntax.ClassNameNode
 import edu.cornell.cs.apl.viaduct.syntax.FunctionNameNode
 import edu.cornell.cs.apl.viaduct.syntax.HostNode
 import edu.cornell.cs.apl.viaduct.syntax.JumpLabelNode
-import edu.cornell.cs.apl.viaduct.syntax.Located
+import edu.cornell.cs.apl.viaduct.syntax.LabelNode
 import edu.cornell.cs.apl.viaduct.syntax.ObjectVariableNode
 import edu.cornell.cs.apl.viaduct.syntax.ProtocolNode
 import edu.cornell.cs.apl.viaduct.syntax.SourceLocation
@@ -71,7 +70,7 @@ class DeclarationNode(
     override val className: ClassNameNode,
     override val typeArguments: Arguments<ValueTypeNode>,
     // TODO: allow leaving out some of the labels (right now it's all or nothing)
-    override val labelArguments: Arguments<Located<Label>>?,
+    override val labelArguments: Arguments<LabelNode>?,
     val arguments: Arguments<AtomicExpressionNode>,
     override val sourceLocation: SourceLocation
 ) : SimpleStatementNode(), ObjectDeclaration {
@@ -154,7 +153,7 @@ class OutParameterExpressionInitializerNode(
 class OutParameterConstructorInitializerNode(
     val className: ClassNameNode,
     val typeArguments: Arguments<ValueTypeNode>,
-    val labelArguments: Arguments<Located<Label>>?,
+    val labelArguments: Arguments<LabelNode>?,
     val arguments: Arguments<AtomicExpressionNode>,
     override val sourceLocation: SourceLocation
 ) : OutParameterInitializerNode() {

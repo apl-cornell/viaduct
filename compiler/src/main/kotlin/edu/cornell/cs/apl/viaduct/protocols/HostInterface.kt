@@ -30,7 +30,7 @@ data class HostInterface(val host: Host) : Protocol() {
         get() = mapOf("host" to HostValue(host))
 
     override fun authority(hostTrustConfiguration: HostTrustConfiguration): Label =
-        hostTrustConfiguration(host)
+        hostTrustConfiguration(host).interpret()
 
     override val asDocument: Document
         get() = protocolName + listOf(host).tupled()

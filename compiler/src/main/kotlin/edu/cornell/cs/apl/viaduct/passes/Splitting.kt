@@ -200,7 +200,6 @@ class Splitter(
         fun splitMain(): ProgramNode {
             // Assert that the program has a main
             program.main
-
             val splitDeclarations: MutableList<TopLevelDeclarationNode> = mutableListOf()
             for (declaration in program.declarations) {
                 when {

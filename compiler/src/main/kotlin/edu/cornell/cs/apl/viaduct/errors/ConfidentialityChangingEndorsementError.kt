@@ -3,6 +3,7 @@ package edu.cornell.cs.apl.viaduct.errors
 import edu.cornell.cs.apl.prettyprinting.Document
 import edu.cornell.cs.apl.prettyprinting.div
 import edu.cornell.cs.apl.viaduct.security.Label
+import edu.cornell.cs.apl.viaduct.security.LabelConfidentiality
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.EndorsementNode
 
 /**
@@ -28,5 +29,5 @@ class ConfidentialityChangingEndorsementError(private val node: EndorsementNode,
                 Document("Original confidentiality of the expression:")
                     .withData(fromConfidentiality) /
                 Document("Output confidentiality:")
-                    .withData(node.toLabel.value.confidentiality())
+                    .withData(LabelConfidentiality(node.toLabel.value))
 }

@@ -25,15 +25,15 @@ import edu.cornell.cs.apl.viaduct.syntax.types.ObjectType
 import edu.cornell.cs.apl.viaduct.syntax.types.VectorType
 import edu.cornell.cs.apl.viaduct.syntax.values.ByteVecValue
 import edu.cornell.cs.apl.viaduct.syntax.values.Value
+import java.util.Stack
 import kotlinx.collections.immutable.PersistentMap
 import kotlinx.collections.immutable.persistentMapOf
-import java.util.Stack
 
-data class ObjectHash(val type : ObjectType, val hash : List<Byte>)
+data class ObjectHash(val type: ObjectType, val hash: List<Byte>)
 
 internal class CommitmentHashReplica(
     private val runtime: ViaductProcessRuntime,
-    private val typeAnalysis : TypeAnalysis,
+    private val typeAnalysis: TypeAnalysis,
     private val cleartextHost: Host
 ) : AbstractBackendInterpreter() {
 
@@ -130,8 +130,10 @@ internal class CommitmentHashReplica(
                 cleartextHost
             )
         )
-        hashObjectStore = hashObjectStore.put(stmt.variable.value,
-            ObjectHash(typeAnalysis.type(stmt), (hash as ByteVecValue).value))
+        hashObjectStore = hashObjectStore.put(
+            stmt.variable.value,
+            ObjectHash(typeAnalysis.type(stmt), (hash as ByteVecValue).value)
+        )
     }
 
     private suspend fun runRead(tempFrom: Temporary, tempTo: Temporary) {
@@ -151,10 +153,10 @@ internal class CommitmentHashReplica(
     private fun runQuery(q: QueryNode): List<Byte> {
         val objhash = hashObjectStore[q.variable.value] ?: throw Error("Hashed object not found")
         return when (objhash.type) {
-           is ImmutableCellType ->  objhash.hash
-           is MutableCellType ->  objhash.hash
-           is VectorType -> TODO("Vector hashing")
-            else -> throw Error("Unexpected object type: ${objhash.type.toString()}")
+            is ImmutableCellType -> objhash.hash
+            is MutableCellType -> objhash.hash
+            is VectorType -> TODO("Vector hashing")
+            else -> throw Error("Unexpected object type: ${objhash.type}")
         }
     }
 

@@ -209,7 +209,6 @@ private class PlaintextInterpreter(
                                 runtime.receive(ProtocolProjection(sendProtocol, sendProtocol.host))
                             }
 
-
                             else -> {
                                 throw ViaductInterpreterError(
                                     "cannot receive from protocol ${sendProtocol.name} to $projection"

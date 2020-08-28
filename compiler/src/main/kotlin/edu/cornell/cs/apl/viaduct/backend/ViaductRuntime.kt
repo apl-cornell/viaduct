@@ -89,7 +89,6 @@ private class ViaductReceiverThread(
                             // ByteVecValue
                             valType == 2 -> ByteVecValue(socketInput.readNBytes(unparsedValue).toList())
 
-
                             else -> throw ViaductInterpreterError("parsed invalid value type $valType")
                         }
 

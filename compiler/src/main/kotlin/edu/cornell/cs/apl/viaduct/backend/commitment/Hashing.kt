@@ -13,7 +13,7 @@ import java.security.MessageDigest
 import java.security.SecureRandom
 
 data class HashInfo(val hash: List<Byte>, val nonce: List<Byte>) {
-    fun verify(data : List<Byte>) : Boolean {
+    fun verify(data: List<Byte>): Boolean {
         return (
             MessageDigest.getInstance("SHA-256").digest(nonce.toByteArray() + data.toByteArray()).toList()
             ==
@@ -22,27 +22,25 @@ data class HashInfo(val hash: List<Byte>, val nonce: List<Byte>) {
     }
 }
 
+fun Boolean.toByte(): Byte = if (this) 1 else 0
 
-fun Boolean.toByte() : Byte = if (this) 1 else 0
-
-fun Value.encode() : List<Byte> {
+fun Value.encode(): List<Byte> {
     return when (this) {
         is IntegerValue -> this.value.toBigInteger().toByteArray().toList()
         is BooleanValue -> listOf(this.value.toByte())
         is ByteVecValue -> this.value
         is StringValue -> this.value.toByteArray().toList()
-        else -> throw Error ("Unknown value!")
+        else -> throw Error("Unknown value!")
     }
 }
 
-fun PlaintextClassObject.encode() : List<Byte> {
+fun PlaintextClassObject.encode(): List<Byte> {
     return when (this) {
         is ImmutableCellObject -> this.value.encode()
         is MutableCellObject -> this.value.encode()
         is VectorObject -> TODO("Vector encoding")
     }
 }
-
 
 object Hashing {
     private fun generateHash(data: List<Byte>): HashInfo {
@@ -59,13 +57,12 @@ object Hashing {
 
     /** Deterministic hash for storing literals. **/
 
-    fun deterministicHash(data : List<Byte>) : HashInfo {
+    fun deterministicHash(data: List<Byte>): HashInfo {
         return HashInfo(
             MessageDigest.getInstance("SHA-256").digest(data.toByteArray()).toList(),
             listOf()
         )
     }
 
-    fun deterministicHash(v : Value) : HashInfo = deterministicHash(v.encode())
-
+    fun deterministicHash(v: Value): HashInfo = deterministicHash(v.encode())
 }

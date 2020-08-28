@@ -194,6 +194,11 @@ private class PlaintextInterpreter(
                 when (projection.protocol) {
                     is Local -> {
                         return when {
+
+                            sendProtocol is Commitment -> {
+                                receiveCommitment(sendProtocol)
+                            }
+
                             // receive from local process
                             sendProtocol.hosts.contains(projection.host) -> {
                                 runtime.receive(ProtocolProjection(sendProtocol, projection.host))
@@ -204,9 +209,6 @@ private class PlaintextInterpreter(
                                 runtime.receive(ProtocolProjection(sendProtocol, sendProtocol.host))
                             }
 
-                            sendProtocol is Commitment -> {
-                                receiveCommitment(sendProtocol)
-                            }
 
                             else -> {
                                 throw ViaductInterpreterError(

@@ -115,8 +115,7 @@ private class Z3Selection(
     /** Listing of all distinct protocols in question for the program. We also ensure that all local
      * protocols are included in the map. **/
     private val pmap: BiMap<Protocol, Int> =
-        tempViables.union(declViables).union(
-            LocalFactory.protocols(program).map { it.protocol }.toSet()).withIndex().map {
+        protocolFactory.protocols().map { it.protocol }.toSet().withIndex().map {
             it.value to it.index
         }.toMap().toBiMap()
 

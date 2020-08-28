@@ -28,6 +28,8 @@ class ABYFactory(program: ProgramNode) : ProtocolFactory {
         hostSubsets.map(::ABY).map { SpecializedProtocol(it, hostTrustConfiguration) }
     }
 
+    override fun protocols(): List<SpecializedProtocol> = protocols
+
     private fun LetNode.isApplicable(): Boolean {
         return nameAnalysis.readers(this).all { reader ->
             val pcCheck = informationFlowAnalysis.pcLabel(reader).flowsTo(informationFlowAnalysis.pcLabel(this))

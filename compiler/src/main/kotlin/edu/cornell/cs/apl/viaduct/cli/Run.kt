@@ -4,10 +4,10 @@ import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.parameters.arguments.argument
 import edu.cornell.cs.apl.viaduct.analysis.TypeAnalysis
 import edu.cornell.cs.apl.viaduct.backend.BackendInterpreter
-import edu.cornell.cs.apl.viaduct.backend.CommitmentBackend
 import edu.cornell.cs.apl.viaduct.backend.PlaintextBackend
 import edu.cornell.cs.apl.viaduct.backend.ProtocolBackend
 import edu.cornell.cs.apl.viaduct.backend.aby.ABYBackend
+import edu.cornell.cs.apl.viaduct.backend.commitment.CommitmentBackend
 import edu.cornell.cs.apl.viaduct.parsing.AbyProtocolParser
 import edu.cornell.cs.apl.viaduct.parsing.CommitmentProtocolParser
 import edu.cornell.cs.apl.viaduct.parsing.LocalProtocolParser
@@ -46,7 +46,9 @@ class Run : CliktCommand(help = "Run compiled protocol for a single host") {
         return mapOf(
             Local.protocolName to plaintextBackend,
             Replication.protocolName to plaintextBackend,
-            Commitment.protocolName to CommitmentBackend(typeAnalysis),
+            Commitment.protocolName to CommitmentBackend(
+                typeAnalysis
+            ),
             ABY.protocolName to ABYBackend(typeAnalysis)
         )
     }

@@ -16,7 +16,7 @@ fun simpleProtocolCost(p: Protocol): Int {
         is Local -> 0
         is Commitment -> 1
         is Replication -> 1
-        is ABY -> 2
-        else -> 10
+        is ABY -> 10
+        else -> 100
     }
 }

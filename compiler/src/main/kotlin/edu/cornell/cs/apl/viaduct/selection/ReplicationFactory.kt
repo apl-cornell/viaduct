@@ -26,6 +26,8 @@ class ReplicationFactory(val program: ProgramNode) : ProtocolFactory {
         fun protocols(program: ProgramNode): List<SpecializedProtocol> = program.instance
     }
 
+    override fun protocols(): List<SpecializedProtocol> = protocols(program)
+
     override fun viableProtocols(node: LetNode): Set<Protocol> =
         protocols(program).filter { it.authority.actsFor(informationFlowAnalysis.label(node)) }.map { it.protocol }.toSet()
 

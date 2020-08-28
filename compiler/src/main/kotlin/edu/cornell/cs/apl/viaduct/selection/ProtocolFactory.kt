@@ -1,6 +1,7 @@
 package edu.cornell.cs.apl.viaduct.selection
 
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
+import edu.cornell.cs.apl.viaduct.syntax.SpecializedProtocol
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.DeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.LetNode
 
@@ -16,6 +17,7 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.LetNode
  */
 
 interface ProtocolFactory {
+    fun protocols(): List<SpecializedProtocol>
     fun viableProtocols(node: LetNode): Set<Protocol>
     fun viableProtocols(node: DeclarationNode): Set<Protocol>
     fun constraint(node: LetNode): SelectionConstraint {
@@ -30,6 +32,9 @@ interface ProtocolFactory {
 /** Union of protocol selectors. [unions] takes a number of selectors and implements their collective union. */
 
 fun unions(vararg selectors: ProtocolFactory): ProtocolFactory = object : ProtocolFactory {
+    override fun protocols(): List<SpecializedProtocol> =
+        selectors.fold(listOf()) { acc, sel -> acc + sel.protocols() }
+
     override fun viableProtocols(node: LetNode): Set<Protocol> =
         selectors.fold(setOf()) { acc, sel -> acc.union(sel.viableProtocols(node)) }
 

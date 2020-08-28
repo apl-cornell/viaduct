@@ -8,6 +8,7 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.HostDeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProcessDeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
 import edu.cornell.cs.apl.viaduct.syntax.values.BooleanValue
+import edu.cornell.cs.apl.viaduct.syntax.values.ByteVecValue
 import edu.cornell.cs.apl.viaduct.syntax.values.IntegerValue
 import edu.cornell.cs.apl.viaduct.syntax.values.Value
 import java.io.InputStream
@@ -85,6 +86,10 @@ private class ViaductReceiverThread(
                             // IntegerValue
                             valType == 1 -> IntegerValue(unparsedValue)
 
+                            // ByteVecValue
+                            valType == 2 -> ByteVecValue(socketInput.readNBytes(unparsedValue).toList())
+
+
                             else -> throw ViaductInterpreterError("parsed invalid value type $valType")
                         }
 
@@ -119,6 +124,12 @@ private class ViaductSenderThread(
                         is IntegerValue -> {
                             socketOutput.write(1)
                             socketOutput.write(msg.message.value)
+                        }
+
+                        is ByteVecValue -> {
+                            socketOutput.write(2)
+                            socketOutput.write(msg.message.value.size)
+                            socketOutput.write(msg.message.value.toByteArray())
                         }
                     }
                 }

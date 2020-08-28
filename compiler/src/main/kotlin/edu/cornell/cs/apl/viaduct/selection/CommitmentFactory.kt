@@ -37,16 +37,16 @@ class CommitmentFactory(val program: ProgramNode) : ProtocolFactory {
         fun protocols(program: ProgramNode): List<SpecializedProtocol> = program.instance
     }
 
+    override fun protocols(): List<SpecializedProtocol> = protocols(program)
+
     private fun Node.isApplicable(): Boolean {
         return when (this) {
             is LetNode -> nameAnalysis.readers(this).all {
                 it.immediateRHS().all {
                     (it is AtomicExpressionNode) || (it is DowngradeNode)
                 }
-            }
-            is DeclarationNode -> nameAnalysis.users(this).all {
-                it is QueryNode
-            }
+            } && ((this.value is AtomicExpressionNode) || (this.value is DowngradeNode) || (this.value is QueryNode))
+            is DeclarationNode -> nameAnalysis.updaters(this).isEmpty()
             else -> false
         }
     }
@@ -77,6 +77,10 @@ class CommitmentFactory(val program: ProgramNode) : ProtocolFactory {
                 it.involvedVariables().map {
                     VariableIn(it, pset)
                 }
+            } + when (it) {
+                // The object constructed out of a reader must life in the pset as well
+                is DeclarationNode -> listOf(VariableIn(it.variable.value, pset))
+                else -> listOf()
             }
         }.ands()
     }
@@ -85,7 +89,8 @@ class CommitmentFactory(val program: ProgramNode) : ProtocolFactory {
         return protocols(program).map {
             Implies(
                 VariableIn(node.temporary.value, setOf(it.protocol)),
-                readersIn(node,
+                readersIn(
+                    node,
                     setOf(it.protocol) + LocalFactory.protocols(program).map { it.protocol }.toSet() +
                         ReplicationFactory.protocols(program).map { it.protocol }.toSet()
                 )
@@ -108,7 +113,8 @@ class CommitmentFactory(val program: ProgramNode) : ProtocolFactory {
         return protocols(program).map {
             Implies(
                 VariableIn(node.variable.value, setOf(it.protocol)),
-                usersIn(node,
+                usersIn(
+                    node,
                     setOf(it.protocol) + LocalFactory.protocols(program).map { it.protocol }.toSet() +
                         ReplicationFactory.protocols(program).map { it.protocol }.toSet()
                 )

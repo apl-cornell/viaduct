@@ -1,6 +1,5 @@
 package edu.cornell.cs.apl.viaduct.selection
 
-import com.microsoft.z3.ArithExpr
 import com.microsoft.z3.Context
 import com.microsoft.z3.IntExpr
 import com.microsoft.z3.IntNum
@@ -265,7 +264,7 @@ private class Z3Selection(
         }
 
         // TODO: this cost metric is particularly naive; it is simply the sum of costs of protocols for each selection.
-        val cost = ctx.mkAdd(* (varMap.values.map { symbolicCost(it) as ArithExpr }).toTypedArray())
+        val cost = ctx.mkAdd(* (varMap.values.map { symbolicCost(it) }).toTypedArray())
         solver.MkMinimize(cost)
 
         if (solver.Check() == Status.SATISFIABLE) {

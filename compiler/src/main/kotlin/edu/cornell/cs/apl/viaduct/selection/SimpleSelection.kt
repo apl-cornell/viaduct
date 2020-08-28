@@ -86,7 +86,8 @@ class SimpleSelection(
                     if (!assignment.containsKey(Pair(f, node.temporary.value))) {
                         constraints = And(constraints, protocolFactory.constraint(node))
                         val p =
-                            viableProtocols(node).minBy(protocolCost) ?: throw NoApplicableProtocolError(node.temporary)
+                            viableProtocols(node).minByOrNull(protocolCost)
+                                ?: throw NoApplicableProtocolError(node.temporary)
                         assignment = assignment.put(Pair(f, node.temporary.value), p)
                     }
                 }
@@ -94,7 +95,8 @@ class SimpleSelection(
                     if (!assignment.containsKey(Pair(f, node.name.value))) {
                         constraints = And(constraints, protocolFactory.constraint(node))
                         val p =
-                            viableProtocols(node).minBy(protocolCost) ?: throw NoApplicableProtocolError(node.name)
+                            viableProtocols(node).minByOrNull(protocolCost)
+                                ?: throw NoApplicableProtocolError(node.name)
                         assignment = assignment.put(Pair(f, node.name.value), p)
                     }
                 }
@@ -173,14 +175,16 @@ class SimpleSelection(
                     }
 
                     val p =
-                        candidateProtocols.minBy(protocolCost)
+                        candidateProtocols.minByOrNull(protocolCost)
                             ?: throw NoApplicableProtocolError(parameter.name)
 
                     assert(p.authority(hostTrustConfiguration).actsFor(informationFlowAnalysis.label(parameter)))
 
                     assignment =
                         correlatedVariables
-                            .fold(assignment.put(Pair(function.name.value, parameter.name.value), p)) { acc, fv -> acc.put(fv, p) }
+                            .fold(assignment.put(Pair(function.name.value, parameter.name.value), p)) { acc, fv ->
+                                acc.put(fv, p)
+                            }
                 }
             }
         }

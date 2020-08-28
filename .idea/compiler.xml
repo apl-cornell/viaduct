@@ -11,6 +11,8 @@
       </profile>
     </annotationProcessing>
     <bytecodeTargetLevel target="14">
+      <module name="viaduct.kotlin-dsl.main" target="11" />
+      <module name="viaduct.kotlin-dsl.test" target="11" />
       <module name="viaduct.main" target="11" />
       <module name="viaduct.test" target="11" />
     </bytecodeTargetLevel>

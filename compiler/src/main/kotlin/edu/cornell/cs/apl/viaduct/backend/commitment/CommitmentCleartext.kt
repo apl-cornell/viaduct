@@ -28,9 +28,9 @@ import edu.cornell.cs.apl.viaduct.syntax.types.MutableCellType
 import edu.cornell.cs.apl.viaduct.syntax.types.VectorType
 import edu.cornell.cs.apl.viaduct.syntax.values.ByteVecValue
 import edu.cornell.cs.apl.viaduct.syntax.values.Value
-import java.util.Stack
 import kotlinx.collections.immutable.PersistentMap
 import kotlinx.collections.immutable.persistentMapOf
+import java.util.Stack
 
 data class Hashed<T>(val value: T, val info: HashInfo)
 
@@ -92,6 +92,7 @@ internal class CommitmentCleartext(
 
     private fun runAtomicExprHashed(expr: AtomicExpressionNode): Hashed<Value> {
         return when (expr) {
+            // TODO: form a proper hash, not deterministic
             is LiteralNode -> Hashed(expr.value, Hashing.deterministicHash(expr.value))
             is ReadNode -> (tempStore[expr.temporary.value]
                 ?: throw UndefinedNameError(expr.temporary))
@@ -195,10 +196,12 @@ internal class CommitmentCleartext(
 
         // Send the nonce and then the value
         for (recvHost: Host in stmt.protocol.value.hosts) {
-            runtime.send(ByteVecValue(hashedMessage.info.nonce),
+            runtime.send(
+                ByteVecValue(hashedMessage.info.nonce),
                 ProtocolProjection(stmt.protocol.value, recvHost)
             )
-            runtime.send(hashedMessage.value,
+            runtime.send(
+                hashedMessage.value,
                 ProtocolProjection(stmt.protocol.value, recvHost)
             )
         }

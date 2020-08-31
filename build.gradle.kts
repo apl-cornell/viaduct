@@ -4,7 +4,6 @@ plugins {
 
     // Style checking
     id("com.diffplug.spotless") version "5.1.0"
-    id("org.ec4j.editorconfig") version "0.0.3"
 
     // Dependency management
     id("com.github.ben-manes.versions") version "0.29.0"
@@ -54,16 +53,6 @@ allprojects {
             }
         }
     }
-}
-
-/** Style */
-
-editorconfig {
-    excludes = listOf("$buildDir", "**/out", "gradlew", ".kotlin", "**/*.hprof")
-}
-
-tasks.check {
-    dependsOn(tasks.editorconfigCheck)
 }
 
 /** Documentation */

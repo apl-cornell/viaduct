@@ -83,13 +83,12 @@ tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach 
     kotlinOptions.allWarningsAsErrors = true
 }
 
-val propertiesFile = run {
-    val packageDir = mainPackage.replace(".", File.separator)
-    project.file("${project.buildDir}/generated-src/properties/$packageDir/Properties.kt")
-}
+val generatedPropertiesDir = "${project.buildDir}/generated-src/properties"
 
 val generatePropertiesFile by tasks.registering {
     doLast {
+        val packageDir = mainPackage.replace(".", File.separator)
+        val propertiesFile = project.file("$generatedPropertiesDir/$packageDir/Properties.kt")
         propertiesFile.parentFile.mkdirs()
         propertiesFile.writeText(
             """
@@ -118,7 +117,7 @@ sourceSets {
 
 kotlin {
     sourceSets["main"].apply {
-        kotlin.srcDir(propertiesFile.parentFile)
+        kotlin.srcDir(generatedPropertiesDir)
     }
 }
 

@@ -121,27 +121,7 @@ class NameAnalysis private constructor(private val tree: Tree<Node, ProgramNode>
             is FunctionCallNode ->
                 it.arguments
                     .filterIsInstance<ObjectDeclarationArgumentNode>()
-                    .map { arg ->
-                        val parameter = parameter(arg)
-                        val argDecl = object : ObjectDeclaration {
-                            override val name: ObjectVariableNode
-                                get() = arg.name
-
-                            override val className: ClassNameNode
-                                get() = parameter.className
-
-                            override val typeArguments: Arguments<ValueTypeNode>
-                                get() = parameter.typeArguments
-
-                            override val labelArguments: Arguments<LabelNode>?
-                                get() = parameter.labelArguments
-
-                            override val declarationAsNode: Node
-                                get() = arg
-                        }
-
-                        Pair(arg.name, argDecl)
-                    }
+                    .map { arg -> Pair(arg.name, asObjectDeclaration(arg)) }
 
             else -> listOf()
         }
@@ -263,6 +243,26 @@ class NameAnalysis private constructor(private val tree: Tree<Node, ProgramNode>
         return when {
             parameter is ParameterNode && parameter.isOutParameter -> parameter
             else -> throw UndefinedNameError(parameter.name)
+        }
+    }
+
+    fun asObjectDeclaration(node: ObjectDeclarationArgumentNode): ObjectDeclaration {
+        val parameter = parameter(node)
+        return object : ObjectDeclaration {
+            override val name: ObjectVariableNode
+                get() = node.name
+
+            override val className: ClassNameNode
+                get() = parameter.className
+
+            override val typeArguments: Arguments<ValueTypeNode>
+                get() = parameter.typeArguments
+
+            override val labelArguments: Arguments<LabelNode>?
+                get() = parameter.labelArguments
+
+            override val declarationAsNode: Node
+                get() = node
         }
     }
 
@@ -520,7 +520,7 @@ class NameAnalysis private constructor(private val tree: Tree<Node, ProgramNode>
     companion object : AnalysisProvider<NameAnalysis> {
         private val ProgramNode.instance: NameAnalysis by attribute { NameAnalysis(this.tree) }
 
-        private val MAIN_FUNCTION = FunctionName("#main#")
+        val MAIN_FUNCTION = FunctionName("#main#")
 
         override fun get(program: ProgramNode): NameAnalysis = program.instance
     }

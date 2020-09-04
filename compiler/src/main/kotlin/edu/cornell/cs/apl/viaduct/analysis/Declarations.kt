@@ -60,3 +60,12 @@ val ProgramNode.main: ProcessDeclarationNode
         }
         throw NoMainError(this.sourceLocation.sourcePath)
     }
+
+val ProgramNode.hasMain: Boolean
+    get() {
+        this.forEach {
+            if (it is ProcessDeclarationNode && it.protocol.value == MainProtocol)
+                return true
+        }
+        return false
+    }

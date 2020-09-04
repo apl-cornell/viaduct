@@ -51,13 +51,13 @@ class Compile : CliktCommand(help = "Compile ideal protocol to secure distribute
     override fun run() {
         val unspecializedProgram = input.parse().elaborated()
 
-        // Dump label constraint graph to a file if requested.
-        dumpGraph(InformationFlowAnalysis.get(unspecializedProgram)::exportConstraintGraph, constraintGraphOutput)
-
         val program = unspecializedProgram.specialize()
 
         // Perform static checks.
         program.check()
+
+        // Dump label constraint graph to a file if requested.
+        dumpGraph(InformationFlowAnalysis.get(program)::exportConstraintGraph, constraintGraphOutput)
 
         val protocolFactory = simpleProtocolFactory(program)
 

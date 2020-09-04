@@ -4,3 +4,5 @@ process main {
     val untrusted: int{A<-} = 42;
     val trusted: int{(A ∧ B)<-} = untrusted;
 }
+
+host alice : {A}

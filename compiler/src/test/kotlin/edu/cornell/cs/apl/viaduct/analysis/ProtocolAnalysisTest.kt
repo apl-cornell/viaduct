@@ -2,6 +2,7 @@ package edu.cornell.cs.apl.viaduct.analysis
 
 import edu.cornell.cs.apl.viaduct.ExampleProgramProvider
 import edu.cornell.cs.apl.viaduct.errors.NoMainError
+import edu.cornell.cs.apl.viaduct.passes.check
 import edu.cornell.cs.apl.viaduct.passes.elaborated
 import edu.cornell.cs.apl.viaduct.selection.SimpleSelection
 import edu.cornell.cs.apl.viaduct.selection.simpleProtocolCost
@@ -16,6 +17,7 @@ internal class ProtocolAnalysisTest {
     fun `it does not explode`(surfaceProgram: ProgramNode) {
         val program = surfaceProgram.elaborated()
 
+        program.check()
         val dumpProtocolAssignment =
             SimpleSelection(program, simpleProtocolFactory(program), ::simpleProtocolCost).select(program)
         val protocolAnalysis = ProtocolAnalysis(program, dumpProtocolAssignment)

@@ -17,6 +17,7 @@ internal class SplittingTest {
     fun `it splits`(surfaceProgram: ProgramNode) {
         val program = surfaceProgram.elaborated()
 
+        program.check()
         val dumbProtocolAssignment =
             SimpleSelection(program, simpleProtocolFactory(program), ::simpleProtocolCost).select(program)
         val protocolAnalysis = ProtocolAnalysis(program, dumbProtocolAssignment)

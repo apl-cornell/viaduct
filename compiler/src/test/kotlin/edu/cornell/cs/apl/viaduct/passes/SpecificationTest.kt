@@ -13,7 +13,9 @@ internal class SpecificationTest {
     @ParameterizedTest
     @ArgumentsSource(ExampleProgramProvider::class)
     fun `it generates valid specifications`(program: ProgramNode) {
-        val specification = program.elaborated().specification(adversaryLabel)
+        val elaboratedProgram = program.elaborated()
+        elaboratedProgram.check()
+        val specification = elaboratedProgram.specification(adversaryLabel)
         specification.check()
     }
 }

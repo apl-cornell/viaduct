@@ -432,8 +432,10 @@ class InformationFlowAnalysis private constructor(
                         val parameterLabel: Label = parameterLabels[nameAnalysis.parameter(argument).name.value]!!
                         val argumentLabel =
                             when (argument) {
-                                is ExpressionArgumentNode ->
+                                is ExpressionArgumentNode -> {
+                                    argument.expression.check(solver, parameterMap, pcLabel)
                                     argument.expression.labelVariable
+                                }
 
                                 is ObjectReferenceArgumentNode ->
                                     nameAnalysis.declaration(argument).variableLabel()
@@ -460,6 +462,7 @@ class InformationFlowAnalysis private constructor(
                             val argumentVariable =
                                 when (argument) {
                                     is ExpressionArgumentNode -> {
+                                        argument.expression.check(solver, parameterMap, pcLabel)
                                         argument.expression.labelVariable
                                     }
 

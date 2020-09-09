@@ -102,7 +102,7 @@ class Splitter(
                         result
                     }
 
-                    is FunctionCallNode ->
+                    is FunctionCallNode -> {
                         listOf(
                             FunctionCallNode(
                                 Located(
@@ -118,6 +118,7 @@ class Splitter(
                                 it.sourceLocation
                             )
                         )
+                    }
 
                     is IfNode ->
                         listOf(

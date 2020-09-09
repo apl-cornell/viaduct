@@ -10,6 +10,7 @@ import kotlinx.collections.immutable.persistentMapOf
 sealed class LabelExpression : PrettyPrintable {
     abstract fun interpret(parameters: Map<String, Label> = persistentMapOf()): Label
     abstract fun rename(renamer: (String) -> String = { x -> x }): LabelExpression
+    abstract fun containsParameters(): Boolean
 }
 
 data class LabelLiteral(val name: String) : LabelExpression() {
@@ -20,6 +21,8 @@ data class LabelLiteral(val name: String) : LabelExpression() {
         Label(Principal(name))
 
     override fun rename(renamer: (String) -> String): LabelExpression = this
+
+    override fun containsParameters(): Boolean = false
 }
 
 data class LabelParameter(val name: String) : LabelExpression() {
@@ -31,6 +34,8 @@ data class LabelParameter(val name: String) : LabelExpression() {
 
     override fun rename(renamer: (String) -> String): LabelExpression =
         LabelParameter(renamer(name))
+
+    override fun containsParameters(): Boolean = true
 }
 
 data class LabelJoin(val lhs: LabelExpression, val rhs: LabelExpression) : LabelExpression() {
@@ -42,6 +47,8 @@ data class LabelJoin(val lhs: LabelExpression, val rhs: LabelExpression) : Label
 
     override fun rename(renamer: (String) -> String): LabelExpression =
         LabelJoin(lhs.rename(renamer), rhs.rename(renamer))
+
+    override fun containsParameters(): Boolean = lhs.containsParameters() || rhs.containsParameters()
 }
 
 data class LabelMeet(val lhs: LabelExpression, val rhs: LabelExpression) : LabelExpression() {
@@ -53,6 +60,8 @@ data class LabelMeet(val lhs: LabelExpression, val rhs: LabelExpression) : Label
 
     override fun rename(renamer: (String) -> String): LabelExpression =
         LabelMeet(lhs.rename(renamer), rhs.rename(renamer))
+
+    override fun containsParameters(): Boolean = lhs.containsParameters() || rhs.containsParameters()
 }
 
 data class LabelAnd(val lhs: LabelExpression, val rhs: LabelExpression) : LabelExpression() {
@@ -64,6 +73,8 @@ data class LabelAnd(val lhs: LabelExpression, val rhs: LabelExpression) : LabelE
 
     override fun rename(renamer: (String) -> String): LabelExpression =
         LabelAnd(lhs.rename(renamer), rhs.rename(renamer))
+
+    override fun containsParameters(): Boolean = lhs.containsParameters() || rhs.containsParameters()
 }
 
 data class LabelOr(val lhs: LabelExpression, val rhs: LabelExpression) : LabelExpression() {
@@ -75,6 +86,8 @@ data class LabelOr(val lhs: LabelExpression, val rhs: LabelExpression) : LabelEx
 
     override fun rename(renamer: (String) -> String): LabelExpression =
         LabelOr(lhs.rename(renamer), rhs.rename(renamer))
+
+    override fun containsParameters(): Boolean = lhs.containsParameters() || rhs.containsParameters()
 }
 
 data class LabelConfidentiality(val value: LabelExpression) : LabelExpression() {
@@ -86,6 +99,8 @@ data class LabelConfidentiality(val value: LabelExpression) : LabelExpression() 
 
     override fun rename(renamer: (String) -> String): LabelExpression =
         LabelConfidentiality(value.rename(renamer))
+
+    override fun containsParameters(): Boolean = value.containsParameters()
 }
 
 data class LabelIntegrity(val value: LabelExpression) : LabelExpression() {
@@ -97,6 +112,8 @@ data class LabelIntegrity(val value: LabelExpression) : LabelExpression() {
 
     override fun rename(renamer: (String) -> String): LabelExpression =
         LabelIntegrity(value.rename(renamer))
+
+    override fun containsParameters(): Boolean = value.containsParameters()
 }
 
 object LabelBottom : LabelExpression() {
@@ -107,6 +124,8 @@ object LabelBottom : LabelExpression() {
         Label.strongest
 
     override fun rename(renamer: (String) -> String): LabelExpression = this
+
+    override fun containsParameters(): Boolean = false
 }
 
 object LabelTop : LabelExpression() {
@@ -117,4 +136,6 @@ object LabelTop : LabelExpression() {
         Label.weakest
 
     override fun rename(renamer: (String) -> String): LabelExpression = this
+
+    override fun containsParameters(): Boolean = false
 }

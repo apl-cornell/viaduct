@@ -118,7 +118,8 @@ nonterminal IndexingNode indexing;
 nonterminal Value value;
 nonterminal Located<ValueType> value_type;
 nonterminal Located<LabelExpression> label, optional_label, optional_from_label;
-nonterminal LabelExpression label_expr;
+nonterminal Located<LabelExpression> label_signature, optional_label_signature;
+nonterminal LabelExpression label_expr, label_expr_noparam, label_expr_signature;
 
 nonterminal Located<ObjectVariable> variable;
 nonterminal Located<Host> host;
@@ -221,7 +222,7 @@ declaration ::=
       RESULT = new ProcessDeclarationNode(protocol, body, location(beginleft, bodyright));
     :}
 
-  | FUNCTION:begin IDENT:funcname optional_label:label
+  | FUNCTION:begin IDENT:funcname optional_label_signature:label
     OPEN_PAREN:paramsbegin parameter_list:params CLOSE_PAREN:paramsclose block:body {:
       RESULT = new FunctionDeclarationNode(
         new Located(new FunctionName(funcname), location(funcnameleft, funcnameright)),
@@ -260,10 +261,10 @@ parameter_direction ::=
   ;
 
 parameter ::=
-    variable:name COLON parameter_direction:pdirection value_type:type optional_label:label {:
+    variable:name COLON value_type:type optional_label_signature:label {:
       RESULT = new ParameterNode(
         name,
-        pdirection,
+        ParameterDirection.PARAM_IN,
         new Located(PrimitivesKt.getImmutableCell(), name.getSourceLocation()),
         Arguments.from(type),
         optionalLabelArgument(label),
@@ -271,11 +272,34 @@ parameter ::=
       );
     :}
 
-  | variable:name COLON parameter_direction:pdirection ARRAY OPEN_SQBRACE value_type:elementType CLOSE_SQBRACE
-    optional_label:label {:
+  | variable:name COLON OUT value_type:type label_signature:label {:
       RESULT = new ParameterNode(
         name,
-        pdirection,
+        ParameterDirection.PARAM_OUT,
+        new Located(PrimitivesKt.getImmutableCell(), name.getSourceLocation()),
+        Arguments.from(type),
+        optionalLabelArgument(label),
+        location(nameleft, labelright)
+      );
+    :}
+
+  | variable:name COLON ARRAY OPEN_SQBRACE value_type:elementType CLOSE_SQBRACE
+    optional_label_signature:label {:
+      RESULT = new ParameterNode(
+        name,
+        ParameterDirection.PARAM_IN,
+        new Located(PrimitivesKt.getVector(), name.getSourceLocation()),
+        Arguments.from(elementType),
+        optionalLabelArgument(label),
+        location(nameleft, labelright)
+      );
+    :}
+
+  | variable:name COLON OUT ARRAY OPEN_SQBRACE value_type:elementType CLOSE_SQBRACE
+    label_signature:label {:
+      RESULT = new ParameterNode(
+        name,
+        ParameterDirection.PARAM_OUT,
         new Located(PrimitivesKt.getVector(), name.getSourceLocation()),
         Arguments.from(elementType),
         optionalLabelArgument(label),
@@ -676,6 +700,8 @@ label ::=
 label_expr ::=
     CAP_IDENT:id {: RESULT = new LabelLiteral(id); :}
 
+  | IDENT:id {: RESULT = new LabelParameter(id); :}
+
   | TOP {: RESULT = LabelTop.INSTANCE; :}
 
   | BOTTOM {: RESULT = LabelBottom.INSTANCE; :}
@@ -709,10 +735,62 @@ label_expr ::=
     :}
   ;
 
+label_signature ::=
+    OPEN_BRACE:begin label_expr_signature:l CLOSE_BRACE:end {:
+      RESULT = new Located(l, location(beginleft, endright));
+    :}
+  ;
+
+label_expr_signature ::=
+    label_expr_noparam:l {: RESULT = l; :}
+
+  | IDENT:id             {: RESULT = new LabelParameter(id); :}
+  ;
+
+label_expr_noparam ::=
+    CAP_IDENT:id {: RESULT = new LabelLiteral(id); :}
+
+  | TOP {: RESULT = LabelTop.INSTANCE; :}
+
+  | BOTTOM {: RESULT = LabelBottom.INSTANCE; :}
+
+  | label_expr:l1 OR label_expr:l2 {:
+      RESULT = new LabelOr(l1, l2);
+    :}
+
+  | label_expr:l1 AND label_expr:l2 {:
+      RESULT = new LabelAnd(l1, l2);
+    :}
+
+  | label_expr:l1 JOIN label_expr:l2 {:
+      RESULT = new LabelJoin(l1, l2);
+    :}
+
+  | label_expr:l1 MEET label_expr:l2 {:
+      RESULT = new LabelMeet(l1, l2);
+    :}
+
+  | label_expr:l RARROW {:
+      RESULT = new LabelConfidentiality(l);
+    :}
+
+  | label_expr:l LARROW {:
+      RESULT = new LabelIntegrity(l);
+    :}
+
+  | OPEN_PAREN label_expr:l CLOSE_PAREN {:
+      RESULT = l;
+    :}
+  ;
 
 optional_label ::=
     label:l     {: RESULT = l; :}
   | /* empty */ {: RESULT = null; :}
+  ;
+
+optional_label_signature ::=
+    label_signature:l     {: RESULT = l; :}
+  | /* empty */         {: RESULT = null; :}
   ;
 
 optional_from_label ::=

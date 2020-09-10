@@ -15,8 +15,9 @@ internal class SplittingTest {
     @ParameterizedTest
     @ArgumentsSource(ExampleProgramProvider::class)
     fun `it splits`(surfaceProgram: ProgramNode) {
-        val program = surfaceProgram.elaborated()
+        val program = surfaceProgram.elaborated().specialize()
 
+        program.check()
         val dumbProtocolAssignment =
             SimpleSelection(program, simpleProtocolFactory(program), ::simpleProtocolCost).select(program)
         val protocolAnalysis = ProtocolAnalysis(program, dumbProtocolAssignment)

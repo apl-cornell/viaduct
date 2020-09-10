@@ -1,6 +1,7 @@
 package edu.cornell.cs.apl.viaduct.syntax.surface
 
 import edu.cornell.cs.apl.prettyprinting.Document
+import edu.cornell.cs.apl.prettyprinting.braced
 import edu.cornell.cs.apl.prettyprinting.bracketed
 import edu.cornell.cs.apl.prettyprinting.concatenated
 import edu.cornell.cs.apl.prettyprinting.joined
@@ -66,13 +67,13 @@ class DeclarationNode(
 
             return when (constructor.className.value) {
                 ImmutableCell -> {
-                    val label = constructor.labelArguments?.get(0) ?: Document()
+                    val label = constructor.labelArguments?.braced() ?: Document()
                     keyword("val") * variable + Document(":") *
                         constructor.typeArguments[0] + label * "=" * constructor.arguments[0]
                 }
 
                 MutableCell -> {
-                    val label = constructor.labelArguments?.get(0) ?: Document()
+                    val label = constructor.labelArguments?.braced() ?: Document()
                     keyword("var") * variable + Document(":") *
                         constructor.typeArguments[0] + label * "=" * constructor.arguments[0]
                 }
@@ -81,7 +82,7 @@ class DeclarationNode(
                     val types = constructor.typeArguments.bracketed().nested()
                     // TODO: labels should have braces
                     //   val labels = labelArguments?.braced()?.nested() ?: Document()
-                    val labels = constructor.labelArguments?.joined() ?: Document()
+                    val labels = constructor.labelArguments?.braced() ?: Document()
                     val arguments = constructor.arguments.tupled().nested()
                     keyword("val") * variable * "=" * constructor.className + types + labels + arguments
                 }

@@ -3,6 +3,7 @@ package edu.cornell.cs.apl.viaduct.errors
 import edu.cornell.cs.apl.prettyprinting.Document
 import edu.cornell.cs.apl.prettyprinting.div
 import edu.cornell.cs.apl.viaduct.security.Label
+import edu.cornell.cs.apl.viaduct.security.LabelIntegrity
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.DeclassificationNode
 
 /**
@@ -28,5 +29,5 @@ class IntegrityChangingDeclassificationError(private val node: DeclassificationN
                 Document("Original integrity of the expression:")
                     .withData(fromIntegrity) /
                 Document("Output integrity:")
-                    .withData(node.toLabel.value.integrity())
+                    .withData(LabelIntegrity(node.toLabel.value))
 }

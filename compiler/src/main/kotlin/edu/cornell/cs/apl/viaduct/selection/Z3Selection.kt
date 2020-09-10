@@ -96,17 +96,26 @@ private class Z3Selection(
             protocolFactory.viableProtocols(this)
         }
 
-        fun viableProtocols(node: LetNode): Set<Protocol> = node.viableProtocols.filter {
-            it.authority(hostTrustConfiguration).actsFor(informationFlowAnalysis.label(node))
-        }.toSet()
+        fun viableProtocols(node: LetNode): Set<Protocol> {
+            val label = informationFlowAnalysis.label(node)
+            return node.viableProtocols.filter {
+                it.authority(hostTrustConfiguration).actsFor(label)
+            }.toSet()
+        }
 
-        fun viableProtocols(node: DeclarationNode): Set<Protocol> = node.viableProtocols.filter {
-            it.authority(hostTrustConfiguration).actsFor(informationFlowAnalysis.label(node))
-        }.toSet()
+        fun viableProtocols(node: DeclarationNode): Set<Protocol> {
+            val label = informationFlowAnalysis.label(node)
+            return node.viableProtocols.filter {
+                it.authority(hostTrustConfiguration).actsFor(label)
+            }.toSet()
+        }
 
-        fun viableProtocols(node: ParameterNode): Set<Protocol> = node.viableProtocols.filter {
-            it.authority(hostTrustConfiguration).actsFor(informationFlowAnalysis.label(node))
-        }.toSet()
+        fun viableProtocols(node: ParameterNode): Set<Protocol> {
+            val label = informationFlowAnalysis.label(node)
+            return node.viableProtocols.filter {
+                it.authority(hostTrustConfiguration).actsFor(label)
+            }.toSet()
+        }
     }
 
     private fun Node.constraints(): Set<SelectionConstraint> {

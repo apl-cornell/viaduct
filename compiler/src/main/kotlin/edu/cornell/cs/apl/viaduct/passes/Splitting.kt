@@ -22,7 +22,6 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.FunctionDeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.IfNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.InfiniteLoopNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.LetNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.Node
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProcessDeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ReadNode
@@ -31,6 +30,7 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.SendNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.SimpleStatementNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.StatementNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.TopLevelDeclarationNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.deepCopy
 import edu.cornell.cs.apl.viaduct.util.FreshNameGenerator
 
 class Splitter(
@@ -102,7 +102,7 @@ class Splitter(
                         result
                     }
 
-                    is FunctionCallNode ->
+                    is FunctionCallNode -> {
                         listOf(
                             FunctionCallNode(
                                 Located(
@@ -118,6 +118,7 @@ class Splitter(
                                 it.sourceLocation
                             )
                         )
+                    }
 
                     is IfNode ->
                         listOf(
@@ -200,7 +201,6 @@ class Splitter(
         fun splitMain(): ProgramNode {
             // Assert that the program has a main
             program.main
-
             val splitDeclarations: MutableList<TopLevelDeclarationNode> = mutableListOf()
             for (declaration in program.declarations) {
                 when {
@@ -220,10 +220,6 @@ class Splitter(
 
             return ProgramNode(splitDeclarations, program.sourceLocation)
         }
-
-        /** Like [Node.copy], but recursively copies all descendant nodes also.*/
-        private fun Node.deepCopy(): Node =
-            this.copy(this.children.toList().map { it.deepCopy() })
     }
 
     fun splitMain(): ProgramNode =

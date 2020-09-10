@@ -7,12 +7,12 @@ import edu.cornell.cs.apl.viaduct.errors.IncorrectNumberOfArgumentsError
 import edu.cornell.cs.apl.viaduct.errors.NameClashError
 import edu.cornell.cs.apl.viaduct.errors.UndefinedNameError
 import edu.cornell.cs.apl.viaduct.protocols.Adversary
-import edu.cornell.cs.apl.viaduct.security.Label
 import edu.cornell.cs.apl.viaduct.syntax.Arguments
 import edu.cornell.cs.apl.viaduct.syntax.ClassNameNode
 import edu.cornell.cs.apl.viaduct.syntax.FunctionName
 import edu.cornell.cs.apl.viaduct.syntax.Host
 import edu.cornell.cs.apl.viaduct.syntax.JumpLabel
+import edu.cornell.cs.apl.viaduct.syntax.LabelNode
 import edu.cornell.cs.apl.viaduct.syntax.Located
 import edu.cornell.cs.apl.viaduct.syntax.Name
 import edu.cornell.cs.apl.viaduct.syntax.NameMap
@@ -121,27 +121,7 @@ class NameAnalysis private constructor(private val tree: Tree<Node, ProgramNode>
             is FunctionCallNode ->
                 it.arguments
                     .filterIsInstance<ObjectDeclarationArgumentNode>()
-                    .map { arg ->
-                        val parameter = parameter(arg)
-                        val argDecl = object : ObjectDeclaration {
-                            override val name: ObjectVariableNode
-                                get() = arg.name
-
-                            override val className: ClassNameNode
-                                get() = parameter.className
-
-                            override val typeArguments: Arguments<ValueTypeNode>
-                                get() = parameter.typeArguments
-
-                            override val labelArguments: Arguments<Located<Label>>?
-                                get() = parameter.labelArguments
-
-                            override val declarationAsNode: Node
-                                get() = arg
-                        }
-
-                        Pair(arg.name, argDecl)
-                    }
+                    .map { arg -> Pair(arg.name, asObjectDeclaration(arg)) }
 
             else -> listOf()
         }
@@ -263,6 +243,26 @@ class NameAnalysis private constructor(private val tree: Tree<Node, ProgramNode>
         return when {
             parameter is ParameterNode && parameter.isOutParameter -> parameter
             else -> throw UndefinedNameError(parameter.name)
+        }
+    }
+
+    fun asObjectDeclaration(node: ObjectDeclarationArgumentNode): ObjectDeclaration {
+        val parameter = parameter(node)
+        return object : ObjectDeclaration {
+            override val name: ObjectVariableNode
+                get() = node.name
+
+            override val className: ClassNameNode
+                get() = parameter.className
+
+            override val typeArguments: Arguments<ValueTypeNode>
+                get() = parameter.typeArguments
+
+            override val labelArguments: Arguments<LabelNode>?
+                get() = parameter.labelArguments
+
+            override val declarationAsNode: Node
+                get() = node
         }
     }
 
@@ -454,6 +454,16 @@ class NameAnalysis private constructor(private val tree: Tree<Node, ProgramNode>
         }
     }
 
+    /** Get the call sites for a function. */
+    private val FunctionDeclarationNode.calls: Set<FunctionCallNode> by collectedAttribute(tree) { node ->
+        when (node) {
+            is FunctionCallNode -> listOf(declaration(node) to node)
+            else -> listOf()
+        }
+    }
+
+    fun calls(function: FunctionDeclarationNode): Set<FunctionCallNode> = function.calls
+
     /**
      * Asserts that every referenced [Name] has a declaration, and that no [Name] is declared
      * multiple times in the same scope.
@@ -520,7 +530,7 @@ class NameAnalysis private constructor(private val tree: Tree<Node, ProgramNode>
     companion object : AnalysisProvider<NameAnalysis> {
         private val ProgramNode.instance: NameAnalysis by attribute { NameAnalysis(this.tree) }
 
-        private val MAIN_FUNCTION = FunctionName("#main#")
+        val MAIN_FUNCTION = FunctionName("#main#")
 
         override fun get(program: ProgramNode): NameAnalysis = program.instance
     }

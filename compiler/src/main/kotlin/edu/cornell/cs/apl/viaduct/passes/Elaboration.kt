@@ -5,6 +5,7 @@ import edu.cornell.cs.apl.viaduct.errors.JumpOutsideLoopScopeError
 import edu.cornell.cs.apl.viaduct.syntax.Arguments
 import edu.cornell.cs.apl.viaduct.syntax.JumpLabel
 import edu.cornell.cs.apl.viaduct.syntax.JumpLabelNode
+import edu.cornell.cs.apl.viaduct.syntax.LabelNode
 import edu.cornell.cs.apl.viaduct.syntax.Located
 import edu.cornell.cs.apl.viaduct.syntax.NameMap
 import edu.cornell.cs.apl.viaduct.syntax.ObjectVariable
@@ -125,6 +126,17 @@ fun SProgramNode.elaborated(): IProgramNode {
     return IProgramNode(declarations, this.sourceLocation)
 }
 
+private fun renameLabel(
+    objectRenames: NameMap<ObjectVariable, ObjectVariable>,
+    labelNode: LabelNode
+): LabelNode {
+    val renamer = { param: String ->
+        objectRenames[Located(ObjectVariable(param), labelNode.sourceLocation)].name
+    }
+
+    return Located(labelNode.value.rename(renamer), labelNode.sourceLocation)
+}
+
 private class FunctionElaborator(
     val nameGenerator: FreshNameGenerator
 ) {
@@ -134,15 +146,23 @@ private class FunctionElaborator(
         val elaboratedParameters = mutableListOf<IParameterNode>()
         for (parameter in functionDecl.parameters) {
             val newName = ObjectVariable(nameGenerator.getFreshName(parameter.name.value.name))
-            val newLocatedName = Located(newName, parameter.name.sourceLocation)
             objectRenames = objectRenames.put(parameter.name, newName)
+        }
+
+        for (parameter in functionDecl.parameters) {
+            val newLocatedName = Located(objectRenames[parameter.name], parameter.name.sourceLocation)
             val elaboratedParameter =
                 IParameterNode(
                     newLocatedName,
                     parameter.parameterDirection,
                     parameter.className,
                     parameter.typeArguments,
-                    parameter.labelArguments,
+                    parameter.labelArguments?.let {
+                        Arguments(
+                            it.map { arg -> renameLabel(objectRenames, arg) },
+                            it.sourceLocation
+                        )
+                    },
                     parameter.sourceLocation
                 )
             elaboratedParameters.add(elaboratedParameter)
@@ -150,7 +170,7 @@ private class FunctionElaborator(
 
         return IFunctionDeclarationNode(
             functionDecl.name,
-            functionDecl.pcLabel,
+            functionDecl.pcLabel?.let { renameLabel(objectRenames, it) },
             Arguments(elaboratedParameters, functionDecl.parameters.sourceLocation),
             StatementElaborator(nameGenerator, objectRenames).elaborate(functionDecl.body),
             functionDecl.sourceLocation
@@ -368,7 +388,12 @@ private class StatementElaborator(
                                 ObjectVariableNode(newName, stmt.variable.sourceLocation),
                                 initializer.className,
                                 initializer.typeArguments,
-                                initializer.labelArguments,
+                                initializer.labelArguments?.let {
+                                    Arguments(
+                                        it.map { arg -> renameLabel(objectRenames, arg) },
+                                        it.sourceLocation
+                                    )
+                                },
                                 newArguments,
                                 stmt.sourceLocation
                             )
@@ -403,7 +428,12 @@ private class StatementElaborator(
                                 IOutParameterConstructorInitializerNode(
                                     rhs.className,
                                     rhs.typeArguments,
-                                    rhs.labelArguments,
+                                    rhs.labelArguments?.let {
+                                        Arguments(
+                                            it.map { arg -> renameLabel(objectRenames, arg) },
+                                            it.sourceLocation
+                                        )
+                                    },
                                     Arguments(
                                         rhs.arguments.map { it.toAnf(bindings).toAtomic(bindings) },
                                         rhs.arguments.sourceLocation

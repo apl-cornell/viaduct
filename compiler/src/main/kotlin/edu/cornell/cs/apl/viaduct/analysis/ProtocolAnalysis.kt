@@ -110,6 +110,21 @@ class ProtocolAnalysis(
             .toPersistentSet()
     }
 
+    private val FunctionDeclarationNode.protocols: PersistentSet<Protocol> by circularAttribute(
+        persistentHashSetOf()
+    ) {
+        this.parameters
+            .fold(persistentSetOf<Protocol>()) { acc, param ->
+                acc.add(protocolAssignment(this.name.value, param.name.value))
+            }
+            .addAll(this.body.protocols)
+            .addAll(
+                nameAnalysis.calls(this).fold(persistentSetOf<Protocol>()) { acc, call ->
+                    acc.addAll(call.protocols)
+                }
+            )
+    }
+
     /** Used to compute [protocols]. */
     private val StatementNode.protocols: PersistentSet<Protocol> by circularAttribute(
         persistentHashSetOf()
@@ -130,11 +145,8 @@ class ProtocolAnalysis(
             // also need to add primary protocols for arguments
             // and all protocols participating in the function body
             is FunctionCallNode ->
-                this.arguments.fold(persistentSetOf<Protocol>()) { acc, arg ->
-                    acc.add(primaryProtocol(nameAnalysis.parameter(arg)))
-                }
-                .addAll(nameAnalysis.declaration(this).body.protocols)
-                .addAll(this.enclosingBlock.protocols)
+                nameAnalysis.declaration(this).protocols
+                    .addAll(this.enclosingBlock.protocols)
 
             is IfNode ->
                 thenBranch.protocols.addAll(elseBranch.protocols)
@@ -156,10 +168,7 @@ class ProtocolAnalysis(
     fun protocols(statement: StatementNode): Set<Protocol> = statement.protocols
 
     /** Returns the set of protocols that execute [function]. */
-    fun protocols(function: FunctionDeclarationNode): Set<Protocol> =
-        function.parameters
-            .fold(persistentSetOf<Protocol>()) { acc, param -> acc.add(protocolAssignment(function.name.value, param.name.value)) }
-            .addAll(function.body.protocols)
+    fun protocols(function: FunctionDeclarationNode): Set<Protocol> = function.protocols
 }
 
 /** Returns the union of all sets in this collection. */

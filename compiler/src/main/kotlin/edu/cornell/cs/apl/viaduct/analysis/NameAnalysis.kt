@@ -454,6 +454,16 @@ class NameAnalysis private constructor(private val tree: Tree<Node, ProgramNode>
         }
     }
 
+    /** Get the call sites for a function. */
+    private val FunctionDeclarationNode.calls: Set<FunctionCallNode> by collectedAttribute(tree) { node ->
+        when (node) {
+            is FunctionCallNode -> listOf(declaration(node) to node)
+            else -> listOf()
+        }
+    }
+
+    fun calls(function: FunctionDeclarationNode): Set<FunctionCallNode> = function.calls
+
     /**
      * Asserts that every referenced [Name] has a declaration, and that no [Name] is declared
      * multiple times in the same scope.

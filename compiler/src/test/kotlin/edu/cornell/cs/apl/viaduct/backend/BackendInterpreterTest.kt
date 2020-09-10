@@ -5,6 +5,7 @@ import edu.cornell.cs.apl.viaduct.analysis.ProtocolAnalysis
 import edu.cornell.cs.apl.viaduct.passes.Splitter
 import edu.cornell.cs.apl.viaduct.passes.check
 import edu.cornell.cs.apl.viaduct.passes.elaborated
+import edu.cornell.cs.apl.viaduct.passes.specialize
 import edu.cornell.cs.apl.viaduct.protocols.HostInterface
 import edu.cornell.cs.apl.viaduct.selection.SimpleSelection
 import edu.cornell.cs.apl.viaduct.selection.simpleProtocolCost
@@ -39,7 +40,7 @@ internal class BackendInterpreterTest {
     @ParameterizedTest
     @ArgumentsSource(ExampleProgramProvider::class)
     fun testInterpreter(surfaceProgram: ProgramNode) {
-        val program = surfaceProgram.elaborated()
+        val program = surfaceProgram.elaborated().specialize()
 
         // Perform static checks.
         program.check()

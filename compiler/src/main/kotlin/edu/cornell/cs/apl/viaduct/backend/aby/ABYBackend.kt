@@ -1,5 +1,10 @@
 package edu.cornell.cs.apl.viaduct.backend.aby
 
+import de.tu_darmstadt.cs.encrypto.aby.ABYParty
+import de.tu_darmstadt.cs.encrypto.aby.Circuit
+import de.tu_darmstadt.cs.encrypto.aby.Role
+import de.tu_darmstadt.cs.encrypto.aby.Share
+import de.tu_darmstadt.cs.encrypto.aby.SharingType
 import edu.cornell.cs.apl.viaduct.analysis.TypeAnalysis
 import edu.cornell.cs.apl.viaduct.backend.AbstractBackendInterpreter
 import edu.cornell.cs.apl.viaduct.backend.HostAddress
@@ -47,14 +52,11 @@ import edu.cornell.cs.apl.viaduct.syntax.operators.Addition
 import edu.cornell.cs.apl.viaduct.syntax.operators.And
 import edu.cornell.cs.apl.viaduct.syntax.operators.EqualTo
 import edu.cornell.cs.apl.viaduct.syntax.operators.LessThan
-import edu.cornell.cs.apl.viaduct.syntax.operators.LessThanOrEqualTo
 import edu.cornell.cs.apl.viaduct.syntax.operators.Maximum
 import edu.cornell.cs.apl.viaduct.syntax.operators.Minimum
 import edu.cornell.cs.apl.viaduct.syntax.operators.Multiplication
 import edu.cornell.cs.apl.viaduct.syntax.operators.Mux
 import edu.cornell.cs.apl.viaduct.syntax.operators.Negation
-import edu.cornell.cs.apl.viaduct.syntax.operators.Not
-import edu.cornell.cs.apl.viaduct.syntax.operators.Or
 import edu.cornell.cs.apl.viaduct.syntax.operators.Subtraction
 import edu.cornell.cs.apl.viaduct.syntax.types.BooleanType
 import edu.cornell.cs.apl.viaduct.syntax.types.IntegerType
@@ -62,10 +64,10 @@ import edu.cornell.cs.apl.viaduct.syntax.types.ValueType
 import edu.cornell.cs.apl.viaduct.syntax.values.BooleanValue
 import edu.cornell.cs.apl.viaduct.syntax.values.IntegerValue
 import edu.cornell.cs.apl.viaduct.syntax.values.Value
-import java.util.SortedSet
-import java.util.Stack
 import kotlinx.collections.immutable.PersistentMap
 import kotlinx.collections.immutable.persistentMapOf
+import java.util.SortedSet
+import java.util.Stack
 
 /** Backend for the ABY MPC framework. */
 class ABYBackend : ProtocolBackend {
@@ -73,7 +75,8 @@ class ABYBackend : ProtocolBackend {
         private const val DEFAULT_PORT = 7766
     }
 
-    private var aby: ViaductABYParty? = null
+    private var aby: ABYParty? = null
+    private var role: Role? = null
 
     override fun initialize(connectionMap: Map<Host, HostAddress>, projection: ProtocolProjection) {
         System.loadLibrary("ViaductABY")
@@ -84,18 +87,17 @@ class ABYBackend : ProtocolBackend {
         val sortedHosts: SortedSet<Host> = protocolHosts.toSortedSet()
 
         // lowest host is the server
-        val role: ABYRole
         val otherHost: Host
         if (sortedHosts.first() == projection.host) {
-            role = ABYRole.ABY_SERVER
+            role = Role.SERVER
             otherHost = sortedHosts.last()
         } else {
-            role = ABYRole.ABY_CLIENT
+            role = Role.CLIENT
             otherHost = sortedHosts.first()
         }
 
         val otherHostAddress: HostAddress = connectionMap[otherHost]!!
-        aby = ViaductABYParty(role, otherHostAddress.ipAddress, DEFAULT_PORT)
+        aby = ABYParty(role, otherHostAddress.ipAddress, otherHostAddress.port)
     }
 
     override suspend fun run(
@@ -103,8 +105,8 @@ class ABYBackend : ProtocolBackend {
         program: ProgramNode,
         process: BlockNode
     ) {
-        if (aby != null) {
-            val interpreter = ABYInterpreter(aby!!, program, runtime)
+        if (aby != null || role != null) {
+            val interpreter = ABYInterpreter(aby!!, role!!, program, runtime)
 
             try {
                 interpreter.run(process)
@@ -121,16 +123,103 @@ class ABYBackend : ProtocolBackend {
     }
 }
 
+class ABYCircuitBuilder(
+    val circuit: Circuit,
+    val bitlen: Long,
+    val role: Role
+)
+
+enum class ABYOperation {
+    SUB_GATE {
+        override val numOperands = 2
+        override fun buildABYGate(circuit: Circuit, children: List<Share>): Share =
+            circuit.putSUBGate(children[0], children[1])
+    },
+    ADD_GATE {
+        override val numOperands = 2
+        override fun buildABYGate(circuit: Circuit, children: List<Share>): Share =
+            circuit.putADDGate(children[0], children[1])
+    },
+    MUL_GATE {
+        override val numOperands = 2
+        override fun buildABYGate(circuit: Circuit, children: List<Share>): Share =
+            circuit.putMULGate(children[0], children[1])
+    },
+    AND_GATE {
+        override val numOperands = 2
+        override fun buildABYGate(circuit: Circuit, children: List<Share>): Share =
+            circuit.putANDGate(children[0], children[1])
+    },
+
+    /*
+    INV_GATE {
+        override val numOperands = 1
+        override fun buildABYGate(circuit: Circuit, children: List<Share>): Share =
+            circuit.putINVGate(children[0].)
+    },
+    */
+    GT_GATE {
+        override val numOperands = 2
+        override fun buildABYGate(circuit: Circuit, children: List<Share>): Share =
+            circuit.putGTGate(children[0], children[1])
+    },
+    EQ_GATE {
+        override val numOperands = 2
+        override fun buildABYGate(circuit: Circuit, children: List<Share>): Share =
+            circuit.putEQGate(children[0], children[1])
+    },
+    MUX_GATE {
+        override val numOperands = 3
+        override fun buildABYGate(circuit: Circuit, children: List<Share>): Share =
+            circuit.putMUXGate(children[0], children[1], children[2])
+    };
+
+    abstract val numOperands: Int
+    abstract fun buildABYGate(circuit: Circuit, children: List<Share>): Share
+}
+
+sealed class ABYCircuitGate(val children: List<ABYCircuitGate>) {
+    abstract fun buildABYGate(builder: ABYCircuitBuilder, children: List<Share>): Share
+}
+
+class ABYInGate(val value: Int) : ABYCircuitGate(listOf()) {
+    override fun buildABYGate(builder: ABYCircuitBuilder, children: List<Share>): Share =
+        builder.circuit.putINGate(value.toBigInteger(), builder.bitlen, builder.role)
+}
+
+class ABYDummyInGate : ABYCircuitGate(listOf()) {
+    override fun buildABYGate(builder: ABYCircuitBuilder, children: List<Share>): Share =
+        builder.circuit.putDummyINGate(builder.bitlen)
+}
+
+class ABYConstGate(val value: Int) : ABYCircuitGate(listOf()) {
+    override fun buildABYGate(builder: ABYCircuitBuilder, children: List<Share>): Share =
+        builder.circuit.putCONSGate(value.toBigInteger(), builder.bitlen)
+}
+
+class ABYOperationGate(
+    val operation: ABYOperation,
+    operands: List<ABYCircuitGate>
+) : ABYCircuitGate(operands) {
+    override fun buildABYGate(builder: ABYCircuitBuilder, children: List<Share>): Share =
+        operation.buildABYGate(builder.circuit, children)
+}
+
 private class ABYInterpreter(
-    private val aby: ViaductABYParty,
+    private val aby: ABYParty,
+    private val role: Role,
     program: ProgramNode,
     private val runtime: ViaductProcessRuntime
 ) : AbstractBackendInterpreter<ABYInterpreter.ABYClassObject>(program) {
+    companion object {
+        val BITLEN: Long = 64
+    }
+
     private val typeAnalysis = TypeAnalysis.get(program)
 
-    private val ssTempStoreStack: Stack<PersistentMap<Temporary, CircuitGate>> = Stack()
+    private val ssTempStoreStack: Stack<PersistentMap<Temporary, ABYCircuitGate>> = Stack()
 
-    private var ssTempStore: PersistentMap<Temporary, CircuitGate>
+    private var ssTempStore: PersistentMap<Temporary, ABYCircuitGate>
         get() {
             return ssTempStoreStack.peek()
         }
@@ -160,7 +249,7 @@ private class ABYInterpreter(
 
     private fun pushContext(
         newObjectStore: PersistentMap<ObjectVariable, ObjectLocation>,
-        newSsTempStore: PersistentMap<Temporary, CircuitGate>,
+        newSsTempStore: PersistentMap<Temporary, ABYCircuitGate>,
         newCtTempStore: PersistentMap<Temporary, Value>
     ) {
         objectStoreStack.push(newObjectStore)
@@ -232,20 +321,20 @@ private class ABYInterpreter(
         return ABYNullObject
     }
 
-    private fun valueToCircuit(value: Value, isInput: Boolean = false): CircuitGate {
+    private fun valueToCircuit(value: Value, isInput: Boolean = false): ABYCircuitGate {
         return when (value) {
             is BooleanValue ->
                 if (isInput) {
-                    aby.PutINGate(if (value.value) 1 else 0)
+                    ABYInGate(if (value.value) 1 else 0)
                 } else {
-                    aby.PutCONSTGate(if (value.value) 1 else 0)
+                    ABYConstGate(if (value.value) 1 else 0)
                 }
 
             is IntegerValue ->
                 if (isInput) {
-                    aby.PutINGate(value.value)
+                    ABYInGate(value.value)
                 } else {
-                    aby.PutCONSTGate(value.value)
+                    ABYConstGate(value.value)
                 }
 
             else -> throw Exception("unknown value type")
@@ -262,7 +351,7 @@ private class ABYInterpreter(
         }
     }
 
-    suspend fun runSecretSharedExpr(expr: PureExpressionNode): CircuitGate {
+    suspend fun runSecretSharedExpr(expr: PureExpressionNode): ABYCircuitGate {
         return when (expr) {
             is LiteralNode -> valueToCircuit(expr.value)
 
@@ -270,7 +359,7 @@ private class ABYInterpreter(
                 ssTempStore[expr.temporary.value]!!
 
             is OperatorApplicationNode -> {
-                val circuitArguments: List<CircuitGate> = expr.arguments.map { arg -> runSecretSharedExpr(arg) }
+                val circuitArguments: List<ABYCircuitGate> = expr.arguments.map { arg -> runSecretSharedExpr(arg) }
                 operatorToCircuit(expr.operator, circuitArguments)
             }
 
@@ -296,7 +385,7 @@ private class ABYInterpreter(
                     ctTempStore = ctTempStore.put(stmt.temporary.value, receivedValue)
                     ssTempStore = ssTempStore.put(stmt.temporary.value, valueToCircuit(receivedValue, isInput = true))
                 } else {
-                    ssTempStore = ssTempStore.put(stmt.temporary.value, aby.PutDummyINGate())
+                    ssTempStore = ssTempStore.put(stmt.temporary.value, ABYDummyInGate())
                 }
             }
 
@@ -311,6 +400,49 @@ private class ABYInterpreter(
         getObject(getObjectLocation(stmt.variable.value)).update(stmt.update, stmt.arguments)
     }
 
+    fun buildABYCircuit(outGate: ABYCircuitGate): Share {
+        val circuitBuilder =
+            ABYCircuitBuilder(
+                aby.getCircuitBuilder(SharingType.S_YAO)!!,
+                BITLEN,
+                role
+            )
+
+        // pre-order traversal of circuit
+        val traverseStack = Stack<ABYCircuitGate>()
+
+        // post-order traversal of circuit
+        val exprStack = Stack<ABYCircuitGate>()
+
+        // actual ABY circuit
+        val shareStack = Stack<Share>()
+
+        traverseStack.push(outGate)
+
+        // build post-order traversal
+        while (traverseStack.isNotEmpty()) {
+            val curGate: ABYCircuitGate = traverseStack.pop()!!
+            exprStack.push(curGate)
+            for (child: ABYCircuitGate in curGate.children) {
+                traverseStack.push(child)
+            }
+        }
+
+        // "evaluate" stack as a reverse Polish expression by building the ABY circuit
+        while (exprStack.isNotEmpty()) {
+            val curGate: ABYCircuitGate = exprStack.pop()!!
+            val numChildren = curGate.children.size
+            val childrenShares: MutableList<Share> = mutableListOf()
+            for (i in 1..numChildren) {
+                childrenShares.add(shareStack.pop())
+            }
+            shareStack.push(curGate.buildABYGate(circuitBuilder, childrenShares))
+        }
+
+        assert(shareStack.size == 1)
+        return circuitBuilder.circuit.putOUTGate(shareStack.peek()!!, Role.ALL)
+    }
+
     // actually perform MPC protocol and declassify output
     override suspend fun runSend(stmt: SendNode) {
         val sendValue: Value =
@@ -320,12 +452,17 @@ private class ABYInterpreter(
                 }
 
                 is ReadNode -> {
-                    val outGate: CircuitGate =
+                    /*
+                    val outGate: ABYCircuitGate =
                         ssTempStore[msg.temporary.value]
                             ?: throw UndefinedNameError(msg.temporary)
 
-                    aby.Reset()
-                    val result: Int = aby.ExecCircuit(outGate)
+                    aby.reset()
+                    val outShare = buildABYCircuit(outGate)
+                    aby.execCircuit()
+                    val result = outShare.clearValue32.toInt()
+                     */
+                    val result = 1
 
                     when (val msgType: ValueType = typeAnalysis.type(msg)) {
                         is BooleanType -> BooleanValue(result != 0)
@@ -346,69 +483,122 @@ private class ABYInterpreter(
         throw Exception("cannot perform I/O in non-Local protocol")
     }
 
-    fun operatorToCircuit(operator: Operator, arguments: List<CircuitGate>): CircuitGate {
+    fun operatorToCircuit(operator: Operator, arguments: List<ABYCircuitGate>): ABYCircuitGate {
         return when (operator) {
-            is Negation -> aby.PutSUBGate(aby.PutCONSTGate(0), arguments[0])
+            is Negation ->
+                ABYOperationGate(
+                    ABYOperation.SUB_GATE,
+                    listOf(ABYConstGate(0), arguments[0])
+                )
 
-            is Addition -> aby.PutADDGate(arguments[0], arguments[1])
+            is Addition ->
+                ABYOperationGate(
+                    ABYOperation.ADD_GATE,
+                    listOf(arguments[0], arguments[1])
+                )
 
-            is Subtraction -> aby.PutSUBGate(arguments[0], arguments[1])
+            is Subtraction ->
+                ABYOperationGate(
+                    ABYOperation.SUB_GATE,
+                    listOf(arguments[0], arguments[1])
+                )
 
-            is Multiplication -> aby.PutMULGate(arguments[0], arguments[1])
+            is Multiplication ->
+                ABYOperationGate(
+                    ABYOperation.MUL_GATE,
+                    listOf(arguments[0], arguments[1])
+                )
 
             is Minimum ->
-                aby.PutMUXGate(
-                    aby.PutGTGate(arguments[0], arguments[1]),
-                    arguments[1],
-                    arguments[0]
-                )
-
-            is Maximum ->
-                aby.PutMUXGate(
-                    aby.PutGTGate(arguments[0], arguments[1]),
-                    arguments[0],
-                    arguments[1]
-                )
-
-            // TODO: check if INV gate is actually NOT
-            is Not -> aby.PutINVGate(arguments[0])
-
-            is And -> aby.PutANDGate(arguments[0], arguments[1])
-
-            is Or -> aby.PutORGate(arguments[0], arguments[1])
-
-            // (a == b) <--> (a <= b && b <= a)
-            is EqualTo ->
-                aby.PutANDGate(
-                    aby.PutINVGate(
-                        aby.PutGTGate(arguments[0], arguments[1])
-                    ),
-                    aby.PutINVGate(
-                        aby.PutGTGate(arguments[1], arguments[0])
+                ABYOperationGate(
+                    ABYOperation.MUX_GATE,
+                    listOf(
+                        ABYOperationGate(ABYOperation.GT_GATE, listOf(arguments[0], arguments[1])),
+                        arguments[1],
+                        arguments[0]
                     )
                 )
 
-            is LessThan -> aby.PutGTGate(arguments[1], arguments[0])
-
-            is LessThanOrEqualTo ->
-                aby.PutINVGate(
-                    aby.PutGTGate(arguments[0], arguments[1])
+            is Maximum ->
+                ABYOperationGate(
+                    ABYOperation.MUX_GATE,
+                    listOf(
+                        ABYOperationGate(ABYOperation.GT_GATE, listOf(arguments[0], arguments[1])),
+                        arguments[0],
+                        arguments[1]
+                    )
                 )
 
-            is Mux -> aby.PutMUXGate(arguments[0], arguments[1], arguments[2])
+            // TODO: check if INV gate is actually NOT
+            /*
+            is Not ->
+                ABYOperationGate(
+                    ABYOperation.INV_GATE,
+                    listOf(arguments[0])
+                )
+             */
+
+            is And ->
+                ABYOperationGate(
+                    ABYOperation.AND_GATE,
+                    listOf(arguments[0], arguments[1])
+                )
+
+            /*
+            is Or ->
+                ABYOperationGate(
+                    ABYOperation.OR_GATE,
+                    listOf(arguments[0], arguments[1])
+                )
+             */
+
+            // (a == b) <--> (a <= b && b <= a)
+            is EqualTo ->
+                ABYOperationGate(
+                    ABYOperation.EQ_GATE,
+                    listOf(
+                        arguments[0],
+                        arguments[1],
+                    )
+                )
+
+            is LessThan ->
+                ABYOperationGate(
+                    ABYOperation.GT_GATE,
+                    listOf(arguments[1], arguments[0])
+                )
+
+            /*
+            is LessThanOrEqualTo ->
+                ABYOperationGate(
+                    ABYOperation.INV_GATE,
+                    listOf(
+                        ABYOperationGate(
+                            ABYOperation.GT_GATE,
+                            listOf(arguments[1], arguments[0])
+                        )
+                    )
+                )
+             */
+
+            is Mux ->
+                ABYOperationGate(
+                    ABYOperation.MUX_GATE,
+                    listOf(arguments[0], arguments[1], arguments[2])
+                )
 
             else -> throw Exception("operator $operator not supported by ABY backend")
         }
     }
 
     private abstract class ABYClassObject {
-        abstract suspend fun query(query: QueryNameNode, arguments: List<AtomicExpressionNode>): CircuitGate
+        abstract suspend fun query(query: QueryNameNode, arguments: List<AtomicExpressionNode>): ABYCircuitGate
 
         abstract suspend fun update(update: UpdateNameNode, arguments: List<AtomicExpressionNode>)
     }
 
-    inner class ABYImmutableCellObject(var gate: CircuitGate) : ABYClassObject() {
-        override suspend fun query(query: QueryNameNode, arguments: List<AtomicExpressionNode>): CircuitGate {
+    inner class ABYImmutableCellObject(var gate: ABYCircuitGate) : ABYClassObject() {
+        override suspend fun query(query: QueryNameNode, arguments: List<AtomicExpressionNode>): ABYCircuitGate {
             return when (query.value) {
                 is Get -> gate
 
@@ -421,8 +611,8 @@ private class ABYInterpreter(
         }
     }
 
-    inner class ABYMutableCellObject(var gate: CircuitGate) : ABYClassObject() {
-        override suspend fun query(query: QueryNameNode, arguments: List<AtomicExpressionNode>): CircuitGate {
+    inner class ABYMutableCellObject(var gate: ABYCircuitGate) : ABYClassObject() {
+        override suspend fun query(query: QueryNameNode, arguments: List<AtomicExpressionNode>): ABYCircuitGate {
             return when (query.value) {
                 is Get -> gate
 
@@ -437,7 +627,7 @@ private class ABYInterpreter(
                 }
 
                 is Modify -> {
-                    val circuitArg: CircuitGate = runSecretSharedExpr(arguments[0])
+                    val circuitArg: ABYCircuitGate = runSecretSharedExpr(arguments[0])
                     operatorToCircuit(update.value.operator, listOf(gate, circuitArg))
                 }
 
@@ -447,7 +637,7 @@ private class ABYInterpreter(
     }
 
     inner class ABYVectorObject(val size: Int, defaultValue: Value) : ABYClassObject() {
-        val gates: ArrayList<CircuitGate> = ArrayList(size)
+        val gates: ArrayList<ABYCircuitGate> = ArrayList(size)
 
         init {
             for (i: Int in 0 until size) {
@@ -455,7 +645,7 @@ private class ABYInterpreter(
             }
         }
 
-        override suspend fun query(query: QueryNameNode, arguments: List<AtomicExpressionNode>): CircuitGate {
+        override suspend fun query(query: QueryNameNode, arguments: List<AtomicExpressionNode>): ABYCircuitGate {
             return when (query.value) {
                 is Get -> {
                     val index = runExprAsValue(arguments[0]) as IntegerValue
@@ -475,7 +665,7 @@ private class ABYInterpreter(
                 }
 
                 is Modify -> {
-                    val circuitArg: CircuitGate = runSecretSharedExpr(arguments[1])
+                    val circuitArg: ABYCircuitGate = runSecretSharedExpr(arguments[1])
                     operatorToCircuit(update.value.operator, listOf(gates[index.value], circuitArg))
                 }
 
@@ -485,7 +675,7 @@ private class ABYInterpreter(
     }
 
     object ABYNullObject : ABYClassObject() {
-        override suspend fun query(query: QueryNameNode, arguments: List<AtomicExpressionNode>): CircuitGate {
+        override suspend fun query(query: QueryNameNode, arguments: List<AtomicExpressionNode>): ABYCircuitGate {
             throw Exception("runtime error")
         }
 

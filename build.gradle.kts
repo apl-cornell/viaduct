@@ -1,3 +1,5 @@
+import org.gradle.api.JavaVersion.VERSION_11
+
 plugins {
     kotlin("multiplatform") version "1.4.0" apply false
     id("org.jetbrains.dokka") version "0.10.1"
@@ -25,9 +27,11 @@ allprojects {
 
     /** Java Version */
 
-    tasks.withType<JavaCompile> {
-        sourceCompatibility = "11"
-        targetCompatibility = "11"
+    pluginManager.withPlugin("java") {
+        extensions.configure<JavaPluginExtension>("java") {
+            sourceCompatibility = VERSION_11
+            targetCompatibility = VERSION_11
+        }
     }
 
     tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {

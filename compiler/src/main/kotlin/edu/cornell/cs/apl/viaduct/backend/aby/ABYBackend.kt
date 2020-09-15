@@ -101,7 +101,7 @@ class ABYBackend : ProtocolBackend {
         }
 
         val otherHostAddress: HostAddress = connectionMap[otherHost]!!
-        aby = ABYParty(role, otherHostAddress.ipAddress, otherHostAddress.port)
+        aby = ABYParty(role, otherHostAddress.ipAddress, DEFAULT_PORT)
     }
 
     override suspend fun run(
@@ -374,7 +374,6 @@ private class ABYInterpreter(
                 }
 
                 is ReadNode -> {
-                    /*
                     val outGate: ABYCircuitGate =
                         ssTempStore[msg.temporary.value]
                             ?: throw UndefinedNameError(msg.temporary)
@@ -383,8 +382,6 @@ private class ABYInterpreter(
                     val outShare = buildABYCircuit(outGate)
                     aby.execCircuit()
                     val result = outShare.clearValue32.toInt()
-                     */
-                    val result = 1
 
                     when (val msgType: ValueType = typeAnalysis.type(msg)) {
                         is BooleanType -> BooleanValue(result != 0)

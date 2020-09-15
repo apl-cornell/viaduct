@@ -20,12 +20,6 @@ data class ProtocolProjection(
     }
 
     override fun compareTo(other: ProtocolProjection): Int {
-        val protocolCmp: Int = protocol.compareTo(other.protocol)
-
-        return if (protocolCmp == 0) {
-            host.compareTo(other.host)
-        } else {
-            return protocolCmp
-        }
+        return compareBy(ProtocolProjection::protocol, ProtocolProjection::host).compare(this, other)
     }
 }

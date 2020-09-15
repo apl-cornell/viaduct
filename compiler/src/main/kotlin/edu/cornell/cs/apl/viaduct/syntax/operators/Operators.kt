@@ -28,7 +28,7 @@ import kotlin.math.min
 object LogicalOperatorPrecedence : Precedence
 
 /** The precedence of [ComparisonOperator]s. */
-object ComparisionOperatorPrecedence : Precedence {
+object ComparisonOperatorPrecedence : Precedence {
     override fun compareTo(other: Precedence): Order {
         return if (other is LogicalOperatorPrecedence)
             Order.HIGHER
@@ -40,7 +40,7 @@ object ComparisionOperatorPrecedence : Precedence {
 /** The precedence of [Addition] and [Subtraction]. */
 object AdditiveOperatorPrecedence : Precedence {
     override fun compareTo(other: Precedence): Order {
-        return if (other is LogicalOperatorPrecedence || other is ComparisionOperatorPrecedence)
+        return if (other is LogicalOperatorPrecedence || other is ComparisonOperatorPrecedence)
             Order.HIGHER
         else
             super.compareTo(other)
@@ -50,7 +50,7 @@ object AdditiveOperatorPrecedence : Precedence {
 /** The precedence of [Multiplication] and [Division]. */
 object MultiplicativeOperatorPrecedence : Precedence {
     override fun compareTo(other: Precedence): Order {
-        return if (other is LogicalOperatorPrecedence || other is ComparisionOperatorPrecedence || other is AdditiveOperatorPrecedence)
+        return if (other is LogicalOperatorPrecedence || other is ComparisonOperatorPrecedence || other is AdditiveOperatorPrecedence)
             Order.HIGHER
         else
             super.compareTo(other)
@@ -121,7 +121,7 @@ abstract class ComparisonOperator : BinaryInfixOperator() {
         get() = Associativity.NON
 
     final override val precedence: Precedence
-        get() = ComparisionOperatorPrecedence
+        get() = ComparisonOperatorPrecedence
 
     final override val type: FunctionType
         get() = FunctionType(IntegerType, IntegerType, result = BooleanType)

@@ -198,31 +198,35 @@ private class PlaintextInterpreter(
                         val sendingHosts: Set<Host> = sendProtocol.hosts.intersect(projection.protocol.hosts)
                         val receivingHosts: Set<Host> = sendProtocol.hosts.minus(projection.protocol.hosts)
 
-                        return if (!sendingHosts.isEmpty()) { // at least one copy of the Replication process receives
-                            // do actual receive
-                            val receivedValue: Value =
-                                runtime.receive(ProtocolProjection(sendProtocol, projection.host))
-
-                            // broadcast to projections that did not receive
-                            for (receivingHost: Host in receivingHosts) {
-                                runtime.send(receivedValue, ProtocolProjection(projection.protocol, receivingHost))
-                            }
-
-                            receivedValue
-                        } else { // copy of Repl process at host does not receive; receive from copies that did
-                            var finalValue: Value? = null
-                            for (sendingHost: Host in sendingHosts) {
+                        return if (sendingHosts.isNotEmpty()) { // at least one copy of the Replication process receives
+                            if (sendingHosts.contains(projection.host)) {
+                                // do actual receive
                                 val receivedValue: Value =
-                                    runtime.receive(ProtocolProjection(projection.protocol, sendingHost))
+                                    runtime.receive(ProtocolProjection(sendProtocol, projection.host))
 
-                                if (finalValue == null) {
-                                    finalValue = receivedValue
-                                } else if (finalValue != receivedValue) {
-                                    throw ViaductInterpreterError("received different values")
+                                // broadcast to projections that did not receive
+                                for (receivingHost: Host in receivingHosts) {
+                                    runtime.send(receivedValue, ProtocolProjection(projection.protocol, receivingHost))
                                 }
-                            }
 
-                            finalValue ?: throw ViaductInterpreterError("did not receive")
+                                receivedValue
+                            } else { // copy of Repl process at host does not receive; receive from copies that did
+                                var finalValue: Value? = null
+                                for (sendingHost: Host in sendingHosts) {
+                                    val receivedValue: Value =
+                                        runtime.receive(ProtocolProjection(projection.protocol, sendingHost))
+
+                                    if (finalValue == null) {
+                                        finalValue = receivedValue
+                                    } else if (finalValue != receivedValue) {
+                                        throw ViaductInterpreterError("received different values")
+                                    }
+                                }
+
+                                finalValue ?: throw ViaductInterpreterError("did not receive")
+                            }
+                        } else { // no copy can receive; we cannot compile this
+                            throw ViaductInterpreterError("backend compilation: at least one copy of Replication process must be able to receive")
                         }
                     }
 

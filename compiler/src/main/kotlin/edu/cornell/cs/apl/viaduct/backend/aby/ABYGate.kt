@@ -1,4 +1,4 @@
-package edu.cornell.cs.apl.viaduct.backend
+package edu.cornell.cs.apl.viaduct.backend.aby
 
 import de.tu_darmstadt.cs.encrypto.aby.Circuit
 import de.tu_darmstadt.cs.encrypto.aby.Role

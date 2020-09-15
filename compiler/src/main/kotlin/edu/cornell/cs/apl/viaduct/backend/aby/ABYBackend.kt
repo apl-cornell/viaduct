@@ -1,17 +1,11 @@
 package edu.cornell.cs.apl.viaduct.backend.aby
 
 import de.tu_darmstadt.cs.encrypto.aby.ABYParty
+import de.tu_darmstadt.cs.encrypto.aby.Aby
 import de.tu_darmstadt.cs.encrypto.aby.Role
 import de.tu_darmstadt.cs.encrypto.aby.Share
 import de.tu_darmstadt.cs.encrypto.aby.SharingType
 import edu.cornell.cs.apl.viaduct.analysis.TypeAnalysis
-import edu.cornell.cs.apl.viaduct.backend.ABYCircuitBuilder
-import edu.cornell.cs.apl.viaduct.backend.ABYCircuitGate
-import edu.cornell.cs.apl.viaduct.backend.ABYConstGate
-import edu.cornell.cs.apl.viaduct.backend.ABYDummyInGate
-import edu.cornell.cs.apl.viaduct.backend.ABYInGate
-import edu.cornell.cs.apl.viaduct.backend.ABYOperation
-import edu.cornell.cs.apl.viaduct.backend.ABYOperationGate
 import edu.cornell.cs.apl.viaduct.backend.AbstractBackendInterpreter
 import edu.cornell.cs.apl.viaduct.backend.HostAddress
 import edu.cornell.cs.apl.viaduct.backend.LoopBreakSignal
@@ -79,10 +73,12 @@ import kotlinx.collections.immutable.persistentMapOf
 class ABYBackend : ProtocolBackend {
     companion object {
         private const val DEFAULT_PORT = 7766
+        private const val BITLEN: Long = 32
     }
 
     private var aby: ABYParty? = null
     private var role: Role? = null
+    private var otherHost: Host? = null
 
     override fun initialize(connectionMap: Map<Host, HostAddress>, projection: ProtocolProjection) {
         val protocolHosts: Set<Host> = projection.protocol.hosts
@@ -91,7 +87,6 @@ class ABYBackend : ProtocolBackend {
         val sortedHosts: SortedSet<Host> = protocolHosts.toSortedSet()
 
         // lowest host is the server
-        val otherHost: Host
         if (sortedHosts.first() == projection.host) {
             role = Role.SERVER
             otherHost = sortedHosts.last()
@@ -101,7 +96,7 @@ class ABYBackend : ProtocolBackend {
         }
 
         val otherHostAddress: HostAddress = connectionMap[otherHost]!!
-        aby = ABYParty(role, otherHostAddress.ipAddress, DEFAULT_PORT)
+        aby = ABYParty(role, otherHostAddress.ipAddress, DEFAULT_PORT, Aby.getLT(), BITLEN)
     }
 
     override suspend fun run(
@@ -109,8 +104,8 @@ class ABYBackend : ProtocolBackend {
         program: ProgramNode,
         process: BlockNode
     ) {
-        if (aby != null || role != null) {
-            val interpreter = ABYInterpreter(aby!!, role!!, program, runtime)
+        if (aby != null && role != null && otherHost != null) {
+            val interpreter = ABYInterpreter(aby!!, role!!, otherHost!!, BITLEN, program, runtime)
 
             try {
                 interpreter.run(process)
@@ -130,12 +125,11 @@ class ABYBackend : ProtocolBackend {
 private class ABYInterpreter(
     private val aby: ABYParty,
     private val role: Role,
+    private val otherHost: Host,
+    private val bitlen: Long,
     program: ProgramNode,
     private val runtime: ViaductProcessRuntime
 ) : AbstractBackendInterpreter<ABYInterpreter.ABYClassObject>(program) {
-    companion object {
-        val BITLEN: Long = 64
-    }
 
     private val typeAnalysis = TypeAnalysis.get(program)
 
@@ -322,11 +316,11 @@ private class ABYInterpreter(
         getObject(getObjectLocation(stmt.variable.value)).update(stmt.update, stmt.arguments)
     }
 
-    fun buildABYCircuit(outGate: ABYCircuitGate): Share {
+    fun buildABYCircuit(outGate: ABYCircuitGate, recvProtocol: Protocol): Share {
         val circuitBuilder =
             ABYCircuitBuilder(
                 aby.getCircuitBuilder(SharingType.S_YAO)!!,
-                BITLEN,
+                bitlen,
                 role
             )
 
@@ -362,7 +356,22 @@ private class ABYInterpreter(
         }
 
         assert(shareStack.size == 1)
-        return circuitBuilder.circuit.putOUTGate(shareStack.peek()!!, Role.ALL)
+
+        val outRole =
+            when {
+                // only this party receives cleartext value of output gate
+                recvProtocol.hosts.contains(this.runtime.projection.host) && !recvProtocol.hosts.contains(this.otherHost) ->
+                    this.role
+
+                // only other party receives cleartext value of output gate
+                !recvProtocol.hosts.contains(this.runtime.projection.host) && recvProtocol.hosts.contains(this.otherHost) ->
+                    if (this.role == Role.SERVER) Role.CLIENT else Role.SERVER
+
+                // both parties receive cleartext value of output gate
+                else -> Role.ALL
+            }
+
+        return circuitBuilder.circuit.putOUTGate(shareStack.peek()!!, outRole)
     }
 
     // actually perform MPC protocol and declassify output
@@ -379,7 +388,7 @@ private class ABYInterpreter(
                             ?: throw UndefinedNameError(msg.temporary)
 
                     aby.reset()
-                    val outShare = buildABYCircuit(outGate)
+                    val outShare = buildABYCircuit(outGate, stmt.protocol.value)
                     aby.execCircuit()
                     val result = outShare.clearValue32.toInt()
 

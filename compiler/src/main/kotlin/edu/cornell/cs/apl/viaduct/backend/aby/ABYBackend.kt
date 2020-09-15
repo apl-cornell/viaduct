@@ -20,7 +20,6 @@ import edu.cornell.cs.apl.viaduct.syntax.Arguments
 import edu.cornell.cs.apl.viaduct.syntax.ClassNameNode
 import edu.cornell.cs.apl.viaduct.syntax.Host
 import edu.cornell.cs.apl.viaduct.syntax.ObjectVariable
-import edu.cornell.cs.apl.viaduct.syntax.Operator
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
 import edu.cornell.cs.apl.viaduct.syntax.QueryNameNode
 import edu.cornell.cs.apl.viaduct.syntax.Temporary
@@ -48,16 +47,6 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.ReadNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ReceiveNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.SendNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.UpdateNode
-import edu.cornell.cs.apl.viaduct.syntax.operators.Addition
-import edu.cornell.cs.apl.viaduct.syntax.operators.And
-import edu.cornell.cs.apl.viaduct.syntax.operators.EqualTo
-import edu.cornell.cs.apl.viaduct.syntax.operators.LessThan
-import edu.cornell.cs.apl.viaduct.syntax.operators.Maximum
-import edu.cornell.cs.apl.viaduct.syntax.operators.Minimum
-import edu.cornell.cs.apl.viaduct.syntax.operators.Multiplication
-import edu.cornell.cs.apl.viaduct.syntax.operators.Mux
-import edu.cornell.cs.apl.viaduct.syntax.operators.Negation
-import edu.cornell.cs.apl.viaduct.syntax.operators.Subtraction
 import edu.cornell.cs.apl.viaduct.syntax.types.BooleanType
 import edu.cornell.cs.apl.viaduct.syntax.types.IntegerType
 import edu.cornell.cs.apl.viaduct.syntax.types.ValueType
@@ -243,14 +232,14 @@ private class ABYInterpreter(
                 if (isInput) {
                     ABYInGate(if (value.value) 1 else 0)
                 } else {
-                    ABYConstGate(if (value.value) 1 else 0)
+                    ABYConstantGate(if (value.value) 1 else 0)
                 }
 
             is IntegerValue ->
                 if (isInput) {
                     ABYInGate(value.value)
                 } else {
-                    ABYConstGate(value.value)
+                    ABYConstantGate(value.value)
                 }
 
             else -> throw Exception("unknown value type")
@@ -352,7 +341,7 @@ private class ABYInterpreter(
             for (i in 1..numChildren) {
                 childrenShares.add(shareStack.pop())
             }
-            shareStack.push(curGate.buildABYGate(circuitBuilder, childrenShares))
+            shareStack.push(curGate.putGate(circuitBuilder, childrenShares))
         }
 
         assert(shareStack.size == 1)
@@ -409,114 +398,6 @@ private class ABYInterpreter(
 
     override suspend fun runOutput(stmt: OutputNode) {
         throw Exception("cannot perform I/O in non-Local protocol")
-    }
-
-    fun operatorToCircuit(operator: Operator, arguments: List<ABYCircuitGate>): ABYCircuitGate {
-        return when (operator) {
-            is Negation ->
-                ABYOperationGate(
-                    ABYOperation.SUB_GATE,
-                    listOf(ABYConstGate(0), arguments[0])
-                )
-
-            is Addition ->
-                ABYOperationGate(
-                    ABYOperation.ADD_GATE,
-                    listOf(arguments[0], arguments[1])
-                )
-
-            is Subtraction ->
-                ABYOperationGate(
-                    ABYOperation.SUB_GATE,
-                    listOf(arguments[0], arguments[1])
-                )
-
-            is Multiplication ->
-                ABYOperationGate(
-                    ABYOperation.MUL_GATE,
-                    listOf(arguments[0], arguments[1])
-                )
-
-            is Minimum ->
-                ABYOperationGate(
-                    ABYOperation.MUX_GATE,
-                    listOf(
-                        ABYOperationGate(ABYOperation.GT_GATE, listOf(arguments[0], arguments[1])),
-                        arguments[1],
-                        arguments[0]
-                    )
-                )
-
-            is Maximum ->
-                ABYOperationGate(
-                    ABYOperation.MUX_GATE,
-                    listOf(
-                        ABYOperationGate(ABYOperation.GT_GATE, listOf(arguments[0], arguments[1])),
-                        arguments[0],
-                        arguments[1]
-                    )
-                )
-
-            // TODO: check if INV gate is actually NOT
-            /*
-            is Not ->
-                ABYOperationGate(
-                    ABYOperation.INV_GATE,
-                    listOf(arguments[0])
-                )
-             */
-
-            is And ->
-                ABYOperationGate(
-                    ABYOperation.AND_GATE,
-                    listOf(arguments[0], arguments[1])
-                )
-
-            /*
-            is Or ->
-                ABYOperationGate(
-                    ABYOperation.OR_GATE,
-                    listOf(arguments[0], arguments[1])
-                )
-             */
-
-            // (a == b) <--> (a <= b && b <= a)
-            is EqualTo ->
-                ABYOperationGate(
-                    ABYOperation.EQ_GATE,
-                    listOf(
-                        arguments[0],
-                        arguments[1]
-                    )
-                )
-
-            is LessThan ->
-                ABYOperationGate(
-                    ABYOperation.GT_GATE,
-                    listOf(arguments[1], arguments[0])
-                )
-
-            /*
-            is LessThanOrEqualTo ->
-                ABYOperationGate(
-                    ABYOperation.INV_GATE,
-                    listOf(
-                        ABYOperationGate(
-                            ABYOperation.GT_GATE,
-                            listOf(arguments[1], arguments[0])
-                        )
-                    )
-                )
-             */
-
-            is Mux ->
-                ABYOperationGate(
-                    ABYOperation.MUX_GATE,
-                    listOf(arguments[0], arguments[1], arguments[2])
-                )
-
-            else -> throw Exception("operator $operator not supported by ABY backend")
-        }
     }
 
     private abstract class ABYClassObject {

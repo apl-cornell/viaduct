@@ -2,6 +2,7 @@ package edu.cornell.cs.apl.viaduct.analysis
 
 import edu.cornell.cs.apl.attributes.Tree
 import edu.cornell.cs.apl.attributes.attribute
+import edu.cornell.cs.apl.attributes.circularAttribute
 import edu.cornell.cs.apl.viaduct.errors.OutParameterInitializationError
 import edu.cornell.cs.apl.viaduct.syntax.ObjectVariable
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.BlockNode
@@ -20,6 +21,8 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.UpdateNode
 import kotlinx.collections.immutable.PersistentMap
 import kotlinx.collections.immutable.persistentMapOf
 
+private enum class InitializationState { UNINITIALIZED, INITIALIZED, UNKNOWN }
+
 /** Analysis to ensure all out parameters have been initialized before
  * they are used and before the function returns. */
 class OutParameterInitializationAnalysis private constructor(
@@ -27,7 +30,9 @@ class OutParameterInitializationAnalysis private constructor(
     private val nameAnalysis: NameAnalysis
 ) {
     /** Defines initialization map of out parameters BEFORE node has been executed. */
-    private val Node.flowIn: PersistentMap<ObjectVariable, Boolean> by attribute {
+    private val Node.flowIn: PersistentMap<ObjectVariable, InitializationState> by circularAttribute(
+        persistentMapOf()
+    ) {
         val parent = tree.parent(this)
         val previousSibling = tree.previousSibling(this)
         when {
@@ -46,33 +51,66 @@ class OutParameterInitializationAnalysis private constructor(
         }
     }
 
+    private fun InitializationState.meet(val2: InitializationState): InitializationState =
+        when {
+            this == InitializationState.UNINITIALIZED && val2 == InitializationState.UNINITIALIZED ->
+                InitializationState.UNINITIALIZED
+
+            this == InitializationState.INITIALIZED && val2 == InitializationState.INITIALIZED ->
+                InitializationState.INITIALIZED
+
+            else -> InitializationState.UNKNOWN
+        }
+
+    private fun InitializationState.join(val2: InitializationState): InitializationState =
+        when {
+            this == InitializationState.UNINITIALIZED && val2 == InitializationState.UNINITIALIZED ->
+                InitializationState.UNINITIALIZED
+
+            this == InitializationState.UNKNOWN || val2 == InitializationState.UNKNOWN ->
+                InitializationState.UNKNOWN
+
+            else -> InitializationState.INITIALIZED
+        }
+
     /** Take the meet of two maps. */
     private fun mapMeet(
-        map1: PersistentMap<ObjectVariable, Boolean>,
-        map2: PersistentMap<ObjectVariable, Boolean>
-    ): PersistentMap<ObjectVariable, Boolean> {
+        map1: PersistentMap<ObjectVariable, InitializationState>,
+        map2: PersistentMap<ObjectVariable, InitializationState>
+    ): PersistentMap<ObjectVariable, InitializationState> {
         assert(map1.keys == map2.keys)
-        return map1.keys.fold(persistentMapOf()) { acc, key -> acc.put(key, map1[key]!! && map2[key]!!) }
+        return map1.keys.fold(persistentMapOf()) { acc, key ->
+            acc.put(key, map1[key]!!.meet(map2[key]!!))
+        }
     }
 
     /** Defines initialization map of out parameters AFTER node has been processed. */
-    private val Node.flowOut: PersistentMap<ObjectVariable, Boolean> by attribute {
+    private val Node.flowOut: PersistentMap<ObjectVariable, InitializationState> by circularAttribute(
+        persistentMapOf()
+    ) {
         when (this) {
             is FunctionDeclarationNode -> {
                 parameters
-                    .map { param -> Pair(param.name.value, param.isInParameter) }
-                    .fold(persistentMapOf()) { acc, pair -> acc.put(pair.first, pair.second) }
+                    .filter { param -> !param.isInParameter }
+                    .fold(persistentMapOf()) { acc, param ->
+                        acc.put(param.name.value, InitializationState.UNINITIALIZED)
+                    }
             }
 
             is OutParameterInitializationNode -> {
-                this.flowIn.put(this.name.value, true)
+                this.flowIn.put(
+                    this.name.value,
+                    this.flowIn[this.name.value]!!.join(InitializationState.INITIALIZED)
+                )
             }
 
             is FunctionCallNode -> {
                 arguments
                     .filterIsInstance<OutParameterArgumentNode>()
                     .map { param -> param.parameter.value }
-                    .fold(this.flowIn) { acc, param -> acc.put(param, true) }
+                    .fold(this.flowIn) { acc, param ->
+                        acc.put(param, this.flowIn[param]!!.join(InitializationState.INITIALIZED))
+                    }
             }
 
             // unify flowOuts from branches by taking the intersection of their
@@ -109,25 +147,26 @@ class OutParameterInitializationAnalysis private constructor(
         when (node) {
             is FunctionDeclarationNode -> {
                 for (kv in node.body.flowOut) {
-                    if (!kv.value) {
+                    if (kv.value != InitializationState.INITIALIZED) {
                         throw OutParameterInitializationError(node.getParameter(kv.key)!!)
                     }
                 }
             }
 
             is UpdateNode -> {
-                val initialized = node.flowIn[node.variable.value] ?: true
-                if (!initialized) {
-                    throw OutParameterInitializationError(
-                        nameAnalysis.declaration(node) as ParameterNode,
-                        node
-                    )
+                if (node.flowIn.containsKey(node.variable.value)) {
+                    if (node.flowIn[node.variable.value]!! != InitializationState.UNINITIALIZED) {
+                        throw OutParameterInitializationError(
+                            nameAnalysis.declaration(node) as ParameterNode,
+                            node
+                        )
+                    }
                 }
             }
 
             is QueryNode -> {
-                val initialized = node.flowIn[node.variable.value] ?: true
-                if (!initialized) {
+                val initialized = node.flowIn[node.variable.value] ?: InitializationState.INITIALIZED
+                if (initialized != InitializationState.INITIALIZED) {
                     throw OutParameterInitializationError(
                         nameAnalysis.declaration(node) as ParameterNode,
                         node
@@ -136,10 +175,20 @@ class OutParameterInitializationAnalysis private constructor(
             }
 
             is ObjectReferenceArgumentNode -> {
-                val initialized = node.flowIn[node.variable.value] ?: true
-                if (!initialized) {
+                val initialized = node.flowIn[node.variable.value] ?: InitializationState.INITIALIZED
+                if (initialized != InitializationState.INITIALIZED) {
                     throw OutParameterInitializationError(
                         nameAnalysis.declaration(node) as ParameterNode,
+                        node
+                    )
+                }
+            }
+
+            is OutParameterInitializationNode -> {
+                val initialized = node.flowIn[node.name.value] ?: InitializationState.UNINITIALIZED
+                if (initialized != InitializationState.UNINITIALIZED) {
+                    throw OutParameterInitializationError(
+                        nameAnalysis.declaration(node),
                         node
                     )
                 }

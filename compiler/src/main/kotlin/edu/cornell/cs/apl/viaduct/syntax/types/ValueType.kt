@@ -4,7 +4,6 @@ import edu.cornell.cs.apl.prettyprinting.AnsiBaseColor
 import edu.cornell.cs.apl.prettyprinting.AnsiColor
 import edu.cornell.cs.apl.prettyprinting.Document
 import edu.cornell.cs.apl.prettyprinting.NormalColor
-import edu.cornell.cs.apl.prettyprinting.PrettyPrintable
 import edu.cornell.cs.apl.prettyprinting.Style
 import edu.cornell.cs.apl.prettyprinting.styled
 import edu.cornell.cs.apl.viaduct.syntax.values.Value
@@ -14,7 +13,7 @@ import edu.cornell.cs.apl.viaduct.syntax.values.Value
  *
  * Data types such as arrays are not value types.
  */
-abstract class ValueType : Type, PrettyPrintable {
+abstract class ValueType : Type {
     /** The default value of this type. */
     abstract val defaultValue: Value
 

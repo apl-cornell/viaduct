@@ -9,6 +9,8 @@ import edu.cornell.cs.apl.viaduct.syntax.Protocol
 import edu.cornell.cs.apl.viaduct.syntax.SpecializedProtocol
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.DeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.LetNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.ObjectDeclarationArgumentNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.ParameterNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
 import edu.cornell.cs.apl.viaduct.util.subsequences
 
@@ -56,6 +58,19 @@ class ABYFactory(program: ProgramNode) : ProtocolFactory {
         }
     }
 
+    private fun ObjectDeclarationArgumentNode.isApplicable(): Boolean {
+        return nameAnalysis.users(this).all { site ->
+            val pcCheck = informationFlowAnalysis.pcLabel(site).flowsTo(informationFlowAnalysis.pcLabel(this))
+            val involvedLoops = nameAnalysis.involvedLoops(site)
+            val loopCheck = involvedLoops.all { loop ->
+                nameAnalysis.correspondingBreaks(loop).isNotEmpty() && nameAnalysis.correspondingBreaks(loop).all {
+                    informationFlowAnalysis.pcLabel(it).flowsTo(informationFlowAnalysis.pcLabel(this))
+                }
+            }
+            true || pcCheck && loopCheck
+        }
+    }
+
     override fun viableProtocols(node: LetNode): Set<Protocol> =
         if (node.isApplicable()) {
             protocols.filter { it.authority.actsFor(informationFlowAnalysis.label(node)) }.map { it.protocol }.toSet()
@@ -69,4 +84,17 @@ class ABYFactory(program: ProgramNode) : ProtocolFactory {
         } else {
             setOf()
         }
+
+    override fun viableProtocols(node: ObjectDeclarationArgumentNode): Set<Protocol> =
+        if (node.isApplicable()) {
+            protocols.filter { it.authority.actsFor(informationFlowAnalysis.label(node)) }.map { it.protocol }.toSet()
+        } else {
+            setOf()
+        }
+
+    override fun viableProtocols(node: ParameterNode): Set<Protocol> =
+        protocols
+            .filter { it.authority.actsFor(informationFlowAnalysis.label(node)) }
+            .map { it.protocol }
+            .toSet()
 }

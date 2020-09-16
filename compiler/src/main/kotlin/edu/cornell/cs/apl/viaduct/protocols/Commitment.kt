@@ -1,6 +1,9 @@
 package edu.cornell.cs.apl.viaduct.protocols
 
 import edu.cornell.cs.apl.viaduct.security.Label
+import edu.cornell.cs.apl.viaduct.security.LabelAnd
+import edu.cornell.cs.apl.viaduct.security.LabelExpression
+import edu.cornell.cs.apl.viaduct.security.LabelIntegrity
 import edu.cornell.cs.apl.viaduct.syntax.Host
 import edu.cornell.cs.apl.viaduct.syntax.HostTrustConfiguration
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
@@ -19,14 +22,17 @@ class Commitment(val cleartextHost: Host, val hashHosts: Set<Host>) : Protocol()
         require(!hashHosts.contains(cleartextHost))
     }
 
-    val receivers = HostSetValue(hashHosts)
-
     override val protocolName: ProtocolName
         get() = Commitment.protocolName
 
     override val arguments: Map<String, Value>
-        get() = mapOf("sender" to HostValue(cleartextHost), "receivers" to receivers)
+        get() = mapOf("sender" to HostValue(cleartextHost), "receivers" to HostSetValue(hashHosts))
 
     override fun authority(hostTrustConfiguration: HostTrustConfiguration): Label =
-        hostTrustConfiguration(cleartextHost) and (receivers.map { hostTrustConfiguration(it).integrity() }.reduce(Label::and))
+        LabelAnd(
+            hostTrustConfiguration(cleartextHost),
+            hashHosts
+                .map { LabelIntegrity(hostTrustConfiguration(it)) }
+                .reduce<LabelExpression, LabelExpression> { acc, l -> LabelAnd(acc, l) }
+        ).interpret()
 }

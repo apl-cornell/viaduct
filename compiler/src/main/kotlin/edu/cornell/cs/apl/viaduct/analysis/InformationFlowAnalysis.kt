@@ -11,11 +11,13 @@ import edu.cornell.cs.apl.viaduct.errors.IntegrityChangingDeclassificationError
 import edu.cornell.cs.apl.viaduct.errors.LabelMismatchError
 import edu.cornell.cs.apl.viaduct.errors.MalleableDowngradeError
 import edu.cornell.cs.apl.viaduct.security.Label
+import edu.cornell.cs.apl.viaduct.security.LabelParameter
 import edu.cornell.cs.apl.viaduct.security.solver.AtomicLabelTerm
 import edu.cornell.cs.apl.viaduct.security.solver.ConstraintSolver
 import edu.cornell.cs.apl.viaduct.security.solver.LabelConstant
 import edu.cornell.cs.apl.viaduct.security.solver.LabelTerm
 import edu.cornell.cs.apl.viaduct.security.solver.LabelVariable
+import edu.cornell.cs.apl.viaduct.syntax.FunctionName
 import edu.cornell.cs.apl.viaduct.syntax.HasSourceLocation
 import edu.cornell.cs.apl.viaduct.syntax.ObjectVariable
 import edu.cornell.cs.apl.viaduct.syntax.Temporary
@@ -27,15 +29,27 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.DeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.DeclassificationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.DowngradeNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.EndorsementNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.ExpressionArgumentNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ExpressionNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.FunctionArgumentNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.FunctionCallNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.FunctionDeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.IfNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.InfiniteLoopNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.InputNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.LetNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.LiteralNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.Node
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.ObjectDeclaration
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.ObjectDeclarationArgumentNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.ObjectReferenceArgumentNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.OperatorApplicationNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutParameterArgumentNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutParameterConstructorInitializerNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutParameterExpressionInitializerNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutParameterInitializationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutputNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.ParameterNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.QueryNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ReadNode
@@ -45,6 +59,8 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.StatementNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.UpdateNode
 import edu.cornell.cs.apl.viaduct.util.FreshNameGenerator
 import java.io.Writer
+import java.util.LinkedList
+import kotlinx.collections.immutable.persistentMapOf
 
 /** Associates [Variable]s with their [Label]s. */
 class InformationFlowAnalysis private constructor(
@@ -55,135 +71,265 @@ class InformationFlowAnalysis private constructor(
     private val nameGenerator = FreshNameGenerator()
     private val solution: Map<LabelVariable, Label> by lazy { constraintSystem.solve() }
 
+    private val constraintSolverMap: MutableMap<FunctionName, ConstraintSolver<InformationFlowError>> = mutableMapOf()
+    private val solutionMap: MutableMap<FunctionName, Map<LabelVariable, Label>> = mutableMapOf()
+    private val parameterLabelMap: MutableMap<FunctionName, Map<String, Label>> = mutableMapOf()
+    private val pcLabelMap: MutableMap<FunctionName, Label> = mutableMapOf()
+    private val parameterVariableMap: MutableMap<FunctionName, Pair<FunctionName, Map<ObjectVariable, LabelVariable>>> =
+        mutableMapOf()
+    private val pcVariableMap: MutableMap<String, Pair<FunctionName, LabelVariable>> = mutableMapOf()
+    private val functionPcVariableMap: MutableMap<FunctionName, Pair<FunctionName, LabelVariable>> = mutableMapOf()
+    private val worklist = LinkedList<FunctionDeclarationNode>()
+
+    private fun constraintSolver(function: FunctionName): ConstraintSolver<InformationFlowError> =
+        constraintSolverMap[function]!!
+
+    private fun constraintSolver(expr: ExpressionNode): ConstraintSolver<InformationFlowError> =
+        constraintSolver(nameAnalysis.enclosingFunctionName(expr))
+
+    private fun constraintSolver(stmt: StatementNode): ConstraintSolver<InformationFlowError> =
+        constraintSolver(nameAnalysis.enclosingFunctionName(stmt))
+
+    private fun constraintSolver(arg: FunctionArgumentNode): ConstraintSolver<InformationFlowError> =
+        constraintSolver(nameAnalysis.enclosingFunctionName(arg))
+
+    private fun constraintSolver(parameter: ParameterNode): ConstraintSolver<InformationFlowError> =
+        constraintSolver(nameAnalysis.functionDeclaration(parameter).name.value)
+
     /** The (fresh) variable that stands in for the [Label] of the result of this expression. */
     private val ExpressionNode.labelVariable: LabelVariable by attribute {
-        constraintSystem.addNewVariable(PrettyNodeWrapper(this))
+        constraintSolver(this).addNewVariable(PrettyNodeWrapper(this))
     }
 
     /** The [LabelTerm] representing the [Label] of the temporary defined by this node. */
     private val LetNode.temporaryLabel: LabelVariable by attribute {
-        constraintSystem.addNewVariable(PrettyNodeWrapper(this))
+        constraintSolver(this).addNewVariable(PrettyNodeWrapper(this))
     }
 
-    /** The [LabelTerm] representing the [Label] of the object declared by this node. */
-    private val DeclarationNode.variableLabel: AtomicLabelTerm by attribute {
-        if (labelArguments == null)
-            constraintSystem.addNewVariable(PrettyNodeWrapper(variable))
-        else {
-            // TODO: this is hacky. How do we know it's the first label, for example?
-            LabelConstant.create(labelArguments[0].value)
-        }
-    }
+    private val variableLabelMap: MutableMap<Node, AtomicLabelTerm> = mutableMapOf()
 
-    /** The program counter label at this node. */
-    private val Node.pc: PCLabelVariable by attribute {
-        val parent = tree.parent(this)
-        when {
-            parent == null ->
-                PCLabelVariable("program")
-            parent is IfNode && this is BlockNode -> {
-                // TODO: two pc variables are generated per IfNode. These variables are equivalent.
-                //   Can we cut this down to one?
-                val childIndex = tree.childIndex(this)
-                val newPC = PCLabelVariable("${parent.pc.path}.if.$childIndex")
-                parent.pcFlowsTo(this, newPC.variable)
-                parent.guard flowsTo newPC.variable
-                newPC
+    private fun ObjectDeclaration.variableLabel(
+        parameterMap: Map<String, Label> = persistentMapOf()
+    ): AtomicLabelTerm =
+        variableLabelMap.getOrPut(
+            this.declarationAsNode,
+            {
+                if (labelArguments == null || this.declarationAsNode is ObjectDeclarationArgumentNode) {
+                    when (val declaration = this.declarationAsNode) {
+                        is DeclarationNode ->
+                            constraintSolver(declaration).addNewVariable(PrettyNodeWrapper(this.name))
+
+                        is ParameterNode ->
+                            constraintSolver(declaration).addNewVariable(PrettyNodeWrapper(this.name))
+
+                        is ObjectDeclarationArgumentNode ->
+                            constraintSolver(declaration).addNewVariable(PrettyNodeWrapper(this.name))
+
+                        else -> throw Exception("Impossible case: Unknown ObjectDeclaration type")
+                    }
+                } else {
+                    // TODO: this is hacky. How do we know it's the first label, for example?
+                    LabelConstant.create(labelArguments!![0].value.interpret(parameterMap))
+                }
             }
-            this is InfiniteLoopNode -> {
-                val loopPC = PCLabelVariable("${parent.pc.path}.loop")
-                parent.pcFlowsTo(jumpLabel, loopPC.variable)
-                loopPC
-            }
-            else ->
-                parent.pc
-        }
-    }
+        )
 
     /**
-     * A [LabelVariable] that stands in for the program counter label at some point in the program.
-     * The program point is described by [path].
+     * Name of the PC label at a particular node.
      */
-    private inner class PCLabelVariable(val path: String) {
-        val variable: LabelVariable =
-            constraintSystem.addNewVariable(nameGenerator.getFreshName("$path.pc"))
+    private val Node.pathName: String by attribute {
+        val parent = tree.parent(this)
+        when {
+            parent == null -> "program"
+
+            parent is IfNode && this is BlockNode -> "${parent.pathName}.if.${tree.childIndex(this)}"
+
+            this is InfiniteLoopNode -> "${parent.pathName}.loop"
+
+            this is FunctionDeclarationNode -> "${parent.pathName}.func.${name.value.name}"
+
+            else -> parent.pathName
+        }
     }
 
     /**
      * Adds a constraint asserting that [node] with label [nodeLabel] can flow to a location
      * with label [to].
      */
-    private fun assertFlowsTo(node: HasSourceLocation, nodeLabel: AtomicLabelTerm, to: LabelTerm) =
-        constraintSystem.addFlowsToConstraint(nodeLabel, to) { actualNodeLabel, toLabel ->
+    private fun assertFlowsTo(
+        solver: ConstraintSolver<InformationFlowError>,
+        node: HasSourceLocation,
+        nodeLabel: AtomicLabelTerm,
+        to: LabelTerm
+    ) =
+        solver.addFlowsToConstraint(nodeLabel, to) { actualNodeLabel, toLabel ->
             InsecureDataFlowError(node, actualNodeLabel, toLabel)
         }
 
     /**
-     * Adds a constraint asserting that the program counter label at [this] node can flow into
-     * [node], which has label [nodeLabel].
+     * Adds a constraint asserting that [node] with label [nodeLabel] is equal to a location
+     * with label [to].
      */
-    private fun Node.pcFlowsTo(node: HasSourceLocation, nodeLabel: AtomicLabelTerm) {
-        constraintSystem.addFlowsToConstraint(pc.variable, nodeLabel) { pcLabel, actualNodeLabel ->
+    private fun assertEqualsTo(
+        solver: ConstraintSolver<InformationFlowError>,
+        node: HasSourceLocation,
+        nodeLabel: AtomicLabelTerm,
+        to: AtomicLabelTerm
+    ) =
+        solver.addEqualToConstraint(nodeLabel, to) { actualNodeLabel, toLabel ->
+            InsecureDataFlowError(node, actualNodeLabel, toLabel)
+        }
+
+    private fun flowsTo(
+        solver: ConstraintSolver<InformationFlowError>,
+        expr: ExpressionNode,
+        to: LabelTerm
+    ) = assertFlowsTo(solver, expr, expr.labelVariable, to)
+
+    private fun pcFlowsTo(
+        solver: ConstraintSolver<InformationFlowError>,
+        pc: AtomicLabelTerm,
+        node: HasSourceLocation,
+        nodeLabel: AtomicLabelTerm
+    ) {
+        solver.addFlowsToConstraint(pc, nodeLabel) { pcLabel, actualNodeLabel ->
             InsecureControlFlowError(node, actualNodeLabel, pcLabel)
         }
     }
 
-    /** Asserts that it is safe for [this] node's output to flow to a location with label [to]. */
-    private infix fun ExpressionNode.flowsTo(to: LabelTerm) =
-        assertFlowsTo(this, labelVariable, to)
+    /**
+     * Create a PC label variable and save into global map.
+     */
+    private fun createPCVariable(
+        solver: ConstraintSolver<InformationFlowError>,
+        function: FunctionName,
+        path: String
+    ): LabelVariable {
+        val pc = solver.addNewVariable(nameGenerator.getFreshName(path))
+        pcVariableMap[path] = Pair(function, pc)
+        return pc
+    }
 
-    /** Non-recursively add constraints relevant to this expression to [constraintSystem]. */
-    private fun ExpressionNode.addConstraints(): Unit =
+    /**
+     * Create a PC label variable for a statement.
+     */
+    private fun createPCVariable(
+        solver: ConstraintSolver<InformationFlowError>,
+        stmt: StatementNode
+    ): LabelVariable =
+        createPCVariable(solver, nameAnalysis.enclosingFunctionName(stmt), stmt.pathName)
+
+    /**
+     * Create a PC label variable for a function declaration.
+     */
+    private fun createPCVariable(
+        solver: ConstraintSolver<InformationFlowError>,
+        function: FunctionDeclarationNode
+    ): LabelVariable =
+        createPCVariable(solver, function.name.value, function.pathName)
+
+    /** Returns the inferred security label of the [Temporary] defined by [node]. */
+    fun label(node: LetNode): Label =
+        solutionMap[nameAnalysis.enclosingFunctionName(node)]!![node.temporaryLabel]!!
+
+    /** Returns the inferred security label of the [ObjectVariable] declared by [node]. */
+    fun label(node: DeclarationNode): Label =
+        when (val label = node.variableLabel()) {
+            is LabelConstant -> label.value
+
+            is LabelVariable ->
+                solutionMap[nameAnalysis.enclosingFunctionName(node)]!![label]!!
+
+            else -> throw Error("impossible case")
+        }
+
+    /** Returns the inferred security label of the [ObjectVariable] declared by [node]. */
+    fun label(node: ParameterNode): Label {
+        val function = nameAnalysis.functionDeclaration(node)
+        val (labelFunction, labelParamMap) = parameterVariableMap[function.name.value]!!
+        return solutionMap[labelFunction]!![labelParamMap[node.name.value]]!!
+    }
+
+    /** Returns the inferred security label of the [ObjectVariable] declared by [node]. */
+    fun label(node: ObjectDeclarationArgumentNode): Label {
+        val labelVar = nameAnalysis.asObjectDeclaration(node).variableLabel()
+        return solutionMap[nameAnalysis.enclosingFunctionName(node)]!![labelVar]!!
+    }
+
+    /** Returns the inferred security label of the result of [node]. */
+    fun label(node: ExpressionNode): Label =
+        solutionMap[nameAnalysis.enclosingFunctionName(node)]!![node.labelVariable]!!
+
+    /** Returns the label of the program counter at the [node]'s program point. */
+    fun pcLabel(node: Node): Label {
+        val path = node.pathName
+        val (pcFunction, pcVariable) = pcVariableMap[path]!!
+        return solutionMap[pcFunction]!![pcVariable]!!
+    }
+
+    /**
+     * Generate information flow constraints for an expression.
+     */
+    fun ExpressionNode.check(
+        solver: ConstraintSolver<InformationFlowError>,
+        parameterMap: Map<String, Label>,
+        pcLabel: AtomicLabelTerm
+    ) {
         when (this) {
-            is LiteralNode ->
-                Unit
-            is ReadNode -> {
-                // Note: not leaking the pc since temporaries are "local".
-                val temporaryLabel = nameAnalysis.declaration(this).temporaryLabel
-                assertFlowsTo(temporary, temporaryLabel, this.labelVariable)
-            }
-            is OperatorApplicationNode ->
-                arguments.forEach { it flowsTo this.labelVariable }
-            is QueryNode -> {
-                val variableLabel = nameAnalysis.declaration(this).variableLabel
+            is LiteralNode -> Unit
 
-                pcFlowsTo(variable, variableLabel)
-                arguments.forEach { it flowsTo variableLabel }
+            is ReadNode -> {
+                val temporaryLabel = nameAnalysis.declaration(this).temporaryLabel
+                assertFlowsTo(solver, temporary, temporaryLabel, this.labelVariable)
+            }
+
+            is OperatorApplicationNode -> {
+                arguments.forEach { flowsTo(solver, it, this.labelVariable) }
+            }
+
+            is QueryNode -> {
+                val variableLabel = nameAnalysis.declaration(this).variableLabel(parameterMap)
+
+                pcFlowsTo(solver, pcLabel, this.variable, variableLabel)
+                this.arguments.forEach { flowsTo(solver, it, variableLabel) }
 
                 // TODO: return label should be based on the query.
                 //  For example, Array.length leaks the label on the size but not the data.
-                assertFlowsTo(variable, variableLabel, this.labelVariable)
+                assertFlowsTo(solver, variable, variableLabel, this.labelVariable)
             }
-            is DowngradeNode -> {
-                val from = fromLabel?.let { LabelConstant.create(it.value) } ?: expression.labelVariable
-                val to = LabelConstant.create(toLabel.value)
 
-                // The pc is always leaked to the output label
-                pcFlowsTo(toLabel, to)
+            is DowngradeNode -> {
+                val from =
+                    fromLabel?.let {
+                        LabelConstant.create(it.value.interpret(parameterMap))
+                    } ?: expression.labelVariable
+                val to = LabelConstant.create(toLabel.value.interpret(parameterMap))
+
+                pcFlowsTo(solver, pcLabel, this.toLabel, to)
 
                 // From label must match the expression label if it is specified
-                if (fromLabel != null) {
-                    constraintSystem.addEqualToConstraint(expression.labelVariable, from) { actual, expected ->
-                        LabelMismatchError(expression, actual, expected)
+                if (this.fromLabel != null) {
+                    solver.addEqualToConstraint(this.expression.labelVariable, from) { actual, expected ->
+                        LabelMismatchError(this.expression, actual, expected)
                     }
                 }
 
                 // Non-malleable downgrade constraints
-                constraintSystem.addFlowsToConstraint(from, from.swap().join(to.value)) { _, _ ->
+                solver.addFlowsToConstraint(from, from.swap().join(to.value)) { _, _ ->
                     MalleableDowngradeError(this)
                 }
-                constraintSystem.addFlowsToConstraint(from, pc.variable.swap().join(to.value)) { _, _ ->
+                solver.addFlowsToConstraint(from, pcLabel.swap().join(to.value)) { _, _ ->
                     MalleableDowngradeError(this)
                 }
 
                 // Check that single dimensional downgrades don't change the other dimension
                 when (this) {
                     is DeclassificationNode ->
-                        constraintSystem.addEqualToConstraint(from.integrity(), to.integrity()) { fromLabel, _ ->
+                        solver.addEqualToConstraint(from.integrity(), to.integrity()) { fromLabel, _ ->
                             IntegrityChangingDeclassificationError(this, fromLabel)
                         }
                     is EndorsementNode ->
-                        constraintSystem.addEqualToConstraint(
+                        solver.addEqualToConstraint(
                             from.confidentiality(),
                             to.confidentiality()
                         ) { fromLabel, _ ->
@@ -191,105 +337,343 @@ class InformationFlowAnalysis private constructor(
                         }
                 }
 
-                assertFlowsTo(toLabel, to, this.labelVariable)
+                assertFlowsTo(solver, this.toLabel, to, this.labelVariable)
             }
+
             is InputNode -> {
-                val hostLabel = LabelConstant.create(nameAnalysis.declaration(this).authority.value)
+                val hostLabel =
+                    LabelConstant.create(nameAnalysis.declaration(this).authority.value.interpret())
 
                 // Host learns the current pc
-                pcFlowsTo(host, hostLabel)
+                pcFlowsTo(solver, pcLabel, this.host, hostLabel)
 
-                assertFlowsTo(host, hostLabel, this.labelVariable)
+                assertFlowsTo(solver, this.host, hostLabel, this.labelVariable)
             }
+
             is ReceiveNode -> {
                 // TODO: should we leak the pc to the protocol?
                 // TODO: should we do any checks on the data?
             }
         }
+    }
 
-    /** Non-recursively add constraints relevant to this statement to [constraintSystem]. */
-    private fun StatementNode.addConstraints(): Unit =
+    /**
+     * Generate information flow constraints for a statement.
+     */
+    fun StatementNode.check(
+        solver: ConstraintSolver<InformationFlowError>,
+        parameterMap: Map<String, Label>,
+        pcLabel: AtomicLabelTerm
+    ) {
         when (this) {
             is LetNode -> {
-                // Note: not leaking the pc since temporaries are "local".
-                value flowsTo temporaryLabel
+                this.value.check(solver, parameterMap, pcLabel)
+                flowsTo(solver, this.value, this.temporaryLabel)
             }
+
             is DeclarationNode -> {
-                pcFlowsTo(variable, variableLabel)
-                arguments.forEach { it flowsTo variableLabel }
+                val varLabel = this.variableLabel(parameterMap)
+                for (argument in this.arguments) {
+                    argument.check(solver, parameterMap, pcLabel)
+                    assertFlowsTo(solver, argument, argument.labelVariable, varLabel)
+                }
+                pcFlowsTo(solver, pcLabel, this.name, varLabel)
             }
+
             is UpdateNode -> {
-                val variableLabel = nameAnalysis.declaration(this).variableLabel
-                pcFlowsTo(variable, variableLabel)
-                arguments.forEach { it flowsTo variableLabel }
+                this.arguments.forEach { it.check(solver, parameterMap, pcLabel) }
+
+                val variableLabel = nameAnalysis.declaration(this).variableLabel(parameterMap)
+                pcFlowsTo(solver, pcLabel, this.variable, variableLabel)
+                arguments.forEach { flowsTo(solver, it, variableLabel) }
                 // TODO: consult the method signature. There may be constraints on the pc or the arguments.
             }
 
-            is OutputNode -> {
-                val hostLabel = LabelConstant.create(nameAnalysis.declaration(this).authority.value)
-                pcFlowsTo(host, hostLabel)
-                message flowsTo hostLabel
+            is OutParameterInitializationNode -> {
+                val variableLabel = nameAnalysis.declaration(this).variableLabel(parameterMap)
+                pcFlowsTo(solver, pcLabel, this.name, variableLabel)
+                when (val initializer = this.initializer) {
+                    is OutParameterConstructorInitializerNode -> {
+                        initializer.arguments.forEach { arg ->
+                            arg.check(solver, parameterMap, pcLabel)
+                            flowsTo(solver, arg, variableLabel)
+                        }
+                    }
+
+                    is OutParameterExpressionInitializerNode -> {
+                        initializer.expression.check(solver, parameterMap, pcLabel)
+                        flowsTo(solver, initializer.expression, variableLabel)
+                    }
+                }
             }
+
+            is FunctionCallNode -> {
+                // assert argument labels and PC match the called function's labels
+                if (solutionMap.containsKey(this.name.value)) {
+                    val funcDecl = nameAnalysis.declaration(this)
+                    val funcPcVariable = pcVariableMap[funcDecl.pathName]!!
+                    val parameterVariables = parameterVariableMap[this.name.value]!!
+
+                    val functionPcLabel = solutionMap[funcPcVariable.first]!![funcPcVariable.second]!!
+                    val parameterSolution = solutionMap[parameterVariables.first]!!
+                    val parameterLabels =
+                        parameterVariables.second
+                            .map { kv -> Pair(kv.key, parameterSolution[kv.value]!!) }
+                            .toMap()
+
+                    assertEqualsTo(
+                        solver,
+                        this,
+                        pcLabel,
+                        LabelConstant.create(functionPcLabel)
+                    )
+
+                    for (argument in this.arguments) {
+                        val parameterLabel: Label = parameterLabels[nameAnalysis.parameter(argument).name.value]!!
+                        val argumentLabel =
+                            when (argument) {
+                                is ExpressionArgumentNode -> {
+                                    argument.expression.check(solver, parameterMap, pcLabel)
+                                    argument.expression.labelVariable
+                                }
+
+                                is ObjectReferenceArgumentNode ->
+                                    nameAnalysis.declaration(argument).variableLabel()
+
+                                is ObjectDeclarationArgumentNode ->
+                                    nameAnalysis.asObjectDeclaration(argument).variableLabel()
+
+                                is OutParameterArgumentNode ->
+                                    nameAnalysis.declaration(argument).variableLabel()
+                            }
+
+                        assertEqualsTo(
+                            solver,
+                            argument,
+                            LabelConstant.create(parameterLabel),
+                            argumentLabel
+                        )
+                    }
+                } else { // add function to worklist
+                    val enclosingFunction = nameAnalysis.enclosingFunctionName(this)
+                    val argumentLabelMap =
+                        this.arguments.map { argument ->
+                            val parameter = nameAnalysis.parameter(argument)
+                            val argumentVariable =
+                                when (argument) {
+                                    is ExpressionArgumentNode -> {
+                                        argument.expression.check(solver, parameterMap, pcLabel)
+                                        argument.expression.labelVariable
+                                    }
+
+                                    is ObjectReferenceArgumentNode ->
+                                        nameAnalysis.declaration(argument).variableLabel()
+
+                                    is ObjectDeclarationArgumentNode ->
+                                        nameAnalysis.asObjectDeclaration(argument).variableLabel()
+
+                                    is OutParameterArgumentNode ->
+                                        nameAnalysis.declaration(argument).variableLabel()
+                                }
+
+                            Pair(parameter.name.value, argumentVariable)
+                        }
+                            .toMap()
+
+                    val parameterVariables =
+                        this.arguments
+                            .map { argument ->
+                                val parameter = nameAnalysis.parameter(argument)
+                                val parameterVariable =
+                                    solver.addNewVariable(nameGenerator.getFreshName(parameter.name.value.name))
+                                val argumentLabel = argumentLabelMap[parameter.name.value]!!
+
+                                assertEqualsTo(
+                                    solver,
+                                    argument,
+                                    parameterVariable,
+                                    argumentLabel
+                                )
+
+                                if (parameter.labelArguments != null) {
+                                    val labelBoundExpr = parameter.labelArguments[0].value
+                                    val labelBound =
+                                        when {
+                                            labelBoundExpr is LabelParameter ->
+                                                argumentLabelMap[ObjectVariable(labelBoundExpr.name)]!!
+
+                                            !labelBoundExpr.containsParameters() ->
+                                                LabelConstant.create(labelBoundExpr.interpret())
+
+                                            // no complex expressions with label parameters
+                                            else -> throw Error("no complex label expressions with parameters in function signatures")
+                                        }
+
+                                    if (argument is ObjectDeclarationArgumentNode) {
+                                        assertEqualsTo(
+                                            solver,
+                                            argument,
+                                            argumentLabel,
+                                            labelBound
+                                        )
+                                    } else {
+                                        assertFlowsTo(
+                                            solver,
+                                            argument,
+                                            argumentLabel,
+                                            labelBound
+                                        )
+                                    }
+                                }
+
+                                Pair(parameter.name.value, parameterVariable)
+                            }
+                            .toMap()
+
+                    val functionDecl = nameAnalysis.declaration(this)
+                    val functionPc =
+                        solver.addNewVariable(nameGenerator.getFreshName("${this.name.value}.pc"))
+
+                    assertEqualsTo(solver, this, functionPc, pcLabel)
+
+                    if (functionDecl.pcLabel != null) {
+                        val labelBound = functionDecl.pcLabel.value
+
+                        when {
+                            labelBound is LabelParameter -> {
+                                assertFlowsTo(
+                                    solver,
+                                    this,
+                                    pcLabel,
+                                    argumentLabelMap[ObjectVariable(labelBound.name)]!!
+                                )
+                            }
+
+                            !labelBound.containsParameters() -> {
+                                assertFlowsTo(
+                                    solver,
+                                    this,
+                                    pcLabel,
+                                    LabelConstant.create(labelBound.interpret())
+                                )
+                            }
+
+                            // no complex expressions with label parameters
+                            else -> throw Error("no complex label expressions with parameters in function signatures")
+                        }
+                    }
+
+                    pcVariableMap[functionDecl.pathName] = Pair(enclosingFunction, functionPc)
+                    functionPcVariableMap[this.name.value] = Pair(enclosingFunction, functionPc)
+                    parameterVariableMap[this.name.value] = Pair(enclosingFunction, parameterVariables)
+                    worklist.add(nameAnalysis.declaration(this))
+                }
+            }
+
+            is OutputNode -> {
+                this.message.check(solver, parameterMap, pcLabel)
+
+                val hostLabel =
+                    LabelConstant.create(nameAnalysis.declaration(this).authority.value.interpret())
+                pcFlowsTo(solver, pcLabel, this.host, hostLabel)
+                flowsTo(solver, this.message, hostLabel)
+            }
+
             is SendNode -> {
                 // TODO: should we leak the pc to the protocol?
                 // TODO: should we leak [message] to the protocol?
             }
 
-            is IfNode ->
-                Unit
-            is InfiniteLoopNode ->
-                Unit
-            is BreakNode ->
-                pcFlowsTo(this, nameAnalysis.correspondingLoop(this).pc.variable)
+            is IfNode -> {
+                this.guard.check(solver, parameterMap, pcLabel)
+                val thenPc = createPCVariable(solver, this.thenBranch)
+                pcFlowsTo(solver, pcLabel, this, thenPc)
+                flowsTo(solver, this.guard, thenPc)
+                this.thenBranch.check(solver, parameterMap, thenPc)
+
+                val elsePc = createPCVariable(solver, this.elseBranch)
+                pcFlowsTo(solver, pcLabel, this, elsePc)
+                flowsTo(solver, this.guard, elsePc)
+                this.elseBranch.check(solver, parameterMap, elsePc)
+            }
+
+            is InfiniteLoopNode -> {
+                val loopPc = createPCVariable(solver, this)
+                pcFlowsTo(solver, pcLabel, this, loopPc)
+                this.body.check(solver, parameterMap, loopPc)
+            }
+
+            is BreakNode -> {
+                val loopPath = nameAnalysis.correspondingLoop(this).pathName
+                val loopPc = pcVariableMap[loopPath]!!.second
+                pcFlowsTo(solver, pcLabel, this, loopPc)
+            }
+
             is AssertionNode -> {
                 // Everybody must execute assertions, so [condition] must be public and trusted.
                 // TODO: can we do any better? This seems almost impossible to achieve...
-                condition flowsTo LabelConstant.create(Label.bottom)
+                flowsTo(solver, this.condition, LabelConstant.create(Label.bottom))
             }
-            is BlockNode ->
-                Unit
+
+            is BlockNode -> {
+                for (child in statements) {
+                    child.check(solver, parameterMap, pcLabel)
+                }
+            }
         }
-
-    /** Recursively add constraints relevant to this node and all its descendants. */
-    private fun Node.addConstraints() {
-        this.pc // force thunk
-        when (this) {
-            is ExpressionNode ->
-                this.addConstraints()
-            is StatementNode ->
-                this.addConstraints()
-        }
-        children.forEach { it.addConstraints() }
     }
-
-    init {
-        tree.root.addConstraints()
-    }
-
-    /** Returns the inferred security label of the [Temporary] defined by [node]. */
-    fun label(node: LetNode): Label = node.temporaryLabel.getValue(solution)
-
-    /** Returns the inferred security label of the [ObjectVariable] declared by [node]. */
-    fun label(node: DeclarationNode): Label = node.variableLabel.getValue(solution)
-
-    /** Returns the inferred security label of the result of [node]. */
-    fun label(node: ExpressionNode): Label = node.labelVariable.getValue(solution)
-
-    /** Returns the label of the program counter at the [node]'s program point. */
-    fun pcLabel(node: Node): Label = node.pc.variable.getValue(solution)
 
     /**
      * Asserts that the program does not violate information flow security, and throws (a subclass
      * of) [InformationFlowError] otherwise.
      */
     fun check() {
-        // Force the thunk, which forces all checks.
-        solution
+        if (!tree.root.hasMain) return
+
+        for (function in tree.root.functions) {
+            constraintSolverMap[function.name.value] = ConstraintSolver()
+        }
+
+        val mainFunction = nameAnalysis.enclosingFunctionName(tree.root.main.body)
+        val mainSolver = ConstraintSolver<InformationFlowError>()
+        constraintSolverMap[mainFunction] = mainSolver
+
+        val mainPc = mainSolver.addNewVariable(nameGenerator.getFreshName(tree.root.main.body.pathName))
+        pcVariableMap[tree.root.main.body.pathName] = Pair(mainFunction, mainPc)
+        tree.root.main.body.check(mainSolver, persistentMapOf(), mainPc)
+        solutionMap[mainFunction] = mainSolver.solve()
+
+        while (worklist.isNotEmpty()) {
+            val currentFunction = worklist.remove()
+
+            // initialize constraint solver
+            val solver = constraintSolverMap[currentFunction.name.value]!!
+
+            // get formal parameter labels
+            val (solFunction, solVariableMap) =
+                parameterVariableMap[currentFunction.name.value]!!
+            val solution = solutionMap[solFunction]!!
+            val parameterMap =
+                solVariableMap
+                    .map { kv -> Pair(kv.key.name, solution[kv.value]!!) }
+                    .toMap()
+
+            // get PC label
+            val (pcSolFunction, pcSolVariable) =
+                functionPcVariableMap[currentFunction.name.value]!!
+            val pcSolution = solutionMap[pcSolFunction]!![pcSolVariable]!!
+
+            // add constraints for function body
+            currentFunction.body.check(solver, parameterMap, LabelConstant.create(pcSolution))
+
+            // get solution
+            solutionMap[currentFunction.name.value] = solver.solve()
+        }
     }
 
     /** Outputs a DOT representation of the program's constraint graph to [output]. */
     fun exportConstraintGraph(output: Writer) {
-        constraintSystem.exportDotGraph(output)
+        constraintSolverMap[nameAnalysis.enclosingFunctionName(tree.root.main.body)]!!.exportDotGraph(output)
     }
 
     companion object : AnalysisProvider<InformationFlowAnalysis> {

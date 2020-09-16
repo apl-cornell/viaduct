@@ -2,7 +2,7 @@ package edu.cornell.cs.apl.viaduct.syntax
 
 import edu.cornell.cs.apl.prettyprinting.Document
 import edu.cornell.cs.apl.prettyprinting.PrettyPrintable
-import edu.cornell.cs.apl.viaduct.security.Label
+import edu.cornell.cs.apl.viaduct.security.LabelExpression
 import edu.cornell.cs.apl.viaduct.syntax.datatypes.ClassName
 import edu.cornell.cs.apl.viaduct.syntax.datatypes.MethodName
 import edu.cornell.cs.apl.viaduct.syntax.datatypes.QueryName
@@ -45,4 +45,6 @@ typealias ValueNode = Located<Value>
 
 typealias ValueTypeNode = Located<ValueType>
 
-typealias LabelNode = Located<Label>
+typealias LabelNode = Located<LabelExpression>
+
+typealias FunctionNameNode = Located<FunctionName>

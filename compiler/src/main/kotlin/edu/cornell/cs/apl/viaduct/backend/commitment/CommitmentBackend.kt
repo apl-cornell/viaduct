@@ -1,28 +1,27 @@
 package edu.cornell.cs.apl.viaduct.backend.commitment
 
-import edu.cornell.cs.apl.viaduct.analysis.TypeAnalysis
 import edu.cornell.cs.apl.viaduct.backend.ProtocolBackend
 import edu.cornell.cs.apl.viaduct.backend.ViaductProcessRuntime
 import edu.cornell.cs.apl.viaduct.errors.ViaductInterpreterError
 import edu.cornell.cs.apl.viaduct.protocols.Commitment
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.BlockNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
 
-class CommitmentBackend(
-    val typeAnalysis: TypeAnalysis
-) : ProtocolBackend {
+class CommitmentBackend : ProtocolBackend {
 
-    override suspend fun run(runtime: ViaductProcessRuntime, process: BlockNode) {
+    override suspend fun run(runtime: ViaductProcessRuntime, program: ProgramNode, process: BlockNode) {
         when (runtime.projection.protocol) {
             is Commitment ->
                 if (runtime.projection.host == runtime.projection.protocol.cleartextHost) {
                     CommitmentCleartext(
-                        runtime, typeAnalysis,
-                        runtime.projection.protocol.receivers
+                        program,
+                        runtime,
+                        runtime.projection.protocol.hashHosts
                     ).run(process)
                 } else {
                     CommitmentHashReplica(
+                        program,
                         runtime,
-                        typeAnalysis,
                         runtime.projection.protocol.cleartextHost
                     ).run(process)
                 }

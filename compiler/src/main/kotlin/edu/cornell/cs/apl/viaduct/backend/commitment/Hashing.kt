@@ -2,6 +2,7 @@ package edu.cornell.cs.apl.viaduct.backend.commitment
 
 import edu.cornell.cs.apl.viaduct.backend.ImmutableCellObject
 import edu.cornell.cs.apl.viaduct.backend.MutableCellObject
+import edu.cornell.cs.apl.viaduct.backend.NullObject
 import edu.cornell.cs.apl.viaduct.backend.PlaintextClassObject
 import edu.cornell.cs.apl.viaduct.backend.VectorObject
 import edu.cornell.cs.apl.viaduct.syntax.values.BooleanValue
@@ -39,6 +40,7 @@ fun PlaintextClassObject.encode(): List<Byte> {
         is ImmutableCellObject -> this.value.encode()
         is MutableCellObject -> this.value.encode()
         is VectorObject -> TODO("Vector encoding")
+        is NullObject -> listOf()
     }
 }
 

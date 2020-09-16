@@ -1,0 +1,13 @@
+fun add10(a: int, b: out int{b}) {
+    out b = a + 10;
+}
+
+process main {
+    val array = Array[int]{A}(10);
+    val a: int{A} = 0;
+    add10(a, val b);
+    output b to alice;
+}
+
+host alice: {A}
+host bob: {B}

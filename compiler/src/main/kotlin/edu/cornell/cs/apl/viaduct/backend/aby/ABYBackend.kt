@@ -4,26 +4,29 @@ import edu.cornell.cs.apl.viaduct.analysis.TypeAnalysis
 import edu.cornell.cs.apl.viaduct.backend.AbstractBackendInterpreter
 import edu.cornell.cs.apl.viaduct.backend.HostAddress
 import edu.cornell.cs.apl.viaduct.backend.LoopBreakSignal
+import edu.cornell.cs.apl.viaduct.backend.ObjectLocation
 import edu.cornell.cs.apl.viaduct.backend.ProtocolBackend
 import edu.cornell.cs.apl.viaduct.backend.ProtocolProjection
 import edu.cornell.cs.apl.viaduct.backend.ViaductProcessRuntime
 import edu.cornell.cs.apl.viaduct.errors.UndefinedNameError
-import edu.cornell.cs.apl.viaduct.errors.UnknownMethodError
 import edu.cornell.cs.apl.viaduct.errors.ViaductInterpreterError
 import edu.cornell.cs.apl.viaduct.protocols.ABY
 import edu.cornell.cs.apl.viaduct.syntax.Host
+import edu.cornell.cs.apl.viaduct.syntax.Located
 import edu.cornell.cs.apl.viaduct.syntax.ObjectVariable
-import edu.cornell.cs.apl.viaduct.syntax.ObjectVariableNode
 import edu.cornell.cs.apl.viaduct.syntax.Operator
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
 import edu.cornell.cs.apl.viaduct.syntax.QueryNameNode
 import edu.cornell.cs.apl.viaduct.syntax.Temporary
 import edu.cornell.cs.apl.viaduct.syntax.UpdateNameNode
+import edu.cornell.cs.apl.viaduct.syntax.datatypes.ClassName
 import edu.cornell.cs.apl.viaduct.syntax.datatypes.Get
+import edu.cornell.cs.apl.viaduct.syntax.datatypes.ImmutableCell
 import edu.cornell.cs.apl.viaduct.syntax.datatypes.Modify
+import edu.cornell.cs.apl.viaduct.syntax.datatypes.MutableCell
+import edu.cornell.cs.apl.viaduct.syntax.datatypes.Vector
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.AtomicExpressionNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.BlockNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.DeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.DeclassificationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.EndorsementNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ExpressionNode
@@ -32,6 +35,7 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.LetNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.LiteralNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.OperatorApplicationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutputNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.PureExpressionNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.QueryNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ReadNode
@@ -52,12 +56,8 @@ import edu.cornell.cs.apl.viaduct.syntax.operators.Not
 import edu.cornell.cs.apl.viaduct.syntax.operators.Or
 import edu.cornell.cs.apl.viaduct.syntax.operators.Subtraction
 import edu.cornell.cs.apl.viaduct.syntax.types.BooleanType
-import edu.cornell.cs.apl.viaduct.syntax.types.ImmutableCellType
 import edu.cornell.cs.apl.viaduct.syntax.types.IntegerType
-import edu.cornell.cs.apl.viaduct.syntax.types.MutableCellType
-import edu.cornell.cs.apl.viaduct.syntax.types.ObjectType
 import edu.cornell.cs.apl.viaduct.syntax.types.ValueType
-import edu.cornell.cs.apl.viaduct.syntax.types.VectorType
 import edu.cornell.cs.apl.viaduct.syntax.values.BooleanValue
 import edu.cornell.cs.apl.viaduct.syntax.values.IntegerValue
 import edu.cornell.cs.apl.viaduct.syntax.values.Value
@@ -67,9 +67,7 @@ import kotlinx.collections.immutable.PersistentMap
 import kotlinx.collections.immutable.persistentMapOf
 
 /** Backend for the ABY MPC framework. */
-class ABYBackend(
-    private val typeAnalysis: TypeAnalysis
-) : ProtocolBackend {
+class ABYBackend : ProtocolBackend {
     companion object {
         private const val DEFAULT_PORT = 7766
     }
@@ -99,9 +97,13 @@ class ABYBackend(
         aby = ViaductABYParty(role, otherHostAddress.ipAddress, DEFAULT_PORT)
     }
 
-    override suspend fun run(runtime: ViaductProcessRuntime, process: BlockNode) {
+    override suspend fun run(
+        runtime: ViaductProcessRuntime,
+        program: ProgramNode,
+        process: BlockNode
+    ) {
         if (aby != null) {
-            val interpreter = ABYInterpreter(aby!!, typeAnalysis, runtime)
+            val interpreter = ABYInterpreter(aby!!, program, runtime)
 
             try {
                 interpreter.run(process)
@@ -120,22 +122,10 @@ class ABYBackend(
 
 private class ABYInterpreter(
     private val aby: ViaductABYParty,
-    private val typeAnalysis: TypeAnalysis,
+    program: ProgramNode,
     private val runtime: ViaductProcessRuntime
-) : AbstractBackendInterpreter() {
-    private val projection: ProtocolProjection = runtime.projection
-
-    private val objectStoreStack: Stack<PersistentMap<ObjectVariable, ABYClassObject>> = Stack()
-
-    private var objectStore: PersistentMap<ObjectVariable, ABYClassObject>
-        get() {
-            return objectStoreStack.peek()
-        }
-
-        set(value) {
-            objectStoreStack.pop()
-            objectStoreStack.push(value)
-        }
+) : AbstractBackendInterpreter<ABYInterpreter.ABYClassObject>(program) {
+    private val typeAnalysis = TypeAnalysis.get(program)
 
     private val ssTempStoreStack: Stack<PersistentMap<Temporary, CircuitGate>> = Stack()
 
@@ -143,7 +133,6 @@ private class ABYInterpreter(
         get() {
             return ssTempStoreStack.peek()
         }
-
         set(value) {
             ssTempStoreStack.pop()
             ssTempStoreStack.push(value)
@@ -155,24 +144,35 @@ private class ABYInterpreter(
         get() {
             return ctTempStoreStack.peek()
         }
-
         set(value) {
             ctTempStoreStack.pop()
             ctTempStoreStack.push(value)
         }
 
     init {
-        assert(projection.protocol is ABY)
+        assert(runtime.projection.protocol is ABY)
 
         objectStoreStack.push(persistentMapOf())
         ssTempStoreStack.push(persistentMapOf())
         ctTempStoreStack.push(persistentMapOf())
     }
 
+    private fun pushContext(
+        newObjectStore: PersistentMap<ObjectVariable, ObjectLocation>,
+        newSsTempStore: PersistentMap<Temporary, CircuitGate>,
+        newCtTempStore: PersistentMap<Temporary, Value>
+    ) {
+        objectStoreStack.push(newObjectStore)
+        ssTempStoreStack.push(newSsTempStore)
+        ctTempStoreStack.push(newCtTempStore)
+    }
+
     override fun pushContext() {
-        objectStoreStack.push(objectStore)
-        ssTempStoreStack.push(ssTempStore)
-        ctTempStoreStack.push(ctTempStore)
+        pushContext(objectStore, ssTempStore, ctTempStore)
+    }
+
+    override fun pushContext(initialStore: PersistentMap<ObjectVariable, ObjectLocation>) {
+        pushContext(initialStore, persistentMapOf(), persistentMapOf())
     }
 
     override fun popContext() {
@@ -191,6 +191,44 @@ private class ABYInterpreter(
             ssTempStoreStack.pop()
             ctTempStoreStack.pop()
         }
+    }
+
+    override fun allocateObject(obj: ABYClassObject): ObjectLocation {
+        objectHeap.add(obj)
+        return objectHeap.size - 1
+    }
+
+    override suspend fun buildExpressionObject(expr: AtomicExpressionNode): ABYClassObject {
+        return ABYImmutableCellObject(runSecretSharedExpr(expr))
+    }
+
+    override suspend fun buildObject(
+        className: ClassName,
+        typeArguments: List<ValueType>,
+        arguments: List<AtomicExpressionNode>
+    ): ABYClassObject {
+        return when (className) {
+            ImmutableCell -> {
+                val valGate = runSecretSharedExpr(arguments[0])
+                ABYImmutableCellObject(valGate)
+            }
+
+            MutableCell -> {
+                val valGate = runSecretSharedExpr(arguments[0])
+                ABYMutableCellObject(valGate)
+            }
+
+            Vector -> {
+                val length = runExprAsValue(arguments[0]) as IntegerValue
+                ABYVectorObject(length.value, typeArguments[0].defaultValue)
+            }
+
+            else -> throw UndefinedNameError(Located(className, program.sourceLocation)) // kind of a hack
+        }
+    }
+
+    override fun getNullObject(): ABYClassObject {
+        return ABYNullObject
     }
 
     private fun valueToCircuit(value: Value, isInput: Boolean = false): CircuitGate {
@@ -213,7 +251,7 @@ private class ABYInterpreter(
         }
     }
 
-    override suspend fun runAtomicExpr(expr: AtomicExpressionNode): Value {
+    override suspend fun runExprAsValue(expr: AtomicExpressionNode): Value {
         return when (expr) {
             is LiteralNode -> expr.value
 
@@ -228,54 +266,20 @@ private class ABYInterpreter(
             is LiteralNode -> valueToCircuit(expr.value)
 
             is ReadNode ->
-                ssTempStore[expr.temporary.value]
-                    ?: throw UndefinedNameError(expr.temporary)
+                ssTempStore[expr.temporary.value]!!
 
             is OperatorApplicationNode -> {
                 val circuitArguments: List<CircuitGate> = expr.arguments.map { arg -> runSecretSharedExpr(arg) }
                 operatorToCircuit(expr.operator, circuitArguments)
             }
 
-            is QueryNode ->
-                objectStore[expr.variable.value]
-                    ?.query(expr.query, expr.arguments)
-                    ?: throw UndefinedNameError(expr.variable)
+            is QueryNode -> {
+                val loc = getObjectLocation(expr.variable.value)
+                getObject(loc).query(expr.query, expr.arguments)
+            }
 
             is DeclassificationNode -> runSecretSharedExpr(expr.expression)
             is EndorsementNode -> runSecretSharedExpr(expr.expression)
-        }
-    }
-
-    override suspend fun runDeclaration(stmt: DeclarationNode) {
-        val argumentValues: List<Value> = stmt.arguments.map { arg -> runAtomicExpr(arg) }
-
-        return when (val objectType: ObjectType = typeAnalysis.type(stmt)) {
-            is ImmutableCellType -> {
-                objectStore =
-                    objectStore.put(
-                        stmt.variable.value,
-                        ABYImmutableCellObject(argumentValues[0], stmt.variable, objectType)
-                    )
-            }
-
-            is MutableCellType -> {
-                objectStore =
-                    objectStore.put(
-                        stmt.variable.value,
-                        ABYMutableCellObject(argumentValues[0], stmt.variable, objectType)
-                    )
-            }
-
-            is VectorType -> {
-                val length = argumentValues[0] as IntegerValue
-                objectStore =
-                    objectStore.put(
-                        stmt.variable.value,
-                        ABYVectorObject(length.value, objectType.elementType.defaultValue, stmt.variable, objectType)
-                    )
-            }
-
-            else -> throw UndefinedNameError(stmt.className)
         }
     }
 
@@ -284,9 +288,9 @@ private class ABYInterpreter(
             is ReceiveNode -> {
                 val rhsProtocol: Protocol = rhs.protocol.value
 
-                if (rhsProtocol.hosts.contains(projection.host)) { // actually receive input
+                if (rhsProtocol.hosts.contains(runtime.projection.host)) { // actually receive input
                     val receivedValue: Value =
-                        runtime.receive(ProtocolProjection(rhsProtocol, projection.host))
+                        runtime.receive(ProtocolProjection(rhsProtocol, runtime.projection.host))
 
                     ctTempStore = ctTempStore.put(stmt.temporary.value, receivedValue)
                     ssTempStore = ssTempStore.put(stmt.temporary.value, valueToCircuit(receivedValue, isInput = true))
@@ -303,9 +307,7 @@ private class ABYInterpreter(
     }
 
     override suspend fun runUpdate(stmt: UpdateNode) {
-        objectStore[stmt.variable.value]
-            ?.update(stmt.update, stmt.arguments)
-            ?: throw UndefinedNameError(stmt.variable)
+        getObject(getObjectLocation(stmt.variable.value)).update(stmt.update, stmt.arguments)
     }
 
     // actually perform MPC protocol and declassify output
@@ -334,8 +336,8 @@ private class ABYInterpreter(
                 }
             }
 
-        if (stmt.protocol.value.hosts.contains(projection.host)) {
-            runtime.send(sendValue, ProtocolProjection(stmt.protocol.value, projection.host))
+        if (stmt.protocol.value.hosts.contains(runtime.projection.host)) {
+            runtime.send(sendValue, ProtocolProjection(stmt.protocol.value, runtime.projection.host))
         }
     }
 
@@ -398,55 +400,32 @@ private class ABYInterpreter(
         }
     }
 
-    private abstract class ABYClassObject(
-        protected val objectName: ObjectVariableNode,
-        protected val objectType: ObjectType
-    ) {
+    private abstract class ABYClassObject {
         abstract suspend fun query(query: QueryNameNode, arguments: List<AtomicExpressionNode>): CircuitGate
 
         abstract suspend fun update(update: UpdateNameNode, arguments: List<AtomicExpressionNode>)
     }
 
-    inner class ABYImmutableCellObject(
-        value: Value,
-        objectName: ObjectVariableNode,
-        objectType: ObjectType
-    ) : ABYClassObject(objectName, objectType) {
-
-        val gate: CircuitGate = valueToCircuit(value)
-
+    inner class ABYImmutableCellObject(var gate: CircuitGate) : ABYClassObject() {
         override suspend fun query(query: QueryNameNode, arguments: List<AtomicExpressionNode>): CircuitGate {
             return when (query.value) {
                 is Get -> gate
 
-                else -> {
-                    throw UnknownMethodError(objectName, query, objectType,
-                        arguments.map { arg -> this@ABYInterpreter.typeAnalysis.type(arg) })
-                }
+                else -> throw Exception("runtime error")
             }
         }
 
         override suspend fun update(update: UpdateNameNode, arguments: List<AtomicExpressionNode>) {
-            throw UnknownMethodError(objectName, update, objectType,
-                arguments.map { arg -> this@ABYInterpreter.typeAnalysis.type(arg) })
+            throw Exception("runtime error")
         }
     }
 
-    inner class ABYMutableCellObject(
-        value: Value,
-        objectName: ObjectVariableNode,
-        objectType: ObjectType
-    ) : ABYClassObject(objectName, objectType) {
-        var gate: CircuitGate = valueToCircuit(value)
-
+    inner class ABYMutableCellObject(var gate: CircuitGate) : ABYClassObject() {
         override suspend fun query(query: QueryNameNode, arguments: List<AtomicExpressionNode>): CircuitGate {
             return when (query.value) {
                 is Get -> gate
 
-                else -> {
-                    throw UnknownMethodError(objectName, query, objectType,
-                        arguments.map { arg -> this@ABYInterpreter.typeAnalysis.type(arg) })
-                }
+                else -> throw Exception("runtime exception")
             }
         }
 
@@ -461,20 +440,12 @@ private class ABYInterpreter(
                     operatorToCircuit(update.value.operator, listOf(gate, circuitArg))
                 }
 
-                else -> {
-                    throw UnknownMethodError(objectName, update, objectType,
-                        arguments.map { arg -> this@ABYInterpreter.typeAnalysis.type(arg) })
-                }
+                else -> throw Exception("runtime error")
             }
         }
     }
 
-    inner class ABYVectorObject(
-        val size: Int,
-        defaultValue: Value,
-        objectName: ObjectVariableNode,
-        objectType: ObjectType
-    ) : ABYClassObject(objectName, objectType) {
+    inner class ABYVectorObject(val size: Int, defaultValue: Value) : ABYClassObject() {
         val gates: ArrayList<CircuitGate> = ArrayList(size)
 
         init {
@@ -486,19 +457,16 @@ private class ABYInterpreter(
         override suspend fun query(query: QueryNameNode, arguments: List<AtomicExpressionNode>): CircuitGate {
             return when (query.value) {
                 is Get -> {
-                    val index = runAtomicExpr(arguments[0]) as IntegerValue
+                    val index = runExprAsValue(arguments[0]) as IntegerValue
                     gates[index.value]
                 }
 
-                else -> {
-                    throw UnknownMethodError(objectName, query, objectType,
-                        arguments.map { arg -> this@ABYInterpreter.typeAnalysis.type(arg) })
-                }
+                else -> throw Exception("runtime error")
             }
         }
 
         override suspend fun update(update: UpdateNameNode, arguments: List<AtomicExpressionNode>) {
-            val index = runAtomicExpr(arguments[0]) as IntegerValue
+            val index = runExprAsValue(arguments[0]) as IntegerValue
 
             gates[index.value] = when (update.value) {
                 is edu.cornell.cs.apl.viaduct.syntax.datatypes.Set -> {
@@ -510,11 +478,18 @@ private class ABYInterpreter(
                     operatorToCircuit(update.value.operator, listOf(gates[index.value], circuitArg))
                 }
 
-                else -> {
-                    throw UnknownMethodError(objectName, update, objectType,
-                        arguments.map { arg -> this@ABYInterpreter.typeAnalysis.type(arg) })
-                }
+                else -> throw Exception("runtime error")
             }
+        }
+    }
+
+    object ABYNullObject : ABYClassObject() {
+        override suspend fun query(query: QueryNameNode, arguments: List<AtomicExpressionNode>): CircuitGate {
+            throw Exception("runtime error")
+        }
+
+        override suspend fun update(update: UpdateNameNode, arguments: List<AtomicExpressionNode>) {
+            throw Exception("runtime error")
         }
     }
 }

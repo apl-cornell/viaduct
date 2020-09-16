@@ -17,8 +17,10 @@ plugins {
 
 /** Application */
 
+val mainPackage = "${project.group}.${rootProject.name}"
+
 application {
-    mainClass.set("${project.group}.${rootProject.name}.MainKt")
+    mainClass.set("$mainPackage.MainKt")
 }
 
 /** Dependencies */
@@ -81,6 +83,25 @@ tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach 
     kotlinOptions.allWarningsAsErrors = true
 }
 
+val generatedPropertiesDir = "${project.buildDir}/generated-src/properties"
+
+val generatePropertiesFile by tasks.registering {
+    doLast {
+        val packageDir = mainPackage.replace(".", File.separator)
+        val propertiesFile = project.file("$generatedPropertiesDir/$packageDir/Properties.kt")
+        propertiesFile.parentFile.mkdirs()
+        propertiesFile.writeText(
+            """
+            package $mainPackage
+
+            const val version = "${project.version}"
+
+            const val group = "${project.group}"
+            """.trimIndent()
+        )
+    }
+}
+
 jflex {
     encoding = Charsets.UTF_8.name()
 }
@@ -93,11 +114,18 @@ sourceSets {
     }
 }
 
+kotlin {
+    sourceSets["main"].apply {
+        kotlin.srcDir(generatedPropertiesDir)
+    }
+}
+
 tasks.compileJava {
     dependsOn(compileCup)
 }
 
 tasks.compileKotlin {
+    dependsOn(generatePropertiesFile)
     dependsOn(compileCup)
     dependsOn(tasks.withType<org.xbib.gradle.plugin.JFlexTask>())
 }

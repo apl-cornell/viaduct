@@ -15,6 +15,7 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.InputNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.LetNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.LiteralNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.Node
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.ObjectDeclarationArgumentNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.OperatorApplicationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutputNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProcessDeclarationNode
@@ -75,6 +76,8 @@ fun Node.letNodes(): List<LetNode> = this.listOfInstances()
 /** Returns all [DeclarationNode]s contained in this node. */
 fun Node.declarationNodes(): List<DeclarationNode> = this.listOfInstances()
 
+fun Node.objectDeclarationArgumentNodes(): List<ObjectDeclarationArgumentNode> = this.listOfInstances()
+
 /** Returns all [InfiniteLoopNode]s contained in this node. */
 fun Node.infiniteLoopNodes(): List<InfiniteLoopNode> = this.listOfInstances()
 
@@ -99,4 +102,13 @@ val ProgramNode.main: ProcessDeclarationNode
                 return it
         }
         throw NoMainError(this.sourceLocation.sourcePath)
+    }
+
+val ProgramNode.hasMain: Boolean
+    get() {
+        this.forEach {
+            if (it is ProcessDeclarationNode && it.protocol.value == MainProtocol)
+                return true
+        }
+        return false
     }

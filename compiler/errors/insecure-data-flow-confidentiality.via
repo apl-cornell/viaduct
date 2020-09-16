@@ -4,3 +4,5 @@ process main {
     val secret: int{(A ∧ B)->} = 42;
     val public: int{A->} = secret;
 }
+
+host alice : {A}

@@ -2,8 +2,7 @@ import com.google.common.collect.ImmutableList;
 
 import edu.cornell.cs.apl.viaduct.errors.ParsingError;
 import edu.cornell.cs.apl.viaduct.protocols.*;
-import edu.cornell.cs.apl.viaduct.security.Label;
-import edu.cornell.cs.apl.viaduct.security.Principal;
+import edu.cornell.cs.apl.viaduct.security.*;
 import edu.cornell.cs.apl.viaduct.syntax.*;
 import edu.cornell.cs.apl.viaduct.syntax.datatypes.*;
 import edu.cornell.cs.apl.viaduct.syntax.surface.*;
@@ -31,7 +30,7 @@ action code {:
     }
 
     /** Constructs a label argument list from a single optional label. */
-    private Arguments<Located<Label>> optionalLabelArgument(Located<Label> label) {
+    private Arguments<Located<LabelExpression>> optionalLabelArgument(Located<LabelExpression> label) {
         if (label == null) {
             return null;
         } else {
@@ -85,9 +84,9 @@ parser code {:
     }
 
     /** Parses the input as a security label. */
-    public Label parseLabel() throws Exception {
+    public LabelExpression parseLabel() throws Exception {
         set_current_symbol(sym.PARSE_LABEL);
-        return (Label) parse().value;
+        return (LabelExpression) parse().value;
     }
 :}
 
@@ -118,8 +117,9 @@ nonterminal IndexingNode indexing;
 
 nonterminal Value value;
 nonterminal Located<ValueType> value_type;
-nonterminal Located<Label> label, optional_label, optional_from_label;
-nonterminal Label label_expr;
+nonterminal Located<LabelExpression> label, optional_label, optional_from_label;
+nonterminal Located<LabelExpression> label_signature, optional_label_signature;
+nonterminal LabelExpression label_expr, label_expr_noparam, label_expr_signature;
 
 nonterminal Located<ObjectVariable> variable;
 nonterminal Located<Host> host;
@@ -127,6 +127,14 @@ nonterminal Located<Host> host;
 // TODO: the above type causes a parse error in the IntelliJ plugin
 nonterminal List host_list, nonempty_host_list;
 nonterminal HostSetValue host_set;
+
+nonterminal List parameter_list, nonempty_parameter_list;
+nonterminal ParameterNode parameter;
+nonterminal ParameterDirection parameter_direction;
+
+nonterminal List argument_list, nonempty_argument_list;
+nonterminal FunctionArgumentNode argument;
+
 nonterminal Located<Protocol> protocol;
 nonterminal Located<ProtocolName> protocol_name;
 // TODO: more accurate types cause parse errors in IntelliJ
@@ -137,11 +145,14 @@ nonterminal Pair<Located, Located> protocol_labelled_argument;
 nonterminal Value protocol_argument;
 
 terminal String IDENT, CAP_IDENT;
+terminal String TMP_IDENT;
 terminal int INT_LIT;
 terminal TRUE, FALSE;
 
 terminal HOST, PROCESS;
 terminal CAP_HOST;
+terminal FUNCTION;
+terminal OUT;
 terminal COLON;
 
 terminal EQ;
@@ -210,18 +221,105 @@ declaration ::=
   | PROCESS:begin protocol:protocol block:body {:
       RESULT = new ProcessDeclarationNode(protocol, body, location(beginleft, bodyright));
     :}
+
+  | FUNCTION:begin IDENT:funcname optional_label_signature:label
+    OPEN_PAREN:paramsbegin parameter_list:params CLOSE_PAREN:paramsclose block:body {:
+      RESULT = new FunctionDeclarationNode(
+        new Located(new FunctionName(funcname), location(funcnameleft, funcnameright)),
+        label,
+        new Arguments(params, location(paramsbeginleft, paramsbeginright)),
+        body,
+        location(beginleft, bodyright)
+      );
+  :}
   ;
 
+parameter_list ::=
+    nonempty_parameter_list:params {:
+      RESULT = params;
+    :}
+
+  | /* empty */ {:
+      RESULT = CollectionsKt.mutableListOf();
+    :}
+  ;
+
+nonempty_parameter_list ::=
+    nonempty_parameter_list:params COMMA parameter:param {:
+      params.add(param);
+      RESULT = params;
+    :}
+
+  | parameter:param {:
+      RESULT = CollectionsKt.mutableListOf(param);
+    :}
+  ;
+
+parameter_direction ::=
+    OUT         {: RESULT = ParameterDirection.PARAM_OUT; :}
+  | /* empty */ {: RESULT = ParameterDirection.PARAM_IN; :}
+  ;
+
+parameter ::=
+    variable:name COLON value_type:type optional_label_signature:label {:
+      RESULT = new ParameterNode(
+        name,
+        ParameterDirection.PARAM_IN,
+        new Located(PrimitivesKt.getImmutableCell(), name.getSourceLocation()),
+        Arguments.from(type),
+        optionalLabelArgument(label),
+        location(nameleft, labelright)
+      );
+    :}
+
+  | variable:name COLON OUT value_type:type label_signature:label {:
+      RESULT = new ParameterNode(
+        name,
+        ParameterDirection.PARAM_OUT,
+        new Located(PrimitivesKt.getImmutableCell(), name.getSourceLocation()),
+        Arguments.from(type),
+        optionalLabelArgument(label),
+        location(nameleft, labelright)
+      );
+    :}
+
+  | variable:name COLON ARRAY OPEN_SQBRACE value_type:elementType CLOSE_SQBRACE
+    optional_label_signature:label {:
+      RESULT = new ParameterNode(
+        name,
+        ParameterDirection.PARAM_IN,
+        new Located(PrimitivesKt.getVector(), name.getSourceLocation()),
+        Arguments.from(elementType),
+        optionalLabelArgument(label),
+        location(nameleft, labelright)
+      );
+    :}
+
+  | variable:name COLON OUT ARRAY OPEN_SQBRACE value_type:elementType CLOSE_SQBRACE
+    label_signature:label {:
+      RESULT = new ParameterNode(
+        name,
+        ParameterDirection.PARAM_OUT,
+        new Located(PrimitivesKt.getVector(), name.getSourceLocation()),
+        Arguments.from(elementType),
+        optionalLabelArgument(label),
+        location(nameleft, labelright)
+      );
+    :}
+  ;
 
 simple_stmt ::=
     /* Immutable variable declaration. */
     VAL:begin variable:var COLON value_type:type optional_label:label EQ expr:value {:
       RESULT = new DeclarationNode(
         var,
-        new Located(PrimitivesKt.getImmutableCell(), var.getSourceLocation()),
-        Arguments.from(type),
-        optionalLabelArgument(label),
-        Arguments.from(value),
+        new ConstructorCallNode(
+            new Located(PrimitivesKt.getImmutableCell(), var.getSourceLocation()),
+            Arguments.from(type),
+            optionalLabelArgument(label),
+            Arguments.from(value),
+            location(typeleft, valueright)
+        ),
         location(beginleft, valueright));
     :}
 
@@ -233,24 +331,22 @@ simple_stmt ::=
 
       RESULT = new DeclarationNode(
         var,
-        new Located(PrimitivesKt.getMutableCell(), var.getSourceLocation()),
-        Arguments.from(type),
-        optionalLabelArgument(label),
-        Arguments.from((initial == null) ? defaultValue : initial),
+        new ConstructorCallNode(
+            new Located(PrimitivesKt.getMutableCell(), var.getSourceLocation()),
+            Arguments.from(type),
+            optionalLabelArgument(label),
+            Arguments.from((initial == null) ? defaultValue : initial),
+            location(typeleft, initialright)
+        ),
         location(beginleft, initialright));
     :}
 
-    /* Array declaration. */
-  | VAL:begin variable:var EQ ARRAY OPEN_SQBRACE value_type:elementType CLOSE_SQBRACE
-    optional_label:label OPEN_PAREN expr:size CLOSE_PAREN:end {:
+    /* Generic object declaration. */
+  | VAL:begin variable:var EQ expr:e {:
       RESULT = new DeclarationNode(
         var,
-        new Located(PrimitivesKt.getVector(), var.getSourceLocation()),
-        // TODO: Argument source locations below should include the braces
-        Arguments.from(elementType),
-        optionalLabelArgument(label),  // TODO: add label on size
-        Arguments.from(size),
-        location(beginleft, endright));
+        e,
+        location(beginleft, eright));
     :}
 
   | indexing:indexing EQ:eq expr:e {:
@@ -261,8 +357,25 @@ simple_stmt ::=
       RESULT = indexing.modify(op, e, location(opleft, opright));
     :}
 
+  /* out parameter declaration */
+  | OUT:begin IDENT:id EQ expr:e {:
+      RESULT = new OutParameterInitializationNode(
+        new Located(new ObjectVariable(id), location(idleft, idright)),
+        e,
+        location(beginleft, eright));
+    :}
+
+  /* function call */
+  | IDENT:funcname OPEN_PAREN:paramsopen argument_list:args CLOSE_PAREN:end {:
+      RESULT = new FunctionCallNode(
+        new Located(new FunctionName(funcname), location(funcnameleft, funcnameright)),
+        new Arguments(args, location(paramsopenleft, endright)),
+        location(funcnameleft, endright)
+      );
+    :}
+
   /* let binding */
-  | LET:begin IDENT:id EQ expr:e {:
+  | LET:begin TMP_IDENT:id EQ expr:e {:
     RESULT = new LetNode(
       new Located(new Temporary(id), location(idleft, idright)),
       e,
@@ -288,6 +401,45 @@ compound_assignment ::=
   | MINUSEQ  {: RESULT = Subtraction.INSTANCE; :}
   | TIMESEQ  {: RESULT = Multiplication.INSTANCE; :}
   | DIVIDEEQ {: RESULT = Division.INSTANCE; :}
+  ;
+
+argument ::=
+    expr:expr {:
+      RESULT = new ExpressionArgumentNode(expr, expr.getSourceLocation());
+    :}
+
+  | AND:begin variable:var {:
+      RESULT = new ObjectReferenceArgumentNode(var, location(beginleft, varright));
+    :}
+
+  | VAL:begin variable:var {:
+      RESULT = new ObjectDeclarationArgumentNode(var, location(beginleft, varright));
+    :}
+
+  | OUT:begin variable:var {:
+      RESULT = new OutParameterArgumentNode(var, location(beginleft, varright));
+    :}
+  ;
+
+nonempty_argument_list ::=
+    nonempty_argument_list:args COMMA argument:arg {:
+      args.add(arg);
+      RESULT = args;
+    :}
+
+  | argument:arg {:
+      RESULT = CollectionsKt.mutableListOf(arg);
+    :}
+  ;
+
+argument_list ::=
+    nonempty_argument_list:args {:
+      RESULT = args;
+    :}
+
+  | /* empty */ {:
+      RESULT = CollectionsKt.mutableListOf();
+    :}
   ;
 
 stmt ::=
@@ -358,6 +510,10 @@ expr ::=
 
   | indexing:indexing {:
        RESULT = indexing.get();
+    :}
+
+  | TMP_IDENT:id {:
+      RESULT = new ReadNode(new Located(new Temporary(id), location(idleft, idright)));
     :}
 
   | NOT:begin expr:e {:
@@ -451,6 +607,19 @@ expr ::=
   | OPEN_PAREN expr:e CLOSE_PAREN {:
       RESULT = e;
     :}
+
+  // constructor call, make this general later
+  | ARRAY:begin OPEN_SQBRACE value_type:elementType CLOSE_SQBRACE
+    optional_label:label OPEN_PAREN expr:size CLOSE_PAREN:end
+    {:
+      RESULT = new ConstructorCallNode(
+        new Located(PrimitivesKt.getVector(), location(beginleft, beginright)),
+        Arguments.from(elementType),
+        optionalLabelArgument(label),
+        Arguments.from(size),
+        location(beginleft, endright)
+      );
+    :}
   ;
 
 expr_list ::=
@@ -529,34 +698,36 @@ label ::=
   ;
 
 label_expr ::=
-    CAP_IDENT:id {: RESULT = Label.invoke(new Principal(id)); :}
+    CAP_IDENT:id {: RESULT = new LabelLiteral(id); :}
 
-  | TOP {: RESULT = Label.getWeakest(); :}
+  | IDENT:id {: RESULT = new LabelParameter(id); :}
 
-  | BOTTOM {: RESULT = Label.getStrongest(); :}
+  | TOP {: RESULT = LabelTop.INSTANCE; :}
+
+  | BOTTOM {: RESULT = LabelBottom.INSTANCE; :}
 
   | label_expr:l1 OR label_expr:l2 {:
-      RESULT = l1.or(l2);
+      RESULT = new LabelOr(l1, l2);
     :}
 
   | label_expr:l1 AND label_expr:l2 {:
-      RESULT = l1.and(l2);
+      RESULT = new LabelAnd(l1, l2);
     :}
 
   | label_expr:l1 JOIN label_expr:l2 {:
-      RESULT = l1.join(l2);
+      RESULT = new LabelJoin(l1, l2);
     :}
 
   | label_expr:l1 MEET label_expr:l2 {:
-      RESULT = l1.meet(l2);
+      RESULT = new LabelMeet(l1, l2);
     :}
 
   | label_expr:l RARROW {:
-      RESULT = l.confidentiality();
+      RESULT = new LabelConfidentiality(l);
     :}
 
   | label_expr:l LARROW {:
-      RESULT = l.integrity();
+      RESULT = new LabelIntegrity(l);
     :}
 
   | OPEN_PAREN label_expr:l CLOSE_PAREN {:
@@ -564,10 +735,62 @@ label_expr ::=
     :}
   ;
 
+label_signature ::=
+    OPEN_BRACE:begin label_expr_signature:l CLOSE_BRACE:end {:
+      RESULT = new Located(l, location(beginleft, endright));
+    :}
+  ;
+
+label_expr_signature ::=
+    label_expr_noparam:l {: RESULT = l; :}
+
+  | IDENT:id             {: RESULT = new LabelParameter(id); :}
+  ;
+
+label_expr_noparam ::=
+    CAP_IDENT:id {: RESULT = new LabelLiteral(id); :}
+
+  | TOP {: RESULT = LabelTop.INSTANCE; :}
+
+  | BOTTOM {: RESULT = LabelBottom.INSTANCE; :}
+
+  | label_expr:l1 OR label_expr:l2 {:
+      RESULT = new LabelOr(l1, l2);
+    :}
+
+  | label_expr:l1 AND label_expr:l2 {:
+      RESULT = new LabelAnd(l1, l2);
+    :}
+
+  | label_expr:l1 JOIN label_expr:l2 {:
+      RESULT = new LabelJoin(l1, l2);
+    :}
+
+  | label_expr:l1 MEET label_expr:l2 {:
+      RESULT = new LabelMeet(l1, l2);
+    :}
+
+  | label_expr:l RARROW {:
+      RESULT = new LabelConfidentiality(l);
+    :}
+
+  | label_expr:l LARROW {:
+      RESULT = new LabelIntegrity(l);
+    :}
+
+  | OPEN_PAREN label_expr:l CLOSE_PAREN {:
+      RESULT = l;
+    :}
+  ;
 
 optional_label ::=
     label:l     {: RESULT = l; :}
   | /* empty */ {: RESULT = null; :}
+  ;
+
+optional_label_signature ::=
+    label_signature:l     {: RESULT = l; :}
+  | /* empty */         {: RESULT = null; :}
   ;
 
 optional_from_label ::=

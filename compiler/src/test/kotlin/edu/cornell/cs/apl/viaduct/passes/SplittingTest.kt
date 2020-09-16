@@ -16,15 +16,15 @@ internal class SplittingTest {
     @ParameterizedTest
     @ArgumentsSource(ExampleProgramProvider::class)
     fun `it splits`(surfaceProgram: ProgramNode) {
-        val program = surfaceProgram.elaborated()
+        val program = surfaceProgram.elaborated().specialize()
 
         program.check()
 
         val protocolAssignment =
             selectProtocolsWithZ3(program, program.main, simpleProtocolFactory(program), ::simpleProtocolCost)
         val protocolAnalysis = ProtocolAnalysis(program, protocolAssignment)
+        val splitProgram = Splitter(protocolAnalysis).splitMain()
 
-        val splitProgram = program.splitMain(protocolAnalysis)
         edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode(
             // TODO: don't remove [HostInterface]s once [splitMain] starts renaming communication with main.
             declarations = splitProgram.filterNot { it is ProcessDeclarationNode && it.protocol.value is HostInterface },

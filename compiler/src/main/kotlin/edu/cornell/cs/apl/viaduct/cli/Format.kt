@@ -5,6 +5,7 @@ import com.github.ajalt.clikt.parameters.options.flag
 import com.github.ajalt.clikt.parameters.options.option
 import edu.cornell.cs.apl.viaduct.passes.check
 import edu.cornell.cs.apl.viaduct.passes.elaborated
+import edu.cornell.cs.apl.viaduct.passes.specialize
 import java.io.File
 
 class Format : CliktCommand(help = "Pretty print source program") {
@@ -18,7 +19,7 @@ class Format : CliktCommand(help = "Pretty print source program") {
 
     override fun run() {
         val program = input.parse()
-        val elaborated by lazy { program.elaborated() }
+        val elaborated by lazy { program.elaborated().specialize() }
 
         if (check) {
             elaborated.check()

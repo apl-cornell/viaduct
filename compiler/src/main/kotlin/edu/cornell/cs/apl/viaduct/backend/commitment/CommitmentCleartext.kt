@@ -4,6 +4,8 @@ import edu.cornell.cs.apl.viaduct.analysis.TypeAnalysis
 import edu.cornell.cs.apl.viaduct.backend.AbstractBackendInterpreter
 import edu.cornell.cs.apl.viaduct.backend.ImmutableCellObject
 import edu.cornell.cs.apl.viaduct.backend.MutableCellObject
+import edu.cornell.cs.apl.viaduct.backend.NullObject
+import edu.cornell.cs.apl.viaduct.backend.ObjectLocation
 import edu.cornell.cs.apl.viaduct.backend.PlaintextClassObject
 import edu.cornell.cs.apl.viaduct.backend.ProtocolProjection
 import edu.cornell.cs.apl.viaduct.backend.VectorObject
@@ -12,33 +14,38 @@ import edu.cornell.cs.apl.viaduct.errors.UndefinedNameError
 import edu.cornell.cs.apl.viaduct.syntax.Host
 import edu.cornell.cs.apl.viaduct.syntax.ObjectVariable
 import edu.cornell.cs.apl.viaduct.syntax.Temporary
+import edu.cornell.cs.apl.viaduct.syntax.datatypes.ClassName
+import edu.cornell.cs.apl.viaduct.syntax.datatypes.ImmutableCell
+import edu.cornell.cs.apl.viaduct.syntax.datatypes.MutableCell
+import edu.cornell.cs.apl.viaduct.syntax.datatypes.Vector
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.AtomicExpressionNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.DeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.DowngradeNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.LetNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.LiteralNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutputNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.QueryNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ReadNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ReceiveNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.SendNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.UpdateNode
-import edu.cornell.cs.apl.viaduct.syntax.types.ImmutableCellType
-import edu.cornell.cs.apl.viaduct.syntax.types.MutableCellType
-import edu.cornell.cs.apl.viaduct.syntax.types.VectorType
+import edu.cornell.cs.apl.viaduct.syntax.types.ValueType
 import edu.cornell.cs.apl.viaduct.syntax.values.ByteVecValue
+import edu.cornell.cs.apl.viaduct.syntax.values.IntegerValue
 import edu.cornell.cs.apl.viaduct.syntax.values.Value
+import java.util.Stack
 import kotlinx.collections.immutable.PersistentMap
 import kotlinx.collections.immutable.persistentMapOf
-import java.util.Stack
 
 data class Hashed<T>(val value: T, val info: HashInfo)
 
 internal class CommitmentCleartext(
+    program: ProgramNode,
     private val runtime: ViaductProcessRuntime,
-    private val typeAnalysis: TypeAnalysis,
     private val hashHosts: Set<Host>
-) : AbstractBackendInterpreter() {
+) : AbstractBackendInterpreter<Hashed<PlaintextClassObject>>(program) {
+
+    private val typeAnalysis = TypeAnalysis.get(program)
 
     private val projection: ProtocolProjection = runtime.projection
 
@@ -53,25 +60,18 @@ internal class CommitmentCleartext(
             tempStack.push(value)
         }
 
-    private val objectStoreStack: Stack<PersistentMap<ObjectVariable, Hashed<PlaintextClassObject>>> = Stack()
-
-    private var objectStore: PersistentMap<ObjectVariable, Hashed<PlaintextClassObject>>
-        get() {
-            return objectStoreStack.peek()
-        }
-        set(value) {
-            objectStoreStack.pop()
-            objectStoreStack.push(value)
-        }
-
     init {
         tempStack.push(persistentMapOf())
-        objectStoreStack.push(persistentMapOf())
+    }
+
+    override fun pushContext(
+        initialStore: PersistentMap<ObjectVariable, ObjectLocation>
+    ) {
+        objectStoreStack.push(initialStore)
     }
 
     override fun pushContext() {
         tempStack.push(tempStore)
-        objectStoreStack.push(objectStore)
     }
 
     override fun popContext() {
@@ -99,55 +99,21 @@ internal class CommitmentCleartext(
         }
     }
 
-    override suspend fun runAtomicExpr(expr: AtomicExpressionNode): Value {
-        return runAtomicExprHashed(expr).value
-    }
-
-    override suspend fun runDeclaration(stmt: DeclarationNode) {
-        val argumentValues: List<Value> = stmt.arguments.map { arg -> runAtomicExpr(arg) }
-        val obj: PlaintextClassObject
-        obj = when (val objectType = typeAnalysis.type(stmt)) {
-            is ImmutableCellType -> {
-                ImmutableCellObject(argumentValues[0], stmt.variable, objectType)
-            }
-            is MutableCellType -> {
-                MutableCellObject(argumentValues[0], stmt.variable, objectType)
-            }
-            is VectorType -> {
-                TODO("Commitment for vectors")
-            }
-            else -> {
-                TODO("other")
-            }
-        }
-        val hashInfo = Hashing.generateHash(obj)
-        objectStore = objectStore.put(
-            stmt.variable.value,
-            Hashed(obj, hashInfo)
-        )
-        for (commitmentReceiver: Host in hashHosts) {
-            runtime.send(
-                ByteVecValue(hashInfo.hash),
-                ProtocolProjection(
-                    projection.protocol,
-                    commitmentReceiver
-                )
-            )
-        }
-    }
-
     private fun runQuery(q: QueryNode): Hashed<Value> {
         val o = objectStore[q.variable.value] ?: throw Error("bad lookup")
-        return when (o.value) {
+        val obj = objectHeap[o]
+        return when (obj.value) {
             // We query an immutable cell by just copying the hash for the value.
-            is ImmutableCellObject -> Hashed(o.value.value, o.info)
+            is ImmutableCellObject -> Hashed(obj.value.value, obj.info)
 
             // We query an immutable cell by just copying the hash for the value.
-            is MutableCellObject -> Hashed(o.value.value, o.info)
+            is MutableCellObject -> Hashed(obj.value.value, obj.info)
 
             // TODO: in this case, we need to come up with a hash for an element from hash of collection.
             // This will require us to modify HashInfo to support a collection of hashes (perhaps a Merkle proof)
             is VectorObject -> TODO("Digest for vector")
+
+            is NullObject -> throw Error("runtime error: query on null")
         }
     }
 
@@ -209,5 +175,53 @@ internal class CommitmentCleartext(
 
     override suspend fun runUpdate(stmt: UpdateNode) {
         throw Exception("No updates in commitment")
+    }
+
+    override fun allocateObject(obj: Hashed<PlaintextClassObject>): ObjectLocation {
+        objectHeap.add(obj)
+        return objectHeap.size - 1
+    }
+
+    override suspend fun buildExpressionObject(expr: AtomicExpressionNode): Hashed<PlaintextClassObject> {
+        return buildObject(ImmutableCell, listOf(typeAnalysis.type(expr)), listOf(expr))
+    }
+
+    override suspend fun buildObject(
+        className: ClassName,
+        typeArguments: List<ValueType>,
+        arguments: List<AtomicExpressionNode>
+    ): Hashed<PlaintextClassObject> {
+        val argumentValues: List<Value> = arguments.map { arg -> runAtomicExprHashed(arg).value }
+        val obj: PlaintextClassObject
+        obj = when (className) {
+            ImmutableCell -> ImmutableCellObject(argumentValues[0])
+
+            MutableCell -> MutableCellObject(argumentValues[0])
+
+            Vector -> {
+                TODO("Commitment for vectors")
+            }
+
+            else -> throw Exception("runtime error")
+        }
+        val hashInfo = Hashing.generateHash(obj)
+        for (commitmentReceiver: Host in hashHosts) {
+            runtime.send(
+                ByteVecValue(hashInfo.hash),
+                ProtocolProjection(
+                    projection.protocol,
+                    commitmentReceiver
+                )
+            )
+        }
+        return Hashed(obj, hashInfo)
+    }
+
+    override fun getNullObject(): Hashed<PlaintextClassObject> {
+        return Hashed(NullObject, Hashing.deterministicHash(IntegerValue(0)))
+    }
+
+    override suspend fun runExprAsValue(expr: AtomicExpressionNode): Value {
+        return runAtomicExprHashed(expr).value
     }
 }

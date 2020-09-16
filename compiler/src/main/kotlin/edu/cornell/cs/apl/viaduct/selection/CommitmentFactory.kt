@@ -14,6 +14,8 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.DeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.DowngradeNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.LetNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.Node
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.ObjectDeclarationArgumentNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.ParameterNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.QueryNode
 import edu.cornell.cs.apl.viaduct.util.subsequences
@@ -59,6 +61,18 @@ class CommitmentFactory(val program: ProgramNode) : ProtocolFactory {
         }
     }
 
+    override fun viableProtocols(node: ObjectDeclarationArgumentNode): Set<Protocol> {
+        return if (node.isApplicable()) {
+            protocols(program).map { it.protocol }.toSet()
+        } else {
+            setOf()
+        }
+    }
+
+    override fun viableProtocols(node: ParameterNode): Set<Protocol> {
+        return protocols(program).map { it.protocol }.toSet()
+    }
+
     override fun viableProtocols(node: LetNode): Set<Protocol> {
         return if (node.isApplicable()) {
             protocols(program).map { it.protocol }.toSet()
@@ -73,13 +87,18 @@ class CommitmentFactory(val program: ProgramNode) : ProtocolFactory {
 
     fun readersIn(node: LetNode, pset: Set<Protocol>): SelectionConstraint {
         return nameAnalysis.readers(node).flatMap {
-            it.immediateRHS().flatMap {
-                it.involvedVariables().map {
-                    VariableIn(it, pset)
+            it.immediateRHS().flatMap { e ->
+                e.involvedVariables().map {
+                    VariableIn(Pair(nameAnalysis.enclosingFunctionName(e), it), pset)
                 }
             } + when (it) {
                 // The object constructed out of a reader must life in the pset as well
-                is DeclarationNode -> listOf(VariableIn(it.variable.value, pset))
+                is DeclarationNode -> listOf(
+                    VariableIn(
+                        Pair(nameAnalysis.enclosingFunctionName(it.declarationAsNode), it.name.value),
+                        pset
+                    )
+                )
                 else -> listOf()
             }
         }.ands()
@@ -88,7 +107,7 @@ class CommitmentFactory(val program: ProgramNode) : ProtocolFactory {
     override fun constraint(node: LetNode): SelectionConstraint {
         return protocols(program).map {
             Implies(
-                VariableIn(node.temporary.value, setOf(it.protocol)),
+                VariableIn(Pair(nameAnalysis.enclosingFunctionName(node), node.temporary.value), setOf(it.protocol)),
                 readersIn(
                     node,
                     setOf(it.protocol) + LocalFactory.protocols(program).map { it.protocol }.toSet() +
@@ -102,7 +121,18 @@ class CommitmentFactory(val program: ProgramNode) : ProtocolFactory {
         return nameAnalysis.users(node).flatMap { user ->
             when (user) {
                 is QueryNode -> user.involvedVariables().map {
-                    VariableIn(it, pset)
+                    VariableIn(Pair(nameAnalysis.enclosingFunctionName(user), it), pset)
+                }
+                else -> listOf(Literal(true))
+            }
+        }.ands()
+    }
+
+    private fun usersIn(node: ObjectDeclarationArgumentNode, pset: Set<Protocol>): SelectionConstraint {
+        return nameAnalysis.users(node).flatMap { user ->
+            when (user) {
+                is QueryNode -> user.involvedVariables().map {
+                    VariableIn(Pair(nameAnalysis.enclosingFunctionName(user), it), pset)
                 }
                 else -> listOf(Literal(true))
             }
@@ -112,7 +142,20 @@ class CommitmentFactory(val program: ProgramNode) : ProtocolFactory {
     override fun constraint(node: DeclarationNode): SelectionConstraint {
         return protocols(program).map {
             Implies(
-                VariableIn(node.variable.value, setOf(it.protocol)),
+                VariableIn(Pair(nameAnalysis.enclosingFunctionName(node), node.name.value), setOf(it.protocol)),
+                usersIn(
+                    node,
+                    setOf(it.protocol) + LocalFactory.protocols(program).map { it.protocol }.toSet() +
+                        ReplicationFactory.protocols(program).map { it.protocol }.toSet()
+                )
+            )
+        }.ands()
+    }
+
+    override fun constraint(node: ObjectDeclarationArgumentNode): SelectionConstraint {
+        return protocols(program).map {
+            Implies(
+                VariableIn(Pair(nameAnalysis.enclosingFunctionName(node), node.name.value), setOf(it.protocol)),
                 usersIn(
                     node,
                     setOf(it.protocol) + LocalFactory.protocols(program).map { it.protocol }.toSet() +

@@ -2,13 +2,19 @@ package edu.cornell.cs.apl.viaduct.syntax.surface
 
 import edu.cornell.cs.apl.prettyprinting.Document
 import edu.cornell.cs.apl.prettyprinting.PrettyPrintable
+import edu.cornell.cs.apl.prettyprinting.braced
+import edu.cornell.cs.apl.prettyprinting.bracketed
+import edu.cornell.cs.apl.prettyprinting.joined
 import edu.cornell.cs.apl.prettyprinting.nested
 import edu.cornell.cs.apl.prettyprinting.plus
 import edu.cornell.cs.apl.prettyprinting.times
 import edu.cornell.cs.apl.prettyprinting.tupled
+import edu.cornell.cs.apl.viaduct.security.LabelExpression
 import edu.cornell.cs.apl.viaduct.syntax.Arguments
+import edu.cornell.cs.apl.viaduct.syntax.ClassNameNode
 import edu.cornell.cs.apl.viaduct.syntax.HostNode
 import edu.cornell.cs.apl.viaduct.syntax.LabelNode
+import edu.cornell.cs.apl.viaduct.syntax.Located
 import edu.cornell.cs.apl.viaduct.syntax.ObjectVariableNode
 import edu.cornell.cs.apl.viaduct.syntax.Operator
 import edu.cornell.cs.apl.viaduct.syntax.ProtocolNode
@@ -79,11 +85,11 @@ sealed class DowngradeNode : ExpressionNode() {
     protected fun asDocument(downgradeOperation: String): Document {
         val from = fromLabel.let {
             if (it != null)
-                Document() * keyword("from") * it
+                Document() * keyword("from") * listOf(it).braced()
             else
                 Document()
         }
-        return keyword(downgradeOperation) * expression + from * keyword("to") * toLabel
+        return keyword(downgradeOperation) * expression + from * keyword("to") * listOf(toLabel).braced()
     }
 }
 
@@ -140,4 +146,27 @@ class ReceiveNode(
 ) : ExpressionNode() {
     override val asDocument: Document
         get() = keyword("receive") * type * keyword("from") * protocol
+}
+
+/**
+ * Call to an object constructor. Used for out parameter initialization.
+ */
+class ConstructorCallNode(
+    val className: ClassNameNode,
+    val typeArguments: Arguments<ValueTypeNode>,
+    val labelArguments: Arguments<Located<LabelExpression>>?,
+    val arguments: Arguments<ExpressionNode>,
+    override val sourceLocation: SourceLocation
+) : ExpressionNode() {
+    override val asDocument: Document
+        get() {
+            val types = typeArguments.bracketed().nested()
+            val labels =
+                labelArguments
+                    ?.map { arg -> listOf(arg).braced() }
+                    ?.joined()
+                    ?: Document()
+            val arguments = arguments.tupled().nested()
+            return className + types + labels + arguments
+        }
 }

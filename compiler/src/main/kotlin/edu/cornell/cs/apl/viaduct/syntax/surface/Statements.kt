@@ -1,6 +1,7 @@
 package edu.cornell.cs.apl.viaduct.syntax.surface
 
 import edu.cornell.cs.apl.prettyprinting.Document
+import edu.cornell.cs.apl.prettyprinting.braced
 import edu.cornell.cs.apl.prettyprinting.bracketed
 import edu.cornell.cs.apl.prettyprinting.concatenated
 import edu.cornell.cs.apl.prettyprinting.joined
@@ -8,18 +9,16 @@ import edu.cornell.cs.apl.prettyprinting.nested
 import edu.cornell.cs.apl.prettyprinting.plus
 import edu.cornell.cs.apl.prettyprinting.times
 import edu.cornell.cs.apl.prettyprinting.tupled
-import edu.cornell.cs.apl.viaduct.security.Label
+import edu.cornell.cs.apl.viaduct.errors.InvalidConstructorCallError
 import edu.cornell.cs.apl.viaduct.syntax.Arguments
-import edu.cornell.cs.apl.viaduct.syntax.ClassNameNode
+import edu.cornell.cs.apl.viaduct.syntax.FunctionNameNode
 import edu.cornell.cs.apl.viaduct.syntax.HostNode
 import edu.cornell.cs.apl.viaduct.syntax.JumpLabelNode
-import edu.cornell.cs.apl.viaduct.syntax.Located
 import edu.cornell.cs.apl.viaduct.syntax.ObjectVariableNode
 import edu.cornell.cs.apl.viaduct.syntax.ProtocolNode
 import edu.cornell.cs.apl.viaduct.syntax.SourceLocation
 import edu.cornell.cs.apl.viaduct.syntax.TemporaryNode
 import edu.cornell.cs.apl.viaduct.syntax.UpdateNameNode
-import edu.cornell.cs.apl.viaduct.syntax.ValueTypeNode
 import edu.cornell.cs.apl.viaduct.syntax.datatypes.ImmutableCell
 import edu.cornell.cs.apl.viaduct.syntax.datatypes.Modify
 import edu.cornell.cs.apl.viaduct.syntax.datatypes.MutableCell
@@ -54,37 +53,41 @@ class LetNode(
 /** Constructing a new object and binding it to a variable. */
 class DeclarationNode(
     val variable: ObjectVariableNode,
-    val className: ClassNameNode,
-    val typeArguments: Arguments<ValueTypeNode>,
-    // TODO: allow leaving out some of the labels (right now it's all or nothing)
-    val labelArguments: Arguments<Located<Label>>?,
-    val arguments: Arguments<ExpressionNode>,
+    val initializer: ExpressionNode,
     override val sourceLocation: SourceLocation
 ) : SimpleStatementNode() {
     override val asDocument: Document
-        get() =
-            when (className.value) {
+        get() {
+            val constructor: ConstructorCallNode =
+                when (initializer) {
+                    is ConstructorCallNode -> initializer
+
+                    else -> throw InvalidConstructorCallError(initializer, constructorNeeded = true)
+                }
+
+            return when (constructor.className.value) {
                 ImmutableCell -> {
-                    val label = labelArguments?.get(0) ?: Document()
+                    val label = constructor.labelArguments?.braced() ?: Document()
                     keyword("val") * variable + Document(":") *
-                        typeArguments[0] + label * "=" * arguments[0]
+                        constructor.typeArguments[0] + label * "=" * constructor.arguments[0]
                 }
 
                 MutableCell -> {
-                    val label = labelArguments?.get(0) ?: Document()
+                    val label = constructor.labelArguments?.braced() ?: Document()
                     keyword("var") * variable + Document(":") *
-                        typeArguments[0] + label * "=" * arguments[0]
+                        constructor.typeArguments[0] + label * "=" * constructor.arguments[0]
                 }
 
                 else -> {
-                    val types = typeArguments.bracketed().nested()
+                    val types = constructor.typeArguments.bracketed().nested()
                     // TODO: labels should have braces
                     //   val labels = labelArguments?.braced()?.nested() ?: Document()
-                    val labels = labelArguments?.joined() ?: Document()
-                    val arguments = arguments.tupled().nested()
-                    keyword("val") * variable * "=" * className + types + labels + arguments
+                    val labels = constructor.labelArguments?.braced() ?: Document()
+                    val arguments = constructor.arguments.tupled().nested()
+                    keyword("val") * variable * "=" * constructor.className + types + labels + arguments
                 }
             }
+        }
 }
 
 /** An update method applied to an object. */
@@ -110,6 +113,68 @@ class UpdateNode(
                 variable + "." + update + arguments.tupled().nested()
             }
         }
+}
+
+/** Initialization for an out parameter. */
+class OutParameterInitializationNode(
+    val name: ObjectVariableNode,
+    val rhs: ExpressionNode,
+    override val sourceLocation: SourceLocation
+) : SimpleStatementNode() {
+    override val asDocument: Document
+        get() = keyword("out") * name * Document("=") * rhs
+}
+
+/** Arguments to functions. */
+sealed class FunctionArgumentNode : Node()
+
+/** Out arguments to functions. */
+sealed class FunctionReturnArgumentNode : FunctionArgumentNode()
+
+/** Function argument that is an expression. */
+class ExpressionArgumentNode(
+    val expression: ExpressionNode,
+    override val sourceLocation: SourceLocation
+) : FunctionArgumentNode() {
+    override val asDocument: Document
+        get() = expression.asDocument
+}
+
+/** Function argument that is an object reference (e.g. &a in the surface syntax). */
+class ObjectReferenceArgumentNode(
+    val variable: ObjectVariableNode,
+    override val sourceLocation: SourceLocation
+) : FunctionArgumentNode() {
+    override val asDocument: Document
+        get() = Document("&${variable.value.name}")
+}
+
+/** Declaration of a new object as a return argument of a function. */
+class ObjectDeclarationArgumentNode(
+    val variable: ObjectVariableNode,
+    override val sourceLocation: SourceLocation
+) : FunctionReturnArgumentNode() {
+    override val asDocument: Document
+        get() = keyword("val") * Document(variable.value.name)
+}
+
+/** Out parameter initialized as an out parameter to a function call. */
+class OutParameterArgumentNode(
+    val parameter: ObjectVariableNode,
+    override val sourceLocation: SourceLocation
+) : FunctionReturnArgumentNode() {
+    override val asDocument: Document
+        get() = keyword("out") * Document(parameter.value.name)
+}
+
+/** Function call. */
+class FunctionCallNode(
+    val name: FunctionNameNode,
+    val arguments: Arguments<FunctionArgumentNode>,
+    override val sourceLocation: SourceLocation
+) : SimpleStatementNode() {
+    override val asDocument: Document
+        get() = name + arguments.tupled()
 }
 
 /** A statement that does nothing. */

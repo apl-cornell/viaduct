@@ -18,9 +18,9 @@ internal class AttributesTest {
         if (this == 1) true else (this - 1).even
     }
 
-    private val Any.cyclic: Nothing by attribute { this.cyclic }
-    private val Any.cyclicA: Nothing by attribute { this.cyclicB }
-    private val Any.cyclicB: Nothing by attribute { this.cyclicA }
+    private val Any.cyclic: Unit by attribute { this.cyclic }
+    private val Any.cyclicA: Unit by attribute { this.cyclicB }
+    private val Any.cyclicB: Unit by attribute { this.cyclicA }
 
     @Test
     fun `simple attributes work`() {

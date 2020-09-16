@@ -1,6 +1,7 @@
 package edu.cornell.cs.apl.viaduct.syntax.intermediate
 
 import edu.cornell.cs.apl.viaduct.passes.elaborated
+import edu.cornell.cs.apl.viaduct.syntax.FunctionName
 import edu.cornell.cs.apl.viaduct.syntax.SourceLocation
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.toPersistentList
@@ -17,6 +18,12 @@ private constructor(
 ) : Node(), List<TopLevelDeclarationNode> by declarations {
     constructor(declarations: List<TopLevelDeclarationNode>, sourceLocation: SourceLocation) :
         this(declarations.toPersistentList(), sourceLocation)
+
+    val functions: Iterable<FunctionDeclarationNode> =
+        declarations.filterIsInstance<FunctionDeclarationNode>()
+
+    val functionMap: Map<FunctionName, FunctionDeclarationNode> =
+        functions.map { function -> Pair(function.name.value, function) }.toMap()
 
     override val children: Iterable<TopLevelDeclarationNode>
         get() = declarations

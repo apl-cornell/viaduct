@@ -1,10 +1,9 @@
 plugins {
-    kotlin("multiplatform") version "1.3.72" apply false
+    kotlin("multiplatform") version "1.4.0" apply false
     id("org.jetbrains.dokka") version "0.10.1"
 
     // Style checking
     id("com.diffplug.spotless") version "5.1.0"
-    id("org.ec4j.editorconfig") version "0.0.3"
 
     // Dependency management
     id("com.github.ben-manes.versions") version "0.29.0"
@@ -50,20 +49,12 @@ allprojects {
     pluginManager.withPlugin("kotlin") {
         spotless {
             kotlin {
+                val relativeBuildPath = project.buildDir.relativeTo(project.projectDir)
+                targetExclude("$relativeBuildPath/**/*.kt")
                 ktlint()
             }
         }
     }
-}
-
-/** Style */
-
-editorconfig {
-    excludes = listOf("$buildDir", "**/out", "gradlew", ".kotlin", "**/*.hprof")
-}
-
-tasks.check {
-    dependsOn(tasks.editorconfigCheck)
 }
 
 /** Documentation */

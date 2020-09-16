@@ -28,7 +28,7 @@ class VariableExtractor private constructor() {
                 }
 
                 is DeclarationNode -> {
-                    variableList.add(stmt.variable.value)
+                    variableList.add(stmt.name.value)
                 }
 
                 is IfNode -> {

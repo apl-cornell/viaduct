@@ -6,13 +6,15 @@ import com.github.ajalt.clikt.parameters.types.file
 import edu.cornell.cs.apl.viaduct.analysis.InformationFlowAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.ProtocolAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.main
+import edu.cornell.cs.apl.viaduct.passes.Splitter
 import edu.cornell.cs.apl.viaduct.passes.check
 import edu.cornell.cs.apl.viaduct.passes.elaborated
-import edu.cornell.cs.apl.viaduct.passes.splitMain
+import edu.cornell.cs.apl.viaduct.passes.specialize
 import edu.cornell.cs.apl.viaduct.selection.selectProtocolsWithZ3
 import edu.cornell.cs.apl.viaduct.selection.simpleProtocolCost
 import edu.cornell.cs.apl.viaduct.selection.simpleProtocolFactory
 import edu.cornell.cs.apl.viaduct.selection.validateProtocolAssignment
+import edu.cornell.cs.apl.viaduct.syntax.FunctionName
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
 import edu.cornell.cs.apl.viaduct.syntax.Variable
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
@@ -47,18 +49,20 @@ class Compile : CliktCommand(help = "Compile ideal protocol to secure distribute
     ).file(canBeDir = false)
 
     override fun run() {
-        val program = input.parse().elaborated()
+        val unspecializedProgram = input.parse().elaborated()
 
-        // Dump label constraint graph to a file if requested.
-        dumpGraph(InformationFlowAnalysis.get(program)::exportConstraintGraph, constraintGraphOutput)
+        val program = unspecializedProgram.specialize()
 
         // Perform static checks.
         program.check()
 
+        // Dump label constraint graph to a file if requested.
+        dumpGraph(InformationFlowAnalysis.get(program)::exportConstraintGraph, constraintGraphOutput)
+
         val protocolFactory = simpleProtocolFactory(program)
 
         // Select protocols.
-        val protocolAssignment: (Variable) -> Protocol =
+        val protocolAssignment: (FunctionName, Variable) -> Protocol =
             selectProtocolsWithZ3(program, program.main, protocolFactory, ::simpleProtocolCost)
 
         // Perform a sanity check to ensure the protocolAssignment is valid.
@@ -68,7 +72,7 @@ class Compile : CliktCommand(help = "Compile ideal protocol to secure distribute
         val protocolAnalysis = ProtocolAnalysis(program, protocolAssignment)
 
         // Split the program.
-        val splitProgram: ProgramNode = program.splitMain(protocolAnalysis)
+        val splitProgram: ProgramNode = Splitter(protocolAnalysis).splitMain()
         output.println(splitProgram)
     }
 }

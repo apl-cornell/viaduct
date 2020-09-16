@@ -3,9 +3,10 @@ package edu.cornell.cs.apl.viaduct.backend
 import edu.cornell.cs.apl.viaduct.ExampleProgramProvider
 import edu.cornell.cs.apl.viaduct.analysis.ProtocolAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.main
+import edu.cornell.cs.apl.viaduct.passes.Splitter
 import edu.cornell.cs.apl.viaduct.passes.check
 import edu.cornell.cs.apl.viaduct.passes.elaborated
-import edu.cornell.cs.apl.viaduct.passes.splitMain
+import edu.cornell.cs.apl.viaduct.passes.specialize
 import edu.cornell.cs.apl.viaduct.protocols.HostInterface
 import edu.cornell.cs.apl.viaduct.selection.selectProtocolsWithZ3
 import edu.cornell.cs.apl.viaduct.selection.simpleProtocolCost
@@ -25,14 +26,19 @@ import org.junit.jupiter.params.provider.ArgumentsSource
 
 /** Fake protocol backend that doesn't do anything. */
 private object FakeBackend : ProtocolBackend {
-    override suspend fun run(runtime: ViaductProcessRuntime, process: BlockNode) {}
+    override suspend fun run(
+        runtime: ViaductProcessRuntime,
+        program: edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode,
+        process: BlockNode
+    ) {
+    }
 }
 
 internal class BackendInterpreterTest {
     @ParameterizedTest
     @ArgumentsSource(ExampleProgramProvider::class)
     fun testInterpreter(surfaceProgram: ProgramNode) {
-        val program = surfaceProgram.elaborated()
+        val program = surfaceProgram.elaborated().specialize()
 
         // Perform static checks.
         program.check()
@@ -43,7 +49,7 @@ internal class BackendInterpreterTest {
         val protocolAnalysis = ProtocolAnalysis(program, protocolAssignment)
 
         // Split the program.
-        val splitProgram = program.splitMain(protocolAnalysis)
+        val splitProgram = Splitter(protocolAnalysis).splitMain()
 
         // set up backend interpreter with fake backends
         val backendMap: Map<ProtocolName, ProtocolBackend> =

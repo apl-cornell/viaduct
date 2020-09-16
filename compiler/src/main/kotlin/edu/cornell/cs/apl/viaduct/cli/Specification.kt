@@ -28,7 +28,7 @@ class Specification : CliktCommand(help = "Generate UC ideal functionality from 
         program.check()
 
         // Generate specification
-        val specificationProgram = program.specification(adversaryLabel)
+        val specificationProgram = program.specification(adversaryLabel.interpret())
 
         output.println(specificationProgram)
     }

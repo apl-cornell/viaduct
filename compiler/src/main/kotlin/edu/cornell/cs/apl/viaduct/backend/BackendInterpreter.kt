@@ -52,6 +52,7 @@ class BackendInterpreter(
                             processes[projection] = { runtime ->
                                 backend.run(
                                     ViaductProcessRuntime(runtime, projection),
+                                    splitProgram,
                                     decl.body
                                 )
                             }

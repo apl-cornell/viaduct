@@ -53,7 +53,6 @@ import kotlin.reflect.KProperty
 import kotlinx.collections.immutable.PersistentSet
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.persistentSetOf
-import kotlinx.collections.immutable.toPersistentSet
 
 /**
  * Associates each use of a [Name] with its declaration, and every [Name] declaration with the
@@ -464,61 +463,21 @@ class NameAnalysis private constructor(private val tree: Tree<Node, ProgramNode>
         }
     }
 
+    /** Returns the set of calls to the given function declaration. */
     fun calls(function: FunctionDeclarationNode): Set<FunctionCallNode> = function.calls
 
-    /** Get call sides inside of a node. */
-    private val Node.callSites: PersistentSet<FunctionCallNode> by attribute {
-        when (this) {
-            is ProgramNode ->
-                this.declarations
-                    .map { decl -> decl.callSites }
-                    .fold(persistentSetOf()) { acc, declCallSites -> acc.addAll(declCallSites) }
-
-            is FunctionDeclarationNode -> this.body.callSites
-
-            is ProcessDeclarationNode -> this.body.callSites
-
-            is FunctionCallNode -> persistentSetOf(this)
-
-            is IfNode -> this.thenBranch.callSites.addAll(this.elseBranch.callSites)
-
-            is InfiniteLoopNode -> this.body.callSites
-
-            is BlockNode ->
-                this.statements
-                    .map { child -> child.callSites }
-                    .fold(persistentSetOf()) { acc, childCallSites -> acc.addAll(childCallSites) }
-
-            else -> persistentSetOf()
-        }
-    }
-
-    /** Get call sides inside of a node. */
-    fun callSites(node: Node): Set<FunctionCallNode> = node.callSites
-
-    /** Set of functions reachable from a node by transitively following call sites. */
+    /** Set of functions reachable from a node by transitively following function calls. */
     private val Node.reachableFunctions: PersistentSet<FunctionName> by circularAttribute(
         persistentSetOf()
     ) {
-        when (this) {
-            is FunctionDeclarationNode ->
-                this.body.reachableFunctions
-
-            is BlockNode ->
-                this.callSites
-                    .map { callSite -> callSite.name.value }
-                    .toPersistentSet()
-                    .addAll(
-                        this.callSites
-                            .map { callSite -> declaration(callSite).reachableFunctions }
-                            .fold(persistentSetOf()) { acc, callSiteSet -> acc.addAll(callSiteSet) }
-                    )
-
-            else -> this.callSites.map { callSite -> callSite.name.value }.toPersistentSet()
+        if (this is FunctionCallNode) {
+            declaration(this).reachableFunctions.add(this.name.value)
+        } else {
+            this.children.fold(persistentSetOf()) { acc, child -> acc.addAll(child.reachableFunctions) }
         }
     }
 
-    /** Set of functions reachable from a node by transitively following call sites. */
+    /** Returns the set of functions transitively reachable from a node. */
     fun reachableFunctions(node: Node) = node.reachableFunctions
 
     /** The set of names declared in a node. */

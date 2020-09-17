@@ -2,6 +2,7 @@ package edu.cornell.cs.apl.viaduct.analysis
 
 import edu.cornell.cs.apl.attributes.Tree
 import edu.cornell.cs.apl.attributes.attribute
+import edu.cornell.cs.apl.attributes.circularAttribute
 import edu.cornell.cs.apl.attributes.collectedAttribute
 import edu.cornell.cs.apl.viaduct.errors.IncorrectNumberOfArgumentsError
 import edu.cornell.cs.apl.viaduct.errors.NameClashError
@@ -52,6 +53,7 @@ import kotlin.reflect.KProperty
 import kotlinx.collections.immutable.PersistentSet
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.persistentSetOf
+import kotlinx.collections.immutable.toPersistentSet
 
 /**
  * Associates each use of a [Name] with its declaration, and every [Name] declaration with the
@@ -454,7 +456,7 @@ class NameAnalysis private constructor(private val tree: Tree<Node, ProgramNode>
         }
     }
 
-    /** Get the call sites for a function. */
+    /** Get the sites that call a function. */
     private val FunctionDeclarationNode.calls: Set<FunctionCallNode> by collectedAttribute(tree) { node ->
         when (node) {
             is FunctionCallNode -> listOf(declaration(node) to node)
@@ -463,6 +465,101 @@ class NameAnalysis private constructor(private val tree: Tree<Node, ProgramNode>
     }
 
     fun calls(function: FunctionDeclarationNode): Set<FunctionCallNode> = function.calls
+
+    /** Get call sides inside of a node. */
+    private val Node.callSites: PersistentSet<FunctionCallNode> by attribute {
+        when (this) {
+            is ProgramNode ->
+                this.declarations
+                    .map { decl -> decl.callSites }
+                    .fold(persistentSetOf()) { acc, declCallSites -> acc.addAll(declCallSites) }
+
+            is FunctionDeclarationNode -> this.body.callSites
+
+            is ProcessDeclarationNode -> this.body.callSites
+
+            is FunctionCallNode -> persistentSetOf(this)
+
+            is IfNode -> this.thenBranch.callSites.addAll(this.elseBranch.callSites)
+
+            is InfiniteLoopNode -> this.body.callSites
+
+            is BlockNode ->
+                this.statements
+                    .map { child -> child.callSites }
+                    .fold(persistentSetOf()) { acc, childCallSites -> acc.addAll(childCallSites) }
+
+            else -> persistentSetOf()
+        }
+    }
+
+    /** Get call sides inside of a node. */
+    fun callSites(node: Node): Set<FunctionCallNode> = node.callSites
+
+    /** Set of functions reachable from a node by transitively following call sites. */
+    private val Node.reachableFunctions: PersistentSet<FunctionName> by circularAttribute(
+        persistentSetOf()
+    ) {
+        when (this) {
+            is FunctionDeclarationNode ->
+                this.body.reachableFunctions
+
+            is BlockNode ->
+                this.callSites
+                    .map { callSite -> callSite.name.value }
+                    .toPersistentSet()
+                    .addAll(
+                        this.callSites
+                            .map { callSite -> declaration(callSite).reachableFunctions }
+                            .fold(persistentSetOf()) { acc, callSiteSet -> acc.addAll(callSiteSet) }
+                    )
+
+            else -> this.callSites.map { callSite -> callSite.name.value }.toPersistentSet()
+        }
+    }
+
+    /** Set of functions reachable from a node by transitively following call sites. */
+    fun reachableFunctions(node: Node) = node.reachableFunctions
+
+    /** The set of names declared in a node. */
+    private val Node.declaredNames: PersistentSet<String> by attribute {
+        when (this) {
+            is ProgramNode ->
+                this.declarations
+                    .map { decl -> decl.declaredNames }
+                    .fold(persistentSetOf()) { acc, declNames -> acc.addAll(declNames) }
+
+            is HostDeclarationNode -> persistentSetOf(this.name.value.name)
+
+            is FunctionDeclarationNode ->
+                this.body.declaredNames
+                    .addAll(
+                        this.parameters
+                            .map { param -> param.declaredNames }
+                            .fold(persistentSetOf()) { acc, paramNames -> acc.addAll(paramNames) }
+                    )
+                    .add(this.name.value.name)
+
+            is ParameterNode -> persistentSetOf(this.name.value.name)
+
+            is LetNode -> persistentSetOf(this.temporary.value.name)
+
+            is DeclarationNode -> persistentSetOf(this.name.value.name)
+
+            is IfNode -> this.thenBranch.declaredNames.addAll(this.elseBranch.declaredNames)
+
+            is InfiniteLoopNode -> this.body.declaredNames
+
+            is BlockNode ->
+                this.statements
+                    .map { child -> child.declaredNames }
+                    .fold(persistentSetOf()) { acc, childNames -> acc.addAll(childNames) }
+
+            else -> persistentSetOf()
+        }
+    }
+
+    fun declaredNames(node: Node) = node.declaredNames
 
     /**
      * Asserts that every referenced [Name] has a declaration, and that no [Name] is declared

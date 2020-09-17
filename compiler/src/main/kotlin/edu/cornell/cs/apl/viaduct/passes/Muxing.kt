@@ -2,8 +2,10 @@ package edu.cornell.cs.apl.viaduct.passes
 
 import edu.cornell.cs.apl.viaduct.analysis.NameAnalysis
 import edu.cornell.cs.apl.viaduct.syntax.Arguments
+import edu.cornell.cs.apl.viaduct.syntax.FunctionName
 import edu.cornell.cs.apl.viaduct.syntax.Located
 import edu.cornell.cs.apl.viaduct.syntax.Operator
+import edu.cornell.cs.apl.viaduct.syntax.Protocol
 import edu.cornell.cs.apl.viaduct.syntax.Temporary
 import edu.cornell.cs.apl.viaduct.syntax.TemporaryNode
 import edu.cornell.cs.apl.viaduct.syntax.datatypes.Get
@@ -22,7 +24,6 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.IfNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.InfiniteLoopNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.InputNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.LetNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.LiteralNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.OperatorApplicationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutParameterInitializationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutputNode
@@ -40,10 +41,12 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.deepCopy
 import edu.cornell.cs.apl.viaduct.syntax.operators.And
 import edu.cornell.cs.apl.viaduct.syntax.operators.Mux
 import edu.cornell.cs.apl.viaduct.syntax.operators.Not
-import edu.cornell.cs.apl.viaduct.syntax.values.BooleanValue
 import edu.cornell.cs.apl.viaduct.util.FreshNameGenerator
 
-fun ProgramNode.mux(): ProgramNode {
+fun ProgramNode.mux(
+    muxedProcesses: Set<Protocol>,
+    muxedFunctions: Set<FunctionName>
+): ProgramNode {
     val nameAnalysis = NameAnalysis.get(this)
     return ProgramNode(
         this.declarations.map { declaration ->
@@ -51,30 +54,47 @@ fun ProgramNode.mux(): ProgramNode {
                 is HostDeclarationNode -> declaration.deepCopy() as TopLevelDeclarationNode
 
                 is ProcessDeclarationNode -> {
-                    ProcessDeclarationNode(
-                        declaration.protocol,
-                        declaration.body.mux(nameAnalysis),
-                        declaration.sourceLocation
-                    )
+                    if (muxedProcesses.contains(declaration.protocol.value)) {
+                        ProcessDeclarationNode(
+                            declaration.protocol,
+                            declaration.body.mux(nameAnalysis),
+                            declaration.sourceLocation
+                        )
+                    } else {
+                        declaration.deepCopy() as ProcessDeclarationNode
+                    }
                 }
 
                 is FunctionDeclarationNode -> {
-                    FunctionDeclarationNode(
-                        declaration.name,
-                        declaration.pcLabel,
-                        Arguments(
-                            declaration.parameters.map { it.deepCopy() as ParameterNode },
-                            declaration.parameters.sourceLocation
-                        ),
-                        declaration.body.mux(nameAnalysis),
-                        declaration.sourceLocation
-                    )
+                    if (muxedFunctions.contains(declaration.name.value)) {
+                        FunctionDeclarationNode(
+                            declaration.name,
+                            declaration.pcLabel,
+                            Arguments(
+                                declaration.parameters.map { it.deepCopy() as ParameterNode },
+                                declaration.parameters.sourceLocation
+                            ),
+                            declaration.body.mux(nameAnalysis),
+                            declaration.sourceLocation
+                        )
+                    } else {
+                        declaration.deepCopy() as FunctionDeclarationNode
+                    }
                 }
             }
         },
         this.sourceLocation
     )
 }
+
+fun ProgramNode.mux(): ProgramNode =
+    this.mux(
+        this.declarations
+            .filterIsInstance<ProcessDeclarationNode>()
+            .map { procDecl -> procDecl.protocol.value }
+            .toSet(),
+        this.functions.map { f -> f.name.value }.toSet()
+    )
 
 fun StatementNode.canMux(): Boolean =
     when (this) {
@@ -110,7 +130,7 @@ fun StatementNode.canMux(): Boolean =
 
 fun BlockNode.mux(
     nameAnalysis: NameAnalysis,
-    nameGenerator: FreshNameGenerator = FreshNameGenerator()
+    nameGenerator: FreshNameGenerator = FreshNameGenerator(nameAnalysis.declaredNames(this))
 ): BlockNode {
     val newStatements = mutableListOf<StatementNode>()
     for (child in this.statements) {
@@ -301,18 +321,19 @@ private fun StatementNode.asStraightLine(
                 newStatements.add(
                     LetNode(
                         pathGuard,
-                        OperatorApplicationNode(
-                            And,
-                            Arguments(
-                                listOf(
-                                    this.guard.deepCopy() as AtomicExpressionNode,
-                                    currentGuard?.let { ReadNode(it) }
-                                        ?: LiteralNode(BooleanValue(true), this.guard.sourceLocation)
+                        currentGuard?.let {
+                            OperatorApplicationNode(
+                                And,
+                                Arguments(
+                                    listOf(
+                                        this.guard.deepCopy() as AtomicExpressionNode,
+                                        ReadNode(it)
+                                    ),
+                                    this.guard.sourceLocation
                                 ),
                                 this.guard.sourceLocation
-                            ),
-                            this.guard.sourceLocation
-                        ),
+                            )
+                        } ?: this.guard.deepCopy() as AtomicExpressionNode,
                         this.guard.sourceLocation
                     )
                 )
@@ -320,18 +341,16 @@ private fun StatementNode.asStraightLine(
                 newStatements.add(
                     LetNode(
                         negatedPathGuard,
-                        OperatorApplicationNode(
-                            And,
-                            Arguments(
-                                listOf(
-                                    ReadNode(negatedGuard),
-                                    currentGuard?.let { ReadNode(it) }
-                                        ?: LiteralNode(BooleanValue(true), this.guard.sourceLocation)
+                        currentGuard?.let {
+                            OperatorApplicationNode(
+                                And,
+                                Arguments(
+                                    listOf(ReadNode(negatedGuard), ReadNode(it)),
+                                    this.guard.sourceLocation
                                 ),
                                 this.guard.sourceLocation
-                            ),
-                            this.guard.sourceLocation
-                        ),
+                            )
+                        } ?: ReadNode(negatedGuard),
                         this.guard.sourceLocation
                     )
                 )

@@ -480,46 +480,6 @@ class NameAnalysis private constructor(private val tree: Tree<Node, ProgramNode>
     /** Returns the set of functions transitively reachable from a node. */
     fun reachableFunctions(node: Node) = node.reachableFunctions
 
-    /** The set of names declared in a node. */
-    private val Node.declaredNames: PersistentSet<String> by attribute {
-        when (this) {
-            is ProgramNode ->
-                this.declarations
-                    .map { decl -> decl.declaredNames }
-                    .fold(persistentSetOf()) { acc, declNames -> acc.addAll(declNames) }
-
-            is HostDeclarationNode -> persistentSetOf(this.name.value.name)
-
-            is FunctionDeclarationNode ->
-                this.body.declaredNames
-                    .addAll(
-                        this.parameters
-                            .map { param -> param.declaredNames }
-                            .fold(persistentSetOf()) { acc, paramNames -> acc.addAll(paramNames) }
-                    )
-                    .add(this.name.value.name)
-
-            is ParameterNode -> persistentSetOf(this.name.value.name)
-
-            is LetNode -> persistentSetOf(this.temporary.value.name)
-
-            is DeclarationNode -> persistentSetOf(this.name.value.name)
-
-            is IfNode -> this.thenBranch.declaredNames.addAll(this.elseBranch.declaredNames)
-
-            is InfiniteLoopNode -> this.body.declaredNames
-
-            is BlockNode ->
-                this.statements
-                    .map { child -> child.declaredNames }
-                    .fold(persistentSetOf()) { acc, childNames -> acc.addAll(childNames) }
-
-            else -> persistentSetOf()
-        }
-    }
-
-    fun declaredNames(node: Node) = node.declaredNames
-
     /**
      * Asserts that every referenced [Name] has a declaration, and that no [Name] is declared
      * multiple times in the same scope.

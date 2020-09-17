@@ -1,6 +1,7 @@
 package edu.cornell.cs.apl.viaduct.passes
 
 import edu.cornell.cs.apl.viaduct.analysis.NameAnalysis
+import edu.cornell.cs.apl.viaduct.analysis.freshVariableNameGenerator
 import edu.cornell.cs.apl.viaduct.syntax.Arguments
 import edu.cornell.cs.apl.viaduct.syntax.FunctionName
 import edu.cornell.cs.apl.viaduct.syntax.Located
@@ -130,7 +131,7 @@ fun StatementNode.canMux(): Boolean =
 
 fun BlockNode.mux(
     nameAnalysis: NameAnalysis,
-    nameGenerator: FreshNameGenerator = FreshNameGenerator(nameAnalysis.declaredNames(this))
+    nameGenerator: FreshNameGenerator = this.freshVariableNameGenerator()
 ): BlockNode {
     val newStatements = mutableListOf<StatementNode>()
     for (child in this.statements) {

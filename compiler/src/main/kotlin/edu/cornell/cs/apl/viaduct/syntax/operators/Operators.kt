@@ -319,6 +319,9 @@ object Mux : InfixOperator {
     override val type: FunctionType
         get() = FunctionType(BooleanType, IntegerType, IntegerType, result = IntegerType)
 
+    override fun alternativeTypes(): List<FunctionType> =
+        listOf(FunctionType(BooleanType, BooleanType, BooleanType, result = BooleanType))
+
     override fun apply(arguments: List<Value>): Value {
         return if ((arguments[0] as BooleanValue).value) arguments[1] else arguments[2]
     }

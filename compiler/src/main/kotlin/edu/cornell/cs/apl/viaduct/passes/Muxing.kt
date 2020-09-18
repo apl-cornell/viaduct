@@ -2,6 +2,9 @@ package edu.cornell.cs.apl.viaduct.passes
 
 import edu.cornell.cs.apl.viaduct.analysis.NameAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.freshVariableNameGenerator
+import edu.cornell.cs.apl.viaduct.errors.MuxingError
+import edu.cornell.cs.apl.viaduct.errors.UnknownDatatypeError
+import edu.cornell.cs.apl.viaduct.errors.UnknownMethodError
 import edu.cornell.cs.apl.viaduct.syntax.Arguments
 import edu.cornell.cs.apl.viaduct.syntax.FunctionName
 import edu.cornell.cs.apl.viaduct.syntax.Located
@@ -150,6 +153,11 @@ fun BlockNode.mux(
     return BlockNode(newStatements, this.sourceLocation)
 }
 
+private const val GET_TEMPORARY_NAME = "get"
+private const val MUX_TEMPORARY_NAME = "mux"
+private const val OP_TEMPORARY_NAME = "op"
+private const val GUARD_TEMPORARY_NAME = "guard"
+
 private fun StatementNode.asStraightLine(
     nameAnalysis: NameAnalysis,
     nameGenerator: FreshNameGenerator,
@@ -165,13 +173,13 @@ private fun StatementNode.asStraightLine(
                 val className = nameAnalysis.declaration(this).className.value
                 val getTemporary =
                     Located(
-                        Temporary(nameGenerator.getFreshName("${'$'}get")),
+                        Temporary(nameGenerator.getFreshName("${'$'}$GET_TEMPORARY_NAME")),
                         this.sourceLocation
                     )
 
                 val muxTemporary =
                     Located(
-                        Temporary(nameGenerator.getFreshName("${'$'}mux")),
+                        Temporary(nameGenerator.getFreshName("${'$'}$MUX_TEMPORARY_NAME")),
                         this.sourceLocation
                     )
 
@@ -179,7 +187,7 @@ private fun StatementNode.asStraightLine(
                     when (className) {
                         MutableCell -> null
                         Vector -> this.arguments[0].deepCopy() as AtomicExpressionNode
-                        else -> throw Error("unknown datatype")
+                        else -> throw UnknownDatatypeError(this.variable, className)
                     }
                 }
 
@@ -215,7 +223,7 @@ private fun StatementNode.asStraightLine(
 
                 val operationTemporary =
                     Located(
-                        Temporary(nameGenerator.getFreshName("${'$'}operation")),
+                        Temporary(nameGenerator.getFreshName("${'$'}$OP_TEMPORARY_NAME")),
                         this.arguments.sourceLocation
                     )
 
@@ -271,36 +279,36 @@ private fun StatementNode.asStraightLine(
                         )
                     }
 
-                    else -> throw Error("unknown update name")
+                    else -> throw UnknownMethodError(this.variable, this.update)
                 }
             } else {
                 listOf(this.deepCopy() as StatementNode)
             }
         }
 
-        is OutParameterInitializationNode -> throw Error("mux error")
+        is OutParameterInitializationNode -> throw MuxingError(this)
 
-        is OutputNode -> throw Error("mux error")
+        is OutputNode -> throw MuxingError(this)
 
-        is SendNode -> throw Error("mux error")
+        is SendNode -> throw MuxingError(this)
 
-        is FunctionCallNode -> throw Error("mux error")
+        is FunctionCallNode -> throw MuxingError(this)
 
         is IfNode -> {
             if (this.canMux()) {
                 val negatedGuard =
                     Located(
-                        Temporary(nameGenerator.getFreshName("${'$'}guard")),
+                        Temporary(nameGenerator.getFreshName("${'$'}$GUARD_TEMPORARY_NAME")),
                         this.guard.sourceLocation
                     )
                 val pathGuard =
                     Located(
-                        Temporary(nameGenerator.getFreshName("${'$'}guard")),
+                        Temporary(nameGenerator.getFreshName("${'$'}$GUARD_TEMPORARY_NAME")),
                         this.guard.sourceLocation
                     )
                 val negatedPathGuard =
                     Located(
-                        Temporary(nameGenerator.getFreshName("${'$'}guard")),
+                        Temporary(nameGenerator.getFreshName("${'$'}$GUARD_TEMPORARY_NAME")),
                         this.guard.sourceLocation
                     )
 

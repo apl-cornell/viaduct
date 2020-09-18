@@ -75,7 +75,10 @@ fun ProgramNode.mux(
                                 declaration.parameters.map { it.deepCopy() as ParameterNode },
                                 declaration.parameters.sourceLocation
                             ),
-                            declaration.body.mux(nameAnalysis),
+                            declaration.body.mux(
+                                nameAnalysis,
+                                declaration.freshVariableNameGenerator()
+                            ),
                             declaration.sourceLocation
                         )
                     } else {

@@ -109,9 +109,14 @@ class ABYFactory(program: ProgramNode) : ProtocolFactory {
                                 node.letNodes().map { letNode -> letNode.temporary.value }
                             )
                             .map { v -> varEqualToGuard(v) }
-                            .fold<SelectionConstraint, SelectionConstraint>(Literal(true)) { acc, constraint -> And(acc, constraint) }
+                            .fold<SelectionConstraint, SelectionConstraint>(Literal(true)) { acc, constraint ->
+                                And(
+                                    acc,
+                                    constraint
+                                )
+                            }
 
-                    return Implies(guardInMPC, varsEqualToGuard)
+                    Implies(guardInMPC, varsEqualToGuard)
                 } else { // if the node cannot be muxed, then the guard cannot be computed in MPC
                     Not(guardInMPC)
                 }

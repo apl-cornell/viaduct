@@ -13,6 +13,9 @@ import edu.cornell.cs.apl.viaduct.analysis.InformationFlowAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.NameAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.declarationNodes
 import edu.cornell.cs.apl.viaduct.analysis.letNodes
+import edu.cornell.cs.apl.viaduct.errors.IllegalInternalCommunicationError
+import edu.cornell.cs.apl.viaduct.errors.NoHostDeclarationsError
+import edu.cornell.cs.apl.viaduct.errors.NoSelectionSolutionError
 import edu.cornell.cs.apl.viaduct.protocols.Local
 import edu.cornell.cs.apl.viaduct.syntax.FunctionName
 import edu.cornell.cs.apl.viaduct.syntax.HostTrustConfiguration
@@ -31,6 +34,7 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.ParameterNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProcessDeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.QueryNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.ReceiveNode
 import edu.cornell.cs.apl.viaduct.util.unions
 
 /**
@@ -58,13 +62,15 @@ private class Z3Selection(
     private val protocolCost: (Protocol) -> Int,
     private val ctx: Context
 ) {
-    private companion object {
-        val MAIN_FUNCTION = FunctionName("#main#")
-    }
-
     private val nameAnalysis = NameAnalysis.get(program)
     private val informationFlowAnalysis = InformationFlowAnalysis.get(program)
     private val hostTrustConfiguration = HostTrustConfiguration(program)
+
+    init {
+        if (this.hostTrustConfiguration.isEmpty()) {
+            throw NoHostDeclarationsError(program.sourceLocation.sourcePath)
+        }
+    }
 
     // TODO: pc must be weak enough for the hosts involved in the selected protocols to read it
     private val protocolSelection = object {
@@ -98,6 +104,10 @@ private class Z3Selection(
         }
 
         fun viableProtocols(node: LetNode): Set<Protocol> {
+            if (node.value is ReceiveNode) {
+                throw IllegalInternalCommunicationError(node.value)
+            }
+
             val label = informationFlowAnalysis.label(node)
             return node.viableProtocols.filter {
                 it.authority(hostTrustConfiguration).actsFor(label)
@@ -297,8 +307,7 @@ private class Z3Selection(
             }
             return ::eval
         } else {
-            // TODO: error class
-            throw error("Solver could not find solution")
+            throw NoSelectionSolutionError()
         }
     }
 }

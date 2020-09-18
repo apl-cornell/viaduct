@@ -65,4 +65,12 @@ fun unions(vararg selectors: ProtocolFactory): ProtocolFactory = object : Protoc
                 sel.constraint(node)
             )
         }
+
+    override fun constraint(node: IfNode): SelectionConstraint =
+        selectors.fold<ProtocolFactory, SelectionConstraint>(Literal(true)) { acc, sel ->
+            And(
+                acc,
+                sel.constraint(node)
+            )
+        }
 }

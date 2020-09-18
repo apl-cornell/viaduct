@@ -20,6 +20,7 @@ import edu.cornell.cs.apl.viaduct.syntax.Protocol
 import edu.cornell.cs.apl.viaduct.syntax.Variable
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.DeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ExpressionArgumentNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.IfNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.InputNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.LetNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.Node
@@ -128,6 +129,7 @@ private class Z3Selection(
                     ),
                     protocolFactory.constraint(this)
                 )
+
             is DeclarationNode ->
                 setOf(
                     VariableIn(
@@ -136,6 +138,8 @@ private class Z3Selection(
                     ),
                     protocolFactory.constraint(this)
                 )
+
+            is IfNode -> setOf(protocolFactory.constraint(this))
 
             is ExpressionArgumentNode -> {
                 val parameter = nameAnalysis.parameter(this)

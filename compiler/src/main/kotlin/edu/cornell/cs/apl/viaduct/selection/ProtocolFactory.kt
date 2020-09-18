@@ -2,6 +2,7 @@ package edu.cornell.cs.apl.viaduct.selection
 
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.DeclarationNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.IfNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.LetNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ParameterNode
 
@@ -29,6 +30,10 @@ interface ProtocolFactory {
     }
 
     fun constraint(node: ParameterNode): SelectionConstraint {
+        return Literal(true)
+    }
+
+    fun constraint(node: IfNode): SelectionConstraint {
         return Literal(true)
     }
 }

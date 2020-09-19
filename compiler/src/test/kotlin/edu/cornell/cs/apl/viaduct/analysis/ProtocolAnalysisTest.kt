@@ -4,7 +4,7 @@ import edu.cornell.cs.apl.viaduct.ExampleProgramProvider
 import edu.cornell.cs.apl.viaduct.errors.NoMainError
 import edu.cornell.cs.apl.viaduct.passes.check
 import edu.cornell.cs.apl.viaduct.passes.elaborated
-import edu.cornell.cs.apl.viaduct.selection.SimpleSelection
+import edu.cornell.cs.apl.viaduct.selection.selectProtocolsWithZ3
 import edu.cornell.cs.apl.viaduct.selection.simpleProtocolCost
 import edu.cornell.cs.apl.viaduct.selection.simpleProtocolFactory
 import edu.cornell.cs.apl.viaduct.syntax.surface.ProgramNode
@@ -19,7 +19,7 @@ internal class ProtocolAnalysisTest {
 
         program.check()
         val dumpProtocolAssignment =
-            SimpleSelection(program, simpleProtocolFactory(program), ::simpleProtocolCost).select(program)
+            selectProtocolsWithZ3(program, program.main, simpleProtocolFactory(program), ::simpleProtocolCost)
         val protocolAnalysis = ProtocolAnalysis(program, dumpProtocolAssignment)
 
         try {

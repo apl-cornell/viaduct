@@ -196,118 +196,139 @@ private class Z3Selection(
         )
     }
 
-    private val letNodes: Map<LetNode, IntExpr> =
-        program.letNodes().map {
-            it to (ctx.mkFreshConst("t", ctx.intSort) as IntExpr)
-        }.toMap()
+    private fun computeProtocolAndVariableMaps(
+        main: ProcessDeclarationNode
+    ): Pair<BiMap<Protocol, Int>, BiMap<FunctionVariable, IntExpr>> {
+        val reachableFunctionNames = nameAnalysis.reachableFunctions(main)
+        val reachableFunctions = program.functions.filter { f -> reachableFunctionNames.contains(f.name.value) }
 
-    // All possible viable protocols that can be selected for temporaries.
-    private val tempViables: Set<Protocol> =
-        letNodes.keys.map { protocolSelection.viableProtocols(it) }.unions()
+        val letNodes: Map<LetNode, IntExpr> =
+            reachableFunctions
+                .flatMap { f -> f.letNodes() }
+                .plus(main.letNodes())
+                .map { letNode: LetNode ->
+                    letNode to (ctx.mkFreshConst("t", ctx.intSort) as IntExpr)
+                }.toMap()
 
-    private val declarationNodes: Map<DeclarationNode, IntExpr> =
-        program.declarationNodes().map {
-            it to (ctx.mkFreshConst("t", ctx.intSort) as IntExpr)
-        }.toMap()
+        val tempViables: Set<Protocol> =
+            letNodes.keys.map { protocolSelection.viableProtocols(it) }.unions()
 
-    // All possible viable protocols that can be selected for objects
-    private val declViables: Set<Protocol> =
-        declarationNodes.keys.map { protocolSelection.viableProtocols(it) }.unions()
+        val declarationNodes: Map<DeclarationNode, IntExpr> =
+            reachableFunctions
+                .flatMap { f -> f.declarationNodes() }
+                .plus(main.declarationNodes())
+                .map { decl: DeclarationNode ->
+                    decl to (ctx.mkFreshConst("t", ctx.intSort) as IntExpr)
+                }.toMap()
 
-    private val parameterNodes: Map<ParameterNode, IntExpr> =
-        program.functions.flatMap { function ->
-            function.parameters.map { parameter ->
-                parameter to (ctx.mkFreshConst("t", ctx.intSort) as IntExpr)
-            }
-        }.toMap()
+        val declViables: Set<Protocol> =
+            declarationNodes.keys.map { protocolSelection.viableProtocols(it) }.unions()
 
-    // All possible viable protocols that can be selected for parameters
-    private val parameterViables: Set<Protocol> =
-        parameterNodes.keys.map { protocolSelection.viableProtocols(it) }.unions()
+        val parameterNodes: Map<ParameterNode, IntExpr> =
+            reachableFunctions.flatMap { function ->
+                function.parameters.map { parameter ->
+                    parameter to (ctx.mkFreshConst("t", ctx.intSort) as IntExpr)
+                }
+            }.toMap()
 
-    /** Listing of all distinct protocols in question for the program. **/
-    private val pmap: BiMap<Protocol, Int> =
-        tempViables
-            .union(declViables)
-            .union(parameterViables)
-            .withIndex().map {
-                it.value to it.index
-            }.toMap().toBiMap()
+        // All possible viable protocols that can be selected for parameters
+        val parameterViables: Set<Protocol> =
+            parameterNodes.keys.map { protocolSelection.viableProtocols(it) }.unions()
 
-    /** Listing of all distinct variables in question for the program.
-     */
+        val pmap: BiMap<Protocol, Int> =
+            tempViables
+                .union(declViables)
+                .union(parameterViables)
+                .withIndex().map {
+                    it.value to it.index
+                }.toMap().toBiMap()
 
-    private val varMap: BiMap<FunctionVariable, IntExpr> =
-        (letNodes.mapKeys {
-            Pair(nameAnalysis.enclosingFunctionName(it.key), it.key.temporary.value)
-        }.plus(
-            declarationNodes.mapKeys {
-                Pair(nameAnalysis.enclosingFunctionName(it.key), it.key.name.value)
-            }
-        ).plus(
-            parameterNodes.mapKeys {
-                val functionName = nameAnalysis.functionDeclaration(it.key).name.value
-                Pair(functionName, it.key.name.value)
-            }
-        )).toBiMap()
+        val varMap: BiMap<FunctionVariable, IntExpr> =
+            (letNodes.mapKeys {
+                Pair(nameAnalysis.enclosingFunctionName(it.key), it.key.temporary.value)
+            }.plus(
+                declarationNodes.mapKeys {
+                    Pair(nameAnalysis.enclosingFunctionName(it.key), it.key.name.value)
+                }
+            ).plus(
+                parameterNodes.mapKeys {
+                    val functionName = nameAnalysis.functionDeclaration(it.key).name.value
+                    Pair(functionName, it.key.name.value)
+                }
+            )).toBiMap()
 
-    /** Naive cost for selecting a protocol coded by the int p, which is equal to the cost of the corresponding protocol
-    (as defined by the protocolCost function) */
-    private fun symbolicCost(p: IntExpr): IntExpr {
-        return pmap.toList().fold(ctx.mkInt(0) as IntExpr) { acc, x ->
-            ctx.mkITE(ctx.mkEq(p, ctx.mkInt(x.second)), ctx.mkInt(protocolCost(x.first)), acc) as IntExpr
-        }
+        return Pair(pmap, varMap)
     }
 
     fun select(): (FunctionName, Variable) -> Protocol {
         val solver = ctx.mkOptimize()
         val constraints = mutableSetOf<SelectionConstraint>()
 
+        val reachableFunctions = nameAnalysis.reachableFunctions(processDeclaration)
         for (function in program.functions) {
-            // select for function parameters first
-            for (parameter in function.parameters) {
-                constraints.add(
-                    VariableIn(
-                        Pair(function.name.value, parameter.name.value),
-                        protocolSelection.viableProtocols(parameter)
+            if (reachableFunctions.contains(function.name.value)) {
+                // select for function parameters first
+                for (parameter in function.parameters) {
+                    constraints.add(
+                        VariableIn(
+                            Pair(function.name.value, parameter.name.value),
+                            protocolSelection.viableProtocols(parameter)
+                        )
                     )
-                )
-                constraints.add(protocolFactory.constraint(parameter))
-            }
+                    constraints.add(protocolFactory.constraint(parameter))
+                }
 
-            // then select for function bodies
-            constraints.addAll(function.body.constraints())
+                // then select for function bodies
+                constraints.addAll(function.body.constraints())
+            }
         }
 
         // finally select for main process
         constraints.addAll(processDeclaration.constraints())
 
+        val (pmap, varMap) = computeProtocolAndVariableMaps(processDeclaration)
+
+        /** Naive cost for selecting a protocol coded by the int p, which is equal to the cost of the corresponding protocol
+        (as defined by the protocolCost function) */
+        // TODO: this cost metric is particularly naive; it is simply the sum of costs of protocols for each selection.
+        val symbolicCost: (IntExpr) -> IntExpr = { p ->
+            pmap.toList().fold(ctx.mkInt(0) as IntExpr) { acc, x ->
+                ctx.mkITE(ctx.mkEq(p, ctx.mkInt(x.second)), ctx.mkInt(protocolCost(x.first)), acc) as IntExpr
+            }
+        }
+
         for (constraint in constraints) {
             solver.Add(constraint.boolExpr(ctx, varMap, pmap.mapValues { ctx.mkInt(it.value) }.toBiMap()))
         }
 
-        // TODO: this cost metric is particularly naive; it is simply the sum of costs of protocols for each selection.
-        val cost = ctx.mkAdd(* (varMap.values.map { symbolicCost(it) }).toTypedArray())
-        solver.MkMinimize(cost)
+        if (varMap.values.isNotEmpty()) {
+            val cost = ctx.mkAdd(* (varMap.values.map { symbolicCost(it) }).toTypedArray())
+            solver.MkMinimize(cost)
 
-        if (solver.Check() == Status.SATISFIABLE) {
-            var model = solver.model
-            val interpMap: Map<FunctionVariable, Int> =
-                varMap.mapValues { e ->
-                    (model.getConstInterp(e.value) as IntNum).int
-                }
+            if (solver.Check() == Status.SATISFIABLE) {
+                var model = solver.model
+                val interpMap: Map<FunctionVariable, Int> =
+                    varMap.mapValues { e ->
+                        (model.getConstInterp(e.value) as IntNum).int
+                    }
 
-            fun eval(f: FunctionName, v: Variable): Protocol {
-                val fvar = Pair(f, v)
-                if (interpMap.containsKey(fvar)) {
-                    return pmap.inverse.get(interpMap[fvar]) ?: throw error("Protocol now found")
-                } else {
-                    throw SelectionError("Query for variable not contained in varMap: $v")
+                fun eval(f: FunctionName, v: Variable): Protocol {
+                    val fvar = Pair(f, v)
+                    if (interpMap.containsKey(fvar)) {
+                        return pmap.inverse.get(interpMap[fvar]) ?: throw error("Protocol now found")
+                    } else {
+                        throw SelectionError("Query for variable not contained in varMap: $v")
+                    }
                 }
+                return ::eval
+            } else {
+                throw NoSelectionSolutionError()
             }
-            return ::eval
+
         } else {
-            throw NoSelectionSolutionError()
+            return { _:FunctionName, _:Variable ->
+                throw Error("there are no variables in the program! impossible ")
+            }
         }
     }
 }

@@ -201,14 +201,20 @@ class Splitter(
         fun splitMain(): ProgramNode {
             // Assert that the program has a main
             program.main
+
+            val reachableFunctions = nameAnalysis.reachableFunctions(program.main)
             val splitDeclarations: MutableList<TopLevelDeclarationNode> = mutableListOf()
             for (declaration in program.declarations) {
                 when {
-                    declaration is ProcessDeclarationNode && declaration.protocol.value == MainProtocol -> {
+                    declaration is ProcessDeclarationNode
+                        && declaration.protocol.value == MainProtocol ->
+                    {
                         splitDeclarations.addAll(split(declaration))
                     }
 
-                    declaration is FunctionDeclarationNode -> {
+                    declaration is FunctionDeclarationNode
+                        && reachableFunctions.contains(declaration.name.value) ->
+                    {
                         splitDeclarations.addAll(split(declaration))
                     }
 

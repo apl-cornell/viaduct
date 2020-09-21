@@ -90,6 +90,8 @@ private class Z3Selection(
                         else -> throw Exception("impossible case")
                     }
 
+                is ReceiveNode -> throw IllegalInternalCommunicationError(value)
+
                 else ->
                     protocolFactory.viableProtocols(this)
             }
@@ -104,10 +106,6 @@ private class Z3Selection(
         }
 
         fun viableProtocols(node: LetNode): Set<Protocol> {
-            if (node.value is ReceiveNode) {
-                throw IllegalInternalCommunicationError(node.value)
-            }
-
             val label = informationFlowAnalysis.label(node)
             return node.viableProtocols.filter {
                 it.authority(hostTrustConfiguration).actsFor(label)
@@ -132,13 +130,50 @@ private class Z3Selection(
     private fun Node.constraints(): Set<SelectionConstraint> {
         val s = when (this) {
             is LetNode ->
-                setOf(
-                    VariableIn(
-                        Pair(nameAnalysis.enclosingFunctionName(this), this.temporary.value),
-                        protocolSelection.viableProtocols(this)
-                    ),
-                    protocolFactory.constraint(this)
-                )
+                when (val rhs = this.value) {
+                    is QueryNode -> {
+                        val enclosingFunctionName = nameAnalysis.enclosingFunctionName(this)
+                        when (val objectDecl = nameAnalysis.declaration(rhs).declarationAsNode) {
+                            is DeclarationNode ->
+                                setOf(
+                                    VariableEquals(
+                                        FunctionVariable(enclosingFunctionName, objectDecl.name.value),
+                                        FunctionVariable(enclosingFunctionName, this.temporary.value)
+                                    )
+                                )
+
+                            is ParameterNode ->
+                                setOf(
+                                    VariableEquals(
+                                        FunctionVariable(enclosingFunctionName, objectDecl.name.value),
+                                        FunctionVariable(enclosingFunctionName, this.temporary.value)
+                                    )
+                                )
+
+                            is ObjectDeclarationArgumentNode -> {
+                                val param = nameAnalysis.parameter(objectDecl)
+                                setOf(
+                                    VariableEquals(
+                                        FunctionVariable(nameAnalysis.functionDeclaration(param).name.value, param.name.value),
+                                        FunctionVariable(enclosingFunctionName, this.temporary.value)
+                                    )
+                                )
+                            }
+
+                            else -> throw Error("impossible case")
+                        }
+                    }
+
+                    else -> {
+                        setOf(
+                            VariableIn(
+                                Pair(nameAnalysis.enclosingFunctionName(this), this.temporary.value),
+                                protocolSelection.viableProtocols(this)
+                            ),
+                            protocolFactory.constraint(this)
+                        )
+                    }
+                }
 
             is DeclarationNode ->
                 setOf(
@@ -324,9 +359,8 @@ private class Z3Selection(
             } else {
                 throw NoSelectionSolutionError()
             }
-
         } else {
-            return { _:FunctionName, _:Variable ->
+            return { _: FunctionName, _: Variable ->
                 throw Error("there are no variables in the program! impossible ")
             }
         }

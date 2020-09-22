@@ -11,6 +11,7 @@ import edu.cornell.cs.apl.viaduct.analysis.InformationFlowAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.NameAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.declarationNodes
 import edu.cornell.cs.apl.viaduct.analysis.letNodes
+import edu.cornell.cs.apl.viaduct.analysis.updateNodes
 import edu.cornell.cs.apl.viaduct.errors.IllegalInternalCommunicationError
 import edu.cornell.cs.apl.viaduct.errors.NoHostDeclarationsError
 import edu.cornell.cs.apl.viaduct.errors.NoProtocolIndexMapping
@@ -38,6 +39,7 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.QueryNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ReadNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ReceiveNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.UpdateNode
 import edu.cornell.cs.apl.viaduct.util.unions
 import kotlinx.collections.immutable.PersistentMap
 import kotlinx.collections.immutable.persistentMapOf
@@ -251,52 +253,141 @@ private class Z3Selection(
             .map { CostVariable(ctx.mkFreshConst("cost", ctx.intSort) as IntExpr) }
     }
 
+    /**
+     * Generate cost constraints for performing a computation (let nodes and updates).
+     * Handles computation of communication costs.
+     *
+     * @param fv: function-variable pair associated with the computation
+     * @param protocols: protocols that can implement the computation
+     * @param reads: the reads performed by the computation
+     * @param baseCostFunction: basic cost of computation node (no communication cost) as a function of its protocol
+     * @param symbolicCost: symbolic cost associated with the computation node.
+     * */
+    private fun generateComputationCostConstraints(
+        fv: FunctionVariable,
+        protocols: Set<Protocol>,
+        reads: List<ReadNode>,
+        baseCostFunction: (Protocol) -> Cost<IntegerCost>,
+        symbolicCost: Cost<SymbolicCost>
+    ): Set<SelectionConstraint> {
+        // cartesian product of all viable protocols for arguments
+        val argProtocolMaps =
+            getArgumentViableProtocols(persistentMapOf(), reads)
+
+        // for each element in the cartesian product of viable protocols,
+        // compute the cost using the cost estimator
+        return protocols.flatMap { protocol ->
+            argProtocolMaps.map { argProtocolMap ->
+                val cost =
+                    baseCostFunction(protocol).concat(
+                        argProtocolMap.values.fold(costEstimator.zeroCost()) { acc, argProtocol ->
+                            acc.concat(costEstimator.communicationCost(argProtocol, protocol))
+                        }
+                    )
+
+                val protocolConstraints: SelectionConstraint =
+                    argProtocolMap.map { kv ->
+                        VariableIn(FunctionVariable(fv.first, kv.key), setOf(kv.value))
+                    }.plus(
+                        setOf(VariableIn(fv, setOf(protocol)))
+                    ).fold(Literal(true) as SelectionConstraint) { acc, c -> And(acc, c) }
+
+                val costConstraints: SelectionConstraint =
+                    symbolicCost.features.map { kv ->
+                        CostEquals(
+                            kv.value,
+                            cost.features[kv.key]?.let { c -> CostLiteral(c.cost) }
+                                ?: throw Error("No cost associated with feature ${kv.key}")
+                        )
+                    }.fold(Literal(true) as SelectionConstraint) { acc, c -> And(acc, c) }
+
+                Implies(protocolConstraints, costConstraints)
+            }
+        }.toSet()
+    }
+
     private fun Node.costConstraints(): Set<SelectionConstraint> =
         when (this) {
             is LetNode -> {
-                val enclosingFunctionName = nameAnalysis.enclosingFunctionName(this)
-                val protocols = protocolSelection.viableProtocols(this)
-                val argProtocolMaps =
-                    getArgumentViableProtocols(
-                        persistentMapOf(),
-                        this.children.filterIsInstance<ReadNode>()
-                    )
+                generateComputationCostConstraints(
+                    FunctionVariable(nameAnalysis.enclosingFunctionName(this), this.temporary.value),
+                    protocolSelection.viableProtocols(this),
+                    this.children.filterIsInstance<ReadNode>(),
+                    { protocol -> costEstimator.executionCost(this.value, protocol) },
+                    this.symbolicCost
+                )
+            }
 
-                protocols.flatMap { protocol ->
-                    argProtocolMaps.map { argProtocolMap ->
-                        val cost =
-                            costEstimator.executionCost(this.value, protocol).concat(
-                                argProtocolMap.values.fold(costEstimator.zeroCost()) { acc, argProtocol ->
-                                    acc.concat(costEstimator.communicationCost(argProtocol, protocol))
-                                }
+            is DeclarationNode -> {
+                generateComputationCostConstraints(
+                    FunctionVariable(nameAnalysis.enclosingFunctionName(this), this.name.value),
+                    protocolSelection.viableProtocols(this),
+                    this.arguments.filterIsInstance<ReadNode>(),
+                    { costEstimator.zeroCost() }, // TODO: add storage cost
+                    this.symbolicCost
+                )
+            }
+
+            is UpdateNode -> {
+                val (fv, protocols) =
+                    when (val objectDecl = nameAnalysis.declaration(this).declarationAsNode) {
+                        is DeclarationNode ->
+                            Pair(
+                                FunctionVariable(nameAnalysis.enclosingFunctionName(objectDecl), objectDecl.name.value),
+                                protocolSelection.viableProtocols(objectDecl)
                             )
 
-                        val protocolConstraints: SelectionConstraint =
-                            argProtocolMap.map { kv ->
-                                VariableIn(
-                                    FunctionVariable(enclosingFunctionName, kv.key),
-                                    setOf(kv.value)
-                                )
-                            }.plus(
-                                setOf(
-                                    VariableIn(
-                                        FunctionVariable(enclosingFunctionName, this.temporary.value),
-                                        setOf(protocol)
-                                    )
-                                )
-                            ).fold(Literal(true) as SelectionConstraint) { acc, c -> And(acc, c) }
+                        is ParameterNode ->
+                            Pair(
+                                FunctionVariable(
+                                    nameAnalysis.functionDeclaration(objectDecl).name.value,
+                                    objectDecl.name.value
+                                ),
+                                protocolSelection.viableProtocols(objectDecl)
+                            )
 
-                        val costConstraints: SelectionConstraint =
-                            this.symbolicCost.features.map { kv ->
-                                CostEquals(
-                                    kv.value,
-                                    cost.features[kv.key]?.let { c -> CostLiteral(c.cost) }
-                                        ?: throw Error("No cost associated with feature ${kv.key}")
-                                )
-                            }.fold(Literal(true) as SelectionConstraint) { acc, c -> And(acc, c) }
+                        is ObjectDeclarationArgumentNode -> {
+                            val param = nameAnalysis.parameter(objectDecl)
+                            Pair(
+                                FunctionVariable(
+                                    nameAnalysis.functionDeclaration(param).name.value,
+                                    objectDecl.name.value
+                                ),
+                                protocolSelection.viableProtocols(param)
+                            )
+                        }
 
-                        Implies(protocolConstraints, costConstraints)
+                        else -> throw UnknownObjectDeclarationError(objectDecl)
                     }
+
+                generateComputationCostConstraints(
+                    fv,
+                    protocols,
+                    this.arguments.filterIsInstance<ReadNode>(),
+                    { costEstimator.zeroCost() }, // TODO: add update cost
+                    this.symbolicCost
+                )
+            }
+
+            is ParameterNode -> {
+                val enclosingFunctionName =
+                    nameAnalysis.functionDeclaration(this).name.value
+
+                protocolSelection.viableProtocols(this).map { protocol ->
+                    val cost = costEstimator.storageCost(this, protocol)
+                    Implies(
+                        VariableIn(
+                            FunctionVariable(enclosingFunctionName, this.name.value),
+                            setOf(protocol)
+                        ),
+                        this.symbolicCost.features.map { kv ->
+                            CostEquals(
+                                kv.value,
+                                cost.features[kv.key]?.let { c -> CostLiteral(c.cost) }
+                                    ?: throw Error("No cost associated with feature ${kv.key}")
+                            )
+                        }.fold(Literal(true) as SelectionConstraint) { acc, c -> And(acc, c) }
+                    )
                 }.toSet()
             }
 
@@ -368,6 +459,11 @@ private class Z3Selection(
         val parameterViables: Set<Protocol> =
             parameterNodes.keys.map { protocolSelection.viableProtocols(it) }.unions()
 
+        val updateNodes: List<UpdateNode> =
+            reachableFunctions
+                .flatMap { f -> f.updateNodes() }
+                .plus(main.updateNodes())
+
         val pmap: BiMap<Protocol, Int> =
             tempViables
                 .union(declViables)
@@ -390,20 +486,27 @@ private class Z3Selection(
                 }
             )).toBiMap()
 
-        /** Naive cost for selecting a protocol coded by the int p, which is equal to the cost of the corresponding protocol
-        (as defined by the protocolCost function) */
-        // TODO: this cost metric is particularly naive; it is simply the sum of costs of protocols for each selection.
+        // tally all costs associated with storage (declaration nodes) and computations (let nodes and update nodes)
+        val zeroSymbolicCost = costEstimator.zeroCost().map { CostLiteral(0) }
         val programCost =
-            letNodes.keys.fold(
-                costEstimator.zeroCost().map { CostLiteral(0) }
-            ) { acc, letNode -> acc.concat(letNode.symbolicCost) }
+            letNodes.keys.fold(zeroSymbolicCost) { acc, letNode -> acc.concat(letNode.symbolicCost) }
+            .concat(
+                declarationNodes.keys.fold(zeroSymbolicCost) { acc, decl -> acc.concat(decl.symbolicCost) }
+            )
+            .concat(
+                parameterNodes.keys.fold(zeroSymbolicCost) { acc, param -> acc.concat(param.symbolicCost) }
+            )
+            .concat(
+                updateNodes.fold(zeroSymbolicCost) { acc, update -> acc.concat(update.symbolicCost) }
+            )
 
+        // load selection constraints into Z3
         for (constraint in constraints) {
             solver.Add(constraint.boolExpr(ctx, varMap, pmap.mapValues { ctx.mkInt(it.value) }.toBiMap()))
         }
 
         if (varMap.values.isNotEmpty()) {
-            // TODO: weight feature costs
+            // load cost constraints into Z3; build integer expression to minimize
             val weights = costEstimator.featureWeights()
             val cost =
                 programCost.features.entries

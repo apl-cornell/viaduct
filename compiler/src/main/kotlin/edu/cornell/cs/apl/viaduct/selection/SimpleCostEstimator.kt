@@ -5,6 +5,7 @@ import edu.cornell.cs.apl.viaduct.protocols.Local
 import edu.cornell.cs.apl.viaduct.protocols.Replication
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ExpressionNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.ObjectDeclaration
 import kotlinx.collections.immutable.persistentMapOf
 
 /**
@@ -100,6 +101,16 @@ object SimpleCostEstimator : CostEstimator<IntegerCost> {
             else -> throw Error("unknown source protocol ${source.protocolName} or destination protocol ${destination.protocolName}")
         }
 
+    override fun storageCost(declaration: ObjectDeclaration, protocol: Protocol): Cost<IntegerCost> =
+        zeroCost().update(EXECUTION_COST,
+            when (protocol) {
+                is Local -> IntegerCost(1)
+                is Replication -> IntegerCost(1)
+                is ABY -> IntegerCost(10)
+                else -> throw Error("unknown protocol ${protocol.protocolName}")
+            }
+        )
+
     override fun zeroCost(): Cost<IntegerCost> =
         Cost(persistentMapOf(
                 NUM_MESSAGES to IntegerCost(0),
@@ -109,8 +120,8 @@ object SimpleCostEstimator : CostEstimator<IntegerCost> {
 
     override fun featureWeights(): Cost<IntegerCost> =
         Cost(persistentMapOf(
-            NUM_MESSAGES to IntegerCost(2),
-            BYTES_TRANSFERRED to IntegerCost(2),
+            NUM_MESSAGES to IntegerCost(5),
+            BYTES_TRANSFERRED to IntegerCost(5),
             EXECUTION_COST to IntegerCost(1)
         ))
 }

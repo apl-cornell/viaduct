@@ -2,6 +2,7 @@ package edu.cornell.cs.apl.viaduct.selection
 
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.DeclarationNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.IfNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.LetNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ParameterNode
 
@@ -31,6 +32,10 @@ interface ProtocolFactory {
     fun constraint(node: ParameterNode): SelectionConstraint {
         return Literal(true)
     }
+
+    fun constraint(node: IfNode): SelectionConstraint {
+        return Literal(true)
+    }
 }
 
 /** Union of protocol selectors. [unions] takes a number of selectors and implements their collective union. */
@@ -54,6 +59,14 @@ fun unions(vararg selectors: ProtocolFactory): ProtocolFactory = object : Protoc
         }
 
     override fun constraint(node: DeclarationNode): SelectionConstraint =
+        selectors.fold<ProtocolFactory, SelectionConstraint>(Literal(true)) { acc, sel ->
+            And(
+                acc,
+                sel.constraint(node)
+            )
+        }
+
+    override fun constraint(node: IfNode): SelectionConstraint =
         selectors.fold<ProtocolFactory, SelectionConstraint>(Literal(true)) { acc, sel ->
             And(
                 acc,

@@ -11,6 +11,8 @@ import edu.cornell.cs.apl.viaduct.syntax.ParameterDirection
 import edu.cornell.cs.apl.viaduct.syntax.ProtocolNode
 import edu.cornell.cs.apl.viaduct.syntax.SourceLocation
 import edu.cornell.cs.apl.viaduct.syntax.ValueTypeNode
+import kotlinx.collections.immutable.PersistentList
+import kotlinx.collections.immutable.toPersistentList
 
 /** A declaration at the top level of a file. */
 sealed class TopLevelDeclarationNode : Node() {
@@ -118,8 +120,8 @@ class FunctionDeclarationNode(
     val body: BlockNode,
     override val sourceLocation: SourceLocation
 ) : TopLevelDeclarationNode() {
-    override val children: Iterable<BlockNode>
-        get() = listOf(body)
+    override val children: Iterable<Node>
+        get() = (parameters.toPersistentList() as PersistentList<Node>).add(body)
 
     override fun toSurfaceNode(): edu.cornell.cs.apl.viaduct.syntax.surface.TopLevelDeclarationNode =
         edu.cornell.cs.apl.viaduct.syntax.surface.FunctionDeclarationNode(
@@ -135,8 +137,10 @@ class FunctionDeclarationNode(
             sourceLocation
         )
 
-    override fun copy(children: List<Node>): Node =
-        FunctionDeclarationNode(name, pcLabel, parameters, children[0] as BlockNode, sourceLocation)
+    override fun copy(children: List<Node>): Node {
+        val parameters = Arguments(children.dropLast(1).map { it as ParameterNode }, parameters.sourceLocation)
+        return FunctionDeclarationNode(name, pcLabel, parameters, children.last() as BlockNode, sourceLocation)
+    }
 
     fun getParameter(name: ObjectVariable): ParameterNode? =
         parameters.firstOrNull { param -> param.name.value == name }

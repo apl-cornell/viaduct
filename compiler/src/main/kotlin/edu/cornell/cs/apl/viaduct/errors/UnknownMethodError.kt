@@ -21,8 +21,8 @@ import edu.cornell.cs.apl.viaduct.syntax.types.ValueType
 class UnknownMethodError(
     private val objectName: ObjectVariableNode,
     private val methodName: MethodNameNode,
-    private val objectType: ObjectType,
-    private val argumentTypes: List<ValueType>
+    private val objectType: ObjectType? = null,
+    private val argumentTypes: List<ValueType>? = null
 ) : CompilationError() {
     override val category: String
         get() = "Unknown Method"
@@ -32,8 +32,13 @@ class UnknownMethodError(
 
     override val description: Document
         get() =
-            Document("This object does not have a method named") * methodName + Document(":")
-                .withSource(objectName.sourceLocation) /
-                Document("The object's type is:").withData(objectType) /
-                Document("And the method's signature is:").withData(methodName + argumentTypes.tupled())
+            if (objectType != null && argumentTypes != null) {
+                Document("This object does not have a method named") * methodName + Document(":")
+                    .withSource(objectName.sourceLocation) /
+                    Document("The object's type is:").withData(objectType) /
+                    Document("And the method's signature is:").withData(methodName + argumentTypes.tupled())
+            } else {
+                Document("This object does not have a method named") * methodName + Document(":")
+                    .withSource(objectName.sourceLocation)
+            }
 }

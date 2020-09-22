@@ -1,4 +1,4 @@
-/* NoApplicableProtocolError */
+/* NoSelectionSolutionError */
 
 host alice : {A}
 

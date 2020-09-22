@@ -6,6 +6,8 @@ import com.github.ajalt.clikt.parameters.types.file
 import edu.cornell.cs.apl.viaduct.analysis.InformationFlowAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.ProtocolAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.main
+import edu.cornell.cs.apl.viaduct.backend.aby.ABYMuxPostprocessor
+import edu.cornell.cs.apl.viaduct.passes.ProgramPostprocessorRegistry
 import edu.cornell.cs.apl.viaduct.passes.Splitter
 import edu.cornell.cs.apl.viaduct.passes.check
 import edu.cornell.cs.apl.viaduct.passes.elaborated
@@ -73,7 +75,12 @@ class Compile : CliktCommand(help = "Compile ideal protocol to secure distribute
 
         // Split the program.
         val splitProgram: ProgramNode = Splitter(protocolAnalysis).splitMain()
-        output.println(splitProgram)
+
+        // Post-process split program
+        val postprocessor = ProgramPostprocessorRegistry(ABYMuxPostprocessor)
+        val postprocessedProgram = postprocessor.postprocess(splitProgram)
+
+        output.println(postprocessedProgram)
     }
 }
 

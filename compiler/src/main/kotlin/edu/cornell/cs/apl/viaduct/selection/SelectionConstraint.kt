@@ -1,5 +1,6 @@
 package edu.cornell.cs.apl.viaduct.selection
 
+import com.microsoft.z3.ArithExpr
 import com.microsoft.z3.BoolExpr
 import com.microsoft.z3.Context
 import com.microsoft.z3.IntExpr
@@ -9,6 +10,21 @@ import edu.cornell.cs.apl.viaduct.syntax.Protocol
 import edu.cornell.cs.apl.viaduct.syntax.Variable
 
 typealias FunctionVariable = Pair<FunctionName, Variable>
+
+sealed class SymbolicCost : CostMonoid<SymbolicCost> {
+    companion object {
+        fun zero(): SymbolicCost = CostLiteral(0)
+    }
+
+    override fun concat(other: SymbolicCost): SymbolicCost =
+        CostAdd(this, other)
+
+    override fun zero(): SymbolicCost = SymbolicCost.zero()
+}
+
+data class CostLiteral(val cost: Int) : SymbolicCost()
+data class CostVariable(val variable: IntExpr) : SymbolicCost()
+data class CostAdd(val lhs: SymbolicCost, val rhs: SymbolicCost) : SymbolicCost()
 
 /** Custom selection constraints specified for constraint solving during splitting. */
 sealed class SelectionConstraint
@@ -22,6 +38,8 @@ data class VariableIn(val variable: FunctionVariable, val protocols: Set<Protoco
 
 /** Protocols for v1 and v2 are equal. */
 data class VariableEquals(val var1: FunctionVariable, val var2: FunctionVariable) : SelectionConstraint()
+
+data class CostEquals(val lhs: SymbolicCost, val rhs: SymbolicCost) : SelectionConstraint()
 
 data class Not(val rhs: SelectionConstraint) : SelectionConstraint()
 data class And(val lhs: SelectionConstraint, val rhs: SelectionConstraint) : SelectionConstraint()
@@ -38,6 +56,9 @@ internal fun SelectionConstraint.evaluate(f: (FunctionName, Variable) -> Protoco
         is VariableIn -> protocols.contains(f(variable.first, variable.second))
         is Not -> !(rhs.evaluate(f))
         is VariableEquals -> f(var1.first, var1.second) == f(var2.first, var2.second)
+
+        // TODO: ignore cost constraints for now
+        is CostEquals -> true
     }
 }
 
@@ -69,5 +90,14 @@ internal fun SelectionConstraint.boolExpr(
                 )
             }.ors(ctx)
         is VariableEquals -> ctx.mkEq(vmap.get(this.var1), vmap.get(this.var2))
+        is CostEquals -> ctx.mkEq(this.lhs.arithExpr(ctx), this.rhs.arithExpr(ctx))
     }
 }
+
+/** Convert a CostExpression into a Z3 ArithExpr. */
+internal fun SymbolicCost.arithExpr(ctx: Context): ArithExpr =
+    when (this) {
+        is CostLiteral -> ctx.mkInt(this.cost)
+        is CostVariable -> this.variable
+        is CostAdd -> ctx.mkAdd(this.lhs.arithExpr(ctx), this.rhs.arithExpr(ctx))
+    }

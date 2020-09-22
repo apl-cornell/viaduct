@@ -1,4 +1,54 @@
 package edu.cornell.cs.apl.viaduct.selection
 
-/** The cost of executing a piece of code or sending a message. */
-typealias Cost = Double
+import kotlinx.collections.immutable.PersistentMap
+import kotlinx.collections.immutable.toPersistentMap
+
+typealias CostFeature = String
+
+/** A commutative monoid that represents a notion of cost for a feature. */
+interface CostMonoid<C : CostMonoid<C>> {
+    fun concat(other: C): C
+    fun zero(): C
+}
+
+class IntegerCost(val cost: Int) : CostMonoid<IntegerCost> {
+    companion object {
+        fun zero(): IntegerCost = IntegerCost(0)
+    }
+
+    override fun concat(other: IntegerCost): IntegerCost =
+        IntegerCost(this.cost + other.cost)
+
+    override fun zero(): IntegerCost = IntegerCost.zero()
+}
+
+/**
+ * The cost of executing a piece of code or sending a message.
+ * Consists of a map of features over some cost monoid.
+ * */
+data class Cost<C : CostMonoid<C>>(
+    val features: PersistentMap<CostFeature, C>
+) : CostMonoid<Cost<C>> {
+    override fun concat(other: Cost<C>): Cost<C> =
+        Cost(
+            this.features
+                .mapValues { kv ->
+                    kv.value.concat(other.features[kv.key] ?: kv.value.zero())
+                }
+                .plus(other.features.filterKeys { k -> !features.containsKey(k) })
+                .toPersistentMap()
+        )
+
+    override fun zero(): Cost<C> =
+        Cost(
+            this.features.map { kv -> kv.key to kv.value.zero() }.toMap().toPersistentMap()
+        )
+
+    fun <D : CostMonoid<D>> map(f: (C) -> D): Cost<D> =
+        Cost(
+            this.features.map { kv -> kv.key to f(kv.value) }.toMap().toPersistentMap()
+        )
+
+    fun update(feature: CostFeature, cost: C): Cost<C> =
+        Cost(features.put(feature, cost))
+}

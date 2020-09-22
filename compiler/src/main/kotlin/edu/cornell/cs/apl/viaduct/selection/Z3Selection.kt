@@ -15,7 +15,10 @@ import edu.cornell.cs.apl.viaduct.analysis.declarationNodes
 import edu.cornell.cs.apl.viaduct.analysis.letNodes
 import edu.cornell.cs.apl.viaduct.errors.IllegalInternalCommunicationError
 import edu.cornell.cs.apl.viaduct.errors.NoHostDeclarationsError
+import edu.cornell.cs.apl.viaduct.errors.NoProtocolIndexMapping
 import edu.cornell.cs.apl.viaduct.errors.NoSelectionSolutionError
+import edu.cornell.cs.apl.viaduct.errors.NoVariableSelectionSolutionError
+import edu.cornell.cs.apl.viaduct.errors.UnknownObjectDeclarationError
 import edu.cornell.cs.apl.viaduct.protocols.Local
 import edu.cornell.cs.apl.viaduct.syntax.FunctionName
 import edu.cornell.cs.apl.viaduct.syntax.HostTrustConfiguration
@@ -87,7 +90,7 @@ private class Z3Selection(
                         is ObjectDeclarationArgumentNode ->
                             nameAnalysis.parameter(declaration).viableProtocols
 
-                        else -> throw Exception("impossible case")
+                        else -> throw UnknownObjectDeclarationError(declaration)
                     }
 
                 is ReceiveNode -> throw IllegalInternalCommunicationError(value)
@@ -160,7 +163,7 @@ private class Z3Selection(
                                 )
                             }
 
-                            else -> throw Error("impossible case")
+                            else -> throw UnknownObjectDeclarationError(objectDecl)
                         }
                     }
 
@@ -341,7 +344,7 @@ private class Z3Selection(
             solver.MkMinimize(cost)
 
             if (solver.Check() == Status.SATISFIABLE) {
-                var model = solver.model
+                val model = solver.model
                 val interpMap: Map<FunctionVariable, Int> =
                     varMap.mapValues { e ->
                         (model.getConstInterp(e.value) as IntNum).int
@@ -349,19 +352,17 @@ private class Z3Selection(
 
                 fun eval(f: FunctionName, v: Variable): Protocol {
                     val fvar = Pair(f, v)
-                    if (interpMap.containsKey(fvar)) {
-                        return pmap.inverse.get(interpMap[fvar]) ?: throw error("Protocol now found")
-                    } else {
-                        throw SelectionError("Query for variable not contained in varMap: $v")
-                    }
+                    return interpMap[fvar]?.let { protocolIndex ->
+                        pmap.inverse[protocolIndex] ?: throw NoProtocolIndexMapping(protocolIndex)
+                    } ?: throw NoVariableSelectionSolutionError(f, v)
                 }
                 return ::eval
             } else {
                 throw NoSelectionSolutionError()
             }
         } else {
-            return { _: FunctionName, _: Variable ->
-                throw Error("there are no variables in the program! impossible ")
+            return { f: FunctionName, v: Variable ->
+                throw NoVariableSelectionSolutionError(f, v)
             }
         }
     }

@@ -24,4 +24,7 @@ interface CostEstimator<C : CostMonoid<C>> {
 
     /** Features that factor into cost estimation. */
     fun zeroCost(): Cost<C>
+
+    /** Cost weights of features. */
+    fun featureWeights(): Cost<C>
 }

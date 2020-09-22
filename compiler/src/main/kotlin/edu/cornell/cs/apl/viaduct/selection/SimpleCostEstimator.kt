@@ -26,22 +26,91 @@ object SimpleCostEstimator : CostEstimator<IntegerCost> {
         zeroCost().update(EXECUTION_COST,
             when (executingProtocol) {
                 is Local -> IntegerCost(1)
-                is Replication -> IntegerCost(5)
+                is Replication -> IntegerCost(1)
                 is ABY -> IntegerCost(10)
                 else -> throw Error("unknown protocol ${executingProtocol.protocolName}")
             }
         )
 
-    // TODO: actually implement this
     override fun communicationCost(source: Protocol, destination: Protocol): Cost<IntegerCost> =
-        zeroCost()
+        when {
+            source is Local && destination is Local -> {
+                zeroCost().update(
+                    NUM_MESSAGES,
+                    IntegerCost(if (source.host == destination.host) 0 else 1)
+                )
+            }
+
+            source is Local && destination is Replication -> {
+                zeroCost().update(
+                    NUM_MESSAGES,
+                    IntegerCost(destination.hosts.size)
+                )
+            }
+
+            source is Local && destination is ABY -> {
+                zeroCost().update(
+                    NUM_MESSAGES,
+                    IntegerCost(if (destination.hosts.contains(source.host)) 0 else destination.hosts.size)
+                )
+            }
+
+            source is Replication && destination is Local -> {
+                zeroCost().update(
+                    NUM_MESSAGES,
+                    IntegerCost(if (source.hosts.contains(destination.host)) 0 else source.hosts.size)
+                )
+            }
+
+            // TODO: check if this is right
+            source is Replication && destination is Replication -> {
+                val destHostsComplement = destination.hosts.removeAll(source.hosts)
+                zeroCost().update(
+                    NUM_MESSAGES,
+                    IntegerCost(destHostsComplement.size * source.hosts.size)
+                )
+            }
+
+            // TODO: check if this is right
+            source is Replication && destination is ABY -> {
+                val destHostsComplement = destination.hosts.removeAll(source.hosts)
+                zeroCost().update(
+                    NUM_MESSAGES,
+                    IntegerCost(destHostsComplement.size * source.hosts.size)
+                )
+            }
+
+            source is ABY && destination is Local -> {
+                zeroCost().update(
+                    NUM_MESSAGES,
+                    IntegerCost(if (source.hosts.contains(destination.host)) 0 else source.hosts.size)
+                )
+            }
+
+            source is ABY && destination is Replication -> {
+                val destHostsComplement = destination.hosts.removeAll(source.hosts)
+                zeroCost().update(
+                    NUM_MESSAGES,
+                    IntegerCost(destHostsComplement.size * source.hosts.size)
+                )
+            }
+
+            source is ABY && destination is ABY -> zeroCost()
+
+            else -> throw Error("unknown source protocol ${source.protocolName} or destination protocol ${destination.protocolName}")
+        }
 
     override fun zeroCost(): Cost<IntegerCost> =
-        Cost(
-            persistentMapOf(
+        Cost(persistentMapOf(
                 NUM_MESSAGES to IntegerCost(0),
                 BYTES_TRANSFERRED to IntegerCost(0),
                 EXECUTION_COST to IntegerCost(0)
-            )
-        )
+        ))
+
+    override fun featureWeights(): Cost<IntegerCost> =
+        Cost(persistentMapOf(
+            NUM_MESSAGES to IntegerCost(2),
+            BYTES_TRANSFERRED to IntegerCost(2),
+            EXECUTION_COST to IntegerCost(1)
+        ))
 }

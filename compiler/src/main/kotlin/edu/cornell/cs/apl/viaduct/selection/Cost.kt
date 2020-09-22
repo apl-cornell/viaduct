@@ -28,7 +28,7 @@ class IntegerCost(val cost: Int) : CostMonoid<IntegerCost> {
  * */
 data class Cost<C : CostMonoid<C>>(
     val features: PersistentMap<CostFeature, C>
-) : CostMonoid<Cost<C>> {
+) : CostMonoid<Cost<C>>, Map<CostFeature, C> by features {
     override fun concat(other: Cost<C>): Cost<C> =
         Cost(
             this.features

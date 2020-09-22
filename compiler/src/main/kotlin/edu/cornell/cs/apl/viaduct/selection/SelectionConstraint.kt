@@ -25,6 +25,7 @@ sealed class SymbolicCost : CostMonoid<SymbolicCost> {
 data class CostLiteral(val cost: Int) : SymbolicCost()
 data class CostVariable(val variable: IntExpr) : SymbolicCost()
 data class CostAdd(val lhs: SymbolicCost, val rhs: SymbolicCost) : SymbolicCost()
+data class CostMul(val lhs: SymbolicCost, val rhs: SymbolicCost) : SymbolicCost()
 
 /** Custom selection constraints specified for constraint solving during splitting. */
 sealed class SelectionConstraint
@@ -100,4 +101,5 @@ internal fun SymbolicCost.arithExpr(ctx: Context): ArithExpr =
         is CostLiteral -> ctx.mkInt(this.cost)
         is CostVariable -> this.variable
         is CostAdd -> ctx.mkAdd(this.lhs.arithExpr(ctx), this.rhs.arithExpr(ctx))
+        is CostMul -> ctx.mkMul(this.lhs.arithExpr(ctx), this.rhs.arithExpr(ctx))
     }

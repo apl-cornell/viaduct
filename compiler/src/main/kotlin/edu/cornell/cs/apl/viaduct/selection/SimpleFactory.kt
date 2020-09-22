@@ -6,4 +6,3 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
 fun simpleProtocolFactory(program: ProgramNode): ProtocolFactory {
     return unions(LocalFactory(program), ReplicationFactory(program), ABYFactory(program))
 }
-

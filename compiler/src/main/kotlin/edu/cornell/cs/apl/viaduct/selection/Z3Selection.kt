@@ -404,10 +404,14 @@ private class Z3Selection(
 
         if (varMap.values.isNotEmpty()) {
             // TODO: weight feature costs
+            val weights = costEstimator.featureWeights()
             val cost =
-                programCost.features.values
-                    .fold(CostLiteral(0) as SymbolicCost) { acc, c -> CostAdd(acc, c) }
+                programCost.features.entries
+                    .fold(CostLiteral(0) as SymbolicCost) { acc, c ->
+                        CostAdd(acc, CostMul(CostLiteral(weights[c.key]!!.cost), c.value))
+                    }
                     .arithExpr(ctx)
+
             solver.MkMinimize(cost)
 
             if (solver.Check() == Status.SATISFIABLE) {

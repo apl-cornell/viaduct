@@ -7,8 +7,6 @@ import com.microsoft.z3.Status
 import com.uchuhimo.collections.BiMap
 import com.uchuhimo.collections.toBiMap
 import edu.cornell.cs.apl.attributes.attribute
-import edu.cornell.cs.apl.prettyprinting.Document
-import edu.cornell.cs.apl.prettyprinting.PrettyPrintable
 import edu.cornell.cs.apl.viaduct.analysis.InformationFlowAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.NameAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.declarationNodes
@@ -379,16 +377,4 @@ fun selectProtocolsWithZ3(
         Z3Selection(program, processDeclaration, protocolFactory, protocolCost, ctx).select()
     ctx.close()
     return ret
-}
-
-/**
- * Thrown when an error is found during protocol selection.
- *
- * @param info Description of the error.
- */
-private class SelectionError(
-    val info: String
-) : Error(), PrettyPrintable {
-    override val asDocument: Document
-        get() = Document(info)
 }

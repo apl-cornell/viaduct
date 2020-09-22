@@ -24,7 +24,8 @@ object SimpleCostEstimator : CostEstimator<IntegerCost> {
     private const val EXECUTION_COST = "executionCost"
 
     override fun executionCost(computation: ExpressionNode, executingProtocol: Protocol): Cost<IntegerCost> =
-        zeroCost().update(EXECUTION_COST,
+        zeroCost().update(
+            EXECUTION_COST,
             when (executingProtocol) {
                 is Local -> IntegerCost(1)
                 is Replication -> IntegerCost(1)
@@ -102,7 +103,8 @@ object SimpleCostEstimator : CostEstimator<IntegerCost> {
         }
 
     override fun storageCost(declaration: ObjectDeclaration, protocol: Protocol): Cost<IntegerCost> =
-        zeroCost().update(EXECUTION_COST,
+        zeroCost().update(
+            EXECUTION_COST,
             when (protocol) {
                 is Local -> IntegerCost(1)
                 is Replication -> IntegerCost(1)
@@ -112,16 +114,20 @@ object SimpleCostEstimator : CostEstimator<IntegerCost> {
         )
 
     override fun zeroCost(): Cost<IntegerCost> =
-        Cost(persistentMapOf(
+        Cost(
+            persistentMapOf(
                 NUM_MESSAGES to IntegerCost(0),
                 BYTES_TRANSFERRED to IntegerCost(0),
                 EXECUTION_COST to IntegerCost(0)
-        ))
+            )
+        )
 
     override fun featureWeights(): Cost<IntegerCost> =
-        Cost(persistentMapOf(
-            NUM_MESSAGES to IntegerCost(5),
-            BYTES_TRANSFERRED to IntegerCost(5),
-            EXECUTION_COST to IntegerCost(1)
-        ))
+        Cost(
+            persistentMapOf(
+                NUM_MESSAGES to IntegerCost(100),
+                BYTES_TRANSFERRED to IntegerCost(5),
+                EXECUTION_COST to IntegerCost(1)
+            )
+        )
 }

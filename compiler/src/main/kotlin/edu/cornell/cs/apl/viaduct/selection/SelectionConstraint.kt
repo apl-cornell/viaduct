@@ -26,6 +26,7 @@ data class CostLiteral(val cost: Int) : SymbolicCost()
 data class CostVariable(val variable: IntExpr) : SymbolicCost()
 data class CostAdd(val lhs: SymbolicCost, val rhs: SymbolicCost) : SymbolicCost()
 data class CostMul(val lhs: SymbolicCost, val rhs: SymbolicCost) : SymbolicCost()
+data class CostMux(val guard: SelectionConstraint, val lhs: SymbolicCost, val rhs: SymbolicCost) : SymbolicCost()
 
 /** Custom selection constraints specified for constraint solving during splitting. */
 sealed class SelectionConstraint
@@ -91,15 +92,41 @@ internal fun SelectionConstraint.boolExpr(
                 )
             }.ors(ctx)
         is VariableEquals -> ctx.mkEq(vmap.get(this.var1), vmap.get(this.var2))
-        is CostEquals -> ctx.mkEq(this.lhs.arithExpr(ctx), this.rhs.arithExpr(ctx))
+
+        is CostEquals ->
+            ctx.mkEq(
+                this.lhs.arithExpr(ctx, vmap, pmap),
+                this.rhs.arithExpr(ctx, vmap, pmap)
+            )
     }
 }
 
 /** Convert a CostExpression into a Z3 ArithExpr. */
-internal fun SymbolicCost.arithExpr(ctx: Context): ArithExpr =
+internal fun SymbolicCost.arithExpr(
+    ctx: Context,
+    vmap: BiMap<FunctionVariable, IntExpr>,
+    pmap: BiMap<Protocol, IntExpr>
+): ArithExpr =
     when (this) {
         is CostLiteral -> ctx.mkInt(this.cost)
         is CostVariable -> this.variable
-        is CostAdd -> ctx.mkAdd(this.lhs.arithExpr(ctx), this.rhs.arithExpr(ctx))
-        is CostMul -> ctx.mkMul(this.lhs.arithExpr(ctx), this.rhs.arithExpr(ctx))
+
+        is CostAdd ->
+            ctx.mkAdd(
+                this.lhs.arithExpr(ctx, vmap, pmap),
+                this.rhs.arithExpr(ctx, vmap, pmap)
+            )
+
+        is CostMul ->
+            ctx.mkMul(
+                this.lhs.arithExpr(ctx, vmap, pmap),
+                this.rhs.arithExpr(ctx, vmap, pmap)
+            )
+
+        is CostMux ->
+            ctx.mkITE(
+                this.guard.boolExpr(ctx, vmap, pmap),
+                this.lhs.arithExpr(ctx, vmap, pmap),
+                this.rhs.arithExpr(ctx, vmap, pmap)
+            ) as ArithExpr
     }

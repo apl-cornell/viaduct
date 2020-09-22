@@ -7,9 +7,11 @@ import edu.cornell.cs.apl.viaduct.syntax.Name
 import edu.cornell.cs.apl.viaduct.syntax.Variable
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.BreakNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.DeclarationNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.IfNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.InfiniteLoopNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.LetNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.Node
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutputNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ParameterNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProcessDeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
@@ -43,6 +45,9 @@ fun Node.declarationNodes(): List<DeclarationNode> = this.listOfInstances()
 /** Returns all [ParameterNode]s contained in this node. */
 fun Node.parameterNodes(): List<ParameterNode> = this.listOfInstances()
 
+/** Returns all [IfNode]s contained in this node. */
+fun Node.ifNodes(): List<IfNode> = this.listOfInstances()
+
 /** Returns all [InfiniteLoopNode]s contained in this node. */
 fun Node.infiniteLoopNodes(): List<InfiniteLoopNode> = this.listOfInstances()
 
@@ -54,6 +59,9 @@ fun Node.queryNodes(): List<QueryNode> = this.listOfInstances()
 
 /** Returns all [UpdateNode]s contained in this node. */
 fun Node.updateNodes(): List<UpdateNode> = this.listOfInstances()
+
+/** Returns all [OutputNode]s contained in this node. */
+fun Node.outputNodes(): List<OutputNode> = this.listOfInstances()
 
 /**
  * Returns the declaration of the [MainProtocol] in this program.

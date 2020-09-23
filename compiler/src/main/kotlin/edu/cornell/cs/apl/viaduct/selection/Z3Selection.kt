@@ -413,12 +413,7 @@ private class Z3Selection(
                         val guardDecl = nameAnalysis.declaration(guard)
 
                         // make this cover transitive closure of reads
-                        val guardProtocols =
-                            nameAnalysis.reads(guardDecl).flatMap { read ->
-                                protocolSelection.viableProtocols(nameAnalysis.declaration(read))
-                            }.union(
-                                protocolSelection.viableProtocols(guardDecl)
-                            )
+                        val guardProtocols = protocolSelection.viableProtocols(guardDecl)
 
                         val enclosingFunctionName = nameAnalysis.enclosingFunctionName(this)
                         val variableProtocolMap: Map<FunctionVariable, Set<Protocol>> =

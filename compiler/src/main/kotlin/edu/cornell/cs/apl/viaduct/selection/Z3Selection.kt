@@ -127,10 +127,12 @@ private class Z3Selection(
         fun viableProtocols(node: ParameterNode): Set<Protocol> = node.viableProtocols
     }
 
+    /** Generate constraints for possible protocols. */
     private fun Node.selectionConstraints(): Set<SelectionConstraint> =
         when (this) {
             is LetNode ->
                 when (val rhs = this.value) {
+                    // queries needs to be executed in the same protocol as the object
                     is QueryNode -> {
                         val enclosingFunctionName = nameAnalysis.enclosingFunctionName(this)
                         when (val objectDecl = nameAnalysis.declaration(rhs).declarationAsNode) {
@@ -170,6 +172,7 @@ private class Z3Selection(
                         }
                     }
 
+                    // use the protocol factory to get the set of viable protocols
                     else -> {
                         setOf(
                             VariableIn(
@@ -190,8 +193,11 @@ private class Z3Selection(
                     protocolFactory.constraint(this)
                 )
 
+            // generate constraints for the if node
+            // used by the ABY/MPC factory to generate muxing constraints
             is IfNode -> setOf(protocolFactory.constraint(this))
 
+            // argument protocol must equal the parameter protocol
             is ExpressionArgumentNode -> {
                 val parameter = nameAnalysis.parameter(this)
                 val parameterFunctionName = nameAnalysis.functionDeclaration(parameter).name.value
@@ -207,6 +213,7 @@ private class Z3Selection(
                     .toSet()
             }
 
+            // argument protocol must equal the parameter protocol
             is ObjectReferenceArgumentNode -> {
                 val parameter = nameAnalysis.parameter(this)
                 val parameterFunctionName = nameAnalysis.functionDeclaration(parameter).name.value
@@ -218,6 +225,7 @@ private class Z3Selection(
                 )
             }
 
+            // argument protocol must equal the parameter protocol
             is OutParameterArgumentNode -> {
                 val parameter = nameAnalysis.parameter(this)
                 val parameterFunctionName = nameAnalysis.functionDeclaration(parameter).name.value
@@ -232,6 +240,13 @@ private class Z3Selection(
             else -> setOf()
         }
 
+    /**
+     * Computes the cartesian product of viable protocols for arguments.
+     *
+     * @param previous the map of viable protocols selected in this path
+     * @param next the remaining arguments to process
+     * @return the cartesian product of maps from temporaries to viable protocols
+     */
     private fun getArgumentViableProtocols(
         previous: PersistentMap<Temporary, Protocol>,
         next: List<ReadNode>
@@ -251,11 +266,38 @@ private class Z3Selection(
         }
     }
 
+    /** Symbolic cost associated with a node. */
     private val Node.symbolicCost: Cost<SymbolicCost> by attribute {
         costEstimator
             .zeroCost()
             .map { CostVariable(ctx.mkFreshConst("cost", ctx.intSort) as IntExpr) }
     }
+
+    /**
+     * Generate constraints that set two symbolic costs equal to each other.
+     *
+     * @param symCost: symbolic cost
+     * @param symCost2: integer cost
+     * @return selection constraints that set the features of [symCost] and [symCost2] equal.
+     */
+    private fun symbolicCostEqualsSym(symCost: Cost<SymbolicCost>, symCost2: Cost<SymbolicCost>): SelectionConstraint =
+        symCost.features.map { kv ->
+            CostEquals(
+                kv.value,
+                symCost2.features[kv.key]
+                    ?: throw Error("No cost associated with feature ${kv.key}")
+            )
+        }.fold(Literal(true) as SelectionConstraint) { acc, c -> And(acc, c) }
+
+    /**
+     * Generate constraints that set a symbolic cost equal to some integer cost.
+     *
+     * @param symCost: symbolic cost
+     * @param intCost: integer cost
+     * @return selection constraints that set the features of [symCost] and [intCost] equal.
+     */
+    private fun symbolicCostEqualsInt(symCost: Cost<SymbolicCost>, intCost: Cost<IntegerCost>): SelectionConstraint =
+        symbolicCostEqualsSym(symCost, intCost.map { c -> CostLiteral(c.cost) })
 
     /**
      * Generate cost constraints for performing a computation (let nodes and updates).
@@ -282,13 +324,6 @@ private class Z3Selection(
         // compute the cost using the cost estimator
         return protocols.flatMap { protocol ->
             argProtocolMaps.map { argProtocolMap ->
-                val cost =
-                    baseCostFunction(protocol).concat(
-                        argProtocolMap.values.fold(costEstimator.zeroCost()) { acc, argProtocol ->
-                            acc.concat(costEstimator.communicationCost(argProtocol, protocol))
-                        }
-                    )
-
                 val protocolConstraints: SelectionConstraint =
                     argProtocolMap.map { kv ->
                         VariableIn(FunctionVariable(fv.first, kv.key), setOf(kv.value))
@@ -296,34 +331,27 @@ private class Z3Selection(
                         setOf(VariableIn(fv, setOf(protocol)))
                     ).fold(Literal(true) as SelectionConstraint) { acc, c -> And(acc, c) }
 
-                val costConstraints: SelectionConstraint =
-                    symbolicCost.features.map { kv ->
-                        CostEquals(
-                            kv.value,
-                            cost.features[kv.key]?.let { c -> CostLiteral(c.cost) }
-                                ?: throw Error("No cost associated with feature ${kv.key}")
-                        )
-                    }.fold(Literal(true) as SelectionConstraint) { acc, c -> And(acc, c) }
+                // estimate cost given a particular configuration of an executing protocol
+                // and protocols for arguments
+                val cost =
+                    baseCostFunction(protocol).concat(
+                        argProtocolMap.values.fold(costEstimator.zeroCost()) { acc, argProtocol ->
+                            acc.concat(costEstimator.communicationCost(argProtocol, protocol))
+                        }
+                    )
 
-                Implies(protocolConstraints, costConstraints)
+                Implies(
+                    protocolConstraints,
+                    symbolicCostEqualsInt(symbolicCost, cost)
+                )
             }
         }.toSet()
     }
 
-    private fun symbolicCostEqualsSym(symCost: Cost<SymbolicCost>, intCost: Cost<SymbolicCost>): SelectionConstraint =
-        symCost.features.map { kv ->
-            CostEquals(
-                kv.value,
-                intCost.features[kv.key]
-                    ?: throw Error("No cost associated with feature ${kv.key}")
-            )
-        }.fold(Literal(true) as SelectionConstraint) { acc, c -> And(acc, c) }
-
-    private fun symbolicCostEqualsInt(symCost: Cost<SymbolicCost>, intCost: Cost<IntegerCost>): SelectionConstraint =
-        symbolicCostEqualsSym(symCost, intCost.map { c -> CostLiteral(c.cost) })
-
+    /** Generate cost constraints. */
     private fun Node.costConstraints(): Set<SelectionConstraint> =
         when (this) {
+            // induce execution and communication costs
             is LetNode -> {
                 generateComputationCostConstraints(
                     FunctionVariable(nameAnalysis.enclosingFunctionName(this), this.temporary.value),
@@ -334,6 +362,7 @@ private class Z3Selection(
                 )
             }
 
+            // induce storage and communication costs
             is DeclarationNode -> {
                 generateComputationCostConstraints(
                     FunctionVariable(nameAnalysis.enclosingFunctionName(this), this.name.value),
@@ -344,6 +373,7 @@ private class Z3Selection(
                 )
             }
 
+            // induce execution and communication costs
             is UpdateNode -> {
                 val (fv, protocols) =
                     when (val objectDecl = nameAnalysis.declaration(this).declarationAsNode) {
@@ -388,6 +418,7 @@ private class Z3Selection(
                 )
             }
 
+            // induce costs for storing the parameter
             is ParameterNode -> {
                 val enclosingFunctionName =
                     nameAnalysis.functionDeclaration(this).name.value
@@ -405,18 +436,22 @@ private class Z3Selection(
             }
 
             // generate cost constraints for when temporaries are read as guards
+            // induce communication cost from guard protocol to all protocols
+            // participating in the conditional
             is IfNode -> {
                 when (val guard = this.guard) {
-                    is LiteralNode -> setOf()
+                    is LiteralNode ->
+                        setOf(
+                            symbolicCostEqualsInt(this.symbolicCost, costEstimator.zeroCost())
+                        )
 
                     is ReadNode -> {
                         val guardDecl = nameAnalysis.declaration(guard)
-
-                        // make this cover transitive closure of reads
                         val guardProtocols = protocolSelection.viableProtocols(guardDecl)
-
                         val enclosingFunctionName = nameAnalysis.enclosingFunctionName(this)
-                        val variableProtocolMap: Map<FunctionVariable, Set<Protocol>> =
+
+                        // map from declaration/let nodes to viable protocols
+                        val viableProtocolMap: Map<FunctionVariable, Set<Protocol>> =
                             this.letNodes().map { letNode ->
                                 Pair(
                                     FunctionVariable(enclosingFunctionName, letNode.temporary.value),
@@ -432,8 +467,10 @@ private class Z3Selection(
                             )
                             .toMap()
 
+                        // create inverse map from protocols to nodes that can potentially
+                        // have it as its primary protocol
                         val participatingProtocolMap: MutableMap<Protocol, MutableSet<FunctionVariable>> = mutableMapOf()
-                        for (kv in variableProtocolMap) {
+                        for (kv in viableProtocolMap) {
                             for (protocol in kv.value) {
                                 if (participatingProtocolMap.containsKey(protocol)) {
                                     participatingProtocolMap[protocol]!!.add(kv.key)
@@ -449,6 +486,10 @@ private class Z3Selection(
                                     costEstimator.zeroCost().map { CostLiteral(0) }
                                 ) { acc, kv ->
                                     acc.concat(
+                                        // induce communication cost from guard protocol to participating protocol
+                                        // when at least one of the declaration/let nodes actually has it as a primary protocol
+                                        // otherwise, the cost is zero
+                                        // we model this using a mux expression that maps over all cost features
                                         costEstimator.communicationCost(guardProtocol, kv.key).map { cost ->
                                             CostMux(
                                                 kv.value.fold(
@@ -475,9 +516,13 @@ private class Z3Selection(
                 }
             }
 
+            // induce communication costs from message protocol to output protocol
             is OutputNode -> {
                 when (val msg = this.message) {
-                    is LiteralNode -> setOf()
+                    is LiteralNode ->
+                        setOf(
+                            symbolicCostEqualsInt(this.symbolicCost, costEstimator.zeroCost())
+                        )
 
                     is ReadNode -> {
                         val msgDecl = nameAnalysis.declaration(msg)
@@ -504,11 +549,13 @@ private class Z3Selection(
             else -> setOf()
         }
 
+    /** Generate both selection and cost constraints. */
     private fun Node.constraints(): Set<SelectionConstraint> =
         this.selectionConstraints()
             .union(this.costConstraints())
             .union(this.children.map { it.constraints() }.unions())
 
+    /** Protocol selection. */
     fun select(): (FunctionName, Variable) -> Protocol {
         val solver = ctx.mkOptimize()
         val constraints = mutableSetOf<SelectionConstraint>()

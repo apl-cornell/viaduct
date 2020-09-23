@@ -125,7 +125,7 @@ object SimpleCostEstimator : CostEstimator<IntegerCost> {
     override fun featureWeights(): Cost<IntegerCost> =
         Cost(
             persistentMapOf(
-                NUM_MESSAGES to IntegerCost(100),
+                NUM_MESSAGES to IntegerCost(5),
                 BYTES_TRANSFERRED to IntegerCost(5),
                 EXECUTION_COST to IntegerCost(1)
             )

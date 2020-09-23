@@ -328,7 +328,7 @@ private class Z3Selection(
                 generateComputationCostConstraints(
                     FunctionVariable(nameAnalysis.enclosingFunctionName(this), this.temporary.value),
                     protocolSelection.viableProtocols(this),
-                    this.children.filterIsInstance<ReadNode>(),
+                    nameAnalysis.reads(this.value).toList(),
                     { protocol -> costEstimator.executionCost(this.value, protocol) },
                     this.symbolicCost
                 )
@@ -339,7 +339,7 @@ private class Z3Selection(
                     FunctionVariable(nameAnalysis.enclosingFunctionName(this), this.name.value),
                     protocolSelection.viableProtocols(this),
                     this.arguments.filterIsInstance<ReadNode>(),
-                    { costEstimator.zeroCost() }, // TODO: add storage cost
+                    { protocol -> costEstimator.storageCost(this, protocol) },
                     this.symbolicCost
                 )
             }
@@ -380,7 +380,10 @@ private class Z3Selection(
                     fv,
                     protocols,
                     this.arguments.filterIsInstance<ReadNode>(),
-                    { costEstimator.zeroCost() }, // TODO: add update cost
+                    { protocol ->
+                        val decl = nameAnalysis.declaration(this)
+                        costEstimator.storageCost(decl, protocol)
+                    },
                     this.symbolicCost
                 )
             }

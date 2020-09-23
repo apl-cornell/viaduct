@@ -12,8 +12,8 @@ import edu.cornell.cs.apl.viaduct.passes.Splitter
 import edu.cornell.cs.apl.viaduct.passes.check
 import edu.cornell.cs.apl.viaduct.passes.elaborated
 import edu.cornell.cs.apl.viaduct.passes.specialize
+import edu.cornell.cs.apl.viaduct.selection.SimpleCostEstimator
 import edu.cornell.cs.apl.viaduct.selection.selectProtocolsWithZ3
-import edu.cornell.cs.apl.viaduct.selection.simpleProtocolCost
 import edu.cornell.cs.apl.viaduct.selection.simpleProtocolFactory
 import edu.cornell.cs.apl.viaduct.selection.validateProtocolAssignment
 import edu.cornell.cs.apl.viaduct.syntax.FunctionName
@@ -65,7 +65,7 @@ class Compile : CliktCommand(help = "Compile ideal protocol to secure distribute
 
         // Select protocols.
         val protocolAssignment: (FunctionName, Variable) -> Protocol =
-            selectProtocolsWithZ3(program, program.main, protocolFactory, ::simpleProtocolCost)
+            selectProtocolsWithZ3(program, program.main, protocolFactory, SimpleCostEstimator)
 
         // Perform a sanity check to ensure the protocolAssignment is valid.
         // TODO: either remove this entirely or make it opt-in by the command line.

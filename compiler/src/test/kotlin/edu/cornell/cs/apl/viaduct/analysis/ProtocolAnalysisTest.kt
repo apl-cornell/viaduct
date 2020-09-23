@@ -4,8 +4,8 @@ import edu.cornell.cs.apl.viaduct.ExampleProgramProvider
 import edu.cornell.cs.apl.viaduct.errors.NoMainError
 import edu.cornell.cs.apl.viaduct.passes.check
 import edu.cornell.cs.apl.viaduct.passes.elaborated
+import edu.cornell.cs.apl.viaduct.selection.SimpleCostEstimator
 import edu.cornell.cs.apl.viaduct.selection.selectProtocolsWithZ3
-import edu.cornell.cs.apl.viaduct.selection.simpleProtocolCost
 import edu.cornell.cs.apl.viaduct.selection.simpleProtocolFactory
 import edu.cornell.cs.apl.viaduct.syntax.surface.ProgramNode
 import org.junit.jupiter.params.ParameterizedTest
@@ -19,7 +19,7 @@ internal class ProtocolAnalysisTest {
 
         program.check()
         val dumpProtocolAssignment =
-            selectProtocolsWithZ3(program, program.main, simpleProtocolFactory(program), ::simpleProtocolCost)
+            selectProtocolsWithZ3(program, program.main, simpleProtocolFactory(program), SimpleCostEstimator)
         val protocolAnalysis = ProtocolAnalysis(program, dumpProtocolAssignment)
 
         try {

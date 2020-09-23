@@ -147,6 +147,10 @@ class NameAnalysis private constructor(private val tree: Tree<Node, ProgramNode>
                 persistentSetOf(this)
             is ExpressionNode ->
                 children.fold(persistentSetOf()) { acc, child -> acc.addAll(child.reads) }
+            is OutParameterInitializationNode ->
+                children.fold(persistentSetOf()) { acc, child -> acc.addAll(child.reads) }
+            is FunctionCallNode ->
+                children.fold(persistentSetOf()) { acc, child -> acc.addAll(child.reads) }
             else ->
                 children.filterIsInstance<ExpressionNode>().fold(persistentSetOf()) { acc, child ->
                     acc.addAll(child.reads)

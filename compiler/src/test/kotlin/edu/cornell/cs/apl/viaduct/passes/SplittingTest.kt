@@ -4,8 +4,8 @@ import edu.cornell.cs.apl.viaduct.ExampleProgramProvider
 import edu.cornell.cs.apl.viaduct.analysis.ProtocolAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.main
 import edu.cornell.cs.apl.viaduct.protocols.HostInterface
+import edu.cornell.cs.apl.viaduct.selection.SimpleCostEstimator
 import edu.cornell.cs.apl.viaduct.selection.selectProtocolsWithZ3
-import edu.cornell.cs.apl.viaduct.selection.simpleProtocolCost
 import edu.cornell.cs.apl.viaduct.selection.simpleProtocolFactory
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProcessDeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.surface.ProgramNode
@@ -20,7 +20,7 @@ internal class SplittingTest {
 
         program.check()
         val protocolAssignment =
-            selectProtocolsWithZ3(program, program.main, simpleProtocolFactory(program), ::simpleProtocolCost)
+            selectProtocolsWithZ3(program, program.main, simpleProtocolFactory(program), SimpleCostEstimator)
         val protocolAnalysis = ProtocolAnalysis(program, protocolAssignment)
         val splitProgram = Splitter(protocolAnalysis).splitMain()
 

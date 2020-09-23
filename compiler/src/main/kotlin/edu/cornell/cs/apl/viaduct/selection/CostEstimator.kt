@@ -2,7 +2,7 @@ package edu.cornell.cs.apl.viaduct.selection
 
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ExpressionNode
-import edu.cornell.cs.apl.viaduct.syntax.types.ValueType
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.ObjectDeclaration
 
 /**
  * A modular cost model for estimating the cost of executing a program given a protocol assignment.
@@ -10,16 +10,24 @@ import edu.cornell.cs.apl.viaduct.syntax.types.ValueType
  * The cost model is modular because it is local: it cannot look at the entire program, instead,
  * it is restricted to viewing a single computation or a message at a time.
  */
-// TODO: should protocols be nullable to take into account unassigned protocols?
-interface CostEstimator {
+interface CostEstimator<C : CostMonoid<C>> {
     /**
      * Estimated cost of running [computation] at [executingProtocol].
      */
     // TODO: not sure about taking in an expression. At the very least we needs methods too.
-    fun executionCost(computation: ExpressionNode, executingProtocol: Protocol): Cost
+    fun executionCost(computation: ExpressionNode, executingProtocol: Protocol): Cost<C>
 
     /**
      * Estimated cost of sending a message of type [messageType] from [source] to [destination].
      */
-    fun communicationCost(source: Protocol, destination: Protocol, messageType: ValueType): Cost
+    fun communicationCost(source: Protocol, destination: Protocol): Cost<C>
+
+    /** Estimated cost of storing object defined by [declaration] in protocol [protocol]. */
+    fun storageCost(declaration: ObjectDeclaration, protocol: Protocol): Cost<C>
+
+    /** "Identity" cost. */
+    fun zeroCost(): Cost<C>
+
+    /** Cost weights of features. */
+    fun featureWeights(): Cost<C>
 }

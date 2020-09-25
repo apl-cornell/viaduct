@@ -41,6 +41,20 @@ internal fun SelectionConstraint.evaluate(f: (FunctionName, Variable) -> Protoco
     }
 }
 
+internal fun List<SelectionConstraint>.assert(context: Set<SelectionConstraint>, f: (FunctionName, Variable) -> Protocol) {
+    for (c in this) {
+        if (c is And) {
+            listOf(c.lhs, c.rhs).assert(context, f)
+        } else if (c is Implies) {
+            if (c.lhs.evaluate(f)) {
+                listOf(c.rhs).assert(context + setOf(c.lhs), f)
+            }
+        } else if (!c.evaluate(f)) {
+            assert(false)
+        }
+    }
+}
+
 internal fun SelectionConstraint.or(other: SelectionConstraint): SelectionConstraint {
     return Or(this, other)
 }

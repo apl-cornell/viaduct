@@ -18,10 +18,10 @@ class OutParameterInitializationError(
     override val description: Document
         get() {
             return if (useSite == null) {
-                Document("Failed to initialize out parameter before function return:")
+                Document("Failed to initialize out parameter exactly once before function return:")
                     .withSource(parameter.sourceLocation)
             } else {
-                Document("Failed to initialize out parameter:")
+                Document("Failed to initialize out parameter exactly once:")
                     .withSource(parameter.sourceLocation) /
                     Document("Before the following use site:")
                         .withSource(useSite.sourceLocation)

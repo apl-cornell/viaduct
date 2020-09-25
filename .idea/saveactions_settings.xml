@@ -10,7 +10,6 @@
         <option value="missingOverrideAnnotation" />
         <option value="useBlocks" />
         <option value="explicitTypeCanBeDiamond" />
-        <option value="suppressAnnotation" />
         <option value="unnecessarySemicolon" />
       </set>
     </option>

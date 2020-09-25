@@ -144,43 +144,47 @@ private class PlaintextInterpreter(
 
     private suspend fun replicationCleartextReceive(node: ReceiveNode): Value {
         val sendProtocol = node.protocol.value
+
         val sendingHosts: Set<Host> = sendProtocol.hosts.intersect(projection.protocol.hosts)
         val receivingHosts: Set<Host> = sendProtocol.hosts.minus(projection.protocol.hosts)
 
-        return if (sendingHosts.isNotEmpty()) { // at least one copy of the Replication process receives
-            // do actual receive
-            val receivedValue: Value =
-                runtime.receive(ProtocolProjection(sendProtocol, projection.host))
-
-            // broadcast to projections that did not receive
-            for (receivingHost: Host in receivingHosts) {
-                runtime.send(receivedValue, ProtocolProjection(projection.protocol, receivingHost))
-            }
-
-            receivedValue
-        } else { // copy of Repl process at host does not receive; receive from copies that did
-            var finalValue: Value? = null
-            for (sendingHost: Host in sendingHosts) {
+        if (sendingHosts.isNotEmpty()) { // at least one copy of the Replication process receives
+            if (sendingHosts.contains(projection.host)) {
+                // do actual receive
                 val receivedValue: Value =
-                    runtime.receive(ProtocolProjection(projection.protocol, sendingHost))
+                    runtime.receive(ProtocolProjection(sendProtocol, projection.host))
 
-                if (finalValue == null) {
-                    finalValue = receivedValue
-                } else if (finalValue != receivedValue) {
-                    throw ViaductInterpreterError("received different values")
+                // broadcast to projections that did not receive
+                for (receivingHost: Host in receivingHosts) {
+                    runtime.send(receivedValue, ProtocolProjection(projection.protocol, receivingHost))
                 }
-            }
 
-            finalValue ?: throw ViaductInterpreterError("did not receive")
+                return receivedValue
+            } else { // copy of Repl process at host does not receive; receive from copies that did
+                var finalValue: Value? = null
+                for (sendingHost: Host in sendingHosts) {
+                    val receivedValue: Value =
+                        runtime.receive(ProtocolProjection(projection.protocol, sendingHost))
+
+                    if (finalValue == null) {
+                        finalValue = receivedValue
+                    } else if (finalValue != receivedValue) {
+                        throw ViaductInterpreterError("received different values")
+                    }
+                }
+                return finalValue ?: throw ViaductInterpreterError("did not receive")
+            }
+        } else { // no copy can receive; we cannot compile this
+            throw ViaductInterpreterError("backend compilation: at least one copy of Replication process must be able to receive")
         }
     }
 
     private suspend fun receiveCommitment(protocol: Commitment): Value {
-        val nonce = runtime.receive(ProtocolProjection(protocol, protocol.cleartextHost)) as ByteVecValue
-        val msg = runtime.receive(ProtocolProjection(protocol, protocol.cleartextHost))
+            val nonce = runtime.receive(ProtocolProjection(protocol, protocol.cleartextHost)) as ByteVecValue
+            val msg = runtime.receive(ProtocolProjection(protocol, protocol.cleartextHost))
 
-        for (hashHost: Host in protocol.hashHosts) {
-            val h = runtime.receive(ProtocolProjection(protocol, hashHost)) as ByteVecValue
+            for (hashHost: Host in protocol.hashHosts) {
+                val h = runtime.receive(ProtocolProjection(protocol, hashHost)) as ByteVecValue
             assert(HashInfo(h.value, nonce.value).verify(msg.encode()))
         }
         return msg
@@ -251,8 +255,8 @@ private class PlaintextInterpreter(
                         when (expr.protocol.value) {
                             is Commitment -> receiveCommitment(expr.protocol.value)
                             else -> replicationCleartextReceive(expr)
+                            }
                         }
-                    }
 
                     else -> throw ViaductInterpreterError(
                         "cannot receive from protocol $sendProtocol from $projection"

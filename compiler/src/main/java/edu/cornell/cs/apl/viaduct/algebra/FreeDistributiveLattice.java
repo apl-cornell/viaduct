@@ -29,10 +29,12 @@ public abstract class FreeDistributiveLattice<A>
     return new AutoValue_FreeDistributiveLattice<>(removeRedundant(joinOfMeets));
   }
 
+  @SuppressWarnings("unchecked")
   public static <A> FreeDistributiveLattice<A> top() {
     return (FreeDistributiveLattice<A>) TOP;
   }
 
+  @SuppressWarnings("unchecked")
   public static <A> FreeDistributiveLattice<A> bottom() {
     return (FreeDistributiveLattice<A>) BOTTOM;
   }

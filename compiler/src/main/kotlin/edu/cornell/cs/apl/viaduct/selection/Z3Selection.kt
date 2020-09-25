@@ -8,29 +8,19 @@ import com.uchuhimo.collections.BiMap
 import com.uchuhimo.collections.toBiMap
 import edu.cornell.cs.apl.prettyprinting.Document
 import edu.cornell.cs.apl.prettyprinting.PrettyPrintable
-import edu.cornell.cs.apl.viaduct.analysis.InformationFlowAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.NameAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.declarationNodes
 import edu.cornell.cs.apl.viaduct.analysis.letNodes
 import edu.cornell.cs.apl.viaduct.analysis.objectDeclarationArgumentNodes
-import edu.cornell.cs.apl.viaduct.protocols.Local
 import edu.cornell.cs.apl.viaduct.syntax.FunctionName
-import edu.cornell.cs.apl.viaduct.syntax.HostTrustConfiguration
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
 import edu.cornell.cs.apl.viaduct.syntax.Variable
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.DeclarationNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.ExpressionArgumentNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.InputNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.LetNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.Node
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ObjectDeclarationArgumentNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.ObjectReferenceArgumentNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutParameterArgumentNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ParameterNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProcessDeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.QueryNode
-import edu.cornell.cs.apl.viaduct.util.unions
 
 /**
  * This class performs splitting by using Z3. It operates as follows:
@@ -50,6 +40,7 @@ import edu.cornell.cs.apl.viaduct.util.unions
  * - Finally, we ask Z3 for a model, which we may convert into a function of type Variable -> Protocol.
  *
  */
+
 private class Z3Selection(
     private val program: ProgramNode,
     private val processDeclaration: ProcessDeclarationNode,
@@ -62,131 +53,8 @@ private class Z3Selection(
     }
 
     private val nameAnalysis = NameAnalysis.get(program)
-    private val informationFlowAnalysis = InformationFlowAnalysis.get(program)
-    private val hostTrustConfiguration = HostTrustConfiguration(program)
 
-    // TODO: pc must be weak enough for the hosts involved in the selected protocols to read it
-    fun viableProtocols(node: LetNode): Set<Protocol> =
-        protocolFactory.viableProtocols(node).filter {
-            it.authority(hostTrustConfiguration).actsFor(informationFlowAnalysis.label(node))
-        }.toSet()
-
-    fun viableProtocols(node: DeclarationNode): Set<Protocol> =
-        protocolFactory.viableProtocols(node).filter {
-            it.authority(hostTrustConfiguration).actsFor(informationFlowAnalysis.label(node))
-        }.toSet()
-
-    fun viableProtocols(node: ParameterNode): Set<Protocol> =
-        protocolFactory.viableProtocols(node).filter {
-            it.authority(hostTrustConfiguration).actsFor(informationFlowAnalysis.label(node))
-        }.toSet()
-
-    fun viableProtocols(node: ObjectDeclarationArgumentNode): Set<Protocol> =
-        protocolFactory.viableProtocols(node).filter {
-            it.authority(hostTrustConfiguration).actsFor(informationFlowAnalysis.label(node))
-        }.toSet()
-
-    private fun Node.constraints(): Set<SelectionConstraint> {
-        val s = when (this) {
-            is LetNode ->
-                setOf(
-                    VariableIn(
-                        Pair(nameAnalysis.enclosingFunctionName(this), this.temporary.value),
-                        viableProtocols(this)
-                    ),
-                    protocolFactory.constraint(this)
-                ) + when (this.value) {
-                    is InputNode ->
-                        setOf(
-                            VariableIn(
-                                Pair(nameAnalysis.enclosingFunctionName(this), this.temporary.value),
-                                setOf(Local(this.value.host.value))
-                            )
-                        )
-                    is QueryNode -> {
-                        val decl = nameAnalysis.declaration(this.value)
-                        val declFn: FunctionName = when (val n = decl.declarationAsNode) {
-                            is DeclarationNode -> nameAnalysis.enclosingFunctionName(n)
-
-                            is ParameterNode -> nameAnalysis.functionDeclaration(n).name.value
-
-                            is ObjectDeclarationArgumentNode -> nameAnalysis.enclosingFunctionName(n)
-
-                            else -> throw Exception("impossible")
-                        }
-
-                        return setOf(
-                            VariableEquals(
-                                Pair(nameAnalysis.enclosingFunctionName(this), this.temporary.value),
-                                Pair(declFn, decl.name.value)
-                            )
-                        )
-                    }
-                    else -> setOf()
-                }
-
-            is DeclarationNode ->
-                setOf(
-                    VariableIn(
-                        Pair(nameAnalysis.enclosingFunctionName(this), this.name.value),
-                        viableProtocols(this)
-                    ),
-                    protocolFactory.constraint(this)
-                )
-
-            is ObjectDeclarationArgumentNode ->
-                setOf(
-                    VariableIn(
-                        Pair(nameAnalysis.enclosingFunctionName(this), this.name.value),
-                        viableProtocols(this)
-                    ),
-                    protocolFactory.constraint(this)
-                )
-
-            is ExpressionArgumentNode -> {
-                val parameter = nameAnalysis.parameter(this)
-                val parameterFunctionName = nameAnalysis.functionDeclaration(parameter).name.value
-                nameAnalysis
-                    .reads(this)
-                    .map { read -> nameAnalysis.declaration(read) }
-                    .map { letNode ->
-                        VariableEquals(
-                            Pair(nameAnalysis.enclosingFunctionName(letNode), letNode.temporary.value),
-                            Pair(parameterFunctionName, parameter.name.value)
-                        )
-                    }
-                    .toSet()
-            }
-
-            is ObjectReferenceArgumentNode -> {
-                val parameter = nameAnalysis.parameter(this)
-                val parameterFunctionName = nameAnalysis.functionDeclaration(parameter).name.value
-                setOf(
-                    VariableEquals(
-                        Pair(nameAnalysis.enclosingFunctionName(this), this.variable.value),
-                        Pair(parameterFunctionName, parameter.name.value)
-                    )
-                )
-            }
-
-            is OutParameterArgumentNode -> {
-                val parameter = nameAnalysis.parameter(this)
-                val parameterFunctionName = nameAnalysis.functionDeclaration(parameter).name.value
-                setOf(
-                    VariableEquals(
-                        Pair(nameAnalysis.enclosingFunctionName(this), this.parameter.value),
-                        Pair(parameterFunctionName, parameter.name.value)
-                    )
-                )
-            }
-
-            else -> setOf()
-        }
-
-        return s.union(
-            this.children.map { it.constraints() }.unions()
-        )
-    }
+    private val constraintGenerator = ConstraintGenerator(program, protocolFactory)
 
     private val letNodes: Map<LetNode, IntExpr> =
         program.letNodes().map {
@@ -256,18 +124,18 @@ private class Z3Selection(
                 constraints.add(
                     VariableIn(
                         Pair(function.name.value, parameter.name.value),
-                        viableProtocols(parameter)
+                        constraintGenerator.viableProtocols(parameter)
                     )
                 )
                 constraints.add(protocolFactory.constraint(parameter))
             }
 
             // then select for function bodies
-            constraints.addAll(function.body.constraints())
+            constraints.addAll(constraintGenerator.constraints(function.body))
         }
 
         // finally select for main process
-        constraints.addAll(processDeclaration.constraints())
+        constraints.addAll(constraintGenerator.constraints(processDeclaration))
 
         for (constraint in constraints) {
             solver.Add(constraint.boolExpr(ctx, varMap, pmap.mapValues { ctx.mkInt(it.value) }.toBiMap()))

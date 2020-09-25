@@ -284,14 +284,21 @@ class InformationFlowAnalysis private constructor(
             }
 
             is OperatorApplicationNode -> {
-                arguments.forEach { flowsTo(solver, it, this.labelVariable) }
+                for (argument in this.arguments) {
+                    argument.check(solver, parameterMap, pcLabel)
+                    flowsTo(solver, argument, this.labelVariable)
+                }
             }
 
             is QueryNode -> {
                 val variableLabel = nameAnalysis.declaration(this).variableLabel(parameterMap)
 
+                for (argument in this.arguments) {
+                    argument.check(solver, parameterMap, pcLabel)
+                    flowsTo(solver, argument, variableLabel)
+                }
+
                 pcFlowsTo(solver, pcLabel, this.variable, variableLabel)
-                this.arguments.forEach { flowsTo(solver, it, variableLabel) }
 
                 // TODO: return label should be based on the query.
                 //  For example, Array.length leaks the label on the size but not the data.
@@ -299,6 +306,8 @@ class InformationFlowAnalysis private constructor(
             }
 
             is DowngradeNode -> {
+                this.expression.check(solver, parameterMap, pcLabel)
+
                 val from =
                     fromLabel?.let {
                         LabelConstant.create(it.value.interpret(parameterMap))
@@ -381,11 +390,12 @@ class InformationFlowAnalysis private constructor(
             }
 
             is UpdateNode -> {
-                this.arguments.forEach { it.check(solver, parameterMap, pcLabel) }
-
                 val variableLabel = nameAnalysis.declaration(this).variableLabel(parameterMap)
+                for (argument in this.arguments) {
+                    argument.check(solver, parameterMap, pcLabel)
+                    flowsTo(solver, argument, variableLabel)
+                }
                 pcFlowsTo(solver, pcLabel, this.variable, variableLabel)
-                arguments.forEach { flowsTo(solver, it, variableLabel) }
                 // TODO: consult the method signature. There may be constraints on the pc or the arguments.
             }
 
@@ -394,9 +404,9 @@ class InformationFlowAnalysis private constructor(
                 pcFlowsTo(solver, pcLabel, this.name, variableLabel)
                 when (val initializer = this.initializer) {
                     is OutParameterConstructorInitializerNode -> {
-                        initializer.arguments.forEach { arg ->
-                            arg.check(solver, parameterMap, pcLabel)
-                            flowsTo(solver, arg, variableLabel)
+                        for (argument in initializer.arguments) {
+                            argument.check(solver, parameterMap, pcLabel)
+                            flowsTo(solver, argument, variableLabel)
                         }
                     }
 

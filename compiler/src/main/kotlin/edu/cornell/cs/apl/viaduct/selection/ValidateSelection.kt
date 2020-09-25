@@ -1,5 +1,6 @@
 package edu.cornell.cs.apl.viaduct.selection
 
+import com.microsoft.z3.Context
 import edu.cornell.cs.apl.viaduct.analysis.InformationFlowAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.NameAnalysis
 import edu.cornell.cs.apl.viaduct.syntax.FunctionName
@@ -11,6 +12,7 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.LetNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.Node
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProcessDeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
+import edu.cornell.cs.apl.viaduct.util.unions
 
 /** This function provides a sanity check to ensure that a given protocol selection f : Variable -> Protocol
  *  satisfies all constraints required on it by the selector.
@@ -20,9 +22,13 @@ fun validateProtocolAssignment(
     program: ProgramNode,
     processDeclaration: ProcessDeclarationNode,
     protocolFactory: ProtocolFactory,
+    costEstimator: CostEstimator<IntegerCost>,
     protocolAssignment: (FunctionName, Variable) -> Protocol
 ) {
-    val constraintGenerator = ConstraintGenerator(program, protocolFactory)
+
+    val ctx = Context()
+
+    val constraintGenerator = ConstraintGenerator(program, protocolFactory, costEstimator, ctx)
 
     val nameAnalysis = NameAnalysis.get(program)
     val informationFlowAnalysis = InformationFlowAnalysis.get(program)
@@ -107,6 +113,14 @@ fun validateProtocolAssignment(
         }
     }
 
+    fun Node.constraints(): Set<SelectionConstraint> =
+        constraintGenerator.selectionConstraints(this).union(
+            this.children.map { it.constraints() }.unions()
+        )
+
     processDeclaration.traverse(protocolAssignment)
-    constraintGenerator.constraints(processDeclaration).toList().assert(setOf(), protocolAssignment)
+    val constraints = processDeclaration.constraints()
+    constraints.toList().assert(setOf(), protocolAssignment)
+
+    ctx.close()
 }

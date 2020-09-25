@@ -2,6 +2,7 @@ package edu.cornell.cs.apl.viaduct.errors
 
 import edu.cornell.cs.apl.viaduct.ErroneousExampleFileProvider
 import edu.cornell.cs.apl.viaduct.analysis.ProtocolAnalysis
+import edu.cornell.cs.apl.viaduct.analysis.main
 import edu.cornell.cs.apl.viaduct.parsing.SourceFile
 import edu.cornell.cs.apl.viaduct.parsing.isBlankOrUnderline
 import edu.cornell.cs.apl.viaduct.parsing.parse
@@ -9,8 +10,8 @@ import edu.cornell.cs.apl.viaduct.passes.Splitter
 import edu.cornell.cs.apl.viaduct.passes.check
 import edu.cornell.cs.apl.viaduct.passes.elaborated
 import edu.cornell.cs.apl.viaduct.protocols.MainProtocol
-import edu.cornell.cs.apl.viaduct.selection.SimpleSelection
-import edu.cornell.cs.apl.viaduct.selection.simpleProtocolCost
+import edu.cornell.cs.apl.viaduct.selection.SimpleCostEstimator
+import edu.cornell.cs.apl.viaduct.selection.selectProtocolsWithZ3
 import edu.cornell.cs.apl.viaduct.selection.simpleProtocolFactory
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
 import java.io.File
@@ -64,7 +65,7 @@ private fun run(file: File) {
 /** Selects protocols for and splits the [MainProtocol] in [this] program. */
 private fun ProgramNode.split() {
     val protocolAssignment =
-        SimpleSelection(this, simpleProtocolFactory(this), ::simpleProtocolCost).select(this)
+        selectProtocolsWithZ3(this, this.main, simpleProtocolFactory(this), SimpleCostEstimator)
     val protocolAnalysis = ProtocolAnalysis(this, protocolAssignment)
 
     Splitter(protocolAnalysis).splitMain()

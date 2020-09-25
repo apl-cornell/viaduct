@@ -2,6 +2,8 @@ package edu.cornell.cs.apl.viaduct.analysis
 
 import edu.cornell.cs.apl.viaduct.errors.NoMainError
 import edu.cornell.cs.apl.viaduct.protocols.MainProtocol
+import edu.cornell.cs.apl.viaduct.syntax.Located
+import edu.cornell.cs.apl.viaduct.syntax.Name
 import edu.cornell.cs.apl.viaduct.syntax.Variable
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.AssertionNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.BreakNode
@@ -18,6 +20,7 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.Node
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ObjectDeclarationArgumentNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.OperatorApplicationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutputNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.ParameterNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProcessDeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.QueryNode
@@ -26,6 +29,7 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.ReceiveNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.SendNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.StatementNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.UpdateNode
+import edu.cornell.cs.apl.viaduct.util.FreshNameGenerator
 
 /** Recursively traverses the children of [this] node, then applies [f] to [this] node. */
 fun StatementNode.immediateRHS(): List<ExpressionNode> {
@@ -76,7 +80,14 @@ fun Node.letNodes(): List<LetNode> = this.listOfInstances()
 /** Returns all [DeclarationNode]s contained in this node. */
 fun Node.declarationNodes(): List<DeclarationNode> = this.listOfInstances()
 
+/** Returns all [ObjectDeclarationArgumentNode]s contained in this node. */
 fun Node.objectDeclarationArgumentNodes(): List<ObjectDeclarationArgumentNode> = this.listOfInstances()
+
+/** Returns all [ParameterNode]s contained in this node. */
+fun Node.parameterNodes(): List<ParameterNode> = this.listOfInstances()
+
+/** Returns all [IfNode]s contained in this node. */
+fun Node.ifNodes(): List<IfNode> = this.listOfInstances()
 
 /** Returns all [InfiniteLoopNode]s contained in this node. */
 fun Node.infiniteLoopNodes(): List<InfiniteLoopNode> = this.listOfInstances()
@@ -89,6 +100,9 @@ fun Node.queryNodes(): List<QueryNode> = this.listOfInstances()
 
 /** Returns all [UpdateNode]s contained in this node. */
 fun Node.updateNodes(): List<UpdateNode> = this.listOfInstances()
+
+/** Returns all [OutputNode]s contained in this node. */
+fun Node.outputNodes(): List<OutputNode> = this.listOfInstances()
 
 /**
  * Returns the declaration of the [MainProtocol] in this program.
@@ -112,3 +126,17 @@ val ProgramNode.hasMain: Boolean
         }
         return false
     }
+
+/** A [FreshNameGenerator] that will avoid all [Variable] names in this node. */
+fun Node.freshVariableNameGenerator(): FreshNameGenerator {
+    val freshNameGenerator = FreshNameGenerator()
+
+    fun <Named> Iterable<Named>.addNames(getName: Named.() -> Located<Name>) {
+        this.forEach { freshNameGenerator.getFreshName(it.getName().value.name) }
+    }
+    this.letNodes().addNames(LetNode::temporary)
+    this.declarationNodes().addNames(DeclarationNode::name)
+    this.parameterNodes().addNames(ParameterNode::name)
+
+    return freshNameGenerator
+}

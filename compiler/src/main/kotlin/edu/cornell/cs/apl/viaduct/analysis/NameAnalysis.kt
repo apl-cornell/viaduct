@@ -2,6 +2,7 @@ package edu.cornell.cs.apl.viaduct.analysis
 
 import edu.cornell.cs.apl.attributes.Tree
 import edu.cornell.cs.apl.attributes.attribute
+import edu.cornell.cs.apl.attributes.circularAttribute
 import edu.cornell.cs.apl.attributes.collectedAttribute
 import edu.cornell.cs.apl.viaduct.errors.IncorrectNumberOfArgumentsError
 import edu.cornell.cs.apl.viaduct.errors.NameClashError
@@ -145,6 +146,10 @@ class NameAnalysis private constructor(private val tree: Tree<Node, ProgramNode>
             is ReadNode ->
                 persistentSetOf(this)
             is ExpressionNode ->
+                children.fold(persistentSetOf()) { acc, child -> acc.addAll(child.reads) }
+            is OutParameterInitializationNode ->
+                children.fold(persistentSetOf()) { acc, child -> acc.addAll(child.reads) }
+            is FunctionCallNode ->
                 children.fold(persistentSetOf()) { acc, child -> acc.addAll(child.reads) }
             else ->
                 children.filterIsInstance<ExpressionNode>().fold(persistentSetOf()) { acc, child ->
@@ -454,7 +459,7 @@ class NameAnalysis private constructor(private val tree: Tree<Node, ProgramNode>
         }
     }
 
-    /** Get the call sites for a function. */
+    /** Get the sites that call a function. */
     private val FunctionDeclarationNode.calls: Set<FunctionCallNode> by collectedAttribute(tree) { node ->
         when (node) {
             is FunctionCallNode -> listOf(declaration(node) to node)
@@ -462,7 +467,22 @@ class NameAnalysis private constructor(private val tree: Tree<Node, ProgramNode>
         }
     }
 
+    /** Returns the set of calls to the given function declaration. */
     fun calls(function: FunctionDeclarationNode): Set<FunctionCallNode> = function.calls
+
+    /** Set of functions reachable from a node by transitively following function calls. */
+    private val Node.reachableFunctions: PersistentSet<FunctionName> by circularAttribute(
+        persistentSetOf()
+    ) {
+        if (this is FunctionCallNode) {
+            declaration(this).reachableFunctions.add(this.name.value)
+        } else {
+            this.children.fold(persistentSetOf()) { acc, child -> acc.addAll(child.reachableFunctions) }
+        }
+    }
+
+    /** Returns the set of functions transitively reachable from a node. */
+    fun reachableFunctions(node: Node) = node.reachableFunctions
 
     /**
      * Asserts that every referenced [Name] has a declaration, and that no [Name] is declared

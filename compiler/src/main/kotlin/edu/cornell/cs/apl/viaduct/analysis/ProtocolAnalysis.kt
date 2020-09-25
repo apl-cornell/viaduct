@@ -106,7 +106,7 @@ class ProtocolAnalysis(
     private val LetNode.directReaders: PersistentSet<Protocol> by attribute {
         nameAnalysis.readers(this)
             .filterIsInstance<SimpleStatementNode>()
-            .map(::primaryProtocol)
+            .map { primaryProtocol(it) }
             .toPersistentSet()
     }
 

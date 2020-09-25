@@ -6,17 +6,20 @@ import com.github.ajalt.clikt.parameters.types.file
 import edu.cornell.cs.apl.viaduct.analysis.InformationFlowAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.ProtocolAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.main
+import edu.cornell.cs.apl.viaduct.backend.aby.ABYMuxPostprocessor
+import edu.cornell.cs.apl.viaduct.passes.ProgramPostprocessorRegistry
 import edu.cornell.cs.apl.viaduct.passes.Splitter
 import edu.cornell.cs.apl.viaduct.passes.check
 import edu.cornell.cs.apl.viaduct.passes.elaborated
 import edu.cornell.cs.apl.viaduct.passes.specialize
+import edu.cornell.cs.apl.viaduct.selection.SimpleCostEstimator
 import edu.cornell.cs.apl.viaduct.selection.selectProtocolsWithZ3
-import edu.cornell.cs.apl.viaduct.selection.simpleProtocolCost
 import edu.cornell.cs.apl.viaduct.selection.simpleProtocolFactory
 import edu.cornell.cs.apl.viaduct.selection.validateProtocolAssignment
 import edu.cornell.cs.apl.viaduct.syntax.FunctionName
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
 import edu.cornell.cs.apl.viaduct.syntax.Variable
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProcessDeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
 import guru.nidi.graphviz.engine.Format
 import guru.nidi.graphviz.engine.Graphviz
@@ -63,17 +66,24 @@ class Compile : CliktCommand(help = "Compile ideal protocol to secure distribute
 
         // Select protocols.
         val protocolAssignment: (FunctionName, Variable) -> Protocol =
-            selectProtocolsWithZ3(program, program.main, protocolFactory, ::simpleProtocolCost)
+            selectProtocolsWithZ3(program, program.main, protocolFactory, SimpleCostEstimator)
 
         // Perform a sanity check to ensure the protocolAssignment is valid.
         // TODO: either remove this entirely or make it opt-in by the command line.
-        validateProtocolAssignment(program, program.main, protocolFactory, protocolAssignment)
+        for (processDecl in program.declarations.filterIsInstance<ProcessDeclarationNode>()) {
+            validateProtocolAssignment(program, processDecl, protocolFactory, SimpleCostEstimator, protocolAssignment)
+        }
 
         val protocolAnalysis = ProtocolAnalysis(program, protocolAssignment)
 
         // Split the program.
         val splitProgram: ProgramNode = Splitter(protocolAnalysis).splitMain()
-        output.println(splitProgram)
+
+        // Post-process split program
+        val postprocessor = ProgramPostprocessorRegistry(ABYMuxPostprocessor)
+        val postprocessedProgram = postprocessor.postprocess(splitProgram)
+
+        output.println(postprocessedProgram)
     }
 }
 

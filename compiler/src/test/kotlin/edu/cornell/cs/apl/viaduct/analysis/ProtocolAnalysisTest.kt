@@ -4,8 +4,8 @@ import edu.cornell.cs.apl.viaduct.ExampleProgramProvider
 import edu.cornell.cs.apl.viaduct.errors.NoMainError
 import edu.cornell.cs.apl.viaduct.passes.check
 import edu.cornell.cs.apl.viaduct.passes.elaborated
+import edu.cornell.cs.apl.viaduct.selection.SimpleCostEstimator
 import edu.cornell.cs.apl.viaduct.selection.selectProtocolsWithZ3
-import edu.cornell.cs.apl.viaduct.selection.simpleProtocolCost
 import edu.cornell.cs.apl.viaduct.selection.simpleProtocolFactory
 import edu.cornell.cs.apl.viaduct.syntax.surface.ProgramNode
 import org.junit.jupiter.params.ParameterizedTest
@@ -17,10 +17,9 @@ internal class ProtocolAnalysisTest {
     fun `it does not explode`(surfaceProgram: ProgramNode) {
         val program = surfaceProgram.elaborated()
         program.check()
-
-        val protocolAssignment =
-            selectProtocolsWithZ3(program, program.main, simpleProtocolFactory(program), ::simpleProtocolCost)
-        val protocolAnalysis = ProtocolAnalysis(program, protocolAssignment)
+        val dumpProtocolAssignment =
+            selectProtocolsWithZ3(program, program.main, simpleProtocolFactory(program), SimpleCostEstimator)
+        val protocolAnalysis = ProtocolAnalysis(program, dumpProtocolAssignment)
 
         try {
             protocolAnalysis.protocols(program.main.body)

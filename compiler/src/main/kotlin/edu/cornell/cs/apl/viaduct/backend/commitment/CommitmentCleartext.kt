@@ -61,6 +61,7 @@ internal class CommitmentCleartext(
         }
 
     init {
+        objectStoreStack.push(persistentMapOf())
         tempStack.push(persistentMapOf())
     }
 

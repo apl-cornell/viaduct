@@ -68,6 +68,7 @@ internal class CommitmentHashReplica(
         }
 
     init {
+        objectStoreStack.push(persistentMapOf())
         ctTempStack.push(persistentMapOf())
         hashTempStack.push(persistentMapOf())
     }

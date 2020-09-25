@@ -128,31 +128,7 @@ class CommitmentFactory(val program: ProgramNode) : ProtocolFactory {
         }.ands()
     }
 
-    private fun usersIn(node: ObjectDeclarationArgumentNode, pset: Set<Protocol>): SelectionConstraint {
-        return nameAnalysis.users(node).flatMap { user ->
-            when (user) {
-                is QueryNode -> user.involvedVariables().map {
-                    VariableIn(Pair(nameAnalysis.enclosingFunctionName(user), it), pset)
-                }
-                else -> listOf(Literal(true))
-            }
-        }.ands()
-    }
-
     override fun constraint(node: DeclarationNode): SelectionConstraint {
-        return protocols(program).map {
-            Implies(
-                VariableIn(Pair(nameAnalysis.enclosingFunctionName(node), node.name.value), setOf(it.protocol)),
-                usersIn(
-                    node,
-                    setOf(it.protocol) + LocalFactory.protocols(program).map { it.protocol }.toSet() +
-                        ReplicationFactory.protocols(program).map { it.protocol }.toSet()
-                )
-            )
-        }.ands()
-    }
-
-    override fun constraint(node: ObjectDeclarationArgumentNode): SelectionConstraint {
         return protocols(program).map {
             Implies(
                 VariableIn(Pair(nameAnalysis.enclosingFunctionName(node), node.name.value), setOf(it.protocol)),

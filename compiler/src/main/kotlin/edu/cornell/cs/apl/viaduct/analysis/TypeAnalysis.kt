@@ -104,10 +104,26 @@ class TypeAnalysis private constructor(
                 type(nameAnalysis.declaration(this))
             is OperatorApplicationNode -> {
                 assert(arguments.size == operator.type.arguments.size)
-                arguments.zip(operator.type.arguments) { argument, expectedType ->
-                    argument.assertHasType(expectedType)
+
+                val possibleTypes = listOf(operator.type) + operator.alternativeTypes()
+
+                var lastResultType: ValueType? = null
+                var lastError: TypeMismatchError? = null
+
+                for (functionType in possibleTypes) {
+                    try {
+                        arguments.zip(functionType.arguments) { argument, expectedType ->
+                            argument.assertHasType(expectedType)
+                        }
+                        lastResultType = functionType.result
+                        break
+                    } catch (err: TypeMismatchError) {
+                        lastError = err
+                        continue
+                    }
                 }
-                operator.type.result
+
+                lastResultType ?: throw lastError!!
             }
             is QueryNode -> {
                 val methodType = nameAnalysis.declaration(this).type.getType(query.value)

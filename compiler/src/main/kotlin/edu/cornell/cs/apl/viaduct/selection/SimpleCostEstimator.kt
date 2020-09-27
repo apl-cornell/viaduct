@@ -4,6 +4,7 @@ import edu.cornell.cs.apl.viaduct.protocols.ABY
 import edu.cornell.cs.apl.viaduct.protocols.Commitment
 import edu.cornell.cs.apl.viaduct.protocols.Local
 import edu.cornell.cs.apl.viaduct.protocols.Replication
+import edu.cornell.cs.apl.viaduct.protocols.ZKP
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ExpressionNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ObjectDeclaration
@@ -31,6 +32,7 @@ object SimpleCostEstimator : CostEstimator<IntegerCost> {
                 is Local -> IntegerCost(1)
                 is Replication -> IntegerCost(1)
                 is Commitment -> IntegerCost(1)
+                is ZKP -> IntegerCost(1)
                 is ABY -> IntegerCost(10)
                 else -> throw Error("unknown protocol ${executingProtocol.protocolName}")
             }
@@ -104,6 +106,9 @@ object SimpleCostEstimator : CostEstimator<IntegerCost> {
             source is Commitment -> zeroCost() // TODO
             destination is Commitment -> zeroCost() // TODO
 
+            source is ZKP -> zeroCost() // TODO
+            destination is ZKP -> zeroCost() // TODO
+
             else -> throw Error("unknown source protocol ${source.protocolName} or destination protocol ${destination.protocolName}")
         }
 
@@ -114,6 +119,7 @@ object SimpleCostEstimator : CostEstimator<IntegerCost> {
                 is Local -> IntegerCost(1)
                 is Replication -> IntegerCost(1)
                 is Commitment -> IntegerCost(1)
+                is ZKP -> IntegerCost(1)
                 is ABY -> IntegerCost(10)
                 else -> throw Error("unknown protocol ${protocol.protocolName}")
             }

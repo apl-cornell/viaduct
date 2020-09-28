@@ -9,7 +9,6 @@ import edu.cornell.cs.apl.viaduct.selection.ProtocolCommunication
 import edu.cornell.cs.apl.viaduct.selection.SimpleProtocolComposer
 import edu.cornell.cs.apl.viaduct.syntax.Arguments
 import edu.cornell.cs.apl.viaduct.syntax.ClassNameNode
-import edu.cornell.cs.apl.viaduct.syntax.Host
 import edu.cornell.cs.apl.viaduct.syntax.ObjectVariable
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
 import edu.cornell.cs.apl.viaduct.syntax.Temporary
@@ -177,11 +176,8 @@ private class PlaintextInterpreter(
             is ReceiveNode -> {
                 val sendProtocol = expr.protocol.value
 
-                val communication: ProtocolCommunication =
-                    SimpleProtocolComposer.communicate(sendProtocol, projection.protocol)
-
-                val sendPhase = communication.getPhase("send")
-                val broadcastPhase = communication.getPhase("broadcast")
+                val sendPhase =
+                    SimpleProtocolComposer.getSendPhase(sendProtocol, projection.protocol)
 
                 var finalValue: Value? = null
                 for (recvEvent: CommunicationEvent in sendPhase.getHostReceives(this.projection.host)) {
@@ -196,6 +192,9 @@ private class PlaintextInterpreter(
                 }
 
                 assert(finalValue != null)
+
+                val broadcastPhase =
+                    SimpleProtocolComposer.getBroadcastPhase(sendProtocol, projection.protocol)
 
                 for (sendEvent: CommunicationEvent in broadcastPhase.getHostSends(this.projection.host)) {
                     runtime.send(finalValue!!, ProtocolProjection(this.projection.protocol, sendEvent.recv.host))

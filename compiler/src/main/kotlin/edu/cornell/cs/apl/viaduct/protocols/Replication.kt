@@ -42,11 +42,11 @@ class Replication(hosts: Set<Host>) : Protocol() {
 
     val hostInputPorts: Map<Host, InputPort> =
         hosts
-            .map { h -> Pair(h, InputPort(this, h, "${h.name}_INPUT")) }
+            .map { h -> Pair(h, InputPort(this, h, "INPUT")) }
             .toMap()
 
     val hostOutputPorts: Map<Host, OutputPort> =
         hosts
-            .map { h -> Pair(h, OutputPort(this, h, "${h.name}_OUTPUT")) }
+            .map { h -> Pair(h, OutputPort(this, h, "OUTPUT")) }
             .toMap()
 }

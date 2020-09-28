@@ -16,6 +16,8 @@ import edu.cornell.cs.apl.viaduct.backend.ViaductProcessRuntime
 import edu.cornell.cs.apl.viaduct.errors.UndefinedNameError
 import edu.cornell.cs.apl.viaduct.errors.ViaductInterpreterError
 import edu.cornell.cs.apl.viaduct.protocols.ABY
+import edu.cornell.cs.apl.viaduct.selection.ProtocolCommunication
+import edu.cornell.cs.apl.viaduct.selection.SimpleProtocolComposer
 import edu.cornell.cs.apl.viaduct.syntax.Arguments
 import edu.cornell.cs.apl.viaduct.syntax.ClassNameNode
 import edu.cornell.cs.apl.viaduct.syntax.Host
@@ -283,14 +285,36 @@ private class ABYInterpreter(
             is ReceiveNode -> {
                 val rhsProtocol: Protocol = rhs.protocol.value
 
-                if (rhsProtocol.hosts.contains(runtime.projection.host)) { // actually receive input
-                    val receivedValue: Value =
-                        runtime.receive(ProtocolProjection(rhsProtocol, runtime.projection.host))
+                val communication: ProtocolCommunication =
+                    SimpleProtocolComposer.communicate(rhsProtocol, runtime.projection.protocol)
 
-                    ctTempStore = ctTempStore.put(stmt.temporary.value, receivedValue)
-                    ssTempStore = ssTempStore.put(stmt.temporary.value, valueToCircuit(receivedValue, isInput = true))
-                } else {
-                    ssTempStore = ssTempStore.put(stmt.temporary.value, ABYDummyInGate())
+                val sendPhase = communication.getPhase("send")
+
+                for (sendEvent in sendPhase) {
+                    when {
+                        // secret input for this host; create input gate
+                        sendEvent.recv.id == "SECRET_INPUT"
+                            && sendEvent.recv.host == runtime.projection.host ->
+                        {
+                            val receivedValue: Value =
+                                runtime.receive(ProtocolProjection(rhsProtocol, runtime.projection.host))
+                            ssTempStore = ssTempStore.put(stmt.temporary.value, valueToCircuit(receivedValue, isInput = true))
+                        }
+
+                        // other host has secret input; create dummy input gate
+                        sendEvent.recv.id == "SECRET_INPUT"
+                            && sendEvent.recv.host != runtime.projection.host ->
+                        {
+                            ssTempStore = ssTempStore.put(stmt.temporary.value, ABYDummyInGate())
+                        }
+
+                        // cleartext input
+                        sendEvent.recv.id == "CLEARTEXT_INPUT" && sendEvent.recv.host == runtime.projection.host -> {
+                            val receivedValue: Value =
+                                runtime.receive(ProtocolProjection(rhsProtocol, runtime.projection.host))
+                            ctTempStore = ctTempStore.put(stmt.temporary.value, receivedValue)
+                        }
+                    }
                 }
             }
 
@@ -305,7 +329,7 @@ private class ABYInterpreter(
         getObject(getObjectLocation(stmt.variable.value)).update(stmt.update, stmt.arguments)
     }
 
-    fun buildABYCircuit(outGate: ABYCircuitGate, recvProtocol: Protocol): Share {
+    fun buildABYCircuit(outGate: ABYCircuitGate, outRole: Role): Share {
         val circuitBuilder =
             ABYCircuitBuilder(
                 aby.getCircuitBuilder(SharingType.S_YAO)!!,
@@ -346,25 +370,33 @@ private class ABYInterpreter(
 
         assert(shareStack.size == 1)
 
+        return circuitBuilder.circuit.putOUTGate(shareStack.peek()!!, outRole)
+    }
+
+    // actually perform MPC protocol and declassify output
+    override suspend fun runSend(stmt: SendNode) {
+        val sendProtocol = runtime.projection.protocol
+        val recvProtocol = stmt.protocol.value
+
+        val sendPhase = SimpleProtocolComposer.getSendPhase(sendProtocol, recvProtocol)
+
+        val thisHostHasSends = sendPhase.any { event -> event.send.host == runtime.projection.host }
+        val otherHostHasSends = sendPhase.any { event -> event.send.host == this.otherHost }
+
         val outRole =
             when {
                 // only this party receives cleartext value of output gate
-                recvProtocol.hosts.contains(this.runtime.projection.host) && !recvProtocol.hosts.contains(this.otherHost) ->
+                thisHostHasSends && !otherHostHasSends ->
                     this.role
 
                 // only other party receives cleartext value of output gate
-                !recvProtocol.hosts.contains(this.runtime.projection.host) && recvProtocol.hosts.contains(this.otherHost) ->
+                !thisHostHasSends && otherHostHasSends ->
                     if (this.role == Role.SERVER) Role.CLIENT else Role.SERVER
 
                 // both parties receive cleartext value of output gate
                 else -> Role.ALL
             }
 
-        return circuitBuilder.circuit.putOUTGate(shareStack.peek()!!, outRole)
-    }
-
-    // actually perform MPC protocol and declassify output
-    override suspend fun runSend(stmt: SendNode) {
         val sendValue: Value =
             when (val msg: AtomicExpressionNode = stmt.message) {
                 is LiteralNode -> {
@@ -377,7 +409,7 @@ private class ABYInterpreter(
                             ?: throw UndefinedNameError(msg.temporary)
 
                     aby.reset()
-                    val outShare = buildABYCircuit(outGate, stmt.protocol.value)
+                    val outShare = buildABYCircuit(outGate, outRole)
                     aby.execCircuit()
                     val result = outShare.clearValue32.toInt()
 
@@ -391,8 +423,8 @@ private class ABYInterpreter(
                 }
             }
 
-        if (stmt.protocol.value.hosts.contains(runtime.projection.host)) {
-            runtime.send(sendValue, ProtocolProjection(stmt.protocol.value, runtime.projection.host))
+        for (sendEvent in sendPhase.getHostSends(runtime.projection.host)) {
+            runtime.send(sendValue, ProtocolProjection(recvProtocol, sendEvent.recv.host))
         }
     }
 

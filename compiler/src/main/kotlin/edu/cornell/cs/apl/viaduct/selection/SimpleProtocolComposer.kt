@@ -212,4 +212,10 @@ object SimpleProtocolComposer : ProtocolComposer {
 
     override fun communicate(src: Protocol, dst: Protocol): ProtocolCommunication =
         Pair(src, dst).communicate
+
+    fun getSendPhase(src: Protocol, dst: Protocol): ProtocolCommunication.CommunicationPhase =
+        Pair(src, dst).communicate.getPhase("send")
+
+    fun getBroadcastPhase(src: Protocol, dst: Protocol): ProtocolCommunication.CommunicationPhase =
+        Pair(src, dst).communicate.getPhase("broadcast")
 }

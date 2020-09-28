@@ -37,9 +37,11 @@ object SimpleCostEstimator : CostEstimator<IntegerCost> {
     override fun communicationCost(source: Protocol, destination: Protocol): Cost<IntegerCost> {
         return if (source != destination) {
             val numMessages =
-                SimpleProtocolComposer.communicate(source, destination).filter { event ->
-                    event.send.host != event.recv.host
-                }.size
+                SimpleProtocolComposer.communicate(source, destination).communicationMap.map { kv ->
+                    kv.value.filter { event ->
+                        event.send.host != event.recv.host
+                    }.size
+                }.fold(0) { acc, numMsgs -> acc + numMsgs }
 
             zeroCost().update(NUM_MESSAGES, IntegerCost(numMessages))
         } else {

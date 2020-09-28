@@ -4,6 +4,9 @@ import edu.cornell.cs.apl.viaduct.errors.UndefinedNameError
 import edu.cornell.cs.apl.viaduct.errors.ViaductInterpreterError
 import edu.cornell.cs.apl.viaduct.protocols.Local
 import edu.cornell.cs.apl.viaduct.protocols.Replication
+import edu.cornell.cs.apl.viaduct.selection.CommunicationEvent
+import edu.cornell.cs.apl.viaduct.selection.ProtocolCommunication
+import edu.cornell.cs.apl.viaduct.selection.SimpleProtocolComposer
 import edu.cornell.cs.apl.viaduct.syntax.Arguments
 import edu.cornell.cs.apl.viaduct.syntax.ClassNameNode
 import edu.cornell.cs.apl.viaduct.syntax.Host
@@ -109,6 +112,7 @@ private class PlaintextInterpreter(
             tempStoreStack.pop()
         }
     }
+
     override fun allocateObject(obj: PlaintextClassObject): ObjectLocation {
         objectHeap.add(obj)
         return objectHeap.size - 1
@@ -173,67 +177,31 @@ private class PlaintextInterpreter(
             is ReceiveNode -> {
                 val sendProtocol = expr.protocol.value
 
-                when (projection.protocol) {
-                    is Local -> {
-                        return when {
-                            // receive from local process
-                            sendProtocol.hosts.contains(projection.host) -> {
-                                runtime.receive(ProtocolProjection(sendProtocol, projection.host))
-                            }
+                val communication: ProtocolCommunication =
+                    SimpleProtocolComposer.communicate(sendProtocol, projection.protocol)
 
-                            // allow remote sends from other Local processes
-                            sendProtocol is Local -> {
-                                runtime.receive(ProtocolProjection(sendProtocol, sendProtocol.host))
-                            }
+                val sendPhase = communication.getPhase("send")
+                val broadcastPhase = communication.getPhase("broadcast")
 
-                            else -> {
-                                throw ViaductInterpreterError(
-                                    "cannot receive from protocol ${sendProtocol.name} to $projection"
-                                )
-                            }
-                        }
+                var finalValue: Value? = null
+                for (recvEvent: CommunicationEvent in sendPhase.getHostReceives(this.projection.host)) {
+                    val receivedValue: Value =
+                        runtime.receive(ProtocolProjection(sendProtocol, recvEvent.send.host))
+
+                    if (finalValue == null) {
+                        finalValue = receivedValue
+                    } else if (finalValue != receivedValue) {
+                        throw ViaductInterpreterError("received different values")
                     }
-
-                    is Replication -> {
-                        val sendingHosts: Set<Host> = sendProtocol.hosts.intersect(projection.protocol.hosts)
-                        val receivingHosts: Set<Host> = sendProtocol.hosts.minus(projection.protocol.hosts)
-
-                        return if (sendingHosts.isNotEmpty()) { // at least one copy of the Replication process receives
-                            if (sendingHosts.contains(projection.host)) {
-                                // do actual receive
-                                val receivedValue: Value =
-                                    runtime.receive(ProtocolProjection(sendProtocol, projection.host))
-
-                                // broadcast to projections that did not receive
-                                for (receivingHost: Host in receivingHosts) {
-                                    runtime.send(receivedValue, ProtocolProjection(projection.protocol, receivingHost))
-                                }
-
-                                receivedValue
-                            } else { // copy of Repl process at host does not receive; receive from copies that did
-                                var finalValue: Value? = null
-                                for (sendingHost: Host in sendingHosts) {
-                                    val receivedValue: Value =
-                                        runtime.receive(ProtocolProjection(projection.protocol, sendingHost))
-
-                                    if (finalValue == null) {
-                                        finalValue = receivedValue
-                                    } else if (finalValue != receivedValue) {
-                                        throw ViaductInterpreterError("received different values")
-                                    }
-                                }
-
-                                finalValue ?: throw ViaductInterpreterError("did not receive")
-                            }
-                        } else { // no copy can receive; we cannot compile this
-                            throw ViaductInterpreterError("backend compilation: at least one copy of Replication process must be able to receive")
-                        }
-                    }
-
-                    else -> throw ViaductInterpreterError(
-                        "cannot receive from protocol $sendProtocol from $projection"
-                    )
                 }
+
+                assert(finalValue != null)
+
+                for (sendEvent: CommunicationEvent in broadcastPhase.getHostSends(this.projection.host)) {
+                    runtime.send(finalValue!!, ProtocolProjection(this.projection.protocol, sendEvent.recv.host))
+                }
+
+                finalValue!!
             }
         }
     }
@@ -257,26 +225,12 @@ private class PlaintextInterpreter(
         val msgValue: Value = runExpr(stmt.message)
         val recvProtocol: Protocol = stmt.protocol.value
 
-        when (projection.protocol) {
-            is Local -> {
-                if (recvProtocol.hosts.contains(projection.host)) {
-                    runtime.send(msgValue, ProtocolProjection(stmt.protocol.value, projection.host))
-                } else if (recvProtocol is Local) { // only send to remote Local processes
-                    for (recvHost: Host in stmt.protocol.value.hosts) {
-                        runtime.send(msgValue, ProtocolProjection(stmt.protocol.value, recvHost))
-                    }
+        val communication: ProtocolCommunication =
+            SimpleProtocolComposer.communicate(this.projection.protocol, recvProtocol)
+        val sendPhase = communication.getPhase("send")
 
-                    runtime.send(msgValue, ProtocolProjection(recvProtocol, recvProtocol.host))
-                }
-            }
-
-            is Replication -> {
-                // there is a local copy of the receiving process; send it there
-                // otherwise, don't do anything
-                if (recvProtocol.hosts.contains(projection.host)) {
-                    runtime.send(msgValue, ProtocolProjection(recvProtocol, projection.host))
-                }
-            }
+        for (sendEvent in sendPhase.getHostSends(this.projection.host)) {
+            runtime.send(msgValue, ProtocolProjection(recvProtocol, sendEvent.recv.host))
         }
     }
 

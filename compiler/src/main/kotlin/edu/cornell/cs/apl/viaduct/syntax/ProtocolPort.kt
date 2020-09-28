@@ -19,5 +19,3 @@ data class OutputPort(
     override val host: Host,
     override val id: PortId
 ) : ProtocolPort
-
-data class CommunicationEvent(val send: OutputPort, val recv: InputPort)

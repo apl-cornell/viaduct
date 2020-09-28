@@ -16,7 +16,6 @@ import edu.cornell.cs.apl.viaduct.backend.ViaductProcessRuntime
 import edu.cornell.cs.apl.viaduct.errors.UndefinedNameError
 import edu.cornell.cs.apl.viaduct.errors.ViaductInterpreterError
 import edu.cornell.cs.apl.viaduct.protocols.ABY
-import edu.cornell.cs.apl.viaduct.selection.ProtocolCommunication
 import edu.cornell.cs.apl.viaduct.selection.SimpleProtocolComposer
 import edu.cornell.cs.apl.viaduct.syntax.Arguments
 import edu.cornell.cs.apl.viaduct.syntax.ClassNameNode
@@ -283,36 +282,49 @@ private class ABYInterpreter(
     override suspend fun runLet(stmt: LetNode) {
         when (val rhs: ExpressionNode = stmt.value) {
             is ReceiveNode -> {
-                val rhsProtocol: Protocol = rhs.protocol.value
+                val sendProtocol: Protocol = rhs.protocol.value
+                val recvProtocol: Protocol = runtime.projection.protocol
 
-                val communication: ProtocolCommunication =
-                    SimpleProtocolComposer.communicate(rhsProtocol, runtime.projection.protocol)
+                val sendPhase =
+                    SimpleProtocolComposer.getSendPhase(sendProtocol, recvProtocol)
 
-                val sendPhase = communication.getPhase("send")
+                var secretInput: Value? = null
+                var cleartextInput: Value? = null
 
                 for (sendEvent in sendPhase) {
                     when {
                         // secret input for this host; create input gate
-                        sendEvent.recv.id == "SECRET_INPUT"
-                            && sendEvent.recv.host == runtime.projection.host ->
-                        {
+                        sendEvent.recv.id == "SECRET_INPUT" && sendEvent.recv.host == runtime.projection.host -> {
                             val receivedValue: Value =
-                                runtime.receive(ProtocolProjection(rhsProtocol, runtime.projection.host))
-                            ssTempStore = ssTempStore.put(stmt.temporary.value, valueToCircuit(receivedValue, isInput = true))
+                                runtime.receive(ProtocolProjection(sendProtocol, runtime.projection.host))
+
+                            if (secretInput == null) {
+                                secretInput = receivedValue
+                                ssTempStore =
+                                    ssTempStore.put(stmt.temporary.value, valueToCircuit(secretInput, isInput = true))
+                            } else if (secretInput != receivedValue) {
+                                throw ViaductInterpreterError("received different values")
+                            }
                         }
 
                         // other host has secret input; create dummy input gate
-                        sendEvent.recv.id == "SECRET_INPUT"
-                            && sendEvent.recv.host != runtime.projection.host ->
-                        {
-                            ssTempStore = ssTempStore.put(stmt.temporary.value, ABYDummyInGate())
+                        sendEvent.recv.id == "SECRET_INPUT" && sendEvent.recv.host != runtime.projection.host -> {
+                            if (!ssTempStore.containsKey(stmt.temporary.value)) {
+                                ssTempStore = ssTempStore.put(stmt.temporary.value, ABYDummyInGate())
+                            }
                         }
 
                         // cleartext input
                         sendEvent.recv.id == "CLEARTEXT_INPUT" && sendEvent.recv.host == runtime.projection.host -> {
                             val receivedValue: Value =
-                                runtime.receive(ProtocolProjection(rhsProtocol, runtime.projection.host))
-                            ctTempStore = ctTempStore.put(stmt.temporary.value, receivedValue)
+                                runtime.receive(ProtocolProjection(sendProtocol, runtime.projection.host))
+
+                            if (cleartextInput == null) {
+                                cleartextInput = receivedValue
+                                ctTempStore = ctTempStore.put(stmt.temporary.value, cleartextInput)
+                            } else if (cleartextInput != receivedValue) {
+                                throw ViaductInterpreterError("received different values")
+                            }
                         }
                     }
                 }

@@ -5,9 +5,15 @@ import com.microsoft.z3.BoolExpr
 import com.microsoft.z3.Context
 import com.microsoft.z3.IntExpr
 import com.uchuhimo.collections.BiMap
+import edu.cornell.cs.apl.viaduct.analysis.NameAnalysis
+import edu.cornell.cs.apl.viaduct.analysis.createdVariables
+import edu.cornell.cs.apl.viaduct.analysis.involvedVariables
 import edu.cornell.cs.apl.viaduct.syntax.FunctionName
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
 import edu.cornell.cs.apl.viaduct.syntax.Variable
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.DeclarationNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.ExpressionNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.LetNode
 
 typealias FunctionVariable = Pair<FunctionName, Variable>
 
@@ -64,7 +70,10 @@ internal fun SelectionConstraint.evaluate(f: (FunctionName, Variable) -> Protoco
     }
 }
 
-internal fun List<SelectionConstraint>.assert(context: Set<SelectionConstraint>, f: (FunctionName, Variable) -> Protocol) {
+internal fun List<SelectionConstraint>.assert(
+    context: Set<SelectionConstraint>,
+    f: (FunctionName, Variable) -> Protocol
+) {
     for (c in this) {
         if (c is And) {
             listOf(c.lhs, c.rhs).assert(context, f)
@@ -92,6 +101,10 @@ internal fun List<BoolExpr>.ors(ctx: Context): BoolExpr {
 
 internal fun List<SelectionConstraint>.ands(): SelectionConstraint {
     return this.fold(Literal(true) as SelectionConstraint) { acc, x -> And(acc, x) }
+}
+
+internal fun List<SelectionConstraint>.ors(): SelectionConstraint {
+    return this.fold(Literal(true) as SelectionConstraint) { acc, x -> Or(acc, x) }
 }
 
 /** Convert a SelectionConstraint into a Z3 BoolExpr. **/
@@ -152,3 +165,45 @@ internal fun SymbolicCost.arithExpr(
                 this.rhs.arithExpr(ctx, vmap, pmap)
             ) as ArithExpr
     }
+
+/** Some convenience functions. **/
+
+/** States whether an expression reads only from the protocols in [prots] **/
+fun ExpressionNode.readsFrom(nameAnalysis: NameAnalysis, prots: Set<Protocol>): SelectionConstraint =
+    this.involvedVariables().map {
+        VariableIn(Pair(nameAnalysis.enclosingFunctionName(this), it), prots)
+    }.ands()
+
+/** States that if the let node is stored at any protocol in [to], it reads from only the protocols in [from] **/
+fun LetNode.readsFrom(nameAnalysis: NameAnalysis, to: Set<Protocol>, from: Set<Protocol>): SelectionConstraint =
+    Implies(
+        VariableIn(Pair(nameAnalysis.enclosingFunctionName(this), this.temporary.value), to),
+        this.value.readsFrom(nameAnalysis, from)
+    )
+
+fun DeclarationNode.readsFrom(nameAnalysis: NameAnalysis, to: Set<Protocol>, from: Set<Protocol>): SelectionConstraint =
+    Implies(
+        VariableIn(Pair(nameAnalysis.enclosingFunctionName(this), this.name.value), to),
+        this.arguments.map { it.readsFrom(nameAnalysis, from) }.ands()
+    )
+
+/** States that if the let node is stores at any protocol in [from], it sends to only the protocols in [to] **/
+
+fun LetNode.sendsTo(nameAnalysis: NameAnalysis, from: Set<Protocol>, to: Set<Protocol>): SelectionConstraint =
+    Implies(
+        VariableIn(Pair(nameAnalysis.enclosingFunctionName(this), this.temporary.value), from),
+        nameAnalysis.readers(this).map { stmt ->
+            stmt.createdVariables().map {
+                VariableIn(Pair(nameAnalysis.enclosingFunctionName(stmt), it), to)
+            }.ands()
+        }.ands()
+    )
+
+fun DeclarationNode.sendsTo(nameAnalysis: NameAnalysis, from: Set<Protocol>, to: Set<Protocol>): SelectionConstraint =
+    Implies(
+        VariableIn(Pair(nameAnalysis.enclosingFunctionName(this), this.name.value), from),
+        nameAnalysis.queriers(this).map {
+            val clet = nameAnalysis.correspondingLet(it)
+            VariableIn(Pair(nameAnalysis.enclosingFunctionName(clet), clet.temporary.value), to)
+        }.ands()
+    )

@@ -1,0 +1,8 @@
+process main {
+    val a : int{A} = input int from alice;
+    val zkp_val : bool{A & B<-} = (endorse a to {A & B<-}) == 7;
+    output (declassify zkp_val to {(A | B)-> & (A&B)<-} ) to bob ;
+}
+
+host alice: {A}
+host bob: {B}

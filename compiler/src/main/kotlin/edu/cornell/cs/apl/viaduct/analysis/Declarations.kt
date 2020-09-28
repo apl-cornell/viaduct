@@ -6,11 +6,13 @@ import edu.cornell.cs.apl.viaduct.syntax.Located
 import edu.cornell.cs.apl.viaduct.syntax.Name
 import edu.cornell.cs.apl.viaduct.syntax.Variable
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.AssertionNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.BlockNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.BreakNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.DeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.DeclassificationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.EndorsementNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ExpressionNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.FunctionCallNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.IfNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.InfiniteLoopNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.InputNode
@@ -19,6 +21,7 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.LiteralNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.Node
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ObjectDeclarationArgumentNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.OperatorApplicationNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutParameterInitializationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutputNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ParameterNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProcessDeclarationNode
@@ -44,6 +47,25 @@ fun StatementNode.immediateRHS(): List<ExpressionNode> {
         else -> listOf()
     }
 }
+
+fun StatementNode.createdVariables(): List<Variable> =
+    when (this) {
+        is LetNode -> listOf(this.temporary.value)
+        is DeclarationNode -> listOf(this.name.value)
+        is UpdateNode -> listOf()
+        is OutParameterInitializationNode -> listOf(this.name.value) // TODO is this right?
+        is OutputNode -> listOf()
+        is SendNode -> listOf()
+        is FunctionCallNode ->
+            this.arguments.filterIsInstance<ObjectDeclarationArgumentNode>().map {
+                it.name.value
+            } // TODO what about OutParameterArgumentNode?
+        is IfNode -> listOf()
+        is InfiniteLoopNode -> listOf()
+        is BreakNode -> listOf()
+        is AssertionNode -> listOf()
+        is BlockNode -> listOf()
+    }
 
 fun ExpressionNode.involvedVariables(): List<Variable> {
     return when (this) {

@@ -23,7 +23,7 @@ class ZKP(val prover: Host, val verifiers: Set<Host>) : Protocol() {
     }
 
     override val protocolName: ProtocolName
-        get() = Commitment.protocolName
+        get() = ZKP.protocolName
 
     override val arguments: Map<String, Value>
         get() = mapOf("prover" to HostValue(prover), "verifiers" to HostSetValue(verifiers))

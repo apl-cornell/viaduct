@@ -432,6 +432,9 @@ class NameAnalysis private constructor(private val tree: Tree<Node, ProgramNode>
     /** Returns the set of arguments for [ParameterNode]. */
     fun parameterUsers(parameter: ParameterNode): Set<FunctionArgumentNode> = parameter.parameterUsers
 
+    fun correspondingLet(query: QueryNode): LetNode =
+        (tree.parent(query) as LetNode)
+
     /** Returns the set of [BreakNode]s that reference [node]. **/
     fun correspondingBreaks(node: InfiniteLoopNode): Set<BreakNode> = node.correspondingBreaks
 

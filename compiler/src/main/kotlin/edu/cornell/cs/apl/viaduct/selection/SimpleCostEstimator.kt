@@ -29,7 +29,7 @@ object SimpleCostEstimator : CostEstimator<IntegerCost> {
             when (executingProtocol) {
                 is Local -> IntegerCost(1)
                 is Replication -> IntegerCost(1)
-                is ABY -> IntegerCost(10)
+                is ABY -> IntegerCost(100)
                 else -> throw Error("unknown protocol ${executingProtocol.protocolName}")
             }
         )
@@ -39,9 +39,14 @@ object SimpleCostEstimator : CostEstimator<IntegerCost> {
             val numMessages =
                 SimpleProtocolComposer.communicate(source, destination).communicationMap.map { kv ->
                     kv.value.filter { event ->
-                        event.send.host != event.recv.host
-                    }.size
-                }.fold(0) { acc, numMsgs -> acc + numMsgs }
+                        event.send.host != event.recv.host || event.send.protocol is ABY
+                    }.map { event ->
+                        when (event.send.protocol) {
+                            is ABY -> 10
+                            else -> 1
+                        }
+                    }.fold(0) { acc, msgCost -> acc + msgCost }
+                }.fold(0) { acc, phaseCost -> acc + phaseCost }
 
             zeroCost().update(NUM_MESSAGES, IntegerCost(numMessages))
         } else {
@@ -55,7 +60,7 @@ object SimpleCostEstimator : CostEstimator<IntegerCost> {
             when (protocol) {
                 is Local -> IntegerCost(1)
                 is Replication -> IntegerCost(1)
-                is ABY -> IntegerCost(10)
+                is ABY -> IntegerCost(100)
                 else -> throw Error("unknown protocol ${protocol.protocolName}")
             }
         )
@@ -72,8 +77,8 @@ object SimpleCostEstimator : CostEstimator<IntegerCost> {
     override fun featureWeights(): Cost<IntegerCost> =
         Cost(
             persistentMapOf(
-                NUM_MESSAGES to IntegerCost(5),
-                BYTES_TRANSFERRED to IntegerCost(5),
+                NUM_MESSAGES to IntegerCost(1),
+                BYTES_TRANSFERRED to IntegerCost(1),
                 EXECUTION_COST to IntegerCost(1)
             )
         )

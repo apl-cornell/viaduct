@@ -133,7 +133,7 @@ class ProtocolAnalysis(
             is LetNode -> {
                 val indirectReaders =
                     nameAnalysis.readers(this)
-                        .filter { it !is SimpleStatementNode }
+                        .filter { it !is SimpleStatementNode && it !is FunctionCallNode }
                         .map { it.protocols }.unions()
                 directReaders.addAll(indirectReaders).add(primaryProtocol(this))
             }

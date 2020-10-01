@@ -11,12 +11,15 @@ import edu.cornell.cs.apl.viaduct.syntax.HostTrustConfiguration
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
 import edu.cornell.cs.apl.viaduct.syntax.SpecializedProtocol
 import edu.cornell.cs.apl.viaduct.syntax.Variable
+import edu.cornell.cs.apl.viaduct.syntax.datatypes.Vector
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.DeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.IfNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.LetNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ParameterNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.QueryNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ReadNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.UpdateNode
 import edu.cornell.cs.apl.viaduct.util.subsequences
 
 // Only select ABY for a selection if:
@@ -37,14 +40,57 @@ class ABYFactory(program: ProgramNode) : ProtocolFactory {
 
     private fun LetNode.isApplicable(): Boolean {
         return nameAnalysis.readers(this).all { reader ->
-            val pcCheck = informationFlowAnalysis.pcLabel(reader).flowsTo(informationFlowAnalysis.pcLabel(this))
-            val involvedLoops = nameAnalysis.involvedLoops(reader)
-            val loopCheck = involvedLoops.all { loop ->
-                nameAnalysis.correspondingBreaks(loop).isNotEmpty() && nameAnalysis.correspondingBreaks(loop).all {
-                    informationFlowAnalysis.pcLabel(it).flowsTo(informationFlowAnalysis.pcLabel(this))
+            // array index can't be in MPC
+            val arrayIndexCheck =
+                when (reader) {
+                    is LetNode ->
+                        when (val rhs = reader.value) {
+                            is QueryNode ->
+                                when (nameAnalysis.declaration(rhs).className.value) {
+                                    Vector ->
+                                        when (val index = rhs.arguments[0]) {
+                                            is ReadNode -> index.temporary.value != this.temporary.value
+                                            else -> true
+                                        }
+
+                                    else -> true
+                                }
+
+                            else -> true
+                        }
+
+                    is UpdateNode ->
+                        when (nameAnalysis.declaration(reader).className.value) {
+                            Vector ->
+                                when (val index = reader.arguments[0]) {
+                                    is ReadNode -> index.temporary.value != this.temporary.value
+                                    else -> false
+                                }
+
+                            else -> true
+                        }
+
+                    else -> true
                 }
-            }
-            true || pcCheck && loopCheck
+
+            // array length can't be in MPC
+            val arrayLengthCheck =
+                when (reader) {
+                    is DeclarationNode ->
+                        when (reader.className.value) {
+                            Vector ->
+                                when (val index = reader.arguments[0]) {
+                                    is ReadNode -> index.temporary.value != this.temporary.value
+                                    else -> true
+                                }
+
+                            else -> true
+                        }
+
+                    else -> true
+                }
+
+            arrayIndexCheck && arrayLengthCheck
         }
     }
 

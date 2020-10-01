@@ -53,7 +53,6 @@ import edu.cornell.cs.apl.viaduct.syntax.types.ValueType
 import edu.cornell.cs.apl.viaduct.syntax.values.BooleanValue
 import edu.cornell.cs.apl.viaduct.syntax.values.IntegerValue
 import edu.cornell.cs.apl.viaduct.syntax.values.Value
-import java.util.SortedSet
 import java.util.Stack
 import kotlinx.collections.immutable.PersistentMap
 import kotlinx.collections.immutable.persistentMapOf
@@ -70,18 +69,19 @@ class ABYBackend : ProtocolBackend {
     private var otherHost: Host? = null
 
     override fun initialize(connectionMap: Map<Host, HostAddress>, projection: ProtocolProjection) {
-        val protocolHosts: Set<Host> = projection.protocol.hosts
-        assert(protocolHosts.size == 2)
+        val protocol = projection.protocol as ABY
 
-        val sortedHosts: SortedSet<Host> = protocolHosts.toSortedSet()
-
-        // lowest host is the server
-        if (sortedHosts.first() == projection.host) {
-            role = Role.SERVER
-            otherHost = sortedHosts.last()
-        } else {
-            role = Role.CLIENT
-            otherHost = sortedHosts.first()
+        when (projection.host) {
+            protocol.server -> {
+                role = Role.SERVER
+                otherHost = protocol.client
+            }
+            protocol.client -> {
+                role = Role.CLIENT
+                otherHost = protocol.server
+            }
+            else ->
+                throw RuntimeException("Invalid projection")
         }
 
         val otherHostAddress: HostAddress = connectionMap[otherHost]!!

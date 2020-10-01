@@ -17,7 +17,7 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.LetNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ParameterNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ReadNode
-import edu.cornell.cs.apl.viaduct.util.subsequences
+import edu.cornell.cs.apl.viaduct.util.pairedWith
 
 // Only select ABY for a selection if:
 // for every simple statement that reads from the selection: //      the pc of that statement flows to pc of selection
@@ -31,8 +31,8 @@ class ABYFactory(program: ProgramNode) : ProtocolFactory {
     private val protocols: List<SpecializedProtocol> = run {
         val hostTrustConfiguration = HostTrustConfiguration(program)
         val hosts: List<Host> = hostTrustConfiguration.keys.sorted()
-        val hostSubsets = hosts.subsequences().map { it.toSet() }.filter { it.size >= 2 }
-        hostSubsets.map(::ABY).map { SpecializedProtocol(it, hostTrustConfiguration) }
+        val hostPairs = hosts.pairedWith(hosts).filter { it.first < it.second }
+        hostPairs.map { SpecializedProtocol(ABY(it.first, it.second), hostTrustConfiguration) }
     }
 
     private fun LetNode.isApplicable(): Boolean {

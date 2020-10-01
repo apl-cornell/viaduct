@@ -2,7 +2,6 @@ package edu.cornell.cs.apl.viaduct.passes
 
 import edu.cornell.cs.apl.viaduct.analysis.NameAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.freshVariableNameGenerator
-import edu.cornell.cs.apl.viaduct.errors.MuxingError
 import edu.cornell.cs.apl.viaduct.errors.UnknownDatatypeError
 import edu.cornell.cs.apl.viaduct.errors.UnknownMethodError
 import edu.cornell.cs.apl.viaduct.syntax.Arguments

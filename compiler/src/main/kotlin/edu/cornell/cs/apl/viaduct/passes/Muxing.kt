@@ -141,13 +141,9 @@ fun BlockNode.mux(
 ): BlockNode {
     val newStatements = mutableListOf<StatementNode>()
     for (child in this.statements) {
-        if (child.canMux()) {
-            newStatements.addAll(
-                child.asStraightLine(nameAnalysis, nameGenerator, null)
-            )
-        } else {
-            newStatements.add(child.deepCopy() as StatementNode)
-        }
+        newStatements.addAll(
+            child.asStraightLine(nameAnalysis, nameGenerator, null)
+        )
     }
 
     return BlockNode(newStatements, this.sourceLocation)
@@ -286,13 +282,13 @@ private fun StatementNode.asStraightLine(
             }
         }
 
-        is OutParameterInitializationNode -> throw MuxingError(this)
+        is OutParameterInitializationNode -> listOf(this.deepCopy() as StatementNode)
 
-        is OutputNode -> throw MuxingError(this)
+        is OutputNode -> listOf(this.deepCopy() as StatementNode)
 
-        is SendNode -> throw MuxingError(this)
+        is SendNode -> listOf(this.deepCopy() as StatementNode)
 
-        is FunctionCallNode -> throw MuxingError(this)
+        is FunctionCallNode -> listOf(this.deepCopy() as StatementNode)
 
         is IfNode -> {
             if (this.canMux()) {
@@ -404,10 +400,6 @@ private fun StatementNode.asStraightLine(
         is AssertionNode -> listOf(this.deepCopy() as StatementNode)
 
         is BlockNode -> this.statements.flatMap { child ->
-            if (child.canMux()) {
-                child.asStraightLine(nameAnalysis, nameGenerator, currentGuard)
-            } else {
-                listOf(child.deepCopy() as StatementNode)
-            }
+            child.asStraightLine(nameAnalysis, nameGenerator, currentGuard)
         }
     }

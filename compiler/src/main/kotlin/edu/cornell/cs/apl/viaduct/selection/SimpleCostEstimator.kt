@@ -2,7 +2,6 @@ package edu.cornell.cs.apl.viaduct.selection
 
 import edu.cornell.cs.apl.viaduct.protocols.ABY
 import edu.cornell.cs.apl.viaduct.protocols.Local
-import edu.cornell.cs.apl.viaduct.protocols.MPC
 import edu.cornell.cs.apl.viaduct.protocols.Replication
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ExpressionNode
@@ -31,7 +30,6 @@ object SimpleCostEstimator : CostEstimator<IntegerCost> {
                 is Local -> IntegerCost(1)
                 is Replication -> IntegerCost(1)
                 is ABY -> IntegerCost(10)
-                is MPC -> IntegerCost(100)
                 else -> throw Error("unknown protocol ${executingProtocol.protocolName}")
             }
         )
@@ -101,8 +99,6 @@ object SimpleCostEstimator : CostEstimator<IntegerCost> {
 
             source is ABY && destination is ABY -> zeroCost()
 
-            source is MPC || destination is MPC -> zeroCost().update(NUM_MESSAGES, IntegerCost(100))
-
             else -> throw Error("unknown source protocol ${source.protocolName} or destination protocol ${destination.protocolName}")
         }
 
@@ -113,7 +109,6 @@ object SimpleCostEstimator : CostEstimator<IntegerCost> {
                 is Local -> IntegerCost(1)
                 is Replication -> IntegerCost(1)
                 is ABY -> IntegerCost(10)
-                is MPC -> IntegerCost(100)
                 else -> throw Error("unknown protocol ${protocol.protocolName}")
             }
         )

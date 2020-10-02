@@ -3,18 +3,24 @@ package edu.cornell.cs.apl.viaduct.selection
 import edu.cornell.cs.apl.attributes.attribute
 import edu.cornell.cs.apl.viaduct.analysis.NameAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.TypeAnalysis
+import edu.cornell.cs.apl.viaduct.analysis.declarationNodes
+import edu.cornell.cs.apl.viaduct.analysis.letNodes
+import edu.cornell.cs.apl.viaduct.passes.canMux
 import edu.cornell.cs.apl.viaduct.protocols.ZKP
 import edu.cornell.cs.apl.viaduct.syntax.Host
 import edu.cornell.cs.apl.viaduct.syntax.HostTrustConfiguration
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
 import edu.cornell.cs.apl.viaduct.syntax.SpecializedProtocol
+import edu.cornell.cs.apl.viaduct.syntax.Variable
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.DeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.DowngradeNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.IfNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.LetNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.Node
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ObjectDeclarationArgumentNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ParameterNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.ReadNode
 import edu.cornell.cs.apl.viaduct.syntax.types.BooleanType
 import edu.cornell.cs.apl.viaduct.util.subsequences
 
@@ -40,7 +46,7 @@ class ZKPFactory(val program: ProgramNode) : ProtocolFactory {
 
     override fun protocols(): List<SpecializedProtocol> = protocols(program)
 
-    fun LetNode.onlyDeclassifyBoolean(): Boolean {
+    private fun LetNode.onlyDeclassifyBoolean(): Boolean {
         return nameAnalysis.readers(this).all {
             when (it) {
                 is LetNode ->
@@ -106,4 +112,49 @@ class ZKPFactory(val program: ProgramNode) : ProtocolFactory {
             And(node.readsFrom(nameAnalysis, setOf(it.protocol), localAndReplicated + setOf(it.protocol)),
                 node.sendsTo(nameAnalysis, setOf(it.protocol), localAndReplicated + setOf(it.protocol)))
         }.ands()
+
+    // add muxing constraints
+    override fun constraint(node: IfNode): SelectionConstraint {
+        return when (val guard = node.guard) {
+            is ReadNode -> {
+                val functionName = nameAnalysis.enclosingFunctionName(node)
+
+                val guardInZKP =
+                    VariableIn(
+                        FunctionVariable(functionName, guard.temporary.value),
+                        protocols().map { it.protocol }.toSet()
+                    )
+
+                val varEqualToGuard = { v: Variable ->
+                    VariableEquals(
+                        FunctionVariable(functionName, guard.temporary.value),
+                        FunctionVariable(functionName, v)
+                    )
+                }
+
+                if (node.canMux()) { // if the guard is computed in ZKP, then all of the nodes have to be in ZKP as well
+                    val varsEqualToGuard: SelectionConstraint =
+                        node.declarationNodes()
+                            .map { decl -> decl.name.value }
+                            .toSet()
+                            .union(
+                                node.letNodes().map { letNode -> letNode.temporary.value }
+                            )
+                            .map { v -> varEqualToGuard(v) }
+                            .fold<SelectionConstraint, SelectionConstraint>(Literal(true)) { acc, constraint ->
+                                And(
+                                    acc,
+                                    constraint
+                                )
+                            }
+
+                    Implies(guardInZKP, varsEqualToGuard)
+                } else { // if the node cannot be muxed, then the guard cannot be computed in MPC
+                    Not(guardInZKP)
+                }
+            }
+
+            else -> Literal(true)
+        }
+    }
 }

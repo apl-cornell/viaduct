@@ -7,6 +7,7 @@ import edu.cornell.cs.apl.viaduct.analysis.InformationFlowAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.ProtocolAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.main
 import edu.cornell.cs.apl.viaduct.backend.aby.ABYMuxPostprocessor
+import edu.cornell.cs.apl.viaduct.backend.zkp.ZKPMuxPostprocessor
 import edu.cornell.cs.apl.viaduct.passes.ProgramPostprocessorRegistry
 import edu.cornell.cs.apl.viaduct.passes.Splitter
 import edu.cornell.cs.apl.viaduct.passes.check
@@ -80,7 +81,7 @@ class Compile : CliktCommand(help = "Compile ideal protocol to secure distribute
         val splitProgram: ProgramNode = Splitter(protocolAnalysis).splitMain()
 
         // Post-process split program
-        val postprocessor = ProgramPostprocessorRegistry(ABYMuxPostprocessor)
+        val postprocessor = ProgramPostprocessorRegistry(ABYMuxPostprocessor, ZKPMuxPostprocessor)
         val postprocessedProgram = postprocessor.postprocess(splitProgram)
 
         output.println(postprocessedProgram)

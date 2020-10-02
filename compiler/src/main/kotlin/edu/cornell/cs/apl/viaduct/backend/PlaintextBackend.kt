@@ -7,6 +7,7 @@ import edu.cornell.cs.apl.viaduct.errors.ViaductInterpreterError
 import edu.cornell.cs.apl.viaduct.protocols.Commitment
 import edu.cornell.cs.apl.viaduct.protocols.Local
 import edu.cornell.cs.apl.viaduct.protocols.Replication
+import edu.cornell.cs.apl.viaduct.protocols.ZKP
 import edu.cornell.cs.apl.viaduct.syntax.Host
 import edu.cornell.cs.apl.viaduct.syntax.ObjectVariable
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
@@ -31,6 +32,7 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.ReceiveNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.SendNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.UpdateNode
 import edu.cornell.cs.apl.viaduct.syntax.types.ValueType
+import edu.cornell.cs.apl.viaduct.syntax.values.BooleanValue
 import edu.cornell.cs.apl.viaduct.syntax.values.ByteVecValue
 import edu.cornell.cs.apl.viaduct.syntax.values.IntegerValue
 import edu.cornell.cs.apl.viaduct.syntax.values.Value
@@ -190,6 +192,14 @@ private class PlaintextInterpreter(
         return msg
     }
 
+    private suspend fun receiveZKPVerification(protocol : ZKP) : Value {
+        for (verifier : Host in protocol.verifiers) {
+            val b = runtime.receive(ProtocolProjection(protocol, verifier)) as BooleanValue
+            assert (b.value)
+        }
+        return BooleanValue(true)
+    }
+
     private suspend fun runExpr(expr: ExpressionNode): Value {
         return when (expr) {
             is LiteralNode -> expr.value
@@ -233,6 +243,10 @@ private class PlaintextInterpreter(
                                 receiveCommitment(sendProtocol)
                             }
 
+                            sendProtocol is ZKP -> {
+                                receiveZKPVerification(sendProtocol)
+                            }
+
                             // receive from local process
                             sendProtocol.hosts.contains(projection.host) -> {
                                 runtime.receive(ProtocolProjection(sendProtocol, projection.host))
@@ -254,6 +268,7 @@ private class PlaintextInterpreter(
                     is Replication -> {
                         when (expr.protocol.value) {
                             is Commitment -> receiveCommitment(expr.protocol.value)
+                            is ZKP -> receiveZKPVerification(expr.protocol.value)
                             else -> replicationCleartextReceive(expr)
                             }
                         }

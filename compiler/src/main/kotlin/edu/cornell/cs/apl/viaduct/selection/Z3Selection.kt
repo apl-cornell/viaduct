@@ -614,20 +614,6 @@ private class Z3Selection(
                     )
                 )
                 constraints.add(protocolFactory.constraint(parameter))
-
-                // induce costs for storing the parameter
-                constraints.addAll(
-                    protocolSelection.viableProtocols(parameter).map { protocol ->
-                        val cost = costEstimator.storageCost(parameter, protocol)
-                        Implies(
-                            VariableIn(
-                                FunctionVariable(function.name.value, parameter.name.value),
-                                setOf(protocol)
-                            ),
-                            symbolicCostEqualsInt(parameter.symbolicCost, cost)
-                        )
-                    }.toSet()
-                )
             }
 
             // then select for function bodies
@@ -705,13 +691,14 @@ private class Z3Selection(
             val weights = costEstimator.featureWeights()
 
             val programCostFeatures: Cost<SymbolicCost> =
-                reachableFunctions.fold(main.symbolicCost) { acc, f -> acc.concat(f.body.symbolicCost) }
+                reachableFunctions.fold(main.body.symbolicCost) { acc, f -> acc.concat(f.body.symbolicCost) }
 
             val totalCost =
                 programCostFeatures.features.entries
                     .fold(CostLiteral(0) as SymbolicCost) { acc, c ->
                         CostAdd(acc, CostMul(CostLiteral(weights[c.key]!!.cost), c.value))
                     }
+
             val costExpr = totalCost.arithExpr(ctx, varMap, pmapExpr)
 
             val totalCostSymvar = ctx.mkFreshConst("total_cost", ctx.intSort) as IntExpr
@@ -720,7 +707,6 @@ private class Z3Selection(
 
             if (solver.Check() == Status.SATISFIABLE) {
                 val model = solver.model
-
                 val interpMap: Map<FunctionVariable, Int> =
                     varMap.mapValues { e ->
                         (model.getConstInterp(e.value) as IntNum).int
@@ -733,8 +719,66 @@ private class Z3Selection(
                     } ?: throw NoVariableSelectionSolutionError(f, v)
                 }
 
-                return ::eval
+                /*
+                val nodeCostFunc: (Node) -> Pair<Node, PrettyPrintable> = { node ->
+                    val symcost =
+                        when (node) {
+                            is IfNode -> node.guard.symbolicCost
+                            else -> node.symbolicCost
+                        }
 
+                    val nodeCostStr =
+                        symcost.map { symvar ->
+                            IntegerCost((model.getConstInterp((symvar as CostVariable).variable) as IntNum).int)
+                        }.features.entries.fold(0) { acc, kv ->
+                            acc + (weights[kv.key]!!.cost * kv.value.cost)
+                        }.toString()
+
+                    val nodeProtocolStr =
+                        when (node) {
+                            is LetNode -> {
+                                val enclosingFunc = nameAnalysis.enclosingFunctionName(node)
+                                eval(enclosingFunc, node.temporary.value).asDocument.print()
+                            }
+
+                            is DeclarationNode -> {
+                                val enclosingFunc = nameAnalysis.enclosingFunctionName(node)
+                                eval(enclosingFunc, node.name.value).asDocument.print()
+                            }
+
+                            else -> ""
+                        }
+
+                    Pair(node, Document("cost: $nodeCostStr protocol: $nodeProtocolStr"))
+                }
+
+                val updateNodes =
+                    reachableFunctions
+                        .flatMap { f -> f.updateNodes() }
+                        .plus(main.updateNodes())
+
+                val outputNodes =
+                    reachableFunctions
+                        .flatMap { f -> f.outputNodes() }
+                        .plus(main.outputNodes())
+
+                val ifNodes =
+                    reachableFunctions
+                        .flatMap { f -> f.ifNodes() }
+                        .plus(main.ifNodes())
+
+                val costMetadata: Map<Node, PrettyPrintable> =
+                    declarationNodes.keys.asSequence().map { nodeCostFunc(it) }
+                        .plus(letNodes.keys.map { nodeCostFunc(it) })
+                        .plus(updateNodes.map { nodeCostFunc(it) })
+                        .plus(outputNodes.map { nodeCostFunc(it) })
+                        .plus(ifNodes.map { nodeCostFunc(it) }).toList()
+                        .toMap()
+
+                println(program.printMetadata(costMetadata).print())
+                */
+
+                return ::eval
             } else {
                 throw NoSelectionSolutionError()
             }

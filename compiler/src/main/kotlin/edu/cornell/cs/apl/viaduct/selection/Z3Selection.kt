@@ -10,10 +10,7 @@ import edu.cornell.cs.apl.attributes.attribute
 import edu.cornell.cs.apl.viaduct.analysis.InformationFlowAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.NameAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.declarationNodes
-import edu.cornell.cs.apl.viaduct.analysis.ifNodes
 import edu.cornell.cs.apl.viaduct.analysis.letNodes
-import edu.cornell.cs.apl.viaduct.analysis.outputNodes
-import edu.cornell.cs.apl.viaduct.analysis.updateNodes
 import edu.cornell.cs.apl.viaduct.errors.IllegalInternalCommunicationError
 import edu.cornell.cs.apl.viaduct.errors.NoHostDeclarationsError
 import edu.cornell.cs.apl.viaduct.errors.NoProtocolIndexMapping
@@ -26,9 +23,14 @@ import edu.cornell.cs.apl.viaduct.syntax.HostTrustConfiguration
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
 import edu.cornell.cs.apl.viaduct.syntax.Temporary
 import edu.cornell.cs.apl.viaduct.syntax.Variable
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.AssertionNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.BlockNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.BreakNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.DeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ExpressionArgumentNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.FunctionCallNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.IfNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.InfiniteLoopNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.InputNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.LetNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.LiteralNode
@@ -36,6 +38,9 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.Node
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ObjectDeclarationArgumentNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ObjectReferenceArgumentNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutParameterArgumentNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutParameterConstructorInitializerNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutParameterExpressionInitializerNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutParameterInitializationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutputNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ParameterNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProcessDeclarationNode
@@ -264,11 +269,37 @@ private class Z3Selection(
         }
     }
 
+    private val zeroSymbolicCost = costEstimator.zeroCost().map { CostLiteral(0) }
+
     /** Symbolic cost associated with a node. */
     private val Node.symbolicCost: Cost<SymbolicCost> by attribute {
-        costEstimator
-            .zeroCost()
-            .map { CostVariable(ctx.mkFreshConst("cost", ctx.intSort) as IntExpr) }
+        when (this) {
+            is BlockNode ->
+                this.statements
+                    .fold(zeroSymbolicCost) { acc, childStmt ->
+                        acc.concat(childStmt.symbolicCost)
+                    }
+
+            is IfNode ->
+                this.guard.symbolicCost
+                    .concat(this.thenBranch.symbolicCost)
+                    .concat(this.elseBranch.symbolicCost)
+
+            is InfiniteLoopNode ->
+                this.body.symbolicCost.map { f -> CostMul(CostLiteral(10), f) }
+
+            // TODO: handle this later, recursive functions are tricky
+            is FunctionCallNode -> zeroSymbolicCost
+
+            is BreakNode -> zeroSymbolicCost
+
+            is AssertionNode -> zeroSymbolicCost
+
+            else ->
+                costEstimator
+                    .zeroCost()
+                    .map { CostVariable(ctx.mkFreshConst("cost", ctx.intSort) as IntExpr) }
+        }
     }
 
     /**
@@ -416,21 +447,28 @@ private class Z3Selection(
                 )
             }
 
-            // induce costs for storing the parameter
-            is ParameterNode -> {
-                val enclosingFunctionName =
-                    nameAnalysis.functionDeclaration(this).name.value
+            // storage and communication cost for initializing an out parameter
+            is OutParameterInitializationNode -> {
+                val parameter = nameAnalysis.declaration(this)
+                val reads: List<ReadNode> =
+                    when (val initializer = this.initializer) {
+                        is OutParameterConstructorInitializerNode ->
+                            initializer.arguments.filterIsInstance<ReadNode>()
 
-                protocolSelection.viableProtocols(this).map { protocol ->
-                    val cost = costEstimator.storageCost(this, protocol)
-                    Implies(
-                        VariableIn(
-                            FunctionVariable(enclosingFunctionName, this.name.value),
-                            setOf(protocol)
-                        ),
-                        symbolicCostEqualsInt(this.symbolicCost, cost)
-                    )
-                }.toSet()
+                        is OutParameterExpressionInitializerNode ->
+                            if (initializer.expression is ReadNode) listOf(initializer.expression) else listOf()
+                    }
+
+                generateComputationCostConstraints(
+                    FunctionVariable(
+                        nameAnalysis.functionDeclaration(parameter).name.value,
+                        parameter.name.value
+                    ),
+                    protocolSelection.viableProtocols(parameter),
+                    reads,
+                    { protocol -> costEstimator.storageCost(parameter, protocol) },
+                    this.symbolicCost
+                )
             }
 
             // generate cost constraints for when temporaries are read as guards
@@ -440,7 +478,7 @@ private class Z3Selection(
                 when (val guard = this.guard) {
                     is LiteralNode ->
                         setOf(
-                            symbolicCostEqualsInt(this.symbolicCost, costEstimator.zeroCost())
+                            symbolicCostEqualsInt(this.guard.symbolicCost, costEstimator.zeroCost())
                         )
 
                     is ReadNode -> {
@@ -463,11 +501,12 @@ private class Z3Selection(
                                     )
                                 }
                             )
-                            .toMap()
+                                .toMap()
 
                         // create inverse map from protocols to nodes that can potentially
                         // have it as its primary protocol
-                        val participatingProtocolMap: MutableMap<Protocol, MutableSet<FunctionVariable>> = mutableMapOf()
+                        val participatingProtocolMap: MutableMap<Protocol, MutableSet<FunctionVariable>> =
+                            mutableMapOf()
                         for (kv in viableProtocolMap) {
                             for (protocol in kv.value) {
                                 if (participatingProtocolMap.containsKey(protocol)) {
@@ -499,8 +538,7 @@ private class Z3Selection(
                                                     CostLiteral(cost.cost),
                                                     CostLiteral(0)
                                                 )
-
-                                            }  else {
+                                            } else {
                                                 CostLiteral(0)
                                             }
                                         }
@@ -512,7 +550,7 @@ private class Z3Selection(
                                     FunctionVariable(enclosingFunctionName, guardDecl.temporary.value),
                                     setOf(guardProtocol)
                                 ),
-                                symbolicCostEqualsSym(this.symbolicCost, protocolCost)
+                                symbolicCostEqualsSym(this.guard.symbolicCost, protocolCost)
                             )
                         }.toSet()
                     }
@@ -576,6 +614,20 @@ private class Z3Selection(
                     )
                 )
                 constraints.add(protocolFactory.constraint(parameter))
+
+                // induce costs for storing the parameter
+                constraints.addAll(
+                    protocolSelection.viableProtocols(parameter).map { protocol ->
+                        val cost = costEstimator.storageCost(parameter, protocol)
+                        Implies(
+                            VariableIn(
+                                FunctionVariable(function.name.value, parameter.name.value),
+                                setOf(protocol)
+                            ),
+                            symbolicCostEqualsInt(parameter.symbolicCost, cost)
+                        )
+                    }.toSet()
+                )
             }
 
             // then select for function bodies
@@ -619,15 +671,6 @@ private class Z3Selection(
         val parameterViables: Set<Protocol> =
             parameterNodes.keys.map { protocolSelection.viableProtocols(it) }.unions()
 
-        val updateNodes: List<UpdateNode> =
-            reachableFunctions.flatMap { f -> f.updateNodes() }.plus(main.updateNodes())
-
-        val outputNodes: List<OutputNode> =
-            reachableFunctions.flatMap { f -> f.outputNodes() }.plus(main.outputNodes())
-
-        val ifNodes: List<IfNode> =
-            reachableFunctions.flatMap { f -> f.ifNodes() }.plus(main.ifNodes())
-
         val pmap: BiMap<Protocol, Int> =
             tempViables
                 .union(declViables)
@@ -650,45 +693,30 @@ private class Z3Selection(
                 }
             )).toBiMap()
 
-        // tally all costs associated with storage (declaration nodes) and computations (let nodes and update nodes)
-        val zeroSymbolicCost = costEstimator.zeroCost().map { CostLiteral(0) }
-        val programCost =
-            letNodes.keys.fold(zeroSymbolicCost) { acc, letNode -> acc.concat(letNode.symbolicCost) }
-                .concat(
-                    declarationNodes.keys.fold(zeroSymbolicCost) { acc, decl -> acc.concat(decl.symbolicCost) }
-                )
-                .concat(
-                    parameterNodes.keys.fold(zeroSymbolicCost) { acc, param -> acc.concat(param.symbolicCost) }
-                )
-                .concat(
-                    updateNodes.fold(zeroSymbolicCost) { acc, update -> acc.concat(update.symbolicCost) }
-                )
-                .concat(
-                    outputNodes.fold(zeroSymbolicCost) { acc, output -> acc.concat(output.symbolicCost) }
-                )
-                .concat(
-                    ifNodes.fold(zeroSymbolicCost) { acc, ifNode -> acc.concat(ifNode.symbolicCost) }
-                )
-
         val pmapExpr = pmap.mapValues { ctx.mkInt(it.value) as IntExpr }.toBiMap()
 
         // load selection constraints into Z3
         for (constraint in constraints) {
-            println(constraint.asDocument.print())
             solver.Add(constraint.boolExpr(ctx, varMap, pmapExpr))
         }
 
         if (varMap.values.isNotEmpty()) {
             // load cost constraints into Z3; build integer expression to minimize
             val weights = costEstimator.featureWeights()
-            val cost =
-                programCost.features.entries
+
+            val programCostFeatures: Cost<SymbolicCost> =
+                reachableFunctions.fold(main.symbolicCost) { acc, f -> acc.concat(f.body.symbolicCost) }
+
+            val totalCost =
+                programCostFeatures.features.entries
                     .fold(CostLiteral(0) as SymbolicCost) { acc, c ->
                         CostAdd(acc, CostMul(CostLiteral(weights[c.key]!!.cost), c.value))
                     }
+            val costExpr = totalCost.arithExpr(ctx, varMap, pmapExpr)
 
-            println("total cost: ${cost.asDocument.print()}")
-            solver.MkMinimize(cost.arithExpr(ctx, varMap, pmapExpr))
+            val totalCostSymvar = ctx.mkFreshConst("total_cost", ctx.intSort) as IntExpr
+            solver.Add(ctx.mkEq(totalCostSymvar, costExpr))
+            solver.MkMinimize(totalCostSymvar)
 
             if (solver.Check() == Status.SATISFIABLE) {
                 val model = solver.model
@@ -704,7 +732,9 @@ private class Z3Selection(
                         pmap.inverse[protocolIndex] ?: throw NoProtocolIndexMapping(protocolIndex)
                     } ?: throw NoVariableSelectionSolutionError(f, v)
                 }
+
                 return ::eval
+
             } else {
                 throw NoSelectionSolutionError()
             }

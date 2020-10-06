@@ -40,7 +40,9 @@ interface ProtocolFactory {
 
 /** Union of protocol selectors. [unions] takes a number of selectors and implements their collective union. */
 
-fun unions(vararg selectors: ProtocolFactory): ProtocolFactory = object : ProtocolFactory {
+open class UnionProtocolFactory(val selectors: Set<ProtocolFactory>) : ProtocolFactory {
+    constructor(vararg selectors: ProtocolFactory) : this(selectors.toSet())
+
     override fun viableProtocols(node: LetNode): Set<Protocol> =
         selectors.fold(setOf()) { acc, sel -> acc.union(sel.viableProtocols(node)) }
 

@@ -7,6 +7,7 @@ import edu.cornell.cs.apl.viaduct.syntax.Name
 import edu.cornell.cs.apl.viaduct.syntax.Variable
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.BreakNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.DeclarationNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.FunctionCallNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.IfNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.InfiniteLoopNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.LetNode
@@ -41,6 +42,9 @@ fun Node.letNodes(): List<LetNode> = this.listOfInstances()
 
 /** Returns all [DeclarationNode]s contained in this node. */
 fun Node.declarationNodes(): List<DeclarationNode> = this.listOfInstances()
+
+/** Returns all [FunctionCallNode]s contained in this node. */
+fun Node.functionCallNodes(): List<FunctionCallNode> = this.listOfInstances()
 
 /** Returns all [ParameterNode]s contained in this node. */
 fun Node.parameterNodes(): List<ParameterNode> = this.listOfInstances()

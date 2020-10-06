@@ -2,15 +2,12 @@ package edu.cornell.cs.apl.viaduct.selection
 
 import edu.cornell.cs.apl.viaduct.analysis.InformationFlowAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.NameAnalysis
-import edu.cornell.cs.apl.viaduct.analysis.declarationNodes
-import edu.cornell.cs.apl.viaduct.analysis.letNodes
 import edu.cornell.cs.apl.viaduct.passes.canMux
 import edu.cornell.cs.apl.viaduct.protocols.ABY
 import edu.cornell.cs.apl.viaduct.syntax.Host
 import edu.cornell.cs.apl.viaduct.syntax.HostTrustConfiguration
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
 import edu.cornell.cs.apl.viaduct.syntax.SpecializedProtocol
-import edu.cornell.cs.apl.viaduct.syntax.Variable
 import edu.cornell.cs.apl.viaduct.syntax.datatypes.Vector
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.DeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.IfNode
@@ -23,7 +20,8 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.UpdateNode
 import edu.cornell.cs.apl.viaduct.util.subsequences
 
 // Only select ABY for a selection if:
-// for every simple statement that reads from the selection: //      the pc of that statement flows to pc of selection
+// for every simple statement that reads from the selection:
+//      the pc of that statement flows to pc of selection
 //      if it's in a loop, the loop has a break
 //      every break for that loop has a pc that flows to pc of selection
 
@@ -31,7 +29,7 @@ class ABYFactory(program: ProgramNode) : ProtocolFactory {
     private val nameAnalysis = NameAnalysis.get(program)
     private val informationFlowAnalysis = InformationFlowAnalysis.get(program)
 
-    private val protocols: List<SpecializedProtocol> = run {
+    val protocols: List<SpecializedProtocol> = run {
         val hostTrustConfiguration = HostTrustConfiguration(program)
         val hosts: List<Host> = hostTrustConfiguration.keys.sorted()
         val hostSubsets = hosts.subsequences().map { it.toSet() }.filter { it.size >= 2 }
@@ -127,11 +125,12 @@ class ABYFactory(program: ProgramNode) : ProtocolFactory {
             .map { it.protocol }
             .toSet()
 
-    // add muxing constraints
+    // add muxing and plaintext constraints
     override fun constraint(node: IfNode): SelectionConstraint {
         return when (val guard = node.guard) {
             is ReadNode -> {
                 val functionName = nameAnalysis.enclosingFunctionName(node)
+                val variables = nameAnalysis.variables(node)
 
                 val guardInMPC =
                     VariableIn(
@@ -139,27 +138,19 @@ class ABYFactory(program: ProgramNode) : ProtocolFactory {
                         protocols.map { it.protocol }.toSet()
                     )
 
-                val varEqualToGuard = { v: Variable ->
-                    VariableEquals(
-                        FunctionVariable(functionName, guard.temporary.value),
-                        FunctionVariable(functionName, v)
-                    )
-                }
-
                 if (node.canMux()) { // if the guard is computed in MPC, then all of the nodes have to be in MPC as well
+                    val varEqualToGuard = { fv: FunctionVariable ->
+                        VariableEquals(
+                            FunctionVariable(functionName, guard.temporary.value),
+                            fv
+                        )
+                    }
+
                     val varsEqualToGuard: SelectionConstraint =
-                        node.declarationNodes()
-                            .map { decl -> decl.name.value }
-                            .toSet()
-                            .union(
-                                node.letNodes().map { letNode -> letNode.temporary.value }
-                            )
+                        variables
                             .map { v -> varEqualToGuard(v) }
                             .fold<SelectionConstraint, SelectionConstraint>(Literal(true)) { acc, constraint ->
-                                And(
-                                    acc,
-                                    constraint
-                                )
+                                And(acc, constraint)
                             }
 
                     Implies(guardInMPC, varsEqualToGuard)

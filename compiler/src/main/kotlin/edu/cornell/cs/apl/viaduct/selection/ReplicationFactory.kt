@@ -15,7 +15,7 @@ import edu.cornell.cs.apl.viaduct.util.subsequences
 class ReplicationFactory(program: ProgramNode) : ProtocolFactory {
     private val informationFlowAnalysis = InformationFlowAnalysis.get(program)
 
-    private val protocols: List<SpecializedProtocol> = run {
+    val protocols: List<SpecializedProtocol> = run {
         val hostTrustConfiguration = HostTrustConfiguration(program)
         val hosts: List<Host> = hostTrustConfiguration.keys.sorted()
         val hostSubsets = hosts.subsequences().map { it.toSet() }.filter { it.size >= 2 }

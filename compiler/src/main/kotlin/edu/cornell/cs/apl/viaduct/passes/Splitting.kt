@@ -12,6 +12,8 @@ import edu.cornell.cs.apl.viaduct.syntax.FunctionName
 import edu.cornell.cs.apl.viaduct.syntax.Located
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
 import edu.cornell.cs.apl.viaduct.syntax.ProtocolNode
+import edu.cornell.cs.apl.viaduct.syntax.Temporary
+import edu.cornell.cs.apl.viaduct.syntax.TemporaryNode
 import edu.cornell.cs.apl.viaduct.syntax.ValueTypeNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.AssertionNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.AtomicExpressionNode
@@ -22,6 +24,8 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.FunctionDeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.IfNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.InfiniteLoopNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.LetNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.LiteralNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutputNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProcessDeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ReadNode
@@ -31,11 +35,17 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.SimpleStatementNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.StatementNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.TopLevelDeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.deepCopy
+import edu.cornell.cs.apl.viaduct.syntax.types.UnitType
+import edu.cornell.cs.apl.viaduct.syntax.values.UnitValue
 import edu.cornell.cs.apl.viaduct.util.FreshNameGenerator
 
 class Splitter(
     private val protocolAnalysis: ProtocolAnalysis
 ) {
+    companion object {
+        private const val SYNC_NAME = "${'$'}sync"
+    }
+
     private inner class ProgramSplitter(
         private val program: ProgramNode
     ) {
@@ -59,8 +69,10 @@ class Splitter(
 
         private fun projectFor(block: BlockNode, protocol: Protocol): BlockNode {
             val statements: List<StatementNode> = block.statements.flatMap {
-                if (protocol !in protocolAnalysis.protocols(it))
+                if (protocol !in protocolAnalysis.protocols(it) &&
+                    protocol !in protocolAnalysis.syncProtocols(it))
                     listOf()
+
                 else when (it) {
                     is SimpleStatementNode -> {
                         val result = mutableListOf<StatementNode>()
@@ -69,35 +81,108 @@ class Splitter(
                         if (protocol == primaryProtocol)
                             result.add(it)
 
-                        if (it is LetNode) {
-                            if (protocol == primaryProtocol) {
-                                // Send the temporary to everyone relevant
-                                (protocolAnalysis.protocols(it) - protocol).forEach { protocol ->
-                                    result.add(
-                                        SendNode(
-                                            ReadNode(it.temporary),
-                                            ProtocolNode(protocol, it.temporary.sourceLocation),
-                                            it.sourceLocation
+                        val protocolsToSync = protocolAnalysis.syncProtocols(it) - protocolAnalysis.protocols(it) - primaryProtocol
+                        when (it) {
+                            is LetNode -> {
+                                when (protocol) {
+                                    primaryProtocol -> {
+                                        // Send the temporary to everyone relevant
+                                        (protocolAnalysis.protocols(it) - primaryProtocol).forEach { sendProtocol ->
+                                            result.add(
+                                                SendNode(
+                                                    ReadNode(it.temporary),
+                                                    ProtocolNode(sendProtocol, it.temporary.sourceLocation),
+                                                    it.sourceLocation
+                                                )
+                                            )
+                                        }
+
+                                        // synchronize protocols that haven't received the value
+                                        protocolsToSync.forEach { syncProtocol ->
+                                            result.add(
+                                                SendNode(
+                                                    LiteralNode(UnitValue, it.sourceLocation),
+                                                    ProtocolNode(syncProtocol, it.sourceLocation),
+                                                    it.sourceLocation
+                                                )
+                                            )
+                                        }
+                                    }
+
+                                    // Receive the temporary from the primary protocol
+                                    in protocolAnalysis.protocols(it) -> {
+                                        result.add(
+                                            LetNode(
+                                                it.temporary,
+                                                ReceiveNode(
+                                                    ValueTypeNode(
+                                                        typeAnalysis.type(it),
+                                                        it.value.sourceLocation
+                                                    ),
+                                                    ProtocolNode(primaryProtocol, it.temporary.sourceLocation),
+                                                    it.value.sourceLocation
+                                                ),
+                                                it.sourceLocation
+                                            )
                                         )
-                                    )
+                                    }
+
+                                    // Receive synchronization from the primary protocol
+                                    in protocolsToSync -> {
+                                        result.add(
+                                            LetNode(
+                                                TemporaryNode(
+                                                    Temporary(nameGenerator.getFreshName(SYNC_NAME)),
+                                                    it.sourceLocation
+                                                ),
+                                                ReceiveNode(
+                                                    ValueTypeNode(UnitType, it.sourceLocation),
+                                                    ProtocolNode(primaryProtocol, it.temporary.sourceLocation),
+                                                    it.value.sourceLocation
+                                                ),
+                                                it.sourceLocation
+                                            )
+                                        )
+                                    }
                                 }
-                            } else {
-                                // Receive the temporary from the primary protocol
-                                result.add(
-                                    LetNode(
-                                        it.temporary,
-                                        ReceiveNode(
-                                            ValueTypeNode(
-                                                typeAnalysis.type(it),
-                                                it.value.sourceLocation
-                                            ),
-                                            ProtocolNode(primaryProtocol, it.temporary.sourceLocation),
-                                            it.value.sourceLocation
-                                        ),
-                                        it.sourceLocation
-                                    )
-                                )
                             }
+
+                            is OutputNode -> {
+                                when (protocol) {
+                                    // send synchronization
+                                    primaryProtocol -> {
+                                        protocolsToSync.forEach { syncProtocol ->
+                                            result.add(
+                                                SendNode(
+                                                    LiteralNode(UnitValue, it.sourceLocation),
+                                                    ProtocolNode(syncProtocol, it.sourceLocation),
+                                                    it.sourceLocation
+                                                )
+                                            )
+                                        }
+                                    }
+
+                                    // receive synchronization from primary protocol
+                                    in protocolsToSync -> {
+                                        result.add(
+                                            LetNode(
+                                                TemporaryNode(
+                                                    Temporary(nameGenerator.getFreshName(SYNC_NAME)),
+                                                    it.sourceLocation
+                                                ),
+                                                ReceiveNode(
+                                                    ValueTypeNode(UnitType, it.sourceLocation),
+                                                    ProtocolNode(primaryProtocol, it.sourceLocation),
+                                                    it.sourceLocation
+                                                ),
+                                                it.sourceLocation
+                                            )
+                                        )
+                                    }
+                                }
+                            }
+
+                            else -> {}
                         }
                         result
                     }

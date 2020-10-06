@@ -82,107 +82,87 @@ class Splitter(
                             result.add(it)
 
                         val protocolsToSync = protocolAnalysis.syncProtocols(it) - protocolAnalysis.protocols(it) - primaryProtocol
-                        when (it) {
-                            is LetNode -> {
-                                when (protocol) {
-                                    primaryProtocol -> {
-                                        // Send the temporary to everyone relevant
-                                        (protocolAnalysis.protocols(it) - primaryProtocol).forEach { sendProtocol ->
-                                            result.add(
-                                                SendNode(
-                                                    ReadNode(it.temporary),
-                                                    ProtocolNode(sendProtocol, it.temporary.sourceLocation),
-                                                    it.sourceLocation
-                                                )
-                                            )
-                                        }
 
-                                        // synchronize protocols that haven't received the value
-                                        protocolsToSync.forEach { syncProtocol ->
-                                            result.add(
-                                                SendNode(
-                                                    LiteralNode(UnitValue, it.sourceLocation),
-                                                    ProtocolNode(syncProtocol, it.sourceLocation),
-                                                    it.sourceLocation
-                                                )
-                                            )
-                                        }
-                                    }
-
-                                    // Receive the temporary from the primary protocol
-                                    in protocolAnalysis.protocols(it) -> {
+                        if (it is LetNode) {
+                            when (protocol) {
+                                primaryProtocol -> {
+                                    // Send the temporary to everyone relevant
+                                    (protocolAnalysis.protocols(it) - primaryProtocol).forEach { sendProtocol ->
                                         result.add(
-                                            LetNode(
-                                                it.temporary,
-                                                ReceiveNode(
-                                                    ValueTypeNode(
-                                                        typeAnalysis.type(it),
-                                                        it.value.sourceLocation
-                                                    ),
-                                                    ProtocolNode(primaryProtocol, it.temporary.sourceLocation),
-                                                    it.value.sourceLocation
-                                                ),
+                                            SendNode(
+                                                ReadNode(it.temporary),
+                                                ProtocolNode(sendProtocol, it.temporary.sourceLocation),
                                                 it.sourceLocation
                                             )
                                         )
                                     }
 
-                                    // Receive synchronization from the primary protocol
-                                    in protocolsToSync -> {
+                                    // synchronize protocols that haven't received the value
+                                    protocolsToSync.forEach { syncProtocol ->
                                         result.add(
-                                            LetNode(
-                                                TemporaryNode(
-                                                    Temporary(nameGenerator.getFreshName(SYNC_NAME)),
-                                                    it.sourceLocation
-                                                ),
-                                                ReceiveNode(
-                                                    ValueTypeNode(UnitType, it.sourceLocation),
-                                                    ProtocolNode(primaryProtocol, it.temporary.sourceLocation),
-                                                    it.value.sourceLocation
-                                                ),
+                                            SendNode(
+                                                LiteralNode(UnitValue, it.sourceLocation),
+                                                ProtocolNode(syncProtocol, it.sourceLocation),
                                                 it.sourceLocation
                                             )
                                         )
                                     }
                                 }
+
+                                // Receive the temporary from the primary protocol
+                                in protocolAnalysis.protocols(it) -> {
+                                    result.add(
+                                        LetNode(
+                                            it.temporary,
+                                            ReceiveNode(
+                                                ValueTypeNode(
+                                                    typeAnalysis.type(it),
+                                                    it.value.sourceLocation
+                                                ),
+                                                ProtocolNode(primaryProtocol, it.temporary.sourceLocation),
+                                                it.value.sourceLocation
+                                            ),
+                                            it.sourceLocation
+                                        )
+                                    )
+                                }
                             }
+                        }
 
-                            is OutputNode -> {
-                                when (protocol) {
-                                    // send synchronization
-                                    primaryProtocol -> {
-                                        protocolsToSync.forEach { syncProtocol ->
-                                            result.add(
-                                                SendNode(
-                                                    LiteralNode(UnitValue, it.sourceLocation),
-                                                    ProtocolNode(syncProtocol, it.sourceLocation),
-                                                    it.sourceLocation
-                                                )
-                                            )
-                                        }
-                                    }
-
-                                    // receive synchronization from primary protocol
-                                    in protocolsToSync -> {
+                        // handle synchronization
+                        if (it is LetNode || it is OutputNode) {
+                            when (protocol) {
+                                // send synchronization
+                                primaryProtocol -> {
+                                    protocolsToSync.forEach { syncProtocol ->
                                         result.add(
-                                            LetNode(
-                                                TemporaryNode(
-                                                    Temporary(nameGenerator.getFreshName(SYNC_NAME)),
-                                                    it.sourceLocation
-                                                ),
-                                                ReceiveNode(
-                                                    ValueTypeNode(UnitType, it.sourceLocation),
-                                                    ProtocolNode(primaryProtocol, it.sourceLocation),
-                                                    it.sourceLocation
-                                                ),
+                                            SendNode(
+                                                LiteralNode(UnitValue, it.sourceLocation),
+                                                ProtocolNode(syncProtocol, it.sourceLocation),
                                                 it.sourceLocation
                                             )
                                         )
                                     }
                                 }
-                            }
 
-                            else -> {}
+                                // receive synchronization from primary protocol
+                                in protocolsToSync -> {
+                                    result.add(
+                                        LetNode(
+                                            TemporaryNode(
+                                                Temporary(nameGenerator.getFreshName(SYNC_NAME)),
+                                                it.sourceLocation
+                                            ),
+                                            ReceiveNode(
+                                                ValueTypeNode(UnitType, it.sourceLocation),
+                                                ProtocolNode(primaryProtocol, it.sourceLocation),
+                                                it.sourceLocation
+                                            ),
+                                            it.sourceLocation
+                                        )
+                                    )
+                                }
+                            }
                         }
                         result
                     }

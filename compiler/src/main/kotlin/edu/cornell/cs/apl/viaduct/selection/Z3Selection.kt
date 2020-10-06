@@ -7,10 +7,15 @@ import com.microsoft.z3.Status
 import com.uchuhimo.collections.BiMap
 import com.uchuhimo.collections.toBiMap
 import edu.cornell.cs.apl.attributes.attribute
+import edu.cornell.cs.apl.prettyprinting.Document
+import edu.cornell.cs.apl.prettyprinting.PrettyPrintable
 import edu.cornell.cs.apl.viaduct.analysis.InformationFlowAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.NameAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.declarationNodes
+import edu.cornell.cs.apl.viaduct.analysis.ifNodes
 import edu.cornell.cs.apl.viaduct.analysis.letNodes
+import edu.cornell.cs.apl.viaduct.analysis.outputNodes
+import edu.cornell.cs.apl.viaduct.analysis.updateNodes
 import edu.cornell.cs.apl.viaduct.errors.IllegalInternalCommunicationError
 import edu.cornell.cs.apl.viaduct.errors.NoHostDeclarationsError
 import edu.cornell.cs.apl.viaduct.errors.NoProtocolIndexMapping
@@ -76,7 +81,8 @@ private class Z3Selection(
     private val main: ProcessDeclarationNode,
     private val protocolFactory: ProtocolFactory,
     private val costEstimator: CostEstimator<IntegerCost>,
-    private val ctx: Context
+    private val ctx: Context,
+    private val dumpMetadata: (Map<Node, PrettyPrintable>) -> Unit
 ) {
     private val nameAnalysis = NameAnalysis.get(program)
     private val informationFlowAnalysis = InformationFlowAnalysis.get(program)
@@ -719,7 +725,6 @@ private class Z3Selection(
                     } ?: throw NoVariableSelectionSolutionError(f, v)
                 }
 
-                /*
                 val nodeCostFunc: (Node) -> Pair<Node, PrettyPrintable> = { node ->
                     val symcost =
                         when (node) {
@@ -775,8 +780,7 @@ private class Z3Selection(
                         .plus(ifNodes.map { nodeCostFunc(it) }).toList()
                         .toMap()
 
-                println(program.printMetadata(costMetadata).print())
-                */
+                dumpMetadata(costMetadata)
 
                 return ::eval
             } else {
@@ -794,11 +798,12 @@ fun selectProtocolsWithZ3(
     program: ProgramNode,
     main: ProcessDeclarationNode,
     protocolFactory: ProtocolFactory,
-    costEstimator: CostEstimator<IntegerCost>
+    costEstimator: CostEstimator<IntegerCost>,
+    dumpMetadata: (Map<Node, PrettyPrintable>) -> Unit = {}
 ): (FunctionName, Variable) -> Protocol {
     val ctx = Context()
     val ret =
-        Z3Selection(program, main, protocolFactory, costEstimator, ctx).select()
+        Z3Selection(program, main, protocolFactory, costEstimator, ctx, dumpMetadata).select()
     ctx.close()
     return ret
 }

@@ -1,5 +1,11 @@
 package edu.cornell.cs.apl.viaduct.syntax.intermediate
 
+import edu.cornell.cs.apl.prettyprinting.Document
+import edu.cornell.cs.apl.prettyprinting.PrettyPrintable
+import edu.cornell.cs.apl.prettyprinting.braced
+import edu.cornell.cs.apl.prettyprinting.plus
+import edu.cornell.cs.apl.prettyprinting.times
+import edu.cornell.cs.apl.prettyprinting.tupled
 import edu.cornell.cs.apl.viaduct.syntax.Arguments
 import edu.cornell.cs.apl.viaduct.syntax.ClassNameNode
 import edu.cornell.cs.apl.viaduct.syntax.FunctionNameNode
@@ -11,6 +17,7 @@ import edu.cornell.cs.apl.viaduct.syntax.ParameterDirection
 import edu.cornell.cs.apl.viaduct.syntax.ProtocolNode
 import edu.cornell.cs.apl.viaduct.syntax.SourceLocation
 import edu.cornell.cs.apl.viaduct.syntax.ValueTypeNode
+import edu.cornell.cs.apl.viaduct.syntax.surface.keyword
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.toPersistentList
 
@@ -67,6 +74,9 @@ class ProcessDeclarationNode(
 
     override fun copy(children: List<Node>): ProcessDeclarationNode =
         ProcessDeclarationNode(protocol, children[0] as BlockNode, sourceLocation)
+
+    override fun printMetadata(metadata: Map<Node, PrettyPrintable>): Document =
+        keyword("process") * protocol * body.printMetadata(metadata)
 }
 
 /**
@@ -141,6 +151,11 @@ class FunctionDeclarationNode(
         val parameters = Arguments(children.dropLast(1).map { it as ParameterNode }, parameters.sourceLocation)
         return FunctionDeclarationNode(name, pcLabel, parameters, children.last() as BlockNode, sourceLocation)
     }
+
+    override fun printMetadata(metadata: Map<Node, PrettyPrintable>): Document =
+        keyword("fun") * name +
+            (pcLabel?.let { listOf(it).braced() } ?: Document("")) +
+            parameters.tupled() * body.printMetadata(metadata)
 
     fun getParameter(name: ObjectVariable): ParameterNode? =
         parameters.firstOrNull { param -> param.name.value == name }

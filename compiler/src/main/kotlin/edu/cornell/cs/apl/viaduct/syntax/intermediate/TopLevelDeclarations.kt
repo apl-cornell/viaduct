@@ -3,6 +3,7 @@ package edu.cornell.cs.apl.viaduct.syntax.intermediate
 import edu.cornell.cs.apl.prettyprinting.Document
 import edu.cornell.cs.apl.prettyprinting.PrettyPrintable
 import edu.cornell.cs.apl.prettyprinting.braced
+import edu.cornell.cs.apl.prettyprinting.commented
 import edu.cornell.cs.apl.prettyprinting.plus
 import edu.cornell.cs.apl.prettyprinting.times
 import edu.cornell.cs.apl.prettyprinting.tupled
@@ -76,6 +77,7 @@ class ProcessDeclarationNode(
         ProcessDeclarationNode(protocol, children[0] as BlockNode, sourceLocation)
 
     override fun printMetadata(metadata: Map<Node, PrettyPrintable>): Document =
+        (metadata[this]?.let { it.asDocument.commented() + Document.forcedLineBreak } ?: Document("")) +
         keyword("process") * protocol * body.printMetadata(metadata)
 }
 
@@ -153,6 +155,7 @@ class FunctionDeclarationNode(
     }
 
     override fun printMetadata(metadata: Map<Node, PrettyPrintable>): Document =
+        (metadata[this]?.let { it.asDocument.commented() + Document.forcedLineBreak } ?: Document("")) +
         keyword("fun") * name +
             (pcLabel?.let { listOf(it).braced() } ?: Document("")) +
             parameters.tupled() * body.printMetadata(metadata)

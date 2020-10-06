@@ -107,6 +107,19 @@ internal fun SelectionConstraint.evaluate(f: (FunctionName, Variable) -> Protoco
     }
 }
 
+internal fun SymbolicCost.evaluate(
+    f: (FunctionName, Variable) -> Protocol,
+    c: (CostVariable) -> Int
+): Int {
+    return when (this) {
+        is CostLiteral -> this.cost
+        is CostVariable -> c(this)
+        is CostAdd -> this.lhs.evaluate(f, c) + this.rhs.evaluate(f, c)
+        is CostMul -> this.lhs.evaluate(f, c) + this.rhs.evaluate(f, c)
+        is CostMux -> if (this.guard.evaluate(f)) this.lhs.evaluate(f, c) else this.rhs.evaluate(f, c)
+    }
+}
+
 internal fun List<BoolExpr>.ors(ctx: Context): BoolExpr {
     return ctx.mkOr(* this.toTypedArray())
 }

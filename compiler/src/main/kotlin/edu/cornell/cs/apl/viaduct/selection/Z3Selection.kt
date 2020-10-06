@@ -3,6 +3,7 @@ package edu.cornell.cs.apl.viaduct.selection
 import com.microsoft.z3.Context
 import com.microsoft.z3.IntExpr
 import com.microsoft.z3.IntNum
+import com.microsoft.z3.Model
 import com.microsoft.z3.Status
 import com.uchuhimo.collections.BiMap
 import com.uchuhimo.collections.toBiMap
@@ -13,6 +14,7 @@ import edu.cornell.cs.apl.viaduct.analysis.InformationFlowAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.NameAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.declarationNodes
 import edu.cornell.cs.apl.viaduct.analysis.ifNodes
+import edu.cornell.cs.apl.viaduct.analysis.infiniteLoopNodes
 import edu.cornell.cs.apl.viaduct.analysis.letNodes
 import edu.cornell.cs.apl.viaduct.analysis.outputNodes
 import edu.cornell.cs.apl.viaduct.analysis.updateNodes
@@ -34,6 +36,7 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.BreakNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.DeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ExpressionArgumentNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.FunctionCallNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.FunctionDeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.IfNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.InfiniteLoopNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.InputNode
@@ -280,6 +283,10 @@ private class Z3Selection(
     /** Symbolic cost associated with a node. */
     private val Node.symbolicCost: Cost<SymbolicCost> by attribute {
         when (this) {
+            is FunctionDeclarationNode -> this.body.symbolicCost
+
+            is ProcessDeclarationNode -> this.body.symbolicCost
+
             is BlockNode ->
                 this.statements
                     .fold(zeroSymbolicCost) { acc, childStmt ->
@@ -602,6 +609,97 @@ private class Z3Selection(
             .union(this.costConstraints())
             .union(this.children.map { it.constraints() }.unions())
 
+    private fun Cost<SymbolicCost>.featureSum(): SymbolicCost {
+        val weights = costEstimator.featureWeights()
+        return this.features.entries.fold(CostLiteral(0) as SymbolicCost) { acc, c ->
+            CostAdd(acc, CostMul(CostLiteral(weights[c.key]!!.cost), c.value))
+        }
+    }
+
+    private fun printMetadata(
+        reachableFunctions: Iterable<FunctionDeclarationNode>,
+        eval: (FunctionName, Variable) -> Protocol,
+        model: Model,
+        totalCostSymvar: IntExpr
+    ) {
+        val nodeCostFunc: (Node) -> Pair<Node, PrettyPrintable> = { node ->
+            val symcost =
+                when (node) {
+                    is IfNode -> node.guard.symbolicCost
+                    else -> node.symbolicCost
+                }
+
+            val nodeCostStr =
+                symcost.featureSum().evaluate(eval) { cvar ->
+                    (model.getConstInterp(cvar.variable) as IntNum).int
+                }.toString()
+
+            val nodeProtocolStr =
+                when (node) {
+                    is LetNode -> {
+                        val enclosingFunc = nameAnalysis.enclosingFunctionName(node)
+                        "protocol: ${eval(enclosingFunc, node.temporary.value).asDocument.print()}"
+                    }
+
+                    is DeclarationNode -> {
+                        val enclosingFunc = nameAnalysis.enclosingFunctionName(node)
+                        "protocol: ${eval(enclosingFunc, node.name.value).asDocument.print()}"
+                    }
+
+                    else -> ""
+                }
+
+            Pair(node, Document("cost: $nodeCostStr $nodeProtocolStr"))
+        }
+
+        val declarationNodes =
+            reachableFunctions
+                .flatMap { f -> f.declarationNodes() }
+                .plus(main.declarationNodes())
+
+        val letNodes =
+            reachableFunctions
+                .flatMap { f -> f.letNodes() }
+                .plus(main.letNodes())
+
+        val updateNodes =
+            reachableFunctions
+                .flatMap { f -> f.updateNodes() }
+                .plus(main.updateNodes())
+
+        val outputNodes =
+            reachableFunctions
+                .flatMap { f -> f.outputNodes() }
+                .plus(main.outputNodes())
+
+        val ifNodes =
+            reachableFunctions
+                .flatMap { f -> f.ifNodes() }
+                .plus(main.ifNodes())
+
+        val loopNodes =
+            reachableFunctions
+                .flatMap { f -> f.infiniteLoopNodes() }
+                .plus(main.infiniteLoopNodes())
+
+        val totalCostMetadata =
+            Document("total cost: ${(model.getConstInterp(totalCostSymvar) as IntNum).int}")
+
+        val costMetadata: Map<Node, PrettyPrintable> =
+            declarationNodes.asSequence().map { nodeCostFunc(it) }
+                .plus(letNodes.map { nodeCostFunc(it) })
+                .plus(updateNodes.map { nodeCostFunc(it) })
+                .plus(outputNodes.map { nodeCostFunc(it) })
+                .plus(ifNodes.map { nodeCostFunc(it) })
+                .plus(loopNodes.map { nodeCostFunc(it) })
+                .plus(reachableFunctions.map { nodeCostFunc(it) })
+                .plus(nodeCostFunc(main))
+                .plus(Pair(program, totalCostMetadata))
+                .toMap()
+
+        dumpMetadata(costMetadata)
+    }
+
     /** Protocol selection. */
     fun select(): (FunctionName, Variable) -> Protocol {
         val solver = ctx.mkOptimize()
@@ -694,20 +792,13 @@ private class Z3Selection(
 
         if (varMap.values.isNotEmpty()) {
             // load cost constraints into Z3; build integer expression to minimize
-            val weights = costEstimator.featureWeights()
-
             val programCostFeatures: Cost<SymbolicCost> =
                 reachableFunctions.fold(main.body.symbolicCost) { acc, f -> acc.concat(f.body.symbolicCost) }
 
-            val totalCost =
-                programCostFeatures.features.entries
-                    .fold(CostLiteral(0) as SymbolicCost) { acc, c ->
-                        CostAdd(acc, CostMul(CostLiteral(weights[c.key]!!.cost), c.value))
-                    }
-
+            val totalCost = programCostFeatures.featureSum()
             val costExpr = totalCost.arithExpr(ctx, varMap, pmapExpr)
-
             val totalCostSymvar = ctx.mkFreshConst("total_cost", ctx.intSort) as IntExpr
+
             solver.Add(ctx.mkEq(totalCostSymvar, costExpr))
             solver.MkMinimize(totalCostSymvar)
 
@@ -725,62 +816,7 @@ private class Z3Selection(
                     } ?: throw NoVariableSelectionSolutionError(f, v)
                 }
 
-                val nodeCostFunc: (Node) -> Pair<Node, PrettyPrintable> = { node ->
-                    val symcost =
-                        when (node) {
-                            is IfNode -> node.guard.symbolicCost
-                            else -> node.symbolicCost
-                        }
-
-                    val nodeCostStr =
-                        symcost.map { symvar ->
-                            IntegerCost((model.getConstInterp((symvar as CostVariable).variable) as IntNum).int)
-                        }.features.entries.fold(0) { acc, kv ->
-                            acc + (weights[kv.key]!!.cost * kv.value.cost)
-                        }.toString()
-
-                    val nodeProtocolStr =
-                        when (node) {
-                            is LetNode -> {
-                                val enclosingFunc = nameAnalysis.enclosingFunctionName(node)
-                                eval(enclosingFunc, node.temporary.value).asDocument.print()
-                            }
-
-                            is DeclarationNode -> {
-                                val enclosingFunc = nameAnalysis.enclosingFunctionName(node)
-                                eval(enclosingFunc, node.name.value).asDocument.print()
-                            }
-
-                            else -> ""
-                        }
-
-                    Pair(node, Document("cost: $nodeCostStr protocol: $nodeProtocolStr"))
-                }
-
-                val updateNodes =
-                    reachableFunctions
-                        .flatMap { f -> f.updateNodes() }
-                        .plus(main.updateNodes())
-
-                val outputNodes =
-                    reachableFunctions
-                        .flatMap { f -> f.outputNodes() }
-                        .plus(main.outputNodes())
-
-                val ifNodes =
-                    reachableFunctions
-                        .flatMap { f -> f.ifNodes() }
-                        .plus(main.ifNodes())
-
-                val costMetadata: Map<Node, PrettyPrintable> =
-                    declarationNodes.keys.asSequence().map { nodeCostFunc(it) }
-                        .plus(letNodes.keys.map { nodeCostFunc(it) })
-                        .plus(updateNodes.map { nodeCostFunc(it) })
-                        .plus(outputNodes.map { nodeCostFunc(it) })
-                        .plus(ifNodes.map { nodeCostFunc(it) }).toList()
-                        .toMap()
-
-                dumpMetadata(costMetadata)
+                printMetadata(reachableFunctions, ::eval, model, totalCostSymvar)
 
                 return ::eval
             } else {

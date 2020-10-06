@@ -43,6 +43,7 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.InputNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.LetNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.LiteralNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.Node
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.ObjectDeclaration
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ObjectDeclarationArgumentNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ObjectReferenceArgumentNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutParameterArgumentNode
@@ -125,9 +126,16 @@ private class Z3Selection(
 
         fun viableProtocols(node: LetNode): Set<Protocol> = node.viableProtocols
 
-        fun viableProtocols(node: DeclarationNode): Set<Protocol> = node.viableProtocols
+        fun viableProtocols(node: ObjectDeclaration): Set<Protocol> =
+            when (val decl = node.declarationAsNode) {
+                is DeclarationNode -> decl.viableProtocols
 
-        fun viableProtocols(node: ParameterNode): Set<Protocol> = node.viableProtocols
+                is ParameterNode -> decl.viableProtocols
+
+                is ObjectDeclarationArgumentNode -> nameAnalysis.parameter(decl).viableProtocols
+
+                else -> throw UnknownObjectDeclarationError(decl)
+            }
     }
 
     /** Generate constraints for possible protocols. */
@@ -390,6 +398,39 @@ private class Z3Selection(
         }.toSet()
     }
 
+    private fun getObjectDeclarationViableProtocols(
+        decl: ObjectDeclaration
+    ): Pair<FunctionVariable, Set<Protocol>> =
+        when (val node = decl.declarationAsNode) {
+            is DeclarationNode ->
+                Pair(
+                    FunctionVariable(nameAnalysis.enclosingFunctionName(node), node.name.value),
+                    protocolSelection.viableProtocols(node)
+                )
+
+            is ParameterNode ->
+                Pair(
+                    FunctionVariable(
+                        nameAnalysis.functionDeclaration(node).name.value,
+                        node.name.value
+                    ),
+                    protocolSelection.viableProtocols(node)
+                )
+
+            is ObjectDeclarationArgumentNode -> {
+                val param = nameAnalysis.parameter(node)
+                Pair(
+                    FunctionVariable(
+                        nameAnalysis.functionDeclaration(param).name.value,
+                        node.name.value
+                    ),
+                    protocolSelection.viableProtocols(param)
+                )
+            }
+
+            else -> throw UnknownObjectDeclarationError(node)
+        }
+
     /** Generate cost constraints. */
     private fun Node.costConstraints(): Set<SelectionConstraint> =
         when (this) {
@@ -417,36 +458,7 @@ private class Z3Selection(
 
             // induce execution and communication costs
             is UpdateNode -> {
-                val (fv, protocols) =
-                    when (val objectDecl = nameAnalysis.declaration(this).declarationAsNode) {
-                        is DeclarationNode ->
-                            Pair(
-                                FunctionVariable(nameAnalysis.enclosingFunctionName(objectDecl), objectDecl.name.value),
-                                protocolSelection.viableProtocols(objectDecl)
-                            )
-
-                        is ParameterNode ->
-                            Pair(
-                                FunctionVariable(
-                                    nameAnalysis.functionDeclaration(objectDecl).name.value,
-                                    objectDecl.name.value
-                                ),
-                                protocolSelection.viableProtocols(objectDecl)
-                            )
-
-                        is ObjectDeclarationArgumentNode -> {
-                            val param = nameAnalysis.parameter(objectDecl)
-                            Pair(
-                                FunctionVariable(
-                                    nameAnalysis.functionDeclaration(param).name.value,
-                                    objectDecl.name.value
-                                ),
-                                protocolSelection.viableProtocols(param)
-                            )
-                        }
-
-                        else -> throw UnknownObjectDeclarationError(objectDecl)
-                    }
+                val (fv, protocols) = getObjectDeclarationViableProtocols(nameAnalysis.declaration(this))
 
                 generateComputationCostConstraints(
                     fv,
@@ -506,15 +518,15 @@ private class Z3Selection(
                                     FunctionVariable(enclosingFunctionName, letNode.temporary.value),
                                     protocolSelection.viableProtocols(letNode)
                                 )
-                            }.union(
+                            }.plus(
                                 this.declarationNodes().map { decl ->
-                                    Pair(
-                                        FunctionVariable(enclosingFunctionName, decl.name.value),
-                                        protocolSelection.viableProtocols(decl)
-                                    )
+                                    getObjectDeclarationViableProtocols(decl)
                                 }
-                            )
-                                .toMap()
+                            ).plus(
+                                this.updateNodes().map { update ->
+                                    getObjectDeclarationViableProtocols(nameAnalysis.declaration(update))
+                                }
+                            ).toMap()
 
                         // create inverse map from protocols to nodes that can potentially
                         // have it as its primary protocol

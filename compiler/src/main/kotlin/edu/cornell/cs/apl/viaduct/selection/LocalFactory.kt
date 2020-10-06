@@ -14,7 +14,7 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
 class LocalFactory(program: ProgramNode) : ProtocolFactory {
     private val informationFlowAnalysis = InformationFlowAnalysis.get(program)
 
-    private val protocols: List<SpecializedProtocol> = run {
+    val protocols: List<SpecializedProtocol> = run {
         val hostTrustConfiguration = HostTrustConfiguration(program)
         val hosts: List<Host> = hostTrustConfiguration.keys.sorted()
         hosts.map(::Local).map { SpecializedProtocol(it, hostTrustConfiguration) }

@@ -29,78 +29,30 @@ object SimpleCostEstimator : CostEstimator<IntegerCost> {
             when (executingProtocol) {
                 is Local -> IntegerCost(1)
                 is Replication -> IntegerCost(1)
-                is ABY -> IntegerCost(10)
+                is ABY -> IntegerCost(100)
                 else -> throw Error("unknown protocol ${executingProtocol.protocolName}")
             }
         )
 
-    override fun communicationCost(source: Protocol, destination: Protocol): Cost<IntegerCost> =
-        when {
-            source is Local && destination is Local -> {
-                zeroCost().update(
-                    NUM_MESSAGES,
-                    IntegerCost(if (source.host == destination.host) 0 else 1)
-                )
-            }
+    override fun communicationCost(source: Protocol, destination: Protocol): Cost<IntegerCost> {
+        return if (source != destination) {
+            val numMessages =
+                SimpleProtocolComposer.communicate(source, destination).communicationMap.map { kv ->
+                    val plaintextMsgCost =
+                        kv.value.filter { event ->
+                            event.send.host != event.recv.host && event.send.protocol !is ABY
+                        }.size
 
-            source is Local && destination is Replication -> {
-                zeroCost().update(
-                    NUM_MESSAGES,
-                    IntegerCost(destination.hosts.size)
-                )
-            }
+                    val mpcExecCost =
+                        if (kv.value.any { event -> event.send.protocol is ABY && event.recv.protocol !is ABY }) 10 else 0
+                    plaintextMsgCost + mpcExecCost
+                }.fold(0) { acc, phaseCost -> acc + phaseCost }
 
-            source is Local && destination is ABY -> {
-                zeroCost().update(
-                    NUM_MESSAGES,
-                    IntegerCost(if (destination.hosts.contains(source.host)) 0 else destination.hosts.size)
-                )
-            }
-
-            source is Replication && destination is Local -> {
-                zeroCost().update(
-                    NUM_MESSAGES,
-                    IntegerCost(if (source.hosts.contains(destination.host)) 0 else source.hosts.size)
-                )
-            }
-
-            // TODO: check if this is right
-            source is Replication && destination is Replication -> {
-                val destHostsComplement = destination.hosts.removeAll(source.hosts)
-                zeroCost().update(
-                    NUM_MESSAGES,
-                    IntegerCost(destHostsComplement.size * source.hosts.size)
-                )
-            }
-
-            // TODO: check if this is right
-            source is Replication && destination is ABY -> {
-                val destHostsComplement = destination.hosts.removeAll(source.hosts)
-                zeroCost().update(
-                    NUM_MESSAGES,
-                    IntegerCost(destHostsComplement.size * source.hosts.size)
-                )
-            }
-
-            source is ABY && destination is Local -> {
-                zeroCost().update(
-                    NUM_MESSAGES,
-                    IntegerCost(if (source.hosts.contains(destination.host)) 0 else source.hosts.size)
-                )
-            }
-
-            source is ABY && destination is Replication -> {
-                val destHostsComplement = destination.hosts.removeAll(source.hosts)
-                zeroCost().update(
-                    NUM_MESSAGES,
-                    IntegerCost(destHostsComplement.size * source.hosts.size)
-                )
-            }
-
-            source is ABY && destination is ABY -> zeroCost()
-
-            else -> throw Error("unknown source protocol ${source.protocolName} or destination protocol ${destination.protocolName}")
+            zeroCost().update(NUM_MESSAGES, IntegerCost(numMessages))
+        } else {
+            zeroCost()
         }
+    }
 
     override fun storageCost(declaration: ObjectDeclaration, protocol: Protocol): Cost<IntegerCost> =
         zeroCost().update(
@@ -108,7 +60,7 @@ object SimpleCostEstimator : CostEstimator<IntegerCost> {
             when (protocol) {
                 is Local -> IntegerCost(1)
                 is Replication -> IntegerCost(1)
-                is ABY -> IntegerCost(10)
+                is ABY -> IntegerCost(100)
                 else -> throw Error("unknown protocol ${protocol.protocolName}")
             }
         )
@@ -125,8 +77,8 @@ object SimpleCostEstimator : CostEstimator<IntegerCost> {
     override fun featureWeights(): Cost<IntegerCost> =
         Cost(
             persistentMapOf(
-                NUM_MESSAGES to IntegerCost(5),
-                BYTES_TRANSFERRED to IntegerCost(5),
+                NUM_MESSAGES to IntegerCost(1),
+                BYTES_TRANSFERRED to IntegerCost(1),
                 EXECUTION_COST to IntegerCost(1)
             )
         )

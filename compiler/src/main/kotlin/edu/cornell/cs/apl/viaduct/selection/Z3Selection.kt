@@ -3,14 +3,18 @@ package edu.cornell.cs.apl.viaduct.selection
 import com.microsoft.z3.Context
 import com.microsoft.z3.IntExpr
 import com.microsoft.z3.IntNum
+import com.microsoft.z3.Model
 import com.microsoft.z3.Status
 import com.uchuhimo.collections.BiMap
 import com.uchuhimo.collections.toBiMap
 import edu.cornell.cs.apl.attributes.attribute
+import edu.cornell.cs.apl.prettyprinting.Document
+import edu.cornell.cs.apl.prettyprinting.PrettyPrintable
 import edu.cornell.cs.apl.viaduct.analysis.InformationFlowAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.NameAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.declarationNodes
 import edu.cornell.cs.apl.viaduct.analysis.ifNodes
+import edu.cornell.cs.apl.viaduct.analysis.infiniteLoopNodes
 import edu.cornell.cs.apl.viaduct.analysis.letNodes
 import edu.cornell.cs.apl.viaduct.analysis.outputNodes
 import edu.cornell.cs.apl.viaduct.analysis.updateNodes
@@ -26,9 +30,15 @@ import edu.cornell.cs.apl.viaduct.syntax.HostTrustConfiguration
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
 import edu.cornell.cs.apl.viaduct.syntax.Temporary
 import edu.cornell.cs.apl.viaduct.syntax.Variable
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.AssertionNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.BlockNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.BreakNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.DeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ExpressionArgumentNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.FunctionCallNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.FunctionDeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.IfNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.InfiniteLoopNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.InputNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.LetNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.LiteralNode
@@ -36,6 +46,9 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.Node
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ObjectDeclarationArgumentNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ObjectReferenceArgumentNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutParameterArgumentNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutParameterConstructorInitializerNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutParameterExpressionInitializerNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutParameterInitializationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutputNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ParameterNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProcessDeclarationNode
@@ -71,7 +84,8 @@ private class Z3Selection(
     private val main: ProcessDeclarationNode,
     private val protocolFactory: ProtocolFactory,
     private val costEstimator: CostEstimator<IntegerCost>,
-    private val ctx: Context
+    private val ctx: Context,
+    private val dumpMetadata: (Map<Node, PrettyPrintable>) -> Unit
 ) {
     private val nameAnalysis = NameAnalysis.get(program)
     private val informationFlowAnalysis = InformationFlowAnalysis.get(program)
@@ -89,17 +103,6 @@ private class Z3Selection(
             when (value) {
                 is InputNode ->
                     setOf(Local(value.host.value))
-                is QueryNode ->
-                    when (val declaration = nameAnalysis.declaration(value).declarationAsNode) {
-                        is DeclarationNode -> declaration.viableProtocols
-
-                        is ParameterNode -> declaration.viableProtocols
-
-                        is ObjectDeclarationArgumentNode ->
-                            nameAnalysis.parameter(declaration).viableProtocols
-
-                        else -> throw UnknownObjectDeclarationError(declaration)
-                    }
 
                 is ReceiveNode -> throw IllegalInternalCommunicationError(value)
 
@@ -131,63 +134,72 @@ private class Z3Selection(
     private fun Node.selectionConstraints(): Set<SelectionConstraint> =
         when (this) {
             is LetNode ->
-                when (val rhs = this.value) {
-                    // queries needs to be executed in the same protocol as the object
-                    is QueryNode -> {
-                        val enclosingFunctionName = nameAnalysis.enclosingFunctionName(this)
-                        when (val objectDecl = nameAnalysis.declaration(rhs).declarationAsNode) {
-                            is DeclarationNode ->
-                                setOf(
-                                    VariableEquals(
-                                        FunctionVariable(enclosingFunctionName, objectDecl.name.value),
-                                        FunctionVariable(enclosingFunctionName, this.temporary.value)
-                                    ),
-                                    protocolFactory.constraint(this)
+                setOf(protocolFactory.constraint(this)).plus(
+                    // extra constraints
+                    when (val rhs = this.value) {
+                        is InputNode -> {
+                            setOf(
+                                VariableIn(
+                                    FunctionVariable(nameAnalysis.enclosingFunctionName(this), this.temporary.value),
+                                    setOf(Local(rhs.host.value))
                                 )
+                            )
+                        }
 
-                            is ParameterNode ->
-                                setOf(
-                                    VariableEquals(
-                                        FunctionVariable(enclosingFunctionName, objectDecl.name.value),
-                                        FunctionVariable(enclosingFunctionName, this.temporary.value)
-                                    ),
-                                    protocolFactory.constraint(this)
+                        // queries needs to be executed in the same protocol as the object
+                        is QueryNode -> {
+                            val enclosingFunctionName = nameAnalysis.enclosingFunctionName(this)
+
+                            setOf(
+                                VariableIn(
+                                    FunctionVariable(nameAnalysis.enclosingFunctionName(this), this.temporary.value),
+                                    protocolSelection.viableProtocols(this)
                                 )
+                            ).plus(
+                                when (val objectDecl = nameAnalysis.declaration(rhs).declarationAsNode) {
+                                    is DeclarationNode ->
+                                        VariableEquals(
+                                            FunctionVariable(enclosingFunctionName, objectDecl.name.value),
+                                            FunctionVariable(enclosingFunctionName, this.temporary.value)
+                                        )
 
-                            is ObjectDeclarationArgumentNode -> {
-                                val param = nameAnalysis.parameter(objectDecl)
-                                setOf(
-                                    VariableEquals(
-                                        FunctionVariable(
-                                            nameAnalysis.functionDeclaration(param).name.value,
-                                            param.name.value
-                                        ),
-                                        FunctionVariable(enclosingFunctionName, this.temporary.value)
-                                    ),
-                                    protocolFactory.constraint(this)
+                                    is ParameterNode ->
+                                        VariableEquals(
+                                            FunctionVariable(enclosingFunctionName, objectDecl.name.value),
+                                            FunctionVariable(enclosingFunctionName, this.temporary.value)
+                                        )
+
+                                    is ObjectDeclarationArgumentNode -> {
+                                        val param = nameAnalysis.parameter(objectDecl)
+                                        VariableEquals(
+                                            FunctionVariable(
+                                                nameAnalysis.functionDeclaration(param).name.value,
+                                                param.name.value
+                                            ),
+                                            FunctionVariable(enclosingFunctionName, this.temporary.value)
+                                        )
+                                    }
+
+                                    else -> throw UnknownObjectDeclarationError(objectDecl)
+                                }
+                            )
+                        }
+
+                        else -> {
+                            setOf(
+                                VariableIn(
+                                    FunctionVariable(nameAnalysis.enclosingFunctionName(this), this.temporary.value),
+                                    protocolSelection.viableProtocols(this)
                                 )
-                            }
-
-                            else -> throw UnknownObjectDeclarationError(objectDecl)
+                            )
                         }
                     }
-
-                    // use the protocol factory to get the set of viable protocols
-                    else -> {
-                        setOf(
-                            VariableIn(
-                                Pair(nameAnalysis.enclosingFunctionName(this), this.temporary.value),
-                                protocolSelection.viableProtocols(this)
-                            ),
-                            protocolFactory.constraint(this)
-                        )
-                    }
-                }
+                )
 
             is DeclarationNode ->
                 setOf(
                     VariableIn(
-                        Pair(nameAnalysis.enclosingFunctionName(this), this.name.value),
+                        FunctionVariable(nameAnalysis.enclosingFunctionName(this), this.name.value),
                         protocolSelection.viableProtocols(this)
                     ),
                     protocolFactory.constraint(this)
@@ -206,8 +218,8 @@ private class Z3Selection(
                     .map { read -> nameAnalysis.declaration(read) }
                     .map { letNode ->
                         VariableEquals(
-                            Pair(nameAnalysis.enclosingFunctionName(letNode), letNode.temporary.value),
-                            Pair(parameterFunctionName, parameter.name.value)
+                            FunctionVariable(nameAnalysis.enclosingFunctionName(letNode), letNode.temporary.value),
+                            FunctionVariable(parameterFunctionName, parameter.name.value)
                         )
                     }
                     .toSet()
@@ -219,8 +231,8 @@ private class Z3Selection(
                 val parameterFunctionName = nameAnalysis.functionDeclaration(parameter).name.value
                 setOf(
                     VariableEquals(
-                        Pair(nameAnalysis.enclosingFunctionName(this), this.variable.value),
-                        Pair(parameterFunctionName, parameter.name.value)
+                        FunctionVariable(nameAnalysis.enclosingFunctionName(this), this.variable.value),
+                        FunctionVariable(parameterFunctionName, parameter.name.value)
                     )
                 )
             }
@@ -231,8 +243,8 @@ private class Z3Selection(
                 val parameterFunctionName = nameAnalysis.functionDeclaration(parameter).name.value
                 setOf(
                     VariableEquals(
-                        Pair(nameAnalysis.enclosingFunctionName(this), this.parameter.value),
-                        Pair(parameterFunctionName, parameter.name.value)
+                        FunctionVariable(nameAnalysis.enclosingFunctionName(this), this.parameter.value),
+                        FunctionVariable(parameterFunctionName, parameter.name.value)
                     )
                 )
             }
@@ -266,11 +278,41 @@ private class Z3Selection(
         }
     }
 
+    private val zeroSymbolicCost = costEstimator.zeroCost().map { CostLiteral(0) }
+
     /** Symbolic cost associated with a node. */
     private val Node.symbolicCost: Cost<SymbolicCost> by attribute {
-        costEstimator
-            .zeroCost()
-            .map { CostVariable(ctx.mkFreshConst("cost", ctx.intSort) as IntExpr) }
+        when (this) {
+            is FunctionDeclarationNode -> this.body.symbolicCost
+
+            is ProcessDeclarationNode -> this.body.symbolicCost
+
+            is BlockNode ->
+                this.statements
+                    .fold(zeroSymbolicCost) { acc, childStmt ->
+                        acc.concat(childStmt.symbolicCost)
+                    }
+
+            is IfNode ->
+                this.guard.symbolicCost
+                    .concat(this.thenBranch.symbolicCost)
+                    .concat(this.elseBranch.symbolicCost)
+
+            is InfiniteLoopNode ->
+                this.body.symbolicCost.map { f -> CostMul(CostLiteral(10), f) }
+
+            // TODO: handle this later, recursive functions are tricky
+            is FunctionCallNode -> zeroSymbolicCost
+
+            is BreakNode -> zeroSymbolicCost
+
+            is AssertionNode -> zeroSymbolicCost
+
+            else ->
+                costEstimator
+                    .zeroCost()
+                    .map { CostVariable(ctx.mkFreshConst("cost", ctx.intSort) as IntExpr) }
+        }
     }
 
     /**
@@ -326,7 +368,7 @@ private class Z3Selection(
             argProtocolMaps.map { argProtocolMap ->
                 val protocolConstraints: SelectionConstraint =
                     argProtocolMap.map { kv ->
-                        VariableIn(FunctionVariable(fv.first, kv.key), setOf(kv.value))
+                        VariableIn(FunctionVariable(fv.function, kv.key), setOf(kv.value))
                     }.plus(
                         setOf(VariableIn(fv, setOf(protocol)))
                     ).fold(Literal(true) as SelectionConstraint) { acc, c -> And(acc, c) }
@@ -418,21 +460,28 @@ private class Z3Selection(
                 )
             }
 
-            // induce costs for storing the parameter
-            is ParameterNode -> {
-                val enclosingFunctionName =
-                    nameAnalysis.functionDeclaration(this).name.value
+            // storage and communication cost for initializing an out parameter
+            is OutParameterInitializationNode -> {
+                val parameter = nameAnalysis.declaration(this)
+                val reads: List<ReadNode> =
+                    when (val initializer = this.initializer) {
+                        is OutParameterConstructorInitializerNode ->
+                            initializer.arguments.filterIsInstance<ReadNode>()
 
-                protocolSelection.viableProtocols(this).map { protocol ->
-                    val cost = costEstimator.storageCost(this, protocol)
-                    Implies(
-                        VariableIn(
-                            FunctionVariable(enclosingFunctionName, this.name.value),
-                            setOf(protocol)
-                        ),
-                        symbolicCostEqualsInt(this.symbolicCost, cost)
-                    )
-                }.toSet()
+                        is OutParameterExpressionInitializerNode ->
+                            if (initializer.expression is ReadNode) listOf(initializer.expression) else listOf()
+                    }
+
+                generateComputationCostConstraints(
+                    FunctionVariable(
+                        nameAnalysis.functionDeclaration(parameter).name.value,
+                        parameter.name.value
+                    ),
+                    protocolSelection.viableProtocols(parameter),
+                    reads,
+                    { protocol -> costEstimator.storageCost(parameter, protocol) },
+                    this.symbolicCost
+                )
             }
 
             // generate cost constraints for when temporaries are read as guards
@@ -442,7 +491,7 @@ private class Z3Selection(
                 when (val guard = this.guard) {
                     is LiteralNode ->
                         setOf(
-                            symbolicCostEqualsInt(this.symbolicCost, costEstimator.zeroCost())
+                            symbolicCostEqualsInt(this.guard.symbolicCost, costEstimator.zeroCost())
                         )
 
                     is ReadNode -> {
@@ -465,11 +514,12 @@ private class Z3Selection(
                                     )
                                 }
                             )
-                            .toMap()
+                                .toMap()
 
                         // create inverse map from protocols to nodes that can potentially
                         // have it as its primary protocol
-                        val participatingProtocolMap: MutableMap<Protocol, MutableSet<FunctionVariable>> = mutableMapOf()
+                        val participatingProtocolMap: MutableMap<Protocol, MutableSet<FunctionVariable>> =
+                            mutableMapOf()
                         for (kv in viableProtocolMap) {
                             for (protocol in kv.value) {
                                 if (participatingProtocolMap.containsKey(protocol)) {
@@ -491,15 +541,19 @@ private class Z3Selection(
                                         // otherwise, the cost is zero
                                         // we model this using a mux expression that maps over all cost features
                                         costEstimator.communicationCost(guardProtocol, kv.key).map { cost ->
-                                            CostMux(
-                                                kv.value.fold(
-                                                    Literal(false) as SelectionConstraint
-                                                ) { acc2, fv ->
-                                                    Or(acc2, VariableIn(fv, setOf(kv.key)))
-                                                },
-                                                CostLiteral(cost.cost),
+                                            if (cost.cost != 0) {
+                                                CostMux(
+                                                    kv.value.fold(
+                                                        Literal(false) as SelectionConstraint
+                                                    ) { acc2, fv ->
+                                                        Or(acc2, VariableIn(fv, setOf(kv.key)))
+                                                    },
+                                                    CostLiteral(cost.cost),
+                                                    CostLiteral(0)
+                                                )
+                                            } else {
                                                 CostLiteral(0)
-                                            )
+                                            }
                                         }
                                     )
                                 }
@@ -509,7 +563,7 @@ private class Z3Selection(
                                     FunctionVariable(enclosingFunctionName, guardDecl.temporary.value),
                                     setOf(guardProtocol)
                                 ),
-                                symbolicCostEqualsSym(this.symbolicCost, protocolCost)
+                                symbolicCostEqualsSym(this.guard.symbolicCost, protocolCost)
                             )
                         }.toSet()
                     }
@@ -555,6 +609,97 @@ private class Z3Selection(
             .union(this.costConstraints())
             .union(this.children.map { it.constraints() }.unions())
 
+    private fun Cost<SymbolicCost>.featureSum(): SymbolicCost {
+        val weights = costEstimator.featureWeights()
+        return this.features.entries.fold(CostLiteral(0) as SymbolicCost) { acc, c ->
+            CostAdd(acc, CostMul(CostLiteral(weights[c.key]!!.cost), c.value))
+        }
+    }
+
+    private fun printMetadata(
+        reachableFunctions: Iterable<FunctionDeclarationNode>,
+        eval: (FunctionName, Variable) -> Protocol,
+        model: Model,
+        totalCostSymvar: IntExpr
+    ) {
+        val nodeCostFunc: (Node) -> Pair<Node, PrettyPrintable> = { node ->
+            val symcost =
+                when (node) {
+                    is IfNode -> node.guard.symbolicCost
+                    else -> node.symbolicCost
+                }
+
+            val nodeCostStr =
+                symcost.featureSum().evaluate(eval) { cvar ->
+                    (model.getConstInterp(cvar.variable) as IntNum).int
+                }.toString()
+
+            val nodeProtocolStr =
+                when (node) {
+                    is LetNode -> {
+                        val enclosingFunc = nameAnalysis.enclosingFunctionName(node)
+                        "protocol: ${eval(enclosingFunc, node.temporary.value).asDocument.print()}"
+                    }
+
+                    is DeclarationNode -> {
+                        val enclosingFunc = nameAnalysis.enclosingFunctionName(node)
+                        "protocol: ${eval(enclosingFunc, node.name.value).asDocument.print()}"
+                    }
+
+                    else -> ""
+                }
+
+            Pair(node, Document("cost: $nodeCostStr $nodeProtocolStr"))
+        }
+
+        val declarationNodes =
+            reachableFunctions
+                .flatMap { f -> f.declarationNodes() }
+                .plus(main.declarationNodes())
+
+        val letNodes =
+            reachableFunctions
+                .flatMap { f -> f.letNodes() }
+                .plus(main.letNodes())
+
+        val updateNodes =
+            reachableFunctions
+                .flatMap { f -> f.updateNodes() }
+                .plus(main.updateNodes())
+
+        val outputNodes =
+            reachableFunctions
+                .flatMap { f -> f.outputNodes() }
+                .plus(main.outputNodes())
+
+        val ifNodes =
+            reachableFunctions
+                .flatMap { f -> f.ifNodes() }
+                .plus(main.ifNodes())
+
+        val loopNodes =
+            reachableFunctions
+                .flatMap { f -> f.infiniteLoopNodes() }
+                .plus(main.infiniteLoopNodes())
+
+        val totalCostMetadata =
+            Document("total cost: ${(model.getConstInterp(totalCostSymvar) as IntNum).int}")
+
+        val costMetadata: Map<Node, PrettyPrintable> =
+            declarationNodes.asSequence().map { nodeCostFunc(it) }
+                .plus(letNodes.map { nodeCostFunc(it) })
+                .plus(updateNodes.map { nodeCostFunc(it) })
+                .plus(outputNodes.map { nodeCostFunc(it) })
+                .plus(ifNodes.map { nodeCostFunc(it) })
+                .plus(loopNodes.map { nodeCostFunc(it) })
+                .plus(reachableFunctions.map { nodeCostFunc(it) })
+                .plus(nodeCostFunc(main))
+                .plus(Pair(program, totalCostMetadata))
+                .toMap()
+
+        dumpMetadata(costMetadata)
+    }
+
     /** Protocol selection. */
     fun select(): (FunctionName, Variable) -> Protocol {
         val solver = ctx.mkOptimize()
@@ -568,7 +713,7 @@ private class Z3Selection(
             for (parameter in function.parameters) {
                 constraints.add(
                     VariableIn(
-                        Pair(function.name.value, parameter.name.value),
+                        FunctionVariable(function.name.value, parameter.name.value),
                         protocolSelection.viableProtocols(parameter)
                     )
                 )
@@ -616,15 +761,6 @@ private class Z3Selection(
         val parameterViables: Set<Protocol> =
             parameterNodes.keys.map { protocolSelection.viableProtocols(it) }.unions()
 
-        val updateNodes: List<UpdateNode> =
-            reachableFunctions.flatMap { f -> f.updateNodes() }.plus(main.updateNodes())
-
-        val outputNodes: List<OutputNode> =
-            reachableFunctions.flatMap { f -> f.outputNodes() }.plus(main.outputNodes())
-
-        val ifNodes: List<IfNode> =
-            reachableFunctions.flatMap { f -> f.ifNodes() }.plus(main.ifNodes())
-
         val pmap: BiMap<Protocol, Int> =
             tempViables
                 .union(declViables)
@@ -635,37 +771,17 @@ private class Z3Selection(
 
         val varMap: BiMap<FunctionVariable, IntExpr> =
             (letNodes.mapKeys {
-                Pair(nameAnalysis.enclosingFunctionName(it.key), it.key.temporary.value)
+                FunctionVariable(nameAnalysis.enclosingFunctionName(it.key), it.key.temporary.value)
             }.plus(
                 declarationNodes.mapKeys {
-                    Pair(nameAnalysis.enclosingFunctionName(it.key), it.key.name.value)
+                    FunctionVariable(nameAnalysis.enclosingFunctionName(it.key), it.key.name.value)
                 }
             ).plus(
                 parameterNodes.mapKeys {
                     val functionName = nameAnalysis.functionDeclaration(it.key).name.value
-                    Pair(functionName, it.key.name.value)
+                    FunctionVariable(functionName, it.key.name.value)
                 }
             )).toBiMap()
-
-        // tally all costs associated with storage (declaration nodes) and computations (let nodes and update nodes)
-        val zeroSymbolicCost = costEstimator.zeroCost().map { CostLiteral(0) }
-        val programCost =
-            letNodes.keys.fold(zeroSymbolicCost) { acc, letNode -> acc.concat(letNode.symbolicCost) }
-                .concat(
-                    declarationNodes.keys.fold(zeroSymbolicCost) { acc, decl -> acc.concat(decl.symbolicCost) }
-                )
-                .concat(
-                    parameterNodes.keys.fold(zeroSymbolicCost) { acc, param -> acc.concat(param.symbolicCost) }
-                )
-                .concat(
-                    updateNodes.fold(zeroSymbolicCost) { acc, update -> acc.concat(update.symbolicCost) }
-                )
-                .concat(
-                    outputNodes.fold(zeroSymbolicCost) { acc, output -> acc.concat(output.symbolicCost) }
-                )
-                .concat(
-                    ifNodes.fold(zeroSymbolicCost) { acc, ifNode -> acc.concat(ifNode.symbolicCost) }
-                )
 
         val pmapExpr = pmap.mapValues { ctx.mkInt(it.value) as IntExpr }.toBiMap()
 
@@ -676,30 +792,32 @@ private class Z3Selection(
 
         if (varMap.values.isNotEmpty()) {
             // load cost constraints into Z3; build integer expression to minimize
-            val weights = costEstimator.featureWeights()
-            val cost =
-                programCost.features.entries
-                    .fold(CostLiteral(0) as SymbolicCost) { acc, c ->
-                        CostAdd(acc, CostMul(CostLiteral(weights[c.key]!!.cost), c.value))
-                    }
-                    .arithExpr(ctx, varMap, pmapExpr)
+            val programCostFeatures: Cost<SymbolicCost> =
+                reachableFunctions.fold(main.body.symbolicCost) { acc, f -> acc.concat(f.body.symbolicCost) }
 
-            solver.MkMinimize(cost)
+            val totalCost = programCostFeatures.featureSum()
+            val costExpr = totalCost.arithExpr(ctx, varMap, pmapExpr)
+            val totalCostSymvar = ctx.mkFreshConst("total_cost", ctx.intSort) as IntExpr
+
+            solver.Add(ctx.mkEq(totalCostSymvar, costExpr))
+            solver.MkMinimize(totalCostSymvar)
 
             if (solver.Check() == Status.SATISFIABLE) {
                 val model = solver.model
-
                 val interpMap: Map<FunctionVariable, Int> =
                     varMap.mapValues { e ->
                         (model.getConstInterp(e.value) as IntNum).int
                     }
 
                 fun eval(f: FunctionName, v: Variable): Protocol {
-                    val fvar = Pair(f, v)
+                    val fvar = FunctionVariable(f, v)
                     return interpMap[fvar]?.let { protocolIndex ->
                         pmap.inverse[protocolIndex] ?: throw NoProtocolIndexMapping(protocolIndex)
                     } ?: throw NoVariableSelectionSolutionError(f, v)
                 }
+
+                printMetadata(reachableFunctions, ::eval, model, totalCostSymvar)
+
                 return ::eval
             } else {
                 throw NoSelectionSolutionError()
@@ -716,11 +834,12 @@ fun selectProtocolsWithZ3(
     program: ProgramNode,
     main: ProcessDeclarationNode,
     protocolFactory: ProtocolFactory,
-    costEstimator: CostEstimator<IntegerCost>
+    costEstimator: CostEstimator<IntegerCost>,
+    dumpMetadata: (Map<Node, PrettyPrintable>) -> Unit = {}
 ): (FunctionName, Variable) -> Protocol {
     val ctx = Context()
     val ret =
-        Z3Selection(program, main, protocolFactory, costEstimator, ctx).select()
+        Z3Selection(program, main, protocolFactory, costEstimator, ctx, dumpMetadata).select()
     ctx.close()
     return ret
 }

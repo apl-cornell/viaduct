@@ -41,6 +41,8 @@ abstract class Node : TreeNode<Node>, HasSourceLocation, PrettyPrintable {
 
     final override val asDocument: Document
         get() = toSurfaceNode().asDocument
+
+    open fun printMetadata(metadata: Map<Node, PrettyPrintable>): Document = asDocument
 }
 
 /** Like [Node.copy], but recursively copies all descendant nodes also.*/

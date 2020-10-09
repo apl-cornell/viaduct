@@ -5,7 +5,6 @@ import edu.cornell.cs.apl.viaduct.errors.ViaductInterpreterError
 import edu.cornell.cs.apl.viaduct.protocols.Local
 import edu.cornell.cs.apl.viaduct.protocols.Replication
 import edu.cornell.cs.apl.viaduct.selection.CommunicationEvent
-import edu.cornell.cs.apl.viaduct.selection.ProtocolCommunication
 import edu.cornell.cs.apl.viaduct.selection.SimpleProtocolComposer
 import edu.cornell.cs.apl.viaduct.syntax.Arguments
 import edu.cornell.cs.apl.viaduct.syntax.ClassNameNode
@@ -31,7 +30,9 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.ReadNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ReceiveNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.SendNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.UpdateNode
+import edu.cornell.cs.apl.viaduct.syntax.types.UnitType
 import edu.cornell.cs.apl.viaduct.syntax.values.IntegerValue
+import edu.cornell.cs.apl.viaduct.syntax.values.UnitValue
 import edu.cornell.cs.apl.viaduct.syntax.values.Value
 import java.util.Stack
 import kotlinx.collections.immutable.PersistentMap
@@ -176,31 +177,43 @@ private class PlaintextInterpreter(
             is ReceiveNode -> {
                 val sendProtocol = expr.protocol.value
 
-                val sendPhase =
-                    SimpleProtocolComposer.getSendPhase(sendProtocol, projection.protocol)
+                when (expr.type.value) {
+                    is UnitType -> {
+                        val syncPhase = SimpleProtocolComposer.getSyncPhase(sendProtocol, projection.protocol)
+                        for (recvEvent: CommunicationEvent in syncPhase.getHostReceives(this.projection.host)) {
+                            runtime.receive(ProtocolProjection(sendProtocol, recvEvent.send.host))
+                        }
 
-                var finalValue: Value? = null
-                for (recvEvent: CommunicationEvent in sendPhase.getHostReceives(this.projection.host)) {
-                    val receivedValue: Value =
-                        runtime.receive(ProtocolProjection(sendProtocol, recvEvent.send.host))
+                        UnitValue
+                    }
 
-                    if (finalValue == null) {
-                        finalValue = receivedValue
-                    } else if (finalValue != receivedValue) {
-                        throw ViaductInterpreterError("received different values")
+                    else -> {
+                        val sendPhase = SimpleProtocolComposer.getSendPhase(sendProtocol, projection.protocol)
+
+                        var finalValue: Value? = null
+                        for (recvEvent: CommunicationEvent in sendPhase.getHostReceives(this.projection.host)) {
+                            val receivedValue: Value =
+                                runtime.receive(ProtocolProjection(sendProtocol, recvEvent.send.host))
+
+                            if (finalValue == null) {
+                                finalValue = receivedValue
+                            } else if (finalValue != receivedValue) {
+                                throw ViaductInterpreterError("received different values")
+                            }
+                        }
+
+                        assert(finalValue != null)
+
+                        val broadcastPhase =
+                            SimpleProtocolComposer.getBroadcastPhase(sendProtocol, projection.protocol)
+
+                        for (sendEvent: CommunicationEvent in broadcastPhase.getHostSends(this.projection.host)) {
+                            runtime.send(finalValue!!, ProtocolProjection(this.projection.protocol, sendEvent.recv.host))
+                        }
+
+                        finalValue!!
                     }
                 }
-
-                assert(finalValue != null)
-
-                val broadcastPhase =
-                    SimpleProtocolComposer.getBroadcastPhase(sendProtocol, projection.protocol)
-
-                for (sendEvent: CommunicationEvent in broadcastPhase.getHostSends(this.projection.host)) {
-                    runtime.send(finalValue!!, ProtocolProjection(this.projection.protocol, sendEvent.recv.host))
-                }
-
-                finalValue!!
             }
         }
     }
@@ -224,11 +237,13 @@ private class PlaintextInterpreter(
         val msgValue: Value = runExpr(stmt.message)
         val recvProtocol: Protocol = stmt.protocol.value
 
-        val communication: ProtocolCommunication =
-            SimpleProtocolComposer.communicate(this.projection.protocol, recvProtocol)
-        val sendPhase = communication.getPhase("send")
+        val phase =
+            when (msgValue) {
+                UnitValue -> SimpleProtocolComposer.getSyncPhase(this.projection.protocol, recvProtocol)
+                else -> SimpleProtocolComposer.getSendPhase(this.projection.protocol, recvProtocol)
+            }
 
-        for (sendEvent in sendPhase.getHostSends(this.projection.host)) {
+        for (sendEvent in phase.getHostSends(this.projection.host)) {
             runtime.send(msgValue, ProtocolProjection(recvProtocol, sendEvent.recv.host))
         }
     }

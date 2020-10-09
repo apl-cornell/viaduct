@@ -178,13 +178,10 @@ class ProtocolAnalysis(
         when (this) {
             is LetNode -> {
                 when (this.value) {
-                    is InputNode -> this.enclosingBlock.protocols
                     is DowngradeNode -> this.enclosingBlock.protocols
                     else -> setOf()
                 }
             }
-
-            is OutputNode -> this.enclosingBlock.protocols
 
             else -> setOf()
         }

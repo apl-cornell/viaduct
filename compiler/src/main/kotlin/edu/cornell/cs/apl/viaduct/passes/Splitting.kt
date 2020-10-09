@@ -81,8 +81,6 @@ class Splitter(
                         if (protocol == primaryProtocol)
                             result.add(it)
 
-                        val protocolsToSync = protocolAnalysis.syncProtocols(it) - protocolAnalysis.protocols(it) - primaryProtocol
-
                         if (it is LetNode) {
                             when (protocol) {
                                 primaryProtocol -> {
@@ -92,17 +90,6 @@ class Splitter(
                                             SendNode(
                                                 ReadNode(it.temporary),
                                                 ProtocolNode(sendProtocol, it.temporary.sourceLocation),
-                                                it.sourceLocation
-                                            )
-                                        )
-                                    }
-
-                                    // synchronize protocols that haven't received the value
-                                    protocolsToSync.forEach { syncProtocol ->
-                                        result.add(
-                                            SendNode(
-                                                LiteralNode(UnitValue, it.sourceLocation),
-                                                ProtocolNode(syncProtocol, it.sourceLocation),
                                                 it.sourceLocation
                                             )
                                         )
@@ -130,6 +117,8 @@ class Splitter(
                         }
 
                         // handle synchronization
+                        val protocolsToSync = protocolAnalysis.syncProtocols(it) - protocolAnalysis.protocols(it) - primaryProtocol
+
                         if (it is LetNode || it is OutputNode) {
                             when (protocol) {
                                 // send synchronization
@@ -164,6 +153,7 @@ class Splitter(
                                 }
                             }
                         }
+
                         result
                     }
 

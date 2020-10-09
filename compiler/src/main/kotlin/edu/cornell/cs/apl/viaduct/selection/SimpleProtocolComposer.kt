@@ -92,14 +92,15 @@ object SimpleProtocolComposer : ProtocolComposer {
                     "send" to
                         dstHostSenders.map { sender ->
                             CommunicationEvent(src.hostOutputPorts[sender]!!, dst.hostInputPorts[sender]!!)
-                        }.toSet(),
-
-                    "broadcast" to
-                        src.hosts.flatMap { sender ->
-                            dstHostReceivers.map { receiver ->
-                                CommunicationEvent(src.hostOutputPorts[sender]!!, dst.hostInputPorts[receiver]!!)
+                        }.plus(
+                            src.hosts.flatMap { sender ->
+                                dstHostReceivers.map { receiver ->
+                                    CommunicationEvent(src.hostOutputPorts[sender]!!, dst.hostInputPorts[receiver]!!)
+                                }
                             }
-                        }.toSet()
+                        ).toSet(),
+
+                    "broadcast" to setOf()
                 ))
             }
 
@@ -171,17 +172,18 @@ object SimpleProtocolComposer : ProtocolComposer {
                                 src.hostCleartextOutputPorts[sender]!!,
                                 dst.hostInputPorts[sender]!!
                             )
-                        }.toSet(),
-
-                    "broadcast" to
-                        src.hosts.flatMap { sender ->
-                            dstHostReceivers.map { receiver ->
-                                CommunicationEvent(
-                                    src.hostCleartextOutputPorts[sender]!!,
-                                    dst.hostInputPorts[receiver]!!
-                                )
+                        }.plus(
+                            src.hosts.flatMap { sender ->
+                                dstHostReceivers.map { receiver ->
+                                    CommunicationEvent(
+                                        src.hostCleartextOutputPorts[sender]!!,
+                                        dst.hostInputPorts[receiver]!!
+                                    )
+                                }
                             }
-                        }.toSet()
+                        ).toSet(),
+
+                    "broadcast" to setOf()
                 ))
             }
 
@@ -218,4 +220,26 @@ object SimpleProtocolComposer : ProtocolComposer {
 
     fun getBroadcastPhase(src: Protocol, dst: Protocol): ProtocolCommunication.CommunicationPhase =
         Pair(src, dst).communicate.getPhase("broadcast")
+
+    private val Pair<Protocol, Protocol>.synchronize: ProtocolCommunication by attribute {
+        val src = this.first
+        val dst = this.second
+        val dstHostReceivers = dst.hosts.removeAll(src.hosts)
+        val dstHostSenders = dst.hosts.removeAll(dstHostReceivers)
+        ProtocolCommunication(mapOf(
+            "sync" to
+                dstHostSenders.map { sender ->
+                    CommunicationEvent(src.syncOutputPorts[sender]!!, dst.syncInputPorts[sender]!!)
+                }.plus(
+                    src.hosts.flatMap { sender ->
+                        dstHostReceivers.map { receiver ->
+                            CommunicationEvent(src.syncOutputPorts[sender]!!, dst.syncInputPorts[receiver]!!)
+                        }
+                    }
+                ).toSet()
+        ))
+    }
+
+    fun getSyncPhase(src: Protocol, dst: Protocol): ProtocolCommunication.CommunicationPhase =
+        Pair(src, dst).synchronize.getPhase("sync")
 }

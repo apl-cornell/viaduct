@@ -169,7 +169,7 @@ terminal MIN, MAX;
 
 terminal DECLASSIFY, ENDORSE, DOWNGRADE;
 
-terminal INT, BOOL, ARRAY;
+terminal INT, BOOL, UNIT, ARRAY;
 terminal TOP, BOTTOM, OR, AND, JOIN, MEET, RARROW, LARROW;
 
 terminal OPEN_BRACE, CLOSE_BRACE, SEMICOLON;
@@ -677,6 +677,10 @@ value ::=
   | INT_LIT:literal {:
       RESULT = new IntegerValue(literal);
     :}
+
+  | UNIT {:
+      RESULT = UnitValue.INSTANCE;
+    :}
   ;
 
 
@@ -687,6 +691,10 @@ value_type ::=
 
   | BOOL:type {:
       RESULT = new Located(BooleanType.INSTANCE, location(typeleft, typeright));
+    :}
+
+  | UNIT:type {:
+      RESULT = new Located(UnitType.INSTANCE, location(typeleft, typeright));
     :}
   ;
 

@@ -99,6 +99,7 @@ NUM         = ((-)?[1-9][0-9]*) | 0
   /* Types */
   "int"           { return symbol(sym.INT); }
   "bool"          { return symbol(sym.BOOL); }
+  "unit"          { return symbol(sym.UNIT); }
   "Array"         { return symbol(sym.ARRAY); }
 
   /* Statements */

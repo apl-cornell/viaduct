@@ -40,11 +40,15 @@ object SimpleCostEstimator : CostEstimator<IntegerCost> {
                 SimpleProtocolComposer.communicate(source, destination).communicationMap.map { kv ->
                     val plaintextMsgCost =
                         kv.value.filter { event ->
-                            event.send.host != event.recv.host && event.send.protocol !is ABY
+                            event.send.host != event.recv.host && event.send.protocol !is ABY &&
+                                event.send.id != "SYNC"
                         }.size
 
                     val mpcExecCost =
-                        if (kv.value.any { event -> event.send.protocol is ABY && event.recv.protocol !is ABY }) 10 else 0
+                        if (kv.value.any { event ->
+                            event.send.protocol is ABY && event.send.id != "SYNC" && event.recv.protocol !is ABY }
+                        ) 10 else 0
+
                     plaintextMsgCost + mpcExecCost
                 }.fold(0) { acc, phaseCost -> acc + phaseCost }
 

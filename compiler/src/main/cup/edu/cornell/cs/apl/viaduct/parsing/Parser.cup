@@ -165,7 +165,7 @@ terminal ASSERT;
 terminal NOT, ANDAND, OROR;
 terminal EQEQ, NEQ, LT, LEQ, GT, GEQ;
 terminal PLUS, MINUS, TIMES, DIVIDE;
-terminal MIN, MAX;
+terminal MIN, MAX, MUX;
 
 terminal DECLASSIFY, ENDORSE, DOWNGRADE;
 
@@ -585,6 +585,12 @@ expr ::=
 
   | MAX:begin OPEN_PAREN expr:e1 COMMA expr:e2 CLOSE_PAREN:end {:
       RESULT = binaryExpression(Maximum.INSTANCE, e1, e2);
+    :}
+
+  | MUX:begin OPEN_PAREN expr:e1 COMMA expr:e2 COMMA expr:e3 CLOSE_PAREN:end {:
+      Arguments arguments = Arguments.from(e1, e2, e3);
+      SourceRange sourceLocation = e1.getSourceLocation().merge(e2.getSourceLocation()).merge(e3.getSourceLocation());
+      RESULT = new OperatorApplicationNode(Mux.INSTANCE, arguments, location(beginleft, endright));
     :}
 
   | DECLASSIFY:begin expr:e optional_from_label:from TO label:to {:

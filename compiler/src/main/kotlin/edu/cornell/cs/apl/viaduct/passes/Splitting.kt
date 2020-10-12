@@ -19,21 +19,32 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.AssertionNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.AtomicExpressionNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.BlockNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.BreakNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.DeclarationNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.DeclassificationNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.EndorsementNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.ExpressionNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.FunctionCallNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.FunctionDeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.IfNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.InfiniteLoopNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.InputNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.LetNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.LiteralNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.OperatorApplicationNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutParameterConstructorInitializerNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutParameterExpressionInitializerNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutParameterInitializationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutputNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProcessDeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.QueryNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ReadNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ReceiveNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.SendNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.SimpleStatementNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.StatementNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.TopLevelDeclarationNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.UpdateNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.deepCopy
 import edu.cornell.cs.apl.viaduct.syntax.types.UnitType
 import edu.cornell.cs.apl.viaduct.syntax.values.UnitValue
@@ -67,6 +78,64 @@ class Splitter(
                 }
                 .toMap()
 
+        private fun ExpressionNode.eraseSecurityLabels(): ExpressionNode =
+            when (this) {
+                is LiteralNode -> this
+                is ReadNode -> this
+                is OperatorApplicationNode -> this
+                is QueryNode -> this
+                is DeclassificationNode -> this.expression
+                is EndorsementNode -> this.expression
+                is InputNode -> this
+                is ReceiveNode -> this
+            }
+
+        private fun SimpleStatementNode.eraseSecurityLabels(): SimpleStatementNode =
+            when (this) {
+                is LetNode ->
+                    LetNode(
+                        temporary = this.temporary,
+                        value = this.value.eraseSecurityLabels(),
+                        sourceLocation = this.sourceLocation
+                    )
+
+                is DeclarationNode ->
+                    DeclarationNode(
+                        name = this.name,
+                        className = this.className,
+                        typeArguments = this.typeArguments,
+                        labelArguments = null,
+                        arguments = this.arguments,
+                        sourceLocation = this.sourceLocation
+                    )
+
+                is UpdateNode -> this.deepCopy() as SimpleStatementNode
+
+                is OutParameterInitializationNode ->
+                    when (val initializer = this.initializer) {
+                        is OutParameterExpressionInitializerNode ->
+                            this.deepCopy() as SimpleStatementNode
+
+                        is OutParameterConstructorInitializerNode ->
+                            OutParameterInitializationNode(
+                                name = this.name,
+                                initializer =
+                                    OutParameterConstructorInitializerNode(
+                                        className = initializer.className,
+                                        typeArguments = initializer.typeArguments,
+                                        labelArguments = null,
+                                        arguments = initializer.arguments,
+                                        sourceLocation = initializer.sourceLocation
+                                    ),
+                                sourceLocation = this.sourceLocation
+                            )
+                    }
+
+                is OutputNode -> this.deepCopy() as SimpleStatementNode
+
+                is SendNode -> this.deepCopy() as SimpleStatementNode
+            }
+
         private fun projectFor(block: BlockNode, protocol: Protocol): BlockNode {
             val statements: List<StatementNode> = block.statements.flatMap {
                 if (protocol !in protocolAnalysis.protocols(it) &&
@@ -79,7 +148,7 @@ class Splitter(
                         val primaryProtocol = protocolAnalysis.primaryProtocol(it)
 
                         if (protocol == primaryProtocol)
-                            result.add(it)
+                            result.add(it.eraseSecurityLabels())
 
                         if (it is LetNode) {
                             when (protocol) {
@@ -232,7 +301,7 @@ class Splitter(
                             functionMap[Pair(function.name.value, protocol)]!!,
                             function.name.sourceLocation
                         ),
-                        function.pcLabel,
+                        null,
                         Arguments(
                             function.parameters.filter { param ->
                                 protocolAnalysis.primaryProtocol(param) == protocol

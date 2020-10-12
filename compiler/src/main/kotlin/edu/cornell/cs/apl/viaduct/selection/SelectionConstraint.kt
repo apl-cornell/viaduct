@@ -5,11 +5,19 @@ import com.microsoft.z3.BoolExpr
 import com.microsoft.z3.Context
 import com.microsoft.z3.IntExpr
 import com.uchuhimo.collections.BiMap
+import edu.cornell.cs.apl.prettyprinting.Document
+import edu.cornell.cs.apl.prettyprinting.PrettyPrintable
+import edu.cornell.cs.apl.prettyprinting.braced
+import edu.cornell.cs.apl.prettyprinting.plus
+import edu.cornell.cs.apl.prettyprinting.times
 import edu.cornell.cs.apl.viaduct.syntax.FunctionName
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
 import edu.cornell.cs.apl.viaduct.syntax.Variable
 
-typealias FunctionVariable = Pair<FunctionName, Variable>
+data class FunctionVariable(val function: FunctionName, val variable: Variable) : PrettyPrintable {
+    override val asDocument: Document =
+        Document("(") + function + "," + variable.asDocument + Document(")")
+}
 
 sealed class SymbolicCost : CostMonoid<SymbolicCost> {
     companion object {
@@ -22,29 +30,64 @@ sealed class SymbolicCost : CostMonoid<SymbolicCost> {
     override fun zero(): SymbolicCost = SymbolicCost.zero()
 }
 
-data class CostLiteral(val cost: Int) : SymbolicCost()
-data class CostVariable(val variable: IntExpr) : SymbolicCost()
-data class CostAdd(val lhs: SymbolicCost, val rhs: SymbolicCost) : SymbolicCost()
-data class CostMul(val lhs: SymbolicCost, val rhs: SymbolicCost) : SymbolicCost()
-data class CostMux(val guard: SelectionConstraint, val lhs: SymbolicCost, val rhs: SymbolicCost) : SymbolicCost()
+data class CostLiteral(val cost: Int) : SymbolicCost() {
+    override val asDocument: Document = Document(cost.toString())
+}
+
+data class CostVariable(val variable: IntExpr) : SymbolicCost() {
+    override val asDocument: Document = Document(variable.toString())
+}
+
+data class CostAdd(val lhs: SymbolicCost, val rhs: SymbolicCost) : SymbolicCost() {
+    override val asDocument: Document = lhs.asDocument * Document("+") * rhs.asDocument
+}
+
+data class CostMul(val lhs: SymbolicCost, val rhs: SymbolicCost) : SymbolicCost() {
+    override val asDocument: Document = lhs.asDocument * Document("*") * rhs.asDocument
+}
+
+data class CostMux(val guard: SelectionConstraint, val lhs: SymbolicCost, val rhs: SymbolicCost) : SymbolicCost() {
+    override val asDocument: Document =
+        guard.asDocument * Document("?") * lhs.asDocument * Document(":") * rhs.asDocument
+}
 
 /** Custom selection constraints specified for constraint solving during splitting. */
-sealed class SelectionConstraint
+sealed class SelectionConstraint : PrettyPrintable
 
-data class Literal(val literalValue: Boolean) : SelectionConstraint()
-data class Implies(val lhs: SelectionConstraint, val rhs: SelectionConstraint) : SelectionConstraint()
-data class Or(val lhs: SelectionConstraint, val rhs: SelectionConstraint) : SelectionConstraint()
+data class Literal(val literalValue: Boolean) : SelectionConstraint() {
+    override val asDocument: Document = Document(literalValue.toString())
+}
+
+data class Implies(val lhs: SelectionConstraint, val rhs: SelectionConstraint) : SelectionConstraint() {
+    override val asDocument: Document = lhs.asDocument * Document("=>") * rhs.asDocument
+}
+
+data class Or(val lhs: SelectionConstraint, val rhs: SelectionConstraint) : SelectionConstraint() {
+    override val asDocument: Document = lhs.asDocument * Document("||") * rhs.asDocument
+}
 
 /** VariableIn(v, P) holds when v is selected to be a protocol in P **/
-data class VariableIn(val variable: FunctionVariable, val protocols: Set<Protocol>) : SelectionConstraint()
+data class VariableIn(val variable: FunctionVariable, val protocols: Set<Protocol>) : SelectionConstraint() {
+    override val asDocument: Document =
+        variable * Document("in") * protocols.map { it.asDocument }.braced()
+}
 
 /** Protocols for v1 and v2 are equal. */
-data class VariableEquals(val var1: FunctionVariable, val var2: FunctionVariable) : SelectionConstraint()
+data class VariableEquals(val var1: FunctionVariable, val var2: FunctionVariable) : SelectionConstraint() {
+    override val asDocument: Document = var1.asDocument * Document("==") * var2.asDocument
+}
 
-data class CostEquals(val lhs: SymbolicCost, val rhs: SymbolicCost) : SelectionConstraint()
+data class CostEquals(val lhs: SymbolicCost, val rhs: SymbolicCost) : SelectionConstraint() {
+    override val asDocument: Document = lhs.asDocument * Document("=") * rhs.asDocument
+}
 
-data class Not(val rhs: SelectionConstraint) : SelectionConstraint()
-data class And(val lhs: SelectionConstraint, val rhs: SelectionConstraint) : SelectionConstraint()
+data class Not(val rhs: SelectionConstraint) : SelectionConstraint() {
+    override val asDocument: Document = Document("!") + rhs.asDocument
+}
+
+data class And(val lhs: SelectionConstraint, val rhs: SelectionConstraint) : SelectionConstraint() {
+    override val asDocument: Document = lhs.asDocument * Document("&&") * rhs.asDocument
+}
 
 internal fun Boolean.implies(r: Boolean) = (!this) || r
 
@@ -55,12 +98,25 @@ internal fun SelectionConstraint.evaluate(f: (FunctionName, Variable) -> Protoco
         is Implies -> lhs.evaluate(f).implies(rhs.evaluate(f))
         is Or -> (lhs.evaluate(f)) || (rhs.evaluate(f))
         is And -> (lhs.evaluate(f)) && (rhs.evaluate(f))
-        is VariableIn -> protocols.contains(f(variable.first, variable.second))
+        is VariableIn -> protocols.contains(f(variable.function, variable.variable))
         is Not -> !(rhs.evaluate(f))
-        is VariableEquals -> f(var1.first, var1.second) == f(var2.first, var2.second)
+        is VariableEquals -> f(var1.function, var1.variable) == f(var2.function, var2.variable)
 
         // TODO: ignore cost constraints for now
         is CostEquals -> true
+    }
+}
+
+internal fun SymbolicCost.evaluate(
+    f: (FunctionName, Variable) -> Protocol,
+    c: (CostVariable) -> Int
+): Int {
+    return when (this) {
+        is CostLiteral -> this.cost
+        is CostVariable -> c(this)
+        is CostAdd -> this.lhs.evaluate(f, c) + this.rhs.evaluate(f, c)
+        is CostMul -> this.lhs.evaluate(f, c) + this.rhs.evaluate(f, c)
+        is CostMux -> if (this.guard.evaluate(f)) this.lhs.evaluate(f, c) else this.rhs.evaluate(f, c)
     }
 }
 

@@ -245,7 +245,7 @@ private class ABYInterpreter(
                     ABYConstantGate(value.value)
                 }
 
-            else -> throw Exception("unknown value type")
+            else -> throw Exception("unknown value type: ${value.asDocument.print()}")
         }
     }
 

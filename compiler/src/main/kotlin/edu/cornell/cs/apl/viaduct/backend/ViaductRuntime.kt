@@ -105,6 +105,7 @@ private class ViaductReceiverThread(
 
 private class ViaductSenderThread(
     val socket: Socket,
+    val runtime: ViaductRuntime,
     msgQueue: Channel<ViaductMessage>
 ) : ViaductThread(msgQueue) {
     override suspend fun processCommunicationMessage(msg: CommunicationMessage) {
@@ -363,6 +364,7 @@ class ViaductRuntime(
                     launch {
                         ViaductSenderThread(
                             connectionMap[kv.key]!!,
+                            this@ViaductRuntime,
                             hostInfoMap[kv.key]!!.sendChannel
                         ).run()
                     }

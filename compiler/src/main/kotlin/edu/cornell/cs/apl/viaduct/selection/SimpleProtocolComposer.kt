@@ -19,32 +19,24 @@ object SimpleProtocolComposer : ProtocolComposer {
                 ))
 
             src is Local && dst is Replication -> {
-                // receive in local replica and then broadcast to all other replicas
-                if (dst.hosts.contains(src.host)) {
-                    ProtocolCommunication(mapOf(
-                        "send" to
-                            setOf(CommunicationEvent(src.hostOutputPort, dst.hostInputPorts[src.host]!!)),
+                val dstHostReceivers = dst.hosts.removeAll(src.hosts)
+                val dstHostSenders = dst.hosts.removeAll(dstHostReceivers)
 
-                        "broadcast" to
-                            dst.hosts
-                                .filter { dstHost -> dstHost != src.host }
-                                .map { dstHost ->
-                                    CommunicationEvent(
-                                        dst.hostOutputPorts[src.host]!!,
-                                        dst.hostInputPorts[dstHost]!!
-                                    )
-                                }.toSet()
-                    ))
-                } else {
-                    ProtocolCommunication(mapOf(
-                        "send" to
-                            dst.hosts.map { dstHost ->
-                                CommunicationEvent(src.hostOutputPort, dst.hostInputPorts[dstHost]!!)
-                            }.toSet(),
+                // TODO: optimize this later. receivers don't necessarily need to receive from all senders
+                ProtocolCommunication(mapOf(
+                    "send" to
+                        dstHostSenders.map { sender ->
+                            CommunicationEvent(src.hostOutputPort, dst.hostInputPorts[sender]!!)
+                        }.plus(
+                            src.hosts.flatMap { _ ->
+                                dstHostReceivers.map { receiver ->
+                                    CommunicationEvent(src.hostOutputPort, dst.hostInputPorts[receiver]!!)
+                                }
+                            }
+                        ).toSet(),
 
-                        "broadcast" to setOf()
-                    ))
-                }
+                    "broadcast" to setOf()
+                ))
             }
 
             src is Local && dst is ABY -> {

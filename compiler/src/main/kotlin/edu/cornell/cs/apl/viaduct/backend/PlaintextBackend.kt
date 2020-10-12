@@ -202,13 +202,22 @@ private class PlaintextInterpreter(
                             }
                         }
 
-                        assert(finalValue != null)
+                        val broadcastPhase = SimpleProtocolComposer.getBroadcastPhase(sendProtocol, projection.protocol)
+                        if (finalValue != null) {
+                            for (sendEvent: CommunicationEvent in broadcastPhase.getHostSends(this.projection.host)) {
+                                runtime.send(finalValue, ProtocolProjection(sendEvent.recv.protocol, sendEvent.recv.host))
+                            }
+                        } else {
+                            for (recvEvent: CommunicationEvent in broadcastPhase.getHostReceives(this.projection.host)) {
+                                val receivedValue: Value =
+                                    runtime.receive(ProtocolProjection(sendProtocol, recvEvent.send.host))
 
-                        val broadcastPhase =
-                            SimpleProtocolComposer.getBroadcastPhase(sendProtocol, projection.protocol)
-
-                        for (sendEvent: CommunicationEvent in broadcastPhase.getHostSends(this.projection.host)) {
-                            runtime.send(finalValue!!, ProtocolProjection(this.projection.protocol, sendEvent.recv.host))
+                                if (finalValue == null) {
+                                    finalValue = receivedValue
+                                } else if (finalValue != receivedValue) {
+                                    throw ViaductInterpreterError("received different values")
+                                }
+                            }
                         }
 
                         finalValue!!

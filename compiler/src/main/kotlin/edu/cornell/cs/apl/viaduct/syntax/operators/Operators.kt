@@ -327,6 +327,6 @@ object Mux : InfixOperator {
     }
 
     override fun asDocument(arguments: List<PrettyPrintable>): Document {
-        return arguments[0] * "?" * arguments[1] * ":" * arguments[2]
+        return Document("mux") + listOf(arguments[0], arguments[1], arguments[2]).tupled().nested()
     }
 }

@@ -50,9 +50,11 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.SendNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.UpdateNode
 import edu.cornell.cs.apl.viaduct.syntax.types.BooleanType
 import edu.cornell.cs.apl.viaduct.syntax.types.IntegerType
+import edu.cornell.cs.apl.viaduct.syntax.types.UnitType
 import edu.cornell.cs.apl.viaduct.syntax.types.ValueType
 import edu.cornell.cs.apl.viaduct.syntax.values.BooleanValue
 import edu.cornell.cs.apl.viaduct.syntax.values.IntegerValue
+import edu.cornell.cs.apl.viaduct.syntax.values.UnitValue
 import edu.cornell.cs.apl.viaduct.syntax.values.Value
 import java.util.SortedSet
 import java.util.Stack
@@ -243,7 +245,7 @@ private class ABYInterpreter(
                     ABYConstantGate(value.value)
                 }
 
-            else -> throw Exception("unknown value type")
+            else -> throw Exception("unknown value type: ${value.asDocument.print()}")
         }
     }
 
@@ -285,18 +287,24 @@ private class ABYInterpreter(
                 val sendProtocol: Protocol = rhs.protocol.value
                 val recvProtocol: Protocol = runtime.projection.protocol
 
-                val sendPhase =
-                    SimpleProtocolComposer.getSendPhase(sendProtocol, recvProtocol)
+                val phase =
+                    when (rhs.type.value) {
+                        is UnitType ->
+                            SimpleProtocolComposer.getSyncPhase(sendProtocol, recvProtocol)
+
+                        else ->
+                            SimpleProtocolComposer.getSendPhase(sendProtocol, recvProtocol)
+                    }
 
                 var secretInput: Value? = null
                 var cleartextInput: Value? = null
 
-                for (sendEvent in sendPhase) {
+                for (sendEvent in phase) {
                     when {
                         // secret input for this host; create input gate
                         sendEvent.recv.id == "SECRET_INPUT" && sendEvent.recv.host == runtime.projection.host -> {
                             val receivedValue: Value =
-                                runtime.receive(ProtocolProjection(sendProtocol, runtime.projection.host))
+                                runtime.receive(ProtocolProjection(sendProtocol, sendEvent.send.host))
 
                             if (secretInput == null) {
                                 secretInput = receivedValue
@@ -317,14 +325,22 @@ private class ABYInterpreter(
                         // cleartext input
                         sendEvent.recv.id == "CLEARTEXT_INPUT" && sendEvent.recv.host == runtime.projection.host -> {
                             val receivedValue: Value =
-                                runtime.receive(ProtocolProjection(sendProtocol, runtime.projection.host))
+                                runtime.receive(ProtocolProjection(sendProtocol, sendEvent.send.host))
 
                             if (cleartextInput == null) {
                                 cleartextInput = receivedValue
-                                ctTempStore = ctTempStore.put(stmt.temporary.value, cleartextInput)
+
+                                if (rhs.type.value !is UnitType) {
+                                    ctTempStore = ctTempStore.put(stmt.temporary.value, cleartextInput)
+                                }
                             } else if (cleartextInput != receivedValue) {
                                 throw ViaductInterpreterError("received different values")
                             }
+                        }
+
+                        // synchronization message
+                        sendEvent.recv.id == "SYNC" && sendEvent.recv.host == runtime.projection.host -> {
+                            runtime.receive(ProtocolProjection(sendProtocol, sendEvent.send.host))
                         }
                     }
                 }
@@ -390,32 +406,41 @@ private class ABYInterpreter(
         val sendProtocol = runtime.projection.protocol
         val recvProtocol = stmt.protocol.value
 
-        val sendPhase = SimpleProtocolComposer.getSendPhase(sendProtocol, recvProtocol)
-
-        val thisHostHasSends = sendPhase.any { event -> event.send.host == runtime.projection.host }
-        val otherHostHasSends = sendPhase.any { event -> event.send.host == this.otherHost }
-
-        val outRole =
+        val phase =
             when {
-                // only this party receives cleartext value of output gate
-                thisHostHasSends && !otherHostHasSends ->
-                    this.role
+                stmt.message is LiteralNode && stmt.message.value == UnitValue ->
+                    SimpleProtocolComposer.getSyncPhase(sendProtocol, recvProtocol)
 
-                // only other party receives cleartext value of output gate
-                !thisHostHasSends && otherHostHasSends ->
-                    if (this.role == Role.SERVER) Role.CLIENT else Role.SERVER
-
-                // both parties receive cleartext value of output gate
-                else -> Role.ALL
+                else ->
+                    SimpleProtocolComposer.getSendPhase(sendProtocol, recvProtocol)
             }
 
         val sendValue: Value =
             when (val msg: AtomicExpressionNode = stmt.message) {
+                // send plaintext value
                 is LiteralNode -> {
                     msg.value
                 }
 
+                // build and execute ABY circuit
                 is ReadNode -> {
+                    val thisHostHasSends = phase.any { event -> event.send.host == runtime.projection.host }
+                    val otherHostHasSends = phase.any { event -> event.send.host == this.otherHost }
+
+                    val outRole =
+                        when {
+                            // only this party receives cleartext value of output gate
+                            thisHostHasSends && !otherHostHasSends ->
+                                this.role
+
+                            // only other party receives cleartext value of output gate
+                            !thisHostHasSends && otherHostHasSends ->
+                                if (this.role == Role.SERVER) Role.CLIENT else Role.SERVER
+
+                            // both parties receive cleartext value of output gate
+                            else -> Role.ALL
+                        }
+
                     val outGate: ABYCircuitGate =
                         ssTempStore[msg.temporary.value]
                             ?: throw UndefinedNameError(msg.temporary)
@@ -435,7 +460,7 @@ private class ABYInterpreter(
                 }
             }
 
-        for (sendEvent in sendPhase.getHostSends(runtime.projection.host)) {
+        for (sendEvent in phase.getHostSends(runtime.projection.host)) {
             runtime.send(sendValue, ProtocolProjection(recvProtocol, sendEvent.recv.host))
         }
     }

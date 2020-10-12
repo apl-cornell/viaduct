@@ -9,6 +9,7 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProcessDeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
 import edu.cornell.cs.apl.viaduct.syntax.values.BooleanValue
 import edu.cornell.cs.apl.viaduct.syntax.values.IntegerValue
+import edu.cornell.cs.apl.viaduct.syntax.values.UnitValue
 import edu.cornell.cs.apl.viaduct.syntax.values.Value
 import java.io.InputStream
 import java.io.OutputStream
@@ -85,6 +86,9 @@ private class ViaductReceiverThread(
                             // IntegerValue
                             valType == 1 -> IntegerValue(unparsedValue)
 
+                            // UnitValue
+                            valType == 2 -> UnitValue
+
                             else -> throw ViaductInterpreterError("parsed invalid value type $valType")
                         }
 
@@ -101,6 +105,7 @@ private class ViaductReceiverThread(
 
 private class ViaductSenderThread(
     val socket: Socket,
+    val runtime: ViaductRuntime,
     msgQueue: Channel<ViaductMessage>
 ) : ViaductThread(msgQueue) {
     override suspend fun processCommunicationMessage(msg: CommunicationMessage) {
@@ -119,6 +124,11 @@ private class ViaductSenderThread(
                         is IntegerValue -> {
                             socketOutput.write(1)
                             socketOutput.write(msg.message.value)
+                        }
+
+                        is UnitValue -> {
+                            socketOutput.write(2)
+                            socketOutput.write(0)
                         }
                     }
                 }
@@ -354,6 +364,7 @@ class ViaductRuntime(
                     launch {
                         ViaductSenderThread(
                             connectionMap[kv.key]!!,
+                            this@ViaductRuntime,
                             hostInfoMap[kv.key]!!.sendChannel
                         ).run()
                     }

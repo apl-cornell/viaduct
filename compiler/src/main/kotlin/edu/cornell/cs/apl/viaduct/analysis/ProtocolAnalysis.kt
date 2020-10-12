@@ -11,6 +11,7 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.AssertionNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.BlockNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.BreakNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.DeclarationNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.DowngradeNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.FunctionCallNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.FunctionDeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.IfNode
@@ -169,6 +170,25 @@ class ProtocolAnalysis(
 
     /** Returns the set of protocols that execute [function]. */
     fun protocols(function: FunctionDeclarationNode): Set<Protocol> = function.protocols
+
+    /** Used to compute [syncProtocols]. */
+    private val StatementNode.syncProtocols: Set<Protocol> by circularAttribute(
+        persistentHashSetOf()
+    ) {
+        when (this) {
+            is LetNode -> {
+                when (this.value) {
+                    is DowngradeNode -> this.enclosingBlock.protocols
+                    else -> setOf()
+                }
+            }
+
+            else -> setOf()
+        }
+    }
+
+    /** Returns the set of protocols that must synchronize with [statement]. */
+    fun syncProtocols(statement: StatementNode): Set<Protocol> = statement.syncProtocols
 }
 
 /** Returns the union of all sets in this collection. */

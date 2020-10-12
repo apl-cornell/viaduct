@@ -100,6 +100,18 @@ abstract class Protocol : Name, Comparable<Protocol> {
             return 0
         }
     }
+
+    val syncInputPorts: Map<Host, InputPort> by lazy {
+        hosts
+            .map { h -> Pair(h, InputPort(this, h, "SYNC")) }
+            .toMap()
+    }
+
+    val syncOutputPorts: Map<Host, OutputPort> by lazy {
+        hosts
+            .map { h -> Pair(h, OutputPort(this, h, "SYNC")) }
+            .toMap()
+    }
 }
 
 /**

@@ -129,7 +129,7 @@ internal class ZKPProver(
             MutableCell -> ZKPObject.ZKPMutableCell(getAtomicExprWire(arguments[0]))
             Vector -> {
                 val length = runExprAsValue(arguments[0]) as IntegerValue
-                ZKPObject.ZKPVectorObject(length.value, typeArguments[0].defaultValue)
+                ZKPObject.ZKPVectorObject(length.value, typeArguments[0].defaultValue, wireGenerator)
             }
             else -> throw Exception("unknown object")
         }

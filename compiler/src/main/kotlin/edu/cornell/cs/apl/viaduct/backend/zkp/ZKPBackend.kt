@@ -3,6 +3,7 @@ package edu.cornell.cs.apl.viaduct.backend.zkp
 import edu.cornell.cs.apl.viaduct.backend.ProtocolBackend
 import edu.cornell.cs.apl.viaduct.backend.ViaductProcessRuntime
 import edu.cornell.cs.apl.viaduct.backend.WireConst
+import edu.cornell.cs.apl.viaduct.backend.WireGenerator
 import edu.cornell.cs.apl.viaduct.backend.WireTerm
 import edu.cornell.cs.apl.viaduct.errors.ViaductInterpreterError
 import edu.cornell.cs.apl.viaduct.protocols.ZKP
@@ -40,7 +41,7 @@ class ZKPBackend : ProtocolBackend {
 sealed class ZKPObject {
     data class ZKPImmutableCell(val value: WireTerm) : ZKPObject()
     data class ZKPMutableCell(var value: WireTerm) : ZKPObject()
-    class ZKPVectorObject(val size: Int, val defaultValue: Value) : ZKPObject() {
+    class ZKPVectorObject(val size: Int, val defaultValue: Value, val wireGenerator: WireGenerator) : ZKPObject() {
         val gates: ArrayList<WireTerm> = ArrayList(size)
 
         init {
@@ -57,7 +58,7 @@ sealed class ZKPObject {
                         )
                         else -> throw Exception("Bad default value")
                     }
-                gates[i] = WireConst(v.value)
+                gates[i] = wireGenerator.mkConst(v.value)
             }
         }
     }

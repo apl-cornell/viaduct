@@ -68,6 +68,8 @@ dependencies {
     // Cryptography
     implementation("com.github.apl-cornell:aby-java:0275050a4b")
 
+    implementation(files("libs/jsnark.jar"))
+
     // Logging
     implementation("io.github.microutils:kotlin-logging:1.8.3")
     implementation("org.apache.logging.log4j:log4j-core:2.13.3")

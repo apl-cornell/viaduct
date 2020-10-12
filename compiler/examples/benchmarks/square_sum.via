@@ -1,0 +1,33 @@
+process main {
+    val length: int = 100;
+
+    val a = Array[int]{A}(length);
+    for (var i : int = 0; i < length; i += 1) {
+        a[i] = input int from alice;
+    }
+
+    val b = Array[int]{B}(length);
+    for (var i : int = 0; i < length; i += 1) {
+        b[i] = input int from bob;
+    }
+
+    var a_sum : int{A} = 0;
+    for (var i : int = 0; i < length; i += 1) {
+        a_sum += a[i] * a[i];
+    }
+
+    var b_sum : int{B} = 0;
+    for (var i : int = 0; i < length; i += 1) {
+        b_sum += b[i] * b[i];
+    }
+
+    val sqsums : int = endorse a_sum to {A & B<-} + endorse b_sum to {B & A<-};
+
+    val result : int = declassify (sqsums / 2) to {A ⊓ B};
+
+    output result to alice;
+    output result to bob;
+}
+
+host alice  : {A}
+host bob    : {B}

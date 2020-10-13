@@ -43,8 +43,8 @@ class ProtocolAnalysis(
     val tree = program.tree
     val nameAnalysis = NameAnalysis.get(program)
 
-    /** The [ProcessDeclarationNode] this [Node] is in. */
-    private val Node.enclosingBlock: BlockNode by attribute {
+    /** The outermost block this [Node] is in. */
+    private val Node.enclosingBody: BlockNode by attribute {
         when (val parent = tree.parent(this)!!) {
             is ProcessDeclarationNode ->
                 parent.body
@@ -53,7 +53,7 @@ class ProtocolAnalysis(
                 parent.body
 
             else ->
-                parent.enclosingBlock
+                parent.enclosingBody
         }
     }
 
@@ -147,7 +147,7 @@ class ProtocolAnalysis(
             // and all protocols participating in the function body
             is FunctionCallNode ->
                 nameAnalysis.declaration(this).protocols
-                    .addAll(this.enclosingBlock.protocols)
+                    .addAll(this.enclosingBody.protocols)
 
             is IfNode ->
                 thenBranch.protocols.addAll(elseBranch.protocols)
@@ -158,7 +158,7 @@ class ProtocolAnalysis(
                 nameAnalysis.correspondingLoop(this).protocols
             is AssertionNode ->
                 // All protocols execute every assertion.
-                this.enclosingBlock.protocols
+                this.enclosingBody.protocols
 
             is BlockNode ->
                 statements.map { it.protocols }.unions()
@@ -178,7 +178,7 @@ class ProtocolAnalysis(
         when (this) {
             is LetNode -> {
                 when (this.value) {
-                    is DowngradeNode -> this.enclosingBlock.protocols
+                    is DowngradeNode -> this.enclosingBody.protocols
                     else -> setOf()
                 }
             }

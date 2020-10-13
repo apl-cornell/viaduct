@@ -148,6 +148,8 @@ class Splitter(
                     val protocols = protocolAnalysis.protocols(statement)
                     val protocolsToSync = protocolAnalysis.protocolsToSync(statement)
                     when (protocol) {
+                        // protocol participates in execution of control structure.
+                        // must send synchronization to protocols
                         in protocols -> {
                             listOf(newStatement).plus(
                                 protocolsToSync.map { protocolToSync ->
@@ -160,6 +162,8 @@ class Splitter(
                             )
                         }
 
+                        // protocol does not participate in executing control structure,
+                        // but does require synchronization after
                         in protocolsToSync -> {
                             protocols.map { protocolSyncFrom ->
                                 LetNode(
@@ -177,6 +181,7 @@ class Splitter(
                             }
                         }
 
+                        // neither! return nothing
                         else -> listOf()
                     }
                 }
@@ -198,6 +203,7 @@ class Splitter(
                             result.add(it.eraseSecurityLabels())
 
                         if (it is LetNode) {
+                            val protocolsToSync = protocolAnalysis.protocolsToSync(it)
                             when (protocol) {
                                 primaryProtocol -> {
                                     // Send the temporary to everyone relevant
@@ -206,6 +212,17 @@ class Splitter(
                                             SendNode(
                                                 ReadNode(it.temporary),
                                                 ProtocolNode(sendProtocol, it.temporary.sourceLocation),
+                                                it.sourceLocation
+                                            )
+                                        )
+                                    }
+
+                                    // send synchronization
+                                    protocolsToSync.forEach { syncProtocol ->
+                                        result.add(
+                                            SendNode(
+                                                LiteralNode(UnitValue, it.sourceLocation),
+                                                ProtocolNode(syncProtocol, it.sourceLocation),
                                                 it.sourceLocation
                                             )
                                         )
@@ -228,26 +245,6 @@ class Splitter(
                                             it.sourceLocation
                                         )
                                     )
-                                }
-                            }
-                        }
-
-                        // handle synchronization
-                        val protocolsToSync = protocolAnalysis.protocolsToSync(it)
-
-                        if (it is LetNode) {
-                            when (protocol) {
-                                // send synchronization
-                                primaryProtocol -> {
-                                    protocolsToSync.forEach { syncProtocol ->
-                                        result.add(
-                                            SendNode(
-                                                LiteralNode(UnitValue, it.sourceLocation),
-                                                ProtocolNode(syncProtocol, it.sourceLocation),
-                                                it.sourceLocation
-                                            )
-                                        )
-                                    }
                                 }
 
                                 // receive synchronization from primary protocol

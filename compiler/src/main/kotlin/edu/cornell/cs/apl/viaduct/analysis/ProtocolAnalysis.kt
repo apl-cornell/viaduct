@@ -171,8 +171,8 @@ class ProtocolAnalysis(
     /** Returns the set of protocols that execute [function]. */
     fun protocols(function: FunctionDeclarationNode): Set<Protocol> = function.protocols
 
-    /** Used to compute [syncProtocols]. */
-    private val StatementNode.syncProtocols: Set<Protocol> by circularAttribute(
+    /** Used to compute [protocolsRequiringSync]. */
+    private val StatementNode.protocolsRequiringSync: Set<Protocol> by circularAttribute(
         persistentHashSetOf()
     ) {
         when (this) {
@@ -183,12 +183,39 @@ class ProtocolAnalysis(
                 }
             }
 
+            is BlockNode -> {
+                this.statements.fold(setOf()) { acc, child -> acc.plus(child.protocolsRequiringSync) }
+            }
+
+            is IfNode -> this.thenBranch.protocolsRequiringSync.plus(this.elseBranch.protocolsRequiringSync)
+
+            is InfiniteLoopNode -> this.body.protocolsRequiringSync
+
+            else -> setOf()
+        }
+    }
+
+    private val StatementNode.protocolsToSync: Set<Protocol> by attribute {
+        when (this) {
+            is LetNode, is IfNode, is InfiniteLoopNode, is BlockNode -> {
+                    this.protocolsRequiringSync
+                    .subtract(this.protocols)
+                    .intersect(nameAnalysis.enclosingBlock(this).protocols)
+            }
+
             else -> setOf()
         }
     }
 
     /** Returns the set of protocols that must synchronize with [statement]. */
-    fun syncProtocols(statement: StatementNode): Set<Protocol> = statement.syncProtocols
+    fun protocolsToSync(statement: StatementNode): Set<Protocol> = statement.protocolsToSync
+
+    private val StatementNode.participatingProtocols: Set<Protocol> by attribute {
+        this.protocols.union(this.protocolsToSync)
+    }
+
+    /** Protocols that execute or require synchronization at this statement. */
+    fun participatingProtocols(statement: StatementNode): Set<Protocol> = statement.participatingProtocols
 }
 
 /** Returns the union of all sets in this collection. */

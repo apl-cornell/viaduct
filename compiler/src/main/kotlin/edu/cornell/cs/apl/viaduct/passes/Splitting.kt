@@ -136,10 +136,57 @@ class Splitter(
                 is SendNode -> this.deepCopy() as SimpleStatementNode
             }
 
+        /** Send synchronization to protocols that required synchronization in a control context
+         *  they were not participating in. */
+        private fun syncAfterControlStructure(
+            statement: StatementNode,
+            protocol: Protocol,
+            newStatement: StatementNode
+        ): List<StatementNode> =
+            when (statement) {
+                is IfNode, is InfiniteLoopNode, is BlockNode -> {
+                    val protocols = protocolAnalysis.protocols(statement)
+                    val protocolsToSync = protocolAnalysis.protocolsToSync(statement)
+                    when (protocol) {
+                        in protocols -> {
+                            listOf(newStatement).plus(
+                                protocolsToSync.map { protocolToSync ->
+                                    SendNode(
+                                        LiteralNode(UnitValue, statement.sourceLocation),
+                                        ProtocolNode(protocolToSync, statement.sourceLocation),
+                                        statement.sourceLocation
+                                    )
+                                }
+                            )
+                        }
+
+                        in protocolsToSync -> {
+                            protocols.map { protocolSyncFrom ->
+                                LetNode(
+                                    TemporaryNode(
+                                        Temporary(nameGenerator.getFreshName(SYNC_NAME)),
+                                        statement.sourceLocation
+                                    ),
+                                    ReceiveNode(
+                                        ValueTypeNode(UnitType, statement.sourceLocation),
+                                        ProtocolNode(protocolSyncFrom, statement.sourceLocation),
+                                        statement.sourceLocation
+                                    ),
+                                    statement.sourceLocation
+                                )
+                            }
+                        }
+
+                        else -> listOf()
+                    }
+                }
+
+                else -> throw Error("can only sync after if, loop, and block nodes")
+            }
+
         private fun projectFor(block: BlockNode, protocol: Protocol): BlockNode {
             val statements: List<StatementNode> = block.statements.flatMap {
-                if (protocol !in protocolAnalysis.protocols(it) &&
-                    protocol !in protocolAnalysis.syncProtocols(it))
+                if (protocol !in protocolAnalysis.participatingProtocols(it))
                     listOf()
 
                 else when (it) {
@@ -186,9 +233,9 @@ class Splitter(
                         }
 
                         // handle synchronization
-                        val protocolsToSync = protocolAnalysis.syncProtocols(it) - protocolAnalysis.protocols(it) - primaryProtocol
+                        val protocolsToSync = protocolAnalysis.protocolsToSync(it)
 
-                        if (it is LetNode || it is OutputNode) {
+                        if (it is LetNode) {
                             when (protocol) {
                                 // send synchronization
                                 primaryProtocol -> {
@@ -245,7 +292,9 @@ class Splitter(
                     }
 
                     is IfNode ->
-                        listOf(
+                        syncAfterControlStructure(
+                            it,
+                            protocol,
                             IfNode(
                                 it.guard.deepCopy() as AtomicExpressionNode,
                                 projectFor(it.thenBranch, protocol),
@@ -255,7 +304,9 @@ class Splitter(
                         )
 
                     is InfiniteLoopNode ->
-                        listOf(
+                        syncAfterControlStructure(
+                            it,
+                            protocol,
                             InfiniteLoopNode(
                                 projectFor(it.body, protocol),
                                 it.jumpLabel,
@@ -270,7 +321,11 @@ class Splitter(
                         listOf(it.deepCopy() as StatementNode)
 
                     is BlockNode ->
-                        listOf(projectFor(it, protocol))
+                        syncAfterControlStructure(
+                            it,
+                            protocol,
+                            projectFor(it, protocol)
+                        )
                 }
             }
 

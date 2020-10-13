@@ -43,8 +43,8 @@ class ProtocolAnalysis(
     val tree = program.tree
     val nameAnalysis = NameAnalysis.get(program)
 
-    /** The [ProcessDeclarationNode] this [Node] is in. */
-    private val Node.enclosingBlock: BlockNode by attribute {
+    /** The outermost block this [Node] is in. */
+    private val Node.enclosingBody: BlockNode by attribute {
         when (val parent = tree.parent(this)!!) {
             is ProcessDeclarationNode ->
                 parent.body
@@ -53,7 +53,7 @@ class ProtocolAnalysis(
                 parent.body
 
             else ->
-                parent.enclosingBlock
+                parent.enclosingBody
         }
     }
 
@@ -147,7 +147,7 @@ class ProtocolAnalysis(
             // and all protocols participating in the function body
             is FunctionCallNode ->
                 nameAnalysis.declaration(this).protocols
-                    .addAll(this.enclosingBlock.protocols)
+                    .addAll(this.enclosingBody.protocols)
 
             is IfNode ->
                 thenBranch.protocols.addAll(elseBranch.protocols)
@@ -158,7 +158,7 @@ class ProtocolAnalysis(
                 nameAnalysis.correspondingLoop(this).protocols
             is AssertionNode ->
                 // All protocols execute every assertion.
-                this.enclosingBlock.protocols
+                this.enclosingBody.protocols
 
             is BlockNode ->
                 statements.map { it.protocols }.unions()
@@ -171,16 +171,36 @@ class ProtocolAnalysis(
     /** Returns the set of protocols that execute [function]. */
     fun protocols(function: FunctionDeclarationNode): Set<Protocol> = function.protocols
 
-    /** Used to compute [syncProtocols]. */
-    private val StatementNode.syncProtocols: Set<Protocol> by circularAttribute(
+    /** Used to compute [protocolsRequiringSync]. */
+    private val StatementNode.protocolsRequiringSync: Set<Protocol> by circularAttribute(
         persistentHashSetOf()
     ) {
         when (this) {
             is LetNode -> {
                 when (this.value) {
-                    is DowngradeNode -> this.enclosingBlock.protocols
+                    is DowngradeNode -> this.enclosingBody.protocols
                     else -> setOf()
                 }
+            }
+
+            is BlockNode -> {
+                this.statements.fold(setOf()) { acc, child -> acc.plus(child.protocolsRequiringSync) }
+            }
+
+            is IfNode -> this.thenBranch.protocolsRequiringSync.plus(this.elseBranch.protocolsRequiringSync)
+
+            is InfiniteLoopNode -> this.body.protocolsRequiringSync
+
+            else -> setOf()
+        }
+    }
+
+    private val StatementNode.protocolsToSync: Set<Protocol> by attribute {
+        when (this) {
+            is LetNode, is IfNode, is InfiniteLoopNode, is BlockNode -> {
+                    this.protocolsRequiringSync
+                    .subtract(this.protocols)
+                    .intersect(nameAnalysis.enclosingBlock(this).protocols)
             }
 
             else -> setOf()
@@ -188,7 +208,14 @@ class ProtocolAnalysis(
     }
 
     /** Returns the set of protocols that must synchronize with [statement]. */
-    fun syncProtocols(statement: StatementNode): Set<Protocol> = statement.syncProtocols
+    fun protocolsToSync(statement: StatementNode): Set<Protocol> = statement.protocolsToSync
+
+    private val StatementNode.participatingProtocols: Set<Protocol> by attribute {
+        this.protocols.union(this.protocolsToSync)
+    }
+
+    /** Protocols that execute or require synchronization at this statement. */
+    fun participatingProtocols(statement: StatementNode): Set<Protocol> = statement.participatingProtocols
 }
 
 /** Returns the union of all sets in this collection. */

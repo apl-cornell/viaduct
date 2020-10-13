@@ -5,6 +5,7 @@ import edu.cornell.cs.apl.attributes.circularAttribute
 import edu.cornell.cs.apl.viaduct.errors.IllegalInternalCommunicationError
 import edu.cornell.cs.apl.viaduct.protocols.Local
 import edu.cornell.cs.apl.viaduct.syntax.FunctionName
+import edu.cornell.cs.apl.viaduct.syntax.Host
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
 import edu.cornell.cs.apl.viaduct.syntax.Variable
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.AssertionNode
@@ -12,6 +13,7 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.BlockNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.BreakNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.DeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.DowngradeNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.FunctionArgumentNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.FunctionCallNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.FunctionDeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.IfNode
@@ -25,6 +27,7 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutputNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ParameterNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProcessDeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.ReadNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ReceiveNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.SendNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.SimpleStatementNode
@@ -93,10 +96,21 @@ class ProtocolAnalysis(
     }
 
     /**
+     * Returns the protocol that coordinates the execution of the let node read by [read].
+     */
+    fun primaryProtocol(read: ReadNode): Protocol = primaryProtocol(nameAnalysis.declaration(read))
+
+    /**
      * Returns the protocol that coordinates the execution of [parameter].
      */
     fun primaryProtocol(parameter: ParameterNode): Protocol =
         protocolAssignment(nameAnalysis.functionDeclaration(parameter).name.value, parameter.name.value)
+
+    /**
+     * Returns the protocol that coordinates the execution of [argument].
+     */
+    fun primaryProtocol(argument: FunctionArgumentNode): Protocol =
+        primaryProtocol(nameAnalysis.parameter(argument))
 
     /**
      * The [primaryProtocol]s of [SimpleStatementNode]s that read the temporary defined by this
@@ -165,11 +179,21 @@ class ProtocolAnalysis(
         }
     }
 
+    /** Returns the set of protocols that direct read the let binding. */
+    fun directReaders(letNode: LetNode): Set<Protocol> = letNode.directReaders
+
     /** Returns the set of protocols that execute [statement]. */
     fun protocols(statement: StatementNode): Set<Protocol> = statement.protocols
 
     /** Returns the set of protocols that execute [function]. */
     fun protocols(function: FunctionDeclarationNode): Set<Protocol> = function.protocols
+
+    private val StatementNode.hosts: Set<Host> by attribute {
+        this.protocols.fold(setOf()) { acc, protocol -> acc.union(protocol.hosts.hosts) }
+    }
+
+    /** Returns the set of hosts that participate in the execution of [statement]. */
+    fun hosts(statement: StatementNode): Set<Host> = statement.hosts
 
     /** Used to compute [protocolsRequiringSync]. */
     private val StatementNode.protocolsRequiringSync: Set<Protocol> by circularAttribute(

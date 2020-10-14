@@ -1,9 +1,7 @@
 package edu.cornell.cs.apl.viaduct.backend
 
-import edu.cornell.cs.apl.viaduct.syntax.Arguments
-import edu.cornell.cs.apl.viaduct.syntax.ClassNameNode
 import edu.cornell.cs.apl.viaduct.syntax.ObjectVariable
-import edu.cornell.cs.apl.viaduct.syntax.ValueTypeNode
+import edu.cornell.cs.apl.viaduct.syntax.datatypes.ClassName
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.AtomicExpressionNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.BlockNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.BreakNode
@@ -26,6 +24,7 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.SendNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.StatementNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.UpdateNode
+import edu.cornell.cs.apl.viaduct.syntax.types.ValueType
 import edu.cornell.cs.apl.viaduct.syntax.values.BooleanValue
 import edu.cornell.cs.apl.viaduct.syntax.values.Value
 import java.util.Stack
@@ -94,9 +93,9 @@ abstract class AbstractBackendInterpreter<Obj>(val program: ProgramNode) {
     abstract suspend fun buildExpressionObject(expr: AtomicExpressionNode): Obj
 
     abstract suspend fun buildObject(
-        className: ClassNameNode,
-        typeArguments: Arguments<ValueTypeNode>,
-        arguments: Arguments<AtomicExpressionNode>
+        className: ClassName,
+        typeArguments: List<ValueType>,
+        arguments: List<AtomicExpressionNode>
     ): Obj
 
     abstract fun getNullObject(): Obj
@@ -117,7 +116,10 @@ abstract class AbstractBackendInterpreter<Obj>(val program: ProgramNode) {
                 putObjectLocation(
                     stmt.name.value,
                     allocateObject(
-                        buildObject(stmt.className, stmt.typeArguments, stmt.arguments)
+                        buildObject(
+                            stmt.className.value,
+                            stmt.typeArguments.map { it.value }, stmt.arguments
+                        )
                     )
                 )
             }
@@ -134,7 +136,10 @@ abstract class AbstractBackendInterpreter<Obj>(val program: ProgramNode) {
                         }
 
                         is OutParameterConstructorInitializerNode -> {
-                            buildObject(initializer.className, initializer.typeArguments, initializer.arguments)
+                            buildObject(
+                                initializer.className.value,
+                                initializer.typeArguments.map { it.value }, initializer.arguments
+                            )
                         }
                     }
 

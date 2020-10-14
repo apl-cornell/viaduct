@@ -1,9 +1,11 @@
 package edu.cornell.cs.apl.viaduct.selection
 
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
+import edu.cornell.cs.apl.viaduct.syntax.SpecializedProtocol
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.DeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.IfNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.LetNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.ObjectDeclarationArgumentNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ParameterNode
 
 /**
@@ -18,9 +20,15 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.ParameterNode
  */
 
 interface ProtocolFactory {
+    fun protocols(): List<SpecializedProtocol>
     fun viableProtocols(node: LetNode): Set<Protocol>
     fun viableProtocols(node: DeclarationNode): Set<Protocol>
     fun viableProtocols(node: ParameterNode): Set<Protocol>
+
+    /** TODO: This interface can likely be simplified by collapsing DeclarationNode and ObjectDeclarationArgumentNode
+    together by taking in [ObjectDeclaration] interface
+     **/
+    fun viableProtocols(node: ObjectDeclarationArgumentNode): Set<Protocol>
     fun constraint(node: LetNode): SelectionConstraint {
         return Literal(true)
     }
@@ -43,6 +51,8 @@ interface ProtocolFactory {
 open class UnionProtocolFactory(val selectors: Set<ProtocolFactory>) : ProtocolFactory {
     constructor(vararg selectors: ProtocolFactory) : this(selectors.toSet())
 
+    override fun protocols() = selectors.map { it.protocols() }.flatten()
+
     override fun viableProtocols(node: LetNode): Set<Protocol> =
         selectors.fold(setOf()) { acc, sel -> acc.union(sel.viableProtocols(node)) }
 
@@ -50,6 +60,9 @@ open class UnionProtocolFactory(val selectors: Set<ProtocolFactory>) : ProtocolF
         selectors.fold(setOf()) { acc, sel -> acc.union(sel.viableProtocols(node)) }
 
     override fun viableProtocols(node: ParameterNode): Set<Protocol> =
+        selectors.fold(setOf()) { acc, sel -> acc.union(sel.viableProtocols(node)) }
+
+    override fun viableProtocols(node: ObjectDeclarationArgumentNode): Set<Protocol> =
         selectors.fold(setOf()) { acc, sel -> acc.union(sel.viableProtocols(node)) }
 
     override fun constraint(node: LetNode): SelectionConstraint =

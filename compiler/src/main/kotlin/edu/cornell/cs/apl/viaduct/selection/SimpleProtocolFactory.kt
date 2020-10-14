@@ -13,8 +13,9 @@ class SimpleProtocolFactory(
     private val program: ProgramNode,
     private val localFactory: LocalFactory = LocalFactory(program),
     private val replicationFactory: ReplicationFactory = ReplicationFactory(program),
-    private val abyFactory: ABYFactory = ABYFactory(program)
-) : UnionProtocolFactory(localFactory, replicationFactory, abyFactory) {
+    private val abyFactory: ABYFactory = ABYFactory(program),
+    private val commitmentFactory: CommitmentFactory = CommitmentFactory(program)
+) : UnionProtocolFactory(localFactory, replicationFactory, abyFactory, commitmentFactory) {
     private val nameAnalysis = NameAnalysis.get(program)
 
     // if there is an MPC protocol participating in a branch of a conditional,
@@ -42,12 +43,14 @@ class SimpleProtocolFactory(
                     }
 
                 val guardNotMPCInput =
-                    Not(VariableIn(
-                        FunctionVariable(functionName, guard.temporary.value),
-                        super.viableProtocols(nameAnalysis.declaration(guard))
-                            .filterIsInstance<Local>()
-                            .toSet()
-                    ))
+                    Not(
+                        VariableIn(
+                            FunctionVariable(functionName, guard.temporary.value),
+                            super.viableProtocols(nameAnalysis.declaration(guard))
+                                .filterIsInstance<Local>()
+                                .toSet()
+                        )
+                    )
 
                 val mpcPlaintextGuardConstraint = Implies(plaintextCondition, guardNotMPCInput)
 

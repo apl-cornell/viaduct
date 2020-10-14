@@ -16,7 +16,6 @@ internal class ProtocolAnalysisTest {
     @ArgumentsSource(ExampleProgramProvider::class)
     fun `it does not explode`(surfaceProgram: ProgramNode) {
         val program = surfaceProgram.elaborated()
-
         program.check()
         val dumpProtocolAssignment =
             selectProtocolsWithZ3(program, program.main, SimpleProtocolFactory(program), SimpleCostEstimator)

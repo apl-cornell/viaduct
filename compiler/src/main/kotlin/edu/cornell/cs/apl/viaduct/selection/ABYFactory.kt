@@ -12,6 +12,7 @@ import edu.cornell.cs.apl.viaduct.syntax.datatypes.Vector
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.DeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.IfNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.LetNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.ObjectDeclarationArgumentNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ParameterNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.QueryNode
@@ -35,6 +36,8 @@ class ABYFactory(program: ProgramNode) : ProtocolFactory {
         val hostPairs = hosts.pairedWith(hosts).filter { it.first < it.second }
         hostPairs.map { SpecializedProtocol(ABY(it.first, it.second), hostTrustConfiguration) }
     }
+
+    override fun protocols(): List<SpecializedProtocol> = protocols
 
     private fun LetNode.isApplicable(): Boolean {
         return nameAnalysis.readers(this).all { reader ->
@@ -105,6 +108,19 @@ class ABYFactory(program: ProgramNode) : ProtocolFactory {
         }
     }
 
+    private fun ObjectDeclarationArgumentNode.isApplicable(): Boolean {
+        return nameAnalysis.users(this).all { site ->
+            val pcCheck = informationFlowAnalysis.pcLabel(site).flowsTo(informationFlowAnalysis.pcLabel(this))
+            val involvedLoops = nameAnalysis.involvedLoops(site)
+            val loopCheck = involvedLoops.all { loop ->
+                nameAnalysis.correspondingBreaks(loop).isNotEmpty() && nameAnalysis.correspondingBreaks(loop).all {
+                    informationFlowAnalysis.pcLabel(it).flowsTo(informationFlowAnalysis.pcLabel(this))
+                }
+            }
+            true || pcCheck && loopCheck
+        }
+    }
+
     override fun viableProtocols(node: LetNode): Set<Protocol> =
         if (node.isApplicable()) {
             protocols.filter { it.authority.actsFor(informationFlowAnalysis.label(node)) }.map { it.protocol }.toSet()
@@ -113,6 +129,13 @@ class ABYFactory(program: ProgramNode) : ProtocolFactory {
         }
 
     override fun viableProtocols(node: DeclarationNode): Set<Protocol> =
+        if (node.isApplicable()) {
+            protocols.filter { it.authority.actsFor(informationFlowAnalysis.label(node)) }.map { it.protocol }.toSet()
+        } else {
+            setOf()
+        }
+
+    override fun viableProtocols(node: ObjectDeclarationArgumentNode): Set<Protocol> =
         if (node.isApplicable()) {
             protocols.filter { it.authority.actsFor(informationFlowAnalysis.label(node)) }.map { it.protocol }.toSet()
         } else {

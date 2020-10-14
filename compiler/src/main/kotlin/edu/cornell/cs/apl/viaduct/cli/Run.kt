@@ -6,12 +6,15 @@ import edu.cornell.cs.apl.viaduct.backend.BackendInterpreter
 import edu.cornell.cs.apl.viaduct.backend.PlaintextBackend
 import edu.cornell.cs.apl.viaduct.backend.ProtocolBackend
 import edu.cornell.cs.apl.viaduct.backend.aby.ABYBackend
+import edu.cornell.cs.apl.viaduct.backend.commitment.CommitmentBackend
 import edu.cornell.cs.apl.viaduct.parsing.AbyProtocolParser
+import edu.cornell.cs.apl.viaduct.parsing.CommitmentProtocolParser
 import edu.cornell.cs.apl.viaduct.parsing.LocalProtocolParser
 import edu.cornell.cs.apl.viaduct.parsing.ProtocolParser
 import edu.cornell.cs.apl.viaduct.parsing.ReplicationProtocolParser
 import edu.cornell.cs.apl.viaduct.passes.elaborated
 import edu.cornell.cs.apl.viaduct.protocols.ABY
+import edu.cornell.cs.apl.viaduct.protocols.Commitment
 import edu.cornell.cs.apl.viaduct.protocols.Local
 import edu.cornell.cs.apl.viaduct.protocols.Replication
 import edu.cornell.cs.apl.viaduct.syntax.Host
@@ -31,6 +34,7 @@ class Run : CliktCommand(help = "Run compiled protocol for a single host") {
     private val protocols: Map<ProtocolName, ProtocolParser<Protocol>> =
         mapOf(
             Local.protocolName to LocalProtocolParser,
+            Commitment.protocolName to CommitmentProtocolParser,
             Replication.protocolName to ReplicationProtocolParser,
             ABY.protocolName to AbyProtocolParser
         )
@@ -41,6 +45,7 @@ class Run : CliktCommand(help = "Run compiled protocol for a single host") {
         return mapOf(
             Local.protocolName to plaintextBackend,
             Replication.protocolName to plaintextBackend,
+            Commitment.protocolName to CommitmentBackend(),
             ABY.protocolName to ABYBackend()
         )
     }

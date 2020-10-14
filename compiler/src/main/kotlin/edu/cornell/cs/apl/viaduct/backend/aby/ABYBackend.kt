@@ -16,16 +16,16 @@ import edu.cornell.cs.apl.viaduct.backend.ViaductProcessRuntime
 import edu.cornell.cs.apl.viaduct.errors.UndefinedNameError
 import edu.cornell.cs.apl.viaduct.errors.ViaductInterpreterError
 import edu.cornell.cs.apl.viaduct.protocols.ABY
+import edu.cornell.cs.apl.viaduct.protocols.Commitment
 import edu.cornell.cs.apl.viaduct.selection.SimpleProtocolComposer
-import edu.cornell.cs.apl.viaduct.syntax.Arguments
-import edu.cornell.cs.apl.viaduct.syntax.ClassNameNode
 import edu.cornell.cs.apl.viaduct.syntax.Host
+import edu.cornell.cs.apl.viaduct.syntax.Located
 import edu.cornell.cs.apl.viaduct.syntax.ObjectVariable
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
 import edu.cornell.cs.apl.viaduct.syntax.QueryNameNode
 import edu.cornell.cs.apl.viaduct.syntax.Temporary
 import edu.cornell.cs.apl.viaduct.syntax.UpdateNameNode
-import edu.cornell.cs.apl.viaduct.syntax.ValueTypeNode
+import edu.cornell.cs.apl.viaduct.syntax.datatypes.ClassName
 import edu.cornell.cs.apl.viaduct.syntax.datatypes.Get
 import edu.cornell.cs.apl.viaduct.syntax.datatypes.ImmutableCell
 import edu.cornell.cs.apl.viaduct.syntax.datatypes.Modify
@@ -201,11 +201,11 @@ private class ABYInterpreter(
     }
 
     override suspend fun buildObject(
-        className: ClassNameNode,
-        typeArguments: Arguments<ValueTypeNode>,
-        arguments: Arguments<AtomicExpressionNode>
+        className: ClassName,
+        typeArguments: List<ValueType>,
+        arguments: List<AtomicExpressionNode>
     ): ABYClassObject {
-        return when (className.value) {
+        return when (className) {
             ImmutableCell -> {
                 val valGate = runSecretSharedExpr(arguments[0])
                 ABYImmutableCellObject(valGate)
@@ -218,10 +218,10 @@ private class ABYInterpreter(
 
             Vector -> {
                 val length = runExprAsValue(arguments[0]) as IntegerValue
-                ABYVectorObject(length.value, typeArguments[0].value.defaultValue)
+                ABYVectorObject(length.value, typeArguments[0].defaultValue)
             }
 
-            else -> throw UndefinedNameError(className)
+            else -> throw UndefinedNameError(Located(className, program.sourceLocation)) // kind of a hack
         }
     }
 
@@ -284,6 +284,10 @@ private class ABYInterpreter(
     override suspend fun runLet(stmt: LetNode) {
         when (val rhs: ExpressionNode = stmt.value) {
             is ReceiveNode -> {
+                if (rhs.type.value is UnitType && rhs.protocol.value is Commitment) { // TODO copout for commitment sync
+                    return
+                }
+
                 val sendProtocol: Protocol = rhs.protocol.value
                 val recvProtocol: Protocol = runtime.projection.protocol
 
@@ -405,6 +409,10 @@ private class ABYInterpreter(
     override suspend fun runSend(stmt: SendNode) {
         val sendProtocol = runtime.projection.protocol
         val recvProtocol = stmt.protocol.value
+
+        if (stmt.message is LiteralNode && stmt.message.value == UnitValue && recvProtocol is Commitment) {
+            return // TODO copout for commitment sync
+        }
 
         val phase =
             when {

@@ -2,7 +2,6 @@ package edu.cornell.cs.apl.viaduct.selection
 
 import edu.cornell.cs.apl.attributes.attribute
 import edu.cornell.cs.apl.viaduct.protocols.ABY
-import edu.cornell.cs.apl.viaduct.protocols.Commitment
 import edu.cornell.cs.apl.viaduct.protocols.Local
 import edu.cornell.cs.apl.viaduct.protocols.Replication
 import edu.cornell.cs.apl.viaduct.syntax.Protocol

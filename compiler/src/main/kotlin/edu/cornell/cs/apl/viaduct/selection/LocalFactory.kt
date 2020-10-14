@@ -1,6 +1,5 @@
 package edu.cornell.cs.apl.viaduct.selection
 
-import edu.cornell.cs.apl.attributes.attribute
 import edu.cornell.cs.apl.viaduct.analysis.InformationFlowAnalysis
 import edu.cornell.cs.apl.viaduct.protocols.Local
 import edu.cornell.cs.apl.viaduct.syntax.Host

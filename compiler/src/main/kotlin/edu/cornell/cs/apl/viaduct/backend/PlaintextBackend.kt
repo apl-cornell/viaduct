@@ -38,9 +38,9 @@ import edu.cornell.cs.apl.viaduct.syntax.values.ByteVecValue
 import edu.cornell.cs.apl.viaduct.syntax.values.IntegerValue
 import edu.cornell.cs.apl.viaduct.syntax.values.UnitValue
 import edu.cornell.cs.apl.viaduct.syntax.values.Value
+import java.util.Stack
 import kotlinx.collections.immutable.PersistentMap
 import kotlinx.collections.immutable.persistentMapOf
-import java.util.Stack
 
 /** Backend for Local and Replication protocols. */
 class PlaintextBackend : ProtocolBackend {
@@ -195,8 +195,7 @@ private class PlaintextInterpreter(
                 if (sendProtocol is Commitment) { // TODO: integrate in with protocol ports
                     if (expr.type.value is UnitType) { // Ignore syncs for now with commitment
                         return UnitValue
-                    }
-                    else {
+                    } else {
                         return receiveCommitment(sendProtocol)
                     }
                 }

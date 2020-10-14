@@ -48,5 +48,4 @@ class Commitment(val cleartextHost: Host, val hashHosts: Set<Host>) : Protocol()
 
     val cleartextOutputPort: OutputPort =
         OutputPort(this, cleartextHost, "COMMITMENT_CLEARTEXT_OUTPUT")
-
 }

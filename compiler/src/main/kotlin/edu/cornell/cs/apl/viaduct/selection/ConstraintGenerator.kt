@@ -70,6 +70,11 @@ class ConstraintGenerator(
             it.authority(hostTrustConfiguration).actsFor(informationFlowAnalysis.label(node))
         }.toSet()
 
+    fun viableProtocols(node: ObjectDeclarationArgumentNode): Set<Protocol> =
+        protocolFactory.viableProtocols(node).filter {
+            it.authority(hostTrustConfiguration).actsFor(informationFlowAnalysis.label(node))
+        }.toSet()
+
     /** Generate constraints for possible protocols. */
     private fun Node.selectionConstraints(): Set<SelectionConstraint> =
         when (this) {
@@ -148,6 +153,17 @@ class ConstraintGenerator(
             // generate constraints for the if node
             // used by the ABY/MPC factory to generate muxing constraints
             is IfNode -> setOf(protocolFactory.constraint(this))
+
+            is ObjectDeclarationArgumentNode -> {
+                val parameter = nameAnalysis.parameter(this)
+                val parameterFunctionName = nameAnalysis.functionDeclaration(parameter).name.value
+                setOf(
+                    VariableEquals(
+                        FunctionVariable(nameAnalysis.enclosingFunctionName(this), this.name.value),
+                        FunctionVariable(parameterFunctionName, parameter.name.value)
+                    )
+                )
+            }
 
             // argument protocol must equal the parameter protocol
             is ExpressionArgumentNode -> {
@@ -556,7 +572,7 @@ class ConstraintGenerator(
             .union(this.children.map { it.constraints() }.unions())
 
     fun getConstraints(node: Node) = node.constraints()
-    fun getSelectionConstraints(node: Node) = node.selectionConstraints()
+
+    fun getSelectionConstraints(node: Node): Set<SelectionConstraint> =
+        node.selectionConstraints().union(node.children.map { it.constraints() }.unions())
 }
-
-

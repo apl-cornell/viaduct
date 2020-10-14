@@ -124,9 +124,7 @@ internal class CommitmentCleartext(
         when (val rhs = stmt.value) {
             is ReceiveNode -> {
                 if (rhs.type.value is UnitType) { // TODO Ignore syncs for now
-
-                }
-                else {
+                } else {
 
                     val sendProtocol = rhs.protocol.value
                     val v = runtime.receive(

@@ -12,18 +12,18 @@ import edu.cornell.cs.apl.viaduct.syntax.values.ByteVecValue
 import edu.cornell.cs.apl.viaduct.syntax.values.IntegerValue
 import edu.cornell.cs.apl.viaduct.syntax.values.UnitValue
 import edu.cornell.cs.apl.viaduct.syntax.values.Value
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withContext
 import java.io.InputStream
 import java.io.OutputStream
 import java.net.ConnectException
 import java.net.ServerSocket
 import java.net.Socket
 import java.util.Scanner
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 
 typealias ProcessId = Int
 typealias HostId = Int

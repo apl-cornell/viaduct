@@ -1,5 +1,10 @@
 package edu.cornell.cs.apl.viaduct.syntax.intermediate
 
+import edu.cornell.cs.apl.prettyprinting.Document
+import edu.cornell.cs.apl.prettyprinting.PrettyPrintable
+import edu.cornell.cs.apl.prettyprinting.commented
+import edu.cornell.cs.apl.prettyprinting.concatenated
+import edu.cornell.cs.apl.prettyprinting.plus
 import edu.cornell.cs.apl.viaduct.passes.elaborated
 import edu.cornell.cs.apl.viaduct.syntax.FunctionName
 import edu.cornell.cs.apl.viaduct.syntax.SourceLocation
@@ -39,4 +44,10 @@ private constructor(
 
     override fun toString(): String =
         "Program (" + sourceLocation.sourcePath + ")"
+
+    override fun printMetadata(metadata: Map<Node, PrettyPrintable>): Document =
+        (metadata[this]?.let { it.asDocument.commented() + Document.forcedLineBreak } ?: Document("")) +
+        declarations
+            .map { it.printMetadata(metadata) }
+            .concatenated(Document.forcedLineBreak + Document.forcedLineBreak)
 }

@@ -7,7 +7,9 @@ import edu.cornell.cs.apl.attributes.collectedAttribute
 import edu.cornell.cs.apl.viaduct.errors.IncorrectNumberOfArgumentsError
 import edu.cornell.cs.apl.viaduct.errors.NameClashError
 import edu.cornell.cs.apl.viaduct.errors.UndefinedNameError
+import edu.cornell.cs.apl.viaduct.errors.UnknownObjectDeclarationError
 import edu.cornell.cs.apl.viaduct.protocols.Adversary
+import edu.cornell.cs.apl.viaduct.selection.FunctionVariable
 import edu.cornell.cs.apl.viaduct.syntax.Arguments
 import edu.cornell.cs.apl.viaduct.syntax.ClassNameNode
 import edu.cornell.cs.apl.viaduct.syntax.FunctionName
@@ -432,6 +434,9 @@ class NameAnalysis private constructor(private val tree: Tree<Node, ProgramNode>
     /** Returns the set of arguments for [ParameterNode]. */
     fun parameterUsers(parameter: ParameterNode): Set<FunctionArgumentNode> = parameter.parameterUsers
 
+    fun correspondingLet(query: QueryNode): LetNode =
+        (tree.parent(query) as LetNode)
+
     /** Returns the set of [BreakNode]s that reference [node]. **/
     fun correspondingBreaks(node: InfiniteLoopNode): Set<BreakNode> = node.correspondingBreaks
 
@@ -481,8 +486,42 @@ class NameAnalysis private constructor(private val tree: Tree<Node, ProgramNode>
         }
     }
 
-    /** Returns the set of functions transitively reachable from a node. */
+    /** Returns the set of functions transitively reachable from a statement node. */
     fun reachableFunctions(node: Node) = node.reachableFunctions
+
+    private val StatementNode.variables: Set<FunctionVariable> by attribute {
+        val functionName = enclosingFunctionName(this)
+        this.declarationNodes().map { decl -> FunctionVariable(functionName, decl.name.value) }
+            .plus(
+                this.letNodes().map { letNode -> FunctionVariable(functionName, letNode.temporary.value) }
+            ).plus(
+                this.updateNodes().map { update ->
+                    when (val decl = declaration(update).declarationAsNode) {
+                        is DeclarationNode ->
+                            FunctionVariable(functionName, decl.name.value)
+
+                        is ParameterNode ->
+                            FunctionVariable(
+                                functionDeclaration(decl).name.value,
+                                decl.name.value
+                            )
+
+                        is ObjectDeclarationArgumentNode -> {
+                            val param = parameter(decl)
+                            FunctionVariable(
+                                functionDeclaration(param).name.value,
+                                decl.name.value
+                            )
+                        }
+
+                        else -> throw UnknownObjectDeclarationError(this)
+                    }
+                }
+            ).toSet()
+    }
+
+    /** Returns the variables used of a node. */
+    fun variables(node: StatementNode): Set<FunctionVariable> = node.variables
 
     /**
      * Asserts that every referenced [Name] has a declaration, and that no [Name] is declared

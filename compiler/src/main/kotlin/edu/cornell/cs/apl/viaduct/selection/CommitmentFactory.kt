@@ -3,7 +3,6 @@ package edu.cornell.cs.apl.viaduct.selection
 import edu.cornell.cs.apl.attributes.attribute
 import edu.cornell.cs.apl.viaduct.analysis.NameAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.immediateRHS
-import edu.cornell.cs.apl.viaduct.analysis.involvedVariables
 import edu.cornell.cs.apl.viaduct.protocols.Commitment
 import edu.cornell.cs.apl.viaduct.syntax.Host
 import edu.cornell.cs.apl.viaduct.syntax.HostTrustConfiguration
@@ -81,63 +80,25 @@ class CommitmentFactory(val program: ProgramNode) : ProtocolFactory {
         }
     }
 
-    /** Selection constraint for commitment.
-     *  If a let node is selected for commitment, then readers can only be local or replicated
-     */
+    private val localFactory = LocalFactory(program)
+    private val replicationFactory = ReplicationFactory(program)
 
-    fun readersIn(node: LetNode, pset: Set<Protocol>): SelectionConstraint {
-        return nameAnalysis.readers(node).flatMap {
-            it.immediateRHS().flatMap { e ->
-                e.involvedVariables().map {
-                    VariableIn(Pair(nameAnalysis.enclosingFunctionName(e), it), pset)
-                }
-            } + when (it) {
-                // The object constructed out of a reader must life in the pset as well
-                is DeclarationNode -> listOf(
-                    VariableIn(
-                        Pair(nameAnalysis.enclosingFunctionName(it.declarationAsNode), it.name.value),
-                        pset
-                    )
-                )
-                else -> listOf()
-            }
+    private val localAndReplicated: Set<Protocol> =
+        localFactory.protocols.map { it.protocol }.toSet() +
+            replicationFactory.protocols.map { it.protocol }.toSet()
+
+    /** Commitment can only send to itself, local, and replicated **/
+
+    override fun constraint(node: LetNode): SelectionConstraint =
+        protocols(program).map {
+            node.sendsTo(nameAnalysis, setOf(it.protocol), localAndReplicated + setOf(it.protocol))
         }.ands()
-    }
 
-    override fun constraint(node: LetNode): SelectionConstraint {
-        return protocols(program).map {
-            Implies(
-                VariableIn(Pair(nameAnalysis.enclosingFunctionName(node), node.temporary.value), setOf(it.protocol)),
-                readersIn(
-                    node,
-                    setOf(it.protocol) + LocalFactory.protocols(program).map { it.protocol }.toSet() +
-                        ReplicationFactory.protocols(program).map { it.protocol }.toSet()
-                )
+    override fun constraint(node: DeclarationNode): SelectionConstraint =
+        protocols(program).map {
+            And(
+                node.readsFrom(nameAnalysis, setOf(it.protocol), localAndReplicated + setOf(it.protocol)),
+                node.sendsTo(nameAnalysis, setOf(it.protocol), localAndReplicated + setOf(it.protocol))
             )
         }.ands()
-    }
-
-    private fun usersIn(node: DeclarationNode, pset: Set<Protocol>): SelectionConstraint {
-        return nameAnalysis.users(node).flatMap { user ->
-            when (user) {
-                is QueryNode -> user.involvedVariables().map {
-                    VariableIn(Pair(nameAnalysis.enclosingFunctionName(user), it), pset)
-                }
-                else -> listOf(Literal(true))
-            }
-        }.ands()
-    }
-
-    override fun constraint(node: DeclarationNode): SelectionConstraint {
-        return protocols(program).map {
-            Implies(
-                VariableIn(Pair(nameAnalysis.enclosingFunctionName(node), node.name.value), setOf(it.protocol)),
-                usersIn(
-                    node,
-                    setOf(it.protocol) + LocalFactory.protocols(program).map { it.protocol }.toSet() +
-                        ReplicationFactory.protocols(program).map { it.protocol }.toSet()
-                )
-            )
-        }.ands()
-    }
 }

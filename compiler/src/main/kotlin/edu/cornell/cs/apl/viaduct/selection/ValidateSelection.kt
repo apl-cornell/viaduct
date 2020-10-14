@@ -114,7 +114,7 @@ fun validateProtocolAssignment(
     }
 
     fun Node.constraints(): Set<SelectionConstraint> =
-        constraintGenerator.selectionConstraints(this).union(
+        constraintGenerator.getSelectionConstraints(this).union(
             this.children.map { it.constraints() }.unions()
         )
 

@@ -25,14 +25,16 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.SendNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.UpdateNode
 import edu.cornell.cs.apl.viaduct.syntax.types.ImmutableCellType
 import edu.cornell.cs.apl.viaduct.syntax.types.MutableCellType
+import edu.cornell.cs.apl.viaduct.syntax.types.UnitType
 import edu.cornell.cs.apl.viaduct.syntax.types.ValueType
 import edu.cornell.cs.apl.viaduct.syntax.types.VectorType
 import edu.cornell.cs.apl.viaduct.syntax.values.ByteVecValue
 import edu.cornell.cs.apl.viaduct.syntax.values.IntegerValue
+import edu.cornell.cs.apl.viaduct.syntax.values.UnitValue
 import edu.cornell.cs.apl.viaduct.syntax.values.Value
-import java.util.Stack
 import kotlinx.collections.immutable.PersistentMap
 import kotlinx.collections.immutable.persistentMapOf
+import java.util.Stack
 
 internal class CommitmentHashReplica(
     program: ProgramNode,
@@ -150,6 +152,9 @@ internal class CommitmentHashReplica(
     override suspend fun runLet(stmt: LetNode) {
         when (val rhs = stmt.value) {
             is ReceiveNode -> {
+                if (rhs.type.value is UnitType) { // TODO Ignore syncs for now
+                    return
+                }
                 // receive the commitment from sender
                 val h = runtime.receive(
                     ProtocolProjection(
@@ -186,6 +191,10 @@ internal class CommitmentHashReplica(
     }
 
     override suspend fun runSend(stmt: SendNode) {
+        if (stmt.message is LiteralNode && stmt.message.value is UnitValue) { // TODO Ignore sending syncs for now
+            return
+        }
+
         val msg = runAtomicExpr(stmt.message)
 
         // send to all recvers

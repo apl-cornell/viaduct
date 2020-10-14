@@ -29,9 +29,11 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.ReadNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ReceiveNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.SendNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.UpdateNode
+import edu.cornell.cs.apl.viaduct.syntax.types.UnitType
 import edu.cornell.cs.apl.viaduct.syntax.types.ValueType
 import edu.cornell.cs.apl.viaduct.syntax.values.ByteVecValue
 import edu.cornell.cs.apl.viaduct.syntax.values.IntegerValue
+import edu.cornell.cs.apl.viaduct.syntax.values.UnitValue
 import edu.cornell.cs.apl.viaduct.syntax.values.Value
 import java.util.Stack
 import kotlinx.collections.immutable.PersistentMap
@@ -121,24 +123,30 @@ internal class CommitmentCleartext(
     override suspend fun runLet(stmt: LetNode) {
         when (val rhs = stmt.value) {
             is ReceiveNode -> {
-                val sendProtocol = rhs.protocol.value
-                val v = runtime.receive(
-                    ProtocolProjection(
-                        sendProtocol,
-                        projection.host
-                    )
-                )
-                val hashInfo = Hashing.generateHash(v)
-                tempStore = tempStore.put(stmt.temporary.value, Hashed(v, hashInfo))
-                // send hash to all receivers (currently dummy)
-                for (commitmentReceiver: Host in hashHosts) {
-                    runtime.send(
-                        ByteVecValue(hashInfo.hash),
+                if (rhs.type.value is UnitType) { // TODO Ignore syncs for now
+
+                }
+                else {
+
+                    val sendProtocol = rhs.protocol.value
+                    val v = runtime.receive(
                         ProtocolProjection(
-                            projection.protocol,
-                            commitmentReceiver
+                            sendProtocol,
+                            projection.host
                         )
                     )
+                    val hashInfo = Hashing.generateHash(v)
+                    tempStore = tempStore.put(stmt.temporary.value, Hashed(v, hashInfo))
+                    // send hash to all receivers (currently dummy)
+                    for (commitmentReceiver: Host in hashHosts) {
+                        runtime.send(
+                            ByteVecValue(hashInfo.hash),
+                            ProtocolProjection(
+                                projection.protocol,
+                                commitmentReceiver
+                            )
+                        )
+                    }
                 }
             }
             is AtomicExpressionNode -> {
@@ -159,6 +167,10 @@ internal class CommitmentCleartext(
     }
 
     override suspend fun runSend(stmt: SendNode) {
+        if (stmt.message is LiteralNode && stmt.message.value is UnitValue) { // TODO Ignore sending syncs for now
+            return
+        }
+
         val hashedMessage = runAtomicExprHashed(stmt.message)
 
         // Send the nonce and then the value

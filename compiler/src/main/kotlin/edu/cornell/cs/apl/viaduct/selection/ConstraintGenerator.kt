@@ -7,28 +7,40 @@ import edu.cornell.cs.apl.viaduct.analysis.InformationFlowAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.NameAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.declarationNodes
 import edu.cornell.cs.apl.viaduct.analysis.letNodes
+import edu.cornell.cs.apl.viaduct.analysis.updateNodes
 import edu.cornell.cs.apl.viaduct.errors.UnknownObjectDeclarationError
 import edu.cornell.cs.apl.viaduct.protocols.Local
-import edu.cornell.cs.apl.viaduct.syntax.FunctionName
 import edu.cornell.cs.apl.viaduct.syntax.HostTrustConfiguration
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
 import edu.cornell.cs.apl.viaduct.syntax.Temporary
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.AssertionNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.BlockNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.BreakNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.DeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ExpressionArgumentNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.FunctionCallNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.FunctionDeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.IfNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.InfiniteLoopNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.InputNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.LetNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.LiteralNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.Node
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.ObjectDeclaration
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ObjectDeclarationArgumentNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ObjectReferenceArgumentNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutParameterArgumentNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutParameterConstructorInitializerNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutParameterExpressionInitializerNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutParameterInitializationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutputNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ParameterNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProcessDeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.QueryNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ReadNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.UpdateNode
+import edu.cornell.cs.apl.viaduct.util.unions
 import kotlinx.collections.immutable.PersistentMap
 import kotlinx.collections.immutable.persistentMapOf
 
@@ -58,102 +70,121 @@ class ConstraintGenerator(
             it.authority(hostTrustConfiguration).actsFor(informationFlowAnalysis.label(node))
         }.toSet()
 
-    fun selectionConstraints(node: Node): Set<SelectionConstraint> =
-        when (node) {
+    /** Generate constraints for possible protocols. */
+    private fun Node.selectionConstraints(): Set<SelectionConstraint> =
+        when (this) {
             is LetNode ->
-                setOf(
-                    VariableIn(
-                        Pair(nameAnalysis.enclosingFunctionName(node), node.temporary.value),
-                        viableProtocols(node)
-                    ),
-                    protocolFactory.constraint(node)
-                ) + when (node.value) {
-                    is InputNode ->
-                        setOf(
-                            VariableIn(
-                                Pair(nameAnalysis.enclosingFunctionName(node), node.temporary.value),
-                                setOf(Local(node.value.host.value))
+                setOf(protocolFactory.constraint(this)).plus(
+                    // extra constraints
+                    when (val rhs = this.value) {
+                        is InputNode -> {
+                            setOf(
+                                VariableIn(
+                                    FunctionVariable(nameAnalysis.enclosingFunctionName(this), this.temporary.value),
+                                    setOf(Local(rhs.host.value))
+                                )
                             )
-                        )
-                    is QueryNode -> {
-                        val decl = nameAnalysis.declaration(node.value)
-                        val declFn: FunctionName = when (val n = decl.declarationAsNode) {
-                            is DeclarationNode -> nameAnalysis.enclosingFunctionName(n)
-
-                            is ParameterNode -> nameAnalysis.functionDeclaration(n).name.value
-
-                            is ObjectDeclarationArgumentNode -> nameAnalysis.enclosingFunctionName(n)
-
-                            else -> throw Exception("impossible")
                         }
 
-                        setOf(
-                            VariableEquals(
-                                Pair(nameAnalysis.enclosingFunctionName(node), node.temporary.value),
-                                Pair(declFn, decl.name.value)
+                        // queries needs to be executed in the same protocol as the object
+                        is QueryNode -> {
+                            val enclosingFunctionName = nameAnalysis.enclosingFunctionName(this)
+
+                            setOf(
+                                VariableIn(
+                                    FunctionVariable(nameAnalysis.enclosingFunctionName(this), this.temporary.value),
+                                    viableProtocols(this)
+                                )
+                            ).plus(
+                                when (val objectDecl = nameAnalysis.declaration(rhs).declarationAsNode) {
+                                    is DeclarationNode ->
+                                        VariableEquals(
+                                            FunctionVariable(enclosingFunctionName, objectDecl.name.value),
+                                            FunctionVariable(enclosingFunctionName, this.temporary.value)
+                                        )
+
+                                    is ParameterNode ->
+                                        VariableEquals(
+                                            FunctionVariable(enclosingFunctionName, objectDecl.name.value),
+                                            FunctionVariable(enclosingFunctionName, this.temporary.value)
+                                        )
+
+                                    is ObjectDeclarationArgumentNode -> {
+                                        val param = nameAnalysis.parameter(objectDecl)
+                                        VariableEquals(
+                                            FunctionVariable(
+                                                nameAnalysis.functionDeclaration(param).name.value,
+                                                param.name.value
+                                            ),
+                                            FunctionVariable(enclosingFunctionName, this.temporary.value)
+                                        )
+                                    }
+
+                                    else -> throw UnknownObjectDeclarationError(objectDecl)
+                                }
                             )
-                        )
+                        }
+
+                        else -> {
+                            setOf(
+                                VariableIn(
+                                    FunctionVariable(nameAnalysis.enclosingFunctionName(this), this.temporary.value),
+                                    viableProtocols(this)
+                                )
+                            )
+                        }
                     }
-                    else -> setOf()
-                }
+                )
 
             is DeclarationNode ->
                 setOf(
                     VariableIn(
-                        Pair(nameAnalysis.enclosingFunctionName(node), node.name.value),
-                        viableProtocols(node)
+                        FunctionVariable(nameAnalysis.enclosingFunctionName(this), this.name.value),
+                        viableProtocols(this)
                     ),
-                    protocolFactory.constraint(node)
+                    protocolFactory.constraint(this)
                 )
 
             // generate constraints for the if node
             // used by the ABY/MPC factory to generate muxing constraints
-            is IfNode -> setOf(protocolFactory.constraint(node))
+            is IfNode -> setOf(protocolFactory.constraint(this))
 
+            // argument protocol must equal the parameter protocol
             is ExpressionArgumentNode -> {
-                val parameter = nameAnalysis.parameter(node)
+                val parameter = nameAnalysis.parameter(this)
                 val parameterFunctionName = nameAnalysis.functionDeclaration(parameter).name.value
                 nameAnalysis
-                    .reads(node)
+                    .reads(this)
                     .map { read -> nameAnalysis.declaration(read) }
                     .map { letNode ->
                         VariableEquals(
-                            Pair(nameAnalysis.enclosingFunctionName(letNode), letNode.temporary.value),
-                            Pair(parameterFunctionName, parameter.name.value)
+                            FunctionVariable(nameAnalysis.enclosingFunctionName(letNode), letNode.temporary.value),
+                            FunctionVariable(parameterFunctionName, parameter.name.value)
                         )
                     }
                     .toSet()
             }
 
+            // argument protocol must equal the parameter protocol
             is ObjectReferenceArgumentNode -> {
-                val parameter = nameAnalysis.parameter(node)
+                val parameter = nameAnalysis.parameter(this)
                 val parameterFunctionName = nameAnalysis.functionDeclaration(parameter).name.value
                 setOf(
                     VariableEquals(
-                        Pair(nameAnalysis.enclosingFunctionName(node), node.variable.value),
-                        Pair(parameterFunctionName, parameter.name.value)
+                        FunctionVariable(nameAnalysis.enclosingFunctionName(this), this.variable.value),
+                        FunctionVariable(parameterFunctionName, parameter.name.value)
                     )
                 )
             }
 
+            // argument protocol must equal the parameter protocol
             is OutParameterArgumentNode -> {
-                val parameter = nameAnalysis.parameter(node)
+                val parameter = nameAnalysis.parameter(this)
                 val parameterFunctionName = nameAnalysis.functionDeclaration(parameter).name.value
                 setOf(
                     VariableEquals(
-                        Pair(nameAnalysis.enclosingFunctionName(node), node.parameter.value),
-                        Pair(parameterFunctionName, parameter.name.value)
-                    )
-                )
-            }
-
-            is ObjectDeclarationArgumentNode -> {
-                val parameter = nameAnalysis.parameter(node)
-                val parameterFunctionName = nameAnalysis.functionDeclaration(parameter).name.value
-                setOf(
-                    VariableEquals(
-                        Pair(nameAnalysis.enclosingFunctionName(node), node.name.value),
-                        Pair(parameterFunctionName, parameter.name.value)
+                        FunctionVariable(nameAnalysis.enclosingFunctionName(this), this.parameter.value),
+                        FunctionVariable(parameterFunctionName, parameter.name.value)
                     )
                 )
             }
@@ -186,6 +217,45 @@ class ConstraintGenerator(
             }.toSet()
         }
     }
+
+    private val zeroSymbolicCost = costEstimator.zeroCost().map { CostLiteral(0) }
+
+    /** Symbolic cost associated with a node. */
+    private val Node.symbolicCost: Cost<SymbolicCost> by attribute {
+        when (this) {
+            is FunctionDeclarationNode -> this.body.symbolicCost
+
+            is ProcessDeclarationNode -> this.body.symbolicCost
+
+            is BlockNode ->
+                this.statements
+                    .fold(zeroSymbolicCost) { acc, childStmt ->
+                        acc.concat(childStmt.symbolicCost)
+                    }
+
+            is IfNode ->
+                this.guard.symbolicCost
+                    .concat(this.thenBranch.symbolicCost)
+                    .concat(this.elseBranch.symbolicCost)
+
+            is InfiniteLoopNode ->
+                this.body.symbolicCost.map { f -> CostMul(CostLiteral(10), f) }
+
+            // TODO: handle this later, recursive functions are tricky
+            is FunctionCallNode -> zeroSymbolicCost
+
+            is BreakNode -> zeroSymbolicCost
+
+            is AssertionNode -> zeroSymbolicCost
+
+            else ->
+                costEstimator
+                    .zeroCost()
+                    .map { CostVariable(ctx.mkFreshConst("cost", ctx.intSort) as IntExpr) }
+        }
+    }
+
+    fun symbolicCost(node: Node) = node.symbolicCost
 
     /**
      * Generate constraints that set two symbolic costs equal to each other.
@@ -240,7 +310,7 @@ class ConstraintGenerator(
             argProtocolMaps.map { argProtocolMap ->
                 val protocolConstraints: SelectionConstraint =
                     argProtocolMap.map { kv ->
-                        VariableIn(FunctionVariable(fv.first, kv.key), setOf(kv.value))
+                        VariableIn(FunctionVariable(fv.function, kv.key), setOf(kv.value))
                     }.plus(
                         setOf(VariableIn(fv, setOf(protocol)))
                     ).fold(Literal(true) as SelectionConstraint) { acc, c -> And(acc, c) }
@@ -262,133 +332,135 @@ class ConstraintGenerator(
         }.toSet()
     }
 
-    private val Node.symbolicCost: Cost<SymbolicCost> by attribute {
-        costEstimator
-            .zeroCost()
-            .map { CostVariable(ctx.mkFreshConst("cost", ctx.intSort) as IntExpr) }
-    }
+    private fun getObjectDeclarationViableProtocols(
+        decl: ObjectDeclaration
+    ): Pair<FunctionVariable, Set<Protocol>> =
+        when (val node = decl.declarationAsNode) {
+            is DeclarationNode ->
+                Pair(
+                    FunctionVariable(nameAnalysis.enclosingFunctionName(node), node.name.value),
+                    viableProtocols(node)
+                )
 
-    fun symbolicCost(node: Node) = node.symbolicCost
+            is ParameterNode ->
+                Pair(
+                    FunctionVariable(
+                        nameAnalysis.functionDeclaration(node).name.value,
+                        node.name.value
+                    ),
+                    viableProtocols(node)
+                )
+
+            is ObjectDeclarationArgumentNode -> {
+                val param = nameAnalysis.parameter(node)
+                Pair(
+                    FunctionVariable(
+                        nameAnalysis.functionDeclaration(param).name.value,
+                        node.name.value
+                    ),
+                    viableProtocols(param)
+                )
+            }
+
+            else -> throw UnknownObjectDeclarationError(node)
+        }
 
     /** Generate cost constraints. */
-    fun costConstraints(node: Node): Set<SelectionConstraint> =
-        when (node) {
+    private fun Node.costConstraints(): Set<SelectionConstraint> =
+        when (this) {
             // induce execution and communication costs
             is LetNode -> {
                 generateComputationCostConstraints(
-                    FunctionVariable(nameAnalysis.enclosingFunctionName(node), node.temporary.value),
-                    viableProtocols(node),
-                    nameAnalysis.reads(node.value).toList(),
-                    { protocol -> costEstimator.executionCost(node.value, protocol) },
-                    node.symbolicCost
+                    FunctionVariable(nameAnalysis.enclosingFunctionName(this), this.temporary.value),
+                    viableProtocols(this),
+                    nameAnalysis.reads(this.value).toList(),
+                    { protocol -> costEstimator.executionCost(this.value, protocol) },
+                    this.symbolicCost
                 )
             }
 
             // induce storage and communication costs
             is DeclarationNode -> {
                 generateComputationCostConstraints(
-                    FunctionVariable(nameAnalysis.enclosingFunctionName(node), node.name.value),
-                    viableProtocols(node),
-                    node.arguments.filterIsInstance<ReadNode>(),
-                    { protocol -> costEstimator.storageCost(node, protocol) },
-                    node.symbolicCost
+                    FunctionVariable(nameAnalysis.enclosingFunctionName(this), this.name.value),
+                    viableProtocols(this),
+                    this.arguments.filterIsInstance<ReadNode>(),
+                    { protocol -> costEstimator.storageCost(this, protocol) },
+                    this.symbolicCost
                 )
             }
 
             // induce execution and communication costs
             is UpdateNode -> {
-                val (fv, protocols) =
-                    when (val objectDecl = nameAnalysis.declaration(node).declarationAsNode) {
-                        is DeclarationNode ->
-                            Pair(
-                                FunctionVariable(nameAnalysis.enclosingFunctionName(objectDecl), objectDecl.name.value),
-                                viableProtocols(objectDecl)
-                            )
-
-                        is ParameterNode ->
-                            Pair(
-                                FunctionVariable(
-                                    nameAnalysis.functionDeclaration(objectDecl).name.value,
-                                    objectDecl.name.value
-                                ),
-                                viableProtocols(objectDecl)
-                            )
-
-                        is ObjectDeclarationArgumentNode -> {
-                            val param = nameAnalysis.parameter(objectDecl)
-                            Pair(
-                                FunctionVariable(
-                                    nameAnalysis.functionDeclaration(param).name.value,
-                                    objectDecl.name.value
-                                ),
-                                viableProtocols(param)
-                            )
-                        }
-
-                        else -> throw UnknownObjectDeclarationError(objectDecl)
-                    }
+                val (fv, protocols) = getObjectDeclarationViableProtocols(nameAnalysis.declaration(this))
 
                 generateComputationCostConstraints(
                     fv,
                     protocols,
-                    node.arguments.filterIsInstance<ReadNode>(),
-
+                    this.arguments.filterIsInstance<ReadNode>(),
                     { protocol ->
-                        val decl = nameAnalysis.declaration(node)
+                        val decl = nameAnalysis.declaration(this)
                         costEstimator.storageCost(decl, protocol)
                     },
-                    node.symbolicCost
+                    this.symbolicCost
                 )
             }
 
-            // induce costs for storing the parameter
-            is ParameterNode -> {
-                val enclosingFunctionName =
-                    nameAnalysis.functionDeclaration(node).name.value
+            // storage and communication cost for initializing an out parameter
+            is OutParameterInitializationNode -> {
+                val parameter = nameAnalysis.declaration(this)
+                val reads: List<ReadNode> =
+                    when (val initializer = this.initializer) {
+                        is OutParameterConstructorInitializerNode ->
+                            initializer.arguments.filterIsInstance<ReadNode>()
 
-                viableProtocols(node).map { protocol ->
-                    val cost = costEstimator.storageCost(node, protocol)
-                    Implies(
-                        VariableIn(
-                            FunctionVariable(enclosingFunctionName, node.name.value),
-                            setOf(protocol)
-                        ),
-                        symbolicCostEqualsInt(node.symbolicCost, cost)
-                    )
-                }.toSet()
+                        is OutParameterExpressionInitializerNode ->
+                            if (initializer.expression is ReadNode) listOf(initializer.expression) else listOf()
+                    }
+
+                generateComputationCostConstraints(
+                    FunctionVariable(
+                        nameAnalysis.functionDeclaration(parameter).name.value,
+                        parameter.name.value
+                    ),
+                    viableProtocols(parameter),
+                    reads,
+                    { protocol -> costEstimator.storageCost(parameter, protocol) },
+                    this.symbolicCost
+                )
             }
 
             // generate cost constraints for when temporaries are read as guards
             // induce communication cost from guard protocol to all protocols
             // participating in the conditional
             is IfNode -> {
-                when (val guard = node.guard) {
+                when (val guard = this.guard) {
                     is LiteralNode ->
                         setOf(
-                            symbolicCostEqualsInt(node.symbolicCost, costEstimator.zeroCost())
+                            symbolicCostEqualsInt(this.guard.symbolicCost, costEstimator.zeroCost())
                         )
 
                     is ReadNode -> {
                         val guardDecl = nameAnalysis.declaration(guard)
                         val guardProtocols = viableProtocols(guardDecl)
-                        val enclosingFunctionName = nameAnalysis.enclosingFunctionName(node)
+                        val enclosingFunctionName = nameAnalysis.enclosingFunctionName(this)
 
                         // map from declaration/let nodes to viable protocols
                         val viableProtocolMap: Map<FunctionVariable, Set<Protocol>> =
-                            node.letNodes().map { letNode ->
+                            this.letNodes().map { letNode ->
                                 Pair(
                                     FunctionVariable(enclosingFunctionName, letNode.temporary.value),
                                     viableProtocols(letNode)
                                 )
-                            }.union(
-                                node.declarationNodes().map { decl ->
-                                    Pair(
-                                        FunctionVariable(enclosingFunctionName, decl.name.value),
-                                        viableProtocols(decl)
-                                    )
+                            }.plus(
+                                this.declarationNodes().map { decl ->
+                                    getObjectDeclarationViableProtocols(decl)
                                 }
-                            )
-                                .toMap()
+                            ).plus(
+                                this.updateNodes().map { update ->
+                                    getObjectDeclarationViableProtocols(nameAnalysis.declaration(update))
+                                }
+                            ).toMap()
 
                         // create inverse map from protocols to nodes that can potentially
                         // have it as its primary protocol
@@ -415,15 +487,19 @@ class ConstraintGenerator(
                                         // otherwise, the cost is zero
                                         // we model this using a mux expression that maps over all cost features
                                         costEstimator.communicationCost(guardProtocol, kv.key).map { cost ->
-                                            CostMux(
-                                                kv.value.fold(
-                                                    Literal(false) as SelectionConstraint
-                                                ) { acc2, fv ->
-                                                    Or(acc2, VariableIn(fv, setOf(kv.key)))
-                                                },
-                                                CostLiteral(cost.cost),
+                                            if (cost.cost != 0) {
+                                                CostMux(
+                                                    kv.value.fold(
+                                                        Literal(false) as SelectionConstraint
+                                                    ) { acc2, fv ->
+                                                        Or(acc2, VariableIn(fv, setOf(kv.key)))
+                                                    },
+                                                    CostLiteral(cost.cost),
+                                                    CostLiteral(0)
+                                                )
+                                            } else {
                                                 CostLiteral(0)
-                                            )
+                                            }
                                         }
                                     )
                                 }
@@ -433,7 +509,7 @@ class ConstraintGenerator(
                                     FunctionVariable(enclosingFunctionName, guardDecl.temporary.value),
                                     setOf(guardProtocol)
                                 ),
-                                symbolicCostEqualsSym(node.symbolicCost, protocolCost)
+                                symbolicCostEqualsSym(this.guard.symbolicCost, protocolCost)
                             )
                         }.toSet()
                     }
@@ -442,17 +518,17 @@ class ConstraintGenerator(
 
             // induce communication costs from message protocol to output protocol
             is OutputNode -> {
-                when (val msg = node.message) {
+                when (val msg = this.message) {
                     is LiteralNode ->
                         setOf(
-                            symbolicCostEqualsInt(node.symbolicCost, costEstimator.zeroCost())
+                            symbolicCostEqualsInt(this.symbolicCost, costEstimator.zeroCost())
                         )
 
                     is ReadNode -> {
                         val msgDecl = nameAnalysis.declaration(msg)
                         val enclosingFunctionName = nameAnalysis.enclosingFunctionName(msgDecl)
                         val msgProtocols = viableProtocols(msgDecl)
-                        val outputProtocol = Local(node.host.value)
+                        val outputProtocol = Local(this.host.value)
 
                         msgProtocols.map { msgProtocol ->
                             Implies(
@@ -461,7 +537,7 @@ class ConstraintGenerator(
                                     setOf(msgProtocol)
                                 ),
                                 symbolicCostEqualsInt(
-                                    node.symbolicCost,
+                                    this.symbolicCost,
                                     costEstimator.communicationCost(msgProtocol, outputProtocol)
                                 )
                             )
@@ -472,4 +548,15 @@ class ConstraintGenerator(
 
             else -> setOf()
         }
+
+    /** Generate both selection and cost constraints. */
+    private fun Node.constraints(): Set<SelectionConstraint> =
+        this.selectionConstraints()
+            .union(this.costConstraints())
+            .union(this.children.map { it.constraints() }.unions())
+
+    fun getConstraints(node: Node) = node.constraints()
+    fun getSelectionConstraints(node: Node) = node.selectionConstraints()
 }
+
+

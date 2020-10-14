@@ -1,5 +1,12 @@
 package edu.cornell.cs.apl.viaduct.syntax.intermediate
 
+import edu.cornell.cs.apl.prettyprinting.Document
+import edu.cornell.cs.apl.prettyprinting.PrettyPrintable
+import edu.cornell.cs.apl.prettyprinting.commented
+import edu.cornell.cs.apl.prettyprinting.concatenated
+import edu.cornell.cs.apl.prettyprinting.nested
+import edu.cornell.cs.apl.prettyprinting.plus
+import edu.cornell.cs.apl.prettyprinting.times
 import edu.cornell.cs.apl.viaduct.syntax.Arguments
 import edu.cornell.cs.apl.viaduct.syntax.ClassNameNode
 import edu.cornell.cs.apl.viaduct.syntax.FunctionNameNode
@@ -19,6 +26,7 @@ import edu.cornell.cs.apl.viaduct.syntax.surface.FunctionCallNode as SFunctionCa
 import edu.cornell.cs.apl.viaduct.syntax.surface.ObjectDeclarationArgumentNode as SObjectDeclarationArgumentNode
 import edu.cornell.cs.apl.viaduct.syntax.surface.ObjectReferenceArgumentNode as SObjectReferenceArgumentNode
 import edu.cornell.cs.apl.viaduct.syntax.surface.OutParameterArgumentNode as SOutParameterArgumentNode
+import edu.cornell.cs.apl.viaduct.syntax.surface.keyword
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toPersistentList
@@ -373,6 +381,10 @@ class IfNode(
 
     override fun copy(children: List<Node>): IfNode =
         IfNode(children[0] as AtomicExpressionNode, children[1] as BlockNode, children[2] as BlockNode, sourceLocation)
+
+    override fun printMetadata(metadata: Map<Node, PrettyPrintable>): Document =
+        (keyword("if") * "(" + guard + ")") * thenBranch.printMetadata(metadata) *
+            keyword("else") * elseBranch.printMetadata(metadata)
 }
 
 /**
@@ -397,6 +409,9 @@ class InfiniteLoopNode(
 
     override fun copy(children: List<Node>): InfiniteLoopNode =
         InfiniteLoopNode(children[0] as BlockNode, jumpLabel, sourceLocation)
+
+    override fun printMetadata(metadata: Map<Node, PrettyPrintable>): Document =
+        keyword("loop") * body.printMetadata(metadata)
 }
 
 /**
@@ -462,4 +477,23 @@ private constructor(
 
     override fun copy(children: List<Node>): BlockNode =
         BlockNode(children.map { it as StatementNode }, sourceLocation)
+
+    // like asDocument, but weave metadata throughout
+    override fun printMetadata(metadata: Map<Node, PrettyPrintable>): Document {
+        val statements: List<Document> = statements.map { stmt: StatementNode ->
+            val stmtDocument =
+                if (stmt is SimpleStatementNode || stmt is BreakNode || stmt is AssertionNode)
+                    stmt.printMetadata(metadata) + ";"
+                else
+                    stmt.printMetadata(metadata)
+
+            metadata[stmt]?.let { data ->
+                data.commented() + Document.forcedLineBreak + stmtDocument
+            } ?: stmtDocument
+        }
+
+        val bodyDocument: Document = statements.concatenated(separator = Document.forcedLineBreak)
+        return Document("{") +
+            (Document.forcedLineBreak + bodyDocument).nested() + Document.forcedLineBreak + "}"
+    }
 }

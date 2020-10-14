@@ -7,6 +7,8 @@ import edu.cornell.cs.apl.viaduct.errors.ViaductInterpreterError
 import edu.cornell.cs.apl.viaduct.protocols.Commitment
 import edu.cornell.cs.apl.viaduct.protocols.Local
 import edu.cornell.cs.apl.viaduct.protocols.Replication
+import edu.cornell.cs.apl.viaduct.selection.CommunicationEvent
+import edu.cornell.cs.apl.viaduct.selection.SimpleProtocolComposer
 import edu.cornell.cs.apl.viaduct.syntax.Host
 import edu.cornell.cs.apl.viaduct.syntax.ObjectVariable
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
@@ -30,13 +32,15 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.ReadNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ReceiveNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.SendNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.UpdateNode
+import edu.cornell.cs.apl.viaduct.syntax.types.UnitType
 import edu.cornell.cs.apl.viaduct.syntax.types.ValueType
 import edu.cornell.cs.apl.viaduct.syntax.values.ByteVecValue
 import edu.cornell.cs.apl.viaduct.syntax.values.IntegerValue
+import edu.cornell.cs.apl.viaduct.syntax.values.UnitValue
 import edu.cornell.cs.apl.viaduct.syntax.values.Value
-import java.util.Stack
 import kotlinx.collections.immutable.PersistentMap
 import kotlinx.collections.immutable.persistentMapOf
+import java.util.Stack
 
 /** Backend for Local and Replication protocols. */
 class PlaintextBackend : ProtocolBackend {
@@ -142,49 +146,12 @@ private class PlaintextInterpreter(
 
     override fun getNullObject(): PlaintextClassObject = NullObject
 
-    private suspend fun replicationCleartextReceive(node: ReceiveNode): Value {
-        val sendProtocol = node.protocol.value
-
-        val sendingHosts: Set<Host> = sendProtocol.hosts.intersect(projection.protocol.hosts)
-        val receivingHosts: Set<Host> = sendProtocol.hosts.minus(projection.protocol.hosts)
-
-        if (sendingHosts.isNotEmpty()) { // at least one copy of the Replication process receives
-            if (sendingHosts.contains(projection.host)) {
-                // do actual receive
-                val receivedValue: Value =
-                    runtime.receive(ProtocolProjection(sendProtocol, projection.host))
-
-                // broadcast to projections that did not receive
-                for (receivingHost: Host in receivingHosts) {
-                    runtime.send(receivedValue, ProtocolProjection(projection.protocol, receivingHost))
-                }
-
-                return receivedValue
-            } else { // copy of Repl process at host does not receive; receive from copies that did
-                var finalValue: Value? = null
-                for (sendingHost: Host in sendingHosts) {
-                    val receivedValue: Value =
-                        runtime.receive(ProtocolProjection(projection.protocol, sendingHost))
-
-                    if (finalValue == null) {
-                        finalValue = receivedValue
-                    } else if (finalValue != receivedValue) {
-                        throw ViaductInterpreterError("received different values")
-                    }
-                }
-                return finalValue ?: throw ViaductInterpreterError("did not receive")
-            }
-        } else { // no copy can receive; we cannot compile this
-            throw ViaductInterpreterError("backend compilation: at least one copy of Replication process must be able to receive")
-        }
-    }
-
     private suspend fun receiveCommitment(protocol: Commitment): Value {
-            val nonce = runtime.receive(ProtocolProjection(protocol, protocol.cleartextHost)) as ByteVecValue
-            val msg = runtime.receive(ProtocolProjection(protocol, protocol.cleartextHost))
+        val nonce = runtime.receive(ProtocolProjection(protocol, protocol.cleartextHost)) as ByteVecValue
+        val msg = runtime.receive(ProtocolProjection(protocol, protocol.cleartextHost))
 
-            for (hashHost: Host in protocol.hashHosts) {
-                val h = runtime.receive(ProtocolProjection(protocol, hashHost)) as ByteVecValue
+        for (hashHost: Host in protocol.hashHosts) {
+            val h = runtime.receive(ProtocolProjection(protocol, hashHost)) as ByteVecValue
             assert(HashInfo(h.value, nonce.value).verify(msg.encode()))
         }
         return msg
@@ -225,42 +192,63 @@ private class PlaintextInterpreter(
             is ReceiveNode -> {
                 val sendProtocol = expr.protocol.value
 
-                when (projection.protocol) {
-                    is Local -> {
-                        return when {
+                if (sendProtocol is Commitment) { // TODO: integrate in with protocol ports
+                    if (expr.type.value is UnitType) { // Ignore syncs for now with commitment
+                        return UnitValue
+                    }
+                    else {
+                        return receiveCommitment(sendProtocol)
+                    }
+                }
 
-                            sendProtocol is Commitment -> {
-                                receiveCommitment(sendProtocol)
-                            }
-
-                            // receive from local process
-                            sendProtocol.hosts.contains(projection.host) -> {
-                                runtime.receive(ProtocolProjection(sendProtocol, projection.host))
-                            }
-
-                            // allow remote sends from other Local processes
-                            sendProtocol is Local -> {
-                                runtime.receive(ProtocolProjection(sendProtocol, sendProtocol.host))
-                            }
-
-                            else -> {
-                                throw ViaductInterpreterError(
-                                    "cannot receive from protocol ${sendProtocol.name} to $projection"
-                                )
-                            }
+                when (expr.type.value) {
+                    is UnitType -> {
+                        val syncPhase = SimpleProtocolComposer.getSyncPhase(sendProtocol, projection.protocol)
+                        for (recvEvent: CommunicationEvent in syncPhase.getHostReceives(this.projection.host)) {
+                            runtime.receive(ProtocolProjection(sendProtocol, recvEvent.send.host))
                         }
+
+                        UnitValue
                     }
 
-                    is Replication -> {
-                        when (expr.protocol.value) {
-                            is Commitment -> receiveCommitment(expr.protocol.value)
-                            else -> replicationCleartextReceive(expr)
+                    else -> {
+                        val sendPhase = SimpleProtocolComposer.getSendPhase(sendProtocol, projection.protocol)
+
+                        var finalValue: Value? = null
+                        for (recvEvent: CommunicationEvent in sendPhase.getHostReceives(this.projection.host)) {
+                            val receivedValue: Value =
+                                runtime.receive(ProtocolProjection(sendProtocol, recvEvent.send.host))
+
+                            if (finalValue == null) {
+                                finalValue = receivedValue
+                            } else if (finalValue != receivedValue) {
+                                throw ViaductInterpreterError("received different values")
                             }
                         }
 
-                    else -> throw ViaductInterpreterError(
-                        "cannot receive from protocol $sendProtocol from $projection"
-                    )
+                        val broadcastPhase = SimpleProtocolComposer.getBroadcastPhase(sendProtocol, projection.protocol)
+                        if (finalValue != null) {
+                            for (sendEvent: CommunicationEvent in broadcastPhase.getHostSends(this.projection.host)) {
+                                runtime.send(
+                                    finalValue,
+                                    ProtocolProjection(sendEvent.recv.protocol, sendEvent.recv.host)
+                                )
+                            }
+                        } else {
+                            for (recvEvent: CommunicationEvent in broadcastPhase.getHostReceives(this.projection.host)) {
+                                val receivedValue: Value =
+                                    runtime.receive(ProtocolProjection(sendProtocol, recvEvent.send.host))
+
+                                if (finalValue == null) {
+                                    finalValue = receivedValue
+                                } else if (finalValue != receivedValue) {
+                                    throw ViaductInterpreterError("received different values")
+                                }
+                            }
+                        }
+
+                        finalValue!!
+                    }
                 }
             }
         }
@@ -285,25 +273,19 @@ private class PlaintextInterpreter(
         val msgValue: Value = runExpr(stmt.message)
         val recvProtocol: Protocol = stmt.protocol.value
 
-        when (projection.protocol) {
-            is Local -> {
-                if (recvProtocol.hosts.contains(projection.host)) {
-                    runtime.send(msgValue, ProtocolProjection(stmt.protocol.value, projection.host))
-                } else if (recvProtocol is Local) { // only send to remote Local processes
-                    for (recvHost: Host in stmt.protocol.value.hosts) {
-                        runtime.send(msgValue, ProtocolProjection(stmt.protocol.value, recvHost))
-                    }
-
-                    runtime.send(msgValue, ProtocolProjection(recvProtocol, recvProtocol.host))
-                }
+        if (recvProtocol is Commitment) { // TODO: merge this in with ports idea
+            if (!(msgValue is UnitValue)) { // Ignore syncs for now
+                runtime.send(msgValue, ProtocolProjection(recvProtocol, recvProtocol.cleartextHost))
             }
-
-            is Replication -> {
-                // there is a local copy of the receiving process; send it there
-                // otherwise, don't do anything
-                if (recvProtocol.hosts.contains(projection.host)) {
-                    runtime.send(msgValue, ProtocolProjection(recvProtocol, projection.host))
+        } else {
+            val phase =
+                when (msgValue) {
+                    UnitValue -> SimpleProtocolComposer.getSyncPhase(this.projection.protocol, recvProtocol)
+                    else -> SimpleProtocolComposer.getSendPhase(this.projection.protocol, recvProtocol)
                 }
+
+            for (sendEvent in phase.getHostSends(this.projection.host)) {
+                runtime.send(msgValue, ProtocolProjection(recvProtocol, sendEvent.recv.host))
             }
         }
     }

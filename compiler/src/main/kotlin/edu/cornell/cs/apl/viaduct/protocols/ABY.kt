@@ -4,6 +4,8 @@ import edu.cornell.cs.apl.viaduct.security.Label
 import edu.cornell.cs.apl.viaduct.security.LabelAnd
 import edu.cornell.cs.apl.viaduct.syntax.Host
 import edu.cornell.cs.apl.viaduct.syntax.HostTrustConfiguration
+import edu.cornell.cs.apl.viaduct.syntax.InputPort
+import edu.cornell.cs.apl.viaduct.syntax.OutputPort
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
 import edu.cornell.cs.apl.viaduct.syntax.ProtocolName
 import edu.cornell.cs.apl.viaduct.syntax.values.HostSetValue
@@ -37,4 +39,19 @@ class ABY(hosts: Set<Host>) : Protocol() {
             .map { hostTrustConfiguration(it) }
             .reduce { acc, l -> LabelAnd(acc, l) }
             .interpret()
+
+    val hostSecretInputPorts: Map<Host, InputPort> =
+        hosts
+            .map { h -> Pair(h, InputPort(this, h, "SECRET_INPUT")) }
+            .toMap()
+
+    val hostCleartextInputPorts: Map<Host, InputPort> =
+        hosts
+            .map { h -> Pair(h, InputPort(this, h, "CLEARTEXT_INPUT")) }
+            .toMap()
+
+    val hostCleartextOutputPorts: Map<Host, OutputPort> =
+        hosts
+            .map { h -> Pair(h, OutputPort(this, h, "CLEARTEXT_OUTPUT")) }
+            .toMap()
 }

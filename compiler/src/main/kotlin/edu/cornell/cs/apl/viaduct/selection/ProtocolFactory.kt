@@ -24,9 +24,10 @@ interface ProtocolFactory {
     fun viableProtocols(node: LetNode): Set<Protocol>
     fun viableProtocols(node: DeclarationNode): Set<Protocol>
     fun viableProtocols(node: ParameterNode): Set<Protocol>
+
     /** TODO: This interface can likely be simplified by collapsing DeclarationNode and ObjectDeclarationArgumentNode
-       together by taking in [ObjectDeclaration] interface
-    **/
+    together by taking in [ObjectDeclaration] interface
+     **/
     fun viableProtocols(node: ObjectDeclarationArgumentNode): Set<Protocol>
     fun constraint(node: LetNode): SelectionConstraint {
         return Literal(true)
@@ -47,9 +48,10 @@ interface ProtocolFactory {
 
 /** Union of protocol selectors. [unions] takes a number of selectors and implements their collective union. */
 
-fun unions(vararg selectors: ProtocolFactory): ProtocolFactory = object : ProtocolFactory {
-    override fun protocols(): List<SpecializedProtocol> =
-        selectors.fold(listOf()) { acc, sel -> acc + sel.protocols() }
+open class UnionProtocolFactory(val selectors: Set<ProtocolFactory>) : ProtocolFactory {
+    constructor(vararg selectors: ProtocolFactory) : this(selectors.toSet())
+
+    override fun protocols() = selectors.map { it.protocols() }.flatten()
 
     override fun viableProtocols(node: LetNode): Set<Protocol> =
         selectors.fold(setOf()) { acc, sel -> acc.union(sel.viableProtocols(node)) }

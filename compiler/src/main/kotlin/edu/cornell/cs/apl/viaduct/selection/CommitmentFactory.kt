@@ -80,9 +80,12 @@ class CommitmentFactory(val program: ProgramNode) : ProtocolFactory {
         }
     }
 
+    private val localFactory = LocalFactory(program)
+    private val replicationFactory = ReplicationFactory(program)
+
     private val localAndReplicated: Set<Protocol> =
-        LocalFactory.protocols(program).map { it.protocol }.toSet() +
-            ReplicationFactory.protocols(program).map { it.protocol }.toSet()
+        localFactory.protocols.map { it.protocol }.toSet() +
+            replicationFactory.protocols.map { it.protocol }.toSet()
 
     /** Commitment can only send to itself, local, and replicated **/
 
@@ -93,7 +96,9 @@ class CommitmentFactory(val program: ProgramNode) : ProtocolFactory {
 
     override fun constraint(node: DeclarationNode): SelectionConstraint =
         protocols(program).map {
-            And(node.readsFrom(nameAnalysis, setOf(it.protocol), localAndReplicated + setOf(it.protocol)),
-                node.sendsTo(nameAnalysis, setOf(it.protocol), localAndReplicated + setOf(it.protocol)))
+            And(
+                node.readsFrom(nameAnalysis, setOf(it.protocol), localAndReplicated + setOf(it.protocol)),
+                node.sendsTo(nameAnalysis, setOf(it.protocol), localAndReplicated + setOf(it.protocol))
+            )
         }.ands()
 }

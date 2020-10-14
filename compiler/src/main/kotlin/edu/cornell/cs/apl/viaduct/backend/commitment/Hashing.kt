@@ -9,6 +9,7 @@ import edu.cornell.cs.apl.viaduct.syntax.values.BooleanValue
 import edu.cornell.cs.apl.viaduct.syntax.values.ByteVecValue
 import edu.cornell.cs.apl.viaduct.syntax.values.IntegerValue
 import edu.cornell.cs.apl.viaduct.syntax.values.StringValue
+import edu.cornell.cs.apl.viaduct.syntax.values.UnitValue
 import edu.cornell.cs.apl.viaduct.syntax.values.Value
 import java.security.MessageDigest
 import java.security.SecureRandom
@@ -17,7 +18,7 @@ data class HashInfo(val hash: List<Byte>, val nonce: List<Byte>) {
     fun verify(data: List<Byte>): Boolean {
         return (
             MessageDigest.getInstance("SHA-256").digest(nonce.toByteArray() + data.toByteArray()).toList()
-            ==
+                ==
                 hash
             )
     }
@@ -30,6 +31,7 @@ fun Value.encode(): List<Byte> {
         is IntegerValue -> this.value.toBigInteger().toByteArray().toList()
         is BooleanValue -> listOf(this.value.toByte())
         is ByteVecValue -> this.value
+        is UnitValue -> listOf()
         is StringValue -> this.value.toByteArray().toList()
         else -> throw Error("Unknown value!")
     }
@@ -50,7 +52,8 @@ object Hashing {
         SecureRandom().nextBytes(nonce)
         return HashInfo(
             MessageDigest.getInstance("SHA-256").digest(nonce + data.toByteArray()).toList(),
-            nonce.toList())
+            nonce.toList()
+        )
     }
 
     fun generateHash(v: Value): HashInfo = generateHash(v.encode())

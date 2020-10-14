@@ -34,20 +34,6 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.StatementNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.UpdateNode
 import edu.cornell.cs.apl.viaduct.util.FreshNameGenerator
 
-/** Recursively traverses the children of [this] node, then applies [f] to [this] node. */
-fun StatementNode.immediateRHS(): List<ExpressionNode> {
-    return when (this) {
-        is LetNode -> listOf(this.value)
-        is DeclarationNode -> this.arguments
-        is UpdateNode -> this.arguments
-        is OutputNode -> listOf(this.message)
-        is SendNode -> listOf(this.message)
-        is IfNode -> listOf(this.guard)
-        is AssertionNode -> listOf(this.condition)
-        else -> listOf()
-    }
-}
-
 fun StatementNode.createdVariables(): List<Variable> =
     when (this) {
         is LetNode -> listOf(this.temporary.value)
@@ -66,6 +52,20 @@ fun StatementNode.createdVariables(): List<Variable> =
         is AssertionNode -> listOf()
         is BlockNode -> listOf()
     }
+
+/** Recursively traverses the children of [this] node, then applies [f] to [this] node. */
+fun StatementNode.immediateRHS(): List<ExpressionNode> {
+    return when (this) {
+        is LetNode -> listOf(this.value)
+        is DeclarationNode -> this.arguments
+        is UpdateNode -> this.arguments
+        is OutputNode -> listOf(this.message)
+        is SendNode -> listOf(this.message)
+        is IfNode -> listOf(this.guard)
+        is AssertionNode -> listOf(this.condition)
+        else -> listOf()
+    }
+}
 
 fun ExpressionNode.involvedVariables(): List<Variable> {
     return when (this) {
@@ -104,6 +104,9 @@ fun Node.declarationNodes(): List<DeclarationNode> = this.listOfInstances()
 
 /** Returns all [ObjectDeclarationArgumentNode]s contained in this node. */
 fun Node.objectDeclarationArgumentNodes(): List<ObjectDeclarationArgumentNode> = this.listOfInstances()
+
+/** Returns all [FunctionCallNode]s contained in this node. */
+fun Node.functionCallNodes(): List<FunctionCallNode> = this.listOfInstances()
 
 /** Returns all [ParameterNode]s contained in this node. */
 fun Node.parameterNodes(): List<ParameterNode> = this.listOfInstances()

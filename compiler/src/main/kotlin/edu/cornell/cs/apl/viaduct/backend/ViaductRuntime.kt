@@ -10,6 +10,7 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
 import edu.cornell.cs.apl.viaduct.syntax.values.BooleanValue
 import edu.cornell.cs.apl.viaduct.syntax.values.ByteVecValue
 import edu.cornell.cs.apl.viaduct.syntax.values.IntegerValue
+import edu.cornell.cs.apl.viaduct.syntax.values.UnitValue
 import edu.cornell.cs.apl.viaduct.syntax.values.Value
 import java.io.InputStream
 import java.io.OutputStream
@@ -88,6 +89,8 @@ private class ViaductReceiverThread(
 
                             // ByteVecValue
                             valType == 2 -> ByteVecValue(socketInput.readNBytes(unparsedValue).toList())
+                            // UnitValue
+                            valType == 3 -> UnitValue
 
                             else -> throw ViaductInterpreterError("parsed invalid value type $valType")
                         }
@@ -105,6 +108,7 @@ private class ViaductReceiverThread(
 
 private class ViaductSenderThread(
     val socket: Socket,
+    val runtime: ViaductRuntime,
     msgQueue: Channel<ViaductMessage>
 ) : ViaductThread(msgQueue) {
     override suspend fun processCommunicationMessage(msg: CommunicationMessage) {
@@ -129,6 +133,11 @@ private class ViaductSenderThread(
                             socketOutput.write(2)
                             socketOutput.write(msg.message.value.size)
                             socketOutput.write(msg.message.value.toByteArray())
+                        }
+
+                        is UnitValue -> {
+                            socketOutput.write(3)
+                            socketOutput.write(0)
                         }
                     }
                 }
@@ -364,6 +373,7 @@ class ViaductRuntime(
                     launch {
                         ViaductSenderThread(
                             connectionMap[kv.key]!!,
+                            this@ViaductRuntime,
                             hostInfoMap[kv.key]!!.sendChannel
                         ).run()
                     }

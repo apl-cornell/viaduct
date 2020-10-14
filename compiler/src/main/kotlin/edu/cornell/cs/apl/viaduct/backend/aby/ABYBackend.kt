@@ -16,6 +16,8 @@ import edu.cornell.cs.apl.viaduct.backend.ViaductProcessRuntime
 import edu.cornell.cs.apl.viaduct.errors.UndefinedNameError
 import edu.cornell.cs.apl.viaduct.errors.ViaductInterpreterError
 import edu.cornell.cs.apl.viaduct.protocols.ABY
+import edu.cornell.cs.apl.viaduct.protocols.Commitment
+import edu.cornell.cs.apl.viaduct.selection.SimpleProtocolComposer
 import edu.cornell.cs.apl.viaduct.syntax.Host
 import edu.cornell.cs.apl.viaduct.syntax.Located
 import edu.cornell.cs.apl.viaduct.syntax.ObjectVariable
@@ -48,11 +50,12 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.SendNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.UpdateNode
 import edu.cornell.cs.apl.viaduct.syntax.types.BooleanType
 import edu.cornell.cs.apl.viaduct.syntax.types.IntegerType
+import edu.cornell.cs.apl.viaduct.syntax.types.UnitType
 import edu.cornell.cs.apl.viaduct.syntax.types.ValueType
 import edu.cornell.cs.apl.viaduct.syntax.values.BooleanValue
 import edu.cornell.cs.apl.viaduct.syntax.values.IntegerValue
+import edu.cornell.cs.apl.viaduct.syntax.values.UnitValue
 import edu.cornell.cs.apl.viaduct.syntax.values.Value
-import java.util.SortedSet
 import java.util.Stack
 import kotlinx.collections.immutable.PersistentMap
 import kotlinx.collections.immutable.persistentMapOf
@@ -69,18 +72,19 @@ class ABYBackend : ProtocolBackend {
     private var otherHost: Host? = null
 
     override fun initialize(connectionMap: Map<Host, HostAddress>, projection: ProtocolProjection) {
-        val protocolHosts: Set<Host> = projection.protocol.hosts
-        assert(protocolHosts.size == 2)
+        val protocol = projection.protocol as ABY
 
-        val sortedHosts: SortedSet<Host> = protocolHosts.toSortedSet()
-
-        // lowest host is the server
-        if (sortedHosts.first() == projection.host) {
-            role = Role.SERVER
-            otherHost = sortedHosts.last()
-        } else {
-            role = Role.CLIENT
-            otherHost = sortedHosts.first()
+        when (projection.host) {
+            protocol.server -> {
+                role = Role.SERVER
+                otherHost = protocol.client
+            }
+            protocol.client -> {
+                role = Role.CLIENT
+                otherHost = protocol.server
+            }
+            else ->
+                throw RuntimeException("Invalid projection")
         }
 
         val otherHostAddress: HostAddress = connectionMap[otherHost]!!
@@ -241,7 +245,7 @@ private class ABYInterpreter(
                     ABYConstantGate(value.value)
                 }
 
-            else -> throw Exception("unknown value type")
+            else -> throw Exception("unknown value type: ${value.asDocument.print()}")
         }
     }
 
@@ -280,16 +284,69 @@ private class ABYInterpreter(
     override suspend fun runLet(stmt: LetNode) {
         when (val rhs: ExpressionNode = stmt.value) {
             is ReceiveNode -> {
-                val rhsProtocol: Protocol = rhs.protocol.value
+                if (rhs.type.value is UnitType && rhs.protocol.value is Commitment) { // TODO copout for commitment sync
+                    return
+                }
 
-                if (rhsProtocol.hosts.contains(runtime.projection.host)) { // actually receive input
-                    val receivedValue: Value =
-                        runtime.receive(ProtocolProjection(rhsProtocol, runtime.projection.host))
+                val sendProtocol: Protocol = rhs.protocol.value
+                val recvProtocol: Protocol = runtime.projection.protocol
 
-                    ctTempStore = ctTempStore.put(stmt.temporary.value, receivedValue)
-                    ssTempStore = ssTempStore.put(stmt.temporary.value, valueToCircuit(receivedValue, isInput = true))
-                } else {
-                    ssTempStore = ssTempStore.put(stmt.temporary.value, ABYDummyInGate())
+                val phase =
+                    when (rhs.type.value) {
+                        is UnitType ->
+                            SimpleProtocolComposer.getSyncPhase(sendProtocol, recvProtocol)
+
+                        else ->
+                            SimpleProtocolComposer.getSendPhase(sendProtocol, recvProtocol)
+                    }
+
+                var secretInput: Value? = null
+                var cleartextInput: Value? = null
+
+                for (sendEvent in phase) {
+                    when {
+                        // secret input for this host; create input gate
+                        sendEvent.recv.id == "SECRET_INPUT" && sendEvent.recv.host == runtime.projection.host -> {
+                            val receivedValue: Value =
+                                runtime.receive(ProtocolProjection(sendProtocol, sendEvent.send.host))
+
+                            if (secretInput == null) {
+                                secretInput = receivedValue
+                                ssTempStore =
+                                    ssTempStore.put(stmt.temporary.value, valueToCircuit(secretInput, isInput = true))
+                            } else if (secretInput != receivedValue) {
+                                throw ViaductInterpreterError("received different values")
+                            }
+                        }
+
+                        // other host has secret input; create dummy input gate
+                        sendEvent.recv.id == "SECRET_INPUT" && sendEvent.recv.host != runtime.projection.host -> {
+                            if (!ssTempStore.containsKey(stmt.temporary.value)) {
+                                ssTempStore = ssTempStore.put(stmt.temporary.value, ABYDummyInGate())
+                            }
+                        }
+
+                        // cleartext input
+                        sendEvent.recv.id == "CLEARTEXT_INPUT" && sendEvent.recv.host == runtime.projection.host -> {
+                            val receivedValue: Value =
+                                runtime.receive(ProtocolProjection(sendProtocol, sendEvent.send.host))
+
+                            if (cleartextInput == null) {
+                                cleartextInput = receivedValue
+
+                                if (rhs.type.value !is UnitType) {
+                                    ctTempStore = ctTempStore.put(stmt.temporary.value, cleartextInput)
+                                }
+                            } else if (cleartextInput != receivedValue) {
+                                throw ViaductInterpreterError("received different values")
+                            }
+                        }
+
+                        // synchronization message
+                        sendEvent.recv.id == "SYNC" && sendEvent.recv.host == runtime.projection.host -> {
+                            runtime.receive(ProtocolProjection(sendProtocol, sendEvent.send.host))
+                        }
+                    }
                 }
             }
 
@@ -304,7 +361,7 @@ private class ABYInterpreter(
         getObject(getObjectLocation(stmt.variable.value)).update(stmt.update, stmt.arguments)
     }
 
-    fun buildABYCircuit(outGate: ABYCircuitGate, recvProtocol: Protocol): Share {
+    fun buildABYCircuit(outGate: ABYCircuitGate, outRole: Role): Share {
         val circuitBuilder =
             ABYCircuitBuilder(
                 aby.getCircuitBuilder(SharingType.S_YAO)!!,
@@ -345,38 +402,59 @@ private class ABYInterpreter(
 
         assert(shareStack.size == 1)
 
-        val outRole =
-            when {
-                // only this party receives cleartext value of output gate
-                recvProtocol.hosts.contains(this.runtime.projection.host) && !recvProtocol.hosts.contains(this.otherHost) ->
-                    this.role
-
-                // only other party receives cleartext value of output gate
-                !recvProtocol.hosts.contains(this.runtime.projection.host) && recvProtocol.hosts.contains(this.otherHost) ->
-                    if (this.role == Role.SERVER) Role.CLIENT else Role.SERVER
-
-                // both parties receive cleartext value of output gate
-                else -> Role.ALL
-            }
-
         return circuitBuilder.circuit.putOUTGate(shareStack.peek()!!, outRole)
     }
 
     // actually perform MPC protocol and declassify output
     override suspend fun runSend(stmt: SendNode) {
+        val sendProtocol = runtime.projection.protocol
+        val recvProtocol = stmt.protocol.value
+
+        if (stmt.message is LiteralNode && stmt.message.value == UnitValue && recvProtocol is Commitment) {
+            return // TODO copout for commitment sync
+        }
+
+        val phase =
+            when {
+                stmt.message is LiteralNode && stmt.message.value == UnitValue ->
+                    SimpleProtocolComposer.getSyncPhase(sendProtocol, recvProtocol)
+
+                else ->
+                    SimpleProtocolComposer.getSendPhase(sendProtocol, recvProtocol)
+            }
+
         val sendValue: Value =
             when (val msg: AtomicExpressionNode = stmt.message) {
+                // send plaintext value
                 is LiteralNode -> {
                     msg.value
                 }
 
+                // build and execute ABY circuit
                 is ReadNode -> {
+                    val thisHostHasSends = phase.any { event -> event.send.host == runtime.projection.host }
+                    val otherHostHasSends = phase.any { event -> event.send.host == this.otherHost }
+
+                    val outRole =
+                        when {
+                            // only this party receives cleartext value of output gate
+                            thisHostHasSends && !otherHostHasSends ->
+                                this.role
+
+                            // only other party receives cleartext value of output gate
+                            !thisHostHasSends && otherHostHasSends ->
+                                if (this.role == Role.SERVER) Role.CLIENT else Role.SERVER
+
+                            // both parties receive cleartext value of output gate
+                            else -> Role.ALL
+                        }
+
                     val outGate: ABYCircuitGate =
                         ssTempStore[msg.temporary.value]
                             ?: throw UndefinedNameError(msg.temporary)
 
                     aby.reset()
-                    val outShare = buildABYCircuit(outGate, stmt.protocol.value)
+                    val outShare = buildABYCircuit(outGate, outRole)
                     aby.execCircuit()
                     val result = outShare.clearValue32.toInt()
 
@@ -390,8 +468,8 @@ private class ABYInterpreter(
                 }
             }
 
-        if (stmt.protocol.value.hosts.contains(runtime.projection.host)) {
-            runtime.send(sendValue, ProtocolProjection(stmt.protocol.value, runtime.projection.host))
+        for (sendEvent in phase.getHostSends(runtime.projection.host)) {
+            runtime.send(sendValue, ProtocolProjection(recvProtocol, sendEvent.recv.host))
         }
     }
 

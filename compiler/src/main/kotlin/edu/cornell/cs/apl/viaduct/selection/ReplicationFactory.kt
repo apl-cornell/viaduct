@@ -17,18 +17,14 @@ import edu.cornell.cs.apl.viaduct.util.subsequences
 class ReplicationFactory(val program: ProgramNode) : ProtocolFactory {
     private val informationFlowAnalysis = InformationFlowAnalysis.get(program)
 
-    companion object {
-        private val ProgramNode.instance: List<SpecializedProtocol> by attribute {
-            val hostTrustConfiguration = HostTrustConfiguration(this)
-            val hosts: List<Host> = hostTrustConfiguration.keys.sorted()
-            val hostSubsets = hosts.subsequences().map { it.toSet() }.filter { it.size >= 2 }
-            hostSubsets.map(::Replication).map { SpecializedProtocol(it, hostTrustConfiguration) }
-        }
-
-        fun protocols(program: ProgramNode): List<SpecializedProtocol> = program.instance
+    val protocols: List<SpecializedProtocol> = run {
+        val hostTrustConfiguration = HostTrustConfiguration(program)
+        val hosts: List<Host> = hostTrustConfiguration.keys.sorted()
+        val hostSubsets = hosts.subsequences().map { it.toSet() }.filter { it.size >= 2 }
+        hostSubsets.map(::Replication).map { SpecializedProtocol(it, hostTrustConfiguration) }
     }
 
-    override fun protocols(): List<SpecializedProtocol> = protocols(program)
+    override fun protocols() = protocols
 
     override fun viableProtocols(node: LetNode): Set<Protocol> =
         protocols(program).filter { it.authority.actsFor(informationFlowAnalysis.label(node)) }.map { it.protocol }.toSet()
@@ -37,8 +33,8 @@ class ReplicationFactory(val program: ProgramNode) : ProtocolFactory {
         protocols(program).filter { it.authority.actsFor(informationFlowAnalysis.label(node)) }.map { it.protocol }.toSet()
 
     override fun viableProtocols(node: ParameterNode): Set<Protocol> =
-        protocols(program).filter { it.authority.actsFor(informationFlowAnalysis.label(node)) }.map { it.protocol }.toSet()
+        protocols.filter { it.authority.actsFor(informationFlowAnalysis.label(node)) }.map { it.protocol }.toSet()
 
     override fun viableProtocols(node: ObjectDeclarationArgumentNode): Set<Protocol> =
-        protocols(program).filter { it.authority.actsFor(informationFlowAnalysis.label(node)) }.map { it.protocol }.toSet()
+        protocols.filter { it.authority.actsFor(informationFlowAnalysis.label(node)) }.map { it.protocol }.toSet()
 }

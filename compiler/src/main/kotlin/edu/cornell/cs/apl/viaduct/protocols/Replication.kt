@@ -1,9 +1,10 @@
 package edu.cornell.cs.apl.viaduct.protocols
 
 import edu.cornell.cs.apl.viaduct.security.Label
-import edu.cornell.cs.apl.viaduct.security.LabelMeet
 import edu.cornell.cs.apl.viaduct.syntax.Host
 import edu.cornell.cs.apl.viaduct.syntax.HostTrustConfiguration
+import edu.cornell.cs.apl.viaduct.syntax.InputPort
+import edu.cornell.cs.apl.viaduct.syntax.OutputPort
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
 import edu.cornell.cs.apl.viaduct.syntax.ProtocolName
 import edu.cornell.cs.apl.viaduct.syntax.values.HostSetValue
@@ -33,8 +34,15 @@ class Replication(hosts: Set<Host>) : Protocol() {
         get() = mapOf("hosts" to participants)
 
     override fun authority(hostTrustConfiguration: HostTrustConfiguration): Label =
+        hosts.map { hostTrustConfiguration(it).interpret() }.reduce(Label::meet)
+
+    val hostInputPorts: Map<Host, InputPort> =
         hosts
-            .map { hostTrustConfiguration(it) }
-            .reduce { acc, l -> LabelMeet(acc, l) }
-            .interpret()
+            .map { h -> Pair(h, InputPort(this, h, "INPUT")) }
+            .toMap()
+
+    val hostOutputPorts: Map<Host, OutputPort> =
+        hosts
+            .map { h -> Pair(h, OutputPort(this, h, "OUTPUT")) }
+            .toMap()
 }

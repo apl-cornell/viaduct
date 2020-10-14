@@ -1,12 +1,16 @@
 package edu.cornell.cs.apl.viaduct.selection
 
+import edu.cornell.cs.apl.prettyprinting.Document
+import edu.cornell.cs.apl.prettyprinting.PrettyPrintable
+import edu.cornell.cs.apl.prettyprinting.braced
+import edu.cornell.cs.apl.prettyprinting.times
 import kotlinx.collections.immutable.PersistentMap
 import kotlinx.collections.immutable.toPersistentMap
 
 typealias CostFeature = String
 
 /** A commutative monoid that represents a notion of cost for a feature. */
-interface CostMonoid<C : CostMonoid<C>> {
+interface CostMonoid<C : CostMonoid<C>> : PrettyPrintable {
     fun concat(other: C): C
     fun zero(): C
 }
@@ -20,6 +24,8 @@ class IntegerCost(val cost: Int) : CostMonoid<IntegerCost> {
         IntegerCost(this.cost + other.cost)
 
     override fun zero(): IntegerCost = IntegerCost.zero()
+
+    override val asDocument: Document = Document(cost.toString())
 }
 
 /**
@@ -28,7 +34,7 @@ class IntegerCost(val cost: Int) : CostMonoid<IntegerCost> {
  * */
 data class Cost<C : CostMonoid<C>>(
     val features: PersistentMap<CostFeature, C>
-) : CostMonoid<Cost<C>>, Map<CostFeature, C> by features {
+) : CostMonoid<Cost<C>>, Map<CostFeature, C> by features, PrettyPrintable {
     override fun concat(other: Cost<C>): Cost<C> =
         Cost(
             this.features
@@ -51,4 +57,9 @@ data class Cost<C : CostMonoid<C>>(
 
     fun update(feature: CostFeature, cost: C): Cost<C> =
         Cost(features.put(feature, cost))
+
+    override val asDocument: Document =
+        features
+            .map { kv -> Document(kv.key) * ":" * kv.value }
+            .braced()
 }

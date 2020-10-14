@@ -3,6 +3,7 @@ package edu.cornell.cs.apl.viaduct.cli
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.types.file
+import edu.cornell.cs.apl.prettyprinting.PrettyPrintable
 import edu.cornell.cs.apl.viaduct.analysis.InformationFlowAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.ProtocolAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.main
@@ -14,12 +15,13 @@ import edu.cornell.cs.apl.viaduct.passes.check
 import edu.cornell.cs.apl.viaduct.passes.elaborated
 import edu.cornell.cs.apl.viaduct.passes.specialize
 import edu.cornell.cs.apl.viaduct.selection.SimpleCostEstimator
+import edu.cornell.cs.apl.viaduct.selection.SimpleProtocolFactory
 import edu.cornell.cs.apl.viaduct.selection.selectProtocolsWithZ3
-import edu.cornell.cs.apl.viaduct.selection.simpleProtocolFactory
 import edu.cornell.cs.apl.viaduct.selection.validateProtocolAssignment
 import edu.cornell.cs.apl.viaduct.syntax.FunctionName
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
 import edu.cornell.cs.apl.viaduct.syntax.Variable
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.Node
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProcessDeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
 import guru.nidi.graphviz.engine.Format
@@ -52,6 +54,13 @@ class Compile : CliktCommand(help = "Compile ideal protocol to secure distribute
         """
     ).file(canBeDir = false)
 
+    val protocolSelectionOutput: File? by option(
+        "-s",
+        "--selection",
+        metavar = "FILE.via",
+        help = "Write program decorated with protocol selection to FILE.via"
+    ).file(canBeDir = false)
+
     override fun run() {
         val unspecializedProgram = input.parse().elaborated()
 
@@ -63,11 +72,16 @@ class Compile : CliktCommand(help = "Compile ideal protocol to secure distribute
         // Dump label constraint graph to a file if requested.
         dumpGraph(InformationFlowAnalysis.get(program)::exportConstraintGraph, constraintGraphOutput)
 
-        val protocolFactory = simpleProtocolFactory(program)
+        val protocolFactory = SimpleProtocolFactory(program)
 
         // Select protocols.
         val protocolAssignment: (FunctionName, Variable) -> Protocol =
-            selectProtocolsWithZ3(program, program.main, protocolFactory, SimpleCostEstimator)
+            selectProtocolsWithZ3(
+                program,
+                program.main,
+                protocolFactory,
+                SimpleCostEstimator
+            ) { metadata -> dumpProgramMetadata(program, metadata, protocolSelectionOutput) }
 
         // Perform a sanity check to ensure the protocolAssignment is valid.
         // TODO: either remove this entirely or make it opt-in by the command line.
@@ -108,6 +122,19 @@ private fun dumpGraph(graphWriter: (Writer) -> Unit, file: File?) {
             Graphviz.fromString(writer.toString()).render(format).toFile(file)
         }
     }
+}
+
+private fun dumpProgramMetadata(
+    program: ProgramNode,
+    metadata: Map<Node, PrettyPrintable>,
+    file: File?
+) {
+    if (file == null) {
+        return
+    }
+
+    logger.info { "Writing program metadata to $file" }
+    file.println(program.printMetadata(metadata))
 }
 
 /** Infers Graphviz output format from [file]'s extension. */

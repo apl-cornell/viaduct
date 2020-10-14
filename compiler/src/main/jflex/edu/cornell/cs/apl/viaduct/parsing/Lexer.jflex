@@ -99,6 +99,7 @@ NUM         = ((-)?[1-9][0-9]*) | 0
   /* Types */
   "int"           { return symbol(sym.INT); }
   "bool"          { return symbol(sym.BOOL); }
+  "unit"          { return symbol(sym.UNIT); }
   "Array"         { return symbol(sym.ARRAY); }
 
   /* Statements */
@@ -145,6 +146,7 @@ NUM         = ((-)?[1-9][0-9]*) | 0
   "/"             { return symbol(sym.DIVIDE); }
   "min"           { return symbol(sym.MIN); }
   "max"           { return symbol(sym.MAX); }
+  "mux"           { return symbol(sym.MUX); }
 
   "=="            { return symbol(sym.EQEQ); }
   "!="            { return symbol(sym.NEQ); }

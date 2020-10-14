@@ -3,6 +3,8 @@ package edu.cornell.cs.apl.viaduct.protocols
 import edu.cornell.cs.apl.viaduct.security.Label
 import edu.cornell.cs.apl.viaduct.syntax.Host
 import edu.cornell.cs.apl.viaduct.syntax.HostTrustConfiguration
+import edu.cornell.cs.apl.viaduct.syntax.InputPort
+import edu.cornell.cs.apl.viaduct.syntax.OutputPort
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
 import edu.cornell.cs.apl.viaduct.syntax.ProtocolName
 import edu.cornell.cs.apl.viaduct.syntax.values.HostValue
@@ -26,4 +28,8 @@ class Local(val host: Host) : Protocol() {
 
     override fun authority(hostTrustConfiguration: HostTrustConfiguration): Label =
         hostTrustConfiguration(host).interpret()
+
+    val hostInputPort = InputPort(this, this.host, "INPUT")
+
+    val hostOutputPort = OutputPort(this, this.host, "INPUT")
 }

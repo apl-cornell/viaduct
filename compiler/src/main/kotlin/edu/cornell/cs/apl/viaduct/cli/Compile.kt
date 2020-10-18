@@ -5,16 +5,12 @@ import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.types.file
 import edu.cornell.cs.apl.prettyprinting.PrettyPrintable
 import edu.cornell.cs.apl.viaduct.analysis.InformationFlowAnalysis
-import edu.cornell.cs.apl.viaduct.analysis.ProtocolAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.main
-import edu.cornell.cs.apl.viaduct.backend.aby.ABYMuxPostprocessor
-import edu.cornell.cs.apl.viaduct.passes.ProgramPostprocessorRegistry
-import edu.cornell.cs.apl.viaduct.passes.Splitter
+import edu.cornell.cs.apl.viaduct.passes.annotateWithProtocols
 import edu.cornell.cs.apl.viaduct.passes.check
 import edu.cornell.cs.apl.viaduct.passes.elaborated
 import edu.cornell.cs.apl.viaduct.passes.specialize
 import edu.cornell.cs.apl.viaduct.selection.SimpleCostEstimator
-import edu.cornell.cs.apl.viaduct.selection.SimpleProtocolComposer
 import edu.cornell.cs.apl.viaduct.selection.SimpleProtocolFactory
 import edu.cornell.cs.apl.viaduct.selection.selectProtocolsWithZ3
 import edu.cornell.cs.apl.viaduct.selection.validateProtocolAssignment
@@ -86,6 +82,10 @@ class Compile : CliktCommand(help = "Compile ideal protocol to secure distribute
         // TODO: either remove this entirely or make it opt-in by the command line.
         validateProtocolAssignment(program, program.main, protocolFactory, protocolAssignment)
 
+        val annotatedProgram = program.annotateWithProtocols(protocolAssignment)
+        output.println(annotatedProgram)
+
+        /*
         val protocolAnalysis = ProtocolAnalysis(program, protocolAssignment, SimpleProtocolComposer)
 
         // Split the program.
@@ -96,6 +96,7 @@ class Compile : CliktCommand(help = "Compile ideal protocol to secure distribute
         val postprocessedProgram = postprocessor.postprocess(splitProgram)
 
         output.println(postprocessedProgram)
+        */
     }
 }
 

@@ -3,12 +3,12 @@ package edu.cornell.cs.apl.viaduct.analysis
 import edu.cornell.cs.apl.attributes.attribute
 import edu.cornell.cs.apl.attributes.circularAttribute
 import edu.cornell.cs.apl.viaduct.errors.IllegalInternalCommunicationError
+import edu.cornell.cs.apl.viaduct.errors.NoProtocolAnnotationError
+import edu.cornell.cs.apl.viaduct.errors.UnknownObjectDeclarationError
 import edu.cornell.cs.apl.viaduct.protocols.Local
 import edu.cornell.cs.apl.viaduct.selection.ProtocolComposer
-import edu.cornell.cs.apl.viaduct.syntax.FunctionName
 import edu.cornell.cs.apl.viaduct.syntax.Host
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
-import edu.cornell.cs.apl.viaduct.syntax.Variable
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.AssertionNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.BlockNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.BreakNode
@@ -23,6 +23,7 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.InputNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.InternalCommunicationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.LetNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.Node
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.ObjectDeclarationArgumentNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutParameterInitializationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutputNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ParameterNode
@@ -42,7 +43,6 @@ import kotlinx.collections.immutable.toPersistentSet
 /** Associates each [StatementNode] with the [Protocol]s involved in its execution. */
 class ProtocolAnalysis(
     val program: ProgramNode,
-    val protocolAssignment: (FunctionName, Variable) -> Protocol,
     val protocolComposer: ProtocolComposer
 ) {
     val tree = program.tree
@@ -68,10 +68,11 @@ class ProtocolAnalysis(
      * @throws IllegalInternalCommunicationError if [statement] is an [InternalCommunicationNode].
      */
     fun primaryProtocol(statement: SimpleStatementNode): Protocol {
-        val functionName = nameAnalysis.enclosingFunctionName(statement)
         return when (statement) {
             is LetNode -> {
-                val protocol = protocolAssignment(functionName, statement.temporary.value)
+                val protocol =
+                    statement.protocol?.value ?: throw NoProtocolAnnotationError(statement)
+
                 when (statement.value) {
                     is InputNode ->
                         assert(protocol == Local(statement.value.host.value))
@@ -80,18 +81,33 @@ class ProtocolAnalysis(
                     else ->
                         Unit
                 }
+
                 protocol
             }
+
             is DeclarationNode ->
-                protocolAssignment(functionName, statement.name.value)
+                statement.protocol?.value ?: throw NoProtocolAnnotationError(statement)
+
             is UpdateNode ->
-                protocolAssignment(functionName, statement.variable.value)
+                when (val decl = nameAnalysis.declaration(statement).declarationAsNode) {
+                    is DeclarationNode ->
+                        primaryProtocol(decl)
+
+                    is ParameterNode ->
+                        primaryProtocol(decl)
+
+                    is ObjectDeclarationArgumentNode ->
+                        primaryProtocol(nameAnalysis.parameter(decl))
+
+                    else -> throw UnknownObjectDeclarationError(decl)
+                }
 
             is OutParameterInitializationNode ->
-                protocolAssignment(functionName, statement.name.value)
+                primaryProtocol(nameAnalysis.declaration(statement))
 
             is OutputNode ->
                 Local(statement.host.value)
+
             is SendNode ->
                 throw IllegalInternalCommunicationError(statement)
         }
@@ -106,7 +122,7 @@ class ProtocolAnalysis(
      * Returns the protocol that coordinates the execution of [parameter].
      */
     fun primaryProtocol(parameter: ParameterNode): Protocol =
-        protocolAssignment(nameAnalysis.functionDeclaration(parameter).name.value, parameter.name.value)
+        parameter.protocol?.value ?: throw NoProtocolAnnotationError(parameter)
 
     /**
      * Returns the protocol that coordinates the execution of [argument].
@@ -132,7 +148,7 @@ class ProtocolAnalysis(
     ) {
         this.parameters
             .fold(persistentSetOf<Protocol>()) { acc, param ->
-                acc.add(protocolAssignment(this.name.value, param.name.value))
+                acc.add(primaryProtocol(param))
             }
             .addAll(this.body.protocols)
             .addAll(

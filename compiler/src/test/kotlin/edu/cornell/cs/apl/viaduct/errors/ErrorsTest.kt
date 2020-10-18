@@ -7,6 +7,7 @@ import edu.cornell.cs.apl.viaduct.parsing.SourceFile
 import edu.cornell.cs.apl.viaduct.parsing.isBlankOrUnderline
 import edu.cornell.cs.apl.viaduct.parsing.parse
 import edu.cornell.cs.apl.viaduct.passes.Splitter
+import edu.cornell.cs.apl.viaduct.passes.annotateWithProtocols
 import edu.cornell.cs.apl.viaduct.passes.check
 import edu.cornell.cs.apl.viaduct.passes.elaborated
 import edu.cornell.cs.apl.viaduct.protocols.MainProtocol
@@ -67,7 +68,8 @@ private fun run(file: File) {
 private fun ProgramNode.split() {
     val protocolAssignment =
         selectProtocolsWithZ3(this, this.main, SimpleProtocolFactory(this), SimpleCostEstimator)
-    val protocolAnalysis = ProtocolAnalysis(this, protocolAssignment, SimpleProtocolComposer)
+    val annotatedProgram = this.annotateWithProtocols(protocolAssignment)
+    val protocolAnalysis = ProtocolAnalysis(annotatedProgram, SimpleProtocolComposer)
 
     Splitter(protocolAnalysis).splitMain()
 }

@@ -22,7 +22,8 @@ internal class SplittingTest {
         program.check()
         val protocolAssignment =
             selectProtocolsWithZ3(program, program.main, SimpleProtocolFactory(program), SimpleCostEstimator)
-        val protocolAnalysis = ProtocolAnalysis(program, protocolAssignment, SimpleProtocolComposer)
+        val annotatedProgram = program.annotateWithProtocols(protocolAssignment)
+        val protocolAnalysis = ProtocolAnalysis(annotatedProgram, SimpleProtocolComposer)
         val splitProgram = Splitter(protocolAnalysis).splitMain()
 
         edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode(

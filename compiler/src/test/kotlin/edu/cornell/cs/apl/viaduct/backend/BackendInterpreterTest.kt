@@ -3,6 +3,7 @@ package edu.cornell.cs.apl.viaduct.backend
 import edu.cornell.cs.apl.viaduct.ExampleProgramProvider
 import edu.cornell.cs.apl.viaduct.analysis.ProtocolAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.main
+import edu.cornell.cs.apl.viaduct.passes.annotateWithProtocols
 import edu.cornell.cs.apl.viaduct.passes.check
 import edu.cornell.cs.apl.viaduct.passes.elaborated
 import edu.cornell.cs.apl.viaduct.passes.specialize
@@ -17,17 +18,12 @@ import edu.cornell.cs.apl.viaduct.syntax.ProtocolName
 import edu.cornell.cs.apl.viaduct.syntax.Variable
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.AtomicExpressionNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.FunctionArgumentNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.HostDeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ParameterNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.SimpleStatementNode
 import edu.cornell.cs.apl.viaduct.syntax.surface.ProgramNode
 import edu.cornell.cs.apl.viaduct.syntax.values.BooleanValue
 import edu.cornell.cs.apl.viaduct.syntax.values.Value
-import java.util.concurrent.Executors
 import kotlinx.collections.immutable.PersistentMap
-import kotlinx.coroutines.asCoroutineDispatcher
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ArgumentsSource
 
@@ -74,19 +70,24 @@ internal class BackendInterpreterTest {
         // Select protocols.
         val protocolAssignment: (FunctionName, Variable) -> Protocol =
             selectProtocolsWithZ3(program, program.main, SimpleProtocolFactory(program), SimpleCostEstimator)
-        val protocolAnalysis = ProtocolAnalysis(program, protocolAssignment, SimpleProtocolComposer)
+        val annotatedProgram = program.annotateWithProtocols(protocolAssignment)
+        val protocolAnalysis = ProtocolAnalysis(annotatedProgram, SimpleProtocolComposer)
 
         // set up backend interpreter with fake backends
         val backendMap: Map<ProtocolName, ProtocolInterpreterFactory> =
-            protocolAnalysis.participatingProtocols(program)
+            protocolAnalysis.participatingProtocols(annotatedProgram)
                 .map { protocol -> Pair(protocol.protocolName, FakeProtocolInterpreterFactory) }
                 .toMap()
 
+        ViaductBackend(backendMap)
+
+        /*
         val hosts: Set<Host> =
             program.declarations
                 .filterIsInstance<HostDeclarationNode>()
                 .map { hostDecl -> hostDecl.name.value }
                 .toSet()
+
 
         val interpreter = ViaductBackend(backendMap)
 
@@ -94,9 +95,10 @@ internal class BackendInterpreterTest {
         runBlocking {
             for (host: Host in hosts) {
                 launch(Executors.newSingleThreadExecutor().asCoroutineDispatcher()) {
-                    interpreter.run(program, protocolAnalysis, host)
+                    interpreter.run(annotatedProgram, host)
                 }
             }
         }
+        */
     }
 }

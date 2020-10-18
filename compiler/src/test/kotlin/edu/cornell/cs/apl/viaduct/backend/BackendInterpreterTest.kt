@@ -3,12 +3,11 @@ package edu.cornell.cs.apl.viaduct.backend
 import edu.cornell.cs.apl.viaduct.ExampleProgramProvider
 import edu.cornell.cs.apl.viaduct.analysis.ProtocolAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.main
-import edu.cornell.cs.apl.viaduct.passes.Splitter
 import edu.cornell.cs.apl.viaduct.passes.check
 import edu.cornell.cs.apl.viaduct.passes.elaborated
 import edu.cornell.cs.apl.viaduct.passes.specialize
-import edu.cornell.cs.apl.viaduct.protocols.HostInterface
 import edu.cornell.cs.apl.viaduct.selection.SimpleCostEstimator
+import edu.cornell.cs.apl.viaduct.selection.SimpleProtocolComposer
 import edu.cornell.cs.apl.viaduct.selection.SimpleProtocolFactory
 import edu.cornell.cs.apl.viaduct.selection.selectProtocolsWithZ3
 import edu.cornell.cs.apl.viaduct.syntax.FunctionName
@@ -16,24 +15,50 @@ import edu.cornell.cs.apl.viaduct.syntax.Host
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
 import edu.cornell.cs.apl.viaduct.syntax.ProtocolName
 import edu.cornell.cs.apl.viaduct.syntax.Variable
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.BlockNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.AtomicExpressionNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.FunctionArgumentNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.HostDeclarationNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProcessDeclarationNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.ParameterNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.SimpleStatementNode
 import edu.cornell.cs.apl.viaduct.syntax.surface.ProgramNode
+import edu.cornell.cs.apl.viaduct.syntax.values.BooleanValue
+import edu.cornell.cs.apl.viaduct.syntax.values.Value
 import java.util.concurrent.Executors
+import kotlinx.collections.immutable.PersistentMap
 import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ArgumentsSource
 
+private object FakeProtocolInterpreter : ProtocolInterpreter {
+    override suspend fun runExprAsValue(expr: AtomicExpressionNode): Value =
+        BooleanValue(false)
+
+    override suspend fun runSimpleStatement(stmt: SimpleStatementNode) {}
+
+    override suspend fun pushContext() {}
+
+    override suspend fun popContext() {}
+
+    override suspend fun pushFunctionContext(arguments: PersistentMap<ParameterNode, FunctionArgumentNode>) {}
+
+    override suspend fun popFunctionContext() {}
+
+    override fun getContextMarker(): Int = 0
+
+    override fun restoreContext(marker: Int) {}
+}
+
 /** Fake protocol backend that doesn't do anything. */
-private object FakeBackend : ProtocolBackend {
-    override suspend fun run(
-        runtime: ViaductProcessRuntime,
+private object FakeProtocolInterpreterFactory : ProtocolInterpreterFactory {
+    override fun buildProtocolInterpreter(
         program: edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode,
-        process: BlockNode
-    ) {
+        protocolAnalysis: ProtocolAnalysis,
+        runtime: ViaductProcessRuntime,
+        connectionMap: Map<Host, HostAddress>
+    ): ProtocolInterpreter {
+        return FakeProtocolInterpreter
     }
 }
 
@@ -49,32 +74,27 @@ internal class BackendInterpreterTest {
         // Select protocols.
         val protocolAssignment: (FunctionName, Variable) -> Protocol =
             selectProtocolsWithZ3(program, program.main, SimpleProtocolFactory(program), SimpleCostEstimator)
-        val protocolAnalysis = ProtocolAnalysis(program, protocolAssignment)
-
-        // Split the program.
-        val splitProgram = Splitter(protocolAnalysis).splitMain()
+        val protocolAnalysis = ProtocolAnalysis(program, protocolAssignment, SimpleProtocolComposer)
 
         // set up backend interpreter with fake backends
-        val backendMap: Map<ProtocolName, ProtocolBackend> =
-            splitProgram.declarations
-                .filterIsInstance<ProcessDeclarationNode>()
-                .filter { procDecl -> procDecl.protocol.value !is HostInterface }
-                .map { procDecl -> Pair(procDecl.protocol.value.protocolName, FakeBackend) }
+        val backendMap: Map<ProtocolName, ProtocolInterpreterFactory> =
+            protocolAnalysis.participatingProtocols(program)
+                .map { protocol -> Pair(protocol.protocolName, FakeProtocolInterpreterFactory) }
                 .toMap()
 
         val hosts: Set<Host> =
-            splitProgram.declarations
+            program.declarations
                 .filterIsInstance<HostDeclarationNode>()
                 .map { hostDecl -> hostDecl.name.value }
                 .toSet()
 
-        val interpreter = BackendInterpreter(backendMap)
+        val interpreter = ViaductBackend(backendMap)
 
         // run backend interpreter for all hosts
         runBlocking {
             for (host: Host in hosts) {
                 launch(Executors.newSingleThreadExecutor().asCoroutineDispatcher()) {
-                    interpreter.run(splitProgram, host)
+                    interpreter.run(program, protocolAnalysis, host)
                 }
             }
         }

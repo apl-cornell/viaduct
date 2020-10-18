@@ -24,9 +24,9 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.SendNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.SimpleStatementNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.UpdateNode
-import java.util.Stack
 import kotlinx.collections.immutable.PersistentMap
 import kotlinx.collections.immutable.toPersistentMap
+import java.util.Stack
 
 typealias ObjectLocation = Int
 
@@ -51,7 +51,7 @@ abstract class AbstractProtocolInterpreter<Obj>(
     protected abstract suspend fun pushContext(initialStore: PersistentMap<ObjectVariable, ObjectLocation>)
 
     override suspend fun pushFunctionContext(arguments: PersistentMap<ParameterNode, FunctionArgumentNode>) {
-        functionFrameStack.push(Pair(Integer.max(objectHeap.size - 1, 0), arguments))
+        functionFrameStack.push(Pair(objectHeap.size, arguments))
 
         val initialStore: PersistentMap<ObjectVariable, ObjectLocation> =
             arguments
@@ -92,7 +92,7 @@ abstract class AbstractProtocolInterpreter<Obj>(
                 }
 
         // destroy function frame
-        objectHeap.subList(heapTail, objectHeap.size - 1).clear()
+        objectHeap.subList(heapTail, objectHeap.size).clear()
         popContext()
 
         // point output parameters to new objects

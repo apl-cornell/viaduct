@@ -95,7 +95,7 @@ class DeclarationNode(
                     //   val labels = labelArguments?.braced()?.nested() ?: Document()
                     val labels = constructor.labelArguments?.braced() ?: Document()
                     val arguments = constructor.arguments.tupled().nested()
-                    keyword("val") * variable + protocolDoc * "=" *
+                    keyword("val") * variable * "=" *
                         constructor.className + types + labels + protocolDoc + arguments
                 }
             }

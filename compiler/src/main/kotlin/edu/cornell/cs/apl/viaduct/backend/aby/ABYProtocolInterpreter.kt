@@ -36,11 +36,13 @@ import edu.cornell.cs.apl.viaduct.syntax.datatypes.Vector
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.AtomicExpressionNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.DeclassificationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.EndorsementNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.FunctionArgumentNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.InputNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.LetNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.LiteralNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.OperatorApplicationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutputNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.ParameterNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.PureExpressionNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.QueryNode
@@ -53,10 +55,10 @@ import edu.cornell.cs.apl.viaduct.syntax.types.ValueType
 import edu.cornell.cs.apl.viaduct.syntax.values.BooleanValue
 import edu.cornell.cs.apl.viaduct.syntax.values.IntegerValue
 import edu.cornell.cs.apl.viaduct.syntax.values.Value
-import java.util.Stack
 import kotlinx.collections.immutable.PersistentMap
 import kotlinx.collections.immutable.persistentMapOf
 import kotlinx.collections.immutable.persistentSetOf
+import java.util.Stack
 
 class ABYProtocolInterpreter(
     program: ProgramNode,
@@ -468,8 +470,9 @@ class ABYProtocolInterpreter(
             return when (query.value) {
                 is Get -> gate
 
-                else ->
+                else -> {
                     throw ViaductInterpreterError("ABY: unknown query for immutable cell", query)
+                }
             }
         }
 
@@ -483,7 +486,9 @@ class ABYProtocolInterpreter(
             return when (query.value) {
                 is Get -> gate
 
-                else -> throw ViaductInterpreterError("ABY: unknown query for mutable cell", query)
+                else -> {
+                    throw ViaductInterpreterError("ABY: unknown query for mutable cell", query)
+                }
             }
         }
 
@@ -498,7 +503,8 @@ class ABYProtocolInterpreter(
                     operatorToCircuit(update.value.operator, listOf(gate, circuitArg))
                 }
 
-                else -> throw ViaductInterpreterError("ABY: unknown update for mutable cell", update)
+                else ->
+                    throw ViaductInterpreterError("ABY: unknown update for mutable cell", update)
             }
         }
     }
@@ -519,7 +525,7 @@ class ABYProtocolInterpreter(
                     gates[index.value]
                 }
 
-                else -> throw ViaductInterpreterError("ABY: unknown query for vector", query)
+                else -> throw ViaductInterpreterError("ABY: unknown query ${query.value} for vector", query)
             }
         }
 
@@ -536,18 +542,18 @@ class ABYProtocolInterpreter(
                     operatorToCircuit(update.value.operator, listOf(gates[index.value], circuitArg))
                 }
 
-                else -> throw ViaductInterpreterError("ABY: unknown update for vector", update)
+                else -> throw ViaductInterpreterError("ABY: unknown update ${update.value} for vector", update)
             }
         }
     }
 
     object ABYNullObject : ABYClassObject() {
         override suspend fun query(query: QueryNameNode, arguments: List<AtomicExpressionNode>): ABYCircuitGate {
-            throw ViaductInterpreterError("ABY: unknown query for null object", query)
+            throw ViaductInterpreterError("ABY: unknown query ${query.value} for null object", query)
         }
 
         override suspend fun update(update: UpdateNameNode, arguments: List<AtomicExpressionNode>) {
-            throw ViaductInterpreterError("ABY: unknown update for null object", update)
+            throw ViaductInterpreterError("ABY: unknown update ${update.value} for null object", update)
         }
     }
 

@@ -198,6 +198,7 @@ private fun StatementNode.asStraightLine(
                             ),
                             this.sourceLocation
                         ),
+                        null,
                         this.sourceLocation
                     )
 
@@ -212,6 +213,7 @@ private fun StatementNode.asStraightLine(
                             ),
                             this.sourceLocation
                         ),
+                        null,
                         this.sourceLocation
                     )
                 }
@@ -233,6 +235,7 @@ private fun StatementNode.asStraightLine(
                             ),
                             arg.sourceLocation
                         ),
+                        null,
                         arg.sourceLocation
                     )
                 }
@@ -320,6 +323,7 @@ private fun StatementNode.asStraightLine(
                             ),
                             this.guard.sourceLocation
                         ),
+                        null,
                         this.guard.sourceLocation
                     )
 
@@ -341,6 +345,7 @@ private fun StatementNode.asStraightLine(
                                 this.guard.sourceLocation
                             )
                         } ?: this.guard.deepCopy() as AtomicExpressionNode,
+                        null,
                         this.guard.sourceLocation
                     )
                 )
@@ -358,6 +363,7 @@ private fun StatementNode.asStraightLine(
                                 this.guard.sourceLocation
                             )
                         } ?: ReadNode(negatedGuard),
+                        null,
                         this.guard.sourceLocation
                     )
                 )

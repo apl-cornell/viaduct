@@ -96,6 +96,7 @@ class Splitter(
                     LetNode(
                         temporary = this.temporary,
                         value = this.value.eraseSecurityLabels(),
+                        protocol = this.protocol,
                         sourceLocation = this.sourceLocation
                     )
 
@@ -106,6 +107,7 @@ class Splitter(
                         typeArguments = this.typeArguments,
                         labelArguments = null,
                         arguments = this.arguments,
+                        protocol = this.protocol,
                         sourceLocation = this.sourceLocation
                     )
 
@@ -176,6 +178,7 @@ class Splitter(
                                         ProtocolNode(protocolSyncFrom, statement.sourceLocation),
                                         statement.sourceLocation
                                     ),
+                                    null,
                                     statement.sourceLocation
                                 )
                             }
@@ -242,6 +245,7 @@ class Splitter(
                                                 ProtocolNode(primaryProtocol, it.temporary.sourceLocation),
                                                 it.value.sourceLocation
                                             ),
+                                            null,
                                             it.sourceLocation
                                         )
                                     )
@@ -260,6 +264,7 @@ class Splitter(
                                                 ProtocolNode(primaryProtocol, it.sourceLocation),
                                                 it.sourceLocation
                                             ),
+                                            null,
                                             it.sourceLocation
                                         )
                                     )

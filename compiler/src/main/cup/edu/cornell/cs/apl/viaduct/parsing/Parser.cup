@@ -136,6 +136,7 @@ nonterminal List argument_list, nonempty_argument_list;
 nonterminal FunctionArgumentNode argument;
 
 nonterminal Located<Protocol> protocol;
+nonterminal Located<Protocol> protocol_annot;
 nonterminal Located<ProtocolName> protocol_name;
 // TODO: more accurate types cause parse errors in IntelliJ
 //nonterminal List<Pair<Located<ArgumentLabel>, Located<Value>>> protocol_argument_list, nonempty_protocol_argument_list;
@@ -171,6 +172,7 @@ terminal DECLASSIFY, ENDORSE, DOWNGRADE;
 
 terminal INT, BOOL, UNIT, ARRAY;
 terminal TOP, BOTTOM, OR, AND, JOIN, MEET, RARROW, LARROW;
+terminal AT;
 
 terminal OPEN_BRACE, CLOSE_BRACE, SEMICOLON;
 terminal OPEN_SQBRACE, CLOSE_SQBRACE;
@@ -261,48 +263,52 @@ parameter_direction ::=
   ;
 
 parameter ::=
-    variable:name COLON value_type:type optional_label_signature:label {:
+    variable:name COLON value_type:type optional_label_signature:label protocol_annot:protocol {:
       RESULT = new ParameterNode(
         name,
         ParameterDirection.PARAM_IN,
         new Located(PrimitivesKt.getImmutableCell(), name.getSourceLocation()),
         Arguments.from(type),
         optionalLabelArgument(label),
+        protocol,
         location(nameleft, labelright)
       );
     :}
 
-  | variable:name COLON OUT value_type:type label_signature:label {:
+  | variable:name COLON OUT value_type:type label_signature:label protocol_annot:protocol {:
       RESULT = new ParameterNode(
         name,
         ParameterDirection.PARAM_OUT,
         new Located(PrimitivesKt.getImmutableCell(), name.getSourceLocation()),
         Arguments.from(type),
         optionalLabelArgument(label),
+        protocol,
         location(nameleft, labelright)
       );
     :}
 
   | variable:name COLON ARRAY OPEN_SQBRACE value_type:elementType CLOSE_SQBRACE
-    optional_label_signature:label {:
+    optional_label_signature:label protocol_annot:protocol {:
       RESULT = new ParameterNode(
         name,
         ParameterDirection.PARAM_IN,
         new Located(PrimitivesKt.getVector(), name.getSourceLocation()),
         Arguments.from(elementType),
         optionalLabelArgument(label),
+        protocol,
         location(nameleft, labelright)
       );
     :}
 
   | variable:name COLON OUT ARRAY OPEN_SQBRACE value_type:elementType CLOSE_SQBRACE
-    label_signature:label {:
+    label_signature:label protocol_annot:protocol {:
       RESULT = new ParameterNode(
         name,
         ParameterDirection.PARAM_OUT,
         new Located(PrimitivesKt.getVector(), name.getSourceLocation()),
         Arguments.from(elementType),
         optionalLabelArgument(label),
+        protocol,
         location(nameleft, labelright)
       );
     :}
@@ -310,13 +316,14 @@ parameter ::=
 
 simple_stmt ::=
     /* Immutable variable declaration. */
-    VAL:begin variable:var COLON value_type:type optional_label:label EQ expr:value {:
+    VAL:begin variable:var COLON value_type:type optional_label:label protocol_annot:protocol EQ expr:value {:
       RESULT = new DeclarationNode(
         var,
         new ConstructorCallNode(
             new Located(PrimitivesKt.getImmutableCell(), var.getSourceLocation()),
             Arguments.from(type),
             optionalLabelArgument(label),
+            protocol,
             Arguments.from(value),
             location(typeleft, valueright)
         ),
@@ -324,7 +331,7 @@ simple_stmt ::=
     :}
 
     /* Mutable variable declaration. */
-  | VAR:begin variable:var COLON value_type:type optional_label:label optional_initial_value:initial {:
+  | VAR:begin variable:var COLON value_type:type optional_label:label protocol_annot:protocol optional_initial_value:initial {:
       final LiteralNode defaultValue = new LiteralNode(
         type.getValue().getDefaultValue(),
         type.getSourceLocation());
@@ -335,6 +342,7 @@ simple_stmt ::=
             new Located(PrimitivesKt.getMutableCell(), var.getSourceLocation()),
             Arguments.from(type),
             optionalLabelArgument(label),
+            protocol,
             Arguments.from((initial == null) ? defaultValue : initial),
             location(typeleft, initialright)
         ),
@@ -355,7 +363,7 @@ simple_stmt ::=
 
   | indexing:indexing compound_assignment:op expr:e {:
       RESULT = indexing.modify(op, e, location(opleft, opright));
-    :}
+        :}
 
   /* out parameter declaration */
   | OUT:begin IDENT:id EQ expr:e {:
@@ -375,10 +383,11 @@ simple_stmt ::=
     :}
 
   /* let binding */
-  | LET:begin TMP_IDENT:id EQ expr:e {:
+  | LET:begin TMP_IDENT:id protocol_annot:protocol EQ expr:e {:
     RESULT = new LetNode(
       new Located(new Temporary(id), location(idleft, idright)),
       e,
+      protocol,
       location(beginleft, eright));
     :}
 
@@ -616,12 +625,13 @@ expr ::=
 
   // constructor call, make this general later
   | ARRAY:begin OPEN_SQBRACE value_type:elementType CLOSE_SQBRACE
-    optional_label:label OPEN_PAREN expr:size CLOSE_PAREN:end
+    optional_label:label protocol_annot:protocol OPEN_PAREN expr:size CLOSE_PAREN:end
     {:
       RESULT = new ConstructorCallNode(
         new Located(PrimitivesKt.getVector(), location(beginleft, beginright)),
         Arguments.from(elementType),
         optionalLabelArgument(label),
+        protocol,
         Arguments.from(size),
         location(beginleft, endright)
       );
@@ -850,6 +860,11 @@ host_set ::=
     OPEN_BRACE host_list:hosts CLOSE_BRACE {:
       RESULT = HostSetValue.invoke(hosts);
     :}
+  ;
+
+protocol_annot ::=
+    AT protocol:p     {: RESULT = p; :}
+  | /* empty */       {: RESULT = null; :}
   ;
 
 protocol ::=

@@ -163,6 +163,7 @@ private class FunctionElaborator(
                             it.sourceLocation
                         )
                     },
+                    parameter.protocol,
                     parameter.sourceLocation
                 )
             elaboratedParameters.add(elaboratedParameter)
@@ -335,7 +336,7 @@ private class StatementElaborator(
 
             else -> {
                 val tmp = TemporaryNode(freshTemporary(), this.sourceLocation)
-                bindings.add(ILetNode(tmp, this, this.sourceLocation))
+                bindings.add(ILetNode(tmp, this, null, this.sourceLocation))
                 IReadNode(tmp)
             }
         }
@@ -365,6 +366,7 @@ private class StatementElaborator(
                     ILetNode(
                         TemporaryNode(newName, stmt.temporary.sourceLocation),
                         newValue,
+                        stmt.protocol,
                         stmt.sourceLocation
                     )
                 }
@@ -395,6 +397,7 @@ private class StatementElaborator(
                                     )
                                 },
                                 newArguments,
+                                initializer.protocol,
                                 stmt.sourceLocation
                             )
                         }

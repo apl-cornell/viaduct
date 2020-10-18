@@ -56,6 +56,7 @@ sealed class SimpleStatementNode : StatementNode() {
 class LetNode(
     val temporary: TemporaryNode,
     val value: ExpressionNode,
+    val protocol: ProtocolNode?,
     override val sourceLocation: SourceLocation
 ) : SimpleStatementNode() {
     override val children: Iterable<ExpressionNode>
@@ -65,11 +66,12 @@ class LetNode(
         edu.cornell.cs.apl.viaduct.syntax.surface.LetNode(
             temporary,
             value.toSurfaceNode(),
+            protocol,
             sourceLocation
         )
 
     override fun copy(children: List<Node>): LetNode =
-        LetNode(temporary, children[0] as ExpressionNode, sourceLocation)
+        LetNode(temporary, children[0] as ExpressionNode, protocol, sourceLocation)
 }
 
 /** Constructing a new object and binding it to a variable. */
@@ -80,6 +82,7 @@ class DeclarationNode(
     // TODO: allow leaving out some of the labels (right now it's all or nothing)
     override val labelArguments: Arguments<LabelNode>?,
     val arguments: Arguments<AtomicExpressionNode>,
+    val protocol: ProtocolNode?,
     override val sourceLocation: SourceLocation
 ) : SimpleStatementNode(), ObjectDeclaration {
     override val declarationAsNode: Node
@@ -95,6 +98,7 @@ class DeclarationNode(
                 className,
                 typeArguments,
                 labelArguments,
+                protocol,
                 Arguments(arguments.map { it.toSurfaceNode() }, arguments.sourceLocation),
                 sourceLocation
             ),
@@ -108,6 +112,7 @@ class DeclarationNode(
             typeArguments,
             labelArguments,
             Arguments(children.map { it as AtomicExpressionNode }, arguments.sourceLocation),
+            protocol,
             sourceLocation
         )
 }
@@ -185,6 +190,7 @@ class OutParameterConstructorInitializerNode(
             className,
             typeArguments,
             labelArguments,
+            null,
             Arguments(
                 arguments.map { arg -> arg.toSurfaceNode() },
                 arguments.sourceLocation

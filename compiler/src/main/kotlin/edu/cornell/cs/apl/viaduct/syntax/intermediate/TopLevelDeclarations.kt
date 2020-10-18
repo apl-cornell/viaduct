@@ -91,6 +91,7 @@ class ParameterNode(
     override val typeArguments: Arguments<ValueTypeNode>,
     // TODO: allow leaving out some of the labels (right now it's all or nothing)
     override val labelArguments: Arguments<LabelNode>?,
+    val protocol: ProtocolNode?,
     override val sourceLocation: SourceLocation
 ) : Node(), ObjectDeclaration {
     override val declarationAsNode: Node
@@ -106,11 +107,12 @@ class ParameterNode(
             className,
             typeArguments,
             labelArguments,
+            protocol,
             sourceLocation
         )
 
     override fun copy(children: List<Node>): Node =
-        ParameterNode(name, parameterDirection, className, typeArguments, labelArguments, sourceLocation)
+        ParameterNode(name, parameterDirection, className, typeArguments, labelArguments, protocol, sourceLocation)
 
     val isOutParameter: Boolean
         get() = parameterDirection == ParameterDirection.PARAM_OUT

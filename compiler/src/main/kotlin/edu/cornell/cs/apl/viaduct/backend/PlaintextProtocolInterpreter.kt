@@ -146,7 +146,7 @@ class PlaintextProtocolInterpreter(
                 tempStore = tempStore.put(read.temporary.value, finalValue!!)
                 finalValue
             } else { // temporary should be stored locally, but isn't
-                throw UndefinedNameError(read.temporary)
+                throw ViaductInterpreterError("${runtime.projection.protocol.asDocument.print()}: could not find local temporary ${read.temporary.value}")
             }
         } else {
             storeValue

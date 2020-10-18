@@ -81,8 +81,6 @@ class SingleBackendInterpreter(
             }
 
             is IfNode -> {
-                println(stmt.asDocument.print())
-                println("if hosts: ${protocolAnalysis.hosts(stmt)}")
                 if (protocolAnalysis.hosts(stmt).contains(this.host)) {
                     val guardValue =
                         when (val guard = stmt.guard) {
@@ -91,13 +89,7 @@ class SingleBackendInterpreter(
                             is ReadNode -> {
                                 val guardProtocol = protocolAnalysis.primaryProtocol(guard)
                                 backends[guardProtocol]?.runExprAsValue(guard)
-                                    ?: {
-                                        println(stmt.asDocument.print())
-                                        for (protocol in protocolAnalysis.protocols(stmt)) {
-                                            println(protocol.asDocument.print())
-                                        }
-                                        throw ViaductInterpreterError("no backend for protocol ${guardProtocol.asDocument.print()}")
-                                    }()
+                                    ?: throw ViaductInterpreterError("no backend for protocol ${guardProtocol.asDocument.print()}")
                             }
                         }
 

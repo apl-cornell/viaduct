@@ -1,6 +1,7 @@
 package edu.cornell.cs.apl.viaduct.backend
 
 import edu.cornell.cs.apl.viaduct.errors.IllegalInternalCommunicationError
+import edu.cornell.cs.apl.viaduct.errors.ViaductInterpreterError
 import edu.cornell.cs.apl.viaduct.syntax.Arguments
 import edu.cornell.cs.apl.viaduct.syntax.ClassNameNode
 import edu.cornell.cs.apl.viaduct.syntax.ObjectVariable
@@ -9,7 +10,6 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.AtomicExpressionNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.DeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ExpressionArgumentNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.FunctionArgumentNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.FunctionInputArgumentNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.FunctionOutputArgumentNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.LetNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ObjectDeclarationArgumentNode
@@ -24,9 +24,9 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.SendNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.SimpleStatementNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.UpdateNode
-import java.util.Stack
 import kotlinx.collections.immutable.PersistentMap
 import kotlinx.collections.immutable.toPersistentMap
+import java.util.Stack
 
 typealias ObjectLocation = Int
 
@@ -51,19 +51,24 @@ abstract class AbstractProtocolInterpreter<Obj>(
     protected abstract suspend fun pushContext(initialStore: PersistentMap<ObjectVariable, ObjectLocation>)
 
     override suspend fun pushFunctionContext(arguments: PersistentMap<ParameterNode, FunctionArgumentNode>) {
-        functionFrameStack.push(Pair(objectHeap.size, arguments))
+        functionFrameStack.push(Pair(Integer.max(objectHeap.size-1, 0), arguments))
 
         val initialStore: PersistentMap<ObjectVariable, ObjectLocation> =
             arguments
-                .filter { kv -> kv.value is FunctionInputArgumentNode }
                 .map { kv ->
                     val objectLoc =
-                        when (val argument = kv.value as FunctionInputArgumentNode) {
+                        when (val argument = kv.value) {
                             is ExpressionArgumentNode ->
                                 allocateObject(buildExpressionObject(argument.expression))
 
                             is ObjectReferenceArgumentNode ->
                                 getObjectLocation(argument.variable.value)
+
+                            is ObjectDeclarationArgumentNode ->
+                                allocateObject(getNullObject())
+
+                            is OutParameterArgumentNode ->
+                                allocateObject(getNullObject())
                         }
                     kv.key.name.value to objectLoc
                 }.toMap().toPersistentMap()
@@ -87,7 +92,7 @@ abstract class AbstractProtocolInterpreter<Obj>(
                 }
 
         // destroy function frame
-        objectHeap.subList(heapTail - 1, objectHeap.size - 1).clear()
+        objectHeap.subList(heapTail, objectHeap.size - 1).clear()
         popContext()
 
         // point output parameters to new objects
@@ -107,7 +112,8 @@ abstract class AbstractProtocolInterpreter<Obj>(
     }
 
     protected fun getObjectLocation(obj: ObjectVariable): ObjectLocation {
-        return objectStore[obj]!!
+        return objectStore[obj]
+            ?: throw ViaductInterpreterError("undefined variable: $obj")
     }
 
     protected fun putObjectLocation(obj: ObjectVariable, loc: ObjectLocation) {
@@ -115,7 +121,8 @@ abstract class AbstractProtocolInterpreter<Obj>(
     }
 
     protected fun getObject(loc: ObjectLocation): Obj {
-        return objectHeap[loc]!!
+        return objectHeap[loc]
+            ?: throw ViaductInterpreterError("no object at location $loc")
     }
 
     protected fun putObject(loc: ObjectLocation, obj: Obj) {

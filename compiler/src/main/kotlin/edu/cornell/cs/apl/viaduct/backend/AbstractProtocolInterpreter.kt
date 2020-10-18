@@ -28,6 +28,8 @@ import java.util.Stack
 import kotlinx.collections.immutable.PersistentMap
 import kotlinx.collections.immutable.toPersistentMap
 
+typealias ObjectLocation = Int
+
 abstract class AbstractProtocolInterpreter<Obj>(
     val program: ProgramNode
 ) : ProtocolInterpreter {

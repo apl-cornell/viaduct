@@ -1,11 +1,10 @@
 package edu.cornell.cs.apl.viaduct.backend
 
+import edu.cornell.cs.apl.viaduct.analysis.ProtocolAnalysis
 import edu.cornell.cs.apl.viaduct.errors.ViaductInterpreterError
-import edu.cornell.cs.apl.viaduct.protocols.HostInterface
 import edu.cornell.cs.apl.viaduct.syntax.Host
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.HostDeclarationNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProcessDeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
 import edu.cornell.cs.apl.viaduct.syntax.values.BooleanValue
 import edu.cornell.cs.apl.viaduct.syntax.values.IntegerValue
@@ -164,12 +163,13 @@ data class ProcessInfo(
 }
 
 typealias Process = ProtocolProjection
-typealias ProcessBody = suspend (ViaductRuntime) -> Unit
+typealias ProcessInterpreter = suspend (ViaductRuntime) -> ProtocolInterpreter
 
 class ViaductRuntime(
-    programNode: ProgramNode,
-    hostConnectionInfo: Map<Host, HostAddress>,
-    private val processBodyMap: Map<Process, ProcessBody>,
+    private val program: ProgramNode,
+    private val protocolAnalysis: ProtocolAnalysis,
+    private val hostConnectionInfo: Map<Host, HostAddress>,
+    private val processBodyMap: Map<Process, ProcessInterpreter>,
     val host: Host
 ) {
     private val processInfoMap: Map<Process, ProcessInfo>
@@ -193,19 +193,7 @@ class ViaductRuntime(
         // all hosts and processes that interpreters in all hosts will agree on
 
         // create identifiers for processes (protocol projections)
-        val processList: List<Process> =
-            programNode.declarations
-                .filterIsInstance<ProcessDeclarationNode>()
-                .flatMap { node ->
-                    if (node.protocol.value !is HostInterface) {
-                        node.protocol.value.hosts.map { host ->
-                            ProtocolProjection(node.protocol.value, host)
-                        }
-                    } else {
-                        setOf<Process>()
-                    }
-                }
-                .sorted()
+        val processList: List<Process> = processBodyMap.keys.sorted()
 
         val tempProcessInfoMap: MutableMap<Process, ProcessInfo> = mutableMapOf()
         var j = 1
@@ -241,7 +229,7 @@ class ViaductRuntime(
 
         // create identifiers for hosts
         val hostList: List<Host> =
-            programNode.declarations
+            program.declarations
                 .filterIsInstance<HostDeclarationNode>()
                 .map { node -> node.name.value }
                 .sorted()
@@ -371,13 +359,15 @@ class ViaductRuntime(
                 }
             }
 
-            // run process coroutines
+            // run interpreter
             val job: Job = launch {
-                for (process: Map.Entry<Process, ProcessBody> in processBodyMap) {
-                    if (processInfoMap[process.key]!!.host == host) {
-                        launch { process.value(this@ViaductRuntime) }
-                    }
-                }
+                val processInterpreters =
+                    processBodyMap.map { kv ->
+                        kv.key.protocol to kv.value(this@ViaductRuntime)
+                    }.toMap()
+
+                val interpreter = SingleBackendInterpreter(program, protocolAnalysis, host, processInterpreters)
+                interpreter.run()
             }
 
             job.invokeOnCompletion {

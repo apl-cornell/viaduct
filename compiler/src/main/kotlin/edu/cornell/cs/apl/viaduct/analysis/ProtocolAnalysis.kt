@@ -4,6 +4,7 @@ import edu.cornell.cs.apl.attributes.attribute
 import edu.cornell.cs.apl.attributes.circularAttribute
 import edu.cornell.cs.apl.viaduct.errors.IllegalInternalCommunicationError
 import edu.cornell.cs.apl.viaduct.protocols.Local
+import edu.cornell.cs.apl.viaduct.selection.ProtocolComposer
 import edu.cornell.cs.apl.viaduct.syntax.FunctionName
 import edu.cornell.cs.apl.viaduct.syntax.Host
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
@@ -41,7 +42,8 @@ import kotlinx.collections.immutable.toPersistentSet
 /** Associates each [StatementNode] with the [Protocol]s involved in its execution. */
 class ProtocolAnalysis(
     val program: ProgramNode,
-    val protocolAssignment: (FunctionName, Variable) -> Protocol
+    val protocolAssignment: (FunctionName, Variable) -> Protocol,
+    val protocolComposer: ProtocolComposer
 ) {
     val tree = program.tree
     val nameAnalysis = NameAnalysis.get(program)
@@ -189,7 +191,50 @@ class ProtocolAnalysis(
     fun protocols(function: FunctionDeclarationNode): Set<Protocol> = function.protocols
 
     private val StatementNode.hosts: Set<Host> by attribute {
-        this.protocols.fold(setOf()) { acc, protocol -> acc.union(protocol.hosts.hosts) }
+        when (this) {
+            is DeclarationNode ->
+                primaryProtocol(this).hosts
+
+            is UpdateNode ->
+                primaryProtocol(this).hosts
+
+            is OutputNode ->
+                primaryProtocol(this).hosts
+
+            is LetNode -> {
+                val protocol = primaryProtocol(this)
+                nameAnalysis.readers(this)
+                    .filterIsInstance<SimpleStatementNode>()
+                    .map { reader ->
+                        val readerHosts = reader.hosts
+                        val readerProtocol = primaryProtocol(reader)
+                        val phase = protocolComposer.communicate(protocol, readerProtocol)
+
+                        // relevance criterion: if (A) the receiver of the event is the reader protocol,
+                        // then (B) the event's receiving host must be participating
+                        // the implication (A) -> (B) is turned into !(A) || (B)
+                        val relevantEvents =
+                            phase.filter { event ->
+                                readerProtocol != event.recv.protocol || readerHosts.contains(event.recv.host)
+                            }
+
+                        protocol.hosts.filter { host ->
+                            relevantEvents.any { event -> event.send.host == host }
+                        }
+                    }.fold(setOf()) { acc, hostSet -> acc.union(hostSet) }
+            }
+
+            is InfiniteLoopNode ->
+                this.body.hosts
+
+            is IfNode ->
+                this.thenBranch.hosts.union(this.elseBranch.hosts)
+
+            is BlockNode ->
+                this.statements.fold(setOf()) { acc, stmt -> acc.union(stmt.hosts) }
+
+            else -> setOf()
+        }
     }
 
     /** Returns the set of hosts that participate in the execution of [statement]. */
@@ -222,7 +267,7 @@ class ProtocolAnalysis(
     private val StatementNode.protocolsToSync: Set<Protocol> by attribute {
         when (this) {
             is LetNode, is IfNode, is InfiniteLoopNode, is BlockNode -> {
-                    this.protocolsRequiringSync
+                this.protocolsRequiringSync
                     .subtract(this.protocols)
                     .intersect(nameAnalysis.enclosingBlock(this).protocols)
             }
@@ -234,12 +279,32 @@ class ProtocolAnalysis(
     /** Returns the set of protocols that must synchronize with [statement]. */
     fun protocolsToSync(statement: StatementNode): Set<Protocol> = statement.protocolsToSync
 
-    private val StatementNode.participatingProtocols: Set<Protocol> by attribute {
-        this.protocols.union(this.protocolsToSync)
+    private val Node.participatingProtocols: Set<Protocol> by attribute {
+        when (this) {
+            is ProgramNode ->
+                this.declarations.fold(setOf()) { acc, decl ->
+                    acc.union(decl.participatingProtocols)
+                }
+
+            is FunctionDeclarationNode ->
+                this.protocols.union(this.body.participatingProtocols)
+
+            is ProcessDeclarationNode ->
+                this.body.participatingProtocols
+
+            is StatementNode ->
+                this.protocols.union(this.protocolsToSync)
+
+            else -> setOf()
+        }
     }
 
     /** Protocols that execute or require synchronization at this statement. */
-    fun participatingProtocols(statement: StatementNode): Set<Protocol> = statement.participatingProtocols
+    fun participatingProtocols(statement: StatementNode): Set<Protocol> =
+        statement.participatingProtocols
+
+    fun participatingProtocols(program: ProgramNode): Set<Protocol> =
+        program.participatingProtocols
 }
 
 /** Returns the union of all sets in this collection. */

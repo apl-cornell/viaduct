@@ -2,11 +2,11 @@ package edu.cornell.cs.apl.viaduct.backend
 
 import edu.cornell.cs.apl.viaduct.analysis.NameAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.ProtocolAnalysis
+import edu.cornell.cs.apl.viaduct.analysis.main
 import edu.cornell.cs.apl.viaduct.errors.ViaductInterpreterError
 import edu.cornell.cs.apl.viaduct.syntax.FunctionName
 import edu.cornell.cs.apl.viaduct.syntax.Host
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
-import edu.cornell.cs.apl.viaduct.syntax.Variable
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.AssertionNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.BlockNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.BreakNode
@@ -25,20 +25,25 @@ import kotlinx.collections.immutable.PersistentMap
 import kotlinx.collections.immutable.persistentMapOf
 
 class SingleBackendInterpreter(
-    program: ProgramNode,
-    protocolAssignment: (FunctionName, Variable) -> Protocol,
+    private val program: ProgramNode,
+    private val protocolAnalysis: ProtocolAnalysis,
     private val host: Host,
     private val backends: Map<Protocol, ProtocolInterpreter>
 ) {
     private val nameAnalysis = NameAnalysis.get(program)
-    private val protocolAnalysis = ProtocolAnalysis(program, protocolAssignment)
+
+    suspend fun run() {
+        val mainBody = program.main.body
+        run(nameAnalysis.enclosingFunctionName(mainBody), mainBody)
+    }
 
     suspend fun run(function: FunctionName, stmt: StatementNode) {
         when (stmt) {
             is SimpleStatementNode -> {
                 val protocol = protocolAnalysis.primaryProtocol(stmt)
                 if (protocol.hosts.contains(this.host)) {
-                    backends[protocol]!!.runSimpleStatement(stmt)
+                    backends[protocol]?.runSimpleStatement(stmt)
+                        ?: throw ViaductInterpreterError("no backend for protocol ${protocol.asDocument.print()}")
                 }
 
                 // TODO: perform synchronization
@@ -76,6 +81,8 @@ class SingleBackendInterpreter(
             }
 
             is IfNode -> {
+                println(stmt.asDocument.print())
+                println("if hosts: ${protocolAnalysis.hosts(stmt)}")
                 if (protocolAnalysis.hosts(stmt).contains(this.host)) {
                     val guardValue =
                         when (val guard = stmt.guard) {
@@ -83,7 +90,14 @@ class SingleBackendInterpreter(
 
                             is ReadNode -> {
                                 val guardProtocol = protocolAnalysis.primaryProtocol(guard)
-                                backends[guardProtocol]!!.runExprAsValue(guard)
+                                backends[guardProtocol]?.runExprAsValue(guard)
+                                    ?: {
+                                        println(stmt.asDocument.print())
+                                        for (protocol in protocolAnalysis.protocols(stmt)) {
+                                            println(protocol.asDocument.print())
+                                        }
+                                        throw ViaductInterpreterError("no backend for protocol ${guardProtocol.asDocument.print()}")
+                                    }()
                             }
                         }
 

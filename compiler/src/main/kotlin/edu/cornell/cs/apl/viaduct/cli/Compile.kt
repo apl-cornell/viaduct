@@ -14,6 +14,7 @@ import edu.cornell.cs.apl.viaduct.passes.check
 import edu.cornell.cs.apl.viaduct.passes.elaborated
 import edu.cornell.cs.apl.viaduct.passes.specialize
 import edu.cornell.cs.apl.viaduct.selection.SimpleCostEstimator
+import edu.cornell.cs.apl.viaduct.selection.SimpleProtocolComposer
 import edu.cornell.cs.apl.viaduct.selection.SimpleProtocolFactory
 import edu.cornell.cs.apl.viaduct.selection.selectProtocolsWithZ3
 import edu.cornell.cs.apl.viaduct.selection.validateProtocolAssignment
@@ -85,7 +86,7 @@ class Compile : CliktCommand(help = "Compile ideal protocol to secure distribute
         // TODO: either remove this entirely or make it opt-in by the command line.
         validateProtocolAssignment(program, program.main, protocolFactory, protocolAssignment)
 
-        val protocolAnalysis = ProtocolAnalysis(program, protocolAssignment)
+        val protocolAnalysis = ProtocolAnalysis(program, protocolAssignment, SimpleProtocolComposer)
 
         // Split the program.
         val splitProgram: ProgramNode = Splitter(protocolAnalysis).splitMain()

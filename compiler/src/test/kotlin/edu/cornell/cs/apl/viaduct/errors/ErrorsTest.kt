@@ -11,6 +11,7 @@ import edu.cornell.cs.apl.viaduct.passes.check
 import edu.cornell.cs.apl.viaduct.passes.elaborated
 import edu.cornell.cs.apl.viaduct.protocols.MainProtocol
 import edu.cornell.cs.apl.viaduct.selection.SimpleCostEstimator
+import edu.cornell.cs.apl.viaduct.selection.SimpleProtocolComposer
 import edu.cornell.cs.apl.viaduct.selection.SimpleProtocolFactory
 import edu.cornell.cs.apl.viaduct.selection.selectProtocolsWithZ3
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
@@ -66,7 +67,7 @@ private fun run(file: File) {
 private fun ProgramNode.split() {
     val protocolAssignment =
         selectProtocolsWithZ3(this, this.main, SimpleProtocolFactory(this), SimpleCostEstimator)
-    val protocolAnalysis = ProtocolAnalysis(this, protocolAssignment)
+    val protocolAnalysis = ProtocolAnalysis(this, protocolAssignment, SimpleProtocolComposer)
 
     Splitter(protocolAnalysis).splitMain()
 }

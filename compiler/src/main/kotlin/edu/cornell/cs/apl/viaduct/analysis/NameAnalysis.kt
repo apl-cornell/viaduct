@@ -465,6 +465,7 @@ class NameAnalysis private constructor(private val tree: Tree<Node, ProgramNode>
         when (val parent = tree.parent(this)) {
             is BlockNode -> parent
             is FunctionDeclarationNode -> this as BlockNode
+            is ProcessDeclarationNode -> this as BlockNode
             else -> throw Error("statement parent has to be a block node!")
         }
     }

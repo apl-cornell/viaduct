@@ -6,9 +6,11 @@ import edu.cornell.cs.apl.viaduct.errors.ViaductInterpreterError
 import edu.cornell.cs.apl.viaduct.protocols.Local
 import edu.cornell.cs.apl.viaduct.protocols.Replication
 import edu.cornell.cs.apl.viaduct.selection.CommunicationEvent
+import edu.cornell.cs.apl.viaduct.selection.ProtocolCommunication
 import edu.cornell.cs.apl.viaduct.selection.SimpleProtocolComposer
 import edu.cornell.cs.apl.viaduct.syntax.Arguments
 import edu.cornell.cs.apl.viaduct.syntax.ClassNameNode
+import edu.cornell.cs.apl.viaduct.syntax.Host
 import edu.cornell.cs.apl.viaduct.syntax.ObjectVariable
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
 import edu.cornell.cs.apl.viaduct.syntax.Temporary
@@ -127,8 +129,7 @@ class PlaintextProtocolInterpreter(
 
             // must receive from read protocol
             if (runtime.projection.protocol != sendProtocol) {
-                val sendPhase =
-                    SimpleProtocolComposer.getSendPhase(sendProtocol, runtime.projection.protocol)
+                val sendPhase: ProtocolCommunication = SimpleProtocolComposer.communicate(sendProtocol, runtime.projection.protocol)
 
                 var finalValue: Value? = null
                 for (recvEvent: CommunicationEvent in sendPhase.getHostReceives(runtime.projection.host)) {
@@ -139,26 +140,6 @@ class PlaintextProtocolInterpreter(
                         finalValue = receivedValue
                     } else if (finalValue != receivedValue) {
                         throw ViaductInterpreterError("received different values")
-                    }
-                }
-
-                val broadcastPhase =
-                    SimpleProtocolComposer.getBroadcastPhase(sendProtocol, runtime.projection.protocol)
-
-                if (finalValue != null) {
-                    for (sendEvent: CommunicationEvent in broadcastPhase.getHostSends(runtime.projection.host)) {
-                        runtime.send(finalValue, ProtocolProjection(sendEvent.recv.protocol, sendEvent.recv.host))
-                    }
-                } else {
-                    for (recvEvent: CommunicationEvent in broadcastPhase.getHostReceives(runtime.projection.host)) {
-                        val receivedValue: Value =
-                            runtime.receive(ProtocolProjection(sendProtocol, recvEvent.send.host))
-
-                        if (finalValue == null) {
-                            finalValue = receivedValue
-                        } else if (finalValue != receivedValue) {
-                            throw ViaductInterpreterError("received different values")
-                        }
                     }
                 }
 
@@ -211,10 +192,11 @@ class PlaintextProtocolInterpreter(
         tempStore = tempStore.put(stmt.temporary.value, rhsValue)
 
         // broadcast to other protocols
-        val recvProtocols: Set<Protocol> = protocolAnalysis.directReaders(stmt)
+        val recvProtocols =
+            protocolAnalysis.directReaders(stmt).filter { it != runtime.projection.protocol }
+
         for (recvProtocol: Protocol in recvProtocols) {
-            val sendPhase =
-                SimpleProtocolComposer.getSendPhase(runtime.projection.protocol, recvProtocol)
+            val sendPhase: ProtocolCommunication = SimpleProtocolComposer.communicate(runtime.projection.protocol, recvProtocol)
 
             for (sendEvent in sendPhase.getHostSends(runtime.projection.host)) {
                 runtime.send(rhsValue, ProtocolProjection(recvProtocol, sendEvent.recv.host))
@@ -235,6 +217,17 @@ class PlaintextProtocolInterpreter(
             }
 
             else -> throw ViaductInterpreterError("Cannot perform I/O in non-Local protocol", stmt)
+        }
+    }
+
+    companion object : ProtocolInterpreterFactory {
+        override fun buildProtocolInterpreter(
+            program: ProgramNode,
+            protocolAnalysis: ProtocolAnalysis,
+            runtime: ViaductProcessRuntime,
+            connectionMap: Map<Host, HostAddress>
+        ): ProtocolInterpreter {
+            return PlaintextProtocolInterpreter(program, protocolAnalysis, runtime)
         }
     }
 }

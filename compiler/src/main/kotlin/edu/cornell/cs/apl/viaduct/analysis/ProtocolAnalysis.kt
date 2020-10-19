@@ -6,6 +6,7 @@ import edu.cornell.cs.apl.viaduct.errors.IllegalInternalCommunicationError
 import edu.cornell.cs.apl.viaduct.errors.NoProtocolAnnotationError
 import edu.cornell.cs.apl.viaduct.errors.UnknownObjectDeclarationError
 import edu.cornell.cs.apl.viaduct.protocols.Local
+import edu.cornell.cs.apl.viaduct.selection.CommunicationEvent
 import edu.cornell.cs.apl.viaduct.selection.ProtocolComposer
 import edu.cornell.cs.apl.viaduct.syntax.Host
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
@@ -208,6 +209,41 @@ class ProtocolAnalysis(
     /** Returns the set of protocols that execute [function]. */
     fun protocols(function: FunctionDeclarationNode): Set<Protocol> = function.protocols
 
+    private val LetNode.relevantCommunicationEventsMap: Map<SimpleStatementNode, Set<CommunicationEvent>> by attribute {
+        nameAnalysis
+            .readers(this)
+            .filterIsInstance<SimpleStatementNode>()
+            .map { reader ->
+                val readerHosts = reader.participatingHosts
+
+                val protocol = primaryProtocol(this)
+                val readerProtocol = primaryProtocol(reader)
+                val phase = protocolComposer.communicate(protocol, readerProtocol)
+
+                // relevance criterion: if (A) the receiver of the event is the reader protocol,
+                // then (B) the event's receiving host must be participating
+                // the implication (A) -> (B) is turned into !(A) || (B)
+                val relevantEvents =
+                    phase.filter { event ->
+                        readerProtocol != event.recv.protocol || readerHosts.contains(event.recv.host)
+                    }.toSet()
+
+                Pair(reader, relevantEvents)
+            }.toMap()
+    }
+
+    /** Return the relevant communication events for the [read]. */
+    fun relevantCommunicationEvents(read: ReadNode): Set<CommunicationEvent> {
+        val letNode = nameAnalysis.declaration(read)
+        val reader = nameAnalysis.enclosingStatement(read) as SimpleStatementNode
+        return letNode.relevantCommunicationEventsMap[reader]!!
+    }
+
+    /** Return the relevant communication events for [reader] reading from [letNode]. */
+    fun relevantCommunicationEvents(letNode: LetNode, reader: SimpleStatementNode): Set<CommunicationEvent> {
+        return letNode.relevantCommunicationEventsMap[reader]!!
+    }
+
     private val StatementNode.participatingHosts: Set<Host> by circularAttribute(
         persistentHashSetOf()
     ) {
@@ -230,17 +266,8 @@ class ProtocolAnalysis(
                     .map { reader ->
                         when (reader) {
                             is SimpleStatementNode -> {
-                                val readerHosts = reader.participatingHosts
-                                val readerProtocol = primaryProtocol(reader)
-                                val phase = protocolComposer.communicate(protocol, readerProtocol)
-
-                                // relevance criterion: if (A) the receiver of the event is the reader protocol,
-                                // then (B) the event's receiving host must be participating
-                                // the implication (A) -> (B) is turned into !(A) || (B)
-                                val relevantEvents =
-                                    phase.filter { event ->
-                                        readerProtocol != event.recv.protocol || readerHosts.contains(event.recv.host)
-                                    }
+                                val relevantEvents: Set<CommunicationEvent> =
+                                    this.relevantCommunicationEventsMap[reader]!!
 
                                 protocol.hosts.filter { host ->
                                     relevantEvents.any { event -> event.send.host == host }
@@ -272,7 +299,6 @@ class ProtocolAnalysis(
                     }.fold(
                         protocolComposer.mandatoryParticipatingHosts(protocol, this)
                     ) { acc, hostSet -> acc.union(hostSet) }
-
             }
 
             // TODO: what is the correct answer for this?
@@ -294,14 +320,6 @@ class ProtocolAnalysis(
 
             is BlockNode ->
                 this.statements.fold(setOf()) { acc, stmt -> acc.union(stmt.participatingHosts) }
-
-            /*
-            is BreakNode ->
-                nameAnalysis.enclosingBlock(this).participatingHosts
-
-            is AssertionNode ->
-                nameAnalysis.enclosingBlock(this).participatingHosts
-            */
 
             else -> setOf()
         }

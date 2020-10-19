@@ -42,11 +42,6 @@ class ABY(val server: Host, val client: Host) : Protocol() {
             .map { h -> Pair(h, InputPort(this, h, "CLEARTEXT_INPUT")) }
             .toMap()
 
-    val hostDummyInputPorts: Map<Host, InputPort> =
-        hosts
-            .map { h -> Pair(h, InputPort(this, h, "DUMMY_INPUT")) }
-            .toMap()
-
     val hostSecretShareInputPorts: Map<Host, InputPort> =
         hosts
             .map { h -> Pair(h, InputPort(this, h, "SECRET_SHARE_INPUT")) }
@@ -60,10 +55,5 @@ class ABY(val server: Host, val client: Host) : Protocol() {
     val hostSecretShareOutputPorts: Map<Host, OutputPort> =
         hosts
             .map { h -> Pair(h, OutputPort(this, h, "CLEARTEXT_OUTPUT")) }
-            .toMap()
-
-    val hostDummyOutputPorts: Map<Host, OutputPort> =
-        hosts
-            .map { h -> Pair(h, OutputPort(this, h, "DUMMY_OUTPUT")) }
             .toMap()
 }

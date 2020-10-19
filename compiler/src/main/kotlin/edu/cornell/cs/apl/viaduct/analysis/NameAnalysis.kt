@@ -48,6 +48,7 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProcessDeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.QueryNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ReadNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.SimpleStatementNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.StatementNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.UpdateNode
 import kotlin.properties.ReadOnlyProperty
@@ -330,6 +331,18 @@ class NameAnalysis private constructor(private val tree: Tree<Node, ProgramNode>
     fun readers(node: LetNode): Set<StatementNode> = node.readers
 
     fun reads(node: Node): Set<ReadNode> = node.reads
+
+    private val ReadNode.enclosingStatement: StatementNode by attribute {
+        when (val parent = tree.parent(this)) {
+            is SimpleStatementNode -> parent
+            is IfNode -> parent
+            is ExpressionNode -> tree.parent(parent) as StatementNode
+            else -> throw Error("read node not enclosed by a simple statement or conditional")
+        }
+    }
+
+    /** Return the statement enclosing the [read] node. */
+    fun enclosingStatement(read: ReadNode): StatementNode = read.enclosingStatement
 
     private val Node.queries: Set<QueryNode> by collectedAttribute(tree) { node ->
         if (node is QueryNode) {

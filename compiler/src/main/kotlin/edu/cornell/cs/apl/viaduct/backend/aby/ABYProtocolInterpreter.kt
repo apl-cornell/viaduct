@@ -293,7 +293,7 @@ class ABYProtocolInterpreter(
                         }
 
                         // other host has secret input; create dummy input gate
-                        sendEvent.recv.id == "DUMMY_INPUT" && sendEvent.recv.host == runtime.projection.host -> {
+                        sendEvent.recv.id == "SECRET_INPUT" && sendEvent.recv.host != runtime.projection.host -> {
                             secretInput = ABYDummyInGate()
                         }
 

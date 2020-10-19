@@ -46,15 +46,8 @@ object SimpleProtocolComposer : ProtocolComposer {
             src is Local && dst is ABY -> {
                 ProtocolCommunication(
                     if (dst.hosts.contains(src.host)) {
-                        val otherHost = if (dst.client == src.host) dst.server else dst.client
+                        setOf(CommunicationEvent(src.hostOutputPort, dst.hostSecretInputPorts[src.host]!!))
 
-                        setOf(
-                            CommunicationEvent(src.hostOutputPort, dst.hostSecretInputPorts[src.host]!!),
-                            CommunicationEvent(
-                                dst.hostDummyOutputPorts[otherHost]!!,
-                                dst.hostDummyInputPorts[otherHost]!!
-                            )
-                        )
                     } else {
                         // TODO: for now, assume the input is cleartext, but should compare labels
                         // to actually determine this

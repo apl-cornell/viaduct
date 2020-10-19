@@ -191,7 +191,7 @@ class PlaintextProtocolInterpreter(
         val rhsValue = runExpr(stmt.value)
         tempStore = tempStore.put(stmt.temporary.value, rhsValue)
 
-        // broadcast to other protocols
+        // broadcast to readers
         val recvProtocols =
             protocolAnalysis.directReaders(stmt).filter { it != runtime.projection.protocol }
 

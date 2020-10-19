@@ -53,10 +53,10 @@ import edu.cornell.cs.apl.viaduct.syntax.types.ValueType
 import edu.cornell.cs.apl.viaduct.syntax.values.BooleanValue
 import edu.cornell.cs.apl.viaduct.syntax.values.IntegerValue
 import edu.cornell.cs.apl.viaduct.syntax.values.Value
+import java.util.Stack
 import kotlinx.collections.immutable.PersistentMap
 import kotlinx.collections.immutable.persistentMapOf
 import kotlinx.collections.immutable.persistentSetOf
-import java.util.Stack
 
 class ABYProtocolInterpreter(
     program: ProgramNode,

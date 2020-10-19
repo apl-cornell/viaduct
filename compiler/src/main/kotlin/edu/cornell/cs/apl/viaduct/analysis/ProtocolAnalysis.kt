@@ -295,7 +295,6 @@ class ProtocolAnalysis(
 
                             else -> setOf()
                         }
-
                     }.fold(
                         protocolComposer.mandatoryParticipatingHosts(protocol, this)
                     ) { acc, hostSet -> acc.union(hostSet) }

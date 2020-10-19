@@ -47,7 +47,6 @@ object SimpleProtocolComposer : ProtocolComposer {
                 ProtocolCommunication(
                     if (dst.hosts.contains(src.host)) {
                         setOf(CommunicationEvent(src.hostOutputPort, dst.hostSecretInputPorts[src.host]!!))
-
                     } else {
                         // TODO: for now, assume the input is cleartext, but should compare labels
                         // to actually determine this

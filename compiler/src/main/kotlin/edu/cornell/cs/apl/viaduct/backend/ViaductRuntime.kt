@@ -10,13 +10,6 @@ import edu.cornell.cs.apl.viaduct.syntax.values.BooleanValue
 import edu.cornell.cs.apl.viaduct.syntax.values.IntegerValue
 import edu.cornell.cs.apl.viaduct.syntax.values.UnitValue
 import edu.cornell.cs.apl.viaduct.syntax.values.Value
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.asCoroutineDispatcher
-import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withContext
 import java.io.InputStream
 import java.io.OutputStream
 import java.net.ConnectException
@@ -24,6 +17,13 @@ import java.net.ServerSocket
 import java.net.Socket
 import java.util.Scanner
 import java.util.concurrent.Executors
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.asCoroutineDispatcher
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 
 typealias ProcessId = Int
 typealias HostId = Int
@@ -367,7 +367,7 @@ class ViaductRuntime(
         // check if all processes have registered bodies
         assert(
             processBodyMap.keys.containsAll(
-                processInfoMap.keys.filter { k -> k.host == host }
+                processInfoMap.keys.filter { k -> k.host == host && k.protocol !is Synchronization }
             )
         )
 

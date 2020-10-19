@@ -24,9 +24,9 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.SendNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.SimpleStatementNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.UpdateNode
+import java.util.Stack
 import kotlinx.collections.immutable.PersistentMap
 import kotlinx.collections.immutable.toPersistentMap
-import java.util.Stack
 
 typealias ObjectLocation = Int
 

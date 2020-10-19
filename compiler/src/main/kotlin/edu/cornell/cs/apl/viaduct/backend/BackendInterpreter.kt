@@ -73,7 +73,6 @@ class BackendInterpreter(
                     val protocol = protocolAnalysis.primaryProtocol(stmt)
                     backends[protocol]?.runSimpleStatement(stmt)
                         ?: throw ViaductInterpreterError("no backend for protocol ${protocol.asDocument.print()}")
-
                 }
 
                 synchronize(protocolAnalysis.participatingHosts(stmt), protocolAnalysis.hostsToSync(stmt))
@@ -134,7 +133,6 @@ class BackendInterpreter(
 
                         else -> throw ViaductInterpreterError("conditional guard $guardValue is not boolean")
                     }
-
                 }
 
                 synchronize(protocolAnalysis.participatingHosts(stmt), protocolAnalysis.hostsToSync(stmt))

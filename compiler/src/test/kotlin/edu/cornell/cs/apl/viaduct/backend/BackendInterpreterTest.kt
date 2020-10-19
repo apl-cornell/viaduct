@@ -83,11 +83,9 @@ internal class BackendInterpreterTest {
 
         /*
         val hosts: Set<Host> =
-            program.declarations
-                .filterIsInstance<HostDeclarationNode>()
+            program.hosts
                 .map { hostDecl -> hostDecl.name.value }
                 .toSet()
-
 
         val interpreter = ViaductBackend(backendMap)
 

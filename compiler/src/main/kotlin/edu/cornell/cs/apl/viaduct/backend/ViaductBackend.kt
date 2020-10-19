@@ -4,6 +4,7 @@ import edu.cornell.cs.apl.viaduct.analysis.ProtocolAnalysis
 import edu.cornell.cs.apl.viaduct.errors.ViaductInterpreterError
 import edu.cornell.cs.apl.viaduct.selection.SimpleProtocolComposer
 import edu.cornell.cs.apl.viaduct.syntax.Host
+import edu.cornell.cs.apl.viaduct.syntax.Protocol
 import edu.cornell.cs.apl.viaduct.syntax.ProtocolName
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.HostDeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
@@ -31,20 +32,21 @@ class ViaductBackend(
         // TODO: make this configurable
         var portNum = DEFAULT_PORT
         val connectionMap: Map<Host, HostAddress> =
-            program.declarations
-                .filterIsInstance<HostDeclarationNode>()
+            program.hosts
                 .map { hostDecl ->
                     val addr = HostAddress(DEFAULT_ADDRESS, portNum)
                     portNum++
                     Pair(hostDecl.name.value, addr)
-                }
-                .toMap()
+                }.toMap()
 
         val processes: MutableMap<Process, ProcessInterpreter> = mutableMapOf()
-        for (protocol in protocolAnalysis.participatingProtocols(program)) {
+        val participatingProtocols: Set<Protocol> =
+            protocolAnalysis.participatingProtocols(program)
+
+        for (protocol in participatingProtocols) {
             if (protocol.hosts.contains(host)) {
+                val projection = ProtocolProjection(protocol, host)
                 backends[protocol.protocolName]?.let { factory: ProtocolInterpreterFactory ->
-                    val projection = ProtocolProjection(protocol, host)
                     processes[projection] = { runtime ->
                         factory.buildProtocolInterpreter(
                             program,

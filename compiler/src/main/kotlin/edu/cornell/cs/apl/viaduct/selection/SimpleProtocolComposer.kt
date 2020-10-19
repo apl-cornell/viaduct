@@ -4,7 +4,15 @@ import edu.cornell.cs.apl.attributes.attribute
 import edu.cornell.cs.apl.viaduct.protocols.ABY
 import edu.cornell.cs.apl.viaduct.protocols.Local
 import edu.cornell.cs.apl.viaduct.protocols.Replication
+import edu.cornell.cs.apl.viaduct.syntax.Host
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.DeclarationNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.LetNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutParameterInitializationNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutputNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.SendNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.SimpleStatementNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.UpdateNode
 
 /** Describe how protocols should communicate / compose with each other. */
 object SimpleProtocolComposer : ProtocolComposer {
@@ -42,7 +50,10 @@ object SimpleProtocolComposer : ProtocolComposer {
 
                         setOf(
                             CommunicationEvent(src.hostOutputPort, dst.hostSecretInputPorts[src.host]!!),
-                            CommunicationEvent(dst.hostDummyOutputPorts[otherHost]!!, dst.hostDummyInputPorts[otherHost]!!)
+                            CommunicationEvent(
+                                dst.hostDummyOutputPorts[otherHost]!!,
+                                dst.hostDummyInputPorts[otherHost]!!
+                            )
                         )
                     } else {
                         // TODO: for now, assume the input is cleartext, but should compare labels
@@ -193,4 +204,25 @@ object SimpleProtocolComposer : ProtocolComposer {
 
     override fun communicate(src: Protocol, dst: Protocol): ProtocolCommunication =
         Pair(src, dst).communicate
+
+    override fun mandatoryParticipatingHosts(protocol: Protocol, stmt: SimpleStatementNode): Set<Host> =
+        when (stmt) {
+            is LetNode -> {
+                when (protocol) {
+                    is ABY, is Local -> protocol.hosts
+                    is Replication -> setOf()
+                    else -> setOf()
+                }
+            }
+
+            is DeclarationNode -> protocol.hosts
+
+            is UpdateNode -> protocol.hosts
+
+            is OutParameterInitializationNode -> protocol.hosts
+
+            is OutputNode -> protocol.hosts
+
+            is SendNode -> setOf()
+        }
 }

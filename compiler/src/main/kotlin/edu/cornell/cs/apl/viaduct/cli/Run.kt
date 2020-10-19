@@ -18,6 +18,7 @@ import edu.cornell.cs.apl.viaduct.syntax.Host
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
 import edu.cornell.cs.apl.viaduct.syntax.ProtocolName
 import java.io.File
+import kotlin.system.exitProcess
 
 class Run : CliktCommand(help = "Run compiled protocol for a single host") {
     private val hostName by
@@ -50,5 +51,6 @@ class Run : CliktCommand(help = "Run compiled protocol for a single host") {
 
         // interpret program
         backend.run(program, Host(hostName))
+        exitProcess(0)
     }
 }

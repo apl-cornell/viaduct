@@ -213,16 +213,16 @@ class ProtocolAnalysis(
     ) {
         when (this) {
             is DeclarationNode ->
-                primaryProtocol(this).hosts
+                protocolComposer.mandatoryParticipatingHosts(primaryProtocol(this), this)
 
             is UpdateNode ->
-                primaryProtocol(this).hosts
+                protocolComposer.mandatoryParticipatingHosts(primaryProtocol(this), this)
 
             is OutputNode ->
-                primaryProtocol(this).hosts
+                protocolComposer.mandatoryParticipatingHosts(primaryProtocol(this), this)
 
             is OutParameterInitializationNode ->
-                primaryProtocol(this).hosts
+                protocolComposer.mandatoryParticipatingHosts(primaryProtocol(this), this)
 
             is LetNode -> {
                 val protocol = primaryProtocol(this)
@@ -269,7 +269,10 @@ class ProtocolAnalysis(
                             else -> setOf()
                         }
 
-                    }.fold(setOf()) { acc, hostSet -> acc.union(hostSet) }
+                    }.fold(
+                        protocolComposer.mandatoryParticipatingHosts(protocol, this)
+                    ) { acc, hostSet -> acc.union(hostSet) }
+
             }
 
             // TODO: what is the correct answer for this?

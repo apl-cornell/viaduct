@@ -148,7 +148,9 @@ class Splitter(
             when (statement) {
                 is IfNode, is InfiniteLoopNode, is BlockNode -> {
                     val protocols = protocolAnalysis.protocols(statement)
-                    val protocolsToSync = protocolAnalysis.protocolsToSync(statement)
+                    // val protocolsToSync = protocolAnalysis.protocolsToSync(statement)
+                    val protocolsToSync: Set<Protocol> = setOf()
+
                     when (protocol) {
                         // protocol participates in execution of control structure.
                         // must send synchronization to protocols
@@ -206,7 +208,9 @@ class Splitter(
                             result.add(it.eraseSecurityLabels())
 
                         if (it is LetNode) {
-                            val protocolsToSync = protocolAnalysis.protocolsToSync(it)
+                            // val protocolsToSync = protocolAnalysis.protocolsToSync(it)
+                            val protocolsToSync: Set<Protocol> = setOf()
+
                             when (protocol) {
                                 primaryProtocol -> {
                                     // Send the temporary to everyone relevant

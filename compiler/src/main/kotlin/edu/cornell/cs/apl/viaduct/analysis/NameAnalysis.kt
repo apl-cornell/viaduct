@@ -464,6 +464,8 @@ class NameAnalysis private constructor(private val tree: Tree<Node, ProgramNode>
     private val StatementNode.enclosingBlock: BlockNode by attribute {
         when (val parent = tree.parent(this)) {
             is BlockNode -> parent
+            is IfNode -> parent.enclosingBlock
+            is InfiniteLoopNode -> parent.enclosingBlock
             is FunctionDeclarationNode -> this as BlockNode
             is ProcessDeclarationNode -> this as BlockNode
             else -> throw Error("statement parent has to be a block node!")

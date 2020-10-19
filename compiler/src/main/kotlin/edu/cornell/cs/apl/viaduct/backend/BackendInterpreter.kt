@@ -4,6 +4,7 @@ import edu.cornell.cs.apl.viaduct.analysis.NameAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.ProtocolAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.main
 import edu.cornell.cs.apl.viaduct.errors.ViaductInterpreterError
+import edu.cornell.cs.apl.viaduct.protocols.Synchronization
 import edu.cornell.cs.apl.viaduct.syntax.FunctionName
 import edu.cornell.cs.apl.viaduct.syntax.Host
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
@@ -21,32 +22,61 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.ReadNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.SimpleStatementNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.StatementNode
 import edu.cornell.cs.apl.viaduct.syntax.values.BooleanValue
+import edu.cornell.cs.apl.viaduct.syntax.values.UnitValue
 import kotlinx.collections.immutable.PersistentMap
 import kotlinx.collections.immutable.persistentMapOf
 
-class SingleBackendInterpreter(
+class BackendInterpreter(
     private val program: ProgramNode,
     private val protocolAnalysis: ProtocolAnalysis,
     private val host: Host,
-    private val backends: Map<Protocol, ProtocolInterpreter>
+    inputBackends: Map<Protocol, ProtocolInterpreter>,
+    private val runtime: ViaductRuntime
 ) {
     private val nameAnalysis = NameAnalysis.get(program)
+    private val backends: Map<Protocol, ProtocolInterpreter> =
+        inputBackends.filter { kv -> kv.key !is Synchronization }
+    private val syncProtocol = Synchronization(program.hosts.map { it.name.value }.toSet())
 
     suspend fun run() {
         val mainBody = program.main.body
         run(nameAnalysis.enclosingFunctionName(mainBody), mainBody)
     }
 
+    suspend fun synchronize(senders: Set<Host>, receivers: Set<Host>) {
+        when {
+            senders.contains(this.host) -> {
+                for (receiver in receivers) {
+                    runtime.send(
+                        UnitValue,
+                        ProtocolProjection(syncProtocol, this.host),
+                        ProtocolProjection(syncProtocol, receiver)
+                    )
+                }
+            }
+
+            receivers.contains(this.host) -> {
+                for (sender in senders) {
+                    runtime.receive(
+                        ProtocolProjection(syncProtocol, sender),
+                        ProtocolProjection(syncProtocol, this.host)
+                    )
+                }
+            }
+        }
+    }
+
     suspend fun run(function: FunctionName, stmt: StatementNode) {
         when (stmt) {
             is SimpleStatementNode -> {
-                val protocol = protocolAnalysis.primaryProtocol(stmt)
-                if (protocol.hosts.contains(this.host)) {
+                if (protocolAnalysis.participatingHosts(stmt).contains(this.host)) {
+                    val protocol = protocolAnalysis.primaryProtocol(stmt)
                     backends[protocol]?.runSimpleStatement(stmt)
                         ?: throw ViaductInterpreterError("no backend for protocol ${protocol.asDocument.print()}")
+
                 }
 
-                // TODO: perform synchronization
+                synchronize(protocolAnalysis.participatingHosts(stmt), protocolAnalysis.hostsToSync(stmt))
             }
 
             is FunctionCallNode -> {
@@ -81,7 +111,7 @@ class SingleBackendInterpreter(
             }
 
             is IfNode -> {
-                if (protocolAnalysis.hosts(stmt).contains(this.host)) {
+                if (protocolAnalysis.participatingHosts(stmt).contains(this.host)) {
                     val guardValue =
                         when (val guard = stmt.guard) {
                             is LiteralNode -> guard.value
@@ -104,13 +134,14 @@ class SingleBackendInterpreter(
 
                         else -> throw ViaductInterpreterError("conditional guard $guardValue is not boolean")
                     }
+
                 }
 
-                // TODO: perform synchronization
+                synchronize(protocolAnalysis.participatingHosts(stmt), protocolAnalysis.hostsToSync(stmt))
             }
 
             is InfiniteLoopNode -> {
-                if (protocolAnalysis.hosts(stmt).contains(this.host)) {
+                if (protocolAnalysis.participatingHosts(stmt).contains(this.host)) {
                     val protocolContextMarkers: Map<Protocol, Int> =
                         backends
                             .map { kv -> kv.key to kv.value.getContextMarker() }
@@ -131,7 +162,7 @@ class SingleBackendInterpreter(
                     }
                 }
 
-                // TODO: perform synchronization
+                synchronize(protocolAnalysis.participatingHosts(stmt), protocolAnalysis.hostsToSync(stmt))
             }
 
             is BreakNode -> {
@@ -151,10 +182,11 @@ class SingleBackendInterpreter(
                     backend.popContext()
                 }
 
-                // TODO: perform synchronization
+                synchronize(protocolAnalysis.participatingHosts(stmt), protocolAnalysis.hostsToSync(stmt))
             }
 
-            is AssertionNode -> {}
+            is AssertionNode -> {
+            }
         }
     }
 }

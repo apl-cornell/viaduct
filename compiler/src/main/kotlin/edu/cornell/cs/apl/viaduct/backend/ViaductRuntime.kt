@@ -2,26 +2,28 @@ package edu.cornell.cs.apl.viaduct.backend
 
 import edu.cornell.cs.apl.viaduct.analysis.ProtocolAnalysis
 import edu.cornell.cs.apl.viaduct.errors.ViaductInterpreterError
+import edu.cornell.cs.apl.viaduct.protocols.Synchronization
 import edu.cornell.cs.apl.viaduct.syntax.Host
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.HostDeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
 import edu.cornell.cs.apl.viaduct.syntax.values.BooleanValue
 import edu.cornell.cs.apl.viaduct.syntax.values.IntegerValue
 import edu.cornell.cs.apl.viaduct.syntax.values.UnitValue
 import edu.cornell.cs.apl.viaduct.syntax.values.Value
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.asCoroutineDispatcher
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import java.io.InputStream
 import java.io.OutputStream
 import java.net.ConnectException
 import java.net.ServerSocket
 import java.net.Socket
 import java.util.Scanner
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withContext
+import java.util.concurrent.Executors
 
 typealias ProcessId = Int
 typealias HostId = Int
@@ -53,7 +55,9 @@ private abstract class ViaductThread(
             when (val msg: ViaductMessage = msgQueue.receive()) {
                 is CommunicationMessage -> processCommunicationMessage(msg)
 
-                is ShutdownMessage -> break@loop
+                is ShutdownMessage -> {
+                    break@loop
+                }
             }
         }
     }
@@ -78,18 +82,19 @@ private class ViaductReceiverThread(
 
                         val sender: Process = runtime.getProcessById(senderId).process
                         val receiver: Process = runtime.getProcessById(receiverId).process
-                        val value: Value = when {
-                            // BooleanValue
-                            valType == 0 -> BooleanValue(unparsedValue != 0)
+                        val value: Value =
+                            when (valType) {
+                                // BooleanValue
+                                0 -> BooleanValue(unparsedValue != 0)
 
-                            // IntegerValue
-                            valType == 1 -> IntegerValue(unparsedValue)
+                                // IntegerValue
+                                1 -> IntegerValue(unparsedValue)
 
-                            // UnitValue
-                            valType == 2 -> UnitValue
+                                // UnitValue
+                                2 -> UnitValue
 
-                            else -> throw ViaductInterpreterError("parsed invalid value type $valType")
-                        }
+                                else -> throw ViaductInterpreterError("parsed invalid value type $valType")
+                            }
 
                         Triple(value, sender, receiver)
                     }
@@ -191,9 +196,21 @@ class ViaductRuntime(
     init {
         // we need a deterministic algorithm to assign identifiers (ints) to
         // all hosts and processes that interpreters in all hosts will agree on
+        val syncProtocol = Synchronization(program.hosts.map { it.name.value }.toSet())
 
         // create identifiers for processes (protocol projections)
-        val processList: List<Process> = processBodyMap.keys.sorted()
+        val processList: List<Process> =
+            protocolAnalysis
+                .participatingProtocols(program)
+                .flatMap { protocol ->
+                    protocol.hosts.map { host ->
+                        ProtocolProjection(protocol, host)
+                    }
+                }.plus(
+                    syncProtocol.hosts.map { host ->
+                        ProtocolProjection(syncProtocol, host)
+                    }
+                ).sorted()
 
         val tempProcessInfoMap: MutableMap<Process, ProcessInfo> = mutableMapOf()
         var j = 1
@@ -207,6 +224,7 @@ class ViaductRuntime(
         // initialize channel map
         val processPairList: List<Pair<Process, Process>> =
             processInfoMap.values
+                .filter { pinfo -> pinfo.protocol !is Synchronization }
                 .flatMap { pinfo ->
                     processInfoMap.values
                         .filter { pinfo2 -> pinfo2.id != pinfo.id }
@@ -225,19 +243,30 @@ class ViaductRuntime(
             }
         }
 
+        // add synchronization channels
+        for (host in syncProtocol.hosts) {
+            val syncProcess = ProtocolProjection(syncProtocol, host)
+            tempChannelMap[syncProcess] = mutableMapOf()
+            tempChannelMap[syncProcess]!!.putAll(
+                syncProtocol.hosts
+                    .filter { host2 -> host2 != host }
+                    .map { host2 ->
+                        ProtocolProjection(syncProtocol, host2) to Channel(CHANNEL_CAPACITY)
+                    }
+            )
+        }
+
         channelMap = tempChannelMap
 
         // create identifiers for hosts
         val hostList: List<Host> =
-            program.declarations
-                .filterIsInstance<HostDeclarationNode>()
-                .map { node -> node.name.value }
-                .sorted()
+            program.hosts.map { node -> node.name.value }.sorted()
 
         val tempHostInfoMap = mutableMapOf<Host, HostInfo>()
         var i = 1
         for (host: Host in hostList) {
-            tempHostInfoMap[host] = HostInfo(host, i, hostConnectionInfo[host]!!, Channel(), Channel())
+            tempHostInfoMap[host] =
+                HostInfo(host, i, hostConnectionInfo[host]!!, Channel(CHANNEL_CAPACITY), Channel(CHANNEL_CAPACITY))
             i++
         }
         hostInfoMap = tempHostInfoMap
@@ -246,8 +275,14 @@ class ViaductRuntime(
     fun getHostById(id: HostId): HostInfo =
         hostInfoMap.values.first { hinfo -> hinfo.id == id }
 
-    fun getProcessById(id: ProcessId): ProcessInfo =
-        processInfoMap.values.first { pinfo -> pinfo.id == id }
+    fun getProcessById(id: ProcessId): ProcessInfo {
+        val lst = processInfoMap.values.filter { pinfo -> pinfo.id == id }
+        if (lst.isNotEmpty()) {
+            return lst.first()
+        } else {
+            throw ViaductInterpreterError("unknown process id: $id")
+        }
+    }
 
     suspend fun send(value: Value, sender: Process, receiver: Process) {
         if (receiver.host == host) { // local communication
@@ -341,7 +376,7 @@ class ViaductRuntime(
         runBlocking {
             for (kv: Map.Entry<Host, HostInfo> in hostInfoMap) {
                 if (host != kv.key) {
-                    launch {
+                    launch(Executors.newSingleThreadExecutor().asCoroutineDispatcher()) {
                         ViaductReceiverThread(
                             connectionMap[kv.key]!!,
                             this@ViaductRuntime,
@@ -349,7 +384,7 @@ class ViaductRuntime(
                         ).run()
                     }
 
-                    launch {
+                    launch(Executors.newSingleThreadExecutor().asCoroutineDispatcher()) {
                         ViaductSenderThread(
                             connectionMap[kv.key]!!,
                             this@ViaductRuntime,
@@ -366,7 +401,14 @@ class ViaductRuntime(
                         kv.key.protocol to kv.value(this@ViaductRuntime)
                     }.toMap()
 
-                val interpreter = SingleBackendInterpreter(program, protocolAnalysis, host, processInterpreters)
+                val interpreter =
+                    BackendInterpreter(
+                        program,
+                        protocolAnalysis,
+                        host,
+                        processInterpreters,
+                        this@ViaductRuntime
+                    )
                 interpreter.run()
             }
 

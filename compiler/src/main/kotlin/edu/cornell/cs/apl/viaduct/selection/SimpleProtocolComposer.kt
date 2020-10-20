@@ -2,6 +2,7 @@ package edu.cornell.cs.apl.viaduct.selection
 
 import edu.cornell.cs.apl.attributes.attribute
 import edu.cornell.cs.apl.viaduct.protocols.ABY
+import edu.cornell.cs.apl.viaduct.protocols.Commitment
 import edu.cornell.cs.apl.viaduct.protocols.Local
 import edu.cornell.cs.apl.viaduct.protocols.Replication
 import edu.cornell.cs.apl.viaduct.syntax.Host
@@ -201,7 +202,7 @@ object SimpleProtocolComposer : ProtocolComposer {
         when (stmt) {
             is LetNode -> {
                 when (protocol) {
-                    is ABY, is Local -> protocol.hosts
+                    is ABY, is Local, is Commitment -> protocol.hosts
                     is Replication -> setOf()
                     else -> setOf()
                 }

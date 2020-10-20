@@ -1,20 +1,21 @@
 package edu.cornell.cs.apl.viaduct.backend
 
 import edu.cornell.cs.apl.viaduct.analysis.ProtocolAnalysis
+import edu.cornell.cs.apl.viaduct.backend.commitment.HashInfo
+import edu.cornell.cs.apl.viaduct.backend.commitment.encode
 import edu.cornell.cs.apl.viaduct.errors.UndefinedNameError
 import edu.cornell.cs.apl.viaduct.errors.ViaductInterpreterError
+import edu.cornell.cs.apl.viaduct.protocols.Commitment
 import edu.cornell.cs.apl.viaduct.protocols.Local
 import edu.cornell.cs.apl.viaduct.protocols.Replication
 import edu.cornell.cs.apl.viaduct.selection.CommunicationEvent
 import edu.cornell.cs.apl.viaduct.selection.ProtocolCommunication
 import edu.cornell.cs.apl.viaduct.selection.SimpleProtocolComposer
-import edu.cornell.cs.apl.viaduct.syntax.Arguments
-import edu.cornell.cs.apl.viaduct.syntax.ClassNameNode
 import edu.cornell.cs.apl.viaduct.syntax.Host
 import edu.cornell.cs.apl.viaduct.syntax.ObjectVariable
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
 import edu.cornell.cs.apl.viaduct.syntax.Temporary
-import edu.cornell.cs.apl.viaduct.syntax.ValueTypeNode
+import edu.cornell.cs.apl.viaduct.syntax.datatypes.ClassName
 import edu.cornell.cs.apl.viaduct.syntax.datatypes.ImmutableCell
 import edu.cornell.cs.apl.viaduct.syntax.datatypes.MutableCell
 import edu.cornell.cs.apl.viaduct.syntax.datatypes.Vector
@@ -31,6 +32,8 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.QueryNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ReadNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ReceiveNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.UpdateNode
+import edu.cornell.cs.apl.viaduct.syntax.types.ValueType
+import edu.cornell.cs.apl.viaduct.syntax.values.ByteVecValue
 import edu.cornell.cs.apl.viaduct.syntax.values.IntegerValue
 import edu.cornell.cs.apl.viaduct.syntax.values.Value
 import java.util.Stack
@@ -81,32 +84,16 @@ class PlaintextProtocolInterpreter(
         tempStoreStack.pop()
     }
 
-    override fun getContextMarker(): Int {
-        return objectStoreStack.size
-    }
-
-    override fun restoreContext(marker: Int) {
-        while (objectStoreStack.size > marker) {
-            objectStoreStack.pop()
-            tempStoreStack.pop()
-        }
-    }
-
-    override fun allocateObject(obj: PlaintextClassObject): ObjectLocation {
-        objectHeap.add(obj)
-        return objectHeap.size - 1
-    }
-
     override suspend fun buildExpressionObject(expr: AtomicExpressionNode): PlaintextClassObject {
         return ImmutableCellObject(runExpr(expr))
     }
 
     override suspend fun buildObject(
-        className: ClassNameNode,
-        typeArguments: Arguments<ValueTypeNode>,
-        arguments: Arguments<AtomicExpressionNode>
+        className: ClassName,
+        typeArguments: List<ValueType>,
+        arguments: List<AtomicExpressionNode>
     ): PlaintextClassObject {
-        return when (className.value) {
+        return when (className) {
             ImmutableCell -> ImmutableCellObject(runExpr(arguments[0]))
 
             MutableCell -> MutableCellObject(runExpr(arguments[0]))
@@ -122,6 +109,20 @@ class PlaintextProtocolInterpreter(
 
     override fun getNullObject(): PlaintextClassObject = NullObject
 
+    // TODO: use protocol composer
+    private suspend fun receiveOpenedCommitment(protocol: Commitment): Value {
+        val cleartextProjection = ProtocolProjection(protocol, protocol.cleartextHost)
+        val nonce = runtime.receive(cleartextProjection) as ByteVecValue
+        val msg = runtime.receive(cleartextProjection)
+
+        for (hashHost: Host in protocol.hashHosts) {
+            val commitment: ByteVecValue =
+                runtime.receive(ProtocolProjection(protocol, hashHost)) as ByteVecValue
+            assert(HashInfo(commitment.value, nonce.value).verify(msg.encode()))
+        }
+        return msg
+    }
+
     private suspend fun runRead(read: ReadNode): Value {
         val storeValue = tempStore[read.temporary.value]
         return if (storeValue == null) {
@@ -129,22 +130,36 @@ class PlaintextProtocolInterpreter(
 
             // must receive from read protocol
             if (runtime.projection.protocol != sendProtocol) {
-                val sendPhase: ProtocolCommunication = SimpleProtocolComposer.communicate(sendProtocol, runtime.projection.protocol)
+                // TODO: use protocol composer
+                val value =
+                    when (sendProtocol) {
+                        is Commitment -> {
+                            receiveOpenedCommitment(sendProtocol)
+                        }
 
-                var finalValue: Value? = null
-                for (recvEvent: CommunicationEvent in sendPhase.getHostReceives(runtime.projection.host)) {
-                    val receivedValue: Value =
-                        runtime.receive(ProtocolProjection(sendProtocol, recvEvent.send.host))
+                        else -> {
+                            val sendPhase: ProtocolCommunication =
+                                SimpleProtocolComposer.communicate(sendProtocol, runtime.projection.protocol)
 
-                    if (finalValue == null) {
-                        finalValue = receivedValue
-                    } else if (finalValue != receivedValue) {
-                        throw ViaductInterpreterError("received different values")
+                            var finalValue: Value? = null
+                            for (recvEvent: CommunicationEvent in sendPhase.getHostReceives(runtime.projection.host)) {
+                                val receivedValue: Value =
+                                    runtime.receive(ProtocolProjection(sendProtocol, recvEvent.send.host))
+
+                                if (finalValue == null) {
+                                    finalValue = receivedValue
+                                } else if (finalValue != receivedValue) {
+                                    throw ViaductInterpreterError("received different values")
+                                }
+                            }
+
+                            assert(finalValue != null)
+                            finalValue!!
+                        }
                     }
-                }
 
-                tempStore = tempStore.put(read.temporary.value, finalValue!!)
-                finalValue
+                tempStore = tempStore.put(read.temporary.value, value)
+                value
             } else { // temporary should be stored locally, but isn't
                 throw ViaductInterpreterError("${runtime.projection.protocol.asDocument.print()}: could not find local temporary ${read.temporary.value}")
             }
@@ -196,7 +211,8 @@ class PlaintextProtocolInterpreter(
             protocolAnalysis.directReaders(stmt).filter { it != runtime.projection.protocol }
 
         for (recvProtocol: Protocol in recvProtocols) {
-            val sendPhase: ProtocolCommunication = SimpleProtocolComposer.communicate(runtime.projection.protocol, recvProtocol)
+            val sendPhase: ProtocolCommunication =
+                SimpleProtocolComposer.communicate(runtime.projection.protocol, recvProtocol)
 
             for (sendEvent in sendPhase.getHostSends(runtime.projection.host)) {
                 runtime.send(rhsValue, ProtocolProjection(recvProtocol, sendEvent.recv.host))

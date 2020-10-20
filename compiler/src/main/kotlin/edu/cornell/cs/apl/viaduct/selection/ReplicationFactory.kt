@@ -8,11 +8,12 @@ import edu.cornell.cs.apl.viaduct.syntax.Protocol
 import edu.cornell.cs.apl.viaduct.syntax.SpecializedProtocol
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.DeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.LetNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.ObjectDeclarationArgumentNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ParameterNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
 import edu.cornell.cs.apl.viaduct.util.subsequences
 
-class ReplicationFactory(program: ProgramNode) : ProtocolFactory {
+class ReplicationFactory(val program: ProgramNode) : ProtocolFactory {
     private val informationFlowAnalysis = InformationFlowAnalysis.get(program)
 
     val protocols: List<SpecializedProtocol> = run {
@@ -22,6 +23,8 @@ class ReplicationFactory(program: ProgramNode) : ProtocolFactory {
         hostSubsets.map(::Replication).map { SpecializedProtocol(it, hostTrustConfiguration) }
     }
 
+    override fun protocols() = protocols
+
     override fun viableProtocols(node: LetNode): Set<Protocol> =
         protocols.filter { it.authority.actsFor(informationFlowAnalysis.label(node)) }.map { it.protocol }.toSet()
 
@@ -29,5 +32,8 @@ class ReplicationFactory(program: ProgramNode) : ProtocolFactory {
         protocols.filter { it.authority.actsFor(informationFlowAnalysis.label(node)) }.map { it.protocol }.toSet()
 
     override fun viableProtocols(node: ParameterNode): Set<Protocol> =
+        protocols.filter { it.authority.actsFor(informationFlowAnalysis.label(node)) }.map { it.protocol }.toSet()
+
+    override fun viableProtocols(node: ObjectDeclarationArgumentNode): Set<Protocol> =
         protocols.filter { it.authority.actsFor(informationFlowAnalysis.label(node)) }.map { it.protocol }.toSet()
 }

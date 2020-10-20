@@ -85,7 +85,7 @@ class DeclarationNode(
     val protocol: ProtocolNode?,
     override val sourceLocation: SourceLocation
 ) : SimpleStatementNode(), ObjectDeclaration {
-    override val declarationAsNode: Node
+    override val declarationAsNode: StatementNode
         get() = this
 
     override val children: Iterable<AtomicExpressionNode>

@@ -25,7 +25,7 @@ interface ProtocolInterpreter {
 
     fun getContextMarker(): Int
 
-    fun restoreContext(marker: Int)
+    suspend fun restoreContext(marker: Int)
 }
 
 interface ProtocolInterpreterFactory {

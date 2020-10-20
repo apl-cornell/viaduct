@@ -43,7 +43,7 @@ private object FakeProtocolInterpreter : ProtocolInterpreter {
 
     override fun getContextMarker(): Int = 0
 
-    override fun restoreContext(marker: Int) {}
+    override suspend fun restoreContext(marker: Int) {}
 }
 
 /** Fake protocol backend that doesn't do anything. */

@@ -20,6 +20,7 @@ import edu.cornell.cs.apl.viaduct.syntax.FunctionName
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
 import edu.cornell.cs.apl.viaduct.syntax.Variable
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.Node
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProcessDeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
 import guru.nidi.graphviz.engine.Format
 import guru.nidi.graphviz.engine.Graphviz
@@ -82,7 +83,9 @@ class Compile : CliktCommand(help = "Compile ideal protocol to secure distribute
 
         // Perform a sanity check to ensure the protocolAssignment is valid.
         // TODO: either remove this entirely or make it opt-in by the command line.
-        validateProtocolAssignment(program, program.main, protocolFactory, protocolAssignment)
+        for (processDecl in program.declarations.filterIsInstance<ProcessDeclarationNode>()) {
+            validateProtocolAssignment(program, processDecl, protocolFactory, SimpleCostEstimator, protocolAssignment)
+        }
 
         val annotatedProgram = program.annotateWithProtocols(protocolAssignment)
 

@@ -2,10 +2,8 @@ package edu.cornell.cs.apl.viaduct.backend
 
 import edu.cornell.cs.apl.viaduct.errors.IllegalInternalCommunicationError
 import edu.cornell.cs.apl.viaduct.errors.ViaductInterpreterError
-import edu.cornell.cs.apl.viaduct.syntax.Arguments
-import edu.cornell.cs.apl.viaduct.syntax.ClassNameNode
 import edu.cornell.cs.apl.viaduct.syntax.ObjectVariable
-import edu.cornell.cs.apl.viaduct.syntax.ValueTypeNode
+import edu.cornell.cs.apl.viaduct.syntax.datatypes.ClassName
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.AtomicExpressionNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.DeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ExpressionArgumentNode
@@ -24,6 +22,7 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.SendNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.SimpleStatementNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.UpdateNode
+import edu.cornell.cs.apl.viaduct.syntax.types.ValueType
 import java.util.Stack
 import kotlinx.collections.immutable.PersistentMap
 import kotlinx.collections.immutable.toPersistentMap
@@ -111,6 +110,16 @@ abstract class AbstractProtocolInterpreter<Obj>(
         }
     }
 
+    override fun getContextMarker(): Int {
+        return objectStoreStack.size
+    }
+
+    override suspend fun restoreContext(marker: Int) {
+        while (getContextMarker() > marker) {
+            popContext()
+        }
+    }
+
     protected fun getObjectLocation(obj: ObjectVariable): ObjectLocation {
         return objectStore[obj]
             ?: throw ViaductInterpreterError("undefined variable: $obj")
@@ -129,14 +138,17 @@ abstract class AbstractProtocolInterpreter<Obj>(
         objectHeap[loc] = obj
     }
 
-    abstract fun allocateObject(obj: Obj): ObjectLocation
+    protected fun allocateObject(obj: Obj): ObjectLocation {
+        objectHeap.add(obj)
+        return objectHeap.size - 1
+    }
 
     abstract suspend fun buildExpressionObject(expr: AtomicExpressionNode): Obj
 
     abstract suspend fun buildObject(
-        className: ClassNameNode,
-        typeArguments: Arguments<ValueTypeNode>,
-        arguments: Arguments<AtomicExpressionNode>
+        className: ClassName,
+        typeArguments: List<ValueType>,
+        arguments: List<AtomicExpressionNode>
     ): Obj
 
     abstract fun getNullObject(): Obj
@@ -149,7 +161,11 @@ abstract class AbstractProtocolInterpreter<Obj>(
                 putObjectLocation(
                     stmt.name.value,
                     allocateObject(
-                        buildObject(stmt.className, stmt.typeArguments, stmt.arguments)
+                        buildObject(
+                            stmt.className.value,
+                            stmt.typeArguments.map { it.value },
+                            stmt.arguments
+                        )
                     )
                 )
             }
@@ -164,7 +180,11 @@ abstract class AbstractProtocolInterpreter<Obj>(
                         }
 
                         is OutParameterConstructorInitializerNode -> {
-                            buildObject(initializer.className, initializer.typeArguments, initializer.arguments)
+                            buildObject(
+                                initializer.className.value,
+                                initializer.typeArguments.map { it.value },
+                                initializer.arguments
+                            )
                         }
                     }
 

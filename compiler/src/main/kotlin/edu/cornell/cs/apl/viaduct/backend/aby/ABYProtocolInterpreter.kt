@@ -19,15 +19,13 @@ import edu.cornell.cs.apl.viaduct.errors.ViaductInterpreterError
 import edu.cornell.cs.apl.viaduct.protocols.ABY
 import edu.cornell.cs.apl.viaduct.selection.ProtocolCommunication
 import edu.cornell.cs.apl.viaduct.selection.SimpleProtocolComposer
-import edu.cornell.cs.apl.viaduct.syntax.Arguments
-import edu.cornell.cs.apl.viaduct.syntax.ClassNameNode
 import edu.cornell.cs.apl.viaduct.syntax.Host
 import edu.cornell.cs.apl.viaduct.syntax.ObjectVariable
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
 import edu.cornell.cs.apl.viaduct.syntax.QueryNameNode
 import edu.cornell.cs.apl.viaduct.syntax.Temporary
 import edu.cornell.cs.apl.viaduct.syntax.UpdateNameNode
-import edu.cornell.cs.apl.viaduct.syntax.ValueTypeNode
+import edu.cornell.cs.apl.viaduct.syntax.datatypes.ClassName
 import edu.cornell.cs.apl.viaduct.syntax.datatypes.Get
 import edu.cornell.cs.apl.viaduct.syntax.datatypes.ImmutableCell
 import edu.cornell.cs.apl.viaduct.syntax.datatypes.Modify
@@ -147,33 +145,16 @@ class ABYProtocolInterpreter(
         ctTempStoreStack.pop()
     }
 
-    override fun getContextMarker(): Int {
-        return objectStoreStack.size
-    }
-
-    override fun restoreContext(marker: Int) {
-        while (objectStoreStack.size > marker) {
-            objectStoreStack.pop()
-            ssTempStoreStack.pop()
-            ctTempStoreStack.pop()
-        }
-    }
-
-    override fun allocateObject(obj: ABYClassObject): ObjectLocation {
-        objectHeap.add(obj)
-        return objectHeap.size - 1
-    }
-
     override suspend fun buildExpressionObject(expr: AtomicExpressionNode): ABYClassObject {
         return ABYImmutableCellObject(runSecretSharedExpr(expr))
     }
 
     override suspend fun buildObject(
-        className: ClassNameNode,
-        typeArguments: Arguments<ValueTypeNode>,
-        arguments: Arguments<AtomicExpressionNode>
+        className: ClassName,
+        typeArguments: List<ValueType>,
+        arguments: List<AtomicExpressionNode>
     ): ABYClassObject {
-        return when (className.value) {
+        return when (className) {
             ImmutableCell -> {
                 val valGate = runSecretSharedExpr(arguments[0])
                 ABYImmutableCellObject(valGate)
@@ -186,10 +167,10 @@ class ABYProtocolInterpreter(
 
             Vector -> {
                 val length = runExprAsValue(arguments[0]) as IntegerValue
-                ABYVectorObject(length.value, typeArguments[0].value.defaultValue)
+                ABYVectorObject(length.value, typeArguments[0].defaultValue)
             }
 
-            else -> throw UndefinedNameError(className)
+            else -> throw ViaductInterpreterError("ABY: Cannot build object of unknown class $className")
         }
     }
 

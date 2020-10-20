@@ -488,7 +488,7 @@ class InformationFlowAnalysis private constructor(
 
                             Pair(parameter.name.value, argumentVariable)
                         }
-                        .toMap()
+                            .toMap()
 
                     val parameterVariables =
                         this.arguments

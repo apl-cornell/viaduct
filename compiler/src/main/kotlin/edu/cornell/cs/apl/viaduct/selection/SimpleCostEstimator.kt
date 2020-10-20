@@ -1,6 +1,7 @@
 package edu.cornell.cs.apl.viaduct.selection
 
 import edu.cornell.cs.apl.viaduct.protocols.ABY
+import edu.cornell.cs.apl.viaduct.protocols.Commitment
 import edu.cornell.cs.apl.viaduct.protocols.Local
 import edu.cornell.cs.apl.viaduct.protocols.Replication
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
@@ -29,12 +30,19 @@ object SimpleCostEstimator : CostEstimator<IntegerCost> {
             when (executingProtocol) {
                 is Local -> IntegerCost(1)
                 is Replication -> IntegerCost(1)
+                is Commitment -> IntegerCost(10)
                 is ABY -> IntegerCost(100)
                 else -> throw Error("unknown protocol ${executingProtocol.protocolName}")
             }
         )
 
     override fun communicationCost(source: Protocol, destination: Protocol): Cost<IntegerCost> {
+        if (source is Commitment) { // TODO copout until merge commitments into ports
+            return zeroCost()
+        }
+        if (destination is Commitment) { // TODO copout until merge commitments into ports
+            return zeroCost()
+        }
         return if (source != destination) {
             val events = SimpleProtocolComposer.communicate(source, destination)
 
@@ -63,6 +71,7 @@ object SimpleCostEstimator : CostEstimator<IntegerCost> {
             when (protocol) {
                 is Local -> IntegerCost(1)
                 is Replication -> IntegerCost(1)
+                is Commitment -> IntegerCost(10)
                 is ABY -> IntegerCost(100)
                 else -> throw Error("unknown protocol ${protocol.protocolName}")
             }

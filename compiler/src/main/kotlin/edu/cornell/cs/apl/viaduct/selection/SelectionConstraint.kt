@@ -10,9 +10,15 @@ import edu.cornell.cs.apl.prettyprinting.PrettyPrintable
 import edu.cornell.cs.apl.prettyprinting.braced
 import edu.cornell.cs.apl.prettyprinting.plus
 import edu.cornell.cs.apl.prettyprinting.times
+import edu.cornell.cs.apl.viaduct.analysis.NameAnalysis
+import edu.cornell.cs.apl.viaduct.analysis.createdVariables
+import edu.cornell.cs.apl.viaduct.analysis.involvedVariables
 import edu.cornell.cs.apl.viaduct.syntax.FunctionName
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
 import edu.cornell.cs.apl.viaduct.syntax.Variable
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.DeclarationNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.ExpressionNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.LetNode
 
 data class FunctionVariable(val function: FunctionName, val variable: Variable) : PrettyPrintable {
     override val asDocument: Document =
@@ -107,6 +113,31 @@ internal fun SelectionConstraint.evaluate(f: (FunctionName, Variable) -> Protoco
     }
 }
 
+internal fun List<SelectionConstraint>.assert(
+    context: Set<SelectionConstraint>,
+    f: (FunctionName, Variable) -> Protocol
+) {
+    for (c in this) {
+        if (c is And) {
+            listOf(c.lhs, c.rhs).assert(context, f)
+        } else if (c is Implies) {
+            if (c.lhs.evaluate(f)) {
+                listOf(c.rhs).assert(context + setOf(c.lhs), f)
+            }
+        } else if (!c.evaluate(f)) {
+            assert(false)
+        }
+    }
+}
+
+internal fun SelectionConstraint.or(other: SelectionConstraint): SelectionConstraint {
+    return Or(this, other)
+}
+
+internal fun SelectionConstraint.implies(other: SelectionConstraint): SelectionConstraint {
+    return Implies(this, other)
+}
+
 internal fun SymbolicCost.evaluate(
     f: (FunctionName, Variable) -> Protocol,
     c: (CostVariable) -> Int
@@ -186,3 +217,45 @@ internal fun SymbolicCost.arithExpr(
                 this.rhs.arithExpr(ctx, vmap, pmap)
             ) as ArithExpr
     }
+
+/** Some convenience functions. **/
+
+/** States whether an expression reads only from the protocols in [prots] **/
+fun ExpressionNode.readsFrom(nameAnalysis: NameAnalysis, prots: Set<Protocol>): SelectionConstraint =
+    this.involvedVariables().map {
+        VariableIn(FunctionVariable(nameAnalysis.enclosingFunctionName(this), it), prots)
+    }.ands()
+
+/** States that if the let node is stored at any protocol in [to], it reads from only the protocols in [from] **/
+fun LetNode.readsFrom(nameAnalysis: NameAnalysis, to: Set<Protocol>, from: Set<Protocol>): SelectionConstraint =
+    Implies(
+        VariableIn(FunctionVariable(nameAnalysis.enclosingFunctionName(this), this.temporary.value), to),
+        this.value.readsFrom(nameAnalysis, from)
+    )
+
+fun DeclarationNode.readsFrom(nameAnalysis: NameAnalysis, to: Set<Protocol>, from: Set<Protocol>): SelectionConstraint =
+    Implies(
+        VariableIn(FunctionVariable(nameAnalysis.enclosingFunctionName(this), this.name.value), to),
+        this.arguments.map { it.readsFrom(nameAnalysis, from) }.ands()
+    )
+
+/** States that if the let node is stores at any protocol in [from], it sends to only the protocols in [to] **/
+
+fun LetNode.sendsTo(nameAnalysis: NameAnalysis, from: Set<Protocol>, to: Set<Protocol>): SelectionConstraint =
+    Implies(
+        VariableIn(FunctionVariable(nameAnalysis.enclosingFunctionName(this), this.temporary.value), from),
+        nameAnalysis.readers(this).map { stmt ->
+            stmt.createdVariables().map {
+                VariableIn(FunctionVariable(nameAnalysis.enclosingFunctionName(stmt), it), to)
+            }.ands()
+        }.ands()
+    )
+
+fun DeclarationNode.sendsTo(nameAnalysis: NameAnalysis, from: Set<Protocol>, to: Set<Protocol>): SelectionConstraint =
+    Implies(
+        VariableIn(FunctionVariable(nameAnalysis.enclosingFunctionName(this), this.name.value), from),
+        nameAnalysis.queriers(this).map {
+            val clet = nameAnalysis.correspondingLet(it)
+            VariableIn(FunctionVariable(nameAnalysis.enclosingFunctionName(clet), clet.temporary.value), to)
+        }.ands()
+    )

@@ -37,12 +37,14 @@ class Replication(hosts: Set<Host>) : Protocol() {
         hosts.map { hostTrustConfiguration(it).interpret() }.reduce(Label::meet)
 
     val hostInputPorts: Map<Host, InputPort> =
-        hosts
-            .map { h -> Pair(h, InputPort(this, h, "INPUT")) }
-            .toMap()
+        hosts.map { h -> h to InputPort(this, h, "INPUT") }.toMap()
+
+    val hostHashCommitmentInputPorts: Map<Host, InputPort> =
+        hosts.map { h -> h to InputPort(this, h, "HASH_COMMITMENT_INPUT") }.toMap()
+
+    val hostCleartextCommitmentInputPorts: Map<Host, InputPort> =
+        hosts.map { h -> h to InputPort(this, h, "CLEARTEXT_COMMITMENT_INPUT") }.toMap()
 
     val hostOutputPorts: Map<Host, OutputPort> =
-        hosts
-            .map { h -> Pair(h, OutputPort(this, h, "OUTPUT")) }
-            .toMap()
+        hosts.map { h -> h to OutputPort(this, h, "OUTPUT") }.toMap()
 }

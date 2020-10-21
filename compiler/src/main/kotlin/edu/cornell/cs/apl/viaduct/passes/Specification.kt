@@ -104,6 +104,7 @@ private fun ProcessDeclarationNode.specification(
                                     ProtocolNode(Adversary, it.value.sourceLocation),
                                     it.value.sourceLocation
                                 ),
+                                null,
                                 it.sourceLocation
                             )
 

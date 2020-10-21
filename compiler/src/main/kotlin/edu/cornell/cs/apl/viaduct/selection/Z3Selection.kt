@@ -47,15 +47,12 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
  *      - For each variable, we create a fresh integer constant. Call this constant c(v).
  *      - For each variable v with viable protocols P, we constrain that c(v) is contained in the image set of P under i.
  *      - For each variable v, we constrain c(v) relative to the custom constraints output by the factory.
- * - Third, we ask Z3 to optimize relative to a cost metric. For now, the cost metric is the sum of costs of all protocols
- *       selected. This is particularly naive, as it regards queries/declassifies as having a cost, even though it is
- *       likely free in all backends.
- * - Finally, we ask Z3 for a model, which we may convert into a function of type Variable -> Protocol.
- *
+ * - Third, we ask Z3 to optimize relative to a cost metric. The cost metric is provided by [costEstimator], which
+ *   will represent cost using a set of features. At a high level, the cost estimator approximates cost by:
+ *      - The cost of storing data in a protocol
+ *      - The cost of executing computations in a protocol
+ *      - Estimating the communication cost between one protocol reading data from another protocol
  */
-
-// TODO TOMORROW: Fix Z3Selection, MERGE ASAP
-
 private class Z3Selection(
     private val program: ProgramNode,
     private val main: ProcessDeclarationNode,

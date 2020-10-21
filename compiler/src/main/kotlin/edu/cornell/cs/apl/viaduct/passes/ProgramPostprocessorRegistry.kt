@@ -9,8 +9,8 @@ class ProgramPostprocessorRegistry(
     constructor(vararg postprocessors: ProgramPostprocessor) :
         this(listOf(*postprocessors))
 
-    override fun postprocess(splitProgram: ProgramNode): ProgramNode {
-        var currentProgram = splitProgram
+    override fun postprocess(program: ProgramNode): ProgramNode {
+        var currentProgram = program
         for (postprocessor in postprocessors) {
             currentProgram = postprocessor.postprocess(currentProgram)
         }

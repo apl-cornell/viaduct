@@ -24,6 +24,9 @@ private constructor(
     constructor(declarations: List<TopLevelDeclarationNode>, sourceLocation: SourceLocation) :
         this(declarations.toPersistentList(), sourceLocation)
 
+    val hosts: Iterable<HostDeclarationNode> =
+        declarations.filterIsInstance<HostDeclarationNode>()
+
     val functions: Iterable<FunctionDeclarationNode> =
         declarations.filterIsInstance<FunctionDeclarationNode>()
 

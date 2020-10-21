@@ -42,7 +42,17 @@ class ABY(val server: Host, val client: Host) : Protocol() {
             .map { h -> Pair(h, InputPort(this, h, "CLEARTEXT_INPUT")) }
             .toMap()
 
+    val hostSecretShareInputPorts: Map<Host, InputPort> =
+        hosts
+            .map { h -> Pair(h, InputPort(this, h, "SECRET_SHARE_INPUT")) }
+            .toMap()
+
     val hostCleartextOutputPorts: Map<Host, OutputPort> =
+        hosts
+            .map { h -> Pair(h, OutputPort(this, h, "CLEARTEXT_OUTPUT")) }
+            .toMap()
+
+    val hostSecretShareOutputPorts: Map<Host, OutputPort> =
         hosts
             .map { h -> Pair(h, OutputPort(this, h, "CLEARTEXT_OUTPUT")) }
             .toMap()

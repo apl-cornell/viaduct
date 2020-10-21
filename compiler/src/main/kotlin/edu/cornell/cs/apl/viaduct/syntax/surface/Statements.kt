@@ -44,10 +44,17 @@ sealed class SimpleStatementNode : StatementNode()
 class LetNode(
     val temporary: TemporaryNode,
     val value: ExpressionNode,
+    val protocol: ProtocolNode?,
     override val sourceLocation: SourceLocation
 ) : SimpleStatementNode() {
     override val asDocument: Document
-        get() = keyword("let") * temporary * "=" * value
+        get() {
+            val protocolDoc = protocol?.let {
+                Document("@") + it.value.asDocument
+            } ?: Document("")
+
+            return keyword("let") * temporary + protocolDoc * "=" * value
+        }
 }
 
 /** Constructing a new object and binding it to a variable. */
@@ -65,17 +72,21 @@ class DeclarationNode(
                     else -> throw InvalidConstructorCallError(initializer, constructorNeeded = true)
                 }
 
+            val protocolDoc = constructor.protocol?.let {
+                Document("@") + it.value.asDocument
+            } ?: Document("")
+
             return when (constructor.className.value) {
                 ImmutableCell -> {
                     val label = constructor.labelArguments?.braced() ?: Document()
                     keyword("val") * variable + Document(":") *
-                        constructor.typeArguments[0] + label * "=" * constructor.arguments[0]
+                        constructor.typeArguments[0] + label + protocolDoc * "=" * constructor.arguments[0]
                 }
 
                 MutableCell -> {
                     val label = constructor.labelArguments?.braced() ?: Document()
                     keyword("var") * variable + Document(":") *
-                        constructor.typeArguments[0] + label * "=" * constructor.arguments[0]
+                        constructor.typeArguments[0] + label + protocolDoc * "=" * constructor.arguments[0]
                 }
 
                 else -> {
@@ -84,7 +95,8 @@ class DeclarationNode(
                     //   val labels = labelArguments?.braced()?.nested() ?: Document()
                     val labels = constructor.labelArguments?.braced() ?: Document()
                     val arguments = constructor.arguments.tupled().nested()
-                    keyword("val") * variable * "=" * constructor.className + types + labels + arguments
+                    keyword("val") * variable * "=" *
+                        constructor.className + types + labels + protocolDoc + arguments
                 }
             }
         }

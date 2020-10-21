@@ -62,14 +62,19 @@ class ParameterNode(
     val typeArguments: Arguments<ValueTypeNode>,
     // TODO: allow leaving out some of the labels (right now it's all or nothing)
     val labelArguments: Arguments<LabelNode>?,
+    val protocol: ProtocolNode?,
     override val sourceLocation: SourceLocation
 ) : Node() {
     override val asDocument: Document
         get() {
+            val protocolDoc = protocol?.let {
+                Document("@") + it.value.asDocument
+            } ?: Document("")
+
             return when (className.value) {
                 ImmutableCell -> {
                     val label = labelArguments?.braced() ?: Document()
-                    name + Document(":") + parameterDirection * typeArguments[0] + label
+                    name + Document(":") + parameterDirection * typeArguments[0] + label + protocolDoc
                 }
 
                 else -> {
@@ -77,7 +82,7 @@ class ParameterNode(
                     // TODO: labels should have braces
                     //   val labels = labelArguments?.braced()?.nested() ?: Document()
                     val labels = labelArguments?.braced() ?: Document()
-                    name * ":" + parameterDirection * className + types + labels
+                    name * ":" + parameterDirection * className + types + labels + protocolDoc
                 }
             }
         }

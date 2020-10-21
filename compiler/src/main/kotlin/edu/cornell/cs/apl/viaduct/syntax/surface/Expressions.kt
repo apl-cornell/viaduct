@@ -155,6 +155,7 @@ class ConstructorCallNode(
     val className: ClassNameNode,
     val typeArguments: Arguments<ValueTypeNode>,
     val labelArguments: Arguments<Located<LabelExpression>>?,
+    val protocol: ProtocolNode?,
     val arguments: Arguments<ExpressionNode>,
     override val sourceLocation: SourceLocation
 ) : ExpressionNode() {

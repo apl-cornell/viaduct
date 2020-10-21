@@ -2,11 +2,13 @@ package edu.cornell.cs.apl.viaduct.cli
 
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.parameters.arguments.argument
-import edu.cornell.cs.apl.viaduct.backend.BackendInterpreter
-import edu.cornell.cs.apl.viaduct.backend.PlaintextBackend
-import edu.cornell.cs.apl.viaduct.backend.ProtocolBackend
-import edu.cornell.cs.apl.viaduct.backend.aby.ABYBackend
-import edu.cornell.cs.apl.viaduct.backend.commitment.CommitmentBackend
+import com.github.ajalt.clikt.parameters.options.flag
+import com.github.ajalt.clikt.parameters.options.option
+import edu.cornell.cs.apl.viaduct.backend.PlaintextProtocolInterpreter
+import edu.cornell.cs.apl.viaduct.backend.ProtocolInterpreterFactory
+import edu.cornell.cs.apl.viaduct.backend.ViaductBackend
+import edu.cornell.cs.apl.viaduct.backend.aby.ABYProtocolInterpreter
+import edu.cornell.cs.apl.viaduct.backend.commitment.CommitmentProtocolInterpreterFactory
 import edu.cornell.cs.apl.viaduct.parsing.AbyProtocolParser
 import edu.cornell.cs.apl.viaduct.parsing.CommitmentProtocolParser
 import edu.cornell.cs.apl.viaduct.parsing.LocalProtocolParser
@@ -21,6 +23,8 @@ import edu.cornell.cs.apl.viaduct.syntax.Host
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
 import edu.cornell.cs.apl.viaduct.syntax.ProtocolName
 import java.io.File
+import kotlin.system.exitProcess
+import org.apache.logging.log4j.core.config.Configurator
 
 class Run : CliktCommand(help = "Run compiled protocol for a single host") {
     private val hostName by
@@ -31,6 +35,12 @@ class Run : CliktCommand(help = "Run compiled protocol for a single host") {
 
     val input: File? by inputProgram()
 
+    val verbose: Boolean by option(
+        "-v",
+        "--verbose",
+        help = "Output logging information generated during execution"
+    ).flag(default = false)
+
     private val protocols: Map<ProtocolName, ProtocolParser<Protocol>> =
         mapOf(
             Local.protocolName to LocalProtocolParser,
@@ -39,23 +49,26 @@ class Run : CliktCommand(help = "Run compiled protocol for a single host") {
             ABY.protocolName to AbyProtocolParser
         )
 
-    private fun getBackends(): Map<ProtocolName, ProtocolBackend> {
-        val plaintextBackend = PlaintextBackend()
-
+    private fun getBackends(): Map<ProtocolName, ProtocolInterpreterFactory> {
         return mapOf(
-            Local.protocolName to plaintextBackend,
-            Replication.protocolName to plaintextBackend,
-            Commitment.protocolName to CommitmentBackend(),
-            ABY.protocolName to ABYBackend()
+            Local.protocolName to PlaintextProtocolInterpreter,
+            Replication.protocolName to PlaintextProtocolInterpreter,
+            ABY.protocolName to ABYProtocolInterpreter,
+            Commitment.protocolName to CommitmentProtocolInterpreterFactory
         )
     }
 
     override fun run() {
-        val program = input.parse(protocols).elaborated()
-        val backends: Map<ProtocolName, ProtocolBackend> = getBackends()
-        val interpreter = BackendInterpreter(backends)
+        if (verbose) {
+            Configurator.setRootLevel(org.apache.logging.log4j.Level.INFO)
+        }
 
-        val host = Host(hostName)
-        interpreter.run(program, host)
+        val program = input.parse(protocols).elaborated()
+        val protocolBackends: Map<ProtocolName, ProtocolInterpreterFactory> = getBackends()
+        val backend = ViaductBackend(protocolBackends)
+
+        // interpret program
+        backend.run(program, Host(hostName))
+        exitProcess(0)
     }
 }

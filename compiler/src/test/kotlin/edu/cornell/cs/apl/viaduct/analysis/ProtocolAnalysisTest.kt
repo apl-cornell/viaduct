@@ -2,9 +2,11 @@ package edu.cornell.cs.apl.viaduct.analysis
 
 import edu.cornell.cs.apl.viaduct.ExampleProgramProvider
 import edu.cornell.cs.apl.viaduct.errors.NoMainError
+import edu.cornell.cs.apl.viaduct.passes.annotateWithProtocols
 import edu.cornell.cs.apl.viaduct.passes.check
 import edu.cornell.cs.apl.viaduct.passes.elaborated
 import edu.cornell.cs.apl.viaduct.selection.SimpleCostEstimator
+import edu.cornell.cs.apl.viaduct.selection.SimpleProtocolComposer
 import edu.cornell.cs.apl.viaduct.selection.SimpleProtocolFactory
 import edu.cornell.cs.apl.viaduct.selection.selectProtocolsWithZ3
 import edu.cornell.cs.apl.viaduct.syntax.surface.ProgramNode
@@ -17,12 +19,14 @@ internal class ProtocolAnalysisTest {
     fun `it does not explode`(surfaceProgram: ProgramNode) {
         val program = surfaceProgram.elaborated()
         program.check()
-        val dumpProtocolAssignment =
+        val dumbProtocolAssignment =
             selectProtocolsWithZ3(program, program.main, SimpleProtocolFactory(program), SimpleCostEstimator)
-        val protocolAnalysis = ProtocolAnalysis(program, dumpProtocolAssignment)
+
+        val annotatedProgram = program.annotateWithProtocols(dumbProtocolAssignment)
+        val protocolAnalysis = ProtocolAnalysis(annotatedProgram, SimpleProtocolComposer)
 
         try {
-            protocolAnalysis.protocols(program.main.body)
+            protocolAnalysis.protocols(annotatedProgram.main.body)
         } catch (_: NoMainError) {
             // Do nothing
         }

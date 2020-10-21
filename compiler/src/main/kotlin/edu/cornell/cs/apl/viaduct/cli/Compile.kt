@@ -5,11 +5,10 @@ import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.types.file
 import edu.cornell.cs.apl.prettyprinting.PrettyPrintable
 import edu.cornell.cs.apl.viaduct.analysis.InformationFlowAnalysis
-import edu.cornell.cs.apl.viaduct.analysis.ProtocolAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.main
 import edu.cornell.cs.apl.viaduct.backend.aby.ABYMuxPostprocessor
 import edu.cornell.cs.apl.viaduct.passes.ProgramPostprocessorRegistry
-import edu.cornell.cs.apl.viaduct.passes.Splitter
+import edu.cornell.cs.apl.viaduct.passes.annotateWithProtocols
 import edu.cornell.cs.apl.viaduct.passes.check
 import edu.cornell.cs.apl.viaduct.passes.elaborated
 import edu.cornell.cs.apl.viaduct.passes.specialize
@@ -88,14 +87,11 @@ class Compile : CliktCommand(help = "Compile ideal protocol to secure distribute
             validateProtocolAssignment(program, processDecl, protocolFactory, SimpleCostEstimator, protocolAssignment)
         }
 
-        val protocolAnalysis = ProtocolAnalysis(program, protocolAssignment)
+        val annotatedProgram = program.annotateWithProtocols(protocolAssignment)
 
-        // Split the program.
-        val splitProgram: ProgramNode = Splitter(protocolAnalysis).splitMain()
-
-        // Post-process split program
-        val postprocessor = ProgramPostprocessorRegistry(ABYMuxPostprocessor)
-        val postprocessedProgram = postprocessor.postprocess(splitProgram)
+        // Post-process program
+        val postprocessor = ProgramPostprocessorRegistry(ABYMuxPostprocessor(protocolAssignment))
+        val postprocessedProgram = postprocessor.postprocess(annotatedProgram)
 
         output.println(postprocessedProgram)
     }

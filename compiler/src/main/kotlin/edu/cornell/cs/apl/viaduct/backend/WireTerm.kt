@@ -16,7 +16,7 @@ sealed class WireTerm
 data class WireOp(val op: Operator, val inputs: List<WireTerm>) : WireTerm()
 data class WireIn(val v: Int, val index: Int) : WireTerm()
 data class WireDummyIn(val index: Int) : WireTerm()
-data class WireConst(val index : Int, val v: Int) : WireTerm()
+data class WireConst(val index: Int, val v: Int) : WireTerm()
 
 fun String.asPrettyPrintable(): PrettyPrintable = Document(this)
 
@@ -67,7 +67,7 @@ class WireGenerator {
         return r
     }
 
-    fun mkConst(v: Int) : WireTerm {
+    fun mkConst(v: Int): WireTerm {
         val r = WireConst(constIndex, v)
         constIndex++
         return r

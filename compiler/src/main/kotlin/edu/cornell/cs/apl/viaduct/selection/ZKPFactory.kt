@@ -96,9 +96,12 @@ class ZKPFactory(val program: ProgramNode) : ProtocolFactory {
             setOf()
         }
 
+    private val localFactory = LocalFactory(program)
+    private val replicationFactory = ReplicationFactory(program)
+
     private val localAndReplicated: Set<Protocol> =
-        LocalFactory.protocols(program).map { it.protocol }.toSet() +
-            ReplicationFactory.protocols(program).map { it.protocol }.toSet()
+        localFactory.protocols.map { it.protocol }.toSet() +
+            replicationFactory.protocols.map { it.protocol }.toSet()
 
     /** ZKP can only read from, and only send to, itself, local, and replicated **/
     override fun constraint(node: LetNode): SelectionConstraint =

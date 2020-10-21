@@ -2,7 +2,6 @@ package edu.cornell.cs.apl.viaduct.backend.zkp
 
 import edu.cornell.cs.apl.viaduct.backend.ProtocolBackend
 import edu.cornell.cs.apl.viaduct.backend.ViaductProcessRuntime
-import edu.cornell.cs.apl.viaduct.backend.WireConst
 import edu.cornell.cs.apl.viaduct.backend.WireGenerator
 import edu.cornell.cs.apl.viaduct.backend.WireTerm
 import edu.cornell.cs.apl.viaduct.errors.ViaductInterpreterError

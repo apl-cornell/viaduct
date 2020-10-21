@@ -121,19 +121,6 @@ class ABYFactory(program: ProgramNode) : ProtocolFactory {
         }
     }
 
-    private fun ObjectDeclarationArgumentNode.isApplicable(): Boolean {
-        return nameAnalysis.users(this).all { site ->
-            val pcCheck = informationFlowAnalysis.pcLabel(site).flowsTo(informationFlowAnalysis.pcLabel(this))
-            val involvedLoops = nameAnalysis.involvedLoops(site)
-            val loopCheck = involvedLoops.all { loop ->
-                nameAnalysis.correspondingBreaks(loop).isNotEmpty() && nameAnalysis.correspondingBreaks(loop).all {
-                    informationFlowAnalysis.pcLabel(it).flowsTo(informationFlowAnalysis.pcLabel(this))
-                }
-            }
-            true || pcCheck && loopCheck
-        }
-    }
-
     override fun viableProtocols(node: LetNode): Set<Protocol> =
         if (node.isApplicable()) {
             protocols.filter { it.authority.actsFor(informationFlowAnalysis.label(node)) }.map { it.protocol }.toSet()

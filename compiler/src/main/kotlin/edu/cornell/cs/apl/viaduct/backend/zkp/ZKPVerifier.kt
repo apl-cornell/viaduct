@@ -37,11 +37,12 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.SendNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.UpdateNode
 import edu.cornell.cs.apl.viaduct.syntax.types.ValueType
 import edu.cornell.cs.apl.viaduct.syntax.values.BooleanValue
+import edu.cornell.cs.apl.viaduct.syntax.values.ByteVecValue
 import edu.cornell.cs.apl.viaduct.syntax.values.IntegerValue
 import edu.cornell.cs.apl.viaduct.syntax.values.Value
-import java.util.Stack
 import kotlinx.collections.immutable.PersistentMap
 import kotlinx.collections.immutable.persistentMapOf
+import java.util.Stack
 
 internal class ZKPVerifier(
     program: ProgramNode,
@@ -166,10 +167,10 @@ internal class ZKPVerifier(
 
     override suspend fun runExprAsValue(expr: AtomicExpressionNode): Value =
         when (expr) {
-        is LiteralNode -> expr.value
-        is ReadNode -> tempStore[expr.temporary.value]
-        ?: throw UndefinedNameError(expr.temporary)
-    }
+            is LiteralNode -> expr.value
+            is ReadNode -> tempStore[expr.temporary.value]
+                ?: throw UndefinedNameError(expr.temporary)
+        }
 
     private suspend fun runQuery(obj: ZKPObject, query: QueryNameNode, args: List<AtomicExpressionNode>): WireTerm =
         when (obj) {
@@ -245,9 +246,10 @@ internal class ZKPVerifier(
     override suspend fun runLet(stmt: LetNode) {
         when (val rhs: ExpressionNode = stmt.value) {
             is ReceiveNode -> {
-                val receivedValue: Value = replicationCleartextReceive(rhs)
+                val receivedValue: Value = replicationCleartextReceive(rhs) // TODO verify logic here.. i don't think it's right
                 val rhsProtocol: Protocol = rhs.protocol.value
-                val isSecret = rhsProtocol.hosts.intersect(verifiers).isEmpty() // if the value was sent to any of the verifiers, the value is public
+                val isSecret = rhsProtocol.hosts.intersect(verifiers)
+                    .isEmpty() // if the value was sent to any of the verifiers, the value is public
                 if (isSecret) {
                     wireStore = wireStore.put(stmt.temporary.value, injectDummyIn())
                 } else {
@@ -299,10 +301,10 @@ internal class ZKPVerifier(
         when (stmt.message) {
             is LiteralNode -> print("Sending literal ${stmt.message.value}")
             is ReadNode -> {
-                // TODO: get proof from prover, verify it
-                print("Being proved statement ${wireStore[stmt.message.temporary.value]}")
-
-                runtime.receive(ProtocolProjection(runtime.projection.protocol, prover))
+                val r1cs = wireStore[stmt.message.temporary.value]?.toR1CS(1) ?: throw Exception("bad")
+                val pf = (runtime.receive(ProtocolProjection(runtime.projection.protocol, prover)) as ByteVecValue)
+                val i = r1cs.verifyProof("vk", String(pf.value.toByteArray()))
+                assert (i == 1)
 
                 for (recvHost: Host in stmt.protocol.value.hosts) {
                     runtime.send(

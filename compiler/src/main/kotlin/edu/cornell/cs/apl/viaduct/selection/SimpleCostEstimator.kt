@@ -32,6 +32,7 @@ object SimpleCostEstimator : CostEstimator<IntegerCost> {
                 is Local -> IntegerCost(1)
                 is Replication -> IntegerCost(1)
                 is Commitment -> IntegerCost(1)
+                is ZKP -> IntegerCost(50)
                 is ABY -> IntegerCost(100)
                 else -> throw Error("unknown protocol ${executingProtocol.protocolName}")
             }
@@ -42,6 +43,12 @@ object SimpleCostEstimator : CostEstimator<IntegerCost> {
             return zeroCost()
         }
         if (destination is Commitment) { // TODO copout until merge commitments into ports
+            return zeroCost()
+        }
+        if (source is ZKP) { // TODO copout until merge commitments into ports
+            return zeroCost()
+        }
+        if (destination is ZKP) { // TODO copout until merge commitments into ports
             return zeroCost()
         }
         return if (source != destination) {
@@ -75,6 +82,7 @@ object SimpleCostEstimator : CostEstimator<IntegerCost> {
                 is Local -> IntegerCost(1)
                 is Replication -> IntegerCost(1)
                 is Commitment -> IntegerCost(1)
+                is ZKP -> IntegerCost(50)
                 is ABY -> IntegerCost(100)
                 else -> throw Error("unknown protocol ${protocol.protocolName}")
             }

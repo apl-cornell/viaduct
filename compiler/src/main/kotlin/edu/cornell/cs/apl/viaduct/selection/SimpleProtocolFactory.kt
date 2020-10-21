@@ -14,8 +14,9 @@ class SimpleProtocolFactory(
     private val localFactory: LocalFactory = LocalFactory(program),
     private val replicationFactory: ReplicationFactory = ReplicationFactory(program),
     private val abyFactory: ABYFactory = ABYFactory(program),
-    private val commitmentFactory: CommitmentFactory = CommitmentFactory(program)
-) : UnionProtocolFactory(localFactory, replicationFactory, abyFactory, commitmentFactory) {
+    private val commitmentFactory: CommitmentFactory = CommitmentFactory(program),
+    private val zkpFactory : ZKPFactory = ZKPFactory(program)
+) : UnionProtocolFactory(localFactory, replicationFactory, abyFactory, commitmentFactory, zkpFactory) {
     private val nameAnalysis = NameAnalysis.get(program)
 
     // if there is an MPC protocol participating in a branch of a conditional,

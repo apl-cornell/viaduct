@@ -1,6 +1,5 @@
 package edu.cornell.cs.apl.viaduct.selection
 
-import edu.cornell.cs.apl.attributes.attribute
 import edu.cornell.cs.apl.viaduct.analysis.InformationFlowAnalysis
 import edu.cornell.cs.apl.viaduct.protocols.Replication
 import edu.cornell.cs.apl.viaduct.syntax.Host
@@ -27,10 +26,10 @@ class ReplicationFactory(val program: ProgramNode) : ProtocolFactory {
     override fun protocols() = protocols
 
     override fun viableProtocols(node: LetNode): Set<Protocol> =
-        protocols(program).filter { it.authority.actsFor(informationFlowAnalysis.label(node)) }.map { it.protocol }.toSet()
+        protocols.filter { it.authority.actsFor(informationFlowAnalysis.label(node)) }.map { it.protocol }.toSet()
 
     override fun viableProtocols(node: DeclarationNode): Set<Protocol> =
-        protocols(program).filter { it.authority.actsFor(informationFlowAnalysis.label(node)) }.map { it.protocol }.toSet()
+        protocols.filter { it.authority.actsFor(informationFlowAnalysis.label(node)) }.map { it.protocol }.toSet()
 
     override fun viableProtocols(node: ParameterNode): Set<Protocol> =
         protocols.filter { it.authority.actsFor(informationFlowAnalysis.label(node)) }.map { it.protocol }.toSet()

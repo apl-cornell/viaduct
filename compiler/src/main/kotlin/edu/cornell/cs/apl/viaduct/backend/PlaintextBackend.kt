@@ -7,6 +7,7 @@ import edu.cornell.cs.apl.viaduct.errors.ViaductInterpreterError
 import edu.cornell.cs.apl.viaduct.protocols.Commitment
 import edu.cornell.cs.apl.viaduct.protocols.Local
 import edu.cornell.cs.apl.viaduct.protocols.Replication
+import edu.cornell.cs.apl.viaduct.protocols.ZKP
 import edu.cornell.cs.apl.viaduct.selection.CommunicationEvent
 import edu.cornell.cs.apl.viaduct.selection.SimpleProtocolComposer
 import edu.cornell.cs.apl.viaduct.syntax.Host
@@ -34,13 +35,14 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.SendNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.UpdateNode
 import edu.cornell.cs.apl.viaduct.syntax.types.UnitType
 import edu.cornell.cs.apl.viaduct.syntax.types.ValueType
+import edu.cornell.cs.apl.viaduct.syntax.values.BooleanValue
 import edu.cornell.cs.apl.viaduct.syntax.values.ByteVecValue
 import edu.cornell.cs.apl.viaduct.syntax.values.IntegerValue
 import edu.cornell.cs.apl.viaduct.syntax.values.UnitValue
 import edu.cornell.cs.apl.viaduct.syntax.values.Value
-import java.util.Stack
 import kotlinx.collections.immutable.PersistentMap
 import kotlinx.collections.immutable.persistentMapOf
+import java.util.Stack
 
 /** Backend for Local and Replication protocols. */
 class PlaintextBackend : ProtocolBackend {
@@ -157,6 +159,14 @@ private class PlaintextInterpreter(
         return msg
     }
 
+    private suspend fun receiveZKP(protocol: ZKP): Value {
+        for (verifHost : Host in protocol.verifiers) {
+            val b = runtime.receive(ProtocolProjection(protocol, verifHost)) as BooleanValue
+            assert(b.value)
+        }
+        return BooleanValue(true)
+    }
+
     private suspend fun runExpr(expr: ExpressionNode): Value {
         return when (expr) {
             is LiteralNode -> expr.value
@@ -197,6 +207,14 @@ private class PlaintextInterpreter(
                         return UnitValue
                     } else {
                         return receiveCommitment(sendProtocol)
+                    }
+                }
+
+                if (sendProtocol is ZKP) { // TODO: integrate in with protocol ports
+                    if (expr.type.value is UnitType) { // Ignore syncs for now with commitment
+                        return UnitValue
+                    } else {
+                        return receiveZKP(sendProtocol)
                     }
                 }
 
@@ -275,6 +293,14 @@ private class PlaintextInterpreter(
         if (recvProtocol is Commitment) { // TODO: merge this in with ports idea
             if (!(msgValue is UnitValue)) { // Ignore syncs for now
                 runtime.send(msgValue, ProtocolProjection(recvProtocol, recvProtocol.cleartextHost))
+            }
+        }
+        else if (recvProtocol is ZKP) { // TODO merge in
+            if (!(msgValue is UnitValue)) { // Ignore syncs for now
+                val readingHosts = recvProtocol.hosts.intersect(projection.protocol.hosts)
+                for (h in readingHosts) {
+                    runtime.send(msgValue, ProtocolProjection(recvProtocol, h)) // Send to all hosts who can see the value
+                }
             }
         } else {
             val phase =

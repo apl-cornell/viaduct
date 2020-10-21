@@ -1,9 +1,9 @@
 process main {
     val b : int = input int from bob;
-    val a : int = input int from alice;
     val endorsed_b : int{B & A<-} = endorse b to {B & A<-};
+    val a : int = input int from alice;
     val open_b : int{(A | B)-> & (A & B)<-} = declassify endorsed_b to {(A | B)-> & (A & B)<-};
-    output open_b to alice;
+    output (a == open_b) to alice;
 }
 
 host alice : {A}

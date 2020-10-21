@@ -36,11 +36,12 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.SendNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.UpdateNode
 import edu.cornell.cs.apl.viaduct.syntax.types.ValueType
 import edu.cornell.cs.apl.viaduct.syntax.values.BooleanValue
+import edu.cornell.cs.apl.viaduct.syntax.values.ByteVecValue
 import edu.cornell.cs.apl.viaduct.syntax.values.IntegerValue
 import edu.cornell.cs.apl.viaduct.syntax.values.Value
-import java.util.Stack
 import kotlinx.collections.immutable.PersistentMap
 import kotlinx.collections.immutable.persistentMapOf
+import java.util.Stack
 
 internal class ZKPProver(
     program: ProgramNode,
@@ -206,7 +207,8 @@ internal class ZKPProver(
         when (val rhs: ExpressionNode = stmt.value) {
             is ReceiveNode -> {
                 val rhsProtocol: Protocol = rhs.protocol.value
-                val isSecret = rhsProtocol.hosts.intersect(verifiers).isEmpty() // if the value was sent to any of the verifiers, the value is public
+                val isSecret = rhsProtocol.hosts.intersect(verifiers)
+                    .isEmpty() // if the value was sent to any of the verifiers, the value is public
                 // Value must be visible to prover
                 val receivedValue: Value =
                     runtime.receive(ProtocolProjection(rhsProtocol, runtime.projection.host))
@@ -258,12 +260,11 @@ internal class ZKPProver(
         when (stmt.message) {
             is LiteralNode -> print("Sending literal ${stmt.message.value}")
             is ReadNode -> {
-                print("Proving statement ${wireStore[stmt.message.temporary.value]}")
-                // TODO: send proof to verifiers
-                for (verifier : Host in verifiers) {
-                    runtime.send(BooleanValue(true), ProtocolProjection(runtime.projection.protocol, verifier))
+                val r1cs = wireStore[stmt.message.temporary.value]?.toR1CS(1) ?: throw Exception("bad")
+                val pf = r1cs.makeProof("pf")
+                for (verifier: Host in verifiers) {
+                    runtime.send(ByteVecValue(pf.toByteArray().toList()), ProtocolProjection(runtime.projection.protocol, verifier))
                 }
-
             }
         }
     }

@@ -25,6 +25,9 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
+import mu.KotlinLogging
+
+private var logger = KotlinLogging.logger {}
 
 typealias ProcessId = Int
 typealias HostId = Int
@@ -57,6 +60,7 @@ private abstract class ViaductThread(
                 is CommunicationMessage -> processCommunicationMessage(msg)
 
                 is ShutdownMessage -> {
+                    logger.info { "shutting down $this" }
                     break@loop
                 }
             }
@@ -65,10 +69,14 @@ private abstract class ViaductThread(
 }
 
 private class ViaductReceiverThread(
+    val host: Host,
     val socket: Socket,
     val runtime: ViaductRuntime,
     msgQueue: Channel<ViaductMessage>
 ) : ViaductThread(msgQueue) {
+    override fun toString(): String {
+        return "receiver thread for host ${host.name}"
+    }
 
     override suspend fun processCommunicationMessage(msg: CommunicationMessage) {
         when (msg) {
@@ -103,6 +111,10 @@ private class ViaductReceiverThread(
                         Triple(value, sender, receiver)
                     }
 
+                logger.info {
+                    "received remote message ${result.first} from ${result.second.asDocument.print()} to ${result.third.asDocument.print()}"
+                }
+
                 runtime.send(result.first, result.second, result.third)
             }
 
@@ -112,10 +124,15 @@ private class ViaductReceiverThread(
 }
 
 private class ViaductSenderThread(
+    val host: Host,
     val socket: Socket,
     val runtime: ViaductRuntime,
     msgQueue: Channel<ViaductMessage>
 ) : ViaductThread(msgQueue) {
+    override fun toString(): String {
+        return "sender thread for host ${host.name}"
+    }
+
     override suspend fun processCommunicationMessage(msg: CommunicationMessage) {
         when (msg) {
             is SendMessage -> {
@@ -298,8 +315,13 @@ class ViaductRuntime(
         if (receiver.host == host) { // local communication
             channelMap[sender]!![receiver]!!.send(value)
         } else { // remote communication
+
             val msg = SendMessage(processInfoMap[sender]!!.id, processInfoMap[receiver]!!.id, value)
             hostInfoMap[receiver.host]!!.sendChannel.send(msg)
+
+            logger.info {
+                "sent remote message $value from ${sender.asDocument.print()} to ${receiver.asDocument.print()}"
+            }
         }
     }
 
@@ -320,6 +342,7 @@ class ViaductRuntime(
     }
 
     suspend fun output(value: Value) {
+        logger.info { "output $value" }
         withContext(Dispatchers.IO) { println(value) }
     }
 
@@ -339,8 +362,17 @@ class ViaductRuntime(
                         clientSocket.getOutputStream().write(hinfo.id)
                         connectionMap[hinfo2.host] = clientSocket
                         connected = true
+                        logger.info {
+                            "connected to host ${hinfo2.host.name} " +
+                            "at ${hinfo2.address.ipAddress}:${hinfo2.address.port}"
+                        }
+
                         break
                     } catch (e: ConnectException) {
+                        logger.info {
+                            "failed to connect to host ${hinfo2.host.name} " +
+                            "at ${hinfo2.address.ipAddress}:${hinfo2.address.port}, retrying"
+                        }
                         retries++
                         Thread.sleep(CONNECTION_RETRY_DELAY)
                     }
@@ -366,6 +398,8 @@ class ViaductRuntime(
             val clientHost = getHostById(clientHostId)
             connectionMap[clientHost.host] = clientSocket
             incomingConnections.remove(clientHostId)
+
+            logger.info { "accepted connection from host ${clientHost.host.name}" }
         }
 
         serverSocket.close()
@@ -387,7 +421,10 @@ class ViaductRuntime(
             for (kv: Map.Entry<Host, HostInfo> in hostInfoMap) {
                 if (host != kv.key) {
                     launch(Executors.newSingleThreadExecutor().asCoroutineDispatcher()) {
+                        logger.info { "launching receiver thread for host ${kv.key.name}" }
+
                         ViaductReceiverThread(
+                            kv.key,
                             connectionMap[kv.key]!!,
                             this@ViaductRuntime,
                             hostInfoMap[kv.key]!!.recvChannel
@@ -395,7 +432,10 @@ class ViaductRuntime(
                     }
 
                     launch(Executors.newSingleThreadExecutor().asCoroutineDispatcher()) {
+                        logger.info { "launching sender thread for host ${kv.key.name}" }
+
                         ViaductSenderThread(
+                            kv.key,
                             connectionMap[kv.key]!!,
                             this@ViaductRuntime,
                             hostInfoMap[kv.key]!!.sendChannel
@@ -408,6 +448,7 @@ class ViaductRuntime(
             val job: Job = launch {
                 val processInterpreters =
                     processBodyMap.map { kv ->
+                        logger.info { "created interpreter for protocol ${kv.key.protocol.asDocument.print()}" }
                         kv.key.protocol to kv.value(this@ViaductRuntime)
                     }.toMap()
 
@@ -434,8 +475,9 @@ class ViaductRuntime(
             }
         }
 
-        for (socket: Socket in connectionMap.values) {
-            socket.close()
+        for (kv in connectionMap) {
+            logger.info { "closing connection to host ${kv.key.name}" }
+            kv.value.close()
         }
     }
 }

@@ -35,9 +35,12 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.UpdateNode
 import edu.cornell.cs.apl.viaduct.syntax.types.ValueType
 import edu.cornell.cs.apl.viaduct.syntax.values.ByteVecValue
 import edu.cornell.cs.apl.viaduct.syntax.values.Value
-import java.util.Stack
 import kotlinx.collections.immutable.PersistentMap
 import kotlinx.collections.immutable.persistentMapOf
+import mu.KotlinLogging
+import java.util.Stack
+
+private val logger = KotlinLogging.logger {}
 
 data class Hashed<T>(val value: T, val info: HashInfo)
 
@@ -112,6 +115,7 @@ class CommitmentProtocolCleartextInterpreter(
 
     /** Send commitment to hash hosts. */
     private suspend fun sendCommitment(hashInfo: HashInfo) {
+
         val commitment = ByteVecValue(hashInfo.hash)
         for (commitmentReceiver: Host in hashHosts) {
             runtime.send(
@@ -121,6 +125,8 @@ class CommitmentProtocolCleartextInterpreter(
                     commitmentReceiver
                 )
             )
+
+            logger.info { "sent commitment to host ${commitmentReceiver.name}" }
         }
     }
 
@@ -228,6 +234,11 @@ class CommitmentProtocolCleartextInterpreter(
                 val recvProjection = ProtocolProjection(event.recv.protocol, event.recv.host)
                 runtime.send(nonce, recvProjection)
                 runtime.send(rhsValue.value, recvProjection)
+
+                logger.info {
+                    "sent opened value and nonce to " +
+                    "${event.recv.protocol.asDocument.print()}@${event.recv.host.name}"
+                }
             }
         }
     }

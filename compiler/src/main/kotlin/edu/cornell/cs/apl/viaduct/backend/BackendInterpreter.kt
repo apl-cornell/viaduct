@@ -25,6 +25,9 @@ import edu.cornell.cs.apl.viaduct.syntax.values.BooleanValue
 import edu.cornell.cs.apl.viaduct.syntax.values.UnitValue
 import kotlinx.collections.immutable.PersistentMap
 import kotlinx.collections.immutable.persistentMapOf
+import mu.KotlinLogging
+
+private val logger = KotlinLogging.logger {}
 
 class BackendInterpreter(
     private val program: ProgramNode,
@@ -42,12 +45,23 @@ class BackendInterpreter(
     suspend fun run() {
         val mainBody = program.main.body
 
+        logger.info { "starting interpretation" }
+
         run(nameAnalysis.enclosingFunctionName(mainBody), mainBody)
         synchronize(allHosts, allHosts)
+
+        logger.info { "finished interpretation" }
     }
 
     /** Synchronize hosts. */
     suspend fun synchronize(senders: Set<Host>, receivers: Set<Host>) {
+        if (receivers.isNotEmpty()) {
+            logger.info {
+                "synchronizing hosts ${senders.joinToString(", "){ it.name } } " +
+                    "with ${receivers.joinToString(", ") { it.name }}"
+            }
+        }
+
         if (senders.contains(this.host)) {
             for (receiver in receivers) {
                 if (this.host != receiver) {

@@ -55,6 +55,9 @@ import edu.cornell.cs.apl.viaduct.syntax.values.Value
 import java.util.Stack
 import kotlinx.collections.immutable.PersistentMap
 import kotlinx.collections.immutable.persistentMapOf
+import mu.KotlinLogging
+
+private var logger = KotlinLogging.logger {}
 
 class ABYProtocolInterpreter(
     program: ProgramNode,
@@ -115,6 +118,8 @@ class ABYProtocolInterpreter(
                 ?: throw ViaductInterpreterError("cannot find address for host ${otherHost.name}")
 
         aby = ABYParty(role, otherHostAddress.ipAddress, DEFAULT_PORT, Aby.getLT(), BITLEN)
+
+        logger.info { "connected ABY to other host at ${otherHostAddress.ipAddress}:$DEFAULT_PORT" }
 
         objectStoreStack.push(persistentMapOf())
         ssTempStoreStack.push(persistentMapOf())
@@ -356,7 +361,7 @@ class ABYProtocolInterpreter(
         return circuitBuilder.circuit.putOUTGate(shareStack.peek()!!, outRole)
     }
 
-    private fun executeABYCircuit(letNode: LetNode, receivingHosts: Set<Host>): Value {
+    private fun executeABYCircuit(letNode: LetNode, receivingHosts: Set<Host>): Value? {
         val thisHostReceives = receivingHosts.contains(runtime.projection.host)
         val otherHostReceives = receivingHosts.contains(otherHost)
         val outRole: Role =
@@ -383,13 +388,17 @@ class ABYProtocolInterpreter(
         aby.execCircuit()
         val result: Int = outShare.clearValue32.toInt()
 
-        return when (val msgType: ValueType = typeAnalysis.type(letNode)) {
-            is BooleanType -> BooleanValue(result != 0)
+        logger.info { "executed ABY circuit, sent output to $outRole" }
 
-            is IntegerType -> IntegerValue(result)
+        return if (thisHostReceives) {
+            when (val msgType: ValueType = typeAnalysis.type(letNode)) {
+                is BooleanType -> BooleanValue(result != 0)
 
-            else -> throw Exception("unknown type $msgType")
-        }
+                is IntegerType -> IntegerValue(result)
+
+                else -> throw Exception("unknown type $msgType")
+            }
+        } else null
     }
 
     override suspend fun runLet(stmt: LetNode) {
@@ -416,11 +425,13 @@ class ABYProtocolInterpreter(
                     val receivingHosts = events.map { event -> event.recv.host }.toSet()
                     val outValue = executeABYCircuit(stmt, receivingHosts)
 
-                    val hostEvents =
-                        events.filter { event -> event.send.host == runtime.projection.host }
+                    if (outValue != null) {
+                        val hostEvents =
+                            events.filter { event -> event.send.host == runtime.projection.host }
 
-                    for (event in hostEvents) {
-                        runtime.send(outValue, ProtocolProjection(event.recv.protocol, event.recv.host))
+                        for (event in hostEvents) {
+                            runtime.send(outValue, ProtocolProjection(event.recv.protocol, event.recv.host))
+                        }
                     }
                 }
             }

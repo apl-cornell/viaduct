@@ -2,6 +2,8 @@ package edu.cornell.cs.apl.viaduct.cli
 
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.parameters.arguments.argument
+import com.github.ajalt.clikt.parameters.options.flag
+import com.github.ajalt.clikt.parameters.options.option
 import edu.cornell.cs.apl.viaduct.backend.PlaintextProtocolInterpreter
 import edu.cornell.cs.apl.viaduct.backend.ProtocolInterpreterFactory
 import edu.cornell.cs.apl.viaduct.backend.ViaductBackend
@@ -20,6 +22,7 @@ import edu.cornell.cs.apl.viaduct.protocols.Replication
 import edu.cornell.cs.apl.viaduct.syntax.Host
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
 import edu.cornell.cs.apl.viaduct.syntax.ProtocolName
+import org.apache.logging.log4j.core.config.Configurator
 import java.io.File
 import kotlin.system.exitProcess
 
@@ -31,6 +34,12 @@ class Run : CliktCommand(help = "Run compiled protocol for a single host") {
     )
 
     val input: File? by inputProgram()
+
+    val verbose: Boolean by option(
+        "-v",
+        "--verbose",
+        help = "Output logging information generated during execution"
+    ).flag(default = false)
 
     private val protocols: Map<ProtocolName, ProtocolParser<Protocol>> =
         mapOf(
@@ -50,6 +59,10 @@ class Run : CliktCommand(help = "Run compiled protocol for a single host") {
     }
 
     override fun run() {
+        if (verbose) {
+            Configurator.setRootLevel(org.apache.logging.log4j.Level.INFO)
+        }
+
         val program = input.parse(protocols).elaborated()
         val protocolBackends: Map<ProtocolName, ProtocolInterpreterFactory> = getBackends()
         val backend = ViaductBackend(protocolBackends)

@@ -40,6 +40,9 @@ import edu.cornell.cs.apl.viaduct.syntax.values.Value
 import java.util.Stack
 import kotlinx.collections.immutable.PersistentMap
 import kotlinx.collections.immutable.persistentMapOf
+import mu.KotlinLogging
+
+private val logger = KotlinLogging.logger {}
 
 class CommitmentObject(val bytes: List<Byte>) {
     fun query(
@@ -118,6 +121,9 @@ class CommitmentProtocolHashReplicaInterpreter(
                 cleartextHost
             )
         )
+
+        logger.info { "received commitment from host ${cleartextHost.name}" }
+
         return (commitment as ByteVecValue).value
     }
 
@@ -204,6 +210,11 @@ class CommitmentProtocolHashReplicaInterpreter(
 
             for (event in events) {
                 runtime.send(commitmentValue, ProtocolProjection(event.recv.protocol, event.recv.host))
+
+                logger.info {
+                    "sent opened commitment to " +
+                    "${event.recv.protocol.asDocument.print()}@${event.recv.host.name}"
+                }
             }
         }
     }

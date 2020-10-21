@@ -27,7 +27,7 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import mu.KotlinLogging
 
-private var logger = KotlinLogging.logger {}
+private var logger = KotlinLogging.logger("Runtime")
 
 typealias ProcessId = Int
 typealias HostId = Int
@@ -204,6 +204,7 @@ class ViaductRuntime(
     private val processBodyMap: Map<Process, ProcessInterpreter>,
     val host: Host
 ) {
+    private val syncProtocol = Synchronization(program.hosts.map { it.name.value }.toSet())
     private val processInfoMap: Map<Process, ProcessInfo>
     private val hostInfoMap: Map<Host, HostInfo>
 
@@ -223,7 +224,6 @@ class ViaductRuntime(
     init {
         // we need a deterministic algorithm to assign identifiers (ints) to
         // all hosts and processes that interpreters in all hosts will agree on
-        val syncProtocol = Synchronization(program.hosts.map { it.name.value }.toSet())
 
         // create identifiers for processes (protocol projections)
         val processList: List<Process> =
@@ -458,7 +458,10 @@ class ViaductRuntime(
                         protocolAnalysis,
                         host,
                         processInterpreters,
-                        this@ViaductRuntime
+                        ViaductProcessRuntime(
+                            this@ViaductRuntime,
+                            ProtocolProjection(syncProtocol, host)
+                        )
                     )
                 interpreter.run()
             }

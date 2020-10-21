@@ -35,12 +35,12 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.UpdateNode
 import edu.cornell.cs.apl.viaduct.syntax.types.ValueType
 import edu.cornell.cs.apl.viaduct.syntax.values.ByteVecValue
 import edu.cornell.cs.apl.viaduct.syntax.values.Value
+import java.util.Stack
 import kotlinx.collections.immutable.PersistentMap
 import kotlinx.collections.immutable.persistentMapOf
 import mu.KotlinLogging
-import java.util.Stack
 
-private val logger = KotlinLogging.logger {}
+private val logger = KotlinLogging.logger("Commitment")
 
 data class Hashed<T>(val value: T, val info: HashInfo)
 

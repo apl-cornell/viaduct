@@ -5,7 +5,6 @@ import edu.cornell.cs.apl.viaduct.backend.commitment.HashInfo
 import edu.cornell.cs.apl.viaduct.backend.commitment.encode
 import edu.cornell.cs.apl.viaduct.errors.UndefinedNameError
 import edu.cornell.cs.apl.viaduct.errors.ViaductInterpreterError
-import edu.cornell.cs.apl.viaduct.protocols.Commitment
 import edu.cornell.cs.apl.viaduct.protocols.Local
 import edu.cornell.cs.apl.viaduct.protocols.Replication
 import edu.cornell.cs.apl.viaduct.selection.ProtocolCommunication
@@ -37,6 +36,9 @@ import edu.cornell.cs.apl.viaduct.syntax.values.Value
 import java.util.Stack
 import kotlinx.collections.immutable.PersistentMap
 import kotlinx.collections.immutable.persistentMapOf
+import mu.KotlinLogging
+
+private val logger = KotlinLogging.logger("Plaintext")
 
 class PlaintextProtocolInterpreter(
     program: ProgramNode,
@@ -107,20 +109,6 @@ class PlaintextProtocolInterpreter(
 
     override fun getNullObject(): PlaintextClassObject = NullObject
 
-    // TODO: use protocol composer
-    private suspend fun receiveOpenedCommitment(protocol: Commitment): Value {
-        val cleartextProjection = ProtocolProjection(protocol, protocol.cleartextHost)
-        val nonce = runtime.receive(cleartextProjection) as ByteVecValue
-        val msg = runtime.receive(cleartextProjection)
-
-        for (hashHost: Host in protocol.hashHosts) {
-            val commitment: ByteVecValue =
-                runtime.receive(ProtocolProjection(protocol, hashHost)) as ByteVecValue
-            assert(HashInfo(commitment.value, nonce.value).verify(msg.encode()))
-        }
-        return msg
-    }
-
     private suspend fun runRead(read: ReadNode): Value {
         val storeValue = tempStore[read.temporary.value]
         return if (storeValue == null) {
@@ -169,16 +157,23 @@ class PlaintextProtocolInterpreter(
                         val nonce = runtime.receive(cleartextProjection) as ByteVecValue
                         val msg = runtime.receive(cleartextProjection)
 
+                        logger.info {
+                            "received opened commitment value and nonce from ${cleartextProjection.asDocument.print()}"
+                        }
+
                         for (hashCommitmentInput in hashCommitmentInputs) {
-                            val commitment: ByteVecValue =
-                                runtime.receive(
-                                    ProtocolProjection(
-                                        hashCommitmentInput.send.protocol,
-                                        hashCommitmentInput.send.host
-                                    )
-                                ) as ByteVecValue
+                            val commitmentSender =
+                                ProtocolProjection(
+                                    hashCommitmentInput.send.protocol,
+                                    hashCommitmentInput.send.host
+                                )
+
+                            val commitment: ByteVecValue = runtime.receive(commitmentSender) as ByteVecValue
 
                             assert(HashInfo(commitment.value, nonce.value).verify(msg.encode()))
+                            logger.info {
+                                "verified commitment from host ${commitmentSender.asDocument.print()}"
+                            }
                         }
 
                         tempStore = tempStore.put(read.temporary.value, msg)

@@ -7,23 +7,32 @@ import edu.cornell.cs.apl.viaduct.passes.annotateWithProtocols
 import edu.cornell.cs.apl.viaduct.passes.check
 import edu.cornell.cs.apl.viaduct.passes.elaborated
 import edu.cornell.cs.apl.viaduct.passes.specialize
+import edu.cornell.cs.apl.viaduct.protocols.MainProtocol
 import edu.cornell.cs.apl.viaduct.selection.SimpleCostEstimator
 import edu.cornell.cs.apl.viaduct.selection.SimpleProtocolComposer
 import edu.cornell.cs.apl.viaduct.selection.SimpleProtocolFactory
 import edu.cornell.cs.apl.viaduct.selection.selectProtocolsWithZ3
 import edu.cornell.cs.apl.viaduct.syntax.FunctionName
 import edu.cornell.cs.apl.viaduct.syntax.Host
+import edu.cornell.cs.apl.viaduct.syntax.Located
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
 import edu.cornell.cs.apl.viaduct.syntax.ProtocolName
 import edu.cornell.cs.apl.viaduct.syntax.Variable
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.AtomicExpressionNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.BlockNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.FunctionArgumentNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ParameterNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProcessDeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.SimpleStatementNode
 import edu.cornell.cs.apl.viaduct.syntax.surface.ProgramNode
 import edu.cornell.cs.apl.viaduct.syntax.values.BooleanValue
 import edu.cornell.cs.apl.viaduct.syntax.values.Value
+import java.util.concurrent.Executors
 import kotlinx.collections.immutable.PersistentMap
+import kotlinx.coroutines.asCoroutineDispatcher
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
+import org.apache.logging.log4j.core.config.Configurator
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ArgumentsSource
 
@@ -79,24 +88,35 @@ internal class BackendInterpreterTest {
                 .map { protocol -> Pair(protocol.protocolName, FakeProtocolInterpreterFactory) }
                 .toMap()
 
-        ViaductBackend(backendMap)
-
-        /*
         val hosts: Set<Host> =
             program.hosts
                 .map { hostDecl -> hostDecl.name.value }
                 .toSet()
 
-        val interpreter = ViaductBackend(backendMap)
+        val backend = ViaductBackend(backendMap)
+
+        val fakeProgram =
+            edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode(
+                declarations =
+                    annotatedProgram.hosts.plus(
+                        ProcessDeclarationNode(
+                            protocol = Located(MainProtocol, annotatedProgram.sourceLocation),
+                            body = BlockNode(listOf(), annotatedProgram.sourceLocation),
+                            sourceLocation = annotatedProgram.sourceLocation
+                        )
+                    ),
+                sourceLocation = annotatedProgram.sourceLocation
+            )
+
+        Configurator.setRootLevel(org.apache.logging.log4j.Level.INFO)
 
         // run backend interpreter for all hosts
         runBlocking {
             for (host: Host in hosts) {
                 launch(Executors.newSingleThreadExecutor().asCoroutineDispatcher()) {
-                    interpreter.run(annotatedProgram, host)
+                    backend.run(fakeProgram, host)
                 }
             }
         }
-        */
     }
 }

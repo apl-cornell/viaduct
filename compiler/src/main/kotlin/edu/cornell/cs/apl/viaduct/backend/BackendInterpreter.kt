@@ -27,14 +27,14 @@ import kotlinx.collections.immutable.PersistentMap
 import kotlinx.collections.immutable.persistentMapOf
 import mu.KotlinLogging
 
-private val logger = KotlinLogging.logger {}
+private val logger = KotlinLogging.logger("Interpreter")
 
 class BackendInterpreter(
     private val program: ProgramNode,
     private val protocolAnalysis: ProtocolAnalysis,
     private val host: Host,
     inputBackends: Map<Protocol, ProtocolInterpreter>,
-    private val runtime: ViaductRuntime
+    private val runtime: ViaductProcessRuntime
 ) {
     private val allHosts = program.hosts.map { it.name.value }.toSet()
     private val nameAnalysis = NameAnalysis.get(program)
@@ -65,11 +65,7 @@ class BackendInterpreter(
         if (senders.contains(this.host)) {
             for (receiver in receivers) {
                 if (this.host != receiver) {
-                    runtime.send(
-                        UnitValue,
-                        ProtocolProjection(syncProtocol, this@BackendInterpreter.host),
-                        ProtocolProjection(syncProtocol, receiver)
-                    )
+                    runtime.send(UnitValue, ProtocolProjection(syncProtocol, receiver))
                 }
             }
         }
@@ -77,10 +73,7 @@ class BackendInterpreter(
         if (receivers.contains(this.host)) {
             for (sender in senders) {
                 if (this.host != sender) {
-                    runtime.receive(
-                        ProtocolProjection(syncProtocol, sender),
-                        ProtocolProjection(syncProtocol, this@BackendInterpreter.host)
-                    )
+                    runtime.receive(ProtocolProjection(syncProtocol, sender))
                 }
             }
         }

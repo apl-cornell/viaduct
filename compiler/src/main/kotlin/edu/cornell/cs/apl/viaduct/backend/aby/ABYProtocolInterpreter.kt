@@ -57,7 +57,7 @@ import kotlinx.collections.immutable.PersistentMap
 import kotlinx.collections.immutable.persistentMapOf
 import mu.KotlinLogging
 
-private var logger = KotlinLogging.logger {}
+private var logger = KotlinLogging.logger("ABY")
 
 class ABYProtocolInterpreter(
     program: ProgramNode,

@@ -42,7 +42,7 @@ import kotlinx.collections.immutable.PersistentMap
 import kotlinx.collections.immutable.persistentMapOf
 import mu.KotlinLogging
 
-private val logger = KotlinLogging.logger {}
+private val logger = KotlinLogging.logger("Commitment")
 
 class CommitmentObject(val bytes: List<Byte>) {
     fun query(

@@ -164,15 +164,16 @@ class CommitmentProtocolHashReplicaInterpreter(
 
             is DowngradeNode -> runExpr(expr.expression)
 
-            is ReceiveNode -> throw IllegalInternalCommunicationError(expr)
-
-            is OperatorApplicationNode ->
-                throw ViaductInterpreterError("Commitment: cannot perform operations on committed values")
-
             is QueryNode -> {
                 val loc = getObjectLocation(expr.variable.value)
                 getObject(loc).query(expr.query, expr.arguments)
             }
+
+            is OperatorApplicationNode ->
+                throw ViaductInterpreterError("Commitment: cannot perform operations on committed values")
+
+            is ReceiveNode ->
+                throw IllegalInternalCommunicationError(expr)
 
             is InputNode ->
                 throw ViaductInterpreterError("Commitment: cannot perform I/O in non-local protocol")
@@ -183,7 +184,7 @@ class CommitmentProtocolHashReplicaInterpreter(
         hashTempStore = hashTempStore.put(stmt.temporary.value, commitment)
 
         // broadcast to readers
-        val readers: Set<SimpleStatementNode> = protocolAnalysis.directReaders(stmt)
+        val readers: Set<SimpleStatementNode> = protocolAnalysis.directRemoteReaders(stmt)
 
         val commitmentValue = ByteVecValue(commitment)
         for (reader in readers) {
@@ -193,10 +194,7 @@ class CommitmentProtocolHashReplicaInterpreter(
                     .getHostSends(runtime.projection.host, "COMMITMENT_OUTPUT")
 
             for (event in events) {
-                runtime.send(
-                    commitmentValue,
-                    ProtocolProjection(event.recv.protocol, event.recv.host)
-                )
+                runtime.send(commitmentValue, ProtocolProjection(event.recv.protocol, event.recv.host))
             }
         }
     }

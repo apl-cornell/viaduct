@@ -231,7 +231,7 @@ class CommitmentProtocolCleartextInterpreter(
         tempStore = tempStore.put(stmt.temporary.value, rhsValue)
 
         // broadcast to readers
-        val readers: Set<SimpleStatementNode> = protocolAnalysis.directReaders(stmt)
+        val readers: Set<SimpleStatementNode> = protocolAnalysis.directRemoteReaders(stmt)
 
         val nonce = ByteVecValue(rhsValue.info.nonce)
         for (reader in readers) {
@@ -243,7 +243,6 @@ class CommitmentProtocolCleartextInterpreter(
             for (event in events) {
                 // send nonce and the opened value
                 val recvProjection = ProtocolProjection(event.recv.protocol, event.recv.host)
-
                 runtime.send(nonce, recvProjection)
                 runtime.send(rhsValue.value, recvProjection)
             }

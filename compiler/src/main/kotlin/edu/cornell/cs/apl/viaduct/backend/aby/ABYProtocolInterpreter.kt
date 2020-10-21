@@ -14,14 +14,14 @@ import edu.cornell.cs.apl.viaduct.backend.ProtocolInterpreter
 import edu.cornell.cs.apl.viaduct.backend.ProtocolInterpreterFactory
 import edu.cornell.cs.apl.viaduct.backend.ProtocolProjection
 import edu.cornell.cs.apl.viaduct.backend.ViaductProcessRuntime
+import edu.cornell.cs.apl.viaduct.errors.IllegalInternalCommunicationError
 import edu.cornell.cs.apl.viaduct.errors.UndefinedNameError
 import edu.cornell.cs.apl.viaduct.errors.ViaductInterpreterError
 import edu.cornell.cs.apl.viaduct.protocols.ABY
+import edu.cornell.cs.apl.viaduct.selection.CommunicationEvent
 import edu.cornell.cs.apl.viaduct.selection.ProtocolCommunication
-import edu.cornell.cs.apl.viaduct.selection.SimpleProtocolComposer
 import edu.cornell.cs.apl.viaduct.syntax.Host
 import edu.cornell.cs.apl.viaduct.syntax.ObjectVariable
-import edu.cornell.cs.apl.viaduct.syntax.Protocol
 import edu.cornell.cs.apl.viaduct.syntax.QueryNameNode
 import edu.cornell.cs.apl.viaduct.syntax.Temporary
 import edu.cornell.cs.apl.viaduct.syntax.UpdateNameNode
@@ -44,6 +44,7 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.PureExpressionNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.QueryNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ReadNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ReceiveNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.SimpleStatementNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.UpdateNode
 import edu.cornell.cs.apl.viaduct.syntax.types.BooleanType
 import edu.cornell.cs.apl.viaduct.syntax.types.IntegerType
@@ -54,7 +55,6 @@ import edu.cornell.cs.apl.viaduct.syntax.values.Value
 import java.util.Stack
 import kotlinx.collections.immutable.PersistentMap
 import kotlinx.collections.immutable.persistentMapOf
-import kotlinx.collections.immutable.persistentSetOf
 
 class ABYProtocolInterpreter(
     program: ProgramNode,
@@ -204,17 +204,15 @@ class ABYProtocolInterpreter(
             val sendProtocol = protocolAnalysis.primaryProtocol(read)
 
             if (runtime.projection.protocol != sendProtocol) {
-                val phase: ProtocolCommunication =
-                    SimpleProtocolComposer.communicate(sendProtocol, runtime.projection.protocol)
+                val events: ProtocolCommunication = protocolAnalysis.relevantCommunicationEvents(read)
 
                 var cleartextInput: Value? = null
-
-                for (sendEvent in phase) {
+                for (event in events) {
                     when {
                         // cleartext input
-                        sendEvent.recv.id == "CLEARTEXT_INPUT" && sendEvent.recv.host == runtime.projection.host -> {
+                        event.recv.id == "CLEARTEXT_INPUT" && event.recv.host == runtime.projection.host -> {
                             val receivedValue: Value =
-                                runtime.receive(ProtocolProjection(sendProtocol, sendEvent.send.host))
+                                runtime.receive(ProtocolProjection(sendProtocol, event.send.host))
 
                             if (cleartextInput == null) {
                                 cleartextInput = receivedValue
@@ -224,7 +222,7 @@ class ABYProtocolInterpreter(
                         }
 
                         // secret input; throw an error
-                        sendEvent.recv.id == "SECRET_INPUT" ->
+                        event.recv.id == "SECRET_INPUT" ->
                             throw ViaductInterpreterError("ABY: expected cleartext read, got secret read instead", read)
                     }
                 }
@@ -253,17 +251,16 @@ class ABYProtocolInterpreter(
             val sendProtocol = protocolAnalysis.primaryProtocol(read)
 
             if (sendProtocol != runtime.projection.protocol) {
-                val phase: ProtocolCommunication =
-                    SimpleProtocolComposer.communicate(sendProtocol, runtime.projection.protocol)
+                val events: ProtocolCommunication = protocolAnalysis.relevantCommunicationEvents(read)
 
                 var secretInput: ABYCircuitGate? = null
                 var previousReceivedValue: Value? = null
-                for (sendEvent in phase) {
+                for (event in events) {
                     when {
                         // secret input for this host; create input gate
-                        sendEvent.recv.id == "SECRET_INPUT" && sendEvent.recv.host == runtime.projection.host -> {
+                        event.recv.id == "SECRET_INPUT" && event.recv.host == runtime.projection.host -> {
                             val receivedValue: Value =
-                                runtime.receive(ProtocolProjection(sendProtocol, sendEvent.send.host))
+                                runtime.receive(ProtocolProjection(sendProtocol, event.send.host))
 
                             if (previousReceivedValue == null) {
                                 secretInput = valueToCircuit(receivedValue, isInput = true)
@@ -274,12 +271,12 @@ class ABYProtocolInterpreter(
                         }
 
                         // other host has secret input; create dummy input gate
-                        sendEvent.recv.id == "SECRET_INPUT" && sendEvent.recv.host != runtime.projection.host -> {
+                        event.recv.id == "SECRET_INPUT" && event.recv.host != runtime.projection.host -> {
                             secretInput = ABYDummyInGate()
                         }
 
                         // cleartext input; throw an error
-                        sendEvent.recv.id == "CLEARTEXT_INPUT" ->
+                        event.recv.id == "CLEARTEXT_INPUT" ->
                             throw ViaductInterpreterError("ABY: expected secret read, got cleartext read instead", read)
                     }
                 }
@@ -359,10 +356,7 @@ class ABYProtocolInterpreter(
         return circuitBuilder.circuit.putOUTGate(shareStack.peek()!!, outRole)
     }
 
-    private suspend fun executeABYCircuit(letNode: LetNode, receivers: Iterable<Protocol>) {
-        val receivingHosts: Set<Host> =
-            receivers.fold(persistentSetOf()) { acc, receiver -> acc.addAll(receiver.hosts) }
-
+    private fun executeABYCircuit(letNode: LetNode, receivingHosts: Set<Host>): Value {
         val thisHostReceives = receivingHosts.contains(runtime.projection.host)
         val otherHostReceives = receivingHosts.contains(otherHost)
         val outRole: Role =
@@ -389,29 +383,18 @@ class ABYProtocolInterpreter(
         aby.execCircuit()
         val result: Int = outShare.clearValue32.toInt()
 
-        val sendValue: Value =
-            when (val msgType: ValueType = typeAnalysis.type(letNode)) {
-                is BooleanType -> BooleanValue(result != 0)
+        return when (val msgType: ValueType = typeAnalysis.type(letNode)) {
+            is BooleanType -> BooleanValue(result != 0)
 
-                is IntegerType -> IntegerValue(result)
+            is IntegerType -> IntegerValue(result)
 
-                else -> throw Exception("unknown type $msgType")
-            }
-
-        for (recvProtocol: Protocol in receivers) {
-            val sendPhase: ProtocolCommunication =
-                SimpleProtocolComposer.communicate(runtime.projection.protocol, recvProtocol)
-
-            for (sendEvent in sendPhase.getHostSends(runtime.projection.host)) {
-                runtime.send(sendValue, ProtocolProjection(recvProtocol, sendEvent.recv.host))
-            }
+            else -> throw Exception("unknown type $msgType")
         }
     }
 
     override suspend fun runLet(stmt: LetNode) {
         when (val rhs = stmt.value) {
-            is ReceiveNode -> {
-            }
+            is ReceiveNode -> throw IllegalInternalCommunicationError(rhs)
 
             is InputNode -> throw ViaductInterpreterError("cannot perform I/O in non-Local protocol")
 
@@ -420,11 +403,25 @@ class ABYProtocolInterpreter(
                 ssTempStore = ssTempStore.put(stmt.temporary.value, rhsCircuit)
 
                 // execute circuit and broadcast to other protocols
-                val recvProtocols =
-                    protocolAnalysis.directReaderProtocols(stmt).filter { it != runtime.projection.protocol }
+                val readers: Set<SimpleStatementNode> = protocolAnalysis.directRemoteReaders(stmt)
 
-                if (recvProtocols.isNotEmpty()) {
-                    executeABYCircuit(stmt, recvProtocols)
+                if (readers.isNotEmpty()) {
+                    val events: Set<CommunicationEvent> =
+                        readers.fold(setOf()) { acc, reader ->
+                            acc.union(
+                                protocolAnalysis.relevantCommunicationEvents(stmt, reader)
+                            )
+                        }
+
+                    val receivingHosts = events.map { event -> event.recv.host }.toSet()
+                    val outValue = executeABYCircuit(stmt, receivingHosts)
+
+                    val hostEvents =
+                        events.filter { event -> event.send.host == runtime.projection.host }
+
+                    for (event in hostEvents) {
+                        runtime.send(outValue, ProtocolProjection(event.recv.protocol, event.recv.host))
+                    }
                 }
             }
         }

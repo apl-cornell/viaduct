@@ -9,10 +9,8 @@ import edu.cornell.cs.apl.viaduct.protocols.Commitment
 import edu.cornell.cs.apl.viaduct.protocols.Local
 import edu.cornell.cs.apl.viaduct.protocols.Replication
 import edu.cornell.cs.apl.viaduct.selection.ProtocolCommunication
-import edu.cornell.cs.apl.viaduct.selection.SimpleProtocolComposer
 import edu.cornell.cs.apl.viaduct.syntax.Host
 import edu.cornell.cs.apl.viaduct.syntax.ObjectVariable
-import edu.cornell.cs.apl.viaduct.syntax.Protocol
 import edu.cornell.cs.apl.viaduct.syntax.Temporary
 import edu.cornell.cs.apl.viaduct.syntax.datatypes.ClassName
 import edu.cornell.cs.apl.viaduct.syntax.datatypes.ImmutableCell
@@ -30,6 +28,7 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.QueryNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ReadNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ReceiveNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.SimpleStatementNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.UpdateNode
 import edu.cornell.cs.apl.viaduct.syntax.types.ValueType
 import edu.cornell.cs.apl.viaduct.syntax.values.ByteVecValue
@@ -129,8 +128,7 @@ class PlaintextProtocolInterpreter(
 
             // must receive from read protocol
             if (runtime.projection.protocol != sendProtocol) {
-                val events: ProtocolCommunication =
-                    SimpleProtocolComposer.communicate(sendProtocol, runtime.projection.protocol)
+                val events: ProtocolCommunication = protocolAnalysis.relevantCommunicationEvents(read)
 
                 val cleartextInputs =
                     events.getHostReceives(runtime.projection.host, "INPUT")
@@ -147,7 +145,7 @@ class PlaintextProtocolInterpreter(
                         var cleartextValue: Value? = null
                         for (event in events.getHostReceives(runtime.projection.host, "INPUT")) {
                             val receivedValue: Value =
-                                runtime.receive(ProtocolProjection(sendProtocol, event.send.host))
+                                runtime.receive(ProtocolProjection(event.send.protocol, event.send.host))
 
                             if (cleartextValue == null) {
                                 cleartextValue = receivedValue
@@ -237,15 +235,16 @@ class PlaintextProtocolInterpreter(
         tempStore = tempStore.put(stmt.temporary.value, rhsValue)
 
         // broadcast to readers
-        val recvProtocols =
-            protocolAnalysis.directReaderProtocols(stmt).filter { it != runtime.projection.protocol }
+        val readers: Set<SimpleStatementNode> = protocolAnalysis.directRemoteReaders(stmt)
 
-        for (recvProtocol: Protocol in recvProtocols) {
-            val sendPhase: ProtocolCommunication =
-                SimpleProtocolComposer.communicate(runtime.projection.protocol, recvProtocol)
+        for (reader in readers) {
+            val events =
+                protocolAnalysis
+                    .relevantCommunicationEvents(stmt, reader)
+                    .getHostSends(runtime.projection.host)
 
-            for (sendEvent in sendPhase.getHostSends(runtime.projection.host)) {
-                runtime.send(rhsValue, ProtocolProjection(recvProtocol, sendEvent.recv.host))
+            for (event in events) {
+                runtime.send(rhsValue, ProtocolProjection(event.recv.protocol, event.recv.host))
             }
         }
     }

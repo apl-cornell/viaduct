@@ -204,10 +204,12 @@ class ProtocolAnalysis(
     /** Returns the set of protocols that direct read the let binding. */
     fun directReaderProtocols(letNode: LetNode): Set<Protocol> = letNode.directReaders
 
-    fun directReaders(letNode: LetNode): Set<SimpleStatementNode> {
+    fun directRemoteReaders(letNode: LetNode): Set<SimpleStatementNode> {
+        val protocol = primaryProtocol(letNode)
         return nameAnalysis
             .readers(letNode)
             .filterIsInstance<SimpleStatementNode>()
+            .filter { primaryProtocol(it) != protocol }
             .toSet()
     }
 

@@ -23,7 +23,6 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.SimpleStatementNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.StatementNode
 import edu.cornell.cs.apl.viaduct.syntax.values.BooleanValue
 import edu.cornell.cs.apl.viaduct.syntax.values.UnitValue
-import kotlin.io.println
 import kotlinx.collections.immutable.PersistentMap
 import kotlinx.collections.immutable.persistentMapOf
 

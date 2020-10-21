@@ -421,7 +421,7 @@ class ABYProtocolInterpreter(
 
                 // execute circuit and broadcast to other protocols
                 val recvProtocols =
-                    protocolAnalysis.directReaders(stmt).filter { it != runtime.projection.protocol }
+                    protocolAnalysis.directReaderProtocols(stmt).filter { it != runtime.projection.protocol }
 
                 if (recvProtocols.isNotEmpty()) {
                     executeABYCircuit(stmt, recvProtocols)

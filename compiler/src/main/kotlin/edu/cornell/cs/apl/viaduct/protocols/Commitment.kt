@@ -20,7 +20,7 @@ class Commitment(val cleartextHost: Host, val hashHosts: Set<Host>) : Protocol()
     }
 
     init {
-        require(hashHosts.size >= 1)
+        require(hashHosts.isNotEmpty())
         require(!hashHosts.contains(cleartextHost))
     }
 
@@ -38,14 +38,13 @@ class Commitment(val cleartextHost: Host, val hashHosts: Set<Host>) : Protocol()
                 .reduce<LabelExpression, LabelExpression> { acc, l -> LabelAnd(acc, l) }
         ).interpret()
 
-    val cleartextInputPorts: Map<Host, InputPort> =
-        hashHosts.union(setOf(cleartextHost))
-            .map { h -> Pair(h, InputPort(this, h, "COMMITMENT_CLEARTEXT_INPUT")) }
-            .toMap()
-
-    val cleartextSecretInputPort: Map<Host, InputPort> =
-        mapOf(cleartextHost to InputPort(this, cleartextHost, "COMMITMENT_SECRET_INPUT"))
+    val inputPort = InputPort(this, this.cleartextHost, "INPUT")
 
     val cleartextOutputPort: OutputPort =
-        OutputPort(this, cleartextHost, "COMMITMENT_CLEARTEXT_OUTPUT")
+        OutputPort(this, this.cleartextHost, "CLEARTEXT_OUTPUT")
+
+    val commitmentOutputPorts: Map<Host, OutputPort> =
+        this.hashHosts.map { hashHost ->
+            hashHost to OutputPort(this, hashHost, "COMMITMENT_OUTPUT")
+        }.toMap()
 }

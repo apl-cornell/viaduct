@@ -13,9 +13,9 @@ import edu.cornell.cs.apl.viaduct.backend.ViaductProcessRuntime
 import edu.cornell.cs.apl.viaduct.errors.IllegalInternalCommunicationError
 import edu.cornell.cs.apl.viaduct.errors.ViaductInterpreterError
 import edu.cornell.cs.apl.viaduct.protocols.Commitment
+import edu.cornell.cs.apl.viaduct.selection.CommunicationEvent
 import edu.cornell.cs.apl.viaduct.syntax.Host
 import edu.cornell.cs.apl.viaduct.syntax.ObjectVariable
-import edu.cornell.cs.apl.viaduct.syntax.Protocol
 import edu.cornell.cs.apl.viaduct.syntax.Temporary
 import edu.cornell.cs.apl.viaduct.syntax.datatypes.ClassName
 import edu.cornell.cs.apl.viaduct.syntax.datatypes.Get
@@ -34,6 +34,7 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.QueryNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ReadNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ReceiveNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.SimpleStatementNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.UpdateNode
 import edu.cornell.cs.apl.viaduct.syntax.types.ValueType
 import edu.cornell.cs.apl.viaduct.syntax.values.ByteVecValue
@@ -117,13 +118,32 @@ class CommitmentProtocolCleartextInterpreter(
         return if (storeValue == null) {
             val sendProtocol = protocolAnalysis.primaryProtocol(read)
             if (sendProtocol != runtime.projection.protocol) {
-                // TODO: use protocol composer
-                val recvValue: Value =
-                    runtime.receive(ProtocolProjection(sendProtocol, runtime.projection.host))
+                val events =
+                    protocolAnalysis
+                        .relevantCommunicationEvents(read)
+                        .getHostReceives(runtime.projection.host)
 
-                val hashInfo: HashInfo = Hashing.generateHash(recvValue)
+                var cleartextValue: Value? = null
+                for (event in events) {
+                    val recvValue: Value =
+                        runtime.receive(ProtocolProjection(event.send.protocol, event.send.host))
+
+                    when {
+                        cleartextValue == null -> {
+                            cleartextValue = recvValue
+                        }
+
+                        cleartextValue != recvValue -> {
+                            throw ViaductInterpreterError("Commitment: received different cleartext values")
+                        }
+                    }
+                }
+
+                assert(cleartextValue != null)
+
+                val hashInfo: HashInfo = Hashing.generateHash(cleartextValue!!)
                 sendCommitment(hashInfo)
-                val hashedValue = Hashed(recvValue, hashInfo)
+                val hashedValue = Hashed(cleartextValue, hashInfo)
                 tempStore.put(read.temporary.value, hashedValue)
                 hashedValue
             } else { // temporary should be stored locally, but isn't
@@ -211,20 +231,21 @@ class CommitmentProtocolCleartextInterpreter(
         tempStore = tempStore.put(stmt.temporary.value, rhsValue)
 
         // broadcast to readers
-        val recvProtocols: List<Protocol> =
-            protocolAnalysis.directReaders(stmt).filter { it != runtime.projection.protocol }
+        val readers: Set<SimpleStatementNode> = protocolAnalysis.directReaders(stmt)
 
-        // TODO: use the protocol composer
-        if (recvProtocols.isNotEmpty()) {
-            for (recvProtocol in recvProtocols) {
-                for (recvHost in recvProtocol.hosts) {
-                    // send nonce and the opened value
-                    val recvProjection = ProtocolProjection(recvProtocol, recvHost)
-                    val nonce = ByteVecValue(rhsValue.info.nonce)
+        val nonce = ByteVecValue(rhsValue.info.nonce)
+        for (reader in readers) {
+            val events: Set<CommunicationEvent> =
+                protocolAnalysis
+                    .relevantCommunicationEvents(stmt, reader)
+                    .getHostSends(runtime.projection.host, "CLEARTEXT_OUTPUT")
 
-                    runtime.send(nonce, recvProjection)
-                    runtime.send(rhsValue.value, recvProjection)
-                }
+            for (event in events) {
+                // send nonce and the opened value
+                val recvProjection = ProtocolProjection(event.recv.protocol, event.recv.host)
+
+                runtime.send(nonce, recvProjection)
+                runtime.send(rhsValue.value, recvProjection)
             }
         }
     }

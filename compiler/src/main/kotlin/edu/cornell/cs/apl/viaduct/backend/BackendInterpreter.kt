@@ -23,6 +23,7 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.SimpleStatementNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.StatementNode
 import edu.cornell.cs.apl.viaduct.syntax.values.BooleanValue
 import edu.cornell.cs.apl.viaduct.syntax.values.UnitValue
+import kotlin.io.println
 import kotlinx.collections.immutable.PersistentMap
 import kotlinx.collections.immutable.persistentMapOf
 
@@ -33,6 +34,7 @@ class BackendInterpreter(
     inputBackends: Map<Protocol, ProtocolInterpreter>,
     private val runtime: ViaductRuntime
 ) {
+    private val allHosts = program.hosts.map { it.name.value }.toSet()
     private val nameAnalysis = NameAnalysis.get(program)
     private val backends: Map<Protocol, ProtocolInterpreter> =
         inputBackends.filter { kv -> kv.key !is Synchronization }
@@ -40,26 +42,31 @@ class BackendInterpreter(
 
     suspend fun run() {
         val mainBody = program.main.body
+
         run(nameAnalysis.enclosingFunctionName(mainBody), mainBody)
+        synchronize(allHosts, allHosts)
     }
 
+    /** Synchronize hosts. */
     suspend fun synchronize(senders: Set<Host>, receivers: Set<Host>) {
-        when {
-            senders.contains(this.host) -> {
-                for (receiver in receivers) {
+        if (senders.contains(this.host)) {
+            for (receiver in receivers) {
+                if (this.host != receiver) {
                     runtime.send(
                         UnitValue,
-                        ProtocolProjection(syncProtocol, this.host),
+                        ProtocolProjection(syncProtocol, this@BackendInterpreter.host),
                         ProtocolProjection(syncProtocol, receiver)
                     )
                 }
             }
+        }
 
-            receivers.contains(this.host) -> {
-                for (sender in senders) {
+        if (receivers.contains(this.host)) {
+            for (sender in senders) {
+                if (this.host != sender) {
                     runtime.receive(
                         ProtocolProjection(syncProtocol, sender),
-                        ProtocolProjection(syncProtocol, this.host)
+                        ProtocolProjection(syncProtocol, this@BackendInterpreter.host)
                     )
                 }
             }

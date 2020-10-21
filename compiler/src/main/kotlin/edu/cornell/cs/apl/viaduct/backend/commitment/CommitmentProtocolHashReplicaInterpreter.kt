@@ -8,9 +8,9 @@ import edu.cornell.cs.apl.viaduct.backend.ViaductProcessRuntime
 import edu.cornell.cs.apl.viaduct.errors.IllegalInternalCommunicationError
 import edu.cornell.cs.apl.viaduct.errors.ViaductInterpreterError
 import edu.cornell.cs.apl.viaduct.protocols.Commitment
+import edu.cornell.cs.apl.viaduct.selection.CommunicationEvent
 import edu.cornell.cs.apl.viaduct.syntax.Host
 import edu.cornell.cs.apl.viaduct.syntax.ObjectVariable
-import edu.cornell.cs.apl.viaduct.syntax.Protocol
 import edu.cornell.cs.apl.viaduct.syntax.QueryNameNode
 import edu.cornell.cs.apl.viaduct.syntax.Temporary
 import edu.cornell.cs.apl.viaduct.syntax.UpdateNameNode
@@ -28,6 +28,7 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.QueryNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ReadNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ReceiveNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.SimpleStatementNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.UpdateNode
 import edu.cornell.cs.apl.viaduct.syntax.types.ValueType
 import edu.cornell.cs.apl.viaduct.syntax.values.ByteVecValue
@@ -108,13 +109,13 @@ class CommitmentProtocolHashReplicaInterpreter(
     }
 
     private suspend fun receiveCommitment(): List<Byte> {
-        val h = runtime.receive(
+        val commitment = runtime.receive(
             ProtocolProjection(
                 runtime.projection.protocol,
                 cleartextHost
             )
         )
-        return (h as ByteVecValue).value
+        return (commitment as ByteVecValue).value
     }
 
     override suspend fun buildExpressionObject(expr: AtomicExpressionNode): CommitmentObject {
@@ -161,7 +162,7 @@ class CommitmentProtocolHashReplicaInterpreter(
 
             is ReadNode -> runRead(expr)
 
-            is DowngradeNode -> runExpr(expr)
+            is DowngradeNode -> runExpr(expr.expression)
 
             is ReceiveNode -> throw IllegalInternalCommunicationError(expr)
 
@@ -182,19 +183,20 @@ class CommitmentProtocolHashReplicaInterpreter(
         hashTempStore = hashTempStore.put(stmt.temporary.value, commitment)
 
         // broadcast to readers
-        val recvProtocols: List<Protocol> =
-            protocolAnalysis.directReaders(stmt).filter { it != runtime.projection.protocol }
+        val readers: Set<SimpleStatementNode> = protocolAnalysis.directReaders(stmt)
 
-        // TODO: use the protocol composer
-        if (recvProtocols.isNotEmpty()) {
-            val commitmentValue = ByteVecValue(commitment)
-            for (recvProtocol in recvProtocols) {
-                for (recvHost in recvProtocol.hosts) {
-                    runtime.send(
-                        commitmentValue,
-                        ProtocolProjection(recvProtocol, recvHost)
-                    )
-                }
+        val commitmentValue = ByteVecValue(commitment)
+        for (reader in readers) {
+            val events: Set<CommunicationEvent> =
+                protocolAnalysis
+                    .relevantCommunicationEvents(stmt, reader)
+                    .getHostSends(runtime.projection.host, "COMMITMENT_OUTPUT")
+
+            for (event in events) {
+                runtime.send(
+                    commitmentValue,
+                    ProtocolProjection(event.recv.protocol, event.recv.host)
+                )
             }
         }
     }

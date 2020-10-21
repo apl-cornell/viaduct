@@ -22,6 +22,9 @@ interface CostEstimator<C : CostMonoid<C>> {
      */
     fun communicationCost(source: Protocol, destination: Protocol): Cost<C>
 
+    /** Returns whether [source] protocol can send data to [destination] protocol. */
+    fun canCommunicate(source: Protocol, destination: Protocol): Boolean
+
     /** Estimated cost of storing object defined by [declaration] in protocol [protocol]. */
     fun storageCost(declaration: ObjectDeclaration, protocol: Protocol): Cost<C>
 

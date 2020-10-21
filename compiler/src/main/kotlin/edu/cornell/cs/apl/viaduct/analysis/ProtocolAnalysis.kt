@@ -7,6 +7,7 @@ import edu.cornell.cs.apl.viaduct.errors.NoProtocolAnnotationError
 import edu.cornell.cs.apl.viaduct.errors.UnknownObjectDeclarationError
 import edu.cornell.cs.apl.viaduct.protocols.Local
 import edu.cornell.cs.apl.viaduct.selection.CommunicationEvent
+import edu.cornell.cs.apl.viaduct.selection.ProtocolCommunication
 import edu.cornell.cs.apl.viaduct.selection.ProtocolComposer
 import edu.cornell.cs.apl.viaduct.syntax.Host
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
@@ -201,7 +202,14 @@ class ProtocolAnalysis(
     }
 
     /** Returns the set of protocols that direct read the let binding. */
-    fun directReaders(letNode: LetNode): Set<Protocol> = letNode.directReaders
+    fun directReaderProtocols(letNode: LetNode): Set<Protocol> = letNode.directReaders
+
+    fun directReaders(letNode: LetNode): Set<SimpleStatementNode> {
+        return nameAnalysis
+            .readers(letNode)
+            .filterIsInstance<SimpleStatementNode>()
+            .toSet()
+    }
 
     /** Returns the set of protocols that execute [statement]. */
     fun protocols(statement: StatementNode): Set<Protocol> = statement.protocols
@@ -233,15 +241,15 @@ class ProtocolAnalysis(
     }
 
     /** Return the relevant communication events for the [read]. */
-    fun relevantCommunicationEvents(read: ReadNode): Set<CommunicationEvent> {
+    fun relevantCommunicationEvents(read: ReadNode): ProtocolCommunication {
         val letNode = nameAnalysis.declaration(read)
         val reader = nameAnalysis.enclosingStatement(read) as SimpleStatementNode
-        return letNode.relevantCommunicationEventsMap[reader]!!
+        return ProtocolCommunication(letNode.relevantCommunicationEventsMap[reader]!!)
     }
 
     /** Return the relevant communication events for [reader] reading from [letNode]. */
-    fun relevantCommunicationEvents(letNode: LetNode, reader: SimpleStatementNode): Set<CommunicationEvent> {
-        return letNode.relevantCommunicationEventsMap[reader]!!
+    fun relevantCommunicationEvents(letNode: LetNode, reader: SimpleStatementNode): ProtocolCommunication {
+        return ProtocolCommunication(letNode.relevantCommunicationEventsMap[reader]!!)
     }
 
     private val StatementNode.participatingHosts: Set<Host> by circularAttribute(

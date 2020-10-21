@@ -37,12 +37,6 @@ object SimpleCostEstimator : CostEstimator<IntegerCost> {
         )
 
     override fun communicationCost(source: Protocol, destination: Protocol): Cost<IntegerCost> {
-        if (source is Commitment) { // TODO copout until merge commitments into ports
-            return zeroCost()
-        }
-        if (destination is Commitment) { // TODO copout until merge commitments into ports
-            return zeroCost()
-        }
         return if (source != destination) {
             val events = SimpleProtocolComposer.communicate(source, destination)
 
@@ -63,6 +57,10 @@ object SimpleCostEstimator : CostEstimator<IntegerCost> {
         } else {
             zeroCost()
         }
+    }
+
+    override fun canCommunicate(source: Protocol, destination: Protocol): Boolean {
+        return SimpleProtocolComposer.canCommunicate(source, destination)
     }
 
     override fun storageCost(declaration: ObjectDeclaration, protocol: Protocol): Cost<IntegerCost> =

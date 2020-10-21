@@ -331,26 +331,40 @@ class ConstraintGenerator(
         // compute the cost using the cost estimator
         return protocols.flatMap { protocol ->
             argProtocolMaps.map { argProtocolMap ->
-                val protocolConstraints: SelectionConstraint =
-                    argProtocolMap.map { kv ->
-                        VariableIn(FunctionVariable(fv.function, kv.key), setOf(kv.value))
-                    }.plus(
-                        setOf(VariableIn(fv, setOf(protocol)))
-                    ).fold(Literal(true) as SelectionConstraint) { acc, c -> And(acc, c) }
+                val validArgProtocols =
+                    argProtocolMap.all { kv -> costEstimator.canCommunicate(protocol, kv.value) }
 
-                // estimate cost given a particular configuration of an executing protocol
-                // and protocols for arguments
-                val cost =
-                    baseCostFunction(protocol).concat(
-                        argProtocolMap.values.fold(costEstimator.zeroCost()) { acc, argProtocol ->
-                            acc.concat(costEstimator.communicationCost(argProtocol, protocol))
-                        }
+                if (validArgProtocols) {
+                    val protocolConstraints: SelectionConstraint =
+                        argProtocolMap.map { kv ->
+                            VariableIn(FunctionVariable(fv.function, kv.key), setOf(kv.value))
+                        }.plus(
+                            setOf(VariableIn(fv, setOf(protocol)))
+                        ).fold(Literal(true) as SelectionConstraint) { acc, c -> And(acc, c) }
+
+                    // estimate cost given a particular configuration of an executing protocol
+                    // and protocols for arguments
+                    val cost =
+                        baseCostFunction(protocol).concat(
+                            argProtocolMap.values.fold(costEstimator.zeroCost()) { acc, argProtocol ->
+                                acc.concat(costEstimator.communicationCost(argProtocol, protocol))
+                            }
+                        )
+
+                    Implies(
+                        protocolConstraints,
+                        symbolicCostEqualsInt(symbolicCost, cost)
                     )
-
-                Implies(
-                    protocolConstraints,
-                    symbolicCostEqualsInt(symbolicCost, cost)
-                )
+                } else {
+                    Implies(
+                        VariableIn(fv, setOf(protocol)),
+                        Not(
+                            argProtocolMap.map { kv ->
+                                VariableIn(FunctionVariable(fv.function, kv.key), setOf(kv.value))
+                            }.fold(Literal(true) as SelectionConstraint) { acc, c -> And(acc, c) }
+                        )
+                    )
+                }
             }
         }.toSet()
     }
@@ -501,31 +515,32 @@ class ConstraintGenerator(
 
                         guardProtocols.map { guardProtocol ->
                             val protocolCost =
-                                participatingProtocolMap.entries.fold(
-                                    costEstimator.zeroCost().map { CostLiteral(0) }
-                                ) { acc, kv ->
-                                    acc.concat(
-                                        // induce communication cost from guard protocol to participating protocol
-                                        // when at least one of the declaration/let nodes actually has it as a primary protocol
-                                        // otherwise, the cost is zero
-                                        // we model this using a mux expression that maps over all cost features
-                                        costEstimator.communicationCost(guardProtocol, kv.key).map { cost ->
-                                            if (cost.cost != 0) {
-                                                CostMux(
-                                                    kv.value.fold(
-                                                        Literal(false) as SelectionConstraint
-                                                    ) { acc2, fv ->
-                                                        Or(acc2, VariableIn(fv, setOf(kv.key)))
-                                                    },
-                                                    CostLiteral(cost.cost),
+                                participatingProtocolMap
+                                    .entries
+                                    .filter { kv -> costEstimator.canCommunicate(guardProtocol, kv.key) }
+                                    .fold(costEstimator.zeroCost().map { CostLiteral(0) }) { acc, kv ->
+                                        acc.concat(
+                                            // induce communication cost from guard protocol to participating protocol
+                                            // when at least one of the declaration/let nodes actually has it as a primary protocol
+                                            // otherwise, the cost is zero
+                                            // we model this using a mux expression that maps over all cost features
+                                            costEstimator.communicationCost(guardProtocol, kv.key).map { cost ->
+                                                if (cost.cost != 0) {
+                                                    CostMux(
+                                                        kv.value.fold(
+                                                            Literal(false) as SelectionConstraint
+                                                        ) { acc2, fv ->
+                                                            Or(acc2, VariableIn(fv, setOf(kv.key)))
+                                                        },
+                                                        CostLiteral(cost.cost),
+                                                        CostLiteral(0)
+                                                    )
+                                                } else {
                                                     CostLiteral(0)
-                                                )
-                                            } else {
-                                                CostLiteral(0)
+                                                }
                                             }
-                                        }
-                                    )
-                                }
+                                        )
+                                    }
 
                             Implies(
                                 VariableIn(

@@ -16,6 +16,9 @@ import edu.cornell.cs.apl.viaduct.syntax.Temporary
 import edu.cornell.cs.apl.viaduct.syntax.UpdateNameNode
 import edu.cornell.cs.apl.viaduct.syntax.datatypes.ClassName
 import edu.cornell.cs.apl.viaduct.syntax.datatypes.Get
+import edu.cornell.cs.apl.viaduct.syntax.datatypes.ImmutableCell
+import edu.cornell.cs.apl.viaduct.syntax.datatypes.MutableCell
+import edu.cornell.cs.apl.viaduct.syntax.datatypes.Vector
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.AtomicExpressionNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.DowngradeNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ExpressionNode
@@ -119,8 +122,7 @@ class CommitmentProtocolHashReplicaInterpreter(
     }
 
     override suspend fun buildExpressionObject(expr: AtomicExpressionNode): CommitmentObject {
-        val commitment = receiveCommitment()
-        return CommitmentObject(commitment)
+        return CommitmentObject(runExpr(expr))
     }
 
     override suspend fun buildObject(
@@ -128,8 +130,15 @@ class CommitmentProtocolHashReplicaInterpreter(
         typeArguments: List<ValueType>,
         arguments: List<AtomicExpressionNode>
     ): CommitmentObject {
-        val commitment = receiveCommitment()
-        return CommitmentObject(commitment)
+        val argumentValues = arguments.map { arg -> runExpr(arg) }
+        return when (className) {
+            ImmutableCell, MutableCell -> CommitmentObject(argumentValues[0])
+
+            Vector -> TODO("Commitment for vectors")
+
+            else ->
+                throw ViaductInterpreterError("Commitment: cannot build object of unknown class $className")
+        }
     }
 
     override fun getNullObject(): CommitmentObject {

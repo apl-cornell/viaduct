@@ -2,13 +2,8 @@ package edu.cornell.cs.apl.viaduct.backend.commitment
 
 import edu.cornell.cs.apl.viaduct.analysis.ProtocolAnalysis
 import edu.cornell.cs.apl.viaduct.backend.AbstractProtocolInterpreter
-import edu.cornell.cs.apl.viaduct.backend.ImmutableCellObject
-import edu.cornell.cs.apl.viaduct.backend.MutableCellObject
-import edu.cornell.cs.apl.viaduct.backend.NullObject
 import edu.cornell.cs.apl.viaduct.backend.ObjectLocation
-import edu.cornell.cs.apl.viaduct.backend.PlaintextClassObject
 import edu.cornell.cs.apl.viaduct.backend.ProtocolProjection
-import edu.cornell.cs.apl.viaduct.backend.VectorObject
 import edu.cornell.cs.apl.viaduct.backend.ViaductProcessRuntime
 import edu.cornell.cs.apl.viaduct.errors.IllegalInternalCommunicationError
 import edu.cornell.cs.apl.viaduct.errors.ViaductInterpreterError
@@ -16,6 +11,7 @@ import edu.cornell.cs.apl.viaduct.protocols.Commitment
 import edu.cornell.cs.apl.viaduct.selection.CommunicationEvent
 import edu.cornell.cs.apl.viaduct.syntax.Host
 import edu.cornell.cs.apl.viaduct.syntax.ObjectVariable
+import edu.cornell.cs.apl.viaduct.syntax.QueryNameNode
 import edu.cornell.cs.apl.viaduct.syntax.Temporary
 import edu.cornell.cs.apl.viaduct.syntax.datatypes.ClassName
 import edu.cornell.cs.apl.viaduct.syntax.datatypes.Get
@@ -38,7 +34,6 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.SimpleStatementNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.UpdateNode
 import edu.cornell.cs.apl.viaduct.syntax.types.ValueType
 import edu.cornell.cs.apl.viaduct.syntax.values.ByteVecValue
-import edu.cornell.cs.apl.viaduct.syntax.values.IntegerValue
 import edu.cornell.cs.apl.viaduct.syntax.values.Value
 import java.util.Stack
 import kotlinx.collections.immutable.PersistentMap
@@ -46,15 +41,33 @@ import kotlinx.collections.immutable.persistentMapOf
 
 data class Hashed<T>(val value: T, val info: HashInfo)
 
+abstract class HashedObject {
+    abstract fun query(query: QueryNameNode, arguments: List<AtomicExpressionNode>): Hashed<Value>
+}
+
+object HashedNullObject : HashedObject() {
+    override fun query(query: QueryNameNode, arguments: List<AtomicExpressionNode>): Hashed<Value> {
+        throw ViaductInterpreterError("Commitment: unknown query ${query.value} for null object")
+    }
+}
+
+data class HashedCellObject(val value: Hashed<Value>) : HashedObject() {
+    override fun query(query: QueryNameNode, arguments: List<AtomicExpressionNode>): Hashed<Value> {
+        return when (query.value) {
+            is Get -> this.value
+            else -> throw ViaductInterpreterError("Commitment: unknown query ${query.value} for cell object")
+        }
+    }
+}
+
 /** Commitment protocol interpreter for hosts holding the cleartext value. */
 class CommitmentProtocolCleartextInterpreter(
     program: ProgramNode,
     private val protocolAnalysis: ProtocolAnalysis,
     private val runtime: ViaductProcessRuntime
-) : AbstractProtocolInterpreter<Hashed<PlaintextClassObject>>(program) {
+) : AbstractProtocolInterpreter<HashedObject>(program) {
+
     private val hashHosts: Set<Host> = (runtime.projection.protocol as Commitment).hashHosts
-    private val nullObject: Hashed<PlaintextClassObject> =
-        Hashed(NullObject, Hashing.deterministicHash(IntegerValue(0)))
 
     private val tempStoreStack: Stack<PersistentMap<Temporary, Hashed<Value>>> = Stack()
 
@@ -95,9 +108,7 @@ class CommitmentProtocolCleartextInterpreter(
         tempStoreStack.pop()
     }
 
-    override fun getNullObject(): Hashed<PlaintextClassObject> {
-        return nullObject
-    }
+    override fun getNullObject(): HashedObject = HashedNullObject
 
     /** Send commitment to hash hosts. */
     private suspend fun sendCommitment(hashInfo: HashInfo) {
@@ -158,18 +169,7 @@ class CommitmentProtocolCleartextInterpreter(
     }
 
     private fun runQuery(query: QueryNode): Hashed<Value> {
-        val queryName = query.query.value
-        if (queryName != Get) {
-            throw ViaductInterpreterError("Commitment: unspported query: $queryName")
-        }
-
-        val hashedObj = getObject(getObjectLocation(query.variable.value))
-        return when (val obj = hashedObj.value) {
-            is ImmutableCellObject -> Hashed(obj.value, hashedObj.info)
-            is MutableCellObject -> Hashed(obj.value, hashedObj.info)
-            is VectorObject -> TODO("digest for vector")
-            else -> throw ViaductInterpreterError("Commitment: query on object of unknown class $obj")
-        }
+        return getObject(getObjectLocation(query.variable.value)).query(query.query, query.arguments)
     }
 
     private suspend fun runExpr(expr: ExpressionNode): Hashed<Value> =
@@ -192,38 +192,21 @@ class CommitmentProtocolCleartextInterpreter(
                 throw IllegalInternalCommunicationError(expr)
         }
 
-    private suspend fun sendCommmitmentObject(obj: PlaintextClassObject): Hashed<PlaintextClassObject> {
-        val hashInfo = Hashing.generateHash(obj)
-        sendCommitment(hashInfo)
-
-        return Hashed(obj, hashInfo)
-    }
-
-    override suspend fun buildExpressionObject(expr: AtomicExpressionNode): Hashed<PlaintextClassObject> {
-        return sendCommmitmentObject(ImmutableCellObject(runExpr(expr).value))
+    override suspend fun buildExpressionObject(expr: AtomicExpressionNode): HashedObject {
+        return HashedCellObject(runExpr(expr))
     }
 
     override suspend fun buildObject(
         className: ClassName,
         typeArguments: List<ValueType>,
         arguments: List<AtomicExpressionNode>
-    ): Hashed<PlaintextClassObject> {
-        val argumentValues: List<Value> = arguments.map { arg -> runExpr(arg).value }
-        val obj: PlaintextClassObject =
-            when (className) {
-                ImmutableCell -> ImmutableCellObject(argumentValues[0])
-
-                MutableCell -> MutableCellObject(argumentValues[0])
-
-                Vector -> {
-                    TODO("Commitment for vectors")
-                }
-
-                else ->
-                    throw ViaductInterpreterError("Commitment: cannot build object of unknown class $className")
-            }
-
-        return sendCommmitmentObject(obj)
+    ): HashedObject {
+        val argumentValues: List<Hashed<Value>> = arguments.map { arg -> runExpr(arg) }
+        return when (className) {
+            ImmutableCell, MutableCell -> HashedCellObject(argumentValues[0])
+            Vector -> TODO("Commitment for vectors")
+            else -> throw ViaductInterpreterError("Commitment: cannot build object of unknown class $className")
+        }
     }
 
     override suspend fun runLet(stmt: LetNode) {

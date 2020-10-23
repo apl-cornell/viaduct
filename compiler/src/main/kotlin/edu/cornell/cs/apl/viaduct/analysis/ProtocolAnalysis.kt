@@ -330,6 +330,9 @@ class ProtocolAnalysis(
             is BlockNode ->
                 this.statements.fold(setOf()) { acc, stmt -> acc.union(stmt.participatingHosts) }
 
+            is BreakNode ->
+                nameAnalysis.correspondingLoop(this).participatingHosts
+
             else -> setOf()
         }
     }
@@ -344,7 +347,7 @@ class ProtocolAnalysis(
         when (this) {
             is LetNode -> {
                 when (this.value) {
-                    is DowngradeNode -> program.hosts.map { it.name.value }.toSet()
+                    is DowngradeNode -> program.hostDeclarations.map { it.name.value }.toSet()
 
                     else -> setOf()
                 }

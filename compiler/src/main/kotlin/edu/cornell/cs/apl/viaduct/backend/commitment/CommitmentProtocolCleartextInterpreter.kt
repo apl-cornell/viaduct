@@ -113,7 +113,6 @@ class CommitmentProtocolCleartextInterpreter(
 
     override fun getNullObject(): HashedObject = HashedNullObject
 
-    /** Send commitment to hash hosts. */
     private suspend fun sendCommitment(hashInfo: HashInfo) {
 
         val commitment = ByteVecValue(hashInfo.hash)
@@ -136,14 +135,15 @@ class CommitmentProtocolCleartextInterpreter(
             val sendProtocol = protocolAnalysis.primaryProtocol(read)
             if (sendProtocol != runtime.projection.protocol) {
                 val events =
-                    protocolAnalysis
-                        .relevantCommunicationEvents(read)
-                        .getHostReceives(runtime.projection.host)
+                    protocolAnalysis.relevantCommunicationEvents(read)
+
+                // receive cleartext inputs
+                val cleartextInputEvents: Set<CommunicationEvent> =
+                    events.getProjectionReceives(runtime.projection, Commitment.INPUT)
 
                 var cleartextValue: Value? = null
-                for (event in events) {
-                    val recvValue: Value =
-                        runtime.receive(ProtocolProjection(event.send.protocol, event.send.host))
+                for (event in cleartextInputEvents) {
+                    val recvValue: Value = runtime.receive(event)
 
                     when {
                         cleartextValue == null -> {
@@ -158,8 +158,22 @@ class CommitmentProtocolCleartextInterpreter(
 
                 assert(cleartextValue != null)
 
+                // send commitment to hash hosts
                 val hashInfo: HashInfo = Hashing.generateHash(cleartextValue!!)
-                sendCommitment(hashInfo)
+                val commitment = ByteVecValue(hashInfo.hash)
+
+                val createCommitmentEvents: Set<CommunicationEvent> =
+                    events.getProjectionSends(runtime.projection, Commitment.CREATE_COMMITMENT_OUTPUT)
+
+                for (event in events) {
+                    logger.info { "$event" }
+                }
+
+                for (event in createCommitmentEvents) {
+                    runtime.send(commitment, event)
+                    logger.info { "sent commitment to host ${event.recv.host.name}" }
+                }
+
                 val hashedValue = Hashed(cleartextValue, hashInfo)
                 tempStore.put(read.temporary.value, hashedValue)
                 hashedValue
@@ -227,11 +241,11 @@ class CommitmentProtocolCleartextInterpreter(
             val events: Set<CommunicationEvent> =
                 protocolAnalysis
                     .relevantCommunicationEvents(stmt, reader)
-                    .getHostSends(runtime.projection.host, "CLEARTEXT_OUTPUT")
+                    .getProjectionSends(runtime.projection, Commitment.OPEN_CLEARTEXT_OUTPUT)
 
             for (event in events) {
                 // send nonce and the opened value
-                val recvProjection = ProtocolProjection(event.recv.protocol, event.recv.host)
+                val recvProjection = event.recv.asProjection()
                 runtime.send(nonce, recvProjection)
                 runtime.send(rhsValue.value, recvProjection)
 
@@ -252,6 +266,6 @@ class CommitmentProtocolCleartextInterpreter(
     }
 
     override suspend fun runExprAsValue(expr: AtomicExpressionNode): Value {
-        throw ViaductInterpreterError("Commitment: cannot use committed value as a guard")
+        return runExpr(expr).value
     }
 }

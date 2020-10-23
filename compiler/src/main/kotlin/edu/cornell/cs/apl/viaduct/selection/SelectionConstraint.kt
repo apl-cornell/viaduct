@@ -60,6 +60,14 @@ data class CostMux(val guard: SelectionConstraint, val lhs: SymbolicCost, val rh
 /** Custom selection constraints specified for constraint solving during splitting. */
 sealed class SelectionConstraint : PrettyPrintable
 
+data class HostVariable(val variable: BoolExpr) : SelectionConstraint() {
+    override val asDocument: Document = Document("$variable")
+}
+
+data class GuardVisibilityFlag(val variable: BoolExpr) : SelectionConstraint() {
+    override val asDocument: Document = Document("$variable")
+}
+
 data class Literal(val literalValue: Boolean) : SelectionConstraint() {
     override val asDocument: Document = Document(literalValue.toString())
 }
@@ -110,6 +118,12 @@ internal fun SelectionConstraint.evaluate(f: (FunctionName, Variable) -> Protoco
 
         // TODO: ignore cost constraints for now
         is CostEquals -> true
+
+        // TODO: ignore host variables for now
+        is HostVariable -> true
+
+        // TODO: ignore guard visibility flags for now
+        is GuardVisibilityFlag -> true
     }
 }
 
@@ -155,9 +169,16 @@ internal fun List<BoolExpr>.ors(ctx: Context): BoolExpr {
     return ctx.mkOr(* this.toTypedArray())
 }
 
+internal fun List<SelectionConstraint>.ors(): SelectionConstraint {
+    return this.fold(Literal(false) as SelectionConstraint) { acc, x -> Or(acc, x) }
+}
+
 internal fun List<SelectionConstraint>.ands(): SelectionConstraint {
     return this.fold(Literal(true) as SelectionConstraint) { acc, x -> And(acc, x) }
 }
+
+internal fun iff(lhs: SelectionConstraint, rhs: SelectionConstraint): SelectionConstraint =
+    And(Implies(lhs, rhs), Implies(rhs, lhs))
 
 /** Convert a SelectionConstraint into a Z3 BoolExpr. **/
 internal fun SelectionConstraint.boolExpr(
@@ -166,6 +187,8 @@ internal fun SelectionConstraint.boolExpr(
     pmap: BiMap<Protocol, IntExpr>
 ): BoolExpr {
     return when (this) {
+        is HostVariable -> this.variable
+        is GuardVisibilityFlag -> this.variable
         is Literal -> ctx.mkBool(literalValue)
         is Implies -> ctx.mkImplies(lhs.boolExpr(ctx, vmap, pmap), rhs.boolExpr(ctx, vmap, pmap))
         is Or -> ctx.mkOr(lhs.boolExpr(ctx, vmap, pmap), rhs.boolExpr(ctx, vmap, pmap))
@@ -219,6 +242,33 @@ internal fun SymbolicCost.arithExpr(
     }
 
 /** Some convenience functions. **/
+
+fun SymbolicCost.costVariables(): Set<CostVariable> =
+    when (this) {
+        is CostLiteral -> setOf()
+        is CostVariable -> setOf(this)
+        is CostAdd -> this.lhs.costVariables().union(this.rhs.costVariables())
+        is CostMul -> this.lhs.costVariables().union(this.rhs.costVariables())
+        is CostMux ->
+            this.guard.costVariables().union(
+                this.lhs.costVariables()
+                    .union(this.rhs.costVariables())
+            )
+    }
+
+fun SelectionConstraint.costVariables(): Set<CostVariable> =
+    when (this) {
+        is HostVariable -> setOf()
+        is GuardVisibilityFlag -> setOf()
+        is Literal -> setOf()
+        is Implies -> this.lhs.costVariables().union(this.rhs.costVariables())
+        is Or -> this.lhs.costVariables().union(this.rhs.costVariables())
+        is VariableIn -> setOf()
+        is VariableEquals -> setOf()
+        is CostEquals -> this.lhs.costVariables().union(this.rhs.costVariables())
+        is Not -> this.rhs.costVariables()
+        is And -> this.lhs.costVariables().union(this.rhs.costVariables())
+    }
 
 /** States whether an expression reads only from the protocols in [prots] **/
 fun ExpressionNode.readsFrom(nameAnalysis: NameAnalysis, prots: Set<Protocol>): SelectionConstraint =

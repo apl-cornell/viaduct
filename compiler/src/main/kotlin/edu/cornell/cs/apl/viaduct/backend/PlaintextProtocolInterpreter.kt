@@ -6,6 +6,7 @@ import edu.cornell.cs.apl.viaduct.backend.commitment.encode
 import edu.cornell.cs.apl.viaduct.errors.UndefinedNameError
 import edu.cornell.cs.apl.viaduct.errors.ViaductInterpreterError
 import edu.cornell.cs.apl.viaduct.protocols.Local
+import edu.cornell.cs.apl.viaduct.protocols.Plaintext
 import edu.cornell.cs.apl.viaduct.protocols.Replication
 import edu.cornell.cs.apl.viaduct.selection.ProtocolCommunication
 import edu.cornell.cs.apl.viaduct.syntax.Host
@@ -119,21 +120,20 @@ class PlaintextProtocolInterpreter(
                 val events: ProtocolCommunication = protocolAnalysis.relevantCommunicationEvents(read)
 
                 val cleartextInputs =
-                    events.getHostReceives(runtime.projection.host, "INPUT")
+                    events.getProjectionReceives(runtime.projection, Plaintext.INPUT)
 
                 val cleartextCommitmentInputs =
-                    events.getHostReceives(runtime.projection.host, "CLEARTEXT_COMMITMENT_INPUT")
+                    events.getProjectionReceives(runtime.projection, Plaintext.CLEARTEXT_COMMITMENT_INPUT)
 
                 val hashCommitmentInputs =
-                    events.getHostReceives(runtime.projection.host, "HASH_COMMITMENT_INPUT")
+                    events.getProjectionReceives(runtime.projection, Plaintext.HASH_COMMITMENT_INPUT)
 
                 return when {
                     // cleartext input
                     cleartextInputs.isNotEmpty() && cleartextCommitmentInputs.isEmpty() && hashCommitmentInputs.isEmpty() -> {
                         var cleartextValue: Value? = null
-                        for (event in events.getHostReceives(runtime.projection.host, "INPUT")) {
-                            val receivedValue: Value =
-                                runtime.receive(ProtocolProjection(event.send.protocol, event.send.host))
+                        for (event in cleartextInputs) {
+                            val receivedValue: Value = runtime.receive(event)
 
                             if (cleartextValue == null) {
                                 cleartextValue = receivedValue
@@ -152,8 +152,7 @@ class PlaintextProtocolInterpreter(
                         assert(cleartextCommitmentInputs.size == 1)
                         val cleartextSendEvent = cleartextCommitmentInputs.first()
 
-                        val cleartextProjection =
-                            ProtocolProjection(cleartextSendEvent.send.protocol, cleartextSendEvent.send.host)
+                        val cleartextProjection = cleartextSendEvent.send.asProjection()
                         val nonce = runtime.receive(cleartextProjection) as ByteVecValue
                         val msg = runtime.receive(cleartextProjection)
 
@@ -236,10 +235,10 @@ class PlaintextProtocolInterpreter(
             val events =
                 protocolAnalysis
                     .relevantCommunicationEvents(stmt, reader)
-                    .getHostSends(runtime.projection.host)
+                    .getProjectionSends(runtime.projection)
 
             for (event in events) {
-                runtime.send(rhsValue, ProtocolProjection(event.recv.protocol, event.recv.host))
+                runtime.send(rhsValue, event)
             }
         }
     }

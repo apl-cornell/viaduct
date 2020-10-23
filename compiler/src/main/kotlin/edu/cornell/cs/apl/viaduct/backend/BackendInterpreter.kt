@@ -36,11 +36,11 @@ class BackendInterpreter(
     inputBackends: Map<Protocol, ProtocolInterpreter>,
     private val runtime: ViaductProcessRuntime
 ) {
-    private val allHosts = program.hosts.map { it.name.value }.toSet()
+    private val allHosts = program.hostDeclarations.map { it.name.value }.toSet()
     private val nameAnalysis = NameAnalysis.get(program)
     private val backends: Map<Protocol, ProtocolInterpreter> =
         inputBackends.filter { kv -> kv.key !is Synchronization }
-    private val syncProtocol = Synchronization(program.hosts.map { it.name.value }.toSet())
+    private val syncProtocol = Synchronization(program.hostDeclarations.map { it.name.value }.toSet())
 
     suspend fun run() {
         val mainBody = program.main.body
@@ -57,7 +57,7 @@ class BackendInterpreter(
     suspend fun synchronize(senders: Set<Host>, receivers: Set<Host>) {
         if (receivers.isNotEmpty()) {
             logger.info {
-                "synchronizing hosts ${senders.joinToString(", "){ it.name } } " +
+                "synchronizing hosts ${senders.joinToString(", ") { it.name }} " +
                     "with ${receivers.joinToString(", ") { it.name }}"
             }
         }

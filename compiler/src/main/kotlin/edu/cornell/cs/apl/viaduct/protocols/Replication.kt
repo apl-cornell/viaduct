@@ -5,7 +5,6 @@ import edu.cornell.cs.apl.viaduct.syntax.Host
 import edu.cornell.cs.apl.viaduct.syntax.HostTrustConfiguration
 import edu.cornell.cs.apl.viaduct.syntax.InputPort
 import edu.cornell.cs.apl.viaduct.syntax.OutputPort
-import edu.cornell.cs.apl.viaduct.syntax.Protocol
 import edu.cornell.cs.apl.viaduct.syntax.ProtocolName
 import edu.cornell.cs.apl.viaduct.syntax.values.HostSetValue
 import edu.cornell.cs.apl.viaduct.syntax.values.Value
@@ -16,7 +15,7 @@ import edu.cornell.cs.apl.viaduct.syntax.values.Value
  * Replication increases integrity, but doing it in the clear sacrifices confidentiality.
  * Additionally, availability is lost if _any_ participating host aborts.
  */
-class Replication(hosts: Set<Host>) : Protocol() {
+class Replication(hosts: Set<Host>) : Plaintext() {
     companion object {
         val protocolName = ProtocolName("Replication")
     }
@@ -37,14 +36,14 @@ class Replication(hosts: Set<Host>) : Protocol() {
         hosts.map { hostTrustConfiguration(it).interpret() }.reduce(Label::meet)
 
     val hostInputPorts: Map<Host, InputPort> =
-        hosts.map { h -> h to InputPort(this, h, "INPUT") }.toMap()
+        hosts.map { h -> h to InputPort(this, h, INPUT) }.toMap()
 
     val hostHashCommitmentInputPorts: Map<Host, InputPort> =
-        hosts.map { h -> h to InputPort(this, h, "HASH_COMMITMENT_INPUT") }.toMap()
+        hosts.map { h -> h to InputPort(this, h, HASH_COMMITMENT_INPUT) }.toMap()
 
     val hostCleartextCommitmentInputPorts: Map<Host, InputPort> =
-        hosts.map { h -> h to InputPort(this, h, "CLEARTEXT_COMMITMENT_INPUT") }.toMap()
+        hosts.map { h -> h to InputPort(this, h, CLEARTEXT_COMMITMENT_INPUT) }.toMap()
 
     val hostOutputPorts: Map<Host, OutputPort> =
-        hosts.map { h -> h to OutputPort(this, h, "OUTPUT") }.toMap()
+        hosts.map { h -> h to OutputPort(this, h, OUTPUT) }.toMap()
 }

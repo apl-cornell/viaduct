@@ -78,7 +78,7 @@ internal class BackendInterpreterTest {
 
         // Select protocols.
         val protocolAssignment: (FunctionName, Variable) -> Protocol =
-            selectProtocolsWithZ3(program, program.main, SimpleProtocolFactory(program), SimpleCostEstimator)
+            selectProtocolsWithZ3(program, program.main, SimpleProtocolFactory(program), SimpleProtocolComposer, SimpleCostEstimator(SimpleProtocolComposer))
         val annotatedProgram = program.annotateWithProtocols(protocolAssignment)
         val protocolAnalysis = ProtocolAnalysis(annotatedProgram, SimpleProtocolComposer)
 
@@ -89,7 +89,7 @@ internal class BackendInterpreterTest {
                 .toMap()
 
         val hosts: Set<Host> =
-            program.hosts
+            program.hostDeclarations
                 .map { hostDecl -> hostDecl.name.value }
                 .toSet()
 
@@ -98,13 +98,13 @@ internal class BackendInterpreterTest {
         val fakeProgram =
             edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode(
                 declarations =
-                    annotatedProgram.hosts.plus(
-                        ProcessDeclarationNode(
-                            protocol = Located(MainProtocol, annotatedProgram.sourceLocation),
-                            body = BlockNode(listOf(), annotatedProgram.sourceLocation),
-                            sourceLocation = annotatedProgram.sourceLocation
-                        )
-                    ),
+                annotatedProgram.hostDeclarations.plus(
+                    ProcessDeclarationNode(
+                        protocol = Located(MainProtocol, annotatedProgram.sourceLocation),
+                        body = BlockNode(listOf(), annotatedProgram.sourceLocation),
+                        sourceLocation = annotatedProgram.sourceLocation
+                    )
+                ),
                 sourceLocation = annotatedProgram.sourceLocation
             )
 

@@ -13,6 +13,7 @@ import edu.cornell.cs.apl.viaduct.passes.check
 import edu.cornell.cs.apl.viaduct.passes.elaborated
 import edu.cornell.cs.apl.viaduct.passes.specialize
 import edu.cornell.cs.apl.viaduct.selection.SimpleCostEstimator
+import edu.cornell.cs.apl.viaduct.selection.SimpleProtocolComposer
 import edu.cornell.cs.apl.viaduct.selection.SimpleProtocolFactory
 import edu.cornell.cs.apl.viaduct.selection.selectProtocolsWithZ3
 import edu.cornell.cs.apl.viaduct.selection.validateProtocolAssignment
@@ -78,13 +79,21 @@ class Compile : CliktCommand(help = "Compile ideal protocol to secure distribute
                 program,
                 program.main,
                 protocolFactory,
-                SimpleCostEstimator
+                SimpleProtocolComposer,
+                SimpleCostEstimator(SimpleProtocolComposer)
             ) { metadata -> dumpProgramMetadata(program, metadata, protocolSelectionOutput) }
 
         // Perform a sanity check to ensure the protocolAssignment is valid.
         // TODO: either remove this entirely or make it opt-in by the command line.
         for (processDecl in program.declarations.filterIsInstance<ProcessDeclarationNode>()) {
-            validateProtocolAssignment(program, processDecl, protocolFactory, SimpleCostEstimator, protocolAssignment)
+            validateProtocolAssignment(
+                program,
+                processDecl,
+                protocolFactory,
+                SimpleProtocolComposer,
+                SimpleCostEstimator(SimpleProtocolComposer),
+                protocolAssignment
+            )
         }
 
         val annotatedProgram = program.annotateWithProtocols(protocolAssignment)

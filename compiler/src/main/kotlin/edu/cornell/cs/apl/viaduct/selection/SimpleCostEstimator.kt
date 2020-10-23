@@ -4,6 +4,7 @@ import edu.cornell.cs.apl.viaduct.protocols.ABY
 import edu.cornell.cs.apl.viaduct.protocols.Commitment
 import edu.cornell.cs.apl.viaduct.protocols.Local
 import edu.cornell.cs.apl.viaduct.protocols.Replication
+import edu.cornell.cs.apl.viaduct.syntax.Host
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ExpressionNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ObjectDeclaration
@@ -19,10 +20,14 @@ import kotlinx.collections.immutable.persistentMapOf
  * in high latency regimes, NUM_MESSAGES is weighted more;
  * in low latency regimes, BYTES_TRANSFERRED is weighted more.
  * */
-object SimpleCostEstimator : CostEstimator<IntegerCost> {
-    private const val NUM_MESSAGES = "numberOfMessages"
-    private const val BYTES_TRANSFERRED = "bytesTransferred"
-    private const val EXECUTION_COST = "executionCost"
+class SimpleCostEstimator(
+    private val protocolComposer: ProtocolComposer
+) : CostEstimator<IntegerCost> {
+    companion object {
+        private const val NUM_MESSAGES = "numberOfMessages"
+        private const val BYTES_TRANSFERRED = "bytesTransferred"
+        private const val EXECUTION_COST = "executionCost"
+    }
 
     override fun executionCost(computation: ExpressionNode, executingProtocol: Protocol): Cost<IntegerCost> =
         zeroCost().update(
@@ -36,19 +41,22 @@ object SimpleCostEstimator : CostEstimator<IntegerCost> {
             }
         )
 
-    override fun communicationCost(source: Protocol, destination: Protocol): Cost<IntegerCost> {
+    override fun communicationCost(source: Protocol, destination: Protocol, host: Host?): Cost<IntegerCost> {
         return if (source != destination) {
-            val events = SimpleProtocolComposer.communicate(source, destination)
+            val events =
+                if (host != null)
+                    (protocolComposer.communicate(source, destination).getHostReceives(host))
+                    else (protocolComposer.communicate(source, destination))
 
             val plaintextMsgCost =
                 events.filter { event ->
                     event.send.host != event.recv.host && event.send.protocol !is ABY &&
-                        event.send.id != "SYNC"
+                        event.send.id != Protocol.INTERNAL_OUTPUT
                 }.size
 
             val mpcExecCost =
                 if (events.any { event ->
-                    event.send.protocol is ABY && event.send.id != "SYNC" && event.recv.protocol !is ABY }
+                    event.send.protocol is ABY && event.send.id != Protocol.INTERNAL_OUTPUT && event.recv.protocol !is ABY }
                 ) 10 else 0
 
             val numMessages = plaintextMsgCost + mpcExecCost
@@ -57,10 +65,6 @@ object SimpleCostEstimator : CostEstimator<IntegerCost> {
         } else {
             zeroCost()
         }
-    }
-
-    override fun canCommunicate(source: Protocol, destination: Protocol): Boolean {
-        return SimpleProtocolComposer.canCommunicate(source, destination)
     }
 
     override fun storageCost(declaration: ObjectDeclaration, protocol: Protocol): Cost<IntegerCost> =

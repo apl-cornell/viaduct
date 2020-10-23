@@ -8,4 +8,5 @@ interface ProtocolComposer {
     fun communicate(src: Protocol, dst: Protocol): ProtocolCommunication
     fun canCommunicate(src: Protocol, dst: Protocol): Boolean
     fun mandatoryParticipatingHosts(protocol: Protocol, stmt: SimpleStatementNode): Set<Host>
+    fun visibleGuardHosts(protocol: Protocol): Set<Host>
 }

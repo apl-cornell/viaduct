@@ -1,5 +1,6 @@
 package edu.cornell.cs.apl.viaduct.selection
 
+import edu.cornell.cs.apl.viaduct.syntax.Host
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ExpressionNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ObjectDeclaration
@@ -18,12 +19,11 @@ interface CostEstimator<C : CostMonoid<C>> {
     fun executionCost(computation: ExpressionNode, executingProtocol: Protocol): Cost<C>
 
     /**
-     * Estimated cost of sending a message of type [messageType] from [source] to [destination].
+     * Estimated cost of sending a message of type [messageType] from [source] to [destination]
+     * relative to [host] in [destination]. If [host] is null, then computes the cost for
+     * all the hosts in [destination].
      */
-    fun communicationCost(source: Protocol, destination: Protocol): Cost<C>
-
-    /** Returns whether [source] protocol can send data to [destination] protocol. */
-    fun canCommunicate(source: Protocol, destination: Protocol): Boolean
+    fun communicationCost(source: Protocol, destination: Protocol, host: Host? = null): Cost<C>
 
     /** Estimated cost of storing object defined by [declaration] in protocol [protocol]. */
     fun storageCost(declaration: ObjectDeclaration, protocol: Protocol): Cost<C>

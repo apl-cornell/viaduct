@@ -7,11 +7,13 @@ import edu.cornell.cs.apl.viaduct.protocols.ABY
 import edu.cornell.cs.apl.viaduct.syntax.Host
 import edu.cornell.cs.apl.viaduct.syntax.HostTrustConfiguration
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
+import edu.cornell.cs.apl.viaduct.syntax.ProtocolName
 import edu.cornell.cs.apl.viaduct.syntax.SpecializedProtocol
 import edu.cornell.cs.apl.viaduct.syntax.datatypes.Vector
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.DeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.IfNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.LetNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.LiteralNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ObjectDeclarationArgumentNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ParameterNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
@@ -38,6 +40,8 @@ class ABYFactory(program: ProgramNode) : ProtocolFactory {
     }
 
     override fun protocols(): List<SpecializedProtocol> = protocols
+
+    override fun availableProtocols(): Set<ProtocolName> = setOf(ABY.protocolName)
 
     private fun LetNode.isApplicable(): Boolean {
         return nameAnalysis.readers(this).all { reader ->
@@ -148,41 +152,11 @@ class ABYFactory(program: ProgramNode) : ProtocolFactory {
             .map { it.protocol }
             .toSet()
 
-    // add muxing and plaintext constraints
-    override fun constraint(node: IfNode): SelectionConstraint {
-        return when (val guard = node.guard) {
-            is ReadNode -> {
-                val functionName = nameAnalysis.enclosingFunctionName(node)
-                val variables = nameAnalysis.variables(node)
+    override fun guardVisibilityConstraint(protocol: Protocol, node: IfNode): SelectionConstraint =
+        when (node.guard) {
+            is LiteralNode -> Literal(true)
 
-                val guardInMPC =
-                    VariableIn(
-                        FunctionVariable(functionName, guard.temporary.value),
-                        protocols.map { it.protocol }.toSet()
-                    )
-
-                if (node.canMux()) { // if the guard is computed in MPC, then all of the nodes have to be in MPC as well
-                    val varEqualToGuard = { fv: FunctionVariable ->
-                        VariableEquals(
-                            FunctionVariable(functionName, guard.temporary.value),
-                            fv
-                        )
-                    }
-
-                    val varsEqualToGuard: SelectionConstraint =
-                        variables
-                            .map { v -> varEqualToGuard(v) }
-                            .fold<SelectionConstraint, SelectionConstraint>(Literal(true)) { acc, constraint ->
-                                And(acc, constraint)
-                            }
-
-                    Implies(guardInMPC, varsEqualToGuard)
-                } else { // if the node cannot be muxed, then the guard cannot be computed in MPC
-                    Not(guardInMPC)
-                }
-            }
-
-            else -> Literal(true)
+            // turn off visibility check when the conditional can be muxed
+            is ReadNode -> Literal(!node.canMux())
         }
-    }
 }

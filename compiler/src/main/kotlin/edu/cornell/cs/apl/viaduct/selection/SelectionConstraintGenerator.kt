@@ -120,6 +120,72 @@ class SelectionConstraintGenerator(
         return viableProtocolsAndVariable(nameAnalysis.declaration(node))
     }
 
+    private val zeroSymbolicCost = costEstimator.zeroCost().map { CostLiteral(0) }
+
+    /** lift [this] integer cost to symbolic cost. */
+    private fun Cost<IntegerCost>.toSymbolicCost(): Cost<SymbolicCost> =
+        this.map { CostLiteral(it.cost) }
+
+    /** Symbolic cost associated with a node. */
+    private val Node.symbolicCost: Cost<SymbolicCost> by attribute {
+        when (this) {
+            is ProgramNode ->
+                this.declarations.fold(zeroSymbolicCost) { acc, decl ->
+                    acc.concat(decl.symbolicCost)
+                }
+
+            is FunctionDeclarationNode ->
+                this.parameters.fold(zeroSymbolicCost) { acc, param ->
+                    acc.concat(param.symbolicCost)
+                }.concat(this.body.symbolicCost)
+
+            is ProcessDeclarationNode -> this.body.symbolicCost
+
+            is HostDeclarationNode -> zeroSymbolicCost
+
+            is BlockNode ->
+                this.statements
+                    .fold(zeroSymbolicCost) { acc, childStmt ->
+                        acc.concat(childStmt.symbolicCost)
+                    }
+
+            is IfNode ->
+                this.thenBranch.symbolicCost.concat(this.elseBranch.symbolicCost)
+
+            is InfiniteLoopNode ->
+                this.body.symbolicCost.map { f -> CostMul(CostLiteral(10), f) }
+
+            // TODO: handle this later, recursive functions are tricky
+            is FunctionCallNode -> zeroSymbolicCost
+
+            is BreakNode -> zeroSymbolicCost
+
+            is AssertionNode -> zeroSymbolicCost
+
+            is SendNode -> zeroSymbolicCost
+
+            is ExpressionNode -> zeroSymbolicCost
+
+            else ->
+                costEstimator
+                    .zeroCost()
+                    .map { CostVariable(ctx.mkFreshConst("cost_${this.asDocument.print()}", ctx.intSort) as IntExpr) }
+        }
+    }
+
+    fun symbolicCost(node: Node) = node.symbolicCost
+
+    /** Symbolic variables that specify whether a host is participating in the execution of a statement. */
+    private val Node.participatingHosts: Map<Host, HostVariable> by attribute {
+        program.hosts.map { host ->
+            host to HostVariable(ctx.mkFreshConst("host", ctx.boolSort) as BoolExpr)
+        }.toMap()
+    }
+
+    private val IfNode.guardVisiblityFlag: GuardVisibilityFlag by attribute {
+        GuardVisibilityFlag(ctx.mkFreshConst("guard", ctx.boolSort) as BoolExpr)
+    }
+
     /** Generate constraints for possible protocols. */
     private fun Node.selectionConstraints(): Iterable<SelectionConstraint> =
         when (this) {
@@ -197,9 +263,27 @@ class SelectionConstraintGenerator(
                     protocolFactory.constraint(this)
                 )
 
-            // generate constraints for the if node
+            // generate constraints for guard visibility
             // used by the ABY/MPC factory to generate muxing constraints
-            is IfNode -> setOf(protocolFactory.constraint(this))
+            is IfNode -> {
+                when (val guard = this.guard) {
+                    is LiteralNode -> setOf()
+
+                    is ReadNode -> {
+                        val guardDeclaration = nameAnalysis.declaration(guard)
+                        val (fv, protocols) = viableProtocolsAndVariable(guardDeclaration)
+                        protocols.map { protocol ->
+                            Implies(
+                                VariableIn(fv, setOf(protocol)),
+                                iff(
+                                    this.guardVisiblityFlag,
+                                    protocolFactory.guardVisibilityConstraint(protocol, this)
+                                )
+                            )
+                        }
+                    }
+                }
+            }
 
             is ObjectDeclarationArgumentNode -> {
                 val parameter = nameAnalysis.parameter(this)
@@ -281,68 +365,6 @@ class SelectionConstraintGenerator(
                 )
             }.toSet()
         }
-    }
-
-    private val zeroSymbolicCost = costEstimator.zeroCost().map { CostLiteral(0) }
-
-    /** lift [this] integer cost to symbolic cost. */
-    private fun Cost<IntegerCost>.toSymbolicCost(): Cost<SymbolicCost> =
-        this.map { CostLiteral(it.cost) }
-
-    /** Symbolic cost associated with a node. */
-    private val Node.symbolicCost: Cost<SymbolicCost> by attribute {
-        when (this) {
-            is ProgramNode ->
-                this.declarations.fold(zeroSymbolicCost) { acc, decl ->
-                    acc.concat(decl.symbolicCost)
-                }
-
-            is FunctionDeclarationNode ->
-                this.parameters.fold(zeroSymbolicCost) { acc, param ->
-                    acc.concat(param.symbolicCost)
-                }.concat(this.body.symbolicCost)
-
-            is ProcessDeclarationNode -> this.body.symbolicCost
-
-            is HostDeclarationNode -> zeroSymbolicCost
-
-            is BlockNode ->
-                this.statements
-                    .fold(zeroSymbolicCost) { acc, childStmt ->
-                        acc.concat(childStmt.symbolicCost)
-                    }
-
-            is IfNode ->
-                this.thenBranch.symbolicCost.concat(this.elseBranch.symbolicCost)
-
-            is InfiniteLoopNode ->
-                this.body.symbolicCost.map { f -> CostMul(CostLiteral(10), f) }
-
-            // TODO: handle this later, recursive functions are tricky
-            is FunctionCallNode -> zeroSymbolicCost
-
-            is BreakNode -> zeroSymbolicCost
-
-            is AssertionNode -> zeroSymbolicCost
-
-            is SendNode -> zeroSymbolicCost
-
-            is ExpressionNode -> zeroSymbolicCost
-
-            else ->
-                costEstimator
-                    .zeroCost()
-                    .map { CostVariable(ctx.mkFreshConst("cost_${this.asDocument.print()}", ctx.intSort) as IntExpr) }
-        }
-    }
-
-    fun symbolicCost(node: Node) = node.symbolicCost
-
-    /** Symbolic variables that specify whether a host is participating in the execution of a statement. */
-    private val Node.participatingHosts: Map<Host, HostVariable> by attribute {
-        program.hosts.map { host ->
-            host to HostVariable(ctx.mkFreshConst("host", ctx.boolSort) as BoolExpr)
-        }.toMap()
     }
 
     /**
@@ -594,6 +616,7 @@ class SelectionConstraintGenerator(
             }
 
             // induce communication costs from message protocol to output protocol
+            // TODO: partition by participating hosts
             is OutputNode -> {
                 when (val msg = this.message) {
                     is LiteralNode ->
@@ -693,32 +716,37 @@ class SelectionConstraintGenerator(
                             val enclosingFunction = nameAnalysis.enclosingFunctionName(guard)
                             val guardDeclaration = nameAnalysis.declaration(guard)
 
-                            viableProtocols(guardDeclaration).flatMap { guardProtocol ->
-                                val visibleGuardHosts = protocolComposer.visibleGuardHosts(guardProtocol)
-                                program.hosts.map { host ->
-                                    if (visibleGuardHosts.contains(host)) {
-                                        // if a host participates in a conditional,
-                                        // then it must also participate in computing the guard
-                                        Implies(
-                                            this.participatingHosts[host]!!,
-                                            guardDeclaration.participatingHosts[host]!!
-                                        )
-                                    } else {
-                                        // if a host participates in a conditional but the guard is
-                                        // not visible to it in a protocol, then the guard cannot
-                                        // be executed in that protocol
-                                        Implies(
-                                            this.participatingHosts[host]!!,
-                                            Not(
-                                                VariableIn(
-                                                    FunctionVariable(enclosingFunction, guard.temporary.value),
-                                                    setOf(guardProtocol)
+                            val visibilityConstraints: SelectionConstraint =
+                                viableProtocols(guardDeclaration).flatMap { guardProtocol ->
+                                    val visibleGuardHosts = protocolComposer.visibleGuardHosts(guardProtocol)
+                                    program.hosts.map { host ->
+                                        if (visibleGuardHosts.contains(host)) {
+                                            // if a host participates in a conditional,
+                                            // then it must also participate in computing the guard
+                                            Implies(
+                                                this.participatingHosts[host]!!,
+                                                guardDeclaration.participatingHosts[host]!!
+                                            )
+                                        } else {
+                                            // if a host participates in a conditional but the guard is
+                                            // not visible to it in a protocol, then the guard cannot
+                                            // be executed in that protocol
+                                            Implies(
+                                                this.participatingHosts[host]!!,
+                                                Not(
+                                                    VariableIn(
+                                                        FunctionVariable(enclosingFunction, guard.temporary.value),
+                                                        setOf(guardProtocol)
+                                                    )
                                                 )
                                             )
-                                        )
+                                        }
                                     }
-                                }
-                            }
+                                }.ands()
+
+                            // only turn on visibility constraints when
+                            // the guard visibility flag is enabled
+                            setOf(Implies(this.guardVisiblityFlag, visibilityConstraints))
                         }
                     }
                 )
@@ -739,8 +767,16 @@ class SelectionConstraintGenerator(
                 }
             }
 
-            // TODO: fill this in
-            is FunctionCallNode -> setOf()
+            // TODO: handle parameters
+            is FunctionCallNode -> {
+                val functionDecl = nameAnalysis.declaration(this)
+
+                // every host participating in the called function's body
+                // must also participate in the function call
+                functionDecl.body.participatingHosts.map { kv ->
+                    Implies(kv.value, this.participatingHosts[kv.key]!!)
+                }
+            }
 
             is LetNode -> {
                 val (fv, protocols) = viableProtocolsAndVariable(this)

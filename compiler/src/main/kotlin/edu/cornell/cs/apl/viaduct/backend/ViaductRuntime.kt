@@ -218,8 +218,8 @@ class ViaductRuntime(
         private const val CHANNEL_CAPACITY: Int = 100
 
         // try to connect for 10 seconds, at 100ms intervals
-        const val CONNECTION_NUM_RETRY: Int = 100
-        const val CONNECTION_RETRY_DELAY: Long = 100
+        const val CONNECTION_NUM_RETRY: Int = 20
+        const val CONNECTION_RETRY_DELAY: Long = 500
     }
 
     init {

@@ -5,7 +5,6 @@ import edu.cornell.cs.apl.viaduct.syntax.Host
 import edu.cornell.cs.apl.viaduct.syntax.HostTrustConfiguration
 import edu.cornell.cs.apl.viaduct.syntax.InputPort
 import edu.cornell.cs.apl.viaduct.syntax.OutputPort
-import edu.cornell.cs.apl.viaduct.syntax.Protocol
 import edu.cornell.cs.apl.viaduct.syntax.ProtocolName
 import edu.cornell.cs.apl.viaduct.syntax.values.HostSetValue
 import edu.cornell.cs.apl.viaduct.syntax.values.Value

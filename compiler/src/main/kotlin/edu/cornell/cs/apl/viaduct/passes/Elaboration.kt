@@ -3,6 +3,8 @@ package edu.cornell.cs.apl.viaduct.passes
 import edu.cornell.cs.apl.viaduct.errors.InvalidConstructorCallError
 import edu.cornell.cs.apl.viaduct.errors.JumpOutsideLoopScopeError
 import edu.cornell.cs.apl.viaduct.syntax.Arguments
+import edu.cornell.cs.apl.viaduct.syntax.FunctionName
+import edu.cornell.cs.apl.viaduct.syntax.Host
 import edu.cornell.cs.apl.viaduct.syntax.JumpLabel
 import edu.cornell.cs.apl.viaduct.syntax.JumpLabelNode
 import edu.cornell.cs.apl.viaduct.syntax.LabelNode
@@ -10,6 +12,7 @@ import edu.cornell.cs.apl.viaduct.syntax.Located
 import edu.cornell.cs.apl.viaduct.syntax.NameMap
 import edu.cornell.cs.apl.viaduct.syntax.ObjectVariable
 import edu.cornell.cs.apl.viaduct.syntax.ObjectVariableNode
+import edu.cornell.cs.apl.viaduct.syntax.Protocol
 import edu.cornell.cs.apl.viaduct.syntax.Temporary
 import edu.cornell.cs.apl.viaduct.syntax.TemporaryNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.AssertionNode as IAssertionNode
@@ -95,9 +98,15 @@ fun SProgramNode.elaborated(): IProgramNode {
     val declarations = mutableListOf<ITopLevelDeclarationNode>()
 
     val nameGenerator = FreshNameGenerator()
+
+    var hosts = NameMap<Host, Boolean>()
+    var processes = NameMap<Protocol, Boolean>()
+    var functions = NameMap<FunctionName, Boolean>()
+
     for (declaration in this.declarations) {
         when (declaration) {
             is SHostDeclarationNode -> {
+                hosts = hosts.put(declaration.name, true)
                 declarations.add(
                     IHostDeclarationNode(
                         declaration.name,
@@ -108,6 +117,7 @@ fun SProgramNode.elaborated(): IProgramNode {
             }
 
             is SProcessDeclarationNode -> {
+                processes = processes.put(declaration.protocol, true)
                 declarations.add(
                     IProcessDeclarationNode(
                         declaration.protocol,
@@ -118,6 +128,7 @@ fun SProgramNode.elaborated(): IProgramNode {
             }
 
             is SFunctionDeclarationNode -> {
+                functions = functions.put(declaration.name, true)
                 declarations.add(FunctionElaborator(nameGenerator).elaborate(declaration))
             }
         }

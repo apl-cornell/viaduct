@@ -3,7 +3,9 @@ fun f(x: int{A}) {
 }
 
 fun g(y: int{A}) {
-    f(y);
+    if (false) {
+        f(y);
+    }
 }
 
 process main {

@@ -1,41 +1,10 @@
 package edu.cornell.cs.apl.viaduct.backend.zkp
 
-import edu.cornell.cs.apl.viaduct.backend.ProtocolBackend
-import edu.cornell.cs.apl.viaduct.backend.ViaductProcessRuntime
 import edu.cornell.cs.apl.viaduct.backend.WireGenerator
 import edu.cornell.cs.apl.viaduct.backend.WireTerm
-import edu.cornell.cs.apl.viaduct.errors.ViaductInterpreterError
-import edu.cornell.cs.apl.viaduct.protocols.ZKP
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.BlockNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
 import edu.cornell.cs.apl.viaduct.syntax.values.BooleanValue
 import edu.cornell.cs.apl.viaduct.syntax.values.IntegerValue
 import edu.cornell.cs.apl.viaduct.syntax.values.Value
-
-class ZKPBackend : ProtocolBackend {
-
-    override suspend fun run(runtime: ViaductProcessRuntime, program: ProgramNode, process: BlockNode) {
-        when (runtime.projection.protocol) {
-            is ZKP ->
-                if (runtime.projection.host == runtime.projection.protocol.prover) {
-                    ZKPProver(
-                        program,
-                        runtime,
-                        runtime.projection.protocol.verifiers
-                    ).run(process)
-                } else {
-                    ZKPVerifier(
-                        program,
-                        runtime,
-                        runtime.projection.protocol.prover,
-                        runtime.projection.protocol.verifiers
-                    ).run(process)
-                }
-            else ->
-                throw ViaductInterpreterError("CommitmentBackend: unexpected runtime protocol")
-        }
-    }
-}
 
 sealed class ZKPObject {
     data class ZKPImmutableCell(val value: WireTerm) : ZKPObject()

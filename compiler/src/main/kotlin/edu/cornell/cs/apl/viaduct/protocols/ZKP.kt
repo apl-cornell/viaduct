@@ -6,6 +6,8 @@ import edu.cornell.cs.apl.viaduct.security.LabelExpression
 import edu.cornell.cs.apl.viaduct.security.LabelIntegrity
 import edu.cornell.cs.apl.viaduct.syntax.Host
 import edu.cornell.cs.apl.viaduct.syntax.HostTrustConfiguration
+import edu.cornell.cs.apl.viaduct.syntax.InputPort
+import edu.cornell.cs.apl.viaduct.syntax.OutputPort
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
 import edu.cornell.cs.apl.viaduct.syntax.ProtocolName
 import edu.cornell.cs.apl.viaduct.syntax.values.HostSetValue
@@ -35,4 +37,17 @@ class ZKP(val prover: Host, val verifiers: Set<Host>) : Protocol() {
                 .map { LabelIntegrity(hostTrustConfiguration(it)) }
                 .reduce<LabelExpression, LabelExpression> { acc, l -> LabelAnd(acc, l) }
         ).interpret()
+
+    val secretInputPort : InputPort =
+        InputPort(this, prover, "ZKP_SECRET_INPUT")
+
+    val cleartextInput : Map<Host, InputPort> =
+        (verifiers + setOf(prover)).map {
+            it to InputPort(this, it, "ZKP_PUBLIC_INPUT")
+        }.toMap()
+
+    val outputPorts : Map<Host, OutputPort> =
+        (verifiers + setOf(prover)).map {
+            it to OutputPort(this, it, "ZKP_OUTPUT")
+        }.toMap()
 }

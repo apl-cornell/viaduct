@@ -76,7 +76,7 @@ fun operatorToCircuit(operator: Operator, arguments: List<ABYCircuitGate>): ABYC
             ABYOperationGate(putBinaryOperationGate(Circuit::putADDGate), arguments)
 
         is Subtraction ->
-            ABYOperationGate(putBinaryOperationGate(Circuit::putSUBGate), arguments)
+            ABYOperationGate(putBinaryOperationGate(Circuit::putSUBGate), arguments.reversed())
 
         is Multiplication ->
             ABYOperationGate(putBinaryOperationGate(Circuit::putMULGate), arguments)
@@ -121,18 +121,21 @@ fun operatorToCircuit(operator: Operator, arguments: List<ABYCircuitGate>): ABYC
             // x < y <=> y > x
             ABYOperationGate(
                 putBinaryOperationGate(Circuit::putGTGate),
-                listOf(arguments[1], arguments[0])
+                listOf(arguments[0], arguments[1])
             )
 
         is LessThanOrEqualTo ->
             // x <= y <=> not (x > y)
             operatorToCircuit(
                 Not,
-                listOf(ABYOperationGate(putBinaryOperationGate(Circuit::putGTGate), arguments))
+                listOf(ABYOperationGate(putBinaryOperationGate(Circuit::putGTGate), arguments.reversed()))
             )
 
         is Mux ->
-            ABYOperationGate(putTernaryOperationGate(Circuit::putMUXGate), arguments)
+            ABYOperationGate(
+                putTernaryOperationGate(Circuit::putMUXGate),
+                listOf(arguments[0], arguments[2], arguments[1])
+            )
 
         else -> throw UnsupportedOperationException("Operator $operator is not supported by the ABY backend.")
     }

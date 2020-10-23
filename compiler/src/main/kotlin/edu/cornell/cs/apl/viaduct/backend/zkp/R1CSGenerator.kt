@@ -14,6 +14,7 @@ import edu.cornell.cs.apl.viaduct.libsnarkwrapper.WireInfo
 import edu.cornell.cs.apl.viaduct.libsnarkwrapper.WireType
 import edu.cornell.cs.apl.viaduct.syntax.Operator
 import edu.cornell.cs.apl.viaduct.syntax.operators.Addition
+import edu.cornell.cs.apl.viaduct.syntax.operators.And
 import edu.cornell.cs.apl.viaduct.syntax.operators.EqualTo
 
 typealias Wire = Int
@@ -45,6 +46,8 @@ data class LinTerm(val constTerm: Int, val linearTerm: List<Pair<Int, Wire>>) {
         return LinTerm(constTerm + other.constTerm, linearTerm + other.linearTerm)
     }
 }
+
+data class ConstraintTuple(val lhs : LinTerm, val rhs : LinTerm, val eq : LinTerm)
 
 class R1CSGenerator() {
     init {
@@ -79,11 +82,11 @@ class R1CSGenerator() {
         return r1cs.mkWire(wi)
     }
 
-    fun addConstraint(lhs: LinTerm, rhs: LinTerm, eq: LinTerm) {
+    fun addConstraint(ctup : ConstraintTuple) {
         val c = Constraint()
-        c.lhs = lhs.toJNI()
-        c.rhs = rhs.toJNI()
-        c.eq = eq.toJNI()
+        c.lhs = ctup.lhs.toJNI()
+        c.rhs = ctup.rhs.toJNI()
+        c.eq = ctup.eq.toJNI()
         r1cs.addConstraint(c)
     }
 
@@ -97,7 +100,7 @@ class R1CSGenerator() {
 }
 
 fun R1CSGenerator.assertEqualsTo(w: Wire, v: Int) {
-    addConstraint(LinTerm.fromWire(w), LinTerm.fromConst(1), LinTerm.fromConst(v))
+    addConstraint(ConstraintTuple(LinTerm.fromWire(w), LinTerm.fromConst(1), LinTerm.fromConst(v)))
 }
 
 fun WireTerm.getWire(generator: R1CSGenerator): Wire {
@@ -109,29 +112,42 @@ fun WireTerm.getWire(generator: R1CSGenerator): Wire {
     }
 }
 
-fun R1CSGenerator.mkWireOp(op: Operator, args: List<Wire>): Wire {
-    return when (op) {
-        is Addition -> {
-            val i = this.mkInternal()
-            // TODO this isn't quite right..
-            // assert (1 + args[0] - args[1]) * 1 == i
-            this.addConstraint(
+
+fun Operator.interpretR1CS() : ((List<Wire>, Wire) -> ConstraintTuple)? {
+    return when(this) {
+        is Addition -> { args, i ->
+            ConstraintTuple(
                 LinTerm.fromConst(1).add(LinTerm.fromWire(args[0]).add(LinTerm.fromWire(args[1]))),
                 LinTerm.fromConst(1),
                 LinTerm.fromWire(i)
             )
-            i
         }
-        is EqualTo -> {
-            val i = this.mkInternal()
-            this.addConstraint(
+        is EqualTo -> { args, i ->
+            ConstraintTuple(
                 LinTerm(0, listOf(1 to args[0], -1 to args[1])),
                 LinTerm.fromConst(1),
                 LinTerm.fromWire(i)
             )
-            i
         }
-        else -> throw Exception("Unknown op ${op}")
+        is And -> { args, i ->
+           ConstraintTuple(
+               LinTerm(0, listOf(1 to args[0])),
+               LinTerm(0, listOf(1 to args[1])),
+               LinTerm.fromWire(i)
+           )
+        }
+        else -> null
+        }
+}
+
+fun R1CSGenerator.mkWireOp(op: Operator, args: List<Wire>): Wire {
+    val k = op.interpretR1CS()
+    if (k == null) {
+        throw Exception("unknown op $op")
+    } else {
+        val i = this.mkInternal()
+        this.addConstraint(k(args, i))
+        return i
     }
 }
 

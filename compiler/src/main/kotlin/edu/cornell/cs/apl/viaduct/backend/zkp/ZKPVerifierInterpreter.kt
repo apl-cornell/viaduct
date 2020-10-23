@@ -1,16 +1,17 @@
 package edu.cornell.cs.apl.viaduct.backend.zkp
 
-import edu.cornell.cs.apl.viaduct.backend.AbstractBackendInterpreter
+import edu.cornell.cs.apl.viaduct.analysis.ProtocolAnalysis
+import edu.cornell.cs.apl.viaduct.backend.AbstractProtocolInterpreter
 import edu.cornell.cs.apl.viaduct.backend.ObjectLocation
 import edu.cornell.cs.apl.viaduct.backend.ProtocolProjection
 import edu.cornell.cs.apl.viaduct.backend.ViaductProcessRuntime
 import edu.cornell.cs.apl.viaduct.backend.WireGenerator
 import edu.cornell.cs.apl.viaduct.backend.WireTerm
 import edu.cornell.cs.apl.viaduct.errors.UndefinedNameError
+import edu.cornell.cs.apl.viaduct.errors.ViaductInterpreterError
 import edu.cornell.cs.apl.viaduct.protocols.ZKP
-import edu.cornell.cs.apl.viaduct.syntax.Host
+import edu.cornell.cs.apl.viaduct.selection.ProtocolCommunication
 import edu.cornell.cs.apl.viaduct.syntax.ObjectVariable
-import edu.cornell.cs.apl.viaduct.syntax.Protocol
 import edu.cornell.cs.apl.viaduct.syntax.QueryNameNode
 import edu.cornell.cs.apl.viaduct.syntax.Temporary
 import edu.cornell.cs.apl.viaduct.syntax.datatypes.ClassName
@@ -28,28 +29,29 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.LiteralNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.OperatorApplicationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutputNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.PureExpressionNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.QueryNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ReadNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ReceiveNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.SendNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.SimpleStatementNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.UpdateNode
 import edu.cornell.cs.apl.viaduct.syntax.types.ValueType
 import edu.cornell.cs.apl.viaduct.syntax.values.BooleanValue
-import edu.cornell.cs.apl.viaduct.syntax.values.ByteVecValue
 import edu.cornell.cs.apl.viaduct.syntax.values.IntegerValue
 import edu.cornell.cs.apl.viaduct.syntax.values.Value
 import kotlinx.collections.immutable.PersistentMap
 import kotlinx.collections.immutable.persistentMapOf
+import mu.KotlinLogging
 import java.util.Stack
 
-internal class ZKPProver(
-    program: ProgramNode,
-    private val runtime: ViaductProcessRuntime,
-    private val verifiers: Set<Host>
-) : AbstractBackendInterpreter<ZKPObject>(program) {
 
-    private val wireGenerator = WireGenerator()
+private val logger = KotlinLogging.logger("ZKP Verifier")
+
+class ZKPVerifierInterpreter(
+    program: ProgramNode,
+    val protocolAnalysis: ProtocolAnalysis,
+    val runtime: ViaductProcessRuntime
+) :
+    AbstractProtocolInterpreter<ZKPObject>(program) {
 
     private val tempStack: Stack<PersistentMap<Temporary, Value>> = Stack()
 
@@ -61,6 +63,8 @@ internal class ZKPProver(
             tempStack.pop()
             tempStack.push(value)
         }
+
+    private val wireGenerator = WireGenerator()
 
     private val wireStack: Stack<PersistentMap<Temporary, WireTerm>> = Stack()
 
@@ -77,43 +81,42 @@ internal class ZKPProver(
         assert(runtime.projection.protocol is ZKP)
 
         objectStoreStack.push(persistentMapOf())
-        wireStack.push(persistentMapOf())
         tempStack.push(persistentMapOf())
+        wireStack.push(persistentMapOf())
     }
 
-    override fun pushContext(
-        initialStore: PersistentMap<ObjectVariable, ObjectLocation>
-    ) {
-        objectStoreStack.push(initialStore)
-        wireStack.push(persistentMapOf())
-        tempStack.push(persistentMapOf())
-    }
-
-    override fun pushContext() {
+    override suspend fun pushContext() {
         pushContext(objectStore)
     }
 
-    override fun popContext() {
+    override suspend fun pushContext(initialStore: PersistentMap<ObjectVariable, ObjectLocation>) {
+        objectStoreStack.push(initialStore)
+        tempStack.push(persistentMapOf())
+        wireStack.push(persistentMapOf())
+    }
+
+    override suspend fun popContext() {
         tempStack.pop()
-        wireStack.pop()
         objectStoreStack.pop()
+        wireStack.pop()
     }
 
-    override fun getContextMarker(): Int {
-        return tempStack.size
-    }
-
-    override fun restoreContext(marker: Int) {
-        while (tempStack.size > marker) {
-            tempStack.pop()
-            wireStack.pop()
-            objectStoreStack.pop()
+    /** Inject a value into a wire. **/
+    private fun injectValue(value: Value): WireTerm {
+        val i = when (value) {
+            is IntegerValue -> value.value
+            is BooleanValue -> if (value.value) {
+                1
+            } else {
+                0
+            }
+            else -> throw Exception("runtime error: unexpected value $value")
         }
+        return wireGenerator.mkConst(i)
     }
 
-    override fun allocateObject(obj: ZKPObject): ObjectLocation {
-        objectHeap.add(obj)
-        return objectHeap.size - 1
+    private fun injectDummyIn(): WireTerm {
+        return wireGenerator.mkDummyIn()
     }
 
     override suspend fun buildExpressionObject(expr: AtomicExpressionNode): ZKPObject {
@@ -136,38 +139,9 @@ internal class ZKPProver(
         }
     }
 
-    override fun getNullObject(): ZKPObject =
-        ZKPObject.ZKPNullObject
-
-    override suspend fun runExprAsValue(expr: AtomicExpressionNode): Value = when (expr) {
-        is LiteralNode -> expr.value
-        is ReadNode -> tempStore[expr.temporary.value]
-            ?: throw UndefinedNameError(expr.temporary)
+    override fun getNullObject(): ZKPObject {
+        return ZKPObject.ZKPNullObject
     }
-
-    private fun injectValue(value: Value, isInput: Boolean = false): WireTerm {
-        val i = when (value) {
-            is IntegerValue -> value.value
-            is BooleanValue -> if (value.value) {
-                1
-            } else {
-                0
-            }
-            else -> throw Exception("runtime error: unexpected value $value")
-        }
-        return if (isInput) {
-            wireGenerator.mkIn(i)
-        } else {
-            wireGenerator.mkConst(i)
-        }
-    }
-
-    private fun getAtomicExprWire(expr: AtomicExpressionNode): WireTerm =
-        when (expr) {
-            is LiteralNode -> injectValue(expr.value)
-            is ReadNode ->
-                wireStore[expr.temporary.value] ?: throw UndefinedNameError(expr.temporary)
-        }
 
     private suspend fun runQuery(obj: ZKPObject, query: QueryNameNode, args: List<AtomicExpressionNode>): WireTerm =
         when (obj) {
@@ -190,7 +164,46 @@ internal class ZKPProver(
             ZKPObject.ZKPNullObject -> throw Exception("null query")
         }
 
-    private suspend fun getExprWire(expr: PureExpressionNode): WireTerm =
+    private suspend fun runRead(node: ReadNode): WireTerm {
+        val wireVal = wireStore[node.temporary.value]
+        if (wireVal != null) {
+            return wireVal
+        } else {
+            val sendProtocol = protocolAnalysis.primaryProtocol(node)
+            assert(runtime.projection.protocol != sendProtocol)
+            val events: ProtocolCommunication = protocolAnalysis.relevantCommunicationEvents(node)
+            val publicInputs = events.getHostReceives(runtime.projection.host, "ZKP_PUBLIC_INPUT")
+
+            val w: WireTerm = if (publicInputs.isEmpty()) {
+                injectDummyIn()
+            } else {
+                // Only kind of input is zkp public input
+                var cleartextValue: Value? = null
+                for (event in publicInputs) {
+                    val receivedValue: Value =
+                        runtime.receive(ProtocolProjection(event.send.protocol, event.send.host))
+
+                    if (cleartextValue == null) {
+                        cleartextValue = receivedValue
+                    } else if (cleartextValue != receivedValue) {
+                        throw ViaductInterpreterError("ZKP public input: received different values")
+                    }
+                }
+                tempStore = tempStore.put(node.temporary.value, cleartextValue!!)
+                injectValue(cleartextValue)
+            }
+            wireStore = wireStore.put(node.temporary.value, w)
+            return w
+        }
+    }
+
+    private suspend fun getAtomicExprWire(expr: AtomicExpressionNode): WireTerm =
+        when (expr) {
+            is LiteralNode -> injectValue(expr.value)
+            is ReadNode -> runRead(expr)
+        }
+
+    private suspend fun getExprWire(expr: ExpressionNode): WireTerm =
         when (expr) {
             is LiteralNode -> getAtomicExprWire(expr)
             is ReadNode -> getAtomicExprWire(expr)
@@ -201,25 +214,32 @@ internal class ZKPProver(
             is QueryNode -> runQuery(getObject(getObjectLocation(expr.variable.value)), expr.query, expr.arguments)
             is DeclassificationNode -> getExprWire(expr.expression)
             is EndorsementNode -> getExprWire(expr.expression)
+            is InputNode -> throw ViaductInterpreterError("impossible")
+            is ReceiveNode -> throw ViaductInterpreterError("impossible")
         }
 
     override suspend fun runLet(stmt: LetNode) {
-        when (val rhs: ExpressionNode = stmt.value) {
-            is ReceiveNode -> {
-                val rhsProtocol: Protocol = rhs.protocol.value
-                val isSecret = rhsProtocol.hosts.intersect(verifiers)
-                    .isEmpty() // if the value was sent to any of the verifiers, the value is public
-                // Value must be visible to prover
-                val receivedValue: Value =
-                    runtime.receive(ProtocolProjection(rhsProtocol, runtime.projection.host))
+        val w = getExprWire(stmt.value)
+        wireStore = wireStore.put(stmt.temporary.value, w)
 
-                tempStore = tempStore.put(stmt.temporary.value, receivedValue)
-                wireStore = wireStore.put(stmt.temporary.value, injectValue(receivedValue, isInput = isSecret))
+        // broadcast to readers
+        val readers: Set<SimpleStatementNode> = protocolAnalysis.directRemoteReaders(stmt)
+
+        for (reader in readers) {
+            val events =
+                protocolAnalysis
+                    .relevantCommunicationEvents(stmt, reader)
+                    .getHostSends(runtime.projection.host)
+
+            for (event in events) {
+                // TODO receive proof, verify it
+                logger.info {
+                    "verifying circuit $w"
+                }
+
+                runtime.send(BooleanValue(true), ProtocolProjection(event.recv.protocol, event.recv.host))
+                // runtime.send(rhsValue, ProtocolProjection(event.recv.protocol, event.recv.host))
             }
-
-            is InputNode -> throw Exception("cannot perform I/O in non-Local protocol")
-            is PureExpressionNode ->
-                wireStore = wireStore.put(stmt.temporary.value, getExprWire(rhs))
         }
     }
 
@@ -256,20 +276,15 @@ internal class ZKPProver(
         }
     }
 
-    override suspend fun runSend(stmt: SendNode) {
-        when (stmt.message) {
-            is LiteralNode -> print("Sending literal ${stmt.message.value}")
-            is ReadNode -> {
-                val r1cs = wireStore[stmt.message.temporary.value]?.toR1CS(1) ?: throw Exception("bad")
-                val pf = r1cs.makeProof("pf")
-                for (verifier: Host in verifiers) {
-                    runtime.send(ByteVecValue(pf.toByteArray().toList()), ProtocolProjection(runtime.projection.protocol, verifier))
-                }
-            }
-        }
-    }
-
     override suspend fun runOutput(stmt: OutputNode) {
         throw Exception("cannot perform I/O in non-Local protocol")
+    }
+
+    override suspend fun runExprAsValue(expr: AtomicExpressionNode): Value {
+        return when (expr) {
+            is LiteralNode -> expr.value
+            is ReadNode -> tempStore[expr.temporary.value]
+                ?: throw UndefinedNameError(expr.temporary)
+        }
     }
 }

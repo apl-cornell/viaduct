@@ -1,7 +1,9 @@
 process main {
     val a : int{A} = input int from alice;
     val x : int{B} = input int from bob;
-    val zkp_val : bool{A & B<-} = (endorse a to {A & B<-}) == 7;
+    val a_endorse : int{A & B<-} = endorse a to {A & B<-};
+    val public_input : int{(A | B)-> & (A & B)<-} = 7;
+    val zkp_val : bool{A & B<-} = a_endorse == public_input;
     output (declassify zkp_val to {(A | B)-> & (A&B)<-} ) to bob ;
 }
 

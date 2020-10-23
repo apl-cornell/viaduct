@@ -29,7 +29,13 @@ class Local(val host: Host) : Protocol() {
     override fun authority(hostTrustConfiguration: HostTrustConfiguration): Label =
         hostTrustConfiguration(host).interpret()
 
-    val hostInputPort = InputPort(this, this.host, "INPUT")
+    val inputPort = InputPort(this, this.host, "INPUT")
 
-    val hostOutputPort = OutputPort(this, this.host, "INPUT")
+    val hashCommitmentInputPort =
+        InputPort(this, this.host, "HASH_COMMITMENT_INPUT")
+
+    val cleartextCommitmentInputPort =
+        InputPort(this, this.host, "CLEARTEXT_COMMITMENT_INPUT")
+
+    val outputPort = OutputPort(this, this.host, "INPUT")
 }

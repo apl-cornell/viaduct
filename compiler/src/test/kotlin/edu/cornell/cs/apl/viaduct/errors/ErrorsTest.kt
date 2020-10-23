@@ -8,6 +8,7 @@ import edu.cornell.cs.apl.viaduct.parsing.parse
 import edu.cornell.cs.apl.viaduct.passes.check
 import edu.cornell.cs.apl.viaduct.passes.elaborated
 import edu.cornell.cs.apl.viaduct.selection.SimpleCostEstimator
+import edu.cornell.cs.apl.viaduct.selection.SimpleProtocolComposer
 import edu.cornell.cs.apl.viaduct.selection.SimpleProtocolFactory
 import edu.cornell.cs.apl.viaduct.selection.selectProtocolsWithZ3
 import java.io.File
@@ -54,7 +55,7 @@ internal class ErrorsTest {
 private fun run(file: File) {
     val program = SourceFile.from(file).parse().elaborated()
     program.check()
-    selectProtocolsWithZ3(program, program.main, SimpleProtocolFactory(program), SimpleCostEstimator)
+    selectProtocolsWithZ3(program, program.main, SimpleProtocolFactory(program), SimpleProtocolComposer, SimpleCostEstimator(SimpleProtocolComposer))
     // TODO: interpret
 }
 

@@ -21,10 +21,21 @@ object SimpleProtocolComposer : ProtocolComposer {
         val src: Protocol = this.first
         val dst: Protocol = this.second
         when {
-            src is Local && dst is Local ->
+            src == dst -> {
                 ProtocolCommunication(
-                    setOf(CommunicationEvent(src.outputPort, dst.inputPort))
+                    src.hosts.map { host ->
+                        CommunicationEvent(src.internalOutputPorts[host]!!, dst.internalInputPorts[host]!!)
+                    }.toSet()
                 )
+            }
+
+            src is Local && dst is Local -> {
+                if (src.host != dst.host) {
+                    ProtocolCommunication(setOf(CommunicationEvent(src.outputPort, dst.inputPort)))
+                } else {
+                    ProtocolCommunication(setOf())
+                }
+            }
 
             src is Local && dst is Replication -> {
                 val dstHostReceivers = dst.hosts.removeAll(src.hosts)
@@ -60,7 +71,16 @@ object SimpleProtocolComposer : ProtocolComposer {
 
             src is Local && dst is Commitment -> {
                 ProtocolCommunication(
-                    setOf(CommunicationEvent(src.outputPort, dst.inputPort))
+                    setOf(
+                        CommunicationEvent(src.outputPort, dst.inputPort)
+                    ).plus(
+                        dst.hashHosts.map { hashHost ->
+                            CommunicationEvent(
+                                dst.createCommitmentOutputPort,
+                                dst.createCommitmentInputPorts[hashHost]!!
+                            )
+                        }
+                    )
                 )
             }
 
@@ -135,7 +155,8 @@ object SimpleProtocolComposer : ProtocolComposer {
             }
 
             src is Replication && dst is Commitment -> {
-                ProtocolCommunication(
+                // TODO: fix this
+                val cleartextEvents =
                     if (src.hosts.contains(dst.cleartextHost)) {
                         setOf(CommunicationEvent(src.hostOutputPorts[dst.cleartextHost]!!, dst.inputPort))
                     } else {
@@ -143,6 +164,16 @@ object SimpleProtocolComposer : ProtocolComposer {
                             CommunicationEvent(src.hostOutputPorts[host]!!, dst.inputPort)
                         }.toSet()
                     }
+
+                ProtocolCommunication(
+                    cleartextEvents.union(
+                        dst.hashHosts.map { hashHost ->
+                            CommunicationEvent(
+                                dst.createCommitmentOutputPort,
+                                dst.createCommitmentInputPorts[hashHost]!!
+                            )
+                        }
+                    )
                 )
             }
 
@@ -184,41 +215,23 @@ object SimpleProtocolComposer : ProtocolComposer {
                 )
             }
 
-            // TODO: fix this later
-            src is ABY && dst is ABY -> {
-                val dstHostReceivers = dst.hosts.removeAll(src.hosts)
-                val dstHostSenders = dst.hosts.removeAll(dstHostReceivers)
-
-                // TODO: optimize this later. receivers don't necessarily need to receive from all senders
-                ProtocolCommunication(
-                    dstHostSenders.map { sender ->
-                        CommunicationEvent(
-                            src.hostSecretShareOutputPorts[sender]!!,
-                            dst.hostSecretShareInputPorts[sender]!!
-                        )
-                    }.plus(
-                        src.hosts.flatMap { sender ->
-                            dstHostReceivers.map { receiver ->
-                                CommunicationEvent(
-                                    src.hostSecretShareOutputPorts[sender]!!,
-                                    dst.hostSecretShareInputPorts[receiver]!!
-                                )
-                            }
-                        }
-                    ).toSet()
-                )
+            src is ABY && dst is ABY && src.client == dst.client && src.server == dst.server -> {
+                ProtocolCommunication(setOf())
             }
 
             src is Commitment && dst is Local -> {
                 ProtocolCommunication(
                     if (dst.host == src.cleartextHost) {
-                        setOf(CommunicationEvent(src.cleartextOutputPort, dst.inputPort))
+                        setOf(CommunicationEvent(src.openCleartextOutputPort, dst.inputPort))
                     } else {
                         setOf(
-                            CommunicationEvent(src.cleartextOutputPort, dst.cleartextCommitmentInputPort)
+                            CommunicationEvent(src.openCleartextOutputPort, dst.cleartextCommitmentInputPort)
                         ).plus(
                             src.hashHosts.map { hashHost ->
-                                CommunicationEvent(src.commitmentOutputPorts[hashHost]!!, dst.hashCommitmentInputPort)
+                                CommunicationEvent(
+                                    src.openCommitmentOutputPorts[hashHost]!!,
+                                    dst.hashCommitmentInputPort
+                                )
                             }.toSet()
                         )
                     }
@@ -230,18 +243,18 @@ object SimpleProtocolComposer : ProtocolComposer {
                     dst.hosts.flatMap { host ->
                         if (host == src.cleartextHost) {
                             setOf(
-                                CommunicationEvent(src.cleartextOutputPort, dst.hostInputPorts[host]!!)
+                                CommunicationEvent(src.openCleartextOutputPort, dst.hostInputPorts[host]!!)
                             )
                         } else {
                             setOf(
                                 CommunicationEvent(
-                                    src.cleartextOutputPort,
+                                    src.openCleartextOutputPort,
                                     dst.hostCleartextCommitmentInputPorts[host]!!
                                 )
                             ).plus(
                                 src.hashHosts.map { hashHost ->
                                     CommunicationEvent(
-                                        src.commitmentOutputPorts[hashHost]!!,
+                                        src.openCommitmentOutputPorts[hashHost]!!,
                                         dst.hostHashCommitmentInputPorts[host]!!
                                     )
                                 }
@@ -252,7 +265,9 @@ object SimpleProtocolComposer : ProtocolComposer {
             }
 
             // TODO: fix this
-            src is Commitment && dst is Commitment -> {
+            src is Commitment && dst is Commitment &&
+                src.cleartextHost == dst.cleartextHost && src.hashHosts == dst.hashHosts ->
+            {
                 ProtocolCommunication(setOf())
             }
 
@@ -265,6 +280,7 @@ object SimpleProtocolComposer : ProtocolComposer {
 
     override fun canCommunicate(src: Protocol, dst: Protocol): Boolean =
         when {
+            src == dst -> true
             src is Local && dst is Local -> true
             src is Local && dst is Replication -> true
             src is Local && dst is ABY -> true
@@ -275,10 +291,13 @@ object SimpleProtocolComposer : ProtocolComposer {
             src is Replication && dst is Commitment -> true
             src is ABY && dst is Local -> true
             src is ABY && dst is Replication -> true
-            src is ABY && dst is ABY -> true
+            src is ABY && dst is ABY &&
+                src.client == dst.client && src.server == dst.server -> true
             src is Commitment && dst is Local -> true
             src is Commitment && dst is Replication -> true
-            src is Commitment && dst is Commitment -> true
+            src is Commitment && dst is Commitment &&
+                src.cleartextHost == dst.cleartextHost
+                && src.hashHosts == dst.hashHosts -> true
             else -> false
         }
 
@@ -301,5 +320,13 @@ object SimpleProtocolComposer : ProtocolComposer {
             is OutputNode -> protocol.hosts
 
             is SendNode -> setOf()
+        }
+
+    override fun visibleGuardHosts(protocol: Protocol): Set<Host> =
+        when (protocol) {
+            is Local, is Replication -> protocol.hosts
+            is ABY -> setOf()
+            is Commitment -> setOf(protocol.cleartextHost)
+            else -> setOf()
         }
 }

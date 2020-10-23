@@ -7,6 +7,7 @@ import edu.cornell.cs.apl.prettyprinting.concatenated
 import edu.cornell.cs.apl.prettyprinting.plus
 import edu.cornell.cs.apl.viaduct.passes.elaborated
 import edu.cornell.cs.apl.viaduct.syntax.FunctionName
+import edu.cornell.cs.apl.viaduct.syntax.Host
 import edu.cornell.cs.apl.viaduct.syntax.SourceLocation
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.toPersistentList
@@ -24,8 +25,10 @@ private constructor(
     constructor(declarations: List<TopLevelDeclarationNode>, sourceLocation: SourceLocation) :
         this(declarations.toPersistentList(), sourceLocation)
 
-    val hosts: Iterable<HostDeclarationNode> =
+    val hostDeclarations: Iterable<HostDeclarationNode> =
         declarations.filterIsInstance<HostDeclarationNode>()
+
+    val hosts: Set<Host> = hostDeclarations.map { it.name.value }.toSet()
 
     val functions: Iterable<FunctionDeclarationNode> =
         declarations.filterIsInstance<FunctionDeclarationNode>()

@@ -21,6 +21,11 @@ import edu.cornell.cs.apl.viaduct.util.asComparable
  * The name and the arguments uniquely determine the protocol (see [Protocol.equals]).
  */
 abstract class Protocol : Name, Comparable<Protocol> {
+    companion object {
+        const val INTERNAL_INPUT = "INTERNAL_INPUT"
+        const val INTERNAL_OUTPUT = "INTERNAL_OUTPUT"
+    }
+
     /** The name of the (cryptographic) protocol. */
     abstract val protocolName: ProtocolName
 
@@ -101,15 +106,15 @@ abstract class Protocol : Name, Comparable<Protocol> {
         }
     }
 
-    val syncInputPorts: Map<Host, InputPort> by lazy {
+    val internalInputPorts: Map<Host, InputPort> by lazy {
         hosts
-            .map { h -> Pair(h, InputPort(this, h, "SYNC")) }
+            .map { h -> Pair(h, InputPort(this, h, INTERNAL_INPUT)) }
             .toMap()
     }
 
-    val syncOutputPorts: Map<Host, OutputPort> by lazy {
+    val internalOutputPorts: Map<Host, OutputPort> by lazy {
         hosts
-            .map { h -> Pair(h, OutputPort(this, h, "SYNC")) }
+            .map { h -> Pair(h, OutputPort(this, h, INTERNAL_OUTPUT)) }
             .toMap()
     }
 }

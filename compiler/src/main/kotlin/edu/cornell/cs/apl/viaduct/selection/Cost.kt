@@ -26,6 +26,8 @@ class IntegerCost(val cost: Int) : CostMonoid<IntegerCost> {
     override fun zero(): IntegerCost = IntegerCost.zero()
 
     override val asDocument: Document = Document(cost.toString())
+
+    override fun toString(): String = asDocument.print()
 }
 
 /**

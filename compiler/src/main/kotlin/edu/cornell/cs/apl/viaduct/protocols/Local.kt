@@ -5,7 +5,6 @@ import edu.cornell.cs.apl.viaduct.syntax.Host
 import edu.cornell.cs.apl.viaduct.syntax.HostTrustConfiguration
 import edu.cornell.cs.apl.viaduct.syntax.InputPort
 import edu.cornell.cs.apl.viaduct.syntax.OutputPort
-import edu.cornell.cs.apl.viaduct.syntax.Protocol
 import edu.cornell.cs.apl.viaduct.syntax.ProtocolName
 import edu.cornell.cs.apl.viaduct.syntax.values.HostValue
 import edu.cornell.cs.apl.viaduct.syntax.values.Value
@@ -15,7 +14,7 @@ import edu.cornell.cs.apl.viaduct.syntax.values.Value
  *
  * This protocol has exactly the authority and the capabilities of the host it is tied to.
  */
-class Local(val host: Host) : Protocol() {
+class Local(val host: Host) : Plaintext() {
     companion object {
         val protocolName = ProtocolName("Local")
     }
@@ -29,13 +28,13 @@ class Local(val host: Host) : Protocol() {
     override fun authority(hostTrustConfiguration: HostTrustConfiguration): Label =
         hostTrustConfiguration(host).interpret()
 
-    val inputPort = InputPort(this, this.host, "INPUT")
+    val inputPort = InputPort(this, this.host, INPUT)
 
     val hashCommitmentInputPort =
-        InputPort(this, this.host, "HASH_COMMITMENT_INPUT")
+        InputPort(this, this.host, HASH_COMMITMENT_INPUT)
 
     val cleartextCommitmentInputPort =
-        InputPort(this, this.host, "CLEARTEXT_COMMITMENT_INPUT")
+        InputPort(this, this.host, CLEARTEXT_COMMITMENT_INPUT)
 
-    val outputPort = OutputPort(this, this.host, "INPUT")
+    val outputPort = OutputPort(this, this.host, OUTPUT)
 }

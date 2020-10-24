@@ -29,115 +29,202 @@ import edu.cornell.cs.apl.viaduct.syntax.operators.Subtraction
  */
 typealias PutOperationGate = Circuit.(arguments: List<Share>) -> Share
 
+enum class ABYCircuitType { ARITH, BOOL, YAO }
+
+private val defaultCircuitType = ABYCircuitType.YAO
+
 class ABYCircuitBuilder(
-    val circuit: Circuit,
+    val arithCircuit: Circuit,
+    val boolCircuit: Circuit,
+    val yaoCircuit: Circuit,
     val bitlen: Long,
     val role: Role
-)
+) {
+    val circuit: Circuit = boolCircuit
 
-sealed class ABYCircuitGate(val children: List<ABYCircuitGate>) {
+    fun circuit(type: ABYCircuitType): Circuit =
+        when (type) {
+            ABYCircuitType.ARITH -> arithCircuit
+            ABYCircuitType.BOOL -> boolCircuit
+            ABYCircuitType.YAO -> yaoCircuit
+        }
+}
+
+sealed class ABYCircuitGate(
+    val children: List<ABYCircuitGate>,
+    val circuitType: ABYCircuitType = defaultCircuitType
+) {
     /** Adds the gate represented by this object to the given circuit. */
-    abstract fun putGate(builder: ABYCircuitBuilder, children: List<Share>): Share
+    abstract fun putGate(builder: ABYCircuitBuilder, childShares: List<Share>): Share
 }
 
-class ABYInGate(val value: Int) : ABYCircuitGate(listOf()) {
-    override fun putGate(builder: ABYCircuitBuilder, children: List<Share>): Share =
-        builder.circuit.putINGate(value.toBigInteger(), builder.bitlen, builder.role)
+class ABYInGate(
+    val value: Int,
+    circuitType: ABYCircuitType = defaultCircuitType
+) : ABYCircuitGate(listOf(), circuitType) {
+    override fun putGate(builder: ABYCircuitBuilder, childShares: List<Share>): Share =
+        builder.circuit(circuitType).putINGate(value.toBigInteger(), builder.bitlen, builder.role)
 }
 
-class ABYDummyInGate : ABYCircuitGate(listOf()) {
-    override fun putGate(builder: ABYCircuitBuilder, children: List<Share>): Share =
-        builder.circuit.putDummyINGate(builder.bitlen)
+class ABYDummyInGate(
+    circuitType: ABYCircuitType = defaultCircuitType
+) : ABYCircuitGate(listOf(), circuitType) {
+    override fun putGate(builder: ABYCircuitBuilder, childShares: List<Share>): Share =
+        builder.circuit(circuitType).putDummyINGate(builder.bitlen)
 }
 
-class ABYConstantGate(val value: Int) : ABYCircuitGate(listOf()) {
-    override fun putGate(builder: ABYCircuitBuilder, children: List<Share>): Share =
-        builder.circuit.putCONSGate(value.toBigInteger(), builder.bitlen)
+class ABYConstantGate(
+    val value: Int,
+    circuitType: ABYCircuitType = defaultCircuitType
+) : ABYCircuitGate(listOf(), circuitType) {
+    override fun putGate(builder: ABYCircuitBuilder, childShares: List<Share>): Share =
+        builder.circuit(circuitType).putCONSGate(value.toBigInteger(), builder.bitlen)
+}
+
+class ABYConversionGate(
+    inputGate: ABYCircuitGate,
+    circuitType: ABYCircuitType
+) : ABYCircuitGate(listOf(inputGate), circuitType) {
+    override fun putGate(builder: ABYCircuitBuilder, childShares: List<Share>): Share =
+        when (children[0].circuitType) {
+            ABYCircuitType.ARITH ->
+                when (circuitType) {
+                    ABYCircuitType.ARITH ->
+                        childShares[0]
+
+                    ABYCircuitType.BOOL ->
+                        builder.boolCircuit.putA2BGate(childShares[0], builder.yaoCircuit)
+
+                    ABYCircuitType.YAO ->
+                        builder.yaoCircuit.putA2YGate(childShares[0])
+                }
+
+            ABYCircuitType.BOOL ->
+                when (circuitType) {
+                    ABYCircuitType.ARITH ->
+                        builder.arithCircuit.putB2AGate(childShares[0])
+
+                    ABYCircuitType.BOOL ->
+                        childShares[0]
+
+                    ABYCircuitType.YAO ->
+                        builder.yaoCircuit.putB2YGate(childShares[0])
+                }
+
+            ABYCircuitType.YAO ->
+                when (circuitType) {
+                    ABYCircuitType.ARITH ->
+                        builder.arithCircuit.putY2AGate(childShares[0], builder.boolCircuit)
+
+                    ABYCircuitType.BOOL ->
+                        builder.boolCircuit.putY2BGate(childShares[0])
+
+                    ABYCircuitType.YAO ->
+                        childShares[0]
+                }
+        }
 }
 
 class ABYOperationGate(
     val operation: PutOperationGate,
-    operands: List<ABYCircuitGate>
-) : ABYCircuitGate(operands) {
-    override fun putGate(builder: ABYCircuitBuilder, children: List<Share>): Share =
-        builder.circuit.operation(children)
+    operands: List<ABYCircuitGate>,
+    circuitType: ABYCircuitType = defaultCircuitType
+) : ABYCircuitGate(operands, circuitType) {
+    override fun putGate(builder: ABYCircuitBuilder, childShares: List<Share>): Share =
+        builder.circuit(circuitType).operation(childShares)
 }
 
+/** Add a conversion gate---if necessary---to match the target circuit type. */
+fun ABYCircuitGate.addConversionGates(target: ABYCircuitType) =
+    if (this.circuitType == target) this else ABYConversionGate(this, target)
+
 /** Returns an ABY circuit implementing the given operator. */
-fun operatorToCircuit(operator: Operator, arguments: List<ABYCircuitGate>): ABYCircuitGate {
-    return when (operator) {
-        is Negation ->
+fun operatorToCircuit(
+    operator: Operator,
+    arguments: List<ABYCircuitGate>,
+    circuitType: ABYCircuitType = defaultCircuitType
+): ABYCircuitGate {
+    val finalArguments = arguments.map { it.addConversionGates(circuitType) }
+    return when {
+        operator is Negation ->
             ABYOperationGate(
                 putBinaryOperationGate(Circuit::putSUBGate),
-                listOf(ABYConstantGate(0), arguments[0])
+                listOf(ABYConstantGate(0, circuitType), finalArguments[0]),
+                circuitType
             )
 
-        is Addition ->
-            ABYOperationGate(putBinaryOperationGate(Circuit::putADDGate), arguments)
+        operator is Addition ->
+            ABYOperationGate(putBinaryOperationGate(Circuit::putADDGate), finalArguments, circuitType)
 
-        is Subtraction ->
-            ABYOperationGate(putBinaryOperationGate(Circuit::putSUBGate), arguments.reversed())
+        operator is Subtraction ->
+            ABYOperationGate(putBinaryOperationGate(Circuit::putSUBGate), finalArguments.reversed(), circuitType)
 
-        is Multiplication ->
-            ABYOperationGate(putBinaryOperationGate(Circuit::putMULGate), arguments)
+        operator is Multiplication ->
+            ABYOperationGate(putBinaryOperationGate(Circuit::putMULGate), finalArguments, circuitType)
 
-        is Minimum ->
+        operator is Minimum && circuitType != ABYCircuitType.ARITH ->
             operatorToCircuit(
                 Mux,
                 listOf(
-                    operatorToCircuit(LessThan, arguments),
-                    arguments[0],
-                    arguments[1]
-                )
+                    operatorToCircuit(LessThan, finalArguments, circuitType),
+                    finalArguments[0],
+                    finalArguments[1]
+                ),
+                circuitType
             )
 
-        is Maximum ->
+        operator is Maximum && circuitType != ABYCircuitType.ARITH ->
             operatorToCircuit(
                 Mux,
                 listOf(
-                    operatorToCircuit(LessThan, arguments),
-                    arguments[1],
-                    arguments[0]
-                )
+                    operatorToCircuit(LessThan, finalArguments, circuitType),
+                    finalArguments[1],
+                    finalArguments[0]
+                ),
+                circuitType
             )
 
-        is Not ->
-            ABYOperationGate(putUnaryOperationGate(Circuit::putNOTGate), arguments)
+        operator is Not && circuitType != ABYCircuitType.ARITH ->
+            ABYOperationGate(putUnaryOperationGate(Circuit::putNOTGate), finalArguments, circuitType)
 
-        is And ->
-            ABYOperationGate(putBinaryOperationGate(Circuit::putANDGate), arguments)
+        operator is And && circuitType != ABYCircuitType.ARITH ->
+            ABYOperationGate(putBinaryOperationGate(Circuit::putANDGate), finalArguments, circuitType)
 
-        is Or ->
+        operator is Or && circuitType != ABYCircuitType.ARITH ->
             // a | b = ~(~a & ~b)
             operatorToCircuit(
                 Not,
-                listOf(operatorToCircuit(And, arguments.map { arg -> operatorToCircuit(Not, listOf(arg)) }))
+                listOf(operatorToCircuit(And, finalArguments.map { arg -> operatorToCircuit(Not, listOf(arg)) })),
+                circuitType
             )
 
-        is EqualTo ->
-            ABYOperationGate(putBinaryOperationGate(Circuit::putEQGate), arguments)
+        operator is EqualTo && circuitType != ABYCircuitType.ARITH ->
+            ABYOperationGate(putBinaryOperationGate(Circuit::putEQGate), finalArguments, circuitType)
 
-        is LessThan ->
+        operator is LessThan && circuitType != ABYCircuitType.ARITH ->
             // x < y <=> y > x
             ABYOperationGate(
                 putBinaryOperationGate(Circuit::putGTGate),
-                listOf(arguments[0], arguments[1])
+                listOf(finalArguments[0], finalArguments[1]),
+                circuitType
             )
 
-        is LessThanOrEqualTo ->
+        operator is LessThanOrEqualTo && circuitType != ABYCircuitType.ARITH ->
             // x <= y <=> not (x > y)
             operatorToCircuit(
                 Not,
-                listOf(ABYOperationGate(putBinaryOperationGate(Circuit::putGTGate), arguments.reversed()))
+                listOf(ABYOperationGate(putBinaryOperationGate(Circuit::putGTGate), finalArguments.reversed())),
+                circuitType
             )
 
-        is Mux ->
+        operator is Mux && circuitType != ABYCircuitType.ARITH ->
             ABYOperationGate(
                 putTernaryOperationGate(Circuit::putMUXGate),
-                listOf(arguments[0], arguments[2], arguments[1])
+                listOf(finalArguments[0], finalArguments[2], finalArguments[1]),
+                circuitType
             )
 
-        else -> throw UnsupportedOperationException("Operator $operator is not supported by the ABY backend.")
+        else -> throw UnsupportedOperationException("Operator $operator in sharing $circuitType is not supported by the ABY backend.")
     }
 }
 

@@ -52,6 +52,7 @@ import edu.cornell.cs.apl.viaduct.syntax.values.BooleanValue
 import edu.cornell.cs.apl.viaduct.syntax.values.IntegerValue
 import edu.cornell.cs.apl.viaduct.syntax.values.Value
 import java.util.Stack
+import kotlin.system.measureTimeMillis
 import kotlinx.collections.immutable.PersistentMap
 import kotlinx.collections.immutable.persistentMapOf
 import mu.KotlinLogging
@@ -318,9 +319,11 @@ class ABYProtocolInterpreter(
     private fun buildABYCircuit(outGate: ABYCircuitGate, outRole: Role): Share {
         val circuitBuilder =
             ABYCircuitBuilder(
-                aby.getCircuitBuilder(SharingType.S_YAO)!!,
-                BITLEN,
-                role
+                arithCircuit = aby.getCircuitBuilder(SharingType.S_ARITH)!!,
+                boolCircuit = aby.getCircuitBuilder(SharingType.S_BOOL)!!,
+                yaoCircuit = aby.getCircuitBuilder(SharingType.S_YAO)!!,
+                bitlen = BITLEN,
+                role = role
             )
 
         // pre-order traversal of circuit
@@ -356,7 +359,7 @@ class ABYProtocolInterpreter(
 
         assert(shareStack.size == 1)
 
-        return circuitBuilder.circuit.putOUTGate(shareStack.peek()!!, outRole)
+        return circuitBuilder.circuit(outGate.circuitType).putOUTGate(shareStack.peek()!!, outRole)
     }
 
     private fun executeABYCircuit(letNode: LetNode, receivingHosts: Set<Host>): Value? {
@@ -383,10 +386,12 @@ class ABYProtocolInterpreter(
 
         aby.reset()
         val outShare: Share = buildABYCircuit(outputGate, outRole)
-        aby.execCircuit()
+
+        val execDuration = measureTimeMillis { aby.execCircuit() }
+
         val result: Int = outShare.clearValue32.toInt()
 
-        logger.info { "executed ABY circuit, sent output to $outRole" }
+        logger.info { "executed ABY circuit in ${execDuration}ms, sent output to $outRole" }
 
         return if (thisHostReceives) {
             when (val msgType: ValueType = typeAnalysis.type(letNode)) {

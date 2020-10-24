@@ -7,12 +7,14 @@ import de.tu_darmstadt.cs.encrypto.aby.Share
 import de.tu_darmstadt.cs.encrypto.aby.SharingType
 import edu.cornell.cs.apl.viaduct.analysis.ProtocolAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.TypeAnalysis
-import edu.cornell.cs.apl.viaduct.backend.AbstractProtocolInterpreter
 import edu.cornell.cs.apl.viaduct.backend.HostAddress
 import edu.cornell.cs.apl.viaduct.backend.ObjectLocation
+import edu.cornell.cs.apl.viaduct.backend.ProtocolBackend
 import edu.cornell.cs.apl.viaduct.backend.ProtocolInterpreter
-import edu.cornell.cs.apl.viaduct.backend.ProtocolInterpreterFactory
+import edu.cornell.cs.apl.viaduct.backend.ProtocolProjection
+import edu.cornell.cs.apl.viaduct.backend.SingleProtocolInterpreter
 import edu.cornell.cs.apl.viaduct.backend.ViaductProcessRuntime
+import edu.cornell.cs.apl.viaduct.backend.ViaductRuntime
 import edu.cornell.cs.apl.viaduct.errors.IllegalInternalCommunicationError
 import edu.cornell.cs.apl.viaduct.errors.UndefinedNameError
 import edu.cornell.cs.apl.viaduct.errors.ViaductInterpreterError
@@ -21,6 +23,7 @@ import edu.cornell.cs.apl.viaduct.selection.CommunicationEvent
 import edu.cornell.cs.apl.viaduct.selection.ProtocolCommunication
 import edu.cornell.cs.apl.viaduct.syntax.Host
 import edu.cornell.cs.apl.viaduct.syntax.ObjectVariable
+import edu.cornell.cs.apl.viaduct.syntax.Protocol
 import edu.cornell.cs.apl.viaduct.syntax.QueryNameNode
 import edu.cornell.cs.apl.viaduct.syntax.Temporary
 import edu.cornell.cs.apl.viaduct.syntax.UpdateNameNode
@@ -64,7 +67,9 @@ class ABYProtocolInterpreter(
     private val protocolAnalysis: ProtocolAnalysis,
     private val runtime: ViaductProcessRuntime,
     connectionMap: Map<Host, HostAddress>
-) : AbstractProtocolInterpreter<ABYProtocolInterpreter.ABYClassObject>(program) {
+) : SingleProtocolInterpreter<ABYProtocolInterpreter.ABYClassObject>(program) {
+    override val availableProtocols: Set<Protocol> =
+        setOf(runtime.projection.protocol)
 
     private var aby: ABYParty
     private var role: Role
@@ -171,7 +176,7 @@ class ABYProtocolInterpreter(
             }
 
             Vector -> {
-                val length = runExprAsValue(arguments[0]) as IntegerValue
+                val length = runGuard(arguments[0]) as IntegerValue
                 ABYVectorObject(length.value, typeArguments[0].defaultValue)
             }
 
@@ -239,14 +244,6 @@ class ABYProtocolInterpreter(
             }
         } else {
             storeValue
-        }
-    }
-
-    override suspend fun runExprAsValue(expr: AtomicExpressionNode): Value {
-        return when (expr) {
-            is LiteralNode -> expr.value
-
-            is ReadNode -> runCleartextRead(expr)
         }
     }
 
@@ -404,6 +401,10 @@ class ABYProtocolInterpreter(
         } else null
     }
 
+    override suspend fun runGuard(expr: AtomicExpressionNode): Value {
+        throw ViaductInterpreterError("ABY: Cannot execute conditional guard")
+    }
+
     override suspend fun runLet(stmt: LetNode) {
         when (val rhs = stmt.value) {
             is ReceiveNode -> throw IllegalInternalCommunicationError(rhs)
@@ -512,7 +513,7 @@ class ABYProtocolInterpreter(
         override suspend fun query(query: QueryNameNode, arguments: List<AtomicExpressionNode>): ABYCircuitGate {
             return when (query.value) {
                 is Get -> {
-                    val index = runExprAsValue(arguments[0]) as IntegerValue
+                    val index = runGuard(arguments[0]) as IntegerValue
                     gates[index.value]
                 }
 
@@ -521,7 +522,7 @@ class ABYProtocolInterpreter(
         }
 
         override suspend fun update(update: UpdateNameNode, arguments: List<AtomicExpressionNode>) {
-            val index = runExprAsValue(arguments[0]) as IntegerValue
+            val index = runGuard(arguments[0]) as IntegerValue
 
             gates[index.value] = when (update.value) {
                 is edu.cornell.cs.apl.viaduct.syntax.datatypes.Set -> {
@@ -548,17 +549,28 @@ class ABYProtocolInterpreter(
         }
     }
 
-    companion object : ProtocolInterpreterFactory {
+    companion object : ProtocolBackend {
         private const val DEFAULT_PORT = 7766
         private const val BITLEN: Long = 32
 
-        override fun buildProtocolInterpreter(
+        override fun buildProtocolInterpreters(
+            host: Host,
             program: ProgramNode,
+            protocols: Set<Protocol>,
             protocolAnalysis: ProtocolAnalysis,
-            runtime: ViaductProcessRuntime,
+            runtime: ViaductRuntime,
             connectionMap: Map<Host, HostAddress>
-        ): ProtocolInterpreter {
-            return ABYProtocolInterpreter(program, protocolAnalysis, runtime, connectionMap)
+        ): Iterable<ProtocolInterpreter> {
+            return protocols
+                .filter { protocol -> protocol.protocolName == ABY.protocolName }
+                .map { protocol ->
+                    ABYProtocolInterpreter(
+                        program,
+                        protocolAnalysis,
+                        ViaductProcessRuntime(runtime, ProtocolProjection(protocol, host)),
+                        connectionMap
+                    )
+                }
         }
     }
 }

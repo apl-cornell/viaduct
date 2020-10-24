@@ -3,6 +3,7 @@ package edu.cornell.cs.apl.viaduct.backend
 import edu.cornell.cs.apl.viaduct.errors.IllegalInternalCommunicationError
 import edu.cornell.cs.apl.viaduct.errors.ViaductInterpreterError
 import edu.cornell.cs.apl.viaduct.syntax.ObjectVariable
+import edu.cornell.cs.apl.viaduct.syntax.Protocol
 import edu.cornell.cs.apl.viaduct.syntax.datatypes.ClassName
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.AtomicExpressionNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.DeclarationNode
@@ -23,8 +24,10 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.SendNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.SimpleStatementNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.UpdateNode
 import edu.cornell.cs.apl.viaduct.syntax.types.ValueType
+import edu.cornell.cs.apl.viaduct.syntax.values.Value
 import java.util.Stack
 import kotlinx.collections.immutable.PersistentMap
+import kotlinx.collections.immutable.persistentMapOf
 import kotlinx.collections.immutable.toPersistentMap
 
 typealias ObjectLocation = Int
@@ -49,25 +52,37 @@ abstract class AbstractProtocolInterpreter<Obj>(
 
     protected abstract suspend fun pushContext(initialStore: PersistentMap<ObjectVariable, ObjectLocation>)
 
-    override suspend fun pushFunctionContext(arguments: PersistentMap<ParameterNode, FunctionArgumentNode>) {
-        functionFrameStack.push(Pair(objectHeap.size, arguments))
+    override suspend fun pushFunctionContext(
+        arguments: PersistentMap<ParameterNode, Pair<Protocol, FunctionArgumentNode>>
+    ) {
+        functionFrameStack.push(
+            objectHeap.size to
+                persistentMapOf(
+                    *(arguments.map { kv -> kv.key to kv.value.second }.toTypedArray())
+                )
+        )
 
         val initialStore: PersistentMap<ObjectVariable, ObjectLocation> =
             arguments
                 .map { kv ->
                     val objectLoc =
-                        when (val argument = kv.value) {
+                        when (val argument = kv.value.second) {
                             is ExpressionArgumentNode ->
-                                allocateObject(buildExpressionObject(argument.expression))
+                                allocateObject(
+                                    buildExpressionObject(
+                                        kv.value.first,
+                                        argument.expression
+                                    )
+                                )
 
                             is ObjectReferenceArgumentNode ->
                                 getObjectLocation(argument.variable.value)
 
                             is ObjectDeclarationArgumentNode ->
-                                allocateObject(getNullObject())
+                                allocateObject(getNullObject(kv.value.first))
 
                             is OutParameterArgumentNode ->
-                                allocateObject(getNullObject())
+                                allocateObject(getNullObject(kv.value.first))
                         }
                     kv.key.name.value to objectLoc
                 }.toMap().toPersistentMap()
@@ -143,25 +158,27 @@ abstract class AbstractProtocolInterpreter<Obj>(
         return objectHeap.size - 1
     }
 
-    abstract suspend fun buildExpressionObject(expr: AtomicExpressionNode): Obj
+    abstract suspend fun buildExpressionObject(protocol: Protocol, expr: AtomicExpressionNode): Obj
 
     abstract suspend fun buildObject(
+        protocol: Protocol,
         className: ClassName,
         typeArguments: List<ValueType>,
         arguments: List<AtomicExpressionNode>
     ): Obj
 
-    abstract fun getNullObject(): Obj
+    abstract fun getNullObject(protocol: Protocol): Obj
 
-    override suspend fun runSimpleStatement(stmt: SimpleStatementNode) {
+    override suspend fun runSimpleStatement(protocol: Protocol, stmt: SimpleStatementNode) {
         when (stmt) {
-            is LetNode -> runLet(stmt)
+            is LetNode -> runLet(protocol, stmt)
 
             is DeclarationNode -> {
                 putObjectLocation(
                     stmt.name.value,
                     allocateObject(
                         buildObject(
+                            protocol,
                             stmt.className.value,
                             stmt.typeArguments.map { it.value },
                             stmt.arguments
@@ -170,17 +187,18 @@ abstract class AbstractProtocolInterpreter<Obj>(
                 )
             }
 
-            is UpdateNode -> runUpdate(stmt)
+            is UpdateNode -> runUpdate(protocol, stmt)
 
             is OutParameterInitializationNode -> {
                 val obj: Obj =
                     when (val initializer = stmt.initializer) {
                         is OutParameterExpressionInitializerNode -> {
-                            buildExpressionObject(initializer.expression)
+                            buildExpressionObject(protocol, initializer.expression)
                         }
 
                         is OutParameterConstructorInitializerNode -> {
                             buildObject(
+                                protocol,
                                 initializer.className.value,
                                 initializer.typeArguments.map { it.value },
                                 initializer.arguments
@@ -191,15 +209,66 @@ abstract class AbstractProtocolInterpreter<Obj>(
                 putObject(getObjectLocation(stmt.name.value), obj)
             }
 
-            is OutputNode -> runOutput(stmt)
+            is OutputNode -> runOutput(protocol, stmt)
 
             is SendNode -> throw IllegalInternalCommunicationError(stmt)
         }
     }
 
+    abstract suspend fun runLet(protocol: Protocol, stmt: LetNode)
+
+    abstract suspend fun runUpdate(protocol: Protocol, stmt: UpdateNode)
+
+    abstract suspend fun runOutput(protocol: Protocol, stmt: OutputNode)
+}
+
+/** Interpreter for a single protocol.
+ *  This class is defined for convenience, so that the
+ *  protocol argument on implemented methods isn't necessary. */
+abstract class SingleProtocolInterpreter<Obj>(
+    program: ProgramNode
+) : AbstractProtocolInterpreter<Obj>(program) {
+    abstract suspend fun buildExpressionObject(expr: AtomicExpressionNode): Obj
+
+    override suspend fun buildExpressionObject(protocol: Protocol, expr: AtomicExpressionNode): Obj =
+        buildExpressionObject(expr)
+
+    abstract suspend fun buildObject(
+        className: ClassName,
+        typeArguments: List<ValueType>,
+        arguments: List<AtomicExpressionNode>
+    ): Obj
+
+    override suspend fun buildObject(
+        protocol: Protocol,
+        className: ClassName,
+        typeArguments: List<ValueType>,
+        arguments: List<AtomicExpressionNode>
+    ): Obj =
+        buildObject(className, typeArguments, arguments)
+
+    abstract fun getNullObject(): Obj
+
+    override fun getNullObject(protocol: Protocol): Obj =
+        getNullObject()
+
+    abstract suspend fun runGuard(expr: AtomicExpressionNode): Value
+
+    override suspend fun runGuard(protocol: Protocol, expr: AtomicExpressionNode): Value =
+        runGuard(expr)
+
     abstract suspend fun runLet(stmt: LetNode)
+
+    override suspend fun runLet(protocol: Protocol, stmt: LetNode) =
+        runLet(stmt)
 
     abstract suspend fun runUpdate(stmt: UpdateNode)
 
+    override suspend fun runUpdate(protocol: Protocol, stmt: UpdateNode) =
+        runUpdate(stmt)
+
     abstract suspend fun runOutput(stmt: OutputNode)
+
+    override suspend fun runOutput(protocol: Protocol, stmt: OutputNode) =
+        runOutput(stmt)
 }

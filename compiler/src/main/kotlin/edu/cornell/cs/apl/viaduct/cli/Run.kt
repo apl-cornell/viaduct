@@ -5,7 +5,7 @@ import com.github.ajalt.clikt.parameters.arguments.argument
 import com.github.ajalt.clikt.parameters.options.flag
 import com.github.ajalt.clikt.parameters.options.option
 import edu.cornell.cs.apl.viaduct.backend.PlaintextProtocolInterpreter
-import edu.cornell.cs.apl.viaduct.backend.ProtocolInterpreterFactory
+import edu.cornell.cs.apl.viaduct.backend.ProtocolBackend
 import edu.cornell.cs.apl.viaduct.backend.ViaductBackend
 import edu.cornell.cs.apl.viaduct.backend.aby.ABYProtocolInterpreter
 import edu.cornell.cs.apl.viaduct.backend.commitment.CommitmentProtocolInterpreterFactory
@@ -49,12 +49,11 @@ class Run : CliktCommand(help = "Run compiled protocol for a single host") {
             ABY.protocolName to AbyProtocolParser
         )
 
-    private fun getBackends(): Map<ProtocolName, ProtocolInterpreterFactory> {
-        return mapOf(
-            Local.protocolName to PlaintextProtocolInterpreter,
-            Replication.protocolName to PlaintextProtocolInterpreter,
-            ABY.protocolName to ABYProtocolInterpreter,
-            Commitment.protocolName to CommitmentProtocolInterpreterFactory
+    private fun getProtocolBackends(): List<ProtocolBackend> {
+        return listOf(
+            PlaintextProtocolInterpreter,
+            ABYProtocolInterpreter,
+            CommitmentProtocolInterpreterFactory
         )
     }
 
@@ -64,8 +63,7 @@ class Run : CliktCommand(help = "Run compiled protocol for a single host") {
         }
 
         val program = input.parse(protocols).elaborated()
-        val protocolBackends: Map<ProtocolName, ProtocolInterpreterFactory> = getBackends()
-        val backend = ViaductBackend(protocolBackends)
+        val backend = ViaductBackend(getProtocolBackends())
 
         // interpret program
         backend.run(program, Host(hostName))

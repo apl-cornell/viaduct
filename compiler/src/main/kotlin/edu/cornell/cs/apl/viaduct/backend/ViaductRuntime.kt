@@ -196,14 +196,13 @@ data class ProcessInfo(
 }
 
 typealias Process = ProtocolProjection
-typealias ProcessInterpreter = suspend (ViaductRuntime) -> ProtocolInterpreter
 
 class ViaductRuntime(
+    val host: Host,
     private val program: ProgramNode,
     private val protocolAnalysis: ProtocolAnalysis,
     private val hostConnectionInfo: Map<Host, HostAddress>,
-    private val processBodyMap: Map<Process, ProcessInterpreter>,
-    val host: Host
+    private val backends: List<ProtocolBackend>
 ) {
     private val syncProtocol = Synchronization(program.hostDeclarations.map { it.name.value }.toSet())
     private val processInfoMap: Map<Process, ProcessInfo>
@@ -409,14 +408,25 @@ class ViaductRuntime(
     }
 
     fun start() {
-        // check if all processes have registered bodies
-        assert(
-            processBodyMap.keys.containsAll(
-                processInfoMap.keys.filter { k -> k.host == host && k.protocol !is Synchronization }
-            )
-        )
-
         val connectionMap: Map<Host, Socket> = createRemoteConnections()
+
+        val hostParticipatingProtocols: Set<Protocol> =
+            protocolAnalysis
+                .participatingProtocols(program)
+                .filter { protocol -> protocol.hosts.contains(host) }
+                .toSet()
+
+        val processInterpreters =
+            backends.flatMap { backend ->
+                backend.buildProtocolInterpreters(
+                    host,
+                    program,
+                    hostParticipatingProtocols,
+                    protocolAnalysis,
+                    this,
+                    hostConnectionInfo
+                )
+            }
 
         runBlocking {
             for (kv: Map.Entry<Host, HostInfo> in hostInfoMap) {
@@ -447,17 +457,11 @@ class ViaductRuntime(
 
             // run interpreter
             val job: Job = launch {
-                val processInterpreters =
-                    processBodyMap.map { kv ->
-                        logger.info { "created interpreter for protocol ${kv.key.protocol.asDocument.print()}" }
-                        kv.key.protocol to kv.value(this@ViaductRuntime)
-                    }.toMap()
-
                 val interpreter =
                     BackendInterpreter(
+                        host,
                         program,
                         protocolAnalysis,
-                        host,
                         processInterpreters,
                         ViaductProcessRuntime(
                             this@ViaductRuntime,

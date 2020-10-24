@@ -325,6 +325,10 @@ class ViaductRuntime(
         }
     }
 
+    suspend fun send(value: Value, event: CommunicationEvent) {
+        send(value, event.send.asProjection(), event.recv.asProjection())
+    }
+
     suspend fun receive(sender: Process, receiver: Process): Value {
         if (sender.host != host) { // remote communication
             val msg = ReceiveMessage(processInfoMap[sender]!!.id, processInfoMap[receiver]!!.id)
@@ -332,6 +336,10 @@ class ViaductRuntime(
         }
 
         return channelMap[sender]!![receiver]!!.receive()
+    }
+
+    suspend fun receive(event: CommunicationEvent): Value {
+        return receive(event.send.asProjection(), event.recv.asProjection())
     }
 
     suspend fun input(): Value {

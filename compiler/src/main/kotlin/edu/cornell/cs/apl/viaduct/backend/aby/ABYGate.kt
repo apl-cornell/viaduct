@@ -31,8 +31,6 @@ typealias PutOperationGate = Circuit.(arguments: List<Share>) -> Share
 
 enum class ABYCircuitType { ARITH, BOOL, YAO }
 
-private val defaultCircuitType = ABYCircuitType.YAO
-
 class ABYCircuitBuilder(
     val arithCircuit: Circuit,
     val boolCircuit: Circuit,
@@ -52,7 +50,7 @@ class ABYCircuitBuilder(
 
 sealed class ABYCircuitGate(
     val children: List<ABYCircuitGate>,
-    val circuitType: ABYCircuitType = defaultCircuitType
+    val circuitType: ABYCircuitType
 ) {
     /** Adds the gate represented by this object to the given circuit. */
     abstract fun putGate(builder: ABYCircuitBuilder, childShares: List<Share>): Share
@@ -60,14 +58,14 @@ sealed class ABYCircuitGate(
 
 class ABYInGate(
     val value: Int,
-    circuitType: ABYCircuitType = defaultCircuitType
+    circuitType: ABYCircuitType
 ) : ABYCircuitGate(listOf(), circuitType) {
     override fun putGate(builder: ABYCircuitBuilder, childShares: List<Share>): Share =
         builder.circuit(circuitType).putINGate(value.toBigInteger(), builder.bitlen, builder.role)
 }
 
 class ABYDummyInGate(
-    circuitType: ABYCircuitType = defaultCircuitType
+    circuitType: ABYCircuitType
 ) : ABYCircuitGate(listOf(), circuitType) {
     override fun putGate(builder: ABYCircuitBuilder, childShares: List<Share>): Share =
         builder.circuit(circuitType).putDummyINGate(builder.bitlen)
@@ -75,7 +73,7 @@ class ABYDummyInGate(
 
 class ABYConstantGate(
     val value: Int,
-    circuitType: ABYCircuitType = defaultCircuitType
+    circuitType: ABYCircuitType
 ) : ABYCircuitGate(listOf(), circuitType) {
     override fun putGate(builder: ABYCircuitBuilder, childShares: List<Share>): Share =
         builder.circuit(circuitType).putCONSGate(value.toBigInteger(), builder.bitlen)
@@ -128,7 +126,7 @@ class ABYConversionGate(
 class ABYOperationGate(
     val operation: PutOperationGate,
     operands: List<ABYCircuitGate>,
-    circuitType: ABYCircuitType = defaultCircuitType
+    circuitType: ABYCircuitType
 ) : ABYCircuitGate(operands, circuitType) {
     override fun putGate(builder: ABYCircuitBuilder, childShares: List<Share>): Share =
         builder.circuit(circuitType).operation(childShares)
@@ -142,7 +140,7 @@ fun ABYCircuitGate.addConversionGates(target: ABYCircuitType) =
 fun operatorToCircuit(
     operator: Operator,
     arguments: List<ABYCircuitGate>,
-    circuitType: ABYCircuitType = defaultCircuitType
+    circuitType: ABYCircuitType
 ): ABYCircuitGate {
     val finalArguments = arguments.map { it.addConversionGates(circuitType) }
     return when {
@@ -194,7 +192,13 @@ fun operatorToCircuit(
             // a | b = ~(~a & ~b)
             operatorToCircuit(
                 Not,
-                listOf(operatorToCircuit(And, finalArguments.map { arg -> operatorToCircuit(Not, listOf(arg)) })),
+                listOf(
+                    operatorToCircuit(
+                        And,
+                        finalArguments.map { arg -> operatorToCircuit(Not, listOf(arg), circuitType) },
+                        circuitType
+                    )
+                ),
                 circuitType
             )
 
@@ -213,7 +217,7 @@ fun operatorToCircuit(
             // x <= y <=> not (x > y)
             operatorToCircuit(
                 Not,
-                listOf(ABYOperationGate(putBinaryOperationGate(Circuit::putGTGate), finalArguments.reversed())),
+                listOf(ABYOperationGate(putBinaryOperationGate(Circuit::putGTGate), finalArguments.reversed(), circuitType)),
                 circuitType
             )
 

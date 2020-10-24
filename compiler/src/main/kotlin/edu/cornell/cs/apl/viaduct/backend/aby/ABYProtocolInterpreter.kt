@@ -7,13 +7,11 @@ import de.tu_darmstadt.cs.encrypto.aby.Share
 import de.tu_darmstadt.cs.encrypto.aby.SharingType
 import edu.cornell.cs.apl.viaduct.analysis.ProtocolAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.TypeAnalysis
+import edu.cornell.cs.apl.viaduct.backend.AbstractProtocolInterpreter
 import edu.cornell.cs.apl.viaduct.backend.HostAddress
 import edu.cornell.cs.apl.viaduct.backend.ObjectLocation
 import edu.cornell.cs.apl.viaduct.backend.ProtocolBackend
 import edu.cornell.cs.apl.viaduct.backend.ProtocolInterpreter
-import edu.cornell.cs.apl.viaduct.backend.ProtocolProjection
-import edu.cornell.cs.apl.viaduct.backend.SingleProtocolInterpreter
-import edu.cornell.cs.apl.viaduct.backend.ViaductProcessRuntime
 import edu.cornell.cs.apl.viaduct.backend.ViaductRuntime
 import edu.cornell.cs.apl.viaduct.errors.IllegalInternalCommunicationError
 import edu.cornell.cs.apl.viaduct.errors.UndefinedNameError
@@ -24,6 +22,7 @@ import edu.cornell.cs.apl.viaduct.selection.ProtocolCommunication
 import edu.cornell.cs.apl.viaduct.syntax.Host
 import edu.cornell.cs.apl.viaduct.syntax.ObjectVariable
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
+import edu.cornell.cs.apl.viaduct.syntax.ProtocolName
 import edu.cornell.cs.apl.viaduct.syntax.QueryNameNode
 import edu.cornell.cs.apl.viaduct.syntax.Temporary
 import edu.cornell.cs.apl.viaduct.syntax.UpdateNameNode
@@ -63,19 +62,22 @@ import mu.KotlinLogging
 private var logger = KotlinLogging.logger("ABY")
 
 class ABYProtocolInterpreter(
+    private val host: Host,
+    private val otherHost: Host,
+    private val role: Role,
     program: ProgramNode,
     private val protocolAnalysis: ProtocolAnalysis,
-    private val runtime: ViaductProcessRuntime,
-    connectionMap: Map<Host, HostAddress>
-) : SingleProtocolInterpreter<ABYProtocolInterpreter.ABYClassObject>(program) {
+    private val runtime: ViaductRuntime,
+    connectionMap: Map<Host, HostAddress>,
+    port: Int = DEFAULT_PORT
+) : AbstractProtocolInterpreter<ABYProtocolInterpreter.ABYClassObject>(program) {
     override val availableProtocols: Set<Protocol> =
-        setOf(runtime.projection.protocol)
-
-    private var aby: ABYParty
-    private var role: Role
-    private var otherHost: Host
+        setOf(
+            if (role == Role.SERVER) ABY(host, otherHost) else ABY(otherHost, host)
+        )
 
     private val typeAnalysis = TypeAnalysis.get(program)
+    private val aby: ABYParty
 
     private val ssTempStoreStack: Stack<PersistentMap<Temporary, ABYCircuitGate>> = Stack()
 
@@ -100,31 +102,13 @@ class ABYProtocolInterpreter(
         }
 
     init {
-        val protocol = runtime.projection.protocol as ABY
-
-        when (runtime.projection.host) {
-            protocol.server -> {
-                role = Role.SERVER
-                otherHost = protocol.client
-            }
-            protocol.client -> {
-                role = Role.CLIENT
-                otherHost = protocol.server
-            }
-            else ->
-                throw ViaductInterpreterError(
-                    "ABY interpreter for protocol ${runtime.projection.protocol.asDocument.print()} " +
-                        "cannot execute code for host ${runtime.projection.host.name}"
-                )
-        }
-
         val otherHostAddress: HostAddress =
             connectionMap[otherHost]
                 ?: throw ViaductInterpreterError("cannot find address for host ${otherHost.name}")
 
-        aby = ABYParty(role, otherHostAddress.ipAddress, DEFAULT_PORT, Aby.getLT(), BITLEN)
+        aby = ABYParty(role, otherHostAddress.ipAddress, port, Aby.getLT(), BITLEN)
 
-        logger.info { "connected ABY to other host at ${otherHostAddress.ipAddress}:$DEFAULT_PORT" }
+        logger.info { "connected ABY to other host at ${otherHostAddress.ipAddress}:$port" }
 
         objectStoreStack.push(persistentMapOf())
         ssTempStoreStack.push(persistentMapOf())
@@ -155,72 +139,79 @@ class ABYProtocolInterpreter(
         ctTempStoreStack.pop()
     }
 
-    override suspend fun buildExpressionObject(expr: AtomicExpressionNode): ABYClassObject {
-        return ABYImmutableCellObject(runSecretSharedExpr(expr))
+    override suspend fun buildExpressionObject(
+        protocol: Protocol,
+        expr: AtomicExpressionNode
+    ): ABYClassObject {
+        return ABYImmutableCellObject(
+            runSecretSharedExpr(protocolCircuitType[protocol.protocolName]!!, expr)
+        )
     }
 
     override suspend fun buildObject(
+        protocol: Protocol,
         className: ClassName,
         typeArguments: List<ValueType>,
         arguments: List<AtomicExpressionNode>
     ): ABYClassObject {
+        val circuitType = protocolCircuitType[protocol.protocolName]!!
         return when (className) {
             ImmutableCell -> {
-                val valGate = runSecretSharedExpr(arguments[0])
+                val valGate = runSecretSharedExpr(circuitType, arguments[0])
                 ABYImmutableCellObject(valGate)
             }
 
             MutableCell -> {
-                val valGate = runSecretSharedExpr(arguments[0])
+                val valGate = runSecretSharedExpr(circuitType, arguments[0])
                 ABYMutableCellObject(valGate)
             }
 
             Vector -> {
-                val length = runGuard(arguments[0]) as IntegerValue
-                ABYVectorObject(length.value, typeArguments[0].defaultValue)
+                val length = runPlaintextExpr(arguments[0]) as IntegerValue
+                ABYVectorObject(protocolCircuitType[protocol.protocolName]!!, length.value, typeArguments[0].defaultValue)
             }
 
             else -> throw ViaductInterpreterError("ABY: Cannot build object of unknown class $className")
         }
     }
 
-    override fun getNullObject(): ABYClassObject {
+    override fun getNullObject(protocol: Protocol): ABYClassObject {
         return ABYNullObject
     }
 
-    private fun valueToCircuit(value: Value, isInput: Boolean = false): ABYCircuitGate {
+    private fun valueToCircuit(circuitType: ABYCircuitType, value: Value, isInput: Boolean = false): ABYCircuitGate {
         return when (value) {
             is BooleanValue ->
                 if (isInput) {
-                    ABYInGate(if (value.value) 1 else 0)
+                    ABYInGate(if (value.value) 1 else 0, circuitType)
                 } else {
-                    ABYConstantGate(if (value.value) 1 else 0)
+                    ABYConstantGate(if (value.value) 1 else 0, circuitType)
                 }
 
             is IntegerValue ->
                 if (isInput) {
-                    ABYInGate(value.value)
+                    ABYInGate(value.value, circuitType)
                 } else {
-                    ABYConstantGate(value.value)
+                    ABYConstantGate(value.value, circuitType)
                 }
 
             else -> throw ViaductInterpreterError("unknown value type: ${value.asDocument.print()}")
         }
     }
 
-    private suspend fun runCleartextRead(read: ReadNode): Value {
+    private suspend fun runPlaintextRead(read: ReadNode): Value {
         val storeValue = ctTempStore[read.temporary.value]
         return if (storeValue == null) {
             val sendProtocol = protocolAnalysis.primaryProtocol(read)
 
-            if (runtime.projection.protocol != sendProtocol) {
+            if (!availableProtocols.contains(sendProtocol)) {
                 val events: ProtocolCommunication = protocolAnalysis.relevantCommunicationEvents(read)
 
                 var cleartextInput: Value? = null
                 for (event in events) {
                     when {
                         // cleartext input
-                        event.recv.id == ABY.CLEARTEXT_INPUT && event.recv.host == runtime.projection.host -> {
+                        event.recv.id == ABY.CLEARTEXT_INPUT && event.recv.host == host -> {
                             val receivedValue: Value =
                                 runtime.receive(event)
 
@@ -247,12 +238,19 @@ class ABYProtocolInterpreter(
         }
     }
 
-    private suspend fun runSecretRead(read: ReadNode): ABYCircuitGate {
+    private suspend fun runPlaintextExpr(expr: AtomicExpressionNode): Value {
+        return when (expr) {
+            is LiteralNode -> expr.value
+            is ReadNode -> runPlaintextRead(expr)
+        }
+    }
+
+    private suspend fun runSecretRead(circuitType: ABYCircuitType, read: ReadNode): ABYCircuitGate {
         val storeValue = ssTempStore[read.temporary.value]
         return if (storeValue == null) {
             val sendProtocol = protocolAnalysis.primaryProtocol(read)
 
-            if (sendProtocol != runtime.projection.protocol) {
+            if (!availableProtocols.contains(sendProtocol)) {
                 val events: ProtocolCommunication = protocolAnalysis.relevantCommunicationEvents(read)
 
                 var secretInput: ABYCircuitGate? = null
@@ -260,11 +258,11 @@ class ABYProtocolInterpreter(
                 for (event in events) {
                     when {
                         // secret input for this host; create input gate
-                        event.recv.id == ABY.SECRET_INPUT && event.recv.host == runtime.projection.host -> {
+                        event.recv.id == ABY.SECRET_INPUT && event.recv.host == host -> {
                             val receivedValue: Value = runtime.receive(event)
 
                             if (previousReceivedValue == null) {
-                                secretInput = valueToCircuit(receivedValue, isInput = true)
+                                secretInput = valueToCircuit(circuitType, receivedValue, isInput = true)
                                 previousReceivedValue = receivedValue
                             } else if (previousReceivedValue != receivedValue) {
                                 throw ViaductInterpreterError("received different values")
@@ -272,8 +270,8 @@ class ABYProtocolInterpreter(
                         }
 
                         // other host has secret input; create dummy input gate
-                        event.recv.id == ABY.SECRET_INPUT && event.recv.host != runtime.projection.host -> {
-                            secretInput = ABYDummyInGate()
+                        event.recv.id == ABY.SECRET_INPUT && event.recv.host != host -> {
+                            secretInput = ABYDummyInGate(circuitType)
                         }
 
                         // cleartext input; throw an error
@@ -292,15 +290,16 @@ class ABYProtocolInterpreter(
         }
     }
 
-    suspend fun runSecretSharedExpr(expr: PureExpressionNode): ABYCircuitGate {
+    private suspend fun runSecretSharedExpr(circuitType: ABYCircuitType, expr: PureExpressionNode): ABYCircuitGate {
         return when (expr) {
-            is LiteralNode -> valueToCircuit(expr.value)
+            is LiteralNode -> valueToCircuit(circuitType, expr.value)
 
-            is ReadNode -> runSecretRead(expr)
+            is ReadNode -> runSecretRead(circuitType, expr)
 
             is OperatorApplicationNode -> {
-                val circuitArguments: List<ABYCircuitGate> = expr.arguments.map { arg -> runSecretSharedExpr(arg) }
-                operatorToCircuit(expr.operator, circuitArguments)
+                val circuitArguments: List<ABYCircuitGate> =
+                    expr.arguments.map { arg -> runSecretSharedExpr(circuitType, arg) }
+                operatorToCircuit(expr.operator, circuitArguments, circuitType)
             }
 
             is QueryNode -> {
@@ -308,8 +307,8 @@ class ABYProtocolInterpreter(
                 getObject(loc).query(expr.query, expr.arguments)
             }
 
-            is DeclassificationNode -> runSecretSharedExpr(expr.expression)
-            is EndorsementNode -> runSecretSharedExpr(expr.expression)
+            is DeclassificationNode -> runSecretSharedExpr(circuitType, expr.expression)
+            is EndorsementNode -> runSecretSharedExpr(circuitType, expr.expression)
         }
     }
 
@@ -360,7 +359,7 @@ class ABYProtocolInterpreter(
     }
 
     private fun executeABYCircuit(letNode: LetNode, receivingHosts: Set<Host>): Value? {
-        val thisHostReceives = receivingHosts.contains(runtime.projection.host)
+        val thisHostReceives = receivingHosts.contains(host)
         val otherHostReceives = receivingHosts.contains(otherHost)
         val outRole: Role =
             when {
@@ -401,18 +400,19 @@ class ABYProtocolInterpreter(
         } else null
     }
 
-    override suspend fun runGuard(expr: AtomicExpressionNode): Value {
+    override suspend fun runGuard(protocol: Protocol, expr: AtomicExpressionNode): Value {
         throw ViaductInterpreterError("ABY: Cannot execute conditional guard")
     }
 
-    override suspend fun runLet(stmt: LetNode) {
+    override suspend fun runLet(protocol: Protocol, stmt: LetNode) {
         when (val rhs = stmt.value) {
             is ReceiveNode -> throw IllegalInternalCommunicationError(rhs)
 
             is InputNode -> throw ViaductInterpreterError("cannot perform I/O in non-Local protocol")
 
             is PureExpressionNode -> {
-                val rhsCircuit = runSecretSharedExpr(rhs)
+                val circuitType = protocolCircuitType[protocol.protocolName]!!
+                val rhsCircuit = runSecretSharedExpr(circuitType, rhs)
                 ssTempStore = ssTempStore.put(stmt.temporary.value, rhsCircuit)
 
                 // execute circuit and broadcast to other protocols
@@ -432,7 +432,10 @@ class ABYProtocolInterpreter(
 
                     if (outValue != null) {
                         val hostEvents =
-                            events.filter { event -> event.send.asProjection() == runtime.projection }
+                            events.filter { event ->
+                                availableProtocols.contains(event.send.protocol) &&
+                                    event.send.host == host
+                            }
 
                         for (event in hostEvents) {
                             runtime.send(outValue, event)
@@ -443,18 +446,19 @@ class ABYProtocolInterpreter(
         }
     }
 
-    override suspend fun runUpdate(stmt: UpdateNode) {
-        getObject(getObjectLocation(stmt.variable.value)).update(stmt.update, stmt.arguments)
+    override suspend fun runUpdate(protocol: Protocol, stmt: UpdateNode) {
+        getObject(getObjectLocation(stmt.variable.value))
+            .update(protocolCircuitType[protocol.protocolName]!!, stmt.update, stmt.arguments)
     }
 
-    override suspend fun runOutput(stmt: OutputNode) {
+    override suspend fun runOutput(protocol: Protocol, stmt: OutputNode) {
         throw ViaductInterpreterError("cannot perform I/O in non-Local protocol")
     }
 
     abstract class ABYClassObject {
         abstract suspend fun query(query: QueryNameNode, arguments: List<AtomicExpressionNode>): ABYCircuitGate
 
-        abstract suspend fun update(update: UpdateNameNode, arguments: List<AtomicExpressionNode>)
+        abstract suspend fun update(circuitType: ABYCircuitType, update: UpdateNameNode, arguments: List<AtomicExpressionNode>)
     }
 
     class ABYImmutableCellObject(private var gate: ABYCircuitGate) : ABYClassObject() {
@@ -468,7 +472,7 @@ class ABYProtocolInterpreter(
             }
         }
 
-        override suspend fun update(update: UpdateNameNode, arguments: List<AtomicExpressionNode>) {
+        override suspend fun update(circuitType: ABYCircuitType, update: UpdateNameNode, arguments: List<AtomicExpressionNode>) {
             throw ViaductInterpreterError("ABY: unknown update for immutable cell", update)
         }
     }
@@ -484,15 +488,15 @@ class ABYProtocolInterpreter(
             }
         }
 
-        override suspend fun update(update: UpdateNameNode, arguments: List<AtomicExpressionNode>) {
+        override suspend fun update(circuitType: ABYCircuitType, update: UpdateNameNode, arguments: List<AtomicExpressionNode>) {
             gate = when (update.value) {
                 is edu.cornell.cs.apl.viaduct.syntax.datatypes.Set -> {
-                    this@ABYProtocolInterpreter.runSecretSharedExpr(arguments[0])
+                    this@ABYProtocolInterpreter.runSecretSharedExpr(circuitType, arguments[0])
                 }
 
                 is Modify -> {
-                    val circuitArg: ABYCircuitGate = runSecretSharedExpr(arguments[0])
-                    operatorToCircuit(update.value.operator, listOf(gate, circuitArg))
+                    val circuitArg: ABYCircuitGate = runSecretSharedExpr(circuitType, arguments[0])
+                    operatorToCircuit(update.value.operator, listOf(gate, circuitArg), circuitType)
                 }
 
                 else ->
@@ -501,19 +505,20 @@ class ABYProtocolInterpreter(
         }
     }
 
-    inner class ABYVectorObject(val size: Int, defaultValue: Value) : ABYClassObject() {
+    inner class ABYVectorObject(circuitType: ABYCircuitType, val size: Int, defaultValue: Value) : ABYClassObject() {
         private val gates: ArrayList<ABYCircuitGate> = ArrayList(size)
 
         init {
             for (i: Int in 0 until size) {
-                gates[i] = valueToCircuit(defaultValue)
+                gates[i] = valueToCircuit(circuitType, defaultValue)
             }
         }
 
         override suspend fun query(query: QueryNameNode, arguments: List<AtomicExpressionNode>): ABYCircuitGate {
             return when (query.value) {
                 is Get -> {
-                    val index = runGuard(arguments[0]) as IntegerValue
+                    val index: IntegerValue = runPlaintextExpr(arguments[0]) as IntegerValue
+
                     gates[index.value]
                 }
 
@@ -521,17 +526,17 @@ class ABYProtocolInterpreter(
             }
         }
 
-        override suspend fun update(update: UpdateNameNode, arguments: List<AtomicExpressionNode>) {
-            val index = runGuard(arguments[0]) as IntegerValue
+        override suspend fun update(circuitType: ABYCircuitType, update: UpdateNameNode, arguments: List<AtomicExpressionNode>) {
+            val index: IntegerValue = runPlaintextExpr(arguments[0]) as IntegerValue
 
             gates[index.value] = when (update.value) {
                 is edu.cornell.cs.apl.viaduct.syntax.datatypes.Set -> {
-                    runSecretSharedExpr(arguments[1])
+                    runSecretSharedExpr(circuitType, arguments[1])
                 }
 
                 is Modify -> {
-                    val circuitArg: ABYCircuitGate = runSecretSharedExpr(arguments[1])
-                    operatorToCircuit(update.value.operator, listOf(gates[index.value], circuitArg))
+                    val circuitArg: ABYCircuitGate = runSecretSharedExpr(circuitType, arguments[1])
+                    operatorToCircuit(update.value.operator, listOf(gates[index.value], circuitArg), circuitType)
                 }
 
                 else -> throw ViaductInterpreterError("ABY: unknown update ${update.value} for vector", update)
@@ -544,7 +549,7 @@ class ABYProtocolInterpreter(
             throw ViaductInterpreterError("ABY: unknown query ${query.value} for null object", query)
         }
 
-        override suspend fun update(update: UpdateNameNode, arguments: List<AtomicExpressionNode>) {
+        override suspend fun update(circuitType: ABYCircuitType, update: UpdateNameNode, arguments: List<AtomicExpressionNode>) {
             throw ViaductInterpreterError("ABY: unknown update ${update.value} for null object", update)
         }
     }
@@ -552,6 +557,9 @@ class ABYProtocolInterpreter(
     companion object : ProtocolBackend {
         private const val DEFAULT_PORT = 7766
         private const val BITLEN: Long = 32
+
+        private val protocolCircuitType: Map<ProtocolName, ABYCircuitType> =
+            mapOf(ABY.protocolName to ABYCircuitType.YAO)
 
         override fun buildProtocolInterpreters(
             host: Host,
@@ -561,16 +569,35 @@ class ABYProtocolInterpreter(
             runtime: ViaductRuntime,
             connectionMap: Map<Host, HostAddress>
         ): Iterable<ProtocolInterpreter> {
-            return protocols
-                .filter { protocol -> protocol.protocolName == ABY.protocolName }
-                .map { protocol ->
-                    ABYProtocolInterpreter(
-                        program,
-                        protocolAnalysis,
-                        ViaductProcessRuntime(runtime, ProtocolProjection(protocol, host)),
-                        connectionMap
+            // this has to be sorted so all hosts agree on the port number to use!
+            val abyProtocols = protocols.filterIsInstance<ABY>().sorted()
+            var currentPort = DEFAULT_PORT
+            val currentHostPairs: MutableSet<Pair<Host, Host>> = mutableSetOf()
+            val createdInterpreters: MutableSet<ABYProtocolInterpreter> = mutableSetOf()
+
+            for (abyProtocol in abyProtocols) {
+                val hostPair = abyProtocol.server to abyProtocol.client
+                if (!currentHostPairs.contains(hostPair)) {
+                    val role = if (abyProtocol.server == host) Role.SERVER else Role.CLIENT
+                    val otherHost = if (role == Role.CLIENT) abyProtocol.server else abyProtocol.client
+
+                    createdInterpreters.add(
+                        ABYProtocolInterpreter(
+                            host,
+                            otherHost,
+                            role,
+                            program,
+                            protocolAnalysis,
+                            runtime,
+                            connectionMap
+                        )
                     )
+                    currentHostPairs.add(hostPair)
+                    currentPort++
                 }
+            }
+
+            return createdInterpreters
         }
     }
 }

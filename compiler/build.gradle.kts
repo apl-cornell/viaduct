@@ -1,3 +1,5 @@
+// import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
+
 buildscript {
     dependencies {
         classpath("com.github.vbmacher:java-cup:11b-20160615")
@@ -13,6 +15,9 @@ plugins {
 
     // Lexing & Parsing
     id("org.xbib.gradle.plugin.jflex") version "1.4.0"
+
+    // shadowJar
+    // id("com.github.johnrengelman.shadow") version "6.1.0"
 }
 
 /** Application */
@@ -21,7 +26,20 @@ val mainPackage = "${project.group}.${rootProject.name}"
 
 application {
     mainClass.set("$mainPackage.MainKt")
+    mainClassName = "$mainPackage.MainKt"
 }
+
+/*
+tasks {
+    named<ShadowJar>("shadowJar") {
+        archiveBaseName.set("${rootProject.name}")
+        mergeServiceFiles()
+        manifest {
+            attributes(mapOf("Main-Class" to "$mainPackage.MainKt"))
+        }
+    }
+}
+*/
 
 /** Dependencies */
 

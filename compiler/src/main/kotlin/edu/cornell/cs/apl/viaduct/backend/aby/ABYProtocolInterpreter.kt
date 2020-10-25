@@ -17,6 +17,9 @@ import edu.cornell.cs.apl.viaduct.errors.IllegalInternalCommunicationError
 import edu.cornell.cs.apl.viaduct.errors.UndefinedNameError
 import edu.cornell.cs.apl.viaduct.errors.ViaductInterpreterError
 import edu.cornell.cs.apl.viaduct.protocols.ABY
+import edu.cornell.cs.apl.viaduct.protocols.ArithABY
+import edu.cornell.cs.apl.viaduct.protocols.BoolABY
+import edu.cornell.cs.apl.viaduct.protocols.YaoABY
 import edu.cornell.cs.apl.viaduct.selection.CommunicationEvent
 import edu.cornell.cs.apl.viaduct.selection.ProtocolCommunication
 import edu.cornell.cs.apl.viaduct.syntax.Host
@@ -72,9 +75,11 @@ class ABYProtocolInterpreter(
     port: Int = DEFAULT_PORT
 ) : AbstractProtocolInterpreter<ABYProtocolInterpreter.ABYClassObject>(program) {
     override val availableProtocols: Set<Protocol> =
-        setOf(
-            if (role == Role.SERVER) ABY(host, otherHost) else ABY(otherHost, host)
-        )
+        if (role == Role.SERVER) {
+            setOf(ABY(host, otherHost), ArithABY(host, otherHost), BoolABY(host, otherHost), YaoABY(host, otherHost))
+        } else {
+            setOf(ABY(otherHost, host), ArithABY(otherHost, host), BoolABY(otherHost, host), YaoABY(otherHost, host))
+        }
 
     private val typeAnalysis = TypeAnalysis.get(program)
     private val aby: ABYParty
@@ -168,7 +173,11 @@ class ABYProtocolInterpreter(
 
             Vector -> {
                 val length = runPlaintextExpr(arguments[0]) as IntegerValue
-                ABYVectorObject(protocolCircuitType[protocol.protocolName]!!, length.value, typeArguments[0].defaultValue)
+                ABYVectorObject(
+                    protocolCircuitType[protocol.protocolName]!!,
+                    length.value,
+                    typeArguments[0].defaultValue
+                )
             }
 
             else -> throw ViaductInterpreterError("ABY: Cannot build object of unknown class $className")
@@ -416,7 +425,14 @@ class ABYProtocolInterpreter(
                 ssTempStore = ssTempStore.put(stmt.temporary.value, rhsCircuit)
 
                 // execute circuit and broadcast to other protocols
-                val readers: Set<SimpleStatementNode> = protocolAnalysis.directRemoteReaders(stmt)
+                val readers: List<SimpleStatementNode> =
+                    protocolAnalysis
+                        .directRemoteReaders(stmt)
+                        .filter { reader ->
+                            !availableProtocols.contains(
+                                protocolAnalysis.primaryProtocol(reader)
+                            )
+                        }
 
                 if (readers.isNotEmpty()) {
                     val events: Set<CommunicationEvent> =
@@ -458,7 +474,11 @@ class ABYProtocolInterpreter(
     abstract class ABYClassObject {
         abstract suspend fun query(query: QueryNameNode, arguments: List<AtomicExpressionNode>): ABYCircuitGate
 
-        abstract suspend fun update(circuitType: ABYCircuitType, update: UpdateNameNode, arguments: List<AtomicExpressionNode>)
+        abstract suspend fun update(
+            circuitType: ABYCircuitType,
+            update: UpdateNameNode,
+            arguments: List<AtomicExpressionNode>
+        )
     }
 
     class ABYImmutableCellObject(private var gate: ABYCircuitGate) : ABYClassObject() {
@@ -472,7 +492,11 @@ class ABYProtocolInterpreter(
             }
         }
 
-        override suspend fun update(circuitType: ABYCircuitType, update: UpdateNameNode, arguments: List<AtomicExpressionNode>) {
+        override suspend fun update(
+            circuitType: ABYCircuitType,
+            update: UpdateNameNode,
+            arguments: List<AtomicExpressionNode>
+        ) {
             throw ViaductInterpreterError("ABY: unknown update for immutable cell", update)
         }
     }
@@ -488,7 +512,11 @@ class ABYProtocolInterpreter(
             }
         }
 
-        override suspend fun update(circuitType: ABYCircuitType, update: UpdateNameNode, arguments: List<AtomicExpressionNode>) {
+        override suspend fun update(
+            circuitType: ABYCircuitType,
+            update: UpdateNameNode,
+            arguments: List<AtomicExpressionNode>
+        ) {
             gate = when (update.value) {
                 is edu.cornell.cs.apl.viaduct.syntax.datatypes.Set -> {
                     this@ABYProtocolInterpreter.runSecretSharedExpr(circuitType, arguments[0])
@@ -526,7 +554,11 @@ class ABYProtocolInterpreter(
             }
         }
 
-        override suspend fun update(circuitType: ABYCircuitType, update: UpdateNameNode, arguments: List<AtomicExpressionNode>) {
+        override suspend fun update(
+            circuitType: ABYCircuitType,
+            update: UpdateNameNode,
+            arguments: List<AtomicExpressionNode>
+        ) {
             val index: IntegerValue = runPlaintextExpr(arguments[0]) as IntegerValue
 
             gates[index.value] = when (update.value) {
@@ -549,7 +581,11 @@ class ABYProtocolInterpreter(
             throw ViaductInterpreterError("ABY: unknown query ${query.value} for null object", query)
         }
 
-        override suspend fun update(circuitType: ABYCircuitType, update: UpdateNameNode, arguments: List<AtomicExpressionNode>) {
+        override suspend fun update(
+            circuitType: ABYCircuitType,
+            update: UpdateNameNode,
+            arguments: List<AtomicExpressionNode>
+        ) {
             throw ViaductInterpreterError("ABY: unknown update ${update.value} for null object", update)
         }
     }
@@ -559,7 +595,12 @@ class ABYProtocolInterpreter(
         private const val BITLEN: Long = 32
 
         private val protocolCircuitType: Map<ProtocolName, ABYCircuitType> =
-            mapOf(ABY.protocolName to ABYCircuitType.YAO)
+            mapOf(
+                ABY.protocolName to ABYCircuitType.YAO,
+                ArithABY.protocolName to ABYCircuitType.ARITH,
+                BoolABY.protocolName to ABYCircuitType.BOOL,
+                YaoABY.protocolName to ABYCircuitType.YAO
+            )
 
         override fun buildProtocolInterpreters(
             host: Host,
@@ -571,6 +612,7 @@ class ABYProtocolInterpreter(
         ): Iterable<ProtocolInterpreter> {
             // this has to be sorted so all hosts agree on the port number to use!
             val abyProtocols = protocols.filterIsInstance<ABY>().sorted()
+
             var currentPort = DEFAULT_PORT
             val currentHostPairs: MutableSet<Pair<Host, Host>> = mutableSetOf()
             val createdInterpreters: MutableSet<ABYProtocolInterpreter> = mutableSetOf()

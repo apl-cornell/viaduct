@@ -50,6 +50,8 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.ReadNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ReceiveNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.SimpleStatementNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.UpdateNode
+import edu.cornell.cs.apl.viaduct.syntax.operators.EqualTo
+import edu.cornell.cs.apl.viaduct.syntax.operators.Mux
 import edu.cornell.cs.apl.viaduct.syntax.types.BooleanType
 import edu.cornell.cs.apl.viaduct.syntax.types.IntegerType
 import edu.cornell.cs.apl.viaduct.syntax.types.ValueType
@@ -63,6 +65,10 @@ import kotlinx.collections.immutable.persistentMapOf
 import mu.KotlinLogging
 
 private var logger = KotlinLogging.logger("ABY")
+
+sealed class ABYValue
+data class ABYCleartextValue(val value: Value) : ABYValue()
+data class ABYSecretValue(val value: ABYCircuitGate) : ABYValue()
 
 class ABYProtocolInterpreter(
     private val host: Host,
@@ -149,7 +155,7 @@ class ABYProtocolInterpreter(
         expr: AtomicExpressionNode
     ): ABYClassObject {
         return ABYImmutableCellObject(
-            runSecretSharedExpr(protocolCircuitType[protocol.protocolName]!!, expr)
+            runSecretExpr(protocolCircuitType[protocol.protocolName]!!, expr)
         )
     }
 
@@ -162,12 +168,12 @@ class ABYProtocolInterpreter(
         val circuitType = protocolCircuitType[protocol.protocolName]!!
         return when (className) {
             ImmutableCell -> {
-                val valGate = runSecretSharedExpr(circuitType, arguments[0])
+                val valGate = runSecretExpr(circuitType, arguments[0])
                 ABYImmutableCellObject(valGate)
             }
 
             MutableCell -> {
-                val valGate = runSecretSharedExpr(circuitType, arguments[0])
+                val valGate = runSecretExpr(circuitType, arguments[0])
                 ABYMutableCellObject(valGate)
             }
 
@@ -299,7 +305,7 @@ class ABYProtocolInterpreter(
         }
     }
 
-    private suspend fun runSecretSharedExpr(circuitType: ABYCircuitType, expr: PureExpressionNode): ABYCircuitGate {
+    private suspend fun runSecretExpr(circuitType: ABYCircuitType, expr: PureExpressionNode): ABYCircuitGate {
         return when (expr) {
             is LiteralNode -> valueToCircuit(circuitType, expr.value)
 
@@ -307,17 +313,39 @@ class ABYProtocolInterpreter(
 
             is OperatorApplicationNode -> {
                 val circuitArguments: List<ABYCircuitGate> =
-                    expr.arguments.map { arg -> runSecretSharedExpr(circuitType, arg) }
+                    expr.arguments.map { arg -> runSecretExpr(circuitType, arg) }
                 operatorToCircuit(expr.operator, circuitArguments, circuitType)
             }
 
             is QueryNode -> {
                 val loc = getObjectLocation(expr.variable.value)
-                getObject(loc).query(expr.query, expr.arguments)
+                getObject(loc).query(circuitType, expr.query, expr.arguments)
             }
 
-            is DeclassificationNode -> runSecretSharedExpr(circuitType, expr.expression)
-            is EndorsementNode -> runSecretSharedExpr(circuitType, expr.expression)
+            is DeclassificationNode -> runSecretExpr(circuitType, expr.expression)
+            is EndorsementNode -> runSecretExpr(circuitType, expr.expression)
+        }
+    }
+
+    /** Return either a cleartext or secret-shared value. Used by array indexing. */
+    private suspend fun runPlaintextOrSecretExpr(
+        circuitType: ABYCircuitType,
+        expr: AtomicExpressionNode
+    ): ABYValue {
+        return when (expr) {
+            is LiteralNode -> ABYCleartextValue(expr.value)
+            is ReadNode -> {
+                val isCleartextRead =
+                    protocolAnalysis
+                        .relevantCommunicationEvents(expr)
+                        .all { event -> event.recv.id == ABY.CLEARTEXT_INPUT }
+
+                if (isCleartextRead) {
+                    ABYCleartextValue(runPlaintextRead(expr))
+                } else {
+                    ABYSecretValue(runSecretRead(circuitType, expr))
+                }
+            }
         }
     }
 
@@ -421,7 +449,7 @@ class ABYProtocolInterpreter(
 
             is PureExpressionNode -> {
                 val circuitType = protocolCircuitType[protocol.protocolName]!!
-                val rhsCircuit = runSecretSharedExpr(circuitType, rhs)
+                val rhsCircuit = runSecretExpr(circuitType, rhs)
                 ssTempStore = ssTempStore.put(stmt.temporary.value, rhsCircuit)
 
                 // execute circuit and broadcast to other protocols
@@ -472,7 +500,11 @@ class ABYProtocolInterpreter(
     }
 
     abstract class ABYClassObject {
-        abstract suspend fun query(query: QueryNameNode, arguments: List<AtomicExpressionNode>): ABYCircuitGate
+        abstract suspend fun query(
+            circuitType: ABYCircuitType,
+            query: QueryNameNode,
+            arguments: List<AtomicExpressionNode>
+        ): ABYCircuitGate
 
         abstract suspend fun update(
             circuitType: ABYCircuitType,
@@ -482,7 +514,11 @@ class ABYProtocolInterpreter(
     }
 
     class ABYImmutableCellObject(private var gate: ABYCircuitGate) : ABYClassObject() {
-        override suspend fun query(query: QueryNameNode, arguments: List<AtomicExpressionNode>): ABYCircuitGate {
+        override suspend fun query(
+            circuitType: ABYCircuitType,
+            query: QueryNameNode,
+            arguments: List<AtomicExpressionNode>
+        ): ABYCircuitGate {
             return when (query.value) {
                 is Get -> gate
 
@@ -502,7 +538,11 @@ class ABYProtocolInterpreter(
     }
 
     inner class ABYMutableCellObject(private var gate: ABYCircuitGate) : ABYClassObject() {
-        override suspend fun query(query: QueryNameNode, arguments: List<AtomicExpressionNode>): ABYCircuitGate {
+        override suspend fun query(
+            circuitType: ABYCircuitType,
+            query: QueryNameNode,
+            arguments: List<AtomicExpressionNode>
+        ): ABYCircuitGate {
             return when (query.value) {
                 is Get -> gate
 
@@ -519,11 +559,11 @@ class ABYProtocolInterpreter(
         ) {
             gate = when (update.value) {
                 is edu.cornell.cs.apl.viaduct.syntax.datatypes.Set -> {
-                    this@ABYProtocolInterpreter.runSecretSharedExpr(circuitType, arguments[0])
+                    this@ABYProtocolInterpreter.runSecretExpr(circuitType, arguments[0])
                 }
 
                 is Modify -> {
-                    val circuitArg: ABYCircuitGate = runSecretSharedExpr(circuitType, arguments[0])
+                    val circuitArg: ABYCircuitGate = runSecretExpr(circuitType, arguments[0])
                     operatorToCircuit(update.value.operator, listOf(gate, circuitArg), circuitType)
                 }
 
@@ -538,16 +578,47 @@ class ABYProtocolInterpreter(
 
         init {
             for (i: Int in 0 until size) {
-                gates[i] = valueToCircuit(circuitType, defaultValue)
+                gates.add(valueToCircuit(circuitType, defaultValue))
             }
         }
 
-        override suspend fun query(query: QueryNameNode, arguments: List<AtomicExpressionNode>): ABYCircuitGate {
+        override suspend fun query(
+            circuitType: ABYCircuitType,
+            query: QueryNameNode,
+            arguments: List<AtomicExpressionNode>
+        ): ABYCircuitGate {
             return when (query.value) {
                 is Get -> {
-                    val index: IntegerValue = runPlaintextExpr(arguments[0]) as IntegerValue
+                    when (val index: ABYValue = runPlaintextOrSecretExpr(circuitType, arguments[0])) {
+                        is ABYCleartextValue -> {
+                            gates[((index.value) as IntegerValue).value]
+                        }
 
-                    gates[index.value]
+                        // secret indexing requires muxing the entire array
+                        is ABYSecretValue -> {
+                            // return 0 in case of indexing error
+                            var currentShare: ABYCircuitGate = ABYConstantGate(0, circuitType)
+                            for (i in size - 1 downTo 0) {
+                                val guard: ABYCircuitGate =
+                                    operatorToCircuit(
+                                        EqualTo,
+                                        listOf(index.value, ABYConstantGate(i, circuitType)),
+                                        circuitType
+                                    )
+
+                                val mux: ABYCircuitGate =
+                                    operatorToCircuit(
+                                        Mux,
+                                        listOf(guard, gates[i], currentShare),
+                                        circuitType
+                                    )
+
+                                currentShare = mux
+                            }
+
+                            currentShare
+                        }
+                    }
                 }
 
                 else -> throw ViaductInterpreterError("ABY: unknown query ${query.value} for vector", query)
@@ -559,25 +630,72 @@ class ABYProtocolInterpreter(
             update: UpdateNameNode,
             arguments: List<AtomicExpressionNode>
         ) {
-            val index: IntegerValue = runPlaintextExpr(arguments[0]) as IntegerValue
+            when (val index: ABYValue = runPlaintextOrSecretExpr(circuitType, arguments[0])) {
+                is ABYCleartextValue -> {
+                    val intIndex = (index.value as IntegerValue).value
+                    gates[intIndex] = when (update.value) {
+                        is edu.cornell.cs.apl.viaduct.syntax.datatypes.Set -> {
+                            runSecretExpr(circuitType, arguments[1])
+                        }
 
-            gates[index.value] = when (update.value) {
-                is edu.cornell.cs.apl.viaduct.syntax.datatypes.Set -> {
-                    runSecretSharedExpr(circuitType, arguments[1])
+                        is Modify -> {
+                            val circuitArg: ABYCircuitGate = runSecretExpr(circuitType, arguments[1])
+                            operatorToCircuit(
+                                update.value.operator,
+                                listOf(gates[intIndex], circuitArg),
+                                circuitType
+                            )
+                        }
+
+                        else -> throw ViaductInterpreterError("ABY: unknown update ${update.value} for vector", update)
+                    }
                 }
 
-                is Modify -> {
-                    val circuitArg: ABYCircuitGate = runSecretSharedExpr(circuitType, arguments[1])
-                    operatorToCircuit(update.value.operator, listOf(gates[index.value], circuitArg), circuitType)
-                }
+                // mux all array values
+                is ABYSecretValue -> {
+                    val circuitArg: ABYCircuitGate = runSecretExpr(circuitType, arguments[1])
+                    for (i in 0 until size) {
+                        val rhs = when (update.value) {
+                            is edu.cornell.cs.apl.viaduct.syntax.datatypes.Set -> circuitArg
 
-                else -> throw ViaductInterpreterError("ABY: unknown update ${update.value} for vector", update)
+                            is Modify -> {
+                                operatorToCircuit(
+                                    update.value.operator,
+                                    listOf(gates[i], circuitArg),
+                                    circuitType
+                                )
+                            }
+
+                            else -> throw ViaductInterpreterError("ABY: unknown update ${update.value} for vector", update)
+                        }
+
+                        val guard: ABYCircuitGate =
+                            operatorToCircuit(
+                                EqualTo,
+                                listOf(index.value, ABYConstantGate(i, circuitType)),
+                                circuitType
+                            )
+
+                        val mux: ABYCircuitGate =
+                            operatorToCircuit(
+                                Mux,
+                                listOf(guard, rhs, gates[i]),
+                                circuitType
+                            )
+
+                        gates[i] = mux
+                    }
+                }
             }
         }
     }
 
     object ABYNullObject : ABYClassObject() {
-        override suspend fun query(query: QueryNameNode, arguments: List<AtomicExpressionNode>): ABYCircuitGate {
+        override suspend fun query(
+            circuitType: ABYCircuitType,
+            query: QueryNameNode,
+            arguments: List<AtomicExpressionNode>
+        ): ABYCircuitGate {
             throw ViaductInterpreterError("ABY: unknown query ${query.value} for null object", query)
         }
 

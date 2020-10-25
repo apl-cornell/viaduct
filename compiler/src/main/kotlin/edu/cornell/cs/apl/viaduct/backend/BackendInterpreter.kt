@@ -184,8 +184,14 @@ class BackendInterpreter(
                             .toMap()
 
                     try {
+                        /*
                         run(function, stmt.body)
                         run(function, stmt)
+                         */
+
+                        while (true) {
+                            run(function, stmt.body)
+                        }
                     } catch (signal: LoopBreakSignal) {
                         // this signal is for an outer loop
                         if (signal.jumpLabel != stmt.jumpLabel.value) {

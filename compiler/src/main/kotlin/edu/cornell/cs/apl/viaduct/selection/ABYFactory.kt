@@ -17,9 +17,7 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.LiteralNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ObjectDeclarationArgumentNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ParameterNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.QueryNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ReadNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.UpdateNode
 import edu.cornell.cs.apl.viaduct.util.pairedWith
 
 // Only select ABY for a selection if:
@@ -45,39 +43,6 @@ class ABYFactory(program: ProgramNode) : ProtocolFactory {
 
     private fun LetNode.isApplicable(): Boolean {
         return nameAnalysis.readers(this).all { reader ->
-            // array index can't be in MPC
-            val arrayIndexCheck =
-                when (reader) {
-                    is LetNode ->
-                        when (val rhs = reader.value) {
-                            is QueryNode ->
-                                when (nameAnalysis.declaration(rhs).className.value) {
-                                    Vector ->
-                                        when (val index = rhs.arguments[0]) {
-                                            is ReadNode -> index.temporary.value != this.temporary.value
-                                            else -> true
-                                        }
-
-                                    else -> true
-                                }
-
-                            else -> true
-                        }
-
-                    is UpdateNode ->
-                        when (nameAnalysis.declaration(reader).className.value) {
-                            Vector ->
-                                when (val index = reader.arguments[0]) {
-                                    is ReadNode -> index.temporary.value != this.temporary.value
-                                    else -> false
-                                }
-
-                            else -> true
-                        }
-
-                    else -> true
-                }
-
             // array length can't be in MPC
             val arrayLengthCheck =
                 when (reader) {
@@ -95,7 +60,7 @@ class ABYFactory(program: ProgramNode) : ProtocolFactory {
                     else -> true
                 }
 
-            arrayIndexCheck && arrayLengthCheck
+            arrayLengthCheck
         }
     }
 
@@ -151,6 +116,29 @@ class ABYFactory(program: ProgramNode) : ProtocolFactory {
             .filter { it.authority.actsFor(informationFlowAnalysis.label(node)) }
             .map { it.protocol }
             .toSet()
+
+    override fun constraint(node: DeclarationNode): SelectionConstraint {
+        return Literal(true)
+        /*
+        return if (node.className.value == Vector && node.arguments[0] is ReadNode) {
+            val lengthExpr = node.arguments[0] as ReadNode
+            val lengthExprDecl = nameAnalysis.declaration(lengthExpr)
+            val enclosingFunction = nameAnalysis.enclosingFunctionName(lengthExprDecl)
+            val mpcProtocols = protocols.map { it.protocol }.toSet()
+
+            Implies(
+                VariableIn(FunctionVariable(enclosingFunction, node.name.value), mpcProtocols),
+                Not(VariableIn(FunctionVariable(enclosingFunction, lengthExprDecl), mpcProtocols))
+            )
+        } else {
+            Literal(true)
+        }
+        */
+    }
+
+    override fun constraint(node: LetNode): SelectionConstraint {
+        return super.constraint(node)
+    }
 
     override fun guardVisibilityConstraint(protocol: Protocol, node: IfNode): SelectionConstraint =
         when (node.guard) {

@@ -2,8 +2,7 @@ package edu.cornell.cs.apl.viaduct.selection
 
 import edu.cornell.cs.apl.viaduct.syntax.Host
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.ExpressionNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.ObjectDeclaration
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.SimpleStatementNode
 
 /**
  * A modular cost model for estimating the cost of executing a program given a protocol assignment.
@@ -13,10 +12,9 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.ObjectDeclaration
  */
 interface CostEstimator<C : CostMonoid<C>> {
     /**
-     * Estimated cost of running [computation] at [protocol].
+     * Estimated cost of executing [stmt] at [protocol].
      */
-    // TODO: not sure about taking in an expression. At the very least we needs methods too.
-    fun executionCost(computation: ExpressionNode, protocol: Protocol): Cost<C>
+    fun executionCost(stmt: SimpleStatementNode, protocol: Protocol): Cost<C>
 
     /**
      * Estimated cost of sending a message of type [messageType] from [source] to [destination]
@@ -24,9 +22,6 @@ interface CostEstimator<C : CostMonoid<C>> {
      * all the hosts in [destination].
      */
     fun communicationCost(source: Protocol, destination: Protocol, host: Host? = null): Cost<C>
-
-    /** Estimated cost of storing object defined by [declaration] in protocol [protocol]. */
-    fun storageCost(declaration: ObjectDeclaration, protocol: Protocol): Cost<C>
 
     /** "Identity" cost. */
     fun zeroCost(): Cost<C>

@@ -9,8 +9,7 @@ import edu.cornell.cs.apl.viaduct.protocols.Replication
 import edu.cornell.cs.apl.viaduct.protocols.YaoABY
 import edu.cornell.cs.apl.viaduct.syntax.Host
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.ExpressionNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.ObjectDeclaration
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.SimpleStatementNode
 import kotlinx.collections.immutable.persistentMapOf
 
 /**
@@ -32,7 +31,7 @@ class SimpleCostEstimator(
         private const val EXECUTION_COST = "executionCost"
     }
 
-    override fun executionCost(computation: ExpressionNode, protocol: Protocol): Cost<IntegerCost> =
+    override fun executionCost(stmt: SimpleStatementNode, protocol: Protocol): Cost<IntegerCost> =
         zeroCost().update(
             EXECUTION_COST,
             when (protocol) {
@@ -97,32 +96,6 @@ class SimpleCostEstimator(
             zeroCost()
         }
     }
-
-    override fun storageCost(declaration: ObjectDeclaration, protocol: Protocol): Cost<IntegerCost> =
-        zeroCost().update(
-            EXECUTION_COST,
-            when (protocol) {
-                is Local -> IntegerCost(1)
-                is Replication -> IntegerCost(1)
-                is Commitment -> IntegerCost(10)
-                is ABY -> IntegerCost(100)
-                else -> IntegerCost(0)
-            }
-        ).update(
-            NUM_MESSAGES,
-            when (protocol) {
-                is ArithABY, is BoolABY -> IntegerCost(30)
-                is YaoABY -> IntegerCost(10)
-                else -> IntegerCost(0)
-            }
-        ).update(
-            BYTES_TRANSFERRED,
-            when (protocol) {
-                is ArithABY, is BoolABY -> IntegerCost(10)
-                is YaoABY -> IntegerCost(30)
-                else -> IntegerCost(0)
-            }
-        )
 
     override fun zeroCost(): Cost<IntegerCost> =
         Cost(

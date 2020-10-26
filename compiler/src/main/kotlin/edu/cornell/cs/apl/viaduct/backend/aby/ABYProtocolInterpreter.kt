@@ -82,9 +82,9 @@ class ABYProtocolInterpreter(
 ) : AbstractProtocolInterpreter<ABYProtocolInterpreter.ABYClassObject>(program) {
     override val availableProtocols: Set<Protocol> =
         if (role == Role.SERVER) {
-            setOf(ABY(host, otherHost), ArithABY(host, otherHost), BoolABY(host, otherHost), YaoABY(host, otherHost))
+            setOf(ArithABY(host, otherHost), BoolABY(host, otherHost), YaoABY(host, otherHost))
         } else {
-            setOf(ABY(otherHost, host), ArithABY(otherHost, host), BoolABY(otherHost, host), YaoABY(otherHost, host))
+            setOf(ArithABY(otherHost, host), BoolABY(otherHost, host), YaoABY(otherHost, host))
         }
 
     private val typeAnalysis = TypeAnalysis.get(program)

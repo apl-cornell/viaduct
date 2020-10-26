@@ -9,7 +9,6 @@ import edu.cornell.cs.apl.viaduct.backend.ProtocolBackend
 import edu.cornell.cs.apl.viaduct.backend.ViaductBackend
 import edu.cornell.cs.apl.viaduct.backend.aby.ABYProtocolInterpreter
 import edu.cornell.cs.apl.viaduct.backend.commitment.CommitmentProtocolInterpreterFactory
-import edu.cornell.cs.apl.viaduct.parsing.AbyProtocolParser
 import edu.cornell.cs.apl.viaduct.parsing.ArithABYProtocolParser
 import edu.cornell.cs.apl.viaduct.parsing.BoolABYProtocolParser
 import edu.cornell.cs.apl.viaduct.parsing.CommitmentProtocolParser
@@ -18,7 +17,6 @@ import edu.cornell.cs.apl.viaduct.parsing.ProtocolParser
 import edu.cornell.cs.apl.viaduct.parsing.ReplicationProtocolParser
 import edu.cornell.cs.apl.viaduct.parsing.YaoABYProtocolParser
 import edu.cornell.cs.apl.viaduct.passes.elaborated
-import edu.cornell.cs.apl.viaduct.protocols.ABY
 import edu.cornell.cs.apl.viaduct.protocols.ArithABY
 import edu.cornell.cs.apl.viaduct.protocols.BoolABY
 import edu.cornell.cs.apl.viaduct.protocols.Commitment
@@ -52,7 +50,6 @@ class Run : CliktCommand(help = "Run compiled protocol for a single host") {
             Local.protocolName to LocalProtocolParser,
             Commitment.protocolName to CommitmentProtocolParser,
             Replication.protocolName to ReplicationProtocolParser,
-            ABY.protocolName to AbyProtocolParser,
             ArithABY.protocolName to ArithABYProtocolParser,
             BoolABY.protocolName to BoolABYProtocolParser,
             YaoABY.protocolName to YaoABYProtocolParser

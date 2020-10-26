@@ -7,14 +7,6 @@ import edu.cornell.cs.apl.viaduct.protocols.YaoABY
 import edu.cornell.cs.apl.viaduct.syntax.values.HostValue
 
 /** Parser for the [ABY] protocol. */
-object AbyProtocolParser : ProtocolParser<ABY> {
-    override fun parse(arguments: ProtocolArguments): ABY {
-        val server = arguments.get<HostValue>("server")
-        val client = arguments.get<HostValue>("client")
-        return ABY(server.value, client.value)
-    }
-}
-
 object ArithABYProtocolParser : ProtocolParser<ArithABY> {
     override fun parse(arguments: ProtocolArguments): ArithABY {
         val server = arguments.get<HostValue>("server")

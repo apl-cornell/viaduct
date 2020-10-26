@@ -51,6 +51,9 @@ import edu.cornell.cs.apl.viaduct.syntax.operators.And
 import edu.cornell.cs.apl.viaduct.syntax.operators.Mux
 import edu.cornell.cs.apl.viaduct.syntax.operators.Not
 import edu.cornell.cs.apl.viaduct.util.FreshNameGenerator
+import mu.KotlinLogging
+
+private val logger = KotlinLogging.logger("ABYMuxPostprocessor")
 
 fun StatementNode.canMux(): Boolean =
     when (this) {
@@ -88,6 +91,8 @@ class ABYMuxPostprocessor(
     val protocolAssignment: (FunctionName, Variable) -> Protocol
 ) : ProgramPostprocessor {
     override fun postprocess(program: ProgramNode): ProgramNode {
+        logger.info { "muxing conditonals in ABY..." }
+
         val nameAnalysis = NameAnalysis.get(program)
         return ProgramNode(
             program.declarations.map { declaration ->

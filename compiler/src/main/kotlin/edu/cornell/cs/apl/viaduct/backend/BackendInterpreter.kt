@@ -23,6 +23,7 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.SimpleStatementNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.StatementNode
 import edu.cornell.cs.apl.viaduct.syntax.values.BooleanValue
 import edu.cornell.cs.apl.viaduct.syntax.values.UnitValue
+import kotlin.system.measureTimeMillis
 import kotlinx.collections.immutable.PersistentMap
 import kotlinx.collections.immutable.toPersistentMap
 import mu.KotlinLogging
@@ -75,10 +76,12 @@ class BackendInterpreter(
 
         logger.info { "starting interpretation" }
 
-        run(nameAnalysis.enclosingFunctionName(mainBody), mainBody)
-        synchronize(allHosts, allHosts)
+        val duration = measureTimeMillis {
+            run(nameAnalysis.enclosingFunctionName(mainBody), mainBody)
+            synchronize(allHosts, allHosts)
+        }
 
-        logger.info { "finished interpretation" }
+        logger.info { "finished interpretation, total running time: ${duration}ms" }
     }
 
     /** Synchronize hosts. */

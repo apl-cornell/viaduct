@@ -13,10 +13,10 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.ObjectDeclaration
  */
 interface CostEstimator<C : CostMonoid<C>> {
     /**
-     * Estimated cost of running [computation] at [executingProtocol].
+     * Estimated cost of running [computation] at [protocol].
      */
     // TODO: not sure about taking in an expression. At the very least we needs methods too.
-    fun executionCost(computation: ExpressionNode, executingProtocol: Protocol): Cost<C>
+    fun executionCost(computation: ExpressionNode, protocol: Protocol): Cost<C>
 
     /**
      * Estimated cost of sending a message of type [messageType] from [source] to [destination]

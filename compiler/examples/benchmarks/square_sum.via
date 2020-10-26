@@ -23,7 +23,12 @@ process main {
 
     val sqsums : int = endorse a_sum to {A & B<-} + endorse b_sum to {B & A<-};
 
+    /*
+    ABY doesn't support division, so comment this out for now
     val result : int = declassify (sqsums / 2) to {A ⊓ B};
+    */
+
+    val result : int = declassify sqsums to {A ⊓ B};
 
     output result to alice;
     output result to bob;

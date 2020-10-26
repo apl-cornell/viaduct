@@ -2,9 +2,12 @@ package edu.cornell.cs.apl.viaduct.selection
 
 import edu.cornell.cs.apl.attributes.attribute
 import edu.cornell.cs.apl.viaduct.protocols.ABY
+import edu.cornell.cs.apl.viaduct.protocols.ArithABY
+import edu.cornell.cs.apl.viaduct.protocols.BoolABY
 import edu.cornell.cs.apl.viaduct.protocols.Commitment
 import edu.cornell.cs.apl.viaduct.protocols.Local
 import edu.cornell.cs.apl.viaduct.protocols.Replication
+import edu.cornell.cs.apl.viaduct.protocols.YaoABY
 import edu.cornell.cs.apl.viaduct.syntax.Host
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.DeclarationNode
@@ -29,12 +32,8 @@ object SimpleProtocolComposer : ProtocolComposer {
                 )
             }
 
-            src is Local && dst is Local -> {
-                if (src.host != dst.host) {
-                    ProtocolCommunication(setOf(CommunicationEvent(src.outputPort, dst.inputPort)))
-                } else {
-                    ProtocolCommunication(setOf())
-                }
+            src is Local && dst is Local && src.host != dst.host -> {
+                ProtocolCommunication(setOf(CommunicationEvent(src.outputPort, dst.inputPort)))
             }
 
             src is Local && dst is Replication -> {
@@ -58,11 +57,11 @@ object SimpleProtocolComposer : ProtocolComposer {
             src is Local && dst is ABY -> {
                 ProtocolCommunication(
                     if (dst.hosts.contains(src.host)) {
-                        setOf(CommunicationEvent(src.outputPort, dst.hostSecretInputPorts[src.host]!!))
+                        setOf(CommunicationEvent(src.outputPort, dst.secretInputPorts[src.host]!!))
                     } else {
                         // TODO: for now, assume the input is cleartext, but should compare labels
                         // to actually determine this
-                        dst.hostCleartextInputPorts.values.map { inPort ->
+                        dst.cleartextInputPorts.values.map { inPort ->
                             CommunicationEvent(src.outputPort, inPort)
                         }.toSet()
                     }
@@ -124,7 +123,7 @@ object SimpleProtocolComposer : ProtocolComposer {
                             dst.hosts.map { dstHost ->
                                 CommunicationEvent(
                                     src.hostOutputPorts[dstHost]!!,
-                                    dst.hostCleartextInputPorts[dstHost]!!
+                                    dst.cleartextInputPorts[dstHost]!!
                                 )
                             }.toSet()
                         }
@@ -145,7 +144,7 @@ object SimpleProtocolComposer : ProtocolComposer {
                                 dst.hosts.map { dstHost ->
                                     CommunicationEvent(
                                         src.hostOutputPorts[srcHost]!!,
-                                        dst.hostCleartextInputPorts[dstHost]!!
+                                        dst.cleartextInputPorts[dstHost]!!
                                     )
                                 }
                             }.toSet()
@@ -181,11 +180,11 @@ object SimpleProtocolComposer : ProtocolComposer {
                 ProtocolCommunication(
                     if (src.hosts.contains(dst.host)) {
                         setOf(
-                            CommunicationEvent(src.hostCleartextOutputPorts[dst.host]!!, dst.inputPort)
+                            CommunicationEvent(src.cleartextOutputPorts[dst.host]!!, dst.inputPort)
                         )
                     } else {
                         src.hosts.map { srcHost ->
-                            CommunicationEvent(src.hostCleartextOutputPorts[srcHost]!!, dst.inputPort)
+                            CommunicationEvent(src.cleartextOutputPorts[srcHost]!!, dst.inputPort)
                         }.toSet()
                     }
                 )
@@ -199,14 +198,14 @@ object SimpleProtocolComposer : ProtocolComposer {
                 ProtocolCommunication(
                     dstHostSenders.map { sender ->
                         CommunicationEvent(
-                            src.hostCleartextOutputPorts[sender]!!,
+                            src.cleartextOutputPorts[sender]!!,
                             dst.hostInputPorts[sender]!!
                         )
                     }.plus(
                         src.hosts.flatMap { sender ->
                             dstHostReceivers.map { receiver ->
                                 CommunicationEvent(
-                                    src.hostCleartextOutputPorts[sender]!!,
+                                    src.cleartextOutputPorts[sender]!!,
                                     dst.hostInputPorts[receiver]!!
                                 )
                             }
@@ -215,8 +214,64 @@ object SimpleProtocolComposer : ProtocolComposer {
                 )
             }
 
-            src is ABY && dst is ABY && src.client == dst.client && src.server == dst.server -> {
-                ProtocolCommunication(setOf())
+            src is ArithABY && dst is BoolABY &&
+                src.client == dst.client && src.server == dst.server -> {
+                ProtocolCommunication(
+                    setOf(
+                        CommunicationEvent(src.A2BOutputPorts[src.client]!!, dst.A2BInputPorts[dst.client]!!),
+                        CommunicationEvent(src.A2BOutputPorts[src.server]!!, dst.A2BInputPorts[dst.server]!!)
+                    )
+                )
+            }
+
+            src is ArithABY && dst is YaoABY &&
+                src.client == dst.client && src.server == dst.server -> {
+                ProtocolCommunication(
+                    setOf(
+                        CommunicationEvent(src.A2YOutputPorts[src.client]!!, dst.A2YInputPorts[dst.client]!!),
+                        CommunicationEvent(src.A2YOutputPorts[src.server]!!, dst.A2YInputPorts[dst.server]!!)
+                    )
+                )
+            }
+
+            src is BoolABY && dst is ArithABY &&
+                src.client == dst.client && src.server == dst.server -> {
+                ProtocolCommunication(
+                    setOf(
+                        CommunicationEvent(src.B2AOutputPorts[src.client]!!, dst.B2AInputPorts[dst.client]!!),
+                        CommunicationEvent(src.B2AOutputPorts[src.server]!!, dst.B2AInputPorts[dst.server]!!)
+                    )
+                )
+            }
+
+            src is BoolABY && dst is YaoABY &&
+                src.client == dst.client && src.server == dst.server -> {
+                ProtocolCommunication(
+                    setOf(
+                        CommunicationEvent(src.B2YOutputPorts[src.client]!!, dst.B2YInputPorts[dst.client]!!),
+                        CommunicationEvent(src.B2YOutputPorts[src.server]!!, dst.B2YInputPorts[dst.server]!!)
+                    )
+                )
+            }
+
+            src is YaoABY && dst is ArithABY &&
+                src.client == dst.client && src.server == dst.server -> {
+                ProtocolCommunication(
+                    setOf(
+                        CommunicationEvent(src.Y2AOutputPorts[src.client]!!, dst.Y2AInputPorts[dst.client]!!),
+                        CommunicationEvent(src.Y2AOutputPorts[src.server]!!, dst.Y2AInputPorts[dst.server]!!)
+                    )
+                )
+            }
+
+            src is YaoABY && dst is BoolABY &&
+                src.client == dst.client && src.server == dst.server -> {
+                ProtocolCommunication(
+                    setOf(
+                        CommunicationEvent(src.Y2BOutputPorts[src.client]!!, dst.Y2BInputPorts[dst.client]!!),
+                        CommunicationEvent(src.Y2BOutputPorts[src.server]!!, dst.Y2BInputPorts[dst.server]!!)
+                    )
+                )
             }
 
             src is Commitment && dst is Local -> {
@@ -262,13 +317,6 @@ object SimpleProtocolComposer : ProtocolComposer {
                         }
                     }.toSet()
                 )
-            }
-
-            // TODO: fix this
-            src is Commitment && dst is Commitment &&
-                src.cleartextHost == dst.cleartextHost && src.hashHosts == dst.hashHosts ->
-            {
-                ProtocolCommunication(setOf())
             }
 
             else -> throw Error("does not support communication from ${src.protocolName} to ${dst.protocolName}")

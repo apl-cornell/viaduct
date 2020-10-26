@@ -301,7 +301,7 @@ class ABYProtocolInterpreter(
                 throw UndefinedNameError(read.temporary)
             }
         } else {
-            storeValue
+            storeValue.addConversionGates(circuitType)
         }
     }
 

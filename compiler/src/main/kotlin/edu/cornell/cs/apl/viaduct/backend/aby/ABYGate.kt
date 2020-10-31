@@ -91,7 +91,7 @@ class ABYConversionGate(
                         childShares[0]
 
                     ABYCircuitType.BOOL ->
-                        builder.boolCircuit.putA2BGate(childShares[0], builder.yaoCircuit)
+                        builder.boolCircuit.putY2BGate(builder.yaoCircuit.putA2YGate(childShares[0]))
 
                     ABYCircuitType.YAO ->
                         builder.yaoCircuit.putA2YGate(childShares[0])
@@ -112,7 +112,7 @@ class ABYConversionGate(
             ABYCircuitType.YAO ->
                 when (circuitType) {
                     ABYCircuitType.ARITH ->
-                        builder.arithCircuit.putY2AGate(childShares[0], builder.boolCircuit)
+                        builder.arithCircuit.putB2AGate(builder.boolCircuit.putY2BGate(childShares[0]))
 
                     ABYCircuitType.BOOL ->
                         builder.boolCircuit.putY2BGate(childShares[0])
@@ -217,7 +217,13 @@ fun operatorToCircuit(
             // x <= y <=> not (x > y)
             operatorToCircuit(
                 Not,
-                listOf(ABYOperationGate(putBinaryOperationGate(Circuit::putGTGate), finalArguments.reversed(), circuitType)),
+                listOf(
+                    ABYOperationGate(
+                        putBinaryOperationGate(Circuit::putGTGate),
+                        finalArguments.reversed(),
+                        circuitType
+                    )
+                ),
                 circuitType
             )
 

@@ -2,6 +2,7 @@ package edu.cornell.cs.apl.viaduct.backend.aby
 
 import de.tu_darmstadt.cs.encrypto.aby.ABYParty
 import de.tu_darmstadt.cs.encrypto.aby.Aby
+import de.tu_darmstadt.cs.encrypto.aby.Phase
 import de.tu_darmstadt.cs.encrypto.aby.Role
 import de.tu_darmstadt.cs.encrypto.aby.Share
 import de.tu_darmstadt.cs.encrypto.aby.SharingType
@@ -58,11 +59,11 @@ import edu.cornell.cs.apl.viaduct.syntax.types.ValueType
 import edu.cornell.cs.apl.viaduct.syntax.values.BooleanValue
 import edu.cornell.cs.apl.viaduct.syntax.values.IntegerValue
 import edu.cornell.cs.apl.viaduct.syntax.values.Value
-import java.util.Stack
-import kotlin.system.measureTimeMillis
 import kotlinx.collections.immutable.PersistentMap
 import kotlinx.collections.immutable.persistentMapOf
 import mu.KotlinLogging
+import java.util.Stack
+import kotlin.system.measureTimeMillis
 
 private var logger = KotlinLogging.logger("ABY")
 
@@ -392,6 +393,10 @@ class ABYProtocolInterpreter(
 
         assert(shareStack.size == 1)
 
+        logger.info { "arith gates: ${circuitBuilder.arithCircuit.numGates} rounds: ${circuitBuilder.arithCircuit.maxDepth}" }
+        logger.info { "bool gates: ${circuitBuilder.boolCircuit.numGates} rounds: ${circuitBuilder.boolCircuit.maxDepth}" }
+        logger.info { "yao gates: ${circuitBuilder.yaoCircuit.numGates} rounds: ${circuitBuilder.yaoCircuit.maxDepth}" }
+
         return circuitBuilder.circuit(outGate.circuitType).putOUTGate(shareStack.peek()!!, outRole)
     }
 
@@ -422,11 +427,19 @@ class ABYProtocolInterpreter(
 
         val execDuration = measureTimeMillis { aby.execCircuit() }
 
-        val result: Int = outShare.clearValue32.toInt()
-
         logger.info { "executed ABY circuit in ${execDuration}ms, sent output to $outRole" }
+        logger.info { "total gates: ${aby.totalGates}" }
+        logger.info { "total depth: ${aby.totalDepth}" }
+        logger.info { "total time: ${aby.getTiming(Phase.P_TOTAL)}" }
+        logger.info { "total sent/recv: ${aby.getSentData(Phase.P_TOTAL)} / ${aby.getReceivedData(Phase.P_TOTAL)}" }
+        logger.info { "network time: ${aby.getTiming(Phase.P_NETWORK)}" }
+        logger.info { "setup time: ${aby.getTiming(Phase.P_SETUP)}" }
+        logger.info { "setup sent/recv: ${aby.getSentData(Phase.P_SETUP)} / ${aby.getReceivedData(Phase.P_SETUP)}" }
+        logger.info { "online time: ${aby.getTiming(Phase.P_ONLINE)}" }
+        logger.info { "online sent/recv: ${aby.getSentData(Phase.P_ONLINE)} / ${aby.getReceivedData(Phase.P_ONLINE)}" }
 
         return if (thisHostReceives) {
+            val result: Int = outShare.clearValue32.toInt()
             when (val msgType: ValueType = typeAnalysis.type(letNode)) {
                 is BooleanType -> BooleanValue(result != 0)
 
@@ -666,7 +679,10 @@ class ABYProtocolInterpreter(
                                 )
                             }
 
-                            else -> throw ViaductInterpreterError("ABY: unknown update ${update.value} for vector", update)
+                            else -> throw ViaductInterpreterError(
+                                "ABY: unknown update ${update.value} for vector",
+                                update
+                            )
                         }
 
                         val guard: ABYCircuitGate =
@@ -714,7 +730,6 @@ class ABYProtocolInterpreter(
 
         private val protocolCircuitType: Map<ProtocolName, ABYCircuitType> =
             mapOf(
-                ABY.protocolName to ABYCircuitType.YAO,
                 ArithABY.protocolName to ABYCircuitType.ARITH,
                 BoolABY.protocolName to ABYCircuitType.BOOL,
                 YaoABY.protocolName to ABYCircuitType.YAO

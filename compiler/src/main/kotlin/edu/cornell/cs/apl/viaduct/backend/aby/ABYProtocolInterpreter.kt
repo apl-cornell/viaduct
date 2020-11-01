@@ -427,16 +427,18 @@ class ABYProtocolInterpreter(
 
         val execDuration = measureTimeMillis { aby.execCircuit() }
 
-        logger.info { "executed ABY circuit in ${execDuration}ms, sent output to $outRole" }
-        logger.info { "total gates: ${aby.totalGates}" }
-        logger.info { "total depth: ${aby.totalDepth}" }
-        logger.info { "total time: ${aby.getTiming(Phase.P_TOTAL)}" }
-        logger.info { "total sent/recv: ${aby.getSentData(Phase.P_TOTAL)} / ${aby.getReceivedData(Phase.P_TOTAL)}" }
-        logger.info { "network time: ${aby.getTiming(Phase.P_NETWORK)}" }
-        logger.info { "setup time: ${aby.getTiming(Phase.P_SETUP)}" }
-        logger.info { "setup sent/recv: ${aby.getSentData(Phase.P_SETUP)} / ${aby.getReceivedData(Phase.P_SETUP)}" }
-        logger.info { "online time: ${aby.getTiming(Phase.P_ONLINE)}" }
-        logger.info { "online sent/recv: ${aby.getSentData(Phase.P_ONLINE)} / ${aby.getReceivedData(Phase.P_ONLINE)}" }
+        logger.info {
+            "executed ABY circuit in ${execDuration}ms, sent output to $outRole\n" +
+            "total gates: ${aby.totalGates}\n" +
+            "total depth: ${aby.totalDepth}\n" +
+            "total time: ${aby.getTiming(Phase.P_TOTAL)}\n" +
+            "total sent/recv: ${aby.getSentData(Phase.P_TOTAL)} / ${aby.getReceivedData(Phase.P_TOTAL)}\n" +
+            "network time: ${aby.getTiming(Phase.P_NETWORK)}\n" +
+            "setup time: ${aby.getTiming(Phase.P_SETUP)}\n" +
+            "setup sent/recv: ${aby.getSentData(Phase.P_SETUP)} / ${aby.getReceivedData(Phase.P_SETUP)}\n" +
+            "online time: ${aby.getTiming(Phase.P_ONLINE)}\n" +
+            "online sent/recv: ${aby.getSentData(Phase.P_ONLINE)} / ${aby.getReceivedData(Phase.P_ONLINE)}\n"
+        }
 
         return if (thisHostReceives) {
             val result: Int = outShare.clearValue32.toInt()

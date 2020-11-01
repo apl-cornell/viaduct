@@ -60,8 +60,7 @@ class SimpleCostEstimator(
     /** Cost of sending messages over the wire from one host to another. */
     private fun remoteMessagingCost(events: Iterable<CommunicationEvent>): Int =
         events.filter { event ->
-            event.send.host != event.recv.host && event.send.protocol !is ABY &&
-                event.send.id != Protocol.INTERNAL_OUTPUT
+            event.send.host != event.recv.host && event.send.protocol !is ABY
         }.size
 
     /** Cost of executing an MPC circuit, performed whenever communication from ABY
@@ -83,7 +82,7 @@ class SimpleCostEstimator(
                     protocolComposer.communicate(source, destination).getHostReceives(host)
                 } else {
                     protocolComposer.communicate(source, destination)
-                }.filter { it.recv.id == Protocol.INTERNAL_INPUT || it.send.id == Protocol.INTERNAL_OUTPUT }
+                }.filter { it.recv.id != Protocol.INTERNAL_INPUT || it.send.id != Protocol.INTERNAL_OUTPUT }
 
             val plaintextMsgCost = remoteMessagingCost(events)
             val mpcExecCost = mpcExecutionCost(events)

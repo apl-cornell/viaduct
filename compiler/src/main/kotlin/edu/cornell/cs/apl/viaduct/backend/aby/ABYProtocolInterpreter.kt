@@ -59,11 +59,11 @@ import edu.cornell.cs.apl.viaduct.syntax.types.ValueType
 import edu.cornell.cs.apl.viaduct.syntax.values.BooleanValue
 import edu.cornell.cs.apl.viaduct.syntax.values.IntegerValue
 import edu.cornell.cs.apl.viaduct.syntax.values.Value
+import java.util.Stack
+import kotlin.system.measureTimeMillis
 import kotlinx.collections.immutable.PersistentMap
 import kotlinx.collections.immutable.persistentMapOf
 import mu.KotlinLogging
-import java.util.Stack
-import kotlin.system.measureTimeMillis
 
 private var logger = KotlinLogging.logger("ABY")
 

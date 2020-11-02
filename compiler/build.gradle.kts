@@ -66,7 +66,7 @@ dependencies {
     implementation("io.github.tudo-aqua:z3-turnkey:4.8.7.1")
 
     // Cryptography
-    implementation("com.github.apl-cornell:aby-java:0275050a4b")
+    implementation("com.github.apl-cornell:aby-java:f061249362")
 
     // Logging
     implementation("io.github.microutils:kotlin-logging:1.8.3")

@@ -8,6 +8,7 @@ import de.tu_darmstadt.cs.encrypto.aby.UInt32Vector
 import edu.cornell.cs.apl.viaduct.syntax.Operator
 import edu.cornell.cs.apl.viaduct.syntax.operators.Addition
 import edu.cornell.cs.apl.viaduct.syntax.operators.And
+import edu.cornell.cs.apl.viaduct.syntax.operators.Division
 import edu.cornell.cs.apl.viaduct.syntax.operators.EqualTo
 import edu.cornell.cs.apl.viaduct.syntax.operators.LessThan
 import edu.cornell.cs.apl.viaduct.syntax.operators.LessThanOrEqualTo
@@ -231,6 +232,13 @@ fun operatorToCircuit(
             ABYOperationGate(
                 putTernaryOperationGate(Circuit::putMUXGate),
                 listOf(finalArguments[0], finalArguments[2], finalArguments[1]),
+                circuitType
+            )
+
+        operator is Division && circuitType != ABYCircuitType.ARITH ->
+            ABYOperationGate(
+                putBinaryOperationGate { lhs, rhs -> Aby.putInt32DIVGate(this, lhs, rhs) },
+                listOf(finalArguments[0], finalArguments[1]),
                 circuitType
             )
 

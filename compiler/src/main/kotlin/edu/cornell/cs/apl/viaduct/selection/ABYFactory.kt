@@ -81,9 +81,7 @@ class ABYFactory(program: ProgramNode) : ProtocolFactory {
             when (val rhs = this.value) {
                 is OperatorApplicationNode ->
                     when (rhs.operator) {
-                        is Division -> false
-
-                        is ComparisonOperator, is LogicalOperator, Mux, Maximum, Minimum ->
+                        is ComparisonOperator, is LogicalOperator, Mux, Maximum, Minimum, Division ->
                             protocol !is ArithABY
 
                         else -> true

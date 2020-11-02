@@ -6,7 +6,7 @@ import edu.cornell.cs.apl.viaduct.analysis.TypeAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.declarationNodes
 import edu.cornell.cs.apl.viaduct.analysis.letNodes
 import edu.cornell.cs.apl.viaduct.backend.canMux
-import edu.cornell.cs.apl.viaduct.backend.zkp.interpretR1CS
+import edu.cornell.cs.apl.viaduct.backend.zkp.supportedOp
 import edu.cornell.cs.apl.viaduct.protocols.ZKP
 import edu.cornell.cs.apl.viaduct.syntax.Host
 import edu.cornell.cs.apl.viaduct.syntax.HostTrustConfiguration
@@ -63,9 +63,9 @@ class ZKPFactory(val program: ProgramNode) : ProtocolFactory {
     }
 
     /** If the value is an op, ensure it's compatible with r1cs generation **/
-    private fun ExpressionNode.compatibleOp() : Boolean {
+    private fun ExpressionNode.compatibleOp(): Boolean {
         return if (this is OperatorApplicationNode) {
-            (this.operator.interpretR1CS() != null)
+            (this.operator.supportedOp())
         } else {
             true
         }
@@ -77,7 +77,7 @@ class ZKPFactory(val program: ProgramNode) : ProtocolFactory {
             is DeclarationNode -> true
             is ObjectDeclarationArgumentNode -> true
             is ParameterNode -> true
-            else -> false
+            else -> throw Exception("How did I get here?")
         }
 
     override fun viableProtocols(node: DeclarationNode): Set<Protocol> =

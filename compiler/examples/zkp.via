@@ -1,10 +1,10 @@
 process main {
-    val a : int{A} = input int from alice;
-    val x : int{B} = input int from bob;
-    val a_endorse : int{A & B<-} = endorse a to {A & B<-};
-    val public_input : int{(A | B)-> & (A & B)<-} = 7;
-    val zkp_val : bool{A & B<-} = a_endorse == public_input;
-    output (declassify zkp_val to {(A | B)-> & (A&B)<-} ) to bob ;
+    val a : bool{A} = input bool from alice;
+    val x : int = input int from bob;
+    val a_endorse : bool{A & B<-} = endorse a to {A & B<-};
+    val tst : bool{A & B<-} = !(a_endorse && true);
+    val a2 : bool = input bool from alice;
+    output (declassify tst to {(A | B)-> & (A&B)<-}) to bob;
 }
 
 host alice: {A}

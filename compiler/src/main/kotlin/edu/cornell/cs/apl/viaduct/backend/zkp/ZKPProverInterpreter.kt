@@ -1,16 +1,22 @@
 package edu.cornell.cs.apl.viaduct.backend.zkp
 
 import edu.cornell.cs.apl.viaduct.analysis.ProtocolAnalysis
+import edu.cornell.cs.apl.viaduct.analysis.TypeAnalysis
 import edu.cornell.cs.apl.viaduct.backend.AbstractProtocolInterpreter
 import edu.cornell.cs.apl.viaduct.backend.ObjectLocation
 import edu.cornell.cs.apl.viaduct.backend.ProtocolProjection
 import edu.cornell.cs.apl.viaduct.backend.ViaductProcessRuntime
 import edu.cornell.cs.apl.viaduct.backend.WireGenerator
 import edu.cornell.cs.apl.viaduct.backend.WireTerm
+import edu.cornell.cs.apl.viaduct.backend.asString
+import edu.cornell.cs.apl.viaduct.backend.eval
+import edu.cornell.cs.apl.viaduct.backend.wireName
 import edu.cornell.cs.apl.viaduct.errors.UndefinedNameError
 import edu.cornell.cs.apl.viaduct.errors.ViaductInterpreterError
+import edu.cornell.cs.apl.viaduct.libsnarkwrapper.libsnarkwrapper.mkByteBuf
 import edu.cornell.cs.apl.viaduct.protocols.ZKP
 import edu.cornell.cs.apl.viaduct.selection.ProtocolCommunication
+import edu.cornell.cs.apl.viaduct.syntax.Host
 import edu.cornell.cs.apl.viaduct.syntax.ObjectVariable
 import edu.cornell.cs.apl.viaduct.syntax.QueryNameNode
 import edu.cornell.cs.apl.viaduct.syntax.Temporary
@@ -34,19 +40,33 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.ReadNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ReceiveNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.SimpleStatementNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.UpdateNode
+import edu.cornell.cs.apl.viaduct.syntax.types.BooleanType
+import edu.cornell.cs.apl.viaduct.syntax.types.IntegerType
 import edu.cornell.cs.apl.viaduct.syntax.types.ValueType
 import edu.cornell.cs.apl.viaduct.syntax.values.BooleanValue
+import edu.cornell.cs.apl.viaduct.syntax.values.ByteVecValue
 import edu.cornell.cs.apl.viaduct.syntax.values.IntegerValue
 import edu.cornell.cs.apl.viaduct.syntax.values.Value
 import kotlinx.collections.immutable.PersistentMap
 import kotlinx.collections.immutable.persistentMapOf
 import mu.KotlinLogging
+import java.io.File
+import java.io.FileInputStream
+import java.io.FileOutputStream
 import java.util.Stack
 
 private val logger = KotlinLogging.logger("ZKP Prover")
 
-class ZKPProverInterpreter(program: ProgramNode, private val protocolAnalysis: ProtocolAnalysis, val runtime: ViaductProcessRuntime) :
+class ZKPProverInterpreter(
+    program: ProgramNode,
+    private val protocolAnalysis: ProtocolAnalysis,
+    val runtime: ViaductProcessRuntime
+) :
     AbstractProtocolInterpreter<ZKPObject>(program) {
+
+    private val typeAnalysis = TypeAnalysis.get(program)
+
+    private val verifiers = (runtime.projection.protocol as ZKP).verifiers
 
     private val wireGenerator = WireGenerator()
 
@@ -83,7 +103,7 @@ class ZKPProverInterpreter(program: ProgramNode, private val protocolAnalysis: P
     private fun pushContext(
         newObjectStore: PersistentMap<ObjectVariable, ObjectLocation>,
         newTempStore: PersistentMap<Temporary, Value>,
-        newWireStore : PersistentMap<Temporary, WireTerm>
+        newWireStore: PersistentMap<Temporary, WireTerm>
     ) {
         objectStoreStack.push(newObjectStore)
         tempStack.push(newTempStore)
@@ -116,6 +136,20 @@ class ZKPProverInterpreter(program: ProgramNode, private val protocolAnalysis: P
         }
     }
 
+    private fun Int.toValue(t: ValueType): Value {
+        return when (t) {
+            is BooleanType -> {
+                when (this) {
+                    0 -> BooleanValue(false)
+                    1 -> BooleanValue(true)
+                    else -> throw Error("toValue: cannot convert value $this to boolean")
+                }
+            }
+            is IntegerType -> IntegerValue(this)
+            else -> throw Exception("toValue: cannot convert type $t")
+
+        }
+    }
 
     override suspend fun buildExpressionObject(expr: AtomicExpressionNode): ZKPObject {
         return ZKPObject.ZKPImmutableCell(getAtomicExprWire(expr))
@@ -163,48 +197,50 @@ class ZKPProverInterpreter(program: ProgramNode, private val protocolAnalysis: P
             ZKPObject.ZKPNullObject -> throw Exception("null query")
         }
 
-   private suspend fun runRead(node : ReadNode) : WireTerm {
-       val wireVal = wireStore[node.temporary.value]
-       if (wireVal != null) {
-           return wireVal
-       }
-       else {
-           val sendProtocol = protocolAnalysis.primaryProtocol(node)
-           assert(runtime.projection.protocol != sendProtocol)
-           val events: ProtocolCommunication = protocolAnalysis.relevantCommunicationEvents(node)
-           val secretInputs = events.getHostReceives(runtime.projection.host, "ZKP_SECRET_INPUT")
-           val publicInputs = events.getHostReceives(runtime.projection.host, "ZKP_PUBLIC_INPUT")
-           return when {
-               secretInputs.isNotEmpty() && publicInputs.isEmpty() -> {
-                   assert(secretInputs.size == 1)
-                   val sendEvent = secretInputs.first()
-                   val msg = runtime.receive(ProtocolProjection(sendEvent.send.protocol, sendEvent.send.host))
-                   val wire = injectValue(msg, true)
-                   tempStore = tempStore.put(node.temporary.value, msg)
-                   wireStore = wireStore.put(node.temporary.value, wire)
-                   wire
-               }
-               secretInputs.isEmpty() && publicInputs.isNotEmpty() -> {
-                   var cleartextValue: Value? = null
-                   for (event in publicInputs) {
-                       val receivedValue: Value =
-                           runtime.receive(ProtocolProjection(event.send.protocol, event.send.host))
+    private suspend fun runRead(node: ReadNode): WireTerm {
+        val wireVal = wireStore[node.temporary.value]
+        if (wireVal != null) {
+            return wireVal
+        } else {
+            val sendProtocol = protocolAnalysis.primaryProtocol(node)
+            logger.info {
+                "Wire for ${node.temporary} does not exist; sendProtocol = $sendProtocol, runtimeProtocol = ${runtime.projection.protocol}"
+            }
+            val events: ProtocolCommunication = protocolAnalysis.relevantCommunicationEvents(node)
+            val secretInputs = events.getHostReceives(runtime.projection.host, "ZKP_SECRET_INPUT")
+            val publicInputs = events.getHostReceives(runtime.projection.host, "ZKP_PUBLIC_INPUT")
+            assert(runtime.projection.protocol != sendProtocol)
+            return when {
+                secretInputs.isNotEmpty() && publicInputs.isEmpty() -> {
+                    assert(secretInputs.size == 1)
+                    val sendEvent = secretInputs.first()
+                    val msg = runtime.receive(ProtocolProjection(sendEvent.send.protocol, sendEvent.send.host))
+                    val wire = injectValue(msg, true)
+                    tempStore = tempStore.put(node.temporary.value, msg)
+                    wireStore = wireStore.put(node.temporary.value, wire)
+                    wire
+                }
+                secretInputs.isEmpty() && publicInputs.isNotEmpty() -> {
+                    var cleartextValue: Value? = null
+                    for (event in publicInputs) {
+                        val receivedValue: Value =
+                            runtime.receive(ProtocolProjection(event.send.protocol, event.send.host))
 
-                       if (cleartextValue == null) {
-                           cleartextValue = receivedValue
-                       } else if (cleartextValue != receivedValue) {
-                           throw ViaductInterpreterError("ZKP public input: received different values")
-                       }
-                   }
-                   val wire = injectValue(cleartextValue!!, false)
-                   tempStore = tempStore.put(node.temporary.value, cleartextValue)
-                   wireStore = wireStore.put(node.temporary.value, wire)
-                   wire
-               }
-               else -> throw ViaductInterpreterError("Got weird ZKP situation")
-           }
-       }
-   }
+                        if (cleartextValue == null) {
+                            cleartextValue = receivedValue
+                        } else if (cleartextValue != receivedValue) {
+                            throw ViaductInterpreterError("ZKP public input: received different values")
+                        }
+                    }
+                    val wire = injectValue(cleartextValue!!, false)
+                    tempStore = tempStore.put(node.temporary.value, cleartextValue)
+                    wireStore = wireStore.put(node.temporary.value, wire)
+                    wire
+                }
+                else -> throw ViaductInterpreterError("Got weird ZKP situation: secret = $secretInputs, public = $publicInputs")
+            }
+        }
+    }
 
     private suspend fun getAtomicExprWire(expr: AtomicExpressionNode): WireTerm =
         when (expr) {
@@ -228,11 +264,53 @@ class ZKPProverInterpreter(program: ProgramNode, private val protocolAnalysis: P
         }
 
     override suspend fun runLet(stmt: LetNode) {
+        logger.info {
+            "running let for ${stmt.temporary.value}"
+        }
         val w = getExprWire(stmt.value)
         wireStore = wireStore.put(stmt.temporary.value, w)
+        logger.info {
+            "Storing wire for ${stmt.temporary.value}"
+        }
 
         // broadcast to readers
         val readers: Set<SimpleStatementNode> = protocolAnalysis.directRemoteReaders(stmt)
+
+        var wireVal: Int? = null
+
+        if (readers.isNotEmpty()) {
+            wireVal = w.eval()
+            val r1cs = w.toR1CS(true, wireVal)
+            val wireName = w.wireName()
+            val pkFile = File("zkpkeys/$wireName.pk")
+            if (!pkFile.exists()) { // Create proving key, and abort
+                pkFile.createNewFile()
+                val vkFile = File("zkpkeys/$wireName.vk")
+                vkFile.createNewFile()
+                val kp = r1cs.genKeypair()
+                val out_pkFile = FileOutputStream(pkFile, false)
+                logger.info { "kp : writing ${kp.proving_key._data.size} bytes" }
+                out_pkFile.write(kp.proving_key._data)
+                logger.info { "vk : writing ${kp.verification_key._data.size} bytes"}
+                val out_vkFile = FileOutputStream(vkFile, false)
+                out_vkFile.write(kp.verification_key._data)
+                out_pkFile.close()
+                out_vkFile.close()
+                throw Exception("Created new proving key and verification key for wire ${w.asString()} with name $wireName. Rerun to use.")
+            } else { // Read proving key, make proof, send to all the verifiers
+                val in_pkFile = FileInputStream(pkFile)
+                val pk = mkByteBuf(in_pkFile.readAllBytes())
+                in_pkFile.close()
+                logger.info { "Proving.." }
+                val pf = r1cs.makeProof(pk)
+                logger.info { "Proof done!" }
+                for (v: Host in verifiers) {
+                    val hostProjection = ProtocolProjection(runtime.projection.protocol, v)
+                    runtime.send(IntegerValue(wireVal), hostProjection)
+                    runtime.send(ByteVecValue(pf._data.toList()), hostProjection)
+                }
+            }
+        }
 
         for (reader in readers) {
             val events =
@@ -240,13 +318,16 @@ class ZKPProverInterpreter(program: ProgramNode, private val protocolAnalysis: P
                     .relevantCommunicationEvents(stmt, reader)
                     .getHostSends(runtime.projection.host)
 
-            for (event in events) {
-                // TODO generate proof, send it
-                logger.info {
-                    "Proving circuit $w"
-                }
+            if (events.isEmpty()) {
+                throw Exception("empty events ??")
+            }
 
-                runtime.send(BooleanValue(true), ProtocolProjection(event.recv.protocol, event.recv.host))
+            for (event in events) {
+
+                runtime.send(
+                    wireVal!!.toValue(typeAnalysis.type(stmt)),
+                    ProtocolProjection(event.recv.protocol, event.recv.host)
+                )
             }
         }
     }
@@ -289,11 +370,11 @@ class ZKPProverInterpreter(program: ProgramNode, private val protocolAnalysis: P
     }
 
     override suspend fun runExprAsValue(expr: AtomicExpressionNode): Value {
-       return when(expr) {
-           is LiteralNode -> expr.value
-           is ReadNode -> tempStore[expr.temporary.value]
-               ?: throw UndefinedNameError(expr.temporary)
-       }
+        return when (expr) {
+            is LiteralNode -> expr.value
+            is ReadNode -> tempStore[expr.temporary.value]
+                ?: throw UndefinedNameError(expr.temporary)
+        }
     }
 
     override suspend fun popContext() {
@@ -301,5 +382,4 @@ class ZKPProverInterpreter(program: ProgramNode, private val protocolAnalysis: P
         wireStack.pop()
         objectStoreStack.pop()
     }
-
 }

@@ -15,7 +15,6 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutputNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.SendNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.SimpleStatementNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.UpdateNode
-import java.lang.Exception
 
 /** Describe how protocols should communicate / compose with each other. */
 object SimpleProtocolComposer : ProtocolComposer {
@@ -258,6 +257,10 @@ object SimpleProtocolComposer : ProtocolComposer {
                 ProtocolCommunication(setOf())
             }
 
+            src is ZKP && dst is ZKP -> {
+                ProtocolCommunication(setOf())
+            }
+
             src is Local && dst is ZKP -> { // We know src.host == dst.prover
                 ProtocolCommunication(setOf(CommunicationEvent(src.outputPort, dst.secretInputPort)))
             }
@@ -299,9 +302,10 @@ object SimpleProtocolComposer : ProtocolComposer {
             src is Local && dst is ABY -> true
             src is Local && dst is Commitment -> true
             src is Local && dst is ZKP -> src.host == dst.prover
-            src is ZKP && dst is Local -> src.prover == dst.host // TODO can this be made more general
-            src is Replication && dst is ZKP -> src.hosts == (dst.verifiers + setOf(dst.prover)) // TODO generalize this
-            src is ZKP && dst is Replication -> (src.verifiers + setOf(src.prover)) == dst.hosts // TODO generalize
+            src is ZKP && dst is Local -> true
+            src is Replication && dst is ZKP -> src.hosts == dst.hosts // TODO generalize this?
+            src is ZKP && dst is ZKP -> true
+            src is ZKP && dst is Replication -> true
             src is Replication && dst is Local -> true
             src is Replication && dst is Replication -> true
             src is Replication && dst is ABY -> true
@@ -320,7 +324,7 @@ object SimpleProtocolComposer : ProtocolComposer {
         when (stmt) {
             is LetNode -> {
                 when (protocol) {
-                    is ABY, is Local, is Commitment -> protocol.hosts
+                    is ABY, is Local, is Commitment, is ZKP -> protocol.hosts
                     is Replication -> setOf()
                     else -> setOf()
                 }

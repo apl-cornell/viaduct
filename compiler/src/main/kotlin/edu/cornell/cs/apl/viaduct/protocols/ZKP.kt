@@ -50,4 +50,5 @@ class ZKP(val prover: Host, val verifiers: Set<Host>) : Protocol() {
         (verifiers + setOf(prover)).map {
             it to OutputPort(this, it, "ZKP_OUTPUT")
         }.toMap()
+
 }

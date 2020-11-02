@@ -2,15 +2,16 @@ package edu.cornell.cs.apl.viaduct.backend
 
 import edu.cornell.cs.apl.prettyprinting.Document
 import edu.cornell.cs.apl.prettyprinting.PrettyPrintable
+import edu.cornell.cs.apl.viaduct.backend.commitment.Hashing
 import edu.cornell.cs.apl.viaduct.syntax.Operator
 import edu.cornell.cs.apl.viaduct.syntax.operators.Addition
 import edu.cornell.cs.apl.viaduct.syntax.operators.And
+import edu.cornell.cs.apl.viaduct.syntax.operators.EqualTo
 import edu.cornell.cs.apl.viaduct.syntax.operators.Multiplication
 import edu.cornell.cs.apl.viaduct.syntax.operators.Negation
 import edu.cornell.cs.apl.viaduct.syntax.operators.Not
 import edu.cornell.cs.apl.viaduct.syntax.operators.Or
 import edu.cornell.cs.apl.viaduct.syntax.operators.Subtraction
-import java.security.MessageDigest
 
 sealed class WireTerm
 data class WireOp(val op: Operator, val inputs: List<WireTerm>) : WireTerm()
@@ -20,18 +21,25 @@ data class WireConst(val index: Int, val v: Int) : WireTerm()
 
 fun String.asPrettyPrintable(): PrettyPrintable = Document(this)
 
-fun WireTerm.hash(): String {
-    fun WireTerm.asString(): String {
-        return when (this) {
-            is WireConst -> "Aux($index)"
-            is WireDummyIn -> "In($index)"
-            is WireIn -> "In($index)"
-            is WireOp -> op.asDocument(inputs.map { it.toString().asPrettyPrintable() }).print()
-        }
+fun WireTerm.asString(): String {
+    return when (this) {
+        is WireConst -> "Aux($index)"
+        is WireDummyIn -> "In($index)"
+        is WireIn -> "In($index)"
+        is WireOp -> op.asDocument(inputs.map { it.asString().asPrettyPrintable() }).print()
     }
-
-    return MessageDigest.getInstance("SHA-256").digest(this.asString().toByteArray()).toString()
 }
+
+private fun WireTerm.hash(): String {
+    val blist = Hashing.deterministicHash(this.asString().toByteArray().toList()).hash
+    return blist.hashCode().toString(16)
+}
+
+// Maybe take just a substring so it's smaller?
+fun WireTerm.wireName(): String =
+    this.hash()
+
+// For booleans, encoding is: 0 if false, anything else if true
 
 fun WireTerm.eval(): Int =
     when (this) {
@@ -44,6 +52,11 @@ fun WireTerm.eval(): Int =
                 is And -> inputs[0].eval() * inputs[1].eval()
                 is Not -> 1 - inputs[0].eval()
                 is Or -> 1 - (1 - inputs[0].eval()) * (1 - inputs[1].eval())
+                is EqualTo -> if (inputs[0].eval() == inputs[1].eval()) {
+                    1
+                } else {
+                    0
+                }
                 else -> throw Exception("unsupported op: $op")
             }
         is WireIn -> this.v

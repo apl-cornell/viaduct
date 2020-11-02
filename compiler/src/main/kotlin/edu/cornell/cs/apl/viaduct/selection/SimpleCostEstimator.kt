@@ -72,7 +72,7 @@ object SimpleCostEstimator : CostEstimator<IntegerCost> {
                 is Local -> IntegerCost(1)
                 is Replication -> IntegerCost(1)
                 is Commitment -> IntegerCost(10)
-                is ZKP -> IntegerCost(50)
+                is ZKP -> IntegerCost(20)
                 is ABY -> IntegerCost(100)
                 else -> throw Error("unknown protocol ${protocol.protocolName}")
             }

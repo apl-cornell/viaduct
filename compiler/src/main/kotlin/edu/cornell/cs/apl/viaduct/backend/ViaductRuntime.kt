@@ -3,6 +3,7 @@ package edu.cornell.cs.apl.viaduct.backend
 import edu.cornell.cs.apl.viaduct.analysis.ProtocolAnalysis
 import edu.cornell.cs.apl.viaduct.errors.ViaductInterpreterError
 import edu.cornell.cs.apl.viaduct.protocols.Synchronization
+import edu.cornell.cs.apl.viaduct.selection.CommunicationEvent
 import edu.cornell.cs.apl.viaduct.syntax.Host
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
@@ -216,7 +217,7 @@ class ViaductRuntime(
     private val processBodyMap: Map<Process, ProcessInterpreter>,
     val host: Host
 ) {
-    private val syncProtocol = Synchronization(program.hosts.map { it.name.value }.toSet())
+    private val syncProtocol = Synchronization(program.hostDeclarations.map { it.name.value }.toSet())
     private val processInfoMap: Map<Process, ProcessInfo>
     private val hostInfoMap: Map<Host, HostInfo>
 
@@ -229,8 +230,8 @@ class ViaductRuntime(
         private const val CHANNEL_CAPACITY: Int = 100
 
         // try to connect for 10 seconds, at 100ms intervals
-        const val CONNECTION_NUM_RETRY: Int = 100
-        const val CONNECTION_RETRY_DELAY: Long = 100
+        const val CONNECTION_NUM_RETRY: Int = 20
+        const val CONNECTION_RETRY_DELAY: Long = 500
     }
 
     init {
@@ -299,7 +300,7 @@ class ViaductRuntime(
 
         // create identifiers for hosts
         val hostList: List<Host> =
-            program.hosts.map { node -> node.name.value }.sorted()
+            program.hostDeclarations.map { node -> node.name.value }.sorted()
 
         val tempHostInfoMap = mutableMapOf<Host, HostInfo>()
         var i = 1
@@ -505,8 +506,18 @@ class ViaductProcessRuntime(
         runtime.send(value, projection, receiver)
     }
 
+    suspend fun send(value: Value, event: CommunicationEvent) {
+        assert(event.send.protocol == projection.protocol && event.send.host == projection.host)
+        runtime.send(value, projection, ProtocolProjection(event.recv.protocol, event.recv.host))
+    }
+
     suspend fun receive(sender: ProtocolProjection): Value {
         return runtime.receive(sender, projection)
+    }
+
+    suspend fun receive(event: CommunicationEvent): Value {
+        assert(event.recv.protocol == projection.protocol && event.recv.host == projection.host)
+        return runtime.receive(ProtocolProjection(event.send.protocol, event.send.host), projection)
     }
 
     suspend fun input(): Value {

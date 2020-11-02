@@ -32,7 +32,7 @@ class ViaductBackend(
         // TODO: make this configurable
         var portNum = DEFAULT_PORT
         val connectionMap: Map<Host, HostAddress> =
-            program.hosts
+            program.hostDeclarations
                 .map { hostDecl ->
                     val addr = HostAddress(DEFAULT_ADDRESS, portNum)
                     portNum++

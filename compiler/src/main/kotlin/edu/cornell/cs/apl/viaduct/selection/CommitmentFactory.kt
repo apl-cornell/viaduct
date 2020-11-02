@@ -7,6 +7,7 @@ import edu.cornell.cs.apl.viaduct.protocols.Commitment
 import edu.cornell.cs.apl.viaduct.syntax.Host
 import edu.cornell.cs.apl.viaduct.syntax.HostTrustConfiguration
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
+import edu.cornell.cs.apl.viaduct.syntax.ProtocolName
 import edu.cornell.cs.apl.viaduct.syntax.SpecializedProtocol
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.AtomicExpressionNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.DeclarationNode
@@ -39,6 +40,8 @@ class CommitmentFactory(val program: ProgramNode) : ProtocolFactory {
     }
 
     override fun protocols(): List<SpecializedProtocol> = protocols(program)
+
+    override fun availableProtocols(): Set<ProtocolName> = setOf(Commitment.protocolName)
 
     private fun Node.isApplicable(): Boolean {
         return when (this) {

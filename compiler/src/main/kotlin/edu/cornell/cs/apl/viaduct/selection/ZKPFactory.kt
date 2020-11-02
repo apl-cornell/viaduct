@@ -11,6 +11,7 @@ import edu.cornell.cs.apl.viaduct.protocols.ZKP
 import edu.cornell.cs.apl.viaduct.syntax.Host
 import edu.cornell.cs.apl.viaduct.syntax.HostTrustConfiguration
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
+import edu.cornell.cs.apl.viaduct.syntax.ProtocolName
 import edu.cornell.cs.apl.viaduct.syntax.SpecializedProtocol
 import edu.cornell.cs.apl.viaduct.syntax.Variable
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.DeclarationNode
@@ -18,6 +19,7 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.DowngradeNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ExpressionNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.IfNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.LetNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.LiteralNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.Node
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ObjectDeclarationArgumentNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.OperatorApplicationNode
@@ -94,6 +96,8 @@ class ZKPFactory(val program: ProgramNode) : ProtocolFactory {
             setOf()
         }
 
+    override fun availableProtocols(): Set<ProtocolName> = setOf(ZKP.protocolName)
+
     override fun viableProtocols(node: ParameterNode): Set<Protocol> =
         if (node.isApplicable()) {
             protocols(program).map { it.protocol }.toSet()
@@ -118,58 +122,26 @@ class ZKPFactory(val program: ProgramNode) : ProtocolFactory {
     /** ZKP can only read from, and only send to, itself, local, and replicated **/
     override fun constraint(node: LetNode): SelectionConstraint =
         protocols(program).map {
-            And(node.readsFrom(nameAnalysis, setOf(it.protocol), localAndReplicated + setOf(it.protocol)),
-                node.sendsTo(nameAnalysis, setOf(it.protocol), localAndReplicated + setOf(it.protocol)))
+            And(
+                node.readsFrom(nameAnalysis, setOf(it.protocol), localAndReplicated + setOf(it.protocol)),
+                node.sendsTo(nameAnalysis, setOf(it.protocol), localAndReplicated + setOf(it.protocol))
+            )
         }.ands()
 
     override fun constraint(node: DeclarationNode): SelectionConstraint =
         protocols(program).map {
-            And(node.readsFrom(nameAnalysis, setOf(it.protocol), localAndReplicated + setOf(it.protocol)),
-                node.sendsTo(nameAnalysis, setOf(it.protocol), localAndReplicated + setOf(it.protocol)))
+            And(
+                node.readsFrom(nameAnalysis, setOf(it.protocol), localAndReplicated + setOf(it.protocol)),
+                node.sendsTo(nameAnalysis, setOf(it.protocol), localAndReplicated + setOf(it.protocol))
+            )
         }.ands()
 
-    // add muxing constraints
-    override fun constraint(node: IfNode): SelectionConstraint {
-        return when (val guard = node.guard) {
-            is ReadNode -> {
-                val functionName = nameAnalysis.enclosingFunctionName(node)
+    override fun guardVisibilityConstraint(protocol: Protocol, node: IfNode): SelectionConstraint =
+        when (node.guard) {
+            is LiteralNode -> Literal(true)
 
-                val guardInZKP =
-                    VariableIn(
-                        FunctionVariable(functionName, guard.temporary.value),
-                        protocols().map { it.protocol }.toSet()
-                    )
-
-                val varEqualToGuard = { v: Variable ->
-                    VariableEquals(
-                        FunctionVariable(functionName, guard.temporary.value),
-                        FunctionVariable(functionName, v)
-                    )
-                }
-
-                if (node.canMux()) { // if the guard is computed in ZKP, then all of the nodes have to be in ZKP as well
-                    val varsEqualToGuard: SelectionConstraint =
-                        node.declarationNodes()
-                            .map { decl -> decl.name.value }
-                            .toSet()
-                            .union(
-                                node.letNodes().map { letNode -> letNode.temporary.value }
-                            )
-                            .map { v -> varEqualToGuard(v) }
-                            .fold<SelectionConstraint, SelectionConstraint>(Literal(true)) { acc, constraint ->
-                                And(
-                                    acc,
-                                    constraint
-                                )
-                            }
-
-                    Implies(guardInZKP, varsEqualToGuard)
-                } else { // if the node cannot be muxed, then the guard cannot be computed in MPC
-                    Not(guardInZKP)
-                }
-            }
-
-            else -> Literal(true)
+            // turn off visibility check when the conditional can be muxed
+            is ReadNode -> Literal(!node.canMux())
         }
-    }
+
 }

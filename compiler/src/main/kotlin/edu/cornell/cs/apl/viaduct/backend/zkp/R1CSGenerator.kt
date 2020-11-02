@@ -107,10 +107,11 @@ class R1CSInstance(val isProver: Boolean) {
     private val r1cs: R1CS = R1CS()
     private val publicInputs: MutableMap<Int, Wire> = mutableMapOf()
     private val secretInputs: MutableMap<Int, Wire> = mutableMapOf()
+    private var outputWire: Wire? = null
 
     val wireValues: MutableMap<Wire, Int> = mutableMapOf()
 
-    fun getWireVal(w : Wire) : Int {
+    fun getWireVal(w: Wire): Int {
         return wireValues[w] ?: throw Exception("Unknown value for wire $w")
     }
 
@@ -163,6 +164,19 @@ class R1CSInstance(val isProver: Boolean) {
         }
     }
 
+    fun mkOutput(v: Int): Wire {
+        return if (outputWire != null) {
+            outputWire!!
+        } else {
+            val wi = WireInfo()
+            wi.type = WireType.WIRE_PUBLIC_IN
+            wi.input_val = v
+            val w = r1cs.mkWire(wi)
+            outputWire = w
+            w
+        }
+    }
+
     fun mkInternalProver(lhs: LinTerm, rhs: LinTerm, v: Int): Wire {
         val wi = WireInfo()
         wi.type = WireType.WIRE_IN
@@ -182,25 +196,37 @@ class R1CSInstance(val isProver: Boolean) {
     }
 
     fun makeProof(pk: ByteBuf): ByteBuf {
+        assert(outputWire != null)
         return r1cs.generateProof(pk)
     }
 
     fun verifyProof(vk: ByteBuf, pf: ByteBuf): Boolean {
+        assert(outputWire != null)
         return r1cs.verifyProof(vk, pf)
     }
 
     fun genKeypair(): Keypair {
+        assert(outputWire != null)
         return r1cs.genKeypair()
     }
 }
 
-fun R1CSInstance.assertEqualsTo(w: Wire, v: Int) {
-    addConstraint(ConstraintTuple(LinTerm.fromWire(w), LinTerm.fromConst(1), LinTerm.fromConst(v)))
+fun R1CSInstance.assertEqualsTo(w: Wire, v: Wire) {
+    addConstraint(ConstraintTuple(LinTerm.fromWire(w), LinTerm.fromConst(1), LinTerm.fromWire(v)))
 }
 
 // x * (1- x) = 0
 fun R1CSInstance.assertBoolean(w: Wire) {
     addConstraint(ConstraintTuple(LinTerm.fromWire(w), LinTerm(1, listOf(-1 to w)), LinTerm.fromConst(0)))
+}
+
+fun WireTerm.generatePrimaryInputs(instance : R1CSInstance) {
+    when (this) {
+        is WireConst -> instance.mkPublicInput(this.index, this.v)
+        is WireOp -> this.inputs.map { it.generatePrimaryInputs(instance) }
+        is WireIn ->  { }
+        is WireDummyIn -> { }
+    }
 }
 
 fun WireTerm.getWire(isProver: Boolean, instance: R1CSInstance): Wire {
@@ -218,10 +244,15 @@ fun WireTerm.getWire(isProver: Boolean, instance: R1CSInstance): Wire {
     }
 }
 
+
 fun WireTerm.toR1CS(isProver: Boolean, is_eq_to: Int): R1CSInstance {
-    val gen = R1CSInstance(isProver)
-    val o = this.getWire(isProver, gen)
-    gen.assertEqualsTo(o, is_eq_to)
-    return gen
+    val instance = R1CSInstance(isProver)
+    val w_o = instance.mkOutput(is_eq_to)
+    // First make sure all the primary inputs are instantiated, because they come first
+    this.generatePrimaryInputs(instance)
+    // Now, go through the circuit (generating aux inputs along the way)
+    val o = this.getWire(isProver, instance)
+    instance.assertEqualsTo(o, w_o)
+    return instance
 }
 

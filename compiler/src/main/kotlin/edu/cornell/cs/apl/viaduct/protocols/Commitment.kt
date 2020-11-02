@@ -17,6 +17,11 @@ import edu.cornell.cs.apl.viaduct.syntax.values.Value
 class Commitment(val cleartextHost: Host, val hashHosts: Set<Host>) : Protocol() {
     companion object {
         val protocolName = ProtocolName("Commitment")
+        const val INPUT = "INPUT"
+        const val CREATE_COMMITMENT_INPUT = "CREATE_COMMITMENT_INPUT"
+        const val CREATE_COMMITMENT_OUTPUT = "CREATE_COMMITMENT_OUTPUT"
+        const val OPEN_CLEARTEXT_OUTPUT = "OPEN_CLEARTEXT_OUTPUT"
+        const val OPEN_COMMITMENT_OUTPUT = "OPEN_COMMITMENT_OUTPUT"
     }
 
     init {
@@ -38,13 +43,21 @@ class Commitment(val cleartextHost: Host, val hashHosts: Set<Host>) : Protocol()
                 .reduce<LabelExpression, LabelExpression> { acc, l -> LabelAnd(acc, l) }
         ).interpret()
 
-    val inputPort = InputPort(this, this.cleartextHost, "INPUT")
+    val inputPort = InputPort(this, this.cleartextHost, INPUT)
 
-    val cleartextOutputPort: OutputPort =
-        OutputPort(this, this.cleartextHost, "CLEARTEXT_OUTPUT")
-
-    val commitmentOutputPorts: Map<Host, OutputPort> =
+    val createCommitmentInputPorts =
         this.hashHosts.map { hashHost ->
-            hashHost to OutputPort(this, hashHost, "COMMITMENT_OUTPUT")
+            hashHost to InputPort(this, hashHost, CREATE_COMMITMENT_INPUT)
+        }.toMap()
+
+    val createCommitmentOutputPort =
+        OutputPort(this, this.cleartextHost, CREATE_COMMITMENT_OUTPUT)
+
+    val openCleartextOutputPort: OutputPort =
+        OutputPort(this, this.cleartextHost, OPEN_CLEARTEXT_OUTPUT)
+
+    val openCommitmentOutputPorts: Map<Host, OutputPort> =
+        this.hashHosts.map { hashHost ->
+            hashHost to OutputPort(this, hashHost, OPEN_COMMITMENT_OUTPUT)
         }.toMap()
 }

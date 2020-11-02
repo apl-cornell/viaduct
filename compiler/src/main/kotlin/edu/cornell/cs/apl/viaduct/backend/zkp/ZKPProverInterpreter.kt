@@ -280,6 +280,9 @@ class ZKPProverInterpreter(
 
         if (readers.isNotEmpty()) {
             wireVal = w.eval()
+            logger.info {
+                "Run let on wire $w with output value $wireVal"
+            }
             val r1cs = w.toR1CS(true, wireVal)
             val wireName = w.wireName()
             val pkFile = File("zkpkeys/$wireName.pk")

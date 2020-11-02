@@ -12,7 +12,6 @@ import edu.cornell.cs.apl.viaduct.backend.HostAddress
 import edu.cornell.cs.apl.viaduct.backend.ObjectLocation
 import edu.cornell.cs.apl.viaduct.backend.ProtocolInterpreter
 import edu.cornell.cs.apl.viaduct.backend.ProtocolInterpreterFactory
-import edu.cornell.cs.apl.viaduct.backend.ProtocolProjection
 import edu.cornell.cs.apl.viaduct.backend.ViaductProcessRuntime
 import edu.cornell.cs.apl.viaduct.errors.IllegalInternalCommunicationError
 import edu.cornell.cs.apl.viaduct.errors.UndefinedNameError
@@ -215,9 +214,9 @@ class ABYProtocolInterpreter(
                 for (event in events) {
                     when {
                         // cleartext input
-                        event.recv.id == "CLEARTEXT_INPUT" && event.recv.host == runtime.projection.host -> {
+                        event.recv.id == ABY.CLEARTEXT_INPUT && event.recv.host == runtime.projection.host -> {
                             val receivedValue: Value =
-                                runtime.receive(ProtocolProjection(sendProtocol, event.send.host))
+                                runtime.receive(event)
 
                             if (cleartextInput == null) {
                                 cleartextInput = receivedValue
@@ -227,7 +226,7 @@ class ABYProtocolInterpreter(
                         }
 
                         // secret input; throw an error
-                        event.recv.id == "SECRET_INPUT" ->
+                        event.recv.id == ABY.SECRET_INPUT ->
                             throw ViaductInterpreterError("ABY: expected cleartext read, got secret read instead", read)
                     }
                 }
@@ -263,9 +262,8 @@ class ABYProtocolInterpreter(
                 for (event in events) {
                     when {
                         // secret input for this host; create input gate
-                        event.recv.id == "SECRET_INPUT" && event.recv.host == runtime.projection.host -> {
-                            val receivedValue: Value =
-                                runtime.receive(ProtocolProjection(sendProtocol, event.send.host))
+                        event.recv.id == ABY.SECRET_INPUT && event.recv.host == runtime.projection.host -> {
+                            val receivedValue: Value = runtime.receive(event)
 
                             if (previousReceivedValue == null) {
                                 secretInput = valueToCircuit(receivedValue, isInput = true)
@@ -276,12 +274,12 @@ class ABYProtocolInterpreter(
                         }
 
                         // other host has secret input; create dummy input gate
-                        event.recv.id == "SECRET_INPUT" && event.recv.host != runtime.projection.host -> {
+                        event.recv.id == ABY.SECRET_INPUT && event.recv.host != runtime.projection.host -> {
                             secretInput = ABYDummyInGate()
                         }
 
                         // cleartext input; throw an error
-                        event.recv.id == "CLEARTEXT_INPUT" ->
+                        event.recv.id == ABY.CLEARTEXT_INPUT ->
                             throw ViaductInterpreterError("ABY: expected secret read, got cleartext read instead", read)
                     }
                 }
@@ -418,7 +416,8 @@ class ABYProtocolInterpreter(
                     val events: Set<CommunicationEvent> =
                         readers.fold(setOf()) { acc, reader ->
                             acc.union(
-                                protocolAnalysis.relevantCommunicationEvents(stmt, reader)
+                                protocolAnalysis
+                                    .relevantCommunicationEvents(stmt, reader)
                             )
                         }
 
@@ -427,10 +426,10 @@ class ABYProtocolInterpreter(
 
                     if (outValue != null) {
                         val hostEvents =
-                            events.filter { event -> event.send.host == runtime.projection.host }
+                            events.filter { event -> event.send.asProjection() == runtime.projection }
 
                         for (event in hostEvents) {
-                            runtime.send(outValue, ProtocolProjection(event.recv.protocol, event.recv.host))
+                            runtime.send(outValue, event)
                         }
                     }
                 }

@@ -1,11 +1,15 @@
 package edu.cornell.cs.apl.viaduct.syntax
 
+import edu.cornell.cs.apl.viaduct.backend.ProtocolProjection
+
 typealias PortId = String
 
 interface ProtocolPort {
     val protocol: Protocol
     val host: Host
     val id: PortId
+
+    fun asProjection(): ProtocolProjection = ProtocolProjection(protocol, host)
 }
 
 data class InputPort(

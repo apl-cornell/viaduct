@@ -20,7 +20,7 @@ internal class ProtocolAnalysisTest {
         val program = surfaceProgram.elaborated()
         program.check()
         val dumbProtocolAssignment =
-            selectProtocolsWithZ3(program, program.main, SimpleProtocolFactory(program), SimpleCostEstimator)
+            selectProtocolsWithZ3(program, program.main, SimpleProtocolFactory(program), SimpleProtocolComposer, SimpleCostEstimator(SimpleProtocolComposer))
 
         val annotatedProgram = program.annotateWithProtocols(dumbProtocolAssignment)
         val protocolAnalysis = ProtocolAnalysis(annotatedProgram, SimpleProtocolComposer)

@@ -86,6 +86,17 @@ void dump_constraint_system(libsnark::r1cs_constraint_system<libff::Fr<libsnark:
     }
 }
 
+void dump_inputs(std::vector<field128> primary_input, std::vector<field128> aux_input) {
+    std::cout<<"Primary: \n";
+    for (int i = 0; i < primary_input.size(); ++i)
+        std::cout<<"x_" << i + 1 << " = " << primary_input[i] << "\n";
+
+    std::cout<<"\nAux: \n";
+    for (int i = 0; i < aux_input.size(); ++i)
+        std::cout<<"x_" << i + primary_input.size() + 1 << " = " << aux_input[i] << "\n";
+
+}
+
 bool ensure_satisfied(libsnark::r1cs_constraint_system<libff::Fr<libsnark::default_r1cs_ppzksnark_pp> > CS,
     std::vector<field128> primary_input,
     std::vector<field128> auxiliary_input ) {
@@ -112,6 +123,7 @@ bool ensure_satisfied(libsnark::r1cs_constraint_system<libff::Fr<libsnark::defau
             printf("terms for a:\n"); CS.constraints[c].a.print_with_assignment(full_variable_assignment);
             printf("terms for b:\n"); CS.constraints[c].b.print_with_assignment(full_variable_assignment);
             printf("terms for c:\n"); CS.constraints[c].c.print_with_assignment(full_variable_assignment);
+            dump_inputs(primary_input, auxiliary_input);
             assert (false);
             return false;
         }
@@ -238,6 +250,7 @@ struct R1CS {
     Keypair genKeypair() {
         initConstraintSystem();
         reportConstraintSystem(CS);
+        dump_constraint_system(CS);
         ensure_satisfied(CS, primary_input, aux_input);
         auto kp = libsnark::r1cs_ppzksnark_generator<libsnark::default_r1cs_ppzksnark_pp>(CS);
         std::stringstream kp_pk, kp_vk;

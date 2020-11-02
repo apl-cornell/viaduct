@@ -27,7 +27,6 @@ import edu.cornell.cs.apl.viaduct.syntax.Protocol
 import edu.cornell.cs.apl.viaduct.syntax.Variable
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.DeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.FunctionDeclarationNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.IfNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.LetNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.Node
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ObjectDeclarationArgumentNode
@@ -57,13 +56,15 @@ private class Z3Selection(
     private val program: ProgramNode,
     private val main: ProcessDeclarationNode,
     private val protocolFactory: ProtocolFactory,
+    private val protocolComposer: ProtocolComposer,
     private val costEstimator: CostEstimator<IntegerCost>,
     private val ctx: Context,
     private val dumpMetadata: (Map<Node, PrettyPrintable>) -> Unit
 ) {
     private val nameAnalysis = NameAnalysis.get(program)
 
-    private val constraintGenerator = ConstraintGenerator(program, protocolFactory, costEstimator, ctx)
+    private val constraintGenerator =
+        SelectionConstraintGenerator(program, protocolFactory, protocolComposer, costEstimator, ctx)
     private val hostTrustConfiguration = HostTrustConfiguration(program)
 
     init {
@@ -86,15 +87,14 @@ private class Z3Selection(
         totalCostSymvar: IntExpr
     ) {
         val nodeCostFunc: (Node) -> Pair<Node, PrettyPrintable> = { node ->
-            val symcost =
-                when (node) {
-                    is IfNode -> constraintGenerator.symbolicCost(node.guard)
-                    else -> constraintGenerator.symbolicCost(node)
-                }
-
+            val symcost = constraintGenerator.symbolicCost(node)
             val nodeCostStr =
                 symcost.featureSum().evaluate(eval) { cvar ->
-                    (model.getConstInterp(cvar.variable) as IntNum).int
+                    val interpValue = model.getConstInterp(cvar.variable)
+                    if (interpValue == null) {
+                        println(cvar.variable)
+                    }
+                    (interpValue as IntNum).int
                 }.toString()
 
             val nodeProtocolStr =
@@ -173,6 +173,7 @@ private class Z3Selection(
 
         for (function in reachableFunctions) {
             // select for function parameters first
+            /*
             for (parameter in function.parameters) {
                 constraints.add(
                     VariableIn(
@@ -180,11 +181,12 @@ private class Z3Selection(
                         constraintGenerator.viableProtocols(parameter)
                     )
                 )
-                constraints.add(protocolFactory.constraint(parameter))
+                constraints.addAll(constraintGenerator.getConstraints(parameter))
             }
+            */
 
             // then select for function bodies
-            constraints.addAll(constraintGenerator.getSelectionConstraints(function.body))
+            constraints.addAll(constraintGenerator.getConstraints(function))
         }
 
         constraints.addAll(constraintGenerator.getConstraints(main))
@@ -245,8 +247,15 @@ private class Z3Selection(
         val pmapExpr = pmap.mapValues { ctx.mkInt(it.value) as IntExpr }.toBiMap()
 
         // load selection constraints into Z3
+        val costVariables: MutableSet<CostVariable> = mutableSetOf()
         for (constraint in constraints) {
+            costVariables.addAll(constraint.costVariables())
             solver.Add(constraint.boolExpr(ctx, varMap, pmapExpr))
+        }
+
+        // make sure all cost variables are nonnegative
+        for (costVariable in costVariables) {
+            solver.Add(ctx.mkGe(costVariable.variable, ctx.mkInt(0)))
         }
 
         if (varMap.values.isNotEmpty()) {
@@ -297,12 +306,13 @@ fun selectProtocolsWithZ3(
     program: ProgramNode,
     main: ProcessDeclarationNode,
     protocolFactory: ProtocolFactory,
+    protocolComposer: ProtocolComposer,
     costEstimator: CostEstimator<IntegerCost>,
     dumpMetadata: (Map<Node, PrettyPrintable>) -> Unit = {}
 ): (FunctionName, Variable) -> Protocol {
     val ctx = Context()
     val ret =
-        Z3Selection(program, main, protocolFactory, costEstimator, ctx, dumpMetadata).select()
+        Z3Selection(program, main, protocolFactory, protocolComposer, costEstimator, ctx, dumpMetadata).select()
     ctx.close()
     return ret
 }

@@ -38,17 +38,16 @@ class ZKP(val prover: Host, val verifiers: Set<Host>) : Protocol() {
                 .reduce<LabelExpression, LabelExpression> { acc, l -> LabelAnd(acc, l) }
         ).interpret()
 
-    val secretInputPort : InputPort =
+    val secretInputPort: InputPort =
         InputPort(this, prover, "ZKP_SECRET_INPUT")
 
-    val cleartextInput : Map<Host, InputPort> =
+    val cleartextInput: Map<Host, InputPort> =
         (verifiers + setOf(prover)).map {
             it to InputPort(this, it, "ZKP_PUBLIC_INPUT")
         }.toMap()
 
-    val outputPorts : Map<Host, OutputPort> =
+    val outputPorts: Map<Host, OutputPort> =
         (verifiers + setOf(prover)).map {
             it to OutputPort(this, it, "ZKP_OUTPUT")
         }.toMap()
-
 }

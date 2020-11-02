@@ -282,7 +282,7 @@ object SimpleProtocolComposer : ProtocolComposer {
 
             src is Replication && dst is ZKP -> { // We know src.hosts == dst.verifiers + {dst.prover}
                 if (src.hosts != dst.hosts) {
-                    throw Exception("Bad state for composition")
+                    throw Exception("Bad state for composition: source hosts is ${src.hosts} but dest is ${dst.hosts}")
                 }
                 ProtocolCommunication(src.hosts.map {
                     CommunicationEvent(src.hostOutputPorts[it]!!, dst.cleartextInput[it]!!)

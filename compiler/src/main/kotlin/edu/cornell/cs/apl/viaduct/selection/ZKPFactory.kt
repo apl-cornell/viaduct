@@ -3,8 +3,6 @@ package edu.cornell.cs.apl.viaduct.selection
 import edu.cornell.cs.apl.attributes.attribute
 import edu.cornell.cs.apl.viaduct.analysis.NameAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.TypeAnalysis
-import edu.cornell.cs.apl.viaduct.analysis.declarationNodes
-import edu.cornell.cs.apl.viaduct.analysis.letNodes
 import edu.cornell.cs.apl.viaduct.backend.canMux
 import edu.cornell.cs.apl.viaduct.backend.zkp.supportedOp
 import edu.cornell.cs.apl.viaduct.protocols.ZKP
@@ -13,7 +11,6 @@ import edu.cornell.cs.apl.viaduct.syntax.HostTrustConfiguration
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
 import edu.cornell.cs.apl.viaduct.syntax.ProtocolName
 import edu.cornell.cs.apl.viaduct.syntax.SpecializedProtocol
-import edu.cornell.cs.apl.viaduct.syntax.Variable
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.DeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.DowngradeNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ExpressionNode
@@ -143,5 +140,4 @@ class ZKPFactory(val program: ProgramNode) : ProtocolFactory {
             // turn off visibility check when the conditional can be muxed
             is ReadNode -> Literal(!node.canMux())
         }
-
 }

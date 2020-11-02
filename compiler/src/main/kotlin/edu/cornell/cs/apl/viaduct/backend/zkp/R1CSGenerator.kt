@@ -220,11 +220,11 @@ fun R1CSInstance.assertBoolean(w: Wire) {
     addConstraint(ConstraintTuple(LinTerm.fromWire(w), LinTerm(1, listOf(-1 to w)), LinTerm.fromConst(0)))
 }
 
-fun WireTerm.generatePrimaryInputs(instance : R1CSInstance) {
+fun WireTerm.generatePrimaryInputs(instance: R1CSInstance) {
     when (this) {
         is WireConst -> instance.mkPublicInput(this.index, this.v)
         is WireOp -> this.inputs.map { it.generatePrimaryInputs(instance) }
-        is WireIn ->  { }
+        is WireIn -> { }
         is WireDummyIn -> { }
     }
 }
@@ -244,7 +244,6 @@ fun WireTerm.getWire(isProver: Boolean, instance: R1CSInstance): Wire {
     }
 }
 
-
 fun WireTerm.toR1CS(isProver: Boolean, is_eq_to: Int): R1CSInstance {
     val instance = R1CSInstance(isProver)
     val w_o = instance.mkOutput(is_eq_to)
@@ -255,4 +254,3 @@ fun WireTerm.toR1CS(isProver: Boolean, is_eq_to: Int): R1CSInstance {
     instance.assertEqualsTo(o, w_o)
     return instance
 }
-

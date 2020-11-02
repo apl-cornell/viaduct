@@ -45,10 +45,18 @@ class SimpleCostEstimator(
 
     override fun communicationCost(source: Protocol, destination: Protocol, host: Host?): Cost<IntegerCost> {
         return if (source != destination) {
+
+            val protocolCommunication =
+                    if (protocolComposer.canCommunicate(source, destination))
+                        (protocolComposer.communicate(source, destination))
+                    else
+                        ProtocolCommunication(setOf())
+
             val events =
                 if (host != null)
-                    (protocolComposer.communicate(source, destination).getHostReceives(host))
-                    else (protocolComposer.communicate(source, destination))
+                    (protocolCommunication.getHostReceives(host))
+                else
+                    protocolCommunication
 
             val plaintextMsgCost =
                 events.filter { event ->

@@ -9,5 +9,4 @@ import edu.cornell.cs.apl.viaduct.syntax.Variable
 
 fun ZKPMuxPostprocessor(
     protocolAssignment: (FunctionName, Variable) -> Protocol
-) : ProgramPostprocessor = MuxPostprocessor({ p -> p is ZKP }, protocolAssignment)
-
+): ProgramPostprocessor = MuxPostprocessor({ p -> p is ZKP }, protocolAssignment)

@@ -47,13 +47,13 @@ import edu.cornell.cs.apl.viaduct.syntax.values.BooleanValue
 import edu.cornell.cs.apl.viaduct.syntax.values.ByteVecValue
 import edu.cornell.cs.apl.viaduct.syntax.values.IntegerValue
 import edu.cornell.cs.apl.viaduct.syntax.values.Value
-import kotlinx.collections.immutable.PersistentMap
-import kotlinx.collections.immutable.persistentMapOf
-import mu.KotlinLogging
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
 import java.util.Stack
+import kotlinx.collections.immutable.PersistentMap
+import kotlinx.collections.immutable.persistentMapOf
+import mu.KotlinLogging
 
 private val logger = KotlinLogging.logger("ZKP Prover")
 
@@ -147,7 +147,6 @@ class ZKPProverInterpreter(
             }
             is IntegerType -> IntegerValue(this)
             else -> throw Exception("toValue: cannot convert type $t")
-
         }
     }
 
@@ -294,7 +293,7 @@ class ZKPProverInterpreter(
                 val out_pkFile = FileOutputStream(pkFile, false)
                 logger.info { "kp : writing ${kp.proving_key._data.size} bytes" }
                 out_pkFile.write(kp.proving_key._data)
-                logger.info { "vk : writing ${kp.verification_key._data.size} bytes"}
+                logger.info { "vk : writing ${kp.verification_key._data.size} bytes" }
                 val out_vkFile = FileOutputStream(vkFile, false)
                 out_vkFile.write(kp.verification_key._data)
                 out_pkFile.close()

@@ -45,13 +45,12 @@ import edu.cornell.cs.apl.viaduct.syntax.values.BooleanValue
 import edu.cornell.cs.apl.viaduct.syntax.values.ByteVecValue
 import edu.cornell.cs.apl.viaduct.syntax.values.IntegerValue
 import edu.cornell.cs.apl.viaduct.syntax.values.Value
-import kotlinx.collections.immutable.PersistentMap
-import kotlinx.collections.immutable.persistentMapOf
-import mu.KotlinLogging
 import java.io.File
 import java.io.FileInputStream
 import java.util.Stack
-
+import kotlinx.collections.immutable.PersistentMap
+import kotlinx.collections.immutable.persistentMapOf
+import mu.KotlinLogging
 
 private val logger = KotlinLogging.logger("ZKP Verifier")
 
@@ -113,20 +112,19 @@ class ZKPVerifierInterpreter(
         wireStack.pop()
     }
 
-    private fun Value.toInt() : Int {
-        return when(this) {
+    private fun Value.toInt(): Int {
+        return when (this) {
             is IntegerValue -> this.value
             is BooleanValue -> if (this.value) {
                 1
-            }
-            else { 0 }
+            } else { 0 }
             else -> throw Exception("value.toInt: Unknown value type")
         }
     }
 
     /** Inject a value into a wire. **/
-    private fun injectValue(value: Value): WireTerm
-        = wireGenerator.mkConst(value.toInt())
+    private fun injectValue(value: Value): WireTerm =
+        wireGenerator.mkConst(value.toInt())
 
     private fun Int.toValue(t: ValueType): Value {
         return when (t) {
@@ -139,7 +137,6 @@ class ZKPVerifierInterpreter(
             }
             is IntegerType -> IntegerValue(this)
             else -> throw Exception("toValue: cannot convert type $t")
-
         }
     }
 
@@ -255,15 +252,13 @@ class ZKPVerifierInterpreter(
 
         if (readers.isEmpty()) {
             return
-        }
-        else {
+        } else {
             val wireName = w.wireName()
             val vkFile = File("zkpkeys/$wireName.vk")
             if (!vkFile.exists()) {
                 throw Exception("Cannot find verification key for ${w.asString()} with name $wireName.vk.  Restart after prover finishes.")
-            }
-            else {
-                val wireVal : Int = (runtime.receive(ProtocolProjection(runtime.projection.protocol, prover)) as IntegerValue).value
+            } else {
+                val wireVal: Int = (runtime.receive(ProtocolProjection(runtime.projection.protocol, prover)) as IntegerValue).value
                 val r1cs = w.toR1CS(false, wireVal)
                 val pf = (runtime.receive(ProtocolProjection(runtime.projection.protocol, prover)) as ByteVecValue).value
                 val in_vkFile = FileInputStream(vkFile)
@@ -276,7 +271,7 @@ class ZKPVerifierInterpreter(
                 logger.info {
                     "Verified: $verifyResult"
                 }
-                assert( verifyResult)
+                assert(verifyResult)
 
                 for (reader in readers) {
                     val events =
@@ -289,11 +284,8 @@ class ZKPVerifierInterpreter(
                         runtime.send(outVal, ProtocolProjection(event.recv.protocol, event.recv.host))
                     }
                 }
-
             }
-
         }
-
     }
 
     override suspend fun runUpdate(stmt: UpdateNode) {

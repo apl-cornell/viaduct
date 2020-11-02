@@ -12,14 +12,6 @@ import edu.cornell.cs.apl.viaduct.syntax.values.ByteVecValue
 import edu.cornell.cs.apl.viaduct.syntax.values.IntegerValue
 import edu.cornell.cs.apl.viaduct.syntax.values.UnitValue
 import edu.cornell.cs.apl.viaduct.syntax.values.Value
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.asCoroutineDispatcher
-import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withContext
-import mu.KotlinLogging
 import java.io.InputStream
 import java.io.OutputStream
 import java.net.ConnectException
@@ -29,6 +21,14 @@ import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.util.Scanner
 import java.util.concurrent.Executors
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.asCoroutineDispatcher
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
+import mu.KotlinLogging
 
 private var logger = KotlinLogging.logger("Runtime")
 
@@ -101,7 +101,7 @@ private class ViaductReceiverThread(
                                 // IntegerValue
                                 1 -> {
                                     val b = socketInput.readNBytes(4)
-                                    IntegerValue (ByteBuffer.wrap(b).order(ByteOrder.LITTLE_ENDIAN).int)
+                                    IntegerValue(ByteBuffer.wrap(b).order(ByteOrder.LITTLE_ENDIAN).int)
                                 }
 
                                 // ByteVecValue

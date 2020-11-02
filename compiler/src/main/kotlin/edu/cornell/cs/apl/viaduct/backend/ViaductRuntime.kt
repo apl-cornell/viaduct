@@ -17,6 +17,8 @@ import java.io.OutputStream
 import java.net.ConnectException
 import java.net.ServerSocket
 import java.net.Socket
+import java.nio.ByteBuffer
+import java.nio.ByteOrder
 import java.util.Scanner
 import java.util.concurrent.Executors
 import kotlinx.coroutines.Dispatchers
@@ -88,20 +90,27 @@ private class ViaductReceiverThread(
                         val senderId: Int = socketInput.read()
                         val receiverId: Int = socketInput.read()
                         val valType: Int = socketInput.read()
-                        val unparsedValue: Int = socketInput.read()
 
                         val sender: Process = runtime.getProcessById(senderId).process
                         val receiver: Process = runtime.getProcessById(receiverId).process
                         val value: Value =
                             when (valType) {
                                 // BooleanValue
-                                0 -> BooleanValue(unparsedValue != 0)
+                                0 -> BooleanValue(socketInput.read() != 0)
 
                                 // IntegerValue
-                                1 -> IntegerValue(unparsedValue)
+                                1 -> {
+                                    val b = socketInput.readNBytes(4)
+                                    IntegerValue(ByteBuffer.wrap(b).order(ByteOrder.LITTLE_ENDIAN).int)
+                                }
 
                                 // ByteVecValue
-                                2 -> ByteVecValue(socketInput.readNBytes(unparsedValue).toList())
+                                2 -> {
+                                    val len_buf = socketInput.readNBytes(4)
+                                    val len = ByteBuffer.wrap(len_buf).order(ByteOrder.LITTLE_ENDIAN).int
+                                    val i = socketInput.readNBytes(len).toList()
+                                    ByteVecValue(i)
+                                }
 
                                 // UnitValue
                                 3 -> UnitValue
@@ -149,18 +158,21 @@ private class ViaductSenderThread(
 
                         is IntegerValue -> {
                             socketOutput.write(1)
-                            socketOutput.write(msg.message.value)
+                            val b = ByteBuffer.allocate(4).order(ByteOrder.LITTLE_ENDIAN).putInt(msg.message.value)
+                            socketOutput.write(b.array())
                         }
 
                         is ByteVecValue -> {
                             socketOutput.write(2)
-                            socketOutput.write(msg.message.value.size)
-                            socketOutput.write(msg.message.value.toByteArray())
+                            val bytes = msg.message.value.toByteArray()
+                            val len = bytes.size
+                            val len_buf = ByteBuffer.allocate(4).order(ByteOrder.LITTLE_ENDIAN).putInt(len)
+                            socketOutput.write(len_buf.array())
+                            socketOutput.write(bytes)
                         }
 
                         is UnitValue -> {
                             socketOutput.write(3)
-                            socketOutput.write(0)
                         }
                     }
                 }

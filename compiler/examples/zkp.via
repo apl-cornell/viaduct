@@ -1,0 +1,11 @@
+process main {
+    val a : bool{A} = input bool from alice;
+    val x : int = input int from bob;
+    val a_endorse : bool{A & B<-} = endorse a to {A & B<-};
+    val tst : bool{A & B<-} = !(a_endorse && true);
+    val a2 : bool = input bool from alice;
+    output (declassify tst to {(A | B)-> & (A&B)<-}) to bob;
+}
+
+host alice: {A}
+host bob: {B}

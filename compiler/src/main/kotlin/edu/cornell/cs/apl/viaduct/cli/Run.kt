@@ -9,16 +9,19 @@ import edu.cornell.cs.apl.viaduct.backend.ProtocolInterpreterFactory
 import edu.cornell.cs.apl.viaduct.backend.ViaductBackend
 import edu.cornell.cs.apl.viaduct.backend.aby.ABYProtocolInterpreter
 import edu.cornell.cs.apl.viaduct.backend.commitment.CommitmentProtocolInterpreterFactory
+import edu.cornell.cs.apl.viaduct.backend.zkp.ZKPProtocolInterpreterFactory
 import edu.cornell.cs.apl.viaduct.parsing.AbyProtocolParser
 import edu.cornell.cs.apl.viaduct.parsing.CommitmentProtocolParser
 import edu.cornell.cs.apl.viaduct.parsing.LocalProtocolParser
 import edu.cornell.cs.apl.viaduct.parsing.ProtocolParser
 import edu.cornell.cs.apl.viaduct.parsing.ReplicationProtocolParser
+import edu.cornell.cs.apl.viaduct.parsing.ZKPProtocolParser
 import edu.cornell.cs.apl.viaduct.passes.elaborated
 import edu.cornell.cs.apl.viaduct.protocols.ABY
 import edu.cornell.cs.apl.viaduct.protocols.Commitment
 import edu.cornell.cs.apl.viaduct.protocols.Local
 import edu.cornell.cs.apl.viaduct.protocols.Replication
+import edu.cornell.cs.apl.viaduct.protocols.ZKP
 import edu.cornell.cs.apl.viaduct.syntax.Host
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
 import edu.cornell.cs.apl.viaduct.syntax.ProtocolName
@@ -46,6 +49,7 @@ class Run : CliktCommand(help = "Run compiled protocol for a single host") {
             Local.protocolName to LocalProtocolParser,
             Commitment.protocolName to CommitmentProtocolParser,
             Replication.protocolName to ReplicationProtocolParser,
+            ZKP.protocolName to ZKPProtocolParser,
             ABY.protocolName to AbyProtocolParser
         )
 
@@ -54,7 +58,8 @@ class Run : CliktCommand(help = "Run compiled protocol for a single host") {
             Local.protocolName to PlaintextProtocolInterpreter,
             Replication.protocolName to PlaintextProtocolInterpreter,
             ABY.protocolName to ABYProtocolInterpreter,
-            Commitment.protocolName to CommitmentProtocolInterpreterFactory
+            Commitment.protocolName to CommitmentProtocolInterpreterFactory,
+            ZKP.protocolName to ZKPProtocolInterpreterFactory
         )
     }
 

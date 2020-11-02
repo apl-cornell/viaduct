@@ -5,6 +5,7 @@ import edu.cornell.cs.apl.viaduct.protocols.ABY
 import edu.cornell.cs.apl.viaduct.protocols.Commitment
 import edu.cornell.cs.apl.viaduct.protocols.Local
 import edu.cornell.cs.apl.viaduct.protocols.Replication
+import edu.cornell.cs.apl.viaduct.protocols.ZKP
 import edu.cornell.cs.apl.viaduct.syntax.Host
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.DeclarationNode
@@ -271,6 +272,37 @@ object SimpleProtocolComposer : ProtocolComposer {
                 ProtocolCommunication(setOf())
             }
 
+            src is ZKP && dst is ZKP -> {
+                ProtocolCommunication(setOf())
+            }
+
+            src is Local && dst is ZKP -> { // We know src.host == dst.prover
+                ProtocolCommunication(setOf(CommunicationEvent(src.outputPort, dst.secretInputPort)))
+            }
+
+            src is Replication && dst is ZKP -> { // We know src.hosts == dst.verifiers + {dst.prover}
+                if (src.hosts != dst.hosts) {
+                    throw Exception("Bad state for composition: source hosts is ${src.hosts} but dest is ${dst.hosts}")
+                }
+                ProtocolCommunication(src.hosts.map {
+                    CommunicationEvent(src.hostOutputPorts[it]!!, dst.cleartextInput[it]!!)
+                }.toSet())
+            }
+
+            src is ZKP && dst is Local -> {
+                ProtocolCommunication(src.hosts.map {
+                    CommunicationEvent(src.outputPorts[it]!!, dst.inputPort)
+                }.toSet())
+            }
+
+            src is ZKP && dst is Replication -> {
+                ProtocolCommunication(src.hosts.flatMap { h1 ->
+                    dst.hosts.map { h2 ->
+                        CommunicationEvent(src.outputPorts[h1]!!, dst.hostInputPorts[h2]!!)
+                    }
+                }.toSet())
+            }
+
             else -> throw Error("does not support communication from ${src.protocolName} to ${dst.protocolName}")
         }
     }
@@ -285,6 +317,11 @@ object SimpleProtocolComposer : ProtocolComposer {
             src is Local && dst is Replication -> true
             src is Local && dst is ABY -> true
             src is Local && dst is Commitment -> true
+            src is Local && dst is ZKP -> src.host == dst.prover
+            src is ZKP && dst is Local -> true
+            src is Replication && dst is ZKP -> src.hosts == dst.hosts // TODO generalize this?
+            src is ZKP && dst is ZKP -> true
+            src is ZKP && dst is Replication -> true
             src is Replication && dst is Local -> true
             src is Replication && dst is Replication -> true
             src is Replication && dst is ABY -> true
@@ -305,7 +342,7 @@ object SimpleProtocolComposer : ProtocolComposer {
         when (stmt) {
             is LetNode -> {
                 when (protocol) {
-                    is ABY, is Local, is Commitment -> protocol.hosts
+                    is ABY, is Local, is Commitment, is ZKP -> protocol.hosts
                     is Replication -> setOf()
                     else -> setOf()
                 }

@@ -4,6 +4,7 @@ import edu.cornell.cs.apl.viaduct.protocols.ABY
 import edu.cornell.cs.apl.viaduct.protocols.Commitment
 import edu.cornell.cs.apl.viaduct.protocols.Local
 import edu.cornell.cs.apl.viaduct.protocols.Replication
+import edu.cornell.cs.apl.viaduct.protocols.ZKP
 import edu.cornell.cs.apl.viaduct.syntax.Host
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ExpressionNode
@@ -36,6 +37,7 @@ class SimpleCostEstimator(
                 is Local -> IntegerCost(1)
                 is Replication -> IntegerCost(1)
                 is Commitment -> IntegerCost(10)
+                is ZKP -> IntegerCost(50)
                 is ABY -> IntegerCost(100)
                 else -> throw Error("unknown protocol ${executingProtocol.protocolName}")
             }
@@ -43,10 +45,18 @@ class SimpleCostEstimator(
 
     override fun communicationCost(source: Protocol, destination: Protocol, host: Host?): Cost<IntegerCost> {
         return if (source != destination) {
+
+            val protocolCommunication =
+                    if (protocolComposer.canCommunicate(source, destination))
+                        (protocolComposer.communicate(source, destination))
+                    else
+                        ProtocolCommunication(setOf())
+
             val events =
                 if (host != null)
-                    (protocolComposer.communicate(source, destination).getHostReceives(host))
-                    else (protocolComposer.communicate(source, destination))
+                    (protocolCommunication.getHostReceives(host))
+                else
+                    protocolCommunication
 
             val plaintextMsgCost =
                 events.filter { event ->
@@ -74,6 +84,7 @@ class SimpleCostEstimator(
                 is Local -> IntegerCost(1)
                 is Replication -> IntegerCost(1)
                 is Commitment -> IntegerCost(10)
+                is ZKP -> IntegerCost(20)
                 is ABY -> IntegerCost(100)
                 else -> throw Error("unknown protocol ${protocol.protocolName}")
             }

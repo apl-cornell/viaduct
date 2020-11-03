@@ -143,6 +143,7 @@ class PlaintextProtocolInterpreter(
                         }
 
                         assert(cleartextValue != null)
+                        assert(!(cleartextValue is ByteVecValue))
                         tempStore = tempStore.put(read.temporary.value, cleartextValue!!)
                         cleartextValue
                     }
@@ -175,6 +176,7 @@ class PlaintextProtocolInterpreter(
                             }
                         }
 
+                        assert(!(msg is ByteVecValue))
                         tempStore = tempStore.put(read.temporary.value, msg)
                         msg
                     }
@@ -238,6 +240,9 @@ class PlaintextProtocolInterpreter(
                     .getProjectionSends(runtime.projection)
 
             for (event in events) {
+                logger.info {
+                    "Sending value $rhsValue on $event"
+                }
                 runtime.send(rhsValue, event)
             }
         }

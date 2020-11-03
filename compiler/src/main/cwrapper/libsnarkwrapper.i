@@ -1,6 +1,7 @@
 %module libsnarkwrapper
 %include various.i
 %include "std_vector.i"
+%include "std_string.i"
 
 
 %apply (char *STRING, size_t LENGTH) { (const char data[], size_t len) }

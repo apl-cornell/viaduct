@@ -19,10 +19,24 @@ public class libsnarkwrapper {
 
   public static void dump_constraint_system(
       SWIGTYPE_p_libsnark__r1cs_constraint_systemT_libff__FrT_libsnark__default_r1cs_ppzksnark_pp_t_t
-          CS) {
-    libsnarkwrapperJNI.dump_constraint_system(
+          CS,
+      SWIGTYPE_p_std__mapT_size_t_std__string_t annotations,
+      SWIGTYPE_p_std__vectorT_std__string_t constraint_annotations) {
+    libsnarkwrapperJNI.dump_constraint_system__SWIG_0(
         SWIGTYPE_p_libsnark__r1cs_constraint_systemT_libff__FrT_libsnark__default_r1cs_ppzksnark_pp_t_t
-            .getCPtr(CS));
+            .getCPtr(CS),
+        SWIGTYPE_p_std__mapT_size_t_std__string_t.getCPtr(annotations),
+        SWIGTYPE_p_std__vectorT_std__string_t.getCPtr(constraint_annotations));
+  }
+
+  public static void dump_constraint_system(
+      SWIGTYPE_p_libsnark__r1cs_constraint_systemT_libff__FrT_libsnark__default_r1cs_ppzksnark_pp_t_t
+          CS,
+      SWIGTYPE_p_std__mapT_size_t_std__string_t annotations) {
+    libsnarkwrapperJNI.dump_constraint_system__SWIG_1(
+        SWIGTYPE_p_libsnark__r1cs_constraint_systemT_libff__FrT_libsnark__default_r1cs_ppzksnark_pp_t_t
+            .getCPtr(CS),
+        SWIGTYPE_p_std__mapT_size_t_std__string_t.getCPtr(annotations));
   }
 
   public static void dump_inputs(
@@ -39,13 +53,15 @@ public class libsnarkwrapper {
       SWIGTYPE_p_libsnark__r1cs_constraint_systemT_libff__FrT_libsnark__default_r1cs_ppzksnark_pp_t_t
           CS,
       SWIGTYPE_p_std__vectorT_libff__FrT_libsnark__default_r1cs_ppzksnark_pp_t_t primary_input,
-      SWIGTYPE_p_std__vectorT_libff__FrT_libsnark__default_r1cs_ppzksnark_pp_t_t auxiliary_input) {
+      SWIGTYPE_p_std__vectorT_libff__FrT_libsnark__default_r1cs_ppzksnark_pp_t_t auxiliary_input,
+      SWIGTYPE_p_std__mapT_size_t_std__string_t annotations) {
     return libsnarkwrapperJNI.ensure_satisfied(
         SWIGTYPE_p_libsnark__r1cs_constraint_systemT_libff__FrT_libsnark__default_r1cs_ppzksnark_pp_t_t
             .getCPtr(CS),
         SWIGTYPE_p_std__vectorT_libff__FrT_libsnark__default_r1cs_ppzksnark_pp_t_t.getCPtr(
             primary_input),
         SWIGTYPE_p_std__vectorT_libff__FrT_libsnark__default_r1cs_ppzksnark_pp_t_t.getCPtr(
-            auxiliary_input));
+            auxiliary_input),
+        SWIGTYPE_p_std__mapT_size_t_std__string_t.getCPtr(annotations));
   }
 }

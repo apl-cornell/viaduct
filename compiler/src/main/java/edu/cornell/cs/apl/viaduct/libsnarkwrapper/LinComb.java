@@ -36,11 +36,11 @@ public class LinComb {
     }
   }
 
-  public void setConstTerm(int value) {
+  public void setConstTerm(long value) {
     libsnarkwrapperJNI.LinComb_constTerm_set(swigCPtr, this, value);
   }
 
-  public int getConstTerm() {
+  public long getConstTerm() {
     return libsnarkwrapperJNI.LinComb_constTerm_get(swigCPtr, this);
   }
 

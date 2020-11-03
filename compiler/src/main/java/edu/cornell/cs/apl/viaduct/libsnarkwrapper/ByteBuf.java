@@ -36,13 +36,12 @@ public class ByteBuf {
     }
   }
 
-  public void setContents(SWIGTYPE_p_std__string value) {
-    libsnarkwrapperJNI.ByteBuf_contents_set(swigCPtr, this, SWIGTYPE_p_std__string.getCPtr(value));
+  public void setContents(String value) {
+    libsnarkwrapperJNI.ByteBuf_contents_set(swigCPtr, this, value);
   }
 
-  public SWIGTYPE_p_std__string getContents() {
-    return new SWIGTYPE_p_std__string(
-        libsnarkwrapperJNI.ByteBuf_contents_get(swigCPtr, this), true);
+  public String getContents() {
+    return libsnarkwrapperJNI.ByteBuf_contents_get(swigCPtr, this);
   }
 
   public byte[] get_data() {

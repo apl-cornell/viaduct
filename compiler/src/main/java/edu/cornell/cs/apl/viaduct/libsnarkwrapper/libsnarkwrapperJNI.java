@@ -119,9 +119,9 @@ public class libsnarkwrapperJNI {
 
   public static final native void delete_WireInfoVector(long jarg1);
 
-  public static final native void Term_coeff_set(long jarg1, Term jarg1_, int jarg2);
+  public static final native void Term_coeff_set(long jarg1, Term jarg1_, long jarg2);
 
-  public static final native int Term_coeff_get(long jarg1, Term jarg1_);
+  public static final native long Term_coeff_get(long jarg1, Term jarg1_);
 
   public static final native void Term_wireID_set(long jarg1, Term jarg1_, int jarg2);
 
@@ -131,9 +131,9 @@ public class libsnarkwrapperJNI {
 
   public static final native void delete_Term(long jarg1);
 
-  public static final native void LinComb_constTerm_set(long jarg1, LinComb jarg1_, int jarg2);
+  public static final native void LinComb_constTerm_set(long jarg1, LinComb jarg1_, long jarg2);
 
-  public static final native int LinComb_constTerm_get(long jarg1, LinComb jarg1_);
+  public static final native long LinComb_constTerm_get(long jarg1, LinComb jarg1_);
 
   public static final native void LinComb_linTerms_set(
       long jarg1, LinComb jarg1_, long jarg2, TermVector jarg2_);
@@ -161,6 +161,11 @@ public class libsnarkwrapperJNI {
 
   public static final native long Constraint_eq_get(long jarg1, Constraint jarg1_);
 
+  public static final native void Constraint_annotation_set(
+      long jarg1, Constraint jarg1_, String jarg2);
+
+  public static final native String Constraint_annotation_get(long jarg1, Constraint jarg1_);
+
   public static final native long new_Constraint();
 
   public static final native void delete_Constraint(long jarg1);
@@ -169,17 +174,17 @@ public class libsnarkwrapperJNI {
 
   public static final native int WireInfo_type_get(long jarg1, WireInfo jarg1_);
 
-  public static final native void WireInfo_input_val_set(long jarg1, WireInfo jarg1_, int jarg2);
+  public static final native void WireInfo_input_val_set(long jarg1, WireInfo jarg1_, long jarg2);
 
-  public static final native int WireInfo_input_val_get(long jarg1, WireInfo jarg1_);
+  public static final native long WireInfo_input_val_get(long jarg1, WireInfo jarg1_);
 
   public static final native long new_WireInfo();
 
   public static final native void delete_WireInfo(long jarg1);
 
-  public static final native void ByteBuf_contents_set(long jarg1, ByteBuf jarg1_, long jarg2);
+  public static final native void ByteBuf_contents_set(long jarg1, ByteBuf jarg1_, String jarg2);
 
-  public static final native long ByteBuf_contents_get(long jarg1, ByteBuf jarg1_);
+  public static final native String ByteBuf_contents_get(long jarg1, ByteBuf jarg1_);
 
   public static final native byte[] ByteBuf_get_data(long jarg1, ByteBuf jarg1_);
 
@@ -205,11 +210,15 @@ public class libsnarkwrapperJNI {
 
   public static final native void initZKP();
 
-  public static final native void dump_constraint_system(long jarg1);
+  public static final native void dump_constraint_system__SWIG_0(
+      long jarg1, long jarg2, long jarg3);
+
+  public static final native void dump_constraint_system__SWIG_1(long jarg1, long jarg2);
 
   public static final native void dump_inputs(long jarg1, long jarg2);
 
-  public static final native boolean ensure_satisfied(long jarg1, long jarg2, long jarg3);
+  public static final native boolean ensure_satisfied(
+      long jarg1, long jarg2, long jarg3, long jarg4);
 
   public static final native void R1CS_wires_set(
       long jarg1, R1CS jarg1_, long jarg2, WireInfoVector jarg2_);
@@ -220,6 +229,15 @@ public class libsnarkwrapperJNI {
       long jarg1, R1CS jarg1_, long jarg2, ConstraintVector jarg2_);
 
   public static final native long R1CS_constraints_get(long jarg1, R1CS jarg1_);
+
+  public static final native void R1CS_wire_annotations_set(long jarg1, R1CS jarg1_, long jarg2);
+
+  public static final native long R1CS_wire_annotations_get(long jarg1, R1CS jarg1_);
+
+  public static final native void R1CS_constraint_annotations_set(
+      long jarg1, R1CS jarg1_, long jarg2);
+
+  public static final native long R1CS_constraint_annotations_get(long jarg1, R1CS jarg1_);
 
   public static final native void R1CS_primary_input_set(long jarg1, R1CS jarg1_, long jarg2);
 
@@ -237,7 +255,8 @@ public class libsnarkwrapperJNI {
 
   public static final native boolean R1CS_initialized_get(long jarg1, R1CS jarg1_);
 
-  public static final native int R1CS_mkWire(long jarg1, R1CS jarg1_, long jarg2, WireInfo jarg2_);
+  public static final native int R1CS_mkWire(
+      long jarg1, R1CS jarg1_, long jarg2, WireInfo jarg2_, String jarg3);
 
   public static final native void R1CS_addConstraint(
       long jarg1, R1CS jarg1_, long jarg2, Constraint jarg2_);

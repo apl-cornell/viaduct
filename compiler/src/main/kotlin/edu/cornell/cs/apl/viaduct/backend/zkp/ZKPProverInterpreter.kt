@@ -11,7 +11,6 @@ import edu.cornell.cs.apl.viaduct.backend.WireTerm
 import edu.cornell.cs.apl.viaduct.backend.asString
 import edu.cornell.cs.apl.viaduct.backend.eval
 import edu.cornell.cs.apl.viaduct.backend.wireName
-import edu.cornell.cs.apl.viaduct.errors.UndefinedNameError
 import edu.cornell.cs.apl.viaduct.errors.ViaductInterpreterError
 import edu.cornell.cs.apl.viaduct.libsnarkwrapper.libsnarkwrapper.mkByteBuf
 import edu.cornell.cs.apl.viaduct.protocols.ZKP
@@ -165,7 +164,7 @@ class ZKPProverInterpreter(
             MutableCell -> ZKPObject.ZKPMutableCell(getAtomicExprWire(arguments[0]))
             Vector -> {
                 val length = runExprAsValue(arguments[0]) as IntegerValue
-                ZKPObject.ZKPVectorObject(length.value, typeArguments[0].defaultValue, wireGenerator)
+                ZKPObject.ZKPVectorObject(length.value, length.type.defaultValue, wireGenerator)
             }
             else -> throw Exception("unknown object")
         }
@@ -195,6 +194,28 @@ class ZKPProverInterpreter(
             }
             ZKPObject.ZKPNullObject -> throw Exception("null query")
         }
+
+    private suspend fun runCleartextRead(node: ReadNode) {
+        val sendProtocol = protocolAnalysis.primaryProtocol(node)
+        assert(runtime.projection.protocol != sendProtocol)
+        val events: ProtocolCommunication = protocolAnalysis.relevantCommunicationEvents(node)
+        val publicInputs = events.getHostReceives(runtime.projection.host, "ZKP_PUBLIC_INPUT")
+        assert(publicInputs.isNotEmpty())
+
+        var cleartextValue: Value? = null
+        for (event in publicInputs) {
+            val receivedValue: Value =
+                runtime.receive(ProtocolProjection(event.send.protocol, event.send.host))
+
+            if (cleartextValue == null) {
+                cleartextValue = receivedValue
+            } else if (cleartextValue != receivedValue) {
+                throw ViaductInterpreterError("ZKP public input: received different values")
+            }
+        }
+        tempStore = tempStore.put(node.temporary.value, cleartextValue!!)
+        wireStore = wireStore.put(node.temporary.value, injectValue(cleartextValue))
+    }
 
     private suspend fun runRead(node: ReadNode): WireTerm {
         val wireVal = wireStore[node.temporary.value]
@@ -282,8 +303,11 @@ class ZKPProverInterpreter(
             logger.info {
                 "Run let on wire $w with output value $wireVal"
             }
-            val r1cs = w.toR1CS(true, wireVal)
             val wireName = w.wireName()
+            logger.info {
+                "Wire name = $wireName"
+            }
+            val r1cs = w.toR1CS(true, wireVal)
             val pkFile = File("zkpkeys/$wireName.pk")
             if (!pkFile.exists()) { // Create proving key, and abort
                 pkFile.createNewFile()
@@ -374,8 +398,14 @@ class ZKPProverInterpreter(
     override suspend fun runExprAsValue(expr: AtomicExpressionNode): Value {
         return when (expr) {
             is LiteralNode -> expr.value
-            is ReadNode -> tempStore[expr.temporary.value]
-                ?: throw UndefinedNameError(expr.temporary)
+            is ReadNode -> {
+                if (tempStore.containsKey(expr.temporary.value)) {
+                    tempStore[expr.temporary.value]!!
+                } else {
+                    runCleartextRead(expr) // Force external communication and update tempStore, if needed
+                    tempStore[expr.temporary.value]!!
+                }
+            }
         }
     }
 

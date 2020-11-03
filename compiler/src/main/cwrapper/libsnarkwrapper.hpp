@@ -15,19 +15,19 @@ typedef libsnark::linear_term<field128> linterm;
 typedef libsnark::variable<field128> var;
 
 struct Term {
-    int coeff = 1;
+    long long coeff = 1;
     int wireID = 0;
 };
 
 struct LinComb {
-    int constTerm = 0;
+    long long constTerm = 0;
     std::vector<Term> linTerms;
 
     lincomb to_lincomb() {
         std::vector<linterm > terms;
         terms.push_back(linterm(var(0), constTerm));
         for (int i = 0; i < linTerms.size(); i++) {
-            terms.push_back(linterm(var(linTerms[i].wireID + 1), linTerms[i].coeff));
+            terms.push_back(linterm(var(linTerms[i].wireID), linTerms[i].coeff));
         }
         return terms;
     }
@@ -40,6 +40,7 @@ struct Constraint {
     LinComb lhs;
     LinComb rhs;
     LinComb eq;
+    std::string annotation;
 };
 
 
@@ -51,7 +52,7 @@ enum WireType {
 
 struct WireInfo {
     WireType type; // should be an enum
-    int input_val = 0;
+    long long input_val = 0;
 };
 
 // Basically just a wrapper around std::string for binary data
@@ -76,13 +77,20 @@ void initZKP() {
     libsnark::default_r1cs_ppzksnark_pp::init_public_params();
 }
 
-void dump_constraint_system(libsnark::r1cs_constraint_system<libff::Fr<libsnark::default_r1cs_ppzksnark_pp> > CS) {
+void dump_constraint_system(libsnark::r1cs_constraint_system<libff::Fr<libsnark::default_r1cs_ppzksnark_pp> > CS,
+    std::map<size_t, std::string> annotations,
+    std::vector<std::string> constraint_annotations = std::vector<std::string>()
+    ) {
     std::cout<<" Constraint system size: " << CS.constraints.size() << "\n";
     for (size_t c = 0; c < CS.constraints.size(); ++c) {
-            std::cout<< "Constraint " << c << ":\n";
-            printf("terms for a:\n"); CS.constraints[c].a.print();
-            printf("terms for b:\n"); CS.constraints[c].b.print();
-            printf("terms for c:\n"); CS.constraints[c].c.print();
+            std::string annotation = "";
+            if (c < constraint_annotations.size()) {
+                annotation = constraint_annotations[c];
+            }
+            std::cout<< "Constraint " << c << ":" << annotation << "\n";
+            printf("terms for a:\n"); CS.constraints[c].a.print(annotations);
+            printf("terms for b:\n"); CS.constraints[c].b.print(annotations);
+            printf("terms for c:\n"); CS.constraints[c].c.print(annotations);
     }
 }
 
@@ -99,7 +107,8 @@ void dump_inputs(std::vector<field128> primary_input, std::vector<field128> aux_
 
 bool ensure_satisfied(libsnark::r1cs_constraint_system<libff::Fr<libsnark::default_r1cs_ppzksnark_pp> > CS,
     std::vector<field128> primary_input,
-    std::vector<field128> auxiliary_input ) {
+    std::vector<field128> auxiliary_input,
+    std::map<size_t, std::string> annotations) {
 
     assert(primary_input.size() == CS.num_inputs());
     assert(primary_input.size() + auxiliary_input.size() == CS.num_variables());
@@ -120,9 +129,9 @@ bool ensure_satisfied(libsnark::r1cs_constraint_system<libff::Fr<libsnark::defau
             printf("<b,(1,x)> = "); bres.print();
             printf("<c,(1,x)> = "); cres.print();
             printf("constraint was:\n");
-            printf("terms for a:\n"); CS.constraints[c].a.print_with_assignment(full_variable_assignment);
-            printf("terms for b:\n"); CS.constraints[c].b.print_with_assignment(full_variable_assignment);
-            printf("terms for c:\n"); CS.constraints[c].c.print_with_assignment(full_variable_assignment);
+            printf("terms for a:\n"); CS.constraints[c].a.print_with_assignment(full_variable_assignment, annotations);
+            printf("terms for b:\n"); CS.constraints[c].b.print_with_assignment(full_variable_assignment, annotations);
+            printf("terms for c:\n"); CS.constraints[c].c.print_with_assignment(full_variable_assignment, annotations);
             dump_inputs(primary_input, auxiliary_input);
             assert (false);
             return false;
@@ -135,6 +144,8 @@ bool ensure_satisfied(libsnark::r1cs_constraint_system<libff::Fr<libsnark::defau
 struct R1CS {
     std::vector<WireInfo> wires;
     std::vector<Constraint> constraints;
+    std::map<size_t, std::string> wire_annotations;
+    std::vector<std::string> constraint_annotations;
 
     // Derived notions
     std::vector<field128> primary_input;
@@ -145,8 +156,9 @@ struct R1CS {
         libsnark::r1cs_constraint_system<libff::Fr<libsnark::default_r1cs_ppzksnark_pp> >();
     bool initialized = false;
 
-    int mkWire(WireInfo info) {
+    int mkWire(WireInfo info, std::string annotation) {
         wires.push_back(info);
+        wire_annotations[wires.size() - 1] = annotation;
         if (info.type == WIRE_PUBLIC_IN) {
             primary_input.push_back(info.input_val);
             CS.primary_input_size++;
@@ -158,11 +170,12 @@ struct R1CS {
         if (info.type == WIRE_DUMMY_IN) {
             CS.auxiliary_input_size++;
         }
-        return wires.size() - 1;
+        return wires.size();
     }
 
     void addConstraint(Constraint c) {
         constraints.push_back(c);
+        constraint_annotations.push_back(c.annotation);
     }
 
     void reportConstraintSystem(libsnark::r1cs_constraint_system<libff::Fr<libsnark::default_r1cs_ppzksnark_pp> > cs) {
@@ -174,6 +187,9 @@ struct R1CS {
     // Generate proof. Input: Proving key.
     ByteBuf generateProof(ByteBuf provingKey) {
 
+        libff::inhibit_profiling_info = true;
+        libff::inhibit_profiling_counters = true;
+
         libsnark::r1cs_ppzksnark_proving_key<libsnark::default_r1cs_ppzksnark_pp> pk;
         std::stringstream pk_stream(provingKey.contents);
         pk_stream >> pk;
@@ -184,9 +200,8 @@ struct R1CS {
         }
 
 
-        std::cout<<"pk constraint system: " << "\n";
-        dump_constraint_system(pk.constraint_system);
-        ensure_satisfied(pk.constraint_system, primary_input, aux_input);
+        // dump_constraint_system(pk.constraint_system, wire_annotations);
+        ensure_satisfied(pk.constraint_system, primary_input, aux_input, wire_annotations);
 
         std::stringstream pf_stream;
         pf_stream << libsnark::r1cs_ppzksnark_prover(pk, primary_input, aux_input);
@@ -196,6 +211,9 @@ struct R1CS {
 
     // Requires that wires are only dummy_in, public, or internal
     bool verifyProof(ByteBuf verificationKey, ByteBuf proof) {
+
+        libff::inhibit_profiling_info = true;
+        libff::inhibit_profiling_counters = true;
 
         // Deserialize the verification key
         libsnark::r1cs_ppzksnark_verification_key<libsnark::default_r1cs_ppzksnark_pp> vk;
@@ -240,18 +258,18 @@ struct R1CS {
                 CS.add_constraint(constraint);
             }
             initialized = true;
-            std::cout<<"Initialized constraint system with primary_input_size=" << num_primary_inputs
-            << ", aux input size=" << num_aux_inputs << " and num constraints = " << constraints.size() << "\n";
         }
     }
 
 
     // Requires that wires are only in, public, or internal
     Keypair genKeypair() {
+
+        libff::inhibit_profiling_info = true;
+        libff::inhibit_profiling_counters = true;
+
         initConstraintSystem();
-        reportConstraintSystem(CS);
-        dump_constraint_system(CS);
-        ensure_satisfied(CS, primary_input, aux_input);
+        ensure_satisfied(CS, primary_input, aux_input, wire_annotations);
         auto kp = libsnark::r1cs_ppzksnark_generator<libsnark::default_r1cs_ppzksnark_pp>(CS);
         std::stringstream kp_pk, kp_vk;
         kp_pk << kp.pk;

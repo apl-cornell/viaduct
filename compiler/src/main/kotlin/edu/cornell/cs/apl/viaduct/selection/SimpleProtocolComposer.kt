@@ -222,9 +222,6 @@ object SimpleProtocolComposer : ProtocolComposer {
 
             src is Commitment && dst is Local -> {
                 ProtocolCommunication(
-                    if (dst.host == src.cleartextHost) {
-                        setOf(CommunicationEvent(src.openCleartextOutputPort, dst.inputPort))
-                    } else {
                         setOf(
                             CommunicationEvent(src.openCleartextOutputPort, dst.cleartextCommitmentInputPort)
                         ).plus(
@@ -235,18 +232,12 @@ object SimpleProtocolComposer : ProtocolComposer {
                                 )
                             }.toSet()
                         )
-                    }
                 )
             }
 
             src is Commitment && dst is Replication -> {
                 ProtocolCommunication(
                     dst.hosts.flatMap { host ->
-                        if (host == src.cleartextHost) {
-                            setOf(
-                                CommunicationEvent(src.openCleartextOutputPort, dst.hostInputPorts[host]!!)
-                            )
-                        } else {
                             setOf(
                                 CommunicationEvent(
                                     src.openCleartextOutputPort,
@@ -260,7 +251,6 @@ object SimpleProtocolComposer : ProtocolComposer {
                                     )
                                 }
                             )
-                        }
                     }.toSet()
                 )
             }

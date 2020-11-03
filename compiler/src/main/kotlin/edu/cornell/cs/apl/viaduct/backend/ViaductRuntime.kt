@@ -350,6 +350,7 @@ class ViaductRuntime(
     suspend fun input(): Value {
         return withContext(Dispatchers.IO) {
             // TODO: support booleans as well
+            println("Input: ")
             IntegerValue(stdinScanner.nextInt())
         }
     }

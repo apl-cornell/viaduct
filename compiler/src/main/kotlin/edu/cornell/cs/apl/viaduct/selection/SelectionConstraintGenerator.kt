@@ -134,10 +134,10 @@ class SelectionConstraintGenerator(
                     acc.concat(decl.symbolicCost)
                 }
 
-            is FunctionDeclarationNode ->
-                this.parameters.fold(zeroSymbolicCost) { acc, param ->
-                    acc.concat(param.symbolicCost)
-                }.concat(this.body.symbolicCost)
+            is FunctionDeclarationNode -> this.body.symbolicCost
+
+            // don't bother giving cost to parameters, since arguments already incur cost
+            is ParameterNode -> zeroSymbolicCost
 
             is ProcessDeclarationNode -> this.body.symbolicCost
 
@@ -553,6 +553,7 @@ class SelectionConstraintGenerator(
     private fun Node.costConstraints():
         Iterable<SelectionConstraint> =
         when (this) {
+            /*
             is ParameterNode -> {
                 val fv =
                     FunctionVariable(
@@ -563,10 +564,11 @@ class SelectionConstraintGenerator(
                 viableProtocols(this).map { protocol ->
                     Implies(
                         VariableIn(fv, setOf(protocol)),
-                        symbolicCostEqualsInt(symbolicCost, costEstimator.storageCost(this, protocol))
+                        symbolicCostEqualsInt(symbolicCost, costEstimator.executionNode(this, protocol))
                     )
                 }
             }
+            */
 
             // induce execution and communication costs
             is LetNode -> {
@@ -576,7 +578,7 @@ class SelectionConstraintGenerator(
                     fv,
                     protocols,
                     nameAnalysis.reads(this.value).toList(),
-                    { protocol -> costEstimator.executionCost(this.value, protocol) },
+                    { protocol -> costEstimator.executionCost(this, protocol) },
                     this.symbolicCost
                 )
             }
@@ -589,7 +591,7 @@ class SelectionConstraintGenerator(
                     fv,
                     protocols,
                     this.arguments.filterIsInstance<ReadNode>(),
-                    { protocol -> costEstimator.storageCost(this, protocol) },
+                    { protocol -> costEstimator.executionCost(this, protocol) },
                     this.symbolicCost
                 )
             }
@@ -602,10 +604,7 @@ class SelectionConstraintGenerator(
                     fv,
                     protocols,
                     this.arguments.filterIsInstance<ReadNode>(),
-                    { protocol ->
-                        val decl = nameAnalysis.declaration(this)
-                        costEstimator.storageCost(decl, protocol)
-                    },
+                    { protocol -> costEstimator.executionCost(this, protocol) },
                     this.symbolicCost
                 )
             }
@@ -630,7 +629,7 @@ class SelectionConstraintGenerator(
                     ),
                     viableProtocols(parameter),
                     reads,
-                    { protocol -> costEstimator.storageCost(parameter, protocol) },
+                    { protocol -> costEstimator.executionCost(this, protocol) },
                     this.symbolicCost
                 )
             }

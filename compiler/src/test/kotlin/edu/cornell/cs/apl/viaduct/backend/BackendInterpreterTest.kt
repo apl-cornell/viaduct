@@ -16,7 +16,6 @@ import edu.cornell.cs.apl.viaduct.syntax.FunctionName
 import edu.cornell.cs.apl.viaduct.syntax.Host
 import edu.cornell.cs.apl.viaduct.syntax.Located
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
-import edu.cornell.cs.apl.viaduct.syntax.ProtocolName
 import edu.cornell.cs.apl.viaduct.syntax.Variable
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.AtomicExpressionNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.BlockNode
@@ -36,17 +35,20 @@ import org.apache.logging.log4j.core.config.Configurator
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ArgumentsSource
 
-private object FakeProtocolInterpreter : ProtocolInterpreter {
-    override suspend fun runExprAsValue(expr: AtomicExpressionNode): Value =
-        BooleanValue(false)
+private class FakeProtocolInterpreter(
+    override val availableProtocols: Set<Protocol>
+) : ProtocolInterpreter {
+    override suspend fun runGuard(protocol: Protocol, expr: AtomicExpressionNode): Value {
+        return BooleanValue(false)
+    }
 
-    override suspend fun runSimpleStatement(stmt: SimpleStatementNode) {}
+    override suspend fun runSimpleStatement(protocol: Protocol, stmt: SimpleStatementNode) {}
 
     override suspend fun pushContext() {}
 
     override suspend fun popContext() {}
 
-    override suspend fun pushFunctionContext(arguments: PersistentMap<ParameterNode, FunctionArgumentNode>) {}
+    override suspend fun pushFunctionContext(arguments: PersistentMap<ParameterNode, Pair<Protocol, FunctionArgumentNode>>) {}
 
     override suspend fun popFunctionContext() {}
 
@@ -56,14 +58,16 @@ private object FakeProtocolInterpreter : ProtocolInterpreter {
 }
 
 /** Fake protocol backend that doesn't do anything. */
-private object FakeProtocolInterpreterFactory : ProtocolInterpreterFactory {
-    override fun buildProtocolInterpreter(
+private object FakeProtocolBackend : ProtocolBackend {
+    override fun buildProtocolInterpreters(
+        host: Host,
         program: edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode,
+        protocols: Set<Protocol>,
         protocolAnalysis: ProtocolAnalysis,
-        runtime: ViaductProcessRuntime,
+        runtime: ViaductRuntime,
         connectionMap: Map<Host, HostAddress>
-    ): ProtocolInterpreter {
-        return FakeProtocolInterpreter
+    ): Iterable<ProtocolInterpreter> {
+        return setOf(FakeProtocolInterpreter(protocols))
     }
 }
 
@@ -78,22 +82,22 @@ internal class BackendInterpreterTest {
 
         // Select protocols.
         val protocolAssignment: (FunctionName, Variable) -> Protocol =
-            selectProtocolsWithZ3(program, program.main, SimpleProtocolFactory(program), SimpleProtocolComposer, SimpleCostEstimator(SimpleProtocolComposer))
+            selectProtocolsWithZ3(
+                program,
+                program.main,
+                SimpleProtocolFactory(program),
+                SimpleProtocolComposer,
+                SimpleCostEstimator(SimpleProtocolComposer)
+            )
         val annotatedProgram = program.annotateWithProtocols(protocolAssignment)
-        val protocolAnalysis = ProtocolAnalysis(annotatedProgram, SimpleProtocolComposer)
 
         // set up backend interpreter with fake backends
-        val backendMap: Map<ProtocolName, ProtocolInterpreterFactory> =
-            protocolAnalysis.participatingProtocols(annotatedProgram)
-                .map { protocol -> Pair(protocol.protocolName, FakeProtocolInterpreterFactory) }
-                .toMap()
-
         val hosts: Set<Host> =
             program.hostDeclarations
                 .map { hostDecl -> hostDecl.name.value }
                 .toSet()
 
-        val backend = ViaductBackend(backendMap)
+        val backend = ViaductBackend(listOf(FakeProtocolBackend))
 
         val fakeProgram =
             edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode(

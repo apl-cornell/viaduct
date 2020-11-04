@@ -6,7 +6,6 @@ import edu.cornell.cs.apl.viaduct.syntax.SpecializedProtocol
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.DeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.IfNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.LetNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.ObjectDeclarationArgumentNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ParameterNode
 
 /**
@@ -28,10 +27,6 @@ interface ProtocolFactory {
 
     fun availableProtocols(): Set<ProtocolName>
 
-    /** TODO: This interface can likely be simplified by collapsing DeclarationNode and ObjectDeclarationArgumentNode
-    together by taking in [ObjectDeclaration] interface
-     **/
-    fun viableProtocols(node: ObjectDeclarationArgumentNode): Set<Protocol>
     fun constraint(node: LetNode): SelectionConstraint {
         return Literal(true)
     }
@@ -84,9 +79,6 @@ open class UnionProtocolFactory(private val selectors: Set<ProtocolFactory>) : P
         selectors.fold(setOf()) { acc, sel -> acc.union(sel.viableProtocols(node)) }
 
     override fun viableProtocols(node: ParameterNode): Set<Protocol> =
-        selectors.fold(setOf()) { acc, sel -> acc.union(sel.viableProtocols(node)) }
-
-    override fun viableProtocols(node: ObjectDeclarationArgumentNode): Set<Protocol> =
         selectors.fold(setOf()) { acc, sel -> acc.union(sel.viableProtocols(node)) }
 
     override fun constraint(node: LetNode): SelectionConstraint =

@@ -4,13 +4,11 @@ import edu.cornell.cs.apl.viaduct.analysis.ProtocolAnalysis
 import edu.cornell.cs.apl.viaduct.errors.ViaductInterpreterError
 import edu.cornell.cs.apl.viaduct.selection.SimpleProtocolComposer
 import edu.cornell.cs.apl.viaduct.syntax.Host
-import edu.cornell.cs.apl.viaduct.syntax.Protocol
-import edu.cornell.cs.apl.viaduct.syntax.ProtocolName
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.HostDeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
 
 class ViaductBackend(
-    private val backends: Map<ProtocolName, ProtocolInterpreterFactory>
+    private val backends: List<ProtocolBackend>
 ) {
     companion object {
         const val DEFAULT_PORT = 5000
@@ -39,27 +37,7 @@ class ViaductBackend(
                     Pair(hostDecl.name.value, addr)
                 }.toMap()
 
-        val processes: MutableMap<Process, ProcessInterpreter> = mutableMapOf()
-        val participatingProtocols: Set<Protocol> =
-            protocolAnalysis.participatingProtocols(program)
-
-        for (protocol in participatingProtocols) {
-            if (protocol.hosts.contains(host)) {
-                val projection = ProtocolProjection(protocol, host)
-                backends[protocol.protocolName]?.let { factory: ProtocolInterpreterFactory ->
-                    processes[projection] = { runtime ->
-                        factory.buildProtocolInterpreter(
-                            program,
-                            protocolAnalysis,
-                            ViaductProcessRuntime(runtime, projection),
-                            connectionMap
-                        )
-                    }
-                } ?: throw Exception("no backend for protocol ${protocol.protocolName}")
-            }
-        }
-
-        val runtime = ViaductRuntime(program, protocolAnalysis, connectionMap, processes, host)
+        val runtime = ViaductRuntime(host, program, protocolAnalysis, connectionMap, backends)
         runtime.start()
     }
 }

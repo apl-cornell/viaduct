@@ -208,14 +208,13 @@ data class ProcessInfo(
 }
 
 typealias Process = ProtocolProjection
-typealias ProcessInterpreter = suspend (ViaductRuntime) -> ProtocolInterpreter
 
 class ViaductRuntime(
+    val host: Host,
     private val program: ProgramNode,
     private val protocolAnalysis: ProtocolAnalysis,
     private val hostConnectionInfo: Map<Host, HostAddress>,
-    private val processBodyMap: Map<Process, ProcessInterpreter>,
-    val host: Host
+    private val backends: List<ProtocolBackend>
 ) {
     private val syncProtocol = Synchronization(program.hostDeclarations.map { it.name.value }.toSet())
     private val processInfoMap: Map<Process, ProcessInfo>
@@ -338,6 +337,10 @@ class ViaductRuntime(
         }
     }
 
+    suspend fun send(value: Value, event: CommunicationEvent) {
+        send(value, event.send.asProjection(), event.recv.asProjection())
+    }
+
     suspend fun receive(sender: Process, receiver: Process): Value {
         if (sender.host != host) { // remote communication
             val msg = ReceiveMessage(processInfoMap[sender]!!.id, processInfoMap[receiver]!!.id)
@@ -345,6 +348,10 @@ class ViaductRuntime(
         }
 
         return channelMap[sender]!![receiver]!!.receive()
+    }
+
+    suspend fun receive(event: CommunicationEvent): Value {
+        return receive(event.send.asProjection(), event.recv.asProjection())
     }
 
     suspend fun input(): Value {
@@ -422,14 +429,25 @@ class ViaductRuntime(
     }
 
     fun start() {
-        // check if all processes have registered bodies
-        assert(
-            processBodyMap.keys.containsAll(
-                processInfoMap.keys.filter { k -> k.host == host && k.protocol !is Synchronization }
-            )
-        )
-
         val connectionMap: Map<Host, Socket> = createRemoteConnections()
+
+        val hostParticipatingProtocols: Set<Protocol> =
+            protocolAnalysis
+                .participatingProtocols(program)
+                .filter { protocol -> protocol.hosts.contains(host) }
+                .toSet()
+
+        val processInterpreters =
+            backends.flatMap { backend ->
+                backend.buildProtocolInterpreters(
+                    host,
+                    program,
+                    hostParticipatingProtocols,
+                    protocolAnalysis,
+                    this,
+                    hostConnectionInfo
+                )
+            }
 
         runBlocking {
             for (kv: Map.Entry<Host, HostInfo> in hostInfoMap) {
@@ -460,17 +478,11 @@ class ViaductRuntime(
 
             // run interpreter
             val job: Job = launch {
-                val processInterpreters =
-                    processBodyMap.map { kv ->
-                        logger.info { "created interpreter for protocol ${kv.key.protocol.asDocument.print()}" }
-                        kv.key.protocol to kv.value(this@ViaductRuntime)
-                    }.toMap()
-
                 val interpreter =
                     BackendInterpreter(
+                        host,
                         program,
                         protocolAnalysis,
-                        host,
                         processInterpreters,
                         ViaductProcessRuntime(
                             this@ViaductRuntime,

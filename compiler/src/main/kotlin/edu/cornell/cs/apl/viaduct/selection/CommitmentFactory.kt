@@ -14,7 +14,6 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.DeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.DowngradeNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.LetNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.Node
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.ObjectDeclarationArgumentNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ParameterNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.QueryNode
@@ -63,14 +62,6 @@ class CommitmentFactory(val program: ProgramNode) : ProtocolFactory {
         }
     }
 
-    override fun viableProtocols(node: ObjectDeclarationArgumentNode): Set<Protocol> {
-        return if (node.isApplicable()) {
-            protocols(program).map { it.protocol }.toSet()
-        } else {
-            setOf()
-        }
-    }
-
     override fun viableProtocols(node: ParameterNode): Set<Protocol> {
         return protocols(program).map { it.protocol }.toSet()
     }
@@ -92,6 +83,7 @@ class CommitmentFactory(val program: ProgramNode) : ProtocolFactory {
 
     /** Commitment can only send to itself, local, and replicated **/
 
+    // TODO: delete this
     override fun constraint(node: LetNode): SelectionConstraint =
         protocols(program).map {
             node.sendsTo(nameAnalysis, setOf(it.protocol), localAndReplicated + setOf(it.protocol))

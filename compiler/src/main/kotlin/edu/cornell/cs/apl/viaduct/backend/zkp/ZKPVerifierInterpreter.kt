@@ -2,9 +2,9 @@ package edu.cornell.cs.apl.viaduct.backend.zkp
 
 import edu.cornell.cs.apl.viaduct.analysis.ProtocolAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.TypeAnalysis
-import edu.cornell.cs.apl.viaduct.backend.AbstractProtocolInterpreter
 import edu.cornell.cs.apl.viaduct.backend.ObjectLocation
 import edu.cornell.cs.apl.viaduct.backend.ProtocolProjection
+import edu.cornell.cs.apl.viaduct.backend.SingleProtocolInterpreter
 import edu.cornell.cs.apl.viaduct.backend.ViaductProcessRuntime
 import edu.cornell.cs.apl.viaduct.backend.WireGenerator
 import edu.cornell.cs.apl.viaduct.backend.WireTerm
@@ -58,7 +58,7 @@ class ZKPVerifierInterpreter(
     val protocolAnalysis: ProtocolAnalysis,
     val runtime: ViaductProcessRuntime
 ) :
-    AbstractProtocolInterpreter<ZKPObject>(program) {
+    SingleProtocolInterpreter<ZKPObject>(program, runtime.projection.protocol) {
 
     private val prover = (runtime.projection.protocol as ZKP).prover
     private val typeAnalysis = TypeAnalysis.get(program)
@@ -156,7 +156,7 @@ class ZKPVerifierInterpreter(
             ImmutableCell -> ZKPObject.ZKPImmutableCell(getAtomicExprWire(arguments[0]))
             MutableCell -> ZKPObject.ZKPMutableCell(getAtomicExprWire(arguments[0]))
             Vector -> {
-                val length = runExprAsValue(arguments[0]) as IntegerValue
+                val length = runPlaintextExpr(arguments[0]) as IntegerValue
                 ZKPObject.ZKPVectorObject(length.value, length.type.defaultValue, wireGenerator)
             }
             else -> throw Exception("unknown object")
@@ -180,7 +180,7 @@ class ZKPVerifierInterpreter(
                 throw Exception("bad query")
             }
             is ZKPObject.ZKPVectorObject -> if (query.value is Get) {
-                val index = runExprAsValue(args[0]) as IntegerValue
+                val index = runPlaintextExpr(args[0]) as IntegerValue
                 obj.gates[index.value]
             } else {
                 throw Exception("bad query")
@@ -329,7 +329,7 @@ class ZKPVerifierInterpreter(
                 }
             }
             is ZKPObject.ZKPVectorObject -> {
-                val index = runExprAsValue(stmt.arguments[0]) as IntegerValue
+                val index = runPlaintextExpr(stmt.arguments[0]) as IntegerValue
                 when (stmt.update.value) {
                     is edu.cornell.cs.apl.viaduct.syntax.datatypes.Set ->
                         o.gates[index.value] = getAtomicExprWire(stmt.arguments[1])
@@ -350,7 +350,7 @@ class ZKPVerifierInterpreter(
         throw Exception("cannot perform I/O in non-Local protocol")
     }
 
-    override suspend fun runExprAsValue(expr: AtomicExpressionNode): Value {
+    private suspend fun runPlaintextExpr(expr: AtomicExpressionNode): Value {
         return when (expr) {
             is LiteralNode -> expr.value
             is ReadNode -> {
@@ -365,5 +365,9 @@ class ZKPVerifierInterpreter(
                 }
             }
         }
+    }
+
+    override suspend fun runGuard(expr: AtomicExpressionNode): Value {
+        throw ViaductInterpreterError("ZKP: Cannot run cleartext guard")
     }
 }

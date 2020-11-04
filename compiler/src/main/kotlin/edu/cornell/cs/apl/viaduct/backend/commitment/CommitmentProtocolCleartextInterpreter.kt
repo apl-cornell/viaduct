@@ -1,9 +1,9 @@
 package edu.cornell.cs.apl.viaduct.backend.commitment
 
 import edu.cornell.cs.apl.viaduct.analysis.ProtocolAnalysis
-import edu.cornell.cs.apl.viaduct.backend.AbstractProtocolInterpreter
 import edu.cornell.cs.apl.viaduct.backend.ObjectLocation
 import edu.cornell.cs.apl.viaduct.backend.ProtocolProjection
+import edu.cornell.cs.apl.viaduct.backend.SingleProtocolInterpreter
 import edu.cornell.cs.apl.viaduct.backend.ViaductProcessRuntime
 import edu.cornell.cs.apl.viaduct.errors.IllegalInternalCommunicationError
 import edu.cornell.cs.apl.viaduct.errors.ViaductInterpreterError
@@ -68,8 +68,7 @@ class CommitmentProtocolCleartextInterpreter(
     program: ProgramNode,
     private val protocolAnalysis: ProtocolAnalysis,
     private val runtime: ViaductProcessRuntime
-) : AbstractProtocolInterpreter<HashedObject>(program) {
-
+) : SingleProtocolInterpreter<HashedObject>(program, runtime.projection.protocol) {
     private val hashHosts: Set<Host> = (runtime.projection.protocol as Commitment).hashHosts
 
     private val tempStoreStack: Stack<PersistentMap<Temporary, Hashed<Value>>> = Stack()
@@ -265,7 +264,7 @@ class CommitmentProtocolCleartextInterpreter(
         throw ViaductInterpreterError("Commitment: cannot perform I/O in non-local protocol")
     }
 
-    override suspend fun runExprAsValue(expr: AtomicExpressionNode): Value {
+    override suspend fun runGuard(expr: AtomicExpressionNode): Value {
         return runExpr(expr).value
     }
 }

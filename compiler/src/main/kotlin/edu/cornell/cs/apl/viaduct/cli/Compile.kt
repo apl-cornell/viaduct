@@ -1,6 +1,7 @@
 package edu.cornell.cs.apl.viaduct.cli
 
 import com.github.ajalt.clikt.core.CliktCommand
+import com.github.ajalt.clikt.parameters.options.flag
 import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.types.file
 import edu.cornell.cs.apl.prettyprinting.PrettyPrintable
@@ -29,9 +30,11 @@ import guru.nidi.graphviz.engine.Graphviz
 import java.io.File
 import java.io.StringWriter
 import java.io.Writer
+import kotlin.system.measureTimeMillis
 import mu.KotlinLogging
+import org.apache.logging.log4j.core.config.Configurator
 
-private val logger = KotlinLogging.logger { }
+private val logger = KotlinLogging.logger("Compile")
 
 class Compile : CliktCommand(help = "Compile ideal protocol to secure distributed program") {
     val input: File? by inputProgram()
@@ -61,9 +64,21 @@ class Compile : CliktCommand(help = "Compile ideal protocol to secure distribute
         help = "Write program decorated with protocol selection to FILE.via"
     ).file(canBeDir = false)
 
+    val verbose: Boolean by option(
+        "-v",
+        "--verbose",
+        help = "Output logging information generated during execution"
+    ).flag(default = false)
+
     override fun run() {
+        if (verbose) {
+            Configurator.setRootLevel(org.apache.logging.log4j.Level.INFO)
+        }
+
+        logger.info { "elaborating source program..." }
         val unspecializedProgram = input.parse().elaborated()
 
+        logger.info { "specializing functions..." }
         val program = unspecializedProgram.specialize()
 
         // Perform static checks.
@@ -75,14 +90,19 @@ class Compile : CliktCommand(help = "Compile ideal protocol to secure distribute
         val protocolFactory = SimpleProtocolFactory(program)
 
         // Select protocols.
-        val protocolAssignment: (FunctionName, Variable) -> Protocol =
-            selectProtocolsWithZ3(
+        logger.info { "selecting protocols..." }
+
+        val protocolAssignment: (FunctionName, Variable) -> Protocol
+        val protocolSelectionDuration = measureTimeMillis {
+            protocolAssignment = selectProtocolsWithZ3(
                 program,
                 program.main,
                 protocolFactory,
                 SimpleProtocolComposer,
                 SimpleCostEstimator(SimpleProtocolComposer)
             ) { metadata -> dumpProgramMetadata(program, metadata, protocolSelectionOutput) }
+        }
+        logger.info { "finished protocol selection, ran for ${protocolSelectionDuration}ms" }
 
         // Perform a sanity check to ensure the protocolAssignment is valid.
         // TODO: either remove this entirely or make it opt-in by the command line.
@@ -97,6 +117,7 @@ class Compile : CliktCommand(help = "Compile ideal protocol to secure distribute
             )
         }
 
+        logger.info { "annotating program with protocols..." }
         val annotatedProgram = program.annotateWithProtocols(protocolAssignment)
 
         // Post-process program

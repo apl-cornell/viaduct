@@ -11,6 +11,7 @@ import edu.cornell.cs.apl.viaduct.protocols.Replication
 import edu.cornell.cs.apl.viaduct.selection.ProtocolCommunication
 import edu.cornell.cs.apl.viaduct.syntax.Host
 import edu.cornell.cs.apl.viaduct.syntax.ObjectVariable
+import edu.cornell.cs.apl.viaduct.syntax.Protocol
 import edu.cornell.cs.apl.viaduct.syntax.Temporary
 import edu.cornell.cs.apl.viaduct.syntax.datatypes.ClassName
 import edu.cornell.cs.apl.viaduct.syntax.datatypes.ImmutableCell
@@ -45,7 +46,7 @@ class PlaintextProtocolInterpreter(
     program: ProgramNode,
     private val protocolAnalysis: ProtocolAnalysis,
     private val runtime: ViaductProcessRuntime
-) : AbstractProtocolInterpreter<PlaintextClassObject>(program) {
+) : SingleProtocolInterpreter<PlaintextClassObject>(program, runtime.projection.protocol) {
     private val tempStoreStack: Stack<PersistentMap<Temporary, Value>> = Stack()
 
     private var tempStore: PersistentMap<Temporary, Value>
@@ -224,7 +225,7 @@ class PlaintextProtocolInterpreter(
         }
     }
 
-    override suspend fun runExprAsValue(expr: AtomicExpressionNode): Value = runExpr(expr)
+    override suspend fun runGuard(expr: AtomicExpressionNode): Value = runExpr(expr)
 
     override suspend fun runLet(stmt: LetNode) {
         val rhsValue = runExpr(stmt.value)
@@ -264,14 +265,25 @@ class PlaintextProtocolInterpreter(
         }
     }
 
-    companion object : ProtocolInterpreterFactory {
-        override fun buildProtocolInterpreter(
+    companion object : ProtocolBackend {
+        override fun buildProtocolInterpreters(
+            host: Host,
             program: ProgramNode,
+            protocols: Set<Protocol>,
             protocolAnalysis: ProtocolAnalysis,
-            runtime: ViaductProcessRuntime,
+            runtime: ViaductRuntime,
             connectionMap: Map<Host, HostAddress>
-        ): ProtocolInterpreter {
-            return PlaintextProtocolInterpreter(program, protocolAnalysis, runtime)
+        ): Iterable<ProtocolInterpreter> {
+            return protocols.filter { protocol ->
+                protocol.protocolName == Local.protocolName ||
+                    protocol.protocolName == Replication.protocolName
+            }.map { protocol ->
+                PlaintextProtocolInterpreter(
+                    program,
+                    protocolAnalysis,
+                    ViaductProcessRuntime(runtime, ProtocolProjection(protocol, host))
+                )
+            }
         }
     }
 }

@@ -277,47 +277,68 @@ object SimpleProtocolComposer : ProtocolComposer {
 
             src is Commitment && dst is Local -> {
                 ProtocolCommunication(
-                    if (dst.host == src.cleartextHost) {
-                        setOf(CommunicationEvent(src.openCleartextOutputPort, dst.inputPort))
-                    } else {
-                        setOf(
-                            CommunicationEvent(src.openCleartextOutputPort, dst.cleartextCommitmentInputPort)
-                        ).plus(
-                            src.hashHosts.map { hashHost ->
-                                CommunicationEvent(
-                                    src.openCommitmentOutputPorts[hashHost]!!,
-                                    dst.hashCommitmentInputPort
-                                )
-                            }.toSet()
-                        )
-                    }
+                    setOf(
+                        CommunicationEvent(src.openCleartextOutputPort, dst.cleartextCommitmentInputPort)
+                    ).plus(
+                        src.hashHosts.map { hashHost ->
+                            CommunicationEvent(
+                                src.openCommitmentOutputPorts[hashHost]!!,
+                                dst.hashCommitmentInputPort
+                            )
+                        }.toSet()
+                    )
                 )
             }
 
             src is Commitment && dst is Replication -> {
                 ProtocolCommunication(
                     dst.hosts.flatMap { host ->
-                        if (host == src.cleartextHost) {
-                            setOf(
-                                CommunicationEvent(src.openCleartextOutputPort, dst.hostInputPorts[host]!!)
+                        setOf(
+                            CommunicationEvent(
+                                src.openCleartextOutputPort,
+                                dst.hostCleartextCommitmentInputPorts[host]!!
                             )
-                        } else {
-                            setOf(
+                        ).plus(
+                            src.hashHosts.map { hashHost ->
                                 CommunicationEvent(
-                                    src.openCleartextOutputPort,
-                                    dst.hostCleartextCommitmentInputPorts[host]!!
+                                    src.openCommitmentOutputPorts[hashHost]!!,
+                                    dst.hostHashCommitmentInputPorts[host]!!
                                 )
-                            ).plus(
-                                src.hashHosts.map { hashHost ->
-                                    CommunicationEvent(
-                                        src.openCommitmentOutputPorts[hashHost]!!,
-                                        dst.hostHashCommitmentInputPorts[host]!!
-                                    )
-                                }
-                            )
-                        }
+                            }
+                        )
                     }.toSet()
                 )
+            }
+
+            src is Local && dst is ZKP -> { // We know src.host == dst.prover
+                ProtocolCommunication(setOf(CommunicationEvent(src.outputPort, dst.secretInputPort)))
+            }
+
+            src is Replication && dst is ZKP -> { // We know src.hosts == dst.verifiers + {dst.prover}
+                if (src.hosts != dst.hosts) {
+                    throw Exception("Bad state for composition: source hosts is ${src.hosts} but dest is ${dst.hosts}")
+                }
+                ProtocolCommunication(src.hosts.map {
+                    CommunicationEvent(src.hostOutputPorts[it]!!, dst.cleartextInput[it]!!)
+                }.toSet())
+            }
+
+            src is ZKP && dst is Local -> {
+                ProtocolCommunication(src.hosts.map {
+                    CommunicationEvent(src.outputPorts[it]!!, dst.inputPort)
+                }.toSet())
+            }
+
+            src is ZKP && dst is Replication -> {
+                ProtocolCommunication(src.hosts.flatMap { h1 ->
+                    dst.hosts.map { h2 ->
+                        CommunicationEvent(src.outputPorts[h1]!!, dst.hostInputPorts[h2]!!)
+                    }
+                }.toSet())
+            }
+
+            src is ZKP && dst is ZKP -> {
+                ProtocolCommunication(setOf())
             }
 
             src is Local && dst is ZKP -> { // We know src.host == dst.prover

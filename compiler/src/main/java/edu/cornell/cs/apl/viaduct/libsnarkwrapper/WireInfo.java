@@ -44,11 +44,11 @@ public class WireInfo {
     return WireType.swigToEnum(libsnarkwrapperJNI.WireInfo_type_get(swigCPtr, this));
   }
 
-  public void setInput_val(int value) {
+  public void setInput_val(long value) {
     libsnarkwrapperJNI.WireInfo_input_val_set(swigCPtr, this, value);
   }
 
-  public int getInput_val() {
+  public long getInput_val() {
     return libsnarkwrapperJNI.WireInfo_input_val_get(swigCPtr, this);
   }
 

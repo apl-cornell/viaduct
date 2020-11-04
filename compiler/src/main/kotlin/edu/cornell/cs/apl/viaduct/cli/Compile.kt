@@ -121,7 +121,6 @@ class Compile : CliktCommand(help = "Compile ideal protocol to secure distribute
         val annotatedProgram = program.annotateWithProtocols(protocolAssignment)
 
         // Post-process program
-        logger.info { "post-processing program..." }
         val postprocessor = ProgramPostprocessorRegistry(ABYMuxPostprocessor(protocolAssignment), ZKPMuxPostprocessor(protocolAssignment))
         val postprocessedProgram = postprocessor.postprocess(annotatedProgram)
 

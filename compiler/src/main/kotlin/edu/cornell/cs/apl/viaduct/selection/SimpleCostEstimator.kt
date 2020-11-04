@@ -174,8 +174,10 @@ class SimpleCostEstimator(
                             when (val rhs = stmt.value) {
                                 is OperatorApplicationNode ->
                                     mpcOperationCostMap[rhs.operator to protocol.protocolName]
-                                        ?: throw Error("SimpleCostEstimator: no cost for operator ${rhs.operator} " +
-                                            "in protocol ${protocol.protocolName}")
+                                        ?: throw Error(
+                                            "SimpleCostEstimator: no cost for operator ${rhs.operator} " +
+                                                "in protocol ${protocol.protocolName}"
+                                        )
 
                                 else -> zeroCost()
                             }

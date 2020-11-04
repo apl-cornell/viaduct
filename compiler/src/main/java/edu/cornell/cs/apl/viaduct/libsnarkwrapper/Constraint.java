@@ -63,6 +63,14 @@ public class Constraint {
     return (cPtr == 0) ? null : new LinComb(cPtr, false);
   }
 
+  public void setAnnotation(String value) {
+    libsnarkwrapperJNI.Constraint_annotation_set(swigCPtr, this, value);
+  }
+
+  public String getAnnotation() {
+    return libsnarkwrapperJNI.Constraint_annotation_get(swigCPtr, this);
+  }
+
   public Constraint() {
     this(libsnarkwrapperJNI.new_Constraint(), true);
   }

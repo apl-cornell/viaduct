@@ -189,6 +189,7 @@ class SelectionConstraintGenerator(
     /** Generate constraints for possible protocols. */
     private fun Node.selectionConstraints(): Iterable<SelectionConstraint> =
         when (this) {
+
             is LetNode ->
                 setOf(protocolFactory.constraint(this)).plus(
                     // extra constraints
@@ -351,7 +352,8 @@ class SelectionConstraintGenerator(
     private fun getArgumentViableProtocols(
         previous: PersistentMap<ReadNode, Protocol>,
         next: List<ReadNode>
-    ): Set<PersistentMap<ReadNode, Protocol>> {
+    ):
+        Set<PersistentMap<ReadNode, Protocol>> {
         return if (next.isEmpty()) {
             setOf(previous)
         } else {
@@ -374,7 +376,11 @@ class SelectionConstraintGenerator(
      * @param symCost2: integer cost
      * @return selection constraints that set the features of [symCost] and [symCost2] equal.
      */
-    private fun symbolicCostEqualsSym(symCost: Cost<SymbolicCost>, symCost2: Cost<SymbolicCost>): SelectionConstraint =
+    private fun symbolicCostEqualsSym(
+        symCost: Cost<SymbolicCost>,
+        symCost2: Cost<SymbolicCost>
+    ):
+        SelectionConstraint =
         symCost.features.map { kv ->
             CostEquals(
                 kv.value,
@@ -390,7 +396,11 @@ class SelectionConstraintGenerator(
      * @param intCost: integer cost
      * @return selection constraints that set the features of [symCost] and [intCost] equal.
      */
-    private fun symbolicCostEqualsInt(symCost: Cost<SymbolicCost>, intCost: Cost<IntegerCost>): SelectionConstraint =
+    private fun symbolicCostEqualsInt(
+        symCost: Cost<SymbolicCost>,
+        intCost: Cost<IntegerCost>
+    ):
+        SelectionConstraint =
         symbolicCostEqualsSym(symCost, intCost.toSymbolicCost())
 
     /**
@@ -408,9 +418,11 @@ class SelectionConstraintGenerator(
         fv: FunctionVariable,
         protocols: Set<Protocol>,
         reads: List<ReadNode>,
-        baseCostFunction: (Protocol) -> Cost<IntegerCost>,
+        baseCostFunction: (Protocol)
+        -> Cost<IntegerCost>,
         symbolicCost: Cost<SymbolicCost>
-    ): Iterable<SelectionConstraint> {
+    ):
+        Iterable<SelectionConstraint> {
         // cartesian product of all viable protocols for arguments
         val argProtocolMaps: Set<PersistentMap<ReadNode, Protocol>> =
             getArgumentViableProtocols(persistentMapOf(), reads)
@@ -432,7 +444,10 @@ class SelectionConstraintGenerator(
 
                         val argProtocolConstraints: SelectionConstraint =
                             argProtocolMap.map { kv ->
-                                VariableIn(FunctionVariable(fv.function, kv.key.temporary.value), setOf(kv.value))
+                                VariableIn(
+                                    FunctionVariable(fv.function, kv.key.temporary.value),
+                                    setOf(kv.value)
+                                )
                             }.ands()
 
                         if (invalidArgProtocols.isEmpty()) { // no invalid arg protocols
@@ -535,7 +550,8 @@ class SelectionConstraintGenerator(
     }
 
     /** Generate cost constraints. */
-    private fun Node.costConstraints(): Iterable<SelectionConstraint> =
+    private fun Node.costConstraints():
+        Iterable<SelectionConstraint> =
         when (this) {
             /*
             is ParameterNode -> {
@@ -667,7 +683,8 @@ class SelectionConstraintGenerator(
         stmt: SimpleStatementNode,
         fv: FunctionVariable,
         protocols: Set<Protocol>
-    ): Iterable<SelectionConstraint> {
+    ):
+        Iterable<SelectionConstraint> {
         return protocols.map { protocol ->
             val mandatoryHosts = protocolComposer.mandatoryParticipatingHosts(protocol, stmt)
             Implies(
@@ -689,7 +706,8 @@ class SelectionConstraintGenerator(
     }
 
     /** Describes the relationships between hosts participating in execution of statements. */
-    private fun Node.participatingHostConstraints(): Iterable<SelectionConstraint> =
+    private fun Node.participatingHostConstraints():
+        Iterable<SelectionConstraint> =
         when (this) {
             // a host participates in a block node if it participates in any of the children
             is BlockNode -> {
@@ -738,7 +756,10 @@ class SelectionConstraintGenerator(
                                                 this.participatingHosts[host]!!,
                                                 Not(
                                                     VariableIn(
-                                                        FunctionVariable(enclosingFunction, guard.temporary.value),
+                                                        FunctionVariable(
+                                                            enclosingFunction,
+                                                            guard.temporary.value
+                                                        ),
                                                         setOf(guardProtocol)
                                                     )
                                                 )
@@ -817,7 +838,8 @@ class SelectionConstraintGenerator(
         }
 
     /** Generate selection, cost, and participating host constraints. */
-    private fun Node.constraints(): Set<SelectionConstraint> =
+    private fun Node.constraints():
+        Set<SelectionConstraint> =
         this.selectionConstraints()
             .union(this.costConstraints())
             .union(this.participatingHostConstraints())

@@ -36,11 +36,11 @@ public class Term {
     }
   }
 
-  public void setCoeff(int value) {
+  public void setCoeff(long value) {
     libsnarkwrapperJNI.Term_coeff_set(swigCPtr, this, value);
   }
 
-  public int getCoeff() {
+  public long getCoeff() {
     return libsnarkwrapperJNI.Term_coeff_get(swigCPtr, this);
   }
 

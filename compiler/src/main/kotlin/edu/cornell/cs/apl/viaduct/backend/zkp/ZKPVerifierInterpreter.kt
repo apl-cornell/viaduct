@@ -57,7 +57,8 @@ class ZKPVerifierInterpreter(
     program: ProgramNode,
     val protocolAnalysis: ProtocolAnalysis,
     val runtime: ViaductProcessRuntime
-) : SingleProtocolInterpreter<ZKPObject>(program, runtime.projection.protocol) {
+) :
+    SingleProtocolInterpreter<ZKPObject>(program, runtime.projection.protocol) {
 
     private val prover = (runtime.projection.protocol as ZKP).prover
     private val typeAnalysis = TypeAnalysis.get(program)
@@ -116,7 +117,7 @@ class ZKPVerifierInterpreter(
             is BooleanValue -> if (this.value) {
                 1
             } else { 0 }
-            else -> throw Exception("value.toInt: Unknown value type")
+            else -> throw Exception("value.toInt: Unknown value type: $this")
         }
     }
 
@@ -155,8 +156,8 @@ class ZKPVerifierInterpreter(
             ImmutableCell -> ZKPObject.ZKPImmutableCell(getAtomicExprWire(arguments[0]))
             MutableCell -> ZKPObject.ZKPMutableCell(getAtomicExprWire(arguments[0]))
             Vector -> {
-                val length = runGuard(arguments[0]) as IntegerValue
-                ZKPObject.ZKPVectorObject(length.value, typeArguments[0].defaultValue, wireGenerator)
+                val length = runPlaintextExpr(arguments[0]) as IntegerValue
+                ZKPObject.ZKPVectorObject(length.value, length.type.defaultValue, wireGenerator)
             }
             else -> throw Exception("unknown object")
         }
@@ -179,13 +180,39 @@ class ZKPVerifierInterpreter(
                 throw Exception("bad query")
             }
             is ZKPObject.ZKPVectorObject -> if (query.value is Get) {
-                val index = runGuard(args[0]) as IntegerValue
+                val index = runPlaintextExpr(args[0]) as IntegerValue
                 obj.gates[index.value]
             } else {
                 throw Exception("bad query")
             }
             ZKPObject.ZKPNullObject -> throw Exception("null query")
         }
+
+    private suspend fun runCleartextRead(node: ReadNode) {
+        val sendProtocol = protocolAnalysis.primaryProtocol(node)
+        assert(runtime.projection.protocol != sendProtocol)
+        val events: ProtocolCommunication = protocolAnalysis.relevantCommunicationEvents(node)
+        val publicInputs = events.getHostReceives(runtime.projection.host, "ZKP_PUBLIC_INPUT")
+        assert(publicInputs.isNotEmpty())
+
+        logger.info {
+            "reading cleartext read from $sendProtocol"
+        }
+
+        var cleartextValue: Value? = null
+        for (event in publicInputs) {
+            val receivedValue: Value =
+                runtime.receive(ProtocolProjection(event.send.protocol, event.send.host))
+
+            if (cleartextValue == null) {
+                cleartextValue = receivedValue
+            } else if (cleartextValue != receivedValue) {
+                throw ViaductInterpreterError("ZKP public input: received different values")
+            }
+        }
+        tempStore = tempStore.put(node.temporary.value, cleartextValue!!)
+        wireStore = wireStore.put(node.temporary.value, injectValue(cleartextValue))
+    }
 
     private suspend fun runRead(node: ReadNode): WireTerm {
         val wireVal = wireStore[node.temporary.value]
@@ -302,7 +329,7 @@ class ZKPVerifierInterpreter(
                 }
             }
             is ZKPObject.ZKPVectorObject -> {
-                val index = runGuard(stmt.arguments[0]) as IntegerValue
+                val index = runPlaintextExpr(stmt.arguments[0]) as IntegerValue
                 when (stmt.update.value) {
                     is edu.cornell.cs.apl.viaduct.syntax.datatypes.Set ->
                         o.gates[index.value] = getAtomicExprWire(stmt.arguments[1])
@@ -323,7 +350,24 @@ class ZKPVerifierInterpreter(
         throw Exception("cannot perform I/O in non-Local protocol")
     }
 
+    private suspend fun runPlaintextExpr(expr: AtomicExpressionNode): Value {
+        return when (expr) {
+            is LiteralNode -> expr.value
+            is ReadNode -> {
+                if (tempStore.containsKey(expr.temporary.value)) {
+                    tempStore[expr.temporary.value]!!
+                } else {
+                    logger.info {
+                        "Temporary not found for ${expr.temporary}; running cleartext read"
+                    }
+                    runCleartextRead(expr) // Force external communication and update tempStore, if needed
+                    tempStore[expr.temporary.value]!!
+                }
+            }
+        }
+    }
+
     override suspend fun runGuard(expr: AtomicExpressionNode): Value {
-        throw ViaductInterpreterError("ZKP: Verifier cannot compute guard")
+        throw ViaductInterpreterError("ZKP: Cannot run cleartext guard")
     }
 }

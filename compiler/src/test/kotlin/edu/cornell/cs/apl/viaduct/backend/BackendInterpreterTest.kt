@@ -3,6 +3,7 @@ package edu.cornell.cs.apl.viaduct.backend
 import edu.cornell.cs.apl.viaduct.ExampleProgramProvider
 import edu.cornell.cs.apl.viaduct.analysis.ProtocolAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.main
+import edu.cornell.cs.apl.viaduct.backend.IO.Strategy
 import edu.cornell.cs.apl.viaduct.passes.annotateWithProtocols
 import edu.cornell.cs.apl.viaduct.passes.check
 import edu.cornell.cs.apl.viaduct.passes.elaborated
@@ -25,6 +26,7 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProcessDeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.SimpleStatementNode
 import edu.cornell.cs.apl.viaduct.syntax.surface.ProgramNode
 import edu.cornell.cs.apl.viaduct.syntax.values.BooleanValue
+import edu.cornell.cs.apl.viaduct.syntax.values.IntegerValue
 import edu.cornell.cs.apl.viaduct.syntax.values.Value
 import java.util.concurrent.Executors
 import kotlinx.collections.immutable.PersistentMap
@@ -68,6 +70,15 @@ private object FakeProtocolBackend : ProtocolBackend {
         connectionMap: Map<Host, HostAddress>
     ): Iterable<ProtocolInterpreter> {
         return setOf(FakeProtocolInterpreter(protocols))
+    }
+}
+
+private object FakeStrategy : Strategy {
+    override suspend fun getInput(): Value {
+        return IntegerValue(0)
+    }
+
+    override suspend fun recvOutput(value: Value) {
     }
 }
 
@@ -118,7 +129,7 @@ internal class BackendInterpreterTest {
         runBlocking {
             for (host: Host in hosts) {
                 launch(Executors.newSingleThreadExecutor().asCoroutineDispatcher()) {
-                    backend.run(fakeProgram, host)
+                    backend.run(fakeProgram, host, FakeStrategy)
                 }
             }
         }

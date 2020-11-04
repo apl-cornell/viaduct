@@ -1,6 +1,7 @@
 package edu.cornell.cs.apl.viaduct.backend
 
 import edu.cornell.cs.apl.viaduct.analysis.ProtocolAnalysis
+import edu.cornell.cs.apl.viaduct.backend.IO.Strategy
 import edu.cornell.cs.apl.viaduct.errors.ViaductInterpreterError
 import edu.cornell.cs.apl.viaduct.protocols.Synchronization
 import edu.cornell.cs.apl.viaduct.selection.CommunicationEvent
@@ -214,7 +215,8 @@ class ViaductRuntime(
     private val program: ProgramNode,
     private val protocolAnalysis: ProtocolAnalysis,
     private val hostConnectionInfo: Map<Host, HostAddress>,
-    private val backends: List<ProtocolBackend>
+    private val backends: List<ProtocolBackend>,
+    private val strategy: Strategy
 ) {
     private val syncProtocol = Synchronization(program.hostDeclarations.map { it.name.value }.toSet())
     private val processInfoMap: Map<Process, ProcessInfo>
@@ -355,16 +357,11 @@ class ViaductRuntime(
     }
 
     suspend fun input(): Value {
-        return withContext(Dispatchers.IO) {
-            // TODO: support booleans as well
-            println("Input: ")
-            IntegerValue(stdinScanner.nextInt())
-        }
+        return strategy.getInput()
     }
 
     suspend fun output(value: Value) {
-        logger.info { "output $value" }
-        withContext(Dispatchers.IO) { println(value) }
+        strategy.recvOutput(value)
     }
 
     // protocol for connections: for hosts i and j where i < j, j connects to i

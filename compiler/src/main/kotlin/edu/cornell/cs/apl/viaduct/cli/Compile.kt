@@ -8,6 +8,7 @@ import edu.cornell.cs.apl.prettyprinting.PrettyPrintable
 import edu.cornell.cs.apl.viaduct.analysis.InformationFlowAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.main
 import edu.cornell.cs.apl.viaduct.backend.aby.ABYMuxPostprocessor
+import edu.cornell.cs.apl.viaduct.backend.zkp.ZKPMuxPostprocessor
 import edu.cornell.cs.apl.viaduct.passes.ProgramPostprocessorRegistry
 import edu.cornell.cs.apl.viaduct.passes.annotateWithProtocols
 import edu.cornell.cs.apl.viaduct.passes.check
@@ -121,7 +122,7 @@ class Compile : CliktCommand(help = "Compile ideal protocol to secure distribute
 
         // Post-process program
         logger.info { "post-processing program..." }
-        val postprocessor = ProgramPostprocessorRegistry(ABYMuxPostprocessor(protocolAssignment))
+        val postprocessor = ProgramPostprocessorRegistry(ABYMuxPostprocessor(protocolAssignment), ZKPMuxPostprocessor(protocolAssignment))
         val postprocessedProgram = postprocessor.postprocess(annotatedProgram)
 
         output.println(postprocessedProgram)

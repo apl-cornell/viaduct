@@ -7,6 +7,7 @@ import edu.cornell.cs.apl.viaduct.protocols.Commitment
 import edu.cornell.cs.apl.viaduct.protocols.Local
 import edu.cornell.cs.apl.viaduct.protocols.Replication
 import edu.cornell.cs.apl.viaduct.protocols.YaoABY
+import edu.cornell.cs.apl.viaduct.protocols.ZKP
 import edu.cornell.cs.apl.viaduct.syntax.Host
 import edu.cornell.cs.apl.viaduct.syntax.Operator
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
@@ -18,6 +19,7 @@ import edu.cornell.cs.apl.viaduct.syntax.operators.Addition
 import edu.cornell.cs.apl.viaduct.syntax.operators.And
 import edu.cornell.cs.apl.viaduct.syntax.operators.EqualTo
 import edu.cornell.cs.apl.viaduct.syntax.operators.LessThan
+import edu.cornell.cs.apl.viaduct.syntax.operators.LessThanOrEqualTo
 import edu.cornell.cs.apl.viaduct.syntax.operators.Maximum
 import edu.cornell.cs.apl.viaduct.syntax.operators.Minimum
 import edu.cornell.cs.apl.viaduct.syntax.operators.Multiplication
@@ -71,6 +73,16 @@ class SimpleCostEstimator(
             Pair(Subtraction, YaoABY.protocolName) to
                 zeroCost().update(LAN_COST, IntegerCost(149)).update(WAN_COST, IntegerCost(148)),
 
+            // NEGATION (treat like subtraction)
+            Pair(Negation, ArithABY.protocolName) to
+                zeroCost().update(LAN_COST, IntegerCost(9)).update(WAN_COST, IntegerCost(9)),
+
+            Pair(Negation, BoolABY.protocolName) to
+                zeroCost().update(LAN_COST, IntegerCost(445)).update(WAN_COST, IntegerCost(451)),
+
+            Pair(Negation, YaoABY.protocolName) to
+                zeroCost().update(LAN_COST, IntegerCost(149)).update(WAN_COST, IntegerCost(148)),
+
             // MUL
             Pair(Multiplication, ArithABY.protocolName) to
                 zeroCost().update(LAN_COST, IntegerCost(306)).update(WAN_COST, IntegerCost(314)),
@@ -89,16 +101,16 @@ class SimpleCostEstimator(
                 zeroCost().update(LAN_COST, IntegerCost(146)).update(WAN_COST, IntegerCost(145)),
 
             // OR
-            Pair(And, BoolABY.protocolName) to
+            Pair(edu.cornell.cs.apl.viaduct.syntax.operators.Or, BoolABY.protocolName) to
                 zeroCost().update(LAN_COST, IntegerCost(138)).update(WAN_COST, IntegerCost(139)),
 
-            Pair(And, YaoABY.protocolName) to
+            Pair(edu.cornell.cs.apl.viaduct.syntax.operators.Or, YaoABY.protocolName) to
                 zeroCost().update(LAN_COST, IntegerCost(146)).update(WAN_COST, IntegerCost(146)),
 
             // NOT (don't have numbers for these from Ishaq et al)
-            Pair(Negation, BoolABY.protocolName) to zeroCost(),
+            Pair(edu.cornell.cs.apl.viaduct.syntax.operators.Not, BoolABY.protocolName) to zeroCost(),
 
-            Pair(Negation, YaoABY.protocolName) to zeroCost(),
+            Pair(edu.cornell.cs.apl.viaduct.syntax.operators.Not, YaoABY.protocolName) to zeroCost(),
 
             // EQUAL TO
             Pair(EqualTo, BoolABY.protocolName) to
@@ -108,10 +120,10 @@ class SimpleCostEstimator(
                 zeroCost().update(LAN_COST, IntegerCost(146)).update(WAN_COST, IntegerCost(146)),
 
             // LESS THAN / EQUAL TO
-            Pair(EqualTo, BoolABY.protocolName) to
+            Pair(LessThanOrEqualTo, BoolABY.protocolName) to
                 zeroCost().update(LAN_COST, IntegerCost(202)).update(WAN_COST, IntegerCost(202)),
 
-            Pair(EqualTo, YaoABY.protocolName) to
+            Pair(LessThanOrEqualTo, YaoABY.protocolName) to
                 zeroCost().update(LAN_COST, IntegerCost(147)).update(WAN_COST, IntegerCost(147)),
 
             // LESS THAN
@@ -150,6 +162,7 @@ class SimpleCostEstimator(
                 is Local -> IntegerCost(1)
                 is Replication -> IntegerCost(1)
                 is Commitment -> IntegerCost(10)
+                is ZKP -> IntegerCost(20)
                 is ABY -> IntegerCost(100)
                 else -> throw Error("unknown protocol ${protocol.protocolName}")
             }
@@ -255,7 +268,7 @@ class SimpleCostEstimator(
     }
 
     override fun communicationCost(source: Protocol, destination: Protocol, host: Host?): Cost<IntegerCost> {
-        return if (source != destination) {
+        return if (source != destination && protocolComposer.canCommunicate(source, destination)) {
             val events =
                 if (host != null) {
                     protocolComposer.communicate(source, destination).getHostReceives(host)

@@ -1,7 +1,7 @@
 package edu.cornell.cs.apl.viaduct.selection
 
 import edu.cornell.cs.apl.viaduct.analysis.NameAnalysis
-import edu.cornell.cs.apl.viaduct.backend.aby.canMux
+import edu.cornell.cs.apl.viaduct.backend.canMux
 import edu.cornell.cs.apl.viaduct.protocols.ArithABY
 import edu.cornell.cs.apl.viaduct.protocols.BoolABY
 import edu.cornell.cs.apl.viaduct.protocols.YaoABY
@@ -81,7 +81,9 @@ class ABYFactory(program: ProgramNode) : ProtocolFactory {
             when (val rhs = this.value) {
                 is OperatorApplicationNode ->
                     when (rhs.operator) {
-                        is ComparisonOperator, is LogicalOperator, Mux, Maximum, Minimum, Division ->
+                        is ComparisonOperator, is LogicalOperator,
+                        edu.cornell.cs.apl.viaduct.syntax.operators.Not,
+                        Mux, Maximum, Minimum, Division ->
                             protocol !is ArithABY
 
                         else -> true

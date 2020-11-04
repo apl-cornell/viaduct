@@ -9,6 +9,7 @@ import edu.cornell.cs.apl.viaduct.backend.ProtocolBackend
 import edu.cornell.cs.apl.viaduct.backend.ViaductBackend
 import edu.cornell.cs.apl.viaduct.backend.aby.ABYProtocolInterpreter
 import edu.cornell.cs.apl.viaduct.backend.commitment.CommitmentProtocolInterpreterFactory
+import edu.cornell.cs.apl.viaduct.backend.zkp.ZKPProtocolInterpreterFactory
 import edu.cornell.cs.apl.viaduct.parsing.ArithABYProtocolParser
 import edu.cornell.cs.apl.viaduct.parsing.BoolABYProtocolParser
 import edu.cornell.cs.apl.viaduct.parsing.CommitmentProtocolParser
@@ -16,6 +17,7 @@ import edu.cornell.cs.apl.viaduct.parsing.LocalProtocolParser
 import edu.cornell.cs.apl.viaduct.parsing.ProtocolParser
 import edu.cornell.cs.apl.viaduct.parsing.ReplicationProtocolParser
 import edu.cornell.cs.apl.viaduct.parsing.YaoABYProtocolParser
+import edu.cornell.cs.apl.viaduct.parsing.ZKPProtocolParser
 import edu.cornell.cs.apl.viaduct.passes.elaborated
 import edu.cornell.cs.apl.viaduct.protocols.ArithABY
 import edu.cornell.cs.apl.viaduct.protocols.BoolABY
@@ -23,6 +25,7 @@ import edu.cornell.cs.apl.viaduct.protocols.Commitment
 import edu.cornell.cs.apl.viaduct.protocols.Local
 import edu.cornell.cs.apl.viaduct.protocols.Replication
 import edu.cornell.cs.apl.viaduct.protocols.YaoABY
+import edu.cornell.cs.apl.viaduct.protocols.ZKP
 import edu.cornell.cs.apl.viaduct.syntax.Host
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
 import edu.cornell.cs.apl.viaduct.syntax.ProtocolName
@@ -52,14 +55,16 @@ class Run : CliktCommand(help = "Run compiled protocol for a single host") {
             Replication.protocolName to ReplicationProtocolParser,
             ArithABY.protocolName to ArithABYProtocolParser,
             BoolABY.protocolName to BoolABYProtocolParser,
-            YaoABY.protocolName to YaoABYProtocolParser
+            YaoABY.protocolName to YaoABYProtocolParser,
+            ZKP.protocolName to ZKPProtocolParser
         )
 
     private fun getProtocolBackends(): List<ProtocolBackend> {
         return listOf(
             PlaintextProtocolInterpreter,
             ABYProtocolInterpreter,
-            CommitmentProtocolInterpreterFactory
+            CommitmentProtocolInterpreterFactory,
+            ZKPProtocolInterpreterFactory
         )
     }
 

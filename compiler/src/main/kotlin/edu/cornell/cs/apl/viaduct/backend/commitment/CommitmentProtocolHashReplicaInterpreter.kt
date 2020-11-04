@@ -71,7 +71,7 @@ class CommitmentProtocolHashReplicaInterpreter(
     program: ProgramNode,
     private val protocolAnalysis: ProtocolAnalysis,
     private val runtime: ViaductProcessRuntime
-) : SingleProtocolInterpreter<CommitmentObject>(program) {
+) : SingleProtocolInterpreter<CommitmentObject>(program, runtime.projection.protocol) {
     override val availableProtocols: Set<Protocol> =
         setOf(runtime.projection.protocol)
 

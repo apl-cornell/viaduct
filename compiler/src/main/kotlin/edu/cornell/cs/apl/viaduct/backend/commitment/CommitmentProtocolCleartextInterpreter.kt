@@ -11,7 +11,6 @@ import edu.cornell.cs.apl.viaduct.protocols.Commitment
 import edu.cornell.cs.apl.viaduct.selection.CommunicationEvent
 import edu.cornell.cs.apl.viaduct.syntax.Host
 import edu.cornell.cs.apl.viaduct.syntax.ObjectVariable
-import edu.cornell.cs.apl.viaduct.syntax.Protocol
 import edu.cornell.cs.apl.viaduct.syntax.QueryNameNode
 import edu.cornell.cs.apl.viaduct.syntax.Temporary
 import edu.cornell.cs.apl.viaduct.syntax.datatypes.ClassName
@@ -69,10 +68,7 @@ class CommitmentProtocolCleartextInterpreter(
     program: ProgramNode,
     private val protocolAnalysis: ProtocolAnalysis,
     private val runtime: ViaductProcessRuntime
-) : SingleProtocolInterpreter<HashedObject>(program) {
-    override val availableProtocols: Set<Protocol> =
-        setOf(runtime.projection.protocol)
-
+) : SingleProtocolInterpreter<HashedObject>(program, runtime.projection.protocol) {
     private val hashHosts: Set<Host> = (runtime.projection.protocol as Commitment).hashHosts
 
     private val tempStoreStack: Stack<PersistentMap<Temporary, Hashed<Value>>> = Stack()

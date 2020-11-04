@@ -46,10 +46,7 @@ class PlaintextProtocolInterpreter(
     program: ProgramNode,
     private val protocolAnalysis: ProtocolAnalysis,
     private val runtime: ViaductProcessRuntime
-) : SingleProtocolInterpreter<PlaintextClassObject>(program) {
-    override val availableProtocols: Set<Protocol> =
-        setOf(runtime.projection.protocol)
-
+) : SingleProtocolInterpreter<PlaintextClassObject>(program, runtime.projection.protocol) {
     private val tempStoreStack: Stack<PersistentMap<Temporary, Value>> = Stack()
 
     private var tempStore: PersistentMap<Temporary, Value>

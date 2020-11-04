@@ -226,8 +226,12 @@ abstract class AbstractProtocolInterpreter<Obj>(
  *  This class is defined for convenience, so that the
  *  protocol argument on implemented methods isn't necessary. */
 abstract class SingleProtocolInterpreter<Obj>(
-    program: ProgramNode
+    program: ProgramNode,
+    private val protocol: Protocol
 ) : AbstractProtocolInterpreter<Obj>(program) {
+    override val availableProtocols: Set<Protocol> =
+        setOf(protocol)
+
     abstract suspend fun buildExpressionObject(expr: AtomicExpressionNode): Obj
 
     override suspend fun buildExpressionObject(protocol: Protocol, expr: AtomicExpressionNode): Obj =

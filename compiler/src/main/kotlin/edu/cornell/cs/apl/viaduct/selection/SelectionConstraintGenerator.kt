@@ -479,7 +479,11 @@ class SelectionConstraintGenerator(
                             val participatingHostsConstraint: SelectionConstraint =
                                 argProtocolMap.flatMap { argProtocol ->
                                     val argDeclaration = nameAnalysis.declaration(argProtocol.key)
-                                    val events = protocolComposer.communicate(argProtocol.value, protocol)
+                                    val events =
+                                        if (protocolComposer.canCommunicate(argProtocol.value, protocol))
+                                            (protocolComposer.communicate(argProtocol.value, protocol))
+                                        else
+                                            (ProtocolCommunication(setOf()))
 
                                     // if a protocol host is participating, every host sending a message to it must also be participating
                                     protocol.hosts.map { protocolHost ->

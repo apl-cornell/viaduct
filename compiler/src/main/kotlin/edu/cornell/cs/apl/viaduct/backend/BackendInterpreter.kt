@@ -23,34 +23,65 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.SimpleStatementNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.StatementNode
 import edu.cornell.cs.apl.viaduct.syntax.values.BooleanValue
 import edu.cornell.cs.apl.viaduct.syntax.values.UnitValue
+import kotlin.system.measureTimeMillis
 import kotlinx.collections.immutable.PersistentMap
-import kotlinx.collections.immutable.persistentMapOf
+import kotlinx.collections.immutable.toPersistentMap
 import mu.KotlinLogging
 
 private val logger = KotlinLogging.logger("Interpreter")
 
 class BackendInterpreter(
+    private val host: Host,
     private val program: ProgramNode,
     private val protocolAnalysis: ProtocolAnalysis,
-    private val host: Host,
-    inputBackends: Map<Protocol, ProtocolInterpreter>,
+    private val protocolInterpreters: List<ProtocolInterpreter>,
     private val runtime: ViaductProcessRuntime
 ) {
     private val allHosts = program.hostDeclarations.map { it.name.value }.toSet()
     private val nameAnalysis = NameAnalysis.get(program)
-    private val backends: Map<Protocol, ProtocolInterpreter> =
-        inputBackends.filter { kv -> kv.key !is Synchronization }
+    private val protocolInterpreterMap: Map<Protocol, ProtocolInterpreter>
     private val syncProtocol = Synchronization(program.hostDeclarations.map { it.name.value }.toSet())
+
+    init {
+        val initInterpreterMap: MutableMap<Protocol, ProtocolInterpreter> = mutableMapOf()
+        val currentProtocols: MutableSet<Protocol> = mutableSetOf()
+        for (interpreter in protocolInterpreters) {
+            val interpreterProtocols = interpreter.availableProtocols
+            for (protocol in interpreterProtocols) {
+                if (currentProtocols.contains(protocol)) {
+                    throw ViaductInterpreterError("Interpreter: Multiple backends for protocol ${protocol.asDocument.print()}")
+                } else {
+                    currentProtocols.add(protocol)
+                    initInterpreterMap[protocol] = interpreter
+                }
+            }
+        }
+
+        val hostParticipatingProtocols =
+            protocolAnalysis
+                .participatingProtocols(program)
+                .filter { protocol -> protocol.hosts.contains(host) }
+
+        for (protocol in hostParticipatingProtocols) {
+            if (!currentProtocols.contains(protocol)) {
+                throw ViaductInterpreterError("Interpreter: No backend for ${protocol.protocolName}")
+            }
+        }
+
+        protocolInterpreterMap = initInterpreterMap
+    }
 
     suspend fun run() {
         val mainBody = program.main.body
 
         logger.info { "starting interpretation" }
 
-        run(nameAnalysis.enclosingFunctionName(mainBody), mainBody)
-        synchronize(allHosts, allHosts)
+        val duration = measureTimeMillis {
+            run(nameAnalysis.enclosingFunctionName(mainBody), mainBody)
+            synchronize(allHosts, allHosts)
+        }
 
-        logger.info { "finished interpretation" }
+        logger.info { "finished interpretation, total running time: ${duration}ms" }
     }
 
     /** Synchronize hosts. */
@@ -84,7 +115,7 @@ class BackendInterpreter(
             is SimpleStatementNode -> {
                 if (protocolAnalysis.participatingHosts(stmt).contains(this.host)) {
                     val protocol = protocolAnalysis.primaryProtocol(stmt)
-                    backends[protocol]?.runSimpleStatement(stmt)
+                    protocolInterpreterMap[protocol]?.runSimpleStatement(protocol, stmt)
                         ?: throw ViaductInterpreterError("no backend for protocol ${protocol.asDocument.print()}")
                 }
 
@@ -92,24 +123,21 @@ class BackendInterpreter(
             }
 
             is FunctionCallNode -> {
-                val argumentProtocolMap: PersistentMap<Protocol, PersistentMap<ParameterNode, FunctionArgumentNode>> =
-                    stmt.arguments.fold(persistentMapOf()) { acc, arg ->
+                val argumentProtocolMap: Map<ParameterNode, Pair<Protocol, FunctionArgumentNode>> =
+                    stmt.arguments.map { arg ->
                         val parameter = nameAnalysis.parameter(arg)
                         val argProtocol = protocolAnalysis.primaryProtocol(parameter)
-
-                        acc.put(
-                            argProtocol,
-                            acc[argProtocol]?.put(parameter, arg)
-                                ?: persistentMapOf(parameter to arg)
-                        )
-                    }
+                        parameter to (argProtocol to arg)
+                    }.toMap()
 
                 // pass arguments and create new function activation record
-                for (kv: Map.Entry<Protocol, ProtocolInterpreter> in backends) {
-                    val arguments: PersistentMap<ParameterNode, FunctionArgumentNode> =
-                        argumentProtocolMap[kv.key] ?: persistentMapOf()
+                for (interpreter in protocolInterpreters) {
+                    val arguments: PersistentMap<ParameterNode, Pair<Protocol, FunctionArgumentNode>> =
+                        argumentProtocolMap
+                            .filter { kv -> interpreter.availableProtocols.contains(kv.value.first) }
+                            .toPersistentMap()
 
-                    kv.value.pushFunctionContext(arguments)
+                    interpreter.pushFunctionContext(arguments)
                 }
 
                 // execute function body
@@ -117,8 +145,8 @@ class BackendInterpreter(
                 run(calledFunction.name.value, calledFunction.body)
 
                 // pop function activation record
-                for (kv: Map.Entry<Protocol, ProtocolInterpreter> in backends) {
-                    kv.value.popFunctionContext()
+                for (interpreter in protocolInterpreters) {
+                    interpreter.popFunctionContext()
                 }
             }
 
@@ -130,7 +158,7 @@ class BackendInterpreter(
 
                             is ReadNode -> {
                                 val guardProtocol = protocolAnalysis.primaryProtocol(guard)
-                                backends[guardProtocol]?.runExprAsValue(guard)
+                                protocolInterpreterMap[guardProtocol]?.runGuard(guardProtocol, guard)
                                     ?: throw ViaductInterpreterError("no backend for protocol ${guardProtocol.asDocument.print()}")
                             }
                         }
@@ -153,21 +181,27 @@ class BackendInterpreter(
 
             is InfiniteLoopNode -> {
                 if (protocolAnalysis.participatingHosts(stmt).contains(this.host)) {
-                    val protocolContextMarkers: Map<Protocol, Int> =
-                        backends
-                            .map { kv -> kv.key to kv.value.getContextMarker() }
+                    val contextMarkers: Map<ProtocolInterpreter, Int> =
+                        protocolInterpreters
+                            .map { interpreter -> interpreter to interpreter.getContextMarker() }
                             .toMap()
 
                     try {
+                        /*
                         run(function, stmt.body)
                         run(function, stmt)
+                         */
+
+                        while (true) {
+                            run(function, stmt.body)
+                        }
                     } catch (signal: LoopBreakSignal) {
                         // this signal is for an outer loop
                         if (signal.jumpLabel != stmt.jumpLabel.value) {
                             throw signal
                         } else { // restore context
-                            for (protocolContextMarker in protocolContextMarkers) {
-                                backends[protocolContextMarker.key]!!.restoreContext(protocolContextMarker.value)
+                            for (contextMarker in contextMarkers) {
+                                contextMarker.key.restoreContext(contextMarker.value)
                             }
                         }
                     }
@@ -177,20 +211,22 @@ class BackendInterpreter(
             }
 
             is BreakNode -> {
-                throw LoopBreakSignal(stmt)
+                if (protocolAnalysis.participatingHosts(stmt).contains(host)) {
+                    throw LoopBreakSignal(stmt)
+                }
             }
 
             is BlockNode -> {
-                for (backend: ProtocolInterpreter in backends.values) {
-                    backend.pushContext()
+                for (interpreter in protocolInterpreters) {
+                    interpreter.pushContext()
                 }
 
                 for (child: StatementNode in stmt) {
                     run(function, child)
                 }
 
-                for (backend: ProtocolInterpreter in backends.values) {
-                    backend.popContext()
+                for (interpreter in protocolInterpreters) {
+                    interpreter.popContext()
                 }
 
                 synchronize(protocolAnalysis.participatingHosts(stmt), protocolAnalysis.hostsToSync(stmt))

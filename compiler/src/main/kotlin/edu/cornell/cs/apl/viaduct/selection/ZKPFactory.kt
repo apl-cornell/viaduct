@@ -86,13 +86,6 @@ class ZKPFactory(val program: ProgramNode) : ProtocolFactory {
             setOf()
         }
 
-    override fun viableProtocols(node: ObjectDeclarationArgumentNode): Set<Protocol> =
-        if (node.isApplicable()) {
-            protocols(program).map { it.protocol }.toSet()
-        } else {
-            setOf()
-        }
-
     override fun availableProtocols(): Set<ProtocolName> = setOf(ZKP.protocolName)
 
     override fun viableProtocols(node: ParameterNode): Set<Protocol> =

@@ -14,14 +14,12 @@ import edu.cornell.cs.apl.viaduct.syntax.values.Value
  * The [ABY](https://github.com/encryptogroup/ABY) protocol which is a two party MPC protocol
  * secure in the honest-but-curios setting.
  */
-class ABY(val server: Host, val client: Host) : Protocol() {
+abstract class ABY(val server: Host, val client: Host) : Protocol() {
     companion object {
         val protocolName = ProtocolName("ABY")
         const val SECRET_INPUT = "SECRET_INPUT"
         const val CLEARTEXT_INPUT = "CLEARTEXT_INPUT"
-        const val SECRET_SHARE_INPUT = "SECRET_SHARE_INPUT"
         const val CLEARTEXT_OUTPUT = "CLEARTEXT_OUTPUT"
-        const val SECRET_SHARE_OUTPUT = "SECRET_SHARE_OUTPUT"
     }
 
     init {
@@ -37,28 +35,18 @@ class ABY(val server: Host, val client: Host) : Protocol() {
     override fun authority(hostTrustConfiguration: HostTrustConfiguration): Label =
         hostTrustConfiguration(server).interpret() and hostTrustConfiguration(client).interpret()
 
-    val hostSecretInputPorts: Map<Host, InputPort> =
+    val secretInputPorts: Map<Host, InputPort> =
         hosts
             .map { h -> Pair(h, InputPort(this, h, SECRET_INPUT)) }
             .toMap()
 
-    val hostCleartextInputPorts: Map<Host, InputPort> =
+    val cleartextInputPorts: Map<Host, InputPort> =
         hosts
             .map { h -> Pair(h, InputPort(this, h, CLEARTEXT_INPUT)) }
             .toMap()
 
-    val hostSecretShareInputPorts: Map<Host, InputPort> =
-        hosts
-            .map { h -> Pair(h, InputPort(this, h, SECRET_SHARE_INPUT)) }
-            .toMap()
-
-    val hostCleartextOutputPorts: Map<Host, OutputPort> =
+    val cleartextOutputPorts: Map<Host, OutputPort> =
         hosts
             .map { h -> Pair(h, OutputPort(this, h, CLEARTEXT_OUTPUT)) }
-            .toMap()
-
-    val hostSecretShareOutputPorts: Map<Host, OutputPort> =
-        hosts
-            .map { h -> Pair(h, OutputPort(this, h, SECRET_SHARE_OUTPUT)) }
             .toMap()
 }

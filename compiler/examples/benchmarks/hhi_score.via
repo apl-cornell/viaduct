@@ -32,8 +32,14 @@ process main {
     val b_rev_trusted : int = endorse b_rev to {B & A<-};
     val total_market : int = a_rev_trusted + b_rev_trusted;
 
+    /*
+    ABY doesn't support division so comment this out for now
     val a_share : int = (100 * a_rev_trusted) / total_market;
     val b_share : int = (100 * b_rev_trusted) / total_market;
+    */
+
+    val a_share : int = 100 * a_rev_trusted;
+    val b_share : int = 100 * b_rev_trusted;
 
     val hhi : int = declassify (a_share * a_share + b_share * b_share) to {A ⊓ B};
 

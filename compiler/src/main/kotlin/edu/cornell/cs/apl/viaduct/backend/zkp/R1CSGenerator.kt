@@ -23,8 +23,8 @@ import edu.cornell.cs.apl.viaduct.syntax.operators.Multiplication
 import edu.cornell.cs.apl.viaduct.syntax.operators.Mux
 import edu.cornell.cs.apl.viaduct.syntax.operators.Not
 import edu.cornell.cs.apl.viaduct.syntax.operators.Or
-import kotlin.math.pow
 import mu.KotlinLogging
+import kotlin.math.pow
 
 // Needs to be in sync with getOutputWire below
 fun Operator.supportedOp(): Boolean =
@@ -70,7 +70,7 @@ fun Operator.getOutputWire(instance: R1CSInstance, args: List<Wire>): Wire {
         }
         is Mux -> { // b ? x : y = b * x + (1-b) * y
             val b = LinTerm(0, listOf(1L to args[0]))
-            val negb = LinTerm(0, listOf(-1L to args[0]))
+            val negb = LinTerm(1, listOf(-1L to args[0]))
             val x = LinTerm(0, listOf(1L to args[1]))
             val y = LinTerm(0, listOf(1L to args[2]))
             val ifTrue = instance.mkInternal(b, x)
@@ -86,8 +86,8 @@ fun Operator.getOutputWire(instance: R1CSInstance, args: List<Wire>): Wire {
             return instance.mkInternal(lhs, LinTerm.fromConst(1))
         }
         is EqualTo -> {
-            val ws1 = instance.mkUnpack32(args[0])
-            val ws2 = instance.mkUnpack32(args[1])
+            val ws1 = instance.mkUnpack(args[0])
+            val ws2 = instance.mkUnpack(args[1])
             fun mkIff(a: Wire, b: Wire): Wire { // a = b := (ab) + !(a+b)
                 val ab = And.getOutputWire(instance, listOf(a, b))
                 val aorb = Or.getOutputWire(instance, listOf(a, b))
@@ -232,61 +232,62 @@ class R1CSInstance(val isProver: Boolean) {
         return res
     }
 
+
+    fun mkInternalProver(v : Long, name : String = "") : Wire {
+        assert(isProver)
+        val wi = WireInfo()
+        wi.type = WireType.WIRE_IN
+        wi.input_val = v
+        val w = r1cs.mkWire(wi, name)
+        setWireVal(w, v)
+        return w
+    }
+
+    fun mkInternalVerifier(name : String = "") : Wire {
+        assert(!isProver)
+        val wi = WireInfo()
+        wi.type = WireType.WIRE_DUMMY_IN
+        val w = r1cs.mkWire(wi, name)
+        return w
+    }
+
     fun mkInternal(lhs: LinTerm, rhs: LinTerm): Wire {
         if (isProver) {
-            val wi = WireInfo()
-            wi.type = WireType.WIRE_IN
-            val v = evaluate(lhs) * evaluate(rhs)
-            wi.input_val = v
-            val w = r1cs.mkWire(wi, "Internal($v)")
+            val w = mkInternalProver(evaluate(lhs) * evaluate(rhs), "Internal")
             addConstraint(ConstraintTuple(lhs, rhs, LinTerm.fromWire(w)))
-            setWireVal(w, v)
             return w
         } else {
-            val wi = WireInfo()
-            wi.type = WireType.WIRE_DUMMY_IN
-            val w = r1cs.mkWire(wi, "Internal")
+            val w = mkInternalVerifier("Internal")
             addConstraint(ConstraintTuple(lhs, rhs, LinTerm.fromWire(w)))
             return w
         }
     }
 
     private fun genBooleanProver(b: Byte): Wire {
-        assert(isProver)
-        val wi = WireInfo()
-        wi.type = WireType.WIRE_IN
-        wi.input_val = b.toLong()
-        val w = r1cs.mkWire(wi, "InternalBool($b)")
+        val w = mkInternalProver(b.toLong(), "InternalBool($b)")
         assertBoolean(w)
-        setWireVal(w, b.toLong())
         return w
     }
 
-    private fun genBooleanVerifer(): Wire {
-        assert(!isProver)
-        val wi = WireInfo()
-        wi.type = WireType.WIRE_DUMMY_IN
-        val w = r1cs.mkWire(wi, "InternalBool")
-        assertBoolean(w)
-        return w
-    }
+    private fun genBooleanVerifer(): Wire =
+        mkInternalVerifier("InternalBool")
 
     private fun getBit(l: Long, pos: Int): Byte {
         return (l.shr(pos)).and(1).toByte()
     }
 
-    val powersOf2: List<Long> =
+    val powersOf232: List<Long> =
         (0..32).map {
             (2).toDouble().pow(it).toLong()
         }
 
     // TODO support two's complement
-    fun mkUnpack32(w: Wire): List<Wire> {
+    fun mkUnpack(w: Wire): List<Wire> {
         if (isProver) {
             val v = getWireVal(w)
             assert(v >= 0)
             val ws = (0..32).map { genBooleanProver(getBit(v, it)) }
-            val tms = ws.zip(powersOf2).map {
+            val tms = ws.zip(powersOf232).map {
                 it.second to it.first
             }
             logger.info { " Unpacking wire $w = $v with values ${ws.map { getWireVal(it) }}" }
@@ -301,7 +302,7 @@ class R1CSInstance(val isProver: Boolean) {
             return ws
         } else {
             val ws = (0..32).map { genBooleanVerifer() }
-            val tms = ws.zip(powersOf2).map {
+            val tms = ws.zip(powersOf232).map {
                 it.second to it.first
             }
             addConstraint(
@@ -312,42 +313,6 @@ class R1CSInstance(val isProver: Boolean) {
                 )
             )
             return ws
-        }
-    }
-
-    fun mkPack32(ws: List<Wire>): Wire {
-        if (isProver) {
-            val v = ws.zip(powersOf2).map { it.second * getWireVal(it.first) }.fold(0L) { x, acc -> x + acc }
-            val wi = WireInfo()
-            wi.type = WireType.WIRE_IN
-            wi.input_val = v
-            val tms = ws.zip(powersOf2).map {
-                it.second to it.first
-            }
-            val w = r1cs.mkWire(wi, "pack32")
-            addConstraint(
-                ConstraintTuple(
-                    LinTerm.fromConst(1),
-                    LinTerm(0, tms),
-                    LinTerm.fromWire(w)
-                )
-            )
-            return w
-        } else {
-            val wi = WireInfo()
-            wi.type = WireType.WIRE_DUMMY_IN
-            val tms = ws.zip(powersOf2).map {
-                it.second to it.first
-            }
-            val w = r1cs.mkWire(wi, "pack32")
-            addConstraint(
-                ConstraintTuple(
-                    LinTerm.fromConst(1),
-                    LinTerm(0, tms),
-                    LinTerm.fromWire(w)
-                )
-            )
-            return w
         }
     }
 

@@ -7,7 +7,10 @@ import edu.cornell.cs.apl.viaduct.syntax.Operator
 import edu.cornell.cs.apl.viaduct.syntax.operators.Addition
 import edu.cornell.cs.apl.viaduct.syntax.operators.And
 import edu.cornell.cs.apl.viaduct.syntax.operators.EqualTo
+import edu.cornell.cs.apl.viaduct.syntax.operators.LessThan
+import edu.cornell.cs.apl.viaduct.syntax.operators.LessThanOrEqualTo
 import edu.cornell.cs.apl.viaduct.syntax.operators.Multiplication
+import edu.cornell.cs.apl.viaduct.syntax.operators.Mux
 import edu.cornell.cs.apl.viaduct.syntax.operators.Negation
 import edu.cornell.cs.apl.viaduct.syntax.operators.Not
 import edu.cornell.cs.apl.viaduct.syntax.operators.Or
@@ -28,8 +31,6 @@ fun WireTerm.eval(): Int =
         is WireOp ->
             when (this.op) {
                 is Addition -> inputs[0].eval() + inputs[1].eval()
-                is Subtraction -> inputs[0].eval() - inputs[1].eval()
-                is Negation -> 0 - inputs[0].eval()
                 is Multiplication -> inputs[0].eval() * inputs[1].eval()
                 is And -> inputs[0].eval() * inputs[1].eval()
                 is Not -> 1 - inputs[0].eval()
@@ -39,6 +40,9 @@ fun WireTerm.eval(): Int =
                 } else {
                     0
                 }
+                is Mux -> if (inputs[0].eval() == 1) (inputs[1].eval()) else (inputs[2].eval())
+                is LessThan -> if (inputs[0].eval() < inputs[1].eval()) (1) else (0)
+                is LessThanOrEqualTo -> if (inputs[0].eval() <= inputs[1].eval()) (1) else (0)
                 else -> throw Exception("unsupported op: $op")
             }
         is WireIn -> this.v

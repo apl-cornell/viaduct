@@ -23,8 +23,8 @@ import edu.cornell.cs.apl.viaduct.syntax.operators.Multiplication
 import edu.cornell.cs.apl.viaduct.syntax.operators.Mux
 import edu.cornell.cs.apl.viaduct.syntax.operators.Not
 import edu.cornell.cs.apl.viaduct.syntax.operators.Or
-import mu.KotlinLogging
 import kotlin.math.pow
+import mu.KotlinLogging
 
 // Needs to be in sync with getOutputWire below
 fun Operator.supportedOp(): Boolean =
@@ -232,8 +232,7 @@ class R1CSInstance(val isProver: Boolean) {
         return res
     }
 
-
-    fun mkInternalProver(v : Long, name : String = "") : Wire {
+    fun mkInternalProver(v: Long, name: String = ""): Wire {
         assert(isProver)
         val wi = WireInfo()
         wi.type = WireType.WIRE_IN
@@ -243,7 +242,7 @@ class R1CSInstance(val isProver: Boolean) {
         return w
     }
 
-    fun mkInternalVerifier(name : String = "") : Wire {
+    fun mkInternalVerifier(name: String = ""): Wire {
         assert(!isProver)
         val wi = WireInfo()
         wi.type = WireType.WIRE_DUMMY_IN

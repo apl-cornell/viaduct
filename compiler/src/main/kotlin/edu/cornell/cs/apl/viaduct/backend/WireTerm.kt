@@ -11,10 +11,8 @@ import edu.cornell.cs.apl.viaduct.syntax.operators.LessThan
 import edu.cornell.cs.apl.viaduct.syntax.operators.LessThanOrEqualTo
 import edu.cornell.cs.apl.viaduct.syntax.operators.Multiplication
 import edu.cornell.cs.apl.viaduct.syntax.operators.Mux
-import edu.cornell.cs.apl.viaduct.syntax.operators.Negation
 import edu.cornell.cs.apl.viaduct.syntax.operators.Not
 import edu.cornell.cs.apl.viaduct.syntax.operators.Or
-import edu.cornell.cs.apl.viaduct.syntax.operators.Subtraction
 
 sealed class WireTerm
 data class WireOp(val op: Operator, val inputs: List<WireTerm>) : WireTerm()

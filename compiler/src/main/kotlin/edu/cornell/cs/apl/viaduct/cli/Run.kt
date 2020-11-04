@@ -33,9 +33,9 @@ import edu.cornell.cs.apl.viaduct.protocols.ZKP
 import edu.cornell.cs.apl.viaduct.syntax.Host
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
 import edu.cornell.cs.apl.viaduct.syntax.ProtocolName
-import org.apache.logging.log4j.core.config.Configurator
 import java.io.File
 import kotlin.system.exitProcess
+import org.apache.logging.log4j.core.config.Configurator
 
 class Run : CliktCommand(help = "Run compiled protocol for a single host") {
     private val hostName by

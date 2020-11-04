@@ -216,7 +216,7 @@ class ViaductRuntime(
     private val protocolAnalysis: ProtocolAnalysis,
     private val hostConnectionInfo: Map<Host, HostAddress>,
     private val backends: List<ProtocolBackend>,
-    private val strategy : Strategy
+    private val strategy: Strategy
 ) {
     private val syncProtocol = Synchronization(program.hostDeclarations.map { it.name.value }.toSet())
     private val processInfoMap: Map<Process, ProcessInfo>

@@ -16,7 +16,7 @@ class ViaductBackend(
         const val DEFAULT_ADDRESS = "127.0.0.1"
     }
 
-    fun run(program: ProgramNode, host: Host, strategy : Strategy) {
+    fun run(program: ProgramNode, host: Host, strategy: Strategy) {
         val isHostValid: Boolean =
             program.declarations
                 .filterIsInstance<HostDeclarationNode>()

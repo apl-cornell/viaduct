@@ -13,20 +13,22 @@ sealed class ZKPObject {
         val gates: ArrayList<WireTerm> = ArrayList(size)
 
         init {
+
+            val v: IntegerValue =
+                when (defaultValue) {
+                    is IntegerValue -> defaultValue
+                    is BooleanValue -> IntegerValue(
+                        if (defaultValue.value) {
+                            1
+                        } else {
+                            0
+                        }
+                    )
+                    else -> throw Exception("Bad default value")
+                }
+
             for (i: Int in 0 until size) {
-                val v: IntegerValue =
-                    when (defaultValue) {
-                        is IntegerValue -> defaultValue
-                        is BooleanValue -> IntegerValue(
-                            if (defaultValue.value) {
-                                1
-                            } else {
-                                0
-                            }
-                        )
-                        else -> throw Exception("Bad default value")
-                    }
-                gates[i] = wireGenerator.mkConst(v.value)
+                gates.add(wireGenerator.mkConst(v.value))
             }
         }
     }

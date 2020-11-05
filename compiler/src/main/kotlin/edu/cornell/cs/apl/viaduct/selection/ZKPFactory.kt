@@ -12,7 +12,6 @@ import edu.cornell.cs.apl.viaduct.syntax.Protocol
 import edu.cornell.cs.apl.viaduct.syntax.ProtocolName
 import edu.cornell.cs.apl.viaduct.syntax.SpecializedProtocol
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.DeclarationNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.DowngradeNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ExpressionNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.IfNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.LetNode
@@ -23,7 +22,6 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.OperatorApplicationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ParameterNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ReadNode
-import edu.cornell.cs.apl.viaduct.syntax.types.BooleanType
 import edu.cornell.cs.apl.viaduct.util.subsequences
 
 class ZKPFactory(val program: ProgramNode) : ProtocolFactory {
@@ -48,19 +46,6 @@ class ZKPFactory(val program: ProgramNode) : ProtocolFactory {
 
     override fun protocols(): List<SpecializedProtocol> = protocols(program)
 
-    private fun LetNode.onlyDeclassifyBoolean(): Boolean {
-        return nameAnalysis.readers(this).all {
-            when (it) {
-                is LetNode ->
-                    when (it.value) {
-                        is DowngradeNode -> typeAnalysis.type(this) is BooleanType
-                        else -> true
-                    }
-                else -> true
-            }
-        }
-    }
-
     /** If the value is an op, ensure it's compatible with r1cs generation **/
     private fun ExpressionNode.compatibleOp(): Boolean {
         return if (this is OperatorApplicationNode) {
@@ -72,7 +57,7 @@ class ZKPFactory(val program: ProgramNode) : ProtocolFactory {
 
     private fun Node.isApplicable(): Boolean =
         when (this) {
-            is LetNode -> this.onlyDeclassifyBoolean() && this.value.compatibleOp()
+            is LetNode -> this.value.compatibleOp()
             is DeclarationNode -> true
             is ObjectDeclarationArgumentNode -> true
             is ParameterNode -> true

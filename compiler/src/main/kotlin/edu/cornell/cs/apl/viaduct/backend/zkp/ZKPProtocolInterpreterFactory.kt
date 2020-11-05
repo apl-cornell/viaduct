@@ -20,15 +20,14 @@ object ZKPProtocolInterpreterFactory : ProtocolBackend {
         protocolAnalysis: ProtocolAnalysis,
         runtime: ViaductRuntime,
         connectionMap: Map<Host, HostAddress>
-    ): Iterable<ProtocolInterpreter> =
-        protocols
-            .filterIsInstance<ZKP>()
-            .map { protocol ->
-                val processRuntime = ViaductProcessRuntime(runtime, ProtocolProjection(protocol, host))
-                if (host == protocol.prover) {
-                    ZKPProverInterpreter(program, protocolAnalysis, processRuntime)
-                } else {
-                    ZKPVerifierInterpreter(program, protocolAnalysis, processRuntime)
-                }
-            }
+    ): Iterable<ProtocolInterpreter> {
+        val zkpProtocols = protocols.filterIsInstance<ZKP>()
+        return zkpProtocols.map {
+            val processRuntime = ViaductProcessRuntime(runtime, ProtocolProjection(it, host))
+            if (host == it.prover)
+                (ZKPProverInterpreter(program, protocolAnalysis, processRuntime))
+            else
+                (ZKPVerifierInterpreter(program, protocolAnalysis, processRuntime))
+        }
+    }
 }

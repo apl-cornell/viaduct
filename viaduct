@@ -7,4 +7,5 @@ DIR=$(cd "$(dirname "$0")" && pwd -P)
 
 PROJECT=compiler
 
-(cd "$DIR" && ./gradlew :$PROJECT:installDist > /dev/null) && "$DIR/$PROJECT/build/install/$PROJECT/bin/$PROJECT" "$@" <&0
+(cd "$DIR" && ./gradlew :$PROJECT:installDist > /dev/null) < /dev/null
+exec "$DIR/$PROJECT/build/install/$PROJECT/bin/$PROJECT" "$@"

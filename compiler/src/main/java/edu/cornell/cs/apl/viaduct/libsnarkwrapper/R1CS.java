@@ -54,6 +54,26 @@ public class R1CS {
     return (cPtr == 0) ? null : new ConstraintVector(cPtr, false);
   }
 
+  public void setWire_annotations(SWIGTYPE_p_std__mapT_size_t_std__string_t value) {
+    libsnarkwrapperJNI.R1CS_wire_annotations_set(
+        swigCPtr, this, SWIGTYPE_p_std__mapT_size_t_std__string_t.getCPtr(value));
+  }
+
+  public SWIGTYPE_p_std__mapT_size_t_std__string_t getWire_annotations() {
+    long cPtr = libsnarkwrapperJNI.R1CS_wire_annotations_get(swigCPtr, this);
+    return (cPtr == 0) ? null : new SWIGTYPE_p_std__mapT_size_t_std__string_t(cPtr, false);
+  }
+
+  public void setConstraint_annotations(SWIGTYPE_p_std__vectorT_std__string_t value) {
+    libsnarkwrapperJNI.R1CS_constraint_annotations_set(
+        swigCPtr, this, SWIGTYPE_p_std__vectorT_std__string_t.getCPtr(value));
+  }
+
+  public SWIGTYPE_p_std__vectorT_std__string_t getConstraint_annotations() {
+    long cPtr = libsnarkwrapperJNI.R1CS_constraint_annotations_get(swigCPtr, this);
+    return (cPtr == 0) ? null : new SWIGTYPE_p_std__vectorT_std__string_t(cPtr, false);
+  }
+
   public void setPrimary_input(
       SWIGTYPE_p_std__vectorT_libff__FrT_libsnark__default_r1cs_ppzksnark_pp_t_t value) {
     libsnarkwrapperJNI.R1CS_primary_input_set(
@@ -112,8 +132,8 @@ public class R1CS {
     return libsnarkwrapperJNI.R1CS_initialized_get(swigCPtr, this);
   }
 
-  public int mkWire(WireInfo info) {
-    return libsnarkwrapperJNI.R1CS_mkWire(swigCPtr, this, WireInfo.getCPtr(info), info);
+  public int mkWire(WireInfo info, String annotation) {
+    return libsnarkwrapperJNI.R1CS_mkWire(swigCPtr, this, WireInfo.getCPtr(info), info, annotation);
   }
 
   public void addConstraint(Constraint c) {

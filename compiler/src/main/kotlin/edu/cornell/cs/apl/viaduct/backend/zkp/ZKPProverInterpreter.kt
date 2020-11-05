@@ -378,6 +378,10 @@ class ZKPProverInterpreter(
         }
     }
 
+    override suspend fun runReceive(read: ReadNode) {
+        TODO("Not yet implemented")
+    }
+
     override suspend fun popContext() {
         tempStack.pop()
         wireStack.pop()

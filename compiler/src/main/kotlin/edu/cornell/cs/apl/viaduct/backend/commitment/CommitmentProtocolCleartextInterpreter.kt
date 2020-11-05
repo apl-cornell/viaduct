@@ -113,7 +113,6 @@ class CommitmentProtocolCleartextInterpreter(
     override fun getNullObject(): HashedObject = HashedNullObject
 
     private suspend fun sendCommitment(hashInfo: HashInfo) {
-
         val commitment = ByteVecValue(hashInfo.hash)
         for (commitmentReceiver: Host in hashHosts) {
             runtime.send(
@@ -128,62 +127,54 @@ class CommitmentProtocolCleartextInterpreter(
         }
     }
 
-    private suspend fun runRead(read: ReadNode): Hashed<Value> {
-        val storeValue = tempStore[read.temporary.value]
-        return if (storeValue == null) {
-            val sendProtocol = protocolAnalysis.primaryProtocol(read)
-            if (sendProtocol != runtime.projection.protocol) {
-                val events =
-                    protocolAnalysis.relevantCommunicationEvents(read)
+    private fun runRead(read: ReadNode): Hashed<Value> =
+        tempStore[read.temporary.value]
+            ?: throw ViaductInterpreterError(
+                "${runtime.projection.protocol.asDocument.print()}:" +
+                    " could not find local temporary ${read.temporary.value}"
+            )
 
-                // receive cleartext inputs
-                val cleartextInputEvents: Set<CommunicationEvent> =
-                    events.getProjectionReceives(runtime.projection, Commitment.INPUT)
+    override suspend fun runReceive(read: ReadNode) {
+        val sendProtocol = protocolAnalysis.primaryProtocol(read)
+        if (sendProtocol != runtime.projection.protocol) {
+            val events =
+                protocolAnalysis.relevantCommunicationEvents(read)
 
-                var cleartextValue: Value? = null
-                for (event in cleartextInputEvents) {
-                    val recvValue: Value = runtime.receive(event)
+            // receive cleartext inputs
+            val cleartextInputEvents: Set<CommunicationEvent> =
+                events.getProjectionReceives(runtime.projection, Commitment.INPUT)
 
-                    when {
-                        cleartextValue == null -> {
-                            cleartextValue = recvValue
-                        }
+            var cleartextValue: Value? = null
+            for (event in cleartextInputEvents) {
+                val recvValue: Value = runtime.receive(event)
 
-                        cleartextValue != recvValue -> {
-                            throw ViaductInterpreterError("Commitment: received different cleartext values")
-                        }
+                when {
+                    cleartextValue == null -> {
+                        cleartextValue = recvValue
+                    }
+
+                    cleartextValue != recvValue -> {
+                        throw ViaductInterpreterError("Commitment: received different cleartext values")
                     }
                 }
-
-                assert(cleartextValue != null)
-
-                // send commitment to hash hosts
-                val hashInfo: HashInfo = Hashing.generateHash(cleartextValue!!)
-                val commitment = ByteVecValue(hashInfo.hash)
-
-                val createCommitmentEvents: Set<CommunicationEvent> =
-                    events.getProjectionSends(runtime.projection, Commitment.CREATE_COMMITMENT_OUTPUT)
-
-                for (event in events) {
-                    logger.info { "$event" }
-                }
-
-                for (event in createCommitmentEvents) {
-                    runtime.send(commitment, event)
-                    logger.info { "sent commitment to host ${event.recv.host.name}" }
-                }
-
-                val hashedValue = Hashed(cleartextValue, hashInfo)
-                tempStore.put(read.temporary.value, hashedValue)
-                hashedValue
-            } else { // temporary should be stored locally, but isn't
-                throw ViaductInterpreterError(
-                    "${runtime.projection.protocol.asDocument.print()}:" +
-                        " could not find local temporary ${read.temporary.value}"
-                )
             }
-        } else {
-            storeValue
+
+            assert(cleartextValue != null)
+
+            // send commitment to hash hosts
+            val hashInfo: HashInfo = Hashing.generateHash(cleartextValue!!)
+            val commitment = ByteVecValue(hashInfo.hash)
+
+            val createCommitmentEvents: Set<CommunicationEvent> =
+                events.getProjectionSends(runtime.projection, Commitment.CREATE_COMMITMENT_OUTPUT)
+
+            for (event in createCommitmentEvents) {
+                runtime.send(commitment, event)
+                logger.info { "sent commitment to host ${event.recv.host.name}" }
+            }
+
+            val hashedValue = Hashed(cleartextValue, hashInfo)
+            tempStore.put(read.temporary.value, hashedValue)
         }
     }
 

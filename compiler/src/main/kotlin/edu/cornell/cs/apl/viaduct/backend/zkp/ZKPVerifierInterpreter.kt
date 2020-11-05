@@ -326,4 +326,8 @@ class ZKPVerifierInterpreter(
     override suspend fun runGuard(expr: AtomicExpressionNode): Value {
         throw ViaductInterpreterError("ZKP: Verifier cannot compute guard")
     }
+
+    override suspend fun runReceive(read: ReadNode) {
+        TODO("Not yet implemented")
+    }
 }

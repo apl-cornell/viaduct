@@ -215,102 +215,21 @@ class ABYProtocolInterpreter(
         }
     }
 
-    private suspend fun runPlaintextRead(read: ReadNode): Value {
-        val storeValue = ctTempStore[read.temporary.value]
-        return if (storeValue == null) {
-            val sendProtocol = protocolAnalysis.primaryProtocol(read)
-
-            if (!availableProtocols.contains(sendProtocol)) {
-                val events: ProtocolCommunication = protocolAnalysis.relevantCommunicationEvents(read)
-
-                var cleartextInput: Value? = null
-                for (event in events) {
-                    when {
-                        // cleartext input
-                        event.recv.id == ABY.CLEARTEXT_INPUT && event.recv.host == host -> {
-                            val receivedValue: Value =
-                                runtime.receive(event)
-
-                            if (cleartextInput == null) {
-                                cleartextInput = receivedValue
-                            } else if (cleartextInput != receivedValue) {
-                                throw ViaductInterpreterError("received different values")
-                            }
-                        }
-
-                        // secret input; throw an error
-                        event.recv.id == ABY.SECRET_INPUT ->
-                            throw ViaductInterpreterError("ABY: expected cleartext read, got secret read instead", read)
-                    }
-                }
-                assert(cleartextInput != null)
-                ctTempStore = ctTempStore.put(read.temporary.value, cleartextInput!!)
-                cleartextInput
-            } else { // temporary should be stored locally, but isn't
-                throw UndefinedNameError(read.temporary)
-            }
-        } else {
-            storeValue
-        }
-    }
-
-    private suspend fun runPlaintextExpr(expr: AtomicExpressionNode): Value {
+    private fun runPlaintextExpr(expr: AtomicExpressionNode): Value {
         return when (expr) {
             is LiteralNode -> expr.value
-            is ReadNode -> runPlaintextRead(expr)
+            is ReadNode ->
+                ctTempStore[expr.temporary.value] ?: throw UndefinedNameError(expr.temporary)
         }
     }
 
-    private suspend fun runSecretRead(circuitType: ABYCircuitType, read: ReadNode): ABYCircuitGate {
-        val storeValue = ssTempStore[read.temporary.value]
-        return if (storeValue == null) {
-            val sendProtocol = protocolAnalysis.primaryProtocol(read)
-
-            if (!availableProtocols.contains(sendProtocol)) {
-                val events: ProtocolCommunication = protocolAnalysis.relevantCommunicationEvents(read)
-
-                var secretInput: ABYCircuitGate? = null
-                var previousReceivedValue: Value? = null
-                for (event in events) {
-                    when {
-                        // secret input for this host; create input gate
-                        event.recv.id == ABY.SECRET_INPUT && event.recv.host == host -> {
-                            val receivedValue: Value = runtime.receive(event)
-
-                            if (previousReceivedValue == null) {
-                                secretInput = valueToCircuit(circuitType, receivedValue, isInput = true)
-                                previousReceivedValue = receivedValue
-                            } else if (previousReceivedValue != receivedValue) {
-                                throw ViaductInterpreterError("received different values")
-                            }
-                        }
-
-                        // other host has secret input; create dummy input gate
-                        event.recv.id == ABY.SECRET_INPUT && event.recv.host != host -> {
-                            secretInput = ABYDummyInGate(circuitType)
-                        }
-
-                        // cleartext input; throw an error
-                        event.recv.id == ABY.CLEARTEXT_INPUT ->
-                            throw ViaductInterpreterError("ABY: expected secret read, got cleartext read instead", read)
-                    }
-                }
-                assert(secretInput != null)
-                ssTempStore = ssTempStore.put(read.temporary.value, secretInput!!)
-                secretInput
-            } else { // temporary should be stored locally, but isn't
-                throw UndefinedNameError(read.temporary)
-            }
-        } else {
-            storeValue.addConversionGates(circuitType)
-        }
-    }
-
-    private suspend fun runSecretExpr(circuitType: ABYCircuitType, expr: PureExpressionNode): ABYCircuitGate {
+    private fun runSecretExpr(circuitType: ABYCircuitType, expr: PureExpressionNode): ABYCircuitGate {
         return when (expr) {
             is LiteralNode -> valueToCircuit(circuitType, expr.value)
 
-            is ReadNode -> runSecretRead(circuitType, expr)
+            is ReadNode ->
+                ssTempStore[expr.temporary.value]?.addConversionGates(circuitType)
+                    ?: throw UndefinedNameError(expr.temporary)
 
             is OperatorApplicationNode -> {
                 val circuitArguments: List<ABYCircuitGate> =
@@ -329,7 +248,7 @@ class ABYProtocolInterpreter(
     }
 
     /** Return either a cleartext or secret-shared value. Used by array indexing. */
-    private suspend fun runPlaintextOrSecretExpr(
+    private fun runPlaintextOrSecretExpr(
         circuitType: ABYCircuitType,
         expr: AtomicExpressionNode
     ): ABYValue {
@@ -342,10 +261,62 @@ class ABYProtocolInterpreter(
                         .all { event -> event.recv.id == ABY.CLEARTEXT_INPUT }
 
                 if (isCleartextRead) {
-                    ABYCleartextValue(runPlaintextRead(expr))
+                    ABYCleartextValue(runPlaintextExpr(expr))
                 } else {
-                    ABYSecretValue(runSecretRead(circuitType, expr))
+                    ABYSecretValue(runSecretExpr(circuitType, expr))
                 }
+            }
+        }
+    }
+
+    override suspend fun runReceive(protocol: Protocol, read: ReadNode) {
+        val sendProtocol = protocolAnalysis.primaryProtocol(read)
+        val circuitType = protocolCircuitType[protocol.protocolName]!!
+
+        if (!availableProtocols.contains(sendProtocol)) {
+            val events: ProtocolCommunication = protocolAnalysis.relevantCommunicationEvents(read)
+
+            var secretInput: ABYCircuitGate? = null
+            var cleartextValue: Value? = null
+            for (event in events) {
+                when {
+                    // secret input for this host; create input gate
+                    event.recv.id == ABY.SECRET_INPUT && event.recv.host == host -> {
+                        val receivedValue: Value = runtime.receive(event)
+
+                        if (cleartextValue == null) {
+                            secretInput = valueToCircuit(circuitType, receivedValue, isInput = true)
+                            cleartextValue = receivedValue
+                        } else if (cleartextValue != receivedValue) {
+                            throw ViaductInterpreterError("received different values")
+                        }
+                    }
+
+                    // other host has secret input; create dummy input gate
+                    event.recv.id == ABY.SECRET_INPUT && event.recv.host != host -> {
+                        secretInput = ABYDummyInGate(circuitType)
+                    }
+
+                    // cleartext input; create constant gate
+                    event.recv.id == ABY.CLEARTEXT_INPUT && event.recv.host == host -> {
+                        val receivedValue: Value = runtime.receive(event)
+
+                        if (cleartextValue == null) {
+                            secretInput = valueToCircuit(circuitType, receivedValue, isInput = false)
+                            cleartextValue = receivedValue
+                        } else if (cleartextValue != receivedValue) {
+                            throw ViaductInterpreterError("received different values")
+                        }
+                    }
+                }
+            }
+
+            assert(secretInput != null)
+            ssTempStore = ssTempStore.put(read.temporary.value, secretInput!!)
+
+            // cleartext value can be null in case of dummy inputs
+            if (cleartextValue != null) {
+                ctTempStore = ctTempStore.put(read.temporary.value, cleartextValue)
             }
         }
     }
@@ -515,13 +486,13 @@ class ABYProtocolInterpreter(
     }
 
     abstract class ABYClassObject {
-        abstract suspend fun query(
+        abstract fun query(
             circuitType: ABYCircuitType,
             query: QueryNameNode,
             arguments: List<AtomicExpressionNode>
         ): ABYCircuitGate
 
-        abstract suspend fun update(
+        abstract fun update(
             circuitType: ABYCircuitType,
             update: UpdateNameNode,
             arguments: List<AtomicExpressionNode>
@@ -529,7 +500,7 @@ class ABYProtocolInterpreter(
     }
 
     class ABYImmutableCellObject(private var gate: ABYCircuitGate) : ABYClassObject() {
-        override suspend fun query(
+        override fun query(
             circuitType: ABYCircuitType,
             query: QueryNameNode,
             arguments: List<AtomicExpressionNode>
@@ -543,7 +514,7 @@ class ABYProtocolInterpreter(
             }
         }
 
-        override suspend fun update(
+        override fun update(
             circuitType: ABYCircuitType,
             update: UpdateNameNode,
             arguments: List<AtomicExpressionNode>
@@ -553,7 +524,7 @@ class ABYProtocolInterpreter(
     }
 
     inner class ABYMutableCellObject(private var gate: ABYCircuitGate) : ABYClassObject() {
-        override suspend fun query(
+        override fun query(
             circuitType: ABYCircuitType,
             query: QueryNameNode,
             arguments: List<AtomicExpressionNode>
@@ -567,7 +538,7 @@ class ABYProtocolInterpreter(
             }
         }
 
-        override suspend fun update(
+        override fun update(
             circuitType: ABYCircuitType,
             update: UpdateNameNode,
             arguments: List<AtomicExpressionNode>
@@ -597,16 +568,19 @@ class ABYProtocolInterpreter(
             }
         }
 
-        override suspend fun query(
+        override fun query(
             circuitType: ABYCircuitType,
             query: QueryNameNode,
             arguments: List<AtomicExpressionNode>
         ): ABYCircuitGate {
             return when (query.value) {
                 is Get -> {
-                    when (val index: ABYValue = runPlaintextOrSecretExpr(circuitType, arguments[0])) {
+                    logger.info { "array query index expr is ${arguments[0].asDocument.print()}" }
+                    when (val indexValue: ABYValue = runPlaintextOrSecretExpr(circuitType, arguments[0])) {
                         is ABYCleartextValue -> {
-                            gates[((index.value) as IntegerValue).value]
+                            val index = ((indexValue.value) as IntegerValue).value
+                            logger.info { "array query index expr is $index" }
+                            gates[index]
                         }
 
                         // secret indexing requires muxing the entire array
@@ -617,7 +591,7 @@ class ABYProtocolInterpreter(
                                 val guard: ABYCircuitGate =
                                     operatorToCircuit(
                                         EqualTo,
-                                        listOf(index.value, ABYConstantGate(i, circuitType)),
+                                        listOf(indexValue.value, ABYConstantGate(i, circuitType)),
                                         circuitType
                                     )
 
@@ -640,14 +614,16 @@ class ABYProtocolInterpreter(
             }
         }
 
-        override suspend fun update(
+        override fun update(
             circuitType: ABYCircuitType,
             update: UpdateNameNode,
             arguments: List<AtomicExpressionNode>
         ) {
+            logger.info { "array update index expr is ${arguments[0].asDocument.print()}" }
             when (val index: ABYValue = runPlaintextOrSecretExpr(circuitType, arguments[0])) {
                 is ABYCleartextValue -> {
                     val intIndex = (index.value as IntegerValue).value
+                    logger.info { "array update index is $intIndex" }
                     gates[intIndex] = when (update.value) {
                         is edu.cornell.cs.apl.viaduct.syntax.datatypes.Set -> {
                             runSecretExpr(circuitType, arguments[1])
@@ -709,7 +685,7 @@ class ABYProtocolInterpreter(
     }
 
     object ABYNullObject : ABYClassObject() {
-        override suspend fun query(
+        override fun query(
             circuitType: ABYCircuitType,
             query: QueryNameNode,
             arguments: List<AtomicExpressionNode>
@@ -717,7 +693,7 @@ class ABYProtocolInterpreter(
             throw ViaductInterpreterError("ABY: unknown query ${query.value} for null object", query)
         }
 
-        override suspend fun update(
+        override fun update(
             circuitType: ABYCircuitType,
             update: UpdateNameNode,
             arguments: List<AtomicExpressionNode>

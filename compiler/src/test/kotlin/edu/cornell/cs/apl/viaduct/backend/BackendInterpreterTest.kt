@@ -22,6 +22,7 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.BlockNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.FunctionArgumentNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ParameterNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProcessDeclarationNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.ReadNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.SimpleStatementNode
 import edu.cornell.cs.apl.viaduct.syntax.surface.ProgramNode
 import edu.cornell.cs.apl.viaduct.syntax.values.BooleanValue
@@ -43,6 +44,8 @@ private class FakeProtocolInterpreter(
     }
 
     override suspend fun runSimpleStatement(protocol: Protocol, stmt: SimpleStatementNode) {}
+
+    override suspend fun runReceive(protocol: Protocol, read: ReadNode) {}
 
     override suspend fun pushContext() {}
 

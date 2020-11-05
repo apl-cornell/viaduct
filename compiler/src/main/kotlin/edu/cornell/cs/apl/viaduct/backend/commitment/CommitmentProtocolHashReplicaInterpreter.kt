@@ -141,39 +141,34 @@ class CommitmentProtocolHashReplicaInterpreter(
         return nullObject
     }
 
-    suspend fun runRead(read: ReadNode): List<Byte> {
-        val storeValue = hashTempStore[read.temporary.value]
+    fun runRead(read: ReadNode): List<Byte> =
+        hashTempStore[read.temporary.value]
+            ?: throw ViaductInterpreterError(
+                "${runtime.projection.protocol.asDocument.print()}:" +
+                    " could not find local temporary ${read.temporary.value}"
+            )
 
-        return if (storeValue == null) {
-            val sendProtocol = protocolAnalysis.primaryProtocol(read)
-            if (sendProtocol != runtime.projection.protocol) { // receive commitment
-                val event =
-                    protocolAnalysis
-                        .relevantCommunicationEvents(read)
-                        .getProjectionReceives(runtime.projection, Commitment.CREATE_COMMITMENT_INPUT)
-                        .first()
+    override suspend fun runReceive(read: ReadNode) {
+        val sendProtocol = protocolAnalysis.primaryProtocol(read)
+        if (sendProtocol != runtime.projection.protocol) { // receive commitment
+            val event =
+                protocolAnalysis
+                    .relevantCommunicationEvents(read)
+                    .getProjectionReceives(runtime.projection, Commitment.CREATE_COMMITMENT_INPUT)
+                    .first()
 
-                logger.info { "expecting to receive " }
+            logger.info { "expecting to receive " }
 
-                val commitment: Value = runtime.receive(event)
-                val committedValue = (commitment as ByteVecValue).value
+            val commitment: Value = runtime.receive(event)
+            val committedValue = (commitment as ByteVecValue).value
 
-                logger.info { "received commitment from host ${event.send.host.name}" }
+            logger.info { "received commitment from host ${event.send.host.name}" }
 
-                hashTempStore = hashTempStore.put(read.temporary.value, committedValue)
-                committedValue
-            } else { // temporary should be stored locally, but isn't
-                throw ViaductInterpreterError(
-                    "${runtime.projection.protocol.asDocument.print()}:" +
-                        " could not find local temporary ${read.temporary.value}"
-                )
-            }
-        } else {
-            storeValue
+            hashTempStore = hashTempStore.put(read.temporary.value, committedValue)
         }
     }
 
-    private suspend fun runExpr(expr: ExpressionNode): List<Byte> =
+    private fun runExpr(expr: ExpressionNode): List<Byte> =
         when (expr) {
             is LiteralNode -> TODO()
 

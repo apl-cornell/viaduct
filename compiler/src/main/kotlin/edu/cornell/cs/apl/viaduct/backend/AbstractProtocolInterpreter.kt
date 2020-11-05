@@ -20,6 +20,7 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutParameterInitialization
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutputNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ParameterNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.ReadNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.SendNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.SimpleStatementNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.UpdateNode
@@ -275,4 +276,9 @@ abstract class SingleProtocolInterpreter<Obj>(
 
     override suspend fun runOutput(protocol: Protocol, stmt: OutputNode) =
         runOutput(stmt)
+
+    abstract suspend fun runReceive(read: ReadNode)
+
+    override suspend fun runReceive(protocol: Protocol, read: ReadNode) =
+        runReceive(read)
 }

@@ -7,6 +7,7 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.AtomicExpressionNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.FunctionArgumentNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ParameterNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.ReadNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.SimpleStatementNode
 import edu.cornell.cs.apl.viaduct.syntax.values.Value
 import kotlinx.collections.immutable.PersistentMap
@@ -17,6 +18,8 @@ interface ProtocolInterpreter {
     suspend fun runGuard(protocol: Protocol, expr: AtomicExpressionNode): Value
 
     suspend fun runSimpleStatement(protocol: Protocol, stmt: SimpleStatementNode)
+
+    suspend fun runReceive(protocol: Protocol, read: ReadNode)
 
     suspend fun pushContext()
 

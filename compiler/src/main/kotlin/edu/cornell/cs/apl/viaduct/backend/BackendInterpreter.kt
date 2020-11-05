@@ -15,6 +15,7 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.FunctionArgumentNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.FunctionCallNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.IfNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.InfiniteLoopNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.LetNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.LiteralNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ParameterNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
@@ -112,6 +113,30 @@ class BackendInterpreter(
 
     suspend fun run(function: FunctionName, stmt: StatementNode) {
         when (stmt) {
+            is LetNode -> {
+                if (protocolAnalysis.participatingHosts(stmt).contains(this.host)) {
+                    val protocol = protocolAnalysis.primaryProtocol(stmt)
+                    protocolInterpreterMap[protocol]?.runSimpleStatement(protocol, stmt)
+                        ?: throw ViaductInterpreterError("no backend for protocol ${protocol.asDocument.print()}")
+                }
+
+                // there should only be a single reader, if any
+                val readers = nameAnalysis.readers(stmt).filterIsInstance<SimpleStatementNode>()
+                if (readers.isNotEmpty()) {
+                    val reader = readers.first()
+
+                    // there should only be a single read
+                    val read =
+                        nameAnalysis.reads(reader).first { read -> read.temporary.value == stmt.temporary.value }
+
+                    val readerProtocol = protocolAnalysis.primaryProtocol(reader)
+                    protocolInterpreterMap[readerProtocol]?.runReceive(readerProtocol, read)
+                        ?: throw ViaductInterpreterError("no backend for protocol ${readerProtocol.asDocument.print()}")
+                }
+
+                synchronize(protocolAnalysis.participatingHosts(stmt), protocolAnalysis.hostsToSync(stmt))
+            }
+
             is SimpleStatementNode -> {
                 if (protocolAnalysis.participatingHosts(stmt).contains(this.host)) {
                     val protocol = protocolAnalysis.primaryProtocol(stmt)

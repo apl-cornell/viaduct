@@ -111,83 +111,78 @@ class PlaintextProtocolInterpreter(
 
     override fun getNullObject(): PlaintextClassObject = NullObject
 
-    private suspend fun runRead(read: ReadNode): Value {
-        val storeValue = tempStore[read.temporary.value]
-        return if (storeValue == null) {
-            val sendProtocol = protocolAnalysis.primaryProtocol(read)
+    private fun runRead(read: ReadNode): Value =
+        tempStore[read.temporary.value]
+            ?: throw ViaductInterpreterError("Plaintext: could not find local temporary ${read.temporary.value}")
 
-            // must receive from read protocol
-            if (runtime.projection.protocol != sendProtocol) {
-                val events: ProtocolCommunication = protocolAnalysis.relevantCommunicationEvents(read)
+    override suspend fun runReceive(read: ReadNode) {
+        val sendProtocol = protocolAnalysis.primaryProtocol(read)
 
-                val cleartextInputs =
-                    events.getProjectionReceives(runtime.projection, Plaintext.INPUT)
+        // must receive from read protocol
+        if (runtime.projection.protocol != sendProtocol) {
+            val events: ProtocolCommunication = protocolAnalysis.relevantCommunicationEvents(read)
 
-                val cleartextCommitmentInputs =
-                    events.getProjectionReceives(runtime.projection, Plaintext.CLEARTEXT_COMMITMENT_INPUT)
+            val cleartextInputs =
+                events.getProjectionReceives(runtime.projection, Plaintext.INPUT)
 
-                val hashCommitmentInputs =
-                    events.getProjectionReceives(runtime.projection, Plaintext.HASH_COMMITMENT_INPUT)
+            val cleartextCommitmentInputs =
+                events.getProjectionReceives(runtime.projection, Plaintext.CLEARTEXT_COMMITMENT_INPUT)
 
-                return when {
-                    // cleartext input
-                    cleartextInputs.isNotEmpty() && cleartextCommitmentInputs.isEmpty() && hashCommitmentInputs.isEmpty() -> {
-                        var cleartextValue: Value? = null
-                        for (event in cleartextInputs) {
-                            val receivedValue: Value = runtime.receive(event)
+            val hashCommitmentInputs =
+                events.getProjectionReceives(runtime.projection, Plaintext.HASH_COMMITMENT_INPUT)
 
-                            if (cleartextValue == null) {
-                                cleartextValue = receivedValue
-                            } else if (cleartextValue != receivedValue) {
-                                throw ViaductInterpreterError("Plaintext: received different values")
-                            }
+            when {
+                // cleartext input
+                cleartextInputs.isNotEmpty() && cleartextCommitmentInputs.isEmpty() && hashCommitmentInputs.isEmpty() -> {
+                    var cleartextValue: Value? = null
+                    for (event in cleartextInputs) {
+                        val receivedValue: Value = runtime.receive(event)
+
+                        if (cleartextValue == null) {
+                            cleartextValue = receivedValue
+                        } else if (cleartextValue != receivedValue) {
+                            throw ViaductInterpreterError("Plaintext: received different values")
                         }
-
-                        assert(cleartextValue != null)
-                        tempStore = tempStore.put(read.temporary.value, cleartextValue!!)
-                        cleartextValue
                     }
 
-                    // commitment opening
-                    cleartextInputs.isEmpty() && cleartextCommitmentInputs.isNotEmpty() && hashCommitmentInputs.isNotEmpty() -> {
-                        assert(cleartextCommitmentInputs.size == 1)
-                        val cleartextSendEvent = cleartextCommitmentInputs.first()
-
-                        val cleartextProjection = cleartextSendEvent.send.asProjection()
-                        val nonce = runtime.receive(cleartextProjection) as ByteVecValue
-                        val msg = runtime.receive(cleartextProjection)
-
-                        logger.info {
-                            "received opened commitment value and nonce from ${cleartextProjection.asDocument.print()}"
-                        }
-
-                        for (hashCommitmentInput in hashCommitmentInputs) {
-                            val commitmentSender =
-                                ProtocolProjection(
-                                    hashCommitmentInput.send.protocol,
-                                    hashCommitmentInput.send.host
-                                )
-
-                            val commitment: ByteVecValue = runtime.receive(commitmentSender) as ByteVecValue
-
-                            assert(HashInfo(commitment.value, nonce.value).verify(msg.encode()))
-                            logger.info {
-                                "verified commitment from host ${commitmentSender.asDocument.print()}"
-                            }
-                        }
-
-                        tempStore = tempStore.put(read.temporary.value, msg)
-                        msg
-                    }
-
-                    else ->
-                        throw ViaductInterpreterError("Plaintext: received both commitment opening and cleartext value")
+                    assert(cleartextValue != null)
+                    tempStore = tempStore.put(read.temporary.value, cleartextValue!!)
                 }
-            } else { // temporary should be stored locally, but isn't
-                throw ViaductInterpreterError("Plaintext: could not find local temporary ${read.temporary.value}")
+
+                // commitment opening
+                cleartextInputs.isEmpty() && cleartextCommitmentInputs.isNotEmpty() && hashCommitmentInputs.isNotEmpty() -> {
+                    assert(cleartextCommitmentInputs.size == 1)
+                    val cleartextSendEvent = cleartextCommitmentInputs.first()
+
+                    val cleartextProjection = cleartextSendEvent.send.asProjection()
+                    val nonce = runtime.receive(cleartextProjection) as ByteVecValue
+                    val msg = runtime.receive(cleartextProjection)
+
+                    logger.info {
+                        "received opened commitment value and nonce from ${cleartextProjection.asDocument.print()}"
+                    }
+
+                    for (hashCommitmentInput in hashCommitmentInputs) {
+                        val commitmentSender =
+                            ProtocolProjection(
+                                hashCommitmentInput.send.protocol,
+                                hashCommitmentInput.send.host
+                            )
+
+                        val commitment: ByteVecValue = runtime.receive(commitmentSender) as ByteVecValue
+
+                        assert(HashInfo(commitment.value, nonce.value).verify(msg.encode()))
+                        logger.info {
+                            "verified commitment from host ${commitmentSender.asDocument.print()}"
+                        }
+                    }
+
+                    tempStore = tempStore.put(read.temporary.value, msg)
+                }
+
+                else ->
+                    throw ViaductInterpreterError("Plaintext: received both commitment opening and cleartext value")
             }
-        } else {
-            storeValue
         }
     }
 

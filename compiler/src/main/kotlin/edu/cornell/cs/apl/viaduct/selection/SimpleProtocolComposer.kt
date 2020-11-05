@@ -337,10 +337,6 @@ object SimpleProtocolComposer : ProtocolComposer {
                 }.toSet())
             }
 
-            src is ZKP && dst is ZKP -> {
-                ProtocolCommunication(setOf())
-            }
-
             src is Local && dst is ZKP -> { // We know src.host == dst.prover
                 ProtocolCommunication(setOf(CommunicationEvent(src.outputPort, dst.secretInputPort)))
             }

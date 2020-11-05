@@ -129,15 +129,18 @@ class BackendInterpreter(
                 }
 
                 if (protocolAnalysis.participatingHosts(stmt).contains(this.host)) {
+                    // execute statement, if host is participating
                     val protocolBackend = protocolInterpreterMap[protocol]
                         ?: throw ViaductInterpreterError("no backend for protocol ${protocol.asDocument.print()}")
                     protocolBackend.runSimpleStatement(protocol, stmt)
 
+                    // send data
                     if (readers.isNotEmpty()) {
                         protocolBackend.runSend(stmt, protocol, reader!!, readerProtocol!!, events!!)
                     }
                 }
 
+                // receive data
                 if (readers.isNotEmpty()) {
                     if (protocolAnalysis.participatingHosts(reader!!).contains(this.host)) {
                         protocolInterpreterMap[readerProtocol]

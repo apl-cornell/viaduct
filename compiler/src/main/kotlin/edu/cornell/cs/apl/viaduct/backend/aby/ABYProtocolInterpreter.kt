@@ -21,7 +21,6 @@ import edu.cornell.cs.apl.viaduct.protocols.ABY
 import edu.cornell.cs.apl.viaduct.protocols.ArithABY
 import edu.cornell.cs.apl.viaduct.protocols.BoolABY
 import edu.cornell.cs.apl.viaduct.protocols.YaoABY
-import edu.cornell.cs.apl.viaduct.selection.CommunicationEvent
 import edu.cornell.cs.apl.viaduct.selection.ProtocolCommunication
 import edu.cornell.cs.apl.viaduct.syntax.Host
 import edu.cornell.cs.apl.viaduct.syntax.ObjectVariable
@@ -269,58 +268,6 @@ class ABYProtocolInterpreter(
         }
     }
 
-    override suspend fun runReceive(protocol: Protocol, read: ReadNode) {
-        val sendProtocol = protocolAnalysis.primaryProtocol(read)
-        val circuitType = protocolCircuitType[protocol.protocolName]!!
-
-        if (!availableProtocols.contains(sendProtocol)) {
-            val events: ProtocolCommunication = protocolAnalysis.relevantCommunicationEvents(read)
-
-            var secretInput: ABYCircuitGate? = null
-            var cleartextValue: Value? = null
-            for (event in events) {
-                when {
-                    // secret input for this host; create input gate
-                    event.recv.id == ABY.SECRET_INPUT && event.recv.host == host -> {
-                        val receivedValue: Value = runtime.receive(event)
-
-                        if (cleartextValue == null) {
-                            secretInput = valueToCircuit(circuitType, receivedValue, isInput = true)
-                            cleartextValue = receivedValue
-                        } else if (cleartextValue != receivedValue) {
-                            throw ViaductInterpreterError("received different values")
-                        }
-                    }
-
-                    // other host has secret input; create dummy input gate
-                    event.recv.id == ABY.SECRET_INPUT && event.recv.host != host -> {
-                        secretInput = ABYDummyInGate(circuitType)
-                    }
-
-                    // cleartext input; create constant gate
-                    event.recv.id == ABY.CLEARTEXT_INPUT && event.recv.host == host -> {
-                        val receivedValue: Value = runtime.receive(event)
-
-                        if (cleartextValue == null) {
-                            secretInput = valueToCircuit(circuitType, receivedValue, isInput = false)
-                            cleartextValue = receivedValue
-                        } else if (cleartextValue != receivedValue) {
-                            throw ViaductInterpreterError("received different values")
-                        }
-                    }
-                }
-            }
-
-            assert(secretInput != null)
-            ssTempStore = ssTempStore.put(read.temporary.value, secretInput!!)
-
-            // cleartext value can be null in case of dummy inputs
-            if (cleartextValue != null) {
-                ctTempStore = ctTempStore.put(read.temporary.value, cleartextValue)
-            }
-        }
-    }
-
     private fun buildABYCircuit(outGate: ABYCircuitGate, outRole: Role): Share {
         val circuitBuilder =
             ABYCircuitBuilder(
@@ -437,41 +384,6 @@ class ABYProtocolInterpreter(
                 val circuitType = protocolCircuitType[protocol.protocolName]!!
                 val rhsCircuit = runSecretExpr(circuitType, rhs)
                 ssTempStore = ssTempStore.put(stmt.temporary.value, rhsCircuit)
-
-                // execute circuit and broadcast to other protocols
-                val readers: List<SimpleStatementNode> =
-                    protocolAnalysis
-                        .directRemoteReaders(stmt)
-                        .filter { reader ->
-                            !availableProtocols.contains(
-                                protocolAnalysis.primaryProtocol(reader)
-                            )
-                        }
-
-                if (readers.isNotEmpty()) {
-                    val events: Set<CommunicationEvent> =
-                        readers.fold(setOf()) { acc, reader ->
-                            acc.union(
-                                protocolAnalysis
-                                    .relevantCommunicationEvents(stmt, reader)
-                            )
-                        }
-
-                    val receivingHosts = events.map { event -> event.recv.host }.toSet()
-                    val outValue = executeABYCircuit(stmt, receivingHosts)
-
-                    if (outValue != null) {
-                        val hostEvents =
-                            events.filter { event ->
-                                availableProtocols.contains(event.send.protocol) &&
-                                    event.send.host == host
-                            }
-
-                        for (event in hostEvents) {
-                            runtime.send(outValue, event)
-                        }
-                    }
-                }
             }
         }
     }
@@ -483,6 +395,85 @@ class ABYProtocolInterpreter(
 
     override suspend fun runOutput(protocol: Protocol, stmt: OutputNode) {
         throw ViaductInterpreterError("cannot perform I/O in non-Local protocol")
+    }
+
+    override suspend fun runSend(
+        sender: LetNode,
+        sendProtocol: Protocol,
+        receiver: SimpleStatementNode,
+        recvProtocol: Protocol,
+        events: ProtocolCommunication
+    ) {
+        if (!availableProtocols.contains(recvProtocol)) {
+            val receivingHosts = events.map { event -> event.recv.host }.toSet()
+            val outValue = executeABYCircuit(sender, receivingHosts)
+
+            if (outValue != null) {
+                val hostEvents =
+                    events.filter { event ->
+                        availableProtocols.contains(event.send.protocol) &&
+                            event.send.host == host
+                    }
+
+                for (event in hostEvents) {
+                    runtime.send(outValue, event)
+                }
+            }
+        }
+    }
+
+    override suspend fun runReceive(
+        sender: LetNode,
+        sendProtocol: Protocol,
+        receiver: SimpleStatementNode,
+        recvProtocol: Protocol,
+        events: ProtocolCommunication
+    ) {
+        if (!availableProtocols.contains(sendProtocol)) {
+            val circuitType = protocolCircuitType[recvProtocol.protocolName]!!
+            var secretInput: ABYCircuitGate? = null
+            var cleartextValue: Value? = null
+            for (event in events) {
+                when {
+                    // secret input for this host; create input gate
+                    event.recv.id == ABY.SECRET_INPUT && event.recv.host == host -> {
+                        val receivedValue: Value = runtime.receive(event)
+
+                        if (cleartextValue == null) {
+                            secretInput = valueToCircuit(circuitType, receivedValue, isInput = true)
+                            cleartextValue = receivedValue
+                        } else if (cleartextValue != receivedValue) {
+                            throw ViaductInterpreterError("received different values")
+                        }
+                    }
+
+                    // other host has secret input; create dummy input gate
+                    event.recv.id == ABY.SECRET_INPUT && event.recv.host != host -> {
+                        secretInput = ABYDummyInGate(circuitType)
+                    }
+
+                    // cleartext input; create constant gate
+                    event.recv.id == ABY.CLEARTEXT_INPUT && event.recv.host == host -> {
+                        val receivedValue: Value = runtime.receive(event)
+
+                        if (cleartextValue == null) {
+                            secretInput = valueToCircuit(circuitType, receivedValue, isInput = false)
+                            cleartextValue = receivedValue
+                        } else if (cleartextValue != receivedValue) {
+                            throw ViaductInterpreterError("received different values")
+                        }
+                    }
+                }
+            }
+
+            assert(secretInput != null)
+            ssTempStore = ssTempStore.put(sender.temporary.value, secretInput!!)
+
+            // cleartext value can be null in case of dummy inputs
+            if (cleartextValue != null) {
+                ctTempStore = ctTempStore.put(sender.temporary.value, cleartextValue)
+            }
+        }
     }
 
     abstract class ABYClassObject {
@@ -575,11 +566,9 @@ class ABYProtocolInterpreter(
         ): ABYCircuitGate {
             return when (query.value) {
                 is Get -> {
-                    logger.info { "array query index expr is ${arguments[0].asDocument.print()}" }
                     when (val indexValue: ABYValue = runPlaintextOrSecretExpr(circuitType, arguments[0])) {
                         is ABYCleartextValue -> {
                             val index = ((indexValue.value) as IntegerValue).value
-                            logger.info { "array query index expr is $index" }
                             gates[index]
                         }
 
@@ -619,11 +608,9 @@ class ABYProtocolInterpreter(
             update: UpdateNameNode,
             arguments: List<AtomicExpressionNode>
         ) {
-            logger.info { "array update index expr is ${arguments[0].asDocument.print()}" }
             when (val index: ABYValue = runPlaintextOrSecretExpr(circuitType, arguments[0])) {
                 is ABYCleartextValue -> {
                     val intIndex = (index.value as IntegerValue).value
-                    logger.info { "array update index is $intIndex" }
                     gates[intIndex] = when (update.value) {
                         is edu.cornell.cs.apl.viaduct.syntax.datatypes.Set -> {
                             runSecretExpr(circuitType, arguments[1])

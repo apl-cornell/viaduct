@@ -8,6 +8,7 @@ import edu.cornell.cs.apl.viaduct.passes.check
 import edu.cornell.cs.apl.viaduct.passes.elaborated
 import edu.cornell.cs.apl.viaduct.passes.specialize
 import edu.cornell.cs.apl.viaduct.protocols.MainProtocol
+import edu.cornell.cs.apl.viaduct.selection.ProtocolCommunication
 import edu.cornell.cs.apl.viaduct.selection.SimpleCostEstimator
 import edu.cornell.cs.apl.viaduct.selection.SimpleProtocolComposer
 import edu.cornell.cs.apl.viaduct.selection.SimpleProtocolFactory
@@ -20,9 +21,9 @@ import edu.cornell.cs.apl.viaduct.syntax.Variable
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.AtomicExpressionNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.BlockNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.FunctionArgumentNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.LetNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ParameterNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProcessDeclarationNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.ReadNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.SimpleStatementNode
 import edu.cornell.cs.apl.viaduct.syntax.surface.ProgramNode
 import edu.cornell.cs.apl.viaduct.syntax.values.BooleanValue
@@ -45,7 +46,21 @@ private class FakeProtocolInterpreter(
 
     override suspend fun runSimpleStatement(protocol: Protocol, stmt: SimpleStatementNode) {}
 
-    override suspend fun runReceive(protocol: Protocol, read: ReadNode) {}
+    override suspend fun runSend(
+        sender: LetNode,
+        sendProtocol: Protocol,
+        receiver: SimpleStatementNode,
+        recvProtocol: Protocol,
+        events: ProtocolCommunication
+    ) {}
+
+    override suspend fun runReceive(
+        sender: LetNode,
+        sendProtocol: Protocol,
+        receiver: SimpleStatementNode,
+        recvProtocol: Protocol,
+        events: ProtocolCommunication
+    ) {}
 
     override suspend fun pushContext() {}
 

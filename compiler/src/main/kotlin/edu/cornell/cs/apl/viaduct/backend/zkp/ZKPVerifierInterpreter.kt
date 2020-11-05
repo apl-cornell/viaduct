@@ -15,6 +15,7 @@ import edu.cornell.cs.apl.viaduct.libsnarkwrapper.libsnarkwrapper.mkByteBuf
 import edu.cornell.cs.apl.viaduct.protocols.ZKP
 import edu.cornell.cs.apl.viaduct.selection.ProtocolCommunication
 import edu.cornell.cs.apl.viaduct.syntax.ObjectVariable
+import edu.cornell.cs.apl.viaduct.syntax.Protocol
 import edu.cornell.cs.apl.viaduct.syntax.QueryNameNode
 import edu.cornell.cs.apl.viaduct.syntax.Temporary
 import edu.cornell.cs.apl.viaduct.syntax.datatypes.ClassName
@@ -327,7 +328,23 @@ class ZKPVerifierInterpreter(
         throw ViaductInterpreterError("ZKP: Verifier cannot compute guard")
     }
 
-    override suspend fun runReceive(read: ReadNode) {
+    override suspend fun runSend(
+        sender: LetNode,
+        sendProtocol: Protocol,
+        receiver: SimpleStatementNode,
+        recvProtocol: Protocol,
+        events: ProtocolCommunication
+    ) {
+        TODO("Not yet implemented")
+    }
+
+    override suspend fun runReceive(
+        sender: LetNode,
+        sendProtocol: Protocol,
+        receiver: SimpleStatementNode,
+        recvProtocol: Protocol,
+        events: ProtocolCommunication
+    ) {
         TODO("Not yet implemented")
     }
 }

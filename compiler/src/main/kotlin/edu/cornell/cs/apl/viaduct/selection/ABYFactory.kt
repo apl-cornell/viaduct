@@ -2,14 +2,18 @@ package edu.cornell.cs.apl.viaduct.selection
 
 import edu.cornell.cs.apl.viaduct.analysis.NameAnalysis
 import edu.cornell.cs.apl.viaduct.backend.canMux
+import edu.cornell.cs.apl.viaduct.protocols.ABY
 import edu.cornell.cs.apl.viaduct.protocols.ArithABY
 import edu.cornell.cs.apl.viaduct.protocols.BoolABY
 import edu.cornell.cs.apl.viaduct.protocols.YaoABY
+import edu.cornell.cs.apl.viaduct.syntax.FunctionName
 import edu.cornell.cs.apl.viaduct.syntax.Host
 import edu.cornell.cs.apl.viaduct.syntax.HostTrustConfiguration
+import edu.cornell.cs.apl.viaduct.syntax.ObjectVariable
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
 import edu.cornell.cs.apl.viaduct.syntax.ProtocolName
 import edu.cornell.cs.apl.viaduct.syntax.SpecializedProtocol
+import edu.cornell.cs.apl.viaduct.syntax.datatypes.Get
 import edu.cornell.cs.apl.viaduct.syntax.datatypes.Vector
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.DeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.IfNode
@@ -18,7 +22,9 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.LiteralNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.OperatorApplicationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ParameterNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.QueryNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ReadNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.UpdateNode
 import edu.cornell.cs.apl.viaduct.syntax.operators.ComparisonOperator
 import edu.cornell.cs.apl.viaduct.syntax.operators.Division
 import edu.cornell.cs.apl.viaduct.syntax.operators.LogicalOperator
@@ -35,6 +41,9 @@ import edu.cornell.cs.apl.viaduct.util.pairedWith
 
 class ABYFactory(program: ProgramNode) : ProtocolFactory {
     private val nameAnalysis = NameAnalysis.get(program)
+
+    // hack to get backpointer to parent factory
+    var parentFactory: ProtocolFactory? = null
 
     val protocols: List<SpecializedProtocol> = run {
         val hostTrustConfiguration = HostTrustConfiguration(program)
@@ -55,28 +64,6 @@ class ABYFactory(program: ProgramNode) : ProtocolFactory {
         setOf(ArithABY.protocolName, BoolABY.protocolName, YaoABY.protocolName)
 
     private fun LetNode.isApplicable(protocol: Protocol): Boolean {
-        val readerCheck =
-            nameAnalysis.readers(this).all { reader ->
-                // array length can't be in MPC
-                val arrayLengthCheck =
-                    when (reader) {
-                        is DeclarationNode ->
-                            when (reader.className.value) {
-                                Vector ->
-                                    when (val index = reader.arguments[0]) {
-                                        is ReadNode -> index.temporary.value != this.temporary.value
-                                        else -> true
-                                    }
-
-                                else -> true
-                            }
-
-                        else -> true
-                    }
-
-                arrayLengthCheck
-            }
-
         val operationCheck =
             when (val rhs = this.value) {
                 is OperatorApplicationNode ->
@@ -92,11 +79,7 @@ class ABYFactory(program: ProgramNode) : ProtocolFactory {
                 else -> true
             }
 
-        // TODO: add check---if index is secret, array cannot be stored
-        // in ArithABY because it doesn't support muxing
-        // need this in array queries and updates
-
-        return readerCheck && operationCheck
+        return operationCheck
     }
 
     override fun viableProtocols(node: LetNode): Set<Protocol> =
@@ -108,23 +91,77 @@ class ABYFactory(program: ProgramNode) : ProtocolFactory {
     override fun viableProtocols(node: ParameterNode): Set<Protocol> =
         protocols.map { it.protocol }.toSet()
 
-    override fun constraint(node: DeclarationNode): SelectionConstraint {
-        return Literal(true)
-        /*
-        return if (node.className.value == Vector && node.arguments[0] is ReadNode) {
-            val lengthExpr = node.arguments[0] as ReadNode
-            val lengthExprDecl = nameAnalysis.declaration(lengthExpr)
-            val enclosingFunction = nameAnalysis.enclosingFunctionName(lengthExprDecl)
-            val mpcProtocols = protocols.map { it.protocol }.toSet()
+    private fun cleartextArrayLengthAndIndexConstraint(
+        enclosingFunction: FunctionName,
+        arrayObject: ObjectVariable,
+        lengthOrIndexExpr: ReadNode
+    ): SelectionConstraint {
+        val exprDecl = nameAnalysis.declaration(lengthOrIndexExpr)
+        val mpcProtocols = protocols.map { it.protocol }.toSet()
+        val cleartextLengthProtocols =
+            (parentFactory?.viableProtocols(exprDecl) ?: viableProtocols(exprDecl))
+                .filter { lengthProtocol ->
+                    if (mpcProtocols.all { SimpleProtocolComposer.canCommunicate(lengthProtocol, it) }) {
+                        mpcProtocols.all {
+                            val events = SimpleProtocolComposer.communicate(lengthProtocol, it)
+                            events.all { event -> event.recv.id == ABY.CLEARTEXT_INPUT }
+                        }
+                    } else {
+                        false
+                    }
+                }
+                .toSet()
 
-            Implies(
-                VariableIn(FunctionVariable(enclosingFunction, node.name.value), mpcProtocols),
-                Not(VariableIn(FunctionVariable(enclosingFunction, lengthExprDecl), mpcProtocols))
+        return Implies(
+            VariableIn(FunctionVariable(enclosingFunction, arrayObject), mpcProtocols),
+            VariableIn(FunctionVariable(enclosingFunction, exprDecl.temporary.value), cleartextLengthProtocols)
+        )
+    }
+
+    override fun constraint(node: DeclarationNode): SelectionConstraint {
+        return if (node.className.value == Vector && node.arguments[0] is ReadNode) {
+            cleartextArrayLengthAndIndexConstraint(
+                nameAnalysis.enclosingFunctionName(node),
+                node.name.value,
+                node.arguments[0] as ReadNode
             )
         } else {
             Literal(true)
         }
-        */
+    }
+
+    override fun constraint(node: LetNode): SelectionConstraint =
+        when (val rhs = node.value) {
+            is QueryNode -> {
+                val objectDecl = nameAnalysis.declaration(rhs)
+                if (objectDecl.className.value == Vector && rhs.query.value == Get && rhs.arguments[0] is ReadNode) {
+                    cleartextArrayLengthAndIndexConstraint(
+                        nameAnalysis.enclosingFunctionName(node),
+                        rhs.variable.value,
+                        rhs.arguments[0] as ReadNode
+                    )
+                } else {
+                    Literal(true)
+                }
+            }
+
+            else -> Literal(true)
+        }
+
+    override fun constraint(node: UpdateNode): SelectionConstraint {
+        val objectDecl = nameAnalysis.declaration(node)
+        return if (objectDecl.className.value == Vector &&
+            node.update.value == edu.cornell.cs.apl.viaduct.syntax.datatypes.Set &&
+            node.arguments[0] is ReadNode
+        ) {
+            cleartextArrayLengthAndIndexConstraint(
+                nameAnalysis.enclosingFunctionName(node),
+                node.variable.value,
+                node.arguments[0] as ReadNode
+            )
+        } else {
+            Literal(true)
+        }
     }
 
     override fun guardVisibilityConstraint(protocol: Protocol, node: IfNode): SelectionConstraint =

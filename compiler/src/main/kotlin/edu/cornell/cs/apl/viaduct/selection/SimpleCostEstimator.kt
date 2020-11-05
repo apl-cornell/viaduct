@@ -17,6 +17,7 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.OperatorApplicationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.SimpleStatementNode
 import edu.cornell.cs.apl.viaduct.syntax.operators.Addition
 import edu.cornell.cs.apl.viaduct.syntax.operators.And
+import edu.cornell.cs.apl.viaduct.syntax.operators.Division
 import edu.cornell.cs.apl.viaduct.syntax.operators.EqualTo
 import edu.cornell.cs.apl.viaduct.syntax.operators.LessThan
 import edu.cornell.cs.apl.viaduct.syntax.operators.LessThanOrEqualTo
@@ -91,6 +92,13 @@ class SimpleCostEstimator(
                 zeroCost().update(LAN_COST, IntegerCost(583)).update(WAN_COST, IntegerCost(581)),
 
             Pair(Multiplication, YaoABY.protocolName) to
+                zeroCost().update(LAN_COST, IntegerCost(281)).update(WAN_COST, IntegerCost(212)),
+
+            // DIV (copied from MUL), fix this
+            Pair(Division, BoolABY.protocolName) to
+                zeroCost().update(LAN_COST, IntegerCost(583)).update(WAN_COST, IntegerCost(581)),
+
+            Pair(Division, YaoABY.protocolName) to
                 zeroCost().update(LAN_COST, IntegerCost(281)).update(WAN_COST, IntegerCost(212)),
 
             // AND

@@ -7,6 +7,7 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.DeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.IfNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.LetNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ParameterNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.UpdateNode
 
 /**
  *
@@ -32,6 +33,10 @@ interface ProtocolFactory {
     }
 
     fun constraint(node: DeclarationNode): SelectionConstraint {
+        return Literal(true)
+    }
+
+    fun constraint(node: UpdateNode): SelectionConstraint {
         return Literal(true)
     }
 
@@ -85,6 +90,9 @@ open class UnionProtocolFactory(private val selectors: Set<ProtocolFactory>) : P
         selectors.map { sel -> sel.constraint(node) }.ands()
 
     override fun constraint(node: DeclarationNode): SelectionConstraint =
+        selectors.map { sel -> sel.constraint(node) }.ands()
+
+    override fun constraint(node: UpdateNode): SelectionConstraint =
         selectors.map { sel -> sel.constraint(node) }.ands()
 
     override fun guardVisibilityConstraint(protocol: Protocol, node: IfNode): SelectionConstraint =

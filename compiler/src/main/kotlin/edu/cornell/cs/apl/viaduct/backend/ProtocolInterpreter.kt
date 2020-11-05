@@ -1,10 +1,12 @@
 package edu.cornell.cs.apl.viaduct.backend
 
 import edu.cornell.cs.apl.viaduct.analysis.ProtocolAnalysis
+import edu.cornell.cs.apl.viaduct.selection.ProtocolCommunication
 import edu.cornell.cs.apl.viaduct.syntax.Host
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.AtomicExpressionNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.FunctionArgumentNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.LetNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ParameterNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.SimpleStatementNode
@@ -17,6 +19,22 @@ interface ProtocolInterpreter {
     suspend fun runGuard(protocol: Protocol, expr: AtomicExpressionNode): Value
 
     suspend fun runSimpleStatement(protocol: Protocol, stmt: SimpleStatementNode)
+
+    suspend fun runSend(
+        sender: LetNode,
+        sendProtocol: Protocol,
+        receiver: SimpleStatementNode,
+        recvProtocol: Protocol,
+        events: ProtocolCommunication
+    )
+
+    suspend fun runReceive(
+        sender: LetNode,
+        sendProtocol: Protocol,
+        receiver: SimpleStatementNode,
+        recvProtocol: Protocol,
+        events: ProtocolCommunication
+    )
 
     suspend fun pushContext()
 

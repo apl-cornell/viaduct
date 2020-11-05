@@ -9,8 +9,10 @@ import edu.cornell.cs.apl.viaduct.errors.IllegalInternalCommunicationError
 import edu.cornell.cs.apl.viaduct.errors.ViaductInterpreterError
 import edu.cornell.cs.apl.viaduct.protocols.Commitment
 import edu.cornell.cs.apl.viaduct.selection.CommunicationEvent
+import edu.cornell.cs.apl.viaduct.selection.ProtocolCommunication
 import edu.cornell.cs.apl.viaduct.syntax.Host
 import edu.cornell.cs.apl.viaduct.syntax.ObjectVariable
+import edu.cornell.cs.apl.viaduct.syntax.Protocol
 import edu.cornell.cs.apl.viaduct.syntax.QueryNameNode
 import edu.cornell.cs.apl.viaduct.syntax.Temporary
 import edu.cornell.cs.apl.viaduct.syntax.datatypes.ClassName
@@ -113,7 +115,6 @@ class CommitmentProtocolCleartextInterpreter(
     override fun getNullObject(): HashedObject = HashedNullObject
 
     private suspend fun sendCommitment(hashInfo: HashInfo) {
-
         val commitment = ByteVecValue(hashInfo.hash)
         for (commitmentReceiver: Host in hashHosts) {
             runtime.send(
@@ -128,64 +129,12 @@ class CommitmentProtocolCleartextInterpreter(
         }
     }
 
-    private suspend fun runRead(read: ReadNode): Hashed<Value> {
-        val storeValue = tempStore[read.temporary.value]
-        return if (storeValue == null) {
-            val sendProtocol = protocolAnalysis.primaryProtocol(read)
-            if (sendProtocol != runtime.projection.protocol) {
-                val events =
-                    protocolAnalysis.relevantCommunicationEvents(read)
-
-                // receive cleartext inputs
-                val cleartextInputEvents: Set<CommunicationEvent> =
-                    events.getProjectionReceives(runtime.projection, Commitment.INPUT)
-
-                var cleartextValue: Value? = null
-                for (event in cleartextInputEvents) {
-                    val recvValue: Value = runtime.receive(event)
-
-                    when {
-                        cleartextValue == null -> {
-                            cleartextValue = recvValue
-                        }
-
-                        cleartextValue != recvValue -> {
-                            throw ViaductInterpreterError("Commitment: received different cleartext values")
-                        }
-                    }
-                }
-
-                assert(cleartextValue != null)
-
-                // send commitment to hash hosts
-                val hashInfo: HashInfo = Hashing.generateHash(cleartextValue!!)
-                val commitment = ByteVecValue(hashInfo.hash)
-
-                val createCommitmentEvents: Set<CommunicationEvent> =
-                    events.getProjectionSends(runtime.projection, Commitment.CREATE_COMMITMENT_OUTPUT)
-
-                for (event in events) {
-                    logger.info { "$event" }
-                }
-
-                for (event in createCommitmentEvents) {
-                    runtime.send(commitment, event)
-                    logger.info { "sent commitment to host ${event.recv.host.name}" }
-                }
-
-                val hashedValue = Hashed(cleartextValue, hashInfo)
-                tempStore.put(read.temporary.value, hashedValue)
-                hashedValue
-            } else { // temporary should be stored locally, but isn't
-                throw ViaductInterpreterError(
-                    "${runtime.projection.protocol.asDocument.print()}:" +
-                        " could not find local temporary ${read.temporary.value}"
-                )
-            }
-        } else {
-            storeValue
-        }
-    }
+    private fun runRead(read: ReadNode): Hashed<Value> =
+        tempStore[read.temporary.value]
+            ?: throw ViaductInterpreterError(
+                "${runtime.projection.protocol.asDocument.print()}:" +
+                    " could not find local temporary ${read.temporary.value}"
+            )
 
     private fun runQuery(query: QueryNode): Hashed<Value> {
         return getObject(getObjectLocation(query.variable.value)).query(query.query, query.arguments)
@@ -231,29 +180,6 @@ class CommitmentProtocolCleartextInterpreter(
     override suspend fun runLet(stmt: LetNode) {
         val rhsValue: Hashed<Value> = runExpr(stmt.value)
         tempStore = tempStore.put(stmt.temporary.value, rhsValue)
-
-        // broadcast to readers
-        val readers: Set<SimpleStatementNode> = protocolAnalysis.directRemoteReaders(stmt)
-
-        val nonce = ByteVecValue(rhsValue.info.nonce)
-        for (reader in readers) {
-            val events: Set<CommunicationEvent> =
-                protocolAnalysis
-                    .relevantCommunicationEvents(stmt, reader)
-                    .getProjectionSends(runtime.projection, Commitment.OPEN_CLEARTEXT_OUTPUT)
-
-            for (event in events) {
-                // send nonce and the opened value
-                val recvProjection = event.recv.asProjection()
-                runtime.send(nonce, recvProjection)
-                runtime.send(rhsValue.value, recvProjection)
-
-                logger.info {
-                    "sent opened value and nonce to " +
-                    "${event.recv.protocol.asDocument.print()}@${event.recv.host.name}"
-                }
-            }
-        }
     }
 
     override suspend fun runUpdate(stmt: UpdateNode) {
@@ -266,5 +192,79 @@ class CommitmentProtocolCleartextInterpreter(
 
     override suspend fun runGuard(expr: AtomicExpressionNode): Value {
         return runExpr(expr).value
+    }
+
+    override suspend fun runSend(
+        sender: LetNode,
+        sendProtocol: Protocol,
+        receiver: SimpleStatementNode,
+        recvProtocol: Protocol,
+        events: ProtocolCommunication
+    ) {
+        if (receiver != runtime.projection.protocol) {
+            val hashedValue: Hashed<Value> = tempStore[sender.temporary.value]!!
+
+            val relevantEvents: Set<CommunicationEvent> =
+                events.getProjectionSends(runtime.projection, Commitment.OPEN_CLEARTEXT_OUTPUT)
+
+            val nonce = ByteVecValue(hashedValue.info.nonce)
+            for (event in relevantEvents) {
+                // send nonce and the opened value
+                val recvProjection = event.recv.asProjection()
+                runtime.send(nonce, recvProjection)
+                runtime.send(hashedValue.value, recvProjection)
+
+                logger.info {
+                    "sent opened value and nonce to " +
+                        "${event.recv.protocol.asDocument.print()}@${event.recv.host.name}"
+                }
+            }
+        }
+    }
+
+    override suspend fun runReceive(
+        sender: LetNode,
+        sendProtocol: Protocol,
+        receiver: SimpleStatementNode,
+        recvProtocol: Protocol,
+        events: ProtocolCommunication
+    ) {
+        if (sendProtocol != runtime.projection.protocol) {
+            // receive cleartext inputs
+            val cleartextInputEvents: Set<CommunicationEvent> =
+                events.getProjectionReceives(runtime.projection, Commitment.INPUT)
+
+            var cleartextValue: Value? = null
+            for (event in cleartextInputEvents) {
+                val recvValue: Value = runtime.receive(event)
+
+                when {
+                    cleartextValue == null -> {
+                        cleartextValue = recvValue
+                    }
+
+                    cleartextValue != recvValue -> {
+                        throw ViaductInterpreterError("Commitment: received different cleartext values")
+                    }
+                }
+            }
+
+            assert(cleartextValue != null)
+
+            // send commitment to hash hosts
+            val hashInfo: HashInfo = Hashing.generateHash(cleartextValue!!)
+            val commitment = ByteVecValue(hashInfo.hash)
+
+            val createCommitmentEvents: Set<CommunicationEvent> =
+                events.getProjectionSends(runtime.projection, Commitment.CREATE_COMMITMENT_OUTPUT)
+
+            for (event in createCommitmentEvents) {
+                runtime.send(commitment, event)
+                logger.info { "sent commitment to host ${event.recv.host.name}" }
+            }
+
+            val hashedValue = Hashed(cleartextValue, hashInfo)
+            tempStore.put(sender.temporary.value, hashedValue)
+        }
     }
 }

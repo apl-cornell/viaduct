@@ -10,4 +10,8 @@ class SimpleProtocolFactory(
     abyFactory: ABYFactory = ABYFactory(program),
     zkpFactory: ZKPFactory = ZKPFactory(program),
     commitmentFactory: CommitmentFactory = CommitmentFactory(program)
-) : UnionProtocolFactory(localFactory, replicationFactory, abyFactory, zkpFactory, commitmentFactory)
+) : UnionProtocolFactory(localFactory, replicationFactory, abyFactory, zkpFactory, commitmentFactory) {
+    init {
+        abyFactory.parentFactory = this
+    }
+}

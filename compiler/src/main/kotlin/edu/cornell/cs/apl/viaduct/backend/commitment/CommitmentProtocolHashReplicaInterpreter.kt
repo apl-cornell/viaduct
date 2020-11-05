@@ -8,6 +8,7 @@ import edu.cornell.cs.apl.viaduct.errors.IllegalInternalCommunicationError
 import edu.cornell.cs.apl.viaduct.errors.ViaductInterpreterError
 import edu.cornell.cs.apl.viaduct.protocols.Commitment
 import edu.cornell.cs.apl.viaduct.selection.CommunicationEvent
+import edu.cornell.cs.apl.viaduct.selection.ProtocolCommunication
 import edu.cornell.cs.apl.viaduct.syntax.Host
 import edu.cornell.cs.apl.viaduct.syntax.ObjectVariable
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
@@ -141,39 +142,14 @@ class CommitmentProtocolHashReplicaInterpreter(
         return nullObject
     }
 
-    suspend fun runRead(read: ReadNode): List<Byte> {
-        val storeValue = hashTempStore[read.temporary.value]
+    fun runRead(read: ReadNode): List<Byte> =
+        hashTempStore[read.temporary.value]
+            ?: throw ViaductInterpreterError(
+                "${runtime.projection.protocol.asDocument.print()}:" +
+                    " could not find local temporary ${read.temporary.value}"
+            )
 
-        return if (storeValue == null) {
-            val sendProtocol = protocolAnalysis.primaryProtocol(read)
-            if (sendProtocol != runtime.projection.protocol) { // receive commitment
-                val event =
-                    protocolAnalysis
-                        .relevantCommunicationEvents(read)
-                        .getProjectionReceives(runtime.projection, Commitment.CREATE_COMMITMENT_INPUT)
-                        .first()
-
-                logger.info { "expecting to receive " }
-
-                val commitment: Value = runtime.receive(event)
-                val committedValue = (commitment as ByteVecValue).value
-
-                logger.info { "received commitment from host ${event.send.host.name}" }
-
-                hashTempStore = hashTempStore.put(read.temporary.value, committedValue)
-                committedValue
-            } else { // temporary should be stored locally, but isn't
-                throw ViaductInterpreterError(
-                    "${runtime.projection.protocol.asDocument.print()}:" +
-                        " could not find local temporary ${read.temporary.value}"
-                )
-            }
-        } else {
-            storeValue
-        }
-    }
-
-    private suspend fun runExpr(expr: ExpressionNode): List<Byte> =
+    private fun runExpr(expr: ExpressionNode): List<Byte> =
         when (expr) {
             is LiteralNode -> TODO()
 
@@ -231,5 +207,47 @@ class CommitmentProtocolHashReplicaInterpreter(
 
     override suspend fun runGuard(expr: AtomicExpressionNode): Value {
         throw ViaductInterpreterError("Commitment: cannot use committed value as a guard")
+    }
+
+    override suspend fun runSend(
+        sender: LetNode,
+        sendProtocol: Protocol,
+        receiver: SimpleStatementNode,
+        recvProtocol: Protocol,
+        events: ProtocolCommunication
+    ) {
+        if (!availableProtocols.contains(recvProtocol)) {
+            val relevantEvents: Set<CommunicationEvent> =
+                events.getProjectionSends(runtime.projection, Commitment.OPEN_COMMITMENT_OUTPUT)
+
+            val commitment = hashTempStore[sender.temporary.value]!!
+            val commitmentValue = ByteVecValue(commitment)
+            for (event in relevantEvents) {
+                runtime.send(commitmentValue, event)
+
+                logger.info {
+                    "sent opened commitment to " +
+                        "${event.recv.protocol.asDocument.print()}@${event.recv.host.name}"
+                }
+            }
+        }
+    }
+
+    override suspend fun runReceive(
+        sender: LetNode,
+        sendProtocol: Protocol,
+        receiver: SimpleStatementNode,
+        recvProtocol: Protocol,
+        events: ProtocolCommunication
+    ) {
+        if (sendProtocol != runtime.projection.protocol) { // receive commitment
+            val event = events.first()
+            val commitment: Value = runtime.receive(event)
+            val committedValue = (commitment as ByteVecValue).value
+
+            logger.info { "received commitment from host ${event.send.host.name}" }
+
+            hashTempStore = hashTempStore.put(sender.temporary.value, committedValue)
+        }
     }
 }

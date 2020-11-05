@@ -15,6 +15,7 @@ import edu.cornell.cs.apl.viaduct.libsnarkwrapper.libsnarkwrapper.mkByteBuf
 import edu.cornell.cs.apl.viaduct.protocols.ZKP
 import edu.cornell.cs.apl.viaduct.selection.ProtocolCommunication
 import edu.cornell.cs.apl.viaduct.syntax.ObjectVariable
+import edu.cornell.cs.apl.viaduct.syntax.Protocol
 import edu.cornell.cs.apl.viaduct.syntax.QueryNameNode
 import edu.cornell.cs.apl.viaduct.syntax.Temporary
 import edu.cornell.cs.apl.viaduct.syntax.datatypes.ClassName
@@ -188,69 +189,10 @@ class ZKPVerifierInterpreter(
             ZKPObject.ZKPNullObject -> throw Exception("null query")
         }
 
-    private suspend fun runCleartextRead(node: ReadNode) {
-        val sendProtocol = protocolAnalysis.primaryProtocol(node)
-        assert(runtime.projection.protocol != sendProtocol)
-        val events: ProtocolCommunication = protocolAnalysis.relevantCommunicationEvents(node)
-        val publicInputs = events.getHostReceives(runtime.projection.host, "ZKP_PUBLIC_INPUT")
-        assert(publicInputs.isNotEmpty())
-
-        logger.info {
-            "reading cleartext read from $sendProtocol"
-        }
-
-        var cleartextValue: Value? = null
-        for (event in publicInputs) {
-            val receivedValue: Value =
-                runtime.receive(ProtocolProjection(event.send.protocol, event.send.host))
-
-            if (cleartextValue == null) {
-                cleartextValue = receivedValue
-            } else if (cleartextValue != receivedValue) {
-                throw ViaductInterpreterError("ZKP public input: received different values")
-            }
-        }
-        tempStore = tempStore.put(node.temporary.value, cleartextValue!!)
-        wireStore = wireStore.put(node.temporary.value, injectValue(cleartextValue))
-    }
-
-    private suspend fun runRead(node: ReadNode): WireTerm {
-        val wireVal = wireStore[node.temporary.value]
-        if (wireVal != null) {
-            return wireVal
-        } else {
-            val sendProtocol = protocolAnalysis.primaryProtocol(node)
-            assert(runtime.projection.protocol != sendProtocol)
-            val events: ProtocolCommunication = protocolAnalysis.relevantCommunicationEvents(node)
-            val publicInputs = events.getHostReceives(runtime.projection.host, "ZKP_PUBLIC_INPUT")
-
-            val w: WireTerm = if (publicInputs.isEmpty()) {
-                injectDummyIn()
-            } else {
-                // Only kind of input is zkp public input
-                var cleartextValue: Value? = null
-                for (event in publicInputs) {
-                    val receivedValue: Value =
-                        runtime.receive(ProtocolProjection(event.send.protocol, event.send.host))
-
-                    if (cleartextValue == null) {
-                        cleartextValue = receivedValue
-                    } else if (cleartextValue != receivedValue) {
-                        throw ViaductInterpreterError("ZKP public input: received different values")
-                    }
-                }
-                tempStore = tempStore.put(node.temporary.value, cleartextValue!!)
-                injectValue(cleartextValue)
-            }
-            wireStore = wireStore.put(node.temporary.value, w)
-            return w
-        }
-    }
-
-    private suspend fun getAtomicExprWire(expr: AtomicExpressionNode): WireTerm =
+    private fun getAtomicExprWire(expr: AtomicExpressionNode): WireTerm =
         when (expr) {
             is LiteralNode -> injectValue(expr.value)
-            is ReadNode -> runRead(expr)
+            is ReadNode -> wireStore[expr.temporary.value]!!
         }
 
     private suspend fun getExprWire(expr: ExpressionNode): WireTerm =
@@ -268,49 +210,15 @@ class ZKPVerifierInterpreter(
             is ReceiveNode -> throw ViaductInterpreterError("impossible")
         }
 
+    private fun runPlaintextExpr(expr: AtomicExpressionNode): Value =
+        when (expr) {
+            is LiteralNode -> expr.value
+            is ReadNode -> tempStore[expr.temporary.value]!!
+        }
+
     override suspend fun runLet(stmt: LetNode) {
         val w = getExprWire(stmt.value)
         wireStore = wireStore.put(stmt.temporary.value, w)
-
-        // broadcast to readers
-        val readers: Set<SimpleStatementNode> = protocolAnalysis.directRemoteReaders(stmt)
-
-        if (readers.isEmpty()) {
-            return
-        } else {
-            val wireName = w.wireName()
-            val vkFile = File("zkpkeys/$wireName.vk")
-            if (!vkFile.exists()) {
-                throw Exception("Cannot find verification key for ${w.asString()} with name $wireName.vk.  Restart after prover finishes.")
-            } else {
-                val wireVal: Int = (runtime.receive(ProtocolProjection(runtime.projection.protocol, prover)) as IntegerValue).value
-                val r1cs = w.toR1CS(false, wireVal)
-                val pf = (runtime.receive(ProtocolProjection(runtime.projection.protocol, prover)) as ByteVecValue).value
-                val in_vkFile = FileInputStream(vkFile)
-                val vk = mkByteBuf(in_vkFile.readAllBytes())
-                in_vkFile.close()
-                logger.info {
-                    "Verifying.."
-                }
-                val verifyResult = r1cs.verifyProof(vk, mkByteBuf(pf.toByteArray()))
-                logger.info {
-                    "Verified: $verifyResult"
-                }
-                assert(verifyResult)
-
-                for (reader in readers) {
-                    val events =
-                        protocolAnalysis
-                            .relevantCommunicationEvents(stmt, reader)
-                            .getHostSends(runtime.projection.host)
-
-                    for (event in events) {
-                        val outVal = wireVal.toValue(typeAnalysis.type(stmt))
-                        runtime.send(outVal, ProtocolProjection(event.recv.protocol, event.recv.host))
-                    }
-                }
-            }
-        }
     }
 
     override suspend fun runUpdate(stmt: UpdateNode) {
@@ -350,24 +258,78 @@ class ZKPVerifierInterpreter(
         throw Exception("cannot perform I/O in non-Local protocol")
     }
 
-    private suspend fun runPlaintextExpr(expr: AtomicExpressionNode): Value {
-        return when (expr) {
-            is LiteralNode -> expr.value
-            is ReadNode -> {
-                if (tempStore.containsKey(expr.temporary.value)) {
-                    tempStore[expr.temporary.value]!!
-                } else {
-                    logger.info {
-                        "Temporary not found for ${expr.temporary}; running cleartext read"
-                    }
-                    runCleartextRead(expr) // Force external communication and update tempStore, if needed
-                    tempStore[expr.temporary.value]!!
+    override suspend fun runGuard(expr: AtomicExpressionNode): Value {
+        throw ViaductInterpreterError("ZKP: Cannot run cleartext guard")
+    }
+
+    override suspend fun runSend(
+        sender: LetNode,
+        sendProtocol: Protocol,
+        receiver: SimpleStatementNode,
+        recvProtocol: Protocol,
+        events: ProtocolCommunication
+    ) {
+        if (sendProtocol != recvProtocol) {
+            val wire = wireStore[sender.temporary.value]!!
+            val wireName = wire.wireName()
+            val vkFile = File("zkpkeys/$wireName.vk")
+            if (!vkFile.exists()) {
+                throw Exception("Cannot find verification key for ${wire.asString()} with name $wireName.vk.  Restart after prover finishes.")
+            } else {
+                val wireVal: Int = (runtime.receive(ProtocolProjection(runtime.projection.protocol, prover)) as IntegerValue).value
+                val r1cs = wire.toR1CS(false, wireVal)
+                val pf = (runtime.receive(ProtocolProjection(runtime.projection.protocol, prover)) as ByteVecValue).value
+                val in_vkFile = FileInputStream(vkFile)
+                val vk = mkByteBuf(in_vkFile.readAllBytes())
+                in_vkFile.close()
+                logger.info {
+                    "Verifying.."
+                }
+                val verifyResult = r1cs.verifyProof(vk, mkByteBuf(pf.toByteArray()))
+                logger.info {
+                    "Verified: $verifyResult"
+                }
+                assert(verifyResult)
+
+                val hostEvents = events.getHostSends(runtime.projection.host)
+
+                for (event in hostEvents) {
+                    val outVal = wireVal.toValue(typeAnalysis.type(sender))
+                    runtime.send(outVal, ProtocolProjection(event.recv.protocol, event.recv.host))
                 }
             }
         }
     }
 
-    override suspend fun runGuard(expr: AtomicExpressionNode): Value {
-        throw ViaductInterpreterError("ZKP: Cannot run cleartext guard")
+    override suspend fun runReceive(
+        sender: LetNode,
+        sendProtocol: Protocol,
+        receiver: SimpleStatementNode,
+        recvProtocol: Protocol,
+        events: ProtocolCommunication
+    ) {
+        if (sendProtocol != recvProtocol) {
+            val publicInputs = events.getHostReceives(runtime.projection.host, "ZKP_PUBLIC_INPUT")
+
+            val w: WireTerm = if (publicInputs.isEmpty()) {
+                injectDummyIn()
+            } else {
+                // Only kind of input is zkp public input
+                var cleartextValue: Value? = null
+                for (event in publicInputs) {
+                    val receivedValue: Value =
+                        runtime.receive(ProtocolProjection(event.send.protocol, event.send.host))
+
+                    if (cleartextValue == null) {
+                        cleartextValue = receivedValue
+                    } else if (cleartextValue != receivedValue) {
+                        throw ViaductInterpreterError("ZKP public input: received different values")
+                    }
+                }
+                tempStore = tempStore.put(sender.temporary.value, cleartextValue!!)
+                injectValue(cleartextValue)
+            }
+            wireStore = wireStore.put(sender.temporary.value, w)
+        }
     }
 }

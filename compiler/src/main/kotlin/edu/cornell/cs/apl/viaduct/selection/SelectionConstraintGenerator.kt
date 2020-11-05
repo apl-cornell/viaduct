@@ -264,6 +264,8 @@ class SelectionConstraintGenerator(
                     protocolFactory.constraint(this)
                 )
 
+            is UpdateNode -> setOf(protocolFactory.constraint(this))
+
             // generate constraints for guard visibility
             // used by the ABY/MPC factory to generate muxing constraints
             is IfNode -> {

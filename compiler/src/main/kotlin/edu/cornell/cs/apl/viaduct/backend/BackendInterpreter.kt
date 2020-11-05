@@ -5,6 +5,7 @@ import edu.cornell.cs.apl.viaduct.analysis.ProtocolAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.main
 import edu.cornell.cs.apl.viaduct.errors.ViaductInterpreterError
 import edu.cornell.cs.apl.viaduct.protocols.Synchronization
+import edu.cornell.cs.apl.viaduct.selection.ProtocolCommunication
 import edu.cornell.cs.apl.viaduct.syntax.FunctionName
 import edu.cornell.cs.apl.viaduct.syntax.Host
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
@@ -15,6 +16,7 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.FunctionArgumentNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.FunctionCallNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.IfNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.InfiniteLoopNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.LetNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.LiteralNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ParameterNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
@@ -112,6 +114,45 @@ class BackendInterpreter(
 
     suspend fun run(function: FunctionName, stmt: StatementNode) {
         when (stmt) {
+            is LetNode -> {
+                val protocol = protocolAnalysis.primaryProtocol(stmt)
+                var reader: SimpleStatementNode? = null
+                var readerProtocol: Protocol? = null
+                var events: ProtocolCommunication? = null
+
+                // there should only be a single reader, if any
+                val readers = nameAnalysis.readers(stmt).filterIsInstance<SimpleStatementNode>()
+                if (readers.isNotEmpty()) {
+                    reader = readers.first()
+                    readerProtocol = protocolAnalysis.primaryProtocol(reader)
+                    events = protocolAnalysis.relevantCommunicationEvents(stmt, reader)
+                }
+
+                if (protocolAnalysis.participatingHosts(stmt).contains(this.host)) {
+                    // execute statement, if host is participating
+                    val protocolBackend = protocolInterpreterMap[protocol]
+                        ?: throw ViaductInterpreterError("no backend for protocol ${protocol.asDocument.print()}")
+                    protocolBackend.runSimpleStatement(protocol, stmt)
+
+                    // send data
+                    if (readers.isNotEmpty()) {
+                        protocolBackend.runSend(stmt, protocol, reader!!, readerProtocol!!, events!!)
+                    }
+                }
+
+                // receive data
+                if (readers.isNotEmpty()) {
+                    if (protocolAnalysis.participatingHosts(reader!!).contains(this.host)) {
+                        protocolInterpreterMap[readerProtocol]
+                            ?.runReceive(stmt, protocol, reader, readerProtocol!!, events!!)
+                            ?: throw ViaductInterpreterError(
+                                "no backend for protocol ${readerProtocol!!.asDocument.print()}")
+                    }
+                }
+
+                synchronize(protocolAnalysis.participatingHosts(stmt), protocolAnalysis.hostsToSync(stmt))
+            }
+
             is SimpleStatementNode -> {
                 if (protocolAnalysis.participatingHosts(stmt).contains(this.host)) {
                     val protocol = protocolAnalysis.primaryProtocol(stmt)

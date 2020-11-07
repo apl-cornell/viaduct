@@ -29,6 +29,8 @@ import edu.cornell.cs.apl.viaduct.syntax.operators.Negation
 import edu.cornell.cs.apl.viaduct.syntax.operators.Subtraction
 import kotlinx.collections.immutable.persistentMapOf
 
+enum class SimpleCostRegime { LAN, WAN }
+
 /**
  * Cost estimator for Local, Replication and ABY protocols.
  *
@@ -43,7 +45,8 @@ import kotlinx.collections.immutable.persistentMapOf
  * - cost is from microsecond figure for non-amortized n=1, divided by 10 and rounded
  * */
 class SimpleCostEstimator(
-    private val protocolComposer: ProtocolComposer
+    private val protocolComposer: ProtocolComposer,
+    private val costRegime: SimpleCostRegime
 ) : CostEstimator<IntegerCost> {
     companion object {
         private const val NUM_MESSAGES = "numberOfMessages"
@@ -334,5 +337,9 @@ class SimpleCostEstimator(
             )
         )
 
-    override fun featureWeights(): Cost<IntegerCost> = lanWeights
+    override fun featureWeights(): Cost<IntegerCost> =
+        when (costRegime) {
+            SimpleCostRegime.LAN -> lanWeights
+            SimpleCostRegime.WAN -> wanWeights
+        }
 }

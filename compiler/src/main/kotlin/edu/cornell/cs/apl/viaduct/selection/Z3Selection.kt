@@ -34,6 +34,8 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.ParameterNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProcessDeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
 
+enum class CostMode { MINIMIZE, MAXIMIZE }
+
 /**
  * This class performs splitting by using Z3. It operates as follows:
  * - First, it collects constraints on protocol selection from the [ProtocolFactory]. For each let or declaration,
@@ -59,6 +61,7 @@ private class Z3Selection(
     private val protocolComposer: ProtocolComposer,
     private val costEstimator: CostEstimator<IntegerCost>,
     private val ctx: Context,
+    private val costMode: CostMode,
     private val dumpMetadata: (Map<Node, PrettyPrintable>) -> Unit
 ) {
     private val nameAnalysis = NameAnalysis.get(program)
@@ -272,7 +275,10 @@ private class Z3Selection(
             val totalCostSymvar = ctx.mkFreshConst("total_cost", ctx.intSort) as IntExpr
 
             solver.Add(ctx.mkEq(totalCostSymvar, costExpr))
-            solver.MkMinimize(totalCostSymvar)
+            when (costMode) {
+                CostMode.MINIMIZE -> solver.MkMinimize(totalCostSymvar)
+                CostMode.MAXIMIZE -> solver.MkMaximize(totalCostSymvar)
+            }
 
             if (solver.Check() == Status.SATISFIABLE) {
                 val model = solver.model
@@ -308,11 +314,15 @@ fun selectProtocolsWithZ3(
     protocolFactory: ProtocolFactory,
     protocolComposer: ProtocolComposer,
     costEstimator: CostEstimator<IntegerCost>,
+    costMode: CostMode,
     dumpMetadata: (Map<Node, PrettyPrintable>) -> Unit = {}
 ): (FunctionName, Variable) -> Protocol {
     val ctx = Context()
-    val ret =
-        Z3Selection(program, main, protocolFactory, protocolComposer, costEstimator, ctx, dumpMetadata).select()
+    val ret = Z3Selection(
+        program, main,
+        protocolFactory, protocolComposer, costEstimator,
+        ctx, costMode, dumpMetadata
+    ).select()
     ctx.close()
     return ret
 }

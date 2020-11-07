@@ -1,33 +1,30 @@
 process main {
     val length: int = 5;
 
-    val a = Array[int]{A}(length);
+    val a = Array[int]{A & B<-}(length);
     for (var i: int = 0; i < length; i += 1) {
         a[i] = input int from alice;
     }
 
-    val b = Array[int]{B}(length);
+    val b = Array[int]{B & A<-}(length);
     for (var i: int = 0; i < length; i += 1) {
         b[i] = input int from bob;
     }
 
-    var a_min : int{A} = 0;
+    var a_min : int{A & B<-} = 0;
     for (var i: int = 0; i < length; i += 1) {
         a_min = min(a_min, a[i]);
     }
 
-    var b_min : int{B} = 0;
+    var b_min : int{B & A<-} = 0;
     for (var i: int = 0; i < length; i += 1) {
         b_min = min(b_min, b[i]);
     }
 
-    val a_min_trusted : int = endorse a_min to {A & B<-};
-    val b_min_trusted : int = endorse b_min to {B & A<-};
-
-    val a_wins : bool = declassify (a_min_trusted > b_min_trusted) to {A ⊓ B};
+    val a_wins : bool = declassify (a_min > b_min) to {A ⊓ B};
     output a_wins to alice;
     output a_wins to bob;
 }
 
-host alice : {A}
-host bob   : {B}
+host alice : {A & B<-}
+host bob   : {B & A<-}

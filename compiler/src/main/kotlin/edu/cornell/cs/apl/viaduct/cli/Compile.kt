@@ -6,6 +6,8 @@ import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.types.file
 import edu.cornell.cs.apl.prettyprinting.PrettyPrintable
 import edu.cornell.cs.apl.viaduct.analysis.InformationFlowAnalysis
+import edu.cornell.cs.apl.viaduct.analysis.declarationNodes
+import edu.cornell.cs.apl.viaduct.analysis.letNodes
 import edu.cornell.cs.apl.viaduct.analysis.main
 import edu.cornell.cs.apl.viaduct.backend.aby.ABYMuxPostprocessor
 import edu.cornell.cs.apl.viaduct.backend.zkp.ZKPMuxPostprocessor
@@ -59,6 +61,13 @@ class Compile : CliktCommand(help = "Compile ideal protocol to secure distribute
         """
     ).file(canBeDir = false)
 
+    val labelOutput: File? by option(
+        "-l",
+        "--label",
+        metavar = "FILE.via",
+        help = "Write program decorated with minimal authority labels to FILE.via"
+    ).file(canBeDir = false)
+
     val protocolSelectionOutput: File? by option(
         "-s",
         "--selection",
@@ -97,7 +106,18 @@ class Compile : CliktCommand(help = "Compile ideal protocol to secure distribute
         program.check()
 
         // Dump label constraint graph to a file if requested.
-        dumpGraph(InformationFlowAnalysis.get(program)::exportConstraintGraph, constraintGraphOutput)
+        val ifcAnalysis = InformationFlowAnalysis.get(program)
+        dumpGraph(ifcAnalysis::exportConstraintGraph, constraintGraphOutput)
+
+        if (labelOutput != null) {
+            val labelMetadata: Map<Node, PrettyPrintable> =
+                program.declarationNodes().map {
+                    it to ifcAnalysis.label(it)
+                }.plus(program.letNodes().map {
+                    it to ifcAnalysis.label(it)
+                }).toMap()
+            dumpProgramMetadata(program, labelMetadata, labelOutput)
+        }
 
         val protocolFactory = SimpleProtocolFactory(program)
 

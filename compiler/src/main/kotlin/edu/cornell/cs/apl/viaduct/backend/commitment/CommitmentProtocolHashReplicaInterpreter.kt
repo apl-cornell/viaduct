@@ -2,6 +2,7 @@ package edu.cornell.cs.apl.viaduct.backend.commitment
 
 import edu.cornell.cs.apl.viaduct.analysis.ProtocolAnalysis
 import edu.cornell.cs.apl.viaduct.backend.ObjectLocation
+import edu.cornell.cs.apl.viaduct.backend.ProtocolProjection
 import edu.cornell.cs.apl.viaduct.backend.SingleProtocolInterpreter
 import edu.cornell.cs.apl.viaduct.backend.ViaductProcessRuntime
 import edu.cornell.cs.apl.viaduct.errors.IllegalInternalCommunicationError
@@ -175,26 +176,6 @@ class CommitmentProtocolHashReplicaInterpreter(
     override suspend fun runLet(stmt: LetNode) {
         val commitment = runExpr(stmt.value)
         hashTempStore = hashTempStore.put(stmt.temporary.value, commitment)
-
-        // broadcast to readers
-        val readers: Set<SimpleStatementNode> = protocolAnalysis.directRemoteReaders(stmt)
-
-        val commitmentValue = ByteVecValue(commitment)
-        for (reader in readers) {
-            val events: Set<CommunicationEvent> =
-                protocolAnalysis
-                    .relevantCommunicationEvents(stmt, reader)
-                    .getProjectionSends(runtime.projection, Commitment.OPEN_COMMITMENT_OUTPUT)
-
-            for (event in events) {
-                runtime.send(commitmentValue, event)
-
-                logger.info {
-                    "sent opened commitment to " +
-                        "${event.recv.protocol.asDocument.print()}@${event.recv.host.name}"
-                }
-            }
-        }
     }
 
     override suspend fun runUpdate(stmt: UpdateNode) {
@@ -226,7 +207,7 @@ class CommitmentProtocolHashReplicaInterpreter(
                 runtime.send(commitmentValue, event)
 
                 logger.info {
-                    "sent opened commitment to " +
+                    "sent opened commitment for ${sender.temporary.value.name} to " +
                         "${event.recv.protocol.asDocument.print()}@${event.recv.host.name}"
                 }
             }
@@ -241,11 +222,11 @@ class CommitmentProtocolHashReplicaInterpreter(
         events: ProtocolCommunication
     ) {
         if (sendProtocol != runtime.projection.protocol) { // receive commitment
-            val event = events.first()
-            val commitment: Value = runtime.receive(event)
+            val commitment: Value =
+                runtime.receive(ProtocolProjection(runtime.projection.protocol, cleartextHost))
             val committedValue = (commitment as ByteVecValue).value
 
-            logger.info { "received commitment from host ${event.send.host.name}" }
+            logger.info { "received commitment for ${sender.temporary.value.name} from host ${cleartextHost.name}" }
 
             hashTempStore = hashTempStore.put(sender.temporary.value, committedValue)
         }

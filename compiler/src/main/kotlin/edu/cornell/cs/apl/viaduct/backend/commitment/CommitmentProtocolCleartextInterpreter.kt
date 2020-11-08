@@ -129,22 +129,15 @@ class CommitmentProtocolCleartextInterpreter(
         }
     }
 
-    private fun runRead(read: ReadNode): Hashed<Value> =
-        tempStore[read.temporary.value]
-            ?: throw ViaductInterpreterError(
-                "${runtime.projection.protocol.asDocument.print()}:" +
-                    " could not find local temporary ${read.temporary.value}"
-            )
-
     private fun runQuery(query: QueryNode): Hashed<Value> {
         return getObject(getObjectLocation(query.variable.value)).query(query.query, query.arguments)
     }
 
-    private suspend fun runExpr(expr: ExpressionNode): Hashed<Value> =
+    private fun runExpr(expr: ExpressionNode): Hashed<Value> =
         when (expr) {
             is LiteralNode -> Hashed(expr.value, Hashing.deterministicHash(expr.value))
 
-            is ReadNode -> runRead(expr)
+            is ReadNode -> tempStore[expr.temporary.value]!!
 
             is DowngradeNode -> runExpr(expr.expression)
 
@@ -215,7 +208,7 @@ class CommitmentProtocolCleartextInterpreter(
                 runtime.send(hashedValue.value, recvProjection)
 
                 logger.info {
-                    "sent opened value and nonce to " +
+                    "sent opened value and nonce for ${sender.temporary.value.name} to " +
                         "${event.recv.protocol.asDocument.print()}@${event.recv.host.name}"
                 }
             }
@@ -255,16 +248,13 @@ class CommitmentProtocolCleartextInterpreter(
             val hashInfo: HashInfo = Hashing.generateHash(cleartextValue!!)
             val commitment = ByteVecValue(hashInfo.hash)
 
-            val createCommitmentEvents: Set<CommunicationEvent> =
-                events.getProjectionSends(runtime.projection, Commitment.CREATE_COMMITMENT_OUTPUT)
-
-            for (event in createCommitmentEvents) {
-                runtime.send(commitment, event)
-                logger.info { "sent commitment to host ${event.recv.host.name}" }
+            for (hashHost in hashHosts) {
+                runtime.send(commitment, ProtocolProjection(runtime.projection.protocol, hashHost))
+                logger.info { "sent commitment for ${sender.temporary.value.name} to host ${hashHost.name}" }
             }
 
             val hashedValue = Hashed(cleartextValue, hashInfo)
-            tempStore.put(sender.temporary.value, hashedValue)
+            tempStore = tempStore.put(sender.temporary.value, hashedValue)
         }
     }
 }

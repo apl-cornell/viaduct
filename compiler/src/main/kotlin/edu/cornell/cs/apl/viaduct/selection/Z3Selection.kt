@@ -97,9 +97,7 @@ private class Z3Selection(
             val nodeCostStr =
                 symcost.featureSum().evaluate(eval) { cvar ->
                     val interpValue = model.getConstInterp(cvar.variable)
-                    if (interpValue == null) {
-                        println(cvar.variable)
-                    }
+                    assert(interpValue != null)
                     (interpValue as IntNum).int
                 }.toString()
 

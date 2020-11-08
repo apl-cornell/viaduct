@@ -55,115 +55,140 @@ class SimpleCostEstimator(
         private const val WAN_COST = "wan"
     }
 
+    private fun opCost(lan: Int, wan: Int) =
+        zeroCost().update(LAN_COST, IntegerCost(lan)).update(WAN_COST, IntegerCost(wan))
+
+    // from Ishaq et al, CCS 2019
+    // numbers from Table 2, n=1, w/ the microsecond figure divided by 100
     private val mpcOperationCostMap: Map<Pair<Operator, ProtocolName>, Cost<IntegerCost>> =
         mapOf(
             // ADD
-            Pair(Addition, ArithABY.protocolName) to
-                zeroCost().update(LAN_COST, IntegerCost(9)).update(WAN_COST, IntegerCost(9)),
-
-            Pair(Addition, BoolABY.protocolName) to
-                zeroCost().update(LAN_COST, IntegerCost(20)).update(WAN_COST, IntegerCost(20)),
-
-            Pair(Addition, YaoABY.protocolName) to
-                zeroCost().update(LAN_COST, IntegerCost(15)).update(WAN_COST, IntegerCost(15)),
+            Pair(Addition, ArithABY.protocolName) to opCost(9, 9),
+            Pair(Addition, BoolABY.protocolName) to opCost(20, 20),
+            Pair(Addition, YaoABY.protocolName) to opCost(15, 15),
 
             // SUB
-            Pair(Subtraction, ArithABY.protocolName) to
-                zeroCost().update(LAN_COST, IntegerCost(9)).update(WAN_COST, IntegerCost(9)),
-
-            Pair(Subtraction, BoolABY.protocolName) to
-                zeroCost().update(LAN_COST, IntegerCost(445)).update(WAN_COST, IntegerCost(451)),
-
-            Pair(Subtraction, YaoABY.protocolName) to
-                zeroCost().update(LAN_COST, IntegerCost(149)).update(WAN_COST, IntegerCost(148)),
+            Pair(Subtraction, ArithABY.protocolName) to opCost(9, 9),
+            Pair(Subtraction, BoolABY.protocolName) to opCost(445, 451),
+            Pair(Subtraction, YaoABY.protocolName) to opCost(149, 148),
 
             // NEGATION (treat like subtraction)
-            Pair(Negation, ArithABY.protocolName) to
-                zeroCost().update(LAN_COST, IntegerCost(9)).update(WAN_COST, IntegerCost(9)),
-
-            Pair(Negation, BoolABY.protocolName) to
-                zeroCost().update(LAN_COST, IntegerCost(445)).update(WAN_COST, IntegerCost(451)),
-
-            Pair(Negation, YaoABY.protocolName) to
-                zeroCost().update(LAN_COST, IntegerCost(149)).update(WAN_COST, IntegerCost(148)),
+            Pair(Negation, ArithABY.protocolName) to opCost(9, 9),
+            Pair(Negation, BoolABY.protocolName) to opCost(445, 451),
+            Pair(Negation, YaoABY.protocolName) to opCost(149, 148),
 
             // MUL
-            Pair(Multiplication, ArithABY.protocolName) to
-                zeroCost().update(LAN_COST, IntegerCost(306)).update(WAN_COST, IntegerCost(314)),
+            Pair(Multiplication, ArithABY.protocolName) to opCost(306, 314),
+            Pair(Multiplication, BoolABY.protocolName) to opCost(583, 581),
+            Pair(Multiplication, YaoABY.protocolName) to opCost(281, 212),
 
-            Pair(Multiplication, BoolABY.protocolName) to
-                zeroCost().update(LAN_COST, IntegerCost(583)).update(WAN_COST, IntegerCost(581)),
-
-            Pair(Multiplication, YaoABY.protocolName) to
-                zeroCost().update(LAN_COST, IntegerCost(281)).update(WAN_COST, IntegerCost(212)),
-
-            // DIV (copied from MUL), fix this
-            Pair(Division, BoolABY.protocolName) to
-                zeroCost().update(LAN_COST, IntegerCost(583)).update(WAN_COST, IntegerCost(581)),
-
-            Pair(Division, YaoABY.protocolName) to
-                zeroCost().update(LAN_COST, IntegerCost(281)).update(WAN_COST, IntegerCost(212)),
+            // DIV (copied from MUL), TODO: fix this
+            Pair(Division, BoolABY.protocolName) to opCost(583, 581),
+            Pair(Division, YaoABY.protocolName) to opCost(281, 212),
 
             // AND
-            Pair(And, BoolABY.protocolName) to
-                zeroCost().update(LAN_COST, IntegerCost(137)).update(WAN_COST, IntegerCost(137)),
-
-            Pair(And, YaoABY.protocolName) to
-                zeroCost().update(LAN_COST, IntegerCost(146)).update(WAN_COST, IntegerCost(145)),
+            Pair(And, BoolABY.protocolName) to opCost(137, 137),
+            Pair(And, YaoABY.protocolName) to opCost(146, 145),
 
             // OR
             Pair(edu.cornell.cs.apl.viaduct.syntax.operators.Or, BoolABY.protocolName) to
-                zeroCost().update(LAN_COST, IntegerCost(138)).update(WAN_COST, IntegerCost(139)),
-
+                opCost(138, 139),
             Pair(edu.cornell.cs.apl.viaduct.syntax.operators.Or, YaoABY.protocolName) to
-                zeroCost().update(LAN_COST, IntegerCost(146)).update(WAN_COST, IntegerCost(146)),
+                opCost(146, 146),
 
-            // NOT (don't have numbers for these from Ishaq et al)
-            Pair(edu.cornell.cs.apl.viaduct.syntax.operators.Not, BoolABY.protocolName) to zeroCost(),
-
-            Pair(edu.cornell.cs.apl.viaduct.syntax.operators.Not, YaoABY.protocolName) to zeroCost(),
+            // NOT (don't have numbers for these, copy AND)
+            Pair(edu.cornell.cs.apl.viaduct.syntax.operators.Not, BoolABY.protocolName) to opCost(137, 137),
+            Pair(edu.cornell.cs.apl.viaduct.syntax.operators.Not, YaoABY.protocolName) to opCost(146, 145),
 
             // EQUAL TO
-            Pair(EqualTo, BoolABY.protocolName) to
-                zeroCost().update(LAN_COST, IntegerCost(184)).update(WAN_COST, IntegerCost(186)),
-
-            Pair(EqualTo, YaoABY.protocolName) to
-                zeroCost().update(LAN_COST, IntegerCost(146)).update(WAN_COST, IntegerCost(146)),
+            Pair(EqualTo, BoolABY.protocolName) to opCost(184, 186),
+            Pair(EqualTo, YaoABY.protocolName) to opCost(146, 146),
 
             // LESS THAN / EQUAL TO
-            Pair(LessThanOrEqualTo, BoolABY.protocolName) to
-                zeroCost().update(LAN_COST, IntegerCost(202)).update(WAN_COST, IntegerCost(202)),
-
-            Pair(LessThanOrEqualTo, YaoABY.protocolName) to
-                zeroCost().update(LAN_COST, IntegerCost(147)).update(WAN_COST, IntegerCost(147)),
+            Pair(LessThanOrEqualTo, BoolABY.protocolName) to opCost(202, 202),
+            Pair(LessThanOrEqualTo, YaoABY.protocolName) to opCost(147, 147),
 
             // LESS THAN
-            Pair(LessThan, BoolABY.protocolName) to
-                zeroCost().update(LAN_COST, IntegerCost(214)).update(WAN_COST, IntegerCost(214)),
-
-            Pair(LessThan, YaoABY.protocolName) to
-                zeroCost().update(LAN_COST, IntegerCost(148)).update(WAN_COST, IntegerCost(147)),
+            Pair(LessThan, BoolABY.protocolName) to opCost(214, 214),
+            Pair(LessThan, YaoABY.protocolName) to opCost(148, 147),
 
             // MUX
-            Pair(Mux, BoolABY.protocolName) to
-                zeroCost().update(LAN_COST, IntegerCost(141)).update(WAN_COST, IntegerCost(141)),
-
-            Pair(Mux, YaoABY.protocolName) to
-                zeroCost().update(LAN_COST, IntegerCost(148)).update(WAN_COST, IntegerCost(146)),
+            Pair(Mux, BoolABY.protocolName) to opCost(141, 141),
+            Pair(Mux, YaoABY.protocolName) to opCost(148, 146),
 
             // MIN = (MUX + LESS THAN)
-            Pair(Minimum, BoolABY.protocolName) to
-                zeroCost().update(LAN_COST, IntegerCost(141 + 214)).update(WAN_COST, IntegerCost(141 + 214)),
-
-            Pair(Minimum, YaoABY.protocolName) to
-                zeroCost().update(LAN_COST, IntegerCost(148 + 147)).update(WAN_COST, IntegerCost(146 + 147)),
+            Pair(Minimum, BoolABY.protocolName) to opCost(141 + 214, 141 + 214),
+            Pair(Minimum, YaoABY.protocolName) to opCost(148 + 147, 146 + 147),
 
             // MIN = (MUX + LESS THAN)
-            Pair(Maximum, BoolABY.protocolName) to
-                zeroCost().update(LAN_COST, IntegerCost(141)).update(WAN_COST, IntegerCost(141)),
+            Pair(Maximum, BoolABY.protocolName) to opCost(141, 141),
+            Pair(Maximum, YaoABY.protocolName) to opCost(148, 146)
+        )
 
-            Pair(Maximum, YaoABY.protocolName) to
-                zeroCost().update(LAN_COST, IntegerCost(148)).update(WAN_COST, IntegerCost(146))
+    // from the original ABY paper; cost is from setup + (sequential) online time divided by 100
+    private val mpcOperationCostMap2: Map<Pair<Operator, ProtocolName>, Cost<IntegerCost>> =
+        mapOf(
+            // ADD
+            Pair(Addition, ArithABY.protocolName) to opCost(0, 0),
+            Pair(Addition, BoolABY.protocolName) to opCost(20, 20),
+            Pair(Addition, YaoABY.protocolName) to opCost(1, 24),
+
+            // SUB (TODO: not in table, copied ADD)
+            Pair(Subtraction, ArithABY.protocolName) to opCost(0, 0),
+            Pair(Subtraction, BoolABY.protocolName) to opCost(20, 20),
+            Pair(Subtraction, YaoABY.protocolName) to opCost(1, 24),
+
+            // NEGATION (treat like subtraction)
+            Pair(Negation, ArithABY.protocolName) to opCost(0, 0),
+            Pair(Negation, BoolABY.protocolName) to opCost(20, 20),
+            Pair(Negation, YaoABY.protocolName) to opCost(1, 24),
+
+            // MUL
+            Pair(Multiplication, ArithABY.protocolName) to opCost(2, 2391),
+            Pair(Multiplication, BoolABY.protocolName) to opCost(103, 67455),
+            Pair(Multiplication, YaoABY.protocolName) to opCost(281, 212),
+
+            // DIV (TODO: no numbers for these, copied from MUL)
+            Pair(Division, BoolABY.protocolName) to opCost(103, 67455),
+            Pair(Division, YaoABY.protocolName) to opCost(281, 212),
+
+            // AND
+            Pair(And, BoolABY.protocolName) to opCost(1, 1932),
+            Pair(And, YaoABY.protocolName) to opCost(0, 23),
+
+            // OR (TODO: no numbers for these, copy AND)
+            Pair(edu.cornell.cs.apl.viaduct.syntax.operators.Or, BoolABY.protocolName) to
+                opCost(138, 139),
+            Pair(edu.cornell.cs.apl.viaduct.syntax.operators.Or, YaoABY.protocolName) to
+                opCost(146, 146),
+
+            // NOT (TODO: no numbers for these, copy AND)
+            Pair(edu.cornell.cs.apl.viaduct.syntax.operators.Not, BoolABY.protocolName) to opCost(1, 1932),
+            Pair(edu.cornell.cs.apl.viaduct.syntax.operators.Not, YaoABY.protocolName) to opCost(0, 23),
+
+            // EQUAL TO
+            Pair(EqualTo, BoolABY.protocolName) to opCost(6, 11300),
+            Pair(EqualTo, YaoABY.protocolName) to opCost(1, 23),
+
+            // LESS THAN / EQUAL TO (cost given as CMP)
+            Pair(LessThanOrEqualTo, BoolABY.protocolName) to opCost(8, 10802),
+            Pair(LessThanOrEqualTo, YaoABY.protocolName) to opCost(1, 23),
+
+            // LESS THAN (cost given as CMP)
+            Pair(LessThan, BoolABY.protocolName) to opCost(8, 10802),
+            Pair(LessThan, YaoABY.protocolName) to opCost(1, 23),
+
+            // MUX
+            Pair(Mux, BoolABY.protocolName) to opCost(2, 2252),
+            Pair(Mux, YaoABY.protocolName) to opCost(1, 23),
+
+            // MIN = (MUX + LESS THAN)
+            Pair(Minimum, BoolABY.protocolName) to opCost(2 + 8, 2252 + 10802),
+            Pair(Minimum, YaoABY.protocolName) to opCost(1 + 1, 23 + 23),
+
+            // MIN = (MUX + LESS THAN)
+            Pair(Maximum, BoolABY.protocolName) to opCost(141, 141),
+            Pair(Maximum, YaoABY.protocolName) to opCost(148, 146)
         )
 
     override fun executionCost(stmt: SimpleStatementNode, protocol: Protocol): Cost<IntegerCost> =
@@ -184,7 +209,7 @@ class SimpleCostEstimator(
                         is LetNode -> {
                             when (val rhs = stmt.value) {
                                 is OperatorApplicationNode ->
-                                    mpcOperationCostMap[rhs.operator to protocol.protocolName]
+                                    mpcOperationCostMap2[rhs.operator to protocol.protocolName]
                                         ?: throw Error(
                                             "SimpleCostEstimator: no cost for operator ${rhs.operator} " +
                                                 "in protocol ${protocol.protocolName}"

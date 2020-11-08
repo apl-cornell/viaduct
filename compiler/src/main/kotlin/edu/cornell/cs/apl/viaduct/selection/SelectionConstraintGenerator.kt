@@ -189,6 +189,16 @@ class SelectionConstraintGenerator(
     /** Generate constraints for possible protocols. */
     private fun Node.selectionConstraints(): Iterable<SelectionConstraint> =
         when (this) {
+            is ParameterNode ->
+                setOf(protocolFactory.constraint(this)).plus(
+                    VariableIn(
+                        FunctionVariable(
+                            nameAnalysis.functionDeclaration(this).name.value,
+                            this.name.value
+                        ),
+                        viableProtocols(this)
+                    )
+                )
 
             is LetNode ->
                 setOf(protocolFactory.constraint(this)).plus(
@@ -420,11 +430,11 @@ class SelectionConstraintGenerator(
         fv: FunctionVariable,
         protocols: Set<Protocol>,
         reads: List<ReadNode>,
-        baseCostFunction: (Protocol)
-        -> Cost<IntegerCost>,
+        baseCostFunction: (Protocol) -> Cost<IntegerCost>,
         symbolicCost: Cost<SymbolicCost>
     ):
         Iterable<SelectionConstraint> {
+
         // cartesian product of all viable protocols for arguments
         val argProtocolMaps: Set<PersistentMap<ReadNode, Protocol>> =
             getArgumentViableProtocols(persistentMapOf(), reads)
@@ -441,7 +451,7 @@ class SelectionConstraintGenerator(
                     argProtocolMaps.flatMap { argProtocolMap ->
                         val invalidArgProtocols =
                             argProtocolMap
-                                .filter { kv -> !protocolComposer.canCommunicate(protocol, kv.value) }
+                                .filter { kv -> !protocolComposer.canCommunicate(kv.value, protocol) }
                                 .toList()
 
                         val argProtocolConstraints: SelectionConstraint =
@@ -526,7 +536,12 @@ class SelectionConstraintGenerator(
                                 )
                             )
                         } else { // has invalid arg protocols
+                            // println("stmt: ${stmt.asDocument.print()} protocol: ${protocol.asDocument.print()}")
+                            // for (invalidProtocol in invalidArgProtocols) {
+                            //     println(invalidProtocol.second.asDocument.print())
+                            // }
                             invalidArgProtocolSet.addAll(invalidArgProtocols)
+                            // setOf(Not(argProtocolConstraints))
                             setOf()
                         }
                     }.ands()

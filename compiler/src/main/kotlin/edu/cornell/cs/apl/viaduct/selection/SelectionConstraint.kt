@@ -270,6 +270,34 @@ fun SelectionConstraint.costVariables(): Set<CostVariable> =
         is And -> this.lhs.costVariables().union(this.rhs.costVariables())
     }
 
+fun SelectionConstraint.hostVariables(): Set<HostVariable> =
+    when (this) {
+        is HostVariable -> setOf(this)
+        is GuardVisibilityFlag -> setOf()
+        is Literal -> setOf()
+        is Implies -> this.lhs.hostVariables().union(this.rhs.hostVariables())
+        is Or -> this.lhs.hostVariables().union(this.rhs.hostVariables())
+        is VariableIn -> setOf()
+        is VariableEquals -> setOf()
+        is CostEquals -> setOf()
+        is Not -> this.rhs.hostVariables()
+        is And -> this.lhs.hostVariables().union(this.rhs.hostVariables())
+    }
+
+fun SelectionConstraint.guardVisibilityVariables(): Set<GuardVisibilityFlag> =
+    when (this) {
+        is HostVariable -> setOf()
+        is GuardVisibilityFlag -> setOf(this)
+        is Literal -> setOf()
+        is Implies -> this.lhs.guardVisibilityVariables().union(this.rhs.guardVisibilityVariables())
+        is Or -> this.lhs.guardVisibilityVariables().union(this.rhs.guardVisibilityVariables())
+        is VariableIn -> setOf()
+        is VariableEquals -> setOf()
+        is CostEquals -> setOf()
+        is Not -> this.rhs.guardVisibilityVariables()
+        is And -> this.lhs.guardVisibilityVariables().union(this.rhs.guardVisibilityVariables())
+    }
+
 /** States whether an expression reads only from the protocols in [prots] **/
 fun ExpressionNode.readsFrom(nameAnalysis: NameAnalysis, prots: Set<Protocol>): SelectionConstraint =
     this.involvedVariables().map {

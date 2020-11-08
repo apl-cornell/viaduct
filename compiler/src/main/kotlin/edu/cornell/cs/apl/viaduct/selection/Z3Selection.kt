@@ -33,6 +33,9 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.ObjectDeclarationArgumentN
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ParameterNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProcessDeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
+import mu.KotlinLogging
+
+private val logger = KotlinLogging.logger("Z3Selection")
 
 enum class CostMode { MINIMIZE, MAXIMIZE }
 
@@ -174,24 +177,12 @@ private class Z3Selection(
         val reachableFunctionNames = nameAnalysis.reachableFunctions(main)
         val reachableFunctions = program.functions.filter { f -> reachableFunctionNames.contains(f.name.value) }
 
+        // select for functions first
         for (function in reachableFunctions) {
-            // select for function parameters first
-            /*
-            for (parameter in function.parameters) {
-                constraints.add(
-                    VariableIn(
-                        FunctionVariable(function.name.value, parameter.name.value),
-                        constraintGenerator.viableProtocols(parameter)
-                    )
-                )
-                constraints.addAll(constraintGenerator.getConstraints(parameter))
-            }
-            */
-
-            // then select for function bodies
             constraints.addAll(constraintGenerator.getConstraints(function))
         }
 
+        // then select for the main process
         constraints.addAll(constraintGenerator.getConstraints(main))
 
         // build variable and protocol maps
@@ -250,9 +241,13 @@ private class Z3Selection(
         val pmapExpr = pmap.mapValues { ctx.mkInt(it.value) as IntExpr }.toBiMap()
 
         // load selection constraints into Z3
-        val costVariables: MutableSet<CostVariable> = mutableSetOf()
+        val costVariables = mutableSetOf<CostVariable>()
+        val hostVariables = mutableSetOf<HostVariable>()
+        val guardVisibilityVariables = mutableSetOf<GuardVisibilityFlag>()
         for (constraint in constraints) {
             costVariables.addAll(constraint.costVariables())
+            hostVariables.addAll(constraint.hostVariables())
+            guardVisibilityVariables.addAll(constraint.guardVisibilityVariables())
             solver.Add(constraint.boolExpr(ctx, varMap, pmapExpr))
         }
 
@@ -280,6 +275,11 @@ private class Z3Selection(
                 CostMode.MAXIMIZE -> solver.MkMaximize(totalCostSymvar)
             }
 
+            val symvarCount = varMap.size + costVariables.size + hostVariables.size + guardVisibilityVariables.size
+
+            logger.info { "number of symvars: $symvarCount" }
+            logger.info { "cost mode set to $costMode" }
+
             if (solver.Check() == Status.SATISFIABLE) {
                 val model = solver.model
                 val interpMap: Map<FunctionVariable, Int> =
@@ -295,6 +295,8 @@ private class Z3Selection(
                 }
 
                 printMetadata(reachableFunctions, ::eval, model, totalCostSymvar)
+
+                logger.info { "constraints satisfiable, extracted model" }
 
                 return ::eval
             } else {

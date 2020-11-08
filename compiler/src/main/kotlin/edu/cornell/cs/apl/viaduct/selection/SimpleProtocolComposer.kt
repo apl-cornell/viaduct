@@ -98,26 +98,10 @@ object SimpleProtocolComposer : ProtocolComposer {
                 }.toSet())
             }
 
-            src is Replication && dst is Commitment -> { // TODO: fix this, make like ZKP
-                val cleartextEvents =
-                    if (src.hosts.contains(dst.cleartextHost)) {
-                        setOf(CommunicationEvent(src.hostOutputPorts[dst.cleartextHost]!!, dst.inputPort))
-                    } else {
-                        src.hosts.map { host ->
-                            CommunicationEvent(src.hostOutputPorts[host]!!, dst.inputPort)
-                        }.toSet()
-                    }
-
-                ProtocolCommunication(
-                    cleartextEvents.union(
-                        dst.hashHosts.map { hashHost ->
-                            CommunicationEvent(
-                                dst.createCommitmentOutputPort,
-                                dst.createCommitmentInputPorts[hashHost]!!
-                            )
-                        }
-                    )
-                )
+            src is Replication && dst is Commitment -> { // src.hosts contains dst.hosts
+                ProtocolCommunication(dst.hosts.map { h ->
+                    CommunicationEvent(src.hostOutputPorts[h]!!, dst.cleartextInputPorts[h]!!)
+                }.toSet())
             }
 
             src is Replication && dst is ZKP -> { // We know src.hosts contains dst.verifiers + {dst.prover}

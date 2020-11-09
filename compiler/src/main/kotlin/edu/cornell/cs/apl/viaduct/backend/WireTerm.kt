@@ -16,8 +16,8 @@ import edu.cornell.cs.apl.viaduct.syntax.operators.Or
 
 sealed class WireTerm
 data class WireOp(val op: Operator, val inputs: List<WireTerm>) : WireTerm()
-data class WireIn(val v: Int, val index: Int) : WireTerm()
-data class WireDummyIn(val index: Int) : WireTerm()
+data class WireIn(val v: Int, val index: Int, val hash: List<Byte>, val nonce: List<Byte>) : WireTerm()
+data class WireDummyIn(val index: Int, val hash: List<Byte>, val nonce: List<Byte>) : WireTerm()
 data class WireConst(val index: Int, val v: Int) : WireTerm()
 
 fun String.asPrettyPrintable(): PrettyPrintable = Document(this)
@@ -52,14 +52,14 @@ class WireGenerator {
     private var inIndex = 0
     private var constIndex = 0
     fun mkOp(op: Operator, inputs: List<WireTerm>) = WireOp(op, inputs)
-    fun mkDummyIn(): WireTerm {
-        val r = WireDummyIn(inIndex)
+    fun mkDummyIn(hash: List<Byte>, nonce: List<Byte>): WireTerm {
+        val r = WireDummyIn(inIndex, hash, nonce)
         inIndex++
         return r
     }
 
-    fun mkIn(v: Int): WireTerm {
-        val r = WireIn(v, inIndex)
+    fun mkIn(v: Int, hash: List<Byte>, nonce: List<Byte>): WireTerm {
+        val r = WireIn(v, inIndex, hash, nonce)
         inIndex++
         return r
     }
@@ -102,9 +102,9 @@ fun WireTerm.normalize(counter: NormalizeCounter): WireTerm =
                 val i = counter.inIndex
                 counter.inMap[this.index] = i
                 counter.inIndex++
-                WireIn(this.v, i)
+                WireIn(this.v, i, this.hash, this.nonce)
             } else {
-                WireIn(this.v, counter.inMap[this.index]!!)
+                WireIn(this.v, counter.inMap[this.index]!!, this.hash, this.nonce)
             }
         }
         is WireDummyIn -> {
@@ -112,9 +112,9 @@ fun WireTerm.normalize(counter: NormalizeCounter): WireTerm =
                 val i = counter.inIndex
                 counter.inMap[this.index] = i
                 counter.inIndex++
-                WireDummyIn(i)
+                WireDummyIn(i, this.hash, this.nonce)
             } else {
-                WireDummyIn(counter.inMap[this.index]!!)
+                WireDummyIn(counter.inMap[this.index]!!, this.hash, this.nonce)
             }
         }
         is WireConst -> {

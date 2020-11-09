@@ -8,16 +8,16 @@
 
 package edu.cornell.cs.apl.viaduct.libsnarkwrapper;
 
-public class WireInfo {
+public class Var {
   private transient long swigCPtr;
   protected transient boolean swigCMemOwn;
 
-  protected WireInfo(long cPtr, boolean cMemoryOwn) {
+  protected Var(long cPtr, boolean cMemoryOwn) {
     swigCMemOwn = cMemoryOwn;
     swigCPtr = cPtr;
   }
 
-  protected static long getCPtr(WireInfo obj) {
+  protected static long getCPtr(Var obj) {
     return (obj == null) ? 0 : obj.swigCPtr;
   }
 
@@ -30,29 +30,23 @@ public class WireInfo {
     if (swigCPtr != 0) {
       if (swigCMemOwn) {
         swigCMemOwn = false;
-        libsnarkwrapperJNI.delete_WireInfo(swigCPtr);
+        libsnarkwrapperJNI.delete_Var(swigCPtr);
       }
       swigCPtr = 0;
     }
   }
 
-  public void setType(WireType value) {
-    libsnarkwrapperJNI.WireInfo_type_set(swigCPtr, this, value.swigValue());
+  public void setValue(SWIGTYPE_p_libsnark__pb_variableT_field128_t value) {
+    libsnarkwrapperJNI.Var_value_set(
+        swigCPtr, this, SWIGTYPE_p_libsnark__pb_variableT_field128_t.getCPtr(value));
   }
 
-  public WireType getType() {
-    return WireType.swigToEnum(libsnarkwrapperJNI.WireInfo_type_get(swigCPtr, this));
+  public SWIGTYPE_p_libsnark__pb_variableT_field128_t getValue() {
+    return new SWIGTYPE_p_libsnark__pb_variableT_field128_t(
+        libsnarkwrapperJNI.Var_value_get(swigCPtr, this), true);
   }
 
-  public void setInput_val(long value) {
-    libsnarkwrapperJNI.WireInfo_input_val_set(swigCPtr, this, value);
-  }
-
-  public long getInput_val() {
-    return libsnarkwrapperJNI.WireInfo_input_val_get(swigCPtr, this);
-  }
-
-  public WireInfo() {
-    this(libsnarkwrapperJNI.new_WireInfo(), true);
+  public Var() {
+    this(libsnarkwrapperJNI.new_Var(), true);
   }
 }

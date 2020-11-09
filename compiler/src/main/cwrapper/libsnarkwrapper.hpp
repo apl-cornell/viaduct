@@ -1,72 +1,5 @@
+#include "utils.hpp"
 
-#include <vector>
-#include <string>
-#define CURVE_ALT_BN128
-#include <libff/common/profiling.hpp>
-#include <libff/common/utils.hpp>
-#include <libsnark/common/default_types/r1cs_ppzksnark_pp.hpp>
-#include <libsnark/zk_proof_systems/ppzksnark/r1cs_ppzksnark/r1cs_ppzksnark.hpp>
-#include <iostream>
-
-
-typedef libff::Fr<libsnark::default_r1cs_ppzksnark_pp> field128;
-typedef libsnark::linear_combination<field128> lincomb;
-typedef libsnark::linear_term<field128> linterm;
-typedef libsnark::variable<field128> var;
-
-struct Term {
-    long long coeff = 1;
-    int wireID = 0;
-};
-
-struct LinComb {
-    long long constTerm = 0;
-    std::vector<Term> linTerms;
-
-    lincomb to_lincomb() {
-        std::vector<linterm > terms;
-        terms.push_back(linterm(var(0), constTerm));
-        for (int i = 0; i < linTerms.size(); i++) {
-            terms.push_back(linterm(var(linTerms[i].wireID), linTerms[i].coeff));
-        }
-        return terms;
-    }
-
-};
-
-
-
-struct Constraint {
-    LinComb lhs;
-    LinComb rhs;
-    LinComb eq;
-    std::string annotation;
-};
-
-
-enum WireType {
-    WIRE_IN,
-    WIRE_DUMMY_IN,
-    WIRE_PUBLIC_IN,
-};
-
-struct WireInfo {
-    WireType type; // should be an enum
-    long long input_val = 0;
-};
-
-// Basically just a wrapper around std::string for binary data
-struct ByteBuf {
-    std::string contents;
-    const signed char* get_data(size_t *len) {
-        *len = contents.size();
-        return (signed char*) contents.data();
-    }
-};
-
-ByteBuf mkByteBuf(const char data[], size_t len) {
-    return {std::string(data, len)};
-}
 
 struct Keypair {
     ByteBuf proving_key;
@@ -77,208 +10,234 @@ void initZKP() {
     libsnark::default_r1cs_ppzksnark_pp::init_public_params();
 }
 
-void dump_constraint_system(libsnark::r1cs_constraint_system<libff::Fr<libsnark::default_r1cs_ppzksnark_pp> > CS,
-    std::map<size_t, std::string> annotations,
-    std::vector<std::string> constraint_annotations = std::vector<std::string>()
-    ) {
-    std::cout<<" Constraint system size: " << CS.constraints.size() << "\n";
-    for (size_t c = 0; c < CS.constraints.size(); ++c) {
-            std::string annotation = "";
-            if (c < constraint_annotations.size()) {
-                annotation = constraint_annotations[c];
-            }
-            std::cout<< "Constraint " << c << ":" << annotation << "\n";
-            printf("terms for a:\n"); CS.constraints[c].a.print(annotations);
-            printf("terms for b:\n"); CS.constraints[c].b.print(annotations);
-            printf("terms for c:\n"); CS.constraints[c].c.print(annotations);
-    }
+ByteBuf get_sha_nonce_val (ByteBuf nonce, long long val) {
+    protoboard pb;
+    auto res = mkSHA(pb, val, nonce.contents, true);
+    auto hash_str = bvec_to_string(res.output.get_bits(pb));
+    return {hash_str};
 }
 
-void dump_inputs(std::vector<field128> primary_input, std::vector<field128> aux_input) {
-    std::cout<<"Primary: \n";
-    for (int i = 0; i < primary_input.size(); ++i)
-        std::cout<<"x_" << i + 1 << " = " << primary_input[i] << "\n";
+class R1CSInstance {
+    private:
+        protoboard pb;
 
-    std::cout<<"\nAux: \n";
-    for (int i = 0; i < aux_input.size(); ++i)
-        std::cout<<"x_" << i + primary_input.size() + 1 << " = " << aux_input[i] << "\n";
+        bool inserting_public = true;
+        int num_public = 0;
 
-}
-
-bool ensure_satisfied(libsnark::r1cs_constraint_system<libff::Fr<libsnark::default_r1cs_ppzksnark_pp> > CS,
-    std::vector<field128> primary_input,
-    std::vector<field128> auxiliary_input,
-    std::map<size_t, std::string> annotations) {
-
-    assert(primary_input.size() == CS.num_inputs());
-    assert(primary_input.size() + auxiliary_input.size() == CS.num_variables());
-
-    libsnark::r1cs_variable_assignment<field128> full_variable_assignment = primary_input;
-    full_variable_assignment.insert(full_variable_assignment.end(), auxiliary_input.begin(), auxiliary_input.end());
-
-    for (size_t c = 0; c < CS.constraints.size(); ++c)
-    {
-        const field128 ares = CS.constraints[c].a.evaluate(full_variable_assignment);
-        const field128 bres = CS.constraints[c].b.evaluate(full_variable_assignment);
-        const field128 cres = CS.constraints[c].c.evaluate(full_variable_assignment);
-
-        if (!(ares*bres == cres))
-        {
-            printf("constraint %zu unsatisfied\n", c);
-            printf("<a,(1,x)> = "); ares.print();
-            printf("<b,(1,x)> = "); bres.print();
-            printf("<c,(1,x)> = "); cres.print();
-            printf("constraint was:\n");
-            printf("terms for a:\n"); CS.constraints[c].a.print_with_assignment(full_variable_assignment, annotations);
-            printf("terms for b:\n"); CS.constraints[c].b.print_with_assignment(full_variable_assignment, annotations);
-            printf("terms for c:\n"); CS.constraints[c].c.print_with_assignment(full_variable_assignment, annotations);
-            dump_inputs(primary_input, auxiliary_input);
-            assert (false);
-            return false;
+    public:
+        R1CSInstance() {
         }
-    }
+        bool isProver = false;
 
-    return true;
-}
-
-struct R1CS {
-    std::vector<WireInfo> wires;
-    std::vector<Constraint> constraints;
-    std::map<size_t, std::string> wire_annotations;
-    std::vector<std::string> constraint_annotations;
-
-    // Derived notions
-    std::vector<field128> primary_input;
-    std::vector<field128> aux_input;
-
-    // Constraint system
-    libsnark::r1cs_constraint_system<libff::Fr<libsnark::default_r1cs_ppzksnark_pp> > CS =
-        libsnark::r1cs_constraint_system<libff::Fr<libsnark::default_r1cs_ppzksnark_pp> >();
-    bool initialized = false;
-
-    int mkWire(WireInfo info, std::string annotation) {
-        wires.push_back(info);
-        wire_annotations[wires.size() - 1] = annotation;
-        if (info.type == WIRE_PUBLIC_IN) {
-            primary_input.push_back(info.input_val);
-            CS.primary_input_size++;
-        }
-        if (info.type == WIRE_IN) {
-            aux_input.push_back(info.input_val);
-            CS.auxiliary_input_size++;
-        }
-        if (info.type == WIRE_DUMMY_IN) {
-            CS.auxiliary_input_size++;
-        }
-        return wires.size();
-    }
-
-    void addConstraint(Constraint c) {
-        constraints.push_back(c);
-        constraint_annotations.push_back(c.annotation);
-    }
-
-    void reportConstraintSystem(libsnark::r1cs_constraint_system<libff::Fr<libsnark::default_r1cs_ppzksnark_pp> > cs) {
-            std::cout<<"constraint system primary inputs = " << cs.primary_input_size << "\n";
-            std::cout<<"constraint system aux inputs = " << cs.auxiliary_input_size << "\n";
-            std::cout<<"constraint system constraint size = " << cs.num_constraints() << "\n";
-    }
-
-    // Generate proof. Input: Proving key.
-    ByteBuf generateProof(ByteBuf provingKey) {
-
-        libff::inhibit_profiling_info = true;
-        libff::inhibit_profiling_counters = true;
-
-        libsnark::r1cs_ppzksnark_proving_key<libsnark::default_r1cs_ppzksnark_pp> pk;
-        std::stringstream pk_stream(provingKey.contents);
-        pk_stream >> pk;
-
-        if (pk.constraint_system.primary_input_size != primary_input.size()) {
-            reportConstraintSystem(pk.constraint_system);
-            assert(false);
+        Var mkPublicVal(long long val) {
+            assert(inserting_public);
+            pb_variable x;
+            x.allocate(pb);
+            pb.val(x) = val;
+            num_public++;
+            return {x};
         }
 
-
-        // dump_constraint_system(pk.constraint_system, wire_annotations);
-        ensure_satisfied(pk.constraint_system, primary_input, aux_input, wire_annotations);
-
-        std::stringstream pf_stream;
-        pf_stream << libsnark::r1cs_ppzksnark_prover(pk, primary_input, aux_input);
-
-        return {pf_stream.str()};
-    }
-
-    // Requires that wires are only dummy_in, public, or internal
-    bool verifyProof(ByteBuf verificationKey, ByteBuf proof) {
-
-        libff::inhibit_profiling_info = true;
-        libff::inhibit_profiling_counters = true;
-
-        // Deserialize the verification key
-        libsnark::r1cs_ppzksnark_verification_key<libsnark::default_r1cs_ppzksnark_pp> vk;
-        std::stringstream vk_stream(verificationKey.contents);
-        vk_stream >> vk;
-
-        // Deserialize proof
-        libsnark::r1cs_ppzksnark_proof<libsnark::default_r1cs_ppzksnark_pp> pf;
-        std::stringstream pf_stream(proof.contents);
-        pf_stream >> pf;
-
-        return libsnark::r1cs_ppzksnark_verifier_strong_IC(vk, primary_input, pf);
-    }
-
-    void initConstraintSystem() {
-        if (initialized) {
-            return;
+        VarArray mkPublicBitvec(std::vector<bool> bits) {
+            assert(inserting_public);
+            pb_variable_array out;
+            out.allocate(pb, bits.size());
+            out.fill_with_bits(pb, bits);
+            num_public += bits.size();
+            return {out};
         }
-        else {
-            // Get input sizes
-            size_t num_primary_inputs = 0;
-            size_t num_aux_inputs = 0;
-            for (int i = 0; i < wires.size(); i++) {
-                if ((wires[i].type == WIRE_IN) || (wires[i].type == WIRE_DUMMY_IN)) {
-                    num_aux_inputs++;
-                }
-                if (wires[i].type == WIRE_PUBLIC_IN) {
-                    num_primary_inputs++;
-                }
+
+        VarArray mkPublicBitvec(ByteBuf buf) {
+            return mkPublicBitvec(string_to_bvec(buf.contents));
+        }
+
+        Var mkPrivateValProver(long long val, VarArray hash, VarArray nonce) {
+            assert(isProver);
+            assert(nonce.values.size() == libsnark::SHA256_digest_size);
+            inserting_public = false;
+
+            auto res = mkSHA(pb, val, bvec_to_string(nonce.values.get_bits(pb)), true);
+            addEquality(pb, res.output, hash.values);
+            return {res.val_var};
+        }
+
+        Var mkPrivateValVerifier(VarArray hash, VarArray nonce) {
+            assert(!isProver);
+            assert(nonce.values.size() == libsnark::SHA256_digest_size);
+            inserting_public = false;
+
+            auto res = mkSHA(pb, 0, bvec_to_string(nonce.values.get_bits(pb)), false);
+            addEquality(pb, res.output, hash.values);
+            return {res.val_var};
+        }
+
+        Var mkAnd(Var lhs, Var rhs) {
+            inserting_public = false;
+            libsnark::generate_boolean_r1cs_constraint<field128>(pb, lhs.value);
+            libsnark::generate_boolean_r1cs_constraint<field128>(pb, rhs.value);
+            pb_variable out;
+            out.allocate(pb);
+            pb.add_r1cs_constraint(constraint(lhs.value, rhs.value, out));
+            if (isProver) {
+                pb.val(out) = pb.val(lhs.value) * pb.val(rhs.value);
             }
-            CS.primary_input_size = num_primary_inputs;
-            CS.auxiliary_input_size = num_aux_inputs;
-            for (int i = 0; i < constraints.size(); i++) {
-                // Add constraint to CS
-                auto lhs_lc = constraints[i].lhs.to_lincomb();
-                auto rhs_lc = constraints[i].rhs.to_lincomb();
-                auto eq_lc = constraints[i].eq.to_lincomb();
-                auto constraint = libsnark::r1cs_constraint<libff::Fr<libsnark::default_r1cs_ppzksnark_pp> >();
-                constraint.a = lhs_lc;
-                constraint.b = rhs_lc;
-                constraint.c = eq_lc;
-                CS.add_constraint(constraint);
-            }
-            initialized = true;
+            return {out};
         }
-    }
 
+        Var mkNot(Var v) {
+            inserting_public = false;
+            libsnark::generate_boolean_r1cs_constraint<field128>(pb, v.value);
+            pb_variable out;
+            out.allocate(pb);
+            pb.add_r1cs_constraint(constraint(1, 1-v.value, out));
+            if (isProver) {
+                pb.val(out) = field128::one() - pb.val(v.value);
+            }
+            return {out};
+        }
 
-    // Requires that wires are only in, public, or internal
-    Keypair genKeypair() {
+        Var mkOr(Var lhs, Var rhs) {
+            return mkNot(mkAnd(mkNot(lhs), mkNot(rhs)));
+        }
 
-        libff::inhibit_profiling_info = true;
-        libff::inhibit_profiling_counters = true;
+        Var mkMult(Var lhs, Var rhs) {
+            inserting_public = false;
+            pb_variable out;
+            out.allocate(pb);
+            pb.add_r1cs_constraint(constraint(lhs.value, rhs.value, out));
+            if (isProver) {
+                pb.val(out) = pb.val(lhs.value) * pb.val(rhs.value);
+            }
+            return {out};
+        }
 
-        initConstraintSystem();
-        ensure_satisfied(CS, primary_input, aux_input, wire_annotations);
-        auto kp = libsnark::r1cs_ppzksnark_generator<libsnark::default_r1cs_ppzksnark_pp>(CS);
-        std::stringstream kp_pk, kp_vk;
-        kp_pk << kp.pk;
-        kp_vk << kp.vk;
-        return { { kp_pk.str() }, { kp_vk.str() } };
-    }
+        Var mkAdd(Var lhs, Var rhs) {
+            inserting_public = false;
+            pb_variable out;
+            out.allocate(pb);
+            pb.add_r1cs_constraint(constraint(1, lhs.value + rhs.value, out));
+            if (isProver) {
+                pb.val(out) = pb.val(lhs.value) + pb.val(rhs.value);
+            }
+            return {out};
+        }
+
+        Var mkMux(Var b, Var lhs, Var rhs) {
+            libsnark::generate_boolean_r1cs_constraint<field128>(pb, b.value);
+
+            pb_variable out1;
+            out1.allocate(pb);
+            pb.add_r1cs_constraint(constraint(b.value, lhs.value, out1));
+
+            if (isProver) {
+                pb.val(out1) = pb.val(b.value) * pb.val(lhs.value);
+            }
+
+            pb_variable out2;
+            out2.allocate(pb);
+            pb.add_r1cs_constraint(constraint(1- b.value, rhs.value, out1));
+
+            if (isProver) {
+                pb.val(out2) = (field128::one() - pb.val(b.value)) * pb.val(rhs.value);
+            }
+
+            return mkAdd({out1}, {out2});
+        }
+
+        Var mkEqualTo(Var a, Var b) {
+            pb_variable less, less_or_eq;
+            less.allocate(pb);
+            less_or_eq.allocate(pb);
+            auto cg = libsnark::comparison_gadget<field128>(pb, 32, a.value, b.value, less, less_or_eq);
+            cg.generate_r1cs_constraints();
+            if (isProver) {
+                cg.generate_r1cs_witness();
+            }
+
+            return mkAnd(mkNot({less}), {less_or_eq});
+        }
+
+        Var mkLessThan(Var a, Var b) {
+            pb_variable less, less_or_eq;
+            less.allocate(pb);
+            less_or_eq.allocate(pb);
+            auto cg = libsnark::comparison_gadget<field128>(pb, 32, a.value, b.value, less, less_or_eq);
+            cg.generate_r1cs_constraints();
+            if (isProver) {
+                cg.generate_r1cs_witness();
+            }
+            return {less};
+        }
+
+        Var mkLE(Var a, Var b) {
+            pb_variable less, less_or_eq;
+            less.allocate(pb);
+            less_or_eq.allocate(pb);
+            auto cg = libsnark::comparison_gadget<field128>(pb, 32, a.value, b.value, less, less_or_eq);
+            cg.generate_r1cs_constraints();
+            if (isProver) {
+                cg.generate_r1cs_witness();
+            }
+            return {less_or_eq};
+        }
+
+        void AddEquality(Var a, Var b) {
+            addEquality(pb, a, b);
+        }
+
+        // Requires that wires are only dummy_in, public, or internal
+        bool verifyProof(ByteBuf verificationKey, ByteBuf proof) {
+
+            libff::inhibit_profiling_info = true;
+            libff::inhibit_profiling_counters = true;
+            pb.set_input_sizes(num_public);
+
+            // Deserialize the verification key
+            libsnark::r1cs_ppzksnark_verification_key<libsnark::default_r1cs_ppzksnark_pp> vk;
+            std::stringstream vk_stream(verificationKey.contents);
+            vk_stream >> vk;
+
+            // Deserialize proof
+            libsnark::r1cs_ppzksnark_proof<libsnark::default_r1cs_ppzksnark_pp> pf;
+            std::stringstream pf_stream(proof.contents);
+            pf_stream >> pf;
+
+            return libsnark::r1cs_ppzksnark_verifier_strong_IC(vk, pb.primary_input(), pf);
+        }
+
+        // Generate proof. Input: Proving key.
+        ByteBuf generateProof(ByteBuf provingKey) {
+            assert (isProver);
+            pb.set_input_sizes(num_public);
+            assert (ensure_satisfied(pb));
+
+            libff::inhibit_profiling_info = true;
+            libff::inhibit_profiling_counters = true;
+
+            libsnark::r1cs_ppzksnark_proving_key<libsnark::default_r1cs_ppzksnark_pp> pk;
+            std::stringstream pk_stream(provingKey.contents);
+            pk_stream >> pk;
+
+            std::stringstream pf_stream;
+            pf_stream << libsnark::r1cs_ppzksnark_prover<libsnark::default_r1cs_ppzksnark_pp>(pk, pb.primary_input(), pb.auxiliary_input());
+            return {pf_stream.str()};
+        }
+
+        Keypair genKeypair() {
+            assert (isProver);
+            pb.set_input_sizes(num_public);
+            assert (ensure_satisfied(pb));
+
+            libff::inhibit_profiling_info = true;
+            libff::inhibit_profiling_counters = true;
+
+            auto cs = pb.get_constraint_system();
+            auto kp = libsnark::r1cs_ppzksnark_generator<libsnark::default_r1cs_ppzksnark_pp>(cs);
+
+            std::stringstream kp_pk, kp_vk;
+            kp_pk << kp.pk;
+            kp_vk << kp.vk;
+            return { { kp_pk.str() }, { kp_vk.str() } };
+        }
+
 };
-
-
-
-
-

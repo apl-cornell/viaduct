@@ -9,9 +9,11 @@ import edu.cornell.cs.apl.viaduct.backend.ViaductProcessRuntime
 import edu.cornell.cs.apl.viaduct.backend.WireGenerator
 import edu.cornell.cs.apl.viaduct.backend.WireTerm
 import edu.cornell.cs.apl.viaduct.backend.asString
+import edu.cornell.cs.apl.viaduct.backend.commitment.genNonce
 import edu.cornell.cs.apl.viaduct.backend.eval
 import edu.cornell.cs.apl.viaduct.backend.wireName
 import edu.cornell.cs.apl.viaduct.errors.ViaductInterpreterError
+import edu.cornell.cs.apl.viaduct.libsnarkwrapper.libsnarkwrapper
 import edu.cornell.cs.apl.viaduct.libsnarkwrapper.libsnarkwrapper.mkByteBuf
 import edu.cornell.cs.apl.viaduct.protocols.ZKP
 import edu.cornell.cs.apl.viaduct.selection.ProtocolCommunication
@@ -95,7 +97,9 @@ class ZKPProverInterpreter(
         }
 
     init {
+        System.loadLibrary("snarkwrapper")
         assert(runtime.projection.protocol is ZKP)
+        libsnarkwrapper.initZKP()
 
         objectStoreStack.push(persistentMapOf())
         wireStack.push(persistentMapOf())
@@ -126,8 +130,7 @@ class ZKPProverInterpreter(
         objectStoreStack.pop()
     }
 
-    /** Inject a value into a wire. **/
-    private fun injectValue(value: Value, isInput: Boolean = false): WireTerm {
+    private fun injectConst(value: Value): WireTerm {
         val i = when (value) {
             is IntegerValue -> value.value
             is BooleanValue -> if (value.value) {
@@ -137,11 +140,28 @@ class ZKPProverInterpreter(
             }
             else -> throw Exception("runtime error: unexpected value $value")
         }
-        return if (isInput) {
-            wireGenerator.mkIn(i)
-        } else {
-            wireGenerator.mkConst(i)
+        return wireGenerator.mkConst(i)
+    }
+
+    private suspend fun mkInput(value: Value): WireTerm {
+        val i = when (value) {
+            is IntegerValue -> value.value
+            is BooleanValue -> if (value.value) {
+                1
+            } else {
+                0
+            }
+            else -> throw Exception("runtime error: unexpected value $value")
         }
+        val nonce = genNonce(32) // 256 / 8 = 32
+
+        val hash = libsnarkwrapper.get_sha_nonce_val(mkByteBuf(nonce.toByteArray()), i.toLong())
+
+        for (h: Host in verifiers) {
+            runtime.send(ByteVecValue(hash._data.toList()), ProtocolProjection(runtime.projection.protocol, h))
+            runtime.send(ByteVecValue(nonce.toList()), ProtocolProjection(runtime.projection.protocol, h))
+        }
+        return wireGenerator.mkIn(i, hash._data.toList(), nonce.toList())
     }
 
     private fun Int.toValue(t: ValueType): Value {
@@ -206,7 +226,7 @@ class ZKPProverInterpreter(
 
     private fun getAtomicExprWire(expr: AtomicExpressionNode): WireTerm =
         when (expr) {
-            is LiteralNode -> injectValue(expr.value)
+            is LiteralNode -> injectConst(expr.value)
             is ReadNode -> wireStore[expr.temporary.value]!!
         }
 
@@ -362,7 +382,7 @@ class ZKPProverInterpreter(
                     assert(secretInputs.size == 1)
                     val sendEvent = secretInputs.first()
                     val msg = runtime.receive(ProtocolProjection(sendEvent.send.protocol, sendEvent.send.host))
-                    val wire = injectValue(msg, true)
+                    val wire = mkInput(msg)
                     tempStore = tempStore.put(sender.temporary.value, msg)
                     wireStore = wireStore.put(sender.temporary.value, wire)
                 }
@@ -378,7 +398,7 @@ class ZKPProverInterpreter(
                             throw ViaductInterpreterError("ZKP public input: received different values")
                         }
                     }
-                    val wire = injectValue(cleartextValue!!, false)
+                    val wire = injectConst(cleartextValue!!)
                     tempStore = tempStore.put(sender.temporary.value, cleartextValue)
                     wireStore = wireStore.put(sender.temporary.value, wire)
                 }

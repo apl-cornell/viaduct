@@ -9,59 +9,74 @@
 package edu.cornell.cs.apl.viaduct.libsnarkwrapper;
 
 public class libsnarkwrapper {
-  public static ByteBuf mkByteBuf(byte[] data) {
-    return new ByteBuf(libsnarkwrapperJNI.mkByteBuf(data), true);
-  }
-
   public static void initZKP() {
     libsnarkwrapperJNI.initZKP();
   }
 
-  public static void dump_constraint_system(
-      SWIGTYPE_p_libsnark__r1cs_constraint_systemT_libff__FrT_libsnark__default_r1cs_ppzksnark_pp_t_t
-          CS,
-      SWIGTYPE_p_std__mapT_size_t_std__string_t annotations,
-      SWIGTYPE_p_std__vectorT_std__string_t constraint_annotations) {
-    libsnarkwrapperJNI.dump_constraint_system__SWIG_0(
-        SWIGTYPE_p_libsnark__r1cs_constraint_systemT_libff__FrT_libsnark__default_r1cs_ppzksnark_pp_t_t
-            .getCPtr(CS),
-        SWIGTYPE_p_std__mapT_size_t_std__string_t.getCPtr(annotations),
-        SWIGTYPE_p_std__vectorT_std__string_t.getCPtr(constraint_annotations));
+  public static ByteBuf get_sha_nonce_val(ByteBuf nonce, long val) {
+    return new ByteBuf(
+        libsnarkwrapperJNI.get_sha_nonce_val(ByteBuf.getCPtr(nonce), nonce, val), true);
   }
 
-  public static void dump_constraint_system(
-      SWIGTYPE_p_libsnark__r1cs_constraint_systemT_libff__FrT_libsnark__default_r1cs_ppzksnark_pp_t_t
-          CS,
-      SWIGTYPE_p_std__mapT_size_t_std__string_t annotations) {
-    libsnarkwrapperJNI.dump_constraint_system__SWIG_1(
-        SWIGTYPE_p_libsnark__r1cs_constraint_systemT_libff__FrT_libsnark__default_r1cs_ppzksnark_pp_t_t
-            .getCPtr(CS),
-        SWIGTYPE_p_std__mapT_size_t_std__string_t.getCPtr(annotations));
+  public static long divide_rounding_up(long dividend, long divisor) {
+    return libsnarkwrapperJNI.divide_rounding_up(dividend, divisor);
   }
 
-  public static void dump_inputs(
-      SWIGTYPE_p_std__vectorT_libff__FrT_libsnark__default_r1cs_ppzksnark_pp_t_t primary_input,
-      SWIGTYPE_p_std__vectorT_libff__FrT_libsnark__default_r1cs_ppzksnark_pp_t_t aux_input) {
-    libsnarkwrapperJNI.dump_inputs(
-        SWIGTYPE_p_std__vectorT_libff__FrT_libsnark__default_r1cs_ppzksnark_pp_t_t.getCPtr(
-            primary_input),
-        SWIGTYPE_p_std__vectorT_libff__FrT_libsnark__default_r1cs_ppzksnark_pp_t_t.getCPtr(
-            aux_input));
+  public static String bvec_to_string(BoolVector bitvector) {
+    return libsnarkwrapperJNI.bvec_to_string(BoolVector.getCPtr(bitvector), bitvector);
+  }
+
+  public static BoolVector string_to_bvec(String data) {
+    return new BoolVector(libsnarkwrapperJNI.string_to_bvec(data), true);
+  }
+
+  public static ByteBuf mkByteBuf(byte[] data) {
+    return new ByteBuf(libsnarkwrapperJNI.mkByteBuf(data), true);
   }
 
   public static boolean ensure_satisfied(
       SWIGTYPE_p_libsnark__r1cs_constraint_systemT_libff__FrT_libsnark__default_r1cs_ppzksnark_pp_t_t
           CS,
       SWIGTYPE_p_std__vectorT_libff__FrT_libsnark__default_r1cs_ppzksnark_pp_t_t primary_input,
-      SWIGTYPE_p_std__vectorT_libff__FrT_libsnark__default_r1cs_ppzksnark_pp_t_t auxiliary_input,
-      SWIGTYPE_p_std__mapT_size_t_std__string_t annotations) {
-    return libsnarkwrapperJNI.ensure_satisfied(
+      SWIGTYPE_p_std__vectorT_libff__FrT_libsnark__default_r1cs_ppzksnark_pp_t_t auxiliary_input) {
+    return libsnarkwrapperJNI.ensure_satisfied__SWIG_0(
         SWIGTYPE_p_libsnark__r1cs_constraint_systemT_libff__FrT_libsnark__default_r1cs_ppzksnark_pp_t_t
             .getCPtr(CS),
         SWIGTYPE_p_std__vectorT_libff__FrT_libsnark__default_r1cs_ppzksnark_pp_t_t.getCPtr(
             primary_input),
         SWIGTYPE_p_std__vectorT_libff__FrT_libsnark__default_r1cs_ppzksnark_pp_t_t.getCPtr(
-            auxiliary_input),
-        SWIGTYPE_p_std__mapT_size_t_std__string_t.getCPtr(annotations));
+            auxiliary_input));
+  }
+
+  public static boolean ensure_satisfied(SWIGTYPE_p_libsnark__protoboardT_field128_t pb) {
+    return libsnarkwrapperJNI.ensure_satisfied__SWIG_1(
+        SWIGTYPE_p_libsnark__protoboardT_field128_t.getCPtr(pb));
+  }
+
+  public static void addEquality(SWIGTYPE_p_libsnark__protoboardT_field128_t pb, Var a, Var b) {
+    libsnarkwrapperJNI.addEquality__SWIG_0(
+        SWIGTYPE_p_libsnark__protoboardT_field128_t.getCPtr(pb),
+        Var.getCPtr(a),
+        a,
+        Var.getCPtr(b),
+        b);
+  }
+
+  public static void addEquality(
+      SWIGTYPE_p_libsnark__protoboardT_field128_t pb,
+      SWIGTYPE_p_libsnark__pb_variable_arrayT_field128_t a,
+      SWIGTYPE_p_libsnark__pb_variable_arrayT_field128_t b) {
+    libsnarkwrapperJNI.addEquality__SWIG_1(
+        SWIGTYPE_p_libsnark__protoboardT_field128_t.getCPtr(pb),
+        SWIGTYPE_p_libsnark__pb_variable_arrayT_field128_t.getCPtr(a),
+        SWIGTYPE_p_libsnark__pb_variable_arrayT_field128_t.getCPtr(b));
+  }
+
+  public static ShaResult mkSHA(
+      SWIGTYPE_p_libsnark__protoboardT_field128_t pb, long v, String nonce, boolean isProver) {
+    return new ShaResult(
+        libsnarkwrapperJNI.mkSHA(
+            SWIGTYPE_p_libsnark__protoboardT_field128_t.getCPtr(pb), v, nonce, isProver),
+        true);
   }
 }

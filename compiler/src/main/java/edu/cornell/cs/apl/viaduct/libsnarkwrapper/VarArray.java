@@ -8,16 +8,16 @@
 
 package edu.cornell.cs.apl.viaduct.libsnarkwrapper;
 
-public class Term {
+public class VarArray {
   private transient long swigCPtr;
   protected transient boolean swigCMemOwn;
 
-  protected Term(long cPtr, boolean cMemoryOwn) {
+  protected VarArray(long cPtr, boolean cMemoryOwn) {
     swigCMemOwn = cMemoryOwn;
     swigCPtr = cPtr;
   }
 
-  protected static long getCPtr(Term obj) {
+  protected static long getCPtr(VarArray obj) {
     return (obj == null) ? 0 : obj.swigCPtr;
   }
 
@@ -30,29 +30,23 @@ public class Term {
     if (swigCPtr != 0) {
       if (swigCMemOwn) {
         swigCMemOwn = false;
-        libsnarkwrapperJNI.delete_Term(swigCPtr);
+        libsnarkwrapperJNI.delete_VarArray(swigCPtr);
       }
       swigCPtr = 0;
     }
   }
 
-  public void setCoeff(long value) {
-    libsnarkwrapperJNI.Term_coeff_set(swigCPtr, this, value);
+  public void setValues(SWIGTYPE_p_libsnark__pb_variable_arrayT_field128_t value) {
+    libsnarkwrapperJNI.VarArray_values_set(
+        swigCPtr, this, SWIGTYPE_p_libsnark__pb_variable_arrayT_field128_t.getCPtr(value));
   }
 
-  public long getCoeff() {
-    return libsnarkwrapperJNI.Term_coeff_get(swigCPtr, this);
+  public SWIGTYPE_p_libsnark__pb_variable_arrayT_field128_t getValues() {
+    return new SWIGTYPE_p_libsnark__pb_variable_arrayT_field128_t(
+        libsnarkwrapperJNI.VarArray_values_get(swigCPtr, this), true);
   }
 
-  public void setWireID(int value) {
-    libsnarkwrapperJNI.Term_wireID_set(swigCPtr, this, value);
-  }
-
-  public int getWireID() {
-    return libsnarkwrapperJNI.Term_wireID_get(swigCPtr, this);
-  }
-
-  public Term() {
-    this(libsnarkwrapperJNI.new_Term(), true);
+  public VarArray() {
+    this(libsnarkwrapperJNI.new_VarArray(), true);
   }
 }

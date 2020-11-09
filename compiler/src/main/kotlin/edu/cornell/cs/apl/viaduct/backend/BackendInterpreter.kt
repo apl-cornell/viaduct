@@ -80,7 +80,7 @@ class BackendInterpreter(
 
         val duration = measureTimeMillis {
             run(nameAnalysis.enclosingFunctionName(mainBody), mainBody)
-            synchronize(allHosts, allHosts)
+            // synchronize(allHosts, allHosts)
         }
 
         logger.info { "finished interpretation, total running time: ${duration}ms" }
@@ -150,7 +150,7 @@ class BackendInterpreter(
                     }
                 }
 
-                synchronize(protocolAnalysis.participatingHosts(stmt), protocolAnalysis.hostsToSync(stmt))
+                // synchronize(protocolAnalysis.participatingHosts(stmt), protocolAnalysis.hostsToSync(stmt))
             }
 
             is SimpleStatementNode -> {
@@ -160,7 +160,7 @@ class BackendInterpreter(
                         ?: throw ViaductInterpreterError("no backend for protocol ${protocol.asDocument.print()}")
                 }
 
-                synchronize(protocolAnalysis.participatingHosts(stmt), protocolAnalysis.hostsToSync(stmt))
+                // synchronize(protocolAnalysis.participatingHosts(stmt), protocolAnalysis.hostsToSync(stmt))
             }
 
             is FunctionCallNode -> {
@@ -217,7 +217,7 @@ class BackendInterpreter(
                     }
                 }
 
-                synchronize(protocolAnalysis.participatingHosts(stmt), protocolAnalysis.hostsToSync(stmt))
+                // synchronize(protocolAnalysis.participatingHosts(stmt), protocolAnalysis.hostsToSync(stmt))
             }
 
             is InfiniteLoopNode -> {
@@ -248,7 +248,7 @@ class BackendInterpreter(
                     }
                 }
 
-                synchronize(protocolAnalysis.participatingHosts(stmt), protocolAnalysis.hostsToSync(stmt))
+                // synchronize(protocolAnalysis.participatingHosts(stmt), protocolAnalysis.hostsToSync(stmt))
             }
 
             is BreakNode -> {
@@ -270,7 +270,7 @@ class BackendInterpreter(
                     interpreter.popContext()
                 }
 
-                synchronize(protocolAnalysis.participatingHosts(stmt), protocolAnalysis.hostsToSync(stmt))
+                // synchronize(protocolAnalysis.participatingHosts(stmt), protocolAnalysis.hostsToSync(stmt))
             }
 
             is AssertionNode -> {

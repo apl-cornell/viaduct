@@ -344,10 +344,14 @@ class ZKPProverInterpreter(
                     logger.info { "Proving.." }
                     val pf = r1cs.makeProof(pk)
                     logger.info { "Proof done!" }
+
+                    // send to all verifiers who need to release output
                     for (v: Host in verifiers) {
-                        val hostProjection = ProtocolProjection(runtime.projection.protocol, v)
-                        runtime.send(IntegerValue(wireVal), hostProjection)
-                        runtime.send(ByteVecValue(pf._data.toList()), hostProjection)
+                        if (events.getHostSends(v).isNotEmpty()) {
+                            val hostProjection = ProtocolProjection(runtime.projection.protocol, v)
+                            runtime.send(IntegerValue(wireVal), hostProjection)
+                            runtime.send(ByteVecValue(pf._data.toList()), hostProjection)
+                        }
                     }
                 }
             }

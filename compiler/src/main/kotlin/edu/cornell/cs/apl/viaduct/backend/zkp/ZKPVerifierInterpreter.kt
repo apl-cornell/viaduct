@@ -274,7 +274,8 @@ class ZKPVerifierInterpreter(
         recvProtocol: Protocol,
         events: ProtocolCommunication
     ) {
-        if (sendProtocol != recvProtocol) {
+        val hostEvents = events.getHostSends(runtime.projection.host)
+        if (sendProtocol != recvProtocol && hostEvents.isNotEmpty()) {
             val wire = wireStore[sender.temporary.value]!!
             val wireName = wire.wireName()
             val vkFile = File("zkpkeys/$wireName.vk")
@@ -297,8 +298,6 @@ class ZKPVerifierInterpreter(
                     "Verified: $verifyResult"
                 }
                 assert(verifyResult)
-
-                val hostEvents = events.getHostSends(runtime.projection.host)
 
                 for (event in hostEvents) {
                     val outVal = wireVal.toValue(typeAnalysis.type(sender))

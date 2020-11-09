@@ -8,44 +8,37 @@
 process main {
     val storeCount: int = 100;
 
-    val a = Array[int]{A}(storeCount);
+    val a = Array[int]{A & B<-}(storeCount);
     for (var i : int = 0; i < storeCount; i += 1) {
         a[i] = input int from companyA;
     }
 
-    val b = Array[int]{B}(storeCount);
+    val b = Array[int]{B & A<-}(storeCount);
     for (var i : int = 0; i < storeCount; i += 1) {
         b[i] = input int from companyB;
     }
 
-    var a_rev : int{A} = 0;
+    var a_rev : int{A & B<-} = 0;
     for (var i : int = 0; i < storeCount; i += 1) {
         a_rev += a[i];
     }
 
-    var b_rev : int{B} = 0;
+    var b_rev : int{B & A<-} = 0;
     for (var i : int = 0; i < storeCount; i += 1) {
         b_rev += b[i];
     }
 
-    val a_rev_trusted : int = endorse a_rev to {A & B<-};
-    val b_rev_trusted : int = endorse b_rev to {B & A<-};
-    val total_market : int = a_rev_trusted + b_rev_trusted;
+    val total_market : int = a_rev + b_rev;
 
-    /*
-    ABY doesn't support division so comment this out for now
-    val a_share : int = (100 * a_rev_trusted) / total_market;
-    val b_share : int = (100 * b_rev_trusted) / total_market;
-    */
+    val a_share : int = (100 * a_rev) / total_market;
+    val b_share : int = (100 * b_rev) / total_market;
 
-    val a_share : int = 100 * a_rev_trusted;
-    val b_share : int = 100 * b_rev_trusted;
+    val hhi : int = (a_share * a_share) + (b_share * b_share);
+    val hhi_public : int = declassify hhi to {A ⊓ B};
 
-    val hhi : int = declassify (a_share * a_share + b_share * b_share) to {A ⊓ B};
-
-    output hhi to companyA;
-    output hhi to companyB;
+    output hhi_public to companyA;
+    output hhi_public to companyB;
 }
 
-host companyA  : {A}
-host companyB  : {B}
+host companyA  : {A & B<-}
+host companyB  : {B & A<-}

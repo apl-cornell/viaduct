@@ -49,7 +49,13 @@ class CommitmentFactory(val program: ProgramNode) : ProtocolFactory {
                     (it is AtomicExpressionNode) || (it is DowngradeNode)
                 }
             } && ((this.value is AtomicExpressionNode) || (this.value is DowngradeNode) || (this.value is QueryNode))
-            is DeclarationNode -> nameAnalysis.updaters(this).isEmpty()
+
+            is DeclarationNode -> {
+                nameAnalysis.updaters(this).filter { updateNode ->
+                    updateNode.update.value != edu.cornell.cs.apl.viaduct.syntax.datatypes.Set
+                }.isEmpty()
+            }
+
             else -> false
         }
     }
@@ -73,27 +79,4 @@ class CommitmentFactory(val program: ProgramNode) : ProtocolFactory {
             setOf()
         }
     }
-
-    private val localFactory = LocalFactory(program)
-    private val replicationFactory = ReplicationFactory(program)
-
-    private val localAndReplicated: Set<Protocol> =
-        localFactory.protocols.map { it.protocol }.toSet() +
-            replicationFactory.protocols.map { it.protocol }.toSet()
-
-    /** Commitment can only send to itself, local, and replicated **/
-
-    // TODO: delete this
-    override fun constraint(node: LetNode): SelectionConstraint =
-        protocols(program).map {
-            node.sendsTo(nameAnalysis, setOf(it.protocol), localAndReplicated + setOf(it.protocol))
-        }.ands()
-
-    override fun constraint(node: DeclarationNode): SelectionConstraint =
-        protocols(program).map {
-            And(
-                node.readsFrom(nameAnalysis, setOf(it.protocol), localAndReplicated + setOf(it.protocol)),
-                node.sendsTo(nameAnalysis, setOf(it.protocol), localAndReplicated + setOf(it.protocol))
-            )
-        }.ands()
 }

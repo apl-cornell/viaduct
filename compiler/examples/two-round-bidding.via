@@ -57,5 +57,5 @@ process Host(bob) {
   assert a_higher;
 }
 
-host alice : {A}
-host bob   : {B}
+host alice : {A & B<-}
+host bob   : {B & A<-}

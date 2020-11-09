@@ -2,6 +2,7 @@ package edu.cornell.cs.apl.viaduct.backend.commitment
 
 import edu.cornell.cs.apl.viaduct.analysis.ProtocolAnalysis
 import edu.cornell.cs.apl.viaduct.backend.ObjectLocation
+import edu.cornell.cs.apl.viaduct.backend.ProtocolProjection
 import edu.cornell.cs.apl.viaduct.backend.SingleProtocolInterpreter
 import edu.cornell.cs.apl.viaduct.backend.ViaductProcessRuntime
 import edu.cornell.cs.apl.viaduct.errors.IllegalInternalCommunicationError
@@ -45,41 +46,20 @@ import mu.KotlinLogging
 
 private val logger = KotlinLogging.logger("Commitment")
 
-class CommitmentObject(val bytes: List<Byte>) {
-    fun query(
-        query: QueryNameNode,
-        @Suppress("UNUSED_PARAMETER") arguments: List<AtomicExpressionNode>
-    ): List<Byte> {
-        return when (query.value) {
-            is Get -> bytes
-
-            else -> {
-                throw ViaductInterpreterError("Commitment: unknown query for commitment object", query)
-            }
-        }
-    }
-
-    fun update(
-        @Suppress("UNUSED_PARAMETER") update: UpdateNameNode,
-        @Suppress("UNUSED_PARAMETER") arguments: List<AtomicExpressionNode>
-    ) {
-        throw ViaductInterpreterError("Commitment: cannot update committed values")
-    }
-}
-
 /** Commitment protocol interpreter for hash replica hosts. */
 class CommitmentProtocolHashReplicaInterpreter(
     program: ProgramNode,
     private val protocolAnalysis: ProtocolAnalysis,
     private val runtime: ViaductProcessRuntime
-) : SingleProtocolInterpreter<CommitmentObject>(program, runtime.projection.protocol) {
+) : SingleProtocolInterpreter<CommitmentProtocolHashReplicaInterpreter.CommitmentObject>(program, runtime.projection.protocol) {
     override val availableProtocols: Set<Protocol> =
         setOf(runtime.projection.protocol)
 
     private val cleartextHost: Host = (runtime.projection.protocol as Commitment).cleartextHost
-    private val nullObject = CommitmentObject(Hashing.deterministicHash(IntegerValue(0)).hash)
+    private val nullObject = CommitmentCell(Hashing.deterministicHash(IntegerValue(0)).hash)
 
     private val hashTempStoreStack: Stack<PersistentMap<Temporary, List<Byte>>> = Stack()
+    private val ctTempStoreStack: Stack<PersistentMap<Temporary, Value>> = Stack()
 
     private var hashTempStore: PersistentMap<Temporary, List<Byte>>
         get() {
@@ -90,36 +70,49 @@ class CommitmentProtocolHashReplicaInterpreter(
             hashTempStoreStack.push(value)
         }
 
+    private var ctTempStore: PersistentMap<Temporary, Value>
+        get() {
+            return ctTempStoreStack.peek()
+        }
+        set(value) {
+            ctTempStoreStack.pop()
+            ctTempStoreStack.push(value)
+        }
+
     init {
         assert(runtime.projection.protocol is Commitment)
 
         objectStoreStack.push(persistentMapOf())
         hashTempStoreStack.push(persistentMapOf())
+        ctTempStoreStack.push(persistentMapOf())
     }
 
     private fun pushContext(
         newObjectStore: PersistentMap<ObjectVariable, ObjectLocation>,
-        newTempStore: PersistentMap<Temporary, List<Byte>>
+        newHashTempStore: PersistentMap<Temporary, List<Byte>>,
+        newCtTempStore: PersistentMap<Temporary, Value>
     ) {
         objectStoreStack.push(newObjectStore)
-        hashTempStoreStack.push(newTempStore)
+        hashTempStoreStack.push(newHashTempStore)
+        ctTempStoreStack.push(newCtTempStore)
     }
 
     override suspend fun pushContext(initialStore: PersistentMap<ObjectVariable, ObjectLocation>) {
-        pushContext(initialStore, persistentMapOf())
+        pushContext(initialStore, persistentMapOf(), persistentMapOf())
     }
 
     override suspend fun pushContext() {
-        pushContext(this.objectStore, this.hashTempStore)
+        pushContext(this.objectStore, this.hashTempStore, this.ctTempStore)
     }
 
     override suspend fun popContext() {
         objectStoreStack.pop()
         hashTempStoreStack.pop()
+        ctTempStoreStack.pop()
     }
 
     override suspend fun buildExpressionObject(expr: AtomicExpressionNode): CommitmentObject {
-        return CommitmentObject(runExpr(expr))
+        return CommitmentCell(runExpr(expr))
     }
 
     override suspend fun buildObject(
@@ -127,11 +120,13 @@ class CommitmentProtocolHashReplicaInterpreter(
         typeArguments: List<ValueType>,
         arguments: List<AtomicExpressionNode>
     ): CommitmentObject {
-        val argumentValues = arguments.map { arg -> runExpr(arg) }
         return when (className) {
-            ImmutableCell, MutableCell -> CommitmentObject(argumentValues[0])
+            ImmutableCell, MutableCell -> CommitmentCell(runExpr(arguments[0]))
 
-            Vector -> TODO("Commitment for vectors")
+            Vector -> {
+                val length = (runCleartextExpr(arguments[0]) as IntegerValue).value
+                CommitmentVector(length, nullObject.bytes)
+            }
 
             else ->
                 throw ViaductInterpreterError("Commitment: cannot build object of unknown class $className")
@@ -149,9 +144,15 @@ class CommitmentProtocolHashReplicaInterpreter(
                     " could not find local temporary ${read.temporary.value}"
             )
 
+    private fun runCleartextExpr(expr: AtomicExpressionNode): Value =
+        when (expr) {
+            is LiteralNode -> expr.value
+            is ReadNode -> ctTempStore[expr.temporary.value]!!
+        }
+
     private fun runExpr(expr: ExpressionNode): List<Byte> =
         when (expr) {
-            is LiteralNode -> TODO()
+            is LiteralNode -> throw ViaductInterpreterError("Commitment: Cannot commit literals")
 
             is ReadNode -> runRead(expr)
 
@@ -175,30 +176,10 @@ class CommitmentProtocolHashReplicaInterpreter(
     override suspend fun runLet(stmt: LetNode) {
         val commitment = runExpr(stmt.value)
         hashTempStore = hashTempStore.put(stmt.temporary.value, commitment)
-
-        // broadcast to readers
-        val readers: Set<SimpleStatementNode> = protocolAnalysis.directRemoteReaders(stmt)
-
-        val commitmentValue = ByteVecValue(commitment)
-        for (reader in readers) {
-            val events: Set<CommunicationEvent> =
-                protocolAnalysis
-                    .relevantCommunicationEvents(stmt, reader)
-                    .getProjectionSends(runtime.projection, Commitment.OPEN_COMMITMENT_OUTPUT)
-
-            for (event in events) {
-                runtime.send(commitmentValue, event)
-
-                logger.info {
-                    "sent opened commitment to " +
-                        "${event.recv.protocol.asDocument.print()}@${event.recv.host.name}"
-                }
-            }
-        }
     }
 
     override suspend fun runUpdate(stmt: UpdateNode) {
-        throw ViaductInterpreterError("Commitment: cannot perform update on committed value")
+        getObject(getObjectLocation(stmt.variable.value)).update(stmt.update, stmt.arguments)
     }
 
     override suspend fun runOutput(stmt: OutputNode) {
@@ -226,7 +207,7 @@ class CommitmentProtocolHashReplicaInterpreter(
                 runtime.send(commitmentValue, event)
 
                 logger.info {
-                    "sent opened commitment to " +
+                    "sent opened commitment for ${sender.temporary.value.name} to " +
                         "${event.recv.protocol.asDocument.print()}@${event.recv.host.name}"
                 }
             }
@@ -241,13 +222,90 @@ class CommitmentProtocolHashReplicaInterpreter(
         events: ProtocolCommunication
     ) {
         if (sendProtocol != runtime.projection.protocol) { // receive commitment
-            val event = events.first()
-            val commitment: Value = runtime.receive(event)
-            val committedValue = (commitment as ByteVecValue).value
+            when {
+                events.any { event -> event.recv.id == Commitment.CLEARTEXT_INPUT } -> {
+                    val relevantEvents =
+                        events.getHostReceives(runtime.projection.host, Commitment.CLEARTEXT_INPUT)
+                    for (event in relevantEvents) {
+                        val v: Value = runtime.receive(event)
+                        ctTempStore = ctTempStore.put(sender.temporary.value, v)
+                    }
+                }
 
-            logger.info { "received commitment from host ${event.send.host.name}" }
+                else -> { // create commitment; receive from committer
+                    val commitment: Value =
+                        runtime.receive(ProtocolProjection(runtime.projection.protocol, cleartextHost))
+                    val committedValue = (commitment as ByteVecValue).value
 
-            hashTempStore = hashTempStore.put(sender.temporary.value, committedValue)
+                    logger.info { "received commitment for ${sender.temporary.value.name} from host ${cleartextHost.name}" }
+
+                    hashTempStore = hashTempStore.put(sender.temporary.value, committedValue)
+                }
+            }
+        }
+    }
+
+    abstract class CommitmentObject() {
+        abstract fun query(query: QueryNameNode, arguments: List<AtomicExpressionNode>): List<Byte>
+        abstract fun update(update: UpdateNameNode, arguments: List<AtomicExpressionNode>)
+    }
+
+    inner class CommitmentCell(var bytes: List<Byte>) : CommitmentObject() {
+        override fun query(
+            query: QueryNameNode,
+            @Suppress("UNUSED_PARAMETER") arguments: List<AtomicExpressionNode>
+        ): List<Byte> {
+            return when (query.value) {
+                is Get -> bytes
+
+                else ->
+                    throw ViaductInterpreterError("Commitment: unknown query for commitment cell", query)
+            }
+        }
+
+        override fun update(update: UpdateNameNode, arguments: List<AtomicExpressionNode>) {
+            when (update.value) {
+                is edu.cornell.cs.apl.viaduct.syntax.datatypes.Set -> {
+                    bytes = runExpr(arguments[0])
+                }
+
+                else ->
+                    throw ViaductInterpreterError("Commitment: unknown update for commitment cell", update)
+            }
+        }
+    }
+
+    inner class CommitmentVector(val size: Int, defaultValue: List<Byte>) : CommitmentObject() {
+        private val commitments: ArrayList<List<Byte>> = ArrayList(size)
+
+        init {
+            for (i: Int in 0 until size) {
+                commitments.add(defaultValue)
+            }
+        }
+
+        override fun query(query: QueryNameNode, arguments: List<AtomicExpressionNode>): List<Byte> {
+            return when (query.value) {
+                is Get -> {
+                    val index = (runCleartextExpr(arguments[0]) as IntegerValue).value
+                    commitments[index]
+                }
+
+                else ->
+                    throw ViaductInterpreterError("Commitment: Unknown query for commitment vector", query)
+            }
+        }
+
+        override fun update(update: UpdateNameNode, arguments: List<AtomicExpressionNode>) {
+            when (update.value) {
+                is edu.cornell.cs.apl.viaduct.syntax.datatypes.Set -> {
+                    val index = (runCleartextExpr(arguments[0]) as IntegerValue).value
+                    commitments[index] = runExpr(arguments[1])
+                }
+
+                else ->
+                    throw ViaductInterpreterError("Commitment: unknown update for commitment vector", update)
+            }
         }
     }
 }

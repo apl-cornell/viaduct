@@ -6,6 +6,8 @@ import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.types.file
 import edu.cornell.cs.apl.prettyprinting.PrettyPrintable
 import edu.cornell.cs.apl.viaduct.analysis.InformationFlowAnalysis
+import edu.cornell.cs.apl.viaduct.analysis.declarationNodes
+import edu.cornell.cs.apl.viaduct.analysis.letNodes
 import edu.cornell.cs.apl.viaduct.analysis.main
 import edu.cornell.cs.apl.viaduct.backend.aby.ABYMuxPostprocessor
 import edu.cornell.cs.apl.viaduct.backend.zkp.ZKPMuxPostprocessor
@@ -14,7 +16,9 @@ import edu.cornell.cs.apl.viaduct.passes.annotateWithProtocols
 import edu.cornell.cs.apl.viaduct.passes.check
 import edu.cornell.cs.apl.viaduct.passes.elaborated
 import edu.cornell.cs.apl.viaduct.passes.specialize
+import edu.cornell.cs.apl.viaduct.selection.CostMode
 import edu.cornell.cs.apl.viaduct.selection.SimpleCostEstimator
+import edu.cornell.cs.apl.viaduct.selection.SimpleCostRegime
 import edu.cornell.cs.apl.viaduct.selection.SimpleProtocolComposer
 import edu.cornell.cs.apl.viaduct.selection.SimpleProtocolFactory
 import edu.cornell.cs.apl.viaduct.selection.selectProtocolsWithZ3
@@ -57,12 +61,29 @@ class Compile : CliktCommand(help = "Compile ideal protocol to secure distribute
         """
     ).file(canBeDir = false)
 
+    val labelOutput: File? by option(
+        "-l",
+        "--label",
+        metavar = "FILE.via",
+        help = "Write program decorated with minimal authority labels to FILE.via"
+    ).file(canBeDir = false)
+
     val protocolSelectionOutput: File? by option(
         "-s",
         "--selection",
         metavar = "FILE.via",
         help = "Write program decorated with protocol selection to FILE.via"
     ).file(canBeDir = false)
+
+    val maximizeCost: Boolean by option(
+        "--maxcost",
+        help = "Maximize cost during protocol selection instead of minimize"
+    ).flag(default = false)
+
+    val wanCost: Boolean by option(
+        "--wancost",
+        help = "Use WAN cost model instead of LAN cost model"
+    ).flag(default = false)
 
     val verbose: Boolean by option(
         "-v",
@@ -85,12 +106,27 @@ class Compile : CliktCommand(help = "Compile ideal protocol to secure distribute
         program.check()
 
         // Dump label constraint graph to a file if requested.
-        dumpGraph(InformationFlowAnalysis.get(program)::exportConstraintGraph, constraintGraphOutput)
+        val ifcAnalysis = InformationFlowAnalysis.get(program)
+        dumpGraph(ifcAnalysis::exportConstraintGraph, constraintGraphOutput)
+
+        if (labelOutput != null) {
+            val labelMetadata: Map<Node, PrettyPrintable> =
+                program.declarationNodes().map {
+                    it to ifcAnalysis.label(it)
+                }.plus(program.letNodes().map {
+                    it to ifcAnalysis.label(it)
+                }).toMap()
+            dumpProgramMetadata(program, labelMetadata, labelOutput)
+        }
 
         val protocolFactory = SimpleProtocolFactory(program)
 
         // Select protocols.
         logger.info { "selecting protocols..." }
+
+        val protocolComposer = SimpleProtocolComposer
+        val costRegime = if (wanCost) SimpleCostRegime.WAN else SimpleCostRegime.LAN
+        val costEstimator = SimpleCostEstimator(SimpleProtocolComposer, costRegime)
 
         val protocolAssignment: (FunctionName, Variable) -> Protocol
         val protocolSelectionDuration = measureTimeMillis {
@@ -98,8 +134,9 @@ class Compile : CliktCommand(help = "Compile ideal protocol to secure distribute
                 program,
                 program.main,
                 protocolFactory,
-                SimpleProtocolComposer,
-                SimpleCostEstimator(SimpleProtocolComposer)
+                protocolComposer,
+                costEstimator,
+                if (maximizeCost) CostMode.MAXIMIZE else CostMode.MINIMIZE
             ) { metadata -> dumpProgramMetadata(program, metadata, protocolSelectionOutput) }
         }
         logger.info { "finished protocol selection, ran for ${protocolSelectionDuration}ms" }
@@ -111,8 +148,8 @@ class Compile : CliktCommand(help = "Compile ideal protocol to secure distribute
                 program,
                 processDecl,
                 protocolFactory,
-                SimpleProtocolComposer,
-                SimpleCostEstimator(SimpleProtocolComposer),
+                protocolComposer,
+                costEstimator,
                 protocolAssignment
             )
         }

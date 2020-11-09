@@ -26,6 +26,11 @@ public final class ConstraintSolver<T extends Throwable> {
   /** Set of variables that appear in the constraints. */
   private final Set<LabelVariable> variables = new HashSet<>();
 
+  /** Return the number of variables in the constraint system. */
+  public int variableCount() {
+    return variables.size();
+  }
+
   /**
    * Find the least trust solution to the set of constraints in the system.
    *

@@ -9,7 +9,8 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.HostDeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
 
 class ViaductBackend(
-    private val backends: List<ProtocolBackend>
+    private val backends: List<ProtocolBackend>,
+    private val customConnectionInfo: Map<Host, HostAddress> = mapOf()
 ) {
     companion object {
         const val DEFAULT_PORT = 5000
@@ -28,15 +29,25 @@ class ViaductBackend(
         // build protocol analysis from protocol annotations in the program
         val protocolAnalysis = ProtocolAnalysis(program, SimpleProtocolComposer)
 
-        // TODO: make this configurable
         var portNum = DEFAULT_PORT
         val connectionMap: Map<Host, HostAddress> =
-            program.hostDeclarations
-                .map { hostDecl ->
-                    val addr = HostAddress(DEFAULT_ADDRESS, portNum)
-                    portNum++
-                    Pair(hostDecl.name.value, addr)
-                }.toMap()
+            // custom connection info must provide info for all hosts or none
+            if (customConnectionInfo.isEmpty()) {
+                program.hostDeclarations
+                    .map { hostDecl ->
+                        val addr = HostAddress(DEFAULT_ADDRESS, portNum)
+                        portNum++
+                        Pair(hostDecl.name.value, addr)
+                    }.toMap()
+            } else {
+                val allHostsDefined = program.hostDeclarations.all { hostDecl ->
+                    customConnectionInfo.containsKey(hostDecl.name.value)
+                }
+                if (!allHostsDefined) {
+                    throw ViaductInterpreterError("Some hosts do not have connection information.")
+                }
+                customConnectionInfo
+            }
 
         val runtime = ViaductRuntime(host, program, protocolAnalysis, connectionMap, backends, strategy)
         runtime.start()

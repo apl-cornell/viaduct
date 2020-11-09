@@ -18,8 +18,7 @@ class Commitment(val cleartextHost: Host, val hashHosts: Set<Host>) : Protocol()
     companion object {
         val protocolName = ProtocolName("Commitment")
         const val INPUT = "INPUT"
-        const val CREATE_COMMITMENT_INPUT = "CREATE_COMMITMENT_INPUT"
-        const val CREATE_COMMITMENT_OUTPUT = "CREATE_COMMITMENT_OUTPUT"
+        const val CLEARTEXT_INPUT = "CLEARTEXT_INPUT"
         const val OPEN_CLEARTEXT_OUTPUT = "OPEN_CLEARTEXT_OUTPUT"
         const val OPEN_COMMITMENT_OUTPUT = "OPEN_COMMITMENT_OUTPUT"
     }
@@ -45,13 +44,10 @@ class Commitment(val cleartextHost: Host, val hashHosts: Set<Host>) : Protocol()
 
     val inputPort = InputPort(this, this.cleartextHost, INPUT)
 
-    val createCommitmentInputPorts =
-        this.hashHosts.map { hashHost ->
-            hashHost to InputPort(this, hashHost, CREATE_COMMITMENT_INPUT)
+    val cleartextInputPorts: Map<Host, InputPort> =
+        this.hosts.map { host ->
+            host to InputPort(this, host, CLEARTEXT_INPUT)
         }.toMap()
-
-    val createCommitmentOutputPort =
-        OutputPort(this, this.cleartextHost, CREATE_COMMITMENT_OUTPUT)
 
     val openCleartextOutputPort: OutputPort =
         OutputPort(this, this.cleartextHost, OPEN_CLEARTEXT_OUTPUT)

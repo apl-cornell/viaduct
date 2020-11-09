@@ -6,6 +6,7 @@ import edu.cornell.cs.apl.viaduct.protocols.ABY
 import edu.cornell.cs.apl.viaduct.protocols.ArithABY
 import edu.cornell.cs.apl.viaduct.protocols.BoolABY
 import edu.cornell.cs.apl.viaduct.protocols.YaoABY
+import edu.cornell.cs.apl.viaduct.security.Label
 import edu.cornell.cs.apl.viaduct.syntax.FunctionName
 import edu.cornell.cs.apl.viaduct.syntax.Host
 import edu.cornell.cs.apl.viaduct.syntax.HostTrustConfiguration
@@ -50,11 +51,23 @@ class ABYFactory(program: ProgramNode) : ProtocolFactory {
         val hosts: List<Host> = hostTrustConfiguration.keys.sorted()
         val hostPairs = hosts.pairedWith(hosts).filter { it.first < it.second }
         hostPairs.flatMap {
-            listOf(
-                SpecializedProtocol(ArithABY(it.first, it.second), hostTrustConfiguration),
-                SpecializedProtocol(BoolABY(it.first, it.second), hostTrustConfiguration),
-                SpecializedProtocol(YaoABY(it.first, it.second), hostTrustConfiguration)
-            )
+            // ABY is secure only in semi-honest,
+            // so the integrity of one should imply the integrity of the other
+            val h1Label: Label = hostTrustConfiguration[it.first]!!.interpret()
+            val h2Label: Label = hostTrustConfiguration[it.second]!!.interpret()
+            val combinedConfidentiality = h1Label.confidentiality().and(h1Label.confidentiality())
+            val semihonest =
+                h1Label.integrity().swap().actsFor(combinedConfidentiality) &&
+                h2Label.integrity().swap().actsFor(combinedConfidentiality)
+            if (semihonest) {
+                listOf(
+                    SpecializedProtocol(ArithABY(it.first, it.second), hostTrustConfiguration),
+                    SpecializedProtocol(BoolABY(it.first, it.second), hostTrustConfiguration),
+                    SpecializedProtocol(YaoABY(it.first, it.second), hostTrustConfiguration)
+                )
+            } else {
+                listOf()
+            }
         }
     }
 

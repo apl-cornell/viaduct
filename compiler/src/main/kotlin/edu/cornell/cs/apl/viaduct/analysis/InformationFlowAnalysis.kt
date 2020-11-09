@@ -61,6 +61,9 @@ import edu.cornell.cs.apl.viaduct.util.FreshNameGenerator
 import java.io.Writer
 import java.util.LinkedList
 import kotlinx.collections.immutable.persistentMapOf
+import mu.KotlinLogging
+
+private val logger = KotlinLogging.logger("InformationFlowAnalysis")
 
 /** Associates [Variable]s with their [Label]s. */
 class InformationFlowAnalysis private constructor(
@@ -648,10 +651,13 @@ class InformationFlowAnalysis private constructor(
         val mainSolver = ConstraintSolver<InformationFlowError>()
         constraintSolverMap[mainFunction] = mainSolver
 
+        var numLabelVariables = 0
+
         val mainPc = mainSolver.addNewVariable(nameGenerator.getFreshName(tree.root.main.body.pathName))
         pcVariableMap[tree.root.main.body.pathName] = Pair(mainFunction, mainPc)
         tree.root.main.body.check(mainSolver, persistentMapOf(), mainPc)
         solutionMap[mainFunction] = mainSolver.solve()
+        numLabelVariables += mainSolver.variableCount()
 
         while (worklist.isNotEmpty()) {
             val currentFunction = worklist.remove()
@@ -678,7 +684,10 @@ class InformationFlowAnalysis private constructor(
 
             // get solution
             solutionMap[currentFunction.name.value] = solver.solve()
+            numLabelVariables += solver.variableCount()
         }
+
+        logger.info { "number of label variables: $numLabelVariables" }
     }
 
     /** Outputs a DOT representation of the program's constraint graph to [output]. */

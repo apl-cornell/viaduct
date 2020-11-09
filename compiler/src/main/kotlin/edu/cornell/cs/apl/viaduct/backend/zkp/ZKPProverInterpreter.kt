@@ -69,6 +69,7 @@ class ZKPProverInterpreter(
     SingleProtocolInterpreter<ZKPObject>(program, runtime.projection.protocol) {
 
     private val typeAnalysis = TypeAnalysis.get(program)
+    private val ensureInit = ZKPInit
 
     private val verifiers = (runtime.projection.protocol as ZKP).verifiers
 

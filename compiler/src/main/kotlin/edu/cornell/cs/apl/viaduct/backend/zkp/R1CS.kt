@@ -33,14 +33,17 @@ fun Operator.supportedOp(): Boolean =
         else -> false
     }
 
-// Assumes libsnarkwrapper has been initialized, and initZKP has been called already
-class R1CS(val isProver: Boolean, val wire: WireTerm, val is_eq_to: Long) {
+class ZKPInit {
     companion object {
         init {
             System.loadLibrary("snarkwrapper")
             libsnarkwrapper.initZKP()
         }
     }
+}
+
+// Assumes libsnarkwrapper has been initialized, and initZKP has been called already
+class R1CS(val isProver: Boolean, val wire: WireTerm, val is_eq_to: Long) {
 
     val primaryInputs: MutableMap<Int, Var> = mutableMapOf()
     val auxInputs: MutableMap<Int, Var> = mutableMapOf()

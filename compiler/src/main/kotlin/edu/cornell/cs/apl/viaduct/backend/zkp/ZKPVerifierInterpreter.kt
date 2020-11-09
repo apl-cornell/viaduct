@@ -11,7 +11,6 @@ import edu.cornell.cs.apl.viaduct.backend.WireTerm
 import edu.cornell.cs.apl.viaduct.backend.asString
 import edu.cornell.cs.apl.viaduct.backend.wireName
 import edu.cornell.cs.apl.viaduct.errors.ViaductInterpreterError
-import edu.cornell.cs.apl.viaduct.libsnarkwrapper.libsnarkwrapper
 import edu.cornell.cs.apl.viaduct.libsnarkwrapper.libsnarkwrapper.mkByteBuf
 import edu.cornell.cs.apl.viaduct.protocols.ZKP
 import edu.cornell.cs.apl.viaduct.selection.ProtocolCommunication
@@ -61,6 +60,8 @@ class ZKPVerifierInterpreter(
     val runtime: ViaductProcessRuntime
 ) :
     SingleProtocolInterpreter<ZKPObject>(program, runtime.projection.protocol) {
+
+    private val ensureInit = ZKPInit
 
     private val prover = (runtime.projection.protocol as ZKP).prover
     private val typeAnalysis = TypeAnalysis.get(program)

@@ -10,6 +10,7 @@ import edu.cornell.cs.apl.viaduct.libsnarkwrapper.Keypair
 import edu.cornell.cs.apl.viaduct.libsnarkwrapper.R1CSInstance
 import edu.cornell.cs.apl.viaduct.libsnarkwrapper.Var
 import edu.cornell.cs.apl.viaduct.libsnarkwrapper.VarArray
+import edu.cornell.cs.apl.viaduct.libsnarkwrapper.libsnarkwrapper
 import edu.cornell.cs.apl.viaduct.libsnarkwrapper.libsnarkwrapper.mkByteBuf
 import edu.cornell.cs.apl.viaduct.syntax.Operator
 import edu.cornell.cs.apl.viaduct.syntax.operators.Addition
@@ -34,6 +35,13 @@ fun Operator.supportedOp(): Boolean =
 
 // Assumes libsnarkwrapper has been initialized, and initZKP has been called already
 class R1CS(val isProver: Boolean, val wire: WireTerm, val is_eq_to: Long) {
+    companion object {
+        init {
+            System.loadLibrary("snarkwrapper")
+            libsnarkwrapper.initZKP()
+        }
+    }
+
     val primaryInputs: MutableMap<Int, Var> = mutableMapOf()
     val auxInputs: MutableMap<Int, Var> = mutableMapOf()
     val auxInputHashes: MutableMap<Int, VarArray> = mutableMapOf()

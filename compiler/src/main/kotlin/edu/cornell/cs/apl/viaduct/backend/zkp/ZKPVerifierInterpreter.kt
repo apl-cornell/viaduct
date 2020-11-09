@@ -90,9 +90,7 @@ class ZKPVerifierInterpreter(
         }
 
     init {
-        System.loadLibrary("snarkwrapper")
         assert(runtime.projection.protocol is ZKP)
-        libsnarkwrapper.initZKP()
 
         objectStoreStack.push(persistentMapOf())
         tempStack.push(persistentMapOf())

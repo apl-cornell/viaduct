@@ -8,24 +8,19 @@
 
 package edu.cornell.cs.apl.viaduct.libsnarkwrapper;
 
-public
-class SWIGTYPE_p_libsnark__r1cs_constraint_systemT_libff__FrT_libsnark__default_r1cs_ppzksnark_pp_t_t {
+public class SWIGTYPE_p_libsnark__r1cs_constraint_systemT_libff__FrT_libsnark__default_r1cs_ppzksnark_pp_t_t {
   private transient long swigCPtr;
 
-  protected
-  SWIGTYPE_p_libsnark__r1cs_constraint_systemT_libff__FrT_libsnark__default_r1cs_ppzksnark_pp_t_t(
-      long cPtr, @SuppressWarnings("unused") boolean futureUse) {
+  protected SWIGTYPE_p_libsnark__r1cs_constraint_systemT_libff__FrT_libsnark__default_r1cs_ppzksnark_pp_t_t(long cPtr, @SuppressWarnings("unused") boolean futureUse) {
     swigCPtr = cPtr;
   }
 
-  protected
-  SWIGTYPE_p_libsnark__r1cs_constraint_systemT_libff__FrT_libsnark__default_r1cs_ppzksnark_pp_t_t() {
+  protected SWIGTYPE_p_libsnark__r1cs_constraint_systemT_libff__FrT_libsnark__default_r1cs_ppzksnark_pp_t_t() {
     swigCPtr = 0;
   }
 
-  protected static long getCPtr(
-      SWIGTYPE_p_libsnark__r1cs_constraint_systemT_libff__FrT_libsnark__default_r1cs_ppzksnark_pp_t_t
-          obj) {
+  protected static long getCPtr(SWIGTYPE_p_libsnark__r1cs_constraint_systemT_libff__FrT_libsnark__default_r1cs_ppzksnark_pp_t_t obj) {
     return (obj == null) ? 0 : obj.swigCPtr;
   }
 }
+

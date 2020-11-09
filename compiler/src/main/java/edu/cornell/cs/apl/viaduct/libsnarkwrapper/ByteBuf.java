@@ -45,10 +45,11 @@ public class ByteBuf {
   }
 
   public byte[] get_data() {
-    return libsnarkwrapperJNI.ByteBuf_get_data(swigCPtr, this);
-  }
+  return libsnarkwrapperJNI.ByteBuf_get_data(swigCPtr, this);
+}
 
   public ByteBuf() {
     this(libsnarkwrapperJNI.new_ByteBuf(), true);
   }
+
 }

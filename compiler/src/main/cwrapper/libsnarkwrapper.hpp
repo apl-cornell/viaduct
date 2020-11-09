@@ -123,6 +123,7 @@ class R1CSInstance {
         }
 
         Var mkMux(Var b, Var lhs, Var rhs) {
+            inserting_public = false;
             libsnark::generate_boolean_r1cs_constraint<field128>(pb, b.value);
 
             pb_variable out1;
@@ -135,7 +136,7 @@ class R1CSInstance {
 
             pb_variable out2;
             out2.allocate(pb);
-            pb.add_r1cs_constraint(constraint(1- b.value, rhs.value, out1));
+            pb.add_r1cs_constraint(constraint(1- b.value, rhs.value, out2));
 
             if (isProver) {
                 pb.val(out2) = (field128::one() - pb.val(b.value)) * pb.val(rhs.value);
@@ -145,6 +146,7 @@ class R1CSInstance {
         }
 
         Var mkEqualTo(Var a, Var b) {
+            inserting_public = false;
             pb_variable less, less_or_eq;
             less.allocate(pb);
             less_or_eq.allocate(pb);
@@ -158,6 +160,7 @@ class R1CSInstance {
         }
 
         Var mkLessThan(Var a, Var b) {
+            inserting_public = false;
             pb_variable less, less_or_eq;
             less.allocate(pb);
             less_or_eq.allocate(pb);
@@ -170,6 +173,7 @@ class R1CSInstance {
         }
 
         Var mkLE(Var a, Var b) {
+            inserting_public = false;
             pb_variable less, less_or_eq;
             less.allocate(pb);
             less_or_eq.allocate(pb);

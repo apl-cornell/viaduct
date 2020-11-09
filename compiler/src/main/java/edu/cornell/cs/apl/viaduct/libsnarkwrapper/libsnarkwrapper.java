@@ -14,8 +14,7 @@ public class libsnarkwrapper {
   }
 
   public static ByteBuf get_sha_nonce_val(ByteBuf nonce, long val) {
-    return new ByteBuf(
-        libsnarkwrapperJNI.get_sha_nonce_val(ByteBuf.getCPtr(nonce), nonce, val), true);
+    return new ByteBuf(libsnarkwrapperJNI.get_sha_nonce_val(ByteBuf.getCPtr(nonce), nonce, val), true);
   }
 
   public static long divide_rounding_up(long dividend, long divisor) {
@@ -34,49 +33,24 @@ public class libsnarkwrapper {
     return new ByteBuf(libsnarkwrapperJNI.mkByteBuf(data), true);
   }
 
-  public static boolean ensure_satisfied(
-      SWIGTYPE_p_libsnark__r1cs_constraint_systemT_libff__FrT_libsnark__default_r1cs_ppzksnark_pp_t_t
-          CS,
-      SWIGTYPE_p_std__vectorT_libff__FrT_libsnark__default_r1cs_ppzksnark_pp_t_t primary_input,
-      SWIGTYPE_p_std__vectorT_libff__FrT_libsnark__default_r1cs_ppzksnark_pp_t_t auxiliary_input) {
-    return libsnarkwrapperJNI.ensure_satisfied__SWIG_0(
-        SWIGTYPE_p_libsnark__r1cs_constraint_systemT_libff__FrT_libsnark__default_r1cs_ppzksnark_pp_t_t
-            .getCPtr(CS),
-        SWIGTYPE_p_std__vectorT_libff__FrT_libsnark__default_r1cs_ppzksnark_pp_t_t.getCPtr(
-            primary_input),
-        SWIGTYPE_p_std__vectorT_libff__FrT_libsnark__default_r1cs_ppzksnark_pp_t_t.getCPtr(
-            auxiliary_input));
+  public static boolean ensure_satisfied(SWIGTYPE_p_libsnark__r1cs_constraint_systemT_libff__FrT_libsnark__default_r1cs_ppzksnark_pp_t_t CS, SWIGTYPE_p_std__vectorT_libff__FrT_libsnark__default_r1cs_ppzksnark_pp_t_t primary_input, SWIGTYPE_p_std__vectorT_libff__FrT_libsnark__default_r1cs_ppzksnark_pp_t_t auxiliary_input) {
+    return libsnarkwrapperJNI.ensure_satisfied__SWIG_0(SWIGTYPE_p_libsnark__r1cs_constraint_systemT_libff__FrT_libsnark__default_r1cs_ppzksnark_pp_t_t.getCPtr(CS), SWIGTYPE_p_std__vectorT_libff__FrT_libsnark__default_r1cs_ppzksnark_pp_t_t.getCPtr(primary_input), SWIGTYPE_p_std__vectorT_libff__FrT_libsnark__default_r1cs_ppzksnark_pp_t_t.getCPtr(auxiliary_input));
   }
 
   public static boolean ensure_satisfied(SWIGTYPE_p_libsnark__protoboardT_field128_t pb) {
-    return libsnarkwrapperJNI.ensure_satisfied__SWIG_1(
-        SWIGTYPE_p_libsnark__protoboardT_field128_t.getCPtr(pb));
+    return libsnarkwrapperJNI.ensure_satisfied__SWIG_1(SWIGTYPE_p_libsnark__protoboardT_field128_t.getCPtr(pb));
   }
 
   public static void addEquality(SWIGTYPE_p_libsnark__protoboardT_field128_t pb, Var a, Var b) {
-    libsnarkwrapperJNI.addEquality__SWIG_0(
-        SWIGTYPE_p_libsnark__protoboardT_field128_t.getCPtr(pb),
-        Var.getCPtr(a),
-        a,
-        Var.getCPtr(b),
-        b);
+    libsnarkwrapperJNI.addEquality__SWIG_0(SWIGTYPE_p_libsnark__protoboardT_field128_t.getCPtr(pb), Var.getCPtr(a), a, Var.getCPtr(b), b);
   }
 
-  public static void addEquality(
-      SWIGTYPE_p_libsnark__protoboardT_field128_t pb,
-      SWIGTYPE_p_libsnark__pb_variable_arrayT_field128_t a,
-      SWIGTYPE_p_libsnark__pb_variable_arrayT_field128_t b) {
-    libsnarkwrapperJNI.addEquality__SWIG_1(
-        SWIGTYPE_p_libsnark__protoboardT_field128_t.getCPtr(pb),
-        SWIGTYPE_p_libsnark__pb_variable_arrayT_field128_t.getCPtr(a),
-        SWIGTYPE_p_libsnark__pb_variable_arrayT_field128_t.getCPtr(b));
+  public static void addEquality(SWIGTYPE_p_libsnark__protoboardT_field128_t pb, SWIGTYPE_p_libsnark__pb_variable_arrayT_field128_t a, SWIGTYPE_p_libsnark__pb_variable_arrayT_field128_t b) {
+    libsnarkwrapperJNI.addEquality__SWIG_1(SWIGTYPE_p_libsnark__protoboardT_field128_t.getCPtr(pb), SWIGTYPE_p_libsnark__pb_variable_arrayT_field128_t.getCPtr(a), SWIGTYPE_p_libsnark__pb_variable_arrayT_field128_t.getCPtr(b));
   }
 
-  public static ShaResult mkSHA(
-      SWIGTYPE_p_libsnark__protoboardT_field128_t pb, long v, String nonce, boolean isProver) {
-    return new ShaResult(
-        libsnarkwrapperJNI.mkSHA(
-            SWIGTYPE_p_libsnark__protoboardT_field128_t.getCPtr(pb), v, nonce, isProver),
-        true);
+  public static ShaResult mkSHA(SWIGTYPE_p_libsnark__protoboardT_field128_t pb, long v, String nonce, boolean isProver) {
+    return new ShaResult(libsnarkwrapperJNI.mkSHA(SWIGTYPE_p_libsnark__protoboardT_field128_t.getCPtr(pb), v, nonce, isProver), true);
   }
+
 }

@@ -57,4 +57,5 @@ public class Keypair {
   public Keypair() {
     this(libsnarkwrapperJNI.new_Keypair(), true);
   }
+
 }

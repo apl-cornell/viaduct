@@ -53,38 +53,23 @@ public class R1CSInstance {
   }
 
   public VarArray mkPublicBitvec(BoolVector bits) {
-    return new VarArray(
-        libsnarkwrapperJNI.R1CSInstance_mkPublicBitvec__SWIG_0(
-            swigCPtr, this, BoolVector.getCPtr(bits), bits),
-        true);
+    return new VarArray(libsnarkwrapperJNI.R1CSInstance_mkPublicBitvec__SWIG_0(swigCPtr, this, BoolVector.getCPtr(bits), bits), true);
   }
 
   public VarArray mkPublicBitvec(ByteBuf buf) {
-    return new VarArray(
-        libsnarkwrapperJNI.R1CSInstance_mkPublicBitvec__SWIG_1(
-            swigCPtr, this, ByteBuf.getCPtr(buf), buf),
-        true);
+    return new VarArray(libsnarkwrapperJNI.R1CSInstance_mkPublicBitvec__SWIG_1(swigCPtr, this, ByteBuf.getCPtr(buf), buf), true);
   }
 
   public Var mkPrivateValProver(long val, VarArray hash, VarArray nonce) {
-    return new Var(
-        libsnarkwrapperJNI.R1CSInstance_mkPrivateValProver(
-            swigCPtr, this, val, VarArray.getCPtr(hash), hash, VarArray.getCPtr(nonce), nonce),
-        true);
+    return new Var(libsnarkwrapperJNI.R1CSInstance_mkPrivateValProver(swigCPtr, this, val, VarArray.getCPtr(hash), hash, VarArray.getCPtr(nonce), nonce), true);
   }
 
   public Var mkPrivateValVerifier(VarArray hash, VarArray nonce) {
-    return new Var(
-        libsnarkwrapperJNI.R1CSInstance_mkPrivateValVerifier(
-            swigCPtr, this, VarArray.getCPtr(hash), hash, VarArray.getCPtr(nonce), nonce),
-        true);
+    return new Var(libsnarkwrapperJNI.R1CSInstance_mkPrivateValVerifier(swigCPtr, this, VarArray.getCPtr(hash), hash, VarArray.getCPtr(nonce), nonce), true);
   }
 
   public Var mkAnd(Var lhs, Var rhs) {
-    return new Var(
-        libsnarkwrapperJNI.R1CSInstance_mkAnd(
-            swigCPtr, this, Var.getCPtr(lhs), lhs, Var.getCPtr(rhs), rhs),
-        true);
+    return new Var(libsnarkwrapperJNI.R1CSInstance_mkAnd(swigCPtr, this, Var.getCPtr(lhs), lhs, Var.getCPtr(rhs), rhs), true);
   }
 
   public Var mkNot(Var v) {
@@ -92,76 +77,47 @@ public class R1CSInstance {
   }
 
   public Var mkOr(Var lhs, Var rhs) {
-    return new Var(
-        libsnarkwrapperJNI.R1CSInstance_mkOr(
-            swigCPtr, this, Var.getCPtr(lhs), lhs, Var.getCPtr(rhs), rhs),
-        true);
+    return new Var(libsnarkwrapperJNI.R1CSInstance_mkOr(swigCPtr, this, Var.getCPtr(lhs), lhs, Var.getCPtr(rhs), rhs), true);
   }
 
   public Var mkMult(Var lhs, Var rhs) {
-    return new Var(
-        libsnarkwrapperJNI.R1CSInstance_mkMult(
-            swigCPtr, this, Var.getCPtr(lhs), lhs, Var.getCPtr(rhs), rhs),
-        true);
+    return new Var(libsnarkwrapperJNI.R1CSInstance_mkMult(swigCPtr, this, Var.getCPtr(lhs), lhs, Var.getCPtr(rhs), rhs), true);
   }
 
   public Var mkAdd(Var lhs, Var rhs) {
-    return new Var(
-        libsnarkwrapperJNI.R1CSInstance_mkAdd(
-            swigCPtr, this, Var.getCPtr(lhs), lhs, Var.getCPtr(rhs), rhs),
-        true);
+    return new Var(libsnarkwrapperJNI.R1CSInstance_mkAdd(swigCPtr, this, Var.getCPtr(lhs), lhs, Var.getCPtr(rhs), rhs), true);
   }
 
   public Var mkMux(Var b, Var lhs, Var rhs) {
-    return new Var(
-        libsnarkwrapperJNI.R1CSInstance_mkMux(
-            swigCPtr, this, Var.getCPtr(b), b, Var.getCPtr(lhs), lhs, Var.getCPtr(rhs), rhs),
-        true);
+    return new Var(libsnarkwrapperJNI.R1CSInstance_mkMux(swigCPtr, this, Var.getCPtr(b), b, Var.getCPtr(lhs), lhs, Var.getCPtr(rhs), rhs), true);
   }
 
   public Var mkEqualTo(Var a, Var b) {
-    return new Var(
-        libsnarkwrapperJNI.R1CSInstance_mkEqualTo(
-            swigCPtr, this, Var.getCPtr(a), a, Var.getCPtr(b), b),
-        true);
+    return new Var(libsnarkwrapperJNI.R1CSInstance_mkEqualTo(swigCPtr, this, Var.getCPtr(a), a, Var.getCPtr(b), b), true);
   }
 
   public Var mkLessThan(Var a, Var b) {
-    return new Var(
-        libsnarkwrapperJNI.R1CSInstance_mkLessThan(
-            swigCPtr, this, Var.getCPtr(a), a, Var.getCPtr(b), b),
-        true);
+    return new Var(libsnarkwrapperJNI.R1CSInstance_mkLessThan(swigCPtr, this, Var.getCPtr(a), a, Var.getCPtr(b), b), true);
   }
 
   public Var mkLE(Var a, Var b) {
-    return new Var(
-        libsnarkwrapperJNI.R1CSInstance_mkLE(swigCPtr, this, Var.getCPtr(a), a, Var.getCPtr(b), b),
-        true);
+    return new Var(libsnarkwrapperJNI.R1CSInstance_mkLE(swigCPtr, this, Var.getCPtr(a), a, Var.getCPtr(b), b), true);
   }
 
   public void AddEquality(Var a, Var b) {
-    libsnarkwrapperJNI.R1CSInstance_AddEquality(
-        swigCPtr, this, Var.getCPtr(a), a, Var.getCPtr(b), b);
+    libsnarkwrapperJNI.R1CSInstance_AddEquality(swigCPtr, this, Var.getCPtr(a), a, Var.getCPtr(b), b);
   }
 
   public boolean verifyProof(ByteBuf verificationKey, ByteBuf proof) {
-    return libsnarkwrapperJNI.R1CSInstance_verifyProof(
-        swigCPtr,
-        this,
-        ByteBuf.getCPtr(verificationKey),
-        verificationKey,
-        ByteBuf.getCPtr(proof),
-        proof);
+    return libsnarkwrapperJNI.R1CSInstance_verifyProof(swigCPtr, this, ByteBuf.getCPtr(verificationKey), verificationKey, ByteBuf.getCPtr(proof), proof);
   }
 
   public ByteBuf generateProof(ByteBuf provingKey) {
-    return new ByteBuf(
-        libsnarkwrapperJNI.R1CSInstance_generateProof(
-            swigCPtr, this, ByteBuf.getCPtr(provingKey), provingKey),
-        true);
+    return new ByteBuf(libsnarkwrapperJNI.R1CSInstance_generateProof(swigCPtr, this, ByteBuf.getCPtr(provingKey), provingKey), true);
   }
 
   public Keypair genKeypair() {
     return new Keypair(libsnarkwrapperJNI.R1CSInstance_genKeypair(swigCPtr, this), true);
   }
+
 }

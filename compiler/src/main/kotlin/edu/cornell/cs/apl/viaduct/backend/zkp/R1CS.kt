@@ -44,15 +44,11 @@ class R1CS(val isProver: Boolean, val wire: WireTerm, val is_eq_to: Long) {
 
     init {
         r1cs.isProver = isProver
-        setOutput(is_eq_to)
+        output = r1cs.mkPublicVal(is_eq_to)
         wire.populatePrimaryInputs()
         wire.setupAuxInputs()
         val o = wire.value()
         r1cs.AddEquality(o, output!!)
-    }
-
-    private fun setOutput(v: Long) {
-        output = r1cs.mkPublicVal(v)
     }
 
     fun WireTerm.populatePrimaryInputs() {

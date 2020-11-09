@@ -78,6 +78,9 @@ private class ViaductReceiverThread(
     val runtime: ViaductRuntime,
     msgQueue: Channel<ViaductMessage>
 ) : ViaductThread(msgQueue) {
+    var bytesReceived: Long = 0
+        private set
+
     override fun toString(): String {
         return "receiver thread for host ${host.name}"
     }
@@ -91,16 +94,21 @@ private class ViaductReceiverThread(
                         val senderId: Int = socketInput.read()
                         val receiverId: Int = socketInput.read()
                         val valType: Int = socketInput.read()
+                        bytesReceived += 3
 
                         val sender: Process = runtime.getProcessById(senderId).process
                         val receiver: Process = runtime.getProcessById(receiverId).process
                         val value: Value =
                             when (valType) {
                                 // BooleanValue
-                                0 -> BooleanValue(socketInput.read() != 0)
+                                0 -> {
+                                    bytesReceived += 1
+                                    BooleanValue(socketInput.read() != 0)
+                                }
 
                                 // IntegerValue
                                 1 -> {
+                                    bytesReceived += 4
                                     val b = socketInput.readNBytes(4)
                                     IntegerValue(ByteBuffer.wrap(b).order(ByteOrder.LITTLE_ENDIAN).int)
                                 }
@@ -110,6 +118,7 @@ private class ViaductReceiverThread(
                                     val len_buf = socketInput.readNBytes(4)
                                     val len = ByteBuffer.wrap(len_buf).order(ByteOrder.LITTLE_ENDIAN).int
                                     val i = socketInput.readNBytes(len).toList()
+                                    bytesReceived += 4 + len
                                     ByteVecValue(i)
                                 }
 
@@ -123,7 +132,8 @@ private class ViaductReceiverThread(
                     }
 
                 logger.info {
-                    "received remote message ${result.first} from ${result.second.asDocument.print()} to ${result.third.asDocument.print()}"
+                    "received remote message ${result.first.type.asDocument.print()} " +
+                    "from ${result.second.asDocument.print()} to ${result.third.asDocument.print()}"
                 }
 
                 runtime.send(result.first, result.second, result.third)
@@ -140,6 +150,9 @@ private class ViaductSenderThread(
     val runtime: ViaductRuntime,
     msgQueue: Channel<ViaductMessage>
 ) : ViaductThread(msgQueue) {
+    var bytesSent: Long = 0
+        private set
+
     override fun toString(): String {
         return "sender thread for host ${host.name}"
     }
@@ -151,16 +164,19 @@ private class ViaductSenderThread(
                     val socketOutput: OutputStream = socket.getOutputStream()
                     socketOutput.write(msg.sender)
                     socketOutput.write(msg.receiver)
+                    bytesSent += 2
                     when (msg.message) {
                         is BooleanValue -> {
                             socketOutput.write(0)
                             socketOutput.write(if (msg.message.value) 1 else 0)
+                            bytesSent += 2
                         }
 
                         is IntegerValue -> {
                             socketOutput.write(1)
                             val b = ByteBuffer.allocate(4).order(ByteOrder.LITTLE_ENDIAN).putInt(msg.message.value)
                             socketOutput.write(b.array())
+                            bytesSent += 5
                         }
 
                         is ByteVecValue -> {
@@ -170,10 +186,12 @@ private class ViaductSenderThread(
                             val len_buf = ByteBuffer.allocate(4).order(ByteOrder.LITTLE_ENDIAN).putInt(len)
                             socketOutput.write(len_buf.array())
                             socketOutput.write(bytes)
+                            bytesSent += 5 + bytes.size
                         }
 
                         is UnitValue -> {
                             socketOutput.write(3)
+                            bytesSent += 1
                         }
                     }
                 }
@@ -334,7 +352,8 @@ class ViaductRuntime(
             hostInfoMap[receiver.host]!!.sendChannel.send(msg)
 
             logger.info {
-                "sent remote message $value from ${sender.asDocument.print()} to ${receiver.asDocument.print()}"
+                "sent remote message ${value.type.asDocument.print()} " +
+                    "from ${sender.asDocument.print()} to ${receiver.asDocument.print()}"
             }
         }
     }
@@ -446,29 +465,36 @@ class ViaductRuntime(
                 )
             }
 
+        val receiverThreads: MutableMap<Host, ViaductReceiverThread> = mutableMapOf()
+        val senderThreads: MutableMap<Host, ViaductSenderThread> = mutableMapOf()
+
         runBlocking {
             for (kv: Map.Entry<Host, HostInfo> in hostInfoMap) {
                 if (host != kv.key) {
-                    launch(Executors.newSingleThreadExecutor().asCoroutineDispatcher()) {
-                        logger.info { "launching receiver thread for host ${kv.key.name}" }
-
+                    receiverThreads[kv.key] =
                         ViaductReceiverThread(
                             kv.key,
                             connectionMap[kv.key]!!,
                             this@ViaductRuntime,
                             hostInfoMap[kv.key]!!.recvChannel
-                        ).run()
-                    }
+                        )
 
-                    launch(Executors.newSingleThreadExecutor().asCoroutineDispatcher()) {
-                        logger.info { "launching sender thread for host ${kv.key.name}" }
-
+                    senderThreads[kv.key] =
                         ViaductSenderThread(
                             kv.key,
                             connectionMap[kv.key]!!,
                             this@ViaductRuntime,
                             hostInfoMap[kv.key]!!.sendChannel
-                        ).run()
+                        )
+
+                    launch(Executors.newSingleThreadExecutor().asCoroutineDispatcher()) {
+                        logger.info { "launching receiver thread for host ${kv.key.name}" }
+                        receiverThreads[kv.key]!!.run()
+                    }
+
+                    launch(Executors.newSingleThreadExecutor().asCoroutineDispatcher()) {
+                        logger.info { "launching sender thread for host ${kv.key.name}" }
+                        senderThreads[kv.key]!!.run()
                     }
                 }
             }
@@ -493,6 +519,12 @@ class ViaductRuntime(
                 launch {
                     for (kv: Map.Entry<Host, HostInfo> in hostInfoMap) {
                         if (host != kv.key) {
+                            val receiverThread: ViaductReceiverThread = receiverThreads[kv.key]!!
+                            val senderThread: ViaductSenderThread = senderThreads[kv.key]!!
+
+                            logger.info { "bytes sent to host ${host.name}: ${senderThread.bytesSent}" }
+                            logger.info { "bytes received from host ${host.name}: ${receiverThread.bytesReceived}" }
+
                             kv.value.recvChannel.send(ShutdownMessage)
                             kv.value.sendChannel.send(ShutdownMessage)
                         }

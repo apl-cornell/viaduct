@@ -9,190 +9,106 @@
 package edu.cornell.cs.apl.viaduct.libsnarkwrapper;
 
 public class libsnarkwrapperJNI {
-  public static final native long new_TermVector__SWIG_0();
+  public static final native long new_IntVector__SWIG_0();
 
-  public static final native long new_TermVector__SWIG_1(long jarg1, TermVector jarg1_);
+  public static final native long new_IntVector__SWIG_1(long jarg1, IntVector jarg1_);
 
-  public static final native long TermVector_capacity(long jarg1, TermVector jarg1_);
+  public static final native long IntVector_capacity(long jarg1, IntVector jarg1_);
 
-  public static final native void TermVector_reserve(long jarg1, TermVector jarg1_, long jarg2);
+  public static final native void IntVector_reserve(long jarg1, IntVector jarg1_, long jarg2);
 
-  public static final native boolean TermVector_isEmpty(long jarg1, TermVector jarg1_);
+  public static final native boolean IntVector_isEmpty(long jarg1, IntVector jarg1_);
 
-  public static final native void TermVector_clear(long jarg1, TermVector jarg1_);
+  public static final native void IntVector_clear(long jarg1, IntVector jarg1_);
 
-  public static final native long new_TermVector__SWIG_2(int jarg1, long jarg2, Term jarg2_);
+  public static final native long new_IntVector__SWIG_2(int jarg1, int jarg2);
 
-  public static final native int TermVector_doSize(long jarg1, TermVector jarg1_);
+  public static final native int IntVector_doSize(long jarg1, IntVector jarg1_);
 
-  public static final native void TermVector_doAdd__SWIG_0(
-      long jarg1, TermVector jarg1_, long jarg2, Term jarg2_);
+  public static final native void IntVector_doAdd__SWIG_0(long jarg1, IntVector jarg1_, int jarg2);
 
-  public static final native void TermVector_doAdd__SWIG_1(
-      long jarg1, TermVector jarg1_, int jarg2, long jarg3, Term jarg3_);
+  public static final native void IntVector_doAdd__SWIG_1(
+      long jarg1, IntVector jarg1_, int jarg2, int jarg3);
 
-  public static final native long TermVector_doRemove(long jarg1, TermVector jarg1_, int jarg2);
+  public static final native int IntVector_doRemove(long jarg1, IntVector jarg1_, int jarg2);
 
-  public static final native long TermVector_doGet(long jarg1, TermVector jarg1_, int jarg2);
+  public static final native int IntVector_doGet(long jarg1, IntVector jarg1_, int jarg2);
 
-  public static final native long TermVector_doSet(
-      long jarg1, TermVector jarg1_, int jarg2, long jarg3, Term jarg3_);
+  public static final native int IntVector_doSet(
+      long jarg1, IntVector jarg1_, int jarg2, int jarg3);
 
-  public static final native void TermVector_doRemoveRange(
-      long jarg1, TermVector jarg1_, int jarg2, int jarg3);
+  public static final native void IntVector_doRemoveRange(
+      long jarg1, IntVector jarg1_, int jarg2, int jarg3);
 
-  public static final native void delete_TermVector(long jarg1);
+  public static final native void delete_IntVector(long jarg1);
 
-  public static final native long new_ConstraintVector__SWIG_0();
+  public static final native long new_BoolVector__SWIG_0();
 
-  public static final native long new_ConstraintVector__SWIG_1(long jarg1, ConstraintVector jarg1_);
+  public static final native long new_BoolVector__SWIG_1(long jarg1, BoolVector jarg1_);
 
-  public static final native long ConstraintVector_capacity(long jarg1, ConstraintVector jarg1_);
+  public static final native long BoolVector_capacity(long jarg1, BoolVector jarg1_);
 
-  public static final native void ConstraintVector_reserve(
-      long jarg1, ConstraintVector jarg1_, long jarg2);
+  public static final native void BoolVector_reserve(long jarg1, BoolVector jarg1_, long jarg2);
 
-  public static final native boolean ConstraintVector_isEmpty(long jarg1, ConstraintVector jarg1_);
+  public static final native boolean BoolVector_isEmpty(long jarg1, BoolVector jarg1_);
 
-  public static final native void ConstraintVector_clear(long jarg1, ConstraintVector jarg1_);
+  public static final native void BoolVector_clear(long jarg1, BoolVector jarg1_);
 
-  public static final native long new_ConstraintVector__SWIG_2(
-      int jarg1, long jarg2, Constraint jarg2_);
+  public static final native long new_BoolVector__SWIG_2(int jarg1, boolean jarg2);
 
-  public static final native int ConstraintVector_doSize(long jarg1, ConstraintVector jarg1_);
+  public static final native int BoolVector_doSize(long jarg1, BoolVector jarg1_);
 
-  public static final native void ConstraintVector_doAdd__SWIG_0(
-      long jarg1, ConstraintVector jarg1_, long jarg2, Constraint jarg2_);
+  public static final native void BoolVector_doAdd__SWIG_0(
+      long jarg1, BoolVector jarg1_, boolean jarg2);
 
-  public static final native void ConstraintVector_doAdd__SWIG_1(
-      long jarg1, ConstraintVector jarg1_, int jarg2, long jarg3, Constraint jarg3_);
+  public static final native void BoolVector_doAdd__SWIG_1(
+      long jarg1, BoolVector jarg1_, int jarg2, boolean jarg3);
 
-  public static final native long ConstraintVector_doRemove(
-      long jarg1, ConstraintVector jarg1_, int jarg2);
+  public static final native boolean BoolVector_doRemove(long jarg1, BoolVector jarg1_, int jarg2);
 
-  public static final native long ConstraintVector_doGet(
-      long jarg1, ConstraintVector jarg1_, int jarg2);
+  public static final native boolean BoolVector_doGet(long jarg1, BoolVector jarg1_, int jarg2);
 
-  public static final native long ConstraintVector_doSet(
-      long jarg1, ConstraintVector jarg1_, int jarg2, long jarg3, Constraint jarg3_);
+  public static final native boolean BoolVector_doSet(
+      long jarg1, BoolVector jarg1_, int jarg2, boolean jarg3);
 
-  public static final native void ConstraintVector_doRemoveRange(
-      long jarg1, ConstraintVector jarg1_, int jarg2, int jarg3);
+  public static final native void BoolVector_doRemoveRange(
+      long jarg1, BoolVector jarg1_, int jarg2, int jarg3);
 
-  public static final native void delete_ConstraintVector(long jarg1);
+  public static final native void delete_BoolVector(long jarg1);
 
-  public static final native long new_WireInfoVector__SWIG_0();
+  public static final native long new_CharVector__SWIG_0();
 
-  public static final native long new_WireInfoVector__SWIG_1(long jarg1, WireInfoVector jarg1_);
+  public static final native long new_CharVector__SWIG_1(long jarg1, CharVector jarg1_);
 
-  public static final native long WireInfoVector_capacity(long jarg1, WireInfoVector jarg1_);
+  public static final native long CharVector_capacity(long jarg1, CharVector jarg1_);
 
-  public static final native void WireInfoVector_reserve(
-      long jarg1, WireInfoVector jarg1_, long jarg2);
+  public static final native void CharVector_reserve(long jarg1, CharVector jarg1_, long jarg2);
 
-  public static final native boolean WireInfoVector_isEmpty(long jarg1, WireInfoVector jarg1_);
+  public static final native boolean CharVector_isEmpty(long jarg1, CharVector jarg1_);
 
-  public static final native void WireInfoVector_clear(long jarg1, WireInfoVector jarg1_);
+  public static final native void CharVector_clear(long jarg1, CharVector jarg1_);
 
-  public static final native long new_WireInfoVector__SWIG_2(
-      int jarg1, long jarg2, WireInfo jarg2_);
+  public static final native long new_CharVector__SWIG_2(int jarg1, char jarg2);
 
-  public static final native int WireInfoVector_doSize(long jarg1, WireInfoVector jarg1_);
+  public static final native int CharVector_doSize(long jarg1, CharVector jarg1_);
 
-  public static final native void WireInfoVector_doAdd__SWIG_0(
-      long jarg1, WireInfoVector jarg1_, long jarg2, WireInfo jarg2_);
+  public static final native void CharVector_doAdd__SWIG_0(
+      long jarg1, CharVector jarg1_, char jarg2);
 
-  public static final native void WireInfoVector_doAdd__SWIG_1(
-      long jarg1, WireInfoVector jarg1_, int jarg2, long jarg3, WireInfo jarg3_);
+  public static final native void CharVector_doAdd__SWIG_1(
+      long jarg1, CharVector jarg1_, int jarg2, char jarg3);
 
-  public static final native long WireInfoVector_doRemove(
-      long jarg1, WireInfoVector jarg1_, int jarg2);
+  public static final native char CharVector_doRemove(long jarg1, CharVector jarg1_, int jarg2);
 
-  public static final native long WireInfoVector_doGet(
-      long jarg1, WireInfoVector jarg1_, int jarg2);
+  public static final native char CharVector_doGet(long jarg1, CharVector jarg1_, int jarg2);
 
-  public static final native long WireInfoVector_doSet(
-      long jarg1, WireInfoVector jarg1_, int jarg2, long jarg3, WireInfo jarg3_);
+  public static final native char CharVector_doSet(
+      long jarg1, CharVector jarg1_, int jarg2, char jarg3);
 
-  public static final native void WireInfoVector_doRemoveRange(
-      long jarg1, WireInfoVector jarg1_, int jarg2, int jarg3);
+  public static final native void CharVector_doRemoveRange(
+      long jarg1, CharVector jarg1_, int jarg2, int jarg3);
 
-  public static final native void delete_WireInfoVector(long jarg1);
-
-  public static final native void Term_coeff_set(long jarg1, Term jarg1_, long jarg2);
-
-  public static final native long Term_coeff_get(long jarg1, Term jarg1_);
-
-  public static final native void Term_wireID_set(long jarg1, Term jarg1_, int jarg2);
-
-  public static final native int Term_wireID_get(long jarg1, Term jarg1_);
-
-  public static final native long new_Term();
-
-  public static final native void delete_Term(long jarg1);
-
-  public static final native void LinComb_constTerm_set(long jarg1, LinComb jarg1_, long jarg2);
-
-  public static final native long LinComb_constTerm_get(long jarg1, LinComb jarg1_);
-
-  public static final native void LinComb_linTerms_set(
-      long jarg1, LinComb jarg1_, long jarg2, TermVector jarg2_);
-
-  public static final native long LinComb_linTerms_get(long jarg1, LinComb jarg1_);
-
-  public static final native long LinComb_to_lincomb(long jarg1, LinComb jarg1_);
-
-  public static final native long new_LinComb();
-
-  public static final native void delete_LinComb(long jarg1);
-
-  public static final native void Constraint_lhs_set(
-      long jarg1, Constraint jarg1_, long jarg2, LinComb jarg2_);
-
-  public static final native long Constraint_lhs_get(long jarg1, Constraint jarg1_);
-
-  public static final native void Constraint_rhs_set(
-      long jarg1, Constraint jarg1_, long jarg2, LinComb jarg2_);
-
-  public static final native long Constraint_rhs_get(long jarg1, Constraint jarg1_);
-
-  public static final native void Constraint_eq_set(
-      long jarg1, Constraint jarg1_, long jarg2, LinComb jarg2_);
-
-  public static final native long Constraint_eq_get(long jarg1, Constraint jarg1_);
-
-  public static final native void Constraint_annotation_set(
-      long jarg1, Constraint jarg1_, String jarg2);
-
-  public static final native String Constraint_annotation_get(long jarg1, Constraint jarg1_);
-
-  public static final native long new_Constraint();
-
-  public static final native void delete_Constraint(long jarg1);
-
-  public static final native void WireInfo_type_set(long jarg1, WireInfo jarg1_, int jarg2);
-
-  public static final native int WireInfo_type_get(long jarg1, WireInfo jarg1_);
-
-  public static final native void WireInfo_input_val_set(long jarg1, WireInfo jarg1_, long jarg2);
-
-  public static final native long WireInfo_input_val_get(long jarg1, WireInfo jarg1_);
-
-  public static final native long new_WireInfo();
-
-  public static final native void delete_WireInfo(long jarg1);
-
-  public static final native void ByteBuf_contents_set(long jarg1, ByteBuf jarg1_, String jarg2);
-
-  public static final native String ByteBuf_contents_get(long jarg1, ByteBuf jarg1_);
-
-  public static final native byte[] ByteBuf_get_data(long jarg1, ByteBuf jarg1_);
-
-  public static final native long new_ByteBuf();
-
-  public static final native void delete_ByteBuf(long jarg1);
-
-  public static final native long mkByteBuf(byte[] jarg1);
+  public static final native void delete_CharVector(long jarg1);
 
   public static final native void Keypair_proving_key_set(
       long jarg1, Keypair jarg1_, long jarg2, ByteBuf jarg2_);
@@ -210,70 +126,145 @@ public class libsnarkwrapperJNI {
 
   public static final native void initZKP();
 
-  public static final native void dump_constraint_system__SWIG_0(
-      long jarg1, long jarg2, long jarg3);
+  public static final native long get_sha_nonce_val(long jarg1, ByteBuf jarg1_, long jarg2);
 
-  public static final native void dump_constraint_system__SWIG_1(long jarg1, long jarg2);
+  public static final native long new_R1CSInstance();
 
-  public static final native void dump_inputs(long jarg1, long jarg2);
+  public static final native void R1CSInstance_isProver_set(
+      long jarg1, R1CSInstance jarg1_, boolean jarg2);
 
-  public static final native boolean ensure_satisfied(
-      long jarg1, long jarg2, long jarg3, long jarg4);
+  public static final native boolean R1CSInstance_isProver_get(long jarg1, R1CSInstance jarg1_);
 
-  public static final native void R1CS_wires_set(
-      long jarg1, R1CS jarg1_, long jarg2, WireInfoVector jarg2_);
+  public static final native long R1CSInstance_mkPublicVal(
+      long jarg1, R1CSInstance jarg1_, long jarg2);
 
-  public static final native long R1CS_wires_get(long jarg1, R1CS jarg1_);
+  public static final native long R1CSInstance_mkPublicBitvec__SWIG_0(
+      long jarg1, R1CSInstance jarg1_, long jarg2, BoolVector jarg2_);
 
-  public static final native void R1CS_constraints_set(
-      long jarg1, R1CS jarg1_, long jarg2, ConstraintVector jarg2_);
+  public static final native long R1CSInstance_mkPublicBitvec__SWIG_1(
+      long jarg1, R1CSInstance jarg1_, long jarg2, ByteBuf jarg2_);
 
-  public static final native long R1CS_constraints_get(long jarg1, R1CS jarg1_);
+  public static final native long R1CSInstance_mkPrivateValProver(
+      long jarg1,
+      R1CSInstance jarg1_,
+      long jarg2,
+      long jarg3,
+      VarArray jarg3_,
+      long jarg4,
+      VarArray jarg4_);
 
-  public static final native void R1CS_wire_annotations_set(long jarg1, R1CS jarg1_, long jarg2);
+  public static final native long R1CSInstance_mkPrivateValVerifier(
+      long jarg1, R1CSInstance jarg1_, long jarg2, VarArray jarg2_, long jarg3, VarArray jarg3_);
 
-  public static final native long R1CS_wire_annotations_get(long jarg1, R1CS jarg1_);
+  public static final native long R1CSInstance_mkAnd(
+      long jarg1, R1CSInstance jarg1_, long jarg2, Var jarg2_, long jarg3, Var jarg3_);
 
-  public static final native void R1CS_constraint_annotations_set(
-      long jarg1, R1CS jarg1_, long jarg2);
+  public static final native long R1CSInstance_mkNot(
+      long jarg1, R1CSInstance jarg1_, long jarg2, Var jarg2_);
 
-  public static final native long R1CS_constraint_annotations_get(long jarg1, R1CS jarg1_);
+  public static final native long R1CSInstance_mkOr(
+      long jarg1, R1CSInstance jarg1_, long jarg2, Var jarg2_, long jarg3, Var jarg3_);
 
-  public static final native void R1CS_primary_input_set(long jarg1, R1CS jarg1_, long jarg2);
+  public static final native long R1CSInstance_mkMult(
+      long jarg1, R1CSInstance jarg1_, long jarg2, Var jarg2_, long jarg3, Var jarg3_);
 
-  public static final native long R1CS_primary_input_get(long jarg1, R1CS jarg1_);
+  public static final native long R1CSInstance_mkAdd(
+      long jarg1, R1CSInstance jarg1_, long jarg2, Var jarg2_, long jarg3, Var jarg3_);
 
-  public static final native void R1CS_aux_input_set(long jarg1, R1CS jarg1_, long jarg2);
+  public static final native long R1CSInstance_mkMux(
+      long jarg1,
+      R1CSInstance jarg1_,
+      long jarg2,
+      Var jarg2_,
+      long jarg3,
+      Var jarg3_,
+      long jarg4,
+      Var jarg4_);
 
-  public static final native long R1CS_aux_input_get(long jarg1, R1CS jarg1_);
+  public static final native long R1CSInstance_mkEqualTo(
+      long jarg1, R1CSInstance jarg1_, long jarg2, Var jarg2_, long jarg3, Var jarg3_);
 
-  public static final native void R1CS_CS_set(long jarg1, R1CS jarg1_, long jarg2);
+  public static final native long R1CSInstance_mkLessThan(
+      long jarg1, R1CSInstance jarg1_, long jarg2, Var jarg2_, long jarg3, Var jarg3_);
 
-  public static final native long R1CS_CS_get(long jarg1, R1CS jarg1_);
+  public static final native long R1CSInstance_mkLE(
+      long jarg1, R1CSInstance jarg1_, long jarg2, Var jarg2_, long jarg3, Var jarg3_);
 
-  public static final native void R1CS_initialized_set(long jarg1, R1CS jarg1_, boolean jarg2);
+  public static final native void R1CSInstance_AddEquality(
+      long jarg1, R1CSInstance jarg1_, long jarg2, Var jarg2_, long jarg3, Var jarg3_);
 
-  public static final native boolean R1CS_initialized_get(long jarg1, R1CS jarg1_);
+  public static final native boolean R1CSInstance_verifyProof(
+      long jarg1, R1CSInstance jarg1_, long jarg2, ByteBuf jarg2_, long jarg3, ByteBuf jarg3_);
 
-  public static final native int R1CS_mkWire(
-      long jarg1, R1CS jarg1_, long jarg2, WireInfo jarg2_, String jarg3);
+  public static final native long R1CSInstance_generateProof(
+      long jarg1, R1CSInstance jarg1_, long jarg2, ByteBuf jarg2_);
 
-  public static final native void R1CS_addConstraint(
-      long jarg1, R1CS jarg1_, long jarg2, Constraint jarg2_);
+  public static final native long R1CSInstance_genKeypair(long jarg1, R1CSInstance jarg1_);
 
-  public static final native void R1CS_reportConstraintSystem(long jarg1, R1CS jarg1_, long jarg2);
+  public static final native void delete_R1CSInstance(long jarg1);
 
-  public static final native long R1CS_generateProof(
-      long jarg1, R1CS jarg1_, long jarg2, ByteBuf jarg2_);
+  public static final native long divide_rounding_up(long jarg1, long jarg2);
 
-  public static final native boolean R1CS_verifyProof(
-      long jarg1, R1CS jarg1_, long jarg2, ByteBuf jarg2_, long jarg3, ByteBuf jarg3_);
+  public static final native String bvec_to_string(long jarg1, BoolVector jarg1_);
 
-  public static final native void R1CS_initConstraintSystem(long jarg1, R1CS jarg1_);
+  public static final native long string_to_bvec(String jarg1);
 
-  public static final native long R1CS_genKeypair(long jarg1, R1CS jarg1_);
+  public static final native void ByteBuf_contents_set(long jarg1, ByteBuf jarg1_, String jarg2);
 
-  public static final native long new_R1CS();
+  public static final native String ByteBuf_contents_get(long jarg1, ByteBuf jarg1_);
 
-  public static final native void delete_R1CS(long jarg1);
+  public static final native byte[] ByteBuf_get_data(long jarg1, ByteBuf jarg1_);
+
+  public static final native long new_ByteBuf();
+
+  public static final native void delete_ByteBuf(long jarg1);
+
+  public static final native long mkByteBuf(byte[] jarg1);
+
+  public static final native boolean ensure_satisfied__SWIG_0(long jarg1, long jarg2, long jarg3);
+
+  public static final native boolean ensure_satisfied__SWIG_1(long jarg1);
+
+  public static final native void Var_value_set(long jarg1, Var jarg1_, long jarg2);
+
+  public static final native long Var_value_get(long jarg1, Var jarg1_);
+
+  public static final native long new_Var();
+
+  public static final native void delete_Var(long jarg1);
+
+  public static final native void VarArray_values_set(long jarg1, VarArray jarg1_, long jarg2);
+
+  public static final native long VarArray_values_get(long jarg1, VarArray jarg1_);
+
+  public static final native long new_VarArray();
+
+  public static final native void delete_VarArray(long jarg1);
+
+  public static final native void addEquality__SWIG_0(
+      long jarg1, long jarg2, Var jarg2_, long jarg3, Var jarg3_);
+
+  public static final native void addEquality__SWIG_1(long jarg1, long jarg2, long jarg3);
+
+  public static final native void ShaResult_val_var_set(long jarg1, ShaResult jarg1_, long jarg2);
+
+  public static final native long ShaResult_val_var_get(long jarg1, ShaResult jarg1_);
+
+  public static final native void ShaResult_data_set(long jarg1, ShaResult jarg1_, long jarg2);
+
+  public static final native long ShaResult_data_get(long jarg1, ShaResult jarg1_);
+
+  public static final native void ShaResult_nonce_set(long jarg1, ShaResult jarg1_, long jarg2);
+
+  public static final native long ShaResult_nonce_get(long jarg1, ShaResult jarg1_);
+
+  public static final native void ShaResult_output_set(long jarg1, ShaResult jarg1_, long jarg2);
+
+  public static final native long ShaResult_output_get(long jarg1, ShaResult jarg1_);
+
+  public static final native long new_ShaResult();
+
+  public static final native void delete_ShaResult(long jarg1);
+
+  public static final native long mkSHA(long jarg1, long jarg2, String jarg3, boolean jarg4);
 }

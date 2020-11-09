@@ -61,6 +61,8 @@ class ZKPVerifierInterpreter(
 ) :
     SingleProtocolInterpreter<ZKPObject>(program, runtime.projection.protocol) {
 
+    private val ensureInit = ZKPInit
+
     private val prover = (runtime.projection.protocol as ZKP).prover
     private val typeAnalysis = TypeAnalysis.get(program)
 
@@ -117,13 +119,15 @@ class ZKPVerifierInterpreter(
             is IntegerValue -> this.value
             is BooleanValue -> if (this.value) {
                 1
-            } else { 0 }
+            } else {
+                0
+            }
             else -> throw Exception("value.toInt: Unknown value type: $this")
         }
     }
 
     /** Inject a value into a wire. **/
-    private fun injectValue(value: Value): WireTerm =
+    private fun mkConst(value: Value): WireTerm =
         wireGenerator.mkConst(value.toInt())
 
     private fun Int.toValue(t: ValueType): Value {
@@ -140,8 +144,10 @@ class ZKPVerifierInterpreter(
         }
     }
 
-    private fun injectDummyIn(): WireTerm {
-        return wireGenerator.mkDummyIn()
+    private suspend fun mkDummyIn(): WireTerm {
+        val hash = (runtime.receive(ProtocolProjection(runtime.projection.protocol, prover)) as ByteVecValue)
+        val nonce = (runtime.receive(ProtocolProjection(runtime.projection.protocol, prover)) as ByteVecValue)
+        return wireGenerator.mkDummyIn(hash.value, nonce.value)
     }
 
     override suspend fun buildExpressionObject(expr: AtomicExpressionNode): ZKPObject {
@@ -191,7 +197,7 @@ class ZKPVerifierInterpreter(
 
     private fun getAtomicExprWire(expr: AtomicExpressionNode): WireTerm =
         when (expr) {
-            is LiteralNode -> injectValue(expr.value)
+            is LiteralNode -> mkConst(expr.value)
             is ReadNode -> wireStore[expr.temporary.value]!!
         }
 
@@ -277,9 +283,11 @@ class ZKPVerifierInterpreter(
             if (!vkFile.exists()) {
                 throw Exception("Cannot find verification key for ${wire.asString()} with name $wireName.vk.  Restart after prover finishes.")
             } else {
-                val wireVal: Int = (runtime.receive(ProtocolProjection(runtime.projection.protocol, prover)) as IntegerValue).value
+                val wireVal: Int =
+                    (runtime.receive(ProtocolProjection(runtime.projection.protocol, prover)) as IntegerValue).value
                 val r1cs = wire.toR1CS(false, wireVal)
-                val pf = (runtime.receive(ProtocolProjection(runtime.projection.protocol, prover)) as ByteVecValue).value
+                val pf =
+                    (runtime.receive(ProtocolProjection(runtime.projection.protocol, prover)) as ByteVecValue).value
                 val in_vkFile = FileInputStream(vkFile)
                 val vk = mkByteBuf(in_vkFile.readAllBytes())
                 in_vkFile.close()
@@ -311,7 +319,7 @@ class ZKPVerifierInterpreter(
             val publicInputs = events.getHostReceives(runtime.projection.host, "ZKP_PUBLIC_INPUT")
 
             val w: WireTerm = if (publicInputs.isEmpty()) {
-                injectDummyIn()
+                mkDummyIn()
             } else {
                 // Only kind of input is zkp public input
                 var cleartextValue: Value? = null
@@ -326,7 +334,7 @@ class ZKPVerifierInterpreter(
                     }
                 }
                 tempStore = tempStore.put(sender.temporary.value, cleartextValue!!)
-                injectValue(cleartextValue)
+                mkConst(cleartextValue)
             }
             wireStore = wireStore.put(sender.temporary.value, w)
         }

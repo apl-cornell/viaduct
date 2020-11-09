@@ -30,10 +30,15 @@
     #include "libsnarkwrapper.hpp"
 %}
 
-%template(TermVector) std::vector<Term>;
-%template(ConstraintVector) std::vector<Constraint>;
-%template(WireInfoVector) std::vector<WireInfo>;
+%template(IntVector) std::vector<int>;
+%template(BoolVector) std::vector<bool>;
+%template(CharVector) std::vector<char>;
+
+// %template(pbvar) libsnark::pb_variable<field128>;
+
+// %template(TermVector) std::vector<Term>;
+// %template(ConstraintVector) std::vector<Constraint>;
+// %template(WireInfoVector) std::vector<WireInfo>;
 
 %include "libsnarkwrapper.hpp"
-
-
+%include "utils.hpp"

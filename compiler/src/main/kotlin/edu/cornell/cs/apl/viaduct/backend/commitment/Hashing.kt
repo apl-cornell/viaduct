@@ -46,6 +46,12 @@ fun PlaintextClassObject.encode(): List<Byte> {
     }
 }
 
+fun genNonce(width: Int): List<Byte> {
+    val nonce = ByteArray(width)
+    SecureRandom().nextBytes(nonce)
+    return nonce.toList()
+}
+
 object Hashing {
     private fun generateHash(data: List<Byte>): HashInfo {
         val nonce = ByteArray(16)

@@ -9,7 +9,7 @@ libsnarkwrapper.so: libsnarkwrapper_wrap.o
 libsnarkwrapper_wrap.o: libsnarkwrapper_wrap.cpp
 	g++ -c -fpic $(INCLUDES) libsnarkwrapper_wrap.cpp
 
-libsnarkwrapper_wrap.cpp: libsnarkwrapper.i
+libsnarkwrapper_wrap.cpp: libsnarkwrapper.i libsnarkwrapper.hpp utils.hpp
 	mkdir -p ../java/edu/cornell/cs/apl/viaduct/libsnarkwrapper && swig -java -outdir ../java/edu/cornell/cs/apl/viaduct/libsnarkwrapper -package edu.cornell.cs.apl.viaduct.libsnarkwrapper -c++ -o $@ libsnarkwrapper.i
 
 

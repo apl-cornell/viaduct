@@ -8,19 +8,19 @@
 
 package edu.cornell.cs.apl.viaduct.libsnarkwrapper;
 
-public class SWIGTYPE_p_libsnark__linear_combinationT_field128_t {
+public class SWIGTYPE_p_libsnark__pb_variable_arrayT_field128_t {
   private transient long swigCPtr;
 
-  protected SWIGTYPE_p_libsnark__linear_combinationT_field128_t(
+  protected SWIGTYPE_p_libsnark__pb_variable_arrayT_field128_t(
       long cPtr, @SuppressWarnings("unused") boolean futureUse) {
     swigCPtr = cPtr;
   }
 
-  protected SWIGTYPE_p_libsnark__linear_combinationT_field128_t() {
+  protected SWIGTYPE_p_libsnark__pb_variable_arrayT_field128_t() {
     swigCPtr = 0;
   }
 
-  protected static long getCPtr(SWIGTYPE_p_libsnark__linear_combinationT_field128_t obj) {
+  protected static long getCPtr(SWIGTYPE_p_libsnark__pb_variable_arrayT_field128_t obj) {
     return (obj == null) ? 0 : obj.swigCPtr;
   }
 }

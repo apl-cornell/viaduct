@@ -8,7 +8,8 @@
 
 package edu.cornell.cs.apl.viaduct.libsnarkwrapper;
 
-public class CharVector extends java.util.AbstractList<Character> implements java.util.RandomAccess {
+public class CharVector extends java.util.AbstractList<Character>
+    implements java.util.RandomAccess {
   private transient long swigCPtr;
   protected transient boolean swigCMemOwn;
 
@@ -140,5 +141,4 @@ public class CharVector extends java.util.AbstractList<Character> implements jav
   private void doRemoveRange(int fromIndex, int toIndex) {
     libsnarkwrapperJNI.CharVector_doRemoveRange(swigCPtr, this, fromIndex, toIndex);
   }
-
 }

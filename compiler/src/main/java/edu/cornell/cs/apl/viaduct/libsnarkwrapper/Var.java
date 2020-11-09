@@ -37,15 +37,16 @@ public class Var {
   }
 
   public void setValue(SWIGTYPE_p_libsnark__pb_variableT_field128_t value) {
-    libsnarkwrapperJNI.Var_value_set(swigCPtr, this, SWIGTYPE_p_libsnark__pb_variableT_field128_t.getCPtr(value));
+    libsnarkwrapperJNI.Var_value_set(
+        swigCPtr, this, SWIGTYPE_p_libsnark__pb_variableT_field128_t.getCPtr(value));
   }
 
   public SWIGTYPE_p_libsnark__pb_variableT_field128_t getValue() {
-    return new SWIGTYPE_p_libsnark__pb_variableT_field128_t(libsnarkwrapperJNI.Var_value_get(swigCPtr, this), true);
+    return new SWIGTYPE_p_libsnark__pb_variableT_field128_t(
+        libsnarkwrapperJNI.Var_value_get(swigCPtr, this), true);
   }
 
   public Var() {
     this(libsnarkwrapperJNI.new_Var(), true);
   }
-
 }

@@ -11,7 +11,8 @@ package edu.cornell.cs.apl.viaduct.libsnarkwrapper;
 public class SWIGTYPE_p_libsnark__pb_variable_arrayT_field128_t {
   private transient long swigCPtr;
 
-  protected SWIGTYPE_p_libsnark__pb_variable_arrayT_field128_t(long cPtr, @SuppressWarnings("unused") boolean futureUse) {
+  protected SWIGTYPE_p_libsnark__pb_variable_arrayT_field128_t(
+      long cPtr, @SuppressWarnings("unused") boolean futureUse) {
     swigCPtr = cPtr;
   }
 
@@ -23,4 +24,3 @@ public class SWIGTYPE_p_libsnark__pb_variable_arrayT_field128_t {
     return (obj == null) ? 0 : obj.swigCPtr;
   }
 }
-

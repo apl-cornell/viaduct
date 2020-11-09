@@ -140,5 +140,4 @@ public class BoolVector extends java.util.AbstractList<Boolean> implements java.
   private void doRemoveRange(int fromIndex, int toIndex) {
     libsnarkwrapperJNI.BoolVector_doRemoveRange(swigCPtr, this, fromIndex, toIndex);
   }
-
 }

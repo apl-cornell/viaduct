@@ -37,39 +37,46 @@ public class ShaResult {
   }
 
   public void setVal_var(SWIGTYPE_p_libsnark__pb_variableT_field128_t value) {
-    libsnarkwrapperJNI.ShaResult_val_var_set(swigCPtr, this, SWIGTYPE_p_libsnark__pb_variableT_field128_t.getCPtr(value));
+    libsnarkwrapperJNI.ShaResult_val_var_set(
+        swigCPtr, this, SWIGTYPE_p_libsnark__pb_variableT_field128_t.getCPtr(value));
   }
 
   public SWIGTYPE_p_libsnark__pb_variableT_field128_t getVal_var() {
-    return new SWIGTYPE_p_libsnark__pb_variableT_field128_t(libsnarkwrapperJNI.ShaResult_val_var_get(swigCPtr, this), true);
+    return new SWIGTYPE_p_libsnark__pb_variableT_field128_t(
+        libsnarkwrapperJNI.ShaResult_val_var_get(swigCPtr, this), true);
   }
 
   public void setData(SWIGTYPE_p_libsnark__pb_variable_arrayT_field128_t value) {
-    libsnarkwrapperJNI.ShaResult_data_set(swigCPtr, this, SWIGTYPE_p_libsnark__pb_variable_arrayT_field128_t.getCPtr(value));
+    libsnarkwrapperJNI.ShaResult_data_set(
+        swigCPtr, this, SWIGTYPE_p_libsnark__pb_variable_arrayT_field128_t.getCPtr(value));
   }
 
   public SWIGTYPE_p_libsnark__pb_variable_arrayT_field128_t getData() {
-    return new SWIGTYPE_p_libsnark__pb_variable_arrayT_field128_t(libsnarkwrapperJNI.ShaResult_data_get(swigCPtr, this), true);
+    return new SWIGTYPE_p_libsnark__pb_variable_arrayT_field128_t(
+        libsnarkwrapperJNI.ShaResult_data_get(swigCPtr, this), true);
   }
 
   public void setNonce(SWIGTYPE_p_libsnark__pb_variable_arrayT_field128_t value) {
-    libsnarkwrapperJNI.ShaResult_nonce_set(swigCPtr, this, SWIGTYPE_p_libsnark__pb_variable_arrayT_field128_t.getCPtr(value));
+    libsnarkwrapperJNI.ShaResult_nonce_set(
+        swigCPtr, this, SWIGTYPE_p_libsnark__pb_variable_arrayT_field128_t.getCPtr(value));
   }
 
   public SWIGTYPE_p_libsnark__pb_variable_arrayT_field128_t getNonce() {
-    return new SWIGTYPE_p_libsnark__pb_variable_arrayT_field128_t(libsnarkwrapperJNI.ShaResult_nonce_get(swigCPtr, this), true);
+    return new SWIGTYPE_p_libsnark__pb_variable_arrayT_field128_t(
+        libsnarkwrapperJNI.ShaResult_nonce_get(swigCPtr, this), true);
   }
 
   public void setOutput(SWIGTYPE_p_libsnark__pb_variable_arrayT_field128_t value) {
-    libsnarkwrapperJNI.ShaResult_output_set(swigCPtr, this, SWIGTYPE_p_libsnark__pb_variable_arrayT_field128_t.getCPtr(value));
+    libsnarkwrapperJNI.ShaResult_output_set(
+        swigCPtr, this, SWIGTYPE_p_libsnark__pb_variable_arrayT_field128_t.getCPtr(value));
   }
 
   public SWIGTYPE_p_libsnark__pb_variable_arrayT_field128_t getOutput() {
-    return new SWIGTYPE_p_libsnark__pb_variable_arrayT_field128_t(libsnarkwrapperJNI.ShaResult_output_get(swigCPtr, this), true);
+    return new SWIGTYPE_p_libsnark__pb_variable_arrayT_field128_t(
+        libsnarkwrapperJNI.ShaResult_output_get(swigCPtr, this), true);
   }
 
   public ShaResult() {
     this(libsnarkwrapperJNI.new_ShaResult(), true);
   }
-
 }

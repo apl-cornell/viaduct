@@ -11,7 +11,8 @@ package edu.cornell.cs.apl.viaduct.libsnarkwrapper;
 public class SWIGTYPE_p_std__vectorT_libff__FrT_libsnark__default_r1cs_ppzksnark_pp_t_t {
   private transient long swigCPtr;
 
-  protected SWIGTYPE_p_std__vectorT_libff__FrT_libsnark__default_r1cs_ppzksnark_pp_t_t(long cPtr, @SuppressWarnings("unused") boolean futureUse) {
+  protected SWIGTYPE_p_std__vectorT_libff__FrT_libsnark__default_r1cs_ppzksnark_pp_t_t(
+      long cPtr, @SuppressWarnings("unused") boolean futureUse) {
     swigCPtr = cPtr;
   }
 
@@ -19,8 +20,8 @@ public class SWIGTYPE_p_std__vectorT_libff__FrT_libsnark__default_r1cs_ppzksnark
     swigCPtr = 0;
   }
 
-  protected static long getCPtr(SWIGTYPE_p_std__vectorT_libff__FrT_libsnark__default_r1cs_ppzksnark_pp_t_t obj) {
+  protected static long getCPtr(
+      SWIGTYPE_p_std__vectorT_libff__FrT_libsnark__default_r1cs_ppzksnark_pp_t_t obj) {
     return (obj == null) ? 0 : obj.swigCPtr;
   }
 }
-

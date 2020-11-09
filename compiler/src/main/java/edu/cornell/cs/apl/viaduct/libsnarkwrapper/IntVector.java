@@ -140,5 +140,4 @@ public class IntVector extends java.util.AbstractList<Integer> implements java.u
   private void doRemoveRange(int fromIndex, int toIndex) {
     libsnarkwrapperJNI.IntVector_doRemoveRange(swigCPtr, this, fromIndex, toIndex);
   }
-
 }

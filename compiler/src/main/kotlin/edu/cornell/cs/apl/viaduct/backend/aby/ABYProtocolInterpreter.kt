@@ -117,7 +117,8 @@ class ABYProtocolInterpreter(
             connectionMap[otherHost]
                 ?: throw ViaductInterpreterError("cannot find address for host ${otherHost.name}")
 
-        aby = ABYParty(role, otherHostAddress.ipAddress, port, Aby.getLT(), BITLEN)
+        val address = if (role == Role.SERVER) "" else otherHostAddress.ipAddress
+        aby = ABYParty(role, address, port, Aby.getLT(), BITLEN)
 
         logger.info { "connected ABY to other host at ${otherHostAddress.ipAddress}:$port" }
 
@@ -693,6 +694,8 @@ class ABYProtocolInterpreter(
         private const val DEFAULT_PORT = 7766
         private const val BITLEN: Long = 32
 
+        var port: Int = DEFAULT_PORT
+
         private val protocolCircuitType: Map<ProtocolName, ABYCircuitType> =
             mapOf(
                 ArithABY.protocolName to ABYCircuitType.ARITH,
@@ -729,7 +732,8 @@ class ABYProtocolInterpreter(
                             program,
                             protocolAnalysis,
                             runtime,
-                            connectionMap
+                            connectionMap,
+                            port
                         )
                     )
                     currentHostPairs.add(hostPair)

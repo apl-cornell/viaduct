@@ -536,12 +536,7 @@ class SelectionConstraintGenerator(
                                 )
                             )
                         } else { // has invalid arg protocols
-                            // println("stmt: ${stmt.asDocument.print()} protocol: ${protocol.asDocument.print()}")
-                            // for (invalidProtocol in invalidArgProtocols) {
-                            //     println(invalidProtocol.second.asDocument.print())
-                            // }
                             invalidArgProtocolSet.addAll(invalidArgProtocols)
-                            // setOf(Not(argProtocolConstraints))
                             setOf()
                         }
                     }.ands()

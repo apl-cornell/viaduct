@@ -268,6 +268,7 @@ private class Z3Selection(
             val totalCostSymvar = ctx.mkFreshConst("total_cost", ctx.intSort) as IntExpr
 
             solver.Add(ctx.mkEq(totalCostSymvar, costExpr))
+
             when (costMode) {
                 CostMode.MINIMIZE -> solver.MkMinimize(totalCostSymvar)
                 CostMode.MAXIMIZE -> solver.MkMaximize(totalCostSymvar)

@@ -95,6 +95,10 @@ data class CostEquals(val lhs: SymbolicCost, val rhs: SymbolicCost) : SelectionC
     override val asDocument: Document = lhs.asDocument * Document("=") * rhs.asDocument
 }
 
+data class CostLessThanEqualTo(val lhs: SymbolicCost, val rhs: SymbolicCost) : SelectionConstraint() {
+    override val asDocument: Document = lhs.asDocument * Document("<=") * rhs.asDocument
+}
+
 data class Not(val rhs: SelectionConstraint) : SelectionConstraint() {
     override val asDocument: Document = Document("!") + rhs.asDocument
 }
@@ -118,6 +122,8 @@ internal fun SelectionConstraint.evaluate(f: (FunctionName, Variable) -> Protoco
 
         // TODO: ignore cost constraints for now
         is CostEquals -> true
+
+        is CostLessThanEqualTo -> true
 
         // TODO: ignore host variables for now
         is HostVariable -> true
@@ -208,6 +214,12 @@ internal fun SelectionConstraint.boolExpr(
                 this.lhs.arithExpr(ctx, vmap, pmap),
                 this.rhs.arithExpr(ctx, vmap, pmap)
             )
+
+        is CostLessThanEqualTo ->
+            ctx.mkLe(
+                this.lhs.arithExpr(ctx, vmap, pmap),
+                this.rhs.arithExpr(ctx, vmap, pmap)
+            )
     }
 }
 
@@ -266,6 +278,7 @@ fun SelectionConstraint.costVariables(): Set<CostVariable> =
         is VariableIn -> setOf()
         is VariableEquals -> setOf()
         is CostEquals -> this.lhs.costVariables().union(this.rhs.costVariables())
+        is CostLessThanEqualTo -> this.lhs.costVariables().union(this.rhs.costVariables())
         is Not -> this.rhs.costVariables()
         is And -> this.lhs.costVariables().union(this.rhs.costVariables())
     }
@@ -280,6 +293,7 @@ fun SelectionConstraint.hostVariables(): Set<HostVariable> =
         is VariableIn -> setOf()
         is VariableEquals -> setOf()
         is CostEquals -> setOf()
+        is CostLessThanEqualTo -> setOf()
         is Not -> this.rhs.hostVariables()
         is And -> this.lhs.hostVariables().union(this.rhs.hostVariables())
     }
@@ -294,6 +308,7 @@ fun SelectionConstraint.guardVisibilityVariables(): Set<GuardVisibilityFlag> =
         is VariableIn -> setOf()
         is VariableEquals -> setOf()
         is CostEquals -> setOf()
+        is CostLessThanEqualTo -> setOf()
         is Not -> this.rhs.guardVisibilityVariables()
         is And -> this.lhs.guardVisibilityVariables().union(this.rhs.guardVisibilityVariables())
     }

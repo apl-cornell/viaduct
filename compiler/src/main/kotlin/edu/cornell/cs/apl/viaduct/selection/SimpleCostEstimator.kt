@@ -241,23 +241,49 @@ class SimpleCostEstimator(
             }
         ) 10 else 0
 
-    private val costA2B: Cost<IntegerCost> =
-        zeroCost().update(LAN_COST, IntegerCost(18)).update(WAN_COST, IntegerCost(18))
+    // from Ishaq et al CCS 2019
+    private val abyConversionCostMap: Map<Pair<ProtocolName, ProtocolName>, Cost<IntegerCost>> =
+        mapOf(
+            Pair(ArithABY.protocolName, BoolABY.protocolName) to
+                zeroCost().update(LAN_COST, IntegerCost(18)).update(WAN_COST, IntegerCost(18)),
 
-    private val costA2Y: Cost<IntegerCost> =
-        zeroCost().update(LAN_COST, IntegerCost(17)).update(WAN_COST, IntegerCost(17))
+            Pair(ArithABY.protocolName, YaoABY.protocolName) to
+                zeroCost().update(LAN_COST, IntegerCost(17)).update(WAN_COST, IntegerCost(17)),
 
-    private val costB2A: Cost<IntegerCost> =
-        zeroCost().update(LAN_COST, IntegerCost(14)).update(WAN_COST, IntegerCost(14))
+            Pair(BoolABY.protocolName, ArithABY.protocolName) to
+                zeroCost().update(LAN_COST, IntegerCost(14)).update(WAN_COST, IntegerCost(14)),
 
-    private val costB2Y: Cost<IntegerCost> =
-        zeroCost().update(LAN_COST, IntegerCost(15)).update(WAN_COST, IntegerCost(15))
+            Pair(BoolABY.protocolName, YaoABY.protocolName) to
+                zeroCost().update(LAN_COST, IntegerCost(15)).update(WAN_COST, IntegerCost(15)),
 
-    private val costY2A: Cost<IntegerCost> =
-        zeroCost().update(LAN_COST, IntegerCost(20)).update(WAN_COST, IntegerCost(20))
+            Pair(YaoABY.protocolName, ArithABY.protocolName) to
+                zeroCost().update(LAN_COST, IntegerCost(20)).update(WAN_COST, IntegerCost(20)),
 
-    private val costY2B: Cost<IntegerCost> =
-        zeroCost().update(LAN_COST, IntegerCost(15)).update(WAN_COST, IntegerCost(15))
+            Pair(YaoABY.protocolName, BoolABY.protocolName) to
+                zeroCost().update(LAN_COST, IntegerCost(1)).update(WAN_COST, IntegerCost(15))
+        )
+
+    // from ABY paper
+    private val abyConversionCostMap2: Map<Pair<ProtocolName, ProtocolName>, Cost<IntegerCost>> =
+        mapOf(
+            Pair(ArithABY.protocolName, BoolABY.protocolName) to
+                zeroCost().update(LAN_COST, IntegerCost(1)).update(WAN_COST, IntegerCost(4346)),
+
+            Pair(ArithABY.protocolName, YaoABY.protocolName) to
+                zeroCost().update(LAN_COST, IntegerCost(1)).update(WAN_COST, IntegerCost(4346)),
+
+            Pair(BoolABY.protocolName, ArithABY.protocolName) to
+                zeroCost().update(LAN_COST, IntegerCost(0)).update(WAN_COST, IntegerCost(4191)),
+
+            Pair(BoolABY.protocolName, YaoABY.protocolName) to
+                zeroCost().update(LAN_COST, IntegerCost(0)).update(WAN_COST, IntegerCost(4790)),
+
+            Pair(YaoABY.protocolName, ArithABY.protocolName) to
+                zeroCost().update(LAN_COST, IntegerCost(0)).update(WAN_COST, IntegerCost(4191)),
+
+            Pair(YaoABY.protocolName, BoolABY.protocolName) to
+                zeroCost().update(LAN_COST, IntegerCost(0)).update(WAN_COST, IntegerCost(0))
+        )
 
     /** Cost of converting between different ABY circuit types. */
     private fun abyShareConversionCost(events: List<CommunicationEvent>): Cost<IntegerCost> {
@@ -271,32 +297,38 @@ class SimpleCostEstimator(
         for (event in events) {
             when {
                 event.send.id == ArithABY.A2B_OUTPUT && !hasA2B -> {
-                    conversionCost = conversionCost.concat(costA2B)
+                    conversionCost =
+                        conversionCost.concat(abyConversionCostMap2[ArithABY.protocolName to BoolABY.protocolName]!!)
                     hasA2B = true
                 }
 
                 event.send.id == ArithABY.A2Y_OUTPUT && !hasA2Y -> {
-                    conversionCost = conversionCost.concat(costA2Y)
+                    conversionCost =
+                        conversionCost.concat(abyConversionCostMap2[ArithABY.protocolName to YaoABY.protocolName]!!)
                     hasA2Y = true
                 }
 
                 event.send.id == BoolABY.B2A_OUTPUT && !hasB2A -> {
-                    conversionCost = conversionCost.concat(costB2A)
+                    conversionCost =
+                        conversionCost.concat(abyConversionCostMap2[BoolABY.protocolName to ArithABY.protocolName]!!)
                     hasB2A = true
                 }
 
                 event.send.id == BoolABY.B2Y_OUTPUT && !hasB2Y -> {
-                    conversionCost = conversionCost.concat(costB2Y)
+                    conversionCost =
+                        conversionCost.concat(abyConversionCostMap2[BoolABY.protocolName to YaoABY.protocolName]!!)
                     hasB2Y = true
                 }
 
                 event.send.id == YaoABY.Y2A_OUTPUT && !hasY2A -> {
-                    conversionCost = conversionCost.concat(costY2A)
+                    conversionCost =
+                        conversionCost.concat(abyConversionCostMap2[YaoABY.protocolName to ArithABY.protocolName]!!)
                     hasY2A = true
                 }
 
                 event.send.id == YaoABY.Y2B_OUTPUT && !hasY2B -> {
-                    conversionCost = conversionCost.concat(costY2B)
+                    conversionCost =
+                        conversionCost.concat(abyConversionCostMap2[YaoABY.protocolName to BoolABY.protocolName]!!)
                     hasY2B = true
                 }
             }

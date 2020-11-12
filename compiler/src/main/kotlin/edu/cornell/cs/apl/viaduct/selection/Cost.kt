@@ -57,6 +57,11 @@ data class Cost<C : CostMonoid<C>>(
             this.features.map { kv -> kv.key to f(kv.value) }.toMap().toPersistentMap()
         )
 
+    fun <D : CostMonoid<D>> featureMap(f: (CostFeature, C) -> D): Cost<D> =
+        Cost(
+            this.features.map { kv -> kv.key to f(kv.key, kv.value) }.toMap().toPersistentMap()
+        )
+
     fun update(feature: CostFeature, cost: C): Cost<C> =
         Cost(features.put(feature, cost))
 

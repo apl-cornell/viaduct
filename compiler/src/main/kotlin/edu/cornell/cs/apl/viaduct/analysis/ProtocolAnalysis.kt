@@ -412,6 +412,8 @@ class ProtocolAnalysis(
             is DeclarationNode ->
                 this.protocol?.value?.let { setOf(it) } ?: throw NoProtocolAnnotationError(this)
 
+            is OutputNode -> setOf(Local(this.host.value))
+
             else -> setOf()
         }
     }

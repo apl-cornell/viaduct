@@ -556,8 +556,7 @@ expr ::=
     :}
 
   | expr:e1 NEQ expr:e2 {:
-      final ExpressionNode eq = binaryExpression(EqualTo.INSTANCE, e1, e2);
-      RESULT = new OperatorApplicationNode(Not.INSTANCE, Arguments.from(eq), eq.getSourceLocation());
+      RESULT = binaryExpression(ExclusiveOr.INSTANCE, e1, e2);
     :}
 
   | expr:e1 LT expr:e2 {:

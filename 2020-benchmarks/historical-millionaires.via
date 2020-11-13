@@ -8,7 +8,7 @@ process main {
         b_min = min(b_min, input int from bob);
     }
 
-    val a_wins: bool{A ⊓ B} = declassify (a_min_trusted > b_min_trusted) to {A ⊓ B};
+    val a_wins: bool{A ⊓ B} = declassify (a_min > b_min) to {A ⊓ B};
     output a_wins to alice;
     output a_wins to bob;
 }

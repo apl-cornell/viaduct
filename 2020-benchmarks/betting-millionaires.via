@@ -1,0 +1,28 @@
+host alice: {A & B<-}
+host bob:   {B & A<-}
+host chuck: {C}
+
+/* chuck bets who was richer b/w alice and bob at their poorest */
+process main {
+  val c_bet: bool{C & (A&B)<-} =
+    endorse (input bool from chuck) from {C} to {C & (A&B)<-};
+
+  val length: int{A ⊓ B} = 10;
+  var a_min: int{A & B<-} = 0;
+  var b_min: int{B & A<-} = 0;
+  for (var i: int{A ⊓ B} = 0; i < length; i += 1) {
+      a_min = min(a_min, input int from alice);
+      b_min = min(b_min, input int from bob);
+  }
+
+  val a_wins: bool{A ⊓ B ⊓ C->} = declassify (a_min > b_min) to {A ⊓ B ⊓ C->};
+  val a_wins_trusted: bool{A ⊓ B ⊓ C} =
+    endorse a_wins from {A ⊓ B ⊓ C->} to {A ⊓ B ⊓ C};
+  val c_bet_public: bool{A ⊓ B ⊓ C} = declassify c_bet to {A ⊓ B ⊓ C};
+  val c_wins: bool{A ⊓ B ⊓ C} = (c_bet_public && a_wins_trusted)
+                             || (!c_bet_public && !a_wins_trusted);
+
+  output c_wins to alice;
+  output c_wins to bob;
+  output c_wins to chuck;
+}

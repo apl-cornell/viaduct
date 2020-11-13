@@ -273,6 +273,16 @@ object Or : LogicalOperator() {
     }
 }
 
+object ExclusiveOr : LogicalOperator() {
+    override fun apply(left: Boolean, right: Boolean): Boolean {
+        return left.xor(right)
+    }
+
+    override fun toString(): String {
+        return "^"
+    }
+}
+
 // Comparison Operators
 
 object EqualTo : ComparisonOperator() {
@@ -302,6 +312,26 @@ object LessThanOrEqualTo : ComparisonOperator() {
 
     override fun toString(): String {
         return "<="
+    }
+}
+
+object GreaterThan : ComparisonOperator() {
+    override fun apply(left: Int, right: Int): Boolean {
+        return left > right
+    }
+
+    override fun toString(): String {
+        return ">"
+    }
+}
+
+object GreaterThanOrEqualTo : ComparisonOperator() {
+    override fun apply(left: Int, right: Int): Boolean {
+        return left >= right
+    }
+
+    override fun toString(): String {
+        return ">="
     }
 }
 

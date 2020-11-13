@@ -19,6 +19,9 @@ import edu.cornell.cs.apl.viaduct.syntax.operators.Addition
 import edu.cornell.cs.apl.viaduct.syntax.operators.And
 import edu.cornell.cs.apl.viaduct.syntax.operators.Division
 import edu.cornell.cs.apl.viaduct.syntax.operators.EqualTo
+import edu.cornell.cs.apl.viaduct.syntax.operators.ExclusiveOr
+import edu.cornell.cs.apl.viaduct.syntax.operators.GreaterThan
+import edu.cornell.cs.apl.viaduct.syntax.operators.GreaterThanOrEqualTo
 import edu.cornell.cs.apl.viaduct.syntax.operators.LessThan
 import edu.cornell.cs.apl.viaduct.syntax.operators.LessThanOrEqualTo
 import edu.cornell.cs.apl.viaduct.syntax.operators.Maximum
@@ -112,6 +115,14 @@ class SimpleCostEstimator(
             Pair(LessThan, BoolABY.protocolName) to opCost(214, 214),
             Pair(LessThan, YaoABY.protocolName) to opCost(148, 147),
 
+            // GREATER THAN / EQUAL TO
+            Pair(GreaterThanOrEqualTo, BoolABY.protocolName) to opCost(202, 202),
+            Pair(GreaterThanOrEqualTo, YaoABY.protocolName) to opCost(147, 147),
+
+            // GREATER THAN
+            Pair(GreaterThan, BoolABY.protocolName) to opCost(214, 214),
+            Pair(GreaterThan, YaoABY.protocolName) to opCost(148, 147),
+
             // MUX
             Pair(Mux, BoolABY.protocolName) to opCost(141, 141),
             Pair(Mux, YaoABY.protocolName) to opCost(148, 146),
@@ -166,6 +177,10 @@ class SimpleCostEstimator(
             Pair(edu.cornell.cs.apl.viaduct.syntax.operators.Not, BoolABY.protocolName) to opCost(1, 1932),
             Pair(edu.cornell.cs.apl.viaduct.syntax.operators.Not, YaoABY.protocolName) to opCost(0, 23),
 
+            // XOR (TODO: no numbers for these, copy AND)
+            Pair(ExclusiveOr, BoolABY.protocolName) to opCost(0, 0),
+            Pair(ExclusiveOr, YaoABY.protocolName) to opCost(0, 12),
+
             // EQUAL TO
             Pair(EqualTo, BoolABY.protocolName) to opCost(6, 11300),
             Pair(EqualTo, YaoABY.protocolName) to opCost(1, 23),
@@ -177,6 +192,14 @@ class SimpleCostEstimator(
             // LESS THAN (cost given as CMP)
             Pair(LessThan, BoolABY.protocolName) to opCost(8, 10802),
             Pair(LessThan, YaoABY.protocolName) to opCost(1, 23),
+
+            // GREATER THAN / EQUAL TO (cost given as CMP)
+            Pair(GreaterThanOrEqualTo, BoolABY.protocolName) to opCost(8, 10802),
+            Pair(GreaterThanOrEqualTo, YaoABY.protocolName) to opCost(1, 23),
+
+            // GREATER THAN (cost given as CMP)
+            Pair(GreaterThan, BoolABY.protocolName) to opCost(8, 10802),
+            Pair(GreaterThan, YaoABY.protocolName) to opCost(1, 23),
 
             // MUX
             Pair(Mux, BoolABY.protocolName) to opCost(2, 2252),

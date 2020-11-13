@@ -547,6 +547,10 @@ expr ::=
       RESULT = binaryExpression(Or.INSTANCE, e1, e2);
     :}
 
+  | expr:e1 AND expr:e2 {:
+      RESULT = binaryExpression(ExclusiveOr.INSTANCE, e1, e2);
+    :}
+
   | expr:e1 EQEQ expr:e2 {:
       RESULT = binaryExpression(EqualTo.INSTANCE, e1, e2);
     :}
@@ -565,11 +569,11 @@ expr ::=
     :}
 
   | expr:e1 GT expr:e2 {:
-      RESULT = binaryExpression(LessThan.INSTANCE, e2, e1);
+      RESULT = binaryExpression(GreaterThan.INSTANCE, e1, e2);
     :}
 
   | expr:e1 GEQ expr:e2 {:
-      RESULT = binaryExpression(LessThanOrEqualTo.INSTANCE, e2, e1);
+      RESULT = binaryExpression(GreaterThanOrEqualTo.INSTANCE, e1, e2);
     :}
 
   | expr:e1 PLUS expr:e2 {:

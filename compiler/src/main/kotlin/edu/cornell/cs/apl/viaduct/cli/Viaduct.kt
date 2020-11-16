@@ -10,7 +10,7 @@ class Viaduct : CliktCommand(help = "Compile high level specifications to secure
 
     init {
         versionOption(version)
-        subcommands(Format(), Compile(), Specification(), Run())
+        subcommands(Format(), Compile(), Specification(), Run(), ABYBench())
         // TODO: Help, Interpret, Specification commands
     }
 

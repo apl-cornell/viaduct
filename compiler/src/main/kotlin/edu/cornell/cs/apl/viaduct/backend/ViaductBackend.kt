@@ -7,6 +7,10 @@ import edu.cornell.cs.apl.viaduct.selection.SimpleProtocolComposer
 import edu.cornell.cs.apl.viaduct.syntax.Host
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.HostDeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
+import kotlin.system.measureTimeMillis
+import mu.KotlinLogging
+
+private val logger = KotlinLogging.logger("ViaductBackend")
 
 class ViaductBackend(
     private val backends: List<ProtocolBackend>,
@@ -50,6 +54,8 @@ class ViaductBackend(
             }
 
         val runtime = ViaductRuntime(host, program, protocolAnalysis, connectionMap, backends, strategy)
-        runtime.start()
+
+        val runtimeDuration = measureTimeMillis { runtime.start() }
+        logger.info { "runtime duration: ${runtimeDuration}ms" }
     }
 }

@@ -54,7 +54,8 @@ class ABYCircuitBuilder(
 
 sealed class ABYCircuitGate(
     val children: List<ABYCircuitGate>,
-    val circuitType: ABYCircuitType
+    val circuitType: ABYCircuitType,
+    var variableGate: Boolean = false // is this gate stored in a variable?
 ) {
     /** Adds the gate represented by this object to the given circuit. */
     abstract fun putGate(builder: ABYCircuitBuilder, childShares: List<Share>): Share
@@ -286,7 +287,7 @@ private fun putTernaryOperationGate(gate: Circuit.(Share, Share, Share) -> Share
 }
 
 /** Implements bitwise not. */
-private fun Circuit.putNOTGate(input: Share): Share {
+fun Circuit.putNOTGate(input: Share): Share {
     val inverses = mutableListOf<Long>()
     for (wire in input.wires) {
         inverses.add(this.putINVGate(wire))

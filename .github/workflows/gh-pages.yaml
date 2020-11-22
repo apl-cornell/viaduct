@@ -11,7 +11,7 @@ jobs:
 
     env:
       java: 11
-      docsDir: build/docs/gfm/viaduct
+      docsDir: build/dokka/htmlMultiModule
 
     steps:
       - uses: actions/checkout@v2
@@ -22,10 +22,10 @@ jobs:
       - name: Generate documentation with Dokka
         uses: eskatos/gradle-command-action@v1
         with:
-          arguments: dokkaGfm
-      - name: Set Jekyll theme
+          arguments: dokkaHtmlMultiModule
+      - name: Create index.html
         run: |
-          echo 'theme: jekyll-theme-hacker' > ${{ env.docsDir }}/_config.yml
+          cp ${{ env.docsDir }}/-modules.html ${{ env.docsDir }}/index.html
       - name: Upload to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         with:

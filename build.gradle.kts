@@ -1,15 +1,15 @@
 import org.gradle.api.JavaVersion.VERSION_11
 
 plugins {
-    kotlin("multiplatform") version "1.4.0" apply false
-    id("org.jetbrains.dokka") version "0.10.1"
+    kotlin("multiplatform") version "1.4.20" apply false
+    id("org.jetbrains.dokka") version "1.4.10.2"
 
     // Style checking
-    id("com.diffplug.spotless") version "5.1.0"
+    id("com.diffplug.spotless") version "5.8.2"
 
     // Dependency management
-    id("com.github.ben-manes.versions") version "0.29.0"
-    id("se.patrikerdes.use-latest-versions") version "0.2.14"
+    id("com.github.ben-manes.versions") version "0.36.0"
+    id("se.patrikerdes.use-latest-versions") version "0.2.15"
 }
 
 allprojects {
@@ -66,20 +66,14 @@ allprojects {
 
 /** Documentation */
 
-val dokkaHtml by tasks.registering(org.jetbrains.dokka.gradle.DokkaTask::class) {
-    outputFormat = "html"
-    outputDirectory = "$buildDir/docs/$outputFormat"
-}
+subprojects {
+    apply(plugin = "org.jetbrains.dokka")
 
-val dokkaGfm by tasks.registering(org.jetbrains.dokka.gradle.DokkaTask::class) {
-    outputFormat = "gfm"
-    outputDirectory = "$buildDir/docs/$outputFormat"
-}
-
-tasks.withType<org.jetbrains.dokka.gradle.DokkaTask>().configureEach {
-    // TODO: we will be able to remove all this with the next release of Dokka
-    subProjects = subprojects.map { it.name }
-    configuration {
-        includes = subprojects.map { it.file("packages.md") }.filter { it.exists() }.map { it.toString() }
+    tasks.withType<org.jetbrains.dokka.gradle.DokkaTask>().configureEach {
+        dokkaSourceSets {
+            configureEach {
+                includes.from("Module.md")
+            }
+        }
     }
 }

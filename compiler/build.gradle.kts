@@ -15,9 +15,6 @@ plugins {
 
     // Lexing & Parsing
     id("org.xbib.gradle.plugin.jflex") version "1.5.0"
-
-    // shadowJar
-    // id("com.github.johnrengelman.shadow") version "6.1.0"
 }
 
 /** Application */
@@ -26,20 +23,7 @@ val mainPackage = "${project.group}.${rootProject.name}"
 
 application {
     mainClass.set("$mainPackage.MainKt")
-    mainClassName = "$mainPackage.MainKt"
 }
-
-/*
-tasks {
-    named<ShadowJar>("shadowJar") {
-        archiveBaseName.set("${rootProject.name}")
-        mergeServiceFiles()
-        manifest {
-            attributes(mapOf("Main-Class" to "$mainPackage.MainKt"))
-        }
-    }
-}
-*/
 
 /** Dependencies */
 

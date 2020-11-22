@@ -1,5 +1,3 @@
-import org.gradle.api.JavaVersion.VERSION_11
-
 plugins {
     kotlin("multiplatform") version "1.4.20" apply false
     id("org.jetbrains.dokka") version "1.4.10.2"
@@ -32,8 +30,9 @@ allprojects {
 
     pluginManager.withPlugin("java") {
         extensions.configure<JavaPluginExtension>("java") {
-            sourceCompatibility = VERSION_11
-            targetCompatibility = VERSION_11
+            toolchain {
+                languageVersion.set(JavaLanguageVersion.of(11))
+            }
         }
     }
 

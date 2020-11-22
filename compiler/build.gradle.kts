@@ -14,7 +14,7 @@ plugins {
     jacoco
 
     // Lexing & Parsing
-    id("org.xbib.gradle.plugin.jflex") version "1.4.0"
+    id("org.xbib.gradle.plugin.jflex") version "1.5.0"
 
     // shadowJar
     // id("com.github.johnrengelman.shadow") version "6.1.0"
@@ -46,15 +46,15 @@ tasks {
 dependencies {
     // Standard libraries
     implementation(kotlin("stdlib-jdk8"))
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.3.8")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.4.1")
 
     // Data structures
     implementation("io.vavr:vavr:1.0.0-alpha-3")
-    implementation("org.jetbrains.kotlinx:kotlinx-collections-immutable-jvm:0.3")
+    implementation("org.jetbrains.kotlinx:kotlinx-collections-immutable-jvm:0.3.3")
     implementation("com.uchuhimo:kotlinx-bimap:1.2")
 
     // Google's Guava (core data structures)
-    implementation("com.google.guava:guava:29.0-jre")
+    implementation("com.google.guava:guava:30.0-jre")
 
     // Google's AutoValue for creating immutable classes
     implementation("com.google.auto.value:auto-value-annotations:1.7.4")
@@ -65,17 +65,17 @@ dependencies {
     implementation("org.jgrapht:jgrapht-io:1.5.0")
 
     // DOT graph output
-    implementation("guru.nidi:graphviz-java:0.16.3")
-    implementation("guru.nidi:graphviz-java-all-j2v8:0.16.3")
+    implementation("guru.nidi:graphviz-java:0.18.0")
+    implementation("guru.nidi:graphviz-java-all-j2v8:0.18.0")
 
     // Unicode support
-    implementation("com.ibm.icu:icu4j:67.1")
+    implementation("com.ibm.icu:icu4j:68.1")
 
     // Command-line-argument parsing
-    implementation("com.github.ajalt:clikt:2.5.0")
+    implementation("com.github.ajalt:clikt:2.8.0")
 
     // Colored terminal output
-    implementation("org.fusesource.jansi:jansi:1.18")
+    implementation("org.fusesource.jansi:jansi:2.0.1")
 
     // Parsing
     implementation("com.github.vbmacher:java-cup-runtime:11b-20160615")
@@ -89,15 +89,15 @@ dependencies {
     implementation(files("libs/jsnark.jar"))
 
     // Logging
-    implementation("io.github.microutils:kotlin-logging:1.8.3")
-    implementation("org.apache.logging.log4j:log4j-core:2.13.3")
-    implementation("org.apache.logging.log4j:log4j-slf4j-impl:2.13.3")
+    implementation("io.github.microutils:kotlin-logging:2.0.3")
+    implementation("org.apache.logging.log4j:log4j-core:2.14.0")
+    implementation("org.apache.logging.log4j:log4j-slf4j-impl:2.14.0")
 
     // Testing
     testImplementation(kotlin("reflect"))
-    testImplementation("org.junit.jupiter:junit-jupiter-api:5.7.0-M1")
-    testImplementation("org.junit.jupiter:junit-jupiter-params:5.7.0-M1")
-    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.7.0-M1")
+    testImplementation("org.junit.jupiter:junit-jupiter-api:5.7.0")
+    testImplementation("org.junit.jupiter:junit-jupiter-params:5.7.0")
+    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.7.0")
 }
 
 /** Compilation */

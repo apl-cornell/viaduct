@@ -1,4 +1,4 @@
-# Module viaduct
+# Module compiler
 
 # Package edu.cornell.cs.apl.attributes
 

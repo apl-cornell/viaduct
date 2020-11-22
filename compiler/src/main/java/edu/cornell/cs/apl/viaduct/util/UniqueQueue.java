@@ -17,7 +17,7 @@ import javax.annotation.Nonnull;
  * old. Additionally, the element will keep its original position in the queue, and is <em>not</em>
  * moved to the end of the queue.
  */
-public class UniqueQueue<E> extends AbstractQueue<E> implements Queue<E> {
+public class UniqueQueue<E> extends AbstractQueue<E> {
   private final Queue<E> queue = new LinkedList<>();
   private final Set<E> elements = new HashSet<>();
 

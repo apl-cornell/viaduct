@@ -26,7 +26,6 @@ import java.io.PrintStream
 import org.apache.logging.log4j.Level
 import org.apache.logging.log4j.core.config.Configurator
 import org.fusesource.jansi.AnsiConsole
-import org.fusesource.jansi.AnsiPrintStream
 
 /** Adds an input parameter to a [CliktCommand]. */
 internal fun CliktCommand.inputProgram(): ArgumentDelegate<File?> =
@@ -89,21 +88,12 @@ internal fun File?.parse(
  * @throws IOException
  */
 internal fun File?.println(document: PrettyPrintable) {
-    this.output { (document.asDocument + Document.lineBreak).print(it, ansi = true) }
-}
-
-/**
- * Opens this [File] and executes the given [block] function on it. Then, closes the file down
- * correctly whether an exception is thrown or not. If the file is `null`, [block] is run on the
- * standard output, which is not closed.
- */
-private fun <R> File?.output(block: (PrintStream) -> R): R {
-    // TODO: PrintStream doesn't throw errors when writing. These will fail silently.
-    return if (this == null) {
+    val doc = document.asDocument + Document.lineBreak
+    if (this == null) {
         // Write to standard out.
-        block(AnsiConsole.out)
+        doc.print(AnsiConsole.out, ansi = true)
     } else {
-        // Write to the given file, but strip out ANSI escape codes.
-        AnsiPrintStream(PrintStream(this, Charsets.UTF_8)).use(block)
+        // Write to the given file, but exclude ANSI escape codes.
+        PrintStream(this, Charsets.UTF_8).use { doc.print(it, ansi = false) }
     }
 }

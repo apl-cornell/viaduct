@@ -1,9 +1,6 @@
-name: GitHub Pages
+name: Documentation
 
-on:
-  push:
-    branches:
-      - master
+on: [ push, pull_request ]
 
 jobs:
   documentation:
@@ -27,8 +24,8 @@ jobs:
         run: |
           cp ${{ env.docsDir }}/-modules.html ${{ env.docsDir }}/index.html
       - name: Upload to GitHub Pages
+        if: github.ref == 'ref/head/master'
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ${{ env.docsDir }}
-          enable_jekyll: true

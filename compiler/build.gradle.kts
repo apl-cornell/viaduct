@@ -29,11 +29,12 @@ application {
 /** Dependencies */
 
 dependencies {
-    // Standard libraries
+    implementation(project(":common"))
+
+    // Concurrency
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.4.1")
 
     // Data structures
-    implementation("org.jetbrains.kotlinx:kotlinx-collections-immutable-jvm:0.3.3")
     implementation("com.uchuhimo:kotlinx-bimap:1.2")
 
     // Graphs
@@ -74,25 +75,6 @@ dependencies {
 
 /** Compilation */
 
-val generatedPropertiesDir = "${project.buildDir}/generated-src/properties"
-
-val generatePropertiesFile by tasks.registering {
-    doLast {
-        val packageDir = mainPackage.replace(".", File.separator)
-        val propertiesFile = project.file("$generatedPropertiesDir/$packageDir/Properties.kt")
-        propertiesFile.parentFile.mkdirs()
-        propertiesFile.writeText(
-            """
-            package $mainPackage
-
-            const val version = "${project.version}"
-
-            const val group = "${project.group}"
-            """.trimIndent()
-        )
-    }
-}
-
 jflex {
     encoding = Charsets.UTF_8.name()
 }
@@ -105,18 +87,11 @@ sourceSets {
     }
 }
 
-kotlin {
-    sourceSets["main"].apply {
-        kotlin.srcDir(generatedPropertiesDir)
-    }
-}
-
 tasks.compileJava {
     dependsOn(compileCup)
 }
 
 tasks.compileKotlin {
-    dependsOn(generatePropertiesFile)
     dependsOn(compileCup)
     dependsOn(tasks.withType<org.xbib.gradle.plugin.JFlexTask>())
 }
@@ -174,4 +149,9 @@ tasks.test {
     // Rerun tests when code examples change.
     inputs.files(project.fileTree("examples"))
     inputs.files(project.fileTree("errors"))
+}
+
+// Enable assertions during manual testing
+tasks.named<JavaExec>("run") {
+    enableAssertions = true
 }

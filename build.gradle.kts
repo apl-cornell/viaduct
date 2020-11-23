@@ -69,6 +69,9 @@ subprojects {
         /** Dependencies */
 
         dependencies {
+            // Data structures
+            "implementation"("org.jetbrains.kotlinx:kotlinx-collections-immutable-jvm:0.3.3")
+
             // Logging
             "implementation"("io.github.microutils:kotlin-logging:2.0.3")
             "testImplementation"("org.apache.logging.log4j:log4j-core:2.14.0")
@@ -92,11 +95,6 @@ subprojects {
                 html.isEnabled = true
             }
             dependsOn(tasks["test"])
-        }
-
-        // Enable assertions during manual testing
-        tasks.named<JavaExec>("run") {
-            enableAssertions = true
         }
 
         /** Documentation */

@@ -29,7 +29,7 @@ application {
 /** Dependencies */
 
 dependencies {
-    implementation(project(":common"))
+    implementation(project(":shared"))
 
     // Concurrency
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.4.1")

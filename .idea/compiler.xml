@@ -1,15 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="CompilerConfiguration">
-    <annotationProcessing>
-      <profile name="Gradle Imported" enabled="true">
-        <outputRelativeToContentRoot value="true" />
-        <processorPath useClasspath="false">
-          <entry name="$USER_HOME$/.gradle/caches/modules-2/files-2.1/com.google.auto.value/auto-value/1.7.4/6b126cb218af768339e4d6e95a9b0ae41f74e73d/auto-value-1.7.4.jar" />
-        </processorPath>
-        <module name="viaduct.compiler.main" />
-      </profile>
-    </annotationProcessing>
     <bytecodeTargetLevel target="11" />
   </component>
 </project>

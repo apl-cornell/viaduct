@@ -225,7 +225,7 @@ fun List<PrettyPrintable>.bracketed(): Document =
 fun List<PrettyPrintable>.braced(): Document =
     this.joined(prefix = Document("{"), postfix = Document("}"))
 
-/** Like [joined] but using comm as separators and enclosed in curly braces. */
+/** Like [joined] but using commas as separators and enclosed in `/*` and `*/`. */
 fun PrettyPrintable.commented(): Document =
     (Document("/*") * this * Document("*/")).grouped()
 

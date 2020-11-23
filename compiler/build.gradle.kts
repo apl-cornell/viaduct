@@ -1,5 +1,3 @@
-// import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
-
 buildscript {
     dependencies {
         classpath("com.github.vbmacher:java-cup:11b-20160615")
@@ -10,11 +8,14 @@ plugins {
     application
     kotlin("jvm")
 
-    // Bug finding
-    jacoco
-
     // Lexing & Parsing
     id("org.xbib.gradle.plugin.jflex") version "1.5.0"
+}
+
+repositories {
+    maven {
+        url = uri("https://jitpack.io")
+    }
 }
 
 /** Application */
@@ -64,22 +65,14 @@ dependencies {
     implementation(files("libs/jsnark.jar"))
 
     // Logging
-    implementation("io.github.microutils:kotlin-logging:2.0.3")
     implementation("org.apache.logging.log4j:log4j-core:2.14.0")
     implementation("org.apache.logging.log4j:log4j-slf4j-impl:2.14.0")
 
     // Testing
     testImplementation(kotlin("reflect"))
-    testImplementation("org.junit.jupiter:junit-jupiter-api:5.7.0")
-    testImplementation("org.junit.jupiter:junit-jupiter-params:5.7.0")
-    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.7.0")
 }
 
 /** Compilation */
-
-tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
-    kotlinOptions.allWarningsAsErrors = true
-}
 
 val generatedPropertiesDir = "${project.buildDir}/generated-src/properties"
 
@@ -178,22 +171,7 @@ open class CupCompileTask : DefaultTask() {
 /** Testing */
 
 tasks.test {
-    useJUnitPlatform()
-
     // Rerun tests when code examples change.
     inputs.files(project.fileTree("examples"))
     inputs.files(project.fileTree("errors"))
-}
-
-tasks.jacocoTestReport {
-    reports {
-        xml.isEnabled = true
-        html.isEnabled = true
-    }
-    dependsOn(tasks.test)
-}
-
-// Enable assertions during manual testing
-tasks.named<JavaExec>("run") {
-    enableAssertions = true
 }

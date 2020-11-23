@@ -9,9 +9,9 @@ import kotlinx.collections.immutable.toPersistentList
  *
  * This class is a simplified version of Kiama's tree relations.
  * Refer to the sections on
- * [Attribute Grammars](https://bitbucket.org/inkytonik/kiama/src/master/wiki/Attribution.md#markdown-header-tree-relations)
+ * [Attribute Grammars](https://github.com/inkytonik/kiama/blob/master/wiki/Attribution.md#tree-relations)
  * and
- * [Relations](https://bitbucket.org/inkytonik/kiama/src/master/wiki/Relations.md).
+ * [Relations](https://github.com/inkytonik/kiama/blob/master/wiki/Relations.md).
  * in Kiama's user manual for more information.
  *
  * @param Node The type of nodes in the tree.

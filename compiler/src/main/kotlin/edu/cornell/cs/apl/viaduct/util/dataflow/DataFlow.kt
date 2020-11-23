@@ -2,7 +2,6 @@ package edu.cornell.cs.apl.viaduct.util.dataflow
 
 import edu.cornell.cs.apl.viaduct.algebra.MeetSemiLattice
 import edu.cornell.cs.apl.viaduct.util.UniqueQueue
-import java.util.HashMap
 import java.util.Queue
 import org.jgrapht.Graph
 import org.jgrapht.Graphs
@@ -28,9 +27,9 @@ private class DataFlow<A : MeetSemiLattice<A>, NodeT : DataFlowNode<A>, EdgeT : 
     private val top: A,
     private val graph: Graph<NodeT, EdgeT>
 ) {
-    private val nodeOutValues: MutableMap<NodeT, A> = HashMap()
+    private val nodeOutValues = mutableMapOf<NodeT, A>()
 
-    private val edgeOutValues: MutableMap<EdgeT, A> = HashMap()
+    private val edgeOutValues = mutableMapOf<EdgeT, A>()
 
     fun run(): Map<NodeT, A> {
         // Initialize nodes

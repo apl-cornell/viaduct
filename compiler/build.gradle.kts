@@ -107,9 +107,12 @@ open class CupCompileTask : DefaultTask() {
     val cupArguments: List<String> = listOf("-interface")
 
     @Input
-    override fun getDescription(): String {
-        return "Generates Java sources from CUP grammar files."
-    }
+    override fun getGroup(): String =
+        JavaBasePlugin.BUILD_TASK_NAME
+
+    @Input
+    override fun getDescription(): String =
+        "Generates Java sources from CUP grammar files."
 
     @TaskAction
     fun compileAll() {

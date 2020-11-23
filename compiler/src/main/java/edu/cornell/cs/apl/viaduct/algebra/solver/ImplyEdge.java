@@ -13,8 +13,8 @@ final class ImplyEdge<A extends HeytingAlgebra<A>> extends DefaultEdge implement
   }
 
   @Override
-  public A propagate(A in) {
-    return antecedent.imply(in);
+  public A propagate(A input) {
+    return antecedent.imply(input);
   }
 
   @Override

@@ -30,7 +30,7 @@ public abstract class ConstantTerm<A extends HeytingAlgebra<A>> extends AtomicTe
   }
 
   @Override
-  public final A transfer(A in) {
+  public final A transfer(A input) {
     return getValue();
   }
 

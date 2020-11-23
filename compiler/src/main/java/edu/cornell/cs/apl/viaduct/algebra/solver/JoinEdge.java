@@ -13,8 +13,8 @@ final class JoinEdge<A extends Lattice<A>> extends DefaultEdge implements DataFl
   }
 
   @Override
-  public A propagate(A in) {
-    return constant.join(in);
+  public A propagate(A input) {
+    return constant.join(input);
   }
 
   @Override

@@ -36,8 +36,8 @@ public final class VariableTerm<A extends HeytingAlgebra<A>> extends AtomicTerm<
   }
 
   @Override
-  public A transfer(A in) {
-    return in;
+  public A transfer(A input) {
+    return input;
   }
 
   @Override

@@ -3,8 +3,8 @@ package edu.cornell.cs.apl.viaduct.algebra.solver;
 import edu.cornell.cs.apl.viaduct.algebra.HeytingAlgebra;
 import edu.cornell.cs.apl.viaduct.algebra.PartialOrder;
 import edu.cornell.cs.apl.viaduct.util.Colors;
-import edu.cornell.cs.apl.viaduct.util.dataflow.DataFlow;
 import edu.cornell.cs.apl.viaduct.util.dataflow.DataFlowEdge;
+import edu.cornell.cs.apl.viaduct.util.dataflow.DataFlowKt;
 import edu.cornell.cs.apl.viaduct.util.dataflow.IdentityEdge;
 import io.vavr.Function2;
 import java.io.Writer;
@@ -67,7 +67,7 @@ public final class ConstraintSystem<A extends HeytingAlgebra<A>, T extends Throw
    */
   public Map<VariableTerm<A>, A> solve() throws T {
     // Use data flow analysis to find a solution for all nodes.
-    final Map<AtomicTerm<A>, A> solution = DataFlow.solve(top, constraints);
+    final Map<AtomicTerm<A>, A> solution = DataFlowKt.solve(top, constraints);
 
     // Restrict the mapping to only contain variable nodes.
     final Map<VariableTerm<A>, A> variableAssignment = new HashMap<>();
@@ -177,7 +177,7 @@ public final class ConstraintSystem<A extends HeytingAlgebra<A>, T extends Throw
 
   /** Output the constraint system as a DOT graph. */
   public void exportDotGraph(Writer writer) {
-    final Map<AtomicTerm<A>, A> solution = DataFlow.solve(top, constraints);
+    final Map<AtomicTerm<A>, A> solution = DataFlowKt.solve(top, constraints);
 
     final DOTExporter<AtomicTerm<A>, DataFlowEdge<A>> dotExporter = new DOTExporter<>();
 

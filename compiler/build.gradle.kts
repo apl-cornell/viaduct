@@ -29,20 +29,11 @@ application {
 
 dependencies {
     // Standard libraries
-    implementation(kotlin("stdlib-jdk8"))
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.4.1")
 
     // Data structures
-    implementation("io.vavr:vavr:1.0.0-alpha-3")
     implementation("org.jetbrains.kotlinx:kotlinx-collections-immutable-jvm:0.3.3")
     implementation("com.uchuhimo:kotlinx-bimap:1.2")
-
-    // Google's Guava (core data structures)
-    implementation("com.google.guava:guava:30.0-jre")
-
-    // Google's AutoValue for creating immutable classes
-    implementation("com.google.auto.value:auto-value-annotations:1.7.4")
-    annotationProcessor("com.google.auto.value:auto-value:1.7.4")
 
     // Graphs
     implementation("org.jgrapht:jgrapht-core:1.5.0")

@@ -44,11 +44,11 @@ public abstract class LabelConstant extends AtomicLabelTerm {
 
   @Override
   final ConstantTerm<FreeDistributiveLattice<Principal>> getConfidentialityComponent() {
-    return ConstantTerm.create(getValue().getConfidentialityComponent());
+    return new ConstantTerm<>(getValue().getConfidentialityComponent());
   }
 
   @Override
   final ConstantTerm<FreeDistributiveLattice<Principal>> getIntegrityComponent() {
-    return ConstantTerm.create(getValue().getIntegrityComponent());
+    return new ConstantTerm<>(getValue().getIntegrityComponent());
   }
 }

@@ -15,7 +15,7 @@ import org.jgrapht.traverse.TopologicalOrderIterator
  * @param top greatest element of `A`
  * @param graph data flow graph to run the analysis on
  */
-fun <A : MeetSemiLattice<A>, NodeT : DataFlowNode<A>, EdgeT : DataFlowEdge<A>> solve(
+fun <A : MeetSemiLattice<A>, NodeT : DataFlowNode<A>, EdgeT : DataFlowEdge<A>> solveDataFlow(
     top: A,
     graph: Graph<NodeT, EdgeT>
 ): Map<NodeT, A> {

@@ -148,11 +148,6 @@ open class CupCompileTask : DefaultTask() {
 
 /** Testing */
 
-tasks.test {
-    // Rerun tests when code examples change.
-    inputs.files(project.fileTree("tests"))
-}
-
 // Enable assertions during manual testing
 tasks.named<JavaExec>("run") {
     enableAssertions = true

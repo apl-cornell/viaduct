@@ -87,6 +87,9 @@ subprojects {
 
         tasks.named<Test>("test") {
             useJUnitPlatform()
+
+            // Rerun tests when code examples change.
+            inputs.files(project.fileTree("tests"))
         }
 
         tasks.named<JacocoReport>("jacocoTestReport") {

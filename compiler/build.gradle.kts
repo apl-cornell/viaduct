@@ -150,8 +150,7 @@ open class CupCompileTask : DefaultTask() {
 
 tasks.test {
     // Rerun tests when code examples change.
-    inputs.files(project.fileTree("examples"))
-    inputs.files(project.fileTree("errors"))
+    inputs.files(project.fileTree("tests"))
 }
 
 // Enable assertions during manual testing

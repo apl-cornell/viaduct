@@ -1,6 +1,6 @@
 package edu.cornell.cs.apl.viaduct.errors
 
-import edu.cornell.cs.apl.viaduct.ErroneousExampleFileProvider
+import edu.cornell.cs.apl.viaduct.NegativeTestFileProvider
 import edu.cornell.cs.apl.viaduct.analysis.main
 import edu.cornell.cs.apl.viaduct.parsing.SourceFile
 import edu.cornell.cs.apl.viaduct.parsing.isBlankOrUnderline
@@ -25,7 +25,7 @@ import org.junit.jupiter.params.provider.ArgumentsSource
 
 internal class ErrorsTest {
     @ParameterizedTest
-    @ArgumentsSource(ErroneousExampleFileProvider::class)
+    @ArgumentsSource(NegativeTestFileProvider::class)
     fun `erroneous example files throw the expected compilation error`(file: File) {
         assertThrows<CompilationError> { run(file) }
         try {
@@ -36,7 +36,7 @@ internal class ErrorsTest {
     }
 
     @ParameterizedTest
-    @ArgumentsSource(ErroneousExampleFileProvider::class)
+    @ArgumentsSource(NegativeTestFileProvider::class)
     fun `error messages end in a single blank line`(file: File) {
         try {
             run(file)

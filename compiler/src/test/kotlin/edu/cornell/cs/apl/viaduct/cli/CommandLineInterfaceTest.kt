@@ -5,7 +5,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 
 internal class CommandLineInterfaceTest {
-    private val example = "examples/millionaires.via"
+    private val example = "tests/should-pass/Millionaires.via"
 
     @Test
     fun help() {

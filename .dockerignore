@@ -17,5 +17,6 @@
 !gradlew
 
 # Code
-!**/src
-!**/tests
+!cli/src
+!compiler/src
+!shared/src

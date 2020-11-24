@@ -10,12 +10,12 @@
 # Gradle
 !*.gradle.kts
 !gradle.properties
+!cli/*.gradle.kts
 !compiler/*.gradle.kts
-!compiler/gradle.properties
+!shared/*.gradle.kts
 !gradle
 !gradlew
 
 # Code
-!compiler/src
-!compiler/examples
-!compiler/errors
+!**/src
+!**/tests

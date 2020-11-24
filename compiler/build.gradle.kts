@@ -5,25 +5,10 @@ buildscript {
 }
 
 plugins {
-    application
     kotlin("jvm")
 
     // Lexing & Parsing
     id("org.xbib.gradle.plugin.jflex") version "1.5.0"
-}
-
-repositories {
-    maven {
-        url = uri("https://jitpack.io")
-    }
-}
-
-/** Application */
-
-val mainPackage = "${project.group}.${rootProject.name}"
-
-application {
-    mainClass.set("$mainPackage.MainKt")
 }
 
 /** Dependencies */
@@ -41,18 +26,8 @@ dependencies {
     implementation("org.jgrapht:jgrapht-core:1.5.0")
     implementation("org.jgrapht:jgrapht-io:1.5.0")
 
-    // DOT graph output
-    implementation("guru.nidi:graphviz-java:0.18.0")
-    implementation("guru.nidi:graphviz-java-all-j2v8:0.18.0")
-
     // Unicode support
     implementation("com.ibm.icu:icu4j:68.1")
-
-    // Command-line-argument parsing
-    implementation("com.github.ajalt:clikt:2.8.0")
-
-    // Colored terminal output
-    implementation("org.fusesource.jansi:jansi:2.0.1")
 
     // Parsing
     implementation("com.github.vbmacher:java-cup-runtime:11b-20160615")
@@ -62,12 +37,7 @@ dependencies {
 
     // Cryptography
     implementation("com.github.apl-cornell:aby-java:f061249362")
-
     implementation(files("libs/jsnark.jar"))
-
-    // Logging
-    implementation("org.apache.logging.log4j:log4j-core:2.14.0")
-    implementation("org.apache.logging.log4j:log4j-slf4j-impl:2.14.0")
 
     // Testing
     testImplementation(kotlin("reflect"))
@@ -144,11 +114,4 @@ open class CupCompileTask : DefaultTask() {
             )
         java_cup.Main.main(args.toTypedArray())
     }
-}
-
-/** Testing */
-
-// Enable assertions during manual testing
-tasks.named<JavaExec>("run") {
-    enableAssertions = true
 }

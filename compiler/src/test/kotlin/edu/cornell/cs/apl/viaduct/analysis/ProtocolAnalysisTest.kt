@@ -1,6 +1,6 @@
 package edu.cornell.cs.apl.viaduct.analysis
 
-import edu.cornell.cs.apl.viaduct.ExampleProgramProvider
+import edu.cornell.cs.apl.viaduct.PositiveTestProgramProvider
 import edu.cornell.cs.apl.viaduct.errors.NoMainError
 import edu.cornell.cs.apl.viaduct.passes.annotateWithProtocols
 import edu.cornell.cs.apl.viaduct.passes.check
@@ -17,7 +17,7 @@ import org.junit.jupiter.params.provider.ArgumentsSource
 
 internal class ProtocolAnalysisTest {
     @ParameterizedTest
-    @ArgumentsSource(ExampleProgramProvider::class)
+    @ArgumentsSource(PositiveTestProgramProvider::class)
     fun `it does not explode`(surfaceProgram: ProgramNode) {
         val program = surfaceProgram.elaborated()
         program.check()

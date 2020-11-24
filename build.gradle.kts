@@ -26,20 +26,6 @@ allprojects {
         }
     }
 
-    /** Java Version */
-
-    pluginManager.withPlugin("java") {
-        extensions.configure<JavaPluginExtension>("java") {
-            toolchain {
-                languageVersion.set(JavaLanguageVersion.of(11))
-            }
-        }
-    }
-
-    tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
-        kotlinOptions.jvmTarget = "1.8"
-    }
-
     /** Style */
 
     spotless {
@@ -63,15 +49,67 @@ allprojects {
     }
 }
 
-/** Documentation */
-
+/** Kotlin Conventions */
+// TODO: move into buildSrc when this is fixed: https://youtrack.jetbrains.com/issue/KT-41142
 subprojects {
-    apply(plugin = "org.jetbrains.dokka")
+    pluginManager.withPlugin("kotlin") {
+        apply(plugin = "jacoco")
+        apply(plugin = "org.jetbrains.dokka")
 
-    tasks.withType<org.jetbrains.dokka.gradle.DokkaTask>().configureEach {
-        dokkaSourceSets {
-            configureEach {
-                includes.from("Module.md")
+        /** Java Version */
+
+        extensions.configure<JavaPluginExtension>("java") {
+            toolchain {
+                languageVersion.set(JavaLanguageVersion.of(11))
+            }
+        }
+
+        tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
+            kotlinOptions.jvmTarget = "1.8"
+            kotlinOptions.allWarningsAsErrors = true
+        }
+
+        /** Dependencies */
+
+        dependencies {
+            // Data structures
+            "implementation"("org.jetbrains.kotlinx:kotlinx-collections-immutable-jvm:0.3.3")
+
+            // Logging
+            "implementation"("io.github.microutils:kotlin-logging:2.0.3")
+            "testImplementation"("org.apache.logging.log4j:log4j-core:2.14.0")
+            "testImplementation"("org.apache.logging.log4j:log4j-slf4j-impl:2.14.0")
+
+            // Testing
+            "testImplementation"("org.junit.jupiter:junit-jupiter-api:5.7.0")
+            "testImplementation"("org.junit.jupiter:junit-jupiter-params:5.7.0")
+            "testRuntimeOnly"("org.junit.jupiter:junit-jupiter-engine:5.7.0")
+        }
+
+        /** Testing */
+
+        tasks.named<Test>("test") {
+            useJUnitPlatform()
+
+            // Rerun tests when code examples change.
+            inputs.files(project.fileTree("tests"))
+        }
+
+        tasks.named<JacocoReport>("jacocoTestReport") {
+            reports {
+                xml.isEnabled = true
+                html.isEnabled = true
+            }
+            dependsOn(tasks["test"])
+        }
+
+        /** Documentation */
+
+        tasks.withType<org.jetbrains.dokka.gradle.DokkaTask>().configureEach {
+            dokkaSourceSets {
+                configureEach {
+                    includes.from("Module.md")
+                }
             }
         }
     }

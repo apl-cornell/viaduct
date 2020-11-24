@@ -1,6 +1,6 @@
 package edu.cornell.cs.apl.viaduct.syntax.surface
 
-import edu.cornell.cs.apl.viaduct.ExampleProgramProvider
+import edu.cornell.cs.apl.viaduct.PositiveTestProgramProvider
 import edu.cornell.cs.apl.viaduct.parsing.parse
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
@@ -16,7 +16,7 @@ internal class PrettyPrintingTest {
     }
 
     @ParameterizedTest
-    @ArgumentsSource(ExampleProgramProvider::class)
+    @ArgumentsSource(PositiveTestProgramProvider::class)
     fun `it is dual to parsing`(program: ProgramNode) {
         val printedAst = program.asDocument.print()
         assertStructurallyEquals(program, printedAst.parse())

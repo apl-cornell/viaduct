@@ -5,7 +5,7 @@ set -e
 # Directory containing this file
 DIR=$(cd "$(dirname "$0")" && pwd -P)
 
-PROJECT=compiler
+PROJECT=cli
 
 (cd "$DIR" && ./gradlew :$PROJECT:installDist > /dev/null) < /dev/null
 exec "$DIR/$PROJECT/build/install/$PROJECT/bin/$PROJECT" "$@"

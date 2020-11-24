@@ -1,6 +1,6 @@
 package edu.cornell.cs.apl.viaduct.passes
 
-import edu.cornell.cs.apl.viaduct.ExampleProgramProvider
+import edu.cornell.cs.apl.viaduct.PositiveTestProgramProvider
 import edu.cornell.cs.apl.viaduct.security.Label
 import edu.cornell.cs.apl.viaduct.security.Principal
 import edu.cornell.cs.apl.viaduct.syntax.surface.ProgramNode
@@ -11,7 +11,7 @@ internal class SpecificationTest {
     private val adversaryLabel = Label(Principal("A"))
 
     @ParameterizedTest
-    @ArgumentsSource(ExampleProgramProvider::class)
+    @ArgumentsSource(PositiveTestProgramProvider::class)
     fun `it generates valid specifications`(program: ProgramNode) {
         val elaboratedProgram = program.elaborated()
         elaboratedProgram.check()

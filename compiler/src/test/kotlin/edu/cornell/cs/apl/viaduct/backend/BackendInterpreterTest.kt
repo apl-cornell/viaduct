@@ -1,6 +1,6 @@
 package edu.cornell.cs.apl.viaduct.backend
 
-import edu.cornell.cs.apl.viaduct.ExampleProgramProvider
+import edu.cornell.cs.apl.viaduct.PositiveTestProgramProvider
 import edu.cornell.cs.apl.viaduct.analysis.ProtocolAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.main
 import edu.cornell.cs.apl.viaduct.backend.IO.Strategy
@@ -56,7 +56,8 @@ private class FakeProtocolInterpreter(
         receiver: SimpleStatementNode,
         recvProtocol: Protocol,
         events: ProtocolCommunication
-    ) {}
+    ) {
+    }
 
     override suspend fun runReceive(
         sender: LetNode,
@@ -64,7 +65,8 @@ private class FakeProtocolInterpreter(
         receiver: SimpleStatementNode,
         recvProtocol: Protocol,
         events: ProtocolCommunication
-    ) {}
+    ) {
+    }
 
     override suspend fun pushContext() {}
 
@@ -104,7 +106,7 @@ private object FakeStrategy : Strategy {
 
 internal class BackendInterpreterTest {
     @ParameterizedTest
-    @ArgumentsSource(ExampleProgramProvider::class)
+    @ArgumentsSource(PositiveTestProgramProvider::class)
     fun testInterpreter(surfaceProgram: ProgramNode) {
         val program = surfaceProgram.elaborated().specialize()
 

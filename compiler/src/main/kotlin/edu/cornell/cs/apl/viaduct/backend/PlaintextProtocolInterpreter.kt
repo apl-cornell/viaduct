@@ -7,7 +7,6 @@ import edu.cornell.cs.apl.viaduct.errors.UndefinedNameError
 import edu.cornell.cs.apl.viaduct.errors.ViaductInterpreterError
 import edu.cornell.cs.apl.viaduct.protocols.Local
 import edu.cornell.cs.apl.viaduct.protocols.Plaintext
-import edu.cornell.cs.apl.viaduct.protocols.Replication
 import edu.cornell.cs.apl.viaduct.selection.CommunicationEvent
 import edu.cornell.cs.apl.viaduct.selection.ProtocolCommunication
 import edu.cornell.cs.apl.viaduct.syntax.Host
@@ -45,9 +44,12 @@ private val logger = KotlinLogging.logger("Plaintext")
 
 class PlaintextProtocolInterpreter(
     program: ProgramNode,
-    private val protocolAnalysis: ProtocolAnalysis,
-    private val runtime: ViaductProcessRuntime
-) : SingleProtocolInterpreter<PlaintextClassObject>(program, runtime.projection.protocol) {
+    protocols: Set<Protocol>,
+    private val host: Host,
+    private val runtime: ViaductRuntime
+) : AbstractProtocolInterpreter<PlaintextClassObject>(program) {
+    override val availableProtocols: Set<Protocol> = protocols
+
     private val tempStoreStack: Stack<PersistentMap<Temporary, Value>> = Stack()
 
     private var tempStore: PersistentMap<Temporary, Value>
@@ -60,8 +62,6 @@ class PlaintextProtocolInterpreter(
         }
 
     init {
-        assert(runtime.projection.protocol is Local || runtime.projection.protocol is Replication)
-
         objectStoreStack.push(persistentMapOf())
         tempStoreStack.push(persistentMapOf())
     }
@@ -87,11 +87,12 @@ class PlaintextProtocolInterpreter(
         tempStoreStack.pop()
     }
 
-    override suspend fun buildExpressionObject(expr: AtomicExpressionNode): PlaintextClassObject {
+    override suspend fun buildExpressionObject(protocol: Protocol, expr: AtomicExpressionNode): PlaintextClassObject {
         return ImmutableCellObject(runExpr(expr))
     }
 
     override suspend fun buildObject(
+        protocol: Protocol,
         className: ClassName,
         typeArguments: List<ValueType>,
         arguments: List<AtomicExpressionNode>
@@ -110,7 +111,7 @@ class PlaintextProtocolInterpreter(
         }
     }
 
-    override fun getNullObject(): PlaintextClassObject = NullObject
+    override fun getNullObject(protocol: Protocol): PlaintextClassObject = NullObject
 
     private fun runRead(read: ReadNode): Value =
         tempStore[read.temporary.value]
@@ -136,32 +137,26 @@ class PlaintextProtocolInterpreter(
 
             is DowngradeNode -> runExpr(expr.expression)
 
-            is InputNode -> {
-                when (runtime.projection.protocol) {
-                    is Local -> runtime.input()
-
-                    else -> throw ViaductInterpreterError("Cannot perform I/O in non-Local protocol", expr)
-                }
-            }
+            is InputNode -> runtime.input()
 
             is ReceiveNode -> TODO()
         }
     }
 
-    override suspend fun runGuard(expr: AtomicExpressionNode): Value = runExpr(expr)
+    override suspend fun runGuard(protocol: Protocol, expr: AtomicExpressionNode): Value = runExpr(expr)
 
-    override suspend fun runLet(stmt: LetNode) {
+    override suspend fun runLet(protocol: Protocol, stmt: LetNode) {
         val rhsValue = runExpr(stmt.value)
         tempStore = tempStore.put(stmt.temporary.value, rhsValue)
     }
 
-    override suspend fun runUpdate(stmt: UpdateNode) {
+    override suspend fun runUpdate(protocol: Protocol, stmt: UpdateNode) {
         val argValues: List<Value> = stmt.arguments.map { arg -> runExpr(arg) }
         getObject(getObjectLocation(stmt.variable.value)).update(stmt.update, argValues)
     }
 
-    override suspend fun runOutput(stmt: OutputNode) {
-        when (runtime.projection.protocol) {
+    override suspend fun runOutput(protocol: Protocol, stmt: OutputNode) {
+        when (protocol) {
             is Local -> {
                 val outputValue = runExpr(stmt.message)
                 runtime.output(outputValue)
@@ -179,7 +174,8 @@ class PlaintextProtocolInterpreter(
         events: ProtocolCommunication
     ) {
         if (sendProtocol != recvProtocol) {
-            val relevantEvents: Set<CommunicationEvent> = events.getProjectionSends(runtime.projection)
+            val relevantEvents: Set<CommunicationEvent> =
+                events.getProjectionSends(ProtocolProjection(sendProtocol, this.host))
 
             val rhsValue = tempStore[sender.temporary.value]!!
             for (event in relevantEvents) {
@@ -196,15 +192,16 @@ class PlaintextProtocolInterpreter(
         events: ProtocolCommunication
     ) {
         // must receive from read protocol
-        if (runtime.projection.protocol != sendProtocol) {
+        if (sendProtocol != recvProtocol) {
+            val projection = ProtocolProjection(recvProtocol, this.host)
             val cleartextInputs =
-                events.getProjectionReceives(runtime.projection, Plaintext.INPUT)
+                events.getProjectionReceives(projection, Plaintext.INPUT)
 
             val cleartextCommitmentInputs =
-                events.getProjectionReceives(runtime.projection, Plaintext.CLEARTEXT_COMMITMENT_INPUT)
+                events.getProjectionReceives(projection, Plaintext.CLEARTEXT_COMMITMENT_INPUT)
 
             val hashCommitmentInputs =
-                events.getProjectionReceives(runtime.projection, Plaintext.HASH_COMMITMENT_INPUT)
+                events.getProjectionReceives(projection, Plaintext.HASH_COMMITMENT_INPUT)
 
             when {
                 // cleartext input
@@ -228,27 +225,19 @@ class PlaintextProtocolInterpreter(
                 cleartextInputs.isEmpty() && cleartextCommitmentInputs.isNotEmpty() && hashCommitmentInputs.isNotEmpty() -> {
                     assert(cleartextCommitmentInputs.size == 1)
                     val cleartextSendEvent = cleartextCommitmentInputs.first()
-
-                    val cleartextProjection = cleartextSendEvent.send.asProjection()
-                    val nonce = runtime.receive(cleartextProjection) as ByteVecValue
-                    val msg = runtime.receive(cleartextProjection)
+                    val nonce = runtime.receive(cleartextSendEvent) as ByteVecValue
+                    val msg = runtime.receive(cleartextSendEvent)
 
                     logger.info {
-                        "received opened commitment value and nonce from ${cleartextProjection.asDocument.print()}"
+                        "received opened commitment value and nonce from ${cleartextSendEvent.send.asProjection().asDocument.print()}"
                     }
 
                     for (hashCommitmentInput in hashCommitmentInputs) {
-                        val commitmentSender =
-                            ProtocolProjection(
-                                hashCommitmentInput.send.protocol,
-                                hashCommitmentInput.send.host
-                            )
-
-                        val commitment: ByteVecValue = runtime.receive(commitmentSender) as ByteVecValue
+                        val commitment: ByteVecValue = runtime.receive(hashCommitmentInput) as ByteVecValue
 
                         assert(HashInfo(commitment.value, nonce.value).verify(msg.encode()))
                         logger.info {
-                            "verified commitment from host ${commitmentSender.asDocument.print()}"
+                            "verified commitment from host ${hashCommitmentInput.send.asProjection().asDocument.print()}"
                         }
                     }
 
@@ -269,17 +258,14 @@ class PlaintextProtocolInterpreter(
             protocolAnalysis: ProtocolAnalysis,
             runtime: ViaductRuntime,
             connectionMap: Map<Host, HostAddress>
-        ): Iterable<ProtocolInterpreter> {
-            return protocols.filter { protocol ->
-                protocol.protocolName == Local.protocolName ||
-                    protocol.protocolName == Replication.protocolName
-            }.map { protocol ->
+        ): Iterable<ProtocolInterpreter> =
+            setOf(
                 PlaintextProtocolInterpreter(
                     program,
-                    protocolAnalysis,
-                    ViaductProcessRuntime(runtime, ProtocolProjection(protocol, host))
+                    protocols.filterIsInstance<Plaintext>().toSet(),
+                    host,
+                    runtime
                 )
-            }
-        }
+            )
     }
 }

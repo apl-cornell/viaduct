@@ -285,6 +285,16 @@ object EqualTo : ComparisonOperator() {
     }
 }
 
+object ExclusiveOr : ComparisonOperator() {
+    override fun apply(left: Int, right: Int): Boolean {
+        return left != right
+    }
+
+    override fun toString(): String {
+        return "!="
+    }
+}
+
 object LessThan : ComparisonOperator() {
     override fun apply(left: Int, right: Int): Boolean {
         return left < right
@@ -302,6 +312,26 @@ object LessThanOrEqualTo : ComparisonOperator() {
 
     override fun toString(): String {
         return "<="
+    }
+}
+
+object GreaterThan : ComparisonOperator() {
+    override fun apply(left: Int, right: Int): Boolean {
+        return left > right
+    }
+
+    override fun toString(): String {
+        return ">"
+    }
+}
+
+object GreaterThanOrEqualTo : ComparisonOperator() {
+    override fun apply(left: Int, right: Int): Boolean {
+        return left >= right
+    }
+
+    override fun toString(): String {
+        return ">="
     }
 }
 

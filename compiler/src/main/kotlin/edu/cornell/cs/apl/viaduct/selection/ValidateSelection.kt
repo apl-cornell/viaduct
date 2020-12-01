@@ -43,10 +43,8 @@ fun validateProtocolAssignment(
         if (!constraintGenerator.viableProtocols(node).contains(protocol)) {
             throw error(
                 "Bad protocol restriction for let node of ${node.temporary} = ${node.value}: viable protocols is ${
-                    constraintGenerator.viableProtocols(
-                        node
-                    )
-                } but selected was $protocol; label is $l"
+                    constraintGenerator.viableProtocols(node).map { it.asDocument.print() }
+                } but selected was ${protocol.asDocument.print()}; label is $l"
             )
         }
     }

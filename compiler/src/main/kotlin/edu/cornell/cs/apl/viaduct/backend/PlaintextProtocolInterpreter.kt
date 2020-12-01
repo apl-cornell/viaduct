@@ -182,7 +182,6 @@ class PlaintextProtocolInterpreter(
             val relevantEvents: Set<CommunicationEvent> = events.getProjectionSends(runtime.projection)
 
             val rhsValue = tempStore[sender.temporary.value]!!
-            logger.info { "sending $rhsValue: ${sendProtocol.asDocument.print()} => ${recvProtocol.asDocument.print()}" }
             for (event in relevantEvents) {
                 runtime.send(rhsValue, event)
             }

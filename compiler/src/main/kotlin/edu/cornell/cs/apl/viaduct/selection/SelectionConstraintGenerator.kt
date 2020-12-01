@@ -150,7 +150,11 @@ class SelectionConstraintGenerator(
                     }
 
             is IfNode ->
-                this.thenBranch.symbolicCost.concat(this.elseBranch.symbolicCost)
+                zeroSymbolicCost.featureMap { feature, _ ->
+                    val thenCost = this.thenBranch.symbolicCost[feature]!!
+                    val elseCost = this.elseBranch.symbolicCost[feature]!!
+                    CostMux(CostLessThanEqualTo(thenCost, elseCost), elseCost, thenCost)
+                }
 
             is InfiniteLoopNode ->
                 this.body.symbolicCost.map { f -> CostMul(CostLiteral(10), f) }

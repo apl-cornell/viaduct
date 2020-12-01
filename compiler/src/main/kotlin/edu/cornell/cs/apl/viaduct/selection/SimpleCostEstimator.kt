@@ -19,6 +19,9 @@ import edu.cornell.cs.apl.viaduct.syntax.operators.Addition
 import edu.cornell.cs.apl.viaduct.syntax.operators.And
 import edu.cornell.cs.apl.viaduct.syntax.operators.Division
 import edu.cornell.cs.apl.viaduct.syntax.operators.EqualTo
+import edu.cornell.cs.apl.viaduct.syntax.operators.ExclusiveOr
+import edu.cornell.cs.apl.viaduct.syntax.operators.GreaterThan
+import edu.cornell.cs.apl.viaduct.syntax.operators.GreaterThanOrEqualTo
 import edu.cornell.cs.apl.viaduct.syntax.operators.LessThan
 import edu.cornell.cs.apl.viaduct.syntax.operators.LessThanOrEqualTo
 import edu.cornell.cs.apl.viaduct.syntax.operators.Maximum
@@ -112,6 +115,14 @@ class SimpleCostEstimator(
             Pair(LessThan, BoolABY.protocolName) to opCost(214, 214),
             Pair(LessThan, YaoABY.protocolName) to opCost(148, 147),
 
+            // GREATER THAN / EQUAL TO
+            Pair(GreaterThanOrEqualTo, BoolABY.protocolName) to opCost(202, 202),
+            Pair(GreaterThanOrEqualTo, YaoABY.protocolName) to opCost(147, 147),
+
+            // GREATER THAN
+            Pair(GreaterThan, BoolABY.protocolName) to opCost(214, 214),
+            Pair(GreaterThan, YaoABY.protocolName) to opCost(148, 147),
+
             // MUX
             Pair(Mux, BoolABY.protocolName) to opCost(141, 141),
             Pair(Mux, YaoABY.protocolName) to opCost(148, 146),
@@ -158,13 +169,16 @@ class SimpleCostEstimator(
 
             // OR (TODO: no numbers for these, copy AND)
             Pair(edu.cornell.cs.apl.viaduct.syntax.operators.Or, BoolABY.protocolName) to
-                opCost(138, 139),
+                opCost(1, 1932),
             Pair(edu.cornell.cs.apl.viaduct.syntax.operators.Or, YaoABY.protocolName) to
-                opCost(146, 146),
+                opCost(0, 23),
 
             // NOT (TODO: no numbers for these, copy AND)
             Pair(edu.cornell.cs.apl.viaduct.syntax.operators.Not, BoolABY.protocolName) to opCost(1, 1932),
             Pair(edu.cornell.cs.apl.viaduct.syntax.operators.Not, YaoABY.protocolName) to opCost(0, 23),
+
+            Pair(ExclusiveOr, BoolABY.protocolName) to opCost(0, 0),
+            Pair(ExclusiveOr, YaoABY.protocolName) to opCost(0, 12),
 
             // EQUAL TO
             Pair(EqualTo, BoolABY.protocolName) to opCost(6, 11300),
@@ -178,6 +192,14 @@ class SimpleCostEstimator(
             Pair(LessThan, BoolABY.protocolName) to opCost(8, 10802),
             Pair(LessThan, YaoABY.protocolName) to opCost(1, 23),
 
+            // GREATER THAN / EQUAL TO (cost given as CMP)
+            Pair(GreaterThanOrEqualTo, BoolABY.protocolName) to opCost(8, 10802),
+            Pair(GreaterThanOrEqualTo, YaoABY.protocolName) to opCost(1, 23),
+
+            // GREATER THAN (cost given as CMP)
+            Pair(GreaterThan, BoolABY.protocolName) to opCost(8, 10802),
+            Pair(GreaterThan, YaoABY.protocolName) to opCost(1, 23),
+
             // MUX
             Pair(Mux, BoolABY.protocolName) to opCost(2, 2252),
             Pair(Mux, YaoABY.protocolName) to opCost(1, 23),
@@ -187,8 +209,82 @@ class SimpleCostEstimator(
             Pair(Minimum, YaoABY.protocolName) to opCost(1 + 1, 23 + 23),
 
             // MIN = (MUX + LESS THAN)
-            Pair(Maximum, BoolABY.protocolName) to opCost(141, 141),
-            Pair(Maximum, YaoABY.protocolName) to opCost(148, 146)
+            Pair(Maximum, BoolABY.protocolName) to opCost(2 + 8, 2252 + 10802),
+            Pair(Maximum, YaoABY.protocolName) to opCost(1 + 1, 23 + 23)
+        )
+
+    // from my own estimation
+    private val mpcOperationCostMap3: Map<Pair<Operator, ProtocolName>, Cost<IntegerCost>> =
+        mapOf(
+            // ADD
+            Pair(Addition, ArithABY.protocolName) to opCost(4, 5),
+            Pair(Addition, BoolABY.protocolName) to opCost(24, 31),
+            Pair(Addition, YaoABY.protocolName) to opCost(17, 15),
+
+            // SUB
+            Pair(Subtraction, ArithABY.protocolName) to opCost(5, 5),
+            Pair(Subtraction, BoolABY.protocolName) to opCost(60, 92),
+            Pair(Subtraction, YaoABY.protocolName) to opCost(16, 15),
+
+            // NEGATION (treat like subtraction)
+            Pair(Negation, ArithABY.protocolName) to opCost(5, 5),
+            Pair(Negation, BoolABY.protocolName) to opCost(60, 92),
+            Pair(Negation, YaoABY.protocolName) to opCost(16, 15),
+
+            // MUL
+            Pair(Multiplication, ArithABY.protocolName) to opCost(17, 15),
+            Pair(Multiplication, BoolABY.protocolName) to opCost(80, 102),
+            Pair(Multiplication, YaoABY.protocolName) to opCost(46, 15),
+
+            // DIV
+            Pair(Division, BoolABY.protocolName) to opCost(378, 552),
+            Pair(Division, YaoABY.protocolName) to opCost(130, 17),
+
+            // AND
+            Pair(And, BoolABY.protocolName) to opCost(20, 15),
+            Pair(And, YaoABY.protocolName) to opCost(22, 15),
+
+            // OR = NOT (AND (NOT lhs) (NOT rhs))
+            Pair(edu.cornell.cs.apl.viaduct.syntax.operators.Or, BoolABY.protocolName) to
+                opCost(20 + (3 * 5), 15 + (3 * 5)),
+            Pair(edu.cornell.cs.apl.viaduct.syntax.operators.Or, YaoABY.protocolName) to
+                opCost(22 + (3 * 6), 15 + (3 * 5)),
+
+            // NOT
+            Pair(edu.cornell.cs.apl.viaduct.syntax.operators.Not, BoolABY.protocolName) to opCost(5, 5),
+            Pair(edu.cornell.cs.apl.viaduct.syntax.operators.Not, YaoABY.protocolName) to opCost(6, 5),
+
+            // EQUAL TO
+            Pair(EqualTo, BoolABY.protocolName) to opCost(25, 26),
+            Pair(EqualTo, YaoABY.protocolName) to opCost(18, 15),
+
+            // LESS THAN / EQUAL TO = GT + OR + EQ
+            Pair(LessThanOrEqualTo, BoolABY.protocolName) to opCost(26 + 25 + 20 + (3 * 5), 26 + 26 + 15 + (3 * 5)),
+            Pair(LessThanOrEqualTo, YaoABY.protocolName) to opCost(18 + 18 + 22 + (3 * 6), 15 + 15 + 15 + (3 * 5)),
+
+            // LESS THAN = GT
+            Pair(LessThan, BoolABY.protocolName) to opCost(26, 26),
+            Pair(LessThan, YaoABY.protocolName) to opCost(18, 15),
+
+            // GREATER THAN / EQUAL TO = GT + OR + EQ
+            Pair(GreaterThanOrEqualTo, BoolABY.protocolName) to opCost(26 + 25 + 20 + (3 * 5), 26 + 26 + 15 + (3 * 5)),
+            Pair(GreaterThanOrEqualTo, YaoABY.protocolName) to opCost(18 + 18 + 22 + (3 * 6), 15 + 15 + 15 + (3 * 5)),
+
+            // GREATER THAN = GT
+            Pair(GreaterThan, BoolABY.protocolName) to opCost(26, 26),
+            Pair(GreaterThan, YaoABY.protocolName) to opCost(18, 15),
+
+            // MUX
+            Pair(Mux, BoolABY.protocolName) to opCost(14, 10),
+            Pair(Mux, YaoABY.protocolName) to opCost(9, 10),
+
+            // MIN
+            Pair(Minimum, BoolABY.protocolName) to opCost(35, 36),
+            Pair(Minimum, YaoABY.protocolName) to opCost(19, 15),
+
+            // MAX
+            Pair(Maximum, BoolABY.protocolName) to opCost(34, 36),
+            Pair(Maximum, YaoABY.protocolName) to opCost(18, 15)
         )
 
     override fun executionCost(stmt: SimpleStatementNode, protocol: Protocol): Cost<IntegerCost> =
@@ -209,7 +305,7 @@ class SimpleCostEstimator(
                         is LetNode -> {
                             when (val rhs = stmt.value) {
                                 is OperatorApplicationNode ->
-                                    mpcOperationCostMap2[rhs.operator to protocol.protocolName]
+                                    mpcOperationCostMap3[rhs.operator to protocol.protocolName]
                                         ?: throw Error(
                                             "SimpleCostEstimator: no cost for operator ${rhs.operator} " +
                                                 "in protocol ${protocol.protocolName}"
@@ -241,23 +337,71 @@ class SimpleCostEstimator(
             }
         ) 10 else 0
 
-    private val costA2B: Cost<IntegerCost> =
-        zeroCost().update(LAN_COST, IntegerCost(18)).update(WAN_COST, IntegerCost(18))
+    // from Ishaq et al CCS 2019
+    private val abyConversionCostMap: Map<Pair<ProtocolName, ProtocolName>, Cost<IntegerCost>> =
+        mapOf(
+            Pair(ArithABY.protocolName, BoolABY.protocolName) to
+                zeroCost().update(LAN_COST, IntegerCost(18)).update(WAN_COST, IntegerCost(18)),
 
-    private val costA2Y: Cost<IntegerCost> =
-        zeroCost().update(LAN_COST, IntegerCost(17)).update(WAN_COST, IntegerCost(17))
+            Pair(ArithABY.protocolName, YaoABY.protocolName) to
+                zeroCost().update(LAN_COST, IntegerCost(17)).update(WAN_COST, IntegerCost(17)),
 
-    private val costB2A: Cost<IntegerCost> =
-        zeroCost().update(LAN_COST, IntegerCost(14)).update(WAN_COST, IntegerCost(14))
+            Pair(BoolABY.protocolName, ArithABY.protocolName) to
+                zeroCost().update(LAN_COST, IntegerCost(14)).update(WAN_COST, IntegerCost(14)),
 
-    private val costB2Y: Cost<IntegerCost> =
-        zeroCost().update(LAN_COST, IntegerCost(15)).update(WAN_COST, IntegerCost(15))
+            Pair(BoolABY.protocolName, YaoABY.protocolName) to
+                zeroCost().update(LAN_COST, IntegerCost(15)).update(WAN_COST, IntegerCost(15)),
 
-    private val costY2A: Cost<IntegerCost> =
-        zeroCost().update(LAN_COST, IntegerCost(20)).update(WAN_COST, IntegerCost(20))
+            Pair(YaoABY.protocolName, ArithABY.protocolName) to
+                zeroCost().update(LAN_COST, IntegerCost(20)).update(WAN_COST, IntegerCost(20)),
 
-    private val costY2B: Cost<IntegerCost> =
-        zeroCost().update(LAN_COST, IntegerCost(15)).update(WAN_COST, IntegerCost(15))
+            Pair(YaoABY.protocolName, BoolABY.protocolName) to
+                zeroCost().update(LAN_COST, IntegerCost(1)).update(WAN_COST, IntegerCost(15))
+        )
+
+    // from ABY paper
+    private val abyConversionCostMap2: Map<Pair<ProtocolName, ProtocolName>, Cost<IntegerCost>> =
+        mapOf(
+            Pair(ArithABY.protocolName, BoolABY.protocolName) to
+                zeroCost().update(LAN_COST, IntegerCost(1)).update(WAN_COST, IntegerCost(4346)),
+
+            Pair(ArithABY.protocolName, YaoABY.protocolName) to
+                zeroCost().update(LAN_COST, IntegerCost(1)).update(WAN_COST, IntegerCost(4346)),
+
+            Pair(BoolABY.protocolName, ArithABY.protocolName) to
+                zeroCost().update(LAN_COST, IntegerCost(0)).update(WAN_COST, IntegerCost(4191)),
+
+            Pair(BoolABY.protocolName, YaoABY.protocolName) to
+                zeroCost().update(LAN_COST, IntegerCost(0)).update(WAN_COST, IntegerCost(4790)),
+
+            Pair(YaoABY.protocolName, ArithABY.protocolName) to
+                zeroCost().update(LAN_COST, IntegerCost(0)).update(WAN_COST, IntegerCost(4191)),
+
+            Pair(YaoABY.protocolName, BoolABY.protocolName) to
+                zeroCost().update(LAN_COST, IntegerCost(0)).update(WAN_COST, IntegerCost(0))
+        )
+
+    // from my estimation
+    private val abyConversionCostMap3: Map<Pair<ProtocolName, ProtocolName>, Cost<IntegerCost>> =
+        mapOf(
+            Pair(ArithABY.protocolName, BoolABY.protocolName) to
+                zeroCost().update(LAN_COST, IntegerCost(19)).update(WAN_COST, IntegerCost(15)),
+
+            Pair(ArithABY.protocolName, YaoABY.protocolName) to
+                zeroCost().update(LAN_COST, IntegerCost(18)).update(WAN_COST, IntegerCost(15)),
+
+            Pair(BoolABY.protocolName, ArithABY.protocolName) to
+                zeroCost().update(LAN_COST, IntegerCost(15)).update(WAN_COST, IntegerCost(15)),
+
+            Pair(BoolABY.protocolName, YaoABY.protocolName) to
+                zeroCost().update(LAN_COST, IntegerCost(16)).update(WAN_COST, IntegerCost(15)),
+
+            Pair(YaoABY.protocolName, ArithABY.protocolName) to
+                zeroCost().update(LAN_COST, IntegerCost(15)).update(WAN_COST, IntegerCost(15)),
+
+            Pair(YaoABY.protocolName, BoolABY.protocolName) to
+                zeroCost().update(LAN_COST, IntegerCost(5)).update(WAN_COST, IntegerCost(5))
+        )
 
     /** Cost of converting between different ABY circuit types. */
     private fun abyShareConversionCost(events: List<CommunicationEvent>): Cost<IntegerCost> {
@@ -271,32 +415,38 @@ class SimpleCostEstimator(
         for (event in events) {
             when {
                 event.send.id == ArithABY.A2B_OUTPUT && !hasA2B -> {
-                    conversionCost = conversionCost.concat(costA2B)
+                    conversionCost =
+                        conversionCost.concat(abyConversionCostMap3[ArithABY.protocolName to BoolABY.protocolName]!!)
                     hasA2B = true
                 }
 
                 event.send.id == ArithABY.A2Y_OUTPUT && !hasA2Y -> {
-                    conversionCost = conversionCost.concat(costA2Y)
+                    conversionCost =
+                        conversionCost.concat(abyConversionCostMap3[ArithABY.protocolName to YaoABY.protocolName]!!)
                     hasA2Y = true
                 }
 
                 event.send.id == BoolABY.B2A_OUTPUT && !hasB2A -> {
-                    conversionCost = conversionCost.concat(costB2A)
+                    conversionCost =
+                        conversionCost.concat(abyConversionCostMap3[BoolABY.protocolName to ArithABY.protocolName]!!)
                     hasB2A = true
                 }
 
                 event.send.id == BoolABY.B2Y_OUTPUT && !hasB2Y -> {
-                    conversionCost = conversionCost.concat(costB2Y)
+                    conversionCost =
+                        conversionCost.concat(abyConversionCostMap3[BoolABY.protocolName to YaoABY.protocolName]!!)
                     hasB2Y = true
                 }
 
                 event.send.id == YaoABY.Y2A_OUTPUT && !hasY2A -> {
-                    conversionCost = conversionCost.concat(costY2A)
+                    conversionCost =
+                        conversionCost.concat(abyConversionCostMap3[YaoABY.protocolName to ArithABY.protocolName]!!)
                     hasY2A = true
                 }
 
                 event.send.id == YaoABY.Y2B_OUTPUT && !hasY2B -> {
-                    conversionCost = conversionCost.concat(costY2B)
+                    conversionCost =
+                        conversionCost.concat(abyConversionCostMap3[YaoABY.protocolName to BoolABY.protocolName]!!)
                     hasY2B = true
                 }
             }

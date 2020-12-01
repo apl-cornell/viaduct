@@ -54,7 +54,7 @@ process main {
                 val bmove_trusted: int = endorse bmove from {(A|B)-> & B<-} to {A ⊓ B};
                 var bhit: bool = false;
                 for (var bj: int = 0; bj < 5; bj += 1) {
-                    if (declassify (bships[bj] == bmove_trusted) to {A ⊓ B}) {
+                    if (declassify (aships[bj] == bmove_trusted) to {A ⊓ B}) {
                         bscore += 1;
                         aships[bj] = 0;
                         bhit = true;

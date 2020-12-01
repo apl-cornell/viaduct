@@ -10,6 +10,9 @@ import edu.cornell.cs.apl.viaduct.syntax.operators.Addition
 import edu.cornell.cs.apl.viaduct.syntax.operators.And
 import edu.cornell.cs.apl.viaduct.syntax.operators.Division
 import edu.cornell.cs.apl.viaduct.syntax.operators.EqualTo
+import edu.cornell.cs.apl.viaduct.syntax.operators.ExclusiveOr
+import edu.cornell.cs.apl.viaduct.syntax.operators.GreaterThan
+import edu.cornell.cs.apl.viaduct.syntax.operators.GreaterThanOrEqualTo
 import edu.cornell.cs.apl.viaduct.syntax.operators.LessThan
 import edu.cornell.cs.apl.viaduct.syntax.operators.LessThanOrEqualTo
 import edu.cornell.cs.apl.viaduct.syntax.operators.Maximum
@@ -51,7 +54,8 @@ class ABYCircuitBuilder(
 
 sealed class ABYCircuitGate(
     val children: List<ABYCircuitGate>,
-    val circuitType: ABYCircuitType
+    val circuitType: ABYCircuitType,
+    var variableGate: Boolean = false // is this gate stored in a variable?
 ) {
     /** Adds the gate represented by this object to the given circuit. */
     abstract fun putGate(builder: ABYCircuitBuilder, childShares: List<Share>): Share
@@ -162,24 +166,16 @@ fun operatorToCircuit(
             ABYOperationGate(putBinaryOperationGate(Circuit::putMULGate), finalArguments, circuitType)
 
         operator is Minimum && circuitType != ABYCircuitType.ARITH ->
-            operatorToCircuit(
-                Mux,
-                listOf(
-                    operatorToCircuit(LessThan, finalArguments, circuitType),
-                    finalArguments[0],
-                    finalArguments[1]
-                ),
+            ABYOperationGate(
+                putBinaryOperationGate { lhs, rhs -> Aby.putMinGate(this, lhs, rhs) },
+                listOf(finalArguments[0], finalArguments[1]),
                 circuitType
             )
 
         operator is Maximum && circuitType != ABYCircuitType.ARITH ->
-            operatorToCircuit(
-                Mux,
-                listOf(
-                    operatorToCircuit(LessThan, finalArguments, circuitType),
-                    finalArguments[1],
-                    finalArguments[0]
-                ),
+            ABYOperationGate(
+                putBinaryOperationGate { lhs, rhs -> Aby.putMaxGate(this, lhs, rhs) },
+                listOf(finalArguments[0], finalArguments[1]),
                 circuitType
             )
 
@@ -214,6 +210,14 @@ fun operatorToCircuit(
                 circuitType
             )
 
+        operator is GreaterThan && circuitType != ABYCircuitType.ARITH ->
+            // x < y <=> y > x
+            ABYOperationGate(
+                putBinaryOperationGate(Circuit::putGTGate),
+                listOf(finalArguments[1], finalArguments[0]),
+                circuitType
+            )
+
         operator is LessThanOrEqualTo && circuitType != ABYCircuitType.ARITH ->
             // x <= y <=> not (x > y)
             operatorToCircuit(
@@ -228,10 +232,31 @@ fun operatorToCircuit(
                 circuitType
             )
 
+        operator is GreaterThanOrEqualTo && circuitType != ABYCircuitType.ARITH ->
+            // x >= y <=> (x > y)
+            operatorToCircuit(
+                Not,
+                listOf(
+                    ABYOperationGate(
+                        putBinaryOperationGate(Circuit::putGTGate),
+                        finalArguments,
+                        circuitType
+                    )
+                ),
+                circuitType
+            )
+
         operator is Mux && circuitType != ABYCircuitType.ARITH ->
             ABYOperationGate(
                 putTernaryOperationGate(Circuit::putMUXGate),
                 listOf(finalArguments[0], finalArguments[2], finalArguments[1]),
+                circuitType
+            )
+
+        operator is ExclusiveOr && circuitType != ABYCircuitType.ARITH ->
+            ABYOperationGate(
+                putBinaryOperationGate(Circuit::putXORGate),
+                listOf(finalArguments[0], finalArguments[1]),
                 circuitType
             )
 
@@ -262,7 +287,7 @@ private fun putTernaryOperationGate(gate: Circuit.(Share, Share, Share) -> Share
 }
 
 /** Implements bitwise not. */
-private fun Circuit.putNOTGate(input: Share): Share {
+fun Circuit.putNOTGate(input: Share): Share {
     val inverses = mutableListOf<Long>()
     for (wire in input.wires) {
         inverses.add(this.putINVGate(wire))

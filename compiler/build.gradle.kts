@@ -36,7 +36,7 @@ dependencies {
     implementation("io.github.tudo-aqua:z3-turnkey:4.8.7.1")
 
     // Cryptography
-    implementation("com.github.apl-cornell:aby-java:f061249362")
+    implementation("com.github.apl-cornell:aby-java:9f626e2b70")
     implementation(files("libs/jsnark.jar"))
 
     // Testing

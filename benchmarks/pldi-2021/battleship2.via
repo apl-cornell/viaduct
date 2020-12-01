@@ -1,0 +1,101 @@
+host alice  : {A}
+host bob    : {B}
+
+process main {
+  val board_size: int{A ⊓ B} = 10;
+  val num_ships: int{A ⊓ B} = 3;
+  val aboard = Array[bool]{A & B<-}(board_size);
+  val bboard = Array[bool]{B & A<-}(board_size);
+
+  /* 1 = draw; 2 = alice wins; 3 = bob wins */
+  var outcome: int{A ⊓ B} = 1;
+
+  var a_num_ships: int{A & B<-} = 0;
+  var b_num_ships: int{B & A<-} = 0;
+  for (var i: int{A ⊓ B} = 0; i < board_size; i+=1) {
+    aboard[i] = endorse (input int from alice != 0) from {A} to {A & B<-};
+    bboard[i] = endorse (input int from bob != 0) from {B} to {B & A<-};
+
+    if (aboard[i]) {
+      a_num_ships += 1;
+    }
+
+    if (bboard[i]) {
+      b_num_ships += 1;
+    }
+  }
+
+  /* make sure there are the right number of ships in each player's board */
+  val a_cheated: bool{A ⊓ B} = declassify (a_num_ships != num_ships) to {A ⊓ B};
+  val b_cheated: bool{A ⊓ B} = declassify (b_num_ships != num_ships) to {A ⊓ B};
+
+  if (!a_cheated && !b_cheated) {
+    var ascore: int{A ⊓ B} = 0;
+    var bscore: int{A ⊓ B} = 0;
+
+    var playing: bool{A ⊓ B} = true;
+    var aturn: bool{A ⊓ B} = true;
+
+    /** keep playing until someone sinks all the other person's battleships */
+    while (playing) {
+      if (aturn) { /* alice's turn */
+        val amove: int{A ⊓ B->} = declassify (input int from alice) to {A ⊓ B->};
+        var amove_trusted: int = endorse amove from {A ⊓ B->} to {A ⊓ B};
+        var ahit: bool{A ⊓ B} = false;
+
+        if (0 <= amove_trusted && amove_trusted < board_size) {
+          if (declassify bboard[amove_trusted] to {A ⊓ B}) {
+            bboard[amove_trusted] = false;
+            ascore += 1;
+            ahit = true;
+          }
+        }
+
+        output ahit to alice;
+        output ahit to bob;
+        aturn = false;
+
+      } else { /* bob's turn */
+        val bmove: int{A-> ⊓ B} = declassify (input int from bob) to {(A|B)-> & B<-};
+        var bmove_trusted: int{A ⊓ B} = endorse bmove from {A-> ⊓ B} to {A ⊓ B};
+        var bhit: bool{A ⊓ B} = false;
+
+        if (0 <= bmove_trusted && bmove_trusted < board_size) {
+          if (declassify aboard[bmove_trusted] to {A ⊓ B}) {
+            aboard[bmove_trusted] = false;
+            bscore += 1;
+            bhit = true;
+          }
+        }
+
+        output bhit to alice;
+        output bhit to bob;
+        aturn = true;
+      }
+
+      playing = ascore < num_ships && bscore < num_ships;
+    }
+
+    if (ascore == num_ships) { /* alice wins */
+      outcome = 2;
+    } else { /* bob wins */
+      outcome = 3;
+    }
+
+  } else {
+    if (a_cheated && !b_cheated) { /* alice cheated, bob wins */
+      outcome = 3;
+    }
+
+    if (!a_cheated && b_cheated) { /* bob cheated, alice wins */
+      outcome = 2;
+    }
+
+    if (a_cheated && b_cheated) { /* both cheated, it's a draw */
+      outcome = 1;
+    }
+  }
+
+  output outcome to alice;
+  output outcome to bob;
+}

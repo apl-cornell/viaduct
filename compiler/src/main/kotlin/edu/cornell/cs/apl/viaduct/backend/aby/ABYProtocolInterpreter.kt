@@ -269,16 +269,86 @@ class ABYProtocolInterpreter(
         }
     }
 
-    private fun buildABYCircuit(outGate: ABYCircuitGate, outRole: Role): Share {
-        val circuitBuilder =
-            ABYCircuitBuilder(
-                arithCircuit = aby.getCircuitBuilder(SharingType.S_ARITH)!!,
-                boolCircuit = aby.getCircuitBuilder(SharingType.S_BOOL)!!,
-                yaoCircuit = aby.getCircuitBuilder(SharingType.S_YAO)!!,
-                bitlen = BITLEN,
-                role = role
-            )
+    private abstract class ScheduleNode
+    private data class CircuitNode(val gate: ABYCircuitGate) : ScheduleNode()
+    private data class ParentMarker(val parent: ABYCircuitGate?) : ScheduleNode()
 
+    /* compute the order in which circuits for variables gates should be generated;
+    *  this has to be done in topological order */
+    private fun computeVariableSchedule(outGate: ABYCircuitGate): List<ABYCircuitGate> {
+        // pre-order traversal of circuit
+        val traverseStack = Stack<ScheduleNode>()
+        traverseStack.push(CircuitNode(outGate))
+
+        val visitedVariables: MutableSet<ABYCircuitGate> = mutableSetOf()
+        var parent: ABYCircuitGate? = null
+        val childrenMap: MutableMap<ABYCircuitGate, MutableSet<ABYCircuitGate>> = mutableMapOf()
+
+        while (traverseStack.isNotEmpty()) {
+            when (val curNode: ScheduleNode = traverseStack.pop()!!) {
+                is CircuitNode -> {
+                    val curGate = curNode.gate
+
+                    // update parent map
+                    if (parent != null && curGate.variableGate) {
+                        childrenMap[parent] =
+                            childrenMap[parent]?.let { it.add(curGate); it } ?: mutableSetOf(curGate)
+                    }
+
+                    if (!visitedVariables.contains(curGate) || !curGate.variableGate) {
+                        if (curGate.variableGate) {
+                            visitedVariables.add(curGate)
+                            traverseStack.push(ParentMarker(parent))
+                            parent = curGate
+                        }
+
+                        for (child: ABYCircuitGate in curGate.children) {
+                            traverseStack.push(CircuitNode(child))
+                        }
+                    }
+                }
+
+                // finished traversal of variable gate subtree; restore previous parent
+                is ParentMarker -> {
+                    parent = curNode.parent
+                }
+            }
+        }
+
+        // create toposort from parent map; children go before parents
+        val variablesToProcess: MutableSet<ABYCircuitGate> = visitedVariables.toMutableSet()
+        val variableSchedule: MutableList<ABYCircuitGate> = mutableListOf()
+        while (variableSchedule.size < visitedVariables.size) {
+            // find a variable with no children and add it to the schedule
+            var processedVar: ABYCircuitGate? = null
+            for (v in variablesToProcess) {
+                if (childrenMap[v]?.size ?: 0 == 0) {
+                    variableSchedule.add(v)
+
+                    // remove v's outgoing edges
+                    for (kv in childrenMap) {
+                        kv.value.remove(v)
+                    }
+
+                    processedVar = v
+                    break
+                }
+            }
+
+            assert(processedVar != null)
+            variablesToProcess.remove(processedVar)
+        }
+
+        return variableSchedule
+    }
+
+    private data class VariableShare(val share: Share, val size: Int)
+
+    private fun buildABYCircuit(
+        circuitBuilder: ABYCircuitBuilder,
+        variableShareMap: Map<ABYCircuitGate, VariableShare>,
+        outGate: ABYCircuitGate
+    ): VariableShare {
         // pre-order traversal of circuit
         val traverseStack = Stack<ABYCircuitGate>()
 
@@ -293,30 +363,51 @@ class ABYProtocolInterpreter(
         // build post-order traversal
         while (traverseStack.isNotEmpty()) {
             val curGate: ABYCircuitGate = traverseStack.pop()!!
+
             exprStack.push(curGate)
-            for (child: ABYCircuitGate in curGate.children) {
-                traverseStack.push(child)
+
+            if (!curGate.variableGate || curGate == outGate) {
+                for (child: ABYCircuitGate in curGate.children) {
+                    traverseStack.push(child)
+                }
             }
         }
+
+        val size = exprStack.size
 
         // "evaluate" stack as a reverse Polish expression by building the ABY circuit
         while (exprStack.isNotEmpty()) {
             val curGate: ABYCircuitGate = exprStack.pop()!!
-            val numChildren = curGate.children.size
-            val childrenShares: MutableList<Share> = mutableListOf()
-            for (i in 1..numChildren) {
-                childrenShares.add(shareStack.pop())
+
+            if (!curGate.variableGate || curGate == outGate) {
+                val numChildren = curGate.children.size
+                val childrenShares: MutableList<Share> = mutableListOf()
+                for (i in 1..numChildren) {
+                    childrenShares.add(shareStack.pop())
+                }
+                val share = curGate.putGate(circuitBuilder, childrenShares)
+                shareStack.push(share)
+            } else { // variable gate should already have been processed; retrieve computed share
+                shareStack.push(variableShareMap[curGate]!!.share)
             }
-            shareStack.push(curGate.putGate(circuitBuilder, childrenShares))
         }
 
         assert(shareStack.size == 1)
+        return VariableShare(shareStack.pop(), size)
+    }
 
-        logger.info { "arith gates: ${circuitBuilder.arithCircuit.numGates} rounds: ${circuitBuilder.arithCircuit.maxDepth}" }
-        logger.info { "bool gates: ${circuitBuilder.boolCircuit.numGates} rounds: ${circuitBuilder.boolCircuit.maxDepth}" }
-        logger.info { "yao gates: ${circuitBuilder.yaoCircuit.numGates} rounds: ${circuitBuilder.yaoCircuit.maxDepth}" }
+    private fun computeVariableCircuitMap(
+        circuitBuilder: ABYCircuitBuilder,
+        outputGate: ABYCircuitGate
+    ): Map<ABYCircuitGate, VariableShare> {
+        val variableCircuitMap: MutableMap<ABYCircuitGate, VariableShare> = mutableMapOf()
+        val variableSchedule = computeVariableSchedule(outputGate)
 
-        return circuitBuilder.circuit(outGate.circuitType).putOUTGate(shareStack.peek()!!, outRole)
+        for (v in variableSchedule) {
+            variableCircuitMap[v] = buildABYCircuit(circuitBuilder, variableCircuitMap, v)
+        }
+
+        return variableCircuitMap
     }
 
     private fun executeABYCircuit(letNode: LetNode, receivingHosts: Set<Host>): Value? {
@@ -337,12 +428,27 @@ class ABYProtocolInterpreter(
                     throw ViaductInterpreterError("ABY: at least one party must receive output when executing circuit")
             }
 
-        val outputGate: ABYCircuitGate =
-            ssTempStore[letNode.temporary.value]
-                ?: throw UndefinedNameError(letNode.temporary)
+        val outputGate = ssTempStore[letNode.temporary.value] ?: throw UndefinedNameError(letNode.temporary)
 
         aby.reset()
-        val outShare: Share = buildABYCircuit(outputGate, outRole)
+
+        val circuitBuilder =
+            ABYCircuitBuilder(
+                arithCircuit = aby.getCircuitBuilder(SharingType.S_ARITH)!!,
+                boolCircuit = aby.getCircuitBuilder(SharingType.S_BOOL)!!,
+                yaoCircuit = aby.getCircuitBuilder(SharingType.S_YAO)!!,
+                bitlen = BITLEN,
+                role = role
+            )
+
+        val variableCircuitMap: Map<ABYCircuitGate, VariableShare> = computeVariableCircuitMap(circuitBuilder, outputGate)
+        val outputShare: VariableShare = buildABYCircuit(circuitBuilder, variableCircuitMap, outputGate)
+        val clearOutputShare = circuitBuilder.circuit(outputGate.circuitType).putOUTGate(outputShare.share, outRole)
+
+        logger.info {
+            val circuitSize = variableCircuitMap.values.fold(outputShare.size) { acc, v -> acc + v.size }
+            "circuit size: $circuitSize"
+        }
 
         val execDuration = measureTimeMillis { aby.execCircuit() }
 
@@ -360,7 +466,7 @@ class ABYProtocolInterpreter(
         }
 
         return if (thisHostReceives) {
-            val result: Int = outShare.clearValue32.toInt()
+            val result: Int = clearOutputShare.clearValue32.toInt()
             when (val msgType: ValueType = typeAnalysis.type(letNode)) {
                 is BooleanType -> BooleanValue(result != 0)
 
@@ -492,6 +598,10 @@ class ABYProtocolInterpreter(
     }
 
     class ABYImmutableCellObject(private var gate: ABYCircuitGate) : ABYClassObject() {
+        init {
+            gate.variableGate = true
+        }
+
         override fun query(
             circuitType: ABYCircuitType,
             query: QueryNameNode,
@@ -516,6 +626,10 @@ class ABYProtocolInterpreter(
     }
 
     inner class ABYMutableCellObject(private var gate: ABYCircuitGate) : ABYClassObject() {
+        init {
+            gate.variableGate = true
+        }
+
         override fun query(
             circuitType: ABYCircuitType,
             query: QueryNameNode,
@@ -548,6 +662,8 @@ class ABYProtocolInterpreter(
                 else ->
                     throw ViaductInterpreterError("ABY: unknown update for mutable cell", update)
             }
+
+            gate.variableGate = true
         }
     }
 
@@ -628,6 +744,8 @@ class ABYProtocolInterpreter(
 
                         else -> throw ViaductInterpreterError("ABY: unknown update ${update.value} for vector", update)
                     }
+
+                    gates[intIndex].variableGate = true
                 }
 
                 // mux all array values
@@ -666,6 +784,7 @@ class ABYProtocolInterpreter(
                             )
 
                         gates[i] = mux
+                        gates[i].variableGate = true
                     }
                 }
             }

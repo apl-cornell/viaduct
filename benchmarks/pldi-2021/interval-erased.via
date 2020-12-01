@@ -1,0 +1,49 @@
+host alice  : {A & B<-}
+host bob    : {B & A<-}
+host chuck  : {C}
+
+/* Alice and Bob compute the interval of their numbers
+ * without revealing them; then Chuck gives an attestation that
+ * his secret point does or does not lie in the interval.
+ * This is the 1d version of checking whether a point lies
+ * in a convex hull.
+ */
+process main {
+  val a_num_points: int = 5;
+  val b_num_points: int = 5;
+  val num_points: int = a_num_points + b_num_points;
+  val chuck_point: int = endorse (input int from chuck) from {C} to {C & (A&B)<-};
+
+  val points = Array[int](num_points);
+  for (var i: int = 0; i < a_num_points; i += 1) {
+    points[i] = input int from alice;
+  }
+
+  for (var i: int = 0; i < b_num_points; i += 1) {
+    points[a_num_points+i] = input int from bob;
+  }
+
+  var min_point: int = points[0];
+  var max_point: int = points[0];
+
+  for (var i: int = 1; i < num_points; i += 1) {
+    min_point = min(min_point, points[i]);
+    max_point = max(max_point, points[i]);
+  }
+
+  val min_point_public: int = declassify min_point to {A ⊓ B ⊓ C->};
+  val max_point_public: int = declassify max_point to {A ⊓ B ⊓ C->};
+  val min_point_trusted: int =
+    endorse min_point_public from {A ⊓ B ⊓ C->} to {A ⊓ B ⊓ C};
+  val max_point_trusted: int =
+    endorse max_point_public from {A ⊓ B ⊓ C->} to {A ⊓ B ⊓ C};
+
+  val in_interval: bool =
+    min_point_trusted <= chuck_point && chuck_point <= max_point_trusted;
+
+  val in_interval_public: bool = declassify in_interval to {A ⊓ B ⊓ C};
+
+  output in_interval_public to alice;
+  output in_interval_public to bob;
+}
+

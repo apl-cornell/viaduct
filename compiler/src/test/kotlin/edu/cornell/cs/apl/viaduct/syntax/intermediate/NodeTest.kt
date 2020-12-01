@@ -1,6 +1,6 @@
 package edu.cornell.cs.apl.viaduct.syntax.intermediate
 
-import edu.cornell.cs.apl.viaduct.ExampleProgramProvider
+import edu.cornell.cs.apl.viaduct.PositiveTestProgramProvider
 import edu.cornell.cs.apl.viaduct.passes.elaborated
 import edu.cornell.cs.apl.viaduct.syntax.surface.ProgramNode
 import edu.cornell.cs.apl.viaduct.syntax.surface.assertStructurallyEquals
@@ -10,14 +10,14 @@ import org.junit.jupiter.params.provider.ArgumentsSource
 
 internal class NodeTest {
     @ParameterizedTest
-    @ArgumentsSource(ExampleProgramProvider::class)
+    @ArgumentsSource(PositiveTestProgramProvider::class)
     fun `copy returns structurally equivalent nodes`(surfaceProgram: ProgramNode) {
         val program = surfaceProgram.elaborated()
         assertStructurallyEquals(program.toSurfaceNode(), program.deepCopy().toSurfaceNode())
     }
 
     @ParameterizedTest
-    @ArgumentsSource(ExampleProgramProvider::class)
+    @ArgumentsSource(PositiveTestProgramProvider::class)
     fun `copy uses all children nodes`(surfaceProgram: ProgramNode) {
         val program = surfaceProgram.elaborated()
         program.trackingDeepCopy()

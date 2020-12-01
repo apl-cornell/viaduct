@@ -1,6 +1,6 @@
 package edu.cornell.cs.apl.viaduct.syntax.surface
 
-import edu.cornell.cs.apl.viaduct.ExampleFileProvider
+import edu.cornell.cs.apl.viaduct.PositiveTestFileProvider
 import edu.cornell.cs.apl.viaduct.parsing.SourceFile
 import edu.cornell.cs.apl.viaduct.parsing.parse
 import java.io.File
@@ -11,7 +11,7 @@ import org.junit.jupiter.params.provider.ArgumentsSource
 
 internal class StructuralEqualityTest {
     @ParameterizedTest
-    @ArgumentsSource(ExampleFileProvider::class)
+    @ArgumentsSource(PositiveTestFileProvider::class)
     fun `compares equals as equal`(file: File) {
         val source: SourceFile = SourceFile.from(file)
         assertStructurallyEquals(source.parse(), source.parse())
@@ -70,7 +70,7 @@ internal class StructuralEqualityTest {
     }
 
     @ParameterizedTest
-    @ArgumentsSource(ExampleFileProvider::class)
+    @ArgumentsSource(PositiveTestFileProvider::class)
     fun `is smarter than object equality`(file: File) {
         val source: SourceFile = SourceFile.from(file)
         assertNotEquals(source.parse(), source.parse())

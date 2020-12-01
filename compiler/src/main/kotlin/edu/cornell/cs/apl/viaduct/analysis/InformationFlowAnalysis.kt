@@ -13,6 +13,7 @@ import edu.cornell.cs.apl.viaduct.errors.MalleableDowngradeError
 import edu.cornell.cs.apl.viaduct.security.Label
 import edu.cornell.cs.apl.viaduct.security.LabelParameter
 import edu.cornell.cs.apl.viaduct.security.solver.AtomicLabelTerm
+import edu.cornell.cs.apl.viaduct.security.solver.ConstraintSolution
 import edu.cornell.cs.apl.viaduct.security.solver.ConstraintSolver
 import edu.cornell.cs.apl.viaduct.security.solver.LabelConstant
 import edu.cornell.cs.apl.viaduct.security.solver.LabelTerm
@@ -70,14 +71,10 @@ class InformationFlowAnalysis private constructor(
     private val tree: Tree<Node, ProgramNode>,
     private val nameAnalysis: NameAnalysis
 ) {
-    private val constraintSystem = ConstraintSolver<InformationFlowError>()
     private val nameGenerator = FreshNameGenerator()
-    private val solution: Map<LabelVariable, Label> by lazy { constraintSystem.solve() }
 
     private val constraintSolverMap: MutableMap<FunctionName, ConstraintSolver<InformationFlowError>> = mutableMapOf()
-    private val solutionMap: MutableMap<FunctionName, Map<LabelVariable, Label>> = mutableMapOf()
-    private val parameterLabelMap: MutableMap<FunctionName, Map<String, Label>> = mutableMapOf()
-    private val pcLabelMap: MutableMap<FunctionName, Label> = mutableMapOf()
+    private val solutionMap: MutableMap<FunctionName, ConstraintSolution> = mutableMapOf()
     private val parameterVariableMap: MutableMap<FunctionName, Pair<FunctionName, Map<ObjectVariable, LabelVariable>>> =
         mutableMapOf()
     private val pcVariableMap: MutableMap<String, Pair<FunctionName, LabelVariable>> = mutableMapOf()
@@ -85,7 +82,7 @@ class InformationFlowAnalysis private constructor(
     private val worklist = LinkedList<FunctionDeclarationNode>()
 
     private fun constraintSolver(function: FunctionName): ConstraintSolver<InformationFlowError> =
-        constraintSolverMap[function]!!
+        constraintSolverMap.getValue(function)
 
     private fun constraintSolver(expr: ExpressionNode): ConstraintSolver<InformationFlowError> =
         constraintSolver(nameAnalysis.enclosingFunctionName(expr))
@@ -132,7 +129,7 @@ class InformationFlowAnalysis private constructor(
                     }
                 } else {
                     // TODO: this is hacky. How do we know it's the first label, for example?
-                    LabelConstant.create(labelArguments!![0].value.interpret(parameterMap))
+                    LabelConstant(labelArguments!![0].value.interpret(parameterMap))
                 }
             }
         )
@@ -222,18 +219,9 @@ class InformationFlowAnalysis private constructor(
     ): LabelVariable =
         createPCVariable(solver, nameAnalysis.enclosingFunctionName(stmt), stmt.pathName)
 
-    /**
-     * Create a PC label variable for a function declaration.
-     */
-    private fun createPCVariable(
-        solver: ConstraintSolver<InformationFlowError>,
-        function: FunctionDeclarationNode
-    ): LabelVariable =
-        createPCVariable(solver, function.name.value, function.pathName)
-
     /** Returns the inferred security label of the [Temporary] defined by [node]. */
     fun label(node: LetNode): Label =
-        solutionMap[nameAnalysis.enclosingFunctionName(node)]!![node.temporaryLabel]!!
+        solutionMap.getValue(nameAnalysis.enclosingFunctionName(node)).getValue(node.temporaryLabel)
 
     /** Returns the inferred security label of the [ObjectVariable] declared by [node]. */
     fun label(node: DeclarationNode): Label =
@@ -241,7 +229,7 @@ class InformationFlowAnalysis private constructor(
             is LabelConstant -> label.value
 
             is LabelVariable ->
-                solutionMap[nameAnalysis.enclosingFunctionName(node)]!![label]!!
+                solutionMap.getValue(nameAnalysis.enclosingFunctionName(node)).getValue(label)
 
             else -> throw Error("impossible case")
         }
@@ -249,25 +237,25 @@ class InformationFlowAnalysis private constructor(
     /** Returns the inferred security label of the [ObjectVariable] declared by [node]. */
     fun label(node: ParameterNode): Label {
         val function = nameAnalysis.functionDeclaration(node)
-        val (labelFunction, labelParamMap) = parameterVariableMap[function.name.value]!!
-        return solutionMap[labelFunction]!![labelParamMap[node.name.value]]!!
+        val (labelFunction, labelParamMap) = parameterVariableMap.getValue(function.name.value)
+        return solutionMap.getValue(labelFunction).getValue(labelParamMap.getValue(node.name.value))
     }
 
     /** Returns the inferred security label of the [ObjectVariable] declared by [node]. */
     fun label(node: ObjectDeclarationArgumentNode): Label {
         val labelVar = nameAnalysis.asObjectDeclaration(node).variableLabel()
-        return solutionMap[nameAnalysis.enclosingFunctionName(node)]!![labelVar]!!
+        return labelVar.getValue(solutionMap.getValue(nameAnalysis.enclosingFunctionName(node)))
     }
 
     /** Returns the inferred security label of the result of [node]. */
     fun label(node: ExpressionNode): Label =
-        solutionMap[nameAnalysis.enclosingFunctionName(node)]!![node.labelVariable]!!
+        node.labelVariable.getValue(solutionMap.getValue(nameAnalysis.enclosingFunctionName(node)))
 
     /** Returns the label of the program counter at the [node]'s program point. */
     fun pcLabel(node: Node): Label {
         val path = node.pathName
-        val (pcFunction, pcVariable) = pcVariableMap[path]!!
-        return solutionMap[pcFunction]!![pcVariable]!!
+        val (pcFunction, pcVariable) = pcVariableMap.getValue(path)
+        return solutionMap.getValue(pcFunction).getValue(pcVariable)
     }
 
     /**
@@ -313,9 +301,9 @@ class InformationFlowAnalysis private constructor(
 
                 val from =
                     fromLabel?.let {
-                        LabelConstant.create(it.value.interpret(parameterMap))
+                        LabelConstant(it.value.interpret(parameterMap))
                     } ?: expression.labelVariable
-                val to = LabelConstant.create(toLabel.value.interpret(parameterMap))
+                val to = LabelConstant(toLabel.value.interpret(parameterMap))
 
                 pcFlowsTo(solver, pcLabel, this.toLabel, to)
 
@@ -354,7 +342,7 @@ class InformationFlowAnalysis private constructor(
 
             is InputNode -> {
                 val hostLabel =
-                    LabelConstant.create(nameAnalysis.declaration(this).authority.value.interpret())
+                    LabelConstant(nameAnalysis.declaration(this).authority.value.interpret())
 
                 // Host learns the current pc
                 pcFlowsTo(solver, pcLabel, this.host, hostLabel)
@@ -424,25 +412,26 @@ class InformationFlowAnalysis private constructor(
                 // assert argument labels and PC match the called function's labels
                 if (solutionMap.containsKey(this.name.value)) {
                     val funcDecl = nameAnalysis.declaration(this)
-                    val funcPcVariable = pcVariableMap[funcDecl.pathName]!!
-                    val parameterVariables = parameterVariableMap[this.name.value]!!
+                    val funcPcVariable = pcVariableMap.getValue(funcDecl.pathName)
+                    val parameterVariables = parameterVariableMap.getValue(this.name.value)
 
-                    val functionPcLabel = solutionMap[funcPcVariable.first]!![funcPcVariable.second]!!
-                    val parameterSolution = solutionMap[parameterVariables.first]!!
+                    val functionPcLabel = solutionMap.getValue(funcPcVariable.first).getValue(funcPcVariable.second)
+                    val parameterSolution = solutionMap.getValue(parameterVariables.first)
                     val parameterLabels =
                         parameterVariables.second
-                            .map { kv -> Pair(kv.key, parameterSolution[kv.value]!!) }
+                            .map { kv -> Pair(kv.key, parameterSolution.getValue(kv.value)) }
                             .toMap()
 
                     assertEqualsTo(
                         solver,
                         this,
                         pcLabel,
-                        LabelConstant.create(functionPcLabel)
+                        LabelConstant(functionPcLabel)
                     )
 
                     for (argument in this.arguments) {
-                        val parameterLabel: Label = parameterLabels[nameAnalysis.parameter(argument).name.value]!!
+                        val parameterLabel: Label =
+                            parameterLabels.getValue(nameAnalysis.parameter(argument).name.value)
                         val argumentLabel =
                             when (argument) {
                                 is ExpressionArgumentNode -> {
@@ -463,7 +452,7 @@ class InformationFlowAnalysis private constructor(
                         assertEqualsTo(
                             solver,
                             argument,
-                            LabelConstant.create(parameterLabel),
+                            LabelConstant(parameterLabel),
                             argumentLabel
                         )
                     }
@@ -499,7 +488,7 @@ class InformationFlowAnalysis private constructor(
                                 val parameter = nameAnalysis.parameter(argument)
                                 val parameterVariable =
                                     solver.addNewVariable(nameGenerator.getFreshName(parameter.name.value.name))
-                                val argumentLabel = argumentLabelMap[parameter.name.value]!!
+                                val argumentLabel = argumentLabelMap.getValue(parameter.name.value)
 
                                 assertEqualsTo(
                                     solver,
@@ -513,10 +502,10 @@ class InformationFlowAnalysis private constructor(
                                     val labelBound =
                                         when {
                                             labelBoundExpr is LabelParameter ->
-                                                argumentLabelMap[ObjectVariable(labelBoundExpr.name)]!!
+                                                argumentLabelMap.getValue(ObjectVariable(labelBoundExpr.name))
 
                                             !labelBoundExpr.containsParameters() ->
-                                                LabelConstant.create(labelBoundExpr.interpret())
+                                                LabelConstant(labelBoundExpr.interpret())
 
                                             // no complex expressions with label parameters
                                             else -> throw Error("no complex label expressions with parameters in function signatures")
@@ -558,7 +547,7 @@ class InformationFlowAnalysis private constructor(
                                     solver,
                                     this,
                                     pcLabel,
-                                    argumentLabelMap[ObjectVariable(labelBound.name)]!!
+                                    argumentLabelMap.getValue(ObjectVariable(labelBound.name))
                                 )
                             }
 
@@ -567,7 +556,7 @@ class InformationFlowAnalysis private constructor(
                                     solver,
                                     this,
                                     pcLabel,
-                                    LabelConstant.create(labelBound.interpret())
+                                    LabelConstant(labelBound.interpret())
                                 )
                             }
 
@@ -587,7 +576,7 @@ class InformationFlowAnalysis private constructor(
                 this.message.check(solver, parameterMap, pcLabel)
 
                 val hostLabel =
-                    LabelConstant.create(nameAnalysis.declaration(this).authority.value.interpret())
+                    LabelConstant(nameAnalysis.declaration(this).authority.value.interpret())
                 pcFlowsTo(solver, pcLabel, this.host, hostLabel)
                 flowsTo(solver, this.message, hostLabel)
             }
@@ -618,14 +607,14 @@ class InformationFlowAnalysis private constructor(
 
             is BreakNode -> {
                 val loopPath = nameAnalysis.correspondingLoop(this).pathName
-                val loopPc = pcVariableMap[loopPath]!!.second
+                val loopPc = pcVariableMap.getValue(loopPath).second
                 pcFlowsTo(solver, pcLabel, this, loopPc)
             }
 
             is AssertionNode -> {
                 // Everybody must execute assertions, so [condition] must be public and trusted.
                 // TODO: can we do any better? This seems almost impossible to achieve...
-                flowsTo(solver, this.condition, LabelConstant.create(Label.bottom))
+                flowsTo(solver, this.condition, LabelConstant(Label.bottom))
             }
 
             is BlockNode -> {
@@ -663,24 +652,24 @@ class InformationFlowAnalysis private constructor(
             val currentFunction = worklist.remove()
 
             // initialize constraint solver
-            val solver = constraintSolverMap[currentFunction.name.value]!!
+            val solver = constraintSolverMap.getValue(currentFunction.name.value)
 
             // get formal parameter labels
             val (solFunction, solVariableMap) =
-                parameterVariableMap[currentFunction.name.value]!!
-            val solution = solutionMap[solFunction]!!
+                parameterVariableMap.getValue(currentFunction.name.value)
+            val solution = solutionMap.getValue(solFunction)
             val parameterMap =
                 solVariableMap
-                    .map { kv -> Pair(kv.key.name, solution[kv.value]!!) }
+                    .map { kv -> Pair(kv.key.name, solution.getValue(kv.value)) }
                     .toMap()
 
             // get PC label
             val (pcSolFunction, pcSolVariable) =
-                functionPcVariableMap[currentFunction.name.value]!!
-            val pcSolution = solutionMap[pcSolFunction]!![pcSolVariable]!!
+                functionPcVariableMap.getValue(currentFunction.name.value)
+            val pcSolution = solutionMap.getValue(pcSolFunction).getValue(pcSolVariable)
 
             // add constraints for function body
-            currentFunction.body.check(solver, parameterMap, LabelConstant.create(pcSolution))
+            currentFunction.body.check(solver, parameterMap, LabelConstant(pcSolution))
 
             // get solution
             solutionMap[currentFunction.name.value] = solver.solve()
@@ -692,7 +681,7 @@ class InformationFlowAnalysis private constructor(
 
     /** Outputs a DOT representation of the program's constraint graph to [output]. */
     fun exportConstraintGraph(output: Writer) {
-        constraintSolverMap[nameAnalysis.enclosingFunctionName(tree.root.main.body)]!!.exportDotGraph(output)
+        constraintSolverMap.getValue(nameAnalysis.enclosingFunctionName(tree.root.main.body)).exportDotGraph(output)
     }
 
     companion object : AnalysisProvider<InformationFlowAnalysis> {

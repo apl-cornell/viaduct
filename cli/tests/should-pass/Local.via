@@ -1,0 +1,6 @@
+host alice: {A}
+
+process main {
+    val x: int = input int from alice;
+    output x to alice;
+}

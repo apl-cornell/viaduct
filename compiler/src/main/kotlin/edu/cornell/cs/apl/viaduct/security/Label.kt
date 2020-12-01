@@ -144,7 +144,7 @@ data class Label(
         /** Returns the label representing the authority of the given principal. */
         @JvmStatic
         operator fun invoke(principal: Principal): Label {
-            val component = FreeDistributiveLattice.create(principal)
+            val component = FreeDistributiveLattice(principal)
             return Label(component, component)
         }
 

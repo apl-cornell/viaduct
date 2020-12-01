@@ -1,0 +1,31 @@
+name: Documentation
+
+on: [ push, pull_request ]
+
+jobs:
+  documentation:
+    runs-on: ubuntu-latest
+
+    env:
+      java: 11
+      docsDir: build/dokka/htmlMultiModule
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up JDK ${{ env.java }}
+        uses: actions/setup-java@v1
+        with:
+          java-version: ${{ env.java }}
+      - name: Generate documentation with Dokka
+        uses: eskatos/gradle-command-action@v1
+        with:
+          arguments: dokkaHtmlMultiModule
+      - name: Create index.html
+        run: |
+          cp ${{ env.docsDir }}/-modules.html ${{ env.docsDir }}/index.html
+      - name: Upload to GitHub Pages
+        if: github.ref == 'refs/heads/master'
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ${{ env.docsDir }}

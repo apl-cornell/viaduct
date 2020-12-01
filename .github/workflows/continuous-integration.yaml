@@ -1,6 +1,6 @@
 name: CI
 
-on: [push, pull_request]
+on: [ push, pull_request ]
 
 jobs:
   build:
@@ -10,8 +10,8 @@ jobs:
 
     strategy:
       matrix:
-        os: [macos-latest, ubuntu-latest, windows-latest]
-        java: [11]
+        os: [ macos-latest, ubuntu-latest, windows-latest ]
+        java: [ 11 ]
 
     steps:
       - uses: actions/checkout@v2
@@ -22,6 +22,6 @@ jobs:
       - name: Build with Gradle
         uses: eskatos/gradle-command-action@v1
         with:
-          arguments: build jacocoTestReport dokkaGfm
+          arguments: build jacocoTestReport
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v1

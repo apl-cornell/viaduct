@@ -157,6 +157,8 @@ class ABYBench : CliktCommand(help = "Benchmark ABY operations") {
         val aby = ABYParty(role, if (role == Role.SERVER) "" else address, port, Aby.getLT(), bitlen)
 
         for (i in 0 until count) {
+            println("trial ${i + 1}")
+
             execCircuit("ARITH_ADD", aby) { add(aby, SharingType.S_ARITH) }
             execCircuit("BOOL_ADD", aby) { add(aby, SharingType.S_BOOL) }
             execCircuit("YAO_ADD", aby) { add(aby, SharingType.S_YAO) }

@@ -218,6 +218,33 @@ class PlaintextProtocolInterpreter(
                     }
 
                     assert(cleartextValue != null)
+
+                    // check for equivocation
+                    val recvHosts: Set<Host> =
+                        events
+                            .filter { event -> event.recv.id == Plaintext.INPUT }
+                            .map { event -> event.recv.host }
+                            .filter { host -> host != this.host }
+                            .toSet()
+
+                    for (recvHost in recvHosts) {
+                        runtime.send(
+                            cleartextValue!!,
+                            projection,
+                            ProtocolProjection(recvProtocol, recvHost)
+                        )
+                    }
+
+                    for (recvHost in recvHosts) {
+                        val recvValue =
+                            runtime.receive(
+                                ProtocolProjection(recvProtocol, recvHost),
+                                projection
+                            )
+
+                        assert(recvValue == cleartextValue)
+                    }
+
                     tempStore = tempStore.put(sender.temporary.value, cleartextValue!!)
                 }
 

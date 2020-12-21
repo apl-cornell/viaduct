@@ -76,7 +76,7 @@ subprojects {
             "implementation"("org.jetbrains.kotlinx:kotlinx-collections-immutable-jvm:0.3.3")
 
             // Logging
-            "implementation"("io.github.microutils:kotlin-logging:2.0.3")
+            "implementation"("io.github.microutils:kotlin-logging:2.0.4")
             "testImplementation"("org.apache.logging.log4j:log4j-core:2.14.0")
             "testImplementation"("org.apache.logging.log4j:log4j-slf4j-impl:2.14.0")
 

@@ -1,6 +1,6 @@
 plugins {
     kotlin("multiplatform") version "1.4.20" apply false
-    id("org.jetbrains.dokka") version "1.4.10.2"
+    id("org.jetbrains.dokka") version "1.4.20"
 
     // Style checking
     id("com.diffplug.spotless") version "5.8.2"

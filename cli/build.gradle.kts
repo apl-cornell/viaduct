@@ -21,7 +21,7 @@ dependencies {
     implementation("com.github.ajalt:clikt:2.8.0")
 
     // Colored terminal output
-    implementation("org.fusesource.jansi:jansi:2.0.1")
+    implementation("org.fusesource.jansi:jansi:2.2.0")
 
     // DOT graph output
     implementation("guru.nidi:graphviz-java:0.18.0")

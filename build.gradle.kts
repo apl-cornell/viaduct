@@ -3,7 +3,7 @@ plugins {
     id("org.jetbrains.dokka") version "1.4.20"
 
     // Style checking
-    id("com.diffplug.spotless") version "5.8.2"
+    id("com.diffplug.spotless") version "5.10.2"
 
     // Dependency management
     id("com.github.ben-manes.versions") version "0.36.0"

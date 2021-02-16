@@ -17,7 +17,7 @@ dependencies {
     implementation(project(":shared"))
 
     // Concurrency
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.4.1")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.4.2")
 
     // Data structures
     implementation("com.uchuhimo:kotlinx-bimap:1.2")

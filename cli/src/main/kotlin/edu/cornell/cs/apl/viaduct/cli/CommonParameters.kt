@@ -91,7 +91,7 @@ internal fun File?.println(document: PrettyPrintable) {
     val doc = document.asDocument + Document.lineBreak
     if (this == null) {
         // Write to standard out.
-        doc.print(AnsiConsole.out, ansi = true)
+        doc.print(AnsiConsole.out(), ansi = true)
     } else {
         // Write to the given file, but exclude ANSI escape codes.
         PrintStream(this, Charsets.UTF_8).use { doc.print(it, ansi = false) }

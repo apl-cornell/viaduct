@@ -12,7 +12,6 @@ import edu.cornell.cs.apl.viaduct.libsnarkwrapper.Var
 import edu.cornell.cs.apl.viaduct.libsnarkwrapper.VarArray
 import edu.cornell.cs.apl.viaduct.libsnarkwrapper.libsnarkwrapper
 import edu.cornell.cs.apl.viaduct.libsnarkwrapper.libsnarkwrapper.mkByteBuf
-import edu.cornell.cs.apl.viaduct.syntax.Operator
 import edu.cornell.cs.apl.viaduct.syntax.operators.Addition
 import edu.cornell.cs.apl.viaduct.syntax.operators.And
 import edu.cornell.cs.apl.viaduct.syntax.operators.EqualTo
@@ -25,13 +24,6 @@ import edu.cornell.cs.apl.viaduct.syntax.operators.Or
 import mu.KotlinLogging
 
 private val logger = KotlinLogging.logger("ZKP Generator")
-
-// Needs to be in sync with getOutputWire below
-fun Operator.supportedOp(): Boolean =
-    when (this) {
-        is And, Not, Or, Multiplication, Addition, Mux, EqualTo, LessThan, LessThanOrEqualTo -> true
-        else -> false
-    }
 
 class ZKPInit {
     companion object {

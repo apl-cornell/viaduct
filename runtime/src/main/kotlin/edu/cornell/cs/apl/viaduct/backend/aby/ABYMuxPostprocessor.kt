@@ -1,12 +1,12 @@
-package edu.cornell.cs.apl.viaduct.backend.zkp
+package edu.cornell.cs.apl.viaduct.backend.aby
 
-import edu.cornell.cs.apl.viaduct.backend.MuxPostprocessor
+import edu.cornell.cs.apl.viaduct.passes.MuxPostprocessor
 import edu.cornell.cs.apl.viaduct.passes.ProgramPostprocessor
-import edu.cornell.cs.apl.viaduct.protocols.ZKP
+import edu.cornell.cs.apl.viaduct.protocols.ABY
 import edu.cornell.cs.apl.viaduct.syntax.FunctionName
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
 import edu.cornell.cs.apl.viaduct.syntax.Variable
 
-fun ZKPMuxPostprocessor(
+fun ABYMuxPostprocessor(
     protocolAssignment: (FunctionName, Variable) -> Protocol
-): ProgramPostprocessor = MuxPostprocessor({ p -> p is ZKP }, protocolAssignment)
+): ProgramPostprocessor = MuxPostprocessor({ p -> p is ABY }, protocolAssignment)

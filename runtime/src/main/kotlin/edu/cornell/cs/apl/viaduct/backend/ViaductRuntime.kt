@@ -7,6 +7,7 @@ import edu.cornell.cs.apl.viaduct.protocols.Synchronization
 import edu.cornell.cs.apl.viaduct.selection.CommunicationEvent
 import edu.cornell.cs.apl.viaduct.syntax.Host
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
+import edu.cornell.cs.apl.viaduct.syntax.ProtocolProjection
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
 import edu.cornell.cs.apl.viaduct.syntax.values.BooleanValue
 import edu.cornell.cs.apl.viaduct.syntax.values.ByteVecValue
@@ -133,7 +134,7 @@ private class ViaductReceiverThread(
 
                 logger.info {
                     "received remote message ${result.first.type.asDocument.print()} " +
-                    "from ${result.second.asDocument.print()} to ${result.third.asDocument.print()}"
+                        "from ${result.second.asDocument.print()} to ${result.third.asDocument.print()}"
                 }
 
                 runtime.send(result.first, result.second, result.third)

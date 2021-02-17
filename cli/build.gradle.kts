@@ -16,6 +16,7 @@ application {
 dependencies {
     implementation(project(":shared"))
     implementation(project(":compiler"))
+    implementation(project(":runtime"))
 
     // Command-line-argument parsing
     implementation("com.github.ajalt:clikt:2.8.0")

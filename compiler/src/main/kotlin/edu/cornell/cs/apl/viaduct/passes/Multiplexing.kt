@@ -1,10 +1,9 @@
-package edu.cornell.cs.apl.viaduct.backend
+package edu.cornell.cs.apl.viaduct.passes
 
 import edu.cornell.cs.apl.viaduct.analysis.NameAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.freshVariableNameGenerator
 import edu.cornell.cs.apl.viaduct.errors.UnknownDatatypeError
 import edu.cornell.cs.apl.viaduct.errors.UnknownMethodError
-import edu.cornell.cs.apl.viaduct.passes.ProgramPostprocessor
 import edu.cornell.cs.apl.viaduct.protocols.MainProtocol
 import edu.cornell.cs.apl.viaduct.syntax.Arguments
 import edu.cornell.cs.apl.viaduct.syntax.FunctionName

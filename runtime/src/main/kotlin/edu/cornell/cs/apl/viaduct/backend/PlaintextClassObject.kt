@@ -51,13 +51,13 @@ class MutableCellObject(var value: Value) : PlaintextClassObject() {
     }
 
     override fun update(update: UpdateNameNode, arguments: List<Value>) {
-        value = when (update.value) {
+        value = when (val updateValue = update.value) {
             is edu.cornell.cs.apl.viaduct.syntax.datatypes.Set -> {
                 arguments[0]
             }
 
             is Modify -> {
-                update.value.operator.apply(value, arguments[0])
+                updateValue.operator.apply(value, arguments[0])
             }
 
             else -> {
@@ -93,13 +93,13 @@ class VectorObject(val size: Int, defaultValue: Value) : PlaintextClassObject() 
     override fun update(update: UpdateNameNode, arguments: List<Value>) {
         val index = arguments[0] as IntegerValue
 
-        values[index.value] = when (update.value) {
+        values[index.value] = when (val updateValue = update.value) {
             is edu.cornell.cs.apl.viaduct.syntax.datatypes.Set -> {
                 arguments[1]
             }
 
             is Modify -> {
-                update.value.operator.apply(values[index.value], arguments[1])
+                updateValue.operator.apply(values[index.value], arguments[1])
             }
 
             else -> {

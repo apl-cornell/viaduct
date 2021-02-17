@@ -9,6 +9,7 @@ import edu.cornell.cs.apl.viaduct.selection.ProtocolCommunication
 import edu.cornell.cs.apl.viaduct.syntax.FunctionName
 import edu.cornell.cs.apl.viaduct.syntax.Host
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
+import edu.cornell.cs.apl.viaduct.syntax.ProtocolProjection
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.AssertionNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.BlockNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.BreakNode
@@ -146,7 +147,8 @@ class BackendInterpreter(
                         protocolInterpreterMap[readerProtocol]
                             ?.runReceive(stmt, protocol, reader, readerProtocol!!, events!!)
                             ?: throw ViaductInterpreterError(
-                                "no backend for protocol ${readerProtocol!!.asDocument.print()}")
+                                "no backend for protocol ${readerProtocol!!.asDocument.print()}"
+                            )
                     }
                 }
 

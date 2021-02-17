@@ -441,7 +441,8 @@ class ABYProtocolInterpreter(
                 role = role
             )
 
-        val variableCircuitMap: Map<ABYCircuitGate, VariableShare> = computeVariableCircuitMap(circuitBuilder, outputGate)
+        val variableCircuitMap: Map<ABYCircuitGate, VariableShare> =
+            computeVariableCircuitMap(circuitBuilder, outputGate)
         val outputShare: VariableShare = buildABYCircuit(circuitBuilder, variableCircuitMap, outputGate)
         val clearOutputShare = circuitBuilder.circuit(outputGate.circuitType).putOUTGate(outputShare.share, outRole)
 
@@ -454,15 +455,15 @@ class ABYProtocolInterpreter(
 
         logger.info {
             "executed ABY circuit in ${execDuration}ms, sent output to $outRole\n" +
-            "total gates: ${aby.totalGates}\n" +
-            "total depth: ${aby.totalDepth}\n" +
-            "total time: ${aby.getTiming(Phase.P_TOTAL)}\n" +
-            "total sent/recv: ${aby.getSentData(Phase.P_TOTAL)} / ${aby.getReceivedData(Phase.P_TOTAL)}\n" +
-            "network time: ${aby.getTiming(Phase.P_NETWORK)}\n" +
-            "setup time: ${aby.getTiming(Phase.P_SETUP)}\n" +
-            "setup sent/recv: ${aby.getSentData(Phase.P_SETUP)} / ${aby.getReceivedData(Phase.P_SETUP)}\n" +
-            "online time: ${aby.getTiming(Phase.P_ONLINE)}\n" +
-            "online sent/recv: ${aby.getSentData(Phase.P_ONLINE)} / ${aby.getReceivedData(Phase.P_ONLINE)}\n"
+                "total gates: ${aby.totalGates}\n" +
+                "total depth: ${aby.totalDepth}\n" +
+                "total time: ${aby.getTiming(Phase.P_TOTAL)}\n" +
+                "total sent/recv: ${aby.getSentData(Phase.P_TOTAL)} / ${aby.getReceivedData(Phase.P_TOTAL)}\n" +
+                "network time: ${aby.getTiming(Phase.P_NETWORK)}\n" +
+                "setup time: ${aby.getTiming(Phase.P_SETUP)}\n" +
+                "setup sent/recv: ${aby.getSentData(Phase.P_SETUP)} / ${aby.getReceivedData(Phase.P_SETUP)}\n" +
+                "online time: ${aby.getTiming(Phase.P_ONLINE)}\n" +
+                "online sent/recv: ${aby.getSentData(Phase.P_ONLINE)} / ${aby.getReceivedData(Phase.P_ONLINE)}\n"
         }
 
         return if (thisHostReceives) {
@@ -649,14 +650,14 @@ class ABYProtocolInterpreter(
             update: UpdateNameNode,
             arguments: List<AtomicExpressionNode>
         ) {
-            gate = when (update.value) {
+            gate = when (val updateValue = update.value) {
                 is edu.cornell.cs.apl.viaduct.syntax.datatypes.Set -> {
                     this@ABYProtocolInterpreter.runSecretExpr(circuitType, arguments[0])
                 }
 
                 is Modify -> {
                     val circuitArg: ABYCircuitGate = runSecretExpr(circuitType, arguments[0])
-                    operatorToCircuit(update.value.operator, listOf(gate, circuitArg), circuitType)
+                    operatorToCircuit(updateValue.operator, listOf(gate, circuitArg), circuitType)
                 }
 
                 else ->
@@ -728,7 +729,7 @@ class ABYProtocolInterpreter(
             when (val index: ABYValue = runPlaintextOrSecretExpr(circuitType, arguments[0])) {
                 is ABYCleartextValue -> {
                     val intIndex = (index.value as IntegerValue).value
-                    gates[intIndex] = when (update.value) {
+                    gates[intIndex] = when (val updateValue = update.value) {
                         is edu.cornell.cs.apl.viaduct.syntax.datatypes.Set -> {
                             runSecretExpr(circuitType, arguments[1])
                         }
@@ -736,7 +737,7 @@ class ABYProtocolInterpreter(
                         is Modify -> {
                             val circuitArg: ABYCircuitGate = runSecretExpr(circuitType, arguments[1])
                             operatorToCircuit(
-                                update.value.operator,
+                                updateValue.operator,
                                 listOf(gates[intIndex], circuitArg),
                                 circuitType
                             )
@@ -752,12 +753,12 @@ class ABYProtocolInterpreter(
                 is ABYSecretValue -> {
                     val circuitArg: ABYCircuitGate = runSecretExpr(circuitType, arguments[1])
                     for (i in 0 until size) {
-                        val rhs = when (update.value) {
+                        val rhs = when (val updateValue = update.value) {
                             is edu.cornell.cs.apl.viaduct.syntax.datatypes.Set -> circuitArg
 
                             is Modify -> {
                                 operatorToCircuit(
-                                    update.value.operator,
+                                    updateValue.operator,
                                     listOf(gates[i], circuitArg),
                                     circuitType
                                 )

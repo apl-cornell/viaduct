@@ -1,9 +1,6 @@
-package edu.cornell.cs.apl.viaduct.backend
+package edu.cornell.cs.apl.viaduct.syntax
 
 import edu.cornell.cs.apl.prettyprinting.Document
-import edu.cornell.cs.apl.viaduct.syntax.Host
-import edu.cornell.cs.apl.viaduct.syntax.Name
-import edu.cornell.cs.apl.viaduct.syntax.Protocol
 
 data class ProtocolProjection(
     val protocol: Protocol,

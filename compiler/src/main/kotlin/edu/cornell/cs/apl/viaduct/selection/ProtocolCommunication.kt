@@ -1,10 +1,10 @@
 package edu.cornell.cs.apl.viaduct.selection
 
-import edu.cornell.cs.apl.viaduct.backend.ProtocolProjection
 import edu.cornell.cs.apl.viaduct.syntax.Host
 import edu.cornell.cs.apl.viaduct.syntax.InputPort
 import edu.cornell.cs.apl.viaduct.syntax.OutputPort
 import edu.cornell.cs.apl.viaduct.syntax.PortId
+import edu.cornell.cs.apl.viaduct.syntax.ProtocolProjection
 
 data class CommunicationEvent(val send: OutputPort, val recv: InputPort)
 

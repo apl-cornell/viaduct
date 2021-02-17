@@ -8,13 +8,13 @@ import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.ArgumentsProvider
 
 /** Enumerates the paths of source files that should successfully compile. */
-internal class PositiveTestFileProvider : ArgumentsProvider {
+class PositiveTestFileProvider : ArgumentsProvider {
     override fun provideArguments(context: ExtensionContext?): Stream<out Arguments> =
         testFilesAtPath("should-pass").map { Arguments.of(it) }.asStream()
 }
 
 /** Enumerates the paths of source files that should fail to compile. */
-internal class NegativeTestFileProvider : ArgumentsProvider {
+class NegativeTestFileProvider : ArgumentsProvider {
     override fun provideArguments(context: ExtensionContext?): Stream<out Arguments> =
         testFilesAtPath("should-fail").map { Arguments.of(it) }.asStream()
 }

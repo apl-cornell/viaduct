@@ -40,6 +40,7 @@ dependencies {
     implementation(files("libs/jsnark.jar"))
 
     // Testing
+    testImplementation(project(":test-utilities"))
     testImplementation(kotlin("reflect"))
 }
 

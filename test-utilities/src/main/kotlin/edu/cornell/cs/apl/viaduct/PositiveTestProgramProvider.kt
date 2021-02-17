@@ -9,7 +9,7 @@ import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.ArgumentsProvider
 
 /** Same as [PositiveTestFileProvider] but parses the programs. */
-internal class PositiveTestProgramProvider : ArgumentsProvider {
+class PositiveTestProgramProvider : ArgumentsProvider {
     override fun provideArguments(context: ExtensionContext?): Stream<out Arguments> {
         return PositiveTestFileProvider().provideArguments(context)
             .map { Arguments.of(SourceFile.from(it.get()[0] as File).parse()) }

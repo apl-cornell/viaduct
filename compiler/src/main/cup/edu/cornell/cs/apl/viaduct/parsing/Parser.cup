@@ -1,3 +1,4 @@
+import edu.cornell.cs.apl.viaduct.errors.NoMainError;
 import edu.cornell.cs.apl.viaduct.errors.ParsingError;
 import edu.cornell.cs.apl.viaduct.protocols.*;
 import edu.cornell.cs.apl.viaduct.security.*;
@@ -198,6 +199,12 @@ entry_point ::=
 
 program ::=
     declaration_list:declarations {:
+      if (declarations.isEmpty()) {
+        /* Empty program */
+        throw new NoMainError(((Lexer) getScanner()).sourceFile.getPath());
+      }
+
+
       RESULT = new ProgramNode(declarations, location(declarationsleft, declarationsright));
     :}
   ;

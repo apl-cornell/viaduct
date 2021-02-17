@@ -79,11 +79,6 @@ subprojects {
             "implementation"("io.github.microutils:kotlin-logging:2.0.4")
             "testImplementation"("org.apache.logging.log4j:log4j-core:2.14.0")
             "testImplementation"("org.apache.logging.log4j:log4j-slf4j-impl:2.14.0")
-
-            // Testing
-            "testImplementation"("org.junit.jupiter:junit-jupiter-api:5.7.1")
-            "testImplementation"("org.junit.jupiter:junit-jupiter-params:5.7.1")
-            "testRuntimeOnly"("org.junit.jupiter:junit-jupiter-engine:5.7.1")
         }
 
         /** Testing */

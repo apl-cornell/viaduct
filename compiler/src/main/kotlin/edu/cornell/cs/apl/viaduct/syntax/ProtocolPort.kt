@@ -1,7 +1,5 @@
 package edu.cornell.cs.apl.viaduct.syntax
 
-import edu.cornell.cs.apl.viaduct.backend.ProtocolProjection
-
 typealias PortId = String
 
 interface ProtocolPort {

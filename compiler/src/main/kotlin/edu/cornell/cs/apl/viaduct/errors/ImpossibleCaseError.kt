@@ -2,6 +2,7 @@ package edu.cornell.cs.apl.viaduct.errors
 
 import edu.cornell.cs.apl.prettyprinting.Document
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.Node
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.ObjectDeclaration
 
 /** Thrown when the compiler reaches an impossible state. */
 abstract class ImpossibleCaseError : CompilationError() {
@@ -9,7 +10,7 @@ abstract class ImpossibleCaseError : CompilationError() {
 }
 
 /**
- * Thrown when a unknown Node is tagged as an ObjectDeclaration.
+ * Thrown when an unknown [Node] is tagged as an [ObjectDeclaration].
  *
  * @param node: The unknown node.
  */

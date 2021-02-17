@@ -16,9 +16,6 @@ plugins {
 dependencies {
     implementation(project(":shared"))
 
-    // Concurrency
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.4.2")
-
     // Data structures
     implementation("com.uchuhimo:kotlinx-bimap:1.2")
 
@@ -35,11 +32,8 @@ dependencies {
     // SMT solving
     implementation("io.github.tudo-aqua:z3-turnkey:4.8.7.1")
 
-    // Cryptography
-    implementation("com.github.apl-cornell:aby-java:9f626e2b70")
-    implementation(files("libs/jsnark.jar"))
-
     // Testing
+    testImplementation(project(":test-utilities"))
     testImplementation(kotlin("reflect"))
 }
 

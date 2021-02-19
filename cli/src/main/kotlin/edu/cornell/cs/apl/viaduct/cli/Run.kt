@@ -2,7 +2,6 @@ package edu.cornell.cs.apl.viaduct.cli
 
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.parameters.arguments.argument
-import com.github.ajalt.clikt.parameters.options.flag
 import com.github.ajalt.clikt.parameters.options.multiple
 import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.options.pair
@@ -39,7 +38,6 @@ import edu.cornell.cs.apl.viaduct.syntax.Protocol
 import edu.cornell.cs.apl.viaduct.syntax.ProtocolName
 import java.io.File
 import kotlin.system.exitProcess
-import org.apache.logging.log4j.core.config.Configurator
 
 class Run : CliktCommand(help = "Run compiled protocol for a single host") {
     private val hostName by
@@ -49,12 +47,6 @@ class Run : CliktCommand(help = "Run compiled protocol for a single host") {
     )
 
     val input: File? by inputProgram()
-
-    val verbose: Boolean by option(
-        "-v",
-        "--verbose",
-        help = "Output logging information generated during execution"
-    ).flag(default = false)
 
     val inputStrategy by option(
         "-in",
@@ -94,10 +86,6 @@ class Run : CliktCommand(help = "Run compiled protocol for a single host") {
     }
 
     override fun run() {
-        if (verbose) {
-            Configurator.setRootLevel(org.apache.logging.log4j.Level.INFO)
-        }
-
         val program = input.parse(protocols).elaborated()
 
         val connectionInfoMap: Map<Host, HostAddress> =

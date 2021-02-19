@@ -36,7 +36,6 @@ import java.io.StringWriter
 import java.io.Writer
 import kotlin.system.measureTimeMillis
 import mu.KotlinLogging
-import org.apache.logging.log4j.core.config.Configurator
 
 private val logger = KotlinLogging.logger("Compile")
 
@@ -85,17 +84,7 @@ class Compile : CliktCommand(help = "Compile ideal protocol to secure distribute
         help = "Use WAN cost model instead of LAN cost model"
     ).flag(default = false)
 
-    val verbose: Boolean by option(
-        "-v",
-        "--verbose",
-        help = "Output logging information generated during execution"
-    ).flag(default = false)
-
     override fun run() {
-        if (verbose) {
-            Configurator.setRootLevel(org.apache.logging.log4j.Level.INFO)
-        }
-
         logger.info { "elaborating source program..." }
         val unspecializedProgram = input.parse().elaborated()
 
@@ -158,7 +147,10 @@ class Compile : CliktCommand(help = "Compile ideal protocol to secure distribute
         val annotatedProgram = program.annotateWithProtocols(protocolAssignment)
 
         // Post-process program
-        val postprocessor = ProgramPostprocessorRegistry(ABYMuxPostprocessor(protocolAssignment), ZKPMuxPostprocessor(protocolAssignment))
+        val postprocessor = ProgramPostprocessorRegistry(
+            ABYMuxPostprocessor(protocolAssignment),
+            ZKPMuxPostprocessor(protocolAssignment)
+        )
         val postprocessedProgram = postprocessor.postprocess(annotatedProgram)
 
         output.println(postprocessedProgram)

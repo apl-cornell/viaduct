@@ -1,26 +1,9 @@
-# Ignore everything by default. So this is a "Docker include" file.
-*
-
-!LICENSE
-!README.ms
-
-# Configuration
-!.editorconfig
+# Hidden files
+**/.*
 
 # Gradle
-!*.gradle.kts
-!gradle.properties
-!cli/*.gradle.kts
-!compiler/*.gradle.kts
-!shared/*.gradle.kts
-!gradle
-!gradlew
+**/build
 
-# Code
-!cli/src
-!compiler/src
-!shared/src
-
-!cli/tests
-!compiler/tests
-!shared/tests
+# Irrelevant scripts
+gradlew.bat
+viaduct

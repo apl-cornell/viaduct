@@ -19,13 +19,6 @@ allprojects {
 
     version = "0.1"
 
-    repositories {
-        jcenter()
-        maven {
-            url = uri("https://jitpack.io")
-        }
-    }
-
     /** Style */
 
     spotless {

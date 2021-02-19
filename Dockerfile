@@ -35,5 +35,5 @@ COPY --from=builder /app/cli/build/install /usr/local/
 RUN ["ln", "-s", "/usr/local/cli/bin/cli", "/usr/local/bin/viaduct" ]
 
 ## Add command-line completion (i.e. tab to autocomplete)
-RUN viaduct generate-completion bash > viaduct-completion.sh
+RUN _VIADUCT_COMPLETE=bash viaduct > viaduct-completion.sh
 RUN echo source viaduct-completion.sh >> .bashrc

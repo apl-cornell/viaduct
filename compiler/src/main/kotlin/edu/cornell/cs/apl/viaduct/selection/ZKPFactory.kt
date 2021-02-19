@@ -3,11 +3,11 @@ package edu.cornell.cs.apl.viaduct.selection
 import edu.cornell.cs.apl.attributes.attribute
 import edu.cornell.cs.apl.viaduct.analysis.NameAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.TypeAnalysis
-import edu.cornell.cs.apl.viaduct.backend.canMux
-import edu.cornell.cs.apl.viaduct.backend.zkp.supportedOp
+import edu.cornell.cs.apl.viaduct.passes.canMux
 import edu.cornell.cs.apl.viaduct.protocols.ZKP
 import edu.cornell.cs.apl.viaduct.syntax.Host
 import edu.cornell.cs.apl.viaduct.syntax.HostTrustConfiguration
+import edu.cornell.cs.apl.viaduct.syntax.Operator
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
 import edu.cornell.cs.apl.viaduct.syntax.ProtocolName
 import edu.cornell.cs.apl.viaduct.syntax.SpecializedProtocol
@@ -22,6 +22,15 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.OperatorApplicationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ParameterNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ReadNode
+import edu.cornell.cs.apl.viaduct.syntax.operators.Addition
+import edu.cornell.cs.apl.viaduct.syntax.operators.And
+import edu.cornell.cs.apl.viaduct.syntax.operators.EqualTo
+import edu.cornell.cs.apl.viaduct.syntax.operators.LessThan
+import edu.cornell.cs.apl.viaduct.syntax.operators.LessThanOrEqualTo
+import edu.cornell.cs.apl.viaduct.syntax.operators.Multiplication
+import edu.cornell.cs.apl.viaduct.syntax.operators.Mux
+import edu.cornell.cs.apl.viaduct.syntax.operators.Not
+import edu.cornell.cs.apl.viaduct.syntax.operators.Or
 import edu.cornell.cs.apl.viaduct.util.subsequences
 
 class ZKPFactory(val program: ProgramNode) : ProtocolFactory {
@@ -49,11 +58,17 @@ class ZKPFactory(val program: ProgramNode) : ProtocolFactory {
     /** If the value is an op, ensure it's compatible with r1cs generation **/
     private fun ExpressionNode.compatibleOp(): Boolean {
         return if (this is OperatorApplicationNode) {
-            (this.operator.supportedOp())
+            (this.operator.isSupported())
         } else {
             true
         }
     }
+
+    private fun Operator.isSupported(): Boolean =
+        when (this) {
+            is And, Not, Or, Multiplication, Addition, Mux, EqualTo, LessThan, LessThanOrEqualTo -> true
+            else -> false
+        }
 
     private fun Node.isApplicable(): Boolean =
         when (this) {

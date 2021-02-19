@@ -14,6 +14,7 @@ object ArithABYProtocolParser : ProtocolParser<ArithABY> {
         return ArithABY(server.value, client.value)
     }
 }
+
 object BoolABYProtocolParser : ProtocolParser<BoolABY> {
     override fun parse(arguments: ProtocolArguments): BoolABY {
         val server = arguments.get<HostValue>("server")
@@ -21,6 +22,7 @@ object BoolABYProtocolParser : ProtocolParser<BoolABY> {
         return BoolABY(server.value, client.value)
     }
 }
+
 object YaoABYProtocolParser : ProtocolParser<YaoABY> {
     override fun parse(arguments: ProtocolArguments): YaoABY {
         val server = arguments.get<HostValue>("server")

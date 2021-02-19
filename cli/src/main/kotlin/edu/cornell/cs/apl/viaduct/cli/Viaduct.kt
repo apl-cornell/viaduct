@@ -1,5 +1,6 @@
 package edu.cornell.cs.apl.viaduct.cli
 
+import com.github.ajalt.clikt.completion.CompletionCommand
 import com.github.ajalt.clikt.core.NoOpCliktCommand
 import com.github.ajalt.clikt.core.subcommands
 import com.github.ajalt.clikt.parameters.options.versionOption
@@ -10,7 +11,7 @@ class Viaduct : NoOpCliktCommand(help = "Compile high level specifications to se
 
     init {
         versionOption(version)
-        subcommands(Format(), Compile(), Specification(), Run())
+        subcommands(Format(), Compile(), CompletionCommand(), Specification(), Run())
         // TODO: Help, Interpret, Specification commands
     }
 

@@ -1,8 +1,9 @@
-# Hidden files
-**/.*
+# IntelliJ
+.idea
 
 # Gradle
 **/build
+.gradle
 
 # Irrelevant scripts
 gradlew.bat

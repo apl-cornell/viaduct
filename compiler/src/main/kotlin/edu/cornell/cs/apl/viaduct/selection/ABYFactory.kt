@@ -1,7 +1,7 @@
 package edu.cornell.cs.apl.viaduct.selection
 
 import edu.cornell.cs.apl.viaduct.analysis.NameAnalysis
-import edu.cornell.cs.apl.viaduct.backend.canMux
+import edu.cornell.cs.apl.viaduct.passes.canMux
 import edu.cornell.cs.apl.viaduct.protocols.ABY
 import edu.cornell.cs.apl.viaduct.protocols.ArithABY
 import edu.cornell.cs.apl.viaduct.protocols.BoolABY
@@ -58,7 +58,7 @@ class ABYFactory(program: ProgramNode) : ProtocolFactory {
             val combinedConfidentiality = h1Label.confidentiality().and(h1Label.confidentiality())
             val semihonest =
                 h1Label.integrity().swap().actsFor(combinedConfidentiality) &&
-                h2Label.integrity().swap().actsFor(combinedConfidentiality)
+                    h2Label.integrity().swap().actsFor(combinedConfidentiality)
             if (semihonest) {
                 listOf(
                     SpecializedProtocol(ArithABY(it.first, it.second), hostTrustConfiguration),

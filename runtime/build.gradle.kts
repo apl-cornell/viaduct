@@ -1,0 +1,20 @@
+plugins {
+    kotlin("jvm")
+}
+
+/** Dependencies */
+
+dependencies {
+    implementation(project(":shared"))
+    implementation(project(":compiler"))
+
+    // Concurrency
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.4.2")
+
+    // Cryptography
+    implementation("com.github.apl-cornell:aby-java:9f626e2b70")
+    implementation(files("libs/jsnark.jar"))
+
+    // Testing
+    testImplementation(project(":test-utilities"))
+}

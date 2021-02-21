@@ -18,12 +18,12 @@ import java_cup.runtime.Symbol;
 %char
 
 %{
-  private final SourceFile sourceFile;
+  final SourceFile sourceFile;
   private final ComplexSymbolFactory symbolFactory;
   private int commentLevel = 0;
 
   /**
-  * Construct a new lexer.
+  * Constructs a new lexer.
   *
   * @param sourceFile input file
   * @param symbolFactory generates symbols with source location information
@@ -32,7 +32,7 @@ import java_cup.runtime.Symbol;
     this(sourceFile.createReader(), sourceFile, symbolFactory);
   }
 
-  /** Generate a source location given left and right character offsets. */
+  /** Generates a source location given left and right character offsets. */
   public SourceRange location(int left, int right) {
     final SourcePosition start = new SourcePosition(sourceFile, left);
     final SourcePosition end = new SourcePosition(sourceFile, right);
@@ -40,14 +40,14 @@ import java_cup.runtime.Symbol;
   }
 
   /**
-   * Construct a Symbol with information about source location.
+   * Constructs a Symbol with information about source location.
    */
   private Symbol symbol(int code) {
     return symbol(code, null);
   }
 
   /**
-   * Construct a Symbol with information about source location.
+   * Constructs a Symbol with information about source location.
    * Additionally stores a value.
    */
   private Symbol symbol(int code, Object value) {

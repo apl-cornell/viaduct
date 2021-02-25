@@ -43,7 +43,7 @@ jflex {
     encoding = Charsets.UTF_8.name()
 }
 
-val compileCup by tasks.registering(CupCompileTask::class) {}
+val compileCup by tasks.registering(CompileCupTask::class) {}
 
 sourceSets {
     main {
@@ -60,7 +60,7 @@ tasks.compileKotlin {
     dependsOn(tasks.withType<org.xbib.gradle.plugin.JFlexTask>())
 }
 
-abstract class CupCompileTask : DefaultTask() {
+abstract class CompileCupTask : DefaultTask() {
     @InputDirectory
     @SkipWhenEmpty
     val sourceDirectory: DirectoryProperty =
@@ -82,7 +82,7 @@ abstract class CupCompileTask : DefaultTask() {
 
     @Internal
     override fun getGroup(): String =
-        JavaBasePlugin.BUILD_TASK_NAME
+        LifecycleBasePlugin.BUILD_TASK_NAME
 
     @Internal
     override fun getDescription(): String =

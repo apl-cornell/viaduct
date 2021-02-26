@@ -82,6 +82,16 @@ internal fun File?.parse(
         SourceFile.from(this)).parse(protocolParsers)
 
 /**
+ * Jansi has this annoying behavior of reading [java.io.FileDescriptor.out] directly instead of using [System.out].
+ * This causes a bunch of stuff to be printed during testing, because JUnit replaces the [System] streams, but it
+ * cannot replace the file descriptors. Moreover, JUnit cannot capture testing output when it is directly printed to
+ * file descriptors.
+ *
+ * Setting this flag makes all output sidestep [AnsiConsole].
+ */
+internal var testing: Boolean = false
+
+/**
  * Pretty prints [document] (plus the line separator) to [this] file. If [this] is `null`, [document] is printed to the
  * standard output instead.
  *
@@ -91,7 +101,7 @@ internal fun File?.println(document: PrettyPrintable) {
     val doc = document.asDocument + Document.lineBreak
     if (this == null) {
         // Write to standard out.
-        doc.print(AnsiConsole.out(), ansi = true)
+        doc.print(if (testing) System.out else AnsiConsole.out(), ansi = true)
     } else {
         // Write to the given file, but exclude ANSI escape codes.
         PrintStream(this, Charsets.UTF_8).use { doc.print(it, ansi = false) }

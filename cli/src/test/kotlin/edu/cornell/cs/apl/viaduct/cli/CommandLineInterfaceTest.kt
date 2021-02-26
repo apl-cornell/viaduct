@@ -1,11 +1,13 @@
 package edu.cornell.cs.apl.viaduct.cli
 
 import com.github.ajalt.clikt.core.PrintHelpMessage
+import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 
 internal class CommandLineInterfaceTest {
-    private val example = "tests/should-pass/Local.via"
+    private val example
+        get() = "tests/should-pass/Local.via"
 
     @Test
     fun help() {
@@ -31,8 +33,21 @@ internal class CommandLineInterfaceTest {
     }
 
     @Test
+    fun `aliases work`() {
+        cli("spec", "--adversary", "A", example)
+    }
+
+    @Test
     fun `no arguments causes error`() {
         assertThrows<PrintHelpMessage> { cli() }
+    }
+
+    companion object {
+        @BeforeAll
+        @JvmStatic
+        fun disableJansi() {
+            testing = true
+        }
     }
 }
 

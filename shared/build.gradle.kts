@@ -16,7 +16,7 @@ dependencies {
 
 /** Compilation */
 
-val generatedPropertiesDir = "${project.buildDir}/generated-src/properties"
+val generatedPropertiesDir = "${project.buildDir}/generated/sources/properties"
 
 val generatePropertiesFile by tasks.registering {
     doLast {

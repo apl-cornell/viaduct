@@ -43,7 +43,7 @@ jflex {
     encoding = Charsets.UTF_8.name()
 }
 
-val compileCup by tasks.registering(CupCompileTask::class) {}
+val compileCup by tasks.registering(CompileCupTask::class) {}
 
 sourceSets {
     main {
@@ -60,21 +60,21 @@ tasks.compileKotlin {
     dependsOn(tasks.withType<org.xbib.gradle.plugin.JFlexTask>())
 }
 
-open class CupCompileTask : DefaultTask() {
+open class CompileCupTask : DefaultTask() {
     @InputDirectory
     val sourceDir: File = project.file("src/main/cup")
 
     @OutputDirectory
-    val generateDir: File = project.file("${project.buildDir}/generated-src/cup")
+    val generateDir: File = project.file("${project.buildDir}/generated/sources/cup")
 
     @Input
     val cupArguments: List<String> = listOf("-interface")
 
-    @Input
+    @Internal
     override fun getGroup(): String =
-        JavaBasePlugin.BUILD_TASK_NAME
+        LifecycleBasePlugin.BUILD_TASK_NAME
 
-    @Input
+    @Internal
     override fun getDescription(): String =
         "Generates Java sources from CUP grammar files."
 

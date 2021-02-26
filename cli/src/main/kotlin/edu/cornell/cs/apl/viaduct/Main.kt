@@ -24,7 +24,7 @@ fun main(args: Array<String>) {
 private fun failWith(e: Throwable) {
     when (e) {
         is IOException -> {
-            AnsiConsole.err().println(e.getLocalizedMessage())
+            System.err.println(e.getLocalizedMessage())
         }
         is CompilationError -> {
             // User error. Print short, pretty message.

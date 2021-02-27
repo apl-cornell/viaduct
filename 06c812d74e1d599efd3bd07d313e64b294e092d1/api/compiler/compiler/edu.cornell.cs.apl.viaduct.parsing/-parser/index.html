@@ -1,0 +1,805 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Viaduct: an extensible, optimizing compiler for secure distributed programs.">
+      
+      
+      
+        <meta name="author" content="Applied Programming Languages Group">
+      
+      
+        <link rel="canonical" href="https://apl-cornell.github.io/viaduct/06c812d74e1d599efd3bd07d313e64b294e092d1/api/compiler/compiler/edu.cornell.cs.apl.viaduct.parsing/-parser/">
+      
+      <link rel="shortcut icon" href="../../../../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.1.2, mkdocs-material-7.0.3">
+    
+    
+      
+        <title>Index - Viaduct</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../../../../assets/stylesheets/main.1655a90d.min.css">
+      
+        
+        <link rel="stylesheet" href="../../../../../assets/stylesheets/palette.7fa14f5b.min.css">
+        
+      
+    
+    
+    
+      
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,400i,700%7CRoboto+Mono&display=fallback">
+        <style>:root{--md-text-font-family:"Roboto";--md-code-font-family:"Roboto Mono"}</style>
+      
+    
+    
+    
+      <link rel="stylesheet" href="../../../../../styles/extra.css">
+    
+    
+      
+    
+    
+  </head>
+  
+  
+    
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="" data-md-color-primary="none" data-md-color-accent="none">
+      
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#parser" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="https://apl-cornell.github.io/viaduct/06c812d74e1d599efd3bd07d313e64b294e092d1" title="Viaduct" class="md-header__button md-logo" aria-label="Viaduct">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54z"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Viaduct
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Index
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    <div class="md-header__options">
+      
+    </div>
+    
+      <label class="md-header__button md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5z"/></svg>
+      </label>
+      
+<div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" data-md-state="active" required>
+      <label class="md-search__icon md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5z"/></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
+      </label>
+      <button type="reset" class="md-search__icon md-icon" aria-label="Clear" tabindex="-1">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z"/></svg>
+      </button>
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+      <div class="md-header__source">
+        
+<a href="https://github.com/apl-cornell/viaduct/" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path d="M439.55 236.05L244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+      </div>
+    
+  </nav>
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-tabs__inner md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+
+
+  <li class="md-tabs__item">
+    <a href="../../../../.." class="md-tabs__link">
+      Getting Started
+    </a>
+  </li>
+
+      
+        
+  
+  
+
+
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../../../developer-guide/building/" class="md-tabs__link">
+        Developer's Guide
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+
+
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../../cli/cli/" class="md-tabs__link">
+        API Reference
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="https://apl-cornell.github.io/viaduct/06c812d74e1d599efd3bd07d313e64b294e092d1" title="Viaduct" class="md-nav__button md-logo" aria-label="Viaduct">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54z"/></svg>
+
+    </a>
+    Viaduct
+  </label>
+  
+    <div class="md-nav__source">
+      
+<a href="https://github.com/apl-cornell/viaduct/" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path d="M439.55 236.05L244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../.." class="md-nav__link">
+        Getting Started
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_2" type="checkbox" id="__nav_2" >
+      
+      <label class="md-nav__link" for="__nav_2">
+        Developer's Guide
+        <span class="md-nav__icon md-icon"></span>
+      </label>
+      <nav class="md-nav" aria-label="Developer's Guide" data-md-level="1">
+        <label class="md-nav__title" for="__nav_2">
+          <span class="md-nav__icon md-icon"></span>
+          Developer's Guide
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../../developer-guide/building/" class="md-nav__link">
+        Building
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../../developer-guide/logging/" class="md-nav__link">
+        Logging
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../../developer-guide/dependencies/" class="md-nav__link">
+        Updating Dependencies
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../../developer-guide/documentation/" class="md-nav__link">
+        Updating Documentation
+      </a>
+    </li>
+  
+
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_3" type="checkbox" id="__nav_3" >
+      
+      <label class="md-nav__link" for="__nav_3">
+        API Reference
+        <span class="md-nav__icon md-icon"></span>
+      </label>
+      <nav class="md-nav" aria-label="API Reference" data-md-level="1">
+        <label class="md-nav__title" for="__nav_3">
+          <span class="md-nav__icon md-icon"></span>
+          API Reference
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../cli/cli/" class="md-nav__link">
+        Command Line Interface
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../" class="md-nav__link">
+        Compiler
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../runtime/runtime/" class="md-nav__link">
+        Runtime System
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../shared/shared/" class="md-nav__link">
+        Shared Modules
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../test-utilities/test-utilities/" class="md-nav__link">
+        Test Utilities
+      </a>
+    </li>
+  
+
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#constructors" class="md-nav__link">
+    Constructors
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#types" class="md-nav__link">
+    Types
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#functions" class="md-nav__link">
+    Functions
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#properties" class="md-nav__link">
+    Properties
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          <div class="md-content" data-md-component="content">
+            <article class="md-content__inner md-typeset">
+              
+                
+                  <a href="https://github.com/apl-cornell/viaduct/edit/master/docs/api/compiler/compiler/edu.cornell.cs.apl.viaduct.parsing/-parser/index.md" title="Edit this page" class="md-content__button md-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20.71 7.04c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.37-.39-1.02-.39-1.41 0l-1.84 1.83 3.75 3.75M3 17.25V21h3.75L17.81 9.93l-3.75-3.75L3 17.25z"/></svg>
+                  </a>
+                
+                
+                <p>//<a href="../../">compiler</a>/<a href="../">edu.cornell.cs.apl.viaduct.parsing</a>/<a href="./">Parser</a></p>
+<h1 id="parser">Parser<a class="headerlink" href="#parser" title="Permanent link">&para;</a></h1>
+<p>[jvm] open class <a href="./">Parser</a> : lr_parser</p>
+<p>CUP v0.11b 20160615 (GIT 4ac7450) generated parser.</p>
+<h2 id="constructors">Constructors<a class="headerlink" href="#constructors" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Summary</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a name="edu.cornell.cs.apl.viaduct.parsing/Parser/Parser/#/PointingToDeclaration/"></a><a href="-parser/">Parser</a></td>
+<td><a name="edu.cornell.cs.apl.viaduct.parsing/Parser/Parser/#/PointingToDeclaration/"></a> [jvm] @<a href="https://docs.oracle.com/javase/8/docs/api/java/lang/Deprecated.html">Deprecated</a>()  <br>  <br><del>open</del> <del>fun</del> <a href="-parser/"><del>Parser</del></a><del>(~~</del>)~~Default constructor.   <br></td>
+</tr>
+<tr>
+<td><a name="edu.cornell.cs.apl.viaduct.parsing/Parser/Parser/#java_cup.runtime.Scanner/PointingToDeclaration/"></a><a href="-parser/">Parser</a></td>
+<td><a name="edu.cornell.cs.apl.viaduct.parsing/Parser/Parser/#java_cup.runtime.Scanner/PointingToDeclaration/"></a> [jvm] @<a href="https://docs.oracle.com/javase/8/docs/api/java/lang/Deprecated.html">Deprecated</a>()  <br>  <br><del>open</del> <del>fun</del> <a href="-parser/"><del>Parser</del></a><del>(<sub>~</sub><sub>s</sub>~</del>:~~ Scanner<sub>~)</sub>~Constructor which sets the default scanner.   <br></td>
+</tr>
+<tr>
+<td><a name="edu.cornell.cs.apl.viaduct.parsing/Parser/Parser/#java_cup.runtime.Scanner#java_cup.runtime.SymbolFactory/PointingToDeclaration/"></a><a href="-parser/">Parser</a></td>
+<td><a name="edu.cornell.cs.apl.viaduct.parsing/Parser/Parser/#java_cup.runtime.Scanner#java_cup.runtime.SymbolFactory/PointingToDeclaration/"></a> [jvm] open fun <a href="-parser/">Parser</a>(s: Scanner, sf: SymbolFactory)Constructor which sets the default scanner.   <br></td>
+</tr>
+</tbody>
+</table>
+<h2 id="types">Types<a class="headerlink" href="#types" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Summary</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a name="edu.cornell.cs.apl.viaduct.parsing/Parser.CUP$Parser$actions///PointingToDeclaration/"></a><a href="-c-u-p%24-parser%24actions/">CUP$Parser$actions</a></td>
+<td><a name="edu.cornell.cs.apl.viaduct.parsing/Parser.CUP$Parser$actions///PointingToDeclaration/"></a>[jvm]  <br>Content  <br>open class <a href="-c-u-p%24-parser%24actions/">CUP$Parser$actions</a>  <br>More info  <br>Cup generated class to encapsulate user supplied action code.  <br><br><br></td>
+</tr>
+</tbody>
+</table>
+<h2 id="functions">Functions<a class="headerlink" href="#functions" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Summary</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a name="edu.cornell.cs.apl.viaduct.parsing/Parser/action_table/#/PointingToDeclaration/"></a><a href="action_table/">action_table</a></td>
+<td><a name="edu.cornell.cs.apl.viaduct.parsing/Parser/action_table/#/PointingToDeclaration/"></a>[jvm]  <br>Content  <br>open fun <a href="action_table/">action_table</a>(): <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-array/index.html">Array</a>&lt;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-array/index.html">Array</a>&lt;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-short/index.html">Short</a>&gt;&gt;  <br>More info  <br>Access to parse-action table.  <br><br><br>[jvm]  <br>Content  <br>abstract fun <a href="./#%5Bjava_cup.runtime%2Flr_parser%2Faction_table%2F%23%2FPointingToDeclaration%2F%5D%2FFunctions%2F1338814298">action_table</a>(): <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-array/index.html">Array</a>&lt;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-array/index.html">Array</a>&lt;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-short/index.html">Short</a>&gt;&gt;  <br><br><br></td>
+</tr>
+<tr>
+<td><a name="java_cup.runtime/lr_parser/advance_lookahead/#/PointingToDeclaration/"></a><a href="./#%5Bjava_cup.runtime%2Flr_parser%2Fadvance_lookahead%2F%23%2FPointingToDeclaration%2F%5D%2FFunctions%2F1338814298">advance_lookahead</a></td>
+<td><a name="java_cup.runtime/lr_parser/advance_lookahead/#/PointingToDeclaration/"></a>[jvm]  <br>Content  <br>open fun <a href="./#%5Bjava_cup.runtime%2Flr_parser%2Fadvance_lookahead%2F%23%2FPointingToDeclaration%2F%5D%2FFunctions%2F1338814298">advance_lookahead</a>(): <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html">Boolean</a>  <br><br><br></td>
+</tr>
+<tr>
+<td><a name="java_cup.runtime/lr_parser/cur_err_token/#/PointingToDeclaration/"></a><a href="./#%5Bjava_cup.runtime%2Flr_parser%2Fcur_err_token%2F%23%2FPointingToDeclaration%2F%5D%2FFunctions%2F1338814298">cur_err_token</a></td>
+<td><a name="java_cup.runtime/lr_parser/cur_err_token/#/PointingToDeclaration/"></a>[jvm]  <br>Content  <br>open fun <a href="./#%5Bjava_cup.runtime%2Flr_parser%2Fcur_err_token%2F%23%2FPointingToDeclaration%2F%5D%2FFunctions%2F1338814298">cur_err_token</a>(): Symbol  <br><br><br></td>
+</tr>
+<tr>
+<td><a name="java_cup.runtime/lr_parser/debug_message/#java.lang.String/PointingToDeclaration/"></a><a href="./#%5Bjava_cup.runtime%2Flr_parser%2Fdebug_message%2F%23java.lang.String%2FPointingToDeclaration%2F%5D%2FFunctions%2F1338814298">debug_message</a></td>
+<td><a name="java_cup.runtime/lr_parser/debug_message/#java.lang.String/PointingToDeclaration/"></a>[jvm]  <br>Content  <br>open fun <a href="./#%5Bjava_cup.runtime%2Flr_parser%2Fdebug_message%2F%23java.lang.String%2FPointingToDeclaration%2F%5D%2FFunctions%2F1338814298">debug_message</a>(mess: <a href="https://docs.oracle.com/javase/8/docs/api/java/lang/String.html">String</a>)  <br><br><br></td>
+</tr>
+<tr>
+<td><a name="java_cup.runtime/lr_parser/debug_parse/#/PointingToDeclaration/"></a><a href="./#%5Bjava_cup.runtime%2Flr_parser%2Fdebug_parse%2F%23%2FPointingToDeclaration%2F%5D%2FFunctions%2F1338814298">debug_parse</a></td>
+<td><a name="java_cup.runtime/lr_parser/debug_parse/#/PointingToDeclaration/"></a>[jvm]  <br>Content  <br>open fun <a href="./#%5Bjava_cup.runtime%2Flr_parser%2Fdebug_parse%2F%23%2FPointingToDeclaration%2F%5D%2FFunctions%2F1338814298">debug_parse</a>(): Symbol  <br><br><br></td>
+</tr>
+<tr>
+<td><a name="java_cup.runtime/lr_parser/debug_reduce/#int#int#int/PointingToDeclaration/"></a><a href="./#%5Bjava_cup.runtime%2Flr_parser%2Fdebug_reduce%2F%23int%23int%23int%2FPointingToDeclaration%2F%5D%2FFunctions%2F1338814298">debug_reduce</a></td>
+<td><a name="java_cup.runtime/lr_parser/debug_reduce/#int#int#int/PointingToDeclaration/"></a>[jvm]  <br>Content  <br>open fun <a href="./#%5Bjava_cup.runtime%2Flr_parser%2Fdebug_reduce%2F%23int%23int%23int%2FPointingToDeclaration%2F%5D%2FFunctions%2F1338814298">debug_reduce</a>(prod_num: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html">Int</a>, nt_num: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html">Int</a>, rhs_size: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html">Int</a>)  <br><br><br></td>
+</tr>
+<tr>
+<td><a name="java_cup.runtime/lr_parser/debug_shift/#java_cup.runtime.Symbol/PointingToDeclaration/"></a><a href="./#%5Bjava_cup.runtime%2Flr_parser%2Fdebug_shift%2F%23java_cup.runtime.Symbol%2FPointingToDeclaration%2F%5D%2FFunctions%2F1338814298">debug_shift</a></td>
+<td><a name="java_cup.runtime/lr_parser/debug_shift/#java_cup.runtime.Symbol/PointingToDeclaration/"></a>[jvm]  <br>Content  <br>open fun <a href="./#%5Bjava_cup.runtime%2Flr_parser%2Fdebug_shift%2F%23java_cup.runtime.Symbol%2FPointingToDeclaration%2F%5D%2FFunctions%2F1338814298">debug_shift</a>(shift_tkn: Symbol)  <br><br><br></td>
+</tr>
+<tr>
+<td><a name="java_cup.runtime/lr_parser/debug_stack/#/PointingToDeclaration/"></a><a href="./#%5Bjava_cup.runtime%2Flr_parser%2Fdebug_stack%2F%23%2FPointingToDeclaration%2F%5D%2FFunctions%2F1338814298">debug_stack</a></td>
+<td><a name="java_cup.runtime/lr_parser/debug_stack/#/PointingToDeclaration/"></a>[jvm]  <br>Content  <br>open fun <a href="./#%5Bjava_cup.runtime%2Flr_parser%2Fdebug_stack%2F%23%2FPointingToDeclaration%2F%5D%2FFunctions%2F1338814298">debug_stack</a>()  <br><br><br></td>
+</tr>
+<tr>
+<td><a name="edu.cornell.cs.apl.viaduct.parsing/Parser/do_action/#int#java_cup.runtime.lr_parser#java.util.Stack#int/PointingToDeclaration/"></a><a href="do_action/">do_action</a></td>
+<td><a name="edu.cornell.cs.apl.viaduct.parsing/Parser/do_action/#int#java_cup.runtime.lr_parser#java.util.Stack#int/PointingToDeclaration/"></a>[jvm]  <br>Content  <br>open fun <a href="do_action/">do_action</a>(act_num: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html">Int</a>, parser: lr_parser, stack: <a href="https://docs.oracle.com/javase/8/docs/api/java/util/Stack.html">Stack</a>, top: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html">Int</a>): Symbol  <br>More info  <br>Invoke a user supplied parse action.  <br><br><br>[jvm]  <br>Content  <br>abstract fun <a href="./#%5Bjava_cup.runtime%2Flr_parser%2Fdo_action%2F%23int%23java_cup.runtime.lr_parser%23java.util.Stack%23int%2FPointingToDeclaration%2F%5D%2FFunctions%2F1338814298">do_action</a>(p: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html">Int</a>, p1: lr_parser, p2: <a href="https://docs.oracle.com/javase/8/docs/api/java/util/Stack.html">Stack</a>, p3: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html">Int</a>): Symbol  <br><br><br></td>
+</tr>
+<tr>
+<td><a name="java_cup.runtime/lr_parser/done_parsing/#/PointingToDeclaration/"></a><a href="./#%5Bjava_cup.runtime%2Flr_parser%2Fdone_parsing%2F%23%2FPointingToDeclaration%2F%5D%2FFunctions%2F1338814298">done_parsing</a></td>
+<td><a name="java_cup.runtime/lr_parser/done_parsing/#/PointingToDeclaration/"></a>[jvm]  <br>Content  <br>open fun <a href="./#%5Bjava_cup.runtime%2Flr_parser%2Fdone_parsing%2F%23%2FPointingToDeclaration%2F%5D%2FFunctions%2F1338814298">done_parsing</a>()  <br><br><br></td>
+</tr>
+<tr>
+<td><a name="java_cup.runtime/lr_parser/dump_stack/#/PointingToDeclaration/"></a><a href="./#%5Bjava_cup.runtime%2Flr_parser%2Fdump_stack%2F%23%2FPointingToDeclaration%2F%5D%2FFunctions%2F1338814298">dump_stack</a></td>
+<td><a name="java_cup.runtime/lr_parser/dump_stack/#/PointingToDeclaration/"></a>[jvm]  <br>Content  <br>open fun <a href="./#%5Bjava_cup.runtime%2Flr_parser%2Fdump_stack%2F%23%2FPointingToDeclaration%2F%5D%2FFunctions%2F1338814298">dump_stack</a>()  <br><br><br></td>
+</tr>
+<tr>
+<td><a name="edu.cornell.cs.apl.viaduct.parsing/Parser/EOF_sym/#/PointingToDeclaration/"></a><a href="-e-o-f_sym/">EOF_sym</a></td>
+<td><a name="edu.cornell.cs.apl.viaduct.parsing/Parser/EOF_sym/#/PointingToDeclaration/"></a>[jvm]  <br>Content  <br>open fun <a href="-e-o-f_sym/">EOF_sym</a>(): <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html">Int</a>  <br>More info  <br>EOF Symbol index.  <br><br><br>[jvm]  <br>Content  <br>abstract fun <a href="./#%5Bjava_cup.runtime%2Flr_parser%2FEOF_sym%2F%23%2FPointingToDeclaration%2F%5D%2FFunctions%2F1338814298">EOF_sym</a>(): <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html">Int</a>  <br><br><br></td>
+</tr>
+<tr>
+<td><a name="java_cup.runtime/lr_parser/error_recovery/#boolean/PointingToDeclaration/"></a><a href="./#%5Bjava_cup.runtime%2Flr_parser%2Ferror_recovery%2F%23boolean%2FPointingToDeclaration%2F%5D%2FFunctions%2F1338814298">error_recovery</a></td>
+<td><a name="java_cup.runtime/lr_parser/error_recovery/#boolean/PointingToDeclaration/"></a>[jvm]  <br>Content  <br>open fun <a href="./#%5Bjava_cup.runtime%2Flr_parser%2Ferror_recovery%2F%23boolean%2FPointingToDeclaration%2F%5D%2FFunctions%2F1338814298">error_recovery</a>(debug: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html">Boolean</a>): <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html">Boolean</a>  <br><br><br></td>
+</tr>
+<tr>
+<td><a name="edu.cornell.cs.apl.viaduct.parsing/Parser/error_sym/#/PointingToDeclaration/"></a><a href="error_sym/">error_sym</a></td>
+<td><a name="edu.cornell.cs.apl.viaduct.parsing/Parser/error_sym/#/PointingToDeclaration/"></a>[jvm]  <br>Content  <br>open fun <a href="error_sym/">error_sym</a>(): <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html">Int</a>  <br>More info  <br>error Symbol index.  <br><br><br>[jvm]  <br>Content  <br>abstract fun <a href="./#%5Bjava_cup.runtime%2Flr_parser%2Ferror_sym%2F%23%2FPointingToDeclaration%2F%5D%2FFunctions%2F1338814298">error_sym</a>(): <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html">Int</a>  <br><br><br></td>
+</tr>
+<tr>
+<td><a name="java_cup.runtime/lr_parser/error_sync_size/#/PointingToDeclaration/"></a><a href="./#%5Bjava_cup.runtime%2Flr_parser%2Ferror_sync_size%2F%23%2FPointingToDeclaration%2F%5D%2FFunctions%2F1338814298">error_sync_size</a></td>
+<td><a name="java_cup.runtime/lr_parser/error_sync_size/#/PointingToDeclaration/"></a>[jvm]  <br>Content  <br>open fun <a href="./#%5Bjava_cup.runtime%2Flr_parser%2Ferror_sync_size%2F%23%2FPointingToDeclaration%2F%5D%2FFunctions%2F1338814298">error_sync_size</a>(): <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html">Int</a>  <br><br><br></td>
+</tr>
+<tr>
+<td><a name="java_cup.runtime/lr_parser/expected_token_ids/#/PointingToDeclaration/"></a><a href="./#%5Bjava_cup.runtime%2Flr_parser%2Fexpected_token_ids%2F%23%2FPointingToDeclaration%2F%5D%2FFunctions%2F1338814298">expected_token_ids</a></td>
+<td><a name="java_cup.runtime/lr_parser/expected_token_ids/#/PointingToDeclaration/"></a>[jvm]  <br>Content  <br>open fun <a href="./#%5Bjava_cup.runtime%2Flr_parser%2Fexpected_token_ids%2F%23%2FPointingToDeclaration%2F%5D%2FFunctions%2F1338814298">expected_token_ids</a>(): <a href="https://docs.oracle.com/javase/8/docs/api/java/util/List.html">List</a>&lt;<a href="https://docs.oracle.com/javase/8/docs/api/java/lang/Integer.html">Integer</a>&gt;  <br><br><br></td>
+</tr>
+<tr>
+<td><a name="java_cup.runtime/lr_parser/find_recovery_config/#boolean/PointingToDeclaration/"></a><a href="./#%5Bjava_cup.runtime%2Flr_parser%2Ffind_recovery_config%2F%23boolean%2FPointingToDeclaration%2F%5D%2FFunctions%2F1338814298">find_recovery_config</a></td>
+<td><a name="java_cup.runtime/lr_parser/find_recovery_config/#boolean/PointingToDeclaration/"></a>[jvm]  <br>Content  <br>open fun <a href="./#%5Bjava_cup.runtime%2Flr_parser%2Ffind_recovery_config%2F%23boolean%2FPointingToDeclaration%2F%5D%2FFunctions%2F1338814298">find_recovery_config</a>(debug: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html">Boolean</a>): <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html">Boolean</a>  <br><br><br></td>
+</tr>
+<tr>
+<td><a name="java_cup.runtime/lr_parser/get_action/#int#int/PointingToDeclaration/"></a><a href="./#%5Bjava_cup.runtime%2Flr_parser%2Fget_action%2F%23int%23int%2FPointingToDeclaration%2F%5D%2FFunctions%2F1338814298">get_action</a></td>
+<td><a name="java_cup.runtime/lr_parser/get_action/#int#int/PointingToDeclaration/"></a>[jvm]  <br>Content  <br>fun <a href="./#%5Bjava_cup.runtime%2Flr_parser%2Fget_action%2F%23int%23int%2FPointingToDeclaration%2F%5D%2FFunctions%2F1338814298">get_action</a>(state: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html">Int</a>, sym: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html">Int</a>): <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-short/index.html">Short</a>  <br><br><br></td>
+</tr>
+<tr>
+<td><a name="java_cup.runtime/lr_parser/get_reduce/#int#int/PointingToDeclaration/"></a><a href="./#%5Bjava_cup.runtime%2Flr_parser%2Fget_reduce%2F%23int%23int%2FPointingToDeclaration%2F%5D%2FFunctions%2F1338814298">get_reduce</a></td>
+<td><a name="java_cup.runtime/lr_parser/get_reduce/#int#int/PointingToDeclaration/"></a>[jvm]  <br>Content  <br>fun <a href="./#%5Bjava_cup.runtime%2Flr_parser%2Fget_reduce%2F%23int%23int%2FPointingToDeclaration%2F%5D%2FFunctions%2F1338814298">get_reduce</a>(state: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html">Int</a>, sym: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html">Int</a>): <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-short/index.html">Short</a>  <br><br><br></td>
+</tr>
+<tr>
+<td><a name="java_cup.runtime/lr_parser/getScanner/#/PointingToDeclaration/"></a><a href="./#%5Bjava_cup.runtime%2Flr_parser%2FgetScanner%2F%23%2FPointingToDeclaration%2F%5D%2FFunctions%2F1338814298">getScanner</a></td>
+<td><a name="java_cup.runtime/lr_parser/getScanner/#/PointingToDeclaration/"></a>[jvm]  <br>Content  <br>open fun <a href="./#%5Bjava_cup.runtime%2Flr_parser%2FgetScanner%2F%23%2FPointingToDeclaration%2F%5D%2FFunctions%2F1338814298">getScanner</a>(): Scanner  <br><br><br></td>
+</tr>
+<tr>
+<td><a name="edu.cornell.cs.apl.viaduct.parsing/Parser/getSymbolContainer/#/PointingToDeclaration/"></a><a href="get-symbol-container/">getSymbolContainer</a></td>
+<td><a name="edu.cornell.cs.apl.viaduct.parsing/Parser/getSymbolContainer/#/PointingToDeclaration/"></a>[jvm]  <br>Content  <br>fun <a href="get-symbol-container/">getSymbolContainer</a>(): <a href="https://docs.oracle.com/javase/8/docs/api/java/lang/Class.html">Class</a>  <br>open fun <a href="./#%5Bjava_cup.runtime%2Flr_parser%2FgetSymbolContainer%2F%23%2FPointingToDeclaration%2F%5D%2FFunctions%2F1338814298">getSymbolContainer</a>(): <a href="https://docs.oracle.com/javase/8/docs/api/java/lang/Class.html">Class</a>  <br><br><br></td>
+</tr>
+<tr>
+<td><a name="java_cup.runtime/lr_parser/getSymbolFactory/#/PointingToDeclaration/"></a><a href="./#%5Bjava_cup.runtime%2Flr_parser%2FgetSymbolFactory%2F%23%2FPointingToDeclaration%2F%5D%2FFunctions%2F1338814298">getSymbolFactory</a></td>
+<td><a name="java_cup.runtime/lr_parser/getSymbolFactory/#/PointingToDeclaration/"></a>[jvm]  <br>Content  <br>open fun <a href="./#%5Bjava_cup.runtime%2Flr_parser%2FgetSymbolFactory%2F%23%2FPointingToDeclaration%2F%5D%2FFunctions%2F1338814298">getSymbolFactory</a>(): SymbolFactory  <br><br><br></td>
+</tr>
+<tr>
+<td><a name="java_cup.runtime/lr_parser/init_actions/#/PointingToDeclaration/"></a><a href="./#%5Bjava_cup.runtime%2Flr_parser%2Finit_actions%2F%23%2FPointingToDeclaration%2F%5D%2FFunctions%2F1338814298">init_actions</a></td>
+<td><a name="java_cup.runtime/lr_parser/init_actions/#/PointingToDeclaration/"></a>[jvm]  <br>Content  <br>abstract fun <a href="./#%5Bjava_cup.runtime%2Flr_parser%2Finit_actions%2F%23%2FPointingToDeclaration%2F%5D%2FFunctions%2F1338814298">init_actions</a>()  <br><br><br></td>
+</tr>
+<tr>
+<td><a name="java_cup.runtime/lr_parser/parse/#/PointingToDeclaration/"></a><a href="./#%5Bjava_cup.runtime%2Flr_parser%2Fparse%2F%23%2FPointingToDeclaration%2F%5D%2FFunctions%2F1338814298">parse</a></td>
+<td><a name="java_cup.runtime/lr_parser/parse/#/PointingToDeclaration/"></a>[jvm]  <br>Content  <br>open fun <a href="./#%5Bjava_cup.runtime%2Flr_parser%2Fparse%2F%23%2FPointingToDeclaration%2F%5D%2FFunctions%2F1338814298">parse</a>(): Symbol  <br><br><br></td>
+</tr>
+<tr>
+<td><a name="java_cup.runtime/lr_parser/parse_lookahead/#boolean/PointingToDeclaration/"></a><a href="./#%5Bjava_cup.runtime%2Flr_parser%2Fparse_lookahead%2F%23boolean%2FPointingToDeclaration%2F%5D%2FFunctions%2F1338814298">parse_lookahead</a></td>
+<td><a name="java_cup.runtime/lr_parser/parse_lookahead/#boolean/PointingToDeclaration/"></a>[jvm]  <br>Content  <br>open fun <a href="./#%5Bjava_cup.runtime%2Flr_parser%2Fparse_lookahead%2F%23boolean%2FPointingToDeclaration%2F%5D%2FFunctions%2F1338814298">parse_lookahead</a>(debug: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html">Boolean</a>)  <br><br><br></td>
+</tr>
+<tr>
+<td><a name="edu.cornell.cs.apl.viaduct.parsing/Parser/parseLabel/#/PointingToDeclaration/"></a><a href="parse-label/">parseLabel</a></td>
+<td><a name="edu.cornell.cs.apl.viaduct.parsing/Parser/parseLabel/#/PointingToDeclaration/"></a>[jvm]  <br>Content  <br>open fun <a href="parse-label/">parseLabel</a>(): <a href="../../edu.cornell.cs.apl.viaduct.security/-label-expression/">LabelExpression</a>  <br>More info  <br>Parses the input as a security label.  <br><br><br></td>
+</tr>
+<tr>
+<td><a name="edu.cornell.cs.apl.viaduct.parsing/Parser/parseProgram/#/PointingToDeclaration/"></a><a href="parse-program/">parseProgram</a></td>
+<td><a name="edu.cornell.cs.apl.viaduct.parsing/Parser/parseProgram/#/PointingToDeclaration/"></a>[jvm]  <br>Content  <br>open fun <a href="parse-program/">parseProgram</a>(): <a href="../../edu.cornell.cs.apl.viaduct.syntax.surface/-program-node/">ProgramNode</a>  <br>More info  <br>Parses the input as a program.  <br><br><br></td>
+</tr>
+<tr>
+<td><a name="edu.cornell.cs.apl.viaduct.parsing/Parser/production_table/#/PointingToDeclaration/"></a><a href="production_table/">production_table</a></td>
+<td><a name="edu.cornell.cs.apl.viaduct.parsing/Parser/production_table/#/PointingToDeclaration/"></a>[jvm]  <br>Content  <br>open fun <a href="production_table/">production_table</a>(): <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-array/index.html">Array</a>&lt;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-array/index.html">Array</a>&lt;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-short/index.html">Short</a>&gt;&gt;  <br>More info  <br>Access to production table.  <br><br><br>[jvm]  <br>Content  <br>abstract fun <a href="./#%5Bjava_cup.runtime%2Flr_parser%2Fproduction_table%2F%23%2FPointingToDeclaration%2F%5D%2FFunctions%2F1338814298">production_table</a>(): <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-array/index.html">Array</a>&lt;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-array/index.html">Array</a>&lt;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-short/index.html">Short</a>&gt;&gt;  <br><br><br></td>
+</tr>
+<tr>
+<td><a name="java_cup.runtime/lr_parser/read_lookahead/#/PointingToDeclaration/"></a><a href="./#%5Bjava_cup.runtime%2Flr_parser%2Fread_lookahead%2F%23%2FPointingToDeclaration%2F%5D%2FFunctions%2F1338814298">read_lookahead</a></td>
+<td><a name="java_cup.runtime/lr_parser/read_lookahead/#/PointingToDeclaration/"></a>[jvm]  <br>Content  <br>open fun <a href="./#%5Bjava_cup.runtime%2Flr_parser%2Fread_lookahead%2F%23%2FPointingToDeclaration%2F%5D%2FFunctions%2F1338814298">read_lookahead</a>()  <br><br><br></td>
+</tr>
+<tr>
+<td><a name="edu.cornell.cs.apl.viaduct.parsing/Parser/reduce_table/#/PointingToDeclaration/"></a><a href="reduce_table/">reduce_table</a></td>
+<td><a name="edu.cornell.cs.apl.viaduct.parsing/Parser/reduce_table/#/PointingToDeclaration/"></a>[jvm]  <br>Content  <br>open fun <a href="reduce_table/">reduce_table</a>(): <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-array/index.html">Array</a>&lt;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-array/index.html">Array</a>&lt;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-short/index.html">Short</a>&gt;&gt;  <br>More info  <br>Access to reduce_goto table.  <br><br><br>[jvm]  <br>Content  <br>abstract fun <a href="./#%5Bjava_cup.runtime%2Flr_parser%2Freduce_table%2F%23%2FPointingToDeclaration%2F%5D%2FFunctions%2F1338814298">reduce_table</a>(): <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-array/index.html">Array</a>&lt;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-array/index.html">Array</a>&lt;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-short/index.html">Short</a>&gt;&gt;  <br><br><br></td>
+</tr>
+<tr>
+<td><a name="edu.cornell.cs.apl.viaduct.parsing/Parser/report_error/#java.lang.String#java.lang.Object/PointingToDeclaration/"></a><a href="report_error/">report_error</a></td>
+<td><a name="edu.cornell.cs.apl.viaduct.parsing/Parser/report_error/#java.lang.String#java.lang.Object/PointingToDeclaration/"></a>[jvm]  <br>Content  <br>open fun <a href="report_error/">report_error</a>(message: <a href="https://docs.oracle.com/javase/8/docs/api/java/lang/String.html">String</a>, info: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-any/index.html">Any</a>)  <br>open fun <a href="./#%5Bjava_cup.runtime%2Flr_parser%2Freport_error%2F%23java.lang.String%23java.lang.Object%2FPointingToDeclaration%2F%5D%2FFunctions%2F1338814298">report_error</a>(message: <a href="https://docs.oracle.com/javase/8/docs/api/java/lang/String.html">String</a>, info: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-any/index.html">Any</a>)  <br><br><br></td>
+</tr>
+<tr>
+<td><a name="java_cup.runtime/lr_parser/report_expected_token_ids/#/PointingToDeclaration/"></a><a href="./#%5Bjava_cup.runtime%2Flr_parser%2Freport_expected_token_ids%2F%23%2FPointingToDeclaration%2F%5D%2FFunctions%2F1338814298">report_expected_token_ids</a></td>
+<td><a name="java_cup.runtime/lr_parser/report_expected_token_ids/#/PointingToDeclaration/"></a>[jvm]  <br>Content  <br>open fun <a href="./#%5Bjava_cup.runtime%2Flr_parser%2Freport_expected_token_ids%2F%23%2FPointingToDeclaration%2F%5D%2FFunctions%2F1338814298">report_expected_token_ids</a>()  <br><br><br></td>
+</tr>
+<tr>
+<td><a name="edu.cornell.cs.apl.viaduct.parsing/Parser/report_fatal_error/#java.lang.String#java.lang.Object/PointingToDeclaration/"></a><a href="report_fatal_error/">report_fatal_error</a></td>
+<td><a name="edu.cornell.cs.apl.viaduct.parsing/Parser/report_fatal_error/#java.lang.String#java.lang.Object/PointingToDeclaration/"></a>[jvm]  <br>Content  <br>open fun <a href="report_fatal_error/">report_fatal_error</a>(message: <a href="https://docs.oracle.com/javase/8/docs/api/java/lang/String.html">String</a>, info: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-any/index.html">Any</a>)  <br>open fun <a href="./#%5Bjava_cup.runtime%2Flr_parser%2Freport_fatal_error%2F%23java.lang.String%23java.lang.Object%2FPointingToDeclaration%2F%5D%2FFunctions%2F1338814298">report_fatal_error</a>(message: <a href="https://docs.oracle.com/javase/8/docs/api/java/lang/String.html">String</a>, info: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-any/index.html">Any</a>)  <br><br><br></td>
+</tr>
+<tr>
+<td><a name="java_cup.runtime/lr_parser/restart_lookahead/#/PointingToDeclaration/"></a><a href="./#%5Bjava_cup.runtime%2Flr_parser%2Frestart_lookahead%2F%23%2FPointingToDeclaration%2F%5D%2FFunctions%2F1338814298">restart_lookahead</a></td>
+<td><a name="java_cup.runtime/lr_parser/restart_lookahead/#/PointingToDeclaration/"></a>[jvm]  <br>Content  <br>open fun <a href="./#%5Bjava_cup.runtime%2Flr_parser%2Frestart_lookahead%2F%23%2FPointingToDeclaration%2F%5D%2FFunctions%2F1338814298">restart_lookahead</a>()  <br><br><br></td>
+</tr>
+<tr>
+<td><a name="edu.cornell.cs.apl.viaduct.parsing/Parser/scan/#/PointingToDeclaration/"></a><a href="scan/">scan</a></td>
+<td><a name="edu.cornell.cs.apl.viaduct.parsing/Parser/scan/#/PointingToDeclaration/"></a>[jvm]  <br>Content  <br>open fun <a href="scan/">scan</a>(): Symbol  <br>More info  <br>Scan to get the next Symbol.  <br><br><br>[jvm]  <br>Content  <br>open fun <a href="./#%5Bjava_cup.runtime%2Flr_parser%2Fscan%2F%23%2FPointingToDeclaration%2F%5D%2FFunctions%2F1338814298">scan</a>(): Symbol  <br><br><br></td>
+</tr>
+<tr>
+<td><a name="java_cup.runtime/lr_parser/setScanner/#java_cup.runtime.Scanner/PointingToDeclaration/"></a><a href="./#%5Bjava_cup.runtime%2Flr_parser%2FsetScanner%2F%23java_cup.runtime.Scanner%2FPointingToDeclaration%2F%5D%2FFunctions%2F1338814298">setScanner</a></td>
+<td><a name="java_cup.runtime/lr_parser/setScanner/#java_cup.runtime.Scanner/PointingToDeclaration/"></a>[jvm]  <br>Content  <br>open fun <a href="./#%5Bjava_cup.runtime%2Flr_parser%2FsetScanner%2F%23java_cup.runtime.Scanner%2FPointingToDeclaration%2F%5D%2FFunctions%2F1338814298">setScanner</a>(s: Scanner)  <br><br><br></td>
+</tr>
+<tr>
+<td><a name="java_cup.runtime/lr_parser/shift_under_error/#/PointingToDeclaration/"></a><a href="./#%5Bjava_cup.runtime%2Flr_parser%2Fshift_under_error%2F%23%2FPointingToDeclaration%2F%5D%2FFunctions%2F1338814298">shift_under_error</a></td>
+<td><a name="java_cup.runtime/lr_parser/shift_under_error/#/PointingToDeclaration/"></a>[jvm]  <br>Content  <br>open fun <a href="./#%5Bjava_cup.runtime%2Flr_parser%2Fshift_under_error%2F%23%2FPointingToDeclaration%2F%5D%2FFunctions%2F1338814298">shift_under_error</a>(): <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html">Boolean</a>  <br><br><br></td>
+</tr>
+<tr>
+<td><a name="edu.cornell.cs.apl.viaduct.parsing/Parser/start_production/#/PointingToDeclaration/"></a><a href="start_production/">start_production</a></td>
+<td><a name="edu.cornell.cs.apl.viaduct.parsing/Parser/start_production/#/PointingToDeclaration/"></a>[jvm]  <br>Content  <br>open fun <a href="start_production/">start_production</a>(): <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html">Int</a>  <br>More info  <br>Indicates start production.  <br><br><br>[jvm]  <br>Content  <br>abstract fun <a href="./#%5Bjava_cup.runtime%2Flr_parser%2Fstart_production%2F%23%2FPointingToDeclaration%2F%5D%2FFunctions%2F1338814298">start_production</a>(): <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html">Int</a>  <br><br><br></td>
+</tr>
+<tr>
+<td><a name="edu.cornell.cs.apl.viaduct.parsing/Parser/start_state/#/PointingToDeclaration/"></a><a href="start_state/">start_state</a></td>
+<td><a name="edu.cornell.cs.apl.viaduct.parsing/Parser/start_state/#/PointingToDeclaration/"></a>[jvm]  <br>Content  <br>open fun <a href="start_state/">start_state</a>(): <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html">Int</a>  <br>More info  <br>Indicates start state.  <br><br><br>[jvm]  <br>Content  <br>abstract fun <a href="./#%5Bjava_cup.runtime%2Flr_parser%2Fstart_state%2F%23%2FPointingToDeclaration%2F%5D%2FFunctions%2F1338814298">start_state</a>(): <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html">Int</a>  <br><br><br></td>
+</tr>
+<tr>
+<td><a name="java_cup.runtime/lr_parser/symbl_name_from_id/#int/PointingToDeclaration/"></a><a href="./#%5Bjava_cup.runtime%2Flr_parser%2Fsymbl_name_from_id%2F%23int%2FPointingToDeclaration%2F%5D%2FFunctions%2F1338814298">symbl_name_from_id</a></td>
+<td><a name="java_cup.runtime/lr_parser/symbl_name_from_id/#int/PointingToDeclaration/"></a>[jvm]  <br>Content  <br>open fun <a href="./#%5Bjava_cup.runtime%2Flr_parser%2Fsymbl_name_from_id%2F%23int%2FPointingToDeclaration%2F%5D%2FFunctions%2F1338814298">symbl_name_from_id</a>(id: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html">Int</a>): <a href="https://docs.oracle.com/javase/8/docs/api/java/lang/String.html">String</a>  <br><br><br></td>
+</tr>
+<tr>
+<td><a name="java_cup.runtime/lr_parser/syntax_error/#java_cup.runtime.Symbol/PointingToDeclaration/"></a><a href="./#%5Bjava_cup.runtime%2Flr_parser%2Fsyntax_error%2F%23java_cup.runtime.Symbol%2FPointingToDeclaration%2F%5D%2FFunctions%2F1338814298">syntax_error</a></td>
+<td><a name="java_cup.runtime/lr_parser/syntax_error/#java_cup.runtime.Symbol/PointingToDeclaration/"></a>[jvm]  <br>Content  <br>open fun <a href="./#%5Bjava_cup.runtime%2Flr_parser%2Fsyntax_error%2F%23java_cup.runtime.Symbol%2FPointingToDeclaration%2F%5D%2FFunctions%2F1338814298">syntax_error</a>(cur_token: Symbol)  <br><br><br></td>
+</tr>
+<tr>
+<td><a name="java_cup.runtime/lr_parser/try_parse_ahead/#boolean/PointingToDeclaration/"></a><a href="./#%5Bjava_cup.runtime%2Flr_parser%2Ftry_parse_ahead%2F%23boolean%2FPointingToDeclaration%2F%5D%2FFunctions%2F1338814298">try_parse_ahead</a></td>
+<td><a name="java_cup.runtime/lr_parser/try_parse_ahead/#boolean/PointingToDeclaration/"></a>[jvm]  <br>Content  <br>open fun <a href="./#%5Bjava_cup.runtime%2Flr_parser%2Ftry_parse_ahead%2F%23boolean%2FPointingToDeclaration%2F%5D%2FFunctions%2F1338814298">try_parse_ahead</a>(debug: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html">Boolean</a>): <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html">Boolean</a>  <br><br><br></td>
+</tr>
+<tr>
+<td><a name="java_cup.runtime/lr_parser/unpackFromStrings/#java.lang.String[]/PointingToDeclaration/"></a><a href="./#%5Bjava_cup.runtime%2Flr_parser%2FunpackFromStrings%2F%23java.lang.String%5B%5D%2FPointingToDeclaration%2F%5D%2FFunctions%2F1338814298">unpackFromStrings</a></td>
+<td><a name="java_cup.runtime/lr_parser/unpackFromStrings/#java.lang.String[]/PointingToDeclaration/"></a>[jvm]  <br>Content  <br>open fun <a href="./#%5Bjava_cup.runtime%2Flr_parser%2FunpackFromStrings%2F%23java.lang.String%5B%5D%2FPointingToDeclaration%2F%5D%2FFunctions%2F1338814298">unpackFromStrings</a>(sa: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-array/index.html">Array</a>&lt;<a href="https://docs.oracle.com/javase/8/docs/api/java/lang/String.html">String</a>&gt;): <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-array/index.html">Array</a>&lt;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-array/index.html">Array</a>&lt;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-short/index.html">Short</a>&gt;&gt;  <br><br><br></td>
+</tr>
+<tr>
+<td><a name="java_cup.runtime/lr_parser/unrecovered_syntax_error/#java_cup.runtime.Symbol/PointingToDeclaration/"></a><a href="./#%5Bjava_cup.runtime%2Flr_parser%2Funrecovered_syntax_error%2F%23java_cup.runtime.Symbol%2FPointingToDeclaration%2F%5D%2FFunctions%2F1338814298">unrecovered_syntax_error</a></td>
+<td><a name="java_cup.runtime/lr_parser/unrecovered_syntax_error/#java_cup.runtime.Symbol/PointingToDeclaration/"></a>[jvm]  <br>Content  <br>open fun <a href="./#%5Bjava_cup.runtime%2Flr_parser%2Funrecovered_syntax_error%2F%23java_cup.runtime.Symbol%2FPointingToDeclaration%2F%5D%2FFunctions%2F1338814298">unrecovered_syntax_error</a>(cur_token: Symbol)  <br><br><br></td>
+</tr>
+<tr>
+<td><a name="java_cup.runtime/lr_parser/user_init/#/PointingToDeclaration/"></a><a href="./#%5Bjava_cup.runtime%2Flr_parser%2Fuser_init%2F%23%2FPointingToDeclaration%2F%5D%2FFunctions%2F1338814298">user_init</a></td>
+<td><a name="java_cup.runtime/lr_parser/user_init/#/PointingToDeclaration/"></a>[jvm]  <br>Content  <br>open fun <a href="./#%5Bjava_cup.runtime%2Flr_parser%2Fuser_init%2F%23%2FPointingToDeclaration%2F%5D%2FFunctions%2F1338814298">user_init</a>()  <br><br><br></td>
+</tr>
+<tr>
+<td><a name="java_cup.runtime/lr_parser/validate_expected_symbol/#int/PointingToDeclaration/"></a><a href="./#%5Bjava_cup.runtime%2Flr_parser%2Fvalidate_expected_symbol%2F%23int%2FPointingToDeclaration%2F%5D%2FFunctions%2F1338814298">validate_expected_symbol</a></td>
+<td><a name="java_cup.runtime/lr_parser/validate_expected_symbol/#int/PointingToDeclaration/"></a>[jvm]  <br>Content  <br>open fun <a href="./#%5Bjava_cup.runtime%2Flr_parser%2Fvalidate_expected_symbol%2F%23int%2FPointingToDeclaration%2F%5D%2FFunctions%2F1338814298">validate_expected_symbol</a>(id: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html">Int</a>): <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html">Boolean</a>  <br><br><br></td>
+</tr>
+</tbody>
+</table>
+<h2 id="properties">Properties<a class="headerlink" href="#properties" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Summary</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a name="edu.cornell.cs.apl.viaduct.parsing/Parser/protocolParsers/#/PointingToDeclaration/"></a><a href="protocol-parsers/">protocolParsers</a></td>
+<td><a name="edu.cornell.cs.apl.viaduct.parsing/Parser/protocolParsers/#/PointingToDeclaration/"></a> [jvm] open val <a href="protocol-parsers/">protocolParsers</a>: <a href="https://docs.oracle.com/javase/8/docs/api/java/util/Map.html">Map</a>&lt;<a href="../../edu.cornell.cs.apl.viaduct.syntax/-protocol-name/">ProtocolName</a>, <a href="../-protocol-parser/">ProtocolParser</a>&lt;<a href="../../edu.cornell.cs.apl.viaduct.syntax/-protocol/">Protocol</a>&gt;&gt;   <br></td>
+</tr>
+</tbody>
+</table>
+                
+              
+              
+                
+
+
+              
+            </article>
+          </div>
+        </div>
+      </main>
+      
+        
+<footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-footer-copyright">
+        
+          <div class="md-footer-copyright__highlight">
+            Copyright &copy; 2021 Applied Programming Languages Group
+          </div>
+        
+        Made with
+        <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+          Material for MkDocs
+        </a>
+      </div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    <script id="__config" type="application/json">{"base": "../../../../..", "features": ["navigation.instant", "navigation.tabs"], "translations": {"clipboard.copy": "Copy to clipboard", "clipboard.copied": "Copied to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.placeholder": "Type to start searching", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.term.missing": "Missing"}, "search": "../../../../../assets/javascripts/workers/search.fb4a9340.min.js", "version": null}</script>
+    
+    
+      <script src="../../../../../assets/javascripts/bundle.ca5457b8.min.js"></script>
+      
+    
+  </body>
+</html>

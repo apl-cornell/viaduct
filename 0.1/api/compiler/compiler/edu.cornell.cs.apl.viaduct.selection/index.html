@@ -1,0 +1,759 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Viaduct: an extensible, optimizing compiler for secure distributed programs.">
+      
+      
+      
+        <meta name="author" content="Applied Programming Languages Group">
+      
+      
+        <link rel="canonical" href="https://apl-cornell.github.io/viaduct/0.1/api/compiler/compiler/edu.cornell.cs.apl.viaduct.selection/">
+      
+      <link rel="shortcut icon" href="../../../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.1.2, mkdocs-material-7.0.3">
+    
+    
+      
+        <title>Index - Viaduct</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../../../assets/stylesheets/main.1655a90d.min.css">
+      
+        
+        <link rel="stylesheet" href="../../../../assets/stylesheets/palette.7fa14f5b.min.css">
+        
+      
+    
+    
+    
+      
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,400i,700%7CRoboto+Mono&display=fallback">
+        <style>:root{--md-text-font-family:"Roboto";--md-code-font-family:"Roboto Mono"}</style>
+      
+    
+    
+    
+      <link rel="stylesheet" href="../../../../styles/extra.css">
+    
+    
+      
+    
+    
+  </head>
+  
+  
+    
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="" data-md-color-primary="none" data-md-color-accent="none">
+      
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#package-educornellcsaplviaductselection" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="https://apl-cornell.github.io/viaduct/0.1" title="Viaduct" class="md-header__button md-logo" aria-label="Viaduct">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54z"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Viaduct
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Index
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    <div class="md-header__options">
+      
+    </div>
+    
+      <label class="md-header__button md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5z"/></svg>
+      </label>
+      
+<div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" data-md-state="active" required>
+      <label class="md-search__icon md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5z"/></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
+      </label>
+      <button type="reset" class="md-search__icon md-icon" aria-label="Clear" tabindex="-1">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z"/></svg>
+      </button>
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+      <div class="md-header__source">
+        
+<a href="https://github.com/apl-cornell/viaduct/" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path d="M439.55 236.05L244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+      </div>
+    
+  </nav>
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-tabs__inner md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+
+
+  <li class="md-tabs__item">
+    <a href="../../../.." class="md-tabs__link">
+      Getting Started
+    </a>
+  </li>
+
+      
+        
+  
+  
+
+
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../../developer-guide/building/" class="md-tabs__link">
+        Developer's Guide
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+
+
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../cli/cli/" class="md-tabs__link">
+        API Reference
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="https://apl-cornell.github.io/viaduct/0.1" title="Viaduct" class="md-nav__button md-logo" aria-label="Viaduct">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54z"/></svg>
+
+    </a>
+    Viaduct
+  </label>
+  
+    <div class="md-nav__source">
+      
+<a href="https://github.com/apl-cornell/viaduct/" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path d="M439.55 236.05L244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../.." class="md-nav__link">
+        Getting Started
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_2" type="checkbox" id="__nav_2" >
+      
+      <label class="md-nav__link" for="__nav_2">
+        Developer's Guide
+        <span class="md-nav__icon md-icon"></span>
+      </label>
+      <nav class="md-nav" aria-label="Developer's Guide" data-md-level="1">
+        <label class="md-nav__title" for="__nav_2">
+          <span class="md-nav__icon md-icon"></span>
+          Developer's Guide
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../developer-guide/building/" class="md-nav__link">
+        Building
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../developer-guide/logging/" class="md-nav__link">
+        Logging
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../developer-guide/dependencies/" class="md-nav__link">
+        Updating Dependencies
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../developer-guide/documentation/" class="md-nav__link">
+        Updating Documentation
+      </a>
+    </li>
+  
+
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_3" type="checkbox" id="__nav_3" >
+      
+      <label class="md-nav__link" for="__nav_3">
+        API Reference
+        <span class="md-nav__icon md-icon"></span>
+      </label>
+      <nav class="md-nav" aria-label="API Reference" data-md-level="1">
+        <label class="md-nav__title" for="__nav_3">
+          <span class="md-nav__icon md-icon"></span>
+          API Reference
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../cli/cli/" class="md-nav__link">
+        Command Line Interface
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../" class="md-nav__link">
+        Compiler
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../runtime/runtime/" class="md-nav__link">
+        Runtime System
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../shared/shared/" class="md-nav__link">
+        Shared Modules
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../test-utilities/test-utilities/" class="md-nav__link">
+        Test Utilities
+      </a>
+    </li>
+  
+
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#types" class="md-nav__link">
+    Types
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#functions" class="md-nav__link">
+    Functions
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          <div class="md-content" data-md-component="content">
+            <article class="md-content__inner md-typeset">
+              
+                
+                  <a href="https://github.com/apl-cornell/viaduct/edit/master/docs/api/compiler/compiler/edu.cornell.cs.apl.viaduct.selection/index.md" title="Edit this page" class="md-content__button md-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20.71 7.04c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.37-.39-1.02-.39-1.41 0l-1.84 1.83 3.75 3.75M3 17.25V21h3.75L17.81 9.93l-3.75-3.75L3 17.25z"/></svg>
+                  </a>
+                
+                
+                <p>//<a href="../">compiler</a>/<a href="./">edu.cornell.cs.apl.viaduct.selection</a></p>
+<h1 id="package-educornellcsaplviaductselection">Package edu.cornell.cs.apl.viaduct.selection<a class="headerlink" href="#package-educornellcsaplviaductselection" title="Permanent link">&para;</a></h1>
+<h2 id="types">Types<a class="headerlink" href="#types" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Summary</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a name="edu.cornell.cs.apl.viaduct.selection/ABYFactory///PointingToDeclaration/"></a><a href="-a-b-y-factory/">ABYFactory</a></td>
+<td><a name="edu.cornell.cs.apl.viaduct.selection/ABYFactory///PointingToDeclaration/"></a>[jvm]  <br>Content  <br>class <a href="-a-b-y-factory/">ABYFactory</a>(<strong>program</strong>: <a href="../edu.cornell.cs.apl.viaduct.syntax.intermediate/-program-node/">ProgramNode</a>) : <a href="-protocol-factory/">ProtocolFactory</a>  <br><br><br></td>
+</tr>
+<tr>
+<td><a name="edu.cornell.cs.apl.viaduct.selection/And///PointingToDeclaration/"></a><a href="-and/">And</a></td>
+<td><a name="edu.cornell.cs.apl.viaduct.selection/And///PointingToDeclaration/"></a>[jvm]  <br>Content  <br>data class <a href="-and/">And</a>(<strong>lhs</strong>: <a href="-selection-constraint/">SelectionConstraint</a>, <strong>rhs</strong>: <a href="-selection-constraint/">SelectionConstraint</a>) : <a href="-selection-constraint/">SelectionConstraint</a>  <br><br><br></td>
+</tr>
+<tr>
+<td><a name="edu.cornell.cs.apl.viaduct.selection/CommitmentFactory///PointingToDeclaration/"></a><a href="-commitment-factory/">CommitmentFactory</a></td>
+<td><a name="edu.cornell.cs.apl.viaduct.selection/CommitmentFactory///PointingToDeclaration/"></a>[jvm]  <br>Content  <br>class <a href="-commitment-factory/">CommitmentFactory</a>(<strong>program</strong>: <a href="../edu.cornell.cs.apl.viaduct.syntax.intermediate/-program-node/">ProgramNode</a>) : <a href="-protocol-factory/">ProtocolFactory</a>  <br><br><br></td>
+</tr>
+<tr>
+<td><a name="edu.cornell.cs.apl.viaduct.selection/CommunicationEvent///PointingToDeclaration/"></a><a href="-communication-event/">CommunicationEvent</a></td>
+<td><a name="edu.cornell.cs.apl.viaduct.selection/CommunicationEvent///PointingToDeclaration/"></a>[jvm]  <br>Content  <br>data class <a href="-communication-event/">CommunicationEvent</a>(<strong>send</strong>: <a href="../edu.cornell.cs.apl.viaduct.syntax/-output-port/">OutputPort</a>, <strong>recv</strong>: <a href="../edu.cornell.cs.apl.viaduct.syntax/-input-port/">InputPort</a>)  <br><br><br></td>
+</tr>
+<tr>
+<td><a name="edu.cornell.cs.apl.viaduct.selection/Cost///PointingToDeclaration/"></a><a href="-cost/">Cost</a></td>
+<td><a name="edu.cornell.cs.apl.viaduct.selection/Cost///PointingToDeclaration/"></a>[jvm]  <br>Content  <br>data class <a href="-cost/">Cost</a>&lt;<a href="-cost/">C</a> : <a href="-cost-monoid/">CostMonoid</a>&lt;<a href="-cost/">C</a>&gt;&gt;(<strong>features</strong>: PersistentMap&lt;<a href="./#%5Bedu.cornell.cs.apl.viaduct.selection%2FCostFeature%2F%2F%2FPointingToDeclaration%2F%5D%2FClasslikes%2F677037120">CostFeature</a>, <a href="-cost/">C</a>&gt;) : <a href="-cost-monoid/">CostMonoid</a>&lt;<a href="-cost/">Cost</a>&lt;<a href="-cost/">C</a>&gt;&gt; , <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-map/index.html">Map</a>&lt;<a href="./#%5Bedu.cornell.cs.apl.viaduct.selection%2FCostFeature%2F%2F%2FPointingToDeclaration%2F%5D%2FClasslikes%2F677037120">CostFeature</a>, <a href="-cost/">C</a>&gt; , PrettyPrintable  <br>More info  <br>The cost of executing a piece of code or sending a message.  <br><br><br></td>
+</tr>
+<tr>
+<td><a name="edu.cornell.cs.apl.viaduct.selection/CostAdd///PointingToDeclaration/"></a><a href="-cost-add/">CostAdd</a></td>
+<td><a name="edu.cornell.cs.apl.viaduct.selection/CostAdd///PointingToDeclaration/"></a>[jvm]  <br>Content  <br>data class <a href="-cost-add/">CostAdd</a>(<strong>lhs</strong>: <a href="-symbolic-cost/">SymbolicCost</a>, <strong>rhs</strong>: <a href="-symbolic-cost/">SymbolicCost</a>) : <a href="-symbolic-cost/">SymbolicCost</a>  <br><br><br></td>
+</tr>
+<tr>
+<td><a name="edu.cornell.cs.apl.viaduct.selection/CostEquals///PointingToDeclaration/"></a><a href="-cost-equals/">CostEquals</a></td>
+<td><a name="edu.cornell.cs.apl.viaduct.selection/CostEquals///PointingToDeclaration/"></a>[jvm]  <br>Content  <br>data class <a href="-cost-equals/">CostEquals</a>(<strong>lhs</strong>: <a href="-symbolic-cost/">SymbolicCost</a>, <strong>rhs</strong>: <a href="-symbolic-cost/">SymbolicCost</a>) : <a href="-selection-constraint/">SelectionConstraint</a>  <br><br><br></td>
+</tr>
+<tr>
+<td><a name="edu.cornell.cs.apl.viaduct.selection/CostEstimator///PointingToDeclaration/"></a><a href="-cost-estimator/">CostEstimator</a></td>
+<td><a name="edu.cornell.cs.apl.viaduct.selection/CostEstimator///PointingToDeclaration/"></a>[jvm]  <br>Content  <br>interface <a href="-cost-estimator/">CostEstimator</a>&lt;<a href="-cost-estimator/">C</a> : <a href="-cost-monoid/">CostMonoid</a>&lt;<a href="-cost-estimator/">C</a>&gt;&gt;  <br>More info  <br>A modular cost model for estimating the cost of executing a program given a protocol assignment.  <br><br><br></td>
+</tr>
+<tr>
+<td><a name="edu.cornell.cs.apl.viaduct.selection/CostFeature///PointingToDeclaration/"></a><a href="./#%5Bedu.cornell.cs.apl.viaduct.selection%2FCostFeature%2F%2F%2FPointingToDeclaration%2F%5D%2FClasslikes%2F677037120">CostFeature</a></td>
+<td><a name="edu.cornell.cs.apl.viaduct.selection/CostFeature///PointingToDeclaration/"></a>[jvm]  <br>Content  <br>typealias <a href="./#%5Bedu.cornell.cs.apl.viaduct.selection%2FCostFeature%2F%2F%2FPointingToDeclaration%2F%5D%2FClasslikes%2F677037120">CostFeature</a> = <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a>  <br><br><br></td>
+</tr>
+<tr>
+<td><a name="edu.cornell.cs.apl.viaduct.selection/CostLessThanEqualTo///PointingToDeclaration/"></a><a href="-cost-less-than-equal-to/">CostLessThanEqualTo</a></td>
+<td><a name="edu.cornell.cs.apl.viaduct.selection/CostLessThanEqualTo///PointingToDeclaration/"></a>[jvm]  <br>Content  <br>data class <a href="-cost-less-than-equal-to/">CostLessThanEqualTo</a>(<strong>lhs</strong>: <a href="-symbolic-cost/">SymbolicCost</a>, <strong>rhs</strong>: <a href="-symbolic-cost/">SymbolicCost</a>) : <a href="-selection-constraint/">SelectionConstraint</a>  <br><br><br></td>
+</tr>
+<tr>
+<td><a name="edu.cornell.cs.apl.viaduct.selection/CostLiteral///PointingToDeclaration/"></a><a href="-cost-literal/">CostLiteral</a></td>
+<td><a name="edu.cornell.cs.apl.viaduct.selection/CostLiteral///PointingToDeclaration/"></a>[jvm]  <br>Content  <br>data class <a href="-cost-literal/">CostLiteral</a>(<strong>cost</strong>: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html">Int</a>) : <a href="-symbolic-cost/">SymbolicCost</a>  <br><br><br></td>
+</tr>
+<tr>
+<td><a name="edu.cornell.cs.apl.viaduct.selection/CostMode///PointingToDeclaration/"></a><a href="-cost-mode/">CostMode</a></td>
+<td><a name="edu.cornell.cs.apl.viaduct.selection/CostMode///PointingToDeclaration/"></a>[jvm]  <br>Content  <br>enum <a href="-cost-mode/">CostMode</a> : <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-enum/index.html">Enum</a>&lt;<a href="-cost-mode/">CostMode</a>&gt;   <br><br><br></td>
+</tr>
+<tr>
+<td><a name="edu.cornell.cs.apl.viaduct.selection/CostMonoid///PointingToDeclaration/"></a><a href="-cost-monoid/">CostMonoid</a></td>
+<td><a name="edu.cornell.cs.apl.viaduct.selection/CostMonoid///PointingToDeclaration/"></a>[jvm]  <br>Content  <br>interface <a href="-cost-monoid/">CostMonoid</a>&lt;<a href="-cost-monoid/">C</a> : <a href="-cost-monoid/">CostMonoid</a>&lt;<a href="-cost-monoid/">C</a>&gt;&gt; : PrettyPrintable  <br>More info  <br>A commutative monoid that represents a notion of cost for a feature.  <br><br><br></td>
+</tr>
+<tr>
+<td><a name="edu.cornell.cs.apl.viaduct.selection/CostMul///PointingToDeclaration/"></a><a href="-cost-mul/">CostMul</a></td>
+<td><a name="edu.cornell.cs.apl.viaduct.selection/CostMul///PointingToDeclaration/"></a>[jvm]  <br>Content  <br>data class <a href="-cost-mul/">CostMul</a>(<strong>lhs</strong>: <a href="-symbolic-cost/">SymbolicCost</a>, <strong>rhs</strong>: <a href="-symbolic-cost/">SymbolicCost</a>) : <a href="-symbolic-cost/">SymbolicCost</a>  <br><br><br></td>
+</tr>
+<tr>
+<td><a name="edu.cornell.cs.apl.viaduct.selection/CostMux///PointingToDeclaration/"></a><a href="-cost-mux/">CostMux</a></td>
+<td><a name="edu.cornell.cs.apl.viaduct.selection/CostMux///PointingToDeclaration/"></a>[jvm]  <br>Content  <br>data class <a href="-cost-mux/">CostMux</a>(<strong>guard</strong>: <a href="-selection-constraint/">SelectionConstraint</a>, <strong>lhs</strong>: <a href="-symbolic-cost/">SymbolicCost</a>, <strong>rhs</strong>: <a href="-symbolic-cost/">SymbolicCost</a>) : <a href="-symbolic-cost/">SymbolicCost</a>  <br><br><br></td>
+</tr>
+<tr>
+<td><a name="edu.cornell.cs.apl.viaduct.selection/CostVariable///PointingToDeclaration/"></a><a href="-cost-variable/">CostVariable</a></td>
+<td><a name="edu.cornell.cs.apl.viaduct.selection/CostVariable///PointingToDeclaration/"></a>[jvm]  <br>Content  <br>data class <a href="-cost-variable/">CostVariable</a>(<strong>variable</strong>: IntExpr) : <a href="-symbolic-cost/">SymbolicCost</a>  <br><br><br></td>
+</tr>
+<tr>
+<td><a name="edu.cornell.cs.apl.viaduct.selection/FunctionVariable///PointingToDeclaration/"></a><a href="-function-variable/">FunctionVariable</a></td>
+<td><a name="edu.cornell.cs.apl.viaduct.selection/FunctionVariable///PointingToDeclaration/"></a>[jvm]  <br>Content  <br>data class <a href="-function-variable/">FunctionVariable</a>(<strong>function</strong>: <a href="../edu.cornell.cs.apl.viaduct.syntax/-function-name/">FunctionName</a>, <strong>variable</strong>: <a href="../edu.cornell.cs.apl.viaduct.syntax/-variable/">Variable</a>) : PrettyPrintable  <br><br><br></td>
+</tr>
+<tr>
+<td><a name="edu.cornell.cs.apl.viaduct.selection/GuardVisibilityFlag///PointingToDeclaration/"></a><a href="-guard-visibility-flag/">GuardVisibilityFlag</a></td>
+<td><a name="edu.cornell.cs.apl.viaduct.selection/GuardVisibilityFlag///PointingToDeclaration/"></a>[jvm]  <br>Content  <br>data class <a href="-guard-visibility-flag/">GuardVisibilityFlag</a>(<strong>variable</strong>: BoolExpr) : <a href="-selection-constraint/">SelectionConstraint</a>  <br><br><br></td>
+</tr>
+<tr>
+<td><a name="edu.cornell.cs.apl.viaduct.selection/HostVariable///PointingToDeclaration/"></a><a href="-host-variable/">HostVariable</a></td>
+<td><a name="edu.cornell.cs.apl.viaduct.selection/HostVariable///PointingToDeclaration/"></a>[jvm]  <br>Content  <br>data class <a href="-host-variable/">HostVariable</a>(<strong>variable</strong>: BoolExpr) : <a href="-selection-constraint/">SelectionConstraint</a>  <br><br><br></td>
+</tr>
+<tr>
+<td><a name="edu.cornell.cs.apl.viaduct.selection/Implies///PointingToDeclaration/"></a><a href="-implies/">Implies</a></td>
+<td><a name="edu.cornell.cs.apl.viaduct.selection/Implies///PointingToDeclaration/"></a>[jvm]  <br>Content  <br>data class <a href="-implies/">Implies</a>(<strong>lhs</strong>: <a href="-selection-constraint/">SelectionConstraint</a>, <strong>rhs</strong>: <a href="-selection-constraint/">SelectionConstraint</a>) : <a href="-selection-constraint/">SelectionConstraint</a>  <br><br><br></td>
+</tr>
+<tr>
+<td><a name="edu.cornell.cs.apl.viaduct.selection/IntegerCost///PointingToDeclaration/"></a><a href="-integer-cost/">IntegerCost</a></td>
+<td><a name="edu.cornell.cs.apl.viaduct.selection/IntegerCost///PointingToDeclaration/"></a>[jvm]  <br>Content  <br>class <a href="-integer-cost/">IntegerCost</a>(<strong>cost</strong>: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html">Int</a>) : <a href="-cost-monoid/">CostMonoid</a>&lt;<a href="-integer-cost/">IntegerCost</a>&gt;   <br><br><br></td>
+</tr>
+<tr>
+<td><a name="edu.cornell.cs.apl.viaduct.selection/Literal///PointingToDeclaration/"></a><a href="-literal/">Literal</a></td>
+<td><a name="edu.cornell.cs.apl.viaduct.selection/Literal///PointingToDeclaration/"></a>[jvm]  <br>Content  <br>data class <a href="-literal/">Literal</a>(<strong>literalValue</strong>: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html">Boolean</a>) : <a href="-selection-constraint/">SelectionConstraint</a>  <br><br><br></td>
+</tr>
+<tr>
+<td><a name="edu.cornell.cs.apl.viaduct.selection/LocalFactory///PointingToDeclaration/"></a><a href="-local-factory/">LocalFactory</a></td>
+<td><a name="edu.cornell.cs.apl.viaduct.selection/LocalFactory///PointingToDeclaration/"></a>[jvm]  <br>Content  <br>class <a href="-local-factory/">LocalFactory</a>(<strong>program</strong>: <a href="../edu.cornell.cs.apl.viaduct.syntax.intermediate/-program-node/">ProgramNode</a>) : <a href="-protocol-factory/">ProtocolFactory</a>  <br><br><br></td>
+</tr>
+<tr>
+<td><a name="edu.cornell.cs.apl.viaduct.selection/Not///PointingToDeclaration/"></a><a href="-not/">Not</a></td>
+<td><a name="edu.cornell.cs.apl.viaduct.selection/Not///PointingToDeclaration/"></a>[jvm]  <br>Content  <br>data class <a href="-not/">Not</a>(<strong>rhs</strong>: <a href="-selection-constraint/">SelectionConstraint</a>) : <a href="-selection-constraint/">SelectionConstraint</a>  <br><br><br></td>
+</tr>
+<tr>
+<td><a name="edu.cornell.cs.apl.viaduct.selection/Or///PointingToDeclaration/"></a><a href="-or/">Or</a></td>
+<td><a name="edu.cornell.cs.apl.viaduct.selection/Or///PointingToDeclaration/"></a>[jvm]  <br>Content  <br>data class <a href="-or/">Or</a>(<strong>lhs</strong>: <a href="-selection-constraint/">SelectionConstraint</a>, <strong>rhs</strong>: <a href="-selection-constraint/">SelectionConstraint</a>) : <a href="-selection-constraint/">SelectionConstraint</a>  <br><br><br></td>
+</tr>
+<tr>
+<td><a name="edu.cornell.cs.apl.viaduct.selection/ProtocolCommunication///PointingToDeclaration/"></a><a href="-protocol-communication/">ProtocolCommunication</a></td>
+<td><a name="edu.cornell.cs.apl.viaduct.selection/ProtocolCommunication///PointingToDeclaration/"></a>[jvm]  <br>Content  <br>data class <a href="-protocol-communication/">ProtocolCommunication</a>(<strong>events</strong>: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-set/index.html">Set</a>&lt;<a href="-communication-event/">CommunicationEvent</a>&gt;) : <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-set/index.html">Set</a>&lt;<a href="-communication-event/">CommunicationEvent</a>&gt;   <br><br><br></td>
+</tr>
+<tr>
+<td><a name="edu.cornell.cs.apl.viaduct.selection/ProtocolComposer///PointingToDeclaration/"></a><a href="-protocol-composer/">ProtocolComposer</a></td>
+<td><a name="edu.cornell.cs.apl.viaduct.selection/ProtocolComposer///PointingToDeclaration/"></a>[jvm]  <br>Content  <br>interface <a href="-protocol-composer/">ProtocolComposer</a>  <br><br><br></td>
+</tr>
+<tr>
+<td><a name="edu.cornell.cs.apl.viaduct.selection/ProtocolFactory///PointingToDeclaration/"></a><a href="-protocol-factory/">ProtocolFactory</a></td>
+<td><a name="edu.cornell.cs.apl.viaduct.selection/ProtocolFactory///PointingToDeclaration/"></a>[jvm]  <br>Content  <br>interface <a href="-protocol-factory/">ProtocolFactory</a>  <br>More info  <br>This interface specifies factories for protocol selection.  <br><br><br></td>
+</tr>
+<tr>
+<td><a name="edu.cornell.cs.apl.viaduct.selection/ProtocolSelector///PointingToDeclaration/"></a><a href="-protocol-selector/">ProtocolSelector</a></td>
+<td><a name="edu.cornell.cs.apl.viaduct.selection/ProtocolSelector///PointingToDeclaration/"></a>[jvm]  <br>Content  <br>interface <a href="-protocol-selector/">ProtocolSelector</a>  <br>More info  <br>This interface specifies selectors for protocol selection.  <br><br><br></td>
+</tr>
+<tr>
+<td><a name="edu.cornell.cs.apl.viaduct.selection/ReplicationFactory///PointingToDeclaration/"></a><a href="-replication-factory/">ReplicationFactory</a></td>
+<td><a name="edu.cornell.cs.apl.viaduct.selection/ReplicationFactory///PointingToDeclaration/"></a>[jvm]  <br>Content  <br>class <a href="-replication-factory/">ReplicationFactory</a>(<strong>program</strong>: <a href="../edu.cornell.cs.apl.viaduct.syntax.intermediate/-program-node/">ProgramNode</a>) : <a href="-protocol-factory/">ProtocolFactory</a>  <br><br><br></td>
+</tr>
+<tr>
+<td><a name="edu.cornell.cs.apl.viaduct.selection/SelectionConstraint///PointingToDeclaration/"></a><a href="-selection-constraint/">SelectionConstraint</a></td>
+<td><a name="edu.cornell.cs.apl.viaduct.selection/SelectionConstraint///PointingToDeclaration/"></a>[jvm]  <br>Content  <br>sealed class <a href="-selection-constraint/">SelectionConstraint</a> : PrettyPrintable  <br>More info  <br>Custom selection constraints specified for constraint solving during splitting.  <br><br><br></td>
+</tr>
+<tr>
+<td><a name="edu.cornell.cs.apl.viaduct.selection/SelectionConstraintGenerator///PointingToDeclaration/"></a><a href="-selection-constraint-generator/">SelectionConstraintGenerator</a></td>
+<td><a name="edu.cornell.cs.apl.viaduct.selection/SelectionConstraintGenerator///PointingToDeclaration/"></a>[jvm]  <br>Content  <br>class <a href="-selection-constraint-generator/">SelectionConstraintGenerator</a>(<strong>program</strong>: <a href="../edu.cornell.cs.apl.viaduct.syntax.intermediate/-program-node/">ProgramNode</a>, <strong>protocolFactory</strong>: <a href="-protocol-factory/">ProtocolFactory</a>, <strong>protocolComposer</strong>: <a href="-protocol-composer/">ProtocolComposer</a>, <strong>costEstimator</strong>: <a href="-cost-estimator/">CostEstimator</a>&lt;<a href="-integer-cost/">IntegerCost</a>&gt;, <strong>ctx</strong>: Context)  <br><br><br></td>
+</tr>
+<tr>
+<td><a name="edu.cornell.cs.apl.viaduct.selection/SimpleCostEstimator///PointingToDeclaration/"></a><a href="-simple-cost-estimator/">SimpleCostEstimator</a></td>
+<td><a name="edu.cornell.cs.apl.viaduct.selection/SimpleCostEstimator///PointingToDeclaration/"></a>[jvm]  <br>Content  <br>class <a href="-simple-cost-estimator/">SimpleCostEstimator</a>(<strong>protocolComposer</strong>: <a href="-protocol-composer/">ProtocolComposer</a>, <strong>costRegime</strong>: <a href="-simple-cost-regime/">SimpleCostRegime</a>) : <a href="-cost-estimator/">CostEstimator</a>&lt;<a href="-integer-cost/">IntegerCost</a>&gt;   <br>More info  <br>Cost estimator for Local, Replication and ABY protocols.  <br><br><br></td>
+</tr>
+<tr>
+<td><a name="edu.cornell.cs.apl.viaduct.selection/SimpleCostRegime///PointingToDeclaration/"></a><a href="-simple-cost-regime/">SimpleCostRegime</a></td>
+<td><a name="edu.cornell.cs.apl.viaduct.selection/SimpleCostRegime///PointingToDeclaration/"></a>[jvm]  <br>Content  <br>enum <a href="-simple-cost-regime/">SimpleCostRegime</a> : <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-enum/index.html">Enum</a>&lt;<a href="-simple-cost-regime/">SimpleCostRegime</a>&gt;   <br><br><br></td>
+</tr>
+<tr>
+<td><a name="edu.cornell.cs.apl.viaduct.selection/SimpleProtocolComposer///PointingToDeclaration/"></a><a href="-simple-protocol-composer/">SimpleProtocolComposer</a></td>
+<td><a name="edu.cornell.cs.apl.viaduct.selection/SimpleProtocolComposer///PointingToDeclaration/"></a>[jvm]  <br>Content  <br>object <a href="-simple-protocol-composer/">SimpleProtocolComposer</a> : <a href="-protocol-composer/">ProtocolComposer</a>  <br>More info  <br>Describe how protocols should communicate / compose with each other.  <br><br><br></td>
+</tr>
+<tr>
+<td><a name="edu.cornell.cs.apl.viaduct.selection/SimpleProtocolFactory///PointingToDeclaration/"></a><a href="-simple-protocol-factory/">SimpleProtocolFactory</a></td>
+<td><a name="edu.cornell.cs.apl.viaduct.selection/SimpleProtocolFactory///PointingToDeclaration/"></a>[jvm]  <br>Content  <br>class <a href="-simple-protocol-factory/">SimpleProtocolFactory</a>(<strong>program</strong>: <a href="../edu.cornell.cs.apl.viaduct.syntax.intermediate/-program-node/">ProgramNode</a>, <strong>localFactory</strong>: <a href="-local-factory/">LocalFactory</a>, <strong>replicationFactory</strong>: <a href="-replication-factory/">ReplicationFactory</a>, <strong>abyFactory</strong>: <a href="-a-b-y-factory/">ABYFactory</a>, <strong>zkpFactory</strong>: <a href="-z-k-p-factory/">ZKPFactory</a>, <strong>commitmentFactory</strong>: <a href="-commitment-factory/">CommitmentFactory</a>) : <a href="-union-protocol-factory/">UnionProtocolFactory</a>  <br>More info  <br>Factory for Local, Replication and ABY, and Commitment protocols.  <br><br><br></td>
+</tr>
+<tr>
+<td><a name="edu.cornell.cs.apl.viaduct.selection/SymbolicCost///PointingToDeclaration/"></a><a href="-symbolic-cost/">SymbolicCost</a></td>
+<td><a name="edu.cornell.cs.apl.viaduct.selection/SymbolicCost///PointingToDeclaration/"></a>[jvm]  <br>Content  <br>sealed class <a href="-symbolic-cost/">SymbolicCost</a> : <a href="-cost-monoid/">CostMonoid</a>&lt;<a href="-symbolic-cost/">SymbolicCost</a>&gt;   <br><br><br></td>
+</tr>
+<tr>
+<td><a name="edu.cornell.cs.apl.viaduct.selection/UnionProtocolFactory///PointingToDeclaration/"></a><a href="-union-protocol-factory/">UnionProtocolFactory</a></td>
+<td><a name="edu.cornell.cs.apl.viaduct.selection/UnionProtocolFactory///PointingToDeclaration/"></a>[jvm]  <br>Content  <br>open class <a href="-union-protocol-factory/">UnionProtocolFactory</a>(<strong>selectors</strong>: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-set/index.html">Set</a>&lt;<a href="-protocol-factory/">ProtocolFactory</a>&gt;) : <a href="-protocol-factory/">ProtocolFactory</a>  <br>More info  <br>Union of protocol selectors.  <br><br><br></td>
+</tr>
+<tr>
+<td><a name="edu.cornell.cs.apl.viaduct.selection/VariableEquals///PointingToDeclaration/"></a><a href="-variable-equals/">VariableEquals</a></td>
+<td><a name="edu.cornell.cs.apl.viaduct.selection/VariableEquals///PointingToDeclaration/"></a>[jvm]  <br>Content  <br>data class <a href="-variable-equals/">VariableEquals</a>(<strong>var1</strong>: <a href="-function-variable/">FunctionVariable</a>, <strong>var2</strong>: <a href="-function-variable/">FunctionVariable</a>) : <a href="-selection-constraint/">SelectionConstraint</a>  <br>More info  <br>Protocols for v1 and v2 are equal.  <br><br><br></td>
+</tr>
+<tr>
+<td><a name="edu.cornell.cs.apl.viaduct.selection/VariableIn///PointingToDeclaration/"></a><a href="-variable-in/">VariableIn</a></td>
+<td><a name="edu.cornell.cs.apl.viaduct.selection/VariableIn///PointingToDeclaration/"></a>[jvm]  <br>Content  <br>data class <a href="-variable-in/">VariableIn</a>(<strong>variable</strong>: <a href="-function-variable/">FunctionVariable</a>, <strong>protocols</strong>: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-set/index.html">Set</a>&lt;<a href="../edu.cornell.cs.apl.viaduct.syntax/-protocol/">Protocol</a>&gt;) : <a href="-selection-constraint/">SelectionConstraint</a>  <br>More info  <br>VariableIn(v, P) holds when v is selected to be a protocol in P  <br><br><br></td>
+</tr>
+<tr>
+<td><a name="edu.cornell.cs.apl.viaduct.selection/ZKPFactory///PointingToDeclaration/"></a><a href="-z-k-p-factory/">ZKPFactory</a></td>
+<td><a name="edu.cornell.cs.apl.viaduct.selection/ZKPFactory///PointingToDeclaration/"></a>[jvm]  <br>Content  <br>class <a href="-z-k-p-factory/">ZKPFactory</a>(<strong>program</strong>: <a href="../edu.cornell.cs.apl.viaduct.syntax.intermediate/-program-node/">ProgramNode</a>) : <a href="-protocol-factory/">ProtocolFactory</a>  <br><br><br></td>
+</tr>
+</tbody>
+</table>
+<h2 id="functions">Functions<a class="headerlink" href="#functions" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Summary</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a name="edu.cornell.cs.apl.viaduct.selection//costVariables/edu.cornell.cs.apl.viaduct.selection.SelectionConstraint#/PointingToDeclaration/"></a><a href="cost-variables/">costVariables</a></td>
+<td><a name="edu.cornell.cs.apl.viaduct.selection//costVariables/edu.cornell.cs.apl.viaduct.selection.SelectionConstraint#/PointingToDeclaration/"></a>[jvm]  <br>Content  <br>fun <a href="-selection-constraint/">SelectionConstraint</a>.<a href="cost-variables/">costVariables</a>(): <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-set/index.html">Set</a>&lt;<a href="-cost-variable/">CostVariable</a>&gt;  <br><br><br>[jvm]  <br>Content  <br>fun <a href="-symbolic-cost/">SymbolicCost</a>.<a href="cost-variables/">costVariables</a>(): <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-set/index.html">Set</a>&lt;<a href="-cost-variable/">CostVariable</a>&gt;  <br>More info  <br>Some convenience functions.  <br><br><br></td>
+</tr>
+<tr>
+<td><a name="edu.cornell.cs.apl.viaduct.selection//guardVisibilityVariables/edu.cornell.cs.apl.viaduct.selection.SelectionConstraint#/PointingToDeclaration/"></a><a href="guard-visibility-variables/">guardVisibilityVariables</a></td>
+<td><a name="edu.cornell.cs.apl.viaduct.selection//guardVisibilityVariables/edu.cornell.cs.apl.viaduct.selection.SelectionConstraint#/PointingToDeclaration/"></a>[jvm]  <br>Content  <br>fun <a href="-selection-constraint/">SelectionConstraint</a>.<a href="guard-visibility-variables/">guardVisibilityVariables</a>(): <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-set/index.html">Set</a>&lt;<a href="-guard-visibility-flag/">GuardVisibilityFlag</a>&gt;  <br><br><br></td>
+</tr>
+<tr>
+<td><a name="edu.cornell.cs.apl.viaduct.selection//hostVariables/edu.cornell.cs.apl.viaduct.selection.SelectionConstraint#/PointingToDeclaration/"></a><a href="host-variables/">hostVariables</a></td>
+<td><a name="edu.cornell.cs.apl.viaduct.selection//hostVariables/edu.cornell.cs.apl.viaduct.selection.SelectionConstraint#/PointingToDeclaration/"></a>[jvm]  <br>Content  <br>fun <a href="-selection-constraint/">SelectionConstraint</a>.<a href="host-variables/">hostVariables</a>(): <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-set/index.html">Set</a>&lt;<a href="-host-variable/">HostVariable</a>&gt;  <br><br><br></td>
+</tr>
+<tr>
+<td><a name="edu.cornell.cs.apl.viaduct.selection//readsFrom/edu.cornell.cs.apl.viaduct.syntax.intermediate.ExpressionNode#edu.cornell.cs.apl.viaduct.analysis.NameAnalysis#kotlin.collections.Set[edu.cornell.cs.apl.viaduct.syntax.Protocol]/PointingToDeclaration/"></a><a href="reads-from/">readsFrom</a></td>
+<td><a name="edu.cornell.cs.apl.viaduct.selection//readsFrom/edu.cornell.cs.apl.viaduct.syntax.intermediate.ExpressionNode#edu.cornell.cs.apl.viaduct.analysis.NameAnalysis#kotlin.collections.Set[edu.cornell.cs.apl.viaduct.syntax.Protocol]/PointingToDeclaration/"></a>[jvm]  <br>Content  <br>fun <a href="../edu.cornell.cs.apl.viaduct.syntax.intermediate/-expression-node/">ExpressionNode</a>.<a href="reads-from/">readsFrom</a>(nameAnalysis: <a href="../edu.cornell.cs.apl.viaduct.analysis/-name-analysis/">NameAnalysis</a>, prots: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-set/index.html">Set</a>&lt;<a href="../edu.cornell.cs.apl.viaduct.syntax/-protocol/">Protocol</a>&gt;): <a href="-selection-constraint/">SelectionConstraint</a>  <br>More info  <br>States whether an expression reads only from the protocols in prots  <br><br><br>[jvm]  <br>Content  <br>fun <a href="../edu.cornell.cs.apl.viaduct.syntax.intermediate/-declaration-node/">DeclarationNode</a>.<a href="reads-from/">readsFrom</a>(nameAnalysis: <a href="../edu.cornell.cs.apl.viaduct.analysis/-name-analysis/">NameAnalysis</a>, to: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-set/index.html">Set</a>&lt;<a href="../edu.cornell.cs.apl.viaduct.syntax/-protocol/">Protocol</a>&gt;, from: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-set/index.html">Set</a>&lt;<a href="../edu.cornell.cs.apl.viaduct.syntax/-protocol/">Protocol</a>&gt;): <a href="-selection-constraint/">SelectionConstraint</a>  <br><br><br>[jvm]  <br>Content  <br>fun <a href="../edu.cornell.cs.apl.viaduct.syntax.intermediate/-let-node/">LetNode</a>.<a href="reads-from/">readsFrom</a>(nameAnalysis: <a href="../edu.cornell.cs.apl.viaduct.analysis/-name-analysis/">NameAnalysis</a>, to: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-set/index.html">Set</a>&lt;<a href="../edu.cornell.cs.apl.viaduct.syntax/-protocol/">Protocol</a>&gt;, from: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-set/index.html">Set</a>&lt;<a href="../edu.cornell.cs.apl.viaduct.syntax/-protocol/">Protocol</a>&gt;): <a href="-selection-constraint/">SelectionConstraint</a>  <br>More info  <br>States that if the let node is stored at any protocol in to, it reads from only the protocols in from  <br><br><br></td>
+</tr>
+<tr>
+<td><a name="edu.cornell.cs.apl.viaduct.selection//selectProtocolsWithZ3/#edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode#edu.cornell.cs.apl.viaduct.syntax.intermediate.ProcessDeclarationNode#edu.cornell.cs.apl.viaduct.selection.ProtocolFactory#edu.cornell.cs.apl.viaduct.selection.ProtocolComposer#edu.cornell.cs.apl.viaduct.selection.CostEstimator[edu.cornell.cs.apl.viaduct.selection.IntegerCost]#edu.cornell.cs.apl.viaduct.selection.CostMode#kotlin.Function1[kotlin.collections.Map[edu.cornell.cs.apl.viaduct.syntax.intermediate.Node,edu.cornell.cs.apl.prettyprinting.PrettyPrintable],kotlin.Unit]/PointingToDeclaration/"></a><a href="select-protocols-with-z3/">selectProtocolsWithZ3</a></td>
+<td><a name="edu.cornell.cs.apl.viaduct.selection//selectProtocolsWithZ3/#edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode#edu.cornell.cs.apl.viaduct.syntax.intermediate.ProcessDeclarationNode#edu.cornell.cs.apl.viaduct.selection.ProtocolFactory#edu.cornell.cs.apl.viaduct.selection.ProtocolComposer#edu.cornell.cs.apl.viaduct.selection.CostEstimator[edu.cornell.cs.apl.viaduct.selection.IntegerCost]#edu.cornell.cs.apl.viaduct.selection.CostMode#kotlin.Function1[kotlin.collections.Map[edu.cornell.cs.apl.viaduct.syntax.intermediate.Node,edu.cornell.cs.apl.prettyprinting.PrettyPrintable],kotlin.Unit]/PointingToDeclaration/"></a>[jvm]  <br>Content  <br>fun <a href="select-protocols-with-z3/">selectProtocolsWithZ3</a>(program: <a href="../edu.cornell.cs.apl.viaduct.syntax.intermediate/-program-node/">ProgramNode</a>, main: <a href="../edu.cornell.cs.apl.viaduct.syntax.intermediate/-process-declaration-node/">ProcessDeclarationNode</a>, protocolFactory: <a href="-protocol-factory/">ProtocolFactory</a>, protocolComposer: <a href="-protocol-composer/">ProtocolComposer</a>, costEstimator: <a href="-cost-estimator/">CostEstimator</a>&lt;<a href="-integer-cost/">IntegerCost</a>&gt;, costMode: <a href="-cost-mode/">CostMode</a>, dumpMetadata: (<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-map/index.html">Map</a>&lt;<a href="../edu.cornell.cs.apl.viaduct.syntax.intermediate/-node/">Node</a>, PrettyPrintable&gt;) -&gt; <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html">Unit</a> = {}): (<a href="../edu.cornell.cs.apl.viaduct.syntax/-function-name/">FunctionName</a>, <a href="../edu.cornell.cs.apl.viaduct.syntax/-variable/">Variable</a>) -&gt; <a href="../edu.cornell.cs.apl.viaduct.syntax/-protocol/">Protocol</a>  <br><br><br></td>
+</tr>
+<tr>
+<td><a name="edu.cornell.cs.apl.viaduct.selection//sendsTo/edu.cornell.cs.apl.viaduct.syntax.intermediate.DeclarationNode#edu.cornell.cs.apl.viaduct.analysis.NameAnalysis#kotlin.collections.Set[edu.cornell.cs.apl.viaduct.syntax.Protocol]#kotlin.collections.Set[edu.cornell.cs.apl.viaduct.syntax.Protocol]/PointingToDeclaration/"></a><a href="sends-to/">sendsTo</a></td>
+<td><a name="edu.cornell.cs.apl.viaduct.selection//sendsTo/edu.cornell.cs.apl.viaduct.syntax.intermediate.DeclarationNode#edu.cornell.cs.apl.viaduct.analysis.NameAnalysis#kotlin.collections.Set[edu.cornell.cs.apl.viaduct.syntax.Protocol]#kotlin.collections.Set[edu.cornell.cs.apl.viaduct.syntax.Protocol]/PointingToDeclaration/"></a>[jvm]  <br>Content  <br>fun <a href="../edu.cornell.cs.apl.viaduct.syntax.intermediate/-declaration-node/">DeclarationNode</a>.<a href="sends-to/">sendsTo</a>(nameAnalysis: <a href="../edu.cornell.cs.apl.viaduct.analysis/-name-analysis/">NameAnalysis</a>, from: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-set/index.html">Set</a>&lt;<a href="../edu.cornell.cs.apl.viaduct.syntax/-protocol/">Protocol</a>&gt;, to: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-set/index.html">Set</a>&lt;<a href="../edu.cornell.cs.apl.viaduct.syntax/-protocol/">Protocol</a>&gt;): <a href="-selection-constraint/">SelectionConstraint</a>  <br><br><br>[jvm]  <br>Content  <br>fun <a href="../edu.cornell.cs.apl.viaduct.syntax.intermediate/-let-node/">LetNode</a>.<a href="sends-to/">sendsTo</a>(nameAnalysis: <a href="../edu.cornell.cs.apl.viaduct.analysis/-name-analysis/">NameAnalysis</a>, from: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-set/index.html">Set</a>&lt;<a href="../edu.cornell.cs.apl.viaduct.syntax/-protocol/">Protocol</a>&gt;, to: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-set/index.html">Set</a>&lt;<a href="../edu.cornell.cs.apl.viaduct.syntax/-protocol/">Protocol</a>&gt;): <a href="-selection-constraint/">SelectionConstraint</a>  <br>More info  <br>States that if the let node is stores at any protocol in from, it sends to only the protocols in to  <br><br><br></td>
+</tr>
+<tr>
+<td><a name="edu.cornell.cs.apl.viaduct.selection//unions/#kotlin.Array[edu.cornell.cs.apl.viaduct.selection.ProtocolSelector]/PointingToDeclaration/"></a><a href="unions/">unions</a></td>
+<td><a name="edu.cornell.cs.apl.viaduct.selection//unions/#kotlin.Array[edu.cornell.cs.apl.viaduct.selection.ProtocolSelector]/PointingToDeclaration/"></a>[jvm]  <br>Content  <br>fun <a href="unions/">unions</a>(vararg selectors: <a href="-protocol-selector/">ProtocolSelector</a>): <a href="-protocol-selector/">ProtocolSelector</a>  <br><br><br></td>
+</tr>
+<tr>
+<td><a name="edu.cornell.cs.apl.viaduct.selection//validateProtocolAssignment/#edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode#edu.cornell.cs.apl.viaduct.syntax.intermediate.ProcessDeclarationNode#edu.cornell.cs.apl.viaduct.selection.ProtocolFactory#edu.cornell.cs.apl.viaduct.selection.ProtocolComposer#edu.cornell.cs.apl.viaduct.selection.CostEstimator[edu.cornell.cs.apl.viaduct.selection.IntegerCost]#kotlin.Function2[edu.cornell.cs.apl.viaduct.syntax.FunctionName,edu.cornell.cs.apl.viaduct.syntax.Variable,edu.cornell.cs.apl.viaduct.syntax.Protocol]/PointingToDeclaration/"></a><a href="validate-protocol-assignment/">validateProtocolAssignment</a></td>
+<td><a name="edu.cornell.cs.apl.viaduct.selection//validateProtocolAssignment/#edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode#edu.cornell.cs.apl.viaduct.syntax.intermediate.ProcessDeclarationNode#edu.cornell.cs.apl.viaduct.selection.ProtocolFactory#edu.cornell.cs.apl.viaduct.selection.ProtocolComposer#edu.cornell.cs.apl.viaduct.selection.CostEstimator[edu.cornell.cs.apl.viaduct.selection.IntegerCost]#kotlin.Function2[edu.cornell.cs.apl.viaduct.syntax.FunctionName,edu.cornell.cs.apl.viaduct.syntax.Variable,edu.cornell.cs.apl.viaduct.syntax.Protocol]/PointingToDeclaration/"></a>[jvm]  <br>Content  <br>fun <a href="validate-protocol-assignment/">validateProtocolAssignment</a>(program: <a href="../edu.cornell.cs.apl.viaduct.syntax.intermediate/-program-node/">ProgramNode</a>, processDeclaration: <a href="../edu.cornell.cs.apl.viaduct.syntax.intermediate/-process-declaration-node/">ProcessDeclarationNode</a>, protocolFactory: <a href="-protocol-factory/">ProtocolFactory</a>, protocolComposer: <a href="-protocol-composer/">ProtocolComposer</a>, costEstimator: <a href="-cost-estimator/">CostEstimator</a>&lt;<a href="-integer-cost/">IntegerCost</a>&gt;, protocolAssignment: (<a href="../edu.cornell.cs.apl.viaduct.syntax/-function-name/">FunctionName</a>, <a href="../edu.cornell.cs.apl.viaduct.syntax/-variable/">Variable</a>) -&gt; <a href="../edu.cornell.cs.apl.viaduct.syntax/-protocol/">Protocol</a>)  <br>More info  <br>This function provides a sanity check to ensure that a given protocol selection f : Variable -&gt; Protocol satisfies all constraints required on it by the selector.  <br><br><br></td>
+</tr>
+</tbody>
+</table>
+                
+              
+              
+                
+
+
+              
+            </article>
+          </div>
+        </div>
+      </main>
+      
+        
+<footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-footer-copyright">
+        
+          <div class="md-footer-copyright__highlight">
+            Copyright &copy; 2021 Applied Programming Languages Group
+          </div>
+        
+        Made with
+        <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+          Material for MkDocs
+        </a>
+      </div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    <script id="__config" type="application/json">{"base": "../../../..", "features": ["navigation.instant", "navigation.tabs"], "translations": {"clipboard.copy": "Copy to clipboard", "clipboard.copied": "Copied to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.placeholder": "Type to start searching", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.term.missing": "Missing"}, "search": "../../../../assets/javascripts/workers/search.fb4a9340.min.js", "version": null}</script>
+    
+    
+      <script src="../../../../assets/javascripts/bundle.ca5457b8.min.js"></script>
+      
+    
+  </body>
+</html>

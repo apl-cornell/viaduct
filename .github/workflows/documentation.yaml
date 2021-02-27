@@ -8,7 +8,6 @@ jobs:
 
     env:
       java: 11
-      docsDir: build/dokka/htmlMultiModule
 
     steps:
       - uses: actions/checkout@v2
@@ -16,16 +15,14 @@ jobs:
         uses: actions/setup-java@v1
         with:
           java-version: ${{ env.java }}
-      - name: Generate documentation with Dokka
+      - name: Generate documentation with MkDocs
         uses: eskatos/gradle-command-action@v1
         with:
-          arguments: dokkaHtmlMultiModule
-      - name: Create index.html
-        run: |
-          cp ${{ env.docsDir }}/-modules.html ${{ env.docsDir }}/index.html
+          arguments: mkdocsBuild
       - name: Upload to GitHub Pages
         if: github.ref == 'refs/heads/master'
-        uses: peaceiris/actions-gh-pages@v3
+        uses: eskatos/gradle-command-action@v1
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ${{ env.docsDir }}
+          arguments: mkdocsBuild
+        env:
+          GRGIT_USER: ${{ secrets.GITHUB_TOKEN }}

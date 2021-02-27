@@ -23,6 +23,6 @@ jobs:
         if: github.ref == 'refs/heads/master'
         uses: eskatos/gradle-command-action@v1
         with:
-          arguments: mkdocsmkdocsPublish
+          arguments: mkdocsPublish
         env:
           GRGIT_USER: ${{ secrets.GITHUB_TOKEN }}

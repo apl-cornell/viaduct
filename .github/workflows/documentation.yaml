@@ -24,6 +24,4 @@ jobs:
         if: github.event_name == 'push'
         uses: eskatos/gradle-command-action@v1
         with:
-          arguments: mkdocsPublish
-        env:
-          GRGIT_USER: ${{ secrets.GITHUB_TOKEN }}
+          arguments: mkdocsPublish -Dorg.ajoberstar.grgit.auth.username=${{ secrets.GITHUB_TOKEN }}

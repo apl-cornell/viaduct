@@ -20,7 +20,6 @@ jobs:
         with:
           arguments: mkdocsBuild
       - name: Upload to GitHub Pages
-        if: github.ref == 'refs/heads/master'
         uses: eskatos/gradle-command-action@v1
         with:
           arguments: mkdocsPublish

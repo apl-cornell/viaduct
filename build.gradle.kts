@@ -111,6 +111,19 @@ subprojects {
 mkdocs {
     sourcesDir = "."
     buildDir = "${project.buildDir}/mkdocs"
+
+    publish.apply {
+        val projectVersion = "${project.version}"
+        if (System.getenv("GITHUB_REF") == "refs/heads/master") {
+            // Publishing to master; update latest version pointer
+            docPath = projectVersion
+            rootRedirect = true
+        } else {
+            // Publishing some other commit; don't update latest version pointer
+            docPath = System.getenv("GITHUB_SHA") ?: projectVersion
+            rootRedirect = false
+        }
+    }
 }
 
 tasks.withType<ru.vyarus.gradle.plugin.mkdocs.task.MkdocsTask>().configureEach {

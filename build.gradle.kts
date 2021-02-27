@@ -4,6 +4,7 @@ plugins {
     // Documentation
     id("org.jetbrains.dokka") version "1.4.20"
     id("ru.vyarus.mkdocs") version "2.0.1"
+    id("org.ajoberstar.git-publish") version "3.0.0" apply false
 
     // Style checking
     id("com.diffplug.spotless") version "5.10.2"

@@ -1,0 +1,70 @@
+site_name: Viaduct
+
+# Meta tags (placed in header)
+site_description: 'Viaduct: an extensible, optimizing compiler for secure distributed programs.'
+site_author: Applied Programming Languages Group
+site_url: https://apl-cornell.github.io/viaduct
+
+# Repository (adds link to repository on each page)
+#repo_name: apl-cornell/viaduct
+repo_url: https://github.com/apl-cornell/viaduct
+# edit_uri: edit/master/docs/
+
+# Copyright (shown at the footer)
+copyright: 'Copyright &copy; 2021 Applied Programming Languages Group'
+
+# Material theme
+theme:
+  name: material
+  features:
+    - navigation.instant
+    - navigation.tabs
+    # - toc.integrate
+
+#  palette:
+#    primary: indigo
+#    accent: indigo
+
+extra_css:
+  - styles/extra.css
+
+#extra:
+#  social:
+#    - type: github
+#      link: https://github.com/apl-cornell/viaduct
+#    - icon: fontawesome/brands/docker
+#      link: https://hub.docker.com/repository/docker/cacay/viaduct
+
+# Extensions
+markdown_extensions:
+  - admonition
+  - codehilite:
+      guess_lang: false
+  - footnotes
+  - meta
+  - def_list
+  - toc:
+      permalink: true
+  - pymdownx.betterem:
+      smart_enable: all
+  - pymdownx.caret
+  - pymdownx.inlinehilite
+  - pymdownx.magiclink
+  - pymdownx.smartsymbols
+  - pymdownx.superfences
+  - pymdownx.tilde
+
+nav:
+  - Getting Started: index.md
+  - Developer's Guide:
+      - developer-guide/building.md
+      - developer-guide/logging.md
+      - developer-guide/dependencies.md
+      - developer-guide/documentation.md
+  - API Reference:
+      # TODO: use https://github.com/lukasgeiter/mkdocs-awesome-pages-plugin so sub pages get navigation.
+      - Command Line Interface: api/cli/cli/index.md
+      - Compiler: api/compiler/compiler/index.md
+      - Runtime System: api/runtime/runtime/index.md
+      - Shared Modules: api/shared/shared/index.md
+      - Test Utilities: api/test-utilities/test-utilities/index.md

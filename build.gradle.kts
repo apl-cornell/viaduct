@@ -4,6 +4,7 @@ plugins {
     // Documentation
     id("org.jetbrains.dokka") version "1.4.20"
     id("ru.vyarus.mkdocs") version "2.0.1"
+    id("org.ajoberstar.git-publish") version "3.0.0" apply false
 
     // Style checking
     id("com.diffplug.spotless") version "5.10.2"
@@ -111,6 +112,19 @@ subprojects {
 mkdocs {
     sourcesDir = "."
     buildDir = "${project.buildDir}/mkdocs"
+
+    publish.apply {
+        val projectVersion = "${project.version}"
+        if (System.getenv("GITHUB_REF") == "refs/heads/master") {
+            // Publishing to master; update latest version pointer
+            docPath = projectVersion
+            rootRedirect = true
+        } else {
+            // Publishing some other commit; don't update latest version pointer
+            docPath = System.getenv("GITHUB_SHA") ?: projectVersion
+            rootRedirect = false
+        }
+    }
 }
 
 tasks.withType<ru.vyarus.gradle.plugin.mkdocs.task.MkdocsTask>().configureEach {

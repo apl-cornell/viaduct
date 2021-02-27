@@ -127,4 +127,3 @@ python {
     pip("pygments:2.8.0")
     pip("pymdown-extensions:8.1.1")
 }
-

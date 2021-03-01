@@ -20,7 +20,7 @@ jobs:
         with:
           arguments: mkdocsBuild
       - name: Publish documentation to GitHub Pages
-        if: github.event_name == 'push'
+        if: github.ref == 'refs/heads/master'
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}

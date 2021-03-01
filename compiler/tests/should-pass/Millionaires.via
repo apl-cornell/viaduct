@@ -1,8 +1,8 @@
 /* The classic MPC problem. */
 process main {
   /* Alice and Bob are free to provide any input; we'll just trust it. */
-  val a: int{A & B<-} = endorse input int from alice to {A & B<-};
-  val b: int{B & A<-} = endorse input int from bob to {B & A<-};
+  val a: int{A & B<-} = endorse input int from alice to {A & B<-} from {A & B<-};
+  val b: int{B & A<-} = endorse input int from bob to {B & A<-} from {B & A<-};
 
   var bob_richer : bool{A & B} = false;
   if (a <= b) {

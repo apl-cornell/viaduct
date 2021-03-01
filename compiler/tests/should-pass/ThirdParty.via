@@ -3,8 +3,8 @@
 /* Millionaire's problem with a trusted third party. */
 process main {
   /* We endorse because Alice and Bob are free to provide any input. */
-  val a: int{A & B<-} = endorse input int from alice to {A & B<-};
-  val b: int{B & A<-} = endorse input int from bob to {B & A<-};
+  val a: int{A & B<-} = endorse input int from alice to {A & B<-} from {A};
+  val b: int{B & A<-} = endorse input int from bob to {B & A<-} from {B};
 
   val bob_richer: bool = declassify a <= b to {(A | B)-> & (A & B)<-};
   output bob_richer to alice;

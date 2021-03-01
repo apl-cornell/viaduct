@@ -116,7 +116,7 @@ nonterminal IndexingNode indexing;
 
 nonterminal Value value;
 nonterminal Located<ValueType> value_type;
-nonterminal Located<LabelExpression> label, optional_label, optional_from_label;
+nonterminal Located<LabelExpression> label, optional_label, optional_from_label, optional_to_label;
 nonterminal Located<LabelExpression> label_signature, optional_label_signature;
 nonterminal LabelExpression label_expr, label_expr_noparam, label_expr_signature;
 
@@ -611,11 +611,11 @@ expr ::=
     :}
 
   | DECLASSIFY:begin expr:e optional_from_label:from TO label:to {:
-      // TODO: Add from labels.
       RESULT = new DeclassificationNode(e, from, to, location(beginleft, toright));
     :}
 
-  | ENDORSE:begin expr:e optional_from_label:from TO label:to {:
+    // invert FROM and TO labels to prevent shift-reduce conflict
+  | ENDORSE:begin expr:e optional_to_label:to FROM label:from {:
       RESULT = new EndorsementNode(e, from, to, location(beginleft, toright));
     :}
 
@@ -827,6 +827,11 @@ optional_label_signature ::=
 
 optional_from_label ::=
     FROM label:l {: RESULT = l; :}
+  | /* empty */  {: RESULT = null; :}
+  ;
+
+optional_to_label ::=
+    TO label:l {: RESULT = l; :}
   | /* empty */  {: RESULT = null; :}
   ;
 

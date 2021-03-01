@@ -14,11 +14,11 @@ process main {
     val b_sample = Array[int]{B & A<-}(d);
 
     for (var i: int{A ⊓ B} = 0; i < n*d; i += 1) {
-        a_db[i] = endorse (input int from alice) to {A & B<-};
+        a_db[i] = endorse (input int from alice) to {A & B<-} from {A & B<-};
     }
 
     for (var i: int{A ⊓ B} = 0; i < d; i += 1) {
-        b_sample[i] = endorse (input int from bob) to {B & A<-};
+        b_sample[i] = endorse (input int from bob) to {B & A<-} from {B & A<-};
     }
 
     match(a_db[0], a_db[1], b_sample[0], b_sample[1], val init_min);

@@ -79,18 +79,7 @@ sealed class DowngradeNode : ExpressionNode() {
     abstract val fromLabel: LabelNode?
 
     /** The label after the downgrade. */
-    abstract val toLabel: LabelNode
-
-    /** Used to implement [PrettyPrintable.asDocument]. */
-    protected fun asDocument(downgradeOperation: String): Document {
-        val from = fromLabel.let {
-            if (it != null)
-                Document() * keyword("from") * listOf(it).braced()
-            else
-                Document()
-        }
-        return keyword(downgradeOperation) * expression + from * keyword("to") * listOf(toLabel).braced()
-    }
+    abstract val toLabel: LabelNode?
 }
 
 /** Revealing the the result of an expression (reducing confidentiality). */
@@ -102,17 +91,43 @@ class DeclassificationNode(
 ) : DowngradeNode() {
     override val asDocument: Document
         get() = asDocument("declassify")
+
+    /** Used to implement [PrettyPrintable.asDocument]. */
+    fun asDocument(downgradeOperation: String): Document {
+        val from = fromLabel.let {
+            if (it != null)
+                Document() * keyword("from") * listOf(it).braced()
+            else
+                Document()
+        }
+
+        val to = Document() * keyword("to") * listOf(toLabel).braced()
+        return keyword(downgradeOperation) * expression + from + to
+    }
 }
 
 /** Trusting the result of an expression (increasing integrity). */
 class EndorsementNode(
     override val expression: ExpressionNode,
-    override val fromLabel: LabelNode?,
-    override val toLabel: LabelNode,
+    override val fromLabel: LabelNode,
+    override val toLabel: LabelNode?,
     override val sourceLocation: SourceLocation
 ) : DowngradeNode() {
     override val asDocument: Document
         get() = asDocument("endorse")
+
+    /** Used to implement [PrettyPrintable.asDocument]. */
+    fun asDocument(downgradeOperation: String): Document {
+        val from = Document() * keyword("from") * listOf(fromLabel).braced()
+
+        val to = toLabel.let {
+            if (it != null)
+                Document() * keyword("to") * listOf(it).braced()
+            else
+                Document()
+        }
+        return keyword(downgradeOperation) * expression + to + from
+    }
 }
 
 // Communication Expressions

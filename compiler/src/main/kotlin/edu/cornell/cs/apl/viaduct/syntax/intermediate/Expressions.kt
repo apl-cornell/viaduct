@@ -116,7 +116,7 @@ sealed class DowngradeNode : PureExpressionNode() {
     abstract val fromLabel: LabelNode?
 
     /** The label after the downgrade. */
-    abstract val toLabel: LabelNode
+    abstract val toLabel: LabelNode?
 
     final override val children: Iterable<AtomicExpressionNode>
         get() = listOf(expression)
@@ -146,8 +146,8 @@ class DeclassificationNode(
 /** Trusting the result of an expression (increasing integrity). */
 class EndorsementNode(
     override val expression: AtomicExpressionNode,
-    override val fromLabel: LabelNode?,
-    override val toLabel: LabelNode,
+    override val fromLabel: LabelNode,
+    override val toLabel: LabelNode?,
     override val sourceLocation: SourceLocation
 ) : DowngradeNode() {
     override fun toSurfaceNode(): edu.cornell.cs.apl.viaduct.syntax.surface.EndorsementNode =

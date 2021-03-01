@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+
+sudo -nv
+
+# ethernet device
+ETH="enp0s31f6"
+
+# clear traffic rules
+tc qdisc del dev $ETH root
+
+case $2 in
+  "wan" )
+    tc qdisc add dev $ETH root handle 1: tbf rate 100mbit burst 1mbit latency 400ms
+    tc qdisc add dev $ETH parent 1:1 handle 10: netem delay 50ms
+    ;;
+esac

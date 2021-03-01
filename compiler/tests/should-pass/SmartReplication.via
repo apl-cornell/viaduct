@@ -3,11 +3,11 @@ process main {
   val a: int{A} = input int from alice;
 
   /* The input is public, and Bob implicitly trusts it. */
-  val replicated: int{(A & B)<-} = endorse (declassify a to {A<-}) to {(A & B)<-};
+  val replicated: int{(A & B)<-} = endorse (declassify a to {A<-}) to {(A & B)<-} from {A<-};
   /* The cheapest protocol for storing this variable is open replication. */
 
   /* Chuck wants the input; but he only needs Alice's word for it. */
-  output (endorse replicated from {A<-} to {C<-}) to chuck;
+  output (endorse replicated to {C<-} from {A<-}) to chuck;
   /* In the final protocol, Chuck should receive the variable from Alice only. */
 }
 

@@ -303,9 +303,12 @@ class InformationFlowAnalysis private constructor(
                     fromLabel?.let {
                         LabelConstant(it.value.interpret(parameterMap))
                     } ?: expression.labelVariable
-                val to = LabelConstant(toLabel.value.interpret(parameterMap))
 
-                pcFlowsTo(solver, pcLabel, this.toLabel, to)
+                val to = toLabel?.let {
+                    LabelConstant(it.value.interpret(parameterMap))
+                } ?: this.labelVariable
+
+                pcFlowsTo(solver, pcLabel, this, to)
 
                 // From label must match the expression label if it is specified
                 if (this.fromLabel != null) {
@@ -314,30 +317,41 @@ class InformationFlowAnalysis private constructor(
                     }
                 }
 
-                // Non-malleable downgrade constraints
-                solver.addFlowsToConstraint(from, from.swap().join(to.value)) { _, _ ->
-                    MalleableDowngradeError(this)
-                }
+                /* don't need this PC check anymore I think? it's not in the rules in the paper
                 solver.addFlowsToConstraint(from, pcLabel.swap().join(to.value)) { _, _ ->
                     MalleableDowngradeError(this)
                 }
+                */
 
-                // Check that single dimensional downgrades don't change the other dimension
                 when (this) {
-                    is DeclassificationNode ->
+                    is DeclassificationNode -> {
+                        // don't downgrade integrity
                         solver.addEqualToConstraint(from.integrity(), to.integrity()) { fromLabel, _ ->
                             IntegrityChangingDeclassificationError(this, fromLabel)
                         }
-                    is EndorsementNode ->
-                        solver.addEqualToConstraint(
-                            from.confidentiality(),
-                            to.confidentiality()
-                        ) { fromLabel, _ ->
+
+                        // nonmalleability
+                        val toConst = to as LabelConstant
+                        solver.addFlowsToConstraint(from, from.swap().join(toConst.value)) { _, _ ->
+                            MalleableDowngradeError(this)
+                        }
+                    }
+
+                    is EndorsementNode -> {
+                        // don't downgrade confidentiality
+                        solver.addEqualToConstraint(from.confidentiality(), to.confidentiality()) { fromLabel, _ ->
                             ConfidentialityChangingEndorsementError(this, fromLabel)
                         }
+
+                        // nonmalleability
+                        val fromConst = from as LabelConstant
+                        solver.addFlowsToConstraint(from, to.swap().join(fromConst.value)) { _, _ ->
+                            MalleableDowngradeError(this)
+                        }
+                    }
                 }
 
-                assertFlowsTo(solver, this.toLabel, to, this.labelVariable)
+                assertFlowsTo(solver, this, to, this.labelVariable)
             }
 
             is InputNode -> {

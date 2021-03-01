@@ -29,5 +29,5 @@ class ConfidentialityChangingEndorsementError(private val node: EndorsementNode,
                 Document("Original confidentiality of the expression:")
                     .withData(fromConfidentiality) /
                 Document("Output confidentiality:")
-                    .withData(LabelConfidentiality(node.toLabel.value))
+                    .withData(LabelConfidentiality(node.toLabel!!.value))
 }

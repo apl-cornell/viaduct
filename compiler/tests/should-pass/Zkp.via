@@ -1,7 +1,7 @@
 process main {
     val a : int{A} = input int from alice;
     val x : int = input int from bob;
-    val a_endorse : int{A & B<-} = endorse a to {A & B<-};
+    val a_endorse : int{A & B<-} = endorse a to {A & B<-} from {A};
     val tst : bool{A & B<-} = (a_endorse == 2);
     output (declassify tst to {(A | B)-> & (A&B)<-}) to bob;
 

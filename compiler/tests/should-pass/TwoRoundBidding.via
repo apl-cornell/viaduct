@@ -5,8 +5,8 @@
  */
 process main {
   /* Round 1 */
-  val a1: int = endorse (input int from alice) to {A & B<-};
-  val b1: int = endorse (input int from bob) to {B & A<-};
+  val a1: int = endorse (input int from alice) to {A & B<-} from {A & B<-};
+  val b1: int = endorse (input int from bob) to {B & A<-} from {B & A<-};
 
   /* Reveal who had the higher bid. */
   val a1_higher: bool = declassify (a1 > b1) to {A ⊓ B};
@@ -14,8 +14,8 @@ process main {
   output a1_higher to bob;
 
   /* Round 2 */
-  val a2: int = endorse (input int from alice) to {A & B<-};
-  val b2: int = endorse (input int from bob) to {B & A<-};
+  val a2: int = endorse (input int from alice) to {A & B<-} from {A & B<-};
+  val b2: int = endorse (input int from bob) to {B & A<-} from {B & A<-};
 
   /* Reveal the overall winner. */
   val a_higher: bool = declassify (a1 + a2 > b1 + b2) to {A ⊓ B};

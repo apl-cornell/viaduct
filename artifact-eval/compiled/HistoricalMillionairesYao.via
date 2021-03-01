@@ -1,0 +1,37 @@
+host alice : {(A & B<-)}
+
+host bob : {(B & A<-)}
+
+process main {
+    val length: int{(A ⊓ B)}@Replication(hosts = {alice, bob}) = 500;
+    var a_min: int{(A & B<-)}@YaoABY(client = bob, server = alice) = 0;
+    var b_min: int{(B & A<-)}@YaoABY(client = bob, server = alice) = 0;
+    var i: int{(A ⊓ B)}@Replication(hosts = {alice, bob}) = 0;
+    loop {
+        let $tmp@Replication(hosts = {alice, bob}) = i;
+        let $tmp_1@Replication(hosts = {alice, bob}) = length;
+        let $tmp_2@Replication(hosts = {alice, bob}) = ($tmp < $tmp_1);
+        if ($tmp_2) {
+            let $tmp_3@YaoABY(client = bob, server = alice) = a_min;
+            let $tmp_4@Local(host = alice) = input int from alice;
+            let $tmp_5@YaoABY(client = bob, server = alice) = (min($tmp_3, $tmp_4));
+            a_min = $tmp_5;
+            let $tmp_6@YaoABY(client = bob, server = alice) = b_min;
+            let $tmp_7@Local(host = bob) = input int from bob;
+            let $tmp_8@YaoABY(client = bob, server = alice) = (min($tmp_6, $tmp_7));
+            b_min = $tmp_8;
+            i += 1;
+        } else {
+            break;
+        }
+    }
+    let $tmp_9@YaoABY(client = bob, server = alice) = a_min;
+    let $tmp_10@YaoABY(client = bob, server = alice) = b_min;
+    let $tmp_11@YaoABY(client = bob, server = alice) = ($tmp_9 > $tmp_10);
+    let $tmp_12@Replication(hosts = {alice, bob}) = declassify $tmp_11 to {(A ⊓ B)};
+    val a_wins: bool{(A ⊓ B)}@Replication(hosts = {alice, bob}) = $tmp_12;
+    let $tmp_13@Replication(hosts = {alice, bob}) = a_wins;
+    output $tmp_13 to alice;
+    let $tmp_14@Replication(hosts = {alice, bob}) = a_wins;
+    output $tmp_14 to bob;
+}

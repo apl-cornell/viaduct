@@ -1,0 +1,84 @@
+host alice : {(A & B<-)}
+
+host bob : {(B & A<-)}
+
+process main {
+    val n: int{(A ⊓ B)}@Replication(hosts = {alice, bob}) = 200;
+    let $tmp@Replication(hosts = {alice, bob}) = n;
+    val adata = Array[int]{(A & B<-)}@YaoABY(client = bob, server = alice)($tmp);
+    let $tmp_1@Replication(hosts = {alice, bob}) = n;
+    val bdata = Array[int]{(B & A<-)}@YaoABY(client = bob, server = alice)($tmp_1);
+    var i: int{(A ⊓ B)}@Replication(hosts = {alice, bob}) = 0;
+    loop {
+        let $tmp_2@Replication(hosts = {alice, bob}) = i;
+        let $tmp_3@Replication(hosts = {alice, bob}) = n;
+        let $tmp_4@Replication(hosts = {alice, bob}) = ($tmp_2 < $tmp_3);
+        if ($tmp_4) {
+            let $tmp_5@Replication(hosts = {alice, bob}) = i;
+            let $tmp_6@Local(host = alice) = input int from alice;
+            adata[$tmp_5] = $tmp_6;
+            let $tmp_7@Replication(hosts = {alice, bob}) = i;
+            let $tmp_8@Local(host = bob) = input int from bob;
+            bdata[$tmp_7] = $tmp_8;
+            i += 1;
+        } else {
+            break;
+        }
+    }
+    var cur_a: int{(A & B<-)}@YaoABY(client = bob, server = alice) = 0;
+    var cur_b: int{(B & A<-)}@YaoABY(client = bob, server = alice) = 0;
+    var iter: int{(A ⊓ B)}@Replication(hosts = {alice, bob}) = 0;
+    loop {
+        let $tmp_9@Replication(hosts = {alice, bob}) = iter;
+        let $tmp_10@Replication(hosts = {alice, bob}) = n;
+        let $tmp_11@Replication(hosts = {alice, bob}) = ($tmp_9 < $tmp_10);
+        if ($tmp_11) {
+            let $tmp_12@YaoABY(client = bob, server = alice) = cur_a;
+            let $tmp_13@YaoABY(client = bob, server = alice) = adata[$tmp_12];
+            let $tmp_14@YaoABY(client = bob, server = alice) = cur_b;
+            let $tmp_15@YaoABY(client = bob, server = alice) = bdata[$tmp_14];
+            let $tmp_16@YaoABY(client = bob, server = alice) = ($tmp_13 <= $tmp_15);
+            let $tmp_17@YaoABY(client = bob, server = alice) = declassify $tmp_16 to {(A ⊓ B)};
+            let $get_1@YaoABY(client = bob, server = alice) = cur_a;
+            let $get_2@YaoABY(client = bob, server = alice) = cur_a;
+            let $get_3@YaoABY(client = bob, server = alice) = $get_2 + 1;
+            let $mux_1@YaoABY(client = bob, server = alice) = mux($tmp_17, $get_3, $get_1);
+            cur_a = $mux_1;
+            let $tmp_17n@YaoABY(client = bob, server = alice) = !$tmp_17;
+            let $get_4@YaoABY(client = bob, server = alice) = cur_b;
+            let $get_5@YaoABY(client = bob, server = alice) = cur_b;
+            let $get_6@YaoABY(client = bob, server = alice) = $get_5 + 1;
+            let $mux_2@YaoABY(client = bob, server = alice) = mux($tmp_17n, $get_6, $get_4);
+            cur_b = $mux_2;
+            iter += 1;
+        } else {
+            break;
+        }
+    }
+    var median: int{(A ⊓ B)}@YaoABY(client = bob, server = alice) = 0;
+    let $tmp_18@YaoABY(client = bob, server = alice) = cur_a;
+    let $tmp_19@YaoABY(client = bob, server = alice) = adata[$tmp_18];
+    let $tmp_20@YaoABY(client = bob, server = alice) = cur_b;
+    let $tmp_21@YaoABY(client = bob, server = alice) = bdata[$tmp_20];
+    let $tmp_22@YaoABY(client = bob, server = alice) = ($tmp_19 <= $tmp_21);
+    let $tmp_23@YaoABY(client = bob, server = alice) = declassify $tmp_22 to {(A ⊓ B)};
+    let $tmp_24@YaoABY(client = bob, server = alice) = cur_a;
+    let $tmp_25@YaoABY(client = bob, server = alice) = adata[$tmp_24];
+    let $tmp_26@YaoABY(client = bob, server = alice) = declassify $tmp_25 to {(A ⊓ B)};
+    let $get_7@YaoABY(client = bob, server = alice) = median;
+    let $mux_3@YaoABY(client = bob, server = alice) = mux($tmp_23, $tmp_26, $get_7);
+    median = $mux_3;
+    let $tmp_23n@YaoABY(client = bob, server = alice) = !$tmp_23;
+    let $tmp_27@YaoABY(client = bob, server = alice) = cur_b;
+    let $tmp_28@YaoABY(client = bob, server = alice) = bdata[$tmp_27];
+    let $get_8@YaoABY(client = bob, server = alice) = median;
+    let $mux_4@YaoABY(client = bob, server = alice) = mux($tmp_23n, $tmp_28, $get_8);
+    median = $mux_4;
+
+    let $tmp_30@YaoABY(client = bob, server = alice) = median;
+    val pub_median: int{(A ⊓ B)}@Replication(hosts = {alice, bob}) = $tmp_30;
+    let $tmp_31@Replication(hosts = {alice, bob}) = pub_median;
+    output $tmp_31 to alice;
+    let $tmp_32@Replication(hosts = {alice, bob}) = pub_median;
+    output $tmp_32 to bob;
+}

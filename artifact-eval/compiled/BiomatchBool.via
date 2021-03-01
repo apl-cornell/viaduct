@@ -1,0 +1,129 @@
+host alice : {(A & B<-)}
+
+host bob : {(B & A<-)}
+
+fun match_1(db1: int{(A & B<-)}@Local(host = alice), db2: int{(A & B<-)}@Local(host = alice), s1: int{(B & A<-)}@Local(host = bob), s2: int{(B & A<-)}@Local(host = bob), res: out int{(A & B)}@BoolABY(client = bob, server = alice)) {
+    let $tmp@Local(host = alice) = db1;
+    let $tmp_1@Local(host = bob) = s1;
+    let $tmp_2@BoolABY(client = bob, server = alice) = ($tmp - $tmp_1);
+    val dist1: int{(db1 & s1)}@BoolABY(client = bob, server = alice) = $tmp_2;
+    let $tmp_3@Local(host = alice) = db2;
+    let $tmp_4@Local(host = bob) = s2;
+    let $tmp_5@BoolABY(client = bob, server = alice) = ($tmp_3 - $tmp_4);
+    val dist2: int{(db2 & s2)}@BoolABY(client = bob, server = alice) = $tmp_5;
+    let $tmp_6@BoolABY(client = bob, server = alice) = dist1;
+    let $tmp_7@BoolABY(client = bob, server = alice) = dist1;
+    let $tmp_8@BoolABY(client = bob, server = alice) = ($tmp_6 * $tmp_7);
+    let $tmp_9@BoolABY(client = bob, server = alice) = dist2;
+    let $tmp_10@BoolABY(client = bob, server = alice) = dist2;
+    let $tmp_11@BoolABY(client = bob, server = alice) = ($tmp_9 * $tmp_10);
+    let $tmp_12@BoolABY(client = bob, server = alice) = ($tmp_8 + $tmp_11);
+    out res = $tmp_12;
+}
+
+fun match_2(db1: int{(A & B<-)}@Local(host = alice), db2: int{(A & B<-)}@Local(host = alice), s1: int{(B & A<-)}@Local(host = bob), s2: int{(B & A<-)}@Local(host = bob), res: out int{(A & B)}@BoolABY(client = bob, server = alice)) {
+    let $tmp@Local(host = alice) = db1;
+    let $tmp_1@Local(host = bob) = s1;
+    let $tmp_2@BoolABY(client = bob, server = alice) = ($tmp - $tmp_1);
+    val dist1: int{(db1 & s1)}@BoolABY(client = bob, server = alice) = $tmp_2;
+    let $tmp_3@Local(host = alice) = db2;
+    let $tmp_4@Local(host = bob) = s2;
+    let $tmp_5@BoolABY(client = bob, server = alice) = ($tmp_3 - $tmp_4);
+    val dist2: int{(db2 & s2)}@BoolABY(client = bob, server = alice) = $tmp_5;
+    let $tmp_6@BoolABY(client = bob, server = alice) = dist1;
+    let $tmp_7@BoolABY(client = bob, server = alice) = dist1;
+    let $tmp_8@BoolABY(client = bob, server = alice) = ($tmp_6 * $tmp_7);
+    let $tmp_9@BoolABY(client = bob, server = alice) = dist2;
+    let $tmp_10@BoolABY(client = bob, server = alice) = dist2;
+    let $tmp_11@BoolABY(client = bob, server = alice) = ($tmp_9 * $tmp_10);
+    let $tmp_12@BoolABY(client = bob, server = alice) = ($tmp_8 + $tmp_11);
+    out res = $tmp_12;
+}
+
+process main {
+    val n: int{(A ⊓ B)}@Replication(hosts = {alice, bob}) = 500;
+    val d: int{(A ⊓ B)}@Replication(hosts = {alice, bob}) = 4;
+    let $tmp_13@Replication(hosts = {alice, bob}) = n;
+    let $tmp_14@Replication(hosts = {alice, bob}) = d;
+    let $tmp_15@Replication(hosts = {alice, bob}) = ($tmp_13 * $tmp_14);
+    val a_db = Array[int]{(A & B<-)}@Local(host = alice)($tmp_15);
+    let $tmp_16@Replication(hosts = {alice, bob}) = d;
+    val b_sample = Array[int]{(B & A<-)}@Local(host = bob)($tmp_16);
+    var i: int{(A ⊓ B)}@Local(host = alice) = 0;
+    loop {
+        let $tmp_17@Local(host = alice) = i;
+        let $tmp_18@Replication(hosts = {alice, bob}) = n;
+        let $tmp_19@Replication(hosts = {alice, bob}) = d;
+        let $tmp_20@Local(host = alice) = ($tmp_18 * $tmp_19);
+        let $tmp_21@Local(host = alice) = ($tmp_17 < $tmp_20);
+        if ($tmp_21) {
+            let $tmp_22@Local(host = alice) = i;
+            let $tmp_23@Local(host = alice) = input int from alice;
+            a_db[$tmp_22] = $tmp_23;
+            i += 1;
+        } else {
+            break;
+        }
+    }
+    var i_1: int{(A ⊓ B)}@Local(host = bob) = 0;
+    loop {
+        let $tmp_24@Local(host = bob) = i_1;
+        let $tmp_25@Replication(hosts = {alice, bob}) = d;
+        let $tmp_26@Local(host = bob) = ($tmp_24 < $tmp_25);
+        if ($tmp_26) {
+            let $tmp_27@Local(host = bob) = i_1;
+            let $tmp_28@Local(host = bob) = input int from bob;
+            b_sample[$tmp_27] = $tmp_28;
+            i_1 += 1;
+        } else {
+            break;
+        }
+    }
+    let $tmp_29@Local(host = alice) = a_db[0];
+    let $tmp_30@Local(host = alice) = a_db[1];
+    let $tmp_31@Local(host = bob) = b_sample[0];
+    let $tmp_32@Local(host = bob) = b_sample[1];
+    match_1($tmp_29, $tmp_30, $tmp_31, $tmp_32, val init_min);
+    let $tmp_33@BoolABY(client = bob, server = alice) = init_min;
+    var min_dist: int{(A & B)}@BoolABY(client = bob, server = alice) = $tmp_33;
+    var i_2: int{(A ⊓ B)}@Replication(hosts = {alice, bob}) = 0;
+    loop {
+        let $tmp_34@Replication(hosts = {alice, bob}) = i_2;
+        let $tmp_35@Replication(hosts = {alice, bob}) = n;
+        let $tmp_36@Replication(hosts = {alice, bob}) = ($tmp_34 < $tmp_35);
+        if ($tmp_36) {
+            let $tmp_37@Replication(hosts = {alice, bob}) = i_2;
+            let $tmp_38@Replication(hosts = {alice, bob}) = d;
+            let $tmp_39@Local(host = alice) = ($tmp_37 * $tmp_38);
+            let $tmp_40@Local(host = alice) = a_db[$tmp_39];
+            let $tmp_41@Replication(hosts = {alice, bob}) = i_2;
+            let $tmp_42@Replication(hosts = {alice, bob}) = d;
+            let $tmp_43@Local(host = alice) = ($tmp_41 * $tmp_42);
+            let $tmp_44@Local(host = alice) = ($tmp_43 + 1);
+            let $tmp_45@Local(host = alice) = a_db[$tmp_44];
+            let $tmp_46@Local(host = bob) = b_sample[0];
+            let $tmp_47@Local(host = bob) = b_sample[1];
+            match_2($tmp_40, $tmp_45, $tmp_46, $tmp_47, val dist);
+            let $tmp_48@BoolABY(client = bob, server = alice) = dist;
+            let $tmp_49@BoolABY(client = bob, server = alice) = min_dist;
+            let $tmp_50@BoolABY(client = bob, server = alice) = ($tmp_48 < $tmp_49);
+            let $guard@BoolABY(client = bob, server = alice) = (!$tmp_50);
+            let $guard_1@BoolABY(client = bob, server = alice) = $tmp_50;
+            let $guard_2@BoolABY(client = bob, server = alice) = $guard;
+            let $tmp_51@BoolABY(client = bob, server = alice) = dist;
+            let $get@BoolABY(client = bob, server = alice) = min_dist;
+            let $mux@BoolABY(client = bob, server = alice) = (mux($guard_1, $tmp_51, $get));
+            min_dist = $mux;
+            i_2 += 1;
+        } else {
+            break;
+        }
+    }
+    let $tmp_52@BoolABY(client = bob, server = alice) = min_dist;
+    let $tmp_53@Replication(hosts = {alice, bob}) = declassify $tmp_52 to {(A ⊓ B)};
+    val result: int{(A ⊓ B)}@Replication(hosts = {alice, bob}) = $tmp_53;
+    let $tmp_54@Replication(hosts = {alice, bob}) = result;
+    output $tmp_54 to alice;
+    let $tmp_55@Replication(hosts = {alice, bob}) = result;
+    output $tmp_55 to bob;
+}

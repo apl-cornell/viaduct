@@ -1,0 +1,60 @@
+host alice : {A}
+host bob   : {B}
+
+process main {
+  val num_turns: int = 3;
+  var a_score: int = 0;
+  var b_score: int = 0;
+  val a_moves = Array[int](num_turns);
+  val b_moves = Array[int](num_turns);
+  
+  for (var i: int = 0; i < num_turns; i += 1) {
+    a_moves[i] = endorse (input int from alice) from {A};
+    b_moves[i] = endorse (input int from bob) from {B};
+  }
+
+  for (var turn: int = 0; turn < num_turns; turn += 1) {
+    val a_move: int = a_moves[turn];
+    val b_move: int = b_moves[turn];
+
+    val a_move_public: int = declassify a_move to {A ⊓ B};
+    val b_move_public: int = declassify b_move to {A ⊓ B};
+
+    /* 1 = rock; 2 = paper; 3 = scissors; */
+    val a_valid: bool = 1 <= a_move_public && a_move_public <= 3;
+    val b_valid: bool = 1 <= b_move_public && b_move_public <= 3;
+
+    /* alice cheats */
+    if (!a_valid && b_valid) {
+      b_score += 1;
+    }
+
+    /* bob cheats */
+    if (a_valid && !b_valid) {
+      a_score += 1;
+    }
+
+    /* neither cheat */
+    if (a_valid && b_valid) {
+      if (a_move_public < b_move_public && b_move_public < 3) {
+        b_score += 1;
+      }
+
+      if (b_move_public < a_move_public && a_move_public < 3) {
+        a_score += 1;
+      }
+
+      if (a_move_public == 1 && b_move_public == 3) {
+        a_score += 1;
+      }
+
+      if (b_move_public == 1 && a_move_public == 3) {
+        b_score += 1;
+      }
+    }
+  }
+
+  val a_wins: bool = a_score > b_score;
+  output a_wins to alice;
+  output a_wins to bob;
+}

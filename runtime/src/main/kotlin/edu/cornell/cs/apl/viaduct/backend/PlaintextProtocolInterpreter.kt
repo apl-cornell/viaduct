@@ -221,9 +221,10 @@ class PlaintextProtocolInterpreter(
                     assert(cleartextValue != null)
 
                     // check for equivocation
+                    /*
                     val recvHosts: Set<Host> =
                         events
-                            .filter { event -> event.recv.id == Plaintext.INPUT }
+                            .filter { event -> event.recv.id == Plaintext.INPUT && event.send.host != event.recv.host }
                             .map { event -> event.recv.host }
                             .filter { host -> host != this.host }
                             .toSet()
@@ -245,6 +246,7 @@ class PlaintextProtocolInterpreter(
 
                         assert(recvValue == cleartextValue)
                     }
+                    */
 
                     tempStore = tempStore.put(sender.temporary.value, cleartextValue!!)
                 }

@@ -3,8 +3,8 @@ process main {
     val aships = Array[int]{A & B<-}(5);
     val bships = Array[int]{B & A<-}(5);
     for (var i: int = 0; i < 5; i+=1) {
-        aships[i] = endorse (input int from alice) from {A} to {A & B<-};
-        bships[i] = endorse (input int from bob) from {B} to {B & A<-};
+        aships[i] = endorse (input int from alice) to {A & B<-} from {A};
+        bships[i] = endorse (input int from bob) to {B & A<-} from {B};
     }
 
     var awins: bool{A ⊓ B} = false;
@@ -36,7 +36,7 @@ process main {
         while (playing) {
             if (aturn) {
                 val amove: int{(A|B)-> & A<-} = declassify (input int from alice) to {(A|B)-> & A<-};
-                var amove_trusted: int{A ⊓ B} = endorse amove from {(A|B)-> & A<-} to {A ⊓ B};
+                var amove_trusted: int{A ⊓ B} = endorse amove to {A ⊓ B} from {(A|B)-> & A<-};
                 var ahit: bool{A ⊓ B} = false;
                 for (var aj: int{A ⊓ B} = 0; aj < 5; aj += 1) {
                     if (declassify (bships[aj] == amove_trusted) to {A ⊓ B}) {
@@ -51,10 +51,10 @@ process main {
                 aturn = false;
             } else {
                 var bmove: int{(A|B)-> & B<-} = declassify (input int from bob) to {(A|B)-> & B<-};
-                val bmove_trusted: int{A ⊓ B} = endorse bmove from {(A|B)-> & B<-} to {A ⊓ B};
+                val bmove_trusted: int{A ⊓ B} = endorse bmove to {A ⊓ B} from {(A|B)-> & B<-};
                 var bhit: bool{A ⊓ B} = false;
                 for (var bj: int{A ⊓ B} = 0; bj < 5; bj += 1) {
-                    if (declassify (bships[bj] == bmove_trusted) to {A ⊓ B}) {
+                    if (declassify (aships[bj] == bmove_trusted) to {A ⊓ B}) {
                         bscore += 1;
                         aships[bj] = 0;
                         bhit = true;

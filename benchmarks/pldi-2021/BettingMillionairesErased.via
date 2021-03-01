@@ -4,7 +4,7 @@ host chuck: {C}
 
 /* chuck bets who was richer b/w alice and bob at their poorest */
 process main {
-  val c_bet: bool = endorse (input bool from chuck) from {C} to {C & (A&B)<-};
+  val c_bet: bool = endorse (input bool from chuck) from {C};
 
   val length: int = 10;
   var a_min: int = 0;
@@ -15,7 +15,7 @@ process main {
   }
 
   val a_wins: bool = declassify (a_min > b_min) to {A ⊓ B ⊓ C->};
-  val a_wins_trusted: bool = endorse a_wins from {A ⊓ B ⊓ C->} to {A ⊓ B ⊓ C};
+  val a_wins_trusted: bool = endorse a_wins from {A ⊓ B ⊓ C->};
   val c_bet_public: bool = declassify c_bet to {A ⊓ B ⊓ C};
   val c_wins: bool = (c_bet_public && a_wins_trusted)
                   || (!c_bet_public && !a_wins_trusted);

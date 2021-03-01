@@ -12,7 +12,7 @@ process main {
   val a_num_points: int = 5;
   val b_num_points: int = 5;
   val num_points: int = a_num_points + b_num_points;
-  val chuck_point: int = endorse (input int from chuck) from {C} to {C & (A&B)<-};
+  val chuck_point: int = endorse (input int from chuck) from {C};
 
   val points = Array[int](num_points);
   for (var i: int = 0; i < a_num_points; i += 1) {
@@ -33,10 +33,8 @@ process main {
 
   val min_point_public: int = declassify min_point to {A ⊓ B ⊓ C->};
   val max_point_public: int = declassify max_point to {A ⊓ B ⊓ C->};
-  val min_point_trusted: int =
-    endorse min_point_public from {A ⊓ B ⊓ C->} to {A ⊓ B ⊓ C};
-  val max_point_trusted: int =
-    endorse max_point_public from {A ⊓ B ⊓ C->} to {A ⊓ B ⊓ C};
+  val min_point_trusted: int = endorse min_point_public from {A ⊓ B ⊓ C->};
+  val max_point_trusted: int = endorse max_point_public from {A ⊓ B ⊓ C->};
 
   val in_interval: bool =
     min_point_trusted <= chuck_point && chuck_point <= max_point_trusted;

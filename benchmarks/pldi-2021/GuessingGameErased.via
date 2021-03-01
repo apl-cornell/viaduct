@@ -2,12 +2,12 @@ host alice : {A}
 host bob   : {B}
 
 process main {
-  val number: int = endorse (input int from bob) to {B & A<-};
+  val number: int = endorse (input int from bob) from {B};
   var tries: int = 0;
   var win: bool = false;
   while (tries < 5 && !win) {
     val guess: int = declassify (input int from alice) to {(A|B)-> & A<-};
-    val trusted_guess: int = endorse guess from {(A|B)-> & A<-} to {A ⊓ B};
+    val trusted_guess: int = endorse guess from {(A|B)-> & A<-};
     win = declassify (number == trusted_guess) to {A ⊓ B};
     tries += 1;
   }

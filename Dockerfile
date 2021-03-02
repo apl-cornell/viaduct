@@ -38,6 +38,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     make \
     && rm -rf /var/lib/apt/lists/*
 
+## Enable Bash completion
+RUN echo source /etc/profile.d/bash_completion.sh >> .bashrc
+
+## Copy application binary
 COPY --from=builder /app/cli/build/install /usr/local/
 RUN ["ln", "-s", "/usr/local/cli/bin/cli", "/usr/local/bin/viaduct" ]
 

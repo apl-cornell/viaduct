@@ -1,40 +1,44 @@
 #!/usr/bin/env bash
 
-if [ $# -lt 2 ]
+. scripts/viaduct_command.sh
+
+if [ $# -lt 1 ]
 then
-  printf "usage: ./compilebench.sh [GROUP] [OUTDIR]\n"
+  echo "usage: ./compilebench.sh [lan|wan|erased]"
   exit
 fi
 
-VIADUCT_CMD="./viaduct"
 BENCH_DIR="benchmarks"
 ERASED_EXT="Erased"
 EXT=".via"
 
 BENCHMARKS=("Battleship" "BettingMillionaires" "Biomatch" "GuessingGame" "HhiScore" "HistoricalMillionaires" "Interval" "Kmeans" "Median" "Rochambeau" "TwoRoundBidding")
-OUTDIR=$2
 
-case $1 in
+GROUP=$1
+
+case $GROUP in
   "lan" )
     COST=""
     ERASED=false
-    OUTEXT="Lan"
     ;;
 
   "wan" )
     COST="--wancost"
     ERASED=false
-    OUTEXT="Wan"
     ;;
 
   "erased" )
     COST=""
     ERASED=true
-    OUTEXT="Erased"
     ;;
 esac
 
-for BENCH in ${BENCHMARKS[@]};
+# Create build directory
+OUTDIR=build/$GROUP
+mkdir -p "$OUTDIR"
+echo "Writing compiled programs to $OUTDIR"
+
+for BENCH in "${BENCHMARKS[@]}"
 do
   if [ "$ERASED" = false ]; then
     BENCH_FILE="$BENCH$EXT"
@@ -42,7 +46,6 @@ do
     BENCH_FILE="$BENCH$ERASED_EXT$EXT"
   fi
 
-  printf "compiling $BENCH_DIR/$BENCH_FILE\n"
-  $VIADUCT_CMD -v compile "$BENCH_DIR/$BENCH_FILE" -o "$OUTDIR/$BENCH$OUTEXT$EXT" $COST
+  echo "compiling $BENCH_DIR/$BENCH_FILE"
+  $VIADUCT_CMD -v compile "$BENCH_DIR/$BENCH_FILE" -o "$OUTDIR/$BENCH$EXT" $COST
 done
-

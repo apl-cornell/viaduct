@@ -46,8 +46,8 @@ COPY --from=builder /app/cli/build/install /usr/local/
 RUN ["ln", "-s", "/usr/local/cli/bin/cli", "/usr/local/bin/viaduct" ]
 
 ## Add command-line completion (i.e. tab to autocomplete)
-RUN _VIADUCT_COMPLETE=bash viaduct > viaduct-completion.sh
-RUN echo source viaduct-completion.sh >> .bashrc
+RUN _VIADUCT_COMPLETE=bash viaduct > /etc/profile.d/viaduct_completion.sh
+RUN echo source /etc/profile.d/viaduct_completion.sh >> .bashrc
 
 ## Copy artifact evaluation
 COPY artifact-eval ./

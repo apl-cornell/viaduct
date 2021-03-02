@@ -7,6 +7,9 @@ BUILD_DIR := build
 LAN_BUILD_DIR := $(BUILD_DIR)/lan
 WAN_BUILD_DIR := $(BUILD_DIR)/wan
 
+.PHONY: all
+all: lan wan
+
 .PHONY: lan
 lan: $(subst $(BENCHMARK_DIR), $(LAN_BUILD_DIR), $(BENCHMARKS))
 

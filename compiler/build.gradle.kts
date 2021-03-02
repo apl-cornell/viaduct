@@ -80,11 +80,11 @@ abstract class CupCompileTask : DefaultTask() {
             convention(listOf("-interface"))
         }
 
-    @Input
+    @Internal
     override fun getGroup(): String =
         JavaBasePlugin.BUILD_TASK_NAME
 
-    @Input
+    @Internal
     override fun getDescription(): String =
         "Generates Java sources from CUP grammar files."
 

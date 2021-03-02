@@ -47,7 +47,7 @@ val compileCup by tasks.registering(CupCompileTask::class) {}
 
 sourceSets {
     main {
-        java.srcDir(compileCup.get().generateDir)
+        java.srcDir(compileCup.get().outputDirectory)
     }
 }
 
@@ -60,31 +60,41 @@ tasks.compileKotlin {
     dependsOn(tasks.withType<org.xbib.gradle.plugin.JFlexTask>())
 }
 
-open class CupCompileTask : DefaultTask() {
+abstract class CupCompileTask : DefaultTask() {
     @InputDirectory
-    val sourceDir: File = project.file("src/main/cup")
+    @SkipWhenEmpty
+    val sourceDirectory: DirectoryProperty =
+        project.objects.directoryProperty().apply {
+            convention(project.layout.projectDirectory.dir("src/main/cup"))
+        }
 
     @OutputDirectory
-    val generateDir: File = project.file("${project.buildDir}/generated-src/cup")
+    val outputDirectory: DirectoryProperty =
+        project.objects.directoryProperty().apply {
+            convention(project.layout.buildDirectory.dir("generated/sources/cup"))
+        }
 
     @Input
-    val cupArguments: List<String> = listOf("-interface")
+    val cupArguments: ListProperty<String> =
+        project.objects.listProperty<String>().apply {
+            convention(listOf("-interface"))
+        }
 
-    @Input
+    @Internal
     override fun getGroup(): String =
         JavaBasePlugin.BUILD_TASK_NAME
 
-    @Input
+    @Internal
     override fun getDescription(): String =
         "Generates Java sources from CUP grammar files."
 
     @TaskAction
     fun compileAll() {
-        val cupFiles = project.fileTree(sourceDir) { include("**/*.cup") }
+        val cupFiles = project.fileTree(sourceDirectory) { include("**/*.cup") }
         if (cupFiles.filter { !it.isDirectory }.isEmpty) {
             logger.warn("no cup files found")
         }
-        project.delete(generateDir)
+        project.delete(outputDirectory)
         cupFiles.visit {
             if (!this.isDirectory) {
                 compileFile(this.file)
@@ -93,19 +103,20 @@ open class CupCompileTask : DefaultTask() {
     }
 
     private fun compileFile(cupFile: File) {
-        val packagePath = cupFile.parentFile.relativeTo(sourceDir).toPath()
-        val outputDirectory = generateDir.toPath().resolve(packagePath).toAbsolutePath()
-        val packageName: String = packagePath.toString().replace(File.separator, ".")
+        val packagePath = cupFile.parentFile.relativeTo(sourceDirectory.get().asFile)
+        val targetDirectory = outputDirectory.dir(packagePath.path)
+        val packageName: String = packagePath.path.replace(File.separator, ".")
         val className: String = cupFile.nameWithoutExtension
 
-        project.mkdir(outputDirectory)
-        val args: List<String> = cupArguments +
+        project.mkdir(targetDirectory)
+        val args: List<String> = cupArguments.get() +
             listOf(
-                "-destdir", outputDirectory.toString(),
+                "-destdir", targetDirectory.get().asFile.path,
                 "-package", packageName,
                 "-parser", className,
-                cupFile.absolutePath
+                cupFile.path
             )
+        logger.info("java_cup ${args.joinToString(" ")}}")
         java_cup.Main.main(args.toTypedArray())
     }
 }

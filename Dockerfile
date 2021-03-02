@@ -32,8 +32,11 @@ RUN ./gradlew :cli:installDist
 FROM openjdk:${JDK_VERSION}-jre-slim
 WORKDIR /root
 
-## Copy example programs for testing
-COPY compiler/tests/should-pass examples
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    bash-completion \
+    less \
+    make \
+    && rm -rf /var/lib/apt/lists/*
 
 COPY --from=builder /app/cli/build/install /usr/local/
 RUN ["ln", "-s", "/usr/local/cli/bin/cli", "/usr/local/bin/viaduct" ]
@@ -41,3 +44,6 @@ RUN ["ln", "-s", "/usr/local/cli/bin/cli", "/usr/local/bin/viaduct" ]
 ## Add command-line completion (i.e. tab to autocomplete)
 RUN _VIADUCT_COMPLETE=bash viaduct > viaduct-completion.sh
 RUN echo source viaduct-completion.sh >> .bashrc
+
+## Copy artifact evaluation
+COPY artifact-eval ./

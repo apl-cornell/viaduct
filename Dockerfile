@@ -25,7 +25,7 @@ COPY compiler compiler
 COPY runtime runtime
 COPY shared shared
 COPY test-utilities test-utilities
-RUN ./gradlew --info :cli:installDist
+RUN ./gradlew :cli:installDist
 
 
 # Stage 2 (the distribution container)

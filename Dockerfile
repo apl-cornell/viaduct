@@ -17,11 +17,15 @@ COPY compiler/*.gradle.kts compiler/
 COPY runtime/*.gradle.kts runtime/
 COPY shared/*.gradle.kts shared/
 COPY test-utilities/*.gradle.kts test-utilities/
-RUN ./gradlew --no-daemon assemble || return 0
+RUN ./gradlew assemble
 
 ## Build the app
-COPY . .
-RUN ./gradlew --no-daemon :cli:installDist
+COPY cli cli
+COPY compiler compiler
+COPY runtime runtime
+COPY shared shared
+COPY test-utilities test-utilities
+RUN ./gradlew :cli:installDist
 
 
 # Stage 2 (the distribution container)

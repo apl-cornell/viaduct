@@ -21,7 +21,7 @@ COPY compiler compiler
 COPY runtime runtime
 COPY shared shared
 COPY test-utilities test-utilities
-RUN --mount=type=cache,target=/root/.gradle/caches ./gradlew --info :cli:installDist
+RUN --mount=type=cache,target=/root/.gradle/caches ./gradlew :cli:installDist
 
 
 # Collect source files

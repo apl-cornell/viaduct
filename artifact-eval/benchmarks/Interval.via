@@ -9,25 +9,27 @@ host chuck  : {C}
  * in a convex hull.
  */
 process main {
-  val a_num_points: int{A ⊓ B ⊓ C} = 5;
-  val b_num_points: int{A ⊓ B ⊓ C} = 5;
-  val num_points: int{A ⊓ B ⊓ C} = a_num_points + b_num_points;
+  /* Chuck can read these public parameters, but doesn't need to trust them
+     since he is not using them */
+  val a_num_points: int{A ⊓ B ⊓ C->} = 5;
+  val b_num_points: int{A ⊓ B ⊓ C->} = 5;
+  val num_points: int{A ⊓ B ⊓ C->} = a_num_points + b_num_points;
   val chuck_point: int{C & (A&B)<-} =
     endorse (input int from chuck) to {C & (A&B)<-} from {C};
 
   val points = Array[int]{A & B}(num_points);
-  for (var i: int{A ⊓ B ⊓ C} = 0; i < a_num_points; i += 1) {
+  for (var i: int{A ⊓ B ⊓ C->} = 0; i < a_num_points; i += 1) {
     points[i] = input int from alice;
   }
 
-  for (var i: int{A ⊓ B ⊓ C} = 0; i < b_num_points; i += 1) {
+  for (var i: int{A ⊓ B ⊓ C->} = 0; i < b_num_points; i += 1) {
     points[a_num_points+i] = input int from bob;
   }
 
   var min_point: int{A & B} = points[0];
   var max_point: int{A & B} = points[0];
 
-  for (var i: int{A ⊓ B ⊓ C} = 1; i < num_points; i += 1) {
+  for (var i: int{A ⊓ B ⊓ C->} = 1; i < num_points; i += 1) {
     min_point = min(min_point, points[i]);
     max_point = max(max_point, points[i]);
   }
@@ -41,7 +43,9 @@ process main {
 
   val in_interval: bool{C & (A&B)<-} =
     min_point_trusted <= chuck_point && chuck_point <= max_point_trusted;
-  val in_interval_public: bool{A ⊓ B ⊓ C} = declassify in_interval to {A ⊓ B ⊓ C};
+
+  /* Chuck doesn't need to trust this because it will not be part of his output */
+  val in_interval_public: bool{A ⊓ B ⊓ C->} = declassify in_interval to {A ⊓ B ⊓ C};
 
   output in_interval_public to alice;
   output in_interval_public to bob;

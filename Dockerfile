@@ -1,4 +1,4 @@
-ARG JDK_VERSION=11.0.3
+ARG JDK_VERSION=11.0.10
 
 # Stage 1 (the build container)
 FROM openjdk:${JDK_VERSION}-jdk-slim AS builder

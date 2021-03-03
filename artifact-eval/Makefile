@@ -1,8 +1,8 @@
 VIADUCT := $(if $(wildcard ../viaduct), ../viaduct, viaduct)
 
 BENCHMARK_DIR := benchmarks
-BENCHMARKS := $(wildcard $(BENCHMARK_DIR)/*.via)
-ERASED_BENCHMARKS := $(wildcard $(BENCHMARK_DIR)/*Erased.via)
+BENCHMARKS := $(sort $(wildcard $(BENCHMARK_DIR)/*.via))
+ERASED_BENCHMARKS := $(sort $(wildcard $(BENCHMARK_DIR)/*Erased.via))
 ANNOTATED_BENCHMARKS := $(filter-out $(ERASED_BENCHMARKS), $(BENCHMARKS))
 
 BUILD_DIR := build

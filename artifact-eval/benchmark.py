@@ -13,8 +13,10 @@ from typing import Mapping
 
 build_dir = Path("build")
 
+
 def command_str(command):
     return " ".join([str(arg) for arg in command])
+
 
 def display_command(command):
     """Displays a list of arguments."""
@@ -25,7 +27,9 @@ def make(args, build_directory=build_dir) -> str:
     """Executes make with the given arguments and returns stderr."""
     command = ["make", f"BUILD_DIR={build_directory}"] + args
     display_command(command)
-    return subprocess.run(command, stdout=sys.stderr, stderr=subprocess.PIPE, text=True, encoding="utf-8").stderr
+    return subprocess.run(command, check=True,
+                          stdout=sys.stderr, stderr=subprocess.PIPE,
+                          text=True, encoding="utf-8").stderr
 
 
 def get_make_variable(variable, build_directory=build_dir) -> str:
@@ -37,7 +41,7 @@ def get_make_variable(variable, build_directory=build_dir) -> str:
         encoding="utf-8").stdout.strip()
 
 
-# @functools.cache
+@functools.lru_cache()
 def viaduct_command():
     """Returns a command name for running the Viaduct compiler."""
     return get_make_variable("VIADUCT")
@@ -59,6 +63,9 @@ def viaduct_run(program: PathLike, host_inputs: Mapping[str, PathLike]):
     for host, host_process in host_processes.items():
         _, stderr = host_process.communicate()
         host_logs[host] = stderr
+        if host_process.returncode != 0:
+            print(f"ERROR: process for {host} failed:", file=sys.stderr)
+            print(stderr, file=sys.stderr)
 
     return host_logs
 
@@ -73,6 +80,7 @@ class CompilationStrategy(Enum):
 def write_report(file, rows):
     """Renders the given rows as CSV and writes them to the standard output and to the given file."""
     # Write report to file
+    Path(file).parent.mkdir(parents=True, exist_ok=True)
     with open(file, 'w', newline='') as f:
         writer = csv.writer(f)
         writer.writerows(rows)
@@ -84,6 +92,13 @@ def write_report(file, rows):
     print("Report written to", file, file=sys.stderr)
 
 
+def write_log(file, log):
+    """Writes the given log to the given file."""
+    path = Path(file)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(log)
+
+
 def rq2(args):
     rq_build_dir = Path(build_dir, args.COMMAND)
     report_file = Path(rq_build_dir, f"report.csv")
@@ -92,13 +107,16 @@ def rq2(args):
     benchmarks = [Path(bench).stem for bench in get_make_variable("ANNOTATED_BENCHMARKS").split()]
     build_log = make(["clean", "lan"], rq_build_dir)
 
+    write_log(Path(rq_build_dir, "log", "build.log"), build_log)
+
     # Parse the build output
-    rows = [
-        ["Benchmark",
-         "Information Flow Variables",
-         "Information Flow Time (ms)",
-         "Selection Variables",
-         "Selection Time (ms)"]]
+    rows = [[
+        "Benchmark",
+        "Information Flow Variables",
+        "Information Flow Time (ms)",
+        "Selection Variables",
+        "Selection Time (ms)"
+    ]]
     information_flow_variables_parser = re.finditer(r"number of label variables: (\d+)", build_log)
     information_flow_time_parser = re.finditer(r"finished information flow analysis, ran for (\d+)ms", build_log)
     selection_variables_parser = re.finditer(r"number of symvars: (\d+)", build_log)
@@ -144,19 +162,59 @@ def rq3(args):
         for benchmark in benchmarks:
             make([compiled_file(benchmark, compilation_strategy)], build_directory=rq_build_dir)
 
-    # Run benchmarks
-    host_inputs = {"alice": Path("alice-input.txt"), "bob": Path("bob-input.txt")}
+    # Run benchmarks and gather data
+    raw_rows = [[
+        "Benchmark",
+        "Variant",
+        "Network",
+        "Iteration",
+        "Host",
+        "Running Time (s)",
+        "Communication (MB)"
+    ]]
 
+    def parse_row_data(host, host_log):
+        try:
+            aby_sent_bytes = 0
+            aby_received_bytes = 0
+            aby_bytes_parser = re.finditer(r"total sent/recv: (?P<sent>\d+) / (?P<received>\d+)", host_log)
+            for match in aby_bytes_parser:
+                aby_sent_bytes += int(match.group("sent"))
+                aby_received_bytes += int(match.group("received"))
+
+            runtime_sent_bytes = int(re.search(r"bytes received from host \w+: (\d+)", host_log).group(1))
+            runtime_received_bytes = int(re.search(r"bytes sent to host \w+: (\d+)", host_log).group(1))
+
+            total_sent_bytes = aby_sent_bytes + runtime_sent_bytes
+            total_received_bytes = aby_received_bytes + runtime_received_bytes
+
+            total_running_time = int(
+                re.search(r"finished interpretation, total running time: (\d+)ms", host_log).group(1))
+
+            return [total_running_time, (total_sent_bytes + total_received_bytes) / 1024.0 / 1024.0]
+        except AttributeError:
+            return ["ERROR", "ERROR"]
+
+    host_inputs = {"alice": Path("alice-input.txt"), "bob": Path("bob-input.txt")}
     for benchmark in benchmarks:
         for compilation_strategy in CompilationStrategy:
-            print(f"Running {benchmark}/{compilation_strategy.name}", file=sys.stderr)
-            host_logs = viaduct_run(compiled_file(benchmark, compilation_strategy), host_inputs)
+            for iteration in range(1, args.iterations + 1):
+                print(f"Running {benchmark}/{compilation_strategy.name} in NETWORK ({iteration})",
+                      file=sys.stderr)
+                host_logs = viaduct_run(compiled_file(benchmark, compilation_strategy), host_inputs)
 
-            # Write execution logs to disk
-            for host, host_log in host_logs.items():
-                log_file = Path(rq_build_dir, "log", compilation_strategy.name.lower(), f"{benchmark}-{host}.log")
-                log_file.parent.mkdir(parents=True, exist_ok=True)
-                log_file.write_text(host_log)
+                # Write execution logs to disk
+                for host, host_log in host_logs.items():
+                    log_file = Path(rq_build_dir, "log", compilation_strategy.name.lower(),
+                                    f"{benchmark}-{host}-{iteration}.log")
+                    write_log(log_file, host_log)
+
+                for host, host_log in host_logs.items():
+                    row_header = [benchmark, compilation_strategy, "NETWORK", iteration, host]
+                    row_data = parse_row_data(host, host_log)
+                    raw_rows.append(row_header + row_data)
+
+    write_report(report_file, raw_rows)
 
 
 def rq4(args):
@@ -170,20 +228,20 @@ def rq4(args):
 
     rq_bench_build_dir = Path(rq_build_dir, "lan")
     with open(report_file, "w") as f:
-      for benchmark in benchmarks:
-        erased_benchmark = f"{benchmark}Erased"
-        if erased_benchmark not in erased_benchmarks:
-          continue
+        for benchmark in benchmarks:
+            erased_benchmark = f"{benchmark}Erased"
+            if erased_benchmark not in erased_benchmarks:
+                continue
 
-        bench_file = Path(rq_bench_build_dir, f"{benchmark}.via")
-        erased_bench_file = Path(rq_bench_build_dir, f"{erased_benchmark}.via")
-        command = ["diff", bench_file, erased_bench_file]
+            bench_file = Path(rq_bench_build_dir, f"{benchmark}.via")
+            erased_bench_file = Path(rq_bench_build_dir, f"{erased_benchmark}.via")
+            command = ["diff", bench_file, erased_bench_file]
 
-        display_command(command)
-        bench_diff = subprocess.run(command, stdout=subprocess.PIPE, text=True, encoding="utf-8").stdout
-        scommand = command_str(command)
-        f.write(f"{scommand}\n")
-        f.write(f"{bench_diff}\n\n")
+            display_command(command)
+            bench_diff = subprocess.run(command, stdout=subprocess.PIPE, text=True, encoding="utf-8").stdout
+            scommand = command_str(command)
+            f.write(f"{scommand}\n")
+            f.write(f"{bench_diff}\n\n")
 
 
 def argument_parser():
@@ -195,7 +253,7 @@ def argument_parser():
 
     rq3_parser = subparsers.add_parser("rq3", help="benchmark execution time")
     rq3_parser.set_defaults(func=rq3)
-    rq3_parser.add_argument("-i", "--iterations", dest="iterations", type=int, default=5,
+    rq3_parser.add_argument("-i", "--iterations", dest="iterations", type=int, default=1,
                             help="number of times to run each benchmark")
 
     rq4_parser = subparsers.add_parser("rq4", help="benchmark annotation burden")

@@ -8,12 +8,12 @@ import sys
 from pathlib import Path
 
 build_dir = Path("build")
-reports_dir = Path(build_dir, "reports")
 
 
 def run(args) -> str:
     """Executes the given shell command and returns stderr."""
-    return subprocess.run(args, stderr=subprocess.PIPE, text=True).stderr
+    print(" ".join(args), file=sys.stderr)
+    return subprocess.run(args, stdout=sys.stderr, stderr=subprocess.PIPE, text=True).stderr
 
 
 def get_make_variable(variable) -> str:
@@ -22,8 +22,8 @@ def get_make_variable(variable) -> str:
 
 
 def write_report(file, rows):
-    """Writes the given CSV report to the standard output and to the given file."""
-    # Write report to the report file
+    """Renders the given rows as CSV and writes them to the standard output and to the given file."""
+    # Write report to file
     with open(file, 'w', newline='') as f:
         writer = csv.writer(f)
         writer.writerows(rows)
@@ -32,11 +32,12 @@ def write_report(file, rows):
     writer = csv.writer(sys.stdout)
     writer.writerows(rows)
 
+    print("Report written to", file, file=sys.stderr)
+
 
 def rq2(args):
-    research_question = args.COMMAND
-    rq_build_dir = Path(build_dir, research_question)
-    report_file = Path(reports_dir, f"{research_question}.csv")
+    rq_build_dir = Path(build_dir, args.COMMAND)
+    report_file = Path(rq_build_dir, f"report.csv")
 
     # Run the benchmarks
     benchmarks = [Path(bench).stem for bench in get_make_variable("ANNOTATED_BENCHMARKS").split()]
@@ -84,5 +85,4 @@ def argument_parser():
 
 if __name__ == "__main__":
     arguments = argument_parser().parse_args()
-    Path(reports_dir).mkdir(parents=True, exist_ok=True)
     arguments.func(arguments)

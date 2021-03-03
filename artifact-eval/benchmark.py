@@ -10,15 +10,20 @@ from pathlib import Path
 build_dir = Path("build")
 
 
-def run(args) -> str:
-    """Executes the given shell command and returns stderr."""
-    print(" ".join(args), file=sys.stderr)
-    return subprocess.run(args, stdout=sys.stderr, stderr=subprocess.PIPE, text=True).stderr
+def make(args, build_directory=build_dir) -> str:
+    """Executes make with the given arguments and returns stderr."""
+    command = ["make", f"BUILD_DIR={build_directory}"] + args
+    print(" ".join(command), file=sys.stderr)
+    return subprocess.run(command, stdout=sys.stderr, stderr=subprocess.PIPE, text=True, encoding="utf-8").stderr
 
 
-def get_make_variable(variable) -> str:
+def get_make_variable(variable, build_directory=build_dir) -> str:
     """Returns the value of the given variable as defined in Makefile."""
-    return subprocess.run(["make", f"print-{variable}"], check=True, capture_output=True, text=True).stdout
+    return subprocess.run(
+        ["make", f"BUILD_DIR={build_directory}", f"print-{variable}"],
+        check=True,
+        capture_output=True, text=True,
+        encoding="utf-8").stdout
 
 
 def write_report(file, rows):
@@ -41,7 +46,7 @@ def rq2(args):
 
     # Run the benchmarks
     benchmarks = [Path(bench).stem for bench in get_make_variable("ANNOTATED_BENCHMARKS").split()]
-    build_log = run(["make", f"BUILD_DIR={rq_build_dir}", "clean", "lan"])
+    build_log = make(["clean", "lan"], rq_build_dir)
 
     # Parse the build output
     rows = [

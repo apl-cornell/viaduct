@@ -24,7 +24,8 @@ def make(args, build_directory=build_dir) -> str:
     """Executes make with the given arguments and returns stderr."""
     command = ["make", f"BUILD_DIR={build_directory}"] + args
     display_command(command)
-    return subprocess.run(command, check=True,
+    return subprocess.run(command,
+                          check=True,
                           stdout=sys.stderr, stderr=subprocess.PIPE,
                           text=True, encoding="utf-8").stderr
 
@@ -52,8 +53,9 @@ def viaduct_run(program: PathLike, host_inputs: Mapping[str, PathLike]):
     for host, host_input in sorted(host_inputs.items()):
         command = [viaduct_command(), "-v", "run", host, "--input", host_input, program]
         display_command(command)
-        host_processes[host] = subprocess.Popen(command, stdout=sys.stderr, stderr=subprocess.PIPE, text=True,
-                                                encoding="utf-8")
+        host_processes[host] = subprocess.Popen(command,
+                                                stdout=sys.stderr, stderr=subprocess.PIPE,
+                                                text=True, encoding="utf-8")
 
     # Wait for host processes to terminate and receive their output
     host_logs = {}
@@ -258,6 +260,8 @@ def rq4(args):
             display_command(command, f)
             bench_diff = subprocess.run(command, stdout=subprocess.PIPE, text=True, encoding="utf-8").stdout
             f.write(f"{bench_diff}\n\n")
+
+    print("Report written to", report_file, file=sys.stderr)
 
 
 def argument_parser():

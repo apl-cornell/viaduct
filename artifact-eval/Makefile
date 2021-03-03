@@ -5,7 +5,7 @@ BENCHMARKS := $(sort $(wildcard $(BENCHMARK_DIR)/*.via))
 ERASED_BENCHMARKS := $(sort $(wildcard $(BENCHMARK_DIR)/*Erased.via))
 ANNOTATED_BENCHMARKS := $(filter-out $(ERASED_BENCHMARKS), $(BENCHMARKS))
 
-BUILD_DIR := build
+BUILD_DIR ?= build
 LAN_BUILD_DIR := $(BUILD_DIR)/lan
 WAN_BUILD_DIR := $(BUILD_DIR)/wan
 
@@ -30,3 +30,7 @@ $(LAN_BUILD_DIR) $(WAN_BUILD_DIR):
 clean:
 	rm -rf $(LAN_BUILD_DIR)
 	rm -rf $(WAN_BUILD_DIR)
+
+# Printing variables
+print-%:
+	@echo $($*)

@@ -13,10 +13,12 @@ from typing import Mapping
 
 build_dir = Path("build")
 
+def command_str(command):
+    return " ".join([str(arg) for arg in command])
 
 def display_command(command):
     """Displays a list of arguments."""
-    print(" ".join([str(arg) for arg in command]), file=sys.stderr)
+    print(command_str(command), file=sys.stderr)
 
 
 def make(args, build_directory=build_dir) -> str:
@@ -35,7 +37,7 @@ def get_make_variable(variable, build_directory=build_dir) -> str:
         encoding="utf-8").stdout.strip()
 
 
-@functools.cache
+# @functools.cache
 def viaduct_command():
     """Returns a command name for running the Viaduct compiler."""
     return get_make_variable("VIADUCT")
@@ -158,7 +160,30 @@ def rq3(args):
 
 
 def rq4(args):
-    print("RQ4: TODO")
+    rq_build_dir = Path(build_dir, args.COMMAND)
+    report_file = Path(rq_build_dir, f"report.txt")
+
+    # Run the benchmarks
+    benchmarks = [Path(bench).stem for bench in get_make_variable("ANNOTATED_BENCHMARKS").split()]
+    erased_benchmarks = [Path(bench).stem for bench in get_make_variable("ERASED_BENCHMARKS").split()]
+    build_log = make(["clean", "lan", "erased"], rq_build_dir)
+
+    rq_bench_build_dir = Path(rq_build_dir, "lan")
+    with open(report_file, "w") as f:
+      for benchmark in benchmarks:
+        erased_benchmark = f"{benchmark}Erased"
+        if erased_benchmark not in erased_benchmarks:
+          continue
+
+        bench_file = Path(rq_bench_build_dir, f"{benchmark}.via")
+        erased_bench_file = Path(rq_bench_build_dir, f"{erased_benchmark}.via")
+        command = ["diff", bench_file, erased_bench_file]
+
+        display_command(command)
+        bench_diff = subprocess.run(command, stdout=subprocess.PIPE, text=True, encoding="utf-8").stdout
+        scommand = command_str(command)
+        f.write(f"{scommand}\n")
+        f.write(f"{bench_diff}\n\n")
 
 
 def argument_parser():

@@ -72,18 +72,27 @@ def rq2(args):
 
 
 def rq3(args):
-    print("RQ3")
+    print("RQ3", args.iterations)
+
+
+def rq4(args):
+    print("RQ4: TODO")
 
 
 def argument_parser():
     parser = argparse.ArgumentParser()
     subparsers = parser.add_subparsers(dest="COMMAND", required=True)
 
-    rq2_parser = subparsers.add_parser("rq2")
+    rq2_parser = subparsers.add_parser("rq2", help="benchmark compilation time")
     rq2_parser.set_defaults(func=rq2)
 
-    rq3_parser = subparsers.add_parser("rq3")
+    rq3_parser = subparsers.add_parser("rq3", help="benchmark execution time")
     rq3_parser.set_defaults(func=rq3)
+    rq3_parser.add_argument("-i", "--iterations", dest="iterations", type=int, default=5,
+                            help="number of times to run each benchmark")
+
+    rq4_parser = subparsers.add_parser("rq4", help="benchmark annotation burden")
+    rq4_parser.set_defaults(func=rq4)
 
     return parser
 

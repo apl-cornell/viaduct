@@ -14,13 +14,9 @@ from typing import Mapping
 build_dir = Path("build")
 
 
-def command_str(command):
-    return " ".join([str(arg) for arg in command])
-
-
-def display_command(command):
+def display_command(command, file=sys.stderr):
     """Displays a list of arguments."""
-    print(command_str(command), file=sys.stderr)
+    print(" ".join([str(arg) for arg in command]), file=file)
 
 
 def make(args, build_directory=build_dir) -> str:
@@ -135,7 +131,7 @@ def rq2(args):
 
 def rq3(args):
     rq_build_dir = Path(build_dir, args.COMMAND)
-    report_file = Path(rq_build_dir, f"report.csv")
+    report_file = Path(rq_build_dir, "report.csv")
 
     def compiled_file(benchmark, compilation_strategy):
         """Returns the path to the compiled file for the given benchmark."""
@@ -173,7 +169,7 @@ def rq3(args):
         "Communication (MB)"
     ]]
 
-    def parse_row_data(host, host_log):
+    def parse_row_data(host_log):
         try:
             aby_sent_bytes = 0
             aby_received_bytes = 0
@@ -211,7 +207,7 @@ def rq3(args):
 
                 for host, host_log in host_logs.items():
                     row_header = [benchmark, compilation_strategy, "NETWORK", iteration, host]
-                    row_data = parse_row_data(host, host_log)
+                    row_data = parse_row_data(host_log)
                     raw_rows.append(row_header + row_data)
 
     write_report(report_file, raw_rows)
@@ -219,12 +215,14 @@ def rq3(args):
 
 def rq4(args):
     rq_build_dir = Path(build_dir, args.COMMAND)
-    report_file = Path(rq_build_dir, f"report.txt")
+    report_file = Path(rq_build_dir, "report.txt")
 
-    # Run the benchmarks
+    # Compile benchmark programs
     benchmarks = [Path(bench).stem for bench in get_make_variable("ANNOTATED_BENCHMARKS").split()]
     erased_benchmarks = [Path(bench).stem for bench in get_make_variable("ERASED_BENCHMARKS").split()]
-    build_log = make(["clean", "lan", "erased"], rq_build_dir)
+
+    build_log = make(["lan", "erased"], rq_build_dir)
+    write_log(Path(rq_build_dir, "log", "build.log"), build_log)
 
     rq_bench_build_dir = Path(rq_build_dir, "lan")
     with open(report_file, "w") as f:
@@ -235,12 +233,11 @@ def rq4(args):
 
             bench_file = Path(rq_bench_build_dir, f"{benchmark}.via")
             erased_bench_file = Path(rq_bench_build_dir, f"{erased_benchmark}.via")
-            command = ["diff", bench_file, erased_bench_file]
 
+            command = ["diff", bench_file, erased_bench_file]
             display_command(command)
+            display_command(command, f)
             bench_diff = subprocess.run(command, stdout=subprocess.PIPE, text=True, encoding="utf-8").stdout
-            scommand = command_str(command)
-            f.write(f"{scommand}\n")
             f.write(f"{bench_diff}\n\n")
 
 

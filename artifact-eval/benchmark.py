@@ -7,6 +7,7 @@ import re
 import subprocess
 import sys
 from enum import Enum, auto
+from glob import glob
 from os import PathLike
 from pathlib import Path
 from typing import Mapping
@@ -48,7 +49,7 @@ def viaduct_run(program: PathLike, host_inputs: Mapping[str, PathLike]):
 
     # Spin up a process for each host
     host_processes = {}
-    for host, host_input in host_inputs.items():
+    for host, host_input in sorted(host_inputs.items()):
         command = [viaduct_command(), "-v", "run", host, "--input", host_input, program]
         display_command(command)
         host_processes[host] = subprocess.Popen(command, stdout=sys.stderr, stderr=subprocess.PIPE, text=True,
@@ -56,7 +57,7 @@ def viaduct_run(program: PathLike, host_inputs: Mapping[str, PathLike]):
 
     # Wait for host processes to terminate and receive their output
     host_logs = {}
-    for host, host_process in host_processes.items():
+    for host, host_process in sorted(host_processes.items()):
         _, stderr = host_process.communicate()
         host_logs[host] = stderr
         if host_process.returncode != 0:
@@ -64,6 +65,20 @@ def viaduct_run(program: PathLike, host_inputs: Mapping[str, PathLike]):
             print(stderr, file=sys.stderr)
 
     return host_logs
+
+
+def detect_host_inputs(benchmark) -> Mapping[str, PathLike]:
+    """Computes host files for the given benchmark by analyzing the file system."""
+    inputs_directory = "inputs"
+    input_files = glob(f"{inputs_directory}/{benchmark}-*.txt")
+    if not input_files:
+        return {"alice": Path(inputs_directory, "alice.txt"), "bob": Path(inputs_directory, "bob.txt")}
+    else:
+        host_inputs = {}
+        for input_file in input_files:
+            host = re.search(r".*-(\w*)\.txt", input_file).group(1)
+            host_inputs[host] = Path(input_file)
+        return host_inputs
 
 
 class CompilationStrategy(Enum):
@@ -191,21 +206,25 @@ def rq3(args):
         except AttributeError:
             return ["ERROR", "ERROR"]
 
-    host_inputs = {"alice": Path("alice-input.txt"), "bob": Path("bob-input.txt")}
     for benchmark in benchmarks:
+        host_inputs = detect_host_inputs(benchmark)
         for compilation_strategy in CompilationStrategy:
             for iteration in range(1, args.iterations + 1):
                 print(f"Running {benchmark}/{compilation_strategy.name} in NETWORK ({iteration})",
                       file=sys.stderr)
+                print("Inputs:", file=sys.stderr)
+                for host, host_input in sorted(host_inputs.items()):
+                    print(f"  {host}: {host_input}", file=sys.stderr)
+
                 host_logs = viaduct_run(compiled_file(benchmark, compilation_strategy), host_inputs)
 
                 # Write execution logs to disk
-                for host, host_log in host_logs.items():
+                for host, host_log in sorted(host_logs.items()):
                     log_file = Path(rq_build_dir, "log", compilation_strategy.name.lower(),
                                     f"{benchmark}-{host}-{iteration}.log")
                     write_log(log_file, host_log)
 
-                for host, host_log in host_logs.items():
+                for host, host_log in sorted(host_logs.items()):
                     row_header = [benchmark, compilation_strategy, "NETWORK", iteration, host]
                     row_data = parse_row_data(host_log)
                     raw_rows.append(row_header + row_data)

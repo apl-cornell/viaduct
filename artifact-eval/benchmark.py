@@ -2,18 +2,27 @@
 
 import argparse
 import csv
+import functools
 import re
 import subprocess
 import sys
+from enum import Enum, auto
+from os import PathLike
 from pathlib import Path
+from typing import Mapping
 
 build_dir = Path("build")
+
+
+def display_command(command):
+    """Displays a list of arguments."""
+    print(" ".join([str(arg) for arg in command]), file=sys.stderr)
 
 
 def make(args, build_directory=build_dir) -> str:
     """Executes make with the given arguments and returns stderr."""
     command = ["make", f"BUILD_DIR={build_directory}"] + args
-    print(" ".join(command), file=sys.stderr)
+    display_command(command)
     return subprocess.run(command, stdout=sys.stderr, stderr=subprocess.PIPE, text=True, encoding="utf-8").stderr
 
 
@@ -23,7 +32,40 @@ def get_make_variable(variable, build_directory=build_dir) -> str:
         ["make", f"BUILD_DIR={build_directory}", f"print-{variable}"],
         check=True,
         capture_output=True, text=True,
-        encoding="utf-8").stdout
+        encoding="utf-8").stdout.strip()
+
+
+@functools.cache
+def viaduct_command():
+    """Returns a command name for running the Viaduct compiler."""
+    return get_make_variable("VIADUCT")
+
+
+def viaduct_run(program: PathLike, host_inputs: Mapping[str, PathLike]):
+    """Runs the given compiled program for all hosts, and returns the stderr for each host."""
+
+    # Spin up a process for each host
+    host_processes = {}
+    for host, host_input in host_inputs.items():
+        command = [viaduct_command(), "-v", "run", host, "--input", host_input, program]
+        display_command(command)
+        host_processes[host] = subprocess.Popen(command, stdout=sys.stderr, stderr=subprocess.PIPE, text=True,
+                                                encoding="utf-8")
+
+    # Wait for host processes to terminate and receive their output
+    host_logs = {}
+    for host, host_process in host_processes.items():
+        _, stderr = host_process.communicate()
+        host_logs[host] = stderr
+
+    return host_logs
+
+
+class CompilationStrategy(Enum):
+    BOOL = auto()
+    YAO = auto()
+    OPT_LAN = auto()
+    OPT_WAN = auto()
 
 
 def write_report(file, rows):
@@ -72,7 +114,47 @@ def rq2(args):
 
 
 def rq3(args):
-    print("RQ3", args.iterations)
+    rq_build_dir = Path(build_dir, args.COMMAND)
+    report_file = Path(rq_build_dir, f"report.csv")
+
+    def compiled_file(benchmark, compilation_strategy):
+        """Returns the path to the compiled file for the given benchmark."""
+        if compilation_strategy is CompilationStrategy.BOOL:
+            return Path("compiled", f"{benchmark}Bool.via")
+        elif compilation_strategy is CompilationStrategy.YAO:
+            return Path("compiled", f"{benchmark}Yao.via")
+        elif compilation_strategy is CompilationStrategy.OPT_LAN:
+            return Path(rq_build_dir, "lan", f"{benchmark}.via")
+        elif compilation_strategy is CompilationStrategy.OPT_WAN:
+            return Path(rq_build_dir, "wan", f"{benchmark}.via")
+
+    benchmarks = [
+        "Biomatch",
+        "HhiScore",
+        "HistoricalMillionaires",
+        "Kmeans",
+        "Median",
+        "TwoRoundBidding",
+    ]
+
+    # Compile benchmarks
+    for compilation_strategy in [CompilationStrategy.OPT_LAN, CompilationStrategy.OPT_WAN]:
+        for benchmark in benchmarks:
+            make([compiled_file(benchmark, compilation_strategy)], build_directory=rq_build_dir)
+
+    # Run benchmarks
+    host_inputs = {"alice": Path("alice-input.txt"), "bob": Path("bob-input.txt")}
+
+    for benchmark in benchmarks:
+        for compilation_strategy in CompilationStrategy:
+            print(f"Running {benchmark}/{compilation_strategy.name}", file=sys.stderr)
+            host_logs = viaduct_run(compiled_file(benchmark, compilation_strategy), host_inputs)
+
+            # Write execution logs to disk
+            for host, host_log in host_logs.items():
+                log_file = Path(rq_build_dir, "log", compilation_strategy.name.lower(), f"{benchmark}-{host}.log")
+                log_file.parent.mkdir(parents=True, exist_ok=True)
+                log_file.write_text(host_log)
 
 
 def rq4(args):

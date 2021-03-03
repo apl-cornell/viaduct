@@ -202,7 +202,7 @@ def rq3(args):
             total_running_time = int(
                 re.search(r"finished interpretation, total running time: (\d+)ms", host_log).group(1))
 
-            return [total_running_time, (total_sent_bytes + total_received_bytes) / 1024.0 / 1024.0]
+            return [total_running_time / 1000.0, (total_sent_bytes + total_received_bytes) / 1024.0 / 1024.0]
         except AttributeError:
             return ["ERROR", "ERROR"]
 

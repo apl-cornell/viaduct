@@ -45,29 +45,30 @@ def viaduct_command():
     return get_make_variable("VIADUCT")
 
 
-def viaduct_run(program: PathLike, host_inputs: Mapping[str, PathLike]):
-    """Runs the given compiled program for all hosts, and returns the stderr for each host."""
+def viaduct_run(program: PathLike, host_inputs: Mapping[str, PathLike], host_logs: Mapping[str, PathLike]):
+    """Runs the given compiled program for all hosts, writing the stderr of each host to the specified file."""
 
     # Spin up a process for each host
     host_processes = {}
+    host_fds = {}
     for host, host_input in sorted(host_inputs.items()):
         command = [viaduct_command(), "-v", "run", host, "--input", host_input, program]
         display_command(command)
-        host_processes[host] = subprocess.Popen(command,
-                                                stdout=sys.stderr, stderr=subprocess.PIPE,
+
+        host_log = Path(host_logs[host])
+        host_log.parent.mkdir(parents=True, exist_ok=True)
+        host_fds[host] = open(host_log, 'w')
+
+        host_processes[host] = subprocess.Popen(command, stdout=sys.stderr, stderr=host_fds[host],
                                                 text=True, encoding="utf-8")
 
     # Wait for host processes to terminate and receive their output
-    host_logs = {}
     for host, host_process in sorted(host_processes.items()):
-        _, stderr = host_process.communicate()
-        host_logs[host] = stderr
+        host_process.wait()
+        host_fds[host].close()
         if host_process.returncode != 0:
-            print(f"ERROR: process for {host} failed:", file=sys.stderr)
-            print(stderr, file=sys.stderr)
+            print(f"ERROR: process for {host} failed. See {host_logs[host]}", file=sys.stderr)
             exit(1)
-
-    return host_logs
 
 
 def detect_host_inputs(benchmark) -> Mapping[str, PathLike]:
@@ -188,26 +189,35 @@ def rq3(args):
     ]]
 
     def parse_row_data(host_log):
-        try:
+        with open(host_log) as f:
             aby_sent_bytes = 0
             aby_received_bytes = 0
-            aby_bytes_parser = re.finditer(r"total sent/recv: (?P<sent>\d+) / (?P<received>\d+)", host_log)
-            for match in aby_bytes_parser:
-                aby_sent_bytes += int(match.group("sent"))
-                aby_received_bytes += int(match.group("received"))
+            runtime_sent_bytes = None
+            runtime_received_bytes = None
+            total_running_time = None
 
-            runtime_sent_bytes = int(re.search(r"bytes received from host \w+: (\d+)", host_log).group(1))
-            runtime_received_bytes = int(re.search(r"bytes sent to host \w+: (\d+)", host_log).group(1))
+            for line in f:
+                match = re.search(r"total sent/recv: (?P<sent>\d+) / (?P<received>\d+)", line)
+                if match:
+                    aby_sent_bytes += int(match.group("sent"))
+                    aby_received_bytes += int(match.group("received"))
+
+                match = re.search(r"bytes received from host \w+: (\d+)", line)
+                if match:
+                    runtime_sent_bytes = int(match.group(1))
+
+                match = re.search(r"bytes sent to host \w+: (\d+)", line)
+                if match:
+                    runtime_received_bytes = int(match.group(1))
+
+                match = re.search(r"finished interpretation, total running time: (\d+)ms", line)
+                if match:
+                    total_running_time = int(match.group(1))
 
             total_sent_bytes = aby_sent_bytes + runtime_sent_bytes
             total_received_bytes = aby_received_bytes + runtime_received_bytes
 
-            total_running_time = int(
-                re.search(r"finished interpretation, total running time: (\d+)ms", host_log).group(1))
-
             return [total_running_time / 1000.0, (total_sent_bytes + total_received_bytes) / 1024.0 / 1024.0]
-        except AttributeError:
-            return ["ERROR", "ERROR"]
 
     for benchmark in benchmarks:
         host_inputs = detect_host_inputs(benchmark)
@@ -219,18 +229,19 @@ def rq3(args):
                 for host, host_input in sorted(host_inputs.items()):
                     print(f"  {host}: {host_input}", file=sys.stderr)
 
-                host_logs = viaduct_run(compiled_file(benchmark, compilation_strategy), host_inputs)
+                host_logs = {host: Path(rq_build_dir, "log", compilation_strategy.name.lower(),
+                                        f"{benchmark}-{host}-{iteration}.log")
+                             for host in host_inputs
+                             }
 
-                # Write execution logs to disk
-                for host, host_log in sorted(host_logs.items()):
-                    log_file = Path(rq_build_dir, "log", compilation_strategy.name.lower(),
-                                    f"{benchmark}-{host}-{iteration}.log")
-                    write_log(log_file, host_log)
+                viaduct_run(compiled_file(benchmark, compilation_strategy), host_inputs, host_logs)
 
-                for host, host_log in sorted(host_logs.items()):
-                    row_header = [benchmark, compilation_strategy, "NETWORK", iteration, host]
-                    row_data = parse_row_data(host_log)
-                    raw_rows.append(row_header + row_data)
+                for host, host_logfile in sorted(host_logs.items()):
+                    row_header = [benchmark, compilation_strategy.name, "NETWORK", iteration, host]
+                    row_data = parse_row_data(host_logfile)
+                    row = row_header + row_data
+                    print(", ".join([str(col) for col in row]), file=sys.stderr)
+                    raw_rows.append(row)
 
     write_report(report_file, raw_rows)
 

@@ -231,7 +231,7 @@ Here is a very quick tutorial to get you started:
    viaduct run bob hm-out.via -in inputs/bob.txt
    ```
 
-5. Quit Tmux with the keyboard shortcut `Ctrl+b d`.
+5. Quit Tmux by typing `tmux kill-session`.
 
 You can provide input manually for one or both of the participant by omitting
 the `-in` option (we also recommend leaving out the `-v` option).
@@ -239,9 +239,11 @@ The participant will block on an `Input: ` prompt when you need to provide input
 However, note that the default input size for the historical millionaires' game is
 100, so it will be tedious to provide input this way.
 
-Note that the Docker image does not have libsnark installed, so you cannot _run_
+#### Limitations
+
+The Docker image does not have libsnark installed, so you cannot _run_
 compiled examples that use the zero-knowledge proof back end
-(however, you can still compile them).
+(though you can still compile them).
 The evaluation results in the submission can be replicated without this back end.
 
 
@@ -353,7 +355,7 @@ the network interfaces on the container back to normal.
 Note that running the benchmarks takes quite a bit of time. This is
 particularly true for running the benchmarks in the WAN setting, which can
 take several hours. To reduce the running time, you can change the parameters
-in the compiled benchmarks. 
+in the compiled benchmarks.
 
 
 ### RQ4 - Annotation Burden of Security Labels
@@ -376,7 +378,7 @@ programs can differ in trivial ways. For example, in `BettingMillionaires.via`
 the compiled program involves Chuck sending a commitment to either Alice or
 Bob. It doesn't matter which because Alice and Bob trust each other. Also our
 cost model currently treats Local and Replication protocols to have the same
-execution cost, so there are some lines in one version of the compiled program 
+execution cost, so there are some lines in one version of the compiled program
 executed in a Local protocol and the corresponding lines in the other version
 executed in a Replication protocol. This is not due to the erasure of label
 annotations but rather due to Z3 returning different models with the same

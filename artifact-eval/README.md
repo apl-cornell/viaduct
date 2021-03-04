@@ -1,48 +1,73 @@
 # Viaduct - Artifact Evaluation Instructions
 
-This document contains information for evaluating the artifact for the
-submission "Viaduct: An Extensible, Optimizing Compiler for Secure Distributed
-Programs." It is in two parts: Section 1 ("Getting Started") has instructions
-to build the artifact, provided as a Docker image, and contains the basics of
-how to use the Viaduct compiler. Section 2 ("Replicating Evaluation Results")
+This document contains information to evaluate the artifact for the submission
+"Viaduct: An Extensible, Optimizing Compiler for Secure Distributed Programs."
+It has two parts:
+[Getting Started](#getting-started) explains how to get the Docker image running,
+and contains the basics of how to use the Viaduct compiler.
+[Replicating Evaluation Results](#replicating-evaluation-results)
 describes the infrastructure we have provided to replicate the results in
 the submission.
 
 
-## 1 - Getting Started
+## Getting Started
 
-### 1.1 - Building the artifact
+### Running the Docker image
 
-We provide the artifact for the Viaduct compiler through a Docker image, so
-these instructions assume that your machine already has Docker installed. We
-have tested the artifact building process on OS X (VERSION) and Linux (Ubuntu
-20.0.1) operating systems with Docker version (VERSION), but it should work on
-any machine with a relatively recent version of Docker.
+Our artifact is packaged as a Docker image for easy reproducibility.
+We have tested running the image on macOS (Big Sur) and Linux (Ubuntu 20.0.1)
+with Docker 20.10.2, but it should work on any machine with a relatively recent
+version of Docker.
 
-To use the image, build and run the submitted `Dockerfile` by running the
-following shell command:
+Follow these steps to run the image:
 
-```
-docker build --tag viaduct .
-```
+1. [Install Docker](https://docs.docker.com/get-docker/) if you don't already have it.
+   You shouldn't need a deep understanding of Docker to follow this guide,
+   but [Docker Docs](https://docs.docker.com/get-started/) are a good resource if
+   you get stuck or would like to know more about Docker.
 
-Make sure that the `Dockerfile` is in the current working directory before
-running this command.
+2. Download the archive file linked in the submission.
+   We will assume it is named `viaduct-docker.tar.gz`.
 
-Once the container has been built, run this command:
+3. Load the image by running the following command in the same directory as the archive file:
 
-```
-docker run --rm -it viaduct
-```
+   ```shell
+   docker load --input viaduct-docker.tar.gz
+   ```
 
-Your shell should now be running inside the container.
+   which will print something similar to:
+
+   ```console
+   Loaded image: viaduct:pldi-2021
+   ```
+
+   Docker should automatically decompress the file. If your installation of Docker doesn't
+   recognize the archive format for whatever reason, you can decompress it manually:
+   ```shell
+   gzip --decompress --keep viaduct-docker.tar.gz
+   # Produces viaduct-docker.tar
+   docker load --input viaduct-docker.tar
+   ```
+
+4. Run the image as a container:
+
+   ```shell
+   docker run --rm -it viaduct:pldi-2021
+   ```
+
+This will drop you in a container with a standard (albeit stripped down) Unix shell.
 
 
 ### Using the Viaduct compiler
 
-The container is set up so that the compiler is already built.
-When you enter the `viaduct` command, you should see the compiler's help
-text as follows:
+The container has a built and installed version of the Viaduct compiler.
+Running
+
+```shell
+viaduct --help
+```
+
+will give you the compiler's help text as follows:
 
 ```
 Usage: viaduct [OPTIONS] COMMAND [ARGS]...
@@ -59,36 +84,47 @@ Options:
 Commands:
   format               Pretty print source program
   compile              Compile ideal protocol to secure distributed program
-  generate-completion  Generate a tab-complete script for the given shell
-  specification        Generate UC ideal functionality from source program
   run                  Run compiled protocol for a single host
 ```
 
-There are two main compiler commands you need to know. The `compile` command
-compiles Viaduct source programs into distributed programs. The `run`
-command allows hosts to execute a compiled distributed program together.
+There are two main compiler commands you need to know.
+The `compile` command compiles Viaduct source programs into distributed programs.
+The `run` command allows hosts to execute a compiled distributed program together.
 We will go over the basics of using these two commands in the following
 sections. You can run `viaduct compile --help` and `viaduct run --help` to get
 more information about each of these commands and the various options and flags
 they support.
 
 
-#### 1.1.1 - Compiling source programs
+#### Compiling source programs
 
-To test compilation, we can compile one of the example programs in the
-`benchmarks` folder. For example, we can compile `HistoricalMillionaires.via`
-program as follows. Note that the `-v` flag turns on verbose mode, which
-prints log information to stdout, and the `-o` option allows you to specify
-the output file where the compiled distributed program will be written.
-Now run the following command:
+As an example, we will compile the `HistoricalMillionaires.via` program,
+which is in the `benchmarks` folder. You can view the source program
+with the following command:
 
+```shell
+less benchmarks/HistoricalMillionaires.via
 ```
+
+Run the following to compile the program:
+
+```shell
+viaduct -v compile benchmarks/HistoricalMillionaires.via
+```
+
+This will print the compiled program to the standard output.
+The `-v` option turns on the verbose mode, which prints logging information.
+You can repeat it (e.g., `-vvv`) for more granular messages, or leave it out.
+
+To save the compiled file to disk, run:
+
+```shell
 viaduct -v compile benchmarks/HistoricalMillionaires.via -o hm-out.via
 ```
 
-You should see something similar to the following printed on stdout:
+You should see logging information that looks like this:
 
-```
+```console
  479 ms [main] INFO  Compile - elaborating source program...
  516 ms [main] INFO  Compile - specializing functions...
  519 ms [main] INFO  Check - name analysis...
@@ -105,9 +141,9 @@ You should see something similar to the following printed on stdout:
 1305 ms [main] INFO  Compile - annotating program with protocols...
 ```
 
-and if you open `hm-out.via`, you should see:
+Viewing `hm-out.via` (using `less` or `cat`), you should see:
 
-```
+```viaduct
 host alice : {(A & B<-)}
 
 host bob : {(B & A<-)}
@@ -149,16 +185,16 @@ process main {
 
 Notice that the distributed program is an elaborated version of the source
 program where each variable declaration and let-binding is annotated with
-the protocol that will execute it. As described in the paper, the
-compiled distributed program is optimized so that Alice and Bob compute
-their respective minima locally, and then use MPC (the YaoABY protocol above)
-to perform the comparison.
+the protocol that will execute it. As described in the paper, the compiled
+distributed program is optimized so that Alice and Bob compute their respective
+minima locally, and then use MPC (the `YaoABY` protocol above) to perform the
+comparison.
 
 
-#### 1.1.2 - Running compiled programs
+#### Running compiled programs
 
-The `run` command takes as arguments a host name and a compiled distributed
-program and executes the host's "projection" of the distributed program.
+The `run` command takes as arguments a host name and a compiled program,
+and executes the host's "projection" of the distributed program.
 To execute the compiled program `hm-out.via` for the historical millionaires'
 game, we need two participants standing in for hosts `alice` and `bob`
 respectively. The easiest way to do this is by running a terminal multiplexer
@@ -227,7 +263,7 @@ compiled examples that use zero-knowledge proof back end. The evaluation
 results in the submission can be replicated without this back end.
 
 
-### 1.2 - Building the compiler
+### Building the compiler
 
 If you wish, you can also build the compiler within the container.
 
@@ -235,12 +271,12 @@ TODO: fill this in
 
 
 
-## 2 - Replicating Evaluation Results
+## Replicating Evaluation Results
 
 To reproduce the evaluation results in the submission, we have provided
 scripts to drive the Viaduct compiler and runtime system.
 
-`compilebench.sh` is a Bash script that 
+`compilebench.sh` is a Bash script that
 
 ### RQ2 - Scalability of Compilation
 

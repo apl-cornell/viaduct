@@ -50,22 +50,19 @@ def viaduct_run(program: PathLike, host_inputs: Mapping[str, PathLike], host_log
 
     # Spin up a process for each host
     host_processes = {}
-    host_fds = {}
     for host, host_input in sorted(host_inputs.items()):
         command = [viaduct_command(), "-v", "run", host, "--input", host_input, program]
         display_command(command)
 
         host_log = Path(host_logs[host])
         host_log.parent.mkdir(parents=True, exist_ok=True)
-        host_fds[host] = open(host_log, 'w')
-
-        host_processes[host] = subprocess.Popen(command, stdout=subprocess.DEVNULL, stderr=host_fds[host],
-                                                text=True, encoding="utf-8")
+        with open(host_log, 'w') as f:
+            host_processes[host] = subprocess.Popen(command, stdout=subprocess.DEVNULL, stderr=f,
+                                                    text=True, encoding="utf-8")
 
     # Wait for host processes to terminate and receive their output
     for host, host_process in sorted(host_processes.items()):
         host_process.wait()
-        host_fds[host].close()
         if host_process.returncode != 0:
             print(f"ERROR: process for {host} failed. See {host_logs[host]}", file=sys.stderr)
             exit(1)

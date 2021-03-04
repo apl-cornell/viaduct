@@ -14,7 +14,7 @@ the submission.
 
 ### Running the Docker image
 
-Our artifact is packaged as a Docker image for easy reproducibility.
+The artifact is packaged as a Docker image for easy reproducibility.
 We have tested running the image on macOS (Big Sur) and Linux (Ubuntu 20.0.1)
 with Docker 20.10.2, but it should work on any machine with a relatively recent
 version of Docker.
@@ -24,7 +24,7 @@ Follow these steps to run the image:
 1. [Install Docker](https://docs.docker.com/get-docker/) if you don't already have it.
    You shouldn't need a deep understanding of Docker to follow this guide,
    but [Docker Docs](https://docs.docker.com/get-started/) are a good resource if
-   you get stuck or would like to know more about Docker.
+   you get stuck or would like to learn more about Docker.
 
 2. Download the archive file linked in the submission.
    We will assume it is named `viaduct-docker.tar.gz`.
@@ -35,7 +35,7 @@ Follow these steps to run the image:
    docker load --input viaduct-docker.tar.gz
    ```
 
-   which will print something similar to:
+   which should print:
 
    ```console
    Loaded image: viaduct:pldi-2021
@@ -60,14 +60,14 @@ This will drop you in a container with a standard (albeit stripped down) Unix sh
 
 ### Using the Viaduct compiler
 
-The container has a built and installed version of the Viaduct compiler.
+The container comes with the Viaduct compiler already installed.
 Running
 
 ```shell
 viaduct --help
 ```
 
-will give you the compiler's help text as follows:
+will give you the compiler's help text, which should look as follows:
 
 ```
 Usage: viaduct [OPTIONS] COMMAND [ARGS]...
@@ -115,8 +115,10 @@ viaduct -v compile benchmarks/HistoricalMillionaires.via
 This will print the compiled program to the standard output.
 The `-v` option turns on the verbose mode, which prints logging information.
 You can repeat it (e.g., `-vvv`) for more granular messages, or leave it out.
+Note that this option needs to come before the command name,
+so `viaduct compile -v` will not work.
 
-To save the compiled file to disk, run:
+To save the compiled file to disk, provide the `-o` option along with a file name:
 
 ```shell
 viaduct -v compile benchmarks/HistoricalMillionaires.via -o hm-out.via
@@ -184,7 +186,7 @@ process main {
 ```
 
 Notice that the distributed program is an elaborated version of the source
-program where each variable declaration and let-binding is annotated with
+program where each variable declaration and let binding is annotated with
 the protocol that will execute it. As described in the paper, the compiled
 distributed program is optimized so that Alice and Bob compute their respective
 minima locally, and then use MPC (the `YaoABY` protocol above) to perform the
@@ -198,7 +200,7 @@ and executes the host's "projection" of the distributed program.
 Since compiled programs are distributed, we need to run multiple instances
 of Viaduct.
 For instance, to execute our example program `hm-out.via`,
-we need two participants standing in for hosts `alice` and `bob` respectively.
+we need two participants standing in for hosts `alice` and `bob`, respectively.
 
 The easiest way to accomplish this from the single terminal window we have is to
 run one of the commands in the background:
@@ -208,15 +210,15 @@ viaduct -v run alice hm-out.via -in inputs/alice.txt &
 viaduct -v run bob hm-out.via -in inputs/bob.txt
 ```
 
-Here, we run two instances with logging enabled (the `-v` options),
+Here, we run two instances with logging enabled (the `-v` option),
 and provide inputs from files (`-in FILENAME`).
 
 An alternative to running one of the instances in the background is
-using [Tmux](https://github.com/tmux/tmux/wiki) and running a participant
-on two separate terminal instances.
-This method allows you to manually provide input for any and all participants.
+using [Tmux](https://github.com/tmux/tmux/wiki) and running each participant
+in a different pane.
+This method allows you to manually provide input to each participant.
 However, we only recommend this alternative if you are already familiar with
-Tmux (or are willing to pick up the basics on your own).
+Tmux (or are willing to pick up the basics).
 Here is a very quick tutorial to get you started:
 
 1. Start a new session by typing `tmux`.
@@ -259,8 +261,9 @@ cd source
 ```
 
 This will build the compiler and run all unit tests.
-Note that the image does not contain third party dependencies to (significantly)
-reduce image size, but Gradle will download all dependencies automatically.
+Note that the Docker image does not contain third party dependencies to
+(significantly) reduce image size, but Gradle will download all
+dependencies automatically.
 Every dependency is version pinned, so you should not run into any issues.
 However, you do need an internet connection.
 
@@ -285,20 +288,20 @@ language is expressive. That's it!
 
 ### RQ2 - Scalability of Compilation
 
-To replicate the result for this research question, run the following command:
+To replicate the result for this research question, run the script as follows:
 
-```
+```shell
 ./benchmark.py rq2
 ```
 
-The command will build benchmarks (with the cost model optimized for LAN)
+The script will build benchmarks (with the cost model optimized for LAN)
 and save compilation information into a report file, which lives in
 `build/rq2/report.csv`.
 The compiled programs are placed under `build/rq2/lan/`.
-The command should also print the commands it is running as well as the report
-contents, like so:
+The script will print the commands it is running,
+and will display the final report, like so:
 
-```
+```console
 make BUILD_DIR=build/rq2 clean lan
 rm -rf build/rq2/lan
 rm -rf build/rq2/wan
@@ -335,7 +338,7 @@ Report written to build/rq2/report.csv
 
 To replicate the result for this research question, run the following command:
 
-```
+```shell
 ./benchmark.py rq3
 ```
 
@@ -364,7 +367,7 @@ in the compiled benchmarks.
 
 To replicate the result for this research question, run the following command:
 
-```
+```shell
 ./benchmark.py rq4
 ```
 

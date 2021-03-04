@@ -195,80 +195,77 @@ comparison.
 
 The `run` command takes as arguments a host name and a compiled program,
 and executes the host's "projection" of the distributed program.
-To execute the compiled program `hm-out.via` for the historical millionaires'
-game, we need two participants standing in for hosts `alice` and `bob`
-respectively. The easiest way to do this is by running a terminal multiplexer
-such as `tmux` and running a participant on two separate terminal instances.
+Since compiled programs are distributed, we need to run multiple instances
+of Viaduct.
+For instance, to execute our example program `hm-out.via`,
+we need two participants standing in for hosts `alice` and `bob` respectively.
 
-Start a `tmux` session with two terminal instances---make sure that the current
-working directory is the home directory (`~/`) of the container, as the
-commands below assume it. Then run this command one terminal instance:
+The easiest way to accomplish this from the single terminal window we have is to
+run one of the commands in the background:
 
-```
-viaduct -v run alice hm-out.via -in alice-input.txt
-```
-
-and this command on another:
-
-```
-viaduct -v run bob hm-out.via -in bob-input.txt
+```shell
+viaduct -v run alice hm-out.via -in inputs/alice.txt &
+viaduct -v run bob hm-out.via -in inputs/bob.txt
 ```
 
-As you can see, each terminal instance is running a participant in the
-compiled distributed program for the historical millionaires' game.
-The `-in` option allows you to specify an file from which a participant provides
-input. Thus the `input int from alice` command in the compiled program will
-read lines from the file `alice-input.txt`, while `input int from bob` will
-read lines from `bob-input.txt`. By omitting the `-in` option, you can also
-provide input through stdin; a participant will block on an `Input: ` prompt
-when you need to provide input. Note that the default input size for the
-historical millionaires' game is 100 though, so it will be tedious
-to provide input this way.
+Here, we run two instances with logging enabled (the `-v` options),
+and provide inputs from files (`-in FILENAME`).
 
-On the terminal running host `alice`, you should see something similar to
-the following printed on stdout:
+An alternative to running one of the instances in the background is
+using [Tmux](https://github.com/tmux/tmux/wiki) and running a participant
+on two separate terminal instances.
+This method allows you to manually provide input for any and all participants.
+However, we only recommend this alternative if you are already familiar with
+Tmux (or are willing to pick up the basics on your own).
+Here is a very quick tutorial to get you started:
 
+1. Start a new session by typing `tmux`.
+
+2. Split your terminal using the keyboard shortcut `Ctrl+b "`.
+
+3. Switch between panes using `Ctrl+b <arrow key>` (up and down keys specifically).
+
+4. Execute the following two commands in separate panes:
+   ```shell
+   viaduct run alice hm-out.via -in inputs/alice.txt
+   viaduct run bob hm-out.via -in inputs/bob.txt
+   ```
+
+5. Quit Tmux with the keyboard shortcut `Ctrl+b d`.
+
+You can provide input manually for one or both of the participant by omitting
+the `-in` option (we also recommend leaving out the `-v` option).
+The participant will block on an `Input: ` prompt when you need to provide input.
+However, note that the default input size for the historical millionaires' game is
+100, so it will be tedious to provide input this way.
+
+Note that the Docker image does not have libsnark installed, so you cannot _run_
+compiled examples that use the zero-knowledge proof back end
+(however, you can still compile them).
+The evaluation results in the submission can be replicated without this back end.
+
+
+### Building the compiler from source
+
+The Viaduct source code is included in the image under the `source` directory.
+If you wish, you can build the compiler within the container.
+To do so, run the following commands:
+
+```shell
+cd source
+./gradlew build
 ```
-1189 ms [main] INFO  Runtime - accepted connection from host bob
-1235 ms [main] INFO  ABY - connected ABY to other host at 127.0.0.1:7766
-1257 ms [pool-2-thread-1] INFO  Runtime - launching receiver thread for host bob
-1262 ms [pool-3-thread-1] INFO  Runtime - launching sender thread for host bob
-1268 ms [main] INFO  Interpreter - starting interpretation
-1342 ms [main] INFO  ABY - circuit size: 3
-Decreasing nthreads from 2 to 1 to fit window size
-1555 ms [main] INFO  ABY - executed ABY circuit in 209ms, sent output to SERVER
-total gates: 194
-total depth: 3
-total time: 0.536
-total sent/recv: 2596 / 2114
-network time: 7.859
-setup time: 0.307
-setup sent/recv: 1042 / 2082
-online time: 0.227
-online sent/recv: 1554 / 32
 
-false
-1568 ms [main] INFO  Runtime - sent remote message bool from Local(host = alice)@Host(name=alice) to Local(host = bob)@Host(name=bob)
-1569 ms [main] INFO  Interpreter - finished interpretation, total running time: 300ms
-1570 ms [main] INFO  Runtime - bytes sent to host alice: 4
-1570 ms [main] INFO  Runtime - bytes received from host alice: 0
-1570 ms [pool-2-thread-1] INFO  Runtime - shutting down receiver thread for host bob
-1570 ms [pool-3-thread-1] INFO  Runtime - shutting down sender thread for host bob
-1571 ms [main] INFO  Runtime - closing connection to host bob
-1572 ms [main] INFO  ViaductBackend - runtime duration: 910ms
-```
+This will build the compiler and run all unit tests.
+Note that the image does not contain third party dependencies to (significantly)
+reduce image size, but Gradle will download all dependencies automatically.
+Every dependency is version pinned, so you should not run into any issues.
+However, you do need an internet connection.
 
-Note that the Docker image does not have libsnark installed, so you cannot run
-compiled examples that use zero-knowledge proof back end. The evaluation
-results in the submission can be replicated without this back end.
-
-
-### Building the compiler
-
-If you wish, you can also build the compiler within the container.
-
-TODO: fill this in
-
+You can now run `./viaduct` in the `source` directory which will
+use the binary you just compiled instead of the system wide binary.
+Note, however, that the benchmarking scripts we provide will continue to use
+the system wide binary.
 
 
 ## Replicating Evaluation Results

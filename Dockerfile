@@ -1,6 +1,6 @@
 ARG JDK_VERSION=11.0.10
 
-# Stage 1 (the build container)
+# Build stage
 FROM openjdk:${JDK_VERSION}-jdk-slim AS builder
 CMD ["/bin/bash"]
 WORKDIR /app
@@ -17,7 +17,7 @@ COPY compiler/*.gradle.kts compiler/
 COPY runtime/*.gradle.kts runtime/
 COPY shared/*.gradle.kts shared/
 COPY test-utilities/*.gradle.kts test-utilities/
-RUN ./gradlew assemble
+RUN ./gradlew build
 
 ## Build the app
 COPY cli cli
@@ -28,8 +28,21 @@ COPY test-utilities test-utilities
 RUN ./gradlew :cli:installDist
 
 
-# Stage 2 (the distribution container)
-FROM openjdk:${JDK_VERSION}-jre-slim
+# Collect source files
+FROM busybox AS source
+WORKDIR /root/source
+
+## Copy source code and remove build files
+COPY --from=builder /app .
+RUN find . -name build -exec rm -rf {} +
+RUN rm -r ./.gradle
+COPY viaduct .
+
+
+# Distribution stage
+#FROM openjdk:${JDK_VERSION}-jre-slim
+FROM openjdk:${JDK_VERSION}-jdk-slim
+CMD ["/bin/bash"]
 WORKDIR /root
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -37,6 +50,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     less \
     make \
     python3 \
+    tmux \
     && rm -rf /var/lib/apt/lists/*
 
 ## Enable Bash completion
@@ -52,3 +66,10 @@ RUN echo source /etc/profile.d/viaduct_completion.sh >> .bashrc
 
 ## Copy artifact evaluation
 COPY artifact-eval ./
+
+## Copy Gradle cache to make build self contained
+# COPY --from=builder /root/.gradle/caches /root/.gradle/caches
+# COPY --from=builder /root/.gradle/wrapper /root/.gradle/wrapper
+
+## Copy application code to allow building from source
+COPY --from=source /root/source source

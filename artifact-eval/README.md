@@ -1,52 +1,73 @@
 # Viaduct - Artifact Evaluation Instructions
 
-This document contains information for evaluating the artifact for the
-submission "Viaduct: An Extensible, Optimizing Compiler for Secure Distributed
-Programs." It is in two parts: Section 1 ("Getting Started") has instructions
-to build the artifact, provided as a Docker image, and contains the basics of
-how to use the Viaduct compiler. Section 2 ("Replicating Evaluation Results")
+This document contains information to evaluate the artifact for the submission
+"Viaduct: An Extensible, Optimizing Compiler for Secure Distributed Programs."
+It has two parts:
+[Getting Started](#getting-started) explains how to get the Docker image running,
+and contains the basics of how to use the Viaduct compiler.
+[Replicating Evaluation Results](#replicating-evaluation-results)
 describes the infrastructure we have provided to replicate the results in
 the submission.
 
 
-## 1 - Getting Started
+## Getting Started
 
-This section contains information on how to build and run the Docker container
-that contains the Viaduct compiler (1.1), how to use the Viaduct compiler (1.2),
-and how to build the Viaduct compiler (1.3).
+### Running the Docker image
 
-### 1.1 - Building the artifact
+Our artifact is packaged as a Docker image for easy reproducibility.
+We have tested running the image on macOS (Big Sur) and Linux (Ubuntu 20.0.1)
+with Docker 20.10.2, but it should work on any machine with a relatively recent
+version of Docker.
 
-We provide the artifact for the Viaduct compiler through a Docker container, so
-these instructions assume that your machine already has Docker installed. We
-have tested the artifact building process on OS X (VERSION) and Linux (Ubuntu
-20.0.1) operating systems with Docker version (VERSION), but it should work on
-any machine with a relatively recent version of Docker.
+Follow these steps to run the image:
 
-To use the image, build and run the submitted `Dockerfile` by running the
-following shell command:
+1. [Install Docker](https://docs.docker.com/get-docker/) if you don't already have it.
+   You shouldn't need a deep understanding of Docker to follow this guide,
+   but [Docker Docs](https://docs.docker.com/get-started/) are a good resource if
+   you get stuck or would like to know more about Docker.
 
-```
-docker build --tag viaduct .
-```
+2. Download the archive file linked in the submission.
+   We will assume it is named `viaduct-docker.tar.gz`.
 
-Make sure that the `Dockerfile` is in the current working directory before
-running this command.
+3. Load the image by running the following command in the same directory as the archive file:
 
-Once the container has been built, run this command:
+   ```shell
+   docker load --input viaduct-docker.tar.gz
+   ```
 
-```
-docker run --rm -it viaduct
-```
+   which will print something similar to:
 
-Your shell should now be running inside the container.
+   ```console
+   Loaded image: viaduct:pldi-2021
+   ```
+
+   Docker should automatically decompress the file. If your installation of Docker doesn't
+   recognize the archive format for whatever reason, you can decompress it manually:
+   ```shell
+   gzip --decompress --keep viaduct-docker.tar.gz
+   # Produces viaduct-docker.tar
+   docker load --input viaduct-docker.tar
+   ```
+
+4. Run the image as a container:
+
+   ```shell
+   docker run --rm -it viaduct:pldi-2021
+   ```
+
+This will drop you in a container with a standard (albeit stripped down) Unix shell.
 
 
 ### Using the Viaduct compiler
 
-The container is set up so that the compiler is already built.
-When you enter the `viaduct` command, you should see the compiler's help
-text as follows:
+The container has a built and installed version of the Viaduct compiler.
+Running
+
+```shell
+viaduct --help
+```
+
+will give you the compiler's help text as follows:
 
 ```
 Usage: viaduct [OPTIONS] COMMAND [ARGS]...
@@ -63,36 +84,47 @@ Options:
 Commands:
   format               Pretty print source program
   compile              Compile ideal protocol to secure distributed program
-  generate-completion  Generate a tab-complete script for the given shell
-  specification        Generate UC ideal functionality from source program
   run                  Run compiled protocol for a single host
 ```
 
-There are two main compiler commands you need to know. The `compile` command
-compiles Viaduct source programs into distributed programs. The `run`
-command allows hosts to execute a compiled distributed program together.
+There are two main compiler commands you need to know.
+The `compile` command compiles Viaduct source programs into distributed programs.
+The `run` command allows hosts to execute a compiled distributed program together.
 We will go over the basics of using these two commands in the following
 sections. You can run `viaduct compile --help` and `viaduct run --help` to get
 more information about each of these commands and the various options and flags
 they support.
 
 
-#### 1.1.1 - Compiling source programs
+#### Compiling source programs
 
-To test compilation, we can compile one of the example programs in the
-`benchmarks` folder. For example, we can compile `HistoricalMillionaires.via`
-program as follows. Note that the `-v` flag turns on verbose mode, which
-prints log information to stdout, and the `-o` option allows you to specify
-the output file where the compiled distributed program will be written.
-Now run the following command:
+As an example, we will compile the `HistoricalMillionaires.via` program,
+which is in the `benchmarks` folder. You can view the source program
+with the following command:
 
+```shell
+less benchmarks/HistoricalMillionaires.via
 ```
+
+Run the following to compile the program:
+
+```shell
+viaduct -v compile benchmarks/HistoricalMillionaires.via
+```
+
+This will print the compiled program to the standard output.
+The `-v` option turns on the verbose mode, which prints logging information.
+You can repeat it (e.g., `-vvv`) for more granular messages, or leave it out.
+
+To save the compiled file to disk, run:
+
+```shell
 viaduct -v compile benchmarks/HistoricalMillionaires.via -o hm-out.via
 ```
 
-You should see something similar to the following printed on stdout:
+You should see logging information that looks like this:
 
-```
+```console
  479 ms [main] INFO  Compile - elaborating source program...
  516 ms [main] INFO  Compile - specializing functions...
  519 ms [main] INFO  Check - name analysis...
@@ -109,9 +141,9 @@ You should see something similar to the following printed on stdout:
 1305 ms [main] INFO  Compile - annotating program with protocols...
 ```
 
-and if you open `hm-out.via`, you should see:
+Viewing `hm-out.via` (using `less` or `cat`), you should see:
 
-```
+```viaduct
 host alice : {(A & B<-)}
 
 host bob : {(B & A<-)}
@@ -153,93 +185,90 @@ process main {
 
 Notice that the distributed program is an elaborated version of the source
 program where each variable declaration and let-binding is annotated with
-the protocol that will execute it. As described in the paper, the
-compiled distributed program is optimized so that Alice and Bob compute
-their respective minima locally, and then use MPC (the YaoABY protocol above)
-to perform the comparison.
+the protocol that will execute it. As described in the paper, the compiled
+distributed program is optimized so that Alice and Bob compute their respective
+minima locally, and then use MPC (the `YaoABY` protocol above) to perform the
+comparison.
 
 
-#### 1.1.2 - Running compiled programs
+#### Running compiled programs
 
-The `run` command takes as arguments a host name and a compiled distributed
-program and executes the host's "projection" of the distributed program.
-To execute the compiled program `hm-out.via` for the historical millionaires'
-game, we need two participants standing in for hosts `alice` and `bob`
-respectively. The easiest way to do this is by running a terminal multiplexer
-such as `tmux` and running a participant on two separate terminal instances.
+The `run` command takes as arguments a host name and a compiled program,
+and executes the host's "projection" of the distributed program.
+Since compiled programs are distributed, we need to run multiple instances
+of Viaduct.
+For instance, to execute our example program `hm-out.via`,
+we need two participants standing in for hosts `alice` and `bob` respectively.
 
-Start a `tmux` session with two terminal instances---make sure that the current
-working directory is the home directory (`~/`) of the container, as the
-commands below assume it. Then run this command one terminal instance:
+The easiest way to accomplish this from the single terminal window we have is to
+run one of the commands in the background:
 
-```
-viaduct -v run alice hm-out.via -in alice-input.txt
-```
-
-and this command on the other terminal instance:
-
-```
-viaduct -v run bob hm-out.via -in bob-input.txt
+```shell
+viaduct -v run alice hm-out.via -in inputs/alice.txt &
+viaduct -v run bob hm-out.via -in inputs/bob.txt
 ```
 
-As you can see, each terminal instance is running a participant in the
-compiled distributed program for the historical millionaires' game.
-The `-in` option allows you to specify an file from which a participant provides
-input. Thus the `input int from alice` command in the compiled program will
-read lines from the file `alice-input.txt`, while `input int from bob` will
-read lines from `bob-input.txt`. By omitting the `-in` option, you can also
-provide input through stdin; a participant will block on an `Input: ` prompt
-when you need to provide input. Note that the default input size for the
-historical millionaires' game is 100 though, so it will be tedious
-to provide input this way.
+Here, we run two instances with logging enabled (the `-v` options),
+and provide inputs from files (`-in FILENAME`).
 
-On the terminal running host `alice`, you should see something similar to
-the following printed on stdout:
+An alternative to running one of the instances in the background is
+using [Tmux](https://github.com/tmux/tmux/wiki) and running a participant
+on two separate terminal instances.
+This method allows you to manually provide input for any and all participants.
+However, we only recommend this alternative if you are already familiar with
+Tmux (or are willing to pick up the basics on your own).
+Here is a very quick tutorial to get you started:
 
+1. Start a new session by typing `tmux`.
+
+2. Split your terminal using the keyboard shortcut `Ctrl+b "`.
+
+3. Switch between panes using `Ctrl+b <arrow key>` (up and down keys specifically).
+
+4. Execute the following two commands in separate panes:
+   ```shell
+   viaduct run alice hm-out.via -in inputs/alice.txt
+   viaduct run bob hm-out.via -in inputs/bob.txt
+   ```
+
+5. Quit Tmux with the keyboard shortcut `Ctrl+b d`.
+
+You can provide input manually for one or both of the participant by omitting
+the `-in` option (we also recommend leaving out the `-v` option).
+The participant will block on an `Input: ` prompt when you need to provide input.
+However, note that the default input size for the historical millionaires' game is
+100, so it will be tedious to provide input this way.
+
+Note that the Docker image does not have libsnark installed, so you cannot _run_
+compiled examples that use the zero-knowledge proof back end
+(however, you can still compile them).
+The evaluation results in the submission can be replicated without this back end.
+
+
+### Building the compiler from source
+
+The Viaduct source code is included in the image under the `source` directory.
+If you wish, you can build the compiler within the container.
+To do so, run the following commands:
+
+```shell
+cd source
+./gradlew build
 ```
-1189 ms [main] INFO  Runtime - accepted connection from host bob
-1235 ms [main] INFO  ABY - connected ABY to other host at 127.0.0.1:7766
-1257 ms [pool-2-thread-1] INFO  Runtime - launching receiver thread for host bob
-1262 ms [pool-3-thread-1] INFO  Runtime - launching sender thread for host bob
-1268 ms [main] INFO  Interpreter - starting interpretation
-1342 ms [main] INFO  ABY - circuit size: 3
-Decreasing nthreads from 2 to 1 to fit window size
-1555 ms [main] INFO  ABY - executed ABY circuit in 209ms, sent output to SERVER
-total gates: 194
-total depth: 3
-total time: 0.536
-total sent/recv: 2596 / 2114
-network time: 7.859
-setup time: 0.307
-setup sent/recv: 1042 / 2082
-online time: 0.227
-online sent/recv: 1554 / 32
 
-false
-1568 ms [main] INFO  Runtime - sent remote message bool from Local(host = alice)@Host(name=alice) to Local(host = bob)@Host(name=bob)
-1569 ms [main] INFO  Interpreter - finished interpretation, total running time: 300ms
-1570 ms [main] INFO  Runtime - bytes sent to host alice: 4
-1570 ms [main] INFO  Runtime - bytes received from host alice: 0
-1570 ms [pool-2-thread-1] INFO  Runtime - shutting down receiver thread for host bob
-1570 ms [pool-3-thread-1] INFO  Runtime - shutting down sender thread for host bob
-1571 ms [main] INFO  Runtime - closing connection to host bob
-1572 ms [main] INFO  ViaductBackend - runtime duration: 910ms
-```
+This will build the compiler and run all unit tests.
+Note that the image does not contain third party dependencies to (significantly)
+reduce image size, but Gradle will download all dependencies automatically.
+Every dependency is version pinned, so you should not run into any issues.
+However, you do need an internet connection.
 
-Note that the Docker image does not have libsnark installed, so you cannot run
-compiled examples that use zero-knowledge proof back end. The evaluation
-results in the submission can be replicated without this back end.
+You can now run `./viaduct` in the `source` directory which will
+use the binary you just compiled instead of the system wide binary.
+Note, however, that the benchmarking scripts we provide will continue to use
+the system wide binary.
 
 
-### 1.2 - Building the compiler
-
-If you wish, you can also build the compiler within the container.
-
-TODO: fill this in
-
-
-
-## 2 - Replicating Evaluation Results
+## Replicating Evaluation Results
 
 To reproduce the evaluation results in the submission, we have provided
 a `benchmark.py` script to drive the Viaduct compiler and runtime system.
@@ -352,5 +381,6 @@ executed in a Local protocol and the corresponding lines in the other version
 executed in a Replication protocol. This is not due to the erasure of label
 annotations but rather due to Z3 returning different models with the same
 minimal cost.
+
 
 

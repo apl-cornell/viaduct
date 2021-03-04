@@ -9,3 +9,7 @@
 # Gradle
 .gradle
 **/build
+
+# Archives
+*.tar
+*.tar.gz

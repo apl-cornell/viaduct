@@ -6,7 +6,7 @@
  * market share and applying the HHI formula.
  */
 process main {
-    val storeCount: int = 100;
+    val storeCount: int = 500;
 
     var a_rev: int = 0;
     var b_rev: int = 0;

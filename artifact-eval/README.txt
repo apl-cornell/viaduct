@@ -11,9 +11,13 @@ the submission.
 
 ## 1 - Getting Started
 
+This section contains information on how to build and run the Docker container
+that contains the Viaduct compiler (1.1), how to use the Viaduct compiler (1.2),
+and how to build the Viaduct compiler (1.3).
+
 ### 1.1 - Building the artifact
 
-We provide the artifact for the Viaduct compiler through a Docker image, so
+We provide the artifact for the Viaduct compiler through a Docker container, so
 these instructions assume that your machine already has Docker installed. We
 have tested the artifact building process on OS X (VERSION) and Linux (Ubuntu
 20.0.1) operating systems with Docker version (VERSION), but it should work on
@@ -172,7 +176,7 @@ commands below assume it. Then run this command one terminal instance:
 viaduct -v run alice hm-out.via -in alice-input.txt
 ```
 
-and this command on another:
+and this command on the other terminal instance:
 
 ```
 viaduct -v run bob hm-out.via -in bob-input.txt
@@ -238,19 +242,115 @@ TODO: fill this in
 ## 2 - Replicating Evaluation Results
 
 To reproduce the evaluation results in the submission, we have provided
-scripts to drive the Viaduct compiler and runtime system.
+a `benchmark.py` script to drive the Viaduct compiler and runtime system.
 
-`compilebench.sh` is a Bash script that 
+
+### RQ1 - Scalability of Compilation
+
+Replicating the "result" for this is simple: peruse the example programs in the
+`benchmarks` folder and see if you are persuaded that the Viaduct source
+language is expressive. That's it!
+
 
 ### RQ2 - Scalability of Compilation
 
+To replicate the result for this research question, run the following command:
+
+```
+./benchmark.py rq2
+```
+
+The command will build benchmarks (with the cost model optimized for LAN)
+and save compilation information into a report file, which lives in
+`build/rq2/report.csv`. The command should also print the commands it is
+running as well as the report contents, like so:
+
+```
+make BUILD_DIR=build/rq2 clean lan
+rm -rf build/rq2/lan
+rm -rf build/rq2/wan
+../viaduct -v compile benchmarks/Battleship.via -o build/rq2/lan/Battleship.via
+../viaduct -v compile benchmarks/BettingMillionaires.via -o build/rq2/lan/BettingMillionaires.via
+../viaduct -v compile benchmarks/Biomatch.via -o build/rq2/lan/Biomatch.via
+../viaduct -v compile benchmarks/GuessingGame.via -o build/rq2/lan/GuessingGame.via
+../viaduct -v compile benchmarks/HhiScore.via -o build/rq2/lan/HhiScore.via
+../viaduct -v compile benchmarks/HistoricalMillionaires.via -o build/rq2/lan/HistoricalMillionaires.via
+../viaduct -v compile benchmarks/Interval.via -o build/rq2/lan/Interval.via
+../viaduct -v compile benchmarks/Kmeans.via -o build/rq2/lan/Kmeans.via
+../viaduct -v compile benchmarks/KmeansUnrolled.via -o build/rq2/lan/KmeansUnrolled.via
+../viaduct -v compile benchmarks/Median.via -o build/rq2/lan/Median.via
+../viaduct -v compile benchmarks/Rochambeau.via -o build/rq2/lan/Rochambeau.via
+../viaduct -v compile benchmarks/TwoRoundBidding.via -o build/rq2/lan/TwoRoundBidding.via
+Benchmark,Information Flow Variables,Information Flow Time (ms),Selection Variables,Selection Time (ms)
+Battleship,323,135,1022,1154
+BettingMillionaires,102,83,387,2072
+Biomatch,248,108,708,2378
+GuessingGame,59,53,193,411
+HhiScore,89,62,285,1165
+HistoricalMillionaires,54,44,187,712
+Interval,170,95,660,4662
+Kmeans,550,192,1684,10157
+KmeansUnrolled,1219,401,3629,34031
+Median,117,71,386,1199
+Rochambeau,254,95,741,878
+TwoRoundBidding,187,68,575,1766
+Report written to build/rq2/report.csv
+```
+
+
 ### RQ3 - Cost of Compiled Programs
+
+To replicate the result for this research question, run the following command:
+
+```
+./benchmark.py rq3
+```
+
+The command will compile two versions of the MPC benchmarks
+(Biomatch, HhiScore, HistoricalMillionaires, Kmeans, Median, TwoRoundBidding),
+one optimized for the LAN setting and another optimized for the WAN setting.
+The command will then run four versions of each benchmark over the same inputs:
+the compiled LAN and WAN versions, as well as hand-written Bool and Yao versions
+that are use Boolean and Yao circuits respectively.
+
+We have provided a `settraffic` script that uses the `tc` utility to simulate
+a LAN or WAN environment. The script artificially creates a bandwidth limits
+and latency on the loopback device (`lo`). It is simple to use: run
+`./settraffic lan` to set a LAN environment (1 Gbps / 1000 Mbps bandwidth) or
+`./settraffic wan` to a WAN environment (100 Mbps bandwidth and 50 ms latency).
+Run `settraffic` with no arguments to delete all installed `tc` rules and set
+the network interfaces on the container back to normal.
+
+Note that running the benchmarks takes quite a bit of time. This is
+particularly true for running the benchmarks in the WAN setting, which can
+take several hours. To reduce the running time, you can change the parameters
+in the compiled benchmarks. 
+
 
 ### RQ4 - Annotation Burden of Security Labels
 
-We note that the compilation between erased programs and annotated programs can
-differ in trivial ways. For example, in `BettingMillionaires.via`
-the compiled program involves Chuck sending a commitment to either Alice or Bob.
-It doesn't matter which because Alice and Bob trust each other.
+To replicate the result for this research question, run the following command:
+
+```
+./benchmark.py rq4
+```
+
+The command builds the annotated and erased versions of benchmarks
+(with the cost model optimized for LAN) and takes the diffs between the compiled
+programs, and then saves these into a report file, which lives in
+`build/rq4/report.txt`. The compiled programs are in `build/rq4/lan/`.
+
+For the most part, the diffs should be between lines that are exactly the same
+except for the label annotations, which the compiler preserves in compiled
+programs. We do note that the compilation between erased programs and annotated
+programs can differ in trivial ways. For example, in `BettingMillionaires.via`
+the compiled program involves Chuck sending a commitment to either Alice or
+Bob. It doesn't matter which because Alice and Bob trust each other. Also our
+cost model currently treats Local and Replication protocols to have the same
+execution cost, so there are some lines in one version of the compiled program 
+executed in a Local protocol and the corresponding lines in the other version
+executed in a Replication protocol. This is not due to the erasure of label
+annotations but rather due to Z3 returning different models with the same
+minimal cost.
 
 

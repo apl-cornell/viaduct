@@ -109,7 +109,7 @@ subprojects {
 /** Documentation */
 
 mkdocs {
-    sourcesDir = "."
+    sourcesDir = "docs"
     buildDir = "${project.buildDir}/mkdocs"
 
     publish.apply {

@@ -65,6 +65,7 @@ def viaduct_run(program: PathLike, host_inputs: Mapping[str, PathLike]):
         if host_process.returncode != 0:
             print(f"ERROR: process for {host} failed:", file=sys.stderr)
             print(stderr, file=sys.stderr)
+            exit(1)
 
     return host_logs
 

@@ -293,8 +293,10 @@ To replicate the result for this research question, run the following command:
 
 The command will build benchmarks (with the cost model optimized for LAN)
 and save compilation information into a report file, which lives in
-`build/rq2/report.csv`. The command should also print the commands it is
-running as well as the report contents, like so:
+`build/rq2/report.csv`.
+The compiled programs are placed under `build/rq2/lan/`.
+The command should also print the commands it is running as well as the report
+contents, like so:
 
 ```
 make BUILD_DIR=build/rq2 clean lan
@@ -342,7 +344,7 @@ The command will compile two versions of the MPC benchmarks
 one optimized for the LAN setting and another optimized for the WAN setting.
 The command will then run four versions of each benchmark over the same inputs:
 the compiled LAN and WAN versions, as well as hand-written Bool and Yao versions
-that are use Boolean and Yao circuits respectively.
+that use Boolean and Yao circuits respectively.
 
 We have provided a `settraffic` script that uses the `tc` utility to simulate
 a LAN or WAN environment. The script artificially creates a bandwidth limits
@@ -383,6 +385,3 @@ executed in a Local protocol and the corresponding lines in the other version
 executed in a Replication protocol. This is not due to the erasure of label
 annotations but rather due to Z3 returning different models with the same
 minimal cost.
-
-
-

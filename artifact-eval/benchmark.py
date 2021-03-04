@@ -59,7 +59,7 @@ def viaduct_run(program: PathLike, host_inputs: Mapping[str, PathLike], host_log
         host_log.parent.mkdir(parents=True, exist_ok=True)
         host_fds[host] = open(host_log, 'w')
 
-        host_processes[host] = subprocess.Popen(command, stdout=sys.stderr, stderr=host_fds[host],
+        host_processes[host] = subprocess.Popen(command, stdout=subprocess.DEVNULL, stderr=host_fds[host],
                                                 text=True, encoding="utf-8")
 
     # Wait for host processes to terminate and receive their output

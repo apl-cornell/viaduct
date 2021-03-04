@@ -278,6 +278,22 @@ the system wide binary.
 To reproduce the evaluation results in the submission, we have provided
 a `benchmark.py` script to drive the Viaduct compiler and runtime system.
 
+### Increasing memory available to Docker
+
+Benchmarks for RQ1, RQ2, and RQ4 should run with the default Docker settings,
+since these benchmarks only compile programs and compilation does not require
+a lot of memory.
+However, RQ3 executes programs using an MPC backend, and some programs
+require up to 10 GB of memory.
+
+There is no memory limit for Docker containers on Linux by default,
+but macOS and Windows set a 2 GB memory limit for Docker containers by default.
+Follow the steps outlined in the provided links and allocate at least 10 GB
+of memory to Docker:
+
+- macOS: https://docs.docker.com/docker-for-mac/#resources
+- Windows: https://docs.docker.com/docker-for-windows/#resources
+
 
 ### RQ1 - Scalability of Compilation
 

@@ -94,12 +94,10 @@ def write_report(file, rows):
     # Write report to file
     Path(file).parent.mkdir(parents=True, exist_ok=True)
     with open(file, 'w', newline='') as f:
-        writer = csv.writer(f)
-        writer.writerows(rows)
+        csv.writer(f).writerows(rows)
 
     # Write report to the standard output
-    writer = csv.writer(sys.stdout)
-    writer.writerows(rows)
+    csv.writer(sys.stdout).writerows(rows)
 
     print("Report written to", file, file=sys.stderr)
 
@@ -175,7 +173,7 @@ def rq3(args):
             make([compiled_file(benchmark, compilation_strategy)], build_directory=rq_build_dir)
 
     # Run benchmarks and gather data
-    raw_rows = [[
+    table_header = [
         "Benchmark",
         "Variant",
         "Network",
@@ -183,7 +181,8 @@ def rq3(args):
         "Host",
         "Running Time (s)",
         "Communication (MB)"
-    ]]
+    ]
+    raw_rows = [table_header]
 
     def parse_row_data(host_log):
         with open(host_log) as f:
@@ -233,11 +232,11 @@ def rq3(args):
 
                 viaduct_run(compiled_file(benchmark, compilation_strategy), host_inputs, host_logs)
 
+                csv.writer(sys.stderr).writerow(table_header)
                 for host, host_logfile in sorted(host_logs.items()):
-                    row_header = [benchmark, compilation_strategy.name, "NETWORK", iteration, host]
-                    row_data = parse_row_data(host_logfile)
-                    row = row_header + row_data
-                    print(", ".join([str(col) for col in row]), file=sys.stderr)
+                    row = [benchmark, compilation_strategy.name, "NETWORK", iteration, host] \
+                          + parse_row_data(host_logfile)
+                    csv.writer(sys.stderr).writerow(row)
                     raw_rows.append(row)
 
     write_report(report_file, raw_rows)

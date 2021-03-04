@@ -50,6 +50,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     less \
     make \
     python3 \
+    tmux \
     && rm -rf /var/lib/apt/lists/*
 
 ## Enable Bash completion

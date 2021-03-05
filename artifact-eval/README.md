@@ -281,7 +281,9 @@ the system wide binary.
 
 To reproduce the evaluation results in the submission (Section 7), we have provided
 a `benchmark.py` script to drive the Viaduct compiler and runtime system.
-Certain benchmarks may require some additional setup, which is detailed below.
+Certain benchmarks may require some additional setup depending on your system,
+which is detailed below.
+
 
 ### Before you start
 
@@ -301,12 +303,16 @@ of memory to Docker:
 - macOS: https://docs.docker.com/docker-for-mac/#resources
 - Windows: https://docs.docker.com/docker-for-windows/#resources
 
-Note that changing these settings will kill all running containers.
+Note that this limit is for all Dockers containers running on your machine
+combined. If you are running other containers, adjust the limit accordingly.
+
+Changing these settings will kill all running containers;
+you will have to start the container again.
 
 
 #### Enabling network admin privileges (Optional)
 
-If you would like to simulate our LAN and WAN network settings when running
+If you would like to simulate our wide area network (WAN) settings when running
 the RQ3 benchmarks, you need to start the Docker container with network
 admin privileges:
 
@@ -314,8 +320,7 @@ admin privileges:
 docker run --rm -it --cap-add NET_ADMIN viaduct:pldi-2021
 ```
 
-This is optional, however. The benchmarks will run with the default network
-settings (but produce slightly different numbers).
+By default, the benchmarks simulate a local area network (LAN).
 
 
 ### RQ1 - Scalability of Compilation
@@ -409,31 +414,29 @@ Biomatch,YAO,NETWORK,1,alice,3.461,49.89405059814453
 The report lists each host and iteration separately;
 to get the numbers in the paper, group by these columns and take the mean.
 
-#### Simulating LAN and WAN networks
+
+#### Simulating wide area networks
 
 We have provided a `settraffic` script that uses the
-[tc](https://linux.die.net/man/8/tc) utility to simulate a LAN or WAN environment.
+[tc](https://linux.die.net/man/8/tc) utility to simulate a WAN environment.
 The script artificially creates a bandwidth limit and latency on the loopback
 device (`lo`). It is simple to use: run
-
-```shell
-./scripts/settraffic lan
-```
-
-to set a LAN environment (1 Gbps / 1000 Mbps bandwidth) or
 
 ```shell
 ./scripts/settraffic wan
 ```
 
-to set a WAN environment (100 Mbps bandwidth and 50 ms latency).
-Run `settraffic` with no arguments to delete all installed `tc` rules and set
-the network interfaces on the container back to normal.
+to set a WAN environment (100 Mbps bandwidth and 50 ms latency), or
+
+```shell
+./scripts/settraffic lan
+```
+
+to set a LAN environment (no limits; reverts to default settings).
 
 Note that running the benchmarks takes quite a bit of time. This is
 particularly true for running the benchmarks in the WAN setting, which can
-take several hours. To reduce the running time, you can change the parameters
-in the compiled benchmarks.
+take several hours.
 
 
 ### RQ4 - Annotation Burden of Security Labels
@@ -454,7 +457,7 @@ except for the label annotations, which the compiler preserves in compiled
 programs. We do note that the compilation between erased programs and annotated
 programs can differ in trivial ways. For example, in `BettingMillionaires.via`
 the compiled program involves Chuck sending a commitment to either Alice or
-Bob. It doesn't matter which because Alice and Bob trust each other. Also our
+Bob. It doesn't matter which because Alice and Bob trust each other. Also, our
 cost model currently treats Local and Replication protocols to have the same
 execution cost, so there are some lines in one version of the compiled program
 executed in a Local protocol and the corresponding lines in the other version

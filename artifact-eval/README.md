@@ -330,7 +330,7 @@ Replicating the "result" for this is simple: peruse the example programs in the
 language is expressive. That's it!
 
 
-### RQ2 - Scalability of Compilation
+### RQ2 - Scalability of Compilation (Figure 14)
 
 To replicate the result for this research question, run the script as follows:
 
@@ -378,7 +378,7 @@ Report written to build/rq2/report.csv
 ```
 
 
-### RQ3 - Cost of Compiled Programs
+### RQ3 - Cost of Compiled Programs (Figure 15)
 
 To replicate the result for this research question, run the following command:
 

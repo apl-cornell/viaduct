@@ -176,7 +176,6 @@ def rq3(args):
     table_header = [
         "Benchmark",
         "Variant",
-        "Network",
         "Iteration",
         "Host",
         "Running Time (s)",
@@ -219,7 +218,7 @@ def rq3(args):
         host_inputs = detect_host_inputs(benchmark)
         for compilation_strategy in CompilationStrategy:
             for iteration in range(1, args.iterations + 1):
-                print(f"Running {benchmark}/{compilation_strategy.name} in NETWORK ({iteration})",
+                print(f"Running {benchmark}/{compilation_strategy.name} ({iteration})",
                       file=sys.stderr)
                 print("Inputs:", file=sys.stderr)
                 for host, host_input in sorted(host_inputs.items()):
@@ -234,8 +233,7 @@ def rq3(args):
 
                 csv.writer(sys.stderr).writerow(table_header)
                 for host, host_logfile in sorted(host_logs.items()):
-                    row = [benchmark, compilation_strategy.name, "NETWORK", iteration, host] \
-                          + parse_row_data(host_logfile)
+                    row = [benchmark, compilation_strategy.name, iteration, host] + parse_row_data(host_logfile)
                     csv.writer(sys.stderr).writerow(row)
                     raw_rows.append(row)
 

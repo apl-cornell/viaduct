@@ -404,10 +404,10 @@ it takes to run the benchmarks. Results in the paper use 5:
 The script will output a CSV report that has the following form:
 
 ```csv
-Benchmark,Variant,Network,Iteration,Host,Running Time (s),Communication (MB)
-Biomatch,BOOL,NETWORK,1,alice,5.866,53.41919994354248
-Biomatch,BOOL,NETWORK,1,bob,5.868,53.41919136047363
-Biomatch,YAO,NETWORK,1,alice,3.461,49.89405059814453
+Benchmark,Variant,Iteration,Host,Running Time (s),Communication (MB)
+Biomatch,BOOL,1,alice,5.866,53.41919994354248
+Biomatch,BOOL,1,bob,5.868,53.41919136047363
+Biomatch,YAO,1,alice,3.461,49.89405059814453
 ...
 ```
 

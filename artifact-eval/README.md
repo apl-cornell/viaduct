@@ -349,33 +349,20 @@ and will display the final report, like so:
 make BUILD_DIR=build/rq2 clean lan
 rm -rf build/rq2/lan
 rm -rf build/rq2/wan
-../viaduct -v compile benchmarks/Battleship.via -o build/rq2/lan/Battleship.via
-../viaduct -v compile benchmarks/BettingMillionaires.via -o build/rq2/lan/BettingMillionaires.via
-../viaduct -v compile benchmarks/Biomatch.via -o build/rq2/lan/Biomatch.via
-../viaduct -v compile benchmarks/GuessingGame.via -o build/rq2/lan/GuessingGame.via
-../viaduct -v compile benchmarks/HhiScore.via -o build/rq2/lan/HhiScore.via
-../viaduct -v compile benchmarks/HistoricalMillionaires.via -o build/rq2/lan/HistoricalMillionaires.via
-../viaduct -v compile benchmarks/Interval.via -o build/rq2/lan/Interval.via
-../viaduct -v compile benchmarks/Kmeans.via -o build/rq2/lan/Kmeans.via
-../viaduct -v compile benchmarks/KmeansUnrolled.via -o build/rq2/lan/KmeansUnrolled.via
-../viaduct -v compile benchmarks/Median.via -o build/rq2/lan/Median.via
-../viaduct -v compile benchmarks/Rochambeau.via -o build/rq2/lan/Rochambeau.via
-../viaduct -v compile benchmarks/TwoRoundBidding.via -o build/rq2/lan/TwoRoundBidding.via
-Benchmark,Information Flow Variables,Information Flow Time (ms),Selection Variables,Selection Time (ms)
-Battleship,323,135,1022,1154
-BettingMillionaires,102,83,387,2072
-Biomatch,248,108,708,2378
-GuessingGame,59,53,193,411
-HhiScore,89,62,285,1165
-HistoricalMillionaires,54,44,187,712
-Interval,170,95,660,4662
-Kmeans,550,192,1684,10157
-KmeansUnrolled,1219,401,3629,34031
-Median,117,71,386,1199
-Rochambeau,254,95,741,878
-TwoRoundBidding,187,68,575,1766
-Report written to build/rq2/report.csv
+viaduct -v compile benchmarks/Battleship.via -o build/rq2/lan/Battleship.via
+viaduct -v compile benchmarks/BettingMillionaires.via -o build/rq2/lan/BettingMillionaires.via
+viaduct -v compile benchmarks/Biomatch.via -o build/rq2/lan/Biomatch.via
+...
+Benchmark,LoC,Annotations,Information Flow Variables,Information Flow Time (ms),Selection Variables,Selection Time (ms)
+Battleship,70,12,323,212,1022,1290
+BettingMillionaires,23,7,102,121,387,2756
+Biomatch,31,8,248,146,708,2947
+...
 ```
+
+This recreates Figure 14 from the paper. Note that the number
+of lines reported here are slightly lower than the ones in the
+paper because this script ignores empty lines.
 
 
 ### RQ3 - Cost of Compiled Programs (Figure 15)

@@ -89,6 +89,25 @@ class CompilationStrategy(Enum):
     OPT_WAN = auto()
 
 
+def count_source_lines(file: PathLike) -> int:
+    """Returns the number of non-blank lines in the given file."""
+    number_of_lines = 0
+    with open(file) as f:
+        for line in f:
+            if line.strip():
+                number_of_lines += 1
+    return number_of_lines
+
+
+def count_source_annotations(file: PathLike) -> int:
+    """Returns the number of label annotations in the given file."""
+    annotations = 0
+    with open(file, encoding='utf-8') as f:
+        for line in f:
+            annotations += len(re.findall(r"{.*?}", line))
+    return annotations
+
+
 def write_report(file, rows):
     """Renders the given rows as CSV and writes them to the standard output and to the given file."""
     # Write report to file
@@ -114,7 +133,7 @@ def rq2(args):
     report_file = Path(rq_build_dir, f"report.csv")
 
     # Run the benchmarks
-    benchmarks = [Path(bench).stem for bench in get_make_variable("ANNOTATED_BENCHMARKS").split()]
+    benchmarks = [Path(bench) for bench in get_make_variable("ANNOTATED_BENCHMARKS").split()]
     build_log = make(["clean", "lan"], rq_build_dir)
 
     write_log(Path(rq_build_dir, "log", "build.log"), build_log)
@@ -122,6 +141,8 @@ def rq2(args):
     # Parse the build output
     rows = [[
         "Benchmark",
+        "LoC",
+        "Annotations",
         "Information Flow Variables",
         "Information Flow Time (ms)",
         "Selection Variables",
@@ -133,11 +154,15 @@ def rq2(args):
     selection_time_parser = re.finditer(r"finished protocol selection, ran for (\d+)ms", build_log)
 
     for benchmark in benchmarks:
+        benchmark_name = benchmark.stem
+        erased_version = benchmark.parent / f"{benchmark_name}Erased.via"
+        loc = count_source_lines(benchmark)
+        annotations = count_source_annotations(erased_version)
         if_vars = next(information_flow_variables_parser).group(1)
         if_time = next(information_flow_time_parser).group(1)
         selection_vars = next(selection_variables_parser).group(1)
         selection_time = next(selection_time_parser).group(1)
-        row = [benchmark, if_vars, if_time, selection_vars, selection_time]
+        row = [benchmark_name, loc, annotations, if_vars, if_time, selection_vars, selection_time]
         rows.append(row)
 
     write_report(report_file, rows)

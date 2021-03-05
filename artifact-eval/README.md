@@ -260,31 +260,38 @@ cd source
 ./gradlew build
 ```
 
-This will build the compiler and run all unit tests.
-Note that the Docker image does not contain third party dependencies to
+This will build the compiler and run all unit tests using the Gradle build
+tool. Gradle provides many other commands; refer to the
+[documentation](https://docs.gradle.org/6.8.2/userguide/command_line_interface.html)
+for details.
+
+Note that the Docker image does not include third party dependencies to
 (significantly) reduce image size, but Gradle will download all
 dependencies automatically.
 Every dependency is version pinned, so you should not run into any issues.
 However, you do need an internet connection.
 
-You can now run `./viaduct` in the `source` directory which will
-use the binary you just compiled instead of the system wide binary.
+You can now run `./viaduct` in the `source` directory to invoke the binary
+you just compiled instead of the system wide binary.
 Note, however, that the benchmarking scripts we provide will continue to use
 the system wide binary.
 
 
 ## Replicating Evaluation Results
 
-To reproduce the evaluation results in the submission, we have provided
+To reproduce the evaluation results in the submission (Section 7), we have provided
 a `benchmark.py` script to drive the Viaduct compiler and runtime system.
+Certain benchmarks may require some additional setup, which is detailed below.
 
-### Increasing memory available to Docker
+### Before you start
+
+#### Increasing memory available to Docker
 
 Benchmarks for RQ1, RQ2, and RQ4 should run with the default Docker settings,
 since these benchmarks only compile programs and compilation does not require
 a lot of memory.
 However, RQ3 executes programs using an MPC backend, and some programs
-require up to 10 GB of memory.
+require significant amounts of memory.
 
 There is no memory limit for Docker containers on Linux by default,
 but macOS and Windows set a 2 GB memory limit for Docker containers by default.
@@ -293,6 +300,22 @@ of memory to Docker:
 
 - macOS: https://docs.docker.com/docker-for-mac/#resources
 - Windows: https://docs.docker.com/docker-for-windows/#resources
+
+Note that changing these settings will kill all running containers.
+
+
+#### Enabling network admin privileges (Optional)
+
+If you would like to simulate our LAN and WAN network settings when running
+the RQ3 benchmarks, you need to start the Docker container with network
+admin privileges:
+
+```shell
+docker run --rm -it --cap-add NET_ADMIN viaduct:pldi-2021
+```
+
+This is optional, however. The benchmarks will run with the default network
+settings (but produce slightly different numbers).
 
 
 ### RQ1 - Scalability of Compilation
@@ -365,11 +388,45 @@ The command will then run four versions of each benchmark over the same inputs:
 the compiled LAN and WAN versions, as well as hand-written Bool and Yao versions
 that use Boolean and Yao circuits respectively.
 
-We have provided a `settraffic` script that uses the `tc` utility to simulate
-a LAN or WAN environment. The script artificially creates a bandwidth limits
-and latency on the loopback device (`lo`). It is simple to use: run
-`./settraffic lan` to set a LAN environment (1 Gbps / 1000 Mbps bandwidth) or
-`./settraffic wan` to a WAN environment (100 Mbps bandwidth and 50 ms latency).
+The script takes an optional argument `-i` which specifies the number of times
+each benchmark should be executed. This is set to 1 by default to reduce the time
+it takes to run the benchmarks. Results in the paper use 5:
+
+```shell
+./benchmark.py rq3 -i 5
+```
+
+The script will output a CSV report that has the following form:
+
+```csv
+Benchmark,Variant,Network,Iteration,Host,Running Time (s),Communication (MB)
+Biomatch,BOOL,NETWORK,1,alice,5.866,53.41919994354248
+Biomatch,BOOL,NETWORK,1,bob,5.868,53.41919136047363
+Biomatch,YAO,NETWORK,1,alice,3.461,49.89405059814453
+...
+```
+
+The report lists each host and iteration separately;
+to get the numbers in the paper, group by these columns and take the mean.
+
+#### Simulating LAN and WAN networks
+
+We have provided a `settraffic` script that uses the
+[tc](https://linux.die.net/man/8/tc) utility to simulate a LAN or WAN environment.
+The script artificially creates a bandwidth limit and latency on the loopback
+device (`lo`). It is simple to use: run
+
+```shell
+scripts/settraffic lan
+```
+
+to set a LAN environment (1 Gbps / 1000 Mbps bandwidth) or
+
+```shell
+scripts/settraffic wan
+```
+
+to set a WAN environment (100 Mbps bandwidth and 50 ms latency).
 Run `settraffic` with no arguments to delete all installed `tc` rules and set
 the network interfaces on the container back to normal.
 

@@ -47,6 +47,7 @@ WORKDIR /root
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     bash-completion \
+    iproute2 \
     less \
     make \
     python3 \

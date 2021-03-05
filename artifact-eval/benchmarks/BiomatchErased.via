@@ -19,7 +19,7 @@ process main {
         a_db[i] = input int from alice;
     }
 
-    for (var i: int{A ⊓ B} = 0; i < d; i += 1) {
+    for (var i: int = 0; i < d; i += 1) {
         b_sample[i] = input int from bob;
     }
 

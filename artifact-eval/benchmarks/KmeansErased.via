@@ -64,7 +64,7 @@ process main {
       val new_centroid_sum = Array[int](dim);
       var num_points: int = 0;
       for (var i: int = 0; i < len; i += 1) {
-        val in_cluster: bool{A & B} = best_clusters[i] == c;
+        val in_cluster: bool = best_clusters[i] == c;
 
         for (var d: int = 0; d < dim; d += 1) {
           new_centroid_sum[d] += mux(in_cluster, data[(i*dim)+d], 0);

@@ -417,13 +417,13 @@ The script artificially creates a bandwidth limit and latency on the loopback
 device (`lo`). It is simple to use: run
 
 ```shell
-scripts/settraffic lan
+./scripts/settraffic lan
 ```
 
 to set a LAN environment (1 Gbps / 1000 Mbps bandwidth) or
 
 ```shell
-scripts/settraffic wan
+./scripts/settraffic wan
 ```
 
 to set a WAN environment (100 Mbps bandwidth and 50 ms latency).

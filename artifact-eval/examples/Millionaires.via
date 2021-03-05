@@ -1,0 +1,12 @@
+/* The classic MPC problem. */
+process main {
+    val a: int = input int from alice;
+    val b: int = input int from bob;
+
+    val a_wins: bool = declassify (a > b) to {A ⊓ B};
+    output a_wins to alice;
+    output a_wins to bob;
+}
+
+host alice : {A & B<-}
+host bob   : {B & A<-}

@@ -50,6 +50,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     iproute2 \
     less \
     make \
+    nano \
     python3 \
     tmux \
     && rm -rf /var/lib/apt/lists/*

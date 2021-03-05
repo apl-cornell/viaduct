@@ -98,99 +98,62 @@ they support.
 
 #### Compiling source programs
 
-As an example, we will compile the `HistoricalMillionaires.via` program,
-which is in the `benchmarks` folder. You can view the source program
-with the following command:
+As an example, we will compile the `examples/Millionaires.via` program,
+which is an implementation of the standard Millionaires' problem in Viaduct.
+You can view the source program with the following command:
 
 ```shell
-less benchmarks/HistoricalMillionaires.via
+less examples/Millionaires.via
 ```
 
+Note that this and other programs in the `examples` directory are purposefully simple;
+you can find more complex examples under the `benchmarks` directory.
 Run the following to compile the program:
 
 ```shell
-viaduct -v compile benchmarks/HistoricalMillionaires.via
+viaduct -v compile examples/Millionaires.via
 ```
 
 This will print the compiled program to the standard output.
-The `-v` option turns on the verbose mode, which prints logging information.
+The `-v` option turns on detailed logging,
+and must come before the command name (e.g., `viaduct compile -v` will not work).
 You can repeat it (e.g., `-vvv`) for more granular messages, or leave it out.
-Note that this option needs to come before the command name,
-so `viaduct compile -v` will not work.
 
 To save the compiled file to disk, provide the `-o` option along with a file name:
 
 ```shell
-viaduct -v compile benchmarks/HistoricalMillionaires.via -o hm-out.via
+viaduct -v compile examples/Millionaires.via -o m-out.via
 ```
 
 You should see logging information that looks like this:
 
 ```console
- 479 ms [main] INFO  Compile - elaborating source program...
- 516 ms [main] INFO  Compile - specializing functions...
- 519 ms [main] INFO  Check - name analysis...
- 530 ms [main] INFO  Check - type checking...
- 533 ms [main] INFO  Check - out parameter initialization analysis...
- 536 ms [main] INFO  Check - information flow analysis...
- 580 ms [main] INFO  InformationFlowAnalysis - number of label variables: 54
- 580 ms [main] INFO  Check - finished information flow analysis, ran for 44ms
- 586 ms [main] INFO  Compile - selecting protocols...
-1146 ms [main] INFO  Z3Selection - number of symvars: 187
-1147 ms [main] INFO  Z3Selection - cost mode set to MINIMIZE
-1286 ms [main] INFO  Z3Selection - constraints satisfiable, extracted model
-1297 ms [main] INFO  Compile - finished protocol selection, ran for 689ms
-1305 ms [main] INFO  Compile - annotating program with protocols...
+1015 ms [main] INFO  Compile - elaborating source program...
+1110 ms [main] INFO  Compile - specializing functions...
+1115 ms [main] INFO  Check - name analysis...
+1149 ms [main] INFO  Check - type checking...
+1159 ms [main] INFO  Check - out parameter initialization analysis...
+1165 ms [main] INFO  Check - information flow analysis...
+1251 ms [main] INFO  InformationFlowAnalysis - number of label variables: 28
+1251 ms [main] INFO  Check - finished information flow analysis, ran for 87ms
+1272 ms [main] INFO  Compile - selecting protocols...
+1779 ms [main] INFO  Z3Selection - number of symvars: 91
+1779 ms [main] INFO  Z3Selection - cost mode set to MINIMIZE
+1828 ms [main] INFO  Z3Selection - constraints satisfiable, extracted model
+1834 ms [main] INFO  Compile - finished protocol selection, ran for 519ms
+1842 ms [main] INFO  Compile - annotating program with protocols...
 ```
 
-Viewing `hm-out.via` (using `less` or `cat`), you should see:
+You can view the compiled program:
 
-```viaduct
-host alice : {(A & B<-)}
-
-host bob : {(B & A<-)}
-
-process main {
-    val length: int{(A ⊓ B)}@Replication(hosts = {alice, bob}) = 100;
-    var a_min: int{(A & B<-)}@Local(host = alice) = 0;
-    var b_min: int{(B & A<-)}@Local(host = bob) = 0;
-    var i: int{(A ⊓ B)}@Replication(hosts = {alice, bob}) = 0;
-    loop {
-        let $tmp@Replication(hosts = {alice, bob}) = i;
-        let $tmp_1@Replication(hosts = {alice, bob}) = length;
-        let $tmp_2@Replication(hosts = {alice, bob}) = ($tmp < $tmp_1);
-        if ($tmp_2) {
-            let $tmp_3@Local(host = alice) = a_min;
-            let $tmp_4@Local(host = alice) = input int from alice;
-            let $tmp_5@Local(host = alice) = (min($tmp_3, $tmp_4));
-            a_min = $tmp_5;
-            let $tmp_6@Local(host = bob) = b_min;
-            let $tmp_7@Local(host = bob) = input int from bob;
-            let $tmp_8@Local(host = bob) = (min($tmp_6, $tmp_7));
-            b_min = $tmp_8;
-            i += 1;
-        } else {
-            break;
-        }
-    }
-    let $tmp_9@Local(host = alice) = a_min;
-    let $tmp_10@Local(host = bob) = b_min;
-    let $tmp_11@YaoABY(client = bob, server = alice) = ($tmp_9 > $tmp_10);
-    let $tmp_12@Replication(hosts = {alice, bob}) = declassify $tmp_11 to {(A ⊓ B)};
-    val a_wins: bool{(A ⊓ B)}@Replication(hosts = {alice, bob}) = $tmp_12;
-    let $tmp_13@Replication(hosts = {alice, bob}) = a_wins;
-    output $tmp_13 to alice;
-    let $tmp_14@Replication(hosts = {alice, bob}) = a_wins;
-    output $tmp_14 to bob;
-}
+```shell
+less m-out.via
 ```
 
-Notice that the distributed program is an elaborated version of the source
+
+Notice that the compiled program is an elaborated version of the source
 program where each variable declaration and let binding is annotated with
-the protocol that will execute it. As described in the paper, the compiled
-distributed program is optimized so that Alice and Bob compute their respective
-minima locally, and then use MPC (the `YaoABY` protocol above) to perform the
-comparison.
+the protocol that will execute it.
 
 
 #### Running compiled programs
@@ -199,15 +162,15 @@ The `run` command takes as arguments a host name and a compiled program,
 and executes the host's "projection" of the distributed program.
 Since compiled programs are distributed, we need to run multiple instances
 of Viaduct.
-For instance, to execute our example program `hm-out.via`,
+For instance, to execute our example program `m-out.via`,
 we need two participants standing in for hosts `alice` and `bob`, respectively.
 
 The easiest way to accomplish this from the single terminal window we have is to
 run one of the commands in the background:
 
 ```shell
-viaduct -v run alice hm-out.via -in inputs/alice.txt &
-viaduct -v run bob hm-out.via -in inputs/bob.txt
+viaduct -v run alice m-out.via -in inputs/alice.txt &
+viaduct -v run bob m-out.via -in inputs/bob.txt
 ```
 
 Here, we run two instances with logging enabled (the `-v` option),
@@ -229,17 +192,33 @@ Here is a very quick tutorial to get you started:
 
 4. Execute the following two commands in separate panes:
    ```shell
-   viaduct run alice hm-out.via -in inputs/alice.txt
-   viaduct run bob hm-out.via -in inputs/bob.txt
+   viaduct run alice m-out.via -in inputs/alice.txt
+   viaduct run bob m-out.via -in inputs/bob.txt
    ```
+
+   We recommend starting Alice's process first; you may get a "connection timed out"
+   error otherwise.
 
 5. Quit Tmux by typing `tmux kill-session`.
 
-You can provide input manually for one or both of the participant by omitting
+You can provide input manually for one or both of the participants by omitting
 the `-in` option (we also recommend leaving out the `-v` option).
 The participant will block on an `Input: ` prompt when you need to provide input.
-However, note that the default input size for the historical millionaires' game is
-100, so it will be tedious to provide input this way.
+
+
+You can repeat these steps for the other programs in the `examples` and `benchmarks`
+directories. However, programs in the `benchmarks` directory expect many
+(sometimes hundreds) of inputs, so we don't recommend providing inputs by hand!
+
+
+#### Editing files
+
+You can edit files using the `nano` editor:
+
+```shell
+nano examples/Millionaires.via
+```
+
 
 #### Limitations
 

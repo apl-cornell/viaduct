@@ -1,0 +1,105 @@
+host alice : {(A & B<-)}
+
+host bob : {(B & A<-)}
+
+process main {
+    val n: int@Replication(hosts = {alice, bob}) = 500;
+    let $tmp@Replication(hosts = {alice, bob}) = n;
+    val abids1 = Array[int]@YaoABY(client = bob, server = alice)($tmp);
+    let $tmp_1@Replication(hosts = {alice, bob}) = n;
+    val abids2 = Array[int]@YaoABY(client = bob, server = alice)($tmp_1);
+    let $tmp_2@Replication(hosts = {alice, bob}) = n;
+    val bbids1 = Array[int]@YaoABY(client = bob, server = alice)($tmp_2);
+    let $tmp_3@Replication(hosts = {alice, bob}) = n;
+    val bbids2 = Array[int]@YaoABY(client = bob, server = alice)($tmp_3);
+    var i: int@Replication(hosts = {alice, bob}) = 0;
+    loop {
+        let $tmp_4@Replication(hosts = {alice, bob}) = i;
+        let $tmp_5@Replication(hosts = {alice, bob}) = n;
+        let $tmp_6@Replication(hosts = {alice, bob}) = ($tmp_4 < $tmp_5);
+        if ($tmp_6) {
+            let $tmp_7@Replication(hosts = {alice, bob}) = i;
+            let $tmp_8@Local(host = alice) = input int from alice;
+            abids1[$tmp_7] = $tmp_8;
+            let $tmp_9@Replication(hosts = {alice, bob}) = i;
+            let $tmp_10@Local(host = bob) = input int from bob;
+            bbids1[$tmp_9] = $tmp_10;
+            i += 1;
+        } else {
+            break;
+        }
+    }
+    var i_1: int@Replication(hosts = {alice, bob}) = 0;
+    loop {
+        let $tmp_11@Replication(hosts = {alice, bob}) = i_1;
+        let $tmp_12@Replication(hosts = {alice, bob}) = n;
+        let $tmp_13@Replication(hosts = {alice, bob}) = ($tmp_11 < $tmp_12);
+        if ($tmp_13) {
+            let $tmp_14@Replication(hosts = {alice, bob}) = i_1;
+            let $tmp_15@YaoABY(client = bob, server = alice) = abids1[$tmp_14];
+            let $tmp_16@Replication(hosts = {alice, bob}) = i_1;
+            let $tmp_17@YaoABY(client = bob, server = alice) = bbids1[$tmp_16];
+            let $tmp_18@YaoABY(client = bob, server = alice) = ($tmp_15 < $tmp_17);
+            let $tmp_19@Replication(hosts = {alice, bob}) = declassify $tmp_18 to {(A ⊓ B)};
+            val winner: bool@Replication(hosts = {alice, bob}) = $tmp_19;
+            let $tmp_20@Replication(hosts = {alice, bob}) = winner;
+            output $tmp_20 to alice;
+            let $tmp_21@Replication(hosts = {alice, bob}) = winner;
+            output $tmp_21 to bob;
+            i_1 += 1;
+        } else {
+            break;
+        }
+    }
+    var i_2: int@Replication(hosts = {alice, bob}) = 0;
+    loop {
+        let $tmp_22@Replication(hosts = {alice, bob}) = i_2;
+        let $tmp_23@Replication(hosts = {alice, bob}) = n;
+        let $tmp_24@Replication(hosts = {alice, bob}) = ($tmp_22 < $tmp_23);
+        if ($tmp_24) {
+            let $tmp_25@Replication(hosts = {alice, bob}) = i_2;
+            let $tmp_26@Local(host = alice) = input int from alice;
+            abids2[$tmp_25] = $tmp_26;
+            let $tmp_27@Replication(hosts = {alice, bob}) = i_2;
+            let $tmp_28@Local(host = bob) = input int from bob;
+            bbids2[$tmp_27] = $tmp_28;
+            i_2 += 1;
+        } else {
+            break;
+        }
+    }
+    var i_3: int@Replication(hosts = {alice, bob}) = 0;
+    loop {
+        let $tmp_29@Replication(hosts = {alice, bob}) = i_3;
+        let $tmp_30@Replication(hosts = {alice, bob}) = n;
+        let $tmp_31@Replication(hosts = {alice, bob}) = ($tmp_29 < $tmp_30);
+        if ($tmp_31) {
+            let $tmp_32@Replication(hosts = {alice, bob}) = i_3;
+            let $tmp_33@YaoABY(client = bob, server = alice) = abids1[$tmp_32];
+            let $tmp_34@Replication(hosts = {alice, bob}) = i_3;
+            let $tmp_35@YaoABY(client = bob, server = alice) = abids2[$tmp_34];
+            let $tmp_36@YaoABY(client = bob, server = alice) = ($tmp_33 + $tmp_35);
+            let $tmp_37@YaoABY(client = bob, server = alice) = ($tmp_36 / 2);
+            val abid: int@YaoABY(client = bob, server = alice) = $tmp_37;
+            let $tmp_38@Replication(hosts = {alice, bob}) = i_3;
+            let $tmp_39@YaoABY(client = bob, server = alice) = bbids1[$tmp_38];
+            let $tmp_40@Replication(hosts = {alice, bob}) = i_3;
+            let $tmp_41@YaoABY(client = bob, server = alice) = bbids2[$tmp_40];
+            let $tmp_42@YaoABY(client = bob, server = alice) = ($tmp_39 + $tmp_41);
+            let $tmp_43@YaoABY(client = bob, server = alice) = ($tmp_42 / 2);
+            val bbid: int@YaoABY(client = bob, server = alice) = $tmp_43;
+            let $tmp_44@YaoABY(client = bob, server = alice) = abid;
+            let $tmp_45@YaoABY(client = bob, server = alice) = bbid;
+            let $tmp_46@YaoABY(client = bob, server = alice) = ($tmp_44 < $tmp_45);
+            let $tmp_47@Replication(hosts = {alice, bob}) = declassify $tmp_46 to {(A ⊓ B)};
+            val winner_1: bool@Replication(hosts = {alice, bob}) = $tmp_47;
+            let $tmp_48@Replication(hosts = {alice, bob}) = winner_1;
+            output $tmp_48 to alice;
+            let $tmp_49@Replication(hosts = {alice, bob}) = winner_1;
+            output $tmp_49 to bob;
+            i_3 += 1;
+        } else {
+            break;
+        }
+    }
+}

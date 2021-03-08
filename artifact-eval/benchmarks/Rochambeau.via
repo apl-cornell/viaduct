@@ -9,8 +9,8 @@ process main {
   val b_moves = Array[int]{B & A<-}(num_turns);
   
   for (var i: int{A ⊓ B} = 0; i < num_turns; i += 1) {
-    a_moves[i] = endorse (input int from alice) from {A} to {A & B<-};
-    b_moves[i] = endorse (input int from bob) from {B} to {B & A<-};
+    a_moves[i] = endorse (input int from alice) to {A & B<-} from {A};
+    b_moves[i] = endorse (input int from bob) to {B & A<-} from {B};
   }
 
   for (var turn: int{A ⊓ B} = 0; turn < num_turns; turn += 1) {

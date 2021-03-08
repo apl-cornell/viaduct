@@ -37,7 +37,7 @@ process main {
             if (aturn) {
                 val amove: int = declassify (input int from alice) to {(A|B)-> & A<-};
                 var amove_trusted: int = endorse amove from {(A|B)-> & A<-};
-                var ahit: bool{A ⊓ B} = false;
+                var ahit: bool = false;
                 for (var aj: int = 0; aj < 5; aj += 1) {
                     if (declassify (bships[aj] == amove_trusted) to {A ⊓ B}) {
                         ascore += 1;

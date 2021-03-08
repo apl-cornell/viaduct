@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+
+set -e
+
+# Ethernet device; the default is the loopback (localhost) device.
+ETH="lo"
+
+# Clear traffic rules.
+tc qdisc del dev $ETH root 2>/dev/null || true
+
+case $1 in
+  "lan" )
+    ;;
+  "wan" )
+    tc qdisc add dev $ETH root handle 1: tbf rate 100mbit burst 1mbit latency 400ms
+    tc qdisc add dev $ETH parent 1:1 handle 10: netem delay 50ms
+    ;;
+esac
+
+echo "Traffic rules applied. Current configuration:"
+tc qdisc show dev $ETH

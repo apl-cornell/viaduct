@@ -1,0 +1,40 @@
+host alice: {A & B<-}
+host bob: {B & A<-}
+
+/* biometric matching example from HyCC paper */
+fun match(db1: int{A & B<-}, db2: int{db1}, s1: int{B & A<-}, s2: int{s1}, res: out int{A & B}) {
+    val dist1: int = db1 - s1;
+    val dist2: int = db2 - s2;
+    out res = (dist1 * dist1) + (dist2 * dist2);
+}
+
+process main {
+    val n: int = 128;
+    val d: int = 2;
+
+    val a_db = Array[int](n * d);
+    val b_sample = Array[int](d);
+
+    for (var i: int = 0; i < n*d; i += 1) {
+        a_db[i] = input int from alice;
+    }
+
+    for (var i: int = 0; i < d; i += 1) {
+        b_sample[i] = input int from bob;
+    }
+
+    match(a_db[0], a_db[1], b_sample[0], b_sample[1], val init_min);
+    var min_dist: int = init_min;
+
+    for (var i: int = 0; i < n; i += 1) {
+        match(a_db[(i*d)], a_db[(i*d)+1], b_sample[0], b_sample[1], val dist);
+
+        if (dist < min_dist) {
+            min_dist = dist;
+        }
+    }
+
+    val result: int = declassify min_dist to {A ⊓ B};
+    output result to alice;
+    output result to bob;
+}

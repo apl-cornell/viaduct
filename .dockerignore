@@ -1,6 +1,10 @@
+# Operating systems
+**/.DS_Store
+
 # Editors
 .idea
 .vscode
+**/*.iml
 
 # Git
 .git
@@ -8,3 +12,7 @@
 # Gradle
 .gradle
 **/build
+
+# Archives
+*.tar
+*.tar.gz

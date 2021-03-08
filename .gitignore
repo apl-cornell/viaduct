@@ -86,7 +86,3 @@ bin/*
 !lib/*
 
 .*.sw?
-
-*.py
-*.mpc
-!viaduct_bench.py

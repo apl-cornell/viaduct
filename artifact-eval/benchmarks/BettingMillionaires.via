@@ -6,10 +6,12 @@ host chuck: {C}
 process main {
   val c_bet: bool{C & (A&B)<-} = endorse (input bool from chuck) to {C & (A&B)<-} from {C};
 
-  val length: int{A ⊓ B} = 10;
+  /* chuck can see this public parameter, but doesn't need to trust it */
+  val length: int{A ⊓ B ⊓ C->} = 10;
+
   var a_min: int{A & B<-} = 0;
   var b_min: int{B & A<-} = 0;
-  for (var i: int{A ⊓ B} = 0; i < length; i += 1) {
+  for (var i: int{A ⊓ B ⊓ C->} = 0; i < length; i += 1) {
       a_min = min(a_min, input int from alice);
       b_min = min(b_min, input int from bob);
   }

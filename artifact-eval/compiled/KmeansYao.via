@@ -1,0 +1,309 @@
+host alice : {(A & B<-)}
+
+host bob : {(B & A<-)}
+
+process main {
+    val a_len: int{(A ⊓ B)}@Replication(hosts = {alice, bob}) = 50;
+    val b_len: int{(A ⊓ B)}@Replication(hosts = {alice, bob}) = 50;
+    let $tmp@Replication(hosts = {alice, bob}) = a_len;
+    let $tmp_1@Replication(hosts = {alice, bob}) = b_len;
+    let $tmp_2@Replication(hosts = {alice, bob}) = ($tmp + $tmp_1);
+    val len: int{(A ⊓ B)}@Replication(hosts = {alice, bob}) = $tmp_2;
+    val dim: int{(A ⊓ B)}@Replication(hosts = {alice, bob}) = 2;
+    val num_clusters: int{(A ⊓ B)}@Replication(hosts = {alice, bob}) = 4;
+    val num_iterations: int{(A ⊓ B)}@Replication(hosts = {alice, bob}) = 3;
+    let $tmp_3@Replication(hosts = {alice, bob}) = len;
+    let $tmp_4@Replication(hosts = {alice, bob}) = dim;
+    let $tmp_5@Replication(hosts = {alice, bob}) = ($tmp_3 * $tmp_4);
+    val data = Array[int]{(A & B)}@YaoABY(client = bob, server = alice)($tmp_5);
+    var i: int{(A ⊓ B)}@Replication(hosts = {alice, bob}) = 0;
+    loop {
+        let $tmp_6@Replication(hosts = {alice, bob}) = i;
+        let $tmp_7@Replication(hosts = {alice, bob}) = a_len;
+        let $tmp_8@Replication(hosts = {alice, bob}) = dim;
+        let $tmp_9@Replication(hosts = {alice, bob}) = ($tmp_7 * $tmp_8);
+        let $tmp_10@Replication(hosts = {alice, bob}) = ($tmp_6 < $tmp_9);
+        if ($tmp_10) {
+            let $tmp_11@Replication(hosts = {alice, bob}) = i;
+            let $tmp_12@Local(host = alice) = input int from alice;
+            data[$tmp_11] = $tmp_12;
+            i += 1;
+        } else {
+            break;
+        }
+    }
+    var i_1: int{(A ⊓ B)}@Replication(hosts = {alice, bob}) = 0;
+    loop {
+        let $tmp_13@Replication(hosts = {alice, bob}) = i_1;
+        let $tmp_14@Replication(hosts = {alice, bob}) = b_len;
+        let $tmp_15@Replication(hosts = {alice, bob}) = dim;
+        let $tmp_16@Replication(hosts = {alice, bob}) = ($tmp_14 * $tmp_15);
+        let $tmp_17@Replication(hosts = {alice, bob}) = ($tmp_13 < $tmp_16);
+        if ($tmp_17) {
+            let $tmp_18@Replication(hosts = {alice, bob}) = a_len;
+            let $tmp_19@Replication(hosts = {alice, bob}) = dim;
+            let $tmp_20@Replication(hosts = {alice, bob}) = ($tmp_18 * $tmp_19);
+            let $tmp_21@Replication(hosts = {alice, bob}) = i_1;
+            let $tmp_22@Replication(hosts = {alice, bob}) = ($tmp_20 + $tmp_21);
+            let $tmp_23@Local(host = bob) = input int from bob;
+            data[$tmp_22] = $tmp_23;
+            i_1 += 1;
+        } else {
+            break;
+        }
+    }
+    let $tmp_24@Replication(hosts = {alice, bob}) = num_clusters;
+    let $tmp_25@Replication(hosts = {alice, bob}) = dim;
+    let $tmp_26@Replication(hosts = {alice, bob}) = ($tmp_24 * $tmp_25);
+    val clusters = Array[int]{(A & B)}@YaoABY(client = bob, server = alice)($tmp_26);
+    let $tmp_27@Replication(hosts = {alice, bob}) = len;
+    let $tmp_28@Replication(hosts = {alice, bob}) = num_clusters;
+    let $tmp_29@Replication(hosts = {alice, bob}) = ($tmp_27 / $tmp_28);
+    val stride: int{(A ⊓ B)}@Replication(hosts = {alice, bob}) = $tmp_29;
+    var c: int{(A ⊓ B)}@Replication(hosts = {alice, bob}) = 0;
+    loop {
+        let $tmp_30@Replication(hosts = {alice, bob}) = c;
+        let $tmp_31@Replication(hosts = {alice, bob}) = num_clusters;
+        let $tmp_32@Replication(hosts = {alice, bob}) = ($tmp_30 < $tmp_31);
+        if ($tmp_32) {
+            var d: int{(A ⊓ B)}@Replication(hosts = {alice, bob}) = 0;
+            loop {
+                let $tmp_33@Replication(hosts = {alice, bob}) = d;
+                let $tmp_34@Replication(hosts = {alice, bob}) = dim;
+                let $tmp_35@Replication(hosts = {alice, bob}) = ($tmp_33 < $tmp_34);
+                if ($tmp_35) {
+                    let $tmp_36@Replication(hosts = {alice, bob}) = c;
+                    let $tmp_37@Replication(hosts = {alice, bob}) = d;
+                    let $tmp_38@Replication(hosts = {alice, bob}) = ($tmp_36 + $tmp_37);
+                    let $tmp_39@Replication(hosts = {alice, bob}) = stride;
+                    let $tmp_40@Replication(hosts = {alice, bob}) = c;
+                    let $tmp_41@Replication(hosts = {alice, bob}) = ($tmp_39 * $tmp_40);
+                    let $tmp_42@Replication(hosts = {alice, bob}) = dim;
+                    let $tmp_43@Replication(hosts = {alice, bob}) = ($tmp_41 * $tmp_42);
+                    let $tmp_44@Replication(hosts = {alice, bob}) = d;
+                    let $tmp_45@Replication(hosts = {alice, bob}) = ($tmp_43 + $tmp_44);
+                    let $tmp_46@YaoABY(client = bob, server = alice) = data[$tmp_45];
+                    clusters[$tmp_38] = $tmp_46;
+                    d += 1;
+                } else {
+                    break;
+                }
+            }
+            c += 1;
+        } else {
+            break;
+        }
+    }
+    var iter: int{(A ⊓ B)}@Replication(hosts = {alice, bob}) = 0;
+    loop {
+        let $tmp_47@Replication(hosts = {alice, bob}) = iter;
+        let $tmp_48@Replication(hosts = {alice, bob}) = num_iterations;
+        let $tmp_49@Replication(hosts = {alice, bob}) = ($tmp_47 < $tmp_48);
+        if ($tmp_49) {
+            let $tmp_50@Replication(hosts = {alice, bob}) = len;
+            val best_clusters = Array[int]{(A & B)}@YaoABY(client = bob, server = alice)($tmp_50);
+            var i_2: int@Replication(hosts = {alice, bob}) = 0;
+            loop {
+                let $tmp_51@Replication(hosts = {alice, bob}) = i_2;
+                let $tmp_52@Replication(hosts = {alice, bob}) = len;
+                let $tmp_53@Replication(hosts = {alice, bob}) = ($tmp_51 < $tmp_52);
+                if ($tmp_53) {
+                    var best_dist: int{(A & B)}@YaoABY(client = bob, server = alice) = 0;
+                    var best_cluster: int{(A & B)}@YaoABY(client = bob, server = alice) = 0;
+                    var d_1: int{(A ⊓ B)}@Replication(hosts = {alice, bob}) = 0;
+                    loop {
+                        let $tmp_54@Replication(hosts = {alice, bob}) = d_1;
+                        let $tmp_55@Replication(hosts = {alice, bob}) = dim;
+                        let $tmp_56@Replication(hosts = {alice, bob}) = ($tmp_54 < $tmp_55);
+                        if ($tmp_56) {
+                            let $tmp_57@Replication(hosts = {alice, bob}) = i_2;
+                            let $tmp_58@Replication(hosts = {alice, bob}) = dim;
+                            let $tmp_59@Replication(hosts = {alice, bob}) = ($tmp_57 * $tmp_58);
+                            let $tmp_60@Replication(hosts = {alice, bob}) = d_1;
+                            let $tmp_61@Replication(hosts = {alice, bob}) = ($tmp_59 + $tmp_60);
+                            let $tmp_62@YaoABY(client = bob, server = alice) = data[$tmp_61];
+                            let $tmp_63@Replication(hosts = {alice, bob}) = d_1;
+                            let $tmp_64@YaoABY(client = bob, server = alice) = clusters[$tmp_63];
+                            let $tmp_65@YaoABY(client = bob, server = alice) = ($tmp_62 - $tmp_64);
+                            val sub: int{(A & B)}@YaoABY(client = bob, server = alice) = $tmp_65;
+                            let $tmp_66@YaoABY(client = bob, server = alice) = sub;
+                            let $tmp_67@YaoABY(client = bob, server = alice) = sub;
+                            let $tmp_68@YaoABY(client = bob, server = alice) = ($tmp_66 * $tmp_67);
+                            best_dist += $tmp_68;
+                            d_1 += 1;
+                        } else {
+                            break;
+                        }
+                    }
+                    var c_1: int{(A ⊓ B)}@Replication(hosts = {alice, bob}) = 1;
+                    loop {
+                        let $tmp_69@Replication(hosts = {alice, bob}) = c_1;
+                        let $tmp_70@Replication(hosts = {alice, bob}) = num_clusters;
+                        let $tmp_71@Replication(hosts = {alice, bob}) = ($tmp_69 < $tmp_70);
+                        if ($tmp_71) {
+                            var dist: int{(A & B)}@YaoABY(client = bob, server = alice) = 0;
+                            var d_2: int{(A ⊓ B)}@Replication(hosts = {alice, bob}) = 0;
+                            loop {
+                                let $tmp_72@Replication(hosts = {alice, bob}) = d_2;
+                                let $tmp_73@Replication(hosts = {alice, bob}) = dim;
+                                let $tmp_74@Replication(hosts = {alice, bob}) = ($tmp_72 < $tmp_73);
+                                if ($tmp_74) {
+                                    let $tmp_75@Replication(hosts = {alice, bob}) = i_2;
+                                    let $tmp_76@Replication(hosts = {alice, bob}) = dim;
+                                    let $tmp_77@Replication(hosts = {alice, bob}) = ($tmp_75 * $tmp_76);
+                                    let $tmp_78@Replication(hosts = {alice, bob}) = d_2;
+                                    let $tmp_79@Replication(hosts = {alice, bob}) = ($tmp_77 + $tmp_78);
+                                    let $tmp_80@YaoABY(client = bob, server = alice) = data[$tmp_79];
+                                    let $tmp_81@Replication(hosts = {alice, bob}) = c_1;
+                                    let $tmp_82@Replication(hosts = {alice, bob}) = dim;
+                                    let $tmp_83@Replication(hosts = {alice, bob}) = ($tmp_81 * $tmp_82);
+                                    let $tmp_84@Replication(hosts = {alice, bob}) = d_2;
+                                    let $tmp_85@Replication(hosts = {alice, bob}) = ($tmp_83 + $tmp_84);
+                                    let $tmp_86@YaoABY(client = bob, server = alice) = clusters[$tmp_85];
+                                    let $tmp_87@YaoABY(client = bob, server = alice) = ($tmp_80 - $tmp_86);
+                                    val sub_1: int{(A & B)}@YaoABY(client = bob, server = alice) = $tmp_87;
+                                    let $tmp_88@YaoABY(client = bob, server = alice) = sub_1;
+                                    let $tmp_89@YaoABY(client = bob, server = alice) = sub_1;
+                                    let $tmp_90@YaoABY(client = bob, server = alice) = ($tmp_88 * $tmp_89);
+                                    dist += $tmp_90;
+                                    d_2 += 1;
+                                } else {
+                                    break;
+                                }
+                            }
+                            let $tmp_91@YaoABY(client = bob, server = alice) = dist;
+                            let $tmp_92@YaoABY(client = bob, server = alice) = best_dist;
+                            let $tmp_93@YaoABY(client = bob, server = alice) = ($tmp_91 < $tmp_92);
+                            let $tmp_94@Replication(hosts = {alice, bob}) = c_1;
+                            let $tmp_95@YaoABY(client = bob, server = alice) = best_cluster;
+                            let $tmp_96@YaoABY(client = bob, server = alice) = (mux($tmp_93, $tmp_94, $tmp_95));
+                            best_cluster = $tmp_96;
+                            c_1 += 1;
+                        } else {
+                            break;
+                        }
+                    }
+                    let $tmp_97@Replication(hosts = {alice, bob}) = i_2;
+                    let $tmp_98@YaoABY(client = bob, server = alice) = best_cluster;
+                    best_clusters[$tmp_97] = $tmp_98;
+                    i_2 += 1;
+                } else {
+                    break;
+                }
+            }
+            var c_2: int@Replication(hosts = {alice, bob}) = 0;
+            loop {
+                let $tmp_99@Replication(hosts = {alice, bob}) = c_2;
+                let $tmp_100@Replication(hosts = {alice, bob}) = num_clusters;
+                let $tmp_101@Replication(hosts = {alice, bob}) = ($tmp_99 < $tmp_100);
+                if ($tmp_101) {
+                    let $tmp_102@Replication(hosts = {alice, bob}) = dim;
+                    val new_centroid_sum = Array[int]{(A & B)}@YaoABY(client = bob, server = alice)($tmp_102);
+                    var num_points: int{(A & B)}@YaoABY(client = bob, server = alice) = 0;
+                    var i_3: int@Replication(hosts = {alice, bob}) = 0;
+                    loop {
+                        let $tmp_103@Replication(hosts = {alice, bob}) = i_3;
+                        let $tmp_104@Replication(hosts = {alice, bob}) = len;
+                        let $tmp_105@Replication(hosts = {alice, bob}) = ($tmp_103 < $tmp_104);
+                        if ($tmp_105) {
+                            let $tmp_106@Replication(hosts = {alice, bob}) = i_3;
+                            let $tmp_107@YaoABY(client = bob, server = alice) = best_clusters[$tmp_106];
+                            let $tmp_108@Replication(hosts = {alice, bob}) = c_2;
+                            let $tmp_109@YaoABY(client = bob, server = alice) = ($tmp_107 == $tmp_108);
+                            val in_cluster: bool{(A & B)}@YaoABY(client = bob, server = alice) = $tmp_109;
+                            var d_3: int{(A ⊓ B)}@Replication(hosts = {alice, bob}) = 0;
+                            loop {
+                                let $tmp_110@Replication(hosts = {alice, bob}) = d_3;
+                                let $tmp_111@Replication(hosts = {alice, bob}) = dim;
+                                let $tmp_112@Replication(hosts = {alice, bob}) = ($tmp_110 < $tmp_111);
+                                if ($tmp_112) {
+                                    let $tmp_113@Replication(hosts = {alice, bob}) = d_3;
+                                    let $tmp_114@YaoABY(client = bob, server = alice) = in_cluster;
+                                    let $tmp_115@Replication(hosts = {alice, bob}) = i_3;
+                                    let $tmp_116@Replication(hosts = {alice, bob}) = dim;
+                                    let $tmp_117@Replication(hosts = {alice, bob}) = ($tmp_115 * $tmp_116);
+                                    let $tmp_118@Replication(hosts = {alice, bob}) = d_3;
+                                    let $tmp_119@Replication(hosts = {alice, bob}) = ($tmp_117 + $tmp_118);
+                                    let $tmp_120@YaoABY(client = bob, server = alice) = data[$tmp_119];
+                                    let $tmp_121@YaoABY(client = bob, server = alice) = (mux($tmp_114, $tmp_120, 0));
+                                    new_centroid_sum[$tmp_113] += $tmp_121;
+                                    d_3 += 1;
+                                } else {
+                                    break;
+                                }
+                            }
+                            let $tmp_122@YaoABY(client = bob, server = alice) = in_cluster;
+                            let $guard@YaoABY(client = bob, server = alice) = (!$tmp_122);
+                            let $guard_1@YaoABY(client = bob, server = alice) = $tmp_122;
+                            let $guard_2@YaoABY(client = bob, server = alice) = $guard;
+                            let $get@YaoABY(client = bob, server = alice) = num_points;
+                            let $op@YaoABY(client = bob, server = alice) = ($get + 1);
+                            let $mux@YaoABY(client = bob, server = alice) = (mux($guard_1, $op, $get));
+                            num_points = $mux;
+                            i_3 += 1;
+                        } else {
+                            break;
+                        }
+                    }
+                    var d_4: int{(A ⊓ B)}@Replication(hosts = {alice, bob}) = 0;
+                    loop {
+                        let $tmp_123@Replication(hosts = {alice, bob}) = d_4;
+                        let $tmp_124@Replication(hosts = {alice, bob}) = dim;
+                        let $tmp_125@Replication(hosts = {alice, bob}) = ($tmp_123 < $tmp_124);
+                        if ($tmp_125) {
+                            let $tmp_126@Replication(hosts = {alice, bob}) = c_2;
+                            let $tmp_127@Replication(hosts = {alice, bob}) = dim;
+                            let $tmp_128@Replication(hosts = {alice, bob}) = ($tmp_126 * $tmp_127);
+                            let $tmp_129@Replication(hosts = {alice, bob}) = d_4;
+                            let $tmp_130@Replication(hosts = {alice, bob}) = ($tmp_128 + $tmp_129);
+                            let $tmp_131@YaoABY(client = bob, server = alice) = num_points;
+                            let $tmp_132@YaoABY(client = bob, server = alice) = ($tmp_131 > 0);
+                            let $tmp_133@Replication(hosts = {alice, bob}) = d_4;
+                            let $tmp_134@YaoABY(client = bob, server = alice) = new_centroid_sum[$tmp_133];
+                            let $tmp_135@YaoABY(client = bob, server = alice) = num_points;
+                            let $tmp_136@YaoABY(client = bob, server = alice) = ($tmp_134 / $tmp_135);
+                            let $tmp_137@Replication(hosts = {alice, bob}) = c_2;
+                            let $tmp_138@Replication(hosts = {alice, bob}) = dim;
+                            let $tmp_139@Replication(hosts = {alice, bob}) = ($tmp_137 * $tmp_138);
+                            let $tmp_140@Replication(hosts = {alice, bob}) = d_4;
+                            let $tmp_141@Replication(hosts = {alice, bob}) = ($tmp_139 + $tmp_140);
+                            let $tmp_142@YaoABY(client = bob, server = alice) = clusters[$tmp_141];
+                            let $tmp_143@YaoABY(client = bob, server = alice) = (mux($tmp_132, $tmp_136, $tmp_142));
+                            clusters[$tmp_130] = $tmp_143;
+                            d_4 += 1;
+                        } else {
+                            break;
+                        }
+                    }
+                    c_2 += 1;
+                } else {
+                    break;
+                }
+            }
+            iter += 1;
+        } else {
+            break;
+        }
+    }
+    var h: int{(A ⊓ B)}@Replication(hosts = {alice, bob}) = 0;
+    loop {
+        let $tmp_144@Replication(hosts = {alice, bob}) = h;
+        let $tmp_145@Replication(hosts = {alice, bob}) = num_clusters;
+        let $tmp_146@Replication(hosts = {alice, bob}) = dim;
+        let $tmp_147@Replication(hosts = {alice, bob}) = ($tmp_145 * $tmp_146);
+        let $tmp_148@Replication(hosts = {alice, bob}) = ($tmp_144 < $tmp_147);
+        if ($tmp_148) {
+            let $tmp_149@Replication(hosts = {alice, bob}) = h;
+            let $tmp_150@YaoABY(client = bob, server = alice) = clusters[$tmp_149];
+            let $tmp_151@Replication(hosts = {alice, bob}) = declassify $tmp_150 to {(A ⊓ B)};
+            val public_cluster: int{(A ⊓ B)}@Replication(hosts = {alice, bob}) = $tmp_151;
+            let $tmp_152@Replication(hosts = {alice, bob}) = public_cluster;
+            output $tmp_152 to alice;
+            let $tmp_153@Replication(hosts = {alice, bob}) = public_cluster;
+            output $tmp_153 to bob;
+            h += 1;
+        } else {
+            break;
+        }
+    }
+}

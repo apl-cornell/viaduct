@@ -1,0 +1,29 @@
+/*
+ * Calculates the Herfindahl-Hirschman index for market competitiveness.
+ * In this scenario, we're assessing the competitiveness of the widget market
+ * amongst two widget makers by calculating the revenue of each company
+ * (by summing up sales in n stores) and then calculating each company's
+ * market share and applying the HHI formula.
+ */
+process main {
+    val storeCount: int = 500;
+
+    var a_rev: int = 0;
+    var b_rev: int = 0;
+    for (var i : int = 0; i < storeCount; i += 1) {
+        a_rev += input int from companyA;
+        b_rev += input int from companyB;
+    }
+
+    val total_market: int = a_rev + b_rev;
+    val a_share: int = (100 * a_rev) / total_market;
+    val b_share: int = (100 * b_rev) / total_market;
+
+    val hhi: int = declassify (a_share * a_share + b_share * b_share) to {A ⊓ B};
+
+    output hhi to companyA;
+    output hhi to companyB;
+}
+
+host companyA  : {A & B<-}
+host companyB  : {B & A<-}

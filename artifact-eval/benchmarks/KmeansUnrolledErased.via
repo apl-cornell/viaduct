@@ -1,0 +1,195 @@
+host alice  : {A & B<-}
+host bob    : {B & A<-}
+
+/* k-means clustering */
+process main {
+  val a_len: int = 2;
+  val b_len: int = 2;
+  val len: int = a_len + b_len;
+  val dim: int = 1;
+  val num_clusters: int = 2;
+  val num_iterations: int = 1;
+
+  val data = Array[int](len * dim);
+
+  /* load data */
+  for (var i: int = 0; i < a_len * dim; i += 1) {
+    data[i] = input int from alice;
+  }
+
+  for (var i: int = 0; i < b_len * dim; i += 1) {
+    data[(a_len*dim) + i] = input int from bob;
+  }
+
+  val clusters = Array[int](num_clusters * dim);
+
+  /* initialize by randomly picking data points as centroids */
+  val stride: int = len / num_clusters;
+  for (var c: int = 0; c < num_clusters; c += 1) {
+    for (var d: int = 0; d < dim; d += 1) {
+      clusters[c+d] = data[(stride*c*dim)+d];
+    }
+  }
+
+  /* unroll iterations */
+  {
+    /* assign points to clusters */
+    val best_clusters = Array[int](len);
+    for (var i: int = 0; i < len; i += 1) {
+
+      /* initialize to first cluster */
+      var best_dist: int = 0;
+      var best_cluster: int = 0;
+      for (var d: int; d < dim; d += 1) {
+        val sub: int = data[(i*dim)+d] - clusters[d];
+        best_dist += sub * sub;
+      }
+
+      for (var c: int = 1; c < num_clusters; c += 1) {
+        var dist: int = 0;
+        for (var d: int; d < dim; d += 1) {
+          val sub: int = data[(i*dim)+d] - clusters[(c*dim)+d];
+          dist += sub * sub;
+        }
+
+        /* need to mux manually because the read channel check prevents this
+         * from typechecking otherwise */
+        best_cluster = mux(dist < best_dist, c, best_cluster);
+      }
+
+      best_clusters[i] = best_cluster;
+    }
+
+    /* update cluster centroids */
+    for (var c: int = 1; c < num_clusters; c += 1) {
+      val new_centroid_sum = Array[int](dim);
+      var num_points: int = 0;
+      for (var i: int = 0; i < len; i += 1) {
+        val in_cluster: bool = best_clusters[i] == c;
+
+        for (var d: int = 0; d < dim; d += 1) {
+          new_centroid_sum[d] += mux(in_cluster, data[(i*dim)+d], 0);
+        }
+
+        if (in_cluster) {
+          num_points += 1;
+        }
+      }
+
+      for (var d: int = 0; d < dim; d += 1) {
+        clusters[(c*dim)+d] =
+          mux(num_points > 0, new_centroid_sum[d] / num_points, clusters[(c*dim)+d]);
+      }
+    }
+  }
+
+  {
+    /* assign points to clusters */
+    val best_clusters = Array[int](len);
+    for (var i: int = 0; i < len; i += 1) {
+
+      /* initialize to first cluster */
+      var best_dist: int = 0;
+      var best_cluster: int = 0;
+      for (var d: int; d < dim; d += 1) {
+        val sub: int = data[(i*dim)+d] - clusters[d];
+        best_dist += sub * sub;
+      }
+
+      for (var c: int = 1; c < num_clusters; c += 1) {
+        var dist: int = 0;
+        for (var d: int; d < dim; d += 1) {
+          val sub: int = data[(i*dim)+d] - clusters[(c*dim)+d];
+          dist += sub * sub;
+        }
+
+        /* need to mux manually because the read channel check prevents this
+         * from typechecking otherwise */
+        best_cluster = mux(dist < best_dist, c, best_cluster);
+      }
+
+      best_clusters[i] = best_cluster;
+    }
+
+    /* update cluster centroids */
+    for (var c: int = 1; c < num_clusters; c += 1) {
+      val new_centroid_sum = Array[int](dim);
+      var num_points: int = 0;
+      for (var i: int = 0; i < len; i += 1) {
+        val in_cluster: bool = best_clusters[i] == c;
+
+        for (var d: int = 0; d < dim; d += 1) {
+          new_centroid_sum[d] += mux(in_cluster, data[(i*dim)+d], 0);
+        }
+
+        if (in_cluster) {
+          num_points += 1;
+        }
+      }
+
+      for (var d: int = 0; d < dim; d += 1) {
+        clusters[(c*dim)+d] =
+          mux(num_points > 0, new_centroid_sum[d] / num_points, clusters[(c*dim)+d]);
+      }
+    }
+  }
+
+  {
+    /* assign points to clusters */
+    val best_clusters = Array[int](len);
+    for (var i: int = 0; i < len; i += 1) {
+
+      /* initialize to first cluster */
+      var best_dist: int = 0;
+      var best_cluster: int = 0;
+      for (var d: int; d < dim; d += 1) {
+        val sub: int = data[(i*dim)+d] - clusters[d];
+        best_dist += sub * sub;
+      }
+
+      for (var c: int = 1; c < num_clusters; c += 1) {
+        var dist: int = 0;
+        for (var d: int; d < dim; d += 1) {
+          val sub: int = data[(i*dim)+d] - clusters[(c*dim)+d];
+          dist += sub * sub;
+        }
+
+        /* need to mux manually because the read channel check prevents this
+         * from typechecking otherwise */
+        best_cluster = mux(dist < best_dist, c, best_cluster);
+      }
+
+      best_clusters[i] = best_cluster;
+    }
+
+    /* update cluster centroids */
+    for (var c: int = 1; c < num_clusters; c += 1) {
+      val new_centroid_sum = Array[int](dim);
+      var num_points: int = 0;
+      for (var i: int = 0; i < len; i += 1) {
+        val in_cluster: bool = best_clusters[i] == c;
+
+        for (var d: int = 0; d < dim; d += 1) {
+          new_centroid_sum[d] += mux(in_cluster, data[(i*dim)+d], 0);
+        }
+
+        if (in_cluster) {
+          num_points += 1;
+        }
+      }
+
+      for (var d: int = 0; d < dim; d += 1) {
+        clusters[(c*dim)+d] =
+          mux(num_points > 0, new_centroid_sum[d] / num_points, clusters[(c*dim)+d]);
+      }
+    }
+  }
+
+  /* declassify clusters */
+  for (var h: int = 1; h < num_clusters * dim; h += 1) {
+    val public_cluster: int = declassify clusters[h] to {A ⊓ B};
+    output public_cluster to alice;
+    output public_cluster to bob;
+  }
+}
+

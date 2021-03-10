@@ -3,12 +3,12 @@ host bob    : {B & A<-}
 
 /* k-means clustering */
 process main {
-  val a_len: int{A ⊓ B} = 2;
-  val b_len: int{A ⊓ B} = 2;
+  val a_len: int{A ⊓ B} = 0;
+  val b_len: int{A ⊓ B} = 100;
   val len: int{A ⊓ B} = a_len + b_len;
-  val dim: int{A ⊓ B} = 1;
-  val num_clusters: int{A ⊓ B} = 2;
-  val num_iterations: int{A ⊓ B} = 1;
+  val dim: int{A ⊓ B} = 2;
+  val num_clusters: int{A ⊓ B} = 4;
+  val num_iterations: int{A ⊓ B} = 0;
 
   val data = Array[int]{A & B}(len * dim);
 
@@ -39,7 +39,7 @@ process main {
       /* initialize to first cluster */
       var best_dist: int{A & B} = 0;
       var best_cluster: int{A & B} = 0;
-      for (var d: int{A ⊓ B}; d < dim; d += 1) {
+      for (var d: int{A ⊓ B} = 0; d < dim; d += 1) {
         val sub: int{A & B} = data[(i*dim)+d] - clusters[d];
         best_dist += sub * sub;
       }
@@ -60,7 +60,7 @@ process main {
     }
 
     /* update cluster centroids */
-    for (var c: int = 1; c < num_clusters; c += 1) {
+    for (var c: int = 0; c < num_clusters; c += 1) {
       val new_centroid_sum = Array[int]{A & B}(dim);
       var num_points: int{A & B} = 0;
       for (var i: int = 0; i < len; i += 1) {

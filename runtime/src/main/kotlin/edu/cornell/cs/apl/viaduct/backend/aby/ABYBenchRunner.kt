@@ -96,7 +96,7 @@ class ABYBenchRunner(
                     val db2 = a_db[(i_2 * d) + 1]
                     val dist = match_alice(db1, db2)
                     val tmp50 = builder.yaoCircuit.putGTGate(min_dist, dist)
-                    val mux = builder.yaoCircuit.putMUXGate(tmp50, dist, min_dist)
+                    val mux = builder.yaoCircuit.putMUXGate(dist, min_dist, tmp50)
                     min_dist = mux
                     i_2 += 1
                 }
@@ -121,7 +121,7 @@ class ABYBenchRunner(
                     val s2 = b_sample[1]
                     val dist = match_bob(s1, s2)
                     val tmp50 = builder.yaoCircuit.putGTGate(min_dist, dist)
-                    val mux = builder.yaoCircuit.putMUXGate(tmp50, dist, min_dist)
+                    val mux = builder.yaoCircuit.putMUXGate(dist, min_dist, tmp50)
                     min_dist = mux
                     i_2 += 1
                 }
@@ -155,7 +155,7 @@ class ABYBenchRunner(
                 val a_share =
                     builder.arithCircuit.putB2AGate(
                         builder.boolCircuit.putY2BGate(
-                            Aby.putInt32DIVGate(builder.yaoCircuit, tmp9, total_market)
+                            Aby.putInt32DIVGate(builder.yaoCircuit, total_market, tmp9)
                         )
                     )
 
@@ -163,7 +163,7 @@ class ABYBenchRunner(
                 val b_share =
                     builder.arithCircuit.putB2AGate(
                         builder.boolCircuit.putY2BGate(
-                            Aby.putInt32DIVGate(builder.yaoCircuit, tmp13, total_market)
+                            Aby.putInt32DIVGate(builder.yaoCircuit, total_market, tmp13)
                         )
                     )
 
@@ -482,8 +482,8 @@ class ABYBenchRunner(
     }
 
     fun benchLANKmeans(aby: ABYParty, builder: ABYCircuitBuilder) {
-        val a_len = 50
-        val b_len = 50
+        val a_len = 0
+        val b_len = 100
         val len = a_len + b_len
         val dim = 2
         val num_clusters = 4
@@ -496,7 +496,9 @@ class ABYBenchRunner(
             "alice" -> {
                 var i = 0
                 while (i < a_len * dim) {
-                    data[i] = builder.yaoCircuit.putINGate(input.nextInt().toBigInteger(), BITLEN, builder.role)
+                    val x = input.nextInt()
+                    println("input alice: $x")
+                    data[i] = builder.yaoCircuit.putINGate(x.toBigInteger(), BITLEN, builder.role)
                     i += 1
                 }
 
@@ -516,7 +518,9 @@ class ABYBenchRunner(
 
                 var i_1 = 0
                 while (i_1 < b_len * dim) {
-                    data[(a_len * dim) + i_1] = builder.yaoCircuit.putINGate(input.nextInt().toBigInteger(), BITLEN, builder.role)
+                    val x = input.nextInt()
+                    println("input bob: $x")
+                    data[(a_len * dim) + i_1] = builder.yaoCircuit.putINGate(x.toBigInteger(), BITLEN, builder.role)
                     i_1 += 1
                 }
             }
@@ -532,6 +536,7 @@ class ABYBenchRunner(
         while (c < num_clusters) {
             var d = 0
             while (d < dim) {
+                println("init cluster ${(c * dim) + d} to data ${(stride * c * dim) + d}")
                 clusters[(c * dim) + d] =
                     builder.arithCircuit.putB2AGate(
                         builder.boolCircuit.putY2BGate(data[(stride * c * dim) + d])
@@ -545,17 +550,20 @@ class ABYBenchRunner(
         while (iter < num_iterations) {
             // YaoABY
             val best_clusters = Array<Share?>(len) { null }
+
+            // assignment phase
             var i = 0
             while (i < len) {
                 var best_dist = builder.arithCircuit.putCONSGate(0.toBigInteger(), BITLEN)
                 var best_cluster = builder.yaoCircuit.putCONSGate(0.toBigInteger(), BITLEN)
+
+                // initialize point to first cluster
                 var d = 0
                 while (d < dim) {
                     val tmp62 =
                         builder.arithCircuit.putB2AGate(
                             builder.boolCircuit.putY2BGate(data[(i * dim) + d])
                         )
-
                     val sub = builder.arithCircuit.putSUBGate(tmp62, clusters[d])
                     val tmp68 = builder.arithCircuit.putMULGate(sub, sub)
                     best_dist = builder.arithCircuit.putADDGate(best_dist, tmp68)
@@ -563,6 +571,7 @@ class ABYBenchRunner(
                     d += 1
                 }
 
+                // assign point to nearest cluster
                 var c2 = 1
                 while (c2 < num_clusters) {
                     var dist = builder.arithCircuit.putCONSGate(0.toBigInteger(), BITLEN)
@@ -582,7 +591,7 @@ class ABYBenchRunner(
                     val tmp92 = builder.yaoCircuit.putA2YGate(best_dist)
                     val tmp93 = builder.yaoCircuit.putGTGate(tmp92, tmp91)
                     val tmp94 = builder.yaoCircuit.putCONSGate(c2.toBigInteger(), BITLEN)
-                    val tmp96 = builder.yaoCircuit.putMUXGate(tmp93, tmp94, best_cluster)
+                    val tmp96 = builder.yaoCircuit.putMUXGate(tmp94, best_cluster, tmp93)
                     best_cluster = tmp96
                     c2 += 1
                 }
@@ -591,7 +600,8 @@ class ABYBenchRunner(
                 i += 1
             }
 
-            var c3 = 1
+            // update phase
+            var c3 = 0
             while (c3 < num_clusters) {
                 // YaoABY
                 val new_centroid_sum = Array<Share?>(dim) { builder.yaoCircuit.putCONSGate(0.toBigInteger(), BITLEN) }
@@ -604,9 +614,9 @@ class ABYBenchRunner(
                     while (d3 < dim) {
                         val tmp121 =
                             builder.yaoCircuit.putMUXGate(
-                                in_cluster,
                                 data[(i2 * dim) + d3],
-                                builder.yaoCircuit.putCONSGate(0.toBigInteger(), BITLEN)
+                                builder.yaoCircuit.putCONSGate(0.toBigInteger(), BITLEN),
+                                in_cluster
                             )
 
                         new_centroid_sum[d3] = builder.yaoCircuit.putADDGate(new_centroid_sum[d3], tmp121)
@@ -618,7 +628,7 @@ class ABYBenchRunner(
                             num_points,
                             builder.yaoCircuit.putCONSGate(1.toBigInteger(), BITLEN)
                         )
-                    val mux = builder.yaoCircuit.putMUXGate(in_cluster, op, num_points)
+                    val mux = builder.yaoCircuit.putMUXGate(op, num_points, in_cluster)
                     num_points = mux
                     i2 += 1
                 }
@@ -630,14 +640,14 @@ class ABYBenchRunner(
                             num_points,
                             builder.yaoCircuit.putCONSGate(0.toBigInteger(), BITLEN)
                         )
-                    val tmp136 = Aby.putInt32DIVGate(builder.yaoCircuit, new_centroid_sum[d4], num_points)
 
+                    val tmp136 = Aby.putInt32DIVGate(builder.yaoCircuit, num_points, new_centroid_sum[d4])
                     val tmp142 = builder.yaoCircuit.putA2YGate(clusters[(c3 * dim) + d4])
 
                     clusters[(c3 * dim) + d4] =
                         builder.arithCircuit.putB2AGate(
                             builder.boolCircuit.putY2BGate(
-                                builder.yaoCircuit.putMUXGate(tmp132, tmp136, tmp142)
+                                builder.yaoCircuit.putMUXGate(tmp136, tmp142, tmp132)
                             )
                         )
 
@@ -651,7 +661,9 @@ class ABYBenchRunner(
         }
 
         var h = 0
-        var out_gates = Array<Share?>(num_clusters * dim) { null }
+        var out_gates = Array<Share?>(num_clusters * dim) {
+            builder.arithCircuit.putCONSGate(0.toBigInteger(), BITLEN)
+        }
         while (h < num_clusters * dim) {
             out_gates[h] = builder.arithCircuit.putOUTGate(clusters[h], Role.ALL)
             h += 1
@@ -659,8 +671,10 @@ class ABYBenchRunner(
 
         executeABYCircuit(aby)
 
-        for (out_gate in out_gates) {
-            println("out: ${out_gate!!.clearValue32.toInt()}")
+        var i = 0
+        while (i < num_clusters * dim) {
+            println("out: ${out_gates[i]!!.clearValue32.toInt()}")
+            i += 1
         }
     }
 

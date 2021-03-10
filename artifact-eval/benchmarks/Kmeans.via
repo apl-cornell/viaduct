@@ -27,7 +27,7 @@ process main {
   val stride: int{A ⊓ B} = len / num_clusters;
   for (var c: int{A ⊓ B} = 0; c < num_clusters; c += 1) {
     for (var d: int{A ⊓ B} = 0; d < dim; d += 1) {
-      clusters[c+d] = data[(stride*c*dim)+d];
+      clusters[(c*dim)+d] = data[(stride*c*dim)+d];
     }
   }
 
@@ -83,7 +83,7 @@ process main {
   }
 
   /* declassify clusters */
-  for (var h: int{A ⊓ B} = 1; h < num_clusters * dim; h += 1) {
+  for (var h: int{A ⊓ B} = 0; h < num_clusters * dim; h += 1) {
     val public_cluster: int{A ⊓ B} = declassify clusters[h] to {A ⊓ B};
     output public_cluster to alice;
     output public_cluster to bob;

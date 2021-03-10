@@ -11,7 +11,7 @@ class Viaduct : NoOpCliktCommand(help = "Compile high level specifications to se
 
     init {
         versionOption(version)
-        subcommands(Format(), Compile(), CompletionCommand(), Specification(), Run())
+        subcommands(Format(), Compile(), CompletionCommand(), Specification(), Run(), ABYBench())
         // TODO: Help, Interpret, Specification commands
     }
 

@@ -66,8 +66,8 @@ RUN ["ln", "-s", "/usr/local/cli/bin/cli", "/usr/local/bin/viaduct" ]
 RUN _VIADUCT_COMPLETE=bash viaduct > /etc/profile.d/viaduct_completion.sh
 RUN echo source /etc/profile.d/viaduct_completion.sh >> .bashrc
 
-## Copy artifact evaluation
-COPY artifact-eval ./
+## Copy benchmarks
+COPY benchmarks ./
 
 ## Copy Gradle cache to make build self contained
 # COPY --from=builder /root/.gradle/caches /root/.gradle/caches

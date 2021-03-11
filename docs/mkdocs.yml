@@ -3,7 +3,7 @@ site_name: Viaduct
 # Meta tags (placed in header)
 site_description: 'Viaduct: an extensible, optimizing compiler for secure distributed programs.'
 site_author: Applied Programming Languages Group
-site_url: https://viaduct-lang.org
+#site_url: (adds a canonical link; we don't need it)
 
 # Repository (adds link to repository on each page)
 #repo_name: apl-cornell/viaduct

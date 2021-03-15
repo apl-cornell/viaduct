@@ -17,6 +17,7 @@ private typealias ABYBenchmark = (ABYParty, ABYCircuitBuilder) -> Unit
 
 class ABYBenchRunner(
     val host: String,
+    val hostAddress: Map<String, String>,
     val benchmark: String,
     val input: Scanner
 ) {
@@ -26,7 +27,8 @@ class ABYBenchRunner(
         "HHIScore" to { aby, builder -> benchLANHHIScore(aby, builder) },
         "Kmeans" to { aby, builder -> benchLANKmeans(aby, builder) },
         "Median" to { aby, builder -> benchLANMedian(aby, builder) },
-        "TwoRoundBidding" to { aby, builder -> benchLANTwoRoundBidding(aby, builder) }
+        "TwoRoundBidding" to { aby, builder -> benchLANTwoRoundBidding(aby, builder) },
+        "Conversions" to { aby, builder -> benchLANConversions(aby, builder) }
     )
 
     fun executeABYCircuit(aby: ABYParty) {
@@ -77,8 +79,8 @@ class ABYBenchRunner(
             return builder.yaoCircuit.putA2YGate(tmp12)
         }
 
-        val n = 4
-        val d = 2
+        val n = 500
+        val d = 4
 
         when (host) {
             "alice" -> {
@@ -224,7 +226,7 @@ class ABYBenchRunner(
     }
 
     private fun benchLANHistoricalMillionaires(aby: ABYParty, builder: ABYCircuitBuilder) {
-        val length = 100
+        val length = 500
 
         when (host) {
             "alice" -> {
@@ -266,7 +268,7 @@ class ABYBenchRunner(
     }
 
     fun benchLANMedian(aby: ABYParty, builder: ABYCircuitBuilder) {
-        val n = 10
+        val n = 200
         when (host) {
             "alice" -> {
                 val adata = Array<Int>(n) { 0 }
@@ -365,7 +367,7 @@ class ABYBenchRunner(
     }
 
     fun benchLANTwoRoundBidding(aby: ABYParty, builder: ABYCircuitBuilder) {
-        val n = 10
+        val n = 500
         when (host) {
             "alice" -> {
                 val abids1 = Array<Int>(n) { 0 }
@@ -482,8 +484,8 @@ class ABYBenchRunner(
     }
 
     fun benchLANKmeans(aby: ABYParty, builder: ABYCircuitBuilder) {
-        val a_len = 0
-        val b_len = 100
+        val a_len = 50
+        val b_len = 50
         val len = a_len + b_len
         val dim = 2
         val num_clusters = 4
@@ -497,7 +499,6 @@ class ABYBenchRunner(
                 var i = 0
                 while (i < a_len * dim) {
                     val x = input.nextInt()
-                    println("input alice: $x")
                     data[i] = builder.yaoCircuit.putINGate(x.toBigInteger(), BITLEN, builder.role)
                     i += 1
                 }
@@ -519,7 +520,6 @@ class ABYBenchRunner(
                 var i_1 = 0
                 while (i_1 < b_len * dim) {
                     val x = input.nextInt()
-                    println("input bob: $x")
                     data[(a_len * dim) + i_1] = builder.yaoCircuit.putINGate(x.toBigInteger(), BITLEN, builder.role)
                     i_1 += 1
                 }
@@ -536,11 +536,8 @@ class ABYBenchRunner(
         while (c < num_clusters) {
             var d = 0
             while (d < dim) {
-                println("init cluster ${(c * dim) + d} to data ${(stride * c * dim) + d}")
                 clusters[(c * dim) + d] =
-                    builder.arithCircuit.putB2AGate(
-                        builder.boolCircuit.putY2BGate(data[(stride * c * dim) + d])
-                    )
+                    builder.arithCircuit.putY2AGate(data[(stride * c * dim) + d], builder.boolCircuit)
                 d += 1
             }
             c += 1
@@ -673,14 +670,301 @@ class ABYBenchRunner(
 
         var i = 0
         while (i < num_clusters * dim) {
-            println("out: ${out_gates[i]!!.clearValue32.toInt()}")
+            logger.info { "out: ${out_gates[i]!!.clearValue32.toInt()}" }
             i += 1
         }
     }
 
+    fun benchLANConversions(aby: ABYParty, builder: ABYCircuitBuilder) {
+        when (host) {
+            "alice" -> {
+                val a2bAlice =
+                    builder.boolCircuit.putOUTGate(
+                        builder.boolCircuit.putA2BGate(
+                            builder.arithCircuit.putINGate(input.nextInt().toBigInteger(), BITLEN, builder.role),
+                            builder.yaoCircuit
+                        ),
+                        Role.ALL
+                    )
+
+                val a2bBob =
+                    builder.boolCircuit.putOUTGate(
+                        builder.boolCircuit.putA2BGate(
+                            builder.arithCircuit.putDummyINGate(BITLEN),
+                            builder.yaoCircuit
+                        ),
+                        Role.ALL
+                    )
+
+                val a2yAlice =
+                    builder.yaoCircuit.putOUTGate(
+                        builder.yaoCircuit.putA2YGate(
+                            builder.arithCircuit.putINGate(input.nextInt().toBigInteger(), BITLEN, builder.role)
+                        ),
+                        Role.ALL
+                    )
+
+                val a2yBob =
+                    builder.yaoCircuit.putOUTGate(
+                        builder.yaoCircuit.putA2YGate(
+                            builder.arithCircuit.putDummyINGate(BITLEN)
+                        ),
+                        Role.ALL
+                    )
+
+                val b2aAlice =
+                    builder.arithCircuit.putOUTGate(
+                        builder.arithCircuit.putB2AGate(
+                            builder.boolCircuit.putINGate(input.nextInt().toBigInteger(), BITLEN, builder.role)
+                        ),
+                        Role.ALL
+                    )
+
+                val b2aBob =
+                    builder.arithCircuit.putOUTGate(
+                        builder.arithCircuit.putB2AGate(
+                            builder.boolCircuit.putDummyINGate(BITLEN)
+                        ),
+                        Role.ALL
+                    )
+
+                val b2yAlice =
+                    builder.yaoCircuit.putOUTGate(
+                        builder.yaoCircuit.putB2YGate(
+                            builder.boolCircuit.putINGate(input.nextInt().toBigInteger(), BITLEN, builder.role)
+                        ),
+                        Role.ALL
+                    )
+
+                val b2yBob =
+                    builder.yaoCircuit.putOUTGate(
+                        builder.yaoCircuit.putB2YGate(
+                            builder.boolCircuit.putDummyINGate(BITLEN)
+                        ),
+                        Role.ALL
+                    )
+
+                val y2aAlice =
+                    builder.arithCircuit.putOUTGate(
+                        builder.arithCircuit.putY2AGate(
+                            builder.yaoCircuit.putINGate(input.nextInt().toBigInteger(), BITLEN, builder.role),
+                            builder.boolCircuit
+                        ),
+                        Role.ALL
+                    )
+
+                val y2aBob =
+                    builder.arithCircuit.putOUTGate(
+                        builder.arithCircuit.putY2AGate(
+                            builder.yaoCircuit.putDummyINGate(BITLEN),
+                            builder.boolCircuit
+                        ),
+                        Role.ALL
+                    )
+
+                val y2bAlice =
+                    builder.boolCircuit.putOUTGate(
+                        builder.boolCircuit.putY2BGate(
+                            builder.yaoCircuit.putINGate(input.nextInt().toBigInteger(), BITLEN, builder.role)
+                        ),
+                        Role.ALL
+                    )
+
+                val y2bBob =
+                    builder.boolCircuit.putOUTGate(
+                        builder.boolCircuit.putY2BGate(
+                            builder.yaoCircuit.putDummyINGate(BITLEN)
+                        ),
+                        Role.ALL
+                    )
+
+                // check if subtraction to negative numbers work
+                val sub =
+                    builder.arithCircuit.putOUTGate(
+                        builder.arithCircuit.putMULGate(
+                            builder.arithCircuit.putSUBGate(
+                                builder.arithCircuit.putCONSGate(2.toBigInteger(), BITLEN),
+                                builder.arithCircuit.putCONSGate(5.toBigInteger(), BITLEN)
+                            ),
+                            builder.arithCircuit.putSUBGate(
+                                builder.arithCircuit.putCONSGate(2.toBigInteger(), BITLEN),
+                                builder.arithCircuit.putCONSGate(5.toBigInteger(), BITLEN)
+                            )
+                        ),
+                        Role.ALL
+                    )
+
+                executeABYCircuit(aby)
+
+                println("A2B Alice: ${a2bAlice.clearValue32.toInt()}")
+                println("A2B Bob: ${a2bBob.clearValue32.toInt()}")
+
+                println("A2Y Alice: ${a2yAlice.clearValue32.toInt()}")
+                println("A2Y Bob: ${a2yBob.clearValue32.toInt()}")
+
+                println("B2A Alice: ${b2aAlice.clearValue32.toInt()}")
+                println("B2A Bob: ${b2aBob.clearValue32.toInt()}")
+
+                println("B2Y Alice: ${b2yAlice.clearValue32.toInt()}")
+                println("B2Y Bob: ${b2yBob.clearValue32.toInt()}")
+
+                println("Y2A Alice: ${y2aAlice.clearValue32.toInt()}")
+                println("Y2A Bob: ${y2aBob.clearValue32.toInt()}")
+
+                println("Y2B Alice: ${y2bAlice.clearValue32.toInt()}")
+                println("Y2B Bob: ${y2bBob.clearValue32.toInt()}")
+
+                println("sub: ${sub.clearValue32.toInt()}")
+            }
+
+            "bob" -> {
+                val a2bAlice =
+                    builder.boolCircuit.putOUTGate(
+                        builder.boolCircuit.putA2BGate(
+                            builder.arithCircuit.putDummyINGate(BITLEN),
+                            builder.yaoCircuit
+                        ),
+                        Role.ALL
+                    )
+
+                val a2bBob =
+                    builder.boolCircuit.putOUTGate(
+                        builder.boolCircuit.putA2BGate(
+                            builder.arithCircuit.putINGate(input.nextInt().toBigInteger(), BITLEN, builder.role),
+                            builder.yaoCircuit
+                        ),
+                        Role.ALL
+                    )
+
+                val a2yAlice =
+                    builder.yaoCircuit.putOUTGate(
+                        builder.yaoCircuit.putA2YGate(
+                            builder.arithCircuit.putDummyINGate(BITLEN)
+                        ),
+                        Role.ALL
+                    )
+
+                val a2yBob =
+                    builder.yaoCircuit.putOUTGate(
+                        builder.yaoCircuit.putA2YGate(
+                            builder.arithCircuit.putINGate(input.nextInt().toBigInteger(), BITLEN, builder.role)
+                        ),
+                        Role.ALL
+                    )
+
+                val b2aAlice =
+                    builder.arithCircuit.putOUTGate(
+                        builder.arithCircuit.putB2AGate(
+                            builder.boolCircuit.putDummyINGate(BITLEN)
+                        ),
+                        Role.ALL
+                    )
+
+                val b2aBob =
+                    builder.arithCircuit.putOUTGate(
+                        builder.arithCircuit.putB2AGate(
+                            builder.boolCircuit.putINGate(input.nextInt().toBigInteger(), BITLEN, builder.role)
+                        ),
+                        Role.ALL
+                    )
+
+                val b2yAlice =
+                    builder.yaoCircuit.putOUTGate(
+                        builder.yaoCircuit.putB2YGate(
+                            builder.boolCircuit.putDummyINGate(BITLEN)
+                        ),
+                        Role.ALL
+                    )
+
+                val b2yBob =
+                    builder.yaoCircuit.putOUTGate(
+                        builder.yaoCircuit.putB2YGate(
+                            builder.boolCircuit.putINGate(input.nextInt().toBigInteger(), BITLEN, builder.role)
+                        ),
+                        Role.ALL
+                    )
+
+                val y2aAlice =
+                    builder.arithCircuit.putOUTGate(
+                        builder.arithCircuit.putY2AGate(
+                            builder.yaoCircuit.putDummyINGate(BITLEN),
+                            builder.boolCircuit
+                        ),
+                        Role.ALL
+                    )
+
+                val y2aBob =
+                    builder.arithCircuit.putOUTGate(
+                        builder.arithCircuit.putY2AGate(
+                            builder.yaoCircuit.putINGate(input.nextInt().toBigInteger(), BITLEN, builder.role),
+                            builder.boolCircuit
+                        ),
+                        Role.ALL
+                    )
+
+                val y2bAlice =
+                    builder.boolCircuit.putOUTGate(
+                        builder.boolCircuit.putY2BGate(
+                            builder.yaoCircuit.putDummyINGate(BITLEN)
+                        ),
+                        Role.ALL
+                    )
+
+                val y2bBob =
+                    builder.boolCircuit.putOUTGate(
+                        builder.boolCircuit.putY2BGate(
+                            builder.yaoCircuit.putINGate(input.nextInt().toBigInteger(), BITLEN, builder.role)
+                        ),
+                        Role.ALL
+                    )
+
+                // check if subtraction to negative numbers work
+                val sub =
+                    builder.arithCircuit.putOUTGate(
+                        builder.arithCircuit.putMULGate(
+                            builder.arithCircuit.putSUBGate(
+                                builder.arithCircuit.putCONSGate(2.toBigInteger(), BITLEN),
+                                builder.arithCircuit.putCONSGate(5.toBigInteger(), BITLEN)
+                            ),
+                            builder.arithCircuit.putSUBGate(
+                                builder.arithCircuit.putCONSGate(2.toBigInteger(), BITLEN),
+                                builder.arithCircuit.putCONSGate(5.toBigInteger(), BITLEN)
+                            )
+                        ),
+                        Role.ALL
+                    )
+
+                executeABYCircuit(aby)
+
+                println("A2B Alice: ${a2bAlice.clearValue32.toInt()}")
+                println("A2B Bob: ${a2bBob.clearValue32.toInt()}")
+
+                println("A2Y Alice: ${a2yAlice.clearValue32.toInt()}")
+                println("A2Y Bob: ${a2yBob.clearValue32.toInt()}")
+
+                println("B2A Alice: ${b2aAlice.clearValue32.toInt()}")
+                println("B2A Bob: ${b2aBob.clearValue32.toInt()}")
+
+                println("B2Y Alice: ${b2yAlice.clearValue32.toInt()}")
+                println("B2Y Bob: ${b2yBob.clearValue32.toInt()}")
+
+                println("Y2A Alice: ${y2aAlice.clearValue32.toInt()}")
+                println("Y2A Bob: ${y2aBob.clearValue32.toInt()}")
+
+                println("Y2B Alice: ${y2bAlice.clearValue32.toInt()}")
+                println("Y2B Bob: ${y2bBob.clearValue32.toInt()}")
+
+                println("sub: ${sub.clearValue32.toInt()}")
+            }
+
+            else -> throw ViaductInterpreterError("unknown host: $host")
+        }
+    }
+
     fun run() {
+        val otherHost = if (host == "alice") "bob" else "alice"
         val role = if (host == "alice") Role.SERVER else Role.CLIENT
-        val address = if (role == Role.SERVER) "" else DEFAULT_ADDRESS
+        val address = if (role == Role.SERVER) "" else hostAddress[otherHost] ?: DEFAULT_ADDRESS
         val aby = ABYParty(role, address, DEFAULT_PORT, Aby.getLT(), BITLEN)
 
         logger.info { "connected ABY to other host at $address:$DEFAULT_PORT" }

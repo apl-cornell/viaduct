@@ -74,7 +74,7 @@ subprojects {
             // Logging
             "implementation"("io.github.microutils:kotlin-logging:2.0.6")
             "testImplementation"("org.apache.logging.log4j:log4j-core:2.14.0")
-            "testImplementation"("org.apache.logging.log4j:log4j-slf4j-impl:2.14.0")
+            "testImplementation"("org.apache.logging.log4j:log4j-slf4j-impl:2.14.1")
         }
 
         /** Testing */

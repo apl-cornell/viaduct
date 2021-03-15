@@ -25,7 +25,7 @@ dependencies {
     implementation("org.fusesource.jansi:jansi:2.3.1")
 
     // DOT graph output
-    implementation("guru.nidi:graphviz-java:0.18.0")
+    implementation("guru.nidi:graphviz-java:0.18.1")
     implementation("guru.nidi:graphviz-java-all-j2v8:0.18.1")
 
     // Logging

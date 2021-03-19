@@ -27,15 +27,17 @@ theme:
 
 docs_dir: src
 
-extra_css:
-  - styles/extra.css
-
-#extra:
+extra:
+  version:
+    provider: mike
 #  social:
 #    - type: github
 #      link: https://github.com/apl-cornell/viaduct
 #    - icon: fontawesome/brands/docker
 #      link: https://hub.docker.com/repository/docker/cacay/viaduct
+
+extra_css:
+  - assets/stylesheets/extra.css
 
 # Extensions
 markdown_extensions:

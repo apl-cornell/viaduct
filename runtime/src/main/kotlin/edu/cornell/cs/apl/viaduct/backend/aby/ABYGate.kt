@@ -211,7 +211,6 @@ fun operatorToCircuit(
             )
 
         operator is GreaterThan && circuitType != ABYCircuitType.ARITH ->
-            // x < y <=> y > x
             ABYOperationGate(
                 putBinaryOperationGate(Circuit::putGTGate),
                 listOf(finalArguments[1], finalArguments[0]),

@@ -69,7 +69,7 @@ subprojects {
 
         dependencies {
             // Data structures
-            "implementation"("org.jetbrains.kotlinx:kotlinx-collections-immutable-jvm:0.3.3")
+            "implementation"("org.jetbrains.kotlinx:kotlinx-collections-immutable-jvm:0.3.4")
 
             // Logging
             "implementation"("io.github.microutils:kotlin-logging:2.0.6")

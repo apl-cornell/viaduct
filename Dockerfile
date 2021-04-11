@@ -68,6 +68,7 @@ RUN echo source /etc/profile.d/viaduct_completion.sh >> .bashrc
 
 ## Copy artifact evaluation
 COPY artifact-eval ./
+COPY LICENSE .
 
 ## Copy Gradle cache to make build self contained
 # COPY --from=builder /root/.gradle/caches /root/.gradle/caches

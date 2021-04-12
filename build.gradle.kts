@@ -3,7 +3,7 @@ plugins {
 
     // Documentation
     id("org.jetbrains.dokka") version "1.4.20"
-    id("ru.vyarus.mkdocs") version "2.0.1"
+    id("ru.vyarus.mkdocs") version "2.1.1"
 
     // Style checking
     id("com.diffplug.spotless") version "5.12.0"

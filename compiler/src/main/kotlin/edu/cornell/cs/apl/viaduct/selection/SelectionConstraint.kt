@@ -4,6 +4,7 @@ import com.microsoft.z3.ArithExpr
 import com.microsoft.z3.BoolExpr
 import com.microsoft.z3.Context
 import com.microsoft.z3.IntExpr
+import com.microsoft.z3.IntSort
 import com.uchuhimo.collections.BiMap
 import edu.cornell.cs.apl.prettyprinting.Document
 import edu.cornell.cs.apl.prettyprinting.PrettyPrintable
@@ -228,7 +229,7 @@ internal fun SymbolicCost.arithExpr(
     ctx: Context,
     vmap: BiMap<FunctionVariable, IntExpr>,
     pmap: BiMap<Protocol, IntExpr>
-): ArithExpr =
+): ArithExpr<IntSort> =
     when (this) {
         is CostLiteral -> ctx.mkInt(this.cost)
         is CostVariable -> this.variable

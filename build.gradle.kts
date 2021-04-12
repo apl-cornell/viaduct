@@ -1,15 +1,15 @@
 plugins {
-    kotlin("multiplatform") version "1.4.31" apply false
+    kotlin("multiplatform") version "1.4.32" apply false
 
     // Documentation
     id("org.jetbrains.dokka") version "1.4.20"
     id("ru.vyarus.mkdocs") version "2.0.1"
 
     // Style checking
-    id("com.diffplug.spotless") version "5.10.2"
+    id("com.diffplug.spotless") version "5.12.0"
 
     // Dependency management
-    id("com.github.ben-manes.versions") version "0.36.0"
+    id("com.github.ben-manes.versions") version "0.38.0"
     id("se.patrikerdes.use-latest-versions") version "0.2.15"
 }
 
@@ -69,12 +69,12 @@ subprojects {
 
         dependencies {
             // Data structures
-            "implementation"("org.jetbrains.kotlinx:kotlinx-collections-immutable-jvm:0.3.3")
+            "implementation"("org.jetbrains.kotlinx:kotlinx-collections-immutable-jvm:0.3.4")
 
             // Logging
-            "implementation"("io.github.microutils:kotlin-logging:2.0.4")
-            "testImplementation"("org.apache.logging.log4j:log4j-core:2.14.0")
-            "testImplementation"("org.apache.logging.log4j:log4j-slf4j-impl:2.14.0")
+            "implementation"("io.github.microutils:kotlin-logging:2.0.6")
+            "testImplementation"("org.apache.logging.log4j:log4j-core:2.14.1")
+            "testImplementation"("org.apache.logging.log4j:log4j-slf4j-impl:2.14.1")
         }
 
         /** Testing */
@@ -109,7 +109,7 @@ subprojects {
 /** Documentation */
 
 mkdocs {
-    sourcesDir = "."
+    sourcesDir = "docs"
     buildDir = "${project.buildDir}/mkdocs"
 
     publish.apply {

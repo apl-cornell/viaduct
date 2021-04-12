@@ -8,7 +8,7 @@ site_url: https://viaduct-lang.org
 # Repository (adds link to repository on each page)
 #repo_name: apl-cornell/viaduct
 repo_url: https://github.com/apl-cornell/viaduct
-# edit_uri: edit/master/docs/
+edit_uri: edit/master/docs/src
 
 # Copyright (shown at the footer)
 copyright: 'Copyright &copy; 2021 Applied Programming Languages Group'
@@ -24,6 +24,8 @@ theme:
 #  palette:
 #    primary: indigo
 #    accent: indigo
+
+docs_dir: src
 
 extra_css:
   - styles/extra.css

@@ -20,7 +20,7 @@ dependencies {
     implementation("com.uchuhimo:kotlinx-bimap:1.2")
 
     // Graphs
-    implementation("org.jgrapht:jgrapht-core:1.5.0")
+    implementation("org.jgrapht:jgrapht-core:1.5.1")
     implementation("org.jgrapht:jgrapht-io:1.5.0")
 
     // Unicode support

@@ -14,6 +14,7 @@ jobs:
       - name: Set up JDK ${{ env.java }}
         uses: actions/setup-java@v2
         with:
+          distribution: 'zulu'
           java-version: ${{ env.java }}
       - name: Generate documentation with MkDocs
         uses: eskatos/gradle-command-action@v1

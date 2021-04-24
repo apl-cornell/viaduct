@@ -8,8 +8,8 @@ include("test-utilities")
 dependencyResolutionManagement {
     repositories {
         mavenCentral()
-        maven {
-            url = uri("https://jitpack.io")
-        }
+        // TODO: remove once kotlinx-html is on Maven Central
+        maven { url = uri("https://maven.pkg.jetbrains.space/public/p/kotlinx-html/maven") }
+        maven { url = uri("https://jitpack.io") }
     }
 }

@@ -57,3 +57,5 @@ caches/build_file_checksums.ser
 **/markdown-navigator/
 
 # End of https://www.gitignore.io/api/intellij
+
+libraries-with-intellij-classes.xml

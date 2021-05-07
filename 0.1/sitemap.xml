@@ -1,47 +1,47 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"><url>
      <loc>https://viaduct-lang.org/0.1/</loc>
-     <lastmod>2021-04-24</lastmod>
+     <lastmod>2021-05-07</lastmod>
      <changefreq>daily</changefreq>
     </url><url>
      <loc>https://viaduct-lang.org/0.1/developer-guide/building/</loc>
-     <lastmod>2021-04-24</lastmod>
+     <lastmod>2021-05-07</lastmod>
      <changefreq>daily</changefreq>
     </url><url>
      <loc>https://viaduct-lang.org/0.1/developer-guide/logging/</loc>
-     <lastmod>2021-04-24</lastmod>
+     <lastmod>2021-05-07</lastmod>
      <changefreq>daily</changefreq>
     </url><url>
      <loc>https://viaduct-lang.org/0.1/developer-guide/dependencies/</loc>
-     <lastmod>2021-04-24</lastmod>
+     <lastmod>2021-05-07</lastmod>
      <changefreq>daily</changefreq>
     </url><url>
      <loc>https://viaduct-lang.org/0.1/developer-guide/documentation/</loc>
-     <lastmod>2021-04-24</lastmod>
+     <lastmod>2021-05-07</lastmod>
      <changefreq>daily</changefreq>
     </url><url>
      <loc>https://viaduct-lang.org/0.1/api/-modules/</loc>
-     <lastmod>2021-04-24</lastmod>
+     <lastmod>2021-05-07</lastmod>
      <changefreq>daily</changefreq>
     </url><url>
      <loc>https://viaduct-lang.org/0.1/api/cli/cli/</loc>
-     <lastmod>2021-04-24</lastmod>
+     <lastmod>2021-05-07</lastmod>
      <changefreq>daily</changefreq>
     </url><url>
      <loc>https://viaduct-lang.org/0.1/api/compiler/compiler/</loc>
-     <lastmod>2021-04-24</lastmod>
+     <lastmod>2021-05-07</lastmod>
      <changefreq>daily</changefreq>
     </url><url>
      <loc>https://viaduct-lang.org/0.1/api/runtime/runtime/</loc>
-     <lastmod>2021-04-24</lastmod>
+     <lastmod>2021-05-07</lastmod>
      <changefreq>daily</changefreq>
     </url><url>
      <loc>https://viaduct-lang.org/0.1/api/shared/shared/</loc>
-     <lastmod>2021-04-24</lastmod>
+     <lastmod>2021-05-07</lastmod>
      <changefreq>daily</changefreq>
     </url><url>
      <loc>https://viaduct-lang.org/0.1/api/test-utilities/test-utilities/</loc>
-     <lastmod>2021-04-24</lastmod>
+     <lastmod>2021-05-07</lastmod>
      <changefreq>daily</changefreq>
     </url>
 </urlset>

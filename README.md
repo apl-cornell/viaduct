@@ -6,7 +6,8 @@
 
 Viaduct is an extensible, optimizing compiler that automatically employs
 cryptography to enforce high-level security specifications.
-Viaduct can generate code that uses
+Viaduct can generate code that uses:
+
 - secure multiparty computation ([ABY](https://github.com/encryptogroup/ABY)),
 - zero-knowledge proofs ([libsnark](https://github.com/scipr-lab/libsnark)),
 - commitments,

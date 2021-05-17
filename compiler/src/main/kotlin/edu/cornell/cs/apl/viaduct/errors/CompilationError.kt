@@ -54,7 +54,7 @@ abstract class CompilationError : Error(), PrettyPrintable {
     final override val asDocument: Document
         get() {
             val header = run {
-                val title = "-- ${category.toUpperCase()} -"
+                val title = "-- ${category.uppercase()} -"
                 val source = " " + this.source
                 val paddingLength = (DEFAULT_LINE_WIDTH - title.length - source.length).coerceAtLeast(0)
                 val padding = "-".repeat(paddingLength)

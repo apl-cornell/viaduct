@@ -194,7 +194,7 @@ private fun dumpProgramMetadata(
 
 /** Infers Graphviz output format from [file]'s extension. */
 private fun formatFromFileExtension(file: File): Format =
-    when (file.extension.toLowerCase()) {
+    when (file.extension.lowercase()) {
         "png" ->
             Format.PNG
         "svg" ->

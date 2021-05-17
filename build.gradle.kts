@@ -1,5 +1,5 @@
 plugins {
-    kotlin("multiplatform") version "1.4.32" apply false
+    kotlin("multiplatform") version "1.5.0" apply false
 
     // Documentation
     id("org.jetbrains.dokka") version "1.4.20"
@@ -60,8 +60,12 @@ subprojects {
             }
         }
 
+        // TODO: remove once Gradle updates to the newer version
+        extensions.configure<JacocoPluginExtension>("jacoco") {
+            toolVersion = "0.8.7"
+        }
+
         tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
-            kotlinOptions.jvmTarget = "1.8"
             kotlinOptions.allWarningsAsErrors = true
         }
 

@@ -218,14 +218,14 @@ internal class DocumentTest {
         @Test
         fun `normal foreground colors`() {
             AnsiBaseColor.values().map { color ->
-                Document(color.name.toLowerCase()).setForegroundColor(NormalColor(color))
+                Document(color.name.lowercase()).setForegroundColor(NormalColor(color))
             }.concatenated(separator = Document(" ")).show()
         }
 
         @Test
         fun `bright foreground colors`() {
             AnsiBaseColor.values().map { color ->
-                Document(color.name.toLowerCase()).setForegroundColor(BrightColor(color))
+                Document(color.name.lowercase()).setForegroundColor(BrightColor(color))
             }.concatenated(separator = Document(" ")).show()
         }
 
@@ -237,14 +237,14 @@ internal class DocumentTest {
         @Test
         fun `normal background colors`() {
             AnsiBaseColor.values().map { color ->
-                Document(color.name.toLowerCase()).setBackgroundColor(NormalColor(color))
+                Document(color.name.lowercase()).setBackgroundColor(NormalColor(color))
             }.concatenated(separator = Document(" ")).show()
         }
 
         @Test
         fun `bright background colors`() {
             AnsiBaseColor.values().map { color ->
-                Document(color.name.toLowerCase()).setBackgroundColor(BrightColor(color))
+                Document(color.name.lowercase()).setBackgroundColor(BrightColor(color))
             }.concatenated(separator = Document(" ")).show()
         }
 

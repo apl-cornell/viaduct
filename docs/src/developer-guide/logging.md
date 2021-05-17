@@ -8,4 +8,6 @@ As a general rule, *never* use `print()` or `println()` to display information t
 information to yourself for debugging. All logging frameworks have a `DEGUB` level, and if you found this information
 useful, chances are it will be relevant later.
 
-Logging is extremely easy to use. See [this section](https://github.com/MicroUtils/kotlin-logging#getting-started).
+Logging is extremely easy to use.
+See [this section](https://github.com/MicroUtils/kotlin-logging#getting-started)
+of the Kotlin library.

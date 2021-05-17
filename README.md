@@ -19,4 +19,4 @@ Checkout the guide to [get started](https://viaduct-lang.org)!
 \[ARGMS21]
 Coşku Acay, Rolph Recto, Joshua Gancher, Andrew C. Myers, Elaine Shi.
 [Viaduct: An Extensible, Optimizing Compiler for Secure Distributed Programs](https://eprint.iacr.org/2021/468).
-In ACM SIGPLAN Conference on Programming Language Design and Implementation (PLDI '21).
+In ACM SIGPLAN Conference on Programming Language Design and Implementation (PLDI).

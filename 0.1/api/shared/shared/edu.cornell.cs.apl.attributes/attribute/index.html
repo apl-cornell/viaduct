@@ -169,11 +169,15 @@
   
 
 
-  <li class="md-tabs__item">
-    <a href="../../../../.." class="md-tabs__link">
-      Getting Started
-    </a>
-  </li>
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../../.." class="md-tabs__link">
+        User's Guide
+      </a>
+    </li>
+  
 
       
         
@@ -261,10 +265,49 @@
   
   
   
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_1" type="checkbox" id="__nav_1" >
+      
+      <label class="md-nav__link" for="__nav_1">
+        User's Guide
+        <span class="md-nav__icon md-icon"></span>
+      </label>
+      <nav class="md-nav" aria-label="User's Guide" data-md-level="1">
+        <label class="md-nav__title" for="__nav_1">
+          <span class="md-nav__icon md-icon"></span>
+          User's Guide
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+  
+  
+  
     <li class="md-nav__item">
       <a href="../../../../.." class="md-nav__link">
         Getting Started
       </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../../user-guide/compiling-and-running/" class="md-nav__link">
+        Using the Compiler
+      </a>
+    </li>
+  
+
+          
+        </ul>
+      </nav>
     </li>
   
 
@@ -517,7 +560,7 @@ Content<br />
 fun &lt;<a href="./">Node</a>, <a href="./">T</a>&gt; <a href="./">attribute</a>(f: <a href="./">Node</a>.() -&gt; <a href="./">T</a>): <a href="../-attribute/">Attribute</a>&lt;<a href="./">Node</a>, <a href="./">T</a>&gt;<br />
 More info  </p>
 <p>Defines an <a href="../-attribute/">Attribute</a> of type <a href="./">T</a> for nodes of type <a href="./">Node</a>. The value of the attribute for a given <a href="./">Node</a> is determined by the function f.</p>
-<p>Calls to f are cached, so there is at most one call to f for any given <a href="./">Node</a>. If the value of the attribute for a <a href="./">Node</a> is never requested, then there are no calls to f for that <a href="./">Node</a>. Note that <a href="./">Node</a> equality is determined by object identity, not <a href="../../edu.cornell.cs.apl.prettyprinting/-default-style/#%5Bkotlin%2FAny%2Fequals%2F%23kotlin.Any%3F%2FPointingToDeclaration%2F%5D%2FFunctions%2F1434596346">Any.equals</a>.</p>
+<p>Calls to f are cached, so there is at most one call to f for any given <a href="./">Node</a>. If the value of the attribute for a <a href="./">Node</a> is never requested, then there are no calls to f for that <a href="./">Node</a>. Note that <a href="./">Node</a> equality is determined by object identity, not <a href="../../edu.cornell.cs.apl.prettyprinting/-default-style/#%5Bkotlin%2FAny%2Fequals%2F%23kotlin.Any%3F%2FPointingToDeclaration%2F%5D%2FFunctions%2F1416364655">Any.equals</a>.</p>
 <h2 id="see-also">See also<a class="headerlink" href="#see-also" title="Permanent link">&para;</a></h2>
 <p>jvm  </p>
 <table>

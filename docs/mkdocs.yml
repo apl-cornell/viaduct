@@ -57,7 +57,9 @@ markdown_extensions:
   - pymdownx.tilde
 
 nav:
-  - Getting Started: index.md
+  - User's Guide:
+      - index.md
+      - user-guide/compiling-and-running.md
   - Developer's Guide:
       - developer-guide/building.md
       - developer-guide/logging.md

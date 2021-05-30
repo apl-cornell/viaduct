@@ -1,6 +1,7 @@
 # Getting Started
 
-The easiest way to try out Viaduct is by using [Docker](https://docs.docker.com/get-docker/). After installing Docker,
+The easiest way to try out Viaduct is by using Docker.
+After [installing Docker](https://docs.docker.com/get-docker/),
 run the following in a terminal:
 
 ```shell

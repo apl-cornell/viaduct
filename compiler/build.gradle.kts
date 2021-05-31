@@ -27,7 +27,7 @@ dependencies {
     implementation("com.ibm.icu:icu4j:69.1")
 
     // Parsing
-    implementation("com.github.vbmacher:java-cup-runtime:11b-20160615")
+    implementation("com.github.vbmacher:java-cup-runtime:11b-20160615-1")
 
     // SMT solving
     implementation("io.github.tudo-aqua:z3-turnkey:4.8.7.1")

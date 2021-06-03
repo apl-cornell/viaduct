@@ -59,6 +59,7 @@ markdown_extensions:
 nav:
   - Home:
       - index.md
+      - user-guide/getting-started.md
       - user-guide/compiling-and-running.md
   - Developer's Guide:
       - developer-guide/building.md

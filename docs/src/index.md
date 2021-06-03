@@ -1,5 +1,5 @@
-# Viaduct 
- 
+# Viaduct
+
 Viaduct is an extensible, optimizing compiler for secure distributed programs.
 It lets developers write programs in a simple sequential language that
 embeds high-level security policies using information flow labels.
@@ -29,23 +29,4 @@ It currently supports the following cryptographic mechanisms:
 More details about the compiler can be found in our
 [PLDI 2021 paper][pldi-2021].
 
-[pldi-2021]: https://www.cs.cornell.edu/andru/papers/viaduct/
-
-
-## Getting Started
-
-The easiest way to try out Viaduct is by using Docker.
-After [installing Docker](https://docs.docker.com/get-docker/),
-run the following in a terminal:
-
-```shell
-docker run --rm -it aplcornell/viaduct
-```
-
-This will drop you in a Docker container that has the Viaduct compiler installed. To get started, try
-
-```shell
-viaduct --help
-```
-
-To build Viaduct from source code, refer to the [Developer's Guide](developer-guide/building.md).
+[pldi-2021]: https://eprint.iacr.org/2021/468

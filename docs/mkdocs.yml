@@ -57,7 +57,7 @@ markdown_extensions:
   - pymdownx.tilde
 
 nav:
-  - User's Guide:
+  - Home:
       - index.md
       - user-guide/compiling-and-running.md
   - Developer's Guide:

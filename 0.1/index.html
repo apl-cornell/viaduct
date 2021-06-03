@@ -20,7 +20,7 @@
     
     
       
-        <title>Getting Started - Viaduct</title>
+        <title>Viaduct - Viaduct</title>
       
     
     
@@ -66,7 +66,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#getting-started" class="md-skip">
+        <a href="#viaduct" class="md-skip">
           Skip to content
         </a>
       
@@ -98,7 +98,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Getting Started
+              Viaduct
             
           </span>
         </div>
@@ -176,7 +176,7 @@
   
     <li class="md-tabs__item">
       <a href="." class="md-tabs__link md-tabs__link--active">
-        User's Guide
+        Home
       </a>
     </li>
   
@@ -276,13 +276,13 @@
         <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_1" type="checkbox" id="__nav_1" checked>
       
       <label class="md-nav__link" for="__nav_1">
-        User's Guide
+        Home
         <span class="md-nav__icon md-icon"></span>
       </label>
-      <nav class="md-nav" aria-label="User's Guide" data-md-level="1">
+      <nav class="md-nav" aria-label="Home" data-md-level="1">
         <label class="md-nav__title" for="__nav_1">
           <span class="md-nav__icon md-icon"></span>
-          User's Guide
+          Home
         </label>
         <ul class="md-nav__list" data-md-scrollfix>
           
@@ -299,9 +299,38 @@
         
       
       
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          Viaduct
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
       <a href="." class="md-nav__link md-nav__link--active">
-        Getting Started
+        Viaduct
       </a>
+      
+        
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#getting-started" class="md-nav__link">
+    Getting Started
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
       
     </li>
   
@@ -523,6 +552,21 @@
     
   
   
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#getting-started" class="md-nav__link">
+    Getting Started
+  </a>
+  
+</li>
+      
+    </ul>
+  
 </nav>
                   </div>
                 </div>
@@ -538,7 +582,30 @@
                   </a>
                 
                 
-                <h1 id="getting-started">Getting Started<a class="headerlink" href="#getting-started" title="Permanent link">&para;</a></h1>
+                <h1 id="viaduct">Viaduct<a class="headerlink" href="#viaduct" title="Permanent link">&para;</a></h1>
+<p>Viaduct is an extensible, optimizing compiler for secure distributed programs.
+It lets developers write programs in a simple sequential language that
+embeds high-level security policies using information flow labels.
+Viaduct then compiles the source program into a distributed implementation that
+employs cryptography to defend the security policy.</p>
+<p>Viaduct is <em>extensible</em>: it provides a set of well-defined interfaces that
+developers can implement to add support for new cryptographic mechanisms.
+Because of its novel design, Viaduct does not place limitations
+on the source programs it can compile, such as the number of participants
+or trust assumptions between participants.
+Viaduct uses a cost model to generate efficient distributed programs,
+avoiding the use of expensive cryptography unless necessary.</p>
+<p>Our prototype compiler and runtime, written in Kotlin, can be found
+<a href="https://github.com/apl-cornell/viaduct">on Github</a>.
+It currently supports the following cryptographic mechanisms:</p>
+<ul>
+<li>multiparty computation (via <a href="https://github.com/encryptogroup/ABY">ABY</a>)</li>
+<li>zero-knowledge proofs (via <a href="https://github.com/scipr-lab/libsnark">libsnark</a>)</li>
+<li>commitments (SHA256 hash + nonce)</li>
+</ul>
+<p>More details about the compiler can be found in our
+<a href="https://www.cs.cornell.edu/andru/papers/viaduct/">PLDI 2021 paper</a>.</p>
+<h2 id="getting-started">Getting Started<a class="headerlink" href="#getting-started" title="Permanent link">&para;</a></h2>
 <p>The easiest way to try out Viaduct is by using Docker.
 After <a href="https://docs.docker.com/get-docker/">installing Docker</a>,
 run the following in a terminal:</p>

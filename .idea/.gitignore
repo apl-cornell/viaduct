@@ -1,7 +1,4 @@
-# Created by https://www.gitignore.io/api/intellij
-
-### Intellij ###
-# Covers JetBrains IDEs: IntelliJ, RubyMine, PhpStorm, AppCode, PyCharm, CLion, Android Studio and WebStorm
+# Covers JetBrains IDEs: IntelliJ, RubyMine, PhpStorm, AppCode, PyCharm, CLion, Android Studio, WebStorm and Rider
 # Reference: https://intellij-support.jetbrains.com/hc/en-us/articles/206544839
 
 # User-specific stuff
@@ -10,6 +7,9 @@
 **/usage.statistics.xml
 **/dictionaries
 **/shelf
+
+# AWS User-specific
+**/aws.xml
 
 # Generated files
 **/contentModel.xml
@@ -28,34 +28,12 @@
 **/libraries
 
 # Gradle and Maven with auto-import
-# When using Gradle or Maven with auto-import, you should exclude module files,
-# since they will be recreated, and may cause churn.
+artifacts
+compiler.xml
+jarRepositories.xml
 modules.xml
 *.iml
 modules
 
-# Mongo Explorer plugin
-**/mongoSettings.xml
-
-# Cursive Clojure plugin
-replstate.xml
-
-# Editor-based Rest Client
-httpRequests
-
-# Android studio 3.1+ serialized cache file
-caches/build_file_checksums.ser
-
-# Sonarlint plugin
-**/sonarlint/
-
-# SonarQube Plugin
-**/sonarIssues.xml
-
-# Markdown Navigator plugin
-**/markdown-navigator.xml
-**/markdown-navigator/
-
-# End of https://www.gitignore.io/api/intellij
 
 libraries-with-intellij-classes.xml

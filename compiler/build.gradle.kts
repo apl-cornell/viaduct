@@ -29,6 +29,10 @@ dependencies {
     // Parsing
     implementation("com.github.vbmacher:java-cup-runtime:11b-20160615-1")
 
+    // Code generation
+    implementation("com.squareup:kotlinpoet:1.7.2")
+    implementation("com.github.apl-cornell:aby-java:9f626e2b70")
+
     // SMT solving
     implementation("io.github.tudo-aqua:z3-turnkey:4.8.7.1")
 

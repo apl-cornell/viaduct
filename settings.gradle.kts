@@ -1,6 +1,6 @@
 rootProject.name = "viaduct"
-include("compiler")
 include("cli")
+include("compiler")
 include("runtime")
 include("shared")
 include("test-utilities")

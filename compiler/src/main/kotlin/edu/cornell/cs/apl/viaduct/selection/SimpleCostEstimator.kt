@@ -292,7 +292,7 @@ class SimpleCostEstimator(
             EXECUTION_COST,
             when (protocol) {
                 is Local -> IntegerCost(1)
-                is Replication -> IntegerCost(1)
+                is Replication -> IntegerCost(2)
                 is Commitment -> IntegerCost(10)
                 // is Replication -> IntegerCost(protocol.hosts.size)
                 // is Commitment -> IntegerCost(10 + protocol.hashHosts.size)

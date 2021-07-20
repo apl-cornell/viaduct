@@ -76,8 +76,38 @@ data class Implies(val lhs: SelectionConstraint, val rhs: SelectionConstraint) :
     override val asDocument: Document = lhs.asDocument * Document("=>") * rhs.asDocument
 }
 
-data class Or(val lhs: SelectionConstraint, val rhs: SelectionConstraint) : SelectionConstraint() {
-    override val asDocument: Document = lhs.asDocument * Document("||") * rhs.asDocument
+data class Or(val props: List<SelectionConstraint>) : SelectionConstraint() {
+    constructor(vararg props: SelectionConstraint) : this(listOf(*props))
+
+    override val asDocument: Document =
+        when (props.size) {
+            0 -> Document("")
+            1 -> props.first().asDocument
+            else -> {
+                props.subList(1, props.size - 1).fold(props.first().asDocument) { acc, prop ->
+                    acc * Document("||") * prop.asDocument
+                }
+            }
+        }
+}
+
+data class And(val props: List<SelectionConstraint>) : SelectionConstraint() {
+    constructor(vararg props: SelectionConstraint) : this(listOf(*props))
+
+    override val asDocument: Document =
+        when (props.size) {
+            0 -> Document("")
+            1 -> props.first().asDocument
+            else -> {
+                props.subList(1, props.size - 1).fold(props.first().asDocument) { acc, prop ->
+                    acc * Document("&&") * prop.asDocument
+                }
+            }
+        }
+}
+
+data class Not(val rhs: SelectionConstraint) : SelectionConstraint() {
+    override val asDocument: Document = Document("!") + rhs.asDocument
 }
 
 /** VariableIn(v, P) holds when v is selected to be a protocol in P **/
@@ -99,14 +129,6 @@ data class CostLessThanEqualTo(val lhs: SymbolicCost, val rhs: SymbolicCost) : S
     override val asDocument: Document = lhs.asDocument * Document("<=") * rhs.asDocument
 }
 
-data class Not(val rhs: SelectionConstraint) : SelectionConstraint() {
-    override val asDocument: Document = Document("!") + rhs.asDocument
-}
-
-data class And(val lhs: SelectionConstraint, val rhs: SelectionConstraint) : SelectionConstraint() {
-    override val asDocument: Document = lhs.asDocument * Document("&&") * rhs.asDocument
-}
-
 internal fun Boolean.implies(r: Boolean) = (!this) || r
 
 /** Given a protocol selection, evaluate the constraints. **/
@@ -114,8 +136,8 @@ internal fun SelectionConstraint.evaluate(f: (FunctionName, Variable) -> Protoco
     return when (this) {
         is Literal -> literalValue
         is Implies -> lhs.evaluate(f).implies(rhs.evaluate(f))
-        is Or -> (lhs.evaluate(f)) || (rhs.evaluate(f))
-        is And -> (lhs.evaluate(f)) && (rhs.evaluate(f))
+        is Or -> props.fold(false) { acc, prop -> acc || prop.evaluate(f) }
+        is And -> props.fold(false) { acc, prop -> acc && prop.evaluate(f) }
         is VariableIn -> protocols.contains(f(variable.function, variable.variable))
         is Not -> !(rhs.evaluate(f))
         is VariableEquals -> f(var1.function, var1.variable) == f(var2.function, var2.variable)
@@ -139,7 +161,7 @@ internal fun List<SelectionConstraint>.assert(
 ) {
     for (c in this) {
         if (c is And) {
-            listOf(c.lhs, c.rhs).assert(context, f)
+            c.props.assert(context, f)
         } else if (c is Implies) {
             if (c.lhs.evaluate(f)) {
                 listOf(c.rhs).assert(context + setOf(c.lhs), f)
@@ -151,7 +173,7 @@ internal fun List<SelectionConstraint>.assert(
 }
 
 internal fun SelectionConstraint.or(other: SelectionConstraint): SelectionConstraint {
-    return Or(this, other)
+    return Or(listOf(this, other))
 }
 
 internal fun SelectionConstraint.implies(other: SelectionConstraint): SelectionConstraint {
@@ -175,13 +197,9 @@ internal fun List<BoolExpr>.ors(ctx: Context): BoolExpr {
     return ctx.mkOr(* this.toTypedArray())
 }
 
-internal fun List<SelectionConstraint>.ors(): SelectionConstraint {
-    return this.fold(Literal(false) as SelectionConstraint) { acc, x -> Or(acc, x) }
-}
+internal fun List<SelectionConstraint>.ors(): SelectionConstraint = Or(this)
 
-internal fun List<SelectionConstraint>.ands(): SelectionConstraint {
-    return this.fold(Literal(true) as SelectionConstraint) { acc, x -> And(acc, x) }
-}
+internal fun List<SelectionConstraint>.ands(): SelectionConstraint = And(this)
 
 internal fun iff(lhs: SelectionConstraint, rhs: SelectionConstraint): SelectionConstraint =
     And(Implies(lhs, rhs), Implies(rhs, lhs))
@@ -197,8 +215,14 @@ internal fun SelectionConstraint.boolExpr(
         is GuardVisibilityFlag -> this.variable
         is Literal -> ctx.mkBool(literalValue)
         is Implies -> ctx.mkImplies(lhs.boolExpr(ctx, vmap, pmap), rhs.boolExpr(ctx, vmap, pmap))
-        is Or -> ctx.mkOr(lhs.boolExpr(ctx, vmap, pmap), rhs.boolExpr(ctx, vmap, pmap))
-        is And -> ctx.mkAnd(lhs.boolExpr(ctx, vmap, pmap), rhs.boolExpr(ctx, vmap, pmap))
+        is Or ->
+            this.props.fold(ctx.mkFalse()) { acc, z3prop ->
+                ctx.mkOr(acc, z3prop.boolExpr(ctx, vmap, pmap))
+            }
+        is And ->
+            this.props.fold(ctx.mkTrue()) { acc, z3prop ->
+                ctx.mkAnd(acc, z3prop.boolExpr(ctx, vmap, pmap))
+            }
         is Not -> ctx.mkNot(rhs.boolExpr(ctx, vmap, pmap))
         is VariableIn ->
             this.protocols.map { prot ->
@@ -274,13 +298,13 @@ fun SelectionConstraint.costVariables(): Set<CostVariable> =
         is GuardVisibilityFlag -> setOf()
         is Literal -> setOf()
         is Implies -> this.lhs.costVariables().union(this.rhs.costVariables())
-        is Or -> this.lhs.costVariables().union(this.rhs.costVariables())
+        is Or -> this.props.fold(setOf()) { acc, prop -> acc.union(prop.costVariables()) }
+        is And -> this.props.fold(setOf()) { acc, prop -> acc.union(prop.costVariables()) }
+        is Not -> this.rhs.costVariables()
         is VariableIn -> setOf()
         is VariableEquals -> setOf()
         is CostEquals -> this.lhs.costVariables().union(this.rhs.costVariables())
         is CostLessThanEqualTo -> this.lhs.costVariables().union(this.rhs.costVariables())
-        is Not -> this.rhs.costVariables()
-        is And -> this.lhs.costVariables().union(this.rhs.costVariables())
     }
 
 fun SelectionConstraint.hostVariables(): Set<HostVariable> =
@@ -289,13 +313,13 @@ fun SelectionConstraint.hostVariables(): Set<HostVariable> =
         is GuardVisibilityFlag -> setOf()
         is Literal -> setOf()
         is Implies -> this.lhs.hostVariables().union(this.rhs.hostVariables())
-        is Or -> this.lhs.hostVariables().union(this.rhs.hostVariables())
+        is Or -> this.props.fold(setOf()) { acc, prop -> acc.union(prop.hostVariables()) }
+        is And -> this.props.fold(setOf()) { acc, prop -> acc.union(prop.hostVariables()) }
+        is Not -> this.rhs.hostVariables()
         is VariableIn -> setOf()
         is VariableEquals -> setOf()
         is CostEquals -> setOf()
         is CostLessThanEqualTo -> setOf()
-        is Not -> this.rhs.hostVariables()
-        is And -> this.lhs.hostVariables().union(this.rhs.hostVariables())
     }
 
 fun SelectionConstraint.guardVisibilityVariables(): Set<GuardVisibilityFlag> =
@@ -304,13 +328,13 @@ fun SelectionConstraint.guardVisibilityVariables(): Set<GuardVisibilityFlag> =
         is GuardVisibilityFlag -> setOf(this)
         is Literal -> setOf()
         is Implies -> this.lhs.guardVisibilityVariables().union(this.rhs.guardVisibilityVariables())
-        is Or -> this.lhs.guardVisibilityVariables().union(this.rhs.guardVisibilityVariables())
+        is Or -> this.props.fold(setOf()) { acc, prop -> acc.union(prop.guardVisibilityVariables()) }
+        is And -> this.props.fold(setOf()) { acc, prop -> acc.union(prop.guardVisibilityVariables()) }
+        is Not -> this.rhs.guardVisibilityVariables()
         is VariableIn -> setOf()
         is VariableEquals -> setOf()
         is CostEquals -> setOf()
         is CostLessThanEqualTo -> setOf()
-        is Not -> this.rhs.guardVisibilityVariables()
-        is And -> this.lhs.guardVisibilityVariables().union(this.rhs.guardVisibilityVariables())
     }
 
 /** States whether an expression reads only from the protocols in [prots] **/

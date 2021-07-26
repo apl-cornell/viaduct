@@ -36,10 +36,10 @@ import edu.cornell.cs.apl.viaduct.syntax.types.ValueType
 import edu.cornell.cs.apl.viaduct.syntax.values.ByteVecValue
 import edu.cornell.cs.apl.viaduct.syntax.values.IntegerValue
 import edu.cornell.cs.apl.viaduct.syntax.values.Value
+import java.util.Stack
 import kotlinx.collections.immutable.PersistentMap
 import kotlinx.collections.immutable.persistentMapOf
 import mu.KotlinLogging
-import java.util.Stack
 
 private val logger = KotlinLogging.logger("Plaintext")
 
@@ -224,8 +224,8 @@ class PlaintextProtocolInterpreter(
                     val recvHosts: Set<Host> =
                         events
                             .filter { event ->
-                                event.recv.id == Plaintext.INPUT && event.send.host != event.recv.host
-                                    && event.send.host != this.host
+                                event.recv.id == Plaintext.INPUT && event.send.host != event.recv.host &&
+                                    event.send.host != this.host
                             }
                             .map { event -> event.recv.host }
                             .filter { host -> host != this.host }

@@ -1,5 +1,5 @@
 plugins {
-    kotlin("multiplatform") version "1.5.20" apply false
+    kotlin("multiplatform") version "1.5.21" apply false
 
     // Documentation
     id("org.jetbrains.dokka") version "1.4.20"
@@ -76,7 +76,7 @@ subprojects {
             "implementation"("org.jetbrains.kotlinx:kotlinx-collections-immutable-jvm:0.3.4")
 
             // Logging
-            "implementation"("io.github.microutils:kotlin-logging:2.0.8")
+            "implementation"("io.github.microutils:kotlin-logging:2.0.10")
             "testImplementation"("org.apache.logging.log4j:log4j-core:2.14.1")
             "testImplementation"("org.apache.logging.log4j:log4j-slf4j-impl:2.14.1")
         }

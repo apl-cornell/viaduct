@@ -60,6 +60,13 @@ tasks.compileKotlin {
     dependsOn(tasks.withType<org.xbib.gradle.plugin.JFlexTask>())
 }
 
+// TODO: we only need to add explicit dependencies for dokkaHtmlPartial; dokkaHtml just works for some reason.
+//   remove if/when Dokka fixes this issue.
+tasks.withType<org.jetbrains.dokka.gradle.DokkaTaskPartial>().configureEach {
+    dependsOn(compileCup)
+    dependsOn(tasks.withType<org.xbib.gradle.plugin.JFlexTask>())
+}
+
 abstract class CompileCupTask : DefaultTask() {
     @InputDirectory
     @SkipWhenEmpty

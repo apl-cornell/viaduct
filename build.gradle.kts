@@ -126,7 +126,7 @@ mkdocs {
 }
 
 tasks.withType<ru.vyarus.gradle.plugin.mkdocs.task.MkdocsTask>().configureEach {
-    dependsOn(tasks.dokkaGfmMultiModule)
+    dependsOn(tasks.dokkaHtmlMultiModule)
 }
 
 python {

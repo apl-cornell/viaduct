@@ -1,25 +1,32 @@
 package edu.cornell.cs.apl.viaduct.codegeneration
 
-import com.squareup.kotlinpoet.FileSpec
-import com.squareup.kotlinpoet.FunSpec
-import com.squareup.kotlinpoet.MemberName.Companion.member
-import com.squareup.kotlinpoet.asClassName
+import com.squareup.kotlinpoet.CodeBlock
+import edu.cornell.cs.apl.viaduct.selection.ProtocolCommunication
+import edu.cornell.cs.apl.viaduct.syntax.Protocol
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.AtomicExpressionNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.LetNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.SimpleStatementNode
 
-abstract class CodeGenerator {
-    companion object {
-        val test: String
-            get() {
-                val aby = de.tu_darmstadt.cs.encrypto.aby.Aby::class.asClassName()
-                val createNewShare = aby.member("createNewName")
-                return FileSpec.builder("", "Test")
-                    .addFunction(
-                        FunSpec.builder("test")
-                            .returns(de.tu_darmstadt.cs.encrypto.aby.Share::class)
-                            .addStatement("%M()", createNewShare)
-                            .build()
-                    )
-                    .build()
-                    .toString()
-            }
-    }
+interface CodeGenerator {
+    val availableProtocols: Set<Protocol>
+
+    fun genGuard(protocol: Protocol, expr: AtomicExpressionNode): CodeBlock
+
+    fun genSimpleStatement(protocol: Protocol, stmt: SimpleStatementNode): CodeBlock
+
+    fun genSend(
+        sender: LetNode,
+        sendProtocol: Protocol,
+        receiver: SimpleStatementNode,
+        recvProtocol: Protocol,
+        events: ProtocolCommunication
+    ): CodeBlock
+
+    fun genRecieve(
+        sender: LetNode,
+        sendProtocol: Protocol,
+        receiver: SimpleStatementNode,
+        recvProtocol: Protocol,
+        events: ProtocolCommunication
+    ): CodeBlock
 }

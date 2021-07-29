@@ -20,8 +20,6 @@ fun RepositoryHandler.githubPackage(packageName: String) {
 dependencyResolutionManagement {
     repositories {
         mavenCentral()
-        // TODO: remove once kotlinx-html is on Maven Central
-        maven { url = uri("https://maven.pkg.jetbrains.space/public/p/kotlinx-html/maven") }
         githubPackage("apl-cornell/aby-java")
     }
 }

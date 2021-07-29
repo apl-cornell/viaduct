@@ -43,7 +43,7 @@ jflex {
     encoding = Charsets.UTF_8.name()
 }
 
-val compileCup by tasks.registering(CompileCupTask::class) {}
+val compileCup by tasks.registering(CompileCupTask::class)
 
 sourceSets {
     main {

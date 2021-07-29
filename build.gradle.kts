@@ -60,11 +60,6 @@ subprojects {
             }
         }
 
-        // TODO: remove once Gradle updates to the newer version
-        extensions.configure<JacocoPluginExtension>("jacoco") {
-            toolVersion = "0.8.7"
-        }
-
         tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
             kotlinOptions.allWarningsAsErrors = true
         }

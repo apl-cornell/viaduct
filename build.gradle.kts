@@ -95,7 +95,7 @@ subprojects {
 
         /** API Documentation */
 
-        tasks.withType<org.jetbrains.dokka.gradle.DokkaTask>().configureEach {
+        tasks.withType<org.jetbrains.dokka.gradle.AbstractDokkaLeafTask>().configureEach {
             dokkaSourceSets {
                 configureEach {
                     includes.from("Module.md")

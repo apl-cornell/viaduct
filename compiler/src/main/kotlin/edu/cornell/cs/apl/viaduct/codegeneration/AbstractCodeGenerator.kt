@@ -5,7 +5,7 @@ import com.squareup.kotlinpoet.FunSpec
 import com.squareup.kotlinpoet.MemberName.Companion.member
 import com.squareup.kotlinpoet.asClassName
 
-abstract class CodeGenerator {
+abstract class AbstractCodeGenerator {
     companion object {
         val test: String
             get() {

@@ -3,6 +3,7 @@ package edu.cornell.cs.apl.viaduct.codegeneration
 import com.squareup.kotlinpoet.CodeBlock
 import edu.cornell.cs.apl.viaduct.errors.IllegalInternalCommunicationError
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.AtomicExpressionNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.DeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.LetNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutParameterInitializationNode
@@ -43,4 +44,32 @@ abstract class AbstractCodeGenerator(
     abstract fun genOutParameter(protocol: Protocol, stmt: OutParameterInitializationNode): CodeBlock
 
     abstract fun genOutput(protocol: Protocol, stmt: OutputNode): CodeBlock
+}
+
+abstract class SingleProtocolCodeGenerator(
+    program: ProgramNode,
+    private val protocol: Protocol
+) : AbstractCodeGenerator(program) {
+    override val availableProtocols: Set<Protocol> =
+        setOf(protocol)
+
+    abstract fun genGuard(expr: AtomicExpressionNode): CodeBlock
+
+    override fun genGuard(protocol: Protocol, expr: AtomicExpressionNode): CodeBlock =
+        genGuard(expr)
+
+    abstract fun genLet(stmt: LetNode): CodeBlock
+
+    override fun genLet(protocol: Protocol, stmt: LetNode): CodeBlock =
+        genLet(stmt)
+
+    abstract fun genUpdate(stmt: UpdateNode): CodeBlock
+
+    override fun genUpdate(protocol: Protocol, stmt: UpdateNode): CodeBlock =
+        genUpdate(stmt)
+
+    abstract fun genOutput(stmt: OutputNode): CodeBlock
+
+    override fun genOutput(protocol: Protocol, stmt: OutputNode): CodeBlock =
+        genOutput(stmt)
 }

@@ -1,5 +1,6 @@
 package edu.cornell.cs.apl.viaduct.backend
 
+import edu.cornell.cs.apl.prettyprinting.joined
 import edu.cornell.cs.apl.viaduct.analysis.ProtocolAnalysis
 import edu.cornell.cs.apl.viaduct.backend.commitment.HashInfo
 import edu.cornell.cs.apl.viaduct.backend.commitment.encode
@@ -247,7 +248,7 @@ class PlaintextProtocolInterpreter(
                     if (hostsToCheckWith.isNotEmpty()) {
                         logger.trace {
                             "host: " + this.host.asDocument.print() + " checks for equivocation with: " +
-                                hostsToCheckWith.fold("") { acc, host -> host.asDocument.print() + ' ' + acc }
+                                hostsToCheckWith.sorted().joined().print()
                         }
                     }
 

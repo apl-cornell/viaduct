@@ -1,5 +1,6 @@
 package edu.cornell.cs.apl.viaduct.backend
 
+import edu.cornell.cs.apl.prettyprinting.joined
 import edu.cornell.cs.apl.viaduct.analysis.ProtocolAnalysis
 import edu.cornell.cs.apl.viaduct.backend.commitment.HashInfo
 import edu.cornell.cs.apl.viaduct.backend.commitment.encode
@@ -218,37 +219,64 @@ class PlaintextProtocolInterpreter(
                         }
                     }
 
-                    assert(cleartextValue != null)
+                    if (cleartextValue == null) {
+                        throw ViaductInterpreterError("Plaintext: received null value")
+                    }
 
-                    // check for equivocation
-                    /*
-                    val recvHosts: Set<Host> =
+                    // calculate set of hosts with whom [this.host] needs to check for equivocation
+                    val hostsToCheckWith: Set<Host> =
                         events
-                            .filter { event -> event.recv.id == Plaintext.INPUT && event.send.host != event.recv.host }
+                            .filter { event ->
+                                // remove events where receiving host is not receiving plaintext data
+                                event.recv.id == Plaintext.INPUT &&
+
+                                    // remove events where a host is sending data to themselves
+                                    event.send.host != event.recv.host &&
+
+                                    // remove events where [this.host] is the sender of the data
+                                    event.send.host != this.host
+                            }
+
+                            // of events matching above criteria, get set of data receivers
                             .map { event -> event.recv.host }
+
+                            // remove [this.host] from the set of hosts with whom [this.host] needs to
+                            // check for equivocation
                             .filter { host -> host != this.host }
                             .toSet()
 
-                    for (recvHost in recvHosts) {
+                    if (hostsToCheckWith.isNotEmpty()) {
+                        logger.trace {
+                            "host: " + this.host.asDocument.print() + " checks for equivocation with: " +
+                                hostsToCheckWith.sorted().joined().print()
+                        }
+                    }
+
+                    for (host in hostsToCheckWith) {
                         runtime.send(
-                            cleartextValue!!,
+                            cleartextValue,
                             projection,
-                            ProtocolProjection(recvProtocol, recvHost)
+                            ProtocolProjection(recvProtocol, host)
                         )
                     }
 
-                    for (recvHost in recvHosts) {
+                    for (host in hostsToCheckWith) {
                         val recvValue =
                             runtime.receive(
-                                ProtocolProjection(recvProtocol, recvHost),
+                                ProtocolProjection(recvProtocol, host),
                                 projection
                             )
 
-                        assert(recvValue == cleartextValue)
+                        if (recvValue != cleartextValue) {
+                            throw ViaductInterpreterError(
+                                "equivocation error between hosts: " + this.host.asDocument.print() + ", " +
+                                    host.asDocument.print() + ", expected " + cleartextValue.asDocument.print() +
+                                    ", received " + recvValue.asDocument.print()
+                            )
+                        }
                     }
-                    */
 
-                    tempStore = tempStore.put(sender.temporary.value, cleartextValue!!)
+                    tempStore = tempStore.put(sender.temporary.value, cleartextValue)
                 }
 
                 // commitment opening

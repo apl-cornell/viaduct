@@ -4,7 +4,6 @@ import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.parameters.options.flag
 import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.types.file
-import edu.cornell.cs.apl.prettyprinting.Document
 import edu.cornell.cs.apl.prettyprinting.PrettyPrintable
 import edu.cornell.cs.apl.viaduct.analysis.InformationFlowAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.declarationNodes
@@ -12,7 +11,6 @@ import edu.cornell.cs.apl.viaduct.analysis.letNodes
 import edu.cornell.cs.apl.viaduct.analysis.main
 import edu.cornell.cs.apl.viaduct.backend.aby.ABYMuxPostprocessor
 import edu.cornell.cs.apl.viaduct.backend.zkp.ZKPMuxPostprocessor
-import edu.cornell.cs.apl.viaduct.codegeneration.CodeGenerator
 import edu.cornell.cs.apl.viaduct.passes.ProgramPostprocessorRegistry
 import edu.cornell.cs.apl.viaduct.passes.annotateWithProtocols
 import edu.cornell.cs.apl.viaduct.passes.check
@@ -33,11 +31,11 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProcessDeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
 import guru.nidi.graphviz.engine.Format
 import guru.nidi.graphviz.engine.Graphviz
+import mu.KotlinLogging
 import java.io.File
 import java.io.StringWriter
 import java.io.Writer
 import kotlin.system.measureTimeMillis
-import mu.KotlinLogging
 
 private val logger = KotlinLogging.logger("Compile")
 
@@ -84,6 +82,11 @@ class Compile : CliktCommand(help = "Compile ideal protocol to secure distribute
     val wanCost: Boolean by option(
         "--wancost",
         help = "Use WAN cost model instead of LAN cost model"
+    ).flag(default = false)
+
+    val compileKotlin: Boolean by option(
+        "-k",
+        help = "Translate .via source file to a .kt file"
     ).flag(default = false)
 
     override fun run() {
@@ -156,7 +159,9 @@ class Compile : CliktCommand(help = "Compile ideal protocol to secure distribute
         val postprocessedProgram = postprocessor.postprocess(annotatedProgram)
 
         output.println(postprocessedProgram)
-        output.println(Document(CodeGenerator.test))
+        if (compileKotlin) {
+            print("output .kt file")
+        }
     }
 }
 

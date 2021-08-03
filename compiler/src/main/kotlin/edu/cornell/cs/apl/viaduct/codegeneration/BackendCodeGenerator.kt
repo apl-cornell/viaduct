@@ -9,7 +9,6 @@ import edu.cornell.cs.apl.viaduct.errors.CodeGenerationError
 import edu.cornell.cs.apl.viaduct.errors.ViaductInterpreterError
 import edu.cornell.cs.apl.viaduct.selection.ProtocolCommunication
 import edu.cornell.cs.apl.viaduct.syntax.FunctionName
-import edu.cornell.cs.apl.viaduct.syntax.Host
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.AssertionNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.BlockNode
@@ -29,11 +28,9 @@ import kotlin.system.measureTimeMillis
 private val logger = KotlinLogging.logger("Code Generation")
 
 class BackendCodeGenerator(
-    private val host: Host,
     private val program: ProgramNode,
     private val protocolAnalysis: ProtocolAnalysis,
     private val codeGenerators: List<CodeGenerator>
-    // TODO - figure out interface with runtime
 ) {
     private val codeGeneratorMap: Map<Protocol, CodeGenerator>
     private val nameAnalysis = NameAnalysis.get(program)
@@ -66,7 +63,7 @@ class BackendCodeGenerator(
         codeGeneratorMap = initGeneratorMap
     }
 
-    fun generate(): FileSpec {
+    fun generate(): String {
         val mainBody = program.main.body
 
         // TODO - come up with way to get source file name
@@ -81,7 +78,7 @@ class BackendCodeGenerator(
 
         logger.info { "finished code generation, total running time: ${duration}ms" }
 
-        return fileBuilder.addFunction(mainBuilder.build()).build()
+        return fileBuilder.addFunction(mainBuilder.build()).build().toString()
     }
 
     fun generate(mainFunctionBuilder: FunSpec.Builder, function: FunctionName, stmt: StatementNode) {
@@ -105,11 +102,11 @@ class BackendCodeGenerator(
                     // generate code for the statement, if [this.host] participating
                     val protocolCodeGenerator = codeGeneratorMap[protocol]
                         ?: throw CodeGenerationError("no code generator for protocol ${protocol.asDocument.print()}")
-                    mainFunctionBuilder.addStatement(protocolCodeGenerator.genSimpleStatement(protocol, stmt).toString())
+                    mainFunctionBuilder.addStatement(protocolCodeGenerator.SimpleStatement(protocol, stmt).toString())
 
                     // generate code for sending data
                     if (readers.isNotEmpty()) {
-                        mainFunctionBuilder.addStatement(protocolCodeGenerator.genSend(stmt, protocol, reader!!, readerProtocol!!, events!!).toString())
+                        mainFunctionBuilder.addStatement(protocolCodeGenerator.Send(stmt, protocol, reader!!, readerProtocol!!, events!!).toString())
                     }
                 }
 
@@ -118,7 +115,7 @@ class BackendCodeGenerator(
                     if (protocolAnalysis.participatingHosts(reader!!).contains(this.host)) {
                         val protocolCodeGenerator = codeGeneratorMap[readerProtocol]
                             ?: throw CodeGenerationError("no code generator for protocol ${protocol.asDocument.print()}")
-                        mainFunctionBuilder.addStatement(protocolCodeGenerator.genRecieve(stmt, protocol, reader, readerProtocol!!, events!!).toString())
+                        mainFunctionBuilder.addStatement(protocolCodeGenerator.Recieve(stmt, protocol, reader, readerProtocol!!, events!!).toString())
                     }
                 }
             }
@@ -128,7 +125,7 @@ class BackendCodeGenerator(
                     val protocol = protocolAnalysis.primaryProtocol(stmt)
                     val protocolCodeGenerator = codeGeneratorMap[protocol]
                         ?: throw CodeGenerationError("no code generator for protocol ${protocol.asDocument.print()}")
-                    mainFunctionBuilder.addStatement(protocolCodeGenerator.genSimpleStatement(protocol, stmt).toString())
+                    mainFunctionBuilder.addStatement(protocolCodeGenerator.SimpleStatement(protocol, stmt).toString())
                 }
             }
 
@@ -148,20 +145,26 @@ class BackendCodeGenerator(
                                 val guardProtocol = protocolAnalysis.primaryProtocol(guard)
                                 val protocolCodeGenerator = codeGeneratorMap[guardProtocol]
                                     ?: throw CodeGenerationError("no code generator for protocol ${guardProtocol.asDocument.print()}")
-                                protocolCodeGenerator.genGuard(guardProtocol, guard).toString()
+                                protocolCodeGenerator.Guard(guardProtocol, guard).toString()
                             }
                         }
 
                     //TODO - this needs verification, potential refactoring
-                    mainFunctionBuilder.addStatement("if ($guardValue)")
+                    mainFunctionBuilder.beginControlFlow("if ($guardValue)")
                     generate(mainFunctionBuilder, function, stmt.thenBranch)
-                    mainFunctionBuilder.addStatement(" else ")
+                    mainFunctionBuilder.endControlFlow()
+                    mainFunctionBuilder.beginControlFlow("else")
                     generate(mainFunctionBuilder, function, stmt.elseBranch)
+                    mainFunctionBuilder.endControlFlow()
                 }
             }
 
-            //TODO
-            is InfiniteLoopNode -> throw ViaductInterpreterError("TODO")
+            is InfiniteLoopNode ->
+                if (protocolAnalysis.participatingHosts(stmt).contains(this.host)) {
+                    mainFunctionBuilder.beginControlFlow("while (true)")
+                    generate(mainFunctionBuilder, function, stmt.body)
+                    mainFunctionBuilder.endControlFlow()
+                }
 
             is BreakNode -> {
                 if (protocolAnalysis.participatingHosts(stmt).contains(host)) {

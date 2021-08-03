@@ -10,11 +10,11 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.SimpleStatementNode
 interface CodeGenerator {
     val availableProtocols: Set<Protocol>
 
-    fun genGuard(protocol: Protocol, expr: AtomicExpressionNode): CodeBlock
+    fun Guard(protocol: Protocol, expr: AtomicExpressionNode): CodeBlock
 
-    fun genSimpleStatement(protocol: Protocol, stmt: SimpleStatementNode): CodeBlock
+    fun SimpleStatement(protocol: Protocol, stmt: SimpleStatementNode): CodeBlock
 
-    fun genSend(
+    fun Send(
         sender: LetNode,
         sendProtocol: Protocol,
         receiver: SimpleStatementNode,
@@ -22,7 +22,7 @@ interface CodeGenerator {
         events: ProtocolCommunication
     ): CodeBlock
 
-    fun genRecieve(
+    fun Recieve(
         sender: LetNode,
         sendProtocol: Protocol,
         receiver: SimpleStatementNode,

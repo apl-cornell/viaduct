@@ -9,6 +9,7 @@ import edu.cornell.cs.apl.viaduct.errors.CodeGenerationError
 import edu.cornell.cs.apl.viaduct.errors.ViaductInterpreterError
 import edu.cornell.cs.apl.viaduct.selection.ProtocolCommunication
 import edu.cornell.cs.apl.viaduct.syntax.FunctionName
+import edu.cornell.cs.apl.viaduct.syntax.Host
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.AssertionNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.BlockNode
@@ -52,7 +53,6 @@ class BackendCodeGenerator(
         val hostParticipatingProtocols =
             protocolAnalysis
                 .participatingProtocols(program)
-                .filter { protocol -> protocol.hosts.contains(host) }
 
         for (protocol in hostParticipatingProtocols) {
             if (!currentProtocols.contains(protocol)) {
@@ -68,20 +68,28 @@ class BackendCodeGenerator(
 
         // TODO - come up with way to get source file name
         val fileBuilder = FileSpec.builder("", "TODO")
-        val mainBuilder = FunSpec.builder("main")
 
         logger.info { "starting code generation" }
 
         val duration = measureTimeMillis {
-            generate(mainBuilder, nameAnalysis.enclosingFunctionName(mainBody), mainBody)
+            for (host: Host in this.program.hosts) {
+                val mainBuilder = FunSpec.builder("main_" + host.name)
+                generate(mainBuilder, nameAnalysis.enclosingFunctionName(mainBody), mainBody, host)
+                fileBuilder.addFunction(mainBuilder.build())
+            }
         }
 
         logger.info { "finished code generation, total running time: ${duration}ms" }
 
-        return fileBuilder.addFunction(mainBuilder.build()).build().toString()
+        return fileBuilder.build().toString()
     }
 
-    fun generate(mainFunctionBuilder: FunSpec.Builder, function: FunctionName, stmt: StatementNode) {
+    fun generate(
+        mainFunctionBuilder: FunSpec.Builder,
+        function: FunctionName,
+        stmt: StatementNode,
+        host: Host
+    ) {
         when (stmt) {
             is LetNode -> {
                 val protocol = protocolAnalysis.primaryProtocol(stmt)
@@ -97,7 +105,7 @@ class BackendCodeGenerator(
                     events = protocolAnalysis.relevantCommunicationEvents(stmt, reader)
                 }
 
-                if (protocolAnalysis.participatingHosts(stmt).contains(this.host)) {
+                if (protocolAnalysis.participatingHosts(stmt).contains(host)) {
 
                     // generate code for the statement, if [this.host] participating
                     val protocolCodeGenerator = codeGeneratorMap[protocol]
@@ -112,7 +120,7 @@ class BackendCodeGenerator(
 
                 // generate code for receiving data
                 if (readers.isNotEmpty()) {
-                    if (protocolAnalysis.participatingHosts(reader!!).contains(this.host)) {
+                    if (protocolAnalysis.participatingHosts(reader!!).contains(host)) {
                         val protocolCodeGenerator = codeGeneratorMap[readerProtocol]
                             ?: throw CodeGenerationError("no code generator for protocol ${protocol.asDocument.print()}")
                         mainFunctionBuilder.addStatement(protocolCodeGenerator.Recieve(stmt, protocol, reader, readerProtocol!!, events!!).toString())
@@ -121,7 +129,7 @@ class BackendCodeGenerator(
             }
 
             is SimpleStatementNode -> {
-                if (protocolAnalysis.participatingHosts(stmt).contains(this.host)) {
+                if (protocolAnalysis.participatingHosts(stmt).contains(host)) {
                     val protocol = protocolAnalysis.primaryProtocol(stmt)
                     val protocolCodeGenerator = codeGeneratorMap[protocol]
                         ?: throw CodeGenerationError("no code generator for protocol ${protocol.asDocument.print()}")
@@ -133,7 +141,7 @@ class BackendCodeGenerator(
             is FunctionCallNode -> throw ViaductInterpreterError("TODO")
 
             is IfNode -> {
-                if (protocolAnalysis.participatingHosts(stmt).contains(this.host)) {
+                if (protocolAnalysis.participatingHosts(stmt).contains(host)) {
 
                     //TODO - do I need to check if guardValue is a boolean? -interpreter does this but I feel like
                     // semantic analysis would accomplish this
@@ -151,18 +159,18 @@ class BackendCodeGenerator(
 
                     //TODO - this needs verification, potential refactoring
                     mainFunctionBuilder.beginControlFlow("if ($guardValue)")
-                    generate(mainFunctionBuilder, function, stmt.thenBranch)
+                    generate(mainFunctionBuilder, function, stmt.thenBranch, host)
                     mainFunctionBuilder.endControlFlow()
                     mainFunctionBuilder.beginControlFlow("else")
-                    generate(mainFunctionBuilder, function, stmt.elseBranch)
+                    generate(mainFunctionBuilder, function, stmt.elseBranch, host)
                     mainFunctionBuilder.endControlFlow()
                 }
             }
 
             is InfiniteLoopNode ->
-                if (protocolAnalysis.participatingHosts(stmt).contains(this.host)) {
+                if (protocolAnalysis.participatingHosts(stmt).contains(host)) {
                     mainFunctionBuilder.beginControlFlow("while (true)")
-                    generate(mainFunctionBuilder, function, stmt.body)
+                    generate(mainFunctionBuilder, function, stmt.body, host)
                     mainFunctionBuilder.endControlFlow()
                 }
 
@@ -174,7 +182,7 @@ class BackendCodeGenerator(
 
             is BlockNode -> {
                 for (child: StatementNode in stmt) {
-                    generate(mainFunctionBuilder, function, child)
+                    generate(mainFunctionBuilder, function, child, host)
                 }
             }
 

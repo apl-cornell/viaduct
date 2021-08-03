@@ -17,17 +17,17 @@ abstract class AbstractCodeGenerator(
     val program: ProgramNode
 ) : CodeGenerator {
 
-    override fun genSimpleStatement(protocol: Protocol, stmt: SimpleStatementNode): CodeBlock {
+    override fun SimpleStatement(protocol: Protocol, stmt: SimpleStatementNode): CodeBlock {
         when (stmt) {
-            is LetNode -> genLet(protocol, stmt)
+            is LetNode -> Let(protocol, stmt)
 
-            is DeclarationNode -> genDeclaration(protocol, stmt)
+            is DeclarationNode -> Declaration(protocol, stmt)
 
-            is UpdateNode -> genUpdate(protocol, stmt)
+            is UpdateNode -> Update(protocol, stmt)
 
-            is OutParameterInitializationNode -> genOutParameter(protocol, stmt)
+            is OutParameterInitializationNode -> OutParameter(protocol, stmt)
 
-            is OutputNode -> genOutput(protocol, stmt)
+            is OutputNode -> Output(protocol, stmt)
 
             is SendNode -> throw IllegalInternalCommunicationError(stmt)
         }
@@ -35,15 +35,15 @@ abstract class AbstractCodeGenerator(
         throw IllegalArgumentException("unknown statement type")
     }
 
-    abstract fun genLet(protocol: Protocol, stmt: LetNode): CodeBlock
+    abstract fun Let(protocol: Protocol, stmt: LetNode): CodeBlock
 
-    abstract fun genDeclaration(protocol: Protocol, stmt: DeclarationNode): CodeBlock
+    abstract fun Declaration(protocol: Protocol, stmt: DeclarationNode): CodeBlock
 
-    abstract fun genUpdate(protocol: Protocol, stmt: UpdateNode): CodeBlock
+    abstract fun Update(protocol: Protocol, stmt: UpdateNode): CodeBlock
 
-    abstract fun genOutParameter(protocol: Protocol, stmt: OutParameterInitializationNode): CodeBlock
+    abstract fun OutParameter(protocol: Protocol, stmt: OutParameterInitializationNode): CodeBlock
 
-    abstract fun genOutput(protocol: Protocol, stmt: OutputNode): CodeBlock
+    abstract fun Output(protocol: Protocol, stmt: OutputNode): CodeBlock
 }
 
 abstract class SingleProtocolCodeGenerator(
@@ -53,23 +53,23 @@ abstract class SingleProtocolCodeGenerator(
     override val availableProtocols: Set<Protocol> =
         setOf(protocol)
 
-    abstract fun genGuard(expr: AtomicExpressionNode): CodeBlock
+    abstract fun Guard(expr: AtomicExpressionNode): CodeBlock
 
-    override fun genGuard(protocol: Protocol, expr: AtomicExpressionNode): CodeBlock =
-        genGuard(expr)
+    override fun Guard(protocol: Protocol, expr: AtomicExpressionNode): CodeBlock =
+        Guard(expr)
 
-    abstract fun genLet(stmt: LetNode): CodeBlock
+    abstract fun Let(stmt: LetNode): CodeBlock
 
-    override fun genLet(protocol: Protocol, stmt: LetNode): CodeBlock =
-        genLet(stmt)
+    override fun Let(protocol: Protocol, stmt: LetNode): CodeBlock =
+        Let(stmt)
 
-    abstract fun genUpdate(stmt: UpdateNode): CodeBlock
+    abstract fun Update(stmt: UpdateNode): CodeBlock
 
-    override fun genUpdate(protocol: Protocol, stmt: UpdateNode): CodeBlock =
-        genUpdate(stmt)
+    override fun Update(protocol: Protocol, stmt: UpdateNode): CodeBlock =
+        Update(stmt)
 
-    abstract fun genOutput(stmt: OutputNode): CodeBlock
+    abstract fun Output(stmt: OutputNode): CodeBlock
 
-    override fun genOutput(protocol: Protocol, stmt: OutputNode): CodeBlock =
-        genOutput(stmt)
+    override fun Output(protocol: Protocol, stmt: OutputNode): CodeBlock =
+        Output(stmt)
 }

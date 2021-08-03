@@ -23,8 +23,8 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ReadNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.SimpleStatementNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.StatementNode
-import mu.KotlinLogging
 import kotlin.system.measureTimeMillis
+import mu.KotlinLogging
 
 private val logger = KotlinLogging.logger("Code Generation")
 
@@ -137,13 +137,13 @@ class BackendCodeGenerator(
                 }
             }
 
-            //TODO
+            // TODO
             is FunctionCallNode -> throw ViaductInterpreterError("TODO")
 
             is IfNode -> {
                 if (protocolAnalysis.participatingHosts(stmt).contains(host)) {
 
-                    //TODO - do I need to check if guardValue is a boolean? -interpreter does this but I feel like
+                    // TODO - do I need to check if guardValue is a boolean? -interpreter does this but I feel like
                     // semantic analysis would accomplish this
                     var guardValue =
                         when (val guard = stmt.guard) {
@@ -157,7 +157,7 @@ class BackendCodeGenerator(
                             }
                         }
 
-                    //TODO - this needs verification, potential refactoring
+                    // TODO - this needs verification, potential refactoring
                     mainFunctionBuilder.beginControlFlow("if ($guardValue)")
                     generate(mainFunctionBuilder, function, stmt.thenBranch, host)
                     mainFunctionBuilder.endControlFlow()

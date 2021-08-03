@@ -44,11 +44,11 @@ class PlainTextCodeGenerator(
         }
     }
 
-    //TODO - figure out how to get type from expression node
+    // TODO - figure out how to get type from expression node
     override fun Let(protocol: Protocol, stmt: LetNode): CodeBlock {
         return CodeBlock.of(
             "val %L = %L",
-            //use name instead of document
+            // use name instead of document
             stmt.temporary.value.name,
             ExpString(stmt.value)
         )
@@ -87,11 +87,12 @@ class PlainTextCodeGenerator(
         return CodeBlock.of(ExpString(expr))
     }
 
-    override fun Send(sender: LetNode,
-                      sendProtocol: Protocol,
-                      receiver: SimpleStatementNode,
-                      recvProtocol: Protocol,
-                      events: ProtocolCommunication
+    override fun Send(
+        sender: LetNode,
+        sendProtocol: Protocol,
+        receiver: SimpleStatementNode,
+        recvProtocol: Protocol,
+        events: ProtocolCommunication
     ): CodeBlock {
         val sendBuilder = CodeBlock.builder()
         if (sendProtocol != recvProtocol) {
@@ -100,11 +101,12 @@ class PlainTextCodeGenerator(
         return sendBuilder.build()
     }
 
-    override fun Recieve(sender: LetNode,
-                         sendProtocol: Protocol,
-                         receiver: SimpleStatementNode,
-                         recvProtocol: Protocol,
-                         events: ProtocolCommunication
+    override fun Recieve(
+        sender: LetNode,
+        sendProtocol: Protocol,
+        receiver: SimpleStatementNode,
+        recvProtocol: Protocol,
+        events: ProtocolCommunication
     ): CodeBlock {
         TODO("Not yet implemented")
     }

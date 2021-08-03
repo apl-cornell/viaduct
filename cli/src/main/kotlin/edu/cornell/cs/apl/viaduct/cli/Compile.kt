@@ -4,13 +4,18 @@ import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.parameters.options.flag
 import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.types.file
+import edu.cornell.cs.apl.prettyprinting.Document
 import edu.cornell.cs.apl.prettyprinting.PrettyPrintable
 import edu.cornell.cs.apl.viaduct.analysis.InformationFlowAnalysis
+import edu.cornell.cs.apl.viaduct.analysis.ProtocolAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.declarationNodes
 import edu.cornell.cs.apl.viaduct.analysis.letNodes
 import edu.cornell.cs.apl.viaduct.analysis.main
 import edu.cornell.cs.apl.viaduct.backend.aby.ABYMuxPostprocessor
 import edu.cornell.cs.apl.viaduct.backend.zkp.ZKPMuxPostprocessor
+import edu.cornell.cs.apl.viaduct.codegeneration.BackendCodeGenerator
+import edu.cornell.cs.apl.viaduct.codegeneration.CodeGenerator
+import edu.cornell.cs.apl.viaduct.codegeneration.PlainTextCodeGenerator
 import edu.cornell.cs.apl.viaduct.passes.ProgramPostprocessorRegistry
 import edu.cornell.cs.apl.viaduct.passes.annotateWithProtocols
 import edu.cornell.cs.apl.viaduct.passes.check
@@ -86,6 +91,7 @@ class Compile : CliktCommand(help = "Compile ideal protocol to secure distribute
 
     val compileKotlin: Boolean by option(
         "-k",
+        "--compile-kotlin",
         help = "Translate .via source file to a .kt file"
     ).flag(default = false)
 
@@ -158,9 +164,23 @@ class Compile : CliktCommand(help = "Compile ideal protocol to secure distribute
         )
         val postprocessedProgram = postprocessor.postprocess(annotatedProgram)
 
-        output.println(postprocessedProgram)
         if (compileKotlin) {
-            print("output .kt file")
+            val plainTextGenerator = PlainTextCodeGenerator(
+                postprocessedProgram,
+                setOf()
+            )
+
+            val protocolAnalysis = ProtocolAnalysis(program, SimpleProtocolComposer)
+            val backendCodeGenerator = BackendCodeGenerator(
+                postprocessedProgram,
+                protocolAnalysis,
+                listOf<CodeGenerator>(plainTextGenerator)
+            )
+
+            val kotlin = backendCodeGenerator.generate()
+            output.println(Document(kotlin))
+        } else {
+            output.println(postprocessedProgram)
         }
     }
 }

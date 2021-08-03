@@ -31,7 +31,7 @@ dependencies {
 
     // Code generation
     implementation("com.squareup:kotlinpoet:1.7.2")
-    implementation("com.github.apl-cornell:aby-java:9f626e2b70")
+    implementation("de.tu_darmstadt.cs.encrypto:aby-java:f96aceac2c7096499c26d91cad1e560e069f6aa2")
 
     // SMT solving
     implementation("io.github.tudo-aqua:z3-turnkey:4.8.7.1")

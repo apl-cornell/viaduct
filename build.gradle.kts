@@ -1,12 +1,12 @@
 plugins {
-    kotlin("multiplatform") version "1.5.20" apply false
+    kotlin("multiplatform") version "1.5.21" apply false
 
     // Documentation
-    id("org.jetbrains.dokka") version "1.4.20"
+    id("org.jetbrains.dokka") version "1.5.0"
     id("ru.vyarus.mkdocs") version "2.1.1"
 
     // Style checking
-    id("com.diffplug.spotless") version "5.14.0"
+    id("com.diffplug.spotless") version "5.14.2"
 
     // Dependency management
     id("com.github.ben-manes.versions") version "0.39.0"
@@ -60,11 +60,6 @@ subprojects {
             }
         }
 
-        // TODO: remove once Gradle updates to the newer version
-        extensions.configure<JacocoPluginExtension>("jacoco") {
-            toolVersion = "0.8.7"
-        }
-
         tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
             kotlinOptions.allWarningsAsErrors = true
         }
@@ -76,7 +71,7 @@ subprojects {
             "implementation"("org.jetbrains.kotlinx:kotlinx-collections-immutable-jvm:0.3.4")
 
             // Logging
-            "implementation"("io.github.microutils:kotlin-logging:2.0.8")
+            "implementation"("io.github.microutils:kotlin-logging:2.0.10")
             "testImplementation"("org.apache.logging.log4j:log4j-core:2.14.1")
             "testImplementation"("org.apache.logging.log4j:log4j-slf4j-impl:2.14.1")
         }
@@ -100,7 +95,7 @@ subprojects {
 
         /** API Documentation */
 
-        tasks.withType<org.jetbrains.dokka.gradle.DokkaTask>().configureEach {
+        tasks.withType<org.jetbrains.dokka.gradle.AbstractDokkaLeafTask>().configureEach {
             dokkaSourceSets {
                 configureEach {
                     includes.from("Module.md")
@@ -131,7 +126,7 @@ mkdocs {
 }
 
 tasks.withType<ru.vyarus.gradle.plugin.mkdocs.task.MkdocsTask>().configureEach {
-    dependsOn(tasks.dokkaGfmMultiModule)
+    dependsOn(tasks.dokkaHtmlMultiModule)
 }
 
 python {

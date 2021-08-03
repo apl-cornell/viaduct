@@ -17,7 +17,7 @@ copyright: 'Copyright &copy; 2021 Applied Programming Languages Group'
 theme:
   name: material
   features:
-    - navigation.instant
+    # - navigation.instant # Breaks API reference
     - navigation.tabs
     # - toc.integrate
 
@@ -67,10 +67,4 @@ nav:
       - developer-guide/dependencies.md
       - developer-guide/documentation.md
   - API Reference:
-      # TODO: use https://github.com/lukasgeiter/mkdocs-awesome-pages-plugin so sub pages get navigation.
-      - Modules: api/-modules.md
-      - Command Line Interface: api/cli/cli/index.md
-      - Compiler: api/compiler/compiler/index.md
-      - Runtime System: api/runtime/runtime/index.md
-      - Shared Modules: api/shared/shared/index.md
-      - Test Utilities: api/test-utilities/test-utilities/index.md
+      - api/index.html

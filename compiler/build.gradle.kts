@@ -47,7 +47,7 @@ jflex {
     encoding = Charsets.UTF_8.name()
 }
 
-val compileCup by tasks.registering(CompileCupTask::class) {}
+val compileCup by tasks.registering(CompileCupTask::class)
 
 sourceSets {
     main {
@@ -60,6 +60,13 @@ tasks.compileJava {
 }
 
 tasks.compileKotlin {
+    dependsOn(compileCup)
+    dependsOn(tasks.withType<org.xbib.gradle.plugin.JFlexTask>())
+}
+
+// TODO: we only need to add explicit dependencies for dokkaHtmlPartial; dokkaHtml just works for some reason.
+//   remove if/when Dokka fixes this issue.
+tasks.withType<org.jetbrains.dokka.gradle.DokkaTaskPartial>().configureEach {
     dependsOn(compileCup)
     dependsOn(tasks.withType<org.xbib.gradle.plugin.JFlexTask>())
 }

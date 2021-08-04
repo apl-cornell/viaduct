@@ -20,9 +20,13 @@ jobs:
         with:
           distribution: 'zulu'
           java-version: ${{ matrix.java }}
-      - name: Build with Gradle
+      - name: Build and test the compiler
         uses: eskatos/gradle-command-action@v2
         with:
           arguments: build jacocoTestReport
+      - name: Build example programs
+        uses: eskatos/gradle-command-action@v1
+        with:
+          arguments: -p examples build
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v2

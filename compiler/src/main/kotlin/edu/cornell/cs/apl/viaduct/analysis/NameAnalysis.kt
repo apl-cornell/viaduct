@@ -614,10 +614,10 @@ class NameAnalysis private constructor(private val tree: Tree<Node, ProgramNode>
     }
 
     companion object : AnalysisProvider<NameAnalysis> {
-        private val ProgramNode.instance: NameAnalysis by attribute { NameAnalysis(this.tree) }
-
         val MAIN_FUNCTION = FunctionName("#main#")
 
-        override fun get(program: ProgramNode): NameAnalysis = program.instance
+        private fun construct(program: ProgramNode) = NameAnalysis(program.tree)
+
+        override fun get(program: ProgramNode): NameAnalysis = program.cached(::construct)
     }
 }

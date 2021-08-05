@@ -1,7 +1,6 @@
 package edu.cornell.cs.apl.viaduct.analysis
 
 import edu.cornell.cs.apl.attributes.Tree
-import edu.cornell.cs.apl.attributes.attribute
 import edu.cornell.cs.apl.attributes.circularAttribute
 import edu.cornell.cs.apl.viaduct.errors.OutParameterInitializationError
 import edu.cornell.cs.apl.viaduct.syntax.ObjectVariable
@@ -206,9 +205,10 @@ class OutParameterInitializationAnalysis private constructor(
     }
 
     companion object : AnalysisProvider<OutParameterInitializationAnalysis> {
-        private val ProgramNode.instance: OutParameterInitializationAnalysis
-            by attribute { OutParameterInitializationAnalysis(this.tree, NameAnalysis.get(this)) }
+        private fun construct(program: ProgramNode) =
+            OutParameterInitializationAnalysis(program.tree, NameAnalysis.get(program))
 
-        override fun get(program: ProgramNode): OutParameterInitializationAnalysis = program.instance
+        override fun get(program: ProgramNode): OutParameterInitializationAnalysis =
+            program.cached(::construct)
     }
 }

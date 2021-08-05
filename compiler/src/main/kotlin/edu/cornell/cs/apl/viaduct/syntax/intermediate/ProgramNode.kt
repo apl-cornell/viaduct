@@ -28,14 +28,18 @@ private constructor(
     constructor(declarations: List<TopLevelDeclarationNode>, sourceLocation: SourceLocation) :
         this(declarations.toPersistentList(), sourceLocation)
 
+    // TODO: Should be moved to analysis.Declarations
     val hostDeclarations: Iterable<HostDeclarationNode> =
         declarations.filterIsInstance<HostDeclarationNode>()
 
+    // TODO: Should be provided by HostTrustConfiguration
     val hosts: Set<Host> = hostDeclarations.map { it.name.value }.toSet()
 
+    // TODO: Should be moved to analysis.Declarations
     val functions: Iterable<FunctionDeclarationNode> =
         declarations.filterIsInstance<FunctionDeclarationNode>()
 
+    // TODO: Should be moved to analysis.NameAnalysis
     val functionMap: Map<FunctionName, FunctionDeclarationNode> =
         functions.map { function -> Pair(function.name.value, function) }.toMap()
 
@@ -71,7 +75,7 @@ private constructor(
 
     override fun printMetadata(metadata: Map<Node, PrettyPrintable>): Document =
         (metadata[this]?.let { it.asDocument.commented() + Document.forcedLineBreak } ?: Document("")) +
-        declarations
-            .map { it.printMetadata(metadata) }
-            .concatenated(Document.forcedLineBreak + Document.forcedLineBreak)
+            declarations
+                .map { it.printMetadata(metadata) }
+                .concatenated(Document.forcedLineBreak + Document.forcedLineBreak)
 }

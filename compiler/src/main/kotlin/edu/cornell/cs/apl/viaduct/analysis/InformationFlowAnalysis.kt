@@ -699,11 +699,9 @@ class InformationFlowAnalysis private constructor(
     }
 
     companion object : AnalysisProvider<InformationFlowAnalysis> {
-        private val ProgramNode.instance: InformationFlowAnalysis by attribute {
-            InformationFlowAnalysis(this.tree, NameAnalysis.get(this))
-        }
+        private fun construct(program: ProgramNode) = InformationFlowAnalysis(program.tree, NameAnalysis.get(program))
 
-        override fun get(program: ProgramNode): InformationFlowAnalysis = program.instance
+        override fun get(program: ProgramNode): InformationFlowAnalysis = program.cached(::construct)
     }
 }
 

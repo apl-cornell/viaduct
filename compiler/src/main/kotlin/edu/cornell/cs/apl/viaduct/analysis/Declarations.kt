@@ -53,7 +53,6 @@ fun StatementNode.createdVariables(): List<Variable> =
         is BlockNode -> listOf()
     }
 
-/** Recursively traverses the children of [this] node, then applies [f] to [this] node. */
 fun StatementNode.immediateRHS(): List<ExpressionNode> {
     return when (this) {
         is LetNode -> listOf(this.value)
@@ -80,6 +79,7 @@ fun ExpressionNode.involvedVariables(): List<Variable> {
     }
 }
 
+/** Recursively traverses the children of [this] node, then applies [f] to [this] node. */
 private fun Node.postorderTraverse(f: (Node) -> Unit) {
     this.children.forEach { it.postorderTraverse(f) }
     f(this)

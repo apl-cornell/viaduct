@@ -26,17 +26,17 @@ class PlainTextCodeGenerator(
     override val availableProtocols: Set<Protocol>
 ) : AbstractCodeGenerator(program) {
 
-    private fun ExpString(expr: ExpressionNode): String {
+    private fun expString(expr: ExpressionNode): String {
         return when (expr) {
-            is LiteralNode -> expr.value.asDocument.print()
+            is LiteralNode -> expr.value.toString()
 
-            is ReadNode -> expr.temporary.asDocument.print()
+            is ReadNode -> expr.temporary.value.name
 
             is OperatorApplicationNode -> expr.operator.asDocument(expr.arguments).print()
 
-            is QueryNode -> expr.variable.asDocument.print() + "." + expr.query.asDocument.print() + "(" + expr.arguments.joined().print() + ")"
+            is QueryNode -> expr.variable.value.name + "." + expr.query.value.name + "(" + expr.arguments.joined().print() + ")"
 
-            is DowngradeNode -> ExpString(expr.expression)
+            is DowngradeNode -> expString(expr)
 
             is InputNode -> "runtime.input()"
 
@@ -44,21 +44,22 @@ class PlainTextCodeGenerator(
         }
     }
 
-    // TODO - figure out how to get type from expression node
     override fun Let(protocol: Protocol, stmt: LetNode): CodeBlock {
         return CodeBlock.of(
             "val %L = %L",
-            // use name instead of document
             stmt.temporary.value.name,
-            ExpString(stmt.value)
+
+            // TODO - create type translation function : Viaduct type -> Kotlin type
+            // this.translateType(this.typeAnalysis.type(stmt)),
+            expString(stmt.value)
         )
     }
 
     override fun Declaration(protocol: Protocol, stmt: DeclarationNode): CodeBlock {
         return CodeBlock.of(
             "val %L = %T(%L)",
-            stmt.name.asDocument.print(),
-            stmt.className.asDocument.print(),
+            stmt.name.value.name,
+            stmt.className.value.name,
             stmt.arguments.joined().print()
         )
     }
@@ -66,8 +67,8 @@ class PlainTextCodeGenerator(
     override fun Update(protocol: Protocol, stmt: UpdateNode): CodeBlock {
         return CodeBlock.of(
             "%L.%L(%L)",
-            stmt.variable.asDocument.print(),
-            stmt.update.asDocument.print(),
+            stmt.variable.value.name,
+            stmt.update.value.name,
             stmt.arguments.joined().print()
         )
     }
@@ -79,12 +80,12 @@ class PlainTextCodeGenerator(
     override fun Output(protocol: Protocol, stmt: OutputNode): CodeBlock {
         return CodeBlock.of(
             "runtime.output(%L)",
-            ExpString(stmt.message)
+            expString(stmt.message)
         )
     }
 
     override fun Guard(protocol: Protocol, expr: AtomicExpressionNode): CodeBlock {
-        return CodeBlock.of(ExpString(expr))
+        return CodeBlock.of(expString(expr))
     }
 
     override fun Send(

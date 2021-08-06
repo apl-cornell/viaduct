@@ -2,15 +2,17 @@ package edu.cornell.cs.apl.viaduct.cli
 
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.parameters.options.flag
+import com.github.ajalt.clikt.parameters.options.multiple
 import com.github.ajalt.clikt.parameters.options.option
+import com.github.ajalt.clikt.parameters.options.pair
 import com.github.ajalt.clikt.parameters.types.file
 import edu.cornell.cs.apl.prettyprinting.Document
 import edu.cornell.cs.apl.prettyprinting.PrettyPrintable
 import edu.cornell.cs.apl.viaduct.analysis.InformationFlowAnalysis
-import edu.cornell.cs.apl.viaduct.analysis.ProtocolAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.declarationNodes
 import edu.cornell.cs.apl.viaduct.analysis.letNodes
 import edu.cornell.cs.apl.viaduct.analysis.main
+import edu.cornell.cs.apl.viaduct.backend.HostAddress
 import edu.cornell.cs.apl.viaduct.backend.aby.ABYMuxPostprocessor
 import edu.cornell.cs.apl.viaduct.backend.zkp.ZKPMuxPostprocessor
 import edu.cornell.cs.apl.viaduct.codegeneration.BackendCodeGenerator
@@ -29,6 +31,7 @@ import edu.cornell.cs.apl.viaduct.selection.SimpleProtocolFactory
 import edu.cornell.cs.apl.viaduct.selection.selectProtocolsWithZ3
 import edu.cornell.cs.apl.viaduct.selection.validateProtocolAssignment
 import edu.cornell.cs.apl.viaduct.syntax.FunctionName
+import edu.cornell.cs.apl.viaduct.syntax.Host
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
 import edu.cornell.cs.apl.viaduct.syntax.Variable
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.Node
@@ -94,6 +97,18 @@ class Compile : CliktCommand(help = "Compile ideal protocol to secure distribute
         "--compile-kotlin",
         help = "Translate .via source file to a .kt file"
     ).flag(default = false)
+
+    val hostAddress: List<Pair<String, String>> by option(
+        "-h",
+        "--host",
+        help = "Set host connection info"
+    ).pair().multiple()
+
+    val inputStrategy by option(
+        "-in",
+        "--input",
+        help = "File to stream inputs from"
+    ).file(canBeDir = false, mustExist = false)
 
     override fun run() {
         logger.info { "elaborating source program..." }
@@ -165,16 +180,36 @@ class Compile : CliktCommand(help = "Compile ideal protocol to secure distribute
         val postprocessedProgram = postprocessor.postprocess(annotatedProgram)
 
         if (compileKotlin) {
+
+            // check for host address information to generate code with
+            // TODO - change this map to <Host, HostAddress> once imports are resolved-
+            val connectionInfoMap: Map<Host, String> =
+                hostAddress.map { kv ->
+                    val host = Host(kv.first)
+                    val addressStr = kv.second.split(":", limit = 2)
+                    val address = HostAddress(addressStr[0], addressStr[1].toInt()).toString()
+                    host to address
+                }.toMap()
+
+//            val strategy: Strategy =
+//                if (inputStrategy == null)
+//                    (TerminalIO())
+//                else
+//                    (FileStrategy(inputStrategy!!))
+
             val plainTextGenerator = PlainTextCodeGenerator(
                 postprocessedProgram,
                 setOf()
             )
 
-            val protocolAnalysis = ProtocolAnalysis(program, SimpleProtocolComposer)
             val backendCodeGenerator = BackendCodeGenerator(
                 postprocessedProgram,
-                protocolAnalysis,
-                listOf<CodeGenerator>(plainTextGenerator)
+                connectionInfoMap,
+
+                // TODO - uncomment this once imports are resolved
+                // strategy,
+                listOf<CodeGenerator>(plainTextGenerator),
+                input!!.name.substringBefore('.')
             )
 
             val kotlin = backendCodeGenerator.generate()

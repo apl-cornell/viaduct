@@ -73,7 +73,7 @@ class PlainTextCodeGenerator(
                 )
 
             MutableCell -> {
-                //TODO - change this (difference between viaduct, kotlin semantics)
+                // TODO - change this (difference between viaduct, kotlin semantics)
                 CodeBlock.of(
                     "var %L = %L",
                     stmt.name.value.name,

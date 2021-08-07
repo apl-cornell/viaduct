@@ -7,6 +7,7 @@ import com.github.ajalt.clikt.parameters.types.file
 import edu.cornell.cs.apl.prettyprinting.Document
 import edu.cornell.cs.apl.prettyprinting.PrettyPrintable
 import edu.cornell.cs.apl.viaduct.analysis.InformationFlowAnalysis
+import edu.cornell.cs.apl.viaduct.analysis.ProtocolAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.declarationNodes
 import edu.cornell.cs.apl.viaduct.analysis.letNodes
 import edu.cornell.cs.apl.viaduct.analysis.main
@@ -35,11 +36,11 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProcessDeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
 import guru.nidi.graphviz.engine.Format
 import guru.nidi.graphviz.engine.Graphviz
+import mu.KotlinLogging
 import java.io.File
 import java.io.StringWriter
 import java.io.Writer
 import kotlin.system.measureTimeMillis
-import mu.KotlinLogging
 
 private val logger = KotlinLogging.logger("Compile")
 
@@ -164,9 +165,12 @@ class Compile : CliktCommand(help = "Compile ideal protocol to secure distribute
         val postprocessedProgram = postprocessor.postprocess(annotatedProgram)
 
         if (compileKotlin) {
+
+            // TODO - figure out best way to let code generators know which protocols it is responsible for
+            val protocolAnalysis = ProtocolAnalysis(program, SimpleProtocolComposer)
             val plainTextGenerator = PlainTextCodeGenerator(
                 postprocessedProgram,
-                setOf()
+                protocolAnalysis.participatingProtocols(postprocessedProgram)
             )
 
             val backendCodeGenerator = BackendCodeGenerator(

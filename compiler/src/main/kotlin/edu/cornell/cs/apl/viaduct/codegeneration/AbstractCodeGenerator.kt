@@ -1,7 +1,6 @@
 package edu.cornell.cs.apl.viaduct.codegeneration
 
 import com.squareup.kotlinpoet.CodeBlock
-import edu.cornell.cs.apl.viaduct.analysis.TypeAnalysis
 import edu.cornell.cs.apl.viaduct.errors.IllegalInternalCommunicationError
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.AtomicExpressionNode
@@ -17,10 +16,9 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.UpdateNode
 abstract class AbstractCodeGenerator(
     val program: ProgramNode
 ) : CodeGenerator {
-    val typeAnalysis = TypeAnalysis.get(program)
 
     override fun SimpleStatement(protocol: Protocol, stmt: SimpleStatementNode): CodeBlock {
-        when (stmt) {
+        return when (stmt) {
             is LetNode -> Let(protocol, stmt)
 
             is DeclarationNode -> Declaration(protocol, stmt)
@@ -33,8 +31,6 @@ abstract class AbstractCodeGenerator(
 
             is SendNode -> throw IllegalInternalCommunicationError(stmt)
         }
-
-        throw IllegalArgumentException("unknown statement type")
     }
 
     abstract fun Let(protocol: Protocol, stmt: LetNode): CodeBlock
@@ -46,10 +42,6 @@ abstract class AbstractCodeGenerator(
     abstract fun OutParameter(protocol: Protocol, stmt: OutParameterInitializationNode): CodeBlock
 
     abstract fun Output(protocol: Protocol, stmt: OutputNode): CodeBlock
-
-    // TODO - write this function
-    // fun translateType(viaductType: Type): KClass<*> {
-    // }
 }
 
 abstract class SingleProtocolCodeGenerator(

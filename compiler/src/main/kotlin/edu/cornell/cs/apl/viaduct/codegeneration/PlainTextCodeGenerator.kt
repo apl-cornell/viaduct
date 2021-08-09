@@ -7,6 +7,8 @@ import edu.cornell.cs.apl.viaduct.errors.RuntimeError
 import edu.cornell.cs.apl.viaduct.protocols.Plaintext
 import edu.cornell.cs.apl.viaduct.selection.CommunicationEvent
 import edu.cornell.cs.apl.viaduct.selection.ProtocolCommunication
+import edu.cornell.cs.apl.viaduct.syntax.Arguments
+import edu.cornell.cs.apl.viaduct.syntax.ClassNameNode
 import edu.cornell.cs.apl.viaduct.syntax.Host
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
 import edu.cornell.cs.apl.viaduct.syntax.ProtocolProjection
@@ -21,6 +23,8 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.InputNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.LetNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.LiteralNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.OperatorApplicationNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutParameterConstructorInitializerNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutParameterExpressionInitializerNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutParameterInitializationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutputNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
@@ -48,8 +52,10 @@ class PlainTextCodeGenerator(
 
             is DowngradeNode -> exp(expr)
 
-            // TODO - add type argument here
-            is InputNode -> "runtime.input()"
+            is InputNode -> {
+                val type = expr.type::class.toString()
+                "runtime.input($type)"
+            }
 
             is ReceiveNode -> TODO()
         }
@@ -63,40 +69,42 @@ class PlainTextCodeGenerator(
         )
     }
 
-    override fun Declaration(protocol: Protocol, stmt: DeclarationNode): CodeBlock {
-        return when (stmt.className.value) {
-            ImmutableCell ->
-                CodeBlock.of(
-                    "val %L = %L",
-                    stmt.name.value.name,
-                    stmt.arguments.joined().print()
-                )
+    fun DeclarationHelper(
+        name: String,
+        className: ClassNameNode,
+        arguments: Arguments<AtomicExpressionNode>
+    ): CodeBlock {
+        return when (className.value) {
+            ImmutableCell -> CodeBlock.of(
+                "val %L = %L",
+                name,
+                arguments.joined().print()
+            )
 
-            MutableCell -> {
-                // TODO - change this (difference between viaduct, kotlin semantics)
-                CodeBlock.of(
-                    "var %L = %L",
-                    stmt.name.value.name,
-                    stmt.arguments.joined().print()
-                )
-            }
+            // TODO - change this (difference between viaduct, kotlin semantics)
+            MutableCell -> CodeBlock.of(
+                "var %L = %L",
+                name,
+                arguments.joined().print()
+            )
 
-            Vector -> {
-                CodeBlock.of(
-                    "var %L = Array(%L)",
-                    stmt.name.value.name,
-                    stmt.arguments.joined().print()
-                )
-            }
-            else -> {
-                CodeBlock.of(
-                    "var %L = %T(%L)",
-                    stmt.name.value.name,
-                    stmt.className.value.name::class.asClassName(),
-                    stmt.arguments.joined().print()
-                )
-            }
+            Vector -> CodeBlock.of(
+                "var %L = Array(%L)",
+                name,
+                arguments.joined().print()
+            )
+
+            else -> CodeBlock.of(
+                "var %L = %T(%L)",
+                name,
+                className.value.name::class.asClassName(),
+                arguments.joined().print()
+            )
         }
+    }
+
+    override fun Declaration(protocol: Protocol, stmt: DeclarationNode): CodeBlock {
+        return DeclarationHelper(stmt.name.value.name, stmt.className, stmt.arguments)
     }
 
     override fun Update(protocol: Protocol, stmt: UpdateNode): CodeBlock {
@@ -108,8 +116,40 @@ class PlainTextCodeGenerator(
         )
     }
 
-    override fun OutParameter(protocol: Protocol, stmt: OutParameterInitializationNode): CodeBlock {
-        TODO("is there anything special we have to do for out parameters?")
+    override fun OutParameterInitialization(
+        protocol: Protocol,
+        stmt: OutParameterInitializationNode
+    ): CodeBlock {
+        return when (val initializer = stmt.initializer) {
+            is OutParameterConstructorInitializerNode -> {
+                CodeBlock.builder()
+                    .add(
+                        // declare object
+                        DeclarationHelper(
+                            "outTemp",
+                            initializer.className,
+                            initializer.arguments
+                        )
+                    )
+                    .add(
+                        // fill box named [stmt.name.value.name] with constructed object
+                        CodeBlock.of(
+                            "%L.set(%L)",
+                            stmt.name.value.name,
+                            "outTemp"
+                        )
+                    )
+                    .build()
+            }
+
+            // fill box named [stmt.name.value.name] with [initializer.expression]
+            is OutParameterExpressionInitializerNode -> {
+                CodeBlock.of("%L.set(%L)",
+                    stmt.name.value.name,
+                    exp(initializer.expression)
+                )
+            }
+        }
     }
 
     override fun Output(protocol: Protocol, stmt: OutputNode): CodeBlock {

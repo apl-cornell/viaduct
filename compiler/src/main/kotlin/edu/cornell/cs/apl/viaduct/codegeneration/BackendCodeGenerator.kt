@@ -22,6 +22,8 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.IfNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.InfiniteLoopNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.LetNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.LiteralNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.ObjectDeclarationArgumentNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutParameterArgumentNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ReadNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.SimpleStatementNode
@@ -167,11 +169,45 @@ class BackendCodeGenerator(
             }
 
             is FunctionCallNode -> {
+
+                // get all ObjectDeclarationArgumentNodes from [stmt]
+                val outObjectDeclarations = stmt.arguments.filterIsInstance<ObjectDeclarationArgumentNode>()
+
+                // create a new list of arguments without ObjectDeclarationArgumentNodes
+                var newArguments = stmt.arguments.filter { argument -> argument !is ObjectDeclarationArgumentNode }
+
+                for (i in 0..outObjectDeclarations.size) {
+
+                    // declare boxed variable before function call
+                    hostFunctionBuilder.addStatement(
+                        "var %L = %T",
+                        outObjectDeclarations[i].name.value.name,
+                        Boxed::class.asClassName()
+                    )
+
+                    // add out parameter for declared object
+                    newArguments +=
+                        OutParameterArgumentNode(
+                            outObjectDeclarations[i].name,
+                            outObjectDeclarations[i].sourceLocation
+                        )
+                }
+
+                // call function
                 hostFunctionBuilder.addStatement(
                     "%L(%L)",
                     stmt.name,
-                    stmt.arguments.joined().toString()
+                    newArguments.joined().toString()
                 )
+
+                // unbox boxes that were created before function call
+                for (i in 0..outObjectDeclarations.size) {
+                    hostFunctionBuilder.addStatement(
+                        "val %L = %L.get()",
+                        outObjectDeclarations[i].name.value.name,
+                        outObjectDeclarations[i].name.value.name
+                    )
+                }
             }
 
             is IfNode -> {

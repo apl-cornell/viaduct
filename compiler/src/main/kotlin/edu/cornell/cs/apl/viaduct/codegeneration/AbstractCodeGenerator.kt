@@ -25,7 +25,7 @@ abstract class AbstractCodeGenerator(
 
             is UpdateNode -> Update(protocol, stmt)
 
-            is OutParameterInitializationNode -> OutParameter(protocol, stmt)
+            is OutParameterInitializationNode -> OutParameterInitialization(protocol, stmt)
 
             is OutputNode -> Output(protocol, stmt)
 
@@ -39,7 +39,7 @@ abstract class AbstractCodeGenerator(
 
     abstract fun Update(protocol: Protocol, stmt: UpdateNode): CodeBlock
 
-    abstract fun OutParameter(protocol: Protocol, stmt: OutParameterInitializationNode): CodeBlock
+    abstract fun OutParameterInitialization(protocol: Protocol, stmt: OutParameterInitializationNode): CodeBlock
 
     abstract fun Output(protocol: Protocol, stmt: OutputNode): CodeBlock
 }

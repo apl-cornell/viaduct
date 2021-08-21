@@ -7,7 +7,9 @@ import com.github.ajalt.clikt.parameters.types.file
 import edu.cornell.cs.apl.prettyprinting.Document
 import edu.cornell.cs.apl.prettyprinting.PrettyPrintable
 import edu.cornell.cs.apl.viaduct.analysis.InformationFlowAnalysis
+import edu.cornell.cs.apl.viaduct.analysis.NameAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.ProtocolAnalysis
+import edu.cornell.cs.apl.viaduct.analysis.TypeAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.declarationNodes
 import edu.cornell.cs.apl.viaduct.analysis.letNodes
 import edu.cornell.cs.apl.viaduct.analysis.main
@@ -170,6 +172,8 @@ class Compile : CliktCommand(help = "Compile ideal protocol to secure distribute
             val protocolAnalysis = ProtocolAnalysis(program, SimpleProtocolComposer)
             val plainTextGenerator = PlainTextCodeGenerator(
                 postprocessedProgram,
+                TypeAnalysis.get(postprocessedProgram),
+                NameAnalysis.get(postprocessedProgram),
                 protocolAnalysis.participatingProtocols(postprocessedProgram)
             )
 

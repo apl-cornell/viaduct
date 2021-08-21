@@ -187,7 +187,6 @@ class PlainTextCodeGenerator(
             else -> throw CodeGenerationError("unknown object to update", stmt)
         }
 
-
     override fun OutParameterInitialization(
         protocol: Protocol,
         stmt: OutParameterInitializationNode

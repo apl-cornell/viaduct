@@ -1,8 +1,10 @@
 package edu.cornell.cs.apl.viaduct.codegeneration
 
+import com.squareup.kotlinpoet.CodeBlock
 import com.squareup.kotlinpoet.FileSpec
 import com.squareup.kotlinpoet.FunSpec
 import com.squareup.kotlinpoet.KModifier
+import com.squareup.kotlinpoet.PropertySpec
 import com.squareup.kotlinpoet.asClassName
 import edu.cornell.cs.apl.prettyprinting.joined
 import edu.cornell.cs.apl.viaduct.analysis.NameAnalysis
@@ -83,7 +85,21 @@ class BackendCodeGenerator(
         mainFunctionBuilder.addParameter("runtime", runtimeClassName)
 
         // create switch statement in main method so program can be run on any host
-        mainFunctionBuilder.beginControlFlow("when(host.name)")
+        mainFunctionBuilder.beginControlFlow("when(host)")
+
+        // add a global host object for each host
+        for (host: Host in this.program.hosts) {
+            fileBuilder.addProperty(
+                PropertySpec.builder(host.name, Host::class)
+                    .initializer(
+                        CodeBlock.of(
+                            "Host(%S)",
+                            host.name
+                        )
+                    )
+                    .build()
+            )
+        }
 
         for (host: Host in this.program.hosts) {
 
@@ -99,7 +115,7 @@ class BackendCodeGenerator(
             fileBuilder.addFunction(hostFunctionBuilder.build())
 
             // update switch statement in main method to have an option for [host]
-            mainFunctionBuilder.beginControlFlow("is %S ->", host.name)
+            mainFunctionBuilder.beginControlFlow("%L ->", host.name)
 
             mainFunctionBuilder.addStatement(
                 "%L(%L)",

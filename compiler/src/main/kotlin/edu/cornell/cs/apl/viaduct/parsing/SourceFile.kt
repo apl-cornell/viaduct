@@ -1,11 +1,11 @@
 package edu.cornell.cs.apl.viaduct.parsing
 
 import edu.cornell.cs.apl.viaduct.util.graphemeClusterCount
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.toImmutableList
 import java.io.File
 import java.io.Reader
 import java.io.StringReader
-import kotlinx.collections.immutable.ImmutableList
-import kotlinx.collections.immutable.toImmutableList
 
 /**
  * Maintains metadata (for example, file path) about an input stream and gives access to its

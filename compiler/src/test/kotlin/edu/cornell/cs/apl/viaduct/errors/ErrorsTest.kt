@@ -13,15 +13,15 @@ import edu.cornell.cs.apl.viaduct.selection.SimpleCostRegime
 import edu.cornell.cs.apl.viaduct.selection.SimpleProtocolComposer
 import edu.cornell.cs.apl.viaduct.selection.SimpleProtocolFactory
 import edu.cornell.cs.apl.viaduct.selection.selectProtocolsWithZ3
-import java.io.File
-import kotlin.reflect.KClass
-import kotlin.reflect.full.isSubclassOf
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ArgumentsSource
+import java.io.File
+import kotlin.reflect.KClass
+import kotlin.reflect.full.isSubclassOf
 
 internal class ErrorsTest {
     @ParameterizedTest

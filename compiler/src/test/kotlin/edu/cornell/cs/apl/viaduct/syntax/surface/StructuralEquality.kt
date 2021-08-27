@@ -3,11 +3,11 @@ package edu.cornell.cs.apl.viaduct.syntax.surface
 import edu.cornell.cs.apl.prettyprinting.PrettyPrintable
 import edu.cornell.cs.apl.viaduct.syntax.Located
 import edu.cornell.cs.apl.viaduct.syntax.SourceLocation
+import org.junit.jupiter.api.assertThrows
+import org.opentest4j.AssertionFailedError
 import kotlin.reflect.KVisibility
 import kotlin.reflect.full.memberProperties
 import kotlin.reflect.jvm.javaField
-import org.junit.jupiter.api.assertThrows
-import org.opentest4j.AssertionFailedError
 
 /** Asserts that [actual] equals [expected], but ignores [SourceLocation]s. */
 // TODO: extend this to also work with intermediate Nodes.

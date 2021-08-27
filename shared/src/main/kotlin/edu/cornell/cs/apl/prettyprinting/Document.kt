@@ -1,9 +1,9 @@
 package edu.cornell.cs.apl.prettyprinting
 
 import edu.cornell.cs.apl.prettyprinting.Document.Companion.invoke
+import org.fusesource.jansi.Ansi
 import java.io.ByteArrayOutputStream
 import java.io.PrintStream
-import org.fusesource.jansi.Ansi
 
 /** The maximum number of characters to put on one line. */
 const val DEFAULT_LINE_WIDTH = 80

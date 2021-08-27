@@ -7,8 +7,8 @@ import edu.cornell.cs.apl.viaduct.selection.SimpleProtocolComposer
 import edu.cornell.cs.apl.viaduct.syntax.Host
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.HostDeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
-import kotlin.system.measureTimeMillis
 import mu.KotlinLogging
+import kotlin.system.measureTimeMillis
 
 private val logger = KotlinLogging.logger("ViaductBackend")
 

@@ -4,9 +4,9 @@ import edu.cornell.cs.apl.prettyprinting.Document
 import edu.cornell.cs.apl.prettyprinting.plus
 import edu.cornell.cs.apl.viaduct.cli.Viaduct
 import edu.cornell.cs.apl.viaduct.errors.CompilationError
+import org.fusesource.jansi.AnsiConsole
 import java.io.IOException
 import kotlin.system.exitProcess
-import org.fusesource.jansi.AnsiConsole
 
 /** Runs the compiler.  */
 fun main(args: Array<String>) {

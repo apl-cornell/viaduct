@@ -19,9 +19,9 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.StatementNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.TopLevelDeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.deepCopy
 import edu.cornell.cs.apl.viaduct.util.FreshNameGenerator
-import java.util.LinkedList
 import kotlinx.collections.immutable.PersistentMap
 import kotlinx.collections.immutable.persistentMapOf
+import java.util.LinkedList
 
 /** Returns an AST where every call site is specialized into new functions as much as possible.
  *  This allows for the most liberal protocol selection possible, at the cost of redundancy.

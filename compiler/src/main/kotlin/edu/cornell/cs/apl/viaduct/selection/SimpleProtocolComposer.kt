@@ -38,9 +38,11 @@ object SimpleProtocolComposer : ProtocolComposer {
             }
 
             src is Local && dst is Replication -> {
-                ProtocolCommunication(dst.hosts.map { h ->
-                    CommunicationEvent(src.outputPort, dst.hostInputPorts[h]!!)
-                }.toSet())
+                ProtocolCommunication(
+                    dst.hosts.map { h ->
+                        CommunicationEvent(src.outputPort, dst.hostInputPorts[h]!!)
+                    }.toSet()
+                )
             }
 
             src is Local && dst is ABY -> { // dst.hosts contains src.host
@@ -90,24 +92,30 @@ object SimpleProtocolComposer : ProtocolComposer {
             }
 
             src is Replication && dst is ABY -> { // src.hosts contains dst.hosts
-                ProtocolCommunication(dst.hosts.map { dstHost ->
-                    CommunicationEvent(
-                        src.hostOutputPorts[dstHost]!!,
-                        dst.cleartextInputPorts[dstHost]!!
-                    )
-                }.toSet())
+                ProtocolCommunication(
+                    dst.hosts.map { dstHost ->
+                        CommunicationEvent(
+                            src.hostOutputPorts[dstHost]!!,
+                            dst.cleartextInputPorts[dstHost]!!
+                        )
+                    }.toSet()
+                )
             }
 
             src is Replication && dst is Commitment -> { // src.hosts contains dst.hosts
-                ProtocolCommunication(dst.hosts.map { h ->
-                    CommunicationEvent(src.hostOutputPorts[h]!!, dst.cleartextInputPorts[h]!!)
-                }.toSet())
+                ProtocolCommunication(
+                    dst.hosts.map { h ->
+                        CommunicationEvent(src.hostOutputPorts[h]!!, dst.cleartextInputPorts[h]!!)
+                    }.toSet()
+                )
             }
 
             src is Replication && dst is ZKP -> { // We know src.hosts contains dst.verifiers + {dst.prover}
-                ProtocolCommunication(dst.hosts.map {
-                    CommunicationEvent(src.hostOutputPorts[it]!!, dst.cleartextInput[it]!!)
-                }.toSet())
+                ProtocolCommunication(
+                    dst.hosts.map {
+                        CommunicationEvent(src.hostOutputPorts[it]!!, dst.cleartextInput[it]!!)
+                    }.toSet()
+                )
             }
 
             src is ABY && dst is Local -> { // src.hosts contains dst.host
@@ -117,12 +125,14 @@ object SimpleProtocolComposer : ProtocolComposer {
             }
 
             src is ABY && dst is Replication -> { // src.hosts contains dst.host
-                ProtocolCommunication(dst.hosts.map { h ->
-                    CommunicationEvent(
-                        src.cleartextOutputPorts[h]!!,
-                        dst.hostInputPorts[h]!!
-                    )
-                }.toSet())
+                ProtocolCommunication(
+                    dst.hosts.map { h ->
+                        CommunicationEvent(
+                            src.cleartextOutputPorts[h]!!,
+                            dst.hostInputPorts[h]!!
+                        )
+                    }.toSet()
+                )
             }
 
             src is ArithABY && dst is BoolABY &&
@@ -231,9 +241,11 @@ object SimpleProtocolComposer : ProtocolComposer {
 
             src is ZKP && dst is Replication -> { // we know src.hosts contains dst.hosts
                 if (src.hosts.containsAll(dst.hosts)) {
-                    ProtocolCommunication(dst.hosts.map { h ->
-                        CommunicationEvent(src.outputPorts[h]!!, dst.hostInputPorts[h]!!)
-                    }.toSet())
+                    ProtocolCommunication(
+                        dst.hosts.map { h ->
+                            CommunicationEvent(src.outputPorts[h]!!, dst.hostInputPorts[h]!!)
+                        }.toSet()
+                    )
                 } else {
                     throw Exception("Bad state for composition: source hosts is ${src.hosts} but dest is ${dst.hosts}")
                 }

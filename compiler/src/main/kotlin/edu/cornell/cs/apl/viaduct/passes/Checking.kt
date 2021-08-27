@@ -6,8 +6,8 @@ import edu.cornell.cs.apl.viaduct.analysis.OutParameterInitializationAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.TypeAnalysis
 import edu.cornell.cs.apl.viaduct.errors.CompilationError
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
-import kotlin.system.measureTimeMillis
 import mu.KotlinLogging
+import kotlin.system.measureTimeMillis
 
 private val logger = KotlinLogging.logger("Check")
 

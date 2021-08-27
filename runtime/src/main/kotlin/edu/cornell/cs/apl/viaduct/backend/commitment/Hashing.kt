@@ -19,7 +19,7 @@ data class HashInfo(val hash: List<Byte>, val nonce: List<Byte>) {
         return (
             MessageDigest.getInstance("SHA-256").digest(nonce.toByteArray() + data.toByteArray()).toList()
                 ==
-                hash
+                    hash
             )
     }
 }

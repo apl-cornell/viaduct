@@ -250,9 +250,11 @@ internal class DocumentTest {
 
         @Test
         fun `font styles`() {
-            (Document("italic").styled(Italic) *
-                Document("bold").styled(Bold) *
-                Document("underline").styled(Underline)).show()
+            (
+                Document("italic").styled(Italic) *
+                    Document("bold").styled(Bold) *
+                    Document("underline").styled(Underline)
+                ).show()
         }
     }
 }

@@ -221,16 +221,20 @@ private class Z3Selection(
             }.toMap().toBiMap()
 
         val varMap: BiMap<FunctionVariable, IntExpr> =
-            (letNodes.mapKeys {
-                FunctionVariable(nameAnalysis.enclosingFunctionName(it.key), it.key.temporary.value)
-            }).plus(
+            (
+                letNodes.mapKeys {
+                    FunctionVariable(nameAnalysis.enclosingFunctionName(it.key), it.key.temporary.value)
+                }
+                ).plus(
                 declarationNodes.mapKeys {
                     FunctionVariable(nameAnalysis.enclosingFunctionName(it.key), it.key.name.value)
-                }).plus(
+                }
+            ).plus(
                 parameterNodes.mapKeys {
                     val functionName = nameAnalysis.functionDeclaration(it.key).name.value
                     FunctionVariable(functionName, it.key.name.value)
-                }).plus(
+                }
+            ).plus(
                 objectDeclarationArgumentNodes.mapKeys {
                     FunctionVariable(nameAnalysis.enclosingFunctionName(it.key), it.key.name.value)
                 }

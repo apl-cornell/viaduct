@@ -93,7 +93,7 @@ interface Operator {
     val type: FunctionType
 
     /** In lieu of polymorphic types, have an optional list of alternative
-        types to check against. */
+     types to check against. */
     fun alternativeTypes(): List<FunctionType> = listOf()
 
     /** Computes the result of applying this operator to [arguments]. */

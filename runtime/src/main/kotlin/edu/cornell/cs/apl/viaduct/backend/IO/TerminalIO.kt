@@ -2,10 +2,10 @@ package edu.cornell.cs.apl.viaduct.backend.IO
 
 import edu.cornell.cs.apl.viaduct.syntax.values.IntegerValue
 import edu.cornell.cs.apl.viaduct.syntax.values.Value
-import java.util.Scanner
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import mu.KotlinLogging
+import java.util.Scanner
 
 private var logger = KotlinLogging.logger("TerminalIO")
 

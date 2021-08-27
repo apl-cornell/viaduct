@@ -3,11 +3,11 @@ package edu.cornell.cs.apl.viaduct.syntax.surface
 import edu.cornell.cs.apl.viaduct.PositiveTestFileProvider
 import edu.cornell.cs.apl.viaduct.parsing.SourceFile
 import edu.cornell.cs.apl.viaduct.parsing.parse
-import java.io.File
 import org.junit.jupiter.api.Assertions.assertNotEquals
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ArgumentsSource
+import java.io.File
 
 internal class StructuralEqualityTest {
     @ParameterizedTest
@@ -23,13 +23,13 @@ internal class StructuralEqualityTest {
             process main {
                 val x: int = 2 + 2;
             }
-            """.trimIndent()
+        """.trimIndent()
 
         val program2 = """
             process main {
                 val x: int = 4;
             }
-            """.trimIndent()
+        """.trimIndent()
 
         assertStructurallyNotEquals(program1.parse(), program2.parse())
     }
@@ -40,13 +40,13 @@ internal class StructuralEqualityTest {
             process main {
                 val a = Array[int](2);
             }
-            """.trimIndent()
+        """.trimIndent()
 
         val program2 = """
             process main {
                 val a = Array[int](3);
             }
-            """.trimIndent()
+        """.trimIndent()
 
         assertStructurallyNotEquals(program1.parse(), program2.parse())
     }
@@ -57,14 +57,14 @@ internal class StructuralEqualityTest {
             process main {
                 val x: int = 2 + 2;
             }
-            """.trimIndent()
+        """.trimIndent()
 
         val program2 = """
             process  main  {
 
                 val   x :  int   =    2  +  2 ;
              }
-            """.trimIndent()
+        """.trimIndent()
 
         assertStructurallyEquals(program1.parse(), program2.parse())
     }

@@ -43,7 +43,7 @@ fun validateProtocolAssignment(
         if (!constraintGenerator.viableProtocols(node).contains(protocol)) {
             throw error(
                 "Bad protocol restriction for let node of ${node.temporary} = ${node.value}: viable protocols is ${
-                    constraintGenerator.viableProtocols(node).map { it.asDocument.print() }
+                constraintGenerator.viableProtocols(node).map { it.asDocument.print() }
                 } but selected was ${protocol.asDocument.print()}; label is $l"
             )
         }
@@ -52,14 +52,16 @@ fun validateProtocolAssignment(
     fun checkAuthority(selection: (FunctionName, Variable) -> Protocol, node: LetNode) {
         val functionName = nameAnalysis.enclosingFunctionName(node)
         val protocol = selection(functionName, node.temporary.value)
-        if (!(protocol.authority(hostTrustConfiguration)
-                .actsFor(informationFlowAnalysis.label(node)))
+        if (!(
+            protocol.authority(hostTrustConfiguration)
+                .actsFor(informationFlowAnalysis.label(node))
+            )
         ) {
             throw error(
                 "Bad authority for let node of ${node.temporary}: protocol's authority is ${
-                    protocol.authority(
-                        hostTrustConfiguration
-                    )
+                protocol.authority(
+                    hostTrustConfiguration
+                )
                 }" +
                     "but node's label is ${informationFlowAnalysis.label(node)}"
             )
@@ -72,9 +74,9 @@ fun validateProtocolAssignment(
         if (!constraintGenerator.viableProtocols(node).contains(protocol)) {
             throw error(
                 "Bad protocol restriction for decl of ${node.name}: viable protocols is ${
-                    constraintGenerator.viableProtocols(
-                        node
-                    )
+                constraintGenerator.viableProtocols(
+                    node
+                )
                 } but selected was $protocol"
             )
         }
@@ -83,14 +85,16 @@ fun validateProtocolAssignment(
     fun checkAuthority(selection: (FunctionName, Variable) -> Protocol, node: DeclarationNode) {
         val functionName = nameAnalysis.enclosingFunctionName(node)
         val protocol = selection(functionName, node.name.value)
-        if (!(protocol.authority(hostTrustConfiguration)
-                .actsFor(informationFlowAnalysis.label(node)))
+        if (!(
+            protocol.authority(hostTrustConfiguration)
+                .actsFor(informationFlowAnalysis.label(node))
+            )
         ) {
             throw error(
                 "Bad authority for decl of ${node.name}: protocol's authority is ${
-                    protocol.authority(
-                        hostTrustConfiguration
-                    )
+                protocol.authority(
+                    hostTrustConfiguration
+                )
                 }" +
                     "but node's label is ${informationFlowAnalysis.label(node)}"
             )

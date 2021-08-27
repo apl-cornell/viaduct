@@ -6,11 +6,11 @@ import edu.cornell.cs.apl.viaduct.util.Colors
 import edu.cornell.cs.apl.viaduct.util.dataflow.DataFlowEdge
 import edu.cornell.cs.apl.viaduct.util.dataflow.IdentityEdge
 import edu.cornell.cs.apl.viaduct.util.dataflow.solveDataFlow
-import java.io.Writer
 import org.jgrapht.graph.DirectedMultigraph
 import org.jgrapht.nio.Attribute
 import org.jgrapht.nio.DefaultAttribute
 import org.jgrapht.nio.dot.DOTExporter
+import java.io.Writer
 
 typealias ConstraintSolution<A> = Map<VariableTerm<A>, A>
 

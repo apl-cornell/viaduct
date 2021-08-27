@@ -26,10 +26,10 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.SimpleStatementNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.StatementNode
 import edu.cornell.cs.apl.viaduct.syntax.values.BooleanValue
 import edu.cornell.cs.apl.viaduct.syntax.values.UnitValue
-import kotlin.system.measureTimeMillis
 import kotlinx.collections.immutable.PersistentMap
 import kotlinx.collections.immutable.toPersistentMap
 import mu.KotlinLogging
+import kotlin.system.measureTimeMillis
 
 private val logger = KotlinLogging.logger("Interpreter")
 

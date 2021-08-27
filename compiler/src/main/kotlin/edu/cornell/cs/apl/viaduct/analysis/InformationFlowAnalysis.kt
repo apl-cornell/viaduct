@@ -59,10 +59,10 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.SendNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.StatementNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.UpdateNode
 import edu.cornell.cs.apl.viaduct.util.FreshNameGenerator
-import java.io.Writer
-import java.util.LinkedList
 import kotlinx.collections.immutable.persistentMapOf
 import mu.KotlinLogging
+import java.io.Writer
+import java.util.LinkedList
 
 private val logger = KotlinLogging.logger("InformationFlowAnalysis")
 

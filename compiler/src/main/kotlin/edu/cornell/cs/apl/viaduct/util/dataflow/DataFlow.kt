@@ -2,11 +2,11 @@ package edu.cornell.cs.apl.viaduct.util.dataflow
 
 import edu.cornell.cs.apl.viaduct.algebra.MeetSemiLattice
 import edu.cornell.cs.apl.viaduct.util.UniqueQueue
-import java.util.Queue
 import org.jgrapht.Graph
 import org.jgrapht.Graphs
 import org.jgrapht.alg.connectivity.KosarajuStrongConnectivityInspector
 import org.jgrapht.traverse.TopologicalOrderIterator
+import java.util.Queue
 
 /**
  * Run data flow analysis on the given graph and return the computed solution for each node. The

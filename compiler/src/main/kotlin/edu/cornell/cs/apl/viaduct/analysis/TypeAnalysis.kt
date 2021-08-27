@@ -216,7 +216,8 @@ class TypeAnalysis private constructor(
                             node.variable,
                             node.update,
                             objectType,
-                            node.arguments.map { it.type })
+                            node.arguments.map { it.type }
+                        )
                     }
                     checkMethodCall(node.update, methodType, node.arguments)
                 }

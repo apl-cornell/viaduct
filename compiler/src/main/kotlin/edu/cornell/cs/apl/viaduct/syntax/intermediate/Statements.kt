@@ -19,6 +19,10 @@ import edu.cornell.cs.apl.viaduct.syntax.SourceLocation
 import edu.cornell.cs.apl.viaduct.syntax.TemporaryNode
 import edu.cornell.cs.apl.viaduct.syntax.UpdateNameNode
 import edu.cornell.cs.apl.viaduct.syntax.ValueTypeNode
+import edu.cornell.cs.apl.viaduct.syntax.surface.keyword
+import kotlinx.collections.immutable.PersistentList
+import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.toPersistentList
 import edu.cornell.cs.apl.viaduct.syntax.surface.ConstructorCallNode as SConstructorCallNode
 import edu.cornell.cs.apl.viaduct.syntax.surface.ExpressionArgumentNode as SExpressionArgumentNode
 import edu.cornell.cs.apl.viaduct.syntax.surface.FunctionArgumentNode as SFunctionArgumentNode
@@ -26,10 +30,6 @@ import edu.cornell.cs.apl.viaduct.syntax.surface.FunctionCallNode as SFunctionCa
 import edu.cornell.cs.apl.viaduct.syntax.surface.ObjectDeclarationArgumentNode as SObjectDeclarationArgumentNode
 import edu.cornell.cs.apl.viaduct.syntax.surface.ObjectReferenceArgumentNode as SObjectReferenceArgumentNode
 import edu.cornell.cs.apl.viaduct.syntax.surface.OutParameterArgumentNode as SOutParameterArgumentNode
-import edu.cornell.cs.apl.viaduct.syntax.surface.keyword
-import kotlinx.collections.immutable.PersistentList
-import kotlinx.collections.immutable.persistentListOf
-import kotlinx.collections.immutable.toPersistentList
 
 /** A computation with side effects. */
 sealed class StatementNode : Node() {

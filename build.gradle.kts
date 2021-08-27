@@ -87,8 +87,8 @@ subprojects {
 
         tasks.named<JacocoReport>("jacocoTestReport") {
             reports {
-                xml.isEnabled = true
-                html.isEnabled = true
+                xml.required.set(true)
+                html.required.set(true)
             }
             dependsOn(tasks["test"])
         }

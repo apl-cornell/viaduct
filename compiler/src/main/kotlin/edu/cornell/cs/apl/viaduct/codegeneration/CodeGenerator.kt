@@ -9,7 +9,6 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.LetNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.SimpleStatementNode
 
 interface CodeGenerator {
-    val availableProtocols: Set<Protocol>
 
     fun Guard(protocol: Protocol, expr: AtomicExpressionNode): CodeBlock
 

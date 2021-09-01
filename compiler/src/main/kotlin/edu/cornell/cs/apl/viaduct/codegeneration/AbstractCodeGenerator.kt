@@ -8,14 +8,11 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.DeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.LetNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutParameterInitializationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutputNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.SendNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.SimpleStatementNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.UpdateNode
 
-abstract class AbstractCodeGenerator(
-    val program: ProgramNode
-) : CodeGenerator {
+abstract class AbstractCodeGenerator : CodeGenerator {
 
     override fun SimpleStatement(protocol: Protocol, stmt: SimpleStatementNode): CodeBlock {
         return when (stmt) {
@@ -44,12 +41,7 @@ abstract class AbstractCodeGenerator(
     abstract fun Output(protocol: Protocol, stmt: OutputNode): CodeBlock
 }
 
-abstract class SingleProtocolCodeGenerator(
-    program: ProgramNode,
-    private val protocol: Protocol
-) : AbstractCodeGenerator(program) {
-    override val availableProtocols: Set<Protocol> =
-        setOf(protocol)
+abstract class SingleProtocolCodeGenerator : AbstractCodeGenerator() {
 
     abstract fun Guard(expr: AtomicExpressionNode): CodeBlock
 

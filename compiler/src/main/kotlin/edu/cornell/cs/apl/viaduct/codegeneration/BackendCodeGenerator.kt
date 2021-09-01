@@ -15,7 +15,9 @@ import edu.cornell.cs.apl.viaduct.selection.ProtocolCommunication
 import edu.cornell.cs.apl.viaduct.selection.SimpleProtocolComposer
 import edu.cornell.cs.apl.viaduct.syntax.FunctionName
 import edu.cornell.cs.apl.viaduct.syntax.Host
+import edu.cornell.cs.apl.viaduct.syntax.ObjectVariable
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
+import edu.cornell.cs.apl.viaduct.syntax.Temporary
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.AssertionNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.BlockNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.BreakNode
@@ -30,13 +32,14 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ReadNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.SimpleStatementNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.StatementNode
+import edu.cornell.cs.apl.viaduct.util.FreshNameGenerator
 import mu.KotlinLogging
 
 private val logger = KotlinLogging.logger("Code Generation")
 
 class BackendCodeGenerator(
     private val program: ProgramNode,
-    private val codeGenerators: List<CodeGenerator>,
+    private val codeGenerators: List<(context: CodeGeneratorContext) -> CodeGenerator>,
     private val fileName: String
 ) {
     private val codeGeneratorMap: Map<Protocol, CodeGenerator>
@@ -44,35 +47,42 @@ class BackendCodeGenerator(
     private val protocolAnalysis = ProtocolAnalysis(program, SimpleProtocolComposer)
     private val hostClassName = Host::class.asClassName()
     private val runtimeClassName = Runtime::class.asClassName()
+    private val context = Context(program)
 
     init {
-        val initGeneratorMap: MutableMap<Protocol, CodeGenerator> = mutableMapOf()
-        val currentProtocols: MutableSet<Protocol> = mutableSetOf()
-
         val allProtocols = protocolAnalysis.participatingProtocols(program)
+        val initGeneratorMap: MutableMap<Protocol, CodeGenerator> = mutableMapOf()
+
+        // for now, assign all protocols to use plaintext
         for (protocol in allProtocols) {
-            initGeneratorMap[protocol] = codeGenerators[0]
+            initGeneratorMap[protocol] = codeGenerators[0](context)
         }
-
-        for (codeGenerator in codeGenerators) {
-            for (protocol in codeGenerator.availableProtocols) {
-                if (currentProtocols.contains(protocol)) {
-                    throw CodeGenerationError("Code Generation: multiple code generators for protocol ${protocol.asDocument.print()}")
-                } else {
-                    currentProtocols.add(protocol)
-                    initGeneratorMap[protocol] = codeGenerator
-                }
-            }
-        }
-        val hostParticipatingProtocols = protocolAnalysis.participatingProtocols(program)
-
-        for (protocol in hostParticipatingProtocols) {
-            if (!currentProtocols.contains(protocol)) {
-                throw CodeGenerationError("Code Generation: No backend for ${protocol.protocolName}")
-            }
-        }
-
         codeGeneratorMap = initGeneratorMap
+
+        // TODO - not sure if we need these checks or what this will look like until we have support for multiple protocols
+
+//        val currentProtocols: MutableSet<Protocol> = mutableSetOf()
+//
+//        for (protocol in allProtocols) {
+//            initGeneratorMap[protocol] = codeGenerators[0]
+//        }
+//
+//        for (codeGenerator in codeGenerators) {
+//            for (protocol in codeGenerator.availableProtocols) {
+//                if (currentProtocols.contains(protocol)) {
+//                    throw CodeGenerationError("Code Generation: multiple code generators for protocol ${protocol.asDocument.print()}")
+//                } else {
+//                    currentProtocols.add(protocol)
+//                    initGeneratorMap[protocol] = codeGenerator
+//                }
+//            }
+//        }
+//        val hostParticipatingProtocols = protocolAnalysis.participatingProtocols(program)
+//
+//        for (protocol in hostParticipatingProtocols) {
+//            if (!currentProtocols.contains(protocol)) {
+//                throw CodeGenerationError("Code Generation: No backend for ${protocol.protocolName}")
+//            }
     }
 
     fun generate(): String {
@@ -80,7 +90,7 @@ class BackendCodeGenerator(
 
         // create a main file builder, main function builder
         val fileBuilder = FileSpec.builder("src", this.fileName)
-        val mainFunctionBuilder = FunSpec.builder("main")
+        val mainFunctionBuilder = FunSpec.builder("main").addModifiers(KModifier.SUSPEND)
         mainFunctionBuilder.addParameter("host", hostClassName)
         mainFunctionBuilder.addParameter("runtime", runtimeClassName)
 
@@ -104,8 +114,8 @@ class BackendCodeGenerator(
         for (host: Host in this.program.hosts) {
 
             // for each host, create a function that they call to run the program
-            val hostFunName = host.name + '_' + this.fileName
-            val hostFunctionBuilder = FunSpec.builder(hostFunName).addModifiers(KModifier.PRIVATE)
+            val hostFunName = host.name
+            val hostFunctionBuilder = FunSpec.builder(hostFunName).addModifiers(KModifier.PRIVATE, KModifier.SUSPEND)
 
             // pass runtime object to [host]'s function
             hostFunctionBuilder.addParameter("runtime", runtimeClassName)
@@ -115,10 +125,10 @@ class BackendCodeGenerator(
             fileBuilder.addFunction(hostFunctionBuilder.build())
 
             // update switch statement in main method to have an option for [host]
-            mainFunctionBuilder.beginControlFlow("%L ->", host.name)
+            mainFunctionBuilder.beginControlFlow("%N ->", host.name)
 
             mainFunctionBuilder.addStatement(
-                "%L(%L)",
+                "%N(%N)",
                 hostFunName,
                 "runtime"
             )
@@ -190,7 +200,7 @@ class BackendCodeGenerator(
                 val outObjectDeclarations = stmt.arguments.filterIsInstance<ObjectDeclarationArgumentNode>()
 
                 // create a new list of arguments without ObjectDeclarationArgumentNodes
-                var newArguments = stmt.arguments.filter { argument -> argument !is ObjectDeclarationArgumentNode }
+                val newArguments = stmt.arguments.filter { argument -> argument !is ObjectDeclarationArgumentNode }.toMutableList()
 
                 for (i in 0..outObjectDeclarations.size) {
 
@@ -231,7 +241,7 @@ class BackendCodeGenerator(
 
                     // TODO - do I need to check if guardValue is a boolean? - interpreter does this but I feel like
                     // semantic analysis would accomplish this
-                    var guardValue =
+                    val guardValue =
                         when (val guard = stmt.guard) {
                             is LiteralNode -> guard.value.asDocument.print()
 
@@ -273,5 +283,28 @@ class BackendCodeGenerator(
 
             is AssertionNode -> throw CodeGenerationError("TODO")
         }
+    }
+
+    private class Context(override val program: ProgramNode) : CodeGeneratorContext {
+        private var tempMap: MutableMap<Temporary, String> = mutableMapOf()
+        private var varMap: MutableMap<ObjectVariable, String> = mutableMapOf()
+        private var baseNames = setOf<String>()
+
+        init {
+            val initNames: MutableSet<String> = program.hosts.map { host -> host.toString() }.toSet().toMutableSet()
+            initNames += "runtime"
+            baseNames = initNames
+        }
+
+        val freshNameGenerator: FreshNameGenerator = FreshNameGenerator(baseNames)
+
+        override fun kotlinName(sourceName: Temporary, protocol: Protocol): String =
+            tempMap.getOrPut(sourceName) { freshNameGenerator.getFreshName((sourceName.name + protocol.name).filter { it.isLetterOrDigit() }) }
+
+        override fun kotlinName(sourceName: ObjectVariable): String =
+            varMap.getOrPut(sourceName) { freshNameGenerator.getFreshName(sourceName.name) }
+
+        override fun newTemporary(baseName: String): String =
+            freshNameGenerator.getFreshName(baseName)
     }
 }

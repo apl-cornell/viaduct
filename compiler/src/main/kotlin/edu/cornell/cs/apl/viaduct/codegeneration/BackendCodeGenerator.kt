@@ -33,13 +33,10 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.ReadNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.SimpleStatementNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.StatementNode
 import edu.cornell.cs.apl.viaduct.util.FreshNameGenerator
-import mu.KotlinLogging
-
-private val logger = KotlinLogging.logger("Code Generation")
 
 class BackendCodeGenerator(
     private val program: ProgramNode,
-    private val codeGenerators: List<(context: CodeGeneratorContext) -> CodeGenerator>,
+    codeGenerators: List<(context: CodeGeneratorContext) -> CodeGenerator>,
     private val fileName: String
 ) {
     private val codeGeneratorMap: Map<Protocol, CodeGenerator>
@@ -167,11 +164,11 @@ class BackendCodeGenerator(
                     // generate code for the statement, if [host] participating
                     val protocolCodeGenerator = codeGeneratorMap[protocol]
                         ?: throw CodeGenerationError("no code generator for protocol ${protocol.asDocument.print()}")
-                    hostFunctionBuilder.addStatement(protocolCodeGenerator.SimpleStatement(protocol, stmt).toString())
+                    hostFunctionBuilder.addStatement(protocolCodeGenerator.simpleStatement(protocol, stmt).toString())
 
                     // generate code for sending data
                     if (readers.isNotEmpty()) {
-                        hostFunctionBuilder.addStatement(protocolCodeGenerator.Send(host, stmt, protocol, readerProtocol!!, events!!).toString())
+                        hostFunctionBuilder.addStatement(protocolCodeGenerator.send(host, stmt, protocol, readerProtocol!!, events!!).toString())
                     }
                 }
 
@@ -180,7 +177,7 @@ class BackendCodeGenerator(
                     if (protocolAnalysis.participatingHosts(reader!!).contains(host)) {
                         val protocolCodeGenerator = codeGeneratorMap[readerProtocol]
                             ?: throw CodeGenerationError("no code generator for protocol ${protocol.asDocument.print()}")
-                        hostFunctionBuilder.addStatement(protocolCodeGenerator.Recieve(host, stmt, protocol, readerProtocol!!, events!!).toString())
+                        hostFunctionBuilder.addStatement(protocolCodeGenerator.receive(host, stmt, protocol, readerProtocol!!, events!!).toString())
                     }
                 }
             }
@@ -190,7 +187,7 @@ class BackendCodeGenerator(
                     val protocol = protocolAnalysis.primaryProtocol(stmt)
                     val protocolCodeGenerator = codeGeneratorMap[protocol]
                         ?: throw CodeGenerationError("no code generator for protocol ${protocol.asDocument.print()}")
-                    hostFunctionBuilder.addStatement(protocolCodeGenerator.SimpleStatement(protocol, stmt).toString())
+                    hostFunctionBuilder.addStatement(protocolCodeGenerator.simpleStatement(protocol, stmt).toString())
                 }
             }
 
@@ -249,7 +246,7 @@ class BackendCodeGenerator(
                                 val guardProtocol = protocolAnalysis.primaryProtocol(guard)
                                 val protocolCodeGenerator = codeGeneratorMap[guardProtocol]
                                     ?: throw CodeGenerationError("no code generator for protocol ${guardProtocol.asDocument.print()}")
-                                protocolCodeGenerator.Guard(guardProtocol, guard).toString()
+                                protocolCodeGenerator.guard(guardProtocol, guard).toString()
                             }
                         }
 

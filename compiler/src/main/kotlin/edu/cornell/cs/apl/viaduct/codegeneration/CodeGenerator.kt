@@ -10,23 +10,23 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.SimpleStatementNode
 
 interface CodeGenerator {
 
-    fun Guard(protocol: Protocol, expr: AtomicExpressionNode): CodeBlock
+    fun guard(protocol: Protocol, expr: AtomicExpressionNode): CodeBlock
 
-    fun SimpleStatement(protocol: Protocol, stmt: SimpleStatementNode): CodeBlock
+    fun simpleStatement(protocol: Protocol, stmt: SimpleStatementNode): CodeBlock
 
-    fun Send(
+    fun send(
         sendingHost: Host,
         sender: LetNode,
         sendProtocol: Protocol,
-        recvProtocol: Protocol,
+        receiveProtocol: Protocol,
         events: ProtocolCommunication
     ): CodeBlock
 
-    fun Recieve(
+    fun receive(
         receivingHost: Host,
         sender: LetNode,
         sendProtocol: Protocol,
-        recvProtocol: Protocol,
+        receiveProtocol: Protocol,
         events: ProtocolCommunication
     ): CodeBlock
 }

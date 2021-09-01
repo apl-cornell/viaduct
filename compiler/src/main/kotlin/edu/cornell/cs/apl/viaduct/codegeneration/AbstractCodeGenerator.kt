@@ -14,52 +14,52 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.UpdateNode
 
 abstract class AbstractCodeGenerator : CodeGenerator {
 
-    override fun SimpleStatement(protocol: Protocol, stmt: SimpleStatementNode): CodeBlock {
+    override fun simpleStatement(protocol: Protocol, stmt: SimpleStatementNode): CodeBlock {
         return when (stmt) {
-            is LetNode -> Let(protocol, stmt)
+            is LetNode -> let(protocol, stmt)
 
-            is DeclarationNode -> Declaration(protocol, stmt)
+            is DeclarationNode -> declaration(protocol, stmt)
 
-            is UpdateNode -> Update(protocol, stmt)
+            is UpdateNode -> update(protocol, stmt)
 
-            is OutParameterInitializationNode -> OutParameterInitialization(protocol, stmt)
+            is OutParameterInitializationNode -> outParameterInitialization(protocol, stmt)
 
-            is OutputNode -> Output(protocol, stmt)
+            is OutputNode -> output(protocol, stmt)
 
             is SendNode -> throw IllegalInternalCommunicationError(stmt)
         }
     }
 
-    abstract fun Let(protocol: Protocol, stmt: LetNode): CodeBlock
+    abstract fun let(protocol: Protocol, stmt: LetNode): CodeBlock
 
-    abstract fun Declaration(protocol: Protocol, stmt: DeclarationNode): CodeBlock
+    abstract fun declaration(protocol: Protocol, stmt: DeclarationNode): CodeBlock
 
-    abstract fun Update(protocol: Protocol, stmt: UpdateNode): CodeBlock
+    abstract fun update(protocol: Protocol, stmt: UpdateNode): CodeBlock
 
-    abstract fun OutParameterInitialization(protocol: Protocol, stmt: OutParameterInitializationNode): CodeBlock
+    abstract fun outParameterInitialization(protocol: Protocol, stmt: OutParameterInitializationNode): CodeBlock
 
-    abstract fun Output(protocol: Protocol, stmt: OutputNode): CodeBlock
+    abstract fun output(protocol: Protocol, stmt: OutputNode): CodeBlock
 }
 
 abstract class SingleProtocolCodeGenerator : AbstractCodeGenerator() {
 
-    abstract fun Guard(expr: AtomicExpressionNode): CodeBlock
+    abstract fun guard(expr: AtomicExpressionNode): CodeBlock
 
-    override fun Guard(protocol: Protocol, expr: AtomicExpressionNode): CodeBlock =
-        Guard(expr)
+    override fun guard(protocol: Protocol, expr: AtomicExpressionNode): CodeBlock =
+        guard(expr)
 
-    abstract fun Let(stmt: LetNode): CodeBlock
+    abstract fun let(stmt: LetNode): CodeBlock
 
-    override fun Let(protocol: Protocol, stmt: LetNode): CodeBlock =
-        Let(stmt)
+    override fun let(protocol: Protocol, stmt: LetNode): CodeBlock =
+        let(stmt)
 
-    abstract fun Update(stmt: UpdateNode): CodeBlock
+    abstract fun update(stmt: UpdateNode): CodeBlock
 
-    override fun Update(protocol: Protocol, stmt: UpdateNode): CodeBlock =
-        Update(stmt)
+    override fun update(protocol: Protocol, stmt: UpdateNode): CodeBlock =
+        update(stmt)
 
-    abstract fun Output(stmt: OutputNode): CodeBlock
+    abstract fun output(stmt: OutputNode): CodeBlock
 
-    override fun Output(protocol: Protocol, stmt: OutputNode): CodeBlock =
-        Output(stmt)
+    override fun output(protocol: Protocol, stmt: OutputNode): CodeBlock =
+        output(stmt)
 }

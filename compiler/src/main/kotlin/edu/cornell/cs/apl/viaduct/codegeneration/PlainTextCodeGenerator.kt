@@ -47,7 +47,6 @@ import edu.cornell.cs.apl.viaduct.syntax.types.StringType
 import edu.cornell.cs.apl.viaduct.syntax.types.UnitType
 import edu.cornell.cs.apl.viaduct.syntax.types.VectorType
 import edu.cornell.cs.apl.viaduct.syntax.values.BooleanValue
-import edu.cornell.cs.apl.viaduct.syntax.values.ByteVecValue
 import edu.cornell.cs.apl.viaduct.syntax.values.IntegerValue
 import edu.cornell.cs.apl.viaduct.syntax.values.StringValue
 import edu.cornell.cs.apl.viaduct.syntax.values.UnitValue
@@ -63,7 +62,8 @@ class PlainTextCodeGenerator(
     private val booleanValueClassName = BooleanValue::class.asClassName()
     private val integerValueClassName = IntegerValue::class.asClassName()
     private val stringValueClassName = StringValue::class.asClassName()
-    private val byteVecValueClassName = ByteVecValue::class.asClassName()
+
+    // private val unitValueClassName = UnitValue::class.asClassName()
     private val unitValueClassName = UnitValue::class.asClassName()
 
     private fun exp(expr: ExpressionNode): CodeBlock =
@@ -142,7 +142,7 @@ class PlainTextCodeGenerator(
             is ReceiveNode -> TODO()
         }
 
-    override fun Let(protocol: Protocol, stmt: LetNode): CodeBlock =
+    override fun let(protocol: Protocol, stmt: LetNode): CodeBlock =
         CodeBlock.of(
             "val %L = %L",
             codeGeneratorContext.kotlinName(stmt.temporary.value, protocolAnalysis.primaryProtocol(stmt)),
@@ -177,10 +177,10 @@ class PlainTextCodeGenerator(
             else -> TODO("throw error")
         }
 
-    override fun Declaration(protocol: Protocol, stmt: DeclarationNode): CodeBlock =
+    override fun declaration(protocol: Protocol, stmt: DeclarationNode): CodeBlock =
         declarationHelper(codeGeneratorContext.kotlinName(stmt.name.value), stmt.className, stmt.arguments)
 
-    override fun Update(protocol: Protocol, stmt: UpdateNode): CodeBlock =
+    override fun update(protocol: Protocol, stmt: UpdateNode): CodeBlock =
         when (this.typeAnalysis.type(nameAnalysis.declaration(stmt))) {
             is VectorType ->
                 when (stmt.update.value) {
@@ -227,7 +227,7 @@ class PlainTextCodeGenerator(
             else -> throw CodeGenerationError("unknown object to update", stmt)
         }
 
-    override fun OutParameterInitialization(
+    override fun outParameterInitialization(
         protocol: Protocol,
         stmt: OutParameterInitializationNode
     ):
@@ -262,7 +262,7 @@ class PlainTextCodeGenerator(
                 )
         }
 
-    override fun Output(protocol: Protocol, stmt: OutputNode): CodeBlock {
+    override fun output(protocol: Protocol, stmt: OutputNode): CodeBlock {
         val valueClassNames =
             when (typeAnalysis.type(stmt.message)) {
                 is BooleanType -> Pair(booleanValueClassName, Boolean::class.asClassName())
@@ -283,17 +283,17 @@ class PlainTextCodeGenerator(
         )
     }
 
-    override fun Guard(protocol: Protocol, expr: AtomicExpressionNode): CodeBlock = exp(expr)
+    override fun guard(protocol: Protocol, expr: AtomicExpressionNode): CodeBlock = exp(expr)
 
-    override fun Send(
+    override fun send(
         sendingHost: Host,
         sender: LetNode,
         sendProtocol: Protocol,
-        recvProtocol: Protocol,
+        receiveProtocol: Protocol,
         events: ProtocolCommunication
     ): CodeBlock {
         val sendBuilder = CodeBlock.builder()
-        if (sendProtocol != recvProtocol) {
+        if (sendProtocol != receiveProtocol) {
             val relevantEvents: Set<CommunicationEvent> =
                 events.getProjectionSends(ProtocolProjection(sendProtocol, sendingHost))
             for (event in relevantEvents) {
@@ -308,16 +308,16 @@ class PlainTextCodeGenerator(
     }
 
     // note - this implementation does not support commitments
-    override fun Recieve(
+    override fun receive(
         receivingHost: Host,
         sender: LetNode,
         sendProtocol: Protocol,
-        recvProtocol: Protocol,
+        receiveProtocol: Protocol,
         events: ProtocolCommunication
     ): CodeBlock {
         val receiveBuilder = CodeBlock.builder()
-        if (sendProtocol != recvProtocol) {
-            val projection = ProtocolProjection(recvProtocol, receivingHost)
+        if (sendProtocol != receiveProtocol) {
+            val projection = ProtocolProjection(receiveProtocol, receivingHost)
             var cleartextInputs = events.getProjectionReceives(projection, Plaintext.INPUT)
             val clearTextTemp = codeGeneratorContext.newTemporary("clearTextTemp")
 

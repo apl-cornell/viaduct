@@ -7,10 +7,9 @@ import edu.cornell.cs.apl.prettyprinting.NormalColor
 import edu.cornell.cs.apl.prettyprinting.PrettyPrintable
 import edu.cornell.cs.apl.prettyprinting.Style
 import edu.cornell.cs.apl.prettyprinting.styled
-import edu.cornell.cs.apl.viaduct.syntax.surface.ExpressionNode
 import edu.cornell.cs.apl.viaduct.syntax.types.ValueType
 
-/** The result of evaluating an [ExpressionNode]. */
+/** The result of evaluating an expression. */
 abstract class Value : PrettyPrintable {
     /** The type of the value. */
     abstract val type: ValueType

@@ -248,7 +248,7 @@ class CommitmentProtocolHashReplicaInterpreter(
         }
     }
 
-    abstract class CommitmentObject() {
+    abstract class CommitmentObject {
         abstract fun query(query: QueryNameNode, arguments: List<AtomicExpressionNode>): List<Byte>
         abstract fun update(update: UpdateNameNode, arguments: List<AtomicExpressionNode>)
     }

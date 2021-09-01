@@ -36,11 +36,11 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProcessDeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
 import guru.nidi.graphviz.engine.Format
 import guru.nidi.graphviz.engine.Graphviz
-import mu.KotlinLogging
 import java.io.File
 import java.io.StringWriter
 import java.io.Writer
 import kotlin.system.measureTimeMillis
+import mu.KotlinLogging
 
 private val logger = KotlinLogging.logger("Compile")
 

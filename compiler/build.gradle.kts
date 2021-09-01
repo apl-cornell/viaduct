@@ -15,6 +15,7 @@ plugins {
 
 dependencies {
     implementation(project(":shared"))
+    implementation(project(":runtime2"))
 
     // Data structures
     implementation("com.uchuhimo:kotlinx-bimap:1.2")
@@ -31,7 +32,6 @@ dependencies {
 
     // Code generation
     implementation("com.squareup:kotlinpoet:1.7.2")
-    implementation("de.tu_darmstadt.cs.encrypto:aby-java:f96aceac2c7096499c26d91cad1e560e069f6aa2")
 
     // SMT solving
     implementation("io.github.tudo-aqua:z3-turnkey:4.8.7.1")

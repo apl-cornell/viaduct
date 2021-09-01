@@ -1,4 +1,4 @@
-package edu.cornell.cs.apl.viaduct.codegeneration
+package edu.cornell.cs.apl.viaduct.runtime
 
 import edu.cornell.cs.apl.viaduct.syntax.Host
 import edu.cornell.cs.apl.viaduct.syntax.types.ValueType

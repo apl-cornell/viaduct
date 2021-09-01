@@ -2,14 +2,15 @@ package edu.cornell.cs.apl.viaduct.codegeneration
 
 import com.squareup.kotlinpoet.CodeBlock
 import com.squareup.kotlinpoet.asClassName
-import edu.cornell.cs.apl.prettyprinting.joined
 import edu.cornell.cs.apl.viaduct.analysis.NameAnalysis
+import edu.cornell.cs.apl.viaduct.analysis.ProtocolAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.TypeAnalysis
 import edu.cornell.cs.apl.viaduct.errors.CodeGenerationError
 import edu.cornell.cs.apl.viaduct.errors.RuntimeError
 import edu.cornell.cs.apl.viaduct.protocols.Plaintext
 import edu.cornell.cs.apl.viaduct.selection.CommunicationEvent
 import edu.cornell.cs.apl.viaduct.selection.ProtocolCommunication
+import edu.cornell.cs.apl.viaduct.selection.SimpleProtocolComposer
 import edu.cornell.cs.apl.viaduct.syntax.Arguments
 import edu.cornell.cs.apl.viaduct.syntax.ClassNameNode
 import edu.cornell.cs.apl.viaduct.syntax.Host
@@ -32,52 +33,96 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutParameterConstructorIni
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutParameterExpressionInitializerNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutParameterInitializationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutputNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.QueryNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ReadNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ReceiveNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.UpdateNode
+import edu.cornell.cs.apl.viaduct.syntax.operators.Maximum
+import edu.cornell.cs.apl.viaduct.syntax.operators.Minimum
+import edu.cornell.cs.apl.viaduct.syntax.types.BooleanType
 import edu.cornell.cs.apl.viaduct.syntax.types.ImmutableCellType
+import edu.cornell.cs.apl.viaduct.syntax.types.IntegerType
 import edu.cornell.cs.apl.viaduct.syntax.types.MutableCellType
+import edu.cornell.cs.apl.viaduct.syntax.types.StringType
+import edu.cornell.cs.apl.viaduct.syntax.types.UnitType
 import edu.cornell.cs.apl.viaduct.syntax.types.VectorType
+import edu.cornell.cs.apl.viaduct.syntax.values.BooleanValue
+import edu.cornell.cs.apl.viaduct.syntax.values.ByteVecValue
+import edu.cornell.cs.apl.viaduct.syntax.values.IntegerValue
+import edu.cornell.cs.apl.viaduct.syntax.values.StringValue
+import edu.cornell.cs.apl.viaduct.syntax.values.UnitValue
 
 class PlainTextCodeGenerator(
-    program: ProgramNode,
-    typeAnalysis: TypeAnalysis,
-    nameAnalysis: NameAnalysis,
-    override val availableProtocols: Set<Protocol>
-) : AbstractCodeGenerator(program) {
-    val runtimeErrorClassName = RuntimeError::class.asClassName()
-    val typeAnalysis = typeAnalysis
-    val nameAnalysis = nameAnalysis
+    context: CodeGeneratorContext
+) : AbstractCodeGenerator() {
+    private val typeAnalysis = TypeAnalysis.get(context.program)
+    private val nameAnalysis = NameAnalysis.get(context.program)
+    private val protocolAnalysis = ProtocolAnalysis(context.program, SimpleProtocolComposer)
+    private val codeGeneratorContext = context
+    private val runtimeErrorClassName = RuntimeError::class.asClassName()
+    private val booleanValueClassName = BooleanValue::class.asClassName()
+    private val integerValueClassName = IntegerValue::class.asClassName()
+    private val stringValueClassName = StringValue::class.asClassName()
+    private val byteVecValueClassName = ByteVecValue::class.asClassName()
+    private val unitValueClassName = UnitValue::class.asClassName()
 
-    private fun exp(expr: ExpressionNode): Any =
+    private fun exp(expr: ExpressionNode): CodeBlock =
         when (expr) {
-            is LiteralNode -> expr.value
+            is LiteralNode -> CodeBlock.of(expr.value.toString())
 
-            is ReadNode -> expr.temporary.value.name
+            is ReadNode ->
+                CodeBlock.of(codeGeneratorContext.kotlinName(expr.temporary.value, protocolAnalysis.primaryProtocol(expr)))
 
-            is OperatorApplicationNode -> expr.operator.asDocument(expr.arguments).print()
+            is OperatorApplicationNode -> {
+                when (expr.operator) {
+                    is Minimum -> CodeBlock.of(
+                        "%N(%L, %L)",
+                        "min",
+                        exp(expr.arguments[0]),
+                        exp(expr.arguments[1])
+                    )
+                    is Maximum -> CodeBlock.of(
+                        "%N(%L, %L)",
+                        "max",
+                        exp(expr.arguments[0]),
+                        exp(expr.arguments[1])
+                    )
+                }
+                when (expr.arguments.size) {
+                    2 -> CodeBlock.of(
+                        "%L %L %L",
+                        exp(expr.arguments[0]),
+                        expr.operator.toString(),
+                        exp(expr.arguments[1])
+                    )
+                    1 -> CodeBlock.of(
+                        "%L%L",
+                        expr.operator.toString(),
+                        exp(expr.arguments[0])
+                    )
+                    else -> throw CodeGenerationError("unknown operator", expr)
+                }
+            }
 
             is QueryNode ->
                 when (this.typeAnalysis.type(nameAnalysis.declaration(expr))) {
                     is VectorType -> {
                         when (expr.query.value) {
-                            is Get -> expr.variable.value.name + "[" + expr.arguments.first().toString() + "]"
+                            is Get -> CodeBlock.of(codeGeneratorContext.kotlinName(expr.variable.value) + "[" + exp(expr.arguments.first()) + "]")
                             else -> throw CodeGenerationError("unknown vector query", expr)
                         }
                     }
 
                     is ImmutableCellType -> {
                         when (expr.query.value) {
-                            is Get -> expr.variable.value.name
+                            is Get -> CodeBlock.of(codeGeneratorContext.kotlinName(expr.variable.value))
                             else -> throw CodeGenerationError("unknown query", expr)
                         }
                     }
 
                     is MutableCellType -> {
                         when (expr.query.value) {
-                            is Get -> expr.variable.value.name
+                            is Get -> CodeBlock.of(codeGeneratorContext.kotlinName(expr.variable.value))
                             else -> throw CodeGenerationError("unknown query", expr)
                         }
                     }
@@ -91,7 +136,7 @@ class PlainTextCodeGenerator(
             is InputNode -> {
                 val viaductTypeClass = expr.type.value::class.asClassName()
                 val viaductValueClass = expr.type.value.defaultValue::class.asClassName()
-                "(runtime.input($viaductTypeClass) as $viaductValueClass).value"
+                CodeBlock.of("(runtime.input($viaductTypeClass) as $viaductValueClass).value")
             }
 
             is ReceiveNode -> TODO()
@@ -100,45 +145,40 @@ class PlainTextCodeGenerator(
     override fun Let(protocol: Protocol, stmt: LetNode): CodeBlock =
         CodeBlock.of(
             "val %L = %L",
-            stmt.temporary.value.name,
+            codeGeneratorContext.kotlinName(stmt.temporary.value, protocolAnalysis.primaryProtocol(stmt)),
             exp(stmt.value)
         )
 
-    fun DeclarationHelper(
+    private fun declarationHelper(
         name: String,
         className: ClassNameNode,
         arguments: Arguments<AtomicExpressionNode>
     ): CodeBlock =
         when (className.value) {
             ImmutableCell -> CodeBlock.of(
-                "val %L = %L",
+                "val %N = %L",
                 name,
-                arguments.joined().print()
+                exp(arguments.first())
             )
 
             // TODO - change this (difference between viaduct, kotlin semantics)
             MutableCell -> CodeBlock.of(
-                "var %L = %L",
+                "var %N = %L",
                 name,
-                arguments.joined().print()
+                exp(arguments.first())
             )
 
             Vector -> CodeBlock.of(
-                "var %L = Array(%L)",
+                "val %N= Array(%L)",
                 name,
-                arguments.joined().print()
+                exp(arguments.first())
             )
 
-            else -> CodeBlock.of(
-                "var %L = %T(%L)",
-                name,
-                className.value.name::class.asClassName(),
-                arguments.joined().print()
-            )
+            else -> TODO("throw error")
         }
 
     override fun Declaration(protocol: Protocol, stmt: DeclarationNode): CodeBlock =
-        DeclarationHelper(stmt.name.value.name, stmt.className, stmt.arguments)
+        declarationHelper(codeGeneratorContext.kotlinName(stmt.name.value), stmt.className, stmt.arguments)
 
     override fun Update(protocol: Protocol, stmt: UpdateNode): CodeBlock =
         when (this.typeAnalysis.type(nameAnalysis.declaration(stmt))) {
@@ -146,16 +186,16 @@ class PlainTextCodeGenerator(
                 when (stmt.update.value) {
                     is edu.cornell.cs.apl.viaduct.syntax.datatypes.Set ->
                         CodeBlock.of(
-                            "%L[%L] = %L",
-                            stmt.variable.value.name,
+                            "%N[%L] = %L",
+                            codeGeneratorContext.kotlinName(stmt.variable.value),
                             exp(stmt.arguments[0]),
                             exp(stmt.arguments[1])
                         )
 
                     is Modify ->
                         CodeBlock.of(
-                            "%L[%L] %L %L",
-                            stmt.variable.value.name,
+                            "%N[%L] %L %L",
+                            codeGeneratorContext.kotlinName(stmt.variable.value),
                             exp(stmt.arguments[0]),
                             stmt.update.value.name,
                             exp(stmt.arguments[1])
@@ -168,15 +208,15 @@ class PlainTextCodeGenerator(
                 when (stmt.update.value) {
                     is edu.cornell.cs.apl.viaduct.syntax.datatypes.Set ->
                         CodeBlock.of(
-                            "%L = %L",
-                            stmt.variable.value.name,
+                            "%N = %L",
+                            codeGeneratorContext.kotlinName(stmt.variable.value),
                             exp(stmt.arguments[0])
                         )
 
                     is Modify ->
                         CodeBlock.of(
-                            "%L %L %L",
-                            stmt.variable.value.name,
+                            "%N %L %L",
+                            codeGeneratorContext.kotlinName(stmt.variable.value),
                             stmt.update.value.name,
                             exp(stmt.arguments[0])
                         )
@@ -193,42 +233,57 @@ class PlainTextCodeGenerator(
     ):
         CodeBlock =
         when (val initializer = stmt.initializer) {
-            is OutParameterConstructorInitializerNode ->
+            is OutParameterConstructorInitializerNode -> {
+                val outTmpString = codeGeneratorContext.newTemporary("outTmp")
                 CodeBlock.builder()
                     .add(
                         // declare object
-                        DeclarationHelper(
-                            "outTemp",
+                        declarationHelper(
+                            outTmpString,
                             initializer.className,
                             initializer.arguments
                         )
                     )
                     .add(
-                        // fill box named [stmt.name.value.name] with constructed object
+                        // fill box with constructed object
                         CodeBlock.of(
-                            "%L.set(%L)",
-                            stmt.name.value.name,
-                            "outTemp"
+                            "%N.set(%L)",
+                            codeGeneratorContext.kotlinName(stmt.name.value),
+                            outTmpString
                         )
                     )
                     .build()
-
+            }
             // fill box named [stmt.name.value.name] with [initializer.expression]
             is OutParameterExpressionInitializerNode ->
-                CodeBlock.of("%L.set(%L)",
-                    stmt.name.value.name,
+                CodeBlock.of("%N.set(%L)",
+                    codeGeneratorContext.kotlinName(stmt.name.value),
                     exp(initializer.expression)
                 )
         }
 
-    override fun Output(protocol: Protocol, stmt: OutputNode): CodeBlock =
-        CodeBlock.of(
-            "runtime.output(%L)",
-            exp(stmt.message)
-        )
+    override fun Output(protocol: Protocol, stmt: OutputNode): CodeBlock {
+        val valueClassNames =
+            when (typeAnalysis.type(stmt.message)) {
+                is BooleanType -> Pair(booleanValueClassName, Boolean::class.asClassName())
+                is IntegerType -> Pair(integerValueClassName, Int::class.asClassName())
+                is StringType -> Pair(stringValueClassName, String::class.asClassName())
 
-    override fun Guard(protocol: Protocol, expr: AtomicExpressionNode): CodeBlock =
-        CodeBlock.of(exp(expr) as String)
+                // TODO() - Do I have to convert the list of bytes to an array?
+                // is ByteVecType -> Pair(byteVecValueClassName, Array<Byte>::class.asClassName())
+                is UnitType -> Pair(unitValueClassName, Unit::class.asClassName())
+                else -> throw CodeGenerationError("unknown output value", stmt)
+            }
+
+        return CodeBlock.of(
+            "runtime.output(%L(%L as %L))",
+            valueClassNames.first,
+            exp(stmt.message),
+            valueClassNames.second
+        )
+    }
+
+    override fun Guard(protocol: Protocol, expr: AtomicExpressionNode): CodeBlock = exp(expr)
 
     override fun Send(
         sendingHost: Host,
@@ -243,8 +298,8 @@ class PlainTextCodeGenerator(
                 events.getProjectionSends(ProtocolProjection(sendProtocol, sendingHost))
             for (event in relevantEvents) {
                 sendBuilder.addStatement(
-                    "runtime.send(%L, %L)",
-                    sender.temporary.value.name,
+                    "runtime.send(%N, %N)",
+                    codeGeneratorContext.kotlinName(sender.temporary.value, protocolAnalysis.primaryProtocol(sender)),
                     event.recv.host.name
                 )
             }
@@ -264,10 +319,12 @@ class PlainTextCodeGenerator(
         if (sendProtocol != recvProtocol) {
             val projection = ProtocolProjection(recvProtocol, receivingHost)
             var cleartextInputs = events.getProjectionReceives(projection, Plaintext.INPUT)
+            val clearTextTemp = codeGeneratorContext.newTemporary("clearTextTemp")
 
             // initialize cleartext receive value by receiving from first host
             receiveBuilder.addStatement(
-                "val clearTextValue = runtime.receive(%L)",
+                "val %N = runtime.receive(%N)",
+                clearTextTemp,
                 cleartextInputs.first().send.host.name
             )
             cleartextInputs = cleartextInputs.minusElement(cleartextInputs.first())
@@ -277,7 +334,8 @@ class PlainTextCodeGenerator(
 
                 // check to make sure that you got the same data from all hosts
                 receiveBuilder.beginControlFlow(
-                    "if(clearTextValue != runtime.receive(%L))",
+                    "if(%N != runtime.receive(%L))",
+                    clearTextTemp,
                     event.send.host.name
                 )
                 receiveBuilder.addStatement(
@@ -289,7 +347,7 @@ class PlainTextCodeGenerator(
             }
 
             // check if value you received is null
-            receiveBuilder.beginControlFlow("if(clearTextValue == null)")
+            receiveBuilder.beginControlFlow("if(%N == null)", clearTextTemp)
             receiveBuilder.addStatement(
                 "throw %T(%S)",
                 runtimeErrorClassName,
@@ -298,7 +356,7 @@ class PlainTextCodeGenerator(
             receiveBuilder.endControlFlow()
 
             // calculate set of hosts with whom [receivingHost] needs to check for equivocation
-            val hostsToCheckWith: Set<Host> =
+            var hostsToCheckWith: Set<Host> =
                 events
                     .filter { event ->
                         // remove events where receiving host is not receiving plaintext data
@@ -321,17 +379,47 @@ class PlainTextCodeGenerator(
 
             for (host in hostsToCheckWith) {
                 receiveBuilder.addStatement(
-                    "runtime.send(clearTextValue, %L)",
+                    "runtime.send(%N, %N)",
+                    clearTextTemp,
                     host.name
                 )
             }
 
+            val receiveTmp = codeGeneratorContext.newTemporary("receiveTmp")
+
+            // start equivocation check by receiving from host in [hostsToCheckWith]
+            if (hostsToCheckWith.isNotEmpty()) {
+                receiveBuilder.addStatement(
+                    "var %N = runtime.receive(%N)",
+                    receiveTmp,
+                    hostsToCheckWith.first().name
+                )
+                receiveBuilder.beginControlFlow(
+                    "if(%N != %N)",
+                    receiveTmp,
+                    clearTextTemp
+                )
+                receiveBuilder.addStatement(
+                    "throw %T(%S)",
+                    runtimeErrorClassName,
+                    "equivocation·error·between·hosts:·" + receivingHost.asDocument.print() + ",·" + hostsToCheckWith.first().asDocument.print()
+                )
+                receiveBuilder.endControlFlow()
+                hostsToCheckWith = hostsToCheckWith.minusElement(hostsToCheckWith.first())
+            }
+
+            // potentially receive from the rest of the hosts in [hostsToCheckWith]
             for (host in hostsToCheckWith) {
                 receiveBuilder.addStatement(
-                    "var recvValue = runtime.receive(%L)",
+                    "%N = runtime.receive(%N)",
+                    receiveTmp,
                     host.name
                 )
-                receiveBuilder.beginControlFlow("if(recvValue != clearTextValue)")
+                receiveBuilder.beginControlFlow(
+                    "if(%N != %N)",
+                    receiveTmp,
+                    clearTextTemp
+                )
                 receiveBuilder.addStatement(
                     "throw %T(%S)",
                     runtimeErrorClassName,
@@ -340,8 +428,9 @@ class PlainTextCodeGenerator(
                 receiveBuilder.endControlFlow()
             }
             receiveBuilder.addStatement(
-                "var %L = clearTextValue",
-                sender.temporary.value.name
+                "val %N = %N",
+                codeGeneratorContext.kotlinName(sender.temporary.value, protocolAnalysis.primaryProtocol(sender)),
+                clearTextTemp
             )
         }
         return receiveBuilder.build()

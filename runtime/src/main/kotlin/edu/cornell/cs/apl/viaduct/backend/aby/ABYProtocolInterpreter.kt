@@ -1,11 +1,11 @@
 package edu.cornell.cs.apl.viaduct.backend.aby
 
-import de.tu_darmstadt.cs.encrypto.aby.ABYParty
-import de.tu_darmstadt.cs.encrypto.aby.Aby
-import de.tu_darmstadt.cs.encrypto.aby.Phase
-import de.tu_darmstadt.cs.encrypto.aby.Role
-import de.tu_darmstadt.cs.encrypto.aby.Share
-import de.tu_darmstadt.cs.encrypto.aby.SharingType
+import com.github.apl_cornell.aby.ABYParty
+import com.github.apl_cornell.aby.Aby
+import com.github.apl_cornell.aby.Phase
+import com.github.apl_cornell.aby.Role
+import com.github.apl_cornell.aby.Share
+import com.github.apl_cornell.aby.SharingType
 import edu.cornell.cs.apl.viaduct.analysis.ProtocolAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.TypeAnalysis
 import edu.cornell.cs.apl.viaduct.backend.AbstractProtocolInterpreter

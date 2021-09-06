@@ -16,3 +16,7 @@ dependencies {
     // Testing
     testImplementation(project(":test-utilities"))
 }
+
+kotlin.sourceSets.all {
+    languageSettings.useExperimentalAnnotation("kotlin.RequiresOptIn")
+}

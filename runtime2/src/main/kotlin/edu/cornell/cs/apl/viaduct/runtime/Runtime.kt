@@ -16,10 +16,10 @@ interface Runtime {
     suspend fun <T> send(type: KType, value: T, receiver: Host)
 }
 
-@ExperimentalStdlibApi
+@OptIn(ExperimentalStdlibApi::class)
 suspend inline fun <reified T> Runtime.receive(sender: Host): T =
     receive(typeOf<T>(), sender)
 
-@ExperimentalStdlibApi
+@OptIn(ExperimentalStdlibApi::class)
 suspend inline fun <reified T> Runtime.send(value: T, receiver: Host) =
     send(typeOf<T>(), value, receiver)

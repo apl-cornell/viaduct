@@ -6,7 +6,7 @@ plugins {
     id("ru.vyarus.mkdocs") version "2.1.1"
 
     // Style checking
-    id("com.diffplug.spotless") version "5.14.3"
+    id("com.diffplug.spotless") version "5.15.0"
 
     // Dependency management
     id("com.github.ben-manes.versions") version "0.39.0"

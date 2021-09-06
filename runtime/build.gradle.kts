@@ -9,7 +9,7 @@ dependencies {
     implementation(project(":compiler"))
 
     // Concurrency
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.5.1")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.5.2")
 
     // Cryptography
     implementation("com.github.apl-cornell:aby-java:0.1.1")

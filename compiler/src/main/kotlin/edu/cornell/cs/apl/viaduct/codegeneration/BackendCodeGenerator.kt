@@ -4,7 +4,9 @@ import com.squareup.kotlinpoet.CodeBlock
 import com.squareup.kotlinpoet.FileSpec
 import com.squareup.kotlinpoet.FunSpec
 import com.squareup.kotlinpoet.KModifier
+import com.squareup.kotlinpoet.MemberName
 import com.squareup.kotlinpoet.PropertySpec
+import com.squareup.kotlinpoet.TypeName
 import com.squareup.kotlinpoet.asClassName
 import edu.cornell.cs.apl.prettyprinting.joined
 import edu.cornell.cs.apl.viaduct.analysis.NameAnalysis
@@ -288,6 +290,9 @@ class BackendCodeGenerator(
         private var varMap: MutableMap<ObjectVariable, String> = mutableMapOf()
         private var baseNames = setOf<String>()
 
+        private val receiveMember = MemberName(Runtime::class.java.packageName, "receive")
+        private val sendMember = MemberName(Runtime::class.java.packageName, "send")
+
         init {
             val initNames: MutableSet<String> = program.hosts.map { host -> host.toString() }.toSet().toMutableSet()
             initNames += "runtime"
@@ -304,5 +309,13 @@ class BackendCodeGenerator(
 
         override fun newTemporary(baseName: String): String =
             freshNameGenerator.getFreshName(baseName)
+
+        // TODO: properly compute host name
+        override fun receive(type: TypeName, sender: Host): CodeBlock =
+            CodeBlock.of("%N.%M<%T>(%N)", "runtime", receiveMember, type, sender.name)
+
+        // TODO: properly compute host name
+        override fun send(value: CodeBlock, receiver: Host): CodeBlock =
+            CodeBlock.of("%N.%M(%L, %N)", "runtime", sendMember, value, receiver.name)
     }
 }

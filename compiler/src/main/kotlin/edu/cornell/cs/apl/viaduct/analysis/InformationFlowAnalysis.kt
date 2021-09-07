@@ -112,27 +112,26 @@ class InformationFlowAnalysis private constructor(
         parameterMap: Map<String, Label> = persistentMapOf()
     ): AtomicLabelTerm =
         variableLabelMap.getOrPut(
-            this.declarationAsNode,
-            {
-                if (labelArguments == null || this.declarationAsNode is ObjectDeclarationArgumentNode) {
-                    when (val declaration = this.declarationAsNode) {
-                        is DeclarationNode ->
-                            constraintSolver(declaration).addNewVariable(PrettyNodeWrapper(this.name))
+            this.declarationAsNode
+        ) {
+            if (labelArguments == null || this.declarationAsNode is ObjectDeclarationArgumentNode) {
+                when (val declaration = this.declarationAsNode) {
+                    is DeclarationNode ->
+                        constraintSolver(declaration).addNewVariable(PrettyNodeWrapper(this.name))
 
-                        is ParameterNode ->
-                            constraintSolver(declaration).addNewVariable(PrettyNodeWrapper(this.name))
+                    is ParameterNode ->
+                        constraintSolver(declaration).addNewVariable(PrettyNodeWrapper(this.name))
 
-                        is ObjectDeclarationArgumentNode ->
-                            constraintSolver(declaration).addNewVariable(PrettyNodeWrapper(this.name))
+                    is ObjectDeclarationArgumentNode ->
+                        constraintSolver(declaration).addNewVariable(PrettyNodeWrapper(this.name))
 
-                        else -> throw Exception("Impossible case: Unknown ObjectDeclaration type")
-                    }
-                } else {
-                    // TODO: this is hacky. How do we know it's the first label, for example?
-                    LabelConstant(labelArguments!![0].value.interpret(parameterMap))
+                    else -> throw Exception("Impossible case: Unknown ObjectDeclaration type")
                 }
+            } else {
+                // TODO: this is hacky. How do we know it's the first label, for example?
+                LabelConstant(labelArguments!![0].value.interpret(parameterMap))
             }
-        )
+        }
 
     /**
      * Name of the PC label at a particular node.

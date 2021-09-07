@@ -42,8 +42,6 @@ class ABYCircuitBuilder(
     val bitlen: Long,
     val role: Role
 ) {
-    val circuit: Circuit = boolCircuit
-
     fun circuit(type: ABYCircuitType): Circuit =
         when (type) {
             ABYCircuitType.ARITH -> arithCircuit

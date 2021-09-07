@@ -1,6 +1,7 @@
 package edu.cornell.cs.apl.viaduct.selection
 
 import com.microsoft.z3.Context
+import com.microsoft.z3.Global
 import com.microsoft.z3.IntExpr
 import com.microsoft.z3.IntNum
 import com.microsoft.z3.Model
@@ -67,6 +68,13 @@ private class Z3Selection(
     private val costMode: CostMode,
     private val dumpMetadata: (Map<Node, PrettyPrintable>) -> Unit
 ) {
+    private companion object {
+        init {
+            // Use old arithmetic solver to fix regression introduced in Z3 v4.8.9
+            Global.setParameter("smt.arith.solver", "2")
+        }
+    }
+
     private val nameAnalysis = NameAnalysis.get(program)
 
     private val constraintGenerator =

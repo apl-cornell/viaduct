@@ -21,7 +21,6 @@ edu.cornell.cs.apl.viaduct.syntax.intermediate
 edu.cornell.cs.apl.viaduct.syntax.operators
 edu.cornell.cs.apl.viaduct.syntax.surface
 edu.cornell.cs.apl.viaduct.syntax.types
-edu.cornell.cs.apl.viaduct.syntax.util
 edu.cornell.cs.apl.viaduct.syntax.values
 edu.cornell.cs.apl.viaduct.util
 edu.cornell.cs.apl.viaduct.util.dataflow

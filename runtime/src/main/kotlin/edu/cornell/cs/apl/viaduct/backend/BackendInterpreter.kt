@@ -40,7 +40,6 @@ class BackendInterpreter(
     private val protocolInterpreters: List<ProtocolInterpreter>,
     private val runtime: ViaductProcessRuntime
 ) {
-    private val allHosts = program.hostDeclarations.map { it.name.value }.toSet()
     private val nameAnalysis = NameAnalysis.get(program)
     private val protocolInterpreterMap: Map<Protocol, ProtocolInterpreter>
     private val syncProtocol = Synchronization(program.hostDeclarations.map { it.name.value }.toSet())

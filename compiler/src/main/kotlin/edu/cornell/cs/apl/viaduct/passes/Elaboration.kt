@@ -206,9 +206,6 @@ private class StatementElaborator(
         const val LOOP_NAME = "loop"
     }
 
-    constructor() :
-        this(FreshNameGenerator(), NameMap(), NameMap(), NameMap(), null)
-
     constructor(nameGenerator: FreshNameGenerator) :
         this(nameGenerator, NameMap(), NameMap(), NameMap(), null)
 

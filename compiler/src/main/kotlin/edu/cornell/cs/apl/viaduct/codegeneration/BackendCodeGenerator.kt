@@ -292,7 +292,6 @@ class BackendCodeGenerator(
         private val receiveMember = MemberName(Runtime::class.java.packageName, "receive")
         private val sendMember = MemberName(Runtime::class.java.packageName, "send")
 
-
         val freshNameGenerator: FreshNameGenerator = FreshNameGenerator().apply {
             // add runtime before hosts
             val initNames: MutableSet<String> = program.hosts.map { host -> host.toString() }.toSet().toMutableSet()

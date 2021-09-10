@@ -256,7 +256,8 @@ class PlainTextCodeGenerator(
             }
             // fill box named [stmt.name.value.name] with [initializer.expression]
             is OutParameterExpressionInitializerNode ->
-                CodeBlock.of("%N.set(%L)",
+                CodeBlock.of(
+                    "%N.set(%L)",
                     codeGeneratorContext.kotlinName(stmt.name.value),
                     exp(initializer.expression)
                 )
@@ -359,10 +360,8 @@ class PlainTextCodeGenerator(
                             // remove events where [receivingHost] is the sender of the data
                             event.send.host != receivingHost
                     }
-
                     // of events matching above criteria, get set of data receivers
                     .map { event -> event.recv.host }
-
                     // remove [receivingHost] from the set of hosts with whom [receivingHost] needs to
                     // check for equivocation
                     .filter { host -> host != receivingHost }

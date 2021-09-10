@@ -114,7 +114,7 @@ class BackendCodeGenerator(
         for (host: Host in this.program.hosts) {
 
             // for each host, create a function that they call to run the program
-            val hostFunName = host.name
+            val hostFunName = context.newTemporary(host.name)
             val hostFunctionBuilder = FunSpec.builder(hostFunName).addModifiers(KModifier.PRIVATE, KModifier.SUSPEND)
 
             // pass runtime object to [host]'s function
@@ -286,29 +286,27 @@ class BackendCodeGenerator(
     }
 
     private class Context(override val program: ProgramNode) : CodeGeneratorContext {
-        private var tempMap: MutableMap<Temporary, String> = mutableMapOf()
+        private var tempMap: MutableMap<Pair<Temporary, Protocol>, String> = mutableMapOf()
         private var varMap: MutableMap<ObjectVariable, String> = mutableMapOf()
-        private var baseNames = setOf<String>()
 
         private val receiveMember = MemberName(Runtime::class.java.packageName, "receive")
         private val sendMember = MemberName(Runtime::class.java.packageName, "send")
 
-        init {
+
+        val freshNameGenerator: FreshNameGenerator = FreshNameGenerator().apply {
+            // add runtime before hosts
             val initNames: MutableSet<String> = program.hosts.map { host -> host.toString() }.toSet().toMutableSet()
             initNames += "runtime"
-            baseNames = initNames
         }
 
-        val freshNameGenerator: FreshNameGenerator = FreshNameGenerator(baseNames)
-
         override fun kotlinName(sourceName: Temporary, protocol: Protocol): String =
-            tempMap.getOrPut(sourceName) { freshNameGenerator.getFreshName((sourceName.name + protocol.name).filter { it.isLetterOrDigit() }) }
+            tempMap.getOrPut(Pair(sourceName, protocol)) { freshNameGenerator.getFreshName((sourceName.name).filter { it.isLetterOrDigit() }) }
 
         override fun kotlinName(sourceName: ObjectVariable): String =
             varMap.getOrPut(sourceName) { freshNameGenerator.getFreshName(sourceName.name) }
 
         override fun newTemporary(baseName: String): String =
-            freshNameGenerator.getFreshName(baseName)
+            freshNameGenerator.getFreshName(baseName).filter { it.isLetterOrDigit() }
 
         // TODO: properly compute host name
         override fun receive(type: TypeName, sender: Host): CodeBlock =

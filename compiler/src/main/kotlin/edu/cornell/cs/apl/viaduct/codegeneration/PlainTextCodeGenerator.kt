@@ -130,7 +130,7 @@ class PlainTextCodeGenerator(
                     else -> throw CodeGenerationError("unknown AST object", expr)
                 }
 
-            is DowngradeNode -> exp(expr)
+            is DowngradeNode -> exp(expr.expression)
 
             // TODO - figure out better way to do this
             is InputNode -> {
@@ -345,15 +345,6 @@ class PlainTextCodeGenerator(
                 )
                 receiveBuilder.endControlFlow()
             }
-
-            // check if value you received is null
-            receiveBuilder.beginControlFlow("if(%N == null)", clearTextTemp)
-            receiveBuilder.addStatement(
-                "throw %T(%S)",
-                runtimeErrorClassName,
-                "Plaintext : received null value"
-            )
-            receiveBuilder.endControlFlow()
 
             // calculate set of hosts with whom [receivingHost] needs to check for equivocation
             var hostsToCheckWith: Set<Host> =

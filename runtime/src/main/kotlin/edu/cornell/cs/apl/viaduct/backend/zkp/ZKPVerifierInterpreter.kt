@@ -45,12 +45,12 @@ import edu.cornell.cs.apl.viaduct.syntax.values.BooleanValue
 import edu.cornell.cs.apl.viaduct.syntax.values.ByteVecValue
 import edu.cornell.cs.apl.viaduct.syntax.values.IntegerValue
 import edu.cornell.cs.apl.viaduct.syntax.values.Value
-import java.io.File
-import java.io.FileInputStream
-import java.util.Stack
 import kotlinx.collections.immutable.PersistentMap
 import kotlinx.collections.immutable.persistentMapOf
 import mu.KotlinLogging
+import java.io.File
+import java.io.FileInputStream
+import java.util.Stack
 
 private val logger = KotlinLogging.logger("ZKP Verifier")
 

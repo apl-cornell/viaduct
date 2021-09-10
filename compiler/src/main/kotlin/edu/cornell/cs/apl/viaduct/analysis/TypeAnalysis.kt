@@ -216,7 +216,8 @@ class TypeAnalysis private constructor(
                             node.variable,
                             node.update,
                             objectType,
-                            node.arguments.map { it.type })
+                            node.arguments.map { it.type }
+                        )
                     }
                     checkMethodCall(node.update, methodType, node.arguments)
                 }
@@ -318,10 +319,8 @@ class TypeAnalysis private constructor(
     }
 
     companion object : AnalysisProvider<TypeAnalysis> {
-        private val ProgramNode.instance: TypeAnalysis by attribute {
-            TypeAnalysis(this.tree, NameAnalysis.get(this))
-        }
+        private fun construct(program: ProgramNode) = TypeAnalysis(program.tree, NameAnalysis.get(program))
 
-        override fun get(program: ProgramNode): TypeAnalysis = program.instance
+        override fun get(program: ProgramNode): TypeAnalysis = program.cached(::construct)
     }
 }

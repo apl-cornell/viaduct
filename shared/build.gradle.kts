@@ -36,7 +36,7 @@ val generatePropertiesFile by tasks.registering {
 }
 
 kotlin {
-    sourceSets["main"].apply {
+    sourceSets.main {
         kotlin.srcDir(generatedPropertiesDir)
     }
 }

@@ -37,10 +37,10 @@ import edu.cornell.cs.apl.viaduct.syntax.types.ValueType
 import edu.cornell.cs.apl.viaduct.syntax.values.ByteVecValue
 import edu.cornell.cs.apl.viaduct.syntax.values.IntegerValue
 import edu.cornell.cs.apl.viaduct.syntax.values.Value
-import java.util.Stack
 import kotlinx.collections.immutable.PersistentMap
 import kotlinx.collections.immutable.persistentMapOf
 import mu.KotlinLogging
+import java.util.Stack
 
 private val logger = KotlinLogging.logger("Plaintext")
 
@@ -236,10 +236,8 @@ class PlaintextProtocolInterpreter(
                                     // remove events where [this.host] is the sender of the data
                                     event.send.host != this.host
                             }
-
                             // of events matching above criteria, get set of data receivers
                             .map { event -> event.recv.host }
-
                             // remove [this.host] from the set of hosts with whom [this.host] needs to
                             // check for equivocation
                             .filter { host -> host != this.host }

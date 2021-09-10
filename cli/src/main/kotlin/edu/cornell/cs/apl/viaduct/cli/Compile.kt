@@ -36,11 +36,11 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProcessDeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
 import guru.nidi.graphviz.engine.Format
 import guru.nidi.graphviz.engine.Graphviz
+import mu.KotlinLogging
 import java.io.File
 import java.io.StringWriter
 import java.io.Writer
 import kotlin.system.measureTimeMillis
-import mu.KotlinLogging
 
 private val logger = KotlinLogging.logger("Compile")
 
@@ -113,9 +113,11 @@ class Compile : CliktCommand(help = "Compile ideal protocol to secure distribute
             val labelMetadata: Map<Node, PrettyPrintable> =
                 program.declarationNodes().map {
                     it to ifcAnalysis.label(it)
-                }.plus(program.letNodes().map {
-                    it to ifcAnalysis.label(it)
-                }).toMap()
+                }.plus(
+                    program.letNodes().map {
+                        it to ifcAnalysis.label(it)
+                    }
+                ).toMap()
             dumpProgramMetadata(program, labelMetadata, labelOutput)
         }
 

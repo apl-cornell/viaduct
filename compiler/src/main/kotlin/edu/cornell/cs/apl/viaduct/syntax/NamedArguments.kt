@@ -53,7 +53,8 @@ private constructor(
             val argumentLabels = arguments.map { it.first }.toPersistentList()
             val argumentsMap = arguments.fold(
                 persistentMapOf<ArgumentLabel, T>(),
-                { map, arg -> map.put(arg.first.value, arg.second) })
+                { map, arg -> map.put(arg.first.value, arg.second) }
+            )
 
             return NamedArguments(argumentLabels, argumentsMap, sourceLocation)
         }

@@ -1,5 +1,8 @@
 package edu.cornell.cs.apl.viaduct.syntax.intermediate
 
+import edu.cornell.cs.apl.attributes.Attribute
+import edu.cornell.cs.apl.attributes.Tree
+import edu.cornell.cs.apl.attributes.attribute
 import edu.cornell.cs.apl.prettyprinting.Document
 import edu.cornell.cs.apl.prettyprinting.PrettyPrintable
 import edu.cornell.cs.apl.prettyprinting.commented
@@ -25,16 +28,35 @@ private constructor(
     constructor(declarations: List<TopLevelDeclarationNode>, sourceLocation: SourceLocation) :
         this(declarations.toPersistentList(), sourceLocation)
 
+    // TODO: Should be moved to analysis.Declarations
     val hostDeclarations: Iterable<HostDeclarationNode> =
         declarations.filterIsInstance<HostDeclarationNode>()
 
+    // TODO: Should be provided by HostTrustConfiguration
     val hosts: Set<Host> = hostDeclarations.map { it.name.value }.toSet()
 
+    // TODO: Should be moved to analysis.Declarations
     val functions: Iterable<FunctionDeclarationNode> =
         declarations.filterIsInstance<FunctionDeclarationNode>()
 
+    // TODO: Should be moved to analysis.NameAnalysis
     val functionMap: Map<FunctionName, FunctionDeclarationNode> =
         functions.map { function -> Pair(function.name.value, function) }.toMap()
+
+    /** A lazily constructed [Tree] instance for the program. */
+    val tree: Tree<Node, ProgramNode> by lazy { Tree(this) }
+
+    private val functionCache: Attribute<(ProgramNode) -> Any?, Any?> = attribute {
+        this.invoke(this@ProgramNode)
+    }
+
+    /**
+     * Applies [function] to this program and returns the results.
+     * The result is cached, so future calls with the same function do not evaluate [function].
+     */
+    @Suppress("UNCHECKED_CAST")
+    fun <T> cached(function: (ProgramNode) -> T): T =
+        functionCache(function) as T
 
     override val children: Iterable<TopLevelDeclarationNode>
         get() = declarations
@@ -53,7 +75,7 @@ private constructor(
 
     override fun printMetadata(metadata: Map<Node, PrettyPrintable>): Document =
         (metadata[this]?.let { it.asDocument.commented() + Document.forcedLineBreak } ?: Document("")) +
-        declarations
-            .map { it.printMetadata(metadata) }
-            .concatenated(Document.forcedLineBreak + Document.forcedLineBreak)
+            declarations
+                .map { it.printMetadata(metadata) }
+                .concatenated(Document.forcedLineBreak + Document.forcedLineBreak)
 }

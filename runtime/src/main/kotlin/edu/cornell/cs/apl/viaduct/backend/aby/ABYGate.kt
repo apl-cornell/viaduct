@@ -1,10 +1,10 @@
 package edu.cornell.cs.apl.viaduct.backend.aby
 
-import de.tu_darmstadt.cs.encrypto.aby.Aby
-import de.tu_darmstadt.cs.encrypto.aby.Circuit
-import de.tu_darmstadt.cs.encrypto.aby.Role
-import de.tu_darmstadt.cs.encrypto.aby.Share
-import de.tu_darmstadt.cs.encrypto.aby.UInt32Vector
+import com.github.apl_cornell.aby.Aby
+import com.github.apl_cornell.aby.Circuit
+import com.github.apl_cornell.aby.Role
+import com.github.apl_cornell.aby.Share
+import com.github.apl_cornell.aby.UInt32Vector
 import edu.cornell.cs.apl.viaduct.syntax.Operator
 import edu.cornell.cs.apl.viaduct.syntax.operators.Addition
 import edu.cornell.cs.apl.viaduct.syntax.operators.And
@@ -42,8 +42,6 @@ class ABYCircuitBuilder(
     val bitlen: Long,
     val role: Role
 ) {
-    val circuit: Circuit = boolCircuit
-
     fun circuit(type: ABYCircuitType): Circuit =
         when (type) {
             ABYCircuitType.ARITH -> arithCircuit

@@ -34,7 +34,7 @@ dependencies {
     implementation("com.squareup:kotlinpoet:1.7.2")
 
     // SMT solving
-    implementation("io.github.tudo-aqua:z3-turnkey:4.8.7.1")
+    implementation("io.github.tudo-aqua:z3-turnkey:4.8.10")
 
     // Testing
     testImplementation(project(":test-utilities"))

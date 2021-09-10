@@ -21,7 +21,7 @@ internal class SourceRangeTest {
                 process main {}
                 host h3 : {H3}
                 host h4 : {H4}
-            """.trimIndent().parse()
+        """.trimIndent().parse()
 
         @Test
         fun `it underlines single-line ranges`() {

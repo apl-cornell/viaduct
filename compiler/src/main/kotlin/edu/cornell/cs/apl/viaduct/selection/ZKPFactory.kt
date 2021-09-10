@@ -2,7 +2,6 @@ package edu.cornell.cs.apl.viaduct.selection
 
 import edu.cornell.cs.apl.attributes.attribute
 import edu.cornell.cs.apl.viaduct.analysis.NameAnalysis
-import edu.cornell.cs.apl.viaduct.analysis.TypeAnalysis
 import edu.cornell.cs.apl.viaduct.passes.canMux
 import edu.cornell.cs.apl.viaduct.protocols.ZKP
 import edu.cornell.cs.apl.viaduct.syntax.Host
@@ -34,9 +33,7 @@ import edu.cornell.cs.apl.viaduct.syntax.operators.Or
 import edu.cornell.cs.apl.viaduct.util.subsequences
 
 class ZKPFactory(val program: ProgramNode) : ProtocolFactory {
-
     private val nameAnalysis = NameAnalysis.get(program)
-    private val typeAnalysis = TypeAnalysis.get(program)
 
     companion object {
         private val ProgramNode.instance: List<SpecializedProtocol> by attribute {

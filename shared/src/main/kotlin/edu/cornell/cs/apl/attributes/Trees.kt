@@ -1,8 +1,8 @@
 package edu.cornell.cs.apl.attributes
 
-import java.util.IdentityHashMap
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.toPersistentList
+import java.util.IdentityHashMap
 
 /**
  * Computes and stores parent/child/sibling relations in a tree structure.

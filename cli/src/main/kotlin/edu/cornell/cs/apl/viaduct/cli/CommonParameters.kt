@@ -20,12 +20,12 @@ import edu.cornell.cs.apl.viaduct.parsing.parse
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
 import edu.cornell.cs.apl.viaduct.syntax.ProtocolName
 import edu.cornell.cs.apl.viaduct.syntax.surface.ProgramNode
-import java.io.File
-import java.io.IOException
-import java.io.PrintStream
 import org.apache.logging.log4j.Level
 import org.apache.logging.log4j.core.config.Configurator
 import org.fusesource.jansi.AnsiConsole
+import java.io.File
+import java.io.IOException
+import java.io.PrintStream
 
 /** Adds an input parameter to a [CliktCommand]. */
 internal fun CliktCommand.inputProgram(): ArgumentDelegate<File?> =
@@ -76,10 +76,12 @@ internal fun ParameterHolder.verbosity(): OptionDelegate<Int> =
 internal fun File?.parse(
     protocolParsers: Map<ProtocolName, ProtocolParser<Protocol>> = defaultProtocolParsers
 ): ProgramNode =
-    (if (this == null)
-        System.`in`.bufferedReader().use { SourceFile.from("<stdin>", it) }
-    else
-        SourceFile.from(this)).parse(protocolParsers)
+    (
+        if (this == null)
+            System.`in`.bufferedReader().use { SourceFile.from("<stdin>", it) }
+        else
+            SourceFile.from(this)
+        ).parse(protocolParsers)
 
 /**
  * Jansi has this annoying behavior of reading [java.io.FileDescriptor.out] directly instead of using [System.out].

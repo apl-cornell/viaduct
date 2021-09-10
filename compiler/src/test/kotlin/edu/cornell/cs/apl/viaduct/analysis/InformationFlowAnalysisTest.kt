@@ -4,9 +4,9 @@ import edu.cornell.cs.apl.viaduct.PositiveTestProgramProvider
 import edu.cornell.cs.apl.viaduct.passes.check
 import edu.cornell.cs.apl.viaduct.passes.elaborated
 import edu.cornell.cs.apl.viaduct.syntax.surface.ProgramNode
-import java.io.StringWriter
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ArgumentsSource
+import java.io.StringWriter
 
 internal class InformationFlowAnalysisTest {
     @ParameterizedTest

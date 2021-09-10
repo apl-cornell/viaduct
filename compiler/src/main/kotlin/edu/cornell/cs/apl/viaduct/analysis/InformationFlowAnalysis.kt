@@ -59,10 +59,10 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.SendNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.StatementNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.UpdateNode
 import edu.cornell.cs.apl.viaduct.util.FreshNameGenerator
-import java.io.Writer
-import java.util.LinkedList
 import kotlinx.collections.immutable.persistentMapOf
 import mu.KotlinLogging
+import java.io.Writer
+import java.util.LinkedList
 
 private val logger = KotlinLogging.logger("InformationFlowAnalysis")
 
@@ -112,27 +112,26 @@ class InformationFlowAnalysis private constructor(
         parameterMap: Map<String, Label> = persistentMapOf()
     ): AtomicLabelTerm =
         variableLabelMap.getOrPut(
-            this.declarationAsNode,
-            {
-                if (labelArguments == null || this.declarationAsNode is ObjectDeclarationArgumentNode) {
-                    when (val declaration = this.declarationAsNode) {
-                        is DeclarationNode ->
-                            constraintSolver(declaration).addNewVariable(PrettyNodeWrapper(this.name))
+            this.declarationAsNode
+        ) {
+            if (labelArguments == null || this.declarationAsNode is ObjectDeclarationArgumentNode) {
+                when (val declaration = this.declarationAsNode) {
+                    is DeclarationNode ->
+                        constraintSolver(declaration).addNewVariable(PrettyNodeWrapper(this.name))
 
-                        is ParameterNode ->
-                            constraintSolver(declaration).addNewVariable(PrettyNodeWrapper(this.name))
+                    is ParameterNode ->
+                        constraintSolver(declaration).addNewVariable(PrettyNodeWrapper(this.name))
 
-                        is ObjectDeclarationArgumentNode ->
-                            constraintSolver(declaration).addNewVariable(PrettyNodeWrapper(this.name))
+                    is ObjectDeclarationArgumentNode ->
+                        constraintSolver(declaration).addNewVariable(PrettyNodeWrapper(this.name))
 
-                        else -> throw Exception("Impossible case: Unknown ObjectDeclaration type")
-                    }
-                } else {
-                    // TODO: this is hacky. How do we know it's the first label, for example?
-                    LabelConstant(labelArguments!![0].value.interpret(parameterMap))
+                    else -> throw Exception("Impossible case: Unknown ObjectDeclaration type")
                 }
+            } else {
+                // TODO: this is hacky. How do we know it's the first label, for example?
+                LabelConstant(labelArguments!![0].value.interpret(parameterMap))
             }
-        )
+        }
 
     /**
      * Name of the PC label at a particular node.
@@ -699,11 +698,9 @@ class InformationFlowAnalysis private constructor(
     }
 
     companion object : AnalysisProvider<InformationFlowAnalysis> {
-        private val ProgramNode.instance: InformationFlowAnalysis by attribute {
-            InformationFlowAnalysis(this.tree, NameAnalysis.get(this))
-        }
+        private fun construct(program: ProgramNode) = InformationFlowAnalysis(program.tree, NameAnalysis.get(program))
 
-        override fun get(program: ProgramNode): InformationFlowAnalysis = program.instance
+        override fun get(program: ProgramNode): InformationFlowAnalysis = program.cached(::construct)
     }
 }
 

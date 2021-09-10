@@ -51,11 +51,11 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.ReadNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.SimpleStatementNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.StatementNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.UpdateNode
-import kotlin.properties.ReadOnlyProperty
-import kotlin.reflect.KProperty
 import kotlinx.collections.immutable.PersistentSet
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.persistentSetOf
+import kotlin.properties.ReadOnlyProperty
+import kotlin.reflect.KProperty
 
 /**
  * Associates each use of a [Name] with its declaration, and every [Name] declaration with the
@@ -614,10 +614,10 @@ class NameAnalysis private constructor(private val tree: Tree<Node, ProgramNode>
     }
 
     companion object : AnalysisProvider<NameAnalysis> {
-        private val ProgramNode.instance: NameAnalysis by attribute { NameAnalysis(this.tree) }
-
         val MAIN_FUNCTION = FunctionName("#main#")
 
-        override fun get(program: ProgramNode): NameAnalysis = program.instance
+        private fun construct(program: ProgramNode) = NameAnalysis(program.tree)
+
+        override fun get(program: ProgramNode): NameAnalysis = program.cached(::construct)
     }
 }

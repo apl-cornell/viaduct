@@ -1,6 +1,7 @@
 package edu.cornell.cs.apl.viaduct.selection
 
 import com.microsoft.z3.Context
+import com.microsoft.z3.Global
 import com.microsoft.z3.IntExpr
 import com.microsoft.z3.IntNum
 import com.microsoft.z3.Model
@@ -67,6 +68,13 @@ private class Z3Selection(
     private val costMode: CostMode,
     private val dumpMetadata: (Map<Node, PrettyPrintable>) -> Unit
 ) {
+    private companion object {
+        init {
+            // Use old arithmetic solver to fix regression introduced in Z3 v4.8.9
+            Global.setParameter("smt.arith.solver", "2")
+        }
+    }
+
     private val nameAnalysis = NameAnalysis.get(program)
 
     private val constraintGenerator =
@@ -221,16 +229,20 @@ private class Z3Selection(
             }.toMap().toBiMap()
 
         val varMap: BiMap<FunctionVariable, IntExpr> =
-            (letNodes.mapKeys {
-                FunctionVariable(nameAnalysis.enclosingFunctionName(it.key), it.key.temporary.value)
-            }).plus(
+            (
+                letNodes.mapKeys {
+                    FunctionVariable(nameAnalysis.enclosingFunctionName(it.key), it.key.temporary.value)
+                }
+                ).plus(
                 declarationNodes.mapKeys {
                     FunctionVariable(nameAnalysis.enclosingFunctionName(it.key), it.key.name.value)
-                }).plus(
+                }
+            ).plus(
                 parameterNodes.mapKeys {
                     val functionName = nameAnalysis.functionDeclaration(it.key).name.value
                     FunctionVariable(functionName, it.key.name.value)
-                }).plus(
+                }
+            ).plus(
                 objectDeclarationArgumentNodes.mapKeys {
                     FunctionVariable(nameAnalysis.enclosingFunctionName(it.key), it.key.name.value)
                 }

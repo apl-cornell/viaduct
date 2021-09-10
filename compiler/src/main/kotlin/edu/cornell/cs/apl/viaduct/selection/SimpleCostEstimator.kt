@@ -333,8 +333,8 @@ class SimpleCostEstimator(
      * to another protocol occurs. */
     private fun mpcExecutionCost(events: List<CommunicationEvent>): Int =
         if (events.any { event ->
-                event.send.protocol is ABY && event.send.id != Protocol.INTERNAL_OUTPUT && event.recv.protocol !is ABY
-            }
+            event.send.protocol is ABY && event.send.id != Protocol.INTERNAL_OUTPUT && event.recv.protocol !is ABY
+        }
         ) 10 else 0
 
     // from Ishaq et al CCS 2019

@@ -167,11 +167,11 @@ class BackendCodeGenerator(
                     // generate code for the statement, if [host] participating
                     val protocolCodeGenerator = codeGeneratorMap[protocol]
                         ?: throw CodeGenerationError("no code generator for protocol ${protocol.asDocument.print()}")
-                    hostFunctionBuilder.addStatement(protocolCodeGenerator.simpleStatement(protocol, stmt).toString())
+                    hostFunctionBuilder.addStatement("%L", protocolCodeGenerator.simpleStatement(protocol, stmt))
 
                     // generate code for sending data
                     if (readers.isNotEmpty()) {
-                        hostFunctionBuilder.addStatement(protocolCodeGenerator.send(host, stmt, protocol, readerProtocol!!, events!!).toString())
+                        hostFunctionBuilder.addCode("%L", protocolCodeGenerator.send(host, stmt, protocol, readerProtocol!!, events!!))
                     }
                 }
 
@@ -180,7 +180,7 @@ class BackendCodeGenerator(
                     if (protocolAnalysis.participatingHosts(reader!!).contains(host)) {
                         val protocolCodeGenerator = codeGeneratorMap[readerProtocol]
                             ?: throw CodeGenerationError("no code generator for protocol ${protocol.asDocument.print()}")
-                        hostFunctionBuilder.addStatement(protocolCodeGenerator.receive(host, stmt, protocol, readerProtocol!!, events!!).toString())
+                        hostFunctionBuilder.addCode("%L", protocolCodeGenerator.receive(host, stmt, protocol, readerProtocol!!, events!!))
                     }
                 }
             }
@@ -190,7 +190,7 @@ class BackendCodeGenerator(
                     val protocol = protocolAnalysis.primaryProtocol(stmt)
                     val protocolCodeGenerator = codeGeneratorMap[protocol]
                         ?: throw CodeGenerationError("no code generator for protocol ${protocol.asDocument.print()}")
-                    hostFunctionBuilder.addStatement(protocolCodeGenerator.simpleStatement(protocol, stmt).toString())
+                    hostFunctionBuilder.addStatement("%L", protocolCodeGenerator.simpleStatement(protocol, stmt))
                 }
             }
 
@@ -238,22 +238,22 @@ class BackendCodeGenerator(
 
             is IfNode -> {
                 if (protocolAnalysis.participatingHosts(stmt).contains(host)) {
-
-                    // TODO - do I need to check if guardValue is a boolean? - interpreter does this but I feel like
-                    // semantic analysis would accomplish this
-                    val guardValue =
+                    val guardValue: CodeBlock =
                         when (val guard = stmt.guard) {
-                            is LiteralNode -> guard.value.asDocument.print()
 
+                            // TODO() - is there any way that we can make this not go through toString?
+                            is LiteralNode -> {
+                                CodeBlock.of("%L", guard.value.asDocument.toString())
+                            }
                             is ReadNode -> {
                                 val guardProtocol = protocolAnalysis.primaryProtocol(guard)
                                 val protocolCodeGenerator = codeGeneratorMap[guardProtocol]
                                     ?: throw CodeGenerationError("no code generator for protocol ${guardProtocol.asDocument.print()}")
-                                protocolCodeGenerator.guard(guardProtocol, guard).toString()
+                                protocolCodeGenerator.guard(guardProtocol, guard)
                             }
                         }
 
-                    hostFunctionBuilder.beginControlFlow("if ($guardValue)")
+                    hostFunctionBuilder.beginControlFlow("if(%L)", guardValue)
                     generate(hostFunctionBuilder, function, stmt.thenBranch, host)
                     hostFunctionBuilder.endControlFlow()
                     hostFunctionBuilder.beginControlFlow("else")
@@ -293,9 +293,8 @@ class BackendCodeGenerator(
         private val sendMember = MemberName(Runtime::class.java.packageName, "send")
 
         val freshNameGenerator: FreshNameGenerator = FreshNameGenerator().apply {
-            // add runtime before hosts
-            val initNames: MutableSet<String> = program.hosts.map { host -> host.toString() }.toSet().toMutableSet()
-            initNames += "runtime"
+            val initNames: MutableSet<String> = mutableSetOf("runtime")
+            initNames += program.hosts.map { host -> host.toString() }.toSet().toMutableSet()
         }
 
         override fun kotlinName(sourceName: Temporary, protocol: Protocol): String =

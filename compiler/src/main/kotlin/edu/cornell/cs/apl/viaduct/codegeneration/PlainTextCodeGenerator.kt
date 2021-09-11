@@ -1,7 +1,11 @@
 package edu.cornell.cs.apl.viaduct.codegeneration
 
+import com.squareup.kotlinpoet.BOOLEAN
 import com.squareup.kotlinpoet.CodeBlock
-import com.squareup.kotlinpoet.asClassName
+import com.squareup.kotlinpoet.INT
+import com.squareup.kotlinpoet.STRING
+import com.squareup.kotlinpoet.TypeName
+import com.squareup.kotlinpoet.U_BYTE_ARRAY
 import edu.cornell.cs.apl.viaduct.analysis.NameAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.ProtocolAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.TypeAnalysis
@@ -40,11 +44,13 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.UpdateNode
 import edu.cornell.cs.apl.viaduct.syntax.operators.Maximum
 import edu.cornell.cs.apl.viaduct.syntax.operators.Minimum
 import edu.cornell.cs.apl.viaduct.syntax.types.BooleanType
+import edu.cornell.cs.apl.viaduct.syntax.types.ByteVecType
 import edu.cornell.cs.apl.viaduct.syntax.types.ImmutableCellType
 import edu.cornell.cs.apl.viaduct.syntax.types.IntegerType
 import edu.cornell.cs.apl.viaduct.syntax.types.MutableCellType
 import edu.cornell.cs.apl.viaduct.syntax.types.StringType
 import edu.cornell.cs.apl.viaduct.syntax.types.UnitType
+import edu.cornell.cs.apl.viaduct.syntax.types.ValueType
 import edu.cornell.cs.apl.viaduct.syntax.types.VectorType
 import edu.cornell.cs.apl.viaduct.syntax.values.BooleanValue
 import edu.cornell.cs.apl.viaduct.syntax.values.IntegerValue
@@ -58,20 +64,24 @@ class PlainTextCodeGenerator(
     private val nameAnalysis = NameAnalysis.get(context.program)
     private val protocolAnalysis = ProtocolAnalysis(context.program, SimpleProtocolComposer)
     private val codeGeneratorContext = context
-    private val runtimeErrorClassName = RuntimeError::class.asClassName()
-    private val booleanValueClassName = BooleanValue::class.asClassName()
-    private val integerValueClassName = IntegerValue::class.asClassName()
-    private val stringValueClassName = StringValue::class.asClassName()
-
-    // private val unitValueClassName = UnitValue::class.asClassName()
-    private val unitValueClassName = UnitValue::class.asClassName()
+    private val runtimeErrorClass = RuntimeError::class
+    private val booleanValueClass = BooleanValue::class
+    private val integerValueClass = IntegerValue::class
+    private val stringValueClass = StringValue::class
+    private val unitValueClass = UnitValue::class
+    private val byteVecValueClass = ByteArray::class
 
     private fun exp(expr: ExpressionNode): CodeBlock =
         when (expr) {
             is LiteralNode -> CodeBlock.of(expr.value.toString())
 
             is ReadNode ->
-                CodeBlock.of(codeGeneratorContext.kotlinName(expr.temporary.value, protocolAnalysis.primaryProtocol(expr)))
+                CodeBlock.of(
+                    codeGeneratorContext.kotlinName(
+                        expr.temporary.value,
+                        protocolAnalysis.primaryProtocol(expr)
+                    )
+                )
 
             is OperatorApplicationNode -> {
                 when (expr.operator) {
@@ -108,7 +118,10 @@ class PlainTextCodeGenerator(
                 when (this.typeAnalysis.type(nameAnalysis.declaration(expr))) {
                     is VectorType -> {
                         when (expr.query.value) {
-                            is Get -> CodeBlock.of(codeGeneratorContext.kotlinName(expr.variable.value) + "[" + exp(expr.arguments.first()) + "]")
+                            is Get -> CodeBlock.of(
+                                codeGeneratorContext.kotlinName(expr.variable.value) + "[" +
+                                    exp(expr.arguments.first()) + "]"
+                            )
                             else -> throw CodeGenerationError("unknown vector query", expr)
                         }
                     }
@@ -132,12 +145,12 @@ class PlainTextCodeGenerator(
 
             is DowngradeNode -> exp(expr.expression)
 
-            // TODO - figure out better way to do this
-            is InputNode -> {
-                val viaductTypeClass = expr.type.value::class.asClassName()
-                val viaductValueClass = expr.type.value.defaultValue::class.asClassName()
-                CodeBlock.of("(runtime.input($viaductTypeClass) as $viaductValueClass).value")
-            }
+            // TODO() - confirm correct way to do this
+            is InputNode ->
+                CodeBlock.of(
+                    "runtime.input(%T)",
+                    expr.type.value::class
+                )
 
             is ReceiveNode -> TODO()
         }
@@ -266,18 +279,16 @@ class PlainTextCodeGenerator(
     override fun output(protocol: Protocol, stmt: OutputNode): CodeBlock {
         val valueClassNames =
             when (typeAnalysis.type(stmt.message)) {
-                is BooleanType -> Pair(booleanValueClassName, Boolean::class.asClassName())
-                is IntegerType -> Pair(integerValueClassName, Int::class.asClassName())
-                is StringType -> Pair(stringValueClassName, String::class.asClassName())
-
-                // TODO() - Do I have to convert the list of bytes to an array?
-                // is ByteVecType -> Pair(byteVecValueClassName, Array<Byte>::class.asClassName())
-                is UnitType -> Pair(unitValueClassName, Unit::class.asClassName())
+                is BooleanType -> Pair(booleanValueClass, Boolean::class)
+                is IntegerType -> Pair(integerValueClass, Int::class)
+                is StringType -> Pair(stringValueClass, String::class)
+                is ByteVecType -> Pair(byteVecValueClass, Array<Byte>::class)
+                is UnitType -> Pair(unitValueClass, Unit::class)
                 else -> throw CodeGenerationError("unknown output value", stmt)
             }
 
         return CodeBlock.of(
-            "runtime.output(%L(%L as %L))",
+            "runtime.output(%T(%L as %T))",
             valueClassNames.first,
             exp(stmt.message),
             valueClassNames.second
@@ -285,6 +296,15 @@ class PlainTextCodeGenerator(
     }
 
     override fun guard(protocol: Protocol, expr: AtomicExpressionNode): CodeBlock = exp(expr)
+
+    private fun typeTranslator(viaductType: ValueType): TypeName =
+        when (viaductType) {
+            ByteVecType -> U_BYTE_ARRAY
+            BooleanType -> BOOLEAN
+            IntegerType -> INT
+            StringType -> STRING
+            else -> throw CodeGenerationError("unknown send and receive type")
+        }
 
     override fun send(
         sendingHost: Host,
@@ -297,13 +317,8 @@ class PlainTextCodeGenerator(
         if (sendProtocol != receiveProtocol) {
             val relevantEvents: Set<CommunicationEvent> =
                 events.getProjectionSends(ProtocolProjection(sendProtocol, sendingHost))
-            for (event in relevantEvents) {
-                sendBuilder.addStatement(
-                    "runtime.send(%N, %N)",
-                    codeGeneratorContext.kotlinName(sender.temporary.value, protocolAnalysis.primaryProtocol(sender)),
-                    event.recv.host.name
-                )
-            }
+            for (event in relevantEvents)
+                sendBuilder.addStatement("%L", codeGeneratorContext.send(exp(sender.value), event.recv.host))
         }
         return sendBuilder.build()
     }
@@ -323,10 +338,14 @@ class PlainTextCodeGenerator(
             val clearTextTemp = codeGeneratorContext.newTemporary("clearTextTemp")
 
             // initialize cleartext receive value by receiving from first host
+            typeAnalysis.type(sender)
             receiveBuilder.addStatement(
-                "val %N = runtime.receive(%N)",
+                "val %N = %L",
                 clearTextTemp,
-                cleartextInputs.first().send.host.name
+                codeGeneratorContext.receive(
+                    typeTranslator(typeAnalysis.type(sender)),
+                    cleartextInputs.first().send.host
+                )
             )
             cleartextInputs = cleartextInputs.minusElement(cleartextInputs.first())
 
@@ -335,13 +354,16 @@ class PlainTextCodeGenerator(
 
                 // check to make sure that you got the same data from all hosts
                 receiveBuilder.beginControlFlow(
-                    "if(%N != runtime.receive(%L))",
+                    "if(%N != %L)",
                     clearTextTemp,
-                    event.send.host.name
+                    codeGeneratorContext.receive(
+                        typeTranslator(typeAnalysis.type(sender)),
+                        event.send.host
+                    )
                 )
                 receiveBuilder.addStatement(
                     "throw %T(%S)",
-                    runtimeErrorClassName,
+                    runtimeErrorClass,
                     "Plaintext : received different values"
                 )
                 receiveBuilder.endControlFlow()
@@ -367,22 +389,20 @@ class PlainTextCodeGenerator(
                     .filter { host -> host != receivingHost }
                     .toSet()
 
-            for (host in hostsToCheckWith) {
-                receiveBuilder.addStatement(
-                    "runtime.send(%N, %N)",
-                    clearTextTemp,
-                    host.name
-                )
-            }
+            for (host in hostsToCheckWith)
+                receiveBuilder.addStatement("%L", codeGeneratorContext.send(CodeBlock.of(clearTextTemp), host))
 
             val receiveTmp = codeGeneratorContext.newTemporary("receiveTmp")
 
             // start equivocation check by receiving from host in [hostsToCheckWith]
             if (hostsToCheckWith.isNotEmpty()) {
                 receiveBuilder.addStatement(
-                    "var %N = runtime.receive(%N)",
+                    "var %N = %L",
                     receiveTmp,
-                    hostsToCheckWith.first().name
+                    codeGeneratorContext.receive(
+                        typeTranslator(typeAnalysis.type(sender)),
+                        hostsToCheckWith.first()
+                    )
                 )
                 receiveBuilder.beginControlFlow(
                     "if(%N != %N)",
@@ -391,8 +411,9 @@ class PlainTextCodeGenerator(
                 )
                 receiveBuilder.addStatement(
                     "throw %T(%S)",
-                    runtimeErrorClassName,
-                    "equivocation·error·between·hosts:·" + receivingHost.asDocument.print() + ",·" + hostsToCheckWith.first().asDocument.print()
+                    runtimeErrorClass,
+                    "equivocation error between hosts: " + receivingHost.asDocument.print() + ", " +
+                        hostsToCheckWith.first().asDocument.print()
                 )
                 receiveBuilder.endControlFlow()
                 hostsToCheckWith = hostsToCheckWith.minusElement(hostsToCheckWith.first())
@@ -401,9 +422,12 @@ class PlainTextCodeGenerator(
             // potentially receive from the rest of the hosts in [hostsToCheckWith]
             for (host in hostsToCheckWith) {
                 receiveBuilder.addStatement(
-                    "%N = runtime.receive(%N)",
+                    "%N = %L",
                     receiveTmp,
-                    host.name
+                    codeGeneratorContext.receive(
+                        typeTranslator(typeAnalysis.type(sender)),
+                        host
+                    )
                 )
                 receiveBuilder.beginControlFlow(
                     "if(%N != %N)",
@@ -412,8 +436,9 @@ class PlainTextCodeGenerator(
                 )
                 receiveBuilder.addStatement(
                     "throw %T(%S)",
-                    runtimeErrorClassName,
-                    "equivocation·error·between·hosts:·" + receivingHost.asDocument.print() + ",·" + host.asDocument.print()
+                    runtimeErrorClass,
+                    "equivocation error between hosts: " + receivingHost.asDocument.print() + ", " +
+                        host.asDocument.print()
                 )
                 receiveBuilder.endControlFlow()
             }

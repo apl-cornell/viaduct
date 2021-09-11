@@ -1,11 +1,11 @@
 package edu.cornell.cs.apl.viaduct.runtime
 
 import edu.cornell.cs.apl.viaduct.syntax.Host
-import kotlin.reflect.KType
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.protobuf.ProtoBuf
 import kotlinx.serialization.serializer
+import kotlin.reflect.KType
 
 @ExperimentalSerializationApi
 @Suppress("UNCHECKED_CAST")

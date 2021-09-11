@@ -145,11 +145,11 @@ class PlainTextCodeGenerator(
 
             is DowngradeNode -> exp(expr.expression)
 
-            // TODO() - confirm correct way to do this
             is InputNode ->
                 CodeBlock.of(
-                    "runtime.input(%T)",
-                    expr.type.value::class
+                    "(runtime.input(%T) as %T).value",
+                    expr.type.value::class,
+                    expr.type.value.defaultValue::class
                 )
 
             is ReceiveNode -> TODO()

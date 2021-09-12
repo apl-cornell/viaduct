@@ -3,6 +3,7 @@ package edu.cornell.cs.apl.viaduct.codegeneration
 import com.squareup.kotlinpoet.BOOLEAN
 import com.squareup.kotlinpoet.CodeBlock
 import com.squareup.kotlinpoet.INT
+import com.squareup.kotlinpoet.MemberName
 import com.squareup.kotlinpoet.STRING
 import com.squareup.kotlinpoet.TypeName
 import com.squareup.kotlinpoet.U_BYTE_ARRAY
@@ -56,6 +57,7 @@ import edu.cornell.cs.apl.viaduct.syntax.values.BooleanValue
 import edu.cornell.cs.apl.viaduct.syntax.values.IntegerValue
 import edu.cornell.cs.apl.viaduct.syntax.values.StringValue
 import edu.cornell.cs.apl.viaduct.syntax.values.UnitValue
+import edu.cornell.cs.apl.viaduct.syntax.values.Value
 
 class PlainTextCodeGenerator(
     context: CodeGeneratorContext
@@ -84,33 +86,35 @@ class PlainTextCodeGenerator(
                 )
 
             is OperatorApplicationNode -> {
-                when (expr.operator) {
-                    is Minimum -> CodeBlock.of(
-                        "%N(%L, %L)",
-                        "min",
+                if (expr.operator == Minimum) {
+                    CodeBlock.of(
+                        "%M(%L, %L)",
+                        MemberName("kotlin.math", "min"),
                         exp(expr.arguments[0]),
                         exp(expr.arguments[1])
                     )
-                    is Maximum -> CodeBlock.of(
-                        "%N(%L, %L)",
-                        "max",
+                } else if (expr.operator == Maximum) {
+                    CodeBlock.of(
+                        "%M(%L, %L)",
+                        MemberName("kotlin.math", "max"),
                         exp(expr.arguments[0]),
                         exp(expr.arguments[1])
                     )
-                }
-                when (expr.arguments.size) {
-                    2 -> CodeBlock.of(
-                        "%L %L %L",
-                        exp(expr.arguments[0]),
-                        expr.operator.toString(),
-                        exp(expr.arguments[1])
-                    )
-                    1 -> CodeBlock.of(
-                        "%L%L",
-                        expr.operator.toString(),
-                        exp(expr.arguments[0])
-                    )
-                    else -> throw CodeGenerationError("unknown operator", expr)
+                } else {
+                    when (expr.arguments.size) {
+                        2 -> CodeBlock.of(
+                            "%L %L %L",
+                            exp(expr.arguments[0]),
+                            expr.operator.toString(),
+                            exp(expr.arguments[1])
+                        )
+                        1 -> CodeBlock.of(
+                            "%L%L",
+                            expr.operator.toString(),
+                            exp(expr.arguments[0])
+                        )
+                        else -> throw CodeGenerationError("unknown operator", expr)
+                    }
                 }
             }
 
@@ -162,10 +166,23 @@ class PlainTextCodeGenerator(
             exp(stmt.value)
         )
 
+    private fun defaultTranslator(value: Value): Any =
+        when (value) {
+            is IntegerValue -> 0
+            is BooleanValue -> false
+            is StringValue -> ""
+            else -> throw CodeGenerationError("unsupported array initialization")
+            // do we need any of the following?
+            // is HostSetValue ->
+            // is HostValue ->
+            // is ByteVecValue -> ByteArray(0)
+        }
+
     private fun declarationHelper(
         name: String,
         className: ClassNameNode,
-        arguments: Arguments<AtomicExpressionNode>
+        arguments: Arguments<AtomicExpressionNode>,
+        initType: ValueType
     ): CodeBlock =
         when (className.value) {
             ImmutableCell -> CodeBlock.of(
@@ -181,17 +198,25 @@ class PlainTextCodeGenerator(
                 exp(arguments.first())
             )
 
-            Vector -> CodeBlock.of(
-                "val %N= Array(%L)",
-                name,
-                exp(arguments.first())
-            )
+            Vector -> {
+                CodeBlock.of(
+                    "val %N= Array(%L){ %L }",
+                    name,
+                    exp(arguments.first()),
+                    defaultTranslator(initType.defaultValue)
+                )
+            }
 
             else -> TODO("throw error")
         }
 
     override fun declaration(protocol: Protocol, stmt: DeclarationNode): CodeBlock =
-        declarationHelper(codeGeneratorContext.kotlinName(stmt.name.value), stmt.className, stmt.arguments)
+        declarationHelper(
+            codeGeneratorContext.kotlinName(stmt.name.value),
+            stmt.className,
+            stmt.arguments,
+            stmt.typeArguments[0].value
+        )
 
     override fun update(protocol: Protocol, stmt: UpdateNode): CodeBlock =
         when (this.typeAnalysis.type(nameAnalysis.declaration(stmt))) {
@@ -254,7 +279,8 @@ class PlainTextCodeGenerator(
                         declarationHelper(
                             outTmpString,
                             initializer.className,
-                            initializer.arguments
+                            initializer.arguments,
+                            initializer.typeArguments[0].value
                         )
                     )
                     .add(
@@ -338,16 +364,17 @@ class PlainTextCodeGenerator(
             val clearTextTemp = codeGeneratorContext.newTemporary("clearTextTemp")
 
             // initialize cleartext receive value by receiving from first host
-            typeAnalysis.type(sender)
-            receiveBuilder.addStatement(
-                "val %N = %L",
-                clearTextTemp,
-                codeGeneratorContext.receive(
-                    typeTranslator(typeAnalysis.type(sender)),
-                    cleartextInputs.first().send.host
+            if (cleartextInputs.isNotEmpty()) {
+                receiveBuilder.addStatement(
+                    "val %N = %L",
+                    clearTextTemp,
+                    codeGeneratorContext.receive(
+                        typeTranslator(typeAnalysis.type(sender)),
+                        cleartextInputs.first().send.host
+                    )
                 )
-            )
-            cleartextInputs = cleartextInputs.minusElement(cleartextInputs.first())
+                cleartextInputs = cleartextInputs.minusElement(cleartextInputs.first())
+            }
 
             // receive from the rest of the hosts and compare against clearTextValue
             for (event in cleartextInputs) {

@@ -207,7 +207,7 @@ class BackendCodeGenerator(
                     // declare boxed variable before function call
                     hostFunctionBuilder.addStatement(
                         "var %L = %T",
-                        outObjectDeclarations[i].name.value.name,
+                        context.kotlinName(outObjectDeclarations[i].name.value),
                         Boxed::class.asClassName()
                     )
 
@@ -230,8 +230,8 @@ class BackendCodeGenerator(
                 for (i in 0..outObjectDeclarations.size) {
                     hostFunctionBuilder.addStatement(
                         "val %L = %L.get()",
-                        outObjectDeclarations[i].name.value.name,
-                        outObjectDeclarations[i].name.value.name
+                        context.kotlinName(outObjectDeclarations[i].name.value),
+                        context.kotlinName(outObjectDeclarations[i].name.value)
                     )
                 }
             }

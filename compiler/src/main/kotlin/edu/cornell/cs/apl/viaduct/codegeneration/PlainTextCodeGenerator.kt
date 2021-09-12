@@ -343,8 +343,11 @@ class PlainTextCodeGenerator(
         if (sendProtocol != receiveProtocol) {
             val relevantEvents: Set<CommunicationEvent> =
                 events.getProjectionSends(ProtocolProjection(sendProtocol, sendingHost))
-            for (event in relevantEvents)
-                sendBuilder.addStatement("%L", codeGeneratorContext.send(exp(sender.value), event.recv.host))
+            for (event in relevantEvents) {
+                if (sendingHost != event.recv.host) {
+                    sendBuilder.addStatement("%L", codeGeneratorContext.send(exp(sender.value), event.recv.host))
+                }
+            }
         }
         return sendBuilder.build()
     }

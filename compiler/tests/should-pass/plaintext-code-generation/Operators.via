@@ -2,34 +2,34 @@ host god : {⊥}
 
 process main {
     /* Comparison Operators */
-     val a : bool = 1 == 1;
-     val b : bool = 1 != 2;
+    val a: bool = 1 == 1;
+    val b: bool = 1 != 2;
 
-    val c : bool = 1 < 2;
-    val d : bool = 1 <= 1;
-    val e : bool = 1 <= 2;
+    val c: bool = 1 < 2;
+    val d: bool = 1 <= 1;
+    val e: bool = 1 <= 2;
 
-    val f : bool = 2 > 1;
-    val g : bool = 1 >= 1;
-    val h : bool = 2 >= 1;
+    val f: bool = 2 > 1;
+    val g: bool = 1 >= 1;
+    val h: bool = 2 >= 1;
 
     /* Arithmetic Operators */
-    val i : bool = -1 < 1;
-    val j : bool = (-1 + 1) == 0;
+    val i: bool = -1 < 1;
+    val j: bool = (-1 + 1) == 0;
 
-    val k : bool = (1 + 2) == 3;
-    val l : bool = (3 - 1) == 2;
-    val m : bool = (1 * 2) == 2;
-    val n : bool = (2 / 1) == 2;
+    val k: bool = (1 + 2) == 3;
+    val l: bool = (3 - 1) == 2;
+    val m: bool = (1 * 2) == 2;
+    val n: bool = (2 / 1) == 2;
 
-    val o : bool = min(1, 2) == 1;
-    val p : bool = max(1, 2) == 2;
+    val o: bool = min(1, 2) == 1;
+    val p: bool = max(1, 2) == 2;
 
     /** Logical Operators */
-    val q : bool = true;
-    val r : bool = !false;
-    val s : bool = true && true;
-    val t : bool = false || true;
+    val q: bool = true;
+    val r: bool = !false;
+    val s: bool = true && true;
+    val t: bool = false || true;
 
     output a to god;
     output b to god;

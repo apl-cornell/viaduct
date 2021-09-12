@@ -1,5 +1,6 @@
 package edu.cornell.cs.apl.viaduct.codegeneration
 
+import edu.cornell.cs.apl.prettyprinting.Document
 import edu.cornell.cs.apl.viaduct.PositiveTestFileProvider
 import edu.cornell.cs.apl.viaduct.analysis.main
 import edu.cornell.cs.apl.viaduct.parsing.SourceFile
@@ -27,10 +28,9 @@ internal class CodeGeneratorTest {
 
     @ParameterizedTest
     @ArgumentsSource(PositiveTestFileProvider::class)
-    fun `it parses`(file: File) {
-        print(file.parent)
-        // check for certain subfolder for code generation tests
-        // file.parentfolder != code gen then skip
+    fun `it generates`(file: File) {
+        if (file.parentFile.name != "plaintext-code-generation") return
+
         var program = SourceFile.from(file)
             .parse()
             .elaborated()
@@ -46,8 +46,7 @@ internal class CodeGeneratorTest {
         val costRegime = if (wanCost) SimpleCostRegime.WAN else SimpleCostRegime.LAN
         val costEstimator = SimpleCostEstimator(SimpleProtocolComposer, costRegime)
 
-        val protocolAssignment: (FunctionName, Variable) -> Protocol
-        protocolAssignment = selectProtocolsWithZ3(
+        val protocolAssignment: (FunctionName, Variable) -> Protocol = selectProtocolsWithZ3(
             program,
             program.main,
             protocolFactory,
@@ -85,5 +84,6 @@ internal class CodeGeneratorTest {
         )
 
         backendCodeGenerator.generate()
+        println(Document(backendCodeGenerator.generate()).print())
     }
 }

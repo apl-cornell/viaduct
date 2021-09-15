@@ -93,7 +93,7 @@ class BackendCodeGenerator(
         mainFunctionBuilder.addParameter("runtime", Runtime::class)
 
         // create switch statement in main method so program can be run on any host
-        mainFunctionBuilder.beginControlFlow("when(host)")
+        mainFunctionBuilder.beginControlFlow("when (host)")
 
         // add a global host object for each host
         for (host: Host in this.program.hosts) {
@@ -124,14 +124,13 @@ class BackendCodeGenerator(
             fileBuilder.addFunction(hostFunctionBuilder.build())
 
             // update switch statement in main method to have an option for [host]
-            mainFunctionBuilder.beginControlFlow("%N ->", host.name)
+            mainFunctionBuilder.addStatement("%N ->", host.name)
 
             mainFunctionBuilder.addStatement(
                 "%N(%N)",
                 hostFunName,
                 "runtime"
             )
-            mainFunctionBuilder.endControlFlow()
         }
 
         mainFunctionBuilder.endControlFlow()
@@ -251,7 +250,7 @@ class BackendCodeGenerator(
                             }
                         }
 
-                    hostFunctionBuilder.nextControlFlow("if(%L)", guardValue)
+                    hostFunctionBuilder.nextControlFlow("if (%L)", guardValue)
                     generate(hostFunctionBuilder, stmt.thenBranch, host)
                     hostFunctionBuilder.nextControlFlow("else")
                     generate(hostFunctionBuilder, stmt.elseBranch, host)

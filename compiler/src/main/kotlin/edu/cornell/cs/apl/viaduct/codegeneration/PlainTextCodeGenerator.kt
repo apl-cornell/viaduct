@@ -160,7 +160,7 @@ class PlainTextCodeGenerator(
 
     override fun let(protocol: Protocol, stmt: LetNode): CodeBlock =
         CodeBlock.of(
-            "val %L = %L",
+            "val %N = %L",
             context.kotlinName(stmt.temporary.value, protocolAnalysis.primaryProtocol(stmt)),
             exp(stmt.value)
         )
@@ -199,7 +199,7 @@ class PlainTextCodeGenerator(
 
             Vector -> {
                 CodeBlock.of(
-                    "val %N= Array(%L){ %L }",
+                    "val %N = Array(%L){ %L }",
                     name,
                     exp(arguments.first()),
                     defaultTranslator(initType.defaultValue)
@@ -383,7 +383,7 @@ class PlainTextCodeGenerator(
 
                 // check to make sure that you got the same data from all hosts
                 receiveBuilder.beginControlFlow(
-                    "if(%N != %L)",
+                    "if (%N != %L)",
                     clearTextTemp,
                     context.receive(
                         typeTranslator(typeAnalysis.type(sender)),
@@ -434,7 +434,7 @@ class PlainTextCodeGenerator(
                     )
                 )
                 receiveBuilder.beginControlFlow(
-                    "if(%N != %N)",
+                    "if (%N != %N)",
                     receiveTmp,
                     clearTextTemp
                 )
@@ -459,7 +459,7 @@ class PlainTextCodeGenerator(
                     )
                 )
                 receiveBuilder.beginControlFlow(
-                    "if(%N != %N)",
+                    "if (%N != %N)",
                     receiveTmp,
                     clearTextTemp
                 )

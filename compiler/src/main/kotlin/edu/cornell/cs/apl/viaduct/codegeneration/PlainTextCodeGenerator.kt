@@ -60,12 +60,11 @@ import edu.cornell.cs.apl.viaduct.syntax.values.UnitValue
 import edu.cornell.cs.apl.viaduct.syntax.values.Value
 
 class PlainTextCodeGenerator(
-    context: CodeGeneratorContext
+    val context: CodeGeneratorContext
 ) : AbstractCodeGenerator() {
     private val typeAnalysis = TypeAnalysis.get(context.program)
     private val nameAnalysis = NameAnalysis.get(context.program)
     private val protocolAnalysis = ProtocolAnalysis(context.program, SimpleProtocolComposer)
-    private val codeGeneratorContext = context
     private val runtimeErrorClass = RuntimeError::class
     private val booleanValueClass = BooleanValue::class
     private val integerValueClass = IntegerValue::class
@@ -79,7 +78,7 @@ class PlainTextCodeGenerator(
 
             is ReadNode ->
                 CodeBlock.of(
-                    codeGeneratorContext.kotlinName(
+                    context.kotlinName(
                         expr.temporary.value,
                         protocolAnalysis.primaryProtocol(expr)
                     )
@@ -123,7 +122,7 @@ class PlainTextCodeGenerator(
                     is VectorType -> {
                         when (expr.query.value) {
                             is Get -> CodeBlock.of(
-                                codeGeneratorContext.kotlinName(expr.variable.value) + "[" +
+                                context.kotlinName(expr.variable.value) + "[" +
                                     exp(expr.arguments.first()) + "]"
                             )
                             else -> throw CodeGenerationError("unknown vector query", expr)
@@ -132,14 +131,14 @@ class PlainTextCodeGenerator(
 
                     is ImmutableCellType -> {
                         when (expr.query.value) {
-                            is Get -> CodeBlock.of(codeGeneratorContext.kotlinName(expr.variable.value))
+                            is Get -> CodeBlock.of(context.kotlinName(expr.variable.value))
                             else -> throw CodeGenerationError("unknown query", expr)
                         }
                     }
 
                     is MutableCellType -> {
                         when (expr.query.value) {
-                            is Get -> CodeBlock.of(codeGeneratorContext.kotlinName(expr.variable.value))
+                            is Get -> CodeBlock.of(context.kotlinName(expr.variable.value))
                             else -> throw CodeGenerationError("unknown query", expr)
                         }
                     }
@@ -162,7 +161,7 @@ class PlainTextCodeGenerator(
     override fun let(protocol: Protocol, stmt: LetNode): CodeBlock =
         CodeBlock.of(
             "val %L = %L",
-            codeGeneratorContext.kotlinName(stmt.temporary.value, protocolAnalysis.primaryProtocol(stmt)),
+            context.kotlinName(stmt.temporary.value, protocolAnalysis.primaryProtocol(stmt)),
             exp(stmt.value)
         )
 
@@ -212,7 +211,7 @@ class PlainTextCodeGenerator(
 
     override fun declaration(protocol: Protocol, stmt: DeclarationNode): CodeBlock =
         declarationHelper(
-            codeGeneratorContext.kotlinName(stmt.name.value),
+            context.kotlinName(stmt.name.value),
             stmt.className,
             stmt.arguments,
             stmt.typeArguments[0].value
@@ -225,7 +224,7 @@ class PlainTextCodeGenerator(
                     is edu.cornell.cs.apl.viaduct.syntax.datatypes.Set ->
                         CodeBlock.of(
                             "%N[%L] = %L",
-                            codeGeneratorContext.kotlinName(stmt.variable.value),
+                            context.kotlinName(stmt.variable.value),
                             exp(stmt.arguments[0]),
                             exp(stmt.arguments[1])
                         )
@@ -233,7 +232,7 @@ class PlainTextCodeGenerator(
                     is Modify ->
                         CodeBlock.of(
                             "%N[%L] %L %L",
-                            codeGeneratorContext.kotlinName(stmt.variable.value),
+                            context.kotlinName(stmt.variable.value),
                             exp(stmt.arguments[0]),
                             stmt.update.value.name,
                             exp(stmt.arguments[1])
@@ -247,14 +246,14 @@ class PlainTextCodeGenerator(
                     is edu.cornell.cs.apl.viaduct.syntax.datatypes.Set ->
                         CodeBlock.of(
                             "%N = %L",
-                            codeGeneratorContext.kotlinName(stmt.variable.value),
+                            context.kotlinName(stmt.variable.value),
                             exp(stmt.arguments[0])
                         )
 
                     is Modify ->
                         CodeBlock.of(
                             "%N %L %L",
-                            codeGeneratorContext.kotlinName(stmt.variable.value),
+                            context.kotlinName(stmt.variable.value),
                             stmt.update.value.name,
                             exp(stmt.arguments[0])
                         )
@@ -272,7 +271,7 @@ class PlainTextCodeGenerator(
         CodeBlock =
         when (val initializer = stmt.initializer) {
             is OutParameterConstructorInitializerNode -> {
-                val outTmpString = codeGeneratorContext.newTemporary("outTmp")
+                val outTmpString = context.newTemporary("outTmp")
                 CodeBlock.builder()
                     .add(
                         // declare object
@@ -287,7 +286,7 @@ class PlainTextCodeGenerator(
                         // fill box with constructed object
                         CodeBlock.of(
                             "%N.set(%L)",
-                            codeGeneratorContext.kotlinName(stmt.name.value),
+                            context.kotlinName(stmt.name.value),
                             outTmpString
                         )
                     )
@@ -297,7 +296,7 @@ class PlainTextCodeGenerator(
             is OutParameterExpressionInitializerNode ->
                 CodeBlock.of(
                     "%N.set(%L)",
-                    codeGeneratorContext.kotlinName(stmt.name.value),
+                    context.kotlinName(stmt.name.value),
                     exp(initializer.expression)
                 )
         }
@@ -345,7 +344,7 @@ class PlainTextCodeGenerator(
                 events.getProjectionSends(ProtocolProjection(sendProtocol, sendingHost))
             for (event in relevantEvents) {
                 if (sendingHost != event.recv.host) {
-                    sendBuilder.addStatement("%L", codeGeneratorContext.send(exp(sender.value), event.recv.host))
+                    sendBuilder.addStatement("%L", context.send(exp(sender.value), event.recv.host))
                 }
             }
         }
@@ -364,14 +363,14 @@ class PlainTextCodeGenerator(
         if (sendProtocol != receiveProtocol) {
             val projection = ProtocolProjection(receiveProtocol, receivingHost)
             var cleartextInputs = events.getProjectionReceives(projection, Plaintext.INPUT)
-            val clearTextTemp = codeGeneratorContext.newTemporary("clearTextTemp")
+            val clearTextTemp = context.newTemporary("clearTextTemp")
 
             // initialize cleartext receive value by receiving from first host
             if (cleartextInputs.isNotEmpty()) {
                 receiveBuilder.addStatement(
                     "val %N = %L",
                     clearTextTemp,
-                    codeGeneratorContext.receive(
+                    context.receive(
                         typeTranslator(typeAnalysis.type(sender)),
                         cleartextInputs.first().send.host
                     )
@@ -386,7 +385,7 @@ class PlainTextCodeGenerator(
                 receiveBuilder.beginControlFlow(
                     "if(%N != %L)",
                     clearTextTemp,
-                    codeGeneratorContext.receive(
+                    context.receive(
                         typeTranslator(typeAnalysis.type(sender)),
                         event.send.host
                     )
@@ -420,16 +419,16 @@ class PlainTextCodeGenerator(
                     .toSet()
 
             for (host in hostsToCheckWith)
-                receiveBuilder.addStatement("%L", codeGeneratorContext.send(CodeBlock.of(clearTextTemp), host))
+                receiveBuilder.addStatement("%L", context.send(CodeBlock.of(clearTextTemp), host))
 
-            val receiveTmp = codeGeneratorContext.newTemporary("receiveTmp")
+            val receiveTmp = context.newTemporary("receiveTmp")
 
             // start equivocation check by receiving from host in [hostsToCheckWith]
             if (hostsToCheckWith.isNotEmpty()) {
                 receiveBuilder.addStatement(
                     "var %N = %L",
                     receiveTmp,
-                    codeGeneratorContext.receive(
+                    context.receive(
                         typeTranslator(typeAnalysis.type(sender)),
                         hostsToCheckWith.first()
                     )
@@ -454,7 +453,7 @@ class PlainTextCodeGenerator(
                 receiveBuilder.addStatement(
                     "%N = %L",
                     receiveTmp,
-                    codeGeneratorContext.receive(
+                    context.receive(
                         typeTranslator(typeAnalysis.type(sender)),
                         host
                     )
@@ -474,7 +473,7 @@ class PlainTextCodeGenerator(
             }
             receiveBuilder.addStatement(
                 "val %N = %N",
-                codeGeneratorContext.kotlinName(sender.temporary.value, protocolAnalysis.primaryProtocol(sender)),
+                context.kotlinName(sender.temporary.value, protocolAnalysis.primaryProtocol(sender)),
                 clearTextTemp
             )
         }

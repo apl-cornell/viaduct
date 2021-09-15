@@ -253,12 +253,10 @@ class BackendCodeGenerator(
                             }
                         }
 
-                    hostFunctionBuilder.beginControlFlow("if(%L)", guardValue)
+                    hostFunctionBuilder.nextControlFlow("if(%L)", guardValue)
                     generate(hostFunctionBuilder, function, stmt.thenBranch, host)
-                    hostFunctionBuilder.endControlFlow()
-                    hostFunctionBuilder.beginControlFlow("else")
+                    hostFunctionBuilder.nextControlFlow("else")
                     generate(hostFunctionBuilder, function, stmt.elseBranch, host)
-                    hostFunctionBuilder.endControlFlow()
                 }
             }
 

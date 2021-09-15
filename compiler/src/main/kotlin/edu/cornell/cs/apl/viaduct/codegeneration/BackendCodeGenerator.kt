@@ -40,13 +40,12 @@ import edu.cornell.cs.apl.viaduct.util.FreshNameGenerator
 class BackendCodeGenerator(
     private val program: ProgramNode,
     codeGenerators: List<(context: CodeGeneratorContext) -> CodeGenerator>,
-    private val fileName: String
+    private val fileName: String,
+    private val packageName: String
 ) {
     private val codeGeneratorMap: Map<Protocol, CodeGenerator>
     private val nameAnalysis = NameAnalysis.get(program)
     private val protocolAnalysis = ProtocolAnalysis(program, SimpleProtocolComposer)
-    private val hostClassName = Host::class.asClassName()
-    private val runtimeClassName = Runtime::class.asClassName()
     private val context = Context(program)
 
     init {
@@ -89,10 +88,10 @@ class BackendCodeGenerator(
         val mainBody = program.main.body
 
         // create a main file builder, main function builder
-        val fileBuilder = FileSpec.builder("src", this.fileName)
+        val fileBuilder = FileSpec.builder(packageName, this.fileName)
         val mainFunctionBuilder = FunSpec.builder("main").addModifiers(KModifier.SUSPEND)
-        mainFunctionBuilder.addParameter("host", hostClassName)
-        mainFunctionBuilder.addParameter("runtime", runtimeClassName)
+        mainFunctionBuilder.addParameter("host", Host::class)
+        mainFunctionBuilder.addParameter("runtime", Runtime::class)
 
         // create switch statement in main method so program can be run on any host
         mainFunctionBuilder.beginControlFlow("when(host)")
@@ -118,7 +117,7 @@ class BackendCodeGenerator(
             val hostFunctionBuilder = FunSpec.builder(hostFunName).addModifiers(KModifier.PRIVATE, KModifier.SUSPEND)
 
             // pass runtime object to [host]'s function
-            hostFunctionBuilder.addParameter("runtime", runtimeClassName)
+            hostFunctionBuilder.addParameter("runtime", Runtime::class)
 
             // generate code for [host]'s role in [this.program]
             generate(hostFunctionBuilder, nameAnalysis.enclosingFunctionName(mainBody), mainBody, host)
@@ -298,13 +297,13 @@ class BackendCodeGenerator(
         }
 
         override fun kotlinName(sourceName: Temporary, protocol: Protocol): String =
-            tempMap.getOrPut(Pair(sourceName, protocol)) { freshNameGenerator.getFreshName((sourceName.name).filter { it.isLetterOrDigit() }) }
+            tempMap.getOrPut(Pair(sourceName, protocol)) { freshNameGenerator.getFreshName(sourceName.name) }
 
         override fun kotlinName(sourceName: ObjectVariable): String =
             varMap.getOrPut(sourceName) { freshNameGenerator.getFreshName(sourceName.name) }
 
         override fun newTemporary(baseName: String): String =
-            freshNameGenerator.getFreshName(baseName).filter { it.isLetterOrDigit() }
+            freshNameGenerator.getFreshName(baseName)
 
         // TODO: properly compute host name
         override fun receive(type: TypeName, sender: Host): CodeBlock =

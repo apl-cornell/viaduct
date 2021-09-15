@@ -172,7 +172,8 @@ class Compile : CliktCommand(help = "Compile ideal protocol to secure distribute
             val backendCodeGenerator = BackendCodeGenerator(
                 postprocessedProgram,
                 listOf<(context: CodeGeneratorContext) -> CodeGenerator>(::PlainTextCodeGenerator),
-                input!!.name.substringBefore('.')
+                input!!.name.substringBefore('.'),
+                "src"
             )
 
             val kotlin = backendCodeGenerator.generate()

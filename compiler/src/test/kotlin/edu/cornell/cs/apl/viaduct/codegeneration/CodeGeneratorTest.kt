@@ -80,7 +80,8 @@ internal class CodeGeneratorTest {
         val backendCodeGenerator = BackendCodeGenerator(
             annotatedProgram,
             listOf<(context: CodeGeneratorContext) -> CodeGenerator>(::PlainTextCodeGenerator),
-            file.name.substringBefore('.')
+            file.name.substringBefore('.'),
+            "src"
         )
 
         backendCodeGenerator.generate()

@@ -16,7 +16,6 @@ import edu.cornell.cs.apl.viaduct.errors.CodeGenerationError
 import edu.cornell.cs.apl.viaduct.runtime.Runtime
 import edu.cornell.cs.apl.viaduct.selection.ProtocolCommunication
 import edu.cornell.cs.apl.viaduct.selection.SimpleProtocolComposer
-import edu.cornell.cs.apl.viaduct.syntax.FunctionName
 import edu.cornell.cs.apl.viaduct.syntax.Host
 import edu.cornell.cs.apl.viaduct.syntax.ObjectVariable
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
@@ -121,7 +120,7 @@ class BackendCodeGenerator(
             hostFunctionBuilder.addParameter("runtime", Runtime::class)
 
             // generate code for [host]'s role in [this.program]
-            generate(hostFunctionBuilder, nameAnalysis.enclosingFunctionName(mainBody), mainBody, host)
+            generate(hostFunctionBuilder, mainBody, host)
             fileBuilder.addFunction(hostFunctionBuilder.build())
 
             // update switch statement in main method to have an option for [host]
@@ -143,7 +142,6 @@ class BackendCodeGenerator(
 
     fun generate(
         hostFunctionBuilder: FunSpec.Builder,
-        function: FunctionName,
         stmt: StatementNode,
         host: Host
     ) {
@@ -254,16 +252,16 @@ class BackendCodeGenerator(
                         }
 
                     hostFunctionBuilder.nextControlFlow("if(%L)", guardValue)
-                    generate(hostFunctionBuilder, function, stmt.thenBranch, host)
+                    generate(hostFunctionBuilder, stmt.thenBranch, host)
                     hostFunctionBuilder.nextControlFlow("else")
-                    generate(hostFunctionBuilder, function, stmt.elseBranch, host)
+                    generate(hostFunctionBuilder, stmt.elseBranch, host)
                 }
             }
 
             is InfiniteLoopNode ->
                 if (protocolAnalysis.participatingHosts(stmt).contains(host)) {
                     hostFunctionBuilder.beginControlFlow("while (true)")
-                    generate(hostFunctionBuilder, function, stmt.body, host)
+                    generate(hostFunctionBuilder, stmt.body, host)
                     hostFunctionBuilder.endControlFlow()
                 }
 
@@ -275,7 +273,7 @@ class BackendCodeGenerator(
 
             is BlockNode -> {
                 for (child: StatementNode in stmt) {
-                    generate(hostFunctionBuilder, function, child, host)
+                    generate(hostFunctionBuilder, child, host)
                 }
             }
 

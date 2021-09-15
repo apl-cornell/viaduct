@@ -74,7 +74,7 @@ class PlainTextCodeGenerator(
 
     private fun exp(expr: ExpressionNode): CodeBlock =
         when (expr) {
-            is LiteralNode -> CodeBlock.of(expr.value.toString())
+            is LiteralNode -> CodeBlock.of("%L", expr.value)
 
             is ReadNode ->
                 CodeBlock.of(
@@ -104,7 +104,7 @@ class PlainTextCodeGenerator(
                         2 -> CodeBlock.of(
                             "%L %L %L",
                             exp(expr.arguments[0]),
-                            expr.operator.toString(),
+                            expr.operator,
                             exp(expr.arguments[1])
                         )
                         1 -> CodeBlock.of(

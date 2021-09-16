@@ -57,7 +57,6 @@ import edu.cornell.cs.apl.viaduct.syntax.types.VectorType
 import edu.cornell.cs.apl.viaduct.syntax.values.BooleanValue
 import edu.cornell.cs.apl.viaduct.syntax.values.IntegerValue
 import edu.cornell.cs.apl.viaduct.syntax.values.StringValue
-import edu.cornell.cs.apl.viaduct.syntax.values.UnitValue
 import edu.cornell.cs.apl.viaduct.syntax.values.Value
 
 class PlainTextCodeGenerator(
@@ -67,11 +66,6 @@ class PlainTextCodeGenerator(
     private val nameAnalysis = NameAnalysis.get(context.program)
     private val protocolAnalysis = ProtocolAnalysis(context.program, SimpleProtocolComposer)
     private val runtimeErrorClass = RuntimeError::class
-    private val booleanValueClass = BooleanValue::class
-    private val integerValueClass = IntegerValue::class
-    private val stringValueClass = StringValue::class
-    private val unitValueClass = UnitValue::class
-    private val byteVecValueClass = ByteArray::class
 
     private fun exp(expr: ExpressionNode): CodeBlock =
         when (expr) {
@@ -155,7 +149,7 @@ class PlainTextCodeGenerator(
                 CodeBlock.of(
                     "(runtime.input(%T) as %T).value",
                     expr.type.value::class,
-                    expr.type.value.defaultValue::class
+                    expr.type.value.valueClass
                 )
 
             is ReceiveNode -> TODO()

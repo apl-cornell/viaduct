@@ -17,10 +17,12 @@ import edu.cornell.cs.apl.viaduct.selection.CommunicationEvent
 import edu.cornell.cs.apl.viaduct.selection.ProtocolCommunication
 import edu.cornell.cs.apl.viaduct.selection.SimpleProtocolComposer
 import edu.cornell.cs.apl.viaduct.syntax.Arguments
+import edu.cornell.cs.apl.viaduct.syntax.BinaryOperator
 import edu.cornell.cs.apl.viaduct.syntax.ClassNameNode
 import edu.cornell.cs.apl.viaduct.syntax.Host
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
 import edu.cornell.cs.apl.viaduct.syntax.ProtocolProjection
+import edu.cornell.cs.apl.viaduct.syntax.UnaryOperator
 import edu.cornell.cs.apl.viaduct.syntax.datatypes.Get
 import edu.cornell.cs.apl.viaduct.syntax.datatypes.ImmutableCell
 import edu.cornell.cs.apl.viaduct.syntax.datatypes.Modify
@@ -85,35 +87,35 @@ class PlainTextCodeGenerator(
                 )
 
             is OperatorApplicationNode -> {
-                if (expr.operator == Minimum) {
-                    CodeBlock.of(
-                        "%M(%L, %L)",
-                        MemberName("kotlin.math", "min"),
-                        exp(expr.arguments[0]),
-                        exp(expr.arguments[1])
-                    )
-                } else if (expr.operator == Maximum) {
-                    CodeBlock.of(
-                        "%M(%L, %L)",
-                        MemberName("kotlin.math", "max"),
-                        exp(expr.arguments[0]),
-                        exp(expr.arguments[1])
-                    )
-                } else {
-                    when (expr.arguments.size) {
-                        2 -> CodeBlock.of(
+                when (expr.operator) {
+                    Minimum ->
+                        CodeBlock.of(
+                            "%M(%L, %L)",
+                            MemberName("kotlin.math", "min"),
+                            exp(expr.arguments[0]),
+                            exp(expr.arguments[1])
+                        )
+                    Maximum ->
+                        CodeBlock.of(
+                            "%M(%L, %L)",
+                            MemberName("kotlin.math", "max"),
+                            exp(expr.arguments[0]),
+                            exp(expr.arguments[1])
+                        )
+                    is UnaryOperator ->
+                        CodeBlock.of(
+                            "%L%L",
+                            expr.operator.toString(),
+                            exp(expr.arguments[0])
+                        )
+                    is BinaryOperator ->
+                        CodeBlock.of(
                             "%L %L %L",
                             exp(expr.arguments[0]),
                             expr.operator,
                             exp(expr.arguments[1])
                         )
-                        1 -> CodeBlock.of(
-                            "%L%L",
-                            expr.operator.toString(),
-                            exp(expr.arguments[0])
-                        )
-                        else -> throw CodeGenerationError("unknown operator", expr)
-                    }
+                    else -> throw CodeGenerationError("unknown operator", expr)
                 }
             }
 

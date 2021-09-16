@@ -124,10 +124,9 @@ class BackendCodeGenerator(
             fileBuilder.addFunction(hostFunctionBuilder.build())
 
             // update switch statement in main method to have an option for [host]
-            mainFunctionBuilder.addStatement("%N ->", host.name)
-
             mainFunctionBuilder.addStatement(
-                "%N(%N)",
+                "%N -> %N(%N)",
+                host.name,
                 hostFunName,
                 "runtime"
             )

@@ -52,7 +52,6 @@ import edu.cornell.cs.apl.viaduct.syntax.types.ImmutableCellType
 import edu.cornell.cs.apl.viaduct.syntax.types.IntegerType
 import edu.cornell.cs.apl.viaduct.syntax.types.MutableCellType
 import edu.cornell.cs.apl.viaduct.syntax.types.StringType
-import edu.cornell.cs.apl.viaduct.syntax.types.UnitType
 import edu.cornell.cs.apl.viaduct.syntax.types.ValueType
 import edu.cornell.cs.apl.viaduct.syntax.types.VectorType
 import edu.cornell.cs.apl.viaduct.syntax.values.BooleanValue
@@ -305,24 +304,13 @@ class PlainTextCodeGenerator(
                 )
         }
 
-    override fun output(protocol: Protocol, stmt: OutputNode): CodeBlock {
-        val valueClassNames =
-            when (typeAnalysis.type(stmt.message)) {
-                is BooleanType -> Pair(booleanValueClass, Boolean::class)
-                is IntegerType -> Pair(integerValueClass, Int::class)
-                is StringType -> Pair(stringValueClass, String::class)
-                is ByteVecType -> Pair(byteVecValueClass, Array<Byte>::class)
-                is UnitType -> Pair(unitValueClass, Unit::class)
-                else -> throw CodeGenerationError("unknown output value", stmt)
-            }
-
-        return CodeBlock.of(
-            "runtime.output(%T(%L as %T))",
-            valueClassNames.first,
-            exp(stmt.message),
-            valueClassNames.second
+    override fun output(protocol: Protocol, stmt: OutputNode): CodeBlock =
+        CodeBlock.of(
+            "runtime.output(%T(%L))",
+            typeAnalysis.type(stmt.message).valueClass,
+            exp(stmt.message)
         )
-    }
+
 
     override fun guard(protocol: Protocol, expr: AtomicExpressionNode): CodeBlock = exp(expr)
 

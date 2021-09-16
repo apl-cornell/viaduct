@@ -165,7 +165,7 @@ class PlainTextCodeGenerator(
     override fun let(protocol: Protocol, stmt: LetNode): CodeBlock =
         CodeBlock.of(
             "val %N = %L",
-            context.kotlinName(stmt.temporary.value, protocolAnalysis.primaryProtocol(stmt)),
+            context.kotlinName(stmt.temporary.value, protocol),
             exp(stmt.value)
         )
 

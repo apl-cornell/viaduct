@@ -54,9 +54,6 @@ import edu.cornell.cs.apl.viaduct.syntax.types.MutableCellType
 import edu.cornell.cs.apl.viaduct.syntax.types.StringType
 import edu.cornell.cs.apl.viaduct.syntax.types.ValueType
 import edu.cornell.cs.apl.viaduct.syntax.types.VectorType
-import edu.cornell.cs.apl.viaduct.syntax.values.BooleanValue
-import edu.cornell.cs.apl.viaduct.syntax.values.IntegerValue
-import edu.cornell.cs.apl.viaduct.syntax.values.StringValue
 import edu.cornell.cs.apl.viaduct.syntax.values.Value
 
 class PlainTextCodeGenerator(
@@ -66,6 +63,12 @@ class PlainTextCodeGenerator(
     private val nameAnalysis = NameAnalysis.get(context.program)
     private val protocolAnalysis = ProtocolAnalysis(context.program, SimpleProtocolComposer)
     private val runtimeErrorClass = RuntimeError::class
+
+    private fun exp(value: Value): CodeBlock =
+        CodeBlock.of(
+            "%L",
+            value
+        )
 
     private fun exp(expr: ExpressionNode): CodeBlock =
         when (expr) {
@@ -162,18 +165,6 @@ class PlainTextCodeGenerator(
             exp(stmt.value)
         )
 
-    private fun defaultTranslator(value: Value): Any =
-        when (value) {
-            is IntegerValue -> 0
-            is BooleanValue -> false
-            is StringValue -> ""
-            else -> throw CodeGenerationError("unsupported array initialization")
-            // do we need any of the following?
-            // is HostSetValue ->
-            // is HostValue ->
-            // is ByteVecValue -> ByteArray(0)
-        }
-
     private fun declarationHelper(
         name: String,
         className: ClassNameNode,
@@ -199,7 +190,7 @@ class PlainTextCodeGenerator(
                     "val %N = Array(%L){ %L }",
                     name,
                     exp(arguments.first()),
-                    defaultTranslator(initType.defaultValue)
+                    exp(initType.defaultValue)
                 )
             }
 

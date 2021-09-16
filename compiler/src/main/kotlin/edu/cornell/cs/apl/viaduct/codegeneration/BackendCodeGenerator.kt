@@ -91,8 +91,8 @@ class BackendCodeGenerator(
                 PropertySpec.builder(host.name, Host::class)
                     .initializer(
                         CodeBlock.of(
-                            "%N(%S)",
-                            "Host",
+                            "%T(%S)",
+                            Host::class,
                             host.name
                         )
                     )

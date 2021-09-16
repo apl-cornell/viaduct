@@ -84,18 +84,7 @@ class BackendCodeGenerator(
 //            }
     }
 
-    fun generate(): String {
-        val mainBody = program.main.body
-
-        // create a main file builder, main function builder
-        val fileBuilder = FileSpec.builder(packageName, this.fileName)
-        val mainFunctionBuilder = FunSpec.builder("main").addModifiers(KModifier.SUSPEND)
-        mainFunctionBuilder.addParameter("host", Host::class)
-        mainFunctionBuilder.addParameter("runtime", Runtime::class)
-
-        // create switch statement in main method so program can be run on any host
-        mainFunctionBuilder.beginControlFlow("when (host)")
-
+    private fun addHostDeclarations(fileBuilder: FileSpec.Builder) {
         // add a global host object for each host
         for (host: Host in this.program.hosts) {
             fileBuilder.addProperty(
@@ -110,27 +99,51 @@ class BackendCodeGenerator(
                     .build()
             )
         }
+    }
 
-        for (host: Host in this.program.hosts) {
+    private fun generateHostFunction(
+        fileBuilder: FileSpec.Builder,
+        host: Host,
+        hostFunName: String,
+        mainBody: BlockNode
+    ) {
+        // for each host, create a function that they call to run the program
+        val hostFunctionBuilder = FunSpec.builder(hostFunName).addModifiers(KModifier.PRIVATE, KModifier.SUSPEND)
 
-            // for each host, create a function that they call to run the program
-            val hostFunName = context.newTemporary(host.name)
-            val hostFunctionBuilder = FunSpec.builder(hostFunName).addModifiers(KModifier.PRIVATE, KModifier.SUSPEND)
+        // pass runtime object to [host]'s function
+        hostFunctionBuilder.addParameter("runtime", Runtime::class)
 
-            // pass runtime object to [host]'s function
-            hostFunctionBuilder.addParameter("runtime", Runtime::class)
+        // generate code for [host]'s role in [this.program]
+        generate(hostFunctionBuilder, mainBody, host)
+        fileBuilder.addFunction(hostFunctionBuilder.build())
+    }
 
-            // generate code for [host]'s role in [this.program]
-            generate(hostFunctionBuilder, mainBody, host)
-            fileBuilder.addFunction(hostFunctionBuilder.build())
+    fun generate(): String {
+        val mainBody = program.main.body
 
-            // update switch statement in main method to have an option for [host]
+        // create a main file builder, main function builder
+        val fileBuilder = FileSpec.builder(packageName, this.fileName)
+
+        // add top level declarations to main file
+        addHostDeclarations(fileBuilder)
+
+        val mainFunctionBuilder = FunSpec.builder("main").addModifiers(KModifier.SUSPEND)
+        mainFunctionBuilder.addParameter("host", Host::class)
+        mainFunctionBuilder.addParameter("runtime", Runtime::class)
+
+        // create switch statement in main method so program can be run on any host
+        mainFunctionBuilder.beginControlFlow("when (host)")
+        for (host in this.program.hosts) {
+            val hostFunName = context.freshNameGenerator.getFreshName(host.name)
             mainFunctionBuilder.addStatement(
                 "%N -> %N(%N)",
                 host.name,
                 hostFunName,
                 "runtime"
             )
+
+            // generate a function for [host] to run
+            generateHostFunction(fileBuilder, host, hostFunName, mainBody)
         }
 
         mainFunctionBuilder.endControlFlow()

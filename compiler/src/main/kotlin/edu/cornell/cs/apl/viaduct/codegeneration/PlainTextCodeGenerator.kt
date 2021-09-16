@@ -376,7 +376,7 @@ class PlainTextCodeGenerator(
             }
 
             // calculate set of hosts with whom [receivingHost] needs to check for equivocation
-            var hostsToCheckWith: Set<Host> =
+            var hostsToCheckWith: List<Host> =
                 events
                     .filter { event ->
                         // remove events where receiving host is not receiving plaintext data
@@ -393,7 +393,7 @@ class PlainTextCodeGenerator(
                     // remove [receivingHost] from the set of hosts with whom [receivingHost] needs to
                     // check for equivocation
                     .filter { host -> host != receivingHost }
-                    .toSet()
+                    .sorted()
 
             for (host in hostsToCheckWith)
                 receiveBuilder.addStatement("%L", context.send(CodeBlock.of(clearTextTemp), host))

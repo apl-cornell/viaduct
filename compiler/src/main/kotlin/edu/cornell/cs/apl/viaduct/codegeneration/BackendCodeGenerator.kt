@@ -291,12 +291,12 @@ class BackendCodeGenerator(
         private val sendMember = MemberName(Runtime::class.java.packageName, "send")
 
         val freshNameGenerator: FreshNameGenerator = FreshNameGenerator().apply {
-            val initNames: MutableSet<String> = mutableSetOf("runtime")
-            initNames += program.hosts.map { host -> host.toString() }.toSet().toMutableSet()
+            this.getFreshName("runtime")
+            program.hosts.forEach { this.getFreshName(it.name) }
         }
 
         override fun kotlinName(sourceName: Temporary, protocol: Protocol): String =
-            tempMap.getOrPut(Pair(sourceName, protocol)) { freshNameGenerator.getFreshName(sourceName.name) }
+            tempMap.getOrPut(Pair(sourceName, protocol)) { freshNameGenerator.getFreshName(sourceName.name.drop(1)) }
 
         override fun kotlinName(sourceName: ObjectVariable): String =
             varMap.getOrPut(sourceName) { freshNameGenerator.getFreshName(sourceName.name) }

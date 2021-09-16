@@ -80,6 +80,7 @@ class PlainTextCodeGenerator(
 
             is ReadNode ->
                 CodeBlock.of(
+                    "%N",
                     context.kotlinName(
                         expr.temporary.value,
                         protocolAnalysis.primaryProtocol(expr)
@@ -124,8 +125,9 @@ class PlainTextCodeGenerator(
                     is VectorType -> {
                         when (expr.query.value) {
                             is Get -> CodeBlock.of(
-                                context.kotlinName(expr.variable.value) + "[" +
-                                    exp(expr.arguments.first()) + "]"
+                                "%N[%L]",
+                                context.kotlinName(expr.variable.value),
+                                exp(expr.arguments.first())
                             )
                             else -> throw CodeGenerationError("unknown vector query", expr)
                         }

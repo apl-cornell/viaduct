@@ -325,8 +325,8 @@ class InformationFlowAnalysis private constructor(
                 when (this) {
                     is DeclassificationNode -> {
                         // don't downgrade integrity
-                        solver.addEqualToConstraint(from.integrity(), to.integrity()) { fromLabel, _ ->
-                            IntegrityChangingDeclassificationError(this, fromLabel)
+                        solver.addEqualToConstraint(from.integrity(), to.integrity()) { fromLabel, toLabel ->
+                            IntegrityChangingDeclassificationError(this, fromLabel, toLabel)
                         }
 
                         // nonmalleability
@@ -338,8 +338,8 @@ class InformationFlowAnalysis private constructor(
 
                     is EndorsementNode -> {
                         // don't downgrade confidentiality
-                        solver.addEqualToConstraint(from.confidentiality(), to.confidentiality()) { fromLabel, _ ->
-                            ConfidentialityChangingEndorsementError(this, fromLabel)
+                        solver.addEqualToConstraint(from.confidentiality(), to.confidentiality()) { fromLabel, toLabel ->
+                            ConfidentialityChangingEndorsementError(this, fromLabel, toLabel)
                         }
 
                         // nonmalleability

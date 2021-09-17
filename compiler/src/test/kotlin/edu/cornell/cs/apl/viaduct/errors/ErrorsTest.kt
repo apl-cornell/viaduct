@@ -13,10 +13,9 @@ import edu.cornell.cs.apl.viaduct.selection.SimpleCostRegime
 import edu.cornell.cs.apl.viaduct.selection.SimpleProtocolComposer
 import edu.cornell.cs.apl.viaduct.selection.SimpleProtocolFactory
 import edu.cornell.cs.apl.viaduct.selection.selectProtocolsWithZ3
-import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Assertions.assertTrue
-import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ArgumentsSource
 import java.io.File
@@ -27,12 +26,7 @@ internal class ErrorsTest {
     @ParameterizedTest
     @ArgumentsSource(NegativeTestFileProvider::class)
     fun `erroneous example files throw the expected compilation error`(file: File) {
-        assertThrows<CompilationError> { run(file) }
-        try {
-            run(file)
-        } catch (e: CompilationError) {
-            assertEquals(expectedError(file), e::class)
-        }
+        assertThrows(expectedError(file).java) { run(file) }
     }
 
     @ParameterizedTest
@@ -70,7 +64,7 @@ private fun run(file: File) {
 private fun expectedError(file: File): KClass<CompilationError> {
     val comment = file.useLines { it.first() }
     val expectedErrorName = comment.removeSurrounding("/*", "*/").trim()
-    val packageName = CompilationError::class.java.`package`.name
+    val packageName = CompilationError::class.java.packageName
     val kClass = Class.forName("$packageName.$expectedErrorName").kotlin
 
     assert(kClass.isSubclassOf(CompilationError::class))

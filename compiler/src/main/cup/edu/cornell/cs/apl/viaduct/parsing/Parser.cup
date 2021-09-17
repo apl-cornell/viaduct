@@ -616,7 +616,7 @@ expr ::=
 
     // invert FROM and TO labels to prevent shift-reduce conflict
   | ENDORSE:begin expr:e optional_to_label:to FROM label:from {:
-      RESULT = new EndorsementNode(e, from, to, location(beginleft, toright));
+      RESULT = new EndorsementNode(e, from, to, location(beginleft, fromright));
     :}
 
   | INPUT:begin value_type:type FROM host:sender {:

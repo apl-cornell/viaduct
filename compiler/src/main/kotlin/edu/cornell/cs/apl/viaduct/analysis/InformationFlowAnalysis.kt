@@ -324,12 +324,12 @@ class InformationFlowAnalysis private constructor(
 
                 when (this) {
                     is DeclassificationNode -> {
-                        // don't downgrade integrity
+                        // Don't downgrade integrity
                         solver.addEqualToConstraint(from.integrity(), to.integrity()) { fromLabel, toLabel ->
                             IntegrityChangingDeclassificationError(this, fromLabel, toLabel)
                         }
 
-                        // nonmalleability
+                        // Nonmalleability
                         val toConst = to as LabelConstant
                         solver.addFlowsToConstraint(from, from.swap().join(toConst.value)) { _, _ ->
                             MalleableDowngradeError(this)
@@ -337,14 +337,14 @@ class InformationFlowAnalysis private constructor(
                     }
 
                     is EndorsementNode -> {
-                        // don't downgrade confidentiality
+                        // Don't downgrade confidentiality
                         solver.addEqualToConstraint(from.confidentiality(), to.confidentiality()) { fromLabel, toLabel ->
                             ConfidentialityChangingEndorsementError(this, fromLabel, toLabel)
                         }
 
-                        // nonmalleability
+                        // Nonmalleability
                         val fromConst = from as LabelConstant
-                        solver.addFlowsToConstraint(from, to.swap().join(fromConst.value)) { _, _ ->
+                        solver.addFlowsToConstraint(from, to.join(fromConst.value.swap())) { _, _ ->
                             MalleableDowngradeError(this)
                         }
                     }

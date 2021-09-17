@@ -3,7 +3,6 @@ package edu.cornell.cs.apl.viaduct.errors
 import edu.cornell.cs.apl.prettyprinting.Document
 import edu.cornell.cs.apl.prettyprinting.div
 import edu.cornell.cs.apl.viaduct.security.Label
-import edu.cornell.cs.apl.viaduct.security.LabelIntegrity
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.DeclassificationNode
 
 /**
@@ -11,10 +10,12 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.DeclassificationNode
  *
  * @param node Declassify statement that modifies confidentiality.
  * @param from Label of the expression being declassified.
+ * @param to Resulting label of the expression.
  */
-class IntegrityChangingDeclassificationError(private val node: DeclassificationNode, from: Label) :
+class IntegrityChangingDeclassificationError(private val node: DeclassificationNode, from: Label, to: Label) :
     InformationFlowError() {
     private val fromIntegrity: Label = from.integrity()
+    private val toIntegrity: Label = to.integrity()
 
     override val category: String
         get() = "Declassify Changes Integrity"
@@ -29,5 +30,5 @@ class IntegrityChangingDeclassificationError(private val node: DeclassificationN
                 Document("Original integrity of the expression:")
                     .withData(fromIntegrity) /
                 Document("Output integrity:")
-                    .withData(LabelIntegrity(node.toLabel.value))
+                    .withData(toIntegrity)
 }

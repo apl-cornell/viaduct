@@ -157,24 +157,25 @@ class BackendCodeGenerator(
         stmt: StatementNode,
         host: Host
     ) {
-        if (protocolAnalysis.participatingHosts(stmt).contains(host)) {
-            when (stmt) {
-                is LetNode -> {
-                    val protocol = protocolAnalysis.primaryProtocol(stmt)
-                    var reader: SimpleStatementNode? = null
-                    var readerProtocol: Protocol? = null
-                    var events: ProtocolCommunication? = null
+        when (stmt) {
+            is LetNode -> {
+                val protocol = protocolAnalysis.primaryProtocol(stmt)
+                var reader: SimpleStatementNode? = null
+                var readerProtocol: Protocol? = null
+                var events: ProtocolCommunication? = null
 
-                    // there should only be a single reader, if any
-                    val readers = nameAnalysis.readers(stmt).filterIsInstance<SimpleStatementNode>()
-                    if (readers.isNotEmpty()) {
-                        reader = readers.first()
-                        readerProtocol = protocolAnalysis.primaryProtocol(reader)
-                        events = protocolAnalysis.relevantCommunicationEvents(stmt, reader)
-                    }
+                // there should only be a single reader, if any
+                val readers = nameAnalysis.readers(stmt).filterIsInstance<SimpleStatementNode>()
+                if (readers.isNotEmpty()) {
+                    reader = readers.first()
+                    readerProtocol = protocolAnalysis.primaryProtocol(reader)
+                    events = protocolAnalysis.relevantCommunicationEvents(stmt, reader)
+                }
+
+                if (protocolAnalysis.participatingHosts(stmt).contains(host)) {
 
                     // generate code for the statement, if [host] participating
-                    var protocolCodeGenerator = codeGeneratorMap[protocol]
+                    val protocolCodeGenerator = codeGeneratorMap[protocol]
                         ?: throw CodeGenerationError("no code generator for protocol ${protocol.asDocument.print()}")
                     hostFunctionBuilder.addStatement("%L", protocolCodeGenerator.simpleStatement(protocol, stmt))
 
@@ -182,67 +183,71 @@ class BackendCodeGenerator(
                     if (readers.isNotEmpty()) {
                         hostFunctionBuilder.addCode("%L", protocolCodeGenerator.send(host, stmt, protocol, readerProtocol!!, events!!))
                     }
-
-                    // generate code for receiving data
-                    if (readers.isNotEmpty()) {
-                        if (protocolAnalysis.participatingHosts(reader!!).contains(host)) {
-                            protocolCodeGenerator = codeGeneratorMap[readerProtocol]
-                                ?: throw CodeGenerationError("no code generator for protocol ${protocol.asDocument.print()}")
-                            hostFunctionBuilder.addCode("%L", protocolCodeGenerator.receive(host, stmt, protocol, readerProtocol!!, events!!))
-                        }
-                    }
                 }
 
-                is SimpleStatementNode -> {
+                // generate code for receiving data
+                if (readers.isNotEmpty()) {
+                    if (protocolAnalysis.participatingHosts(reader!!).contains(host)) {
+                        val protocolCodeGenerator = codeGeneratorMap[readerProtocol]
+                            ?: throw CodeGenerationError("no code generator for protocol ${protocol.asDocument.print()}")
+                        hostFunctionBuilder.addCode("%L", protocolCodeGenerator.receive(host, stmt, protocol, readerProtocol!!, events!!))
+                    }
+                }
+            }
+
+            is SimpleStatementNode -> {
+                if (protocolAnalysis.participatingHosts(stmt).contains(host)) {
                     val protocol = protocolAnalysis.primaryProtocol(stmt)
                     val protocolCodeGenerator = codeGeneratorMap[protocol]
                         ?: throw CodeGenerationError("no code generator for protocol ${protocol.asDocument.print()}")
                     hostFunctionBuilder.addStatement("%L", protocolCodeGenerator.simpleStatement(protocol, stmt))
                 }
+            }
 
-                is FunctionCallNode -> {
+            is FunctionCallNode -> {
 
-                    // get all ObjectDeclarationArgumentNodes from [stmt]
-                    val outObjectDeclarations = stmt.arguments.filterIsInstance<ObjectDeclarationArgumentNode>()
+                // get all ObjectDeclarationArgumentNodes from [stmt]
+                val outObjectDeclarations = stmt.arguments.filterIsInstance<ObjectDeclarationArgumentNode>()
 
-                    // create a new list of arguments without ObjectDeclarationArgumentNodes
-                    val newArguments = stmt.arguments.filter { argument -> argument !is ObjectDeclarationArgumentNode }.toMutableList()
+                // create a new list of arguments without ObjectDeclarationArgumentNodes
+                val newArguments = stmt.arguments.filter { argument -> argument !is ObjectDeclarationArgumentNode }.toMutableList()
 
-                    for (i in 0..outObjectDeclarations.size) {
+                for (i in 0..outObjectDeclarations.size) {
 
-                        // declare boxed variable before function call
-                        hostFunctionBuilder.addStatement(
-                            "var %L = %T",
-                            context.kotlinName(outObjectDeclarations[i].name.value),
-                            Boxed::class.asClassName()
-                        )
-
-                        // add out parameter for declared object
-                        newArguments +=
-                            OutParameterArgumentNode(
-                                outObjectDeclarations[i].name,
-                                outObjectDeclarations[i].sourceLocation
-                            )
-                    }
-
-                    // call function
+                    // declare boxed variable before function call
                     hostFunctionBuilder.addStatement(
-                        "%L(%L)",
-                        stmt.name,
-                        newArguments.joined().toString()
+                        "var %L = %T",
+                        context.kotlinName(outObjectDeclarations[i].name.value),
+                        Boxed::class.asClassName()
                     )
 
-                    // unbox boxes that were created before function call
-                    for (i in 0..outObjectDeclarations.size) {
-                        hostFunctionBuilder.addStatement(
-                            "val %L = %L.get()",
-                            context.kotlinName(outObjectDeclarations[i].name.value),
-                            context.kotlinName(outObjectDeclarations[i].name.value)
+                    // add out parameter for declared object
+                    newArguments +=
+                        OutParameterArgumentNode(
+                            outObjectDeclarations[i].name,
+                            outObjectDeclarations[i].sourceLocation
                         )
-                    }
                 }
 
-                is IfNode -> {
+                // call function
+                hostFunctionBuilder.addStatement(
+                    "%L(%L)",
+                    stmt.name,
+                    newArguments.joined().toString()
+                )
+
+                // unbox boxes that were created before function call
+                for (i in 0..outObjectDeclarations.size) {
+                    hostFunctionBuilder.addStatement(
+                        "val %L = %L.get()",
+                        context.kotlinName(outObjectDeclarations[i].name.value),
+                        context.kotlinName(outObjectDeclarations[i].name.value)
+                    )
+                }
+            }
+
+            is IfNode -> {
+                if (protocolAnalysis.participatingHosts(stmt).contains(host)) {
                     val guardValue: CodeBlock =
                         when (val guard = stmt.guard) {
 
@@ -263,23 +268,28 @@ class BackendCodeGenerator(
                     hostFunctionBuilder.nextControlFlow("else")
                     generate(hostFunctionBuilder, stmt.elseBranch, host)
                 }
+            }
 
-                is InfiniteLoopNode -> {
+            is InfiniteLoopNode ->
+                if (protocolAnalysis.participatingHosts(stmt).contains(host)) {
                     hostFunctionBuilder.beginControlFlow("while (true)")
                     generate(hostFunctionBuilder, stmt.body, host)
                     hostFunctionBuilder.endControlFlow()
                 }
 
-                is BreakNode -> hostFunctionBuilder.addStatement("break")
-
-                is BlockNode -> {
-                    for (child: StatementNode in stmt) {
-                        generate(hostFunctionBuilder, child, host)
-                    }
+            is BreakNode -> {
+                if (protocolAnalysis.participatingHosts(stmt).contains(host)) {
+                    hostFunctionBuilder.addStatement("break")
                 }
-
-                is AssertionNode -> throw CodeGenerationError("TODO")
             }
+
+            is BlockNode -> {
+                for (child: StatementNode in stmt) {
+                    generate(hostFunctionBuilder, child, host)
+                }
+            }
+
+            is AssertionNode -> throw CodeGenerationError("TODO")
         }
     }
 

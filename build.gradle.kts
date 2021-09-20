@@ -2,7 +2,7 @@ plugins {
     kotlin("multiplatform") version "1.5.21" apply false
 
     // Documentation
-    id("org.jetbrains.dokka") version "1.5.0"
+    id("org.jetbrains.dokka") version "1.5.30"
     id("ru.vyarus.mkdocs") version "2.1.1"
 
     // Style checking

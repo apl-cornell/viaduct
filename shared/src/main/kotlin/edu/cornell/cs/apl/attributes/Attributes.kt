@@ -42,7 +42,7 @@ fun <Node, T> attribute(f: Node.() -> T): Attribute<Node, T> =
  * All nodes in [tree] are traversed to collect the attributes for each node.
  *
  * The tree is traversed lazily—only when the value of _any_ node is demanded.
- * Note that it is safe for [f] to use other attributes, but [f] should not depend the attribute
+ * Note that it is safe for [f] to use other attributes, but [f] should not depend on the attribute
  * being defined.
  */
 // TODO: improve implementation using ideas from

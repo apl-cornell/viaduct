@@ -22,6 +22,28 @@ internal class AttributesTest {
     private val Any.cyclicA: Unit by attribute { this.cyclicB }
     private val Any.cyclicB: Unit by attribute { this.cyclicA }
 
+    /** A simple binary tree class to test [collectedAttribute]. */
+    private sealed class BinaryTree : TreeNode<BinaryTree>
+
+    private class BinaryNode(val left: BinaryTree, val right: BinaryTree) : BinaryTree() {
+        override val children: Iterable<BinaryTree>
+            get() = listOf(left, right)
+    }
+
+    private class BinaryLeaf(val value: Int) : BinaryTree() {
+        override val children: Iterable<BinaryTree>
+            get() = listOf()
+    }
+
+    private val leftLeaf = BinaryLeaf(1)
+    private val rightLeaf = BinaryLeaf(2)
+    private val rootNode = BinaryNode(leftLeaf, rightLeaf)
+
+    private val BinaryTree.parent by collectedAttribute(Tree(rootNode)) {
+        it.children.map { child -> child to it }
+    }
+
+
     @Test
     fun `simple attributes work`() {
         assertEquals("hello".length, "hello".simpleLength)
@@ -56,5 +78,11 @@ internal class AttributesTest {
     fun `mutually cyclic attributes are dynamically caught`() {
         assertThrows<CycleInAttributeDefinitionException> { 42.cyclicA }
         assertThrows<CycleInAttributeDefinitionException> { 42.cyclicB }
+    }
+
+    @Test
+    fun `collected attributes work`() {
+        assertEquals(setOf(rootNode), leftLeaf.parent)
+        assertEquals(setOf(rootNode), rightLeaf.parent)
     }
 }

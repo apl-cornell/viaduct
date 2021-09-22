@@ -43,7 +43,6 @@ internal class AttributesTest {
         it.children.map { child -> child to it }
     }
 
-
     @Test
     fun `simple attributes work`() {
         assertEquals("hello".length, "hello".simpleLength)

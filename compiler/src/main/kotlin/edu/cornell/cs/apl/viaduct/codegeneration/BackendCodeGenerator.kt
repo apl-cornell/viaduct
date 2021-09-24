@@ -102,11 +102,10 @@ class BackendCodeGenerator(
     }
 
     private fun generateHostFunction(
-        fileBuilder: FileSpec.Builder,
         host: Host,
         hostFunName: String,
         mainBody: BlockNode
-    ) {
+    ): FunSpec.Builder {
         // for each host, create a function that they call to run the program
         val hostFunctionBuilder = FunSpec.builder(hostFunName).addModifiers(KModifier.PRIVATE, KModifier.SUSPEND)
 
@@ -115,7 +114,7 @@ class BackendCodeGenerator(
 
         // generate code for [host]'s role in [this.program]
         generate(hostFunctionBuilder, mainBody, host)
-        fileBuilder.addFunction(hostFunctionBuilder.build())
+        return hostFunctionBuilder
     }
 
     fun generate(): String {
@@ -131,19 +130,28 @@ class BackendCodeGenerator(
         mainFunctionBuilder.addParameter("host", Host::class)
         mainFunctionBuilder.addParameter("runtime", Runtime::class)
 
-        // create switch statement in main method so program can be run on any host
-        mainFunctionBuilder.beginControlFlow("when (host)")
-        for (host in this.program.hosts) {
-            val hostFunName = context.freshNameGenerator.getFreshName(host.name)
-            mainFunctionBuilder.addStatement(
-                "%N -> %N(%N)",
-                host.name,
-                hostFunName,
-                "runtime"
+        val hostFunNameMap: Map<Host, String> =
+            this.program.hosts.associateWith { context.freshNameGenerator.getFreshName(it.name) }
+
+        // create a function for each host to run
+        for (entry in hostFunNameMap)
+            fileBuilder.addFunction(
+                generateHostFunction(
+                    entry.key,
+                    entry.value,
+                    mainBody
+                ).build()
             )
 
-            // generate a function for [host] to run
-            generateHostFunction(fileBuilder, host, hostFunName, mainBody)
+        // create switch statement in main method so program can be run on any host
+        mainFunctionBuilder.beginControlFlow("when (host)")
+        for (entry in hostFunNameMap) {
+            mainFunctionBuilder.addStatement(
+                "%N -> %N(%N)",
+                entry.key.name,
+                entry.value,
+                "runtime"
+            )
         }
 
         mainFunctionBuilder.endControlFlow()
@@ -263,10 +271,11 @@ class BackendCodeGenerator(
                             }
                         }
 
-                    hostFunctionBuilder.nextControlFlow("if (%L)", guardValue)
+                    hostFunctionBuilder.beginControlFlow("if (%L)", guardValue)
                     generate(hostFunctionBuilder, stmt.thenBranch, host)
                     hostFunctionBuilder.nextControlFlow("else")
                     generate(hostFunctionBuilder, stmt.elseBranch, host)
+                    hostFunctionBuilder.endControlFlow()
                 }
             }
 

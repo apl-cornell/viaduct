@@ -13,6 +13,8 @@ import edu.cornell.cs.apl.viaduct.analysis.NameAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.ProtocolAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.main
 import edu.cornell.cs.apl.viaduct.errors.CodeGenerationError
+import edu.cornell.cs.apl.viaduct.protocols.Local
+import edu.cornell.cs.apl.viaduct.protocols.Replication
 import edu.cornell.cs.apl.viaduct.runtime.Boxed
 import edu.cornell.cs.apl.viaduct.runtime.Runtime
 import edu.cornell.cs.apl.viaduct.selection.ProtocolCommunication
@@ -54,7 +56,10 @@ class BackendCodeGenerator(
 
         // for now, assign all protocols to use plaintext
         for (protocol in allProtocols) {
-            initGeneratorMap[protocol] = codeGenerators[0](context)
+            if (protocol is Replication || protocol is Local)
+                initGeneratorMap[protocol] = codeGenerators[0](context)
+            else
+                throw CodeGenerationError("unsupported protocol for plaintext code generation")
         }
         codeGeneratorMap = initGeneratorMap
 

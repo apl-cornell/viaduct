@@ -296,7 +296,6 @@ class PlainTextCodeGenerator(
             exp(stmt.message)
         )
 
-
     override fun guard(protocol: Protocol, expr: AtomicExpressionNode): CodeBlock = exp(expr)
 
     private fun typeTranslator(viaductType: ValueType): TypeName =
@@ -321,7 +320,16 @@ class PlainTextCodeGenerator(
                 events.getProjectionSends(ProtocolProjection(sendProtocol, sendingHost))
             for (event in relevantEvents) {
                 if (sendingHost != event.recv.host) {
-                    sendBuilder.addStatement("%L", context.send(exp(sender.value), event.recv.host))
+                    if (sender.value is InputNode)
+                        sendBuilder.addStatement(
+                            "%L",
+                            context.send(
+                                CodeBlock.of("%L", context.kotlinName(sender.temporary.value, sendProtocol)),
+                                event.recv.host
+                            )
+                        )
+                    else
+                        sendBuilder.addStatement("%L", context.send(exp(sender.value), event.recv.host))
                 }
             }
         }
@@ -337,11 +345,10 @@ class PlainTextCodeGenerator(
         events: ProtocolCommunication
     ): CodeBlock {
         val receiveBuilder = CodeBlock.builder()
+        val projection = ProtocolProjection(receiveProtocol, receivingHost)
+        var cleartextInputs = events.getProjectionReceives(projection, Plaintext.INPUT)
+        val clearTextTemp = context.newTemporary("clearTextTemp")
         if (sendProtocol != receiveProtocol) {
-            val projection = ProtocolProjection(receiveProtocol, receivingHost)
-            var cleartextInputs = events.getProjectionReceives(projection, Plaintext.INPUT)
-            val clearTextTemp = context.newTemporary("clearTextTemp")
-
             // initialize cleartext receive value by receiving from first host
             if (cleartextInputs.isNotEmpty()) {
                 receiveBuilder.addStatement(

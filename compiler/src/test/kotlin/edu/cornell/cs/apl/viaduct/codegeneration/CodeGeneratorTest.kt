@@ -41,7 +41,7 @@ internal class CodeGeneratorTest {
         val protocolFactory = SimpleProtocolFactory(program)
         val maximizeCost = false
 
-        var wanCost = true
+        var wanCost = false
         val protocolComposer = SimpleProtocolComposer
         val costRegime = if (wanCost) SimpleCostRegime.WAN else SimpleCostRegime.LAN
         val costEstimator = SimpleCostEstimator(SimpleProtocolComposer, costRegime)

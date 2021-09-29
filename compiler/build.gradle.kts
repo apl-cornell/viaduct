@@ -15,6 +15,7 @@ plugins {
 
 dependencies {
     implementation(project(":shared"))
+    implementation(project(":runtime2"))
 
     // Data structures
     implementation("com.uchuhimo:kotlinx-bimap:1.2")
@@ -28,6 +29,9 @@ dependencies {
 
     // Parsing
     implementation("com.github.vbmacher:java-cup-runtime:11b-20160615-1")
+
+    // Code generation
+    implementation("com.squareup:kotlinpoet:1.7.2")
 
     // SMT solving
     implementation("io.github.tudo-aqua:z3-turnkey:4.8.12")

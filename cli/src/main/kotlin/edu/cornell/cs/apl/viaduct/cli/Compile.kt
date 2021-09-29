@@ -4,6 +4,7 @@ import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.parameters.options.flag
 import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.types.file
+import edu.cornell.cs.apl.prettyprinting.Document
 import edu.cornell.cs.apl.prettyprinting.PrettyPrintable
 import edu.cornell.cs.apl.viaduct.analysis.InformationFlowAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.declarationNodes
@@ -11,6 +12,10 @@ import edu.cornell.cs.apl.viaduct.analysis.letNodes
 import edu.cornell.cs.apl.viaduct.analysis.main
 import edu.cornell.cs.apl.viaduct.backend.aby.ABYMuxPostprocessor
 import edu.cornell.cs.apl.viaduct.backend.zkp.ZKPMuxPostprocessor
+import edu.cornell.cs.apl.viaduct.codegeneration.BackendCodeGenerator
+import edu.cornell.cs.apl.viaduct.codegeneration.CodeGenerator
+import edu.cornell.cs.apl.viaduct.codegeneration.CodeGeneratorContext
+import edu.cornell.cs.apl.viaduct.codegeneration.PlainTextCodeGenerator
 import edu.cornell.cs.apl.viaduct.passes.ProgramPostprocessorRegistry
 import edu.cornell.cs.apl.viaduct.passes.annotateWithProtocols
 import edu.cornell.cs.apl.viaduct.passes.check
@@ -84,6 +89,12 @@ class Compile : CliktCommand(help = "Compile ideal protocol to secure distribute
         help = "Use WAN cost model instead of LAN cost model"
     ).flag(default = false)
 
+    val compileKotlin: Boolean by option(
+        "-k",
+        "--compile-kotlin",
+        help = "Translate .via source file to a .kt file"
+    ).flag(default = false)
+
     override fun run() {
         logger.info { "elaborating source program..." }
         val unspecializedProgram = input.parse().elaborated()
@@ -155,7 +166,21 @@ class Compile : CliktCommand(help = "Compile ideal protocol to secure distribute
         )
         val postprocessedProgram = postprocessor.postprocess(annotatedProgram)
 
-        output.println(postprocessedProgram)
+        if (compileKotlin) {
+
+            // TODO - figure out best way to let code generators know which protocols it is responsible for
+            val backendCodeGenerator = BackendCodeGenerator(
+                postprocessedProgram,
+                listOf<(context: CodeGeneratorContext) -> CodeGenerator>(::PlainTextCodeGenerator),
+                input!!.name.substringBefore('.'),
+                "src"
+            )
+
+            val kotlin = backendCodeGenerator.generate()
+            output.println(Document(kotlin))
+        } else {
+            output.println(postprocessedProgram)
+        }
     }
 }
 

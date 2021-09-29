@@ -32,5 +32,6 @@ sealed class ZKPObject {
             }
         }
     }
+
     object ZKPNullObject : ZKPObject()
 }

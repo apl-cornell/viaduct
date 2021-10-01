@@ -1,5 +1,6 @@
 plugins {
     kotlin("multiplatform") version "1.5.21" apply false
+    kotlin("plugin.serialization") version "1.5.21" apply false
 
     // Documentation
     id("org.jetbrains.dokka") version "1.5.30"

@@ -17,7 +17,7 @@ jobs:
           distribution: 'zulu'
           java-version: ${{ env.java }}
       - name: Generate documentation with MkDocs
-        uses: eskatos/gradle-command-action@v1
+        uses: eskatos/gradle-command-action@v2
         with:
           arguments: mkdocsBuild
       - name: Publish documentation to GitHub Pages

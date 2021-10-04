@@ -47,8 +47,8 @@ import edu.cornell.cs.apl.viaduct.syntax.types.StringType
 import edu.cornell.cs.apl.viaduct.syntax.types.ValueType
 import edu.cornell.cs.apl.viaduct.syntax.types.VectorType
 
-class PlainTextCodeGenerator(context: CodeGeneratorContext)
-    : AbstractCodeGenerator(context) {
+class PlainTextCodeGenerator(context: CodeGeneratorContext) :
+    AbstractCodeGenerator(context) {
     private val typeAnalysis = TypeAnalysis.get(context.program)
     private val nameAnalysis = NameAnalysis.get(context.program)
     private val protocolAnalysis = ProtocolAnalysis(context.program, SimpleProtocolComposer)

@@ -31,7 +31,7 @@ abstract class AbstractCodeGenerator(val context: CodeGeneratorContext) : CodeGe
 
             is UpdateNode -> update(protocol, stmt)
 
-            is OutParameterInitializationNode -> outParameterInitialization(protocol, stmt)
+            is OutParameterInitializationNode -> outParameterInitialization(stmt)
 
             is OutputNode -> output(protocol, stmt)
 
@@ -86,7 +86,6 @@ abstract class AbstractCodeGenerator(val context: CodeGeneratorContext) : CodeGe
         }
 
     fun outParameterInitialization(
-        protocol: Protocol,
         stmt: OutParameterInitializationNode
     ): CodeBlock =
         when (val initializer = stmt.initializer) {

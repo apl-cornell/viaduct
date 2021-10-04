@@ -129,11 +129,13 @@ class CommitmentProtocolHashReplicaGenerator(
             else -> throw CodeGenerationError("unknown send and receive type")
         }
 
-    override fun send(sendingHost: Host,
-                      sender: LetNode,
-                      sendProtocol: Protocol,
-                      receiveProtocol: Protocol,
-                      events: ProtocolCommunication): CodeBlock {
+    override fun send(
+        sendingHost: Host,
+        sender: LetNode,
+        sendProtocol: Protocol,
+        receiveProtocol: Protocol,
+        events: ProtocolCommunication
+    ): CodeBlock {
         val sendBuilder = CodeBlock.builder()
 
         // here, the interpreter checks for the available protocols, is this necessary here?
@@ -157,11 +159,13 @@ class CommitmentProtocolHashReplicaGenerator(
         return sendBuilder.build()
     }
 
-    override fun receive(receivingHost: Host,
-                         sender: LetNode,
-                         sendProtocol: Protocol,
-                         receiveProtocol: Protocol,
-                         events: ProtocolCommunication): CodeBlock {
+    override fun receive(
+        receivingHost: Host,
+        sender: LetNode,
+        sendProtocol: Protocol,
+        receiveProtocol: Protocol,
+        events: ProtocolCommunication
+    ): CodeBlock {
 
         val receiveBuilder = CodeBlock.builder()
         val projection = ProtocolProjection(receiveProtocol, receivingHost)

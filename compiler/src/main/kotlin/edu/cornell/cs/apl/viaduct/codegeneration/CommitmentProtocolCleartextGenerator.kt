@@ -155,7 +155,8 @@ class CommitmentProtocolCleartextGenerator(
         sender: LetNode,
         sendProtocol: Protocol,
         receiveProtocol: Protocol,
-        events: ProtocolCommunication): CodeBlock {
+        events: ProtocolCommunication
+    ): CodeBlock {
         val sendBuilder = CodeBlock.builder()
         if (sendProtocol != receiveProtocol) {
             val relevantEvents: Set<CommunicationEvent> =

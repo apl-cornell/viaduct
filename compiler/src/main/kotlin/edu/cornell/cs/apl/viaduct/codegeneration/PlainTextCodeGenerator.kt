@@ -16,18 +16,13 @@ import edu.cornell.cs.apl.viaduct.protocols.Plaintext
 import edu.cornell.cs.apl.viaduct.selection.CommunicationEvent
 import edu.cornell.cs.apl.viaduct.selection.ProtocolCommunication
 import edu.cornell.cs.apl.viaduct.selection.SimpleProtocolComposer
-import edu.cornell.cs.apl.viaduct.syntax.Arguments
 import edu.cornell.cs.apl.viaduct.syntax.BinaryOperator
-import edu.cornell.cs.apl.viaduct.syntax.ClassNameNode
 import edu.cornell.cs.apl.viaduct.syntax.Host
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
 import edu.cornell.cs.apl.viaduct.syntax.ProtocolProjection
 import edu.cornell.cs.apl.viaduct.syntax.UnaryOperator
 import edu.cornell.cs.apl.viaduct.syntax.datatypes.Get
-import edu.cornell.cs.apl.viaduct.syntax.datatypes.ImmutableCell
 import edu.cornell.cs.apl.viaduct.syntax.datatypes.Modify
-import edu.cornell.cs.apl.viaduct.syntax.datatypes.MutableCell
-import edu.cornell.cs.apl.viaduct.syntax.datatypes.Vector
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.AtomicExpressionNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.DeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.DowngradeNode
@@ -36,9 +31,6 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.InputNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.LetNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.LiteralNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.OperatorApplicationNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutParameterConstructorInitializerNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutParameterExpressionInitializerNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutParameterInitializationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutputNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.QueryNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ReadNode
@@ -54,23 +46,15 @@ import edu.cornell.cs.apl.viaduct.syntax.types.MutableCellType
 import edu.cornell.cs.apl.viaduct.syntax.types.StringType
 import edu.cornell.cs.apl.viaduct.syntax.types.ValueType
 import edu.cornell.cs.apl.viaduct.syntax.types.VectorType
-import edu.cornell.cs.apl.viaduct.syntax.values.Value
 
-class PlainTextCodeGenerator(
-    val context: CodeGeneratorContext
-) : AbstractCodeGenerator() {
+class PlainTextCodeGenerator(context: CodeGeneratorContext)
+    : AbstractCodeGenerator(context) {
     private val typeAnalysis = TypeAnalysis.get(context.program)
     private val nameAnalysis = NameAnalysis.get(context.program)
     private val protocolAnalysis = ProtocolAnalysis(context.program, SimpleProtocolComposer)
     private val runtimeErrorClass = RuntimeError::class
 
-    private fun exp(value: Value): CodeBlock =
-        CodeBlock.of(
-            "%L",
-            value
-        )
-
-    private fun exp(expr: ExpressionNode): CodeBlock =
+    override fun exp(expr: ExpressionNode): CodeBlock =
         when (expr) {
             is LiteralNode -> CodeBlock.of("%L", expr.value)
 
@@ -165,38 +149,6 @@ class PlainTextCodeGenerator(
             exp(stmt.value)
         )
 
-    private fun declarationHelper(
-        name: String,
-        className: ClassNameNode,
-        arguments: Arguments<AtomicExpressionNode>,
-        initType: ValueType
-    ): CodeBlock =
-        when (className.value) {
-            ImmutableCell -> CodeBlock.of(
-                "val %N = %L",
-                name,
-                exp(arguments.first())
-            )
-
-            // TODO - change this (difference between viaduct, kotlin semantics)
-            MutableCell -> CodeBlock.of(
-                "var %N = %L",
-                name,
-                exp(arguments.first())
-            )
-
-            Vector -> {
-                CodeBlock.of(
-                    "val %N = Array(%L){ %L }",
-                    name,
-                    exp(arguments.first()),
-                    exp(initType.defaultValue)
-                )
-            }
-
-            else -> TODO("throw error")
-        }
-
     override fun declaration(protocol: Protocol, stmt: DeclarationNode): CodeBlock =
         declarationHelper(
             context.kotlinName(stmt.name.value),
@@ -252,11 +204,10 @@ class PlainTextCodeGenerator(
             else -> throw CodeGenerationError("unknown object to update", stmt)
         }
 
-    override fun outParameterInitialization(
+    /*override fun outParameterInitialization(
         protocol: Protocol,
         stmt: OutParameterInitializationNode
-    ):
-        CodeBlock =
+    ): CodeBlock =
         when (val initializer = stmt.initializer) {
             is OutParameterConstructorInitializerNode -> {
                 val outTmpString = context.newTemporary("outTmp")
@@ -287,7 +238,7 @@ class PlainTextCodeGenerator(
                     context.kotlinName(stmt.name.value),
                     exp(initializer.expression)
                 )
-        }
+        }*/
 
     override fun output(protocol: Protocol, stmt: OutputNode): CodeBlock =
         CodeBlock.of(

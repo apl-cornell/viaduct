@@ -1,5 +1,5 @@
 plugins {
-    kotlin("multiplatform") version "1.5.21" apply false
+    kotlin("multiplatform") version embeddedKotlinVersion apply false
 
     // Documentation
     id("org.jetbrains.dokka") version "1.5.31"

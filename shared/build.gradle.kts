@@ -35,10 +35,8 @@ val generatePropertiesFile by tasks.registering {
     }
 }
 
-kotlin {
-    sourceSets.main {
-        kotlin.srcDir(generatedPropertiesDir)
-    }
+kotlin.sourceSets.main {
+    kotlin.srcDir(generatedPropertiesDir)
 }
 
 tasks.compileKotlin {

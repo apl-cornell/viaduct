@@ -5,7 +5,7 @@ plugins {
 /** Dependencies */
 
 dependencies {
-    implementation(project(":shared"))
+    api(project(":shared"))
 
     // Networking
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-protobuf:1.3.0")

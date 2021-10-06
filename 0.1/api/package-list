@@ -25,6 +25,8 @@ edu.cornell.cs.apl.viaduct.syntax.types
 edu.cornell.cs.apl.viaduct.syntax.values
 edu.cornell.cs.apl.viaduct.util
 edu.cornell.cs.apl.viaduct.util.dataflow
+module:gradle-plugin
+edu.cornell.cs.apl.viaduct.gradle
 module:runtime
 edu.cornell.cs.apl.viaduct.backend
 edu.cornell.cs.apl.viaduct.backend.IO

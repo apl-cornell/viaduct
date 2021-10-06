@@ -1,1 +1,1 @@
-sourceset_dependencies = '{":cli:dokkaHtmlPartial/main":[],":shared:dokkaHtmlPartial/main":[],":test-utilities:dokkaHtmlPartial/main":[],":runtime2:dokkaHtmlPartial/main":[],":runtime:dokkaHtmlPartial/main":[],":compiler:dokkaHtmlPartial/main":[]}'
+sourceset_dependencies = '{":cli:dokkaHtmlPartial/main":[],":shared:dokkaHtmlPartial/main":[],":test-utilities:dokkaHtmlPartial/main":[],":runtime2:dokkaHtmlPartial/main":[],":gradle-plugin:dokkaHtmlPartial/main":[],":runtime:dokkaHtmlPartial/main":[],":compiler:dokkaHtmlPartial/main":[]}'

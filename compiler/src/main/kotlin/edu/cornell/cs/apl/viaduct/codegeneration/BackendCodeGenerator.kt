@@ -1,5 +1,6 @@
 package edu.cornell.cs.apl.viaduct.codegeneration
 
+import com.squareup.kotlinpoet.AnnotationSpec
 import com.squareup.kotlinpoet.CodeBlock
 import com.squareup.kotlinpoet.FileSpec
 import com.squareup.kotlinpoet.FunSpec
@@ -40,6 +41,7 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.ReadNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.SimpleStatementNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.StatementNode
 import edu.cornell.cs.apl.viaduct.util.FreshNameGenerator
+import javax.annotation.processing.Generated
 
 private class BackendCodeGenerator(
     program: ProgramNode,
@@ -288,6 +290,22 @@ fun ProgramNode.compileToKotlin(
 
     // create a main file builder, main function builder
     val fileBuilder = FileSpec.builder(packageName, fileName)
+
+    // Mark generated code as automatically generated.
+    fileBuilder.addAnnotation(
+        AnnotationSpec.builder(Generated::class)
+            .addMember("%S", BackendCodeGenerator::class.qualifiedName!!)
+            .build()
+    )
+
+    // Suppress warnings expected in generated code.
+    fileBuilder.addAnnotation(
+        AnnotationSpec.builder(Suppress::class)
+            .addMember("%S", "RedundantVisibilityModifier")
+            .addMember("%S", "UNUSED_PARAMETER")
+            .addMember("%S", "UNUSED_VARIABLE")
+            .build()
+    )
 
     // create main object
     val objectBuilder = TypeSpec.objectBuilder(fileName)

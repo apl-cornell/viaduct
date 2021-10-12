@@ -3,6 +3,7 @@ package edu.cornell.cs.apl.viaduct.codegeneration
 import com.squareup.kotlinpoet.BOOLEAN
 import com.squareup.kotlinpoet.CodeBlock
 import com.squareup.kotlinpoet.INT
+import com.squareup.kotlinpoet.MemberName
 import com.squareup.kotlinpoet.STRING
 import com.squareup.kotlinpoet.TypeName
 import com.squareup.kotlinpoet.U_BYTE_ARRAY
@@ -14,6 +15,7 @@ import edu.cornell.cs.apl.viaduct.errors.IllegalInternalCommunicationError
 import edu.cornell.cs.apl.viaduct.errors.RuntimeError
 import edu.cornell.cs.apl.viaduct.errors.ViaductInterpreterError
 import edu.cornell.cs.apl.viaduct.protocols.Commitment
+import edu.cornell.cs.apl.viaduct.runtime.commitment.Committed
 import edu.cornell.cs.apl.viaduct.selection.CommunicationEvent
 import edu.cornell.cs.apl.viaduct.selection.ProtocolCommunication
 import edu.cornell.cs.apl.viaduct.selection.SimpleProtocolComposer
@@ -51,20 +53,14 @@ class CommitmentProtocolCleartextGenerator(
     private val protocolAnalysis = ProtocolAnalysis(context.program, SimpleProtocolComposer)
     private val runtimeErrorClass = RuntimeError::class
 
-    // TODO - change this once we have proper imports
-    private val hashClassName = "Hashed"
-    private val hashingClassName = "Hashing"
-    private val hashFunctionName = "deterministicHash"
-    private val hashMember = "hash"
+    private val committedClassName = Committed::class
+    private val commitmentMember = MemberName(Committed::class.java.packageName, "commitment")
 
     override fun exp(expr: ExpressionNode): CodeBlock =
         when (expr) {
             is LiteralNode -> CodeBlock.of(
-                "%T(%L, %T.%M(%L))",
-                hashClassName,
-                expr.value,
-                hashingClassName,
-                hashFunctionName,
+                "%T(%L)",
+                committedClassName,
                 expr.value
             )
 
@@ -162,25 +158,7 @@ class CommitmentProtocolCleartextGenerator(
             val relevantEvents: Set<CommunicationEvent> =
                 events.getProjectionSends(ProtocolProjection(sendProtocol, sendingHost))
 
-            // Here, I assume that the temporary storing the hash
-            // value has type Hashed<Value>
-            sendBuilder.addStatement(
-                "val nonce = %L.%M.%M",
-                context.kotlinName(sender.temporary.value, sendProtocol),
-                "info",
-                "nonce"
-            )
-
             for (event in relevantEvents) {
-
-                // send nonce
-                sendBuilder.addStatement(
-                    "%L",
-                    context.send(
-                        CodeBlock.of("%L", "nonce"),
-                        event.recv.host
-                    )
-                )
 
                 // send temporary containing hash value
                 sendBuilder.addStatement(
@@ -206,7 +184,7 @@ class CommitmentProtocolCleartextGenerator(
         val projection = ProtocolProjection(receiveProtocol, receivingHost)
         val hashHosts: Set<Host> = (projection.protocol as Commitment).hashHosts
         val clearTextTemp = context.newTemporary("clearTextTemp")
-        val hashInfoTemp = context.newTemporary("hashInfo")
+        val commitTemp = context.newTemporary("commitment")
         if (sendProtocol != receiveProtocol) {
             when {
                 events.any { event -> event.recv.id == Commitment.CLEARTEXT_INPUT } -> {
@@ -246,8 +224,6 @@ class CommitmentProtocolCleartextGenerator(
                     }
                 }
 
-                // TODO - possibly change the name of clearTextTemp for the else block if both blocks don't
-                // run mutually exclusively
                 else -> {
                     var cleartextInputEvents: Set<CommunicationEvent> =
                         events.getProjectionReceives(projection, Commitment.INPUT)
@@ -284,35 +260,32 @@ class CommitmentProtocolCleartextGenerator(
                         receiveBuilder.endControlFlow()
                     }
 
-                    // create commitment
-                    receiveBuilder.addStatement(
-                        "val %N = %N.%M(%N)",
-                        hashInfoTemp,
-                        hashClassName,
-                        hashingClassName,
-                        clearTextTemp
-                    )
+//                    // create commitment
+//                    receiveBuilder.addStatement(
+//                        "val %N = %N.%M()",
+//                        commitTemp,
+//                        clearTextTemp,
+//                        commitmentMember
+//                    )
 
                     for (hashHost in hashHosts) {
                         receiveBuilder.addStatement(
                             "%L",
                             context.send(
                                 CodeBlock.of(
-                                    "%N.%M",
-                                    hashInfoTemp,
-                                    hashMember
+                                    "%L",
+                                    commitTemp
                                 ),
                                 hashHost
                             )
                         )
                     }
-
-                    receiveBuilder.addStatement(
-                        "val %N = %T(%N, %N)",
-                        sender.temporary.value,
-                        clearTextTemp,
-                        hashInfoTemp
-                    )
+//                    receiveBuilder.addStatement(
+//                        "val %N = %T(%N, %N)",
+//                        sender.temporary.value,
+//                        clearTextTemp,
+//                        hashInfoTemp
+//                    )
                 }
             }
         }

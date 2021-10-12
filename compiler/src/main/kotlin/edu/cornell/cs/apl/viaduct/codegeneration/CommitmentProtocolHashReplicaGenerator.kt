@@ -3,18 +3,18 @@ package edu.cornell.cs.apl.viaduct.codegeneration
 import com.squareup.kotlinpoet.BOOLEAN
 import com.squareup.kotlinpoet.CodeBlock
 import com.squareup.kotlinpoet.INT
+import com.squareup.kotlinpoet.MemberName
 import com.squareup.kotlinpoet.STRING
 import com.squareup.kotlinpoet.TypeName
 import com.squareup.kotlinpoet.U_BYTE_ARRAY
+import com.squareup.kotlinpoet.asTypeName
 import edu.cornell.cs.apl.viaduct.analysis.NameAnalysis
-import edu.cornell.cs.apl.viaduct.analysis.ProtocolAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.TypeAnalysis
 import edu.cornell.cs.apl.viaduct.errors.CodeGenerationError
-import edu.cornell.cs.apl.viaduct.errors.RuntimeError
 import edu.cornell.cs.apl.viaduct.protocols.Commitment
+import edu.cornell.cs.apl.viaduct.runtime.commitment.Committed
 import edu.cornell.cs.apl.viaduct.selection.CommunicationEvent
 import edu.cornell.cs.apl.viaduct.selection.ProtocolCommunication
-import edu.cornell.cs.apl.viaduct.selection.SimpleProtocolComposer
 import edu.cornell.cs.apl.viaduct.syntax.Host
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
 import edu.cornell.cs.apl.viaduct.syntax.ProtocolProjection
@@ -46,8 +46,11 @@ class CommitmentProtocolHashReplicaGenerator(
 ) : AbstractCodeGenerator(context) {
     private val typeAnalysis = TypeAnalysis.get(context.program)
     private val nameAnalysis = NameAnalysis.get(context.program)
-    private val protocolAnalysis = ProtocolAnalysis(context.program, SimpleProtocolComposer)
-    private val runtimeErrorClass = RuntimeError::class
+
+    // private val protocolAnalysis = ProtocolAnalysis(context.program, SimpleProtocolComposer)
+    // private val runtimeErrorClass = RuntimeError::class
+    private val commitmentMember = Committed::class
+    private val commitmentCreatorMember = MemberName(Committed::class.java.packageName, "commitment")
 
     override fun exp(expr: ExpressionNode): CodeBlock =
         when (expr) {
@@ -145,8 +148,6 @@ class CommitmentProtocolHashReplicaGenerator(
                 Commitment.OPEN_COMMITMENT_OUTPUT
             )
 
-        // here, I assume that the commitment is stored as kotlin native byte list, and this is
-        // what is sent
         for (event in relevantEvents) {
             sendBuilder.addStatement(
                 "%L",
@@ -170,6 +171,7 @@ class CommitmentProtocolHashReplicaGenerator(
         val receiveBuilder = CodeBlock.builder()
         val projection = ProtocolProjection(receiveProtocol, receivingHost)
         val commitmentTemp = context.newTemporary("commitment")
+        val clearTextTemp = context.newTemporary("clearTextTemp")
         if (sendProtocol != receiveProtocol) {
             when {
                 events.any { event -> event.recv.id == Commitment.CLEARTEXT_INPUT } -> {
@@ -177,7 +179,8 @@ class CommitmentProtocolHashReplicaGenerator(
                         events.getHostReceives(projection.host, Commitment.CLEARTEXT_INPUT)
                     for (event in relevantEvents) {
                         receiveBuilder.addStatement(
-                            "%L",
+                            "val %N = %L",
+                            context.newTemporary(clearTextTemp),
                             context.receive(
                                 typeTranslator(typeAnalysis.type(sender)),
                                 event.send.host
@@ -187,14 +190,15 @@ class CommitmentProtocolHashReplicaGenerator(
                 }
 
                 // is it always true that events will be of length one here?
-                else -> {
+                else -> { // create commitment
                     receiveBuilder.addStatement(
-                        "val %N = %L",
-                        commitmentTemp,
+                        "val %N = %L.%M()",
+                        context.newTemporary(commitmentTemp),
                         context.receive(
-                            typeTranslator(typeAnalysis.type(sender)),
+                            commitmentMember.asTypeName(), // TODO - fix this?
                             events.first().send.host
-                        )
+                        ),
+                        commitmentCreatorMember
                     )
                 }
             }

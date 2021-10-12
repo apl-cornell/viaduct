@@ -7,12 +7,14 @@ import com.squareup.kotlinpoet.MemberName
 import com.squareup.kotlinpoet.STRING
 import com.squareup.kotlinpoet.TypeName
 import com.squareup.kotlinpoet.U_BYTE_ARRAY
+import com.squareup.kotlinpoet.asTypeName
 import edu.cornell.cs.apl.viaduct.analysis.NameAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.ProtocolAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.TypeAnalysis
 import edu.cornell.cs.apl.viaduct.errors.CodeGenerationError
 import edu.cornell.cs.apl.viaduct.errors.RuntimeError
 import edu.cornell.cs.apl.viaduct.protocols.Plaintext
+import edu.cornell.cs.apl.viaduct.runtime.commitment.Commitment
 import edu.cornell.cs.apl.viaduct.selection.CommunicationEvent
 import edu.cornell.cs.apl.viaduct.selection.ProtocolCommunication
 import edu.cornell.cs.apl.viaduct.selection.SimpleProtocolComposer
@@ -53,6 +55,8 @@ class PlainTextCodeGenerator(context: CodeGeneratorContext) :
     private val nameAnalysis = NameAnalysis.get(context.program)
     private val protocolAnalysis = ProtocolAnalysis(context.program, SimpleProtocolComposer)
     private val runtimeErrorClass = RuntimeError::class
+    private val commitmentClass = Commitment::class
+    private val commitmentOpenMember = MemberName(Commitment::class.java.packageName, "open")
 
     override fun exp(expr: ExpressionNode): CodeBlock =
         when (expr) {
@@ -287,7 +291,6 @@ class PlainTextCodeGenerator(context: CodeGeneratorContext) :
         return sendBuilder.build()
     }
 
-    // note - this implementation does not support commitments
     override fun receive(
         receivingHost: Host,
         sender: LetNode,
@@ -296,121 +299,187 @@ class PlainTextCodeGenerator(context: CodeGeneratorContext) :
         events: ProtocolCommunication
     ): CodeBlock {
         val receiveBuilder = CodeBlock.builder()
-        val projection = ProtocolProjection(receiveProtocol, receivingHost)
-        var cleartextInputs = events.getProjectionReceives(projection, Plaintext.INPUT)
         val clearTextTemp = context.newTemporary("clearTextTemp")
+        val clearTextCommitmentTemp = context.newTemporary("clearTextCommitmentTemp")
+        val hashCommitmentTemp = context.newTemporary("hashCommitmentTemp")
         if (sendProtocol != receiveProtocol) {
-            // initialize cleartext receive value by receiving from first host
-            if (cleartextInputs.isNotEmpty()) {
-                receiveBuilder.addStatement(
-                    "val %N = %L",
-                    clearTextTemp,
-                    context.receive(
-                        typeTranslator(typeAnalysis.type(sender)),
-                        cleartextInputs.first().send.host
+            val projection = ProtocolProjection(receiveProtocol, receivingHost)
+            var cleartextInputs = events.getProjectionReceives(projection, Plaintext.INPUT)
+
+            val cleartextCommitmentInputs =
+                events.getProjectionReceives(projection, Plaintext.CLEARTEXT_COMMITMENT_INPUT)
+
+            var hashCommitmentInputs =
+                events.getProjectionReceives(projection, Plaintext.HASH_COMMITMENT_INPUT)
+
+            when {
+                cleartextInputs.isNotEmpty() && cleartextCommitmentInputs.isEmpty() &&
+                    hashCommitmentInputs.isEmpty() -> {
+
+                    // initialize cleartext receive value by receiving from first host
+                    receiveBuilder.addStatement(
+                        "val %N = %L",
+                        clearTextTemp,
+                        context.receive(
+                            typeTranslator(typeAnalysis.type(sender)),
+                            cleartextInputs.first().send.host
+                        )
                     )
-                )
-                cleartextInputs = cleartextInputs.minusElement(cleartextInputs.first())
-            }
+                    cleartextInputs = cleartextInputs.minusElement(cleartextInputs.first())
 
-            // receive from the rest of the hosts and compare against clearTextValue
-            for (event in cleartextInputs) {
+                    // receive from the rest of the hosts and compare against clearTextValue
+                    for (event in cleartextInputs) {
 
-                // check to make sure that you got the same data from all hosts
-                receiveBuilder.beginControlFlow(
-                    "if (%N != %L)",
-                    clearTextTemp,
-                    context.receive(
-                        typeTranslator(typeAnalysis.type(sender)),
-                        event.send.host
-                    )
-                )
-                receiveBuilder.addStatement(
-                    "throw %T(%S)",
-                    runtimeErrorClass,
-                    "Plaintext : received different values"
-                )
-                receiveBuilder.endControlFlow()
-            }
-
-            // calculate set of hosts with whom [receivingHost] needs to check for equivocation
-            var hostsToCheckWith: List<Host> =
-                events
-                    .filter { event ->
-                        // remove events where receiving host is not receiving plaintext data
-                        event.recv.id == Plaintext.INPUT &&
-
-                            // remove events where a host is sending data to themselves
-                            event.send.host != event.recv.host &&
-
-                            // remove events where [receivingHost] is the sender of the data
-                            event.send.host != receivingHost
+                        // check to make sure that you got the same data from all hosts
+                        receiveBuilder.beginControlFlow(
+                            "if (%N != %L)",
+                            clearTextTemp,
+                            context.receive(
+                                typeTranslator(typeAnalysis.type(sender)),
+                                event.send.host
+                            )
+                        )
+                        receiveBuilder.addStatement(
+                            "throw %T(%S)",
+                            runtimeErrorClass,
+                            "Plaintext : received different values"
+                        )
+                        receiveBuilder.endControlFlow()
                     }
-                    // of events matching above criteria, get set of data receivers
-                    .map { event -> event.recv.host }
-                    // remove [receivingHost] from the set of hosts with whom [receivingHost] needs to
-                    // check for equivocation
-                    .filter { host -> host != receivingHost }
-                    .sorted()
 
-            for (host in hostsToCheckWith)
-                receiveBuilder.addStatement("%L", context.send(CodeBlock.of(clearTextTemp), host))
+                    // calculate set of hosts with whom [receivingHost] needs to check for equivocation
+                    var hostsToCheckWith: List<Host> =
+                        events
+                            .filter { event ->
+                                // remove events where receiving host is not receiving plaintext data
+                                event.recv.id == Plaintext.INPUT &&
 
-            val receiveTmp = context.newTemporary("receiveTmp")
+                                    // remove events where a host is sending data to themselves
+                                    event.send.host != event.recv.host &&
 
-            // start equivocation check by receiving from host in [hostsToCheckWith]
-            if (hostsToCheckWith.isNotEmpty()) {
-                receiveBuilder.addStatement(
-                    "var %N = %L",
-                    receiveTmp,
-                    context.receive(
-                        typeTranslator(typeAnalysis.type(sender)),
-                        hostsToCheckWith.first()
+                                    // remove events where [receivingHost] is the sender of the data
+                                    event.send.host != receivingHost
+                            }
+                            // of events matching above criteria, get set of data receivers
+                            .map { event -> event.recv.host }
+                            // remove [receivingHost] from the set of hosts with whom [receivingHost] needs to
+                            // check for equivocation
+                            .filter { host -> host != receivingHost }
+                            .sorted()
+
+                    for (host in hostsToCheckWith)
+                        receiveBuilder.addStatement("%L", context.send(CodeBlock.of(clearTextTemp), host))
+
+                    val receiveTmp = context.newTemporary("receiveTmp")
+
+                    // start equivocation check by receiving from host in [hostsToCheckWith]
+                    if (hostsToCheckWith.isNotEmpty()) {
+                        receiveBuilder.addStatement(
+                            "var %N = %L",
+                            receiveTmp,
+                            context.receive(
+                                typeTranslator(typeAnalysis.type(sender)),
+                                hostsToCheckWith.first()
+                            )
+                        )
+                        receiveBuilder.beginControlFlow(
+                            "if (%N != %N)",
+                            receiveTmp,
+                            clearTextTemp
+                        )
+                        receiveBuilder.addStatement(
+                            "throw %T(%S)",
+                            runtimeErrorClass,
+                            "equivocation error between hosts: " + receivingHost.asDocument.print() + ", " +
+                                hostsToCheckWith.first().asDocument.print()
+                        )
+                        receiveBuilder.endControlFlow()
+                        hostsToCheckWith = hostsToCheckWith.minusElement(hostsToCheckWith.first())
+                    }
+
+                    // potentially receive from the rest of the hosts in [hostsToCheckWith]
+                    for (host in hostsToCheckWith) {
+                        receiveBuilder.addStatement(
+                            "%N = %L",
+                            receiveTmp,
+                            context.receive(
+                                typeTranslator(typeAnalysis.type(sender)),
+                                host
+                            )
+                        )
+                        receiveBuilder.beginControlFlow(
+                            "if (%N != %N)",
+                            receiveTmp,
+                            clearTextTemp
+                        )
+                        receiveBuilder.addStatement(
+                            "throw %T(%S)",
+                            runtimeErrorClass,
+                            "equivocation error between hosts: " + receivingHost.asDocument.print() + ", " +
+                                host.asDocument.print()
+                        )
+                        receiveBuilder.endControlFlow()
+                    }
+                    receiveBuilder.addStatement(
+                        "val %N = %N",
+                        context.kotlinName(sender.temporary.value, protocolAnalysis.primaryProtocol(sender)),
+                        clearTextTemp
                     )
-                )
-                receiveBuilder.beginControlFlow(
-                    "if (%N != %N)",
-                    receiveTmp,
-                    clearTextTemp
-                )
-                receiveBuilder.addStatement(
-                    "throw %T(%S)",
-                    runtimeErrorClass,
-                    "equivocation error between hosts: " + receivingHost.asDocument.print() + ", " +
-                        hostsToCheckWith.first().asDocument.print()
-                )
-                receiveBuilder.endControlFlow()
-                hostsToCheckWith = hostsToCheckWith.minusElement(hostsToCheckWith.first())
-            }
 
-            // potentially receive from the rest of the hosts in [hostsToCheckWith]
-            for (host in hostsToCheckWith) {
-                receiveBuilder.addStatement(
-                    "%N = %L",
-                    receiveTmp,
-                    context.receive(
-                        typeTranslator(typeAnalysis.type(sender)),
-                        host
+                    return receiveBuilder.build()
+                }
+
+                // commitment opening
+                cleartextInputs.isEmpty() && cleartextCommitmentInputs.isNotEmpty() &&
+                    hashCommitmentInputs.isNotEmpty() -> {
+                    if (cleartextCommitmentInputs.size != 1) {
+                        throw CodeGenerationError("Commitment open: open multiple commitments at once")
+                    }
+                    val cleartextSendEvent = cleartextCommitmentInputs.first()
+
+                    // TODO() - how can I specify the type of the commitment to be received here?
+                    // val commitmentType = typeTranslator(typeAnalysis.type(sender))
+                    // receive from commitment creator
+                    receiveBuilder.addStatement(
+                        "val %N = %L",
+                        clearTextCommitmentTemp,
+                        context.receive(commitmentClass.asTypeName(), cleartextSendEvent.send.host)
                     )
-                )
-                receiveBuilder.beginControlFlow(
-                    "if (%N != %N)",
-                    receiveTmp,
-                    clearTextTemp
-                )
-                receiveBuilder.addStatement(
-                    "throw %T(%S)",
-                    runtimeErrorClass,
-                    "equivocation error between hosts: " + receivingHost.asDocument.print() + ", " +
-                        host.asDocument.print()
-                )
-                receiveBuilder.endControlFlow()
+
+                    receiveBuilder.addStatement(
+                        "var %N = %L.%M(%N)",
+                        hashCommitmentTemp,
+                        context.receive(
+                            commitmentClass.asTypeName(), // TODO - fix this?
+                            hashCommitmentInputs.first().send.host
+                        ),
+                        commitmentOpenMember,
+                        clearTextCommitmentTemp
+                    )
+
+                    hashCommitmentInputs = hashCommitmentInputs.minusElement(hashCommitmentInputs.first())
+
+                    // compare commitment creator's value with all hash replica holder's value
+                    for (hashCommitmentInput in hashCommitmentInputs) {
+
+                        // validate commitment with all hash holders
+                        receiveBuilder.addStatement(
+                            "%N = %L.%M(%N)",
+                            hashCommitmentTemp,
+                            context.receive(
+                                commitmentClass.asTypeName(), // TODO - fix this?
+                                hashCommitmentInput.send.host
+                            ),
+                            commitmentOpenMember,
+                            clearTextCommitmentTemp
+                        )
+                    }
+                }
+
+                else ->
+                    throw
+                    CodeGenerationError("Plaintext: received both commitment opening and cleartext value")
             }
-            receiveBuilder.addStatement(
-                "val %N = %N",
-                context.kotlinName(sender.temporary.value, protocolAnalysis.primaryProtocol(sender)),
-                clearTextTemp
-            )
         }
         return receiveBuilder.build()
     }

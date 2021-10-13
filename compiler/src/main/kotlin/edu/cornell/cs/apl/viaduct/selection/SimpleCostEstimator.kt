@@ -1,13 +1,13 @@
 package edu.cornell.cs.apl.viaduct.selection
 
-import edu.cornell.cs.apl.viaduct.protocols.ABY
-import edu.cornell.cs.apl.viaduct.protocols.ArithABY
-import edu.cornell.cs.apl.viaduct.protocols.BoolABY
-import edu.cornell.cs.apl.viaduct.protocols.Commitment
-import edu.cornell.cs.apl.viaduct.protocols.Local
-import edu.cornell.cs.apl.viaduct.protocols.Replication
-import edu.cornell.cs.apl.viaduct.protocols.YaoABY
-import edu.cornell.cs.apl.viaduct.protocols.ZKP
+import edu.cornell.cs.apl.viaduct.backends.aby.ABY
+import edu.cornell.cs.apl.viaduct.backends.aby.ArithABY
+import edu.cornell.cs.apl.viaduct.backends.aby.BoolABY
+import edu.cornell.cs.apl.viaduct.backends.aby.YaoABY
+import edu.cornell.cs.apl.viaduct.backends.cleartext.Local
+import edu.cornell.cs.apl.viaduct.backends.cleartext.Replication
+import edu.cornell.cs.apl.viaduct.backends.commitment.Commitment
+import edu.cornell.cs.apl.viaduct.backends.zkp.ZKP
 import edu.cornell.cs.apl.viaduct.syntax.Host
 import edu.cornell.cs.apl.viaduct.syntax.Operator
 import edu.cornell.cs.apl.viaduct.syntax.Protocol

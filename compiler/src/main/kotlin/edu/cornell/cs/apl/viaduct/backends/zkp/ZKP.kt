@@ -1,4 +1,4 @@
-package edu.cornell.cs.apl.viaduct.protocols
+package edu.cornell.cs.apl.viaduct.backends.zkp
 
 import edu.cornell.cs.apl.viaduct.security.Label
 import edu.cornell.cs.apl.viaduct.security.LabelAnd
@@ -25,7 +25,7 @@ class ZKP(val prover: Host, val verifiers: Set<Host>) : Protocol() {
     }
 
     override val protocolName: ProtocolName
-        get() = ZKP.protocolName
+        get() = Companion.protocolName
 
     override val arguments: Map<String, Value>
         get() = mapOf("prover" to HostValue(prover), "verifiers" to HostSetValue(verifiers))

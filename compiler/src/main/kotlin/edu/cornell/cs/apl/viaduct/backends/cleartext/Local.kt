@@ -1,4 +1,4 @@
-package edu.cornell.cs.apl.viaduct.protocols
+package edu.cornell.cs.apl.viaduct.backends.cleartext
 
 import edu.cornell.cs.apl.viaduct.security.Label
 import edu.cornell.cs.apl.viaduct.syntax.Host
@@ -20,7 +20,7 @@ class Local(val host: Host) : Plaintext() {
     }
 
     override val protocolName: ProtocolName
-        get() = Local.protocolName
+        get() = Companion.protocolName
 
     override val arguments: Map<String, Value>
         get() = mapOf("host" to HostValue(host))

@@ -1,5 +1,10 @@
 package edu.cornell.cs.apl.viaduct.selection
 
+import edu.cornell.cs.apl.viaduct.backends.aby.ABYFactory
+import edu.cornell.cs.apl.viaduct.backends.cleartext.LocalFactory
+import edu.cornell.cs.apl.viaduct.backends.cleartext.ReplicationFactory
+import edu.cornell.cs.apl.viaduct.backends.commitment.CommitmentFactory
+import edu.cornell.cs.apl.viaduct.backends.zkp.ZKPFactory
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
 
 /** Factory for Local, Replication and ABY, and Commitment protocols. */

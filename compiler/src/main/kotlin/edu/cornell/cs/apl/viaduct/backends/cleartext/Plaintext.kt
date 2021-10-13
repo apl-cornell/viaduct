@@ -1,4 +1,4 @@
-package edu.cornell.cs.apl.viaduct.protocols
+package edu.cornell.cs.apl.viaduct.backends.cleartext
 
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
 

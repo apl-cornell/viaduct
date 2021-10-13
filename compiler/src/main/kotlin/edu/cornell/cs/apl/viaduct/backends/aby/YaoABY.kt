@@ -1,4 +1,4 @@
-package edu.cornell.cs.apl.viaduct.protocols
+package edu.cornell.cs.apl.viaduct.backends.aby
 
 import edu.cornell.cs.apl.viaduct.syntax.Host
 import edu.cornell.cs.apl.viaduct.syntax.InputPort
@@ -16,7 +16,7 @@ class YaoABY(server: Host, client: Host) : ABY(server, client) {
     }
 
     override val protocolName: ProtocolName
-        get() = YaoABY.protocolName
+        get() = Companion.protocolName
 
     val B2YInputPorts: Map<Host, InputPort> =
         hosts

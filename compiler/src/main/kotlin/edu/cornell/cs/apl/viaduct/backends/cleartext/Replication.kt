@@ -1,4 +1,4 @@
-package edu.cornell.cs.apl.viaduct.protocols
+package edu.cornell.cs.apl.viaduct.backends.cleartext
 
 import edu.cornell.cs.apl.viaduct.security.Label
 import edu.cornell.cs.apl.viaduct.syntax.Host
@@ -27,7 +27,7 @@ class Replication(hosts: Set<Host>) : Plaintext() {
     private val participants: HostSetValue = HostSetValue(hosts)
 
     override val protocolName: ProtocolName
-        get() = Replication.protocolName
+        get() = Companion.protocolName
 
     override val arguments: Map<String, Value>
         get() = mapOf("hosts" to participants)

@@ -1,4 +1,4 @@
-package edu.cornell.cs.apl.viaduct.protocols
+package edu.cornell.cs.apl.viaduct.backends.commitment
 
 import edu.cornell.cs.apl.viaduct.security.Label
 import edu.cornell.cs.apl.viaduct.security.LabelAnd
@@ -29,7 +29,7 @@ class Commitment(val cleartextHost: Host, val hashHosts: Set<Host>) : Protocol()
     }
 
     override val protocolName: ProtocolName
-        get() = Commitment.protocolName
+        get() = Companion.protocolName
 
     override val arguments: Map<String, Value>
         get() = mapOf("sender" to HostValue(cleartextHost), "receivers" to HostSetValue(hashHosts))

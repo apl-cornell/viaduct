@@ -14,8 +14,8 @@ import edu.cornell.cs.apl.viaduct.selection.CostMode
 import edu.cornell.cs.apl.viaduct.selection.SimpleCostEstimator
 import edu.cornell.cs.apl.viaduct.selection.SimpleCostRegime
 import edu.cornell.cs.apl.viaduct.selection.SimpleProtocolComposer
-import edu.cornell.cs.apl.viaduct.selection.SimpleProtocolFactory
 import edu.cornell.cs.apl.viaduct.selection.selectProtocolsWithZ3
+import edu.cornell.cs.apl.viaduct.selection.simpleProtocolFactory
 import edu.cornell.cs.apl.viaduct.selection.validateProtocolAssignment
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProcessDeclarationNode
 import org.gradle.api.DefaultTask
@@ -89,7 +89,7 @@ abstract class CompileViaductTask : DefaultTask() {
         program.check()
 
         // TODO: don't bake in cost regime
-        val protocolFactory = SimpleProtocolFactory(program)
+        val protocolFactory = simpleProtocolFactory(program)
         val protocolComposer = SimpleProtocolComposer
         val costEstimator = SimpleCostEstimator(protocolComposer, SimpleCostRegime.WAN)
 

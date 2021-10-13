@@ -11,8 +11,8 @@ import edu.cornell.cs.apl.viaduct.selection.CostMode
 import edu.cornell.cs.apl.viaduct.selection.SimpleCostEstimator
 import edu.cornell.cs.apl.viaduct.selection.SimpleCostRegime
 import edu.cornell.cs.apl.viaduct.selection.SimpleProtocolComposer
-import edu.cornell.cs.apl.viaduct.selection.SimpleProtocolFactory
 import edu.cornell.cs.apl.viaduct.selection.selectProtocolsWithZ3
+import edu.cornell.cs.apl.viaduct.selection.simpleProtocolFactory
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -53,7 +53,7 @@ private fun run(file: File) {
     program.check()
     selectProtocolsWithZ3(
         program, program.main,
-        SimpleProtocolFactory(program), SimpleProtocolComposer,
+        simpleProtocolFactory(program), SimpleProtocolComposer,
         SimpleCostEstimator(SimpleProtocolComposer, SimpleCostRegime.LAN),
         CostMode.MINIMIZE
     )

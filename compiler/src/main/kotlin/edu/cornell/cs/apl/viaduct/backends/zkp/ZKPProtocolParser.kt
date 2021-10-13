@@ -1,6 +1,7 @@
-package edu.cornell.cs.apl.viaduct.parsing
+package edu.cornell.cs.apl.viaduct.backends.zkp
 
-import edu.cornell.cs.apl.viaduct.protocols.ZKP
+import edu.cornell.cs.apl.viaduct.parsing.ProtocolArguments
+import edu.cornell.cs.apl.viaduct.parsing.ProtocolParser
 import edu.cornell.cs.apl.viaduct.syntax.values.HostSetValue
 import edu.cornell.cs.apl.viaduct.syntax.values.HostValue
 

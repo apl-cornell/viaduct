@@ -1,6 +1,7 @@
-package edu.cornell.cs.apl.viaduct.parsing
+package edu.cornell.cs.apl.viaduct.backends.cleartext
 
-import edu.cornell.cs.apl.viaduct.protocols.Replication
+import edu.cornell.cs.apl.viaduct.parsing.ProtocolArguments
+import edu.cornell.cs.apl.viaduct.parsing.ProtocolParser
 import edu.cornell.cs.apl.viaduct.syntax.values.HostSetValue
 
 /** Parser for the [Replication] protocol. */

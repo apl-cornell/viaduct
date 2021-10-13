@@ -1,9 +1,9 @@
-package edu.cornell.cs.apl.viaduct.selection
+package edu.cornell.cs.apl.viaduct.backends.commitment
 
 import edu.cornell.cs.apl.attributes.attribute
 import edu.cornell.cs.apl.viaduct.analysis.NameAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.immediateRHS
-import edu.cornell.cs.apl.viaduct.protocols.Commitment
+import edu.cornell.cs.apl.viaduct.selection.ProtocolFactory
 import edu.cornell.cs.apl.viaduct.syntax.Host
 import edu.cornell.cs.apl.viaduct.syntax.HostTrustConfiguration
 import edu.cornell.cs.apl.viaduct.syntax.Protocol

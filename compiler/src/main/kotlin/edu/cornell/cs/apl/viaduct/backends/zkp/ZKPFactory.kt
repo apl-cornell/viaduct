@@ -1,9 +1,16 @@
-package edu.cornell.cs.apl.viaduct.selection
+package edu.cornell.cs.apl.viaduct.backends.zkp
 
 import edu.cornell.cs.apl.attributes.attribute
 import edu.cornell.cs.apl.viaduct.analysis.NameAnalysis
+import edu.cornell.cs.apl.viaduct.backends.cleartext.LocalFactory
+import edu.cornell.cs.apl.viaduct.backends.cleartext.ReplicationFactory
 import edu.cornell.cs.apl.viaduct.passes.canMux
-import edu.cornell.cs.apl.viaduct.protocols.ZKP
+import edu.cornell.cs.apl.viaduct.selection.Literal
+import edu.cornell.cs.apl.viaduct.selection.ProtocolFactory
+import edu.cornell.cs.apl.viaduct.selection.SelectionConstraint
+import edu.cornell.cs.apl.viaduct.selection.ands
+import edu.cornell.cs.apl.viaduct.selection.readsFrom
+import edu.cornell.cs.apl.viaduct.selection.sendsTo
 import edu.cornell.cs.apl.viaduct.syntax.Host
 import edu.cornell.cs.apl.viaduct.syntax.HostTrustConfiguration
 import edu.cornell.cs.apl.viaduct.syntax.Operator
@@ -109,7 +116,7 @@ class ZKPFactory(val program: ProgramNode) : ProtocolFactory {
     /** ZKP can only read from, and only send to, itself, local, and replicated **/
     override fun constraint(node: LetNode): SelectionConstraint =
         protocols(program).map {
-            And(
+            edu.cornell.cs.apl.viaduct.selection.And(
                 node.readsFrom(nameAnalysis, setOf(it.protocol), localAndReplicated + setOf(it.protocol)),
                 node.sendsTo(nameAnalysis, setOf(it.protocol), localAndReplicated + setOf(it.protocol))
             )
@@ -117,7 +124,7 @@ class ZKPFactory(val program: ProgramNode) : ProtocolFactory {
 
     override fun constraint(node: DeclarationNode): SelectionConstraint =
         protocols(program).map {
-            And(
+            edu.cornell.cs.apl.viaduct.selection.And(
                 node.readsFrom(nameAnalysis, setOf(it.protocol), localAndReplicated + setOf(it.protocol)),
                 node.sendsTo(nameAnalysis, setOf(it.protocol), localAndReplicated + setOf(it.protocol))
             )

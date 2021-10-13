@@ -14,13 +14,13 @@ import edu.cornell.cs.apl.viaduct.backend.ObjectLocation
 import edu.cornell.cs.apl.viaduct.backend.ProtocolBackend
 import edu.cornell.cs.apl.viaduct.backend.ProtocolInterpreter
 import edu.cornell.cs.apl.viaduct.backend.ViaductRuntime
+import edu.cornell.cs.apl.viaduct.backends.aby.ABY
+import edu.cornell.cs.apl.viaduct.backends.aby.ArithABY
+import edu.cornell.cs.apl.viaduct.backends.aby.BoolABY
+import edu.cornell.cs.apl.viaduct.backends.aby.YaoABY
 import edu.cornell.cs.apl.viaduct.errors.IllegalInternalCommunicationError
 import edu.cornell.cs.apl.viaduct.errors.UndefinedNameError
 import edu.cornell.cs.apl.viaduct.errors.ViaductInterpreterError
-import edu.cornell.cs.apl.viaduct.protocols.ABY
-import edu.cornell.cs.apl.viaduct.protocols.ArithABY
-import edu.cornell.cs.apl.viaduct.protocols.BoolABY
-import edu.cornell.cs.apl.viaduct.protocols.YaoABY
 import edu.cornell.cs.apl.viaduct.selection.ProtocolCommunication
 import edu.cornell.cs.apl.viaduct.syntax.Host
 import edu.cornell.cs.apl.viaduct.syntax.ObjectVariable

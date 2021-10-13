@@ -4,10 +4,10 @@ import edu.cornell.cs.apl.prettyprinting.joined
 import edu.cornell.cs.apl.viaduct.analysis.ProtocolAnalysis
 import edu.cornell.cs.apl.viaduct.backend.commitment.HashInfo
 import edu.cornell.cs.apl.viaduct.backend.commitment.encode
+import edu.cornell.cs.apl.viaduct.backends.cleartext.Local
+import edu.cornell.cs.apl.viaduct.backends.cleartext.Plaintext
 import edu.cornell.cs.apl.viaduct.errors.UndefinedNameError
 import edu.cornell.cs.apl.viaduct.errors.ViaductInterpreterError
-import edu.cornell.cs.apl.viaduct.protocols.Local
-import edu.cornell.cs.apl.viaduct.protocols.Plaintext
 import edu.cornell.cs.apl.viaduct.selection.CommunicationEvent
 import edu.cornell.cs.apl.viaduct.selection.ProtocolCommunication
 import edu.cornell.cs.apl.viaduct.syntax.Host

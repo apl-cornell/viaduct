@@ -4,9 +4,9 @@ import edu.cornell.cs.apl.viaduct.analysis.ProtocolAnalysis
 import edu.cornell.cs.apl.viaduct.backend.ObjectLocation
 import edu.cornell.cs.apl.viaduct.backend.SingleProtocolInterpreter
 import edu.cornell.cs.apl.viaduct.backend.ViaductProcessRuntime
+import edu.cornell.cs.apl.viaduct.backends.commitment.Commitment
 import edu.cornell.cs.apl.viaduct.errors.IllegalInternalCommunicationError
 import edu.cornell.cs.apl.viaduct.errors.ViaductInterpreterError
-import edu.cornell.cs.apl.viaduct.protocols.Commitment
 import edu.cornell.cs.apl.viaduct.selection.CommunicationEvent
 import edu.cornell.cs.apl.viaduct.selection.ProtocolCommunication
 import edu.cornell.cs.apl.viaduct.syntax.Host

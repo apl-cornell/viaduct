@@ -1,4 +1,4 @@
-package edu.cornell.cs.apl.viaduct.protocols
+package edu.cornell.cs.apl.viaduct.backends.aby
 
 import edu.cornell.cs.apl.viaduct.security.Label
 import edu.cornell.cs.apl.viaduct.syntax.Host
@@ -27,7 +27,7 @@ abstract class ABY(val server: Host, val client: Host) : Protocol() {
     }
 
     override val protocolName: ProtocolName
-        get() = ABY.protocolName
+        get() = Companion.protocolName
 
     override val arguments: Map<String, Value>
         get() = mapOf("server" to HostValue(server), "client" to HostValue(client))

@@ -1,9 +1,7 @@
-package edu.cornell.cs.apl.viaduct.parsing
+package edu.cornell.cs.apl.viaduct.backends.aby
 
-import edu.cornell.cs.apl.viaduct.protocols.ABY
-import edu.cornell.cs.apl.viaduct.protocols.ArithABY
-import edu.cornell.cs.apl.viaduct.protocols.BoolABY
-import edu.cornell.cs.apl.viaduct.protocols.YaoABY
+import edu.cornell.cs.apl.viaduct.parsing.ProtocolArguments
+import edu.cornell.cs.apl.viaduct.parsing.ProtocolParser
 import edu.cornell.cs.apl.viaduct.syntax.values.HostValue
 
 /** Parser for the [ABY] protocol. */

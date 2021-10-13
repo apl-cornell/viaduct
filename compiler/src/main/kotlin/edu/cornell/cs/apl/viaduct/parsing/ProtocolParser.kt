@@ -1,9 +1,10 @@
 package edu.cornell.cs.apl.viaduct.parsing
 
+import edu.cornell.cs.apl.viaduct.backends.cleartext.Local
+import edu.cornell.cs.apl.viaduct.backends.cleartext.LocalProtocolParser
 import edu.cornell.cs.apl.viaduct.errors.CompilationError
 import edu.cornell.cs.apl.viaduct.errors.TypeMismatchError
 import edu.cornell.cs.apl.viaduct.errors.UndefinedNameError
-import edu.cornell.cs.apl.viaduct.protocols.Local
 import edu.cornell.cs.apl.viaduct.syntax.ArgumentLabel
 import edu.cornell.cs.apl.viaduct.syntax.NamedArguments
 import edu.cornell.cs.apl.viaduct.syntax.Protocol

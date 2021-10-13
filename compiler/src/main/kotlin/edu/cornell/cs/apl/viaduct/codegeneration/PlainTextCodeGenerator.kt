@@ -4,6 +4,7 @@ import com.squareup.kotlinpoet.BOOLEAN
 import com.squareup.kotlinpoet.CodeBlock
 import com.squareup.kotlinpoet.INT
 import com.squareup.kotlinpoet.MemberName
+import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import com.squareup.kotlinpoet.STRING
 import com.squareup.kotlinpoet.TypeName
 import com.squareup.kotlinpoet.U_BYTE_ARRAY
@@ -15,6 +16,7 @@ import edu.cornell.cs.apl.viaduct.errors.CodeGenerationError
 import edu.cornell.cs.apl.viaduct.errors.RuntimeError
 import edu.cornell.cs.apl.viaduct.protocols.Plaintext
 import edu.cornell.cs.apl.viaduct.runtime.commitment.Commitment
+import edu.cornell.cs.apl.viaduct.runtime.commitment.Committed
 import edu.cornell.cs.apl.viaduct.selection.CommunicationEvent
 import edu.cornell.cs.apl.viaduct.selection.ProtocolCommunication
 import edu.cornell.cs.apl.viaduct.selection.SimpleProtocolComposer
@@ -55,8 +57,6 @@ class PlainTextCodeGenerator(context: CodeGeneratorContext) :
     private val nameAnalysis = NameAnalysis.get(context.program)
     private val protocolAnalysis = ProtocolAnalysis(context.program, SimpleProtocolComposer)
     private val runtimeErrorClass = RuntimeError::class
-    private val commitmentClass = Commitment::class
-    private val commitmentOpenMember = MemberName(Commitment::class.java.packageName, "open")
 
     override fun exp(expr: ExpressionNode): CodeBlock =
         when (expr) {
@@ -300,7 +300,7 @@ class PlainTextCodeGenerator(context: CodeGeneratorContext) :
     ): CodeBlock {
         val receiveBuilder = CodeBlock.builder()
         val clearTextTemp = context.newTemporary("clearTextTemp")
-        val clearTextCommitmentTemp = context.newTemporary("clearTextCommitmentTemp")
+        val clearTextCommittedTemp = context.newTemporary("clearTextCommitmentTemp")
         val hashCommitmentTemp = context.newTemporary("hashCommitmentTemp")
         if (sendProtocol != receiveProtocol) {
             val projection = ProtocolProjection(receiveProtocol, receivingHost)
@@ -437,24 +437,27 @@ class PlainTextCodeGenerator(context: CodeGeneratorContext) :
                     }
                     val cleartextSendEvent = cleartextCommitmentInputs.first()
 
-                    // TODO() - how can I specify the type of the commitment to be received here?
-                    // val commitmentType = typeTranslator(typeAnalysis.type(sender))
-                    // receive from commitment creator
                     receiveBuilder.addStatement(
                         "val %N = %L",
-                        clearTextCommitmentTemp,
-                        context.receive(commitmentClass.asTypeName(), cleartextSendEvent.send.host)
+                        clearTextCommittedTemp,
+                        context.receive(
+                            Committed::class.asTypeName().parameterizedBy(
+                                typeTranslator(typeAnalysis.type(sender))
+                            ),
+                            cleartextSendEvent.send.host
+                        )
                     )
 
                     receiveBuilder.addStatement(
-                        "var %N = %L.%M(%N)",
+                        "var %N = %L.open(%N)",
                         hashCommitmentTemp,
                         context.receive(
-                            commitmentClass.asTypeName(), // TODO - fix this?
+                            Commitment::class.asTypeName().parameterizedBy(
+                                typeTranslator(typeAnalysis.type(sender))
+                            ),
                             hashCommitmentInputs.first().send.host
                         ),
-                        commitmentOpenMember,
-                        clearTextCommitmentTemp
+                        clearTextCommittedTemp
                     )
 
                     hashCommitmentInputs = hashCommitmentInputs.minusElement(hashCommitmentInputs.first())
@@ -464,14 +467,14 @@ class PlainTextCodeGenerator(context: CodeGeneratorContext) :
 
                         // validate commitment with all hash holders
                         receiveBuilder.addStatement(
-                            "%N = %L.%M(%N)",
-                            hashCommitmentTemp,
+                            "%L.open(%N)",
                             context.receive(
-                                commitmentClass.asTypeName(), // TODO - fix this?
+                                Commitment::class.asTypeName().parameterizedBy(
+                                    typeTranslator(typeAnalysis.type(sender))
+                                ),
                                 hashCommitmentInput.send.host
                             ),
-                            commitmentOpenMember,
-                            clearTextCommitmentTemp
+                            clearTextCommittedTemp
                         )
                     }
                 }

@@ -3,7 +3,6 @@ package edu.cornell.cs.apl.viaduct.codegeneration
 import com.squareup.kotlinpoet.BOOLEAN
 import com.squareup.kotlinpoet.CodeBlock
 import com.squareup.kotlinpoet.INT
-import com.squareup.kotlinpoet.MemberName
 import com.squareup.kotlinpoet.STRING
 import com.squareup.kotlinpoet.TypeName
 import com.squareup.kotlinpoet.U_BYTE_ARRAY
@@ -54,7 +53,6 @@ class CommitmentProtocolCleartextGenerator(
     private val runtimeErrorClass = RuntimeError::class
 
     private val committedClassName = Committed::class
-    private val commitmentMember = MemberName(Committed::class.java.packageName, "commitment")
 
     override fun exp(expr: ExpressionNode): CodeBlock =
         when (expr) {
@@ -260,13 +258,12 @@ class CommitmentProtocolCleartextGenerator(
                         receiveBuilder.endControlFlow()
                     }
 
-//                    // create commitment
-//                    receiveBuilder.addStatement(
-//                        "val %N = %N.%M()",
-//                        commitTemp,
-//                        clearTextTemp,
-//                        commitmentMember
-//                    )
+                    // create commitment
+                    receiveBuilder.addStatement(
+                        "val %N = %N.commitment()",
+                        commitTemp,
+                        clearTextTemp
+                    )
 
                     for (hashHost in hashHosts) {
                         receiveBuilder.addStatement(
@@ -280,12 +277,6 @@ class CommitmentProtocolCleartextGenerator(
                             )
                         )
                     }
-//                    receiveBuilder.addStatement(
-//                        "val %N = %T(%N, %N)",
-//                        sender.temporary.value,
-//                        clearTextTemp,
-//                        hashInfoTemp
-//                    )
                 }
             }
         }

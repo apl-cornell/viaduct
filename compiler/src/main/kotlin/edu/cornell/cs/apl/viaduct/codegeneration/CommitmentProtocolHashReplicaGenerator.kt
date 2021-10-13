@@ -3,16 +3,15 @@ package edu.cornell.cs.apl.viaduct.codegeneration
 import com.squareup.kotlinpoet.BOOLEAN
 import com.squareup.kotlinpoet.CodeBlock
 import com.squareup.kotlinpoet.INT
-import com.squareup.kotlinpoet.MemberName
+import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import com.squareup.kotlinpoet.STRING
 import com.squareup.kotlinpoet.TypeName
 import com.squareup.kotlinpoet.U_BYTE_ARRAY
-import com.squareup.kotlinpoet.asTypeName
+import com.squareup.kotlinpoet.asClassName
 import edu.cornell.cs.apl.viaduct.analysis.NameAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.TypeAnalysis
 import edu.cornell.cs.apl.viaduct.errors.CodeGenerationError
 import edu.cornell.cs.apl.viaduct.protocols.Commitment
-import edu.cornell.cs.apl.viaduct.runtime.commitment.Committed
 import edu.cornell.cs.apl.viaduct.selection.CommunicationEvent
 import edu.cornell.cs.apl.viaduct.selection.ProtocolCommunication
 import edu.cornell.cs.apl.viaduct.syntax.Host
@@ -46,11 +45,6 @@ class CommitmentProtocolHashReplicaGenerator(
 ) : AbstractCodeGenerator(context) {
     private val typeAnalysis = TypeAnalysis.get(context.program)
     private val nameAnalysis = NameAnalysis.get(context.program)
-
-    // private val protocolAnalysis = ProtocolAnalysis(context.program, SimpleProtocolComposer)
-    // private val runtimeErrorClass = RuntimeError::class
-    private val commitmentMember = Committed::class
-    private val commitmentCreatorMember = MemberName(Committed::class.java.packageName, "commitment")
 
     override fun exp(expr: ExpressionNode): CodeBlock =
         when (expr) {
@@ -189,16 +183,16 @@ class CommitmentProtocolHashReplicaGenerator(
                     }
                 }
 
-                // is it always true that events will be of length one here?
                 else -> { // create commitment
                     receiveBuilder.addStatement(
-                        "val %N = %L.%M()",
+                        "val %N = %L",
                         context.newTemporary(commitmentTemp),
                         context.receive(
-                            commitmentMember.asTypeName(), // TODO - fix this?
+                            Commitment::class.asClassName().parameterizedBy(
+                                typeTranslator(typeAnalysis.type(sender))
+                            ),
                             events.first().send.host
-                        ),
-                        commitmentCreatorMember
+                        )
                     )
                 }
             }

@@ -42,11 +42,12 @@ enum class CostMode { MINIMIZE, MAXIMIZE }
 
 /**
  * This class performs splitting by using Z3. It operates as follows:
+ *
  * - First, it collects constraints on protocol selection from the [ProtocolFactory]. For each let or declaration,
  *      the factory outputs two things: first, it outputs a set of viable protocols for that variable. Second,
  *      it can output a number of custom constraints on selection for that variable which are forwarded to Z3.
  *      (For the simple factory, the custom constraints are trivial, as we have not yet constrained which protocols
- *      can talk to who.)
+ *      can talk to whom.)
  * - Second, it exports these constraints to Z3. The selection problem is encoded as follows:
  *      - We assign each possible viable protocol a unique integer index. Call this index i(p).
  *      - For each variable, we create a fresh integer constant. Call this constant c(v).
@@ -62,7 +63,7 @@ private class Z3Selection(
     private val program: ProgramNode,
     private val main: ProcessDeclarationNode,
     private val protocolFactory: ProtocolFactory,
-    private val protocolComposer: ProtocolComposer,
+    protocolComposer: ProtocolComposer,
     private val costEstimator: CostEstimator<IntegerCost>,
     private val ctx: Context,
     private val costMode: CostMode,
@@ -194,27 +195,21 @@ private class Z3Selection(
         // build variable and protocol maps
         val letNodes: Map<LetNode, IntExpr> =
             reachableFunctions
-                .flatMap { f -> f.letNodes() }
+                .flatMap { it.letNodes() }
                 .plus(main.letNodes())
-                .map { letNode: LetNode ->
-                    letNode to (ctx.mkFreshConst("t", ctx.intSort) as IntExpr)
-                }.toMap()
+                .associateWith { (ctx.mkFreshConst("t", ctx.intSort) as IntExpr) }
 
         val declarationNodes: Map<DeclarationNode, IntExpr> =
             reachableFunctions
-                .flatMap { f -> f.declarationNodes() }
+                .flatMap { it.declarationNodes() }
                 .plus(main.declarationNodes())
-                .map { decl: DeclarationNode ->
-                    decl to (ctx.mkFreshConst("t", ctx.intSort) as IntExpr)
-                }.toMap()
+                .associateWith { (ctx.mkFreshConst("t", ctx.intSort) as IntExpr) }
 
         val objectDeclarationArgumentNodes: Map<ObjectDeclarationArgumentNode, IntExpr> =
             reachableFunctions
-                .flatMap { f -> f.objectDeclarationArgumentNodes() }
+                .flatMap { it.objectDeclarationArgumentNodes() }
                 .plus(main.objectDeclarationArgumentNodes())
-                .map { decl ->
-                    decl to (ctx.mkFreshConst("t", ctx.intSort) as IntExpr)
-                }.toMap()
+                .associateWith { (ctx.mkFreshConst("t", ctx.intSort) as IntExpr) }
 
         val parameterNodes: Map<ParameterNode, IntExpr> =
             reachableFunctions.flatMap { function ->
@@ -224,9 +219,9 @@ private class Z3Selection(
             }.toMap()
 
         val pmap: BiMap<Protocol, Int> =
-            protocolFactory.protocols().map { it.protocol }.toSet().withIndex().map {
-                it.value to it.index
-            }.toMap().toBiMap()
+            protocolFactory.protocols().withIndex().associate {
+                it.value.protocol to it.index
+            }.toBiMap()
 
         val varMap: BiMap<FunctionVariable, IntExpr> =
             (

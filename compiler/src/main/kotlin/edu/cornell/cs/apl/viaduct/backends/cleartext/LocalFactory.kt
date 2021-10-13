@@ -4,7 +4,6 @@ import edu.cornell.cs.apl.viaduct.selection.ProtocolFactory
 import edu.cornell.cs.apl.viaduct.syntax.Host
 import edu.cornell.cs.apl.viaduct.syntax.HostTrustConfiguration
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
-import edu.cornell.cs.apl.viaduct.syntax.ProtocolName
 import edu.cornell.cs.apl.viaduct.syntax.SpecializedProtocol
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.DeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.LetNode
@@ -19,8 +18,6 @@ class LocalFactory(val program: ProgramNode) : ProtocolFactory {
     }
 
     override fun protocols(): List<SpecializedProtocol> = protocols
-
-    override fun availableProtocols(): Set<ProtocolName> = setOf(Local.protocolName)
 
     override fun viableProtocols(node: LetNode): Set<Protocol> =
         protocols().map { it.protocol }.toSet()

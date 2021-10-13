@@ -15,13 +15,11 @@ import edu.cornell.cs.apl.viaduct.syntax.Host
 import edu.cornell.cs.apl.viaduct.syntax.HostTrustConfiguration
 import edu.cornell.cs.apl.viaduct.syntax.Operator
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
-import edu.cornell.cs.apl.viaduct.syntax.ProtocolName
 import edu.cornell.cs.apl.viaduct.syntax.SpecializedProtocol
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.DeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ExpressionNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.IfNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.LetNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.LiteralNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.Node
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ObjectDeclarationArgumentNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.OperatorApplicationNode
@@ -90,8 +88,6 @@ class ZKPFactory(val program: ProgramNode) : ProtocolFactory {
             setOf()
         }
 
-    override fun availableProtocols(): Set<ProtocolName> = setOf(ZKP.protocolName)
-
     override fun viableProtocols(node: ParameterNode): Set<Protocol> =
         if (node.isApplicable()) {
             protocols(program).map { it.protocol }.toSet()
@@ -131,10 +127,11 @@ class ZKPFactory(val program: ProgramNode) : ProtocolFactory {
         }.ands()
 
     override fun guardVisibilityConstraint(protocol: Protocol, node: IfNode): SelectionConstraint =
-        when (node.guard) {
-            is LiteralNode -> Literal(true)
-
-            // turn off visibility check when the conditional can be muxed
-            is ReadNode -> Literal(!node.canMux())
+        when {
+            protocol is ZKP && node.guard is ReadNode ->
+                // Turn off visibility check when the conditional can be muxed.
+                Literal(!node.canMux())
+            else ->
+                super.guardVisibilityConstraint(protocol, node)
         }
 }

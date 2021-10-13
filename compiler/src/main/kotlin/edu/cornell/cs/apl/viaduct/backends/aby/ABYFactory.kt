@@ -15,14 +15,12 @@ import edu.cornell.cs.apl.viaduct.syntax.Host
 import edu.cornell.cs.apl.viaduct.syntax.HostTrustConfiguration
 import edu.cornell.cs.apl.viaduct.syntax.ObjectVariable
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
-import edu.cornell.cs.apl.viaduct.syntax.ProtocolName
 import edu.cornell.cs.apl.viaduct.syntax.SpecializedProtocol
 import edu.cornell.cs.apl.viaduct.syntax.datatypes.Get
 import edu.cornell.cs.apl.viaduct.syntax.datatypes.Vector
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.DeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.IfNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.LetNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.LiteralNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.OperatorApplicationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ParameterNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
@@ -75,9 +73,6 @@ class ABYFactory(program: ProgramNode) : ProtocolFactory {
     }
 
     override fun protocols(): List<SpecializedProtocol> = protocols
-
-    override fun availableProtocols(): Set<ProtocolName> =
-        setOf(ArithABY.protocolName, BoolABY.protocolName, YaoABY.protocolName)
 
     private fun LetNode.isApplicable(protocol: Protocol): Boolean {
         val operationCheck =
@@ -181,17 +176,14 @@ class ABYFactory(program: ProgramNode) : ProtocolFactory {
     }
 
     override fun guardVisibilityConstraint(protocol: Protocol, node: IfNode): SelectionConstraint =
-        when (node.guard) {
-            is LiteralNode -> Literal(true)
-
-            // turn off visibility check when the conditional can be muxed
-            is ReadNode -> {
-                // arith circuit cannot mux, so keep the check then
-                if (protocol is ArithABY) {
-                    Literal(true)
-                } else {
-                    Literal(!node.canMux())
-                }
-            }
+        when {
+            protocol is ArithABY ->
+                // Arithmetic circuits cannot mux, so keep the check.
+                Literal(true)
+            protocol is ABY && node.guard is ReadNode ->
+                // Turn off visibility check when the conditional can be muxed.
+                Literal(!node.canMux())
+            else ->
+                super.guardVisibilityConstraint(protocol, node)
         }
 }

@@ -4,6 +4,7 @@ import edu.cornell.cs.apl.viaduct.codegeneration.CodeGenerator
 import edu.cornell.cs.apl.viaduct.codegeneration.CodeGeneratorContext
 import edu.cornell.cs.apl.viaduct.codegeneration.unions
 import edu.cornell.cs.apl.viaduct.selection.ProtocolFactory
+import edu.cornell.cs.apl.viaduct.selection.filter
 import edu.cornell.cs.apl.viaduct.selection.unions
 import edu.cornell.cs.apl.viaduct.syntax.ProtocolName
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
@@ -51,3 +52,13 @@ fun Iterable<Backend>.unions(): Backend {
             backends.map { it.protocols to it.codeGenerator(context) }.unions()
     }
 }
+
+/** Restricts the given back end to only use protocols satisfying [predicate]. */
+fun Backend.filter(predicate: (ProtocolName) -> Boolean): Backend =
+    object : Backend by this {
+        override val protocols: Set<ProtocolName>
+            get() = this@filter.protocols.filter(predicate).toSet()
+
+        override fun protocolFactory(program: ProgramNode): ProtocolFactory =
+            this@filter.protocolFactory(program).filter { predicate(it.protocolName) }
+    }

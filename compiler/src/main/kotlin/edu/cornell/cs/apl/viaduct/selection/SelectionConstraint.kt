@@ -133,14 +133,14 @@ data class CostLessThanEqualTo(val lhs: SymbolicCost, val rhs: SymbolicCost) : S
 internal fun Boolean.implies(r: Boolean) = (!this) || r
 
 /** Given a protocol selection, evaluate the constraints. **/
-internal fun SelectionConstraint.evaluate(f: (FunctionName, Variable) -> Protocol): Boolean {
-    return when (this) {
+internal fun SelectionConstraint.evaluate(f: (FunctionName, Variable) -> Protocol): Boolean =
+    when (this) {
         is Literal -> literalValue
         is Implies -> lhs.evaluate(f).implies(rhs.evaluate(f))
-        is Or -> props.fold(false) { acc, prop -> acc || prop.evaluate(f) }
-        is And -> props.fold(false) { acc, prop -> acc && prop.evaluate(f) }
-        is VariableIn -> protocols.contains(f(variable.function, variable.variable))
+        is Or -> props.any { it.evaluate(f) }
+        is And -> props.all { it.evaluate(f) }
         is Not -> !(rhs.evaluate(f))
+        is VariableIn -> protocols.contains(f(variable.function, variable.variable))
         is VariableEquals -> f(var1.function, var1.variable) == f(var2.function, var2.variable)
 
         // TODO: ignore cost constraints for now
@@ -154,7 +154,6 @@ internal fun SelectionConstraint.evaluate(f: (FunctionName, Variable) -> Protoco
         // TODO: ignore guard visibility flags for now
         is GuardVisibilityFlag -> true
     }
-}
 
 internal fun List<SelectionConstraint>.assert(
     context: Set<SelectionConstraint>,

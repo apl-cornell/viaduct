@@ -75,3 +75,19 @@ fun Iterable<ProtocolFactory>.unions(): ProtocolFactory =
         override fun guardVisibilityConstraint(protocol: Protocol, node: IfNode): SelectionConstraint =
             factories.map { it.guardVisibilityConstraint(protocol, node) }.ands()
     }
+
+/** Restricts the given factory to protocols that satisfy [predicate]. */
+fun ProtocolFactory.filter(predicate: (Protocol) -> Boolean): ProtocolFactory =
+    object : ProtocolFactory by this {
+        override fun protocols(): List<SpecializedProtocol> =
+            this@filter.protocols().filter { predicate(it.protocol) }
+
+        override fun viableProtocols(node: LetNode): Set<Protocol> =
+            this@filter.viableProtocols(node).filter(predicate).toSet()
+
+        override fun viableProtocols(node: DeclarationNode): Set<Protocol> =
+            this@filter.viableProtocols(node).filter(predicate).toSet()
+
+        override fun viableProtocols(node: ParameterNode): Set<Protocol> =
+            this@filter.viableProtocols(node).filter(predicate).toSet()
+    }

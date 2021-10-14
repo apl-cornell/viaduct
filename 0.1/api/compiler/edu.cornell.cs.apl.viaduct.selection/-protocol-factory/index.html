@@ -23,30 +23,13 @@
           </div>
           <div class="cover ">
             <h1 class="cover"><span>Protocol</span><wbr><span><span>Factory</span></span></h1>
-            <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":compiler:dokkaHtmlPartial/main"><div class="symbol monospace">interface <a href="index.html">ProtocolFactory</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><p class="paragraph">This interface specifies factories for protocol selection. The role of a factory is twofold: First, it outputs the set of viable protocols which may be selected at that node. A protocol is viable for a node if it satisfies the selector's custom syntactic restrictions. Second, it outputs a constraint for that node (by default, the constraint is trivial). The constraints encode all of the other interdependencies present in protocol selection.</p></div></div>
+            <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":compiler:dokkaHtmlPartial/main"><div class="symbol monospace">interface <a href="index.html">ProtocolFactory</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><p class="paragraph">Generates a list of <a href="../../edu.cornell.cs.apl.viaduct.syntax/-protocol/index.html">Protocol</a>s that can implement a given <a href="../../edu.cornell.cs.apl.viaduct.syntax.intermediate/-node/index.html">Node</a>, along with constraints that specify when using these protocols is valid.</p><p class="paragraph">The factory needs to ensure protocols returned for a node can implement the operations in that node. However, it does not need to ensure the protocols have enough authority to implement the node securely.</p></div></div>
           </div>
           <div class="tabbedcontent">
-            <div class="tabs-section" tabs-section="tabs-section"><button class="section-tab" data-active="" data-togglable="Functions">Functions</button><button class="section-tab" data-togglable="Inheritors">Inheritors</button></div>
+            <div class="tabs-section" tabs-section="tabs-section"><button class="section-tab" data-active="" data-togglable="Functions">Functions</button><button class="section-tab" data-togglable="Extensions">Extensions</button><button class="section-tab" data-togglable="Inheritors">Inheritors</button></div>
             <div class="tabs-section-body">
               <h2 class="">Functions</h2>
-              <div class="table" data-togglable="Functions"><a data-name="988296551%2FFunctions%2F-971379511" anchor-label="availableProtocols" id="988296551%2FFunctions%2F-971379511" data-filterable-set=":compiler:dokkaHtmlPartial/main"></a>
-                <div class="table-row" data-filterable-current=":compiler:dokkaHtmlPartial/main" data-filterable-set=":compiler:dokkaHtmlPartial/main">
-                  <div class="main-subrow keyValue ">
-                    <div class=""><span class="inline-flex"><a href="available-protocols.html"><span>available</span><wbr><span><span>Protocols</span></span></a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="988296551%2FFunctions%2F-971379511"></span>
-                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
-                        </span></span></div>
-                    <div>
-                      <div class="title"><div class="divergent-group" data-filterable-current=":compiler:dokkaHtmlPartial/main" data-filterable-set=":compiler:dokkaHtmlPartial/main"><div class="with-platform-tags"><span class="pull-right"></span></div>
-
-  <div>
-    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":compiler:dokkaHtmlPartial/main"><div class="symbol monospace">abstract fun <a href="available-protocols.html">availableProtocols</a>(): <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-set/index.html">Set</a>&lt;<a href="../../edu.cornell.cs.apl.viaduct.syntax/-protocol-name/index.html">ProtocolName</a>&gt;<span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
-  </div>
-</div>
-</div>
-                    </div>
-                  </div>
-                </div>
-<a data-name="1303511191%2FFunctions%2F-971379511" anchor-label="constraint" id="1303511191%2FFunctions%2F-971379511" data-filterable-set=":compiler:dokkaHtmlPartial/main"></a>
+              <div class="table" data-togglable="Functions"><a data-name="1303511191%2FFunctions%2F-971379511" anchor-label="constraint" id="1303511191%2FFunctions%2F-971379511" data-filterable-set=":compiler:dokkaHtmlPartial/main"></a>
                 <div class="table-row" data-filterable-current=":compiler:dokkaHtmlPartial/main" data-filterable-set=":compiler:dokkaHtmlPartial/main">
                   <div class="main-subrow keyValue ">
                     <div class=""><span class="inline-flex"><a href="constraint.html"><span><span>constraint</span></span></a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1303511191%2FFunctions%2F-971379511"></span>
@@ -116,58 +99,68 @@
                 </div>
               </div>
               <h2 class="">Inheritors</h2>
-              <div class="table" data-togglable="Inheritors"><a data-name="1416190136%2FInheritors%2F-971379511" anchor-label="ABYFactory" id="1416190136%2FInheritors%2F-971379511" data-filterable-set=":compiler:dokkaHtmlPartial/main"></a>
+              <div class="table" data-togglable="Inheritors"><a data-name="1646471133%2FInheritors%2F-971379511" anchor-label="ABYFactory" id="1646471133%2FInheritors%2F-971379511" data-filterable-set=":compiler:dokkaHtmlPartial/main"></a>
                 <div class="table-row" data-filterable-current=":compiler:dokkaHtmlPartial/main" data-filterable-set=":compiler:dokkaHtmlPartial/main">
                   <div class="main-subrow keyValue ">
-                    <div class=""><span class="inline-flex"><a href="../-a-b-y-factory/index.html">ABYFactory</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1416190136%2FInheritors%2F-971379511"></span>
+                    <div class=""><span class="inline-flex"><a href="../../edu.cornell.cs.apl.viaduct.backends.aby/-a-b-y-factory/index.html">ABYFactory</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1646471133%2FInheritors%2F-971379511"></span>
                           <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                         </span></span></div>
                     <div></div>
                   </div>
                 </div>
-<a data-name="-2101898813%2FInheritors%2F-971379511" anchor-label="CommitmentFactory" id="-2101898813%2FInheritors%2F-971379511" data-filterable-set=":compiler:dokkaHtmlPartial/main"></a>
+<a data-name="-1696991598%2FInheritors%2F-971379511" anchor-label="LocalFactory" id="-1696991598%2FInheritors%2F-971379511" data-filterable-set=":compiler:dokkaHtmlPartial/main"></a>
                 <div class="table-row" data-filterable-current=":compiler:dokkaHtmlPartial/main" data-filterable-set=":compiler:dokkaHtmlPartial/main">
                   <div class="main-subrow keyValue ">
-                    <div class=""><span class="inline-flex"><a href="../-commitment-factory/index.html">CommitmentFactory</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-2101898813%2FInheritors%2F-971379511"></span>
+                    <div class=""><span class="inline-flex"><a href="../../edu.cornell.cs.apl.viaduct.backends.cleartext/-local-factory/index.html">LocalFactory</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1696991598%2FInheritors%2F-971379511"></span>
                           <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                         </span></span></div>
                     <div></div>
                   </div>
                 </div>
-<a data-name="613231979%2FInheritors%2F-971379511" anchor-label="LocalFactory" id="613231979%2FInheritors%2F-971379511" data-filterable-set=":compiler:dokkaHtmlPartial/main"></a>
+<a data-name="1790960371%2FInheritors%2F-971379511" anchor-label="ReplicationFactory" id="1790960371%2FInheritors%2F-971379511" data-filterable-set=":compiler:dokkaHtmlPartial/main"></a>
                 <div class="table-row" data-filterable-current=":compiler:dokkaHtmlPartial/main" data-filterable-set=":compiler:dokkaHtmlPartial/main">
                   <div class="main-subrow keyValue ">
-                    <div class=""><span class="inline-flex"><a href="../-local-factory/index.html">LocalFactory</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="613231979%2FInheritors%2F-971379511"></span>
+                    <div class=""><span class="inline-flex"><a href="../../edu.cornell.cs.apl.viaduct.backends.cleartext/-replication-factory/index.html">ReplicationFactory</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1790960371%2FInheritors%2F-971379511"></span>
                           <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                         </span></span></div>
                     <div></div>
                   </div>
                 </div>
-<a data-name="-229351545%2FInheritors%2F-971379511" anchor-label="UnionProtocolFactory" id="-229351545%2FInheritors%2F-971379511" data-filterable-set=":compiler:dokkaHtmlPartial/main"></a>
+<a data-name="2147053387%2FInheritors%2F-971379511" anchor-label="CommitmentFactory" id="2147053387%2FInheritors%2F-971379511" data-filterable-set=":compiler:dokkaHtmlPartial/main"></a>
                 <div class="table-row" data-filterable-current=":compiler:dokkaHtmlPartial/main" data-filterable-set=":compiler:dokkaHtmlPartial/main">
                   <div class="main-subrow keyValue ">
-                    <div class=""><span class="inline-flex"><a href="../-union-protocol-factory/index.html">UnionProtocolFactory</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-229351545%2FInheritors%2F-971379511"></span>
+                    <div class=""><span class="inline-flex"><a href="../../edu.cornell.cs.apl.viaduct.backends.commitment/-commitment-factory/index.html">CommitmentFactory</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="2147053387%2FInheritors%2F-971379511"></span>
                           <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                         </span></span></div>
                     <div></div>
                   </div>
                 </div>
-<a data-name="165335820%2FInheritors%2F-971379511" anchor-label="ReplicationFactory" id="165335820%2FInheritors%2F-971379511" data-filterable-set=":compiler:dokkaHtmlPartial/main"></a>
+<a data-name="-2098240981%2FInheritors%2F-971379511" anchor-label="ZKPFactory" id="-2098240981%2FInheritors%2F-971379511" data-filterable-set=":compiler:dokkaHtmlPartial/main"></a>
                 <div class="table-row" data-filterable-current=":compiler:dokkaHtmlPartial/main" data-filterable-set=":compiler:dokkaHtmlPartial/main">
                   <div class="main-subrow keyValue ">
-                    <div class=""><span class="inline-flex"><a href="../-replication-factory/index.html">ReplicationFactory</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="165335820%2FInheritors%2F-971379511"></span>
+                    <div class=""><span class="inline-flex"><a href="../../edu.cornell.cs.apl.viaduct.backends.zkp/-z-k-p-factory/index.html">ZKPFactory</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-2098240981%2FInheritors%2F-971379511"></span>
                           <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                         </span></span></div>
                     <div></div>
                   </div>
                 </div>
-<a data-name="421288863%2FInheritors%2F-971379511" anchor-label="ZKPFactory" id="421288863%2FInheritors%2F-971379511" data-filterable-set=":compiler:dokkaHtmlPartial/main"></a>
+              </div>
+              <h2 class="tabbedcontent">Extensions</h2>
+              <div class="table" data-togglable="Extensions"><a data-name="1786964917%2FExtensions%2F-971379511" anchor-label="filter" id="1786964917%2FExtensions%2F-971379511" data-filterable-set=":compiler:dokkaHtmlPartial/main"></a>
                 <div class="table-row" data-filterable-current=":compiler:dokkaHtmlPartial/main" data-filterable-set=":compiler:dokkaHtmlPartial/main">
                   <div class="main-subrow keyValue ">
-                    <div class=""><span class="inline-flex"><a href="../-z-k-p-factory/index.html">ZKPFactory</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="421288863%2FInheritors%2F-971379511"></span>
+                    <div class=""><span class="inline-flex"><a href="../filter.html"><span><span>filter</span></span></a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1786964917%2FExtensions%2F-971379511"></span>
                           <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                         </span></span></div>
-                    <div></div>
+                    <div>
+                      <div class="title"><div class="divergent-group" data-filterable-current=":compiler:dokkaHtmlPartial/main" data-filterable-set=":compiler:dokkaHtmlPartial/main"><div class="with-platform-tags"><span class="pull-right"></span></div>
+
+  <div>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":compiler:dokkaHtmlPartial/main"><div class="symbol monospace">fun <a href="index.html">ProtocolFactory</a>.<a href="../filter.html">filter</a>(predicate: (<a href="../../edu.cornell.cs.apl.viaduct.syntax/-protocol/index.html">Protocol</a>) -&gt; <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html">Boolean</a>): <a href="index.html">ProtocolFactory</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+  </div>
+<div class="brief "><p class="paragraph">Restricts the given factory to protocols that satisfy <a href="../filter.html">predicate</a>.</p></div></div>
+</div>
+                    </div>
                   </div>
                 </div>
               </div>

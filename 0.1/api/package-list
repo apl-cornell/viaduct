@@ -8,6 +8,11 @@ module:compiler
 edu.cornell.cs.apl.viaduct.algebra
 edu.cornell.cs.apl.viaduct.algebra.solver
 edu.cornell.cs.apl.viaduct.analysis
+edu.cornell.cs.apl.viaduct.backends
+edu.cornell.cs.apl.viaduct.backends.aby
+edu.cornell.cs.apl.viaduct.backends.cleartext
+edu.cornell.cs.apl.viaduct.backends.commitment
+edu.cornell.cs.apl.viaduct.backends.zkp
 edu.cornell.cs.apl.viaduct.codegeneration
 edu.cornell.cs.apl.viaduct.errors
 edu.cornell.cs.apl.viaduct.parsing

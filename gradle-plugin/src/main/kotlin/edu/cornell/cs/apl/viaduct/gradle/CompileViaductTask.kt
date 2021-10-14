@@ -1,8 +1,8 @@
 package edu.cornell.cs.apl.viaduct.gradle
 
 import edu.cornell.cs.apl.viaduct.analysis.main
+import edu.cornell.cs.apl.viaduct.backends.Backend
 import edu.cornell.cs.apl.viaduct.codegeneration.BackendCodeGenerator
-import edu.cornell.cs.apl.viaduct.codegeneration.PlainTextCodeGenerator
 import edu.cornell.cs.apl.viaduct.errors.CompilationError
 import edu.cornell.cs.apl.viaduct.parsing.SourceFile
 import edu.cornell.cs.apl.viaduct.parsing.parse
@@ -15,12 +15,12 @@ import edu.cornell.cs.apl.viaduct.selection.SimpleCostEstimator
 import edu.cornell.cs.apl.viaduct.selection.SimpleCostRegime
 import edu.cornell.cs.apl.viaduct.selection.SimpleProtocolComposer
 import edu.cornell.cs.apl.viaduct.selection.selectProtocolsWithZ3
-import edu.cornell.cs.apl.viaduct.selection.simpleProtocolFactory
 import edu.cornell.cs.apl.viaduct.selection.validateProtocolAssignment
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProcessDeclarationNode
 import org.gradle.api.DefaultTask
 import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.file.FileType
+import org.gradle.api.provider.Property
 import org.gradle.api.tasks.InputDirectory
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.OutputDirectory
@@ -38,6 +38,9 @@ abstract class CompileViaductTask : DefaultTask() {
 
     @get:OutputDirectory
     abstract val outputDirectory: DirectoryProperty
+
+    @get:Internal
+    abstract val backend: Property<Backend>
 
     @Internal
     override fun getGroup(): String =
@@ -89,7 +92,7 @@ abstract class CompileViaductTask : DefaultTask() {
         program.check()
 
         // TODO: don't bake in cost regime
-        val protocolFactory = simpleProtocolFactory(program)
+        val protocolFactory = backend.get().protocolFactory(program)
         val protocolComposer = SimpleProtocolComposer
         val costEstimator = SimpleCostEstimator(protocolComposer, SimpleCostRegime.WAN)
 
@@ -119,7 +122,7 @@ abstract class CompileViaductTask : DefaultTask() {
 
         val backendCodeGenerator = BackendCodeGenerator(
             annotatedProgram,
-            listOf(::PlainTextCodeGenerator),
+            listOf(backend.get()::codeGenerator),
             fileName,
             packageName
         )

@@ -3,21 +3,17 @@ package edu.cornell.cs.apl.viaduct.codegeneration
 import com.squareup.kotlinpoet.BOOLEAN
 import com.squareup.kotlinpoet.CodeBlock
 import com.squareup.kotlinpoet.INT
+import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import com.squareup.kotlinpoet.STRING
 import com.squareup.kotlinpoet.TypeName
 import com.squareup.kotlinpoet.U_BYTE_ARRAY
+import com.squareup.kotlinpoet.asClassName
 import edu.cornell.cs.apl.viaduct.analysis.NameAnalysis
-import edu.cornell.cs.apl.viaduct.analysis.ProtocolAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.TypeAnalysis
 import edu.cornell.cs.apl.viaduct.errors.CodeGenerationError
-import edu.cornell.cs.apl.viaduct.errors.IllegalInternalCommunicationError
-import edu.cornell.cs.apl.viaduct.errors.RuntimeError
-import edu.cornell.cs.apl.viaduct.errors.ViaductInterpreterError
 import edu.cornell.cs.apl.viaduct.protocols.Commitment
-import edu.cornell.cs.apl.viaduct.runtime.commitment.Committed
 import edu.cornell.cs.apl.viaduct.selection.CommunicationEvent
 import edu.cornell.cs.apl.viaduct.selection.ProtocolCommunication
-import edu.cornell.cs.apl.viaduct.selection.SimpleProtocolComposer
 import edu.cornell.cs.apl.viaduct.syntax.Host
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
 import edu.cornell.cs.apl.viaduct.syntax.ProtocolProjection
@@ -44,36 +40,24 @@ import edu.cornell.cs.apl.viaduct.syntax.types.StringType
 import edu.cornell.cs.apl.viaduct.syntax.types.ValueType
 import edu.cornell.cs.apl.viaduct.syntax.types.VectorType
 
-class CommitmentProtocolCleartextGenerator(
+class CommitmentHolderGenerator(
     context: CodeGeneratorContext
 ) : AbstractCodeGenerator(context) {
     private val typeAnalysis = TypeAnalysis.get(context.program)
     private val nameAnalysis = NameAnalysis.get(context.program)
-    private val protocolAnalysis = ProtocolAnalysis(context.program, SimpleProtocolComposer)
-    private val runtimeErrorClass = RuntimeError::class
-
-    private val committedClassName = Committed::class
 
     override fun exp(expr: ExpressionNode): CodeBlock =
         when (expr) {
-            is LiteralNode -> CodeBlock.of(
-                "%T(%L)",
-                committedClassName,
-                expr.value
-            )
+            is LiteralNode -> throw CodeGenerationError("Commitment: Cannot commit literals")
 
-            is ReadNode ->
-                CodeBlock.of(
-                    "%N",
-                    context.kotlinName(
-                        expr.temporary.value,
-                        protocolAnalysis.primaryProtocol(expr)
-                    )
-                )
+            is ReadNode -> CodeBlock.of(
+                "%L",
+                expr.temporary.value
+            )
 
             is DowngradeNode -> exp(expr.expression)
 
-            is QueryNode -> {
+            is QueryNode ->
                 when (this.typeAnalysis.type(nameAnalysis.declaration(expr))) {
                     is VectorType -> {
                         when (expr.query.value) {
@@ -102,22 +86,20 @@ class CommitmentProtocolCleartextGenerator(
 
                     else -> throw CodeGenerationError("unknown AST object", expr)
                 }
-            }
 
             is OperatorApplicationNode ->
                 throw CodeGenerationError("Commitment: cannot perform operations on committed values")
 
+            is ReceiveNode -> TODO()
+
             is InputNode ->
                 throw CodeGenerationError("Commitment: cannot perform I/O in non-local protocol")
-
-            is ReceiveNode ->
-                throw IllegalInternalCommunicationError(expr)
         }
 
     override fun let(protocol: Protocol, stmt: LetNode): CodeBlock =
         CodeBlock.of(
-            "val %N = %L",
-            context.kotlinName(stmt.temporary.value, protocol),
+            "var %N = %L",
+            stmt.temporary.value,
             exp(stmt.value)
         )
 
@@ -129,11 +111,11 @@ class CommitmentProtocolCleartextGenerator(
         TODO("Not yet implemented")
     }
 
-    override fun output(protocol: Protocol, stmt: OutputNode): CodeBlock {
-        throw ViaductInterpreterError("Commitment: cannot perform I/O in non-local protocol")
-    }
+    override fun output(protocol: Protocol, stmt: OutputNode): CodeBlock =
+        throw CodeGenerationError("Commitment: cannot perform I/O in non-local protocol")
 
-    override fun guard(protocol: Protocol, expr: AtomicExpressionNode): CodeBlock = exp(expr)
+    override fun guard(protocol: Protocol, expr: AtomicExpressionNode): CodeBlock =
+        throw CodeGenerationError("Commitment: cannot use committed value as a guard")
 
     private fun typeTranslator(viaductType: ValueType): TypeName =
         when (viaductType) {
@@ -152,21 +134,22 @@ class CommitmentProtocolCleartextGenerator(
         events: ProtocolCommunication
     ): CodeBlock {
         val sendBuilder = CodeBlock.builder()
-        if (sendProtocol != receiveProtocol) {
-            val relevantEvents: Set<CommunicationEvent> =
-                events.getProjectionSends(ProtocolProjection(sendProtocol, sendingHost))
 
-            for (event in relevantEvents) {
+        // here, the interpreter checks for the available protocols, is this necessary here?
+        val relevantEvents: Set<CommunicationEvent> =
+            events.getProjectionSends(
+                ProtocolProjection(sendProtocol, sendingHost),
+                Commitment.OPEN_COMMITMENT_OUTPUT
+            )
 
-                // send temporary containing hash value
-                sendBuilder.addStatement(
-                    "%L",
-                    context.send(
-                        CodeBlock.of("%L", context.kotlinName(sender.temporary.value, sendProtocol)),
-                        event.recv.host
-                    )
+        for (event in relevantEvents) {
+            sendBuilder.addStatement(
+                "%L",
+                context.send(
+                    CodeBlock.of("%L", sender.temporary.value),
+                    event.recv.host
                 )
-            }
+            )
         }
         return sendBuilder.build()
     }
@@ -178,105 +161,39 @@ class CommitmentProtocolCleartextGenerator(
         receiveProtocol: Protocol,
         events: ProtocolCommunication
     ): CodeBlock {
+
         val receiveBuilder = CodeBlock.builder()
         val projection = ProtocolProjection(receiveProtocol, receivingHost)
-        val hashHosts: Set<Host> = (projection.protocol as Commitment).hashHosts
+        val commitmentTemp = context.newTemporary("commitment")
         val clearTextTemp = context.newTemporary("clearTextTemp")
-        val commitTemp = context.newTemporary("commitment")
         if (sendProtocol != receiveProtocol) {
             when {
                 events.any { event -> event.recv.id == Commitment.CLEARTEXT_INPUT } -> {
-                    var relevantEvents =
+                    val relevantEvents =
                         events.getHostReceives(projection.host, Commitment.CLEARTEXT_INPUT)
-
-                    if (relevantEvents.isNotEmpty()) {
+                    for (event in relevantEvents) {
                         receiveBuilder.addStatement(
                             "val %N = %L",
-                            clearTextTemp,
-                            context.receive(
-                                typeTranslator(typeAnalysis.type(sender)),
-                                relevantEvents.first().send.host
-                            )
-                        )
-                        relevantEvents = relevantEvents.minusElement(relevantEvents.first())
-                    }
-
-                    // receive from the rest of the hosts and compare against clearTextValue
-                    for (event in relevantEvents) {
-
-                        // check to make sure that you got the same data from all hosts
-                        receiveBuilder.beginControlFlow(
-                            "if (%N != %L)",
-                            clearTextTemp,
+                            context.newTemporary(clearTextTemp),
                             context.receive(
                                 typeTranslator(typeAnalysis.type(sender)),
                                 event.send.host
                             )
                         )
-                        receiveBuilder.addStatement(
-                            "throw %T(%S)",
-                            runtimeErrorClass,
-                            "Commitment Cleartext : received different values"
-                        )
-                        receiveBuilder.endControlFlow()
                     }
                 }
 
-                else -> {
-                    var cleartextInputEvents: Set<CommunicationEvent> =
-                        events.getProjectionReceives(projection, Commitment.INPUT)
-
-                    if (cleartextInputEvents.isNotEmpty()) {
-                        receiveBuilder.addStatement(
-                            "val %N = %L",
-                            clearTextTemp,
-                            context.receive(
-                                typeTranslator(typeAnalysis.type(sender)),
-                                cleartextInputEvents.first().send.host
-                            )
-                        )
-                        cleartextInputEvents = cleartextInputEvents.minusElement(cleartextInputEvents.first())
-                    }
-
-                    // receive from the rest of the hosts and compare against clearTextValue
-                    for (event in cleartextInputEvents) {
-
-                        // check to make sure that you got the same data from all hosts
-                        receiveBuilder.beginControlFlow(
-                            "if (%N != %L)",
-                            clearTextTemp,
-                            context.receive(
-                                typeTranslator(typeAnalysis.type(sender)),
-                                event.send.host
-                            )
-                        )
-                        receiveBuilder.addStatement(
-                            "throw %T(%S)",
-                            runtimeErrorClass,
-                            "Commitment Cleartext : received different values"
-                        )
-                        receiveBuilder.endControlFlow()
-                    }
-
-                    // create commitment
+                else -> { // create commitment
                     receiveBuilder.addStatement(
-                        "val %N = %N.commitment()",
-                        commitTemp,
-                        clearTextTemp
-                    )
-
-                    for (hashHost in hashHosts) {
-                        receiveBuilder.addStatement(
-                            "%L",
-                            context.send(
-                                CodeBlock.of(
-                                    "%L",
-                                    commitTemp
-                                ),
-                                hashHost
-                            )
+                        "val %N = %L",
+                        context.newTemporary(commitmentTemp),
+                        context.receive(
+                            Commitment::class.asClassName().parameterizedBy(
+                                typeTranslator(typeAnalysis.type(sender))
+                            ),
+                            events.first().send.host
                         )
-                    }
+                    )
                 }
             }
         }

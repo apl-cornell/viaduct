@@ -12,10 +12,7 @@ import edu.cornell.cs.apl.viaduct.analysis.letNodes
 import edu.cornell.cs.apl.viaduct.analysis.main
 import edu.cornell.cs.apl.viaduct.backend.aby.ABYMuxPostprocessor
 import edu.cornell.cs.apl.viaduct.backend.zkp.ZKPMuxPostprocessor
-import edu.cornell.cs.apl.viaduct.codegeneration.BackendCodeGenerator
-import edu.cornell.cs.apl.viaduct.codegeneration.CodeGenerator
-import edu.cornell.cs.apl.viaduct.codegeneration.CodeGeneratorContext
-import edu.cornell.cs.apl.viaduct.codegeneration.PlainTextCodeGenerator
+import edu.cornell.cs.apl.viaduct.codegeneration.viaductProgramStringGenerator
 import edu.cornell.cs.apl.viaduct.passes.ProgramPostprocessorRegistry
 import edu.cornell.cs.apl.viaduct.passes.annotateWithProtocols
 import edu.cornell.cs.apl.viaduct.passes.check
@@ -167,17 +164,15 @@ class Compile : CliktCommand(help = "Compile ideal protocol to secure distribute
         val postprocessedProgram = postprocessor.postprocess(annotatedProgram)
 
         if (compileKotlin) {
-
-            // TODO - figure out best way to let code generators know which protocols it is responsible for
-            val backendCodeGenerator = BackendCodeGenerator(
-                postprocessedProgram,
-                listOf<(context: CodeGeneratorContext) -> CodeGenerator>(::PlainTextCodeGenerator),
-                input!!.name.substringBefore('.'),
-                "src"
+            output.println(
+                Document(
+                    viaductProgramStringGenerator(
+                        postprocessedProgram,
+                        input!!.name.substringBefore('.'),
+                        "src"
+                    )
+                )
             )
-
-            val kotlin = backendCodeGenerator.generate()
-            output.println(Document(kotlin))
         } else {
             output.println(postprocessedProgram)
         }

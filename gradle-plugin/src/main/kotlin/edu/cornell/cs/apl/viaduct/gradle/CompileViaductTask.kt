@@ -1,8 +1,7 @@
 package edu.cornell.cs.apl.viaduct.gradle
 
 import edu.cornell.cs.apl.viaduct.analysis.main
-import edu.cornell.cs.apl.viaduct.codegeneration.BackendCodeGenerator
-import edu.cornell.cs.apl.viaduct.codegeneration.PlainTextCodeGenerator
+import edu.cornell.cs.apl.viaduct.codegeneration.viaductProgramStringGenerator
 import edu.cornell.cs.apl.viaduct.errors.CompilationError
 import edu.cornell.cs.apl.viaduct.parsing.SourceFile
 import edu.cornell.cs.apl.viaduct.parsing.parse
@@ -117,14 +116,7 @@ abstract class CompileViaductTask : DefaultTask() {
 
         val annotatedProgram = program.annotateWithProtocols(protocolAssignment)
 
-        val backendCodeGenerator = BackendCodeGenerator(
-            annotatedProgram,
-            listOf(::PlainTextCodeGenerator),
-            fileName,
-            packageName
-        )
-
         // TODO: code generator should return a KotlinPoet class
-        return backendCodeGenerator.generate()
+        return viaductProgramStringGenerator(annotatedProgram, fileName, packageName)
     }
 }

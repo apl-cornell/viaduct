@@ -77,14 +77,14 @@ internal class CodeGeneratorTest {
          val postprocessedProgram = postprocessor.postprocess(annotatedProgram)
          **/
 
-        val backendCodeGenerator = BackendCodeGenerator(
-            annotatedProgram,
-            listOf<(context: CodeGeneratorContext) -> CodeGenerator>(::PlainTextCodeGenerator),
-            file.name.substringBefore('.'),
-            "src"
+        println(
+            Document(
+                viaductProgramStringGenerator(
+                    annotatedProgram,
+                    file.name.substringBefore('.'),
+                    "src"
+                )
+            ).print()
         )
-
-        backendCodeGenerator.generate()
-        println(Document(backendCodeGenerator.generate()).print())
     }
 }

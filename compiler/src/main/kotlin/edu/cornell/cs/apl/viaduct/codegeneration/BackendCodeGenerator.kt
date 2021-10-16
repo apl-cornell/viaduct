@@ -13,6 +13,7 @@ import edu.cornell.cs.apl.viaduct.analysis.NameAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.ProtocolAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.main
 import edu.cornell.cs.apl.viaduct.errors.CodeGenerationError
+import edu.cornell.cs.apl.viaduct.protocols.Commitment
 import edu.cornell.cs.apl.viaduct.protocols.Local
 import edu.cornell.cs.apl.viaduct.protocols.Replication
 import edu.cornell.cs.apl.viaduct.runtime.Boxed
@@ -41,76 +42,36 @@ import edu.cornell.cs.apl.viaduct.util.FreshNameGenerator
 
 class BackendCodeGenerator(
     private val program: ProgramNode,
+    private val host: Host,
     codeGenerators: List<(context: CodeGeneratorContext) -> CodeGenerator>,
-    private val fileName: String,
-    private val packageName: String
 ) {
     private val codeGeneratorMap: Map<Protocol, CodeGenerator>
     private val nameAnalysis = NameAnalysis.get(program)
     private val protocolAnalysis = ProtocolAnalysis(program, SimpleProtocolComposer)
-    private val context = Context(program)
+    private val context = Context(program, host)
 
     init {
         val allProtocols = protocolAnalysis.participatingProtocols(program)
         val initGeneratorMap: MutableMap<Protocol, CodeGenerator> = mutableMapOf()
 
-        // for now, assign all protocols to use plaintext
         for (protocol in allProtocols) {
             if (protocol is Replication || protocol is Local)
                 initGeneratorMap[protocol] = codeGenerators[0](context)
-            else
-                throw CodeGenerationError("unsupported protocol for plaintext code generation")
+            if (protocol is Commitment)
+                initGeneratorMap[protocol] = CommitmentDispatchCodeGenerator(
+                    host,
+                    codeGenerators[1](context),
+                    codeGenerators[2](context)
+                )
         }
         codeGeneratorMap = initGeneratorMap
-
-        // TODO - not sure if we need these checks or what this will look like until we have support for multiple protocols
-
-//        val currentProtocols: MutableSet<Protocol> = mutableSetOf()
-//
-//        for (protocol in allProtocols) {
-//            initGeneratorMap[protocol] = codeGenerators[0]
-//        }
-//
-//        for (codeGenerator in codeGenerators) {
-//            for (protocol in codeGenerator.availableProtocols) {
-//                if (currentProtocols.contains(protocol)) {
-//                    throw CodeGenerationError("Code Generation: multiple code generators for protocol ${protocol.asDocument.print()}")
-//                } else {
-//                    currentProtocols.add(protocol)
-//                    initGeneratorMap[protocol] = codeGenerator
-//                }
-//            }
-//        }
-//        val hostParticipatingProtocols = protocolAnalysis.participatingProtocols(program)
-//
-//        for (protocol in hostParticipatingProtocols) {
-//            if (!currentProtocols.contains(protocol)) {
-//                throw CodeGenerationError("Code Generation: No backend for ${protocol.protocolName}")
-//            }
     }
 
-    private fun addHostDeclarations(fileBuilder: FileSpec.Builder) {
-        // add a global host object for each host
-        for (host: Host in this.program.hosts) {
-            fileBuilder.addProperty(
-                PropertySpec.builder(host.name, Host::class)
-                    .initializer(
-                        CodeBlock.of(
-                            "%T(%S)",
-                            Host::class,
-                            host.name
-                        )
-                    )
-                    .build()
-            )
-        }
-    }
-
-    private fun generateHostFunction(
+    fun generateHostFunction(
         host: Host,
         hostFunName: String,
         mainBody: BlockNode
-    ): FunSpec.Builder {
+    ): FunSpec {
         // for each host, create a function that they call to run the program
         val hostFunctionBuilder = FunSpec.builder(hostFunName).addModifiers(KModifier.PRIVATE, KModifier.SUSPEND)
 
@@ -119,50 +80,7 @@ class BackendCodeGenerator(
 
         // generate code for [host]'s role in [this.program]
         generate(hostFunctionBuilder, mainBody, host)
-        return hostFunctionBuilder
-    }
-
-    fun generate(): String {
-        val mainBody = program.main.body
-
-        // create a main file builder, main function builder
-        val fileBuilder = FileSpec.builder(packageName, this.fileName)
-
-        // add top level declarations to main file
-        addHostDeclarations(fileBuilder)
-
-        val mainFunctionBuilder = FunSpec.builder("main").addModifiers(KModifier.SUSPEND)
-        mainFunctionBuilder.addParameter("host", Host::class)
-        mainFunctionBuilder.addParameter("runtime", Runtime::class)
-
-        val hostFunNameMap: Map<Host, String> =
-            this.program.hosts.associateWith { context.freshNameGenerator.getFreshName(it.name) }
-
-        // create a function for each host to run
-        for (entry in hostFunNameMap)
-            fileBuilder.addFunction(
-                generateHostFunction(
-                    entry.key,
-                    entry.value,
-                    mainBody
-                ).build()
-            )
-
-        // create switch statement in main method so program can be run on any host
-        mainFunctionBuilder.beginControlFlow("when (host)")
-        for (entry in hostFunNameMap) {
-            mainFunctionBuilder.addStatement(
-                "%N -> %N(%N)",
-                entry.key.name,
-                entry.value,
-                "runtime"
-            )
-        }
-
-        mainFunctionBuilder.endControlFlow()
-        fileBuilder.addFunction(mainFunctionBuilder.build())
-
-        return fileBuilder.build().toString()
+        return hostFunctionBuilder.build()
     }
 
     fun generate(
@@ -307,7 +225,11 @@ class BackendCodeGenerator(
         }
     }
 
-    private class Context(override val program: ProgramNode) : CodeGeneratorContext {
+    private class Context(
+        override val program: ProgramNode,
+        override val host: Host
+    ) :
+        CodeGeneratorContext {
         private var tempMap: MutableMap<Pair<Temporary, Protocol>, String> = mutableMapOf()
         private var varMap: MutableMap<ObjectVariable, String> = mutableMapOf()
 
@@ -336,4 +258,86 @@ class BackendCodeGenerator(
         override fun send(value: CodeBlock, receiver: Host): CodeBlock =
             CodeBlock.of("%N.%M(%L, %N)", "runtime", sendMember, value, receiver.name)
     }
+}
+
+private fun addHostDeclarations(fileBuilder: FileSpec.Builder, program: ProgramNode) {
+    // add a global host object for each host
+    for (host: Host in program.hosts) {
+        fileBuilder.addProperty(
+            PropertySpec.builder(host.name, Host::class)
+                .initializer(
+                    CodeBlock.of(
+                        "%T(%S)",
+                        Host::class,
+                        host.name
+                    )
+                )
+                .build()
+        )
+    }
+}
+
+fun viaductProgramStringGenerator(
+    program: ProgramNode,
+    fileName: String,
+    packageName: String
+): String = viaductProgramFileSpecGenerator(program, fileName, packageName).toString()
+
+fun viaductProgramFileSpecGenerator(
+    program: ProgramNode,
+    fileName: String,
+    packageName: String
+): FileSpec {
+
+    val mainBody = program.main.body
+
+    // create a main file builder, main function builder
+    val fileBuilder = FileSpec.builder(packageName, fileName)
+
+    // add top level declarations to main file
+    addHostDeclarations(fileBuilder, program)
+
+    val mainFunctionBuilder = FunSpec.builder("main").addModifiers(KModifier.SUSPEND)
+    mainFunctionBuilder.addParameter("host", Host::class)
+    mainFunctionBuilder.addParameter("runtime", Runtime::class)
+
+    // TODO - figure out right way to get unique function names here
+    val hostFunNameMap: Map<Host, String> = program.hosts.associateWith { it.name + "function" }
+
+    // create a function for each host to run
+    for (entry in hostFunNameMap) {
+        val curGenerator = BackendCodeGenerator(
+            program,
+            entry.key,
+            listOf<(context: CodeGeneratorContext) -> CodeGenerator>(
+                ::PlainTextCodeGenerator,
+                ::CommitmentCreatorGenerator,
+                ::CommitmentHolderGenerator
+            )
+        )
+
+        fileBuilder.addFunction(
+            curGenerator.generateHostFunction(
+                entry.key,
+                entry.value,
+                mainBody
+            )
+        )
+    }
+
+    // create switch statement in main method so program can be run on any host
+    mainFunctionBuilder.beginControlFlow("when (host)")
+    for (entry in hostFunNameMap) {
+        mainFunctionBuilder.addStatement(
+            "%N -> %N(%N)",
+            entry.key.name,
+            entry.value,
+            "runtime"
+        )
+    }
+
+    mainFunctionBuilder.endControlFlow()
+    fileBuilder.addFunction(mainFunctionBuilder.build())
+
+    return fileBuilder.build()
 }

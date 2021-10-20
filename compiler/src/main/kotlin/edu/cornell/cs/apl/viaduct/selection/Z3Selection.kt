@@ -18,6 +18,7 @@ import edu.cornell.cs.apl.viaduct.analysis.letNodes
 import edu.cornell.cs.apl.viaduct.analysis.main
 import edu.cornell.cs.apl.viaduct.analysis.objectDeclarationArgumentNodes
 import edu.cornell.cs.apl.viaduct.analysis.outputNodes
+import edu.cornell.cs.apl.viaduct.analysis.parameterNodes
 import edu.cornell.cs.apl.viaduct.analysis.updateNodes
 import edu.cornell.cs.apl.viaduct.errors.NoHostDeclarationsError
 import edu.cornell.cs.apl.viaduct.errors.NoProtocolIndexMapping
@@ -27,11 +28,8 @@ import edu.cornell.cs.apl.viaduct.syntax.FunctionName
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
 import edu.cornell.cs.apl.viaduct.syntax.Variable
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.DeclarationNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.FunctionDeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.LetNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.Node
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.ObjectDeclarationArgumentNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.ParameterNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProcessDeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
 import mu.KotlinLogging
@@ -60,12 +58,12 @@ enum class CostMode { MINIMIZE, MAXIMIZE }
  *      - Estimating the communication cost between one protocol reading data from another protocol
  */
 private class Z3Selection(
+    private val ctx: Context,
     private val program: ProgramNode,
     private val main: ProcessDeclarationNode,
     private val protocolFactory: ProtocolFactory,
     protocolComposer: ProtocolComposer,
     private val costEstimator: CostEstimator<IntegerCost>,
-    private val ctx: Context,
     private val costMode: CostMode,
     private val dumpMetadata: (Map<Node, PrettyPrintable>) -> Unit
 ) {
@@ -88,8 +86,15 @@ private class Z3Selection(
         }
     }
 
+    private val reachableFunctions = run {
+        val reachableFunctionNames = nameAnalysis.reachableFunctions(main)
+        program.functions.filter { reachableFunctionNames.contains(it.name.value) }
+    }
+
+    private fun <T> reachableInstances(instances: Node.() -> List<T>): List<T> =
+        reachableFunctions.flatMap(instances) + main.instances()
+
     private fun printMetadata(
-        reachableFunctions: Iterable<FunctionDeclarationNode>,
         eval: (FunctionName, Variable) -> Protocol,
         model: Model,
         totalCostSymvar: IntExpr
@@ -121,35 +126,17 @@ private class Z3Selection(
             Pair(node, Document("cost: $nodeCostStr $nodeProtocolStr"))
         }
 
-        val declarationNodes =
-            reachableFunctions
-                .flatMap { f -> f.declarationNodes() }
-                .plus(main.declarationNodes())
+        val declarationNodes = reachableInstances { declarationNodes() }
 
-        val letNodes =
-            reachableFunctions
-                .flatMap { f -> f.letNodes() }
-                .plus(main.letNodes())
+        val letNodes = reachableInstances { letNodes() }
 
-        val updateNodes =
-            reachableFunctions
-                .flatMap { f -> f.updateNodes() }
-                .plus(main.updateNodes())
+        val updateNodes = reachableInstances { updateNodes() }
 
-        val outputNodes =
-            reachableFunctions
-                .flatMap { f -> f.outputNodes() }
-                .plus(main.outputNodes())
+        val outputNodes = reachableInstances { outputNodes() }
 
-        val ifNodes =
-            reachableFunctions
-                .flatMap { f -> f.ifNodes() }
-                .plus(main.ifNodes())
+        val ifNodes = reachableInstances { ifNodes() }
 
-        val loopNodes =
-            reachableFunctions
-                .flatMap { f -> f.infiniteLoopNodes() }
-                .plus(main.infiniteLoopNodes())
+        val loopNodes = reachableInstances { infiniteLoopNodes() }
 
         val totalCostMetadata =
             Document("total cost: ${(model.getConstInterp(totalCostSymvar) as IntNum).int}")
@@ -174,9 +161,6 @@ private class Z3Selection(
         val solver = ctx.mkOptimize()
         val constraints = mutableSetOf<SelectionConstraint>()
 
-        val reachableFunctionNames = nameAnalysis.reachableFunctions(main)
-        val reachableFunctions = program.functions.filter { f -> reachableFunctionNames.contains(f.name.value) }
-
         // select for functions first
         for (function in reachableFunctions) {
             constraints.addAll(constraintGenerator.getConstraints(function))
@@ -185,31 +169,14 @@ private class Z3Selection(
         // then select for the main process
         constraints.addAll(constraintGenerator.getConstraints(main))
 
-        // build variable and protocol maps
-        val letNodes: Map<LetNode, IntExpr> =
-            reachableFunctions
-                .flatMap { it.letNodes() }
-                .plus(main.letNodes())
-                .associateWith { (ctx.mkFreshConst("t", ctx.intSort) as IntExpr) }
+        // Build variable and protocol maps
+        fun <T> associateFreshConstant(instances: Node.() -> List<T>): Map<T, IntExpr> =
+            reachableInstances(instances).associateWith { (ctx.mkFreshConst("t", ctx.intSort)) as IntExpr }
 
-        val declarationNodes: Map<DeclarationNode, IntExpr> =
-            reachableFunctions
-                .flatMap { it.declarationNodes() }
-                .plus(main.declarationNodes())
-                .associateWith { (ctx.mkFreshConst("t", ctx.intSort) as IntExpr) }
-
-        val objectDeclarationArgumentNodes: Map<ObjectDeclarationArgumentNode, IntExpr> =
-            reachableFunctions
-                .flatMap { it.objectDeclarationArgumentNodes() }
-                .plus(main.objectDeclarationArgumentNodes())
-                .associateWith { (ctx.mkFreshConst("t", ctx.intSort) as IntExpr) }
-
-        val parameterNodes: Map<ParameterNode, IntExpr> =
-            reachableFunctions.flatMap { function ->
-                function.parameters.map { parameter ->
-                    parameter to (ctx.mkFreshConst("t", ctx.intSort) as IntExpr)
-                }
-            }.toMap()
+        val letNodes = associateFreshConstant { letNodes() }
+        val declarationNodes = associateFreshConstant { declarationNodes() }
+        val objectDeclarationArgumentNodes = associateFreshConstant { objectDeclarationArgumentNodes() }
+        val parameterNodes = associateFreshConstant { parameterNodes() }
 
         val pmap: BiMap<Protocol, Int> =
             protocolFactory.protocols().withIndex().associate {
@@ -293,7 +260,7 @@ private class Z3Selection(
                     } ?: throw NoVariableSelectionSolutionError(f, v)
                 }
 
-                printMetadata(reachableFunctions, ::eval, model, totalCostSymvar)
+                printMetadata(::eval, model, totalCostSymvar)
 
                 logger.info { "constraints satisfiable, extracted model" }
 
@@ -323,9 +290,10 @@ fun selectProtocolsWithZ3(
 
     return Context().use { context ->
         Z3Selection(
+            context,
             program, program.main,
-            protocolFactory, protocolComposer, costEstimator,
-            context, costMode, dumpMetadata
+            protocolFactory, protocolComposer, costEstimator, costMode,
+            dumpMetadata
         ).select()
     }
 }

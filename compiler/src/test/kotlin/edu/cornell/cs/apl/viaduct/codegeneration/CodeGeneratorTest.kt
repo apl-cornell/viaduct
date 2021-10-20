@@ -14,7 +14,6 @@ import edu.cornell.cs.apl.viaduct.selection.CostMode
 import edu.cornell.cs.apl.viaduct.selection.SimpleCostEstimator
 import edu.cornell.cs.apl.viaduct.selection.SimpleCostRegime
 import edu.cornell.cs.apl.viaduct.selection.selectProtocolsWithZ3
-import edu.cornell.cs.apl.viaduct.selection.simpleProtocolFactory
 import edu.cornell.cs.apl.viaduct.selection.validateProtocolAssignment
 import edu.cornell.cs.apl.viaduct.syntax.FunctionName
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
@@ -38,7 +37,7 @@ internal class CodeGeneratorTest {
 
         program.check()
 
-        val protocolFactory = simpleProtocolFactory(program)
+        val protocolFactory = DefaultCombinedBackend.protocolFactory(program)
         val maximizeCost = false
 
         var wanCost = false

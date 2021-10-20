@@ -9,7 +9,6 @@ import edu.cornell.cs.apl.viaduct.passes.annotateWithProtocols
 import edu.cornell.cs.apl.viaduct.passes.check
 import edu.cornell.cs.apl.viaduct.passes.elaborated
 import edu.cornell.cs.apl.viaduct.passes.specialize
-import edu.cornell.cs.apl.viaduct.selection.CostMode
 import edu.cornell.cs.apl.viaduct.selection.SimpleCostEstimator
 import edu.cornell.cs.apl.viaduct.selection.SimpleCostRegime
 import edu.cornell.cs.apl.viaduct.selection.selectProtocolsWithZ3
@@ -98,8 +97,7 @@ abstract class CompileViaductTask : DefaultTask() {
             program,
             protocolFactory,
             protocolComposer,
-            costEstimator,
-            CostMode.MINIMIZE
+            costEstimator
         )
 
         // Perform a sanity check to ensure the protocolAssignment is valid.

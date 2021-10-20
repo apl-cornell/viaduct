@@ -322,7 +322,7 @@ fun selectProtocolsWithZ3(
     protocolFactory: ProtocolFactory,
     protocolComposer: ProtocolComposer,
     costEstimator: CostEstimator<IntegerCost>,
-    costMode: CostMode,
+    costMode: CostMode = CostMode.MINIMIZE,
     dumpMetadata: (Map<Node, PrettyPrintable>) -> Unit = {}
 ): (FunctionName, Variable) -> Protocol =
     Context().use { context ->

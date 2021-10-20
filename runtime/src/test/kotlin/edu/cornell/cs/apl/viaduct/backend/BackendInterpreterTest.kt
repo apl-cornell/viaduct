@@ -9,7 +9,6 @@ import edu.cornell.cs.apl.viaduct.passes.check
 import edu.cornell.cs.apl.viaduct.passes.elaborated
 import edu.cornell.cs.apl.viaduct.passes.specialize
 import edu.cornell.cs.apl.viaduct.protocols.MainProtocol
-import edu.cornell.cs.apl.viaduct.selection.CostMode
 import edu.cornell.cs.apl.viaduct.selection.ProtocolCommunication
 import edu.cornell.cs.apl.viaduct.selection.SimpleCostEstimator
 import edu.cornell.cs.apl.viaduct.selection.SimpleCostRegime
@@ -118,8 +117,7 @@ internal class BackendInterpreterTest {
                 program,
                 DefaultCombinedBackend.protocolFactory(program),
                 protocolComposer,
-                SimpleCostEstimator(protocolComposer, SimpleCostRegime.LAN),
-                CostMode.MINIMIZE
+                SimpleCostEstimator(protocolComposer, SimpleCostRegime.LAN)
             )
         val annotatedProgram = program.annotateWithProtocols(protocolAssignment)
 

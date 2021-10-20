@@ -9,7 +9,6 @@ import edu.cornell.cs.apl.viaduct.passes.annotateWithProtocols
 import edu.cornell.cs.apl.viaduct.passes.check
 import edu.cornell.cs.apl.viaduct.passes.elaborated
 import edu.cornell.cs.apl.viaduct.passes.specialize
-import edu.cornell.cs.apl.viaduct.selection.CostMode
 import edu.cornell.cs.apl.viaduct.selection.SimpleCostEstimator
 import edu.cornell.cs.apl.viaduct.selection.SimpleCostRegime
 import edu.cornell.cs.apl.viaduct.selection.selectProtocolsWithZ3
@@ -37,19 +36,15 @@ internal class CodeGeneratorTest {
         program.check()
 
         val protocolFactory = DefaultCombinedBackend.protocolFactory(program)
-        val maximizeCost = false
 
-        var wanCost = false
         val protocolComposer = DefaultCombinedBackend.protocolComposer
-        val costRegime = if (wanCost) SimpleCostRegime.WAN else SimpleCostRegime.LAN
-        val costEstimator = SimpleCostEstimator(protocolComposer, costRegime)
+        val costEstimator = SimpleCostEstimator(protocolComposer, SimpleCostRegime.LAN)
 
         val protocolAssignment: (FunctionName, Variable) -> Protocol = selectProtocolsWithZ3(
             program,
             protocolFactory,
             protocolComposer,
-            costEstimator,
-            if (maximizeCost) CostMode.MAXIMIZE else CostMode.MINIMIZE
+            costEstimator
         )
 
         for (processDecl in program.declarations.filterIsInstance<ProcessDeclarationNode>()) {

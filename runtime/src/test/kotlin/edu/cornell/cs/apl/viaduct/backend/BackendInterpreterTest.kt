@@ -15,7 +15,6 @@ import edu.cornell.cs.apl.viaduct.selection.ProtocolCommunication
 import edu.cornell.cs.apl.viaduct.selection.SimpleCostEstimator
 import edu.cornell.cs.apl.viaduct.selection.SimpleCostRegime
 import edu.cornell.cs.apl.viaduct.selection.selectProtocolsWithZ3
-import edu.cornell.cs.apl.viaduct.selection.simpleProtocolFactory
 import edu.cornell.cs.apl.viaduct.syntax.FunctionName
 import edu.cornell.cs.apl.viaduct.syntax.Host
 import edu.cornell.cs.apl.viaduct.syntax.Located
@@ -119,7 +118,7 @@ internal class BackendInterpreterTest {
             selectProtocolsWithZ3(
                 program,
                 program.main,
-                simpleProtocolFactory(program),
+                DefaultCombinedBackend.protocolFactory(program),
                 protocolComposer,
                 SimpleCostEstimator(protocolComposer, SimpleCostRegime.LAN),
                 CostMode.MINIMIZE

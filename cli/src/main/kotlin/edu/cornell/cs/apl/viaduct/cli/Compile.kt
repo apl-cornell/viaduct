@@ -26,7 +26,6 @@ import edu.cornell.cs.apl.viaduct.selection.CostMode
 import edu.cornell.cs.apl.viaduct.selection.SimpleCostEstimator
 import edu.cornell.cs.apl.viaduct.selection.SimpleCostRegime
 import edu.cornell.cs.apl.viaduct.selection.selectProtocolsWithZ3
-import edu.cornell.cs.apl.viaduct.selection.simpleProtocolFactory
 import edu.cornell.cs.apl.viaduct.selection.validateProtocolAssignment
 import edu.cornell.cs.apl.viaduct.syntax.FunctionName
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
@@ -121,7 +120,7 @@ class Compile : CliktCommand(help = "Compile ideal protocol to secure distribute
             dumpProgramMetadata(program, labelMetadata, labelOutput)
         }
 
-        val protocolFactory = simpleProtocolFactory(program)
+        val protocolFactory = DefaultCombinedBackend.protocolFactory(program)
 
         // Select protocols.
         logger.info { "selecting protocols..." }

@@ -27,8 +27,11 @@ abstract class ABY(val server: Host, val client: Host) : Protocol() {
     override val arguments: Map<String, Value>
         get() = mapOf("server" to HostValue(server), "client" to HostValue(client))
 
-    override fun authority(hostTrustConfiguration: HostTrustConfiguration): Label =
-        hostTrustConfiguration(server).interpret() and hostTrustConfiguration(client).interpret()
+    override fun authority(hostTrustConfiguration: HostTrustConfiguration): Label {
+        val combined = hostTrustConfiguration(server).interpret() join hostTrustConfiguration(client).interpret()
+        // We limit confidentiality by integrity since ABY provides semi-honest security
+        return combined meet combined.integrity().swap()
+    }
 
     val secretInputPorts: Map<Host, InputPort> =
         hosts

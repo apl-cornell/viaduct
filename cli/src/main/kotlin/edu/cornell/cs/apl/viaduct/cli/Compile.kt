@@ -9,7 +9,6 @@ import edu.cornell.cs.apl.prettyprinting.PrettyPrintable
 import edu.cornell.cs.apl.viaduct.analysis.InformationFlowAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.declarationNodes
 import edu.cornell.cs.apl.viaduct.analysis.letNodes
-import edu.cornell.cs.apl.viaduct.analysis.main
 import edu.cornell.cs.apl.viaduct.backend.aby.ABYMuxPostprocessor
 import edu.cornell.cs.apl.viaduct.backend.zkp.ZKPMuxPostprocessor
 import edu.cornell.cs.apl.viaduct.backends.DefaultCombinedBackend
@@ -133,7 +132,6 @@ class Compile : CliktCommand(help = "Compile ideal protocol to secure distribute
         val protocolSelectionDuration = measureTimeMillis {
             protocolAssignment = selectProtocolsWithZ3(
                 program,
-                program.main,
                 protocolFactory,
                 protocolComposer,
                 costEstimator,

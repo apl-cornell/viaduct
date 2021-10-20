@@ -1,7 +1,6 @@
 package edu.cornell.cs.apl.viaduct.errors
 
 import edu.cornell.cs.apl.viaduct.NegativeTestFileProvider
-import edu.cornell.cs.apl.viaduct.analysis.main
 import edu.cornell.cs.apl.viaduct.backends.DefaultCombinedBackend
 import edu.cornell.cs.apl.viaduct.parsing.SourceFile
 import edu.cornell.cs.apl.viaduct.parsing.isBlankOrUnderline
@@ -53,7 +52,7 @@ private fun run(file: File) {
 
     val protocolComposer = DefaultCombinedBackend.protocolComposer
     selectProtocolsWithZ3(
-        program, program.main,
+        program,
         DefaultCombinedBackend.protocolFactory(program), protocolComposer,
         SimpleCostEstimator(protocolComposer, SimpleCostRegime.LAN),
         CostMode.MINIMIZE

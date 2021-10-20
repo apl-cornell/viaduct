@@ -1,6 +1,5 @@
 package edu.cornell.cs.apl.viaduct.gradle
 
-import edu.cornell.cs.apl.viaduct.analysis.main
 import edu.cornell.cs.apl.viaduct.backends.Backend
 import edu.cornell.cs.apl.viaduct.codegeneration.BackendCodeGenerator
 import edu.cornell.cs.apl.viaduct.errors.CompilationError
@@ -97,7 +96,6 @@ abstract class CompileViaductTask : DefaultTask() {
 
         val protocolAssignment = selectProtocolsWithZ3(
             program,
-            program.main,
             protocolFactory,
             protocolComposer,
             costEstimator,

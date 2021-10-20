@@ -118,12 +118,3 @@ abstract class Protocol : Name, Comparable<Protocol> {
             .toMap()
     }
 }
-
-/**
- * A [Protocol] specialized to a particular [HostTrustConfiguration].
- *
- * Caches [authority] for efficient access.
- */
-class SpecializedProtocol(val protocol: Protocol, hostTrustConfiguration: HostTrustConfiguration) {
-    val authority: Label = protocol.authority(hostTrustConfiguration)
-}

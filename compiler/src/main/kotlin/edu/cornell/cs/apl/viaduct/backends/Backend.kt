@@ -3,7 +3,9 @@ package edu.cornell.cs.apl.viaduct.backends
 import edu.cornell.cs.apl.viaduct.codegeneration.CodeGenerator
 import edu.cornell.cs.apl.viaduct.codegeneration.CodeGeneratorContext
 import edu.cornell.cs.apl.viaduct.codegeneration.unions
+import edu.cornell.cs.apl.viaduct.selection.ProtocolComposer
 import edu.cornell.cs.apl.viaduct.selection.ProtocolFactory
+import edu.cornell.cs.apl.viaduct.selection.cached
 import edu.cornell.cs.apl.viaduct.selection.filter
 import edu.cornell.cs.apl.viaduct.selection.unions
 import edu.cornell.cs.apl.viaduct.syntax.ProtocolName
@@ -16,6 +18,8 @@ interface Backend {
     val protocols: Set<ProtocolName>
 
     fun protocolFactory(program: ProgramNode): ProtocolFactory
+
+    val protocolComposer: ProtocolComposer
 
     fun codeGenerator(context: CodeGeneratorContext): CodeGenerator
 }
@@ -47,6 +51,9 @@ fun Iterable<Backend>.unions(): Backend {
 
         override fun protocolFactory(program: ProgramNode): ProtocolFactory =
             backends.map { it.protocolFactory(program) }.unions()
+
+        override val protocolComposer: ProtocolComposer =
+            backends.map { it.protocols to it.protocolComposer }.unions().cached()
 
         override fun codeGenerator(context: CodeGeneratorContext): CodeGenerator =
             backends.map { it.protocols to it.codeGenerator(context) }.unions()

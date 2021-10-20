@@ -18,5 +18,6 @@ fun simpleProtocolFactory(
 ): ProtocolFactory {
     val factory = listOf(localFactory, replicationFactory, commitmentFactory, zkpFactory, abyFactory).unions()
     abyFactory.parentFactory = factory
+    abyFactory.protocolComposer = SimpleProtocolComposer
     return factory
 }

@@ -6,9 +6,9 @@ import edu.cornell.cs.apl.viaduct.security.Label
 import edu.cornell.cs.apl.viaduct.selection.FunctionVariable
 import edu.cornell.cs.apl.viaduct.selection.Implies
 import edu.cornell.cs.apl.viaduct.selection.Literal
+import edu.cornell.cs.apl.viaduct.selection.ProtocolComposer
 import edu.cornell.cs.apl.viaduct.selection.ProtocolFactory
 import edu.cornell.cs.apl.viaduct.selection.SelectionConstraint
-import edu.cornell.cs.apl.viaduct.selection.SimpleProtocolComposer
 import edu.cornell.cs.apl.viaduct.selection.VariableIn
 import edu.cornell.cs.apl.viaduct.syntax.FunctionName
 import edu.cornell.cs.apl.viaduct.syntax.Host
@@ -46,6 +46,7 @@ class ABYProtocolFactory(program: ProgramNode) : ProtocolFactory {
 
     // hack to get backpointer to parent factory
     var parentFactory: ProtocolFactory? = null
+    var protocolComposer: ProtocolComposer? = null
 
     val protocols: List<SpecializedProtocol> = run {
         val hostTrustConfiguration = HostTrustConfiguration(program)
@@ -112,9 +113,9 @@ class ABYProtocolFactory(program: ProgramNode) : ProtocolFactory {
         val cleartextLengthProtocols =
             (parentFactory?.viableProtocols(exprDecl) ?: viableProtocols(exprDecl))
                 .filter { lengthProtocol ->
-                    if (mpcProtocols.all { SimpleProtocolComposer.canCommunicate(lengthProtocol, it) }) {
+                    if (mpcProtocols.all { protocolComposer!!.canCommunicate(lengthProtocol, it) }) {
                         mpcProtocols.all {
-                            val events = SimpleProtocolComposer.communicate(lengthProtocol, it)
+                            val events = protocolComposer!!.communicate(lengthProtocol, it)
                             events.all { event -> event.recv.id == ABY.CLEARTEXT_INPUT }
                         }
                     } else {

@@ -20,15 +20,6 @@ val SimpleProtocolComposer: ProtocolComposer = UncachedSimpleProtocolComposer.ca
 private object UncachedSimpleProtocolComposer : AbstractProtocolComposer() {
     override fun communicationEvents(source: Protocol, destination: Protocol): Iterable<CommunicationEvent>? =
         when {
-            source == destination -> {
-                source.hosts.map { host ->
-                    CommunicationEvent(
-                        source.internalOutputPorts.getValue(host),
-                        destination.internalInputPorts.getValue(host)
-                    )
-                }
-            }
-
             source is Local && destination is Local && source.host != destination.host -> {
                 setOf(CommunicationEvent(source.outputPort, destination.inputPort))
             }
@@ -136,8 +127,10 @@ private object UncachedSimpleProtocolComposer : AbstractProtocolComposer() {
                         inputPorts = destination.Y2BInputPorts
                     }
 
-                    else ->
-                        throw IllegalStateException()
+                    else -> {
+                        outputPorts = source.internalOutputPorts
+                        inputPorts = destination.internalInputPorts
+                    }
                 }
 
                 outputPorts.map { outputPort ->
@@ -180,7 +173,7 @@ private object UncachedSimpleProtocolComposer : AbstractProtocolComposer() {
                 }
             }
 
-            else -> null
+            else -> super.communicationEvents(source, destination)
         }
 
     override fun mandatoryParticipatingHosts(protocol: Protocol, statement: LetNode): Set<Host> =

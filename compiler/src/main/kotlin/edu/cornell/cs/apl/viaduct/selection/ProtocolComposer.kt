@@ -24,11 +24,17 @@ abstract class ProtocolComposer {
 
 /** A [ProtocolComposer] with sensible defaults. */
 abstract class AbstractProtocolComposer : ProtocolComposer() {
+    /** Same as [communicateOrNull] except there is no need to wrap the result in a [ProtocolCommunication] instance. */
+    protected abstract fun communicationEvents(source: Protocol, destination: Protocol): Iterable<CommunicationEvent>?
+
     /**
-     * Returns mandatory participating hosts for [LetNode]s only from which
-     * mandatory participants for all other statements are derived.
+     * Same as [mandatoryParticipatingHosts] but specialized to [LetNode].
+     * Mandatory participants for other statements are inferred.
      */
     protected abstract fun mandatoryParticipatingHosts(protocol: Protocol, statement: LetNode): Set<Host>
+
+    final override fun communicateOrNull(source: Protocol, destination: Protocol): ProtocolCommunication? =
+        communicationEvents(source, destination)?.let { ProtocolCommunication(it.toSet()) }
 
     final override fun mandatoryParticipatingHosts(protocol: Protocol, statement: SimpleStatementNode): Set<Host> =
         when (statement) {

@@ -18,53 +18,43 @@ val SimpleProtocolComposer: ProtocolComposer = UncachedSimpleProtocolComposer.ca
 
 /** Describe how protocols should communicate / compose with each other. */
 private object UncachedSimpleProtocolComposer : AbstractProtocolComposer() {
-    override fun communicateOrNull(source: Protocol, destination: Protocol): ProtocolCommunication? =
+    override fun communicationEvents(source: Protocol, destination: Protocol): Iterable<CommunicationEvent>? =
         when {
             source == destination -> {
-                ProtocolCommunication(
-                    source.hosts.map { host ->
-                        CommunicationEvent(
-                            source.internalOutputPorts.getValue(host),
-                            destination.internalInputPorts.getValue(host)
-                        )
-                    }.toSet()
-                )
+                source.hosts.map { host ->
+                    CommunicationEvent(
+                        source.internalOutputPorts.getValue(host),
+                        destination.internalInputPorts.getValue(host)
+                    )
+                }
             }
 
             source is Local && destination is Local && source.host != destination.host -> {
-                ProtocolCommunication(setOf(CommunicationEvent(source.outputPort, destination.inputPort)))
+                setOf(CommunicationEvent(source.outputPort, destination.inputPort))
             }
 
             source is Local && destination is Replication -> {
-                ProtocolCommunication(
-                    destination.hostInputPorts.values.map { CommunicationEvent(source.outputPort, it) }.toSet()
-                )
+                destination.hostInputPorts.values.map { CommunicationEvent(source.outputPort, it) }
             }
 
             source is Local && destination is ABY && destination.hosts.contains(source.host) -> {
-                ProtocolCommunication(
-                    setOf(CommunicationEvent(source.outputPort, destination.secretInputPorts.getValue(source.host)))
-                )
+                setOf(CommunicationEvent(source.outputPort, destination.secretInputPorts.getValue(source.host)))
             }
 
             source is Local && destination is Commitment && source.host == destination.cleartextHost -> {
-                ProtocolCommunication(
-                    setOf(CommunicationEvent(source.outputPort, destination.inputPort))
-                )
+                setOf(CommunicationEvent(source.outputPort, destination.inputPort))
             }
 
             source is Local && destination is ZKP && source.host == destination.prover -> {
-                ProtocolCommunication(setOf(CommunicationEvent(source.outputPort, destination.secretInputPort)))
+                setOf(CommunicationEvent(source.outputPort, destination.secretInputPort))
             }
 
             source is Replication && destination is Local -> {
-                ProtocolCommunication(
-                    if (source.hosts.contains(destination.host)) {
-                        setOf(CommunicationEvent(source.hostOutputPorts.getValue(destination.host), destination.inputPort))
-                    } else {
-                        source.hostOutputPorts.values.map { CommunicationEvent(it, destination.inputPort) }.toSet()
-                    }
-                )
+                if (source.hosts.contains(destination.host)) {
+                    setOf(CommunicationEvent(source.hostOutputPorts.getValue(destination.host), destination.inputPort))
+                } else {
+                    source.hostOutputPorts.values.map { CommunicationEvent(it, destination.inputPort) }
+                }
             }
 
             source is Replication && destination is Replication -> {
@@ -72,55 +62,43 @@ private object UncachedSimpleProtocolComposer : AbstractProtocolComposer() {
                 val dstHostSenders = destination.hosts.removeAll(dstHostReceivers)
 
                 // TODO: optimize this later. receivers don't necessarily need to receive from all senders
-                ProtocolCommunication(
-                    dstHostSenders.map { sender ->
-                        CommunicationEvent(source.hostOutputPorts.getValue(sender), destination.hostInputPorts.getValue(sender))
-                    }.plus(
-                        source.hosts.flatMap { sender ->
-                            dstHostReceivers.map { receiver ->
-                                CommunicationEvent(source.hostOutputPorts.getValue(sender), destination.hostInputPorts.getValue(receiver))
-                            }
+                dstHostSenders.map { sender ->
+                    CommunicationEvent(source.hostOutputPorts.getValue(sender), destination.hostInputPorts.getValue(sender))
+                }.plus(
+                    source.hosts.flatMap { sender ->
+                        dstHostReceivers.map { receiver ->
+                            CommunicationEvent(source.hostOutputPorts.getValue(sender), destination.hostInputPorts.getValue(receiver))
                         }
-                    ).toSet()
+                    }
                 )
             }
 
             source is Replication && destination is ABY && source.hosts.containsAll(destination.hosts) -> {
-                ProtocolCommunication(
-                    destination.cleartextInputPorts.map { port ->
-                        CommunicationEvent(source.hostOutputPorts.getValue(port.key), port.value)
-                    }.toSet()
-                )
+                destination.cleartextInputPorts.map { port ->
+                    CommunicationEvent(source.hostOutputPorts.getValue(port.key), port.value)
+                }
             }
 
             source is Replication && destination is Commitment && source.hosts.containsAll(destination.hosts) -> {
-                ProtocolCommunication(
-                    destination.cleartextInputPorts.map { port ->
-                        CommunicationEvent(source.hostOutputPorts.getValue(port.key), port.value)
-                    }.toSet()
-                )
+                destination.cleartextInputPorts.map { port ->
+                    CommunicationEvent(source.hostOutputPorts.getValue(port.key), port.value)
+                }
             }
 
             source is Replication && destination is ZKP && source.hosts.containsAll(destination.hosts) -> {
-                ProtocolCommunication(
-                    destination.cleartextInput.map { port ->
-                        CommunicationEvent(source.hostOutputPorts.getValue(port.key), port.value)
-                    }.toSet()
-                )
+                destination.cleartextInput.map { port ->
+                    CommunicationEvent(source.hostOutputPorts.getValue(port.key), port.value)
+                }
             }
 
             source is ABY && destination is Local && source.hosts.contains(destination.host) -> {
-                ProtocolCommunication(
-                    setOf(CommunicationEvent(source.cleartextOutputPorts.getValue(destination.host), destination.inputPort))
-                )
+                setOf(CommunicationEvent(source.cleartextOutputPorts.getValue(destination.host), destination.inputPort))
             }
 
             source is ABY && destination is Replication && source.hosts.containsAll(destination.hosts) -> {
-                ProtocolCommunication(
-                    destination.hostInputPorts.map { port ->
-                        CommunicationEvent(source.cleartextOutputPorts.getValue(port.key), port.value)
-                    }.toSet()
-                )
+                destination.hostInputPorts.map { port ->
+                    CommunicationEvent(source.cleartextOutputPorts.getValue(port.key), port.value)
+                }
             }
 
             source is ABY && destination is ABY && source.client == destination.client && source.server == destination.server -> {
@@ -162,54 +140,44 @@ private object UncachedSimpleProtocolComposer : AbstractProtocolComposer() {
                         throw IllegalStateException()
                 }
 
-                ProtocolCommunication(
-                    outputPorts.map { outputPort ->
-                        CommunicationEvent(outputPort.value, inputPorts.getValue(outputPort.key))
-                    }.toSet()
-                )
+                outputPorts.map { outputPort ->
+                    CommunicationEvent(outputPort.value, inputPorts.getValue(outputPort.key))
+                }
             }
 
             source is Commitment && destination is Local -> {
-                ProtocolCommunication(
-                    setOf(
-                        CommunicationEvent(source.openCleartextOutputPort, destination.cleartextCommitmentInputPort)
-                    ).plus(
-                        source.openCommitmentOutputPorts.values.map {
-                            CommunicationEvent(it, destination.hashCommitmentInputPort)
-                        }.toSet()
-                    )
+                setOf(
+                    CommunicationEvent(source.openCleartextOutputPort, destination.cleartextCommitmentInputPort)
+                ).plus(
+                    source.openCommitmentOutputPorts.values.map {
+                        CommunicationEvent(it, destination.hashCommitmentInputPort)
+                    }
                 )
             }
 
             source is Commitment && destination is Replication -> {
-                ProtocolCommunication(
-                    destination.hosts.flatMap { host ->
-                        listOf(
-                            CommunicationEvent(
-                                source.openCleartextOutputPort,
-                                destination.hostCleartextCommitmentInputPorts.getValue(host)
-                            )
-                        ).plus(
-                            source.openCommitmentOutputPorts.values.map {
-                                CommunicationEvent(it, destination.hostHashCommitmentInputPorts.getValue(host))
-                            }
+                destination.hosts.flatMap { host ->
+                    listOf(
+                        CommunicationEvent(
+                            source.openCleartextOutputPort,
+                            destination.hostCleartextCommitmentInputPorts.getValue(host)
                         )
-                    }.toSet()
-                )
+                    ).plus(
+                        source.openCommitmentOutputPorts.values.map {
+                            CommunicationEvent(it, destination.hostHashCommitmentInputPorts.getValue(host))
+                        }
+                    )
+                }
             }
 
             source is ZKP && destination is Local && source.hosts.contains(destination.host) -> {
-                ProtocolCommunication(
-                    setOf(CommunicationEvent(source.outputPorts.getValue(destination.host), destination.inputPort))
-                )
+                setOf(CommunicationEvent(source.outputPorts.getValue(destination.host), destination.inputPort))
             }
 
             source is ZKP && destination is Replication && source.hosts.containsAll(destination.hosts) -> {
-                ProtocolCommunication(
-                    destination.hostInputPorts.map { port ->
-                        CommunicationEvent(source.outputPorts.getValue(port.key), port.value)
-                    }.toSet()
-                )
+                destination.hostInputPorts.map { port ->
+                    CommunicationEvent(source.outputPorts.getValue(port.key), port.value)
+                }
             }
 
             else -> null

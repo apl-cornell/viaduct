@@ -15,7 +15,6 @@ import edu.cornell.cs.apl.viaduct.syntax.Host
 import edu.cornell.cs.apl.viaduct.syntax.HostTrustConfiguration
 import edu.cornell.cs.apl.viaduct.syntax.ObjectVariable
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
-import edu.cornell.cs.apl.viaduct.syntax.SpecializedProtocol
 import edu.cornell.cs.apl.viaduct.syntax.datatypes.Get
 import edu.cornell.cs.apl.viaduct.syntax.datatypes.Vector
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.DeclarationNode
@@ -48,32 +47,30 @@ class ABYProtocolFactory(program: ProgramNode) : ProtocolFactory {
     var parentFactory: ProtocolFactory? = null
     var protocolComposer: ProtocolComposer? = null
 
-    val protocols: List<SpecializedProtocol> = run {
+    private val protocols: Set<Protocol> = run {
         val hostTrustConfiguration = HostTrustConfiguration(program)
         val hosts: List<Host> = hostTrustConfiguration.keys.sorted()
         val hostPairs = hosts.pairedWith(hosts).filter { it.first < it.second }
         hostPairs.flatMap {
             // ABY is secure only in semi-honest,
             // so the integrity of one should imply the integrity of the other
-            val h1Label: Label = hostTrustConfiguration[it.first]!!.interpret()
-            val h2Label: Label = hostTrustConfiguration[it.second]!!.interpret()
+            val h1Label: Label = hostTrustConfiguration(it.first).interpret()
+            val h2Label: Label = hostTrustConfiguration(it.second).interpret()
             val combinedConfidentiality = h1Label.confidentiality().and(h1Label.confidentiality())
             val semihonest =
                 h1Label.integrity().swap().actsFor(combinedConfidentiality) &&
                     h2Label.integrity().swap().actsFor(combinedConfidentiality)
             if (semihonest) {
-                listOf(
-                    SpecializedProtocol(ArithABY(it.first, it.second), hostTrustConfiguration),
-                    SpecializedProtocol(BoolABY(it.first, it.second), hostTrustConfiguration),
-                    SpecializedProtocol(YaoABY(it.first, it.second), hostTrustConfiguration)
+                setOf(
+                    ArithABY(it.first, it.second),
+                    BoolABY(it.first, it.second),
+                    YaoABY(it.first, it.second)
                 )
             } else {
-                listOf()
+                setOf()
             }
-        }
+        }.toSet()
     }
-
-    override fun protocols(): List<SpecializedProtocol> = protocols
 
     private fun LetNode.isApplicable(protocol: Protocol): Boolean {
         val operationCheck =
@@ -95,13 +92,11 @@ class ABYProtocolFactory(program: ProgramNode) : ProtocolFactory {
     }
 
     override fun viableProtocols(node: LetNode): Set<Protocol> =
-        protocols.map { it.protocol }.filter { node.isApplicable(it) }.toSet()
+        protocols.filter { node.isApplicable(it) }.toSet()
 
-    override fun viableProtocols(node: DeclarationNode): Set<Protocol> =
-        protocols.map { it.protocol }.toSet()
+    override fun viableProtocols(node: DeclarationNode): Set<Protocol> = protocols
 
-    override fun viableProtocols(node: ParameterNode): Set<Protocol> =
-        protocols.map { it.protocol }.toSet()
+    override fun viableProtocols(node: ParameterNode): Set<Protocol> = protocols
 
     private fun cleartextArrayLengthAndIndexConstraint(
         enclosingFunction: FunctionName,
@@ -109,12 +104,11 @@ class ABYProtocolFactory(program: ProgramNode) : ProtocolFactory {
         lengthOrIndexExpr: ReadNode
     ): SelectionConstraint {
         val exprDecl = nameAnalysis.declaration(lengthOrIndexExpr)
-        val mpcProtocols = protocols.map { it.protocol }.toSet()
         val cleartextLengthProtocols =
             (parentFactory?.viableProtocols(exprDecl) ?: viableProtocols(exprDecl))
                 .filter { lengthProtocol ->
-                    if (mpcProtocols.all { protocolComposer!!.canCommunicate(lengthProtocol, it) }) {
-                        mpcProtocols.all {
+                    if (protocols.all { protocolComposer!!.canCommunicate(lengthProtocol, it) }) {
+                        protocols.all {
                             val events = protocolComposer!!.communicate(lengthProtocol, it)
                             events.all { event -> event.recv.id == ABY.CLEARTEXT_INPUT }
                         }
@@ -125,21 +119,9 @@ class ABYProtocolFactory(program: ProgramNode) : ProtocolFactory {
                 .toSet()
 
         return Implies(
-            VariableIn(FunctionVariable(enclosingFunction, arrayObject), mpcProtocols),
+            VariableIn(FunctionVariable(enclosingFunction, arrayObject), protocols),
             VariableIn(FunctionVariable(enclosingFunction, exprDecl.temporary.value), cleartextLengthProtocols)
         )
-    }
-
-    override fun constraint(node: DeclarationNode): SelectionConstraint {
-        return if (node.className.value == Vector && node.arguments[0] is ReadNode) {
-            cleartextArrayLengthAndIndexConstraint(
-                nameAnalysis.enclosingFunctionName(node),
-                node.name.value,
-                node.arguments[0] as ReadNode
-            )
-        } else {
-            Literal(true)
-        }
     }
 
     override fun constraint(node: LetNode): SelectionConstraint =
@@ -159,6 +141,18 @@ class ABYProtocolFactory(program: ProgramNode) : ProtocolFactory {
 
             else -> Literal(true)
         }
+
+    override fun constraint(node: DeclarationNode): SelectionConstraint {
+        return if (node.className.value == Vector && node.arguments[0] is ReadNode) {
+            cleartextArrayLengthAndIndexConstraint(
+                nameAnalysis.enclosingFunctionName(node),
+                node.name.value,
+                node.arguments[0] as ReadNode
+            )
+        } else {
+            Literal(true)
+        }
+    }
 
     override fun constraint(node: UpdateNode): SelectionConstraint {
         val objectDecl = nameAnalysis.declaration(node)

@@ -1,7 +1,6 @@
 package edu.cornell.cs.apl.viaduct.selection
 
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
-import edu.cornell.cs.apl.viaduct.syntax.SpecializedProtocol
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.DeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.IfNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.LetNode
@@ -19,8 +18,6 @@ import edu.cornell.cs.apl.viaduct.util.unions
  * protocols have enough authority to implement the node securely.
  */
 interface ProtocolFactory {
-    fun protocols(): List<SpecializedProtocol>
-
     fun viableProtocols(node: LetNode): Set<Protocol>
     fun viableProtocols(node: DeclarationNode): Set<Protocol>
     fun viableProtocols(node: ParameterNode): Set<Protocol>
@@ -52,8 +49,6 @@ fun Iterable<ProtocolFactory>.unions(): ProtocolFactory =
     object : ProtocolFactory {
         private val factories = this@unions.toList()
 
-        override fun protocols() = factories.flatMap { it.protocols() }
-
         override fun viableProtocols(node: LetNode): Set<Protocol> =
             factories.map { it.viableProtocols(node) }.unions()
 
@@ -79,9 +74,6 @@ fun Iterable<ProtocolFactory>.unions(): ProtocolFactory =
 /** Restricts the given factory to protocols that satisfy [predicate]. */
 fun ProtocolFactory.filter(predicate: (Protocol) -> Boolean): ProtocolFactory =
     object : ProtocolFactory by this {
-        override fun protocols(): List<SpecializedProtocol> =
-            this@filter.protocols().filter { predicate(it.protocol) }
-
         override fun viableProtocols(node: LetNode): Set<Protocol> =
             this@filter.viableProtocols(node).filter(predicate).toSet()
 

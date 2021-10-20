@@ -1,6 +1,5 @@
 package edu.cornell.cs.apl.viaduct.backends.zkp
 
-import edu.cornell.cs.apl.attributes.attribute
 import edu.cornell.cs.apl.viaduct.analysis.NameAnalysis
 import edu.cornell.cs.apl.viaduct.backends.cleartext.LocalProtocolFactory
 import edu.cornell.cs.apl.viaduct.backends.cleartext.ReplicationProtocolFactory
@@ -11,17 +10,13 @@ import edu.cornell.cs.apl.viaduct.selection.SelectionConstraint
 import edu.cornell.cs.apl.viaduct.selection.ands
 import edu.cornell.cs.apl.viaduct.selection.readsFrom
 import edu.cornell.cs.apl.viaduct.selection.sendsTo
-import edu.cornell.cs.apl.viaduct.syntax.Host
-import edu.cornell.cs.apl.viaduct.syntax.HostTrustConfiguration
 import edu.cornell.cs.apl.viaduct.syntax.Operator
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
-import edu.cornell.cs.apl.viaduct.syntax.SpecializedProtocol
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.DeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ExpressionNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.IfNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.LetNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.Node
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.ObjectDeclarationArgumentNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.OperatorApplicationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ParameterNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
@@ -40,31 +35,14 @@ import edu.cornell.cs.apl.viaduct.util.subsequences
 class ZKPProtocolFactory(val program: ProgramNode) : ProtocolFactory {
     private val nameAnalysis = NameAnalysis.get(program)
 
-    companion object {
-        private val ProgramNode.instance: List<SpecializedProtocol> by attribute {
-            val hostTrustConfiguration = HostTrustConfiguration(this)
-            val hosts: List<Host> = hostTrustConfiguration.keys.sorted()
-            val hostSubsets = hosts.subsequences().map { it.toSet() }
-            hostSubsets.filter { it.size >= 2 }.flatMap { ss ->
-                ss.map { h ->
-                    (h to ss.minus(h))
-                }
-            }.map { SpecializedProtocol(ZKP(it.first, it.second), hostTrustConfiguration) }
-        }
-
-        fun protocols(program: ProgramNode): List<SpecializedProtocol> = program.instance
+    private val protocols: Set<Protocol> = run {
+        val hostSubsets = program.hosts.sorted().subsequences().map { it.toSet() }
+        hostSubsets.filter { it.size >= 2 }.flatMap { ss -> ss.map { h -> ZKP(h, ss - h) } }.toSet()
     }
-
-    override fun protocols(): List<SpecializedProtocol> = protocols(program)
 
     /** If the value is an op, ensure it's compatible with r1cs generation **/
-    private fun ExpressionNode.compatibleOp(): Boolean {
-        return if (this is OperatorApplicationNode) {
-            (this.operator.isSupported())
-        } else {
-            true
-        }
-    }
+    private fun ExpressionNode.compatibleOp(): Boolean =
+        this !is OperatorApplicationNode || this.operator.isSupported()
 
     private fun Operator.isSupported(): Boolean =
         when (this) {
@@ -73,56 +51,35 @@ class ZKPProtocolFactory(val program: ProgramNode) : ProtocolFactory {
         }
 
     private fun Node.isApplicable(): Boolean =
-        when (this) {
-            is LetNode -> this.value.compatibleOp()
-            is DeclarationNode -> true
-            is ObjectDeclarationArgumentNode -> true
-            is ParameterNode -> true
-            else -> throw Exception("How did I get here?")
-        }
-
-    override fun viableProtocols(node: DeclarationNode): Set<Protocol> =
-        if (node.isApplicable()) {
-            protocols(program).map { it.protocol }.toSet()
-        } else {
-            setOf()
-        }
-
-    override fun viableProtocols(node: ParameterNode): Set<Protocol> =
-        if (node.isApplicable()) {
-            protocols(program).map { it.protocol }.toSet()
-        } else {
-            setOf()
-        }
+        this !is LetNode || this.value.compatibleOp()
 
     override fun viableProtocols(node: LetNode): Set<Protocol> =
-        if (node.isApplicable()) {
-            protocols(program).map { it.protocol }.toSet()
-        } else {
-            setOf()
-        }
+        if (node.isApplicable()) protocols else setOf()
+
+    override fun viableProtocols(node: DeclarationNode): Set<Protocol> =
+        if (node.isApplicable()) protocols else setOf()
+
+    override fun viableProtocols(node: ParameterNode): Set<Protocol> =
+        if (node.isApplicable()) protocols else setOf()
 
     private val localFactory = LocalProtocolFactory(program)
     private val replicationFactory = ReplicationProtocolFactory(program)
-
-    private val localAndReplicated: Set<Protocol> =
-        localFactory.protocols.map { it.protocol }.toSet() +
-            replicationFactory.protocols.map { it.protocol }.toSet()
+    private val localAndReplicated = localFactory.protocols + replicationFactory.protocols
 
     /** ZKP can only read from, and only send to, itself, local, and replicated **/
     override fun constraint(node: LetNode): SelectionConstraint =
-        protocols(program).map {
+        protocols.map {
             edu.cornell.cs.apl.viaduct.selection.And(
-                node.readsFrom(nameAnalysis, setOf(it.protocol), localAndReplicated + setOf(it.protocol)),
-                node.sendsTo(nameAnalysis, setOf(it.protocol), localAndReplicated + setOf(it.protocol))
+                node.readsFrom(nameAnalysis, setOf(it), localAndReplicated + setOf(it)),
+                node.sendsTo(nameAnalysis, setOf(it), localAndReplicated + setOf(it))
             )
         }.ands()
 
     override fun constraint(node: DeclarationNode): SelectionConstraint =
-        protocols(program).map {
+        protocols.map {
             edu.cornell.cs.apl.viaduct.selection.And(
-                node.readsFrom(nameAnalysis, setOf(it.protocol), localAndReplicated + setOf(it.protocol)),
-                node.sendsTo(nameAnalysis, setOf(it.protocol), localAndReplicated + setOf(it.protocol))
+                node.readsFrom(nameAnalysis, setOf(it), localAndReplicated + setOf(it)),
+                node.sendsTo(nameAnalysis, setOf(it), localAndReplicated + setOf(it))
             )
         }.ands()
 

@@ -45,15 +45,15 @@ class Commitment(val cleartextHost: Host, val hashHosts: Set<Host>) : Protocol()
     val inputPort = InputPort(this, this.cleartextHost, INPUT)
 
     val cleartextInputPorts: Map<Host, InputPort> =
-        this.hosts.map { host ->
-            host to InputPort(this, host, CLEARTEXT_INPUT)
-        }.toMap()
+        this.hosts.associateWith { host ->
+            InputPort(this, host, CLEARTEXT_INPUT)
+        }
 
     val openCleartextOutputPort: OutputPort =
         OutputPort(this, this.cleartextHost, OPEN_CLEARTEXT_OUTPUT)
 
     val openCommitmentOutputPorts: Map<Host, OutputPort> =
-        this.hashHosts.map { hashHost ->
-            hashHost to OutputPort(this, hashHost, OPEN_COMMITMENT_OUTPUT)
-        }.toMap()
+        this.hashHosts.associateWith { hashHost ->
+            OutputPort(this, hashHost, OPEN_COMMITMENT_OUTPUT)
+        }
 }

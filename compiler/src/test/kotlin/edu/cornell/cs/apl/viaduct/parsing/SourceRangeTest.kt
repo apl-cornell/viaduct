@@ -65,7 +65,7 @@ internal class SourceRangeTest {
 
 /**
  * Returns true if [line] contains only space and carrot (^) characters.
- * Carrots are considered blank since they are used to underline portions of the previous line.
+ * Carrots are considered blank since they are used for underlining portions of the previous line.
  */
 internal fun isBlankOrUnderline(line: String): Boolean =
     line.all { it == ' ' || it == '^' }

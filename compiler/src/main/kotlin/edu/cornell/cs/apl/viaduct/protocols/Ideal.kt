@@ -12,7 +12,7 @@ import edu.cornell.cs.apl.viaduct.syntax.values.Value
  * A perfectly trusted protocol.
  *
  * The ideal protocol is not a real protocol; it is meant to be realized by real protocols.
- * Since it has infinite authority and it involves no hosts, there is no way to execute an ideal
+ * Since it has infinite authority, and it involves no hosts, there is no way to execute an ideal
  * protocol directly.
  *
  * @param identifier Names and distinguishes different instances.

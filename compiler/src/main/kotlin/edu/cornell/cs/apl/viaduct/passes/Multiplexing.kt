@@ -249,7 +249,7 @@ class MuxPostprocessor(
                         )
 
                     when (val update = stmt.update.value) {
-                        is edu.cornell.cs.apl.viaduct.syntax.datatypes.Set -> {
+                        is Set -> {
                             listOf(
                                 getCall,
                                 muxCall(indexExpr() ?: stmt.arguments[0].deepCopy() as AtomicExpressionNode),

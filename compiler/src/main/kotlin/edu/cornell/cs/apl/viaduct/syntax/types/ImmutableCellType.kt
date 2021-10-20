@@ -7,7 +7,7 @@ import edu.cornell.cs.apl.viaduct.syntax.datatypes.QueryName
 import edu.cornell.cs.apl.viaduct.syntax.datatypes.UpdateName
 import kotlinx.collections.immutable.persistentListOf
 
-/** The type of an [ImmutableCell] object. */
+/** The type of [ImmutableCell] objects. */
 data class ImmutableCellType(val elementType: ValueType) : ObjectType() {
     override val className: ClassName
         get() = ImmutableCell

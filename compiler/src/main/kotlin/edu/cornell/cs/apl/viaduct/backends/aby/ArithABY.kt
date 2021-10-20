@@ -19,22 +19,14 @@ class ArithABY(server: Host, client: Host) : ABY(server, client) {
         get() = Companion.protocolName
 
     val Y2AInputPorts: Map<Host, InputPort> =
-        hosts
-            .map { h -> Pair(h, InputPort(this, h, Y2A_INPUT)) }
-            .toMap()
+        hosts.associateWith { h -> InputPort(this, h, Y2A_INPUT) }
 
     val B2AInputPorts: Map<Host, InputPort> =
-        hosts
-            .map { h -> Pair(h, InputPort(this, h, B2A_INPUT)) }
-            .toMap()
+        hosts.associateWith { h -> InputPort(this, h, B2A_INPUT) }
 
     val A2YOutputPorts: Map<Host, OutputPort> =
-        hosts
-            .map { h -> Pair(h, OutputPort(this, h, A2Y_OUTPUT)) }
-            .toMap()
+        hosts.associateWith { h -> OutputPort(this, h, A2Y_OUTPUT) }
 
     val A2BOutputPorts: Map<Host, OutputPort> =
-        hosts
-            .map { h -> Pair(h, OutputPort(this, h, A2B_OUTPUT)) }
-            .toMap()
+        hosts.associateWith { h -> OutputPort(this, h, A2B_OUTPUT) }
 }

@@ -19,22 +19,14 @@ class BoolABY(server: Host, client: Host) : ABY(server, client) {
         get() = Companion.protocolName
 
     val Y2BInputPorts: Map<Host, InputPort> =
-        hosts
-            .map { h -> Pair(h, InputPort(this, h, Y2B_INPUT)) }
-            .toMap()
+        hosts.associateWith { h -> InputPort(this, h, Y2B_INPUT) }
 
     val A2BInputPorts: Map<Host, InputPort> =
-        hosts
-            .map { h -> Pair(h, InputPort(this, h, A2B_INPUT)) }
-            .toMap()
+        hosts.associateWith { h -> InputPort(this, h, A2B_INPUT) }
 
     val B2YOutputPorts: Map<Host, OutputPort> =
-        hosts
-            .map { h -> Pair(h, OutputPort(this, h, B2Y_OUTPUT)) }
-            .toMap()
+        hosts.associateWith { h -> OutputPort(this, h, B2Y_OUTPUT) }
 
     val B2AOutputPorts: Map<Host, OutputPort> =
-        hosts
-            .map { h -> Pair(h, OutputPort(this, h, B2A_OUTPUT)) }
-            .toMap()
+        hosts.associateWith { h -> OutputPort(this, h, B2A_OUTPUT) }
 }

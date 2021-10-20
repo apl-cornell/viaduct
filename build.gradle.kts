@@ -114,11 +114,11 @@ mkdocs {
     publish.apply {
         val projectVersion = "${project.version}"
         if (System.getenv("GITHUB_REF") == "refs/heads/master") {
-            // Publishing to master; update latest version pointer
+            // Publishing to master; update the latest version pointer
             docPath = projectVersion
             rootRedirect = true
         } else {
-            // Publishing some other commit; don't update latest version pointer
+            // Publishing some other commit; don't update the latest version pointer
             docPath = System.getenv("GITHUB_SHA") ?: projectVersion
             rootRedirect = false
         }

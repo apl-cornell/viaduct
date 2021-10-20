@@ -124,7 +124,7 @@ sealed class DowngradeNode : PureExpressionNode() {
     abstract override fun copy(children: List<Node>): DowngradeNode
 }
 
-/** Revealing the the result of an expression (reducing confidentiality). */
+/** Revealing the result of an expression (reducing confidentiality). */
 class DeclassificationNode(
     override val expression: AtomicExpressionNode,
     override val fromLabel: LabelNode?,

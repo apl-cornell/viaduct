@@ -50,7 +50,7 @@ interface Precedence {
      * (see [Parsing Mixfix Operators](https://link.springer.com/chapter/10.1007/978-3-642-24452-0_5)).
      *
      * Note that two different objects implementing this interface can never denote the same precedence since [Order]
-     * does not have an `EQUAL` option. If two operators have the same precedence, than [Operator.precedence] must
+     * does not have an `EQUAL` option. If two operators have the same precedence, then [Operator.precedence] must
      * return the same object for both.
      */
     fun compareTo(other: Precedence): Order = Order.UNDETERMINED

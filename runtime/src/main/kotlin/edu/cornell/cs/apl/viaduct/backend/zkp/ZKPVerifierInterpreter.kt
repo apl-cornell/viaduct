@@ -174,7 +174,7 @@ class ZKPVerifierInterpreter(
         return ZKPObject.ZKPNullObject
     }
 
-    private suspend fun runQuery(obj: ZKPObject, query: QueryNameNode, args: List<AtomicExpressionNode>): WireTerm =
+    private fun runQuery(obj: ZKPObject, query: QueryNameNode, args: List<AtomicExpressionNode>): WireTerm =
         when (obj) {
             is ZKPObject.ZKPImmutableCell -> if (query.value is Get) {
                 obj.value

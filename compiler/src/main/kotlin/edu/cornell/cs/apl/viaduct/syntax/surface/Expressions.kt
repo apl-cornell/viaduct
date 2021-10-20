@@ -67,7 +67,7 @@ class QueryNode(
     override val asDocument: Document
         get() =
             IndexingNode.from(this)?.asDocument
-                ?: variable + "." + query + arguments.tupled().nested()
+                ?: (variable + "." + query + arguments.tupled().nested())
 }
 
 /** Reducing the confidentiality or increasing the integrity of the result of an expression. */
@@ -82,7 +82,7 @@ sealed class DowngradeNode : ExpressionNode() {
     abstract val toLabel: LabelNode?
 }
 
-/** Revealing the the result of an expression (reducing confidentiality). */
+/** Revealing the result of an expression (reducing confidentiality). */
 class DeclassificationNode(
     override val expression: ExpressionNode,
     override val fromLabel: LabelNode?,

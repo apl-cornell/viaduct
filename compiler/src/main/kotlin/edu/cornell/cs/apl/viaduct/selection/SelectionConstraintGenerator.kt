@@ -181,9 +181,7 @@ class SelectionConstraintGenerator(
 
     /** Symbolic variables that specify whether a host is participating in the execution of a statement. */
     private val Node.participatingHosts: Map<Host, HostVariable> by attribute {
-        program.hosts.map { host ->
-            host to HostVariable(ctx.mkFreshConst("host", ctx.boolSort) as BoolExpr)
-        }.toMap()
+        program.hosts.associateWith { HostVariable(ctx.mkFreshConst("host", ctx.boolSort) as BoolExpr) }
     }
 
     private val IfNode.guardVisiblityFlag: GuardVisibilityFlag by attribute {
@@ -217,7 +215,7 @@ class SelectionConstraintGenerator(
                             )
                         }
 
-                        // queries needs to be executed in the same protocol as the object
+                        // Queries need to be executed in the same protocol as the object
                         is QueryNode -> {
                             val enclosingFunctionName = nameAnalysis.enclosingFunctionName(this)
 
@@ -728,9 +726,9 @@ class SelectionConstraintGenerator(
             // a host participates in a block node if it participates in any of the children
             is BlockNode -> {
                 this.statements.fold(
-                    program.hostDeclarations.map {
+                    program.hostDeclarations.associate {
                         it.name.value to (Literal(false) as SelectionConstraint)
-                    }.toMap()
+                    }
                 ) { acc: Map<Host, SelectionConstraint>, stmt: StatementNode ->
                     acc.mapValues { kv -> Or(kv.value, stmt.participatingHosts[kv.key]!!) }
                 }.map { kv ->

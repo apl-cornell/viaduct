@@ -7,6 +7,6 @@ import edu.cornell.cs.apl.viaduct.syntax.FunctionName
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
 import edu.cornell.cs.apl.viaduct.syntax.Variable
 
-fun ABYMuxPostprocessor(
+fun abyMuxPostprocessor(
     protocolAssignment: (FunctionName, Variable) -> Protocol
 ): ProgramPostprocessor = MuxPostprocessor({ p -> p is ABY }, protocolAssignment)

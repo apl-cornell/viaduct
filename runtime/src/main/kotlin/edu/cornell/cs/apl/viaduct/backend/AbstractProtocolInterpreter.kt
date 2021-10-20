@@ -227,7 +227,7 @@ abstract class AbstractProtocolInterpreter<Obj>(
  *  protocol argument on implemented methods isn't necessary. */
 abstract class SingleProtocolInterpreter<Obj>(
     program: ProgramNode,
-    private val protocol: Protocol
+    protocol: Protocol
 ) : AbstractProtocolInterpreter<Obj>(program) {
     override val availableProtocols: Set<Protocol> =
         setOf(protocol)

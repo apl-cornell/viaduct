@@ -41,7 +41,7 @@ private constructor(
 
     // TODO: Should be moved to analysis.NameAnalysis
     val functionMap: Map<FunctionName, FunctionDeclarationNode> =
-        functions.map { function -> Pair(function.name.value, function) }.toMap()
+        functions.associateBy { function -> function.name.value }
 
     /** A lazily constructed [Tree] instance for the program. */
     val tree: Tree<Node, ProgramNode> by lazy { Tree(this) }

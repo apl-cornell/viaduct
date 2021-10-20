@@ -37,12 +37,11 @@ class ViaductBackend(
         val connectionMap: Map<Host, HostAddress> =
             // custom connection info must provide info for all hosts or none
             if (customConnectionInfo.isEmpty()) {
-                program.hostDeclarations
-                    .map { hostDecl ->
-                        val addr = HostAddress(DEFAULT_ADDRESS, portNum)
-                        portNum++
-                        Pair(hostDecl.name.value, addr)
-                    }.toMap()
+                program.hostDeclarations.associate { hostDecl ->
+                    val addr = HostAddress(DEFAULT_ADDRESS, portNum)
+                    portNum++
+                    Pair(hostDecl.name.value, addr)
+                }
             } else {
                 val allHostsDefined = program.hostDeclarations.all { hostDecl ->
                     customConnectionInfo.containsKey(hostDecl.name.value)

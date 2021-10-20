@@ -24,16 +24,16 @@ class CommitmentProtocolFactory(val program: ProgramNode) : ProtocolFactory {
 
     private fun Node.isApplicable(): Boolean {
         return when (this) {
-            is LetNode -> nameAnalysis.readers(this).all {
-                it.immediateRHS().all {
-                    (it is AtomicExpressionNode) || (it is DowngradeNode)
+            is LetNode -> nameAnalysis.readers(this).all { reader ->
+                reader.immediateRHS().all {
+                    it is AtomicExpressionNode || it is DowngradeNode
                 }
-            } && ((this.value is AtomicExpressionNode) || (this.value is DowngradeNode) || (this.value is QueryNode))
+            } && (this.value is AtomicExpressionNode || this.value is DowngradeNode || this.value is QueryNode)
 
             is DeclarationNode -> {
-                nameAnalysis.updaters(this).filter { updateNode ->
-                    updateNode.update.value != edu.cornell.cs.apl.viaduct.syntax.datatypes.Set
-                }.isEmpty()
+                nameAnalysis.updaters(this).all { updateNode ->
+                    updateNode.update.value == edu.cornell.cs.apl.viaduct.syntax.datatypes.Set
+                }
             }
 
             else -> false

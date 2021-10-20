@@ -89,12 +89,12 @@ class Run : CliktCommand(help = "Run compiled protocol for a single host") {
         val program = input.parse(protocols).elaborated()
 
         val connectionInfoMap: Map<Host, HostAddress> =
-            hostAddress.map { kv ->
+            hostAddress.associate { kv ->
                 val host = Host(kv.first)
                 val addressStr = kv.second.split(":", limit = 2)
                 val address = HostAddress(addressStr[0], addressStr[1].toInt())
                 host to address
-            }.toMap()
+            }
 
         if (abyPort != null) {
             ABYProtocolInterpreter.port = abyPort as Int

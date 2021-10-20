@@ -322,7 +322,7 @@ class ABYProtocolInterpreter(
             // find a variable with no children and add it to the schedule
             var processedVar: ABYCircuitGate? = null
             for (v in variablesToProcess) {
-                if (childrenMap[v]?.size ?: 0 == 0) {
+                if ((childrenMap[v]?.size ?: 0) == 0) {
                     variableSchedule.add(v)
 
                     // remove v's outgoing edges

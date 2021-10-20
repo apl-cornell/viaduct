@@ -227,11 +227,11 @@ internal fun SelectionConstraint.boolExpr(
         is VariableIn ->
             this.protocols.map { prot ->
                 ctx.mkEq(
-                    vmap.get(this.variable),
-                    pmap.get(prot)
+                    vmap[this.variable],
+                    pmap[prot]
                 )
             }.ors(ctx)
-        is VariableEquals -> ctx.mkEq(vmap.get(this.var1), vmap.get(this.var2))
+        is VariableEquals -> ctx.mkEq(vmap[this.var1], vmap[this.var2])
 
         is CostEquals ->
             ctx.mkEq(

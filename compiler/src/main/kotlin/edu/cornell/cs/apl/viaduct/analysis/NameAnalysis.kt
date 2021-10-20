@@ -169,7 +169,7 @@ class NameAnalysis private constructor(private val tree: Tree<Node, ProgramNode>
      * Threads a context through the program according to the scoping rules.
      *
      * @param resetAtBlock True if the context map should be cleared upon entering a block.
-     * @param defines Returns the name defined by this node along with the the context information
+     * @param defines Returns the name defined by this node along with the context information
      *   attached to that name, or `null` if this node does not define a new name.
      */
     private inner class Context<N : Name, Data>(
@@ -467,7 +467,7 @@ class NameAnalysis private constructor(private val tree: Tree<Node, ProgramNode>
     private val Node.involvedLoops: List<InfiniteLoopNode> by attribute {
         val loopsAbove =
             when (val parent = tree.parent(this)) {
-                null -> persistentListOf<InfiniteLoopNode>()
+                null -> persistentListOf()
                 else -> parent.involvedLoops
             }
         if (this is InfiniteLoopNode) {

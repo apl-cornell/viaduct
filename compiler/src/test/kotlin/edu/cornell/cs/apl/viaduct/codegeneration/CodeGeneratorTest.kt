@@ -28,7 +28,7 @@ internal class CodeGeneratorTest {
     fun `it generates`(file: File) {
         if (file.parentFile.name != "plaintext-code-generation") return
 
-        var program = SourceFile.from(file)
+        val program = SourceFile.from(file)
             .parse()
             .elaborated()
             .specialize()

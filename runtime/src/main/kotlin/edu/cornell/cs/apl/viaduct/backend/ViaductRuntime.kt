@@ -116,8 +116,8 @@ private class ViaductReceiverThread(
 
                                 // ByteVecValue
                                 2 -> {
-                                    val len_buf = socketInput.readNBytes(4)
-                                    val len = ByteBuffer.wrap(len_buf).order(ByteOrder.LITTLE_ENDIAN).int
+                                    val lenBytes = socketInput.readNBytes(4)
+                                    val len = ByteBuffer.wrap(lenBytes).order(ByteOrder.LITTLE_ENDIAN).int
                                     val i = socketInput.readNBytes(len).toList()
                                     bytesReceived += 4 + len
                                     ByteVecValue(i)
@@ -184,8 +184,8 @@ private class ViaductSenderThread(
                             socketOutput.write(2)
                             val bytes = msg.message.value.toByteArray()
                             val len = bytes.size
-                            val len_buf = ByteBuffer.allocate(4).order(ByteOrder.LITTLE_ENDIAN).putInt(len)
-                            socketOutput.write(len_buf.array())
+                            val lenBytes = ByteBuffer.allocate(4).order(ByteOrder.LITTLE_ENDIAN).putInt(len)
+                            socketOutput.write(lenBytes.array())
                             socketOutput.write(bytes)
                             bytesSent += 5 + bytes.size
                         }

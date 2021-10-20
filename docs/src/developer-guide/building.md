@@ -44,7 +44,7 @@ manually to get the wrapper to build. To build, navigate to the root of the repo
 install the libraries and header files.
 
 Next, clone `libsnark`: https://github.com/scipr-lab/libsnark. Run this command in the root of the repository:
-`mkdir build && cd build && cmake -DUSE_LINKED_LIBRARIES=ON ..`. The `cmake` flag makes the build use the install
+`mkdir build && cd build && cmake -DUSE_LINKED_LIBRARIES=ON ..`. The `cmake` flag makes the build use the installed
 version of `libfqfft` instead of building it again in the `depends` subrepository. Then run `make` and
 then `make install` to install the libraries and header files.
 
@@ -52,5 +52,5 @@ Finally, build the `libsnark` wrapper. Navigate to this directory of the `viaduc
 `runtime/src/main/cwrapper`. Next, inspect the `Makefile` and make sure that the `INCLUDES` variable points to the JVM
 directories. Then inspect the `libsnarkwrapper.so` target and make sure the link directory
 (`-L`) points to the directory where `libff` and `libsnark` were installed. Run `make` to build `libsnarkwrapper.`
-Finally, run `make install` to install the wrapper in a directory known by the JVM to include JNI libraries. By default
+Finally, run `make install` to install the wrapper in a directory known by the JVM to include JNI libraries. By default,
 the `install` target will copy the wrapper in `/usr/lib/`.

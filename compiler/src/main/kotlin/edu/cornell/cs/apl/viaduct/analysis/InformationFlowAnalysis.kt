@@ -316,7 +316,7 @@ class InformationFlowAnalysis private constructor(
                     }
                 }
 
-                /* don't need this PC check anymore I think? it's not in the rules in the paper
+                /* Don't need this PC check anymore I think? it's not in the rules in the paper
                 solver.addFlowsToConstraint(from, pcLabel.swap().join(to.value)) { _, _ ->
                     MalleableDowngradeError(this)
                 }
@@ -472,7 +472,7 @@ class InformationFlowAnalysis private constructor(
                 } else { // add function to worklist
                     val enclosingFunction = nameAnalysis.enclosingFunctionName(this)
                     val argumentLabelMap =
-                        this.arguments.map { argument ->
+                        this.arguments.associate { argument ->
                             val parameter = nameAnalysis.parameter(argument)
                             val argumentVariable =
                                 when (argument) {
@@ -493,57 +493,55 @@ class InformationFlowAnalysis private constructor(
 
                             Pair(parameter.name.value, argumentVariable)
                         }
-                            .toMap()
 
                     val parameterVariables =
-                        this.arguments
-                            .map { argument ->
-                                val parameter = nameAnalysis.parameter(argument)
-                                val parameterVariable =
-                                    solver.addNewVariable(nameGenerator.getFreshName(parameter.name.value.name))
-                                val argumentLabel = argumentLabelMap.getValue(parameter.name.value)
+                        // no complex expressions with label parameters
+                        this.arguments.associate { argument ->
+                            val parameter = nameAnalysis.parameter(argument)
+                            val parameterVariable =
+                                solver.addNewVariable(nameGenerator.getFreshName(parameter.name.value.name))
+                            val argumentLabel = argumentLabelMap.getValue(parameter.name.value)
 
-                                assertEqualsTo(
-                                    solver,
-                                    argument,
-                                    parameterVariable,
-                                    argumentLabel
-                                )
+                            assertEqualsTo(
+                                solver,
+                                argument,
+                                parameterVariable,
+                                argumentLabel
+                            )
 
-                                if (parameter.labelArguments != null) {
-                                    val labelBoundExpr = parameter.labelArguments[0].value
-                                    val labelBound =
-                                        when {
-                                            labelBoundExpr is LabelParameter ->
-                                                argumentLabelMap.getValue(ObjectVariable(labelBoundExpr.name))
+                            if (parameter.labelArguments != null) {
+                                val labelBoundExpr = parameter.labelArguments[0].value
+                                val labelBound =
+                                    when {
+                                        labelBoundExpr is LabelParameter ->
+                                            argumentLabelMap.getValue(ObjectVariable(labelBoundExpr.name))
 
-                                            !labelBoundExpr.containsParameters() ->
-                                                LabelConstant(labelBoundExpr.interpret())
+                                        !labelBoundExpr.containsParameters() ->
+                                            LabelConstant(labelBoundExpr.interpret())
 
-                                            // no complex expressions with label parameters
-                                            else -> throw Error("no complex label expressions with parameters in function signatures")
-                                        }
-
-                                    if (argument is ObjectDeclarationArgumentNode) {
-                                        assertEqualsTo(
-                                            solver,
-                                            argument,
-                                            argumentLabel,
-                                            labelBound
-                                        )
-                                    } else {
-                                        assertFlowsTo(
-                                            solver,
-                                            argument,
-                                            argumentLabel,
-                                            labelBound
-                                        )
+                                        // no complex expressions with label parameters
+                                        else -> throw Error("no complex label expressions with parameters in function signatures")
                                     }
-                                }
 
-                                Pair(parameter.name.value, parameterVariable)
+                                if (argument is ObjectDeclarationArgumentNode) {
+                                    assertEqualsTo(
+                                        solver,
+                                        argument,
+                                        argumentLabel,
+                                        labelBound
+                                    )
+                                } else {
+                                    assertFlowsTo(
+                                        solver,
+                                        argument,
+                                        argumentLabel,
+                                        labelBound
+                                    )
+                                }
                             }
-                            .toMap()
+
+                            Pair(parameter.name.value, parameterVariable)
+                        }
 
                     val functionDecl = nameAnalysis.declaration(this)
                     val functionPc =

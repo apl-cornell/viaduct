@@ -9,7 +9,7 @@ import edu.cornell.cs.apl.viaduct.syntax.datatypes.Set
 import edu.cornell.cs.apl.viaduct.syntax.datatypes.UpdateName
 import kotlinx.collections.immutable.persistentListOf
 
-/** The type of a [MutableCell] object. */
+/** The type of [MutableCell] objects. */
 data class MutableCellType(val elementType: ValueType) : ObjectType() {
     override val className: ClassName
         get() = MutableCell

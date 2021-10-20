@@ -34,17 +34,11 @@ abstract class ABY(val server: Host, val client: Host) : Protocol() {
     }
 
     val secretInputPorts: Map<Host, InputPort> =
-        hosts
-            .map { h -> Pair(h, InputPort(this, h, SECRET_INPUT)) }
-            .toMap()
+        hosts.associateWith { h -> InputPort(this, h, SECRET_INPUT) }
 
     val cleartextInputPorts: Map<Host, InputPort> =
-        hosts
-            .map { h -> Pair(h, InputPort(this, h, CLEARTEXT_INPUT)) }
-            .toMap()
+        hosts.associateWith { h -> InputPort(this, h, CLEARTEXT_INPUT) }
 
     val cleartextOutputPorts: Map<Host, OutputPort> =
-        hosts
-            .map { h -> Pair(h, OutputPort(this, h, CLEARTEXT_OUTPUT)) }
-            .toMap()
+        hosts.associateWith { h -> OutputPort(this, h, CLEARTEXT_OUTPUT) }
 }

@@ -14,7 +14,7 @@ internal fun <A, B> List<A>.pairedWith(other: List<B>): List<Pair<A, B>> {
     return result
 }
 
-/** Returns all subsequences of this list sorted from the smallest in size to the largest. */
+/** Returns all subsequences of this list sorted from shortest to longest. */
 internal fun <E> List<E>.subsequences(): Iterable<List<E>> {
     val result = mutableListOf<List<E>>()
     for (i in 0..this.size) {

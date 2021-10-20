@@ -220,10 +220,13 @@ class ProtocolAnalysis(
     fun protocols(function: FunctionDeclarationNode): Set<Protocol> = function.protocols
 
     private val LetNode.relevantCommunicationEventsMap: Map<SimpleStatementNode, Set<CommunicationEvent>> by attribute {
+        // relevance criterion: if (A) the receiver of the event is the reader protocol,
+        // then (B) the event's receiving host must be participating
+        // the implication (A) -> (B) is turned into !(A) || (B)
         nameAnalysis
             .readers(this)
             .filterIsInstance<SimpleStatementNode>()
-            .map { reader ->
+            .associateWith { reader ->
                 val readerHosts = reader.participatingHosts
 
                 val protocol = primaryProtocol(this)
@@ -238,8 +241,8 @@ class ProtocolAnalysis(
                         readerProtocol != event.recv.protocol || readerHosts.contains(event.recv.host)
                     }.toSet()
 
-                Pair(reader, relevantEvents)
-            }.toMap()
+                relevantEvents
+            }
     }
 
     /** Return the relevant communication events for the [read]. */

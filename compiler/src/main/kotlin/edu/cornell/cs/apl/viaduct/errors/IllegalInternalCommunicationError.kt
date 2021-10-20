@@ -15,7 +15,6 @@ import edu.cornell.cs.apl.viaduct.syntax.surface.keyword
  * These protocols are only allowed to communicate with hosts, not other protocols, so they should
  * be using [ExternalCommunicationNode]s.
  *
- * @param process Protocol containing the illegal statement.
  * @param illegalStatement The illegal communication statement.
  */
 class IllegalInternalCommunicationError(
@@ -32,7 +31,7 @@ class IllegalInternalCommunicationError(
             Document("Not allowed to communicate with other protocols:")
                 .withSource(illegalStatement.sourceLocation)
 
-    override val hint: Document?
+    override val hint: Document
         get() =
             Document("Use") * keyword("input") * "and" * keyword("output") *
                 "if you want to communicate with hosts." + Document.lineBreak

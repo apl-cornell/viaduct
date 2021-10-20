@@ -20,7 +20,7 @@ class ZKP(val prover: Host, val verifiers: Set<Host>) : Protocol() {
     }
 
     init {
-        require(verifiers.size >= 1)
+        require(verifiers.isNotEmpty())
         require(!verifiers.contains(prover))
     }
 
@@ -42,12 +42,12 @@ class ZKP(val prover: Host, val verifiers: Set<Host>) : Protocol() {
         InputPort(this, prover, "ZKP_SECRET_INPUT")
 
     val cleartextInput: Map<Host, InputPort> =
-        (verifiers + setOf(prover)).map {
-            it to InputPort(this, it, "ZKP_PUBLIC_INPUT")
-        }.toMap()
+        (verifiers + setOf(prover)).associateWith {
+            InputPort(this, it, "ZKP_PUBLIC_INPUT")
+        }
 
     val outputPorts: Map<Host, OutputPort> =
-        (verifiers + setOf(prover)).map {
-            it to OutputPort(this, it, "ZKP_OUTPUT")
-        }.toMap()
+        (verifiers + setOf(prover)).associateWith {
+            OutputPort(this, it, "ZKP_OUTPUT")
+        }
 }

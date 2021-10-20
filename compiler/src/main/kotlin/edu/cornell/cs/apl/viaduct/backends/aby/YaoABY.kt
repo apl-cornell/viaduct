@@ -19,22 +19,14 @@ class YaoABY(server: Host, client: Host) : ABY(server, client) {
         get() = Companion.protocolName
 
     val B2YInputPorts: Map<Host, InputPort> =
-        hosts
-            .map { h -> Pair(h, InputPort(this, h, B2Y_INPUT)) }
-            .toMap()
+        hosts.associateWith { h -> InputPort(this, h, B2Y_INPUT) }
 
     val A2YInputPorts: Map<Host, InputPort> =
-        hosts
-            .map { h -> Pair(h, InputPort(this, h, A2Y_INPUT)) }
-            .toMap()
+        hosts.associateWith { h -> InputPort(this, h, A2Y_INPUT) }
 
     val Y2BOutputPorts: Map<Host, OutputPort> =
-        hosts
-            .map { h -> Pair(h, OutputPort(this, h, Y2B_OUTPUT)) }
-            .toMap()
+        hosts.associateWith { h -> OutputPort(this, h, Y2B_OUTPUT) }
 
     val Y2AOutputPorts: Map<Host, OutputPort> =
-        hosts
-            .map { h -> Pair(h, OutputPort(this, h, Y2A_OUTPUT)) }
-            .toMap()
+        hosts.associateWith { h -> OutputPort(this, h, Y2A_OUTPUT) }
 }

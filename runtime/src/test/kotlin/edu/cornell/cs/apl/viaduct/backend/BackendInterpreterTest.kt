@@ -4,6 +4,7 @@ import edu.cornell.cs.apl.viaduct.PositiveTestProgramProvider
 import edu.cornell.cs.apl.viaduct.analysis.ProtocolAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.main
 import edu.cornell.cs.apl.viaduct.backend.IO.Strategy
+import edu.cornell.cs.apl.viaduct.backends.DefaultCombinedBackend
 import edu.cornell.cs.apl.viaduct.passes.annotateWithProtocols
 import edu.cornell.cs.apl.viaduct.passes.check
 import edu.cornell.cs.apl.viaduct.passes.elaborated
@@ -13,7 +14,6 @@ import edu.cornell.cs.apl.viaduct.selection.CostMode
 import edu.cornell.cs.apl.viaduct.selection.ProtocolCommunication
 import edu.cornell.cs.apl.viaduct.selection.SimpleCostEstimator
 import edu.cornell.cs.apl.viaduct.selection.SimpleCostRegime
-import edu.cornell.cs.apl.viaduct.selection.SimpleProtocolComposer
 import edu.cornell.cs.apl.viaduct.selection.selectProtocolsWithZ3
 import edu.cornell.cs.apl.viaduct.selection.simpleProtocolFactory
 import edu.cornell.cs.apl.viaduct.syntax.FunctionName
@@ -114,13 +114,14 @@ internal class BackendInterpreterTest {
         program.check()
 
         // Select protocols.
+        val protocolComposer = DefaultCombinedBackend.protocolComposer
         val protocolAssignment: (FunctionName, Variable) -> Protocol =
             selectProtocolsWithZ3(
                 program,
                 program.main,
                 simpleProtocolFactory(program),
-                SimpleProtocolComposer,
-                SimpleCostEstimator(SimpleProtocolComposer, SimpleCostRegime.LAN),
+                protocolComposer,
+                SimpleCostEstimator(protocolComposer, SimpleCostRegime.LAN),
                 CostMode.MINIMIZE
             )
         val annotatedProgram = program.annotateWithProtocols(protocolAssignment)

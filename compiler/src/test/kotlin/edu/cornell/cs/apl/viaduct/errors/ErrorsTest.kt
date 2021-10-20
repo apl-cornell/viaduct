@@ -2,6 +2,7 @@ package edu.cornell.cs.apl.viaduct.errors
 
 import edu.cornell.cs.apl.viaduct.NegativeTestFileProvider
 import edu.cornell.cs.apl.viaduct.analysis.main
+import edu.cornell.cs.apl.viaduct.backends.DefaultCombinedBackend
 import edu.cornell.cs.apl.viaduct.parsing.SourceFile
 import edu.cornell.cs.apl.viaduct.parsing.isBlankOrUnderline
 import edu.cornell.cs.apl.viaduct.parsing.parse
@@ -10,7 +11,6 @@ import edu.cornell.cs.apl.viaduct.passes.elaborated
 import edu.cornell.cs.apl.viaduct.selection.CostMode
 import edu.cornell.cs.apl.viaduct.selection.SimpleCostEstimator
 import edu.cornell.cs.apl.viaduct.selection.SimpleCostRegime
-import edu.cornell.cs.apl.viaduct.selection.SimpleProtocolComposer
 import edu.cornell.cs.apl.viaduct.selection.selectProtocolsWithZ3
 import edu.cornell.cs.apl.viaduct.selection.simpleProtocolFactory
 import org.junit.jupiter.api.Assertions.assertFalse
@@ -51,10 +51,12 @@ internal class ErrorsTest {
 private fun run(file: File) {
     val program = SourceFile.from(file).parse().elaborated()
     program.check()
+
+    val protocolComposer = DefaultCombinedBackend.protocolComposer
     selectProtocolsWithZ3(
         program, program.main,
-        simpleProtocolFactory(program), SimpleProtocolComposer,
-        SimpleCostEstimator(SimpleProtocolComposer, SimpleCostRegime.LAN),
+        simpleProtocolFactory(program), protocolComposer,
+        SimpleCostEstimator(protocolComposer, SimpleCostRegime.LAN),
         CostMode.MINIMIZE
     )
     // TODO: interpret

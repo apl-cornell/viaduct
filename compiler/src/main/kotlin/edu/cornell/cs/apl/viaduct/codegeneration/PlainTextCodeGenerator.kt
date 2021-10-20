@@ -10,12 +10,12 @@ import com.squareup.kotlinpoet.U_BYTE_ARRAY
 import edu.cornell.cs.apl.viaduct.analysis.NameAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.ProtocolAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.TypeAnalysis
+import edu.cornell.cs.apl.viaduct.backends.DefaultCombinedBackend
 import edu.cornell.cs.apl.viaduct.backends.cleartext.Plaintext
 import edu.cornell.cs.apl.viaduct.errors.CodeGenerationError
 import edu.cornell.cs.apl.viaduct.errors.RuntimeError
 import edu.cornell.cs.apl.viaduct.selection.CommunicationEvent
 import edu.cornell.cs.apl.viaduct.selection.ProtocolCommunication
-import edu.cornell.cs.apl.viaduct.selection.SimpleProtocolComposer
 import edu.cornell.cs.apl.viaduct.syntax.Arguments
 import edu.cornell.cs.apl.viaduct.syntax.BinaryOperator
 import edu.cornell.cs.apl.viaduct.syntax.ClassNameNode
@@ -61,7 +61,7 @@ class PlainTextCodeGenerator(
 ) : AbstractCodeGenerator() {
     private val typeAnalysis = TypeAnalysis.get(context.program)
     private val nameAnalysis = NameAnalysis.get(context.program)
-    private val protocolAnalysis = ProtocolAnalysis(context.program, SimpleProtocolComposer)
+    private val protocolAnalysis = ProtocolAnalysis(context.program, DefaultCombinedBackend.protocolComposer)
     private val runtimeErrorClass = RuntimeError::class
 
     private fun exp(value: Value): CodeBlock =

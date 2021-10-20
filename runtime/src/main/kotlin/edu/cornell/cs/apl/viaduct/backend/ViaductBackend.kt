@@ -2,8 +2,8 @@ package edu.cornell.cs.apl.viaduct.backend
 
 import edu.cornell.cs.apl.viaduct.analysis.ProtocolAnalysis
 import edu.cornell.cs.apl.viaduct.backend.IO.Strategy
+import edu.cornell.cs.apl.viaduct.backends.DefaultCombinedBackend
 import edu.cornell.cs.apl.viaduct.errors.ViaductInterpreterError
-import edu.cornell.cs.apl.viaduct.selection.SimpleProtocolComposer
 import edu.cornell.cs.apl.viaduct.syntax.Host
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.HostDeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
@@ -31,7 +31,7 @@ class ViaductBackend(
         if (!isHostValid) throw ViaductInterpreterError("unknown host $host")
 
         // build protocol analysis from protocol annotations in the program
-        val protocolAnalysis = ProtocolAnalysis(program, SimpleProtocolComposer)
+        val protocolAnalysis = ProtocolAnalysis(program, DefaultCombinedBackend.protocolComposer)
 
         var portNum = DEFAULT_PORT
         val connectionMap: Map<Host, HostAddress> =

@@ -1,6 +1,7 @@
 package edu.cornell.cs.apl.viaduct.analysis
 
 import edu.cornell.cs.apl.viaduct.PositiveTestProgramProvider
+import edu.cornell.cs.apl.viaduct.backends.DefaultCombinedBackend
 import edu.cornell.cs.apl.viaduct.errors.NoMainError
 import edu.cornell.cs.apl.viaduct.passes.annotateWithProtocols
 import edu.cornell.cs.apl.viaduct.passes.check
@@ -8,7 +9,6 @@ import edu.cornell.cs.apl.viaduct.passes.elaborated
 import edu.cornell.cs.apl.viaduct.selection.CostMode
 import edu.cornell.cs.apl.viaduct.selection.SimpleCostEstimator
 import edu.cornell.cs.apl.viaduct.selection.SimpleCostRegime
-import edu.cornell.cs.apl.viaduct.selection.SimpleProtocolComposer
 import edu.cornell.cs.apl.viaduct.selection.selectProtocolsWithZ3
 import edu.cornell.cs.apl.viaduct.selection.simpleProtocolFactory
 import edu.cornell.cs.apl.viaduct.syntax.surface.ProgramNode
@@ -21,15 +21,17 @@ internal class ProtocolAnalysisTest {
     fun `it does not explode`(surfaceProgram: ProgramNode) {
         val program = surfaceProgram.elaborated()
         program.check()
-        val dumbProtocolAssignment = selectProtocolsWithZ3(
+
+        val protocolComposer = DefaultCombinedBackend.protocolComposer
+        val protocolAssignment = selectProtocolsWithZ3(
             program, program.main,
-            simpleProtocolFactory(program), SimpleProtocolComposer,
-            SimpleCostEstimator(SimpleProtocolComposer, SimpleCostRegime.LAN),
+            simpleProtocolFactory(program), protocolComposer,
+            SimpleCostEstimator(protocolComposer, SimpleCostRegime.LAN),
             CostMode.MINIMIZE
         )
 
-        val annotatedProgram = program.annotateWithProtocols(dumbProtocolAssignment)
-        val protocolAnalysis = ProtocolAnalysis(annotatedProgram, SimpleProtocolComposer)
+        val annotatedProgram = program.annotateWithProtocols(protocolAssignment)
+        val protocolAnalysis = ProtocolAnalysis(annotatedProgram, protocolComposer)
 
         try {
             protocolAnalysis.protocols(annotatedProgram.main.body)

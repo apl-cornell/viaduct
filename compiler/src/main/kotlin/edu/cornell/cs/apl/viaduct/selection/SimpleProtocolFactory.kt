@@ -1,5 +1,6 @@
 package edu.cornell.cs.apl.viaduct.selection
 
+import edu.cornell.cs.apl.viaduct.backends.DefaultCombinedBackend
 import edu.cornell.cs.apl.viaduct.backends.aby.ABYProtocolFactory
 import edu.cornell.cs.apl.viaduct.backends.cleartext.LocalProtocolFactory
 import edu.cornell.cs.apl.viaduct.backends.cleartext.ReplicationProtocolFactory
@@ -18,6 +19,6 @@ fun simpleProtocolFactory(
 ): ProtocolFactory {
     val factory = listOf(localFactory, replicationFactory, commitmentFactory, zkpFactory, abyFactory).unions()
     abyFactory.parentFactory = factory
-    abyFactory.protocolComposer = SimpleProtocolComposer
+    abyFactory.protocolComposer = DefaultCombinedBackend.protocolComposer
     return factory
 }

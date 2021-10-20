@@ -12,6 +12,7 @@ import edu.cornell.cs.apl.viaduct.analysis.letNodes
 import edu.cornell.cs.apl.viaduct.analysis.main
 import edu.cornell.cs.apl.viaduct.backend.aby.ABYMuxPostprocessor
 import edu.cornell.cs.apl.viaduct.backend.zkp.ZKPMuxPostprocessor
+import edu.cornell.cs.apl.viaduct.backends.DefaultCombinedBackend
 import edu.cornell.cs.apl.viaduct.codegeneration.BackendCodeGenerator
 import edu.cornell.cs.apl.viaduct.codegeneration.CodeGenerator
 import edu.cornell.cs.apl.viaduct.codegeneration.CodeGeneratorContext
@@ -24,7 +25,6 @@ import edu.cornell.cs.apl.viaduct.passes.specialize
 import edu.cornell.cs.apl.viaduct.selection.CostMode
 import edu.cornell.cs.apl.viaduct.selection.SimpleCostEstimator
 import edu.cornell.cs.apl.viaduct.selection.SimpleCostRegime
-import edu.cornell.cs.apl.viaduct.selection.SimpleProtocolComposer
 import edu.cornell.cs.apl.viaduct.selection.selectProtocolsWithZ3
 import edu.cornell.cs.apl.viaduct.selection.simpleProtocolFactory
 import edu.cornell.cs.apl.viaduct.selection.validateProtocolAssignment
@@ -126,9 +126,9 @@ class Compile : CliktCommand(help = "Compile ideal protocol to secure distribute
         // Select protocols.
         logger.info { "selecting protocols..." }
 
-        val protocolComposer = SimpleProtocolComposer
+        val protocolComposer = DefaultCombinedBackend.protocolComposer
         val costRegime = if (wanCost) SimpleCostRegime.WAN else SimpleCostRegime.LAN
-        val costEstimator = SimpleCostEstimator(SimpleProtocolComposer, costRegime)
+        val costEstimator = SimpleCostEstimator(protocolComposer, costRegime)
 
         val protocolAssignment: (FunctionName, Variable) -> Protocol
         val protocolSelectionDuration = measureTimeMillis {

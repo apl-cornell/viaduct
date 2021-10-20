@@ -3,6 +3,7 @@ package edu.cornell.cs.apl.viaduct.codegeneration
 import edu.cornell.cs.apl.prettyprinting.Document
 import edu.cornell.cs.apl.viaduct.PositiveTestFileProvider
 import edu.cornell.cs.apl.viaduct.analysis.main
+import edu.cornell.cs.apl.viaduct.backends.DefaultCombinedBackend
 import edu.cornell.cs.apl.viaduct.parsing.SourceFile
 import edu.cornell.cs.apl.viaduct.parsing.parse
 import edu.cornell.cs.apl.viaduct.passes.annotateWithProtocols
@@ -12,7 +13,6 @@ import edu.cornell.cs.apl.viaduct.passes.specialize
 import edu.cornell.cs.apl.viaduct.selection.CostMode
 import edu.cornell.cs.apl.viaduct.selection.SimpleCostEstimator
 import edu.cornell.cs.apl.viaduct.selection.SimpleCostRegime
-import edu.cornell.cs.apl.viaduct.selection.SimpleProtocolComposer
 import edu.cornell.cs.apl.viaduct.selection.selectProtocolsWithZ3
 import edu.cornell.cs.apl.viaduct.selection.simpleProtocolFactory
 import edu.cornell.cs.apl.viaduct.selection.validateProtocolAssignment
@@ -42,9 +42,9 @@ internal class CodeGeneratorTest {
         val maximizeCost = false
 
         var wanCost = false
-        val protocolComposer = SimpleProtocolComposer
+        val protocolComposer = DefaultCombinedBackend.protocolComposer
         val costRegime = if (wanCost) SimpleCostRegime.WAN else SimpleCostRegime.LAN
-        val costEstimator = SimpleCostEstimator(SimpleProtocolComposer, costRegime)
+        val costEstimator = SimpleCostEstimator(protocolComposer, costRegime)
 
         val protocolAssignment: (FunctionName, Variable) -> Protocol = selectProtocolsWithZ3(
             program,

@@ -13,7 +13,6 @@ import edu.cornell.cs.apl.viaduct.passes.specialize
 import edu.cornell.cs.apl.viaduct.selection.CostMode
 import edu.cornell.cs.apl.viaduct.selection.SimpleCostEstimator
 import edu.cornell.cs.apl.viaduct.selection.SimpleCostRegime
-import edu.cornell.cs.apl.viaduct.selection.SimpleProtocolComposer
 import edu.cornell.cs.apl.viaduct.selection.selectProtocolsWithZ3
 import edu.cornell.cs.apl.viaduct.selection.validateProtocolAssignment
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProcessDeclarationNode
@@ -93,7 +92,7 @@ abstract class CompileViaductTask : DefaultTask() {
 
         // TODO: don't bake in cost regime
         val protocolFactory = backend.get().protocolFactory(program)
-        val protocolComposer = SimpleProtocolComposer
+        val protocolComposer = backend.get().protocolComposer
         val costEstimator = SimpleCostEstimator(protocolComposer, SimpleCostRegime.WAN)
 
         val protocolAssignment = selectProtocolsWithZ3(

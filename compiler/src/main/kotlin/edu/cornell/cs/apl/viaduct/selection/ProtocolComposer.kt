@@ -25,7 +25,17 @@ abstract class ProtocolComposer {
 /** A [ProtocolComposer] with sensible defaults. */
 abstract class AbstractProtocolComposer : ProtocolComposer() {
     /** Same as [communicateOrNull] except there is no need to wrap the result in a [ProtocolCommunication] instance. */
-    protected abstract fun communicationEvents(source: Protocol, destination: Protocol): Iterable<CommunicationEvent>?
+    protected open fun communicationEvents(source: Protocol, destination: Protocol): Iterable<CommunicationEvent>? =
+        if (source == destination) {
+            source.hosts.map { host ->
+                CommunicationEvent(
+                    source.internalOutputPorts.getValue(host),
+                    destination.internalInputPorts.getValue(host)
+                )
+            }
+        } else {
+            null
+        }
 
     /**
      * Same as [mandatoryParticipatingHosts] but specialized to [LetNode].

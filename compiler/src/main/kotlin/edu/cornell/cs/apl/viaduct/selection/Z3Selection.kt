@@ -24,7 +24,6 @@ import edu.cornell.cs.apl.viaduct.errors.NoProtocolIndexMapping
 import edu.cornell.cs.apl.viaduct.errors.NoSelectionSolutionError
 import edu.cornell.cs.apl.viaduct.errors.NoVariableSelectionSolutionError
 import edu.cornell.cs.apl.viaduct.syntax.FunctionName
-import edu.cornell.cs.apl.viaduct.syntax.HostTrustConfiguration
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
 import edu.cornell.cs.apl.viaduct.syntax.Variable
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.DeclarationNode
@@ -81,13 +80,6 @@ private class Z3Selection(
 
     private val constraintGenerator =
         SelectionConstraintGenerator(program, protocolFactory, protocolComposer, costEstimator, ctx)
-    private val hostTrustConfiguration = HostTrustConfiguration(program)
-
-    init {
-        if (this.hostTrustConfiguration.isEmpty()) {
-            throw NoHostDeclarationsError(program.sourceLocation.sourcePath)
-        }
-    }
 
     private fun Cost<SymbolicCost>.featureSum(): SymbolicCost {
         val weights = costEstimator.featureWeights()
@@ -324,11 +316,16 @@ fun selectProtocolsWithZ3(
     costEstimator: CostEstimator<IntegerCost>,
     costMode: CostMode = CostMode.MINIMIZE,
     dumpMetadata: (Map<Node, PrettyPrintable>) -> Unit = {}
-): (FunctionName, Variable) -> Protocol =
-    Context().use { context ->
+): (FunctionName, Variable) -> Protocol {
+    if (program.hosts.isEmpty()) {
+        throw NoHostDeclarationsError(program.sourceLocation.sourcePath)
+    }
+
+    return Context().use { context ->
         Z3Selection(
             program, program.main,
             protocolFactory, protocolComposer, costEstimator,
             context, costMode, dumpMetadata
         ).select()
     }
+}

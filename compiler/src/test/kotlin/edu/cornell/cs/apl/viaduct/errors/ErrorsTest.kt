@@ -7,7 +7,6 @@ import edu.cornell.cs.apl.viaduct.parsing.isBlankOrUnderline
 import edu.cornell.cs.apl.viaduct.parsing.parse
 import edu.cornell.cs.apl.viaduct.passes.check
 import edu.cornell.cs.apl.viaduct.passes.elaborated
-import edu.cornell.cs.apl.viaduct.selection.CostMode
 import edu.cornell.cs.apl.viaduct.selection.SimpleCostEstimator
 import edu.cornell.cs.apl.viaduct.selection.SimpleCostRegime
 import edu.cornell.cs.apl.viaduct.selection.selectProtocolsWithZ3
@@ -54,8 +53,7 @@ private fun run(file: File) {
     selectProtocolsWithZ3(
         program,
         DefaultCombinedBackend.protocolFactory(program), protocolComposer,
-        SimpleCostEstimator(protocolComposer, SimpleCostRegime.LAN),
-        CostMode.MINIMIZE
+        SimpleCostEstimator(protocolComposer, SimpleCostRegime.LAN)
     )
     // TODO: interpret
 }

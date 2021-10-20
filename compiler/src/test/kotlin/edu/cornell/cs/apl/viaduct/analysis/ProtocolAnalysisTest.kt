@@ -6,7 +6,6 @@ import edu.cornell.cs.apl.viaduct.errors.NoMainError
 import edu.cornell.cs.apl.viaduct.passes.annotateWithProtocols
 import edu.cornell.cs.apl.viaduct.passes.check
 import edu.cornell.cs.apl.viaduct.passes.elaborated
-import edu.cornell.cs.apl.viaduct.selection.CostMode
 import edu.cornell.cs.apl.viaduct.selection.SimpleCostEstimator
 import edu.cornell.cs.apl.viaduct.selection.SimpleCostRegime
 import edu.cornell.cs.apl.viaduct.selection.selectProtocolsWithZ3
@@ -25,8 +24,7 @@ internal class ProtocolAnalysisTest {
         val protocolAssignment = selectProtocolsWithZ3(
             program,
             DefaultCombinedBackend.protocolFactory(program), protocolComposer,
-            SimpleCostEstimator(protocolComposer, SimpleCostRegime.LAN),
-            CostMode.MINIMIZE
+            SimpleCostEstimator(protocolComposer, SimpleCostRegime.LAN)
         )
 
         val annotatedProgram = program.annotateWithProtocols(protocolAssignment)

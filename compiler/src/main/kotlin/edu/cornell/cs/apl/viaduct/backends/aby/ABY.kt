@@ -6,7 +6,6 @@ import edu.cornell.cs.apl.viaduct.syntax.HostTrustConfiguration
 import edu.cornell.cs.apl.viaduct.syntax.InputPort
 import edu.cornell.cs.apl.viaduct.syntax.OutputPort
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
-import edu.cornell.cs.apl.viaduct.syntax.ProtocolName
 import edu.cornell.cs.apl.viaduct.syntax.values.HostValue
 import edu.cornell.cs.apl.viaduct.syntax.values.Value
 
@@ -16,7 +15,6 @@ import edu.cornell.cs.apl.viaduct.syntax.values.Value
  */
 abstract class ABY(val server: Host, val client: Host) : Protocol() {
     companion object {
-        val protocolName = ProtocolName("ABY")
         const val SECRET_INPUT = "SECRET_INPUT"
         const val CLEARTEXT_INPUT = "CLEARTEXT_INPUT"
         const val CLEARTEXT_OUTPUT = "CLEARTEXT_OUTPUT"
@@ -25,9 +23,6 @@ abstract class ABY(val server: Host, val client: Host) : Protocol() {
     init {
         require(server != client)
     }
-
-    override val protocolName: ProtocolName
-        get() = Companion.protocolName
 
     override val arguments: Map<String, Value>
         get() = mapOf("server" to HostValue(server), "client" to HostValue(client))

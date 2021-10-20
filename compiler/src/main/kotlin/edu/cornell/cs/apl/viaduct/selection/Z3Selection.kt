@@ -324,13 +324,11 @@ fun selectProtocolsWithZ3(
     costEstimator: CostEstimator<IntegerCost>,
     costMode: CostMode,
     dumpMetadata: (Map<Node, PrettyPrintable>) -> Unit = {}
-): (FunctionName, Variable) -> Protocol {
-    val ctx = Context()
-    val ret = Z3Selection(
-        program, main,
-        protocolFactory, protocolComposer, costEstimator,
-        ctx, costMode, dumpMetadata
-    ).select()
-    ctx.close()
-    return ret
-}
+): (FunctionName, Variable) -> Protocol =
+    Context().use { context ->
+        Z3Selection(
+            program, main,
+            protocolFactory, protocolComposer, costEstimator,
+            context, costMode, dumpMetadata
+        ).select()
+    }

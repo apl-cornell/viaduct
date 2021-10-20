@@ -2,7 +2,6 @@ package edu.cornell.cs.apl.viaduct.backend
 
 import edu.cornell.cs.apl.viaduct.PositiveTestProgramProvider
 import edu.cornell.cs.apl.viaduct.analysis.ProtocolAnalysis
-import edu.cornell.cs.apl.viaduct.analysis.main
 import edu.cornell.cs.apl.viaduct.backend.IO.Strategy
 import edu.cornell.cs.apl.viaduct.backends.DefaultCombinedBackend
 import edu.cornell.cs.apl.viaduct.passes.annotateWithProtocols
@@ -117,7 +116,6 @@ internal class BackendInterpreterTest {
         val protocolAssignment: (FunctionName, Variable) -> Protocol =
             selectProtocolsWithZ3(
                 program,
-                program.main,
                 DefaultCombinedBackend.protocolFactory(program),
                 protocolComposer,
                 SimpleCostEstimator(protocolComposer, SimpleCostRegime.LAN),

@@ -23,7 +23,7 @@ internal class ProtocolAnalysisTest {
 
         val protocolComposer = DefaultCombinedBackend.protocolComposer
         val protocolAssignment = selectProtocolsWithZ3(
-            program, program.main,
+            program,
             DefaultCombinedBackend.protocolFactory(program), protocolComposer,
             SimpleCostEstimator(protocolComposer, SimpleCostRegime.LAN),
             CostMode.MINIMIZE

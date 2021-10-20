@@ -15,6 +15,7 @@ import edu.cornell.cs.apl.viaduct.analysis.declarationNodes
 import edu.cornell.cs.apl.viaduct.analysis.ifNodes
 import edu.cornell.cs.apl.viaduct.analysis.infiniteLoopNodes
 import edu.cornell.cs.apl.viaduct.analysis.letNodes
+import edu.cornell.cs.apl.viaduct.analysis.main
 import edu.cornell.cs.apl.viaduct.analysis.objectDeclarationArgumentNodes
 import edu.cornell.cs.apl.viaduct.analysis.outputNodes
 import edu.cornell.cs.apl.viaduct.analysis.updateNodes
@@ -318,7 +319,6 @@ private class Z3Selection(
 
 fun selectProtocolsWithZ3(
     program: ProgramNode,
-    main: ProcessDeclarationNode,
     protocolFactory: ProtocolFactory,
     protocolComposer: ProtocolComposer,
     costEstimator: CostEstimator<IntegerCost>,
@@ -327,7 +327,7 @@ fun selectProtocolsWithZ3(
 ): (FunctionName, Variable) -> Protocol =
     Context().use { context ->
         Z3Selection(
-            program, main,
+            program, program.main,
             protocolFactory, protocolComposer, costEstimator,
             context, costMode, dumpMetadata
         ).select()

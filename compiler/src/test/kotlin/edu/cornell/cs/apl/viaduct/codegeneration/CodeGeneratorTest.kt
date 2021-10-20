@@ -2,7 +2,6 @@ package edu.cornell.cs.apl.viaduct.codegeneration
 
 import edu.cornell.cs.apl.prettyprinting.Document
 import edu.cornell.cs.apl.viaduct.PositiveTestFileProvider
-import edu.cornell.cs.apl.viaduct.analysis.main
 import edu.cornell.cs.apl.viaduct.backends.DefaultCombinedBackend
 import edu.cornell.cs.apl.viaduct.parsing.SourceFile
 import edu.cornell.cs.apl.viaduct.parsing.parse
@@ -47,7 +46,6 @@ internal class CodeGeneratorTest {
 
         val protocolAssignment: (FunctionName, Variable) -> Protocol = selectProtocolsWithZ3(
             program,
-            program.main,
             protocolFactory,
             protocolComposer,
             costEstimator,

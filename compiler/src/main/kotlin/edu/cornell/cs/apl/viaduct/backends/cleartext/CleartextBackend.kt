@@ -14,7 +14,7 @@ object CleartextBackend : Backend {
         get() = setOf(Local.protocolName, Replication.protocolName)
 
     override fun protocolFactory(program: ProgramNode): ProtocolFactory =
-        listOf(LocalFactory(program), ReplicationFactory(program)).unions()
+        listOf(LocalProtocolFactory(program), ReplicationProtocolFactory(program)).unions()
 
     override fun codeGenerator(context: CodeGeneratorContext): CodeGenerator = PlainTextCodeGenerator(context)
 }

@@ -18,7 +18,7 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.QueryNode
 import edu.cornell.cs.apl.viaduct.util.subsequences
 
-class CommitmentFactory(val program: ProgramNode) : ProtocolFactory {
+class CommitmentProtocolFactory(val program: ProgramNode) : ProtocolFactory {
 
     private val nameAnalysis = NameAnalysis.get(program)
 

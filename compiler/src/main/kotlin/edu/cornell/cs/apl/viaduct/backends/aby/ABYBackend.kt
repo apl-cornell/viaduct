@@ -11,7 +11,7 @@ object ABYBackend : Backend {
     override val protocols: Set<ProtocolName>
         get() = setOf(ArithABY.protocolName, BoolABY.protocolName, YaoABY.protocolName)
 
-    override fun protocolFactory(program: ProgramNode): ProtocolFactory = ABYFactory(program)
+    override fun protocolFactory(program: ProgramNode): ProtocolFactory = ABYProtocolFactory(program)
 
     override fun codeGenerator(context: CodeGeneratorContext): CodeGenerator = TODO()
 }

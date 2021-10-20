@@ -2,8 +2,8 @@ package edu.cornell.cs.apl.viaduct.backends.zkp
 
 import edu.cornell.cs.apl.attributes.attribute
 import edu.cornell.cs.apl.viaduct.analysis.NameAnalysis
-import edu.cornell.cs.apl.viaduct.backends.cleartext.LocalFactory
-import edu.cornell.cs.apl.viaduct.backends.cleartext.ReplicationFactory
+import edu.cornell.cs.apl.viaduct.backends.cleartext.LocalProtocolFactory
+import edu.cornell.cs.apl.viaduct.backends.cleartext.ReplicationProtocolFactory
 import edu.cornell.cs.apl.viaduct.passes.canMux
 import edu.cornell.cs.apl.viaduct.selection.Literal
 import edu.cornell.cs.apl.viaduct.selection.ProtocolFactory
@@ -37,7 +37,7 @@ import edu.cornell.cs.apl.viaduct.syntax.operators.Not
 import edu.cornell.cs.apl.viaduct.syntax.operators.Or
 import edu.cornell.cs.apl.viaduct.util.subsequences
 
-class ZKPFactory(val program: ProgramNode) : ProtocolFactory {
+class ZKPProtocolFactory(val program: ProgramNode) : ProtocolFactory {
     private val nameAnalysis = NameAnalysis.get(program)
 
     companion object {
@@ -102,8 +102,8 @@ class ZKPFactory(val program: ProgramNode) : ProtocolFactory {
             setOf()
         }
 
-    private val localFactory = LocalFactory(program)
-    private val replicationFactory = ReplicationFactory(program)
+    private val localFactory = LocalProtocolFactory(program)
+    private val replicationFactory = ReplicationProtocolFactory(program)
 
     private val localAndReplicated: Set<Protocol> =
         localFactory.protocols.map { it.protocol }.toSet() +

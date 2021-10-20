@@ -11,7 +11,7 @@ object CommitmentBackend : Backend {
     override val protocols: Set<ProtocolName>
         get() = setOf(Commitment.protocolName)
 
-    override fun protocolFactory(program: ProgramNode): ProtocolFactory = CommitmentFactory(program)
+    override fun protocolFactory(program: ProgramNode): ProtocolFactory = CommitmentProtocolFactory(program)
 
     override fun codeGenerator(context: CodeGeneratorContext): CodeGenerator = TODO()
 }

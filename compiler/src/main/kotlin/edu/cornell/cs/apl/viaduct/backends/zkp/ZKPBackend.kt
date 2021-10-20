@@ -11,7 +11,7 @@ object ZKPBackend : Backend {
     override val protocols: Set<ProtocolName>
         get() = setOf(ZKP.protocolName)
 
-    override fun protocolFactory(program: ProgramNode): ProtocolFactory = ZKPFactory(program)
+    override fun protocolFactory(program: ProgramNode): ProtocolFactory = ZKPProtocolFactory(program)
 
     override fun codeGenerator(context: CodeGeneratorContext): CodeGenerator = TODO()
 }

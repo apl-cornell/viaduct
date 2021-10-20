@@ -41,7 +41,7 @@ import edu.cornell.cs.apl.viaduct.util.pairedWith
 //      if it's in a loop, the loop has a break
 //      every break for that loop has a pc that flows to pc of selection
 
-class ABYFactory(program: ProgramNode) : ProtocolFactory {
+class ABYProtocolFactory(program: ProgramNode) : ProtocolFactory {
     private val nameAnalysis = NameAnalysis.get(program)
 
     // hack to get backpointer to parent factory

@@ -178,10 +178,14 @@ private class Z3Selection(
         val objectDeclarationArgumentNodes = associateFreshConstant { objectDeclarationArgumentNodes() }
         val parameterNodes = associateFreshConstant { parameterNodes() }
 
-        val pmap: BiMap<Protocol, Int> =
-            protocolFactory.protocols().withIndex().associate {
-                it.value.protocol to it.index
-            }.toBiMap()
+        val pmap: BiMap<Protocol, Int> = run {
+            // Compute all protocols relevant for the program
+            val protocols = mutableSetOf<Protocol>()
+            reachableInstances { letNodes() }.forEach { protocols.addAll(protocolFactory.viableProtocols(it)) }
+            reachableInstances { declarationNodes() }.forEach { protocols.addAll(protocolFactory.viableProtocols(it)) }
+            reachableInstances { parameterNodes() }.forEach { protocols.addAll(protocolFactory.viableProtocols(it)) }
+            protocols.sorted().withIndex().associate { it.value to it.index }.toBiMap()
+        }
 
         val varMap: BiMap<FunctionVariable, IntExpr> =
             (

@@ -2,7 +2,6 @@ package edu.cornell.cs.apl.viaduct.backends.aby
 
 import edu.cornell.cs.apl.viaduct.analysis.NameAnalysis
 import edu.cornell.cs.apl.viaduct.passes.canMux
-import edu.cornell.cs.apl.viaduct.security.Label
 import edu.cornell.cs.apl.viaduct.selection.FunctionVariable
 import edu.cornell.cs.apl.viaduct.selection.Implies
 import edu.cornell.cs.apl.viaduct.selection.Literal
@@ -11,8 +10,6 @@ import edu.cornell.cs.apl.viaduct.selection.ProtocolFactory
 import edu.cornell.cs.apl.viaduct.selection.SelectionConstraint
 import edu.cornell.cs.apl.viaduct.selection.VariableIn
 import edu.cornell.cs.apl.viaduct.syntax.FunctionName
-import edu.cornell.cs.apl.viaduct.syntax.Host
-import edu.cornell.cs.apl.viaduct.syntax.HostTrustConfiguration
 import edu.cornell.cs.apl.viaduct.syntax.ObjectVariable
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
 import edu.cornell.cs.apl.viaduct.syntax.datatypes.Get
@@ -48,27 +45,10 @@ class ABYProtocolFactory(program: ProgramNode) : ProtocolFactory {
     var protocolComposer: ProtocolComposer? = null
 
     private val protocols: Set<Protocol> = run {
-        val hostTrustConfiguration = HostTrustConfiguration(program)
-        val hosts: List<Host> = hostTrustConfiguration.keys.sorted()
+        val hosts = program.hosts.sorted()
         val hostPairs = hosts.pairedWith(hosts).filter { it.first < it.second }
         hostPairs.flatMap {
-            // ABY is secure only in semi-honest,
-            // so the integrity of one should imply the integrity of the other
-            val h1Label: Label = hostTrustConfiguration(it.first).interpret()
-            val h2Label: Label = hostTrustConfiguration(it.second).interpret()
-            val combinedConfidentiality = h1Label.confidentiality().and(h1Label.confidentiality())
-            val semihonest =
-                h1Label.integrity().swap().actsFor(combinedConfidentiality) &&
-                    h2Label.integrity().swap().actsFor(combinedConfidentiality)
-            if (semihonest) {
-                setOf(
-                    ArithABY(it.first, it.second),
-                    BoolABY(it.first, it.second),
-                    YaoABY(it.first, it.second)
-                )
-            } else {
-                setOf()
-            }
+            listOf(ArithABY(it.first, it.second), BoolABY(it.first, it.second), YaoABY(it.first, it.second))
         }.toSet()
     }
 

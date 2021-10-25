@@ -2,6 +2,9 @@ package edu.cornell.cs.apl.viaduct.codegeneration
 
 import com.squareup.kotlinpoet.CodeBlock
 import com.squareup.kotlinpoet.TypeName
+import edu.cornell.cs.apl.viaduct.analysis.NameAnalysis
+import edu.cornell.cs.apl.viaduct.analysis.ProtocolAnalysis
+import edu.cornell.cs.apl.viaduct.analysis.TypeAnalysis
 import edu.cornell.cs.apl.viaduct.syntax.Host
 import edu.cornell.cs.apl.viaduct.syntax.ObjectVariable
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
@@ -11,6 +14,9 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
 interface CodeGeneratorContext {
     val program: ProgramNode
     val host: Host
+    val typeAnalysis: TypeAnalysis
+    val nameAnalysis: NameAnalysis
+    val protocolAnalysis: ProtocolAnalysis
 
     // returns a kotlin name for a temporary used in the source program
     fun kotlinName(sourceName: Temporary, protocol: Protocol): String

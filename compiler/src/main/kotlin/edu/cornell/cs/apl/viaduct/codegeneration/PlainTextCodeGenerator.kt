@@ -1,17 +1,9 @@
 package edu.cornell.cs.apl.viaduct.codegeneration
 
-import com.squareup.kotlinpoet.BOOLEAN
 import com.squareup.kotlinpoet.CodeBlock
-import com.squareup.kotlinpoet.INT
 import com.squareup.kotlinpoet.MemberName
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
-import com.squareup.kotlinpoet.STRING
-import com.squareup.kotlinpoet.TypeName
-import com.squareup.kotlinpoet.U_BYTE_ARRAY
 import com.squareup.kotlinpoet.asTypeName
-import edu.cornell.cs.apl.viaduct.analysis.NameAnalysis
-import edu.cornell.cs.apl.viaduct.analysis.ProtocolAnalysis
-import edu.cornell.cs.apl.viaduct.analysis.TypeAnalysis
 import edu.cornell.cs.apl.viaduct.errors.CodeGenerationError
 import edu.cornell.cs.apl.viaduct.errors.RuntimeError
 import edu.cornell.cs.apl.viaduct.protocols.Plaintext
@@ -19,7 +11,6 @@ import edu.cornell.cs.apl.viaduct.runtime.commitment.Commitment
 import edu.cornell.cs.apl.viaduct.runtime.commitment.Committed
 import edu.cornell.cs.apl.viaduct.selection.CommunicationEvent
 import edu.cornell.cs.apl.viaduct.selection.ProtocolCommunication
-import edu.cornell.cs.apl.viaduct.selection.SimpleProtocolComposer
 import edu.cornell.cs.apl.viaduct.syntax.BinaryOperator
 import edu.cornell.cs.apl.viaduct.syntax.Host
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
@@ -42,20 +33,12 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.ReceiveNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.UpdateNode
 import edu.cornell.cs.apl.viaduct.syntax.operators.Maximum
 import edu.cornell.cs.apl.viaduct.syntax.operators.Minimum
-import edu.cornell.cs.apl.viaduct.syntax.types.BooleanType
-import edu.cornell.cs.apl.viaduct.syntax.types.ByteVecType
 import edu.cornell.cs.apl.viaduct.syntax.types.ImmutableCellType
-import edu.cornell.cs.apl.viaduct.syntax.types.IntegerType
 import edu.cornell.cs.apl.viaduct.syntax.types.MutableCellType
-import edu.cornell.cs.apl.viaduct.syntax.types.StringType
-import edu.cornell.cs.apl.viaduct.syntax.types.ValueType
 import edu.cornell.cs.apl.viaduct.syntax.types.VectorType
 
 class PlainTextCodeGenerator(context: CodeGeneratorContext) :
     AbstractCodeGenerator(context) {
-    private val typeAnalysis = TypeAnalysis.get(context.program)
-    private val nameAnalysis = NameAnalysis.get(context.program)
-    private val protocolAnalysis = ProtocolAnalysis(context.program, SimpleProtocolComposer)
     private val runtimeErrorClass = RuntimeError::class
 
     override fun exp(expr: ExpressionNode): CodeBlock =
@@ -67,7 +50,7 @@ class PlainTextCodeGenerator(context: CodeGeneratorContext) :
                     "%N",
                     context.kotlinName(
                         expr.temporary.value,
-                        protocolAnalysis.primaryProtocol(expr)
+                        context.protocolAnalysis.primaryProtocol(expr)
                     )
                 )
 
@@ -105,7 +88,7 @@ class PlainTextCodeGenerator(context: CodeGeneratorContext) :
             }
 
             is QueryNode ->
-                when (this.typeAnalysis.type(nameAnalysis.declaration(expr))) {
+                when (context.typeAnalysis.type(context.nameAnalysis.declaration(expr))) {
                     is VectorType -> {
                         when (expr.query.value) {
                             is Get -> CodeBlock.of(
@@ -158,11 +141,12 @@ class PlainTextCodeGenerator(context: CodeGeneratorContext) :
             context.kotlinName(stmt.name.value),
             stmt.className,
             stmt.arguments,
-            stmt.typeArguments[0].value
+            stmt.typeArguments[0].value,
+            protocol
         )
 
     override fun update(protocol: Protocol, stmt: UpdateNode): CodeBlock =
-        when (this.typeAnalysis.type(nameAnalysis.declaration(stmt))) {
+        when (context.typeAnalysis.type(context.nameAnalysis.declaration(stmt))) {
             is VectorType ->
                 when (stmt.update.value) {
                     is edu.cornell.cs.apl.viaduct.syntax.datatypes.Set ->
@@ -247,20 +231,11 @@ class PlainTextCodeGenerator(context: CodeGeneratorContext) :
     override fun output(protocol: Protocol, stmt: OutputNode): CodeBlock =
         CodeBlock.of(
             "runtime.output(%T(%L))",
-            typeAnalysis.type(stmt.message).valueClass,
+            context.typeAnalysis.type(stmt.message).valueClass,
             exp(stmt.message)
         )
 
     override fun guard(protocol: Protocol, expr: AtomicExpressionNode): CodeBlock = exp(expr)
-
-    private fun typeTranslator(viaductType: ValueType): TypeName =
-        when (viaductType) {
-            ByteVecType -> U_BYTE_ARRAY
-            BooleanType -> BOOLEAN
-            IntegerType -> INT
-            StringType -> STRING
-            else -> throw CodeGenerationError("unknown send and receive type")
-        }
 
     override fun send(
         sendingHost: Host,
@@ -304,7 +279,12 @@ class PlainTextCodeGenerator(context: CodeGeneratorContext) :
         val hashCommitmentTemp = context.newTemporary("hashCommitmentTemp")
         if (sendProtocol != receiveProtocol) {
             val projection = ProtocolProjection(receiveProtocol, receivingHost)
-            var cleartextInputs = events.getProjectionReceives(projection, Plaintext.INPUT)
+            var cleartextInputs = events.getProjectionReceives(
+                projection,
+                Plaintext.INPUT
+            )
+
+            // .filter { event -> event.send.host != context.host }
 
             val cleartextCommitmentInputs =
                 events.getProjectionReceives(projection, Plaintext.CLEARTEXT_COMMITMENT_INPUT)
@@ -321,7 +301,7 @@ class PlainTextCodeGenerator(context: CodeGeneratorContext) :
                         "val %N = %L",
                         clearTextTemp,
                         context.receive(
-                            typeTranslator(typeAnalysis.type(sender)),
+                            typeTranslator(context.typeAnalysis.type(sender)),
                             cleartextInputs.first().send.host
                         )
                     )
@@ -335,7 +315,7 @@ class PlainTextCodeGenerator(context: CodeGeneratorContext) :
                             "if (%N != %L)",
                             clearTextTemp,
                             context.receive(
-                                typeTranslator(typeAnalysis.type(sender)),
+                                typeTranslator(context.typeAnalysis.type(sender)),
                                 event.send.host
                             )
                         )
@@ -378,7 +358,7 @@ class PlainTextCodeGenerator(context: CodeGeneratorContext) :
                             "var %N = %L",
                             receiveTmp,
                             context.receive(
-                                typeTranslator(typeAnalysis.type(sender)),
+                                typeTranslator(context.typeAnalysis.type(sender)),
                                 hostsToCheckWith.first()
                             )
                         )
@@ -403,7 +383,7 @@ class PlainTextCodeGenerator(context: CodeGeneratorContext) :
                             "%N = %L",
                             receiveTmp,
                             context.receive(
-                                typeTranslator(typeAnalysis.type(sender)),
+                                typeTranslator(context.typeAnalysis.type(sender)),
                                 host
                             )
                         )
@@ -422,7 +402,7 @@ class PlainTextCodeGenerator(context: CodeGeneratorContext) :
                     }
                     receiveBuilder.addStatement(
                         "val %N = %N",
-                        context.kotlinName(sender.temporary.value, protocolAnalysis.primaryProtocol(sender)),
+                        context.kotlinName(sender.temporary.value, context.protocolAnalysis.primaryProtocol(sender)),
                         clearTextTemp
                     )
 
@@ -442,7 +422,7 @@ class PlainTextCodeGenerator(context: CodeGeneratorContext) :
                         clearTextCommittedTemp,
                         context.receive(
                             Committed::class.asTypeName().parameterizedBy(
-                                typeTranslator(typeAnalysis.type(sender))
+                                typeTranslator(context.typeAnalysis.type(sender))
                             ),
                             cleartextSendEvent.send.host
                         )
@@ -453,7 +433,7 @@ class PlainTextCodeGenerator(context: CodeGeneratorContext) :
                         hashCommitmentTemp,
                         context.receive(
                             Commitment::class.asTypeName().parameterizedBy(
-                                typeTranslator(typeAnalysis.type(sender))
+                                typeTranslator(context.typeAnalysis.type(sender))
                             ),
                             hashCommitmentInputs.first().send.host
                         ),
@@ -470,7 +450,7 @@ class PlainTextCodeGenerator(context: CodeGeneratorContext) :
                             "%L.open(%N)",
                             context.receive(
                                 Commitment::class.asTypeName().parameterizedBy(
-                                    typeTranslator(typeAnalysis.type(sender))
+                                    typeTranslator(context.typeAnalysis.type(sender))
                                 ),
                                 hashCommitmentInput.send.host
                             ),

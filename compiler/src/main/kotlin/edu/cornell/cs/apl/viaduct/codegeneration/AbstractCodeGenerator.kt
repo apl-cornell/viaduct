@@ -1,7 +1,16 @@
 package edu.cornell.cs.apl.viaduct.codegeneration
 
+import com.squareup.kotlinpoet.BOOLEAN
 import com.squareup.kotlinpoet.CodeBlock
+import com.squareup.kotlinpoet.INT
+import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
+import com.squareup.kotlinpoet.STRING
+import com.squareup.kotlinpoet.TypeName
+import com.squareup.kotlinpoet.U_BYTE_ARRAY
+import com.squareup.kotlinpoet.asClassName
+import edu.cornell.cs.apl.viaduct.errors.CodeGenerationError
 import edu.cornell.cs.apl.viaduct.errors.IllegalInternalCommunicationError
+import edu.cornell.cs.apl.viaduct.runtime.commitment.Commitment
 import edu.cornell.cs.apl.viaduct.syntax.Arguments
 import edu.cornell.cs.apl.viaduct.syntax.ClassNameNode
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
@@ -19,8 +28,13 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutputNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.SendNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.SimpleStatementNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.UpdateNode
+import edu.cornell.cs.apl.viaduct.syntax.types.BooleanType
+import edu.cornell.cs.apl.viaduct.syntax.types.ByteVecType
+import edu.cornell.cs.apl.viaduct.syntax.types.IntegerType
+import edu.cornell.cs.apl.viaduct.syntax.types.StringType
 import edu.cornell.cs.apl.viaduct.syntax.types.ValueType
 import edu.cornell.cs.apl.viaduct.syntax.values.Value
+import edu.cornell.cs.apl.viaduct.protocols.Commitment as CommitmentProtocol
 
 abstract class AbstractCodeGenerator(val context: CodeGeneratorContext) : CodeGenerator {
     override fun simpleStatement(protocol: Protocol, stmt: SimpleStatementNode): CodeBlock {
@@ -53,13 +67,24 @@ abstract class AbstractCodeGenerator(val context: CodeGeneratorContext) : CodeGe
 
     abstract fun update(protocol: Protocol, stmt: UpdateNode): CodeBlock
 
+    fun typeTranslator(viaductType: ValueType): TypeName =
+        when (viaductType) {
+            ByteVecType -> U_BYTE_ARRAY
+            BooleanType -> BOOLEAN
+            IntegerType -> INT
+            StringType -> STRING
+            else -> throw CodeGenerationError("unknown send and receive type")
+        }
+
     fun declarationHelper(
         name: String,
         className: ClassNameNode,
         arguments: Arguments<AtomicExpressionNode>,
-        initType: ValueType
-    ): CodeBlock =
-        when (className.value) {
+        // change this to take the default value (must change everywhere its called)
+        initType: ValueType,
+        protocol: Protocol
+    ): CodeBlock {
+        return when (className.value) {
             ImmutableCell -> CodeBlock.of(
                 "val %N = %L",
                 name,
@@ -73,17 +98,35 @@ abstract class AbstractCodeGenerator(val context: CodeGeneratorContext) : CodeGe
                 exp(arguments.first())
             )
 
+            // When you are a commitment creator, create a zero Committed, and send to bob
+            // Array(size){val com = Committed(0) runtime.send(com.commitment()); com}
+            // As a commitment receiver in an Array(size){runtime.recv(alice)}
             Vector -> {
-                CodeBlock.of(
-                    "val %N = Array(%L){ %L }",
-                    name,
-                    exp(arguments.first()),
-                    exp(initType.defaultValue)
-                )
+                // create a commitment of the default value
+                when (protocol) {
+                    is CommitmentProtocol -> {
+                        CodeBlock.of(
+                            "val %N = Array(%L){ %L() }",
+                            name,
+                            exp(arguments.first()),
+                            Commitment::class.asClassName().parameterizedBy(typeTranslator(initType))
+                        )
+                    }
+
+                    else -> {
+                        CodeBlock.of(
+                            "val %N = Array(%L){ %L }",
+                            name,
+                            exp(arguments.first()),
+                            exp(initType.defaultValue)
+                        )
+                    }
+                }
             }
 
             else -> TODO("throw error")
         }
+    }
 
     fun outParameterInitialization(
         stmt: OutParameterInitializationNode
@@ -98,7 +141,8 @@ abstract class AbstractCodeGenerator(val context: CodeGeneratorContext) : CodeGe
                             outTmpString,
                             initializer.className,
                             initializer.arguments,
-                            initializer.typeArguments[0].value
+                            initializer.typeArguments[0].value,
+                            context.protocolAnalysis.primaryProtocol(stmt)
                         )
                     )
                     .add(

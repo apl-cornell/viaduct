@@ -90,7 +90,7 @@ abstract class CompileViaductTask : DefaultTask() {
         // TODO: don't bake in cost regime
         val protocolFactory = SimpleProtocolFactory(program)
         val protocolComposer = SimpleProtocolComposer
-        val costEstimator = SimpleCostEstimator(protocolComposer, SimpleCostRegime.WAN)
+        val costEstimator = SimpleCostEstimator(protocolComposer, SimpleCostRegime.LAN)
 
         val protocolAssignment = selectProtocolsWithZ3(
             program,

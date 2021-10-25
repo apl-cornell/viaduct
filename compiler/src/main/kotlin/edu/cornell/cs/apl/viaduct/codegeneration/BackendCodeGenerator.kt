@@ -11,6 +11,7 @@ import com.squareup.kotlinpoet.asClassName
 import edu.cornell.cs.apl.prettyprinting.joined
 import edu.cornell.cs.apl.viaduct.analysis.NameAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.ProtocolAnalysis
+import edu.cornell.cs.apl.viaduct.analysis.TypeAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.main
 import edu.cornell.cs.apl.viaduct.errors.CodeGenerationError
 import edu.cornell.cs.apl.viaduct.protocols.Commitment
@@ -48,7 +49,14 @@ class BackendCodeGenerator(
     private val codeGeneratorMap: Map<Protocol, CodeGenerator>
     private val nameAnalysis = NameAnalysis.get(program)
     private val protocolAnalysis = ProtocolAnalysis(program, SimpleProtocolComposer)
-    private val context = Context(program, host)
+    private val context =
+        Context(
+            program,
+            host,
+            TypeAnalysis.get(program),
+            NameAnalysis.get(program),
+            ProtocolAnalysis(program, SimpleProtocolComposer)
+        )
 
     init {
         val allProtocols = protocolAnalysis.participatingProtocols(program)
@@ -227,7 +235,10 @@ class BackendCodeGenerator(
 
     private class Context(
         override val program: ProgramNode,
-        override val host: Host
+        override val host: Host,
+        override val typeAnalysis: TypeAnalysis,
+        override val nameAnalysis: NameAnalysis,
+        override val protocolAnalysis: ProtocolAnalysis
     ) :
         CodeGeneratorContext {
         private var tempMap: MutableMap<Pair<Temporary, Protocol>, String> = mutableMapOf()
@@ -277,12 +288,15 @@ private fun addHostDeclarations(fileBuilder: FileSpec.Builder, program: ProgramN
     }
 }
 
+// this function should take a list of code generators
 fun viaductProgramStringGenerator(
     program: ProgramNode,
     fileName: String,
     packageName: String
 ): String = viaductProgramFileSpecGenerator(program, fileName, packageName).toString()
 
+// this should take a list of backend generators
+// name this compile to kotlin or something
 fun viaductProgramFileSpecGenerator(
     program: ProgramNode,
     fileName: String,

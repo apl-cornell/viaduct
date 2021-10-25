@@ -10,6 +10,8 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.AtomicExpressionNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.LetNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.SimpleStatementNode
 
+// just generate the commitment backends in this class
+// only pass in a context here
 class CommitmentDispatchCodeGenerator(
     val host: Host,
     private val commitmentCreatorGenerator: CodeGenerator,

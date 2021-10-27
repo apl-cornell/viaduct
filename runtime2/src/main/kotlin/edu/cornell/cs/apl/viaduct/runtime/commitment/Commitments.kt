@@ -19,9 +19,13 @@ class Committed<T> private constructor(val value: T, val nonce: ByteArray) {
     )
 
     companion object {
+        /** Size of each nonce in bytes. */
         const val NONCE_LENGTH = 256 / 8
 
         private val secureRandom = SecureRandom.getInstanceStrong()
+
+        /** A statically fixed nonce that is not random at all. Used to create fake commitments. */
+        private val fakeNonce = ByteArray(NONCE_LENGTH)
 
         @OptIn(ExperimentalSerializationApi::class)
         inline fun <reified T> Committed<T>.commitment(): Commitment<T> =
@@ -30,6 +34,15 @@ class Committed<T> private constructor(val value: T, val nonce: ByteArray) {
                 update(nonce)
                 Commitment(digest())
             }
+
+        /**
+         * A commitment to a known value. Note that the returned commitment has no hiding property.
+         *
+         * Can be used for code uniformity in places that require a [Committed] object,
+         * but when there is no need to hide the value.
+         */
+        fun <T> fake(value: T): Committed<T> =
+            Committed(value, fakeNonce)
     }
 }
 

@@ -1,8 +1,6 @@
 package edu.cornell.cs.apl.viaduct.selection
 
-import com.microsoft.z3.BoolExpr
 import com.microsoft.z3.Context
-import com.microsoft.z3.IntExpr
 import edu.cornell.cs.apl.attributes.attribute
 import edu.cornell.cs.apl.viaduct.analysis.InformationFlowAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.NameAnalysis
@@ -45,6 +43,7 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.SendNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.SimpleStatementNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.StatementNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.UpdateNode
+import edu.cornell.cs.apl.viaduct.util.FreshNameGenerator
 import edu.cornell.cs.apl.viaduct.util.unions
 import kotlinx.collections.immutable.PersistentMap
 import kotlinx.collections.immutable.persistentMapOf
@@ -54,11 +53,18 @@ class SelectionConstraintGenerator(
     private val protocolFactory: ProtocolFactory,
     private val protocolComposer: ProtocolComposer,
     private val costEstimator: CostEstimator<IntegerCost>,
-    private val ctx: Context
 ) {
+    private val nameGenerator = FreshNameGenerator()
     private val hostTrustConfiguration = HostTrustConfiguration(program)
     private val nameAnalysis = NameAnalysis.get(program)
     private val informationFlowAnalysis = InformationFlowAnalysis.get(program)
+
+    private fun Cost<SymbolicCost>.featureSum(): SymbolicCost {
+        val weights = costEstimator.featureWeights()
+        return this.features.entries.fold(CostLiteral(0) as SymbolicCost) { acc, c ->
+            CostAdd(acc, CostMul(weights[c.key]!!.cost, c.value))
+        }
+    }
 
     // TODO: pc must be weak enough for the hosts involved in the selected protocols to read it
     fun viableProtocols(node: LetNode): Set<Protocol> =
@@ -153,7 +159,7 @@ class SelectionConstraintGenerator(
                 zeroSymbolicCost.featureMap { feature, _ ->
                     val thenCost = this.thenBranch.symbolicCost[feature]!!
                     val elseCost = this.elseBranch.symbolicCost[feature]!!
-                    CostMux(CostLessThanEqualTo(thenCost, elseCost), elseCost, thenCost)
+                    CostMax(thenCost, elseCost)
                 }
 
             is InfiniteLoopNode ->
@@ -173,7 +179,7 @@ class SelectionConstraintGenerator(
             else ->
                 costEstimator
                     .zeroCost()
-                    .map { CostVariable(ctx.mkFreshConst("cost_${this.asDocument.print()}", ctx.intSort) as IntExpr) }
+                    .map { CostVariable(nameGenerator.getFreshName("cost")) }
         }
     }
 
@@ -181,11 +187,11 @@ class SelectionConstraintGenerator(
 
     /** Symbolic variables that specify whether a host is participating in the execution of a statement. */
     private val Node.participatingHosts: Map<Host, HostVariable> by attribute {
-        program.hosts.associateWith { HostVariable(ctx.mkFreshConst("host", ctx.boolSort) as BoolExpr) }
+        program.hosts.associateWith { HostVariable(nameGenerator.getFreshName("host")) }
     }
 
     private val IfNode.guardVisiblityFlag: GuardVisibilityFlag by attribute {
-        GuardVisibilityFlag(ctx.mkFreshConst("guard", ctx.boolSort) as BoolExpr)
+        GuardVisibilityFlag(nameGenerator.getFreshName("guard"))
     }
 
     /** Generate constraints for possible protocols. */
@@ -193,7 +199,7 @@ class SelectionConstraintGenerator(
         when (this) {
             is ParameterNode ->
                 setOf(protocolFactory.constraint(this)).plus(
-                    VariableIn(
+                    variableInSet(
                         FunctionVariable(
                             nameAnalysis.functionDeclaration(this).name.value,
                             this.name.value
@@ -210,7 +216,7 @@ class SelectionConstraintGenerator(
                             setOf(
                                 VariableIn(
                                     FunctionVariable(nameAnalysis.enclosingFunctionName(this), this.temporary.value),
-                                    setOf(Local(rhs.host.value))
+                                    Local(rhs.host.value)
                                 )
                             )
                         }
@@ -220,7 +226,7 @@ class SelectionConstraintGenerator(
                             val enclosingFunctionName = nameAnalysis.enclosingFunctionName(this)
 
                             setOf(
-                                VariableIn(
+                                variableInSet(
                                     FunctionVariable(nameAnalysis.enclosingFunctionName(this), this.temporary.value),
                                     viableProtocols(this)
                                 )
@@ -860,4 +866,7 @@ class SelectionConstraintGenerator(
             .union(this.children.map { it.constraints() }.unions())
 
     fun getConstraints(node: Node) = node.constraints()
+
+    // TODO: finish
+    fun getSelectionProblem(): SelectionProblem { return null!! }
 }

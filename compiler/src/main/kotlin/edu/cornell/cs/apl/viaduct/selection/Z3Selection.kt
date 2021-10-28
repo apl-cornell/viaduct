@@ -1,25 +1,17 @@
 package edu.cornell.cs.apl.viaduct.selection
 
+import com.microsoft.z3.ArithExpr
+import com.microsoft.z3.BoolExpr
 import com.microsoft.z3.Context
 import com.microsoft.z3.Global
 import com.microsoft.z3.IntExpr
 import com.microsoft.z3.IntNum
-import com.microsoft.z3.Model
+import com.microsoft.z3.IntSort
 import com.microsoft.z3.Status
 import com.uchuhimo.collections.BiMap
-import com.uchuhimo.collections.toBiMap
-import edu.cornell.cs.apl.prettyprinting.Document
+import com.uchuhimo.collections.mutableBiMapOf
 import edu.cornell.cs.apl.prettyprinting.PrettyPrintable
-import edu.cornell.cs.apl.viaduct.analysis.NameAnalysis
-import edu.cornell.cs.apl.viaduct.analysis.declarationNodes
-import edu.cornell.cs.apl.viaduct.analysis.ifNodes
-import edu.cornell.cs.apl.viaduct.analysis.infiniteLoopNodes
-import edu.cornell.cs.apl.viaduct.analysis.letNodes
 import edu.cornell.cs.apl.viaduct.analysis.main
-import edu.cornell.cs.apl.viaduct.analysis.objectDeclarationArgumentNodes
-import edu.cornell.cs.apl.viaduct.analysis.outputNodes
-import edu.cornell.cs.apl.viaduct.analysis.parameterNodes
-import edu.cornell.cs.apl.viaduct.analysis.updateNodes
 import edu.cornell.cs.apl.viaduct.errors.NoHostDeclarationsError
 import edu.cornell.cs.apl.viaduct.errors.NoProtocolIndexMapping
 import edu.cornell.cs.apl.viaduct.errors.NoSelectionSolutionError
@@ -27,10 +19,7 @@ import edu.cornell.cs.apl.viaduct.errors.NoVariableSelectionSolutionError
 import edu.cornell.cs.apl.viaduct.syntax.FunctionName
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
 import edu.cornell.cs.apl.viaduct.syntax.Variable
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.DeclarationNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.LetNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.Node
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProcessDeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
 import mu.KotlinLogging
 
@@ -59,14 +48,9 @@ enum class CostMode { MINIMIZE, MAXIMIZE }
  */
 private class Z3Selection(
     private val ctx: Context,
-    private val program: ProgramNode,
-    private val main: ProcessDeclarationNode,
-    private val protocolFactory: ProtocolFactory,
-    protocolComposer: ProtocolComposer,
-    private val costEstimator: CostEstimator<IntegerCost>,
     private val costMode: CostMode,
     private val dumpMetadata: (Map<Node, PrettyPrintable>) -> Unit
-) {
+): SelectionConstraintSolver {
     private companion object {
         init {
             // Use old arithmetic solver to fix regression introduced in Z3 v4.8.9
@@ -74,26 +58,69 @@ private class Z3Selection(
         }
     }
 
-    private val nameAnalysis = NameAnalysis.get(program)
-
-    private val constraintGenerator =
-        SelectionConstraintGenerator(program, protocolFactory, protocolComposer, costEstimator, ctx)
-
-    private fun Cost<SymbolicCost>.featureSum(): SymbolicCost {
-        val weights = costEstimator.featureWeights()
-        return this.features.entries.fold(CostLiteral(0) as SymbolicCost) { acc, c ->
-            CostAdd(acc, CostMul(CostLiteral(weights[c.key]!!.cost), c.value))
+    /** Convert a SelectionConstraint into a Z3 BoolExpr. **/
+    private fun SelectionConstraint.boolExpr(
+        ctx: Context,
+        vmap: BiMap<FunctionVariable, IntExpr>,
+        boolVarMap: Map<String, BoolExpr>,
+        protocolMap: BiMap<Protocol, Int>
+    ): BoolExpr {
+        return when (this) {
+            is HostVariable -> boolVarMap[this.variable]!!
+            is GuardVisibilityFlag -> boolVarMap[this.variable]!!
+            is Literal -> ctx.mkBool(literalValue)
+            is Implies -> ctx.mkImplies(lhs.boolExpr(ctx, vmap, boolVarMap, protocolMap), rhs.boolExpr(ctx, vmap, boolVarMap, protocolMap))
+            is Or ->
+                this.props.fold(ctx.mkFalse()) { acc, z3prop ->
+                    ctx.mkOr(acc, z3prop.boolExpr(ctx, vmap, boolVarMap, protocolMap))
+                }
+            is And ->
+                this.props.fold(ctx.mkTrue()) { acc, z3prop ->
+                    ctx.mkAnd(acc, z3prop.boolExpr(ctx, vmap, boolVarMap, protocolMap))
+                }
+            is Not -> ctx.mkNot(rhs.boolExpr(ctx, vmap, boolVarMap, protocolMap))
+            is VariableIn -> ctx.mkEq(vmap[this.variable], ctx.mkInt(protocolMap[this.protocol]!!))
+            is VariableEquals -> ctx.mkEq(vmap[this.var1], vmap[this.var2])
         }
     }
 
-    private val reachableFunctions = run {
-        val reachableFunctionNames = nameAnalysis.reachableFunctions(main)
-        program.functions.filter { reachableFunctionNames.contains(it.name.value) }
-    }
+    /** Convert a CostExpression into a Z3 ArithExpr. */
+    private fun SymbolicCost.arithExpr(
+        ctx: Context,
+        fvMap: BiMap<FunctionVariable, IntExpr>,
+        boolVarMap: Map<String, BoolExpr>,
+        protocolMap: BiMap<Protocol, Int>
+    ): ArithExpr<IntSort> =
+        when (this) {
+            is CostLiteral -> ctx.mkInt(this.cost)
 
-    private fun <T> reachableInstances(instances: Node.() -> List<T>): List<T> =
-        reachableFunctions.flatMap(instances) + main.instances()
+            is CostAdd ->
+                ctx.mkAdd(
+                    this.lhs.arithExpr(ctx, fvMap, boolVarMap, protocolMap),
+                    this.rhs.arithExpr(ctx, fvMap, boolVarMap, protocolMap)
+                )
 
+            is CostMul ->
+                ctx.mkMul(
+                    ctx.mkInt(this.lhs),
+                    this.rhs.arithExpr(ctx, fvMap, boolVarMap, protocolMap)
+                )
+
+            is CostMax -> {
+                val lhsExpr = this.lhs.arithExpr(ctx, fvMap, boolVarMap, protocolMap)
+                val rhsExpr = this.rhs.arithExpr(ctx, fvMap, boolVarMap, protocolMap)
+                ctx.mkITE(ctx.mkGe(lhsExpr, rhsExpr), lhsExpr, rhsExpr) as ArithExpr
+            }
+
+            is CostMux ->
+                ctx.mkITE(
+                    this.guard.boolExpr(ctx, fvMap, boolVarMap, protocolMap),
+                    this.lhs.arithExpr(ctx, fvMap, boolVarMap, protocolMap),
+                    this.rhs.arithExpr(ctx, fvMap, boolVarMap, protocolMap)
+                ) as ArithExpr
+        }
+
+    /*
     private fun printMetadata(
         eval: (FunctionName, Variable) -> Protocol,
         model: Model,
@@ -155,97 +182,56 @@ private class Z3Selection(
 
         dumpMetadata(costMetadata)
     }
+    */
 
     /** Protocol selection. */
-    fun select(): (FunctionName, Variable) -> Protocol {
+    override fun solveSelectionProblem(problem: SelectionProblem): ProtocolAssignment {
+        val constraints = problem.constraints
+        val programCost = problem.cost
+
         val solver = ctx.mkOptimize()
-        val constraints = mutableSetOf<SelectionConstraint>()
 
-        // select for functions first
-        for (function in reachableFunctions) {
-            constraints.addAll(constraintGenerator.getConstraints(function))
-        }
+        val protocolMap = mutableBiMapOf<Protocol, Int>()
+        val fvMap  = mutableBiMapOf<FunctionVariable, IntExpr>()
+        val boolVarMap = mutableMapOf<String, BoolExpr>()
 
-        // then select for the main process
-        constraints.addAll(constraintGenerator.getConstraints(main))
-
-        // Build variable and protocol maps
-        fun <T> associateFreshConstant(instances: Node.() -> List<T>): Map<T, IntExpr> =
-            reachableInstances(instances).associateWith { (ctx.mkFreshConst("t", ctx.intSort)) as IntExpr }
-
-        val letNodes = associateFreshConstant { letNodes() }
-        val declarationNodes = associateFreshConstant { declarationNodes() }
-        val objectDeclarationArgumentNodes = associateFreshConstant { objectDeclarationArgumentNodes() }
-        val parameterNodes = associateFreshConstant { parameterNodes() }
-
-        val pmap: BiMap<Protocol, Int> = run {
-            // Compute all protocols relevant for the program
-            val protocols = mutableSetOf<Protocol>()
-            reachableInstances { letNodes() }.forEach { protocols.addAll(protocolFactory.viableProtocols(it)) }
-            reachableInstances { declarationNodes() }.forEach { protocols.addAll(protocolFactory.viableProtocols(it)) }
-            reachableInstances { parameterNodes() }.forEach { protocols.addAll(protocolFactory.viableProtocols(it)) }
-            protocols.sorted().withIndex().associate { it.value to it.index }.toBiMap()
-        }
-
-        val varMap: BiMap<FunctionVariable, IntExpr> =
-            (
-                letNodes.mapKeys {
-                    FunctionVariable(nameAnalysis.enclosingFunctionName(it.key), it.key.temporary.value)
-                }
-                ).plus(
-                declarationNodes.mapKeys {
-                    FunctionVariable(nameAnalysis.enclosingFunctionName(it.key), it.key.name.value)
-                }
-            ).plus(
-                parameterNodes.mapKeys {
-                    val functionName = nameAnalysis.functionDeclaration(it.key).name.value
-                    FunctionVariable(functionName, it.key.name.value)
-                }
-            ).plus(
-                objectDeclarationArgumentNodes.mapKeys {
-                    FunctionVariable(nameAnalysis.enclosingFunctionName(it.key), it.key.name.value)
-                }
-            ).toBiMap()
-
-        val pmapExpr = pmap.mapValues { ctx.mkInt(it.value) as IntExpr }.toBiMap()
-
-        // load selection constraints into Z3
-        val costVariables = mutableSetOf<CostVariable>()
-        val hostVariables = mutableSetOf<HostVariable>()
-        val guardVisibilityVariables = mutableSetOf<GuardVisibilityFlag>()
+        var protocolCounter = 1
         for (constraint in constraints) {
-            costVariables.addAll(constraint.costVariables())
-            hostVariables.addAll(constraint.hostVariables())
-            guardVisibilityVariables.addAll(constraint.guardVisibilityVariables())
-            solver.Add(constraint.boolExpr(ctx, varMap, pmapExpr))
-        }
-
-        // make sure all cost variables are nonnegative
-        for (costVariable in costVariables) {
-            solver.Add(ctx.mkGe(costVariable.variable, ctx.mkInt(0)))
-        }
-
-        if (varMap.values.isNotEmpty()) {
-            // load cost constraints into Z3; build integer expression to minimize
-            val programCostFeatures: Cost<SymbolicCost> =
-                reachableFunctions.fold(constraintGenerator.symbolicCost(main.body)) { acc, f ->
-                    acc.concat(
-                        constraintGenerator.symbolicCost(f.body)
-                    )
+            for (fv in constraint.functionVariables()) {
+                if (!fvMap.containsKey(fv)) {
+                    val fvSymname = "${fv.function.name}_${fv.variable.name}"
+                    fvMap[fv] = ctx.mkFreshConst(fvSymname, ctx.boolSort) as IntExpr
                 }
-
-            val totalCost = programCostFeatures.featureSum()
-            val costExpr = totalCost.arithExpr(ctx, varMap, pmapExpr)
-            val totalCostSymvar = ctx.mkFreshConst("total_cost", ctx.intSort) as IntExpr
-
-            solver.Add(ctx.mkEq(totalCostSymvar, costExpr))
-
-            when (costMode) {
-                CostMode.MINIMIZE -> solver.MkMinimize(totalCostSymvar)
-                CostMode.MAXIMIZE -> solver.MkMaximize(totalCostSymvar)
             }
 
-            val symvarCount = varMap.size + costVariables.size + hostVariables.size + guardVisibilityVariables.size
+            for (protocol in constraint.protocols()) {
+                if (!protocolMap.containsKey(protocol)) {
+                    protocolMap[protocol] = protocolCounter
+                    protocolCounter++
+                }
+            }
+
+            for (variable in constraint.variableNames()) {
+                if (!boolVarMap.containsKey(variable)) {
+                    boolVarMap[variable] = ctx.mkFreshConst(variable, ctx.boolSort) as BoolExpr
+                }
+            }
+        }
+
+        if (fvMap.values.isNotEmpty()) {
+            // load selection constraints into Z3
+            for (constraint in constraints) {
+                solver.Add(constraint.boolExpr(ctx, fvMap, boolVarMap, protocolMap))
+            }
+
+            val costExpr = programCost.arithExpr(ctx, fvMap, boolVarMap, protocolMap)
+
+            when (costMode) {
+                CostMode.MINIMIZE -> solver.MkMinimize(costExpr)
+                CostMode.MAXIMIZE -> solver.MkMaximize(costExpr)
+            }
+
+            val symvarCount = fvMap.size + boolVarMap.size
 
             logger.info { "number of symvars: $symvarCount" }
             logger.info { "cost mode set to $costMode" }
@@ -253,18 +239,17 @@ private class Z3Selection(
             if (solver.Check() == Status.SATISFIABLE) {
                 val model = solver.model
                 val interpMap: Map<FunctionVariable, Int> =
-                    varMap.mapValues { e ->
+                    fvMap.mapValues { e ->
                         (model.getConstInterp(e.value) as IntNum).int
                     }
 
-                fun eval(f: FunctionName, v: Variable): Protocol {
-                    val fvar = FunctionVariable(f, v)
-                    return interpMap[fvar]?.let { protocolIndex ->
-                        pmap.inverse[protocolIndex] ?: throw NoProtocolIndexMapping(protocolIndex)
-                    } ?: throw NoVariableSelectionSolutionError(f, v)
+                fun eval(fv: FunctionVariable): Protocol {
+                    return interpMap[fv]?.let { protocolIndex ->
+                        protocolMap.inverse[protocolIndex] ?: throw NoProtocolIndexMapping(protocolIndex)
+                    } ?: throw NoVariableSelectionSolutionError(fv.function, fv.variable)
                 }
 
-                printMetadata(::eval, model, totalCostSymvar)
+                // printMetadata(::eval, model, totalCostSymvar)
 
                 logger.info { "constraints satisfiable, extracted model" }
 
@@ -273,7 +258,7 @@ private class Z3Selection(
                 throw NoSelectionSolutionError()
             }
         } else {
-            return { f: FunctionName, v: Variable ->
+            return { (f: FunctionName, v: Variable) ->
                 throw NoVariableSelectionSolutionError(f, v)
             }
         }
@@ -292,12 +277,13 @@ fun selectProtocolsWithZ3(
         throw NoHostDeclarationsError(program.sourceLocation.sourcePath)
     }
 
-    return Context().use { context ->
-        Z3Selection(
-            context,
-            program, program.main,
-            protocolFactory, protocolComposer, costEstimator, costMode,
-            dumpMetadata
-        ).select()
+    val constraintGenerator = SelectionConstraintGenerator(program, protocolFactory, protocolComposer, costEstimator)
+
+    Context().use { context ->
+        val assignment =
+            Z3Selection(context, costMode, dumpMetadata)
+            .solveSelectionProblem(constraintGenerator.getSelectionProblem())
+
+        return { f, v -> assignment(FunctionVariable(f, v)) }
     }
 }

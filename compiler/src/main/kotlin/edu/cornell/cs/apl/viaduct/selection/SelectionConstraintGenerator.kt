@@ -7,7 +7,6 @@ import edu.cornell.cs.apl.attributes.attribute
 import edu.cornell.cs.apl.viaduct.analysis.InformationFlowAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.NameAnalysis
 import edu.cornell.cs.apl.viaduct.backends.cleartext.Local
-import edu.cornell.cs.apl.viaduct.errors.IllegalInternalCommunicationError
 import edu.cornell.cs.apl.viaduct.errors.UnknownObjectDeclarationError
 import edu.cornell.cs.apl.viaduct.syntax.Host
 import edu.cornell.cs.apl.viaduct.syntax.HostTrustConfiguration
@@ -40,8 +39,6 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProcessDeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.QueryNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ReadNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.ReceiveNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.SendNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.SimpleStatementNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.StatementNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.UpdateNode
@@ -166,8 +163,6 @@ class SelectionConstraintGenerator(
 
             is AssertionNode -> zeroSymbolicCost
 
-            is SendNode -> zeroSymbolicCost
-
             is ExpressionNode -> zeroSymbolicCost
 
             else ->
@@ -253,8 +248,6 @@ class SelectionConstraintGenerator(
                                 }
                             )
                         }
-
-                        is ReceiveNode -> throw IllegalInternalCommunicationError(rhs)
 
                         else -> {
                             setOf(
@@ -350,8 +343,6 @@ class SelectionConstraintGenerator(
                     )
                 )
             }
-
-            is SendNode -> throw IllegalInternalCommunicationError(this)
 
             else -> setOf()
         }

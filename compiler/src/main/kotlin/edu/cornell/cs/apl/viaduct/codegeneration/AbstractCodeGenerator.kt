@@ -55,7 +55,7 @@ abstract class AbstractCodeGenerator(val context: CodeGeneratorContext) : CodeGe
             value
         )
 
-    abstract fun exp(expr: ExpressionNode): CodeBlock
+    abstract fun exp(expr: ExpressionNode, protocol: Protocol): CodeBlock
 
     abstract fun let(protocol: Protocol, stmt: LetNode): CodeBlock
 
@@ -109,7 +109,8 @@ abstract class AbstractCodeGenerator(val context: CodeGeneratorContext) : CodeGe
     }
 
     fun outParameterInitialization(
-        stmt: OutParameterInitializationNode
+        stmt: OutParameterInitializationNode,
+        protocol: Protocol
     ): CodeBlock =
         when (val initializer = stmt.initializer) {
             is OutParameterConstructorInitializerNode -> {
@@ -139,7 +140,7 @@ abstract class AbstractCodeGenerator(val context: CodeGeneratorContext) : CodeGe
                 CodeBlock.of(
                     "%N.set(%L)",
                     context.kotlinName(stmt.name.value),
-                    exp(initializer.expression)
+                    exp(initializer.expression, protocol)
                 )
         }
 

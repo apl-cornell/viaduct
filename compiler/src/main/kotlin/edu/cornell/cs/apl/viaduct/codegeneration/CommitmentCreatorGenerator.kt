@@ -38,7 +38,7 @@ class CommitmentCreatorGenerator(
     private val committedClassName = Committed::class
 
     // this function should take in a protocol and reference the protocol arg in the body
-    override fun exp(expr: ExpressionNode): CodeBlock =
+    override fun exp(expr: ExpressionNode, protocol: Protocol): CodeBlock =
         when (expr) {
             is LiteralNode -> CodeBlock.of(
                 "%T(%L)",
@@ -51,11 +51,11 @@ class CommitmentCreatorGenerator(
                     "%N",
                     context.kotlinName(
                         expr.temporary.value,
-                        context.protocolAnalysis.primaryProtocol(expr)
+                        protocol
                     )
                 )
 
-            is DowngradeNode -> exp(expr.expression)
+            is DowngradeNode -> exp(expr.expression, protocol)
 
             is QueryNode -> {
                 when (context.typeAnalysis.type(context.nameAnalysis.declaration(expr))) {
@@ -64,7 +64,7 @@ class CommitmentCreatorGenerator(
                             is Get -> CodeBlock.of(
                                 "%N[%L]",
                                 context.kotlinName(expr.variable.value),
-                                exp(expr.arguments.first())
+                                exp(expr.arguments.first(), protocol)
                             )
                             else -> throw CodeGenerationError("unknown vector query", expr)
                         }
@@ -102,7 +102,7 @@ class CommitmentCreatorGenerator(
         CodeBlock.of(
             "val %N = %L",
             context.kotlinName(stmt.temporary.value, protocol),
-            exp(stmt.value)
+            exp(stmt.value, protocol)
         )
 
     override fun declaration(protocol: Protocol, stmt: DeclarationNode): CodeBlock =
@@ -124,8 +124,8 @@ class CommitmentCreatorGenerator(
                         CodeBlock.of(
                             "%N[%L] = %L",
                             context.kotlinName(stmt.variable.value),
-                            exp(stmt.arguments[0]),
-                            exp(stmt.arguments[1])
+                            exp(stmt.arguments[0], protocol),
+                            exp(stmt.arguments[1], protocol)
                         )
                     else -> throw CodeGenerationError("Commitment: cannot modify commitments")
                 }
@@ -135,7 +135,7 @@ class CommitmentCreatorGenerator(
                         CodeBlock.of(
                             "%N = %L",
                             context.kotlinName(stmt.variable.value),
-                            exp(stmt.arguments[0])
+                            exp(stmt.arguments[0], protocol)
                         )
                     else -> throw CodeGenerationError("Commitment: cannot modify commitments")
                 }
@@ -146,7 +146,7 @@ class CommitmentCreatorGenerator(
         throw ViaductInterpreterError("Commitment: cannot perform I/O in non-local protocol")
     }
 
-    override fun guard(protocol: Protocol, expr: AtomicExpressionNode): CodeBlock = exp(expr)
+    override fun guard(protocol: Protocol, expr: AtomicExpressionNode): CodeBlock = exp(expr, protocol)
 
     override fun send(
         sendingHost: Host,

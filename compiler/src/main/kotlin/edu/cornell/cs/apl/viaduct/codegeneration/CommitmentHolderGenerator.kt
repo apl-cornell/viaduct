@@ -31,16 +31,16 @@ import edu.cornell.cs.apl.viaduct.protocols.Commitment as CommitmentProtocol
 class CommitmentHolderGenerator(
     context: CodeGeneratorContext
 ) : AbstractCodeGenerator(context) {
-    override fun exp(expr: ExpressionNode): CodeBlock =
+    override fun exp(expr: ExpressionNode, protocol: Protocol): CodeBlock =
         when (expr) {
             is LiteralNode -> throw CodeGenerationError("Commitment: Cannot commit literals")
 
             is ReadNode -> CodeBlock.of(
                 "%L",
-                context.kotlinName(expr.temporary.value, context.protocolAnalysis.primaryProtocol(expr))
+                context.kotlinName(expr.temporary.value, protocol)
             )
 
-            is DowngradeNode -> exp(expr.expression)
+            is DowngradeNode -> exp(expr.expression, protocol)
 
             is QueryNode ->
                 when (context.typeAnalysis.type(context.nameAnalysis.declaration(expr))) {
@@ -49,7 +49,7 @@ class CommitmentHolderGenerator(
                             is Get -> CodeBlock.of(
                                 "%N[%L]",
                                 context.kotlinName(expr.variable.value),
-                                exp(expr.arguments.first())
+                                exp(expr.arguments.first(), protocol)
                             )
                             else -> throw CodeGenerationError("unknown vector query", expr)
                         }
@@ -85,7 +85,7 @@ class CommitmentHolderGenerator(
         CodeBlock.of(
             "var %N = %L",
             context.kotlinName(stmt.temporary.value, protocol),
-            exp(stmt.value)
+            exp(stmt.value, protocol)
         )
 
     override fun declaration(protocol: Protocol, stmt: DeclarationNode): CodeBlock =
@@ -108,8 +108,8 @@ class CommitmentHolderGenerator(
                         CodeBlock.of(
                             "%N[%L] = %L",
                             context.kotlinName(stmt.variable.value),
-                            exp(stmt.arguments[0]),
-                            exp(stmt.arguments[1])
+                            exp(stmt.arguments[0], protocol),
+                            exp(stmt.arguments[1], protocol)
                         )
                     else -> throw CodeGenerationError("Commitment: cannot modify commitments")
                 }
@@ -119,7 +119,7 @@ class CommitmentHolderGenerator(
                         CodeBlock.of(
                             "%N = %L",
                             context.kotlinName(stmt.variable.value),
-                            exp(stmt.arguments[0])
+                            exp(stmt.arguments[0], protocol)
                         )
                     else -> throw CodeGenerationError("Commitment: cannot modify commitments")
                 }

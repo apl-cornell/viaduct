@@ -289,18 +289,21 @@ private fun addHostDeclarations(fileBuilder: FileSpec.Builder, program: ProgramN
 }
 
 // this function should take a list of code generators
-fun viaductProgramStringGenerator(
+fun compileKotlinFile(
     program: ProgramNode,
     fileName: String,
-    packageName: String
-): String = viaductProgramFileSpecGenerator(program, fileName, packageName).toString()
+    packageName: String,
+    codeGenerators: List<(context: CodeGeneratorContext) -> CodeGenerator>
+
+): String = compileKotlinFileSpec(program, fileName, packageName, codeGenerators).toString()
 
 // this should take a list of backend generators
 // name this compile to kotlin or something
-fun viaductProgramFileSpecGenerator(
+fun compileKotlinFileSpec(
     program: ProgramNode,
     fileName: String,
-    packageName: String
+    packageName: String,
+    codeGenerators: List<(context: CodeGeneratorContext) -> CodeGenerator>
 ): FileSpec {
 
     val mainBody = program.main.body

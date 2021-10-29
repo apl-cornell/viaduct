@@ -12,7 +12,12 @@ import edu.cornell.cs.apl.viaduct.analysis.letNodes
 import edu.cornell.cs.apl.viaduct.analysis.main
 import edu.cornell.cs.apl.viaduct.backend.aby.ABYMuxPostprocessor
 import edu.cornell.cs.apl.viaduct.backend.zkp.ZKPMuxPostprocessor
-import edu.cornell.cs.apl.viaduct.codegeneration.viaductProgramStringGenerator
+import edu.cornell.cs.apl.viaduct.codegeneration.CodeGenerator
+import edu.cornell.cs.apl.viaduct.codegeneration.CodeGeneratorContext
+import edu.cornell.cs.apl.viaduct.codegeneration.CommitmentCreatorGenerator
+import edu.cornell.cs.apl.viaduct.codegeneration.CommitmentHolderGenerator
+import edu.cornell.cs.apl.viaduct.codegeneration.PlainTextCodeGenerator
+import edu.cornell.cs.apl.viaduct.codegeneration.compileKotlinFile
 import edu.cornell.cs.apl.viaduct.passes.ProgramPostprocessorRegistry
 import edu.cornell.cs.apl.viaduct.passes.annotateWithProtocols
 import edu.cornell.cs.apl.viaduct.passes.check
@@ -166,10 +171,15 @@ class Compile : CliktCommand(help = "Compile ideal protocol to secure distribute
         if (compileKotlin) {
             output.println(
                 Document(
-                    viaductProgramStringGenerator(
+                    compileKotlinFile(
                         postprocessedProgram,
                         input!!.name.substringBefore('.'),
-                        "src"
+                        "src",
+                        listOf<(context: CodeGeneratorContext) -> CodeGenerator>(
+                            ::PlainTextCodeGenerator,
+                            ::CommitmentCreatorGenerator,
+                            ::CommitmentHolderGenerator
+                        )
                     )
                 )
             )

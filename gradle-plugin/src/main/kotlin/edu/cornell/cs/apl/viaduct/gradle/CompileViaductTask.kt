@@ -1,7 +1,12 @@
 package edu.cornell.cs.apl.viaduct.gradle
 
 import edu.cornell.cs.apl.viaduct.analysis.main
-import edu.cornell.cs.apl.viaduct.codegeneration.viaductProgramStringGenerator
+import edu.cornell.cs.apl.viaduct.codegeneration.CodeGenerator
+import edu.cornell.cs.apl.viaduct.codegeneration.CodeGeneratorContext
+import edu.cornell.cs.apl.viaduct.codegeneration.CommitmentCreatorGenerator
+import edu.cornell.cs.apl.viaduct.codegeneration.CommitmentHolderGenerator
+import edu.cornell.cs.apl.viaduct.codegeneration.PlainTextCodeGenerator
+import edu.cornell.cs.apl.viaduct.codegeneration.compileKotlinFile
 import edu.cornell.cs.apl.viaduct.errors.CompilationError
 import edu.cornell.cs.apl.viaduct.parsing.SourceFile
 import edu.cornell.cs.apl.viaduct.parsing.parse
@@ -116,7 +121,15 @@ abstract class CompileViaductTask : DefaultTask() {
 
         val annotatedProgram = program.annotateWithProtocols(protocolAssignment)
 
-        // TODO: code generator should return a KotlinPoet class
-        return viaductProgramStringGenerator(annotatedProgram, fileName, packageName)
+        return compileKotlinFile(
+            annotatedProgram,
+            fileName,
+            packageName,
+            listOf<(context: CodeGeneratorContext) -> CodeGenerator>(
+                ::PlainTextCodeGenerator,
+                ::CommitmentCreatorGenerator,
+                ::CommitmentHolderGenerator
+            )
+        )
     }
 }

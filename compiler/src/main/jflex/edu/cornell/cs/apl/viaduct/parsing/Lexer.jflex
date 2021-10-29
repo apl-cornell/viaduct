@@ -89,11 +89,10 @@ NUM         = ((-)?[1-9][0-9]*) | 0
 %%
 
 <YYINITIAL> {
-  /* top-level declarations */
+  /* Top-level declarations */
   "host"          { return symbol(sym.HOST); }
   "process"       { return symbol(sym.PROCESS); }
   "fun"           { return symbol(sym.FUNCTION); }
-  "Host"          { return symbol(sym.CAP_HOST); }
   "out"           { return symbol(sym.OUT); }
 
   /* Types */

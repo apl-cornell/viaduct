@@ -207,16 +207,6 @@ class OutputNode(
         get() = keyword("output") * message * keyword("to") * host
 }
 
-/** Sending a value to another protocol. */
-class SendNode(
-    val message: ExpressionNode,
-    val protocol: ProtocolNode,
-    override val sourceLocation: SourceLocation
-) : SimpleStatementNode() {
-    override val asDocument: Document
-        get() = keyword("send") * message * keyword("to") * protocol
-}
-
 // Compound Statements
 
 /**

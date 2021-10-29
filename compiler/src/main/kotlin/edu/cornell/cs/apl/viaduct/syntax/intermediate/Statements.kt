@@ -252,12 +252,8 @@ class SendNode(
     override val children: Iterable<AtomicExpressionNode>
         get() = listOf(message)
 
-    override fun toSurfaceNode(): edu.cornell.cs.apl.viaduct.syntax.surface.SendNode =
-        edu.cornell.cs.apl.viaduct.syntax.surface.SendNode(
-            message.toSurfaceNode(),
-            protocol,
-            sourceLocation
-        )
+    override fun toSurfaceNode(): edu.cornell.cs.apl.viaduct.syntax.surface.SimpleStatementNode =
+        throw IllegalStateException("This method is deprecated.")
 
     override fun copy(children: List<Node>): SendNode =
         SendNode(children[0] as AtomicExpressionNode, protocol, sourceLocation)

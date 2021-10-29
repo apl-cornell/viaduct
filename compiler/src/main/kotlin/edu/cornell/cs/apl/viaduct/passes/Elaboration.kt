@@ -48,8 +48,6 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProcessDeclarationNode as 
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode as IProgramNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.QueryNode as IQueryNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ReadNode as IReadNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.ReceiveNode as IReceiveNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.SendNode as ISendNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.StatementNode as IStatementNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.TopLevelDeclarationNode as ITopLevelDeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.UpdateNode as IUpdateNode
@@ -82,8 +80,6 @@ import edu.cornell.cs.apl.viaduct.syntax.surface.ProcessDeclarationNode as SProc
 import edu.cornell.cs.apl.viaduct.syntax.surface.ProgramNode as SProgramNode
 import edu.cornell.cs.apl.viaduct.syntax.surface.QueryNode as SQueryNode
 import edu.cornell.cs.apl.viaduct.syntax.surface.ReadNode as SReadNode
-import edu.cornell.cs.apl.viaduct.syntax.surface.ReceiveNode as SReceiveNode
-import edu.cornell.cs.apl.viaduct.syntax.surface.SendNode as SSendNode
 import edu.cornell.cs.apl.viaduct.syntax.surface.SkipNode as SSkipNode
 import edu.cornell.cs.apl.viaduct.syntax.surface.StatementNode as SStatementNode
 import edu.cornell.cs.apl.viaduct.syntax.surface.UpdateNode as SUpdateNode
@@ -294,10 +290,6 @@ private class StatementElaborator(
             is SInputNode ->
                 IInputNode(type, host, sourceLocation)
 
-            is SReceiveNode -> {
-                IReceiveNode(type, protocol, sourceLocation)
-            }
-
             is SConstructorCallNode ->
                 throw InvalidConstructorCallError(this)
         }
@@ -486,15 +478,6 @@ private class StatementElaborator(
                     IOutputNode(
                         stmt.message.toAnf(bindings).toAtomic(bindings),
                         stmt.host,
-                        stmt.sourceLocation
-                    )
-                }
-
-            is SSendNode ->
-                withBindings { bindings ->
-                    ISendNode(
-                        stmt.message.toAnf(bindings).toAtomic(bindings),
-                        stmt.protocol,
                         stmt.sourceLocation
                     )
                 }

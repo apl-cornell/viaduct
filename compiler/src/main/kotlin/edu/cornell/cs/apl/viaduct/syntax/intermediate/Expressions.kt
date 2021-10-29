@@ -197,8 +197,8 @@ class ReceiveNode(
     override val children: Iterable<Nothing>
         get() = listOf()
 
-    override fun toSurfaceNode(): edu.cornell.cs.apl.viaduct.syntax.surface.ReceiveNode =
-        edu.cornell.cs.apl.viaduct.syntax.surface.ReceiveNode(type, protocol, sourceLocation)
+    override fun toSurfaceNode(): edu.cornell.cs.apl.viaduct.syntax.surface.ExpressionNode =
+        throw IllegalStateException("This method is deprecated.")
 
     override fun copy(children: List<Node>): ReceiveNode =
         ReceiveNode(type, protocol, sourceLocation)

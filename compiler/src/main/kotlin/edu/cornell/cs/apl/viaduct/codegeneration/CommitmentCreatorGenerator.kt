@@ -113,7 +113,8 @@ class CommitmentCreatorGenerator(
             CodeBlock.of(
                 "fake(%L)",
                 exp(stmt.typeArguments[0].value.defaultValue)
-            )
+            ),
+            protocol
         )
 
     override fun update(protocol: Protocol, stmt: UpdateNode): CodeBlock =

@@ -139,7 +139,8 @@ class PlainTextCodeGenerator(context: CodeGeneratorContext) :
             context.kotlinName(stmt.name.value),
             stmt.className,
             stmt.arguments,
-            exp(stmt.typeArguments[0].value.defaultValue)
+            exp(stmt.typeArguments[0].value.defaultValue),
+            protocol
         )
 
     override fun update(protocol: Protocol, stmt: UpdateNode): CodeBlock =

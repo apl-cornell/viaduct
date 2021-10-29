@@ -41,7 +41,7 @@ abstract class AbstractCodeGenerator(val context: CodeGeneratorContext) : CodeGe
 
             is UpdateNode -> update(protocol, stmt)
 
-            is OutParameterInitializationNode -> outParameterInitialization(stmt)
+            is OutParameterInitializationNode -> outParameterInitialization(stmt, protocol)
 
             is OutputNode -> output(protocol, stmt)
 
@@ -76,30 +76,28 @@ abstract class AbstractCodeGenerator(val context: CodeGeneratorContext) : CodeGe
         name: String,
         className: ClassNameNode,
         arguments: Arguments<AtomicExpressionNode>,
-        initFun: CodeBlock
+        initFun: CodeBlock,
+        protocol: Protocol
     ): CodeBlock {
         return when (className.value) {
             ImmutableCell -> CodeBlock.of(
                 "val %N = %L",
                 name,
-                exp(arguments.first())
+                exp(arguments.first(), protocol)
             )
 
             // TODO - change this (difference between viaduct, kotlin semantics)
             MutableCell -> CodeBlock.of(
                 "var %N = %L",
                 name,
-                exp(arguments.first())
+                exp(arguments.first(), protocol)
             )
 
-            // When you are a commitment creator, create a zero Committed, and send to bob
-            // Array(size){val com = Committed(0) runtime.send(com.commitment()); com}
-            // As a commitment receiver in an Array(size){runtime.recv(alice)}
             Vector -> {
                 CodeBlock.of(
                     "val %N = Array(%L){ %L }",
                     name,
-                    exp(arguments.first()),
+                    exp(arguments.first(), protocol),
                     initFun
                 )
             }
@@ -123,6 +121,7 @@ abstract class AbstractCodeGenerator(val context: CodeGeneratorContext) : CodeGe
                             initializer.className,
                             initializer.arguments,
                             exp(initializer.typeArguments[0].value.defaultValue),
+                            protocol
                         )
                     )
                     .add(

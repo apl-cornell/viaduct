@@ -97,7 +97,8 @@ class CommitmentHolderGenerator(
                 "fake(%L).%M()",
                 exp(stmt.typeArguments[0].value.defaultValue),
                 MemberName(Committed.Companion::class.asClassName(), "commitment")
-            )
+            ),
+            protocol
         )
 
     override fun update(protocol: Protocol, stmt: UpdateNode): CodeBlock =

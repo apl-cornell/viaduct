@@ -2,8 +2,6 @@ package edu.cornell.cs.apl.viaduct.codegeneration
 
 import com.squareup.kotlinpoet.CodeBlock
 import com.squareup.kotlinpoet.MemberName
-import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
-import com.squareup.kotlinpoet.asClassName
 import edu.cornell.cs.apl.viaduct.errors.CodeGenerationError
 import edu.cornell.cs.apl.viaduct.errors.IllegalInternalCommunicationError
 import edu.cornell.cs.apl.viaduct.errors.RuntimeError
@@ -112,8 +110,10 @@ class CommitmentCreatorGenerator(
             context.kotlinName(stmt.name.value),
             stmt.className,
             stmt.arguments,
-            stmt.typeArguments[0].value,
-            protocol
+            CodeBlock.of(
+                "fake(%L)",
+                exp(stmt.typeArguments[0].value.defaultValue)
+            )
         )
 
     override fun update(protocol: Protocol, stmt: UpdateNode): CodeBlock =

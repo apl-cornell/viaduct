@@ -3,14 +3,11 @@ package edu.cornell.cs.apl.viaduct.codegeneration
 import com.squareup.kotlinpoet.BOOLEAN
 import com.squareup.kotlinpoet.CodeBlock
 import com.squareup.kotlinpoet.INT
-import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import com.squareup.kotlinpoet.STRING
 import com.squareup.kotlinpoet.TypeName
 import com.squareup.kotlinpoet.U_BYTE_ARRAY
-import com.squareup.kotlinpoet.asClassName
 import edu.cornell.cs.apl.viaduct.errors.CodeGenerationError
 import edu.cornell.cs.apl.viaduct.errors.IllegalInternalCommunicationError
-import edu.cornell.cs.apl.viaduct.runtime.commitment.Commitment
 import edu.cornell.cs.apl.viaduct.syntax.Arguments
 import edu.cornell.cs.apl.viaduct.syntax.ClassNameNode
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
@@ -34,7 +31,6 @@ import edu.cornell.cs.apl.viaduct.syntax.types.IntegerType
 import edu.cornell.cs.apl.viaduct.syntax.types.StringType
 import edu.cornell.cs.apl.viaduct.syntax.types.ValueType
 import edu.cornell.cs.apl.viaduct.syntax.values.Value
-import edu.cornell.cs.apl.viaduct.protocols.Commitment as CommitmentProtocol
 
 abstract class AbstractCodeGenerator(val context: CodeGeneratorContext) : CodeGenerator {
     override fun simpleStatement(protocol: Protocol, stmt: SimpleStatementNode): CodeBlock {
@@ -80,9 +76,7 @@ abstract class AbstractCodeGenerator(val context: CodeGeneratorContext) : CodeGe
         name: String,
         className: ClassNameNode,
         arguments: Arguments<AtomicExpressionNode>,
-        // change this to take the default value (must change everywhere its called)
-        initType: ValueType,
-        protocol: Protocol
+        initFun: CodeBlock
     ): CodeBlock {
         return when (className.value) {
             ImmutableCell -> CodeBlock.of(
@@ -102,26 +96,12 @@ abstract class AbstractCodeGenerator(val context: CodeGeneratorContext) : CodeGe
             // Array(size){val com = Committed(0) runtime.send(com.commitment()); com}
             // As a commitment receiver in an Array(size){runtime.recv(alice)}
             Vector -> {
-                // create a commitment of the default value
-                when (protocol) {
-                    is CommitmentProtocol -> {
-                        CodeBlock.of(
-                            "val %N = Array(%L){ %L() }",
-                            name,
-                            exp(arguments.first()),
-                            Commitment::class.asClassName().parameterizedBy(typeTranslator(initType))
-                        )
-                    }
-
-                    else -> {
-                        CodeBlock.of(
-                            "val %N = Array(%L){ %L }",
-                            name,
-                            exp(arguments.first()),
-                            exp(initType.defaultValue)
-                        )
-                    }
-                }
+                CodeBlock.of(
+                    "val %N = Array(%L){ %L }",
+                    name,
+                    exp(arguments.first()),
+                    initFun
+                )
             }
 
             else -> TODO("throw error")
@@ -141,8 +121,7 @@ abstract class AbstractCodeGenerator(val context: CodeGeneratorContext) : CodeGe
                             outTmpString,
                             initializer.className,
                             initializer.arguments,
-                            initializer.typeArguments[0].value,
-                            context.protocolAnalysis.primaryProtocol(stmt)
+                            exp(initializer.typeArguments[0].value.defaultValue),
                         )
                     )
                     .add(

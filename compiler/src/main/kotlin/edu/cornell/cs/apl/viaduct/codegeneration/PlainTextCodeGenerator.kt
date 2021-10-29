@@ -2,8 +2,6 @@ package edu.cornell.cs.apl.viaduct.codegeneration
 
 import com.squareup.kotlinpoet.CodeBlock
 import com.squareup.kotlinpoet.MemberName
-import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
-import com.squareup.kotlinpoet.asTypeName
 import edu.cornell.cs.apl.viaduct.errors.CodeGenerationError
 import edu.cornell.cs.apl.viaduct.errors.RuntimeError
 import edu.cornell.cs.apl.viaduct.protocols.Plaintext
@@ -141,8 +139,7 @@ class PlainTextCodeGenerator(context: CodeGeneratorContext) :
             context.kotlinName(stmt.name.value),
             stmt.className,
             stmt.arguments,
-            stmt.typeArguments[0].value,
-            protocol
+            exp(stmt.typeArguments[0].value.defaultValue)
         )
 
     override fun update(protocol: Protocol, stmt: UpdateNode): CodeBlock =

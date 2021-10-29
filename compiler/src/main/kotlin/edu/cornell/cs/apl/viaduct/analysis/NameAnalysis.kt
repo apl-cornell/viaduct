@@ -8,7 +8,6 @@ import edu.cornell.cs.apl.viaduct.errors.IncorrectNumberOfArgumentsError
 import edu.cornell.cs.apl.viaduct.errors.NameClashError
 import edu.cornell.cs.apl.viaduct.errors.UndefinedNameError
 import edu.cornell.cs.apl.viaduct.errors.UnknownObjectDeclarationError
-import edu.cornell.cs.apl.viaduct.protocols.Adversary
 import edu.cornell.cs.apl.viaduct.selection.FunctionVariable
 import edu.cornell.cs.apl.viaduct.syntax.Arguments
 import edu.cornell.cs.apl.viaduct.syntax.ClassNameNode
@@ -589,8 +588,7 @@ class NameAnalysis private constructor(private val tree: Tree<Node, ProgramNode>
                 is ExternalCommunicationNode ->
                     declaration(node)
                 is InternalCommunicationNode ->
-                    // The adversary is always (implicitly) defined
-                    if (node.protocol.value !is Adversary) declaration(node)
+                    declaration(node)
             }
             // Check that there are no name clashes
             when (node) {

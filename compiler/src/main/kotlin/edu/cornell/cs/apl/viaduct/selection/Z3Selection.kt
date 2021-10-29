@@ -11,7 +11,6 @@ import com.microsoft.z3.Status
 import com.uchuhimo.collections.BiMap
 import com.uchuhimo.collections.mutableBiMapOf
 import edu.cornell.cs.apl.prettyprinting.PrettyPrintable
-import edu.cornell.cs.apl.viaduct.analysis.main
 import edu.cornell.cs.apl.viaduct.errors.NoHostDeclarationsError
 import edu.cornell.cs.apl.viaduct.errors.NoProtocolIndexMapping
 import edu.cornell.cs.apl.viaduct.errors.NoSelectionSolutionError
@@ -50,7 +49,7 @@ private class Z3Selection(
     private val ctx: Context,
     private val costMode: CostMode,
     private val dumpMetadata: (Map<Node, PrettyPrintable>) -> Unit
-): SelectionConstraintSolver {
+) : SelectionConstraintSolver {
     private companion object {
         init {
             // Use old arithmetic solver to fix regression introduced in Z3 v4.8.9
@@ -66,6 +65,8 @@ private class Z3Selection(
         protocolMap: BiMap<Protocol, Int>
     ): BoolExpr {
         return when (this) {
+            is True -> ctx.mkTrue()
+            is False -> ctx.mkFalse()
             is HostVariable -> boolVarMap[this.variable]!!
             is GuardVisibilityFlag -> boolVarMap[this.variable]!!
             is Literal -> ctx.mkBool(literalValue)
@@ -112,12 +113,14 @@ private class Z3Selection(
                 ctx.mkITE(ctx.mkGe(lhsExpr, rhsExpr), lhsExpr, rhsExpr) as ArithExpr
             }
 
-            is CostMux ->
-                ctx.mkITE(
-                    this.guard.boolExpr(ctx, fvMap, boolVarMap, protocolMap),
-                    this.lhs.arithExpr(ctx, fvMap, boolVarMap, protocolMap),
-                    this.rhs.arithExpr(ctx, fvMap, boolVarMap, protocolMap)
-                ) as ArithExpr
+            is CostChoice ->
+                this.choices.fold(ctx.mkInt(0) as ArithExpr<IntSort>) { acc, choice ->
+                    ctx.mkITE(
+                        choice.first.boolExpr(ctx, fvMap, boolVarMap, protocolMap),
+                        choice.second.arithExpr(ctx, fvMap, boolVarMap, protocolMap),
+                        acc
+                    ) as ArithExpr<IntSort>
+                }
         }
 
     /*
@@ -192,7 +195,7 @@ private class Z3Selection(
         val solver = ctx.mkOptimize()
 
         val protocolMap = mutableBiMapOf<Protocol, Int>()
-        val fvMap  = mutableBiMapOf<FunctionVariable, IntExpr>()
+        val fvMap = mutableBiMapOf<FunctionVariable, IntExpr>()
         val boolVarMap = mutableMapOf<String, BoolExpr>()
 
         var protocolCounter = 1
@@ -200,7 +203,7 @@ private class Z3Selection(
             for (fv in constraint.functionVariables()) {
                 if (!fvMap.containsKey(fv)) {
                     val fvSymname = "${fv.function.name}_${fv.variable.name}"
-                    fvMap[fv] = ctx.mkFreshConst(fvSymname, ctx.boolSort) as IntExpr
+                    fvMap[fv] = ctx.mkFreshConst(fvSymname, ctx.intSort) as IntExpr
                 }
             }
 
@@ -282,7 +285,7 @@ fun selectProtocolsWithZ3(
     Context().use { context ->
         val assignment =
             Z3Selection(context, costMode, dumpMetadata)
-            .solveSelectionProblem(constraintGenerator.getSelectionProblem())
+                .solveSelectionProblem(constraintGenerator.getSelectionProblem())
 
         return { f, v -> assignment(FunctionVariable(f, v)) }
     }

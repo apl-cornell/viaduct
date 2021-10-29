@@ -1,7 +1,5 @@
 package edu.cornell.cs.apl.viaduct.selection
 
-import com.microsoft.z3.BoolExpr
-import com.microsoft.z3.Context
 import edu.cornell.cs.apl.prettyprinting.Document
 import edu.cornell.cs.apl.prettyprinting.PrettyPrintable
 import edu.cornell.cs.apl.prettyprinting.plus
@@ -52,13 +50,24 @@ data class CostMax(val lhs: SymbolicCost, val rhs: SymbolicCost) : SymbolicCost(
     override val asDocument: Document = Document("max") * listOf(lhs.asDocument, rhs.asDocument).tupled()
 }
 
-data class CostMux(val guard: SelectionConstraint, val lhs: SymbolicCost, val rhs: SymbolicCost) : SymbolicCost() {
+/** Cost determined by which guard is true. Exactly one guard must be true. */
+data class CostChoice(val choices: List<Pair<SelectionConstraint, SymbolicCost>>) : SymbolicCost() {
     override val asDocument: Document =
-        guard.asDocument * Document("?") * lhs.asDocument * Document(":") * rhs.asDocument
+        this.choices.map { choice ->
+            choice.first.asDocument * Document("=>") * choice.second.asDocument
+        }.tupled()
 }
 
 /** Custom selection constraints specified for constraint solving during splitting. */
 sealed class SelectionConstraint : PrettyPrintable
+
+object True : SelectionConstraint() {
+    override val asDocument: Document = Document("true")
+}
+
+object False : SelectionConstraint() {
+    override val asDocument: Document = Document("false")
+}
 
 data class HostVariable(val variable: String) : SelectionConstraint() {
     override val asDocument: Document = Document(variable)
@@ -128,6 +137,8 @@ data class SelectionProblem(val constraints: Set<SelectionConstraint>, val cost:
 /** Given a protocol selection, evaluate the constraints. **/
 internal fun SelectionConstraint.evaluate(f: (FunctionName, Variable) -> Protocol): Boolean =
     when (this) {
+        is True -> true
+        is False -> false
         is Literal -> literalValue
         is Implies -> (!lhs.evaluate(f)) || rhs.evaluate(f)
         is Or -> props.any { it.evaluate(f) }
@@ -177,12 +188,16 @@ internal fun SymbolicCost.evaluate(
         is CostAdd -> this.lhs.evaluate(assignment) + this.rhs.evaluate(assignment)
         is CostMul -> this.lhs * this.rhs.evaluate(assignment)
         is CostMax -> this.lhs.evaluate(assignment) * this.rhs.evaluate(assignment)
-        is CostMux -> if (this.guard.evaluate(assignment)) this.lhs.evaluate(assignment) else this.rhs.evaluate(assignment)
+        is CostChoice -> {
+            var cost: Int? = null
+            for (choice in this.choices) {
+                if (choice.first.evaluate(assignment)) {
+                    cost = choice.second.evaluate(assignment)
+                }
+            }
+            cost ?: throw Error("at least one choice must be true")
+        }
     }
-}
-
-internal fun List<BoolExpr>.ors(ctx: Context): BoolExpr {
-    return ctx.mkOr(* this.toTypedArray())
 }
 
 internal fun List<SelectionConstraint>.ors(): SelectionConstraint = Or(this)
@@ -196,6 +211,8 @@ internal fun iff(lhs: SelectionConstraint, rhs: SelectionConstraint): SelectionC
 
 fun SelectionConstraint.functionVariables(): Set<FunctionVariable> =
     when (this) {
+        is True -> setOf()
+        is False -> setOf()
         is HostVariable -> setOf()
         is GuardVisibilityFlag -> setOf()
         is Literal -> setOf()
@@ -209,6 +226,8 @@ fun SelectionConstraint.functionVariables(): Set<FunctionVariable> =
 
 fun SelectionConstraint.protocols(): Set<Protocol> =
     when (this) {
+        is True -> setOf()
+        is False -> setOf()
         is HostVariable -> setOf()
         is GuardVisibilityFlag -> setOf()
         is Literal -> setOf()
@@ -222,6 +241,8 @@ fun SelectionConstraint.protocols(): Set<Protocol> =
 
 fun SelectionConstraint.hostVariables(): Set<HostVariable> =
     when (this) {
+        is True -> setOf()
+        is False -> setOf()
         is HostVariable -> setOf(this)
         is GuardVisibilityFlag -> setOf()
         is Literal -> setOf()
@@ -235,6 +256,8 @@ fun SelectionConstraint.hostVariables(): Set<HostVariable> =
 
 fun SelectionConstraint.guardVisibilityVariables(): Set<GuardVisibilityFlag> =
     when (this) {
+        is True -> setOf()
+        is False -> setOf()
         is HostVariable -> setOf()
         is GuardVisibilityFlag -> setOf(this)
         is Literal -> setOf()
@@ -247,11 +270,11 @@ fun SelectionConstraint.guardVisibilityVariables(): Set<GuardVisibilityFlag> =
     }
 
 fun SelectionConstraint.variableNames(): Set<String> =
-    this.hostVariables().map{ hv -> hv.variable }.toSet().union(
+    this.hostVariables().map { hv -> hv.variable }.toSet().union(
         this.guardVisibilityVariables().map { gv -> gv.variable }
     )
 
-        /** States whether an expression reads only from the protocols in [prots] **/
+/** States whether an expression reads only from the protocols in [prots] **/
 fun ExpressionNode.readsFrom(nameAnalysis: NameAnalysis, prots: Set<Protocol>): SelectionConstraint =
     this.involvedVariables().map {
         variableInSet(FunctionVariable(nameAnalysis.enclosingFunctionName(this), it), prots)

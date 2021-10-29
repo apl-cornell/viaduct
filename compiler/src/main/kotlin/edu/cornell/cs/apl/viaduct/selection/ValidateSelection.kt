@@ -12,7 +12,6 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.LetNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.Node
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProcessDeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
-import edu.cornell.cs.apl.viaduct.util.unions
 
 /** This function provides a sanity check to ensure that a given protocol selection f : Variable -> Protocol
  *  satisfies all constraints required on it by the selector.
@@ -30,7 +29,7 @@ fun validateProtocolAssignment(
     val ctx = Context()
 
     val constraintGenerator =
-        SelectionConstraintGenerator(program, protocolFactory, protocolComposer, costEstimator, ctx)
+        SelectionConstraintGenerator(program, protocolFactory, protocolComposer, costEstimator)
 
     val nameAnalysis = NameAnalysis.get(program)
     val informationFlowAnalysis = InformationFlowAnalysis.get(program)
@@ -116,11 +115,6 @@ fun validateProtocolAssignment(
             it.traverse(selection)
         }
     }
-
-    fun Node.constraints(): Set<SelectionConstraint> =
-        constraintGenerator.getConstraints(this).union(
-            this.children.map { it.constraints() }.unions()
-        )
 
     processDeclaration.traverse(protocolAssignment)
 

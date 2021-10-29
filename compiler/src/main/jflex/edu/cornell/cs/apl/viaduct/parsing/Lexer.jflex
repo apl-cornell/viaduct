@@ -116,10 +116,8 @@ NUM         = ((-)?[1-9][0-9]*) | 0
   "break"         { return symbol(sym.BREAK); }
 
   "input"         { return symbol(sym.INPUT); }
-  "receive"       { return symbol(sym.RECEIVE); }
   "from"          { return symbol(sym.FROM); }
   "output"        { return symbol(sym.OUTPUT); }
-  "send"          { return symbol(sym.SEND); }
   "to"            { return symbol(sym.TO); }
 
   "assert"        { return symbol(sym.ASSERT); }

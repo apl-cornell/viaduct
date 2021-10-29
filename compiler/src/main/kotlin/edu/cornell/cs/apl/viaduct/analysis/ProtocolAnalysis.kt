@@ -13,10 +13,10 @@ import edu.cornell.cs.apl.viaduct.syntax.Protocol
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.AssertionNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.BlockNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.BreakNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.CommunicationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.DeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.DowngradeNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ExpressionArgumentNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.ExternalCommunicationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.FunctionArgumentNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.FunctionCallNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.FunctionDeclarationNode
@@ -69,7 +69,7 @@ class ProtocolAnalysis(
                 val protocol =
                     statement.protocol?.value ?: throw NoProtocolAnnotationError(statement)
 
-                if (statement.value is ExternalCommunicationNode)
+                if (statement.value is CommunicationNode)
                     assert(protocol == Local(statement.value.host.value))
 
                 protocol

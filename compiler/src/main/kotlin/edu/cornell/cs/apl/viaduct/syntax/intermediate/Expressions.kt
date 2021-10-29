@@ -172,7 +172,7 @@ class InputNode(
     val type: ValueTypeNode,
     override val host: HostNode,
     override val sourceLocation: SourceLocation
-) : ExpressionNode(), ExternalCommunicationNode {
+) : ExpressionNode(), CommunicationNode {
     override val children: Iterable<Nothing>
         get() = listOf()
 

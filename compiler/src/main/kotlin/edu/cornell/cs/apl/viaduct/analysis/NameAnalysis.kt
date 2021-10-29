@@ -25,9 +25,9 @@ import edu.cornell.cs.apl.viaduct.syntax.Temporary
 import edu.cornell.cs.apl.viaduct.syntax.ValueTypeNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.BlockNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.BreakNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.CommunicationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.DeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ExpressionNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.ExternalCommunicationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.FunctionArgumentNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.FunctionCallNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.FunctionDeclarationNode
@@ -220,7 +220,7 @@ class NameAnalysis private constructor(private val tree: Tree<Node, ProgramNode>
         node.jumpTargets[node.jumpLabel]
 
     /** Returns the declaration of the [Host] in [node]. */
-    fun declaration(node: ExternalCommunicationNode): HostDeclarationNode =
+    fun declaration(node: CommunicationNode): HostDeclarationNode =
         (node as Node).hostDeclarations[node.host]
 
     /** Returns the declaration of the out parameter in [node]. */
@@ -580,7 +580,7 @@ class NameAnalysis private constructor(private val tree: Tree<Node, ProgramNode>
                 }
                 is BreakNode ->
                     correspondingLoop(node)
-                is ExternalCommunicationNode ->
+                is CommunicationNode ->
                     declaration(node)
             }
             // Check that there are no name clashes

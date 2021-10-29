@@ -14,16 +14,5 @@ process main {
   output bob_richer_decl to bob;
 }
 
-process Host(alice) {
-  send 20 to main;
-  val bob_richer: bool = receive bool from main;
-}
-
-process Host(bob) {
-  send 40 to main;
-  val bob_richer: bool = receive bool from main;
-  assert bob_richer;
-}
-
 host alice : {A & B<-}
 host bob   : {B & A<-}

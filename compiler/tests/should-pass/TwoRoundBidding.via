@@ -23,39 +23,5 @@ process main {
   output a_higher to bob;
 }
 
-process Host(alice) {
-  /* First bid. */
-  send 10 to main;
-
-  /* Adjust bid based on result of Round 1. */
-  val a1_higher: bool = receive bool from main;
-  if (a1_higher) {
-    send 5 to main;
-  } else {
-    send 20 to main;
-  }
-
-  /* See who won. */
-  val a_higher: bool = receive bool from main;
-  assert a_higher;
-}
-
-process Host(bob) {
-  /* First bid. */
-  send 20 to main;
-
-  /* Adjust bid based on result of Round 1. */
-  val a1_higher: bool = receive bool from main;
-  if (a1_higher) {
-    send 80 to main;
-  } else {
-    send 5 to main;
-  }
-
-  /* See who won. */
-  val a_higher: bool = receive bool from main;
-  assert a_higher;
-}
-
 host alice : {A & B<-}
 host bob   : {B & A<-}

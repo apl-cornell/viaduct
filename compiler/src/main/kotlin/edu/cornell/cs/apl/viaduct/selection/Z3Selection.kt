@@ -283,9 +283,10 @@ fun selectProtocolsWithZ3(
     val constraintGenerator = SelectionConstraintGenerator(program, protocolFactory, protocolComposer, costEstimator)
 
     Context().use { context ->
+        val selectionProblem = constraintGenerator.getSelectionProblem()
         val assignment =
             Z3Selection(context, costMode, dumpMetadata)
-                .solveSelectionProblem(constraintGenerator.getSelectionProblem())
+                .solveSelectionProblem(selectionProblem)
 
         return { f, v -> assignment(FunctionVariable(f, v)) }
     }

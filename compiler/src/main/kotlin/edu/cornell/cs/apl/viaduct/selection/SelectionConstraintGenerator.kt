@@ -5,6 +5,7 @@ import edu.cornell.cs.apl.viaduct.analysis.InformationFlowAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.NameAnalysis
 import edu.cornell.cs.apl.viaduct.backends.cleartext.Local
 import edu.cornell.cs.apl.viaduct.errors.IllegalInternalCommunicationError
+import edu.cornell.cs.apl.viaduct.errors.NoSelectionSolutionError
 import edu.cornell.cs.apl.viaduct.errors.UnknownObjectDeclarationError
 import edu.cornell.cs.apl.viaduct.syntax.Host
 import edu.cornell.cs.apl.viaduct.syntax.HostTrustConfiguration
@@ -142,7 +143,7 @@ class SelectionConstraintGenerator(
                     }
                 )
             }
-        } ?: throw Error("cost variable $variable does not map to any choices")
+        } ?: throw NoSelectionSolutionError()
 
     private fun Cost<SymbolicCost>.featureSum(): SymbolicCost {
         val weights = costEstimator.featureWeights()

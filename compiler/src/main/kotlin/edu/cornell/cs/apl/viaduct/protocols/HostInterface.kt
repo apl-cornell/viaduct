@@ -8,14 +8,14 @@ import edu.cornell.cs.apl.viaduct.syntax.Host
 import edu.cornell.cs.apl.viaduct.syntax.HostTrustConfiguration
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
 import edu.cornell.cs.apl.viaduct.syntax.ProtocolName
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.ExternalCommunicationNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.CommunicationNode
 import edu.cornell.cs.apl.viaduct.syntax.values.HostValue
 import edu.cornell.cs.apl.viaduct.syntax.values.Value
 
 /**
  * The protocol that represents the external interface to a given host.
  *
- * This protocol is only used during debugging to handle [ExternalCommunicationNode]s. In normal operation,
+ * This protocol is only used during debugging to handle [CommunicationNode]s. In normal operation,
  * communication with an instance of this protocol is replaced with communication with the actual participating host.
  */
 data class HostInterface(val host: Host) : Protocol() {

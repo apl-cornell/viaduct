@@ -228,7 +228,7 @@ class OutputNode(
     val message: AtomicExpressionNode,
     override val host: HostNode,
     override val sourceLocation: SourceLocation
-) : SimpleStatementNode(), ExternalCommunicationNode {
+) : SimpleStatementNode(), CommunicationNode {
     override val children: Iterable<AtomicExpressionNode>
         get() = listOf(message)
 

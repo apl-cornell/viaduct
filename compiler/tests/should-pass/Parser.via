@@ -36,11 +36,4 @@ process main {
 
 host alice : {A}
 
-process Host(alice) {
-  send 5 to main;
-  send false to main;
-  val result: int = receive int from main;
-  assert result == 42;
-}
-
 host trusted : {A & B & C}

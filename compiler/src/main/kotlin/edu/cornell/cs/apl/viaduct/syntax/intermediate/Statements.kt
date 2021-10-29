@@ -243,22 +243,6 @@ class OutputNode(
         OutputNode(children[0] as AtomicExpressionNode, host, sourceLocation)
 }
 
-/** Sending a value to another protocol. */
-class SendNode(
-    val message: AtomicExpressionNode,
-    override val protocol: ProtocolNode,
-    override val sourceLocation: SourceLocation
-) : SimpleStatementNode(), InternalCommunicationNode {
-    override val children: Iterable<AtomicExpressionNode>
-        get() = listOf(message)
-
-    override fun toSurfaceNode(): edu.cornell.cs.apl.viaduct.syntax.surface.SimpleStatementNode =
-        throw IllegalStateException("This method is deprecated.")
-
-    override fun copy(children: List<Node>): SendNode =
-        SendNode(children[0] as AtomicExpressionNode, protocol, sourceLocation)
-}
-
 // Compound Statements
 
 /** A statement that affects control flow. */

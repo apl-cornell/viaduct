@@ -42,7 +42,6 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutParameterInitialization
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutputNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.QueryNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ReadNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.ReceiveNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.UpdateNode
 import edu.cornell.cs.apl.viaduct.syntax.operators.Maximum
 import edu.cornell.cs.apl.viaduct.syntax.operators.Minimum
@@ -154,8 +153,6 @@ class PlainTextCodeGenerator(
                     expr.type.value::class,
                     expr.type.value.valueClass
                 )
-
-            is ReceiveNode -> TODO()
         }
 
     override fun let(protocol: Protocol, stmt: LetNode): CodeBlock =

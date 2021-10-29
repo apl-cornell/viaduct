@@ -39,7 +39,6 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutputNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.QueryNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ReadNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.ReceiveNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.SimpleStatementNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.UpdateNode
 import edu.cornell.cs.apl.viaduct.syntax.types.BooleanType
@@ -241,7 +240,6 @@ class ZKPProverInterpreter(
             is DeclassificationNode -> getExprWire(expr.expression)
             is EndorsementNode -> getExprWire(expr.expression)
             is InputNode -> throw ViaductInterpreterError("impossible")
-            is ReceiveNode -> throw ViaductInterpreterError("impossible")
         }
 
     private fun runPlaintextExpr(expr: AtomicExpressionNode): Value {

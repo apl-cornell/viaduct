@@ -49,8 +49,6 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProcessDeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.QueryNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ReadNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.ReceiveNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.SendNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.StatementNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.UpdateNode
 import edu.cornell.cs.apl.viaduct.syntax.types.BooleanType
@@ -136,8 +134,6 @@ class TypeAnalysis private constructor(
             is DowngradeNode ->
                 expression.type
             is InputNode ->
-                type.value
-            is ReceiveNode ->
                 type.value
         }
     }
@@ -295,8 +291,6 @@ class TypeAnalysis private constructor(
                 }
 
                 is OutputNode ->
-                    node.message.type
-                is SendNode ->
                     node.message.type
 
                 is IfNode -> {

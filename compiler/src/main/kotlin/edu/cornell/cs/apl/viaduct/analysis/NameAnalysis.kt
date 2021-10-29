@@ -34,7 +34,6 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.FunctionDeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.HostDeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.IfNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.InfiniteLoopNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.InternalCommunicationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.LetNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.Node
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ObjectDeclaration
@@ -223,10 +222,6 @@ class NameAnalysis private constructor(private val tree: Tree<Node, ProgramNode>
     /** Returns the declaration of the [Host] in [node]. */
     fun declaration(node: ExternalCommunicationNode): HostDeclarationNode =
         (node as Node).hostDeclarations[node.host]
-
-    /** Returns the declaration of the [Protocol] in [node]. */
-    fun declaration(node: InternalCommunicationNode): ProcessDeclarationNode =
-        (node as Node).protocolDeclarations[node.protocol]
 
     /** Returns the declaration of the out parameter in [node]. */
     fun declaration(node: OutParameterInitializationNode): ParameterNode {
@@ -586,8 +581,6 @@ class NameAnalysis private constructor(private val tree: Tree<Node, ProgramNode>
                 is BreakNode ->
                     correspondingLoop(node)
                 is ExternalCommunicationNode ->
-                    declaration(node)
-                is InternalCommunicationNode ->
                     declaration(node)
             }
             // Check that there are no name clashes

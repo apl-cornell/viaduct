@@ -28,8 +28,6 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProcessDeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.QueryNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ReadNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.ReceiveNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.SendNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.StatementNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.UpdateNode
 import edu.cornell.cs.apl.viaduct.util.FreshNameGenerator
@@ -41,7 +39,6 @@ fun StatementNode.createdVariables(): List<Variable> =
         is UpdateNode -> listOf()
         is OutParameterInitializationNode -> listOf(this.name.value) // TODO is this right?
         is OutputNode -> listOf()
-        is SendNode -> listOf()
         is FunctionCallNode ->
             this.arguments.filterIsInstance<ObjectDeclarationArgumentNode>().map {
                 it.name.value
@@ -59,7 +56,6 @@ fun StatementNode.immediateRHS(): List<ExpressionNode> {
         is DeclarationNode -> this.arguments
         is UpdateNode -> this.arguments
         is OutputNode -> listOf(this.message)
-        is SendNode -> listOf(this.message)
         is IfNode -> listOf(this.guard)
         is AssertionNode -> listOf(this.condition)
         else -> listOf()
@@ -75,7 +71,6 @@ fun ExpressionNode.involvedVariables(): List<Variable> {
         is DeclassificationNode -> this.expression.involvedVariables()
         is EndorsementNode -> this.expression.involvedVariables()
         is InputNode -> listOf()
-        is ReceiveNode -> listOf()
     }
 }
 

@@ -3,4 +3,6 @@
 host alice : {A}
 host bob : {B}
 
-process Local(host = {alice, bob}) {}
+fun main() {
+    val x: int@Local(host = {alice, bob}) = 0;
+}

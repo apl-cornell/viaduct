@@ -3,7 +3,7 @@
  * but the bids are kept secret.
  * Person with the higher average bid wins.
  */
-process main {
+fun main() {
   /* Round 1 */
   val a1: int = endorse (input int from alice) to {A & B<-} from {A & B<-};
   val b1: int = endorse (input int from bob) to {B & A<-} from {B & A<-};

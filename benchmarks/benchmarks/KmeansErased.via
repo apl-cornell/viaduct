@@ -2,7 +2,7 @@ host alice  : {A & B<-}
 host bob    : {B & A<-}
 
 /* k-means clustering */
-process main {
+fun main() {
   val a_len: int = 2;
   val b_len: int = 2;
   val len: int = a_len + b_len;

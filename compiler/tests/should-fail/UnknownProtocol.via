@@ -1,3 +1,5 @@
 /* UndefinedNameError */
 
-process Unknown() {}
+fun main() {
+    val x: int@Unknown() = 0;
+}

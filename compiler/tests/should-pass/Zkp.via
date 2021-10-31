@@ -1,4 +1,4 @@
-process main {
+fun main() {
     val a : int{A} = input int from alice;
     val x : int = input int from bob;
     val a_endorse : int{A & B<-} = endorse a to {A & B<-} from {A};

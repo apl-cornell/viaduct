@@ -1,4 +1,4 @@
-process main {
+fun main() {
   /* Alice provides some input. */
   val a: int{A} = input int from alice;
 

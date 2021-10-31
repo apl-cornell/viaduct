@@ -1,4 +1,4 @@
-process main {
+fun main() {
     /* load inputs into endorsed arrays, so that they cannot be modified further */
     val aships = Array[int]{A & B<-}(5);
     val bships = Array[int]{B & A<-}(5);

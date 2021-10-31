@@ -8,7 +8,7 @@ host chuck  : {C}
  * This is the 1d version of checking whether a point lies
  * in a convex hull.
  */
-process main {
+fun main() {
   /* Chuck can read these public parameters, but doesn't need to trust them
      since he is not using them */
   val a_num_points: int{A ⊓ B ⊓ C->} = 5;

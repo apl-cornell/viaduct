@@ -8,7 +8,7 @@ fun g(y: int{A}) {
     }
 }
 
-process main {
+fun main() {
     val a: int{A} = 0;
     f(a);
     f(a);

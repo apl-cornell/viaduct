@@ -1,6 +1,6 @@
 /* InsecureDataFlowError */
 
-process main {
+fun main() {
     val secret: int{(A ∧ B)->} = 42;
     val public: int{A->} = secret;
 }

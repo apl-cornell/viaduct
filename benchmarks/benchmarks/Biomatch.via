@@ -9,7 +9,7 @@ fun match(db1: int{A & B<-}, db2: int{A & B<-}, s1: int{B & A<-}, s2: int{B & A<
     out res = (dist1 * dist1) + (dist2 * dist2);
 }
 
-process main {
+fun main() {
     val n: int{A ⊓ B} = 128;
     val d: int{A ⊓ B} = 2;
 

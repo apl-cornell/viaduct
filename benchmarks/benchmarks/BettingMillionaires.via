@@ -3,7 +3,7 @@ host bob:   {B & A<-}
 host chuck: {C}
 
 /* chuck bets who was richer b/w alice and bob at their poorest */
-process main {
+fun main() {
   val c_bet: bool{C & (A&B)<-} = endorse (input bool from chuck) to {C & (A&B)<-} from {C};
 
   /* chuck can see this public parameter, but doesn't need to trust it */

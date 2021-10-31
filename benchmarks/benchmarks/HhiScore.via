@@ -5,7 +5,7 @@
  * (by summing up sales in n stores) and then calculating each company's
  * market share and applying the HHI formula.
  */
-process main {
+fun main() {
     val storeCount: int{A ⊓ B} = 500;
 
     var a_rev: int{A & B<-} = 0;

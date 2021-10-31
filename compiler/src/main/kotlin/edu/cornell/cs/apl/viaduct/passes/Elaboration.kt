@@ -1,9 +1,7 @@
 package edu.cornell.cs.apl.viaduct.passes
 
-import edu.cornell.cs.apl.viaduct.errors.IncorrectNumberOfArgumentsError
 import edu.cornell.cs.apl.viaduct.errors.InvalidConstructorCallError
 import edu.cornell.cs.apl.viaduct.errors.JumpOutsideLoopScopeError
-import edu.cornell.cs.apl.viaduct.protocols.MainProtocol
 import edu.cornell.cs.apl.viaduct.syntax.Arguments
 import edu.cornell.cs.apl.viaduct.syntax.FunctionName
 import edu.cornell.cs.apl.viaduct.syntax.Host
@@ -14,7 +12,6 @@ import edu.cornell.cs.apl.viaduct.syntax.Located
 import edu.cornell.cs.apl.viaduct.syntax.NameMap
 import edu.cornell.cs.apl.viaduct.syntax.ObjectVariable
 import edu.cornell.cs.apl.viaduct.syntax.ObjectVariableNode
-import edu.cornell.cs.apl.viaduct.syntax.ProtocolNode
 import edu.cornell.cs.apl.viaduct.syntax.Temporary
 import edu.cornell.cs.apl.viaduct.syntax.TemporaryNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.Node
@@ -46,7 +43,6 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutParameterExpressionInit
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutParameterInitializationNode as IOutParameterInitializationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutputNode as IOutputNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ParameterNode as IParameterNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProcessDeclarationNode as IProcessDeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode as IProgramNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.QueryNode as IQueryNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ReadNode as IReadNode
@@ -115,19 +111,7 @@ fun SProgramNode.elaborated(): IProgramNode {
 
             is SFunctionDeclarationNode -> {
                 functions = functions.put(declaration.name, true)
-                if (declaration.name.value == FunctionName("main")) {
-                    if (declaration.parameters.isNotEmpty())
-                        throw IncorrectNumberOfArgumentsError(declaration.name, 0, declaration.parameters)
-                    declarations.add(
-                        IProcessDeclarationNode(
-                            ProtocolNode(MainProtocol, declaration.name.sourceLocation),
-                            StatementElaborator(nameGenerator).elaborate(declaration.body),
-                            declaration.sourceLocation
-                        )
-                    )
-                } else {
-                    declarations.add(FunctionElaborator(nameGenerator).elaborate(declaration))
-                }
+                declarations.add(FunctionElaborator(nameGenerator).elaborate(declaration))
             }
         }
     }

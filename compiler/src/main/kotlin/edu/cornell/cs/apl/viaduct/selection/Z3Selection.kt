@@ -28,9 +28,9 @@ import edu.cornell.cs.apl.viaduct.syntax.FunctionName
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
 import edu.cornell.cs.apl.viaduct.syntax.Variable
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.DeclarationNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.FunctionDeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.LetNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.Node
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProcessDeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
 import mu.KotlinLogging
 
@@ -60,7 +60,7 @@ enum class CostMode { MINIMIZE, MAXIMIZE }
 private class Z3Selection(
     private val ctx: Context,
     private val program: ProgramNode,
-    private val main: ProcessDeclarationNode,
+    private val main: FunctionDeclarationNode,
     private val protocolFactory: ProtocolFactory,
     protocolComposer: ProtocolComposer,
     private val costEstimator: CostEstimator<IntegerCost>,

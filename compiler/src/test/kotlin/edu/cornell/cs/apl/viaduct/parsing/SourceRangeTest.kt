@@ -1,6 +1,7 @@
 package edu.cornell.cs.apl.viaduct.parsing
 
 import edu.cornell.cs.apl.prettyprinting.DefaultStyle
+import edu.cornell.cs.apl.viaduct.analysis.mainFunction
 import edu.cornell.cs.apl.viaduct.syntax.HasSourceLocation
 import edu.cornell.cs.apl.viaduct.syntax.surface.FunctionDeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.surface.ProgramNode
@@ -75,6 +76,6 @@ private fun HasSourceLocation.showInSource(contextLines: Int = 0): String =
         println(">>>>>\n$it\n<<<<<")
     }
 
-/** Returns the declaration of the "main" function in this program. */
+/** Returns the declaration of the [mainFunction] function in this program. */
 private val ProgramNode.main: FunctionDeclarationNode
-    get() = this.find { it is FunctionDeclarationNode && it.name.value.name == "main" } as FunctionDeclarationNode
+    get() = this.find { it is FunctionDeclarationNode && it.name.value == mainFunction } as FunctionDeclarationNode

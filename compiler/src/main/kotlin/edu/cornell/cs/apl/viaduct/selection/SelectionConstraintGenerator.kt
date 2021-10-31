@@ -35,7 +35,6 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutParameterExpressionInit
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutParameterInitializationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutputNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ParameterNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProcessDeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.QueryNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ReadNode
@@ -135,8 +134,6 @@ class SelectionConstraintGenerator(
 
             // don't bother giving cost to parameters, since arguments already incur cost
             is ParameterNode -> zeroSymbolicCost
-
-            is ProcessDeclarationNode -> this.body.symbolicCost
 
             is HostDeclarationNode -> zeroSymbolicCost
 

@@ -95,6 +95,7 @@ fun SProgramNode.elaborated(): IProgramNode {
 
     val nameGenerator = FreshNameGenerator()
 
+    // Used to check for duplicate definitions.
     var hosts = NameMap<Host, Boolean>()
     var processes = NameMap<Protocol, Boolean>()
     var functions = NameMap<FunctionName, Boolean>()

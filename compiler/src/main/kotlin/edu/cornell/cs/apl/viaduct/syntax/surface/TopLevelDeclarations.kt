@@ -89,10 +89,12 @@ class ParameterNode(
 }
 
 /**
- * A declaration of a function that can be called by a process.
+ * A function declaration associating a name with code.
  *
+ * @param name A name identifying the function.
+ * @param pcLabel Value of the program control label at the beginning of [body].
  * @param parameters A list of formal parameters.
- * @param body The function body.
+ * @param body Code to run when the function is called.
  */
 class FunctionDeclarationNode(
     val name: FunctionNameNode,

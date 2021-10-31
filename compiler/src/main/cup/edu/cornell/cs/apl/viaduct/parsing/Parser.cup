@@ -149,7 +149,7 @@ terminal String TMP_IDENT;
 terminal int INT_LIT;
 terminal TRUE, FALSE;
 
-terminal HOST, PROCESS;
+terminal HOST;
 terminal FUNCTION;
 terminal OUT;
 terminal COLON;
@@ -222,10 +222,6 @@ declaration_list ::=
 declaration ::=
     HOST:begin host:host COLON label:authority {:
       RESULT = new HostDeclarationNode(host, authority, location(beginleft, authorityright));
-    :}
-
-  | PROCESS:begin protocol:protocol block:body {:
-      RESULT = new ProcessDeclarationNode(protocol, body, location(beginleft, bodyright));
     :}
 
   | FUNCTION:begin IDENT:funcname optional_label_signature:label

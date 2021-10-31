@@ -1,4 +1,4 @@
-process main {
+fun main() {
     val length: int{A ⊓ B} = 100;
 
     var a_min: int{A & B<-} = 0;

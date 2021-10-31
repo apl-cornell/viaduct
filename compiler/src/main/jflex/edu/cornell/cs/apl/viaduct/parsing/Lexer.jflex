@@ -91,7 +91,6 @@ NUM         = ((-)?[1-9][0-9]*) | 0
 <YYINITIAL> {
   /* Top-level declarations */
   "host"          { return symbol(sym.HOST); }
-  "process"       { return symbol(sym.PROCESS); }
   "fun"           { return symbol(sym.FUNCTION); }
   "out"           { return symbol(sym.OUT); }
 

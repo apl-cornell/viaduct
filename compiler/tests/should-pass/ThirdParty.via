@@ -1,7 +1,7 @@
 /* TODO: add import statements and rewrite this with import millionaires. */
 
 /* Millionaire's problem with a trusted third party. */
-process main {
+fun main() {
   /* We endorse because Alice and Bob are free to provide any input. */
   val a: int{A & B<-} = endorse input int from alice to {A & B<-} from {A};
   val b: int{B & A<-} = endorse input int from bob to {B & A<-} from {B};

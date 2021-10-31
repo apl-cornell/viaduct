@@ -1,7 +1,7 @@
 host alice : {A}
 host bob   : {B}
 
-process main {
+fun main() {
   val number: int{B & A<-} = endorse (input int from bob) to {B & A<-} from {B};
   var tries: int{A ⊓ B} = 0;
   var win: bool{A ⊓ B} = false;

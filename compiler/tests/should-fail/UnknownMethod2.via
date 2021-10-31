@@ -1,6 +1,6 @@
 /* UnknownMethodError */
 
-process main {
+fun main() {
     var x: bool = false;
     x += 42;
 }

@@ -1,3 +1,5 @@
 /* UndefinedNameError */
 
-process Local() {}
+fun main() {
+    val x: int@Local() = 0;
+}

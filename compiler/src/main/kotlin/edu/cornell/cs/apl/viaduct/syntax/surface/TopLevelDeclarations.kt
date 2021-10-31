@@ -38,21 +38,6 @@ class HostDeclarationNode(
 }
 
 /**
- * A process declaration associating a protocol with the code that process should run.
- *
- * @param protocol Name of the process.
- * @param body Code that will be executed by this process.
- */
-class ProcessDeclarationNode(
-    val protocol: ProtocolNode,
-    val body: BlockNode,
-    override val sourceLocation: SourceLocation
-) : TopLevelDeclarationNode() {
-    override val asDocument: Document
-        get() = keyword("process") * protocol * body
-}
-
-/**
  * A parameter to a function declaration.
  */
 class ParameterNode(

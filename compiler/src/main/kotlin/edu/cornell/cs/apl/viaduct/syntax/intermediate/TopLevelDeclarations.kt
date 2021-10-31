@@ -9,6 +9,7 @@ import edu.cornell.cs.apl.prettyprinting.times
 import edu.cornell.cs.apl.prettyprinting.tupled
 import edu.cornell.cs.apl.viaduct.syntax.Arguments
 import edu.cornell.cs.apl.viaduct.syntax.ClassNameNode
+import edu.cornell.cs.apl.viaduct.syntax.FunctionName
 import edu.cornell.cs.apl.viaduct.syntax.FunctionNameNode
 import edu.cornell.cs.apl.viaduct.syntax.HostNode
 import edu.cornell.cs.apl.viaduct.syntax.LabelNode
@@ -66,9 +67,11 @@ class ProcessDeclarationNode(
     override val children: Iterable<BlockNode>
         get() = listOf(body)
 
-    override fun toSurfaceNode(): edu.cornell.cs.apl.viaduct.syntax.surface.ProcessDeclarationNode =
-        edu.cornell.cs.apl.viaduct.syntax.surface.ProcessDeclarationNode(
-            protocol,
+    override fun toSurfaceNode(): edu.cornell.cs.apl.viaduct.syntax.surface.FunctionDeclarationNode =
+        edu.cornell.cs.apl.viaduct.syntax.surface.FunctionDeclarationNode(
+            FunctionNameNode(FunctionName(protocol.value.name), protocol.sourceLocation),
+            null,
+            Arguments(protocol.sourceLocation),
             body.toSurfaceNode(),
             sourceLocation
         )

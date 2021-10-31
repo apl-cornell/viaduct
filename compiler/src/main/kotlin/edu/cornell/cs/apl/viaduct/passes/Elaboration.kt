@@ -1,7 +1,9 @@
 package edu.cornell.cs.apl.viaduct.passes
 
+import edu.cornell.cs.apl.viaduct.errors.IncorrectNumberOfArgumentsError
 import edu.cornell.cs.apl.viaduct.errors.InvalidConstructorCallError
 import edu.cornell.cs.apl.viaduct.errors.JumpOutsideLoopScopeError
+import edu.cornell.cs.apl.viaduct.protocols.MainProtocol
 import edu.cornell.cs.apl.viaduct.syntax.Arguments
 import edu.cornell.cs.apl.viaduct.syntax.FunctionName
 import edu.cornell.cs.apl.viaduct.syntax.Host
@@ -12,7 +14,7 @@ import edu.cornell.cs.apl.viaduct.syntax.Located
 import edu.cornell.cs.apl.viaduct.syntax.NameMap
 import edu.cornell.cs.apl.viaduct.syntax.ObjectVariable
 import edu.cornell.cs.apl.viaduct.syntax.ObjectVariableNode
-import edu.cornell.cs.apl.viaduct.syntax.Protocol
+import edu.cornell.cs.apl.viaduct.syntax.ProtocolNode
 import edu.cornell.cs.apl.viaduct.syntax.Temporary
 import edu.cornell.cs.apl.viaduct.syntax.TemporaryNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.Node
@@ -76,7 +78,6 @@ import edu.cornell.cs.apl.viaduct.syntax.surface.OperatorApplicationNode as SOpe
 import edu.cornell.cs.apl.viaduct.syntax.surface.OutParameterArgumentNode as SOutParameterArgumentNode
 import edu.cornell.cs.apl.viaduct.syntax.surface.OutParameterInitializationNode as SOutParameterInitializationNode
 import edu.cornell.cs.apl.viaduct.syntax.surface.OutputNode as SOutputNode
-import edu.cornell.cs.apl.viaduct.syntax.surface.ProcessDeclarationNode as SProcessDeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.surface.ProgramNode as SProgramNode
 import edu.cornell.cs.apl.viaduct.syntax.surface.QueryNode as SQueryNode
 import edu.cornell.cs.apl.viaduct.syntax.surface.ReadNode as SReadNode
@@ -97,7 +98,6 @@ fun SProgramNode.elaborated(): IProgramNode {
 
     // Used to check for duplicate definitions.
     var hosts = NameMap<Host, Boolean>()
-    var processes = NameMap<Protocol, Boolean>()
     var functions = NameMap<FunctionName, Boolean>()
 
     for (declaration in this.declarations) {
@@ -113,20 +113,21 @@ fun SProgramNode.elaborated(): IProgramNode {
                 )
             }
 
-            is SProcessDeclarationNode -> {
-                processes = processes.put(declaration.protocol, true)
-                declarations.add(
-                    IProcessDeclarationNode(
-                        declaration.protocol,
-                        StatementElaborator(nameGenerator).elaborate(declaration.body),
-                        declaration.sourceLocation
-                    )
-                )
-            }
-
             is SFunctionDeclarationNode -> {
                 functions = functions.put(declaration.name, true)
-                declarations.add(FunctionElaborator(nameGenerator).elaborate(declaration))
+                if (declaration.name.value == FunctionName("main")) {
+                    if (declaration.parameters.isNotEmpty())
+                        throw IncorrectNumberOfArgumentsError(declaration.name, 0, declaration.parameters)
+                    declarations.add(
+                        IProcessDeclarationNode(
+                            ProtocolNode(MainProtocol, declaration.name.sourceLocation),
+                            StatementElaborator(nameGenerator).elaborate(declaration.body),
+                            declaration.sourceLocation
+                        )
+                    )
+                } else {
+                    declarations.add(FunctionElaborator(nameGenerator).elaborate(declaration))
+                }
             }
         }
     }

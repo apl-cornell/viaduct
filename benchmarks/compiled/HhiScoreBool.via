@@ -2,7 +2,7 @@ host companyA : {(A & B<-)}
 
 host companyB : {(B & A<-)}
 
-process main {
+fun main() {
     val storeCount: int{(A ⊓ B)}@Replication(hosts = {companyA, companyB}) = 500;
     var a_rev: int{(A & B<-)}@BoolABY(client = companyB, server = companyA) = 0;
     var b_rev: int{(B & A<-)}@BoolABY(client = companyB, server = companyA) = 0;

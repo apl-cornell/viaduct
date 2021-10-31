@@ -40,7 +40,7 @@ fun match_2(db1: int{(A & B<-)}@Local(host = alice), db2: int{(A & B<-)}@Local(h
     out res = $tmp_12;
 }
 
-process main {
+fun main() {
     val n: int{(A ⊓ B)}@Replication(hosts = {alice, bob}) = 500;
     val d: int{(A ⊓ B)}@Replication(hosts = {alice, bob}) = 4;
     let $tmp_13@Replication(hosts = {alice, bob}) = n;

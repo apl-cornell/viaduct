@@ -24,7 +24,7 @@ class NoMainError(override val source: String) : CompilationError() {
     private companion object {
         val exampleMain: ProgramNode
             get() = """
-                process main {}
+                fun main() {}
             """.trimIndent().parse()
 
         private val mainPhrase: Document

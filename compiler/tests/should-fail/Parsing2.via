@@ -2,6 +2,6 @@
 
 /* TODO: the error message generated for this file does not have any expected tokens. */
 
-process main {
+fun main() {
     val x = 5;
 }

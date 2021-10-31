@@ -2,17 +2,18 @@ package edu.cornell.cs.apl.viaduct.backend
 
 import edu.cornell.cs.apl.viaduct.PositiveTestProgramProvider
 import edu.cornell.cs.apl.viaduct.analysis.ProtocolAnalysis
+import edu.cornell.cs.apl.viaduct.analysis.mainFunction
 import edu.cornell.cs.apl.viaduct.backend.IO.Strategy
 import edu.cornell.cs.apl.viaduct.backends.DefaultCombinedBackend
 import edu.cornell.cs.apl.viaduct.passes.annotateWithProtocols
 import edu.cornell.cs.apl.viaduct.passes.check
 import edu.cornell.cs.apl.viaduct.passes.elaborated
 import edu.cornell.cs.apl.viaduct.passes.specialize
-import edu.cornell.cs.apl.viaduct.protocols.MainProtocol
 import edu.cornell.cs.apl.viaduct.selection.ProtocolCommunication
 import edu.cornell.cs.apl.viaduct.selection.SimpleCostEstimator
 import edu.cornell.cs.apl.viaduct.selection.SimpleCostRegime
 import edu.cornell.cs.apl.viaduct.selection.selectProtocolsWithZ3
+import edu.cornell.cs.apl.viaduct.syntax.Arguments
 import edu.cornell.cs.apl.viaduct.syntax.FunctionName
 import edu.cornell.cs.apl.viaduct.syntax.Host
 import edu.cornell.cs.apl.viaduct.syntax.Located
@@ -21,9 +22,9 @@ import edu.cornell.cs.apl.viaduct.syntax.Variable
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.AtomicExpressionNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.BlockNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.FunctionArgumentNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.FunctionDeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.LetNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ParameterNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProcessDeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.SimpleStatementNode
 import edu.cornell.cs.apl.viaduct.syntax.surface.ProgramNode
 import edu.cornell.cs.apl.viaduct.syntax.values.BooleanValue
@@ -133,8 +134,10 @@ internal class BackendInterpreterTest {
             edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode(
                 declarations =
                 annotatedProgram.hostDeclarations.plus(
-                    ProcessDeclarationNode(
-                        protocol = Located(MainProtocol, annotatedProgram.sourceLocation),
+                    FunctionDeclarationNode(
+                        name = Located(mainFunction, annotatedProgram.sourceLocation),
+                        pcLabel = null,
+                        parameters = Arguments(annotatedProgram.sourceLocation),
                         body = BlockNode(listOf(), annotatedProgram.sourceLocation),
                         sourceLocation = annotatedProgram.sourceLocation
                     )

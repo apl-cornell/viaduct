@@ -45,7 +45,6 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutParameterInitialization
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutParameterInitializerNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutputNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ParameterNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProcessDeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.QueryNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ReadNode
@@ -308,7 +307,6 @@ class TypeAnalysis private constructor(
                     node.statements.forEach { check(it) }
             }
         }
-        tree.root.filterIsInstance<ProcessDeclarationNode>().forEach { check(it.body) }
         tree.root.filterIsInstance<FunctionDeclarationNode>().forEach { check(it.body) }
     }
 

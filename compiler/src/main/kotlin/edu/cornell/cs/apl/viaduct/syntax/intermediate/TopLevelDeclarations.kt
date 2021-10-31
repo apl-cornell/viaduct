@@ -9,7 +9,6 @@ import edu.cornell.cs.apl.prettyprinting.times
 import edu.cornell.cs.apl.prettyprinting.tupled
 import edu.cornell.cs.apl.viaduct.syntax.Arguments
 import edu.cornell.cs.apl.viaduct.syntax.ClassNameNode
-import edu.cornell.cs.apl.viaduct.syntax.FunctionName
 import edu.cornell.cs.apl.viaduct.syntax.FunctionNameNode
 import edu.cornell.cs.apl.viaduct.syntax.HostNode
 import edu.cornell.cs.apl.viaduct.syntax.LabelNode
@@ -51,37 +50,6 @@ class HostDeclarationNode(
 
     override fun copy(children: List<Node>): HostDeclarationNode =
         HostDeclarationNode(name, authority, sourceLocation)
-}
-
-/**
- * A process declaration associating a protocol with the code that process should run.
- *
- * @param protocol Name of the process.
- * @param body Code that will be executed by this process.
- */
-class ProcessDeclarationNode(
-    val protocol: ProtocolNode,
-    val body: BlockNode,
-    override val sourceLocation: SourceLocation
-) : TopLevelDeclarationNode() {
-    override val children: Iterable<BlockNode>
-        get() = listOf(body)
-
-    override fun toSurfaceNode(): edu.cornell.cs.apl.viaduct.syntax.surface.FunctionDeclarationNode =
-        edu.cornell.cs.apl.viaduct.syntax.surface.FunctionDeclarationNode(
-            FunctionNameNode(FunctionName(protocol.value.name), protocol.sourceLocation),
-            null,
-            Arguments(protocol.sourceLocation),
-            body.toSurfaceNode(),
-            sourceLocation
-        )
-
-    override fun copy(children: List<Node>): ProcessDeclarationNode =
-        ProcessDeclarationNode(protocol, children[0] as BlockNode, sourceLocation)
-
-    override fun printMetadata(metadata: Map<Node, PrettyPrintable>): Document =
-        (metadata[this]?.let { it.asDocument.commented() + Document.forcedLineBreak } ?: Document("")) +
-            keyword("process") * protocol * body.printMetadata(metadata)
 }
 
 /**

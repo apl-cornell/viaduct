@@ -1,7 +1,6 @@
 package edu.cornell.cs.apl.viaduct.passes
 
 import edu.cornell.cs.apl.viaduct.analysis.NameAnalysis
-import edu.cornell.cs.apl.viaduct.protocols.MainProtocol
 import edu.cornell.cs.apl.viaduct.syntax.Arguments
 import edu.cornell.cs.apl.viaduct.syntax.FunctionName
 import edu.cornell.cs.apl.viaduct.syntax.Located
@@ -15,7 +14,6 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.IfNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.InfiniteLoopNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.LetNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ParameterNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProcessDeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.StatementNode
 
@@ -91,18 +89,6 @@ private class ProtocolAnnotator(
                 when (decl) {
                     is HostDeclarationNode ->
                         decl
-
-                    is ProcessDeclarationNode -> {
-                        if (decl.protocol.value != MainProtocol) {
-                            decl
-                        } else {
-                            ProcessDeclarationNode(
-                                decl.protocol,
-                                run(decl.body) as BlockNode,
-                                decl.sourceLocation
-                            )
-                        }
-                    }
 
                     is FunctionDeclarationNode ->
                         FunctionDeclarationNode(

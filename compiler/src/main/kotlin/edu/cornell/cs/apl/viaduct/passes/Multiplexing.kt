@@ -4,7 +4,6 @@ import edu.cornell.cs.apl.viaduct.analysis.NameAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.freshVariableNameGenerator
 import edu.cornell.cs.apl.viaduct.errors.UnknownDatatypeError
 import edu.cornell.cs.apl.viaduct.errors.UnknownMethodError
-import edu.cornell.cs.apl.viaduct.protocols.MainProtocol
 import edu.cornell.cs.apl.viaduct.syntax.Arguments
 import edu.cornell.cs.apl.viaduct.syntax.FunctionName
 import edu.cornell.cs.apl.viaduct.syntax.Located
@@ -35,7 +34,6 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.OperatorApplicationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutParameterInitializationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutputNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ParameterNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProcessDeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.QueryNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ReadNode
@@ -87,18 +85,6 @@ class MuxPostprocessor(
             program.declarations.map { declaration ->
                 when (declaration) {
                     is HostDeclarationNode -> declaration.deepCopy() as TopLevelDeclarationNode
-
-                    is ProcessDeclarationNode -> {
-                        if (declaration.protocol.value == MainProtocol) {
-                            ProcessDeclarationNode(
-                                declaration.protocol,
-                                mux(declaration.body, nameAnalysis),
-                                declaration.sourceLocation
-                            )
-                        } else {
-                            declaration.deepCopy() as ProcessDeclarationNode
-                        }
-                    }
 
                     is FunctionDeclarationNode -> {
                         FunctionDeclarationNode(

@@ -12,11 +12,9 @@ import edu.cornell.cs.apl.viaduct.passes.specialize
 import edu.cornell.cs.apl.viaduct.selection.SimpleCostEstimator
 import edu.cornell.cs.apl.viaduct.selection.SimpleCostRegime
 import edu.cornell.cs.apl.viaduct.selection.selectProtocolsWithZ3
-import edu.cornell.cs.apl.viaduct.selection.validateProtocolAssignment
 import edu.cornell.cs.apl.viaduct.syntax.FunctionName
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
 import edu.cornell.cs.apl.viaduct.syntax.Variable
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProcessDeclarationNode
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ArgumentsSource
 import java.io.File
@@ -46,17 +44,6 @@ internal class CodeGeneratorTest {
             protocolComposer,
             costEstimator
         )
-
-        for (processDecl in program.declarations.filterIsInstance<ProcessDeclarationNode>()) {
-            validateProtocolAssignment(
-                program,
-                processDecl,
-                protocolFactory,
-                protocolComposer,
-                costEstimator,
-                protocolAssignment
-            )
-        }
 
         val annotatedProgram = program.annotateWithProtocols(protocolAssignment)
 

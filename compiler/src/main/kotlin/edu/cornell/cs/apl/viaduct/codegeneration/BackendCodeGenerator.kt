@@ -12,6 +12,7 @@ import edu.cornell.cs.apl.prettyprinting.joined
 import edu.cornell.cs.apl.viaduct.analysis.NameAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.ProtocolAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.main
+import edu.cornell.cs.apl.viaduct.analysis.mainFunction
 import edu.cornell.cs.apl.viaduct.backends.DefaultCombinedBackend
 import edu.cornell.cs.apl.viaduct.backends.cleartext.Local
 import edu.cornell.cs.apl.viaduct.backends.cleartext.Replication
@@ -131,7 +132,7 @@ class BackendCodeGenerator(
         // add top level declarations to main file
         addHostDeclarations(fileBuilder)
 
-        val mainFunctionBuilder = FunSpec.builder("main").addModifiers(KModifier.SUSPEND)
+        val mainFunctionBuilder = FunSpec.builder(mainFunction.name).addModifiers(KModifier.SUSPEND)
         mainFunctionBuilder.addParameter("host", Host::class)
         mainFunctionBuilder.addParameter("runtime", Runtime::class)
 

@@ -13,7 +13,6 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.HostDeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.IfNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.InfiniteLoopNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ParameterNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProcessDeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.StatementNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.TopLevelDeclarationNode
@@ -28,7 +27,8 @@ import java.util.LinkedList
  *  The specializer will not specialize (mutually) recursive functions to prevent unbounded specialization.
  */
 fun ProgramNode.specialize(): ProgramNode {
-    val (newMainBlock, newFunctions) = Specializer(this.functionMap, this.main.body).specialize()
+    val main = this.main
+    val (newMainBlock, newFunctions) = Specializer(this.functionMap, main.body).specialize()
 
     val newDeclarations = mutableListOf<TopLevelDeclarationNode>()
     newDeclarations.addAll(
@@ -38,10 +38,12 @@ fun ProgramNode.specialize(): ProgramNode {
     )
     newDeclarations.addAll(newFunctions)
     newDeclarations.add(
-        ProcessDeclarationNode(
-            this.main.protocol,
+        FunctionDeclarationNode(
+            main.name,
+            main.pcLabel,
+            main.parameters,
             newMainBlock,
-            this.main.sourceLocation
+            main.sourceLocation
         )
     )
 

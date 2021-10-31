@@ -13,7 +13,6 @@ import edu.cornell.cs.apl.viaduct.selection.SimpleCostEstimator
 import edu.cornell.cs.apl.viaduct.selection.SimpleCostRegime
 import edu.cornell.cs.apl.viaduct.selection.selectProtocolsWithZ3
 import edu.cornell.cs.apl.viaduct.selection.validateProtocolAssignment
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProcessDeclarationNode
 import org.gradle.api.DefaultTask
 import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.file.FileType
@@ -102,16 +101,13 @@ abstract class CompileViaductTask : DefaultTask() {
 
         // Perform a sanity check to ensure the protocolAssignment is valid.
         // TODO: either remove this entirely or make it opt-in by the command line.
-        for (processDecl in program.declarations.filterIsInstance<ProcessDeclarationNode>()) {
-            validateProtocolAssignment(
-                program,
-                processDecl,
-                protocolFactory,
-                protocolComposer,
-                costEstimator,
-                protocolAssignment
-            )
-        }
+        validateProtocolAssignment(
+            program,
+            protocolFactory,
+            protocolComposer,
+            costEstimator,
+            protocolAssignment
+        )
 
         val annotatedProgram = program.annotateWithProtocols(protocolAssignment)
 

@@ -17,7 +17,6 @@ edu.cornell.cs.apl.viaduct.codegeneration
 edu.cornell.cs.apl.viaduct.errors
 edu.cornell.cs.apl.viaduct.parsing
 edu.cornell.cs.apl.viaduct.passes
-edu.cornell.cs.apl.viaduct.protocols
 edu.cornell.cs.apl.viaduct.security
 edu.cornell.cs.apl.viaduct.security.solver
 edu.cornell.cs.apl.viaduct.selection
@@ -39,6 +38,7 @@ edu.cornell.cs.apl.viaduct.backend.aby
 edu.cornell.cs.apl.viaduct.backend.commitment
 edu.cornell.cs.apl.viaduct.backend.zkp
 edu.cornell.cs.apl.viaduct.libsnarkwrapper
+edu.cornell.cs.apl.viaduct.protocols
 module:runtime2
 edu.cornell.cs.apl.viaduct.runtime
 module:shared

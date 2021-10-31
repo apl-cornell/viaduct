@@ -21,6 +21,7 @@ import edu.cornell.cs.apl.viaduct.syntax.NameMap
 import edu.cornell.cs.apl.viaduct.syntax.ObjectVariable
 import edu.cornell.cs.apl.viaduct.syntax.ObjectVariableNode
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
+import edu.cornell.cs.apl.viaduct.syntax.ProtocolNode
 import edu.cornell.cs.apl.viaduct.syntax.Temporary
 import edu.cornell.cs.apl.viaduct.syntax.ValueTypeNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.BlockNode
@@ -552,32 +553,38 @@ class NameAnalysis private constructor(private val tree: Tree<Node, ProgramNode>
      * @throws NameClashError if a [Name] is declared multiple times in the same scope.
      */
     fun check() {
+        fun ProtocolNode.check() {
+            // All hosts in a protocol name must be declared.
+            this.value.hosts.forEach { host ->
+                (tree.root as Node).hostDeclarations[Located(host, this.sourceLocation)]
+            }
+        }
+
         fun check(node: Node) {
             // Check that name references are valid
             when (node) {
-                is ProcessDeclarationNode -> {
-                    // All hosts in a protocol name must be declared.
-                    node.protocol.value.hosts.forEach { host ->
-                        node.hostDeclarations[Located(host, node.protocol.sourceLocation)]
-                    }
-                }
+                is ProcessDeclarationNode ->
+                    node.protocol.check()
+                is ParameterNode ->
+                    node.protocol?.check()
                 is ReadNode ->
                     declaration(node)
                 is QueryNode ->
                     declaration(node)
+                is LetNode ->
+                    node.protocol?.check()
+                is DeclarationNode ->
+                    node.protocol?.check()
                 is UpdateNode ->
                     declaration(node)
                 is OutParameterInitializationNode ->
                     declaration(node)
-                is FunctionCallNode -> {
+                is ObjectReferenceArgumentNode ->
                     declaration(node)
-                    for (argument in node.arguments) {
-                        when (argument) {
-                            is ObjectReferenceArgumentNode -> declaration(argument)
-                            is OutParameterArgumentNode -> declaration(argument)
-                        }
-                    }
-                }
+                is OutParameterArgumentNode ->
+                    declaration(node)
+                is FunctionCallNode ->
+                    declaration(node)
                 is BreakNode ->
                     correspondingLoop(node)
                 is CommunicationNode ->

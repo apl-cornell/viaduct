@@ -1,6 +1,5 @@
 import edu.cornell.cs.apl.viaduct.errors.NoMainError;
 import edu.cornell.cs.apl.viaduct.errors.ParsingError;
-import edu.cornell.cs.apl.viaduct.protocols.*;
 import edu.cornell.cs.apl.viaduct.security.*;
 import edu.cornell.cs.apl.viaduct.syntax.*;
 import edu.cornell.cs.apl.viaduct.syntax.datatypes.*;
@@ -868,11 +867,7 @@ protocol_annot ::=
   ;
 
 protocol ::=
-    IDENT:id {:
-      RESULT = new Located(new Ideal(id), location(idleft, idright));
-    :}
-
-  | protocol_name:protocolName OPEN_PAREN:open protocol_argument_list:arguments CLOSE_PAREN:close {:
+    protocol_name:protocolName OPEN_PAREN:open protocol_argument_list:arguments CLOSE_PAREN:close {:
       RESULT = new Located(
         ProtocolParserKt.parseProtocol(
           protocolParsers,

@@ -32,7 +32,7 @@ private class Z3Selection(
     private val ctx: Context,
     private val costMode: CostMode,
     private val dumpMetadata: (Map<Node, PrettyPrintable>) -> Unit
-) : SelectionConstraintSolver {
+) : SelectionProblemSolver {
     private companion object {
         init {
             // Use old arithmetic solver to fix regression introduced in Z3 v4.8.9

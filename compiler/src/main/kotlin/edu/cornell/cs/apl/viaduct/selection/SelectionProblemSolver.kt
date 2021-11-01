@@ -1,5 +1,5 @@
 package edu.cornell.cs.apl.viaduct.selection
 
-interface SelectionConstraintSolver {
+interface SelectionProblemSolver {
     fun solveSelectionProblem(problem: SelectionProblem): ProtocolAssignment
 }

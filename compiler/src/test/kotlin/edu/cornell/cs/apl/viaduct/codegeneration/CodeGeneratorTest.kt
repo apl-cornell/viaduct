@@ -63,7 +63,6 @@ internal class CodeGeneratorTest {
             "src"
         )
 
-        backendCodeGenerator.generate()
         println(Document(backendCodeGenerator.generate()).print())
     }
 }

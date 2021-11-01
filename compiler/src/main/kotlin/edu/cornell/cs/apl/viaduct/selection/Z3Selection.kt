@@ -26,23 +26,7 @@ private val logger = KotlinLogging.logger("Z3Selection")
 enum class CostMode { MINIMIZE, MAXIMIZE }
 
 /**
- * This class performs splitting by using Z3. It operates as follows:
- *
- * - First, it collects constraints on protocol selection from the [ProtocolFactory]. For each let or declaration,
- *      the factory outputs two things: first, it outputs a set of viable protocols for that variable. Second,
- *      it can output a number of custom constraints on selection for that variable which are forwarded to Z3.
- *      (For the simple factory, the custom constraints are trivial, as we have not yet constrained which protocols
- *      can talk to whom.)
- * - Second, it exports these constraints to Z3. The selection problem is encoded as follows:
- *      - We assign each possible viable protocol a unique integer index. Call this index i(p).
- *      - For each variable, we create a fresh integer constant. Call this constant c(v).
- *      - For each variable v with viable protocols P, we constrain that c(v) is contained in the image set of P under i.
- *      - For each variable v, we constrain c(v) relative to the custom constraints output by the factory.
- * - Third, we ask Z3 to optimize relative to a cost metric. The cost metric is provided by [costEstimator], which
- *   will represent cost using a set of features. At a high level, the cost estimator approximates cost by:
- *      - The cost of storing data in a protocol
- *      - The cost of executing computations in a protocol
- *      - Estimating the communication cost between one protocol reading data from another protocol
+ * Constraint problem using Z3. Z3 has an optimization module that can return models with minimal cost.
  */
 private class Z3Selection(
     private val ctx: Context,
@@ -206,8 +190,7 @@ private class Z3Selection(
         }
 
     /** Protocol selection. */
-    override fun solveSelectionProblem(problem: SelectionProblem)
-        : ProtocolAssignment {
+    override fun solveSelectionProblem(problem: SelectionProblem): ProtocolAssignment {
         val constraints = problem.constraints
         val programCost = problem.cost
 

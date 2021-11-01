@@ -26,18 +26,15 @@ import edu.cornell.cs.apl.viaduct.selection.SimpleCostEstimator
 import edu.cornell.cs.apl.viaduct.selection.SimpleCostRegime
 import edu.cornell.cs.apl.viaduct.selection.selectProtocolsWithZ3
 import edu.cornell.cs.apl.viaduct.selection.validateProtocolAssignment
-import edu.cornell.cs.apl.viaduct.syntax.FunctionName
-import edu.cornell.cs.apl.viaduct.syntax.Protocol
-import edu.cornell.cs.apl.viaduct.syntax.Variable
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.Node
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
+import edu.cornell.cs.apl.viaduct.util.duration
 import guru.nidi.graphviz.engine.Format
 import guru.nidi.graphviz.engine.Graphviz
 import mu.KotlinLogging
 import java.io.File
 import java.io.StringWriter
 import java.io.Writer
-import kotlin.system.measureTimeMillis
 
 private val logger = KotlinLogging.logger("Compile")
 
@@ -93,11 +90,13 @@ class Compile : CliktCommand(help = "Compile ideal protocol to secure distribute
     ).flag(default = false)
 
     override fun run() {
-        logger.info { "elaborating source program..." }
-        val unspecializedProgram = input.parse().elaborated()
+        val unspecializedProgram = logger.duration("parsing and elaboration") {
+            input.parse().elaborated()
+        }
 
-        logger.info { "specializing functions..." }
-        val program = unspecializedProgram.specialize()
+        val program = logger.duration("function specialization") {
+            unspecializedProgram.specialize()
+        }
 
         // Perform static checks.
         program.check()
@@ -121,15 +120,11 @@ class Compile : CliktCommand(help = "Compile ideal protocol to secure distribute
         val protocolFactory = DefaultCombinedBackend.protocolFactory(program)
 
         // Select protocols.
-        logger.info { "selecting protocols..." }
-
         val protocolComposer = DefaultCombinedBackend.protocolComposer
         val costRegime = if (wanCost) SimpleCostRegime.WAN else SimpleCostRegime.LAN
         val costEstimator = SimpleCostEstimator(protocolComposer, costRegime)
-
-        val protocolAssignment: (FunctionName, Variable) -> Protocol
-        val protocolSelectionDuration = measureTimeMillis {
-            protocolAssignment = selectProtocolsWithZ3(
+        val protocolAssignment = logger.duration("protocol selection") {
+            selectProtocolsWithZ3(
                 program,
                 protocolFactory,
                 protocolComposer,
@@ -137,7 +132,6 @@ class Compile : CliktCommand(help = "Compile ideal protocol to secure distribute
                 if (maximizeCost) CostMode.MAXIMIZE else CostMode.MINIMIZE
             ) { metadata -> dumpProgramMetadata(program, metadata, protocolSelectionOutput) }
         }
-        logger.info { "finished protocol selection, ran for ${protocolSelectionDuration}ms" }
 
         // Perform a sanity check to ensure the protocolAssignment is valid.
         // TODO: either remove this entirely or make it opt-in by the command line.
@@ -149,8 +143,9 @@ class Compile : CliktCommand(help = "Compile ideal protocol to secure distribute
             protocolAssignment
         )
 
-        logger.info { "annotating program with protocols..." }
-        val annotatedProgram = program.annotateWithProtocols(protocolAssignment)
+        val annotatedProgram = logger.duration("annotating program with protocols") {
+            program.annotateWithProtocols(protocolAssignment)
+        }
 
         // Post-process program
         val postprocessor = ProgramPostprocessorRegistry(
@@ -160,7 +155,6 @@ class Compile : CliktCommand(help = "Compile ideal protocol to secure distribute
         val postprocessedProgram = postprocessor.postprocess(annotatedProgram)
 
         if (compileKotlin) {
-
             // TODO - figure out best way to let code generators know which protocols it is responsible for
             val backendCodeGenerator = BackendCodeGenerator(
                 postprocessedProgram,

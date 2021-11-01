@@ -1,6 +1,6 @@
 /* NameClashError */
 
-process main {
+fun main() {
     var x: int;
     var x: int;
 }

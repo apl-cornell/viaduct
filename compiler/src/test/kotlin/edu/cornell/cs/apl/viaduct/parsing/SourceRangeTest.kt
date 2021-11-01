@@ -1,9 +1,9 @@
 package edu.cornell.cs.apl.viaduct.parsing
 
 import edu.cornell.cs.apl.prettyprinting.DefaultStyle
-import edu.cornell.cs.apl.viaduct.protocols.MainProtocol
+import edu.cornell.cs.apl.viaduct.analysis.mainFunction
 import edu.cornell.cs.apl.viaduct.syntax.HasSourceLocation
-import edu.cornell.cs.apl.viaduct.syntax.surface.ProcessDeclarationNode
+import edu.cornell.cs.apl.viaduct.syntax.surface.FunctionDeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.surface.ProgramNode
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -13,12 +13,12 @@ import org.junit.jupiter.api.Test
 internal class SourceRangeTest {
     @Nested
     inner class ShowInSource {
-        private val program1 = "process main {}".parse()
-        private val program2 = "process main {\n}".parse()
+        private val program1 = "fun main() {}".parse()
+        private val program2 = "fun main() {\n}".parse()
         private val program3 = """
                 host h1 : {H1}
                 host h2 : {H2}
-                process main {}
+                fun main() {}
                 host h3 : {H3}
                 host h4 : {H4}
         """.trimIndent().parse()
@@ -76,6 +76,6 @@ private fun HasSourceLocation.showInSource(contextLines: Int = 0): String =
         println(">>>>>\n$it\n<<<<<")
     }
 
-/** Returns the declaration of the [MainProtocol] in this program. */
-private val ProgramNode.main: ProcessDeclarationNode
-    get() = this.find { it is ProcessDeclarationNode && it.protocol.value == MainProtocol } as ProcessDeclarationNode
+/** Returns the declaration of the [mainFunction] function in this program. */
+private val ProgramNode.main: FunctionDeclarationNode
+    get() = this.find { it is FunctionDeclarationNode && it.name.value == mainFunction } as FunctionDeclarationNode

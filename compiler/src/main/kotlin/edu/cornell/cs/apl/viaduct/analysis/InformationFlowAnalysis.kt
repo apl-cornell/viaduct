@@ -139,11 +139,11 @@ class InformationFlowAnalysis private constructor(
         when {
             parent == null -> "program"
 
+            this is FunctionDeclarationNode -> "${parent.pathName}.${name.value.name}"
+
             parent is IfNode && this is BlockNode -> "${parent.pathName}.if.${tree.childIndex(this)}"
 
             this is InfiniteLoopNode -> "${parent.pathName}.loop"
-
-            this is FunctionDeclarationNode -> "${parent.pathName}.func.${name.value.name}"
 
             else -> parent.pathName
         }
@@ -629,13 +629,11 @@ class InformationFlowAnalysis private constructor(
      * of) [InformationFlowError] otherwise.
      */
     fun check() {
-        if (!tree.root.hasMain) return
-
         for (function in tree.root.functions) {
             constraintSolverMap[function.name.value] = ConstraintSolver()
         }
 
-        val mainFunction = nameAnalysis.enclosingFunctionName(tree.root.main.body)
+        val mainFunction = tree.root.main.name.value
         val mainSolver = ConstraintSolver<InformationFlowError>()
         constraintSolverMap[mainFunction] = mainSolver
 

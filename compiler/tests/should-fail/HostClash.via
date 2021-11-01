@@ -3,6 +3,6 @@
 host alice : {A}
 host alice : {A}
 
-process main {
+fun main() {
     val x: int = 0;
 }

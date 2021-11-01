@@ -1,6 +1,6 @@
 /* InsecureControlFlowError */
 
-process main {
+fun main() {
     val secret: bool{(A ∧ B)->} = true;
     if (secret) {
         val public: int{A->} = 42;

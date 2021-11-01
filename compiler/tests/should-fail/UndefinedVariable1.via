@@ -1,5 +1,5 @@
 /* UndefinedNameError */
 
-process main {
+fun main() {
     x = 1;
 }

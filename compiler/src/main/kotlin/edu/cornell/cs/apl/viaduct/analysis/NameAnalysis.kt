@@ -20,7 +20,7 @@ import edu.cornell.cs.apl.viaduct.syntax.Name
 import edu.cornell.cs.apl.viaduct.syntax.NameMap
 import edu.cornell.cs.apl.viaduct.syntax.ObjectVariable
 import edu.cornell.cs.apl.viaduct.syntax.ObjectVariableNode
-import edu.cornell.cs.apl.viaduct.syntax.Protocol
+import edu.cornell.cs.apl.viaduct.syntax.ProtocolNode
 import edu.cornell.cs.apl.viaduct.syntax.Temporary
 import edu.cornell.cs.apl.viaduct.syntax.ValueTypeNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.BlockNode
@@ -42,7 +42,6 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.ObjectReferenceArgumentNod
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutParameterArgumentNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutParameterInitializationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ParameterNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProcessDeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.QueryNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ReadNode
@@ -73,21 +72,6 @@ class NameAnalysis private constructor(private val tree: Tree<Node, ProgramNode>
             }
             else ->
                 parent.hostDeclarations
-        }
-    }
-
-    /** Protocol declarations in scope for this node. */
-    private val Node.protocolDeclarations: NameMap<Protocol, ProcessDeclarationNode> by attribute {
-        when (val parent = tree.parent(this)) {
-            null -> {
-                require(this is ProgramNode)
-                declarations.filterIsInstance<ProcessDeclarationNode>()
-                    .fold(NameMap()) { map, declaration ->
-                        map.put(declaration.protocol, declaration)
-                    }
-            }
-            else ->
-                parent.protocolDeclarations
         }
     }
 
@@ -290,23 +274,23 @@ class NameAnalysis private constructor(private val tree: Tree<Node, ProgramNode>
 
     /** Get the function declaration enclosing this node. */
     private val Node.enclosingFunction: FunctionDeclarationNode? by attribute {
-        when (this) {
-            is ProgramNode -> null
+        when (val parent = tree.parent(this)) {
+            null -> null
 
-            is FunctionDeclarationNode -> this
+            is FunctionDeclarationNode -> parent
 
-            else -> tree.parent(this)!!.enclosingFunction
+            else -> parent.enclosingFunction
         }
     }
 
-    fun enclosingFunctionName(node: StatementNode): FunctionName =
-        node.enclosingFunction?.name?.value ?: MAIN_FUNCTION
+    fun enclosingFunctionName(node: FunctionArgumentNode): FunctionName =
+        node.enclosingFunction!!.name.value
 
     fun enclosingFunctionName(node: ExpressionNode): FunctionName =
-        node.enclosingFunction?.name?.value ?: MAIN_FUNCTION
+        node.enclosingFunction!!.name.value
 
-    fun enclosingFunctionName(node: FunctionArgumentNode): FunctionName =
-        node.enclosingFunction?.name?.value ?: MAIN_FUNCTION
+    fun enclosingFunctionName(node: StatementNode): FunctionName =
+        node.enclosingFunction!!.name.value
 
     private val Node.readers: Set<StatementNode> by collectedAttribute(tree) { node ->
         if (node is StatementNode) {
@@ -474,11 +458,8 @@ class NameAnalysis private constructor(private val tree: Tree<Node, ProgramNode>
     private val StatementNode.enclosingBlock: BlockNode by attribute {
         when (val parent = tree.parent(this)) {
             is BlockNode -> parent
-            is IfNode -> parent.enclosingBlock
-            is InfiniteLoopNode -> parent.enclosingBlock
             is FunctionDeclarationNode -> this as BlockNode
-            is ProcessDeclarationNode -> this as BlockNode
-            else -> throw Error("statement parent has to be a block node!")
+            else -> (parent as StatementNode).enclosingBlock
         }
     }
 
@@ -552,32 +533,36 @@ class NameAnalysis private constructor(private val tree: Tree<Node, ProgramNode>
      * @throws NameClashError if a [Name] is declared multiple times in the same scope.
      */
     fun check() {
+        fun ProtocolNode.check() {
+            // All hosts in a protocol name must be declared.
+            this.value.hosts.forEach { host ->
+                (tree.root as Node).hostDeclarations[Located(host, this.sourceLocation)]
+            }
+        }
+
         fun check(node: Node) {
             // Check that name references are valid
             when (node) {
-                is ProcessDeclarationNode -> {
-                    // All hosts in a protocol name must be declared.
-                    node.protocol.value.hosts.forEach { host ->
-                        node.hostDeclarations[Located(host, node.protocol.sourceLocation)]
-                    }
-                }
+                is ParameterNode ->
+                    node.protocol?.check()
                 is ReadNode ->
                     declaration(node)
                 is QueryNode ->
                     declaration(node)
+                is LetNode ->
+                    node.protocol?.check()
+                is DeclarationNode ->
+                    node.protocol?.check()
                 is UpdateNode ->
                     declaration(node)
                 is OutParameterInitializationNode ->
                     declaration(node)
-                is FunctionCallNode -> {
+                is ObjectReferenceArgumentNode ->
                     declaration(node)
-                    for (argument in node.arguments) {
-                        when (argument) {
-                            is ObjectReferenceArgumentNode -> declaration(argument)
-                            is OutParameterArgumentNode -> declaration(argument)
-                        }
-                    }
-                }
+                is OutParameterArgumentNode ->
+                    declaration(node)
+                is FunctionCallNode ->
+                    declaration(node)
                 is BreakNode ->
                     correspondingLoop(node)
                 is CommunicationNode ->
@@ -594,7 +579,6 @@ class NameAnalysis private constructor(private val tree: Tree<Node, ProgramNode>
                 is ProgramNode -> {
                     // Forcing these thunks
                     node.hostDeclarations
-                    node.protocolDeclarations
                     node.functionDeclarations
                 }
             }
@@ -605,8 +589,6 @@ class NameAnalysis private constructor(private val tree: Tree<Node, ProgramNode>
     }
 
     companion object : AnalysisProvider<NameAnalysis> {
-        val MAIN_FUNCTION = FunctionName("#main#")
-
         private fun construct(program: ProgramNode) = NameAnalysis(program.tree)
 
         override fun get(program: ProgramNode): NameAnalysis = program.cached(::construct)

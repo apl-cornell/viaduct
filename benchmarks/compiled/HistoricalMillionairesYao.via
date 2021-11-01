@@ -2,7 +2,7 @@ host alice : {(A & B<-)}
 
 host bob : {(B & A<-)}
 
-process main {
+fun main() {
     val length: int{(A ⊓ B)}@Replication(hosts = {alice, bob}) = 500;
     var a_min: int{(A & B<-)}@YaoABY(client = bob, server = alice) = 0;
     var b_min: int{(B & A<-)}@YaoABY(client = bob, server = alice) = 0;

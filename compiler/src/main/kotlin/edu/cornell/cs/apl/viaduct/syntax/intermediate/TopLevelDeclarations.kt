@@ -53,35 +53,6 @@ class HostDeclarationNode(
 }
 
 /**
- * A process declaration associating a protocol with the code that process should run.
- *
- * @param protocol Name of the process.
- * @param body Code that will be executed by this process.
- */
-class ProcessDeclarationNode(
-    val protocol: ProtocolNode,
-    val body: BlockNode,
-    override val sourceLocation: SourceLocation
-) : TopLevelDeclarationNode() {
-    override val children: Iterable<BlockNode>
-        get() = listOf(body)
-
-    override fun toSurfaceNode(): edu.cornell.cs.apl.viaduct.syntax.surface.ProcessDeclarationNode =
-        edu.cornell.cs.apl.viaduct.syntax.surface.ProcessDeclarationNode(
-            protocol,
-            body.toSurfaceNode(),
-            sourceLocation
-        )
-
-    override fun copy(children: List<Node>): ProcessDeclarationNode =
-        ProcessDeclarationNode(protocol, children[0] as BlockNode, sourceLocation)
-
-    override fun printMetadata(metadata: Map<Node, PrettyPrintable>): Document =
-        (metadata[this]?.let { it.asDocument.commented() + Document.forcedLineBreak } ?: Document("")) +
-            keyword("process") * protocol * body.printMetadata(metadata)
-}
-
-/**
  * A parameter to a function declaration.
  */
 class ParameterNode(
@@ -122,10 +93,12 @@ class ParameterNode(
 }
 
 /**
- * A declaration of a function that can be called by a process.
+ * A function declaration associating a name with code.
  *
+ * @param name A name identifying the function.
+ * @param pcLabel Value of the program control label at the beginning of [body].
  * @param parameters A list of formal parameters.
- * @param body The function body.
+ * @param body Code to run when the function is called.
  */
 class FunctionDeclarationNode(
     val name: FunctionNameNode,

@@ -12,7 +12,6 @@ import edu.cornell.cs.apl.viaduct.syntax.Located
 import edu.cornell.cs.apl.viaduct.syntax.NameMap
 import edu.cornell.cs.apl.viaduct.syntax.ObjectVariable
 import edu.cornell.cs.apl.viaduct.syntax.ObjectVariableNode
-import edu.cornell.cs.apl.viaduct.syntax.Protocol
 import edu.cornell.cs.apl.viaduct.syntax.Temporary
 import edu.cornell.cs.apl.viaduct.syntax.TemporaryNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.Node
@@ -44,7 +43,6 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutParameterExpressionInit
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutParameterInitializationNode as IOutParameterInitializationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutputNode as IOutputNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ParameterNode as IParameterNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProcessDeclarationNode as IProcessDeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode as IProgramNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.QueryNode as IQueryNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ReadNode as IReadNode
@@ -76,7 +74,6 @@ import edu.cornell.cs.apl.viaduct.syntax.surface.OperatorApplicationNode as SOpe
 import edu.cornell.cs.apl.viaduct.syntax.surface.OutParameterArgumentNode as SOutParameterArgumentNode
 import edu.cornell.cs.apl.viaduct.syntax.surface.OutParameterInitializationNode as SOutParameterInitializationNode
 import edu.cornell.cs.apl.viaduct.syntax.surface.OutputNode as SOutputNode
-import edu.cornell.cs.apl.viaduct.syntax.surface.ProcessDeclarationNode as SProcessDeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.surface.ProgramNode as SProgramNode
 import edu.cornell.cs.apl.viaduct.syntax.surface.QueryNode as SQueryNode
 import edu.cornell.cs.apl.viaduct.syntax.surface.ReadNode as SReadNode
@@ -95,8 +92,8 @@ fun SProgramNode.elaborated(): IProgramNode {
 
     val nameGenerator = FreshNameGenerator()
 
+    // Used to check for duplicate definitions.
     var hosts = NameMap<Host, Boolean>()
-    var processes = NameMap<Protocol, Boolean>()
     var functions = NameMap<FunctionName, Boolean>()
 
     for (declaration in this.declarations) {
@@ -107,17 +104,6 @@ fun SProgramNode.elaborated(): IProgramNode {
                     IHostDeclarationNode(
                         declaration.name,
                         declaration.authority,
-                        declaration.sourceLocation
-                    )
-                )
-            }
-
-            is SProcessDeclarationNode -> {
-                processes = processes.put(declaration.protocol, true)
-                declarations.add(
-                    IProcessDeclarationNode(
-                        declaration.protocol,
-                        StatementElaborator(nameGenerator).elaborate(declaration.body),
                         declaration.sourceLocation
                     )
                 )

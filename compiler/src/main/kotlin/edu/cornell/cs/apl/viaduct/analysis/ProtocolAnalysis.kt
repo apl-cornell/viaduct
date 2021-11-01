@@ -29,7 +29,6 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.ObjectDeclarationArgumentN
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutParameterInitializationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutputNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ParameterNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProcessDeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ReadNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.SimpleStatementNode
@@ -51,9 +50,6 @@ class ProtocolAnalysis(
     /** The outermost block this [Node] is in. */
     private val Node.enclosingBody: BlockNode by attribute {
         when (val parent = tree.parent(this)!!) {
-            is ProcessDeclarationNode ->
-                parent.body
-
             is FunctionDeclarationNode ->
                 parent.body
 
@@ -379,9 +375,6 @@ class ProtocolAnalysis(
                 this.parameters
                     .fold<ParameterNode, Set<Protocol>>(setOf()) { acc, param -> acc.plus(param.participatingProtocols) }
                     .plus(this.body.participatingProtocols)
-
-            is ProcessDeclarationNode ->
-                this.body.participatingProtocols
 
             is BlockNode ->
                 this.statements.fold(setOf()) { acc, child -> acc.plus(child.participatingProtocols) }

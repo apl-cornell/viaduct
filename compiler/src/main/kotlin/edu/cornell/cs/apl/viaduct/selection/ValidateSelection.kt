@@ -1,6 +1,5 @@
 package edu.cornell.cs.apl.viaduct.selection
 
-import com.microsoft.z3.Context
 import edu.cornell.cs.apl.viaduct.analysis.InformationFlowAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.NameAnalysis
 import edu.cornell.cs.apl.viaduct.syntax.FunctionName
@@ -10,24 +9,19 @@ import edu.cornell.cs.apl.viaduct.syntax.Variable
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.DeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.LetNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.Node
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProcessDeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
 
-/** This function provides a sanity check to ensure that a given protocol selection f : Variable -> Protocol
- *  satisfies all constraints required on it by the selector.
+/**
+ * This function provides a sanity check to ensure that a given protocol assignment satisfies all constraints
+ * required on it by the selector.
  */
-
 fun validateProtocolAssignment(
     program: ProgramNode,
-    processDeclaration: ProcessDeclarationNode,
     protocolFactory: ProtocolFactory,
     protocolComposer: ProtocolComposer,
     costEstimator: CostEstimator<IntegerCost>,
     protocolAssignment: (FunctionName, Variable) -> Protocol
 ) {
-
-    val ctx = Context()
-
     val constraintGenerator =
         SelectionConstraintGenerator(program, protocolFactory, protocolComposer, costEstimator)
 
@@ -116,11 +110,9 @@ fun validateProtocolAssignment(
         }
     }
 
-    processDeclaration.traverse(protocolAssignment)
+    program.traverse(protocolAssignment)
 
     // TODO: currently no support for host variables, so turn these off for now
     // val constraints = processDeclaration.constraints()
     // constraints.toList().assert(setOf(), protocolAssignment)
-
-    ctx.close()
 }

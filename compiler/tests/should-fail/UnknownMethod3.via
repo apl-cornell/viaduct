@@ -1,5 +1,5 @@
 /* UnknownMethodError */
 
-process main {
+fun main() {
     for(val i: int = 0; i < 10; i += 1) {}
 }

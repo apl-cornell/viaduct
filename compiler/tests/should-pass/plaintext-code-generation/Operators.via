@@ -1,6 +1,6 @@
 host god : {⊥}
 
-process main {
+fun main() {
     /* Comparison Operators */
     val a: bool = 1 == 1;
     val b: bool = 1 != 2;

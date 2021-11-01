@@ -1,6 +1,6 @@
 /* NameClashError */
 
-process main {
+fun main() {
     val x: int = 5;
     var x: int;
 }

@@ -1,7 +1,8 @@
 package edu.cornell.cs.apl.viaduct.analysis
 
+import edu.cornell.cs.apl.viaduct.errors.IncorrectNumberOfArgumentsError
 import edu.cornell.cs.apl.viaduct.errors.NoMainError
-import edu.cornell.cs.apl.viaduct.protocols.MainProtocol
+import edu.cornell.cs.apl.viaduct.syntax.FunctionName
 import edu.cornell.cs.apl.viaduct.syntax.Located
 import edu.cornell.cs.apl.viaduct.syntax.Name
 import edu.cornell.cs.apl.viaduct.syntax.Variable
@@ -13,6 +14,7 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.DeclassificationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.EndorsementNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ExpressionNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.FunctionCallNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.FunctionDeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.IfNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.InfiniteLoopNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.InputNode
@@ -24,7 +26,6 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.OperatorApplicationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutParameterInitializationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutputNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ParameterNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProcessDeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.QueryNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ReadNode
@@ -124,28 +125,21 @@ fun Node.updateNodes(): List<UpdateNode> = this.listOfInstances()
 /** Returns all [OutputNode]s contained in this node. */
 fun Node.outputNodes(): List<OutputNode> = this.listOfInstances()
 
+/** Name of the "main" function. */
+val mainFunction = FunctionName("main")
+
 /**
- * Returns the declaration of the [MainProtocol] in this program.
+ * Returns the declaration of [mainFunction] function in this program.
  *
  * @throws NoMainError if the program has no such declaration.
+ * @throws IncorrectNumberOfArgumentsError if the main function has any parameters.
  */
-val ProgramNode.main: ProcessDeclarationNode
-    get() {
-        this.forEach {
-            if (it is ProcessDeclarationNode && it.protocol.value == MainProtocol)
-                return it
-        }
-        throw NoMainError(this.sourceLocation.sourcePath)
-    }
-
-val ProgramNode.hasMain: Boolean
-    get() {
-        this.forEach {
-            if (it is ProcessDeclarationNode && it.protocol.value == MainProtocol)
-                return true
-        }
-        return false
-    }
+val ProgramNode.main: FunctionDeclarationNode
+    get() =
+        this.functions.find { it.name.value == mainFunction }?.also {
+            if (it.parameters.isNotEmpty())
+                throw IncorrectNumberOfArgumentsError(it.name, 0, it.parameters)
+        } ?: throw NoMainError(this.sourceLocation.sourcePath)
 
 /** A [FreshNameGenerator] that will avoid all [Variable] names in this node. */
 fun Node.freshVariableNameGenerator(): FreshNameGenerator {

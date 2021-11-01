@@ -1,13 +1,13 @@
 host alice : {A}
 host bob   : {B}
 
-process main {
+fun main() {
   val num_turns: int = 3;
   var a_score: int = 0;
   var b_score: int = 0;
   val a_moves = Array[int](num_turns);
   val b_moves = Array[int](num_turns);
-  
+
   for (var i: int = 0; i < num_turns; i += 1) {
     a_moves[i] = endorse (input int from alice) from {A};
     b_moves[i] = endorse (input int from bob) from {B};

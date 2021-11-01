@@ -2,6 +2,6 @@
 
 host alice : {A}
 
-process main {
+fun main() {
     val tooIntegral: int{A ∧ B<-} = 42;
 }

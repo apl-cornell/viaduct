@@ -1,6 +1,6 @@
 host alice : {A}
 
-process main {
+fun main() {
     val a: bool = input bool from alice;
 
     /* If with no branches. */

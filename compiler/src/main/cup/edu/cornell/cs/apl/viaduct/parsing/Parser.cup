@@ -1,6 +1,5 @@
 import edu.cornell.cs.apl.viaduct.errors.NoMainError;
 import edu.cornell.cs.apl.viaduct.errors.ParsingError;
-import edu.cornell.cs.apl.viaduct.protocols.*;
 import edu.cornell.cs.apl.viaduct.security.*;
 import edu.cornell.cs.apl.viaduct.syntax.*;
 import edu.cornell.cs.apl.viaduct.syntax.datatypes.*;
@@ -149,7 +148,7 @@ terminal String TMP_IDENT;
 terminal int INT_LIT;
 terminal TRUE, FALSE;
 
-terminal HOST, PROCESS;
+terminal HOST;
 terminal FUNCTION;
 terminal OUT;
 terminal COLON;
@@ -222,10 +221,6 @@ declaration_list ::=
 declaration ::=
     HOST:begin host:host COLON label:authority {:
       RESULT = new HostDeclarationNode(host, authority, location(beginleft, authorityright));
-    :}
-
-  | PROCESS:begin protocol:protocol block:body {:
-      RESULT = new ProcessDeclarationNode(protocol, body, location(beginleft, bodyright));
     :}
 
   | FUNCTION:begin IDENT:funcname optional_label_signature:label
@@ -872,11 +867,7 @@ protocol_annot ::=
   ;
 
 protocol ::=
-    IDENT:id {:
-      RESULT = new Located(new Ideal(id), location(idleft, idright));
-    :}
-
-  | protocol_name:protocolName OPEN_PAREN:open protocol_argument_list:arguments CLOSE_PAREN:close {:
+    protocol_name:protocolName OPEN_PAREN:open protocol_argument_list:arguments CLOSE_PAREN:close {:
       RESULT = new Located(
         ProtocolParserKt.parseProtocol(
           protocolParsers,

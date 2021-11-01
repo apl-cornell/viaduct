@@ -228,7 +228,7 @@ class OutputNode(
     val message: AtomicExpressionNode,
     override val host: HostNode,
     override val sourceLocation: SourceLocation
-) : SimpleStatementNode(), ExternalCommunicationNode {
+) : SimpleStatementNode(), CommunicationNode {
     override val children: Iterable<AtomicExpressionNode>
         get() = listOf(message)
 
@@ -241,26 +241,6 @@ class OutputNode(
 
     override fun copy(children: List<Node>): OutputNode =
         OutputNode(children[0] as AtomicExpressionNode, host, sourceLocation)
-}
-
-/** Sending a value to another protocol. */
-class SendNode(
-    val message: AtomicExpressionNode,
-    override val protocol: ProtocolNode,
-    override val sourceLocation: SourceLocation
-) : SimpleStatementNode(), InternalCommunicationNode {
-    override val children: Iterable<AtomicExpressionNode>
-        get() = listOf(message)
-
-    override fun toSurfaceNode(): edu.cornell.cs.apl.viaduct.syntax.surface.SendNode =
-        edu.cornell.cs.apl.viaduct.syntax.surface.SendNode(
-            message.toSurfaceNode(),
-            protocol,
-            sourceLocation
-        )
-
-    override fun copy(children: List<Node>): SendNode =
-        SendNode(children[0] as AtomicExpressionNode, protocol, sourceLocation)
 }
 
 // Compound Statements

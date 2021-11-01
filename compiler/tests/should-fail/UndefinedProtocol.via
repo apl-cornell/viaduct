@@ -1,5 +1,0 @@
-/* UndefinedNameError */
-
-process main {
-    val x: int = receive int from main2;
-}

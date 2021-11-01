@@ -8,7 +8,6 @@ import edu.cornell.cs.apl.viaduct.errors.IncorrectNumberOfArgumentsError
 import edu.cornell.cs.apl.viaduct.errors.NameClashError
 import edu.cornell.cs.apl.viaduct.errors.UndefinedNameError
 import edu.cornell.cs.apl.viaduct.errors.UnknownObjectDeclarationError
-import edu.cornell.cs.apl.viaduct.protocols.Adversary
 import edu.cornell.cs.apl.viaduct.selection.FunctionVariable
 import edu.cornell.cs.apl.viaduct.syntax.Arguments
 import edu.cornell.cs.apl.viaduct.syntax.ClassNameNode
@@ -26,16 +25,15 @@ import edu.cornell.cs.apl.viaduct.syntax.Temporary
 import edu.cornell.cs.apl.viaduct.syntax.ValueTypeNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.BlockNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.BreakNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.CommunicationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.DeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ExpressionNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.ExternalCommunicationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.FunctionArgumentNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.FunctionCallNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.FunctionDeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.HostDeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.IfNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.InfiniteLoopNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.InternalCommunicationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.LetNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.Node
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ObjectDeclaration
@@ -222,12 +220,8 @@ class NameAnalysis private constructor(private val tree: Tree<Node, ProgramNode>
         node.jumpTargets[node.jumpLabel]
 
     /** Returns the declaration of the [Host] in [node]. */
-    fun declaration(node: ExternalCommunicationNode): HostDeclarationNode =
+    fun declaration(node: CommunicationNode): HostDeclarationNode =
         (node as Node).hostDeclarations[node.host]
-
-    /** Returns the declaration of the [Protocol] in [node]. */
-    fun declaration(node: InternalCommunicationNode): ProcessDeclarationNode =
-        (node as Node).protocolDeclarations[node.protocol]
 
     /** Returns the declaration of the out parameter in [node]. */
     fun declaration(node: OutParameterInitializationNode): ParameterNode {
@@ -586,11 +580,8 @@ class NameAnalysis private constructor(private val tree: Tree<Node, ProgramNode>
                 }
                 is BreakNode ->
                     correspondingLoop(node)
-                is ExternalCommunicationNode ->
+                is CommunicationNode ->
                     declaration(node)
-                is InternalCommunicationNode ->
-                    // The adversary is always (implicitly) defined
-                    if (node.protocol.value !is Adversary) declaration(node)
             }
             // Check that there are no name clashes
             when (node) {

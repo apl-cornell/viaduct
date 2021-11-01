@@ -54,8 +54,6 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.ParameterNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.QueryNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ReadNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.ReceiveNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.SendNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.StatementNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.UpdateNode
 import edu.cornell.cs.apl.viaduct.util.FreshNameGenerator
@@ -362,11 +360,6 @@ class InformationFlowAnalysis private constructor(
 
                 assertFlowsTo(solver, this.host, hostLabel, this.labelVariable)
             }
-
-            is ReceiveNode -> {
-                // TODO: should we leak the pc to the protocol?
-                // TODO: should we do any checks on the data?
-            }
         }
     }
 
@@ -590,11 +583,6 @@ class InformationFlowAnalysis private constructor(
                     LabelConstant(nameAnalysis.declaration(this).authority.value.interpret())
                 pcFlowsTo(solver, pcLabel, this.host, hostLabel)
                 flowsTo(solver, this.message, hostLabel)
-            }
-
-            is SendNode -> {
-                // TODO: should we leak the pc to the protocol?
-                // TODO: should we leak [message] to the protocol?
             }
 
             is IfNode -> {

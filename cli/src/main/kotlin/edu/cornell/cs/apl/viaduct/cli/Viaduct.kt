@@ -11,10 +11,7 @@ class Viaduct : NoOpCliktCommand(help = "Compile high level specifications to se
 
     init {
         versionOption(version)
-        subcommands(Format(), Compile(), CompletionCommand(), Specification(), Run())
-        // TODO: Help, Interpret, Specification commands
+        subcommands(Format(), Compile(), CompletionCommand(), Run())
+        // TODO: Help, Interpret, commands
     }
-
-    override fun aliases(): Map<String, List<String>> =
-        mapOf("spec" to listOf(Specification().commandName))
 }

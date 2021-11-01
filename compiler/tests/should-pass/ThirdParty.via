@@ -11,17 +11,6 @@ process main {
   output bob_richer to bob;
 }
 
-process Host(alice) {
-  send 5 to main;
-  val bob_richer: bool = receive bool from main;
-}
-
-process Host(bob) {
-  send 10 to main;
-  val bob_richer: bool = receive bool from main;
-  assert bob_richer;
-}
-
 host alice   : {A}
 host bob     : {B}
 host trusted : {A & B}

@@ -150,7 +150,6 @@ terminal int INT_LIT;
 terminal TRUE, FALSE;
 
 terminal HOST, PROCESS;
-terminal CAP_HOST;
 terminal FUNCTION;
 terminal OUT;
 terminal COLON;
@@ -159,7 +158,7 @@ terminal EQ;
 terminal PLUSEQ, MINUSEQ, TIMESEQ, DIVIDEEQ;
 terminal LET, VAL, VAR;
 terminal IF, ELSE, WHILE, FOR, LOOP, BREAK;
-terminal INPUT, RECEIVE, FROM, OUTPUT, SEND, TO;
+terminal INPUT, FROM, OUTPUT, TO;
 terminal ASSERT;
 
 terminal NOT, ANDAND, OROR;
@@ -399,10 +398,6 @@ simple_stmt ::=
   | OUTPUT:begin expr:message TO host:recipient {:
       RESULT = new OutputNode(message, recipient, location(beginleft, recipientright));
     :}
-
-  | SEND:begin expr:message TO protocol:recipient {:
-      RESULT = new SendNode(message, recipient, location(beginleft, recipientright));
-    :}
   ;
 
 optional_initial_value ::=
@@ -621,10 +616,6 @@ expr ::=
 
   | INPUT:begin value_type:type FROM host:sender {:
       RESULT = new InputNode(type, sender, location(beginleft, senderright));
-    :}
-
-  | RECEIVE:begin value_type:type FROM protocol:sender {:
-      RESULT = new ReceiveNode(type, sender, location(beginleft, senderright));
     :}
 
   | OPEN_PAREN expr:e CLOSE_PAREN {:
@@ -883,12 +874,6 @@ protocol_annot ::=
 protocol ::=
     IDENT:id {:
       RESULT = new Located(new Ideal(id), location(idleft, idright));
-    :}
-
-  | CAP_HOST:begin OPEN_PAREN host:host CLOSE_PAREN:end {:
-      RESULT = new Located(
-        new HostInterface(host.getValue()),
-        location(beginleft, endright));
     :}
 
   | protocol_name:protocolName OPEN_PAREN:open protocol_argument_list:arguments CLOSE_PAREN:close {:

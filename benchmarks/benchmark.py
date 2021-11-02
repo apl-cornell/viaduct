@@ -149,9 +149,9 @@ def rq2(args):
         "Selection Time (ms)"
     ]]
     information_flow_variables_parser = re.finditer(r"number of label variables: (\d+)", build_log)
-    information_flow_time_parser = re.finditer(r"finished information flow analysis, ran for (\d+)ms", build_log)
+    information_flow_time_parser = re.finditer(r"Finished information flow analysis in (\d+) ms.", build_log)
     selection_variables_parser = re.finditer(r"number of symvars: (\d+)", build_log)
-    selection_time_parser = re.finditer(r"finished protocol selection, ran for (\d+)ms", build_log)
+    selection_time_parser = re.finditer(r"Finished protocol selection in (\d+) ms.", build_log)
 
     for benchmark in benchmarks:
         benchmark_name = benchmark.stem

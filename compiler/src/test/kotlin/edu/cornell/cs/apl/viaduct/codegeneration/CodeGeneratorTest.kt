@@ -1,6 +1,5 @@
 package edu.cornell.cs.apl.viaduct.codegeneration
 
-import edu.cornell.cs.apl.prettyprinting.Document
 import edu.cornell.cs.apl.viaduct.PositiveTestFileProvider
 import edu.cornell.cs.apl.viaduct.backends.DefaultCombinedBackend
 import edu.cornell.cs.apl.viaduct.parsing.SourceFile
@@ -63,6 +62,6 @@ internal class CodeGeneratorTest {
             "src"
         )
 
-        println(Document(backendCodeGenerator.generate()).print())
+        println(backendCodeGenerator.generate())
     }
 }

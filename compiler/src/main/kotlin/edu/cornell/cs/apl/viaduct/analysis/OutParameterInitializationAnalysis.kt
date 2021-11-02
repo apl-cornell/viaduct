@@ -1,7 +1,7 @@
 package edu.cornell.cs.apl.viaduct.analysis
 
 import edu.cornell.cs.apl.attributes.Tree
-import edu.cornell.cs.apl.attributes.circularAttribute
+import edu.cornell.cs.apl.attributes.attribute
 import edu.cornell.cs.apl.viaduct.errors.OutParameterInitializationError
 import edu.cornell.cs.apl.viaduct.syntax.ObjectVariable
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.BlockNode
@@ -60,9 +60,7 @@ class OutParameterInitializationAnalysis private constructor(
     private val nameAnalysis: NameAnalysis
 ) {
     /** Defines initialization map of out parameters BEFORE node has been executed. */
-    private val Node.flowIn: PersistentMap<ObjectVariable, InitializationState> by circularAttribute(
-        persistentMapOf()
-    ) {
+    private val Node.flowIn: PersistentMap<ObjectVariable, InitializationState> by attribute {
         val parent = tree.parent(this)
         val previousSibling = tree.previousSibling(this)
         when {
@@ -81,9 +79,7 @@ class OutParameterInitializationAnalysis private constructor(
     }
 
     /** Defines initialization map of out parameters AFTER node has been processed. */
-    private val Node.flowOut: PersistentMap<ObjectVariable, InitializationState> by circularAttribute(
-        persistentMapOf()
-    ) {
+    private val Node.flowOut: PersistentMap<ObjectVariable, InitializationState> by attribute {
         when (this) {
             is FunctionDeclarationNode ->
                 parameters

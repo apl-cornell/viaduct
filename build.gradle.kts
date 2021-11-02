@@ -6,11 +6,11 @@ plugins {
     id("ru.vyarus.mkdocs") version "2.1.1"
 
     // Style checking
-    id("com.diffplug.spotless") version "5.17.0"
+    id("com.diffplug.spotless") version "5.17.1"
 
     // Dependency management
     id("com.github.ben-manes.versions") version "0.39.0"
-    id("se.patrikerdes.use-latest-versions") version "0.2.17"
+    id("se.patrikerdes.use-latest-versions") version "0.2.18"
 }
 
 allprojects {

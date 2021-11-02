@@ -3,11 +3,13 @@ package edu.cornell.cs.apl.viaduct.backends
 import edu.cornell.cs.apl.viaduct.codegeneration.CodeGenerator
 import edu.cornell.cs.apl.viaduct.codegeneration.CodeGeneratorContext
 import edu.cornell.cs.apl.viaduct.codegeneration.unions
+import edu.cornell.cs.apl.viaduct.parsing.ProtocolParser
 import edu.cornell.cs.apl.viaduct.selection.ProtocolComposer
 import edu.cornell.cs.apl.viaduct.selection.ProtocolFactory
 import edu.cornell.cs.apl.viaduct.selection.cached
 import edu.cornell.cs.apl.viaduct.selection.filter
 import edu.cornell.cs.apl.viaduct.selection.unions
+import edu.cornell.cs.apl.viaduct.syntax.Protocol
 import edu.cornell.cs.apl.viaduct.syntax.ProtocolName
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
 import edu.cornell.cs.apl.viaduct.util.unions
@@ -16,6 +18,8 @@ import edu.cornell.cs.apl.viaduct.util.unions
 interface Backend {
     /** Protocols added by this backend. */
     val protocols: Set<ProtocolName>
+
+    val protocolParsers: Map<ProtocolName, ProtocolParser<Protocol>>
 
     fun protocolFactory(program: ProgramNode): ProtocolFactory
 
@@ -35,8 +39,8 @@ fun Iterable<Backend>.unions(): Backend {
                     throw IllegalArgumentException(
                         """
                         Protocol ${protocol.name} is implemented by multiple backends:
-                        ${'\t'}${previous::class}
-                        ${'\t'}${backend::class}
+                        ${'\t'}${previous.name}
+                        ${'\t'}${backend.name}
                         """.trimIndent()
                     )
             }
@@ -48,6 +52,25 @@ fun Iterable<Backend>.unions(): Backend {
 
         override val protocols: Set<ProtocolName>
             get() = backends.map { it.protocols }.unions()
+
+        override val protocolParsers: Map<ProtocolName, ProtocolParser<Protocol>> = run {
+            // Ensure there are no missing or extra parsers
+            backends.forEach { backend ->
+                val protocols = backend.protocols
+                val parsers = backend.protocolParsers
+                val missingParsers = protocols - parsers.keys
+                val extraParsers = parsers.keys - protocols
+                if (missingParsers.isNotEmpty()) {
+                    val missing = missingParsers.joinToString(", ") { it.name }
+                    throw IllegalArgumentException("Missing parsers for $missing in ${backend.name}")
+                }
+                if (extraParsers.isNotEmpty()) {
+                    val extra = extraParsers.joinToString(", ") { it.name }
+                    throw IllegalArgumentException("Extraneous parsers for $extra in ${backend.name}")
+                }
+            }
+            backends.map { it.protocolParsers }.unions()
+        }
 
         override fun protocolFactory(program: ProgramNode): ProtocolFactory =
             backends.map { it.protocolFactory(program) }.unions()
@@ -69,3 +92,7 @@ fun Backend.filter(predicate: (ProtocolName) -> Boolean): Backend =
         override fun protocolFactory(program: ProgramNode): ProtocolFactory =
             this@filter.protocolFactory(program).filter { predicate(it.protocolName) }
     }
+
+/** Derives a name for this [Backend] to be used in error messages. */
+private val Backend.name: String
+    get() = this::class.toString()

@@ -10,6 +10,7 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.FunctionDeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.IfNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.InfiniteLoopNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.Node
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.ObjectDeclaration
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ObjectReferenceArgumentNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutParameterArgumentNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutParameterInitializationNode
@@ -19,11 +20,41 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.QueryNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.UpdateNode
 import kotlinx.collections.immutable.PersistentMap
 import kotlinx.collections.immutable.persistentMapOf
+import kotlinx.collections.immutable.toPersistentMap
 
-private enum class InitializationState { UNINITIALIZED, INITIALIZED, UNKNOWN }
+private enum class InitializationState {
+    UNINITIALIZED, INITIALIZED, UNKNOWN;
 
-/** Analysis to ensure all out parameters have been initialized before
- * they are used and before the function returns. */
+    fun meet(that: InitializationState): InitializationState =
+        if (this == that) this else UNKNOWN
+
+    fun join(that: InitializationState): InitializationState =
+        when {
+            this == UNINITIALIZED && that == UNINITIALIZED ->
+                UNINITIALIZED
+
+            this == UNKNOWN || that == UNKNOWN ->
+                UNKNOWN
+
+            else -> INITIALIZED
+        }
+}
+
+/** Take the meet of two maps. */
+private fun meet(
+    map1: PersistentMap<ObjectVariable, InitializationState>,
+    map2: PersistentMap<ObjectVariable, InitializationState>
+): PersistentMap<ObjectVariable, InitializationState> {
+    require(map1.keys == map2.keys)
+    return map1.keys.fold(persistentMapOf()) { acc, key ->
+        acc.put(key, map1.getValue(key).meet(map2.getValue(key)))
+    }
+}
+
+/**
+ * Analysis that ensures all out parameters of functions are initialized before
+ * they are used and before the function returns.
+ */
 class OutParameterInitializationAnalysis private constructor(
     private val tree: Tree<Node, ProgramNode>,
     private val nameAnalysis: NameAnalysis
@@ -40,46 +71,12 @@ class OutParameterInitializationAnalysis private constructor(
                 persistentMapOf()
             }
 
-            parent is BlockNode && previousSibling != null -> {
+            parent is BlockNode && previousSibling != null ->
                 previousSibling.flowOut
-            }
 
             parent is FunctionDeclarationNode -> parent.flowOut
 
             else -> parent.flowIn
-        }
-    }
-
-    private fun InitializationState.meet(val2: InitializationState): InitializationState =
-        when {
-            this == InitializationState.UNINITIALIZED && val2 == InitializationState.UNINITIALIZED ->
-                InitializationState.UNINITIALIZED
-
-            this == InitializationState.INITIALIZED && val2 == InitializationState.INITIALIZED ->
-                InitializationState.INITIALIZED
-
-            else -> InitializationState.UNKNOWN
-        }
-
-    private fun InitializationState.join(val2: InitializationState): InitializationState =
-        when {
-            this == InitializationState.UNINITIALIZED && val2 == InitializationState.UNINITIALIZED ->
-                InitializationState.UNINITIALIZED
-
-            this == InitializationState.UNKNOWN || val2 == InitializationState.UNKNOWN ->
-                InitializationState.UNKNOWN
-
-            else -> InitializationState.INITIALIZED
-        }
-
-    /** Take the meet of two maps. */
-    private fun mapMeet(
-        map1: PersistentMap<ObjectVariable, InitializationState>,
-        map2: PersistentMap<ObjectVariable, InitializationState>
-    ): PersistentMap<ObjectVariable, InitializationState> {
-        assert(map1.keys == map2.keys)
-        return map1.keys.fold(persistentMapOf()) { acc, key ->
-            acc.put(key, map1[key]!!.meet(map2[key]!!))
         }
     }
 
@@ -88,51 +85,42 @@ class OutParameterInitializationAnalysis private constructor(
         persistentMapOf()
     ) {
         when (this) {
-            is FunctionDeclarationNode -> {
+            is FunctionDeclarationNode ->
                 parameters
                     .filter { param -> !param.isInParameter }
-                    .fold(persistentMapOf()) { acc, param ->
-                        acc.put(param.name.value, InitializationState.UNINITIALIZED)
-                    }
-            }
+                    .associate { param -> param.name.value to InitializationState.UNINITIALIZED }
+                    .toPersistentMap()
 
-            is OutParameterInitializationNode -> {
+            is OutParameterInitializationNode ->
                 this.flowIn.put(
                     this.name.value,
-                    this.flowIn[this.name.value]!!.join(InitializationState.INITIALIZED)
+                    this.flowIn.getValue(this.name.value).join(InitializationState.INITIALIZED)
                 )
-            }
 
-            is FunctionCallNode -> {
+            is FunctionCallNode ->
                 arguments
                     .filterIsInstance<OutParameterArgumentNode>()
                     .map { param -> param.parameter.value }
                     .fold(this.flowIn) { acc, param ->
-                        acc.put(param, this.flowIn[param]!!.join(InitializationState.INITIALIZED))
+                        acc.put(param, this.flowIn.getValue(param).join(InitializationState.INITIALIZED))
                     }
-            }
 
-            // unify flowOuts from branches by taking the intersection of their
-            // initialized out params
-            is IfNode -> {
-                mapMeet(thenBranch.flowOut, elseBranch.flowOut)
-            }
+            // Unify output flows from both branches.
+            is IfNode ->
+                meet(thenBranch.flowOut, elseBranch.flowOut)
 
-            // disallow out param initialization inside of loops
-            // note that this doesn't actually compute the fixpoint of the
+            // Disallow out param initialization inside of loops.
+            // Note that this doesn't actually compute the fixpoint of the
             // dataflow equations as needed, because that needs a CircularAttribute.
             // TODO: handle breaks properly.
-            is InfiniteLoopNode -> {
-                mapMeet(this.flowIn, this.body.flowOut)
-            }
+            is InfiniteLoopNode ->
+                meet(this.flowIn, this.body.flowOut)
 
-            is BlockNode -> {
-                if (this.children.any()) {
+            is BlockNode ->
+                if (this.children.any())
                     this.children.last().flowOut
-                } else {
+                else
                     this.flowIn
-                }
-            }
 
             else -> this.flowIn
         }
@@ -143,6 +131,20 @@ class OutParameterInitializationAnalysis private constructor(
      * they are used and before the function returns.
      */
     private fun check(node: Node) {
+        fun use(declaration: ObjectDeclaration) {
+            node.flowIn[declaration.name.value]?.let {
+                if (it != InitializationState.INITIALIZED)
+                    throw OutParameterInitializationError(declaration as ParameterNode, node)
+            }
+        }
+
+        fun define(declaration: ParameterNode) {
+            node.flowIn[declaration.name.value]?.let {
+                if (it != InitializationState.UNINITIALIZED)
+                    throw OutParameterInitializationError(declaration, node)
+            }
+        }
+
         when (node) {
             is FunctionDeclarationNode -> {
                 for (kv in node.body.flowOut) {
@@ -152,46 +154,17 @@ class OutParameterInitializationAnalysis private constructor(
                 }
             }
 
-            is UpdateNode -> {
-                if (node.flowIn.containsKey(node.variable.value)) {
-                    if (node.flowIn[node.variable.value]!! != InitializationState.UNINITIALIZED) {
-                        throw OutParameterInitializationError(
-                            nameAnalysis.declaration(node) as ParameterNode,
-                            node
-                        )
-                    }
-                }
-            }
+            is UpdateNode ->
+                use(nameAnalysis.declaration(node))
 
-            is QueryNode -> {
-                val initialized = node.flowIn[node.variable.value] ?: InitializationState.INITIALIZED
-                if (initialized != InitializationState.INITIALIZED) {
-                    throw OutParameterInitializationError(
-                        nameAnalysis.declaration(node) as ParameterNode,
-                        node
-                    )
-                }
-            }
+            is QueryNode ->
+                use(nameAnalysis.declaration(node))
 
-            is ObjectReferenceArgumentNode -> {
-                val initialized = node.flowIn[node.variable.value] ?: InitializationState.INITIALIZED
-                if (initialized != InitializationState.INITIALIZED) {
-                    throw OutParameterInitializationError(
-                        nameAnalysis.declaration(node) as ParameterNode,
-                        node
-                    )
-                }
-            }
+            is ObjectReferenceArgumentNode ->
+                use(nameAnalysis.declaration(node))
 
-            is OutParameterInitializationNode -> {
-                val initialized = node.flowIn[node.name.value] ?: InitializationState.UNINITIALIZED
-                if (initialized != InitializationState.UNINITIALIZED) {
-                    throw OutParameterInitializationError(
-                        nameAnalysis.declaration(node),
-                        node
-                    )
-                }
-            }
+            is OutParameterInitializationNode ->
+                define(nameAnalysis.declaration(node))
         }
 
         for (child in node.children) {

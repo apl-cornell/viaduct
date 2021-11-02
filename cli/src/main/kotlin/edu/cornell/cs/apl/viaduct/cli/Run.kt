@@ -17,25 +17,9 @@ import edu.cornell.cs.apl.viaduct.backend.ViaductBackend
 import edu.cornell.cs.apl.viaduct.backend.aby.ABYProtocolInterpreter
 import edu.cornell.cs.apl.viaduct.backend.commitment.CommitmentProtocolInterpreterFactory
 import edu.cornell.cs.apl.viaduct.backend.zkp.ZKPProtocolInterpreterFactory
-import edu.cornell.cs.apl.viaduct.backends.aby.ArithABY
-import edu.cornell.cs.apl.viaduct.backends.aby.ArithABYProtocolParser
-import edu.cornell.cs.apl.viaduct.backends.aby.BoolABY
-import edu.cornell.cs.apl.viaduct.backends.aby.BoolABYProtocolParser
-import edu.cornell.cs.apl.viaduct.backends.aby.YaoABY
-import edu.cornell.cs.apl.viaduct.backends.aby.YaoABYProtocolParser
-import edu.cornell.cs.apl.viaduct.backends.cleartext.Local
-import edu.cornell.cs.apl.viaduct.backends.cleartext.LocalProtocolParser
-import edu.cornell.cs.apl.viaduct.backends.cleartext.Replication
-import edu.cornell.cs.apl.viaduct.backends.cleartext.ReplicationProtocolParser
-import edu.cornell.cs.apl.viaduct.backends.commitment.Commitment
-import edu.cornell.cs.apl.viaduct.backends.commitment.CommitmentProtocolParser
-import edu.cornell.cs.apl.viaduct.backends.zkp.ZKP
-import edu.cornell.cs.apl.viaduct.backends.zkp.ZKPProtocolParser
-import edu.cornell.cs.apl.viaduct.parsing.ProtocolParser
+import edu.cornell.cs.apl.viaduct.backends.DefaultCombinedBackend
 import edu.cornell.cs.apl.viaduct.passes.elaborated
 import edu.cornell.cs.apl.viaduct.syntax.Host
-import edu.cornell.cs.apl.viaduct.syntax.Protocol
-import edu.cornell.cs.apl.viaduct.syntax.ProtocolName
 import java.io.File
 import kotlin.system.exitProcess
 
@@ -65,17 +49,6 @@ class Run : CliktCommand(help = "Run compiled protocol for a single host") {
         help = "Set port used by ABY"
     ).int()
 
-    private val protocols: Map<ProtocolName, ProtocolParser<Protocol>> =
-        mapOf(
-            Local.protocolName to LocalProtocolParser,
-            Commitment.protocolName to CommitmentProtocolParser,
-            Replication.protocolName to ReplicationProtocolParser,
-            ArithABY.protocolName to ArithABYProtocolParser,
-            BoolABY.protocolName to BoolABYProtocolParser,
-            YaoABY.protocolName to YaoABYProtocolParser,
-            ZKP.protocolName to ZKPProtocolParser
-        )
-
     private fun getProtocolBackends(): List<ProtocolBackend> {
         return listOf(
             PlaintextProtocolInterpreter,
@@ -86,7 +59,7 @@ class Run : CliktCommand(help = "Run compiled protocol for a single host") {
     }
 
     override fun run() {
-        val program = input.parse(protocols).elaborated()
+        val program = input.parse(DefaultCombinedBackend.protocolParsers).elaborated()
 
         val connectionInfoMap: Map<Host, HostAddress> =
             hostAddress.associate { kv ->

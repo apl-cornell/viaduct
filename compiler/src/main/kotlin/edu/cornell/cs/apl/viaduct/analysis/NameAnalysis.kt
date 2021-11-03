@@ -493,11 +493,11 @@ class NameAnalysis private constructor(private val tree: Tree<Node, ProgramNode>
 
     private val StatementNode.variables: Set<FunctionVariable> by attribute {
         val functionName = enclosingFunctionName(this)
-        this.declarationNodes().map { decl -> FunctionVariable(functionName, decl.name.value) }
+        this.descendantsIsInstance<DeclarationNode>().map { decl -> FunctionVariable(functionName, decl.name.value) }
             .plus(
-                this.letNodes().map { letNode -> FunctionVariable(functionName, letNode.temporary.value) }
+                this.descendantsIsInstance<LetNode>().map { letNode -> FunctionVariable(functionName, letNode.temporary.value) }
             ).plus(
-                this.updateNodes().map { update ->
+                this.descendantsIsInstance<UpdateNode>().map { update ->
                     when (val decl = declaration(update).declarationAsNode) {
                         is DeclarationNode ->
                             FunctionVariable(functionName, decl.name.value)

@@ -22,18 +22,8 @@ interface PrettyPrintable {
  * helloWorld
  * ```
  */
-operator fun PrettyPrintable.plus(other: PrettyPrintable): Document {
-    val document1 = this.asDocument
-    val document2 = other.asDocument
-    return when {
-        document1 is Empty ->
-            document2
-        document2 is Empty ->
-            document1
-        else ->
-            Concatenated(document1, document2)
-    }
-}
+operator fun PrettyPrintable.plus(other: PrettyPrintable): Document =
+    listOf(this, other).concatenated(empty)
 
 /**
  * Concatenates [this] and [other] with a space in between.
@@ -46,7 +36,7 @@ operator fun PrettyPrintable.plus(other: PrettyPrintable): Document {
  * ```
  */
 operator fun PrettyPrintable.times(other: PrettyPrintable): Document =
-    this + " " + other
+    listOf(this, other).concatenated(Document(" "))
 
 /**
  * Concatenates [this] and [other] with a line break in between.
@@ -60,7 +50,7 @@ operator fun PrettyPrintable.times(other: PrettyPrintable): Document =
  * ```
  */
 operator fun PrettyPrintable.div(other: PrettyPrintable): Document =
-    this + Document.lineBreak + other
+    listOf(this, other).concatenated(Document.lineBreak)
 
 /**
  * Convenience method that automatically converts [other] to a [Document].
@@ -99,9 +89,25 @@ operator fun PrettyPrintable.div(other: String): Document =
  * ```
  */
 fun List<PrettyPrintable>.concatenated(separator: PrettyPrintable = Document()): Document {
-    return if (this.isEmpty())
-        Document()
-    else reduce { acc, next -> acc + separator + next }.asDocument
+    val documents = this.map { it.asDocument }.joinedWith(separator.asDocument)
+    val nonEmpty = documents.filter { it != empty }
+    return when (nonEmpty.size) {
+        0 -> empty
+        1 -> nonEmpty.first()
+        else -> Concatenated(nonEmpty)
+    }
+}
+
+/** Returns [this] list with [separator] inserted between each element. */
+private fun <T> List<T>.joinedWith(separator: T): List<T> {
+    val result = mutableListOf<T>()
+    if (this.isNotEmpty())
+        result.add(this.first())
+    this.drop(1).forEach {
+        result.add(separator)
+        result.add(it)
+    }
+    return result
 }
 
 /**
@@ -148,14 +154,11 @@ private fun Document.grouped(): Document {
     // TODO: simply replacing all soft line breaks with spaces for now.
     //  Do proper layout in the future.
     return when (this) {
-        is Empty ->
-            this
-
         is Text ->
             this
 
         is Concatenated ->
-            document1.grouped() + document2.grouped()
+            documents.map { it.grouped() }.concatenated(empty)
 
         is LineBreak ->
             this
@@ -266,9 +269,6 @@ sealed class Document : PrettyPrintable {
          */
         fun Document.traverse(indentation: Int, style: Style) {
             when (this) {
-                is Empty ->
-                    Unit
-
                 is Text -> {
                     if (ansi)
                         output.print(style.toAnsi().a(this.text).reset())
@@ -286,18 +286,14 @@ sealed class Document : PrettyPrintable {
                     output.print(" ".repeat(indentation))
                 }
 
-                is Concatenated -> {
-                    this.document1.traverse(indentation, style)
-                    this.document2.traverse(indentation, style)
-                }
+                is Concatenated ->
+                    documents.forEach { it.traverse(indentation, style) }
 
-                is Nested -> {
+                is Nested ->
                     this.document.traverse(indentation + this.indentationChange, style)
-                }
 
-                is Styled -> {
+                is Styled ->
                     this.document.traverse(indentation, this.style)
-                }
             }
         }
 
@@ -339,9 +335,7 @@ sealed class Document : PrettyPrintable {
          * Document() + Document("hello") == Document("hello") == Document("hello") + Document()
          * ```
          */
-        operator fun invoke(): Document {
-            return Empty
-        }
+        operator fun invoke(): Document = empty
 
         /**
          * Returns the document containing [text] converting all line breaks to [lineBreak].
@@ -359,7 +353,7 @@ sealed class Document : PrettyPrintable {
         @JvmStatic
         operator fun invoke(text: String): Document {
             val lines = text.split(unicodeLineBreak)
-            val documents = lines.map { if (it.isEmpty()) Empty else Text(it) }
+            val documents = lines.map { if (it.isEmpty()) empty else Text(it) }
             return documents.concatenated(separator = lineBreak)
         }
 
@@ -404,7 +398,7 @@ sealed class Document : PrettyPrintable {
 }
 
 /** The empty document. */
-private object Empty : Document()
+private val empty: Document = Concatenated(listOf())
 
 /** A document representing a nonempty single-line string. */
 private data class Text(val text: String) : Document() {
@@ -415,10 +409,10 @@ private data class Text(val text: String) : Document() {
 }
 
 /** The concatenation of two documents. */
-private data class Concatenated(val document1: Document, val document2: Document) : Document() {
+private data class Concatenated(val documents: List<Document>) : Document(), Iterable<Document> by documents {
     init {
-        require(document1 !is Empty)
-        require(document2 !is Empty)
+        require(documents.size != 1)
+        require(documents.none { it == empty })
     }
 }
 

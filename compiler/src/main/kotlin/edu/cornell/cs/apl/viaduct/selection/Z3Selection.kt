@@ -11,15 +11,8 @@ import com.uchuhimo.collections.toBiMap
 import edu.cornell.cs.apl.prettyprinting.Document
 import edu.cornell.cs.apl.prettyprinting.PrettyPrintable
 import edu.cornell.cs.apl.viaduct.analysis.NameAnalysis
-import edu.cornell.cs.apl.viaduct.analysis.declarationNodes
-import edu.cornell.cs.apl.viaduct.analysis.ifNodes
-import edu.cornell.cs.apl.viaduct.analysis.infiniteLoopNodes
-import edu.cornell.cs.apl.viaduct.analysis.letNodes
+import edu.cornell.cs.apl.viaduct.analysis.descendantsIsInstance
 import edu.cornell.cs.apl.viaduct.analysis.main
-import edu.cornell.cs.apl.viaduct.analysis.objectDeclarationArgumentNodes
-import edu.cornell.cs.apl.viaduct.analysis.outputNodes
-import edu.cornell.cs.apl.viaduct.analysis.parameterNodes
-import edu.cornell.cs.apl.viaduct.analysis.updateNodes
 import edu.cornell.cs.apl.viaduct.errors.NoHostDeclarationsError
 import edu.cornell.cs.apl.viaduct.errors.NoProtocolIndexMapping
 import edu.cornell.cs.apl.viaduct.errors.NoSelectionSolutionError
@@ -29,9 +22,15 @@ import edu.cornell.cs.apl.viaduct.syntax.Protocol
 import edu.cornell.cs.apl.viaduct.syntax.Variable
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.DeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.FunctionDeclarationNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.IfNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.InfiniteLoopNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.LetNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.Node
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.ObjectDeclarationArgumentNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutputNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.ParameterNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.UpdateNode
 import mu.KotlinLogging
 
 private val logger = KotlinLogging.logger("Z3Selection")
@@ -91,8 +90,8 @@ private class Z3Selection(
         program.functions.filter { reachableFunctionNames.contains(it.name.value) }
     }
 
-    private fun <T> reachableInstances(instances: Node.() -> List<T>): List<T> =
-        reachableFunctions.flatMap(instances) + main.instances()
+    private inline fun <reified T : Node> reachableInstances(): Sequence<T> =
+        reachableFunctions.flatMap { it.descendantsIsInstance<T>() }.asSequence() + main.descendantsIsInstance()
 
     private fun printMetadata(
         eval: (FunctionName, Variable) -> Protocol,
@@ -126,28 +125,16 @@ private class Z3Selection(
             Pair(node, Document("cost: $nodeCostStr $nodeProtocolStr"))
         }
 
-        val declarationNodes = reachableInstances { declarationNodes() }
-
-        val letNodes = reachableInstances { letNodes() }
-
-        val updateNodes = reachableInstances { updateNodes() }
-
-        val outputNodes = reachableInstances { outputNodes() }
-
-        val ifNodes = reachableInstances { ifNodes() }
-
-        val loopNodes = reachableInstances { infiniteLoopNodes() }
-
         val totalCostMetadata =
             Document("total cost: ${(model.getConstInterp(totalCostSymvar) as IntNum).int}")
 
         val costMetadata: Map<Node, PrettyPrintable> =
-            declarationNodes.asSequence().map { nodeCostFunc(it) }
-                .plus(letNodes.map { nodeCostFunc(it) })
-                .plus(updateNodes.map { nodeCostFunc(it) })
-                .plus(outputNodes.map { nodeCostFunc(it) })
-                .plus(ifNodes.map { nodeCostFunc(it) })
-                .plus(loopNodes.map { nodeCostFunc(it) })
+            reachableInstances<DeclarationNode>().map { nodeCostFunc(it) }
+                .plus(reachableInstances<LetNode>().map { nodeCostFunc(it) })
+                .plus(reachableInstances<UpdateNode>().map { nodeCostFunc(it) })
+                .plus(reachableInstances<OutputNode>().map { nodeCostFunc(it) })
+                .plus(reachableInstances<IfNode>().map { nodeCostFunc(it) })
+                .plus(reachableInstances<InfiniteLoopNode>().map { nodeCostFunc(it) })
                 .plus(reachableFunctions.map { nodeCostFunc(it) })
                 .plus(nodeCostFunc(main))
                 .plus(Pair(program, totalCostMetadata))
@@ -155,6 +142,10 @@ private class Z3Selection(
 
         dumpMetadata(costMetadata)
     }
+
+    // Build variable and protocol maps
+    private inline fun <reified T : Node> associateFreshConstant(): Map<T, IntExpr> =
+        reachableInstances<T>().associateWith { (ctx.mkFreshConst("t", ctx.intSort)) as IntExpr }
 
     /** Protocol selection. */
     fun select(): (FunctionName, Variable) -> Protocol {
@@ -169,21 +160,17 @@ private class Z3Selection(
         // then select for the main process
         constraints.addAll(constraintGenerator.getConstraints(main))
 
-        // Build variable and protocol maps
-        fun <T> associateFreshConstant(instances: Node.() -> List<T>): Map<T, IntExpr> =
-            reachableInstances(instances).associateWith { (ctx.mkFreshConst("t", ctx.intSort)) as IntExpr }
-
-        val letNodes = associateFreshConstant { letNodes() }
-        val declarationNodes = associateFreshConstant { declarationNodes() }
-        val objectDeclarationArgumentNodes = associateFreshConstant { objectDeclarationArgumentNodes() }
-        val parameterNodes = associateFreshConstant { parameterNodes() }
+        val letNodes = associateFreshConstant<LetNode>()
+        val declarationNodes = associateFreshConstant<DeclarationNode>()
+        val objectDeclarationArgumentNodes = associateFreshConstant<ObjectDeclarationArgumentNode>()
+        val parameterNodes = associateFreshConstant<ParameterNode>()
 
         val pmap: BiMap<Protocol, Int> = run {
             // Compute all protocols relevant for the program
             val protocols = mutableSetOf<Protocol>()
-            reachableInstances { letNodes() }.forEach { protocols.addAll(protocolFactory.viableProtocols(it)) }
-            reachableInstances { declarationNodes() }.forEach { protocols.addAll(protocolFactory.viableProtocols(it)) }
-            reachableInstances { parameterNodes() }.forEach { protocols.addAll(protocolFactory.viableProtocols(it)) }
+            reachableInstances<LetNode>().forEach { protocols.addAll(protocolFactory.viableProtocols(it)) }
+            reachableInstances<DeclarationNode>().forEach { protocols.addAll(protocolFactory.viableProtocols(it)) }
+            reachableInstances<ParameterNode>().forEach { protocols.addAll(protocolFactory.viableProtocols(it)) }
             protocols.sorted().withIndex().associate { it.value to it.index }.toBiMap()
         }
 

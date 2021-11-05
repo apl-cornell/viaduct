@@ -8,16 +8,9 @@ import com.microsoft.z3.IntNum
 import com.microsoft.z3.Status
 import com.uchuhimo.collections.BiMap
 import com.uchuhimo.collections.mutableBiMapOf
-import edu.cornell.cs.apl.prettyprinting.PrettyPrintable
-import edu.cornell.cs.apl.viaduct.errors.NoHostDeclarationsError
 import edu.cornell.cs.apl.viaduct.errors.NoProtocolIndexMapping
 import edu.cornell.cs.apl.viaduct.errors.NoSelectionSolutionError
-import edu.cornell.cs.apl.viaduct.errors.NoVariableSelectionSolutionError
-import edu.cornell.cs.apl.viaduct.syntax.FunctionName
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
-import edu.cornell.cs.apl.viaduct.syntax.Variable
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.Node
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
 import edu.cornell.cs.apl.viaduct.util.FreshNameGenerator
 import mu.KotlinLogging
 
@@ -28,19 +21,15 @@ enum class CostMode { MINIMIZE, MAXIMIZE }
 /**
  * Constraint problem using Z3. Z3 has an optimization module that can return models with minimal cost.
  */
-private class Z3Selection(
-    private val ctx: Context,
-    private val costMode: CostMode,
-    private val dumpMetadata: (Map<Node, PrettyPrintable>) -> Unit
-) : SelectionProblemSolver {
-    private companion object {
+class Z3Selection : SelectionProblemSolver {
+    companion object {
         init {
             // Use old arithmetic solver to fix regression introduced in Z3 v4.8.9
             Global.setParameter("smt.arith.solver", "2")
         }
     }
 
-    val nameGenerator = FreshNameGenerator()
+    private val nameGenerator = FreshNameGenerator()
 
     /** Convert a SelectionConstraint into a Z3 BoolExpr. **/
     private fun boolExpr(
@@ -191,107 +180,75 @@ private class Z3Selection(
 
     /** Protocol selection. */
     override fun solveSelectionProblem(problem: SelectionProblem): ProtocolAssignment {
-        val constraints = problem.constraints
-        val programCost = problem.cost
+        Context().use { ctx ->
+            val constraints = problem.constraints
+            val programCost = problem.cost
 
-        val solver = ctx.mkOptimize()
+            val solver = ctx.mkOptimize()
 
-        val protocolMap = mutableBiMapOf<Protocol, Int>()
-        val fvMap = mutableBiMapOf<FunctionVariable, IntExpr>()
-        val boolVarMap = mutableMapOf<String, BoolExpr>()
+            val protocolMap = mutableBiMapOf<Protocol, Int>()
+            val fvMap = mutableBiMapOf<FunctionVariable, IntExpr>()
+            val boolVarMap = mutableMapOf<String, BoolExpr>()
 
-        var protocolCounter = 1
-        for (constraint in constraints) {
-            for (fv in constraint.functionVariables()) {
-                if (!fvMap.containsKey(fv)) {
-                    val fvSymname = this.nameGenerator.getFreshName("${fv.function.name}_${fv.variable.name}")
-                    fvMap[fv] = ctx.mkFreshConst(fvSymname, ctx.intSort) as IntExpr
-                }
-            }
-
-            for (protocol in constraint.protocols()) {
-                if (!protocolMap.containsKey(protocol)) {
-                    protocolMap[protocol] = protocolCounter
-                    protocolCounter++
-                }
-            }
-
-            for (variable in constraint.variableNames()) {
-                if (!boolVarMap.containsKey(variable)) {
-                    val varName = this.nameGenerator.getFreshName(variable)
-                    boolVarMap[variable] = ctx.mkFreshConst(varName, ctx.boolSort) as BoolExpr
-                }
-            }
-        }
-
-        if (fvMap.values.isNotEmpty()) {
-            // load selection constraints into Z3
+            var protocolCounter = 1
             for (constraint in constraints) {
-                solver.Add(boolExpr(constraint, ctx, fvMap, boolVarMap, protocolMap))
-            }
-
-            val (costExpr, costConstrs) = arithExpr(programCost, ctx, fvMap, boolVarMap, protocolMap)
-            solver.Add(costConstrs)
-
-            when (costMode) {
-                CostMode.MINIMIZE -> solver.MkMinimize(costExpr)
-                CostMode.MAXIMIZE -> solver.MkMaximize(costExpr)
-            }
-
-            val symvarCount = fvMap.size + boolVarMap.size
-
-            logger.info { "number of symvars: $symvarCount" }
-            logger.info { "cost mode set to $costMode" }
-
-            if (solver.Check() == Status.SATISFIABLE) {
-                val model = solver.model
-                val interpMap: Map<FunctionVariable, Int> =
-                    fvMap.mapValues { e ->
-                        (model.getConstInterp(e.value) as IntNum).int
+                for (fv in constraint.functionVariables()) {
+                    if (!fvMap.containsKey(fv)) {
+                        val fvSymname = this.nameGenerator.getFreshName("${fv.function.name}_${fv.variable.name}")
+                        fvMap[fv] = ctx.mkFreshConst(fvSymname, ctx.intSort) as IntExpr
                     }
-
-                fun eval(fv: FunctionVariable): Protocol {
-                    return interpMap[fv]?.let { protocolIndex ->
-                        protocolMap.inverse[protocolIndex] ?: throw NoProtocolIndexMapping(protocolIndex)
-                    } ?: throw NoVariableSelectionSolutionError(fv.function, fv.variable)
                 }
 
-                // printMetadata(::eval, model, totalCostSymvar)
+                for (protocol in constraint.protocols()) {
+                    if (!protocolMap.containsKey(protocol)) {
+                        protocolMap[protocol] = protocolCounter
+                        protocolCounter++
+                    }
+                }
 
-                logger.info { "constraints satisfiable, extracted model" }
-
-                return ::eval
-            } else {
-                throw NoSelectionSolutionError()
+                for (variable in constraint.variableNames()) {
+                    if (!boolVarMap.containsKey(variable)) {
+                        val varName = this.nameGenerator.getFreshName(variable)
+                        boolVarMap[variable] = ctx.mkFreshConst(varName, ctx.boolSort) as BoolExpr
+                    }
+                }
             }
-        } else {
-            return { (f: FunctionName, v: Variable) ->
-                throw NoVariableSelectionSolutionError(f, v)
+
+            if (fvMap.values.isNotEmpty()) {
+                // load selection constraints into Z3
+                for (constraint in constraints) {
+                    solver.Add(boolExpr(constraint, ctx, fvMap, boolVarMap, protocolMap))
+                }
+
+                val (costExpr, costConstrs) = arithExpr(programCost, ctx, fvMap, boolVarMap, protocolMap)
+                solver.Add(costConstrs)
+                solver.MkMinimize(costExpr)
+
+                val symvarCount = fvMap.size + boolVarMap.size
+
+                logger.info { "number of symvars: $symvarCount" }
+
+                if (solver.Check() == Status.SATISFIABLE) {
+                    val model = solver.model
+                    val assignment: ProtocolAssignment =
+                        ProtocolAssignment(
+                            fvMap.mapValues { e ->
+                                val protocolIndex = (model.getConstInterp(e.value) as IntNum).int
+                                protocolMap.inverse[protocolIndex] ?: throw NoProtocolIndexMapping(protocolIndex)
+                            }
+                        )
+
+                    // printMetadata(::eval, model, totalCostSymvar)
+
+                    logger.info { "constraints satisfiable, extracted model" }
+
+                    return assignment
+                } else {
+                    throw NoSelectionSolutionError()
+                }
+            } else {
+                return ProtocolAssignment(mapOf())
             }
         }
-    }
-}
-
-fun selectProtocolsWithZ3(
-    program: ProgramNode,
-    protocolFactory: ProtocolFactory,
-    protocolComposer: ProtocolComposer,
-    costEstimator: CostEstimator<IntegerCost>,
-    costMode: CostMode = CostMode.MINIMIZE,
-    dumpMetadata: (Map<Node, PrettyPrintable>) -> Unit = {}
-): (FunctionName, Variable) -> Protocol {
-    if (program.hosts.isEmpty()) {
-        throw NoHostDeclarationsError(program.sourceLocation.sourcePath)
-    }
-
-    val constraintGenerator = SelectionConstraintGenerator(program, protocolFactory, protocolComposer, costEstimator)
-
-    Context().use { context ->
-        val selectionProblem = constraintGenerator.getSelectionProblem()
-        val assignment =
-            Z3Selection(context, costMode, dumpMetadata)
-                .solveSelectionProblem(selectionProblem)
-
-        return { f, v -> assignment(FunctionVariable(f, v)) }
     }
 }

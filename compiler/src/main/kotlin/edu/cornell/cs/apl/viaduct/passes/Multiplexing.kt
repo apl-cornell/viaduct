@@ -4,14 +4,13 @@ import edu.cornell.cs.apl.viaduct.analysis.NameAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.freshVariableNameGenerator
 import edu.cornell.cs.apl.viaduct.errors.UnknownDatatypeError
 import edu.cornell.cs.apl.viaduct.errors.UnknownMethodError
+import edu.cornell.cs.apl.viaduct.selection.ProtocolAssignment
 import edu.cornell.cs.apl.viaduct.syntax.Arguments
-import edu.cornell.cs.apl.viaduct.syntax.FunctionName
 import edu.cornell.cs.apl.viaduct.syntax.Located
 import edu.cornell.cs.apl.viaduct.syntax.Operator
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
 import edu.cornell.cs.apl.viaduct.syntax.Temporary
 import edu.cornell.cs.apl.viaduct.syntax.TemporaryNode
-import edu.cornell.cs.apl.viaduct.syntax.Variable
 import edu.cornell.cs.apl.viaduct.syntax.datatypes.Get
 import edu.cornell.cs.apl.viaduct.syntax.datatypes.Modify
 import edu.cornell.cs.apl.viaduct.syntax.datatypes.MutableCell
@@ -77,7 +76,7 @@ fun StatementNode.canMux(): Boolean =
 
 class MuxPostprocessor(
     val containedProtocolCheck: (Protocol) -> Boolean,
-    val protocolAssignment: (FunctionName, Variable) -> Protocol
+    val selection: ProtocolAssignment
 ) : ProgramPostprocessor {
     override fun postprocess(program: ProgramNode): ProgramNode {
         val nameAnalysis = NameAnalysis.get(program)
@@ -137,7 +136,7 @@ class MuxPostprocessor(
             is UpdateNode -> {
                 if (currentGuard != null) {
                     val enclosingFunction = nameAnalysis.enclosingFunctionName(stmt)
-                    val updateProtocol = protocolAssignment(enclosingFunction, stmt.variable.value)
+                    val updateProtocol = selection.getAssignment(enclosingFunction, stmt.variable.value)
                     val className = nameAnalysis.declaration(stmt).className.value
                     val getTemporary =
                         Located(
@@ -268,7 +267,7 @@ class MuxPostprocessor(
                     when (stmt.guard) {
                         is ReadNode -> {
                             val enclosingFunction = nameAnalysis.enclosingFunctionName(stmt)
-                            protocolAssignment(enclosingFunction, stmt.guard.temporary.value)
+                            selection.getAssignment(enclosingFunction, stmt.guard.temporary.value)
                         }
 
                         is LiteralNode -> null

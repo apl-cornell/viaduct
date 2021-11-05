@@ -1,11 +1,9 @@
 package edu.cornell.cs.apl.viaduct.passes
 
 import edu.cornell.cs.apl.viaduct.analysis.NameAnalysis
+import edu.cornell.cs.apl.viaduct.selection.ProtocolAssignment
 import edu.cornell.cs.apl.viaduct.syntax.Arguments
-import edu.cornell.cs.apl.viaduct.syntax.FunctionName
 import edu.cornell.cs.apl.viaduct.syntax.Located
-import edu.cornell.cs.apl.viaduct.syntax.Protocol
-import edu.cornell.cs.apl.viaduct.syntax.Variable
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.BlockNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.DeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.FunctionDeclarationNode
@@ -18,12 +16,12 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.StatementNode
 
 /** Annotate parameters, declarations, and let nodes with protocols. */
-fun ProgramNode.annotateWithProtocols(assignment: (FunctionName, Variable) -> Protocol): ProgramNode =
+fun ProgramNode.annotateWithProtocols(assignment: ProtocolAssignment): ProgramNode =
     ProtocolAnnotator(this, assignment).run()
 
 private class ProtocolAnnotator(
     val program: ProgramNode,
-    val assignment: (FunctionName, Variable) -> Protocol
+    val selection: ProtocolAssignment
 ) {
     private val nameAnalysis = NameAnalysis.get(program)
 
@@ -35,7 +33,7 @@ private class ProtocolAnnotator(
                     stmt.temporary,
                     stmt.value,
                     Located(
-                        assignment(enclosingFunction, stmt.temporary.value),
+                        selection.getAssignment(enclosingFunction, stmt.temporary.value),
                         stmt.sourceLocation
                     ),
                     stmt.sourceLocation
@@ -51,7 +49,7 @@ private class ProtocolAnnotator(
                     stmt.labelArguments,
                     stmt.arguments,
                     Located(
-                        assignment(enclosingFunction, stmt.name.value),
+                        selection.getAssignment(enclosingFunction, stmt.name.value),
                         stmt.sourceLocation
                     ),
                     stmt.sourceLocation
@@ -103,7 +101,7 @@ private class ProtocolAnnotator(
                                         param.typeArguments,
                                         param.labelArguments,
                                         Located(
-                                            assignment(decl.name.value, param.name.value),
+                                            selection.getAssignment(decl.name.value, param.name.value),
                                             param.sourceLocation
                                         ),
                                         param.sourceLocation

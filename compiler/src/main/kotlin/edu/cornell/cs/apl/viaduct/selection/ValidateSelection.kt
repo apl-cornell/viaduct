@@ -2,10 +2,7 @@ package edu.cornell.cs.apl.viaduct.selection
 
 import edu.cornell.cs.apl.viaduct.analysis.InformationFlowAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.NameAnalysis
-import edu.cornell.cs.apl.viaduct.syntax.FunctionName
 import edu.cornell.cs.apl.viaduct.syntax.HostTrustConfiguration
-import edu.cornell.cs.apl.viaduct.syntax.Protocol
-import edu.cornell.cs.apl.viaduct.syntax.Variable
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.DeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.LetNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.Node
@@ -20,7 +17,7 @@ fun validateProtocolAssignment(
     protocolFactory: ProtocolFactory,
     protocolComposer: ProtocolComposer,
     costEstimator: CostEstimator<IntegerCost>,
-    protocolAssignment: (FunctionName, Variable) -> Protocol
+    protocolAssignment: ProtocolAssignment
 ) {
     val constraintGenerator =
         SelectionConstraintGenerator(program, protocolFactory, protocolComposer, costEstimator)
@@ -29,9 +26,9 @@ fun validateProtocolAssignment(
     val informationFlowAnalysis = InformationFlowAnalysis.get(program)
     val hostTrustConfiguration = HostTrustConfiguration(program)
 
-    fun checkViableProtocol(selection: (FunctionName, Variable) -> Protocol, node: LetNode) {
+    fun checkViableProtocol(selection: ProtocolAssignment, node: LetNode) {
         val functionName = nameAnalysis.enclosingFunctionName(node)
-        val protocol = selection(functionName, node.temporary.value)
+        val protocol = selection.getAssignment(functionName, node.temporary.value)
         val l = informationFlowAnalysis.label(node)
         if (!constraintGenerator.viableProtocols(node).contains(protocol)) {
             throw error(
@@ -42,9 +39,9 @@ fun validateProtocolAssignment(
         }
     }
 
-    fun checkAuthority(selection: (FunctionName, Variable) -> Protocol, node: LetNode) {
+    fun checkAuthority(selection: ProtocolAssignment, node: LetNode) {
         val functionName = nameAnalysis.enclosingFunctionName(node)
-        val protocol = selection(functionName, node.temporary.value)
+        val protocol = selection.getAssignment(functionName, node.temporary.value)
         if (!(
             protocol.authority(hostTrustConfiguration)
                 .actsFor(informationFlowAnalysis.label(node))
@@ -61,9 +58,9 @@ fun validateProtocolAssignment(
         }
     }
 
-    fun checkViableProtocol(selection: (FunctionName, Variable) -> Protocol, node: DeclarationNode) {
+    fun checkViableProtocol(selection: ProtocolAssignment, node: DeclarationNode) {
         val functionName = nameAnalysis.enclosingFunctionName(node)
-        val protocol = selection(functionName, node.name.value)
+        val protocol = selection.getAssignment(functionName, node.name.value)
         if (!constraintGenerator.viableProtocols(node).contains(protocol)) {
             throw error(
                 "Bad protocol restriction for decl of ${node.name}: viable protocols is ${
@@ -75,9 +72,9 @@ fun validateProtocolAssignment(
         }
     }
 
-    fun checkAuthority(selection: (FunctionName, Variable) -> Protocol, node: DeclarationNode) {
+    fun checkAuthority(selection: ProtocolAssignment, node: DeclarationNode) {
         val functionName = nameAnalysis.enclosingFunctionName(node)
-        val protocol = selection(functionName, node.name.value)
+        val protocol = selection.getAssignment(functionName, node.name.value)
         if (!(
             protocol.authority(hostTrustConfiguration)
                 .actsFor(informationFlowAnalysis.label(node))
@@ -94,7 +91,7 @@ fun validateProtocolAssignment(
         }
     }
 
-    fun Node.traverse(selection: (FunctionName, Variable) -> Protocol) {
+    fun Node.traverse(selection: ProtocolAssignment) {
         when (this) {
             is LetNode -> {
                 checkViableProtocol(selection, this)

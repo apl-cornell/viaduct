@@ -3,10 +3,8 @@ package edu.cornell.cs.apl.viaduct.backend.zkp
 import edu.cornell.cs.apl.viaduct.backends.zkp.ZKP
 import edu.cornell.cs.apl.viaduct.passes.MuxPostprocessor
 import edu.cornell.cs.apl.viaduct.passes.ProgramPostprocessor
-import edu.cornell.cs.apl.viaduct.syntax.FunctionName
-import edu.cornell.cs.apl.viaduct.syntax.Protocol
-import edu.cornell.cs.apl.viaduct.syntax.Variable
+import edu.cornell.cs.apl.viaduct.selection.ProtocolAssignment
 
 fun zkpMuxPostprocessor(
-    protocolAssignment: (FunctionName, Variable) -> Protocol
+    protocolAssignment: ProtocolAssignment,
 ): ProgramPostprocessor = MuxPostprocessor({ p -> p is ZKP }, protocolAssignment)

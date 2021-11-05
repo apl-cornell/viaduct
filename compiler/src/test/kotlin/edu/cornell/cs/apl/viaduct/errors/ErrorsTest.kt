@@ -7,9 +7,10 @@ import edu.cornell.cs.apl.viaduct.parsing.isBlankOrUnderline
 import edu.cornell.cs.apl.viaduct.parsing.parse
 import edu.cornell.cs.apl.viaduct.passes.check
 import edu.cornell.cs.apl.viaduct.passes.elaborated
+import edu.cornell.cs.apl.viaduct.selection.ProtocolSelection
 import edu.cornell.cs.apl.viaduct.selection.SimpleCostEstimator
 import edu.cornell.cs.apl.viaduct.selection.SimpleCostRegime
-import edu.cornell.cs.apl.viaduct.selection.selectProtocolsWithZ3
+import edu.cornell.cs.apl.viaduct.selection.Z3Selection
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -50,11 +51,12 @@ private fun run(file: File) {
     program.check()
 
     val protocolComposer = DefaultCombinedBackend.protocolComposer
-    selectProtocolsWithZ3(
-        program,
-        DefaultCombinedBackend.protocolFactory(program), protocolComposer,
+    ProtocolSelection(
+        Z3Selection(),
+        DefaultCombinedBackend.protocolFactory(program),
+        protocolComposer,
         SimpleCostEstimator(protocolComposer, SimpleCostRegime.LAN)
-    )
+    ).selectAssignment(program)
     // TODO: interpret
 }
 

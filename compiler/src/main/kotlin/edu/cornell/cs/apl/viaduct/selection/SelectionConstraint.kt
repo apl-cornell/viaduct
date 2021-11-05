@@ -8,6 +8,7 @@ import edu.cornell.cs.apl.prettyprinting.tupled
 import edu.cornell.cs.apl.viaduct.analysis.NameAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.createdVariables
 import edu.cornell.cs.apl.viaduct.analysis.involvedVariables
+import edu.cornell.cs.apl.viaduct.errors.NoVariableSelectionSolutionError
 import edu.cornell.cs.apl.viaduct.syntax.FunctionName
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
 import edu.cornell.cs.apl.viaduct.syntax.Variable
@@ -20,7 +21,15 @@ data class FunctionVariable(val function: FunctionName, val variable: Variable) 
         Document("(") + function + "," + variable.asDocument + Document(")")
 }
 
-typealias ProtocolAssignment = (FunctionVariable) -> Protocol
+data class ProtocolAssignment(
+    val assignment: Map<FunctionVariable, Protocol>
+) {
+    fun getAssignment(fv: FunctionVariable): Protocol =
+        assignment[fv] ?: throw NoVariableSelectionSolutionError(fv.function, fv.variable)
+
+    fun getAssignment(f: FunctionName, v: Variable): Protocol =
+        getAssignment(FunctionVariable(f, v))
+}
 
 sealed class SymbolicCost : CostMonoid<SymbolicCost> {
     companion object {

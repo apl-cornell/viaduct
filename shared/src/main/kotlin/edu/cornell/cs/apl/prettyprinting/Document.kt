@@ -22,18 +22,8 @@ interface PrettyPrintable {
  * helloWorld
  * ```
  */
-operator fun PrettyPrintable.plus(other: PrettyPrintable): Document {
-    val document1 = this.asDocument
-    val document2 = other.asDocument
-    return when {
-        document1 is Empty ->
-            document2
-        document2 is Empty ->
-            document1
-        else ->
-            Concatenated(document1, document2)
-    }
-}
+operator fun PrettyPrintable.plus(other: PrettyPrintable): Document =
+    Concatenated(listOf(this.asDocument, other.asDocument))
 
 /**
  * Concatenates [this] and [other] with a space in between.
@@ -46,7 +36,7 @@ operator fun PrettyPrintable.plus(other: PrettyPrintable): Document {
  * ```
  */
 operator fun PrettyPrintable.times(other: PrettyPrintable): Document =
-    this + " " + other
+    Concatenated(listOf(this.asDocument, Document(" "), other.asDocument))
 
 /**
  * Concatenates [this] and [other] with a line break in between.
@@ -60,7 +50,7 @@ operator fun PrettyPrintable.times(other: PrettyPrintable): Document =
  * ```
  */
 operator fun PrettyPrintable.div(other: PrettyPrintable): Document =
-    this + Document.lineBreak + other
+    Concatenated(listOf(this.asDocument, Document.lineBreak, other.asDocument))
 
 /**
  * Convenience method that automatically converts [other] to a [Document].
@@ -99,9 +89,20 @@ operator fun PrettyPrintable.div(other: String): Document =
  * ```
  */
 fun List<PrettyPrintable>.concatenated(separator: PrettyPrintable = Document()): Document {
-    return if (this.isEmpty())
-        Document()
-    else reduce { acc, next -> acc + separator + next }.asDocument
+    val documents = this.map { it.asDocument }.joinedWith(separator.asDocument)
+    return Concatenated(documents)
+}
+
+/** Returns [this] list with [separator] inserted between each element. */
+private fun <T> List<T>.joinedWith(separator: T): List<T> {
+    val result = mutableListOf<T>()
+    if (this.isNotEmpty())
+        result.add(this.first())
+    this.drop(1).forEach {
+        result.add(separator)
+        result.add(it)
+    }
+    return result
 }
 
 /**
@@ -124,10 +125,7 @@ fun List<PrettyPrintable>.concatenated(separator: PrettyPrintable = Document()):
  * ```
  */
 fun PrettyPrintable.nested(indentationChange: Int = 4): Document =
-    if (indentationChange == 0)
-        this.asDocument
-    else
-        Nested(this.asDocument, indentationChange)
+    Nested(this.asDocument, indentationChange)
 
 /**
  * Tries laying out [this] document into a single line by removing the contained
@@ -148,14 +146,11 @@ private fun Document.grouped(): Document {
     // TODO: simply replacing all soft line breaks with spaces for now.
     //  Do proper layout in the future.
     return when (this) {
-        is Empty ->
-            this
-
         is Text ->
             this
 
         is Concatenated ->
-            document1.grouped() + document2.grouped()
+            Concatenated(documents.map { it.grouped() })
 
         is LineBreak ->
             this
@@ -164,10 +159,10 @@ private fun Document.grouped(): Document {
             Text(" ")
 
         is Nested ->
-            copy(document = document.grouped())
+            Nested(document.grouped(), indentationChange)
 
         is Styled ->
-            copy(document = document.grouped())
+            Styled(document.grouped(), style)
     }
 }
 
@@ -266,9 +261,6 @@ sealed class Document : PrettyPrintable {
          */
         fun Document.traverse(indentation: Int, style: Style) {
             when (this) {
-                is Empty ->
-                    Unit
-
                 is Text -> {
                     if (ansi)
                         output.print(style.toAnsi().a(this.text).reset())
@@ -286,18 +278,14 @@ sealed class Document : PrettyPrintable {
                     output.print(" ".repeat(indentation))
                 }
 
-                is Concatenated -> {
-                    this.document1.traverse(indentation, style)
-                    this.document2.traverse(indentation, style)
-                }
+                is Concatenated ->
+                    documents.forEach { it.traverse(indentation, style) }
 
-                is Nested -> {
+                is Nested ->
                     this.document.traverse(indentation + this.indentationChange, style)
-                }
 
-                is Styled -> {
+                is Styled ->
                     this.document.traverse(indentation, this.style)
-                }
             }
         }
 
@@ -339,9 +327,7 @@ sealed class Document : PrettyPrintable {
          * Document() + Document("hello") == Document("hello") == Document("hello") + Document()
          * ```
          */
-        operator fun invoke(): Document {
-            return Empty
-        }
+        operator fun invoke(): Document = Concatenated()
 
         /**
          * Returns the document containing [text] converting all line breaks to [lineBreak].
@@ -359,7 +345,7 @@ sealed class Document : PrettyPrintable {
         @JvmStatic
         operator fun invoke(text: String): Document {
             val lines = text.split(unicodeLineBreak)
-            val documents = lines.map { if (it.isEmpty()) Empty else Text(it) }
+            val documents = lines.map { Text(it) }
             return documents.concatenated(separator = lineBreak)
         }
 
@@ -403,22 +389,35 @@ sealed class Document : PrettyPrintable {
     }
 }
 
-/** The empty document. */
-private object Empty : Document()
-
 /** A document representing a nonempty single-line string. */
-private data class Text(val text: String) : Document() {
+private class Text private constructor(val text: String) : Document() {
     init {
-        require(text.isNotEmpty())
         require(!text.contains(unicodeLineBreak))
+    }
+
+    companion object {
+        operator fun invoke(text: String): Document =
+            if (text.isEmpty()) Concatenated() else Text(text)
     }
 }
 
 /** The concatenation of two documents. */
-private data class Concatenated(val document1: Document, val document2: Document) : Document() {
-    init {
-        require(document1 !is Empty)
-        require(document2 !is Empty)
+private class Concatenated private constructor(val documents: List<Document>) : Document(), Iterable<Document> by documents {
+    companion object {
+        /** The empty document. */
+        private val empty = Concatenated(listOf())
+
+        /** Returns the empty document. */
+        operator fun invoke(): Document = empty
+
+        operator fun invoke(documents: Iterable<Document>): Document {
+            val nonEmpty = documents.filter { empty != it }
+            return when (nonEmpty.size) {
+                0 -> Concatenated()
+                1 -> nonEmpty.first()
+                else -> Concatenated(nonEmpty)
+            }
+        }
     }
 }
 
@@ -430,14 +429,22 @@ private object LineBreak : Document()
 private object SoftLineBreak : Document()
 
 /** Same as [document] but with its indentation level adjusted by [indentationChange]. */
-private data class Nested(val document: Document, val indentationChange: Int) : Document() {
+private class Nested private constructor(val document: Document, val indentationChange: Int) : Document() {
     init {
         require(indentationChange != 0)
+    }
+
+    companion object {
+        operator fun invoke(document: Document, indentationChange: Int): Document =
+            if (indentationChange == 0)
+                document
+            else
+                Nested(document, indentationChange)
     }
 }
 
 /** Same as [document] but with [style] applied. */
-private data class Styled(val document: Document, val style: Style) : Document()
+private class Styled(val document: Document, val style: Style) : Document()
 
 /** A regular expression that recognizes Unicode line breaks. */
 private val unicodeLineBreak: Regex = Regex("\\R")

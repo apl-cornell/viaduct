@@ -36,7 +36,7 @@ operator fun PrettyPrintable.plus(other: PrettyPrintable): Document =
  * ```
  */
 operator fun PrettyPrintable.times(other: PrettyPrintable): Document =
-    listOf(this, other).concatenated(Document(" "))
+    Concatenated(listOf(this.asDocument, Document(" "), other.asDocument))
 
 /**
  * Concatenates [this] and [other] with a line break in between.
@@ -50,7 +50,7 @@ operator fun PrettyPrintable.times(other: PrettyPrintable): Document =
  * ```
  */
 operator fun PrettyPrintable.div(other: PrettyPrintable): Document =
-    listOf(this, other).concatenated(Document.lineBreak)
+    Concatenated(listOf(this.asDocument, Document.lineBreak, other.asDocument))
 
 /**
  * Convenience method that automatically converts [other] to a [Document].
@@ -411,7 +411,7 @@ private class Concatenated private constructor(val documents: List<Document>) : 
         operator fun invoke(): Document = empty
 
         operator fun invoke(documents: Iterable<Document>): Document {
-            val nonEmpty = documents.filter { it != empty }
+            val nonEmpty = documents.filter { empty != it }
             return when (nonEmpty.size) {
                 0 -> Concatenated()
                 1 -> nonEmpty.first()

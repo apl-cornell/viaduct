@@ -23,7 +23,7 @@ interface PrettyPrintable {
  * ```
  */
 operator fun PrettyPrintable.plus(other: PrettyPrintable): Document =
-    listOf(this, other).concatenated(empty)
+    Concatenated(listOf(this.asDocument, other.asDocument))
 
 /**
  * Concatenates [this] and [other] with a space in between.
@@ -90,12 +90,7 @@ operator fun PrettyPrintable.div(other: String): Document =
  */
 fun List<PrettyPrintable>.concatenated(separator: PrettyPrintable = Document()): Document {
     val documents = this.map { it.asDocument }.joinedWith(separator.asDocument)
-    val nonEmpty = documents.filter { it != empty }
-    return when (nonEmpty.size) {
-        0 -> empty
-        1 -> nonEmpty.first()
-        else -> Concatenated(nonEmpty)
-    }
+    return Concatenated(documents)
 }
 
 /** Returns [this] list with [separator] inserted between each element. */
@@ -130,10 +125,7 @@ private fun <T> List<T>.joinedWith(separator: T): List<T> {
  * ```
  */
 fun PrettyPrintable.nested(indentationChange: Int = 4): Document =
-    if (indentationChange == 0)
-        this.asDocument
-    else
-        Nested(this.asDocument, indentationChange)
+    Nested(this.asDocument, indentationChange)
 
 /**
  * Tries laying out [this] document into a single line by removing the contained
@@ -158,7 +150,7 @@ private fun Document.grouped(): Document {
             this
 
         is Concatenated ->
-            documents.map { it.grouped() }.concatenated(empty)
+            Concatenated(documents.map { it.grouped() })
 
         is LineBreak ->
             this
@@ -167,10 +159,10 @@ private fun Document.grouped(): Document {
             Text(" ")
 
         is Nested ->
-            copy(document = document.grouped())
+            Nested(document.grouped(), indentationChange)
 
         is Styled ->
-            copy(document = document.grouped())
+            Styled(document.grouped(), style)
     }
 }
 
@@ -335,7 +327,7 @@ sealed class Document : PrettyPrintable {
          * Document() + Document("hello") == Document("hello") == Document("hello") + Document()
          * ```
          */
-        operator fun invoke(): Document = empty
+        operator fun invoke(): Document = Concatenated()
 
         /**
          * Returns the document containing [text] converting all line breaks to [lineBreak].
@@ -353,7 +345,7 @@ sealed class Document : PrettyPrintable {
         @JvmStatic
         operator fun invoke(text: String): Document {
             val lines = text.split(unicodeLineBreak)
-            val documents = lines.map { if (it.isEmpty()) empty else Text(it) }
+            val documents = lines.map { Text(it) }
             return documents.concatenated(separator = lineBreak)
         }
 
@@ -397,22 +389,35 @@ sealed class Document : PrettyPrintable {
     }
 }
 
-/** The empty document. */
-private val empty: Document = Concatenated(listOf())
-
 /** A document representing a nonempty single-line string. */
-private data class Text(val text: String) : Document() {
+private class Text private constructor(val text: String) : Document() {
     init {
-        require(text.isNotEmpty())
         require(!text.contains(unicodeLineBreak))
+    }
+
+    companion object {
+        operator fun invoke(text: String): Document =
+            if (text.isEmpty()) Concatenated() else Text(text)
     }
 }
 
 /** The concatenation of two documents. */
-private data class Concatenated(val documents: List<Document>) : Document(), Iterable<Document> by documents {
-    init {
-        require(documents.size != 1)
-        require(documents.none { it == empty })
+private class Concatenated private constructor(val documents: List<Document>) : Document(), Iterable<Document> by documents {
+    companion object {
+        /** The empty document. */
+        private val empty = Concatenated(listOf())
+
+        /** Returns the empty document. */
+        operator fun invoke(): Document = empty
+
+        operator fun invoke(documents: Iterable<Document>): Document {
+            val nonEmpty = documents.filter { it != empty }
+            return when (nonEmpty.size) {
+                0 -> Concatenated()
+                1 -> nonEmpty.first()
+                else -> Concatenated(nonEmpty)
+            }
+        }
     }
 }
 
@@ -424,14 +429,22 @@ private object LineBreak : Document()
 private object SoftLineBreak : Document()
 
 /** Same as [document] but with its indentation level adjusted by [indentationChange]. */
-private data class Nested(val document: Document, val indentationChange: Int) : Document() {
+private class Nested private constructor(val document: Document, val indentationChange: Int) : Document() {
     init {
         require(indentationChange != 0)
+    }
+
+    companion object {
+        operator fun invoke(document: Document, indentationChange: Int): Document =
+            if (indentationChange == 0)
+                document
+            else
+                Nested(document, indentationChange)
     }
 }
 
 /** Same as [document] but with [style] applied. */
-private data class Styled(val document: Document, val style: Style) : Document()
+private class Styled(val document: Document, val style: Style) : Document()
 
 /** A regular expression that recognizes Unicode line breaks. */
 private val unicodeLineBreak: Regex = Regex("\\R")

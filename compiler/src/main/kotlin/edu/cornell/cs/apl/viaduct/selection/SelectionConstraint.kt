@@ -1,19 +1,14 @@
 package edu.cornell.cs.apl.viaduct.selection
 
-import com.microsoft.z3.ArithExpr
-import com.microsoft.z3.BoolExpr
-import com.microsoft.z3.Context
-import com.microsoft.z3.IntExpr
-import com.microsoft.z3.IntSort
-import com.uchuhimo.collections.BiMap
 import edu.cornell.cs.apl.prettyprinting.Document
 import edu.cornell.cs.apl.prettyprinting.PrettyPrintable
-import edu.cornell.cs.apl.prettyprinting.braced
 import edu.cornell.cs.apl.prettyprinting.plus
 import edu.cornell.cs.apl.prettyprinting.times
+import edu.cornell.cs.apl.prettyprinting.tupled
 import edu.cornell.cs.apl.viaduct.analysis.NameAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.createdVariables
 import edu.cornell.cs.apl.viaduct.analysis.involvedVariables
+import edu.cornell.cs.apl.viaduct.errors.NoVariableSelectionSolutionError
 import edu.cornell.cs.apl.viaduct.syntax.FunctionName
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
 import edu.cornell.cs.apl.viaduct.syntax.Variable
@@ -24,6 +19,16 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.LetNode
 data class FunctionVariable(val function: FunctionName, val variable: Variable) : PrettyPrintable {
     override val asDocument: Document =
         Document("(") + function + "," + variable.asDocument + Document(")")
+}
+
+data class ProtocolAssignment(
+    val assignment: Map<FunctionVariable, Protocol>
+) {
+    fun getAssignment(fv: FunctionVariable): Protocol =
+        assignment[fv] ?: throw NoVariableSelectionSolutionError(fv.function, fv.variable)
+
+    fun getAssignment(f: FunctionName, v: Variable): Protocol =
+        getAssignment(FunctionVariable(f, v))
 }
 
 sealed class SymbolicCost : CostMonoid<SymbolicCost> {
@@ -41,32 +46,44 @@ data class CostLiteral(val cost: Int) : SymbolicCost() {
     override val asDocument: Document = Document(cost.toString())
 }
 
-data class CostVariable(val variable: IntExpr) : SymbolicCost() {
-    override val asDocument: Document = Document(variable.toString())
-}
-
 data class CostAdd(val lhs: SymbolicCost, val rhs: SymbolicCost) : SymbolicCost() {
     override val asDocument: Document = lhs.asDocument * Document("+") * rhs.asDocument
 }
 
-data class CostMul(val lhs: SymbolicCost, val rhs: SymbolicCost) : SymbolicCost() {
-    override val asDocument: Document = lhs.asDocument * Document("*") * rhs.asDocument
+/** Multiply cost expression with a scalar. Restrict to scalar multiplication to keep constraint problem linear. */
+data class CostMul(val lhs: Int, val rhs: SymbolicCost) : SymbolicCost() {
+    override val asDocument: Document = Document(lhs.toString()) * Document("*") * rhs.asDocument
 }
 
-data class CostMux(val guard: SelectionConstraint, val lhs: SymbolicCost, val rhs: SymbolicCost) : SymbolicCost() {
+data class CostMax(val lhs: SymbolicCost, val rhs: SymbolicCost) : SymbolicCost() {
+    override val asDocument: Document = Document("max") * listOf(lhs.asDocument, rhs.asDocument).tupled()
+}
+
+/** Cost determined by which guard is true. Exactly one guard must be true. */
+data class CostChoice(val choices: List<Pair<SelectionConstraint, SymbolicCost>>) : SymbolicCost() {
     override val asDocument: Document =
-        guard.asDocument * Document("?") * lhs.asDocument * Document(":") * rhs.asDocument
+        this.choices.map { choice ->
+            choice.first.asDocument * Document("=>") * choice.second.asDocument
+        }.tupled()
 }
 
 /** Custom selection constraints specified for constraint solving during splitting. */
 sealed class SelectionConstraint : PrettyPrintable
 
-data class HostVariable(val variable: BoolExpr) : SelectionConstraint() {
-    override val asDocument: Document = Document("$variable")
+object True : SelectionConstraint() {
+    override val asDocument: Document = Document("true")
 }
 
-data class GuardVisibilityFlag(val variable: BoolExpr) : SelectionConstraint() {
-    override val asDocument: Document = Document("$variable")
+object False : SelectionConstraint() {
+    override val asDocument: Document = Document("false")
+}
+
+data class HostVariable(val variable: String) : SelectionConstraint() {
+    override val asDocument: Document = Document(variable)
+}
+
+data class GuardVisibilityFlag(val variable: String) : SelectionConstraint() {
+    override val asDocument: Document = Document(variable)
 }
 
 data class Literal(val literalValue: Boolean) : SelectionConstraint() {
@@ -112,9 +129,9 @@ data class Not(val rhs: SelectionConstraint) : SelectionConstraint() {
 }
 
 /** VariableIn(v, P) holds when v is selected to be a protocol in P **/
-data class VariableIn(val variable: FunctionVariable, val protocols: Set<Protocol>) : SelectionConstraint() {
+data class VariableIn(val variable: FunctionVariable, val protocol: Protocol) : SelectionConstraint() {
     override val asDocument: Document =
-        variable * Document("in") * protocols.map { it.asDocument }.braced()
+        variable * Document("=") * protocol.asDocument
 }
 
 /** Protocols for v1 and v2 are equal. */
@@ -122,31 +139,22 @@ data class VariableEquals(val var1: FunctionVariable, val var2: FunctionVariable
     override val asDocument: Document = var1.asDocument * Document("==") * var2.asDocument
 }
 
-data class CostEquals(val lhs: SymbolicCost, val rhs: SymbolicCost) : SelectionConstraint() {
-    override val asDocument: Document = lhs.asDocument * Document("=") * rhs.asDocument
-}
-
-data class CostLessThanEqualTo(val lhs: SymbolicCost, val rhs: SymbolicCost) : SelectionConstraint() {
-    override val asDocument: Document = lhs.asDocument * Document("<=") * rhs.asDocument
-}
-
-internal fun Boolean.implies(r: Boolean) = (!this) || r
+/** A constrained optimization problem defined by a set of selection constraints
+ * and a cost expression to minimize. */
+data class SelectionProblem(val constraints: Set<SelectionConstraint>, val cost: SymbolicCost)
 
 /** Given a protocol selection, evaluate the constraints. **/
 internal fun SelectionConstraint.evaluate(f: (FunctionName, Variable) -> Protocol): Boolean =
     when (this) {
+        is True -> true
+        is False -> false
         is Literal -> literalValue
-        is Implies -> lhs.evaluate(f).implies(rhs.evaluate(f))
+        is Implies -> (!lhs.evaluate(f)) || rhs.evaluate(f)
         is Or -> props.any { it.evaluate(f) }
         is And -> props.all { it.evaluate(f) }
         is Not -> !(rhs.evaluate(f))
-        is VariableIn -> protocols.contains(f(variable.function, variable.variable))
+        is VariableIn -> f(variable.function, variable.variable) == this.protocol
         is VariableEquals -> f(var1.function, var1.variable) == f(var2.function, var2.variable)
-
-        // TODO: ignore cost constraints for now
-        is CostEquals -> true
-
-        is CostLessThanEqualTo -> true
 
         // TODO: ignore host variables for now
         is HostVariable -> true
@@ -172,29 +180,33 @@ internal fun List<SelectionConstraint>.assert(
     }
 }
 
-internal fun SelectionConstraint.or(other: SelectionConstraint): SelectionConstraint {
-    return Or(listOf(this, other))
-}
+internal fun SelectionConstraint.or(other: SelectionConstraint): SelectionConstraint =
+    Or(listOf(this, other))
 
-internal fun SelectionConstraint.implies(other: SelectionConstraint): SelectionConstraint {
-    return Implies(this, other)
-}
+internal fun SelectionConstraint.implies(other: SelectionConstraint): SelectionConstraint =
+    Implies(this, other)
+
+internal fun variableInSet(fv: FunctionVariable, protocols: Set<Protocol>): SelectionConstraint =
+    protocols.map { protocol -> VariableIn(fv, protocol) }.ors()
 
 internal fun SymbolicCost.evaluate(
-    f: (FunctionName, Variable) -> Protocol,
-    c: (CostVariable) -> Int
+    assignment: (FunctionName, Variable) -> Protocol,
 ): Int {
     return when (this) {
         is CostLiteral -> this.cost
-        is CostVariable -> c(this)
-        is CostAdd -> this.lhs.evaluate(f, c) + this.rhs.evaluate(f, c)
-        is CostMul -> this.lhs.evaluate(f, c) * this.rhs.evaluate(f, c)
-        is CostMux -> if (this.guard.evaluate(f)) this.lhs.evaluate(f, c) else this.rhs.evaluate(f, c)
+        is CostAdd -> this.lhs.evaluate(assignment) + this.rhs.evaluate(assignment)
+        is CostMul -> this.lhs * this.rhs.evaluate(assignment)
+        is CostMax -> this.lhs.evaluate(assignment) * this.rhs.evaluate(assignment)
+        is CostChoice -> {
+            var cost: Int? = null
+            for (choice in this.choices) {
+                if (choice.first.evaluate(assignment)) {
+                    cost = choice.second.evaluate(assignment)
+                }
+            }
+            cost ?: throw Error("at least one choice must be true")
+        }
     }
-}
-
-internal fun List<BoolExpr>.ors(ctx: Context): BoolExpr {
-    return ctx.mkOr(* this.toTypedArray())
 }
 
 internal fun List<SelectionConstraint>.ors(): SelectionConstraint = Or(this)
@@ -204,111 +216,42 @@ internal fun List<SelectionConstraint>.ands(): SelectionConstraint = And(this)
 internal fun iff(lhs: SelectionConstraint, rhs: SelectionConstraint): SelectionConstraint =
     And(Implies(lhs, rhs), Implies(rhs, lhs))
 
-/** Convert a SelectionConstraint into a Z3 BoolExpr. **/
-internal fun SelectionConstraint.boolExpr(
-    ctx: Context,
-    vmap: BiMap<FunctionVariable, IntExpr>,
-    pmap: BiMap<Protocol, IntExpr>
-): BoolExpr {
-    return when (this) {
-        is HostVariable -> this.variable
-        is GuardVisibilityFlag -> this.variable
-        is Literal -> ctx.mkBool(literalValue)
-        is Implies -> ctx.mkImplies(lhs.boolExpr(ctx, vmap, pmap), rhs.boolExpr(ctx, vmap, pmap))
-        is Or ->
-            this.props.fold(ctx.mkFalse()) { acc, z3prop ->
-                ctx.mkOr(acc, z3prop.boolExpr(ctx, vmap, pmap))
-            }
-        is And ->
-            this.props.fold(ctx.mkTrue()) { acc, z3prop ->
-                ctx.mkAnd(acc, z3prop.boolExpr(ctx, vmap, pmap))
-            }
-        is Not -> ctx.mkNot(rhs.boolExpr(ctx, vmap, pmap))
-        is VariableIn ->
-            this.protocols.map { prot ->
-                ctx.mkEq(
-                    vmap[this.variable],
-                    pmap[prot]
-                )
-            }.ors(ctx)
-        is VariableEquals -> ctx.mkEq(vmap[this.var1], vmap[this.var2])
-
-        is CostEquals ->
-            ctx.mkEq(
-                this.lhs.arithExpr(ctx, vmap, pmap),
-                this.rhs.arithExpr(ctx, vmap, pmap)
-            )
-
-        is CostLessThanEqualTo ->
-            ctx.mkLe(
-                this.lhs.arithExpr(ctx, vmap, pmap),
-                this.rhs.arithExpr(ctx, vmap, pmap)
-            )
-    }
-}
-
-/** Convert a CostExpression into a Z3 ArithExpr. */
-internal fun SymbolicCost.arithExpr(
-    ctx: Context,
-    vmap: BiMap<FunctionVariable, IntExpr>,
-    pmap: BiMap<Protocol, IntExpr>
-): ArithExpr<IntSort> =
-    when (this) {
-        is CostLiteral -> ctx.mkInt(this.cost)
-        is CostVariable -> this.variable
-
-        is CostAdd ->
-            ctx.mkAdd(
-                this.lhs.arithExpr(ctx, vmap, pmap),
-                this.rhs.arithExpr(ctx, vmap, pmap)
-            )
-
-        is CostMul ->
-            ctx.mkMul(
-                this.lhs.arithExpr(ctx, vmap, pmap),
-                this.rhs.arithExpr(ctx, vmap, pmap)
-            )
-
-        is CostMux ->
-            ctx.mkITE(
-                this.guard.boolExpr(ctx, vmap, pmap),
-                this.lhs.arithExpr(ctx, vmap, pmap),
-                this.rhs.arithExpr(ctx, vmap, pmap)
-            ) as ArithExpr
-    }
-
 /** Some convenience functions. **/
 
-fun SymbolicCost.costVariables(): Set<CostVariable> =
+fun SelectionConstraint.functionVariables(): Set<FunctionVariable> =
     when (this) {
-        is CostLiteral -> setOf()
-        is CostVariable -> setOf(this)
-        is CostAdd -> this.lhs.costVariables().union(this.rhs.costVariables())
-        is CostMul -> this.lhs.costVariables().union(this.rhs.costVariables())
-        is CostMux ->
-            this.guard.costVariables().union(
-                this.lhs.costVariables()
-                    .union(this.rhs.costVariables())
-            )
-    }
-
-fun SelectionConstraint.costVariables(): Set<CostVariable> =
-    when (this) {
+        is True -> setOf()
+        is False -> setOf()
         is HostVariable -> setOf()
         is GuardVisibilityFlag -> setOf()
         is Literal -> setOf()
-        is Implies -> this.lhs.costVariables().union(this.rhs.costVariables())
-        is Or -> this.props.fold(setOf()) { acc, prop -> acc.union(prop.costVariables()) }
-        is And -> this.props.fold(setOf()) { acc, prop -> acc.union(prop.costVariables()) }
-        is Not -> this.rhs.costVariables()
-        is VariableIn -> setOf()
+        is Implies -> this.lhs.functionVariables().union(this.rhs.functionVariables())
+        is Or -> this.props.fold(setOf()) { acc, prop -> acc.union(prop.functionVariables()) }
+        is And -> this.props.fold(setOf()) { acc, prop -> acc.union(prop.functionVariables()) }
+        is Not -> this.rhs.functionVariables()
+        is VariableIn -> setOf(this.variable)
+        is VariableEquals -> setOf(this.var1, this.var2)
+    }
+
+fun SelectionConstraint.protocols(): Set<Protocol> =
+    when (this) {
+        is True -> setOf()
+        is False -> setOf()
+        is HostVariable -> setOf()
+        is GuardVisibilityFlag -> setOf()
+        is Literal -> setOf()
+        is Implies -> this.lhs.protocols().union(this.rhs.protocols())
+        is Or -> this.props.fold(setOf()) { acc, prop -> acc.union(prop.protocols()) }
+        is And -> this.props.fold(setOf()) { acc, prop -> acc.union(prop.protocols()) }
+        is Not -> this.rhs.protocols()
+        is VariableIn -> setOf(this.protocol)
         is VariableEquals -> setOf()
-        is CostEquals -> this.lhs.costVariables().union(this.rhs.costVariables())
-        is CostLessThanEqualTo -> this.lhs.costVariables().union(this.rhs.costVariables())
     }
 
 fun SelectionConstraint.hostVariables(): Set<HostVariable> =
     when (this) {
+        is True -> setOf()
+        is False -> setOf()
         is HostVariable -> setOf(this)
         is GuardVisibilityFlag -> setOf()
         is Literal -> setOf()
@@ -318,12 +261,12 @@ fun SelectionConstraint.hostVariables(): Set<HostVariable> =
         is Not -> this.rhs.hostVariables()
         is VariableIn -> setOf()
         is VariableEquals -> setOf()
-        is CostEquals -> setOf()
-        is CostLessThanEqualTo -> setOf()
     }
 
 fun SelectionConstraint.guardVisibilityVariables(): Set<GuardVisibilityFlag> =
     when (this) {
+        is True -> setOf()
+        is False -> setOf()
         is HostVariable -> setOf()
         is GuardVisibilityFlag -> setOf(this)
         is Literal -> setOf()
@@ -333,26 +276,29 @@ fun SelectionConstraint.guardVisibilityVariables(): Set<GuardVisibilityFlag> =
         is Not -> this.rhs.guardVisibilityVariables()
         is VariableIn -> setOf()
         is VariableEquals -> setOf()
-        is CostEquals -> setOf()
-        is CostLessThanEqualTo -> setOf()
     }
+
+fun SelectionConstraint.variableNames(): Set<String> =
+    this.hostVariables().map { hv -> hv.variable }.toSet().union(
+        this.guardVisibilityVariables().map { gv -> gv.variable }
+    )
 
 /** States whether an expression reads only from the protocols in [prots] **/
 fun ExpressionNode.readsFrom(nameAnalysis: NameAnalysis, prots: Set<Protocol>): SelectionConstraint =
     this.involvedVariables().map {
-        VariableIn(FunctionVariable(nameAnalysis.enclosingFunctionName(this), it), prots)
+        variableInSet(FunctionVariable(nameAnalysis.enclosingFunctionName(this), it), prots)
     }.ands()
 
 /** States that if the let node is stored at any protocol in [to], it reads from only the protocols in [from] **/
 fun LetNode.readsFrom(nameAnalysis: NameAnalysis, to: Set<Protocol>, from: Set<Protocol>): SelectionConstraint =
     Implies(
-        VariableIn(FunctionVariable(nameAnalysis.enclosingFunctionName(this), this.temporary.value), to),
+        variableInSet(FunctionVariable(nameAnalysis.enclosingFunctionName(this), this.temporary.value), to),
         this.value.readsFrom(nameAnalysis, from)
     )
 
 fun DeclarationNode.readsFrom(nameAnalysis: NameAnalysis, to: Set<Protocol>, from: Set<Protocol>): SelectionConstraint =
     Implies(
-        VariableIn(FunctionVariable(nameAnalysis.enclosingFunctionName(this), this.name.value), to),
+        variableInSet(FunctionVariable(nameAnalysis.enclosingFunctionName(this), this.name.value), to),
         this.arguments.map { it.readsFrom(nameAnalysis, from) }.ands()
     )
 
@@ -360,19 +306,22 @@ fun DeclarationNode.readsFrom(nameAnalysis: NameAnalysis, to: Set<Protocol>, fro
 
 fun LetNode.sendsTo(nameAnalysis: NameAnalysis, from: Set<Protocol>, to: Set<Protocol>): SelectionConstraint =
     Implies(
-        VariableIn(FunctionVariable(nameAnalysis.enclosingFunctionName(this), this.temporary.value), from),
+        variableInSet(FunctionVariable(nameAnalysis.enclosingFunctionName(this), this.temporary.value), from),
         nameAnalysis.readers(this).map { stmt ->
             stmt.createdVariables().map {
-                VariableIn(FunctionVariable(nameAnalysis.enclosingFunctionName(stmt), it), to)
+                variableInSet(FunctionVariable(nameAnalysis.enclosingFunctionName(stmt), it), to)
             }.ands()
         }.ands()
     )
 
 fun DeclarationNode.sendsTo(nameAnalysis: NameAnalysis, from: Set<Protocol>, to: Set<Protocol>): SelectionConstraint =
     Implies(
-        VariableIn(FunctionVariable(nameAnalysis.enclosingFunctionName(this), this.name.value), from),
+        variableInSet(
+            FunctionVariable(nameAnalysis.enclosingFunctionName(this), this.name.value),
+            from
+        ),
         nameAnalysis.queriers(this).map {
             val clet = nameAnalysis.correspondingLet(it)
-            VariableIn(FunctionVariable(nameAnalysis.enclosingFunctionName(clet), clet.temporary.value), to)
+            variableInSet(FunctionVariable(nameAnalysis.enclosingFunctionName(clet), clet.temporary.value), to)
         }.ands()
     )

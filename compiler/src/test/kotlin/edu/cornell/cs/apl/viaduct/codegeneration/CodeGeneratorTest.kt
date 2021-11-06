@@ -1,6 +1,5 @@
 package edu.cornell.cs.apl.viaduct.codegeneration
 
-import edu.cornell.cs.apl.prettyprinting.Document
 import edu.cornell.cs.apl.viaduct.PositiveTestFileProvider
 import edu.cornell.cs.apl.viaduct.backends.DefaultCombinedBackend
 import edu.cornell.cs.apl.viaduct.parsing.SourceFile
@@ -9,12 +8,11 @@ import edu.cornell.cs.apl.viaduct.passes.annotateWithProtocols
 import edu.cornell.cs.apl.viaduct.passes.check
 import edu.cornell.cs.apl.viaduct.passes.elaborated
 import edu.cornell.cs.apl.viaduct.passes.specialize
+import edu.cornell.cs.apl.viaduct.selection.ProtocolAssignment
+import edu.cornell.cs.apl.viaduct.selection.ProtocolSelection
 import edu.cornell.cs.apl.viaduct.selection.SimpleCostEstimator
 import edu.cornell.cs.apl.viaduct.selection.SimpleCostRegime
-import edu.cornell.cs.apl.viaduct.selection.selectProtocolsWithZ3
-import edu.cornell.cs.apl.viaduct.syntax.FunctionName
-import edu.cornell.cs.apl.viaduct.syntax.Protocol
-import edu.cornell.cs.apl.viaduct.syntax.Variable
+import edu.cornell.cs.apl.viaduct.selection.Z3Selection
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ArgumentsSource
 import java.io.File
@@ -38,12 +36,13 @@ internal class CodeGeneratorTest {
         val protocolComposer = DefaultCombinedBackend.protocolComposer
         val costEstimator = SimpleCostEstimator(protocolComposer, SimpleCostRegime.LAN)
 
-        val protocolAssignment: (FunctionName, Variable) -> Protocol = selectProtocolsWithZ3(
-            program,
-            protocolFactory,
-            protocolComposer,
-            costEstimator
-        )
+        val protocolAssignment: ProtocolAssignment =
+            ProtocolSelection(
+                Z3Selection(),
+                protocolFactory,
+                protocolComposer,
+                costEstimator
+            ).selectAssignment(program)
 
         val annotatedProgram = program.annotateWithProtocols(protocolAssignment)
 
@@ -63,7 +62,6 @@ internal class CodeGeneratorTest {
             "src"
         )
 
-        backendCodeGenerator.generate()
-        println(Document(backendCodeGenerator.generate()).print())
+        println(backendCodeGenerator.generate())
     }
 }

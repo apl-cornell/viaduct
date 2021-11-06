@@ -8,7 +8,7 @@ import edu.cornell.cs.apl.viaduct.selection.Literal
 import edu.cornell.cs.apl.viaduct.selection.ProtocolComposer
 import edu.cornell.cs.apl.viaduct.selection.ProtocolFactory
 import edu.cornell.cs.apl.viaduct.selection.SelectionConstraint
-import edu.cornell.cs.apl.viaduct.selection.VariableIn
+import edu.cornell.cs.apl.viaduct.selection.variableInSet
 import edu.cornell.cs.apl.viaduct.syntax.FunctionName
 import edu.cornell.cs.apl.viaduct.syntax.ObjectVariable
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
@@ -99,8 +99,8 @@ class ABYProtocolFactory(program: ProgramNode) : ProtocolFactory {
                 .toSet()
 
         return Implies(
-            VariableIn(FunctionVariable(enclosingFunction, arrayObject), protocols),
-            VariableIn(FunctionVariable(enclosingFunction, exprDecl.temporary.value), cleartextLengthProtocols)
+            variableInSet(FunctionVariable(enclosingFunction, arrayObject), protocols),
+            variableInSet(FunctionVariable(enclosingFunction, exprDecl.temporary.value), cleartextLengthProtocols)
         )
     }
 

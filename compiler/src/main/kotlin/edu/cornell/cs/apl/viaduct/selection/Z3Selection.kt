@@ -1,290 +1,252 @@
 package edu.cornell.cs.apl.viaduct.selection
 
+import com.microsoft.z3.BoolExpr
 import com.microsoft.z3.Context
 import com.microsoft.z3.Global
 import com.microsoft.z3.IntExpr
 import com.microsoft.z3.IntNum
-import com.microsoft.z3.Model
 import com.microsoft.z3.Status
 import com.uchuhimo.collections.BiMap
-import com.uchuhimo.collections.toBiMap
-import edu.cornell.cs.apl.prettyprinting.Document
-import edu.cornell.cs.apl.prettyprinting.PrettyPrintable
-import edu.cornell.cs.apl.viaduct.analysis.NameAnalysis
-import edu.cornell.cs.apl.viaduct.analysis.descendantsIsInstance
-import edu.cornell.cs.apl.viaduct.analysis.main
-import edu.cornell.cs.apl.viaduct.errors.NoHostDeclarationsError
+import com.uchuhimo.collections.mutableBiMapOf
 import edu.cornell.cs.apl.viaduct.errors.NoProtocolIndexMapping
 import edu.cornell.cs.apl.viaduct.errors.NoSelectionSolutionError
-import edu.cornell.cs.apl.viaduct.errors.NoVariableSelectionSolutionError
-import edu.cornell.cs.apl.viaduct.syntax.FunctionName
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
-import edu.cornell.cs.apl.viaduct.syntax.Variable
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.DeclarationNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.FunctionDeclarationNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.IfNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.InfiniteLoopNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.LetNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.Node
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.ObjectDeclarationArgumentNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutputNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.ParameterNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.UpdateNode
+import edu.cornell.cs.apl.viaduct.util.FreshNameGenerator
 import mu.KotlinLogging
 
 private val logger = KotlinLogging.logger("Z3Selection")
 
-enum class CostMode { MINIMIZE, MAXIMIZE }
-
 /**
- * This class performs splitting by using Z3. It operates as follows:
- *
- * - First, it collects constraints on protocol selection from the [ProtocolFactory]. For each let or declaration,
- *      the factory outputs two things: first, it outputs a set of viable protocols for that variable. Second,
- *      it can output a number of custom constraints on selection for that variable which are forwarded to Z3.
- *      (For the simple factory, the custom constraints are trivial, as we have not yet constrained which protocols
- *      can talk to whom.)
- * - Second, it exports these constraints to Z3. The selection problem is encoded as follows:
- *      - We assign each possible viable protocol a unique integer index. Call this index i(p).
- *      - For each variable, we create a fresh integer constant. Call this constant c(v).
- *      - For each variable v with viable protocols P, we constrain that c(v) is contained in the image set of P under i.
- *      - For each variable v, we constrain c(v) relative to the custom constraints output by the factory.
- * - Third, we ask Z3 to optimize relative to a cost metric. The cost metric is provided by [costEstimator], which
- *   will represent cost using a set of features. At a high level, the cost estimator approximates cost by:
- *      - The cost of storing data in a protocol
- *      - The cost of executing computations in a protocol
- *      - Estimating the communication cost between one protocol reading data from another protocol
+ * Constraint problem using Z3. Z3 has an optimization module that can return models with minimal cost.
  */
-private class Z3Selection(
-    private val ctx: Context,
-    private val program: ProgramNode,
-    private val main: FunctionDeclarationNode,
-    private val protocolFactory: ProtocolFactory,
-    protocolComposer: ProtocolComposer,
-    private val costEstimator: CostEstimator<IntegerCost>,
-    private val costMode: CostMode,
-    private val dumpMetadata: (Map<Node, PrettyPrintable>) -> Unit
-) {
-    private companion object {
+class Z3Selection : SelectionProblemSolver {
+    companion object {
         init {
             // Use old arithmetic solver to fix regression introduced in Z3 v4.8.9
             Global.setParameter("smt.arith.solver", "2")
         }
     }
 
-    private val nameAnalysis = NameAnalysis.get(program)
+    private val nameGenerator = FreshNameGenerator()
 
-    private val constraintGenerator =
-        SelectionConstraintGenerator(program, protocolFactory, protocolComposer, costEstimator, ctx)
+    /** Convert a SelectionConstraint into a Z3 BoolExpr. **/
+    private fun boolExpr(
+        constraint: SelectionConstraint,
+        ctx: Context,
+        vmap: BiMap<FunctionVariable, IntExpr>,
+        boolVarMap: Map<String, BoolExpr>,
+        protocolMap: BiMap<Protocol, Int>
+    ): BoolExpr {
+        return when (constraint) {
+            is True -> ctx.mkTrue()
+            is False -> ctx.mkFalse()
+            is HostVariable -> boolVarMap[constraint.variable]!!
+            is GuardVisibilityFlag -> boolVarMap[constraint.variable]!!
+            is Literal -> ctx.mkBool(constraint.literalValue)
+            is Implies ->
+                ctx.mkImplies(
+                    boolExpr(constraint.lhs, ctx, vmap, boolVarMap, protocolMap),
+                    boolExpr(constraint.rhs, ctx, vmap, boolVarMap, protocolMap)
+                )
 
-    private fun Cost<SymbolicCost>.featureSum(): SymbolicCost {
-        val weights = costEstimator.featureWeights()
-        return this.features.entries.fold(CostLiteral(0) as SymbolicCost) { acc, c ->
-            CostAdd(acc, CostMul(CostLiteral(weights[c.key]!!.cost), c.value))
-        }
-    }
-
-    private val reachableFunctions = run {
-        val reachableFunctionNames = nameAnalysis.reachableFunctions(main)
-        program.functions.filter { reachableFunctionNames.contains(it.name.value) }
-    }
-
-    private inline fun <reified T : Node> reachableInstances(): Sequence<T> =
-        reachableFunctions.flatMap { it.descendantsIsInstance<T>() }.asSequence() + main.descendantsIsInstance()
-
-    private fun printMetadata(
-        eval: (FunctionName, Variable) -> Protocol,
-        model: Model,
-        totalCostSymvar: IntExpr
-    ) {
-        val nodeCostFunc: (Node) -> Pair<Node, PrettyPrintable> = { node ->
-            val symcost = constraintGenerator.symbolicCost(node)
-            val nodeCostStr =
-                symcost.featureSum().evaluate(eval) { cvar ->
-                    val interpValue = model.getConstInterp(cvar.variable)
-                    assert(interpValue != null)
-                    (interpValue as IntNum).int
-                }.toString()
-
-            val nodeProtocolStr =
-                when (node) {
-                    is LetNode -> {
-                        val enclosingFunc = nameAnalysis.enclosingFunctionName(node)
-                        "protocol: ${eval(enclosingFunc, node.temporary.value).asDocument.print()}"
-                    }
-
-                    is DeclarationNode -> {
-                        val enclosingFunc = nameAnalysis.enclosingFunctionName(node)
-                        "protocol: ${eval(enclosingFunc, node.name.value).asDocument.print()}"
-                    }
-
-                    else -> ""
+            is Or ->
+                constraint.props.fold(ctx.mkFalse()) { acc, prop ->
+                    ctx.mkOr(acc, boolExpr(prop, ctx, vmap, boolVarMap, protocolMap))
                 }
 
-            Pair(node, Document("cost: $nodeCostStr $nodeProtocolStr"))
+            is And ->
+                constraint.props.fold(ctx.mkTrue()) { acc, prop ->
+                    ctx.mkAnd(acc, boolExpr(prop, ctx, vmap, boolVarMap, protocolMap))
+                }
+
+            is Not -> ctx.mkNot(boolExpr(constraint.rhs, ctx, vmap, boolVarMap, protocolMap))
+            is VariableIn -> ctx.mkEq(vmap[constraint.variable], ctx.mkInt(protocolMap[constraint.protocol]!!))
+            is VariableEquals -> ctx.mkEq(vmap[constraint.var1], vmap[constraint.var2])
         }
-
-        val totalCostMetadata =
-            Document("total cost: ${(model.getConstInterp(totalCostSymvar) as IntNum).int}")
-
-        val costMetadata: Map<Node, PrettyPrintable> =
-            reachableInstances<DeclarationNode>().map { nodeCostFunc(it) }
-                .plus(reachableInstances<LetNode>().map { nodeCostFunc(it) })
-                .plus(reachableInstances<UpdateNode>().map { nodeCostFunc(it) })
-                .plus(reachableInstances<OutputNode>().map { nodeCostFunc(it) })
-                .plus(reachableInstances<IfNode>().map { nodeCostFunc(it) })
-                .plus(reachableInstances<InfiniteLoopNode>().map { nodeCostFunc(it) })
-                .plus(reachableFunctions.map { nodeCostFunc(it) })
-                .plus(nodeCostFunc(main))
-                .plus(Pair(program, totalCostMetadata))
-                .toMap()
-
-        dumpMetadata(costMetadata)
     }
 
-    // Build variable and protocol maps
-    private inline fun <reified T : Node> associateFreshConstant(): Map<T, IntExpr> =
-        reachableInstances<T>().associateWith { (ctx.mkFreshConst("t", ctx.intSort)) as IntExpr }
+    /** Convert a CostExpression into a Z3 ArithExpr. */
+    private fun arithExpr(
+        symCost: SymbolicCost,
+        ctx: Context,
+        fvMap: BiMap<FunctionVariable, IntExpr>,
+        boolVarMap: Map<String, BoolExpr>,
+        protocolMap: BiMap<Protocol, Int>
+    ): Pair<IntExpr, BoolExpr> =
+        when (symCost) {
+            is CostLiteral -> Pair(ctx.mkInt(symCost.cost), ctx.mkTrue())
+
+            is CostAdd -> {
+                val (lhsExpr, constrsL) = arithExpr(symCost.lhs, ctx, fvMap, boolVarMap, protocolMap)
+                val (rhsExpr, constrsR) = arithExpr(symCost.rhs, ctx, fvMap, boolVarMap, protocolMap)
+                Pair(ctx.mkAdd(lhsExpr, rhsExpr) as IntExpr, ctx.mkAnd(constrsL, constrsR))
+            }
+
+            is CostMul -> {
+                val (rhsExpr, constrs) = arithExpr(symCost.rhs, ctx, fvMap, boolVarMap, protocolMap)
+                Pair(ctx.mkMul(ctx.mkInt(symCost.lhs), rhsExpr) as IntExpr, constrs)
+            }
+
+            is CostMax -> {
+                val (lhsExpr, constrsL) = arithExpr(symCost.lhs, ctx, fvMap, boolVarMap, protocolMap)
+                val (rhsExpr, constrsR) = arithExpr(symCost.rhs, ctx, fvMap, boolVarMap, protocolMap)
+                Pair(
+                    ctx.mkITE(ctx.mkGe(lhsExpr, rhsExpr), lhsExpr, rhsExpr) as IntExpr,
+                    ctx.mkAnd(constrsL, constrsR)
+                )
+            }
+
+            is CostChoice -> {
+                val costVarName = this.nameGenerator.getFreshName("cost")
+                val costVar = ctx.mkFreshConst(costVarName, ctx.intSort) as IntExpr
+                Pair(
+                    costVar,
+                    ctx.mkAnd(
+                        *symCost.choices.map { choice ->
+                            val guardExpr = boolExpr(choice.first, ctx, fvMap, boolVarMap, protocolMap)
+                            val (costExpr, costConstrs) = arithExpr(choice.second, ctx, fvMap, boolVarMap, protocolMap)
+                            ctx.mkImplies(guardExpr, ctx.mkAnd(ctx.mkEq(costVar, costExpr), costConstrs))
+                        }.toTypedArray()
+                    )
+                )
+            }
+
+            /*
+            private fun printMetadata(
+                eval: (FunctionName, Variable) -> Protocol,
+                model: Model,
+                totalCostSymvar: IntExpr
+            ) {
+                val nodeCostFunc: (Node) -> Pair<Node, PrettyPrintable> = { node ->
+                    val symcost = constraintGenerator.symbolicCost(node)
+                    val nodeCostStr =
+                        symcost.featureSum().evaluate(eval) { cvar ->
+                            val interpValue = model.getConstInterp(cvar.variable)
+                            assert(interpValue != null)
+                            (interpValue as IntNum).int
+                        }.toString()
+
+                    val nodeProtocolStr =
+                        when (node) {
+                            is LetNode -> {
+                                val enclosingFunc = nameAnalysis.enclosingFunctionName(node)
+                                "protocol: ${eval(enclosingFunc, node.temporary.value).asDocument.print()}"
+                            }
+
+                            is DeclarationNode -> {
+                                val enclosingFunc = nameAnalysis.enclosingFunctionName(node)
+                                "protocol: ${eval(enclosingFunc, node.name.value).asDocument.print()}"
+                            }
+
+                            else -> ""
+                        }
+
+                    Pair(node, Document("cost: $nodeCostStr $nodeProtocolStr"))
+                }
+
+                val declarationNodes = reachableInstances { declarationNodes() }
+
+                val letNodes = reachableInstances { letNodes() }
+
+                val updateNodes = reachableInstances { updateNodes() }
+
+                val outputNodes = reachableInstances { outputNodes() }
+
+                val ifNodes = reachableInstances { ifNodes() }
+
+                val loopNodes = reachableInstances { infiniteLoopNodes() }
+
+                val totalCostMetadata =
+                    Document("total cost: ${(model.getConstInterp(totalCostSymvar) as IntNum).int}")
+
+                val costMetadata: Map<Node, PrettyPrintable> =
+                    declarationNodes.asSequence().map { nodeCostFunc(it) }
+                        .plus(letNodes.map { nodeCostFunc(it) })
+                        .plus(updateNodes.map { nodeCostFunc(it) })
+                        .plus(outputNodes.map { nodeCostFunc(it) })
+                        .plus(ifNodes.map { nodeCostFunc(it) })
+                        .plus(loopNodes.map { nodeCostFunc(it) })
+                        .plus(reachableFunctions.map { nodeCostFunc(it) })
+                        .plus(nodeCostFunc(main))
+                        .plus(Pair(program, totalCostMetadata))
+                        .toMap()
+
+                dumpMetadata(costMetadata)
+            }
+            */
+        }
 
     /** Protocol selection. */
-    fun select(): (FunctionName, Variable) -> Protocol {
-        val solver = ctx.mkOptimize()
-        val constraints = mutableSetOf<SelectionConstraint>()
+    override fun solveSelectionProblem(problem: SelectionProblem): ProtocolAssignment {
+        Context().use { ctx ->
+            val constraints = problem.constraints
+            val programCost = problem.cost
 
-        // select for functions first
-        for (function in reachableFunctions) {
-            constraints.addAll(constraintGenerator.getConstraints(function))
-        }
+            val solver = ctx.mkOptimize()
 
-        // then select for the main process
-        constraints.addAll(constraintGenerator.getConstraints(main))
+            val protocolMap = mutableBiMapOf<Protocol, Int>()
+            val fvMap = mutableBiMapOf<FunctionVariable, IntExpr>()
+            val boolVarMap = mutableMapOf<String, BoolExpr>()
 
-        val letNodes = associateFreshConstant<LetNode>()
-        val declarationNodes = associateFreshConstant<DeclarationNode>()
-        val objectDeclarationArgumentNodes = associateFreshConstant<ObjectDeclarationArgumentNode>()
-        val parameterNodes = associateFreshConstant<ParameterNode>()
-
-        val pmap: BiMap<Protocol, Int> = run {
-            // Compute all protocols relevant for the program
-            val protocols = mutableSetOf<Protocol>()
-            reachableInstances<LetNode>().forEach { protocols.addAll(protocolFactory.viableProtocols(it)) }
-            reachableInstances<DeclarationNode>().forEach { protocols.addAll(protocolFactory.viableProtocols(it)) }
-            reachableInstances<ParameterNode>().forEach { protocols.addAll(protocolFactory.viableProtocols(it)) }
-            protocols.sorted().withIndex().associate { it.value to it.index }.toBiMap()
-        }
-
-        val varMap: BiMap<FunctionVariable, IntExpr> =
-            (
-                letNodes.mapKeys {
-                    FunctionVariable(nameAnalysis.enclosingFunctionName(it.key), it.key.temporary.value)
-                }
-                ).plus(
-                declarationNodes.mapKeys {
-                    FunctionVariable(nameAnalysis.enclosingFunctionName(it.key), it.key.name.value)
-                }
-            ).plus(
-                parameterNodes.mapKeys {
-                    val functionName = nameAnalysis.functionDeclaration(it.key).name.value
-                    FunctionVariable(functionName, it.key.name.value)
-                }
-            ).plus(
-                objectDeclarationArgumentNodes.mapKeys {
-                    FunctionVariable(nameAnalysis.enclosingFunctionName(it.key), it.key.name.value)
-                }
-            ).toBiMap()
-
-        val pmapExpr = pmap.mapValues { ctx.mkInt(it.value) as IntExpr }.toBiMap()
-
-        // load selection constraints into Z3
-        val costVariables = mutableSetOf<CostVariable>()
-        val hostVariables = mutableSetOf<HostVariable>()
-        val guardVisibilityVariables = mutableSetOf<GuardVisibilityFlag>()
-        for (constraint in constraints) {
-            costVariables.addAll(constraint.costVariables())
-            hostVariables.addAll(constraint.hostVariables())
-            guardVisibilityVariables.addAll(constraint.guardVisibilityVariables())
-            solver.Add(constraint.boolExpr(ctx, varMap, pmapExpr))
-        }
-
-        // make sure all cost variables are nonnegative
-        for (costVariable in costVariables) {
-            solver.Add(ctx.mkGe(costVariable.variable, ctx.mkInt(0)))
-        }
-
-        if (varMap.values.isNotEmpty()) {
-            // load cost constraints into Z3; build integer expression to minimize
-            val programCostFeatures: Cost<SymbolicCost> =
-                reachableFunctions.fold(constraintGenerator.symbolicCost(main.body)) { acc, f ->
-                    acc.concat(
-                        constraintGenerator.symbolicCost(f.body)
-                    )
-                }
-
-            val totalCost = programCostFeatures.featureSum()
-            val costExpr = totalCost.arithExpr(ctx, varMap, pmapExpr)
-            val totalCostSymvar = ctx.mkFreshConst("total_cost", ctx.intSort) as IntExpr
-
-            solver.Add(ctx.mkEq(totalCostSymvar, costExpr))
-
-            when (costMode) {
-                CostMode.MINIMIZE -> solver.MkMinimize(totalCostSymvar)
-                CostMode.MAXIMIZE -> solver.MkMaximize(totalCostSymvar)
-            }
-
-            val symvarCount = varMap.size + costVariables.size + hostVariables.size + guardVisibilityVariables.size
-
-            logger.info { "number of symvars: $symvarCount" }
-            logger.info { "cost mode set to $costMode" }
-
-            if (solver.Check() == Status.SATISFIABLE) {
-                val model = solver.model
-                val interpMap: Map<FunctionVariable, Int> =
-                    varMap.mapValues { e ->
-                        (model.getConstInterp(e.value) as IntNum).int
+            var protocolCounter = 1
+            for (constraint in constraints) {
+                for (fv in constraint.functionVariables()) {
+                    if (!fvMap.containsKey(fv)) {
+                        val fvSymname = this.nameGenerator.getFreshName("${fv.function.name}_${fv.variable.name}")
+                        fvMap[fv] = ctx.mkFreshConst(fvSymname, ctx.intSort) as IntExpr
                     }
-
-                fun eval(f: FunctionName, v: Variable): Protocol {
-                    val fvar = FunctionVariable(f, v)
-                    return interpMap[fvar]?.let { protocolIndex ->
-                        pmap.inverse[protocolIndex] ?: throw NoProtocolIndexMapping(protocolIndex)
-                    } ?: throw NoVariableSelectionSolutionError(f, v)
                 }
 
-                printMetadata(::eval, model, totalCostSymvar)
+                for (protocol in constraint.protocols()) {
+                    if (!protocolMap.containsKey(protocol)) {
+                        protocolMap[protocol] = protocolCounter
+                        protocolCounter++
+                    }
+                }
 
-                logger.info { "constraints satisfiable, extracted model" }
-
-                return ::eval
-            } else {
-                throw NoSelectionSolutionError()
+                for (variable in constraint.variableNames()) {
+                    if (!boolVarMap.containsKey(variable)) {
+                        val varName = this.nameGenerator.getFreshName(variable)
+                        boolVarMap[variable] = ctx.mkFreshConst(varName, ctx.boolSort) as BoolExpr
+                    }
+                }
             }
-        } else {
-            return { f: FunctionName, v: Variable ->
-                throw NoVariableSelectionSolutionError(f, v)
+
+            if (fvMap.values.isNotEmpty()) {
+                // load selection constraints into Z3
+                for (constraint in constraints) {
+                    solver.Add(boolExpr(constraint, ctx, fvMap, boolVarMap, protocolMap))
+                }
+
+                val (costExpr, costConstrs) = arithExpr(programCost, ctx, fvMap, boolVarMap, protocolMap)
+                solver.Add(costConstrs)
+                solver.MkMinimize(costExpr)
+
+                val symvarCount = fvMap.size + boolVarMap.size
+
+                logger.info { "number of symvars: $symvarCount" }
+
+                if (solver.Check() == Status.SATISFIABLE) {
+                    val model = solver.model
+                    val assignment: ProtocolAssignment =
+                        ProtocolAssignment(
+                            fvMap.mapValues { e ->
+                                val protocolIndex = (model.getConstInterp(e.value) as IntNum).int
+                                protocolMap.inverse[protocolIndex] ?: throw NoProtocolIndexMapping(protocolIndex)
+                            }
+                        )
+
+                    // printMetadata(::eval, model, totalCostSymvar)
+
+                    logger.info { "constraints satisfiable, extracted model" }
+
+                    return assignment
+                } else {
+                    throw NoSelectionSolutionError()
+                }
+            } else {
+                return ProtocolAssignment(mapOf())
             }
         }
-    }
-}
-
-fun selectProtocolsWithZ3(
-    program: ProgramNode,
-    protocolFactory: ProtocolFactory,
-    protocolComposer: ProtocolComposer,
-    costEstimator: CostEstimator<IntegerCost>,
-    costMode: CostMode = CostMode.MINIMIZE,
-    dumpMetadata: (Map<Node, PrettyPrintable>) -> Unit = {}
-): (FunctionName, Variable) -> Protocol {
-    if (program.hosts.isEmpty()) {
-        throw NoHostDeclarationsError(program.sourceLocation.sourcePath)
-    }
-
-    return Context().use { context ->
-        Z3Selection(
-            context,
-            program, program.main,
-            protocolFactory, protocolComposer, costEstimator, costMode,
-            dumpMetadata
-        ).select()
     }
 }

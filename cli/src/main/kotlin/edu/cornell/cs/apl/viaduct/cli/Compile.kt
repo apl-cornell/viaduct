@@ -20,10 +20,11 @@ import edu.cornell.cs.apl.viaduct.passes.annotateWithProtocols
 import edu.cornell.cs.apl.viaduct.passes.check
 import edu.cornell.cs.apl.viaduct.passes.elaborated
 import edu.cornell.cs.apl.viaduct.passes.specialize
-import edu.cornell.cs.apl.viaduct.selection.CostMode
+import edu.cornell.cs.apl.viaduct.selection.ProtocolAssignment
+import edu.cornell.cs.apl.viaduct.selection.ProtocolSelection
 import edu.cornell.cs.apl.viaduct.selection.SimpleCostEstimator
 import edu.cornell.cs.apl.viaduct.selection.SimpleCostRegime
-import edu.cornell.cs.apl.viaduct.selection.selectProtocolsWithZ3
+import edu.cornell.cs.apl.viaduct.selection.Z3Selection
 import edu.cornell.cs.apl.viaduct.selection.validateProtocolAssignment
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.DeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.LetNode
@@ -124,15 +125,15 @@ class Compile : CliktCommand(help = "Compile ideal protocol to secure distribute
         val protocolComposer = DefaultCombinedBackend.protocolComposer
         val costRegime = if (wanCost) SimpleCostRegime.WAN else SimpleCostRegime.LAN
         val costEstimator = SimpleCostEstimator(protocolComposer, costRegime)
-        val protocolAssignment = logger.duration("protocol selection") {
-            selectProtocolsWithZ3(
-                program,
-                protocolFactory,
-                protocolComposer,
-                costEstimator,
-                if (maximizeCost) CostMode.MAXIMIZE else CostMode.MINIMIZE
-            ) { metadata -> dumpProgramMetadata(program, metadata, protocolSelectionOutput) }
-        }
+        val protocolAssignment: ProtocolAssignment =
+            logger.duration("protocol selection") {
+                ProtocolSelection(
+                    Z3Selection(),
+                    protocolFactory,
+                    protocolComposer,
+                    costEstimator
+                ).selectAssignment(program)
+            }
 
         // Perform a sanity check to ensure the protocolAssignment is valid.
         // TODO: either remove this entirely or make it opt-in by the command line.

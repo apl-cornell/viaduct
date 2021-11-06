@@ -75,55 +75,16 @@ fun ExpressionNode.involvedVariables(): List<Variable> {
     }
 }
 
-/** Recursively traverses the children of [this] node, then applies [f] to [this] node. */
-private fun Node.postorderTraverse(f: (Node) -> Unit) {
-    this.children.forEach { it.postorderTraverse(f) }
-    f(this)
-}
-
-/** Returns all instances of [T] contained in [this] node. */
-private inline fun <reified T : Node> Node.listOfInstances(): List<T> {
-    val result = mutableListOf<T>()
-    this.postorderTraverse {
-        if (it is T) {
-            result.add(it)
-        }
+/** Returns [this] node and all its descendants in post order. */
+fun Node.descendants(): Sequence<Node> =
+    sequence {
+        this@descendants.children.forEach { yieldAll(it.descendants()) }
+        yield(this@descendants)
     }
-    return result
-}
 
-/** Returns all [LetNode]s contained in this node. */
-fun Node.letNodes(): List<LetNode> = this.listOfInstances()
-
-/** Returns all [DeclarationNode]s contained in this node. */
-fun Node.declarationNodes(): List<DeclarationNode> = this.listOfInstances()
-
-/** Returns all [ObjectDeclarationArgumentNode]s contained in this node. */
-fun Node.objectDeclarationArgumentNodes(): List<ObjectDeclarationArgumentNode> = this.listOfInstances()
-
-/** Returns all [FunctionCallNode]s contained in this node. */
-fun Node.functionCallNodes(): List<FunctionCallNode> = this.listOfInstances()
-
-/** Returns all [ParameterNode]s contained in this node. */
-fun Node.parameterNodes(): List<ParameterNode> = this.listOfInstances()
-
-/** Returns all [IfNode]s contained in this node. */
-fun Node.ifNodes(): List<IfNode> = this.listOfInstances()
-
-/** Returns all [InfiniteLoopNode]s contained in this node. */
-fun Node.infiniteLoopNodes(): List<InfiniteLoopNode> = this.listOfInstances()
-
-/** Returns all [BreakNode]s contained in this node. */
-fun Node.breakNodes(): List<BreakNode> = this.listOfInstances()
-
-/** Returns all [QueryNode]s contained in this node. */
-fun Node.queryNodes(): List<QueryNode> = this.listOfInstances()
-
-/** Returns all [UpdateNode]s contained in this node. */
-fun Node.updateNodes(): List<UpdateNode> = this.listOfInstances()
-
-/** Returns all [OutputNode]s contained in this node. */
-fun Node.outputNodes(): List<OutputNode> = this.listOfInstances()
+/** Returns all instances of [T] contained in [this] node (which may include [this] node). */
+inline fun <reified T : Node> Node.descendantsIsInstance(): Sequence<T> =
+    this.descendants().filterIsInstance<T>()
 
 /** Name of the "main" function. */
 val mainFunction = FunctionName("main")
@@ -145,12 +106,12 @@ val ProgramNode.main: FunctionDeclarationNode
 fun Node.freshVariableNameGenerator(): FreshNameGenerator {
     val freshNameGenerator = FreshNameGenerator()
 
-    fun <Named> Iterable<Named>.addNames(getName: Named.() -> Located<Name>) {
+    fun <Named> Sequence<Named>.addNames(getName: Named.() -> Located<Name>) {
         this.forEach { freshNameGenerator.getFreshName(it.getName().value.name) }
     }
-    this.letNodes().addNames(LetNode::temporary)
-    this.declarationNodes().addNames(DeclarationNode::name)
-    this.parameterNodes().addNames(ParameterNode::name)
+    this.descendantsIsInstance<LetNode>().addNames(LetNode::temporary)
+    this.descendantsIsInstance<DeclarationNode>().addNames(DeclarationNode::name)
+    this.descendantsIsInstance<ParameterNode>().addNames(ParameterNode::name)
 
     return freshNameGenerator
 }

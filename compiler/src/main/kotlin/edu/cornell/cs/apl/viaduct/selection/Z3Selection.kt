@@ -16,8 +16,6 @@ import mu.KotlinLogging
 
 private val logger = KotlinLogging.logger("Z3Selection")
 
-enum class CostMode { MINIMIZE, MAXIMIZE }
-
 /**
  * Constraint problem using Z3. Z3 has an optimization module that can return models with minimal cost.
  */

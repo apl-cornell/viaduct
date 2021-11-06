@@ -9,9 +9,10 @@ import edu.cornell.cs.apl.viaduct.passes.annotateWithProtocols
 import edu.cornell.cs.apl.viaduct.passes.check
 import edu.cornell.cs.apl.viaduct.passes.elaborated
 import edu.cornell.cs.apl.viaduct.passes.specialize
+import edu.cornell.cs.apl.viaduct.selection.ProtocolSelection
 import edu.cornell.cs.apl.viaduct.selection.SimpleCostEstimator
 import edu.cornell.cs.apl.viaduct.selection.SimpleCostRegime
-import edu.cornell.cs.apl.viaduct.selection.selectProtocolsWithZ3
+import edu.cornell.cs.apl.viaduct.selection.Z3Selection
 import edu.cornell.cs.apl.viaduct.selection.validateProtocolAssignment
 import org.gradle.api.DefaultTask
 import org.gradle.api.file.DirectoryProperty
@@ -92,12 +93,13 @@ abstract class CompileViaductTask : DefaultTask() {
         val protocolComposer = backend.get().protocolComposer
         val costEstimator = SimpleCostEstimator(protocolComposer, SimpleCostRegime.WAN)
 
-        val protocolAssignment = selectProtocolsWithZ3(
-            program,
-            protocolFactory,
-            protocolComposer,
-            costEstimator
-        )
+        val protocolAssignment =
+            ProtocolSelection(
+                Z3Selection(),
+                protocolFactory,
+                protocolComposer,
+                costEstimator
+            ).selectAssignment(program)
 
         // Perform a sanity check to ensure the protocolAssignment is valid.
         // TODO: either remove this entirely or make it opt-in by the command line.

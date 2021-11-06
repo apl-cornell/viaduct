@@ -7,8 +7,7 @@ import com.github.ajalt.clikt.parameters.types.file
 import edu.cornell.cs.apl.prettyprinting.Document
 import edu.cornell.cs.apl.prettyprinting.PrettyPrintable
 import edu.cornell.cs.apl.viaduct.analysis.InformationFlowAnalysis
-import edu.cornell.cs.apl.viaduct.analysis.declarationNodes
-import edu.cornell.cs.apl.viaduct.analysis.letNodes
+import edu.cornell.cs.apl.viaduct.analysis.descendantsIsInstance
 import edu.cornell.cs.apl.viaduct.backend.aby.abyMuxPostprocessor
 import edu.cornell.cs.apl.viaduct.backend.zkp.zkpMuxPostprocessor
 import edu.cornell.cs.apl.viaduct.backends.DefaultCombinedBackend
@@ -27,6 +26,8 @@ import edu.cornell.cs.apl.viaduct.selection.SimpleCostEstimator
 import edu.cornell.cs.apl.viaduct.selection.SimpleCostRegime
 import edu.cornell.cs.apl.viaduct.selection.Z3Selection
 import edu.cornell.cs.apl.viaduct.selection.validateProtocolAssignment
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.DeclarationNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.LetNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.Node
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
 import edu.cornell.cs.apl.viaduct.util.duration
@@ -108,10 +109,10 @@ class Compile : CliktCommand(help = "Compile ideal protocol to secure distribute
 
         if (labelOutput != null) {
             val labelMetadata: Map<Node, PrettyPrintable> =
-                program.declarationNodes().map {
+                program.descendantsIsInstance<DeclarationNode>().map {
                     it to ifcAnalysis.label(it)
                 }.plus(
-                    program.letNodes().map {
+                    program.descendantsIsInstance<LetNode>().map {
                         it to ifcAnalysis.label(it)
                     }
                 ).toMap()

@@ -62,15 +62,12 @@ class BackendCodeGenerator(
         val allProtocols = protocolAnalysis.participatingProtocols(program)
         val initGeneratorMap: MutableMap<Protocol, CodeGenerator> = mutableMapOf()
 
+        // TODO - improve this - how to parse inputted generators and assign to protocols the right way?
         for (protocol in allProtocols) {
             if (protocol is Replication || protocol is Local)
                 initGeneratorMap[protocol] = codeGenerators[0](context)
             if (protocol is Commitment)
-                initGeneratorMap[protocol] = CommitmentDispatchCodeGenerator(
-                    host,
-                    codeGenerators[1](context),
-                    codeGenerators[2](context)
-                )
+                initGeneratorMap[protocol] = CommitmentDispatchCodeGenerator(context)
         }
         codeGeneratorMap = initGeneratorMap
     }
@@ -288,7 +285,6 @@ private fun addHostDeclarations(fileBuilder: FileSpec.Builder, program: ProgramN
     }
 }
 
-// this function should take a list of code generators
 fun compileKotlinFile(
     program: ProgramNode,
     fileName: String,
@@ -326,11 +322,7 @@ fun compileKotlinFileSpec(
         val curGenerator = BackendCodeGenerator(
             program,
             entry.key,
-            listOf<(context: CodeGeneratorContext) -> CodeGenerator>(
-                ::PlainTextCodeGenerator,
-                ::CommitmentCreatorGenerator,
-                ::CommitmentHolderGenerator
-            )
+            codeGenerators
         )
 
         fileBuilder.addFunction(

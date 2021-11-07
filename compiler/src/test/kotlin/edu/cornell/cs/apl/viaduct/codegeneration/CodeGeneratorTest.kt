@@ -79,10 +79,15 @@ internal class CodeGeneratorTest {
 
         println(
             Document(
-                viaductProgramStringGenerator(
+                compileKotlinFile(
                     annotatedProgram,
                     file.name.substringBefore('.'),
-                    "src"
+                    "src",
+                    listOf<(context: CodeGeneratorContext) -> CodeGenerator>(
+                        ::PlainTextCodeGenerator,
+                        ::CommitmentCreatorGenerator,
+                        ::CommitmentHolderGenerator
+                    )
                 )
             ).print()
         )

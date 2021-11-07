@@ -2,9 +2,10 @@ package edu.cornell.cs.apl.viaduct.codegeneration
 
 import com.squareup.kotlinpoet.CodeBlock
 import com.squareup.kotlinpoet.MemberName
+import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
+import com.squareup.kotlinpoet.asClassName
 import edu.cornell.cs.apl.viaduct.errors.CodeGenerationError
 import edu.cornell.cs.apl.viaduct.errors.IllegalInternalCommunicationError
-import edu.cornell.cs.apl.viaduct.errors.RuntimeError
 import edu.cornell.cs.apl.viaduct.errors.ViaductInterpreterError
 import edu.cornell.cs.apl.viaduct.protocols.Commitment
 import edu.cornell.cs.apl.viaduct.runtime.commitment.Committed
@@ -34,15 +35,15 @@ import edu.cornell.cs.apl.viaduct.syntax.types.VectorType
 class CommitmentCreatorGenerator(
     context: CodeGeneratorContext
 ) : AbstractCodeGenerator(context) {
-    private val runtimeErrorClass = RuntimeError::class
+
     private val committedClassName = Committed::class
 
     // this function should take in a protocol and reference the protocol arg in the body
     override fun exp(expr: ExpressionNode, protocol: Protocol): CodeBlock =
         when (expr) {
             is LiteralNode -> CodeBlock.of(
-                "%T(%L)",
-                committedClassName,
+                "%M(%L)",
+                MemberName(Committed.Companion::class.asClassName(), "fake"),
                 expr.value
             )
 
@@ -162,15 +163,16 @@ class CommitmentCreatorGenerator(
                 events.getProjectionSends(ProtocolProjection(sendProtocol, sendingHost))
 
             for (event in relevantEvents) {
-
-                // send temporary containing hash value
-                sendBuilder.addStatement(
-                    "%L",
-                    context.send(
-                        CodeBlock.of("%L", context.kotlinName(sender.temporary.value, sendProtocol)),
-                        event.recv.host
+                if (event.send.host != event.recv.host) {
+                    // send temporary containing hash value
+                    sendBuilder.addStatement(
+                        "%L",
+                        context.send(
+                            CodeBlock.of("%L", context.kotlinName(sender.temporary.value, sendProtocol)),
+                            event.recv.host
+                        )
                     )
-                )
+                }
             }
         }
         return sendBuilder.build()
@@ -187,8 +189,7 @@ class CommitmentCreatorGenerator(
         val projection = ProtocolProjection(receiveProtocol, receivingHost)
         val hashHosts: Set<Host> = (projection.protocol as Commitment).hashHosts
         var clearTextTemp = context.newTemporary("clearTextTemp")
-        val committedTemp = context.newTemporary("committed")
-        val commitTemp = context.newTemporary("commitment")
+        val commitmentTemp = context.newTemporary("commitment")
         if (sendProtocol != receiveProtocol) {
             when {
                 events.any { event -> event.recv.id == Commitment.CLEARTEXT_INPUT } -> {
@@ -196,39 +197,26 @@ class CommitmentCreatorGenerator(
                         events.getHostReceives(
                             projection.host,
                             Commitment.CLEARTEXT_INPUT
-                        ).filter { event -> event.send.host != context.host }
+                        )
 
                     if (relevantEvents.isNotEmpty()) {
-                        receiveBuilder.addStatement(
-                            "val %N = %L",
-                            clearTextTemp,
-                            context.receive(
-                                typeTranslator(context.typeAnalysis.type(sender)),
-                                relevantEvents.first().send.host
+                        receiveBuilder.add(
+                            receiveHelper(
+                                sender,
+                                sendProtocol,
+                                relevantEvents,
+                                context,
+                                clearTextTemp,
+                                "Commitment Creator Cleartext : received different values"
                             )
                         )
-                        relevantEvents = relevantEvents.minusElement(relevantEvents.first())
                     }
 
-                    // receive from the rest of the hosts and compare against clearTextValue
-                    for (event in relevantEvents) {
-
-                        // check to make sure that you got the same data from all hosts
-                        receiveBuilder.beginControlFlow(
-                            "if (%N != %L)",
-                            clearTextTemp,
-                            context.receive(
-                                typeTranslator(context.typeAnalysis.type(sender)),
-                                event.send.host
-                            )
-                        )
-                        receiveBuilder.addStatement(
-                            "throw %T(%S)",
-                            runtimeErrorClass,
-                            "Commitment Cleartext : received different values"
-                        )
-                        receiveBuilder.endControlFlow()
-                    }
+                    receiveBuilder.addStatement(
+                        "val %N = %N",
+                        context.kotlinName(sender.temporary.value, receiveProtocol),
+                        clearTextTemp
+                    )
                 }
 
                 else -> {
@@ -236,45 +224,22 @@ class CommitmentCreatorGenerator(
                         events.getProjectionReceives(
                             projection,
                             Commitment.INPUT
-                        ).filter { event -> event.send.host != context.host }
+                        )
 
-                    if (cleartextInputEvents.isNotEmpty()) {
-                        receiveBuilder.addStatement(
-                            "val %N = %L",
+                    receiveBuilder.add(
+                        receiveHelper(
+                            sender,
+                            sendProtocol,
+                            cleartextInputEvents,
+                            context,
                             clearTextTemp,
-                            context.receive(
-                                typeTranslator(context.typeAnalysis.type(sender)),
-                                cleartextInputEvents.first().send.host
-                            )
+                            "Commitment Creation : received different values"
                         )
-                        cleartextInputEvents = cleartextInputEvents.minusElement(cleartextInputEvents.first())
-                    } else {
-                        clearTextTemp = context.kotlinName(sender.temporary.value, sendProtocol)
-                    }
-
-                    // receive from the rest of the hosts and compare against clearTextValue
-                    for (event in cleartextInputEvents) {
-
-                        // check to make sure that you got the same data from all hosts
-                        receiveBuilder.beginControlFlow(
-                            "if (%N != %L)",
-                            clearTextTemp,
-                            context.receive(
-                                typeTranslator(context.typeAnalysis.type(sender)),
-                                event.send.host
-                            )
-                        )
-                        receiveBuilder.addStatement(
-                            "throw %T(%S)",
-                            runtimeErrorClass,
-                            "Commitment Cleartext : received different values"
-                        )
-                        receiveBuilder.endControlFlow()
-                    }
+                    )
 
                     receiveBuilder.addStatement(
                         "val %N = %T(%N)",
-                        committedTemp,
+                        context.kotlinName(sender.temporary.value, receiveProtocol),
                         committedClassName.asClassName().parameterizedBy(
                             typeTranslator(context.typeAnalysis.type(sender))
                         ),
@@ -284,8 +249,8 @@ class CommitmentCreatorGenerator(
                     // create commitment
                     receiveBuilder.addStatement(
                         "val %N = %N.%M()",
-                        commitTemp,
-                        committedTemp,
+                        commitmentTemp,
+                        context.kotlinName(sender.temporary.value, receiveProtocol),
                         MemberName(Committed.Companion::class.asClassName(), "commitment")
                     )
 
@@ -295,18 +260,12 @@ class CommitmentCreatorGenerator(
                             context.send(
                                 CodeBlock.of(
                                     "%L",
-                                    commitTemp
+                                    commitmentTemp
                                 ),
                                 hashHost
                             )
                         )
                     }
-
-//                    receiveBuilder.addStatement(
-//                        "val %N = %N",
-//                        context.kotlinName(sender.temporary.value, sendProtocol),
-//                        committedTemp
-//                    )
                 }
             }
         }

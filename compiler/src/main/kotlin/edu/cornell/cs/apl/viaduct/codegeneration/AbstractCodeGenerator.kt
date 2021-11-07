@@ -8,6 +8,8 @@ import com.squareup.kotlinpoet.TypeName
 import com.squareup.kotlinpoet.U_BYTE_ARRAY
 import edu.cornell.cs.apl.viaduct.errors.CodeGenerationError
 import edu.cornell.cs.apl.viaduct.errors.IllegalInternalCommunicationError
+import edu.cornell.cs.apl.viaduct.errors.RuntimeError
+import edu.cornell.cs.apl.viaduct.selection.CommunicationEvent
 import edu.cornell.cs.apl.viaduct.syntax.Arguments
 import edu.cornell.cs.apl.viaduct.syntax.ClassNameNode
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
@@ -33,6 +35,7 @@ import edu.cornell.cs.apl.viaduct.syntax.types.ValueType
 import edu.cornell.cs.apl.viaduct.syntax.values.Value
 
 abstract class AbstractCodeGenerator(val context: CodeGeneratorContext) : CodeGenerator {
+    val runtimeErrorClass = RuntimeError::class
     override fun simpleStatement(protocol: Protocol, stmt: SimpleStatementNode): CodeBlock {
         return when (stmt) {
             is LetNode -> let(protocol, stmt)
@@ -144,6 +147,65 @@ abstract class AbstractCodeGenerator(val context: CodeGeneratorContext) : CodeGe
         }
 
     abstract fun output(protocol: Protocol, stmt: OutputNode): CodeBlock
+
+    fun receiveHelper(
+        sender: LetNode,
+        sendProtocol: Protocol,
+        events: Set<CommunicationEvent>,
+        context: CodeGeneratorContext,
+        clearTextTemp: String,
+        errorMessage: String
+    ): CodeBlock {
+        var eventSet = events
+        var receiveBuilder = CodeBlock.builder()
+
+        if (eventSet.first().send.host == context.host) {
+            receiveBuilder.addStatement(
+                "val %N = %N",
+                clearTextTemp,
+                context.kotlinName(sender.temporary.value, sendProtocol)
+            )
+        } else {
+            receiveBuilder.addStatement(
+                "val %N = %L",
+                clearTextTemp,
+                context.receive(
+                    typeTranslator(context.typeAnalysis.type(sender)),
+                    eventSet.first().send.host
+                )
+            )
+        }
+        eventSet = eventSet.minusElement(eventSet.first())
+
+        // receive from the rest of the hosts and compare against clearTextValue
+        for (event in eventSet) {
+            // check to make sure that you got the same data from all hosts
+            val receiveVal = CodeBlock.builder()
+            if (event.send.host == context.host) {
+                receiveVal.add(context.kotlinName(sender.temporary.value, sendProtocol))
+            } else {
+                receiveVal.add(
+                    context.receive(
+                        typeTranslator(context.typeAnalysis.type(sender)),
+                        event.send.host
+                    )
+                )
+            }
+            // check to make sure that you got the same data from all hosts
+            receiveBuilder.beginControlFlow(
+                "if (%N != %L)",
+                clearTextTemp,
+                receiveVal
+            )
+            receiveBuilder.addStatement(
+                "throw %T(%S)",
+                runtimeErrorClass,
+                errorMessage
+            )
+            receiveBuilder.endControlFlow()
+        }
+        return receiveBuilder.build()
+    }
 }
 
 abstract class SingleProtocolCodeGenerator(context: CodeGeneratorContext) : AbstractCodeGenerator(context) {

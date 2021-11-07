@@ -2,8 +2,11 @@ package edu.cornell.cs.apl.viaduct.codegeneration
 
 import com.squareup.kotlinpoet.CodeBlock
 import com.squareup.kotlinpoet.MemberName
+import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
+import com.squareup.kotlinpoet.asClassName
 import edu.cornell.cs.apl.viaduct.errors.CodeGenerationError
 import edu.cornell.cs.apl.viaduct.runtime.commitment.Commitment
+import edu.cornell.cs.apl.viaduct.runtime.commitment.Committed
 import edu.cornell.cs.apl.viaduct.selection.CommunicationEvent
 import edu.cornell.cs.apl.viaduct.selection.ProtocolCommunication
 import edu.cornell.cs.apl.viaduct.syntax.Host
@@ -33,7 +36,12 @@ class CommitmentHolderGenerator(
 ) : AbstractCodeGenerator(context) {
     override fun exp(expr: ExpressionNode, protocol: Protocol): CodeBlock =
         when (expr) {
-            is LiteralNode -> throw CodeGenerationError("Commitment: Cannot commit literals")
+            is LiteralNode -> CodeBlock.of(
+                "%M(%L).%M()",
+                MemberName(Committed.Companion::class.asClassName(), "fake"),
+                expr.value,
+                MemberName(Committed.Companion::class.asClassName(), "commitment")
+            )
 
             is ReadNode -> CodeBlock.of(
                 "%L",
@@ -94,7 +102,8 @@ class CommitmentHolderGenerator(
             stmt.className,
             stmt.arguments,
             CodeBlock.of(
-                "fake(%L).%M()",
+                "%M(%L).%M()",
+                MemberName(Committed.Companion::class.asClassName(), "fake"),
                 exp(stmt.typeArguments[0].value.defaultValue),
                 MemberName(Committed.Companion::class.asClassName(), "commitment")
             ),
@@ -150,13 +159,15 @@ class CommitmentHolderGenerator(
             )
 
         for (event in relevantEvents) {
-            sendBuilder.addStatement(
-                "%L",
-                context.send(
-                    CodeBlock.of("%L", context.kotlinName(sender.temporary.value, sendProtocol)),
-                    event.recv.host
+            if (event.send.host != event.recv.host) {
+                sendBuilder.addStatement(
+                    "%L",
+                    context.send(
+                        CodeBlock.of("%L", context.kotlinName(sender.temporary.value, sendProtocol)),
+                        event.recv.host
+                    )
                 )
-            )
+            }
         }
         return sendBuilder.build()
     }
@@ -179,24 +190,31 @@ class CommitmentHolderGenerator(
                         events.getHostReceives(
                             projection.host,
                             CommitmentProtocol.CLEARTEXT_INPUT
-                        ).filter { event -> event.send.host != receivingHost }
-                    for (event in relevantEvents) {
-                        receiveBuilder.addStatement(
-                            "val %N = %L",
-                            context.newTemporary(clearTextTemp),
-                            context.receive(
-                                typeTranslator(context.typeAnalysis.type(sender)),
-                                event.send.host
-                            )
                         )
-                    }
+
+                    receiveBuilder.add(
+                        receiveHelper(
+                            sender,
+                            sendProtocol,
+                            relevantEvents,
+                            context,
+                            clearTextTemp,
+                            "Commitment Holder Cleartext : received different values"
+                        )
+                    )
+
+                    receiveBuilder.addStatement(
+                        "val %N = %N",
+                        context.kotlinName(sender.temporary.value, receiveProtocol),
+                        clearTextTemp
+                    )
                 }
 
                 else -> { // create commitment
                     if (receivingHost !in sendProtocol.hosts) {
                         receiveBuilder.addStatement(
                             "val %N = %L",
-                            context.kotlinName(sender.temporary.value, sendProtocol),
+                            context.kotlinName(sender.temporary.value, receiveProtocol),
                             context.receive(
                                 Commitment::class.asClassName().parameterizedBy(
                                     typeTranslator(context.typeAnalysis.type(sender))

@@ -10,18 +10,16 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.AtomicExpressionNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.LetNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.SimpleStatementNode
 
-// just generate the commitment backends in this class
-// only pass in a context here
 class CommitmentDispatchCodeGenerator(
-    val host: Host,
-    private val commitmentCreatorGenerator: CodeGenerator,
-    private val commitmentHolderGenerator: CodeGenerator
+    val context: CodeGeneratorContext
 ) : CodeGenerator {
+    private val commitmentCreatorGenerator = CommitmentCreatorGenerator(context)
+    private val commitmentHolderGenerator = CommitmentHolderGenerator(context)
 
     override fun guard(protocol: Protocol, expr: AtomicExpressionNode): CodeBlock =
         when (protocol) {
             is Commitment -> {
-                if (host == protocol.cleartextHost) {
+                if (context.host == protocol.cleartextHost) {
                     commitmentCreatorGenerator.guard(protocol, expr)
                 } else {
                     commitmentHolderGenerator.guard(protocol, expr)
@@ -33,7 +31,7 @@ class CommitmentDispatchCodeGenerator(
     override fun simpleStatement(protocol: Protocol, stmt: SimpleStatementNode): CodeBlock =
         when (protocol) {
             is Commitment -> {
-                if (host == protocol.cleartextHost) {
+                if (context.host == protocol.cleartextHost) {
                     commitmentCreatorGenerator.simpleStatement(protocol, stmt)
                 } else {
                     commitmentHolderGenerator.simpleStatement(protocol, stmt)
@@ -51,7 +49,7 @@ class CommitmentDispatchCodeGenerator(
     ): CodeBlock =
         when (sendProtocol) {
             is Commitment -> {
-                if (host == sendProtocol.cleartextHost) {
+                if (context.host == sendProtocol.cleartextHost) {
                     commitmentCreatorGenerator.send(sendingHost, sender, sendProtocol, receiveProtocol, events)
                 } else {
                     commitmentHolderGenerator.send(sendingHost, sender, sendProtocol, receiveProtocol, events)
@@ -69,7 +67,7 @@ class CommitmentDispatchCodeGenerator(
     ): CodeBlock =
         when (receiveProtocol) {
             is Commitment -> {
-                if (host == receiveProtocol.cleartextHost) {
+                if (context.host == receiveProtocol.cleartextHost) {
                     commitmentCreatorGenerator.receive(receivingHost, sender, sendProtocol, receiveProtocol, events)
                 } else {
                     commitmentHolderGenerator.receive(receivingHost, sender, sendProtocol, receiveProtocol, events)

@@ -1,0 +1,15 @@
+host alice : {A}
+host bob   : {B}
+host chuck : {C & D}
+host dave  : {D & C}
+
+process main {
+  val x: int{C & D} = input int from chuck;
+  val a: int{C & D} = input int from dave;
+  val sum: int{C & D} = x + a;
+
+  val y: int{(A | B | C)-> & (C & D)<-} = declassify sum to {(A | B | C)-> & (C & D)<-};
+  val z: int{(A | B | C)-> & (C & D & A)<-} = endorse y from {(A | B | C)-> & (C & D)<-};
+  output z to alice;
+  output z to chuck;
+}

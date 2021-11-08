@@ -29,6 +29,7 @@ import edu.cornell.cs.apl.viaduct.selection.Z3Selection
 import edu.cornell.cs.apl.viaduct.selection.validateProtocolAssignment
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.DeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.LetNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.Metadata
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.Node
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
 import edu.cornell.cs.apl.viaduct.util.duration
@@ -203,7 +204,7 @@ private fun dumpGraph(graphWriter: (Writer) -> Unit, file: File?) {
 
 private fun dumpProgramMetadata(
     program: ProgramNode,
-    metadata: Map<Node, PrettyPrintable>,
+    metadata: Metadata,
     file: File?
 ) {
     if (file == null) {
@@ -211,7 +212,7 @@ private fun dumpProgramMetadata(
     }
 
     logger.info { "Writing program metadata to $file" }
-    file.println(program.printMetadata(metadata))
+    file.println(program.asDocumentWithMetadata(metadata))
 }
 
 /** Infers Graphviz output format from [file]'s extension. */

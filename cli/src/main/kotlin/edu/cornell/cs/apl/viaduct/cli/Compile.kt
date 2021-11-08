@@ -19,6 +19,7 @@ import edu.cornell.cs.apl.viaduct.passes.ProgramPostprocessorRegistry
 import edu.cornell.cs.apl.viaduct.passes.annotateWithProtocols
 import edu.cornell.cs.apl.viaduct.passes.check
 import edu.cornell.cs.apl.viaduct.passes.elaborated
+import edu.cornell.cs.apl.viaduct.passes.isAssignmentAnnotated
 import edu.cornell.cs.apl.viaduct.passes.specialize
 import edu.cornell.cs.apl.viaduct.selection.ProtocolAssignment
 import edu.cornell.cs.apl.viaduct.selection.ProtocolSelection
@@ -93,7 +94,7 @@ class Compile : CliktCommand(help = "Compile ideal protocol to secure distribute
 
     override fun run() {
         val unspecializedProgram = logger.duration("parsing and elaboration") {
-            input.parse().elaborated()
+            input.parse(DefaultCombinedBackend.protocolParsers).elaborated()
         }
 
         val program = logger.duration("function specialization") {
@@ -119,42 +120,47 @@ class Compile : CliktCommand(help = "Compile ideal protocol to secure distribute
             dumpProgramMetadata(program, labelMetadata, labelOutput)
         }
 
-        val protocolFactory = DefaultCombinedBackend.protocolFactory(program)
+        val postprocessedProgram =
+            if (program.isAssignmentAnnotated()) {
+                program
+            } else {
+                // Select protocols.
+                val protocolFactory = DefaultCombinedBackend.protocolFactory(program)
+                val protocolComposer = DefaultCombinedBackend.protocolComposer
+                val costRegime = if (wanCost) SimpleCostRegime.WAN else SimpleCostRegime.LAN
+                val costEstimator = SimpleCostEstimator(protocolComposer, costRegime)
+                val protocolAssignment: ProtocolAssignment =
+                    logger.duration("protocol selection") {
+                        ProtocolSelection(
+                            Z3Selection(),
+                            protocolFactory,
+                            protocolComposer,
+                            costEstimator
+                        ).selectAssignment(program)
+                    }
 
-        // Select protocols.
-        val protocolComposer = DefaultCombinedBackend.protocolComposer
-        val costRegime = if (wanCost) SimpleCostRegime.WAN else SimpleCostRegime.LAN
-        val costEstimator = SimpleCostEstimator(protocolComposer, costRegime)
-        val protocolAssignment: ProtocolAssignment =
-            logger.duration("protocol selection") {
-                ProtocolSelection(
-                    Z3Selection(),
+                // Perform a sanity check to ensure the protocolAssignment is valid.
+                // TODO: either remove this entirely or make it opt-in by the command line.
+                validateProtocolAssignment(
+                    program,
                     protocolFactory,
                     protocolComposer,
-                    costEstimator
-                ).selectAssignment(program)
+                    costEstimator,
+                    protocolAssignment
+                )
+
+                val annotatedProgram = program.annotateWithProtocols(protocolAssignment)
+
+                // Post-process program
+                logger.duration("post-processing program") {
+                    val postprocessor = ProgramPostprocessorRegistry(
+                        abyMuxPostprocessor(protocolAssignment),
+                        zkpMuxPostprocessor(protocolAssignment)
+                    )
+
+                    postprocessor.postprocess(annotatedProgram)
+                }
             }
-
-        // Perform a sanity check to ensure the protocolAssignment is valid.
-        // TODO: either remove this entirely or make it opt-in by the command line.
-        validateProtocolAssignment(
-            program,
-            protocolFactory,
-            protocolComposer,
-            costEstimator,
-            protocolAssignment
-        )
-
-        val annotatedProgram = logger.duration("annotating program with protocols") {
-            program.annotateWithProtocols(protocolAssignment)
-        }
-
-        // Post-process program
-        val postprocessor = ProgramPostprocessorRegistry(
-            abyMuxPostprocessor(protocolAssignment),
-            zkpMuxPostprocessor(protocolAssignment)
-        )
-        val postprocessedProgram = postprocessor.postprocess(annotatedProgram)
 
         if (compileKotlin) {
             // TODO - figure out best way to let code generators know which protocols it is responsible for

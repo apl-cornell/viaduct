@@ -15,7 +15,10 @@ import edu.cornell.cs.apl.viaduct.syntax.values.Value
 sealed class ExpressionNode : Node() {
     abstract override val children: Iterable<AtomicExpressionNode>
 
-    abstract override fun toSurfaceNode(): edu.cornell.cs.apl.viaduct.syntax.surface.ExpressionNode
+    final override fun toSurfaceNode(metadata: Metadata): edu.cornell.cs.apl.viaduct.syntax.surface.ExpressionNode =
+        toSurfaceNode()
+
+    abstract fun toSurfaceNode(): edu.cornell.cs.apl.viaduct.syntax.surface.ExpressionNode
 
     abstract override fun copy(children: List<Node>): ExpressionNode
 }

@@ -77,7 +77,10 @@ internal class IndexingNode(
     override val sourceLocation: SourceLocation
         get() = variable.sourceLocation.merge(indices.sourceLocation)
 
-    override val asDocument: Document
+    override val comment: String?
+        get() = null
+
+    override val asDocumentWithoutComment: Document
         get() =
             if (indices.isEmpty())
                 variable.asDocument

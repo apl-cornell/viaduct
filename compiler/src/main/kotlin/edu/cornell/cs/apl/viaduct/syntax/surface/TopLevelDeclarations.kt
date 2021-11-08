@@ -31,9 +31,10 @@ sealed class TopLevelDeclarationNode : Node()
 class HostDeclarationNode(
     val name: HostNode,
     val authority: LabelNode,
-    override val sourceLocation: SourceLocation
+    override val sourceLocation: SourceLocation,
+    override val comment: String? = null
 ) : TopLevelDeclarationNode() {
-    override val asDocument: Document
+    override val asDocumentWithoutComment: Document
         get() = keyword("host") * name * ":" * listOf(authority).braced()
 }
 
@@ -48,9 +49,10 @@ class ParameterNode(
     // TODO: allow leaving out some of the labels (right now it's all or nothing)
     val labelArguments: Arguments<LabelNode>?,
     val protocol: ProtocolNode?,
-    override val sourceLocation: SourceLocation
+    override val sourceLocation: SourceLocation,
+    override val comment: String? = null
 ) : Node() {
-    override val asDocument: Document
+    override val asDocumentWithoutComment: Document
         get() {
             val protocolDoc = protocol?.let {
                 Document("@") + it.value.asDocument
@@ -86,9 +88,10 @@ class FunctionDeclarationNode(
     val pcLabel: LabelNode?,
     val parameters: Arguments<ParameterNode>,
     val body: BlockNode,
-    override val sourceLocation: SourceLocation
+    override val sourceLocation: SourceLocation,
+    override val comment: String? = null
 ) : TopLevelDeclarationNode() {
-    override val asDocument: Document
+    override val asDocumentWithoutComment: Document
         get() =
             keyword("fun") * name +
                 (pcLabel?.let { listOf(it).braced() } ?: Document("")) +

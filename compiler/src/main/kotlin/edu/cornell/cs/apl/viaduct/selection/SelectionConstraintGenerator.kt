@@ -62,17 +62,17 @@ class SelectionConstraintGenerator(
 
     // TODO: pc must be weak enough for the hosts involved in the selected protocols to read it
     fun viableProtocols(node: LetNode): Set<Protocol> =
-        protocolFactory.viableProtocols(node).filter {
+        node.protocol?.let { setOf(it.value) } ?: protocolFactory.viableProtocols(node).filter {
             it.authority(hostTrustConfiguration).actsFor(informationFlowAnalysis.label(node))
         }.toSet()
 
     fun viableProtocols(node: DeclarationNode): Set<Protocol> =
-        protocolFactory.viableProtocols(node).filter {
+        node.protocol?.let { setOf(it.value) } ?: protocolFactory.viableProtocols(node).filter {
             it.authority(hostTrustConfiguration).actsFor(informationFlowAnalysis.label(node))
         }.toSet()
 
     fun viableProtocols(node: ParameterNode): Set<Protocol> =
-        protocolFactory.viableProtocols(node).filter {
+        node.protocol?.let { setOf(it.value) } ?: protocolFactory.viableProtocols(node).filter {
             it.authority(hostTrustConfiguration).actsFor(informationFlowAnalysis.label(node))
         }.toSet()
 

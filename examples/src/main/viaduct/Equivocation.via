@@ -1,0 +1,18 @@
+host alice : {A & B & C}
+host bob   : {A & B & C}
+host chuck : {A & B & C}
+
+process main {
+    val n: int = input int from chuck;
+
+    var prod: int = 1;
+
+    for (var i: int = 0; i < n; i += 1) {
+        val a: int = input int from alice;
+        val b: int = input int from bob;
+        prod = prod + (a * b);
+    }
+
+    output prod to alice;
+    output prod to bob;
+}

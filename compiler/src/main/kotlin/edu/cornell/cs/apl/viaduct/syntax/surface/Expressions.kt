@@ -25,7 +25,11 @@ import edu.cornell.cs.apl.viaduct.syntax.ValueTypeNode
 import edu.cornell.cs.apl.viaduct.syntax.values.Value
 
 /** A computation that produces a result. */
-sealed class ExpressionNode : Node()
+sealed class ExpressionNode : Node() {
+    /** Expressions cannot have associated comments. */
+    final override val comment: String?
+        get() = null
+}
 
 /** An expression that requires no computation to reduce to a value. */
 sealed class AtomicExpressionNode : ExpressionNode()
@@ -33,7 +37,7 @@ sealed class AtomicExpressionNode : ExpressionNode()
 /** A literal constant. */
 class LiteralNode(val value: Value, override val sourceLocation: SourceLocation) :
     AtomicExpressionNode() {
-    override val asDocument: Document
+    override val asDocumentWithoutComment: Document
         get() = value.asDocument
 }
 
@@ -43,7 +47,7 @@ class ReadNode(val temporary: TemporaryNode) :
     override val sourceLocation: SourceLocation
         get() = temporary.sourceLocation
 
-    override val asDocument: Document
+    override val asDocumentWithoutComment: Document
         get() = temporary.asDocument
 }
 
@@ -53,7 +57,7 @@ class OperatorApplicationNode(
     val arguments: Arguments<ExpressionNode>,
     override val sourceLocation: SourceLocation
 ) : ExpressionNode() {
-    override val asDocument: Document
+    override val asDocumentWithoutComment: Document
         get() = Document("(") + operator.asDocument(arguments) + ")"
 }
 
@@ -64,7 +68,7 @@ class QueryNode(
     val arguments: Arguments<ExpressionNode>,
     override val sourceLocation: SourceLocation
 ) : ExpressionNode() {
-    override val asDocument: Document
+    override val asDocumentWithoutComment: Document
         get() =
             IndexingNode.from(this)?.asDocument
                 ?: (variable + "." + query + arguments.tupled().nested())
@@ -89,7 +93,7 @@ class DeclassificationNode(
     override val toLabel: LabelNode,
     override val sourceLocation: SourceLocation
 ) : DowngradeNode() {
-    override val asDocument: Document
+    override val asDocumentWithoutComment: Document
         get() = asDocument("declassify")
 
     /** Used to implement [PrettyPrintable.asDocument]. */
@@ -113,7 +117,7 @@ class EndorsementNode(
     override val toLabel: LabelNode?,
     override val sourceLocation: SourceLocation
 ) : DowngradeNode() {
-    override val asDocument: Document
+    override val asDocumentWithoutComment: Document
         get() = asDocument("endorse")
 
     /** Used to implement [PrettyPrintable.asDocument]. */
@@ -142,7 +146,7 @@ class InputNode(
     val host: HostNode,
     override val sourceLocation: SourceLocation
 ) : ExpressionNode() {
-    override val asDocument: Document
+    override val asDocumentWithoutComment: Document
         get() = keyword("input") * type * keyword("from") * host
 }
 
@@ -157,7 +161,7 @@ class ConstructorCallNode(
     val arguments: Arguments<ExpressionNode>,
     override val sourceLocation: SourceLocation
 ) : ExpressionNode() {
-    override val asDocument: Document
+    override val asDocumentWithoutComment: Document
         get() {
             val types = typeArguments.bracketed().nested()
             val labels =

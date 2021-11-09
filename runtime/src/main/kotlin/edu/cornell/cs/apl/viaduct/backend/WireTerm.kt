@@ -81,6 +81,7 @@ fun WireTerm.asString(): String {
         is WireOp -> op.asDocument(inputs.map { it.asString().asPrettyPrintable() }).print()
     }
 }
+
 fun WireTerm.hash(): String {
     val blist = Hashing.deterministicHash(this.asString().toByteArray().toList()).hash
     return blist.hashCode().toString(16)

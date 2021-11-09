@@ -242,7 +242,7 @@ class PlaintextProtocolInterpreter(
 
                     if (hostsToCheckWith.isNotEmpty()) {
                         logger.trace {
-                            "host: " + this.host.asDocument.print() + " checks for equivocation with: " +
+                            "host: " + this.host.asDocument().print() + " checks for equivocation with: " +
                                 hostsToCheckWith.sorted().joined().print()
                         }
                     }
@@ -264,9 +264,9 @@ class PlaintextProtocolInterpreter(
 
                         if (recvValue != cleartextValue) {
                             throw ViaductInterpreterError(
-                                "equivocation error between hosts: " + this.host.asDocument.print() + ", " +
-                                    host.asDocument.print() + ", expected " + cleartextValue.asDocument.print() +
-                                    ", received " + recvValue.asDocument.print()
+                                "equivocation error between hosts: " + this.host.asDocument().print() + ", " +
+                                    host.asDocument().print() + ", expected " + cleartextValue.asDocument().print() +
+                                    ", received " + recvValue.asDocument().print()
                             )
                         }
                     }
@@ -282,7 +282,7 @@ class PlaintextProtocolInterpreter(
                     val msg = runtime.receive(cleartextSendEvent)
 
                     logger.info {
-                        "received opened commitment value and nonce from ${cleartextSendEvent.send.asProjection().asDocument.print()}"
+                        "received opened commitment value and nonce from ${cleartextSendEvent.send.asProjection().asDocument().print()}"
                     }
 
                     for (hashCommitmentInput in hashCommitmentInputs) {
@@ -290,7 +290,7 @@ class PlaintextProtocolInterpreter(
 
                         assert(HashInfo(commitment.value, nonce.value).verify(msg.encode()))
                         logger.info {
-                            "verified commitment from host ${hashCommitmentInput.send.asProjection().asDocument.print()}"
+                            "verified commitment from host ${hashCommitmentInput.send.asProjection().asDocument().print()}"
                         }
                     }
 

@@ -695,5 +695,5 @@ class InformationFlowAnalysis private constructor(
  */
 private class PrettyNodeWrapper(private val node: PrettyPrintable) {
     // TODO: colors?
-    override fun toString(): String = node.asDocument.print()
+    override fun toString(): String = node.asDocument().print()
 }

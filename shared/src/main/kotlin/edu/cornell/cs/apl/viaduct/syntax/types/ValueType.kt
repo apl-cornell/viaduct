@@ -17,8 +17,7 @@ abstract class ValueType : Type {
     /** The default value of this type. */
     abstract val defaultValue: Value
 
-    final override val asDocument: Document
-        get() = Document(this.toString()).styled(ValueTypeStyle)
+    final override fun asDocument(): Document = Document(this.toString()).styled(ValueTypeStyle)
 }
 
 /** The display style of [ValueType]s. */

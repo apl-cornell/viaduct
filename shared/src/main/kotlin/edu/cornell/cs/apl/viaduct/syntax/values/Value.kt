@@ -14,8 +14,7 @@ abstract class Value : PrettyPrintable {
     /** The type of the value. */
     abstract val type: ValueType
 
-    final override val asDocument: Document
-        get() = Document(this.toString()).styled(ValueStyle)
+    final override fun asDocument(): Document = Document(this.toString()).styled(ValueStyle)
 }
 
 /** The display style of [Value]s. */

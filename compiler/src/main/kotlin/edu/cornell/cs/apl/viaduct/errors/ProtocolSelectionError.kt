@@ -26,8 +26,8 @@ class NoSelectionSolutionError : ProtocolSelectionError() {
 /**
  * Thrown when the protocol selection does not have a solution for a program variable.
  *
- * @param f: The name of the function enclosing the variable.
- * @param v: The name of variable.
+ * @param f The name of the function enclosing the variable.
+ * @param v The name of variable.
  */
 class NoVariableSelectionSolutionError(
     private val f: FunctionName,
@@ -43,7 +43,7 @@ class NoVariableSelectionSolutionError(
 /**
  * Thrown when a protocol index is not mapped to a corresponding protocol.
  *
- * @param protocolIndex: The protocol index without a mapping to an actual protocol.
+ * @param protocolIndex The protocol index without a mapping to an actual protocol.
  */
 class NoProtocolIndexMapping(
     private val protocolIndex: Int

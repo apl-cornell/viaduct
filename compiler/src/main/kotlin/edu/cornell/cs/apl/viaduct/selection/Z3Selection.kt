@@ -6,6 +6,7 @@ import com.microsoft.z3.Global
 import com.microsoft.z3.IntExpr
 import com.microsoft.z3.IntNum
 import com.microsoft.z3.Status
+import com.microsoft.z3.enumerations.Z3_lbool
 import com.uchuhimo.collections.BiMap
 import com.uchuhimo.collections.mutableBiMapOf
 import edu.cornell.cs.apl.viaduct.errors.NoProtocolIndexMapping
@@ -110,70 +111,6 @@ class Z3Selection : SelectionProblemSolver {
                     )
                 )
             }
-
-            /*
-            private fun printMetadata(
-                eval: (FunctionName, Variable) -> Protocol,
-                model: Model,
-                totalCostSymvar: IntExpr
-            ) {
-                val nodeCostFunc: (Node) -> Pair<Node, PrettyPrintable> = { node ->
-                    val symcost = constraintGenerator.symbolicCost(node)
-                    val nodeCostStr =
-                        symcost.featureSum().evaluate(eval) { cvar ->
-                            val interpValue = model.getConstInterp(cvar.variable)
-                            assert(interpValue != null)
-                            (interpValue as IntNum).int
-                        }.toString()
-
-                    val nodeProtocolStr =
-                        when (node) {
-                            is LetNode -> {
-                                val enclosingFunc = nameAnalysis.enclosingFunctionName(node)
-                                "protocol: ${eval(enclosingFunc, node.temporary.value).asDocument.print()}"
-                            }
-
-                            is DeclarationNode -> {
-                                val enclosingFunc = nameAnalysis.enclosingFunctionName(node)
-                                "protocol: ${eval(enclosingFunc, node.name.value).asDocument.print()}"
-                            }
-
-                            else -> ""
-                        }
-
-                    Pair(node, Document("cost: $nodeCostStr $nodeProtocolStr"))
-                }
-
-                val declarationNodes = reachableInstances { declarationNodes() }
-
-                val letNodes = reachableInstances { letNodes() }
-
-                val updateNodes = reachableInstances { updateNodes() }
-
-                val outputNodes = reachableInstances { outputNodes() }
-
-                val ifNodes = reachableInstances { ifNodes() }
-
-                val loopNodes = reachableInstances { infiniteLoopNodes() }
-
-                val totalCostMetadata =
-                    Document("total cost: ${(model.getConstInterp(totalCostSymvar) as IntNum).int}")
-
-                val costMetadata: Map<Node, PrettyPrintable> =
-                    declarationNodes.asSequence().map { nodeCostFunc(it) }
-                        .plus(letNodes.map { nodeCostFunc(it) })
-                        .plus(updateNodes.map { nodeCostFunc(it) })
-                        .plus(outputNodes.map { nodeCostFunc(it) })
-                        .plus(ifNodes.map { nodeCostFunc(it) })
-                        .plus(loopNodes.map { nodeCostFunc(it) })
-                        .plus(reachableFunctions.map { nodeCostFunc(it) })
-                        .plus(nodeCostFunc(main))
-                        .plus(Pair(program, totalCostMetadata))
-                        .toMap()
-
-                dumpMetadata(costMetadata)
-            }
-            */
         }
 
     /** Protocol selection. */
@@ -228,15 +165,17 @@ class Z3Selection : SelectionProblemSolver {
 
                 if (solver.Check() == Status.SATISFIABLE) {
                     val model = solver.model
-                    val assignment: ProtocolAssignment =
+                    val assignment =
                         ProtocolAssignment(
                             fvMap.mapValues { e ->
                                 val protocolIndex = (model.getConstInterp(e.value) as IntNum).int
                                 protocolMap.inverse[protocolIndex] ?: throw NoProtocolIndexMapping(protocolIndex)
-                            }
+                            },
+                            boolVarMap.mapValues { kv ->
+                                (model.evaluate(kv.value, false) as BoolExpr).boolValue == Z3_lbool.Z3_L_TRUE
+                            },
+                            problem
                         )
-
-                    // printMetadata(::eval, model, totalCostSymvar)
 
                     logger.info { "constraints satisfiable, extracted model" }
 
@@ -245,7 +184,7 @@ class Z3Selection : SelectionProblemSolver {
                     throw NoSelectionSolutionError()
                 }
             } else {
-                return ProtocolAssignment(mapOf())
+                return ProtocolAssignment(mapOf(), mapOf(), problem)
             }
         }
     }

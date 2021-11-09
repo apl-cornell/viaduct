@@ -293,8 +293,8 @@ class SimpleCostEstimator(
             when (protocol) {
                 is Local -> IntegerCost(1)
                 is Replication -> IntegerCost(protocol.hosts.size)
-                is Commitment -> IntegerCost(10 + protocol.hashHosts.size)
-                is ZKP -> IntegerCost(20)
+                is Commitment -> IntegerCost(20 + protocol.hashHosts.size)
+                is ZKP -> IntegerCost(50 + protocol.verifiers.size)
                 is ABY -> IntegerCost(100)
                 else -> throw Error("unknown protocol ${protocol.protocolName}")
             }
@@ -493,7 +493,7 @@ class SimpleCostEstimator(
     private val lanWeights: Cost<IntegerCost> =
         Cost(
             persistentMapOf(
-                NUM_MESSAGES to IntegerCost(10),
+                NUM_MESSAGES to IntegerCost(3),
                 EXECUTION_COST to IntegerCost(1),
                 LAN_COST to IntegerCost(1),
                 WAN_COST to IntegerCost(0)
@@ -505,7 +505,7 @@ class SimpleCostEstimator(
     private val wanWeights: Cost<IntegerCost> =
         Cost(
             persistentMapOf(
-                NUM_MESSAGES to IntegerCost(100),
+                NUM_MESSAGES to IntegerCost(5),
                 EXECUTION_COST to IntegerCost(1),
                 LAN_COST to IntegerCost(0),
                 WAN_COST to IntegerCost(1)

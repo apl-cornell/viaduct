@@ -34,8 +34,7 @@ class HostDeclarationNode(
     override val sourceLocation: SourceLocation,
     override val comment: String? = null
 ) : TopLevelDeclarationNode() {
-    override val asDocumentWithoutComment: Document
-        get() = keyword("host") * name * ":" * listOf(authority).braced()
+    override fun asDocumentWithoutComment(): Document = keyword("host") * name * ":" * listOf(authority).braced()
 }
 
 /**
@@ -52,27 +51,26 @@ class ParameterNode(
     override val sourceLocation: SourceLocation,
     override val comment: String? = null
 ) : Node() {
-    override val asDocumentWithoutComment: Document
-        get() {
-            val protocolDoc = protocol?.let {
-                Document("@") + it.value.asDocument
-            } ?: Document("")
+    override fun asDocumentWithoutComment(): Document {
+        val protocolDoc = protocol?.let {
+            Document("@") + it.value.asDocument()
+        } ?: Document("")
 
-            return when (className.value) {
-                ImmutableCell -> {
-                    val label = labelArguments?.braced() ?: Document()
-                    name + Document(":") + parameterDirection * typeArguments[0] + label + protocolDoc
-                }
+        return when (className.value) {
+            ImmutableCell -> {
+                val label = labelArguments?.braced() ?: Document()
+                name + Document(":") + parameterDirection * typeArguments[0] + label + protocolDoc
+            }
 
-                else -> {
-                    val types = typeArguments.bracketed().nested()
-                    // TODO: labels should have braces
-                    //   val labels = labelArguments?.braced()?.nested() ?: Document()
-                    val labels = labelArguments?.braced() ?: Document()
-                    name * ":" + parameterDirection * className + types + labels + protocolDoc
-                }
+            else -> {
+                val types = typeArguments.bracketed().nested()
+                // TODO: labels should have braces
+                //   val labels = labelArguments?.braced()?.nested() ?: Document()
+                val labels = labelArguments?.braced() ?: Document()
+                name * ":" + parameterDirection * className + types + labels + protocolDoc
             }
         }
+    }
 }
 
 /**
@@ -91,9 +89,8 @@ class FunctionDeclarationNode(
     override val sourceLocation: SourceLocation,
     override val comment: String? = null
 ) : TopLevelDeclarationNode() {
-    override val asDocumentWithoutComment: Document
-        get() =
-            keyword("fun") * name +
-                (pcLabel?.let { listOf(it).braced() } ?: Document("")) +
-                parameters.tupled() * body
+    override fun asDocumentWithoutComment(): Document =
+        keyword("fun") * name +
+            (pcLabel?.let { listOf(it).braced() } ?: Document("")) +
+            parameters.tupled() * body
 }

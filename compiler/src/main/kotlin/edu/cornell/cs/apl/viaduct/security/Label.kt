@@ -105,8 +105,7 @@ data class Label(
     }
 
     // TODO: make asDocument primitive and remove toString
-    override val asDocument: Document
-        get() = Document(this.toString())
+    override fun asDocument(): Document = Document(this.toString())
 
     companion object {
         /**

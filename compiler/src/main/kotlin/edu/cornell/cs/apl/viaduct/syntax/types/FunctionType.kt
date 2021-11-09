@@ -28,6 +28,5 @@ private constructor(
         return Pair(arguments, result).hashCode()
     }
 
-    override val asDocument: Document
-        get() = (arguments.map { arg -> arg.asDocument }.tupled()) * Document("->") * result
+    override fun asDocument(): Document = (arguments.map { arg -> arg.asDocument() }.tupled()) * Document("->") * result
 }

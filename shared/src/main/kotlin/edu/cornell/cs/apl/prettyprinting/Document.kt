@@ -10,8 +10,8 @@ const val DEFAULT_LINE_WIDTH = 80
 
 /** An object that has a pretty text representation. */
 interface PrettyPrintable {
-    /** The pretty text representation of this object. */
-    val asDocument: Document
+    /** Returns the pretty text representation of this object. */
+    fun asDocument(): Document
 }
 
 /**
@@ -23,7 +23,7 @@ interface PrettyPrintable {
  * ```
  */
 operator fun PrettyPrintable.plus(other: PrettyPrintable): Document =
-    Concatenated(listOf(this.asDocument, other.asDocument))
+    Concatenated(listOf(this.asDocument(), other.asDocument()))
 
 /**
  * Concatenates [this] and [other] with a space in between.
@@ -36,7 +36,7 @@ operator fun PrettyPrintable.plus(other: PrettyPrintable): Document =
  * ```
  */
 operator fun PrettyPrintable.times(other: PrettyPrintable): Document =
-    Concatenated(listOf(this.asDocument, Document(" "), other.asDocument))
+    Concatenated(listOf(this.asDocument(), Document(" "), other.asDocument()))
 
 /**
  * Concatenates [this] and [other] with a line break in between.
@@ -50,7 +50,7 @@ operator fun PrettyPrintable.times(other: PrettyPrintable): Document =
  * ```
  */
 operator fun PrettyPrintable.div(other: PrettyPrintable): Document =
-    Concatenated(listOf(this.asDocument, Document.lineBreak, other.asDocument))
+    Concatenated(listOf(this.asDocument(), Document.lineBreak, other.asDocument()))
 
 /**
  * Convenience method that automatically converts [other] to a [Document].
@@ -89,7 +89,7 @@ operator fun PrettyPrintable.div(other: String): Document =
  * ```
  */
 fun List<PrettyPrintable>.concatenated(separator: PrettyPrintable = Document()): Document {
-    val documents = this.map { it.asDocument }.joinedWith(separator.asDocument)
+    val documents = this.map { it.asDocument() }.joinedWith(separator.asDocument())
     return Concatenated(documents)
 }
 
@@ -125,7 +125,7 @@ private fun <T> List<T>.joinedWith(separator: T): List<T> {
  * ```
  */
 fun PrettyPrintable.nested(indentationChange: Int = 4): Document =
-    Nested(this.asDocument, indentationChange)
+    Nested(this.asDocument(), indentationChange)
 
 /**
  * Tries laying out [this] document into a single line by removing the contained
@@ -139,7 +139,7 @@ fun PrettyPrintable.nested(indentationChange: Int = 4): Document =
  * ```
  */
 fun PrettyPrintable.grouped(): Document =
-    this.asDocument.grouped()
+    this.asDocument().grouped()
 
 /** See [PrettyPrintable.grouped]. */
 private fun Document.grouped(): Document {
@@ -172,7 +172,7 @@ private fun Document.grouped(): Document {
  * Styles can be nested.
  */
 fun PrettyPrintable.styled(style: Style): Document =
-    Styled(this.asDocument, style)
+    Styled(this.asDocument(), style)
 
 /**
  * Concatenates all the elements separated by [separator] and enclosed in [prefix] and [postfix].
@@ -236,8 +236,7 @@ fun PrettyPrintable.commented(): Document =
  */
 sealed class Document : PrettyPrintable {
     /** Returns this object. */
-    override val asDocument: Document
-        get() = this
+    override fun asDocument(): Document = this
 
     /** Do not use [toString]; use [print] instead. */
     final override fun toString(): String {

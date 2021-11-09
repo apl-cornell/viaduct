@@ -12,8 +12,7 @@ data class JumpLabel(override val name: String) : Name {
     override val nameCategory: String
         get() = "label"
 
-    override val asDocument: Document
-        get() = Document(name).styled(JumpLabelStyle)
+    override fun asDocument(): Document = Document(name).styled(JumpLabelStyle)
 }
 
 /** The display style of [JumpLabel]s. */

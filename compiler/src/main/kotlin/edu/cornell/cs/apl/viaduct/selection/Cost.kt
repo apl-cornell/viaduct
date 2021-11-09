@@ -25,9 +25,9 @@ class IntegerCost(val cost: Int) : CostMonoid<IntegerCost> {
 
     override fun zero(): IntegerCost = IntegerCost.zero()
 
-    override fun asDocument(): Document = Document(cost.toString())
+    override fun toDocument(): Document = Document(cost.toString())
 
-    override fun toString(): String = asDocument().print()
+    override fun toString(): String = toDocument().print()
 }
 
 /**
@@ -65,6 +65,6 @@ data class Cost<C : CostMonoid<C>>(
     fun update(feature: CostFeature, cost: C): Cost<C> =
         Cost(features.put(feature, cost))
 
-    override fun asDocument(): Document =
+    override fun toDocument(): Document =
         features.map { kv -> Document(kv.key) * ":" * kv.value }.braced()
 }

@@ -15,7 +15,7 @@ data class Located<out T : PrettyPrintable>(
     val value: T,
     override val sourceLocation: SourceLocation
 ) : HasSourceLocation, PrettyPrintable {
-    override fun asDocument(): Document = value.asDocument()
+    override fun toDocument(): Document = value.toDocument()
 }
 
 typealias HostNode = Located<Host>

@@ -11,14 +11,14 @@ internal class PrettyPrintingTest {
     fun `unicode characters work`() {
         val programText = "host alice : {A ⊓ B}"
         val program = programText.parse()
-        val printedAst = program.asDocument().print()
+        val printedAst = program.toDocument().print()
         assertStructurallyEquals(program, printedAst.parse())
     }
 
     @ParameterizedTest
     @ArgumentsSource(PositiveTestProgramProvider::class)
     fun `it is dual to parsing`(program: ProgramNode) {
-        val printedAst = program.asDocument().print()
+        val printedAst = program.toDocument().print()
         assertStructurallyEquals(program, printedAst.parse())
     }
 }

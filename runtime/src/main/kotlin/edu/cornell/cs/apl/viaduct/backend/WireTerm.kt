@@ -78,7 +78,7 @@ fun WireTerm.asString(): String {
         is WireConst -> "Aux($index)"
         is WireDummyIn -> "In($index)"
         is WireIn -> "In($index)"
-        is WireOp -> op.asDocument(inputs.map { it.asString().asPrettyPrintable() }).print()
+        is WireOp -> op.toDocument(inputs.map { it.asString().asPrettyPrintable() }).print()
     }
 }
 

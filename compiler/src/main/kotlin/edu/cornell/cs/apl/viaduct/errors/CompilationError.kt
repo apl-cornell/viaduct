@@ -51,7 +51,7 @@ abstract class CompilationError : Error(), PrettyPrintable {
     protected fun Document.withData(body: PrettyPrintable): Document =
         this / (Document.lineBreak + body).nested() + Document.lineBreak
 
-    final override fun asDocument(): Document {
+    final override fun toDocument(): Document {
         val header = run {
             val title = "-- ${category.uppercase()} -"
             val source = " " + this.source
@@ -66,5 +66,5 @@ abstract class CompilationError : Error(), PrettyPrintable {
     }
 
     final override fun toString(): String =
-        this.asDocument().print()
+        this.toDocument().print()
 }

@@ -48,9 +48,9 @@ class LetNode(
     override val sourceLocation: SourceLocation,
     override val comment: String? = null
 ) : SimpleStatementNode() {
-    override fun asDocumentWithoutComment(): Document {
+    override fun toDocumentWithoutComment(): Document {
         val protocolDoc = protocol?.let {
-            Document("@") + it.value.asDocument()
+            Document("@") + it.value.toDocument()
         } ?: Document("")
 
         return keyword("let") * temporary + protocolDoc * "=" * value
@@ -64,7 +64,7 @@ class DeclarationNode(
     override val sourceLocation: SourceLocation,
     override val comment: String? = null
 ) : SimpleStatementNode() {
-    override fun asDocumentWithoutComment(): Document {
+    override fun toDocumentWithoutComment(): Document {
         val constructor: ConstructorCallNode =
             when (initializer) {
                 is ConstructorCallNode -> initializer
@@ -73,7 +73,7 @@ class DeclarationNode(
             }
 
         val protocolDoc = constructor.protocol?.let {
-            Document("@") + it.value.asDocument()
+            Document("@") + it.value.toDocument()
         } ?: Document("")
 
         return when (constructor.className.value) {
@@ -110,7 +110,7 @@ class UpdateNode(
     override val sourceLocation: SourceLocation,
     override val comment: String? = null
 ) : SimpleStatementNode() {
-    override fun asDocumentWithoutComment(): Document {
+    override fun toDocumentWithoutComment(): Document {
         val indexing = IndexingNode.from(this)
         return if (indexing != null) {
             val assignOp =
@@ -134,7 +134,7 @@ class OutParameterInitializationNode(
     override val sourceLocation: SourceLocation,
     override val comment: String? = null
 ) : SimpleStatementNode() {
-    override fun asDocumentWithoutComment(): Document = keyword("out") * name * Document("=") * rhs
+    override fun toDocumentWithoutComment(): Document = keyword("out") * name * Document("=") * rhs
 }
 
 /** Arguments to functions. */
@@ -151,7 +151,7 @@ class ExpressionArgumentNode(
     val expression: ExpressionNode,
     override val sourceLocation: SourceLocation
 ) : FunctionArgumentNode() {
-    override fun asDocumentWithoutComment(): Document = expression.asDocument()
+    override fun toDocumentWithoutComment(): Document = expression.toDocument()
 }
 
 /** Function argument that is an object reference (e.g. &a in the surface syntax). */
@@ -159,7 +159,7 @@ class ObjectReferenceArgumentNode(
     val variable: ObjectVariableNode,
     override val sourceLocation: SourceLocation
 ) : FunctionArgumentNode() {
-    override fun asDocumentWithoutComment(): Document = Document("&${variable.value.name}")
+    override fun toDocumentWithoutComment(): Document = Document("&${variable.value.name}")
 }
 
 /** Declaration of a new object as a return argument of a function. */
@@ -167,7 +167,7 @@ class ObjectDeclarationArgumentNode(
     val variable: ObjectVariableNode,
     override val sourceLocation: SourceLocation
 ) : FunctionReturnArgumentNode() {
-    override fun asDocumentWithoutComment(): Document = keyword("val") * Document(variable.value.name)
+    override fun toDocumentWithoutComment(): Document = keyword("val") * Document(variable.value.name)
 }
 
 /** Out parameter initialized as an out parameter to a function call. */
@@ -175,7 +175,7 @@ class OutParameterArgumentNode(
     val parameter: ObjectVariableNode,
     override val sourceLocation: SourceLocation
 ) : FunctionReturnArgumentNode() {
-    override fun asDocumentWithoutComment(): Document = keyword("out") * Document(parameter.value.name)
+    override fun toDocumentWithoutComment(): Document = keyword("out") * Document(parameter.value.name)
 }
 
 /** Function call. */
@@ -185,7 +185,7 @@ class FunctionCallNode(
     override val sourceLocation: SourceLocation,
     override val comment: String? = null
 ) : SimpleStatementNode() {
-    override fun asDocumentWithoutComment(): Document = name + arguments.tupled()
+    override fun toDocumentWithoutComment(): Document = name + arguments.tupled()
 }
 
 /** A statement that does nothing. */
@@ -193,7 +193,7 @@ class SkipNode(
     override val sourceLocation: SourceLocation,
     override val comment: String? = null
 ) : SimpleStatementNode() {
-    override fun asDocumentWithoutComment(): Document = keyword("skip")
+    override fun toDocumentWithoutComment(): Document = keyword("skip")
 }
 
 // Communication Statements
@@ -205,7 +205,7 @@ class OutputNode(
     override val sourceLocation: SourceLocation,
     override val comment: String? = null
 ) : SimpleStatementNode() {
-    override fun asDocumentWithoutComment(): Document = keyword("output") * message * keyword("to") * host
+    override fun toDocumentWithoutComment(): Document = keyword("output") * message * keyword("to") * host
 }
 
 // Compound Statements
@@ -223,7 +223,7 @@ class IfNode(
     override val sourceLocation: SourceLocation,
     override val comment: String? = null
 ) : StatementNode() {
-    override fun asDocumentWithoutComment(): Document = (keyword("if") * "(" + guard + ")") * thenBranch * keyword("else") * elseBranch
+    override fun toDocumentWithoutComment(): Document = (keyword("if") * "(" + guard + ")") * thenBranch * keyword("else") * elseBranch
 }
 
 /** A loop statement. */
@@ -242,7 +242,7 @@ class InfiniteLoopNode(
     override val sourceLocation: SourceLocation,
     override val comment: String? = null
 ) : LoopNode() {
-    override fun asDocumentWithoutComment(): Document = keyword("loop") * body
+    override fun toDocumentWithoutComment(): Document = keyword("loop") * body
 }
 
 /** Executing a statement repeatedly as long as a condition is true. */
@@ -253,7 +253,7 @@ class WhileLoopNode(
     override val sourceLocation: SourceLocation,
     override val comment: String? = null
 ) : LoopNode() {
-    override fun asDocumentWithoutComment(): Document = (keyword("while") * "(" + guard + ")") * body
+    override fun toDocumentWithoutComment(): Document = (keyword("while") * "(" + guard + ")") * body
 }
 
 /**
@@ -272,7 +272,7 @@ class ForLoopNode(
     override val sourceLocation: SourceLocation,
     override val comment: String? = null
 ) : LoopNode() {
-    override fun asDocumentWithoutComment(): Document {
+    override fun toDocumentWithoutComment(): Document {
         val header: Document =
             listOf(initialize, guard, update).joined(
                 separator = Document(";"),
@@ -293,7 +293,7 @@ class BreakNode(
     override val sourceLocation: SourceLocation,
     override val comment: String? = null
 ) : StatementNode() {
-    override fun asDocumentWithoutComment(): Document = keyword("break")
+    override fun toDocumentWithoutComment(): Document = keyword("break")
 }
 
 /** Asserting that a condition is true, and failing otherwise. */
@@ -302,7 +302,7 @@ class AssertionNode(
     override val sourceLocation: SourceLocation,
     override val comment: String? = null
 ) : StatementNode() {
-    override fun asDocumentWithoutComment(): Document = keyword("assert") * condition
+    override fun toDocumentWithoutComment(): Document = keyword("assert") * condition
 }
 
 /** A sequence of statements. */
@@ -318,12 +318,12 @@ private constructor(
     constructor(vararg statements: StatementNode, sourceLocation: SourceLocation, comment: String? = null) :
         this(persistentListOf(*statements), sourceLocation, comment)
 
-    override fun asDocumentWithoutComment(): Document {
+    override fun toDocumentWithoutComment(): Document {
         val statements: List<Document> = statements.map {
             if (it is SimpleStatementNode || it is BreakNode || it is AssertionNode)
-                it.asDocument() + ";"
+                it.toDocument() + ";"
             else
-                it.asDocument()
+                it.toDocument()
         }
         val body: Document = statements.concatenated(separator = Document.forcedLineBreak)
         return Document("{") +

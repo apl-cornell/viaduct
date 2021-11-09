@@ -100,7 +100,7 @@ interface Operator {
     fun apply(arguments: List<Value>): Value
 
     /** Shows this operator applied to [arguments]. */
-    fun asDocument(arguments: List<PrettyPrintable>): Document
+    fun toDocument(arguments: List<PrettyPrintable>): Document
 }
 
 /**
@@ -174,16 +174,16 @@ interface UnaryOperator : Operator {
         return apply(arguments[0])
     }
 
-    override fun asDocument(arguments: List<PrettyPrintable>): Document {
+    override fun toDocument(arguments: List<PrettyPrintable>): Document {
         checkArguments(arguments)
-        return asDocument(arguments[0])
+        return toDocument(arguments[0])
     }
 
     /** Computes the result of applying this operator to [argument]. */
     fun apply(argument: Value): Value
 
     /** Shows this operator applied to [argument]. */
-    fun asDocument(argument: PrettyPrintable): Document
+    fun toDocument(argument: PrettyPrintable): Document
 }
 
 /**
@@ -195,16 +195,16 @@ interface BinaryOperator : Operator {
         return apply(arguments[0], arguments[1])
     }
 
-    override fun asDocument(arguments: List<PrettyPrintable>): Document {
+    override fun toDocument(arguments: List<PrettyPrintable>): Document {
         checkArguments(arguments)
-        return asDocument(arguments[0], arguments[1])
+        return toDocument(arguments[0], arguments[1])
     }
 
     /** Computes the result of applying this operator to [argument1] and [argument2]. */
     fun apply(argument1: Value, argument2: Value): Value
 
     /** Shows this operator applied to [argument1] and [argument2]. */
-    fun asDocument(argument1: PrettyPrintable, argument2: PrettyPrintable): Document
+    fun toDocument(argument1: PrettyPrintable, argument2: PrettyPrintable): Document
 }
 
 /** The number of arguments this operator takes. */

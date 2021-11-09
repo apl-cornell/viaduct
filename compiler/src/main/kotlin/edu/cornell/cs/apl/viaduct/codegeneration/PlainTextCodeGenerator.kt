@@ -422,8 +422,8 @@ class PlainTextCodeGenerator(
                 receiveBuilder.addStatement(
                     "throw %T(%S)",
                     runtimeErrorClass,
-                    "equivocation error between hosts: " + receivingHost.asDocument().print() + ", " +
-                        hostsToCheckWith.first().asDocument().print()
+                    "equivocation error between hosts: " + receivingHost.toDocument().print() + ", " +
+                        hostsToCheckWith.first().toDocument().print()
                 )
                 receiveBuilder.endControlFlow()
                 hostsToCheckWith = hostsToCheckWith.minusElement(hostsToCheckWith.first())
@@ -447,8 +447,8 @@ class PlainTextCodeGenerator(
                 receiveBuilder.addStatement(
                     "throw %T(%S)",
                     runtimeErrorClass,
-                    "equivocation error between hosts: " + receivingHost.asDocument().print() + ", " +
-                        host.asDocument().print()
+                    "equivocation error between hosts: " + receivingHost.toDocument().print() + ", " +
+                        host.toDocument().print()
                 )
                 receiveBuilder.endControlFlow()
             }

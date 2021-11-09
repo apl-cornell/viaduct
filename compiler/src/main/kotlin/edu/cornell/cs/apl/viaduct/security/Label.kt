@@ -104,8 +104,8 @@ data class Label(
         return "{$expression}"
     }
 
-    // TODO: make asDocument primitive and remove toString
-    override fun asDocument(): Document = Document(this.toString())
+    // TODO: make toDocument primitive and remove toString
+    override fun toDocument(): Document = Document(this.toString())
 
     companion object {
         /**

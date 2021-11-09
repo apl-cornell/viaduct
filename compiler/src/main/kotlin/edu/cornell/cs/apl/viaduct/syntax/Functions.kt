@@ -11,10 +11,10 @@ import edu.cornell.cs.apl.viaduct.syntax.surface.KeywordStyle
  */
 enum class ParameterDirection : PrettyPrintable {
     PARAM_IN {
-        override fun asDocument(): Document = Document("")
+        override fun toDocument(): Document = Document("")
     },
     PARAM_OUT {
-        override fun asDocument(): Document = Document(" out").styled(KeywordStyle)
+        override fun toDocument(): Document = Document(" out").styled(KeywordStyle)
     }
 }
 
@@ -23,7 +23,7 @@ data class FunctionName(override val name: String) : Name {
     override val nameCategory: String
         get() = "function"
 
-    override fun asDocument(): Document = Document(name).styled(FunctionNameStyle)
+    override fun toDocument(): Document = Document(name).styled(FunctionNameStyle)
 }
 
 object FunctionNameStyle : Style

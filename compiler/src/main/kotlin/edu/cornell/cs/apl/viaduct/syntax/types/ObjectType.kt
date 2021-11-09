@@ -31,5 +31,5 @@ abstract class ObjectType : Type {
      */
     abstract fun getType(update: UpdateName): FunctionType?
 
-    final override fun asDocument(): Document = className + typeArguments.bracketed().nested()
+    final override fun toDocument(): Document = className + typeArguments.bracketed().nested()
 }

@@ -80,9 +80,9 @@ internal class IndexingNode(
     override val comment: String?
         get() = null
 
-    override fun asDocumentWithoutComment(): Document =
+    override fun toDocumentWithoutComment(): Document =
         if (indices.isEmpty())
-            variable.asDocument()
+            variable.toDocument()
         else
             variable + indices.bracketed().nested()
 

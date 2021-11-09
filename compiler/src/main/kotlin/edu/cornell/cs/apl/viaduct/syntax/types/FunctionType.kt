@@ -28,5 +28,5 @@ private constructor(
         return Pair(arguments, result).hashCode()
     }
 
-    override fun asDocument(): Document = (arguments.map { arg -> arg.asDocument() }.tupled()) * Document("->") * result
+    override fun toDocument(): Document = (arguments.map { arg -> arg.toDocument() }.tupled()) * Document("->") * result
 }

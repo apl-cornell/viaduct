@@ -14,9 +14,9 @@ import edu.cornell.cs.apl.viaduct.syntax.HasSourceLocation
 abstract class Node : HasSourceLocation, PrettyPrintable {
     abstract val comment: String?
 
-    final override fun asDocument(): Document = comment?.let { Document(it).commented() / asDocumentWithoutComment() }
-        ?: asDocumentWithoutComment()
+    final override fun toDocument(): Document = comment?.let { Document(it).commented() / toDocumentWithoutComment() }
+        ?: toDocumentWithoutComment()
 
     /** The pretty text representation of this node ignoring the [comment] property. */
-    protected abstract fun asDocumentWithoutComment(): Document
+    protected abstract fun toDocumentWithoutComment(): Document
 }

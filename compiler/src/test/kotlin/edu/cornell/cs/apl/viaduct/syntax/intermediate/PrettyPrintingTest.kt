@@ -10,6 +10,6 @@ internal class PrettyPrintingTest {
     @ParameterizedTest
     @ArgumentsSource(PositiveTestProgramProvider::class)
     fun `intermediate nodes can be printed`(program: ProgramNode) {
-        program.elaborated().asDocument().print()
+        program.elaborated().toDocument().print()
     }
 }

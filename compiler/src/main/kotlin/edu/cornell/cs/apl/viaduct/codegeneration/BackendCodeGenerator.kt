@@ -75,7 +75,7 @@ class BackendCodeGenerator(
 //        for (codeGenerator in codeGenerators) {
 //            for (protocol in codeGenerator.availableProtocols) {
 //                if (currentProtocols.contains(protocol)) {
-//                    throw CodeGenerationError("Code Generation: multiple code generators for protocol ${protocol.asDocument().print()}")
+//                    throw CodeGenerationError("Code Generation: multiple code generators for protocol ${protocol.toDocument().print()}")
 //                } else {
 //                    currentProtocols.add(protocol)
 //                    initGeneratorMap[protocol] = codeGenerator
@@ -190,7 +190,7 @@ class BackendCodeGenerator(
 
                     // generate code for the statement, if [host] participating
                     val protocolCodeGenerator = codeGeneratorMap[protocol]
-                        ?: throw CodeGenerationError("no code generator for protocol ${protocol.asDocument().print()}")
+                        ?: throw CodeGenerationError("no code generator for protocol ${protocol.toDocument().print()}")
                     hostFunctionBuilder.addStatement("%L", protocolCodeGenerator.simpleStatement(protocol, stmt))
 
                     // generate code for sending data
@@ -203,7 +203,7 @@ class BackendCodeGenerator(
                 if (readers.isNotEmpty()) {
                     if (protocolAnalysis.participatingHosts(reader!!).contains(host)) {
                         val protocolCodeGenerator = codeGeneratorMap[readerProtocol]
-                            ?: throw CodeGenerationError("no code generator for protocol ${protocol.asDocument().print()}")
+                            ?: throw CodeGenerationError("no code generator for protocol ${protocol.toDocument().print()}")
                         hostFunctionBuilder.addCode("%L", protocolCodeGenerator.receive(host, stmt, protocol, readerProtocol!!, events!!))
                     }
                 }
@@ -213,7 +213,7 @@ class BackendCodeGenerator(
                 if (protocolAnalysis.participatingHosts(stmt).contains(host)) {
                     val protocol = protocolAnalysis.primaryProtocol(stmt)
                     val protocolCodeGenerator = codeGeneratorMap[protocol]
-                        ?: throw CodeGenerationError("no code generator for protocol ${protocol.asDocument().print()}")
+                        ?: throw CodeGenerationError("no code generator for protocol ${protocol.toDocument().print()}")
                     hostFunctionBuilder.addStatement("%L", protocolCodeGenerator.simpleStatement(protocol, stmt))
                 }
             }
@@ -267,12 +267,12 @@ class BackendCodeGenerator(
 
                             // TODO() - is there any way that we can make this not go through toString?
                             is LiteralNode -> {
-                                CodeBlock.of("%L", guard.value.asDocument().toString())
+                                CodeBlock.of("%L", guard.value.toDocument().toString())
                             }
                             is ReadNode -> {
                                 val guardProtocol = protocolAnalysis.primaryProtocol(guard)
                                 val protocolCodeGenerator = codeGeneratorMap[guardProtocol]
-                                    ?: throw CodeGenerationError("no code generator for protocol ${guardProtocol.asDocument().print()}")
+                                    ?: throw CodeGenerationError("no code generator for protocol ${guardProtocol.toDocument().print()}")
                                 protocolCodeGenerator.guard(guardProtocol, guard)
                             }
                         }

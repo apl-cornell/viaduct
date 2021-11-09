@@ -133,8 +133,8 @@ private class ViaductReceiverThread(
                     }
 
                 logger.info {
-                    "received remote message ${result.first.type.asDocument().print()} " +
-                        "from ${result.second.asDocument().print()} to ${result.third.asDocument().print()}"
+                    "received remote message ${result.first.type.toDocument().print()} " +
+                        "from ${result.second.toDocument().print()} to ${result.third.toDocument().print()}"
                 }
 
                 runtime.send(result.first, result.second, result.third)
@@ -353,8 +353,8 @@ class ViaductRuntime(
             hostInfoMap[receiver.host]!!.sendChannel.send(msg)
 
             logger.info {
-                "sent remote message ${value.type.asDocument().print()} " +
-                    "from ${sender.asDocument().print()} to ${receiver.asDocument().print()}"
+                "sent remote message ${value.type.toDocument().print()} " +
+                    "from ${sender.toDocument().print()} to ${receiver.toDocument().print()}"
             }
         }
     }

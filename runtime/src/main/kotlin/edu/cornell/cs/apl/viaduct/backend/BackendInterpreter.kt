@@ -51,7 +51,7 @@ class BackendInterpreter(
             val interpreterProtocols = interpreter.availableProtocols
             for (protocol in interpreterProtocols) {
                 if (currentProtocols.contains(protocol)) {
-                    throw ViaductInterpreterError("Interpreter: Multiple backends for protocol ${protocol.asDocument().print()}")
+                    throw ViaductInterpreterError("Interpreter: Multiple backends for protocol ${protocol.toDocument().print()}")
                 } else {
                     currentProtocols.add(protocol)
                     initInterpreterMap[protocol] = interpreter
@@ -131,7 +131,7 @@ class BackendInterpreter(
                 if (protocolAnalysis.participatingHosts(stmt).contains(this.host)) {
                     // execute statement, if host is participating
                     val protocolBackend = protocolInterpreterMap[protocol]
-                        ?: throw ViaductInterpreterError("no backend for protocol ${protocol.asDocument().print()}")
+                        ?: throw ViaductInterpreterError("no backend for protocol ${protocol.toDocument().print()}")
                     protocolBackend.runSimpleStatement(protocol, stmt)
 
                     // send data
@@ -146,7 +146,7 @@ class BackendInterpreter(
                         protocolInterpreterMap[readerProtocol]
                             ?.runReceive(stmt, protocol, reader, readerProtocol!!, events!!)
                             ?: throw ViaductInterpreterError(
-                                "no backend for protocol ${readerProtocol!!.asDocument().print()}"
+                                "no backend for protocol ${readerProtocol!!.toDocument().print()}"
                             )
                     }
                 }
@@ -158,7 +158,7 @@ class BackendInterpreter(
                 if (protocolAnalysis.participatingHosts(stmt).contains(this.host)) {
                     val protocol = protocolAnalysis.primaryProtocol(stmt)
                     protocolInterpreterMap[protocol]?.runSimpleStatement(protocol, stmt)
-                        ?: throw ViaductInterpreterError("no backend for protocol ${protocol.asDocument().print()}")
+                        ?: throw ViaductInterpreterError("no backend for protocol ${protocol.toDocument().print()}")
                 }
 
                 // synchronize(protocolAnalysis.participatingHosts(stmt), protocolAnalysis.hostsToSync(stmt))
@@ -201,7 +201,7 @@ class BackendInterpreter(
                             is ReadNode -> {
                                 val guardProtocol = protocolAnalysis.primaryProtocol(guard)
                                 protocolInterpreterMap[guardProtocol]?.runGuard(guardProtocol, guard)
-                                    ?: throw ViaductInterpreterError("no backend for protocol ${guardProtocol.asDocument().print()}")
+                                    ?: throw ViaductInterpreterError("no backend for protocol ${guardProtocol.toDocument().print()}")
                             }
                         }
 

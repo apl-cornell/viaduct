@@ -34,7 +34,7 @@ class HostDeclarationNode(
     override val sourceLocation: SourceLocation,
     override val comment: String? = null
 ) : TopLevelDeclarationNode() {
-    override fun asDocumentWithoutComment(): Document = keyword("host") * name * ":" * listOf(authority).braced()
+    override fun toDocumentWithoutComment(): Document = keyword("host") * name * ":" * listOf(authority).braced()
 }
 
 /**
@@ -51,9 +51,9 @@ class ParameterNode(
     override val sourceLocation: SourceLocation,
     override val comment: String? = null
 ) : Node() {
-    override fun asDocumentWithoutComment(): Document {
+    override fun toDocumentWithoutComment(): Document {
         val protocolDoc = protocol?.let {
-            Document("@") + it.value.asDocument()
+            Document("@") + it.value.toDocument()
         } ?: Document("")
 
         return when (className.value) {
@@ -89,7 +89,7 @@ class FunctionDeclarationNode(
     override val sourceLocation: SourceLocation,
     override val comment: String? = null
 ) : TopLevelDeclarationNode() {
-    override fun asDocumentWithoutComment(): Document =
+    override fun toDocumentWithoutComment(): Document =
         keyword("fun") * name +
             (pcLabel?.let { listOf(it).braced() } ?: Document("")) +
             parameters.tupled() * body

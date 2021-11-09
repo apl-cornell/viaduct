@@ -1,6 +1,7 @@
 package edu.cornell.cs.apl.viaduct.syntax.surface
 
 import edu.cornell.cs.apl.prettyprinting.Document
+import edu.cornell.cs.apl.prettyprinting.PrettyPrintable
 import edu.cornell.cs.apl.prettyprinting.braced
 import edu.cornell.cs.apl.prettyprinting.bracketed
 import edu.cornell.cs.apl.prettyprinting.joined
@@ -36,7 +37,7 @@ sealed class AtomicExpressionNode : ExpressionNode()
 /** A literal constant. */
 class LiteralNode(val value: Value, override val sourceLocation: SourceLocation) :
     AtomicExpressionNode() {
-    override fun asDocumentWithoutComment(): Document = value.asDocument()
+    override fun toDocumentWithoutComment(): Document = value.toDocument()
 }
 
 /** Reading the value stored in a temporary. */
@@ -45,7 +46,7 @@ class ReadNode(val temporary: TemporaryNode) :
     override val sourceLocation: SourceLocation
         get() = temporary.sourceLocation
 
-    override fun asDocumentWithoutComment(): Document = temporary.asDocument()
+    override fun toDocumentWithoutComment(): Document = temporary.toDocument()
 }
 
 /** An n-ary operator applied to n arguments. */
@@ -54,7 +55,7 @@ class OperatorApplicationNode(
     val arguments: Arguments<ExpressionNode>,
     override val sourceLocation: SourceLocation
 ) : ExpressionNode() {
-    override fun asDocumentWithoutComment(): Document = Document("(") + operator.asDocument(arguments) + ")"
+    override fun toDocumentWithoutComment(): Document = Document("(") + operator.toDocument(arguments) + ")"
 }
 
 /** A query method applied to an object. */
@@ -64,8 +65,8 @@ class QueryNode(
     val arguments: Arguments<ExpressionNode>,
     override val sourceLocation: SourceLocation
 ) : ExpressionNode() {
-    override fun asDocumentWithoutComment(): Document =
-        IndexingNode.from(this)?.asDocument()
+    override fun toDocumentWithoutComment(): Document =
+        IndexingNode.from(this)?.toDocument()
             ?: (variable + "." + query + arguments.tupled().nested())
 }
 
@@ -88,10 +89,10 @@ class DeclassificationNode(
     override val toLabel: LabelNode,
     override val sourceLocation: SourceLocation
 ) : DowngradeNode() {
-    override fun asDocumentWithoutComment(): Document = asDocument("declassify")
+    override fun toDocumentWithoutComment(): Document = toDocument("declassify")
 
-    /** Used to implement [PrettyPrintable.asDocument()]. */
-    fun asDocument(downgradeOperation: String): Document {
+    /** Used to implement [PrettyPrintable.toDocument]. */
+    fun toDocument(downgradeOperation: String): Document {
         val from = fromLabel.let {
             if (it != null)
                 Document() * keyword("from") * listOf(it).braced()
@@ -111,10 +112,10 @@ class EndorsementNode(
     override val toLabel: LabelNode?,
     override val sourceLocation: SourceLocation
 ) : DowngradeNode() {
-    override fun asDocumentWithoutComment(): Document = asDocument("endorse")
+    override fun toDocumentWithoutComment(): Document = toDocument("endorse")
 
-    /** Used to implement [PrettyPrintable.asDocument()]. */
-    fun asDocument(downgradeOperation: String): Document {
+    /** Used to implement [PrettyPrintable.toDocument]. */
+    fun toDocument(downgradeOperation: String): Document {
         val from = Document() * keyword("from") * listOf(fromLabel).braced()
 
         val to = toLabel.let {
@@ -139,7 +140,7 @@ class InputNode(
     val host: HostNode,
     override val sourceLocation: SourceLocation
 ) : ExpressionNode() {
-    override fun asDocumentWithoutComment(): Document = keyword("input") * type * keyword("from") * host
+    override fun toDocumentWithoutComment(): Document = keyword("input") * type * keyword("from") * host
 }
 
 /**
@@ -153,7 +154,7 @@ class ConstructorCallNode(
     val arguments: Arguments<ExpressionNode>,
     override val sourceLocation: SourceLocation
 ) : ExpressionNode() {
-    override fun asDocumentWithoutComment(): Document {
+    override fun toDocumentWithoutComment(): Document {
         val types = typeArguments.bracketed().nested()
         val labels =
             labelArguments

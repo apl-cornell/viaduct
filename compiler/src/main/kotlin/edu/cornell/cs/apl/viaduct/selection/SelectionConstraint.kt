@@ -17,8 +17,8 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.LetNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.Node
 
 data class FunctionVariable(val function: FunctionName, val variable: Variable) : PrettyPrintable {
-    override fun asDocument(): Document =
-        Document("(") + function + "," + variable.asDocument() + Document(")")
+    override fun toDocument(): Document =
+        Document("(") + function + "," + variable.toDocument() + Document(")")
 }
 
 /** Symbolic cost that will be minimized by a solver. */
@@ -34,27 +34,27 @@ sealed class SymbolicCost : CostMonoid<SymbolicCost> {
 }
 
 data class CostLiteral(val cost: Int) : SymbolicCost() {
-    override fun asDocument(): Document = Document(cost.toString())
+    override fun toDocument(): Document = Document(cost.toString())
 }
 
 data class CostAdd(val lhs: SymbolicCost, val rhs: SymbolicCost) : SymbolicCost() {
-    override fun asDocument(): Document = lhs.asDocument() * Document("+") * rhs.asDocument()
+    override fun toDocument(): Document = lhs.toDocument() * Document("+") * rhs.toDocument()
 }
 
 /** Multiply cost expression with a scalar. Restrict to scalar multiplication to keep constraint problem linear. */
 data class CostMul(val lhs: Int, val rhs: SymbolicCost) : SymbolicCost() {
-    override fun asDocument(): Document = Document(lhs.toString()) * Document("*") * rhs.asDocument()
+    override fun toDocument(): Document = Document(lhs.toString()) * Document("*") * rhs.toDocument()
 }
 
 data class CostMax(val lhs: SymbolicCost, val rhs: SymbolicCost) : SymbolicCost() {
-    override fun asDocument(): Document = Document("max") * listOf(lhs.asDocument(), rhs.asDocument()).tupled()
+    override fun toDocument(): Document = Document("max") * listOf(lhs.toDocument(), rhs.toDocument()).tupled()
 }
 
 /** Cost determined by which guard is true. Exactly one guard must be true. */
 data class CostChoice(val choices: List<Pair<SelectionConstraint, SymbolicCost>>) : SymbolicCost() {
-    override fun asDocument(): Document =
+    override fun toDocument(): Document =
         this.choices.map { choice ->
-            choice.first.asDocument() * Document("=>") * choice.second.asDocument()
+            choice.first.toDocument() * Document("=>") * choice.second.toDocument()
         }.tupled()
 }
 
@@ -62,39 +62,39 @@ data class CostChoice(val choices: List<Pair<SelectionConstraint, SymbolicCost>>
 sealed class SelectionConstraint : PrettyPrintable
 
 object True : SelectionConstraint() {
-    override fun asDocument(): Document = Document("true")
+    override fun toDocument(): Document = Document("true")
 }
 
 object False : SelectionConstraint() {
-    override fun asDocument(): Document = Document("false")
+    override fun toDocument(): Document = Document("false")
 }
 
 data class HostVariable(val variable: String) : SelectionConstraint() {
-    override fun asDocument(): Document = Document(variable)
+    override fun toDocument(): Document = Document(variable)
 }
 
 data class GuardVisibilityFlag(val variable: String) : SelectionConstraint() {
-    override fun asDocument(): Document = Document(variable)
+    override fun toDocument(): Document = Document(variable)
 }
 
 data class Literal(val literalValue: Boolean) : SelectionConstraint() {
-    override fun asDocument(): Document = Document(literalValue.toString())
+    override fun toDocument(): Document = Document(literalValue.toString())
 }
 
 data class Implies(val lhs: SelectionConstraint, val rhs: SelectionConstraint) : SelectionConstraint() {
-    override fun asDocument(): Document = lhs.asDocument() * Document("=>") * rhs.asDocument()
+    override fun toDocument(): Document = lhs.toDocument() * Document("=>") * rhs.toDocument()
 }
 
 data class Or(val props: List<SelectionConstraint>) : SelectionConstraint() {
     constructor(vararg props: SelectionConstraint) : this(listOf(*props))
 
-    override fun asDocument(): Document =
+    override fun toDocument(): Document =
         when (props.size) {
             0 -> Document("")
-            1 -> props.first().asDocument()
+            1 -> props.first().toDocument()
             else -> {
-                props.subList(1, props.size - 1).fold(props.first().asDocument()) { acc, prop ->
-                    acc * Document("||") * prop.asDocument()
+                props.subList(1, props.size - 1).fold(props.first().toDocument()) { acc, prop ->
+                    acc * Document("||") * prop.toDocument()
                 }
             }
         }
@@ -103,31 +103,31 @@ data class Or(val props: List<SelectionConstraint>) : SelectionConstraint() {
 data class And(val props: List<SelectionConstraint>) : SelectionConstraint() {
     constructor(vararg props: SelectionConstraint) : this(listOf(*props))
 
-    override fun asDocument(): Document =
+    override fun toDocument(): Document =
         when (props.size) {
             0 -> Document("")
-            1 -> props.first().asDocument()
+            1 -> props.first().toDocument()
             else -> {
-                props.subList(1, props.size - 1).fold(props.first().asDocument()) { acc, prop ->
-                    acc * Document("&&") * prop.asDocument()
+                props.subList(1, props.size - 1).fold(props.first().toDocument()) { acc, prop ->
+                    acc * Document("&&") * prop.toDocument()
                 }
             }
         }
 }
 
 data class Not(val rhs: SelectionConstraint) : SelectionConstraint() {
-    override fun asDocument(): Document = Document("!") + rhs.asDocument()
+    override fun toDocument(): Document = Document("!") + rhs.toDocument()
 }
 
 /** VariableIn(v, P) holds when v is selected to be a protocol in P **/
 data class VariableIn(val variable: FunctionVariable, val protocol: Protocol) : SelectionConstraint() {
-    override fun asDocument(): Document =
-        variable * Document("=") * protocol.asDocument()
+    override fun toDocument(): Document =
+        variable * Document("=") * protocol.toDocument()
 }
 
 /** Protocols for v1 and v2 are equal. */
 data class VariableEquals(val var1: FunctionVariable, val var2: FunctionVariable) : SelectionConstraint() {
-    override fun asDocument(): Document = var1.asDocument() * Document("==") * var2.asDocument()
+    override fun toDocument(): Document = var1.toDocument() * Document("==") * var2.toDocument()
 }
 
 /** A constrained optimization problem defined by a set of selection constraints

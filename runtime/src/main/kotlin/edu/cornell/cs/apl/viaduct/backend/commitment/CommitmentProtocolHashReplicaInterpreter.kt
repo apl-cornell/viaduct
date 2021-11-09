@@ -141,7 +141,7 @@ class CommitmentProtocolHashReplicaInterpreter(
     fun runRead(read: ReadNode): List<Byte> =
         hashTempStore[read.temporary.value]
             ?: throw ViaductInterpreterError(
-                "${runtime.projection.protocol.asDocument().print()}:" +
+                "${runtime.projection.protocol.toDocument().print()}:" +
                     " could not find local temporary ${read.temporary.value}"
             )
 
@@ -206,7 +206,7 @@ class CommitmentProtocolHashReplicaInterpreter(
 
                 logger.info {
                     "sent opened commitment for ${sender.temporary.value.name} to " +
-                        "${event.recv.protocol.asDocument().print()}@${event.recv.host.name}"
+                        "${event.recv.protocol.toDocument().print()}@${event.recv.host.name}"
                 }
             }
         }

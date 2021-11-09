@@ -100,7 +100,7 @@ internal var testing: Boolean = false
  * @throws IOException
  */
 internal fun File?.println(document: PrettyPrintable) {
-    val doc = document.asDocument() + Document.lineBreak
+    val doc = document.toDocument() + Document.lineBreak
     if (this == null) {
         // Write to standard out.
         doc.print(if (testing) System.out else AnsiConsole.out(), ansi = true)

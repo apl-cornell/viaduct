@@ -229,7 +229,7 @@ private fun dumpProgramMetadata(
     }
 
     logger.info { "Writing program metadata to $file" }
-    file.println(program.asDocumentWithMetadata(metadata))
+    file.println(program.toDocumentWithMetadata(metadata))
 }
 
 /** Infers Graphviz output format from [file]'s extension. */

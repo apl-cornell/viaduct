@@ -10,7 +10,7 @@ data class ProtocolProjection(
 
     override val nameCategory = "ProtocolProjection"
 
-    override fun asDocument(): Document = Document(name)
+    override fun toDocument(): Document = Document(name)
 
     override fun toString(): String {
         return "${protocol.name}@$host"

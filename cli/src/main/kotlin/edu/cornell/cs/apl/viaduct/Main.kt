@@ -28,7 +28,7 @@ private fun failWith(e: Throwable) {
         }
         is CompilationError -> {
             // User error. Print short, pretty message.
-            (e.asDocument() + Document.lineBreak).print(AnsiConsole.err(), ansi = true)
+            (e.toDocument() + Document.lineBreak).print(AnsiConsole.err(), ansi = true)
         }
         else -> {
             // Developer error. Give more detail.

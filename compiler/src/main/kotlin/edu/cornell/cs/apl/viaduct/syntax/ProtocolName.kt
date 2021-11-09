@@ -16,7 +16,7 @@ data class ProtocolName(override val name: String) : Name, Comparable<ProtocolNa
     override fun compareTo(other: ProtocolName): Int =
         this.name.compareTo(other.name)
 
-    override fun asDocument(): Document = Document(name).styled(ProtocolNameStyle)
+    override fun toDocument(): Document = Document(name).styled(ProtocolNameStyle)
 }
 
 /** The display style of [ProtocolName]s. */

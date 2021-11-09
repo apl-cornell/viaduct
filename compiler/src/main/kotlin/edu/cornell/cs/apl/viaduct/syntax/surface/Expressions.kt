@@ -1,7 +1,6 @@
 package edu.cornell.cs.apl.viaduct.syntax.surface
 
 import edu.cornell.cs.apl.prettyprinting.Document
-import edu.cornell.cs.apl.prettyprinting.PrettyPrintable
 import edu.cornell.cs.apl.prettyprinting.braced
 import edu.cornell.cs.apl.prettyprinting.bracketed
 import edu.cornell.cs.apl.prettyprinting.joined
@@ -89,19 +88,10 @@ class DeclassificationNode(
     override val toLabel: LabelNode,
     override val sourceLocation: SourceLocation
 ) : DowngradeNode() {
-    override fun toDocumentWithoutComment(): Document = toDocument("declassify")
-
-    /** Used to implement [PrettyPrintable.toDocument]. */
-    fun toDocument(downgradeOperation: String): Document {
-        val from = fromLabel.let {
-            if (it != null)
-                Document() * keyword("from") * listOf(it).braced()
-            else
-                Document()
-        }
-
-        val to = Document() * keyword("to") * listOf(toLabel).braced()
-        return keyword(downgradeOperation) * expression + from + to
+    override fun toDocumentWithoutComment(): Document {
+        val from = fromLabel?.let { Document() * keyword("from") * listOf(it).braced() } ?: Document()
+        val to = keyword("to") * listOf(toLabel).braced()
+        return keyword("declassify") * expression + from * to
     }
 }
 
@@ -112,19 +102,10 @@ class EndorsementNode(
     override val toLabel: LabelNode?,
     override val sourceLocation: SourceLocation
 ) : DowngradeNode() {
-    override fun toDocumentWithoutComment(): Document = toDocument("endorse")
-
-    /** Used to implement [PrettyPrintable.toDocument]. */
-    fun toDocument(downgradeOperation: String): Document {
-        val from = Document() * keyword("from") * listOf(fromLabel).braced()
-
-        val to = toLabel.let {
-            if (it != null)
-                Document() * keyword("to") * listOf(it).braced()
-            else
-                Document()
-        }
-        return keyword(downgradeOperation) * expression + to + from
+    override fun toDocumentWithoutComment(): Document {
+        val from = keyword("from") * listOf(fromLabel).braced()
+        val to = toLabel?.let { Document() * keyword("to") * listOf(it).braced() } ?: Document()
+        return keyword("endorse") * expression + to * from
     }
 }
 

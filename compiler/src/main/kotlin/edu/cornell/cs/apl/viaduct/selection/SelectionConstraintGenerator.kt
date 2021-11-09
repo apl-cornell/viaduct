@@ -402,11 +402,11 @@ class SelectionConstraintGenerator(
      * Generate cost constraints for performing a computation (let nodes and updates).
      * Handles computation of communication costs.
      *
-     * @param fv: function-variable pair associated with the computation
-     * @param protocols: protocols that can implement the computation
-     * @param reads: the reads performed by the computation
-     * @param baseCostFunction: basic cost of computation node (no communication cost) as a function of its protocol
-     * @param symbolicCost: symbolic cost associated with the computation node.
+     * @param fv function-variable pair associated with the computation
+     * @param protocols protocols that can implement the computation
+     * @param reads the reads performed by the computation
+     * @param baseCostFunction basic cost of computation node (no communication cost) as a function of its protocol
+     * @param symbolicCost symbolic cost associated with the computation node.
      * */
     private fun generateComputationCostConstraints(
         stmt: SimpleStatementNode,

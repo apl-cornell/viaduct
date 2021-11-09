@@ -12,7 +12,7 @@ abstract class ImpossibleCaseError : CompilationError() {
 /**
  * Thrown when an unknown [Node] is tagged as an [ObjectDeclaration].
  *
- * @param node: The unknown node.
+ * @param node The unknown node.
  */
 class UnknownObjectDeclarationError(
     val node: Node

@@ -9,8 +9,6 @@ import com.microsoft.z3.Status
 import com.microsoft.z3.enumerations.Z3_lbool
 import com.uchuhimo.collections.BiMap
 import com.uchuhimo.collections.mutableBiMapOf
-import edu.cornell.cs.apl.viaduct.errors.NoProtocolIndexMapping
-import edu.cornell.cs.apl.viaduct.errors.NoSelectionSolutionError
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
 import edu.cornell.cs.apl.viaduct.util.FreshNameGenerator
 import mu.KotlinLogging
@@ -114,7 +112,7 @@ class Z3Selection : SelectionProblemSolver {
         }
 
     /** Protocol selection. */
-    override fun solveSelectionProblem(problem: SelectionProblem): ProtocolAssignment {
+    override fun solveSelectionProblem(problem: SelectionProblem): ProtocolAssignment? {
         Context().use { ctx ->
             val constraints = problem.constraints
             val programCost = problem.cost
@@ -169,7 +167,7 @@ class Z3Selection : SelectionProblemSolver {
                         ProtocolAssignment(
                             fvMap.mapValues { e ->
                                 val protocolIndex = (model.getConstInterp(e.value) as IntNum).int
-                                protocolMap.inverse[protocolIndex] ?: throw NoProtocolIndexMapping(protocolIndex)
+                                protocolMap.inverse.getValue(protocolIndex)
                             },
                             boolVarMap.mapValues { kv ->
                                 (model.evaluate(kv.value, false) as BoolExpr).boolValue == Z3_lbool.Z3_L_TRUE
@@ -181,7 +179,7 @@ class Z3Selection : SelectionProblemSolver {
 
                     return assignment
                 } else {
-                    throw NoSelectionSolutionError()
+                    return null
                 }
             } else {
                 return ProtocolAssignment(mapOf(), mapOf(), problem)

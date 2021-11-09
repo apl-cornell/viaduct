@@ -51,7 +51,7 @@ class Compile : CliktCommand(help = "Compile ideal protocol to secure distribute
     // TODO: option to print selected protocol for each variable.
 
     val constraintGraphOutput: File? by option(
-        "-c",
+        "-cg",
         "--constraint-graph",
         metavar = "FILE.EXT",
         help = """
@@ -68,6 +68,13 @@ class Compile : CliktCommand(help = "Compile ideal protocol to secure distribute
         "--label",
         metavar = "FILE.via",
         help = "Write program decorated with minimal authority labels to FILE.via"
+    ).file(canBeDir = false)
+
+    val costOutput: File? by option(
+        "-c",
+        "--cost",
+        metavar = "FILE.via",
+        help = "Write program decorated with cost to FILE.via"
     ).file(canBeDir = false)
 
     val protocolSelectionOutput: File? by option(
@@ -149,6 +156,16 @@ class Compile : CliktCommand(help = "Compile ideal protocol to secure distribute
                     costEstimator,
                     protocolAssignment
                 )
+
+                // generate elaborated program annotated with cost
+                if (costOutput != null) {
+                    val costMetadata: Map<Node, PrettyPrintable> =
+                        protocolAssignment.problem.costMap.mapValues { kv ->
+                            Document(protocolAssignment.evaluate(kv.value).toString())
+                        }
+
+                    dumpProgramMetadata(program, costMetadata, costOutput)
+                }
 
                 val annotatedProgram = program.annotateWithProtocols(protocolAssignment)
 

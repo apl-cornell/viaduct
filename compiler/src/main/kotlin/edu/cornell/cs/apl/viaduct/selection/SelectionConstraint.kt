@@ -8,29 +8,20 @@ import edu.cornell.cs.apl.prettyprinting.tupled
 import edu.cornell.cs.apl.viaduct.analysis.NameAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.createdVariables
 import edu.cornell.cs.apl.viaduct.analysis.involvedVariables
-import edu.cornell.cs.apl.viaduct.errors.NoVariableSelectionSolutionError
 import edu.cornell.cs.apl.viaduct.syntax.FunctionName
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
 import edu.cornell.cs.apl.viaduct.syntax.Variable
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.DeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ExpressionNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.LetNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.Node
 
 data class FunctionVariable(val function: FunctionName, val variable: Variable) : PrettyPrintable {
     override val asDocument: Document =
         Document("(") + function + "," + variable.asDocument + Document(")")
 }
 
-data class ProtocolAssignment(
-    val assignment: Map<FunctionVariable, Protocol>
-) {
-    fun getAssignment(fv: FunctionVariable): Protocol =
-        assignment[fv] ?: throw NoVariableSelectionSolutionError(fv.function, fv.variable)
-
-    fun getAssignment(f: FunctionName, v: Variable): Protocol =
-        getAssignment(FunctionVariable(f, v))
-}
-
+/** Symbolic cost that will be minimized by a solver. */
 sealed class SymbolicCost : CostMonoid<SymbolicCost> {
     companion object {
         fun zero(): SymbolicCost = CostLiteral(0)
@@ -141,44 +132,16 @@ data class VariableEquals(val var1: FunctionVariable, val var2: FunctionVariable
 
 /** A constrained optimization problem defined by a set of selection constraints
  * and a cost expression to minimize. */
-data class SelectionProblem(val constraints: Set<SelectionConstraint>, val cost: SymbolicCost)
+data class SelectionProblem(
+    /** Set of constraints that must hold true for any valid protocol assignment. */
+    val constraints: Set<SelectionConstraint>,
 
-/** Given a protocol selection, evaluate the constraints. **/
-internal fun SelectionConstraint.evaluate(f: (FunctionName, Variable) -> Protocol): Boolean =
-    when (this) {
-        is True -> true
-        is False -> false
-        is Literal -> literalValue
-        is Implies -> (!lhs.evaluate(f)) || rhs.evaluate(f)
-        is Or -> props.any { it.evaluate(f) }
-        is And -> props.all { it.evaluate(f) }
-        is Not -> !(rhs.evaluate(f))
-        is VariableIn -> f(variable.function, variable.variable) == this.protocol
-        is VariableEquals -> f(var1.function, var1.variable) == f(var2.function, var2.variable)
+    /** Cost for the whole program. */
+    val cost: SymbolicCost,
 
-        // TODO: ignore host variables for now
-        is HostVariable -> true
-
-        // TODO: ignore guard visibility flags for now
-        is GuardVisibilityFlag -> true
-    }
-
-internal fun List<SelectionConstraint>.assert(
-    context: Set<SelectionConstraint>,
-    f: (FunctionName, Variable) -> Protocol
-) {
-    for (c in this) {
-        if (c is And) {
-            c.props.assert(context, f)
-        } else if (c is Implies) {
-            if (c.lhs.evaluate(f)) {
-                listOf(c.rhs).assert(context + setOf(c.lhs), f)
-            }
-        } else if (!c.evaluate(f)) {
-            assert(false)
-        }
-    }
-}
+    /** Extra metadata that lets us associate cost with different parts of a program. */
+    val costMap: Map<Node, SymbolicCost> = mapOf()
+)
 
 internal fun SelectionConstraint.or(other: SelectionConstraint): SelectionConstraint =
     Or(listOf(this, other))
@@ -188,26 +151,6 @@ internal fun SelectionConstraint.implies(other: SelectionConstraint): SelectionC
 
 internal fun variableInSet(fv: FunctionVariable, protocols: Set<Protocol>): SelectionConstraint =
     protocols.map { protocol -> VariableIn(fv, protocol) }.ors()
-
-internal fun SymbolicCost.evaluate(
-    assignment: (FunctionName, Variable) -> Protocol,
-): Int {
-    return when (this) {
-        is CostLiteral -> this.cost
-        is CostAdd -> this.lhs.evaluate(assignment) + this.rhs.evaluate(assignment)
-        is CostMul -> this.lhs * this.rhs.evaluate(assignment)
-        is CostMax -> this.lhs.evaluate(assignment) * this.rhs.evaluate(assignment)
-        is CostChoice -> {
-            var cost: Int? = null
-            for (choice in this.choices) {
-                if (choice.first.evaluate(assignment)) {
-                    cost = choice.second.evaluate(assignment)
-                }
-            }
-            cost ?: throw Error("at least one choice must be true")
-        }
-    }
-}
 
 internal fun List<SelectionConstraint>.ors(): SelectionConstraint = Or(this)
 

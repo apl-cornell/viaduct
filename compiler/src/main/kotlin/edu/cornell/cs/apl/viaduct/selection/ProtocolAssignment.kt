@@ -1,6 +1,5 @@
 package edu.cornell.cs.apl.viaduct.selection
 
-import edu.cornell.cs.apl.viaduct.errors.NoVariableSelectionSolutionError
 import edu.cornell.cs.apl.viaduct.syntax.FunctionName
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
 import edu.cornell.cs.apl.viaduct.syntax.Variable
@@ -12,7 +11,7 @@ data class ProtocolAssignment(
     val problem: SelectionProblem
 ) {
     fun getAssignment(fv: FunctionVariable): Protocol =
-        assignment[fv] ?: throw NoVariableSelectionSolutionError(fv.function, fv.variable)
+        assignment.getValue(fv)
 
     fun getAssignment(f: FunctionName, v: Variable): Protocol =
         getAssignment(FunctionVariable(f, v))

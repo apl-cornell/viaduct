@@ -140,7 +140,7 @@ class SelectionConstraintGenerator(
                     }
                 )
             }
-        } ?: throw NoSelectionSolutionError()
+        } ?: throw NoSelectionSolutionError(program)
 
     private fun Cost<SymbolicCost>.featureSum(): SymbolicCost {
         val weights = costEstimator.featureWeights()

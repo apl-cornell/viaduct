@@ -4,7 +4,7 @@ import edu.cornell.cs.apl.prettyprinting.Document
 import edu.cornell.cs.apl.viaduct.syntax.HasSourceLocation
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
 
-/** Thrown when there is no [Protocol] that can be assigned to a node. */
+/** Thrown when there is no [Protocol] that can be assigned to [node]. */
 class NoApplicableProtocolError(private val node: HasSourceLocation) : CompilationError() {
     override val category: String
         get() = "No Applicable Protocol"

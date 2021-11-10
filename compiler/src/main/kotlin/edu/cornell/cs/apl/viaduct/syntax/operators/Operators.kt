@@ -62,19 +62,19 @@ abstract class UnaryPrefixOperator : UnaryOperator, PrefixOperator {
     final override val precedence: Precedence
         get() = HighestPrecedence
 
-    override fun asDocument(argument: PrettyPrintable): Document =
+    override fun toDocument(argument: PrettyPrintable): Document =
         Document(this.toString()) + argument
 }
 
 /** A binary prefix operator. */
 abstract class BinaryPrefixOperator : BinaryOperator, PrefixOperator {
-    final override fun asDocument(argument1: PrettyPrintable, argument2: PrettyPrintable): Document =
+    final override fun toDocument(argument1: PrettyPrintable, argument2: PrettyPrintable): Document =
         Document(this.toString()) + listOf(argument1, argument2).tupled().nested()
 }
 
 /** A binary infix operator. */
 abstract class BinaryInfixOperator : BinaryOperator, InfixOperator {
-    final override fun asDocument(argument1: PrettyPrintable, argument2: PrettyPrintable): Document =
+    final override fun toDocument(argument1: PrettyPrintable, argument2: PrettyPrintable): Document =
         argument1 * this.toString() * argument2
 }
 
@@ -356,7 +356,7 @@ object Mux : InfixOperator {
         return if ((arguments[0] as BooleanValue).value) arguments[1] else arguments[2]
     }
 
-    override fun asDocument(arguments: List<PrettyPrintable>): Document {
+    override fun toDocument(arguments: List<PrettyPrintable>): Document {
         return Document("mux") + listOf(arguments[0], arguments[1], arguments[2]).tupled().nested()
     }
 }

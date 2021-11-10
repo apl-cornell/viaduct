@@ -10,10 +10,9 @@ data class Principal(val name: String) : Comparable<Principal>, PrettyPrintable 
     override fun compareTo(other: Principal): Int =
         name.compareTo(other.name)
 
-    override val asDocument: Document
-        get() = Document(name).styled(PrincipalStyle)
+    override fun toDocument(): Document = Document(name).styled(PrincipalStyle)
 
-    // TODO: remove and use [asDocument]
+    // TODO: remove and use [toDocument]
     override fun toString(): String =
         name
 }

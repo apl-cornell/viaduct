@@ -10,8 +10,7 @@ data class ClassName(override val name: String) : Name {
     override val nameCategory: String
         get() = "class"
 
-    override val asDocument: Document
-        get() = Document(name).styled(ClassNameStyle)
+    override fun toDocument(): Document = Document(name).styled(ClassNameStyle)
 }
 
 /** The display style of [ClassName]s. */

@@ -3,6 +3,7 @@ package edu.cornell.cs.apl.viaduct.selection
 import edu.cornell.cs.apl.attributes.attribute
 import edu.cornell.cs.apl.viaduct.analysis.InformationFlowAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.NameAnalysis
+import edu.cornell.cs.apl.viaduct.analysis.descendantsIsInstance
 import edu.cornell.cs.apl.viaduct.backends.cleartext.Local
 import edu.cornell.cs.apl.viaduct.errors.NoSelectionSolutionError
 import edu.cornell.cs.apl.viaduct.errors.UnknownObjectDeclarationError
@@ -139,7 +140,7 @@ class SelectionConstraintGenerator(
                     }
                 )
             }
-        } ?: throw NoSelectionSolutionError()
+        } ?: throw NoSelectionSolutionError(program)
 
     private fun Cost<SymbolicCost>.featureSum(): SymbolicCost {
         val weights = costEstimator.featureWeights()
@@ -149,14 +150,14 @@ class SelectionConstraintGenerator(
     }
 
     /** Symbolic cost associated with a node. */
-    private fun computeCost(node: Node): Cost<SymbolicCost> =
-        when (node) {
+    private val Node.symbolicCost: Cost<SymbolicCost> by attribute {
+        when (this) {
             is ProgramNode ->
-                node.declarations.fold(zeroSymbolicCost) { acc, decl ->
-                    acc.concat(computeCost(decl))
+                this.declarations.fold(zeroSymbolicCost) { acc, decl ->
+                    acc.concat(decl.symbolicCost)
                 }
 
-            is FunctionDeclarationNode -> computeCost(node.body)
+            is FunctionDeclarationNode -> this.body.symbolicCost
 
             // don't bother giving cost to parameters, since arguments already incur cost
             is ParameterNode -> zeroSymbolicCost
@@ -164,21 +165,21 @@ class SelectionConstraintGenerator(
             is HostDeclarationNode -> zeroSymbolicCost
 
             is BlockNode ->
-                node.statements
+                this.statements
                     .fold(zeroSymbolicCost) { acc, childStmt ->
-                        acc.concat(computeCost(childStmt))
+                        acc.concat(childStmt.symbolicCost)
                     }
 
             is IfNode -> {
-                val thenCost = computeCost(node.thenBranch)
-                val elseCost = computeCost(node.elseBranch)
+                val thenCost = this.thenBranch.symbolicCost
+                val elseCost = this.elseBranch.symbolicCost
                 zeroSymbolicCost.featureMap { feature, _ ->
                     CostMax(thenCost.features[feature]!!, elseCost.features[feature]!!)
                 }
             }
 
             is InfiniteLoopNode ->
-                computeCost(node.body).map { f -> CostMul(10, f) }
+                this.body.symbolicCost.map { f -> CostMul(10, f) }
 
             // TODO: handle this later, recursive functions are tricky
             is FunctionCallNode -> zeroSymbolicCost
@@ -189,10 +190,11 @@ class SelectionConstraintGenerator(
 
             is ExpressionNode -> zeroSymbolicCost
 
-            is SimpleStatementNode -> getCostChoice(node.costVariable)
+            is SimpleStatementNode -> getCostChoice(this.costVariable)
 
             else -> zeroSymbolicCost
         }
+    }
 
     private val SimpleStatementNode.costVariable by attribute { nameGenerator.getFreshName("cost") }
 
@@ -400,11 +402,11 @@ class SelectionConstraintGenerator(
      * Generate cost constraints for performing a computation (let nodes and updates).
      * Handles computation of communication costs.
      *
-     * @param fv: function-variable pair associated with the computation
-     * @param protocols: protocols that can implement the computation
-     * @param reads: the reads performed by the computation
-     * @param baseCostFunction: basic cost of computation node (no communication cost) as a function of its protocol
-     * @param symbolicCost: symbolic cost associated with the computation node.
+     * @param fv function-variable pair associated with the computation
+     * @param protocols protocols that can implement the computation
+     * @param reads the reads performed by the computation
+     * @param baseCostFunction basic cost of computation node (no communication cost) as a function of its protocol
+     * @param symbolicCost symbolic cost associated with the computation node.
      * */
     private fun generateComputationCostConstraints(
         stmt: SimpleStatementNode,
@@ -845,7 +847,25 @@ class SelectionConstraintGenerator(
 
     fun getSelectionProblem(): SelectionProblem {
         val selectionConstraints = program.constraints()
-        val cost = computeCost(program).featureSum()
-        return SelectionProblem(selectionConstraints, cost)
+        val cost = program.symbolicCost.featureSum()
+
+        val costMap =
+            program.descendantsIsInstance<FunctionDeclarationNode>().map { funDecl ->
+                funDecl to funDecl.symbolicCost.featureSum()
+            }.plus(
+                program.descendantsIsInstance<InfiniteLoopNode>().map { loopNode ->
+                    loopNode to loopNode.symbolicCost.featureSum()
+                }
+            ).plus(
+                program.descendantsIsInstance<IfNode>().map { ifNode ->
+                    ifNode to ifNode.symbolicCost.featureSum()
+                }
+            ).plus(
+                program.descendantsIsInstance<SimpleStatementNode>().map { sstmt ->
+                    sstmt to sstmt.symbolicCost.featureSum()
+                }
+            ).toMap()
+
+        return SelectionProblem(selectionConstraints, cost, costMap)
     }
 }

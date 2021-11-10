@@ -50,18 +50,17 @@ abstract class Protocol : Name, Comparable<Protocol> {
     }
 
     final override val name: String
-        get() = this.asDocument.print()
+        get() = this.toDocument().print()
 
     final override val nameCategory: String
         get() = "protocol"
 
     // TODO: make this final once we remove [Ideal]
-    override val asDocument: Document
-        get() {
-            val sortedArguments = arguments.toSortedMap().entries
-            val printedArguments = sortedArguments.map { Document(it.key) * "=" * it.value }
-            return protocolName + printedArguments.tupled().nested()
-        }
+    override fun toDocument(): Document {
+        val sortedArguments = arguments.toSortedMap().entries
+        val printedArguments = sortedArguments.map { Document(it.key) * "=" * it.value }
+        return protocolName + printedArguments.tupled().nested()
+    }
 
     final override fun equals(other: Any?): Boolean =
         other is Protocol && this.protocolName == other.protocolName && this.arguments == other.arguments

@@ -14,8 +14,7 @@ sealed class LabelExpression : PrettyPrintable {
 }
 
 data class LabelLiteral(val name: String) : LabelExpression() {
-    override val asDocument: Document
-        get() = Document(name)
+    override fun toDocument(): Document = Document(name)
 
     override fun interpret(parameters: Map<String, Label>): Label =
         Label(Principal(name))
@@ -26,8 +25,7 @@ data class LabelLiteral(val name: String) : LabelExpression() {
 }
 
 data class LabelParameter(val name: String) : LabelExpression() {
-    override val asDocument: Document
-        get() = Document(name)
+    override fun toDocument(): Document = Document(name)
 
     override fun interpret(parameters: Map<String, Label>): Label =
         parameters[name] ?: throw Exception("label parameter $name not found")
@@ -39,8 +37,7 @@ data class LabelParameter(val name: String) : LabelExpression() {
 }
 
 data class LabelJoin(val lhs: LabelExpression, val rhs: LabelExpression) : LabelExpression() {
-    override val asDocument: Document
-        get() = listOf(lhs.asDocument * Document("⊔") * rhs.asDocument).tupled()
+    override fun toDocument(): Document = listOf(lhs.toDocument() * Document("⊔") * rhs.toDocument()).tupled()
 
     override fun interpret(parameters: Map<String, Label>): Label =
         lhs.interpret(parameters).join(rhs.interpret(parameters))
@@ -52,8 +49,7 @@ data class LabelJoin(val lhs: LabelExpression, val rhs: LabelExpression) : Label
 }
 
 data class LabelMeet(val lhs: LabelExpression, val rhs: LabelExpression) : LabelExpression() {
-    override val asDocument: Document
-        get() = listOf(lhs.asDocument * Document("⊓") * rhs.asDocument).tupled()
+    override fun toDocument(): Document = listOf(lhs.toDocument() * Document("⊓") * rhs.toDocument()).tupled()
 
     override fun interpret(parameters: Map<String, Label>): Label =
         lhs.interpret(parameters).meet(rhs.interpret(parameters))
@@ -65,8 +61,7 @@ data class LabelMeet(val lhs: LabelExpression, val rhs: LabelExpression) : Label
 }
 
 data class LabelAnd(val lhs: LabelExpression, val rhs: LabelExpression) : LabelExpression() {
-    override val asDocument: Document
-        get() = listOf(lhs.asDocument * Document("&") * rhs.asDocument).tupled()
+    override fun toDocument(): Document = listOf(lhs.toDocument() * Document("&") * rhs.toDocument()).tupled()
 
     override fun interpret(parameters: Map<String, Label>): Label =
         lhs.interpret(parameters).and(rhs.interpret(parameters))
@@ -78,8 +73,7 @@ data class LabelAnd(val lhs: LabelExpression, val rhs: LabelExpression) : LabelE
 }
 
 data class LabelOr(val lhs: LabelExpression, val rhs: LabelExpression) : LabelExpression() {
-    override val asDocument: Document
-        get() = listOf(lhs.asDocument * Document("|") * rhs.asDocument).tupled()
+    override fun toDocument(): Document = listOf(lhs.toDocument() * Document("|") * rhs.toDocument()).tupled()
 
     override fun interpret(parameters: Map<String, Label>): Label =
         lhs.interpret(parameters).or(rhs.interpret(parameters))
@@ -91,8 +85,7 @@ data class LabelOr(val lhs: LabelExpression, val rhs: LabelExpression) : LabelEx
 }
 
 data class LabelConfidentiality(val value: LabelExpression) : LabelExpression() {
-    override val asDocument: Document
-        get() = value.asDocument + Document("->")
+    override fun toDocument(): Document = value.toDocument() + Document("->")
 
     override fun interpret(parameters: Map<String, Label>): Label =
         value.interpret(parameters).confidentiality()
@@ -104,8 +97,7 @@ data class LabelConfidentiality(val value: LabelExpression) : LabelExpression() 
 }
 
 data class LabelIntegrity(val value: LabelExpression) : LabelExpression() {
-    override val asDocument: Document
-        get() = value.asDocument + Document("<-")
+    override fun toDocument(): Document = value.toDocument() + Document("<-")
 
     override fun interpret(parameters: Map<String, Label>): Label =
         value.interpret(parameters).integrity()
@@ -117,8 +109,7 @@ data class LabelIntegrity(val value: LabelExpression) : LabelExpression() {
 }
 
 object LabelBottom : LabelExpression() {
-    override val asDocument: Document
-        get() = Document("⊥")
+    override fun toDocument(): Document = Document("⊥")
 
     override fun interpret(parameters: Map<String, Label>): Label =
         Label.strongest
@@ -129,8 +120,7 @@ object LabelBottom : LabelExpression() {
 }
 
 object LabelTop : LabelExpression() {
-    override val asDocument: Document
-        get() = Document("⊤")
+    override fun toDocument(): Document = Document("⊤")
 
     override fun interpret(parameters: Map<String, Label>): Label =
         Label.weakest

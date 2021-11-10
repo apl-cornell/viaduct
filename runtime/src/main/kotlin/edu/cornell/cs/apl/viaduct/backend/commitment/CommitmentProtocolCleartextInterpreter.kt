@@ -209,7 +209,7 @@ class CommitmentProtocolCleartextInterpreter(
 
                 logger.info {
                     "sent opened value and nonce for ${sender.temporary.value.name} to " +
-                        "${event.recv.protocol.asDocument.print()}@${event.recv.host.name}"
+                        "${event.recv.protocol.toDocument().print()}@${event.recv.host.name}"
                 }
             }
         }

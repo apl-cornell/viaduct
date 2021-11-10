@@ -44,16 +44,15 @@ abstract class Node : TreeNode<Node>, HasSourceLocation, PrettyPrintable {
      */
     abstract fun copy(children: List<Node> = this.children.toList()): Node
 
-    final override val asDocument: Document
-        get() = toSurfaceNode(mapOf()).asDocument
+    final override fun toDocument(): Document = toSurfaceNode(mapOf()).toDocument()
 
     /** Returns a pretty representation of this [Node] where each descendant is decorated using [metadata]. */
-    fun asDocumentWithMetadata(metadata: Metadata): Document =
-        toSurfaceNode(metadata).asDocument
+    fun toDocumentWithMetadata(metadata: Metadata): Document =
+        toSurfaceNode(metadata).toDocument()
 
     /** Converts the metadata associated with this [Node] into a comment. */
     protected fun metadataAsComment(metadata: Metadata): String? =
-        metadata[this]?.asDocument?.print()
+        metadata[this]?.toDocument()?.print()
 }
 
 /** Like [Node.copy], but recursively copies all descendant nodes also.*/

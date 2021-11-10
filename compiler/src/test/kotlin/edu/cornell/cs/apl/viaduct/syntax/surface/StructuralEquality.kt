@@ -66,4 +66,4 @@ private fun fail(expected: Any?, actual: Any?) {
 }
 
 private fun Any?.print(): String =
-    if (this is PrettyPrintable) this.asDocument.print() else this.toString()
+    if (this is PrettyPrintable) this.toDocument().print() else this.toString()

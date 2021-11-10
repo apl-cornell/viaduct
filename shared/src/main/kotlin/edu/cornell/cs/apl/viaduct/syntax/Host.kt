@@ -17,8 +17,7 @@ data class Host(override val name: String) : Name, Comparable<Host> {
     override fun compareTo(other: Host): Int =
         this.name.compareTo(other.name)
 
-    override val asDocument: Document
-        get() = Document(name).styled(HostStyle)
+    override fun toDocument(): Document = Document(name).styled(HostStyle)
 }
 
 /** The display style of [Host]s. */

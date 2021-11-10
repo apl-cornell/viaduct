@@ -209,7 +209,7 @@ class ABYProtocolInterpreter(
                     ABYConstantGate(value.value, circuitType)
                 }
 
-            else -> throw ViaductInterpreterError("unknown value type: ${value.asDocument.print()}")
+            else -> throw ViaductInterpreterError("unknown value type: ${value.toDocument().print()}")
         }
     }
 

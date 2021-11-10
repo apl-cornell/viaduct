@@ -13,8 +13,7 @@ interface MethodName : Name {
     override val nameCategory: String
         get() = "method"
 
-    override val asDocument: Document
-        get() = Document(name).styled(MethodNameStyle)
+    override fun toDocument(): Document = Document(name).styled(MethodNameStyle)
 }
 
 /** The display style of [MethodName]s. */

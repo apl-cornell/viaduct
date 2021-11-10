@@ -24,8 +24,7 @@ private constructor(
     override val comment: String?
         get() = null
 
-    override val asDocumentWithoutComment: Document
-        get() = declarations.concatenated(Document.forcedLineBreak + Document.forcedLineBreak)
+    override fun toDocumentWithoutComment(): Document = declarations.concatenated(Document.forcedLineBreak + Document.forcedLineBreak)
 
     override fun toString(): String =
         "Program (" + sourceLocation.sourcePath + ")"

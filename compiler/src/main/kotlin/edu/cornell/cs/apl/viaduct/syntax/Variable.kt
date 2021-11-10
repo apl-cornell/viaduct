@@ -9,8 +9,7 @@ import edu.cornell.cs.apl.prettyprinting.styled
 
 /** A variable is a name that stands for a value or an object instance. */
 sealed class Variable : Name {
-    override val asDocument: Document
-        get() = Document(name).styled(VariableStyle)
+    override fun toDocument(): Document = Document(name).styled(VariableStyle)
 }
 
 /**

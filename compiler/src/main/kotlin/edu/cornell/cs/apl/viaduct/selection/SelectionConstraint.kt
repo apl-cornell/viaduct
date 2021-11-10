@@ -8,29 +8,20 @@ import edu.cornell.cs.apl.prettyprinting.tupled
 import edu.cornell.cs.apl.viaduct.analysis.NameAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.createdVariables
 import edu.cornell.cs.apl.viaduct.analysis.involvedVariables
-import edu.cornell.cs.apl.viaduct.errors.NoVariableSelectionSolutionError
 import edu.cornell.cs.apl.viaduct.syntax.FunctionName
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
 import edu.cornell.cs.apl.viaduct.syntax.Variable
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.DeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ExpressionNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.LetNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.Node
 
 data class FunctionVariable(val function: FunctionName, val variable: Variable) : PrettyPrintable {
-    override val asDocument: Document =
-        Document("(") + function + "," + variable.asDocument + Document(")")
+    override fun toDocument(): Document =
+        Document("(") + function + "," + variable.toDocument() + Document(")")
 }
 
-data class ProtocolAssignment(
-    val assignment: Map<FunctionVariable, Protocol>
-) {
-    fun getAssignment(fv: FunctionVariable): Protocol =
-        assignment[fv] ?: throw NoVariableSelectionSolutionError(fv.function, fv.variable)
-
-    fun getAssignment(f: FunctionName, v: Variable): Protocol =
-        getAssignment(FunctionVariable(f, v))
-}
-
+/** Symbolic cost that will be minimized by a solver. */
 sealed class SymbolicCost : CostMonoid<SymbolicCost> {
     companion object {
         fun zero(): SymbolicCost = CostLiteral(0)
@@ -43,27 +34,27 @@ sealed class SymbolicCost : CostMonoid<SymbolicCost> {
 }
 
 data class CostLiteral(val cost: Int) : SymbolicCost() {
-    override val asDocument: Document = Document(cost.toString())
+    override fun toDocument(): Document = Document(cost.toString())
 }
 
 data class CostAdd(val lhs: SymbolicCost, val rhs: SymbolicCost) : SymbolicCost() {
-    override val asDocument: Document = lhs.asDocument * Document("+") * rhs.asDocument
+    override fun toDocument(): Document = lhs.toDocument() * Document("+") * rhs.toDocument()
 }
 
 /** Multiply cost expression with a scalar. Restrict to scalar multiplication to keep constraint problem linear. */
 data class CostMul(val lhs: Int, val rhs: SymbolicCost) : SymbolicCost() {
-    override val asDocument: Document = Document(lhs.toString()) * Document("*") * rhs.asDocument
+    override fun toDocument(): Document = Document(lhs.toString()) * Document("*") * rhs.toDocument()
 }
 
 data class CostMax(val lhs: SymbolicCost, val rhs: SymbolicCost) : SymbolicCost() {
-    override val asDocument: Document = Document("max") * listOf(lhs.asDocument, rhs.asDocument).tupled()
+    override fun toDocument(): Document = Document("max") * listOf(lhs.toDocument(), rhs.toDocument()).tupled()
 }
 
 /** Cost determined by which guard is true. Exactly one guard must be true. */
 data class CostChoice(val choices: List<Pair<SelectionConstraint, SymbolicCost>>) : SymbolicCost() {
-    override val asDocument: Document =
+    override fun toDocument(): Document =
         this.choices.map { choice ->
-            choice.first.asDocument * Document("=>") * choice.second.asDocument
+            choice.first.toDocument() * Document("=>") * choice.second.toDocument()
         }.tupled()
 }
 
@@ -71,39 +62,39 @@ data class CostChoice(val choices: List<Pair<SelectionConstraint, SymbolicCost>>
 sealed class SelectionConstraint : PrettyPrintable
 
 object True : SelectionConstraint() {
-    override val asDocument: Document = Document("true")
+    override fun toDocument(): Document = Document("true")
 }
 
 object False : SelectionConstraint() {
-    override val asDocument: Document = Document("false")
+    override fun toDocument(): Document = Document("false")
 }
 
 data class HostVariable(val variable: String) : SelectionConstraint() {
-    override val asDocument: Document = Document(variable)
+    override fun toDocument(): Document = Document(variable)
 }
 
 data class GuardVisibilityFlag(val variable: String) : SelectionConstraint() {
-    override val asDocument: Document = Document(variable)
+    override fun toDocument(): Document = Document(variable)
 }
 
 data class Literal(val literalValue: Boolean) : SelectionConstraint() {
-    override val asDocument: Document = Document(literalValue.toString())
+    override fun toDocument(): Document = Document(literalValue.toString())
 }
 
 data class Implies(val lhs: SelectionConstraint, val rhs: SelectionConstraint) : SelectionConstraint() {
-    override val asDocument: Document = lhs.asDocument * Document("=>") * rhs.asDocument
+    override fun toDocument(): Document = lhs.toDocument() * Document("=>") * rhs.toDocument()
 }
 
 data class Or(val props: List<SelectionConstraint>) : SelectionConstraint() {
     constructor(vararg props: SelectionConstraint) : this(listOf(*props))
 
-    override val asDocument: Document =
+    override fun toDocument(): Document =
         when (props.size) {
             0 -> Document("")
-            1 -> props.first().asDocument
+            1 -> props.first().toDocument()
             else -> {
-                props.subList(1, props.size - 1).fold(props.first().asDocument) { acc, prop ->
-                    acc * Document("||") * prop.asDocument
+                props.subList(1, props.size - 1).fold(props.first().toDocument()) { acc, prop ->
+                    acc * Document("||") * prop.toDocument()
                 }
             }
         }
@@ -112,73 +103,45 @@ data class Or(val props: List<SelectionConstraint>) : SelectionConstraint() {
 data class And(val props: List<SelectionConstraint>) : SelectionConstraint() {
     constructor(vararg props: SelectionConstraint) : this(listOf(*props))
 
-    override val asDocument: Document =
+    override fun toDocument(): Document =
         when (props.size) {
             0 -> Document("")
-            1 -> props.first().asDocument
+            1 -> props.first().toDocument()
             else -> {
-                props.subList(1, props.size - 1).fold(props.first().asDocument) { acc, prop ->
-                    acc * Document("&&") * prop.asDocument
+                props.subList(1, props.size - 1).fold(props.first().toDocument()) { acc, prop ->
+                    acc * Document("&&") * prop.toDocument()
                 }
             }
         }
 }
 
 data class Not(val rhs: SelectionConstraint) : SelectionConstraint() {
-    override val asDocument: Document = Document("!") + rhs.asDocument
+    override fun toDocument(): Document = Document("!") + rhs.toDocument()
 }
 
 /** VariableIn(v, P) holds when v is selected to be a protocol in P **/
 data class VariableIn(val variable: FunctionVariable, val protocol: Protocol) : SelectionConstraint() {
-    override val asDocument: Document =
-        variable * Document("=") * protocol.asDocument
+    override fun toDocument(): Document =
+        variable * Document("=") * protocol.toDocument()
 }
 
 /** Protocols for v1 and v2 are equal. */
 data class VariableEquals(val var1: FunctionVariable, val var2: FunctionVariable) : SelectionConstraint() {
-    override val asDocument: Document = var1.asDocument * Document("==") * var2.asDocument
+    override fun toDocument(): Document = var1.toDocument() * Document("==") * var2.toDocument()
 }
 
 /** A constrained optimization problem defined by a set of selection constraints
  * and a cost expression to minimize. */
-data class SelectionProblem(val constraints: Set<SelectionConstraint>, val cost: SymbolicCost)
+data class SelectionProblem(
+    /** Set of constraints that must hold true for any valid protocol assignment. */
+    val constraints: Set<SelectionConstraint>,
 
-/** Given a protocol selection, evaluate the constraints. **/
-internal fun SelectionConstraint.evaluate(f: (FunctionName, Variable) -> Protocol): Boolean =
-    when (this) {
-        is True -> true
-        is False -> false
-        is Literal -> literalValue
-        is Implies -> (!lhs.evaluate(f)) || rhs.evaluate(f)
-        is Or -> props.any { it.evaluate(f) }
-        is And -> props.all { it.evaluate(f) }
-        is Not -> !(rhs.evaluate(f))
-        is VariableIn -> f(variable.function, variable.variable) == this.protocol
-        is VariableEquals -> f(var1.function, var1.variable) == f(var2.function, var2.variable)
+    /** Cost for the whole program. */
+    val cost: SymbolicCost,
 
-        // TODO: ignore host variables for now
-        is HostVariable -> true
-
-        // TODO: ignore guard visibility flags for now
-        is GuardVisibilityFlag -> true
-    }
-
-internal fun List<SelectionConstraint>.assert(
-    context: Set<SelectionConstraint>,
-    f: (FunctionName, Variable) -> Protocol
-) {
-    for (c in this) {
-        if (c is And) {
-            c.props.assert(context, f)
-        } else if (c is Implies) {
-            if (c.lhs.evaluate(f)) {
-                listOf(c.rhs).assert(context + setOf(c.lhs), f)
-            }
-        } else if (!c.evaluate(f)) {
-            assert(false)
-        }
-    }
-}
+    /** Extra metadata that lets us associate cost with different parts of a program. */
+    val costMap: Map<Node, SymbolicCost> = mapOf()
+)
 
 internal fun SelectionConstraint.or(other: SelectionConstraint): SelectionConstraint =
     Or(listOf(this, other))
@@ -188,26 +151,6 @@ internal fun SelectionConstraint.implies(other: SelectionConstraint): SelectionC
 
 internal fun variableInSet(fv: FunctionVariable, protocols: Set<Protocol>): SelectionConstraint =
     protocols.map { protocol -> VariableIn(fv, protocol) }.ors()
-
-internal fun SymbolicCost.evaluate(
-    assignment: (FunctionName, Variable) -> Protocol,
-): Int {
-    return when (this) {
-        is CostLiteral -> this.cost
-        is CostAdd -> this.lhs.evaluate(assignment) + this.rhs.evaluate(assignment)
-        is CostMul -> this.lhs * this.rhs.evaluate(assignment)
-        is CostMax -> this.lhs.evaluate(assignment) * this.rhs.evaluate(assignment)
-        is CostChoice -> {
-            var cost: Int? = null
-            for (choice in this.choices) {
-                if (choice.first.evaluate(assignment)) {
-                    cost = choice.second.evaluate(assignment)
-                }
-            }
-            cost ?: throw Error("at least one choice must be true")
-        }
-    }
-}
 
 internal fun List<SelectionConstraint>.ors(): SelectionConstraint = Or(this)
 

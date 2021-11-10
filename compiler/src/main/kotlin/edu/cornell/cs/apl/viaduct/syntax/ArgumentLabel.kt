@@ -12,8 +12,7 @@ data class ArgumentLabel(override val name: String) : Name, Comparable<ArgumentL
     override fun compareTo(other: ArgumentLabel): Int =
         this.name.compareTo(other.name)
 
-    override val asDocument: Document
-        get() = Document(name).styled(ArgumentLabelStyle)
+    override fun toDocument(): Document = Document(name).styled(ArgumentLabelStyle)
 }
 
 /** The display style of [ArgumentLabel]s. */

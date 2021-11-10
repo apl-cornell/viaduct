@@ -2,7 +2,7 @@ host alice: {A & B<-}
 host bob:   {B & A<-}
 
 /* two-round bidding for n items */
-process main {
+fun main() {
   val n: int = 10; /* number of items to bid */
   val abids1 = Array[int](n);
   val abids2 = Array[int](n);
@@ -20,7 +20,7 @@ process main {
     val winner: bool = declassify abids1[i] < bbids1[i] to {A ⊓ B};
     output winner to alice;
     output winner to bob;
-  } 
+  }
 
   /* round 2 */
   for (var i: int = 0; i < n; i += 1) {
@@ -35,5 +35,5 @@ process main {
     val winner: bool = declassify abid < bbid to {A ⊓ B};
     output winner to alice;
     output winner to bob;
-  } 
+  }
 }

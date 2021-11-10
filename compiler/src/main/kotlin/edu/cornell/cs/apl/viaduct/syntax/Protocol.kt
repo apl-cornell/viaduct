@@ -107,23 +107,10 @@ abstract class Protocol : Name, Comparable<Protocol> {
     }
 
     val internalInputPorts: Map<Host, InputPort> by lazy {
-        hosts
-            .map { h -> Pair(h, InputPort(this, h, INTERNAL_INPUT)) }
-            .toMap()
+        hosts.associateWith { h -> InputPort(this, h, INTERNAL_INPUT) }
     }
 
     val internalOutputPorts: Map<Host, OutputPort> by lazy {
-        hosts
-            .map { h -> Pair(h, OutputPort(this, h, INTERNAL_OUTPUT)) }
-            .toMap()
+        hosts.associateWith { h -> OutputPort(this, h, INTERNAL_OUTPUT) }
     }
-}
-
-/**
- * A [Protocol] specialized to a particular [HostTrustConfiguration].
- *
- * Caches [authority] for efficient access.
- */
-class SpecializedProtocol(val protocol: Protocol, hostTrustConfiguration: HostTrustConfiguration) {
-    val authority: Label = protocol.authority(hostTrustConfiguration)
 }

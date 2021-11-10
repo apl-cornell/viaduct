@@ -5,7 +5,6 @@ import edu.cornell.cs.apl.viaduct.syntax.HostNode
 import edu.cornell.cs.apl.viaduct.syntax.LabelNode
 import edu.cornell.cs.apl.viaduct.syntax.ObjectVariableNode
 import edu.cornell.cs.apl.viaduct.syntax.Operator
-import edu.cornell.cs.apl.viaduct.syntax.ProtocolNode
 import edu.cornell.cs.apl.viaduct.syntax.QueryNameNode
 import edu.cornell.cs.apl.viaduct.syntax.SourceLocation
 import edu.cornell.cs.apl.viaduct.syntax.TemporaryNode
@@ -16,7 +15,10 @@ import edu.cornell.cs.apl.viaduct.syntax.values.Value
 sealed class ExpressionNode : Node() {
     abstract override val children: Iterable<AtomicExpressionNode>
 
-    abstract override fun toSurfaceNode(): edu.cornell.cs.apl.viaduct.syntax.surface.ExpressionNode
+    final override fun toSurfaceNode(metadata: Metadata): edu.cornell.cs.apl.viaduct.syntax.surface.ExpressionNode =
+        toSurfaceNode()
+
+    abstract fun toSurfaceNode(): edu.cornell.cs.apl.viaduct.syntax.surface.ExpressionNode
 
     abstract override fun copy(children: List<Node>): ExpressionNode
 }
@@ -124,7 +126,7 @@ sealed class DowngradeNode : PureExpressionNode() {
     abstract override fun copy(children: List<Node>): DowngradeNode
 }
 
-/** Revealing the the result of an expression (reducing confidentiality). */
+/** Revealing the result of an expression (reducing confidentiality). */
 class DeclassificationNode(
     override val expression: AtomicExpressionNode,
     override val fromLabel: LabelNode?,
@@ -173,7 +175,7 @@ class InputNode(
     val type: ValueTypeNode,
     override val host: HostNode,
     override val sourceLocation: SourceLocation
-) : ExpressionNode(), ExternalCommunicationNode {
+) : ExpressionNode(), CommunicationNode {
     override val children: Iterable<Nothing>
         get() = listOf()
 
@@ -182,24 +184,4 @@ class InputNode(
 
     override fun copy(children: List<Node>): InputNode =
         InputNode(type, host, sourceLocation)
-}
-
-/**
- * Receiving a value from another protocol.
- *
- * @param type Type of the value to receive.
- */
-class ReceiveNode(
-    val type: ValueTypeNode,
-    override val protocol: ProtocolNode,
-    override val sourceLocation: SourceLocation
-) : ExpressionNode(), InternalCommunicationNode {
-    override val children: Iterable<Nothing>
-        get() = listOf()
-
-    override fun toSurfaceNode(): edu.cornell.cs.apl.viaduct.syntax.surface.ReceiveNode =
-        edu.cornell.cs.apl.viaduct.syntax.surface.ReceiveNode(type, protocol, sourceLocation)
-
-    override fun copy(children: List<Node>): ReceiveNode =
-        ReceiveNode(type, protocol, sourceLocation)
 }

@@ -166,11 +166,11 @@ class BackendInterpreter(
 
             is FunctionCallNode -> {
                 val argumentProtocolMap: Map<ParameterNode, Pair<Protocol, FunctionArgumentNode>> =
-                    stmt.arguments.map { arg ->
+                    stmt.arguments.associate { arg ->
                         val parameter = nameAnalysis.parameter(arg)
                         val argProtocol = protocolAnalysis.primaryProtocol(parameter)
                         parameter to (argProtocol to arg)
-                    }.toMap()
+                    }
 
                 // pass arguments and create new function activation record
                 for (interpreter in protocolInterpreters) {
@@ -224,9 +224,7 @@ class BackendInterpreter(
             is InfiniteLoopNode -> {
                 if (protocolAnalysis.participatingHosts(stmt).contains(this.host)) {
                     val contextMarkers: Map<ProtocolInterpreter, Int> =
-                        protocolInterpreters
-                            .map { interpreter -> interpreter to interpreter.getContextMarker() }
-                            .toMap()
+                        protocolInterpreters.associateWith { interpreter -> interpreter.getContextMarker() }
 
                     try {
                         /*

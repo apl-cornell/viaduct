@@ -8,7 +8,7 @@ import edu.cornell.cs.apl.viaduct.syntax.datatypes.ClassName
 import edu.cornell.cs.apl.viaduct.syntax.datatypes.QueryName
 import edu.cornell.cs.apl.viaduct.syntax.datatypes.UpdateName
 
-/** The type of an object. */
+/** The type of objects. */
 abstract class ObjectType : Type {
     /** The class this object belongs to. */
     abstract val className: ClassName

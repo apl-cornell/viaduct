@@ -1,18 +1,16 @@
 package edu.cornell.cs.apl.viaduct.errors
 
 import edu.cornell.cs.apl.viaduct.NegativeTestFileProvider
-import edu.cornell.cs.apl.viaduct.analysis.main
+import edu.cornell.cs.apl.viaduct.backends.DefaultCombinedBackend
 import edu.cornell.cs.apl.viaduct.parsing.SourceFile
 import edu.cornell.cs.apl.viaduct.parsing.isBlankOrUnderline
 import edu.cornell.cs.apl.viaduct.parsing.parse
 import edu.cornell.cs.apl.viaduct.passes.check
 import edu.cornell.cs.apl.viaduct.passes.elaborated
-import edu.cornell.cs.apl.viaduct.selection.CostMode
+import edu.cornell.cs.apl.viaduct.selection.ProtocolSelection
 import edu.cornell.cs.apl.viaduct.selection.SimpleCostEstimator
 import edu.cornell.cs.apl.viaduct.selection.SimpleCostRegime
-import edu.cornell.cs.apl.viaduct.selection.SimpleProtocolComposer
-import edu.cornell.cs.apl.viaduct.selection.SimpleProtocolFactory
-import edu.cornell.cs.apl.viaduct.selection.selectProtocolsWithZ3
+import edu.cornell.cs.apl.viaduct.selection.Z3Selection
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -51,12 +49,14 @@ internal class ErrorsTest {
 private fun run(file: File) {
     val program = SourceFile.from(file).parse().elaborated()
     program.check()
-    selectProtocolsWithZ3(
-        program, program.main,
-        SimpleProtocolFactory(program), SimpleProtocolComposer,
-        SimpleCostEstimator(SimpleProtocolComposer, SimpleCostRegime.LAN),
-        CostMode.MINIMIZE
-    )
+
+    val protocolComposer = DefaultCombinedBackend.protocolComposer
+    ProtocolSelection(
+        Z3Selection(),
+        DefaultCombinedBackend.protocolFactory(program),
+        protocolComposer,
+        SimpleCostEstimator(protocolComposer, SimpleCostRegime.LAN)
+    ).selectAssignment(program)
     // TODO: interpret
 }
 

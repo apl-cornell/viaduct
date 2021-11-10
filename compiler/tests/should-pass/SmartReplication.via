@@ -1,4 +1,4 @@
-process main {
+fun main() {
   /* Alice provides some input. */
   val a: int{A} = input int from alice;
 
@@ -9,15 +9,6 @@ process main {
   /* Chuck wants the input; but he only needs Alice's word for it. */
   output (endorse replicated to {C<-} from {A<-}) to chuck;
   /* In the final protocol, Chuck should receive the variable from Alice only. */
-}
-
-process Host(alice) {
-  send 42 to main;
-}
-
-process Host(chuck) {
-  val result: int = receive int from main;
-  assert result == 42;
 }
 
 host alice : {A}

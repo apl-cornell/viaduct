@@ -17,9 +17,8 @@ interface CostEstimator<C : CostMonoid<C>> {
     fun executionCost(stmt: SimpleStatementNode, protocol: Protocol): Cost<C>
 
     /**
-     * Estimated cost of sending a message of type [messageType] from [source] to [destination]
-     * relative to [host] in [destination]. If [host] is null, then computes the cost for
-     * all the hosts in [destination].
+     * Estimated cost of sending a message from [source] to [destination] relative to [host] in [destination].
+     * If [host] is null, then computes the cost for all the hosts in [destination].
      */
     fun communicationCost(source: Protocol, destination: Protocol, host: Host? = null): Cost<C>
 

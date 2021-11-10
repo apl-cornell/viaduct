@@ -21,7 +21,10 @@ private constructor(
     constructor(declarations: List<TopLevelDeclarationNode>, sourceLocation: SourceLocation) :
         this(declarations.toPersistentList(), sourceLocation)
 
-    override val asDocument: Document
+    override val comment: String?
+        get() = null
+
+    override val asDocumentWithoutComment: Document
         get() = declarations.concatenated(Document.forcedLineBreak + Document.forcedLineBreak)
 
     override fun toString(): String =

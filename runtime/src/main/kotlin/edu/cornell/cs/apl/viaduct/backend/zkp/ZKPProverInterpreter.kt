@@ -11,10 +11,10 @@ import edu.cornell.cs.apl.viaduct.backend.asString
 import edu.cornell.cs.apl.viaduct.backend.commitment.genNonce
 import edu.cornell.cs.apl.viaduct.backend.eval
 import edu.cornell.cs.apl.viaduct.backend.wireName
+import edu.cornell.cs.apl.viaduct.backends.zkp.ZKP
 import edu.cornell.cs.apl.viaduct.errors.ViaductInterpreterError
 import edu.cornell.cs.apl.viaduct.libsnarkwrapper.libsnarkwrapper
 import edu.cornell.cs.apl.viaduct.libsnarkwrapper.libsnarkwrapper.mkByteBuf
-import edu.cornell.cs.apl.viaduct.protocols.ZKP
 import edu.cornell.cs.apl.viaduct.selection.ProtocolCommunication
 import edu.cornell.cs.apl.viaduct.syntax.Host
 import edu.cornell.cs.apl.viaduct.syntax.ObjectVariable
@@ -39,7 +39,6 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutputNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.QueryNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ReadNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.ReceiveNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.SimpleStatementNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.UpdateNode
 import edu.cornell.cs.apl.viaduct.syntax.types.BooleanType
@@ -202,7 +201,7 @@ class ZKPProverInterpreter(
         return ZKPObject.ZKPNullObject
     }
 
-    private suspend fun runQuery(obj: ZKPObject, query: QueryNameNode, args: List<AtomicExpressionNode>): WireTerm =
+    private fun runQuery(obj: ZKPObject, query: QueryNameNode, args: List<AtomicExpressionNode>): WireTerm =
         when (obj) {
             is ZKPObject.ZKPImmutableCell -> if (query.value is Get) {
                 obj.value
@@ -241,7 +240,6 @@ class ZKPProverInterpreter(
             is DeclassificationNode -> getExprWire(expr.expression)
             is EndorsementNode -> getExprWire(expr.expression)
             is InputNode -> throw ViaductInterpreterError("impossible")
-            is ReceiveNode -> throw ViaductInterpreterError("impossible")
         }
 
     private fun runPlaintextExpr(expr: AtomicExpressionNode): Value {

@@ -2,24 +2,18 @@ package edu.cornell.cs.apl.viaduct.codegeneration
 
 import edu.cornell.cs.apl.prettyprinting.Document
 import edu.cornell.cs.apl.viaduct.PositiveTestFileProvider
-import edu.cornell.cs.apl.viaduct.analysis.main
+import edu.cornell.cs.apl.viaduct.backends.DefaultCombinedBackend
 import edu.cornell.cs.apl.viaduct.parsing.SourceFile
 import edu.cornell.cs.apl.viaduct.parsing.parse
 import edu.cornell.cs.apl.viaduct.passes.annotateWithProtocols
 import edu.cornell.cs.apl.viaduct.passes.check
 import edu.cornell.cs.apl.viaduct.passes.elaborated
 import edu.cornell.cs.apl.viaduct.passes.specialize
-import edu.cornell.cs.apl.viaduct.selection.CostMode
+import edu.cornell.cs.apl.viaduct.selection.ProtocolAssignment
+import edu.cornell.cs.apl.viaduct.selection.ProtocolSelection
 import edu.cornell.cs.apl.viaduct.selection.SimpleCostEstimator
 import edu.cornell.cs.apl.viaduct.selection.SimpleCostRegime
-import edu.cornell.cs.apl.viaduct.selection.SimpleProtocolComposer
-import edu.cornell.cs.apl.viaduct.selection.SimpleProtocolFactory
-import edu.cornell.cs.apl.viaduct.selection.selectProtocolsWithZ3
-import edu.cornell.cs.apl.viaduct.selection.validateProtocolAssignment
-import edu.cornell.cs.apl.viaduct.syntax.FunctionName
-import edu.cornell.cs.apl.viaduct.syntax.Protocol
-import edu.cornell.cs.apl.viaduct.syntax.Variable
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProcessDeclarationNode
+import edu.cornell.cs.apl.viaduct.selection.Z3Selection
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ArgumentsSource
 import java.io.File
@@ -31,40 +25,25 @@ internal class CodeGeneratorTest {
     fun `it generates`(file: File) {
         if (file.parentFile.name != "plaintext-code-generation") return
 
-        var program = SourceFile.from(file)
+        val program = SourceFile.from(file)
             .parse()
             .elaborated()
             .specialize()
 
         program.check()
 
-        val protocolFactory = SimpleProtocolFactory(program)
-        val maximizeCost = false
+        val protocolFactory = DefaultCombinedBackend.protocolFactory(program)
 
-        var wanCost = false
-        val protocolComposer = SimpleProtocolComposer
-        val costRegime = if (wanCost) SimpleCostRegime.WAN else SimpleCostRegime.LAN
-        val costEstimator = SimpleCostEstimator(SimpleProtocolComposer, costRegime)
+        val protocolComposer = DefaultCombinedBackend.protocolComposer
+        val costEstimator = SimpleCostEstimator(protocolComposer, SimpleCostRegime.LAN)
 
-        val protocolAssignment: (FunctionName, Variable) -> Protocol = selectProtocolsWithZ3(
-            program,
-            program.main,
-            protocolFactory,
-            protocolComposer,
-            costEstimator,
-            if (maximizeCost) CostMode.MAXIMIZE else CostMode.MINIMIZE
-        )
-
-        for (processDecl in program.declarations.filterIsInstance<ProcessDeclarationNode>()) {
-            validateProtocolAssignment(
-                program,
-                processDecl,
+        val protocolAssignment: ProtocolAssignment =
+            ProtocolSelection(
+                Z3Selection(),
                 protocolFactory,
                 protocolComposer,
-                costEstimator,
-                protocolAssignment
-            )
-        }
+                costEstimator
+            ).selectAssignment(program)
 
         val annotatedProgram = program.annotateWithProtocols(protocolAssignment)
 
@@ -87,7 +66,8 @@ internal class CodeGeneratorTest {
                         ::PlainTextCodeGenerator,
                         ::CommitmentCreatorGenerator,
                         ::CommitmentHolderGenerator
-                    )
+                    ),
+                    DefaultCombinedBackend.protocolComposer
                 )
             ).print()
         )

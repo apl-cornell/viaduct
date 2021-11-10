@@ -1,4 +1,4 @@
-process main {
+fun main() {
     val length: int = 100;
 
     var a_min: int = 0;

@@ -1,12 +1,10 @@
 package edu.cornell.cs.apl.viaduct.backend.aby
 
+import edu.cornell.cs.apl.viaduct.backends.aby.ABY
 import edu.cornell.cs.apl.viaduct.passes.MuxPostprocessor
 import edu.cornell.cs.apl.viaduct.passes.ProgramPostprocessor
-import edu.cornell.cs.apl.viaduct.protocols.ABY
-import edu.cornell.cs.apl.viaduct.syntax.FunctionName
-import edu.cornell.cs.apl.viaduct.syntax.Protocol
-import edu.cornell.cs.apl.viaduct.syntax.Variable
+import edu.cornell.cs.apl.viaduct.selection.ProtocolAssignment
 
-fun ABYMuxPostprocessor(
-    protocolAssignment: (FunctionName, Variable) -> Protocol
+fun abyMuxPostprocessor(
+    protocolAssignment: ProtocolAssignment
 ): ProgramPostprocessor = MuxPostprocessor({ p -> p is ABY }, protocolAssignment)

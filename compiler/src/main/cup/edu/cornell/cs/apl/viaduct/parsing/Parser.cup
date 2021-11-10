@@ -1,6 +1,5 @@
 import edu.cornell.cs.apl.viaduct.errors.NoMainError;
 import edu.cornell.cs.apl.viaduct.errors.ParsingError;
-import edu.cornell.cs.apl.viaduct.protocols.*;
 import edu.cornell.cs.apl.viaduct.security.*;
 import edu.cornell.cs.apl.viaduct.syntax.*;
 import edu.cornell.cs.apl.viaduct.syntax.datatypes.*;
@@ -149,8 +148,7 @@ terminal String TMP_IDENT;
 terminal int INT_LIT;
 terminal TRUE, FALSE;
 
-terminal HOST, PROCESS;
-terminal CAP_HOST;
+terminal HOST;
 terminal FUNCTION;
 terminal OUT;
 terminal COLON;
@@ -159,7 +157,7 @@ terminal EQ;
 terminal PLUSEQ, MINUSEQ, TIMESEQ, DIVIDEEQ;
 terminal LET, VAL, VAR;
 terminal IF, ELSE, WHILE, FOR, LOOP, BREAK;
-terminal INPUT, RECEIVE, FROM, OUTPUT, SEND, TO;
+terminal INPUT, FROM, OUTPUT, TO;
 terminal ASSERT;
 
 terminal NOT, ANDAND, OROR;
@@ -222,11 +220,7 @@ declaration_list ::=
 
 declaration ::=
     HOST:begin host:host COLON label:authority {:
-      RESULT = new HostDeclarationNode(host, authority, location(beginleft, authorityright));
-    :}
-
-  | PROCESS:begin protocol:protocol block:body {:
-      RESULT = new ProcessDeclarationNode(protocol, body, location(beginleft, bodyright));
+      RESULT = new HostDeclarationNode(host, authority, location(beginleft, authorityright), null);
     :}
 
   | FUNCTION:begin IDENT:funcname optional_label_signature:label
@@ -236,7 +230,8 @@ declaration ::=
         label,
         new Arguments(params, location(paramsbeginleft, paramsbeginright)),
         body,
-        location(beginleft, bodyright)
+        location(beginleft, bodyright),
+        null
       );
   :}
   ;
@@ -276,7 +271,8 @@ parameter ::=
         Arguments.from(type),
         optionalLabelArgument(label),
         protocol,
-        location(nameleft, labelright)
+        location(nameleft, labelright),
+        null
       );
     :}
 
@@ -288,7 +284,8 @@ parameter ::=
         Arguments.from(type),
         optionalLabelArgument(label),
         protocol,
-        location(nameleft, labelright)
+        location(nameleft, labelright),
+        null
       );
     :}
 
@@ -301,7 +298,8 @@ parameter ::=
         Arguments.from(elementType),
         optionalLabelArgument(label),
         protocol,
-        location(nameleft, labelright)
+        location(nameleft, labelright),
+        null
       );
     :}
 
@@ -314,7 +312,8 @@ parameter ::=
         Arguments.from(elementType),
         optionalLabelArgument(label),
         protocol,
-        location(nameleft, labelright)
+        location(nameleft, labelright),
+        null
       );
     :}
   ;
@@ -332,7 +331,9 @@ simple_stmt ::=
             Arguments.from(value),
             location(typeleft, valueright)
         ),
-        location(beginleft, valueright));
+        location(beginleft, valueright),
+        null
+      );
     :}
 
     /* Mutable variable declaration. */
@@ -351,7 +352,9 @@ simple_stmt ::=
             Arguments.from((initial == null) ? defaultValue : initial),
             location(typeleft, initialright)
         ),
-        location(beginleft, initialright));
+        location(beginleft, initialright),
+        null
+      );
     :}
 
     /* Generic object declaration. */
@@ -359,7 +362,9 @@ simple_stmt ::=
       RESULT = new DeclarationNode(
         var,
         e,
-        location(beginleft, eright));
+        location(beginleft, eright),
+        null
+      );
     :}
 
   | indexing:indexing EQ:eq expr:e {:
@@ -375,7 +380,9 @@ simple_stmt ::=
       RESULT = new OutParameterInitializationNode(
         new Located(new ObjectVariable(id), location(idleft, idright)),
         e,
-        location(beginleft, eright));
+        location(beginleft, eright),
+        null
+      );
     :}
 
   /* function call */
@@ -383,25 +390,24 @@ simple_stmt ::=
       RESULT = new FunctionCallNode(
         new Located(new FunctionName(funcname), location(funcnameleft, funcnameright)),
         new Arguments(args, location(paramsopenleft, endright)),
-        location(funcnameleft, endright)
+        location(funcnameleft, endright),
+        null
       );
     :}
 
   /* let binding */
   | LET:begin TMP_IDENT:id protocol_annot:protocol EQ expr:e {:
-    RESULT = new LetNode(
-      new Located(new Temporary(id), location(idleft, idright)),
-      e,
-      protocol,
-      location(beginleft, eright));
+      RESULT = new LetNode(
+        new Located(new Temporary(id), location(idleft, idright)),
+        e,
+        protocol,
+        location(beginleft, eright),
+        null
+      );
     :}
 
   | OUTPUT:begin expr:message TO host:recipient {:
-      RESULT = new OutputNode(message, recipient, location(beginleft, recipientright));
-    :}
-
-  | SEND:begin expr:message TO protocol:recipient {:
-      RESULT = new SendNode(message, recipient, location(beginleft, recipientright));
+      RESULT = new OutputNode(message, recipient, location(beginleft, recipientright), null);
     :}
   ;
 
@@ -462,7 +468,7 @@ stmt ::=
     :}
 
   | IF:begin OPEN_PAREN expr:guard CLOSE_PAREN block:thenCase ELSE block:elseCase {:
-      RESULT = new IfNode(guard, thenCase, elseCase, location(beginleft, elseCaseright));
+      RESULT = new IfNode(guard, thenCase, elseCase, location(beginleft, elseCaseright), null);
     :}
 
   | IF:begin OPEN_PAREN expr:guard CLOSE_PAREN block:thenCase {:
@@ -470,28 +476,30 @@ stmt ::=
       RESULT = new IfNode(
         guard,
         thenCase,
-        new BlockNode(CollectionsKt.listOf(), sourceLocation),
-        sourceLocation);
+        new BlockNode(CollectionsKt.listOf(), sourceLocation, null),
+        sourceLocation,
+        null
+      );
     :}
 
   | WHILE:begin OPEN_PAREN expr:guard CLOSE_PAREN block:body {:
-      RESULT = new WhileLoopNode(guard, body, null, location(beginleft, bodyright));
+      RESULT = new WhileLoopNode(guard, body, null, location(beginleft, bodyright), null);
     :}
 
   | FOR:begin OPEN_PAREN simple_stmt:initialize SEMICOLON expr:guard SEMICOLON simple_stmt:update CLOSE_PAREN block:body {:
-      RESULT = new ForLoopNode(initialize, guard, update, body, null, location(beginleft, bodyright));
+      RESULT = new ForLoopNode(initialize, guard, update, body, null, location(beginleft, bodyright), null);
     :}
 
   | LOOP:begin block:body {:
-      RESULT = new InfiniteLoopNode(body, null, location(beginleft, bodyright));
+      RESULT = new InfiniteLoopNode(body, null, location(beginleft, bodyright), null);
     :}
 
   | BREAK:brk SEMICOLON {:
-      RESULT = new BreakNode(null, location(brkleft, brkright));
+      RESULT = new BreakNode(null, location(brkleft, brkright), null);
     :}
 
   | ASSERT:begin expr:e SEMICOLON {:
-      RESULT = new AssertionNode(e, location(beginleft, eright));
+      RESULT = new AssertionNode(e, location(beginleft, eright), null);
     :}
 
   | block:block {:
@@ -501,7 +509,7 @@ stmt ::=
 
 block ::=
     OPEN_BRACE:begin stmt_list:statements CLOSE_BRACE:end {:
-      RESULT = new BlockNode(statements, location(beginleft, endright));
+      RESULT = new BlockNode(statements, location(beginleft, endright), null);
     :}
   ;
 
@@ -621,10 +629,6 @@ expr ::=
 
   | INPUT:begin value_type:type FROM host:sender {:
       RESULT = new InputNode(type, sender, location(beginleft, senderright));
-    :}
-
-  | RECEIVE:begin value_type:type FROM protocol:sender {:
-      RESULT = new ReceiveNode(type, sender, location(beginleft, senderright));
     :}
 
   | OPEN_PAREN expr:e CLOSE_PAREN {:
@@ -881,17 +885,7 @@ protocol_annot ::=
   ;
 
 protocol ::=
-    IDENT:id {:
-      RESULT = new Located(new Ideal(id), location(idleft, idright));
-    :}
-
-  | CAP_HOST:begin OPEN_PAREN host:host CLOSE_PAREN:end {:
-      RESULT = new Located(
-        new HostInterface(host.getValue()),
-        location(beginleft, endright));
-    :}
-
-  | protocol_name:protocolName OPEN_PAREN:open protocol_argument_list:arguments CLOSE_PAREN:close {:
+    protocol_name:protocolName OPEN_PAREN:open protocol_argument_list:arguments CLOSE_PAREN:close {:
       RESULT = new Located(
         ProtocolParserKt.parseProtocol(
           protocolParsers,

@@ -24,12 +24,11 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.OperatorApplicationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutputNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.QueryNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ReadNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.ReceiveNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.UpdateNode
 import edu.cornell.cs.apl.viaduct.syntax.types.ImmutableCellType
 import edu.cornell.cs.apl.viaduct.syntax.types.MutableCellType
 import edu.cornell.cs.apl.viaduct.syntax.types.VectorType
-import edu.cornell.cs.apl.viaduct.protocols.Commitment as CommitmentProtocol
+import edu.cornell.cs.apl.viaduct.backends.commitment.Commitment as CommitmentProtocol
 
 class CommitmentHolderGenerator(
     context: CodeGeneratorContext
@@ -82,8 +81,6 @@ class CommitmentHolderGenerator(
 
             is OperatorApplicationNode ->
                 throw CodeGenerationError("Commitment: cannot perform operations on committed values")
-
-            is ReceiveNode -> TODO()
 
             is InputNode ->
                 throw CodeGenerationError("Commitment: cannot perform I/O in non-local protocol")

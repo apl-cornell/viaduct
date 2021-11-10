@@ -7,7 +7,6 @@ import com.squareup.kotlinpoet.STRING
 import com.squareup.kotlinpoet.TypeName
 import com.squareup.kotlinpoet.U_BYTE_ARRAY
 import edu.cornell.cs.apl.viaduct.errors.CodeGenerationError
-import edu.cornell.cs.apl.viaduct.errors.IllegalInternalCommunicationError
 import edu.cornell.cs.apl.viaduct.errors.RuntimeError
 import edu.cornell.cs.apl.viaduct.selection.CommunicationEvent
 import edu.cornell.cs.apl.viaduct.syntax.Arguments
@@ -24,7 +23,6 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutParameterConstructorIni
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutParameterExpressionInitializerNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutParameterInitializationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutputNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.SendNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.SimpleStatementNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.UpdateNode
 import edu.cornell.cs.apl.viaduct.syntax.types.BooleanType
@@ -47,8 +45,6 @@ abstract class AbstractCodeGenerator(val context: CodeGeneratorContext) : CodeGe
             is OutParameterInitializationNode -> outParameterInitialization(stmt, protocol)
 
             is OutputNode -> output(protocol, stmt)
-
-            is SendNode -> throw IllegalInternalCommunicationError(stmt)
         }
     }
 

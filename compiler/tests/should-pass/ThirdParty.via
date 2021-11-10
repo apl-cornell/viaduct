@@ -1,7 +1,7 @@
 /* TODO: add import statements and rewrite this with import millionaires. */
 
 /* Millionaire's problem with a trusted third party. */
-process main {
+fun main() {
   /* We endorse because Alice and Bob are free to provide any input. */
   val a: int{A & B<-} = endorse input int from alice to {A & B<-} from {A};
   val b: int{B & A<-} = endorse input int from bob to {B & A<-} from {B};
@@ -9,17 +9,6 @@ process main {
   val bob_richer: bool = declassify a <= b to {(A | B)-> & (A & B)<-};
   output bob_richer to alice;
   output bob_richer to bob;
-}
-
-process Host(alice) {
-  send 5 to main;
-  val bob_richer: bool = receive bool from main;
-}
-
-process Host(bob) {
-  send 10 to main;
-  val bob_richer: bool = receive bool from main;
-  assert bob_richer;
 }
 
 host alice   : {A}

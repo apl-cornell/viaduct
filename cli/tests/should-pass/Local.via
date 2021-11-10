@@ -1,6 +1,6 @@
 host alice: {A}
 
-process main {
+fun main() {
     val x: int = input int from alice;
     output x to alice;
 }

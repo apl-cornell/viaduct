@@ -1,14 +1,11 @@
 package edu.cornell.cs.apl.viaduct.selection
 
-import com.microsoft.z3.BoolExpr
-import com.microsoft.z3.Context
-import com.microsoft.z3.IntExpr
 import edu.cornell.cs.apl.attributes.attribute
 import edu.cornell.cs.apl.viaduct.analysis.InformationFlowAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.NameAnalysis
-import edu.cornell.cs.apl.viaduct.errors.IllegalInternalCommunicationError
+import edu.cornell.cs.apl.viaduct.backends.cleartext.Local
+import edu.cornell.cs.apl.viaduct.errors.NoSelectionSolutionError
 import edu.cornell.cs.apl.viaduct.errors.UnknownObjectDeclarationError
-import edu.cornell.cs.apl.viaduct.protocols.Local
 import edu.cornell.cs.apl.viaduct.syntax.Host
 import edu.cornell.cs.apl.viaduct.syntax.HostTrustConfiguration
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
@@ -36,43 +33,46 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutParameterExpressionInit
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutParameterInitializationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutputNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ParameterNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProcessDeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.QueryNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ReadNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.ReceiveNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.SendNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.SimpleStatementNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.StatementNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.UpdateNode
+import edu.cornell.cs.apl.viaduct.util.FreshNameGenerator
 import edu.cornell.cs.apl.viaduct.util.unions
 import kotlinx.collections.immutable.PersistentMap
 import kotlinx.collections.immutable.persistentMapOf
+
+private typealias CostVariable = String
 
 class SelectionConstraintGenerator(
     private val program: ProgramNode,
     private val protocolFactory: ProtocolFactory,
     private val protocolComposer: ProtocolComposer,
     private val costEstimator: CostEstimator<IntegerCost>,
-    private val ctx: Context
 ) {
+    private val nameGenerator = FreshNameGenerator()
     private val hostTrustConfiguration = HostTrustConfiguration(program)
     private val nameAnalysis = NameAnalysis.get(program)
     private val informationFlowAnalysis = InformationFlowAnalysis.get(program)
 
+    private val costChoiceMap =
+        mutableMapOf<CostVariable, MutableList<Pair<SelectionConstraint, Cost<IntegerCost>>>>()
+
     // TODO: pc must be weak enough for the hosts involved in the selected protocols to read it
     fun viableProtocols(node: LetNode): Set<Protocol> =
-        protocolFactory.viableProtocols(node).filter {
+        node.protocol?.let { setOf(it.value) } ?: protocolFactory.viableProtocols(node).filter {
             it.authority(hostTrustConfiguration).actsFor(informationFlowAnalysis.label(node))
         }.toSet()
 
     fun viableProtocols(node: DeclarationNode): Set<Protocol> =
-        protocolFactory.viableProtocols(node).filter {
+        node.protocol?.let { setOf(it.value) } ?: protocolFactory.viableProtocols(node).filter {
             it.authority(hostTrustConfiguration).actsFor(informationFlowAnalysis.label(node))
         }.toSet()
 
     fun viableProtocols(node: ParameterNode): Set<Protocol> =
-        protocolFactory.viableProtocols(node).filter {
+        node.protocol?.let { setOf(it.value) } ?: protocolFactory.viableProtocols(node).filter {
             it.authority(hostTrustConfiguration).actsFor(informationFlowAnalysis.label(node))
         }.toSet()
 
@@ -122,42 +122,63 @@ class SelectionConstraintGenerator(
 
     private val zeroSymbolicCost = costEstimator.zeroCost().map { CostLiteral(0) }
 
-    /** lift [this] integer cost to symbolic cost. */
-    private fun Cost<IntegerCost>.toSymbolicCost(): Cost<SymbolicCost> =
-        this.map { CostLiteral(it.cost) }
+    private fun addCostChoice(variable: CostVariable, guard: SelectionConstraint, cost: Cost<IntegerCost>) {
+        if (!this.costChoiceMap.containsKey(variable)) {
+            this.costChoiceMap[variable] = mutableListOf(Pair(guard, cost))
+        } else {
+            this.costChoiceMap[variable]!!.add(Pair(guard, cost))
+        }
+    }
+
+    private fun getCostChoice(variable: CostVariable): Cost<SymbolicCost> =
+        this.costChoiceMap[variable]?.let { choices ->
+            zeroSymbolicCost.featureMap { feature, _ ->
+                CostChoice(
+                    choices.map { choice ->
+                        Pair(choice.first, CostLiteral(choice.second.features[feature]!!.cost))
+                    }
+                )
+            }
+        } ?: throw NoSelectionSolutionError()
+
+    private fun Cost<SymbolicCost>.featureSum(): SymbolicCost {
+        val weights = costEstimator.featureWeights()
+        return this.features.entries.fold(CostLiteral(0) as SymbolicCost) { acc, c ->
+            CostAdd(acc, CostMul(weights[c.key]!!.cost, c.value))
+        }
+    }
 
     /** Symbolic cost associated with a node. */
-    private val Node.symbolicCost: Cost<SymbolicCost> by attribute {
-        when (this) {
+    private fun computeCost(node: Node): Cost<SymbolicCost> =
+        when (node) {
             is ProgramNode ->
-                this.declarations.fold(zeroSymbolicCost) { acc, decl ->
-                    acc.concat(decl.symbolicCost)
+                node.declarations.fold(zeroSymbolicCost) { acc, decl ->
+                    acc.concat(computeCost(decl))
                 }
 
-            is FunctionDeclarationNode -> this.body.symbolicCost
+            is FunctionDeclarationNode -> computeCost(node.body)
 
             // don't bother giving cost to parameters, since arguments already incur cost
             is ParameterNode -> zeroSymbolicCost
 
-            is ProcessDeclarationNode -> this.body.symbolicCost
-
             is HostDeclarationNode -> zeroSymbolicCost
 
             is BlockNode ->
-                this.statements
+                node.statements
                     .fold(zeroSymbolicCost) { acc, childStmt ->
-                        acc.concat(childStmt.symbolicCost)
+                        acc.concat(computeCost(childStmt))
                     }
 
-            is IfNode ->
+            is IfNode -> {
+                val thenCost = computeCost(node.thenBranch)
+                val elseCost = computeCost(node.elseBranch)
                 zeroSymbolicCost.featureMap { feature, _ ->
-                    val thenCost = this.thenBranch.symbolicCost[feature]!!
-                    val elseCost = this.elseBranch.symbolicCost[feature]!!
-                    CostMux(CostLessThanEqualTo(thenCost, elseCost), elseCost, thenCost)
+                    CostMax(thenCost.features[feature]!!, elseCost.features[feature]!!)
                 }
+            }
 
             is InfiniteLoopNode ->
-                this.body.symbolicCost.map { f -> CostMul(CostLiteral(10), f) }
+                computeCost(node.body).map { f -> CostMul(10, f) }
 
             // TODO: handle this later, recursive functions are tricky
             is FunctionCallNode -> zeroSymbolicCost
@@ -166,28 +187,22 @@ class SelectionConstraintGenerator(
 
             is AssertionNode -> zeroSymbolicCost
 
-            is SendNode -> zeroSymbolicCost
-
             is ExpressionNode -> zeroSymbolicCost
 
-            else ->
-                costEstimator
-                    .zeroCost()
-                    .map { CostVariable(ctx.mkFreshConst("cost_${this.asDocument.print()}", ctx.intSort) as IntExpr) }
-        }
-    }
+            is SimpleStatementNode -> getCostChoice(node.costVariable)
 
-    fun symbolicCost(node: Node) = node.symbolicCost
+            else -> zeroSymbolicCost
+        }
+
+    private val SimpleStatementNode.costVariable by attribute { nameGenerator.getFreshName("cost") }
 
     /** Symbolic variables that specify whether a host is participating in the execution of a statement. */
     private val Node.participatingHosts: Map<Host, HostVariable> by attribute {
-        program.hosts.map { host ->
-            host to HostVariable(ctx.mkFreshConst("host", ctx.boolSort) as BoolExpr)
-        }.toMap()
+        program.hosts.associateWith { HostVariable(nameGenerator.getFreshName("host")) }
     }
 
     private val IfNode.guardVisiblityFlag: GuardVisibilityFlag by attribute {
-        GuardVisibilityFlag(ctx.mkFreshConst("guard", ctx.boolSort) as BoolExpr)
+        GuardVisibilityFlag(nameGenerator.getFreshName("guard"))
     }
 
     /** Generate constraints for possible protocols. */
@@ -195,7 +210,7 @@ class SelectionConstraintGenerator(
         when (this) {
             is ParameterNode ->
                 setOf(protocolFactory.constraint(this)).plus(
-                    VariableIn(
+                    variableInSet(
                         FunctionVariable(
                             nameAnalysis.functionDeclaration(this).name.value,
                             this.name.value
@@ -212,17 +227,17 @@ class SelectionConstraintGenerator(
                             setOf(
                                 VariableIn(
                                     FunctionVariable(nameAnalysis.enclosingFunctionName(this), this.temporary.value),
-                                    setOf(Local(rhs.host.value))
+                                    Local(rhs.host.value)
                                 )
                             )
                         }
 
-                        // queries needs to be executed in the same protocol as the object
+                        // Queries need to be executed in the same protocol as the object
                         is QueryNode -> {
                             val enclosingFunctionName = nameAnalysis.enclosingFunctionName(this)
 
                             setOf(
-                                VariableIn(
+                                variableInSet(
                                     FunctionVariable(nameAnalysis.enclosingFunctionName(this), this.temporary.value),
                                     viableProtocols(this)
                                 )
@@ -256,11 +271,9 @@ class SelectionConstraintGenerator(
                             )
                         }
 
-                        is ReceiveNode -> throw IllegalInternalCommunicationError(rhs)
-
                         else -> {
                             setOf(
-                                VariableIn(
+                                variableInSet(
                                     FunctionVariable(nameAnalysis.enclosingFunctionName(this), this.temporary.value),
                                     viableProtocols(this)
                                 )
@@ -271,7 +284,7 @@ class SelectionConstraintGenerator(
 
             is DeclarationNode ->
                 setOf(
-                    VariableIn(
+                    variableInSet(
                         FunctionVariable(nameAnalysis.enclosingFunctionName(this), this.name.value),
                         viableProtocols(this)
                     ),
@@ -291,7 +304,7 @@ class SelectionConstraintGenerator(
                         val (fv, protocols) = viableProtocolsAndVariable(guardDeclaration)
                         protocols.map { protocol ->
                             Implies(
-                                VariableIn(fv, setOf(protocol)),
+                                VariableIn(fv, protocol),
                                 iff(
                                     this.guardVisiblityFlag,
                                     protocolFactory.guardVisibilityConstraint(protocol, this)
@@ -353,8 +366,6 @@ class SelectionConstraintGenerator(
                 )
             }
 
-            is SendNode -> throw IllegalInternalCommunicationError(this)
-
             else -> setOf()
         }
 
@@ -386,40 +397,6 @@ class SelectionConstraintGenerator(
     }
 
     /**
-     * Generate constraints that set two symbolic costs equal to each other.
-     *
-     * @param symCost: symbolic cost
-     * @param symCost2: integer cost
-     * @return selection constraints that set the features of [symCost] and [symCost2] equal.
-     */
-    private fun symbolicCostEqualsSym(
-        symCost: Cost<SymbolicCost>,
-        symCost2: Cost<SymbolicCost>
-    ):
-        SelectionConstraint =
-        symCost.features.map { kv ->
-            CostEquals(
-                kv.value,
-                symCost2.features[kv.key]
-                    ?: throw Error("No cost associated with feature ${kv.key}")
-            )
-        }.ands()
-
-    /**
-     * Generate constraints that set a symbolic cost equal to some integer cost.
-     *
-     * @param symCost: symbolic cost
-     * @param intCost: integer cost
-     * @return selection constraints that set the features of [symCost] and [intCost] equal.
-     */
-    private fun symbolicCostEqualsInt(
-        symCost: Cost<SymbolicCost>,
-        intCost: Cost<IntegerCost>
-    ):
-        SelectionConstraint =
-        symbolicCostEqualsSym(symCost, intCost.toSymbolicCost())
-
-    /**
      * Generate cost constraints for performing a computation (let nodes and updates).
      * Handles computation of communication costs.
      *
@@ -435,7 +412,7 @@ class SelectionConstraintGenerator(
         protocols: Set<Protocol>,
         reads: List<ReadNode>,
         baseCostFunction: (Protocol) -> Cost<IntegerCost>,
-        symbolicCost: Cost<SymbolicCost>
+        costVariable: CostVariable
     ):
         Iterable<SelectionConstraint> {
 
@@ -450,7 +427,7 @@ class SelectionConstraintGenerator(
         return protocols.map { protocol ->
             val invalidArgProtocolSet: MutableSet<Pair<ReadNode, Protocol>> = mutableSetOf()
 
-            val costAndHostConstraints: SelectionConstraint =
+            val hostConstraints: SelectionConstraint =
                 if (argProtocolMaps.isNotEmpty()) {
                     argProtocolMaps.flatMap { argProtocolMap ->
                         val invalidArgProtocols =
@@ -462,7 +439,7 @@ class SelectionConstraintGenerator(
                             argProtocolMap.map { kv ->
                                 VariableIn(
                                     FunctionVariable(fv.function, kv.key.temporary.value),
-                                    setOf(kv.value)
+                                    kv.value
                                 )
                             }.ands()
 
@@ -505,7 +482,11 @@ class SelectionConstraintGenerator(
                                     }
                                 )
 
-                            val costConstraint: SelectionConstraint = symbolicCostEqualsInt(symbolicCost, cost)
+                            addCostChoice(
+                                costVariable,
+                                And(VariableIn(fv, protocol), argProtocolConstraints),
+                                cost
+                            )
 
                             val participatingHostsConstraint: SelectionConstraint =
                                 argProtocolMap.flatMap { argProtocol ->
@@ -536,7 +517,7 @@ class SelectionConstraintGenerator(
                             setOf(
                                 Implies(
                                     argProtocolConstraints,
-                                    And(costConstraint, participatingHostsConstraint)
+                                    And(participatingHostsConstraint)
                                 )
                             )
                         } else { // has invalid arg protocols
@@ -545,7 +526,8 @@ class SelectionConstraintGenerator(
                         }
                     }.ands()
                 } else { // no arguments; compute execution cost directly
-                    symbolicCostEqualsInt(symbolicCost, baseCostFunction(protocol))
+                    addCostChoice(costVariable, VariableIn(fv, protocol), baseCostFunction(protocol))
+                    True
                 }
 
             val invalidArgProtocolConstraint: SelectionConstraint =
@@ -553,14 +535,14 @@ class SelectionConstraintGenerator(
                     invalidArgProtocolSet.map { argProtocol ->
                         VariableIn(
                             FunctionVariable(fv.function, argProtocol.first.temporary.value),
-                            setOf(argProtocol.second)
+                            argProtocol.second
                         )
                     }.ors()
                 )
 
             Implies(
-                VariableIn(fv, setOf(protocol)),
-                And(costAndHostConstraints, invalidArgProtocolConstraint)
+                VariableIn(fv, protocol),
+                And(hostConstraints, invalidArgProtocolConstraint)
             )
         }
     }
@@ -595,7 +577,7 @@ class SelectionConstraintGenerator(
                     protocols,
                     nameAnalysis.reads(this.value).toList(),
                     { protocol -> costEstimator.executionCost(this, protocol) },
-                    this.symbolicCost
+                    this.costVariable
                 )
             }
 
@@ -608,7 +590,7 @@ class SelectionConstraintGenerator(
                     protocols,
                     this.arguments.filterIsInstance<ReadNode>(),
                     { protocol -> costEstimator.executionCost(this, protocol) },
-                    this.symbolicCost
+                    this.costVariable
                 )
             }
 
@@ -621,7 +603,7 @@ class SelectionConstraintGenerator(
                     protocols,
                     this.arguments.filterIsInstance<ReadNode>(),
                     { protocol -> costEstimator.executionCost(this, protocol) },
-                    this.symbolicCost
+                    this.costVariable
                 )
             }
 
@@ -646,7 +628,7 @@ class SelectionConstraintGenerator(
                     viableProtocols(parameter),
                     reads,
                     { protocol -> costEstimator.executionCost(this, protocol) },
-                    this.symbolicCost
+                    this.costVariable
                 )
             }
 
@@ -654,10 +636,10 @@ class SelectionConstraintGenerator(
             // TODO: partition by participating hosts
             is OutputNode -> {
                 when (val msg = this.message) {
-                    is LiteralNode ->
-                        setOf(
-                            symbolicCostEqualsInt(this.symbolicCost, costEstimator.zeroCost())
-                        )
+                    is LiteralNode -> {
+                        addCostChoice(this.costVariable, True, costEstimator.zeroCost())
+                        setOf()
+                    }
 
                     is ReadNode -> {
                         val msgDecl = nameAnalysis.declaration(msg)
@@ -665,25 +647,26 @@ class SelectionConstraintGenerator(
                         val msgProtocols = viableProtocols(msgDecl)
                         val outputProtocol = Local(this.host.value)
 
-                        msgProtocols.map { msgProtocol ->
+                        msgProtocols.flatMap { msgProtocol ->
                             if (protocolComposer.canCommunicate(msgProtocol, outputProtocol)) {
-                                Implies(
+                                addCostChoice(
+                                    this.costVariable,
                                     VariableIn(
                                         FunctionVariable(enclosingFunctionName, msgDecl.temporary.value),
-                                        setOf(msgProtocol)
+                                        msgProtocol
                                     ),
-                                    symbolicCostEqualsInt(
-                                        this.symbolicCost,
-                                        costEstimator.communicationCost(msgProtocol, outputProtocol)
-                                    )
+                                    costEstimator.communicationCost(msgProtocol, outputProtocol)
                                 )
+                                setOf()
                             } else {
                                 // if the message protocol can't communicate to Local,
                                 // then it should not be selected for
-                                Not(
-                                    VariableIn(
-                                        FunctionVariable(enclosingFunctionName, msgDecl.temporary.value),
-                                        setOf(msgProtocol)
+                                setOf(
+                                    Not(
+                                        VariableIn(
+                                            FunctionVariable(enclosingFunctionName, msgDecl.temporary.value),
+                                            msgProtocol
+                                        )
                                     )
                                 )
                             }
@@ -704,7 +687,7 @@ class SelectionConstraintGenerator(
         return protocols.map { protocol ->
             val mandatoryHosts = protocolComposer.mandatoryParticipatingHosts(protocol, stmt)
             Implies(
-                VariableIn(fv, setOf(protocol)),
+                VariableIn(fv, protocol),
                 program.hosts
                     .flatMap { host ->
                         when {
@@ -728,9 +711,9 @@ class SelectionConstraintGenerator(
             // a host participates in a block node if it participates in any of the children
             is BlockNode -> {
                 this.statements.fold(
-                    program.hostDeclarations.map {
+                    program.hostDeclarations.associate {
                         it.name.value to (Literal(false) as SelectionConstraint)
-                    }.toMap()
+                    }
                 ) { acc: Map<Host, SelectionConstraint>, stmt: StatementNode ->
                     acc.mapValues { kv -> Or(kv.value, stmt.participatingHosts[kv.key]!!) }
                 }.map { kv ->
@@ -776,7 +759,7 @@ class SelectionConstraintGenerator(
                                                             enclosingFunction,
                                                             guard.temporary.value
                                                         ),
-                                                        setOf(guardProtocol)
+                                                        guardProtocol
                                                     )
                                                 )
                                             )
@@ -854,12 +837,15 @@ class SelectionConstraintGenerator(
         }
 
     /** Generate selection, cost, and participating host constraints. */
-    private fun Node.constraints():
-        Set<SelectionConstraint> =
+    private fun Node.constraints(): Set<SelectionConstraint> =
         this.selectionConstraints()
             .union(this.costConstraints())
             .union(this.participatingHostConstraints())
             .union(this.children.map { it.constraints() }.unions())
 
-    fun getConstraints(node: Node) = node.constraints()
+    fun getSelectionProblem(): SelectionProblem {
+        val selectionConstraints = program.constraints()
+        val cost = computeCost(program).featureSum()
+        return SelectionProblem(selectionConstraints, cost)
+    }
 }

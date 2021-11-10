@@ -7,7 +7,7 @@ import kotlinx.coroutines.withContext
 import java.io.File
 import java.util.Scanner
 
-class FileStrategy(private val inFile: File) : Strategy {
+class FileStrategy(inFile: File) : Strategy {
     private val scanner = Scanner(inFile)
     override suspend fun getInput(): Value {
         return IntegerValue(scanner.nextInt())

@@ -1,5 +1,4 @@
 package edu.cornell.cs.apl.viaduct.gradle
-
 import edu.cornell.cs.apl.viaduct.analysis.main
 import edu.cornell.cs.apl.viaduct.codegeneration.CodeGenerator
 import edu.cornell.cs.apl.viaduct.codegeneration.CodeGeneratorContext
@@ -7,6 +6,7 @@ import edu.cornell.cs.apl.viaduct.codegeneration.CommitmentCreatorGenerator
 import edu.cornell.cs.apl.viaduct.codegeneration.CommitmentHolderGenerator
 import edu.cornell.cs.apl.viaduct.codegeneration.PlainTextCodeGenerator
 import edu.cornell.cs.apl.viaduct.codegeneration.compileKotlinFile
+import edu.cornell.cs.apl.viaduct.backends.Backend
 import edu.cornell.cs.apl.viaduct.errors.CompilationError
 import edu.cornell.cs.apl.viaduct.parsing.SourceFile
 import edu.cornell.cs.apl.viaduct.parsing.parse
@@ -14,17 +14,15 @@ import edu.cornell.cs.apl.viaduct.passes.annotateWithProtocols
 import edu.cornell.cs.apl.viaduct.passes.check
 import edu.cornell.cs.apl.viaduct.passes.elaborated
 import edu.cornell.cs.apl.viaduct.passes.specialize
-import edu.cornell.cs.apl.viaduct.selection.CostMode
+import edu.cornell.cs.apl.viaduct.selection.ProtocolSelection
 import edu.cornell.cs.apl.viaduct.selection.SimpleCostEstimator
 import edu.cornell.cs.apl.viaduct.selection.SimpleCostRegime
-import edu.cornell.cs.apl.viaduct.selection.SimpleProtocolComposer
-import edu.cornell.cs.apl.viaduct.selection.SimpleProtocolFactory
-import edu.cornell.cs.apl.viaduct.selection.selectProtocolsWithZ3
+import edu.cornell.cs.apl.viaduct.selection.Z3Selection
 import edu.cornell.cs.apl.viaduct.selection.validateProtocolAssignment
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProcessDeclarationNode
 import org.gradle.api.DefaultTask
 import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.file.FileType
+import org.gradle.api.provider.Property
 import org.gradle.api.tasks.InputDirectory
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.OutputDirectory
@@ -42,6 +40,9 @@ abstract class CompileViaductTask : DefaultTask() {
 
     @get:OutputDirectory
     abstract val outputDirectory: DirectoryProperty
+
+    @get:Internal
+    abstract val backend: Property<Backend>
 
     @Internal
     override fun getGroup(): String =
@@ -93,31 +94,26 @@ abstract class CompileViaductTask : DefaultTask() {
         program.check()
 
         // TODO: don't bake in cost regime
-        val protocolFactory = SimpleProtocolFactory(program)
-        val protocolComposer = SimpleProtocolComposer
-        val costEstimator = SimpleCostEstimator(protocolComposer, SimpleCostRegime.LAN)
-
-        val protocolAssignment = selectProtocolsWithZ3(
-            program,
-            program.main,
-            protocolFactory,
-            protocolComposer,
-            costEstimator,
-            CostMode.MINIMIZE
-        )
+        val protocolFactory = backend.get().protocolFactory(program)
+        val protocolComposer = backend.get().protocolComposer
+        val costEstimator = SimpleCostEstimator(protocolComposer, SimpleCostRegime.WAN)
+        val protocolAssignment =
+            ProtocolSelection(
+                Z3Selection(),
+                protocolFactory,
+                protocolComposer,
+                costEstimator
+            ).selectAssignment(program)
 
         // Perform a sanity check to ensure the protocolAssignment is valid.
         // TODO: either remove this entirely or make it opt-in by the command line.
-        for (processDecl in program.declarations.filterIsInstance<ProcessDeclarationNode>()) {
-            validateProtocolAssignment(
-                program,
-                processDecl,
-                protocolFactory,
-                protocolComposer,
-                costEstimator,
-                protocolAssignment
-            )
-        }
+        validateProtocolAssignment(
+            program,
+            protocolFactory,
+            protocolComposer,
+            costEstimator,
+            protocolAssignment
+        )
 
         val annotatedProgram = program.annotateWithProtocols(protocolAssignment)
 
@@ -129,7 +125,9 @@ abstract class CompileViaductTask : DefaultTask() {
                 ::PlainTextCodeGenerator,
                 ::CommitmentCreatorGenerator,
                 ::CommitmentHolderGenerator
-            )
+            ),
+            backend.get().protocolComposer
         )
+
     }
 }

@@ -95,7 +95,7 @@ private class CircularAttribute<in Node, out T>(
                 // The value of this attribute at this node has been fully computed.
                 attributeValue.finalize()
 
-                // All of the values of dependent attribute occurrences are also final, but have
+                // All values of dependent attribute occurrences are also final, but have
                 // not yet been marked as such. Enter READY mode and go around the circle one more
                 // time to finalize them.
 
@@ -104,7 +104,7 @@ private class CircularAttribute<in Node, out T>(
                 assert(attributeValue.value == newValue)
                 EvaluationState.READY = false
 
-                // Now we have computed and cached all of the attribute occurrences on the circle
+                // Now we have computed and cached all attribute occurrences on the circle,
                 // so we are done with this one.
 
                 attributeValue.isVisited = false
@@ -146,9 +146,9 @@ private class CircularAttribute<in Node, out T>(
             }
 
             else -> {
-                // We reach this point if we ask for the value of a circular attribute occurrence
+                // We reach this point if we ask for the value of a circular attribute occurrence,
                 // and we have already visited it in the current fixed-point iteration. We just
-                // return the cached value (which happens after the when block) since that is our
+                // return the cached value (which happens after the `when` block) since that is our
                 // view of the value of this attribute so far.
             }
         }

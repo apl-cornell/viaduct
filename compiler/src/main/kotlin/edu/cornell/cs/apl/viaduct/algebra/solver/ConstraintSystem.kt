@@ -90,7 +90,7 @@ class ConstraintSystem<A : HeytingAlgebra<A>, T : Throwable>(private val top: A)
      */
     fun addNewVariable(label: Any): VariableTerm<A> {
         val variable = VariableTerm<A>(label)
-        // Add the variable to the graph so we return a solution for it even if it doesn't appear in
+        // Add the variable to the graph, so we return a solution for it even if it doesn't appear in
         // any constraints.
         constraints.addVertex(variable)
         return variable
@@ -126,7 +126,7 @@ class ConstraintSystem<A : HeytingAlgebra<A>, T : Throwable>(private val top: A)
 
     /**
      * Identifies constraints that universally hold and can be safely ignored. This is useful for
-     * simplifying the constraint graph so it is more readable when exported.
+     * simplifying the constraint graph, so it is more readable when exported.
      */
     private fun isTriviallyTrue(lhs: LeftHandTerm<A>, rhs: RightHandTerm<A>): Boolean =
         when {

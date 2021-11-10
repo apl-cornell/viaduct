@@ -31,25 +31,11 @@ sealed class TopLevelDeclarationNode : Node()
 class HostDeclarationNode(
     val name: HostNode,
     val authority: LabelNode,
-    override val sourceLocation: SourceLocation
+    override val sourceLocation: SourceLocation,
+    override val comment: String? = null
 ) : TopLevelDeclarationNode() {
-    override val asDocument: Document
+    override val asDocumentWithoutComment: Document
         get() = keyword("host") * name * ":" * listOf(authority).braced()
-}
-
-/**
- * A process declaration associating a protocol with the code that process should run.
- *
- * @param protocol Name of the process.
- * @param body Code that will be executed by this process.
- */
-class ProcessDeclarationNode(
-    val protocol: ProtocolNode,
-    val body: BlockNode,
-    override val sourceLocation: SourceLocation
-) : TopLevelDeclarationNode() {
-    override val asDocument: Document
-        get() = keyword("process") * protocol * body
 }
 
 /**
@@ -63,9 +49,10 @@ class ParameterNode(
     // TODO: allow leaving out some of the labels (right now it's all or nothing)
     val labelArguments: Arguments<LabelNode>?,
     val protocol: ProtocolNode?,
-    override val sourceLocation: SourceLocation
+    override val sourceLocation: SourceLocation,
+    override val comment: String? = null
 ) : Node() {
-    override val asDocument: Document
+    override val asDocumentWithoutComment: Document
         get() {
             val protocolDoc = protocol?.let {
                 Document("@") + it.value.asDocument
@@ -89,19 +76,22 @@ class ParameterNode(
 }
 
 /**
- * A declaration of a function that can be called by a process.
+ * A function declaration associating a name with code.
  *
+ * @param name A name identifying the function.
+ * @param pcLabel Value of the program control label at the beginning of [body].
  * @param parameters A list of formal parameters.
- * @param body The function body.
+ * @param body Code to run when the function is called.
  */
 class FunctionDeclarationNode(
     val name: FunctionNameNode,
     val pcLabel: LabelNode?,
     val parameters: Arguments<ParameterNode>,
     val body: BlockNode,
-    override val sourceLocation: SourceLocation
+    override val sourceLocation: SourceLocation,
+    override val comment: String? = null
 ) : TopLevelDeclarationNode() {
-    override val asDocument: Document
+    override val asDocumentWithoutComment: Document
         get() =
             keyword("fun") * name +
                 (pcLabel?.let { listOf(it).braced() } ?: Document("")) +

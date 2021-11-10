@@ -31,7 +31,7 @@ class HostSetValue private constructor(val hosts: PersistentSet<Host>) : Value()
         @JvmStatic
         operator fun invoke(hosts: List<HostNode>): HostSetValue {
             // Check for duplicates
-            hosts.fold(NameMap<Host, Unit>(), { map, host -> map.put(host, Unit) })
+            hosts.fold(NameMap<Host, Unit>()) { map, host -> map.put(host, Unit) }
 
             return HostSetValue(hosts.map { it.value }.sorted().toPersistentSet())
         }

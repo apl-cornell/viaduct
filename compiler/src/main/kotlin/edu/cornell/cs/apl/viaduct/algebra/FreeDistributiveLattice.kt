@@ -52,7 +52,7 @@ class FreeDistributiveLattice<A> private constructor(joinOfMeets: JoinOfMeets<A>
      *
      *
      * This inequality only holds true if every meet on the left can be "covered" on the right s.t.
-     * a meet on the right side is a subset of the meet in the left side. For every meet on the left
+     * a meet on the right side is a subset of the meet on the left side. For every meet on the left
      * Ai, we complement it with every meet on the right Bj. because we want the greatest solution, we
      * join these complements together, arriving at an upper bound for x: `x <= Ci1 | ... | Cin`
      *

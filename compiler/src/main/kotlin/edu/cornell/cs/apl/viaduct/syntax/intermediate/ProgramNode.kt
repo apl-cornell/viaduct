@@ -3,11 +3,6 @@ package edu.cornell.cs.apl.viaduct.syntax.intermediate
 import edu.cornell.cs.apl.attributes.Attribute
 import edu.cornell.cs.apl.attributes.Tree
 import edu.cornell.cs.apl.attributes.attribute
-import edu.cornell.cs.apl.prettyprinting.Document
-import edu.cornell.cs.apl.prettyprinting.PrettyPrintable
-import edu.cornell.cs.apl.prettyprinting.commented
-import edu.cornell.cs.apl.prettyprinting.concatenated
-import edu.cornell.cs.apl.prettyprinting.plus
 import edu.cornell.cs.apl.viaduct.passes.elaborated
 import edu.cornell.cs.apl.viaduct.syntax.FunctionName
 import edu.cornell.cs.apl.viaduct.syntax.Host
@@ -41,7 +36,7 @@ private constructor(
 
     // TODO: Should be moved to analysis.NameAnalysis
     val functionMap: Map<FunctionName, FunctionDeclarationNode> =
-        functions.map { function -> Pair(function.name.value, function) }.toMap()
+        functions.associateBy { function -> function.name.value }
 
     /** A lazily constructed [Tree] instance for the program. */
     val tree: Tree<Node, ProgramNode> by lazy { Tree(this) }
@@ -61,9 +56,9 @@ private constructor(
     override val children: Iterable<TopLevelDeclarationNode>
         get() = declarations
 
-    override fun toSurfaceNode(): edu.cornell.cs.apl.viaduct.syntax.surface.ProgramNode =
+    override fun toSurfaceNode(metadata: Metadata): edu.cornell.cs.apl.viaduct.syntax.surface.ProgramNode =
         edu.cornell.cs.apl.viaduct.syntax.surface.ProgramNode(
-            declarations.map { it.toSurfaceNode() },
+            declarations.map { it.toSurfaceNode(metadata) },
             sourceLocation
         )
 
@@ -72,10 +67,4 @@ private constructor(
 
     override fun toString(): String =
         "Program (" + sourceLocation.sourcePath + ")"
-
-    override fun printMetadata(metadata: Map<Node, PrettyPrintable>): Document =
-        (metadata[this]?.let { it.asDocument.commented() + Document.forcedLineBreak } ?: Document("")) +
-            declarations
-                .map { it.printMetadata(metadata) }
-                .concatenated(Document.forcedLineBreak + Document.forcedLineBreak)
 }

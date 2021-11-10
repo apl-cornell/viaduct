@@ -7,11 +7,10 @@ import com.github.ajalt.clikt.parameters.types.file
 import edu.cornell.cs.apl.prettyprinting.Document
 import edu.cornell.cs.apl.prettyprinting.PrettyPrintable
 import edu.cornell.cs.apl.viaduct.analysis.InformationFlowAnalysis
-import edu.cornell.cs.apl.viaduct.analysis.declarationNodes
-import edu.cornell.cs.apl.viaduct.analysis.letNodes
-import edu.cornell.cs.apl.viaduct.analysis.main
-import edu.cornell.cs.apl.viaduct.backend.aby.ABYMuxPostprocessor
-import edu.cornell.cs.apl.viaduct.backend.zkp.ZKPMuxPostprocessor
+import edu.cornell.cs.apl.viaduct.analysis.descendantsIsInstance
+import edu.cornell.cs.apl.viaduct.backend.aby.abyMuxPostprocessor
+import edu.cornell.cs.apl.viaduct.backend.zkp.zkpMuxPostprocessor
+import edu.cornell.cs.apl.viaduct.backends.DefaultCombinedBackend
 import edu.cornell.cs.apl.viaduct.codegeneration.CodeGenerator
 import edu.cornell.cs.apl.viaduct.codegeneration.CodeGeneratorContext
 import edu.cornell.cs.apl.viaduct.codegeneration.CommitmentCreatorGenerator
@@ -22,27 +21,26 @@ import edu.cornell.cs.apl.viaduct.passes.ProgramPostprocessorRegistry
 import edu.cornell.cs.apl.viaduct.passes.annotateWithProtocols
 import edu.cornell.cs.apl.viaduct.passes.check
 import edu.cornell.cs.apl.viaduct.passes.elaborated
+import edu.cornell.cs.apl.viaduct.passes.isAssignmentAnnotated
 import edu.cornell.cs.apl.viaduct.passes.specialize
-import edu.cornell.cs.apl.viaduct.selection.CostMode
+import edu.cornell.cs.apl.viaduct.selection.ProtocolAssignment
+import edu.cornell.cs.apl.viaduct.selection.ProtocolSelection
 import edu.cornell.cs.apl.viaduct.selection.SimpleCostEstimator
 import edu.cornell.cs.apl.viaduct.selection.SimpleCostRegime
-import edu.cornell.cs.apl.viaduct.selection.SimpleProtocolComposer
-import edu.cornell.cs.apl.viaduct.selection.SimpleProtocolFactory
-import edu.cornell.cs.apl.viaduct.selection.selectProtocolsWithZ3
+import edu.cornell.cs.apl.viaduct.selection.Z3Selection
 import edu.cornell.cs.apl.viaduct.selection.validateProtocolAssignment
-import edu.cornell.cs.apl.viaduct.syntax.FunctionName
-import edu.cornell.cs.apl.viaduct.syntax.Protocol
-import edu.cornell.cs.apl.viaduct.syntax.Variable
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.DeclarationNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.LetNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.Metadata
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.Node
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProcessDeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
+import edu.cornell.cs.apl.viaduct.util.duration
 import guru.nidi.graphviz.engine.Format
 import guru.nidi.graphviz.engine.Graphviz
 import mu.KotlinLogging
 import java.io.File
 import java.io.StringWriter
 import java.io.Writer
-import kotlin.system.measureTimeMillis
 
 private val logger = KotlinLogging.logger("Compile")
 
@@ -98,11 +96,13 @@ class Compile : CliktCommand(help = "Compile ideal protocol to secure distribute
     ).flag(default = false)
 
     override fun run() {
-        logger.info { "elaborating source program..." }
-        val unspecializedProgram = input.parse().elaborated()
+        val unspecializedProgram = logger.duration("parsing and elaboration") {
+            input.parse(DefaultCombinedBackend.protocolParsers).elaborated()
+        }
 
-        logger.info { "specializing functions..." }
-        val program = unspecializedProgram.specialize()
+        val program = logger.duration("function specialization") {
+            unspecializedProgram.specialize()
+        }
 
         // Perform static checks.
         program.check()
@@ -113,60 +113,57 @@ class Compile : CliktCommand(help = "Compile ideal protocol to secure distribute
 
         if (labelOutput != null) {
             val labelMetadata: Map<Node, PrettyPrintable> =
-                program.declarationNodes().map {
+                program.descendantsIsInstance<DeclarationNode>().map {
                     it to ifcAnalysis.label(it)
                 }.plus(
-                    program.letNodes().map {
+                    program.descendantsIsInstance<LetNode>().map {
                         it to ifcAnalysis.label(it)
                     }
                 ).toMap()
             dumpProgramMetadata(program, labelMetadata, labelOutput)
         }
 
-        val protocolFactory = SimpleProtocolFactory(program)
+        val postprocessedProgram =
+            if (program.isAssignmentAnnotated()) {
+                program
+            } else {
+                // Select protocols.
+                val protocolFactory = DefaultCombinedBackend.protocolFactory(program)
+                val protocolComposer = DefaultCombinedBackend.protocolComposer
+                val costRegime = if (wanCost) SimpleCostRegime.WAN else SimpleCostRegime.LAN
+                val costEstimator = SimpleCostEstimator(protocolComposer, costRegime)
+                val protocolAssignment: ProtocolAssignment =
+                    logger.duration("protocol selection") {
+                        ProtocolSelection(
+                            Z3Selection(),
+                            protocolFactory,
+                            protocolComposer,
+                            costEstimator
+                        ).selectAssignment(program)
+                    }
 
-        // Select protocols.
-        logger.info { "selecting protocols..." }
+                // Perform a sanity check to ensure the protocolAssignment is valid.
+                // TODO: either remove this entirely or make it opt-in by the command line.
+                validateProtocolAssignment(
+                    program,
+                    protocolFactory,
+                    protocolComposer,
+                    costEstimator,
+                    protocolAssignment
+                )
 
-        val protocolComposer = SimpleProtocolComposer
-        val costRegime = if (wanCost) SimpleCostRegime.WAN else SimpleCostRegime.LAN
-        val costEstimator = SimpleCostEstimator(SimpleProtocolComposer, costRegime)
+                val annotatedProgram = program.annotateWithProtocols(protocolAssignment)
 
-        val protocolAssignment: (FunctionName, Variable) -> Protocol
-        val protocolSelectionDuration = measureTimeMillis {
-            protocolAssignment = selectProtocolsWithZ3(
-                program,
-                program.main,
-                protocolFactory,
-                protocolComposer,
-                costEstimator,
-                if (maximizeCost) CostMode.MAXIMIZE else CostMode.MINIMIZE
-            ) { metadata -> dumpProgramMetadata(program, metadata, protocolSelectionOutput) }
-        }
-        logger.info { "finished protocol selection, ran for ${protocolSelectionDuration}ms" }
+                // Post-process program
+                logger.duration("post-processing program") {
+                    val postprocessor = ProgramPostprocessorRegistry(
+                        abyMuxPostprocessor(protocolAssignment),
+                        zkpMuxPostprocessor(protocolAssignment)
+                    )
 
-        // Perform a sanity check to ensure the protocolAssignment is valid.
-        // TODO: either remove this entirely or make it opt-in by the command line.
-        for (processDecl in program.declarations.filterIsInstance<ProcessDeclarationNode>()) {
-            validateProtocolAssignment(
-                program,
-                processDecl,
-                protocolFactory,
-                protocolComposer,
-                costEstimator,
-                protocolAssignment
-            )
-        }
-
-        logger.info { "annotating program with protocols..." }
-        val annotatedProgram = program.annotateWithProtocols(protocolAssignment)
-
-        // Post-process program
-        val postprocessor = ProgramPostprocessorRegistry(
-            ABYMuxPostprocessor(protocolAssignment),
-            ZKPMuxPostprocessor(protocolAssignment)
-        )
-        val postprocessedProgram = postprocessor.postprocess(annotatedProgram)
+                    postprocessor.postprocess(annotatedProgram)
+                }
+            }
 
         if (compileKotlin) {
             output.println(
@@ -179,7 +176,8 @@ class Compile : CliktCommand(help = "Compile ideal protocol to secure distribute
                             ::PlainTextCodeGenerator,
                             ::CommitmentCreatorGenerator,
                             ::CommitmentHolderGenerator
-                        )
+                        ),
+                        DefaultCombinedBackend.protocolComposer
                     )
                 )
             )
@@ -213,7 +211,7 @@ private fun dumpGraph(graphWriter: (Writer) -> Unit, file: File?) {
 
 private fun dumpProgramMetadata(
     program: ProgramNode,
-    metadata: Map<Node, PrettyPrintable>,
+    metadata: Metadata,
     file: File?
 ) {
     if (file == null) {
@@ -221,7 +219,7 @@ private fun dumpProgramMetadata(
     }
 
     logger.info { "Writing program metadata to $file" }
-    file.println(program.printMetadata(metadata))
+    file.println(program.asDocumentWithMetadata(metadata))
 }
 
 /** Infers Graphviz output format from [file]'s extension. */

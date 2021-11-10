@@ -1,5 +1,5 @@
 /* UndefinedNameError */
 
-process main {
+fun main() {
     val x: int = input int from alice;
 }

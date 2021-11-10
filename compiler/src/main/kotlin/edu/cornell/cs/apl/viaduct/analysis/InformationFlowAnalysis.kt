@@ -54,8 +54,6 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.ParameterNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.QueryNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ReadNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.ReceiveNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.SendNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.StatementNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.UpdateNode
 import edu.cornell.cs.apl.viaduct.util.FreshNameGenerator
@@ -141,11 +139,11 @@ class InformationFlowAnalysis private constructor(
         when {
             parent == null -> "program"
 
+            this is FunctionDeclarationNode -> "${parent.pathName}.${name.value.name}"
+
             parent is IfNode && this is BlockNode -> "${parent.pathName}.if.${tree.childIndex(this)}"
 
             this is InfiniteLoopNode -> "${parent.pathName}.loop"
-
-            this is FunctionDeclarationNode -> "${parent.pathName}.func.${name.value.name}"
 
             else -> parent.pathName
         }
@@ -316,7 +314,7 @@ class InformationFlowAnalysis private constructor(
                     }
                 }
 
-                /* don't need this PC check anymore I think? it's not in the rules in the paper
+                /* Don't need this PC check anymore I think? it's not in the rules in the paper
                 solver.addFlowsToConstraint(from, pcLabel.swap().join(to.value)) { _, _ ->
                     MalleableDowngradeError(this)
                 }
@@ -361,11 +359,6 @@ class InformationFlowAnalysis private constructor(
                 pcFlowsTo(solver, pcLabel, this.host, hostLabel)
 
                 assertFlowsTo(solver, this.host, hostLabel, this.labelVariable)
-            }
-
-            is ReceiveNode -> {
-                // TODO: should we leak the pc to the protocol?
-                // TODO: should we do any checks on the data?
             }
         }
     }
@@ -472,7 +465,7 @@ class InformationFlowAnalysis private constructor(
                 } else { // add function to worklist
                     val enclosingFunction = nameAnalysis.enclosingFunctionName(this)
                     val argumentLabelMap =
-                        this.arguments.map { argument ->
+                        this.arguments.associate { argument ->
                             val parameter = nameAnalysis.parameter(argument)
                             val argumentVariable =
                                 when (argument) {
@@ -493,57 +486,55 @@ class InformationFlowAnalysis private constructor(
 
                             Pair(parameter.name.value, argumentVariable)
                         }
-                            .toMap()
 
                     val parameterVariables =
-                        this.arguments
-                            .map { argument ->
-                                val parameter = nameAnalysis.parameter(argument)
-                                val parameterVariable =
-                                    solver.addNewVariable(nameGenerator.getFreshName(parameter.name.value.name))
-                                val argumentLabel = argumentLabelMap.getValue(parameter.name.value)
+                        // no complex expressions with label parameters
+                        this.arguments.associate { argument ->
+                            val parameter = nameAnalysis.parameter(argument)
+                            val parameterVariable =
+                                solver.addNewVariable(nameGenerator.getFreshName(parameter.name.value.name))
+                            val argumentLabel = argumentLabelMap.getValue(parameter.name.value)
 
-                                assertEqualsTo(
-                                    solver,
-                                    argument,
-                                    parameterVariable,
-                                    argumentLabel
-                                )
+                            assertEqualsTo(
+                                solver,
+                                argument,
+                                parameterVariable,
+                                argumentLabel
+                            )
 
-                                if (parameter.labelArguments != null) {
-                                    val labelBoundExpr = parameter.labelArguments[0].value
-                                    val labelBound =
-                                        when {
-                                            labelBoundExpr is LabelParameter ->
-                                                argumentLabelMap.getValue(ObjectVariable(labelBoundExpr.name))
+                            if (parameter.labelArguments != null) {
+                                val labelBoundExpr = parameter.labelArguments[0].value
+                                val labelBound =
+                                    when {
+                                        labelBoundExpr is LabelParameter ->
+                                            argumentLabelMap.getValue(ObjectVariable(labelBoundExpr.name))
 
-                                            !labelBoundExpr.containsParameters() ->
-                                                LabelConstant(labelBoundExpr.interpret())
+                                        !labelBoundExpr.containsParameters() ->
+                                            LabelConstant(labelBoundExpr.interpret())
 
-                                            // no complex expressions with label parameters
-                                            else -> throw Error("no complex label expressions with parameters in function signatures")
-                                        }
-
-                                    if (argument is ObjectDeclarationArgumentNode) {
-                                        assertEqualsTo(
-                                            solver,
-                                            argument,
-                                            argumentLabel,
-                                            labelBound
-                                        )
-                                    } else {
-                                        assertFlowsTo(
-                                            solver,
-                                            argument,
-                                            argumentLabel,
-                                            labelBound
-                                        )
+                                        // no complex expressions with label parameters
+                                        else -> throw Error("no complex label expressions with parameters in function signatures")
                                     }
-                                }
 
-                                Pair(parameter.name.value, parameterVariable)
+                                if (argument is ObjectDeclarationArgumentNode) {
+                                    assertEqualsTo(
+                                        solver,
+                                        argument,
+                                        argumentLabel,
+                                        labelBound
+                                    )
+                                } else {
+                                    assertFlowsTo(
+                                        solver,
+                                        argument,
+                                        argumentLabel,
+                                        labelBound
+                                    )
+                                }
                             }
-                            .toMap()
+
+                            Pair(parameter.name.value, parameterVariable)
+                        }
 
                     val functionDecl = nameAnalysis.declaration(this)
                     val functionPc =
@@ -594,11 +585,6 @@ class InformationFlowAnalysis private constructor(
                 flowsTo(solver, this.message, hostLabel)
             }
 
-            is SendNode -> {
-                // TODO: should we leak the pc to the protocol?
-                // TODO: should we leak [message] to the protocol?
-            }
-
             is IfNode -> {
                 this.guard.check(solver, parameterMap, pcLabel)
                 val thenPc = createPCVariable(solver, this.thenBranch)
@@ -643,13 +629,11 @@ class InformationFlowAnalysis private constructor(
      * of) [InformationFlowError] otherwise.
      */
     fun check() {
-        if (!tree.root.hasMain) return
-
         for (function in tree.root.functions) {
             constraintSolverMap[function.name.value] = ConstraintSolver()
         }
 
-        val mainFunction = nameAnalysis.enclosingFunctionName(tree.root.main.body)
+        val mainFunction = tree.root.main.name.value
         val mainSolver = ConstraintSolver<InformationFlowError>()
         constraintSolverMap[mainFunction] = mainSolver
 

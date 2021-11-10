@@ -1,6 +1,5 @@
 package edu.cornell.cs.apl.viaduct.backend
 
-import edu.cornell.cs.apl.viaduct.errors.IllegalInternalCommunicationError
 import edu.cornell.cs.apl.viaduct.errors.ViaductInterpreterError
 import edu.cornell.cs.apl.viaduct.syntax.ObjectVariable
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
@@ -20,7 +19,6 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutParameterInitialization
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutputNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ParameterNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.SendNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.SimpleStatementNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.UpdateNode
 import edu.cornell.cs.apl.viaduct.syntax.types.ValueType
@@ -210,8 +208,6 @@ abstract class AbstractProtocolInterpreter<Obj>(
             }
 
             is OutputNode -> runOutput(protocol, stmt)
-
-            is SendNode -> throw IllegalInternalCommunicationError(stmt)
         }
     }
 
@@ -227,7 +223,7 @@ abstract class AbstractProtocolInterpreter<Obj>(
  *  protocol argument on implemented methods isn't necessary. */
 abstract class SingleProtocolInterpreter<Obj>(
     program: ProgramNode,
-    private val protocol: Protocol
+    protocol: Protocol
 ) : AbstractProtocolInterpreter<Obj>(program) {
     override val availableProtocols: Set<Protocol> =
         setOf(protocol)

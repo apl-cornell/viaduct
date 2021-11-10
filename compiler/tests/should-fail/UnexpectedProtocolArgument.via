@@ -2,4 +2,6 @@
 
 host alice : {A}
 
-process Local(host = alice, unexpected = true) {}
+fun main() {
+    val x: int@Local(host = alice, unexpected = true) = 0;
+}

@@ -13,14 +13,14 @@ import edu.cornell.cs.apl.viaduct.analysis.NameAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.ProtocolAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.TypeAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.main
+import edu.cornell.cs.apl.viaduct.backends.cleartext.Local
+import edu.cornell.cs.apl.viaduct.backends.cleartext.Replication
+import edu.cornell.cs.apl.viaduct.backends.commitment.Commitment
 import edu.cornell.cs.apl.viaduct.errors.CodeGenerationError
-import edu.cornell.cs.apl.viaduct.protocols.Commitment
-import edu.cornell.cs.apl.viaduct.protocols.Local
-import edu.cornell.cs.apl.viaduct.protocols.Replication
 import edu.cornell.cs.apl.viaduct.runtime.Boxed
 import edu.cornell.cs.apl.viaduct.runtime.Runtime
 import edu.cornell.cs.apl.viaduct.selection.ProtocolCommunication
-import edu.cornell.cs.apl.viaduct.selection.SimpleProtocolComposer
+import edu.cornell.cs.apl.viaduct.selection.ProtocolComposer
 import edu.cornell.cs.apl.viaduct.syntax.Host
 import edu.cornell.cs.apl.viaduct.syntax.ObjectVariable
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
@@ -40,23 +40,18 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.ReadNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.SimpleStatementNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.StatementNode
 import edu.cornell.cs.apl.viaduct.util.FreshNameGenerator
+import java.lang.reflect.Type
 
 class BackendCodeGenerator(
     private val program: ProgramNode,
     private val host: Host,
     codeGenerators: List<(context: CodeGeneratorContext) -> CodeGenerator>,
+    private val protocolComposer: ProtocolComposer
 ) {
     private val codeGeneratorMap: Map<Protocol, CodeGenerator>
     private val nameAnalysis = NameAnalysis.get(program)
-    private val protocolAnalysis = ProtocolAnalysis(program, SimpleProtocolComposer)
-    private val context =
-        Context(
-            program,
-            host,
-            TypeAnalysis.get(program),
-            NameAnalysis.get(program),
-            ProtocolAnalysis(program, SimpleProtocolComposer)
-        )
+    private val protocolAnalysis = ProtocolAnalysis(program, protocolComposer)
+    private val context = Context(program, host, protocolComposer)
 
     init {
         val allProtocols = protocolAnalysis.participatingProtocols(program)
@@ -233,11 +228,13 @@ class BackendCodeGenerator(
     private class Context(
         override val program: ProgramNode,
         override val host: Host,
-        override val typeAnalysis: TypeAnalysis,
-        override val nameAnalysis: NameAnalysis,
-        override val protocolAnalysis: ProtocolAnalysis
+        override val protocolComposer: ProtocolComposer
     ) :
         CodeGeneratorContext {
+        override val protocolAnalysis: ProtocolAnalysis = ProtocolAnalysis(program, protocolComposer)
+        override val typeAnalysis = TypeAnalysis.get(program)
+        override val nameAnalysis = NameAnalysis.get(program)
+
         private var tempMap: MutableMap<Pair<Temporary, Protocol>, String> = mutableMapOf()
         private var varMap: MutableMap<ObjectVariable, String> = mutableMapOf()
 
@@ -289,9 +286,10 @@ fun compileKotlinFile(
     program: ProgramNode,
     fileName: String,
     packageName: String,
-    codeGenerators: List<(context: CodeGeneratorContext) -> CodeGenerator>
+    codeGenerators: List<(context: CodeGeneratorContext) -> CodeGenerator>,
+    protocolComposer: ProtocolComposer
 
-): String = compileKotlinFileSpec(program, fileName, packageName, codeGenerators).toString()
+): String = compileKotlinFileSpec(program, fileName, packageName, codeGenerators, protocolComposer).toString()
 
 // this should take a list of backend generators
 // name this compile to kotlin or something
@@ -299,7 +297,8 @@ fun compileKotlinFileSpec(
     program: ProgramNode,
     fileName: String,
     packageName: String,
-    codeGenerators: List<(context: CodeGeneratorContext) -> CodeGenerator>
+    codeGenerators: List<(context: CodeGeneratorContext) -> CodeGenerator>,
+    protocolComposer: ProtocolComposer
 ): FileSpec {
 
     val mainBody = program.main.body
@@ -322,7 +321,8 @@ fun compileKotlinFileSpec(
         val curGenerator = BackendCodeGenerator(
             program,
             entry.key,
-            codeGenerators
+            codeGenerators,
+            protocolComposer
         )
 
         fileBuilder.addFunction(

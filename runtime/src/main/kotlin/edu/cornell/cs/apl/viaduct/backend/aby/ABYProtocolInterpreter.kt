@@ -14,13 +14,12 @@ import edu.cornell.cs.apl.viaduct.backend.ObjectLocation
 import edu.cornell.cs.apl.viaduct.backend.ProtocolBackend
 import edu.cornell.cs.apl.viaduct.backend.ProtocolInterpreter
 import edu.cornell.cs.apl.viaduct.backend.ViaductRuntime
-import edu.cornell.cs.apl.viaduct.errors.IllegalInternalCommunicationError
+import edu.cornell.cs.apl.viaduct.backends.aby.ABY
+import edu.cornell.cs.apl.viaduct.backends.aby.ArithABY
+import edu.cornell.cs.apl.viaduct.backends.aby.BoolABY
+import edu.cornell.cs.apl.viaduct.backends.aby.YaoABY
 import edu.cornell.cs.apl.viaduct.errors.UndefinedNameError
 import edu.cornell.cs.apl.viaduct.errors.ViaductInterpreterError
-import edu.cornell.cs.apl.viaduct.protocols.ABY
-import edu.cornell.cs.apl.viaduct.protocols.ArithABY
-import edu.cornell.cs.apl.viaduct.protocols.BoolABY
-import edu.cornell.cs.apl.viaduct.protocols.YaoABY
 import edu.cornell.cs.apl.viaduct.selection.ProtocolCommunication
 import edu.cornell.cs.apl.viaduct.syntax.Host
 import edu.cornell.cs.apl.viaduct.syntax.ObjectVariable
@@ -47,7 +46,6 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.PureExpressionNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.QueryNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ReadNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.ReceiveNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.SimpleStatementNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.UpdateNode
 import edu.cornell.cs.apl.viaduct.syntax.operators.EqualTo
@@ -322,7 +320,7 @@ class ABYProtocolInterpreter(
             // find a variable with no children and add it to the schedule
             var processedVar: ABYCircuitGate? = null
             for (v in variablesToProcess) {
-                if (childrenMap[v]?.size ?: 0 == 0) {
+                if ((childrenMap[v]?.size ?: 0) == 0) {
                     variableSchedule.add(v)
 
                     // remove v's outgoing edges
@@ -484,8 +482,6 @@ class ABYProtocolInterpreter(
 
     override suspend fun runLet(protocol: Protocol, stmt: LetNode) {
         when (val rhs = stmt.value) {
-            is ReceiveNode -> throw IllegalInternalCommunicationError(rhs)
-
             is InputNode -> throw ViaductInterpreterError("cannot perform I/O in non-Local protocol")
 
             is PureExpressionNode -> {

@@ -2,10 +2,9 @@ package edu.cornell.cs.apl.viaduct.analysis
 
 import edu.cornell.cs.apl.attributes.attribute
 import edu.cornell.cs.apl.attributes.circularAttribute
-import edu.cornell.cs.apl.viaduct.errors.IllegalInternalCommunicationError
+import edu.cornell.cs.apl.viaduct.backends.cleartext.Local
 import edu.cornell.cs.apl.viaduct.errors.NoProtocolAnnotationError
 import edu.cornell.cs.apl.viaduct.errors.UnknownObjectDeclarationError
-import edu.cornell.cs.apl.viaduct.protocols.Local
 import edu.cornell.cs.apl.viaduct.selection.CommunicationEvent
 import edu.cornell.cs.apl.viaduct.selection.ProtocolCommunication
 import edu.cornell.cs.apl.viaduct.selection.ProtocolComposer
@@ -14,6 +13,7 @@ import edu.cornell.cs.apl.viaduct.syntax.Protocol
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.AssertionNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.BlockNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.BreakNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.CommunicationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.DeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.DowngradeNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ExpressionArgumentNode
@@ -22,8 +22,6 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.FunctionCallNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.FunctionDeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.IfNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.InfiniteLoopNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.InputNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.InternalCommunicationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.LetNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.LiteralNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.Node
@@ -31,11 +29,8 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.ObjectDeclarationArgumentN
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutParameterInitializationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutputNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ParameterNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProcessDeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ReadNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.ReceiveNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.SendNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.SimpleStatementNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.StatementNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.UpdateNode
@@ -55,9 +50,6 @@ class ProtocolAnalysis(
     /** The outermost block this [Node] is in. */
     private val Node.enclosingBody: BlockNode by attribute {
         when (val parent = tree.parent(this)!!) {
-            is ProcessDeclarationNode ->
-                parent.body
-
             is FunctionDeclarationNode ->
                 parent.body
 
@@ -66,25 +58,15 @@ class ProtocolAnalysis(
         }
     }
 
-    /**
-     * Returns the protocol that coordinates the execution of [statement].
-     *
-     * @throws IllegalInternalCommunicationError if [statement] is an [InternalCommunicationNode].
-     */
+    /** Returns the protocol that coordinates the execution of [statement]. */
     fun primaryProtocol(statement: SimpleStatementNode): Protocol {
         return when (statement) {
             is LetNode -> {
                 val protocol =
                     statement.protocol?.value ?: throw NoProtocolAnnotationError(statement)
 
-                when (statement.value) {
-                    is InputNode ->
-                        assert(protocol == Local(statement.value.host.value))
-                    is ReceiveNode ->
-                        throw IllegalInternalCommunicationError(statement.value)
-                    else ->
-                        Unit
-                }
+                if (statement.value is CommunicationNode)
+                    assert(protocol == Local(statement.value.host.value))
 
                 protocol
             }
@@ -111,9 +93,6 @@ class ProtocolAnalysis(
 
             is OutputNode ->
                 Local(statement.host.value)
-
-            is SendNode ->
-                throw IllegalInternalCommunicationError(statement)
         }
     }
 
@@ -220,10 +199,13 @@ class ProtocolAnalysis(
     fun protocols(function: FunctionDeclarationNode): Set<Protocol> = function.protocols
 
     private val LetNode.relevantCommunicationEventsMap: Map<SimpleStatementNode, Set<CommunicationEvent>> by attribute {
+        // relevance criterion: if (A) the receiver of the event is the reader protocol,
+        // then (B) the event's receiving host must be participating
+        // the implication (A) -> (B) is turned into !(A) || (B)
         nameAnalysis
             .readers(this)
             .filterIsInstance<SimpleStatementNode>()
-            .map { reader ->
+            .associateWith { reader ->
                 val readerHosts = reader.participatingHosts
 
                 val protocol = primaryProtocol(this)
@@ -238,8 +220,8 @@ class ProtocolAnalysis(
                         readerProtocol != event.recv.protocol || readerHosts.contains(event.recv.host)
                     }.toSet()
 
-                Pair(reader, relevantEvents)
-            }.toMap()
+                relevantEvents
+            }
     }
 
     /** Return the relevant communication events for the [read]. */
@@ -393,9 +375,6 @@ class ProtocolAnalysis(
                 this.parameters
                     .fold<ParameterNode, Set<Protocol>>(setOf()) { acc, param -> acc.plus(param.participatingProtocols) }
                     .plus(this.body.participatingProtocols)
-
-            is ProcessDeclarationNode ->
-                this.body.participatingProtocols
 
             is BlockNode ->
                 this.statements.fold(setOf()) { acc, child -> acc.plus(child.participatingProtocols) }

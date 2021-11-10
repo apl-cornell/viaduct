@@ -1,7 +1,7 @@
 /* Parser test. Try to hit all syntactic forms. */
 /* TODO: try to bring back asserts. */
 /* TODO: I'm not sure about this file. We should break it down into smaller tests. */
-process main {
+fun main() {
   var a: int;
   var b: bool{B};
 
@@ -35,12 +35,5 @@ process main {
 }
 
 host alice : {A}
-
-process Host(alice) {
-  send 5 to main;
-  send false to main;
-  val result: int = receive int from main;
-  assert result == 42;
-}
 
 host trusted : {A & B & C}

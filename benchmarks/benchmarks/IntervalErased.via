@@ -8,7 +8,7 @@ host chuck  : {C}
  * This is the 1d version of checking whether a point lies
  * in a convex hull.
  */
-process main {
+fun main() {
   val a_num_points: int = 5;
   val b_num_points: int = 5;
   val num_points: int = a_num_points + b_num_points;

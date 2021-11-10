@@ -5,6 +5,7 @@ import com.squareup.kotlinpoet.TypeName
 import edu.cornell.cs.apl.viaduct.analysis.NameAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.ProtocolAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.TypeAnalysis
+import edu.cornell.cs.apl.viaduct.selection.ProtocolComposer
 import edu.cornell.cs.apl.viaduct.syntax.Host
 import edu.cornell.cs.apl.viaduct.syntax.ObjectVariable
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
@@ -17,6 +18,7 @@ interface CodeGeneratorContext {
     val typeAnalysis: TypeAnalysis
     val nameAnalysis: NameAnalysis
     val protocolAnalysis: ProtocolAnalysis
+    val protocolComposer: ProtocolComposer
 
     // returns a kotlin name for a temporary used in the source program
     fun kotlinName(sourceName: Temporary, protocol: Protocol): String

@@ -1,7 +1,7 @@
 host alice: {A & B<-}
 host bob:   {B & A<-}
 
-process main {
+fun main() {
   val n: int = 10;
 
   /* assume that input arrays are already sorted */

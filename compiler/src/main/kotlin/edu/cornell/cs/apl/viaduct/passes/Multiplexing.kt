@@ -4,15 +4,13 @@ import edu.cornell.cs.apl.viaduct.analysis.NameAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.freshVariableNameGenerator
 import edu.cornell.cs.apl.viaduct.errors.UnknownDatatypeError
 import edu.cornell.cs.apl.viaduct.errors.UnknownMethodError
-import edu.cornell.cs.apl.viaduct.protocols.MainProtocol
+import edu.cornell.cs.apl.viaduct.selection.ProtocolAssignment
 import edu.cornell.cs.apl.viaduct.syntax.Arguments
-import edu.cornell.cs.apl.viaduct.syntax.FunctionName
 import edu.cornell.cs.apl.viaduct.syntax.Located
 import edu.cornell.cs.apl.viaduct.syntax.Operator
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
 import edu.cornell.cs.apl.viaduct.syntax.Temporary
 import edu.cornell.cs.apl.viaduct.syntax.TemporaryNode
-import edu.cornell.cs.apl.viaduct.syntax.Variable
 import edu.cornell.cs.apl.viaduct.syntax.datatypes.Get
 import edu.cornell.cs.apl.viaduct.syntax.datatypes.Modify
 import edu.cornell.cs.apl.viaduct.syntax.datatypes.MutableCell
@@ -22,25 +20,22 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.AssertionNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.AtomicExpressionNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.BlockNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.BreakNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.CommunicationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.DeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.FunctionCallNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.FunctionDeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.HostDeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.IfNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.InfiniteLoopNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.InputNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.LetNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.LiteralNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.OperatorApplicationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutParameterInitializationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutputNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ParameterNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProcessDeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.QueryNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ReadNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.ReceiveNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.SendNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.StatementNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.TopLevelDeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.UpdateNode
@@ -54,8 +49,7 @@ fun StatementNode.canMux(): Boolean =
     when (this) {
         is LetNode ->
             when (this.value) {
-                is InputNode -> false
-                is ReceiveNode -> false
+                is CommunicationNode -> false
                 else -> true
             }
 
@@ -66,8 +60,6 @@ fun StatementNode.canMux(): Boolean =
         is OutParameterInitializationNode -> false
 
         is OutputNode -> false
-
-        is SendNode -> false
 
         is FunctionCallNode -> false
 
@@ -84,7 +76,7 @@ fun StatementNode.canMux(): Boolean =
 
 class MuxPostprocessor(
     val containedProtocolCheck: (Protocol) -> Boolean,
-    val protocolAssignment: (FunctionName, Variable) -> Protocol
+    val selection: ProtocolAssignment
 ) : ProgramPostprocessor {
     override fun postprocess(program: ProgramNode): ProgramNode {
         val nameAnalysis = NameAnalysis.get(program)
@@ -92,18 +84,6 @@ class MuxPostprocessor(
             program.declarations.map { declaration ->
                 when (declaration) {
                     is HostDeclarationNode -> declaration.deepCopy() as TopLevelDeclarationNode
-
-                    is ProcessDeclarationNode -> {
-                        if (declaration.protocol.value == MainProtocol) {
-                            ProcessDeclarationNode(
-                                declaration.protocol,
-                                mux(declaration.body, nameAnalysis),
-                                declaration.sourceLocation
-                            )
-                        } else {
-                            declaration.deepCopy() as ProcessDeclarationNode
-                        }
-                    }
 
                     is FunctionDeclarationNode -> {
                         FunctionDeclarationNode(
@@ -156,7 +136,7 @@ class MuxPostprocessor(
             is UpdateNode -> {
                 if (currentGuard != null) {
                     val enclosingFunction = nameAnalysis.enclosingFunctionName(stmt)
-                    val updateProtocol = protocolAssignment(enclosingFunction, stmt.variable.value)
+                    val updateProtocol = selection.getAssignment(enclosingFunction, stmt.variable.value)
                     val className = nameAnalysis.declaration(stmt).className.value
                     val getTemporary =
                         Located(
@@ -249,7 +229,7 @@ class MuxPostprocessor(
                         )
 
                     when (val update = stmt.update.value) {
-                        is edu.cornell.cs.apl.viaduct.syntax.datatypes.Set -> {
+                        is Set -> {
                             listOf(
                                 getCall,
                                 muxCall(indexExpr() ?: stmt.arguments[0].deepCopy() as AtomicExpressionNode),
@@ -280,8 +260,6 @@ class MuxPostprocessor(
 
             is OutputNode -> listOf(stmt.deepCopy() as StatementNode)
 
-            is SendNode -> listOf(stmt.deepCopy() as StatementNode)
-
             is FunctionCallNode -> listOf(stmt.deepCopy() as StatementNode)
 
             is IfNode -> {
@@ -289,7 +267,7 @@ class MuxPostprocessor(
                     when (stmt.guard) {
                         is ReadNode -> {
                             val enclosingFunction = nameAnalysis.enclosingFunctionName(stmt)
-                            protocolAssignment(enclosingFunction, stmt.guard.temporary.value)
+                            selection.getAssignment(enclosingFunction, stmt.guard.temporary.value)
                         }
 
                         is LiteralNode -> null

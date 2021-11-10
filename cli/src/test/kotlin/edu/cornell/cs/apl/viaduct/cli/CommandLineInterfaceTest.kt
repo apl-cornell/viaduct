@@ -28,16 +28,6 @@ internal class CommandLineInterfaceTest {
     }
 
     @Test
-    fun `specification command`() {
-        cli("specification", "--adversary", "A", example)
-    }
-
-    @Test
-    fun `aliases work`() {
-        cli("spec", "--adversary", "A", example)
-    }
-
-    @Test
     fun `no arguments causes error`() {
         assertThrows<PrintHelpMessage> { cli() }
     }

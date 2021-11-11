@@ -186,15 +186,18 @@ class BackendCodeGenerator(
                     events = protocolAnalysis.relevantCommunicationEvents(stmt, reader)
                 }
 
+                val commentString = protocol.toDocument().print()
                 if (protocolAnalysis.participatingHosts(stmt).contains(host)) {
 
                     // generate code for the statement, if [host] participating
                     val protocolCodeGenerator = codeGeneratorMap[protocol]
                         ?: throw CodeGenerationError("no code generator for protocol ${protocol.toDocument().print()}")
+                    hostFunctionBuilder.addComment("Let: $commentString")
                     hostFunctionBuilder.addStatement("%L", protocolCodeGenerator.simpleStatement(protocol, stmt))
 
                     // generate code for sending data
                     if (readers.isNotEmpty()) {
+                        hostFunctionBuilder.addComment("Send: $commentString")
                         hostFunctionBuilder.addCode("%L", protocolCodeGenerator.send(host, stmt, protocol, readerProtocol!!, events!!))
                     }
                 }
@@ -204,6 +207,7 @@ class BackendCodeGenerator(
                     if (protocolAnalysis.participatingHosts(reader!!).contains(host)) {
                         val protocolCodeGenerator = codeGeneratorMap[readerProtocol]
                             ?: throw CodeGenerationError("no code generator for protocol ${protocol.toDocument().print()}")
+                        hostFunctionBuilder.addComment("Receive: $commentString")
                         hostFunctionBuilder.addCode("%L", protocolCodeGenerator.receive(host, stmt, protocol, readerProtocol!!, events!!))
                     }
                 }

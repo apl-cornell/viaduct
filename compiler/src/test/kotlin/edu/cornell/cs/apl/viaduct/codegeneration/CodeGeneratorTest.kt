@@ -47,12 +47,12 @@ internal class CodeGeneratorTest {
         val annotatedProgram = program.annotateWithProtocols(protocolAssignment)
 
         /**
-        // Post-process program
-        val postprocessor = ProgramPostprocessorRegistry(
-        ABYMuxPostprocessor(protocolAssignment),
-        ZKPMuxPostprocessor(protocolAssignment)
-        )
-        val postprocessedProgram = postprocessor.postprocess(annotatedProgram)
+         // Post-process program
+         val postprocessor = ProgramPostprocessorRegistry(
+         ABYMuxPostprocessor(protocolAssignment),
+         ZKPMuxPostprocessor(protocolAssignment)
+         )
+         val postprocessedProgram = postprocessor.postprocess(annotatedProgram)
          **/
 
         compileKotlinFileSpec(

@@ -4,5 +4,5 @@ host chuck : {A}
 
 fun main() {
 let $aliceLocal@Local(host = alice) = input int from alice;
-let $aliceCommit@Commitment(receivers = {bob, chuck}, sender = alice) = aliceLocal;
+let $aliceCommit@Commitment(receivers = {bob, chuck}, sender = alice) = $aliceLocal;
 }

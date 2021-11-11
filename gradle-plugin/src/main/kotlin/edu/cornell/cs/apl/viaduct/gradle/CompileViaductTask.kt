@@ -1,12 +1,11 @@
 package edu.cornell.cs.apl.viaduct.gradle
-import edu.cornell.cs.apl.viaduct.analysis.main
+import edu.cornell.cs.apl.viaduct.backends.Backend
 import edu.cornell.cs.apl.viaduct.codegeneration.CodeGenerator
 import edu.cornell.cs.apl.viaduct.codegeneration.CodeGeneratorContext
 import edu.cornell.cs.apl.viaduct.codegeneration.CommitmentCreatorGenerator
 import edu.cornell.cs.apl.viaduct.codegeneration.CommitmentHolderGenerator
 import edu.cornell.cs.apl.viaduct.codegeneration.PlainTextCodeGenerator
 import edu.cornell.cs.apl.viaduct.codegeneration.compileKotlinFile
-import edu.cornell.cs.apl.viaduct.backends.Backend
 import edu.cornell.cs.apl.viaduct.errors.CompilationError
 import edu.cornell.cs.apl.viaduct.parsing.SourceFile
 import edu.cornell.cs.apl.viaduct.parsing.parse
@@ -128,6 +127,5 @@ abstract class CompileViaductTask : DefaultTask() {
             ),
             backend.get().protocolComposer
         )
-
     }
 }

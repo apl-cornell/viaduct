@@ -13,6 +13,6 @@ import java.util.stream.Stream
 class PositiveTestProgramProvider : ArgumentsProvider {
     override fun provideArguments(context: ExtensionContext?): Stream<out Arguments> {
         return PositiveTestFileProvider().provideArguments(context)
-            .map { Arguments.of(SourceFile.from(it.get()[0] as File).parse(DefaultCombinedBackend.protocolParsers))}
+            .map { Arguments.of(SourceFile.from(it.get()[0] as File).parse(DefaultCombinedBackend.protocolParsers)) }
     }
 }

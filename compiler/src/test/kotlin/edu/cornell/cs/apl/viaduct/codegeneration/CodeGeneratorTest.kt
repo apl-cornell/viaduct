@@ -1,6 +1,5 @@
 package edu.cornell.cs.apl.viaduct.codegeneration
 
-import edu.cornell.cs.apl.prettyprinting.Document
 import edu.cornell.cs.apl.viaduct.PositiveTestFileProvider
 import edu.cornell.cs.apl.viaduct.backends.DefaultCombinedBackend
 import edu.cornell.cs.apl.viaduct.parsing.SourceFile
@@ -26,7 +25,7 @@ internal class CodeGeneratorTest {
         if (file.parentFile.name != "plaintext-code-generation") return
 
         val program = SourceFile.from(file)
-            .parse()
+            .parse(DefaultCombinedBackend.protocolParsers)
             .elaborated()
             .specialize()
 
@@ -48,28 +47,23 @@ internal class CodeGeneratorTest {
         val annotatedProgram = program.annotateWithProtocols(protocolAssignment)
 
         /**
-         // Post-process program
-         val postprocessor = ProgramPostprocessorRegistry(
-         ABYMuxPostprocessor(protocolAssignment),
-         ZKPMuxPostprocessor(protocolAssignment)
-         )
-         val postprocessedProgram = postprocessor.postprocess(annotatedProgram)
+        // Post-process program
+        val postprocessor = ProgramPostprocessorRegistry(
+        ABYMuxPostprocessor(protocolAssignment),
+        ZKPMuxPostprocessor(protocolAssignment)
+        )
+        val postprocessedProgram = postprocessor.postprocess(annotatedProgram)
          **/
 
-        println(
-            Document(
-                compileKotlinFile(
-                    annotatedProgram,
-                    file.name.substringBefore('.'),
-                    "src",
-                    listOf<(context: CodeGeneratorContext) -> CodeGenerator>(
-                        ::PlainTextCodeGenerator,
-                        ::CommitmentCreatorGenerator,
-                        ::CommitmentHolderGenerator
-                    ),
-                    DefaultCombinedBackend.protocolComposer
-                )
-            ).print()
-        )
+        compileKotlinFileSpec(
+            annotatedProgram,
+            file.name.substringBefore('.'),
+            "src",
+            listOf<(context: CodeGeneratorContext) -> CodeGenerator>(
+                ::PlainTextCodeGenerator,
+                ::CommitmentDispatchCodeGenerator
+            ),
+            DefaultCombinedBackend.protocolComposer
+        ).writeTo(System.out)
     }
 }

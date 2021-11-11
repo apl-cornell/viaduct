@@ -1,7 +1,0 @@
-process main {
-val x:int = input int from alice;
-val y:int { A & B<- } = endorse x from { A };
-}
-
-host alice : {A}
-host bob   : {B}

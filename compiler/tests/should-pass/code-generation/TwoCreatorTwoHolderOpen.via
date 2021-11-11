@@ -1,0 +1,11 @@
+host alice : {A}
+host bob   : {A}
+host chuck : {A}
+host dave  : {A}
+
+fun main() {
+let $aliceLocal@Replication(hosts = {alice, bob}) = input int from alice;
+let $aliceLocal2@Local(host = alice) = $aliceLocal;
+let $aliceCommit@Commitment(receivers = {chuck, dave}, sender = alice) = $aliceLocal2;
+let $chuckDaveDeclassified@Replication(hosts = {chuck, dave}) = $aliceCommit;
+}

@@ -1,6 +1,7 @@
 package edu.cornell.cs.apl.viaduct.parsing
 
 import edu.cornell.cs.apl.viaduct.PositiveTestFileProvider
+import edu.cornell.cs.apl.viaduct.backends.DefaultCombinedBackend
 import edu.cornell.cs.apl.viaduct.errors.NoMainError
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
@@ -23,6 +24,6 @@ internal class ParsingTest {
     @ParameterizedTest
     @ArgumentsSource(PositiveTestFileProvider::class)
     fun `it parses`(file: File) {
-        SourceFile.from(file).parse()
+        SourceFile.from(file).parse(DefaultCombinedBackend.protocolParsers)
     }
 }

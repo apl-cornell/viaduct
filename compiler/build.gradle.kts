@@ -31,7 +31,7 @@ dependencies {
     implementation("com.github.vbmacher:java-cup-runtime:11b-20160615-1")
 
     // Code generation
-    implementation("com.squareup:kotlinpoet:1.10.2")
+    api("com.squareup:kotlinpoet:1.10.2")
 
     // SMT solving
     implementation("io.github.tudo-aqua:z3-turnkey:4.8.12")

@@ -18,6 +18,7 @@ import edu.cornell.cs.apl.viaduct.backend.aby.ABYProtocolInterpreter
 import edu.cornell.cs.apl.viaduct.backend.commitment.CommitmentProtocolInterpreterFactory
 import edu.cornell.cs.apl.viaduct.backend.zkp.ZKPProtocolInterpreterFactory
 import edu.cornell.cs.apl.viaduct.backends.DefaultCombinedBackend
+import edu.cornell.cs.apl.viaduct.parsing.parse
 import edu.cornell.cs.apl.viaduct.passes.elaborated
 import edu.cornell.cs.apl.viaduct.syntax.Host
 import java.io.File
@@ -59,7 +60,7 @@ class Run : CliktCommand(help = "Run compiled protocol for a single host") {
     }
 
     override fun run() {
-        val program = input.parse(DefaultCombinedBackend.protocolParsers).elaborated()
+        val program = input.sourceFile().parse(DefaultCombinedBackend.protocolParsers).elaborated()
 
         val connectionInfoMap: Map<Host, HostAddress> =
             hostAddress.associate { kv ->

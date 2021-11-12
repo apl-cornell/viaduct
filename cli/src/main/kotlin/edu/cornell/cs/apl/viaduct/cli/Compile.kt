@@ -4,36 +4,10 @@ import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.parameters.options.flag
 import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.types.file
-import edu.cornell.cs.apl.prettyprinting.Document
-import edu.cornell.cs.apl.prettyprinting.PrettyPrintable
-import edu.cornell.cs.apl.viaduct.analysis.InformationFlowAnalysis
-import edu.cornell.cs.apl.viaduct.analysis.descendantsIsInstance
 import edu.cornell.cs.apl.viaduct.backends.DefaultCombinedBackend
-import edu.cornell.cs.apl.viaduct.backends.aby.abyMuxPostprocessor
-import edu.cornell.cs.apl.viaduct.backends.zkp.zkpMuxPostprocessor
-import edu.cornell.cs.apl.viaduct.codegeneration.CodeGenerator
-import edu.cornell.cs.apl.viaduct.codegeneration.CodeGeneratorContext
-import edu.cornell.cs.apl.viaduct.codegeneration.CommitmentDispatchCodeGenerator
-import edu.cornell.cs.apl.viaduct.codegeneration.PlainTextCodeGenerator
-import edu.cornell.cs.apl.viaduct.codegeneration.compileKotlinFile
-import edu.cornell.cs.apl.viaduct.passes.ProgramPostprocessorRegistry
-import edu.cornell.cs.apl.viaduct.passes.annotateWithProtocols
-import edu.cornell.cs.apl.viaduct.passes.check
-import edu.cornell.cs.apl.viaduct.passes.elaborated
-import edu.cornell.cs.apl.viaduct.passes.isAssignmentAnnotated
-import edu.cornell.cs.apl.viaduct.passes.specialize
-import edu.cornell.cs.apl.viaduct.selection.ProtocolAssignment
-import edu.cornell.cs.apl.viaduct.selection.ProtocolSelection
-import edu.cornell.cs.apl.viaduct.selection.SimpleCostEstimator
+import edu.cornell.cs.apl.viaduct.passes.compile
+import edu.cornell.cs.apl.viaduct.passes.compileToKotlin
 import edu.cornell.cs.apl.viaduct.selection.SimpleCostRegime
-import edu.cornell.cs.apl.viaduct.selection.Z3Selection
-import edu.cornell.cs.apl.viaduct.selection.validateProtocolAssignment
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.DeclarationNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.LetNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.Metadata
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.Node
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
-import edu.cornell.cs.apl.viaduct.util.duration
 import guru.nidi.graphviz.engine.Format
 import guru.nidi.graphviz.engine.Graphviz
 import mu.KotlinLogging
@@ -102,102 +76,32 @@ class Compile : CliktCommand(help = "Compile ideal protocol to secure distribute
     ).flag(default = false)
 
     override fun run() {
-        val unspecializedProgram = logger.duration("parsing and elaboration") {
-            input.parse(DefaultCombinedBackend.protocolParsers).elaborated()
-        }
-
-        val program = logger.duration("function specialization") {
-            unspecializedProgram.specialize()
-        }
-
-        // Perform static checks.
-        program.check()
-
-        // Dump label constraint graph to a file if requested.
-        val ifcAnalysis = InformationFlowAnalysis.get(program)
-        dumpGraph(ifcAnalysis::exportConstraintGraph, constraintGraphOutput)
-
-        if (labelOutput != null) {
-            val labelMetadata: Map<Node, PrettyPrintable> =
-                program.descendantsIsInstance<DeclarationNode>().map {
-                    it to ifcAnalysis.label(it)
-                }.plus(
-                    program.descendantsIsInstance<LetNode>().map {
-                        it to ifcAnalysis.label(it)
-                    }
-                ).toMap()
-            dumpProgramMetadata(program, labelMetadata, labelOutput)
-        }
-
-        val postprocessedProgram =
-            if (program.isAssignmentAnnotated()) {
-                program
-            } else {
-                // Select protocols.
-                val protocolFactory = DefaultCombinedBackend.protocolFactory(program)
-                val protocolComposer = DefaultCombinedBackend.protocolComposer
-                val costRegime = if (wanCost) SimpleCostRegime.WAN else SimpleCostRegime.LAN
-                val costEstimator = SimpleCostEstimator(protocolComposer, costRegime)
-                val protocolAssignment: ProtocolAssignment =
-                    logger.duration("protocol selection") {
-                        ProtocolSelection(
-                            Z3Selection(),
-                            protocolFactory,
-                            protocolComposer,
-                            costEstimator
-                        ).selectAssignment(program)
-                    }
-
-                // Perform a sanity check to ensure the protocolAssignment is valid.
-                // TODO: either remove this entirely or make it opt-in by the command line.
-                validateProtocolAssignment(
-                    program,
-                    protocolFactory,
-                    protocolComposer,
-                    costEstimator,
-                    protocolAssignment
-                )
-
-                // generate elaborated program annotated with cost
-                if (costOutput != null) {
-                    val costMetadata: Map<Node, PrettyPrintable> =
-                        protocolAssignment.problem.costMap.mapValues { kv ->
-                            Document(protocolAssignment.evaluate(kv.value).toString())
-                        }
-
-                    dumpProgramMetadata(program, costMetadata, costOutput)
-                }
-
-                val annotatedProgram = program.annotateWithProtocols(protocolAssignment)
-
-                // Post-process program
-                logger.duration("post-processing program") {
-                    val postprocessor = ProgramPostprocessorRegistry(
-                        abyMuxPostprocessor(protocolAssignment),
-                        zkpMuxPostprocessor(protocolAssignment)
-                    )
-
-                    postprocessor.postprocess(annotatedProgram)
-                }
-            }
+        val costRegime = if (wanCost) SimpleCostRegime.WAN else SimpleCostRegime.LAN
 
         if (compileKotlin) {
-            output.println(
-                Document(
-                    compileKotlinFile(
-                        postprocessedProgram,
-                        input!!.name.substringBefore('.'),
-                        "src",
-                        listOf<(context: CodeGeneratorContext) -> CodeGenerator>(
-                            ::PlainTextCodeGenerator,
-                            ::CommitmentDispatchCodeGenerator
-                        ),
-                        DefaultCombinedBackend.protocolComposer
-                    )
+            val compiledProgram =
+                input.sourceFile().compileToKotlin(
+                    fileName = output?.nameWithoutExtension ?: "Source",
+                    packageName = ".",
+                    backend = DefaultCombinedBackend,
+                    costRegime = costRegime,
+                    saveLabelConstraintGraph = constraintGraphOutput::dumpGraph,
+                    saveInferredLabels = labelOutput,
+                    saveEstimatedCost = costOutput,
+                    saveProtocolAssignment = protocolSelectionOutput
                 )
-            )
+            output.write(compiledProgram)
         } else {
-            output.println(postprocessedProgram)
+            val compiledProgram =
+                input.sourceFile().compile(
+                    backend = DefaultCombinedBackend,
+                    costRegime = costRegime,
+                    saveLabelConstraintGraph = constraintGraphOutput::dumpGraph,
+                    saveInferredLabels = labelOutput,
+                    saveEstimatedCost = costOutput,
+                    saveProtocolAssignment = protocolSelectionOutput
+                )
+            output.println(compiledProgram)
         }
     }
 }
@@ -206,35 +110,20 @@ class Compile : CliktCommand(help = "Compile ideal protocol to secure distribute
  * Outputs the graph generated by [graphWriter] to [file] if [file] is not `null`. Does nothing
  * otherwise. The output format is determined automatically from [file]'s extension.
  */
-private fun dumpGraph(graphWriter: (Writer) -> Unit, file: File?) {
-    if (file == null) {
-        return
-    }
+private fun File?.dumpGraph(graphWriter: (Writer) -> Unit) {
+    if (this == null) return
 
-    logger.info { "Writing graph to $file" }
+    logger.info { "Writing label constraint graph to $this." }
 
-    when (val format = formatFromFileExtension(file)) {
+    when (val format = formatFromFileExtension(this)) {
         Format.DOT ->
-            file.bufferedWriter().use(graphWriter)
+            this.bufferedWriter().use(graphWriter)
         else -> {
             val writer = StringWriter()
             graphWriter(writer)
-            Graphviz.fromString(writer.toString()).render(format).toFile(file)
+            Graphviz.fromString(writer.toString()).render(format).toFile(this)
         }
     }
-}
-
-private fun dumpProgramMetadata(
-    program: ProgramNode,
-    metadata: Metadata,
-    file: File?
-) {
-    if (file == null) {
-        return
-    }
-
-    logger.info { "Writing program metadata to $file" }
-    file.println(program.toDocumentWithMetadata(metadata))
 }
 
 /** Infers Graphviz output format from [file]'s extension. */

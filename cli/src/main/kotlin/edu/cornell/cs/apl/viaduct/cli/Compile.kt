@@ -13,8 +13,7 @@ import edu.cornell.cs.apl.viaduct.backend.zkp.zkpMuxPostprocessor
 import edu.cornell.cs.apl.viaduct.backends.DefaultCombinedBackend
 import edu.cornell.cs.apl.viaduct.codegeneration.CodeGenerator
 import edu.cornell.cs.apl.viaduct.codegeneration.CodeGeneratorContext
-import edu.cornell.cs.apl.viaduct.codegeneration.CommitmentCreatorGenerator
-import edu.cornell.cs.apl.viaduct.codegeneration.CommitmentHolderGenerator
+import edu.cornell.cs.apl.viaduct.codegeneration.CommitmentDispatchCodeGenerator
 import edu.cornell.cs.apl.viaduct.codegeneration.PlainTextCodeGenerator
 import edu.cornell.cs.apl.viaduct.codegeneration.compileKotlinFile
 import edu.cornell.cs.apl.viaduct.passes.ProgramPostprocessorRegistry
@@ -191,8 +190,7 @@ class Compile : CliktCommand(help = "Compile ideal protocol to secure distribute
                         "src",
                         listOf<(context: CodeGeneratorContext) -> CodeGenerator>(
                             ::PlainTextCodeGenerator,
-                            ::CommitmentCreatorGenerator,
-                            ::CommitmentHolderGenerator
+                            ::CommitmentDispatchCodeGenerator
                         ),
                         DefaultCombinedBackend.protocolComposer
                     )

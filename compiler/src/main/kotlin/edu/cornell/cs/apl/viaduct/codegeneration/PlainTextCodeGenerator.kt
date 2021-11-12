@@ -3,9 +3,11 @@ package edu.cornell.cs.apl.viaduct.codegeneration
 import com.squareup.kotlinpoet.CodeBlock
 import com.squareup.kotlinpoet.MemberName
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
+import com.squareup.kotlinpoet.asClassName
 import com.squareup.kotlinpoet.asTypeName
 import edu.cornell.cs.apl.viaduct.backends.cleartext.Plaintext
 import edu.cornell.cs.apl.viaduct.errors.CodeGenerationError
+import edu.cornell.cs.apl.viaduct.runtime.EquivocationException
 import edu.cornell.cs.apl.viaduct.runtime.commitment.Commitment
 import edu.cornell.cs.apl.viaduct.runtime.commitment.Committed
 import edu.cornell.cs.apl.viaduct.selection.CommunicationEvent
@@ -37,7 +39,7 @@ import edu.cornell.cs.apl.viaduct.syntax.types.VectorType
 
 class PlainTextCodeGenerator(context: CodeGeneratorContext) :
     AbstractCodeGenerator(context) {
-    override fun exp(expr: ExpressionNode, protocol: Protocol): CodeBlock =
+    override fun exp(protocol: Protocol, expr: ExpressionNode): CodeBlock =
         when (expr) {
             is LiteralNode -> CodeBlock.of("%L", expr.value)
 
@@ -56,28 +58,28 @@ class PlainTextCodeGenerator(context: CodeGeneratorContext) :
                         CodeBlock.of(
                             "%M(%L, %L)",
                             MemberName("kotlin.math", "min"),
-                            exp(expr.arguments[0], protocol),
-                            exp(expr.arguments[1], protocol)
+                            exp(protocol, expr.arguments[0]),
+                            exp(protocol, expr.arguments[1])
                         )
                     Maximum ->
                         CodeBlock.of(
                             "%M(%L, %L)",
                             MemberName("kotlin.math", "max"),
-                            exp(expr.arguments[0], protocol),
-                            exp(expr.arguments[1], protocol)
+                            exp(protocol, expr.arguments[0]),
+                            exp(protocol, expr.arguments[1])
                         )
                     is UnaryOperator ->
                         CodeBlock.of(
                             "%L%L",
                             expr.operator.toString(),
-                            exp(expr.arguments[0], protocol)
+                            exp(protocol, expr.arguments[0])
                         )
                     is BinaryOperator ->
                         CodeBlock.of(
                             "%L %L %L",
-                            exp(expr.arguments[0], protocol),
+                            exp(protocol, expr.arguments[0]),
                             expr.operator,
-                            exp(expr.arguments[1], protocol)
+                            exp(protocol, expr.arguments[1])
                         )
                     else -> throw CodeGenerationError("unknown operator", expr)
                 }
@@ -90,7 +92,7 @@ class PlainTextCodeGenerator(context: CodeGeneratorContext) :
                             is Get -> CodeBlock.of(
                                 "%N[%L]",
                                 context.kotlinName(expr.variable.value),
-                                exp(expr.arguments.first(), protocol)
+                                exp(protocol, expr.arguments.first())
                             )
                             else -> throw CodeGenerationError("unknown vector query", expr)
                         }
@@ -113,7 +115,7 @@ class PlainTextCodeGenerator(context: CodeGeneratorContext) :
                     else -> throw CodeGenerationError("unknown AST object", expr)
                 }
 
-            is DowngradeNode -> exp(expr.expression, protocol)
+            is DowngradeNode -> exp(protocol, expr.expression)
 
             is InputNode ->
                 CodeBlock.of(
@@ -127,7 +129,7 @@ class PlainTextCodeGenerator(context: CodeGeneratorContext) :
         CodeBlock.of(
             "val %N = %L",
             context.kotlinName(stmt.temporary.value, protocol),
-            exp(stmt.value, protocol)
+            exp(protocol, stmt.value)
         )
 
     override fun declaration(protocol: Protocol, stmt: DeclarationNode): CodeBlock =
@@ -135,7 +137,7 @@ class PlainTextCodeGenerator(context: CodeGeneratorContext) :
             context.kotlinName(stmt.name.value),
             stmt.className,
             stmt.arguments,
-            exp(stmt.typeArguments[0].value.defaultValue),
+            value(stmt.typeArguments[0].value.defaultValue),
             protocol
         )
 
@@ -147,17 +149,17 @@ class PlainTextCodeGenerator(context: CodeGeneratorContext) :
                         CodeBlock.of(
                             "%N[%L] = %L",
                             context.kotlinName(stmt.variable.value),
-                            exp(stmt.arguments[0], protocol),
-                            exp(stmt.arguments[1], protocol)
+                            exp(protocol, stmt.arguments[0]),
+                            exp(protocol, stmt.arguments[1])
                         )
 
                     is Modify ->
                         CodeBlock.of(
                             "%N[%L] %L %L",
                             context.kotlinName(stmt.variable.value),
-                            exp(stmt.arguments[0], protocol),
+                            exp(protocol, stmt.arguments[0]),
                             stmt.update.value.name,
-                            exp(stmt.arguments[1], protocol)
+                            exp(protocol, stmt.arguments[1])
                         )
 
                     else -> throw CodeGenerationError("unknown update", stmt)
@@ -169,7 +171,7 @@ class PlainTextCodeGenerator(context: CodeGeneratorContext) :
                         CodeBlock.of(
                             "%N = %L",
                             context.kotlinName(stmt.variable.value),
-                            exp(stmt.arguments[0], protocol)
+                            exp(protocol, stmt.arguments[0])
                         )
 
                     is Modify ->
@@ -177,7 +179,7 @@ class PlainTextCodeGenerator(context: CodeGeneratorContext) :
                             "%N %L %L",
                             context.kotlinName(stmt.variable.value),
                             stmt.update.value.name,
-                            exp(stmt.arguments[0], protocol)
+                            exp(protocol, stmt.arguments[0])
                         )
 
                     else -> throw CodeGenerationError("unknown update", stmt)
@@ -226,10 +228,10 @@ class PlainTextCodeGenerator(context: CodeGeneratorContext) :
         CodeBlock.of(
             "runtime.output(%T(%L))",
             context.typeAnalysis.type(stmt.message).valueClass,
-            exp(stmt.message, protocol)
+            exp(protocol, stmt.message)
         )
 
-    override fun guard(protocol: Protocol, expr: AtomicExpressionNode): CodeBlock = exp(expr, protocol)
+    override fun guard(protocol: Protocol, expr: AtomicExpressionNode): CodeBlock = exp(protocol, expr)
 
     override fun send(
         sendingHost: Host,
@@ -253,7 +255,7 @@ class PlainTextCodeGenerator(context: CodeGeneratorContext) :
                             )
                         )
                     else
-                        sendBuilder.addStatement("%L", context.send(exp(sender.value, sendProtocol), event.recv.host))
+                        sendBuilder.addStatement("%L", context.send(exp(sendProtocol, sender.value), event.recv.host))
                 }
             }
         }
@@ -288,13 +290,13 @@ class PlainTextCodeGenerator(context: CodeGeneratorContext) :
                     hashCommitmentInputs.isEmpty() -> {
 
                     receiveBuilder.add(
-                        receiveHelper(
+                        "val %L = %L",
+                        clearTextTemp,
+                        receiveReplicated(
                             sender,
                             sendProtocol,
                             cleartextInputs,
-                            context,
-                            clearTextTemp,
-                            "Plaintext : received different values"
+                            context
                         )
                     )
 
@@ -340,7 +342,7 @@ class PlainTextCodeGenerator(context: CodeGeneratorContext) :
                         )
                         receiveBuilder.addStatement(
                             "throw %T(%S)",
-                            runtimeErrorClass,
+                            EquivocationException::class.asClassName(),
                             "equivocation error between hosts: " + receivingHost.toDocument().print() + ", " +
                                 hostsToCheckWith.first().toDocument().print()
                         )
@@ -365,7 +367,7 @@ class PlainTextCodeGenerator(context: CodeGeneratorContext) :
                         )
                         receiveBuilder.addStatement(
                             "throw %T(%S)",
-                            runtimeErrorClass,
+                            EquivocationException::class.asClassName(),
                             "equivocation error between hosts: " + receivingHost.toDocument().print() + ", " +
                                 host.toDocument().print()
                         )

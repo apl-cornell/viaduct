@@ -30,14 +30,14 @@ import edu.cornell.cs.apl.viaduct.syntax.types.ImmutableCellType
 import edu.cornell.cs.apl.viaduct.syntax.types.MutableCellType
 import edu.cornell.cs.apl.viaduct.syntax.types.VectorType
 
-class CommitmentCreatorGenerator(
+internal class CommitmentCreatorGenerator(
     context: CodeGeneratorContext
 ) : AbstractCodeGenerator(context) {
 
     private val committedClassName = Committed::class
 
     // this function should take in a protocol and reference the protocol arg in the body
-    override fun exp(expr: ExpressionNode, protocol: Protocol): CodeBlock =
+    override fun exp(protocol: Protocol, expr: ExpressionNode): CodeBlock =
         when (expr) {
             is LiteralNode -> CodeBlock.of(
                 "%M(%L)",
@@ -54,7 +54,7 @@ class CommitmentCreatorGenerator(
                     )
                 )
 
-            is DowngradeNode -> exp(expr.expression, protocol)
+            is DowngradeNode -> exp(protocol, expr.expression)
 
             is QueryNode -> {
                 when (context.typeAnalysis.type(context.nameAnalysis.declaration(expr))) {
@@ -63,7 +63,7 @@ class CommitmentCreatorGenerator(
                             is Get -> CodeBlock.of(
                                 "%N[%L]",
                                 context.kotlinName(expr.variable.value),
-                                exp(expr.arguments.first(), protocol)
+                                exp(protocol, expr.arguments.first())
                             )
                             else -> throw CodeGenerationError("unknown vector query", expr)
                         }
@@ -98,7 +98,7 @@ class CommitmentCreatorGenerator(
         CodeBlock.of(
             "val %N = %L",
             context.kotlinName(stmt.temporary.value, protocol),
-            exp(stmt.value, protocol)
+            exp(protocol, stmt.value)
         )
 
     override fun declaration(protocol: Protocol, stmt: DeclarationNode): CodeBlock =
@@ -108,7 +108,7 @@ class CommitmentCreatorGenerator(
             stmt.arguments,
             CodeBlock.of(
                 "fake(%L)",
-                exp(stmt.typeArguments[0].value.defaultValue)
+                value(stmt.typeArguments[0].value.defaultValue)
             ),
             protocol
         )
@@ -121,8 +121,8 @@ class CommitmentCreatorGenerator(
                         CodeBlock.of(
                             "%N[%L] = %L",
                             context.kotlinName(stmt.variable.value),
-                            exp(stmt.arguments[0], protocol),
-                            exp(stmt.arguments[1], protocol)
+                            exp(protocol, stmt.arguments[0]),
+                            exp(protocol, stmt.arguments[1])
                         )
                     else -> throw CodeGenerationError("Commitment: cannot modify commitments")
                 }
@@ -132,7 +132,7 @@ class CommitmentCreatorGenerator(
                         CodeBlock.of(
                             "%N = %L",
                             context.kotlinName(stmt.variable.value),
-                            exp(stmt.arguments[0], protocol)
+                            exp(protocol, stmt.arguments[0])
                         )
                     else -> throw CodeGenerationError("Commitment: cannot modify commitments")
                 }
@@ -143,7 +143,7 @@ class CommitmentCreatorGenerator(
         throw ViaductInterpreterError("Commitment: cannot perform I/O in non-local protocol")
     }
 
-    override fun guard(protocol: Protocol, expr: AtomicExpressionNode): CodeBlock = exp(expr, protocol)
+    override fun guard(protocol: Protocol, expr: AtomicExpressionNode): CodeBlock = exp(protocol, expr)
 
     override fun send(
         sendingHost: Host,
@@ -183,62 +183,49 @@ class CommitmentCreatorGenerator(
         val receiveBuilder = CodeBlock.builder()
         val projection = ProtocolProjection(receiveProtocol, receivingHost)
         val hashHosts: Set<Host> = (projection.protocol as Commitment).hashHosts
-        var clearTextTemp = context.newTemporary("clearTextTemp")
         val commitmentTemp = context.newTemporary("commitment")
         if (sendProtocol != receiveProtocol) {
             when {
                 events.any { event -> event.recv.id == Commitment.CLEARTEXT_INPUT } -> {
-                    var relevantEvents =
+                    val relevantEvents =
                         events.getHostReceives(
                             projection.host,
                             Commitment.CLEARTEXT_INPUT
                         )
 
                     if (relevantEvents.isNotEmpty()) {
-                        receiveBuilder.add(
-                            receiveHelper(
+                        receiveBuilder.addStatement(
+                            "val %N = %L",
+                            context.kotlinName(sender.temporary.value, receiveProtocol),
+                            receiveReplicated(
                                 sender,
                                 sendProtocol,
                                 relevantEvents,
-                                context,
-                                clearTextTemp,
-                                "Commitment Creator Cleartext : received different values"
+                                context
                             )
                         )
                     }
-
-                    receiveBuilder.addStatement(
-                        "val %N = %N",
-                        context.kotlinName(sender.temporary.value, receiveProtocol),
-                        clearTextTemp
-                    )
                 }
 
                 else -> {
-                    var cleartextInputEvents =
+                    val cleartextInputEvents =
                         events.getProjectionReceives(
                             projection,
                             Commitment.INPUT
                         )
 
-                    receiveBuilder.add(
-                        receiveHelper(
-                            sender,
-                            sendProtocol,
-                            cleartextInputEvents,
-                            context,
-                            clearTextTemp,
-                            "Commitment Creation : received different values"
-                        )
-                    )
-
                     receiveBuilder.addStatement(
-                        "val %N = %T(%N)",
+                        "val %N = %T(%L)",
                         context.kotlinName(sender.temporary.value, receiveProtocol),
                         committedClassName.asClassName().parameterizedBy(
                             typeTranslator(context.typeAnalysis.type(sender))
                         ),
-                        clearTextTemp
+                        receiveReplicated(
+                            sender,
+                            sendProtocol,
+                            cleartextInputEvents,
+                            context
+                        )
                     )
 
                     // create commitment

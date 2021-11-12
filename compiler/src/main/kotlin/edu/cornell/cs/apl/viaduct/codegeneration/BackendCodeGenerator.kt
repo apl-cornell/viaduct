@@ -41,7 +41,7 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.SimpleStatementNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.StatementNode
 import edu.cornell.cs.apl.viaduct.util.FreshNameGenerator
 
-class BackendCodeGenerator(
+private class BackendCodeGenerator(
     private val program: ProgramNode,
     private val host: Host,
     codeGenerators: List<(context: CodeGeneratorContext) -> CodeGenerator>,

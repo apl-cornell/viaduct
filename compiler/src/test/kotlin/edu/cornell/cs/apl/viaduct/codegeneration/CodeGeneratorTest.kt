@@ -22,7 +22,7 @@ internal class CodeGeneratorTest {
     @ParameterizedTest
     @ArgumentsSource(PositiveTestFileProvider::class)
     fun `it generates`(file: File) {
-        if (file.parentFile.name != "plaintext-code-generation") return
+        if (file.parentFile.name != "code-generation") return
 
         val program = SourceFile.from(file)
             .parse(DefaultCombinedBackend.protocolParsers)

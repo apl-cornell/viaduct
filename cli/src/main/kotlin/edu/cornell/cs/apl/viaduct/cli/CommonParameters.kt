@@ -10,16 +10,11 @@ import com.github.ajalt.clikt.parameters.options.counted
 import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.options.validate
 import com.github.ajalt.clikt.parameters.types.file
+import com.squareup.kotlinpoet.FileSpec
 import edu.cornell.cs.apl.prettyprinting.Document
 import edu.cornell.cs.apl.prettyprinting.PrettyPrintable
 import edu.cornell.cs.apl.prettyprinting.plus
-import edu.cornell.cs.apl.viaduct.parsing.ProtocolParser
 import edu.cornell.cs.apl.viaduct.parsing.SourceFile
-import edu.cornell.cs.apl.viaduct.parsing.defaultProtocolParsers
-import edu.cornell.cs.apl.viaduct.parsing.parse
-import edu.cornell.cs.apl.viaduct.syntax.Protocol
-import edu.cornell.cs.apl.viaduct.syntax.ProtocolName
-import edu.cornell.cs.apl.viaduct.syntax.surface.ProgramNode
 import org.apache.logging.log4j.Level
 import org.apache.logging.log4j.core.config.Configurator
 import org.fusesource.jansi.AnsiConsole
@@ -67,21 +62,12 @@ internal fun ParameterHolder.verbosity(): OptionDelegate<Int> =
         if (level != null) Configurator.setRootLevel(level)
     }
 
-/**
- * Parses the contents of [this] file as a program. If [this] is `null`, the standard input is
- * parsed instead.
- *
- * @throws IOException
- */
-internal fun File?.parse(
-    protocolParsers: Map<ProtocolName, ProtocolParser<Protocol>> = defaultProtocolParsers
-): ProgramNode =
-    (
-        if (this == null)
-            System.`in`.bufferedReader().use { SourceFile.from("<stdin>", it) }
-        else
-            SourceFile.from(this)
-        ).parse(protocolParsers)
+/** Returns a [SourceFile] constructed from [this]. Uses the standard input if [this] is `null`. */
+internal fun File?.sourceFile(): SourceFile =
+    if (this == null)
+        System.`in`.bufferedReader().use { SourceFile.from("<stdin>", it) }
+    else
+        SourceFile.from(this)
 
 /**
  * Jansi has this annoying behavior of reading [java.io.FileDescriptor.out] directly instead of using [System.out].
@@ -109,3 +95,10 @@ internal fun File?.println(document: PrettyPrintable) {
         PrintStream(this, Charsets.UTF_8).use { doc.print(it, ansi = false) }
     }
 }
+
+/** Writes [program] to [this] file. Writes to the standard output if [this] is `null`. */
+internal fun File?.write(program: FileSpec) =
+    if (this != null)
+        writer().use { program.writeTo(it) }
+    else
+        program.writeTo(System.out)

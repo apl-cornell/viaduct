@@ -42,6 +42,11 @@ fun receiveReplicated(
     fun receiveDispatcher(event: CommunicationEvent, receiveHost: Host): CodeBlock =
         when (event.send.host == receiveHost) {
             true -> CodeBlock.of("%L", context.kotlinName(sender.temporary.value, sendProtocol))
+            /*{
+                    when (sendProtocol) {
+                        is Commitment -> CodeBlock.of("%L.value", context.kotlinName(sender.temporary.value, sendProtocol))
+                        else -> CodeBlock.of("%L", context.kotlinName(sender.temporary.value, sendProtocol))
+                    }*/
             false -> CodeBlock.of(
                 "%L",
                 context.receive(
@@ -55,13 +60,20 @@ fun receiveReplicated(
     val receiveExpression = CodeBlock.builder()
     val it = eventSet.iterator()
 
-    // TODO() - check if there are future events, if not don't use also
-    receiveExpression.beginControlFlow(
-        "%L.also",
-        receiveDispatcher(it.next(), context.host)
-    )
+    if (eventSet.size > 1) {
+        receiveExpression.beginControlFlow(
+            "%L.also",
+            receiveDispatcher(it.next(), context.host)
+        )
+    } else {
+        receiveExpression.add(
+            "%L",
+            receiveDispatcher(it.next(), context.host)
+        )
+        return receiveExpression.build()
+    }
 
-    // check to make sure that you got the same data from all hosts
+// check to make sure that you got the same data from all hosts
     while (it.hasNext()) {
         val currentEvent = it.next()
         receiveExpression.add(

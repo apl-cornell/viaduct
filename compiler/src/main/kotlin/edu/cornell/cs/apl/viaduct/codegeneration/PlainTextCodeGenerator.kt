@@ -289,7 +289,7 @@ class PlainTextCodeGenerator(context: CodeGeneratorContext) :
                 cleartextInputs.isNotEmpty() && cleartextCommitmentInputs.isEmpty() &&
                     hashCommitmentInputs.isEmpty() -> {
 
-                    receiveBuilder.add(
+                    receiveBuilder.addStatement(
                         "val %L = %L",
                         clearTextTemp,
                         receiveReplicated(
@@ -385,13 +385,20 @@ class PlainTextCodeGenerator(context: CodeGeneratorContext) :
                 // commitment opening
                 cleartextInputs.isEmpty() && cleartextCommitmentInputs.isNotEmpty() &&
                     hashCommitmentInputs.isNotEmpty() -> {
+
+                    when (sendProtocol) {
+                        is edu.cornell.cs.apl.viaduct.backends.commitment.Commitment ->
+                            if (context.host == sendProtocol.cleartextHost) {
+                                return receiveBuilder.build()
+                            }
+                    }
+
                     if (cleartextCommitmentInputs.size != 1) {
                         throw CodeGenerationError("Commitment open: open multiple commitments at once")
                     }
                     val cleartextSendEvent = cleartextCommitmentInputs.first()
 
                     val receiveBlock = CodeBlock.builder()
-
                     if (cleartextSendEvent.send.host == context.host) {
                         receiveBlock.add(
                             "%L",

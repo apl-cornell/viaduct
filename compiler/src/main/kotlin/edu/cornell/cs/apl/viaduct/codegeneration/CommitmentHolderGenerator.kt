@@ -149,11 +149,19 @@ internal class CommitmentHolderGenerator(
         val sendBuilder = CodeBlock.builder()
 
         // here, the interpreter checks for the available protocols, is this necessary here?
-        val relevantEvents: Set<CommunicationEvent> =
+        var relevantEvents: List<CommunicationEvent> =
             events.getProjectionSends(
                 ProtocolProjection(sendProtocol, sendingHost),
                 CommitmentProtocol.OPEN_COMMITMENT_OUTPUT
-            )
+            ).toList()
+
+        // no need to send hash to host who already has it
+        when (sendProtocol) {
+            is edu.cornell.cs.apl.viaduct.backends.commitment.Commitment ->
+                relevantEvents = relevantEvents.filter { event ->
+                    event.recv.host != sendProtocol.cleartextHost
+                }
+        }
 
         for (event in relevantEvents) {
             if (event.send.host != event.recv.host) {

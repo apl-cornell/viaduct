@@ -8,9 +8,9 @@ import edu.cornell.cs.apl.prettyprinting.Document
 import edu.cornell.cs.apl.prettyprinting.PrettyPrintable
 import edu.cornell.cs.apl.viaduct.analysis.InformationFlowAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.descendantsIsInstance
-import edu.cornell.cs.apl.viaduct.backend.aby.abyMuxPostprocessor
-import edu.cornell.cs.apl.viaduct.backend.zkp.zkpMuxPostprocessor
 import edu.cornell.cs.apl.viaduct.backends.DefaultCombinedBackend
+import edu.cornell.cs.apl.viaduct.backends.aby.abyMuxPostprocessor
+import edu.cornell.cs.apl.viaduct.backends.zkp.zkpMuxPostprocessor
 import edu.cornell.cs.apl.viaduct.codegeneration.CodeGenerator
 import edu.cornell.cs.apl.viaduct.codegeneration.CodeGeneratorContext
 import edu.cornell.cs.apl.viaduct.codegeneration.CommitmentDispatchCodeGenerator

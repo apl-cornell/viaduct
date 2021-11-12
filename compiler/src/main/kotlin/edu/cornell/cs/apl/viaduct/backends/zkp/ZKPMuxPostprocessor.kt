@@ -1,6 +1,5 @@
-package edu.cornell.cs.apl.viaduct.backend.zkp
+package edu.cornell.cs.apl.viaduct.backends.zkp
 
-import edu.cornell.cs.apl.viaduct.backends.zkp.ZKP
 import edu.cornell.cs.apl.viaduct.passes.MuxPostprocessor
 import edu.cornell.cs.apl.viaduct.passes.ProgramPostprocessor
 import edu.cornell.cs.apl.viaduct.selection.ProtocolAssignment

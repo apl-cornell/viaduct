@@ -21,11 +21,11 @@ jobs:
           distribution: 'zulu'
           java-version: ${{ matrix.java }}
       - name: Build and test the compiler
-        uses: gradle/gradle-build-action@v1
+        uses: gradle/gradle-build-action@v2
         with:
           arguments: build jacocoTestReport
       - name: Build example programs
-        uses: gradle/gradle-build-action@v1
+        uses: gradle/gradle-build-action@v2
         with:
           arguments: -p examples build
       - name: Upload coverage to Codecov

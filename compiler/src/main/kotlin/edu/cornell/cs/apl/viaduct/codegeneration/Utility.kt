@@ -44,11 +44,6 @@ fun receiveReplicated(
     fun receiveDispatcher(event: CommunicationEvent, receiveHost: Host): CodeBlock =
         when (event.send.host == receiveHost) {
             true -> CodeBlock.of("%L", context.kotlinName(sender.temporary.value, sendProtocol))
-            /*{
-                    when (sendProtocol) {
-                        is Commitment -> CodeBlock.of("%L.value", context.kotlinName(sender.temporary.value, sendProtocol))
-                        else -> CodeBlock.of("%L", context.kotlinName(sender.temporary.value, sendProtocol))
-                    }*/
             false -> CodeBlock.of(
                 "%L",
                 context.receive(

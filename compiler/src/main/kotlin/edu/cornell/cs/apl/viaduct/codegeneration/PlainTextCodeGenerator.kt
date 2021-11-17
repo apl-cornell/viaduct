@@ -185,42 +185,6 @@ class PlainTextCodeGenerator(context: CodeGeneratorContext) :
             else -> throw CodeGenerationError("unknown object to update", stmt)
         }
 
-    /*override fun outParameterInitialization(
-        protocol: Protocol,
-        stmt: OutParameterInitializationNode
-    ): CodeBlock =
-        when (val initializer = stmt.initializer) {
-            is OutParameterConstructorInitializerNode -> {
-                val outTmpString = context.newTemporary("outTmp")
-                CodeBlock.builder()
-                    .add(
-                        // declare object
-                        declarationHelper(
-                            outTmpString,
-                            initializer.className,
-                            initializer.arguments,
-                            initializer.typeArguments[0].value
-                        )
-                    )
-                    .add(
-                        // fill box with constructed object
-                        CodeBlock.of(
-                            "%N.set(%L)",
-                            context.kotlinName(stmt.name.value),
-                            outTmpString
-                        )
-                    )
-                    .build()
-            }
-            // fill box named [stmt.name.value.name] with [initializer.expression]
-            is OutParameterExpressionInitializerNode ->
-                CodeBlock.of(
-                    "%N.set(%L)",
-                    context.kotlinName(stmt.name.value),
-                    exp(initializer.expression)
-                )
-        }*/
-
     override fun output(protocol: Protocol, stmt: OutputNode): CodeBlock =
         CodeBlock.of(
             "runtime.output(%T(%L))",
@@ -384,96 +348,70 @@ class PlainTextCodeGenerator(context: CodeGeneratorContext) :
                 cleartextInputs.isEmpty() && cleartextCommitmentInputs.isNotEmpty() &&
                     hashCommitmentInputs.isNotEmpty() -> {
 
-                    if (context.host == (sendProtocol as CommitmentProtocol).cleartextHost) {
-                        return receiveBuilder.build()
-                    }
-
+                    // sanity check, only open one commitment at once
                     if (cleartextCommitmentInputs.size != 1) {
                         throw CodeGenerationError("Commitment open: open multiple commitments at once")
                     }
-                    val cleartextSendEvent = cleartextCommitmentInputs.first()
 
-                    val receiveBlock = CodeBlock.builder()
-                    if (cleartextSendEvent.send.host == context.host) {
-                        receiveBlock.add(
-                            "%L",
+                    // Commitment -> Cleartext, on a single host (I am the cleartext host)
+                    // In this case, we don't need to validate with all hash holders, so we skip that part
+                    if (context.host == (sendProtocol as CommitmentProtocol).cleartextHost) {
+                        receiveBuilder.addStatement(
+                            "val %N = %N.value",
+                            context.kotlinName(sender.temporary.value, receiveProtocol),
                             context.kotlinName(sender.temporary.value, sendProtocol)
                         )
-                    } else {
-                        receiveBlock.add(
-                            "%L",
-                            context.receive(
-                                Committed::class.asTypeName().parameterizedBy(
-                                    typeTranslator(typeAnalysis.type(sender))
-                                ),
-                                cleartextSendEvent.send.host
-                            )
-                        )
+                        return receiveBuilder.build()
                     }
 
-                    receiveBuilder.addStatement(
-                        "val %N = %L",
-                        clearTextCommittedTemp,
-                        receiveBlock.build()
-                    )
+                    // Commitment -> Cleartext on multiple hosts (cleartext host is not me)
+                    // In this case, we do need to validate with all hash holders
 
-                    val firstHashReceiveBlock = CodeBlock.builder()
-
-                    if (hashCommitmentInputs.first().send.host == context.host) {
-                        firstHashReceiveBlock.add(
-                            "%L",
-                            context.kotlinName(sender.temporary.value, sendProtocol)
-                        )
-                    } else {
-                        firstHashReceiveBlock.add(
-                            "%L",
-                            context.receive(
-                                Commitment::class.asTypeName().parameterizedBy(
-                                    typeTranslator(typeAnalysis.type(sender))
-                                ),
-                                hashCommitmentInputs.first().send.host
-                            )
-                        )
-                    }
-
-                    receiveBuilder.addStatement(
-                        "var %N = %L.open(%N)",
-                        context.kotlinName(sender.temporary.value, receiveProtocol),
-                        firstHashReceiveBlock.build(),
-                        clearTextCommittedTemp
-                    )
-
-                    hashCommitmentInputs = hashCommitmentInputs.minusElement(hashCommitmentInputs.first())
-
-                    // compare commitment creator's value with all hash replica holder's value
-                    for (hashCommitmentInput in hashCommitmentInputs) {
-
-                        val hashReceiveBlock = CodeBlock.builder()
-
-                        if (hashCommitmentInput.send.host == context.host) {
-                            hashReceiveBlock.add(
-                                "%L",
-                                context.kotlinName(sender.temporary.value, sendProtocol)
-                            )
-                        } else {
-                            hashReceiveBlock.add(
+                    fun hashReceiveDispatcher(event: CommunicationEvent): CodeBlock =
+                        when (event.send.host == context.host) {
+                            true -> CodeBlock.of("%L", context.kotlinName(sender.temporary.value, sendProtocol))
+                            false -> CodeBlock.of(
                                 "%L",
                                 context.receive(
                                     Commitment::class.asTypeName().parameterizedBy(
                                         typeTranslator(typeAnalysis.type(sender))
                                     ),
-                                    hashCommitmentInput.send.host
+                                    event.send.host
                                 )
                             )
                         }
 
-                        // validate commitment with all hash holders
-                        receiveBuilder.addStatement(
+                    // receive declassified commitment from the hash holder
+                    receiveBuilder.addStatement(
+                        "val %N = %L",
+                        clearTextCommittedTemp,
+                        context.receive(
+                            Committed::class.asTypeName().parameterizedBy(
+                                typeTranslator(typeAnalysis.type(sender))
+                            ),
+                            cleartextCommitmentInputs.first().send.host
+                        )
+                    )
+
+                    val it = hashCommitmentInputs.iterator()
+
+                    // validate commitment with all hash holders
+                    receiveBuilder.beginControlFlow(
+                        "var %N = %L.open(%N).also",
+                        context.kotlinName(sender.temporary.value, receiveProtocol),
+                        hashReceiveDispatcher(it.next()),
+                        clearTextCommittedTemp
+                    )
+
+                    while (it.hasNext()) {
+                        receiveBuilder.add(
                             "%L.open(%N)",
-                            hashReceiveBlock.build(),
+                            hashReceiveDispatcher(it.next()),
                             clearTextCommittedTemp
                         )
                     }
+
+                    receiveBuilder.endControlFlow()
                 }
 
                 else ->

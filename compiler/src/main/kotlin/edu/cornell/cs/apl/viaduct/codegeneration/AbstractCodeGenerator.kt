@@ -1,8 +1,6 @@
 package edu.cornell.cs.apl.viaduct.codegeneration
 
 import com.squareup.kotlinpoet.CodeBlock
-import edu.cornell.cs.apl.viaduct.syntax.Arguments
-import edu.cornell.cs.apl.viaduct.syntax.ClassNameNode
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
 import edu.cornell.cs.apl.viaduct.syntax.datatypes.ImmutableCell
 import edu.cornell.cs.apl.viaduct.syntax.datatypes.MutableCell
@@ -11,10 +9,10 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.AtomicExpressionNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.DeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ExpressionNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.LetNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutParameterConstructorInitializerNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutParameterExpressionInitializerNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.LiteralNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutParameterInitializationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutputNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.ReadNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.SimpleStatementNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.UpdateNode
 import edu.cornell.cs.apl.viaduct.syntax.values.Value
@@ -28,7 +26,7 @@ abstract class AbstractCodeGenerator(val context: CodeGeneratorContext) : CodeGe
 
             is UpdateNode -> update(protocol, stmt)
 
-            is OutParameterInitializationNode -> outParameterInitialization(protocol, stmt)
+            is OutParameterInitializationNode -> outParameterInitialization()
 
             is OutputNode -> output(protocol, stmt)
         }
@@ -42,17 +40,62 @@ abstract class AbstractCodeGenerator(val context: CodeGeneratorContext) : CodeGe
 
     abstract fun exp(protocol: Protocol, expr: ExpressionNode): CodeBlock
 
+    fun cleartextExp(protocol: Protocol, expr: AtomicExpressionNode): CodeBlock =
+        when (expr) {
+            is LiteralNode -> CodeBlock.of("%L", expr.value)
+            is ReadNode -> CodeBlock.of(
+                "%N",
+                context.kotlinName(
+                    expr.temporary.value,
+                    protocol
+                )
+            )
+        }
+
     abstract fun let(protocol: Protocol, stmt: LetNode): CodeBlock
 
-    abstract fun declaration(protocol: Protocol, stmt: DeclarationNode): CodeBlock
+    fun declaration(protocol: Protocol, stmt: DeclarationNode): CodeBlock {
+        return when (stmt.className.value) {
+            ImmutableCell -> CodeBlock.of(
+                "val %N = %L",
+                context.kotlinName(stmt.name.value),
+                exp(protocol, stmt.arguments.first())
+            )
+
+            // TODO - change this (difference between viaduct, kotlin semantics)
+            MutableCell -> CodeBlock.of(
+                "var %N = %L",
+                context.kotlinName(stmt.name.value),
+                exp(protocol, stmt.arguments.first())
+            )
+
+            Vector -> {
+                CodeBlock.of(
+                    "val %N = Array(%L){ %L }",
+                    context.kotlinName(stmt.name.value),
+                    cleartextExp(protocol, stmt.arguments.first()),
+                    exp(
+                        protocol,
+                        LiteralNode(
+                            stmt.typeArguments[0].value.defaultValue,
+                            stmt.sourceLocation
+                        )
+                    )
+                )
+            }
+
+            else -> TODO("throw error")
+        }
+    }
 
     abstract fun update(protocol: Protocol, stmt: UpdateNode): CodeBlock
 
-    fun outParameterInitialization(
-        protocol: Protocol,
-        stmt: OutParameterInitializationNode
+    private fun outParameterInitialization(
+/*        protocol: Protocol,
+        stmt: OutParameterInitializationNode*/
     ): CodeBlock =
-        when (val initializer = stmt.initializer) {
+        TODO()
+/*        when (val initializer = stmt.initializer) {
             is OutParameterConstructorInitializerNode -> {
                 val outTmpString = context.newTemporary("outTmp")
                 CodeBlock.builder()
@@ -83,43 +126,9 @@ abstract class AbstractCodeGenerator(val context: CodeGeneratorContext) : CodeGe
                     context.kotlinName(stmt.name.value),
                     exp(protocol, initializer.expression)
                 )
-        }
+        }*/
 
     abstract fun output(protocol: Protocol, stmt: OutputNode): CodeBlock
-
-    fun declarationHelper(
-        name: String,
-        className: ClassNameNode,
-        arguments: Arguments<AtomicExpressionNode>,
-        initFun: CodeBlock,
-        protocol: Protocol
-    ): CodeBlock {
-        return when (className.value) {
-            ImmutableCell -> CodeBlock.of(
-                "val %N = %L",
-                name,
-                exp(protocol, arguments.first())
-            )
-
-            // TODO - change this (difference between viaduct, kotlin semantics)
-            MutableCell -> CodeBlock.of(
-                "var %N = %L",
-                name,
-                exp(protocol, arguments.first())
-            )
-
-            Vector -> {
-                CodeBlock.of(
-                    "val %N = Array(%L){ %L }",
-                    name,
-                    exp(protocol, arguments.first()),
-                    initFun
-                )
-            }
-
-            else -> TODO("throw error")
-        }
-    }
 }
 
 abstract class SingleProtocolCodeGenerator(context: CodeGeneratorContext) : AbstractCodeGenerator(context) {

@@ -4,6 +4,8 @@ import com.squareup.kotlinpoet.CodeBlock
 import com.squareup.kotlinpoet.MemberName
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import com.squareup.kotlinpoet.asClassName
+import edu.cornell.cs.apl.viaduct.analysis.NameAnalysis
+import edu.cornell.cs.apl.viaduct.analysis.TypeAnalysis
 import edu.cornell.cs.apl.viaduct.errors.CodeGenerationError
 import edu.cornell.cs.apl.viaduct.runtime.commitment.Commitment
 import edu.cornell.cs.apl.viaduct.runtime.commitment.Committed
@@ -14,7 +16,6 @@ import edu.cornell.cs.apl.viaduct.syntax.Protocol
 import edu.cornell.cs.apl.viaduct.syntax.ProtocolProjection
 import edu.cornell.cs.apl.viaduct.syntax.datatypes.Get
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.AtomicExpressionNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.DeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.DowngradeNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ExpressionNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.InputNode
@@ -33,6 +34,8 @@ import edu.cornell.cs.apl.viaduct.backends.commitment.Commitment as CommitmentPr
 internal class CommitmentHolderGenerator(
     context: CodeGeneratorContext
 ) : AbstractCodeGenerator(context) {
+    private val typeAnalysis: TypeAnalysis = TypeAnalysis.get(context.program)
+    private val nameAnalysis: NameAnalysis = NameAnalysis.get(context.program)
     override fun exp(protocol: Protocol, expr: ExpressionNode): CodeBlock =
         when (expr) {
             is LiteralNode -> CodeBlock.of(
@@ -50,13 +53,13 @@ internal class CommitmentHolderGenerator(
             is DowngradeNode -> exp(protocol, expr.expression)
 
             is QueryNode ->
-                when (context.typeAnalysis.type(context.nameAnalysis.declaration(expr))) {
+                when (typeAnalysis.type(nameAnalysis.declaration(expr))) {
                     is VectorType -> {
                         when (expr.query.value) {
                             is Get -> CodeBlock.of(
                                 "%N[%L]",
                                 context.kotlinName(expr.variable.value),
-                                exp(protocol, expr.arguments.first())
+                                cleartextExp(protocol, expr.arguments.first())
                             )
                             else -> throw CodeGenerationError("unknown vector query", expr)
                         }
@@ -93,29 +96,15 @@ internal class CommitmentHolderGenerator(
             exp(protocol, stmt.value)
         )
 
-    override fun declaration(protocol: Protocol, stmt: DeclarationNode): CodeBlock =
-        declarationHelper(
-            context.kotlinName(stmt.name.value),
-            stmt.className,
-            stmt.arguments,
-            CodeBlock.of(
-                "%M(%L).%M()",
-                MemberName(Committed.Companion::class.asClassName(), "fake"),
-                value(stmt.typeArguments[0].value.defaultValue),
-                MemberName(Committed.Companion::class.asClassName(), "commitment")
-            ),
-            protocol
-        )
-
     override fun update(protocol: Protocol, stmt: UpdateNode): CodeBlock =
-        when (context.typeAnalysis.type(context.nameAnalysis.declaration(stmt))) {
+        when (typeAnalysis.type(nameAnalysis.declaration(stmt))) {
             is VectorType ->
                 when (stmt.update.value) {
                     is edu.cornell.cs.apl.viaduct.syntax.datatypes.Set ->
                         CodeBlock.of(
                             "%N[%L] = %L",
                             context.kotlinName(stmt.variable.value),
-                            exp(protocol, stmt.arguments[0]),
+                            cleartextExp(protocol, stmt.arguments[0]),
                             exp(protocol, stmt.arguments[1])
                         )
                     else -> throw CodeGenerationError("Commitment: cannot modify commitments")
@@ -203,8 +192,9 @@ internal class CommitmentHolderGenerator(
                             sender,
                             sendProtocol,
                             relevantEvents,
-                            context
-                        )
+                            context,
+                            typeAnalysis
+                        ),
                     )
                 }
 
@@ -215,7 +205,7 @@ internal class CommitmentHolderGenerator(
                             context.kotlinName(sender.temporary.value, receiveProtocol),
                             context.receive(
                                 Commitment::class.asClassName().parameterizedBy(
-                                    typeTranslator(context.typeAnalysis.type(sender))
+                                    typeTranslator(typeAnalysis.type(sender))
                                 ),
                                 events.first().send.host
                             )

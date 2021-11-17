@@ -7,11 +7,11 @@ import com.squareup.kotlinpoet.KModifier
 import com.squareup.kotlinpoet.MemberName
 import com.squareup.kotlinpoet.PropertySpec
 import com.squareup.kotlinpoet.TypeName
+import com.squareup.kotlinpoet.TypeSpec
 import com.squareup.kotlinpoet.asClassName
 import edu.cornell.cs.apl.prettyprinting.joined
 import edu.cornell.cs.apl.viaduct.analysis.NameAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.ProtocolAnalysis
-import edu.cornell.cs.apl.viaduct.analysis.TypeAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.main
 import edu.cornell.cs.apl.viaduct.backends.cleartext.Local
 import edu.cornell.cs.apl.viaduct.backends.cleartext.Replication
@@ -40,6 +40,7 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.ReadNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.SimpleStatementNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.StatementNode
 import edu.cornell.cs.apl.viaduct.util.FreshNameGenerator
+import org.apache.commons.lang3.StringUtils.substringBefore
 
 private class BackendCodeGenerator(
     private val program: ProgramNode,
@@ -230,9 +231,6 @@ private class BackendCodeGenerator(
         override val protocolComposer: ProtocolComposer
     ) :
         CodeGeneratorContext {
-        override val protocolAnalysis: ProtocolAnalysis = ProtocolAnalysis(program, protocolComposer)
-        override val typeAnalysis = TypeAnalysis.get(program)
-        override val nameAnalysis = NameAnalysis.get(program)
 
         private var tempMap: MutableMap<Pair<Temporary, Protocol>, String> = mutableMapOf()
         private var varMap: MutableMap<ObjectVariable, String> = mutableMapOf()
@@ -264,10 +262,10 @@ private class BackendCodeGenerator(
     }
 }
 
-private fun addHostDeclarations(fileBuilder: FileSpec.Builder, program: ProgramNode) {
+private fun addHostDeclarations(objectBuilder: TypeSpec.Builder, program: ProgramNode) {
     // add a global host object for each host
     for (host: Host in program.hosts) {
-        fileBuilder.addProperty(
+        objectBuilder.addProperty(
             PropertySpec.builder(host.name, Host::class)
                 .initializer(
                     CodeBlock.of(
@@ -290,8 +288,6 @@ fun compileKotlinFile(
 
 ): String = compileKotlinFileSpec(program, fileName, packageName, codeGenerators, protocolComposer).toString()
 
-// this should take a list of backend generators
-// name this compile to kotlin or something
 fun compileKotlinFileSpec(
     program: ProgramNode,
     fileName: String,
@@ -305,8 +301,11 @@ fun compileKotlinFileSpec(
     // create a main file builder, main function builder
     val fileBuilder = FileSpec.builder(packageName, fileName)
 
-    // add top level declarations to main file
-    addHostDeclarations(fileBuilder, program)
+    // create main object
+    val objectBuilder = TypeSpec.objectBuilder(substringBefore(fileName, "."))
+
+    // add host declarations to main object
+    addHostDeclarations(objectBuilder, program)
 
     val mainFunctionBuilder = FunSpec.builder("main").addModifiers(KModifier.SUSPEND)
     mainFunctionBuilder.addParameter("host", Host::class)
@@ -324,7 +323,7 @@ fun compileKotlinFileSpec(
             protocolComposer
         )
 
-        fileBuilder.addFunction(
+        objectBuilder.addFunction(
             curGenerator.generateHostFunction(
                 entry.key,
                 entry.value,
@@ -345,7 +344,9 @@ fun compileKotlinFileSpec(
     }
 
     mainFunctionBuilder.endControlFlow()
-    fileBuilder.addFunction(mainFunctionBuilder.build())
+    objectBuilder.addFunction(mainFunctionBuilder.build())
+
+    fileBuilder.addType(objectBuilder.build())
 
     return fileBuilder.build()
 }

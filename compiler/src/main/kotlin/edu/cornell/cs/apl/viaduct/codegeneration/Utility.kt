@@ -6,6 +6,7 @@ import com.squareup.kotlinpoet.INT
 import com.squareup.kotlinpoet.STRING
 import com.squareup.kotlinpoet.TypeName
 import com.squareup.kotlinpoet.U_BYTE_ARRAY
+import edu.cornell.cs.apl.viaduct.analysis.TypeAnalysis
 import edu.cornell.cs.apl.viaduct.errors.CodeGenerationError
 import edu.cornell.cs.apl.viaduct.selection.CommunicationEvent
 import edu.cornell.cs.apl.viaduct.syntax.Host
@@ -36,7 +37,8 @@ fun receiveReplicated(
     sender: LetNode,
     sendProtocol: Protocol,
     events: Set<CommunicationEvent>,
-    context: CodeGeneratorContext
+    context: CodeGeneratorContext,
+    typeAnalysis: TypeAnalysis
 ): CodeBlock {
 
     fun receiveDispatcher(event: CommunicationEvent, receiveHost: Host): CodeBlock =
@@ -50,7 +52,7 @@ fun receiveReplicated(
             false -> CodeBlock.of(
                 "%L",
                 context.receive(
-                    typeTranslator(context.typeAnalysis.type(sender)),
+                    typeTranslator(typeAnalysis.type(sender)),
                     event.send.host
                 )
             )

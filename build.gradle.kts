@@ -54,7 +54,7 @@ subprojects {
 
         /** Java Version */
 
-        extensions.configure<JavaPluginExtension>("java") {
+        configure<JavaPluginExtension> {
             toolchain {
                 languageVersion.set(JavaLanguageVersion.of(11))
             }

@@ -87,7 +87,7 @@ abstract class CompileViaductTask : DefaultTask() {
     }
 
     private fun compile(sourceFile: File, packageName: String, fileName: String): String {
-        val program = SourceFile.from(sourceFile).parse().elaborated().specialize()
+        val program = SourceFile.from(sourceFile).parse(backend.get().protocolParsers).elaborated().specialize()
 
         // Perform static checks.
         program.check()

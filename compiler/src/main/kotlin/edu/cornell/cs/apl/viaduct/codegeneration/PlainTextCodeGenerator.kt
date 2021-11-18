@@ -1,10 +1,7 @@
 package edu.cornell.cs.apl.viaduct.codegeneration
 
-import com.squareup.kotlinpoet.CodeBlock
-import com.squareup.kotlinpoet.MemberName
+import com.squareup.kotlinpoet.*
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
-import com.squareup.kotlinpoet.asClassName
-import com.squareup.kotlinpoet.asTypeName
 import edu.cornell.cs.apl.viaduct.analysis.NameAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.ProtocolAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.TypeAnalysis
@@ -12,6 +9,7 @@ import edu.cornell.cs.apl.viaduct.backends.cleartext.Plaintext
 import edu.cornell.cs.apl.viaduct.errors.CodeGenerationError
 import edu.cornell.cs.apl.viaduct.runtime.EquivocationException
 import edu.cornell.cs.apl.viaduct.runtime.commitment.Commitment
+import edu.cornell.cs.apl.viaduct.backends.commitment.Commitment as CommitmentProtocol
 import edu.cornell.cs.apl.viaduct.runtime.commitment.Committed
 import edu.cornell.cs.apl.viaduct.selection.CommunicationEvent
 import edu.cornell.cs.apl.viaduct.selection.ProtocolCommunication
@@ -38,7 +36,6 @@ import edu.cornell.cs.apl.viaduct.syntax.operators.Minimum
 import edu.cornell.cs.apl.viaduct.syntax.types.ImmutableCellType
 import edu.cornell.cs.apl.viaduct.syntax.types.MutableCellType
 import edu.cornell.cs.apl.viaduct.syntax.types.VectorType
-import edu.cornell.cs.apl.viaduct.backends.commitment.Commitment as CommitmentProtocol
 
 class PlainTextCodeGenerator(context: CodeGeneratorContext) :
     AbstractCodeGenerator(context) {
@@ -232,7 +229,7 @@ class PlainTextCodeGenerator(context: CodeGeneratorContext) :
     ): CodeBlock {
         val receiveBuilder = CodeBlock.builder()
         val clearTextTemp = context.newTemporary("clearTextTemp")
-        val clearTextCommittedTemp = context.newTemporary("clearTextCommittedTemp")
+        var clearTextCommittedTemp = context.newTemporary("cleartextCommittedTemp")
         if (sendProtocol != receiveProtocol) {
             val projection = ProtocolProjection(receiveProtocol, receivingHost)
             val cleartextInputs = events.getProjectionReceives(
@@ -243,7 +240,7 @@ class PlainTextCodeGenerator(context: CodeGeneratorContext) :
             val cleartextCommitmentInputs =
                 events.getProjectionReceives(projection, Plaintext.CLEARTEXT_COMMITMENT_INPUT)
 
-            var hashCommitmentInputs =
+            val hashCommitmentInputs =
                 events.getProjectionReceives(projection, Plaintext.HASH_COMMITMENT_INPUT)
 
             when {
@@ -303,10 +300,13 @@ class PlainTextCodeGenerator(context: CodeGeneratorContext) :
                             clearTextTemp
                         )
                         receiveBuilder.addStatement(
-                            "throw %T(%S)",
+                            "throw %T(%L, %L, %L, %L)",
                             EquivocationException::class.asClassName(),
-                            "equivocation error between hosts: " + receivingHost.toDocument().print() + ", " +
-                                hostsToCheckWith.first().toDocument().print()
+                            clearTextTemp,
+                            cleartextInputs.first().send.host.name,
+                            receiveTmp,
+                            hostsToCheckWith.first().name
+
                         )
                         receiveBuilder.endControlFlow()
                         hostsToCheckWith = hostsToCheckWith.minusElement(hostsToCheckWith.first())
@@ -353,65 +353,63 @@ class PlainTextCodeGenerator(context: CodeGeneratorContext) :
                         throw CodeGenerationError("Commitment open: open multiple commitments at once")
                     }
 
-                    // Commitment -> Cleartext, on a single host (I am the cleartext host)
-                    // In this case, we don't need to validate with all hash holders, so we skip that part
-                    if (context.host == (sendProtocol as CommitmentProtocol).cleartextHost) {
-                        receiveBuilder.addStatement(
-                            "val %N = %N.value",
-                            context.kotlinName(sender.temporary.value, receiveProtocol),
-                            context.kotlinName(sender.temporary.value, sendProtocol)
-                        )
-                        return receiveBuilder.build()
-                    }
-
-                    // Commitment -> Cleartext on multiple hosts (cleartext host is not me)
-                    // In this case, we do need to validate with all hash holders
-
-                    fun hashReceiveDispatcher(event: CommunicationEvent): CodeBlock =
+                    fun receiveDispatcher(
+                        event: CommunicationEvent,
+                        inputBlock : CodeBlock,
+                        receiveType : ParameterizedTypeName
+                    ): CodeBlock =
                         when (event.send.host == context.host) {
-                            true -> CodeBlock.of("%L", context.kotlinName(sender.temporary.value, sendProtocol))
+                            true -> CodeBlock.of(
+                                "%L%L",
+                                context.kotlinName(sender.temporary.value, sendProtocol),
+                                inputBlock
+
+                            )
                             false -> CodeBlock.of(
                                 "%L",
                                 context.receive(
-                                    Commitment::class.asTypeName().parameterizedBy(
-                                        typeTranslator(typeAnalysis.type(sender))
-                                    ),
+                                    receiveType,
                                     event.send.host
                                 )
                             )
                         }
 
                     // receive declassified commitment from the hash holder
+                    if (context.host == (sendProtocol as CommitmentProtocol).cleartextHost) {
+                        clearTextCommittedTemp = context.kotlinName(sender.temporary.value, receiveProtocol)
+                    }
                     receiveBuilder.addStatement(
                         "val %N = %L",
                         clearTextCommittedTemp,
-                        context.receive(
+                        receiveDispatcher(
+                            cleartextCommitmentInputs.first(),
+                            CodeBlock.of("%L", ".value"), // only call .value when committed is coming from context.host
                             Committed::class.asTypeName().parameterizedBy(
-                                typeTranslator(typeAnalysis.type(sender))
+                                typeTranslator((typeAnalysis.type(sender)))
+                            ))
+                    )
+
+                    var firstHashInput = true
+                    var assignCode = CodeBlock.of("%L", "var ")
+                    for (hashSendEvent in hashCommitmentInputs) {
+                        if (!firstHashInput) {
+                            assignCode = CodeBlock.of("")
+                        }
+                        receiveBuilder.addStatement(
+                            "%L%N = %L.open(%N)",
+                            assignCode,
+                            context.kotlinName(sender.temporary.value, receiveProtocol),
+                            receiveDispatcher(
+                                hashSendEvent,
+                                CodeBlock.of("%L", ""), // do not call .value when receiving a commitment
+                                Commitment::class.asTypeName().parameterizedBy(
+                                    typeTranslator((typeAnalysis.type(sender)))
+                                )
                             ),
-                            cleartextCommitmentInputs.first().send.host
-                        )
-                    )
-
-                    val it = hashCommitmentInputs.iterator()
-
-                    // validate commitment with all hash holders
-                    receiveBuilder.beginControlFlow(
-                        "var %N = %L.open(%N).also",
-                        context.kotlinName(sender.temporary.value, receiveProtocol),
-                        hashReceiveDispatcher(it.next()),
-                        clearTextCommittedTemp
-                    )
-
-                    while (it.hasNext()) {
-                        receiveBuilder.add(
-                            "%L.open(%N)",
-                            hashReceiveDispatcher(it.next()),
                             clearTextCommittedTemp
                         )
+                        firstHashInput = false
                     }
-
-                    receiveBuilder.endControlFlow()
                 }
 
                 else ->

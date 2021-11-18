@@ -302,7 +302,7 @@ fun compileKotlinFileSpec(
     val fileBuilder = FileSpec.builder(packageName, fileName)
 
     // create main object
-    val objectBuilder = TypeSpec.objectBuilder(substringBefore(fileName, "."))
+    val objectBuilder = TypeSpec.objectBuilder(fileName)
 
     // add host declarations to main object
     addHostDeclarations(objectBuilder, program)

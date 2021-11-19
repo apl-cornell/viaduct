@@ -8,6 +8,7 @@ import com.squareup.kotlinpoet.MemberName
 import com.squareup.kotlinpoet.PropertySpec
 import com.squareup.kotlinpoet.TypeName
 import com.squareup.kotlinpoet.asClassName
+import edu.cornell.cs.apl.prettyprinting.Document
 import edu.cornell.cs.apl.prettyprinting.joined
 import edu.cornell.cs.apl.viaduct.analysis.NameAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.ProtocolAnalysis
@@ -186,18 +187,16 @@ class BackendCodeGenerator(
                     events = protocolAnalysis.relevantCommunicationEvents(stmt, reader)
                 }
 
-                val commentString = protocol.toDocument().print()
                 if (protocolAnalysis.participatingHosts(stmt).contains(host)) {
-
+                    hostFunctionBuilder.addComment(stmt.toDocument().print())
                     // generate code for the statement, if [host] participating
                     val protocolCodeGenerator = codeGeneratorMap[protocol]
                         ?: throw CodeGenerationError("no code generator for protocol ${protocol.toDocument().print()}")
-                    hostFunctionBuilder.addComment("Let: $commentString")
                     hostFunctionBuilder.addStatement("%L", protocolCodeGenerator.simpleStatement(protocol, stmt))
 
                     // generate code for sending data
                     if (readers.isNotEmpty()) {
-                        hostFunctionBuilder.addComment("Send: $commentString")
+
                         hostFunctionBuilder.addCode("%L", protocolCodeGenerator.send(host, stmt, protocol, readerProtocol!!, events!!))
                     }
                 }
@@ -207,7 +206,6 @@ class BackendCodeGenerator(
                     if (protocolAnalysis.participatingHosts(reader!!).contains(host)) {
                         val protocolCodeGenerator = codeGeneratorMap[readerProtocol]
                             ?: throw CodeGenerationError("no code generator for protocol ${protocol.toDocument().print()}")
-                        hostFunctionBuilder.addComment("Receive: $commentString")
                         hostFunctionBuilder.addCode("%L", protocolCodeGenerator.receive(host, stmt, protocol, readerProtocol!!, events!!))
                     }
                 }

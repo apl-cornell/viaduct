@@ -346,9 +346,6 @@ class PlainTextCodeGenerator(context: CodeGeneratorContext) :
                 }
 
                 // commitment opening
-                // recive committed into cleartext temp
-                // open all of the hash commitmnets
-                // store committe.value into the proper temporary
                 cleartextInputs.isEmpty() && cleartextCommitmentInputs.isNotEmpty() &&
                     hashCommitmentInputs.isNotEmpty() -> {
 

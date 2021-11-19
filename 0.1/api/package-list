@@ -41,6 +41,7 @@ edu.cornell.cs.apl.viaduct.libsnarkwrapper
 edu.cornell.cs.apl.viaduct.protocols
 module:runtime2
 edu.cornell.cs.apl.viaduct.runtime
+edu.cornell.cs.apl.viaduct.runtime.commitment
 module:shared
 edu.cornell.cs.apl.attributes
 edu.cornell.cs.apl.prettyprinting

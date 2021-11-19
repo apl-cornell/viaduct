@@ -40,7 +40,6 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.ReadNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.SimpleStatementNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.StatementNode
 import edu.cornell.cs.apl.viaduct.util.FreshNameGenerator
-import org.apache.commons.lang3.StringUtils.substringBefore
 
 private class BackendCodeGenerator(
     private val program: ProgramNode,

@@ -1,7 +1,11 @@
 package edu.cornell.cs.apl.viaduct.codegeneration
 
-import com.squareup.kotlinpoet.*
+import com.squareup.kotlinpoet.CodeBlock
+import com.squareup.kotlinpoet.MemberName
+import com.squareup.kotlinpoet.ParameterizedTypeName
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
+import com.squareup.kotlinpoet.asClassName
+import com.squareup.kotlinpoet.asTypeName
 import edu.cornell.cs.apl.viaduct.analysis.NameAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.ProtocolAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.TypeAnalysis
@@ -9,7 +13,6 @@ import edu.cornell.cs.apl.viaduct.backends.cleartext.Plaintext
 import edu.cornell.cs.apl.viaduct.errors.CodeGenerationError
 import edu.cornell.cs.apl.viaduct.runtime.EquivocationException
 import edu.cornell.cs.apl.viaduct.runtime.commitment.Commitment
-import edu.cornell.cs.apl.viaduct.backends.commitment.Commitment as CommitmentProtocol
 import edu.cornell.cs.apl.viaduct.runtime.commitment.Committed
 import edu.cornell.cs.apl.viaduct.selection.CommunicationEvent
 import edu.cornell.cs.apl.viaduct.selection.ProtocolCommunication
@@ -36,6 +39,7 @@ import edu.cornell.cs.apl.viaduct.syntax.operators.Minimum
 import edu.cornell.cs.apl.viaduct.syntax.types.ImmutableCellType
 import edu.cornell.cs.apl.viaduct.syntax.types.MutableCellType
 import edu.cornell.cs.apl.viaduct.syntax.types.VectorType
+import edu.cornell.cs.apl.viaduct.backends.commitment.Commitment as CommitmentProtocol
 
 class PlainTextCodeGenerator(context: CodeGeneratorContext) :
     AbstractCodeGenerator(context) {
@@ -355,8 +359,8 @@ class PlainTextCodeGenerator(context: CodeGeneratorContext) :
 
                     fun receiveDispatcher(
                         event: CommunicationEvent,
-                        inputBlock : CodeBlock,
-                        receiveType : ParameterizedTypeName
+                        inputBlock: CodeBlock,
+                        receiveType: ParameterizedTypeName
                     ): CodeBlock =
                         when (event.send.host == context.host) {
                             true -> CodeBlock.of(
@@ -386,7 +390,8 @@ class PlainTextCodeGenerator(context: CodeGeneratorContext) :
                             CodeBlock.of("%L", ".value"), // only call .value when committed is coming from context.host
                             Committed::class.asTypeName().parameterizedBy(
                                 typeTranslator((typeAnalysis.type(sender)))
-                            ))
+                            )
+                        )
                     )
 
                     var firstHashInput = true

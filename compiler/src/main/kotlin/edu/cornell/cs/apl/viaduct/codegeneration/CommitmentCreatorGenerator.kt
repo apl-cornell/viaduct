@@ -138,7 +138,6 @@ internal class CommitmentCreatorGenerator(
     override fun guard(protocol: Protocol, expr: AtomicExpressionNode): CodeBlock = exp(protocol, expr)
 
     override fun send(
-        sendingHost: Host,
         sender: LetNode,
         sendProtocol: Protocol,
         receiveProtocol: Protocol,
@@ -147,7 +146,7 @@ internal class CommitmentCreatorGenerator(
         val sendBuilder = CodeBlock.builder()
         if (sendProtocol != receiveProtocol) {
             val relevantEvents: Set<CommunicationEvent> =
-                events.getProjectionSends(ProtocolProjection(sendProtocol, sendingHost))
+                events.getProjectionSends(ProtocolProjection(sendProtocol, context.host))
 
             for (event in relevantEvents) {
                 if (event.send.host != event.recv.host) {
@@ -166,14 +165,13 @@ internal class CommitmentCreatorGenerator(
     }
 
     override fun receive(
-        receivingHost: Host,
         sender: LetNode,
         sendProtocol: Protocol,
         receiveProtocol: Protocol,
         events: ProtocolCommunication
     ): CodeBlock {
         val receiveBuilder = CodeBlock.builder()
-        val projection = ProtocolProjection(receiveProtocol, receivingHost)
+        val projection = ProtocolProjection(receiveProtocol, context.host)
         val hashHosts: Set<Host> = (projection.protocol as Commitment).hashHosts
         val commitmentTemp = context.newTemporary("commitment")
         if (sendProtocol != receiveProtocol) {

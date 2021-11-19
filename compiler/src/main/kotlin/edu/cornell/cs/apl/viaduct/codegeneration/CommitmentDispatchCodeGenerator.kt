@@ -4,7 +4,6 @@ import com.squareup.kotlinpoet.CodeBlock
 import edu.cornell.cs.apl.viaduct.backends.commitment.Commitment
 import edu.cornell.cs.apl.viaduct.errors.CodeGenerationError
 import edu.cornell.cs.apl.viaduct.selection.ProtocolCommunication
-import edu.cornell.cs.apl.viaduct.syntax.Host
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.AtomicExpressionNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.LetNode
@@ -41,7 +40,6 @@ class CommitmentDispatchCodeGenerator(
         }
 
     override fun send(
-        sendingHost: Host,
         sender: LetNode,
         sendProtocol: Protocol,
         receiveProtocol: Protocol,
@@ -50,16 +48,15 @@ class CommitmentDispatchCodeGenerator(
         when (sendProtocol) {
             is Commitment -> {
                 if (context.host == sendProtocol.cleartextHost) {
-                    commitmentCreatorGenerator.send(sendingHost, sender, sendProtocol, receiveProtocol, events)
+                    commitmentCreatorGenerator.send(sender, sendProtocol, receiveProtocol, events)
                 } else {
-                    commitmentHolderGenerator.send(sendingHost, sender, sendProtocol, receiveProtocol, events)
+                    commitmentHolderGenerator.send(sender, sendProtocol, receiveProtocol, events)
                 }
             }
             else -> throw CodeGenerationError("Commitment generator dispatcher: got non-commitment protocol")
         }
 
     override fun receive(
-        receivingHost: Host,
         sender: LetNode,
         sendProtocol: Protocol,
         receiveProtocol: Protocol,
@@ -68,9 +65,9 @@ class CommitmentDispatchCodeGenerator(
         when (receiveProtocol) {
             is Commitment -> {
                 if (context.host == receiveProtocol.cleartextHost) {
-                    commitmentCreatorGenerator.receive(receivingHost, sender, sendProtocol, receiveProtocol, events)
+                    commitmentCreatorGenerator.receive(sender, sendProtocol, receiveProtocol, events)
                 } else {
-                    commitmentHolderGenerator.receive(receivingHost, sender, sendProtocol, receiveProtocol, events)
+                    commitmentHolderGenerator.receive(sender, sendProtocol, receiveProtocol, events)
                 }
             }
             else -> throw CodeGenerationError("Commitment generator dispatcher: got non-commitment protocol")

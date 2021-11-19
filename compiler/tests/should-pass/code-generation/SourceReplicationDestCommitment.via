@@ -1,0 +1,10 @@
+fun main() {
+    val x = Array[int]@Commitment(receivers = {bob, chuck}, sender = alice)(10);
+    let $index@Replication(hosts = {alice, bob, chuck}) = 0;
+    x[$index] = input int from alice;
+    x[1] = 1;
+}
+
+host alice : {A}
+host bob : {A}
+host chuck : {A}

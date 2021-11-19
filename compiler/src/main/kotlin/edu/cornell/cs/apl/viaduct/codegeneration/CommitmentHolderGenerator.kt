@@ -11,7 +11,6 @@ import edu.cornell.cs.apl.viaduct.runtime.commitment.Commitment
 import edu.cornell.cs.apl.viaduct.runtime.commitment.Committed
 import edu.cornell.cs.apl.viaduct.selection.CommunicationEvent
 import edu.cornell.cs.apl.viaduct.selection.ProtocolCommunication
-import edu.cornell.cs.apl.viaduct.syntax.Host
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
 import edu.cornell.cs.apl.viaduct.syntax.ProtocolProjection
 import edu.cornell.cs.apl.viaduct.syntax.datatypes.Get
@@ -129,7 +128,6 @@ internal class CommitmentHolderGenerator(
         throw CodeGenerationError("Commitment: cannot use committed value as a guard")
 
     override fun send(
-        sendingHost: Host,
         sender: LetNode,
         sendProtocol: Protocol,
         receiveProtocol: Protocol,
@@ -140,17 +138,9 @@ internal class CommitmentHolderGenerator(
         // here, the interpreter checks for the available protocols, is this necessary here?
         var relevantEvents: List<CommunicationEvent> =
             events.getProjectionSends(
-                ProtocolProjection(sendProtocol, sendingHost),
+                ProtocolProjection(sendProtocol, context.host),
                 CommitmentProtocol.OPEN_COMMITMENT_OUTPUT
             ).toList()
-
-        // no need to send hash to host who already has it
-        when (sendProtocol) {
-            is edu.cornell.cs.apl.viaduct.backends.commitment.Commitment ->
-                relevantEvents = relevantEvents.filter { event ->
-                    event.recv.host != sendProtocol.cleartextHost
-                }
-        }
 
         for (event in relevantEvents) {
             if (event.send.host != event.recv.host) {
@@ -167,7 +157,6 @@ internal class CommitmentHolderGenerator(
     }
 
     override fun receive(
-        receivingHost: Host,
         sender: LetNode,
         sendProtocol: Protocol,
         receiveProtocol: Protocol,
@@ -175,7 +164,7 @@ internal class CommitmentHolderGenerator(
     ): CodeBlock {
 
         val receiveBuilder = CodeBlock.builder()
-        val projection = ProtocolProjection(receiveProtocol, receivingHost)
+        val projection = ProtocolProjection(receiveProtocol, context.host)
         if (sendProtocol != receiveProtocol) {
             when {
                 events.any { event -> event.recv.id == CommitmentProtocol.CLEARTEXT_INPUT } -> {
@@ -199,7 +188,7 @@ internal class CommitmentHolderGenerator(
                 }
 
                 else -> { // create commitment
-                    if (receivingHost !in sendProtocol.hosts) {
+                    if (context.host !in sendProtocol.hosts) {
                         receiveBuilder.addStatement(
                             "val %N = %L",
                             context.kotlinName(sender.temporary.value, receiveProtocol),

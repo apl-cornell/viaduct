@@ -39,7 +39,6 @@ import edu.cornell.cs.apl.viaduct.syntax.operators.Minimum
 import edu.cornell.cs.apl.viaduct.syntax.types.ImmutableCellType
 import edu.cornell.cs.apl.viaduct.syntax.types.MutableCellType
 import edu.cornell.cs.apl.viaduct.syntax.types.VectorType
-import edu.cornell.cs.apl.viaduct.backends.commitment.Commitment as CommitmentProtocol
 
 class PlainTextCodeGenerator(context: CodeGeneratorContext) :
     AbstractCodeGenerator(context) {
@@ -196,7 +195,6 @@ class PlainTextCodeGenerator(context: CodeGeneratorContext) :
     override fun guard(protocol: Protocol, expr: AtomicExpressionNode): CodeBlock = exp(protocol, expr)
 
     override fun send(
-        sendingHost: Host,
         sender: LetNode,
         sendProtocol: Protocol,
         receiveProtocol: Protocol,
@@ -205,9 +203,9 @@ class PlainTextCodeGenerator(context: CodeGeneratorContext) :
         val sendBuilder = CodeBlock.builder()
         if (sendProtocol != receiveProtocol) {
             val relevantEvents: Set<CommunicationEvent> =
-                events.getProjectionSends(ProtocolProjection(sendProtocol, sendingHost))
+                events.getProjectionSends(ProtocolProjection(sendProtocol, context.host))
             for (event in relevantEvents) {
-                if (sendingHost != event.recv.host) {
+                if (context.host != event.recv.host) {
                     if (sender.value is InputNode)
                         sendBuilder.addStatement(
                             "%L",
@@ -225,7 +223,6 @@ class PlainTextCodeGenerator(context: CodeGeneratorContext) :
     }
 
     override fun receive(
-        receivingHost: Host,
         sender: LetNode,
         sendProtocol: Protocol,
         receiveProtocol: Protocol,
@@ -235,7 +232,7 @@ class PlainTextCodeGenerator(context: CodeGeneratorContext) :
         val clearTextTemp = context.newTemporary("clearTextTemp")
         var clearTextCommittedTemp = context.newTemporary("cleartextCommittedTemp")
         if (sendProtocol != receiveProtocol) {
-            val projection = ProtocolProjection(receiveProtocol, receivingHost)
+            val projection = ProtocolProjection(receiveProtocol, context.host)
             val cleartextInputs = events.getProjectionReceives(
                 projection,
                 Plaintext.INPUT
@@ -274,13 +271,13 @@ class PlainTextCodeGenerator(context: CodeGeneratorContext) :
                                     event.send.host != event.recv.host &&
 
                                     // remove events where [receivingHost] is the sender of the data
-                                    event.send.host != receivingHost
+                                    event.send.host != context.host
                             }
                             // of events matching above criteria, get set of data receivers
                             .map { event -> event.recv.host }
                             // remove [receivingHost] from the set of hosts with whom [receivingHost] needs to
                             // check for equivocation
-                            .filter { host -> host != receivingHost }
+                            .filter { host -> host != context.host }
                             .sorted()
 
                     for (host in hostsToCheckWith)
@@ -334,7 +331,7 @@ class PlainTextCodeGenerator(context: CodeGeneratorContext) :
                         receiveBuilder.addStatement(
                             "throw %T(%S)",
                             EquivocationException::class.asClassName(),
-                            "equivocation error between hosts: " + receivingHost.toDocument().print() + ", " +
+                            "equivocation error between hosts: " + context.host.toDocument().print() + ", " +
                                 host.toDocument().print()
                         )
                         receiveBuilder.endControlFlow()
@@ -349,6 +346,9 @@ class PlainTextCodeGenerator(context: CodeGeneratorContext) :
                 }
 
                 // commitment opening
+                // recive committed into cleartext temp
+                // open all of the hash commitmnets
+                // store committe.value into the proper temporary
                 cleartextInputs.isEmpty() && cleartextCommitmentInputs.isNotEmpty() &&
                     hashCommitmentInputs.isNotEmpty() -> {
 
@@ -359,15 +359,12 @@ class PlainTextCodeGenerator(context: CodeGeneratorContext) :
 
                     fun receiveDispatcher(
                         event: CommunicationEvent,
-                        inputBlock: CodeBlock,
                         receiveType: ParameterizedTypeName
                     ): CodeBlock =
                         when (event.send.host == context.host) {
                             true -> CodeBlock.of(
-                                "%L%L",
-                                context.kotlinName(sender.temporary.value, sendProtocol),
-                                inputBlock
-
+                                "%L",
+                                context.kotlinName(sender.temporary.value, sendProtocol)
                             )
                             false -> CodeBlock.of(
                                 "%L",
@@ -379,42 +376,35 @@ class PlainTextCodeGenerator(context: CodeGeneratorContext) :
                         }
 
                     // receive declassified commitment from the hash holder
-                    if (context.host == (sendProtocol as CommitmentProtocol).cleartextHost) {
-                        clearTextCommittedTemp = context.kotlinName(sender.temporary.value, receiveProtocol)
-                    }
                     receiveBuilder.addStatement(
                         "val %N = %L",
                         clearTextCommittedTemp,
                         receiveDispatcher(
                             cleartextCommitmentInputs.first(),
-                            CodeBlock.of("%L", ".value"), // only call .value when committed is coming from context.host
                             Committed::class.asTypeName().parameterizedBy(
                                 typeTranslator((typeAnalysis.type(sender)))
                             )
                         )
                     )
 
-                    var firstHashInput = true
-                    var assignCode = CodeBlock.of("%L", "var ")
                     for (hashSendEvent in hashCommitmentInputs) {
-                        if (!firstHashInput) {
-                            assignCode = CodeBlock.of("")
-                        }
                         receiveBuilder.addStatement(
-                            "%L%N = %L.open(%N)",
-                            assignCode,
-                            context.kotlinName(sender.temporary.value, receiveProtocol),
+                            "%L.open(%N)",
                             receiveDispatcher(
                                 hashSendEvent,
-                                CodeBlock.of("%L", ""), // do not call .value when receiving a commitment
                                 Commitment::class.asTypeName().parameterizedBy(
                                     typeTranslator((typeAnalysis.type(sender)))
                                 )
                             ),
                             clearTextCommittedTemp
                         )
-                        firstHashInput = false
                     }
+
+                    receiveBuilder.addStatement(
+                        "val %N = %L.value",
+                        context.kotlinName(sender.temporary.value, receiveProtocol),
+                        clearTextCommittedTemp
+                    )
                 }
 
                 else ->

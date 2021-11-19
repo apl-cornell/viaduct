@@ -42,10 +42,10 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.StatementNode
 import edu.cornell.cs.apl.viaduct.util.FreshNameGenerator
 
 private class BackendCodeGenerator(
-    private val program: ProgramNode,
-    private val host: Host,
+    program: ProgramNode,
+    host: Host,
     codeGenerators: List<(context: CodeGeneratorContext) -> CodeGenerator>,
-    private val protocolComposer: ProtocolComposer
+    protocolComposer: ProtocolComposer
 ) {
     private val codeGeneratorMap: Map<Protocol, CodeGenerator>
     private val nameAnalysis = NameAnalysis.get(program)
@@ -111,7 +111,7 @@ private class BackendCodeGenerator(
 
                     // generate code for sending data
                     if (readers.isNotEmpty()) {
-                        hostFunctionBuilder.addCode("%L", protocolCodeGenerator.send(host, stmt, protocol, readerProtocol!!, events!!))
+                        hostFunctionBuilder.addCode("%L", protocolCodeGenerator.send(stmt, protocol, readerProtocol!!, events!!))
                     }
                 }
 
@@ -120,7 +120,7 @@ private class BackendCodeGenerator(
                     if (protocolAnalysis.participatingHosts(reader!!).contains(host)) {
                         val protocolCodeGenerator = codeGeneratorMap[readerProtocol]
                             ?: throw CodeGenerationError("no code generator for protocol ${protocol.toDocument().print()}")
-                        hostFunctionBuilder.addCode("%L", protocolCodeGenerator.receive(host, stmt, protocol, readerProtocol!!, events!!))
+                        hostFunctionBuilder.addCode("%L", protocolCodeGenerator.receive(stmt, protocol, readerProtocol!!, events!!))
                     }
                 }
             }

@@ -3,7 +3,6 @@ package edu.cornell.cs.apl.viaduct.backends.cleartext
 import edu.cornell.cs.apl.viaduct.backends.Backend
 import edu.cornell.cs.apl.viaduct.codegeneration.CodeGenerator
 import edu.cornell.cs.apl.viaduct.codegeneration.CodeGeneratorContext
-import edu.cornell.cs.apl.viaduct.codegeneration.PlainTextCodeGenerator
 import edu.cornell.cs.apl.viaduct.parsing.ProtocolParser
 import edu.cornell.cs.apl.viaduct.selection.ProtocolComposer
 import edu.cornell.cs.apl.viaduct.selection.ProtocolFactory
@@ -28,5 +27,5 @@ object CleartextBackend : Backend {
     override val protocolComposer: ProtocolComposer
         get() = CleartextProtocolComposer
 
-    override fun codeGenerator(context: CodeGeneratorContext): CodeGenerator = PlainTextCodeGenerator(context)
+    override fun codeGenerator(context: CodeGeneratorContext): CodeGenerator = CleartextCodeGenerator(context)
 }

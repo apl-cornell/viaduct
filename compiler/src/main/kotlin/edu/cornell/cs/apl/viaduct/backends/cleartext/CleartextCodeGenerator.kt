@@ -1,4 +1,4 @@
-package edu.cornell.cs.apl.viaduct.codegeneration
+package edu.cornell.cs.apl.viaduct.backends.cleartext
 
 import com.squareup.kotlinpoet.CodeBlock
 import com.squareup.kotlinpoet.MemberName
@@ -9,7 +9,11 @@ import com.squareup.kotlinpoet.asTypeName
 import edu.cornell.cs.apl.viaduct.analysis.NameAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.ProtocolAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.TypeAnalysis
-import edu.cornell.cs.apl.viaduct.backends.cleartext.Plaintext
+import edu.cornell.cs.apl.viaduct.codegeneration.AbstractCodeGenerator
+import edu.cornell.cs.apl.viaduct.codegeneration.CodeGeneratorContext
+import edu.cornell.cs.apl.viaduct.codegeneration.receiveReplicated
+import edu.cornell.cs.apl.viaduct.codegeneration.typeTranslator
+import edu.cornell.cs.apl.viaduct.codegeneration.valueClass
 import edu.cornell.cs.apl.viaduct.errors.CodeGenerationError
 import edu.cornell.cs.apl.viaduct.runtime.EquivocationException
 import edu.cornell.cs.apl.viaduct.runtime.commitment.Commitment
@@ -40,7 +44,7 @@ import edu.cornell.cs.apl.viaduct.syntax.types.ImmutableCellType
 import edu.cornell.cs.apl.viaduct.syntax.types.MutableCellType
 import edu.cornell.cs.apl.viaduct.syntax.types.VectorType
 
-class PlainTextCodeGenerator(context: CodeGeneratorContext) :
+class CleartextCodeGenerator(context: CodeGeneratorContext) :
     AbstractCodeGenerator(context) {
     val protocolAnalysis: ProtocolAnalysis = ProtocolAnalysis(context.program, context.protocolComposer)
     val typeAnalysis = TypeAnalysis.get(context.program)

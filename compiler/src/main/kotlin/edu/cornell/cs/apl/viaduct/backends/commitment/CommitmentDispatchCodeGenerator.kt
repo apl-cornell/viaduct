@@ -1,7 +1,8 @@
-package edu.cornell.cs.apl.viaduct.codegeneration
+package edu.cornell.cs.apl.viaduct.backends.commitment
 
 import com.squareup.kotlinpoet.CodeBlock
-import edu.cornell.cs.apl.viaduct.backends.commitment.Commitment
+import edu.cornell.cs.apl.viaduct.codegeneration.CodeGenerator
+import edu.cornell.cs.apl.viaduct.codegeneration.CodeGeneratorContext
 import edu.cornell.cs.apl.viaduct.errors.CodeGenerationError
 import edu.cornell.cs.apl.viaduct.selection.ProtocolCommunication
 import edu.cornell.cs.apl.viaduct.syntax.Protocol

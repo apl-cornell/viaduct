@@ -1,19 +1,20 @@
-package edu.cornell.cs.apl.viaduct.codegeneration
+package edu.cornell.cs.apl.viaduct.backends.commitment
 
 import com.squareup.kotlinpoet.CodeBlock
 import com.squareup.kotlinpoet.MemberName
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import com.squareup.kotlinpoet.asClassName
 import edu.cornell.cs.apl.viaduct.analysis.NameAnalysis
-import edu.cornell.cs.apl.viaduct.analysis.ProtocolAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.TypeAnalysis
-import edu.cornell.cs.apl.viaduct.backends.commitment.Commitment
+import edu.cornell.cs.apl.viaduct.codegeneration.AbstractCodeGenerator
+import edu.cornell.cs.apl.viaduct.codegeneration.CodeGeneratorContext
+import edu.cornell.cs.apl.viaduct.codegeneration.receiveReplicated
+import edu.cornell.cs.apl.viaduct.codegeneration.typeTranslator
 import edu.cornell.cs.apl.viaduct.errors.CodeGenerationError
-import edu.cornell.cs.apl.viaduct.errors.ViaductInterpreterError
+import edu.cornell.cs.apl.viaduct.runtime.commitment.Commitment
 import edu.cornell.cs.apl.viaduct.runtime.commitment.Committed
 import edu.cornell.cs.apl.viaduct.selection.CommunicationEvent
 import edu.cornell.cs.apl.viaduct.selection.ProtocolCommunication
-import edu.cornell.cs.apl.viaduct.syntax.Host
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
 import edu.cornell.cs.apl.viaduct.syntax.ProtocolProjection
 import edu.cornell.cs.apl.viaduct.syntax.datatypes.Get
@@ -31,36 +32,30 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.UpdateNode
 import edu.cornell.cs.apl.viaduct.syntax.types.ImmutableCellType
 import edu.cornell.cs.apl.viaduct.syntax.types.MutableCellType
 import edu.cornell.cs.apl.viaduct.syntax.types.VectorType
+import edu.cornell.cs.apl.viaduct.backends.commitment.Commitment as CommitmentProtocol
 
-internal class CommitmentCreatorGenerator(
+internal class CommitmentHolderGenerator(
     context: CodeGeneratorContext
 ) : AbstractCodeGenerator(context) {
-    val protocolAnalysis: ProtocolAnalysis = ProtocolAnalysis(context.program, context.protocolComposer)
-    val typeAnalysis = TypeAnalysis.get(context.program)
-    val nameAnalysis = NameAnalysis.get(context.program)
-
-    private val committedClassName = Committed::class
-
+    private val typeAnalysis: TypeAnalysis = TypeAnalysis.get(context.program)
+    private val nameAnalysis: NameAnalysis = NameAnalysis.get(context.program)
     override fun exp(protocol: Protocol, expr: ExpressionNode): CodeBlock =
         when (expr) {
             is LiteralNode -> CodeBlock.of(
-                "%M(%L)",
+                "%M(%L).%M()",
                 MemberName(Committed.Companion::class.asClassName(), "fake"),
-                expr.value
+                expr.value,
+                MemberName(Committed.Companion::class.asClassName(), "commitment")
             )
 
-            is ReadNode ->
-                CodeBlock.of(
-                    "%N",
-                    context.kotlinName(
-                        expr.temporary.value,
-                        protocol
-                    )
-                )
+            is ReadNode -> CodeBlock.of(
+                "%L",
+                context.kotlinName(expr.temporary.value, protocol)
+            )
 
             is DowngradeNode -> exp(protocol, expr.expression)
 
-            is QueryNode -> {
+            is QueryNode ->
                 when (typeAnalysis.type(nameAnalysis.declaration(expr))) {
                     is VectorType -> {
                         when (expr.query.value) {
@@ -89,7 +84,6 @@ internal class CommitmentCreatorGenerator(
 
                     else -> throw CodeGenerationError("unknown AST object", expr)
                 }
-            }
 
             is OperatorApplicationNode ->
                 throw CodeGenerationError("Commitment: cannot perform operations on committed values")
@@ -100,7 +94,7 @@ internal class CommitmentCreatorGenerator(
 
     override fun let(protocol: Protocol, stmt: LetNode): CodeBlock =
         CodeBlock.of(
-            "val %N = %L",
+            "var %N = %L",
             context.kotlinName(stmt.temporary.value, protocol),
             exp(protocol, stmt.value)
         )
@@ -131,11 +125,11 @@ internal class CommitmentCreatorGenerator(
             else -> throw CodeGenerationError("Commitment: unknown object to update")
         }
 
-    override fun output(protocol: Protocol, stmt: OutputNode): CodeBlock {
-        throw ViaductInterpreterError("Commitment: cannot perform I/O in non-local protocol")
-    }
+    override fun output(protocol: Protocol, stmt: OutputNode): CodeBlock =
+        throw CodeGenerationError("Commitment: cannot perform I/O in non-local protocol")
 
-    override fun guard(protocol: Protocol, expr: AtomicExpressionNode): CodeBlock = exp(protocol, expr)
+    override fun guard(protocol: Protocol, expr: AtomicExpressionNode): CodeBlock =
+        throw CodeGenerationError("Commitment: cannot use committed value as a guard")
 
     override fun send(
         sender: LetNode,
@@ -144,21 +138,23 @@ internal class CommitmentCreatorGenerator(
         events: ProtocolCommunication
     ): CodeBlock {
         val sendBuilder = CodeBlock.builder()
-        if (sendProtocol != receiveProtocol) {
-            val relevantEvents: Set<CommunicationEvent> =
-                events.getProjectionSends(ProtocolProjection(sendProtocol, context.host))
 
-            for (event in relevantEvents) {
-                if (event.send.host != event.recv.host) {
-                    // send temporary containing hash value
-                    sendBuilder.addStatement(
-                        "%L",
-                        context.send(
-                            CodeBlock.of("%L", context.kotlinName(sender.temporary.value, sendProtocol)),
-                            event.recv.host
-                        )
+        // here, the interpreter checks for the available protocols, is this necessary here?
+        var relevantEvents: List<CommunicationEvent> =
+            events.getProjectionSends(
+                ProtocolProjection(sendProtocol, context.host),
+                CommitmentProtocol.OPEN_COMMITMENT_OUTPUT
+            ).toList()
+
+        for (event in relevantEvents) {
+            if (event.send.host != event.recv.host) {
+                sendBuilder.addStatement(
+                    "%L",
+                    context.send(
+                        CodeBlock.of("%L", context.kotlinName(sender.temporary.value, sendProtocol)),
+                        event.recv.host
                     )
-                }
+                )
             }
         }
         return sendBuilder.build()
@@ -170,73 +166,41 @@ internal class CommitmentCreatorGenerator(
         receiveProtocol: Protocol,
         events: ProtocolCommunication
     ): CodeBlock {
+
         val receiveBuilder = CodeBlock.builder()
         val projection = ProtocolProjection(receiveProtocol, context.host)
-        val hashHosts: Set<Host> = (projection.protocol as Commitment).hashHosts
-        val commitmentTemp = context.newTemporary("commitment")
         if (sendProtocol != receiveProtocol) {
             when {
-                events.any { event -> event.recv.id == Commitment.CLEARTEXT_INPUT } -> {
+                events.any { event -> event.recv.id == CommitmentProtocol.CLEARTEXT_INPUT } -> {
                     val relevantEvents =
                         events.getHostReceives(
                             projection.host,
-                            Commitment.CLEARTEXT_INPUT
-                        )
-
-                    if (relevantEvents.isNotEmpty()) {
-                        receiveBuilder.addStatement(
-                            "val %N = %L",
-                            context.kotlinName(sender.temporary.value, receiveProtocol),
-                            receiveReplicated(
-                                sender,
-                                sendProtocol,
-                                relevantEvents,
-                                context,
-                                typeAnalysis
-                            )
-                        )
-                    }
-                }
-
-                else -> {
-                    val cleartextInputEvents =
-                        events.getProjectionReceives(
-                            projection,
-                            Commitment.INPUT
+                            CommitmentProtocol.CLEARTEXT_INPUT
                         )
 
                     receiveBuilder.addStatement(
-                        "val %N = %T(%L)",
+                        "val %N = %L",
                         context.kotlinName(sender.temporary.value, receiveProtocol),
-                        committedClassName.asClassName().parameterizedBy(
-                            typeTranslator(typeAnalysis.type(sender))
-                        ),
                         receiveReplicated(
                             sender,
                             sendProtocol,
-                            cleartextInputEvents,
+                            relevantEvents,
                             context,
                             typeAnalysis
-                        )
+                        ),
                     )
+                }
 
-                    // create commitment
-                    receiveBuilder.addStatement(
-                        "val %N = %N.%M()",
-                        commitmentTemp,
-                        context.kotlinName(sender.temporary.value, receiveProtocol),
-                        MemberName(Committed.Companion::class.asClassName(), "commitment")
-                    )
-
-                    for (hashHost in hashHosts) {
+                else -> { // create commitment
+                    if (context.host !in sendProtocol.hosts) {
                         receiveBuilder.addStatement(
-                            "%L",
-                            context.send(
-                                CodeBlock.of(
-                                    "%L",
-                                    commitmentTemp
+                            "val %N = %L",
+                            context.kotlinName(sender.temporary.value, receiveProtocol),
+                            context.receive(
+                                Commitment::class.asClassName().parameterizedBy(
+                                    typeTranslator(typeAnalysis.type(sender))
                                 ),
-                                hashHost
+                                events.first().send.host
                             )
                         )
                     }

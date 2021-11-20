@@ -16,6 +16,7 @@ import edu.cornell.cs.apl.viaduct.analysis.main
 import edu.cornell.cs.apl.viaduct.backends.cleartext.Local
 import edu.cornell.cs.apl.viaduct.backends.cleartext.Replication
 import edu.cornell.cs.apl.viaduct.backends.commitment.Commitment
+import edu.cornell.cs.apl.viaduct.backends.commitment.CommitmentDispatchCodeGenerator
 import edu.cornell.cs.apl.viaduct.errors.CodeGenerationError
 import edu.cornell.cs.apl.viaduct.runtime.Boxed
 import edu.cornell.cs.apl.viaduct.runtime.Runtime

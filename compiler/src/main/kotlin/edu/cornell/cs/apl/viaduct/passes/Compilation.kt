@@ -10,7 +10,7 @@ import edu.cornell.cs.apl.viaduct.backends.Backend
 import edu.cornell.cs.apl.viaduct.backends.DefaultCombinedBackend
 import edu.cornell.cs.apl.viaduct.backends.aby.abyMuxPostprocessor
 import edu.cornell.cs.apl.viaduct.backends.zkp.zkpMuxPostprocessor
-import edu.cornell.cs.apl.viaduct.codegeneration.compileKotlinFileSpec
+import edu.cornell.cs.apl.viaduct.codegeneration.compileToKotlin
 import edu.cornell.cs.apl.viaduct.parsing.SourceFile
 import edu.cornell.cs.apl.viaduct.parsing.parse
 import edu.cornell.cs.apl.viaduct.selection.ProtocolSelection
@@ -31,7 +31,7 @@ import java.io.Writer
 
 private val logger = KotlinLogging.logger("Compile")
 
-/** Similar to [compileToKotlin], but returns a program for the interpreter. */
+/** Similar to [SourceFile.compileToKotlin], but returns a program for the interpreter. */
 fun SourceFile.compile(
     backend: Backend,
     costRegime: SimpleCostRegime = SimpleCostRegime.WAN,
@@ -150,8 +150,7 @@ fun SourceFile.compileToKotlin(
             saveProtocolAssignment
         )
 
-    return compileKotlinFileSpec(
-        postProcessedProgram,
+    return postProcessedProgram.compileToKotlin(
         fileName,
         packageName,
         listOf(backend::codeGenerator),

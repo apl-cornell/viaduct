@@ -278,24 +278,13 @@ private fun addHostDeclarations(objectBuilder: TypeSpec.Builder, program: Progra
     }
 }
 
-fun compileKotlinFile(
-    program: ProgramNode,
-    fileName: String,
-    packageName: String,
-    codeGenerators: List<(context: CodeGeneratorContext) -> CodeGenerator>,
-    protocolComposer: ProtocolComposer
-
-): String = compileKotlinFileSpec(program, fileName, packageName, codeGenerators, protocolComposer).toString()
-
-fun compileKotlinFileSpec(
-    program: ProgramNode,
+fun ProgramNode.compileToKotlin(
     fileName: String,
     packageName: String,
     codeGenerators: List<(context: CodeGeneratorContext) -> CodeGenerator>,
     protocolComposer: ProtocolComposer
 ): FileSpec {
-
-    val mainBody = program.main.body
+    val mainBody = this.main.body
 
     // create a main file builder, main function builder
     val fileBuilder = FileSpec.builder(packageName, fileName)
@@ -304,19 +293,19 @@ fun compileKotlinFileSpec(
     val objectBuilder = TypeSpec.objectBuilder(fileName)
 
     // add host declarations to main object
-    addHostDeclarations(objectBuilder, program)
+    addHostDeclarations(objectBuilder, this)
 
     val mainFunctionBuilder = FunSpec.builder("main").addModifiers(KModifier.SUSPEND)
     mainFunctionBuilder.addParameter("host", Host::class)
     mainFunctionBuilder.addParameter("runtime", Runtime::class)
 
     // TODO - figure out right way to get unique function names here
-    val hostFunNameMap: Map<Host, String> = program.hosts.associateWith { it.name + "function" }
+    val hostFunNameMap: Map<Host, String> = this.hosts.associateWith { it.name + "function" }
 
     // create a function for each host to run
     for (entry in hostFunNameMap) {
         val curGenerator = BackendCodeGenerator(
-            program,
+            this,
             entry.key,
             codeGenerators,
             protocolComposer

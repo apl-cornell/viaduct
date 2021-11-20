@@ -1,75 +1,51 @@
 package edu.cornell.cs.apl.viaduct.codegeneration
 
-import com.squareup.kotlinpoet.BOOLEAN
 import com.squareup.kotlinpoet.CodeBlock
-import com.squareup.kotlinpoet.INT
 import com.squareup.kotlinpoet.MemberName
-import com.squareup.kotlinpoet.STRING
-import com.squareup.kotlinpoet.TypeName
-import com.squareup.kotlinpoet.U_BYTE_ARRAY
+import com.squareup.kotlinpoet.ParameterizedTypeName
+import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
+import com.squareup.kotlinpoet.asClassName
+import com.squareup.kotlinpoet.asTypeName
 import edu.cornell.cs.apl.viaduct.analysis.NameAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.ProtocolAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.TypeAnalysis
-import edu.cornell.cs.apl.viaduct.backends.DefaultCombinedBackend
 import edu.cornell.cs.apl.viaduct.backends.cleartext.Plaintext
 import edu.cornell.cs.apl.viaduct.errors.CodeGenerationError
-import edu.cornell.cs.apl.viaduct.errors.RuntimeError
+import edu.cornell.cs.apl.viaduct.runtime.EquivocationException
+import edu.cornell.cs.apl.viaduct.runtime.commitment.Commitment
+import edu.cornell.cs.apl.viaduct.runtime.commitment.Committed
 import edu.cornell.cs.apl.viaduct.selection.CommunicationEvent
 import edu.cornell.cs.apl.viaduct.selection.ProtocolCommunication
-import edu.cornell.cs.apl.viaduct.syntax.Arguments
 import edu.cornell.cs.apl.viaduct.syntax.BinaryOperator
-import edu.cornell.cs.apl.viaduct.syntax.ClassNameNode
 import edu.cornell.cs.apl.viaduct.syntax.Host
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
 import edu.cornell.cs.apl.viaduct.syntax.ProtocolProjection
 import edu.cornell.cs.apl.viaduct.syntax.UnaryOperator
 import edu.cornell.cs.apl.viaduct.syntax.datatypes.Get
-import edu.cornell.cs.apl.viaduct.syntax.datatypes.ImmutableCell
 import edu.cornell.cs.apl.viaduct.syntax.datatypes.Modify
-import edu.cornell.cs.apl.viaduct.syntax.datatypes.MutableCell
-import edu.cornell.cs.apl.viaduct.syntax.datatypes.Vector
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.AtomicExpressionNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.DeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.DowngradeNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ExpressionNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.InputNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.LetNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.LiteralNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.OperatorApplicationNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutParameterConstructorInitializerNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutParameterExpressionInitializerNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutParameterInitializationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutputNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.QueryNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ReadNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.UpdateNode
 import edu.cornell.cs.apl.viaduct.syntax.operators.Maximum
 import edu.cornell.cs.apl.viaduct.syntax.operators.Minimum
-import edu.cornell.cs.apl.viaduct.syntax.types.BooleanType
-import edu.cornell.cs.apl.viaduct.syntax.types.ByteVecType
 import edu.cornell.cs.apl.viaduct.syntax.types.ImmutableCellType
-import edu.cornell.cs.apl.viaduct.syntax.types.IntegerType
 import edu.cornell.cs.apl.viaduct.syntax.types.MutableCellType
-import edu.cornell.cs.apl.viaduct.syntax.types.StringType
-import edu.cornell.cs.apl.viaduct.syntax.types.ValueType
 import edu.cornell.cs.apl.viaduct.syntax.types.VectorType
-import edu.cornell.cs.apl.viaduct.syntax.values.Value
 
-class PlainTextCodeGenerator(
-    val context: CodeGeneratorContext
-) : AbstractCodeGenerator() {
-    private val typeAnalysis = TypeAnalysis.get(context.program)
-    private val nameAnalysis = NameAnalysis.get(context.program)
-    private val protocolAnalysis = ProtocolAnalysis(context.program, DefaultCombinedBackend.protocolComposer)
-    private val runtimeErrorClass = RuntimeError::class
-
-    private fun exp(value: Value): CodeBlock =
-        CodeBlock.of(
-            "%L",
-            value
-        )
-
-    private fun exp(expr: ExpressionNode): CodeBlock =
+class PlainTextCodeGenerator(context: CodeGeneratorContext) :
+    AbstractCodeGenerator(context) {
+    val protocolAnalysis: ProtocolAnalysis = ProtocolAnalysis(context.program, context.protocolComposer)
+    val typeAnalysis = TypeAnalysis.get(context.program)
+    val nameAnalysis = NameAnalysis.get(context.program)
+    override fun exp(protocol: Protocol, expr: ExpressionNode): CodeBlock =
         when (expr) {
             is LiteralNode -> CodeBlock.of("%L", expr.value)
 
@@ -78,7 +54,7 @@ class PlainTextCodeGenerator(
                     "%N",
                     context.kotlinName(
                         expr.temporary.value,
-                        protocolAnalysis.primaryProtocol(expr)
+                        protocol
                     )
                 )
 
@@ -88,41 +64,41 @@ class PlainTextCodeGenerator(
                         CodeBlock.of(
                             "%M(%L, %L)",
                             MemberName("kotlin.math", "min"),
-                            exp(expr.arguments[0]),
-                            exp(expr.arguments[1])
+                            exp(protocol, expr.arguments[0]),
+                            exp(protocol, expr.arguments[1])
                         )
                     Maximum ->
                         CodeBlock.of(
                             "%M(%L, %L)",
                             MemberName("kotlin.math", "max"),
-                            exp(expr.arguments[0]),
-                            exp(expr.arguments[1])
+                            exp(protocol, expr.arguments[0]),
+                            exp(protocol, expr.arguments[1])
                         )
                     is UnaryOperator ->
                         CodeBlock.of(
                             "%L%L",
                             expr.operator.toString(),
-                            exp(expr.arguments[0])
+                            exp(protocol, expr.arguments[0])
                         )
                     is BinaryOperator ->
                         CodeBlock.of(
                             "%L %L %L",
-                            exp(expr.arguments[0]),
+                            exp(protocol, expr.arguments[0]),
                             expr.operator,
-                            exp(expr.arguments[1])
+                            exp(protocol, expr.arguments[1])
                         )
                     else -> throw CodeGenerationError("unknown operator", expr)
                 }
             }
 
             is QueryNode ->
-                when (this.typeAnalysis.type(nameAnalysis.declaration(expr))) {
+                when (typeAnalysis.type(nameAnalysis.declaration(expr))) {
                     is VectorType -> {
                         when (expr.query.value) {
                             is Get -> CodeBlock.of(
                                 "%N[%L]",
                                 context.kotlinName(expr.variable.value),
-                                exp(expr.arguments.first())
+                                exp(protocol, expr.arguments.first())
                             )
                             else -> throw CodeGenerationError("unknown vector query", expr)
                         }
@@ -145,7 +121,7 @@ class PlainTextCodeGenerator(
                     else -> throw CodeGenerationError("unknown AST object", expr)
                 }
 
-            is DowngradeNode -> exp(expr.expression)
+            is DowngradeNode -> exp(protocol, expr.expression)
 
             is InputNode ->
                 CodeBlock.of(
@@ -159,68 +135,28 @@ class PlainTextCodeGenerator(
         CodeBlock.of(
             "val %N = %L",
             context.kotlinName(stmt.temporary.value, protocol),
-            exp(stmt.value)
-        )
-
-    private fun declarationHelper(
-        name: String,
-        className: ClassNameNode,
-        arguments: Arguments<AtomicExpressionNode>,
-        initType: ValueType
-    ): CodeBlock =
-        when (className.value) {
-            ImmutableCell -> CodeBlock.of(
-                "val %N = %L",
-                name,
-                exp(arguments.first())
-            )
-
-            // TODO - change this (difference between viaduct, kotlin semantics)
-            MutableCell -> CodeBlock.of(
-                "var %N = %L",
-                name,
-                exp(arguments.first())
-            )
-
-            Vector -> {
-                CodeBlock.of(
-                    "val %N = Array(%L){ %L }",
-                    name,
-                    exp(arguments.first()),
-                    exp(initType.defaultValue)
-                )
-            }
-
-            else -> TODO("throw error")
-        }
-
-    override fun declaration(protocol: Protocol, stmt: DeclarationNode): CodeBlock =
-        declarationHelper(
-            context.kotlinName(stmt.name.value),
-            stmt.className,
-            stmt.arguments,
-            stmt.typeArguments[0].value
+            exp(protocol, stmt.value)
         )
 
     override fun update(protocol: Protocol, stmt: UpdateNode): CodeBlock =
-        when (this.typeAnalysis.type(nameAnalysis.declaration(stmt))) {
+        when (typeAnalysis.type(nameAnalysis.declaration(stmt))) {
             is VectorType ->
                 when (stmt.update.value) {
                     is edu.cornell.cs.apl.viaduct.syntax.datatypes.Set ->
                         CodeBlock.of(
                             "%N[%L] = %L",
                             context.kotlinName(stmt.variable.value),
-                            exp(stmt.arguments[0]),
-                            exp(stmt.arguments[1])
+                            exp(protocol, stmt.arguments[0]),
+                            exp(protocol, stmt.arguments[1])
                         )
 
                     is Modify ->
                         CodeBlock.of(
                             "%N[%L] %L %L",
                             context.kotlinName(stmt.variable.value),
-                            exp(stmt.arguments[0]),
+                            exp(protocol, stmt.arguments[0]),
                             stmt.update.value.name,
-                            exp(stmt.arguments[1])
+                            exp(protocol, stmt.arguments[1])
                         )
 
                     else -> throw CodeGenerationError("unknown update", stmt)
@@ -232,7 +168,7 @@ class PlainTextCodeGenerator(
                         CodeBlock.of(
                             "%N = %L",
                             context.kotlinName(stmt.variable.value),
-                            exp(stmt.arguments[0])
+                            exp(protocol, stmt.arguments[0])
                         )
 
                     is Modify ->
@@ -240,7 +176,7 @@ class PlainTextCodeGenerator(
                             "%N %L %L",
                             context.kotlinName(stmt.variable.value),
                             stmt.update.value.name,
-                            exp(stmt.arguments[0])
+                            exp(protocol, stmt.arguments[0])
                         )
 
                     else -> throw CodeGenerationError("unknown update", stmt)
@@ -249,63 +185,16 @@ class PlainTextCodeGenerator(
             else -> throw CodeGenerationError("unknown object to update", stmt)
         }
 
-    override fun outParameterInitialization(
-        protocol: Protocol,
-        stmt: OutParameterInitializationNode
-    ):
-        CodeBlock =
-        when (val initializer = stmt.initializer) {
-            is OutParameterConstructorInitializerNode -> {
-                val outTmpString = context.newTemporary("outTmp")
-                CodeBlock.builder()
-                    .add(
-                        // declare object
-                        declarationHelper(
-                            outTmpString,
-                            initializer.className,
-                            initializer.arguments,
-                            initializer.typeArguments[0].value
-                        )
-                    )
-                    .add(
-                        // fill box with constructed object
-                        CodeBlock.of(
-                            "%N.set(%L)",
-                            context.kotlinName(stmt.name.value),
-                            outTmpString
-                        )
-                    )
-                    .build()
-            }
-            // fill box named [stmt.name.value.name] with [initializer.expression]
-            is OutParameterExpressionInitializerNode ->
-                CodeBlock.of(
-                    "%N.set(%L)",
-                    context.kotlinName(stmt.name.value),
-                    exp(initializer.expression)
-                )
-        }
-
     override fun output(protocol: Protocol, stmt: OutputNode): CodeBlock =
         CodeBlock.of(
             "runtime.output(%T(%L))",
             typeAnalysis.type(stmt.message).valueClass,
-            exp(stmt.message)
+            exp(protocol, stmt.message)
         )
 
-    override fun guard(protocol: Protocol, expr: AtomicExpressionNode): CodeBlock = exp(expr)
-
-    private fun typeTranslator(viaductType: ValueType): TypeName =
-        when (viaductType) {
-            ByteVecType -> U_BYTE_ARRAY
-            BooleanType -> BOOLEAN
-            IntegerType -> INT
-            StringType -> STRING
-            else -> throw CodeGenerationError("unknown send and receive type")
-        }
+    override fun guard(protocol: Protocol, expr: AtomicExpressionNode): CodeBlock = exp(protocol, expr)
 
     override fun send(
-        sendingHost: Host,
         sender: LetNode,
         sendProtocol: Protocol,
         receiveProtocol: Protocol,
@@ -314,9 +203,9 @@ class PlainTextCodeGenerator(
         val sendBuilder = CodeBlock.builder()
         if (sendProtocol != receiveProtocol) {
             val relevantEvents: Set<CommunicationEvent> =
-                events.getProjectionSends(ProtocolProjection(sendProtocol, sendingHost))
+                events.getProjectionSends(ProtocolProjection(sendProtocol, context.host))
             for (event in relevantEvents) {
-                if (sendingHost != event.recv.host) {
+                if (context.host != event.recv.host) {
                     if (sender.value is InputNode)
                         sendBuilder.addStatement(
                             "%L",
@@ -326,137 +215,199 @@ class PlainTextCodeGenerator(
                             )
                         )
                     else
-                        sendBuilder.addStatement("%L", context.send(exp(sender.value), event.recv.host))
+                        sendBuilder.addStatement("%L", context.send(exp(sendProtocol, sender.value), event.recv.host))
                 }
             }
         }
         return sendBuilder.build()
     }
 
-    // note - this implementation does not support commitments
     override fun receive(
-        receivingHost: Host,
         sender: LetNode,
         sendProtocol: Protocol,
         receiveProtocol: Protocol,
         events: ProtocolCommunication
     ): CodeBlock {
         val receiveBuilder = CodeBlock.builder()
-        val projection = ProtocolProjection(receiveProtocol, receivingHost)
-        var cleartextInputs = events.getProjectionReceives(projection, Plaintext.INPUT)
         val clearTextTemp = context.newTemporary("clearTextTemp")
+        var clearTextCommittedTemp = context.newTemporary("cleartextCommittedTemp")
         if (sendProtocol != receiveProtocol) {
-            // initialize cleartext receive value by receiving from first host
-            if (cleartextInputs.isNotEmpty()) {
-                receiveBuilder.addStatement(
-                    "val %N = %L",
-                    clearTextTemp,
-                    context.receive(
-                        typeTranslator(typeAnalysis.type(sender)),
-                        cleartextInputs.first().send.host
-                    )
-                )
-                cleartextInputs = cleartextInputs.minusElement(cleartextInputs.first())
-            }
-
-            // receive from the rest of the hosts and compare against clearTextValue
-            for (event in cleartextInputs) {
-
-                // check to make sure that you got the same data from all hosts
-                receiveBuilder.beginControlFlow(
-                    "if (%N != %L)",
-                    clearTextTemp,
-                    context.receive(
-                        typeTranslator(typeAnalysis.type(sender)),
-                        event.send.host
-                    )
-                )
-                receiveBuilder.addStatement(
-                    "throw %T(%S)",
-                    runtimeErrorClass,
-                    "Plaintext : received different values"
-                )
-                receiveBuilder.endControlFlow()
-            }
-
-            // calculate set of hosts with whom [receivingHost] needs to check for equivocation
-            var hostsToCheckWith: List<Host> =
-                events
-                    .filter { event ->
-                        // remove events where receiving host is not receiving plaintext data
-                        event.recv.id == Plaintext.INPUT &&
-
-                            // remove events where a host is sending data to themselves
-                            event.send.host != event.recv.host &&
-
-                            // remove events where [receivingHost] is the sender of the data
-                            event.send.host != receivingHost
-                    }
-                    // of events matching above criteria, get set of data receivers
-                    .map { event -> event.recv.host }
-                    // remove [receivingHost] from the set of hosts with whom [receivingHost] needs to
-                    // check for equivocation
-                    .filter { host -> host != receivingHost }
-                    .sorted()
-
-            for (host in hostsToCheckWith)
-                receiveBuilder.addStatement("%L", context.send(CodeBlock.of(clearTextTemp), host))
-
-            val receiveTmp = context.newTemporary("receiveTmp")
-
-            // start equivocation check by receiving from host in [hostsToCheckWith]
-            if (hostsToCheckWith.isNotEmpty()) {
-                receiveBuilder.addStatement(
-                    "var %N = %L",
-                    receiveTmp,
-                    context.receive(
-                        typeTranslator(typeAnalysis.type(sender)),
-                        hostsToCheckWith.first()
-                    )
-                )
-                receiveBuilder.beginControlFlow(
-                    "if (%N != %N)",
-                    receiveTmp,
-                    clearTextTemp
-                )
-                receiveBuilder.addStatement(
-                    "throw %T(%S)",
-                    runtimeErrorClass,
-                    "equivocation error between hosts: " + receivingHost.toDocument().print() + ", " +
-                        hostsToCheckWith.first().toDocument().print()
-                )
-                receiveBuilder.endControlFlow()
-                hostsToCheckWith = hostsToCheckWith.minusElement(hostsToCheckWith.first())
-            }
-
-            // potentially receive from the rest of the hosts in [hostsToCheckWith]
-            for (host in hostsToCheckWith) {
-                receiveBuilder.addStatement(
-                    "%N = %L",
-                    receiveTmp,
-                    context.receive(
-                        typeTranslator(typeAnalysis.type(sender)),
-                        host
-                    )
-                )
-                receiveBuilder.beginControlFlow(
-                    "if (%N != %N)",
-                    receiveTmp,
-                    clearTextTemp
-                )
-                receiveBuilder.addStatement(
-                    "throw %T(%S)",
-                    runtimeErrorClass,
-                    "equivocation error between hosts: " + receivingHost.toDocument().print() + ", " +
-                        host.toDocument().print()
-                )
-                receiveBuilder.endControlFlow()
-            }
-            receiveBuilder.addStatement(
-                "val %N = %N",
-                context.kotlinName(sender.temporary.value, protocolAnalysis.primaryProtocol(sender)),
-                clearTextTemp
+            val projection = ProtocolProjection(receiveProtocol, context.host)
+            val cleartextInputs = events.getProjectionReceives(
+                projection,
+                Plaintext.INPUT
             )
+
+            val cleartextCommitmentInputs =
+                events.getProjectionReceives(projection, Plaintext.CLEARTEXT_COMMITMENT_INPUT)
+
+            val hashCommitmentInputs =
+                events.getProjectionReceives(projection, Plaintext.HASH_COMMITMENT_INPUT)
+
+            when {
+                cleartextInputs.isNotEmpty() && cleartextCommitmentInputs.isEmpty() &&
+                    hashCommitmentInputs.isEmpty() -> {
+
+                    receiveBuilder.addStatement(
+                        "val %L = %L",
+                        clearTextTemp,
+                        receiveReplicated(
+                            sender,
+                            sendProtocol,
+                            cleartextInputs,
+                            context,
+                            typeAnalysis
+                        )
+                    )
+
+                    // calculate set of hosts with whom [receivingHost] needs to check for equivocation
+                    var hostsToCheckWith: List<Host> =
+                        events
+                            .filter { event ->
+                                // remove events where receiving host is not receiving plaintext data
+                                event.recv.id == Plaintext.INPUT &&
+
+                                    // remove events where a host is sending data to themselves
+                                    event.send.host != event.recv.host &&
+
+                                    // remove events where [receivingHost] is the sender of the data
+                                    event.send.host != context.host
+                            }
+                            // of events matching above criteria, get set of data receivers
+                            .map { event -> event.recv.host }
+                            // remove [receivingHost] from the set of hosts with whom [receivingHost] needs to
+                            // check for equivocation
+                            .filter { host -> host != context.host }
+                            .sorted()
+
+                    for (host in hostsToCheckWith)
+                        receiveBuilder.addStatement("%L", context.send(CodeBlock.of(clearTextTemp), host))
+
+                    val receiveTmp = context.newTemporary("receiveTmp")
+
+                    // start equivocation check by receiving from host in [hostsToCheckWith]
+                    if (hostsToCheckWith.isNotEmpty()) {
+                        receiveBuilder.addStatement(
+                            "var %N = %L",
+                            receiveTmp,
+                            context.receive(
+                                typeTranslator(typeAnalysis.type(sender)),
+                                hostsToCheckWith.first()
+                            )
+                        )
+                        receiveBuilder.beginControlFlow(
+                            "if (%N != %N)",
+                            receiveTmp,
+                            clearTextTemp
+                        )
+                        receiveBuilder.addStatement(
+                            "throw %T(%L, %L, %L, %L)",
+                            EquivocationException::class.asClassName(),
+                            clearTextTemp,
+                            cleartextInputs.first().send.host.name,
+                            receiveTmp,
+                            hostsToCheckWith.first().name
+
+                        )
+                        receiveBuilder.endControlFlow()
+                        hostsToCheckWith = hostsToCheckWith.minusElement(hostsToCheckWith.first())
+                    }
+
+                    // potentially receive from the rest of the hosts in [hostsToCheckWith]
+                    for (host in hostsToCheckWith) {
+                        receiveBuilder.addStatement(
+                            "%N = %L",
+                            receiveTmp,
+                            context.receive(
+                                typeTranslator(typeAnalysis.type(sender)),
+                                host
+                            )
+                        )
+                        receiveBuilder.beginControlFlow(
+                            "if (%N != %N)",
+                            receiveTmp,
+                            clearTextTemp
+                        )
+                        receiveBuilder.addStatement(
+                            "throw %T(%S)",
+                            EquivocationException::class.asClassName(),
+                            "equivocation error between hosts: " + context.host.toDocument().print() + ", " +
+                                host.toDocument().print()
+                        )
+                        receiveBuilder.endControlFlow()
+                    }
+                    receiveBuilder.addStatement(
+                        "val %N = %N",
+                        context.kotlinName(sender.temporary.value, receiveProtocol),
+                        clearTextTemp
+                    )
+
+                    return receiveBuilder.build()
+                }
+
+                // commitment opening
+                cleartextInputs.isEmpty() && cleartextCommitmentInputs.isNotEmpty() &&
+                    hashCommitmentInputs.isNotEmpty() -> {
+
+                    // sanity check, only open one commitment at once
+                    if (cleartextCommitmentInputs.size != 1) {
+                        throw CodeGenerationError("Commitment open: open multiple commitments at once")
+                    }
+
+                    fun receiveDispatcher(
+                        event: CommunicationEvent,
+                        receiveType: ParameterizedTypeName
+                    ): CodeBlock =
+                        when (event.send.host == context.host) {
+                            true -> CodeBlock.of(
+                                "%L",
+                                context.kotlinName(sender.temporary.value, sendProtocol)
+                            )
+                            false -> CodeBlock.of(
+                                "%L",
+                                context.receive(
+                                    receiveType,
+                                    event.send.host
+                                )
+                            )
+                        }
+
+                    // receive declassified commitment from the hash holder
+                    receiveBuilder.addStatement(
+                        "val %N = %L",
+                        clearTextCommittedTemp,
+                        receiveDispatcher(
+                            cleartextCommitmentInputs.first(),
+                            Committed::class.asTypeName().parameterizedBy(
+                                typeTranslator((typeAnalysis.type(sender)))
+                            )
+                        )
+                    )
+
+                    for (hashSendEvent in hashCommitmentInputs) {
+                        receiveBuilder.addStatement(
+                            "%L.open(%N)",
+                            receiveDispatcher(
+                                hashSendEvent,
+                                Commitment::class.asTypeName().parameterizedBy(
+                                    typeTranslator((typeAnalysis.type(sender)))
+                                )
+                            ),
+                            clearTextCommittedTemp
+                        )
+                    }
+
+                    receiveBuilder.addStatement(
+                        "val %N = %L.value",
+                        context.kotlinName(sender.temporary.value, receiveProtocol),
+                        clearTextCommittedTemp
+                    )
+                }
+
+                else ->
+                    throw
+                    CodeGenerationError("Plaintext: received both commitment opening and cleartext value")
+            }
         }
         return receiveBuilder.build()
     }

@@ -2,7 +2,6 @@ package edu.cornell.cs.apl.viaduct.codegeneration
 
 import com.squareup.kotlinpoet.CodeBlock
 import edu.cornell.cs.apl.viaduct.selection.ProtocolCommunication
-import edu.cornell.cs.apl.viaduct.syntax.Host
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
 import edu.cornell.cs.apl.viaduct.syntax.ProtocolName
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.AtomicExpressionNode
@@ -15,7 +14,6 @@ interface CodeGenerator {
     fun simpleStatement(protocol: Protocol, stmt: SimpleStatementNode): CodeBlock
 
     fun send(
-        sendingHost: Host,
         sender: LetNode,
         sendProtocol: Protocol,
         receiveProtocol: Protocol,
@@ -23,7 +21,6 @@ interface CodeGenerator {
     ): CodeBlock
 
     fun receive(
-        receivingHost: Host,
         sender: LetNode,
         sendProtocol: Protocol,
         receiveProtocol: Protocol,
@@ -48,20 +45,18 @@ fun Iterable<Pair<Set<ProtocolName>, CodeGenerator>>.unions(): CodeGenerator =
             generatorFor(protocol).simpleStatement(protocol, stmt)
 
         override fun send(
-            sendingHost: Host,
             sender: LetNode,
             sendProtocol: Protocol,
             receiveProtocol: Protocol,
             events: ProtocolCommunication
         ): CodeBlock =
-            generatorFor(sendProtocol).send(sendingHost, sender, sendProtocol, receiveProtocol, events)
+            generatorFor(sendProtocol).send(sender, sendProtocol, receiveProtocol, events)
 
         override fun receive(
-            receivingHost: Host,
             sender: LetNode,
             sendProtocol: Protocol,
             receiveProtocol: Protocol,
             events: ProtocolCommunication
         ): CodeBlock =
-            generatorFor(receiveProtocol).send(receivingHost, sender, sendProtocol, receiveProtocol, events)
+            generatorFor(receiveProtocol).send(sender, sendProtocol, receiveProtocol, events)
     }

@@ -1,5 +1,6 @@
 plugins {
     kotlin("multiplatform") version embeddedKotlinVersion apply false
+    kotlin("plugin.serialization") version embeddedKotlinVersion apply false
 
     // Documentation
     id("org.jetbrains.dokka") version "1.5.31"
@@ -54,7 +55,7 @@ subprojects {
 
         /** Java Version */
 
-        extensions.configure<JavaPluginExtension>("java") {
+        configure<JavaPluginExtension> {
             toolchain {
                 languageVersion.set(JavaLanguageVersion.of(11))
             }

@@ -1,19 +1,9 @@
 package edu.cornell.cs.apl.viaduct.gradle
 
 import edu.cornell.cs.apl.viaduct.backends.Backend
-import edu.cornell.cs.apl.viaduct.codegeneration.BackendCodeGenerator
 import edu.cornell.cs.apl.viaduct.errors.CompilationError
 import edu.cornell.cs.apl.viaduct.parsing.SourceFile
-import edu.cornell.cs.apl.viaduct.parsing.parse
-import edu.cornell.cs.apl.viaduct.passes.annotateWithProtocols
-import edu.cornell.cs.apl.viaduct.passes.check
-import edu.cornell.cs.apl.viaduct.passes.elaborated
-import edu.cornell.cs.apl.viaduct.passes.specialize
-import edu.cornell.cs.apl.viaduct.selection.ProtocolSelection
-import edu.cornell.cs.apl.viaduct.selection.SimpleCostEstimator
-import edu.cornell.cs.apl.viaduct.selection.SimpleCostRegime
-import edu.cornell.cs.apl.viaduct.selection.Z3Selection
-import edu.cornell.cs.apl.viaduct.selection.validateProtocolAssignment
+import edu.cornell.cs.apl.viaduct.passes.compileToKotlin
 import org.gradle.api.DefaultTask
 import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.file.FileType
@@ -72,55 +62,17 @@ abstract class CompileViaductTask : DefaultTask() {
         logger.debug("Compiling from $sourceFile to $outputFile in package $packageName.")
 
         val compiledProgram = try {
-            compile(sourceFile, packageName, outputFile.nameWithoutExtension)
+            SourceFile.from(sourceFile).compileToKotlin(
+                fileName = outputFile.nameWithoutExtension,
+                packageName = packageName,
+                backend = backend.get()
+            )
         } catch (e: CompilationError) {
             throw Error(e.toString(), e)
         }
 
         // Write the output
         project.mkdir(outputFile.parentFile)
-        outputFile.writeText(compiledProgram)
-    }
-
-    private fun compile(sourceFile: File, packageName: String, fileName: String): String {
-        val program = SourceFile.from(sourceFile).parse().elaborated().specialize()
-
-        // Perform static checks.
-        program.check()
-
-        // TODO: don't bake in cost regime
-        val protocolFactory = backend.get().protocolFactory(program)
-        val protocolComposer = backend.get().protocolComposer
-        val costEstimator = SimpleCostEstimator(protocolComposer, SimpleCostRegime.WAN)
-
-        val protocolAssignment =
-            ProtocolSelection(
-                Z3Selection(),
-                protocolFactory,
-                protocolComposer,
-                costEstimator
-            ).selectAssignment(program)
-
-        // Perform a sanity check to ensure the protocolAssignment is valid.
-        // TODO: either remove this entirely or make it opt-in by the command line.
-        validateProtocolAssignment(
-            program,
-            protocolFactory,
-            protocolComposer,
-            costEstimator,
-            protocolAssignment
-        )
-
-        val annotatedProgram = program.annotateWithProtocols(protocolAssignment)
-
-        val backendCodeGenerator = BackendCodeGenerator(
-            annotatedProgram,
-            listOf(backend.get()::codeGenerator),
-            fileName,
-            packageName
-        )
-
-        // TODO: code generator should return a KotlinPoet class
-        return backendCodeGenerator.generate()
+        outputFile.writer().use { compiledProgram.writeTo(it) }
     }
 }

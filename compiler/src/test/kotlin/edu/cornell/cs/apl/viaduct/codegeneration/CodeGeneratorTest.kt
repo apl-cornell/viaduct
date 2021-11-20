@@ -22,10 +22,10 @@ internal class CodeGeneratorTest {
     @ParameterizedTest
     @ArgumentsSource(PositiveTestFileProvider::class)
     fun `it generates`(file: File) {
-        if (file.parentFile.name != "plaintext-code-generation") return
+        if (file.parentFile.name != "code-generation") return
 
         val program = SourceFile.from(file)
-            .parse()
+            .parse(DefaultCombinedBackend.protocolParsers)
             .elaborated()
             .specialize()
 
@@ -55,13 +55,15 @@ internal class CodeGeneratorTest {
          val postprocessedProgram = postprocessor.postprocess(annotatedProgram)
          **/
 
-        val backendCodeGenerator = BackendCodeGenerator(
+        compileKotlinFileSpec(
             annotatedProgram,
-            listOf<(context: CodeGeneratorContext) -> CodeGenerator>(::PlainTextCodeGenerator),
             file.name.substringBefore('.'),
-            "src"
-        )
-
-        println(backendCodeGenerator.generate())
+            "src",
+            listOf<(context: CodeGeneratorContext) -> CodeGenerator>(
+                ::PlainTextCodeGenerator,
+                ::CommitmentDispatchCodeGenerator
+            ),
+            DefaultCombinedBackend.protocolComposer
+        ).writeTo(System.out)
     }
 }

@@ -1,7 +1,11 @@
 package edu.cornell.cs.apl.viaduct.gradle
 
 import edu.cornell.cs.apl.viaduct.backends.Backend
-import edu.cornell.cs.apl.viaduct.codegeneration.BackendCodeGenerator
+import edu.cornell.cs.apl.viaduct.codegeneration.CodeGenerator
+import edu.cornell.cs.apl.viaduct.codegeneration.CodeGeneratorContext
+import edu.cornell.cs.apl.viaduct.codegeneration.CommitmentDispatchCodeGenerator
+import edu.cornell.cs.apl.viaduct.codegeneration.PlainTextCodeGenerator
+import edu.cornell.cs.apl.viaduct.codegeneration.compileKotlinFile
 import edu.cornell.cs.apl.viaduct.errors.CompilationError
 import edu.cornell.cs.apl.viaduct.parsing.SourceFile
 import edu.cornell.cs.apl.viaduct.parsing.parse
@@ -83,7 +87,7 @@ abstract class CompileViaductTask : DefaultTask() {
     }
 
     private fun compile(sourceFile: File, packageName: String, fileName: String): String {
-        val program = SourceFile.from(sourceFile).parse().elaborated().specialize()
+        val program = SourceFile.from(sourceFile).parse(backend.get().protocolParsers).elaborated().specialize()
 
         // Perform static checks.
         program.check()
@@ -92,7 +96,6 @@ abstract class CompileViaductTask : DefaultTask() {
         val protocolFactory = backend.get().protocolFactory(program)
         val protocolComposer = backend.get().protocolComposer
         val costEstimator = SimpleCostEstimator(protocolComposer, SimpleCostRegime.WAN)
-
         val protocolAssignment =
             ProtocolSelection(
                 Z3Selection(),
@@ -113,14 +116,15 @@ abstract class CompileViaductTask : DefaultTask() {
 
         val annotatedProgram = program.annotateWithProtocols(protocolAssignment)
 
-        val backendCodeGenerator = BackendCodeGenerator(
+        return compileKotlinFile(
             annotatedProgram,
-            listOf(backend.get()::codeGenerator),
             fileName,
-            packageName
+            packageName,
+            listOf<(context: CodeGeneratorContext) -> CodeGenerator>(
+                ::PlainTextCodeGenerator,
+                ::CommitmentDispatchCodeGenerator
+            ),
+            backend.get().protocolComposer
         )
-
-        // TODO: code generator should return a KotlinPoet class
-        return backendCodeGenerator.generate()
     }
 }

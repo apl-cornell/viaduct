@@ -11,10 +11,11 @@ import edu.cornell.cs.apl.viaduct.analysis.descendantsIsInstance
 import edu.cornell.cs.apl.viaduct.backend.aby.abyMuxPostprocessor
 import edu.cornell.cs.apl.viaduct.backend.zkp.zkpMuxPostprocessor
 import edu.cornell.cs.apl.viaduct.backends.DefaultCombinedBackend
-import edu.cornell.cs.apl.viaduct.codegeneration.BackendCodeGenerator
 import edu.cornell.cs.apl.viaduct.codegeneration.CodeGenerator
 import edu.cornell.cs.apl.viaduct.codegeneration.CodeGeneratorContext
+import edu.cornell.cs.apl.viaduct.codegeneration.CommitmentDispatchCodeGenerator
 import edu.cornell.cs.apl.viaduct.codegeneration.PlainTextCodeGenerator
+import edu.cornell.cs.apl.viaduct.codegeneration.compileKotlinFile
 import edu.cornell.cs.apl.viaduct.passes.ProgramPostprocessorRegistry
 import edu.cornell.cs.apl.viaduct.passes.annotateWithProtocols
 import edu.cornell.cs.apl.viaduct.passes.check
@@ -181,16 +182,20 @@ class Compile : CliktCommand(help = "Compile ideal protocol to secure distribute
             }
 
         if (compileKotlin) {
-            // TODO - figure out best way to let code generators know which protocols it is responsible for
-            val backendCodeGenerator = BackendCodeGenerator(
-                postprocessedProgram,
-                listOf<(context: CodeGeneratorContext) -> CodeGenerator>(::PlainTextCodeGenerator),
-                input!!.name.substringBefore('.'),
-                "src"
+            output.println(
+                Document(
+                    compileKotlinFile(
+                        postprocessedProgram,
+                        input!!.name.substringBefore('.'),
+                        "src",
+                        listOf<(context: CodeGeneratorContext) -> CodeGenerator>(
+                            ::PlainTextCodeGenerator,
+                            ::CommitmentDispatchCodeGenerator
+                        ),
+                        DefaultCombinedBackend.protocolComposer
+                    )
+                )
             )
-
-            val kotlin = backendCodeGenerator.generate()
-            output.println(Document(kotlin))
         } else {
             output.println(postprocessedProgram)
         }

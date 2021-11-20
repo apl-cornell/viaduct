@@ -104,7 +104,7 @@ private class BackendCodeGenerator(
                 }
 
                 if (protocolAnalysis.participatingHosts(stmt).contains(host)) {
-
+                    hostFunctionBuilder.addComment(stmt.toDocument().print())
                     // generate code for the statement, if [host] participating
                     val protocolCodeGenerator = codeGeneratorMap[protocol]
                         ?: throw CodeGenerationError("no code generator for protocol ${protocol.toDocument().print()}")
@@ -128,6 +128,7 @@ private class BackendCodeGenerator(
 
             is SimpleStatementNode -> {
                 if (protocolAnalysis.participatingHosts(stmt).contains(host)) {
+                    hostFunctionBuilder.addComment(stmt.toDocument().print())
                     val protocol = protocolAnalysis.primaryProtocol(stmt)
                     val protocolCodeGenerator = codeGeneratorMap[protocol]
                         ?: throw CodeGenerationError("no code generator for protocol ${protocol.toDocument().print()}")

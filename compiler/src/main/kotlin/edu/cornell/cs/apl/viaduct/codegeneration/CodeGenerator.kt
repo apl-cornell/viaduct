@@ -58,5 +58,5 @@ fun Iterable<Pair<Set<ProtocolName>, CodeGenerator>>.unions(): CodeGenerator =
             receiveProtocol: Protocol,
             events: ProtocolCommunication
         ): CodeBlock =
-            generatorFor(receiveProtocol).send(sender, sendProtocol, receiveProtocol, events)
+            generatorFor(receiveProtocol).receive(sender, sendProtocol, receiveProtocol, events)
     }

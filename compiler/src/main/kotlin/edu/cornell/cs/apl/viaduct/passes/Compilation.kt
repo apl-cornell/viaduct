@@ -9,8 +9,6 @@ import edu.cornell.cs.apl.viaduct.analysis.descendantsIsInstance
 import edu.cornell.cs.apl.viaduct.backends.Backend
 import edu.cornell.cs.apl.viaduct.backends.DefaultCombinedBackend
 import edu.cornell.cs.apl.viaduct.backends.aby.abyMuxPostprocessor
-import edu.cornell.cs.apl.viaduct.backends.cleartext.CleartextCodeGenerator
-import edu.cornell.cs.apl.viaduct.backends.commitment.CommitmentDispatchCodeGenerator
 import edu.cornell.cs.apl.viaduct.backends.zkp.zkpMuxPostprocessor
 import edu.cornell.cs.apl.viaduct.codegeneration.compileToKotlin
 import edu.cornell.cs.apl.viaduct.parsing.SourceFile
@@ -155,8 +153,7 @@ fun SourceFile.compileToKotlin(
     return postProcessedProgram.compileToKotlin(
         fileName,
         packageName,
-        // TODO: fix hack
-        listOf(::CleartextCodeGenerator, ::CommitmentDispatchCodeGenerator),
+        listOf(backend::codeGenerator),
         DefaultCombinedBackend.protocolComposer
     )
 }

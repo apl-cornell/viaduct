@@ -7,7 +7,6 @@ import edu.cornell.cs.apl.prettyprinting.plus
 import edu.cornell.cs.apl.viaduct.analysis.InformationFlowAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.descendantsIsInstance
 import edu.cornell.cs.apl.viaduct.backends.Backend
-import edu.cornell.cs.apl.viaduct.backends.DefaultCombinedBackend
 import edu.cornell.cs.apl.viaduct.backends.aby.abyMuxPostprocessor
 import edu.cornell.cs.apl.viaduct.backends.zkp.zkpMuxPostprocessor
 import edu.cornell.cs.apl.viaduct.codegeneration.compileToKotlin
@@ -154,7 +153,7 @@ fun SourceFile.compileToKotlin(
         fileName,
         packageName,
         listOf(backend::codeGenerator),
-        DefaultCombinedBackend.protocolComposer
+        backend.protocolComposer
     )
 }
 

@@ -3,7 +3,7 @@ plugins {
     kotlin("plugin.serialization") version embeddedKotlinVersion apply false
 
     // Documentation
-    id("org.jetbrains.dokka") version "1.5.31"
+    id("org.jetbrains.dokka") version "1.6.0"
     id("ru.vyarus.mkdocs") version "2.1.1"
 
     // Style checking

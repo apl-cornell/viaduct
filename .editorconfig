@@ -4,11 +4,11 @@ root = true
 charset = utf-8
 insert_final_newline = true
 trim_trailing_whitespace = true
+
+[*.{kt, via}]
 indent_style = space
 indent_size = 4
 
-[*.java]
-indent_size = 2
-
-[{*.yml, *.yaml}]
+[*.{yml, yaml}]
+indent_style = space
 indent_size = 2

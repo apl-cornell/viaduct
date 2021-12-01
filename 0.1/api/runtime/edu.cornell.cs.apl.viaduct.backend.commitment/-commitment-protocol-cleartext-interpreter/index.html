@@ -2,28 +2,32 @@
   <head>
     <meta name="viewport" content="width=device-width, initial-scale=1" charset="UTF-8">
     <title>CommitmentProtocolCleartextInterpreter</title>
-</head><body><link href="../../../images/logo-icon.svg" rel="icon" type="image/svg"><script>var pathToRoot = "../../../";</script><script type="text/javascript" src="../../../scripts/sourceset_dependencies.js" async></script><link href="../../../styles/style.css" rel="Stylesheet"><link href="../../../styles/logo-styles.css" rel="Stylesheet"><link href="../../../styles/jetbrains-mono.css" rel="Stylesheet"><link href="../../../styles/main.css" rel="Stylesheet"><script type="text/javascript" src="../../../scripts/clipboard.js" async></script><script type="text/javascript" src="../../../scripts/navigation-loader.js" async></script><script type="text/javascript" src="../../../scripts/platform-content-handler.js" async></script><script type="text/javascript" src="../../../scripts/main.js" async></script>
+</head><body><link href="../../../images/logo-icon.svg" rel="icon" type="image/svg"><script>var pathToRoot = "../../../";</script>
+    <script type="text/javascript" src="../../../scripts/sourceset_dependencies.js" async></script><link href="../../../styles/style.css" rel="Stylesheet"><link href="../../../styles/jetbrains-mono.css" rel="Stylesheet"><link href="../../../styles/main.css" rel="Stylesheet"><link href="../../../styles/prism.css" rel="Stylesheet"><link href="../../../styles/logo-styles.css" rel="Stylesheet"><script type="text/javascript" src="../../../scripts/clipboard.js" async></script><script type="text/javascript" src="../../../scripts/navigation-loader.js" async></script><script type="text/javascript" src="../../../scripts/platform-content-handler.js" async></script><script type="text/javascript" src="../../../scripts/main.js" async></script><script type="text/javascript" src="../../../scripts/prism.js" async></script><script>const storage = localStorage.getItem("dokka-dark-mode")
+const savedDarkMode = storage ? JSON.parse(storage) : false
+if(savedDarkMode === true){
+    document.getElementsByTagName("html")[0].classList.add("theme-dark")
+}</script>
+
   
+    <div class="navigation-wrapper" id="navigation-wrapper">
+      <div id="leftToggler"><span class="icon-toggler"></span></div>
+      <div class="library-name"><a href="../../../index.html"><span>viaduct</span></a></div>
+      <div>0.1</div>
+      <div class="pull-right d-flex"><button id="theme-toggle-button"><span id="theme-toggle"></span></button>
+        <div id="searchBar"></div>
+      </div>
+    </div>
     <div id="container">
-      <div id="leftColumn"><a href="../../../index.html">
-            <div id="logo"></div>
-          </a>
-        <div id="paneSearch"></div>
+      <div id="leftColumn">
         <div id="sideMenu"></div>
       </div>
-      <div id="main">
-        <script type="text/javascript" src="../../../scripts/main.js"></script><div id="leftToggler"><span class="icon-toggler"></span></div>
-
+      <div id="main"><script type="text/javascript" src="../../../scripts/main.js"></script>
         <div class="main-content" id="content" pageids="runtime::edu.cornell.cs.apl.viaduct.backend.commitment/CommitmentProtocolCleartextInterpreter///PointingToDeclaration//-1522668094">
-          <div class="navigation-wrapper" id="navigation-wrapper">
-            <div class="breadcrumbs"><a href="../../index.html">runtime</a>/<a href="../index.html">edu.cornell.cs.apl.viaduct.backend.commitment</a>/<a href="index.html">CommitmentProtocolCleartextInterpreter</a></div>
-            <div class="pull-right d-flex">
-              <div id="searchBar"></div>
-            </div>
-          </div>
+          <div class="breadcrumbs"><a href="../../index.html">runtime</a>/<a href="../index.html">edu.cornell.cs.apl.viaduct.backend.commitment</a>/<a href="index.html">CommitmentProtocolCleartextInterpreter</a></div>
           <div class="cover ">
             <h1 class="cover"><span>Commitment</span><wbr><span>Protocol</span><wbr><span>Cleartext</span><wbr><span><span>Interpreter</span></span></h1>
-            <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":runtime:dokkaHtmlPartial/main"><div class="symbol monospace">class <a href="index.html">CommitmentProtocolCleartextInterpreter</a>(program: <a href="../../../compiler/edu.cornell.cs.apl.viaduct.syntax.intermediate/-program-node/index.html">ProgramNode</a>, protocolAnalysis: <a href="../../../compiler/edu.cornell.cs.apl.viaduct.analysis/-protocol-analysis/index.html">ProtocolAnalysis</a>, runtime: <a href="../../edu.cornell.cs.apl.viaduct.backend/-viaduct-process-runtime/index.html">ViaductProcessRuntime</a>) : <a href="../../edu.cornell.cs.apl.viaduct.backend/-single-protocol-interpreter/index.html">SingleProtocolInterpreter</a>&lt;<a href="-hashed-object/index.html">CommitmentProtocolCleartextInterpreter.HashedObject</a>&gt; <span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><p class="paragraph">Commitment protocol interpreter for hosts holding the cleartext value.</p></div></div>
+            <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":runtime:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">class </span><a href="index.html">CommitmentProtocolCleartextInterpreter</a><span class="token punctuation">(</span>program<span class="token operator">: </span><a href="../../../compiler/edu.cornell.cs.apl.viaduct.syntax.intermediate/-program-node/index.html">ProgramNode</a><span class="token punctuation">, </span>protocolAnalysis<span class="token operator">: </span><a href="../../../compiler/edu.cornell.cs.apl.viaduct.analysis/-protocol-analysis/index.html">ProtocolAnalysis</a><span class="token punctuation">, </span>runtime<span class="token operator">: </span><a href="../../edu.cornell.cs.apl.viaduct.backend/-viaduct-process-runtime/index.html">ViaductProcessRuntime</a><span class="token punctuation">)</span> : <a href="../../edu.cornell.cs.apl.viaduct.backend/-single-protocol-interpreter/index.html">SingleProtocolInterpreter</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="-hashed-object/index.html">CommitmentProtocolCleartextInterpreter.HashedObject</a><span class="token operator">&gt; </span><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><p class="paragraph">Commitment protocol interpreter for hosts holding the cleartext value.</p></div></div>
           </div>
           <div class="tabbedcontent">
             <div class="tabs-section" tabs-section="tabs-section"><button class="section-tab" data-active="" data-togglable="Types">Types</button><button class="section-tab" data-togglable="Constructors">Constructors</button><button class="section-tab" data-togglable="Functions">Functions</button><button class="section-tab" data-togglable="Properties">Properties</button></div>
@@ -37,7 +41,7 @@
                         </span></span></div>
                     <div>
                       <div class="title">
-                        <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":runtime:dokkaHtmlPartial/main"><div class="symbol monospace">fun <a href="-commitment-protocol-cleartext-interpreter.html">CommitmentProtocolCleartextInterpreter</a>(program: <a href="../../../compiler/edu.cornell.cs.apl.viaduct.syntax.intermediate/-program-node/index.html">ProgramNode</a>, protocolAnalysis: <a href="../../../compiler/edu.cornell.cs.apl.viaduct.analysis/-protocol-analysis/index.html">ProtocolAnalysis</a>, runtime: <a href="../../edu.cornell.cs.apl.viaduct.backend/-viaduct-process-runtime/index.html">ViaductProcessRuntime</a>)<span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+                        <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":runtime:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="-commitment-protocol-cleartext-interpreter.html"><span class="token function">CommitmentProtocolCleartextInterpreter</span></a><span class="token punctuation">(</span>program<span class="token operator">: </span><a href="../../../compiler/edu.cornell.cs.apl.viaduct.syntax.intermediate/-program-node/index.html">ProgramNode</a><span class="token punctuation">, </span>protocolAnalysis<span class="token operator">: </span><a href="../../../compiler/edu.cornell.cs.apl.viaduct.analysis/-protocol-analysis/index.html">ProtocolAnalysis</a><span class="token punctuation">, </span>runtime<span class="token operator">: </span><a href="../../edu.cornell.cs.apl.viaduct.backend/-viaduct-process-runtime/index.html">ViaductProcessRuntime</a><span class="token punctuation">)</span><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
                       </div>
                     </div>
                   </div>
@@ -51,13 +55,9 @@
                           <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                         </span></span></div>
                     <div>
-                      <div class="title"><div class="divergent-group" data-filterable-current=":runtime:dokkaHtmlPartial/main" data-filterable-set=":runtime:dokkaHtmlPartial/main"><div class="with-platform-tags"><span class="pull-right"></span></div>
-
-  <div>
-    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":runtime:dokkaHtmlPartial/main"><div class="symbol monospace">inner class <a href="-hashed-cell-object/index.html">HashedCellObject</a>(value: <a href="../-hashed/index.html">Hashed</a>&lt;<a href="../../../compiler/edu.cornell.cs.apl.viaduct.syntax.values/-value/index.html">Value</a>&gt;) : <a href="-hashed-object/index.html">CommitmentProtocolCleartextInterpreter.HashedObject</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
-  </div>
-</div>
-</div>
+                      <div class="title">
+                        <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":runtime:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">inner </span><span class="token keyword">class </span><a href="-hashed-cell-object/index.html">HashedCellObject</a><span class="token punctuation">(</span>value<span class="token operator">: </span><a href="../-hashed/index.html">Hashed</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="../../../compiler/edu.cornell.cs.apl.viaduct.syntax.values/-value/index.html">Value</a><span class="token operator">&gt;</span><span class="token punctuation">)</span> : <a href="-hashed-object/index.html">CommitmentProtocolCleartextInterpreter.HashedObject</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -68,13 +68,9 @@
                           <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                         </span></span></div>
                     <div>
-                      <div class="title"><div class="divergent-group" data-filterable-current=":runtime:dokkaHtmlPartial/main" data-filterable-set=":runtime:dokkaHtmlPartial/main"><div class="with-platform-tags"><span class="pull-right"></span></div>
-
-  <div>
-    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":runtime:dokkaHtmlPartial/main"><div class="symbol monospace">object <a href="-hashed-null-object/index.html">HashedNullObject</a> : <a href="-hashed-object/index.html">CommitmentProtocolCleartextInterpreter.HashedObject</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
-  </div>
-</div>
-</div>
+                      <div class="title">
+                        <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":runtime:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">object </span><a href="-hashed-null-object/index.html">HashedNullObject</a> : <a href="-hashed-object/index.html">CommitmentProtocolCleartextInterpreter.HashedObject</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -85,13 +81,9 @@
                           <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                         </span></span></div>
                     <div>
-                      <div class="title"><div class="divergent-group" data-filterable-current=":runtime:dokkaHtmlPartial/main" data-filterable-set=":runtime:dokkaHtmlPartial/main"><div class="with-platform-tags"><span class="pull-right"></span></div>
-
-  <div>
-    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":runtime:dokkaHtmlPartial/main"><div class="symbol monospace">abstract class <a href="-hashed-object/index.html">HashedObject</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
-  </div>
-</div>
-</div>
+                      <div class="title">
+                        <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":runtime:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">abstract </span><span class="token keyword">class </span><a href="-hashed-object/index.html">HashedObject</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -102,13 +94,9 @@
                           <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                         </span></span></div>
                     <div>
-                      <div class="title"><div class="divergent-group" data-filterable-current=":runtime:dokkaHtmlPartial/main" data-filterable-set=":runtime:dokkaHtmlPartial/main"><div class="with-platform-tags"><span class="pull-right"></span></div>
-
-  <div>
-    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":runtime:dokkaHtmlPartial/main"><div class="symbol monospace">inner class <a href="-hashed-vector-object/index.html">HashedVectorObject</a>(size: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html">Int</a>, defaultValue: <a href="../-hashed/index.html">Hashed</a>&lt;<a href="../../../compiler/edu.cornell.cs.apl.viaduct.syntax.values/-value/index.html">Value</a>&gt;) : <a href="-hashed-object/index.html">CommitmentProtocolCleartextInterpreter.HashedObject</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
-  </div>
-</div>
-</div>
+                      <div class="title">
+                        <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":runtime:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">inner </span><span class="token keyword">class </span><a href="-hashed-vector-object/index.html">HashedVectorObject</a><span class="token punctuation">(</span>size<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html">Int</a><span class="token punctuation">, </span>defaultValue<span class="token operator">: </span><a href="../-hashed/index.html">Hashed</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="../../../compiler/edu.cornell.cs.apl.viaduct.syntax.values/-value/index.html">Value</a><span class="token operator">&gt;</span><span class="token punctuation">)</span> : <a href="-hashed-object/index.html">CommitmentProtocolCleartextInterpreter.HashedObject</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -121,13 +109,9 @@
                           <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                         </span></span></div>
                     <div>
-                      <div class="title"><div class="divergent-group" data-filterable-current=":runtime:dokkaHtmlPartial/main" data-filterable-set=":runtime:dokkaHtmlPartial/main"><div class="with-platform-tags"><span class="pull-right"></span></div>
-
-  <div>
-    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":runtime:dokkaHtmlPartial/main"><div class="symbol monospace">open suspend override fun <a href="build-expression-object.html">buildExpressionObject</a>(expr: <a href="../../../compiler/edu.cornell.cs.apl.viaduct.syntax.intermediate/-atomic-expression-node/index.html">AtomicExpressionNode</a>): <a href="-hashed-object/index.html">CommitmentProtocolCleartextInterpreter.HashedObject</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><div class="symbol monospace">open suspend override fun <a href="../../edu.cornell.cs.apl.viaduct.backend/-single-protocol-interpreter/build-expression-object.html">buildExpressionObject</a>(protocol: <a href="../../../compiler/edu.cornell.cs.apl.viaduct.syntax/-protocol/index.html">Protocol</a>, expr: <a href="../../../compiler/edu.cornell.cs.apl.viaduct.syntax.intermediate/-atomic-expression-node/index.html">AtomicExpressionNode</a>): <a href="-hashed-object/index.html">CommitmentProtocolCleartextInterpreter.HashedObject</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
-  </div>
-</div>
-</div>
+                      <div class="title">
+                        <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":runtime:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">suspend override </span><span class="token keyword">fun </span><a href="build-expression-object.html"><span class="token function">buildExpressionObject</span></a><span class="token punctuation">(</span>expr<span class="token operator">: </span><a href="../../../compiler/edu.cornell.cs.apl.viaduct.syntax.intermediate/-atomic-expression-node/index.html">AtomicExpressionNode</a><span class="token punctuation">)</span><span class="token operator">: </span><a href="-hashed-object/index.html">CommitmentProtocolCleartextInterpreter.HashedObject</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">suspend override </span><span class="token keyword">fun </span><a href="../../edu.cornell.cs.apl.viaduct.backend/-single-protocol-interpreter/build-expression-object.html"><span class="token function">buildExpressionObject</span></a><span class="token punctuation">(</span>protocol<span class="token operator">: </span><a href="../../../compiler/edu.cornell.cs.apl.viaduct.syntax/-protocol/index.html">Protocol</a><span class="token punctuation">, </span>expr<span class="token operator">: </span><a href="../../../compiler/edu.cornell.cs.apl.viaduct.syntax.intermediate/-atomic-expression-node/index.html">AtomicExpressionNode</a><span class="token punctuation">)</span><span class="token operator">: </span><a href="-hashed-object/index.html">CommitmentProtocolCleartextInterpreter.HashedObject</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -138,13 +122,9 @@
                           <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                         </span></span></div>
                     <div>
-                      <div class="title"><div class="divergent-group" data-filterable-current=":runtime:dokkaHtmlPartial/main" data-filterable-set=":runtime:dokkaHtmlPartial/main"><div class="with-platform-tags"><span class="pull-right"></span></div>
-
-  <div>
-    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":runtime:dokkaHtmlPartial/main"><div class="symbol monospace">open suspend override fun <a href="build-object.html">buildObject</a>(className: <a href="../../../compiler/edu.cornell.cs.apl.viaduct.syntax.datatypes/-class-name/index.html">ClassName</a>, typeArguments: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.html">List</a>&lt;<a href="../../../compiler/edu.cornell.cs.apl.viaduct.syntax.types/-value-type/index.html">ValueType</a>&gt;, arguments: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.html">List</a>&lt;<a href="../../../compiler/edu.cornell.cs.apl.viaduct.syntax.intermediate/-atomic-expression-node/index.html">AtomicExpressionNode</a>&gt;): <a href="-hashed-object/index.html">CommitmentProtocolCleartextInterpreter.HashedObject</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><div class="symbol monospace">open suspend override fun <a href="../../edu.cornell.cs.apl.viaduct.backend/-single-protocol-interpreter/build-object.html">buildObject</a>(protocol: <a href="../../../compiler/edu.cornell.cs.apl.viaduct.syntax/-protocol/index.html">Protocol</a>, className: <a href="../../../compiler/edu.cornell.cs.apl.viaduct.syntax.datatypes/-class-name/index.html">ClassName</a>, typeArguments: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.html">List</a>&lt;<a href="../../../compiler/edu.cornell.cs.apl.viaduct.syntax.types/-value-type/index.html">ValueType</a>&gt;, arguments: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.html">List</a>&lt;<a href="../../../compiler/edu.cornell.cs.apl.viaduct.syntax.intermediate/-atomic-expression-node/index.html">AtomicExpressionNode</a>&gt;): <a href="-hashed-object/index.html">CommitmentProtocolCleartextInterpreter.HashedObject</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
-  </div>
-</div>
-</div>
+                      <div class="title">
+                        <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":runtime:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">suspend override </span><span class="token keyword">fun </span><a href="build-object.html"><span class="token function">buildObject</span></a><span class="token punctuation">(</span>className<span class="token operator">: </span><a href="../../../compiler/edu.cornell.cs.apl.viaduct.syntax.datatypes/-class-name/index.html">ClassName</a><span class="token punctuation">, </span>typeArguments<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.html">List</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="../../../compiler/edu.cornell.cs.apl.viaduct.syntax.types/-value-type/index.html">ValueType</a><span class="token operator">&gt;</span><span class="token punctuation">, </span>arguments<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.html">List</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="../../../compiler/edu.cornell.cs.apl.viaduct.syntax.intermediate/-atomic-expression-node/index.html">AtomicExpressionNode</a><span class="token operator">&gt;</span><span class="token punctuation">)</span><span class="token operator">: </span><a href="-hashed-object/index.html">CommitmentProtocolCleartextInterpreter.HashedObject</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">suspend override </span><span class="token keyword">fun </span><a href="../../edu.cornell.cs.apl.viaduct.backend/-single-protocol-interpreter/build-object.html"><span class="token function">buildObject</span></a><span class="token punctuation">(</span>protocol<span class="token operator">: </span><a href="../../../compiler/edu.cornell.cs.apl.viaduct.syntax/-protocol/index.html">Protocol</a><span class="token punctuation">, </span>className<span class="token operator">: </span><a href="../../../compiler/edu.cornell.cs.apl.viaduct.syntax.datatypes/-class-name/index.html">ClassName</a><span class="token punctuation">, </span>typeArguments<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.html">List</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="../../../compiler/edu.cornell.cs.apl.viaduct.syntax.types/-value-type/index.html">ValueType</a><span class="token operator">&gt;</span><span class="token punctuation">, </span>arguments<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.html">List</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="../../../compiler/edu.cornell.cs.apl.viaduct.syntax.intermediate/-atomic-expression-node/index.html">AtomicExpressionNode</a><span class="token operator">&gt;</span><span class="token punctuation">)</span><span class="token operator">: </span><a href="-hashed-object/index.html">CommitmentProtocolCleartextInterpreter.HashedObject</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -155,13 +135,9 @@
                           <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                         </span></span></div>
                     <div>
-                      <div class="title"><div class="divergent-group" data-filterable-current=":runtime:dokkaHtmlPartial/main" data-filterable-set=":runtime:dokkaHtmlPartial/main"><div class="with-platform-tags"><span class="pull-right"></span></div>
-
-  <div>
-    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":runtime:dokkaHtmlPartial/main"><div class="symbol monospace">open override fun <a href="../../edu.cornell.cs.apl.viaduct.backend/-abstract-protocol-interpreter/get-context-marker.html">getContextMarker</a>(): <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html">Int</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
-  </div>
-</div>
-</div>
+                      <div class="title">
+                        <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":runtime:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">override </span><span class="token keyword">fun </span><a href="../../edu.cornell.cs.apl.viaduct.backend/-abstract-protocol-interpreter/get-context-marker.html"><span class="token function">getContextMarker</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html">Int</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -172,13 +148,9 @@
                           <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                         </span></span></div>
                     <div>
-                      <div class="title"><div class="divergent-group" data-filterable-current=":runtime:dokkaHtmlPartial/main" data-filterable-set=":runtime:dokkaHtmlPartial/main"><div class="with-platform-tags"><span class="pull-right"></span></div>
-
-  <div>
-    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":runtime:dokkaHtmlPartial/main"><div class="symbol monospace">open override fun <a href="get-null-object.html">getNullObject</a>(): <a href="-hashed-object/index.html">CommitmentProtocolCleartextInterpreter.HashedObject</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><div class="symbol monospace">open override fun <a href="../../edu.cornell.cs.apl.viaduct.backend/-single-protocol-interpreter/get-null-object.html">getNullObject</a>(protocol: <a href="../../../compiler/edu.cornell.cs.apl.viaduct.syntax/-protocol/index.html">Protocol</a>): <a href="-hashed-object/index.html">CommitmentProtocolCleartextInterpreter.HashedObject</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
-  </div>
-</div>
-</div>
+                      <div class="title">
+                        <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":runtime:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">override </span><span class="token keyword">fun </span><a href="get-null-object.html"><span class="token function">getNullObject</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">: </span><a href="-hashed-object/index.html">CommitmentProtocolCleartextInterpreter.HashedObject</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">override </span><span class="token keyword">fun </span><a href="../../edu.cornell.cs.apl.viaduct.backend/-single-protocol-interpreter/get-null-object.html"><span class="token function">getNullObject</span></a><span class="token punctuation">(</span>protocol<span class="token operator">: </span><a href="../../../compiler/edu.cornell.cs.apl.viaduct.syntax/-protocol/index.html">Protocol</a><span class="token punctuation">)</span><span class="token operator">: </span><a href="-hashed-object/index.html">CommitmentProtocolCleartextInterpreter.HashedObject</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -189,13 +161,9 @@
                           <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                         </span></span></div>
                     <div>
-                      <div class="title"><div class="divergent-group" data-filterable-current=":runtime:dokkaHtmlPartial/main" data-filterable-set=":runtime:dokkaHtmlPartial/main"><div class="with-platform-tags"><span class="pull-right"></span></div>
-
-  <div>
-    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":runtime:dokkaHtmlPartial/main"><div class="symbol monospace">open suspend override fun <a href="pop-context.html">popContext</a>()<span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
-  </div>
-</div>
-</div>
+                      <div class="title">
+                        <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":runtime:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">suspend override </span><span class="token keyword">fun </span><a href="pop-context.html"><span class="token function">popContext</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -206,13 +174,9 @@
                           <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                         </span></span></div>
                     <div>
-                      <div class="title"><div class="divergent-group" data-filterable-current=":runtime:dokkaHtmlPartial/main" data-filterable-set=":runtime:dokkaHtmlPartial/main"><div class="with-platform-tags"><span class="pull-right"></span></div>
-
-  <div>
-    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":runtime:dokkaHtmlPartial/main"><div class="symbol monospace">open suspend override fun <a href="../../edu.cornell.cs.apl.viaduct.backend/-abstract-protocol-interpreter/pop-function-context.html">popFunctionContext</a>()<span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
-  </div>
-</div>
-</div>
+                      <div class="title">
+                        <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":runtime:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">suspend override </span><span class="token keyword">fun </span><a href="../../edu.cornell.cs.apl.viaduct.backend/-abstract-protocol-interpreter/pop-function-context.html"><span class="token function">popFunctionContext</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -223,13 +187,9 @@
                           <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                         </span></span></div>
                     <div>
-                      <div class="title"><div class="divergent-group" data-filterable-current=":runtime:dokkaHtmlPartial/main" data-filterable-set=":runtime:dokkaHtmlPartial/main"><div class="with-platform-tags"><span class="pull-right"></span></div>
-
-  <div>
-    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":runtime:dokkaHtmlPartial/main"><div class="symbol monospace">open suspend override fun <a href="push-context.html">pushContext</a>()<span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
-  </div>
-</div>
-</div>
+                      <div class="title">
+                        <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":runtime:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">suspend override </span><span class="token keyword">fun </span><a href="push-context.html"><span class="token function">pushContext</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -240,13 +200,9 @@
                           <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                         </span></span></div>
                     <div>
-                      <div class="title"><div class="divergent-group" data-filterable-current=":runtime:dokkaHtmlPartial/main" data-filterable-set=":runtime:dokkaHtmlPartial/main"><div class="with-platform-tags"><span class="pull-right"></span></div>
-
-  <div>
-    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":runtime:dokkaHtmlPartial/main"><div class="symbol monospace">open suspend override fun <a href="../../edu.cornell.cs.apl.viaduct.backend/-abstract-protocol-interpreter/push-function-context.html">pushFunctionContext</a>(arguments: <span data-unresolved-link="kotlinx.collections.immutable/PersistentMap///PointingToDeclaration/">PersistentMap</span>&lt;<a href="../../../compiler/edu.cornell.cs.apl.viaduct.syntax.intermediate/-parameter-node/index.html">ParameterNode</a>, <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-pair/index.html">Pair</a>&lt;<a href="../../../compiler/edu.cornell.cs.apl.viaduct.syntax/-protocol/index.html">Protocol</a>, <a href="../../../compiler/edu.cornell.cs.apl.viaduct.syntax.intermediate/-function-argument-node/index.html">FunctionArgumentNode</a>&gt;&gt;)<span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
-  </div>
-</div>
-</div>
+                      <div class="title">
+                        <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":runtime:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">suspend override </span><span class="token keyword">fun </span><a href="../../edu.cornell.cs.apl.viaduct.backend/-abstract-protocol-interpreter/push-function-context.html"><span class="token function">pushFunctionContext</span></a><span class="token punctuation">(</span>arguments<span class="token operator">: </span><span data-unresolved-link="kotlinx.collections.immutable/PersistentMap///PointingToDeclaration/">PersistentMap</span><span class="token operator">&lt;</span><span class="token keyword"></span><a href="../../../compiler/edu.cornell.cs.apl.viaduct.syntax.intermediate/-parameter-node/index.html">ParameterNode</a><span class="token punctuation">, </span><span class="token keyword"></span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-pair/index.html">Pair</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="../../../compiler/edu.cornell.cs.apl.viaduct.syntax/-protocol/index.html">Protocol</a><span class="token punctuation">, </span><span class="token keyword"></span><a href="../../../compiler/edu.cornell.cs.apl.viaduct.syntax.intermediate/-function-argument-node/index.html">FunctionArgumentNode</a><span class="token operator">&gt;</span><span class="token operator">&gt;</span><span class="token punctuation">)</span><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -257,13 +213,9 @@
                           <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                         </span></span></div>
                     <div>
-                      <div class="title"><div class="divergent-group" data-filterable-current=":runtime:dokkaHtmlPartial/main" data-filterable-set=":runtime:dokkaHtmlPartial/main"><div class="with-platform-tags"><span class="pull-right"></span></div>
-
-  <div>
-    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":runtime:dokkaHtmlPartial/main"><div class="symbol monospace">open suspend override fun <a href="../../edu.cornell.cs.apl.viaduct.backend/-abstract-protocol-interpreter/restore-context.html">restoreContext</a>(marker: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html">Int</a>)<span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
-  </div>
-</div>
-</div>
+                      <div class="title">
+                        <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":runtime:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">suspend override </span><span class="token keyword">fun </span><a href="../../edu.cornell.cs.apl.viaduct.backend/-abstract-protocol-interpreter/restore-context.html"><span class="token function">restoreContext</span></a><span class="token punctuation">(</span>marker<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html">Int</a><span class="token punctuation">)</span><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -274,13 +226,9 @@
                           <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                         </span></span></div>
                     <div>
-                      <div class="title"><div class="divergent-group" data-filterable-current=":runtime:dokkaHtmlPartial/main" data-filterable-set=":runtime:dokkaHtmlPartial/main"><div class="with-platform-tags"><span class="pull-right"></span></div>
-
-  <div>
-    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":runtime:dokkaHtmlPartial/main"><div class="symbol monospace">open suspend override fun <a href="run-guard.html">runGuard</a>(expr: <a href="../../../compiler/edu.cornell.cs.apl.viaduct.syntax.intermediate/-atomic-expression-node/index.html">AtomicExpressionNode</a>): <a href="../../../compiler/edu.cornell.cs.apl.viaduct.syntax.values/-value/index.html">Value</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><div class="symbol monospace">open suspend override fun <a href="../../edu.cornell.cs.apl.viaduct.backend/-single-protocol-interpreter/run-guard.html">runGuard</a>(protocol: <a href="../../../compiler/edu.cornell.cs.apl.viaduct.syntax/-protocol/index.html">Protocol</a>, expr: <a href="../../../compiler/edu.cornell.cs.apl.viaduct.syntax.intermediate/-atomic-expression-node/index.html">AtomicExpressionNode</a>): <a href="../../../compiler/edu.cornell.cs.apl.viaduct.syntax.values/-value/index.html">Value</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
-  </div>
-</div>
-</div>
+                      <div class="title">
+                        <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":runtime:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">suspend override </span><span class="token keyword">fun </span><a href="run-guard.html"><span class="token function">runGuard</span></a><span class="token punctuation">(</span>expr<span class="token operator">: </span><a href="../../../compiler/edu.cornell.cs.apl.viaduct.syntax.intermediate/-atomic-expression-node/index.html">AtomicExpressionNode</a><span class="token punctuation">)</span><span class="token operator">: </span><a href="../../../compiler/edu.cornell.cs.apl.viaduct.syntax.values/-value/index.html">Value</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">suspend override </span><span class="token keyword">fun </span><a href="../../edu.cornell.cs.apl.viaduct.backend/-single-protocol-interpreter/run-guard.html"><span class="token function">runGuard</span></a><span class="token punctuation">(</span>protocol<span class="token operator">: </span><a href="../../../compiler/edu.cornell.cs.apl.viaduct.syntax/-protocol/index.html">Protocol</a><span class="token punctuation">, </span>expr<span class="token operator">: </span><a href="../../../compiler/edu.cornell.cs.apl.viaduct.syntax.intermediate/-atomic-expression-node/index.html">AtomicExpressionNode</a><span class="token punctuation">)</span><span class="token operator">: </span><a href="../../../compiler/edu.cornell.cs.apl.viaduct.syntax.values/-value/index.html">Value</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -291,13 +239,9 @@
                           <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                         </span></span></div>
                     <div>
-                      <div class="title"><div class="divergent-group" data-filterable-current=":runtime:dokkaHtmlPartial/main" data-filterable-set=":runtime:dokkaHtmlPartial/main"><div class="with-platform-tags"><span class="pull-right"></span></div>
-
-  <div>
-    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":runtime:dokkaHtmlPartial/main"><div class="symbol monospace">open suspend override fun <a href="run-let.html">runLet</a>(stmt: <a href="../../../compiler/edu.cornell.cs.apl.viaduct.syntax.intermediate/-let-node/index.html">LetNode</a>)<span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><div class="symbol monospace">open suspend override fun <a href="../../edu.cornell.cs.apl.viaduct.backend/-single-protocol-interpreter/run-let.html">runLet</a>(protocol: <a href="../../../compiler/edu.cornell.cs.apl.viaduct.syntax/-protocol/index.html">Protocol</a>, stmt: <a href="../../../compiler/edu.cornell.cs.apl.viaduct.syntax.intermediate/-let-node/index.html">LetNode</a>)<span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
-  </div>
-</div>
-</div>
+                      <div class="title">
+                        <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":runtime:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">suspend override </span><span class="token keyword">fun </span><a href="run-let.html"><span class="token function">runLet</span></a><span class="token punctuation">(</span>stmt<span class="token operator">: </span><a href="../../../compiler/edu.cornell.cs.apl.viaduct.syntax.intermediate/-let-node/index.html">LetNode</a><span class="token punctuation">)</span><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">suspend override </span><span class="token keyword">fun </span><a href="../../edu.cornell.cs.apl.viaduct.backend/-single-protocol-interpreter/run-let.html"><span class="token function">runLet</span></a><span class="token punctuation">(</span>protocol<span class="token operator">: </span><a href="../../../compiler/edu.cornell.cs.apl.viaduct.syntax/-protocol/index.html">Protocol</a><span class="token punctuation">, </span>stmt<span class="token operator">: </span><a href="../../../compiler/edu.cornell.cs.apl.viaduct.syntax.intermediate/-let-node/index.html">LetNode</a><span class="token punctuation">)</span><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -308,13 +252,9 @@
                           <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                         </span></span></div>
                     <div>
-                      <div class="title"><div class="divergent-group" data-filterable-current=":runtime:dokkaHtmlPartial/main" data-filterable-set=":runtime:dokkaHtmlPartial/main"><div class="with-platform-tags"><span class="pull-right"></span></div>
-
-  <div>
-    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":runtime:dokkaHtmlPartial/main"><div class="symbol monospace">open suspend override fun <a href="run-output.html">runOutput</a>(stmt: <a href="../../../compiler/edu.cornell.cs.apl.viaduct.syntax.intermediate/-output-node/index.html">OutputNode</a>)<span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><div class="symbol monospace">open suspend override fun <a href="../../edu.cornell.cs.apl.viaduct.backend/-single-protocol-interpreter/run-output.html">runOutput</a>(protocol: <a href="../../../compiler/edu.cornell.cs.apl.viaduct.syntax/-protocol/index.html">Protocol</a>, stmt: <a href="../../../compiler/edu.cornell.cs.apl.viaduct.syntax.intermediate/-output-node/index.html">OutputNode</a>)<span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
-  </div>
-</div>
-</div>
+                      <div class="title">
+                        <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":runtime:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">suspend override </span><span class="token keyword">fun </span><a href="run-output.html"><span class="token function">runOutput</span></a><span class="token punctuation">(</span>stmt<span class="token operator">: </span><a href="../../../compiler/edu.cornell.cs.apl.viaduct.syntax.intermediate/-output-node/index.html">OutputNode</a><span class="token punctuation">)</span><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">suspend override </span><span class="token keyword">fun </span><a href="../../edu.cornell.cs.apl.viaduct.backend/-single-protocol-interpreter/run-output.html"><span class="token function">runOutput</span></a><span class="token punctuation">(</span>protocol<span class="token operator">: </span><a href="../../../compiler/edu.cornell.cs.apl.viaduct.syntax/-protocol/index.html">Protocol</a><span class="token punctuation">, </span>stmt<span class="token operator">: </span><a href="../../../compiler/edu.cornell.cs.apl.viaduct.syntax.intermediate/-output-node/index.html">OutputNode</a><span class="token punctuation">)</span><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -325,13 +265,9 @@
                           <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                         </span></span></div>
                     <div>
-                      <div class="title"><div class="divergent-group" data-filterable-current=":runtime:dokkaHtmlPartial/main" data-filterable-set=":runtime:dokkaHtmlPartial/main"><div class="with-platform-tags"><span class="pull-right"></span></div>
-
-  <div>
-    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":runtime:dokkaHtmlPartial/main"><div class="symbol monospace">open suspend override fun <a href="run-receive.html">runReceive</a>(sender: <a href="../../../compiler/edu.cornell.cs.apl.viaduct.syntax.intermediate/-let-node/index.html">LetNode</a>, sendProtocol: <a href="../../../compiler/edu.cornell.cs.apl.viaduct.syntax/-protocol/index.html">Protocol</a>, receiver: <a href="../../../compiler/edu.cornell.cs.apl.viaduct.syntax.intermediate/-simple-statement-node/index.html">SimpleStatementNode</a>, recvProtocol: <a href="../../../compiler/edu.cornell.cs.apl.viaduct.syntax/-protocol/index.html">Protocol</a>, events: <a href="../../../compiler/edu.cornell.cs.apl.viaduct.selection/-protocol-communication/index.html">ProtocolCommunication</a>)<span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
-  </div>
-</div>
-</div>
+                      <div class="title">
+                        <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":runtime:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">suspend override </span><span class="token keyword">fun </span><a href="run-receive.html"><span class="token function">runReceive</span></a><span class="token punctuation">(</span>sender<span class="token operator">: </span><a href="../../../compiler/edu.cornell.cs.apl.viaduct.syntax.intermediate/-let-node/index.html">LetNode</a><span class="token punctuation">, </span>sendProtocol<span class="token operator">: </span><a href="../../../compiler/edu.cornell.cs.apl.viaduct.syntax/-protocol/index.html">Protocol</a><span class="token punctuation">, </span>receiver<span class="token operator">: </span><a href="../../../compiler/edu.cornell.cs.apl.viaduct.syntax.intermediate/-simple-statement-node/index.html">SimpleStatementNode</a><span class="token punctuation">, </span>recvProtocol<span class="token operator">: </span><a href="../../../compiler/edu.cornell.cs.apl.viaduct.syntax/-protocol/index.html">Protocol</a><span class="token punctuation">, </span>events<span class="token operator">: </span><a href="../../../compiler/edu.cornell.cs.apl.viaduct.selection/-protocol-communication/index.html">ProtocolCommunication</a><span class="token punctuation">)</span><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -342,13 +278,9 @@
                           <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                         </span></span></div>
                     <div>
-                      <div class="title"><div class="divergent-group" data-filterable-current=":runtime:dokkaHtmlPartial/main" data-filterable-set=":runtime:dokkaHtmlPartial/main"><div class="with-platform-tags"><span class="pull-right"></span></div>
-
-  <div>
-    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":runtime:dokkaHtmlPartial/main"><div class="symbol monospace">open suspend override fun <a href="run-send.html">runSend</a>(sender: <a href="../../../compiler/edu.cornell.cs.apl.viaduct.syntax.intermediate/-let-node/index.html">LetNode</a>, sendProtocol: <a href="../../../compiler/edu.cornell.cs.apl.viaduct.syntax/-protocol/index.html">Protocol</a>, receiver: <a href="../../../compiler/edu.cornell.cs.apl.viaduct.syntax.intermediate/-simple-statement-node/index.html">SimpleStatementNode</a>, recvProtocol: <a href="../../../compiler/edu.cornell.cs.apl.viaduct.syntax/-protocol/index.html">Protocol</a>, events: <a href="../../../compiler/edu.cornell.cs.apl.viaduct.selection/-protocol-communication/index.html">ProtocolCommunication</a>)<span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
-  </div>
-</div>
-</div>
+                      <div class="title">
+                        <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":runtime:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">suspend override </span><span class="token keyword">fun </span><a href="run-send.html"><span class="token function">runSend</span></a><span class="token punctuation">(</span>sender<span class="token operator">: </span><a href="../../../compiler/edu.cornell.cs.apl.viaduct.syntax.intermediate/-let-node/index.html">LetNode</a><span class="token punctuation">, </span>sendProtocol<span class="token operator">: </span><a href="../../../compiler/edu.cornell.cs.apl.viaduct.syntax/-protocol/index.html">Protocol</a><span class="token punctuation">, </span>receiver<span class="token operator">: </span><a href="../../../compiler/edu.cornell.cs.apl.viaduct.syntax.intermediate/-simple-statement-node/index.html">SimpleStatementNode</a><span class="token punctuation">, </span>recvProtocol<span class="token operator">: </span><a href="../../../compiler/edu.cornell.cs.apl.viaduct.syntax/-protocol/index.html">Protocol</a><span class="token punctuation">, </span>events<span class="token operator">: </span><a href="../../../compiler/edu.cornell.cs.apl.viaduct.selection/-protocol-communication/index.html">ProtocolCommunication</a><span class="token punctuation">)</span><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -359,13 +291,9 @@
                           <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                         </span></span></div>
                     <div>
-                      <div class="title"><div class="divergent-group" data-filterable-current=":runtime:dokkaHtmlPartial/main" data-filterable-set=":runtime:dokkaHtmlPartial/main"><div class="with-platform-tags"><span class="pull-right"></span></div>
-
-  <div>
-    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":runtime:dokkaHtmlPartial/main"><div class="symbol monospace">open suspend override fun <a href="../../edu.cornell.cs.apl.viaduct.backend/-abstract-protocol-interpreter/run-simple-statement.html">runSimpleStatement</a>(protocol: <a href="../../../compiler/edu.cornell.cs.apl.viaduct.syntax/-protocol/index.html">Protocol</a>, stmt: <a href="../../../compiler/edu.cornell.cs.apl.viaduct.syntax.intermediate/-simple-statement-node/index.html">SimpleStatementNode</a>)<span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
-  </div>
-</div>
-</div>
+                      <div class="title">
+                        <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":runtime:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">suspend override </span><span class="token keyword">fun </span><a href="../../edu.cornell.cs.apl.viaduct.backend/-abstract-protocol-interpreter/run-simple-statement.html"><span class="token function">runSimpleStatement</span></a><span class="token punctuation">(</span>protocol<span class="token operator">: </span><a href="../../../compiler/edu.cornell.cs.apl.viaduct.syntax/-protocol/index.html">Protocol</a><span class="token punctuation">, </span>stmt<span class="token operator">: </span><a href="../../../compiler/edu.cornell.cs.apl.viaduct.syntax.intermediate/-simple-statement-node/index.html">SimpleStatementNode</a><span class="token punctuation">)</span><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -376,13 +304,9 @@
                           <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                         </span></span></div>
                     <div>
-                      <div class="title"><div class="divergent-group" data-filterable-current=":runtime:dokkaHtmlPartial/main" data-filterable-set=":runtime:dokkaHtmlPartial/main"><div class="with-platform-tags"><span class="pull-right"></span></div>
-
-  <div>
-    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":runtime:dokkaHtmlPartial/main"><div class="symbol monospace">open suspend override fun <a href="run-update.html">runUpdate</a>(stmt: <a href="../../../compiler/edu.cornell.cs.apl.viaduct.syntax.intermediate/-update-node/index.html">UpdateNode</a>)<span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><div class="symbol monospace">open suspend override fun <a href="../../edu.cornell.cs.apl.viaduct.backend/-single-protocol-interpreter/run-update.html">runUpdate</a>(protocol: <a href="../../../compiler/edu.cornell.cs.apl.viaduct.syntax/-protocol/index.html">Protocol</a>, stmt: <a href="../../../compiler/edu.cornell.cs.apl.viaduct.syntax.intermediate/-update-node/index.html">UpdateNode</a>)<span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
-  </div>
-</div>
-</div>
+                      <div class="title">
+                        <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":runtime:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">suspend override </span><span class="token keyword">fun </span><a href="run-update.html"><span class="token function">runUpdate</span></a><span class="token punctuation">(</span>stmt<span class="token operator">: </span><a href="../../../compiler/edu.cornell.cs.apl.viaduct.syntax.intermediate/-update-node/index.html">UpdateNode</a><span class="token punctuation">)</span><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">suspend override </span><span class="token keyword">fun </span><a href="../../edu.cornell.cs.apl.viaduct.backend/-single-protocol-interpreter/run-update.html"><span class="token function">runUpdate</span></a><span class="token punctuation">(</span>protocol<span class="token operator">: </span><a href="../../../compiler/edu.cornell.cs.apl.viaduct.syntax/-protocol/index.html">Protocol</a><span class="token punctuation">, </span>stmt<span class="token operator">: </span><a href="../../../compiler/edu.cornell.cs.apl.viaduct.syntax.intermediate/-update-node/index.html">UpdateNode</a><span class="token punctuation">)</span><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -396,7 +320,7 @@
                         </span></span></div>
                     <div>
                       <div class="title">
-                        <div class="platform-hinted " data-platform-hinted="data-platform-hinted" data-togglable="Properties"><div class="content sourceset-depenent-content" data-active="" data-togglable=":runtime:dokkaHtmlPartial/main"><a data-name="-334439369%2FProperties%2F-1522668094" anchor-label="availableProtocols" id="-334439369%2FProperties%2F-1522668094" data-filterable-set=":runtime:dokkaHtmlPartial/main"></a><div class="symbol monospace">open override val <a href="../../edu.cornell.cs.apl.viaduct.backend/-single-protocol-interpreter/available-protocols.html">availableProtocols</a>: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-set/index.html">Set</a>&lt;<a href="../../../compiler/edu.cornell.cs.apl.viaduct.syntax/-protocol/index.html">Protocol</a>&gt;<span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+                        <div class="platform-hinted " data-platform-hinted="data-platform-hinted" data-togglable="Properties"><div class="content sourceset-depenent-content" data-active="" data-togglable=":runtime:dokkaHtmlPartial/main"><a data-name="-334439369%2FProperties%2F-1522668094" anchor-label="availableProtocols" id="-334439369%2FProperties%2F-1522668094" data-filterable-set=":runtime:dokkaHtmlPartial/main"></a><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">override </span><span class="token keyword">val </span><a href="../../edu.cornell.cs.apl.viaduct.backend/-single-protocol-interpreter/available-protocols.html">availableProtocols</a><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-set/index.html">Set</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="../../../compiler/edu.cornell.cs.apl.viaduct.syntax/-protocol/index.html">Protocol</a><span class="token operator">&gt;</span><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
                       </div>
                     </div>
                   </div>
@@ -409,7 +333,7 @@
                         </span></span></div>
                     <div>
                       <div class="title">
-                        <div class="platform-hinted " data-platform-hinted="data-platform-hinted" data-togglable="Properties"><div class="content sourceset-depenent-content" data-active="" data-togglable=":runtime:dokkaHtmlPartial/main"><a data-name="-1923230713%2FProperties%2F-1522668094" anchor-label="program" id="-1923230713%2FProperties%2F-1522668094" data-filterable-set=":runtime:dokkaHtmlPartial/main"></a><div class="symbol monospace">val <a href="../../edu.cornell.cs.apl.viaduct.backend/-abstract-protocol-interpreter/program.html">program</a>: <a href="../../../compiler/edu.cornell.cs.apl.viaduct.syntax.intermediate/-program-node/index.html">ProgramNode</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+                        <div class="platform-hinted " data-platform-hinted="data-platform-hinted" data-togglable="Properties"><div class="content sourceset-depenent-content" data-active="" data-togglable=":runtime:dokkaHtmlPartial/main"><a data-name="-1923230713%2FProperties%2F-1522668094" anchor-label="program" id="-1923230713%2FProperties%2F-1522668094" data-filterable-set=":runtime:dokkaHtmlPartial/main"></a><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">val </span><a href="../../edu.cornell.cs.apl.viaduct.backend/-abstract-protocol-interpreter/program.html">program</a><span class="token operator">: </span><a href="../../../compiler/edu.cornell.cs.apl.viaduct.syntax.intermediate/-program-node/index.html">ProgramNode</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
                       </div>
                     </div>
                   </div>
@@ -418,7 +342,7 @@
             </div>
           </div>
         </div>
-        <div class="footer"><span class="go-to-top-icon"><a href="#content"></a></span><span>© 2021 Copyright</span><span class="pull-right"><span>Generated by </span><a href="https://github.com/Kotlin/dokka"><span>dokka</span><span class="padded-icon"></span></a></span></div>
+        <div class="footer"><span class="go-to-top-icon"><a href="#content" id="go-to-top-link"></a></span><span>© 2021 Copyright</span><span class="pull-right"><span>Generated by </span><a href="https://github.com/Kotlin/dokka"><span>dokka</span><span class="padded-icon"></span></a></span></div>
       </div>
     </div>
   

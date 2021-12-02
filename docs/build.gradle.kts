@@ -11,7 +11,7 @@ val mkdocsBuild by tasks.registering {
     }
 }
 
-val serve by tasks.registering {
+val mkdocsServe by tasks.registering {
     group = JavaBasePlugin.DOCUMENTATION_GROUP
     description = "Serves documentation locally."
 
@@ -22,7 +22,7 @@ val serve by tasks.registering {
     }
 }
 
-val publish by tasks.registering {
+val mkdocsPublish by tasks.registering {
     group = JavaBasePlugin.DOCUMENTATION_GROUP
     description = "Publishes documentation to GitHub pages."
 

@@ -1,6 +1,10 @@
 name: Documentation
 
-on: [ push, pull_request ]
+on:
+  push:
+  pull_request:
+  release:
+    types: [ published ]
 
 env:
   JDK_DISTRIBUTION: zulu
@@ -22,7 +26,7 @@ jobs:
         with:
           arguments: mkdocsBuild
       - name: Publish documentation to GitHub Pages
-        if: github.ref == 'refs/heads/master'
+        if: github.event_name == 'release'
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}

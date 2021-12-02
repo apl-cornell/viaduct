@@ -7,7 +7,6 @@ plugins {
 
     // Documentation
     id("org.jetbrains.dokka") version "1.6.0"
-    id("ru.vyarus.mkdocs") version "2.1.2"
 
     // Style checking
     id("com.diffplug.spotless") version "5.17.1"
@@ -111,26 +110,4 @@ subprojects {
             }
         }
     }
-}
-
-/** Documentation */
-
-mkdocs {
-    sourcesDir = "docs"
-    buildDir = "${project.buildDir}/mkdocs"
-}
-
-tasks.withType<ru.vyarus.gradle.plugin.mkdocs.task.MkdocsTask>().configureEach {
-    dependsOn(tasks.dokkaHtmlMultiModule)
-}
-
-python {
-    // virtualenv fails without this setting.
-    envCopy = true
-
-    // Update library versions
-    pip("mkdocs:1.1.2")
-    pip("mkdocs-material:7.0.3")
-    pip("pygments:2.8.0")
-    pip("pymdown-extensions:8.1.1")
 }

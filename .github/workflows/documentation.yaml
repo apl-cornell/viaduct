@@ -16,19 +16,30 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0 # Fetch history and tags; necessary for computing app version.
       - name: Set up JDK ${{ env.JDK_VERSION }}
         uses: actions/setup-java@v2
         with:
           distribution: ${{ env.JDK_DISTRIBUTION }}
           java-version: ${{ env.JDK_VERSION }}
+      - name: Install pipenv
+        run: pipx install pipenv
+      - name: Setup Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.9'
+          cache: 'pipenv'
       - name: Generate documentation with MkDocs
         uses: gradle/gradle-build-action@v2
         with:
-          arguments: printVersion mkdocsBuild
+          arguments: printVersion :docs:mkdocsBuild
+      - name: Set up Git credentials
+        run: |
+          git config user.name github-actions
+          git config user.email github-actions@github.com
       - name: Publish documentation to GitHub Pages
         if: github.event_name == 'release'
-        uses: peaceiris/actions-gh-pages@v3
+        uses: gradle/gradle-build-action@v2
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./build/mkdocs
-          keep_files: true
+          arguments: :docs:mkdocsPublish

@@ -1,6 +1,7 @@
 rootProject.name = "viaduct"
 include("cli")
 include("compiler")
+include("docs")
 include("gradle-plugin")
 include("runtime")
 include("runtime2")

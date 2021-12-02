@@ -14,6 +14,9 @@ COPY gradle gradle
 COPY gradle.properties .
 RUN ./gradlew --version
 
+## Create fake .git directory for palantir/gradle-git-version
+RUN mkdir .git
+
 ## Build the app
 COPY *.gradle.kts ./
 COPY cli cli

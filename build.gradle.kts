@@ -2,6 +2,9 @@ plugins {
     kotlin("multiplatform") version embeddedKotlinVersion apply false
     kotlin("plugin.serialization") version embeddedKotlinVersion apply false
 
+    // Versioning
+    id("com.palantir.git-version") version "0.12.3"
+
     // Documentation
     id("org.jetbrains.dokka") version "1.6.0"
     id("ru.vyarus.mkdocs") version "2.1.1"
@@ -14,6 +17,10 @@ plugins {
     id("se.patrikerdes.use-latest-versions") version "0.2.18"
 }
 
+// Derive version from Git tags
+val gitVersion: groovy.lang.Closure<String> by extra
+val versionFromGit = gitVersion()
+
 allprojects {
     apply(plugin = "com.diffplug.spotless")
     apply(plugin = "com.github.ben-manes.versions")
@@ -21,7 +28,7 @@ allprojects {
 
     group = "edu.cornell.cs.apl"
 
-    version = "0.1"
+    version = if (versionFromGit == "unspecified") "SNAPSHOT" else versionFromGit
 
     /** Style */
 

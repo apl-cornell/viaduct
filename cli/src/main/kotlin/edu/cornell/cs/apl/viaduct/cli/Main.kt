@@ -1,8 +1,7 @@
-package edu.cornell.cs.apl.viaduct
+package edu.cornell.cs.apl.viaduct.cli
 
 import edu.cornell.cs.apl.prettyprinting.Document
 import edu.cornell.cs.apl.prettyprinting.plus
-import edu.cornell.cs.apl.viaduct.cli.Viaduct
 import edu.cornell.cs.apl.viaduct.errors.CompilationError
 import org.fusesource.jansi.AnsiConsole
 import java.io.IOException

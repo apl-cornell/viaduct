@@ -16,6 +16,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0 # Fetch history and tags; necessary for computing app version.
       - name: Set up JDK ${{ env.JDK_VERSION }}
         uses: actions/setup-java@v2
         with:

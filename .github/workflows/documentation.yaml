@@ -2,20 +2,21 @@ name: Documentation
 
 on: [ push, pull_request ]
 
+env:
+  JDK_DISTRIBUTION: zulu
+  JDK_VERSION: 11
+
 jobs:
   documentation:
     runs-on: ubuntu-latest
 
-    env:
-      java: 11
-
     steps:
       - uses: actions/checkout@v2
-      - name: Set up JDK ${{ env.java }}
+      - name: Set up JDK ${{ env.JDK_VERSION }}
         uses: actions/setup-java@v2
         with:
-          distribution: 'zulu'
-          java-version: ${{ env.java }}
+          distribution: ${{ env.JDK_DISTRIBUTION }}
+          java-version: ${{ env.JDK_VERSION }}
       - name: Generate documentation with MkDocs
         uses: gradle/gradle-build-action@v2
         with:

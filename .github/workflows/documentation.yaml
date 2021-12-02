@@ -21,6 +21,13 @@ jobs:
         with:
           distribution: ${{ env.JDK_DISTRIBUTION }}
           java-version: ${{ env.JDK_VERSION }}
+      - name: Install pipenv
+        run: pipx install pipenv
+      - name: Setup Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.9'
+          cache: 'pipenv'
       - name: Generate documentation with MkDocs
         uses: gradle/gradle-build-action@v2
         with:

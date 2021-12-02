@@ -28,7 +28,7 @@ allprojects {
 
     group = "edu.cornell.cs.apl"
 
-    version = if (versionFromGit == "unspecified") "SNAPSHOT" else versionFromGit
+    version = if (versionFromGit == "unspecified") "0.0.0-SNAPSHOT" else versionFromGit
 
     /** Style */
 

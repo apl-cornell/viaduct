@@ -32,9 +32,12 @@ jobs:
         uses: gradle/gradle-build-action@v2
         with:
           arguments: printVersion :docs:mkdocsBuild
+      - name: Set up Git credentials
+        run: |
+          git config user.name github-actions
+          git config user.email github-actions@github.com
       - name: Publish documentation to GitHub Pages
         if: github.event_name == 'release'
         uses: gradle/gradle-build-action@v2
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
           arguments: :docs:mkdocsPublish

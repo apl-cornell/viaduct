@@ -152,7 +152,7 @@ fun SourceFile.compileToKotlin(
     return postProcessedProgram.compileToKotlin(
         fileName,
         packageName,
-        listOf(backend::codeGenerator),
+        backend::codeGenerator,
         backend.protocolComposer
     )
 }

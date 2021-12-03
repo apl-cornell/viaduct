@@ -1,0 +1,762 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Viaduct: an extensible, optimizing compiler for secure distributed programs.">
+      
+      
+        <meta name="author" content="Applied Programming Languages Group">
+      
+      
+      <link rel="icon" href="../../../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.2.3, mkdocs-material-8.0.3">
+    
+    
+      
+        <title>Index - Viaduct</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../../../assets/stylesheets/main.62128196.min.css">
+      
+        
+        <link rel="stylesheet" href="../../../../assets/stylesheets/palette.9204c3b2.min.css">
+        
+      
+    
+    
+    
+      
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,400i,700%7CRoboto+Mono&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../../../styles/extra.css">
+    
+    <script>function __md_scope(e,t,_){return new URL(_||(t===localStorage?"../../../..":"../../../.."),location).pathname+"."+e}function __md_get(e,t=localStorage,_){return JSON.parse(t.getItem(__md_scope(e,t,_)))}function __md_set(e,t,_=localStorage,o){try{_.setItem(__md_scope(e,_,o),JSON.stringify(t))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="" data-md-color-primary="none" data-md-color-accent="none">
+  
+    
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#package-educornellcsaplviaductsyntaxsurface" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../../../.." title="Viaduct" class="md-header__button md-logo" aria-label="Viaduct" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54z"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Viaduct
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Index
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5z"/></svg>
+      </label>
+      <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5z"/></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" aria-label="Clear" tabindex="-1">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/apl-cornell/viaduct/" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-tabs__inner md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+
+
+  <li class="md-tabs__item">
+    <a href="../../../.." class="md-tabs__link">
+      Getting Started
+    </a>
+  </li>
+
+      
+        
+  
+  
+
+
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../../developer-guide/building/" class="md-tabs__link">
+        Developer's Guide
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+
+
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../-modules/" class="md-tabs__link">
+        API Reference
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../../../.." title="Viaduct" class="md-nav__button md-logo" aria-label="Viaduct" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54z"/></svg>
+
+    </a>
+    Viaduct
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/apl-cornell/viaduct/" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../.." class="md-nav__link">
+        Getting Started
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_2" type="checkbox" id="__nav_2" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_2">
+          Developer's Guide
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Developer's Guide" data-md-level="1">
+        <label class="md-nav__title" for="__nav_2">
+          <span class="md-nav__icon md-icon"></span>
+          Developer's Guide
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../developer-guide/building/" class="md-nav__link">
+        Building
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../developer-guide/logging/" class="md-nav__link">
+        Logging
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../developer-guide/dependencies/" class="md-nav__link">
+        Updating Dependencies
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../developer-guide/documentation/" class="md-nav__link">
+        Updating Documentation
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_3" type="checkbox" id="__nav_3" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_3">
+          API Reference
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="API Reference" data-md-level="1">
+        <label class="md-nav__title" for="__nav_3">
+          <span class="md-nav__icon md-icon"></span>
+          API Reference
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../-modules/" class="md-nav__link">
+        Modules
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../cli/cli/" class="md-nav__link">
+        Command Line Interface
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../" class="md-nav__link">
+        Compiler
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../runtime/runtime/" class="md-nav__link">
+        Runtime System
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../shared/shared/" class="md-nav__link">
+        Shared Modules
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../test-utilities/test-utilities/" class="md-nav__link">
+        Test Utilities
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#types" class="md-nav__link">
+    Types
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          <div class="md-content" data-md-component="content">
+            <article class="md-content__inner md-typeset">
+              
+                
+<a href="https://github.com/apl-cornell/viaduct/edit/master/docs/api/compiler/compiler/edu.cornell.cs.apl.viaduct.syntax.surface/index.md" title="Edit this page" class="md-content__button md-icon">
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20.71 7.04c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.37-.39-1.02-.39-1.41 0l-1.84 1.83 3.75 3.75M3 17.25V21h3.75L17.81 9.93l-3.75-3.75L3 17.25z"/></svg>
+</a>
+
+
+<p>//<a href="../">compiler</a>/<a href="./">edu.cornell.cs.apl.viaduct.syntax.surface</a></p>
+<h1 id="package-educornellcsaplviaductsyntaxsurface">Package edu.cornell.cs.apl.viaduct.syntax.surface<a class="headerlink" href="#package-educornellcsaplviaductsyntaxsurface" title="Permanent link">&para;</a></h1>
+<p>[jvm] </p>
+<p>The abstract syntax of the surface language.</p>
+<h2 id="types">Types<a class="headerlink" href="#types" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Summary</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a name="edu.cornell.cs.apl.viaduct.syntax.surface/AssertionNode///PointingToDeclaration/"></a><a href="-assertion-node/">AssertionNode</a></td>
+<td><a name="edu.cornell.cs.apl.viaduct.syntax.surface/AssertionNode///PointingToDeclaration/"></a>[jvm]  <br>Content  <br>class <a href="-assertion-node/">AssertionNode</a>(<strong>condition</strong>: <a href="-expression-node/">ExpressionNode</a>, <strong>sourceLocation</strong>: <a href="../edu.cornell.cs.apl.viaduct.syntax/#%5Bedu.cornell.cs.apl.viaduct.syntax%2FSourceLocation%2F%2F%2FPointingToDeclaration%2F%5D%2FClasslikes%2F-566451944">SourceLocation</a>) : <a href="-statement-node/">StatementNode</a>  <br>More info  <br>Asserting that a condition is true, and failing otherwise.  <br><br><br></td>
+</tr>
+<tr>
+<td><a name="edu.cornell.cs.apl.viaduct.syntax.surface/AtomicExpressionNode///PointingToDeclaration/"></a><a href="-atomic-expression-node/">AtomicExpressionNode</a></td>
+<td><a name="edu.cornell.cs.apl.viaduct.syntax.surface/AtomicExpressionNode///PointingToDeclaration/"></a>[jvm]  <br>Content  <br>sealed class <a href="-atomic-expression-node/">AtomicExpressionNode</a> : <a href="-expression-node/">ExpressionNode</a>  <br>More info  <br>An expression that requires no computation to reduce to a value.  <br><br><br></td>
+</tr>
+<tr>
+<td><a name="edu.cornell.cs.apl.viaduct.syntax.surface/BlockNode///PointingToDeclaration/"></a><a href="-block-node/">BlockNode</a></td>
+<td><a name="edu.cornell.cs.apl.viaduct.syntax.surface/BlockNode///PointingToDeclaration/"></a>[jvm]  <br>Content  <br>class <a href="-block-node/">BlockNode</a> : <a href="-statement-node/">StatementNode</a>, <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.html">List</a>&lt;<a href="-statement-node/">StatementNode</a>&gt;   <br>More info  <br>A sequence of statements.  <br><br><br></td>
+</tr>
+<tr>
+<td><a name="edu.cornell.cs.apl.viaduct.syntax.surface/BreakNode///PointingToDeclaration/"></a><a href="-break-node/">BreakNode</a></td>
+<td><a name="edu.cornell.cs.apl.viaduct.syntax.surface/BreakNode///PointingToDeclaration/"></a>[jvm]  <br>Content  <br>class <a href="-break-node/">BreakNode</a>(<strong>jumpLabel</strong>: <a href="../edu.cornell.cs.apl.viaduct.syntax/#%5Bedu.cornell.cs.apl.viaduct.syntax%2FJumpLabelNode%2F%2F%2FPointingToDeclaration%2F%5D%2FClasslikes%2F-566451944">JumpLabelNode</a>?, <strong>sourceLocation</strong>: <a href="../edu.cornell.cs.apl.viaduct.syntax/#%5Bedu.cornell.cs.apl.viaduct.syntax%2FSourceLocation%2F%2F%2FPointingToDeclaration%2F%5D%2FClasslikes%2F-566451944">SourceLocation</a>) : <a href="-statement-node/">StatementNode</a>  <br>More info  <br>Breaking out of a loop.  <br><br><br></td>
+</tr>
+<tr>
+<td><a name="edu.cornell.cs.apl.viaduct.syntax.surface/ConstructorCallNode///PointingToDeclaration/"></a><a href="-constructor-call-node/">ConstructorCallNode</a></td>
+<td><a name="edu.cornell.cs.apl.viaduct.syntax.surface/ConstructorCallNode///PointingToDeclaration/"></a>[jvm]  <br>Content  <br>class <a href="-constructor-call-node/">ConstructorCallNode</a>(<strong>className</strong>: <a href="../edu.cornell.cs.apl.viaduct.syntax/#%5Bedu.cornell.cs.apl.viaduct.syntax%2FClassNameNode%2F%2F%2FPointingToDeclaration%2F%5D%2FClasslikes%2F-566451944">ClassNameNode</a>, <strong>typeArguments</strong>: <a href="../edu.cornell.cs.apl.viaduct.syntax/-arguments/">Arguments</a>&lt;<a href="../edu.cornell.cs.apl.viaduct.syntax/#%5Bedu.cornell.cs.apl.viaduct.syntax%2FValueTypeNode%2F%2F%2FPointingToDeclaration%2F%5D%2FClasslikes%2F-566451944">ValueTypeNode</a>&gt;, <strong>labelArguments</strong>: <a href="../edu.cornell.cs.apl.viaduct.syntax/-arguments/">Arguments</a>&lt;<a href="../edu.cornell.cs.apl.viaduct.syntax/-located/">Located</a>&lt;<a href="../edu.cornell.cs.apl.viaduct.security/-label-expression/">LabelExpression</a>&gt;&gt;?, <strong>protocol</strong>: <a href="../edu.cornell.cs.apl.viaduct.syntax/#%5Bedu.cornell.cs.apl.viaduct.syntax%2FProtocolNode%2F%2F%2FPointingToDeclaration%2F%5D%2FClasslikes%2F-566451944">ProtocolNode</a>?, <strong>arguments</strong>: <a href="../edu.cornell.cs.apl.viaduct.syntax/-arguments/">Arguments</a>&lt;<a href="-expression-node/">ExpressionNode</a>&gt;, <strong>sourceLocation</strong>: <a href="../edu.cornell.cs.apl.viaduct.syntax/#%5Bedu.cornell.cs.apl.viaduct.syntax%2FSourceLocation%2F%2F%2FPointingToDeclaration%2F%5D%2FClasslikes%2F-566451944">SourceLocation</a>) : <a href="-expression-node/">ExpressionNode</a>  <br>More info  <br>Call to an object constructor.  <br><br><br></td>
+</tr>
+<tr>
+<td><a name="edu.cornell.cs.apl.viaduct.syntax.surface/DeclarationNode///PointingToDeclaration/"></a><a href="-declaration-node/">DeclarationNode</a></td>
+<td><a name="edu.cornell.cs.apl.viaduct.syntax.surface/DeclarationNode///PointingToDeclaration/"></a>[jvm]  <br>Content  <br>class <a href="-declaration-node/">DeclarationNode</a>(<strong>variable</strong>: <a href="../edu.cornell.cs.apl.viaduct.syntax/#%5Bedu.cornell.cs.apl.viaduct.syntax%2FObjectVariableNode%2F%2F%2FPointingToDeclaration%2F%5D%2FClasslikes%2F-566451944">ObjectVariableNode</a>, <strong>initializer</strong>: <a href="-expression-node/">ExpressionNode</a>, <strong>sourceLocation</strong>: <a href="../edu.cornell.cs.apl.viaduct.syntax/#%5Bedu.cornell.cs.apl.viaduct.syntax%2FSourceLocation%2F%2F%2FPointingToDeclaration%2F%5D%2FClasslikes%2F-566451944">SourceLocation</a>) : <a href="-simple-statement-node/">SimpleStatementNode</a>  <br>More info  <br>Constructing a new object and binding it to a variable.  <br><br><br></td>
+</tr>
+<tr>
+<td><a name="edu.cornell.cs.apl.viaduct.syntax.surface/DeclassificationNode///PointingToDeclaration/"></a><a href="-declassification-node/">DeclassificationNode</a></td>
+<td><a name="edu.cornell.cs.apl.viaduct.syntax.surface/DeclassificationNode///PointingToDeclaration/"></a>[jvm]  <br>Content  <br>class <a href="-declassification-node/">DeclassificationNode</a>(<strong>expression</strong>: <a href="-expression-node/">ExpressionNode</a>, <strong>fromLabel</strong>: <a href="../edu.cornell.cs.apl.viaduct.syntax/#%5Bedu.cornell.cs.apl.viaduct.syntax%2FLabelNode%2F%2F%2FPointingToDeclaration%2F%5D%2FClasslikes%2F-566451944">LabelNode</a>?, <strong>toLabel</strong>: <a href="../edu.cornell.cs.apl.viaduct.syntax/#%5Bedu.cornell.cs.apl.viaduct.syntax%2FLabelNode%2F%2F%2FPointingToDeclaration%2F%5D%2FClasslikes%2F-566451944">LabelNode</a>, <strong>sourceLocation</strong>: <a href="../edu.cornell.cs.apl.viaduct.syntax/#%5Bedu.cornell.cs.apl.viaduct.syntax%2FSourceLocation%2F%2F%2FPointingToDeclaration%2F%5D%2FClasslikes%2F-566451944">SourceLocation</a>) : <a href="-downgrade-node/">DowngradeNode</a>  <br>More info  <br>Revealing the the result of an expression (reducing confidentiality).  <br><br><br></td>
+</tr>
+<tr>
+<td><a name="edu.cornell.cs.apl.viaduct.syntax.surface/DowngradeNode///PointingToDeclaration/"></a><a href="-downgrade-node/">DowngradeNode</a></td>
+<td><a name="edu.cornell.cs.apl.viaduct.syntax.surface/DowngradeNode///PointingToDeclaration/"></a>[jvm]  <br>Content  <br>sealed class <a href="-downgrade-node/">DowngradeNode</a> : <a href="-expression-node/">ExpressionNode</a>  <br>More info  <br>Reducing the confidentiality or increasing the integrity of the result of an expression.  <br><br><br></td>
+</tr>
+<tr>
+<td><a name="edu.cornell.cs.apl.viaduct.syntax.surface/EndorsementNode///PointingToDeclaration/"></a><a href="-endorsement-node/">EndorsementNode</a></td>
+<td><a name="edu.cornell.cs.apl.viaduct.syntax.surface/EndorsementNode///PointingToDeclaration/"></a>[jvm]  <br>Content  <br>class <a href="-endorsement-node/">EndorsementNode</a>(<strong>expression</strong>: <a href="-expression-node/">ExpressionNode</a>, <strong>fromLabel</strong>: <a href="../edu.cornell.cs.apl.viaduct.syntax/#%5Bedu.cornell.cs.apl.viaduct.syntax%2FLabelNode%2F%2F%2FPointingToDeclaration%2F%5D%2FClasslikes%2F-566451944">LabelNode</a>, <strong>toLabel</strong>: <a href="../edu.cornell.cs.apl.viaduct.syntax/#%5Bedu.cornell.cs.apl.viaduct.syntax%2FLabelNode%2F%2F%2FPointingToDeclaration%2F%5D%2FClasslikes%2F-566451944">LabelNode</a>?, <strong>sourceLocation</strong>: <a href="../edu.cornell.cs.apl.viaduct.syntax/#%5Bedu.cornell.cs.apl.viaduct.syntax%2FSourceLocation%2F%2F%2FPointingToDeclaration%2F%5D%2FClasslikes%2F-566451944">SourceLocation</a>) : <a href="-downgrade-node/">DowngradeNode</a>  <br>More info  <br>Trusting the result of an expression (increasing integrity).  <br><br><br></td>
+</tr>
+<tr>
+<td><a name="edu.cornell.cs.apl.viaduct.syntax.surface/ExpressionArgumentNode///PointingToDeclaration/"></a><a href="-expression-argument-node/">ExpressionArgumentNode</a></td>
+<td><a name="edu.cornell.cs.apl.viaduct.syntax.surface/ExpressionArgumentNode///PointingToDeclaration/"></a>[jvm]  <br>Content  <br>class <a href="-expression-argument-node/">ExpressionArgumentNode</a>(<strong>expression</strong>: <a href="-expression-node/">ExpressionNode</a>, <strong>sourceLocation</strong>: <a href="../edu.cornell.cs.apl.viaduct.syntax/#%5Bedu.cornell.cs.apl.viaduct.syntax%2FSourceLocation%2F%2F%2FPointingToDeclaration%2F%5D%2FClasslikes%2F-566451944">SourceLocation</a>) : <a href="-function-argument-node/">FunctionArgumentNode</a>  <br>More info  <br>Function argument that is an expression.  <br><br><br></td>
+</tr>
+<tr>
+<td><a name="edu.cornell.cs.apl.viaduct.syntax.surface/ExpressionNode///PointingToDeclaration/"></a><a href="-expression-node/">ExpressionNode</a></td>
+<td><a name="edu.cornell.cs.apl.viaduct.syntax.surface/ExpressionNode///PointingToDeclaration/"></a>[jvm]  <br>Content  <br>sealed class <a href="-expression-node/">ExpressionNode</a> : <a href="-node/">Node</a>  <br>More info  <br>A computation that produces a result.  <br><br><br></td>
+</tr>
+<tr>
+<td><a name="edu.cornell.cs.apl.viaduct.syntax.surface/ForLoopNode///PointingToDeclaration/"></a><a href="-for-loop-node/">ForLoopNode</a></td>
+<td><a name="edu.cornell.cs.apl.viaduct.syntax.surface/ForLoopNode///PointingToDeclaration/"></a>[jvm]  <br>Content  <br>class <a href="-for-loop-node/">ForLoopNode</a>(<strong>initialize</strong>: <a href="-simple-statement-node/">SimpleStatementNode</a>, <strong>guard</strong>: <a href="-expression-node/">ExpressionNode</a>, <strong>update</strong>: <a href="-simple-statement-node/">SimpleStatementNode</a>, <strong>body</strong>: <a href="-block-node/">BlockNode</a>, <strong>jumpLabel</strong>: <a href="../edu.cornell.cs.apl.viaduct.syntax/#%5Bedu.cornell.cs.apl.viaduct.syntax%2FJumpLabelNode%2F%2F%2FPointingToDeclaration%2F%5D%2FClasslikes%2F-566451944">JumpLabelNode</a>?, <strong>sourceLocation</strong>: <a href="../edu.cornell.cs.apl.viaduct.syntax/#%5Bedu.cornell.cs.apl.viaduct.syntax%2FSourceLocation%2F%2F%2FPointingToDeclaration%2F%5D%2FClasslikes%2F-566451944">SourceLocation</a>) : <a href="-loop-node/">LoopNode</a>  <br>More info  <br>A for loop.  <br><br><br></td>
+</tr>
+<tr>
+<td><a name="edu.cornell.cs.apl.viaduct.syntax.surface/FunctionArgumentNode///PointingToDeclaration/"></a><a href="-function-argument-node/">FunctionArgumentNode</a></td>
+<td><a name="edu.cornell.cs.apl.viaduct.syntax.surface/FunctionArgumentNode///PointingToDeclaration/"></a>[jvm]  <br>Content  <br>sealed class <a href="-function-argument-node/">FunctionArgumentNode</a> : <a href="-node/">Node</a>  <br>More info  <br>Arguments to functions.  <br><br><br></td>
+</tr>
+<tr>
+<td><a name="edu.cornell.cs.apl.viaduct.syntax.surface/FunctionCallNode///PointingToDeclaration/"></a><a href="-function-call-node/">FunctionCallNode</a></td>
+<td><a name="edu.cornell.cs.apl.viaduct.syntax.surface/FunctionCallNode///PointingToDeclaration/"></a>[jvm]  <br>Content  <br>class <a href="-function-call-node/">FunctionCallNode</a>(<strong>name</strong>: <a href="../edu.cornell.cs.apl.viaduct.syntax/#%5Bedu.cornell.cs.apl.viaduct.syntax%2FFunctionNameNode%2F%2F%2FPointingToDeclaration%2F%5D%2FClasslikes%2F-566451944">FunctionNameNode</a>, <strong>arguments</strong>: <a href="../edu.cornell.cs.apl.viaduct.syntax/-arguments/">Arguments</a>&lt;<a href="-function-argument-node/">FunctionArgumentNode</a>&gt;, <strong>sourceLocation</strong>: <a href="../edu.cornell.cs.apl.viaduct.syntax/#%5Bedu.cornell.cs.apl.viaduct.syntax%2FSourceLocation%2F%2F%2FPointingToDeclaration%2F%5D%2FClasslikes%2F-566451944">SourceLocation</a>) : <a href="-simple-statement-node/">SimpleStatementNode</a>  <br>More info  <br>Function call.  <br><br><br></td>
+</tr>
+<tr>
+<td><a name="edu.cornell.cs.apl.viaduct.syntax.surface/FunctionDeclarationNode///PointingToDeclaration/"></a><a href="-function-declaration-node/">FunctionDeclarationNode</a></td>
+<td><a name="edu.cornell.cs.apl.viaduct.syntax.surface/FunctionDeclarationNode///PointingToDeclaration/"></a>[jvm]  <br>Content  <br>class <a href="-function-declaration-node/">FunctionDeclarationNode</a>(<strong>name</strong>: <a href="../edu.cornell.cs.apl.viaduct.syntax/#%5Bedu.cornell.cs.apl.viaduct.syntax%2FFunctionNameNode%2F%2F%2FPointingToDeclaration%2F%5D%2FClasslikes%2F-566451944">FunctionNameNode</a>, <strong>pcLabel</strong>: <a href="../edu.cornell.cs.apl.viaduct.syntax/#%5Bedu.cornell.cs.apl.viaduct.syntax%2FLabelNode%2F%2F%2FPointingToDeclaration%2F%5D%2FClasslikes%2F-566451944">LabelNode</a>?, <strong>parameters</strong>: <a href="../edu.cornell.cs.apl.viaduct.syntax/-arguments/">Arguments</a>&lt;<a href="-parameter-node/">ParameterNode</a>&gt;, <strong>body</strong>: <a href="-block-node/">BlockNode</a>, <strong>sourceLocation</strong>: <a href="../edu.cornell.cs.apl.viaduct.syntax/#%5Bedu.cornell.cs.apl.viaduct.syntax%2FSourceLocation%2F%2F%2FPointingToDeclaration%2F%5D%2FClasslikes%2F-566451944">SourceLocation</a>) : <a href="-top-level-declaration-node/">TopLevelDeclarationNode</a>  <br>More info  <br>A declaration of a function that can be called by a process.  <br><br><br></td>
+</tr>
+<tr>
+<td><a name="edu.cornell.cs.apl.viaduct.syntax.surface/FunctionReturnArgumentNode///PointingToDeclaration/"></a><a href="-function-return-argument-node/">FunctionReturnArgumentNode</a></td>
+<td><a name="edu.cornell.cs.apl.viaduct.syntax.surface/FunctionReturnArgumentNode///PointingToDeclaration/"></a>[jvm]  <br>Content  <br>sealed class <a href="-function-return-argument-node/">FunctionReturnArgumentNode</a> : <a href="-function-argument-node/">FunctionArgumentNode</a>  <br>More info  <br>Out arguments to functions.  <br><br><br></td>
+</tr>
+<tr>
+<td><a name="edu.cornell.cs.apl.viaduct.syntax.surface/HostDeclarationNode///PointingToDeclaration/"></a><a href="-host-declaration-node/">HostDeclarationNode</a></td>
+<td><a name="edu.cornell.cs.apl.viaduct.syntax.surface/HostDeclarationNode///PointingToDeclaration/"></a>[jvm]  <br>Content  <br>class <a href="-host-declaration-node/">HostDeclarationNode</a>(<strong>name</strong>: <a href="../edu.cornell.cs.apl.viaduct.syntax/#%5Bedu.cornell.cs.apl.viaduct.syntax%2FHostNode%2F%2F%2FPointingToDeclaration%2F%5D%2FClasslikes%2F-566451944">HostNode</a>, <strong>authority</strong>: <a href="../edu.cornell.cs.apl.viaduct.syntax/#%5Bedu.cornell.cs.apl.viaduct.syntax%2FLabelNode%2F%2F%2FPointingToDeclaration%2F%5D%2FClasslikes%2F-566451944">LabelNode</a>, <strong>sourceLocation</strong>: <a href="../edu.cornell.cs.apl.viaduct.syntax/#%5Bedu.cornell.cs.apl.viaduct.syntax%2FSourceLocation%2F%2F%2FPointingToDeclaration%2F%5D%2FClasslikes%2F-566451944">SourceLocation</a>) : <a href="-top-level-declaration-node/">TopLevelDeclarationNode</a>  <br>More info  <br>Declaration of a participant and their authority.  <br><br><br></td>
+</tr>
+<tr>
+<td><a name="edu.cornell.cs.apl.viaduct.syntax.surface/IfNode///PointingToDeclaration/"></a><a href="-if-node/">IfNode</a></td>
+<td><a name="edu.cornell.cs.apl.viaduct.syntax.surface/IfNode///PointingToDeclaration/"></a>[jvm]  <br>Content  <br>class <a href="-if-node/">IfNode</a>(<strong>guard</strong>: <a href="-expression-node/">ExpressionNode</a>, <strong>thenBranch</strong>: <a href="-block-node/">BlockNode</a>, <strong>elseBranch</strong>: <a href="-block-node/">BlockNode</a>, <strong>sourceLocation</strong>: <a href="../edu.cornell.cs.apl.viaduct.syntax/#%5Bedu.cornell.cs.apl.viaduct.syntax%2FSourceLocation%2F%2F%2FPointingToDeclaration%2F%5D%2FClasslikes%2F-566451944">SourceLocation</a>) : <a href="-statement-node/">StatementNode</a>  <br>More info  <br>Executing statements conditionally.  <br><br><br></td>
+</tr>
+<tr>
+<td><a name="edu.cornell.cs.apl.viaduct.syntax.surface/InfiniteLoopNode///PointingToDeclaration/"></a><a href="-infinite-loop-node/">InfiniteLoopNode</a></td>
+<td><a name="edu.cornell.cs.apl.viaduct.syntax.surface/InfiniteLoopNode///PointingToDeclaration/"></a>[jvm]  <br>Content  <br>class <a href="-infinite-loop-node/">InfiniteLoopNode</a>(<strong>body</strong>: <a href="-block-node/">BlockNode</a>, <strong>jumpLabel</strong>: <a href="../edu.cornell.cs.apl.viaduct.syntax/#%5Bedu.cornell.cs.apl.viaduct.syntax%2FJumpLabelNode%2F%2F%2FPointingToDeclaration%2F%5D%2FClasslikes%2F-566451944">JumpLabelNode</a>?, <strong>sourceLocation</strong>: <a href="../edu.cornell.cs.apl.viaduct.syntax/#%5Bedu.cornell.cs.apl.viaduct.syntax%2FSourceLocation%2F%2F%2FPointingToDeclaration%2F%5D%2FClasslikes%2F-566451944">SourceLocation</a>) : <a href="-loop-node/">LoopNode</a>  <br>More info  <br>Executing a statement until a break statement is encountered.  <br><br><br></td>
+</tr>
+<tr>
+<td><a name="edu.cornell.cs.apl.viaduct.syntax.surface/InputNode///PointingToDeclaration/"></a><a href="-input-node/">InputNode</a></td>
+<td><a name="edu.cornell.cs.apl.viaduct.syntax.surface/InputNode///PointingToDeclaration/"></a>[jvm]  <br>Content  <br>class <a href="-input-node/">InputNode</a>(<strong>type</strong>: <a href="../edu.cornell.cs.apl.viaduct.syntax/#%5Bedu.cornell.cs.apl.viaduct.syntax%2FValueTypeNode%2F%2F%2FPointingToDeclaration%2F%5D%2FClasslikes%2F-566451944">ValueTypeNode</a>, <strong>host</strong>: <a href="../edu.cornell.cs.apl.viaduct.syntax/#%5Bedu.cornell.cs.apl.viaduct.syntax%2FHostNode%2F%2F%2FPointingToDeclaration%2F%5D%2FClasslikes%2F-566451944">HostNode</a>, <strong>sourceLocation</strong>: <a href="../edu.cornell.cs.apl.viaduct.syntax/#%5Bedu.cornell.cs.apl.viaduct.syntax%2FSourceLocation%2F%2F%2FPointingToDeclaration%2F%5D%2FClasslikes%2F-566451944">SourceLocation</a>) : <a href="-expression-node/">ExpressionNode</a>  <br>More info  <br>An external input.  <br><br><br></td>
+</tr>
+<tr>
+<td><a name="edu.cornell.cs.apl.viaduct.syntax.surface/KeywordStyle///PointingToDeclaration/"></a><a href="-keyword-style/">KeywordStyle</a></td>
+<td><a name="edu.cornell.cs.apl.viaduct.syntax.surface/KeywordStyle///PointingToDeclaration/"></a>[jvm]  <br>Content  <br>object <a href="-keyword-style/">KeywordStyle</a> : Style  <br>More info  <br>The display style used for the keyword in the language.  <br><br><br></td>
+</tr>
+<tr>
+<td><a name="edu.cornell.cs.apl.viaduct.syntax.surface/LetNode///PointingToDeclaration/"></a><a href="-let-node/">LetNode</a></td>
+<td><a name="edu.cornell.cs.apl.viaduct.syntax.surface/LetNode///PointingToDeclaration/"></a>[jvm]  <br>Content  <br>class <a href="-let-node/">LetNode</a>(<strong>temporary</strong>: <a href="../edu.cornell.cs.apl.viaduct.syntax/#%5Bedu.cornell.cs.apl.viaduct.syntax%2FTemporaryNode%2F%2F%2FPointingToDeclaration%2F%5D%2FClasslikes%2F-566451944">TemporaryNode</a>, <strong>value</strong>: <a href="-expression-node/">ExpressionNode</a>, <strong>protocol</strong>: <a href="../edu.cornell.cs.apl.viaduct.syntax/#%5Bedu.cornell.cs.apl.viaduct.syntax%2FProtocolNode%2F%2F%2FPointingToDeclaration%2F%5D%2FClasslikes%2F-566451944">ProtocolNode</a>?, <strong>sourceLocation</strong>: <a href="../edu.cornell.cs.apl.viaduct.syntax/#%5Bedu.cornell.cs.apl.viaduct.syntax%2FSourceLocation%2F%2F%2FPointingToDeclaration%2F%5D%2FClasslikes%2F-566451944">SourceLocation</a>) : <a href="-simple-statement-node/">SimpleStatementNode</a>  <br>More info  <br>Binding the result of an expression to a new temporary variable.  <br><br><br></td>
+</tr>
+<tr>
+<td><a name="edu.cornell.cs.apl.viaduct.syntax.surface/LiteralNode///PointingToDeclaration/"></a><a href="-literal-node/">LiteralNode</a></td>
+<td><a name="edu.cornell.cs.apl.viaduct.syntax.surface/LiteralNode///PointingToDeclaration/"></a>[jvm]  <br>Content  <br>class <a href="-literal-node/">LiteralNode</a>(<strong>value</strong>: <a href="../edu.cornell.cs.apl.viaduct.syntax.values/-value/">Value</a>, <strong>sourceLocation</strong>: <a href="../edu.cornell.cs.apl.viaduct.syntax/#%5Bedu.cornell.cs.apl.viaduct.syntax%2FSourceLocation%2F%2F%2FPointingToDeclaration%2F%5D%2FClasslikes%2F-566451944">SourceLocation</a>) : <a href="-atomic-expression-node/">AtomicExpressionNode</a>  <br>More info  <br>A literal constant.  <br><br><br></td>
+</tr>
+<tr>
+<td><a name="edu.cornell.cs.apl.viaduct.syntax.surface/LoopNode///PointingToDeclaration/"></a><a href="-loop-node/">LoopNode</a></td>
+<td><a name="edu.cornell.cs.apl.viaduct.syntax.surface/LoopNode///PointingToDeclaration/"></a>[jvm]  <br>Content  <br>sealed class <a href="-loop-node/">LoopNode</a> : <a href="-statement-node/">StatementNode</a>  <br>More info  <br>A loop statement.  <br><br><br></td>
+</tr>
+<tr>
+<td><a name="edu.cornell.cs.apl.viaduct.syntax.surface/Node///PointingToDeclaration/"></a><a href="-node/">Node</a></td>
+<td><a name="edu.cornell.cs.apl.viaduct.syntax.surface/Node///PointingToDeclaration/"></a>[jvm]  <br>Content  <br>abstract class <a href="-node/">Node</a> : <a href="../edu.cornell.cs.apl.viaduct.syntax/-has-source-location/">HasSourceLocation</a>, PrettyPrintable  <br>More info  <br>A node in the abstract syntax tree of a surface level program.  <br><br><br></td>
+</tr>
+<tr>
+<td><a name="edu.cornell.cs.apl.viaduct.syntax.surface/ObjectDeclarationArgumentNode///PointingToDeclaration/"></a><a href="-object-declaration-argument-node/">ObjectDeclarationArgumentNode</a></td>
+<td><a name="edu.cornell.cs.apl.viaduct.syntax.surface/ObjectDeclarationArgumentNode///PointingToDeclaration/"></a>[jvm]  <br>Content  <br>class <a href="-object-declaration-argument-node/">ObjectDeclarationArgumentNode</a>(<strong>variable</strong>: <a href="../edu.cornell.cs.apl.viaduct.syntax/#%5Bedu.cornell.cs.apl.viaduct.syntax%2FObjectVariableNode%2F%2F%2FPointingToDeclaration%2F%5D%2FClasslikes%2F-566451944">ObjectVariableNode</a>, <strong>sourceLocation</strong>: <a href="../edu.cornell.cs.apl.viaduct.syntax/#%5Bedu.cornell.cs.apl.viaduct.syntax%2FSourceLocation%2F%2F%2FPointingToDeclaration%2F%5D%2FClasslikes%2F-566451944">SourceLocation</a>) : <a href="-function-return-argument-node/">FunctionReturnArgumentNode</a>  <br>More info  <br>Declaration of a new object as a return argument of a function.  <br><br><br></td>
+</tr>
+<tr>
+<td><a name="edu.cornell.cs.apl.viaduct.syntax.surface/ObjectReferenceArgumentNode///PointingToDeclaration/"></a><a href="-object-reference-argument-node/">ObjectReferenceArgumentNode</a></td>
+<td><a name="edu.cornell.cs.apl.viaduct.syntax.surface/ObjectReferenceArgumentNode///PointingToDeclaration/"></a>[jvm]  <br>Content  <br>class <a href="-object-reference-argument-node/">ObjectReferenceArgumentNode</a>(<strong>variable</strong>: <a href="../edu.cornell.cs.apl.viaduct.syntax/#%5Bedu.cornell.cs.apl.viaduct.syntax%2FObjectVariableNode%2F%2F%2FPointingToDeclaration%2F%5D%2FClasslikes%2F-566451944">ObjectVariableNode</a>, <strong>sourceLocation</strong>: <a href="../edu.cornell.cs.apl.viaduct.syntax/#%5Bedu.cornell.cs.apl.viaduct.syntax%2FSourceLocation%2F%2F%2FPointingToDeclaration%2F%5D%2FClasslikes%2F-566451944">SourceLocation</a>) : <a href="-function-argument-node/">FunctionArgumentNode</a>  <br>More info  <br>Function argument that is an object reference (e.g.  <br><br><br></td>
+</tr>
+<tr>
+<td><a name="edu.cornell.cs.apl.viaduct.syntax.surface/OperatorApplicationNode///PointingToDeclaration/"></a><a href="-operator-application-node/">OperatorApplicationNode</a></td>
+<td><a name="edu.cornell.cs.apl.viaduct.syntax.surface/OperatorApplicationNode///PointingToDeclaration/"></a>[jvm]  <br>Content  <br>class <a href="-operator-application-node/">OperatorApplicationNode</a>(<strong>operator</strong>: <a href="../edu.cornell.cs.apl.viaduct.syntax/-operator/">Operator</a>, <strong>arguments</strong>: <a href="../edu.cornell.cs.apl.viaduct.syntax/-arguments/">Arguments</a>&lt;<a href="-expression-node/">ExpressionNode</a>&gt;, <strong>sourceLocation</strong>: <a href="../edu.cornell.cs.apl.viaduct.syntax/#%5Bedu.cornell.cs.apl.viaduct.syntax%2FSourceLocation%2F%2F%2FPointingToDeclaration%2F%5D%2FClasslikes%2F-566451944">SourceLocation</a>) : <a href="-expression-node/">ExpressionNode</a>  <br>More info  <br>An n-ary operator applied to n arguments.  <br><br><br></td>
+</tr>
+<tr>
+<td><a name="edu.cornell.cs.apl.viaduct.syntax.surface/OutParameterArgumentNode///PointingToDeclaration/"></a><a href="-out-parameter-argument-node/">OutParameterArgumentNode</a></td>
+<td><a name="edu.cornell.cs.apl.viaduct.syntax.surface/OutParameterArgumentNode///PointingToDeclaration/"></a>[jvm]  <br>Content  <br>class <a href="-out-parameter-argument-node/">OutParameterArgumentNode</a>(<strong>parameter</strong>: <a href="../edu.cornell.cs.apl.viaduct.syntax/#%5Bedu.cornell.cs.apl.viaduct.syntax%2FObjectVariableNode%2F%2F%2FPointingToDeclaration%2F%5D%2FClasslikes%2F-566451944">ObjectVariableNode</a>, <strong>sourceLocation</strong>: <a href="../edu.cornell.cs.apl.viaduct.syntax/#%5Bedu.cornell.cs.apl.viaduct.syntax%2FSourceLocation%2F%2F%2FPointingToDeclaration%2F%5D%2FClasslikes%2F-566451944">SourceLocation</a>) : <a href="-function-return-argument-node/">FunctionReturnArgumentNode</a>  <br>More info  <br>Out parameter initialized as an out parameter to a function call.  <br><br><br></td>
+</tr>
+<tr>
+<td><a name="edu.cornell.cs.apl.viaduct.syntax.surface/OutParameterInitializationNode///PointingToDeclaration/"></a><a href="-out-parameter-initialization-node/">OutParameterInitializationNode</a></td>
+<td><a name="edu.cornell.cs.apl.viaduct.syntax.surface/OutParameterInitializationNode///PointingToDeclaration/"></a>[jvm]  <br>Content  <br>class <a href="-out-parameter-initialization-node/">OutParameterInitializationNode</a>(<strong>name</strong>: <a href="../edu.cornell.cs.apl.viaduct.syntax/#%5Bedu.cornell.cs.apl.viaduct.syntax%2FObjectVariableNode%2F%2F%2FPointingToDeclaration%2F%5D%2FClasslikes%2F-566451944">ObjectVariableNode</a>, <strong>rhs</strong>: <a href="-expression-node/">ExpressionNode</a>, <strong>sourceLocation</strong>: <a href="../edu.cornell.cs.apl.viaduct.syntax/#%5Bedu.cornell.cs.apl.viaduct.syntax%2FSourceLocation%2F%2F%2FPointingToDeclaration%2F%5D%2FClasslikes%2F-566451944">SourceLocation</a>) : <a href="-simple-statement-node/">SimpleStatementNode</a>  <br>More info  <br>Initialization for an out parameter.  <br><br><br></td>
+</tr>
+<tr>
+<td><a name="edu.cornell.cs.apl.viaduct.syntax.surface/OutputNode///PointingToDeclaration/"></a><a href="-output-node/">OutputNode</a></td>
+<td><a name="edu.cornell.cs.apl.viaduct.syntax.surface/OutputNode///PointingToDeclaration/"></a>[jvm]  <br>Content  <br>class <a href="-output-node/">OutputNode</a>(<strong>message</strong>: <a href="-expression-node/">ExpressionNode</a>, <strong>host</strong>: <a href="../edu.cornell.cs.apl.viaduct.syntax/#%5Bedu.cornell.cs.apl.viaduct.syntax%2FHostNode%2F%2F%2FPointingToDeclaration%2F%5D%2FClasslikes%2F-566451944">HostNode</a>, <strong>sourceLocation</strong>: <a href="../edu.cornell.cs.apl.viaduct.syntax/#%5Bedu.cornell.cs.apl.viaduct.syntax%2FSourceLocation%2F%2F%2FPointingToDeclaration%2F%5D%2FClasslikes%2F-566451944">SourceLocation</a>) : <a href="-simple-statement-node/">SimpleStatementNode</a>  <br>More info  <br>An external output.  <br><br><br></td>
+</tr>
+<tr>
+<td><a name="edu.cornell.cs.apl.viaduct.syntax.surface/ParameterNode///PointingToDeclaration/"></a><a href="-parameter-node/">ParameterNode</a></td>
+<td><a name="edu.cornell.cs.apl.viaduct.syntax.surface/ParameterNode///PointingToDeclaration/"></a>[jvm]  <br>Content  <br>class <a href="-parameter-node/">ParameterNode</a>(<strong>name</strong>: <a href="../edu.cornell.cs.apl.viaduct.syntax/#%5Bedu.cornell.cs.apl.viaduct.syntax%2FObjectVariableNode%2F%2F%2FPointingToDeclaration%2F%5D%2FClasslikes%2F-566451944">ObjectVariableNode</a>, <strong>parameterDirection</strong>: <a href="../edu.cornell.cs.apl.viaduct.syntax/-parameter-direction/">ParameterDirection</a>, <strong>className</strong>: <a href="../edu.cornell.cs.apl.viaduct.syntax/#%5Bedu.cornell.cs.apl.viaduct.syntax%2FClassNameNode%2F%2F%2FPointingToDeclaration%2F%5D%2FClasslikes%2F-566451944">ClassNameNode</a>, <strong>typeArguments</strong>: <a href="../edu.cornell.cs.apl.viaduct.syntax/-arguments/">Arguments</a>&lt;<a href="../edu.cornell.cs.apl.viaduct.syntax/#%5Bedu.cornell.cs.apl.viaduct.syntax%2FValueTypeNode%2F%2F%2FPointingToDeclaration%2F%5D%2FClasslikes%2F-566451944">ValueTypeNode</a>&gt;, <strong>labelArguments</strong>: <a href="../edu.cornell.cs.apl.viaduct.syntax/-arguments/">Arguments</a>&lt;<a href="../edu.cornell.cs.apl.viaduct.syntax/#%5Bedu.cornell.cs.apl.viaduct.syntax%2FLabelNode%2F%2F%2FPointingToDeclaration%2F%5D%2FClasslikes%2F-566451944">LabelNode</a>&gt;?, <strong>protocol</strong>: <a href="../edu.cornell.cs.apl.viaduct.syntax/#%5Bedu.cornell.cs.apl.viaduct.syntax%2FProtocolNode%2F%2F%2FPointingToDeclaration%2F%5D%2FClasslikes%2F-566451944">ProtocolNode</a>?, <strong>sourceLocation</strong>: <a href="../edu.cornell.cs.apl.viaduct.syntax/#%5Bedu.cornell.cs.apl.viaduct.syntax%2FSourceLocation%2F%2F%2FPointingToDeclaration%2F%5D%2FClasslikes%2F-566451944">SourceLocation</a>) : <a href="-node/">Node</a>  <br>More info  <br>A parameter to a function declaration.  <br><br><br></td>
+</tr>
+<tr>
+<td><a name="edu.cornell.cs.apl.viaduct.syntax.surface/ProcessDeclarationNode///PointingToDeclaration/"></a><a href="-process-declaration-node/">ProcessDeclarationNode</a></td>
+<td><a name="edu.cornell.cs.apl.viaduct.syntax.surface/ProcessDeclarationNode///PointingToDeclaration/"></a>[jvm]  <br>Content  <br>class <a href="-process-declaration-node/">ProcessDeclarationNode</a>(<strong>protocol</strong>: <a href="../edu.cornell.cs.apl.viaduct.syntax/#%5Bedu.cornell.cs.apl.viaduct.syntax%2FProtocolNode%2F%2F%2FPointingToDeclaration%2F%5D%2FClasslikes%2F-566451944">ProtocolNode</a>, <strong>body</strong>: <a href="-block-node/">BlockNode</a>, <strong>sourceLocation</strong>: <a href="../edu.cornell.cs.apl.viaduct.syntax/#%5Bedu.cornell.cs.apl.viaduct.syntax%2FSourceLocation%2F%2F%2FPointingToDeclaration%2F%5D%2FClasslikes%2F-566451944">SourceLocation</a>) : <a href="-top-level-declaration-node/">TopLevelDeclarationNode</a>  <br>More info  <br>A process declaration associating a protocol with the code that process should run.  <br><br><br></td>
+</tr>
+<tr>
+<td><a name="edu.cornell.cs.apl.viaduct.syntax.surface/ProgramNode///PointingToDeclaration/"></a><a href="-program-node/">ProgramNode</a></td>
+<td><a name="edu.cornell.cs.apl.viaduct.syntax.surface/ProgramNode///PointingToDeclaration/"></a>[jvm]  <br>Content  <br>class <a href="-program-node/">ProgramNode</a> : <a href="-node/">Node</a>, <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.html">List</a>&lt;<a href="-top-level-declaration-node/">TopLevelDeclarationNode</a>&gt;   <br>More info  <br>Represents a surface level program which is a sequence of top level declarations.  <br><br><br></td>
+</tr>
+<tr>
+<td><a name="edu.cornell.cs.apl.viaduct.syntax.surface/QueryNode///PointingToDeclaration/"></a><a href="-query-node/">QueryNode</a></td>
+<td><a name="edu.cornell.cs.apl.viaduct.syntax.surface/QueryNode///PointingToDeclaration/"></a>[jvm]  <br>Content  <br>class <a href="-query-node/">QueryNode</a>(<strong>variable</strong>: <a href="../edu.cornell.cs.apl.viaduct.syntax/#%5Bedu.cornell.cs.apl.viaduct.syntax%2FObjectVariableNode%2F%2F%2FPointingToDeclaration%2F%5D%2FClasslikes%2F-566451944">ObjectVariableNode</a>, <strong>query</strong>: <a href="../edu.cornell.cs.apl.viaduct.syntax/#%5Bedu.cornell.cs.apl.viaduct.syntax%2FQueryNameNode%2F%2F%2FPointingToDeclaration%2F%5D%2FClasslikes%2F-566451944">QueryNameNode</a>, <strong>arguments</strong>: <a href="../edu.cornell.cs.apl.viaduct.syntax/-arguments/">Arguments</a>&lt;<a href="-expression-node/">ExpressionNode</a>&gt;, <strong>sourceLocation</strong>: <a href="../edu.cornell.cs.apl.viaduct.syntax/#%5Bedu.cornell.cs.apl.viaduct.syntax%2FSourceLocation%2F%2F%2FPointingToDeclaration%2F%5D%2FClasslikes%2F-566451944">SourceLocation</a>) : <a href="-expression-node/">ExpressionNode</a>  <br>More info  <br>A query method applied to an object.  <br><br><br></td>
+</tr>
+<tr>
+<td><a name="edu.cornell.cs.apl.viaduct.syntax.surface/ReadNode///PointingToDeclaration/"></a><a href="-read-node/">ReadNode</a></td>
+<td><a name="edu.cornell.cs.apl.viaduct.syntax.surface/ReadNode///PointingToDeclaration/"></a>[jvm]  <br>Content  <br>class <a href="-read-node/">ReadNode</a>(<strong>temporary</strong>: <a href="../edu.cornell.cs.apl.viaduct.syntax/#%5Bedu.cornell.cs.apl.viaduct.syntax%2FTemporaryNode%2F%2F%2FPointingToDeclaration%2F%5D%2FClasslikes%2F-566451944">TemporaryNode</a>) : <a href="-atomic-expression-node/">AtomicExpressionNode</a>  <br>More info  <br>Reading the value stored in a temporary.  <br><br><br></td>
+</tr>
+<tr>
+<td><a name="edu.cornell.cs.apl.viaduct.syntax.surface/ReceiveNode///PointingToDeclaration/"></a><a href="-receive-node/">ReceiveNode</a></td>
+<td><a name="edu.cornell.cs.apl.viaduct.syntax.surface/ReceiveNode///PointingToDeclaration/"></a>[jvm]  <br>Content  <br>class <a href="-receive-node/">ReceiveNode</a>(<strong>type</strong>: <a href="../edu.cornell.cs.apl.viaduct.syntax/#%5Bedu.cornell.cs.apl.viaduct.syntax%2FValueTypeNode%2F%2F%2FPointingToDeclaration%2F%5D%2FClasslikes%2F-566451944">ValueTypeNode</a>, <strong>protocol</strong>: <a href="../edu.cornell.cs.apl.viaduct.syntax/#%5Bedu.cornell.cs.apl.viaduct.syntax%2FProtocolNode%2F%2F%2FPointingToDeclaration%2F%5D%2FClasslikes%2F-566451944">ProtocolNode</a>, <strong>sourceLocation</strong>: <a href="../edu.cornell.cs.apl.viaduct.syntax/#%5Bedu.cornell.cs.apl.viaduct.syntax%2FSourceLocation%2F%2F%2FPointingToDeclaration%2F%5D%2FClasslikes%2F-566451944">SourceLocation</a>) : <a href="-expression-node/">ExpressionNode</a>  <br>More info  <br>Receiving a value from another protocol.  <br><br><br></td>
+</tr>
+<tr>
+<td><a name="edu.cornell.cs.apl.viaduct.syntax.surface/SendNode///PointingToDeclaration/"></a><a href="-send-node/">SendNode</a></td>
+<td><a name="edu.cornell.cs.apl.viaduct.syntax.surface/SendNode///PointingToDeclaration/"></a>[jvm]  <br>Content  <br>class <a href="-send-node/">SendNode</a>(<strong>message</strong>: <a href="-expression-node/">ExpressionNode</a>, <strong>protocol</strong>: <a href="../edu.cornell.cs.apl.viaduct.syntax/#%5Bedu.cornell.cs.apl.viaduct.syntax%2FProtocolNode%2F%2F%2FPointingToDeclaration%2F%5D%2FClasslikes%2F-566451944">ProtocolNode</a>, <strong>sourceLocation</strong>: <a href="../edu.cornell.cs.apl.viaduct.syntax/#%5Bedu.cornell.cs.apl.viaduct.syntax%2FSourceLocation%2F%2F%2FPointingToDeclaration%2F%5D%2FClasslikes%2F-566451944">SourceLocation</a>) : <a href="-simple-statement-node/">SimpleStatementNode</a>  <br>More info  <br>Sending a value to another protocol.  <br><br><br></td>
+</tr>
+<tr>
+<td><a name="edu.cornell.cs.apl.viaduct.syntax.surface/SimpleStatementNode///PointingToDeclaration/"></a><a href="-simple-statement-node/">SimpleStatementNode</a></td>
+<td><a name="edu.cornell.cs.apl.viaduct.syntax.surface/SimpleStatementNode///PointingToDeclaration/"></a>[jvm]  <br>Content  <br>sealed class <a href="-simple-statement-node/">SimpleStatementNode</a> : <a href="-statement-node/">StatementNode</a>  <br>More info  <br>A statement that is <em>not</em> a combination of other statements, and that does not affect control flow.  <br><br><br></td>
+</tr>
+<tr>
+<td><a name="edu.cornell.cs.apl.viaduct.syntax.surface/SkipNode///PointingToDeclaration/"></a><a href="-skip-node/">SkipNode</a></td>
+<td><a name="edu.cornell.cs.apl.viaduct.syntax.surface/SkipNode///PointingToDeclaration/"></a>[jvm]  <br>Content  <br>class <a href="-skip-node/">SkipNode</a>(<strong>sourceLocation</strong>: <a href="../edu.cornell.cs.apl.viaduct.syntax/#%5Bedu.cornell.cs.apl.viaduct.syntax%2FSourceLocation%2F%2F%2FPointingToDeclaration%2F%5D%2FClasslikes%2F-566451944">SourceLocation</a>) : <a href="-simple-statement-node/">SimpleStatementNode</a>  <br>More info  <br>A statement that does nothing.  <br><br><br></td>
+</tr>
+<tr>
+<td><a name="edu.cornell.cs.apl.viaduct.syntax.surface/StatementNode///PointingToDeclaration/"></a><a href="-statement-node/">StatementNode</a></td>
+<td><a name="edu.cornell.cs.apl.viaduct.syntax.surface/StatementNode///PointingToDeclaration/"></a>[jvm]  <br>Content  <br>sealed class <a href="-statement-node/">StatementNode</a> : <a href="-node/">Node</a>  <br>More info  <br>A computation with side effects.  <br><br><br></td>
+</tr>
+<tr>
+<td><a name="edu.cornell.cs.apl.viaduct.syntax.surface/TopLevelDeclarationNode///PointingToDeclaration/"></a><a href="-top-level-declaration-node/">TopLevelDeclarationNode</a></td>
+<td><a name="edu.cornell.cs.apl.viaduct.syntax.surface/TopLevelDeclarationNode///PointingToDeclaration/"></a>[jvm]  <br>Content  <br>sealed class <a href="-top-level-declaration-node/">TopLevelDeclarationNode</a> : <a href="-node/">Node</a>  <br>More info  <br>A declaration at the top level of a file.  <br><br><br></td>
+</tr>
+<tr>
+<td><a name="edu.cornell.cs.apl.viaduct.syntax.surface/UpdateNode///PointingToDeclaration/"></a><a href="-update-node/">UpdateNode</a></td>
+<td><a name="edu.cornell.cs.apl.viaduct.syntax.surface/UpdateNode///PointingToDeclaration/"></a>[jvm]  <br>Content  <br>class <a href="-update-node/">UpdateNode</a>(<strong>variable</strong>: <a href="../edu.cornell.cs.apl.viaduct.syntax/#%5Bedu.cornell.cs.apl.viaduct.syntax%2FObjectVariableNode%2F%2F%2FPointingToDeclaration%2F%5D%2FClasslikes%2F-566451944">ObjectVariableNode</a>, <strong>update</strong>: <a href="../edu.cornell.cs.apl.viaduct.syntax/#%5Bedu.cornell.cs.apl.viaduct.syntax%2FUpdateNameNode%2F%2F%2FPointingToDeclaration%2F%5D%2FClasslikes%2F-566451944">UpdateNameNode</a>, <strong>arguments</strong>: <a href="../edu.cornell.cs.apl.viaduct.syntax/-arguments/">Arguments</a>&lt;<a href="-expression-node/">ExpressionNode</a>&gt;, <strong>sourceLocation</strong>: <a href="../edu.cornell.cs.apl.viaduct.syntax/#%5Bedu.cornell.cs.apl.viaduct.syntax%2FSourceLocation%2F%2F%2FPointingToDeclaration%2F%5D%2FClasslikes%2F-566451944">SourceLocation</a>) : <a href="-simple-statement-node/">SimpleStatementNode</a>  <br>More info  <br>An update method applied to an object.  <br><br><br></td>
+</tr>
+<tr>
+<td><a name="edu.cornell.cs.apl.viaduct.syntax.surface/WhileLoopNode///PointingToDeclaration/"></a><a href="-while-loop-node/">WhileLoopNode</a></td>
+<td><a name="edu.cornell.cs.apl.viaduct.syntax.surface/WhileLoopNode///PointingToDeclaration/"></a>[jvm]  <br>Content  <br>class <a href="-while-loop-node/">WhileLoopNode</a>(<strong>guard</strong>: <a href="-expression-node/">ExpressionNode</a>, <strong>body</strong>: <a href="-block-node/">BlockNode</a>, <strong>jumpLabel</strong>: <a href="../edu.cornell.cs.apl.viaduct.syntax/#%5Bedu.cornell.cs.apl.viaduct.syntax%2FJumpLabelNode%2F%2F%2FPointingToDeclaration%2F%5D%2FClasslikes%2F-566451944">JumpLabelNode</a>?, <strong>sourceLocation</strong>: <a href="../edu.cornell.cs.apl.viaduct.syntax/#%5Bedu.cornell.cs.apl.viaduct.syntax%2FSourceLocation%2F%2F%2FPointingToDeclaration%2F%5D%2FClasslikes%2F-566451944">SourceLocation</a>) : <a href="-loop-node/">LoopNode</a>  <br>More info  <br>Executing a statement repeatedly as long as a condition is true.  <br><br><br></td>
+</tr>
+</tbody>
+</table>
+
+              
+            </article>
+          </div>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+    <div class="md-copyright__highlight">
+      Copyright &copy; 2021 Applied Programming Languages Group
+    </div>
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    <script id="__config" type="application/json">{"base": "../../../..", "features": ["navigation.instant", "navigation.tabs"], "translations": {"clipboard.copy": "Copy to clipboard", "clipboard.copied": "Copied to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.placeholder": "Type to start searching", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.term.missing": "Missing", "select.version.title": "Select version"}, "search": "../../../../assets/javascripts/workers/search.01824240.min.js"}</script>
+    
+    
+      <script src="../../../../assets/javascripts/bundle.e0abf5b0.min.js"></script>
+      
+    
+  </body>
+</html>

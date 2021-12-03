@@ -4,6 +4,7 @@ import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.parameters.options.flag
 import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.types.file
+import edu.cornell.cs.apl.viaduct.backends.CodeGenerationBackend
 import edu.cornell.cs.apl.viaduct.backends.DefaultCombinedBackend
 import edu.cornell.cs.apl.viaduct.passes.compile
 import edu.cornell.cs.apl.viaduct.passes.compileToKotlin
@@ -71,7 +72,7 @@ class Compile : CliktCommand(help = "Compile ideal protocol to secure distribute
 
     val compileKotlin: Boolean by option(
         "-k",
-        "--compile-kotlin",
+        "--kotlin",
         help = "Translate .via source file to a .kt file"
     ).flag(default = false)
 
@@ -83,7 +84,7 @@ class Compile : CliktCommand(help = "Compile ideal protocol to secure distribute
                 input.sourceFile().compileToKotlin(
                     fileName = output?.nameWithoutExtension ?: "Source",
                     packageName = ".",
-                    backend = DefaultCombinedBackend,
+                    backend = CodeGenerationBackend,
                     costRegime = costRegime,
                     saveLabelConstraintGraph = constraintGraphOutput::dumpGraph,
                     saveInferredLabels = labelOutput,

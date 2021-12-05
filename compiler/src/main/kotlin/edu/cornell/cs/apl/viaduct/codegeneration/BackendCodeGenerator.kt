@@ -13,7 +13,6 @@ import com.squareup.kotlinpoet.asClassName
 import edu.cornell.cs.apl.prettyprinting.joined
 import edu.cornell.cs.apl.viaduct.analysis.NameAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.ProtocolAnalysis
-import edu.cornell.cs.apl.viaduct.analysis.main
 import edu.cornell.cs.apl.viaduct.backends.cleartext.Local
 import edu.cornell.cs.apl.viaduct.backends.cleartext.Replication
 import edu.cornell.cs.apl.viaduct.backends.commitment.Commitment
@@ -31,6 +30,7 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.AssertionNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.BlockNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.BreakNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.FunctionCallNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.FunctionDeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.IfNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.InfiniteLoopNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.LetNode
@@ -69,19 +69,14 @@ private class BackendCodeGenerator(
         codeGeneratorMap = initGeneratorMap
     }
 
-    fun generateHostFunction(
+    // generate code for [this.host]'s role in the function named [funName]
+    fun generateFunction(
         host: Host,
-        hostFunName: String,
-        mainBody: BlockNode
+        funName: String,
+        functionDeclaration: FunctionDeclarationNode
     ): FunSpec {
-        // for each host, create a function that they call to run the program
-        val hostFunctionBuilder = FunSpec.builder(hostFunName).addModifiers(KModifier.SUSPEND)
-
-        // pass runtime object to [host]'s function
-        hostFunctionBuilder.addParameter("runtime", Runtime::class)
-
-        // generate code for [host]'s role in [this.program]
-        generate(hostFunctionBuilder, mainBody, host)
+        val hostFunctionBuilder = FunSpec.builder(funName).addModifiers(KModifier.SUSPEND)
+        generate(hostFunctionBuilder, functionDeclaration.body, host)
         return hostFunctionBuilder.build()
     }
 
@@ -288,7 +283,6 @@ fun ProgramNode.compileToKotlin(
     codeGenerators: List<(context: CodeGeneratorContext) -> CodeGenerator>,
     protocolComposer: ProtocolComposer
 ): FileSpec {
-    val mainBody = this.main.body
 
     // create a main file builder, main function builder
     val fileBuilder = FileSpec.builder(packageName, fileName)
@@ -319,38 +313,47 @@ fun ProgramNode.compileToKotlin(
     mainFunctionBuilder.addParameter("host", Host::class)
     mainFunctionBuilder.addParameter("runtime", Runtime::class)
 
-    // TODO - figure out right way to get unique function names here
-    val hostFunNameMap: Map<Host, String> = this.hosts.associateWith { it.name + "Function" }
-
-    // create a function for each host to run
-    for (entry in hostFunNameMap) {
+    // generate code for each host
+    for (host in this.hosts) {
         val curGenerator = BackendCodeGenerator(
             this,
-            entry.key,
+            host,
             codeGenerators,
             protocolComposer
         )
-        objectBuilder.addType(
-            TypeSpec.classBuilder(entry.key.name.replaceFirstChar { it.uppercase() })
-                .addFunction(
-                    curGenerator.generateHostFunction(
-                        entry.key,
-                        entry.value,
-                        mainBody
-                    )
-                ).build()
+
+        val classBuilder = TypeSpec.classBuilder(
+            host.name.replaceFirstChar { it.uppercase() }
+        ).primaryConstructor(
+            FunSpec.constructorBuilder()
+                .addParameter("runtime", Runtime::class)
+                .build()
+        ).addProperty(
+            PropertySpec.builder("runtime", Runtime::class)
+                .initializer("runtime")
+                .build()
         )
+
+        for (function in this.functions) {
+            classBuilder.addFunction(
+                curGenerator.generateFunction(
+                    host,
+                    function.name.value.name,
+                    function
+                )
+            ).build()
+        }
+        objectBuilder.addType(classBuilder.build())
     }
 
     // create switch statement in main method so program can be run on any host
     mainFunctionBuilder.beginControlFlow("when (host)")
-    for (entry in hostFunNameMap) {
+    for (host in this.hosts) {
         mainFunctionBuilder.addStatement(
-            "%N -> %N().%N(%L)",
-            entry.key.name,
-            entry.key.name.replaceFirstChar { it.uppercase() },
-            entry.value,
-            "runtime"
+            "%N -> %N(%L).main()",
+            host.name,
+            host.name.replaceFirstChar { it.uppercase() },
+            "runtime",
         )
     }
 

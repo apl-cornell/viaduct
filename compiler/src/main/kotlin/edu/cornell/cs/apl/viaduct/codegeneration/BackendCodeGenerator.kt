@@ -75,7 +75,7 @@ private class BackendCodeGenerator(
         mainBody: BlockNode
     ): FunSpec {
         // for each host, create a function that they call to run the program
-        val hostFunctionBuilder = FunSpec.builder(hostFunName).addModifiers(KModifier.PRIVATE, KModifier.SUSPEND)
+        val hostFunctionBuilder = FunSpec.builder(hostFunName).addModifiers(KModifier.SUSPEND)
 
         // pass runtime object to [host]'s function
         hostFunctionBuilder.addParameter("runtime", Runtime::class)
@@ -320,7 +320,7 @@ fun ProgramNode.compileToKotlin(
     mainFunctionBuilder.addParameter("runtime", Runtime::class)
 
     // TODO - figure out right way to get unique function names here
-    val hostFunNameMap: Map<Host, String> = this.hosts.associateWith { it.name + "function" }
+    val hostFunNameMap: Map<Host, String> = this.hosts.associateWith { it.name + "Function" }
 
     // create a function for each host to run
     for (entry in hostFunNameMap) {
@@ -330,13 +330,15 @@ fun ProgramNode.compileToKotlin(
             codeGenerators,
             protocolComposer
         )
-
-        objectBuilder.addFunction(
-            curGenerator.generateHostFunction(
-                entry.key,
-                entry.value,
-                mainBody
-            )
+        objectBuilder.addType(
+            TypeSpec.classBuilder(entry.key.name.replaceFirstChar { it.uppercase() })
+                .addFunction(
+                    curGenerator.generateHostFunction(
+                        entry.key,
+                        entry.value,
+                        mainBody
+                    )
+                ).build()
         )
     }
 
@@ -344,8 +346,9 @@ fun ProgramNode.compileToKotlin(
     mainFunctionBuilder.beginControlFlow("when (host)")
     for (entry in hostFunNameMap) {
         mainFunctionBuilder.addStatement(
-            "%N -> %N(%N)",
+            "%N -> %N().%N(%L)",
             entry.key.name,
+            entry.key.name.replaceFirstChar { it.uppercase() },
             entry.value,
             "runtime"
         )

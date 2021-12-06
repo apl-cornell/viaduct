@@ -45,8 +45,8 @@ import edu.cornell.cs.apl.viaduct.util.FreshNameGenerator
 import javax.annotation.processing.Generated
 
 private class BackendCodeGenerator(
-    program: ProgramNode,
-    host: Host,
+    val program: ProgramNode,
+    val host: Host,
     codeGenerators: List<(context: CodeGeneratorContext) -> CodeGenerator>,
     protocolComposer: ProtocolComposer
 ) {
@@ -69,18 +69,36 @@ private class BackendCodeGenerator(
         codeGeneratorMap = initGeneratorMap
     }
 
+    fun generateClass(): TypeSpec {
+        val classBuilder = TypeSpec.classBuilder(
+            host.name.replaceFirstChar { it.uppercase() }
+        ).primaryConstructor(
+            FunSpec.constructorBuilder()
+                .addParameter("runtime", Runtime::class)
+                .build()
+        ).addProperty(
+            PropertySpec.builder("runtime", Runtime::class)
+                .initializer("runtime")
+                .addModifiers(KModifier.PRIVATE)
+                .build()
+        )
+
+        for (function in program.functions) {
+            classBuilder.addFunction(generateFunction(function)).build()
+        }
+        return classBuilder.build()
+    }
+
     // generate code for [this.host]'s role in the function named [funName]
-    fun generateFunction(
-        host: Host,
-        funName: String,
+    private fun generateFunction(
         functionDeclaration: FunctionDeclarationNode
     ): FunSpec {
-        val hostFunctionBuilder = FunSpec.builder(funName).addModifiers(KModifier.SUSPEND)
-        generate(hostFunctionBuilder, functionDeclaration.body, host)
+        val hostFunctionBuilder = FunSpec.builder(functionDeclaration.name.value.name).addModifiers(KModifier.SUSPEND)
+        generate(hostFunctionBuilder, functionDeclaration.body, this.host)
         return hostFunctionBuilder.build()
     }
 
-    fun generate(
+    private fun generate(
         hostFunctionBuilder: FunSpec.Builder,
         stmt: StatementNode,
         host: Host
@@ -309,9 +327,7 @@ fun ProgramNode.compileToKotlin(
     // add host declarations to main object
     addHostDeclarations(objectBuilder, this)
 
-    val mainFunctionBuilder = FunSpec.builder("main").addModifiers(KModifier.SUSPEND)
-    mainFunctionBuilder.addParameter("host", Host::class)
-    mainFunctionBuilder.addParameter("runtime", Runtime::class)
+    val hostClassMap: MutableMap<Host, TypeSpec> = mutableMapOf()
 
     // generate code for each host
     for (host in this.hosts) {
@@ -321,30 +337,15 @@ fun ProgramNode.compileToKotlin(
             codeGenerators,
             protocolComposer
         )
-
-        val classBuilder = TypeSpec.classBuilder(
-            host.name.replaceFirstChar { it.uppercase() }
-        ).primaryConstructor(
-            FunSpec.constructorBuilder()
-                .addParameter("runtime", Runtime::class)
-                .build()
-        ).addProperty(
-            PropertySpec.builder("runtime", Runtime::class)
-                .initializer("runtime")
-                .build()
-        )
-
-        for (function in this.functions) {
-            classBuilder.addFunction(
-                curGenerator.generateFunction(
-                    host,
-                    function.name.value.name,
-                    function
-                )
-            ).build()
-        }
-        objectBuilder.addType(classBuilder.build())
+        val hostTypeSpec = curGenerator.generateClass()
+        objectBuilder.addType(curGenerator.generateClass())
+        hostClassMap[host] = hostTypeSpec
     }
+
+    // create main function
+    val mainFunctionBuilder = FunSpec.builder("main").addModifiers(KModifier.SUSPEND)
+    mainFunctionBuilder.addParameter("host", Host::class)
+    mainFunctionBuilder.addParameter("runtime", Runtime::class)
 
     // create switch statement in main method so program can be run on any host
     mainFunctionBuilder.beginControlFlow("when (host)")
@@ -352,7 +353,7 @@ fun ProgramNode.compileToKotlin(
         mainFunctionBuilder.addStatement(
             "%N -> %N(%L).main()",
             host.name,
-            host.name.replaceFirstChar { it.uppercase() },
+            hostClassMap[host]!!.name!!,
             "runtime",
         )
     }

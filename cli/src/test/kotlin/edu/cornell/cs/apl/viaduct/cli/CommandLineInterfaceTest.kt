@@ -28,6 +28,11 @@ internal class CommandLineInterfaceTest {
     }
 
     @Test
+    fun `compile kotlin command`() {
+        cli("compile", "--kotlin", example)
+    }
+
+    @Test
     fun `no arguments causes error`() {
         assertThrows<PrintHelpMessage> { cli() }
     }

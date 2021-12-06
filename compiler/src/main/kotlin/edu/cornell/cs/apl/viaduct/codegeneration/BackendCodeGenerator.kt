@@ -13,10 +13,6 @@ import com.squareup.kotlinpoet.asClassName
 import edu.cornell.cs.apl.prettyprinting.joined
 import edu.cornell.cs.apl.viaduct.analysis.NameAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.ProtocolAnalysis
-import edu.cornell.cs.apl.viaduct.backends.cleartext.Local
-import edu.cornell.cs.apl.viaduct.backends.cleartext.Replication
-import edu.cornell.cs.apl.viaduct.backends.commitment.Commitment
-import edu.cornell.cs.apl.viaduct.backends.commitment.CommitmentDispatchCodeGenerator
 import edu.cornell.cs.apl.viaduct.errors.CodeGenerationError
 import edu.cornell.cs.apl.viaduct.runtime.Boxed
 import edu.cornell.cs.apl.viaduct.runtime.Runtime
@@ -47,27 +43,13 @@ import javax.annotation.processing.Generated
 private class BackendCodeGenerator(
     val program: ProgramNode,
     val host: Host,
-    codeGenerators: List<(context: CodeGeneratorContext) -> CodeGenerator>,
+    codeGenerator: (context: CodeGeneratorContext) -> CodeGenerator,
     protocolComposer: ProtocolComposer
 ) {
-    private val codeGeneratorMap: Map<Protocol, CodeGenerator>
     private val nameAnalysis = NameAnalysis.get(program)
     private val protocolAnalysis = ProtocolAnalysis(program, protocolComposer)
     private val context = Context(program, host, protocolComposer)
-
-    init {
-        val allProtocols = protocolAnalysis.participatingProtocols(program)
-        val initGeneratorMap: MutableMap<Protocol, CodeGenerator> = mutableMapOf()
-
-        // TODO - improve this - how to parse inputted generators and assign to protocols the right way?
-        for (protocol in allProtocols) {
-            if (protocol is Replication || protocol is Local)
-                initGeneratorMap[protocol] = codeGenerators[0](context)
-            if (protocol is Commitment)
-                initGeneratorMap[protocol] = CommitmentDispatchCodeGenerator(context)
-        }
-        codeGeneratorMap = initGeneratorMap
-    }
+    private val codeGenerator = codeGenerator(context)
 
     fun generateClass(): TypeSpec {
         val classBuilder = TypeSpec.classBuilder(
@@ -121,22 +103,18 @@ private class BackendCodeGenerator(
                 if (protocolAnalysis.participatingHosts(stmt).contains(host)) {
                     hostFunctionBuilder.addComment(stmt.toDocument().print())
                     // generate code for the statement, if [host] participating
-                    val protocolCodeGenerator = codeGeneratorMap[protocol]
-                        ?: throw CodeGenerationError("no code generator for protocol ${protocol.toDocument().print()}")
-                    hostFunctionBuilder.addStatement("%L", protocolCodeGenerator.simpleStatement(protocol, stmt))
+                    hostFunctionBuilder.addStatement("%L", codeGenerator.simpleStatement(protocol, stmt))
 
                     // generate code for sending data
                     if (readers.isNotEmpty()) {
-                        hostFunctionBuilder.addCode("%L", protocolCodeGenerator.send(stmt, protocol, readerProtocol!!, events!!))
+                        hostFunctionBuilder.addCode("%L", codeGenerator.send(stmt, protocol, readerProtocol!!, events!!))
                     }
                 }
 
                 // generate code for receiving data
                 if (readers.isNotEmpty()) {
                     if (protocolAnalysis.participatingHosts(reader!!).contains(host)) {
-                        val protocolCodeGenerator = codeGeneratorMap[readerProtocol]
-                            ?: throw CodeGenerationError("no code generator for protocol ${protocol.toDocument().print()}")
-                        hostFunctionBuilder.addCode("%L", protocolCodeGenerator.receive(stmt, protocol, readerProtocol!!, events!!))
+                        hostFunctionBuilder.addCode("%L", codeGenerator.receive(stmt, protocol, readerProtocol!!, events!!))
                     }
                 }
             }
@@ -145,9 +123,7 @@ private class BackendCodeGenerator(
                 if (protocolAnalysis.participatingHosts(stmt).contains(host)) {
                     hostFunctionBuilder.addComment(stmt.toDocument().print())
                     val protocol = protocolAnalysis.primaryProtocol(stmt)
-                    val protocolCodeGenerator = codeGeneratorMap[protocol]
-                        ?: throw CodeGenerationError("no code generator for protocol ${protocol.toDocument().print()}")
-                    hostFunctionBuilder.addStatement("%L", protocolCodeGenerator.simpleStatement(protocol, stmt))
+                    hostFunctionBuilder.addStatement("%L", codeGenerator.simpleStatement(protocol, stmt))
                 }
             }
 
@@ -204,9 +180,7 @@ private class BackendCodeGenerator(
                             }
                             is ReadNode -> {
                                 val guardProtocol = protocolAnalysis.primaryProtocol(guard)
-                                val protocolCodeGenerator = codeGeneratorMap[guardProtocol]
-                                    ?: throw CodeGenerationError("no code generator for protocol ${guardProtocol.toDocument().print()}")
-                                protocolCodeGenerator.guard(guardProtocol, guard)
+                                codeGenerator.guard(guardProtocol, guard)
                             }
                         }
 
@@ -298,7 +272,7 @@ private fun addHostDeclarations(objectBuilder: TypeSpec.Builder, program: Progra
 fun ProgramNode.compileToKotlin(
     fileName: String,
     packageName: String,
-    codeGenerators: List<(context: CodeGeneratorContext) -> CodeGenerator>,
+    codeGenerator: (context: CodeGeneratorContext) -> CodeGenerator,
     protocolComposer: ProtocolComposer
 ): FileSpec {
 
@@ -334,7 +308,7 @@ fun ProgramNode.compileToKotlin(
         val curGenerator = BackendCodeGenerator(
             this,
             host,
-            codeGenerators,
+            codeGenerator,
             protocolComposer
         )
         val hostTypeSpec = curGenerator.generateClass()

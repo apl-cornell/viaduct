@@ -353,7 +353,7 @@ fun ProgramNode.compileToKotlin(
         mainFunctionBuilder.addStatement(
             "%N -> %N(%L).main()",
             host.name,
-            hostClassMap[host]!!.name!!,
+            hostClassMap.getValue(host),
             "runtime",
         )
     }

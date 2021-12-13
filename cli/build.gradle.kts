@@ -30,7 +30,7 @@ dependencies {
 
     // Logging
     implementation("org.apache.logging.log4j:log4j-core:2.14.1")
-    implementation("org.apache.logging.log4j:log4j-slf4j-impl:2.14.1")
+    implementation("org.apache.logging.log4j:log4j-slf4j-impl:2.16.0")
 
     // Testing
     testImplementation(project(":test-utilities"))

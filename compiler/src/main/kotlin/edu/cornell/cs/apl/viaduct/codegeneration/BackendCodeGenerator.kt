@@ -13,6 +13,9 @@ import com.squareup.kotlinpoet.asClassName
 import edu.cornell.cs.apl.prettyprinting.joined
 import edu.cornell.cs.apl.viaduct.analysis.NameAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.ProtocolAnalysis
+import edu.cornell.cs.apl.viaduct.analysis.main
+import edu.cornell.cs.apl.viaduct.backends.aby.ABY
+import edu.cornell.cs.apl.viaduct.backends.aby.ABYInitGenerator
 import edu.cornell.cs.apl.viaduct.errors.CodeGenerationError
 import edu.cornell.cs.apl.viaduct.runtime.Boxed
 import edu.cornell.cs.apl.viaduct.runtime.Runtime
@@ -44,6 +47,7 @@ private class BackendCodeGenerator(
     val program: ProgramNode,
     val host: Host,
     codeGenerator: (context: CodeGeneratorContext) -> CodeGenerator,
+    val initCodeGenerator: InitCodeGenerator,
     protocolComposer: ProtocolComposer
 ) {
     private val nameAnalysis = NameAnalysis.get(program)
@@ -64,6 +68,15 @@ private class BackendCodeGenerator(
                 .addModifiers(KModifier.PRIVATE)
                 .build()
         )
+
+        // TODO() - this will not be special-cased when the initCodeGenerator is a .unions InitCodeGenerator
+        val abyProtocols = protocolAnalysis.participatingProtocols(program.main.body)
+            .filterIsInstance<ABY>()
+        for (protocol in abyProtocols) {
+            if (context.host == protocol.client || context.host == protocol.server) {
+                classBuilder.addProperty(initCodeGenerator.setup(protocol, context.host))
+            }
+        }
 
         for (function in program.functions) {
             classBuilder.addFunction(generateFunction(function)).build()
@@ -303,12 +316,18 @@ fun ProgramNode.compileToKotlin(
 
     val hostClassMap: MutableMap<Host, TypeSpec> = mutableMapOf()
 
+    // TODO - if we stick with this initGeneratorDesign, we will
+    // probably want to create a .unions version of it that we actually pass
+    // to this function and pass further
+    val initCodeGenerator: InitCodeGenerator = ABYInitGenerator()
+
     // generate code for each host
     for (host in this.hosts) {
         val curGenerator = BackendCodeGenerator(
             this,
             host,
             codeGenerator,
+            initCodeGenerator,
             protocolComposer
         )
         val hostTypeSpec = curGenerator.generateClass()

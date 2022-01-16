@@ -1,6 +1,7 @@
 package edu.cornell.cs.apl.viaduct.cli
 
 import com.github.ajalt.clikt.core.CliktCommand
+import com.github.ajalt.clikt.parameters.options.default
 import com.github.ajalt.clikt.parameters.options.flag
 import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.types.file
@@ -8,11 +9,14 @@ import edu.cornell.cs.apl.viaduct.backends.CodeGenerationBackend
 import edu.cornell.cs.apl.viaduct.backends.DefaultCombinedBackend
 import edu.cornell.cs.apl.viaduct.passes.compile
 import edu.cornell.cs.apl.viaduct.passes.compileToKotlin
-import edu.cornell.cs.apl.viaduct.selection.GurobiSelectionProblemSolver
+import edu.cornell.cs.apl.viaduct.selection.SelectionProblemSolver
 import edu.cornell.cs.apl.viaduct.selection.SimpleCostRegime
 import guru.nidi.graphviz.engine.Format
 import guru.nidi.graphviz.engine.Graphviz
 import mu.KotlinLogging
+import org.reflections.Reflections
+import org.reflections.scanners.Scanners
+import org.reflections.util.ConfigurationBuilder
 import java.io.File
 import java.io.StringWriter
 import java.io.Writer
@@ -77,8 +81,39 @@ class Compile : CliktCommand(help = "Compile ideal protocol to secure distribute
         help = "Translate .via source file to a .kt file"
     ).flag(default = false)
 
+    val selectionProblemSolver: String by option(
+        "--solver",
+        metavar = "SOLVER",
+        help = "Select which solver to use for protocol selection. Current options: z3, gurobi"
+    ).default("z3")
+
+    /** Use reflection to retrieve selection problem solvers. */
+    private fun getSelectionProblemSolvers(): Map<String, SelectionProblemSolver> {
+        val reflections =
+            Reflections(
+                ConfigurationBuilder()
+                    .forPackage(SelectionProblemSolver::class.java.packageName)
+                    .setScanners(Scanners.SubTypes)
+            )
+
+        val solverClasses: Set<Class<*>> =
+            reflections.get(Scanners.SubTypes.of(SelectionProblemSolver::class.java).asClass<Class<*>>())
+
+        return solverClasses.map { solverClass ->
+            val solver = solverClass.getConstructor().newInstance() as SelectionProblemSolver
+            solver.solverName to solver
+        }.toMap()
+    }
+
     override fun run() {
         val costRegime = if (wanCost) SimpleCostRegime.WAN else SimpleCostRegime.LAN
+
+        val solverMap = getSelectionProblemSolvers()
+        logger.info {
+            "available solvers for protocol selection: ${solverMap.keys.joinToString()}"
+        }
+
+        val selectionSolver = solverMap[selectionProblemSolver]!!
 
         if (compileKotlin) {
             val compiledProgram =
@@ -86,7 +121,7 @@ class Compile : CliktCommand(help = "Compile ideal protocol to secure distribute
                     fileName = output?.nameWithoutExtension ?: "Source",
                     packageName = ".",
                     backend = CodeGenerationBackend,
-                    selectionSolver = GurobiSelectionProblemSolver(),
+                    selectionSolver = selectionSolver,
                     costRegime = costRegime,
                     saveLabelConstraintGraph = constraintGraphOutput::dumpGraph,
                     saveInferredLabels = labelOutput,
@@ -98,7 +133,7 @@ class Compile : CliktCommand(help = "Compile ideal protocol to secure distribute
             val compiledProgram =
                 input.sourceFile().compile(
                     backend = DefaultCombinedBackend,
-                    selectionSolver = GurobiSelectionProblemSolver(),
+                    selectionSolver = selectionSolver,
                     costRegime = costRegime,
                     saveLabelConstraintGraph = constraintGraphOutput::dumpGraph,
                     saveInferredLabels = labelOutput,

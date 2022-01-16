@@ -18,13 +18,15 @@ private val logger = KotlinLogging.logger("Z3Selection")
 /**
  * Constraint problem using Z3. Z3 has an optimization module that can return models with minimal cost.
  */
-class Z3Selection : SelectionProblemSolver {
+class Z3SelectionProblemSolver : SelectionProblemSolver {
     companion object {
         init {
             // Use old arithmetic solver to fix regression introduced in Z3 v4.8.9
             Global.setParameter("smt.arith.solver", "2")
         }
     }
+
+    override val solverName = "z3"
 
     private val nameGenerator = FreshNameGenerator()
 

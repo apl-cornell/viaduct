@@ -11,6 +11,8 @@ import kotlin.math.max
 
 /** Translate selection problem into an integer linear program and use the Gurobi solver to find a solution. */
 class GurobiSelectionProblemSolver : SelectionProblemSolver {
+    override val solverName = "gurobi"
+
     private val constraintMap = HashMap<SelectionConstraint, GRBVar>()
     private val assignmentVariableMap = HashMap<FunctionVariable, MutableList<Pair<Protocol, GRBVar>>>()
     private val variableEqualsSet = mutableSetOf<VariableEquals>()

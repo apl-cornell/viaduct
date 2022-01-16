@@ -16,7 +16,7 @@ import edu.cornell.cs.apl.viaduct.selection.ProtocolSelection
 import edu.cornell.cs.apl.viaduct.selection.SelectionProblemSolver
 import edu.cornell.cs.apl.viaduct.selection.SimpleCostEstimator
 import edu.cornell.cs.apl.viaduct.selection.SimpleCostRegime
-import edu.cornell.cs.apl.viaduct.selection.Z3Selection
+import edu.cornell.cs.apl.viaduct.selection.Z3SelectionProblemSolver
 import edu.cornell.cs.apl.viaduct.selection.validateProtocolAssignment
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.DeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.LetNode
@@ -34,7 +34,7 @@ private val logger = KotlinLogging.logger("Compile")
 /** Similar to [SourceFile.compileToKotlin], but returns a program for the interpreter. */
 fun SourceFile.compile(
     backend: Backend,
-    selectionSolver: SelectionProblemSolver = Z3Selection(),
+    selectionSolver: SelectionProblemSolver = Z3SelectionProblemSolver(),
     costRegime: SimpleCostRegime = SimpleCostRegime.WAN,
     saveLabelConstraintGraph: ((graphWriter: (Writer) -> Unit) -> Unit)? = null,
     saveInferredLabels: File? = null,
@@ -135,7 +135,7 @@ fun SourceFile.compileToKotlin(
     fileName: String,
     packageName: String,
     backend: Backend,
-    selectionSolver: SelectionProblemSolver = Z3Selection(),
+    selectionSolver: SelectionProblemSolver = Z3SelectionProblemSolver(),
     costRegime: SimpleCostRegime = SimpleCostRegime.WAN,
     saveLabelConstraintGraph: ((graphWriter: (Writer) -> Unit) -> Unit)? = null,
     saveInferredLabels: File? = null,

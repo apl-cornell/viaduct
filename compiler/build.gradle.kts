@@ -1,3 +1,6 @@
+// toggle compilation Gurobi selection problem solver
+project.ext.set("gurobiSolver", "false")
+
 buildscript {
     dependencies {
         classpath("com.github.vbmacher:java-cup:11b-20160615-1")
@@ -38,8 +41,8 @@ dependencies {
 
     // ILP solver
     // val gurobiHome = System.getenv("GUROBI_HOME")
-    // implementation(files("${gurobiHome}/lib/gurobi.jar"))
-    // implementation(files("${gurobiHome}/lib/gurobi-javadoc.jar"))
+    // implementation(files("file://${gurobiHome}/lib/gurobi.jar"))
+    // implementation(files("file://${gurobiHome}/lib/gurobi-javadoc.jar"))
     implementation(files("lib/gurobi.jar"))
     implementation(files("lib/gurobi-javadoc.jar"))
 
@@ -56,19 +59,57 @@ jflex {
 
 val compileCup by tasks.registering(CompileCupTask::class)
 
+val copyGurobiJars by tasks.register("copyGurobi") {
+    doLast {
+        if (project.findProperty("gurobiSolver") == "true") {
+            val gurobiHome = File(System.getenv("GUROBI_HOME"))
+            val gurobiLib = File(gurobiHome, "lib")
+            val gurobiJar = File(gurobiLib, "gurobi.jar")
+            val gurobiJavadocJar = File(gurobiLib, "gurobi-javadoc.jar")
+
+            if (gurobiJar.isFile && gurobiJavadocJar.isFile) {
+                val libDir = File(project.projectDir, "lib")
+
+                // make lib/ directory if it doesn't exist
+                if (!libDir.isDirectory) {
+                    libDir.mkdir()
+                }
+
+                val newGurobiJar = File(libDir, "gurobi.jar")
+                val newGurobiJavadocJar = File(libDir, "gurobi-javadoc.jar")
+
+                newGurobiJar.delete()
+                newGurobiJavadocJar.delete()
+
+                gurobiJar.copyTo(newGurobiJar)
+                gurobiJar.copyTo(newGurobiJavadocJar)
+            } else {
+                throw GradleException("cannot copy Gurobi JAR files from $gurobiJar and $gurobiJavadocJar")
+            }
+        }
+    }
+}
+
 sourceSets {
     main {
-        java.srcDir(compileCup.get().outputDirectory)
+        java {
+            if (project.findProperty("gurobiSolver") == "true") {
+                srcDir("src/plugins/gurobi")
+            }
+            srcDir(compileCup.get().outputDirectory)
+        }
     }
 }
 
 tasks.compileJava {
     dependsOn(compileCup)
+    dependsOn(copyGurobiJars)
 }
 
 tasks.compileKotlin {
     dependsOn(compileCup)
     dependsOn(tasks.withType<org.xbib.gradle.plugin.JFlexTask>())
+    dependsOn(copyGurobiJars)
 }
 
 // TODO: we only need to add explicit dependencies for dokkaHtmlPartial; dokkaHtml just works for some reason.

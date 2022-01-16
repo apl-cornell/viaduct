@@ -10,7 +10,7 @@ import edu.cornell.cs.apl.viaduct.passes.elaborated
 import edu.cornell.cs.apl.viaduct.selection.ProtocolSelection
 import edu.cornell.cs.apl.viaduct.selection.SimpleCostEstimator
 import edu.cornell.cs.apl.viaduct.selection.SimpleCostRegime
-import edu.cornell.cs.apl.viaduct.selection.Z3Selection
+import edu.cornell.cs.apl.viaduct.selection.Z3SelectionProblemSolver
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -52,7 +52,7 @@ private fun run(file: File) {
 
     val protocolComposer = DefaultCombinedBackend.protocolComposer
     ProtocolSelection(
-        Z3Selection(),
+        Z3SelectionProblemSolver(),
         DefaultCombinedBackend.protocolFactory(program),
         protocolComposer,
         SimpleCostEstimator(protocolComposer, SimpleCostRegime.LAN)

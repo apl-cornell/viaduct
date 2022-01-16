@@ -32,6 +32,9 @@ dependencies {
     implementation("org.apache.logging.log4j:log4j-core:2.17.0")
     implementation("org.apache.logging.log4j:log4j-slf4j-impl:2.17.0")
 
+    // Reflection
+    implementation("org.reflections:reflections:0.10.2")
+
     // Testing
     testImplementation(project(":test-utilities"))
 }

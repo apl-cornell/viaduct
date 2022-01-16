@@ -9,7 +9,7 @@ import edu.cornell.cs.apl.viaduct.passes.elaborated
 import edu.cornell.cs.apl.viaduct.selection.ProtocolSelection
 import edu.cornell.cs.apl.viaduct.selection.SimpleCostEstimator
 import edu.cornell.cs.apl.viaduct.selection.SimpleCostRegime
-import edu.cornell.cs.apl.viaduct.selection.Z3Selection
+import edu.cornell.cs.apl.viaduct.selection.Z3SelectionProblemSolver
 import edu.cornell.cs.apl.viaduct.syntax.surface.ProgramNode
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ArgumentsSource
@@ -24,7 +24,7 @@ internal class ProtocolAnalysisTest {
         val protocolComposer = DefaultCombinedBackend.protocolComposer
         val protocolAssignment =
             ProtocolSelection(
-                Z3Selection(),
+                Z3SelectionProblemSolver(),
                 DefaultCombinedBackend.protocolFactory(program),
                 protocolComposer,
                 SimpleCostEstimator(protocolComposer, SimpleCostRegime.LAN)

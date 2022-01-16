@@ -13,7 +13,7 @@ import edu.cornell.cs.apl.viaduct.selection.ProtocolCommunication
 import edu.cornell.cs.apl.viaduct.selection.ProtocolSelection
 import edu.cornell.cs.apl.viaduct.selection.SimpleCostEstimator
 import edu.cornell.cs.apl.viaduct.selection.SimpleCostRegime
-import edu.cornell.cs.apl.viaduct.selection.Z3Selection
+import edu.cornell.cs.apl.viaduct.selection.Z3SelectionProblemSolver
 import edu.cornell.cs.apl.viaduct.syntax.Arguments
 import edu.cornell.cs.apl.viaduct.syntax.Host
 import edu.cornell.cs.apl.viaduct.syntax.Located
@@ -114,7 +114,7 @@ internal class BackendInterpreterTest {
         val protocolComposer = DefaultCombinedBackend.protocolComposer
         val protocolAssignment =
             ProtocolSelection(
-                Z3Selection(),
+                Z3SelectionProblemSolver(),
                 DefaultCombinedBackend.protocolFactory(program),
                 protocolComposer,
                 SimpleCostEstimator(protocolComposer, SimpleCostRegime.LAN)

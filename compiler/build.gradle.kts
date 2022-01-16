@@ -36,6 +36,13 @@ dependencies {
     // SMT solving
     implementation("io.github.tudo-aqua:z3-turnkey:4.8.12")
 
+    // ILP solver
+    // val gurobiHome = System.getenv("GUROBI_HOME")
+    // implementation(files("${gurobiHome}/lib/gurobi.jar"))
+    // implementation(files("${gurobiHome}/lib/gurobi-javadoc.jar"))
+    implementation(files("lib/gurobi.jar"))
+    implementation(files("lib/gurobi-javadoc.jar"))
+
     // Testing
     testImplementation(project(":test-utilities"))
     testImplementation(kotlin("reflect"))

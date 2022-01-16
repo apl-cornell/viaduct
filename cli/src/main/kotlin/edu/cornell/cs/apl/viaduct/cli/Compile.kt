@@ -8,6 +8,7 @@ import edu.cornell.cs.apl.viaduct.backends.CodeGenerationBackend
 import edu.cornell.cs.apl.viaduct.backends.DefaultCombinedBackend
 import edu.cornell.cs.apl.viaduct.passes.compile
 import edu.cornell.cs.apl.viaduct.passes.compileToKotlin
+import edu.cornell.cs.apl.viaduct.selection.GurobiSelectionProblemSolver
 import edu.cornell.cs.apl.viaduct.selection.SimpleCostRegime
 import guru.nidi.graphviz.engine.Format
 import guru.nidi.graphviz.engine.Graphviz
@@ -85,6 +86,7 @@ class Compile : CliktCommand(help = "Compile ideal protocol to secure distribute
                     fileName = output?.nameWithoutExtension ?: "Source",
                     packageName = ".",
                     backend = CodeGenerationBackend,
+                    selectionSolver = GurobiSelectionProblemSolver(),
                     costRegime = costRegime,
                     saveLabelConstraintGraph = constraintGraphOutput::dumpGraph,
                     saveInferredLabels = labelOutput,
@@ -96,6 +98,7 @@ class Compile : CliktCommand(help = "Compile ideal protocol to secure distribute
             val compiledProgram =
                 input.sourceFile().compile(
                     backend = DefaultCombinedBackend,
+                    selectionSolver = GurobiSelectionProblemSolver(),
                     costRegime = costRegime,
                     saveLabelConstraintGraph = constraintGraphOutput::dumpGraph,
                     saveInferredLabels = labelOutput,

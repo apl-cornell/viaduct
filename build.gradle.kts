@@ -3,7 +3,7 @@ plugins {
     kotlin("plugin.serialization") version embeddedKotlinVersion apply false
 
     // Versioning
-    id("com.palantir.git-version") version "0.12.3"
+    id("com.palantir.git-version") version "0.13.0"
 
     // Documentation
     id("org.jetbrains.dokka") version "1.6.10"

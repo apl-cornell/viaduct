@@ -22,7 +22,7 @@ COPY *.gradle.kts ./
 COPY cli cli
 COPY compiler compiler
 COPY interpreter interpreter
-COPY runtime2 runtime2
+COPY runtime runtime
 COPY shared shared
 COPY test-utilities test-utilities
 RUN --mount=type=cache,target=/root/.gradle/caches ./gradlew :cli:installDist

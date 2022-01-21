@@ -21,7 +21,7 @@ RUN mkdir .git
 COPY *.gradle.kts ./
 COPY cli cli
 COPY compiler compiler
-COPY runtime runtime
+COPY interpreter interpreter
 COPY runtime2 runtime2
 COPY shared shared
 COPY test-utilities test-utilities

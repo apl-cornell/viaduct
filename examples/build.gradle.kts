@@ -14,5 +14,5 @@ java {
 }
 
 dependencies {
-    implementation("edu.cornell.cs.apl:runtime2")
+    implementation("edu.cornell.cs.apl:runtime")
 }

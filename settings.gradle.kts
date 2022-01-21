@@ -4,7 +4,7 @@ include("compiler")
 include("docs")
 include("gradle-plugin")
 include("interpreter")
-include("runtime2")
+include("runtime")
 include("shared")
 include("test-utilities")
 

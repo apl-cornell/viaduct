@@ -1,9 +1,11 @@
 package edu.cornell.cs.apl.viaduct.backends.commitment
 
 import com.squareup.kotlinpoet.CodeBlock
+import com.squareup.kotlinpoet.PropertySpec
 import edu.cornell.cs.apl.viaduct.codegeneration.CodeGenerator
 import edu.cornell.cs.apl.viaduct.codegeneration.CodeGeneratorContext
 import edu.cornell.cs.apl.viaduct.selection.ProtocolCommunication
+import edu.cornell.cs.apl.viaduct.syntax.Host
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.AtomicExpressionNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.LetNode
@@ -44,4 +46,6 @@ class CommitmentDispatchCodeGenerator(
         events: ProtocolCommunication
     ): CodeBlock =
         generatorFor(receiveProtocol).receive(sender, sendProtocol, receiveProtocol, events)
+
+    override fun setup(protocol: Protocol): Iterable<PropertySpec> = listOf()
 }

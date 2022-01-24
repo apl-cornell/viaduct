@@ -13,9 +13,6 @@ import com.squareup.kotlinpoet.asClassName
 import edu.cornell.cs.apl.prettyprinting.joined
 import edu.cornell.cs.apl.viaduct.analysis.NameAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.ProtocolAnalysis
-import edu.cornell.cs.apl.viaduct.analysis.main
-import edu.cornell.cs.apl.viaduct.backends.aby.ABY
-import edu.cornell.cs.apl.viaduct.backends.aby.ABYInitGenerator
 import edu.cornell.cs.apl.viaduct.errors.CodeGenerationError
 import edu.cornell.cs.apl.viaduct.runtime.Boxed
 import edu.cornell.cs.apl.viaduct.runtime.Runtime
@@ -47,7 +44,6 @@ private class BackendCodeGenerator(
     val program: ProgramNode,
     val host: Host,
     codeGenerator: (context: CodeGeneratorContext) -> CodeGenerator,
-    val initCodeGenerator: InitCodeGenerator,
     protocolComposer: ProtocolComposer
 ) {
     private val nameAnalysis = NameAnalysis.get(program)
@@ -69,12 +65,9 @@ private class BackendCodeGenerator(
                 .build()
         )
 
-        // TODO() - this will not be special-cased when the initCodeGenerator is a .unions InitCodeGenerator
-        val abyProtocols = protocolAnalysis.participatingProtocols(program.main.body)
-            .filterIsInstance<ABY>()
-        for (protocol in abyProtocols) {
-            if (context.host == protocol.client || context.host == protocol.server) {
-                classBuilder.addProperty(initCodeGenerator.setup(protocol, context.host))
+        for (protocol in protocolAnalysis.participatingProtocols(program)) {
+            for (property in codeGenerator.setup(protocol)) {
+                classBuilder.addProperty(property)
             }
         }
 
@@ -237,6 +230,7 @@ private class BackendCodeGenerator(
 
         private var tempMap: MutableMap<Pair<Temporary, Protocol>, String> = mutableMapOf()
         private var varMap: MutableMap<ObjectVariable, String> = mutableMapOf()
+        private var kotlinNameToProtocolMap: MutableMap<String, Protocol> = mutableMapOf()
 
         private val receiveMember = MemberName(Runtime::class.java.packageName, "receive")
         private val sendMember = MemberName(Runtime::class.java.packageName, "send")
@@ -246,14 +240,25 @@ private class BackendCodeGenerator(
             program.hosts.forEach { this.getFreshName(it.name) }
         }
 
-        override fun kotlinName(sourceName: Temporary, protocol: Protocol): String =
-            tempMap.getOrPut(Pair(sourceName, protocol)) { freshNameGenerator.getFreshName(sourceName.name.drop(1)) }
+        override fun kotlinName(sourceName: Temporary, protocol: Protocol): String {
+            var kName = if (tempMap.containsKey(Pair(sourceName, protocol))) {
+                tempMap.getValue(Pair(sourceName, protocol))
+            } else {
+                freshNameGenerator.getFreshName(sourceName.name.drop(1))
+            }
+            kotlinNameToProtocolMap[kName] = protocol
+            tempMap[Pair(sourceName, protocol)] = kName
+            return kName
+        }
 
         override fun kotlinName(sourceName: ObjectVariable): String =
             varMap.getOrPut(sourceName) { freshNameGenerator.getFreshName(sourceName.name) }
 
         override fun newTemporary(baseName: String): String =
             freshNameGenerator.getFreshName(baseName)
+
+        override fun tempKotlinNameToProtocol(kotlinName: String): Protocol =
+            kotlinNameToProtocolMap.getValue(kotlinName)
 
         // TODO: properly compute host name
         override fun receive(type: TypeName, sender: Host): CodeBlock =
@@ -262,6 +267,13 @@ private class BackendCodeGenerator(
         // TODO: properly compute host name
         override fun send(value: CodeBlock, receiver: Host): CodeBlock =
             CodeBlock.of("%N.%M(%L, %N)", "runtime", sendMember, value, receiver.name)
+
+        override fun url(host: Host): CodeBlock =
+            CodeBlock.of(
+                "%N.url(%L)",
+                "runtime",
+                host.name
+            )
     }
 }
 
@@ -316,18 +328,12 @@ fun ProgramNode.compileToKotlin(
 
     val hostClassMap: MutableMap<Host, TypeSpec> = mutableMapOf()
 
-    // TODO - if we stick with this initGeneratorDesign, we will
-    // probably want to create a .unions version of it that we actually pass
-    // to this function and pass further
-    val initCodeGenerator: InitCodeGenerator = ABYInitGenerator()
-
     // generate code for each host
     for (host in this.hosts) {
         val curGenerator = BackendCodeGenerator(
             this,
             host,
             codeGenerator,
-            initCodeGenerator,
             protocolComposer
         )
         val hostTypeSpec = curGenerator.generateClass()

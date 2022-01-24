@@ -3,6 +3,7 @@ package edu.cornell.cs.apl.viaduct.backends.commitment
 import com.squareup.kotlinpoet.CodeBlock
 import com.squareup.kotlinpoet.MemberName
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
+import com.squareup.kotlinpoet.PropertySpec
 import com.squareup.kotlinpoet.asClassName
 import edu.cornell.cs.apl.viaduct.analysis.NameAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.TypeAnalysis
@@ -15,6 +16,7 @@ import edu.cornell.cs.apl.viaduct.runtime.commitment.Commitment
 import edu.cornell.cs.apl.viaduct.runtime.commitment.Committed
 import edu.cornell.cs.apl.viaduct.selection.CommunicationEvent
 import edu.cornell.cs.apl.viaduct.selection.ProtocolCommunication
+import edu.cornell.cs.apl.viaduct.syntax.Host
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
 import edu.cornell.cs.apl.viaduct.syntax.ProtocolProjection
 import edu.cornell.cs.apl.viaduct.syntax.datatypes.Get
@@ -140,7 +142,7 @@ internal class CommitmentHolderGenerator(
         val sendBuilder = CodeBlock.builder()
 
         // here, the interpreter checks for the available protocols, is this necessary here?
-        var relevantEvents: List<CommunicationEvent> =
+        val relevantEvents: List<CommunicationEvent> =
             events.getProjectionSends(
                 ProtocolProjection(sendProtocol, context.host),
                 CommitmentProtocol.OPEN_COMMITMENT_OUTPUT
@@ -209,4 +211,6 @@ internal class CommitmentHolderGenerator(
         }
         return receiveBuilder.build()
     }
+
+    override fun setup(protocol: Protocol): Iterable<PropertySpec> = listOf()
 }

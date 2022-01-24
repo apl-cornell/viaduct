@@ -1,11 +1,7 @@
 package edu.cornell.cs.apl.viaduct.backends.cleartext
 
-import com.squareup.kotlinpoet.CodeBlock
-import com.squareup.kotlinpoet.MemberName
-import com.squareup.kotlinpoet.ParameterizedTypeName
+import com.squareup.kotlinpoet.*
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
-import com.squareup.kotlinpoet.asClassName
-import com.squareup.kotlinpoet.asTypeName
 import edu.cornell.cs.apl.viaduct.analysis.NameAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.ProtocolAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.TypeAnalysis
@@ -91,7 +87,7 @@ class CleartextCodeGenerator(context: CodeGeneratorContext) :
                             expr.operator,
                             exp(protocol, expr.arguments[1])
                         )
-                    else -> throw CodeGenerationError("unknown operator", expr)
+                    else -> throw CodeGenerationError("unknown operator: ${expr.operator.toDocument(expr.arguments).print()}")
                 }
             }
 
@@ -234,7 +230,7 @@ class CleartextCodeGenerator(context: CodeGeneratorContext) :
     ): CodeBlock {
         val receiveBuilder = CodeBlock.builder()
         val clearTextTemp = context.newTemporary("clearTextTemp")
-        var clearTextCommittedTemp = context.newTemporary("cleartextCommittedTemp")
+        val clearTextCommittedTemp = context.newTemporary("cleartextCommittedTemp")
         if (sendProtocol != receiveProtocol) {
             val projection = ProtocolProjection(receiveProtocol, context.host)
             val cleartextInputs = events.getProjectionReceives(
@@ -415,4 +411,6 @@ class CleartextCodeGenerator(context: CodeGeneratorContext) :
         }
         return receiveBuilder.build()
     }
+
+    override fun setup(protocol: Protocol): Iterable<PropertySpec> = listOf()
 }

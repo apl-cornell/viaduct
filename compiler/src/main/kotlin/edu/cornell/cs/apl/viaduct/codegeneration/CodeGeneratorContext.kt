@@ -8,6 +8,7 @@ import edu.cornell.cs.apl.viaduct.syntax.ObjectVariable
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
 import edu.cornell.cs.apl.viaduct.syntax.Temporary
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
+import java.net.URL
 
 interface CodeGeneratorContext {
     val program: ProgramNode
@@ -22,9 +23,13 @@ interface CodeGeneratorContext {
     // returns a fresh kotlin name for baseName
     fun newTemporary(baseName: String): String
 
+    fun tempKotlinNameToProtocol(kotlinName: String): Protocol
+
     /** Returns code that will receive a value of type [type] from [sender]. */
     fun receive(type: TypeName, sender: Host): CodeBlock
 
     /** Returns code that will send [value] to [receiver]. */
     fun send(value: CodeBlock, receiver: Host): CodeBlock
+
+    fun url(host: Host): CodeBlock
 }

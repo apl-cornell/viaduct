@@ -3,6 +3,8 @@ package edu.cornell.cs.apl.viaduct.runtime
 import edu.cornell.cs.apl.viaduct.syntax.Host
 import edu.cornell.cs.apl.viaduct.syntax.types.ValueType
 import edu.cornell.cs.apl.viaduct.syntax.values.Value
+import java.net.URI
+import java.net.URL
 import kotlin.reflect.KType
 import kotlin.reflect.typeOf
 
@@ -14,6 +16,8 @@ interface Runtime {
     suspend fun <T> receive(type: KType, sender: Host): T
 
     suspend fun <T> send(type: KType, value: T, receiver: Host)
+
+    suspend fun url(host: Host): URL
 }
 
 @OptIn(ExperimentalStdlibApi::class)

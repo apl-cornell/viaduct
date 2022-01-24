@@ -2,6 +2,7 @@ package edu.cornell.cs.apl.viaduct.backends.aby
 
 import com.github.apl_cornell.aby.SharingType
 import com.squareup.kotlinpoet.CodeBlock
+import com.squareup.kotlinpoet.PropertySpec
 import com.sun.jdi.IntegerValue
 import edu.cornell.cs.apl.viaduct.codegeneration.AbstractCodeGenerator
 import edu.cornell.cs.apl.viaduct.codegeneration.CodeGeneratorContext
@@ -143,6 +144,10 @@ class ABYCodeGenerator(
         receiveProtocol: Protocol,
         events: ProtocolCommunication
     ): CodeBlock {
+        TODO("Not yet implemented")
+    }
+
+    override fun setup(protocol: Protocol): Iterable<PropertySpec> {
         TODO("Not yet implemented")
     }
 }

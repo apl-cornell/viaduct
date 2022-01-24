@@ -15,4 +15,10 @@ java {
 
 dependencies {
     implementation("edu.cornell.cs.apl:runtime")
+
+    testImplementation("edu.cornell.cs.apl:test-utilities")
+}
+
+tasks.withType<Test> {
+    useJUnitPlatform()
 }

@@ -117,7 +117,7 @@ class ViaductRuntime(
                 // accept connections from hosts with higher ID
                 val incomingConnections = connectingHosts.toMutableSet()
 
-                if (incomingConnections.size > 0 ) {
+                if (incomingConnections.size > 0) {
                     logger.info { "listening to incoming connections from: ${connectingHosts.joinToString { it.name }}" }
                 }
 

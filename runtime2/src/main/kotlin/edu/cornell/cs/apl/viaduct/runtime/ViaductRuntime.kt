@@ -117,6 +117,10 @@ class ViaductRuntime(
                 // accept connections from hosts with higher ID
                 val incomingConnections = connectingHosts.toMutableSet()
 
+                if (incomingConnections.size > 0 ) {
+                    logger.info { "listening to incoming connections from: ${connectingHosts.joinToString { it.name }}" }
+                }
+
                 while (incomingConnections.isNotEmpty()) {
                     val clientSocket = serverSocket.accept()
                     val clientHostId = clientSocket.getInputStream().read()
@@ -160,8 +164,10 @@ class ViaductRuntime(
         }
     }
 
-    override suspend fun <T> send(type: KType, value: T, receiver: Host) {
+    override fun <T> send(type: KType, value: T, receiver: Host) {
         return connectionMap[receiver]?.output?.let { socketOut ->
+            logger.info { "sending $value to ${receiver.name}" }
+
             val bytes = ProtoBuf.encodeToByteArray(ProtoBuf.serializersModule.serializer(type), value)
             val bytesLen = bytes.size
             socketOut.writeInt(bytesLen)
@@ -169,20 +175,24 @@ class ViaductRuntime(
         } ?: throw HostCommunicationException(this.host, receiver)
     }
 
-    override suspend fun <T> receive(type: KType, sender: Host): T {
+    override fun <T> receive(type: KType, sender: Host): T {
         connectionMap[sender]?.input?.let { socketIn ->
             val bytesLen = socketIn.readInt()
             val bytes = socketIn.readNBytes(bytesLen)
             val serializer = ProtoBuf.serializersModule.serializer(type) as KSerializer<T>
-            return ProtoBuf.decodeFromByteArray(serializer, bytes)
+            val value = ProtoBuf.decodeFromByteArray(serializer, bytes)
+
+            logger.info { "received $value from ${sender.name}" }
+
+            return value
         } ?: throw HostCommunicationException(this.host, sender)
     }
 
-    override suspend fun input(type: IOValueType): Value {
+    override fun input(type: IOValueType): Value {
         return ioStrategy.input(type)
     }
 
-    override suspend fun output(value: IOValue) {
+    override fun output(value: IOValue) {
         ioStrategy.output(value)
     }
 }

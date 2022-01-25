@@ -8,19 +8,19 @@ import kotlin.reflect.KType
 import kotlin.reflect.typeOf
 
 interface Runtime {
-    suspend fun input(type: IOValueType): Value
+    fun input(type: IOValueType): Value
 
-    suspend fun output(value: IOValue)
+    fun output(value: IOValue)
 
-    suspend fun <T> receive(type: KType, sender: Host): T
+    fun <T> receive(type: KType, sender: Host): T
 
-    suspend fun <T> send(type: KType, value: T, receiver: Host)
+    fun <T> send(type: KType, value: T, receiver: Host)
 }
 
 @OptIn(ExperimentalStdlibApi::class)
-suspend inline fun <reified T> Runtime.receive(sender: Host): T =
+inline fun <reified T> Runtime.receive(sender: Host): T =
     receive(typeOf<T>(), sender)
 
 @OptIn(ExperimentalStdlibApi::class)
-suspend inline fun <reified T> Runtime.send(value: T, receiver: Host) =
+inline fun <reified T> Runtime.send(value: T, receiver: Host) =
     send(typeOf<T>(), value, receiver)

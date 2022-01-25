@@ -1,15 +1,20 @@
 package edu.cornell.cs.apl.viaduct.codegeneration
 
 import com.squareup.kotlinpoet.AnnotationSpec
+import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.CodeBlock
 import com.squareup.kotlinpoet.FileSpec
 import com.squareup.kotlinpoet.FunSpec
 import com.squareup.kotlinpoet.KModifier
 import com.squareup.kotlinpoet.MemberName
+import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import com.squareup.kotlinpoet.PropertySpec
+import com.squareup.kotlinpoet.SET
+import com.squareup.kotlinpoet.STRING
 import com.squareup.kotlinpoet.TypeName
 import com.squareup.kotlinpoet.TypeSpec
 import com.squareup.kotlinpoet.asClassName
+import com.squareup.kotlinpoet.joinToCode
 import edu.cornell.cs.apl.prettyprinting.joined
 import edu.cornell.cs.apl.viaduct.analysis.NameAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.ProtocolAnalysis
@@ -75,7 +80,7 @@ private class BackendCodeGenerator(
     private fun generateFunction(
         functionDeclaration: FunctionDeclarationNode
     ): FunSpec {
-        val hostFunctionBuilder = FunSpec.builder(functionDeclaration.name.value.name).addModifiers(KModifier.SUSPEND)
+        val hostFunctionBuilder = FunSpec.builder(functionDeclaration.name.value.name)
         generate(hostFunctionBuilder, functionDeclaration.body, this.host)
         return hostFunctionBuilder.build()
     }
@@ -254,8 +259,9 @@ private class BackendCodeGenerator(
 
 private fun addHostDeclarations(objectBuilder: TypeSpec.Builder, program: ProgramNode) {
     // add a global host object for each host
+    val hostProperties = mutableListOf<PropertySpec>()
     for (host: Host in program.hosts) {
-        objectBuilder.addProperty(
+        val hostProperty =
             PropertySpec.builder(host.name, Host::class)
                 .initializer(
                     CodeBlock.of(
@@ -265,8 +271,22 @@ private fun addHostDeclarations(objectBuilder: TypeSpec.Builder, program: Progra
                     )
                 )
                 .build()
-        )
+        objectBuilder.addProperty(hostProperty)
+        hostProperties.add(hostProperty)
     }
+
+    objectBuilder.addProperty(
+        PropertySpec.builder("hosts", SET.parameterizedBy(Host::class.asClassName()))
+            .initializer(
+                CodeBlock.of(
+                    "%M(%L)",
+                    MemberName("kotlin.collections", "setOf"),
+                    hostProperties.map { CodeBlock.of("%L", it.name) }.joinToCode()
+                )
+            )
+            .addModifiers(KModifier.OVERRIDE)
+            .build()
+    )
 }
 
 fun ProgramNode.compileToKotlin(
@@ -296,7 +316,19 @@ fun ProgramNode.compileToKotlin(
     )
 
     // create main object
-    val objectBuilder = TypeSpec.objectBuilder(fileName)
+    // ViaductGeneratedProgram is in the runtime module since it references the Runtime interface;
+    // we use the "stringly-typed" interface of kotlinpoet to get around this\
+    val objectBuilder =
+        TypeSpec.objectBuilder(fileName)
+            .addSuperinterface(ClassName("edu.cornell.cs.apl.viaduct.runtime", "ViaductGeneratedProgram"))
+
+    // add programName property
+    objectBuilder.addProperty(
+        PropertySpec.builder("programName", STRING)
+            .initializer(CodeBlock.of("%S", fileName))
+            .addModifiers(KModifier.OVERRIDE)
+            .build()
+    )
 
     // add host declarations to main object
     addHostDeclarations(objectBuilder, this)
@@ -317,7 +349,9 @@ fun ProgramNode.compileToKotlin(
     }
 
     // create main function
-    val mainFunctionBuilder = FunSpec.builder("main").addModifiers(KModifier.SUSPEND)
+    val mainFunctionBuilder =
+        FunSpec.builder("main")
+            .addModifiers(KModifier.OVERRIDE)
     mainFunctionBuilder.addParameter("host", Host::class)
     mainFunctionBuilder.addParameter("runtime", Runtime::class)
 

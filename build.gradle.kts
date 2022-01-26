@@ -9,7 +9,7 @@ plugins {
     id("org.jetbrains.dokka") version "1.6.0"
 
     // Style checking
-    id("com.diffplug.spotless") version "6.0.4"
+    id("com.diffplug.spotless") version "6.0.5"
 
     // Dependency management
     id("com.github.ben-manes.versions") version "0.39.0"
@@ -79,8 +79,8 @@ subprojects {
 
             // Logging
             "implementation"("io.github.microutils:kotlin-logging:2.1.0")
-            "testImplementation"("org.apache.logging.log4j:log4j-core:2.16.0")
-            "testImplementation"("org.apache.logging.log4j:log4j-slf4j-impl:2.16.0")
+            "testImplementation"("org.apache.logging.log4j:log4j-core:2.17.0")
+            "testImplementation"("org.apache.logging.log4j:log4j-slf4j-impl:2.17.0")
         }
 
         /** Testing */

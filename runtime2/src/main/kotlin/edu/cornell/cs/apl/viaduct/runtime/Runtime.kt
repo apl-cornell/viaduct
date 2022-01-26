@@ -3,7 +3,6 @@ package edu.cornell.cs.apl.viaduct.runtime
 import edu.cornell.cs.apl.viaduct.syntax.Host
 import edu.cornell.cs.apl.viaduct.syntax.types.ValueType
 import edu.cornell.cs.apl.viaduct.syntax.values.Value
-import java.net.URI
 import java.net.URL
 import kotlin.reflect.KType
 import kotlin.reflect.typeOf

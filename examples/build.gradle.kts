@@ -70,6 +70,6 @@ abstract class GenerateViaductProgramList : DefaultTask() {
         val outputFile = outputDirectory.file("ViaductPrograms.kt").get().asFile
 
         val programsBlock = programs.map { "    $it" }.joinToString(",\n")
-        outputFile.writeText("val viaductPrograms = listOf(\n$programsBlock\n)")
+        outputFile.writeText("val viaductPrograms = listOf(\n$programsBlock\n)\n")
     }
 }

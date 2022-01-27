@@ -1,6 +1,9 @@
 plugins {
     kotlin("jvm") version embeddedKotlinVersion
     id("viaduct")
+
+    // Style checking
+    id("com.diffplug.spotless") version "6.2.0"
 }
 
 repositories {
@@ -15,4 +18,15 @@ java {
 
 dependencies {
     implementation("edu.cornell.cs.apl:runtime")
+}
+
+spotless {
+    kotlinGradle {
+        ktlint()
+    }
+    kotlin {
+        val relativeBuildPath = project.buildDir.relativeTo(project.projectDir)
+        targetExclude("$relativeBuildPath/**/*.kt")
+        ktlint()
+    }
 }

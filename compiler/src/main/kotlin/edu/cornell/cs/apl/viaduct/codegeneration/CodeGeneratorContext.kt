@@ -8,7 +8,6 @@ import edu.cornell.cs.apl.viaduct.syntax.ObjectVariable
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
 import edu.cornell.cs.apl.viaduct.syntax.Temporary
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
-import java.net.URL
 
 interface CodeGeneratorContext {
     val program: ProgramNode

@@ -1,0 +1,17 @@
+host alice : {A}
+host bob   : {B}
+
+fun main() {
+    val arr = Array[int]{A ⊓ B}(20);
+
+    for (var i: int = 0; i < 10; i += 1) {
+        arr[i] = endorse (declassify (input int from alice) to {A ⊓ B->}) from {A ⊓ B->};
+    }
+
+    for (var j: int = 10; j < 20; j += 1) {
+        arr[j] = endorse (declassify (input int from bob) to {B ⊓ A->}) from {B ⊓ A->};
+    }
+
+    output arr[0] to bob;
+    output arr[19] to alice;
+}

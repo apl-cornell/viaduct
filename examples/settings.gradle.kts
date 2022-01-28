@@ -19,7 +19,6 @@ pluginManagement {
     }
 }
 
-
 dependencyResolutionManagement {
     fun RepositoryHandler.githubPackage(packageName: String) {
         maven {

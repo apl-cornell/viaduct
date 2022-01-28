@@ -22,8 +22,6 @@ interface CodeGeneratorContext {
     // returns a fresh kotlin name for baseName
     fun newTemporary(baseName: String): String
 
-    fun tempKotlinNameToProtocol(kotlinName: String): Protocol
-
     /** Returns code that will receive a value of type [type] from [sender]. */
     fun receive(type: TypeName, sender: Host): CodeBlock
 

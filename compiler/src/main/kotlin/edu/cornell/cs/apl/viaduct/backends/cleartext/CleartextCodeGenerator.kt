@@ -4,7 +4,6 @@ import com.squareup.kotlinpoet.CodeBlock
 import com.squareup.kotlinpoet.MemberName
 import com.squareup.kotlinpoet.ParameterizedTypeName
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
-import com.squareup.kotlinpoet.PropertySpec
 import com.squareup.kotlinpoet.asClassName
 import com.squareup.kotlinpoet.asTypeName
 import edu.cornell.cs.apl.viaduct.analysis.NameAnalysis
@@ -416,6 +415,4 @@ class CleartextCodeGenerator(context: CodeGeneratorContext) :
         }
         return receiveBuilder.build()
     }
-
-    override fun setup(protocol: Protocol): Iterable<PropertySpec> = listOf()
 }

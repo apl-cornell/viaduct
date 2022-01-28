@@ -7,7 +7,6 @@ import com.squareup.kotlinpoet.STRING
 import com.squareup.kotlinpoet.TypeName
 import com.squareup.kotlinpoet.U_BYTE_ARRAY
 import edu.cornell.cs.apl.viaduct.analysis.TypeAnalysis
-import edu.cornell.cs.apl.viaduct.backends.aby.ABY
 import edu.cornell.cs.apl.viaduct.errors.CodeGenerationError
 import edu.cornell.cs.apl.viaduct.selection.CommunicationEvent
 import edu.cornell.cs.apl.viaduct.syntax.Host
@@ -88,13 +87,3 @@ fun receiveReplicated(
 
     return receiveExpression.build()
 }
-
-fun getRole(protocol: Protocol, host: Host): CodeBlock =
-    when (protocol) {
-        is ABY -> if (protocol.client == host) {
-            CodeBlock.of("%L", "Role.CLIENT")
-        } else {
-            CodeBlock.of("%L", "Role.SERVER")
-        }
-        else -> throw CodeGenerationError("unknown protocol: ${protocol.toDocument().print()}")
-    }

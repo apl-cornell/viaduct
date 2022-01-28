@@ -240,25 +240,14 @@ private class BackendCodeGenerator(
             program.hosts.forEach { this.getFreshName(it.name) }
         }
 
-        override fun kotlinName(sourceName: Temporary, protocol: Protocol): String {
-            var kName = if (tempMap.containsKey(Pair(sourceName, protocol))) {
-                tempMap.getValue(Pair(sourceName, protocol))
-            } else {
-                freshNameGenerator.getFreshName(sourceName.name.drop(1))
-            }
-            kotlinNameToProtocolMap[kName] = protocol
-            tempMap[Pair(sourceName, protocol)] = kName
-            return kName
-        }
+        override fun kotlinName(sourceName: Temporary, protocol: Protocol): String =
+            tempMap.getOrPut(Pair(sourceName, protocol)) { freshNameGenerator.getFreshName(sourceName.name.drop(1)) }
 
         override fun kotlinName(sourceName: ObjectVariable): String =
             varMap.getOrPut(sourceName) { freshNameGenerator.getFreshName(sourceName.name) }
 
         override fun newTemporary(baseName: String): String =
             freshNameGenerator.getFreshName(baseName)
-
-        override fun tempKotlinNameToProtocol(kotlinName: String): Protocol =
-            kotlinNameToProtocolMap.getValue(kotlinName)
 
         // TODO: properly compute host name
         override fun receive(type: TypeName, sender: Host): CodeBlock =

@@ -113,14 +113,20 @@ private class BackendCodeGenerator(
 
                     // generate code for sending data
                     if (readers.isNotEmpty()) {
-                        hostFunctionBuilder.addCode("%L", codeGenerator.send(stmt, protocol, readerProtocol!!, events!!))
+                        hostFunctionBuilder.addCode(
+                            "%L",
+                            codeGenerator.send(stmt, protocol, readerProtocol!!, events!!)
+                        )
                     }
                 }
 
                 // generate code for receiving data
                 if (readers.isNotEmpty()) {
                     if (protocolAnalysis.participatingHosts(reader!!).contains(host)) {
-                        hostFunctionBuilder.addCode("%L", codeGenerator.receive(stmt, protocol, readerProtocol!!, events!!))
+                        hostFunctionBuilder.addCode(
+                            "%L",
+                            codeGenerator.receive(stmt, protocol, readerProtocol!!, events!!)
+                        )
                     }
                 }
             }
@@ -139,7 +145,8 @@ private class BackendCodeGenerator(
                 val outObjectDeclarations = stmt.arguments.filterIsInstance<ObjectDeclarationArgumentNode>()
 
                 // create a new list of arguments without ObjectDeclarationArgumentNodes
-                val newArguments = stmt.arguments.filter { argument -> argument !is ObjectDeclarationArgumentNode }.toMutableList()
+                val newArguments =
+                    stmt.arguments.filter { argument -> argument !is ObjectDeclarationArgumentNode }.toMutableList()
 
                 for (i in 0..outObjectDeclarations.size) {
 
@@ -230,7 +237,6 @@ private class BackendCodeGenerator(
 
         private var tempMap: MutableMap<Pair<Temporary, Protocol>, String> = mutableMapOf()
         private var varMap: MutableMap<ObjectVariable, String> = mutableMapOf()
-        private var kotlinNameToProtocolMap: MutableMap<String, Protocol> = mutableMapOf()
 
         private val receiveMember = MemberName(Runtime::class.java.packageName, "receive")
         private val sendMember = MemberName(Runtime::class.java.packageName, "send")

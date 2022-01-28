@@ -15,7 +15,7 @@ plugins {
 
 dependencies {
     implementation(project(":shared"))
-    implementation(project(":runtime2"))
+    implementation(project(":runtime"))
 
     // Data structures
     implementation("com.uchuhimo:kotlinx-bimap:1.2")

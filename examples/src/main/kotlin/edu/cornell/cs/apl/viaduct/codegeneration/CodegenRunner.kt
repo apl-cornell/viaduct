@@ -61,7 +61,7 @@ class CodegenRunnerCommand : CliktCommand(
         }
 
     override fun run() {
-        val reflections = Reflections("tests")
+        val reflections = Reflections("newtests")
         val generatedPrograms: Map<String, ViaductGeneratedProgram> =
             reflections.get(
                 Scanners.SubTypes.of(ViaductGeneratedProgram::class.java).asClass<Class<*>>()

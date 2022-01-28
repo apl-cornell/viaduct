@@ -5,29 +5,20 @@ import com.github.ajalt.clikt.core.requireObject
 import com.github.ajalt.clikt.core.subcommands
 import com.github.ajalt.clikt.parameters.arguments.argument
 import com.github.ajalt.clikt.parameters.options.associate
-import com.github.ajalt.clikt.parameters.options.flag
 import com.github.ajalt.clikt.parameters.options.counted
 import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.options.validate
 import com.github.ajalt.clikt.parameters.types.file
-
-import edu.cornell.cs.apl.viaduct.runtime.HostAddress
 import edu.cornell.cs.apl.viaduct.runtime.FileIOStrategy
+import edu.cornell.cs.apl.viaduct.runtime.HostAddress
 import edu.cornell.cs.apl.viaduct.runtime.TerminalIOStrategy
 import edu.cornell.cs.apl.viaduct.runtime.ViaductGeneratedProgram
 import edu.cornell.cs.apl.viaduct.runtime.ViaductRuntime
 import edu.cornell.cs.apl.viaduct.syntax.Host
-
-import java.io.File
-
 import mu.KotlinLogging
-
-import org.apache.logging.log4j.core.config.Configurator
 import org.apache.logging.log4j.Level
-
-import org.reflections.Reflections
-import org.reflections.scanners.Scanners
-import org.reflections.util.ConfigurationBuilder
+import org.apache.logging.log4j.core.config.Configurator
+import java.io.File
 
 private val logger = KotlinLogging.logger("RunCodegenExamples")
 
@@ -37,39 +28,32 @@ class CodegenRunnerCommand : CliktCommand(
 ) {
 
     val verbose by
-        option(
-            "-v",
-            "--verbose",
-            help = """
+    option(
+        "-v",
+        "--verbose",
+        help = """
             Print debugging information
 
             Repeat for more and more granular messages.
         """
-        ).counted().validate {
-            // Set the global logging level.
-            // Note: this is not how `.validate` is meant to be used, but it's the closest feature Clikt provides.
+    ).counted().validate {
+        // Set the global logging level.
+        // Note: this is not how `.validate` is meant to be used, but it's the closest feature Clikt provides.
 
-            val level = when (it) {
-                0 -> null
-                1 -> Level.INFO
-                2 -> Level.DEBUG
-                3 -> Level.TRACE
-                else -> Level.ALL
-            }
-
-            if (level != null) Configurator.setRootLevel(level)
+        val level = when (it) {
+            0 -> null
+            1 -> Level.INFO
+            2 -> Level.DEBUG
+            3 -> Level.TRACE
+            else -> Level.ALL
         }
 
-    override fun run() {
-        val reflections = Reflections("newtests")
-        val generatedPrograms: Map<String, ViaductGeneratedProgram> =
-            reflections.get(
-                Scanners.SubTypes.of(ViaductGeneratedProgram::class.java).asClass<Class<*>>()
-            ).map { cls ->
-                val program = cls.kotlin.objectInstance as ViaductGeneratedProgram
-                program.programName to program
-            }.toMap()
+        if (level != null) Configurator.setRootLevel(level)
+    }
 
+    override fun run() {
+        val generatedPrograms: Map<String, ViaductGeneratedProgram> =
+            viaductPrograms.map { program -> program.programName to program }.toMap()
         currentContext.obj = generatedPrograms
     }
 }
@@ -80,19 +64,18 @@ class CodegenRunnerListCommand : CliktCommand(
 ) {
     val programMap by requireObject<Map<String, ViaductGeneratedProgram>>()
 
-    override fun run () {
+    override fun run() {
         println("Found ${programMap.size} generated programs:")
         for (kv in programMap.entries) {
             println("- ${kv.key} with hosts ${kv.value.hosts.map { host -> host.name }}")
         }
-
     }
 }
 
 class CodegenRunnerRunCommand : CliktCommand(
     name = "run",
     help = "Run compiled protocol for a single host"
-)  {
+) {
     companion object {
         val DEFAULT_IP: String = "127.0.0.1"
         val DEFAULT_PORT: Int = 4000
@@ -121,28 +104,29 @@ class CodegenRunnerRunCommand : CliktCommand(
     val programMap by requireObject<Map<String, ViaductGeneratedProgram>>()
 
     override fun run() {
-        val program =programMap.get(programName) ?:
-            throw Error("Program $programName does not exist")
+        println("viaductPrograms: $viaductPrograms")
+
+        val program = programMap.get(programName)
+            ?: throw Error("Program $programName does not exist")
 
         val host = Host(hostName)
 
-        if (!program.hosts.contains(host))  {
+        if (!program.hosts.contains(host)) {
             throw Error("Program $programName does not have host $hostName")
         }
 
         val hostConnectionInfo: Map<Host, HostAddress> =
             if (hostAddresses.size < program.hosts.size) {
                 program.hosts.sorted()
-                    .zip(DEFAULT_PORT..(DEFAULT_PORT+program.hosts.size))
+                    .zip(DEFAULT_PORT..(DEFAULT_PORT + program.hosts.size))
                     .map { kv -> kv.first to HostAddress(DEFAULT_IP, kv.second) }
                     .toMap()
-
             } else {
                 hostAddresses.map { kv ->
-                    val host = Host(kv.key)
+                    val otherHost = Host(kv.key)
                     val addressStr = kv.value.split(":", limit = 2)
                     val address = HostAddress(addressStr[0], addressStr[1].toInt())
-                    host to address
+                    otherHost to address
                 }.toMap()
             }
 

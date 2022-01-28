@@ -21,10 +21,6 @@ dependencies {
     // Viaduct
     implementation("edu.cornell.cs.apl:runtime")
 
-    // Reflection
-    implementation("org.reflections:reflections:0.10.2")
-    implementation("org.jetbrains.kotlin:kotlin-reflect:1.6.10")
-
     // Command-line-argument parsing
     implementation("com.github.ajalt.clikt:clikt:3.4.0")
 
@@ -94,6 +90,6 @@ abstract class GenerateViaductProgramList : DefaultTask() {
         val outputFile = outputDirectory.file("ViaductPrograms.kt").get().asFile
 
         val programsBlock = programs.map { "    $it" }.joinToString(",\n")
-        outputFile.writeText("val viaductPrograms = listOf(\n$programsBlock\n)\n")
+        outputFile.writeText("package edu.cornell.cs.apl.viaduct.codegeneration\n\nval viaductPrograms = listOf(\n$programsBlock\n)\n")
     }
 }

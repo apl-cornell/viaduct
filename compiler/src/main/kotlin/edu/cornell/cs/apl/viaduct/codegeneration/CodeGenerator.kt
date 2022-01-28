@@ -1,6 +1,7 @@
 package edu.cornell.cs.apl.viaduct.codegeneration
 
 import com.squareup.kotlinpoet.CodeBlock
+import com.squareup.kotlinpoet.PropertySpec
 import edu.cornell.cs.apl.viaduct.selection.ProtocolCommunication
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
 import edu.cornell.cs.apl.viaduct.syntax.ProtocolName
@@ -26,6 +27,8 @@ interface CodeGenerator {
         receiveProtocol: Protocol,
         events: ProtocolCommunication
     ): CodeBlock
+
+    fun setup(protocol: Protocol): Iterable<PropertySpec>
 }
 
 /** Combines code generators for different protocols into one generator that can handle all protocols. */
@@ -59,4 +62,7 @@ fun Iterable<Pair<Set<ProtocolName>, CodeGenerator>>.unions(): CodeGenerator =
             events: ProtocolCommunication
         ): CodeBlock =
             generatorFor(receiveProtocol).receive(sender, sendProtocol, receiveProtocol, events)
+
+        override fun setup(protocol: Protocol): Iterable<PropertySpec> =
+            generatorFor(protocol).setup(protocol)
     }

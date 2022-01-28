@@ -1,6 +1,7 @@
 package edu.cornell.cs.apl.viaduct.codegeneration
 
 import com.squareup.kotlinpoet.CodeBlock
+import com.squareup.kotlinpoet.PropertySpec
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
 import edu.cornell.cs.apl.viaduct.syntax.datatypes.ImmutableCell
 import edu.cornell.cs.apl.viaduct.syntax.datatypes.MutableCell
@@ -129,6 +130,8 @@ abstract class AbstractCodeGenerator(val context: CodeGeneratorContext) : CodeGe
         }*/
 
     abstract fun output(protocol: Protocol, stmt: OutputNode): CodeBlock
+
+    override fun setup(protocol: Protocol): Iterable<PropertySpec> = listOf()
 }
 
 abstract class SingleProtocolCodeGenerator(context: CodeGeneratorContext) : AbstractCodeGenerator(context) {

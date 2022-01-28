@@ -10,15 +10,15 @@ import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.options.validate
 import com.github.ajalt.clikt.parameters.types.file
 import edu.cornell.cs.apl.viaduct.runtime.FileIOStrategy
-import edu.cornell.cs.apl.viaduct.runtime.HostAddress
 import edu.cornell.cs.apl.viaduct.runtime.TerminalIOStrategy
 import edu.cornell.cs.apl.viaduct.runtime.ViaductGeneratedProgram
-import edu.cornell.cs.apl.viaduct.runtime.ViaductRuntime
+import edu.cornell.cs.apl.viaduct.runtime.ViaductNetworkRuntime
 import edu.cornell.cs.apl.viaduct.syntax.Host
 import mu.KotlinLogging
 import org.apache.logging.log4j.Level
 import org.apache.logging.log4j.core.config.Configurator
 import java.io.File
+import java.net.InetSocketAddress
 
 private val logger = KotlinLogging.logger("RunCodegenExamples")
 
@@ -53,7 +53,7 @@ class CodegenRunnerCommand : CliktCommand(
 
     override fun run() {
         val generatedPrograms: Map<String, ViaductGeneratedProgram> =
-            viaductPrograms.map { program -> program.programName to program }.toMap()
+            viaductPrograms.map { program -> program::class.qualifiedName!! to program }.toMap()
         currentContext.obj = generatedPrograms
     }
 }
@@ -104,8 +104,6 @@ class CodegenRunnerRunCommand : CliktCommand(
     val programMap by requireObject<Map<String, ViaductGeneratedProgram>>()
 
     override fun run() {
-        println("viaductPrograms: $viaductPrograms")
-
         val program = programMap.get(programName)
             ?: throw Error("Program $programName does not exist")
 
@@ -115,17 +113,17 @@ class CodegenRunnerRunCommand : CliktCommand(
             throw Error("Program $programName does not have host $hostName")
         }
 
-        val hostConnectionInfo: Map<Host, HostAddress> =
+        val hostConnectionInfo: Map<Host, InetSocketAddress> =
             if (hostAddresses.size < program.hosts.size) {
                 program.hosts.sorted()
                     .zip(DEFAULT_PORT..(DEFAULT_PORT + program.hosts.size))
-                    .map { kv -> kv.first to HostAddress(DEFAULT_IP, kv.second) }
+                    .map { kv -> kv.first to InetSocketAddress.createUnresolved(DEFAULT_IP, kv.second) }
                     .toMap()
             } else {
                 hostAddresses.map { kv ->
                     val otherHost = Host(kv.key)
                     val addressStr = kv.value.split(":", limit = 2)
-                    val address = HostAddress(addressStr[0], addressStr[1].toInt())
+                    val address = InetSocketAddress.createUnresolved(addressStr[0], addressStr[1].toInt())
                     otherHost to address
                 }.toMap()
             }
@@ -138,7 +136,7 @@ class CodegenRunnerRunCommand : CliktCommand(
         // create IO strategy
         val ioStrategy = inputFile?.let { FileIOStrategy(it) } ?: TerminalIOStrategy()
 
-        val runtime = ViaductRuntime(host, hostConnectionInfo, ioStrategy)
+        val runtime = ViaductNetworkRuntime(host, hostConnectionInfo, ioStrategy)
         runtime.start()
         program.main(host, runtime)
         runtime.shutdown()

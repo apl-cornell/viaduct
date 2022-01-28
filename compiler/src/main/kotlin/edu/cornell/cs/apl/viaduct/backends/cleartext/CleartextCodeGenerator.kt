@@ -91,7 +91,7 @@ class CleartextCodeGenerator(context: CodeGeneratorContext) :
                             expr.operator,
                             exp(protocol, expr.arguments[1])
                         )
-                    else -> throw CodeGenerationError("unknown operator", expr)
+                    else -> throw CodeGenerationError("unknown operator: ${expr.operator.toDocument(expr.arguments).print()}")
                 }
             }
 
@@ -234,7 +234,7 @@ class CleartextCodeGenerator(context: CodeGeneratorContext) :
     ): CodeBlock {
         val receiveBuilder = CodeBlock.builder()
         val clearTextTemp = context.newTemporary("clearTextTemp")
-        var clearTextCommittedTemp = context.newTemporary("cleartextCommittedTemp")
+        val clearTextCommittedTemp = context.newTemporary("cleartextCommittedTemp")
         if (sendProtocol != receiveProtocol) {
             val projection = ProtocolProjection(receiveProtocol, context.host)
             val cleartextInputs = events.getProjectionReceives(

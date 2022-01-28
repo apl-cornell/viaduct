@@ -140,7 +140,7 @@ internal class CommitmentHolderGenerator(
         val sendBuilder = CodeBlock.builder()
 
         // here, the interpreter checks for the available protocols, is this necessary here?
-        var relevantEvents: List<CommunicationEvent> =
+        val relevantEvents: List<CommunicationEvent> =
             events.getProjectionSends(
                 ProtocolProjection(sendProtocol, context.host),
                 CommitmentProtocol.OPEN_COMMITMENT_OUTPUT

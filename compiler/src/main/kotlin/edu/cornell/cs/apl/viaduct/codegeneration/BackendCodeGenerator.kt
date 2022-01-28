@@ -10,7 +10,6 @@ import com.squareup.kotlinpoet.MemberName
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import com.squareup.kotlinpoet.PropertySpec
 import com.squareup.kotlinpoet.SET
-import com.squareup.kotlinpoet.STRING
 import com.squareup.kotlinpoet.TypeName
 import com.squareup.kotlinpoet.TypeSpec
 import com.squareup.kotlinpoet.asClassName
@@ -20,7 +19,7 @@ import edu.cornell.cs.apl.viaduct.analysis.NameAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.ProtocolAnalysis
 import edu.cornell.cs.apl.viaduct.errors.CodeGenerationError
 import edu.cornell.cs.apl.viaduct.runtime.Boxed
-import edu.cornell.cs.apl.viaduct.runtime.Runtime
+import edu.cornell.cs.apl.viaduct.runtime.ViaductRuntime
 import edu.cornell.cs.apl.viaduct.selection.ProtocolCommunication
 import edu.cornell.cs.apl.viaduct.selection.ProtocolComposer
 import edu.cornell.cs.apl.viaduct.syntax.Host
@@ -61,14 +60,20 @@ private class BackendCodeGenerator(
             host.name.replaceFirstChar { it.uppercase() }
         ).primaryConstructor(
             FunSpec.constructorBuilder()
-                .addParameter("runtime", Runtime::class)
+                .addParameter("runtime", ViaductRuntime::class)
                 .build()
         ).addProperty(
-            PropertySpec.builder("runtime", Runtime::class)
+            PropertySpec.builder("runtime", ViaductRuntime::class)
                 .initializer("runtime")
                 .addModifiers(KModifier.PRIVATE)
                 .build()
         )
+
+        for (protocol in protocolAnalysis.participatingProtocols(program)) {
+            for (property in codeGenerator.setup(protocol)) {
+                classBuilder.addProperty(property)
+            }
+        }
 
         for (function in program.functions) {
             classBuilder.addFunction(generateFunction(function)).build()
@@ -112,14 +117,20 @@ private class BackendCodeGenerator(
 
                     // generate code for sending data
                     if (readers.isNotEmpty()) {
-                        hostFunctionBuilder.addCode("%L", codeGenerator.send(stmt, protocol, readerProtocol!!, events!!))
+                        hostFunctionBuilder.addCode(
+                            "%L",
+                            codeGenerator.send(stmt, protocol, readerProtocol!!, events!!)
+                        )
                     }
                 }
 
                 // generate code for receiving data
                 if (readers.isNotEmpty()) {
                     if (protocolAnalysis.participatingHosts(reader!!).contains(host)) {
-                        hostFunctionBuilder.addCode("%L", codeGenerator.receive(stmt, protocol, readerProtocol!!, events!!))
+                        hostFunctionBuilder.addCode(
+                            "%L",
+                            codeGenerator.receive(stmt, protocol, readerProtocol!!, events!!)
+                        )
                     }
                 }
             }
@@ -138,7 +149,8 @@ private class BackendCodeGenerator(
                 val outObjectDeclarations = stmt.arguments.filterIsInstance<ObjectDeclarationArgumentNode>()
 
                 // create a new list of arguments without ObjectDeclarationArgumentNodes
-                val newArguments = stmt.arguments.filter { argument -> argument !is ObjectDeclarationArgumentNode }.toMutableList()
+                val newArguments =
+                    stmt.arguments.filter { argument -> argument !is ObjectDeclarationArgumentNode }.toMutableList()
 
                 for (i in 0..outObjectDeclarations.size) {
 
@@ -230,8 +242,8 @@ private class BackendCodeGenerator(
         private var tempMap: MutableMap<Pair<Temporary, Protocol>, String> = mutableMapOf()
         private var varMap: MutableMap<ObjectVariable, String> = mutableMapOf()
 
-        private val receiveMember = MemberName(Runtime::class.java.packageName, "receive")
-        private val sendMember = MemberName(Runtime::class.java.packageName, "send")
+        private val receiveMember = MemberName(ViaductRuntime::class.java.packageName, "receive")
+        private val sendMember = MemberName(ViaductRuntime::class.java.packageName, "send")
 
         val freshNameGenerator: FreshNameGenerator = FreshNameGenerator().apply {
             this.getFreshName("runtime")
@@ -254,6 +266,13 @@ private class BackendCodeGenerator(
         // TODO: properly compute host name
         override fun send(value: CodeBlock, receiver: Host): CodeBlock =
             CodeBlock.of("%N.%M(%L, %N)", "runtime", sendMember, value, receiver.name)
+
+        override fun url(host: Host): CodeBlock =
+            CodeBlock.of(
+                "%N.url(%L)",
+                "runtime",
+                host.name
+            )
     }
 }
 
@@ -322,14 +341,6 @@ fun ProgramNode.compileToKotlin(
         TypeSpec.objectBuilder(fileName)
             .addSuperinterface(ClassName("edu.cornell.cs.apl.viaduct.runtime", "ViaductGeneratedProgram"))
 
-    // add programName property
-    objectBuilder.addProperty(
-        PropertySpec.builder("programName", STRING)
-            .initializer(CodeBlock.of("%S", fileName))
-            .addModifiers(KModifier.OVERRIDE)
-            .build()
-    )
-
     // add host declarations to main object
     addHostDeclarations(objectBuilder, this)
 
@@ -353,7 +364,7 @@ fun ProgramNode.compileToKotlin(
         FunSpec.builder("main")
             .addModifiers(KModifier.OVERRIDE)
     mainFunctionBuilder.addParameter("host", Host::class)
-    mainFunctionBuilder.addParameter("runtime", Runtime::class)
+    mainFunctionBuilder.addParameter("runtime", ViaductRuntime::class)
 
     // create switch statement in main method so program can be run on any host
     mainFunctionBuilder.beginControlFlow("when (host)")

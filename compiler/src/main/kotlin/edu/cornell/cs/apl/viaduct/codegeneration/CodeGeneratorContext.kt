@@ -27,4 +27,6 @@ interface CodeGeneratorContext {
 
     /** Returns code that will send [value] to [receiver]. */
     fun send(value: CodeBlock, receiver: Host): CodeBlock
+
+    fun url(host: Host): CodeBlock
 }

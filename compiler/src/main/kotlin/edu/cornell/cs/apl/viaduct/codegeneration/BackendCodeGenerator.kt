@@ -65,6 +65,12 @@ private class BackendCodeGenerator(
                 .build()
         )
 
+        for (protocol in protocolAnalysis.participatingProtocols(program)) {
+            for (property in codeGenerator.setup(protocol)) {
+                classBuilder.addProperty(property)
+            }
+        }
+
         for (function in program.functions) {
             classBuilder.addFunction(generateFunction(function)).build()
         }
@@ -107,14 +113,20 @@ private class BackendCodeGenerator(
 
                     // generate code for sending data
                     if (readers.isNotEmpty()) {
-                        hostFunctionBuilder.addCode("%L", codeGenerator.send(stmt, protocol, readerProtocol!!, events!!))
+                        hostFunctionBuilder.addCode(
+                            "%L",
+                            codeGenerator.send(stmt, protocol, readerProtocol!!, events!!)
+                        )
                     }
                 }
 
                 // generate code for receiving data
                 if (readers.isNotEmpty()) {
                     if (protocolAnalysis.participatingHosts(reader!!).contains(host)) {
-                        hostFunctionBuilder.addCode("%L", codeGenerator.receive(stmt, protocol, readerProtocol!!, events!!))
+                        hostFunctionBuilder.addCode(
+                            "%L",
+                            codeGenerator.receive(stmt, protocol, readerProtocol!!, events!!)
+                        )
                     }
                 }
             }
@@ -133,7 +145,8 @@ private class BackendCodeGenerator(
                 val outObjectDeclarations = stmt.arguments.filterIsInstance<ObjectDeclarationArgumentNode>()
 
                 // create a new list of arguments without ObjectDeclarationArgumentNodes
-                val newArguments = stmt.arguments.filter { argument -> argument !is ObjectDeclarationArgumentNode }.toMutableList()
+                val newArguments =
+                    stmt.arguments.filter { argument -> argument !is ObjectDeclarationArgumentNode }.toMutableList()
 
                 for (i in 0..outObjectDeclarations.size) {
 
@@ -249,6 +262,13 @@ private class BackendCodeGenerator(
         // TODO: properly compute host name
         override fun send(value: CodeBlock, receiver: Host): CodeBlock =
             CodeBlock.of("%N.%M(%L, %N)", "runtime", sendMember, value, receiver.name)
+
+        override fun url(host: Host): CodeBlock =
+            CodeBlock.of(
+                "%N.url(%L)",
+                "runtime",
+                host.name
+            )
     }
 }
 

@@ -91,7 +91,11 @@ class CleartextCodeGenerator(context: CodeGeneratorContext) :
                             expr.operator,
                             exp(protocol, expr.arguments[1])
                         )
-                    else -> throw CodeGenerationError("unknown operator: ${expr.operator.toDocument(expr.arguments).print()}")
+                    else -> throw CodeGenerationError(
+                        "unknown operator: ${
+                        expr.operator.toDocument(expr.arguments).print()
+                        }"
+                    )
                 }
             }
 
@@ -305,12 +309,12 @@ class CleartextCodeGenerator(context: CodeGeneratorContext) :
                             clearTextTemp
                         )
                         receiveBuilder.addStatement(
-                            "throw %T(%L, %L, %L, %L)",
+                            "throw %T(%N, %L, %N, %L)",
                             EquivocationException::class.asClassName(),
                             clearTextTemp,
-                            cleartextInputs.first().send.host.name,
+                            context.codeOf(cleartextInputs.first().send.host),
                             receiveTmp,
-                            hostsToCheckWith.first().name
+                            context.codeOf(hostsToCheckWith.first())
 
                         )
                         receiveBuilder.endControlFlow()

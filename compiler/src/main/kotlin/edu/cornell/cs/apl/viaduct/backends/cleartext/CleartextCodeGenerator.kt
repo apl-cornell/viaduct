@@ -4,7 +4,6 @@ import com.squareup.kotlinpoet.CodeBlock
 import com.squareup.kotlinpoet.MemberName
 import com.squareup.kotlinpoet.ParameterizedTypeName
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
-import com.squareup.kotlinpoet.asClassName
 import com.squareup.kotlinpoet.asTypeName
 import edu.cornell.cs.apl.viaduct.analysis.NameAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.ProtocolAnalysis
@@ -269,7 +268,7 @@ class CleartextCodeGenerator(context: CodeGeneratorContext) :
                     )
 
                     // calculate set of hosts with whom [receivingHost] needs to check for equivocation
-                    var hostsToCheckWith: List<Host> =
+                    val hostsToCheckWith: List<Host> =
                         events
                             .filter { event ->
                                 // remove events where receiving host is not receiving plaintext data
@@ -291,58 +290,16 @@ class CleartextCodeGenerator(context: CodeGeneratorContext) :
                     for (host in hostsToCheckWith)
                         receiveBuilder.addStatement("%L", context.send(CodeBlock.of(clearTextTemp), host))
 
-                    val receiveTmp = context.newTemporary("receiveTmp")
-
-                    // start equivocation check by receiving from host in [hostsToCheckWith]
-                    if (hostsToCheckWith.isNotEmpty()) {
-                        receiveBuilder.addStatement(
-                            "var %N = %L",
-                            receiveTmp,
-                            context.receive(
-                                typeTranslator(typeAnalysis.type(sender)),
-                                hostsToCheckWith.first()
-                            )
-                        )
-                        receiveBuilder.beginControlFlow(
-                            "if (%N != %N)",
-                            receiveTmp,
-                            clearTextTemp
-                        )
-                        receiveBuilder.addStatement(
-                            "throw %T(%N, %L, %N, %L)",
-                            EquivocationException::class.asClassName(),
-                            clearTextTemp,
-                            context.codeOf(cleartextInputs.first().send.host),
-                            receiveTmp,
-                            context.codeOf(hostsToCheckWith.first())
-
-                        )
-                        receiveBuilder.endControlFlow()
-                        hostsToCheckWith = hostsToCheckWith.minusElement(hostsToCheckWith.first())
-                    }
-
-                    // potentially receive from the rest of the hosts in [hostsToCheckWith]
                     for (host in hostsToCheckWith) {
                         receiveBuilder.addStatement(
-                            "%N = %L",
-                            receiveTmp,
-                            context.receive(
-                                typeTranslator(typeAnalysis.type(sender)),
-                                host
-                            )
+                            "%T.%N(%N, %L, %L, %L)",
+                            EquivocationException::class,
+                            "assertEquals",
+                            clearTextTemp,
+                            context.codeOf(cleartextInputs.first().send.host),
+                            context.receive(typeTranslator(typeAnalysis.type(sender)), host),
+                            context.codeOf(host)
                         )
-                        receiveBuilder.beginControlFlow(
-                            "if (%N != %N)",
-                            receiveTmp,
-                            clearTextTemp
-                        )
-                        receiveBuilder.addStatement(
-                            "throw %T(%S)",
-                            EquivocationException::class.asClassName(),
-                            "equivocation error between hosts: " + context.host.toDocument().print() + ", " +
-                                host.toDocument().print()
-                        )
-                        receiveBuilder.endControlFlow()
                     }
                     receiveBuilder.addStatement(
                         "val %N = %N",

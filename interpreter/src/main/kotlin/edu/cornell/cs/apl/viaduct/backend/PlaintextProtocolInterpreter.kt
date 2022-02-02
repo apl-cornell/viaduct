@@ -105,7 +105,7 @@ class PlaintextProtocolInterpreter(
 
             Vector -> {
                 val length = runExpr(arguments[0]) as IntegerValue
-                VectorObject(length.value, length.type.defaultValue)
+                VectorObject(length.value, typeArguments[0].defaultValue)
             }
 
             else -> throw Exception("runtime error")

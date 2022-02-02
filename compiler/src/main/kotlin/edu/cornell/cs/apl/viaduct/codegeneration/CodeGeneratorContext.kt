@@ -19,10 +19,11 @@ interface CodeGeneratorContext {
 
     fun kotlinName(sourceName: ObjectVariable): String
 
-    // returns a fresh kotlin name for baseName
+    /** Returns a fresh kotlin name based on [baseName]. */
     fun newTemporary(baseName: String): String
 
-    fun tempKotlinNameToProtocol(kotlinName: String): Protocol
+    /** Returns code that will evaluate to [host]. */
+    fun codeOf(host: Host): CodeBlock
 
     /** Returns code that will receive a value of type [type] from [sender]. */
     fun receive(type: TypeName, sender: Host): CodeBlock
@@ -30,5 +31,6 @@ interface CodeGeneratorContext {
     /** Returns code that will send [value] to [receiver]. */
     fun send(value: CodeBlock, receiver: Host): CodeBlock
 
+    /** Returns code that will evaluate to the address of [host]. */
     fun url(host: Host): CodeBlock
 }

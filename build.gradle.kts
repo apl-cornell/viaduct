@@ -3,16 +3,16 @@ plugins {
     kotlin("plugin.serialization") version embeddedKotlinVersion apply false
 
     // Versioning
-    id("com.palantir.git-version") version "0.12.3"
+    id("com.palantir.git-version") version "0.13.0"
 
     // Documentation
-    id("org.jetbrains.dokka") version "1.6.0"
+    id("org.jetbrains.dokka") version "1.6.10"
 
     // Style checking
-    id("com.diffplug.spotless") version "6.0.4"
+    id("com.diffplug.spotless") version "6.2.0"
 
     // Dependency management
-    id("com.github.ben-manes.versions") version "0.39.0"
+    id("com.github.ben-manes.versions") version "0.41.0"
     id("se.patrikerdes.use-latest-versions") version "0.2.18"
 }
 
@@ -79,8 +79,8 @@ subprojects {
 
             // Logging
             "implementation"("io.github.microutils:kotlin-logging:2.1.0")
-            "testImplementation"("org.apache.logging.log4j:log4j-core:2.16.0")
-            "testImplementation"("org.apache.logging.log4j:log4j-slf4j-impl:2.16.0")
+            "testImplementation"("org.apache.logging.log4j:log4j-core:2.17.1")
+            "testImplementation"("org.apache.logging.log4j:log4j-slf4j-impl:2.17.1")
         }
 
         /** Testing */

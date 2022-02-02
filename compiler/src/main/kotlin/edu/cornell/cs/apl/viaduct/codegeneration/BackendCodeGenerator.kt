@@ -6,16 +6,20 @@ import com.squareup.kotlinpoet.FileSpec
 import com.squareup.kotlinpoet.FunSpec
 import com.squareup.kotlinpoet.KModifier
 import com.squareup.kotlinpoet.MemberName
+import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import com.squareup.kotlinpoet.PropertySpec
+import com.squareup.kotlinpoet.SET
 import com.squareup.kotlinpoet.TypeName
 import com.squareup.kotlinpoet.TypeSpec
 import com.squareup.kotlinpoet.asClassName
+import com.squareup.kotlinpoet.joinToCode
 import edu.cornell.cs.apl.prettyprinting.joined
 import edu.cornell.cs.apl.viaduct.analysis.NameAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.ProtocolAnalysis
 import edu.cornell.cs.apl.viaduct.errors.CodeGenerationError
 import edu.cornell.cs.apl.viaduct.runtime.Boxed
-import edu.cornell.cs.apl.viaduct.runtime.Runtime
+import edu.cornell.cs.apl.viaduct.runtime.ViaductGeneratedProgram
+import edu.cornell.cs.apl.viaduct.runtime.ViaductRuntime
 import edu.cornell.cs.apl.viaduct.selection.ProtocolCommunication
 import edu.cornell.cs.apl.viaduct.selection.ProtocolComposer
 import edu.cornell.cs.apl.viaduct.syntax.Host
@@ -44,11 +48,12 @@ private class BackendCodeGenerator(
     val program: ProgramNode,
     val host: Host,
     codeGenerator: (context: CodeGeneratorContext) -> CodeGenerator,
-    protocolComposer: ProtocolComposer
+    val protocolComposer: ProtocolComposer,
+    val hostDeclarations: TypeSpec
 ) {
     private val nameAnalysis = NameAnalysis.get(program)
     private val protocolAnalysis = ProtocolAnalysis(program, protocolComposer)
-    private val context = Context(program, host, protocolComposer)
+    private val context = Context()
     private val codeGenerator = codeGenerator(context)
 
     fun generateClass(): TypeSpec {
@@ -56,10 +61,10 @@ private class BackendCodeGenerator(
             host.name.replaceFirstChar { it.uppercase() }
         ).primaryConstructor(
             FunSpec.constructorBuilder()
-                .addParameter("runtime", Runtime::class)
+                .addParameter("runtime", ViaductRuntime::class)
                 .build()
         ).addProperty(
-            PropertySpec.builder("runtime", Runtime::class)
+            PropertySpec.builder("runtime", ViaductRuntime::class)
                 .initializer("runtime")
                 .addModifiers(KModifier.PRIVATE)
                 .build()
@@ -72,25 +77,19 @@ private class BackendCodeGenerator(
         }
 
         for (function in program.functions) {
-            classBuilder.addFunction(generateFunction(function)).build()
+            classBuilder.addFunction(generate(function)).build()
         }
         return classBuilder.build()
     }
 
-    // generate code for [this.host]'s role in the function named [funName]
-    private fun generateFunction(
-        functionDeclaration: FunctionDeclarationNode
-    ): FunSpec {
-        val hostFunctionBuilder = FunSpec.builder(functionDeclaration.name.value.name).addModifiers(KModifier.SUSPEND)
-        generate(hostFunctionBuilder, functionDeclaration.body, this.host)
+    /** Generates code for [host]'s role in the function [functionDeclaration]. */
+    private fun generate(functionDeclaration: FunctionDeclarationNode): FunSpec {
+        val hostFunctionBuilder = FunSpec.builder(functionDeclaration.name.value.name)
+        generate(hostFunctionBuilder, functionDeclaration.body, host)
         return hostFunctionBuilder.build()
     }
 
-    private fun generate(
-        hostFunctionBuilder: FunSpec.Builder,
-        stmt: StatementNode,
-        host: Host
-    ) {
+    private fun generate(hostFunctionBuilder: FunSpec.Builder, stmt: StatementNode, host: Host) {
         when (stmt) {
             is LetNode -> {
                 val protocol = protocolAnalysis.primaryProtocol(stmt)
@@ -113,14 +112,20 @@ private class BackendCodeGenerator(
 
                     // generate code for sending data
                     if (readers.isNotEmpty()) {
-                        hostFunctionBuilder.addCode("%L", codeGenerator.send(stmt, protocol, readerProtocol!!, events!!))
+                        hostFunctionBuilder.addCode(
+                            "%L",
+                            codeGenerator.send(stmt, protocol, readerProtocol!!, events!!)
+                        )
                     }
                 }
 
                 // generate code for receiving data
                 if (readers.isNotEmpty()) {
                     if (protocolAnalysis.participatingHosts(reader!!).contains(host)) {
-                        hostFunctionBuilder.addCode("%L", codeGenerator.receive(stmt, protocol, readerProtocol!!, events!!))
+                        hostFunctionBuilder.addCode(
+                            "%L",
+                            codeGenerator.receive(stmt, protocol, readerProtocol!!, events!!)
+                        )
                     }
                 }
             }
@@ -139,7 +144,8 @@ private class BackendCodeGenerator(
                 val outObjectDeclarations = stmt.arguments.filterIsInstance<ObjectDeclarationArgumentNode>()
 
                 // create a new list of arguments without ObjectDeclarationArgumentNodes
-                val newArguments = stmt.arguments.filter { argument -> argument !is ObjectDeclarationArgumentNode }.toMutableList()
+                val newArguments =
+                    stmt.arguments.filter { argument -> argument !is ObjectDeclarationArgumentNode }.toMutableList()
 
                 for (i in 0..outObjectDeclarations.size) {
 
@@ -221,35 +227,28 @@ private class BackendCodeGenerator(
         }
     }
 
-    private class Context(
-        override val program: ProgramNode,
-        override val host: Host,
-        override val protocolComposer: ProtocolComposer
-    ) :
-        CodeGeneratorContext {
-
+    private inner class Context : CodeGeneratorContext {
         private var tempMap: MutableMap<Pair<Temporary, Protocol>, String> = mutableMapOf()
         private var varMap: MutableMap<ObjectVariable, String> = mutableMapOf()
-        private var kotlinNameToProtocolMap: MutableMap<String, Protocol> = mutableMapOf()
 
-        private val receiveMember = MemberName(Runtime::class.java.packageName, "receive")
-        private val sendMember = MemberName(Runtime::class.java.packageName, "send")
+        private val receiveMember = MemberName(ViaductRuntime::class.java.packageName, "receive")
+        private val sendMember = MemberName(ViaductRuntime::class.java.packageName, "send")
 
-        val freshNameGenerator: FreshNameGenerator = FreshNameGenerator().apply {
+        private val freshNameGenerator: FreshNameGenerator = FreshNameGenerator().apply {
             this.getFreshName("runtime")
-            program.hosts.forEach { this.getFreshName(it.name) }
         }
 
-        override fun kotlinName(sourceName: Temporary, protocol: Protocol): String {
-            var kName = if (tempMap.containsKey(Pair(sourceName, protocol))) {
-                tempMap.getValue(Pair(sourceName, protocol))
-            } else {
-                freshNameGenerator.getFreshName(sourceName.name.drop(1))
-            }
-            kotlinNameToProtocolMap[kName] = protocol
-            tempMap[Pair(sourceName, protocol)] = kName
-            return kName
-        }
+        override val program: ProgramNode
+            get() = this@BackendCodeGenerator.program
+
+        override val host: Host
+            get() = this@BackendCodeGenerator.host
+
+        override val protocolComposer: ProtocolComposer
+            get() = this@BackendCodeGenerator.protocolComposer
+
+        override fun kotlinName(sourceName: Temporary, protocol: Protocol): String =
+            tempMap.getOrPut(Pair(sourceName, protocol)) { freshNameGenerator.getFreshName(sourceName.name.drop(1)) }
 
         override fun kotlinName(sourceName: ObjectVariable): String =
             varMap.getOrPut(sourceName) { freshNameGenerator.getFreshName(sourceName.name) }
@@ -257,42 +256,39 @@ private class BackendCodeGenerator(
         override fun newTemporary(baseName: String): String =
             freshNameGenerator.getFreshName(baseName)
 
-        override fun tempKotlinNameToProtocol(kotlinName: String): Protocol =
-            kotlinNameToProtocolMap.getValue(kotlinName)
+        override fun codeOf(host: Host) =
+            hostDeclarations.reference(host)
 
-        // TODO: properly compute host name
         override fun receive(type: TypeName, sender: Host): CodeBlock =
-            CodeBlock.of("%N.%M<%T>(%N)", "runtime", receiveMember, type, sender.name)
+            CodeBlock.of("%N.%M<%T>(%L)", "runtime", receiveMember, type, codeOf(sender))
 
-        // TODO: properly compute host name
         override fun send(value: CodeBlock, receiver: Host): CodeBlock =
-            CodeBlock.of("%N.%M(%L, %N)", "runtime", sendMember, value, receiver.name)
+            CodeBlock.of("%N.%M(%L, %L)", "runtime", sendMember, value, codeOf(receiver))
 
         override fun url(host: Host): CodeBlock =
-            CodeBlock.of(
-                "%N.url(%L)",
-                "runtime",
-                host.name
-            )
+            CodeBlock.of("%N.url(%L)", "runtime", codeOf(host))
     }
 }
 
-private fun addHostDeclarations(objectBuilder: TypeSpec.Builder, program: ProgramNode) {
-    // add a global host object for each host
-    for (host: Host in program.hosts) {
-        objectBuilder.addProperty(
+/** Creates [Host] instances for each host for efficiency. */
+private fun hostDeclarations(program: ProgramNode): TypeSpec {
+    val hosts = TypeSpec.objectBuilder("Hosts").addModifiers(KModifier.PRIVATE)
+
+    // Create a declaration for each host.
+    program.hosts.forEach { host ->
+        hosts.addProperty(
             PropertySpec.builder(host.name, Host::class)
-                .initializer(
-                    CodeBlock.of(
-                        "%T(%S)",
-                        Host::class,
-                        host.name
-                    )
-                )
+                .initializer(CodeBlock.of("%T(%S)", Host::class, host.name))
                 .build()
         )
     }
+
+    return hosts.build()
 }
+
+/** Returns a reference to the declaration of [host]. */
+private fun TypeSpec.reference(host: Host): CodeBlock =
+    CodeBlock.of("%N.%N", this, host.name)
 
 fun ProgramNode.compileToKotlin(
     fileName: String,
@@ -300,8 +296,6 @@ fun ProgramNode.compileToKotlin(
     codeGenerator: (context: CodeGeneratorContext) -> CodeGenerator,
     protocolComposer: ProtocolComposer
 ): FileSpec {
-
-    // create a main file builder, main function builder
     val fileBuilder = FileSpec.builder(packageName, fileName)
 
     // Mark generated code as automatically generated.
@@ -320,47 +314,48 @@ fun ProgramNode.compileToKotlin(
             .build()
     )
 
-    // create main object
-    val objectBuilder = TypeSpec.objectBuilder(fileName)
+    // Create an object wrapping all generated code.
+    val objectBuilder = TypeSpec.objectBuilder(fileName).addSuperinterface(ViaductGeneratedProgram::class)
 
-    // add host declarations to main object
-    addHostDeclarations(objectBuilder, this)
+    // Add host declarations to wrapper object.
+    val hostDeclarations = hostDeclarations(this)
+    objectBuilder.addType(hostDeclarations)
 
-    val hostClassMap: MutableMap<Host, TypeSpec> = mutableMapOf()
+    // Expose set of all hosts.
+    objectBuilder.addProperty(
+        PropertySpec.builder(ViaductGeneratedProgram::hosts.name, SET.parameterizedBy(Host::class.asClassName()))
+            .initializer(
+                CodeBlock.of(
+                    "%M(%L)",
+                    MemberName("kotlin.collections", "setOf"),
+                    hostDeclarations.propertySpecs.map { CodeBlock.of("%N.%N", hostDeclarations, it) }.joinToCode()
+                )
+            )
+            .addModifiers(KModifier.OVERRIDE)
+            .build()
+    )
 
-    // generate code for each host
-    for (host in this.hosts) {
-        val curGenerator = BackendCodeGenerator(
-            this,
-            host,
-            codeGenerator,
-            protocolComposer
-        )
-        val hostTypeSpec = curGenerator.generateClass()
-        objectBuilder.addType(curGenerator.generateClass())
-        hostClassMap[host] = hostTypeSpec
+    // Generate code for each host.
+    val hostSpecs = hosts.map { host ->
+        BackendCodeGenerator(this, host, codeGenerator, protocolComposer, hostDeclarations).generateClass()
     }
+    objectBuilder.addTypes(hostSpecs)
 
-    // create main function
-    val mainFunctionBuilder = FunSpec.builder("main").addModifiers(KModifier.SUSPEND)
-    mainFunctionBuilder.addParameter("host", Host::class)
-    mainFunctionBuilder.addParameter("runtime", Runtime::class)
+    // Add a main function that handles dispatch.
+    val main = with(FunSpec.builder("main")) {
+        addModifiers(KModifier.OVERRIDE)
+        addParameter("host", Host::class)
+        addParameter("runtime", ViaductRuntime::class)
 
-    // create switch statement in main method so program can be run on any host
-    mainFunctionBuilder.beginControlFlow("when (host)")
-    for (host in this.hosts) {
-        mainFunctionBuilder.addStatement(
-            "%N -> %N(%L).main()",
-            host.name,
-            hostClassMap.getValue(host),
-            "runtime",
-        )
+        // Dispatch to correct class based on host.
+        beginControlFlow("when (host)")
+        this@compileToKotlin.hosts.zip(hostSpecs) { host, spec ->
+            addStatement("%L -> %N(%L).main()", hostDeclarations.reference(host), spec, "runtime")
+        }
+        endControlFlow()
     }
-
-    mainFunctionBuilder.endControlFlow()
-    objectBuilder.addFunction(mainFunctionBuilder.build())
+    objectBuilder.addFunction(main.build())
 
     fileBuilder.addType(objectBuilder.build())
-
     return fileBuilder.build()
 }

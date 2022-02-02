@@ -11,27 +11,20 @@ import edu.cornell.cs.apl.viaduct.syntax.datatypes.QueryName
 import edu.cornell.cs.apl.viaduct.syntax.datatypes.UpdateName
 import edu.cornell.cs.apl.viaduct.syntax.datatypes.Vector
 import edu.cornell.cs.apl.viaduct.syntax.types.ValueType
+import edu.cornell.cs.apl.viaduct.syntax.values.BooleanValue
 import edu.cornell.cs.apl.viaduct.syntax.values.Value
 import edu.cornell.cs.apl.viaduct.syntax.values.IntegerValue
-import kotlinx.collections.immutable.PersistentList
+import edu.cornell.cs.apl.viaduct.util.FreshNameGenerator
 import kotlinx.collections.immutable.PersistentMap
-import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.persistentHashMapOf
 import kotlinx.collections.immutable.toPersistentList
+import java.util.LinkedList
+import java.util.Queue
 
 sealed class InterpreterObject {
     abstract fun query(query: QueryName, arguments: List<Value>): Value
 
     abstract fun update(update: UpdateName, arguments: List<Value>): InterpreterObject
-}
-
-object NullObject : InterpreterObject() {
-    override fun query(query: QueryName, arguments: List<Value>): Value {
-        throw Exception("runtime error")
-    }
-
-    override fun update(update: UpdateName, arguments: List<Value>): InterpreterObject {
-        throw Exception("runtime error")
-    }
 }
 
 data class ImmutableCellObject(val value: Value) : InterpreterObject() {
@@ -80,21 +73,22 @@ data class MutableCellObject(var value: Value) : InterpreterObject() {
     }
 }
 
-data class VectorObject(val size: Int, defaultValue: Value) : InterpreterObject() {
-    val values: PersistentList<Value> = persistentListOf()
-
-    init {
-        for (i: Int in 0 until size) {
-            values = values.add(defaultValue)
-        }
-    }
+data class VectorObject(val values: PersistentMap<Int,Value>): InterpreterObject() {
+    constructor(size: Int, defaultValue: Value): this(
+        persistentHashMapOf<Int,Value>(
+            *generateSequence(0) { it+1 }
+                .take(size)
+                .map { i -> i to defaultValue }
+                .toList().toTypedArray()
+        )
+    )
 
     override fun query(query: QueryName, arguments: List<Value>): Value {
         return when (query) {
             // TODO: fail silently when index is out of bounds
             is Get -> {
-                val index = arguments[0] as IntegerValue
-                values[index.value]
+                val index = (arguments[0] as IntegerValue).value
+                values[index]!!
             }
 
             else -> {
@@ -104,21 +98,24 @@ data class VectorObject(val size: Int, defaultValue: Value) : InterpreterObject(
     }
 
     override fun update(update: UpdateName, arguments: List<Value>): InterpreterObject {
-        val index = arguments[0] as IntegerValue
+        val index = (arguments[0] as IntegerValue).value
 
-        values[index.value] = when (update) {
-            is edu.cornell.cs.apl.viaduct.syntax.datatypes.Set -> {
-                arguments[1]
+        val value =
+            when (update) {
+                is edu.cornell.cs.apl.viaduct.syntax.datatypes.Set -> {
+                    arguments[1]
+                }
+
+                is Modify -> {
+                    update.operator.apply(values[index]!!, arguments[1])
+                }
+
+                else -> {
+                    throw Exception("unknown update ${update.name} for vector")
+                }
             }
 
-            is Modify -> {
-                update.operator.apply(values[index.value], arguments[1])
-            }
-
-            else -> {
-                throw Exception("unknown update ${update.name} for vector")
-            }
-        }
+        return this.copy(values = this.values.put(index, value))
     }
 }
 
@@ -145,8 +142,8 @@ class PartialEvaluator(
     val program: FlowchartProgram
 ) {
     companion object {
-        fun evaluate(program: FlowchartProgram) {
-            PartialEvaluator(program).evaluate()
+        fun evaluate(program: FlowchartProgram): FlowchartProgram {
+            return PartialEvaluator(program).evaluate()
         }
     }
 
@@ -205,6 +202,8 @@ class PartialEvaluator(
         }
     }
 
+    /* Evaluate a statement in a given partial store,
+    returning an updated store and a residual statement. */
     private fun evaluate(store: PartialStore, stmt: LoweredStatement): Pair<PartialStore, LoweredStatement> {
         return when (stmt) {
             is SkipNode -> Pair(store, stmt)
@@ -236,15 +235,178 @@ class PartialEvaluator(
             is UpdateNode -> {
                 val reducedArgs = stmt.arguments.map { arg -> evaluate(store, arg) }
                 val staticArgs = reducedArgs.all { it.isStatic() }
-                if (staticArgs && store.objectStore.contains(stmt.variable)) {
-                    val valArgs = reducedArgs.map { (it as LiteralNode).value }
-                    store.objectStore[stmt.variable]!!.update(stmt.update, valArgs)
-                    Pair(store, SkipNode)
+                val staticObject = store.objectStore.contains(stmt.variable)
 
-                } else {
-                    Pair(store.deleteObject())
+                when {
+                    // easy case: interpret update as in normal (full) evaluation
+                    staticArgs && staticObject -> {
+                        val valArgs = reducedArgs.map { (it as LiteralNode).value }
+                        store.objectStore[stmt.variable]!!.update(stmt.update, valArgs)
+                        Pair(store, SkipNode)
+                    }
+
+                    !staticArgs && staticObject -> {
+                        when (val obj = store.objectStore[stmt.variable]!!) {
+                            is ImmutableCellObject ->
+                                throw Exception("cannot update immutable cell object")
+
+                            // for mutable cells, remove cell from partial store
+                            is MutableCellObject -> {
+                                Pair(
+                                    store.deleteObject(stmt.variable),
+                                    stmt.copy(arguments = reducedArgs.toPersistentList())
+                                )
+                            }
+
+                            is VectorObject -> {
+                                val reducedIndex = reducedArgs[0]
+                                val reducedRHS = reducedArgs[1]
+
+                                when {
+                                    // if index is dynamic, remove all entries in vector
+                                    !reducedIndex.isStatic() -> {
+                                        Pair(
+                                            store.updateObject(
+                                                stmt.variable,
+                                                VectorObject(persistentHashMapOf())
+                                            ),
+                                            stmt.copy(arguments = reducedArgs.toPersistentList())
+                                        )
+                                    }
+
+                                    // if index is static but arg is dynamic, remove single index in vector
+                                    reducedIndex.isStatic() && !reducedRHS.isStatic() -> {
+                                        val index = ((reducedIndex as LiteralNode).value as IntegerValue).value
+                                        Pair(
+                                            store.updateObject(
+                                                stmt.variable,
+                                                obj.copy(values = obj.values.remove(index))
+                                            ),
+                                            stmt.copy(arguments = reducedArgs.toPersistentList())
+                                        )
+                                    }
+
+                                    else -> throw Exception("unreachable state")
+                                }
+                            }
+                        }
+                    }
+
+                    // add static object to partial store
+                    // TODO: don't determine class name by number of arguments
+                    staticArgs && !staticObject -> {
+                        when (stmt.update) {
+                            // set can be evaluated because it does not require a read
+                            is edu.cornell.cs.apl.viaduct.syntax.datatypes.Set -> {
+                                if (reducedArgs.size == 1) { // mutable cell
+                                    Pair(
+                                        store.updateObject(
+                                            stmt.variable,
+                                            MutableCellObject((reducedArgs[0] as LiteralNode).value)
+                                        ),
+                                        SkipNode
+                                    )
+                                } else { // vector
+                                    val index = ((reducedArgs[0] as LiteralNode).value as IntegerValue).value
+                                    val value = (reducedArgs[1] as LiteralNode).value
+                                    Pair(
+                                        store.updateObject(
+                                            stmt.variable,
+                                            VectorObject(persistentHashMapOf(index to value))
+                                        ),
+                                        SkipNode
+                                    )
+                                }
+                            }
+
+                            // modify requires a read so it can't be evaluated
+                            is Modify -> {
+                                Pair(store, stmt.copy(arguments = reducedArgs.toPersistentList()))
+                            }
+
+                            else -> throw Exception("unknown update ${stmt.update.name}")
+                        }
+                    }
+
+                    // args and object are dynamic, can't be evaluated
+                    else -> {
+                        Pair(store, stmt.copy(arguments = reducedArgs.toPersistentList()))
+                    }
                 }
             }
         }
+
+    }
+
+    /* Evaluate a basic block starting a given partial store,
+    returning an updated store, residual block, and labels of successor blocks */
+    private fun evaluate(store: PartialStore, block: LoweredBasicBlock): Triple<PartialStore, LoweredBasicBlock, Set<BlockLabel>> {
+        var curStore = store
+        val residualStmts = mutableListOf<LoweredStatement>()
+
+        // partially execute statements in block
+        for (stmt in block.statements) {
+            val (newStore, residualStmt) = evaluate(curStore, stmt)
+            curStore = newStore
+            if (residualStmt != SkipNode) {
+                residualStmts.add(residualStmt)
+            }
+        }
+
+        // calculate successors
+        val successors: Set<BlockLabel> =
+            when (val jump = block.jump) {
+                is Goto -> setOf(jump.label)
+                is GotoIf -> {
+                    val reducedGuard = evaluate(curStore, jump.guard)
+                    if (reducedGuard.isStatic()) {
+                        val guardValue = ((reducedGuard as LiteralNode).value as BooleanValue).value
+                        setOf(if (guardValue) jump.thenLabel else jump.elseLabel)
+
+                    } else {
+                        setOf(jump.thenLabel, jump.elseLabel)
+                    }
+                }
+                is Halt -> setOf()
+            }
+
+        val residualBlock = block.copy(statements = residualStmts)
+        return Triple(curStore, residualBlock, successors)
+    }
+
+    /** Online partial evaluation of a flowchart program. */
+    fun evaluate(
+        initialStore: PartialStore =
+            PartialStore(objectStore = persistentHashMapOf(), temporaryStore = persistentHashMapOf())
+    ): FlowchartProgram {
+        val initialBlockLabel = ResidualBlockLabel(ENTRY_POINT_LABEL, initialStore)
+        val residualBlockMap = mutableMapOf<ResidualBlockLabel, LoweredBasicBlock>()
+        val worklist: Queue<ResidualBlockLabel> = LinkedList()
+        worklist.add(initialBlockLabel)
+
+        while (!worklist.isEmpty()) {
+            val residualBlockLabel = worklist.remove()
+            val (endStore, residualBlock, successors) =
+                evaluate(residualBlockLabel.store, program.blocks[residualBlockLabel.label]!!)
+            residualBlockMap[residualBlockLabel] = residualBlock
+            worklist.addAll(
+                successors
+                    .map { label -> ResidualBlockLabel(label, endStore) }
+                    .filter { residualBlockMap.containsKey(it) }
+            )
+        }
+
+        // create fresh labels from label-partial store pairs
+        val nameGenerator = FreshNameGenerator()
+        val finalBlockMap = mutableMapOf<BlockLabel, LoweredBasicBlock>()
+        finalBlockMap[ENTRY_POINT_LABEL] = residualBlockMap[initialBlockLabel]!!
+        residualBlockMap.remove(initialBlockLabel)
+
+        for (kv in residualBlockMap) {
+            val newLabel: BlockLabel = nameGenerator.getFreshName(kv.key.label)
+            finalBlockMap[newLabel] = kv.value
+        }
+
+        return FlowchartProgram(blocks = finalBlockMap)
     }
 }

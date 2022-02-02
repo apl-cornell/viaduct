@@ -76,6 +76,9 @@ data class GotoIf(
 object Halt: LoweredControl()
 
 typealias BlockLabel = String
+data class ResidualBlockLabel(val label: BlockLabel, val store: PartialStore)
+
+val ENTRY_POINT_LABEL: BlockLabel = "main"
 
 data class LoweredBasicBlock(
     val statements: List<LoweredStatement>,

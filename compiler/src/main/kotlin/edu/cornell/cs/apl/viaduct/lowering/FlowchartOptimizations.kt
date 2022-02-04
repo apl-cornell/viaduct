@@ -1,35 +1,47 @@
 package edu.cornell.cs.apl.viaduct.lowering
 
+import java.util.LinkedList
+import java.util.Queue
+import java.util.concurrent.Flow
+
 /* Instead of jumping to an empty block, jump to its successor instead. */
 fun FlowchartProgram.removeEmptyBlocks(): FlowchartProgram {
     // find empty blocks with a unique successor
-    val initEmptyBlockMap: Map<RegularBlockLabel, RegularBlockLabel> =
+    val emptyBlockMap: Map<RegularBlockLabel, RegularBlockLabel> =
         this.blocks
             .filter { kv -> kv.value.statements.isEmpty() && kv.value.jump is Goto }
             .map { kv -> kv.key to (kv.value.jump as Goto).label }
             .toMap()
 
     // chain relabelings together
-    val emptyBlockMap = mutableMapOf<RegularBlockLabel, RegularBlockLabel>()
-    for (kv in initEmptyBlockMap) {
+    val jumpRelabelMap = mutableMapOf<RegularBlockLabel, RegularBlockLabel>()
+    val blockRelableMap = mutableMapOf<RegularBlockLabel, RegularBlockLabel>()
+    for (kv in emptyBlockMap) {
         var relabel = kv.value
-        while (initEmptyBlockMap.containsKey(relabel)) {
-            relabel = initEmptyBlockMap[relabel]!!
+        while (emptyBlockMap.containsKey(relabel)) {
+            relabel = emptyBlockMap[relabel]!!
         }
-        emptyBlockMap[kv.key] = relabel
+        jumpRelabelMap[kv.key] = relabel
     }
 
-    return FlowchartProgram(
+    // if entry point is removed, new entry point is the block it points to
+    if (jumpRelabelMap.containsKey(ENTRY_POINT_LABEL)) {
+        val newEntryPointLabel = jumpRelabelMap[ENTRY_POINT_LABEL]!!
+        jumpRelabelMap[newEntryPointLabel] = ENTRY_POINT_LABEL
+        blockRelableMap[newEntryPointLabel] = ENTRY_POINT_LABEL
+    }
+
+    val newBlocks =
         this.blocks
             .filter { kv -> !emptyBlockMap.containsKey(kv.key) }
             .map { kv ->
                 val renamedJump =
                     when (val jump = kv.value.jump) {
-                        is Goto -> emptyBlockMap[jump.label]?.let { Goto(it) } ?: jump
+                        is Goto -> jumpRelabelMap[jump.label]?.let { Goto(it) } ?: jump
 
                         is GotoIf -> {
-                            val renamedThenLabel = emptyBlockMap[jump.thenLabel] ?: jump.thenLabel
-                            val renamedElseLabel = emptyBlockMap[jump.elseLabel] ?: jump.elseLabel
+                            val renamedThenLabel = jumpRelabelMap[jump.thenLabel] ?: jump.thenLabel
+                            val renamedElseLabel = jumpRelabelMap[jump.elseLabel] ?: jump.elseLabel
                             jump.copy(thenLabel = renamedThenLabel, elseLabel = renamedElseLabel)
                         }
 
@@ -40,8 +52,51 @@ fun FlowchartProgram.removeEmptyBlocks(): FlowchartProgram {
                         else -> TODO()
                     }
 
-                kv.key to kv.value.copy(jump = renamedJump)
+                val newLabel = blockRelableMap[kv.key] ?: kv.key
+
+                newLabel to kv.value.copy(jump = renamedJump)
             }
             .toMap()
-    )
+
+    return FlowchartProgram(newBlocks)
+}
+
+/** Inline "linear" set of blocks
+ * e.g. a CFG A -> B -> C should just be one block A */
+fun FlowchartProgram.inlineBlocks(): FlowchartProgram {
+    val newBlocks = mutableMapOf<RegularBlockLabel, LoweredBasicBlock<RegularBlockLabel>>()
+
+    val worklist: Queue<RegularBlockLabel> = LinkedList()
+    worklist.add(ENTRY_POINT_LABEL)
+
+    while (worklist.isNotEmpty()) {
+        val label = worklist.remove()
+        var curBlock = this.block(label)!!
+        val curStmts = mutableListOf<LoweredStatement>()
+
+        while (true) {
+            curStmts.addAll(curBlock.statements)
+
+            val jump = curBlock.jump
+            if (jump is Goto) {
+                // if the current block is the only predecessor for the successor,
+                // inline the successor
+                if (this.predecessorMap[jump.label]!!.size == 1) {
+                    curBlock = this.block(jump.label)!!
+
+                } else break
+            } else break
+        }
+
+        newBlocks[label] = LoweredBasicBlock(curStmts, curBlock.jump)
+        worklist.addAll(
+            curBlock.successors().filter { !newBlocks.containsKey(it) }
+        )
+    }
+
+    return FlowchartProgram(newBlocks)
+}
+
+fun FlowchartProgram.optimize(): FlowchartProgram {
+    return this.removeEmptyBlocks().inlineBlocks()
 }

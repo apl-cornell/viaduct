@@ -1,5 +1,10 @@
 package edu.cornell.cs.apl.viaduct.lowering
 
+import edu.cornell.cs.apl.prettyprinting.Document
+import edu.cornell.cs.apl.prettyprinting.PrettyPrintable
+import edu.cornell.cs.apl.prettyprinting.bracketed
+import edu.cornell.cs.apl.prettyprinting.plus
+import edu.cornell.cs.apl.prettyprinting.times
 import edu.cornell.cs.apl.viaduct.syntax.ObjectVariable
 import edu.cornell.cs.apl.viaduct.syntax.Temporary
 import edu.cornell.cs.apl.viaduct.syntax.datatypes.ClassName
@@ -21,7 +26,7 @@ import kotlinx.collections.immutable.toPersistentList
 import java.util.LinkedList
 import java.util.Queue
 
-sealed class InterpreterObject {
+sealed class InterpreterObject: PrettyPrintable {
     abstract fun query(query: QueryName, arguments: List<Value>): Value
 
     abstract fun update(update: UpdateName, arguments: List<Value>): InterpreterObject
@@ -41,6 +46,8 @@ data class ImmutableCellObject(val value: Value) : InterpreterObject() {
     override fun update(update: UpdateName, arguments: List<Value>): InterpreterObject {
         throw Exception("cannot update immutable cell")
     }
+
+    override fun toDocument(): Document = value.toDocument()
 }
 
 data class MutableCellObject(var value: Value) : InterpreterObject() {
@@ -71,6 +78,8 @@ data class MutableCellObject(var value: Value) : InterpreterObject() {
             }
         )
     }
+
+    override fun toDocument(): Document = value.toDocument()
 }
 
 data class VectorObject(val values: PersistentMap<Int, Value>) : InterpreterObject() {
@@ -117,12 +126,17 @@ data class VectorObject(val values: PersistentMap<Int, Value>) : InterpreterObje
 
         return this.copy(values = this.values.put(index, value))
     }
+
+    override fun toDocument(): Document =
+        values.map { kv ->
+            Document(kv.key.toString()) + Document(":") * kv.value.toDocument()
+        }.bracketed()
 }
 
 data class PartialStore(
     val objectStore: PersistentMap<ObjectVariable, InterpreterObject>,
     val temporaryStore: PersistentMap<Temporary, LoweredExpression>
-) {
+): PrettyPrintable {
     fun updateObject(variable: ObjectVariable, obj: InterpreterObject): PartialStore {
         return this.copy(objectStore = objectStore.put(variable, obj))
     }
@@ -134,6 +148,10 @@ data class PartialStore(
     fun updateTemporary(temporary: Temporary, expr: LoweredExpression): PartialStore {
         return this.copy(temporaryStore = temporaryStore.put(temporary, expr))
     }
+
+    override fun toDocument(): Document =
+        objectStore.map { kv -> Document(kv.key.name) * Document("=>") * kv.value }.bracketed() *
+            temporaryStore.map { kv -> Document(kv.key.name) * Document("=>") * kv.value }.bracketed()
 }
 
 private fun LoweredExpression.isStatic(): Boolean = this is LiteralNode
@@ -240,8 +258,8 @@ class PartialEvaluator(
                     // easy case: interpret update as in normal (full) evaluation
                     staticArgs && staticObject -> {
                         val valArgs = reducedArgs.map { (it as LiteralNode).value }
-                        store.objectStore[stmt.variable]!!.update(stmt.update, valArgs)
-                        Pair(store, SkipNode)
+                        val updatedObj = store.objectStore[stmt.variable]!!.update(stmt.update, valArgs)
+                        Pair(store.updateObject(stmt.variable, updatedObj), SkipNode)
                     }
 
                     !staticArgs && staticObject -> {
@@ -432,6 +450,6 @@ class PartialEvaluator(
             finalBlockMap[finalLabelMap[kv.key]!!] = LoweredBasicBlock(kv.value.statements, relabeledJump)
         }
 
-        return FlowchartProgram(blocks = finalBlockMap).removeEmptyBlocks()
+        return FlowchartProgram(blocks = finalBlockMap)
     }
 }

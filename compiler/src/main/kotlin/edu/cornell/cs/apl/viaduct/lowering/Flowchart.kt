@@ -1,5 +1,6 @@
 package edu.cornell.cs.apl.viaduct.lowering
 
+import com.ibm.icu.text.CaseMap
 import edu.cornell.cs.apl.prettyprinting.Document
 import edu.cornell.cs.apl.prettyprinting.PrettyPrintable
 import edu.cornell.cs.apl.prettyprinting.bracketed
@@ -145,7 +146,7 @@ data class RegularBlockLabel(val label: String) : BlockLabel() {
 
 data class ResidualBlockLabel(val label: RegularBlockLabel, val store: PartialStore) : BlockLabel() {
     override fun toDocument(): Document =
-        listOf(label.toDocument(), Document("store")).tupled()
+        listOf(label.toDocument(), store).tupled()
 }
 
 val ENTRY_POINT_LABEL = RegularBlockLabel("main")
@@ -167,6 +168,36 @@ data class LoweredBasicBlock<T : BlockLabel>(
 data class FlowchartProgram(
     val blocks: Map<RegularBlockLabel, LoweredBasicBlock<RegularBlockLabel>>
 ) : PrettyPrintable {
+    /** Return the entry point basic block for the program. */
+    val entryPointBlock: LoweredBasicBlock<RegularBlockLabel> =
+        blocks[ENTRY_POINT_LABEL]!!
+
+    /** Adjecency list representation of the program's CFG. */
+    val successorMap: Map<RegularBlockLabel, Set<RegularBlockLabel>> by lazy {
+        blocks.map { kv -> kv.key to kv.value.successors() }.toMap()
+    }
+
+
+    /** Like successorMap, but for predecessors. */
+    val predecessorMap: Map<RegularBlockLabel, Set<RegularBlockLabel>> by lazy {
+        val predecessors = mutableMapOf<RegularBlockLabel, MutableSet<RegularBlockLabel>>()
+        for (kv in successorMap) {
+            for (successor in kv.value) {
+                if (predecessors.containsKey(successor)) {
+                    predecessors[successor]!!.add(kv.key)
+
+                } else {
+                    predecessors[successor] = mutableSetOf(kv.key)
+                }
+            }
+        }
+
+        predecessors
+    }
+
+    fun block(label: RegularBlockLabel): LoweredBasicBlock<RegularBlockLabel>? =
+        blocks[label]
+
     override fun toDocument(): Document {
         val blockOrder = mutableListOf<RegularBlockLabel>()
         val worklist: Queue<RegularBlockLabel> = LinkedList()

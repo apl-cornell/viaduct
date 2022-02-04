@@ -175,6 +175,6 @@ class LoweringPass(val block: BlockNode) {
     fun lower(): FlowchartProgram {
         val (lastLabel, lastBlock) = lower(ENTRY_POINT_LABEL, mutableListOf(), block)
         blockMap[lastLabel] = LoweredBasicBlock(lastBlock, RegularHalt)
-        return FlowchartProgram(blockMap).removeEmptyBlocks()
+        return FlowchartProgram(blockMap)
     }
 }

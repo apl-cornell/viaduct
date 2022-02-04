@@ -12,8 +12,8 @@ import edu.cornell.cs.apl.viaduct.syntax.datatypes.UpdateName
 import edu.cornell.cs.apl.viaduct.syntax.datatypes.Vector
 import edu.cornell.cs.apl.viaduct.syntax.types.ValueType
 import edu.cornell.cs.apl.viaduct.syntax.values.BooleanValue
-import edu.cornell.cs.apl.viaduct.syntax.values.Value
 import edu.cornell.cs.apl.viaduct.syntax.values.IntegerValue
+import edu.cornell.cs.apl.viaduct.syntax.values.Value
 import edu.cornell.cs.apl.viaduct.util.FreshNameGenerator
 import kotlinx.collections.immutable.PersistentMap
 import kotlinx.collections.immutable.persistentHashMapOf
@@ -73,10 +73,10 @@ data class MutableCellObject(var value: Value) : InterpreterObject() {
     }
 }
 
-data class VectorObject(val values: PersistentMap<Int,Value>): InterpreterObject() {
-    constructor(size: Int, defaultValue: Value): this(
-        persistentHashMapOf<Int,Value>(
-            *generateSequence(0) { it+1 }
+data class VectorObject(val values: PersistentMap<Int, Value>) : InterpreterObject() {
+    constructor(size: Int, defaultValue: Value) : this(
+        persistentHashMapOf<Int, Value>(
+            *generateSequence(0) { it + 1 }
                 .take(size)
                 .map { i -> i to defaultValue }
                 .toList().toTypedArray()
@@ -147,35 +147,33 @@ class PartialEvaluator(
         }
     }
 
-    private fun evaluate(store: PartialStore, expr: LoweredExpression): LoweredExpression {
+    private fun evaluateExpression(store: PartialStore, expr: LoweredExpression): LoweredExpression {
         return when (expr) {
             is LiteralNode -> expr
 
             is ReadNode -> {
-                store.temporaryStore[expr.temporary] ?:
-                    throw Error("cannot find temporary ${expr.temporary.name}")
+                store.temporaryStore[expr.temporary]
+                    ?: throw Error("cannot find temporary ${expr.temporary.name}")
             }
 
             is OperatorApplicationNode -> {
-                val reducedArgs = expr.arguments.map { evaluate(store, it) }
+                val reducedArgs = expr.arguments.map { evaluateExpression(store, it) }
                 val staticArgs = reducedArgs.all { it.isStatic() }
                 if (staticArgs) {
                     val valArgs = reducedArgs.map { (it as LiteralNode).value }
                     LiteralNode(expr.operator.apply(valArgs))
-
                 } else {
                     expr.copy(arguments = reducedArgs.toPersistentList())
                 }
             }
 
             is QueryNode -> {
-                val reducedArgs = expr.arguments.map { evaluate(store, it) }
+                val reducedArgs = expr.arguments.map { evaluateExpression(store, it) }
                 val staticArgs = reducedArgs.all { it.isStatic() }
                 if (staticArgs && store.objectStore.contains(expr.variable)) {
                     val valArgs = reducedArgs.map { (it as LiteralNode).value }
                     val queryVal = store.objectStore[expr.variable]!!.query(expr.query, valArgs)
                     LiteralNode(queryVal)
-
                 } else {
                     expr.copy(arguments = reducedArgs.toPersistentList())
                 }
@@ -186,7 +184,9 @@ class PartialEvaluator(
     }
 
     private fun buildObject(
-        className: ClassName, typeArguments: List<ValueType>, arguments: List<Value>
+        className: ClassName,
+        typeArguments: List<ValueType>,
+        arguments: List<Value>
     ): InterpreterObject {
         return when (className) {
             ImmutableCell -> ImmutableCellObject(arguments[0])
@@ -209,13 +209,12 @@ class PartialEvaluator(
             is SkipNode -> Pair(store, stmt)
 
             is DeclarationNode -> {
-                val reducedArgs = stmt.arguments.map { arg -> evaluate(store, arg) }
+                val reducedArgs = stmt.arguments.map { arg -> evaluateExpression(store, arg) }
                 val staticArgs = reducedArgs.all { it.isStatic() }
                 if (staticArgs) {
                     val valArgs = reducedArgs.map { (it as LiteralNode).value }
                     val obj = buildObject(stmt.className, stmt.typeArguments, valArgs)
                     Pair(store.updateObject(stmt.name, obj), SkipNode)
-
                 } else {
                     val reducedDecl = stmt.copy(arguments = reducedArgs.toPersistentList())
                     Pair(store, reducedDecl)
@@ -223,17 +222,17 @@ class PartialEvaluator(
             }
 
             is LetNode -> {
-                val reducedExpr = evaluate(store, stmt.value)
+                val reducedExpr = evaluateExpression(store, stmt.value)
                 Pair(store.updateTemporary(stmt.temporary, reducedExpr), SkipNode)
             }
 
             is OutputNode -> {
-                val reducedMsg = evaluate(store, stmt.message)
+                val reducedMsg = evaluateExpression(store, stmt.message)
                 Pair(store, stmt.copy(message = reducedMsg))
             }
 
             is UpdateNode -> {
-                val reducedArgs = stmt.arguments.map { arg -> evaluate(store, arg) }
+                val reducedArgs = stmt.arguments.map { arg -> evaluateExpression(store, arg) }
                 val staticArgs = reducedArgs.all { it.isStatic() }
                 val staticObject = store.objectStore.contains(stmt.variable)
 
@@ -335,12 +334,14 @@ class PartialEvaluator(
                 }
             }
         }
-
     }
 
     /* Evaluate a basic block starting a given partial store,
     returning an updated store, residual block, and labels of successor blocks */
-    private fun evaluate(store: PartialStore, block: LoweredBasicBlock): Triple<PartialStore, LoweredBasicBlock, Set<BlockLabel>> {
+    private fun evaluate(
+        store: PartialStore,
+        block: LoweredBasicBlock<RegularBlockLabel>
+    ): LoweredBasicBlock<ResidualBlockLabel> {
         var curStore = store
         val residualStmts = mutableListOf<LoweredStatement>()
 
@@ -354,24 +355,35 @@ class PartialEvaluator(
         }
 
         // calculate successors
-        val successors: Set<BlockLabel> =
+        val residualJump: LoweredControl<ResidualBlockLabel> =
             when (val jump = block.jump) {
-                is Goto -> setOf(jump.label)
+                is Goto -> {
+                    Goto(ResidualBlockLabel(jump.label, curStore))
+                }
+
                 is GotoIf -> {
-                    val reducedGuard = evaluate(curStore, jump.guard)
+                    val reducedGuard = evaluateExpression(curStore, jump.guard)
                     if (reducedGuard.isStatic()) {
                         val guardValue = ((reducedGuard as LiteralNode).value as BooleanValue).value
-                        setOf(if (guardValue) jump.thenLabel else jump.elseLabel)
-
+                        val successor = if (guardValue) jump.thenLabel else jump.elseLabel
+                        Goto(ResidualBlockLabel(successor, curStore))
                     } else {
-                        setOf(jump.thenLabel, jump.elseLabel)
+                        GotoIf(
+                            reducedGuard,
+                            ResidualBlockLabel(jump.thenLabel, curStore),
+                            ResidualBlockLabel(jump.elseLabel, curStore)
+                        )
                     }
                 }
-                is Halt -> setOf()
+
+                is RegularHalt -> ResidualHalt
+
+                // Kotlin compiler is too dumb to recognize that ResidualHalt
+                // is not a valid case, so we need this else case
+                else -> TODO()
             }
 
-        val residualBlock = block.copy(statements = residualStmts)
-        return Triple(curStore, residualBlock, successors)
+        return LoweredBasicBlock(residualStmts, residualJump)
     }
 
     /** Online partial evaluation of a flowchart program. */
@@ -380,33 +392,46 @@ class PartialEvaluator(
             PartialStore(objectStore = persistentHashMapOf(), temporaryStore = persistentHashMapOf())
     ): FlowchartProgram {
         val initialBlockLabel = ResidualBlockLabel(ENTRY_POINT_LABEL, initialStore)
-        val residualBlockMap = mutableMapOf<ResidualBlockLabel, LoweredBasicBlock>()
+        val residualBlockMap = mutableMapOf<ResidualBlockLabel, LoweredBasicBlock<ResidualBlockLabel>>()
         val worklist: Queue<ResidualBlockLabel> = LinkedList()
         worklist.add(initialBlockLabel)
 
         while (!worklist.isEmpty()) {
             val residualBlockLabel = worklist.remove()
-            val (endStore, residualBlock, successors) =
-                evaluate(residualBlockLabel.store, program.blocks[residualBlockLabel.label]!!)
+            val residualBlock = evaluate(residualBlockLabel.store, program.blocks[residualBlockLabel.label]!!)
             residualBlockMap[residualBlockLabel] = residualBlock
+
             worklist.addAll(
-                successors
-                    .map { label -> ResidualBlockLabel(label, endStore) }
-                    .filter { residualBlockMap.containsKey(it) }
+                residualBlock.successors().filter { !residualBlockMap.containsKey(it) }
             )
         }
 
         // create fresh labels from label-partial store pairs
         val nameGenerator = FreshNameGenerator()
-        val finalBlockMap = mutableMapOf<BlockLabel, LoweredBasicBlock>()
-        finalBlockMap[ENTRY_POINT_LABEL] = residualBlockMap[initialBlockLabel]!!
-        residualBlockMap.remove(initialBlockLabel)
 
-        for (kv in residualBlockMap) {
-            val newLabel: BlockLabel = nameGenerator.getFreshName(kv.key.label)
-            finalBlockMap[newLabel] = kv.value
+        val finalLabelMap = mutableMapOf<ResidualBlockLabel, RegularBlockLabel>()
+        finalLabelMap[initialBlockLabel] = ENTRY_POINT_LABEL
+        for (residualLabel in residualBlockMap.keys) {
+            val newLabel = RegularBlockLabel(nameGenerator.getFreshName(residualLabel.label.label))
+            finalLabelMap[residualLabel] = newLabel
         }
 
-        return FlowchartProgram(blocks = finalBlockMap)
+        val finalBlockMap = mutableMapOf<RegularBlockLabel, LoweredBasicBlock<RegularBlockLabel>>()
+        for (kv in residualBlockMap) {
+            val relabeledJump: LoweredControl<RegularBlockLabel> =
+                when (val jump = kv.value.jump) {
+                    is Goto -> Goto(finalLabelMap[jump.label]!!)
+                    is GotoIf -> GotoIf(jump.guard, finalLabelMap[jump.thenLabel]!!, finalLabelMap[jump.elseLabel]!!)
+                    is ResidualHalt -> RegularHalt
+
+                    // Kotlin compiler is too dumb to recognize that RegularHalt
+                    // is not a valid case, so we need this else case
+                    else -> TODO()
+                }
+
+            finalBlockMap[finalLabelMap[kv.key]!!] = LoweredBasicBlock(kv.value.statements, relabeledJump)
+        }
+
+        return FlowchartProgram(blocks = finalBlockMap).removeEmptyBlocks()
     }
 }

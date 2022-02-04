@@ -1,5 +1,12 @@
 package edu.cornell.cs.apl.viaduct.lowering
 
+import edu.cornell.cs.apl.prettyprinting.Document
+import edu.cornell.cs.apl.prettyprinting.PrettyPrintable
+import edu.cornell.cs.apl.prettyprinting.bracketed
+import edu.cornell.cs.apl.prettyprinting.concatenated
+import edu.cornell.cs.apl.prettyprinting.plus
+import edu.cornell.cs.apl.prettyprinting.times
+import edu.cornell.cs.apl.prettyprinting.tupled
 import edu.cornell.cs.apl.viaduct.syntax.Host
 import edu.cornell.cs.apl.viaduct.syntax.ObjectVariable
 import edu.cornell.cs.apl.viaduct.syntax.Operator
@@ -11,32 +18,48 @@ import edu.cornell.cs.apl.viaduct.syntax.datatypes.UpdateName
 import edu.cornell.cs.apl.viaduct.syntax.types.ValueType
 import edu.cornell.cs.apl.viaduct.syntax.values.Value
 import kotlinx.collections.immutable.PersistentList
+import java.util.LinkedList
+import java.util.Queue
 
-sealed class LoweredExpression
+sealed class LoweredExpression : PrettyPrintable
 
-data class LiteralNode(val value: Value): LoweredExpression()
+data class LiteralNode(val value: Value) : LoweredExpression() {
+    override fun toDocument(): Document = value.toDocument()
+}
 
-data class ReadNode(val temporary: Temporary): LoweredExpression()
+data class ReadNode(val temporary: Temporary) : LoweredExpression() {
+    override fun toDocument(): Document = temporary.toDocument()
+}
 
 data class OperatorApplicationNode(
     val operator: Operator,
     val arguments: PersistentList<LoweredExpression>
-): LoweredExpression()
+) : LoweredExpression() {
+    override fun toDocument(): Document = operator.toDocument(arguments)
+}
 
 data class QueryNode(
     val variable: ObjectVariable,
     val query: QueryName,
     val arguments: PersistentList<LoweredExpression>
-): LoweredExpression()
+) : LoweredExpression() {
+    override fun toDocument(): Document =
+        variable + Document(".") + query + arguments.tupled()
+}
 
 data class InputNode(
     val type: ValueType,
     val host: Host
-): LoweredExpression()
+) : LoweredExpression() {
+    override fun toDocument(): Document =
+        Document("input") * type * Document("from") * host
+}
 
-sealed class LoweredStatement
+sealed class LoweredStatement : PrettyPrintable
 
-object SkipNode: LoweredStatement()
+object SkipNode : LoweredStatement() {
+    override fun toDocument(): Document = Document("skip")
+}
 
 data class DeclarationNode(
     val name: ObjectVariable,
@@ -44,47 +67,123 @@ data class DeclarationNode(
     val typeArguments: PersistentList<ValueType>,
     val arguments: PersistentList<LoweredExpression>,
     val protocol: Protocol
-): LoweredStatement()
+) : LoweredStatement() {
+    override fun toDocument(): Document =
+        Document("val") * name + Document("@") + protocol *
+            Document("=") * className + typeArguments.bracketed() + arguments.tupled()
+}
 
 data class LetNode(
     val temporary: Temporary,
     val value: LoweredExpression,
     val protocol: Protocol
-): LoweredStatement()
+) : LoweredStatement() {
+    override fun toDocument(): Document =
+        Document("let") * temporary + Document("@") + protocol * Document("=") * value
+}
 
 data class UpdateNode(
     val variable: ObjectVariable,
     val update: UpdateName,
     val arguments: PersistentList<LoweredExpression>
-): LoweredStatement()
+) : LoweredStatement() {
+    override fun toDocument(): Document =
+        variable + Document(".") + update + arguments.tupled()
+}
 
 data class OutputNode(
     val message: LoweredExpression,
     val host: Host
-): LoweredStatement()
+) : LoweredStatement() {
+    override fun toDocument(): Document =
+        Document("output") * message * Document("to") * host
+}
 
-sealed class LoweredControl
+sealed class LoweredControl<T : BlockLabel> : PrettyPrintable {
+    abstract fun successors(): Set<T>
+}
 
-data class Goto(val label: BlockLabel): LoweredControl()
+data class Goto<T : BlockLabel>(val label: T) : LoweredControl<T>() {
+    override fun toDocument(): Document =
+        Document("goto") * label
 
-data class GotoIf(
+    override fun successors(): Set<T> = setOf(label)
+}
+
+data class GotoIf<T : BlockLabel>(
     val guard: LoweredExpression,
-    val thenLabel: BlockLabel,
-    val elseLabel: BlockLabel
-): LoweredControl()
+    val thenLabel: T,
+    val elseLabel: T
+) : LoweredControl<T>() {
+    override fun toDocument(): Document =
+        Document("if") * guard *
+            Document("then goto") * thenLabel *
+            Document("else goto") * elseLabel
 
-object Halt: LoweredControl()
+    override fun successors(): Set<T> = setOf(thenLabel, elseLabel)
+}
 
-typealias BlockLabel = String
-data class ResidualBlockLabel(val label: BlockLabel, val store: PartialStore)
+// HACK! need a singleton paramerized on type T : BlockLabel,
+// but Kotlin doesn't allow generic singletons. So instead
+// we create two different singletons for each known BlockLabel class
 
-val ENTRY_POINT_LABEL: BlockLabel = "main"
+object RegularHalt : LoweredControl<RegularBlockLabel>() {
+    override fun toDocument(): Document = Document("halt")
+    override fun successors(): Set<RegularBlockLabel> = setOf()
+}
 
-data class LoweredBasicBlock(
+object ResidualHalt : LoweredControl<ResidualBlockLabel>() {
+    override fun toDocument(): Document = Document("halt")
+    override fun successors(): Set<ResidualBlockLabel> = setOf()
+}
+
+sealed class BlockLabel : PrettyPrintable
+
+data class RegularBlockLabel(val label: String) : BlockLabel() {
+    override fun toDocument(): Document = Document(label)
+}
+
+data class ResidualBlockLabel(val label: RegularBlockLabel, val store: PartialStore) : BlockLabel() {
+    override fun toDocument(): Document =
+        listOf(label.toDocument(), Document("store")).tupled()
+}
+
+val ENTRY_POINT_LABEL = RegularBlockLabel("main")
+
+data class LoweredBasicBlock<T : BlockLabel>(
     val statements: List<LoweredStatement>,
-    val jump: LoweredControl
-)
+    val jump: LoweredControl<T>
+) : PrettyPrintable {
+    override fun toDocument(): Document =
+        if (statements.isNotEmpty()) {
+            statements.concatenated(separator = Document.forcedLineBreak) + Document.forcedLineBreak + jump
+        } else {
+           jump.toDocument()
+        }
+
+    fun successors(): Set<T> = jump.successors()
+}
 
 data class FlowchartProgram(
-    val blocks: Map<BlockLabel, LoweredBasicBlock>
-)
+    val blocks: Map<RegularBlockLabel, LoweredBasicBlock<RegularBlockLabel>>
+) : PrettyPrintable {
+    override fun toDocument(): Document {
+        val blockOrder = mutableListOf<RegularBlockLabel>()
+        val worklist: Queue<RegularBlockLabel> = LinkedList()
+        worklist.add(ENTRY_POINT_LABEL)
+
+        while (worklist.isNotEmpty()) {
+            val label = worklist.remove()
+            blockOrder.add(label)
+            for (successor in blocks[label]!!.successors()) {
+                if (!blockOrder.contains(successor)) {
+                    worklist.add(successor)
+                }
+            }
+        }
+
+        return blockOrder.map { label ->
+            Document("label") * label + ":" + Document.forcedLineBreak + blocks[label]!!
+        }.concatenated(Document.forcedLineBreak + Document.forcedLineBreak)
+    }
+}

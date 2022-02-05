@@ -1,5 +1,7 @@
 package edu.cornell.cs.apl.viaduct.lowering
 
+import edu.cornell.cs.apl.viaduct.analysis.AnalysisProvider
+import edu.cornell.cs.apl.viaduct.analysis.main
 import edu.cornell.cs.apl.viaduct.syntax.JumpLabel
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.AssertionNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.BlockNode
@@ -17,6 +19,7 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.LiteralNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.OperatorApplicationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutParameterInitializationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutputNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.QueryNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ReadNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.SimpleStatementNode
@@ -34,13 +37,7 @@ import edu.cornell.cs.apl.viaduct.lowering.QueryNode as LQueryNode
 import edu.cornell.cs.apl.viaduct.lowering.ReadNode as LReadNode
 import edu.cornell.cs.apl.viaduct.lowering.UpdateNode as LUpdateNode
 
-class LoweringPass(val block: BlockNode) {
-    companion object {
-        fun lower(block: BlockNode): FlowchartProgram {
-            return LoweringPass(block).lower()
-        }
-    }
-
+class LoweringPass private constructor (val block: BlockNode) {
     private val nameGenerator = FreshNameGenerator()
     private val blockMap = mutableMapOf<RegularBlockLabel, LoweredBasicBlock<RegularBlockLabel>>()
     private val breakLabelMap = mutableMapOf<JumpLabel, RegularBlockLabel>()
@@ -172,9 +169,15 @@ class LoweringPass(val block: BlockNode) {
         }
     }
 
-    fun lower(): FlowchartProgram {
+    val flowchartProgram: FlowchartProgram by lazy {
         val (lastLabel, lastBlock) = lower(ENTRY_POINT_LABEL, mutableListOf(), block)
         blockMap[lastLabel] = LoweredBasicBlock(lastBlock, RegularHalt)
-        return FlowchartProgram(blockMap)
+        FlowchartProgram(blockMap)
+    }
+
+    companion object : AnalysisProvider<LoweringPass> {
+        private fun construct(program: ProgramNode) = LoweringPass(program.main.body)
+
+        override fun get(program: ProgramNode): LoweringPass = program.cached(::construct)
     }
 }

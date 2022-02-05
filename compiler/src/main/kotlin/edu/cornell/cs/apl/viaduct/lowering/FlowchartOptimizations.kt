@@ -2,7 +2,6 @@ package edu.cornell.cs.apl.viaduct.lowering
 
 import java.util.LinkedList
 import java.util.Queue
-import java.util.concurrent.Flow
 
 /* Instead of jumping to an empty block, jump to its successor instead. */
 fun FlowchartProgram.removeEmptyBlocks(): FlowchartProgram {

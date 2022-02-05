@@ -177,22 +177,26 @@ data class FlowchartProgram(
         blocks.map { kv -> kv.key to kv.value.successors() }.toMap()
     }
 
-
     /** Like successorMap, but for predecessors. */
     val predecessorMap: Map<RegularBlockLabel, Set<RegularBlockLabel>> by lazy {
         val predecessors = mutableMapOf<RegularBlockLabel, MutableSet<RegularBlockLabel>>()
+
+        for (label in successorMap.keys) {
+            predecessors[label] = mutableSetOf()
+        }
+
         for (kv in successorMap) {
             for (successor in kv.value) {
-                if (predecessors.containsKey(successor)) {
-                    predecessors[successor]!!.add(kv.key)
-
-                } else {
-                    predecessors[successor] = mutableSetOf(kv.key)
-                }
+                predecessors[successor]!!.add(kv.key)
             }
         }
 
         predecessors
+    }
+
+    /** The set of basic blocks that transition to HALT and exit the program. */
+    val exitPoints: Set<RegularBlockLabel> by lazy {
+        blocks.filter { kv -> kv.value.jump is RegularHalt }.map { kv -> kv.key }.toSet()
     }
 
     fun block(label: RegularBlockLabel): LoweredBasicBlock<RegularBlockLabel>? =

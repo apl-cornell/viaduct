@@ -37,7 +37,7 @@ import edu.cornell.cs.apl.viaduct.lowering.QueryNode as LQueryNode
 import edu.cornell.cs.apl.viaduct.lowering.ReadNode as LReadNode
 import edu.cornell.cs.apl.viaduct.lowering.UpdateNode as LUpdateNode
 
-class LoweringPass private constructor (val block: BlockNode) {
+class LoweringPass private constructor(val block: BlockNode) {
     private val nameGenerator = FreshNameGenerator()
     private val blockMap = mutableMapOf<RegularBlockLabel, LoweredBasicBlock<RegularBlockLabel>>()
     private val breakLabelMap = mutableMapOf<JumpLabel, RegularBlockLabel>()

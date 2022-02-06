@@ -1,6 +1,5 @@
 package edu.cornell.cs.apl.viaduct.lowering
 
-import com.ibm.icu.text.CaseMap
 import edu.cornell.cs.apl.prettyprinting.Document
 import edu.cornell.cs.apl.prettyprinting.PrettyPrintable
 import edu.cornell.cs.apl.prettyprinting.bracketed
@@ -159,7 +158,7 @@ data class LoweredBasicBlock<T : BlockLabel>(
         if (statements.isNotEmpty()) {
             statements.concatenated(separator = Document.forcedLineBreak) + Document.forcedLineBreak + jump
         } else {
-           jump.toDocument()
+            jump.toDocument()
         }
 
     fun successors(): Set<T> = jump.successors()

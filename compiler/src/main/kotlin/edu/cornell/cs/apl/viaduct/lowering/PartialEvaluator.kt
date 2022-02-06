@@ -26,7 +26,7 @@ import kotlinx.collections.immutable.toPersistentList
 import java.util.LinkedList
 import java.util.Queue
 
-sealed class InterpreterObject: PrettyPrintable {
+sealed class InterpreterObject : PrettyPrintable {
     abstract fun query(query: QueryName, arguments: List<Value>): Value
 
     abstract fun update(update: UpdateName, arguments: List<Value>): InterpreterObject
@@ -136,7 +136,7 @@ data class VectorObject(val values: PersistentMap<Int, Value>) : InterpreterObje
 data class PartialStore(
     val objectStore: PersistentMap<ObjectVariable, InterpreterObject>,
     val temporaryStore: PersistentMap<Temporary, LoweredExpression>
-): PrettyPrintable {
+) : PrettyPrintable {
     fun updateObject(variable: ObjectVariable, obj: InterpreterObject): PartialStore {
         return this.copy(objectStore = objectStore.put(variable, obj))
     }
@@ -164,6 +164,8 @@ class PartialEvaluator(
             return PartialEvaluator(program).evaluate()
         }
     }
+
+    private val objectBindingTimeMap: Map<ObjectVariable, BindingTime> = BindingTimeAnalysis.computeBindingTime(program)
 
     private fun evaluateExpression(store: PartialStore, expr: LoweredExpression): LoweredExpression {
         return when (expr) {
@@ -229,7 +231,9 @@ class PartialEvaluator(
             is DeclarationNode -> {
                 val reducedArgs = stmt.arguments.map { arg -> evaluateExpression(store, arg) }
                 val staticArgs = reducedArgs.all { it.isStatic() }
-                if (staticArgs) {
+                val staticObject = objectBindingTimeMap[stmt.name] == BindingTime.STATIC
+
+                if (staticArgs && staticObject) {
                     val valArgs = reducedArgs.map { (it as LiteralNode).value }
                     val obj = buildObject(stmt.className, stmt.typeArguments, valArgs)
                     Pair(store.updateObject(stmt.name, obj), SkipNode)
@@ -252,7 +256,7 @@ class PartialEvaluator(
             is UpdateNode -> {
                 val reducedArgs = stmt.arguments.map { arg -> evaluateExpression(store, arg) }
                 val staticArgs = reducedArgs.all { it.isStatic() }
-                val staticObject = store.objectStore.contains(stmt.variable)
+                val staticObject = objectBindingTimeMap[stmt.variable]!! == BindingTime.STATIC
 
                 when {
                     // easy case: interpret update as in normal (full) evaluation
@@ -404,7 +408,7 @@ class PartialEvaluator(
         return LoweredBasicBlock(residualStmts, residualJump)
     }
 
-    /** Online partial evaluation of a flowchart program. */
+    /** Offline partial evaluation of a flowchart program. */
     fun evaluate(
         initialStore: PartialStore =
             PartialStore(objectStore = persistentHashMapOf(), temporaryStore = persistentHashMapOf())

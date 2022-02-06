@@ -1,12 +1,12 @@
 package edu.cornell.cs.apl.viaduct.cli
 
 import com.github.ajalt.clikt.core.CliktCommand
-import edu.cornell.cs.apl.viaduct.analysis.main
 import edu.cornell.cs.apl.viaduct.backends.DefaultCombinedBackend
 import edu.cornell.cs.apl.viaduct.lowering.LoweringPass
 import edu.cornell.cs.apl.viaduct.lowering.PartialEvaluator
 import edu.cornell.cs.apl.viaduct.lowering.computeDominators
 import edu.cornell.cs.apl.viaduct.lowering.computePostdominators
+import edu.cornell.cs.apl.viaduct.lowering.computeTransitiveSuccessors
 import edu.cornell.cs.apl.viaduct.lowering.optimize
 import edu.cornell.cs.apl.viaduct.parsing.parse
 import edu.cornell.cs.apl.viaduct.passes.elaborated
@@ -25,7 +25,6 @@ class Evaluate : CliktCommand(help = "Partially evaluate compiled program.") {
         println("original")
         println(flowchart.toDocument().print())
 
-
         println("dominators")
         for (kv in flowchart.computeDominators()) {
             println("${kv.key} => ${kv.value}")
@@ -33,6 +32,11 @@ class Evaluate : CliktCommand(help = "Partially evaluate compiled program.") {
 
         println("postdominators")
         for (kv in flowchart.computePostdominators()) {
+            println("${kv.key} => ${kv.value}")
+        }
+
+        println("transitive successors")
+        for (kv in flowchart.computeTransitiveSuccessors()) {
             println("${kv.key} => ${kv.value}")
         }
 

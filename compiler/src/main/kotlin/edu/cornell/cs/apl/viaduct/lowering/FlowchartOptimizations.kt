@@ -82,7 +82,6 @@ fun FlowchartProgram.inlineBlocks(): FlowchartProgram {
                 // inline the successor
                 if (this.predecessorMap[jump.label]!!.size == 1) {
                     curBlock = this.block(jump.label)!!
-
                 } else break
             } else break
         }

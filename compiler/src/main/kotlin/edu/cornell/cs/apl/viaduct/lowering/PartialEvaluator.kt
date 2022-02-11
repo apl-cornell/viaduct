@@ -137,6 +137,8 @@ data class PartialStore(
     val objectStore: PersistentMap<ObjectVariable, InterpreterObject>,
     val temporaryStore: PersistentMap<Temporary, LoweredExpression>
 ) : PrettyPrintable {
+    fun getObject(variable: ObjectVariable): InterpreterObject? = objectStore[variable]
+
     fun updateObject(variable: ObjectVariable, obj: InterpreterObject): PartialStore {
         return this.copy(objectStore = objectStore.put(variable, obj))
     }
@@ -166,6 +168,10 @@ class PartialEvaluator(
     }
 
     private val objectBindingTimeMap: Map<ObjectVariable, BindingTime> = BindingTimeAnalysis.computeBindingTime(program)
+    private val objectRenameMap = mutableMapOf<ObjectVariable, ObjectVariable>()
+    private val nameGenerator = FreshNameGenerator()
+
+    private fun getObjectName(variable: ObjectVariable) = objectRenameMap[variable] ?: variable
 
     private fun evaluateExpression(store: PartialStore, expr: LoweredExpression): LoweredExpression {
         return when (expr) {
@@ -195,7 +201,10 @@ class PartialEvaluator(
                     val queryVal = store.objectStore[expr.variable]!!.query(expr.query, valArgs)
                     LiteralNode(queryVal)
                 } else {
-                    expr.copy(arguments = reducedArgs.toPersistentList())
+                    expr.copy(
+                        variable = objectRenameMap[expr.variable] ?: expr.variable,
+                        arguments = reducedArgs.toPersistentList()
+                    )
                 }
             }
 
@@ -236,7 +245,8 @@ class PartialEvaluator(
                 if (staticArgs && staticObject) {
                     val valArgs = reducedArgs.map { (it as LiteralNode).value }
                     val obj = buildObject(stmt.className, stmt.typeArguments, valArgs)
-                    Pair(store.updateObject(stmt.name, obj), SkipNode)
+                    Pair(store.updateObject(getObjectName(stmt.name), obj), SkipNode)
+
                 } else {
                     val reducedDecl = stmt.copy(arguments = reducedArgs.toPersistentList())
                     Pair(store, reducedDecl)
@@ -262,20 +272,25 @@ class PartialEvaluator(
                     // easy case: interpret update as in normal (full) evaluation
                     staticArgs && staticObject -> {
                         val valArgs = reducedArgs.map { (it as LiteralNode).value }
-                        val updatedObj = store.objectStore[stmt.variable]!!.update(stmt.update, valArgs)
-                        Pair(store.updateObject(stmt.variable, updatedObj), SkipNode)
+                        val updatedObj =
+                            store.getObject(getObjectName(stmt.variable))!!
+                                .update(stmt.update, valArgs)
+                        Pair(store.updateObject(getObjectName(stmt.variable), updatedObj), SkipNode)
                     }
 
                     !staticArgs && staticObject -> {
-                        when (val obj = store.objectStore[stmt.variable]!!) {
+                        when (val obj = store.getObject(getObjectName(stmt.variable))!!) {
                             is ImmutableCellObject ->
                                 throw Exception("cannot update immutable cell object")
 
                             // for mutable cells, remove cell from partial store
                             is MutableCellObject -> {
                                 Pair(
-                                    store.deleteObject(stmt.variable),
-                                    stmt.copy(arguments = reducedArgs.toPersistentList())
+                                    store.deleteObject(getObjectName(stmt.variable)),
+                                    stmt.copy(
+                                        variable = getObjectName(stmt.variable),
+                                        arguments = reducedArgs.toPersistentList()
+                                    )
                                 )
                             }
 
@@ -288,7 +303,7 @@ class PartialEvaluator(
                                     !reducedIndex.isStatic() -> {
                                         Pair(
                                             store.updateObject(
-                                                stmt.variable,
+                                                getObjectName(stmt.variable),
                                                 VectorObject(persistentHashMapOf())
                                             ),
                                             stmt.copy(arguments = reducedArgs.toPersistentList())
@@ -300,7 +315,7 @@ class PartialEvaluator(
                                         val index = ((reducedIndex as LiteralNode).value as IntegerValue).value
                                         Pair(
                                             store.updateObject(
-                                                stmt.variable,
+                                                getObjectName(stmt.variable),
                                                 obj.copy(values = obj.values.remove(index))
                                             ),
                                             stmt.copy(arguments = reducedArgs.toPersistentList())
@@ -322,7 +337,7 @@ class PartialEvaluator(
                                 if (reducedArgs.size == 1) { // mutable cell
                                     Pair(
                                         store.updateObject(
-                                            stmt.variable,
+                                            getObjectName(stmt.variable),
                                             MutableCellObject((reducedArgs[0] as LiteralNode).value)
                                         ),
                                         SkipNode
@@ -332,7 +347,7 @@ class PartialEvaluator(
                                     val value = (reducedArgs[1] as LiteralNode).value
                                     Pair(
                                         store.updateObject(
-                                            stmt.variable,
+                                            getObjectName(stmt.variable),
                                             VectorObject(persistentHashMapOf(index to value))
                                         ),
                                         SkipNode

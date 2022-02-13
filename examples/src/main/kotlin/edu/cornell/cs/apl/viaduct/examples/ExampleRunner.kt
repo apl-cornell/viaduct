@@ -124,12 +124,13 @@ class Run : CliktCommand(help = "Run a compiled program for a single host.") {
                 hostConnectionInfo.map { kv -> "${kv.key.name} => ${kv.value}" }.joinToString()
         }
 
-        val ioStrategy = inputFile?.let { ScannerIOStrategy(Scanner(it)) } ?: ScannerIOStrategy(Scanner(System.`in`))
-
-        val runtime = ViaductNetworkRuntime(host, hostConnectionInfo, ioStrategy)
-        runtime.start()
-        program.main(host, runtime)
-        runtime.shutdown()
+        (inputFile?.let { Scanner(it) } ?: Scanner(System.`in`)).use { scanner ->
+            val ioStrategy = ScannerIOStrategy(scanner)
+            val runtime = ViaductNetworkRuntime(host, hostConnectionInfo, ioStrategy)
+            runtime.start()
+            program.main(host, runtime)
+            runtime.shutdown()
+        }
     }
 }
 

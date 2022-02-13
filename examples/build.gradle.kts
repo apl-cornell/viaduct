@@ -90,7 +90,6 @@ abstract class GenerateViaductProgramList : DefaultTask() {
             if (packageName.isEmpty()) className else "$packageName.$className"
         }.sorted()
 
-
         val packageDirectory = outputDirectory.get().asFile.resolve(outputPackage.get().replace(".", File.separator))
         val outputFile = packageDirectory.resolve("ViaductPrograms.kt")
         packageDirectory.mkdirs()

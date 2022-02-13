@@ -9,24 +9,30 @@ import edu.cornell.cs.apl.viaduct.syntax.values.IOValue
 import edu.cornell.cs.apl.viaduct.syntax.values.IntegerValue
 import edu.cornell.cs.apl.viaduct.syntax.values.UnitValue
 import edu.cornell.cs.apl.viaduct.syntax.values.Value
+import java.io.Writer
+import java.nio.charset.Charset
 import java.util.Scanner
 
-class TerminalIOStrategy : IOStrategy {
-    private val stdinScanner: Scanner = Scanner(System.`in`)
-
+class ScannerIOStrategy(
+    private val input: Scanner,
+    private val output: Writer = System.out.writer(Charset.defaultCharset())
+) : IOStrategy {
     override fun input(type: IOValueType): Value {
-        println("Input: ")
         return when (type) {
-            is BooleanType -> BooleanValue(stdinScanner.nextBoolean())
-            is IntegerType -> IntegerValue(stdinScanner.nextInt())
+            is BooleanType ->
+                BooleanValue(input.nextBoolean())
+
+            is IntegerType ->
+                IntegerValue(input.nextInt())
+
             is UnitType -> {
-                stdinScanner.next("unit")
+                input.next(UnitType.toString())
                 UnitValue
             }
         }
     }
 
     override fun output(value: IOValue) {
-        println(value)
+        output.write(value.toString())
     }
 }

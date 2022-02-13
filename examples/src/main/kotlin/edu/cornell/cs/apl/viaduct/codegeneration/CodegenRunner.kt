@@ -133,8 +133,7 @@ class CodegenRunnerRunCommand : CliktCommand(
                 hostConnectionInfo.map { kv -> "${kv.key.name} => ${kv.value}" }.joinToString()
         }
 
-        // create IO strategy
-        val ioStrategy = inputFile?.let { FileIOStrategy(it) } ?: TerminalIOStrategy()
+        val ioStrategy = inputFile?.let { ScannerIOStrategy(Scanner(it)) } ?: ScannerIOStrategy(Scanner(System.`in`))
 
         val runtime = ViaductNetworkRuntime(host, hostConnectionInfo, ioStrategy)
         runtime.start()

@@ -37,7 +37,7 @@ class ViaductNetworkRuntime(
     private val ioStrategy: IOStrategy,
     private val connectionNumRetry: Int = CONNECTION_NUM_RETRY,
     private val connectionRetryDelay: Long = CONNECTION_RETRY_DELAY
-) : ViaductRuntime, IOStrategy by ioStrategy {
+) : ViaductRuntime, IOStrategy by ioStrategy, Closeable {
     companion object {
         // default: try to connect for at most 10 times, at 1000ms intervals
         const val CONNECTION_NUM_RETRY: Int = 10
@@ -140,7 +140,7 @@ class ViaductNetworkRuntime(
     }
 
     /** Shutdown runtime by closing sockets to other hosts. */
-    fun shutdown() {
+    override fun close() {
         for (kv in connectionMap) {
             logger.info { "Closing connection to host ${kv.key.name}." }
             kv.value.close()

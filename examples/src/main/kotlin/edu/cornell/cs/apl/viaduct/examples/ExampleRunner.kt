@@ -125,11 +125,10 @@ class Run : CliktCommand(help = "Run a compiled program for a single host.") {
         }
 
         (inputFile?.let { Scanner(it) } ?: Scanner(System.`in`)).use { scanner ->
-            val ioStrategy = ScannerIOStrategy(scanner)
-            val runtime = ViaductNetworkRuntime(host, hostConnectionInfo, ioStrategy)
-            runtime.start()
-            program.main(host, runtime)
-            runtime.shutdown()
+            ViaductNetworkRuntime(host, hostConnectionInfo, ScannerIOStrategy(scanner)).use { runtime ->
+                runtime.start()
+                program.main(host, runtime)
+            }
         }
     }
 }

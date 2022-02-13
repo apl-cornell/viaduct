@@ -1,4 +1,4 @@
-package edu.cornell.cs.apl.viaduct.codegeneration
+package edu.cornell.cs.apl.viaduct.examples
 
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.core.NoOpCliktCommand

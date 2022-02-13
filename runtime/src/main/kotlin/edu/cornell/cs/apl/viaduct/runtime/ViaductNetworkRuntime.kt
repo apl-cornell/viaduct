@@ -1,9 +1,6 @@
 package edu.cornell.cs.apl.viaduct.runtime
 
 import edu.cornell.cs.apl.viaduct.syntax.Host
-import edu.cornell.cs.apl.viaduct.syntax.types.IOValueType
-import edu.cornell.cs.apl.viaduct.syntax.values.IOValue
-import edu.cornell.cs.apl.viaduct.syntax.values.Value
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.joinAll
@@ -14,6 +11,7 @@ import kotlinx.serialization.KSerializer
 import kotlinx.serialization.protobuf.ProtoBuf
 import kotlinx.serialization.serializer
 import mu.KotlinLogging
+import java.io.Closeable
 import java.io.DataInputStream
 import java.io.DataOutputStream
 import java.net.ConnectException
@@ -25,19 +23,12 @@ import kotlin.reflect.KType
 
 private var logger = KotlinLogging.logger("Runtime")
 
-private class HostConnection(private val socket: Socket) {
+private class HostConnection(private val socket: Socket) : Closeable by socket {
     val output = DataOutputStream(socket.getOutputStream())
     val input = DataInputStream(socket.getInputStream())
-
-    val isClosed: Boolean
-        get() = socket.isClosed
-
-    fun close() {
-        socket.close()
-    }
 }
 
-@ExperimentalSerializationApi
+@OptIn(ExperimentalSerializationApi::class)
 @Suppress("UNCHECKED_CAST")
 /** Implementation of the runtime using standard networking sockets. */
 class ViaductNetworkRuntime(
@@ -46,7 +37,7 @@ class ViaductNetworkRuntime(
     private val ioStrategy: IOStrategy,
     private val connectionNumRetry: Int = CONNECTION_NUM_RETRY,
     private val connectionRetryDelay: Long = CONNECTION_RETRY_DELAY
-) : ViaductRuntime {
+) : ViaductRuntime, IOStrategy by ioStrategy, Closeable {
     companion object {
         // default: try to connect for at most 10 times, at 1000ms intervals
         const val CONNECTION_NUM_RETRY: Int = 10
@@ -94,16 +85,20 @@ class ViaductNetworkRuntime(
                                 connectionMap[listeningHost] = HostConnection(clientSocket)
                                 connected = true
 
-                                logger.info { "connected to host ${listeningHost.name} at $listeningHostAddress" }
+                                logger.info { "Connected to host ${listeningHost.name} at $listeningHostAddress." }
                             } catch (e: ConnectException) {
-                                logger.info { "failed to connect to host ${listeningHost.name} at $listeningHostAddress, retrying" }
+                                logger.info { "Failed to connect to host ${listeningHost.name} at $listeningHostAddress; retrying." }
                                 retries++
                                 delay(connectionRetryDelay)
                             }
                         }
 
                         if (!connected) {
-                            throw HostConnectionException(this@ViaductNetworkRuntime.host, listeningHost, listeningHostAddress)
+                            throw HostConnectionException(
+                                this@ViaductNetworkRuntime.host,
+                                listeningHost,
+                                listeningHostAddress
+                            )
                         }
                     }
                 }.joinAll()
@@ -112,7 +107,7 @@ class ViaductNetworkRuntime(
                 val incomingConnections = connectingHosts.toMutableSet()
 
                 if (incomingConnections.size > 0) {
-                    logger.info { "listening to incoming connections from: ${connectingHosts.joinToString { it.name }}" }
+                    logger.info { "Listening to incoming connections from: ${connectingHosts.joinToString { it.name }}." }
                 }
 
                 while (incomingConnections.isNotEmpty()) {
@@ -122,21 +117,17 @@ class ViaductNetworkRuntime(
                     connectionMap[clientHost] = HostConnection(clientSocket)
                     incomingConnections.remove(clientHost)
 
-                    logger.info { "accepted connection from host ${clientHost.name}" }
+                    logger.info { "Accepted connection from host ${clientHost.name}." }
                 }
 
                 serverSocket.close()
             }
         } catch (e: HostConnectionException) { // if this host failed to connect, clean up opened sockets
             for (connection in this@ViaductNetworkRuntime.connectionMap.values) {
-                if (!connection.isClosed) {
-                    connection.close()
-                }
+                connection.close()
             }
 
-            if (!serverSocket.isClosed) {
-                serverSocket.close()
-            }
+            serverSocket.close()
 
             // propagate exception up
             throw e
@@ -149,26 +140,16 @@ class ViaductNetworkRuntime(
     }
 
     /** Shutdown runtime by closing sockets to other hosts. */
-    fun shutdown() {
+    override fun close() {
         for (kv in connectionMap) {
-            if (!kv.value.isClosed) {
-                logger.info { "closing connection to host ${kv.key.name}" }
-                kv.value.close()
-            }
+            logger.info { "Closing connection to host ${kv.key.name}." }
+            kv.value.close()
         }
-    }
-
-    override fun input(type: IOValueType): Value {
-        return ioStrategy.input(type)
-    }
-
-    override fun output(value: IOValue) {
-        ioStrategy.output(value)
     }
 
     override fun <T> send(type: KType, value: T, receiver: Host) {
         return connectionMap[receiver]?.output?.let { socketOut ->
-            logger.info { "sending $value to ${receiver.name}" }
+            logger.trace { "Sending $value to ${receiver.name}." }
 
             val bytes = ProtoBuf.encodeToByteArray(ProtoBuf.serializersModule.serializer(type), value)
             val bytesLen = bytes.size
@@ -184,7 +165,7 @@ class ViaductNetworkRuntime(
             val serializer = ProtoBuf.serializersModule.serializer(type) as KSerializer<T>
             val value = ProtoBuf.decodeFromByteArray(serializer, bytes)
 
-            logger.info { "received $value from ${sender.name}" }
+            logger.trace { "Received $value from ${sender.name}." }
 
             return value
         } ?: throw HostCommunicationException(this.host, sender)

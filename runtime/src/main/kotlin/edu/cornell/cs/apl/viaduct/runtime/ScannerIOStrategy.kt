@@ -33,6 +33,6 @@ class ScannerIOStrategy(
     }
 
     override fun output(value: IOValue) {
-        output.write(value.toString())
+        output.write("$value\n")
     }
 }

@@ -28,7 +28,7 @@ private val logger = KotlinLogging.logger("ExampleRunner")
 private val generatedPrograms: Map<String, ViaductGeneratedProgram> =
     viaductPrograms.associateBy { program -> program::class.qualifiedName!! }
 
-class ExampleRunner : NoOpCliktCommand(help = "Run compiled Viaduct programs.") {
+private class ExampleRunner : NoOpCliktCommand(help = "Run compiled Viaduct programs.") {
     val verbose by option(
         "-v",
         "--verbose",
@@ -58,7 +58,7 @@ class ExampleRunner : NoOpCliktCommand(help = "Run compiled Viaduct programs.") 
     }
 }
 
-class List : CliktCommand(help = "List compiled programs that can be executed.") {
+private class List : CliktCommand(help = "List compiled programs that can be executed.") {
     override fun run() {
         println("Found ${generatedPrograms.size} generated programs:")
         for (kv in generatedPrograms.entries) {
@@ -67,7 +67,7 @@ class List : CliktCommand(help = "List compiled programs that can be executed.")
     }
 }
 
-class Run : CliktCommand(help = "Run a compiled program for a single host.") {
+private class Run : CliktCommand(help = "Run a compiled program for a single host.") {
     companion object {
         const val DEFAULT_IP: String = "127.0.0.1"
         const val DEFAULT_PORT: Int = 4000

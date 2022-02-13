@@ -10,9 +10,9 @@ import java.io.File
 import java.util.stream.Stream
 
 /** Same as [PositiveTestFileProvider] but parses the programs. */
-class PositiveTestProgramProvider : ArgumentsProvider {
+class PositiveTestProgramProvider(private val subfolder: String = "") : ArgumentsProvider {
     override fun provideArguments(context: ExtensionContext?): Stream<out Arguments> {
-        return PositiveTestFileProvider().provideArguments(context)
+        return PositiveTestFileProvider(subfolder).provideArguments(context)
             .map { Arguments.of(SourceFile.from(it.get()[0] as File).parse(DefaultCombinedBackend.protocolParsers)) }
     }
 }

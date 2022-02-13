@@ -1,3 +1,6 @@
+host alice : {A}
+host bob   : {B}
+
 fun main() {
     val a = Array[int]{A}(10);
     val b = Array[int]{B}(10);
@@ -11,8 +14,5 @@ fun main() {
     }
 
     output a[0] to alice;
-    output a[9] to alice;
+    output b[9] to bob;
 }
-
-host alice : {A}
-host bob   : {B}

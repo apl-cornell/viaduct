@@ -1,34 +1,35 @@
 package edu.cornell.cs.apl.viaduct.codegeneration
 
 import com.github.ajalt.clikt.core.CliktCommand
-import com.github.ajalt.clikt.core.requireObject
+import com.github.ajalt.clikt.core.NoOpCliktCommand
 import com.github.ajalt.clikt.core.subcommands
 import com.github.ajalt.clikt.parameters.arguments.argument
 import com.github.ajalt.clikt.parameters.options.associate
 import com.github.ajalt.clikt.parameters.options.counted
 import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.options.validate
+import com.github.ajalt.clikt.parameters.options.versionOption
 import com.github.ajalt.clikt.parameters.types.file
-import edu.cornell.cs.apl.viaduct.runtime.FileIOStrategy
-import edu.cornell.cs.apl.viaduct.runtime.TerminalIOStrategy
+import edu.cornell.cs.apl.viaduct.runtime.ScannerIOStrategy
 import edu.cornell.cs.apl.viaduct.runtime.ViaductGeneratedProgram
 import edu.cornell.cs.apl.viaduct.runtime.ViaductNetworkRuntime
 import edu.cornell.cs.apl.viaduct.syntax.Host
+import edu.cornell.cs.apl.viaduct.version
 import mu.KotlinLogging
 import org.apache.logging.log4j.Level
 import org.apache.logging.log4j.core.config.Configurator
 import java.io.File
 import java.net.InetSocketAddress
+import java.util.Scanner
+import kotlin.system.exitProcess
 
-private val logger = KotlinLogging.logger("RunCodegenExamples")
+private val logger = KotlinLogging.logger("ExampleRunner")
 
-class CodegenRunnerCommand : CliktCommand(
-    help = "Run compiled Viaduct programs.",
-    invokeWithoutSubcommand = true
-) {
+private val generatedPrograms: Map<String, ViaductGeneratedProgram> =
+    viaductPrograms.associateBy { program -> program::class.qualifiedName!! }
 
-    val verbose by
-    option(
+class ExampleRunner : NoOpCliktCommand(help = "Run compiled Viaduct programs.") {
+    val verbose by option(
         "-v",
         "--verbose",
         help = """
@@ -51,34 +52,25 @@ class CodegenRunnerCommand : CliktCommand(
         if (level != null) Configurator.setRootLevel(level)
     }
 
-    override fun run() {
-        val generatedPrograms: Map<String, ViaductGeneratedProgram> =
-            viaductPrograms.map { program -> program::class.qualifiedName!! to program }.toMap()
-        currentContext.obj = generatedPrograms
+    init {
+        versionOption(version)
+        subcommands(List(), Run())
     }
 }
 
-class CodegenRunnerListCommand : CliktCommand(
-    name = "list",
-    help = "List known compiled programs that can be executed"
-) {
-    val programMap by requireObject<Map<String, ViaductGeneratedProgram>>()
-
+class List : CliktCommand(help = "List compiled programs that can be executed.") {
     override fun run() {
-        println("Found ${programMap.size} generated programs:")
-        for (kv in programMap.entries) {
+        println("Found ${generatedPrograms.size} generated programs:")
+        for (kv in generatedPrograms.entries) {
             println("- ${kv.key} with hosts ${kv.value.hosts.map { host -> host.name }}")
         }
     }
 }
 
-class CodegenRunnerRunCommand : CliktCommand(
-    name = "run",
-    help = "Run compiled protocol for a single host"
-) {
+class Run : CliktCommand(help = "Run a compiled program for a single host.") {
     companion object {
-        val DEFAULT_IP: String = "127.0.0.1"
-        val DEFAULT_PORT: Int = 4000
+        const val DEFAULT_IP: String = "127.0.0.1"
+        const val DEFAULT_PORT: Int = 4000
     }
 
     private val programName by argument(
@@ -88,36 +80,35 @@ class CodegenRunnerRunCommand : CliktCommand(
 
     private val hostName by argument(
         "HOSTNAME",
-        help = "Host that will run the protocol."
+        help = "Host that will run the protocol"
     )
 
     val inputFile: File? by option(
-        "-in",
+        "-i",
         "--input",
         help = "File to stream inputs from"
     ).file(canBeDir = false, mustExist = true)
 
     val hostAddresses: Map<String, String> by option(
-        "-hi", "--hostinfo"
+        "-h",
+        "--hostinfo",
+        help = "Associate each host with its address"
     ).associate()
 
-    val programMap by requireObject<Map<String, ViaductGeneratedProgram>>()
-
     override fun run() {
-        val program = programMap.get(programName)
-            ?: throw Error("Program $programName does not exist")
+        val program = generatedPrograms[programName]
+            ?: throw Error("Program $programName does not exist.")
 
         val host = Host(hostName)
 
         if (!program.hosts.contains(host)) {
-            throw Error("Program $programName does not have host $hostName")
+            throw Error("Program $programName does not have host $hostName.")
         }
 
         val hostConnectionInfo: Map<Host, InetSocketAddress> =
             if (hostAddresses.size < program.hosts.size) {
-                program.hosts.sorted()
-                    .zip(DEFAULT_PORT..(DEFAULT_PORT + program.hosts.size))
-                    .map { kv -> kv.first to InetSocketAddress.createUnresolved(DEFAULT_IP, kv.second) }
+                program.hosts
+                    .mapIndexed { i, h -> h to InetSocketAddress.createUnresolved(DEFAULT_IP, DEFAULT_PORT + i) }
                     .toMap()
             } else {
                 hostAddresses.map { kv ->
@@ -129,7 +120,7 @@ class CodegenRunnerRunCommand : CliktCommand(
             }
 
         logger.info {
-            "running $programName as $hostName with host connection info: " +
+            "Running $programName as $hostName with host connection info: " +
                 hostConnectionInfo.map { kv -> "${kv.key.name} => ${kv.value}" }.joinToString()
         }
 
@@ -143,6 +134,9 @@ class CodegenRunnerRunCommand : CliktCommand(
 }
 
 fun main(args: Array<String>) =
-    CodegenRunnerCommand()
-        .subcommands(CodegenRunnerRunCommand(), CodegenRunnerListCommand())
-        .main(args)
+    try {
+        ExampleRunner().main(args)
+    } catch (e: Throwable) {
+        System.err.println(e.localizedMessage)
+        exitProcess(1)
+    }

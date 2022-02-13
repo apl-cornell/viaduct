@@ -1,8 +1,9 @@
 package edu.cornell.cs.apl.viaduct.examples
 
+import edu.cornell.cs.apl.viaduct.runtime.CombinedRuntime
 import edu.cornell.cs.apl.viaduct.runtime.ScannerIOStrategy
+import edu.cornell.cs.apl.viaduct.runtime.TCPNetworkStrategy
 import edu.cornell.cs.apl.viaduct.runtime.ViaductGeneratedProgram
-import edu.cornell.cs.apl.viaduct.runtime.ViaductNetworkRuntime
 import edu.cornell.cs.apl.viaduct.syntax.Host
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -68,8 +69,9 @@ private fun ViaductGeneratedProgram.run(): Map<Host, String> {
 private fun ViaductGeneratedProgram.runAs(host: Host, hostAddresses: Map<Host, InetSocketAddress>): String {
     Scanner(inputFile(this, host)).use { inputs ->
         val outputs = StringWriter()
-        ViaductNetworkRuntime(host, hostAddresses, ScannerIOStrategy(inputs, outputs)).use { runtime ->
-            runtime.start()
+        TCPNetworkStrategy(host, hostAddresses).use { networkStrategy ->
+            networkStrategy.start()
+            val runtime = CombinedRuntime(ScannerIOStrategy(inputs, outputs), networkStrategy)
             this.main(host, runtime)
             return outputs.toString()
         }

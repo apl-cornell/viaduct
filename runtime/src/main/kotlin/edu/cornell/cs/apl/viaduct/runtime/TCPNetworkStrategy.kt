@@ -24,20 +24,19 @@ import kotlin.reflect.KType
 private var logger = KotlinLogging.logger("Runtime")
 
 private class HostConnection(private val socket: Socket) : Closeable by socket {
-    val output = DataOutputStream(socket.getOutputStream())
     val input = DataInputStream(socket.getInputStream())
+    val output = DataOutputStream(socket.getOutputStream())
 }
 
 @OptIn(ExperimentalSerializationApi::class)
 @Suppress("UNCHECKED_CAST")
-/** Implementation of the runtime using standard networking sockets. */
-class ViaductNetworkRuntime(
+/** Implementation of a pairwise connected network using TCP sockets. */
+class TCPNetworkStrategy(
     private val host: Host,
-    private val hostConnectionInfo: Map<Host, InetSocketAddress>,
-    private val ioStrategy: IOStrategy,
+    private val hostAddresses: Map<Host, InetSocketAddress>,
     private val connectionNumRetry: Int = CONNECTION_NUM_RETRY,
     private val connectionRetryDelay: Long = CONNECTION_RETRY_DELAY
-) : ViaductRuntime, IOStrategy by ioStrategy, Closeable {
+) : NetworkStrategy, Closeable {
     companion object {
         // default: try to connect for at most 10 times, at 1000ms intervals
         const val CONNECTION_NUM_RETRY: Int = 10
@@ -53,15 +52,15 @@ class ViaductNetworkRuntime(
      *  - listen to connections from hosts h_j where i < j
      *  - connect to hosts h_k where k < i */
     private fun createRemoteConnections() {
-        val hostAddress = hostConnectionInfo[this.host]!!
+        val hostAddress = hostAddresses[this.host]!!
         val serverSocket = ServerSocket(hostAddress.port)
 
         try {
             runBlocking {
-                val sortedHosts = hostConnectionInfo.keys.sorted()
+                val sortedHosts = hostAddresses.keys.sorted()
 
                 // connect to hosts with lower ID
-                val hindex = sortedHosts.indexOf(this@ViaductNetworkRuntime.host)
+                val hindex = sortedHosts.indexOf(this@TCPNetworkStrategy.host)
 
                 // hosts to which this host will connect
                 val listeningHosts = sortedHosts.subList(0, hindex)
@@ -73,7 +72,7 @@ class ViaductNetworkRuntime(
                 // spawn a coroutine for each host to connect to
                 listeningHosts.map { listeningHost ->
                     launch(Dispatchers.IO) {
-                        val listeningHostAddress = hostConnectionInfo[listeningHost]!!
+                        val listeningHostAddress = hostAddresses[listeningHost]!!
                         var retries = 0
                         var connected = false
                         while (retries < connectionNumRetry && !connected) {
@@ -95,7 +94,7 @@ class ViaductNetworkRuntime(
 
                         if (!connected) {
                             throw HostConnectionException(
-                                this@ViaductNetworkRuntime.host,
+                                this@TCPNetworkStrategy.host,
                                 listeningHost,
                                 listeningHostAddress
                             )
@@ -123,7 +122,7 @@ class ViaductNetworkRuntime(
                 serverSocket.close()
             }
         } catch (e: HostConnectionException) { // if this host failed to connect, clean up opened sockets
-            for (connection in this@ViaductNetworkRuntime.connectionMap.values) {
+            for (connection in this@TCPNetworkStrategy.connectionMap.values) {
                 connection.close()
             }
 
@@ -139,8 +138,8 @@ class ViaductNetworkRuntime(
         createRemoteConnections()
     }
 
-    /** Shutdown runtime by closing sockets to other hosts. */
     override fun close() {
+        // Closing sockets to other hosts.
         for (kv in connectionMap) {
             logger.info { "Closing connection to host ${kv.key.name}." }
             kv.value.close()
@@ -172,6 +171,6 @@ class ViaductNetworkRuntime(
     }
 
     override fun url(host: Host): InetSocketAddress {
-        return hostConnectionInfo[host] ?: throw UnknownHostException(host)
+        return hostAddresses[host] ?: throw UnknownHostException(host)
     }
 }

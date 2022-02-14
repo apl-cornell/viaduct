@@ -10,9 +10,10 @@ import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.options.validate
 import com.github.ajalt.clikt.parameters.options.versionOption
 import com.github.ajalt.clikt.parameters.types.file
+import edu.cornell.cs.apl.viaduct.runtime.CombinedRuntime
 import edu.cornell.cs.apl.viaduct.runtime.ScannerIOStrategy
+import edu.cornell.cs.apl.viaduct.runtime.TCPNetworkStrategy
 import edu.cornell.cs.apl.viaduct.runtime.ViaductGeneratedProgram
-import edu.cornell.cs.apl.viaduct.runtime.ViaductNetworkRuntime
 import edu.cornell.cs.apl.viaduct.syntax.Host
 import edu.cornell.cs.apl.viaduct.version
 import mu.KotlinLogging
@@ -125,8 +126,9 @@ private class Run : CliktCommand(help = "Run a compiled program for a single hos
         }
 
         (inputFile?.let { Scanner(it) } ?: Scanner(System.`in`)).use { scanner ->
-            ViaductNetworkRuntime(host, hostConnectionInfo, ScannerIOStrategy(scanner)).use { runtime ->
-                runtime.start()
+            TCPNetworkStrategy(host, hostConnectionInfo).use { networkStrategy ->
+                networkStrategy.start()
+                val runtime = CombinedRuntime(ScannerIOStrategy(scanner), networkStrategy)
                 program.main(host, runtime)
             }
         }

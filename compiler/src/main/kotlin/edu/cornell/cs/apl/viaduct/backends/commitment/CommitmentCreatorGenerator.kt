@@ -9,10 +9,9 @@ import edu.cornell.cs.apl.viaduct.analysis.ProtocolAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.TypeAnalysis
 import edu.cornell.cs.apl.viaduct.codegeneration.AbstractCodeGenerator
 import edu.cornell.cs.apl.viaduct.codegeneration.CodeGeneratorContext
+import edu.cornell.cs.apl.viaduct.codegeneration.UnsupportedOperatorException
 import edu.cornell.cs.apl.viaduct.codegeneration.receiveReplicated
 import edu.cornell.cs.apl.viaduct.codegeneration.typeTranslator
-import edu.cornell.cs.apl.viaduct.errors.CodeGenerationError
-import edu.cornell.cs.apl.viaduct.errors.ViaductInterpreterError
 import edu.cornell.cs.apl.viaduct.runtime.commitment.Committed
 import edu.cornell.cs.apl.viaduct.selection.CommunicationEvent
 import edu.cornell.cs.apl.viaduct.selection.ProtocolCommunication
@@ -72,33 +71,33 @@ internal class CommitmentCreatorGenerator(
                                 context.kotlinName(expr.variable.value),
                                 cleartextExp(protocol, expr.arguments.first())
                             )
-                            else -> throw CodeGenerationError("unknown vector query", expr)
+                            else -> throw UnsupportedOperatorException(protocol, expr)
                         }
                     }
 
                     is ImmutableCellType -> {
                         when (expr.query.value) {
                             is Get -> CodeBlock.of(context.kotlinName(expr.variable.value))
-                            else -> throw CodeGenerationError("unknown query", expr)
+                            else -> throw UnsupportedOperatorException(protocol, expr)
                         }
                     }
 
                     is MutableCellType -> {
                         when (expr.query.value) {
                             is Get -> CodeBlock.of(context.kotlinName(expr.variable.value))
-                            else -> throw CodeGenerationError("unknown query", expr)
+                            else -> throw UnsupportedOperatorException(protocol, expr)
                         }
                     }
 
-                    else -> throw CodeGenerationError("unknown AST object", expr)
+                    else -> throw UnsupportedOperatorException(protocol, expr)
                 }
             }
 
             is OperatorApplicationNode ->
-                throw CodeGenerationError("Commitment: cannot perform operations on committed values")
+                throw UnsupportedOperatorException(protocol, expr)
 
             is InputNode ->
-                throw CodeGenerationError("Commitment: cannot perform I/O in non-local protocol")
+                throw UnsupportedOperatorException(protocol, expr)
         }
 
     override fun let(protocol: Protocol, stmt: LetNode): CodeBlock =
@@ -119,7 +118,7 @@ internal class CommitmentCreatorGenerator(
                             cleartextExp(protocol, stmt.arguments[0]),
                             exp(protocol, stmt.arguments[1])
                         )
-                    else -> throw CodeGenerationError("Commitment: cannot modify commitments")
+                    else -> throw UnsupportedOperatorException(protocol, stmt)
                 }
             is MutableCellType ->
                 when (stmt.update.value) {
@@ -129,13 +128,13 @@ internal class CommitmentCreatorGenerator(
                             context.kotlinName(stmt.variable.value),
                             exp(protocol, stmt.arguments[0])
                         )
-                    else -> throw CodeGenerationError("Commitment: cannot modify commitments")
+                    else -> throw UnsupportedOperatorException(protocol, stmt)
                 }
-            else -> throw CodeGenerationError("Commitment: unknown object to update")
+            else -> throw UnsupportedOperatorException(protocol, stmt)
         }
 
     override fun output(protocol: Protocol, stmt: OutputNode): CodeBlock {
-        throw ViaductInterpreterError("Commitment: cannot perform I/O in non-local protocol")
+        throw UnsupportedOperatorException(protocol, stmt)
     }
 
     override fun guard(protocol: Protocol, expr: AtomicExpressionNode): CodeBlock = exp(protocol, expr)

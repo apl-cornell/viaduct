@@ -16,7 +16,6 @@ import com.squareup.kotlinpoet.joinToCode
 import edu.cornell.cs.apl.prettyprinting.joined
 import edu.cornell.cs.apl.viaduct.analysis.NameAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.ProtocolAnalysis
-import edu.cornell.cs.apl.viaduct.errors.CodeGenerationError
 import edu.cornell.cs.apl.viaduct.runtime.Boxed
 import edu.cornell.cs.apl.viaduct.runtime.ViaductGeneratedProgram
 import edu.cornell.cs.apl.viaduct.runtime.ViaductRuntime
@@ -223,7 +222,7 @@ private class BackendCodeGenerator(
                 }
             }
 
-            is AssertionNode -> throw CodeGenerationError("TODO")
+            is AssertionNode -> TODO("Assertions not yet implemented.")
         }
     }
 

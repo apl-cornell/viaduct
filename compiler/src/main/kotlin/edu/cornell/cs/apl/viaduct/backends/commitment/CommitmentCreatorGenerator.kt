@@ -2,142 +2,40 @@ package edu.cornell.cs.apl.viaduct.backends.commitment
 
 import com.squareup.kotlinpoet.CodeBlock
 import com.squareup.kotlinpoet.MemberName
-import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import com.squareup.kotlinpoet.asClassName
-import edu.cornell.cs.apl.viaduct.analysis.NameAnalysis
-import edu.cornell.cs.apl.viaduct.analysis.ProtocolAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.TypeAnalysis
 import edu.cornell.cs.apl.viaduct.codegeneration.AbstractCodeGenerator
 import edu.cornell.cs.apl.viaduct.codegeneration.CodeGeneratorContext
-import edu.cornell.cs.apl.viaduct.codegeneration.UnsupportedOperatorException
 import edu.cornell.cs.apl.viaduct.codegeneration.receiveReplicated
-import edu.cornell.cs.apl.viaduct.codegeneration.typeTranslator
 import edu.cornell.cs.apl.viaduct.runtime.commitment.Committed
 import edu.cornell.cs.apl.viaduct.selection.CommunicationEvent
 import edu.cornell.cs.apl.viaduct.selection.ProtocolCommunication
 import edu.cornell.cs.apl.viaduct.syntax.Host
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
 import edu.cornell.cs.apl.viaduct.syntax.ProtocolProjection
-import edu.cornell.cs.apl.viaduct.syntax.datatypes.Get
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.AtomicExpressionNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.DowngradeNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ExpressionNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.InputNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.LetNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.LiteralNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.OperatorApplicationNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutputNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.QueryNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.ReadNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.UpdateNode
-import edu.cornell.cs.apl.viaduct.syntax.types.ImmutableCellType
-import edu.cornell.cs.apl.viaduct.syntax.types.MutableCellType
-import edu.cornell.cs.apl.viaduct.syntax.types.VectorType
 
 internal class CommitmentCreatorGenerator(
     context: CodeGeneratorContext
 ) : AbstractCodeGenerator(context) {
-    val protocolAnalysis: ProtocolAnalysis = ProtocolAnalysis(context.program, context.protocolComposer)
-    val typeAnalysis = TypeAnalysis.get(context.program)
-    val nameAnalysis = NameAnalysis.get(context.program)
+    private val typeAnalysis = TypeAnalysis.get(context.program)
 
-    private val committedClassName = Committed::class
+    override fun guard(protocol: Protocol, expr: AtomicExpressionNode): CodeBlock = exp(protocol, expr)
 
     override fun exp(protocol: Protocol, expr: ExpressionNode): CodeBlock =
         when (expr) {
             is LiteralNode -> CodeBlock.of(
-                "%M(%L)",
-                MemberName(Committed.Companion::class.asClassName(), "fake"),
-                expr.value
+                "%T.%N(%L)",
+                Committed::class,
+                "fake",
+                value(expr.value)
             )
 
-            is ReadNode ->
-                CodeBlock.of(
-                    "%N",
-                    context.kotlinName(
-                        expr.temporary.value,
-                        protocol
-                    )
-                )
-
-            is DowngradeNode -> exp(protocol, expr.expression)
-
-            is QueryNode -> {
-                when (typeAnalysis.type(nameAnalysis.declaration(expr))) {
-                    is VectorType -> {
-                        when (expr.query.value) {
-                            is Get -> CodeBlock.of(
-                                "%N[%L]",
-                                context.kotlinName(expr.variable.value),
-                                cleartextExp(protocol, expr.arguments.first())
-                            )
-                            else -> throw UnsupportedOperatorException(protocol, expr)
-                        }
-                    }
-
-                    is ImmutableCellType -> {
-                        when (expr.query.value) {
-                            is Get -> CodeBlock.of(context.kotlinName(expr.variable.value))
-                            else -> throw UnsupportedOperatorException(protocol, expr)
-                        }
-                    }
-
-                    is MutableCellType -> {
-                        when (expr.query.value) {
-                            is Get -> CodeBlock.of(context.kotlinName(expr.variable.value))
-                            else -> throw UnsupportedOperatorException(protocol, expr)
-                        }
-                    }
-
-                    else -> throw UnsupportedOperatorException(protocol, expr)
-                }
-            }
-
-            is OperatorApplicationNode ->
-                throw UnsupportedOperatorException(protocol, expr)
-
-            is InputNode ->
-                throw UnsupportedOperatorException(protocol, expr)
+            else -> super.exp(protocol, expr)
         }
-
-    override fun let(protocol: Protocol, stmt: LetNode): CodeBlock =
-        CodeBlock.of(
-            "val %N = %L",
-            context.kotlinName(stmt.temporary.value, protocol),
-            exp(protocol, stmt.value)
-        )
-
-    override fun update(protocol: Protocol, stmt: UpdateNode): CodeBlock =
-        when (typeAnalysis.type(nameAnalysis.declaration(stmt))) {
-            is VectorType ->
-                when (stmt.update.value) {
-                    is edu.cornell.cs.apl.viaduct.syntax.datatypes.Set ->
-                        CodeBlock.of(
-                            "%N[%L] = %L",
-                            context.kotlinName(stmt.variable.value),
-                            cleartextExp(protocol, stmt.arguments[0]),
-                            exp(protocol, stmt.arguments[1])
-                        )
-                    else -> throw UnsupportedOperatorException(protocol, stmt)
-                }
-            is MutableCellType ->
-                when (stmt.update.value) {
-                    is edu.cornell.cs.apl.viaduct.syntax.datatypes.Set ->
-                        CodeBlock.of(
-                            "%N = %L",
-                            context.kotlinName(stmt.variable.value),
-                            exp(protocol, stmt.arguments[0])
-                        )
-                    else -> throw UnsupportedOperatorException(protocol, stmt)
-                }
-            else -> throw UnsupportedOperatorException(protocol, stmt)
-        }
-
-    override fun output(protocol: Protocol, stmt: OutputNode): CodeBlock {
-        throw UnsupportedOperatorException(protocol, stmt)
-    }
-
-    override fun guard(protocol: Protocol, expr: AtomicExpressionNode): CodeBlock = exp(protocol, expr)
 
     override fun send(
         sender: LetNode,
@@ -210,9 +108,7 @@ internal class CommitmentCreatorGenerator(
                     receiveBuilder.addStatement(
                         "val %N = %T(%L)",
                         context.kotlinName(sender.temporary.value, receiveProtocol),
-                        committedClassName.asClassName().parameterizedBy(
-                            typeTranslator(typeAnalysis.type(sender))
-                        ),
+                        Committed::class,
                         receiveReplicated(
                             sender,
                             sendProtocol,

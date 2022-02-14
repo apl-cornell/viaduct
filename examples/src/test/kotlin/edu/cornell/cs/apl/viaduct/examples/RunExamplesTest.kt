@@ -12,6 +12,7 @@ import org.apache.logging.log4j.Level
 import org.apache.logging.log4j.core.config.Configurator
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ArgumentsSource
 import org.springframework.util.SocketUtils
@@ -36,6 +37,22 @@ internal class RunExamplesTest {
             val expectedOutput = parseOutput(outputFile(program, host).readText())
             val actualOutput = parseOutput(outputs.getValue(host))
             assertEquals(expectedOutput, actualOutput, host.name)
+        }
+    }
+
+    /** Convenience function that creates empty input/output files for new test programs. */
+    @Disabled
+    @ParameterizedTest
+    @ArgumentsSource(ViaductProgramProvider::class)
+    fun createEmptyInputOutputFiles(program: ViaductGeneratedProgram) {
+        fun createFile(file: File) {
+            println("Creating $file.")
+            file.parentFile.mkdirs()
+            file.createNewFile()
+        }
+        program.hosts.forEach { host ->
+            createFile(inputFile(program, host))
+            createFile(outputFile(program, host))
         }
     }
 

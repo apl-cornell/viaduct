@@ -7,7 +7,6 @@ import com.squareup.kotlinpoet.STRING
 import com.squareup.kotlinpoet.TypeName
 import com.squareup.kotlinpoet.U_BYTE_ARRAY
 import edu.cornell.cs.apl.viaduct.analysis.TypeAnalysis
-import edu.cornell.cs.apl.viaduct.errors.CodeGenerationError
 import edu.cornell.cs.apl.viaduct.selection.CommunicationEvent
 import edu.cornell.cs.apl.viaduct.syntax.Host
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
@@ -30,7 +29,7 @@ fun typeTranslator(viaductType: ValueType): TypeName =
         BooleanType -> BOOLEAN
         IntegerType -> INT
         StringType -> STRING
-        else -> throw CodeGenerationError("unknown send and receive type")
+        else -> throw IllegalArgumentException("Cannot convert ${viaductType.toDocument().print()} to Kotlin type.")
     }
 
 fun receiveReplicated(

@@ -10,10 +10,10 @@ import edu.cornell.cs.apl.viaduct.analysis.ProtocolAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.TypeAnalysis
 import edu.cornell.cs.apl.viaduct.codegeneration.AbstractCodeGenerator
 import edu.cornell.cs.apl.viaduct.codegeneration.CodeGeneratorContext
+import edu.cornell.cs.apl.viaduct.codegeneration.UnsupportedOperatorException
 import edu.cornell.cs.apl.viaduct.codegeneration.receiveReplicated
 import edu.cornell.cs.apl.viaduct.codegeneration.typeTranslator
 import edu.cornell.cs.apl.viaduct.codegeneration.valueClass
-import edu.cornell.cs.apl.viaduct.errors.CodeGenerationError
 import edu.cornell.cs.apl.viaduct.runtime.EquivocationException
 import edu.cornell.cs.apl.viaduct.runtime.commitment.Commitment
 import edu.cornell.cs.apl.viaduct.runtime.commitment.Committed
@@ -55,10 +55,7 @@ class CleartextCodeGenerator(context: CodeGeneratorContext) :
             is ReadNode ->
                 CodeBlock.of(
                     "%N",
-                    context.kotlinName(
-                        expr.temporary.value,
-                        protocol
-                    )
+                    context.kotlinName(expr.temporary.value, protocol)
                 )
 
             is OperatorApplicationNode -> {
@@ -90,11 +87,7 @@ class CleartextCodeGenerator(context: CodeGeneratorContext) :
                             expr.operator,
                             exp(protocol, expr.arguments[1])
                         )
-                    else -> throw CodeGenerationError(
-                        "unknown operator: ${
-                        expr.operator.toDocument(expr.arguments).print()
-                        }"
-                    )
+                    else -> throw UnsupportedOperatorException(protocol, expr)
                 }
             }
 
@@ -107,25 +100,25 @@ class CleartextCodeGenerator(context: CodeGeneratorContext) :
                                 context.kotlinName(expr.variable.value),
                                 exp(protocol, expr.arguments.first())
                             )
-                            else -> throw CodeGenerationError("unknown vector query", expr)
+                            else -> throw UnsupportedOperatorException(protocol, expr)
                         }
                     }
 
                     is ImmutableCellType -> {
                         when (expr.query.value) {
-                            is Get -> CodeBlock.of(context.kotlinName(expr.variable.value))
-                            else -> throw CodeGenerationError("unknown query", expr)
+                            is Get -> CodeBlock.of("%N", context.kotlinName(expr.variable.value))
+                            else -> throw UnsupportedOperatorException(protocol, expr)
                         }
                     }
 
                     is MutableCellType -> {
                         when (expr.query.value) {
-                            is Get -> CodeBlock.of(context.kotlinName(expr.variable.value))
-                            else -> throw CodeGenerationError("unknown query", expr)
+                            is Get -> CodeBlock.of("%N", context.kotlinName(expr.variable.value))
+                            else -> throw UnsupportedOperatorException(protocol, expr)
                         }
                     }
 
-                    else -> throw CodeGenerationError("unknown AST object", expr)
+                    else -> throw UnsupportedOperatorException(protocol, expr)
                 }
 
             is DowngradeNode -> exp(protocol, expr.expression)
@@ -166,7 +159,7 @@ class CleartextCodeGenerator(context: CodeGeneratorContext) :
                             exp(protocol, stmt.arguments[1])
                         )
 
-                    else -> throw CodeGenerationError("unknown update", stmt)
+                    else -> throw UnsupportedOperatorException(protocol, stmt)
                 }
 
             is MutableCellType ->
@@ -186,10 +179,10 @@ class CleartextCodeGenerator(context: CodeGeneratorContext) :
                             exp(protocol, stmt.arguments[0])
                         )
 
-                    else -> throw CodeGenerationError("unknown update", stmt)
+                    else -> throw UnsupportedOperatorException(protocol, stmt)
                 }
 
-            else -> throw CodeGenerationError("unknown object to update", stmt)
+            else -> throw UnsupportedOperatorException(protocol, stmt)
         }
 
     override fun output(protocol: Protocol, stmt: OutputNode): CodeBlock =
@@ -316,7 +309,7 @@ class CleartextCodeGenerator(context: CodeGeneratorContext) :
 
                     // sanity check, only open one commitment at once
                     if (cleartextCommitmentInputs.size != 1) {
-                        throw CodeGenerationError("Commitment open: open multiple commitments at once")
+                        throw IllegalArgumentException("Received multiple commitments to open.")
                     }
 
                     fun receiveDispatcher(
@@ -370,8 +363,7 @@ class CleartextCodeGenerator(context: CodeGeneratorContext) :
                 }
 
                 else ->
-                    throw
-                    CodeGenerationError("Plaintext: received both commitment opening and cleartext value")
+                    throw IllegalArgumentException("Received both commitment to open and cleartext value.")
             }
         }
         return receiveBuilder.build()

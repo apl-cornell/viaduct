@@ -27,6 +27,9 @@ abstract class CompileViaductTask : DefaultTask() {
     @get:OutputDirectory
     abstract val outputDirectory: DirectoryProperty
 
+    @get:OutputDirectory
+    abstract val debugOutputDirectory: DirectoryProperty
+
     @get:Internal
     abstract val backend: Property<Backend>
 
@@ -40,6 +43,8 @@ abstract class CompileViaductTask : DefaultTask() {
 
     @TaskAction
     fun compileAll(sourceChanges: InputChanges) {
+        logger.info("Writing debug outputs to ${debugOutputDirectory.get()}.")
+
         val errors: MutableList<CompilationError> = mutableListOf()
         sourceChanges.getFileChanges(sourceDirectory).forEach { change ->
             if (change.fileType == FileType.DIRECTORY) return@forEach
@@ -48,15 +53,16 @@ abstract class CompileViaductTask : DefaultTask() {
             val packageName: String = packagePath.replace(File.separator, ".")
             val className: String = change.file.nameWithoutExtension
             val outputFile = outputDirectory.get().dir(packagePath).file("$className.kt").asFile
+            val debugDirectory = debugOutputDirectory.get().dir(packagePath).dir(className).asFile
 
             when (change.changeType) {
                 ChangeType.REMOVED -> {
-                    logger.debug("Deleting $outputFile.")
-                    outputFile.delete()
+                    project.delete(outputFile)
+                    project.delete(debugDirectory)
                 }
                 else ->
                     try {
-                        compileFile(change.file, packageName, outputFile)
+                        compileFile(change.file, packageName, outputFile, debugDirectory)
                     } catch (e: CompilationError) {
                         errors.add(e)
                     }
@@ -70,14 +76,18 @@ abstract class CompileViaductTask : DefaultTask() {
         }
     }
 
-    private fun compileFile(sourceFile: File, packageName: String, outputFile: File) {
+    private fun compileFile(sourceFile: File, packageName: String, outputFile: File, debugDirectory: File) {
         logger.debug("Compiling from $sourceFile to $outputFile in package $packageName.")
 
+        project.mkdir(debugDirectory)
         val compiledProgram =
             SourceFile.from(sourceFile).compileToKotlin(
                 fileName = outputFile.nameWithoutExtension,
                 packageName = packageName,
-                backend = backend.get()
+                backend = backend.get(),
+                saveInferredLabels = debugDirectory.resolve("InferredLabels.via"),
+                saveEstimatedCost = debugDirectory.resolve("EstimatedCost.via"),
+                saveProtocolAssignment = debugDirectory.resolve("ProtocolAssignment.via")
             )
 
         // Write the output

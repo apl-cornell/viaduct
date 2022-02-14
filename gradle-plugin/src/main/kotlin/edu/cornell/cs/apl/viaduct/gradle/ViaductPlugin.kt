@@ -19,6 +19,7 @@ class ViaductPlugin : Plugin<Project> {
         val compileViaduct = project.tasks.register<CompileViaductTask>("compileViaduct") {
             sourceDirectory.set(project.layout.projectDirectory.dir("src/main/viaduct"))
             outputDirectory.set(project.layout.buildDirectory.dir("generated/sources/viaduct"))
+            debugOutputDirectory.set(project.layout.buildDirectory.dir("viaduct"))
             backend.set(backends)
         }
 

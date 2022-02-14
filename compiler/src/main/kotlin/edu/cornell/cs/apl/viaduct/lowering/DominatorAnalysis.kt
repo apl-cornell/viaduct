@@ -50,7 +50,7 @@ private data class DominatorAnalysisNode<S : AbstractDataFlowSet<RegularBlockLab
     }
 }
 
-/** Perform dominator analysis by dataflow analysis.
+/** Perform (strict) dominator analysis by dataflow analysis.
  *  The lattice is the powerset lattice (top = set of all block labels),
  *  while the transfer function is defined by:
  *  - in(in_nodes) = fold in_nodes TOP (acc in_node -> intersect acc out(in_node))
@@ -79,8 +79,9 @@ private fun <S : AbstractDataFlowSet<RegularBlockLabel, S>> computeDominators(
         }
     }
 
+    // return blocks that are *strictly* dominated
     return solveDataFlow(nodeBuilder(nodeMap.keys.toPersistentSet()), graph).map { kv ->
-        kv.key.label to kv.value.set
+        kv.key.label to kv.value.set.filter { v -> v != kv.key.label }.toSet()
     }.toMap()
 }
 

@@ -242,14 +242,25 @@ class PartialEvaluator(
                 val staticArgs = reducedArgs.all { it.isStatic() }
                 val staticObject = objectBindingTimeMap[stmt.name] == BindingTime.STATIC
 
+                val objName =
+                    if (objectRenameMap.containsKey(stmt.name)) {
+                        val freshName = nameGenerator.getFreshName(stmt.name.name)
+                        objectRenameMap[stmt.name] = ObjectVariable(freshName)
+                        ObjectVariable(freshName)
+                    } else {
+                        objectRenameMap[stmt.name] = stmt.name
+                        stmt.name
+                    }
+
                 if (staticArgs && staticObject) {
                     val valArgs = reducedArgs.map { (it as LiteralNode).value }
                     val obj = buildObject(stmt.className, stmt.typeArguments, valArgs)
-                    Pair(store.updateObject(getObjectName(stmt.name), obj), SkipNode)
-
+                    Pair(store.updateObject(objName, obj), SkipNode)
                 } else {
-                    val reducedDecl = stmt.copy(arguments = reducedArgs.toPersistentList())
-                    Pair(store, reducedDecl)
+                    Pair(
+                        store,
+                        stmt.copy(name = objName, arguments = reducedArgs.toPersistentList())
+                    )
                 }
             }
 

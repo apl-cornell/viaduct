@@ -5,11 +5,15 @@ import edu.cornell.cs.apl.viaduct.analysis.InformationFlowAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.NameAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.descendantsIsInstance
 import edu.cornell.cs.apl.viaduct.backends.cleartext.Local
+import edu.cornell.cs.apl.viaduct.errors.InvalidProtocolAnnotationError
+import edu.cornell.cs.apl.viaduct.errors.NoApplicableProtocolError
 import edu.cornell.cs.apl.viaduct.errors.NoSelectionSolutionError
 import edu.cornell.cs.apl.viaduct.errors.UnknownObjectDeclarationError
+import edu.cornell.cs.apl.viaduct.security.Label
 import edu.cornell.cs.apl.viaduct.syntax.Host
 import edu.cornell.cs.apl.viaduct.syntax.HostTrustConfiguration
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
+import edu.cornell.cs.apl.viaduct.syntax.ProtocolNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.AssertionNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.BlockNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.BreakNode
@@ -61,21 +65,30 @@ class SelectionConstraintGenerator(
     private val costChoiceMap =
         mutableMapOf<CostVariable, MutableList<Pair<SelectionConstraint, Cost<IntegerCost>>>>()
 
+    private fun Node.viableProtocols(
+        requiredAuthority: Label,
+        annotation: ProtocolNode?,
+        fromFactory: Set<Protocol>
+    ): Set<Protocol> =
+        if (annotation != null) {
+            if (!annotation.value.authority(hostTrustConfiguration).actsFor(requiredAuthority))
+                throw InvalidProtocolAnnotationError(this)
+            setOf(annotation.value)
+        } else {
+            fromFactory.filter { it.authority(hostTrustConfiguration).actsFor(requiredAuthority) }
+                .ifEmpty { throw NoApplicableProtocolError(this) }
+                .toSet()
+        }
+
     // TODO: pc must be weak enough for the hosts involved in the selected protocols to read it
     fun viableProtocols(node: LetNode): Set<Protocol> =
-        node.protocol?.let { setOf(it.value) } ?: protocolFactory.viableProtocols(node).filter {
-            it.authority(hostTrustConfiguration).actsFor(informationFlowAnalysis.label(node))
-        }.toSet()
+        node.viableProtocols(informationFlowAnalysis.label(node), node.protocol, protocolFactory.viableProtocols(node))
 
     fun viableProtocols(node: DeclarationNode): Set<Protocol> =
-        node.protocol?.let { setOf(it.value) } ?: protocolFactory.viableProtocols(node).filter {
-            it.authority(hostTrustConfiguration).actsFor(informationFlowAnalysis.label(node))
-        }.toSet()
+        node.viableProtocols(informationFlowAnalysis.label(node), node.protocol, protocolFactory.viableProtocols(node))
 
     fun viableProtocols(node: ParameterNode): Set<Protocol> =
-        node.protocol?.let { setOf(it.value) } ?: protocolFactory.viableProtocols(node).filter {
-            it.authority(hostTrustConfiguration).actsFor(informationFlowAnalysis.label(node))
-        }.toSet()
+        node.viableProtocols(informationFlowAnalysis.label(node), node.protocol, protocolFactory.viableProtocols(node))
 
     private fun viableProtocolsAndVariable(decl: ObjectDeclaration): Pair<FunctionVariable, Set<Protocol>> =
         when (val node = decl.declarationAsNode) {

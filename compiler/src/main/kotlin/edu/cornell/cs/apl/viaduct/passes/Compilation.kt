@@ -5,6 +5,7 @@ import edu.cornell.cs.apl.prettyprinting.Document
 import edu.cornell.cs.apl.prettyprinting.PrettyPrintable
 import edu.cornell.cs.apl.prettyprinting.plus
 import edu.cornell.cs.apl.viaduct.analysis.InformationFlowAnalysis
+import edu.cornell.cs.apl.viaduct.analysis.NameAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.descendantsIsInstance
 import edu.cornell.cs.apl.viaduct.backends.Backend
 import edu.cornell.cs.apl.viaduct.backends.aby.abyMuxPostprocessor
@@ -46,6 +47,8 @@ fun SourceFile.compile(
         val elaborated = logger.duration("elaboration") {
             parsed.elaborated()
         }
+        // TODO: specialization fails with a null pointer error without this redundant check.
+        NameAnalysis.get(elaborated).check()
         logger.duration("function specialization") {
             elaborated.specialize()
         }

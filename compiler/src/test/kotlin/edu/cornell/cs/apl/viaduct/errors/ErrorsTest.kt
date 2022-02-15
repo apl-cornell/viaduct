@@ -4,13 +4,7 @@ import edu.cornell.cs.apl.viaduct.NegativeTestFileProvider
 import edu.cornell.cs.apl.viaduct.backends.DefaultCombinedBackend
 import edu.cornell.cs.apl.viaduct.parsing.SourceFile
 import edu.cornell.cs.apl.viaduct.parsing.isBlankOrUnderline
-import edu.cornell.cs.apl.viaduct.parsing.parse
-import edu.cornell.cs.apl.viaduct.passes.check
-import edu.cornell.cs.apl.viaduct.passes.elaborated
-import edu.cornell.cs.apl.viaduct.selection.ProtocolSelection
-import edu.cornell.cs.apl.viaduct.selection.SimpleCostEstimator
-import edu.cornell.cs.apl.viaduct.selection.SimpleCostRegime
-import edu.cornell.cs.apl.viaduct.selection.Z3Selection
+import edu.cornell.cs.apl.viaduct.passes.compile
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -24,14 +18,14 @@ internal class ErrorsTest {
     @ParameterizedTest
     @ArgumentsSource(NegativeTestFileProvider::class)
     fun `erroneous example files throw the expected compilation error`(file: File) {
-        assertThrows(expectedError(file).java) { run(file) }
+        assertThrows(expectedError(file).java) { compile(file) }
     }
 
     @ParameterizedTest
     @ArgumentsSource(NegativeTestFileProvider::class)
     fun `error messages end in a single blank line`(file: File) {
         try {
-            run(file)
+            compile(file)
             assert(false)
         } catch (e: CompilationError) {
             val messageLines = e.toString().split(Regex("\\R"))
@@ -45,19 +39,9 @@ internal class ErrorsTest {
     }
 }
 
-/** Parses, checks, interprets, and splits a program. */
-private fun run(file: File) {
-    val program = SourceFile.from(file).parse().elaborated()
-    program.check()
-
-    val protocolComposer = DefaultCombinedBackend.protocolComposer
-    ProtocolSelection(
-        Z3Selection(),
-        DefaultCombinedBackend.protocolFactory(program),
-        protocolComposer,
-        SimpleCostEstimator(protocolComposer, SimpleCostRegime.LAN)
-    ).selectAssignment(program)
-    // TODO: interpret
+/** Parses, checks, compiles a program. */
+private fun compile(file: File) {
+    SourceFile.from(file).compile(DefaultCombinedBackend)
 }
 
 /** Returns the subclass of [CompilationError] that running [file] is supposed to throw. */

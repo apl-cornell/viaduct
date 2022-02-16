@@ -2,7 +2,7 @@ plugins {
     kotlin("jvm")
 }
 
-val mainPackage = "${project.group}.${rootProject.name}"
+val mainPackage = project.group as String
 
 /** Dependencies */
 

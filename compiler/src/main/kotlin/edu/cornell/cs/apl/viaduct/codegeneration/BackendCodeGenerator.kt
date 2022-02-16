@@ -1,6 +1,7 @@
 package edu.cornell.cs.apl.viaduct.codegeneration
 
 import com.squareup.kotlinpoet.AnnotationSpec
+import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.CodeBlock
 import com.squareup.kotlinpoet.FileSpec
 import com.squareup.kotlinpoet.FunSpec
@@ -16,9 +17,6 @@ import com.squareup.kotlinpoet.joinToCode
 import edu.cornell.cs.apl.prettyprinting.joined
 import edu.cornell.cs.apl.viaduct.analysis.NameAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.ProtocolAnalysis
-import edu.cornell.cs.apl.viaduct.runtime.Boxed
-import edu.cornell.cs.apl.viaduct.runtime.ViaductGeneratedProgram
-import edu.cornell.cs.apl.viaduct.runtime.ViaductRuntime
 import edu.cornell.cs.apl.viaduct.selection.ProtocolCommunication
 import edu.cornell.cs.apl.viaduct.selection.ProtocolComposer
 import edu.cornell.cs.apl.viaduct.syntax.Host
@@ -43,6 +41,13 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.StatementNode
 import edu.cornell.cs.apl.viaduct.util.FreshNameGenerator
 import javax.annotation.processing.Generated
 
+private const val runtimePackage = "edu.cornell.cs.apl.viaduct.runtime"
+private val Boxed = ClassName(runtimePackage, "Boxed")
+private val ViaductGeneratedProgram = ClassName(runtimePackage, "ViaductGeneratedProgram")
+private val ViaductRuntime = ClassName(runtimePackage, "ViaductRuntime")
+private val ViaductRuntimeReceive = MemberName(runtimePackage, "receive")
+private val ViaductRuntimeSend = MemberName(runtimePackage, "send")
+
 private class BackendCodeGenerator(
     val program: ProgramNode,
     val host: Host,
@@ -60,10 +65,10 @@ private class BackendCodeGenerator(
             host.name.replaceFirstChar { it.uppercase() }
         ).primaryConstructor(
             FunSpec.constructorBuilder()
-                .addParameter("runtime", ViaductRuntime::class)
+                .addParameter("runtime", ViaductRuntime)
                 .build()
         ).addProperty(
-            PropertySpec.builder("runtime", ViaductRuntime::class)
+            PropertySpec.builder("runtime", ViaductRuntime)
                 .initializer("runtime")
                 .addModifiers(KModifier.PRIVATE)
                 .build()
@@ -152,7 +157,7 @@ private class BackendCodeGenerator(
                     hostFunctionBuilder.addStatement(
                         "var %L = %T",
                         context.kotlinName(outObjectDeclarations[i].name.value),
-                        Boxed::class.asClassName()
+                        Boxed
                     )
 
                     // add out parameter for declared object
@@ -230,9 +235,6 @@ private class BackendCodeGenerator(
         private var tempMap: MutableMap<Pair<Temporary, Protocol>, String> = mutableMapOf()
         private var varMap: MutableMap<ObjectVariable, String> = mutableMapOf()
 
-        private val receiveMember = MemberName(ViaductRuntime::class.java.packageName, "receive")
-        private val sendMember = MemberName(ViaductRuntime::class.java.packageName, "send")
-
         private val freshNameGenerator: FreshNameGenerator = FreshNameGenerator().apply {
             this.getFreshName("runtime")
         }
@@ -259,10 +261,10 @@ private class BackendCodeGenerator(
             hostDeclarations.reference(host)
 
         override fun receive(type: TypeName, sender: Host): CodeBlock =
-            CodeBlock.of("%N.%M<%T>(%L)", "runtime", receiveMember, type, codeOf(sender))
+            CodeBlock.of("%N.%M<%T>(%L)", "runtime", ViaductRuntimeReceive, type, codeOf(sender))
 
         override fun send(value: CodeBlock, receiver: Host): CodeBlock =
-            CodeBlock.of("%N.%M(%L, %L)", "runtime", sendMember, value, codeOf(receiver))
+            CodeBlock.of("%N.%M(%L, %L)", "runtime", ViaductRuntimeSend, value, codeOf(receiver))
 
         override fun url(host: Host): CodeBlock =
             CodeBlock.of("%N.url(%L)", "runtime", codeOf(host))
@@ -314,7 +316,7 @@ fun ProgramNode.compileToKotlin(
     )
 
     // Create an object wrapping all generated code.
-    val objectBuilder = TypeSpec.objectBuilder(fileName).addSuperinterface(ViaductGeneratedProgram::class)
+    val objectBuilder = TypeSpec.objectBuilder(fileName).addSuperinterface(ViaductGeneratedProgram)
 
     // Add host declarations to wrapper object.
     val hostDeclarations = hostDeclarations(this)
@@ -322,7 +324,7 @@ fun ProgramNode.compileToKotlin(
 
     // Expose set of all hosts.
     objectBuilder.addProperty(
-        PropertySpec.builder(ViaductGeneratedProgram::hosts.name, SET.parameterizedBy(Host::class.asClassName()))
+        PropertySpec.builder("hosts", SET.parameterizedBy(Host::class.asClassName()))
             .initializer(
                 CodeBlock.of(
                     "%M(%L)",
@@ -344,7 +346,7 @@ fun ProgramNode.compileToKotlin(
     val main = with(FunSpec.builder("main")) {
         addModifiers(KModifier.OVERRIDE)
         addParameter("host", Host::class)
-        addParameter("runtime", ViaductRuntime::class)
+        addParameter("runtime", ViaductRuntime)
 
         // Dispatch to correct class based on host.
         beginControlFlow("when (host)")

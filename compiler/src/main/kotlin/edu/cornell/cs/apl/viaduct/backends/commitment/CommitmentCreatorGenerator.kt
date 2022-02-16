@@ -1,13 +1,12 @@
 package edu.cornell.cs.apl.viaduct.backends.commitment
 
+import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.CodeBlock
 import com.squareup.kotlinpoet.MemberName
-import com.squareup.kotlinpoet.asClassName
 import edu.cornell.cs.apl.viaduct.analysis.TypeAnalysis
 import edu.cornell.cs.apl.viaduct.codegeneration.AbstractCodeGenerator
 import edu.cornell.cs.apl.viaduct.codegeneration.CodeGeneratorContext
 import edu.cornell.cs.apl.viaduct.codegeneration.receiveReplicated
-import edu.cornell.cs.apl.viaduct.runtime.commitment.Committed
 import edu.cornell.cs.apl.viaduct.selection.CommunicationEvent
 import edu.cornell.cs.apl.viaduct.selection.ProtocolCommunication
 import edu.cornell.cs.apl.viaduct.syntax.Host
@@ -17,6 +16,9 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.AtomicExpressionNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ExpressionNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.LetNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.LiteralNode
+
+private const val commitmentPackage = "edu.cornell.cs.apl.viaduct.runtime.commitment"
+private val Committed = ClassName(commitmentPackage, "Committed")
 
 internal class CommitmentCreatorGenerator(
     context: CodeGeneratorContext
@@ -29,7 +31,7 @@ internal class CommitmentCreatorGenerator(
         when (expr) {
             is LiteralNode -> CodeBlock.of(
                 "%T.%N(%L)",
-                Committed::class,
+                Committed,
                 "fake",
                 value(expr.value)
             )
@@ -108,7 +110,7 @@ internal class CommitmentCreatorGenerator(
                     receiveBuilder.addStatement(
                         "val %N = %T(%L)",
                         context.kotlinName(sender.temporary.value, receiveProtocol),
-                        Committed::class,
+                        Committed,
                         receiveReplicated(
                             sender,
                             sendProtocol,
@@ -123,7 +125,7 @@ internal class CommitmentCreatorGenerator(
                         "val %N = %N.%M()",
                         commitmentTemp,
                         context.kotlinName(sender.temporary.value, receiveProtocol),
-                        MemberName(Committed.Companion::class.asClassName(), "commitment")
+                        MemberName(Committed.nestedClass("Companion"), "commitment")
                     )
 
                     for (hashHost in hashHosts) {

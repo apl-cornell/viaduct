@@ -2,21 +2,16 @@ package edu.cornell.cs.apl.viaduct.backend
 
 import edu.cornell.cs.apl.viaduct.PositiveTestFileProvider
 import edu.cornell.cs.apl.viaduct.analysis.ProtocolAnalysis
-import edu.cornell.cs.apl.viaduct.analysis.mainFunction
 import edu.cornell.cs.apl.viaduct.backend.IO.Strategy
 import edu.cornell.cs.apl.viaduct.backends.DefaultCombinedBackend
 import edu.cornell.cs.apl.viaduct.parsing.SourceFile
 import edu.cornell.cs.apl.viaduct.passes.compile
 import edu.cornell.cs.apl.viaduct.selection.ProtocolCommunication
 import edu.cornell.cs.apl.viaduct.selection.SimpleCostRegime
-import edu.cornell.cs.apl.viaduct.syntax.Arguments
 import edu.cornell.cs.apl.viaduct.syntax.Host
-import edu.cornell.cs.apl.viaduct.syntax.Located
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.AtomicExpressionNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.BlockNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.FunctionArgumentNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.FunctionDeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.LetNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ParameterNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.SimpleStatementNode
@@ -96,8 +91,7 @@ private object FakeStrategy : Strategy {
         return IntegerValue(0)
     }
 
-    override suspend fun recvOutput(value: Value) {
-    }
+    override suspend fun recvOutput(value: Value) {}
 }
 
 private fun findAvailableTcpPort() =
@@ -115,26 +109,11 @@ internal class BackendInterpreterTest {
 
         val backend = ViaductBackend(listOf(FakeProtocolBackend), hostAddresses)
 
-        val fakeProgram =
-            edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode(
-                declarations =
-                program.hostDeclarations.plus(
-                    FunctionDeclarationNode(
-                        name = Located(mainFunction, program.sourceLocation),
-                        pcLabel = null,
-                        parameters = Arguments(program.sourceLocation),
-                        body = BlockNode(listOf(), program.sourceLocation),
-                        sourceLocation = program.sourceLocation
-                    )
-                ),
-                sourceLocation = program.sourceLocation
-            )
-
         // Run backend interpreter for all hosts.
         runBlocking {
             program.hosts.forEach { host ->
                 launch(Executors.newSingleThreadExecutor().asCoroutineDispatcher()) {
-                    backend.run(fakeProgram, host, FakeStrategy)
+                    backend.run(program, host, FakeStrategy)
                 }
             }
         }

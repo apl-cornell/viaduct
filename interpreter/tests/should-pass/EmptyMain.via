@@ -1,0 +1,6 @@
+host alice : {A}
+host bob   : {B}
+host chuck : {C}
+host david : {D}
+
+fun main() {}

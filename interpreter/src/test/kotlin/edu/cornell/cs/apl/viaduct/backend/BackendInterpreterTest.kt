@@ -1,19 +1,14 @@
 package edu.cornell.cs.apl.viaduct.backend
 
-import edu.cornell.cs.apl.viaduct.PositiveTestProgramProvider
+import edu.cornell.cs.apl.viaduct.PositiveTestFileProvider
 import edu.cornell.cs.apl.viaduct.analysis.ProtocolAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.mainFunction
 import edu.cornell.cs.apl.viaduct.backend.IO.Strategy
 import edu.cornell.cs.apl.viaduct.backends.DefaultCombinedBackend
-import edu.cornell.cs.apl.viaduct.passes.annotateWithProtocols
-import edu.cornell.cs.apl.viaduct.passes.check
-import edu.cornell.cs.apl.viaduct.passes.elaborated
-import edu.cornell.cs.apl.viaduct.passes.specialize
+import edu.cornell.cs.apl.viaduct.parsing.SourceFile
+import edu.cornell.cs.apl.viaduct.passes.compile
 import edu.cornell.cs.apl.viaduct.selection.ProtocolCommunication
-import edu.cornell.cs.apl.viaduct.selection.ProtocolSelection
-import edu.cornell.cs.apl.viaduct.selection.SimpleCostEstimator
 import edu.cornell.cs.apl.viaduct.selection.SimpleCostRegime
-import edu.cornell.cs.apl.viaduct.selection.Z3Selection
 import edu.cornell.cs.apl.viaduct.syntax.Arguments
 import edu.cornell.cs.apl.viaduct.syntax.Host
 import edu.cornell.cs.apl.viaduct.syntax.Located
@@ -25,7 +20,6 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.FunctionDeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.LetNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ParameterNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.SimpleStatementNode
-import edu.cornell.cs.apl.viaduct.syntax.surface.ProgramNode
 import edu.cornell.cs.apl.viaduct.syntax.values.BooleanValue
 import edu.cornell.cs.apl.viaduct.syntax.values.IntegerValue
 import edu.cornell.cs.apl.viaduct.syntax.values.Value
@@ -33,9 +27,14 @@ import kotlinx.collections.immutable.PersistentMap
 import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import org.apache.logging.log4j.Level
 import org.apache.logging.log4j.core.config.Configurator
+import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ArgumentsSource
+import java.io.File
+import java.net.InetAddress
+import java.net.ServerSocket
 import java.util.concurrent.Executors
 
 private class FakeProtocolInterpreter(
@@ -101,58 +100,51 @@ private object FakeStrategy : Strategy {
     }
 }
 
+private fun findAvailableTcpPort() =
+    ServerSocket(0).use { it.localPort }
+
 internal class BackendInterpreterTest {
     @ParameterizedTest
-    @ArgumentsSource(PositiveTestProgramProvider::class)
-    fun testInterpreter(surfaceProgram: ProgramNode) {
-        val program = surfaceProgram.elaborated().specialize()
+    @ArgumentsSource(PositiveTestFileProvider::class)
+    fun testInterpreter(file: File) {
+        val program = SourceFile.from(file).compile(DefaultCombinedBackend, costRegime = SimpleCostRegime.LAN)
 
-        // Perform static checks.
-        program.check()
+        val hostAddresses = program.hosts.associateWith {
+            HostAddress(InetAddress.getLoopbackAddress().hostAddress, findAvailableTcpPort())
+        }
 
-        // Select protocols.
-        val protocolComposer = DefaultCombinedBackend.protocolComposer
-        val protocolAssignment =
-            ProtocolSelection(
-                Z3Selection(),
-                DefaultCombinedBackend.protocolFactory(program),
-                protocolComposer,
-                SimpleCostEstimator(protocolComposer, SimpleCostRegime.LAN)
-            ).selectAssignment(program)
-        val annotatedProgram = program.annotateWithProtocols(protocolAssignment)
-
-        // set up backend interpreter with fake backends
-        val hosts: Set<Host> =
-            program.hostDeclarations
-                .map { hostDecl -> hostDecl.name.value }
-                .toSet()
-
-        val backend = ViaductBackend(listOf(FakeProtocolBackend))
+        val backend = ViaductBackend(listOf(FakeProtocolBackend), hostAddresses)
 
         val fakeProgram =
             edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode(
                 declarations =
-                annotatedProgram.hostDeclarations.plus(
+                program.hostDeclarations.plus(
                     FunctionDeclarationNode(
-                        name = Located(mainFunction, annotatedProgram.sourceLocation),
+                        name = Located(mainFunction, program.sourceLocation),
                         pcLabel = null,
-                        parameters = Arguments(annotatedProgram.sourceLocation),
-                        body = BlockNode(listOf(), annotatedProgram.sourceLocation),
-                        sourceLocation = annotatedProgram.sourceLocation
+                        parameters = Arguments(program.sourceLocation),
+                        body = BlockNode(listOf(), program.sourceLocation),
+                        sourceLocation = program.sourceLocation
                     )
                 ),
-                sourceLocation = annotatedProgram.sourceLocation
+                sourceLocation = program.sourceLocation
             )
 
-        Configurator.setRootLevel(org.apache.logging.log4j.Level.INFO)
-
-        // run backend interpreter for all hosts
+        // Run backend interpreter for all hosts.
         runBlocking {
-            for (host: Host in hosts) {
+            program.hosts.forEach { host ->
                 launch(Executors.newSingleThreadExecutor().asCoroutineDispatcher()) {
                     backend.run(fakeProgram, host, FakeStrategy)
                 }
             }
+        }
+    }
+
+    companion object {
+        @BeforeAll
+        @JvmStatic
+        fun setLogLevel() {
+            Configurator.setRootLevel(Level.INFO)
         }
     }
 }

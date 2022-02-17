@@ -25,7 +25,7 @@ dependencies {
     implementation("com.github.ajalt.clikt:clikt:3.4.0")
 
     // Logging
-    implementation("io.github.microutils:kotlin-logging:2.1.0")
+    implementation("io.github.microutils:kotlin-logging:2.1.21")
     implementation("org.apache.logging.log4j:log4j-core:2.17.1")
     implementation("org.apache.logging.log4j:log4j-slf4j-impl:2.17.1")
 

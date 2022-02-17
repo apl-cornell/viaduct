@@ -13,7 +13,7 @@ gradlePlugin {
     plugins {
         register("viaduct-plugin") {
             id = "viaduct"
-            implementationClass = "edu.cornell.cs.apl.viaduct.gradle.ViaductPlugin"
+            implementationClass = "${project.group}.gradle.ViaductPlugin"
         }
     }
 }

@@ -7,9 +7,9 @@ plugins {
     id("com.diffplug.spotless") version "6.2.0"
 }
 
-group = "edu.cornell.cs.apl"
+group = "edu.cornell.cs.apl.viaduct"
 
-val mainPackage = "${project.group}.${gradle.includedBuild("viaduct").name}.${project.name}"
+val mainPackage = "${project.group}.${project.name}"
 
 java {
     toolchain {
@@ -19,7 +19,7 @@ java {
 
 dependencies {
     // Viaduct
-    implementation("edu.cornell.cs.apl:runtime")
+    implementation("${project.group}:runtime")
 
     // Command-line-argument parsing
     implementation("com.github.ajalt.clikt:clikt:3.4.0")
@@ -30,7 +30,7 @@ dependencies {
     implementation("org.apache.logging.log4j:log4j-slf4j-impl:2.17.1")
 
     // Testing
-    testImplementation("edu.cornell.cs.apl:test-utilities")
+    testImplementation("${project.group}:test-utilities")
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.0")
 
     // Getting a free port

@@ -25,7 +25,7 @@ allprojects {
     apply(plugin = "com.github.ben-manes.versions")
     apply(plugin = "se.patrikerdes.use-latest-versions")
 
-    group = "edu.cornell.cs.apl"
+    group = "edu.cornell.cs.apl.${rootProject.name}"
 
     version = if (versionFromGit == "unspecified") "0.0.0-SNAPSHOT" else versionFromGit
 

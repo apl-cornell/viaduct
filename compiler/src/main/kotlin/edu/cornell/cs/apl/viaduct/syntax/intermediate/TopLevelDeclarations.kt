@@ -80,10 +80,10 @@ class ParameterNode(
         ParameterNode(name, parameterDirection, className, typeArguments, labelArguments, protocol, sourceLocation)
 
     val isOutParameter: Boolean
-        get() = parameterDirection == ParameterDirection.PARAM_OUT
+        get() = parameterDirection == ParameterDirection.OUT
 
     val isInParameter: Boolean
-        get() = parameterDirection == ParameterDirection.PARAM_IN
+        get() = parameterDirection == ParameterDirection.IN
 }
 
 /**

@@ -258,15 +258,15 @@ nonempty_parameter_list ::=
   ;
 
 parameter_direction ::=
-    OUT         {: RESULT = ParameterDirection.PARAM_OUT; :}
-  | /* empty */ {: RESULT = ParameterDirection.PARAM_IN; :}
+    OUT         {: RESULT = ParameterDirection.OUT; :}
+  | /* empty */ {: RESULT = ParameterDirection.IN; :}
   ;
 
 parameter ::=
     variable:name COLON value_type:type optional_label_signature:label protocol_annot:protocol {:
       RESULT = new ParameterNode(
         name,
-        ParameterDirection.PARAM_IN,
+        ParameterDirection.IN,
         new Located(PrimitivesKt.getImmutableCell(), name.getSourceLocation()),
         Arguments.from(type),
         optionalLabelArgument(label),
@@ -279,7 +279,7 @@ parameter ::=
   | variable:name COLON OUT value_type:type label_signature:label protocol_annot:protocol {:
       RESULT = new ParameterNode(
         name,
-        ParameterDirection.PARAM_OUT,
+        ParameterDirection.OUT,
         new Located(PrimitivesKt.getImmutableCell(), name.getSourceLocation()),
         Arguments.from(type),
         optionalLabelArgument(label),
@@ -293,7 +293,7 @@ parameter ::=
     optional_label_signature:label protocol_annot:protocol {:
       RESULT = new ParameterNode(
         name,
-        ParameterDirection.PARAM_IN,
+        ParameterDirection.IN,
         new Located(PrimitivesKt.getVector(), name.getSourceLocation()),
         Arguments.from(elementType),
         optionalLabelArgument(label),
@@ -307,7 +307,7 @@ parameter ::=
     label_signature:label protocol_annot:protocol {:
       RESULT = new ParameterNode(
         name,
-        ParameterDirection.PARAM_OUT,
+        ParameterDirection.OUT,
         new Located(PrimitivesKt.getVector(), name.getSourceLocation()),
         Arguments.from(elementType),
         optionalLabelArgument(label),

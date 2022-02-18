@@ -277,7 +277,7 @@ class TypeAnalysis private constructor(
                         val parameter = functionDecl.parameters[i]
                         val expectedType = parameterTypes[i]
 
-                        if ((if (isOutArgument) ParameterDirection.PARAM_OUT else ParameterDirection.PARAM_IN)
+                        if ((if (isOutArgument) ParameterDirection.OUT else ParameterDirection.IN)
                             != parameter.parameterDirection
                         ) {
                             throw ParameterDirectionMismatchError(parameter, argument)

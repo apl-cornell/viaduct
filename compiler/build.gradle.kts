@@ -66,6 +66,13 @@ tasks.compileKotlin.configure {
     dependsOn(tasks.withType<org.xbib.gradle.plugin.JFlexTask>())
 }
 
+tasks.withType<Test>().configureEach {
+    systemProperties(
+        "junit.jupiter.execution.parallel.enabled" to "true",
+        "junit.jupiter.execution.parallel.mode.default" to "concurrent"
+    )
+}
+
 // TODO: we only need to add explicit dependencies for dokkaHtmlPartial; dokkaHtml just works for some reason.
 //   remove if/when Dokka fixes this issue.
 tasks.withType<org.jetbrains.dokka.gradle.DokkaTaskPartial>().configureEach {

@@ -10,10 +10,6 @@ plugins {
 
     // Style checking
     id("com.diffplug.spotless") version "6.3.0"
-
-    // Dependency management
-    id("com.github.ben-manes.versions") version "0.42.0"
-    id("se.patrikerdes.use-latest-versions") version "0.2.18"
 }
 
 // Derive version from Git tags
@@ -22,8 +18,6 @@ val versionFromGit = gitVersion()
 
 allprojects {
     apply(plugin = "com.diffplug.spotless")
-    apply(plugin = "com.github.ben-manes.versions")
-    apply(plugin = "se.patrikerdes.use-latest-versions")
 
     group = "edu.cornell.cs.apl.${rootProject.name}"
 

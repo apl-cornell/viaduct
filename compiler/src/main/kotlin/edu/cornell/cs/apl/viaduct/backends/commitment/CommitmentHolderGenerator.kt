@@ -1,17 +1,15 @@
 package edu.cornell.cs.apl.viaduct.backends.commitment
 
+import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.CodeBlock
 import com.squareup.kotlinpoet.MemberName
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
-import com.squareup.kotlinpoet.asClassName
 import edu.cornell.cs.apl.viaduct.analysis.TypeAnalysis
 import edu.cornell.cs.apl.viaduct.codegeneration.AbstractCodeGenerator
 import edu.cornell.cs.apl.viaduct.codegeneration.CodeGeneratorContext
 import edu.cornell.cs.apl.viaduct.codegeneration.UnsupportedOperatorException
 import edu.cornell.cs.apl.viaduct.codegeneration.receiveReplicated
 import edu.cornell.cs.apl.viaduct.codegeneration.typeTranslator
-import edu.cornell.cs.apl.viaduct.runtime.commitment.Commitment
-import edu.cornell.cs.apl.viaduct.runtime.commitment.Committed
 import edu.cornell.cs.apl.viaduct.selection.CommunicationEvent
 import edu.cornell.cs.apl.viaduct.selection.ProtocolCommunication
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
@@ -21,6 +19,10 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.ExpressionNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.LetNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.LiteralNode
 import edu.cornell.cs.apl.viaduct.backends.commitment.Commitment as CommitmentProtocol
+
+private const val commitmentPackage = "edu.cornell.cs.apl.viaduct.runtime.commitment"
+private val CommitmentClass = ClassName(commitmentPackage, "Commitment")
+private val Committed = ClassName(commitmentPackage, "Committed")
 
 internal class CommitmentHolderGenerator(
     context: CodeGeneratorContext
@@ -34,10 +36,10 @@ internal class CommitmentHolderGenerator(
         when (expr) {
             is LiteralNode -> CodeBlock.of(
                 "%T.%N(%L).%M()",
-                Committed::class,
+                Committed,
                 "fake",
                 value(expr.value),
-                MemberName(Committed.Companion::class.asClassName(), "commitment")
+                MemberName(Committed.nestedClass("Companion"), "commitment")
             )
 
             else -> super.exp(protocol, expr)
@@ -109,9 +111,7 @@ internal class CommitmentHolderGenerator(
                             "val %N = %L",
                             context.kotlinName(sender.temporary.value, receiveProtocol),
                             context.receive(
-                                Commitment::class.asClassName().parameterizedBy(
-                                    typeTranslator(typeAnalysis.type(sender))
-                                ),
+                                CommitmentClass.parameterizedBy(typeTranslator(typeAnalysis.type(sender))),
                                 events.first().send.host
                             )
                         )

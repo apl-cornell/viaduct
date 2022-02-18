@@ -1,10 +1,10 @@
 package edu.cornell.cs.apl.viaduct.backends.cleartext
 
+import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.CodeBlock
 import com.squareup.kotlinpoet.MemberName
 import com.squareup.kotlinpoet.ParameterizedTypeName
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
-import com.squareup.kotlinpoet.asClassName
 import edu.cornell.cs.apl.viaduct.analysis.NameAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.TypeAnalysis
 import edu.cornell.cs.apl.viaduct.codegeneration.AbstractCodeGenerator
@@ -13,9 +13,6 @@ import edu.cornell.cs.apl.viaduct.codegeneration.UnsupportedOperatorException
 import edu.cornell.cs.apl.viaduct.codegeneration.receiveReplicated
 import edu.cornell.cs.apl.viaduct.codegeneration.typeTranslator
 import edu.cornell.cs.apl.viaduct.codegeneration.valueClass
-import edu.cornell.cs.apl.viaduct.runtime.EquivocationException
-import edu.cornell.cs.apl.viaduct.runtime.commitment.Commitment
-import edu.cornell.cs.apl.viaduct.runtime.commitment.Committed
 import edu.cornell.cs.apl.viaduct.selection.CommunicationEvent
 import edu.cornell.cs.apl.viaduct.selection.ProtocolCommunication
 import edu.cornell.cs.apl.viaduct.syntax.BinaryOperator
@@ -36,6 +33,12 @@ import edu.cornell.cs.apl.viaduct.syntax.operators.Maximum
 import edu.cornell.cs.apl.viaduct.syntax.operators.Minimum
 import edu.cornell.cs.apl.viaduct.syntax.types.MutableCellType
 import edu.cornell.cs.apl.viaduct.syntax.types.VectorType
+
+private const val runtimePackage = "edu.cornell.cs.apl.viaduct.runtime"
+private const val commitmentPackage = "edu.cornell.cs.apl.viaduct.runtime.commitment"
+private val EquivocationException = ClassName(runtimePackage, "EquivocationException")
+private val Commitment = ClassName(commitmentPackage, "Commitment")
+private val Committed = ClassName(commitmentPackage, "Committed")
 
 class CleartextCodeGenerator(context: CodeGeneratorContext) : AbstractCodeGenerator(context) {
     private val typeAnalysis = TypeAnalysis.get(context.program)
@@ -221,7 +224,7 @@ class CleartextCodeGenerator(context: CodeGeneratorContext) : AbstractCodeGenera
                     for (host in hostsToCheckWith) {
                         receiveBuilder.addStatement(
                             "%T.%N(%N, %L, %L, %L)",
-                            EquivocationException::class,
+                            EquivocationException,
                             "assertEquals",
                             clearTextTemp,
                             context.codeOf(cleartextInputs.first().send.host),
@@ -262,9 +265,7 @@ class CleartextCodeGenerator(context: CodeGeneratorContext) : AbstractCodeGenera
                         clearTextCommittedTemp,
                         receiveDispatcher(
                             cleartextCommitmentInputs.first(),
-                            Committed::class.asClassName().parameterizedBy(
-                                typeTranslator((typeAnalysis.type(sender)))
-                            )
+                            Committed.parameterizedBy(typeTranslator((typeAnalysis.type(sender))))
                         )
                     )
 
@@ -273,9 +274,7 @@ class CleartextCodeGenerator(context: CodeGeneratorContext) : AbstractCodeGenera
                             "%L.%N(%N)",
                             receiveDispatcher(
                                 hashSendEvent,
-                                Commitment::class.asClassName().parameterizedBy(
-                                    typeTranslator((typeAnalysis.type(sender)))
-                                )
+                                Commitment.parameterizedBy(typeTranslator((typeAnalysis.type(sender))))
                             ),
                             "open",
                             clearTextCommittedTemp

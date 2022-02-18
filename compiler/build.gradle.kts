@@ -53,15 +53,15 @@ val compileCup by tasks.registering(CompileCupTask::class)
 
 sourceSets {
     main {
-        java.srcDir(compileCup.get().outputDirectory)
+        java.srcDir(compileCup.map { it.outputDirectory })
     }
 }
 
-tasks.compileJava {
+tasks.compileJava.configure {
     dependsOn(compileCup)
 }
 
-tasks.compileKotlin {
+tasks.compileKotlin.configure {
     dependsOn(compileCup)
     dependsOn(tasks.withType<org.xbib.gradle.plugin.JFlexTask>())
 }
@@ -122,13 +122,12 @@ abstract class CompileCupTask : DefaultTask() {
         val className: String = cupFile.nameWithoutExtension
 
         project.mkdir(targetDirectory)
-        val args: List<String> = cupArguments.get() +
-            listOf(
-                "-destdir", targetDirectory.get().asFile.path,
-                "-package", packageName,
-                "-parser", className,
-                cupFile.path
-            )
+        val args: List<String> = cupArguments.get() + listOf(
+            "-destdir", targetDirectory.get().asFile.path,
+            "-package", packageName,
+            "-parser", className,
+            cupFile.path
+        )
         logger.info("java_cup ${args.joinToString(" ")}}")
         java_cup.Main.main(args.toTypedArray())
     }

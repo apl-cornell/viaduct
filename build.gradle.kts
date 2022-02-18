@@ -79,19 +79,19 @@ subprojects {
 
         /** Testing */
 
-        tasks.named<Test>("test") {
+        tasks.withType<Test>().configureEach {
             useJUnitPlatform()
 
             // Rerun tests when code examples change.
             inputs.files(project.fileTree("tests"))
         }
 
-        tasks.named<JacocoReport>("jacocoTestReport") {
+        tasks.withType<JacocoReport>().configureEach {
             reports {
                 xml.required.set(true)
                 html.required.set(true)
             }
-            dependsOn(tasks["test"])
+            dependsOn(tasks.withType<Test>())
         }
 
         /** API Documentation */

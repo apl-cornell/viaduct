@@ -1,6 +1,6 @@
 plugins {
     kotlin("jvm") version embeddedKotlinVersion
-    id("viaduct")
+    id("edu.cornell.cs.apl.viaduct")
     application
 
     // Style checking

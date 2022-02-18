@@ -63,7 +63,7 @@ internal class CommitmentHolderGenerator(
                 sendBuilder.addStatement(
                     "%L",
                     context.send(
-                        CodeBlock.of("%N", context.kotlinName(sender.temporary.value, sendProtocol)),
+                        CodeBlock.of("%N", context.kotlinName(sender.name.value, sendProtocol)),
                         event.recv.host
                     )
                 )
@@ -92,7 +92,7 @@ internal class CommitmentHolderGenerator(
 
                     receiveBuilder.addStatement(
                         "val %N = %L",
-                        context.kotlinName(sender.temporary.value, receiveProtocol),
+                        context.kotlinName(sender.name.value, receiveProtocol),
                         receiveReplicated(
                             sender,
                             sendProtocol,
@@ -107,7 +107,7 @@ internal class CommitmentHolderGenerator(
                     if (context.host !in sendProtocol.hosts) {
                         receiveBuilder.addStatement(
                             "val %N = %L",
-                            context.kotlinName(sender.temporary.value, receiveProtocol),
+                            context.kotlinName(sender.name.value, receiveProtocol),
                             context.receive(
                                 Commitment::class.asClassName().parameterizedBy(
                                     typeTranslator(typeAnalysis.type(sender))

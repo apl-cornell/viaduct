@@ -54,10 +54,10 @@ private class ProtocolAnnotator(
             is LetNode -> {
                 val enclosingFunction = nameAnalysis.enclosingFunctionName(stmt)
                 LetNode(
-                    stmt.temporary,
+                    stmt.name,
                     stmt.value,
                     Located(
-                        selection.getAssignment(enclosingFunction, stmt.temporary.value),
+                        selection.getAssignment(enclosingFunction, stmt.name.value),
                         stmt.sourceLocation
                     ),
                     stmt.sourceLocation

@@ -54,7 +54,7 @@ internal class CommitmentCreatorGenerator(
                     sendBuilder.addStatement(
                         "%L",
                         context.send(
-                            CodeBlock.of("%L", context.kotlinName(sender.temporary.value, sendProtocol)),
+                            CodeBlock.of("%L", context.kotlinName(sender.name.value, sendProtocol)),
                             event.recv.host
                         )
                     )
@@ -86,7 +86,7 @@ internal class CommitmentCreatorGenerator(
                     if (relevantEvents.isNotEmpty()) {
                         receiveBuilder.addStatement(
                             "val %N = %L",
-                            context.kotlinName(sender.temporary.value, receiveProtocol),
+                            context.kotlinName(sender.name.value, receiveProtocol),
                             receiveReplicated(
                                 sender,
                                 sendProtocol,
@@ -107,7 +107,7 @@ internal class CommitmentCreatorGenerator(
 
                     receiveBuilder.addStatement(
                         "val %N = %T(%L)",
-                        context.kotlinName(sender.temporary.value, receiveProtocol),
+                        context.kotlinName(sender.name.value, receiveProtocol),
                         Committed::class,
                         receiveReplicated(
                             sender,
@@ -122,7 +122,7 @@ internal class CommitmentCreatorGenerator(
                     receiveBuilder.addStatement(
                         "val %N = %N.%M()",
                         commitmentTemp,
-                        context.kotlinName(sender.temporary.value, receiveProtocol),
+                        context.kotlinName(sender.name.value, receiveProtocol),
                         MemberName(Committed.Companion::class.asClassName(), "commitment")
                     )
 

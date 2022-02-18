@@ -39,17 +39,17 @@ sealed class SimpleStatementNode : StatementNode() {
 
 /** Binding the result of an expression to a new temporary variable. */
 class LetNode(
-    val temporary: TemporaryNode,
+    override val name: TemporaryNode,
     val value: ExpressionNode,
-    val protocol: ProtocolNode?,
+    override val protocol: ProtocolNode?,
     override val sourceLocation: SourceLocation
-) : SimpleStatementNode() {
+) : SimpleStatementNode(), VariableDeclarationNode {
     override val children: Iterable<ExpressionNode>
         get() = listOf(value)
 
     override fun toSurfaceNode(metadata: Metadata): edu.cornell.cs.apl.viaduct.syntax.surface.LetNode =
         edu.cornell.cs.apl.viaduct.syntax.surface.LetNode(
-            temporary,
+            name,
             value.toSurfaceNode(),
             protocol,
             sourceLocation,
@@ -57,7 +57,7 @@ class LetNode(
         )
 
     override fun copy(children: List<Node>): LetNode =
-        LetNode(temporary, children[0] as ExpressionNode, protocol, sourceLocation)
+        LetNode(name, children[0] as ExpressionNode, protocol, sourceLocation)
 }
 
 /** Constructing a new object and binding it to a variable. */
@@ -68,7 +68,7 @@ class DeclarationNode(
     // TODO: allow leaving out some of the labels (right now it's all or nothing)
     override val labelArguments: Arguments<LabelNode>?,
     val arguments: Arguments<AtomicExpressionNode>,
-    val protocol: ProtocolNode?,
+    override val protocol: ProtocolNode?,
     override val sourceLocation: SourceLocation
 ) : SimpleStatementNode(), ObjectDeclaration {
     override val declarationAsNode: StatementNode

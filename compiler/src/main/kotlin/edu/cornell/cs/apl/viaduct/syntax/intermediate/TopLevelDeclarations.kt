@@ -55,7 +55,7 @@ class ParameterNode(
     override val typeArguments: Arguments<ValueTypeNode>,
     // TODO: allow leaving out some of the labels (right now it's all or nothing)
     override val labelArguments: Arguments<LabelNode>?,
-    val protocol: ProtocolNode?,
+    override val protocol: ProtocolNode?,
     override val sourceLocation: SourceLocation
 ) : Node(), ObjectDeclaration {
     override val declarationAsNode: Node

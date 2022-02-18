@@ -21,7 +21,6 @@ import edu.cornell.cs.apl.viaduct.security.solver.LabelVariable
 import edu.cornell.cs.apl.viaduct.syntax.FunctionName
 import edu.cornell.cs.apl.viaduct.syntax.HasSourceLocation
 import edu.cornell.cs.apl.viaduct.syntax.ObjectVariable
-import edu.cornell.cs.apl.viaduct.syntax.Temporary
 import edu.cornell.cs.apl.viaduct.syntax.Variable
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.AssertionNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.BlockNode
@@ -56,6 +55,7 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.QueryNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ReadNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.StatementNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.UpdateNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.VariableDeclarationNode
 import edu.cornell.cs.apl.viaduct.util.FreshNameGenerator
 import kotlinx.collections.immutable.persistentMapOf
 import mu.KotlinLogging
@@ -216,27 +216,22 @@ class InformationFlowAnalysis private constructor(
     ): LabelVariable =
         createPCVariable(solver, nameAnalysis.enclosingFunctionName(stmt), stmt.pathName)
 
-    /** Returns the inferred security label of the [Temporary] defined by [node]. */
-    fun label(node: LetNode): Label =
-        solutionMap.getValue(nameAnalysis.enclosingFunctionName(node)).getValue(node.temporaryLabel)
-
-    /** Returns the inferred security label of the [ObjectVariable] declared by [node]. */
-    fun label(node: DeclarationNode): Label =
-        when (val label = node.variableLabel()) {
-            is LabelConstant -> label.value
-
-            is LabelVariable ->
-                solutionMap.getValue(nameAnalysis.enclosingFunctionName(node)).getValue(label)
-
-            else -> throw Error("impossible case")
+    /** Returns the inferred security label of the [Variable] defined by [node]. */
+    fun label(node: VariableDeclarationNode): Label =
+        when (node) {
+            is LetNode ->
+                node.temporaryLabel.getValue(solutionMap.getValue(nameAnalysis.enclosingFunctionName(node)))
+            is DeclarationNode ->
+                node.variableLabel().getValue(solutionMap.getValue(nameAnalysis.enclosingFunctionName(node)))
+            is ParameterNode -> {
+                val function = nameAnalysis.functionDeclaration(node)
+                val (labelFunction, labelParamMap) = parameterVariableMap.getValue(function.name.value)
+                labelParamMap.getValue(node.name.value).getValue(solutionMap.getValue(labelFunction))
+            }
+            else ->
+                // TODO: remove this after making ObjectDeclaration as sealed class.
+                throw IllegalArgumentException("Unknown variable declaration node.")
         }
-
-    /** Returns the inferred security label of the [ObjectVariable] declared by [node]. */
-    fun label(node: ParameterNode): Label {
-        val function = nameAnalysis.functionDeclaration(node)
-        val (labelFunction, labelParamMap) = parameterVariableMap.getValue(function.name.value)
-        return solutionMap.getValue(labelFunction).getValue(labelParamMap.getValue(node.name.value))
-    }
 
     /** Returns the inferred security label of the [ObjectVariable] declared by [node]. */
     fun label(node: ObjectDeclarationArgumentNode): Label {
@@ -336,7 +331,10 @@ class InformationFlowAnalysis private constructor(
 
                     is EndorsementNode -> {
                         // Don't downgrade confidentiality
-                        solver.addEqualToConstraint(from.confidentiality(), to.confidentiality()) { fromLabel, toLabel ->
+                        solver.addEqualToConstraint(
+                            from.confidentiality(),
+                            to.confidentiality()
+                        ) { fromLabel, toLabel ->
                             ConfidentialityChangingEndorsementError(this, fromLabel, toLabel)
                         }
 

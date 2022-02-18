@@ -34,6 +34,8 @@ typealias UpdateNameNode = Located<UpdateName>
 
 typealias ArgumentLabelNode = Located<ArgumentLabel>
 
+typealias VariableNode = Located<Variable>
+
 typealias TemporaryNode = Located<Temporary>
 
 typealias ObjectVariableNode = Located<ObjectVariable>

@@ -42,7 +42,7 @@ fun receiveReplicated(
 
     fun receiveDispatcher(event: CommunicationEvent, receiveHost: Host): CodeBlock =
         when (event.send.host == receiveHost) {
-            true -> CodeBlock.of("%L", context.kotlinName(sender.temporary.value, sendProtocol))
+            true -> CodeBlock.of("%L", context.kotlinName(sender.name.value, sendProtocol))
             false -> CodeBlock.of(
                 "%L",
                 context.receive(

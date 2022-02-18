@@ -92,7 +92,7 @@ class NameAnalysis private constructor(private val tree: Tree<Node, ProgramNode>
 
     /** Temporary definitions in scope for this node. */
     private val Node.temporaryDefinitions: NameMap<Temporary, LetNode> by Context(true) {
-        if (it is LetNode) listOf(Pair(it.temporary, it)) else listOf()
+        if (it is LetNode) listOf(Pair(it.name, it)) else listOf()
     }
 
     /** Object declarations in scope for this node. */
@@ -237,6 +237,9 @@ class NameAnalysis private constructor(private val tree: Tree<Node, ProgramNode>
         return object : ObjectDeclaration {
             override val name: ObjectVariableNode
                 get() = node.name
+
+            override val protocol: ProtocolNode?
+                get() = null
 
             override val className: ClassNameNode
                 get() = parameter.className
@@ -495,7 +498,8 @@ class NameAnalysis private constructor(private val tree: Tree<Node, ProgramNode>
         val functionName = enclosingFunctionName(this)
         this.descendantsIsInstance<DeclarationNode>().map { decl -> FunctionVariable(functionName, decl.name.value) }
             .plus(
-                this.descendantsIsInstance<LetNode>().map { letNode -> FunctionVariable(functionName, letNode.temporary.value) }
+                this.descendantsIsInstance<LetNode>()
+                    .map { letNode -> FunctionVariable(functionName, letNode.name.value) }
             ).plus(
                 this.descendantsIsInstance<UpdateNode>().map { update ->
                     when (val decl = declaration(update).declarationAsNode) {
@@ -571,7 +575,7 @@ class NameAnalysis private constructor(private val tree: Tree<Node, ProgramNode>
             // Check that there are no name clashes
             when (node) {
                 is LetNode ->
-                    node.temporaryDefinitions.put(node.temporary, node)
+                    node.temporaryDefinitions.put(node.name, node)
                 is DeclarationNode ->
                     node.objectDeclarations.put(node.name, node)
                 is InfiniteLoopNode ->

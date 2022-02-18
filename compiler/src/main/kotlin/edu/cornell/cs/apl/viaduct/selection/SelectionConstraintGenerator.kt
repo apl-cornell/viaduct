@@ -123,7 +123,7 @@ class SelectionConstraintGenerator(
 
     private fun viableProtocolsAndVariable(node: LetNode): Pair<FunctionVariable, Set<Protocol>> {
         val enclosingFunction = nameAnalysis.enclosingFunctionName(node)
-        return FunctionVariable(enclosingFunction, node.temporary.value) to viableProtocols(node)
+        return FunctionVariable(enclosingFunction, node.name.value) to viableProtocols(node)
     }
 
     private fun viableProtocolsAndVariable(node: UpdateNode): Pair<FunctionVariable, Set<Protocol>> {
@@ -241,7 +241,7 @@ class SelectionConstraintGenerator(
                         is InputNode -> {
                             setOf(
                                 VariableIn(
-                                    FunctionVariable(nameAnalysis.enclosingFunctionName(this), this.temporary.value),
+                                    FunctionVariable(nameAnalysis.enclosingFunctionName(this), this.name.value),
                                     Local(rhs.host.value)
                                 )
                             )
@@ -253,7 +253,7 @@ class SelectionConstraintGenerator(
 
                             setOf(
                                 variableInSet(
-                                    FunctionVariable(nameAnalysis.enclosingFunctionName(this), this.temporary.value),
+                                    FunctionVariable(nameAnalysis.enclosingFunctionName(this), this.name.value),
                                     viableProtocols(this)
                                 )
                             ).plus(
@@ -261,13 +261,13 @@ class SelectionConstraintGenerator(
                                     is DeclarationNode ->
                                         VariableEquals(
                                             FunctionVariable(enclosingFunctionName, objectDecl.name.value),
-                                            FunctionVariable(enclosingFunctionName, this.temporary.value)
+                                            FunctionVariable(enclosingFunctionName, this.name.value)
                                         )
 
                                     is ParameterNode ->
                                         VariableEquals(
                                             FunctionVariable(enclosingFunctionName, objectDecl.name.value),
-                                            FunctionVariable(enclosingFunctionName, this.temporary.value)
+                                            FunctionVariable(enclosingFunctionName, this.name.value)
                                         )
 
                                     is ObjectDeclarationArgumentNode -> {
@@ -277,7 +277,7 @@ class SelectionConstraintGenerator(
                                                 nameAnalysis.functionDeclaration(param).name.value,
                                                 param.name.value
                                             ),
-                                            FunctionVariable(enclosingFunctionName, this.temporary.value)
+                                            FunctionVariable(enclosingFunctionName, this.name.value)
                                         )
                                     }
 
@@ -289,7 +289,7 @@ class SelectionConstraintGenerator(
                         else -> {
                             setOf(
                                 variableInSet(
-                                    FunctionVariable(nameAnalysis.enclosingFunctionName(this), this.temporary.value),
+                                    FunctionVariable(nameAnalysis.enclosingFunctionName(this), this.name.value),
                                     viableProtocols(this)
                                 )
                             )
@@ -350,7 +350,7 @@ class SelectionConstraintGenerator(
                     .map { read -> nameAnalysis.declaration(read) }
                     .map { letNode ->
                         VariableEquals(
-                            FunctionVariable(nameAnalysis.enclosingFunctionName(letNode), letNode.temporary.value),
+                            FunctionVariable(nameAnalysis.enclosingFunctionName(letNode), letNode.name.value),
                             FunctionVariable(parameterFunctionName, parameter.name.value)
                         )
                     }
@@ -667,7 +667,7 @@ class SelectionConstraintGenerator(
                                 addCostChoice(
                                     this.costVariable,
                                     VariableIn(
-                                        FunctionVariable(enclosingFunctionName, msgDecl.temporary.value),
+                                        FunctionVariable(enclosingFunctionName, msgDecl.name.value),
                                         msgProtocol
                                     ),
                                     costEstimator.communicationCost(msgProtocol, outputProtocol)
@@ -679,7 +679,7 @@ class SelectionConstraintGenerator(
                                 setOf(
                                     Not(
                                         VariableIn(
-                                            FunctionVariable(enclosingFunctionName, msgDecl.temporary.value),
+                                            FunctionVariable(enclosingFunctionName, msgDecl.name.value),
                                             msgProtocol
                                         )
                                     )

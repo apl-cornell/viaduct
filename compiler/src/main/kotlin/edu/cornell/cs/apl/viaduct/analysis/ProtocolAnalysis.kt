@@ -272,7 +272,7 @@ class ProtocolAnalysis(
                                         .filterIsInstance<ExpressionArgumentNode>()
                                         .filter { arg ->
                                             when (val argExpr = arg.expression) {
-                                                is ReadNode -> argExpr.temporary.value == this.temporary.value
+                                                is ReadNode -> argExpr.temporary.value == this.name.value
                                                 is LiteralNode -> false
                                             }
                                         }.flatMap { arg ->

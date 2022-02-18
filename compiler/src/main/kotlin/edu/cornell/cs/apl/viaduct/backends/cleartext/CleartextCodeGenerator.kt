@@ -145,7 +145,7 @@ class CleartextCodeGenerator(context: CodeGeneratorContext) : AbstractCodeGenera
                         sendBuilder.addStatement(
                             "%L",
                             context.send(
-                                CodeBlock.of("%L", context.kotlinName(sender.temporary.value, sendProtocol)),
+                                CodeBlock.of("%L", context.kotlinName(sender.name.value, sendProtocol)),
                                 event.recv.host
                             )
                         )
@@ -231,7 +231,7 @@ class CleartextCodeGenerator(context: CodeGeneratorContext) : AbstractCodeGenera
                     }
                     receiveBuilder.addStatement(
                         "val %N = %N",
-                        context.kotlinName(sender.temporary.value, receiveProtocol),
+                        context.kotlinName(sender.name.value, receiveProtocol),
                         clearTextTemp
                     )
 
@@ -252,7 +252,7 @@ class CleartextCodeGenerator(context: CodeGeneratorContext) : AbstractCodeGenera
                         receiveType: ParameterizedTypeName
                     ): CodeBlock =
                         when (event.send.host == context.host) {
-                            true -> CodeBlock.of("%N", context.kotlinName(sender.temporary.value, sendProtocol))
+                            true -> CodeBlock.of("%N", context.kotlinName(sender.name.value, sendProtocol))
                             false -> CodeBlock.of("%L", context.receive(receiveType, event.send.host))
                         }
 
@@ -284,7 +284,7 @@ class CleartextCodeGenerator(context: CodeGeneratorContext) : AbstractCodeGenera
 
                     receiveBuilder.addStatement(
                         "val %N = %L.%N",
-                        context.kotlinName(sender.temporary.value, receiveProtocol),
+                        context.kotlinName(sender.name.value, receiveProtocol),
                         clearTextCommittedTemp,
                         "value"
                     )

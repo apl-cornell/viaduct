@@ -6,7 +6,7 @@ import edu.cornell.cs.apl.viaduct.security.Label
 import edu.cornell.cs.apl.viaduct.security.Principal
 
 /** An atomic term such as a constant or a variable but a join. */
-abstract class AtomicLabelTerm : LabelTerm() {
+sealed class AtomicLabelTerm : LabelTerm() {
     abstract override fun confidentiality(): AtomicLabelTerm
 
     abstract override fun integrity(): AtomicLabelTerm

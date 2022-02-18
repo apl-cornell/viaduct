@@ -41,7 +41,7 @@ application {
     mainClass.set("$mainPackage.ExampleRunnerKt")
 }
 
-tasks.withType<Test> {
+tasks.withType<Test>().configureEach {
     useJUnitPlatform()
 }
 

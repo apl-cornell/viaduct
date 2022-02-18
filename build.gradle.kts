@@ -68,9 +68,6 @@ subprojects {
         /** Dependencies */
 
         dependencies {
-            // Data structures
-            "implementation"("org.jetbrains.kotlinx:kotlinx-collections-immutable-jvm:0.3.4")
-
             // Logging
             "implementation"("io.github.microutils:kotlin-logging:2.1.0")
             "testImplementation"("org.apache.logging.log4j:log4j-core:2.17.1")

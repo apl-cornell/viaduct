@@ -18,6 +18,7 @@ dependencies {
     implementation(project(":runtime"))
 
     // Data structures
+    implementation("org.jetbrains.kotlinx:kotlinx-collections-immutable-jvm:0.3.4")
     implementation("com.uchuhimo:kotlinx-bimap:1.2")
 
     // Graphs

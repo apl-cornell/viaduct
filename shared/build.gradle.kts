@@ -7,6 +7,9 @@ val mainPackage = project.group as String
 /** Dependencies */
 
 dependencies {
+    // Data structures
+    implementation("org.jetbrains.kotlinx:kotlinx-collections-immutable-jvm:0.3.4")
+
     // Colored terminal output
     implementation("org.fusesource.jansi:jansi:2.4.0")
 

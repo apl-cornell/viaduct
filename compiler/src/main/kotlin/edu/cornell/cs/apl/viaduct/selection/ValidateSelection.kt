@@ -4,8 +4,6 @@ import edu.cornell.cs.apl.viaduct.analysis.InformationFlowAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.NameAnalysis
 import edu.cornell.cs.apl.viaduct.syntax.HostTrustConfiguration
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.DeclarationNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.LetNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.Node
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.VariableDeclarationNode
@@ -34,7 +32,7 @@ fun validateProtocolAssignment(
         val functionName = nameAnalysis.enclosingFunctionName(node as Node)
         val protocol = selection.getAssignment(functionName, node.name.value)
         if (!constraintGenerator.viableProtocols(node).contains(protocol)) {
-            throw InvalidProtocolAssignmentException(node as Node, protocol)
+            throw InvalidProtocolAssignmentException(node, protocol)
         }
     }
 
@@ -48,11 +46,7 @@ fun validateProtocolAssignment(
 
     fun Node.traverse(selection: ProtocolAssignment) {
         when (this) {
-            is LetNode -> {
-                checkViableProtocol(selection, this)
-                checkAuthority(selection, this)
-            }
-            is DeclarationNode -> {
+            is VariableDeclarationNode -> {
                 checkViableProtocol(selection, this)
                 checkAuthority(selection, this)
             }

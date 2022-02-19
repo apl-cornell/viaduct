@@ -267,9 +267,11 @@ parameter ::=
       RESULT = new ParameterNode(
         name,
         ParameterDirection.IN,
-        new Located(PrimitivesKt.getImmutableCell(), name.getSourceLocation()),
-        Arguments.from(type),
-        optionalLabelArgument(label),
+        new ObjectTypeNode(
+          new Located(PrimitivesKt.getImmutableCell(), name.getSourceLocation()),
+          Arguments.from(type),
+          optionalLabelArgument(label)
+        ),
         protocol,
         location(nameleft, labelright),
         null
@@ -280,9 +282,11 @@ parameter ::=
       RESULT = new ParameterNode(
         name,
         ParameterDirection.OUT,
-        new Located(PrimitivesKt.getImmutableCell(), name.getSourceLocation()),
-        Arguments.from(type),
-        optionalLabelArgument(label),
+        new ObjectTypeNode(
+          new Located(PrimitivesKt.getImmutableCell(), name.getSourceLocation()),
+          Arguments.from(type),
+          optionalLabelArgument(label)
+        ),
         protocol,
         location(nameleft, labelright),
         null
@@ -294,9 +298,11 @@ parameter ::=
       RESULT = new ParameterNode(
         name,
         ParameterDirection.IN,
-        new Located(PrimitivesKt.getVector(), name.getSourceLocation()),
-        Arguments.from(elementType),
-        optionalLabelArgument(label),
+        new ObjectTypeNode(
+          new Located(PrimitivesKt.getVector(), name.getSourceLocation()),
+          Arguments.from(elementType),
+          optionalLabelArgument(label)
+        ),
         protocol,
         location(nameleft, labelright),
         null
@@ -308,9 +314,11 @@ parameter ::=
       RESULT = new ParameterNode(
         name,
         ParameterDirection.OUT,
-        new Located(PrimitivesKt.getVector(), name.getSourceLocation()),
-        Arguments.from(elementType),
-        optionalLabelArgument(label),
+        new ObjectTypeNode(
+          new Located(PrimitivesKt.getVector(), name.getSourceLocation()),
+          Arguments.from(elementType),
+          optionalLabelArgument(label)
+        ),
         protocol,
         location(nameleft, labelright),
         null
@@ -324,9 +332,11 @@ simple_stmt ::=
       RESULT = new DeclarationNode(
         var,
         new ConstructorCallNode(
-            new Located(PrimitivesKt.getImmutableCell(), var.getSourceLocation()),
-            Arguments.from(type),
-            optionalLabelArgument(label),
+            new ObjectTypeNode(
+              new Located(PrimitivesKt.getImmutableCell(), var.getSourceLocation()),
+              Arguments.from(type),
+              optionalLabelArgument(label)
+            ),
             protocol,
             Arguments.from(value),
             location(typeleft, valueright)
@@ -345,9 +355,11 @@ simple_stmt ::=
       RESULT = new DeclarationNode(
         var,
         new ConstructorCallNode(
-            new Located(PrimitivesKt.getMutableCell(), var.getSourceLocation()),
-            Arguments.from(type),
-            optionalLabelArgument(label),
+            new ObjectTypeNode(
+              new Located(PrimitivesKt.getMutableCell(), var.getSourceLocation()),
+              Arguments.from(type),
+              optionalLabelArgument(label)
+            ),
             protocol,
             Arguments.from((initial == null) ? defaultValue : initial),
             location(typeleft, initialright)
@@ -640,9 +652,11 @@ expr ::=
     optional_label:label protocol_annot:protocol OPEN_PAREN expr:size CLOSE_PAREN:end
     {:
       RESULT = new ConstructorCallNode(
-        new Located(PrimitivesKt.getVector(), location(beginleft, beginright)),
-        Arguments.from(elementType),
-        optionalLabelArgument(label),
+        new ObjectTypeNode(
+          new Located(PrimitivesKt.getVector(), location(beginleft, beginright)),
+          Arguments.from(elementType),
+          optionalLabelArgument(label)
+        ),
         protocol,
         Arguments.from(size),
         location(beginleft, endright)

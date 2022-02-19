@@ -137,7 +137,7 @@ class MuxPostprocessor(
                 if (currentGuard != null) {
                     val enclosingFunction = nameAnalysis.enclosingFunctionName(stmt)
                     val updateProtocol = selection.getAssignment(enclosingFunction, stmt.variable.value)
-                    val className = nameAnalysis.declaration(stmt).className.value
+                    val className = nameAnalysis.declaration(stmt).objectType.className.value
                     val getTemporary =
                         Located(
                             Temporary(nameGenerator.getFreshName("${'$'}$GET_TEMPORARY_NAME")),

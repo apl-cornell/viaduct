@@ -1,8 +1,6 @@
 package edu.cornell.cs.apl.viaduct.syntax.surface
 
 import edu.cornell.cs.apl.prettyprinting.Document
-import edu.cornell.cs.apl.prettyprinting.braced
-import edu.cornell.cs.apl.prettyprinting.bracketed
 import edu.cornell.cs.apl.prettyprinting.concatenated
 import edu.cornell.cs.apl.prettyprinting.joined
 import edu.cornell.cs.apl.prettyprinting.nested
@@ -72,31 +70,20 @@ class DeclarationNode(
                 else -> throw InvalidConstructorCallError(initializer, constructorNeeded = true)
             }
 
-        val protocolDoc = constructor.protocol?.let {
-            Document("@") + it.value.toDocument()
-        } ?: Document("")
+        val typeAndProtocol = constructor.objectType.toDocument(constructor.protocol)
 
-        return when (constructor.className.value) {
+        return when (constructor.objectType.className.value) {
             ImmutableCell -> {
-                val label = constructor.labelArguments?.braced() ?: Document()
-                keyword("val") * variable + Document(":") *
-                    constructor.typeArguments[0] + label + protocolDoc * "=" * constructor.arguments[0]
+                keyword("val") * variable + Document(":") * typeAndProtocol * "=" * constructor.arguments[0]
             }
 
             MutableCell -> {
-                val label = constructor.labelArguments?.braced() ?: Document()
-                keyword("var") * variable + Document(":") *
-                    constructor.typeArguments[0] + label + protocolDoc * "=" * constructor.arguments[0]
+                keyword("var") * variable + Document(":") * typeAndProtocol * "=" * constructor.arguments[0]
             }
 
             else -> {
-                val types = constructor.typeArguments.bracketed().nested()
-                // TODO: labels should have braces
-                //   val labels = labelArguments?.braced()?.nested() ?: Document()
-                val labels = constructor.labelArguments?.braced() ?: Document()
                 val arguments = constructor.arguments.tupled().nested()
-                keyword("val") * variable * "=" *
-                    constructor.className + types + labels + protocolDoc + arguments
+                keyword("val") * variable * "=" * typeAndProtocol + arguments
             }
         }
     }
@@ -223,7 +210,8 @@ class IfNode(
     override val sourceLocation: SourceLocation,
     override val comment: String? = null
 ) : StatementNode() {
-    override fun toDocumentWithoutComment(): Document = (keyword("if") * "(" + guard + ")") * thenBranch * keyword("else") * elseBranch
+    override fun toDocumentWithoutComment(): Document =
+        (keyword("if") * "(" + guard + ")") * thenBranch * keyword("else") * elseBranch
 }
 
 /** A loop statement. */

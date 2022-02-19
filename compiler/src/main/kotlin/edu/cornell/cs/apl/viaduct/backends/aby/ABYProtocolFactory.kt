@@ -109,19 +109,19 @@ class ABYProtocolFactory(program: ProgramNode) : ProtocolFactory {
         when {
             node is LetNode && node.value is QueryNode -> {
                 val rhs = node.value
-                val objectDecl = nameAnalysis.declaration(rhs)
-                if (objectDecl.className.value == Vector && rhs.query.value == Get && rhs.arguments[0] is ReadNode) {
+                val className = nameAnalysis.declaration(rhs).objectType.className
+                if (className.value == Vector && rhs.query.value == Get && rhs.arguments[0] is ReadNode) {
                     cleartextArrayLengthAndIndexConstraint(
                         nameAnalysis.enclosingFunctionName(node),
                         rhs.variable.value,
                         rhs.arguments[0] as ReadNode
                     )
                 } else {
-                    Literal(true)
+                    super.constraint(node)
                 }
             }
 
-            node is DeclarationNode && node.className.value == Vector && node.arguments[0] is ReadNode ->
+            node is DeclarationNode && node.objectType.className.value == Vector && node.arguments[0] is ReadNode ->
                 cleartextArrayLengthAndIndexConstraint(
                     nameAnalysis.enclosingFunctionName(node),
                     node.name.value,
@@ -134,7 +134,7 @@ class ABYProtocolFactory(program: ProgramNode) : ProtocolFactory {
 
     override fun constraint(node: UpdateNode): SelectionConstraint {
         val objectDecl = nameAnalysis.declaration(node)
-        return if (objectDecl.className.value == Vector &&
+        return if (objectDecl.objectType.className.value == Vector &&
             node.update.value == edu.cornell.cs.apl.viaduct.syntax.datatypes.Set &&
             node.arguments[0] is ReadNode
         ) {
@@ -144,7 +144,7 @@ class ABYProtocolFactory(program: ProgramNode) : ProtocolFactory {
                 node.arguments[0] as ReadNode
             )
         } else {
-            Literal(true)
+            super.constraint(node)
         }
     }
 

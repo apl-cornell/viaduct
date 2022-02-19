@@ -112,7 +112,7 @@ class InformationFlowAnalysis private constructor(
         variableLabelMap.getOrPut(
             this.declarationAsNode
         ) {
-            if (labelArguments == null || this.declarationAsNode is ObjectDeclarationArgumentNode) {
+            if (objectType.labelArguments == null || this.declarationAsNode is ObjectDeclarationArgumentNode) {
                 when (val declaration = this.declarationAsNode) {
                     is DeclarationNode ->
                         constraintSolver(declaration).addNewVariable(PrettyNodeWrapper(this.name))
@@ -127,7 +127,7 @@ class InformationFlowAnalysis private constructor(
                 }
             } else {
                 // TODO: this is hacky. How do we know it's the first label, for example?
-                LabelConstant(labelArguments!![0].value.interpret(parameterMap))
+                LabelConstant(objectType.labelArguments!![0].value.interpret(parameterMap))
             }
         }
 
@@ -500,8 +500,8 @@ class InformationFlowAnalysis private constructor(
                                 argumentLabel
                             )
 
-                            if (parameter.labelArguments != null) {
-                                val labelBoundExpr = parameter.labelArguments[0].value
+                            if (parameter.objectType.labelArguments != null) {
+                                val labelBoundExpr = parameter.objectType.labelArguments[0].value
                                 val labelBound =
                                     when {
                                         labelBoundExpr is LabelParameter ->

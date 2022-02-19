@@ -19,34 +19,8 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.StatementNode
 fun ProgramNode.annotateWithProtocols(assignment: ProtocolAssignment): ProgramNode =
     ProtocolAnnotator(this, assignment).run()
 
-fun ProgramNode.isAssignmentAnnotated(): Boolean =
-    this.declarations.all { decl ->
-        when (decl) {
-            is HostDeclarationNode -> true
-
-            is FunctionDeclarationNode -> {
-                val paramsAnnotated = decl.parameters.all { param -> param.protocol != null }
-                val bodyAnnotated = decl.body.isAssignmentAnnotated()
-                paramsAnnotated && bodyAnnotated
-            }
-        }
-    }
-
-private fun StatementNode.isAssignmentAnnotated(): Boolean =
-    when (this) {
-        is BlockNode -> this.statements.all { stmt -> stmt.isAssignmentAnnotated() }
-        is IfNode -> this.thenBranch.isAssignmentAnnotated() && this.elseBranch.isAssignmentAnnotated()
-        is InfiniteLoopNode -> this.body.isAssignmentAnnotated()
-        is DeclarationNode -> this.protocol != null
-        is LetNode -> this.protocol != null
-        else -> true
-    }
-
 /** Annotate AST with protocol assignment. */
-private class ProtocolAnnotator(
-    val program: ProgramNode,
-    val selection: ProtocolAssignment
-) {
+private class ProtocolAnnotator(val program: ProgramNode, val selection: ProtocolAssignment) {
     private val nameAnalysis = NameAnalysis.get(program)
 
     fun run(stmt: StatementNode): StatementNode {
@@ -68,9 +42,7 @@ private class ProtocolAnnotator(
                 val enclosingFunction = nameAnalysis.enclosingFunctionName(stmt)
                 DeclarationNode(
                     stmt.name,
-                    stmt.className,
-                    stmt.typeArguments,
-                    stmt.labelArguments,
+                    stmt.objectType,
                     stmt.arguments,
                     Located(
                         selection.getAssignment(enclosingFunction, stmt.name.value),
@@ -121,9 +93,7 @@ private class ProtocolAnnotator(
                                     ParameterNode(
                                         param.name,
                                         param.parameterDirection,
-                                        param.className,
-                                        param.typeArguments,
-                                        param.labelArguments,
+                                        param.objectType,
                                         Located(
                                             selection.getAssignment(decl.name.value, param.name.value),
                                             param.sourceLocation

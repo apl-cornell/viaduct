@@ -1,12 +1,9 @@
 package edu.cornell.cs.apl.viaduct.syntax.intermediate
 
-import edu.cornell.cs.apl.viaduct.syntax.Arguments
-import edu.cornell.cs.apl.viaduct.syntax.ClassNameNode
-import edu.cornell.cs.apl.viaduct.syntax.LabelNode
+import edu.cornell.cs.apl.viaduct.syntax.ObjectTypeNode
 import edu.cornell.cs.apl.viaduct.syntax.ObjectVariable
 import edu.cornell.cs.apl.viaduct.syntax.ObjectVariableNode
 import edu.cornell.cs.apl.viaduct.syntax.ProtocolNode
-import edu.cornell.cs.apl.viaduct.syntax.ValueTypeNode
 import edu.cornell.cs.apl.viaduct.syntax.Variable
 import edu.cornell.cs.apl.viaduct.syntax.VariableNode
 
@@ -19,12 +16,15 @@ sealed interface VariableDeclarationNode {
     val protocol: ProtocolNode?
 }
 
+/** A node that declares an [ObjectVariable]. */
+sealed interface ObjectVariableDeclarationNode : VariableDeclarationNode {
+    override val name: ObjectVariableNode
+}
+
 // TODO: this should be a sealed class.
 /** A node that declares an [ObjectVariable]. */
 interface ObjectDeclaration : VariableDeclarationNode {
     override val name: ObjectVariableNode
-    val className: ClassNameNode
-    val typeArguments: Arguments<ValueTypeNode>
-    val labelArguments: Arguments<LabelNode>?
+    val objectType: ObjectTypeNode
     val declarationAsNode: Node
 }

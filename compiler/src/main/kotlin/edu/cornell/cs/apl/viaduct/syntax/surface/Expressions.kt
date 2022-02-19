@@ -2,18 +2,14 @@ package edu.cornell.cs.apl.viaduct.syntax.surface
 
 import edu.cornell.cs.apl.prettyprinting.Document
 import edu.cornell.cs.apl.prettyprinting.braced
-import edu.cornell.cs.apl.prettyprinting.bracketed
-import edu.cornell.cs.apl.prettyprinting.joined
 import edu.cornell.cs.apl.prettyprinting.nested
 import edu.cornell.cs.apl.prettyprinting.plus
 import edu.cornell.cs.apl.prettyprinting.times
 import edu.cornell.cs.apl.prettyprinting.tupled
-import edu.cornell.cs.apl.viaduct.security.LabelExpression
 import edu.cornell.cs.apl.viaduct.syntax.Arguments
-import edu.cornell.cs.apl.viaduct.syntax.ClassNameNode
 import edu.cornell.cs.apl.viaduct.syntax.HostNode
 import edu.cornell.cs.apl.viaduct.syntax.LabelNode
-import edu.cornell.cs.apl.viaduct.syntax.Located
+import edu.cornell.cs.apl.viaduct.syntax.ObjectTypeNode
 import edu.cornell.cs.apl.viaduct.syntax.ObjectVariableNode
 import edu.cornell.cs.apl.viaduct.syntax.Operator
 import edu.cornell.cs.apl.viaduct.syntax.ProtocolNode
@@ -128,21 +124,13 @@ class InputNode(
  * Call to an object constructor. Used for out parameter initialization.
  */
 class ConstructorCallNode(
-    val className: ClassNameNode,
-    val typeArguments: Arguments<ValueTypeNode>,
-    val labelArguments: Arguments<Located<LabelExpression>>?,
+    val objectType: ObjectTypeNode,
     val protocol: ProtocolNode?,
     val arguments: Arguments<ExpressionNode>,
     override val sourceLocation: SourceLocation
 ) : ExpressionNode() {
     override fun toDocumentWithoutComment(): Document {
-        val types = typeArguments.bracketed().nested()
-        val labels =
-            labelArguments
-                ?.map { arg -> listOf(arg).braced() }
-                ?.joined()
-                ?: Document()
         val arguments = arguments.tupled().nested()
-        return className + types + labels + arguments
+        return objectType + arguments
     }
 }

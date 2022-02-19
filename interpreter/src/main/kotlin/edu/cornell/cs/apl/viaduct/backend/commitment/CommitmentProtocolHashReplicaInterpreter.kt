@@ -173,7 +173,7 @@ class CommitmentProtocolHashReplicaInterpreter(
 
     override suspend fun runLet(stmt: LetNode) {
         val commitment = runExpr(stmt.value)
-        hashTempStore = hashTempStore.put(stmt.temporary.value, commitment)
+        hashTempStore = hashTempStore.put(stmt.name.value, commitment)
     }
 
     override suspend fun runUpdate(stmt: UpdateNode) {
@@ -199,13 +199,13 @@ class CommitmentProtocolHashReplicaInterpreter(
             val relevantEvents: Set<CommunicationEvent> =
                 events.getProjectionSends(runtime.projection, Commitment.OPEN_COMMITMENT_OUTPUT)
 
-            val commitment = hashTempStore[sender.temporary.value]!!
+            val commitment = hashTempStore[sender.name.value]!!
             val commitmentValue = ByteVecValue(commitment)
             for (event in relevantEvents) {
                 runtime.send(commitmentValue, event)
 
                 logger.info {
-                    "sent opened commitment for ${sender.temporary.value.name} to " +
+                    "sent opened commitment for ${sender.name.value.name} to " +
                         "${event.recv.protocol.toDocument().print()}@${event.recv.host.name}"
                 }
             }
@@ -226,7 +226,7 @@ class CommitmentProtocolHashReplicaInterpreter(
                         events.getHostReceives(runtime.projection.host, Commitment.CLEARTEXT_INPUT)
                     for (event in relevantEvents) {
                         val v: Value = runtime.receive(event)
-                        ctTempStore = ctTempStore.put(sender.temporary.value, v)
+                        ctTempStore = ctTempStore.put(sender.name.value, v)
                     }
                 }
 
@@ -235,9 +235,9 @@ class CommitmentProtocolHashReplicaInterpreter(
                         runtime.receive(ProtocolProjection(runtime.projection.protocol, cleartextHost))
                     val committedValue = (commitment as ByteVecValue).value
 
-                    logger.info { "received commitment for ${sender.temporary.value.name} from host ${cleartextHost.name}" }
+                    logger.info { "received commitment for ${sender.name.value.name} from host ${cleartextHost.name}" }
 
-                    hashTempStore = hashTempStore.put(sender.temporary.value, committedValue)
+                    hashTempStore = hashTempStore.put(sender.name.value, committedValue)
                 }
             }
         }

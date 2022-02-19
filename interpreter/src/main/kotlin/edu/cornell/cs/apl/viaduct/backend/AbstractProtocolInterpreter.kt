@@ -177,8 +177,8 @@ abstract class AbstractProtocolInterpreter<Obj>(
                     allocateObject(
                         buildObject(
                             protocol,
-                            stmt.className.value,
-                            stmt.typeArguments.map { it.value },
+                            stmt.objectType.className.value,
+                            stmt.objectType.typeArguments.map { it.value },
                             stmt.arguments
                         )
                     )
@@ -197,8 +197,8 @@ abstract class AbstractProtocolInterpreter<Obj>(
                         is OutParameterConstructorInitializerNode -> {
                             buildObject(
                                 protocol,
-                                initializer.className.value,
-                                initializer.typeArguments.map { it.value },
+                                initializer.objectType.className.value,
+                                initializer.objectType.typeArguments.map { it.value },
                                 initializer.arguments
                             )
                         }

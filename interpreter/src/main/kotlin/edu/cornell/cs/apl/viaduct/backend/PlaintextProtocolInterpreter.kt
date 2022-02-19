@@ -146,7 +146,7 @@ class PlaintextProtocolInterpreter(
 
     override suspend fun runLet(protocol: Protocol, stmt: LetNode) {
         val rhsValue = runExpr(stmt.value)
-        tempStore = tempStore.put(stmt.temporary.value, rhsValue)
+        tempStore = tempStore.put(stmt.name.value, rhsValue)
     }
 
     override suspend fun runUpdate(protocol: Protocol, stmt: UpdateNode) {
@@ -176,7 +176,7 @@ class PlaintextProtocolInterpreter(
             val relevantEvents: Set<CommunicationEvent> =
                 events.getProjectionSends(ProtocolProjection(sendProtocol, this.host))
 
-            val rhsValue = tempStore[sender.temporary.value]!!
+            val rhsValue = tempStore[sender.name.value]!!
             for (event in relevantEvents) {
                 runtime.send(rhsValue, event)
             }
@@ -271,7 +271,7 @@ class PlaintextProtocolInterpreter(
                         }
                     }
 
-                    tempStore = tempStore.put(sender.temporary.value, cleartextValue)
+                    tempStore = tempStore.put(sender.name.value, cleartextValue)
                 }
 
                 // commitment opening
@@ -282,7 +282,9 @@ class PlaintextProtocolInterpreter(
                     val msg = runtime.receive(cleartextSendEvent)
 
                     logger.info {
-                        "received opened commitment value and nonce from ${cleartextSendEvent.send.asProjection().toDocument().print()}"
+                        "received opened commitment value and nonce from ${
+                        cleartextSendEvent.send.asProjection().toDocument().print()
+                        }"
                     }
 
                     for (hashCommitmentInput in hashCommitmentInputs) {
@@ -290,11 +292,13 @@ class PlaintextProtocolInterpreter(
 
                         assert(HashInfo(commitment.value, nonce.value).verify(msg.encode()))
                         logger.info {
-                            "verified commitment from host ${hashCommitmentInput.send.asProjection().toDocument().print()}"
+                            "verified commitment from host ${
+                            hashCommitmentInput.send.asProjection().toDocument().print()
+                            }"
                         }
                     }
 
-                    tempStore = tempStore.put(sender.temporary.value, msg)
+                    tempStore = tempStore.put(sender.name.value, msg)
                 }
 
                 else ->

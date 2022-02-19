@@ -10,8 +10,8 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.FunctionDeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.IfNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.InfiniteLoopNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.Node
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.ObjectDeclaration
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ObjectReferenceArgumentNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.ObjectVariableDeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutParameterArgumentNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutParameterInitializationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ParameterNode
@@ -127,7 +127,7 @@ class OutParameterInitializationAnalysis private constructor(
      * they are used and before the function returns.
      */
     private fun check(node: Node) {
-        fun use(declaration: ObjectDeclaration) {
+        fun use(declaration: ObjectVariableDeclarationNode) {
             node.flowIn[declaration.name.value]?.let {
                 if (it != InitializationState.INITIALIZED)
                     throw OutParameterInitializationError(declaration as ParameterNode, node)

@@ -172,7 +172,7 @@ class CommitmentProtocolCleartextInterpreter(
 
     override suspend fun runLet(stmt: LetNode) {
         val rhsValue: Hashed<Value> = runExpr(stmt.value)
-        tempStore = tempStore.put(stmt.temporary.value, rhsValue)
+        tempStore = tempStore.put(stmt.name.value, rhsValue)
     }
 
     override suspend fun runUpdate(stmt: UpdateNode) {
@@ -195,7 +195,7 @@ class CommitmentProtocolCleartextInterpreter(
         events: ProtocolCommunication
     ) {
         if (receiver != runtime.projection.protocol) {
-            val hashedValue: Hashed<Value> = tempStore[sender.temporary.value]!!
+            val hashedValue: Hashed<Value> = tempStore[sender.name.value]!!
 
             val relevantEvents: Set<CommunicationEvent> =
                 events.getProjectionSends(runtime.projection, Commitment.OPEN_CLEARTEXT_OUTPUT)
@@ -208,7 +208,7 @@ class CommitmentProtocolCleartextInterpreter(
                 runtime.send(hashedValue.value, recvProjection)
 
                 logger.info {
-                    "sent opened value and nonce for ${sender.temporary.value.name} to " +
+                    "sent opened value and nonce for ${sender.name.value.name} to " +
                         "${event.recv.protocol.toDocument().print()}@${event.recv.host.name}"
                 }
             }
@@ -241,7 +241,7 @@ class CommitmentProtocolCleartextInterpreter(
                         }
                     }
 
-                    ctTempStore = ctTempStore.put(sender.temporary.value, cleartextValue!!)
+                    ctTempStore = ctTempStore.put(sender.name.value, cleartextValue!!)
                 }
 
                 else -> { // create commitment
@@ -272,11 +272,11 @@ class CommitmentProtocolCleartextInterpreter(
 
                     for (hashHost in hashHosts) {
                         runtime.send(commitment, ProtocolProjection(runtime.projection.protocol, hashHost))
-                        logger.info { "sent commitment for ${sender.temporary.value.name} to host ${hashHost.name}" }
+                        logger.info { "sent commitment for ${sender.name.value.name} to host ${hashHost.name}" }
                     }
 
                     val hashedValue = Hashed(cleartextValue, hashInfo)
-                    tempStore = tempStore.put(sender.temporary.value, hashedValue)
+                    tempStore = tempStore.put(sender.name.value, hashedValue)
                 }
             }
         }

@@ -96,12 +96,12 @@ abstract class AbstractCodeGenerator(val context: CodeGeneratorContext) : CodeGe
     fun let(protocol: Protocol, stmt: LetNode): CodeBlock =
         CodeBlock.of(
             "val %N = %L",
-            context.kotlinName(stmt.temporary.value, protocol),
+            context.kotlinName(stmt.name.value, protocol),
             exp(protocol, stmt.value)
         )
 
     fun declaration(protocol: Protocol, stmt: DeclarationNode): CodeBlock =
-        when (stmt.className.value) {
+        when (stmt.objectType.className.value) {
             ImmutableCell -> CodeBlock.of(
                 "val %N = %L",
                 context.kotlinName(stmt.name.value),
@@ -124,8 +124,8 @@ abstract class AbstractCodeGenerator(val context: CodeGeneratorContext) : CodeGe
                     exp(
                         protocol,
                         LiteralNode(
-                            stmt.typeArguments[0].value.defaultValue,
-                            stmt.typeArguments[0].sourceLocation
+                            stmt.objectType.typeArguments[0].value.defaultValue,
+                            stmt.objectType.typeArguments[0].sourceLocation
                         )
                     )
                 )

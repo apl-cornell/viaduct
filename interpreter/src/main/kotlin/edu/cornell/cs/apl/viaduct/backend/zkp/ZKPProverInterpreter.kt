@@ -251,12 +251,12 @@ class ZKPProverInterpreter(
 
     override suspend fun runLet(stmt: LetNode) {
         logger.info {
-            "running let for ${stmt.temporary.value}"
+            "running let for ${stmt.name.value}"
         }
         val w = getExprWire(stmt.value)
-        wireStore = wireStore.put(stmt.temporary.value, w)
+        wireStore = wireStore.put(stmt.name.value, w)
         logger.info {
-            "Storing wire for ${stmt.temporary.value}"
+            "Storing wire for ${stmt.name.value}"
         }
     }
 
@@ -309,7 +309,7 @@ class ZKPProverInterpreter(
         events: ProtocolCommunication
     ) {
         if (sendProtocol != recvProtocol) {
-            val wire = wireStore[sender.temporary.value]!!
+            val wire = wireStore[sender.name.value]!!
             val wireVal: Int = wire.eval()
             logger.info {
                 "Run let on wire $wire with output value $wireVal"
@@ -374,7 +374,7 @@ class ZKPProverInterpreter(
     ) {
         if (sendProtocol != recvProtocol) {
             logger.info {
-                "Wire for ${sender.temporary.value} does not exist; sendProtocol = $sendProtocol, runtimeProtocol = ${runtime.projection.protocol}"
+                "Wire for ${sender.name.value} does not exist; sendProtocol = $sendProtocol, runtimeProtocol = ${runtime.projection.protocol}"
             }
             val secretInputs = events.getHostReceives(runtime.projection.host, "ZKP_SECRET_INPUT")
             val publicInputs = events.getHostReceives(runtime.projection.host, "ZKP_PUBLIC_INPUT")
@@ -384,8 +384,8 @@ class ZKPProverInterpreter(
                     val sendEvent = secretInputs.first()
                     val msg = runtime.receive(ProtocolProjection(sendEvent.send.protocol, sendEvent.send.host))
                     val wire = mkInput(msg)
-                    tempStore = tempStore.put(sender.temporary.value, msg)
-                    wireStore = wireStore.put(sender.temporary.value, wire)
+                    tempStore = tempStore.put(sender.name.value, msg)
+                    wireStore = wireStore.put(sender.name.value, wire)
                 }
                 secretInputs.isEmpty() && publicInputs.isNotEmpty() -> {
                     var cleartextValue: Value? = null
@@ -400,8 +400,8 @@ class ZKPProverInterpreter(
                         }
                     }
                     val wire = injectConst(cleartextValue!!)
-                    tempStore = tempStore.put(sender.temporary.value, cleartextValue)
-                    wireStore = wireStore.put(sender.temporary.value, wire)
+                    tempStore = tempStore.put(sender.name.value, cleartextValue)
+                    wireStore = wireStore.put(sender.name.value, wire)
                 }
                 else -> throw ViaductInterpreterError("Got weird ZKP situation: secret = $secretInputs, public = $publicInputs")
             }

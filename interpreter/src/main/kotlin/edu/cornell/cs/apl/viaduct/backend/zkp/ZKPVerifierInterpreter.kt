@@ -222,7 +222,7 @@ class ZKPVerifierInterpreter(
 
     override suspend fun runLet(stmt: LetNode) {
         val w = getExprWire(stmt.value)
-        wireStore = wireStore.put(stmt.temporary.value, w)
+        wireStore = wireStore.put(stmt.name.value, w)
     }
 
     override suspend fun runUpdate(stmt: UpdateNode) {
@@ -275,7 +275,7 @@ class ZKPVerifierInterpreter(
     ) {
         val hostEvents = events.getHostSends(runtime.projection.host)
         if (sendProtocol != recvProtocol && hostEvents.isNotEmpty()) {
-            val wire = wireStore[sender.temporary.value]!!
+            val wire = wireStore[sender.name.value]!!
             val wireName = wire.wireName()
             val vkFile = File("zkpkeys/$wireName.vk")
             if (!vkFile.exists()) {
@@ -331,10 +331,10 @@ class ZKPVerifierInterpreter(
                         throw ViaductInterpreterError("ZKP public input: received different values")
                     }
                 }
-                tempStore = tempStore.put(sender.temporary.value, cleartextValue!!)
+                tempStore = tempStore.put(sender.name.value, cleartextValue!!)
                 mkConst(cleartextValue)
             }
-            wireStore = wireStore.put(sender.temporary.value, w)
+            wireStore = wireStore.put(sender.name.value, w)
         }
     }
 }

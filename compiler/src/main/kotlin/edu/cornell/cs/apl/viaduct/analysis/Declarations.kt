@@ -35,7 +35,7 @@ import edu.cornell.cs.apl.viaduct.util.FreshNameGenerator
 
 fun StatementNode.createdVariables(): List<Variable> =
     when (this) {
-        is LetNode -> listOf(this.temporary.value)
+        is LetNode -> listOf(this.name.value)
         is DeclarationNode -> listOf(this.name.value)
         is UpdateNode -> listOf()
         is OutParameterInitializationNode -> listOf(this.name.value) // TODO is this right?
@@ -109,7 +109,7 @@ fun Node.freshVariableNameGenerator(): FreshNameGenerator {
     fun <Named> Sequence<Named>.addNames(getName: Named.() -> Located<Name>) {
         this.forEach { freshNameGenerator.getFreshName(it.getName().value.name) }
     }
-    this.descendantsIsInstance<LetNode>().addNames(LetNode::temporary)
+    this.descendantsIsInstance<LetNode>().addNames(LetNode::name)
     this.descendantsIsInstance<DeclarationNode>().addNames(DeclarationNode::name)
     this.descendantsIsInstance<ParameterNode>().addNames(ParameterNode::name)
 

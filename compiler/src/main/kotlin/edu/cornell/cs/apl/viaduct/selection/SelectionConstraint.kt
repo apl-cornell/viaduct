@@ -226,16 +226,16 @@ fun SelectionConstraint.variableNames(): Set<String> =
         this.guardVisibilityVariables().map { gv -> gv.variable }
     )
 
-/** States whether an expression reads only from the protocols in [prots] **/
-fun ExpressionNode.readsFrom(nameAnalysis: NameAnalysis, prots: Set<Protocol>): SelectionConstraint =
+/** States whether an expression reads only from the protocols in [protocols]. **/
+fun ExpressionNode.readsFrom(nameAnalysis: NameAnalysis, protocols: Set<Protocol>): SelectionConstraint =
     this.involvedVariables().map {
-        variableInSet(FunctionVariable(nameAnalysis.enclosingFunctionName(this), it), prots)
+        variableInSet(FunctionVariable(nameAnalysis.enclosingFunctionName(this), it), protocols)
     }.ands()
 
-/** States that if the let node is stored at any protocol in [to], it reads from only the protocols in [from] **/
+/** States that if the let node is stored at any protocol in [to], it reads from only the protocols in [from]. **/
 fun LetNode.readsFrom(nameAnalysis: NameAnalysis, to: Set<Protocol>, from: Set<Protocol>): SelectionConstraint =
     Implies(
-        variableInSet(FunctionVariable(nameAnalysis.enclosingFunctionName(this), this.temporary.value), to),
+        variableInSet(FunctionVariable(nameAnalysis.enclosingFunctionName(this), this.name.value), to),
         this.value.readsFrom(nameAnalysis, from)
     )
 
@@ -245,11 +245,10 @@ fun DeclarationNode.readsFrom(nameAnalysis: NameAnalysis, to: Set<Protocol>, fro
         this.arguments.map { it.readsFrom(nameAnalysis, from) }.ands()
     )
 
-/** States that if the let node is stores at any protocol in [from], it sends to only the protocols in [to] **/
-
+/** States that if the let node is stored at any protocol in [from], it sends to only the protocols in [to]. **/
 fun LetNode.sendsTo(nameAnalysis: NameAnalysis, from: Set<Protocol>, to: Set<Protocol>): SelectionConstraint =
     Implies(
-        variableInSet(FunctionVariable(nameAnalysis.enclosingFunctionName(this), this.temporary.value), from),
+        variableInSet(FunctionVariable(nameAnalysis.enclosingFunctionName(this), this.name.value), from),
         nameAnalysis.readers(this).map { stmt ->
             stmt.createdVariables().map {
                 variableInSet(FunctionVariable(nameAnalysis.enclosingFunctionName(stmt), it), to)
@@ -265,6 +264,6 @@ fun DeclarationNode.sendsTo(nameAnalysis: NameAnalysis, from: Set<Protocol>, to:
         ),
         nameAnalysis.queriers(this).map {
             val clet = nameAnalysis.correspondingLet(it)
-            variableInSet(FunctionVariable(nameAnalysis.enclosingFunctionName(clet), clet.temporary.value), to)
+            variableInSet(FunctionVariable(nameAnalysis.enclosingFunctionName(clet), clet.name.value), to)
         }.ands()
     )

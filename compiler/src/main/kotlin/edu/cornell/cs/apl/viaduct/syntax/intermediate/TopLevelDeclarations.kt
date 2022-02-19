@@ -1,16 +1,15 @@
 package edu.cornell.cs.apl.viaduct.syntax.intermediate
 
 import edu.cornell.cs.apl.viaduct.syntax.Arguments
-import edu.cornell.cs.apl.viaduct.syntax.ClassNameNode
 import edu.cornell.cs.apl.viaduct.syntax.FunctionNameNode
 import edu.cornell.cs.apl.viaduct.syntax.HostNode
 import edu.cornell.cs.apl.viaduct.syntax.LabelNode
+import edu.cornell.cs.apl.viaduct.syntax.ObjectTypeNode
 import edu.cornell.cs.apl.viaduct.syntax.ObjectVariable
 import edu.cornell.cs.apl.viaduct.syntax.ObjectVariableNode
 import edu.cornell.cs.apl.viaduct.syntax.ParameterDirection
 import edu.cornell.cs.apl.viaduct.syntax.ProtocolNode
 import edu.cornell.cs.apl.viaduct.syntax.SourceLocation
-import edu.cornell.cs.apl.viaduct.syntax.ValueTypeNode
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.toPersistentList
 
@@ -51,16 +50,10 @@ class HostDeclarationNode(
 class ParameterNode(
     override val name: ObjectVariableNode,
     val parameterDirection: ParameterDirection,
-    override val className: ClassNameNode,
-    override val typeArguments: Arguments<ValueTypeNode>,
-    // TODO: allow leaving out some of the labels (right now it's all or nothing)
-    override val labelArguments: Arguments<LabelNode>?,
-    val protocol: ProtocolNode?,
+    val objectType: ObjectTypeNode,
+    override val protocol: ProtocolNode?,
     override val sourceLocation: SourceLocation
-) : Node(), ObjectDeclaration {
-    override val declarationAsNode: Node
-        get() = this
-
+) : Node(), ObjectVariableDeclarationNode {
     override val children: Iterable<BlockNode>
         get() = listOf()
 
@@ -68,22 +61,20 @@ class ParameterNode(
         edu.cornell.cs.apl.viaduct.syntax.surface.ParameterNode(
             name,
             parameterDirection,
-            className,
-            typeArguments,
-            labelArguments,
+            objectType,
             protocol,
             sourceLocation,
             comment = metadataAsComment(metadata)
         )
 
     override fun copy(children: List<Node>): Node =
-        ParameterNode(name, parameterDirection, className, typeArguments, labelArguments, protocol, sourceLocation)
-
-    val isOutParameter: Boolean
-        get() = parameterDirection == ParameterDirection.PARAM_OUT
+        ParameterNode(name, parameterDirection, objectType, protocol, sourceLocation)
 
     val isInParameter: Boolean
-        get() = parameterDirection == ParameterDirection.PARAM_IN
+        get() = parameterDirection == ParameterDirection.IN
+
+    val isOutParameter: Boolean
+        get() = parameterDirection == ParameterDirection.OUT
 }
 
 /**

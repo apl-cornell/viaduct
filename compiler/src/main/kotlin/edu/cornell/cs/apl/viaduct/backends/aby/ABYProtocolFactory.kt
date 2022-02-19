@@ -109,8 +109,8 @@ class ABYProtocolFactory(program: ProgramNode) : ProtocolFactory {
         when {
             node is LetNode && node.value is QueryNode -> {
                 val rhs = node.value
-                val className = nameAnalysis.declaration(rhs).objectType.className
-                if (className.value == Vector && rhs.query.value == Get && rhs.arguments[0] is ReadNode) {
+                val objectType = nameAnalysis.objectType(nameAnalysis.declaration(rhs))
+                if (objectType.className.value == Vector && rhs.query.value == Get && rhs.arguments[0] is ReadNode) {
                     cleartextArrayLengthAndIndexConstraint(
                         nameAnalysis.enclosingFunctionName(node),
                         rhs.variable.value,
@@ -133,8 +133,8 @@ class ABYProtocolFactory(program: ProgramNode) : ProtocolFactory {
         }
 
     override fun constraint(node: UpdateNode): SelectionConstraint {
-        val objectDecl = nameAnalysis.declaration(node)
-        return if (objectDecl.objectType.className.value == Vector &&
+        val objectType = nameAnalysis.objectType(nameAnalysis.declaration(node))
+        return if (objectType.className.value == Vector &&
             node.update.value == edu.cornell.cs.apl.viaduct.syntax.datatypes.Set &&
             node.arguments[0] is ReadNode
         ) {

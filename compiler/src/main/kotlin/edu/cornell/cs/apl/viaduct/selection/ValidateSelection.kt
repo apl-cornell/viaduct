@@ -8,6 +8,7 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.DeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.LetNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.Node
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.VariableDeclarationNode
 
 /**
  * This function provides a sanity check to ensure that a given protocol assignment
@@ -29,32 +30,16 @@ fun validateProtocolAssignment(
     val informationFlowAnalysis = InformationFlowAnalysis.get(program)
     val hostTrustConfiguration = HostTrustConfiguration(program)
 
-    fun checkViableProtocol(selection: ProtocolAssignment, node: LetNode) {
-        val functionName = nameAnalysis.enclosingFunctionName(node)
+    fun checkViableProtocol(selection: ProtocolAssignment, node: VariableDeclarationNode) {
+        val functionName = nameAnalysis.enclosingFunctionName(node as Node)
         val protocol = selection.getAssignment(functionName, node.name.value)
         if (!constraintGenerator.viableProtocols(node).contains(protocol)) {
-            throw InvalidProtocolAssignmentException(node, protocol)
+            throw InvalidProtocolAssignmentException(node as Node, protocol)
         }
     }
 
-    fun checkAuthority(selection: ProtocolAssignment, node: LetNode) {
-        val functionName = nameAnalysis.enclosingFunctionName(node)
-        val protocol = selection.getAssignment(functionName, node.name.value)
-        if (!protocol.authority(hostTrustConfiguration).actsFor(informationFlowAnalysis.label(node))) {
-            throw InvalidProtocolAssignmentException(node, protocol)
-        }
-    }
-
-    fun checkViableProtocol(selection: ProtocolAssignment, node: DeclarationNode) {
-        val functionName = nameAnalysis.enclosingFunctionName(node)
-        val protocol = selection.getAssignment(functionName, node.name.value)
-        if (!constraintGenerator.viableProtocols(node).contains(protocol)) {
-            throw InvalidProtocolAssignmentException(node, protocol)
-        }
-    }
-
-    fun checkAuthority(selection: ProtocolAssignment, node: DeclarationNode) {
-        val functionName = nameAnalysis.enclosingFunctionName(node)
+    fun checkAuthority(selection: ProtocolAssignment, node: VariableDeclarationNode) {
+        val functionName = nameAnalysis.enclosingFunctionName(node as Node)
         val protocol = selection.getAssignment(functionName, node.name.value)
         if (!protocol.authority(hostTrustConfiguration).actsFor(informationFlowAnalysis.label(node))) {
             throw InvalidProtocolAssignmentException(node, protocol)

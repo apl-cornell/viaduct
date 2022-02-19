@@ -33,9 +33,9 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.InputNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.LetNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.LiteralNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.Node
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.ObjectDeclaration
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ObjectDeclarationArgumentNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ObjectReferenceArgumentNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.ObjectVariableDeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.OperatorApplicationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutParameterArgumentNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutParameterConstructorInitializerNode
@@ -157,8 +157,8 @@ class TypeAnalysis private constructor(
     }
 
     /** See [type]. */
-    private val ObjectDeclaration.type: ObjectType by attribute {
-        objectType.buildType()
+    private val ObjectVariableDeclarationNode.type: ObjectType by attribute {
+        nameAnalysis.objectType(this).buildType()
     }
 
     /** See [type]. */
@@ -183,7 +183,7 @@ class TypeAnalysis private constructor(
     fun type(node: LetNode): ValueType = node.value.type
 
     /** Returns the type of the [ObjectVariable] defined by [node]. */
-    fun type(node: ObjectDeclaration): ObjectType = node.type
+    fun type(node: ObjectVariableDeclarationNode): ObjectType = node.type
 
     fun type(node: OutParameterInitializationNode): ObjectType = node.initializer.type
 

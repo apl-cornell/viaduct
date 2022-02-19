@@ -7,7 +7,6 @@ import edu.cornell.cs.apl.attributes.collectedAttribute
 import edu.cornell.cs.apl.viaduct.errors.IncorrectNumberOfArgumentsError
 import edu.cornell.cs.apl.viaduct.errors.NameClashError
 import edu.cornell.cs.apl.viaduct.errors.UndefinedNameError
-import edu.cornell.cs.apl.viaduct.errors.UnknownObjectDeclarationError
 import edu.cornell.cs.apl.viaduct.selection.FunctionVariable
 import edu.cornell.cs.apl.viaduct.syntax.FunctionName
 import edu.cornell.cs.apl.viaduct.syntax.Host
@@ -17,7 +16,6 @@ import edu.cornell.cs.apl.viaduct.syntax.Name
 import edu.cornell.cs.apl.viaduct.syntax.NameMap
 import edu.cornell.cs.apl.viaduct.syntax.ObjectTypeNode
 import edu.cornell.cs.apl.viaduct.syntax.ObjectVariable
-import edu.cornell.cs.apl.viaduct.syntax.ObjectVariableNode
 import edu.cornell.cs.apl.viaduct.syntax.ProtocolNode
 import edu.cornell.cs.apl.viaduct.syntax.Temporary
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.BlockNode
@@ -33,9 +31,9 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.IfNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.InfiniteLoopNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.LetNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.Node
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.ObjectDeclaration
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ObjectDeclarationArgumentNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ObjectReferenceArgumentNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.ObjectVariableDeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutParameterArgumentNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutParameterInitializationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ParameterNode
@@ -93,18 +91,18 @@ class NameAnalysis private constructor(private val tree: Tree<Node, ProgramNode>
     }
 
     /** Object declarations in scope for this node. */
-    private val Node.objectDeclarations: NameMap<ObjectVariable, ObjectDeclaration> by Context(false) {
+    private val Node.objectDeclarations: NameMap<ObjectVariable, ObjectVariableDeclarationNode> by Context(false) {
         when (it) {
             is DeclarationNode ->
-                listOf(Pair(it.name, it as ObjectDeclaration))
+                listOf(Pair(it.name, it))
 
             is FunctionDeclarationNode ->
-                it.parameters.map { param -> Pair(param.name, param as ObjectDeclaration) }
+                it.parameters.map { param -> Pair(param.name, param) }
 
             is FunctionCallNode ->
                 it.arguments
-                    .filterIsInstance<ObjectDeclarationArgumentNode>()
-                    .map { arg -> Pair(arg.name, asObjectDeclaration(arg)) }
+                    .filterIsInstance<ObjectVariableDeclarationNode>()
+                    .map { arg -> Pair(arg.name, arg) }
 
             else -> listOf()
         }
@@ -120,28 +118,6 @@ class NameAnalysis private constructor(private val tree: Tree<Node, ProgramNode>
             else ->
                 parent.jumpTargets
         }
-    }
-
-    /** The set of [Temporary] variables directly read by this node. */
-    private val Node.reads: PersistentSet<ReadNode> by attribute {
-        when (this) {
-            is ReadNode ->
-                persistentSetOf(this)
-            is ExpressionNode ->
-                children.fold(persistentSetOf()) { acc, child -> acc.addAll(child.reads) }
-            is OutParameterInitializationNode ->
-                children.fold(persistentSetOf()) { acc, child -> acc.addAll(child.reads) }
-            is FunctionCallNode ->
-                children.fold(persistentSetOf()) { acc, child -> acc.addAll(child.reads) }
-            else ->
-                children.filterIsInstance<ExpressionNode>().fold(persistentSetOf()) { acc, child ->
-                    acc.addAll(child.reads)
-                }
-        }
-    }
-
-    private val FunctionArgumentNode.functionCall: FunctionCallNode by attribute {
-        tree.parent(this) as FunctionCallNode
     }
 
     /**
@@ -189,11 +165,11 @@ class NameAnalysis private constructor(private val tree: Tree<Node, ProgramNode>
         node.temporaryDefinitions[node.temporary]
 
     /** Returns the statement that declares the [ObjectVariable] in [node]. */
-    fun declaration(node: QueryNode): ObjectDeclaration =
+    fun declaration(node: QueryNode): ObjectVariableDeclarationNode =
         node.objectDeclarations[node.variable]
 
     /** Returns the statement that declares the [ObjectVariable] in [node]. */
-    fun declaration(node: UpdateNode): ObjectDeclaration =
+    fun declaration(node: UpdateNode): ObjectVariableDeclarationNode =
         node.objectDeclarations[node.variable]
 
     /** Returns the loop that [node] is breaking out of. */
@@ -217,38 +193,42 @@ class NameAnalysis private constructor(private val tree: Tree<Node, ProgramNode>
         (node as Node).functionDeclarations[node.name]
 
     /** Returns the object referenced by the [node] function argument. */
-    fun declaration(node: ObjectReferenceArgumentNode): ObjectDeclaration =
+    fun declaration(node: ObjectReferenceArgumentNode): ObjectVariableDeclarationNode =
         node.objectDeclarations[node.variable]
 
     /** Returns the object referenced by the [node] function argument. */
     fun declaration(node: OutParameterArgumentNode): ParameterNode {
         val parameter = node.objectDeclarations[node.parameter]
         return when {
-            parameter is ParameterNode && parameter.isOutParameter -> parameter
-            else -> throw UndefinedNameError(parameter.name)
+            parameter is ParameterNode && parameter.isOutParameter ->
+                parameter
+            else ->
+                throw UndefinedNameError(parameter.name)
         }
     }
 
-    fun asObjectDeclaration(node: ObjectDeclarationArgumentNode): ObjectDeclaration {
-        val parameter = parameter(node)
-        return object : ObjectDeclaration {
-            override val name: ObjectVariableNode
-                get() = node.name
-
-            override val protocol: ProtocolNode?
-                get() = null
-
-            override val objectType: ObjectTypeNode
-                get() = parameter.objectType
-
-            override val declarationAsNode: Node
-                get() = node
+    /** Returns the object type declaration for [node]. */
+    fun objectType(node: ObjectVariableDeclarationNode): ObjectTypeNode =
+        when (node) {
+            is ParameterNode ->
+                node.objectType
+            is DeclarationNode ->
+                node.objectType
+            is ObjectDeclarationArgumentNode ->
+                parameter(node).objectType
         }
-    }
+
+/** Returns the function call that contains [argument]. */
+    fun functionCall(argument: FunctionArgumentNode): FunctionCallNode =
+        tree.parent(argument) as FunctionCallNode
+
+    /** Returns the function declaration that contains [parameter]. */
+    fun functionDeclaration(parameter: ParameterNode): FunctionDeclarationNode =
+        tree.parent(parameter) as FunctionDeclarationNode
 
     /** Returns the parameter for which [node] is the argument. */
     fun parameter(node: FunctionArgumentNode): ParameterNode {
-        val functionCall = node.functionCall
+        val functionCall = functionCall(node)
         val argumentIndex = functionCall.arguments.indexOf(node)
         val functionDecl = declaration(functionCall)
         return functionDecl.getParameterAtIndex(argumentIndex)
@@ -259,14 +239,7 @@ class NameAnalysis private constructor(private val tree: Tree<Node, ProgramNode>
             )
     }
 
-    /** Get the function declaration where the parameter is in. */
-    private val ParameterNode.functionDeclaration: FunctionDeclarationNode by attribute {
-        tree.root.functionDeclarations.values.first { f -> f.parameters.contains(this) }
-    }
-
-    fun functionDeclaration(parameter: ParameterNode): FunctionDeclarationNode = parameter.functionDeclaration
-
-    /** Get the function declaration enclosing this node. */
+    /** The innermost function that contains this node.*/
     private val Node.enclosingFunction: FunctionDeclarationNode? by attribute {
         when (val parent = tree.parent(this)) {
             null -> null
@@ -277,14 +250,28 @@ class NameAnalysis private constructor(private val tree: Tree<Node, ProgramNode>
         }
     }
 
-    fun enclosingFunctionName(node: FunctionArgumentNode): FunctionName =
+    /** Returns the function declaration enclosing [node]. */
+    // TODO: this should just return the FunctionNode
+    fun enclosingFunctionName(node: Node): FunctionName =
         node.enclosingFunction!!.name.value
 
-    fun enclosingFunctionName(node: ExpressionNode): FunctionName =
-        node.enclosingFunction!!.name.value
-
-    fun enclosingFunctionName(node: StatementNode): FunctionName =
-        node.enclosingFunction!!.name.value
+    /** The set of [Temporary] variables directly read by this node. */
+    private val Node.reads: PersistentSet<ReadNode> by attribute {
+        when (this) {
+            is ReadNode ->
+                persistentSetOf(this)
+            is ExpressionNode ->
+                children.fold(persistentSetOf()) { acc, child -> acc.addAll(child.reads) }
+            is OutParameterInitializationNode ->
+                children.fold(persistentSetOf()) { acc, child -> acc.addAll(child.reads) }
+            is FunctionCallNode ->
+                children.fold(persistentSetOf()) { acc, child -> acc.addAll(child.reads) }
+            else ->
+                children.filterIsInstance<ExpressionNode>().fold(persistentSetOf()) { acc, child ->
+                    acc.addAll(child.reads)
+                }
+        }
+    }
 
     private val Node.readers: Set<StatementNode> by collectedAttribute(tree) { node ->
         if (node is StatementNode) {
@@ -302,6 +289,8 @@ class NameAnalysis private constructor(private val tree: Tree<Node, ProgramNode>
      */
     fun readers(node: LetNode): Set<StatementNode> = node.readers
 
+    /** Returns all [ReadNode]s in this node. */
+    // TODO: [Node.descendantsIsInstance] will give the same thing.
     fun reads(node: Node): Set<ReadNode> = node.reads
 
     private val ReadNode.enclosingStatement: StatementNode by attribute {
@@ -318,24 +307,7 @@ class NameAnalysis private constructor(private val tree: Tree<Node, ProgramNode>
 
     private val Node.queries: Set<QueryNode> by collectedAttribute(tree) { node ->
         if (node is QueryNode) {
-            listOf(declaration(node).declarationAsNode to node)
-        } else {
-            listOf()
-        }
-    }
-
-    /** Returns the set of [QueryNode]s that reference the [ObjectVariable] declared by [node]. **/
-    fun queriers(node: DeclarationNode): Set<QueryNode> = node.queries
-
-    /** Returns the set of [QueryNode]s that reference the [ObjectVariable] declared by [node]. **/
-    fun queriers(node: ParameterNode): Set<QueryNode> = node.queries
-
-    /** Returns the set of [QueryNode]s that reference the [ObjectVariable] declared by [node]. **/
-    fun queriers(node: ObjectDeclarationArgumentNode): Set<QueryNode> = node.queries
-
-    private val ObjectDeclarationArgumentNode.queries: Set<QueryNode> by collectedAttribute(tree) { node ->
-        if (node is QueryNode) {
-            listOf(declaration(node).declarationAsNode to node)
+            listOf(declaration(node) as Node to node)
         } else {
             listOf()
         }
@@ -343,41 +315,28 @@ class NameAnalysis private constructor(private val tree: Tree<Node, ProgramNode>
 
     private val Node.updates: Set<UpdateNode> by collectedAttribute(tree) { node ->
         if (node is UpdateNode) {
-            listOf(declaration(node).declarationAsNode to node)
+            listOf(declaration(node) as Node to node)
         } else {
             listOf()
         }
     }
 
-    /** Returns the set of [UpdateNode]s that reference the [ObjectVariable] declared by [node]. **/
-    fun updaters(node: DeclarationNode): Set<UpdateNode> = node.updates
+    /** Returns the set of [QueryNode]s that reference the [ObjectVariable] declared by [node]. **/
+    fun queriers(node: ObjectVariableDeclarationNode): Set<QueryNode> =
+        (node as Node).queries
 
     /** Returns the set of [UpdateNode]s that reference the [ObjectVariable] declared by [node]. **/
-    fun updaters(node: ParameterNode): Set<UpdateNode> = node.updates
-
-    /** Returns the set of [UpdateNode]s that reference the [ObjectVariable] declared by [node]. **/
-    fun updaters(node: ObjectDeclarationArgumentNode): Set<UpdateNode> = node.updates
-
-    /** Returns the set of [QueryNode]s and [UpdateNode]s that reference the [ObjectVariable] declared by [node]. **/
-    fun users(node: DeclarationNode): Set<Node> =
-        queriers(node).union(updaters(node))
-
-    /** Returns the set of [QueryNode]s and [UpdateNode]s that reference the [ObjectVariable] declared by [node]. **/
-    fun users(node: ParameterNode): Set<Node> =
-        queriers(node).union(updaters(node))
-
-    /** Returns the set of [QueryNode]s and [UpdateNode]s that reference the [ObjectVariable] declared by [node]. **/
-    fun users(node: ObjectDeclarationArgumentNode): Set<Node> =
-        queriers(node).union(updaters(node))
+    fun updaters(node: ObjectVariableDeclarationNode): Set<UpdateNode> =
+        (node as Node).updates
 
     /** Returns the set of arguments where [Node] is used. */
     private val Node.argumentUses: Set<FunctionArgumentNode> by collectedAttribute(tree) { node ->
         when (node) {
             is ObjectReferenceArgumentNode ->
-                listOf(declaration(node).declarationAsNode to node)
+                listOf(declaration(node) as Node to node)
 
             is OutParameterArgumentNode ->
-                listOf(declaration(node).declarationAsNode to node)
+                listOf(declaration(node) as Node to node)
 
             else ->
                 listOf()
@@ -385,25 +344,12 @@ class NameAnalysis private constructor(private val tree: Tree<Node, ProgramNode>
     }
 
     /** Returns the set of arguments where [node] is used. */
-    fun argumentUses(node: DeclarationNode): Set<FunctionArgumentNode> = node.argumentUses
-
-    /** Returns the set of arguments where [node] is used. */
-    fun argumentUses(node: ParameterNode): Set<FunctionArgumentNode> = node.argumentUses
-
-    /** Returns the set of arguments where [node] is used. */
-    fun argumentUses(node: ObjectDeclarationArgumentNode): Set<FunctionArgumentNode> = node.argumentUses
+    fun argumentUses(node: ObjectVariableDeclarationNode): Set<FunctionArgumentNode> =
+        (node as Node).argumentUses
 
     /** Returns the set of parameters for which [node] is used as an argument. */
-    fun parameterUses(node: DeclarationNode): Set<ParameterNode> =
-        node.argumentUses.map { argument -> parameter(argument) }.toSet()
-
-    /** Returns the set of parameters for which [node] is used as an argument. */
-    fun parameterUses(node: ParameterNode): Set<ParameterNode> =
-        node.argumentUses.map { argument -> parameter(argument) }.toSet()
-
-    /** Returns the set of parameters for which [node] is used as an argument. */
-    fun parameterUses(node: ObjectDeclarationArgumentNode): Set<ParameterNode> =
-        node.argumentUses.map { argument -> parameter(argument) }.toSet()
+    fun parameterUses(node: ObjectVariableDeclarationNode): Set<ParameterNode> =
+        argumentUses(node).map { argument -> parameter(argument) }.toSet()
 
     /** Returns the set of arguments for [ParameterNode]. */
     private val ParameterNode.parameterUsers: Set<FunctionArgumentNode> by collectedAttribute(tree) { node ->
@@ -457,10 +403,10 @@ class NameAnalysis private constructor(private val tree: Tree<Node, ProgramNode>
         }
     }
 
-    /** Get the block that encloses this statement. */
+    /** Returns the block that encloses this statement. */
     fun enclosingBlock(stmt: StatementNode): BlockNode = stmt.enclosingBlock
 
-    /** Get the sites that call a function. */
+    /** Returns the sites that call this function. */
     private val FunctionDeclarationNode.calls: Set<FunctionCallNode> by collectedAttribute(tree) { node ->
         when (node) {
             is FunctionCallNode -> listOf(declaration(node) to node)
@@ -485,6 +431,7 @@ class NameAnalysis private constructor(private val tree: Tree<Node, ProgramNode>
     /** Returns the set of functions transitively reachable from a statement node. */
     fun reachableFunctions(node: Node) = node.reachableFunctions
 
+    // TODO: this seems to be missing parameter and out argument nodes...
     private val StatementNode.variables: Set<FunctionVariable> by attribute {
         val functionName = enclosingFunctionName(this)
         this.descendantsIsInstance<DeclarationNode>().map { decl -> FunctionVariable(functionName, decl.name.value) }
@@ -493,7 +440,7 @@ class NameAnalysis private constructor(private val tree: Tree<Node, ProgramNode>
                     .map { letNode -> FunctionVariable(functionName, letNode.name.value) }
             ).plus(
                 this.descendantsIsInstance<UpdateNode>().map { update ->
-                    when (val decl = declaration(update).declarationAsNode) {
+                    when (val decl = declaration(update)) {
                         is DeclarationNode ->
                             FunctionVariable(functionName, decl.name.value)
 
@@ -510,8 +457,6 @@ class NameAnalysis private constructor(private val tree: Tree<Node, ProgramNode>
                                 decl.name.value
                             )
                         }
-
-                        else -> throw UnknownObjectDeclarationError(this)
                     }
                 }
             ).toSet()

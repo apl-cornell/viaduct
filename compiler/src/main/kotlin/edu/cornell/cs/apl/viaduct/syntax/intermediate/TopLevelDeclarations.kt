@@ -50,13 +50,10 @@ class HostDeclarationNode(
 class ParameterNode(
     override val name: ObjectVariableNode,
     val parameterDirection: ParameterDirection,
-    override val objectType: ObjectTypeNode,
+    val objectType: ObjectTypeNode,
     override val protocol: ProtocolNode?,
     override val sourceLocation: SourceLocation
-) : Node(), ObjectDeclaration {
-    override val declarationAsNode: Node
-        get() = this
-
+) : Node(), ObjectVariableDeclarationNode {
     override val children: Iterable<BlockNode>
         get() = listOf()
 

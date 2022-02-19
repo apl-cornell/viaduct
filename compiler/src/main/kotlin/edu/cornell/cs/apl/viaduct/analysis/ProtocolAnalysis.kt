@@ -4,7 +4,6 @@ import edu.cornell.cs.apl.attributes.attribute
 import edu.cornell.cs.apl.attributes.circularAttribute
 import edu.cornell.cs.apl.viaduct.backends.cleartext.Local
 import edu.cornell.cs.apl.viaduct.errors.NoProtocolAnnotationError
-import edu.cornell.cs.apl.viaduct.errors.UnknownObjectDeclarationError
 import edu.cornell.cs.apl.viaduct.selection.CommunicationEvent
 import edu.cornell.cs.apl.viaduct.selection.ProtocolCommunication
 import edu.cornell.cs.apl.viaduct.selection.ProtocolComposer
@@ -75,17 +74,15 @@ class ProtocolAnalysis(
                 statement.protocol?.value ?: throw NoProtocolAnnotationError(statement)
 
             is UpdateNode ->
-                when (val decl = nameAnalysis.declaration(statement).declarationAsNode) {
+                when (val declaration = nameAnalysis.declaration(statement)) {
                     is DeclarationNode ->
-                        primaryProtocol(decl)
+                        primaryProtocol(declaration)
 
                     is ParameterNode ->
-                        primaryProtocol(decl)
+                        primaryProtocol(declaration)
 
                     is ObjectDeclarationArgumentNode ->
-                        primaryProtocol(nameAnalysis.parameter(decl))
-
-                    else -> throw UnknownObjectDeclarationError(decl)
+                        primaryProtocol(nameAnalysis.parameter(declaration))
                 }
 
             is OutParameterInitializationNode ->

@@ -61,14 +61,11 @@ class LetNode(
 /** Constructing a new object and binding it to a variable. */
 class DeclarationNode(
     override val name: ObjectVariableNode,
-    override val objectType: ObjectTypeNode,
+    val objectType: ObjectTypeNode,
     val arguments: Arguments<AtomicExpressionNode>,
     override val protocol: ProtocolNode?,
     override val sourceLocation: SourceLocation
-) : SimpleStatementNode(), ObjectDeclaration {
-    override val declarationAsNode: StatementNode
-        get() = this
-
+) : SimpleStatementNode(), ObjectVariableDeclarationNode {
     override val children: Iterable<AtomicExpressionNode>
         get() = arguments
 
@@ -270,9 +267,12 @@ class ObjectReferenceArgumentNode(
 }
 
 class ObjectDeclarationArgumentNode(
-    val name: ObjectVariableNode,
+    override val name: ObjectVariableNode,
     override val sourceLocation: SourceLocation
-) : FunctionOutputArgumentNode() {
+) : FunctionOutputArgumentNode(), ObjectVariableDeclarationNode {
+    override val protocol: ProtocolNode?
+        get() = null
+
     override val children: Iterable<ExpressionNode>
         get() = listOf()
 

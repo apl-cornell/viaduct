@@ -1,6 +1,5 @@
 package edu.cornell.cs.apl.viaduct.syntax.intermediate
 
-import edu.cornell.cs.apl.viaduct.syntax.ObjectTypeNode
 import edu.cornell.cs.apl.viaduct.syntax.ObjectVariable
 import edu.cornell.cs.apl.viaduct.syntax.ObjectVariableNode
 import edu.cornell.cs.apl.viaduct.syntax.ProtocolNode
@@ -19,12 +18,4 @@ sealed interface VariableDeclarationNode {
 /** A node that declares an [ObjectVariable]. */
 sealed interface ObjectVariableDeclarationNode : VariableDeclarationNode {
     override val name: ObjectVariableNode
-}
-
-// TODO: this should be a sealed class.
-/** A node that declares an [ObjectVariable]. */
-interface ObjectDeclaration : VariableDeclarationNode {
-    override val name: ObjectVariableNode
-    val objectType: ObjectTypeNode
-    val declarationAsNode: Node
 }

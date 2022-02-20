@@ -5,6 +5,7 @@ import edu.cornell.cs.apl.prettyprinting.PrettyPrintable
 import edu.cornell.cs.apl.prettyprinting.Style
 import edu.cornell.cs.apl.viaduct.algebra.FreeDistributiveLattice
 import edu.cornell.cs.apl.viaduct.algebra.Lattice
+import edu.cornell.cs.apl.viaduct.algebra.PartialOrder
 import edu.cornell.cs.apl.viaduct.security.Label.Companion.bottom
 import edu.cornell.cs.apl.viaduct.security.Label.Companion.strongest
 import edu.cornell.cs.apl.viaduct.security.Label.Companion.top
@@ -33,7 +34,7 @@ data class Label(
      * Unlike [integrity], the result is not a [Label].
      */
     val integrityComponent: FreeDistributiveLattice<Principal>
-) : Lattice<Label>, TrustLattice<Label>, PrettyPrintable {
+) : PartialOrder<Label>, Lattice<Label>, TrustLattice<Label>, PrettyPrintable {
     /**
      * The confidentiality component.
      *

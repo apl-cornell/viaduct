@@ -3,6 +3,7 @@ package edu.cornell.cs.apl.viaduct.security
 import edu.cornell.cs.apl.prettyprinting.Document
 import edu.cornell.cs.apl.prettyprinting.PrettyPrintable
 import edu.cornell.cs.apl.prettyprinting.Style
+import edu.cornell.cs.apl.viaduct.algebra.BoundedLattice
 import edu.cornell.cs.apl.viaduct.algebra.FreeDistributiveLattice
 import edu.cornell.cs.apl.viaduct.algebra.Lattice
 import edu.cornell.cs.apl.viaduct.algebra.PartialOrder
@@ -108,14 +109,14 @@ data class Label(
     // TODO: make toDocument primitive and remove toString
     override fun toDocument(): Document = Document(this.toString())
 
-    companion object {
+    companion object : BoundedLattice<Label>, BoundedTrustLattice<Label> {
         /**
          * The least powerful principal, i.e. public and untrusted.
          *
          * This is the unit for [and].
          */
         @JvmStatic
-        val weakest: Label = Label(FreeDistributiveLattice.top(), FreeDistributiveLattice.top())
+        override val weakest: Label = Label(FreeDistributiveLattice.top(), FreeDistributiveLattice.top())
 
         /**
          * The most powerful principal, i.e. secret and trusted.
@@ -123,7 +124,7 @@ data class Label(
          * This is the unit for [or].
          */
         @JvmStatic
-        val strongest: Label = Label(FreeDistributiveLattice.bottom(), FreeDistributiveLattice.bottom())
+        override val strongest: Label = Label(FreeDistributiveLattice.bottom(), FreeDistributiveLattice.bottom())
 
         /**
          * The least restrictive data policy, i.e. public and trusted.
@@ -131,7 +132,7 @@ data class Label(
          * This is the unit for [join].
          */
         @JvmStatic
-        val bottom: Label = Label(weakest.confidentialityComponent, strongest.integrityComponent)
+        override val bottom: Label = Label(weakest.confidentialityComponent, strongest.integrityComponent)
 
         /**
          * The most restrictive data policy, i.e. secret and untrusted.
@@ -139,7 +140,7 @@ data class Label(
          * This is the unit for [meet].
          */
         @JvmStatic
-        val top: Label = Label(strongest.confidentialityComponent, weakest.integrityComponent)
+        override val top: Label = Label(strongest.confidentialityComponent, weakest.integrityComponent)
 
         /** Returns the label representing the authority of the given principal. */
         @JvmStatic

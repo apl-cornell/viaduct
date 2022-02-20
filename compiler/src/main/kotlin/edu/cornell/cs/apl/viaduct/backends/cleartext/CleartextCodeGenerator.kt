@@ -2,9 +2,9 @@ package edu.cornell.cs.apl.viaduct.backends.cleartext
 
 import com.squareup.kotlinpoet.CodeBlock
 import com.squareup.kotlinpoet.MemberName
-import com.squareup.kotlinpoet.ParameterizedTypeName
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import com.squareup.kotlinpoet.asClassName
+import com.squareup.kotlinpoet.asTypeName
 import edu.cornell.cs.apl.viaduct.analysis.NameAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.TypeAnalysis
 import edu.cornell.cs.apl.viaduct.codegeneration.AbstractCodeGenerator
@@ -140,18 +140,16 @@ class CleartextCodeGenerator(context: CodeGeneratorContext) : AbstractCodeGenera
             val relevantEvents: Set<CommunicationEvent> =
                 events.getProjectionSends(ProtocolProjection(sendProtocol, context.host))
             for (event in relevantEvents) {
-                if (context.host != event.recv.host) {
-                    if (sender.value is InputNode)
-                        sendBuilder.addStatement(
-                            "%L",
-                            context.send(
-                                CodeBlock.of("%L", context.kotlinName(sender.name.value, sendProtocol)),
-                                event.recv.host
-                            )
+                if (sender.value is InputNode)
+                    sendBuilder.addStatement(
+                        "%L",
+                        context.send(
+                            CodeBlock.of("%L", context.kotlinName(sender.name.value, sendProtocol)),
+                            event.recv.host
                         )
-                    else
-                        sendBuilder.addStatement("%L", context.send(exp(sendProtocol, sender.value), event.recv.host))
-                }
+                    )
+                else
+                    sendBuilder.addStatement("%L", context.send(exp(sendProtocol, sender.value), event.recv.host))
             }
         }
         return sendBuilder.build()
@@ -188,7 +186,6 @@ class CleartextCodeGenerator(context: CodeGeneratorContext) : AbstractCodeGenera
                         clearTextTemp,
                         receiveReplicated(
                             sender,
-                            sendProtocol,
                             cleartextInputs,
                             context,
                             typeAnalysis
@@ -247,35 +244,26 @@ class CleartextCodeGenerator(context: CodeGeneratorContext) : AbstractCodeGenera
                         throw IllegalArgumentException("Received multiple commitments to open.")
                     }
 
-                    fun receiveDispatcher(
-                        event: CommunicationEvent,
-                        receiveType: ParameterizedTypeName
-                    ): CodeBlock =
-                        when (event.send.host == context.host) {
-                            true -> CodeBlock.of("%N", context.kotlinName(sender.name.value, sendProtocol))
-                            false -> CodeBlock.of("%L", context.receive(receiveType, event.send.host))
-                        }
-
                     // receive declassified commitment from the hash holder
                     receiveBuilder.addStatement(
                         "val %N = %L",
                         clearTextCommittedTemp,
-                        receiveDispatcher(
-                            cleartextCommitmentInputs.first(),
-                            Committed::class.asClassName().parameterizedBy(
+                        context.receive(
+                            Committed::class.asTypeName().parameterizedBy(
                                 typeTranslator((typeAnalysis.type(sender)))
-                            )
+                            ),
+                            cleartextCommitmentInputs.first().send.host
                         )
                     )
 
                     for (hashSendEvent in hashCommitmentInputs) {
                         receiveBuilder.addStatement(
-                            "%L.%N(%N)",
-                            receiveDispatcher(
-                                hashSendEvent,
-                                Commitment::class.asClassName().parameterizedBy(
+                            "%L.open(%N)",
+                            context.receive(
+                                Commitment::class.asTypeName().parameterizedBy(
                                     typeTranslator((typeAnalysis.type(sender)))
-                                )
+                                ),
+                                hashSendEvent.send.host
                             ),
                             "open",
                             clearTextCommittedTemp

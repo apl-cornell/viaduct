@@ -8,13 +8,12 @@ import edu.cornell.cs.apl.viaduct.errors.ParameterDirectionMismatchError
 import edu.cornell.cs.apl.viaduct.errors.TypeMismatchError
 import edu.cornell.cs.apl.viaduct.errors.UnknownMethodError
 import edu.cornell.cs.apl.viaduct.syntax.Arguments
-import edu.cornell.cs.apl.viaduct.syntax.ClassNameNode
 import edu.cornell.cs.apl.viaduct.syntax.Located
 import edu.cornell.cs.apl.viaduct.syntax.Name
+import edu.cornell.cs.apl.viaduct.syntax.ObjectTypeNode
 import edu.cornell.cs.apl.viaduct.syntax.ObjectVariable
 import edu.cornell.cs.apl.viaduct.syntax.ParameterDirection
 import edu.cornell.cs.apl.viaduct.syntax.Temporary
-import edu.cornell.cs.apl.viaduct.syntax.ValueTypeNode
 import edu.cornell.cs.apl.viaduct.syntax.Variable
 import edu.cornell.cs.apl.viaduct.syntax.datatypes.ImmutableCell
 import edu.cornell.cs.apl.viaduct.syntax.datatypes.MutableCell
@@ -34,9 +33,9 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.InputNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.LetNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.LiteralNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.Node
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.ObjectDeclaration
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ObjectDeclarationArgumentNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ObjectReferenceArgumentNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.ObjectVariableDeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.OperatorApplicationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutParameterArgumentNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutParameterConstructorInitializerNode
@@ -44,7 +43,6 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutParameterExpressionInit
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutParameterInitializationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutParameterInitializerNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutputNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.ParameterNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.QueryNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ReadNode
@@ -137,7 +135,7 @@ class TypeAnalysis private constructor(
         }
     }
 
-    private fun buildObjectType(className: ClassNameNode, typeArguments: Arguments<ValueTypeNode>): ObjectType {
+    private fun ObjectTypeNode.buildType(): ObjectType {
         // TODO: move this somewhere else; unify.
         // TODO: error messages for missing type and label arguments
         return when (className.value) {
@@ -159,25 +157,22 @@ class TypeAnalysis private constructor(
     }
 
     /** See [type]. */
-    private val ObjectDeclaration.type: ObjectType by attribute {
-        buildObjectType(className, typeArguments)
-    }
-
-    private val ParameterNode.type: ObjectType by attribute {
-        buildObjectType(className, typeArguments)
+    private val ObjectVariableDeclarationNode.type: ObjectType by attribute {
+        nameAnalysis.objectType(this).buildType()
     }
 
     /** See [type]. */
     private val OutParameterInitializerNode.type: ObjectType by attribute {
         when (this) {
             is OutParameterExpressionInitializerNode ->
-                buildObjectType(
+                ObjectTypeNode(
                     Located(ImmutableCell, this.sourceLocation),
-                    Arguments.from(Located(this.expression.type, this.expression.sourceLocation))
-                )
+                    Arguments.from(Located(this.expression.type, this.expression.sourceLocation)),
+                    null
+                ).buildType()
 
             is OutParameterConstructorInitializerNode ->
-                buildObjectType(this.className, this.typeArguments)
+                objectType.buildType()
         }
     }
 
@@ -188,7 +183,7 @@ class TypeAnalysis private constructor(
     fun type(node: LetNode): ValueType = node.value.type
 
     /** Returns the type of the [ObjectVariable] defined by [node]. */
-    fun type(node: ObjectDeclaration): ObjectType = node.type
+    fun type(node: ObjectVariableDeclarationNode): ObjectType = node.type
 
     fun type(node: OutParameterInitializationNode): ObjectType = node.initializer.type
 
@@ -201,7 +196,7 @@ class TypeAnalysis private constructor(
                     type(node)
                 is DeclarationNode -> {
                     val constructorType = FunctionType(type(node).constructorArguments, UnitType)
-                    checkMethodCall(node.className, constructorType, node.arguments)
+                    checkMethodCall(node.objectType.className, constructorType, node.arguments)
                 }
                 is UpdateNode -> {
                     val methodType = nameAnalysis.declaration(node).type.getType(node.update.value)
@@ -277,7 +272,7 @@ class TypeAnalysis private constructor(
                         val parameter = functionDecl.parameters[i]
                         val expectedType = parameterTypes[i]
 
-                        if ((if (isOutArgument) ParameterDirection.PARAM_OUT else ParameterDirection.PARAM_IN)
+                        if ((if (isOutArgument) ParameterDirection.OUT else ParameterDirection.IN)
                             != parameter.parameterDirection
                         ) {
                             throw ParameterDirectionMismatchError(parameter, argument)

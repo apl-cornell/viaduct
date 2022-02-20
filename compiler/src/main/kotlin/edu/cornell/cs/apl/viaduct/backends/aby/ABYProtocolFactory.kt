@@ -18,11 +18,11 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.DeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.IfNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.LetNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.OperatorApplicationNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.ParameterNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.QueryNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ReadNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.UpdateNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.VariableDeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.operators.ComparisonOperator
 import edu.cornell.cs.apl.viaduct.syntax.operators.Division
 import edu.cornell.cs.apl.viaduct.syntax.operators.LogicalOperator
@@ -71,12 +71,13 @@ class ABYProtocolFactory(program: ProgramNode) : ProtocolFactory {
         return operationCheck
     }
 
-    override fun viableProtocols(node: LetNode): Set<Protocol> =
-        protocols.filter { node.isApplicable(it) }.toSet()
-
-    override fun viableProtocols(node: DeclarationNode): Set<Protocol> = protocols
-
-    override fun viableProtocols(node: ParameterNode): Set<Protocol> = protocols
+    override fun viableProtocols(node: VariableDeclarationNode): Set<Protocol> =
+        when (node) {
+            is LetNode ->
+                protocols.filter { node.isApplicable(it) }.toSet()
+            else ->
+                protocols
+        }
 
     private fun cleartextArrayLengthAndIndexConstraint(
         enclosingFunction: FunctionName,
@@ -100,43 +101,40 @@ class ABYProtocolFactory(program: ProgramNode) : ProtocolFactory {
 
         return Implies(
             variableInSet(FunctionVariable(enclosingFunction, arrayObject), protocols),
-            variableInSet(FunctionVariable(enclosingFunction, exprDecl.temporary.value), cleartextLengthProtocols)
+            variableInSet(FunctionVariable(enclosingFunction, exprDecl.name.value), cleartextLengthProtocols)
         )
     }
 
-    override fun constraint(node: LetNode): SelectionConstraint =
-        when (val rhs = node.value) {
-            is QueryNode -> {
-                val objectDecl = nameAnalysis.declaration(rhs)
-                if (objectDecl.className.value == Vector && rhs.query.value == Get && rhs.arguments[0] is ReadNode) {
+    override fun constraint(node: VariableDeclarationNode): SelectionConstraint =
+        when {
+            node is LetNode && node.value is QueryNode -> {
+                val rhs = node.value
+                val objectType = nameAnalysis.objectType(nameAnalysis.declaration(rhs))
+                if (objectType.className.value == Vector && rhs.query.value == Get && rhs.arguments[0] is ReadNode) {
                     cleartextArrayLengthAndIndexConstraint(
                         nameAnalysis.enclosingFunctionName(node),
                         rhs.variable.value,
                         rhs.arguments[0] as ReadNode
                     )
                 } else {
-                    Literal(true)
+                    super.constraint(node)
                 }
             }
 
-            else -> Literal(true)
-        }
+            node is DeclarationNode && node.objectType.className.value == Vector && node.arguments[0] is ReadNode ->
+                cleartextArrayLengthAndIndexConstraint(
+                    nameAnalysis.enclosingFunctionName(node),
+                    node.name.value,
+                    node.arguments[0] as ReadNode
+                )
 
-    override fun constraint(node: DeclarationNode): SelectionConstraint {
-        return if (node.className.value == Vector && node.arguments[0] is ReadNode) {
-            cleartextArrayLengthAndIndexConstraint(
-                nameAnalysis.enclosingFunctionName(node),
-                node.name.value,
-                node.arguments[0] as ReadNode
-            )
-        } else {
-            Literal(true)
+            else ->
+                super.constraint(node)
         }
-    }
 
     override fun constraint(node: UpdateNode): SelectionConstraint {
-        val objectDecl = nameAnalysis.declaration(node)
-        return if (objectDecl.className.value == Vector &&
+        val objectType = nameAnalysis.objectType(nameAnalysis.declaration(node))
+        return if (objectType.className.value == Vector &&
             node.update.value == edu.cornell.cs.apl.viaduct.syntax.datatypes.Set &&
             node.arguments[0] is ReadNode
         ) {
@@ -146,7 +144,7 @@ class ABYProtocolFactory(program: ProgramNode) : ProtocolFactory {
                 node.arguments[0] as ReadNode
             )
         } else {
-            Literal(true)
+            super.constraint(node)
         }
     }
 

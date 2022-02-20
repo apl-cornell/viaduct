@@ -5,8 +5,9 @@ import edu.cornell.cs.apl.viaduct.analysis.InformationFlowAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.NameAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.descendantsIsInstance
 import edu.cornell.cs.apl.viaduct.backends.cleartext.Local
+import edu.cornell.cs.apl.viaduct.errors.InvalidProtocolAnnotationError
+import edu.cornell.cs.apl.viaduct.errors.NoApplicableProtocolError
 import edu.cornell.cs.apl.viaduct.errors.NoSelectionSolutionError
-import edu.cornell.cs.apl.viaduct.errors.UnknownObjectDeclarationError
 import edu.cornell.cs.apl.viaduct.syntax.Host
 import edu.cornell.cs.apl.viaduct.syntax.HostTrustConfiguration
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
@@ -25,7 +26,6 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.InputNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.LetNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.LiteralNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.Node
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.ObjectDeclaration
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ObjectDeclarationArgumentNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ObjectReferenceArgumentNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutParameterArgumentNode
@@ -40,6 +40,7 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.ReadNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.SimpleStatementNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.StatementNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.UpdateNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.VariableDeclarationNode
 import edu.cornell.cs.apl.viaduct.util.FreshNameGenerator
 import edu.cornell.cs.apl.viaduct.util.unions
 import kotlinx.collections.immutable.PersistentMap
@@ -62,55 +63,38 @@ class SelectionConstraintGenerator(
         mutableMapOf<CostVariable, MutableList<Pair<SelectionConstraint, Cost<IntegerCost>>>>()
 
     // TODO: pc must be weak enough for the hosts involved in the selected protocols to read it
-    fun viableProtocols(node: LetNode): Set<Protocol> =
-        node.protocol?.let { setOf(it.value) } ?: protocolFactory.viableProtocols(node).filter {
-            it.authority(hostTrustConfiguration).actsFor(informationFlowAnalysis.label(node))
-        }.toSet()
+    fun viableProtocols(node: VariableDeclarationNode): Set<Protocol> {
+        val requiredAuthority = informationFlowAnalysis.label(node)
+        val annotation = node.protocol?.value
+        return if (annotation != null) {
+            if (!annotation.authority(hostTrustConfiguration).actsFor(requiredAuthority))
+                throw InvalidProtocolAnnotationError(node as Node)
+            setOf(annotation)
+        } else {
+            protocolFactory.viableProtocols(node)
+                .filter { it.authority(hostTrustConfiguration).actsFor(requiredAuthority) }
+                .ifEmpty { throw NoApplicableProtocolError(node as Node) }
+                .toSet()
+        }
+    }
 
-    fun viableProtocols(node: DeclarationNode): Set<Protocol> =
-        node.protocol?.let { setOf(it.value) } ?: protocolFactory.viableProtocols(node).filter {
-            it.authority(hostTrustConfiguration).actsFor(informationFlowAnalysis.label(node))
-        }.toSet()
+    private fun viableProtocolsAndVariable(node: VariableDeclarationNode): Pair<FunctionVariable, Set<Protocol>> {
+        val functionVariable = when (node) {
+            is LetNode ->
+                FunctionVariable(nameAnalysis.enclosingFunctionName(node), node.name.value)
 
-    fun viableProtocols(node: ParameterNode): Set<Protocol> =
-        node.protocol?.let { setOf(it.value) } ?: protocolFactory.viableProtocols(node).filter {
-            it.authority(hostTrustConfiguration).actsFor(informationFlowAnalysis.label(node))
-        }.toSet()
-
-    private fun viableProtocolsAndVariable(decl: ObjectDeclaration): Pair<FunctionVariable, Set<Protocol>> =
-        when (val node = decl.declarationAsNode) {
             is DeclarationNode ->
-                Pair(
-                    FunctionVariable(nameAnalysis.enclosingFunctionName(node), node.name.value),
-                    viableProtocols(node)
-                )
+                FunctionVariable(nameAnalysis.enclosingFunctionName(node), node.name.value)
 
             is ParameterNode ->
-                Pair(
-                    FunctionVariable(
-                        nameAnalysis.functionDeclaration(node).name.value,
-                        node.name.value
-                    ),
-                    viableProtocols(node)
-                )
+                FunctionVariable(nameAnalysis.functionDeclaration(node).name.value, node.name.value)
 
             is ObjectDeclarationArgumentNode -> {
                 val param = nameAnalysis.parameter(node)
-                Pair(
-                    FunctionVariable(
-                        nameAnalysis.functionDeclaration(param).name.value,
-                        node.name.value
-                    ),
-                    viableProtocols(param)
-                )
+                FunctionVariable(nameAnalysis.functionDeclaration(param).name.value, node.name.value)
             }
-
-            else -> throw UnknownObjectDeclarationError(node)
         }
-
-    private fun viableProtocolsAndVariable(node: LetNode): Pair<FunctionVariable, Set<Protocol>> {
-        val enclosingFunction = nameAnalysis.enclosingFunctionName(node)
-        return FunctionVariable(enclosingFunction, node.temporary.value) to viableProtocols(node)
+        return functionVariable to viableProtocols(node)
     }
 
     private fun viableProtocolsAndVariable(node: UpdateNode): Pair<FunctionVariable, Set<Protocol>> {
@@ -203,7 +187,7 @@ class SelectionConstraintGenerator(
         program.hosts.associateWith { HostVariable(nameGenerator.getFreshName("host")) }
     }
 
-    private val IfNode.guardVisiblityFlag: GuardVisibilityFlag by attribute {
+    private val IfNode.guardVisibilityFlag: GuardVisibilityFlag by attribute {
         GuardVisibilityFlag(nameGenerator.getFreshName("guard"))
     }
 
@@ -228,7 +212,7 @@ class SelectionConstraintGenerator(
                         is InputNode -> {
                             setOf(
                                 VariableIn(
-                                    FunctionVariable(nameAnalysis.enclosingFunctionName(this), this.temporary.value),
+                                    FunctionVariable(nameAnalysis.enclosingFunctionName(this), this.name.value),
                                     Local(rhs.host.value)
                                 )
                             )
@@ -240,21 +224,21 @@ class SelectionConstraintGenerator(
 
                             setOf(
                                 variableInSet(
-                                    FunctionVariable(nameAnalysis.enclosingFunctionName(this), this.temporary.value),
+                                    FunctionVariable(nameAnalysis.enclosingFunctionName(this), this.name.value),
                                     viableProtocols(this)
                                 )
                             ).plus(
-                                when (val objectDecl = nameAnalysis.declaration(rhs).declarationAsNode) {
+                                when (val objectDecl = nameAnalysis.declaration(rhs)) {
                                     is DeclarationNode ->
                                         VariableEquals(
                                             FunctionVariable(enclosingFunctionName, objectDecl.name.value),
-                                            FunctionVariable(enclosingFunctionName, this.temporary.value)
+                                            FunctionVariable(enclosingFunctionName, this.name.value)
                                         )
 
                                     is ParameterNode ->
                                         VariableEquals(
                                             FunctionVariable(enclosingFunctionName, objectDecl.name.value),
-                                            FunctionVariable(enclosingFunctionName, this.temporary.value)
+                                            FunctionVariable(enclosingFunctionName, this.name.value)
                                         )
 
                                     is ObjectDeclarationArgumentNode -> {
@@ -264,11 +248,9 @@ class SelectionConstraintGenerator(
                                                 nameAnalysis.functionDeclaration(param).name.value,
                                                 param.name.value
                                             ),
-                                            FunctionVariable(enclosingFunctionName, this.temporary.value)
+                                            FunctionVariable(enclosingFunctionName, this.name.value)
                                         )
                                     }
-
-                                    else -> throw UnknownObjectDeclarationError(objectDecl)
                                 }
                             )
                         }
@@ -276,7 +258,7 @@ class SelectionConstraintGenerator(
                         else -> {
                             setOf(
                                 variableInSet(
-                                    FunctionVariable(nameAnalysis.enclosingFunctionName(this), this.temporary.value),
+                                    FunctionVariable(nameAnalysis.enclosingFunctionName(this), this.name.value),
                                     viableProtocols(this)
                                 )
                             )
@@ -308,7 +290,7 @@ class SelectionConstraintGenerator(
                             Implies(
                                 VariableIn(fv, protocol),
                                 iff(
-                                    this.guardVisiblityFlag,
+                                    this.guardVisibilityFlag,
                                     protocolFactory.guardVisibilityConstraint(protocol, this)
                                 )
                             )
@@ -337,7 +319,7 @@ class SelectionConstraintGenerator(
                     .map { read -> nameAnalysis.declaration(read) }
                     .map { letNode ->
                         VariableEquals(
-                            FunctionVariable(nameAnalysis.enclosingFunctionName(letNode), letNode.temporary.value),
+                            FunctionVariable(nameAnalysis.enclosingFunctionName(letNode), letNode.name.value),
                             FunctionVariable(parameterFunctionName, parameter.name.value)
                         )
                     }
@@ -654,7 +636,7 @@ class SelectionConstraintGenerator(
                                 addCostChoice(
                                     this.costVariable,
                                     VariableIn(
-                                        FunctionVariable(enclosingFunctionName, msgDecl.temporary.value),
+                                        FunctionVariable(enclosingFunctionName, msgDecl.name.value),
                                         msgProtocol
                                     ),
                                     costEstimator.communicationCost(msgProtocol, outputProtocol)
@@ -666,7 +648,7 @@ class SelectionConstraintGenerator(
                                 setOf(
                                     Not(
                                         VariableIn(
-                                            FunctionVariable(enclosingFunctionName, msgDecl.temporary.value),
+                                            FunctionVariable(enclosingFunctionName, msgDecl.name.value),
                                             msgProtocol
                                         )
                                     )
@@ -771,7 +753,7 @@ class SelectionConstraintGenerator(
 
                             // only turn on visibility constraints when
                             // the guard visibility flag is enabled
-                            setOf(Implies(this.guardVisiblityFlag, visibilityConstraints))
+                            setOf(Implies(this.guardVisibilityFlag, visibilityConstraints))
                         }
                     }
                 )

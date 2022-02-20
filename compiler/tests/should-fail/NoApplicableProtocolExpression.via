@@ -1,7 +1,0 @@
-/* NoSelectionSolutionError */
-
-host alice : {A}
-
-fun main() {
-    val containsTooConfidential: int = 2 + declassify 2 from {A<- ∧ B} to {A<- ∧ B};
-}

@@ -8,15 +8,15 @@ import java.util.stream.Stream
 import kotlin.streams.asStream
 
 /** Enumerates the paths of source files that should successfully compile. */
-class PositiveTestFileProvider : ArgumentsProvider {
+class PositiveTestFileProvider(private val subfolder: String = "") : ArgumentsProvider {
     override fun provideArguments(context: ExtensionContext?): Stream<out Arguments> =
-        testFilesAtPath("should-pass").map { Arguments.of(it) }.asStream()
+        testFilesAtPath("should-pass/$subfolder").map { Arguments.of(it) }.asStream()
 }
 
 /** Enumerates the paths of source files that should fail to compile. */
-class NegativeTestFileProvider : ArgumentsProvider {
+class NegativeTestFileProvider(private val subfolder: String = "") : ArgumentsProvider {
     override fun provideArguments(context: ExtensionContext?): Stream<out Arguments> =
-        testFilesAtPath("should-fail").map { Arguments.of(it) }.asStream()
+        testFilesAtPath("should-fail/$subfolder").map { Arguments.of(it) }.asStream()
 }
 
 private fun testFilesAtPath(path: String): Sequence<File> {

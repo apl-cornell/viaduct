@@ -426,7 +426,7 @@ class ABYProtocolInterpreter(
                     throw ViaductInterpreterError("ABY: at least one party must receive output when executing circuit")
             }
 
-        val outputGate = ssTempStore[letNode.temporary.value] ?: throw UndefinedNameError(letNode.temporary)
+        val outputGate = ssTempStore[letNode.name.value] ?: throw UndefinedNameError(letNode.name)
 
         aby.reset()
 
@@ -487,7 +487,7 @@ class ABYProtocolInterpreter(
             is PureExpressionNode -> {
                 val circuitType = protocolCircuitType[protocol.protocolName]!!
                 val rhsCircuit = runSecretExpr(circuitType, rhs)
-                ssTempStore = ssTempStore.put(stmt.temporary.value, rhsCircuit)
+                ssTempStore = ssTempStore.put(stmt.name.value, rhsCircuit)
             }
         }
     }
@@ -571,11 +571,11 @@ class ABYProtocolInterpreter(
             }
 
             assert(secretInput != null)
-            ssTempStore = ssTempStore.put(sender.temporary.value, secretInput!!)
+            ssTempStore = ssTempStore.put(sender.name.value, secretInput!!)
 
             // cleartext value can be null in case of dummy inputs
             if (cleartextValue != null) {
-                ctTempStore = ctTempStore.put(sender.temporary.value, cleartextValue)
+                ctTempStore = ctTempStore.put(sender.name.value, cleartextValue)
             }
         }
     }

@@ -66,7 +66,6 @@ nav:
   - Developer's Guide:
       - developer-guide/building.md
       - developer-guide/logging.md
-      - developer-guide/dependencies.md
       - developer-guide/documentation.md
   - API Reference:
       - api/index.html

@@ -5,15 +5,14 @@ import edu.cornell.cs.apl.viaduct.backends.CodeGenerationBackend
 import edu.cornell.cs.apl.viaduct.parsing.SourceFile
 import edu.cornell.cs.apl.viaduct.passes.compileToKotlin
 import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.ArgumentsProvider
 import org.junit.jupiter.params.provider.ArgumentsSource
 import java.io.File
 
 internal class CodeGeneratorTest {
     @ParameterizedTest
-    @ArgumentsSource(PositiveTestFileProvider::class)
+    @ArgumentsSource(CodeGenerationFileProvider::class)
     fun `it generates`(file: File) {
-        if (file.parentFile.name != "code-generation") return
-
         SourceFile.from(file).compileToKotlin(
             file.nameWithoutExtension,
             packageName = ".",
@@ -21,3 +20,5 @@ internal class CodeGeneratorTest {
         ).writeTo(System.out)
     }
 }
+
+internal class CodeGenerationFileProvider : ArgumentsProvider by PositiveTestFileProvider("code-generation")

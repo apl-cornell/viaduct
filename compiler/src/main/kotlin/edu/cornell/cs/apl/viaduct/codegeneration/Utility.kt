@@ -7,11 +7,7 @@ import com.squareup.kotlinpoet.STRING
 import com.squareup.kotlinpoet.TypeName
 import com.squareup.kotlinpoet.U_BYTE_ARRAY
 import edu.cornell.cs.apl.viaduct.analysis.TypeAnalysis
-import edu.cornell.cs.apl.viaduct.backends.aby.ABY
-import edu.cornell.cs.apl.viaduct.errors.CodeGenerationError
 import edu.cornell.cs.apl.viaduct.selection.CommunicationEvent
-import edu.cornell.cs.apl.viaduct.syntax.Host
-import edu.cornell.cs.apl.viaduct.syntax.Protocol
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.LetNode
 import edu.cornell.cs.apl.viaduct.syntax.types.BooleanType
 import edu.cornell.cs.apl.viaduct.syntax.types.ByteVecType
@@ -31,42 +27,28 @@ fun typeTranslator(viaductType: ValueType): TypeName =
         BooleanType -> BOOLEAN
         IntegerType -> INT
         StringType -> STRING
-        else -> throw CodeGenerationError("unknown send and receive type")
+        else -> throw IllegalArgumentException("Cannot convert ${viaductType.toDocument().print()} to Kotlin type.")
     }
 
 fun receiveReplicated(
     sender: LetNode,
-    sendProtocol: Protocol,
     events: Set<CommunicationEvent>,
     context: CodeGeneratorContext,
     typeAnalysis: TypeAnalysis
 ): CodeBlock {
 
-    fun receiveDispatcher(event: CommunicationEvent, receiveHost: Host): CodeBlock =
-        when (event.send.host == receiveHost) {
-            true -> CodeBlock.of("%L", context.kotlinName(sender.temporary.value, sendProtocol))
-            false -> CodeBlock.of(
-                "%L",
-                context.receive(
-                    typeTranslator(typeAnalysis.type(sender)),
-                    event.send.host
-                )
-            )
-        }
-
-    var eventSet = events
     val receiveExpression = CodeBlock.builder()
-    val it = eventSet.iterator()
+    val it = events.iterator()
 
-    if (eventSet.size > 1) {
+    if (events.size > 1) {
         receiveExpression.beginControlFlow(
             "%L.also",
-            receiveDispatcher(it.next(), context.host)
+            context.receive(typeTranslator(typeAnalysis.type(sender)), it.next().send.host)
         )
     } else {
         receiveExpression.add(
             "%L",
-            receiveDispatcher(it.next(), context.host)
+            context.receive(typeTranslator(typeAnalysis.type(sender)), it.next().send.host)
         )
         return receiveExpression.build()
     }
@@ -78,8 +60,8 @@ fun receiveReplicated(
             "%N(%N, %L)",
             "assertEquals",
             "it",
-            eventSet.first().send.host,
-            receiveDispatcher(currentEvent, context.host),
+            events.first().send.host,
+            context.receive(typeTranslator(typeAnalysis.type(sender)), currentEvent.send.host),
             currentEvent.send.host
         )
     }
@@ -88,13 +70,3 @@ fun receiveReplicated(
 
     return receiveExpression.build()
 }
-
-fun getRole(protocol: Protocol, host: Host): CodeBlock =
-    when (protocol) {
-        is ABY -> if (protocol.client == host) {
-            CodeBlock.of("%L", "Role.CLIENT")
-        } else {
-            CodeBlock.of("%L", "Role.SERVER")
-        }
-        else -> throw CodeGenerationError("unknown protocol: ${protocol.toDocument().print()}")
-    }

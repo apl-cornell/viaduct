@@ -258,18 +258,20 @@ nonempty_parameter_list ::=
   ;
 
 parameter_direction ::=
-    OUT         {: RESULT = ParameterDirection.PARAM_OUT; :}
-  | /* empty */ {: RESULT = ParameterDirection.PARAM_IN; :}
+    OUT         {: RESULT = ParameterDirection.OUT; :}
+  | /* empty */ {: RESULT = ParameterDirection.IN; :}
   ;
 
 parameter ::=
     variable:name COLON value_type:type optional_label_signature:label protocol_annot:protocol {:
       RESULT = new ParameterNode(
         name,
-        ParameterDirection.PARAM_IN,
-        new Located(PrimitivesKt.getImmutableCell(), name.getSourceLocation()),
-        Arguments.from(type),
-        optionalLabelArgument(label),
+        ParameterDirection.IN,
+        new ObjectTypeNode(
+          new Located(PrimitivesKt.getImmutableCell(), name.getSourceLocation()),
+          Arguments.from(type),
+          optionalLabelArgument(label)
+        ),
         protocol,
         location(nameleft, labelright),
         null
@@ -279,10 +281,12 @@ parameter ::=
   | variable:name COLON OUT value_type:type label_signature:label protocol_annot:protocol {:
       RESULT = new ParameterNode(
         name,
-        ParameterDirection.PARAM_OUT,
-        new Located(PrimitivesKt.getImmutableCell(), name.getSourceLocation()),
-        Arguments.from(type),
-        optionalLabelArgument(label),
+        ParameterDirection.OUT,
+        new ObjectTypeNode(
+          new Located(PrimitivesKt.getImmutableCell(), name.getSourceLocation()),
+          Arguments.from(type),
+          optionalLabelArgument(label)
+        ),
         protocol,
         location(nameleft, labelright),
         null
@@ -293,10 +297,12 @@ parameter ::=
     optional_label_signature:label protocol_annot:protocol {:
       RESULT = new ParameterNode(
         name,
-        ParameterDirection.PARAM_IN,
-        new Located(PrimitivesKt.getVector(), name.getSourceLocation()),
-        Arguments.from(elementType),
-        optionalLabelArgument(label),
+        ParameterDirection.IN,
+        new ObjectTypeNode(
+          new Located(PrimitivesKt.getVector(), name.getSourceLocation()),
+          Arguments.from(elementType),
+          optionalLabelArgument(label)
+        ),
         protocol,
         location(nameleft, labelright),
         null
@@ -307,10 +313,12 @@ parameter ::=
     label_signature:label protocol_annot:protocol {:
       RESULT = new ParameterNode(
         name,
-        ParameterDirection.PARAM_OUT,
-        new Located(PrimitivesKt.getVector(), name.getSourceLocation()),
-        Arguments.from(elementType),
-        optionalLabelArgument(label),
+        ParameterDirection.OUT,
+        new ObjectTypeNode(
+          new Located(PrimitivesKt.getVector(), name.getSourceLocation()),
+          Arguments.from(elementType),
+          optionalLabelArgument(label)
+        ),
         protocol,
         location(nameleft, labelright),
         null
@@ -324,9 +332,11 @@ simple_stmt ::=
       RESULT = new DeclarationNode(
         var,
         new ConstructorCallNode(
-            new Located(PrimitivesKt.getImmutableCell(), var.getSourceLocation()),
-            Arguments.from(type),
-            optionalLabelArgument(label),
+            new ObjectTypeNode(
+              new Located(PrimitivesKt.getImmutableCell(), var.getSourceLocation()),
+              Arguments.from(type),
+              optionalLabelArgument(label)
+            ),
             protocol,
             Arguments.from(value),
             location(typeleft, valueright)
@@ -345,9 +355,11 @@ simple_stmt ::=
       RESULT = new DeclarationNode(
         var,
         new ConstructorCallNode(
-            new Located(PrimitivesKt.getMutableCell(), var.getSourceLocation()),
-            Arguments.from(type),
-            optionalLabelArgument(label),
+            new ObjectTypeNode(
+              new Located(PrimitivesKt.getMutableCell(), var.getSourceLocation()),
+              Arguments.from(type),
+              optionalLabelArgument(label)
+            ),
             protocol,
             Arguments.from((initial == null) ? defaultValue : initial),
             location(typeleft, initialright)
@@ -640,9 +652,11 @@ expr ::=
     optional_label:label protocol_annot:protocol OPEN_PAREN expr:size CLOSE_PAREN:end
     {:
       RESULT = new ConstructorCallNode(
-        new Located(PrimitivesKt.getVector(), location(beginleft, beginright)),
-        Arguments.from(elementType),
-        optionalLabelArgument(label),
+        new ObjectTypeNode(
+          new Located(PrimitivesKt.getVector(), location(beginleft, beginright)),
+          Arguments.from(elementType),
+          optionalLabelArgument(label)
+        ),
         protocol,
         Arguments.from(size),
         location(beginleft, endright)

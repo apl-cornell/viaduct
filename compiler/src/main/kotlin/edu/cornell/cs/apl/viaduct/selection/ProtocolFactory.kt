@@ -1,12 +1,10 @@
 package edu.cornell.cs.apl.viaduct.selection
 
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.DeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.IfNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.LetNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.Node
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.ParameterNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.UpdateNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.VariableDeclarationNode
 import edu.cornell.cs.apl.viaduct.util.unions
 
 /**
@@ -18,23 +16,14 @@ import edu.cornell.cs.apl.viaduct.util.unions
  * protocols have enough authority to implement the node securely.
  */
 interface ProtocolFactory {
-    fun viableProtocols(node: LetNode): Set<Protocol>
-    fun viableProtocols(node: DeclarationNode): Set<Protocol>
-    fun viableProtocols(node: ParameterNode): Set<Protocol>
+    /** Returns the set of protocols that can implement [node]. */
+    fun viableProtocols(node: VariableDeclarationNode): Set<Protocol>
 
-    fun constraint(node: LetNode): SelectionConstraint {
-        return Literal(true)
-    }
-
-    fun constraint(node: DeclarationNode): SelectionConstraint {
+    fun constraint(node: VariableDeclarationNode): SelectionConstraint {
         return Literal(true)
     }
 
     fun constraint(node: UpdateNode): SelectionConstraint {
-        return Literal(true)
-    }
-
-    fun constraint(node: ParameterNode): SelectionConstraint {
         return Literal(true)
     }
 
@@ -49,19 +38,10 @@ fun Iterable<ProtocolFactory>.unions(): ProtocolFactory =
     object : ProtocolFactory {
         private val factories = this@unions.toList()
 
-        override fun viableProtocols(node: LetNode): Set<Protocol> =
+        override fun viableProtocols(node: VariableDeclarationNode): Set<Protocol> =
             factories.map { it.viableProtocols(node) }.unions()
 
-        override fun viableProtocols(node: DeclarationNode): Set<Protocol> =
-            factories.map { it.viableProtocols(node) }.unions()
-
-        override fun viableProtocols(node: ParameterNode): Set<Protocol> =
-            factories.map { it.viableProtocols(node) }.unions()
-
-        override fun constraint(node: LetNode): SelectionConstraint =
-            factories.map { it.constraint(node) }.ands()
-
-        override fun constraint(node: DeclarationNode): SelectionConstraint =
+        override fun constraint(node: VariableDeclarationNode): SelectionConstraint =
             factories.map { it.constraint(node) }.ands()
 
         override fun constraint(node: UpdateNode): SelectionConstraint =
@@ -74,12 +54,6 @@ fun Iterable<ProtocolFactory>.unions(): ProtocolFactory =
 /** Restricts the given factory to protocols that satisfy [predicate]. */
 fun ProtocolFactory.filter(predicate: (Protocol) -> Boolean): ProtocolFactory =
     object : ProtocolFactory by this {
-        override fun viableProtocols(node: LetNode): Set<Protocol> =
-            this@filter.viableProtocols(node).filter(predicate).toSet()
-
-        override fun viableProtocols(node: DeclarationNode): Set<Protocol> =
-            this@filter.viableProtocols(node).filter(predicate).toSet()
-
-        override fun viableProtocols(node: ParameterNode): Set<Protocol> =
+        override fun viableProtocols(node: VariableDeclarationNode): Set<Protocol> =
             this@filter.viableProtocols(node).filter(predicate).toSet()
     }

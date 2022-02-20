@@ -2,18 +2,16 @@ package edu.cornell.cs.apl.viaduct.backends.cleartext
 
 import com.squareup.kotlinpoet.CodeBlock
 import com.squareup.kotlinpoet.MemberName
-import com.squareup.kotlinpoet.ParameterizedTypeName
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import com.squareup.kotlinpoet.asTypeName
 import edu.cornell.cs.apl.viaduct.analysis.NameAnalysis
-import edu.cornell.cs.apl.viaduct.analysis.ProtocolAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.TypeAnalysis
 import edu.cornell.cs.apl.viaduct.codegeneration.AbstractCodeGenerator
 import edu.cornell.cs.apl.viaduct.codegeneration.CodeGeneratorContext
+import edu.cornell.cs.apl.viaduct.codegeneration.UnsupportedOperatorException
 import edu.cornell.cs.apl.viaduct.codegeneration.receiveReplicated
 import edu.cornell.cs.apl.viaduct.codegeneration.typeTranslator
 import edu.cornell.cs.apl.viaduct.codegeneration.valueClass
-import edu.cornell.cs.apl.viaduct.errors.CodeGenerationError
 import edu.cornell.cs.apl.viaduct.runtime.EquivocationException
 import edu.cornell.cs.apl.viaduct.runtime.commitment.Commitment
 import edu.cornell.cs.apl.viaduct.runtime.commitment.Committed
@@ -24,42 +22,29 @@ import edu.cornell.cs.apl.viaduct.syntax.Host
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
 import edu.cornell.cs.apl.viaduct.syntax.ProtocolProjection
 import edu.cornell.cs.apl.viaduct.syntax.UnaryOperator
-import edu.cornell.cs.apl.viaduct.syntax.datatypes.Get
 import edu.cornell.cs.apl.viaduct.syntax.datatypes.Modify
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.AtomicExpressionNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.DowngradeNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ExpressionNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.InputNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.LetNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.LiteralNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.OperatorApplicationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutputNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.QueryNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.ReadNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.UpdateNode
 import edu.cornell.cs.apl.viaduct.syntax.operators.Maximum
 import edu.cornell.cs.apl.viaduct.syntax.operators.Minimum
-import edu.cornell.cs.apl.viaduct.syntax.types.ImmutableCellType
 import edu.cornell.cs.apl.viaduct.syntax.types.MutableCellType
 import edu.cornell.cs.apl.viaduct.syntax.types.VectorType
 
-class CleartextCodeGenerator(context: CodeGeneratorContext) :
-    AbstractCodeGenerator(context) {
-    val protocolAnalysis: ProtocolAnalysis = ProtocolAnalysis(context.program, context.protocolComposer)
-    val typeAnalysis = TypeAnalysis.get(context.program)
-    val nameAnalysis = NameAnalysis.get(context.program)
+class CleartextCodeGenerator(context: CodeGeneratorContext) : AbstractCodeGenerator(context) {
+    private val typeAnalysis = TypeAnalysis.get(context.program)
+    private val nameAnalysis = NameAnalysis.get(context.program)
+
+    override fun guard(protocol: Protocol, expr: AtomicExpressionNode): CodeBlock = exp(protocol, expr)
+
     override fun exp(protocol: Protocol, expr: ExpressionNode): CodeBlock =
         when (expr) {
-            is LiteralNode -> CodeBlock.of("%L", expr.value)
-
-            is ReadNode ->
-                CodeBlock.of(
-                    "%N",
-                    context.kotlinName(
-                        expr.temporary.value,
-                        protocol
-                    )
-                )
+            is LiteralNode -> value(expr.value)
 
             is OperatorApplicationNode -> {
                 when (expr.operator) {
@@ -90,45 +75,9 @@ class CleartextCodeGenerator(context: CodeGeneratorContext) :
                             expr.operator,
                             exp(protocol, expr.arguments[1])
                         )
-                    else -> throw CodeGenerationError(
-                        "unknown operator: ${
-                        expr.operator.toDocument(expr.arguments).print()
-                        }"
-                    )
+                    else -> throw UnsupportedOperatorException(protocol, expr)
                 }
             }
-
-            is QueryNode ->
-                when (typeAnalysis.type(nameAnalysis.declaration(expr))) {
-                    is VectorType -> {
-                        when (expr.query.value) {
-                            is Get -> CodeBlock.of(
-                                "%N[%L]",
-                                context.kotlinName(expr.variable.value),
-                                exp(protocol, expr.arguments.first())
-                            )
-                            else -> throw CodeGenerationError("unknown vector query", expr)
-                        }
-                    }
-
-                    is ImmutableCellType -> {
-                        when (expr.query.value) {
-                            is Get -> CodeBlock.of(context.kotlinName(expr.variable.value))
-                            else -> throw CodeGenerationError("unknown query", expr)
-                        }
-                    }
-
-                    is MutableCellType -> {
-                        when (expr.query.value) {
-                            is Get -> CodeBlock.of(context.kotlinName(expr.variable.value))
-                            else -> throw CodeGenerationError("unknown query", expr)
-                        }
-                    }
-
-                    else -> throw CodeGenerationError("unknown AST object", expr)
-                }
-
-            is DowngradeNode -> exp(protocol, expr.expression)
 
             is InputNode ->
                 CodeBlock.of(
@@ -136,48 +85,14 @@ class CleartextCodeGenerator(context: CodeGeneratorContext) :
                     expr.type.value::class,
                     expr.type.value.valueClass
                 )
-        }
 
-    override fun let(protocol: Protocol, stmt: LetNode): CodeBlock =
-        CodeBlock.of(
-            "val %N = %L",
-            context.kotlinName(stmt.temporary.value, protocol),
-            exp(protocol, stmt.value)
-        )
+            else -> super.exp(protocol, expr)
+        }
 
     override fun update(protocol: Protocol, stmt: UpdateNode): CodeBlock =
         when (typeAnalysis.type(nameAnalysis.declaration(stmt))) {
-            is VectorType ->
-                when (stmt.update.value) {
-                    is edu.cornell.cs.apl.viaduct.syntax.datatypes.Set ->
-                        CodeBlock.of(
-                            "%N[%L] = %L",
-                            context.kotlinName(stmt.variable.value),
-                            exp(protocol, stmt.arguments[0]),
-                            exp(protocol, stmt.arguments[1])
-                        )
-
-                    is Modify ->
-                        CodeBlock.of(
-                            "%N[%L] %L %L",
-                            context.kotlinName(stmt.variable.value),
-                            exp(protocol, stmt.arguments[0]),
-                            stmt.update.value.name,
-                            exp(protocol, stmt.arguments[1])
-                        )
-
-                    else -> throw CodeGenerationError("unknown update", stmt)
-                }
-
             is MutableCellType ->
                 when (stmt.update.value) {
-                    is edu.cornell.cs.apl.viaduct.syntax.datatypes.Set ->
-                        CodeBlock.of(
-                            "%N = %L",
-                            context.kotlinName(stmt.variable.value),
-                            exp(protocol, stmt.arguments[0])
-                        )
-
                     is Modify ->
                         CodeBlock.of(
                             "%N %L %L",
@@ -186,10 +101,24 @@ class CleartextCodeGenerator(context: CodeGeneratorContext) :
                             exp(protocol, stmt.arguments[0])
                         )
 
-                    else -> throw CodeGenerationError("unknown update", stmt)
+                    else -> super.update(protocol, stmt)
                 }
 
-            else -> throw CodeGenerationError("unknown object to update", stmt)
+            is VectorType ->
+                when (stmt.update.value) {
+                    is Modify ->
+                        CodeBlock.of(
+                            "%N[%L] %L %L",
+                            context.kotlinName(stmt.variable.value),
+                            cleartextExp(protocol, stmt.arguments[0]),
+                            stmt.update.value.name,
+                            exp(protocol, stmt.arguments[1])
+                        )
+
+                    else -> super.update(protocol, stmt)
+                }
+
+            else -> super.update(protocol, stmt)
         }
 
     override fun output(protocol: Protocol, stmt: OutputNode): CodeBlock =
@@ -198,8 +127,6 @@ class CleartextCodeGenerator(context: CodeGeneratorContext) :
             typeAnalysis.type(stmt.message).valueClass,
             exp(protocol, stmt.message)
         )
-
-    override fun guard(protocol: Protocol, expr: AtomicExpressionNode): CodeBlock = exp(protocol, expr)
 
     override fun send(
         sender: LetNode,
@@ -212,18 +139,16 @@ class CleartextCodeGenerator(context: CodeGeneratorContext) :
             val relevantEvents: Set<CommunicationEvent> =
                 events.getProjectionSends(ProtocolProjection(sendProtocol, context.host))
             for (event in relevantEvents) {
-                if (context.host != event.recv.host) {
-                    if (sender.value is InputNode)
-                        sendBuilder.addStatement(
-                            "%L",
-                            context.send(
-                                CodeBlock.of("%L", context.kotlinName(sender.temporary.value, sendProtocol)),
-                                event.recv.host
-                            )
+                if (sender.value is InputNode)
+                    sendBuilder.addStatement(
+                        "%L",
+                        context.send(
+                            CodeBlock.of("%L", context.kotlinName(sender.name.value, sendProtocol)),
+                            event.recv.host
                         )
-                    else
-                        sendBuilder.addStatement("%L", context.send(exp(sendProtocol, sender.value), event.recv.host))
-                }
+                    )
+                else
+                    sendBuilder.addStatement("%L", context.send(exp(sendProtocol, sender.value), event.recv.host))
             }
         }
         return sendBuilder.build()
@@ -260,7 +185,6 @@ class CleartextCodeGenerator(context: CodeGeneratorContext) :
                         clearTextTemp,
                         receiveReplicated(
                             sender,
-                            sendProtocol,
                             cleartextInputs,
                             context,
                             typeAnalysis
@@ -303,7 +227,7 @@ class CleartextCodeGenerator(context: CodeGeneratorContext) :
                     }
                     receiveBuilder.addStatement(
                         "val %N = %N",
-                        context.kotlinName(sender.temporary.value, receiveProtocol),
+                        context.kotlinName(sender.name.value, receiveProtocol),
                         clearTextTemp
                     )
 
@@ -316,62 +240,45 @@ class CleartextCodeGenerator(context: CodeGeneratorContext) :
 
                     // sanity check, only open one commitment at once
                     if (cleartextCommitmentInputs.size != 1) {
-                        throw CodeGenerationError("Commitment open: open multiple commitments at once")
+                        throw IllegalArgumentException("Received multiple commitments to open.")
                     }
-
-                    fun receiveDispatcher(
-                        event: CommunicationEvent,
-                        receiveType: ParameterizedTypeName
-                    ): CodeBlock =
-                        when (event.send.host == context.host) {
-                            true -> CodeBlock.of(
-                                "%L",
-                                context.kotlinName(sender.temporary.value, sendProtocol)
-                            )
-                            false -> CodeBlock.of(
-                                "%L",
-                                context.receive(
-                                    receiveType,
-                                    event.send.host
-                                )
-                            )
-                        }
 
                     // receive declassified commitment from the hash holder
                     receiveBuilder.addStatement(
                         "val %N = %L",
                         clearTextCommittedTemp,
-                        receiveDispatcher(
-                            cleartextCommitmentInputs.first(),
+                        context.receive(
                             Committed::class.asTypeName().parameterizedBy(
                                 typeTranslator((typeAnalysis.type(sender)))
-                            )
+                            ),
+                            cleartextCommitmentInputs.first().send.host
                         )
                     )
 
                     for (hashSendEvent in hashCommitmentInputs) {
                         receiveBuilder.addStatement(
-                            "%L.open(%N)",
-                            receiveDispatcher(
-                                hashSendEvent,
+                            "%L.%L(%N)",
+                            context.receive(
                                 Commitment::class.asTypeName().parameterizedBy(
                                     typeTranslator((typeAnalysis.type(sender)))
-                                )
+                                ),
+                                hashSendEvent.send.host
                             ),
+                            "open",
                             clearTextCommittedTemp
                         )
                     }
 
                     receiveBuilder.addStatement(
-                        "val %N = %L.value",
-                        context.kotlinName(sender.temporary.value, receiveProtocol),
-                        clearTextCommittedTemp
+                        "val %N = %L.%N",
+                        context.kotlinName(sender.name.value, receiveProtocol),
+                        clearTextCommittedTemp,
+                        "value"
                     )
                 }
 
                 else ->
-                    throw
-                    CodeGenerationError("Plaintext: received both commitment opening and cleartext value")
+                    throw IllegalArgumentException("Received both commitment to open and cleartext value.")
             }
         }
         return receiveBuilder.build()

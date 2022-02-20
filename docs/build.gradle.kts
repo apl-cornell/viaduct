@@ -1,4 +1,4 @@
-val buildApiDocs: Task = rootProject.tasks.getByName("dokkaHtmlMultiModule")
+val buildApiDocs: TaskProvider<Task> = rootProject.tasks.named("dokkaHtmlMultiModule")
 
 val mkdocsBuild by tasks.registering {
     group = JavaBasePlugin.DOCUMENTATION_GROUP

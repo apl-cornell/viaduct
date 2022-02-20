@@ -8,10 +8,10 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.AtomicExpressionNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.DeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.DowngradeNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.LetNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.Node
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ParameterNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.QueryNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.VariableDeclarationNode
 import edu.cornell.cs.apl.viaduct.util.subsequences
 
 class CommitmentProtocolFactory(val program: ProgramNode) : ProtocolFactory {
@@ -22,8 +22,8 @@ class CommitmentProtocolFactory(val program: ProgramNode) : ProtocolFactory {
         hostSubsets.filter { it.size >= 2 }.flatMap { ss -> ss.map { h -> Commitment(h, ss - h) } }.toSet()
     }
 
-    private fun Node.isApplicable(): Boolean {
-        return when (this) {
+    private fun VariableDeclarationNode.isApplicable(): Boolean =
+        when (this) {
             is LetNode -> nameAnalysis.readers(this).all { reader ->
                 reader.immediateRHS().all {
                     it is AtomicExpressionNode || it is DowngradeNode
@@ -36,15 +36,12 @@ class CommitmentProtocolFactory(val program: ProgramNode) : ProtocolFactory {
                 }
             }
 
+            is ParameterNode ->
+                true
+
             else -> false
         }
-    }
 
-    override fun viableProtocols(node: LetNode): Set<Protocol> =
+    override fun viableProtocols(node: VariableDeclarationNode): Set<Protocol> =
         if (node.isApplicable()) protocols else setOf()
-
-    override fun viableProtocols(node: DeclarationNode): Set<Protocol> =
-        if (node.isApplicable()) protocols else setOf()
-
-    override fun viableProtocols(node: ParameterNode): Set<Protocol> = protocols
 }

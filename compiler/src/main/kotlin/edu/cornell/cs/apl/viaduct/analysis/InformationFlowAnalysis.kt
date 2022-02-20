@@ -21,7 +21,6 @@ import edu.cornell.cs.apl.viaduct.security.solver.LabelVariable
 import edu.cornell.cs.apl.viaduct.syntax.FunctionName
 import edu.cornell.cs.apl.viaduct.syntax.HasSourceLocation
 import edu.cornell.cs.apl.viaduct.syntax.ObjectVariable
-import edu.cornell.cs.apl.viaduct.syntax.Temporary
 import edu.cornell.cs.apl.viaduct.syntax.Variable
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.AssertionNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.BlockNode
@@ -41,9 +40,9 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.InputNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.LetNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.LiteralNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.Node
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.ObjectDeclaration
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ObjectDeclarationArgumentNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ObjectReferenceArgumentNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.ObjectVariableDeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.OperatorApplicationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutParameterArgumentNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutParameterConstructorInitializerNode
@@ -56,6 +55,7 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.QueryNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ReadNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.StatementNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.UpdateNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.VariableDeclarationNode
 import edu.cornell.cs.apl.viaduct.util.FreshNameGenerator
 import kotlinx.collections.immutable.persistentMapOf
 import mu.KotlinLogging
@@ -104,30 +104,28 @@ class InformationFlowAnalysis private constructor(
         constraintSolver(this).addNewVariable(PrettyNodeWrapper(this))
     }
 
-    private val variableLabelMap: MutableMap<Node, AtomicLabelTerm> = mutableMapOf()
+    private val variableLabelMap: MutableMap<ObjectVariableDeclarationNode, AtomicLabelTerm> = mutableMapOf()
 
-    private fun ObjectDeclaration.variableLabel(
+    private fun ObjectVariableDeclarationNode.variableLabel(
         parameterMap: Map<String, Label> = persistentMapOf()
     ): AtomicLabelTerm =
-        variableLabelMap.getOrPut(
-            this.declarationAsNode
-        ) {
-            if (labelArguments == null || this.declarationAsNode is ObjectDeclarationArgumentNode) {
-                when (val declaration = this.declarationAsNode) {
+        variableLabelMap.getOrPut(this) {
+            val objectType = nameAnalysis.objectType(this)
+            // TODO: do we need the or?
+            if (objectType.labelArguments == null || this is ObjectDeclarationArgumentNode) {
+                when (this) {
                     is DeclarationNode ->
-                        constraintSolver(declaration).addNewVariable(PrettyNodeWrapper(this.name))
+                        constraintSolver(this).addNewVariable(PrettyNodeWrapper(this.name))
 
                     is ParameterNode ->
-                        constraintSolver(declaration).addNewVariable(PrettyNodeWrapper(this.name))
+                        constraintSolver(this).addNewVariable(PrettyNodeWrapper(this.name))
 
                     is ObjectDeclarationArgumentNode ->
-                        constraintSolver(declaration).addNewVariable(PrettyNodeWrapper(this.name))
-
-                    else -> throw Exception("Impossible case: Unknown ObjectDeclaration type")
+                        constraintSolver(this).addNewVariable(PrettyNodeWrapper(this.name))
                 }
             } else {
                 // TODO: this is hacky. How do we know it's the first label, for example?
-                LabelConstant(labelArguments!![0].value.interpret(parameterMap))
+                LabelConstant(objectType.labelArguments[0].value.interpret(parameterMap))
             }
         }
 
@@ -216,33 +214,19 @@ class InformationFlowAnalysis private constructor(
     ): LabelVariable =
         createPCVariable(solver, nameAnalysis.enclosingFunctionName(stmt), stmt.pathName)
 
-    /** Returns the inferred security label of the [Temporary] defined by [node]. */
-    fun label(node: LetNode): Label =
-        solutionMap.getValue(nameAnalysis.enclosingFunctionName(node)).getValue(node.temporaryLabel)
-
-    /** Returns the inferred security label of the [ObjectVariable] declared by [node]. */
-    fun label(node: DeclarationNode): Label =
-        when (val label = node.variableLabel()) {
-            is LabelConstant -> label.value
-
-            is LabelVariable ->
-                solutionMap.getValue(nameAnalysis.enclosingFunctionName(node)).getValue(label)
-
-            else -> throw Error("impossible case")
+    /** Returns the inferred security label of the [Variable] defined by [node]. */
+    fun label(node: VariableDeclarationNode): Label =
+        when (node) {
+            is LetNode ->
+                node.temporaryLabel.getValue(solutionMap.getValue(nameAnalysis.enclosingFunctionName(node)))
+            is ParameterNode -> {
+                val function = nameAnalysis.functionDeclaration(node)
+                val (labelFunction, labelParamMap) = parameterVariableMap.getValue(function.name.value)
+                labelParamMap.getValue(node.name.value).getValue(solutionMap.getValue(labelFunction))
+            }
+            is ObjectVariableDeclarationNode ->
+                node.variableLabel().getValue(solutionMap.getValue(nameAnalysis.enclosingFunctionName(node as Node)))
         }
-
-    /** Returns the inferred security label of the [ObjectVariable] declared by [node]. */
-    fun label(node: ParameterNode): Label {
-        val function = nameAnalysis.functionDeclaration(node)
-        val (labelFunction, labelParamMap) = parameterVariableMap.getValue(function.name.value)
-        return solutionMap.getValue(labelFunction).getValue(labelParamMap.getValue(node.name.value))
-    }
-
-    /** Returns the inferred security label of the [ObjectVariable] declared by [node]. */
-    fun label(node: ObjectDeclarationArgumentNode): Label {
-        val labelVar = nameAnalysis.asObjectDeclaration(node).variableLabel()
-        return labelVar.getValue(solutionMap.getValue(nameAnalysis.enclosingFunctionName(node)))
-    }
 
     /** Returns the inferred security label of the result of [node]. */
     fun label(node: ExpressionNode): Label =
@@ -336,7 +320,10 @@ class InformationFlowAnalysis private constructor(
 
                     is EndorsementNode -> {
                         // Don't downgrade confidentiality
-                        solver.addEqualToConstraint(from.confidentiality(), to.confidentiality()) { fromLabel, toLabel ->
+                        solver.addEqualToConstraint(
+                            from.confidentiality(),
+                            to.confidentiality()
+                        ) { fromLabel, toLabel ->
                             ConfidentialityChangingEndorsementError(this, fromLabel, toLabel)
                         }
 
@@ -449,7 +436,7 @@ class InformationFlowAnalysis private constructor(
                                     nameAnalysis.declaration(argument).variableLabel()
 
                                 is ObjectDeclarationArgumentNode ->
-                                    nameAnalysis.asObjectDeclaration(argument).variableLabel()
+                                    argument.variableLabel()
 
                                 is OutParameterArgumentNode ->
                                     nameAnalysis.declaration(argument).variableLabel()
@@ -478,7 +465,7 @@ class InformationFlowAnalysis private constructor(
                                         nameAnalysis.declaration(argument).variableLabel()
 
                                     is ObjectDeclarationArgumentNode ->
-                                        nameAnalysis.asObjectDeclaration(argument).variableLabel()
+                                        argument.variableLabel()
 
                                     is OutParameterArgumentNode ->
                                         nameAnalysis.declaration(argument).variableLabel()
@@ -502,8 +489,8 @@ class InformationFlowAnalysis private constructor(
                                 argumentLabel
                             )
 
-                            if (parameter.labelArguments != null) {
-                                val labelBoundExpr = parameter.labelArguments[0].value
+                            if (parameter.objectType.labelArguments != null) {
+                                val labelBoundExpr = parameter.objectType.labelArguments[0].value
                                 val labelBound =
                                     when {
                                         labelBoundExpr is LabelParameter ->

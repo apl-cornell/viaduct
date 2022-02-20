@@ -11,9 +11,9 @@ dependencies {
 
 gradlePlugin {
     plugins {
-        register("viaduct-plugin") {
-            id = "viaduct"
-            implementationClass = "edu.cornell.cs.apl.viaduct.gradle.ViaductPlugin"
+        register("${rootProject.name}-plugin") {
+            id = project.group as String
+            implementationClass = "${project.group}.gradle.ViaductPlugin"
         }
     }
 }

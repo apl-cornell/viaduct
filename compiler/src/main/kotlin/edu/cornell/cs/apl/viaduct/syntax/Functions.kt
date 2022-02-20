@@ -6,14 +6,15 @@ import edu.cornell.cs.apl.prettyprinting.Style
 import edu.cornell.cs.apl.prettyprinting.styled
 import edu.cornell.cs.apl.viaduct.syntax.surface.KeywordStyle
 
-/** Specifies whether a parameter is an IN parameter (can be used)
- *  or an OUT (has to be assigned in the function body).
+/**
+ * Specifies whether a parameter is an IN parameter (can be used)
+ * or an OUT (has to be assigned in the function body).
  */
 enum class ParameterDirection : PrettyPrintable {
-    PARAM_IN {
+    IN {
         override fun toDocument(): Document = Document("")
     },
-    PARAM_OUT {
+    OUT {
         override fun toDocument(): Document = Document(" out").styled(KeywordStyle)
     }
 }

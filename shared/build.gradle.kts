@@ -2,11 +2,14 @@ plugins {
     kotlin("jvm")
 }
 
-val mainPackage = "${project.group}.${rootProject.name}"
+val mainPackage = project.group as String
 
 /** Dependencies */
 
 dependencies {
+    // Data structures
+    implementation("org.jetbrains.kotlinx:kotlinx-collections-immutable-jvm:0.3.4")
+
     // Colored terminal output
     implementation("org.fusesource.jansi:jansi:2.4.0")
 
@@ -16,12 +19,13 @@ dependencies {
 
 /** Compilation */
 
-val generatedPropertiesDir = "${project.buildDir}/generated/sources/properties"
-
 val generatePropertiesFile by tasks.registering {
+    val outputDir = project.layout.buildDirectory.dir("generated/sources/properties")
+    outputs.dir(outputDir)
+
     doLast {
         val packageDir = mainPackage.replace(".", File.separator)
-        val propertiesFile = project.file("$generatedPropertiesDir/$packageDir/Properties.kt")
+        val propertiesFile = outputDir.get().dir(packageDir).file("Properties.kt").asFile
         propertiesFile.parentFile.mkdirs()
         propertiesFile.writeText(
             """
@@ -36,9 +40,5 @@ val generatePropertiesFile by tasks.registering {
 }
 
 kotlin.sourceSets.main {
-    kotlin.srcDir(generatedPropertiesDir)
-}
-
-tasks.compileKotlin {
-    dependsOn(generatePropertiesFile)
+    kotlin.srcDir(generatePropertiesFile.map { it.outputs })
 }

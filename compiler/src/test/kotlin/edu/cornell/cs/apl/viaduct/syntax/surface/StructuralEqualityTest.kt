@@ -53,6 +53,13 @@ internal class StructuralEqualityTest {
     }
 
     @Test
+    fun `differentiates names`() {
+        val program1 = "fun main() {}"
+        val program2 = "fun main2() {}"
+        assertStructurallyNotEquals(program1.parse(), program2.parse())
+    }
+
+    @Test
     fun `ignores source locations`() {
         val program1 = """
             fun main() {

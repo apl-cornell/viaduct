@@ -1,23 +1,31 @@
 package edu.cornell.cs.apl.viaduct.backends.aby
 
 import com.github.apl_cornell.aby.ABYParty
+import com.github.apl_cornell.aby.Aby
 import com.github.apl_cornell.aby.Role
 import com.github.apl_cornell.aby.SharingType
 import com.squareup.kotlinpoet.CodeBlock
 import com.squareup.kotlinpoet.KModifier
+import com.squareup.kotlinpoet.MemberName
 import com.squareup.kotlinpoet.PropertySpec
+import com.squareup.kotlinpoet.asClassName
 import com.sun.jdi.IntegerValue
 import edu.cornell.cs.apl.viaduct.analysis.NameAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.ProtocolAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.TypeAnalysis
 import edu.cornell.cs.apl.viaduct.codegeneration.AbstractCodeGenerator
 import edu.cornell.cs.apl.viaduct.codegeneration.CodeGeneratorContext
-import edu.cornell.cs.apl.viaduct.codegeneration.getRole
+import edu.cornell.cs.apl.viaduct.codegeneration.typeTranslator
 import edu.cornell.cs.apl.viaduct.errors.CodeGenerationError
 import edu.cornell.cs.apl.viaduct.errors.ViaductInterpreterError
 import edu.cornell.cs.apl.viaduct.selection.ProtocolCommunication
+import edu.cornell.cs.apl.viaduct.syntax.BinaryOperator
 import edu.cornell.cs.apl.viaduct.syntax.Host
+import edu.cornell.cs.apl.viaduct.syntax.Operator
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
+import edu.cornell.cs.apl.viaduct.syntax.UnaryOperator
+import edu.cornell.cs.apl.viaduct.syntax.datatypes.Get
+import edu.cornell.cs.apl.viaduct.syntax.datatypes.Modify
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.AtomicExpressionNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.DeclassificationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.DowngradeNode
@@ -33,10 +41,19 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.QueryNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ReadNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.UpdateNode
 import edu.cornell.cs.apl.viaduct.syntax.operators.Addition
+import edu.cornell.cs.apl.viaduct.syntax.operators.Division
+import edu.cornell.cs.apl.viaduct.syntax.operators.EqualTo
+import edu.cornell.cs.apl.viaduct.syntax.operators.ExclusiveOr
+import edu.cornell.cs.apl.viaduct.syntax.operators.GreaterThan
+import edu.cornell.cs.apl.viaduct.syntax.operators.GreaterThanOrEqualTo
+import edu.cornell.cs.apl.viaduct.syntax.operators.LessThan
+import edu.cornell.cs.apl.viaduct.syntax.operators.LessThanOrEqualTo
 import edu.cornell.cs.apl.viaduct.syntax.operators.Maximum
 import edu.cornell.cs.apl.viaduct.syntax.operators.Minimum
 import edu.cornell.cs.apl.viaduct.syntax.operators.Multiplication
+import edu.cornell.cs.apl.viaduct.syntax.operators.Mux
 import edu.cornell.cs.apl.viaduct.syntax.operators.Negation
+import edu.cornell.cs.apl.viaduct.syntax.operators.Not
 import edu.cornell.cs.apl.viaduct.syntax.operators.Subtraction
 import edu.cornell.cs.apl.viaduct.syntax.types.BooleanType
 import edu.cornell.cs.apl.viaduct.syntax.types.ImmutableCellType
@@ -58,20 +75,30 @@ class ABYCodeGenerator(
     private val protocolAnalysis: ProtocolAnalysis = ProtocolAnalysis(context.program, context.protocolComposer)
     private var protocolToABYPartyMap: MutableMap<ABYPair, String> = mutableMapOf()
 
+    private fun getRole(protocol: Protocol, host: Host): CodeBlock =
+        when (protocol) {
+            is ABY -> if (protocol.client == host) {
+                roleToCodeBlock(Role.CLIENT)
+            } else {
+                roleToCodeBlock(Role.SERVER)
+            }
+            else -> throw CodeGenerationError("unknown protocol: ${protocol.toDocument().print()}")
+        }
+
     override fun setup(protocol: Protocol): List<PropertySpec> =
         listOf(
             PropertySpec.builder(
                 protocolToABYPartyMap.getOrPut(
-                    ABYPair((protocol as ABY).server, protocol.client),
-                    { context.newTemporary("abyParty") }
-                ),
+                    ABYPair((protocol as ABY).server, protocol.client)
+                ) { context.newTemporary("abyParty") },
                 ABYParty::class
             ).initializer(
-                "ABYParty(%L, %L.getHost(), %L, %L, %L)",
+                "ABYParty(%L, %L.hostName, %L, %N.%M(), %L)",
                 getRole(protocol, context.host),
-                context.url(context.host), // TODO() - check whether client and server put in same IP address
+                context.url(protocol.server),
                 ABYPORT,
-                "Aby.getLT()", // TODO() - how to make this not hard-coded
+                "Aby",
+                MemberName(Aby::class.asClassName(), "getLT"), // TODO make this not hard coded
                 32 // TODO() - where is best place to store this value?
             )
                 .addModifiers(KModifier.PRIVATE)
@@ -86,63 +113,56 @@ class ABYCodeGenerator(
         kotlinName: String,
         circuitBuilder: CodeBlock
     ): CodeBlock =
-        when (protocolToShareType(destProtocol)) {
-            SharingType.S_YAO -> {
-                when (protocolToShareType(sourceProtocol)) {
-                    SharingType.S_YAO -> CodeBlock.of("%L", "")
-                    SharingType.S_BOOL -> CodeBlock.of(".putY2BGate(%L)", kotlinName)
-                    SharingType.S_ARITH -> CodeBlock.of(".putB2AGate(%L.putY2BGate(%L))", circuitBuilder, kotlinName)
+        when (sourceProtocol) {
+            is YaoABY -> {
+                when (destProtocol) {
+                    is YaoABY -> CodeBlock.of("")
+                    is BoolABY -> CodeBlock.of(".putY2BGate(%L)", kotlinName)
+                    is ArithABY -> CodeBlock.of(".putB2AGate(%L.putY2BGate(%L))", circuitBuilder, kotlinName)
                     else -> throw CodeGenerationError(
                         "unsupported ABY protocol: ${sourceProtocol.toDocument().print()}"
                     )
                 }
             }
-            SharingType.S_BOOL -> {
-                when (protocolToShareType(sourceProtocol)) {
-                    SharingType.S_YAO -> CodeBlock.of(".putB2YGate(%L)", kotlinName)
-                    SharingType.S_BOOL -> CodeBlock.of("%L", "")
-                    SharingType.S_ARITH -> CodeBlock.of(".putB2AGate(%L)", kotlinName)
+            is BoolABY -> {
+                when (destProtocol) {
+                    is YaoABY -> CodeBlock.of(".putB2YGate(%L)", kotlinName)
+                    is BoolABY -> CodeBlock.of("")
+                    is ArithABY -> CodeBlock.of(".putB2AGate(%L)", kotlinName)
                     else -> throw CodeGenerationError(
                         "unsupported ABY protocol: ${sourceProtocol.toDocument().print()}"
                     )
                 }
             }
-            SharingType.S_ARITH -> {
-                when (protocolToShareType(sourceProtocol)) {
-                    SharingType.S_YAO -> CodeBlock.of(".putA2YGate(%L)", kotlinName)
-                    SharingType.S_BOOL -> CodeBlock.of(".putY2BGate(%L.putA2YGate(%L))")
-                    SharingType.S_ARITH -> CodeBlock.of("%L", "")
+            is ArithABY -> {
+                when (destProtocol) {
+                    is YaoABY -> CodeBlock.of(".putA2YGate(%L)", kotlinName)
+                    is BoolABY -> CodeBlock.of(".putY2BGate(%L.putA2YGate(%L))", circuitBuilder, kotlinName)
+                    is ArithABY -> CodeBlock.of("")
                     else -> throw CodeGenerationError(
                         "unsupported ABY protocol: ${sourceProtocol.toDocument().print()}"
                     )
                 }
             }
-            else ->
-                throw CodeGenerationError("unsupported ABY protocol: ${destProtocol.toDocument().print()}")
+            else -> CodeBlock.of("")
         }
 
-    private fun shareTypeToCodeBlock(shareType: SharingType): CodeBlock =
-        when (shareType) {
-            SharingType.S_ARITH -> CodeBlock.of("%L", "SharingType.S_ARITH")
-            SharingType.S_BOOL -> CodeBlock.of("%L", "SharingType.S_BOOL")
-            SharingType.S_YAO -> CodeBlock.of("%L", "SharingType.S_YAO")
-            else -> throw CodeGenerationError("unknown share type: $shareType")
+    private fun protocolToShareType(protocol: Protocol): CodeBlock =
+        when (protocol) {
+            is ArithABY -> CodeBlock.of("%T.S_ARITH", SharingType::class.asClassName())
+            is BoolABY -> CodeBlock.of("%T.S_BOOL", SharingType::class.asClassName())
+            is YaoABY -> CodeBlock.of("%T.S_YAO", SharingType::class.asClassName())
+            else -> throw CodeGenerationError(
+                "unsupported protocol: ${protocol.toDocument().print()}"
+            )
         }
 
     private fun protocolToAbyPartyCircuit(protocol: Protocol): CodeBlock =
         CodeBlock.of(
             "%L.getCircuitBuilder(%L)",
             protocolToABYPartyMap.getValue(ABYPair((protocol as ABY).server, protocol.client)),
-            shareTypeToCodeBlock(protocolToShareType(protocol))
+            protocolToShareType(protocol)
         )
-
-    private fun protocolToShareType(protocol: Protocol): SharingType =
-        when (protocol) {
-            is ArithABY -> SharingType.S_ARITH
-            is BoolABY -> SharingType.S_BOOL
-            is YaoABY -> SharingType.S_YAO
-            else -> throw CodeGenerationError("unknown ABY protocol: ${protocol.toDocument().print()}")
-        }
 
     private fun valueToShare(value: Value, protocol: Protocol): CodeBlock =
         when (value) {
@@ -155,7 +175,7 @@ class ABYCodeGenerator(
                 )
             is IntegerValue ->
                 CodeBlock.of(
-                    "%L.putCONSGate(%L, %L)",
+                    "%L.putCONSGate(%L.toBigInteger(), %L)",
                     protocolToAbyPartyCircuit(protocol),
                     value.value(),
                     bitLen
@@ -171,6 +191,148 @@ class ABYCodeGenerator(
     ): CodeBlock =
         CodeBlock.of("%L.%L(%L, %L)", circuit, gateMethod, arg1, arg2)
 
+    private fun shareOfOperatorApplication(protocol: Protocol, op: Operator, args: List<CodeBlock>): CodeBlock =
+        when (op) {
+            Minimum ->
+                CodeBlock.of(
+                    "putMinGate(%L, %L, %L)",
+                    protocolToAbyPartyCircuit(protocol),
+                    args.first(),
+                    args.last()
+                )
+
+            Maximum ->
+                CodeBlock.of(
+                    "putMaxGate(%L, %L, %L)",
+                    protocolToAbyPartyCircuit(protocol),
+                    args.first(),
+                    args.last()
+                )
+
+            Negation ->
+                binaryOpToShare(
+                    protocolToAbyPartyCircuit(protocol),
+                    CodeBlock.of("putSUBGate"),
+                    CodeBlock.of(
+                        "%L.putCONSGate(0, %L)",
+                        protocolToAbyPartyCircuit(protocol),
+                        bitLen
+                    ),
+                    args.first()
+                )
+
+            Addition ->
+                binaryOpToShare(
+                    protocolToAbyPartyCircuit(protocol),
+                    CodeBlock.of("putADDGate"),
+                    args.first(),
+                    args.last()
+                )
+
+            Subtraction ->
+                binaryOpToShare(
+                    protocolToAbyPartyCircuit(protocol),
+                    CodeBlock.of("putSUBGate"),
+                    args.first(),
+                    args.last()
+                )
+
+            Multiplication ->
+                binaryOpToShare(
+                    protocolToAbyPartyCircuit(protocol),
+                    CodeBlock.of("putMULGate"),
+                    args.first(),
+                    args.last()
+                )
+
+            Not ->
+                CodeBlock.of(
+                    "%L.%L(%L)",
+                    protocolToAbyPartyCircuit(protocol),
+                    "putNOTGate",
+                    args.first()
+                )
+
+            EqualTo ->
+                binaryOpToShare(
+                    protocolToAbyPartyCircuit(protocol),
+                    CodeBlock.of("putEQGate"),
+                    args.first(),
+                    args.last()
+                )
+
+            LessThan ->
+                binaryOpToShare(
+                    protocolToAbyPartyCircuit(protocol),
+                    CodeBlock.of("putGTGate"),
+                    args.last(),
+                    args.first()
+                )
+
+            // (x <= y) <=> not (x > y)
+            LessThanOrEqualTo ->
+                CodeBlock.of(
+                    "%L.%L(%L)",
+                    protocolToAbyPartyCircuit(protocol),
+                    "putNOTGate",
+                    binaryOpToShare(
+                        protocolToAbyPartyCircuit(protocol),
+                        CodeBlock.of("putGTGate"),
+                        args.first(),
+                        args.last()
+                    )
+                )
+
+            GreaterThan ->
+                binaryOpToShare(
+                    protocolToAbyPartyCircuit(protocol),
+                    CodeBlock.of("putGTGate"),
+                    args.first(),
+                    args.last()
+                )
+
+            // (x >= y) <=> not (x < y)
+            GreaterThanOrEqualTo ->
+                CodeBlock.of(
+                    "%L.%L(%L)",
+                    protocolToAbyPartyCircuit(protocol),
+                    "putNOTGate",
+                    binaryOpToShare(
+                        protocolToAbyPartyCircuit(protocol),
+                        CodeBlock.of("putLTGate"),
+                        args.first(),
+                        args.last()
+                    )
+                )
+
+            Mux ->
+                CodeBlock.of(
+                    "%L.%L(%L, %L, %L)",
+                    protocolToAbyPartyCircuit(protocol),
+                    "putMUXGate",
+                    args.first(),
+                    args[1],
+                    args.last()
+                )
+
+            ExclusiveOr ->
+                binaryOpToShare(
+                    protocolToAbyPartyCircuit(protocol),
+                    CodeBlock.of("putXORGate"),
+                    args.first(),
+                    args.last()
+                )
+
+            Division ->
+                CodeBlock.of(
+                    "putInt32DIVGate(%L, %L, %L)",
+                    protocolToAbyPartyCircuit(protocol),
+                    args.first(),
+                    args.last()
+                )
+            else -> throw CodeGenerationError("unknown operator")
+        }
+
     override fun exp(protocol: Protocol, expr: ExpressionNode): CodeBlock =
         when (expr) {
             is LiteralNode -> valueToShare(expr.value, protocol)
@@ -178,15 +340,10 @@ class ABYCodeGenerator(
             is ReadNode ->
                 CodeBlock.of(
                     "%L%L",
-                    protocolToAbyPartyCircuit(protocol),
+                    context.kotlinName(expr.temporary.value, protocol),
                     addConversionGates(
                         protocol, // destination protocol
-                        context.tempKotlinNameToProtocol(
-                            context.kotlinName(
-                                expr.temporary.value,
-                                protocol
-                            )
-                        ), // source protocol
+                        protocolAnalysis.primaryProtocol(expr), // source protocol
                         context.kotlinName(expr.temporary.value, protocol), // share name
                         protocolToAbyPartyCircuit(protocol) // circuit builder
                     )
@@ -194,46 +351,32 @@ class ABYCodeGenerator(
 
             is OperatorApplicationNode -> {
                 when (expr.operator) {
-                    Minimum ->
-                        CodeBlock.of(
-                            "putMinGate(%L, %L, %L)",
-                            protocolToAbyPartyCircuit(protocol),
-                            exp(protocol, expr.arguments[0]),
-                            exp(protocol, expr.arguments[1])
+                    is BinaryOperator ->
+                        shareOfOperatorApplication(
+                            protocol,
+                            expr.operator,
+                            listOf(
+                                exp(protocol, expr.arguments.first()), exp(protocol, expr.arguments.last())
+                            )
                         )
 
-                    Maximum ->
-                        CodeBlock.of(
-                            "putMaxGate(%L, %L, %L)",
-                            protocolToAbyPartyCircuit(protocol),
-                            exp(protocol, expr.arguments[0]),
-                            exp(protocol, expr.arguments[1])
+                    is UnaryOperator ->
+                        shareOfOperatorApplication(
+                            protocol,
+                            expr.operator,
+                            listOf(exp(protocol, expr.arguments.first()))
                         )
 
-                    Negation -> TODO()
-
-                    Addition ->
-                        binaryOpToShare(
-                            protocolToAbyPartyCircuit(protocol),
-                            CodeBlock.of("putADDGate"),
-                            exp(protocol, expr.arguments[0]),
-                            exp(protocol, expr.arguments[1])
-                        )
-
-                    Subtraction ->
-                        binaryOpToShare(
-                            protocolToAbyPartyCircuit(protocol),
-                            CodeBlock.of("putSUBGate"),
-                            exp(protocol, expr.arguments[1]),
-                            exp(protocol, expr.arguments[0])
-                        )
-
-                    Multiplication ->
-                        binaryOpToShare(
-                            protocolToAbyPartyCircuit(protocol),
-                            CodeBlock.of("putMULGate"),
-                            exp(protocol, expr.arguments[0]),
-                            exp(protocol, expr.arguments[1])
+                    // ternary operator
+                    is Mux ->
+                        shareOfOperatorApplication(
+                            protocol,
+                            expr.operator,
+                            listOf(
+                                exp(protocol, expr.arguments.first()),
+                                exp(protocol, expr.arguments[1]),
+                                exp(protocol, expr.arguments.last())
+                            )
                         )
 
                     else -> throw CodeGenerationError(
@@ -244,12 +387,44 @@ class ABYCodeGenerator(
                 }
             }
 
-            is QueryNode -> TODO()
-/*                when(typeAnalysis.type(nameAnalysis.declaration(expr))) {
-                    is VectorType -> {}
-                    is ImmutableCellType -> expr.arguments[0]
-                    is MutableCellType -> {}
-                }*/
+            is QueryNode ->
+                when (typeAnalysis.type(nameAnalysis.declaration(expr))) {
+                    is VectorType ->
+                        when (expr.query.value) {
+                            is Get ->
+                                when (secretArgument(expr.arguments.first())) {
+                                    true ->
+                                        CodeBlock.of(
+                                            "%L(%L, %L)",
+                                            "secretIndexQuery",
+                                            exp(protocol, expr.arguments.first()),
+                                            context.kotlinName(expr.variable.value)
+
+                                        )
+                                    false ->
+                                        CodeBlock.of(
+                                            "%N[%L]",
+                                            context.kotlinName(expr.variable.value),
+                                            exp(protocol, expr.arguments.first())
+                                        )
+                                }
+                            else -> throw CodeGenerationError("unknown query", expr)
+                        }
+
+                    is ImmutableCellType ->
+                        when (expr.query.value) {
+                            is Get -> CodeBlock.of(context.kotlinName(expr.variable.value))
+                            else -> throw CodeGenerationError("unknown query", expr)
+                        }
+
+                    is MutableCellType ->
+                        when (expr.query.value) {
+                            is Get -> CodeBlock.of(context.kotlinName(expr.variable.value))
+                            else -> throw CodeGenerationError("unknown query", expr)
+                        }
+
+                    else -> throw CodeGenerationError("unknown AST object", expr)
+                }
 
             is DeclassificationNode -> exp(protocol, expr.expression)
 
@@ -273,7 +448,7 @@ class ABYCodeGenerator(
             }
         }
 
-    private fun isSecretArgument(arg: AtomicExpressionNode): Boolean =
+    private fun secretArgument(arg: AtomicExpressionNode): Boolean =
         when (arg) {
             is LiteralNode -> true
             is ReadNode -> protocolAnalysis.relevantCommunicationEvents(arg)
@@ -284,14 +459,93 @@ class ABYCodeGenerator(
         val updateBuilder = CodeBlock.builder()
         when (typeAnalysis.type(nameAnalysis.declaration(stmt))) {
             is VectorType -> {
-                if (isSecretArgument(stmt.arguments[0])) {
-                    // TODO() - ask about muxing
-                } else {
-                    exp(protocol, stmt.arguments[1]) // TODO() - check this
+                when (secretArgument(stmt.arguments.first())) {
+                    true -> when (stmt.update.value) {
+                        is edu.cornell.cs.apl.viaduct.syntax.datatypes.Set -> {
+                            CodeBlock.of(
+                                "%N.%N(%N, %N, %N)",
+                                context.kotlinName(stmt.variable.value),
+                                "secretUpdateSet",
+                                protocolToAbyPartyCircuit(protocol),
+                                exp(protocol, stmt.arguments.first()),
+                                exp(protocol, stmt.arguments.last())
+                            )
+                        }
+                        is Modify -> {
+                            CodeBlock.of(
+                                "%N.%N(%N, %N, %L)",
+                                context.kotlinName(stmt.variable.value),
+                                "secretUpdateModify",
+                                protocolToAbyPartyCircuit(protocol),
+                                exp(protocol, stmt.arguments.first()),
+                                shareOfOperatorApplication(
+                                    protocol,
+                                    stmt.update.value.operator,
+                                    listOf(
+                                        CodeBlock.of("it"),
+                                        exp(protocol, stmt.arguments.last())
+                                    )
+                                )
+                            )
+                        }
+                    }
+
+                    false -> when (stmt.update.value) {
+                        is edu.cornell.cs.apl.viaduct.syntax.datatypes.Set -> {
+                            CodeBlock.of(
+                                "%N[%L] = %L",
+                                context.kotlinName(stmt.variable.value),
+                                (stmt.arguments.first() as LiteralNode).value,
+                                exp(protocol, stmt.arguments.last())
+                            )
+                        }
+                        is Modify -> {
+                            CodeBlock.of(
+                                "%N[%L] = %L",
+                                context.kotlinName(stmt.variable.value),
+                                (stmt.arguments.first() as LiteralNode).value,
+                                shareOfOperatorApplication(
+                                    protocol,
+                                    stmt.update.value.operator,
+                                    listOf(
+                                        CodeBlock.of(
+                                            "%N[%L]",
+                                            context.kotlinName(stmt.variable.value),
+                                            (stmt.arguments.first() as LiteralNode).value
+                                        ),
+                                        exp(protocol, stmt.arguments.last())
+                                    )
+                                )
+                            )
+                        }
+                    }
                 }
             }
 
-            is MutableCellType -> exp(protocol, stmt.arguments[0])
+            is MutableCellType ->
+                when (stmt.update.value) {
+                    is edu.cornell.cs.apl.viaduct.syntax.datatypes.Set -> {
+                        CodeBlock.of(
+                            "%N = %L",
+                            context.kotlinName(stmt.variable.value),
+                            exp(protocol, stmt.arguments.first())
+                        )
+                    }
+                    is Modify -> {
+                        CodeBlock.of(
+                            "%N = %L",
+                            context.kotlinName(stmt.variable.value),
+                            shareOfOperatorApplication(
+                                protocol,
+                                stmt.update.value.operator,
+                                listOf(
+                                    CodeBlock.of(context.kotlinName(stmt.variable.value)),
+                                    exp(protocol, stmt.arguments.first())
+                                )
+                            )
+                        )
+                    }
+                }
 
             is ImmutableCellType ->
                 throw CodeGenerationError("ABY: unknown update for immutable cell", stmt)
@@ -308,9 +562,9 @@ class ABYCodeGenerator(
 
     private fun roleToCodeBlock(role: Role): CodeBlock =
         when (role) {
-            Role.CLIENT -> CodeBlock.of("Role.CLIENT")
-            Role.SERVER -> CodeBlock.of("Role.Server")
-            Role.ALL -> CodeBlock.of("Role.ALL")
+            Role.CLIENT -> CodeBlock.of("%T.CLIENT", Role::class.asClassName())
+            Role.SERVER -> CodeBlock.of("%T.SERVER", Role::class.asClassName())
+            Role.ALL -> CodeBlock.of("%T.ALL", Role::class.asClassName())
         }
 
     override fun send(
@@ -320,6 +574,7 @@ class ABYCodeGenerator(
         events: ProtocolCommunication
     ): CodeBlock {
         val outBuilder = CodeBlock.builder()
+        val outShareName = context.newTemporary("outShare")
 
         val otherHostInfo: Pair<Host, Role> =
             if (context.host == (sendProtocol as ABY).client) {
@@ -346,28 +601,29 @@ class ABYCodeGenerator(
                     throw ViaductInterpreterError("ABY: at least one party must receive output when executing circuit")
             }
 
-        // execute circuit
-        outBuilder.addStatement("%L.execCircuit()", protocolToAbyPartyCircuit(sendProtocol))
-
         outBuilder.addStatement(
-            "val %L = %L.putOUTGate(%L, %L).getClearValue32()",
-            context.kotlinName(sender.temporary.value, receiveProtocol),
+            "val %L = %L.putOUTGate(%L, %L)",
+            outShareName,
             protocolToAbyPartyCircuit(sendProtocol),
             context.kotlinName(sender.temporary.value, sendProtocol),
             outRole
         )
 
-        val hostEvents = events.filter { event -> event.send.host == context.host }
-        for (event in hostEvents) {
-            outBuilder.add(
+        // execute circuit
+        outBuilder.addStatement(
+            "%L.execCircuit()",
+            protocolToABYPartyMap[ABYPair(sendProtocol.server, sendProtocol.client)]
+        )
+
+        for (event in events) {
+            outBuilder.addStatement(
+                "%L",
                 context.send(
-                    CodeBlock.of("%L", context.kotlinName(sender.temporary.value, receiveProtocol)),
+                    CodeBlock.of("%L.getClearValue32().toInt()", outShareName),
                     event.recv.host
                 )
             )
         }
-
-        // TODO() - do I call ABY reset here?
 
         return outBuilder.build()
     }
@@ -386,40 +642,38 @@ class ABYCodeGenerator(
                 event.recv.id == ABY.SECRET_INPUT && event.recv.host == context.host -> {
                     when (typeAnalysis.type(sender)) {
                         is BooleanType ->
-                            receiveBuilder.add(
-                                CodeBlock.of(
-                                    "%L.putINGate(%L.toInt().toBigInteger(), %L, %L)",
-                                    protocolToAbyPartyCircuit(receiveProtocol),
-                                    context.kotlinName(sender.temporary.value, sendProtocol),
-                                    bitLen,
-                                    getRole(receiveProtocol, context.host)
-                                )
+                            receiveBuilder.addStatement(
+                                "val %L = %L.putINGate(%L.toInt().toBigInteger(), %L, %L)",
+                                context.kotlinName(sender.temporary.value, receiveProtocol),
+                                protocolToAbyPartyCircuit(receiveProtocol),
+                                context.receive(typeTranslator(typeAnalysis.type(sender)), event.send.host),
+                                bitLen,
+                                getRole(receiveProtocol, context.host)
                             )
 
                         is IntegerType ->
-                            receiveBuilder.add(
-                                CodeBlock.of(
-                                    "%L.putINGate(%L, %L, %L)",
-                                    protocolToAbyPartyCircuit(receiveProtocol),
-                                    context.kotlinName(sender.temporary.value, sendProtocol),
-                                    bitLen,
-                                    getRole(receiveProtocol, context.host)
-                                )
+                            receiveBuilder.addStatement(
+                                "val %L = %L.putINGate(%L.toBigInteger(), %L, %L)",
+                                context.kotlinName(sender.temporary.value, receiveProtocol),
+                                protocolToAbyPartyCircuit(receiveProtocol),
+                                context.receive(typeTranslator(typeAnalysis.type(sender)), event.send.host),
+                                bitLen,
+                                getRole(receiveProtocol, context.host)
                             )
                     }
                 }
 
                 // other host has secret input; create dummy gate
                 event.recv.id == ABY.SECRET_INPUT && event.recv.host != context.host -> {
-                    receiveBuilder.add(
-                        CodeBlock.of(
-                            "%L.putDummyINGate(%L)",
-                            protocolToAbyPartyCircuit(receiveProtocol),
-                            bitLen
-                        )
+                    receiveBuilder.addStatement(
+                        "val %L = %L.putDummyINGate(%L)",
+                        context.kotlinName(sender.temporary.value, receiveProtocol),
+                        protocolToAbyPartyCircuit(receiveProtocol),
+                        bitLen
                     )
                 }
 
+                // TODO() - look into how to take from the send queue in this case
                 // cleartext input; create constant gate
                 event.recv.id == ABY.CLEARTEXT_INPUT && event.recv.host == context.host -> {
                     receiveBuilder.add(exp(sendProtocol, sender.value))

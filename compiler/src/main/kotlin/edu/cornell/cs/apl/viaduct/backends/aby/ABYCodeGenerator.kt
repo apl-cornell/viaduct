@@ -15,8 +15,8 @@ import edu.cornell.cs.apl.viaduct.analysis.ProtocolAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.TypeAnalysis
 import edu.cornell.cs.apl.viaduct.codegeneration.AbstractCodeGenerator
 import edu.cornell.cs.apl.viaduct.codegeneration.CodeGeneratorContext
+import edu.cornell.cs.apl.viaduct.codegeneration.UnsupportedOperatorException
 import edu.cornell.cs.apl.viaduct.codegeneration.typeTranslator
-import edu.cornell.cs.apl.viaduct.errors.CodeGenerationError
 import edu.cornell.cs.apl.viaduct.errors.ViaductInterpreterError
 import edu.cornell.cs.apl.viaduct.selection.ProtocolCommunication
 import edu.cornell.cs.apl.viaduct.syntax.BinaryOperator
@@ -82,7 +82,7 @@ class ABYCodeGenerator(
             } else {
                 roleToCodeBlock(Role.SERVER)
             }
-            else -> throw CodeGenerationError("unknown protocol: ${protocol.toDocument().print()}")
+            else -> throw UnsupportedOperationException("unknown protocol: ${protocol.toDocument().print()}")
         }
 
     override fun setup(protocol: Protocol): List<PropertySpec> =
@@ -119,7 +119,7 @@ class ABYCodeGenerator(
                     is YaoABY -> CodeBlock.of("")
                     is BoolABY -> CodeBlock.of(".putY2BGate(%L)", kotlinName)
                     is ArithABY -> CodeBlock.of(".putB2AGate(%L.putY2BGate(%L))", circuitBuilder, kotlinName)
-                    else -> throw CodeGenerationError(
+                    else -> throw UnsupportedOperationException(
                         "unsupported ABY protocol: ${sourceProtocol.toDocument().print()}"
                     )
                 }
@@ -129,7 +129,7 @@ class ABYCodeGenerator(
                     is YaoABY -> CodeBlock.of(".putB2YGate(%L)", kotlinName)
                     is BoolABY -> CodeBlock.of("")
                     is ArithABY -> CodeBlock.of(".putB2AGate(%L)", kotlinName)
-                    else -> throw CodeGenerationError(
+                    else -> throw UnsupportedOperationException(
                         "unsupported ABY protocol: ${sourceProtocol.toDocument().print()}"
                     )
                 }
@@ -139,7 +139,7 @@ class ABYCodeGenerator(
                     is YaoABY -> CodeBlock.of(".putA2YGate(%L)", kotlinName)
                     is BoolABY -> CodeBlock.of(".putY2BGate(%L.putA2YGate(%L))", circuitBuilder, kotlinName)
                     is ArithABY -> CodeBlock.of("")
-                    else -> throw CodeGenerationError(
+                    else -> throw UnsupportedOperationException(
                         "unsupported ABY protocol: ${sourceProtocol.toDocument().print()}"
                     )
                 }
@@ -152,7 +152,7 @@ class ABYCodeGenerator(
             is ArithABY -> CodeBlock.of("%T.S_ARITH", SharingType::class.asClassName())
             is BoolABY -> CodeBlock.of("%T.S_BOOL", SharingType::class.asClassName())
             is YaoABY -> CodeBlock.of("%T.S_YAO", SharingType::class.asClassName())
-            else -> throw CodeGenerationError(
+            else -> throw UnsupportedOperationException(
                 "unsupported protocol: ${protocol.toDocument().print()}"
             )
         }
@@ -180,7 +180,7 @@ class ABYCodeGenerator(
                     value.value(),
                     bitLen
                 )
-            else -> throw CodeGenerationError("unknown value type: ${value.toDocument().print()}")
+            else -> throw UnsupportedOperationException("unknown value type: ${value.toDocument().print()}")
         }
 
     private fun binaryOpToShare(
@@ -330,7 +330,7 @@ class ABYCodeGenerator(
                     args.first(),
                     args.last()
                 )
-            else -> throw CodeGenerationError("unknown operator")
+            else -> throw UnsupportedOperationException("unknown operator")
         }
 
     override fun exp(protocol: Protocol, expr: ExpressionNode): CodeBlock =
@@ -379,11 +379,7 @@ class ABYCodeGenerator(
                             )
                         )
 
-                    else -> throw CodeGenerationError(
-                        "unknown operator: ${
-                        expr.operator.toDocument(expr.arguments).print()
-                        }"
-                    )
+                    else -> throw UnsupportedOperatorException(protocol, expr)
                 }
             }
 
@@ -408,22 +404,28 @@ class ABYCodeGenerator(
                                             exp(protocol, expr.arguments.first())
                                         )
                                 }
-                            else -> throw CodeGenerationError("unknown query", expr)
+                            else -> throw UnsupportedOperationException(
+                                "unknown query: ${expr.query.toDocument().print()}"
+                            )
                         }
 
                     is ImmutableCellType ->
                         when (expr.query.value) {
                             is Get -> CodeBlock.of(context.kotlinName(expr.variable.value))
-                            else -> throw CodeGenerationError("unknown query", expr)
+                            else -> throw UnsupportedOperationException(
+                                "unknown query: ${expr.query.toDocument().print()}"
+                            )
                         }
 
                     is MutableCellType ->
                         when (expr.query.value) {
                             is Get -> CodeBlock.of(context.kotlinName(expr.variable.value))
-                            else -> throw CodeGenerationError("unknown query", expr)
+                            else -> throw UnsupportedOperationException(
+                                "unknown query: ${expr.query.toDocument().print()}"
+                            )
                         }
 
-                    else -> throw CodeGenerationError("unknown AST object", expr)
+                    else -> throw UnsupportedOperationException("unknown AST object: ${expr.toDocument().print()}")
                 }
 
             is DeclassificationNode -> exp(protocol, expr.expression)
@@ -433,16 +435,16 @@ class ABYCodeGenerator(
             is DowngradeNode -> exp(protocol, expr.expression)
 
             is InputNode ->
-                throw CodeGenerationError("cannot perform I/O in non-Local protocol")
+                throw UnsupportedOperationException("cannot perform I/O in non-Local protocol")
         }
 
     override fun let(protocol: Protocol, stmt: LetNode): CodeBlock =
         when (stmt.value) {
-            is InputNode -> throw CodeGenerationError("cannot perform I/O in non-Local protocol")
+            is InputNode -> throw UnsupportedOperationException("cannot perform I/O in non-Local protocol")
             is PureExpressionNode -> {
                 CodeBlock.of(
                     "val %N = %L",
-                    context.kotlinName(stmt.temporary.value, protocol),
+                    context.kotlinName(stmt.name.value, protocol),
                     exp(protocol, stmt.value)
                 )
             }
@@ -548,17 +550,17 @@ class ABYCodeGenerator(
                 }
 
             is ImmutableCellType ->
-                throw CodeGenerationError("ABY: unknown update for immutable cell", stmt)
+                throw UnsupportedOperationException("ABY: unknown update for immutable cell: ${stmt.toDocument().print()}")
         }
 
         return updateBuilder.build()
     }
 
     override fun output(protocol: Protocol, stmt: OutputNode): CodeBlock =
-        throw CodeGenerationError("cannot perform I/O in non-local protocol")
+        throw UnsupportedOperationException("cannot perform I/O in non-local protocol: ${stmt.toDocument().print()}")
 
     override fun guard(protocol: Protocol, expr: AtomicExpressionNode): CodeBlock =
-        throw CodeGenerationError("ABY: Cannot execute conditional guard")
+        throw UnsupportedOperationException("ABY: Cannot execute conditional guard: ${expr.toDocument().print()}")
 
     private fun roleToCodeBlock(role: Role): CodeBlock =
         when (role) {
@@ -605,7 +607,7 @@ class ABYCodeGenerator(
             "val %L = %L.putOUTGate(%L, %L)",
             outShareName,
             protocolToAbyPartyCircuit(sendProtocol),
-            context.kotlinName(sender.temporary.value, sendProtocol),
+            context.kotlinName(sender.name.value, sendProtocol),
             outRole
         )
 
@@ -644,7 +646,7 @@ class ABYCodeGenerator(
                         is BooleanType ->
                             receiveBuilder.addStatement(
                                 "val %L = %L.putINGate(%L.toInt().toBigInteger(), %L, %L)",
-                                context.kotlinName(sender.temporary.value, receiveProtocol),
+                                context.kotlinName(sender.name.value, receiveProtocol),
                                 protocolToAbyPartyCircuit(receiveProtocol),
                                 context.receive(typeTranslator(typeAnalysis.type(sender)), event.send.host),
                                 bitLen,
@@ -654,7 +656,7 @@ class ABYCodeGenerator(
                         is IntegerType ->
                             receiveBuilder.addStatement(
                                 "val %L = %L.putINGate(%L.toBigInteger(), %L, %L)",
-                                context.kotlinName(sender.temporary.value, receiveProtocol),
+                                context.kotlinName(sender.name.value, receiveProtocol),
                                 protocolToAbyPartyCircuit(receiveProtocol),
                                 context.receive(typeTranslator(typeAnalysis.type(sender)), event.send.host),
                                 bitLen,
@@ -667,7 +669,7 @@ class ABYCodeGenerator(
                 event.recv.id == ABY.SECRET_INPUT && event.recv.host != context.host -> {
                     receiveBuilder.addStatement(
                         "val %L = %L.putDummyINGate(%L)",
-                        context.kotlinName(sender.temporary.value, receiveProtocol),
+                        context.kotlinName(sender.name.value, receiveProtocol),
                         protocolToAbyPartyCircuit(receiveProtocol),
                         bitLen
                     )

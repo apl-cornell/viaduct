@@ -1,0 +1,44 @@
+package edu.cornell.cs.apl.viaduct.runtime.aby
+
+import com.github.apl_cornell.aby.Aby
+import com.github.apl_cornell.aby.Circuit
+import com.github.apl_cornell.aby.Share
+import com.github.apl_cornell.aby.UInt32Vector
+import java.math.BigInteger
+
+/** Implements bitwise not */
+fun Circuit.putNOTGate(input: Share): Share {
+    val inverses = mutableListOf<Long>()
+    for (wire in input.wires) {
+        inverses.add(this.putINVGate(wire))
+    }
+    return Aby.createNewShare(UInt32Vector(inverses), this)
+}
+
+fun Circuit.secretIndexQuery(indexValue: Share, shareVector: Array<Share>): Share {
+    // return 0 in case of indexing error
+    var currentShare = this.putCONSGate(BigInteger.ZERO, 32)
+    for (i in shareVector.indices) {
+        val guard = this.putEQGate(indexValue, this.putCONSGate(i.toBigInteger(), 32))
+        val mux = this.putMUXGate(guard, shareVector[i], currentShare)
+        currentShare = mux
+    }
+    return currentShare
+}
+
+fun Array<Share>.secretUpdateModify(circuit: Circuit, index: Share, operation: (Share) -> Share) {
+    for (i in this.indices) {
+        val rhs = operation(this[i])
+        val guard = circuit.putEQGate(index, circuit.putCONSGate(i.toBigInteger(), 32))
+        val mux = circuit.putMUXGate(this[i], rhs, guard) // TODO() - check arg order
+        this[i] = mux
+    }
+}
+
+fun Array<Share>.secretUpdateSet(circuit: Circuit, index: Share, argument: Share) {
+    for (i in this.indices) {
+        val guard = circuit.putEQGate(index, circuit.putCONSGate(i.toBigInteger(), 32))
+        val mux = circuit.putMUXGate(this[i], argument, guard) // TODO() - check arg order
+        this[i] = mux
+    }
+}

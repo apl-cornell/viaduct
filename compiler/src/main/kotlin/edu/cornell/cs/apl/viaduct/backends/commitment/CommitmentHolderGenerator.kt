@@ -59,15 +59,13 @@ internal class CommitmentHolderGenerator(
             ).toList()
 
         for (event in relevantEvents) {
-            if (event.send.host != event.recv.host) {
-                sendBuilder.addStatement(
-                    "%L",
-                    context.send(
-                        CodeBlock.of("%N", context.kotlinName(sender.name.value, sendProtocol)),
-                        event.recv.host
-                    )
+            sendBuilder.addStatement(
+                "%L",
+                context.send(
+                    CodeBlock.of("%L", context.kotlinName(sender.name.value, sendProtocol)),
+                    event.recv.host
                 )
-            }
+            )
         }
         return sendBuilder.build()
     }
@@ -95,7 +93,6 @@ internal class CommitmentHolderGenerator(
                         context.kotlinName(sender.name.value, receiveProtocol),
                         receiveReplicated(
                             sender,
-                            sendProtocol,
                             relevantEvents,
                             context,
                             typeAnalysis

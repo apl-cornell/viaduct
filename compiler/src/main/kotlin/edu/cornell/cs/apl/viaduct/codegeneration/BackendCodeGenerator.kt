@@ -230,6 +230,8 @@ private class BackendCodeGenerator(
         private var tempMap: MutableMap<Pair<Temporary, Protocol>, String> = mutableMapOf()
         private var varMap: MutableMap<ObjectVariable, String> = mutableMapOf()
 
+        private var sendQueue: ArrayDeque<String> = ArrayDeque()
+
         private val receiveMember = MemberName(ViaductRuntime::class.java.packageName, "receive")
         private val sendMember = MemberName(ViaductRuntime::class.java.packageName, "send")
 
@@ -259,10 +261,24 @@ private class BackendCodeGenerator(
             hostDeclarations.reference(host)
 
         override fun receive(type: TypeName, sender: Host): CodeBlock =
-            CodeBlock.of("%N.%M<%T>(%L)", "runtime", receiveMember, type, codeOf(sender))
+            when (sender == context.host) {
+                true -> {
+                    val receiveTemp = sendQueue.first()
+                    sendQueue.removeFirst()
+                    CodeBlock.of("%L", receiveTemp)
+                }
+                false -> CodeBlock.of("%N.%M<%T>(%L)", "runtime", receiveMember, type, codeOf(sender))
+            }
 
         override fun send(value: CodeBlock, receiver: Host): CodeBlock =
-            CodeBlock.of("%N.%M(%L, %L)", "runtime", sendMember, value, codeOf(receiver))
+            when (receiver == context.host) {
+                true -> {
+                    val sendTemp = newTemporary("sendTemp")
+                    sendQueue.addLast(sendTemp)
+                    CodeBlock.of("val %L = %L", sendTemp, value)
+                }
+                false -> CodeBlock.of("%N.%M(%L, %L)", "runtime", sendMember, value, codeOf(receiver))
+            }
 
         override fun url(host: Host): CodeBlock =
             CodeBlock.of("%N.url(%L)", "runtime", codeOf(host))

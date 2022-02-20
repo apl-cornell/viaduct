@@ -49,16 +49,14 @@ internal class CommitmentCreatorGenerator(
                 events.getProjectionSends(ProtocolProjection(sendProtocol, context.host))
 
             for (event in relevantEvents) {
-                if (event.send.host != event.recv.host) {
-                    // send temporary containing hash value
-                    sendBuilder.addStatement(
-                        "%L",
-                        context.send(
-                            CodeBlock.of("%L", context.kotlinName(sender.name.value, sendProtocol)),
-                            event.recv.host
-                        )
+                // send temporary containing hash value
+                sendBuilder.addStatement(
+                    "%L",
+                    context.send(
+                        CodeBlock.of("%L", context.kotlinName(sender.name.value, sendProtocol)),
+                        event.recv.host
                     )
-                }
+                )
             }
         }
         return sendBuilder.build()
@@ -89,7 +87,6 @@ internal class CommitmentCreatorGenerator(
                             context.kotlinName(sender.name.value, receiveProtocol),
                             receiveReplicated(
                                 sender,
-                                sendProtocol,
                                 relevantEvents,
                                 context,
                                 typeAnalysis
@@ -111,7 +108,6 @@ internal class CommitmentCreatorGenerator(
                         Committed::class,
                         receiveReplicated(
                             sender,
-                            sendProtocol,
                             cleartextInputEvents,
                             context,
                             typeAnalysis

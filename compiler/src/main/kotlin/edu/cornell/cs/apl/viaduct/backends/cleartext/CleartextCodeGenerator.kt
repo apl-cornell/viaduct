@@ -3,7 +3,6 @@ package edu.cornell.cs.apl.viaduct.backends.cleartext
 import com.squareup.kotlinpoet.CodeBlock
 import com.squareup.kotlinpoet.MemberName
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
-import com.squareup.kotlinpoet.asClassName
 import com.squareup.kotlinpoet.asTypeName
 import edu.cornell.cs.apl.viaduct.analysis.NameAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.TypeAnalysis
@@ -258,7 +257,7 @@ class CleartextCodeGenerator(context: CodeGeneratorContext) : AbstractCodeGenera
 
                     for (hashSendEvent in hashCommitmentInputs) {
                         receiveBuilder.addStatement(
-                            "%L.open(%N)",
+                            "%L.%L(%N)",
                             context.receive(
                                 Commitment::class.asTypeName().parameterizedBy(
                                     typeTranslator((typeAnalysis.type(sender)))

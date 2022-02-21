@@ -41,6 +41,8 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.ReadNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.SimpleStatementNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.StatementNode
 import edu.cornell.cs.apl.viaduct.util.FreshNameGenerator
+import java.util.LinkedList
+import java.util.Queue
 import javax.annotation.processing.Generated
 
 private class BackendCodeGenerator(
@@ -230,6 +232,8 @@ private class BackendCodeGenerator(
         private var tempMap: MutableMap<Pair<Temporary, Protocol>, String> = mutableMapOf()
         private var varMap: MutableMap<ObjectVariable, String> = mutableMapOf()
 
+        private var selfSends: Queue<String> = LinkedList()
+
         private val receiveMember = MemberName(ViaductRuntime::class.java.packageName, "receive")
         private val sendMember = MemberName(ViaductRuntime::class.java.packageName, "send")
 
@@ -259,10 +263,20 @@ private class BackendCodeGenerator(
             hostDeclarations.reference(host)
 
         override fun receive(type: TypeName, sender: Host): CodeBlock =
-            CodeBlock.of("%N.%M<%T>(%L)", "runtime", receiveMember, type, codeOf(sender))
+            if (sender == context.host) {
+                CodeBlock.of("%L", selfSends.remove())
+            } else {
+                CodeBlock.of("%N.%M<%T>(%L)", "runtime", receiveMember, type, codeOf(sender))
+            }
 
         override fun send(value: CodeBlock, receiver: Host): CodeBlock =
-            CodeBlock.of("%N.%M(%L, %L)", "runtime", sendMember, value, codeOf(receiver))
+            if (receiver == context.host) {
+                val sendTemp = newTemporary("sendTemp")
+                selfSends.add(sendTemp)
+                CodeBlock.of("val %N = %L", sendTemp, value)
+            } else {
+                CodeBlock.of("%N.%M(%L, %L)", "runtime", sendMember, value, codeOf(receiver))
+            }
 
         override fun url(host: Host): CodeBlock =
             CodeBlock.of("%N.url(%L)", "runtime", codeOf(host))

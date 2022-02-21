@@ -8,8 +8,6 @@ import com.squareup.kotlinpoet.TypeName
 import com.squareup.kotlinpoet.U_BYTE_ARRAY
 import edu.cornell.cs.apl.viaduct.analysis.TypeAnalysis
 import edu.cornell.cs.apl.viaduct.selection.CommunicationEvent
-import edu.cornell.cs.apl.viaduct.syntax.Host
-import edu.cornell.cs.apl.viaduct.syntax.Protocol
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.LetNode
 import edu.cornell.cs.apl.viaduct.syntax.types.BooleanType
 import edu.cornell.cs.apl.viaduct.syntax.types.ByteVecType
@@ -34,37 +32,24 @@ fun typeTranslator(viaductType: ValueType): TypeName =
 
 fun receiveReplicated(
     sender: LetNode,
-    sendProtocol: Protocol,
     events: Set<CommunicationEvent>,
     context: CodeGeneratorContext,
     typeAnalysis: TypeAnalysis
 ): CodeBlock {
 
-    fun receiveDispatcher(event: CommunicationEvent, receiveHost: Host): CodeBlock =
-        when (event.send.host == receiveHost) {
-            true -> CodeBlock.of("%L", context.kotlinName(sender.name.value, sendProtocol))
-            false -> CodeBlock.of(
-                "%L",
-                context.receive(
-                    typeTranslator(typeAnalysis.type(sender)),
-                    event.send.host
-                )
-            )
-        }
-
-    var eventSet = events
+    val eventSet = events
     val receiveExpression = CodeBlock.builder()
     val it = eventSet.iterator()
 
     if (eventSet.size > 1) {
         receiveExpression.beginControlFlow(
             "%L.also",
-            receiveDispatcher(it.next(), context.host)
+            context.receive(typeTranslator(typeAnalysis.type(sender)), it.next().send.host)
         )
     } else {
         receiveExpression.add(
             "%L",
-            receiveDispatcher(it.next(), context.host)
+            context.receive(typeTranslator(typeAnalysis.type(sender)), it.next().send.host)
         )
         return receiveExpression.build()
     }
@@ -77,7 +62,7 @@ fun receiveReplicated(
             "assertEquals",
             "it",
             eventSet.first().send.host,
-            receiveDispatcher(currentEvent, context.host),
+            context.receive(typeTranslator(typeAnalysis.type(sender)), currentEvent.send.host),
             currentEvent.send.host
         )
     }

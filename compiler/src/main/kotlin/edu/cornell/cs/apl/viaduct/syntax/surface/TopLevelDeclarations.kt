@@ -50,7 +50,7 @@ class ParameterNode(
     }
 
     override fun toDocumentWithoutComment(): Document =
-        name + Document(":") * parameterDirection * objectType.toDocument(protocol)
+        name + Document(":") + parameterDirection * objectType.toDocument(protocol)
 }
 
 /**

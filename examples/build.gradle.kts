@@ -34,7 +34,7 @@ dependencies {
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.0")
 
     // Getting a free port
-    testImplementation("org.springframework:spring-core:5.3.15")
+    testImplementation("org.springframework:spring-core:5.3.16")
 }
 
 application {

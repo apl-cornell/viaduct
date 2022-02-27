@@ -63,7 +63,7 @@ internal class CommitmentHolderGenerator(
             sendBuilder.addStatement(
                 "%L",
                 context.send(
-                    CodeBlock.of("%L", context.kotlinName(sender.name.value, sendProtocol)),
+                    CodeBlock.of("%N", context.kotlinName(sender.name.value, sendProtocol)),
                     event.recv.host
                 )
             )

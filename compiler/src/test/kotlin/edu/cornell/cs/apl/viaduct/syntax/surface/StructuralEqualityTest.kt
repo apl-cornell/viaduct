@@ -4,7 +4,6 @@ import edu.cornell.cs.apl.viaduct.PositiveTestFileProvider
 import edu.cornell.cs.apl.viaduct.backends.DefaultCombinedBackend
 import edu.cornell.cs.apl.viaduct.parsing.SourceFile
 import edu.cornell.cs.apl.viaduct.parsing.parse
-import org.junit.jupiter.api.Assertions.assertNotEquals
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ArgumentsSource
@@ -75,13 +74,6 @@ internal class StructuralEqualityTest {
         """.trimIndent()
 
         assertStructurallyEquals(program1.parse(), program2.parse())
-    }
-
-    @ParameterizedTest
-    @ArgumentsSource(PositiveTestFileProvider::class)
-    fun `is smarter than object equality`(file: File) {
-        val source: SourceFile = SourceFile.from(file)
-        assertNotEquals(parse(source), parse(source))
     }
 
     private fun parse(source: SourceFile): ProgramNode =

@@ -3,7 +3,7 @@ package edu.cornell.cs.apl.viaduct.backends.cleartext
 import com.squareup.kotlinpoet.CodeBlock
 import com.squareup.kotlinpoet.MemberName
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
-import com.squareup.kotlinpoet.asTypeName
+import com.squareup.kotlinpoet.asClassName
 import edu.cornell.cs.apl.viaduct.analysis.NameAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.TypeAnalysis
 import edu.cornell.cs.apl.viaduct.codegeneration.AbstractCodeGenerator
@@ -143,7 +143,7 @@ class CleartextCodeGenerator(context: CodeGeneratorContext) : AbstractCodeGenera
                     sendBuilder.addStatement(
                         "%L",
                         context.send(
-                            CodeBlock.of("%L", context.kotlinName(sender.name.value, sendProtocol)),
+                            CodeBlock.of("%N", context.kotlinName(sender.name.value, sendProtocol)),
                             event.recv.host
                         )
                     )
@@ -248,7 +248,7 @@ class CleartextCodeGenerator(context: CodeGeneratorContext) : AbstractCodeGenera
                         "val %N = %L",
                         clearTextCommittedTemp,
                         context.receive(
-                            Committed::class.asTypeName().parameterizedBy(
+                            Committed::class.asClassName().parameterizedBy(
                                 typeTranslator((typeAnalysis.type(sender)))
                             ),
                             cleartextCommitmentInputs.first().send.host
@@ -259,7 +259,7 @@ class CleartextCodeGenerator(context: CodeGeneratorContext) : AbstractCodeGenera
                         receiveBuilder.addStatement(
                             "%L.%L(%N)",
                             context.receive(
-                                Commitment::class.asTypeName().parameterizedBy(
+                                Commitment::class.asClassName().parameterizedBy(
                                     typeTranslator((typeAnalysis.type(sender)))
                                 ),
                                 hashSendEvent.send.host

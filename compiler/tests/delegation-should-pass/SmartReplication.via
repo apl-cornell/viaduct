@@ -1,0 +1,23 @@
+process main {
+  /* Alice provides some input. */
+  val a: int{Alice} = input int from Alice;
+
+  /* The input is public, and Bob implicitly trusts it. */
+  val replicated: int{(Alice & Bob)<-} = endorse (declassify a to {Alice<-}) to {(Alice & Bob)<-} from {Alice<-};
+  /* The cheapest protocol for storing this variable is open replication. */
+
+  /* Chuck wants the input; but he only needs Alice's word for it. */
+  output (endorse replicated to {Chuck<-} from {Alice<-}) to Chuck;
+  /* In the final protocol, Chuck should receive the variable from Alice only. */
+}
+
+process Host(Alice) {
+  send 42 to main;
+}
+
+process Host(Chuck) {
+  val result: int = receive int from main;
+  assert result == 42;
+}
+
+hosts: Alice, Bob, Chuck

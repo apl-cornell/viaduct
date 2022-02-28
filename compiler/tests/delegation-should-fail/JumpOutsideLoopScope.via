@@ -1,0 +1,5 @@
+/* JumpOutsideLoopScopeError */
+
+process main {
+    break;
+}

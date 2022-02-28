@@ -1,0 +1,12 @@
+process main {
+    val alive : int = input int from Bob;
+    val a : int = input int from Alice;
+    val a2 : int = input int from Alice;
+    val a_endorse : int = endorse a to {Alice & Bob<-} from {Alice};
+    val a2_endorse : int = endorse a2 to {Alice & Bob<-} from {Alice};
+    val b : bool{Alice & Bob<-} = (a_endorse == a2_endorse + 1);
+    output (declassify b to {(Alice | Bob)-> & (Alice & Bob)<-}) to Bob;
+}
+
+hosts: Alice, Bob
+

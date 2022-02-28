@@ -1,0 +1,17 @@
+process main {
+    val a = Array[int]{Alice}(10);
+    val b = Array[int]{Bob}(10);
+
+    for (var i: int = 0; i < 10; i += 1) {
+        a[i] = i * 50;
+    }
+
+    for (var j: int = 0; j < 10; j += 1) {
+        b[j] = j * 100;
+    }
+
+    output a[0] to Alice;
+    output a[9] to Alice;
+}
+
+hosts: Alice, Bob

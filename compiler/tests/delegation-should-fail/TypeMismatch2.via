@@ -1,0 +1,5 @@
+/* TypeMismatchError */
+
+process main {
+    val x: int = false;
+}

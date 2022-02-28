@@ -1,0 +1,6 @@
+/* UnknownMethodError */
+
+process main {
+    var x: bool = false;
+    x += 42;
+}

@@ -1,0 +1,16 @@
+/* IncorrectNumberOfArgumentsError */
+
+fun add10(a: int{A}, b: out int{B}) {
+    out b = declassify (endorse a to {Alice & Bob<-} from {Alice}) + 10 to {(Alice|Bob)-> & (Alice&Bob)<-};
+}
+
+process main {
+    val array = Array[int]{Alice}(10);
+    val a: int{Alice} = 0;
+    add10(a, val b, 20);
+    output a to Alice;
+    output b to Bob;
+}
+
+hosts: Alice, Bob
+

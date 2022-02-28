@@ -1,0 +1,7 @@
+/* NameClashError */
+
+hosts: Alice, Alice;
+
+process main {
+    val x: int = 0;
+}

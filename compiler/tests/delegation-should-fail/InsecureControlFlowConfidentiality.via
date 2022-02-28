@@ -1,0 +1,8 @@
+/* InsecureControlFlowError */
+
+process main {
+    val secret: bool{(Alice ∧ Bob)->} = true;
+    if (secret) {
+        val public: int{Alice->} = 42;
+    }
+}

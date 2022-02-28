@@ -1,0 +1,17 @@
+fun f(x: int{Alice}) {
+    g(x);
+}
+
+fun g(y: int{Alice}) {
+    if (false) {
+        f(y);
+    }
+}
+
+process main {
+    val a: int{Alice} = 0;
+    f(a);
+    f(a);
+}
+
+hosts: Alice, Bob

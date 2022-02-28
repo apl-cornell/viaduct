@@ -1,0 +1,11 @@
+/* IllegalInternalCommunicationError */
+
+process main {
+    send 42 to Alice;
+}
+
+process alice {
+    val x: int = receive int from main;
+}
+
+hosts: Alice, Bob

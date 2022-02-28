@@ -1,0 +1,29 @@
+/* The classic MPC problem. */
+process main {
+  /* Alice and Bob are free to provide any input; we'll just trust it. */
+  val a: int{Alice} = endorse input int from Alice to {Alice} from {Alice};
+  val b: int{Bob} = endorse input int from Bob to {Bob} from {Bob};
+    /* why endorse? */
+  var Bob_richer : bool{Alice & Bob} = false;
+  if (a <= b) {
+    Bob_richer = true;
+  }
+
+  val Bob_richer_decl : bool = declassify Bob_richer to {(Alice | Bob)-> & (Alice & Bob)<-};
+  output Bob_richer_decl to Alice;
+  output Bob_richer_decl to Bob;
+}
+
+process Host(Alice) {
+  send 20 to main;
+  val Bob_richer: bool = receive bool from main;
+}
+
+process Host(Bob) {
+  send 40 to main;
+  val Bob_richer: bool = receive bool from main;
+  assert Bob_richer;
+}
+
+hosts: Alice, Bob
+assume: Alice<- <=> Bob<-

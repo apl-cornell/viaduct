@@ -1,0 +1,6 @@
+/* IncorrectNumberOfArgumentsError */
+
+process main {
+    val x: int = 5;
+    assert x[1] == 5;
+}

@@ -1,15 +1,12 @@
 package edu.cornell.cs.apl.viaduct.security.solver
 
 import edu.cornell.cs.apl.viaduct.algebra.FreeDistributiveLattice
-import edu.cornell.cs.apl.viaduct.algebra.FreeDistributiveLattice.Companion.top
 import edu.cornell.cs.apl.viaduct.algebra.solver.ConstraintSystem
 import edu.cornell.cs.apl.viaduct.security.Label
 import edu.cornell.cs.apl.viaduct.security.Label.Companion.fromConfidentiality
 import edu.cornell.cs.apl.viaduct.security.Label.Companion.fromIntegrity
 import edu.cornell.cs.apl.viaduct.security.Principal
 import java.io.Writer
-import java.util.HashMap
-import java.util.HashSet
 
 typealias ConstraintSolution = Map<LabelVariable, Label>
 
@@ -20,7 +17,9 @@ typealias ConstraintSolution = Map<LabelVariable, Label>
  * @param T type of exceptions thrown when there are unsatisfiable constraints
  */
 class ConstraintSolver<T : Throwable> {
-    private val constraintSystem = ConstraintSystem<FreeDistributiveLattice<Principal>, T>(top())
+    private val constraintSystem = ConstraintSystem<FreeDistributiveLattice<Principal>, T>(
+        FreeDistributiveLattice.bounds<Principal>().top
+    )
 
     /** The set of variables that appear in the constraints. */
     private val variables: MutableSet<LabelVariable> = HashSet()

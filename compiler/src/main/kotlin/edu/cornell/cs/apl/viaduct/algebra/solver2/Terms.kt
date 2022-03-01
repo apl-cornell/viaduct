@@ -1,5 +1,6 @@
 package edu.cornell.cs.apl.viaduct.algebra.solver2
 
+import edu.cornell.cs.apl.viaduct.algebra.BoundedLattice
 import edu.cornell.cs.apl.viaduct.algebra.HeytingAlgebra
 import edu.cornell.cs.apl.viaduct.algebra.JoinSemiLattice
 import edu.cornell.cs.apl.viaduct.algebra.Lattice
@@ -23,6 +24,15 @@ sealed class Term<C, V> : Lattice<Term<C, V>> {
 
     @JvmName("meetVariable")
     fun meet(that: V): Term<C, V> = meet(variable(that))
+
+    /** Provides bounds for a [Term] given bounds for [C]. */
+    class Bounds<C : Lattice<C>, V>(bounds: BoundedLattice<C>) : BoundedLattice<Term<C, V>> {
+        override val bottom: Term<C, V> =
+            constant(bounds.bottom)
+
+        override val top: Term<C, V> =
+            constant(bounds.top)
+    }
 
     companion object {
         fun <C, V> constant(value: C): Term<C, V> = Constant(value)

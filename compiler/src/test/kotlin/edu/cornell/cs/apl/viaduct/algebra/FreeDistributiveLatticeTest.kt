@@ -1,7 +1,5 @@
 package edu.cornell.cs.apl.viaduct.algebra
 
-import edu.cornell.cs.apl.viaduct.algebra.FreeDistributiveLattice.Companion.bottom
-import edu.cornell.cs.apl.viaduct.algebra.FreeDistributiveLattice.Companion.top
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 
@@ -9,8 +7,8 @@ internal class FreeDistributiveLatticeTest {
     private val elemA = FreeDistributiveLattice("a")
     private val elemB = FreeDistributiveLattice("b")
     private val elemC = FreeDistributiveLattice("c")
-    private val top = top<String>()
-    private val bottom = bottom<String>()
+    private val top = FreeDistributiveLattice.bounds<String>().top
+    private val bottom = FreeDistributiveLattice.bounds<String>().bottom
 
     @Test
     fun testImply() {

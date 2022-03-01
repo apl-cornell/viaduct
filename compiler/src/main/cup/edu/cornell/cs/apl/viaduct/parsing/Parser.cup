@@ -154,7 +154,7 @@ terminal OUT;
 terminal COLON;
 
 // delegation syntax
-terminal HOSTS, PRINCIPALS, ASSUME;
+terminal HOSTS, ASSUME;
 
 terminal EQ;
 terminal PLUSEQ, MINUSEQ, TIMESEQ, DIVIDEEQ;

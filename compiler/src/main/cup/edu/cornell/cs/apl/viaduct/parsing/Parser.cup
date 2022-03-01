@@ -521,10 +521,7 @@ simple_stmt ::=
   | OUTPUT:begin expr:message TO host:recipient {:
       RESULT = new OutputNode(message, recipient, location(beginleft, recipientright), null);
     :}
-  // delegation syntax
-  | OUTPUT:begin expr:message TO host_decl:recipient {:
-      RESULT = new OutputNode(message, recipient, location(beginleft, recipientright), null);
-    :}
+    // delegation syntax
   ;
 
 optional_initial_value ::=

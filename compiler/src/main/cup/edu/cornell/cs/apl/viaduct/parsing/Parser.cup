@@ -153,6 +153,9 @@ terminal FUNCTION;
 terminal OUT;
 terminal COLON;
 
+// delegation syntax
+terminal HOSTS, PRINCIPALS, ASSUME;
+
 terminal EQ;
 terminal PLUSEQ, MINUSEQ, TIMESEQ, DIVIDEEQ;
 terminal LET, VAL, VAR;
@@ -164,6 +167,9 @@ terminal NOT, ANDAND, OROR;
 terminal EQEQ, NEQ, LT, LEQ, GT, GEQ;
 terminal PLUS, MINUS, TIMES, DIVIDE;
 terminal MIN, MAX, MUX;
+
+// delegation syntax
+terminal IMPLY, IMPLYEQ;
 
 terminal DECLASSIFY, ENDORSE, DOWNGRADE;
 

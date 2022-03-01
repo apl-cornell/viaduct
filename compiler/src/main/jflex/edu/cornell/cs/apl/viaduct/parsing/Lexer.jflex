@@ -94,6 +94,11 @@ NUM         = ((-)?[1-9][0-9]*) | 0
   "fun"           { return symbol(sym.FUNCTION); }
   "out"           { return symbol(sym.OUT); }
 
+  /* Delegation syntax */
+  "assume"        { return symbol(sym.ASSUME); }
+  "hosts"         { return symbol(sym.HOSTS); }
+  "principals"    { return symbol(sym.PRINCIPALS); }
+
   /* Types */
   "int"           { return symbol(sym.INT); }
   "bool"          { return symbol(sym.BOOL); }
@@ -150,6 +155,10 @@ NUM         = ((-)?[1-9][0-9]*) | 0
   "<="            { return symbol(sym.LEQ); }
   ">"             { return symbol(sym.GT); }
   ">="            { return symbol(sym.GEQ); }
+
+  /* delegation syntax */
+  "=>"            { return symbol(sym.IMPLY); }
+  "<=>"            { return symbol(sym.IMPLYEQ); }
 
   "declassify"    { return symbol(sym.DECLASSIFY); }
   "endorse"       { return symbol(sym.ENDORSE); }

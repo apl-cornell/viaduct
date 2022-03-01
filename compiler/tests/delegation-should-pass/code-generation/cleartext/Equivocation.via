@@ -1,0 +1,17 @@
+hosts: Alice, Bob, Chuck
+assume: Alice <=> Bob, Bob <=> Chuck
+
+fun main() {
+    val n: int = input int from Chuck;
+
+    var prod: int = 1;
+
+    for (var i: int = 0; i < n; i += 1) {
+        val a: int = input int from Alice;
+        val b: int = input int from Bob;
+        prod = prod + (a * b);
+    }
+
+    output prod to Alice;
+    output prod to Bob;
+}

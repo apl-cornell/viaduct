@@ -1,0 +1,54 @@
+hosts: Alice
+
+fun main() {
+    /* Comparison Operators */
+    val a: bool = 1 == 1;
+    val b: bool = 1 != 2;
+
+    val c: bool = 1 < 2;
+    val d: bool = 1 <= 1;
+    val e: bool = 1 <= 2;
+
+    val f: bool = 2 > 1;
+    val g: bool = 1 >= 1;
+    val h: bool = 2 >= 1;
+
+    /* Arithmetic Operators */
+    val i: bool = -1 < 1;
+    val j: bool = (-1 + 1) == 0;
+
+    val k: bool = (1 + 2) == 3;
+    val l: bool = (3 - 1) == 2;
+    val m: bool = (1 * 2) == 2;
+    val n: bool = (2 / 1) == 2;
+
+    val o: bool = min(1, 2) == 1;
+    val p: bool = max(1, 2) == 2;
+
+    /** Logical Operators */
+    val q: bool = true;
+    val r: bool = !false;
+    val s: bool = true && true;
+    val t: bool = false || true;
+
+    output a to Alice;
+    output b to Alice;
+    output c to Alice;
+    output d to Alice;
+    output e to Alice;
+    output f to Alice;
+    output g to Alice;
+    output h to Alice;
+    output i to Alice;
+    output j to Alice;
+    output k to Alice;
+    output l to Alice;
+    output m to Alice;
+    output n to Alice;
+    output o to Alice;
+    output p to Alice;
+    output q to Alice;
+    output r to Alice;
+    output s to Alice;
+    output t to Alice;
+}

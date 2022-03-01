@@ -1,0 +1,20 @@
+hosts: Alice
+
+fun main() {
+    val a: bool = input bool from Alice;
+
+    /* If with no branches. */
+    if (a) {}
+
+    /* If with a single branch. */
+    if (a) {
+        output a to Alice;
+    }
+
+    /* If with both branches. */
+    if (a) {
+        output 1 to Alice;
+    } else {
+        output 0 to Alice;
+    }
+}

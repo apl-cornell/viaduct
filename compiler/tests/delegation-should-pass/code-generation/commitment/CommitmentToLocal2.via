@@ -1,0 +1,8 @@
+hosts: Alice, Bob
+assume: Alice <=> Bob
+
+fun main() {
+    let $AliceLocal@Local(host = Alice) = input int from Alice;
+    let $AliceCommit@Commitment(receivers = {Bob}, sender = Alice) = $AliceLocal;
+    let $BobDeclassified@Local(host = Bob) = $AliceCommit;
+}

@@ -143,6 +143,12 @@ nonterminal List protocol_argument_list, nonempty_protocol_argument_list;
 nonterminal Pair<Located, Located> protocol_labelled_argument;
 nonterminal Value protocol_argument;
 
+// delegation syntax nonterminals
+nonterminal List delegation_decl_list, host_decl_list;
+nonterminal List nonempty_delegation_decl_list, nonempty_host_decl_list;
+nonterminal DelegationDeclarationNode delegation_decl;
+nonterminal HostDeclarationNode host_decl;
+
 terminal String IDENT, CAP_IDENT;
 terminal String TMP_IDENT;
 terminal int INT_LIT;
@@ -240,7 +246,91 @@ declaration ::=
         null
       );
   :}
+  // delegation syntax: host
+  | HOSTS:begin COLON host_decl_list:hostList {:
+      RESULT = new HostDeclarationListNode(hostList, location(beginleft, hostListright));
+  :}
+  | ASSUME:begin COLON delegation_decl_list:delegationList {:
+      RESULT = new DelegationDeclarationListNode(delegationList, location(beginleft, delegationListright));
+  :}
   ;
+
+// delegation syntax
+host_decl_list ::=
+    nonempty_host_decl_list:hostDeclList {:
+      RESULT = hostDeclList;
+    :}
+
+  | /* empty */ {:
+      RESULT = CollectionsKt.mutableListOf();
+    :}
+  ;
+
+// delegation syntax
+nonempty_host_decl_list ::=
+    nonempty_host_decl_list:hostDeclList COMMA host_decl:hostDecl {:
+      hostDeclList.add(hostDecl);
+      RESULT = hostDeclList;
+    :}
+
+  | host_decl:hostDecl {:
+      RESULT = CollectionsKt.mutableListOf(hostDecl);
+    :}
+  ;
+
+// delegation syntax
+host_decl ::=
+    CAP_IDENT:id {:
+      RESULT = new HostDeclarationNode(
+          new Located(new Host(id), location(idleft, idright)),
+          location(idleft, idright)
+      );
+    :}
+  ;
+
+// delegation syntax
+delegation_decl_list ::=
+    nonempty_delegation_decl_list:delegationDeclList {:
+      RESULT = delegationDeclList;
+    :}
+
+  | /* empty */ {:
+      RESULT = CollectionsKt.mutableListOf();
+    :}
+  ;
+
+// delegation syntax
+nonempty_delegation_decl_list ::=
+    nonempty_delegation_decl_list:delegationDeclList COMMA delegation_decl:delegationDecl {:
+      delegationList.add(delegationDecl);
+      RESULT = delegationDeclList;
+    :}
+
+  | delegation_decl:delegationDecl {:
+      RESULT = CollectionsKt.mutableListOf(delegationDecl);
+    :}
+  ;
+
+// delegation syntax
+delegation_decl ::=
+    label_expr:label1 IMPLY label_expr:label2  {:
+    RESULT = new DelegationDeclarationNode(
+        new Located(label1, location(label1left, label1right)),
+        new Located(label2, location(label2left, label2right)),
+        false,
+        location(label1left, label2right)
+    );
+    :}
+    | label_expr:label1 IMPLYEQ label_expr:label2  {:
+    RESULT = new DelegationDeclarationNode(
+        new Located(label1, location(label1left, label1right)),
+        new Located(label2, location(label2left, label2right)),
+        true,
+        location(label1left, label2right)
+    );
+    :}
+  ;
+
 
 parameter_list ::=
     nonempty_parameter_list:params {:

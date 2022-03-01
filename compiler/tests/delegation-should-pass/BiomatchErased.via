@@ -1,6 +1,6 @@
 /* biometric matching example from HyCC paper */
 
-process main {
+fun main() {
     val n: int = 128;
     val d: int = 2;
 

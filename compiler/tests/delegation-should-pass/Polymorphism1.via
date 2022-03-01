@@ -3,7 +3,7 @@ fun f(a: int, b: int, c: out int{a ⊔ b}) {
     val c = a + b;
 }
 
-process main {
+fun main() {
     val x = input int from Alice;
     val y = input int from Bob;
 }

@@ -1,5 +1,5 @@
 /** test cost model: cheapest protocol would place variable i and prodsum_public in replicated */
-process main {
+fun main() {
     var prodsum: int = 0;
     for (var i: int = 0; i < 3; i += 1) {
         val a: int = input int from Alice;

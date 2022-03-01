@@ -1,4 +1,4 @@
-process main {
+fun main() {
     val a = Array[int]{Alice}(10);
     val b = Array[int]{Bob}(10);
 

@@ -1,4 +1,4 @@
-process main {
+fun main() {
     val alive : int = input int from Bob;
     val a : int = input int from Alice;
     val a2 : int = input int from Alice;

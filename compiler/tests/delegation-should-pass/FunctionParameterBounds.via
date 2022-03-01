@@ -2,7 +2,7 @@ fun add10(a: int, b: out int{b}) {
     out b = a + 10;
 }
 
-process main {
+fun main() {
     val array = Array[int]{Alice}(10);
     val a: int{Alice} = 0;
     add10(a, val b);

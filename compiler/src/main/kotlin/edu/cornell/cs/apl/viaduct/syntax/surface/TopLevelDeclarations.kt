@@ -74,3 +74,55 @@ class FunctionDeclarationNode(
             (pcLabel?.let { listOf(it).braced() } ?: Document("")) +
             parameters.tupled() * body
 }
+
+
+/* Delegation syntax */
+/**
+ * A list of hosts.
+ */
+class HostDeclarationListNode(
+    val hosts: List<HostDeclarationNode>,
+    override val sourceLocation: SourceLocation,
+    override val comment: String?
+) : TopLevelDeclarationNode() {
+    override fun toDocumentWithoutComment(): Document =
+        keyword("hosts:") *
+            hosts.fold(Document())
+            { acc: Document, host: HostDeclarationNode ->
+                acc * host + ","
+            };
+}
+
+/**
+ * Declaration of a delegations.
+ * @param node1 The label that acts for the other label.
+ * @param node2 The other label.
+ * @param is_mutual True iff the delegation is on both directions.
+ */
+class DelegationDeclarationNode(
+    val node1: LabelNode,
+    val node2: LabelNode,
+    val is_mutual: Boolean,
+    override val sourceLocation: SourceLocation,
+    override val comment: String?
+) : TopLevelDeclarationNode() {
+    override fun toDocumentWithoutComment(): Document =
+        keyword("delegation:") * listOf(node1).braced() *
+            (if (is_mutual) "<=>" else "=>") * listOf(node2).braced()
+}
+
+/**
+ * A set of delegations as top level declaration.
+ */
+class DelegationDeclarationListNode(
+    val delegations: List<DelegationDeclarationNode>,
+    override val sourceLocation: SourceLocation,
+    override val comment: String?
+) : TopLevelDeclarationNode() {
+    override fun toDocumentWithoutComment(): Document =
+        keyword("delegations:") *
+            delegations.fold(Document())
+            { acc: Document, delegation: DelegationDeclarationNode ->
+                acc * delegation + ","
+            };
+}

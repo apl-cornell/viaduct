@@ -42,3 +42,5 @@ fun Array<Share>.secretUpdateSet(circuit: Circuit, index: Share, argument: Share
         this[i] = mux
     }
 }
+
+val Long.bool: Boolean get() = this != 0.toLong()

@@ -5,11 +5,12 @@ import com.github.apl_cornell.aby.Aby
 import com.github.apl_cornell.aby.Role
 import com.github.apl_cornell.aby.SharingType
 import com.squareup.kotlinpoet.CodeBlock
+import com.squareup.kotlinpoet.INT
 import com.squareup.kotlinpoet.KModifier
 import com.squareup.kotlinpoet.MemberName
 import com.squareup.kotlinpoet.PropertySpec
 import com.squareup.kotlinpoet.asClassName
-import com.sun.jdi.IntegerValue
+import com.squareup.kotlinpoet.withIndent
 import edu.cornell.cs.apl.viaduct.analysis.NameAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.ProtocolAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.TypeAnalysis
@@ -63,10 +64,9 @@ import edu.cornell.cs.apl.viaduct.syntax.types.IntegerType
 import edu.cornell.cs.apl.viaduct.syntax.types.MutableCellType
 import edu.cornell.cs.apl.viaduct.syntax.types.VectorType
 import edu.cornell.cs.apl.viaduct.syntax.values.BooleanValue
+import edu.cornell.cs.apl.viaduct.syntax.values.IntegerValue
 import edu.cornell.cs.apl.viaduct.syntax.values.Value
 import java.math.BigInteger
-
-private const val ABYPORT = 8000
 
 private data class ABYPair(val server: Host, val client: Host)
 
@@ -78,37 +78,81 @@ class ABYCodeGenerator(
     private val protocolAnalysis: ProtocolAnalysis = ProtocolAnalysis(context.program, context.protocolComposer)
     private var protocolToABYPartyMap: MutableMap<ABYPair, String> = mutableMapOf()
 
-    private fun getRole(protocol: Protocol, host: Host): CodeBlock =
+    private fun role(protocol: Protocol, host: Host): Role =
         when (protocol) {
             is ABY -> if (protocol.client == host) {
-                roleToCodeBlock(Role.CLIENT)
+                Role.CLIENT
             } else {
-                roleToCodeBlock(Role.SERVER)
+                Role.SERVER
             }
             else -> throw UnsupportedOperationException("unknown protocol: ${protocol.toDocument().print()}")
         }
 
+    private fun abyParty(protocol: ABY, role: Role, port: String): CodeBlock =
+        CodeBlock.of(
+            "ABYParty(%L, %L.hostName, %L, %N.%M(), %L)",
+            roleToCodeBlock(role),
+            context.url(protocol.server),
+            port,
+            "Aby",
+            MemberName(Aby::class.asClassName(), "getLT"), // TODO make this not hard coded
+            32 // TODO() - where is best place to store this value?
+        )
+
+    private fun abyPartySetup(protocol: Protocol, role: Role): CodeBlock {
+        val abyPartyBuilder = CodeBlock.builder()
+        val portVarName = context.newTemporary("port")
+        when (role) {
+            Role.SERVER -> {
+                abyPartyBuilder.beginControlFlow("run")
+                abyPartyBuilder.addStatement(
+                    "val %N = %M()",
+                    portVarName,
+                    MemberName(
+                        "edu.cornell.cs.apl.viaduct.runtime",
+                        "findAvailableTcpPort"
+                    )
+                )
+
+                abyPartyBuilder.addStatement(
+                    "%L",
+                    context.send(CodeBlock.of(portVarName), (protocol as ABY).client)
+                )
+
+                abyPartyBuilder.addStatement("%L", abyParty(protocol, role, portVarName))
+                abyPartyBuilder.endControlFlow()
+            }
+
+            Role.CLIENT -> {
+                abyPartyBuilder.beginControlFlow("run")
+                abyPartyBuilder.addStatement(
+                    "val %N = %L",
+                    portVarName,
+                    context.receive(INT, (protocol as ABY).server)
+                )
+
+                abyPartyBuilder.addStatement("%L", abyParty(protocol, role, portVarName))
+                abyPartyBuilder.endControlFlow()
+            }
+            else -> throw UnsupportedOperationException("Unknown ABY Role: $role")
+        }
+        return abyPartyBuilder.build()
+    }
+
+
     override fun setup(protocol: Protocol): List<PropertySpec> {
-        if (protocolToABYPartyMap.containsKey(ABYPair((protocol as ABY).server, protocol.client))) {
-            return listOf()
+        return if (protocolToABYPartyMap.containsKey(ABYPair((protocol as ABY).server, protocol.client))) {
+            listOf()
         } else {
-            return listOf(
+            listOf(
                 PropertySpec.builder(
                     protocolToABYPartyMap.getOrPut(
                         ABYPair(protocol.server, protocol.client)
                     ) { context.newTemporary("abyParty") },
                     ABYParty::class
                 ).initializer(
-                    "ABYParty(%L, %L.hostName, %L, %N.%M(), %L)",
-                    getRole(protocol, context.host),
-                    context.url(protocol.server),
-                    ABYPORT,
-                    "Aby",
-                    MemberName(Aby::class.asClassName(), "getLT"), // TODO make this not hard coded
-                    32 // TODO() - where is best place to store this value?
-                )
-                    .addModifiers(KModifier.PRIVATE)
-                    .build()
+                    abyPartySetup(protocol, role(protocol, context.host))
+                ).addModifiers(KModifier.PRIVATE).build()
             )
         }
     }
@@ -185,7 +229,7 @@ class ABYCodeGenerator(
                 CodeBlock.of(
                     "%L.putCONSGate(%L.toBigInteger(), %L)",
                     protocolToAbyPartyCircuit(protocol),
-                    value.value(),
+                    value.value,
                     bitLen
                 )
             else -> throw UnsupportedOperationException("unknown value type: ${value.toDocument().print()}")
@@ -438,8 +482,8 @@ class ABYCodeGenerator(
                     is VectorType ->
                         when (expr.query.value) {
                             is Get ->
-                                when (secretArgument(expr.arguments.first())) {
-                                    true ->
+                                when (clearArgument(expr.arguments.first())) {
+                                    false ->
                                         CodeBlock.of(
                                             "%L(%L, %L)",
                                             "secretIndexQuery",
@@ -447,11 +491,11 @@ class ABYCodeGenerator(
                                             context.kotlinName(expr.variable.value)
 
                                         )
-                                    false ->
+                                    true ->
                                         CodeBlock.of(
                                             "%N[%L]",
                                             context.kotlinName(expr.variable.value),
-                                            exp(protocol, expr.arguments.first())
+                                            cleartextExp(protocol, expr.arguments.first())
                                         )
                                 }
                             else -> throw UnsupportedOperationException(
@@ -500,22 +544,21 @@ class ABYCodeGenerator(
             }
         }
 
-    private fun secretArgument(arg: AtomicExpressionNode): Boolean =
+    private fun clearArgument(arg: AtomicExpressionNode): Boolean =
         when (arg) {
             is LiteralNode -> true
             is ReadNode -> protocolAnalysis.relevantCommunicationEvents(arg)
                 .all { event -> event.recv.id == ABY.CLEARTEXT_INPUT }
         }
 
-    override fun update(protocol: Protocol, stmt: UpdateNode): CodeBlock {
-        val updateBuilder = CodeBlock.builder()
+    override fun update(protocol: Protocol, stmt: UpdateNode): CodeBlock =
         when (typeAnalysis.type(nameAnalysis.declaration(stmt))) {
             is VectorType -> {
-                when (secretArgument(stmt.arguments.first())) {
-                    true -> when (stmt.update.value) {
+                when (clearArgument(stmt.arguments.first())) {
+                    false -> when (stmt.update.value) {
                         is edu.cornell.cs.apl.viaduct.syntax.datatypes.Set -> {
                             CodeBlock.of(
-                                "%N.%N(%N, %N, %N)",
+                                "%N.%N(%L, %L, %L)",
                                 context.kotlinName(stmt.variable.value),
                                 "secretUpdateSet",
                                 protocolToAbyPartyCircuit(protocol),
@@ -540,14 +583,15 @@ class ABYCodeGenerator(
                                 )
                             )
                         }
+                        else -> throw UnsupportedOperationException("unknown update: ${stmt.update.value.toDocument().print()}")
                     }
 
-                    false -> when (stmt.update.value) {
+                    true -> when (stmt.update.value) {
                         is edu.cornell.cs.apl.viaduct.syntax.datatypes.Set -> {
                             CodeBlock.of(
                                 "%N[%L] = %L",
                                 context.kotlinName(stmt.variable.value),
-                                (stmt.arguments.first() as LiteralNode).value,
+                                cleartextExp(protocol, stmt.arguments.first()),
                                 exp(protocol, stmt.arguments.last())
                             )
                         }
@@ -555,7 +599,7 @@ class ABYCodeGenerator(
                             CodeBlock.of(
                                 "%N[%L] = %L",
                                 context.kotlinName(stmt.variable.value),
-                                (stmt.arguments.first() as LiteralNode).value,
+                                cleartextExp(protocol, stmt.arguments.first()),
                                 shareOfOperatorApplication(
                                     protocol,
                                     stmt.update.value.operator,
@@ -563,13 +607,14 @@ class ABYCodeGenerator(
                                         CodeBlock.of(
                                             "%N[%L]",
                                             context.kotlinName(stmt.variable.value),
-                                            (stmt.arguments.first() as LiteralNode).value
+                                            cleartextExp(protocol, stmt.arguments.first())
                                         ),
                                         exp(protocol, stmt.arguments.last())
                                     )
                                 )
                             )
                         }
+                        else -> throw UnsupportedOperationException("unknown update: ${stmt.update.value.toDocument().print()}")
                     }
                 }
             }
@@ -597,14 +642,13 @@ class ABYCodeGenerator(
                             )
                         )
                     }
+                    else -> throw UnsupportedOperationException("unknown update: ${stmt.update.value.toDocument().print()}")
                 }
 
-            is ImmutableCellType ->
+            else ->
                 throw UnsupportedOperationException("ABY: unknown update for immutable cell: ${stmt.toDocument().print()}")
         }
 
-        return updateBuilder.build()
-    }
 
     override fun output(protocol: Protocol, stmt: OutputNode): CodeBlock =
         throw UnsupportedOperationException("cannot perform I/O in non-local protocol: ${stmt.toDocument().print()}")
@@ -721,7 +765,7 @@ class ABYCodeGenerator(
                                 protocolToAbyPartyCircuit(receiveProtocol),
                                 context.receive(typeTranslator(typeAnalysis.type(sender)), event.send.host),
                                 bitLen,
-                                getRole(receiveProtocol, context.host)
+                                roleToCodeBlock(role(receiveProtocol, context.host))
                             )
 
                         is IntegerType ->
@@ -731,7 +775,7 @@ class ABYCodeGenerator(
                                 protocolToAbyPartyCircuit(receiveProtocol),
                                 context.receive(typeTranslator(typeAnalysis.type(sender)), event.send.host),
                                 bitLen,
-                                getRole(receiveProtocol, context.host)
+                                roleToCodeBlock(role(receiveProtocol, context.host))
                             )
                     }
                 }

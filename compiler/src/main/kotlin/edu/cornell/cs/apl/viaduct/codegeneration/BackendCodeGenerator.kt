@@ -93,18 +93,11 @@ private class BackendCodeGenerator(
         when (stmt) {
             is LetNode -> {
                 val protocol = protocolAnalysis.primaryProtocol(stmt)
-                // var reader: SimpleStatementNode? = null
-                // var readerProtocol: Protocol? = null
-                // var events: ProtocolCommunication? = null
 
-                val readers = nameAnalysis.readers(stmt).filterIsInstance<SimpleStatementNode>()
-                // there should only be a single reader, if any
-/*
-                if (readers.isNotEmpty()) {
-                    reader = readers.first()
-                    readerProtocol = protocolAnalysis.primaryProtocol(reader)
-                    events = protocolAnalysis.relevantCommunicationEvents(stmt, reader)
-                }*/
+                val readers : MutableMap<Protocol, SimpleStatementNode> = mutableMapOf()
+                for (reader in nameAnalysis.readers(stmt).filterIsInstance<SimpleStatementNode>()) {
+                    readers[protocolAnalysis.primaryProtocol(reader)] = reader
+                }
 
                 if (protocolAnalysis.participatingHosts(stmt).contains(host)) {
                     hostFunctionBuilder.addComment(stmt.toDocument().print())
@@ -118,8 +111,8 @@ private class BackendCodeGenerator(
                             codeGenerator.send(
                                 stmt,
                                 protocol,
-                                protocolAnalysis.primaryProtocol(reader),
-                                protocolAnalysis.relevantCommunicationEvents(stmt, reader)
+                                reader.key,
+                                protocolAnalysis.relevantCommunicationEvents(stmt, reader.value)
                             )
                         )
                     }
@@ -127,14 +120,14 @@ private class BackendCodeGenerator(
 
                 // generate code for receiving data
                 for (reader in readers) {
-                    if (protocolAnalysis.participatingHosts(reader).contains(host)) {
+                    if (protocolAnalysis.participatingHosts(reader.value).contains(host)) {
                         hostFunctionBuilder.addCode(
                             "%L",
                             codeGenerator.receive(
                                 stmt,
                                 protocol,
-                                protocolAnalysis.primaryProtocol(reader),
-                                protocolAnalysis.relevantCommunicationEvents(stmt, reader)
+                                reader.key,
+                                protocolAnalysis.relevantCommunicationEvents(stmt, reader.value)
                             )
                         )
                     }

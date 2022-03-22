@@ -1,6 +1,0 @@
-/* TypeMismatchError */
-
-process main {
-    var x: int;
-    x = false;
-}

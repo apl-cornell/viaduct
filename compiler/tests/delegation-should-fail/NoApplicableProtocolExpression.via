@@ -1,8 +1,0 @@
-/* NoSelectionSolutionError */
-
-hosts: Alice;
-
-
-process main {
-    val containsTooConfidential: int = 2 + declassify 2 from {Alice<- ∧ Bob} to {Alice<- ∧ Bob};
-}

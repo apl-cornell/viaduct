@@ -1,9 +1,0 @@
-/* InsecureDataFlowError */
-
-process main {
-    val untrusted: int{Alice<-} = 42;
-    val trusted: int{(Alice ∧ Bob)<-} = untrusted;
-}
-
-hosts: Alice
-

@@ -1,5 +1,0 @@
-/* IntegrityChangingDeclassificationError */
-
-process main {
-    val result: int = declassify 42 from {Alice} to {(Alice ∧ Bob)<-};
-}

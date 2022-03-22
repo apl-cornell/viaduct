@@ -1,3 +1,0 @@
-/* TypeMismatchError */
-
-process Local(host = 5) {}

@@ -1,9 +1,0 @@
-hosts: Alice, Bob, Chuck
-assume: Alice <=> Bob, Bob <=> Chuck
-
-fun main() {
-    val x = Array[int]@Commitment(receivers = {Bob, Chuck}, sender = Alice)(10);
-    x[0] = input int from Alice;
-    x[1] = 1;
-}
-

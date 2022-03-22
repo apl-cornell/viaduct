@@ -1,5 +1,0 @@
-/* NameClashError */
-
-hosts: Alice;
-
-process Local(host = {Alice, Alice})

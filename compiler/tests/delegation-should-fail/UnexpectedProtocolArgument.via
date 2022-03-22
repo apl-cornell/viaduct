@@ -1,5 +1,0 @@
-/* UnexpectedArgumentError */
-
-hosts: Alice;
-
-process Local(host = Alice, unexpected = true) {}

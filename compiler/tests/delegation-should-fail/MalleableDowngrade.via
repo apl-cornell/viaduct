@@ -1,5 +1,0 @@
-/* MalleableDowngradeError */
-
-process main {
-    val result: int = declassify 42 from {A->&(A|B)<-} to {A|B};
-}

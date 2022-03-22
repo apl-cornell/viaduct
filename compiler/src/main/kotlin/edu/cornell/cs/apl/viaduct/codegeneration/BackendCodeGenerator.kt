@@ -94,7 +94,7 @@ private class BackendCodeGenerator(
             is LetNode -> {
                 val protocol = protocolAnalysis.primaryProtocol(stmt)
 
-                val readers : MutableMap<Protocol, SimpleStatementNode> = mutableMapOf()
+                val readers: MutableMap<Protocol, SimpleStatementNode> = mutableMapOf()
                 for (reader in nameAnalysis.readers(stmt).filterIsInstance<SimpleStatementNode>()) {
                     readers[protocolAnalysis.primaryProtocol(reader)] = reader
                 }

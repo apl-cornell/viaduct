@@ -10,7 +10,6 @@ import com.squareup.kotlinpoet.KModifier
 import com.squareup.kotlinpoet.MemberName
 import com.squareup.kotlinpoet.PropertySpec
 import com.squareup.kotlinpoet.asClassName
-import com.squareup.kotlinpoet.withIndent
 import edu.cornell.cs.apl.viaduct.analysis.NameAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.ProtocolAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.TypeAnalysis
@@ -138,7 +137,6 @@ class ABYCodeGenerator(
         }
         return abyPartyBuilder.build()
     }
-
 
     override fun setup(protocol: Protocol): List<PropertySpec> {
         return if (protocolToABYPartyMap.containsKey(ABYPair((protocol as ABY).server, protocol.client))) {
@@ -648,7 +646,6 @@ class ABYCodeGenerator(
             else ->
                 throw UnsupportedOperationException("ABY: unknown update for immutable cell: ${stmt.toDocument().print()}")
         }
-
 
     override fun output(protocol: Protocol, stmt: OutputNode): CodeBlock =
         throw UnsupportedOperationException("cannot perform I/O in non-local protocol: ${stmt.toDocument().print()}")

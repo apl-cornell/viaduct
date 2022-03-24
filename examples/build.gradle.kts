@@ -26,15 +26,12 @@ dependencies {
 
     // Logging
     implementation("io.github.microutils:kotlin-logging:2.1.21")
-    implementation("org.apache.logging.log4j:log4j-core:2.17.1")
-    implementation("org.apache.logging.log4j:log4j-slf4j-impl:2.17.1")
+    implementation("org.apache.logging.log4j:log4j-core:2.17.2")
+    implementation("org.apache.logging.log4j:log4j-slf4j-impl:2.17.2")
 
     // Testing
     testImplementation("${project.group}:test-utilities")
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.0")
-
-    // Getting a free port
-    testImplementation("org.springframework:spring-core:5.3.16")
 }
 
 application {

@@ -67,7 +67,7 @@ class FreeDistributiveLattice<A> private constructor(joinOfMeets: JoinOfMeets<A>
      * The algorithm below computes exactly this solution.
      */
     override fun imply(that: FreeDistributiveLattice<A>): FreeDistributiveLattice<A> {
-        var result = top<A>()
+        var result = bounds<A>().top
         joinOfMeets.forEach { thisMeet ->
             val newJoinOfMeets =
                 that.joinOfMeets.map { thatMeet -> thatMeet.removeAll(thisMeet) }.toPersistentSet()
@@ -90,9 +90,9 @@ class FreeDistributiveLattice<A> private constructor(joinOfMeets: JoinOfMeets<A>
         }
 
         return when (this) {
-            TOP ->
+            bounds<A>().top ->
                 "\u22A4"
-            BOTTOM ->
+            bounds<A>().bottom ->
                 "\u22A5"
             else -> {
                 val meets = joinOfMeets.map { meetToString(it) }.sorted()
@@ -103,20 +103,17 @@ class FreeDistributiveLattice<A> private constructor(joinOfMeets: JoinOfMeets<A>
     }
 
     companion object {
-        private val TOP: FreeDistributiveLattice<*> = FreeDistributiveLattice(persistentSetOf(persistentSetOf<Any>()))
-        private val BOTTOM: FreeDistributiveLattice<*> = FreeDistributiveLattice(persistentSetOf<Meet<Any>>())
+        private object Bounds : BoundedLattice<FreeDistributiveLattice<Nothing>> {
+            override val bottom: FreeDistributiveLattice<Nothing> =
+                FreeDistributiveLattice(persistentSetOf())
 
-        @JvmStatic
-        fun <A> top(): FreeDistributiveLattice<A> {
-            @Suppress("UNCHECKED_CAST")
-            return TOP as FreeDistributiveLattice<A>
+            override val top: FreeDistributiveLattice<Nothing> =
+                FreeDistributiveLattice(persistentSetOf(persistentSetOf()))
         }
 
-        @JvmStatic
-        fun <A> bottom(): FreeDistributiveLattice<A> {
-            @Suppress("UNCHECKED_CAST")
-            return BOTTOM as FreeDistributiveLattice<A>
-        }
+        @Suppress("UNCHECKED_CAST")
+        fun <A> bounds(): BoundedLattice<FreeDistributiveLattice<A>> =
+            Bounds as BoundedLattice<FreeDistributiveLattice<A>>
 
         /** Remove redundant meets according to [isRedundant]. */
         private fun <A> removeRedundant(joinOfMeets: JoinOfMeets<A>): JoinOfMeets<A> {

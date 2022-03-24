@@ -15,11 +15,11 @@ import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ArgumentsSource
-import org.springframework.util.SocketUtils
 import java.io.File
 import java.io.StringWriter
 import java.net.InetAddress
 import java.net.InetSocketAddress
+import java.net.ServerSocket
 import java.util.Scanner
 
 internal class RunExamplesTest {
@@ -72,7 +72,7 @@ private fun parseOutput(output: String): List<String> =
 private fun ViaductGeneratedProgram.run(): Map<Host, String> {
     val hosts = this.hosts.sorted()
     val hostAddresses = hosts.associateWith {
-        InetSocketAddress(InetAddress.getLoopbackAddress(), SocketUtils.findAvailableTcpPort())
+        InetSocketAddress(InetAddress.getLoopbackAddress(), findAvailableTcpPort())
     }
 
     return runBlocking(Dispatchers.IO) {
@@ -94,6 +94,9 @@ private fun ViaductGeneratedProgram.runAs(host: Host, hostAddresses: Map<Host, I
         }
     }
 }
+
+private fun findAvailableTcpPort() =
+    ServerSocket(0).use { it.localPort }
 
 /** Returns the file containing [host]'s test inputs for [program]. */
 private fun inputFile(program: ViaductGeneratedProgram, host: Host): File =

@@ -33,7 +33,7 @@ jobs:
       - name: Generate documentation with MkDocs
         uses: gradle/gradle-build-action@v2
         with:
-          arguments: printVersion :docs:mkdocsBuild
+          arguments: 'printVersion :docs:mkdocsBuild'
       - name: Set up Git credentials
         run: |
           git config user.name github-actions
@@ -42,4 +42,4 @@ jobs:
         if: github.event_name == 'release'
         uses: gradle/gradle-build-action@v2
         with:
-          arguments: :docs:mkdocsPublish
+          arguments: ':docs:mkdocsPublish'

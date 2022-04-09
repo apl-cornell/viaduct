@@ -1,10 +1,5 @@
 package edu.cornell.cs.apl.viaduct.backend.aby
 
-import com.github.apl_cornell.aby.Aby
-import com.github.apl_cornell.aby.Circuit
-import com.github.apl_cornell.aby.Role
-import com.github.apl_cornell.aby.Share
-import com.github.apl_cornell.aby.UInt32Vector
 import edu.cornell.cs.apl.viaduct.syntax.Operator
 import edu.cornell.cs.apl.viaduct.syntax.operators.Addition
 import edu.cornell.cs.apl.viaduct.syntax.operators.And
@@ -23,6 +18,11 @@ import edu.cornell.cs.apl.viaduct.syntax.operators.Negation
 import edu.cornell.cs.apl.viaduct.syntax.operators.Not
 import edu.cornell.cs.apl.viaduct.syntax.operators.Or
 import edu.cornell.cs.apl.viaduct.syntax.operators.Subtraction
+import io.github.apl_cornell.aby.Aby
+import io.github.apl_cornell.aby.Circuit
+import io.github.apl_cornell.aby.Role
+import io.github.apl_cornell.aby.Share
+import io.github.apl_cornell.aby.UInt32Vector
 
 /**
  * A method that adds the gate for an operation with the given arguments to the circuit and returns

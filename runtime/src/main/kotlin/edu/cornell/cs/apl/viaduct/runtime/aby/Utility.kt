@@ -9,9 +9,8 @@ import java.math.BigInteger
 /** Implements bitwise not */
 fun Circuit.putNOTGate(input: Share): Share {
     val inverses = mutableListOf<Long>()
-    for (wire in input.wires) {
-        inverses.add(this.putINVGate(wire))
-    }
+    inverses.addAll(input.wires)
+    inverses[0] = putINVGate(inverses.first())
     return Aby.createNewShare(UInt32Vector(inverses), this)
 }
 

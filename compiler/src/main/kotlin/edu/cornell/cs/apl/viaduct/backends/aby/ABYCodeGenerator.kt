@@ -87,11 +87,15 @@ class ABYCodeGenerator(
             else -> throw UnsupportedOperationException("unknown protocol: ${protocol.toDocument().print()}")
         }
 
+    private fun address(protocol: ABY, host:Host) =
+        if (role(protocol, host) == Role.SERVER) CodeBlock.of("%S", "")
+        else CodeBlock.of("%L.hostName", context.url(protocol.server))
+
     private fun abyParty(protocol: ABY, role: Role, port: String): CodeBlock =
         CodeBlock.of(
-            "ABYParty(%L, %L.hostName, %L, %N.%M(), %L)",
+            "ABYParty(%L, %L, %L, %N.%M(), %L)",
             roleToCodeBlock(role),
-            context.url(protocol.server),
+            address(protocol, context.host),
             port,
             "Aby",
             MemberName(Aby::class.asClassName(), "getLT"), // TODO make this not hard coded
@@ -160,15 +164,19 @@ class ABYCodeGenerator(
     private fun addConversionGates(
         destProtocol: Protocol,
         sourceProtocol: Protocol,
-        kotlinName: String,
-        circuitBuilder: CodeBlock
+        kotlinName: String
     ): CodeBlock =
         when (sourceProtocol) {
             is YaoABY -> {
                 when (destProtocol) {
                     is YaoABY -> CodeBlock.of("")
                     is BoolABY -> CodeBlock.of(".putY2BGate(%L)", kotlinName)
-                    is ArithABY -> CodeBlock.of(".putB2AGate(%L.putY2BGate(%L))", circuitBuilder, kotlinName)
+                    is ArithABY ->
+                        CodeBlock.of(
+                            ".putB2AGate(%L.putY2BGate(%L))",
+                            protocolToAbyPartyCircuit(sourceProtocol, SharingType.S_BOOL),
+                            kotlinName
+                        )
                     else -> throw UnsupportedOperationException(
                         "unsupported ABY protocol: ${sourceProtocol.toDocument().print()}"
                     )
@@ -187,7 +195,11 @@ class ABYCodeGenerator(
             is ArithABY -> {
                 when (destProtocol) {
                     is YaoABY -> CodeBlock.of(".putA2YGate(%L)", kotlinName)
-                    is BoolABY -> CodeBlock.of(".putY2BGate(%L.putA2YGate(%L))", circuitBuilder, kotlinName)
+                    is BoolABY ->
+                        CodeBlock.of(".putY2BGate(%L.putA2YGate(%L))",
+                            protocolToAbyPartyCircuit(sourceProtocol, SharingType.S_YAO),
+                            kotlinName
+                    )
                     is ArithABY -> CodeBlock.of("")
                     else -> throw UnsupportedOperationException(
                         "unsupported ABY protocol: ${sourceProtocol.toDocument().print()}"
@@ -197,22 +209,25 @@ class ABYCodeGenerator(
             else -> CodeBlock.of("")
         }
 
-    private fun protocolToShareType(protocol: Protocol): CodeBlock =
+    private fun protocolToShareType(protocol: Protocol): SharingType =
         when (protocol) {
-            is ArithABY -> CodeBlock.of("%T.S_ARITH", SharingType::class.asClassName())
-            is BoolABY -> CodeBlock.of("%T.S_BOOL", SharingType::class.asClassName())
-            is YaoABY -> CodeBlock.of("%T.S_YAO", SharingType::class.asClassName())
-            else -> throw UnsupportedOperationException(
-                "unsupported protocol: ${protocol.toDocument().print()}"
-            )
+            is ArithABY -> SharingType.S_ARITH
+            is BoolABY -> SharingType.S_BOOL
+            is YaoABY -> SharingType.S_YAO
+            else -> throw java.lang.IllegalArgumentException("expected ABY")
         }
 
-    private fun protocolToAbyPartyCircuit(protocol: Protocol): CodeBlock =
-        CodeBlock.of(
-            "%L.getCircuitBuilder(%L)",
-            protocolToABYPartyMap.getValue(ABYPair((protocol as ABY).server, protocol.client)),
-            protocolToShareType(protocol)
+    private fun protocolToAbyPartyCircuit(protocol: Protocol, shareType: SharingType = protocolToShareType(protocol)): CodeBlock {
+        if (protocol !is ABY) {
+            return CodeBlock.of("%L","")
+        }
+        return CodeBlock.of(
+            "%L.getCircuitBuilder(%T.%L)",
+            protocolToABYPartyMap.getValue(ABYPair(protocol.server, protocol.client)),
+            shareType::class.asClassName(),
+            shareType
         )
+    }
 
     private fun valueToShare(value: Value, protocol: Protocol): CodeBlock =
         when (value) {
@@ -413,8 +428,9 @@ class ABYCodeGenerator(
                     "%M(%L, %L, %L)",
                     MemberName("com.github.apl_cornell.aby.Aby", "putInt32DIVGate"),
                     protocolToAbyPartyCircuit(protocol),
+                    args.last(),
                     args.first(),
-                    args.last()
+
                 )
             else -> throw UnsupportedOperationException("unknown operator")
         }
@@ -427,8 +443,7 @@ class ABYCodeGenerator(
                 val conversion = addConversionGates(
                     protocol, // destination protocol
                     protocolAnalysis.primaryProtocol(expr), // source protocol
-                    context.kotlinName(expr.temporary.value, protocolAnalysis.primaryProtocol(expr)), // share name
-                    protocolToAbyPartyCircuit(protocol) // circuit builder
+                    context.kotlinName(expr.temporary.value, protocolAnalysis.primaryProtocol(expr)) // share name
                 )
                 if (conversion != CodeBlock.of("")) {
                     CodeBlock.of(
@@ -475,6 +490,7 @@ class ABYCodeGenerator(
                 }
             }
 
+            // only generate code for the secret query case, otherwise call super
             is QueryNode ->
                 when (typeAnalysis.type(nameAnalysis.declaration(expr))) {
                     is VectorType ->
@@ -520,26 +536,7 @@ class ABYCodeGenerator(
                     else -> throw UnsupportedOperationException("unknown AST object: ${expr.toDocument().print()}")
                 }
 
-            is DeclassificationNode -> exp(protocol, expr.expression)
-
-            is EndorsementNode -> exp(protocol, expr.expression)
-
-            is DowngradeNode -> exp(protocol, expr.expression)
-
-            is InputNode ->
-                throw UnsupportedOperationException("cannot perform I/O in non-Local protocol")
-        }
-
-    override fun let(protocol: Protocol, stmt: LetNode): CodeBlock =
-        when (stmt.value) {
-            is InputNode -> throw UnsupportedOperationException("cannot perform I/O in non-Local protocol")
-            is PureExpressionNode -> {
-                CodeBlock.of(
-                    "val %N = %L",
-                    context.kotlinName(stmt.name.value, protocol),
-                    exp(protocol, stmt.value)
-                )
-            }
+            else -> super.exp(protocol, expr)
         }
 
     private fun clearArgument(arg: AtomicExpressionNode): Boolean =
@@ -666,6 +663,9 @@ class ABYCodeGenerator(
         receiveProtocol: Protocol,
         events: ProtocolCommunication
     ): CodeBlock {
+        if (receiveProtocol is ABY) {
+            return CodeBlock.of("")
+        }
         val outBuilder = CodeBlock.builder()
         val outShareName = context.newTemporary("outShare")
 
@@ -686,7 +686,7 @@ class ABYCodeGenerator(
                 thisHostReceives && !otherHostReceives -> roleToCodeBlock(thisHostRole)
 
                 !thisHostReceives && otherHostReceives ->
-                    if (thisHostRole == Role.SERVER) roleToCodeBlock(Role.SERVER) else roleToCodeBlock(Role.CLIENT)
+                    if (thisHostRole == Role.SERVER) roleToCodeBlock(Role.CLIENT) else roleToCodeBlock(Role.SERVER)
 
                 thisHostReceives && otherHostReceives -> roleToCodeBlock(Role.ALL)
 
@@ -708,7 +708,7 @@ class ABYCodeGenerator(
             protocolToABYPartyMap[ABYPair(sendProtocol.server, sendProtocol.client)]
         )
 
-        for (event in events) {
+        for (event in events.filter { event -> event.send.host == context.host }) {
             when (typeAnalysis.type(sender)) {
                 is BooleanType ->
                     outBuilder.addStatement(

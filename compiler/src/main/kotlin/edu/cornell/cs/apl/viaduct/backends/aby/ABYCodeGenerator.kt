@@ -27,16 +27,11 @@ import edu.cornell.cs.apl.viaduct.syntax.UnaryOperator
 import edu.cornell.cs.apl.viaduct.syntax.datatypes.Get
 import edu.cornell.cs.apl.viaduct.syntax.datatypes.Modify
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.AtomicExpressionNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.DeclassificationNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.DowngradeNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.EndorsementNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ExpressionNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.InputNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.LetNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.LiteralNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.OperatorApplicationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutputNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.PureExpressionNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.QueryNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ReadNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.UpdateNode
@@ -87,7 +82,7 @@ class ABYCodeGenerator(
             else -> throw UnsupportedOperationException("unknown protocol: ${protocol.toDocument().print()}")
         }
 
-    private fun address(protocol: ABY, host:Host) =
+    private fun address(protocol: ABY, host: Host) =
         if (role(protocol, host) == Role.SERVER) CodeBlock.of("%S", "")
         else CodeBlock.of("%L.hostName", context.url(protocol.server))
 
@@ -196,10 +191,11 @@ class ABYCodeGenerator(
                 when (destProtocol) {
                     is YaoABY -> CodeBlock.of(".putA2YGate(%L)", kotlinName)
                     is BoolABY ->
-                        CodeBlock.of(".putY2BGate(%L.putA2YGate(%L))",
+                        CodeBlock.of(
+                            ".putY2BGate(%L.putA2YGate(%L))",
                             protocolToAbyPartyCircuit(sourceProtocol, SharingType.S_YAO),
                             kotlinName
-                    )
+                        )
                     is ArithABY -> CodeBlock.of("")
                     else -> throw UnsupportedOperationException(
                         "unsupported ABY protocol: ${sourceProtocol.toDocument().print()}"
@@ -219,7 +215,7 @@ class ABYCodeGenerator(
 
     private fun protocolToAbyPartyCircuit(protocol: Protocol, shareType: SharingType = protocolToShareType(protocol)): CodeBlock {
         if (protocol !is ABY) {
-            return CodeBlock.of("%L","")
+            return CodeBlock.of("%L", "")
         }
         return CodeBlock.of(
             "%L.getCircuitBuilder(%T.%L)",

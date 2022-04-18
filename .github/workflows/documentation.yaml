@@ -15,25 +15,25 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           fetch-depth: 0 # Fetch history and tags; necessary for computing app version.
       - name: Set up JDK ${{ env.JDK_VERSION }}
-        uses: actions/setup-java@v2
+        uses: actions/setup-java@v3
         with:
           distribution: ${{ env.JDK_DISTRIBUTION }}
           java-version: ${{ env.JDK_VERSION }}
       - name: Install pipenv
         run: pipx install pipenv
       - name: Setup Python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v3
         with:
           python-version: '3.9'
           cache: 'pipenv'
       - name: Generate documentation with MkDocs
         uses: gradle/gradle-build-action@v2
         with:
-          arguments: printVersion :docs:mkdocsBuild
+          arguments: 'printVersion :docs:mkdocsBuild'
       - name: Set up Git credentials
         run: |
           git config user.name github-actions
@@ -42,4 +42,4 @@ jobs:
         if: github.event_name == 'release'
         uses: gradle/gradle-build-action@v2
         with:
-          arguments: :docs:mkdocsPublish
+          arguments: ':docs:mkdocsPublish'

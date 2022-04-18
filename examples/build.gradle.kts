@@ -4,7 +4,7 @@ plugins {
     application
 
     // Style checking
-    id("com.diffplug.spotless") version "6.3.0"
+    id("com.diffplug.spotless") version "6.4.2"
 }
 
 group = "edu.cornell.cs.apl.viaduct"
@@ -22,7 +22,7 @@ dependencies {
     implementation("${project.group}:runtime")
 
     // Command-line-argument parsing
-    implementation("com.github.ajalt.clikt:clikt:3.4.0")
+    implementation("com.github.ajalt.clikt:clikt:3.4.1")
 
     // Logging
     implementation("io.github.microutils:kotlin-logging:2.1.21")
@@ -31,7 +31,7 @@ dependencies {
 
     // Testing
     testImplementation("${project.group}:test-utilities")
-    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.0")
+    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.1")
 }
 
 application {

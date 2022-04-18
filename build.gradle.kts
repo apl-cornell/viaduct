@@ -3,13 +3,13 @@ plugins {
     kotlin("plugin.serialization") version embeddedKotlinVersion apply false
 
     // Versioning
-    id("com.palantir.git-version") version "0.13.0"
+    id("com.palantir.git-version") version "0.14.0"
 
     // Documentation
     id("org.jetbrains.dokka") version "1.6.10"
 
     // Style checking
-    id("com.diffplug.spotless") version "6.3.0"
+    id("com.diffplug.spotless") version "6.4.2"
 }
 
 // Derive version from Git tags

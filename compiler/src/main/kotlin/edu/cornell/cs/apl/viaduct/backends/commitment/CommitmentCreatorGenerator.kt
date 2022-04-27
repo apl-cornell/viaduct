@@ -2,7 +2,6 @@ package edu.cornell.cs.apl.viaduct.backends.commitment
 
 import com.squareup.kotlinpoet.CodeBlock
 import com.squareup.kotlinpoet.MemberName
-import com.squareup.kotlinpoet.PropertySpec
 import com.squareup.kotlinpoet.asClassName
 import edu.cornell.cs.apl.viaduct.analysis.TypeAnalysis
 import edu.cornell.cs.apl.viaduct.codegeneration.AbstractCodeGenerator
@@ -140,6 +139,4 @@ internal class CommitmentCreatorGenerator(
         }
         return receiveBuilder.build()
     }
-
-    override fun setup(protocol: Protocol): Iterable<PropertySpec> = listOf()
 }

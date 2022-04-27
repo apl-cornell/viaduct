@@ -1,9 +1,9 @@
 package edu.cornell.cs.apl.viaduct.runtime.aby
 
-import com.github.apl_cornell.aby.Aby
-import com.github.apl_cornell.aby.Circuit
-import com.github.apl_cornell.aby.Share
-import com.github.apl_cornell.aby.UInt32Vector
+import io.github.apl_cornell.aby.Aby
+import io.github.apl_cornell.aby.Circuit
+import io.github.apl_cornell.aby.Share
+import io.github.apl_cornell.aby.UInt32Vector
 import java.math.BigInteger
 
 /** Implements bitwise not */
@@ -29,7 +29,7 @@ fun Array<Share>.secretUpdateModify(circuit: Circuit, index: Share, operation: (
     for (i in this.indices) {
         val rhs = operation(this[i])
         val guard = circuit.putEQGate(index, circuit.putCONSGate(i.toBigInteger(), 32))
-        val mux = circuit.putMUXGate(this[i], rhs, guard) // TODO() - check arg order
+        val mux = circuit.putMUXGate(this[i], rhs, guard)
         this[i] = mux
     }
 }
@@ -37,7 +37,7 @@ fun Array<Share>.secretUpdateModify(circuit: Circuit, index: Share, operation: (
 fun Array<Share>.secretUpdateSet(circuit: Circuit, index: Share, argument: Share) {
     for (i in this.indices) {
         val guard = circuit.putEQGate(index, circuit.putCONSGate(i.toBigInteger(), 32))
-        val mux = circuit.putMUXGate(this[i], argument, guard) // TODO() - check arg order
+        val mux = circuit.putMUXGate(this[i], argument, guard)
         this[i] = mux
     }
 }

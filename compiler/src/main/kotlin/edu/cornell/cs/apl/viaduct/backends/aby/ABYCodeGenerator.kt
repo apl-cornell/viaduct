@@ -1,9 +1,5 @@
 package edu.cornell.cs.apl.viaduct.backends.aby
 
-import com.github.apl_cornell.aby.ABYParty
-import com.github.apl_cornell.aby.Aby
-import com.github.apl_cornell.aby.Role
-import com.github.apl_cornell.aby.SharingType
 import com.squareup.kotlinpoet.CodeBlock
 import com.squareup.kotlinpoet.INT
 import com.squareup.kotlinpoet.KModifier
@@ -31,7 +27,6 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.ExpressionNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.LetNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.LiteralNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.OperatorApplicationNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutputNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.QueryNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ReadNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.UpdateNode
@@ -60,6 +55,10 @@ import edu.cornell.cs.apl.viaduct.syntax.types.VectorType
 import edu.cornell.cs.apl.viaduct.syntax.values.BooleanValue
 import edu.cornell.cs.apl.viaduct.syntax.values.IntegerValue
 import edu.cornell.cs.apl.viaduct.syntax.values.Value
+import io.github.apl_cornell.aby.ABYParty
+import io.github.apl_cornell.aby.Aby
+import io.github.apl_cornell.aby.Role
+import io.github.apl_cornell.aby.SharingType
 import java.math.BigInteger
 
 private data class ABYPair(val server: Host, val client: Host)
@@ -72,15 +71,14 @@ class ABYCodeGenerator(
     private val protocolAnalysis: ProtocolAnalysis = ProtocolAnalysis(context.program, context.protocolComposer)
     private var protocolToABYPartyMap: MutableMap<ABYPair, String> = mutableMapOf()
 
+    companion object {
+        const val BIT_LENGTH: Int = 32
+    }
+
     private fun role(protocol: Protocol, host: Host): Role =
-        when (protocol) {
-            is ABY -> if (protocol.client == host) {
-                Role.CLIENT
-            } else {
-                Role.SERVER
-            }
-            else -> throw UnsupportedOperationException("unknown protocol: ${protocol.toDocument().print()}")
-        }
+        if ((protocol as ABY).client == host) {
+            Role.CLIENT
+        } else { Role.SERVER }
 
     private fun address(protocol: ABY, host: Host) =
         if (role(protocol, host) == Role.SERVER) CodeBlock.of("%S", "")
@@ -94,7 +92,7 @@ class ABYCodeGenerator(
             port,
             "Aby",
             MemberName(Aby::class.asClassName(), "getLT"), // TODO make this not hard coded
-            32 // TODO() - where is best place to store this value?
+            BIT_LENGTH
         )
 
     private fun abyPartySetup(protocol: Protocol, role: Role): CodeBlock {
@@ -154,8 +152,6 @@ class ABYCodeGenerator(
         }
     }
 
-    private val bitLen = 32
-
     private fun addConversionGates(
         destProtocol: Protocol,
         sourceProtocol: Protocol,
@@ -205,15 +201,14 @@ class ABYCodeGenerator(
             else -> CodeBlock.of("")
         }
 
-    private fun protocolToShareType(protocol: Protocol): SharingType =
+    private fun protocolToShareType(protocol: ABY): SharingType =
         when (protocol) {
             is ArithABY -> SharingType.S_ARITH
             is BoolABY -> SharingType.S_BOOL
             is YaoABY -> SharingType.S_YAO
-            else -> throw java.lang.IllegalArgumentException("expected ABY")
         }
 
-    private fun protocolToAbyPartyCircuit(protocol: Protocol, shareType: SharingType = protocolToShareType(protocol)): CodeBlock {
+    private fun protocolToAbyPartyCircuit(protocol: Protocol, shareType: SharingType = protocolToShareType(protocol as ABY)): CodeBlock {
         if (protocol !is ABY) {
             return CodeBlock.of("%L", "")
         }
@@ -232,14 +227,14 @@ class ABYCodeGenerator(
                     "%L.putCONSGate(%L.toInt().toBigInteger(), %L)",
                     protocolToAbyPartyCircuit(protocol),
                     value.value,
-                    bitLen
+                    BIT_LENGTH
                 )
             is IntegerValue ->
                 CodeBlock.of(
                     "%L.putCONSGate(%L.toBigInteger(), %L)",
                     protocolToAbyPartyCircuit(protocol),
                     value.value,
-                    bitLen
+                    BIT_LENGTH
                 )
             else -> throw UnsupportedOperationException("unknown value type: ${value.toDocument().print()}")
         }
@@ -257,7 +252,7 @@ class ABYCodeGenerator(
             Minimum ->
                 CodeBlock.of(
                     "%M(%L, %L, %L)",
-                    MemberName("com.github.apl_cornell.aby.Aby", "putMinGate"),
+                    MemberName("io.github.apl_cornell.aby.Aby", "putMinGate"),
                     protocolToAbyPartyCircuit(protocol),
                     args.first(),
                     args.last()
@@ -266,7 +261,7 @@ class ABYCodeGenerator(
             Maximum ->
                 CodeBlock.of(
                     "%M(%L, %L, %L)",
-                    MemberName("com.github.apl_cornell.aby.Aby", "putMaxGate"),
+                    MemberName("io.github.apl_cornell.aby.Aby", "putMaxGate"),
                     protocolToAbyPartyCircuit(protocol),
                     args.first(),
                     args.last()
@@ -280,7 +275,7 @@ class ABYCodeGenerator(
                         "%L.putCONSGate(%T.ZERO, %L)",
                         protocolToAbyPartyCircuit(protocol),
                         BigInteger::class.asClassName(),
-                        bitLen
+                        BIT_LENGTH
                     ),
                     args.first()
                 )
@@ -422,7 +417,7 @@ class ABYCodeGenerator(
             Division ->
                 CodeBlock.of(
                     "%M(%L, %L, %L)",
-                    MemberName("com.github.apl_cornell.aby.Aby", "putInt32DIVGate"),
+                    MemberName("io.github.apl_cornell.aby.Aby", "putInt32DIVGate"),
                     protocolToAbyPartyCircuit(protocol),
                     args.last(),
                     args.first(),
@@ -452,39 +447,12 @@ class ABYCodeGenerator(
                 }
             }
 
-            is OperatorApplicationNode -> {
-                when (expr.operator) {
-                    is BinaryOperator ->
-                        shareOfOperatorApplication(
-                            protocol,
-                            expr.operator,
-                            listOf(
-                                exp(protocol, expr.arguments.first()), exp(protocol, expr.arguments.last())
-                            )
-                        )
-
-                    is UnaryOperator ->
-                        shareOfOperatorApplication(
-                            protocol,
-                            expr.operator,
-                            listOf(exp(protocol, expr.arguments.first()))
-                        )
-
-                    // ternary operator
-                    is Mux ->
-                        shareOfOperatorApplication(
-                            protocol,
-                            expr.operator,
-                            listOf(
-                                exp(protocol, expr.arguments.first()),
-                                exp(protocol, expr.arguments[1]),
-                                exp(protocol, expr.arguments.last())
-                            )
-                        )
-
-                    else -> throw UnsupportedOperatorException(protocol, expr)
-                }
-            }
+            is OperatorApplicationNode ->
+                shareOfOperatorApplication(
+                    protocol,
+                    expr.operator,
+                    expr.arguments.map { exp(protocol, it) }
+                )
 
             // only generate code for the secret query case, otherwise call super
             is QueryNode ->
@@ -508,28 +476,22 @@ class ABYCodeGenerator(
                                             cleartextExp(protocol, expr.arguments.first())
                                         )
                                 }
-                            else -> throw UnsupportedOperationException(
-                                "unknown query: ${expr.query.toDocument().print()}"
-                            )
+                            else -> super.exp(protocol, expr)
                         }
 
                     is ImmutableCellType ->
                         when (expr.query.value) {
                             is Get -> CodeBlock.of(context.kotlinName(expr.variable.value))
-                            else -> throw UnsupportedOperationException(
-                                "unknown query: ${expr.query.toDocument().print()}"
-                            )
+                            else -> super.exp(protocol, expr)
                         }
 
                     is MutableCellType ->
                         when (expr.query.value) {
                             is Get -> CodeBlock.of(context.kotlinName(expr.variable.value))
-                            else -> throw UnsupportedOperationException(
-                                "unknown query: ${expr.query.toDocument().print()}"
-                            )
+                            else -> super.exp(protocol, expr)
                         }
 
-                    else -> throw UnsupportedOperationException("unknown AST object: ${expr.toDocument().print()}")
+                    else -> super.exp(protocol, expr)
                 }
 
             else -> super.exp(protocol, expr)
@@ -640,18 +602,10 @@ class ABYCodeGenerator(
                 throw UnsupportedOperationException("ABY: unknown update for immutable cell: ${stmt.toDocument().print()}")
         }
 
-    override fun output(protocol: Protocol, stmt: OutputNode): CodeBlock =
-        throw UnsupportedOperationException("cannot perform I/O in non-local protocol: ${stmt.toDocument().print()}")
-
     override fun guard(protocol: Protocol, expr: AtomicExpressionNode): CodeBlock =
         throw UnsupportedOperationException("ABY: Cannot execute conditional guard: ${expr.toDocument().print()}")
 
-    private fun roleToCodeBlock(role: Role): CodeBlock =
-        when (role) {
-            Role.CLIENT -> CodeBlock.of("%T.CLIENT", Role::class.asClassName())
-            Role.SERVER -> CodeBlock.of("%T.SERVER", Role::class.asClassName())
-            Role.ALL -> CodeBlock.of("%T.ALL", Role::class.asClassName())
-        }
+    private fun roleToCodeBlock(role: Role): CodeBlock = CodeBlock.of("%T.%L", role::class.asClassName(), role)
 
     override fun send(
         sender: LetNode,
@@ -757,7 +711,7 @@ class ABYCodeGenerator(
                                 context.kotlinName(sender.name.value, receiveProtocol),
                                 protocolToAbyPartyCircuit(receiveProtocol),
                                 context.receive(typeTranslator(typeAnalysis.type(sender)), event.send.host),
-                                bitLen,
+                                BIT_LENGTH,
                                 roleToCodeBlock(role(receiveProtocol, context.host))
                             )
 
@@ -767,7 +721,7 @@ class ABYCodeGenerator(
                                 context.kotlinName(sender.name.value, receiveProtocol),
                                 protocolToAbyPartyCircuit(receiveProtocol),
                                 context.receive(typeTranslator(typeAnalysis.type(sender)), event.send.host),
-                                bitLen,
+                                BIT_LENGTH,
                                 roleToCodeBlock(role(receiveProtocol, context.host))
                             )
                     }
@@ -779,7 +733,7 @@ class ABYCodeGenerator(
                         "val %L = %L.putDummyINGate(%L)",
                         context.kotlinName(sender.name.value, receiveProtocol),
                         protocolToAbyPartyCircuit(receiveProtocol),
-                        bitLen
+                        BIT_LENGTH
                     )
                 }
 

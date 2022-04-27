@@ -15,7 +15,7 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-protobuf:1.3.2")
 
     // Cryptography
-    api("com.github.apl-cornell:aby-java:0.1.1")
+    api("io.github.apl-cornell:aby-java:0.2.2")
 
     // Testing
     testImplementation(project(":test-utilities"))

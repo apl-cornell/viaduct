@@ -19,7 +19,6 @@ import edu.cornell.cs.apl.viaduct.analysis.ProtocolAnalysis
 import edu.cornell.cs.apl.viaduct.runtime.Boxed
 import edu.cornell.cs.apl.viaduct.runtime.ViaductGeneratedProgram
 import edu.cornell.cs.apl.viaduct.runtime.ViaductRuntime
-import edu.cornell.cs.apl.viaduct.selection.ProtocolCommunication
 import edu.cornell.cs.apl.viaduct.selection.ProtocolComposer
 import edu.cornell.cs.apl.viaduct.syntax.Host
 import edu.cornell.cs.apl.viaduct.syntax.ObjectVariable
@@ -94,16 +93,10 @@ private class BackendCodeGenerator(
         when (stmt) {
             is LetNode -> {
                 val protocol = protocolAnalysis.primaryProtocol(stmt)
-                var reader: SimpleStatementNode? = null
-                var readerProtocol: Protocol? = null
-                var events: ProtocolCommunication? = null
 
-                // there should only be a single reader, if any
-                val readers = nameAnalysis.readers(stmt).filterIsInstance<SimpleStatementNode>()
-                if (readers.isNotEmpty()) {
-                    reader = readers.first()
-                    readerProtocol = protocolAnalysis.primaryProtocol(reader)
-                    events = protocolAnalysis.relevantCommunicationEvents(stmt, reader)
+                val readers: MutableMap<Protocol, SimpleStatementNode> = mutableMapOf()
+                for (reader in nameAnalysis.readers(stmt).filterIsInstance<SimpleStatementNode>()) {
+                    readers[protocolAnalysis.primaryProtocol(reader)] = reader
                 }
 
                 if (protocolAnalysis.participatingHosts(stmt).contains(host)) {
@@ -112,20 +105,30 @@ private class BackendCodeGenerator(
                     hostFunctionBuilder.addStatement("%L", codeGenerator.simpleStatement(protocol, stmt))
 
                     // generate code for sending data
-                    if (readers.isNotEmpty()) {
+                    for (reader in readers) {
                         hostFunctionBuilder.addCode(
                             "%L",
-                            codeGenerator.send(stmt, protocol, readerProtocol!!, events!!)
+                            codeGenerator.send(
+                                stmt,
+                                protocol,
+                                reader.key,
+                                protocolAnalysis.relevantCommunicationEvents(stmt, reader.value)
+                            )
                         )
                     }
                 }
 
                 // generate code for receiving data
-                if (readers.isNotEmpty()) {
-                    if (protocolAnalysis.participatingHosts(reader!!).contains(host)) {
+                for (reader in readers) {
+                    if (protocolAnalysis.participatingHosts(reader.value).contains(host)) {
                         hostFunctionBuilder.addCode(
                             "%L",
-                            codeGenerator.receive(stmt, protocol, readerProtocol!!, events!!)
+                            codeGenerator.receive(
+                                stmt,
+                                protocol,
+                                reader.key,
+                                protocolAnalysis.relevantCommunicationEvents(stmt, reader.value)
+                            )
                         )
                     }
                 }

@@ -28,7 +28,6 @@ jobs:
         with:
           arguments: printVersion build jacocoTestReport
       - name: Build example programs
-        if: runner.os != 'Windows'
         uses: gradle/gradle-build-action@v2
         with:
           arguments: -p examples build

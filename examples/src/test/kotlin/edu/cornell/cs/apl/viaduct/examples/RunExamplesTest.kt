@@ -26,18 +26,14 @@ internal class RunExamplesTest {
     @ParameterizedTest
     @ArgumentsSource(ViaductProgramProvider::class)
     fun `produces correct output`(program: ViaductGeneratedProgram) {
-        val outputs = program.run()
+        checkOutput(program)
+    }
 
-        program.hosts.forEach { host ->
-            println("${host.name} outputs:")
-            println(outputs.getValue(host))
-        }
-
-        program.hosts.forEach { host ->
-            val expectedOutput = parseOutput(outputFile(program, host).readText())
-            val actualOutput = parseOutput(outputs.getValue(host))
-            assertEquals(expectedOutput, actualOutput, host.name)
-        }
+    @Disabled
+    @ParameterizedTest
+    @ArgumentsSource(ViaductABYProgramProvider::class)
+    fun `aby program produces correct output`(program: ViaductGeneratedProgram) {
+        checkOutput(program)
     }
 
     /** Convenience function that creates empty input/output files for new test programs. */
@@ -62,6 +58,22 @@ internal class RunExamplesTest {
         fun setLogLevel() {
             Configurator.setRootLevel(Level.TRACE)
         }
+    }
+}
+
+/** Executes [program] and verifies that produces the expected output. */
+private fun checkOutput(program: ViaductGeneratedProgram) {
+    val outputs = program.run()
+
+    program.hosts.forEach { host ->
+        println("${host.name} outputs:")
+        println(outputs.getValue(host))
+    }
+
+    program.hosts.forEach { host ->
+        val expectedOutput = parseOutput(outputFile(program, host).readText())
+        val actualOutput = parseOutput(outputs.getValue(host))
+        assertEquals(expectedOutput, actualOutput, host.name)
     }
 }
 

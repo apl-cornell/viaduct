@@ -116,7 +116,7 @@ data class Label(
          * This is the unit for [and].
          */
         @JvmStatic
-        override val weakest: Label = Label(FreeDistributiveLattice.top(), FreeDistributiveLattice.top())
+        override val weakest: Label = FreeDistributiveLattice.bounds<Principal>().top.let { Label(it, it) }
 
         /**
          * The most powerful principal, i.e. secret and trusted.
@@ -124,7 +124,7 @@ data class Label(
          * This is the unit for [or].
          */
         @JvmStatic
-        override val strongest: Label = Label(FreeDistributiveLattice.bottom(), FreeDistributiveLattice.bottom())
+        override val strongest: Label = FreeDistributiveLattice.bounds<Principal>().bottom.let { Label(it, it) }
 
         /**
          * The least restrictive data policy, i.e. public and trusted.

@@ -37,11 +37,10 @@ fun receiveReplicated(
     typeAnalysis: TypeAnalysis
 ): CodeBlock {
 
-    val eventSet = events
     val receiveExpression = CodeBlock.builder()
-    val it = eventSet.iterator()
+    val it = events.iterator()
 
-    if (eventSet.size > 1) {
+    if (events.size > 1) {
         receiveExpression.beginControlFlow(
             "%L.also",
             context.receive(typeTranslator(typeAnalysis.type(sender)), it.next().send.host)
@@ -61,7 +60,7 @@ fun receiveReplicated(
             "%N(%N, %L)",
             "assertEquals",
             "it",
-            eventSet.first().send.host,
+            events.first().send.host,
             context.receive(typeTranslator(typeAnalysis.type(sender)), currentEvent.send.host),
             currentEvent.send.host
         )

@@ -19,7 +19,7 @@ dependencies {
     implementation(project(":interpreter"))
 
     // Command-line-argument parsing
-    implementation("com.github.ajalt.clikt:clikt:3.4.0")
+    implementation("com.github.ajalt.clikt:clikt:3.4.2")
 
     // Colored terminal output
     implementation("org.fusesource.jansi:jansi:2.4.0")
@@ -29,8 +29,8 @@ dependencies {
     implementation("guru.nidi:graphviz-java-all-j2v8:0.18.1")
 
     // Logging
-    implementation("org.apache.logging.log4j:log4j-core:2.17.1")
-    implementation("org.apache.logging.log4j:log4j-slf4j-impl:2.17.1")
+    implementation("org.apache.logging.log4j:log4j-core:2.17.2")
+    implementation("org.apache.logging.log4j:log4j-slf4j-impl:2.17.2")
 
     // Testing
     testImplementation(project(":test-utilities"))

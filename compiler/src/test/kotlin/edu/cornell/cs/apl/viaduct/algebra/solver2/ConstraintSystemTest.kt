@@ -1,6 +1,5 @@
 package edu.cornell.cs.apl.viaduct.algebra.solver2
 
-import edu.cornell.cs.apl.viaduct.algebra.BoundedLattice
 import edu.cornell.cs.apl.viaduct.algebra.FreeDistributiveLattice
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Nested
@@ -14,13 +13,7 @@ private typealias Variable = String
 private class IllegalFlowException(from: Constant, to: Constant) :
     IllegalArgumentException("Element $from does not flow to $to.")
 
-private object ConstantBounds : BoundedLattice<Constant> {
-    override val bottom: Constant
-        get() = Constant.bottom()
-
-    override val top: Constant
-        get() = Constant.top()
-}
+private val ConstantBounds = Constant.bounds<String>()
 
 /** Shorthand for creating constants. */
 private fun c(element: String) = Constant(element)

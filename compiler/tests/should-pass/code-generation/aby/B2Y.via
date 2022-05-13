@@ -1,0 +1,11 @@
+host alice : {A}
+host bob :   {A}
+
+fun main() {
+    let $tmp@Local(host = alice) = 1;
+    let $tmp1Bool@BoolABY(client = bob, server = alice) = $tmp;
+    let $tmp1Yao@YaoABY(client = bob, server = alice) = $tmp1Bool;
+    let $clearTmp@Replication(hosts = {alice, bob}) = $tmp1Yao;
+    output $clearTmp to alice;
+    output $clearTmp to bob;
+}

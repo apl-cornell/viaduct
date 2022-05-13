@@ -26,5 +26,5 @@ object ABYBackend : Backend {
     override val protocolComposer: ProtocolComposer
         get() = ABYProtocolComposer
 
-    override fun codeGenerator(context: CodeGeneratorContext): CodeGenerator = TODO()
+    override fun codeGenerator(context: CodeGeneratorContext): CodeGenerator = ABYCodeGenerator(context)
 }

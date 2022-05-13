@@ -98,7 +98,7 @@ class ConstraintSystem<C : HeytingAlgebra<C>, V, T : Throwable>(
         return targetValue.lessThanOrEqualTo(edge.propagate(sourceValue))
     }
 
-    /** Output the constraint system as a DOT graph.  */
+    /** Outputs the constraint system as a DOT graph to [writer]. */
     fun exportDotGraph(writer: Writer) {
         val dotExporter = DOTExporter<AtomicTerm<C, V>, DataFlowEdge<C>>()
 

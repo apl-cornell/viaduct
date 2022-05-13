@@ -13,7 +13,7 @@ import edu.cornell.cs.apl.viaduct.syntax.values.Value
  * The [ABY](https://github.com/encryptogroup/ABY) protocol which is a two party MPC protocol
  * secure in the honest-but-curios setting.
  */
-abstract class ABY(val server: Host, val client: Host) : Protocol() {
+sealed class ABY(val server: Host, val client: Host) : Protocol() {
     companion object {
         const val SECRET_INPUT = "SECRET_INPUT"
         const val CLEARTEXT_INPUT = "CLEARTEXT_INPUT"

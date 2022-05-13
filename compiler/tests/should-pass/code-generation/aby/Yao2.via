@@ -1,0 +1,29 @@
+
+host alice : {A}
+host bob   : {A}
+
+fun main() {
+    let $aliceLOr@Local(host = alice) = input bool from alice;
+    let $bobLOr@Local(host = bob) = input bool from bob;
+    let $secretOr@YaoABY(client = bob, server = alice) = $aliceLOr || $bobLOr;
+    let $clearOr@Replication(hosts = {alice, bob}) = $secretOr;
+    output $clearOr to alice;
+    output $clearOr to bob;
+
+    let $aliceLAnd@Local(host = alice) = input bool from alice;
+    let $bobLAnd@Local(host = bob) = input bool from bob;
+    let $secretAnd@YaoABY(client = bob, server = alice) = $aliceLAnd && $bobLAnd;
+    let $clearAnd@Replication(hosts = {alice, bob}) = $secretAnd;
+    output $clearAnd to alice;
+    output $clearAnd to bob;
+
+    let $aliceLNot@Local(host = alice) = input bool from alice;
+    let $secretNotAlice@YaoABY(client = bob, server = alice) = !$aliceLNot;
+    let $clearNotAlice@Local(host = alice) = $secretNotAlice;
+    output $clearNotAlice to alice;
+
+    let $bobLNot@Local(host = bob) = input bool from bob;
+    let $secretNotBob@YaoABY(client = bob, server = alice) = !$bobLNot;
+    let $clearNotBob@Local(host = bob) = $secretNotBob;
+    output $clearNotBob to bob;
+}

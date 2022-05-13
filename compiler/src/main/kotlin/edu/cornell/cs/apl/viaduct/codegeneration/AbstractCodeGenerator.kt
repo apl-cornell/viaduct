@@ -93,7 +93,7 @@ abstract class AbstractCodeGenerator(val context: CodeGeneratorContext) : CodeGe
                 CodeBlock.of("%N", context.kotlinName(expr.temporary.value, protocol))
         }
 
-    fun let(protocol: Protocol, stmt: LetNode): CodeBlock =
+    open fun let(protocol: Protocol, stmt: LetNode): CodeBlock =
         CodeBlock.of(
             "val %N = %L",
             context.kotlinName(stmt.name.value, protocol),

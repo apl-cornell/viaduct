@@ -1,0 +1,5 @@
+/* UndefinedNameError */
+
+fun main() {
+    val x: int@Local(host = alice) = 0;
+}

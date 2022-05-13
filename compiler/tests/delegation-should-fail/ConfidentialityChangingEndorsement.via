@@ -1,0 +1,5 @@
+/* ConfidentialityChangingEndorsementError */
+
+fun main() {
+    val result: int = endorse 42 to {A<-} from {A};
+}

@@ -1,0 +1,8 @@
+/* TypeMismatchError */
+
+host alice : {A}
+host bob : {B}
+
+fun main() {
+    val x: int@Local(host = {alice, bob}) = 0;
+}

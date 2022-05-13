@@ -1,0 +1,15 @@
+/* ParameterDirectionMismatchError */
+
+fun add10(a: int{A}, b: out int{B}) {
+    out b = declassify (endorse a to {A & B<-} from {A}) + 10 to {(A|B)-> & (A&B)<-};
+}
+
+fun main() {
+    val array = Array[int]{A}(10);
+    val a: int{A} = 0;
+    add10(a, 20);
+    output a to alice;
+}
+
+host alice: {A}
+host bob: {B}

@@ -1,0 +1,14 @@
+/* monomorphic function by default */
+fun f(x: int{alice}, y: int{bob}, z:out int{(alice | bob)<- & (alice & bob)->}) {
+    out z = x + y;
+}
+
+fun main() {
+    val a: int{alice} = input int from alice;
+    val b: int{bob} = input int from bob;
+
+    f(a, b, val z);
+}
+
+host alice
+host bob

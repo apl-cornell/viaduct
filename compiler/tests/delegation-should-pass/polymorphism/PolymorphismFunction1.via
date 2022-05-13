@@ -1,0 +1,14 @@
+/* Does no constraints on any parameter */
+fun f{X, Y, Z}(a: int{X}, b: int{Y}, c:out int{Z}) {
+    out z = x + y;
+}
+
+fun main() {
+    val a: int{alice} = input int from alice;
+    val b: int{bob} = input int from bob;
+
+    f(a, b, val z);
+}
+
+host alice
+host bob

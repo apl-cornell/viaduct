@@ -1,0 +1,7 @@
+/* UnexpectedArgumentError */
+
+host alice : {A}
+
+fun main() {
+    val x: int@Local(host = alice, unexpected = true) = 0;
+}

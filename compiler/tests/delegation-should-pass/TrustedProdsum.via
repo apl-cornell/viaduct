@@ -1,0 +1,16 @@
+/** test cost model: cheapest protocol would place variable i and prodsum_public in replicated */
+fun main() {
+    var prodsum: int = 0;
+    for (var i: int = 0; i < 3; i += 1) {
+        val a: int = input int from alice;
+        val b: int = input int from bob;
+        prodsum += a * b;
+    }
+
+    val prodsum_public: bool = declassify prodsum < 100 to {A ⊓ B};
+    output prodsum_public to alice;
+    output prodsum_public to bob;
+}
+
+host alice  : {A & B<-}
+host bob    : {B & A<-}

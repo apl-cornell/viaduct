@@ -1,0 +1,3 @@
+/* IncorrectNumberOfArgumentsError */
+
+fun main(a: int{A}) { }

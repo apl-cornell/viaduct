@@ -1,0 +1,6 @@
+/* TypeMismatchError */
+
+fun main() {
+    var x: int;
+    x = false;
+}

@@ -1,0 +1,27 @@
+/* Alice an Bob bid on an item in two rounds.
+ * Who had the higher bid is revealed after the first round,
+ * but the bids are kept secret.
+ * Person with the higher average bid wins.
+ */
+fun main() {
+  /* Round 1 */
+  val a1: int = endorse (input int from alice) to {A & B<-} from {A & B<-};
+  val b1: int = endorse (input int from bob) to {B & A<-} from {B & A<-};
+
+  /* Reveal who had the higher bid. */
+  val a1_higher: bool = declassify (a1 > b1) to {A ⊓ B};
+  output a1_higher to alice;
+  output a1_higher to bob;
+
+  /* Round 2 */
+  val a2: int = endorse (input int from alice) to {A & B<-} from {A & B<-};
+  val b2: int = endorse (input int from bob) to {B & A<-} from {B & A<-};
+
+  /* Reveal the overall winner. */
+  val a_higher: bool = declassify (a1 + a2 > b1 + b2) to {A ⊓ B};
+  output a_higher to alice;
+  output a_higher to bob;
+}
+
+host alice : {A & B<-}
+host bob   : {B & A<-}

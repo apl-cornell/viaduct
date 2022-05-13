@@ -1,0 +1,16 @@
+/* OutParameterInitializationError */
+
+fun add10{(A & B)<-}(a: int{A}, b: out int{B}) {
+    out b = 10;
+    out b = 20;
+}
+
+fun main() {
+    val array = Array[int]{A}(10);
+    val a: int{A} = 0;
+    add10(a, val b);
+    output a to alice;
+}
+
+host alice: {A}
+host bob: {B}

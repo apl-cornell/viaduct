@@ -1,0 +1,8 @@
+/* NameClashError */
+
+host alice : {A}
+host alice : {A}
+
+fun main() {
+    val x: int = 0;
+}

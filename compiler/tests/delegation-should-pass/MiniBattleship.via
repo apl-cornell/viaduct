@@ -1,0 +1,14 @@
+fun main() {
+    val alive : int = input int from bob;
+    val a : int = input int from alice;
+    val a2 : int = input int from alice;
+    val a_endorse : int = endorse a to {A & B<-} from {A};
+    val a2_endorse : int = endorse a2 to {A & B<-} from {A};
+    val b : bool{A & B<-} = (a_endorse == a2_endorse + 1);
+    output (declassify b to {(A | B)-> & (A & B)<-}) to bob;
+}
+
+host alice : {A}
+host bob : {B}
+
+

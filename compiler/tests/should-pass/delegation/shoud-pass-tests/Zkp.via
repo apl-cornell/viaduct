@@ -1,0 +1,14 @@
+fun main() {
+    val a : int = input int from alice;
+    val x : int = input int from bob;
+    val a_endorse : int{alice & bob<-} = endorse a to {alice & bob<-} from {alice};
+    val tst : bool{alice & bob<-} = (a_endorse == 2);
+    output (declassify tst to {(alice | bob)-> & (alice&bob)<-}) to bob;
+
+    val tst2 : bool = (a_endorse == 7);
+    output (declassify tst2 to {(alice | bob)-> & (alice&bob)<-}) to bob;
+
+}
+
+host alice
+host bob

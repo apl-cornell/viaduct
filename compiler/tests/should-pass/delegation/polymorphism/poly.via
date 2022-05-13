@@ -1,0 +1,12 @@
+fun f{X, Y, Z}(a: int{X}, b: int{Y}, c: out int{Z}) where (X <: alice, Y <: bob, alice ⊓ bob <: Z) {
+  out c = a + b;
+}
+
+fun main() {
+  val x = input from alice;
+  val y = input from bob;
+  f(x, y, val z);
+}
+
+host alice
+host bob

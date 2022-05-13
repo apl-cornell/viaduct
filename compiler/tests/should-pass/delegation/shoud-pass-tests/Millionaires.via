@@ -1,0 +1,21 @@
+/* The classic MPC problem. */
+fun main() {
+  /* Alice and Bob are free to provide any input; we'll just trust it. */
+  val a: int{alice} = endorse input int from alice to {alice} from {alice};
+  val b: int{bob} = endorse input int from bob to {bob} from {bob};
+
+  var bob_richer : bool{alice & bob} = false;
+  if (a <= b) {
+    bob_richer = true;
+  }
+
+  val bob_richer_decl : bool = declassify bob_richer to {(alice | bob)};
+  output bob_richer_decl to alice;
+  output bob_richer_decl to bob;
+}
+
+
+host alice
+host bob
+assume for <- alice trusts bob
+assume for <- bob trusts alice

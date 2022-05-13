@@ -1,0 +1,18 @@
+fun main() {
+    val a = Array[int]{alice}(10);
+    val b = Array[int]{bob}(10);
+
+    for (var i: int = 0; i < 10; i += 1) {
+        a[i] = i * 50;
+    }
+
+    for (var j: int = 0; j < 10; j += 1) {
+        b[j] = j * 100;
+    }
+
+    output a[0] to alice;
+    output a[9] to alice;
+}
+
+host alice
+host bob

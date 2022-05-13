@@ -1,0 +1,14 @@
+fun main() {
+    val alive : int = input int from bob;
+    val a : int = input int from alice;
+    val a2 : int = input int from alice;
+    val a_endorse : int = endorse a to {alice} from {alice};
+    val a2_endorse : int = endorse a2 to {alice} from {alice};
+    val b : bool{alice} = (a_endorse == a2_endorse + 1);
+    output (declassify b to {(alice | bob)}) to bob;
+}
+
+host alice
+host bob
+
+

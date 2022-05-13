@@ -1,0 +1,12 @@
+fun f(a: int{alice}, b: int{bob}, c: out int{alice ⊓ bob}) {
+  out c = a + b;
+}
+
+fun main() {
+  val x = input from alice;
+  val y = input from bob;
+  f(x, y, val z);
+}
+
+host alice
+host bob

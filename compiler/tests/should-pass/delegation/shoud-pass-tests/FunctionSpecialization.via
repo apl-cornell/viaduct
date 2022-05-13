@@ -1,0 +1,20 @@
+/* monomorphic */
+fun f(x: int{alice}) {
+    g(x);
+}
+
+/* monomorphic */
+fun g(y: int{alice}) {
+    if (false) {
+        f(y);
+    }
+}
+
+fun main() {
+    val a: int{alice} = 0;
+    f(a);
+    f(a);
+}
+
+host alice
+host bob

@@ -1,0 +1,18 @@
+/* TODO: add import statements and rewrite this with import millionaires. */
+
+/* Millionaire's problem with a trusted third party. */
+fun main() {
+  /* We endorse because Alice and Bob are free to provide any input. */
+  val a: int{alice & bob<-} = endorse input int from alice to {alice & bob<-} from {alice};
+  val b: int{bob & alice<-} = endorse input int from bob to {bob & alice<-} from {bob};
+
+  val bob_richer: bool = declassify a <= b to {(alice | bob)-> & (alice & bob)<-};
+  output bob_richer to alice;
+  output bob_richer to bob;
+}
+
+host alice
+host bob
+host trusted
+assume alice trusts trusted
+assume bob trusts trusted

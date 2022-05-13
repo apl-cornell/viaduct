@@ -1,0 +1,14 @@
+/* a polymorphic function */
+fun add10{a, b}(a: int, b: out int{b}) {
+    out b = a + 10;
+}
+
+fun main() {
+    val array = Array[int]{alice}(10);
+    val a: int{alice} = 0;
+    add10(a, val b);
+    output b to alice;
+}
+
+host alice
+host bob

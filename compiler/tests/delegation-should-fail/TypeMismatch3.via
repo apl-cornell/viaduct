@@ -1,5 +1,0 @@
-/* TypeMismatchError */
-
-fun main() {
-    val x: int@Local(host = 5) = 0;
-}

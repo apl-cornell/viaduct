@@ -1,8 +1,0 @@
-/* InvalidProtocolAnnotationError */
-
-host alice : {A}
-host bob   : {B}
-
-fun main() {
-    val a: int@Local(host = bob) = input int from alice;
-}

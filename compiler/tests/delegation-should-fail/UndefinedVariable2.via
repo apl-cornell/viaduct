@@ -1,5 +1,0 @@
-/* UndefinedNameError */
-
-fun main() {
-    val x: int = y;
-}

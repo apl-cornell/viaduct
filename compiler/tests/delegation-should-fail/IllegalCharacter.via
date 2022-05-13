@@ -1,4 +1,0 @@
-/* IllegalCharacterError */
-
-/* Weird symbols the lexer doesn't know about. */
-~#`

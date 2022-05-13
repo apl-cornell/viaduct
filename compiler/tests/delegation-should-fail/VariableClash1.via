@@ -1,6 +1,0 @@
-/* NameClashError */
-
-fun main() {
-    var x: int;
-    var x: int;
-}

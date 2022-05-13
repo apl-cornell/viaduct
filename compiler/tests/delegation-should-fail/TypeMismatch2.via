@@ -1,5 +1,0 @@
-/* TypeMismatchError */
-
-fun main() {
-    val x: int = false;
-}

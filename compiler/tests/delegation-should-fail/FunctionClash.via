@@ -1,5 +1,0 @@
-/* NameClashError */
-
-fun f() {}
-
-fun f() {}

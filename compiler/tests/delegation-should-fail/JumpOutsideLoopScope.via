@@ -1,5 +1,0 @@
-/* JumpOutsideLoopScopeError */
-
-fun main() {
-    break;
-}

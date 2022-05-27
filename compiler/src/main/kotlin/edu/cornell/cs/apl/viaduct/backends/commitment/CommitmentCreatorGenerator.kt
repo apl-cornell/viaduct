@@ -23,7 +23,8 @@ internal class CommitmentCreatorGenerator(
 ) : AbstractCodeGenerator(context) {
     private val typeAnalysis = TypeAnalysis.get(context.program)
 
-    override fun guard(protocol: Protocol, expr: AtomicExpressionNode): CodeBlock = exp(protocol, expr)
+    override fun guard(protocol: Protocol, expr: AtomicExpressionNode): CodeBlock =
+        cleartextExp(protocol, expr)
 
     override fun exp(protocol: Protocol, expr: ExpressionNode): CodeBlock =
         when (expr) {

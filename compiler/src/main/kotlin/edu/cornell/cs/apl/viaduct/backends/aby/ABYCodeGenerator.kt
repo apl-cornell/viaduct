@@ -11,8 +11,8 @@ import edu.cornell.cs.apl.viaduct.analysis.ProtocolAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.TypeAnalysis
 import edu.cornell.cs.apl.viaduct.codegeneration.AbstractCodeGenerator
 import edu.cornell.cs.apl.viaduct.codegeneration.CodeGeneratorContext
+import edu.cornell.cs.apl.viaduct.codegeneration.UnsupportedOperatorException
 import edu.cornell.cs.apl.viaduct.codegeneration.typeTranslator
-import edu.cornell.cs.apl.viaduct.errors.ViaductInterpreterError
 import edu.cornell.cs.apl.viaduct.selection.ProtocolCommunication
 import edu.cornell.cs.apl.viaduct.syntax.Host
 import edu.cornell.cs.apl.viaduct.syntax.Operator
@@ -75,7 +75,9 @@ class ABYCodeGenerator(
     private fun role(protocol: Protocol, host: Host): Role =
         if ((protocol as ABY).client == host) {
             Role.CLIENT
-        } else { Role.SERVER }
+        } else {
+            Role.SERVER
+        }
 
     private fun address(protocol: ABY, host: Host) =
         if (role(protocol, host) == Role.SERVER) CodeBlock.of("%S", "")
@@ -127,7 +129,7 @@ class ABYCodeGenerator(
                 abyPartyBuilder.addStatement("%L", abyParty(protocol, role, portVarName))
                 abyPartyBuilder.endControlFlow()
             }
-            else -> throw UnsupportedOperationException("Unknown ABY Role: $role")
+            else -> throw IllegalArgumentException("Unknown ABY Role: $role.")
         }
         return abyPartyBuilder.build()
     }
@@ -153,8 +155,11 @@ class ABYCodeGenerator(
         destProtocol: Protocol,
         sourceProtocol: Protocol,
         kotlinName: String
-    ): CodeBlock =
-        when (sourceProtocol) {
+    ): CodeBlock {
+        if (sourceProtocol !is ABY || destProtocol !is ABY)
+            return CodeBlock.of("")
+
+        return when (sourceProtocol) {
             is YaoABY -> {
                 when (destProtocol) {
                     is YaoABY -> CodeBlock.of("")
@@ -165,21 +170,17 @@ class ABYCodeGenerator(
                             protocolToAbyPartyCircuit(sourceProtocol, SharingType.S_BOOL),
                             kotlinName
                         )
-                    else -> throw UnsupportedOperationException(
-                        "unsupported ABY protocol: ${sourceProtocol.toDocument().print()}"
-                    )
                 }
             }
+
             is BoolABY -> {
                 when (destProtocol) {
                     is YaoABY -> CodeBlock.of(".putB2YGate(%L)", kotlinName)
                     is BoolABY -> CodeBlock.of("")
                     is ArithABY -> CodeBlock.of(".putB2AGate(%L)", kotlinName)
-                    else -> throw UnsupportedOperationException(
-                        "unsupported ABY protocol: ${sourceProtocol.toDocument().print()}"
-                    )
                 }
             }
+
             is ArithABY -> {
                 when (destProtocol) {
                     is YaoABY -> CodeBlock.of(".putA2YGate(%L)", kotlinName)
@@ -190,13 +191,10 @@ class ABYCodeGenerator(
                             kotlinName
                         )
                     is ArithABY -> CodeBlock.of("")
-                    else -> throw UnsupportedOperationException(
-                        "unsupported ABY protocol: ${sourceProtocol.toDocument().print()}"
-                    )
                 }
             }
-            else -> CodeBlock.of("")
         }
+    }
 
     private fun protocolToShareType(protocol: ABY): SharingType =
         when (protocol) {
@@ -205,7 +203,10 @@ class ABYCodeGenerator(
             is YaoABY -> SharingType.S_YAO
         }
 
-    private fun protocolToAbyPartyCircuit(protocol: Protocol, shareType: SharingType = protocolToShareType(protocol as ABY)): CodeBlock {
+    private fun protocolToAbyPartyCircuit(
+        protocol: Protocol,
+        shareType: SharingType = protocolToShareType(protocol as ABY)
+    ): CodeBlock {
         if (protocol !is ABY) {
             return CodeBlock.of("%L", "")
         }
@@ -233,7 +234,7 @@ class ABYCodeGenerator(
                     value.value,
                     BIT_LENGTH
                 )
-            else -> throw UnsupportedOperationException("unknown value type: ${value.toDocument().print()}")
+            else -> throw java.lang.IllegalArgumentException("Unknown value type: $value.")
         }
 
     private fun binaryOpToShare(
@@ -420,7 +421,7 @@ class ABYCodeGenerator(
                     args.first(),
 
                 )
-            else -> throw UnsupportedOperationException("unknown operator")
+            else -> throw UnsupportedOperationException("Unknown operator $op.")
         }
 
     override fun exp(protocol: Protocol, expr: ExpressionNode): CodeBlock =
@@ -533,7 +534,7 @@ class ABYCodeGenerator(
                                 )
                             )
                         }
-                        else -> throw UnsupportedOperationException("unknown update: ${stmt.update.value.toDocument().print()}")
+                        else -> throw UnsupportedOperatorException(protocol, stmt)
                     }
 
                     true -> when (stmt.update.value) {
@@ -564,7 +565,7 @@ class ABYCodeGenerator(
                                 )
                             )
                         }
-                        else -> throw UnsupportedOperationException("unknown update: ${stmt.update.value.toDocument().print()}")
+                        else -> throw UnsupportedOperatorException(protocol, stmt)
                     }
                 }
             }
@@ -592,15 +593,11 @@ class ABYCodeGenerator(
                             )
                         )
                     }
-                    else -> throw UnsupportedOperationException("unknown update: ${stmt.update.value.toDocument().print()}")
+                    else -> throw UnsupportedOperatorException(protocol, stmt)
                 }
 
-            else ->
-                throw UnsupportedOperationException("ABY: unknown update for immutable cell: ${stmt.toDocument().print()}")
+            else -> throw UnsupportedOperatorException(protocol, stmt)
         }
-
-    override fun guard(protocol: Protocol, expr: AtomicExpressionNode): CodeBlock =
-        throw UnsupportedOperationException("ABY: Cannot execute conditional guard: ${expr.toDocument().print()}")
 
     private fun roleToCodeBlock(role: Role): CodeBlock = CodeBlock.of("%T.%L", role::class.asClassName(), role)
 
@@ -638,7 +635,7 @@ class ABYCodeGenerator(
                 thisHostReceives && otherHostReceives -> roleToCodeBlock(Role.ALL)
 
                 else ->
-                    throw ViaductInterpreterError("ABY: at least one party must receive output when executing circuit")
+                    throw IllegalArgumentException("ABY: at least one party must receive output when executing circuit.")
             }
 
         outBuilder.addStatement(

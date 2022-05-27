@@ -40,7 +40,8 @@ class CleartextCodeGenerator(context: CodeGeneratorContext) : AbstractCodeGenera
     private val typeAnalysis = TypeAnalysis.get(context.program)
     private val nameAnalysis = NameAnalysis.get(context.program)
 
-    override fun guard(protocol: Protocol, expr: AtomicExpressionNode): CodeBlock = exp(protocol, expr)
+    override fun guard(protocol: Protocol, expr: AtomicExpressionNode): CodeBlock =
+        cleartextExp(protocol, expr)
 
     override fun exp(protocol: Protocol, expr: ExpressionNode): CodeBlock =
         when (expr) {

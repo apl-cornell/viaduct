@@ -30,6 +30,9 @@ abstract class AbstractCodeGenerator(val context: CodeGeneratorContext) : CodeGe
     private val nameAnalysis = NameAnalysis.get(context.program)
     private val typeAnalysis = TypeAnalysis.get(context.program)
 
+    override fun guard(protocol: Protocol, expr: AtomicExpressionNode): CodeBlock =
+        throw UnsupportedOperatorException(protocol, expr)
+
     final override fun simpleStatement(protocol: Protocol, stmt: SimpleStatementNode): CodeBlock {
         return when (stmt) {
             is LetNode -> let(protocol, stmt)

@@ -189,10 +189,8 @@ private class BackendCodeGenerator(
                 if (protocolAnalysis.participatingHosts(stmt).contains(host)) {
                     val guardValue: CodeBlock =
                         when (val guard = stmt.guard) {
-
-                            // TODO() - is there any way that we can make this not go through toString?
                             is LiteralNode -> {
-                                CodeBlock.of("%L", guard.value.toDocument().toString())
+                                CodeBlock.of("%L", guard.value)
                             }
                             is ReadNode -> {
                                 val guardProtocol = protocolAnalysis.primaryProtocol(guard)

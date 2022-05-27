@@ -21,5 +21,8 @@ class NegativeTestFileProvider(private val subfolder: String = "") : ArgumentsPr
 
 private fun testFilesAtPath(path: String): Sequence<File> {
     // TODO: sorting will break with subdirectories
-    return File("tests").resolve(path).walk().filter { it.isFile }.sorted()
+    return File("tests").resolve(path).walk()
+        .filter { it.isFile }
+        .filter { it.extension == "via" }
+        .sorted()
 }

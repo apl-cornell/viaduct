@@ -86,11 +86,14 @@ abstract class GenerateViaductProgramList : DefaultTask() {
     @TaskAction
     fun generate() {
         val source = sourceDirectory.get().asFile
-        val programs = source.walk().filter { it.isFile }.map {
-            val packageName = it.parentFile.toRelativeString(source).replace(File.separator, ".")
-            val className = it.nameWithoutExtension
-            if (packageName.isEmpty()) className else "$packageName.$className"
-        }.sorted()
+        val programs = source.walk()
+            .filter { it.isFile }
+            .filter { it.extension == "via" }
+            .map {
+                val packageName = it.parentFile.toRelativeString(source).replace(File.separator, ".")
+                val className = it.nameWithoutExtension
+                if (packageName.isEmpty()) className else "$packageName.$className"
+            }.sorted()
 
         val packageDirectory = outputDirectory.get().asFile.resolve(outputPackage.get().replace(".", File.separator))
         val outputFile = packageDirectory.resolve("ViaductPrograms.kt")

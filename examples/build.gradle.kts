@@ -1,5 +1,5 @@
 plugins {
-    kotlin("jvm") version embeddedKotlinVersion
+    kotlin("jvm") version "1.6.21"
     id("edu.cornell.cs.apl.viaduct")
     application
 

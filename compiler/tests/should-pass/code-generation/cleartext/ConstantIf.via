@@ -1,0 +1,8 @@
+host alice: {A}
+
+fun main() {
+    val x: int = input int from alice;
+    if (true) {
+        output x to alice;
+    }
+}

@@ -52,6 +52,22 @@ internal class RunExamplesTest {
         }
     }
 
+    /** Convenience function that creates empty input/output files for new test programs. */
+    @Disabled
+    @ParameterizedTest
+    @ArgumentsSource(ViaductProgramProvider::class)
+    fun createEmptyInputOutputFiles(program: ViaductGeneratedProgram) {
+        fun createFile(file: File) {
+            println("Creating $file.")
+            file.parentFile.mkdirs()
+            file.createNewFile()
+        }
+        program.hosts.forEach { host ->
+            createFile(inputFile(program, host))
+            createFile(outputFile(program, host))
+        }
+    }
+
     companion object {
         @BeforeAll
         @JvmStatic

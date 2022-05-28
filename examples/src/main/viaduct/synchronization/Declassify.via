@@ -1,0 +1,15 @@
+host alice : {A & B}
+host bob   : {B}
+
+fun main() {
+    let $pick = input int from alice;
+
+    let $guess = input int from bob;
+    let $trusted_guess = endorse $guess from {B};
+
+    let $revealed_pick@Replication(hosts = {alice, bob}) = declassify $pick to {A ⊓ B};
+    let $bob_wins = $revealed_pick == $trusted_guess;
+
+    output $bob_wins to alice;
+    /* output $bob_wins to bob; */
+}

@@ -144,10 +144,10 @@ nonterminal Pair<Located, Located> protocol_labelled_argument;
 nonterminal Value protocol_argument;
 
 // delegation syntax nonterminals
-nonterminal List delegation_decl_list, host_decl_list;
-nonterminal List nonempty_delegation_decl_list, nonempty_host_decl_list;
 nonterminal DelegationDeclarationNode delegation_decl;
 nonterminal HostDeclarationNode host_decl;
+nonterminal LabelNode label_param;
+nonterminal List<LabelNode> nonempty_polymorphic_label_param_list;
 
 terminal String IDENT, CAP_IDENT;
 terminal String TMP_IDENT;
@@ -160,7 +160,7 @@ terminal OUT;
 terminal COLON;
 
 // delegation syntax
-terminal HOSTS, ASSUME;
+terminal TRUSTS, ASSUME;
 
 terminal EQ;
 terminal PLUSEQ, MINUSEQ, TIMESEQ, DIVIDEEQ;
@@ -175,7 +175,7 @@ terminal PLUS, MINUS, TIMES, DIVIDE;
 terminal MIN, MAX, MUX;
 
 // delegation syntax
-terminal IMPLY, IMPLYEQ;
+terminal FLOWSTO;
 
 terminal DECLASSIFY, ENDORSE, DOWNGRADE;
 
@@ -235,7 +235,7 @@ declaration ::=
       RESULT = new HostDeclarationNode(host, authority, location(beginleft, authorityright), null);
     :}
 
-  | FUNCTION:begin IDENT:funcname optional_label_signature:label
+  | FUNCTION:begin IDENT:funcname
     OPEN_PAREN:paramsbegin parameter_list:params CLOSE_PAREN:paramsclose block:body {:
       RESULT = new FunctionDeclarationNode(
         new Located(new FunctionName(funcname), location(funcnameleft, funcnameright)),
@@ -246,95 +246,53 @@ declaration ::=
         null
       );
   :}
-  // delegation syntax: host
-  | HOSTS:begin COLON host_decl_list:hostList {:
-      RESULT = new HostDeclarationListNode(hostList, location(beginleft, hostListright), null);
-  :}
-  | ASSUME:begin COLON delegation_decl_list:delegationList {:
-      RESULT = new DelegationDeclarationListNode(delegationList, location(beginleft, delegationListright), null);
-  :}
-  ;
-
-// delegation syntax
-host_decl_list ::=
-    nonempty_host_decl_list:hostDeclList {:
-      RESULT = hostDeclList;
-    :}
-
-  | /* empty */ {:
-      RESULT = CollectionsKt.mutableListOf();
-    :}
-  ;
-
-// delegation syntax
-nonempty_host_decl_list ::=
-    nonempty_host_decl_list:hostDeclList COMMA host_decl:hostDecl {:
-      hostDeclList.add(hostDecl);
-      RESULT = hostDeclList;
-    :}
-
-  | host_decl:hostDecl {:
-      RESULT = CollectionsKt.mutableListOf(hostDecl);
-    :}
-  ;
-
-// delegation syntax
-host_decl ::=
-    CAP_IDENT:id {:
-      RESULT = new HostDeclarationNode(
-          new Located(new Host(id), location(idleft, idright)),
-          new Located(new LabelLiteral(id), location(idleft, idright)),
-          location(idleft, idright),
-          null
+  // delegation syntax
+  | FUNCTION:begin IDENT:funcname OPEN_BRACE nonempty_polymorphic_label_param_list:polylabels CLOSE_BRACE
+    OPEN_PAREN:paramsbegin parameter_list:params CLOSE_PAREN:paramsclose block:body {:
+      RESULT = new FunctionDeclarationNode(
+        new Located(new FunctionName(funcname), location(funcnameleft, funcnameright)),
+        label,
+        new Arguments(params, location(paramsbeginleft, paramsbeginright)),
+        body,
+        location(beginleft, bodyright),
+        null
       );
+  :}
+  | HOST:begin IDENT:host {:
+      RESULT = new HostDeclarationNode(new Located(new Host(host), location(hostleft, hostright)),
+        new Located(new LabelLiteral(host), location(hostleft, hostright)),
+        location(beginleft, hostright), null);
     :}
+  /*| ASSUME:begin FOR RARROW COLON label:label1 TRUSTS label:label2 {:
+      RESULT = new DelegationDeclarationNode(
+        label1, label2, location(beginleft, label2right), null);
+  :}
+  | ASSUME:begin FOR LARROW COLON label:label1 TRUSTS label:label2 {:
+      RESULT = new DelegationDeclarationNode(
+        label1, label2, location(beginleft, label2right), null);
+  :}*/
+  | ASSUME:begin COLON label:label1 TRUSTS label:label2 {:
+      RESULT = new DelegationDeclarationNode(
+        label1, label2, location(beginleft, label2right), null);
+  :}
   ;
 
-// delegation syntax
-delegation_decl_list ::=
-    nonempty_delegation_decl_list:delegationDeclList {:
-      RESULT = delegationDeclList;
+//delegation syntax for polymorphic label list
+nonempty_polymorphic_label_param_list ::=
+    nonempty_polymorphic_label_param_list: params COMMA label_param: label {:
+      params.add(label);
+      RESULT = params;
     :}
+  | label_param:label {:
+      RESULT = CollectionsKt.mutableListOf(label);
+    :}
+    ;
 
-  | /* empty */ {:
-      RESULT = CollectionsKt.mutableListOf();
-    :}
+label_param ::=
+  CAP_IDENT:label {:
+    RESULT = new Located(new LabelParameter(label), location(labelleft, labelright));
+  :}
   ;
-
-// delegation syntax
-nonempty_delegation_decl_list ::=
-    nonempty_delegation_decl_list:delegationDeclList COMMA delegation_decl:delegationDecl {:
-      delegationDeclList.add(delegationDecl);
-      RESULT = delegationDeclList;
-    :}
-
-  | delegation_decl:delegationDecl {:
-      RESULT = CollectionsKt.mutableListOf(delegationDecl);
-    :}
-  ;
-
-// delegation syntax
-delegation_decl ::=
-    label_expr:label1 IMPLY label_expr:label2  {:
-    RESULT = new DelegationDeclarationNode(
-        new Located(label1, location(label1left, label1right)),
-        new Located(label2, location(label2left, label2right)),
-        false,
-        location(label1left, label2right),
-        null
-    );
-    :}
-    | label_expr:label1 IMPLYEQ label_expr:label2  {:
-    RESULT = new DelegationDeclarationNode(
-        new Located(label1, location(label1left, label1right)),
-        new Located(label2, location(label2left, label2right)),
-        true,
-        location(label1left, label2right),
-        null
-    );
-    :}
-  ;
-
 
 parameter_list ::=
     nonempty_parameter_list:params {:
@@ -846,6 +804,7 @@ label ::=
       RESULT = new Located(l, location(beginleft, endright));
     :}
   ;
+
 
 label_expr ::=
     CAP_IDENT:id {: RESULT = new LabelLiteral(id); :}

@@ -96,7 +96,7 @@ NUM         = ((-)?[1-9][0-9]*) | 0
 
   /* Delegation syntax */
   "assume"        { return symbol(sym.ASSUME); }
-  "hosts"         { return symbol(sym.HOSTS); }
+  "trusts"         { return symbol(sym.TRUSTS); }
 
   /* Types */
   "int"           { return symbol(sym.INT); }
@@ -156,8 +156,7 @@ NUM         = ((-)?[1-9][0-9]*) | 0
   ">="            { return symbol(sym.GEQ); }
 
   /* delegation syntax */
-  "=>"            { return symbol(sym.IMPLY); }
-  "<=>"            { return symbol(sym.IMPLYEQ); }
+  "<:"            { return symbol(sym.FLOWSTO); }
 
   "declassify"    { return symbol(sym.DECLASSIFY); }
   "endorse"       { return symbol(sym.ENDORSE); }

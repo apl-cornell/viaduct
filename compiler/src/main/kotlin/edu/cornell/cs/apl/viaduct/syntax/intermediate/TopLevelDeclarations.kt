@@ -1,9 +1,11 @@
 package edu.cornell.cs.apl.viaduct.syntax.intermediate
 
+import edu.cornell.cs.apl.viaduct.security.LabelParameter
 import edu.cornell.cs.apl.viaduct.syntax.Arguments
 import edu.cornell.cs.apl.viaduct.syntax.FunctionNameNode
 import edu.cornell.cs.apl.viaduct.syntax.HostNode
 import edu.cornell.cs.apl.viaduct.syntax.LabelNode
+import edu.cornell.cs.apl.viaduct.syntax.Located
 import edu.cornell.cs.apl.viaduct.syntax.ObjectTypeNode
 import edu.cornell.cs.apl.viaduct.syntax.ObjectVariable
 import edu.cornell.cs.apl.viaduct.syntax.ObjectVariableNode
@@ -27,8 +29,9 @@ sealed class TopLevelDeclarationNode : Node() {
 class HostDeclarationNode(
     val name: HostNode,
     val authority: LabelNode,
-    override val sourceLocation: SourceLocation
+    override val sourceLocation: SourceLocation,
 ) : TopLevelDeclarationNode() {
+
     override val children: Iterable<Nothing>
         get() = listOf()
 
@@ -118,4 +121,28 @@ class FunctionDeclarationNode(
 
     fun getParameterAtIndex(i: Int): ParameterNode? =
         if (i >= 0 && i < parameters.size) parameters[i] else null
+}
+
+
+/**
+ * Declaration of a delegation.
+ *
+ */
+class DelegationDeclarationNode(
+    val node1: LabelNode,
+    val node2: LabelNode,
+    override val sourceLocation: SourceLocation
+) : TopLevelDeclarationNode() {
+    override val children: Iterable<BlockNode>
+        get() = listOf()
+    override fun toSurfaceNode(metadata: Metadata): edu.cornell.cs.apl.viaduct.syntax.surface.DelegationDeclarationNode =
+        edu.cornell.cs.apl.viaduct.syntax.surface.DelegationDeclarationNode(
+            node1,
+            node2,
+            sourceLocation,
+            comment = metadataAsComment(metadata)
+        )
+
+    override fun copy(children: List<Node>): DelegationDeclarationNode =
+        DelegationDeclarationNode(node1, node2, sourceLocation)
 }

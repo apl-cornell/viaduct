@@ -22,6 +22,7 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.BlockNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.BreakNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.CommunicationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.DeclarationNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.DelegationDeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.FunctionCallNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.FunctionDeclarationNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.HostDeclarationNode
@@ -84,6 +85,8 @@ class MuxPostprocessor(
             program.declarations.map { declaration ->
                 when (declaration) {
                     is HostDeclarationNode -> declaration.deepCopy() as TopLevelDeclarationNode
+
+                    is DelegationDeclarationNode -> declaration.deepCopy() as TopLevelDeclarationNode
 
                     is FunctionDeclarationNode -> {
                         FunctionDeclarationNode(

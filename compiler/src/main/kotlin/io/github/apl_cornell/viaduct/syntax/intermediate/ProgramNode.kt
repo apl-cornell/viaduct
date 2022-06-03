@@ -1,8 +1,8 @@
 package io.github.apl_cornell.viaduct.syntax.intermediate
 
-import io.github.apl_cornell.apl.attributes.Attribute
-import io.github.apl_cornell.apl.attributes.Tree
-import io.github.apl_cornell.apl.attributes.attribute
+import io.github.apl_cornell.viaduct.attributes.Attribute
+import io.github.apl_cornell.viaduct.attributes.Tree
+import io.github.apl_cornell.viaduct.attributes.attribute
 import io.github.apl_cornell.viaduct.passes.elaborated
 import io.github.apl_cornell.viaduct.syntax.FunctionName
 import io.github.apl_cornell.viaduct.syntax.Host

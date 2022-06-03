@@ -1,4 +1,4 @@
-package io.github.apl_cornell.apl.attributes
+package io.github.apl_cornell.viaduct.attributes
 
 /**
  * Represents an optional value.

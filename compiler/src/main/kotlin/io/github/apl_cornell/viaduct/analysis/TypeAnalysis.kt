@@ -1,7 +1,7 @@
 package io.github.apl_cornell.viaduct.analysis
 
-import io.github.apl_cornell.apl.attributes.Tree
-import io.github.apl_cornell.apl.attributes.attribute
+import io.github.apl_cornell.viaduct.attributes.Tree
+import io.github.apl_cornell.viaduct.attributes.attribute
 import io.github.apl_cornell.viaduct.errors.CompilationError
 import io.github.apl_cornell.viaduct.errors.IncorrectNumberOfArgumentsError
 import io.github.apl_cornell.viaduct.errors.ParameterDirectionMismatchError

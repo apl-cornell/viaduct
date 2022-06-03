@@ -1,6 +1,6 @@
 package io.github.apl_cornell.viaduct.selection
 
-import io.github.apl_cornell.apl.attributes.attribute
+import io.github.apl_cornell.viaduct.attributes.attribute
 import io.github.apl_cornell.viaduct.syntax.Host
 import io.github.apl_cornell.viaduct.syntax.Protocol
 import io.github.apl_cornell.viaduct.syntax.ProtocolName

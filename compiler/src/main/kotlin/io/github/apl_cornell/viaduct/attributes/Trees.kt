@@ -1,4 +1,4 @@
-package io.github.apl_cornell.apl.attributes
+package io.github.apl_cornell.viaduct.attributes
 
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.toPersistentList

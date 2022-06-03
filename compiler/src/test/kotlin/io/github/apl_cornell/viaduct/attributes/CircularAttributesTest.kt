@@ -1,4 +1,4 @@
-package io.github.apl_cornell.apl.attributes
+package io.github.apl_cornell.viaduct.attributes
 
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test

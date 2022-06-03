@@ -1,7 +1,7 @@
 package io.github.apl_cornell.viaduct.analysis
 
-import io.github.apl_cornell.apl.attributes.attribute
-import io.github.apl_cornell.apl.attributes.circularAttribute
+import io.github.apl_cornell.viaduct.attributes.attribute
+import io.github.apl_cornell.viaduct.attributes.circularAttribute
 import io.github.apl_cornell.viaduct.backends.cleartext.Local
 import io.github.apl_cornell.viaduct.errors.NoProtocolAnnotationError
 import io.github.apl_cornell.viaduct.selection.CommunicationEvent

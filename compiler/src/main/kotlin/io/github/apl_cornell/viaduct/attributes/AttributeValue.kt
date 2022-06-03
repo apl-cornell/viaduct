@@ -1,4 +1,4 @@
-package io.github.apl_cornell.apl.attributes
+package io.github.apl_cornell.viaduct.attributes
 
 /**
  * A mutable cell that stores a partial result, which can be updated and/or finalized.

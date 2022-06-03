@@ -1,9 +1,9 @@
 package io.github.apl_cornell.viaduct.analysis
 
-import io.github.apl_cornell.apl.attributes.Tree
-import io.github.apl_cornell.apl.attributes.attribute
-import io.github.apl_cornell.apl.attributes.circularAttribute
-import io.github.apl_cornell.apl.attributes.collectedAttribute
+import io.github.apl_cornell.viaduct.attributes.Tree
+import io.github.apl_cornell.viaduct.attributes.attribute
+import io.github.apl_cornell.viaduct.attributes.circularAttribute
+import io.github.apl_cornell.viaduct.attributes.collectedAttribute
 import io.github.apl_cornell.viaduct.errors.IncorrectNumberOfArgumentsError
 import io.github.apl_cornell.viaduct.errors.NameClashError
 import io.github.apl_cornell.viaduct.errors.UndefinedNameError

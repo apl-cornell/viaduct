@@ -1,9 +1,9 @@
 package io.github.apl_cornell.viaduct.syntax.intermediate
 
-import io.github.apl_cornell.apl.attributes.Tree
-import io.github.apl_cornell.apl.attributes.TreeNode
 import io.github.apl_cornell.apl.prettyprinting.Document
 import io.github.apl_cornell.apl.prettyprinting.PrettyPrintable
+import io.github.apl_cornell.viaduct.attributes.Tree
+import io.github.apl_cornell.viaduct.attributes.TreeNode
 import io.github.apl_cornell.viaduct.syntax.HasSourceLocation
 import io.github.apl_cornell.viaduct.syntax.JumpLabel
 import io.github.apl_cornell.viaduct.syntax.Variable

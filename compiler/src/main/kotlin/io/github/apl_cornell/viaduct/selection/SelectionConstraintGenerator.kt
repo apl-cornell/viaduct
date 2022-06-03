@@ -1,9 +1,9 @@
 package io.github.apl_cornell.viaduct.selection
 
-import io.github.apl_cornell.apl.attributes.attribute
 import io.github.apl_cornell.viaduct.analysis.InformationFlowAnalysis
 import io.github.apl_cornell.viaduct.analysis.NameAnalysis
 import io.github.apl_cornell.viaduct.analysis.descendantsIsInstance
+import io.github.apl_cornell.viaduct.attributes.attribute
 import io.github.apl_cornell.viaduct.backends.cleartext.Local
 import io.github.apl_cornell.viaduct.errors.InvalidProtocolAnnotationError
 import io.github.apl_cornell.viaduct.errors.NoApplicableProtocolError

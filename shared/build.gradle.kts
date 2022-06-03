@@ -2,7 +2,7 @@ plugins {
     kotlin("jvm")
 }
 
-val mainPackage = project.group as String
+val mainPackage = (project.group as String).replace('-', '_')
 
 /** Dependencies */
 

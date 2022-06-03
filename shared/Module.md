@@ -1,6 +1,6 @@
 # Module shared
 
-# Package edu.cornell.cs.apl.attributes
+# Package io.github.apl_cornell.apl.attributes
 
 Attribute grammars based on the [Kiama](https://github.com/inkytonik/kiama) library.
 

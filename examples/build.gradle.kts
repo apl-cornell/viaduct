@@ -1,15 +1,15 @@
 plugins {
     kotlin("jvm") version "1.6.21"
-    id("edu.cornell.cs.apl.viaduct")
+    id("io.github.apl-cornell.viaduct")
     application
 
     // Style checking
     id("com.diffplug.spotless") version "6.6.1"
 }
 
-group = "edu.cornell.cs.apl.viaduct"
+group = "io.github.apl-cornell.viaduct"
 
-val mainPackage = "${project.group}.${project.name}"
+val mainPackage = "${(project.group as String).replace('-', '_')}.${project.name}"
 
 java {
     toolchain {

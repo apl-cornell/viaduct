@@ -19,7 +19,7 @@ val versionFromGit = gitVersion()
 allprojects {
     apply(plugin = "com.diffplug.spotless")
 
-    group = "edu.cornell.cs.apl.${rootProject.name}"
+    group = "io.github.apl-cornell.${rootProject.name}"
 
     version = if (versionFromGit == "unspecified") "0.0.0-SNAPSHOT" else versionFromGit
 

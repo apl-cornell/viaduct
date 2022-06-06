@@ -9,7 +9,7 @@ plugins {
     id("org.jetbrains.dokka") version "1.6.21"
 
     // Style checking
-    id("com.diffplug.spotless") version "6.6.1"
+    id("com.diffplug.spotless") version "6.7.0"
 }
 
 // Derive version from Git tags

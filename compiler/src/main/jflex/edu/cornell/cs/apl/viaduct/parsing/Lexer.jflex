@@ -97,6 +97,7 @@ NUM         = ((-)?[1-9][0-9]*) | 0
   /* Delegation syntax */
   "assume"        { return symbol(sym.ASSUME); }
   "trusts"         { return symbol(sym.TRUSTS); }
+  "where"         { return symbol(sym.WHERE); }
 
   /* Types */
   "int"           { return symbol(sym.INT); }

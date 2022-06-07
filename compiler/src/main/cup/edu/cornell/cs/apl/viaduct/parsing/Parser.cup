@@ -176,6 +176,7 @@ terminal MIN, MAX, MUX;
 
 // delegation syntax
 terminal FLOWSTO;
+terminal WHERE;
 
 terminal DECLASSIFY, ENDORSE, DOWNGRADE;
 
@@ -234,7 +235,6 @@ declaration ::=
     HOST:begin host:host COLON label:authority {:
       RESULT = new HostDeclarationNode(host, authority, location(beginleft, authorityright), null);
     :}
-
   | FUNCTION:begin IDENT:funcname
     OPEN_PAREN:paramsbegin parameter_list:params CLOSE_PAREN:paramsclose block:body {:
       RESULT = new FunctionDeclarationNode(
@@ -248,7 +248,8 @@ declaration ::=
   :}
   // delegation syntax
   | FUNCTION:begin IDENT:funcname OPEN_BRACE nonempty_polymorphic_label_param_list:polylabels CLOSE_BRACE
-    OPEN_PAREN:paramsbegin parameter_list:params CLOSE_PAREN:paramsclose block:body {:
+    OPEN_PAREN:paramsbegin parameter_list:params CLOSE_PAREN:paramsclose
+    WHERE OPEN_PAREN  CLOSE_PAREN block:body {:
       RESULT = new FunctionDeclarationNode(
         new Located(new FunctionName(funcname), location(funcnameleft, funcnameright)),
         label,

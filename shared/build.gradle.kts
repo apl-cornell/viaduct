@@ -2,13 +2,13 @@ plugins {
     kotlin("jvm")
 }
 
-val mainPackage = project.group as String
+val mainPackage = (project.group as String).replace('-', '_')
 
 /** Dependencies */
 
 dependencies {
     // Data structures
-    implementation("org.jetbrains.kotlinx:kotlinx-collections-immutable-jvm:0.3.4")
+    implementation("org.jetbrains.kotlinx:kotlinx-collections-immutable-jvm:0.3.5")
 
     // Colored terminal output
     implementation("org.fusesource.jansi:jansi:2.4.0")

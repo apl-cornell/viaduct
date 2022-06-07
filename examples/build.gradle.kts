@@ -1,15 +1,15 @@
 plugins {
-    kotlin("jvm") version embeddedKotlinVersion
-    id("edu.cornell.cs.apl.viaduct")
+    kotlin("jvm") version "1.6.21"
+    id("io.github.apl-cornell.viaduct")
     application
 
     // Style checking
-    id("com.diffplug.spotless") version "6.5.2"
+    id("com.diffplug.spotless") version "6.6.1"
 }
 
-group = "edu.cornell.cs.apl.viaduct"
+group = "io.github.apl-cornell.viaduct"
 
-val mainPackage = "${project.group}.${project.name}"
+val mainPackage = "${(project.group as String).replace('-', '_')}.${project.name}"
 
 java {
     toolchain {
@@ -25,13 +25,13 @@ dependencies {
     implementation("com.github.ajalt.clikt:clikt:3.4.2")
 
     // Logging
-    implementation("io.github.microutils:kotlin-logging:2.1.21")
+    implementation("io.github.microutils:kotlin-logging:2.1.23")
     implementation("org.apache.logging.log4j:log4j-core:2.17.2")
     implementation("org.apache.logging.log4j:log4j-slf4j-impl:2.17.2")
 
     // Testing
     testImplementation("${project.group}:test-utilities")
-    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.1")
+    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.2")
 }
 
 application {
@@ -86,11 +86,14 @@ abstract class GenerateViaductProgramList : DefaultTask() {
     @TaskAction
     fun generate() {
         val source = sourceDirectory.get().asFile
-        val programs = source.walk().filter { it.isFile }.map {
-            val packageName = it.parentFile.toRelativeString(source).replace(File.separator, ".")
-            val className = it.nameWithoutExtension
-            if (packageName.isEmpty()) className else "$packageName.$className"
-        }.sorted()
+        val programs = source.walk()
+            .filter { it.isFile }
+            .filter { it.extension == "via" }
+            .map {
+                val packageName = it.parentFile.toRelativeString(source).replace(File.separator, ".")
+                val className = it.nameWithoutExtension
+                if (packageName.isEmpty()) className else "$packageName.$className"
+            }.sorted()
 
         val packageDirectory = outputDirectory.get().asFile.resolve(outputPackage.get().replace(".", File.separator))
         val outputFile = packageDirectory.resolve("ViaductPrograms.kt")

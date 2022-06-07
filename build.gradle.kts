@@ -1,6 +1,6 @@
 plugins {
-    kotlin("multiplatform") version embeddedKotlinVersion apply false
-    kotlin("plugin.serialization") version embeddedKotlinVersion apply false
+    kotlin("multiplatform") version "1.6.21" apply false
+    kotlin("plugin.serialization") version "1.6.21" apply false
 
     // Versioning
     id("com.palantir.git-version") version "0.15.0"
@@ -9,7 +9,7 @@ plugins {
     id("org.jetbrains.dokka") version "1.6.21"
 
     // Style checking
-    id("com.diffplug.spotless") version "6.5.2"
+    id("com.diffplug.spotless") version "6.6.1"
 }
 
 // Derive version from Git tags
@@ -19,7 +19,7 @@ val versionFromGit = gitVersion()
 allprojects {
     apply(plugin = "com.diffplug.spotless")
 
-    group = "edu.cornell.cs.apl.${rootProject.name}"
+    group = "io.github.apl-cornell.${rootProject.name}"
 
     version = if (versionFromGit == "unspecified") "0.0.0-SNAPSHOT" else versionFromGit
 
@@ -69,7 +69,7 @@ subprojects {
 
         dependencies {
             // Logging
-            "implementation"("io.github.microutils:kotlin-logging:2.1.0")
+            "implementation"("io.github.microutils:kotlin-logging:2.1.23")
             "testImplementation"("org.apache.logging.log4j:log4j-core:2.17.2")
             "testImplementation"("org.apache.logging.log4j:log4j-slf4j-impl:2.17.2")
         }

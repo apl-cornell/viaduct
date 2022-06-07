@@ -18,7 +18,7 @@ dependencies {
     implementation(project(":runtime"))
 
     // Data structures
-    implementation("org.jetbrains.kotlinx:kotlinx-collections-immutable-jvm:0.3.4")
+    implementation("org.jetbrains.kotlinx:kotlinx-collections-immutable-jvm:0.3.5")
     implementation("com.uchuhimo:kotlinx-bimap:1.2")
 
     // Graphs
@@ -32,7 +32,7 @@ dependencies {
     implementation("com.github.vbmacher:java-cup-runtime:11b-20160615-1")
 
     // Code generation
-    api("com.squareup:kotlinpoet:1.10.2") {
+    api("com.squareup:kotlinpoet:1.11.0") {
         exclude(module = "kotlin-reflect")
     }
 

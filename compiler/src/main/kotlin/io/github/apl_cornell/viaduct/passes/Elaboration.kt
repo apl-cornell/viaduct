@@ -166,9 +166,11 @@ private class FunctionElaborator(val nameGenerator: FreshNameGenerator) {
 
         return IFunctionDeclarationNode(
             functionDecl.name,
+            functionDecl.polymorphicLabels,
             functionDecl.pcLabel?.renameObjects(objectRenames),
             Arguments(elaboratedParameters, functionDecl.parameters.sourceLocation),
             StatementElaborator(nameGenerator, objectRenames = objectRenames).elaborate(functionDecl.body),
+            functionDecl.polymorphicConstraints,
             functionDecl.sourceLocation
         )
     }

@@ -1,7 +1,7 @@
 package io.github.apl_cornell.viaduct.backends.aby
 
+import edu.cornell.cs.apl.viaduct.passes.canMux
 import io.github.apl_cornell.viaduct.analysis.NameAnalysis
-import io.github.apl_cornell.viaduct.passes.canMux
 import io.github.apl_cornell.viaduct.selection.FunctionVariable
 import io.github.apl_cornell.viaduct.selection.Implies
 import io.github.apl_cornell.viaduct.selection.Literal

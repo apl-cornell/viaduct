@@ -30,6 +30,7 @@ import io.github.apl_cornell.viaduct.syntax.intermediate.FunctionArgumentNode as
 import io.github.apl_cornell.viaduct.syntax.intermediate.FunctionCallNode as IFunctionCallNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.FunctionDeclarationNode as IFunctionDeclarationNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.HostDeclarationNode as IHostDeclarationNode
+import io.github.apl_cornell.viaduct.syntax.intermediate.DelegationDeclarationNode as IDelegationDeclarationNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.IfNode as IIfNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.InfiniteLoopNode as IInfiniteLoopNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.InputNode as IInputNode
@@ -64,6 +65,7 @@ import io.github.apl_cornell.viaduct.syntax.surface.FunctionArgumentNode as SFun
 import io.github.apl_cornell.viaduct.syntax.surface.FunctionCallNode as SFunctionCallNode
 import io.github.apl_cornell.viaduct.syntax.surface.FunctionDeclarationNode as SFunctionDeclarationNode
 import io.github.apl_cornell.viaduct.syntax.surface.HostDeclarationNode as SHostDeclarationNode
+import io.github.apl_cornell.viaduct.syntax.surface.DelegationDeclarationNode as SDelegationDeclarationNode
 import io.github.apl_cornell.viaduct.syntax.surface.IfNode as SIfNode
 import io.github.apl_cornell.viaduct.syntax.surface.InfiniteLoopNode as SInfiniteLoopNode
 import io.github.apl_cornell.viaduct.syntax.surface.InputNode as SInputNode
@@ -113,6 +115,17 @@ fun SProgramNode.elaborated(): IProgramNode {
             is SFunctionDeclarationNode -> {
                 functions = functions.put(declaration.name, true)
                 declarations.add(FunctionElaborator(nameGenerator).elaborate(declaration))
+            }
+
+            is SDelegationDeclarationNode -> {
+                declarations.add(
+                    IDelegationDeclarationNode(
+                        declaration.node1,
+                        declaration.node2,
+                        declaration.delegationKind,
+                        declaration.sourceLocation
+                    )
+                )
             }
         }
     }

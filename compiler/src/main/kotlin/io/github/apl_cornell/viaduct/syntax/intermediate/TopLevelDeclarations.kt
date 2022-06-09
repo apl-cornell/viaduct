@@ -1,17 +1,16 @@
 package io.github.apl_cornell.viaduct.syntax.intermediate
 
-import edu.cornell.cs.apl.viaduct.security.LabelParameter
-import edu.cornell.cs.apl.viaduct.syntax.Arguments
-import edu.cornell.cs.apl.viaduct.syntax.FunctionNameNode
-import edu.cornell.cs.apl.viaduct.syntax.HostNode
-import edu.cornell.cs.apl.viaduct.syntax.LabelNode
-import edu.cornell.cs.apl.viaduct.syntax.Located
-import edu.cornell.cs.apl.viaduct.syntax.ObjectTypeNode
-import edu.cornell.cs.apl.viaduct.syntax.ObjectVariable
-import edu.cornell.cs.apl.viaduct.syntax.ObjectVariableNode
-import edu.cornell.cs.apl.viaduct.syntax.ParameterDirection
-import edu.cornell.cs.apl.viaduct.syntax.ProtocolNode
-import edu.cornell.cs.apl.viaduct.syntax.SourceLocation
+import io.github.apl_cornell.viaduct.syntax.Arguments
+import io.github.apl_cornell.viaduct.syntax.DelegationKind
+import io.github.apl_cornell.viaduct.syntax.FunctionNameNode
+import io.github.apl_cornell.viaduct.syntax.HostNode
+import io.github.apl_cornell.viaduct.syntax.LabelNode
+import io.github.apl_cornell.viaduct.syntax.ObjectTypeNode
+import io.github.apl_cornell.viaduct.syntax.ObjectVariable
+import io.github.apl_cornell.viaduct.syntax.ObjectVariableNode
+import io.github.apl_cornell.viaduct.syntax.ParameterDirection
+import io.github.apl_cornell.viaduct.syntax.ProtocolNode
+import io.github.apl_cornell.viaduct.syntax.SourceLocation
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.toPersistentList
 
@@ -90,9 +89,11 @@ class ParameterNode(
  */
 class FunctionDeclarationNode(
     val name: FunctionNameNode,
+    val polymorphicLabels: List<LabelNode>,
     val pcLabel: LabelNode?,
     val parameters: Arguments<ParameterNode>,
     val body: BlockNode,
+    val polymorphicConstraints : List<DelegationDeclarationNode>,
     override val sourceLocation: SourceLocation
 ) : TopLevelDeclarationNode() {
     override val children: Iterable<Node>
@@ -101,19 +102,22 @@ class FunctionDeclarationNode(
     override fun toSurfaceNode(metadata: Metadata): io.github.apl_cornell.viaduct.syntax.surface.FunctionDeclarationNode =
         io.github.apl_cornell.viaduct.syntax.surface.FunctionDeclarationNode(
             name,
+            polymorphicLabels,
             pcLabel,
             Arguments(
                 parameters.map { it.toSurfaceNode(metadata) },
                 parameters.sourceLocation
             ),
             body.toSurfaceNode(metadata),
+            polymorphicConstraints,
             sourceLocation,
             comment = metadataAsComment(metadata)
         )
 
     override fun copy(children: List<Node>): Node {
         val parameters = Arguments(children.dropLast(1).map { it as ParameterNode }, parameters.sourceLocation)
-        return FunctionDeclarationNode(name, pcLabel, parameters, children.last() as BlockNode, sourceLocation)
+        return FunctionDeclarationNode(
+            name, polymorphicLabels, pcLabel, parameters, children.last() as BlockNode, polymorphicConstraints, sourceLocation)
     }
 
     fun getParameter(name: ObjectVariable): ParameterNode? =
@@ -131,18 +135,20 @@ class FunctionDeclarationNode(
 class DelegationDeclarationNode(
     val node1: LabelNode,
     val node2: LabelNode,
+    val delegationKind: DelegationKind,
     override val sourceLocation: SourceLocation
 ) : TopLevelDeclarationNode() {
     override val children: Iterable<BlockNode>
         get() = listOf()
-    override fun toSurfaceNode(metadata: Metadata): edu.cornell.cs.apl.viaduct.syntax.surface.DelegationDeclarationNode =
-        edu.cornell.cs.apl.viaduct.syntax.surface.DelegationDeclarationNode(
+    override fun toSurfaceNode(metadata: Metadata):  io.github.apl_cornell.viaduct.syntax.surface.DelegationDeclarationNode =
+        io.github.apl_cornell.viaduct.syntax.surface.DelegationDeclarationNode(
             node1,
             node2,
+            delegationKind,
             sourceLocation,
             comment = metadataAsComment(metadata)
         )
 
     override fun copy(children: List<Node>): DelegationDeclarationNode =
-        DelegationDeclarationNode(node1, node2, sourceLocation)
+        DelegationDeclarationNode(node1, node2, delegationKind, sourceLocation)
 }

@@ -1,33 +1,17 @@
-package edu.cornell.cs.apl.viaduct.analysis
+/*package edu.cornell.cs.apl.viaduct.analysis
 
-import edu.cornell.cs.apl.attributes.Tree
-import edu.cornell.cs.apl.attributes.attribute
-import edu.cornell.cs.apl.viaduct.algebra.FreeDistributiveLattice
-import edu.cornell.cs.apl.viaduct.errors.InformationFlowError
-import edu.cornell.cs.apl.viaduct.security.Label
-import edu.cornell.cs.apl.viaduct.security.Principal
-import edu.cornell.cs.apl.viaduct.security.solver2.Constraint
-import edu.cornell.cs.apl.viaduct.security.solver2.ConstraintSystem
-import edu.cornell.cs.apl.viaduct.security.solver2.Term
-import edu.cornell.cs.apl.viaduct.security.solver2.flowsTo
-import edu.cornell.cs.apl.viaduct.security.solver2.term
-import edu.cornell.cs.apl.viaduct.syntax.HasSourceLocation
-import edu.cornell.cs.apl.viaduct.syntax.Variable
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.BlockNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.DeclassificationNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.EndorsementNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.ExpressionNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.FunctionArgumentNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.FunctionDeclarationNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.IfNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.InfiniteLoopNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.LiteralNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.Node
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.OperatorApplicationNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.QueryNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.ReadNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.VariableDeclarationNode
+import io.github.apl_cornell.viaduct.algebra.FreeDistributiveLattice
+import io.github.apl_cornell.viaduct.algebra.solver.ConstraintSystem
+import io.github.apl_cornell.viaduct.analysis.NameAnalysis
+import io.github.apl_cornell.viaduct.attributes.Tree
+import io.github.apl_cornell.viaduct.errors.InformationFlowError
+import io.github.apl_cornell.viaduct.security.Principal
+import io.github.apl_cornell.viaduct.syntax.intermediate.DeclassificationNode
+import io.github.apl_cornell.viaduct.syntax.intermediate.EndorsementNode
+import io.github.apl_cornell.viaduct.syntax.intermediate.FunctionArgumentNode
+import io.github.apl_cornell.viaduct.syntax.intermediate.Node
+import io.github.apl_cornell.viaduct.syntax.intermediate.ProgramNode
+import io.github.apl_cornell.viaduct.syntax.intermediate.VariableDeclarationNode
 import java.io.Writer
 
 private typealias LabelConstant = FreeDistributiveLattice<Principal>
@@ -502,3 +486,4 @@ class InformationFlowAnalysis2 private constructor(
         override fun get(program: ProgramNode): InformationFlowAnalysis2 = program.cached(::construct)
     }
 }
+*/

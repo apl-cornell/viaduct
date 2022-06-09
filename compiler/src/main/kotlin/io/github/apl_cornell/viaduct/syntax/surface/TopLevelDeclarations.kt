@@ -6,6 +6,7 @@ import io.github.apl_cornell.apl.prettyprinting.plus
 import io.github.apl_cornell.apl.prettyprinting.times
 import io.github.apl_cornell.apl.prettyprinting.tupled
 import io.github.apl_cornell.viaduct.syntax.Arguments
+import io.github.apl_cornell.viaduct.syntax.DelegationKind
 import io.github.apl_cornell.viaduct.syntax.FunctionNameNode
 import io.github.apl_cornell.viaduct.syntax.HostNode
 import io.github.apl_cornell.viaduct.syntax.LabelNode
@@ -15,6 +16,7 @@ import io.github.apl_cornell.viaduct.syntax.ParameterDirection
 import io.github.apl_cornell.viaduct.syntax.ProtocolNode
 import io.github.apl_cornell.viaduct.syntax.SourceLocation
 import io.github.apl_cornell.viaduct.syntax.datatypes.MutableCell
+import io.github.apl_cornell.viaduct.syntax.intermediate.DelegationDeclarationNode
 
 /** A declaration at the top level of a file. */
 sealed class TopLevelDeclarationNode : Node()
@@ -63,16 +65,18 @@ class ParameterNode(
  */
 class FunctionDeclarationNode(
     val name: FunctionNameNode,
+    val polymorphicLabels: List<LabelNode>,
     val pcLabel: LabelNode?,
     val parameters: Arguments<ParameterNode>,
     val body: BlockNode,
+    val polymorphicConstraints : List<DelegationDeclarationNode>,
     override val sourceLocation: SourceLocation,
     override val comment: String? = null
 ) : TopLevelDeclarationNode() {
     override fun toDocumentWithoutComment(): Document =
-        keyword("fun") * name +
+        keyword("fun") * name + polymorphicLabels.braced() +
             (pcLabel?.let { listOf(it).braced() } ?: Document("")) +
-            parameters.tupled() * body
+            parameters.tupled() * polymorphicConstraints.braced() * body
 }
 
 
@@ -82,15 +86,19 @@ class FunctionDeclarationNode(
  * Declaration of a delegations.
  * @param node1 The label that acts for the other label.
  * @param node2 The other label.
- * @param is_mutual True iff the delegation is on both directions.
+ * @param delegationKind is either IFC or AUTHORITY depending on what kind it is.
  */
 class DelegationDeclarationNode(
     val node1: LabelNode,
     val node2: LabelNode,
+    val delegationKind: DelegationKind,
     override val sourceLocation: SourceLocation,
     override val comment: String?
 ) : TopLevelDeclarationNode() {
     override fun toDocumentWithoutComment(): Document =
         keyword("delegation:") * listOf(node1).braced() *
-            "=>" * listOf(node2).braced()
+            (when (delegationKind) {
+               DelegationKind.AUTHORITY -> "=>"
+                DelegationKind.IFC -> ":>"
+            }) * listOf(node2).braced()
 }

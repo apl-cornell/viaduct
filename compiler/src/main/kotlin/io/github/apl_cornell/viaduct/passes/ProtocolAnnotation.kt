@@ -1,20 +1,20 @@
 package io.github.apl_cornell.viaduct.passes
 
-import edu.cornell.cs.apl.viaduct.analysis.NameAnalysis
-import edu.cornell.cs.apl.viaduct.selection.ProtocolAssignment
-import edu.cornell.cs.apl.viaduct.syntax.Arguments
-import edu.cornell.cs.apl.viaduct.syntax.Located
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.BlockNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.DeclarationNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.DelegationDeclarationNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.FunctionDeclarationNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.HostDeclarationNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.IfNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.InfiniteLoopNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.LetNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.ParameterNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.StatementNode
+import io.github.apl_cornell.viaduct.analysis.NameAnalysis
+import io.github.apl_cornell.viaduct.selection.ProtocolAssignment
+import io.github.apl_cornell.viaduct.syntax.Arguments
+import io.github.apl_cornell.viaduct.syntax.Located
+import io.github.apl_cornell.viaduct.syntax.intermediate.BlockNode
+import io.github.apl_cornell.viaduct.syntax.intermediate.DeclarationNode
+import io.github.apl_cornell.viaduct.syntax.intermediate.DelegationDeclarationNode
+import io.github.apl_cornell.viaduct.syntax.intermediate.FunctionDeclarationNode
+import io.github.apl_cornell.viaduct.syntax.intermediate.HostDeclarationNode
+import io.github.apl_cornell.viaduct.syntax.intermediate.IfNode
+import io.github.apl_cornell.viaduct.syntax.intermediate.InfiniteLoopNode
+import io.github.apl_cornell.viaduct.syntax.intermediate.LetNode
+import io.github.apl_cornell.viaduct.syntax.intermediate.ParameterNode
+import io.github.apl_cornell.viaduct.syntax.intermediate.ProgramNode
+import io.github.apl_cornell.viaduct.syntax.intermediate.StatementNode
 
 /** Annotate parameters, declarations, and let nodes with protocols. */
 fun ProgramNode.annotateWithProtocols(assignment: ProtocolAssignment): ProgramNode =
@@ -91,6 +91,7 @@ private class ProtocolAnnotator(val program: ProgramNode, val selection: Protoco
                     is FunctionDeclarationNode ->
                         FunctionDeclarationNode(
                             decl.name,
+                            decl.polymorphicLabels,
                             decl.pcLabel,
                             Arguments(
                                 decl.parameters.map { param ->
@@ -108,6 +109,7 @@ private class ProtocolAnnotator(val program: ProgramNode, val selection: Protoco
                                 decl.parameters.sourceLocation
                             ),
                             run(decl.body) as BlockNode,
+                            decl.polymorphicConstraints,
                             decl.sourceLocation
                         )
                 }

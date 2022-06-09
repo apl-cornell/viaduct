@@ -1,50 +1,51 @@
 package edu.cornell.cs.apl.viaduct.passes
 
-import edu.cornell.cs.apl.viaduct.analysis.NameAnalysis
-import edu.cornell.cs.apl.viaduct.analysis.freshVariableNameGenerator
-import edu.cornell.cs.apl.viaduct.errors.UnknownDatatypeError
-import edu.cornell.cs.apl.viaduct.errors.UnknownMethodError
-import edu.cornell.cs.apl.viaduct.selection.ProtocolAssignment
-import edu.cornell.cs.apl.viaduct.syntax.Arguments
-import edu.cornell.cs.apl.viaduct.syntax.Located
-import edu.cornell.cs.apl.viaduct.syntax.Operator
-import edu.cornell.cs.apl.viaduct.syntax.Protocol
-import edu.cornell.cs.apl.viaduct.syntax.Temporary
-import edu.cornell.cs.apl.viaduct.syntax.TemporaryNode
-import edu.cornell.cs.apl.viaduct.syntax.datatypes.Get
-import edu.cornell.cs.apl.viaduct.syntax.datatypes.Modify
-import edu.cornell.cs.apl.viaduct.syntax.datatypes.MutableCell
-import edu.cornell.cs.apl.viaduct.syntax.datatypes.Set
-import edu.cornell.cs.apl.viaduct.syntax.datatypes.Vector
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.AssertionNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.AtomicExpressionNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.BlockNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.BreakNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.CommunicationNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.DeclarationNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.DelegationDeclarationNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.FunctionCallNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.FunctionDeclarationNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.HostDeclarationNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.IfNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.InfiniteLoopNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.LetNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.LiteralNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.OperatorApplicationNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutParameterInitializationNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutputNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.ParameterNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.QueryNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.ReadNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.StatementNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.TopLevelDeclarationNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.UpdateNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.deepCopy
-import edu.cornell.cs.apl.viaduct.syntax.operators.And
-import edu.cornell.cs.apl.viaduct.syntax.operators.Mux
-import edu.cornell.cs.apl.viaduct.syntax.operators.Not
-import edu.cornell.cs.apl.viaduct.util.FreshNameGenerator
+import io.github.apl_cornell.viaduct.analysis.NameAnalysis
+import io.github.apl_cornell.viaduct.analysis.freshVariableNameGenerator
+import io.github.apl_cornell.viaduct.errors.UnknownDatatypeError
+import io.github.apl_cornell.viaduct.errors.UnknownMethodError
+import io.github.apl_cornell.viaduct.passes.ProgramPostprocessor
+import io.github.apl_cornell.viaduct.selection.ProtocolAssignment
+import io.github.apl_cornell.viaduct.syntax.Arguments
+import io.github.apl_cornell.viaduct.syntax.Located
+import io.github.apl_cornell.viaduct.syntax.Operator
+import io.github.apl_cornell.viaduct.syntax.Protocol
+import io.github.apl_cornell.viaduct.syntax.Temporary
+import io.github.apl_cornell.viaduct.syntax.TemporaryNode
+import io.github.apl_cornell.viaduct.syntax.datatypes.Get
+import io.github.apl_cornell.viaduct.syntax.datatypes.Modify
+import io.github.apl_cornell.viaduct.syntax.datatypes.MutableCell
+import io.github.apl_cornell.viaduct.syntax.datatypes.Vector
+import io.github.apl_cornell.viaduct.syntax.intermediate.AssertionNode
+import io.github.apl_cornell.viaduct.syntax.intermediate.AtomicExpressionNode
+import io.github.apl_cornell.viaduct.syntax.intermediate.BlockNode
+import io.github.apl_cornell.viaduct.syntax.intermediate.BreakNode
+import io.github.apl_cornell.viaduct.syntax.intermediate.CommunicationNode
+import io.github.apl_cornell.viaduct.syntax.intermediate.DeclarationNode
+import io.github.apl_cornell.viaduct.syntax.intermediate.DelegationDeclarationNode
+import io.github.apl_cornell.viaduct.syntax.intermediate.FunctionCallNode
+import io.github.apl_cornell.viaduct.syntax.intermediate.FunctionDeclarationNode
+import io.github.apl_cornell.viaduct.syntax.intermediate.HostDeclarationNode
+import io.github.apl_cornell.viaduct.syntax.intermediate.IfNode
+import io.github.apl_cornell.viaduct.syntax.intermediate.InfiniteLoopNode
+import io.github.apl_cornell.viaduct.syntax.intermediate.LetNode
+import io.github.apl_cornell.viaduct.syntax.intermediate.LiteralNode
+import io.github.apl_cornell.viaduct.syntax.intermediate.OperatorApplicationNode
+import io.github.apl_cornell.viaduct.syntax.intermediate.OutParameterInitializationNode
+import io.github.apl_cornell.viaduct.syntax.intermediate.OutputNode
+import io.github.apl_cornell.viaduct.syntax.intermediate.ParameterNode
+import io.github.apl_cornell.viaduct.syntax.intermediate.ProgramNode
+import io.github.apl_cornell.viaduct.syntax.intermediate.QueryNode
+import io.github.apl_cornell.viaduct.syntax.intermediate.ReadNode
+import io.github.apl_cornell.viaduct.syntax.intermediate.StatementNode
+import io.github.apl_cornell.viaduct.syntax.intermediate.TopLevelDeclarationNode
+import io.github.apl_cornell.viaduct.syntax.intermediate.UpdateNode
+import io.github.apl_cornell.viaduct.syntax.intermediate.deepCopy
+import io.github.apl_cornell.viaduct.syntax.operators.And
+import io.github.apl_cornell.viaduct.syntax.operators.Mux
+import io.github.apl_cornell.viaduct.syntax.operators.Not
+import io.github.apl_cornell.viaduct.util.FreshNameGenerator
+import io.github.apl_cornell.viaduct.syntax.datatypes.Set
 
 fun StatementNode.canMux(): Boolean =
     when (this) {
@@ -91,6 +92,7 @@ class MuxPostprocessor(
                     is FunctionDeclarationNode -> {
                         FunctionDeclarationNode(
                             declaration.name,
+                            declaration.polymorphicLabels,
                             declaration.pcLabel,
                             Arguments(
                                 declaration.parameters.map { it.deepCopy() as ParameterNode },
@@ -101,6 +103,7 @@ class MuxPostprocessor(
                                 nameAnalysis,
                                 declaration.freshVariableNameGenerator()
                             ),
+                            declaration.polymorphicConstraints,
                             declaration.sourceLocation
                         )
                     }

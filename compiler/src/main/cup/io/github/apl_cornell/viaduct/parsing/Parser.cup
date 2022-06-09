@@ -144,10 +144,11 @@ nonterminal Pair<Located, Located> protocol_labelled_argument;
 nonterminal Value protocol_argument;
 
 // delegation syntax nonterminals
-nonterminal DelegationDeclarationNode delegation_decl;
+nonterminal DelegationDeclarationNode delegation_decl, ifc_delegation;
 nonterminal HostDeclarationNode host_decl;
 nonterminal LabelNode label_param;
-nonterminal List<LabelNode> nonempty_polymorphic_label_param_list;
+nonterminal List<LabelNode> polymorphic_label_param_list, nonempty_polymorphic_label_param_list;
+nonterminal List<DelegationDeclarationNode> ifc_delegation_list, nonempty_ifc_delegation_list;
 
 terminal String IDENT, CAP_IDENT;
 terminal String TMP_IDENT;
@@ -232,10 +233,10 @@ declaration_list ::=
   ;
 
 declaration ::=
-    HOST:begin host:host COLON label:authority {:
+   /* HOST:begin host:host COLON label:authority {:
       RESULT = new HostDeclarationNode(host, authority, location(beginleft, authorityright), null);
     :}
-  | FUNCTION:begin IDENT:funcname
+   | FUNCTION:begin IDENT:funcname
     OPEN_PAREN:paramsbegin parameter_list:params CLOSE_PAREN:paramsclose block:body {:
       RESULT = new FunctionDeclarationNode(
         new Located(new FunctionName(funcname), location(funcnameleft, funcnameright)),
@@ -245,16 +246,18 @@ declaration ::=
         location(beginleft, bodyright),
         null
       );
-  :}
+  :}*/
   // delegation syntax
-  | FUNCTION:begin IDENT:funcname OPEN_BRACE nonempty_polymorphic_label_param_list:polylabels CLOSE_BRACE
+  FUNCTION:begin IDENT:funcname OPEN_BRACE:polybegin polymorphic_label_param_list:polylabels CLOSE_BRACE:polyend
     OPEN_PAREN:paramsbegin parameter_list:params CLOSE_PAREN:paramsclose
-    WHERE OPEN_PAREN  CLOSE_PAREN block:body {:
+    WHERE OPEN_PAREN ifc_delegation_list CLOSE_PAREN block:body {:
       RESULT = new FunctionDeclarationNode(
         new Located(new FunctionName(funcname), location(funcnameleft, funcnameright)),
+        polymorphic_label_param_list,
         label,
         new Arguments(params, location(paramsbeginleft, paramsbeginright)),
         body,
+        ifc_delegation_list,
         location(beginleft, bodyright),
         null
       );
@@ -274,11 +277,47 @@ declaration ::=
   :}*/
   | ASSUME:begin COLON label:label1 TRUSTS label:label2 {:
       RESULT = new DelegationDeclarationNode(
-        label1, label2, location(beginleft, label2right), null);
+        label1, label2, DelegationKind.AUTHORITY, location(beginleft, label2right), null);
   :}
   ;
 
 //delegation syntax for polymorphic label list
+ifc_delegation_list ::=
+    nonempty_ifc_delegation_list:delegations {:
+      RESULT = delegations;
+    :}
+
+  | /* empty */ {:
+      RESULT = CollectionsKt.mutableListOf();
+    :}
+  ;
+nonempty_ifc_delegation_list ::=
+    nonempty_ifc_delegation_list:delegations COMMA ifc_delegation:delegation {:
+      delegations.add(delegation);
+      RESULT = delegations;
+    :}
+  | ifc_delegation:delegation {:
+      RESULT = CollectionsKt.mutableListOf(delegation);
+    :}
+    ;
+
+ifc_delegation ::=
+  label_expr:label1 FLOWSTO label_expr:label2 {:
+      RESULT = new DelegationDeclarationNode(
+        label1, label2, DelegationKind.IFC, location(label1left, label2right), null);
+  :}
+  ;
+
+polymorphic_label_param_list ::=
+    nonempty_polymorphic_label_param_list:labels {:
+      RESULT = labels;
+    :}
+
+  | /* empty */ {:
+      RESULT = CollectionsKt.mutableListOf();
+    :}
+  ;
+
 nonempty_polymorphic_label_param_list ::=
     nonempty_polymorphic_label_param_list: params COMMA label_param: label {:
       params.add(label);

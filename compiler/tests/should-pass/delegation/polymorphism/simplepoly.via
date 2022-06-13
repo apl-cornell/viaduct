@@ -1,10 +1,10 @@
-fun f{X, Y, Z}(a: int{X}, b: int{Y}, c: out int{Z}) {
+fun{X, Y, Z} f(a: int{X}, b: int{Y}, c: out int{Z}) {
   out c = a + b;
 }
 
 fun main() {
-  val x = input from alice;
-  val y = input from bob;
+  val x : int = input int from alice;
+  val y : int = input int from bob;
   f(x, y, val z);
 }
 

@@ -7,6 +7,7 @@ import io.github.apl_cornell.apl.prettyprinting.times
 import io.github.apl_cornell.apl.prettyprinting.tupled
 import io.github.apl_cornell.viaduct.syntax.Arguments
 import io.github.apl_cornell.viaduct.syntax.DelegationKind
+import io.github.apl_cornell.viaduct.syntax.DelegationProjection
 import io.github.apl_cornell.viaduct.syntax.FunctionNameNode
 import io.github.apl_cornell.viaduct.syntax.HostNode
 import io.github.apl_cornell.viaduct.syntax.LabelNode
@@ -69,12 +70,12 @@ class FunctionDeclarationNode(
     val pcLabel: LabelNode?,
     val parameters: Arguments<ParameterNode>,
     val body: BlockNode,
-    val polymorphicConstraints : List<DelegationDeclarationNode>,
+    val polymorphicConstraints: List<DelegationDeclarationNode>,
     override val sourceLocation: SourceLocation,
     override val comment: String? = null
 ) : TopLevelDeclarationNode() {
     override fun toDocumentWithoutComment(): Document =
-        keyword("fun") * name + polymorphicLabels.braced() +
+        keyword("fun") * polymorphicLabels.braced() + name +
             (pcLabel?.let { listOf(it).braced() } ?: Document("")) +
             parameters.tupled() * polymorphicConstraints.braced() * body
 }
@@ -92,13 +93,14 @@ class DelegationDeclarationNode(
     val node1: LabelNode,
     val node2: LabelNode,
     val delegationKind: DelegationKind,
+    val delegationProjection: DelegationProjection,
     override val sourceLocation: SourceLocation,
     override val comment: String?
 ) : TopLevelDeclarationNode() {
     override fun toDocumentWithoutComment(): Document =
         keyword("delegation:") * listOf(node1).braced() *
             (when (delegationKind) {
-               DelegationKind.AUTHORITY -> "=>"
+                DelegationKind.AUTHORITY -> "=>"
                 DelegationKind.IFC -> ":>"
-            }) * listOf(node2).braced()
+            }) * listOf(node2).braced() * "for" * delegationProjection
 }

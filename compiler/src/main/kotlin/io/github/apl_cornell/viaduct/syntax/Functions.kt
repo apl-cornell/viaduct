@@ -41,3 +41,19 @@ enum class DelegationKind : PrettyPrintable {
         override fun toDocument(): Document = Document("Authority Delegation")
     }
 }
+
+/**
+ * Specifies whether a delegation is an information flow delegation
+ * or an authority delegation.
+ */
+enum class DelegationProjection : PrettyPrintable {
+    INTEGRITY {
+        override fun toDocument(): Document = Document("Integrity")
+    },
+    CONFIDENTIALITY {
+        override fun toDocument(): Document = Document("Confidentiality")
+    },
+    BOTH {
+        override fun toDocument(): Document = Document("Both Projections")
+    }
+}

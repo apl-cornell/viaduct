@@ -1,6 +1,10 @@
 package io.github.apl_cornell.viaduct.parsing;
 
 import io.github.apl_cornell.viaduct.errors.IllegalCharacterError;
+import io.github.apl_cornell.viaduct.parsing.SourceFile;
+import io.github.apl_cornell.viaduct.parsing.SourcePosition;
+import io.github.apl_cornell.viaduct.parsing.SourceRange;
+import io.github.apl_cornell.viaduct.parsing.sym;
 
 import java.io.Reader;
 

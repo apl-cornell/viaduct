@@ -2,6 +2,7 @@ package io.github.apl_cornell.viaduct.syntax.intermediate
 
 import io.github.apl_cornell.viaduct.syntax.Arguments
 import io.github.apl_cornell.viaduct.syntax.DelegationKind
+import io.github.apl_cornell.viaduct.syntax.DelegationProjection
 import io.github.apl_cornell.viaduct.syntax.FunctionNameNode
 import io.github.apl_cornell.viaduct.syntax.HostNode
 import io.github.apl_cornell.viaduct.syntax.LabelNode
@@ -93,7 +94,7 @@ class FunctionDeclarationNode(
     val pcLabel: LabelNode?,
     val parameters: Arguments<ParameterNode>,
     val body: BlockNode,
-    val polymorphicConstraints : List<DelegationDeclarationNode>,
+    val polymorphicConstraints: List<DelegationDeclarationNode>,
     override val sourceLocation: SourceLocation
 ) : TopLevelDeclarationNode() {
     override val children: Iterable<Node>
@@ -117,7 +118,14 @@ class FunctionDeclarationNode(
     override fun copy(children: List<Node>): Node {
         val parameters = Arguments(children.dropLast(1).map { it as ParameterNode }, parameters.sourceLocation)
         return FunctionDeclarationNode(
-            name, polymorphicLabels, pcLabel, parameters, children.last() as BlockNode, polymorphicConstraints, sourceLocation)
+            name,
+            polymorphicLabels,
+            pcLabel,
+            parameters,
+            children.last() as BlockNode,
+            polymorphicConstraints,
+            sourceLocation
+        )
     }
 
     fun getParameter(name: ObjectVariable): ParameterNode? =
@@ -136,19 +144,22 @@ class DelegationDeclarationNode(
     val node1: LabelNode,
     val node2: LabelNode,
     val delegationKind: DelegationKind,
+    val delegationProjection: DelegationProjection,
     override val sourceLocation: SourceLocation
 ) : TopLevelDeclarationNode() {
     override val children: Iterable<BlockNode>
         get() = listOf()
-    override fun toSurfaceNode(metadata: Metadata):  io.github.apl_cornell.viaduct.syntax.surface.DelegationDeclarationNode =
+
+    override fun toSurfaceNode(metadata: Metadata): io.github.apl_cornell.viaduct.syntax.surface.DelegationDeclarationNode =
         io.github.apl_cornell.viaduct.syntax.surface.DelegationDeclarationNode(
             node1,
             node2,
             delegationKind,
+            delegationProjection,
             sourceLocation,
             comment = metadataAsComment(metadata)
         )
 
     override fun copy(children: List<Node>): DelegationDeclarationNode =
-        DelegationDeclarationNode(node1, node2, delegationKind, sourceLocation)
+        DelegationDeclarationNode(node1, node2, delegationKind, delegationProjection, sourceLocation)
 }

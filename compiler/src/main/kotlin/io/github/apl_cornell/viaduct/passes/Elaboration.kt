@@ -23,6 +23,7 @@ import io.github.apl_cornell.viaduct.syntax.intermediate.BlockNode as IBlockNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.BreakNode as IBreakNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.DeclarationNode as IDeclarationNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.DeclassificationNode as IDeclassificationNode
+import io.github.apl_cornell.viaduct.syntax.intermediate.DelegationDeclarationNode as IDelegationDeclarationNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.EndorsementNode as IEndorsementNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.ExpressionArgumentNode as IExpressionArgumentNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.ExpressionNode as IExpressionNode
@@ -30,7 +31,6 @@ import io.github.apl_cornell.viaduct.syntax.intermediate.FunctionArgumentNode as
 import io.github.apl_cornell.viaduct.syntax.intermediate.FunctionCallNode as IFunctionCallNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.FunctionDeclarationNode as IFunctionDeclarationNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.HostDeclarationNode as IHostDeclarationNode
-import io.github.apl_cornell.viaduct.syntax.intermediate.DelegationDeclarationNode as IDelegationDeclarationNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.IfNode as IIfNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.InfiniteLoopNode as IInfiniteLoopNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.InputNode as IInputNode
@@ -57,6 +57,7 @@ import io.github.apl_cornell.viaduct.syntax.surface.BreakNode as SBreakNode
 import io.github.apl_cornell.viaduct.syntax.surface.ConstructorCallNode as SConstructorCallNode
 import io.github.apl_cornell.viaduct.syntax.surface.DeclarationNode as SDeclarationNode
 import io.github.apl_cornell.viaduct.syntax.surface.DeclassificationNode as SDeclassificationNode
+import io.github.apl_cornell.viaduct.syntax.surface.DelegationDeclarationNode as SDelegationDeclarationNode
 import io.github.apl_cornell.viaduct.syntax.surface.EndorsementNode as SEndorsementNode
 import io.github.apl_cornell.viaduct.syntax.surface.ExpressionArgumentNode as SExpressionArgumentNode
 import io.github.apl_cornell.viaduct.syntax.surface.ExpressionNode as SExpressionNode
@@ -65,7 +66,6 @@ import io.github.apl_cornell.viaduct.syntax.surface.FunctionArgumentNode as SFun
 import io.github.apl_cornell.viaduct.syntax.surface.FunctionCallNode as SFunctionCallNode
 import io.github.apl_cornell.viaduct.syntax.surface.FunctionDeclarationNode as SFunctionDeclarationNode
 import io.github.apl_cornell.viaduct.syntax.surface.HostDeclarationNode as SHostDeclarationNode
-import io.github.apl_cornell.viaduct.syntax.surface.DelegationDeclarationNode as SDelegationDeclarationNode
 import io.github.apl_cornell.viaduct.syntax.surface.IfNode as SIfNode
 import io.github.apl_cornell.viaduct.syntax.surface.InfiniteLoopNode as SInfiniteLoopNode
 import io.github.apl_cornell.viaduct.syntax.surface.InputNode as SInputNode
@@ -123,6 +123,7 @@ fun SProgramNode.elaborated(): IProgramNode {
                         declaration.node1,
                         declaration.node2,
                         declaration.delegationKind,
+                        declaration.delegationProjection,
                         declaration.sourceLocation
                     )
                 )

@@ -2,6 +2,7 @@ package io.github.apl_cornell.viaduct.errors
 
 import io.github.apl_cornell.apl.prettyprinting.Document
 import io.github.apl_cornell.apl.prettyprinting.div
+import io.github.apl_cornell.viaduct.algebra.FreeDistributiveLattice
 import io.github.apl_cornell.viaduct.security.Label
 import io.github.apl_cornell.viaduct.syntax.HasSourceLocation
 
@@ -25,25 +26,30 @@ class InsecureControlFlowError(
 
     override val description: Document
         get() {
-            if (!pc.confidentiality().flowsTo(nodeLabel.confidentiality())) {
+            if (!pc.confidentiality(FreeDistributiveLattice.bounds())
+                    .flowsTo(nodeLabel.confidentiality(FreeDistributiveLattice.bounds()))
+            ) {
                 // Confidentiality is the problem
                 // TODO: reword message (see the output of insecure-control-flow-confidentiality.via)
                 return Document("Execution of this term might leak information encoded in the control flow:")
                     .withSource(node.sourceLocation) /
                     Document("Confidentiality label on control flow is:")
-                        .withData(pc.confidentiality()) /
+                        .withData(pc.confidentiality(FreeDistributiveLattice.bounds())) /
                     Document("But the term only guarantees:")
-                        .withData(nodeLabel.confidentiality())
+                        .withData(nodeLabel.confidentiality(FreeDistributiveLattice.bounds()))
             } else {
                 // Integrity is the problem
                 // TODO: add an error test case that covers this branch.
-                assert(!pc.integrity().flowsTo(nodeLabel.integrity()))
+                assert(
+                    !pc.integrity(FreeDistributiveLattice.bounds())
+                        .flowsTo(nodeLabel.integrity(FreeDistributiveLattice.bounds()))
+                )
                 return Document("The control flow does not have enough integrity for this term:")
                     .withSource(node.sourceLocation) /
                     Document("Integrity label on control flow is:")
-                        .withData(pc.integrity()) /
+                        .withData(pc.integrity(FreeDistributiveLattice.bounds())) /
                     Document("But it needs to be at least:")
-                        .withData(nodeLabel.integrity())
+                        .withData(nodeLabel.integrity(FreeDistributiveLattice.bounds()))
             }
         }
 }

@@ -2,6 +2,7 @@ package io.github.apl_cornell.viaduct.errors
 
 import io.github.apl_cornell.apl.prettyprinting.Document
 import io.github.apl_cornell.apl.prettyprinting.div
+import io.github.apl_cornell.viaduct.algebra.FreeDistributiveLattice
 import io.github.apl_cornell.viaduct.security.Label
 import io.github.apl_cornell.viaduct.syntax.HasSourceLocation
 
@@ -21,23 +22,28 @@ class InsecureDataFlowError(
 
     override val description: Document
         get() {
-            if (!nodeLabel.confidentiality().flowsTo(to.confidentiality())) {
+            if (!nodeLabel.confidentiality(FreeDistributiveLattice.bounds())
+                    .flowsTo(to.confidentiality(FreeDistributiveLattice.bounds()))
+            ) {
                 // Confidentiality is the problem
                 return Document("This term is flowing to a place that does not have enough confidentiality:")
                     .withSource(node.sourceLocation) /
                     Document("The term's confidentiality label is:")
-                        .withData(nodeLabel.confidentiality()) /
+                        .withData(nodeLabel.confidentiality(FreeDistributiveLattice.bounds())) /
                     Document("But it is going to a place that only guarantees:")
-                        .withData(to.confidentiality())
+                        .withData(to.confidentiality(FreeDistributiveLattice.bounds()))
             } else {
                 // Integrity is the problem
-                assert(!nodeLabel.integrity().flowsTo(to.integrity()))
+                assert(
+                    !nodeLabel.integrity(FreeDistributiveLattice.bounds())
+                        .flowsTo(to.integrity(FreeDistributiveLattice.bounds()))
+                )
                 return Document("This term does not have enough integrity:")
                     .withSource(node.sourceLocation) /
                     Document("Its integrity label is:")
-                        .withData(nodeLabel.integrity()) /
+                        .withData(nodeLabel.integrity(FreeDistributiveLattice.bounds())) /
                     Document("But it needs to be at least:")
-                        .withData(to.integrity())
+                        .withData(to.integrity(FreeDistributiveLattice.bounds()))
             }
         }
 }

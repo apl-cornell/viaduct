@@ -1,11 +1,13 @@
 package io.github.apl_cornell.viaduct.syntax.intermediate
 
+import io.github.apl_cornell.viaduct.security.LabelLiteral
 import io.github.apl_cornell.viaduct.syntax.Arguments
 import io.github.apl_cornell.viaduct.syntax.DelegationKind
 import io.github.apl_cornell.viaduct.syntax.DelegationProjection
 import io.github.apl_cornell.viaduct.syntax.FunctionNameNode
 import io.github.apl_cornell.viaduct.syntax.HostNode
 import io.github.apl_cornell.viaduct.syntax.LabelNode
+import io.github.apl_cornell.viaduct.syntax.LabelVariableNode
 import io.github.apl_cornell.viaduct.syntax.ObjectTypeNode
 import io.github.apl_cornell.viaduct.syntax.ObjectVariable
 import io.github.apl_cornell.viaduct.syntax.ObjectVariableNode
@@ -28,23 +30,22 @@ sealed class TopLevelDeclarationNode : Node() {
  */
 class HostDeclarationNode(
     val name: HostNode,
-    val authority: LabelNode,
     override val sourceLocation: SourceLocation,
 ) : TopLevelDeclarationNode() {
 
+    val authority: LabelLiteral = LabelLiteral(name.value)
     override val children: Iterable<Nothing>
         get() = listOf()
 
     override fun toSurfaceNode(metadata: Metadata): io.github.apl_cornell.viaduct.syntax.surface.HostDeclarationNode =
         io.github.apl_cornell.viaduct.syntax.surface.HostDeclarationNode(
             name,
-            authority,
             sourceLocation,
             comment = metadataAsComment(metadata)
         )
 
     override fun copy(children: List<Node>): HostDeclarationNode =
-        HostDeclarationNode(name, authority, sourceLocation)
+        HostDeclarationNode(name, sourceLocation)
 }
 
 /**
@@ -90,11 +91,11 @@ class ParameterNode(
  */
 class FunctionDeclarationNode(
     val name: FunctionNameNode,
-    val polymorphicLabels: List<LabelNode>,
-    val pcLabel: LabelNode?,
+    val labelParameters: Arguments<LabelVariableNode>?,
     val parameters: Arguments<ParameterNode>,
+    val labelConstraints: Arguments<DelegationDeclarationNode>,
+    val pcLabel: LabelNode?,
     val body: BlockNode,
-    val polymorphicConstraints: List<DelegationDeclarationNode>,
     override val sourceLocation: SourceLocation
 ) : TopLevelDeclarationNode() {
     override val children: Iterable<Node>
@@ -103,14 +104,14 @@ class FunctionDeclarationNode(
     override fun toSurfaceNode(metadata: Metadata): io.github.apl_cornell.viaduct.syntax.surface.FunctionDeclarationNode =
         io.github.apl_cornell.viaduct.syntax.surface.FunctionDeclarationNode(
             name,
-            polymorphicLabels,
-            pcLabel,
+            labelParameters,
             Arguments(
                 parameters.map { it.toSurfaceNode(metadata) },
                 parameters.sourceLocation
             ),
+            labelConstraints,
+            pcLabel,
             body.toSurfaceNode(metadata),
-            polymorphicConstraints,
             sourceLocation,
             comment = metadataAsComment(metadata)
         )
@@ -119,11 +120,11 @@ class FunctionDeclarationNode(
         val parameters = Arguments(children.dropLast(1).map { it as ParameterNode }, parameters.sourceLocation)
         return FunctionDeclarationNode(
             name,
-            polymorphicLabels,
-            pcLabel,
+            labelParameters,
             parameters,
+            labelConstraints,
+            pcLabel,
             children.last() as BlockNode,
-            polymorphicConstraints,
             sourceLocation
         )
     }

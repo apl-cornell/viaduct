@@ -40,11 +40,11 @@ fun ProgramNode.specialize(): ProgramNode {
     newDeclarations.add(
         FunctionDeclarationNode(
             main.name,
-            main.polymorphicLabels,
-            main.pcLabel,
+            main.labelParameters,
             main.parameters,
+            main.labelConstraints,
+            main.pcLabel,
             newMainBlock,
-            main.polymorphicConstraints,
             main.sourceLocation
         )
     )
@@ -134,14 +134,14 @@ private class Specializer(
             newFunctions.add(
                 FunctionDeclarationNode(
                     Located(newName, function.name.sourceLocation),
-                    function.polymorphicLabels,
-                    function.pcLabel,
+                    function.labelParameters,
                     Arguments(
                         function.parameters.map { param -> param.deepCopy() as ParameterNode },
                         function.parameters.sourceLocation
                     ),
+                    function.labelConstraints,
+                    function.pcLabel,
                     specializeStatement(currentCtx, function.body) as BlockNode,
-                    function.polymorphicConstraints,
                     function.sourceLocation
                 )
             )

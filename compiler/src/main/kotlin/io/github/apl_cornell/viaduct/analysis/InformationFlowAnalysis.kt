@@ -1,6 +1,8 @@
 package io.github.apl_cornell.viaduct.analysis
 
 import io.github.apl_cornell.apl.prettyprinting.PrettyPrintable
+import io.github.apl_cornell.viaduct.algebra.FreeDistributiveLattice
+import io.github.apl_cornell.viaduct.algebra.FreeDistributiveLatticeComponent
 import io.github.apl_cornell.viaduct.attributes.Tree
 import io.github.apl_cornell.viaduct.attributes.attribute
 import io.github.apl_cornell.viaduct.errors.ConfidentialityChangingEndorsementError
@@ -12,6 +14,7 @@ import io.github.apl_cornell.viaduct.errors.LabelMismatchError
 import io.github.apl_cornell.viaduct.errors.MalleableDowngradeError
 import io.github.apl_cornell.viaduct.security.Label
 import io.github.apl_cornell.viaduct.security.LabelParameter
+import io.github.apl_cornell.viaduct.security.SecurityLattice
 import io.github.apl_cornell.viaduct.security.solver.AtomicLabelTerm
 import io.github.apl_cornell.viaduct.security.solver.ConstraintSolution
 import io.github.apl_cornell.viaduct.security.solver.ConstraintSolver
@@ -125,7 +128,7 @@ class InformationFlowAnalysis private constructor(
                 }
             } else {
                 // TODO: this is hacky. How do we know it's the first label, for example?
-                LabelConstant(objectType.labelArguments[0].value.interpret(parameterMap))
+                LabelConstant(objectType.labelArguments[0].value.interpret())
             }
         }
 
@@ -219,11 +222,13 @@ class InformationFlowAnalysis private constructor(
         when (node) {
             is LetNode ->
                 node.temporaryLabel.getValue(solutionMap.getValue(nameAnalysis.enclosingFunctionName(node)))
+
             is ParameterNode -> {
                 val function = nameAnalysis.functionDeclaration(node)
                 val (labelFunction, labelParamMap) = parameterVariableMap.getValue(function.name.value)
                 labelParamMap.getValue(node.name.value).getValue(solutionMap.getValue(labelFunction))
             }
+
             is ObjectVariableDeclarationNode ->
                 node.variableLabel().getValue(solutionMap.getValue(nameAnalysis.enclosingFunctionName(node as Node)))
         }
@@ -282,11 +287,11 @@ class InformationFlowAnalysis private constructor(
 
                 val from =
                     fromLabel?.let {
-                        LabelConstant(it.value.interpret(parameterMap))
+                        LabelConstant(it.value.interpret())
                     } ?: expression.labelVariable
 
                 val to = toLabel?.let {
-                    LabelConstant(it.value.interpret(parameterMap))
+                    LabelConstant(it.value.interpret())
                 } ?: this.labelVariable
 
                 pcFlowsTo(solver, pcLabel, this, to)
@@ -340,7 +345,7 @@ class InformationFlowAnalysis private constructor(
 
             is InputNode -> {
                 val hostLabel =
-                    LabelConstant(nameAnalysis.declaration(this).authority.value.interpret())
+                    LabelConstant(nameAnalysis.declaration(this).authority.interpret())
 
                 // Host learns the current pc
                 pcFlowsTo(solver, pcLabel, this.host, hostLabel)
@@ -494,7 +499,7 @@ class InformationFlowAnalysis private constructor(
                                 val labelBound =
                                     when {
                                         labelBoundExpr is LabelParameter ->
-                                            argumentLabelMap.getValue(ObjectVariable(labelBoundExpr.name))
+                                            argumentLabelMap.getValue(ObjectVariable(labelBoundExpr.name.name))
 
                                         !labelBoundExpr.containsParameters() ->
                                             LabelConstant(labelBoundExpr.interpret())
@@ -538,7 +543,7 @@ class InformationFlowAnalysis private constructor(
                                     solver,
                                     this,
                                     pcLabel,
-                                    argumentLabelMap.getValue(ObjectVariable(labelBound.name))
+                                    argumentLabelMap.getValue(ObjectVariable(labelBound.name.name))
                                 )
                             }
 
@@ -567,7 +572,7 @@ class InformationFlowAnalysis private constructor(
                 this.message.check(solver, parameterMap, pcLabel)
 
                 val hostLabel =
-                    LabelConstant(nameAnalysis.declaration(this).authority.value.interpret())
+                    LabelConstant(nameAnalysis.declaration(this).authority.interpret())
                 pcFlowsTo(solver, pcLabel, this.host, hostLabel)
                 flowsTo(solver, this.message, hostLabel)
             }
@@ -600,7 +605,10 @@ class InformationFlowAnalysis private constructor(
             is AssertionNode -> {
                 // Everybody must execute assertions, so [condition] must be public and trusted.
                 // TODO: can we do any better? This seems almost impossible to achieve...
-                flowsTo(solver, this.condition, LabelConstant(Label.bottom))
+                flowsTo(
+                    solver, this.condition,
+                    LabelConstant(SecurityLattice.Bounds<FreeDistributiveLatticeComponent>(FreeDistributiveLattice.bounds()).bottom)
+                )
             }
 
             is BlockNode -> {

@@ -2,6 +2,7 @@ package io.github.apl_cornell.viaduct.errors
 
 import io.github.apl_cornell.apl.prettyprinting.Document
 import io.github.apl_cornell.apl.prettyprinting.div
+import io.github.apl_cornell.viaduct.algebra.FreeDistributiveLattice
 import io.github.apl_cornell.viaduct.security.Label
 import io.github.apl_cornell.viaduct.syntax.intermediate.EndorsementNode
 
@@ -14,8 +15,8 @@ import io.github.apl_cornell.viaduct.syntax.intermediate.EndorsementNode
  */
 class ConfidentialityChangingEndorsementError(private val node: EndorsementNode, from: Label, to: Label) :
     InformationFlowError() {
-    private val fromConfidentiality: Label = from.confidentiality()
-    private val toConfidentiality: Label = to.confidentiality()
+    private val fromConfidentiality: Label = from.confidentiality(FreeDistributiveLattice.bounds())
+    private val toConfidentiality: Label = to.confidentiality(FreeDistributiveLattice.bounds())
 
     override val category: String
         get() = "Endorse Changes Confidentiality"

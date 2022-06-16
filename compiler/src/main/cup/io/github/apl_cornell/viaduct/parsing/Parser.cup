@@ -116,7 +116,7 @@ nonterminal IndexingNode indexing;
 nonterminal Value value;
 nonterminal Located<ValueType> value_type;
 nonterminal Located<LabelExpression> label, optional_label, optional_from_label, optional_to_label;
-nonterminal Located<LabelExpression> label_signature, optional_label_signature;
+nonterminal Located<LabelExpression> label_signature, optional_label_signature, optional_pc;
 nonterminal LabelExpression label_expr, label_expr_noparam, label_expr_signature;
 
 nonterminal Located<ObjectVariable> variable;
@@ -144,11 +144,10 @@ nonterminal Pair<Located, Located> protocol_labelled_argument;
 nonterminal Value protocol_argument;
 
 // delegation syntax nonterminals
-nonterminal DelegationDeclarationNode delegation_decl, ifc_delegation;
-nonterminal HostDeclarationNode host_decl;
+nonterminal DelegationDeclarationNode ifc_delegation;
 nonterminal Located label_param;
-nonterminal List optional_polymorphic_label_param_list, polymorphic_label_param_list, nonempty_polymorphic_label_param_list;
-nonterminal List optional_ifc_delegation_list, ifc_delegation_list, nonempty_ifc_delegation_list;
+nonterminal Arguments optional_polymorphic_label_param_list, polymorphic_label_param_list, nonempty_polymorphic_label_param_list;
+nonterminal Arguments optional_ifc_delegation_list, ifc_delegation_list, nonempty_ifc_delegation_list;
 
 terminal String IDENT, CAP_IDENT;
 terminal String TMP_IDENT;
@@ -248,24 +247,23 @@ declaration ::=
       );
   :}*/
   // delegation syntax
-  FUNCTION:begin optional_polymorphic_label_param_list:polylabels
-    IDENT:funcname optional_label_signature:label
+  FUNCTION:begin IDENT:funcname optional_polymorphic_label_param_list:polylabels
     OPEN_PAREN:paramsbegin parameter_list:params CLOSE_PAREN:paramsclose
-    optional_ifc_delegation_list:assumptions block:body {:
+    optional_ifc_delegation_list:assumptions optional_pc:label block:body {:
       RESULT = new FunctionDeclarationNode(
         new Located(new FunctionName(funcname), location(funcnameleft, funcnameright)),
         polylabels,
-        label,
         new Arguments(params, location(paramsbeginleft, paramsbeginright)),
-        body,
         assumptions,
+        label,
+        body,
         location(beginleft, bodyright),
         null
       );
   :}
   | HOST:begin IDENT:host {:
-      RESULT = new HostDeclarationNode(new Located(new Host(host), location(hostleft, hostright)),
-        new Located(new LabelLiteral(host), location(hostleft, hostright)),
+      RESULT = new HostDeclarationNode(
+        new Located(new Host(host), location(hostleft, hostright)),
         location(beginleft, hostright), null);
     :}
   | ASSUME:begin FOR RARROW label_expr:label1 TRUSTS label_expr:label2 {:
@@ -289,6 +287,16 @@ declaration ::=
         DelegationKind.AUTHORITY, DelegationProjection.BOTH,
         location(beginleft, label2right), null);
   :}
+  ;
+
+optional_pc ::=
+  COLON label_signature:label {:
+    RESULT = label;
+  :}
+
+  | /* empty */ {:
+      RESULT = null;
+    :}
   ;
 
 //delegation syntax for polymorphic label list
@@ -878,9 +886,9 @@ label ::=
 
 
 label_expr ::=
-    CAP_IDENT:id {: RESULT = new LabelLiteral(id); :}
+    IDENT:id {: RESULT = new LabelLiteral(id); :}
 
-  | IDENT:id {: RESULT = new LabelParameter(id); :}
+  | CAP_IDENT:id {: RESULT = new LabelParameter(id); :}
 
   | TOP {: RESULT = LabelTop.INSTANCE; :}
 
@@ -924,11 +932,11 @@ label_signature ::=
 label_expr_signature ::=
     label_expr_noparam:l {: RESULT = l; :}
 
-  | IDENT:id             {: RESULT = new LabelParameter(id); :}
+  | CAP_IDENT:id             {: RESULT = new LabelParameter(id); :}
   ;
 
 label_expr_noparam ::=
-    CAP_IDENT:id {: RESULT = new LabelLiteral(id); :}
+    IDENT:id {: RESULT = new LabelLiteral(id); :}
 
   | TOP {: RESULT = LabelTop.INSTANCE; :}
 

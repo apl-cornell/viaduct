@@ -106,7 +106,6 @@ fun SProgramNode.elaborated(): IProgramNode {
                 declarations.add(
                     IHostDeclarationNode(
                         declaration.name,
-                        declaration.authority,
                         declaration.sourceLocation
                     )
                 )
@@ -167,11 +166,11 @@ private class FunctionElaborator(val nameGenerator: FreshNameGenerator) {
 
         return IFunctionDeclarationNode(
             functionDecl.name,
-            functionDecl.polymorphicLabels,
-            functionDecl.pcLabel?.renameObjects(objectRenames),
+            functionDecl.labelParameters,
             Arguments(elaboratedParameters, functionDecl.parameters.sourceLocation),
+            functionDecl.labelConstraints,
+            functionDecl.pcLabel?.renameObjects(objectRenames),
             StatementElaborator(nameGenerator, objectRenames = objectRenames).elaborate(functionDecl.body),
-            functionDecl.polymorphicConstraints,
             functionDecl.sourceLocation
         )
     }

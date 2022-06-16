@@ -28,6 +28,12 @@ data class ObjectVariable(override val name: String) : Variable() {
         get() = "variable"
 }
 
+/** A variable that binds a label. */
+data class LabelVariable(override val name: String) : Variable() {
+    override val nameCategory: String
+        get() = "label variable"
+}
+
 /** The display style of [Variable]s. */
 object VariableStyle : Style {
     override val foregroundColor: AnsiColor

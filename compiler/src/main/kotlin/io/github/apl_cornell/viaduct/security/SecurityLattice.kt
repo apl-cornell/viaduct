@@ -1,5 +1,7 @@
 package io.github.apl_cornell.viaduct.security
 
+import io.github.apl_cornell.apl.prettyprinting.Document
+import io.github.apl_cornell.apl.prettyprinting.PrettyPrintable
 import io.github.apl_cornell.viaduct.algebra.BoundedLattice
 import io.github.apl_cornell.viaduct.algebra.Lattice
 
@@ -14,7 +16,7 @@ import io.github.apl_cornell.viaduct.algebra.Lattice
  *
  * [and] and [or] talk about trust.
  */
-data class SecurityLattice<T : Lattice<T>>(
+class SecurityLattice<T : Lattice<T>>(
     /**
      * The confidentiality component in the underlying lattice.
      *
@@ -28,7 +30,7 @@ data class SecurityLattice<T : Lattice<T>>(
      * Unlike [integrity], the result is not a [SecurityLattice].
      */
     val integrityComponent: T
-) : Lattice<SecurityLattice<T>>, TrustLattice<SecurityLattice<T>> {
+) : Lattice<SecurityLattice<T>>, TrustLattice<SecurityLattice<T>>, PrettyPrintable {
     /** Returns an element with [confidentialityComponent] and [integrityComponent] equal to [principal]. */
     constructor(principal: T) : this(principal, principal)
 
@@ -83,6 +85,9 @@ data class SecurityLattice<T : Lattice<T>>(
 
     override infix fun actsFor(that: SecurityLattice<T>): Boolean =
         throw UnsupportedOperationException()
+
+
+    override fun toDocument() = Document(this.toString())
 
     /** Provides bounds for a [SecurityLattice] given bounds for [T]. */
     class Bounds<T : Lattice<T>>(

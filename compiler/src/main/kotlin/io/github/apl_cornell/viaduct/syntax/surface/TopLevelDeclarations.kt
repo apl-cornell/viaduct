@@ -11,6 +11,7 @@ import io.github.apl_cornell.viaduct.syntax.DelegationProjection
 import io.github.apl_cornell.viaduct.syntax.FunctionNameNode
 import io.github.apl_cornell.viaduct.syntax.HostNode
 import io.github.apl_cornell.viaduct.syntax.LabelNode
+import io.github.apl_cornell.viaduct.syntax.LabelVariableNode
 import io.github.apl_cornell.viaduct.syntax.ObjectTypeNode
 import io.github.apl_cornell.viaduct.syntax.ObjectVariableNode
 import io.github.apl_cornell.viaduct.syntax.ParameterDirection
@@ -30,12 +31,12 @@ sealed class TopLevelDeclarationNode : Node()
  */
 class HostDeclarationNode(
     val name: HostNode,
-    val authority: LabelNode,
     override val sourceLocation: SourceLocation,
     override val comment: String? = null
 ) : TopLevelDeclarationNode() {
-    override fun toDocumentWithoutComment(): Document = keyword("host") * name * ":" * listOf(authority).braced()
+    override fun toDocumentWithoutComment(): Document = keyword("host") * name
 }
+
 
 /**
  * A parameter to a function declaration.
@@ -66,18 +67,20 @@ class ParameterNode(
  */
 class FunctionDeclarationNode(
     val name: FunctionNameNode,
-    val polymorphicLabels: List<LabelNode>,
-    val pcLabel: LabelNode?,
+    val labelParameters: Arguments<LabelVariableNode>?,
     val parameters: Arguments<ParameterNode>,
+    val labelConstraints: Arguments<DelegationDeclarationNode>,
+    val pcLabel: LabelNode?,
     val body: BlockNode,
-    val polymorphicConstraints: List<DelegationDeclarationNode>,
     override val sourceLocation: SourceLocation,
     override val comment: String? = null
 ) : TopLevelDeclarationNode() {
     override fun toDocumentWithoutComment(): Document =
-        keyword("fun") * polymorphicLabels.braced() + name +
-            (pcLabel?.let { listOf(it).braced() } ?: Document("")) +
-            parameters.tupled() * polymorphicConstraints.braced() * body
+        keyword("fun") *
+            (labelParameters?.braced() ?: Document("")) *
+            name +
+            (pcLabel?.let { listOf(it).braced() } ?: Document("")) *
+            parameters.tupled() * labelConstraints.braced() * body
 }
 
 

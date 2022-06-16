@@ -1,16 +1,6 @@
 package io.github.apl_cornell.viaduct.security
 
-import io.github.apl_cornell.apl.prettyprinting.Document
-import io.github.apl_cornell.apl.prettyprinting.PrettyPrintable
-import io.github.apl_cornell.apl.prettyprinting.Style
-import io.github.apl_cornell.viaduct.algebra.BoundedLattice
 import io.github.apl_cornell.viaduct.algebra.FreeDistributiveLattice
-import io.github.apl_cornell.viaduct.algebra.Lattice
-import io.github.apl_cornell.viaduct.algebra.PartialOrder
-import io.github.apl_cornell.viaduct.security.Label.Companion.bottom
-import io.github.apl_cornell.viaduct.security.Label.Companion.strongest
-import io.github.apl_cornell.viaduct.security.Label.Companion.top
-import io.github.apl_cornell.viaduct.security.Label.Companion.weakest
 
 /**
  * A lattice for information flow security. This is a standard bounded lattice that additionally
@@ -21,20 +11,21 @@ import io.github.apl_cornell.viaduct.security.Label.Companion.weakest
  *
  * [weakest], [strongest], [and], and [or] talk about trust.
  */
-data class Label(
+typealias Label = SecurityLattice<FreeDistributiveLattice<Component<Principal>>>
+/*data class Label(
     /**
      * The confidentiality component in the underlying lattice.
      *
      * Unlike [confidentiality], the result is not a [Label].
      */
-    val confidentialityComponent: FreeDistributiveLattice<Principal>,
+    val confidentialityComponent: FreeDistributiveLattice<PrincipalComponent>,
 
     /**
      * The integrity component in the underlying lattice.
      *
      * Unlike [integrity], the result is not a [Label].
      */
-    val integrityComponent: FreeDistributiveLattice<Principal>
+    val integrityComponent: FreeDistributiveLattice<PrincipalComponent>
 ) : PartialOrder<Label>, Lattice<Label>, TrustLattice<Label>, PrettyPrintable {
     /**
      * The confidentiality component.
@@ -96,10 +87,13 @@ data class Label(
             when {
                 confidentialityComponent == integrityComponent ->
                     confidentialityStr
+
                 this == this.confidentiality() ->
                     "$confidentialityStr->"
+
                 this == this.integrity() ->
                     "$integrityStr<-"
+
                 else ->
                     "$confidentialityStr-> ∧ $integrityStr<-"
             }
@@ -116,7 +110,7 @@ data class Label(
          * This is the unit for [and].
          */
         @JvmStatic
-        override val weakest: Label = FreeDistributiveLattice.bounds<Principal>().top.let { Label(it, it) }
+        override val weakest: Label = FreeDistributiveLattice.bounds<PrincipalComponent>().top.let { Label(it, it) }
 
         /**
          * The most powerful principal, i.e. secret and trusted.
@@ -124,7 +118,8 @@ data class Label(
          * This is the unit for [or].
          */
         @JvmStatic
-        override val strongest: Label = FreeDistributiveLattice.bounds<Principal>().bottom.let { Label(it, it) }
+        override val strongest: Label =
+            FreeDistributiveLattice.bounds<PrincipalComponent>().bottom.let { Label(it, it) }
 
         /**
          * The least restrictive data policy, i.e. public and trusted.
@@ -151,7 +146,7 @@ data class Label(
 
         /** Constructs a label given only the confidentiality component. Integrity is set to minimum. */
         @JvmStatic
-        fun fromConfidentiality(confidentiality: FreeDistributiveLattice<Principal>): Label =
+        fun fromConfidentiality(confidentiality: FreeDistributiveLattice<PrincipalComponent>): Label =
             Label(confidentiality, weakest.integrityComponent)
 
         /** Constructs a label given only the integrity component. Confidentiality is set to minimum. */
@@ -163,3 +158,4 @@ data class Label(
 
 /** The display style of [Label] specific operators such as [Label.confidentiality]. */
 object LabelOperatorStyle : Style
+*/

@@ -4,6 +4,7 @@ import io.github.apl_cornell.viaduct.security.Label
 import io.github.apl_cornell.viaduct.security.LabelAnd
 import io.github.apl_cornell.viaduct.security.LabelExpression
 import io.github.apl_cornell.viaduct.security.LabelIntegrity
+import io.github.apl_cornell.viaduct.security.LabelLiteral
 import io.github.apl_cornell.viaduct.syntax.Host
 import io.github.apl_cornell.viaduct.syntax.HostTrustConfiguration
 import io.github.apl_cornell.viaduct.syntax.InputPort
@@ -36,9 +37,9 @@ class Commitment(val cleartextHost: Host, val hashHosts: Set<Host>) : Protocol()
 
     override fun authority(hostTrustConfiguration: HostTrustConfiguration): Label =
         LabelAnd(
-            hostTrustConfiguration(cleartextHost),
+            LabelLiteral(cleartextHost),
             hashHosts
-                .map { LabelIntegrity(hostTrustConfiguration(it)) }
+                .map { LabelIntegrity(LabelLiteral(it)) }
                 .reduce<LabelExpression, LabelExpression> { acc, l -> LabelAnd(acc, l) }
         ).interpret()
 

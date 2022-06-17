@@ -1,10 +1,10 @@
 package io.github.apl_cornell.viaduct.passes
 
 import com.squareup.kotlinpoet.FileSpec
-import edu.cornell.cs.apl.viaduct.analysis.InformationFlowAnalysis2
 import io.github.apl_cornell.apl.prettyprinting.Document
 import io.github.apl_cornell.apl.prettyprinting.PrettyPrintable
 import io.github.apl_cornell.apl.prettyprinting.plus
+import io.github.apl_cornell.viaduct.analysis.InformationFlowAnalysis2
 import io.github.apl_cornell.viaduct.analysis.NameAnalysis
 import io.github.apl_cornell.viaduct.analysis.descendantsIsInstance
 import io.github.apl_cornell.viaduct.backends.Backend
@@ -132,6 +132,7 @@ fun SourceFile.compile(
  * @param saveEstimatedCost Output program decorated with estimated cost information.
  * @param saveProtocolAssignment Output program decorated with selected protocols.
  */
+
 fun SourceFile.compileToKotlin(
     fileName: String,
     packageName: String,

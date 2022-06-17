@@ -1,6 +1,6 @@
 package io.github.apl_cornell.viaduct.passes
 
-import edu.cornell.cs.apl.viaduct.analysis.InformationFlowAnalysis2
+import io.github.apl_cornell.viaduct.analysis.InformationFlowAnalysis2
 import io.github.apl_cornell.viaduct.analysis.NameAnalysis
 import io.github.apl_cornell.viaduct.analysis.OutParameterInitializationAnalysis
 import io.github.apl_cornell.viaduct.analysis.TypeAnalysis

@@ -1,6 +1,6 @@
 package io.github.apl_cornell.viaduct.selection
 
-import edu.cornell.cs.apl.viaduct.analysis.InformationFlowAnalysis2
+import io.github.apl_cornell.viaduct.analysis.InformationFlowAnalysis2
 import io.github.apl_cornell.viaduct.analysis.NameAnalysis
 import io.github.apl_cornell.viaduct.analysis.descendantsIsInstance
 import io.github.apl_cornell.viaduct.attributes.attribute

@@ -1,8 +1,6 @@
-package edu.cornell.cs.apl.viaduct.analysis
+package io.github.apl_cornell.viaduct.analysis
 
 import io.github.apl_cornell.viaduct.algebra.FreeDistributiveLattice
-import io.github.apl_cornell.viaduct.analysis.AnalysisProvider
-import io.github.apl_cornell.viaduct.analysis.NameAnalysis
 import io.github.apl_cornell.viaduct.attributes.Tree
 import io.github.apl_cornell.viaduct.attributes.attribute
 import io.github.apl_cornell.viaduct.errors.InformationFlowError

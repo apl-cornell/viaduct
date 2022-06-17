@@ -1,10 +1,10 @@
 package io.github.apl_cornell.viaduct.passes
 
 import com.squareup.kotlinpoet.FileSpec
+import edu.cornell.cs.apl.viaduct.analysis.InformationFlowAnalysis2
 import io.github.apl_cornell.apl.prettyprinting.Document
 import io.github.apl_cornell.apl.prettyprinting.PrettyPrintable
 import io.github.apl_cornell.apl.prettyprinting.plus
-import io.github.apl_cornell.viaduct.analysis.InformationFlowAnalysis
 import io.github.apl_cornell.viaduct.analysis.NameAnalysis
 import io.github.apl_cornell.viaduct.analysis.descendantsIsInstance
 import io.github.apl_cornell.viaduct.backends.Backend
@@ -58,11 +58,11 @@ fun SourceFile.compile(
     program.check()
 
     // Dump label constraint graph.
-    saveLabelConstraintGraph?.invoke(InformationFlowAnalysis.get(program)::exportConstraintGraph)
+    saveLabelConstraintGraph?.invoke(InformationFlowAnalysis2.get(program)::exportConstraintGraph)
 
     // Dump program annotated with inferred labels.
     if (saveInferredLabels != null) {
-        val ifcAnalysis = InformationFlowAnalysis.get(program)
+        val ifcAnalysis = InformationFlowAnalysis2.get(program)
         val labelMetadata: Metadata = sequence {
             yieldAll(program.descendantsIsInstance<LetNode>().map { it to ifcAnalysis.label(it) })
             yieldAll(program.descendantsIsInstance<DeclarationNode>().map { it to ifcAnalysis.label(it) })

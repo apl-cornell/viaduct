@@ -22,8 +22,9 @@ class InsecureDataFlowError(
 
     override val description: Document
         get() {
-            if (!nodeLabel.confidentiality(FreeDistributiveLattice.bounds())
-                    .flowsTo(to.confidentiality(FreeDistributiveLattice.bounds()))
+            // TODO: use flowsTo rather than actsFor
+            if (!to.confidentiality(FreeDistributiveLattice.bounds())
+                    .actsFor(nodeLabel.confidentiality(FreeDistributiveLattice.bounds()))
             ) {
                 // Confidentiality is the problem
                 return Document("This term is flowing to a place that does not have enough confidentiality:")
@@ -34,9 +35,10 @@ class InsecureDataFlowError(
                         .withData(to.confidentiality(FreeDistributiveLattice.bounds()))
             } else {
                 // Integrity is the problem
+                // TODO: use flowsTo rather than actsFor
                 assert(
                     !nodeLabel.integrity(FreeDistributiveLattice.bounds())
-                        .flowsTo(to.integrity(FreeDistributiveLattice.bounds()))
+                        .actsFor(to.integrity(FreeDistributiveLattice.bounds()))
                 )
                 return Document("This term does not have enough integrity:")
                     .withSource(node.sourceLocation) /

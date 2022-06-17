@@ -17,8 +17,7 @@ class FreeDistributiveLatticeCongruence<A>(
         }
 
     override fun equals(first: FreeDistributiveLattice<A>, second: FreeDistributiveLattice<A>) =
-        if (foldedCongruence == null) first == second
-        else (first.meet(foldedCongruence.first) == second.meet(foldedCongruence.first)) &&
+        (first.meet(foldedCongruence.first) == second.meet(foldedCongruence.first)) &&
             (first.join(foldedCongruence.second) == second.join(foldedCongruence.second))
 
     override fun lessThanOrEqualTo(first: FreeDistributiveLattice<A>, second: FreeDistributiveLattice<A>): Boolean =

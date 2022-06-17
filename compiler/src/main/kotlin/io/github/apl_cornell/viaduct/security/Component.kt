@@ -14,11 +14,11 @@ data class PrincipalComponent(val principal: Principal) : Component<Principal>(p
 
 //data class IntegrityComponent<A>(val obj: A) : Component<A>(obj)
 
-sealed class Component<A>(obj: A)
+sealed class Component<A>
 
-data class ConfidentialityComponent<A>(val obj: A) : Component<A>(obj)
+data class ConfidentialityComponent<A>(val obj: A) : Component<A>()
 
-data class IntegrityComponent<A>(val obj: A) : Component<A>(obj)
+data class IntegrityComponent<A>(val obj: A) : Component<A>()
 
 //sealed class PrincipalComponent(principal: Principal) : Component<Principal>(principal)
 

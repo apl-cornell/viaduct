@@ -91,8 +91,7 @@ private class ProtocolAnnotator(val program: ProgramNode, val selection: Protoco
                     is FunctionDeclarationNode ->
                         FunctionDeclarationNode(
                             decl.name,
-                            decl.polymorphicLabels,
-                            decl.pcLabel,
+                            decl.labelParameters,
                             Arguments(
                                 decl.parameters.map { param ->
                                     ParameterNode(
@@ -108,8 +107,9 @@ private class ProtocolAnnotator(val program: ProgramNode, val selection: Protoco
                                 },
                                 decl.parameters.sourceLocation
                             ),
+                            decl.labelConstraints,
+                            decl.pcLabel,
                             run(decl.body) as BlockNode,
-                            decl.polymorphicConstraints,
                             decl.sourceLocation
                         )
                 }

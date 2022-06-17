@@ -1,16 +1,33 @@
-/*package edu.cornell.cs.apl.viaduct.analysis
+package edu.cornell.cs.apl.viaduct.analysis
 
 import io.github.apl_cornell.viaduct.algebra.FreeDistributiveLattice
-import io.github.apl_cornell.viaduct.algebra.solver.ConstraintSystem
+import io.github.apl_cornell.viaduct.analysis.AnalysisProvider
 import io.github.apl_cornell.viaduct.analysis.NameAnalysis
 import io.github.apl_cornell.viaduct.attributes.Tree
+import io.github.apl_cornell.viaduct.attributes.attribute
 import io.github.apl_cornell.viaduct.errors.InformationFlowError
+import io.github.apl_cornell.viaduct.security.Label
 import io.github.apl_cornell.viaduct.security.Principal
+import io.github.apl_cornell.viaduct.security.solver2.Constraint
+import io.github.apl_cornell.viaduct.security.solver2.ConstraintSystem
+import io.github.apl_cornell.viaduct.security.solver2.Term
+import io.github.apl_cornell.viaduct.security.solver2.flowsTo
+import io.github.apl_cornell.viaduct.security.solver2.term
+import io.github.apl_cornell.viaduct.syntax.HasSourceLocation
+import io.github.apl_cornell.viaduct.syntax.intermediate.BlockNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.DeclassificationNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.EndorsementNode
+import io.github.apl_cornell.viaduct.syntax.intermediate.ExpressionNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.FunctionArgumentNode
+import io.github.apl_cornell.viaduct.syntax.intermediate.FunctionDeclarationNode
+import io.github.apl_cornell.viaduct.syntax.intermediate.IfNode
+import io.github.apl_cornell.viaduct.syntax.intermediate.InfiniteLoopNode
+import io.github.apl_cornell.viaduct.syntax.intermediate.LiteralNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.Node
+import io.github.apl_cornell.viaduct.syntax.intermediate.OperatorApplicationNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.ProgramNode
+import io.github.apl_cornell.viaduct.syntax.intermediate.QueryNode
+import io.github.apl_cornell.viaduct.syntax.intermediate.ReadNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.VariableDeclarationNode
 import java.io.Writer
 
@@ -486,4 +503,3 @@ class InformationFlowAnalysis2 private constructor(
         override fun get(program: ProgramNode): InformationFlowAnalysis2 = program.cached(::construct)
     }
 }
-*/

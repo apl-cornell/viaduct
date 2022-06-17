@@ -1,7 +1,5 @@
 package io.github.apl_cornell.viaduct.algebra
 
-import io.github.apl_cornell.viaduct.security.Component
-import io.github.apl_cornell.viaduct.security.Principal
 import kotlinx.collections.immutable.PersistentSet
 import kotlinx.collections.immutable.persistentSetOf
 import kotlinx.collections.immutable.toPersistentSet
@@ -132,5 +130,3 @@ class FreeDistributiveLattice<A> private constructor(joinOfMeets: JoinOfMeets<A>
             joinOfMeets.any { it != j && j.containsAll(it) }
     }
 }
-// put in security
-typealias FreeDistributiveLatticeComponent = FreeDistributiveLattice<Component<Principal>>

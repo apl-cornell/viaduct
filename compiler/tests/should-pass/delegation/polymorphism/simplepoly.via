@@ -1,4 +1,4 @@
-fun{X, Y, Z} f(a: int{X}, b: int{Y}, c: out int{Z}) {
+fun f{X, Y, Z}(a: int{X}, b: int{Y}, c: out int{Z}) {
   out c = a + b;
 }
 

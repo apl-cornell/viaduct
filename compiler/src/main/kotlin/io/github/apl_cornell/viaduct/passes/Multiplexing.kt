@@ -15,6 +15,7 @@ import io.github.apl_cornell.viaduct.syntax.TemporaryNode
 import io.github.apl_cornell.viaduct.syntax.datatypes.Get
 import io.github.apl_cornell.viaduct.syntax.datatypes.Modify
 import io.github.apl_cornell.viaduct.syntax.datatypes.MutableCell
+import io.github.apl_cornell.viaduct.syntax.datatypes.Set
 import io.github.apl_cornell.viaduct.syntax.datatypes.Vector
 import io.github.apl_cornell.viaduct.syntax.intermediate.AssertionNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.AtomicExpressionNode
@@ -45,7 +46,6 @@ import io.github.apl_cornell.viaduct.syntax.operators.And
 import io.github.apl_cornell.viaduct.syntax.operators.Mux
 import io.github.apl_cornell.viaduct.syntax.operators.Not
 import io.github.apl_cornell.viaduct.util.FreshNameGenerator
-import io.github.apl_cornell.viaduct.syntax.datatypes.Set
 
 fun StatementNode.canMux(): Boolean =
     when (this) {
@@ -92,18 +92,18 @@ class MuxPostprocessor(
                     is FunctionDeclarationNode -> {
                         FunctionDeclarationNode(
                             declaration.name,
-                            declaration.polymorphicLabels,
-                            declaration.pcLabel,
+                            declaration.labelParameters,
                             Arguments(
                                 declaration.parameters.map { it.deepCopy() as ParameterNode },
                                 declaration.parameters.sourceLocation
                             ),
+                            declaration.labelConstraints,
+                            declaration.pcLabel,
                             mux(
                                 declaration.body,
                                 nameAnalysis,
                                 declaration.freshVariableNameGenerator()
                             ),
-                            declaration.polymorphicConstraints,
                             declaration.sourceLocation
                         )
                     }

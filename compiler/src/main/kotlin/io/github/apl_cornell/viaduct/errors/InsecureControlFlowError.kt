@@ -26,8 +26,9 @@ class InsecureControlFlowError(
 
     override val description: Document
         get() {
-            if (!pc.confidentiality(FreeDistributiveLattice.bounds())
-                    .flowsTo(nodeLabel.confidentiality(FreeDistributiveLattice.bounds()))
+            // TODO: use flowsTo rather than actsFor
+            if (!nodeLabel.confidentiality(FreeDistributiveLattice.bounds())
+                    .actsFor(pc.confidentiality(FreeDistributiveLattice.bounds()))
             ) {
                 // Confidentiality is the problem
                 // TODO: reword message (see the output of insecure-control-flow-confidentiality.via)
@@ -40,9 +41,10 @@ class InsecureControlFlowError(
             } else {
                 // Integrity is the problem
                 // TODO: add an error test case that covers this branch.
+                // TODO: use flowsTo rather than actsFor
                 assert(
                     !pc.integrity(FreeDistributiveLattice.bounds())
-                        .flowsTo(nodeLabel.integrity(FreeDistributiveLattice.bounds()))
+                        .actsFor(nodeLabel.integrity(FreeDistributiveLattice.bounds()))
                 )
                 return Document("The control flow does not have enough integrity for this term:")
                     .withSource(node.sourceLocation) /

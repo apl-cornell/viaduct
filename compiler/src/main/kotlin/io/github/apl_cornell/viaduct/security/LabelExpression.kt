@@ -6,7 +6,6 @@ import io.github.apl_cornell.apl.prettyprinting.plus
 import io.github.apl_cornell.apl.prettyprinting.times
 import io.github.apl_cornell.apl.prettyprinting.tupled
 import io.github.apl_cornell.viaduct.algebra.FreeDistributiveLattice
-import io.github.apl_cornell.viaduct.algebra.FreeDistributiveLatticeComponent
 import io.github.apl_cornell.viaduct.syntax.Host
 import io.github.apl_cornell.viaduct.syntax.LabelVariable
 
@@ -18,8 +17,6 @@ sealed class LabelExpression : PrettyPrintable {
     // TODO: put this in elaboration
     abstract fun rename(renamer: (String) -> String = { x -> x }): LabelExpression
 
-    // TODO: delete
-    abstract fun containsParameters(): Boolean
 }
 
 data class LabelLiteral(val name: Host) : LabelExpression() {
@@ -33,7 +30,6 @@ data class LabelLiteral(val name: Host) : LabelExpression() {
 
     override fun rename(renamer: (String) -> String): LabelExpression = this
 
-    override fun containsParameters(): Boolean = false
 }
 
 data class LabelParameter(val name: LabelVariable) : LabelExpression() {
@@ -48,7 +44,6 @@ data class LabelParameter(val name: LabelVariable) : LabelExpression() {
     override fun rename(renamer: (String) -> String): LabelExpression =
         LabelParameter(LabelVariable(renamer(name.name)))
 
-    override fun containsParameters(): Boolean = true
 }
 
 data class LabelJoin(val lhs: LabelExpression, val rhs: LabelExpression) : LabelExpression() {
@@ -60,7 +55,6 @@ data class LabelJoin(val lhs: LabelExpression, val rhs: LabelExpression) : Label
     override fun rename(renamer: (String) -> String): LabelExpression =
         LabelJoin(lhs.rename(renamer), rhs.rename(renamer))
 
-    override fun containsParameters(): Boolean = lhs.containsParameters() || rhs.containsParameters()
 }
 
 data class LabelMeet(val lhs: LabelExpression, val rhs: LabelExpression) : LabelExpression() {
@@ -72,7 +66,6 @@ data class LabelMeet(val lhs: LabelExpression, val rhs: LabelExpression) : Label
     override fun rename(renamer: (String) -> String): LabelExpression =
         LabelMeet(lhs.rename(renamer), rhs.rename(renamer))
 
-    override fun containsParameters(): Boolean = lhs.containsParameters() || rhs.containsParameters()
 }
 
 data class LabelAnd(val lhs: LabelExpression, val rhs: LabelExpression) : LabelExpression() {
@@ -84,7 +77,6 @@ data class LabelAnd(val lhs: LabelExpression, val rhs: LabelExpression) : LabelE
     override fun rename(renamer: (String) -> String): LabelExpression =
         LabelAnd(lhs.rename(renamer), rhs.rename(renamer))
 
-    override fun containsParameters(): Boolean = lhs.containsParameters() || rhs.containsParameters()
 }
 
 data class LabelOr(val lhs: LabelExpression, val rhs: LabelExpression) : LabelExpression() {
@@ -96,7 +88,6 @@ data class LabelOr(val lhs: LabelExpression, val rhs: LabelExpression) : LabelEx
     override fun rename(renamer: (String) -> String): LabelExpression =
         LabelOr(lhs.rename(renamer), rhs.rename(renamer))
 
-    override fun containsParameters(): Boolean = lhs.containsParameters() || rhs.containsParameters()
 }
 
 data class LabelConfidentiality(val value: LabelExpression) : LabelExpression() {
@@ -109,7 +100,6 @@ data class LabelConfidentiality(val value: LabelExpression) : LabelExpression() 
     override fun rename(renamer: (String) -> String): LabelExpression =
         LabelConfidentiality(value.rename(renamer))
 
-    override fun containsParameters(): Boolean = value.containsParameters()
 }
 
 data class LabelIntegrity(val value: LabelExpression) : LabelExpression() {
@@ -121,7 +111,6 @@ data class LabelIntegrity(val value: LabelExpression) : LabelExpression() {
     override fun rename(renamer: (String) -> String): LabelExpression =
         LabelIntegrity(value.rename(renamer))
 
-    override fun containsParameters(): Boolean = value.containsParameters()
 }
 
 object LabelBottom : LabelExpression() {
@@ -129,13 +118,12 @@ object LabelBottom : LabelExpression() {
 
     override fun interpret(): Label =
         SecurityLattice
-            .Bounds<FreeDistributiveLatticeComponent>(FreeDistributiveLattice.bounds())
+            .Bounds<LabelComponent>(FreeDistributiveLattice.bounds())
             .strongest
 
 
     override fun rename(renamer: (String) -> String): LabelExpression = this
 
-    override fun containsParameters(): Boolean = false
 }
 
 object LabelTop : LabelExpression() {
@@ -143,10 +131,9 @@ object LabelTop : LabelExpression() {
 
     override fun interpret(): Label =
         SecurityLattice
-            .Bounds<FreeDistributiveLatticeComponent>(FreeDistributiveLattice.bounds())
+            .Bounds<LabelComponent>(FreeDistributiveLattice.bounds())
             .weakest
 
     override fun rename(renamer: (String) -> String): LabelExpression = this
 
-    override fun containsParameters(): Boolean = false
 }

@@ -1,5 +1,5 @@
 plugins {
-    kotlin("multiplatform") version "1.6.21" apply false
+    kotlin("multiplatform") version "1.7.0" apply false
     kotlin("plugin.serialization") version "1.6.21" apply false
 
     // Versioning
@@ -9,7 +9,7 @@ plugins {
     id("org.jetbrains.dokka") version "1.6.21"
 
     // Style checking
-    id("com.diffplug.spotless") version "6.7.0"
+    id("com.diffplug.spotless") version "6.7.2"
 }
 
 // Derive version from Git tags

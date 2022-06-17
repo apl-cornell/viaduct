@@ -1,10 +1,10 @@
 plugins {
-    kotlin("jvm") version "1.6.21"
+    kotlin("jvm") version "1.7.0"
     id("io.github.apl-cornell.viaduct")
     application
 
     // Style checking
-    id("com.diffplug.spotless") version "6.7.0"
+    id("com.diffplug.spotless") version "6.7.2"
 }
 
 group = "io.github.apl-cornell.viaduct"
@@ -22,7 +22,7 @@ dependencies {
     implementation("${project.group}:runtime")
 
     // Command-line-argument parsing
-    implementation("com.github.ajalt.clikt:clikt:3.4.2")
+    implementation("com.github.ajalt.clikt:clikt:3.5.0")
 
     // Logging
     implementation("io.github.microutils:kotlin-logging:2.1.23")

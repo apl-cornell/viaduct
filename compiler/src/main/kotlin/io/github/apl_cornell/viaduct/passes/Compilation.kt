@@ -132,7 +132,6 @@ fun SourceFile.compile(
  * @param saveEstimatedCost Output program decorated with estimated cost information.
  * @param saveProtocolAssignment Output program decorated with selected protocols.
  */
-
 fun SourceFile.compileToKotlin(
     fileName: String,
     packageName: String,

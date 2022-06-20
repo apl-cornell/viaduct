@@ -31,7 +31,7 @@ dependencies {
 
     // Testing
     testImplementation("${project.group}:test-utilities")
-    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.2")
+    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.3")
 }
 
 application {

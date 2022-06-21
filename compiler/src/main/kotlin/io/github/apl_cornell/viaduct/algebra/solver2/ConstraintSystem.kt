@@ -2,6 +2,7 @@ package io.github.apl_cornell.viaduct.algebra.solver2
 
 import io.github.apl_cornell.viaduct.algebra.BoundedLattice
 import io.github.apl_cornell.viaduct.algebra.HeytingAlgebra
+import io.github.apl_cornell.viaduct.algebra.LatticeCongruence
 import io.github.apl_cornell.viaduct.algebra.PartialOrder
 import io.github.apl_cornell.viaduct.util.Colors
 import io.github.apl_cornell.viaduct.util.dataflow.DataFlowEdge
@@ -28,7 +29,8 @@ import java.io.Writer
  */
 class ConstraintSystem<C : HeytingAlgebra<C>, V, T : Throwable>(
     constraints: Iterable<Constraint<C, V, T>>,
-    bounds: BoundedLattice<C>
+    bounds: BoundedLattice<C>,
+    delegationContext: LatticeCongruence<C>
 ) {
     /**
      * Represents constraints as a graph. Each vertex is an atomic term (a constant or a variable),
@@ -130,8 +132,10 @@ class ConstraintSystem<C : HeytingAlgebra<C>, V, T : Throwable>(
             val color = when {
                 !constraintSatisfied(edge) ->
                     Colors.RED
+
                 edge is IdentityEdge ->
                     Colors.BLACK
+
                 else ->
                     Colors.BLUE
             }

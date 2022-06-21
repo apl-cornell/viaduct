@@ -68,3 +68,10 @@ fun <C : HeytingAlgebra<C>, V, T> Term<C, V>.flowsTo(
             )
         }
     )
+
+fun <C : HeytingAlgebra<C>, V, T> Term<C, V>.equalsTo(
+    that: Term<C, V>,
+    bounds: BoundedLattice<C>,
+    failWith: (SecurityLattice<C>, SecurityLattice<C>) -> T
+): Iterable<Constraint<C, V, T>> =
+    this.flowsTo(that, bounds, failWith) + that.flowsTo(this, bounds, failWith)

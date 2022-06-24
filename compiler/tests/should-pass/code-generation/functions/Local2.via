@@ -1,0 +1,14 @@
+host ed    : {E & F<-}
+host fred  : {F & E<-}
+
+fun main() {
+    val e : int = input int from ed;
+    val f : int = declassify (input int from fred) to {E ⊓ F};
+    g(e, f, val win);
+    output win to ed;
+    output win to fred;
+}
+
+fun g(e: int, f: int, ret: out bool{E ⊓ F}) {
+    out ret = declassify (e == f) to {E ⊓ F};
+}

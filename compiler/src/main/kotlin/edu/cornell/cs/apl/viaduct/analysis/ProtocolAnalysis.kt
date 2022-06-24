@@ -274,7 +274,7 @@ class ProtocolAnalysis(
                                             }
                                         }.flatMap { arg ->
                                             primaryProtocol(nameAnalysis.parameter(arg)).hosts
-                                        }
+                                        }.toSet()
                                 )
                             }
 

@@ -2,13 +2,17 @@ package edu.cornell.cs.apl.viaduct.backends.commitment
 
 import com.squareup.kotlinpoet.CodeBlock
 import com.squareup.kotlinpoet.PropertySpec
+import com.squareup.kotlinpoet.TypeName
 import edu.cornell.cs.apl.viaduct.codegeneration.CodeGenerator
 import edu.cornell.cs.apl.viaduct.codegeneration.CodeGeneratorContext
 import edu.cornell.cs.apl.viaduct.selection.ProtocolCommunication
 import edu.cornell.cs.apl.viaduct.syntax.Protocol
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.AtomicExpressionNode
+import edu.cornell.cs.apl.viaduct.syntax.intermediate.FunctionArgumentNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.LetNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.SimpleStatementNode
+import edu.cornell.cs.apl.viaduct.syntax.types.ObjectType
+import edu.cornell.cs.apl.viaduct.syntax.types.ValueType
 
 class CommitmentDispatchCodeGenerator(
     val context: CodeGeneratorContext
@@ -24,11 +28,20 @@ class CommitmentDispatchCodeGenerator(
             commitmentHolderGenerator
     }
 
+    override fun kotlinType(protocol: Protocol, sourceType: ValueType): TypeName =
+        generatorFor(protocol).kotlinType(protocol, sourceType)
+
+    override fun kotlinType(protocol: Protocol, sourceType: ObjectType): TypeName =
+        generatorFor(protocol).kotlinType(protocol, sourceType)
+
     override fun guard(protocol: Protocol, expr: AtomicExpressionNode): CodeBlock =
         generatorFor(protocol).guard(protocol, expr)
 
     override fun simpleStatement(protocol: Protocol, stmt: SimpleStatementNode): CodeBlock =
         generatorFor(protocol).simpleStatement(protocol, stmt)
+
+    override fun argument(protocol: Protocol, argument: FunctionArgumentNode): CodeBlock =
+        generatorFor(protocol).argument(protocol, argument)
 
     override fun send(
         sender: LetNode,

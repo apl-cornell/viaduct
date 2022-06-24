@@ -22,6 +22,9 @@ interface CodeGeneratorContext {
     /** Returns a fresh kotlin name based on [baseName]. */
     fun newTemporary(baseName: String): String
 
+    // returns the kotlin name of the box of an out argument used in the source program
+    fun outBoxName(outName: String): String
+
     /** Returns code that will evaluate to [host]. */
     fun codeOf(host: Host): CodeBlock
 

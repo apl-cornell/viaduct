@@ -13,10 +13,10 @@ import com.squareup.kotlinpoet.TypeName
 import com.squareup.kotlinpoet.TypeSpec
 import com.squareup.kotlinpoet.asClassName
 import com.squareup.kotlinpoet.joinToCode
-import edu.cornell.cs.apl.prettyprinting.joined
 import edu.cornell.cs.apl.viaduct.analysis.NameAnalysis
 import edu.cornell.cs.apl.viaduct.analysis.ProtocolAnalysis
-import edu.cornell.cs.apl.viaduct.runtime.Boxed
+import edu.cornell.cs.apl.viaduct.analysis.TypeAnalysis
+import edu.cornell.cs.apl.viaduct.runtime.Out
 import edu.cornell.cs.apl.viaduct.runtime.ViaductGeneratedProgram
 import edu.cornell.cs.apl.viaduct.runtime.ViaductRuntime
 import edu.cornell.cs.apl.viaduct.selection.ProtocolComposer
@@ -34,7 +34,6 @@ import edu.cornell.cs.apl.viaduct.syntax.intermediate.InfiniteLoopNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.LetNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.LiteralNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ObjectDeclarationArgumentNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutParameterArgumentNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ProgramNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.ReadNode
 import edu.cornell.cs.apl.viaduct.syntax.intermediate.SimpleStatementNode
@@ -51,6 +50,7 @@ private class BackendCodeGenerator(
     val protocolComposer: ProtocolComposer,
     val hostDeclarations: TypeSpec
 ) {
+    private val typeAnalysis = TypeAnalysis.get(program)
     private val nameAnalysis = NameAnalysis.get(program)
     private val protocolAnalysis = ProtocolAnalysis(program, protocolComposer)
     private val context = Context()
@@ -85,6 +85,20 @@ private class BackendCodeGenerator(
     /** Generates code for [host]'s role in the function [functionDeclaration]. */
     private fun generate(functionDeclaration: FunctionDeclarationNode): FunSpec {
         val hostFunctionBuilder = FunSpec.builder(functionDeclaration.name.value.name)
+
+        for (param in functionDeclaration.parameters.filter { param -> param.protocol!!.value.hosts.contains(host) }) {
+            val paramName = context.kotlinName(param.name.value)
+            val paramType = codeGenerator.kotlinType(param.protocol!!.value, typeAnalysis.type(param))
+            if (param.isInParameter) {
+                hostFunctionBuilder.addParameter(paramName, paramType)
+            } else {
+                hostFunctionBuilder.addParameter(
+                    context.outBoxName(paramName),
+                    Out::class.asClassName().parameterizedBy(paramType)
+                )
+                hostFunctionBuilder.addStatement("val %N: %T", paramName, paramType)
+            }
+        }
         generate(hostFunctionBuilder, functionDeclaration.body, host)
         return hostFunctionBuilder.build()
     }
@@ -122,7 +136,6 @@ private class BackendCodeGenerator(
                 for (reader in readers) {
                     if (protocolAnalysis.participatingHosts(reader.value).contains(host)) {
                         hostFunctionBuilder.addCode(
-                            "%L",
                             codeGenerator.receive(
                                 stmt,
                                 protocol,
@@ -143,44 +156,44 @@ private class BackendCodeGenerator(
             }
 
             is FunctionCallNode -> {
+                val arguments =
+                    stmt.arguments.filter { arg -> protocolAnalysis.primaryProtocol(arg).hosts.contains(host) }
+                val outObjectDeclarations = arguments.filterIsInstance<ObjectDeclarationArgumentNode>()
 
-                // get all ObjectDeclarationArgumentNodes from [stmt]
-                val outObjectDeclarations = stmt.arguments.filterIsInstance<ObjectDeclarationArgumentNode>()
-
-                // create a new list of arguments without ObjectDeclarationArgumentNodes
-                val newArguments =
-                    stmt.arguments.filter { argument -> argument !is ObjectDeclarationArgumentNode }.toMutableList()
-
-                for (i in 0..outObjectDeclarations.size) {
-
-                    // declare boxed variable before function call
+                // Declare boxed variables
+                val newNames = outObjectDeclarations.associateWith { outDeclaration ->
+                    val newName = context.newTemporary(context.kotlinName(outDeclaration.name.value) + "_boxed")
                     hostFunctionBuilder.addStatement(
-                        "var %L = %T",
-                        context.kotlinName(outObjectDeclarations[i].name.value),
-                        Boxed::class.asClassName()
-                    )
-
-                    // add out parameter for declared object
-                    newArguments +=
-                        OutParameterArgumentNode(
-                            outObjectDeclarations[i].name,
-                            outObjectDeclarations[i].sourceLocation
+                        "val %L = %T()",
+                        newName,
+                        Out::class.asClassName().parameterizedBy(
+                            codeGenerator.kotlinType(
+                                protocolAnalysis.primaryProtocol(outDeclaration),
+                                typeAnalysis.type(outDeclaration)
+                            )
                         )
+                    )
+                    newName
                 }
 
-                // call function
+                // Call function
                 hostFunctionBuilder.addStatement(
-                    "%L(%L)",
-                    stmt.name,
-                    newArguments.joined().toString()
+                    "%N(%L)",
+                    stmt.name.value.name,
+                    arguments.map { arg ->
+                        if (arg is ObjectDeclarationArgumentNode)
+                            CodeBlock.of("%N", newNames[arg])
+                        else
+                            codeGenerator.argument(protocolAnalysis.primaryProtocol(arg), arg)
+                    }.joinToCode()
                 )
 
-                // unbox boxes that were created before function call
-                for (i in 0..outObjectDeclarations.size) {
+                // Unpack boxed values
+                for (outDeclaration in outObjectDeclarations) {
                     hostFunctionBuilder.addStatement(
-                        "val %L = %L.get()",
-                        context.kotlinName(outObjectDeclarations[i].name.value),
-                        context.kotlinName(outObjectDeclarations[i].name.value)
+                        "val %N = %N.get()",
+                        context.kotlinName(outDeclaration.name.value),
+                        newNames[outDeclaration]!!
                     )
                 }
             }
@@ -233,6 +246,8 @@ private class BackendCodeGenerator(
         private var tempMap: MutableMap<Pair<Temporary, Protocol>, String> = mutableMapOf()
         private var varMap: MutableMap<ObjectVariable, String> = mutableMapOf()
 
+        private var outBoxNames: MutableMap<String, String> = mutableMapOf()
+
         private var selfSends: Queue<String> = LinkedList()
 
         private val receiveMember = MemberName(ViaductRuntime::class.java.packageName, "receive")
@@ -259,6 +274,9 @@ private class BackendCodeGenerator(
 
         override fun newTemporary(baseName: String): String =
             freshNameGenerator.getFreshName(baseName)
+
+        override fun outBoxName(outName: String): String =
+            outBoxNames.getOrPut(outName) { freshNameGenerator.getFreshName(outName + "_box") }
 
         override fun codeOf(host: Host) =
             hostDeclarations.reference(host)

@@ -13,7 +13,7 @@ gradlePlugin {
     plugins {
         register("${rootProject.name}-plugin") {
             id = project.group as String
-            implementationClass = "${project.group}.gradle.ViaductPlugin"
+            implementationClass = "${(project.group as String).replace('-', '_')}.gradle.ViaductPlugin"
         }
     }
 }

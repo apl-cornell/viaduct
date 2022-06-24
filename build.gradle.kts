@@ -1,15 +1,15 @@
 plugins {
-    kotlin("multiplatform") version "1.6.21" apply false
-    kotlin("plugin.serialization") version "1.6.21" apply false
+    kotlin("multiplatform") version "1.7.0" apply false
+    kotlin("plugin.serialization") version "1.7.0" apply false
 
     // Versioning
     id("com.palantir.git-version") version "0.15.0"
 
     // Documentation
-    id("org.jetbrains.dokka") version "1.6.21"
+    id("org.jetbrains.dokka") version "1.7.0"
 
     // Style checking
-    id("com.diffplug.spotless") version "6.6.1"
+    id("com.diffplug.spotless") version "6.7.2"
 }
 
 // Derive version from Git tags
@@ -19,7 +19,7 @@ val versionFromGit = gitVersion()
 allprojects {
     apply(plugin = "com.diffplug.spotless")
 
-    group = "edu.cornell.cs.apl.${rootProject.name}"
+    group = "io.github.apl-cornell.${rootProject.name}"
 
     version = if (versionFromGit == "unspecified") "0.0.0-SNAPSHOT" else versionFromGit
 

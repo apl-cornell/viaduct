@@ -1,15 +1,15 @@
 plugins {
-    kotlin("jvm") version "1.7.0"
-    id("io.github.apl-cornell.viaduct")
+    kotlin("jvm") version "1.6.21"
+    id("edu.cornell.cs.apl.viaduct")
     application
 
     // Style checking
-    id("com.diffplug.spotless") version "6.7.2"
+    id("com.diffplug.spotless") version "6.6.1"
 }
 
-group = "io.github.apl-cornell.viaduct"
+group = "edu.cornell.cs.apl.viaduct"
 
-val mainPackage = "${(project.group as String).replace('-', '_')}.${project.name}"
+val mainPackage = "${project.group}.${project.name}"
 
 java {
     toolchain {
@@ -22,7 +22,7 @@ dependencies {
     implementation("${project.group}:runtime")
 
     // Command-line-argument parsing
-    implementation("com.github.ajalt.clikt:clikt:3.5.0")
+    implementation("com.github.ajalt.clikt:clikt:3.4.2")
 
     // Logging
     implementation("io.github.microutils:kotlin-logging:2.1.23")
@@ -31,7 +31,7 @@ dependencies {
 
     // Testing
     testImplementation("${project.group}:test-utilities")
-    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.3")
+    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.2")
 }
 
 application {

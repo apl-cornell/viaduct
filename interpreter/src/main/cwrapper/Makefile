@@ -3,9 +3,6 @@ INCLUDES = -I/usr/lib/jvm/default-java/include -I/usr/lib/jvm/default-java/inclu
 
 FILES = libsnarkwrapper.cpp libsnarkwrapper_wrap.cpp
 
-PACKAGE = io.github.apl_cornell.viaduct.libsnarkwrapper
-PACKAGE_DIR = $(subst .,/,$(PACKAGE))
-
 libsnarkwrapper.so: libsnarkwrapper_wrap.o
 	g++ -shared -o $@ $^ -L/usr/local/lib -lff -lgmp -lgmpxx
 
@@ -13,11 +10,11 @@ libsnarkwrapper_wrap.o: libsnarkwrapper_wrap.cpp
 	g++ -c -fpic $(INCLUDES) libsnarkwrapper_wrap.cpp
 
 libsnarkwrapper_wrap.cpp: libsnarkwrapper.i libsnarkwrapper.hpp utils.hpp
-	mkdir -p ../java/$(PACKAGE_DIR) && swig -java -outdir ../java/$(PACKAGE_DIR) -package $(PACKAGE) -c++ -o $@ libsnarkwrapper.i
+	mkdir -p ../java/edu/cornell/cs/apl/viaduct/libsnarkwrapper && swig -java -outdir ../java/edu/cornell/cs/apl/viaduct/libsnarkwrapper -package edu.cornell.cs.apl.viaduct.libsnarkwrapper -c++ -o $@ libsnarkwrapper.i
 
 
 clean:
-	rm libsnarkwrapper_wrap.cpp *.o *.so ../java/(PACKAGE_DIR)/*
+	rm libsnarkwrapper_wrap.cpp *.o *.so ../java/edu/cornell/cs/apl/viaduct/libsnarkwrapper/*
 
 install: libsnarkwrapper.so
 	cp libsnarkwrapper.so /usr/lib

@@ -86,6 +86,3 @@ bin/*
 !lib/*
 
 .*.sw?
-
-tmp/
-.gitignore

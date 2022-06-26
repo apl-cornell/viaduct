@@ -1,44 +1,44 @@
-package edu.cornell.cs.apl.viaduct.codegeneration
+package io.github.apl_cornell.viaduct.codegeneration
 
 import com.squareup.kotlinpoet.ARRAY
 import com.squareup.kotlinpoet.CodeBlock
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import com.squareup.kotlinpoet.PropertySpec
 import com.squareup.kotlinpoet.TypeName
-import edu.cornell.cs.apl.viaduct.analysis.NameAnalysis
-import edu.cornell.cs.apl.viaduct.analysis.TypeAnalysis
-import edu.cornell.cs.apl.viaduct.syntax.Arguments
-import edu.cornell.cs.apl.viaduct.syntax.ObjectTypeNode
-import edu.cornell.cs.apl.viaduct.syntax.Protocol
-import edu.cornell.cs.apl.viaduct.syntax.datatypes.Get
-import edu.cornell.cs.apl.viaduct.syntax.datatypes.ImmutableCell
-import edu.cornell.cs.apl.viaduct.syntax.datatypes.MutableCell
-import edu.cornell.cs.apl.viaduct.syntax.datatypes.Vector
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.AtomicExpressionNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.DeclarationNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.DowngradeNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.ExpressionArgumentNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.ExpressionNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.FunctionArgumentNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.LetNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.LiteralNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.ObjectDeclarationArgumentNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.ObjectReferenceArgumentNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutParameterArgumentNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutParameterConstructorInitializerNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutParameterExpressionInitializerNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutParameterInitializationNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.OutputNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.QueryNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.ReadNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.SimpleStatementNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.UpdateNode
-import edu.cornell.cs.apl.viaduct.syntax.types.ImmutableCellType
-import edu.cornell.cs.apl.viaduct.syntax.types.MutableCellType
-import edu.cornell.cs.apl.viaduct.syntax.types.ObjectType
-import edu.cornell.cs.apl.viaduct.syntax.types.ValueType
-import edu.cornell.cs.apl.viaduct.syntax.types.VectorType
-import edu.cornell.cs.apl.viaduct.syntax.values.Value
+import io.github.apl_cornell.viaduct.analysis.NameAnalysis
+import io.github.apl_cornell.viaduct.analysis.TypeAnalysis
+import io.github.apl_cornell.viaduct.syntax.Arguments
+import io.github.apl_cornell.viaduct.syntax.ObjectTypeNode
+import io.github.apl_cornell.viaduct.syntax.Protocol
+import io.github.apl_cornell.viaduct.syntax.datatypes.Get
+import io.github.apl_cornell.viaduct.syntax.datatypes.ImmutableCell
+import io.github.apl_cornell.viaduct.syntax.datatypes.MutableCell
+import io.github.apl_cornell.viaduct.syntax.datatypes.Vector
+import io.github.apl_cornell.viaduct.syntax.intermediate.AtomicExpressionNode
+import io.github.apl_cornell.viaduct.syntax.intermediate.DeclarationNode
+import io.github.apl_cornell.viaduct.syntax.intermediate.DowngradeNode
+import io.github.apl_cornell.viaduct.syntax.intermediate.ExpressionArgumentNode
+import io.github.apl_cornell.viaduct.syntax.intermediate.ExpressionNode
+import io.github.apl_cornell.viaduct.syntax.intermediate.FunctionArgumentNode
+import io.github.apl_cornell.viaduct.syntax.intermediate.LetNode
+import io.github.apl_cornell.viaduct.syntax.intermediate.LiteralNode
+import io.github.apl_cornell.viaduct.syntax.intermediate.ObjectDeclarationArgumentNode
+import io.github.apl_cornell.viaduct.syntax.intermediate.ObjectReferenceArgumentNode
+import io.github.apl_cornell.viaduct.syntax.intermediate.OutParameterArgumentNode
+import io.github.apl_cornell.viaduct.syntax.intermediate.OutParameterConstructorInitializerNode
+import io.github.apl_cornell.viaduct.syntax.intermediate.OutParameterExpressionInitializerNode
+import io.github.apl_cornell.viaduct.syntax.intermediate.OutParameterInitializationNode
+import io.github.apl_cornell.viaduct.syntax.intermediate.OutputNode
+import io.github.apl_cornell.viaduct.syntax.intermediate.QueryNode
+import io.github.apl_cornell.viaduct.syntax.intermediate.ReadNode
+import io.github.apl_cornell.viaduct.syntax.intermediate.SimpleStatementNode
+import io.github.apl_cornell.viaduct.syntax.intermediate.UpdateNode
+import io.github.apl_cornell.viaduct.syntax.types.ImmutableCellType
+import io.github.apl_cornell.viaduct.syntax.types.MutableCellType
+import io.github.apl_cornell.viaduct.syntax.types.ObjectType
+import io.github.apl_cornell.viaduct.syntax.types.ValueType
+import io.github.apl_cornell.viaduct.syntax.types.VectorType
+import io.github.apl_cornell.viaduct.syntax.values.Value
 
 abstract class AbstractCodeGenerator(val context: CodeGeneratorContext) : CodeGenerator {
     private val nameAnalysis = NameAnalysis.get(context.program)
@@ -60,7 +60,7 @@ abstract class AbstractCodeGenerator(val context: CodeGeneratorContext) : CodeGe
             else -> {
                 throw IllegalArgumentException(
                     "Cannot convert ${
-                        sourceType.toDocument().print()
+                    sourceType.toDocument().print()
                     } to Kotlin type."
                 )
             }
@@ -195,7 +195,7 @@ abstract class AbstractCodeGenerator(val context: CodeGeneratorContext) : CodeGe
         when (typeAnalysis.type(nameAnalysis.declaration(stmt))) {
             is MutableCellType ->
                 when (stmt.update.value) {
-                    is edu.cornell.cs.apl.viaduct.syntax.datatypes.Set ->
+                    is io.github.apl_cornell.viaduct.syntax.datatypes.Set ->
                         CodeBlock.of(
                             "%N = %L",
                             context.kotlinName(stmt.variable.value),
@@ -207,7 +207,7 @@ abstract class AbstractCodeGenerator(val context: CodeGeneratorContext) : CodeGe
 
             is VectorType ->
                 when (stmt.update.value) {
-                    is edu.cornell.cs.apl.viaduct.syntax.datatypes.Set ->
+                    is io.github.apl_cornell.viaduct.syntax.datatypes.Set ->
                         CodeBlock.of(
                             "%N[%L] = %L",
                             context.kotlinName(stmt.variable.value),
@@ -234,7 +234,7 @@ abstract class AbstractCodeGenerator(val context: CodeGeneratorContext) : CodeGe
             is ObjectDeclarationArgumentNode -> {
                 throw UnsupportedOperatorException(protocol, argument)
             }
-            is OutParameterArgumentNode -> {  // Out box already in scope
+            is OutParameterArgumentNode -> { // Out box already in scope
                 CodeBlock.of("%N", context.outBoxName(context.kotlinName(argument.parameter.value)))
             }
         }

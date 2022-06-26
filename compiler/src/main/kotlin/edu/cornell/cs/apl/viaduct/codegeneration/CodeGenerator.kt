@@ -1,17 +1,17 @@
-package edu.cornell.cs.apl.viaduct.codegeneration
+package io.github.apl_cornell.viaduct.codegeneration
 
 import com.squareup.kotlinpoet.CodeBlock
 import com.squareup.kotlinpoet.PropertySpec
 import com.squareup.kotlinpoet.TypeName
-import edu.cornell.cs.apl.viaduct.selection.ProtocolCommunication
-import edu.cornell.cs.apl.viaduct.syntax.Protocol
-import edu.cornell.cs.apl.viaduct.syntax.ProtocolName
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.AtomicExpressionNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.FunctionArgumentNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.LetNode
-import edu.cornell.cs.apl.viaduct.syntax.intermediate.SimpleStatementNode
-import edu.cornell.cs.apl.viaduct.syntax.types.ObjectType
-import edu.cornell.cs.apl.viaduct.syntax.types.ValueType
+import io.github.apl_cornell.viaduct.selection.ProtocolCommunication
+import io.github.apl_cornell.viaduct.syntax.Protocol
+import io.github.apl_cornell.viaduct.syntax.ProtocolName
+import io.github.apl_cornell.viaduct.syntax.intermediate.AtomicExpressionNode
+import io.github.apl_cornell.viaduct.syntax.intermediate.FunctionArgumentNode
+import io.github.apl_cornell.viaduct.syntax.intermediate.LetNode
+import io.github.apl_cornell.viaduct.syntax.intermediate.SimpleStatementNode
+import io.github.apl_cornell.viaduct.syntax.types.ObjectType
+import io.github.apl_cornell.viaduct.syntax.types.ValueType
 
 interface CodeGenerator {
     fun kotlinType(protocol: Protocol, sourceType: ValueType): TypeName

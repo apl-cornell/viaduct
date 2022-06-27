@@ -24,9 +24,13 @@ import io.github.apl_cornell.viaduct.syntax.Host
 import io.github.apl_cornell.viaduct.syntax.ObjectVariable
 import io.github.apl_cornell.viaduct.syntax.Protocol
 import io.github.apl_cornell.viaduct.syntax.Temporary
+import io.github.apl_cornell.viaduct.syntax.datatypes.ImmutableCell
+import io.github.apl_cornell.viaduct.syntax.datatypes.MutableCell
+import io.github.apl_cornell.viaduct.syntax.datatypes.Vector
 import io.github.apl_cornell.viaduct.syntax.intermediate.AssertionNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.BlockNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.BreakNode
+import io.github.apl_cornell.viaduct.syntax.intermediate.DeclarationNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.FunctionCallNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.FunctionDeclarationNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.IfNode
@@ -35,10 +39,13 @@ import io.github.apl_cornell.viaduct.syntax.intermediate.LetNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.LiteralNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.ObjectDeclarationArgumentNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.OutParameterArgumentNode
+import io.github.apl_cornell.viaduct.syntax.intermediate.OutParameterInitializationNode
+import io.github.apl_cornell.viaduct.syntax.intermediate.OutputNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.ProgramNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.ReadNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.SimpleStatementNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.StatementNode
+import io.github.apl_cornell.viaduct.syntax.intermediate.UpdateNode
 import io.github.apl_cornell.viaduct.util.FreshNameGenerator
 import java.util.LinkedList
 import java.util.Queue
@@ -102,7 +109,7 @@ private class BackendCodeGenerator(
                 if (protocolAnalysis.participatingHosts(stmt).contains(host)) {
                     hostFunctionBuilder.addComment(stmt.toDocument().print())
                     // generate code for the statement, if [host] participating
-                    hostFunctionBuilder.addStatement("%L", codeGenerator.simpleStatement(protocol, stmt))
+                    hostFunctionBuilder.addStatement("%L", simpleStatement(protocol, stmt))
 
                     // generate code for sending data
                     for (reader in readers) {
@@ -138,7 +145,7 @@ private class BackendCodeGenerator(
                 if (protocolAnalysis.participatingHosts(stmt).contains(host)) {
                     hostFunctionBuilder.addComment(stmt.toDocument().print())
                     val protocol = protocolAnalysis.primaryProtocol(stmt)
-                    hostFunctionBuilder.addStatement("%L", codeGenerator.simpleStatement(protocol, stmt))
+                    hostFunctionBuilder.addStatement("%L", simpleStatement(protocol, stmt))
                 }
             }
 
@@ -228,6 +235,57 @@ private class BackendCodeGenerator(
             is AssertionNode -> TODO("Assertions not yet implemented.")
         }
     }
+
+    private fun simpleStatement(protocol: Protocol, stmt: SimpleStatementNode): CodeBlock {
+        return when (stmt) {
+            is LetNode -> let(protocol, stmt)
+
+            is DeclarationNode -> declaration(protocol, stmt)
+
+            is UpdateNode -> codeGenerator.update(protocol, stmt)
+
+            is OutParameterInitializationNode -> outParameterInitialization()
+
+            is OutputNode -> codeGenerator.output(protocol, stmt)
+        }
+    }
+
+    private fun let(protocol: Protocol, stmt: LetNode): CodeBlock =
+        CodeBlock.of(
+            "val %N = %L",
+            context.kotlinName(stmt.name.value, protocol),
+            codeGenerator.exp(protocol, stmt.value)
+        )
+
+    private fun declaration(protocol: Protocol, stmt: DeclarationNode): CodeBlock {
+        val ctorCall = codeGenerator.constructorCall(protocol, stmt.objectType, stmt.arguments)
+        return when (stmt.objectType.className.value) {
+            ImmutableCell -> CodeBlock.of(
+                "val %N = %L",
+                context.kotlinName(stmt.name.value),
+                ctorCall
+            )
+
+            // TODO - change this (difference between viaduct, kotlin semantics)
+            MutableCell -> CodeBlock.of(
+                "var %N = %L",
+                context.kotlinName(stmt.name.value),
+                ctorCall
+            )
+
+            Vector -> CodeBlock.of(
+                "val %N = %L",
+                context.kotlinName(stmt.name.value),
+                ctorCall
+            )
+            else -> throw UnsupportedOperatorException(protocol, stmt)
+        }
+    }
+
+    fun outParameterInitialization(
+        /* protocol: Protocol, stmt: OutParameterInitializationNode */
+    ): CodeBlock =
+        CodeBlock.of("") // TODO (merge from fn calls)
 
     private inner class Context : CodeGeneratorContext {
         private var tempMap: MutableMap<Pair<Temporary, Protocol>, String> = mutableMapOf()

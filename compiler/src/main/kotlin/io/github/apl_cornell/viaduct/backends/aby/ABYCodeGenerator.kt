@@ -485,7 +485,7 @@ class ABYCodeGenerator(
 
                     is MutableCellType ->
                         when (expr.query.value) {
-                            is Get -> CodeBlock.of(context.kotlinName(expr.variable.value))
+                            is Get -> CodeBlock.of("%N.get()", context.kotlinName(expr.variable.value))
                             else -> super.exp(protocol, expr)
                         }
 
@@ -574,7 +574,7 @@ class ABYCodeGenerator(
                 when (stmt.update.value) {
                     is io.github.apl_cornell.viaduct.syntax.datatypes.Set -> {
                         CodeBlock.of(
-                            "%N = %L",
+                            "%N.set(%L)",
                             context.kotlinName(stmt.variable.value),
                             exp(protocol, stmt.arguments.first())
                         )

@@ -159,7 +159,12 @@ class InformationFlowAnalysis private constructor(
     private val Node.pcTerm: LabelTerm
         get() =
             when (this) {
-                is FunctionDeclarationNode -> term(this.pcLabel!!.value.interpret())
+                is FunctionDeclarationNode ->
+                    if (this.pcLabel != null) {
+                        term(this.pcLabel.value.interpret())
+                    } else {
+                        term(LabelVariable.PC(pathName))
+                    }
 
                 else -> term(LabelVariable.PC(pathName))
             }
@@ -422,6 +427,7 @@ class InformationFlowAnalysis private constructor(
 
                 sequence {
                     // pc flows to function
+                    // TODO: use proper exception class
                     yieldAll(pcFlowsTo(functionDeclaration.pcLabel!!.value.interpretAsVariable(this@constraints)))
                     // arguments flows to parameters (and the reverse direction for out parameters)
                     yieldAll(
@@ -454,7 +460,7 @@ class InformationFlowAnalysis private constructor(
                     // parameters satisfy function IFC constraints, where polymorphic variables
                     // in the function declaration are interpreted as existential variables
                     yieldAll(
-                        functionDeclaration.labelConstraints!!.flatMap {
+                        functionDeclaration.labelConstraints.flatMap {
                             // this has to be IFC delegations
                             assert(it.delegationKind == DelegationKind.IFC)
                             (it to it.node1.value.interpretAsVariable(this@constraints)) flowsTo
@@ -514,11 +520,9 @@ class InformationFlowAnalysis private constructor(
 
             is BlockNode -> {
                 sequence {
-                    yieldAll(
-                        statements.flatMap {
-                            constraints()
-                        }
-                    )
+                    statements.forEach {
+                        yieldAll(it.constraints())
+                    }
                 }
             }
         }
@@ -528,7 +532,7 @@ class InformationFlowAnalysis private constructor(
      */
     private fun FunctionDeclarationNode.constraints(): LabelConstraintSystem {
         val delegations = trustConfiguration.congruence +
-            FreeDistributiveLatticeCongruence(labelConstraints!!.flatMap { it.congruences() })
+            FreeDistributiveLatticeCongruence(labelConstraints.flatMap { it.congruences() })
         return ConstraintSystem(
             body.constraints().asIterable(),
             FreeDistributiveLattice.bounds(),

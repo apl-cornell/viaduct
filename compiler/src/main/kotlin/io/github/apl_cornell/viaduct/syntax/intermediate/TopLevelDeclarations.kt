@@ -92,9 +92,9 @@ class ParameterNode(
  */
 class FunctionDeclarationNode(
     val name: FunctionNameNode,
-    val labelParameters: Arguments<LabelVariableNode>?,
+    val labelParameters: Arguments<LabelVariableNode>,
     val parameters: Arguments<ParameterNode>,
-    val labelConstraints: Arguments<DelegationDeclarationNode>?,
+    val labelConstraints: Arguments<DelegationDeclarationNode>,
     val pcLabel: LabelNode?,
     val body: BlockNode,
     override val sourceLocation: SourceLocation

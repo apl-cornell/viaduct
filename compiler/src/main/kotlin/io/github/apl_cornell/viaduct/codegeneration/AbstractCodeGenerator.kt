@@ -143,9 +143,6 @@ abstract class AbstractCodeGenerator(val context: CodeGeneratorContext) : CodeGe
             else -> throw UnsupportedOperatorException(protocol, stmt)
         }
 
-    override fun output(protocol: Protocol, stmt: OutputNode): CodeBlock =
-        throw UnsupportedOperatorException(protocol, stmt)
-
     override fun setup(protocol: Protocol): Iterable<PropertySpec> =
         listOf()
 }

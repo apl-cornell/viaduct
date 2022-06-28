@@ -26,8 +26,6 @@ interface CodeGenerator {
 
     fun update(protocol: Protocol, stmt: UpdateNode): CodeBlock
 
-    fun output(protocol: Protocol, stmt: OutputNode): CodeBlock
-
     fun send(
         sender: LetNode,
         sendProtocol: Protocol,
@@ -66,8 +64,6 @@ fun Iterable<Pair<Set<ProtocolName>, CodeGenerator>>.unions(): CodeGenerator = o
     ): CodeBlock = generatorFor(protocol).constructorCall(protocol, objectType, arguments)
 
     override fun update(protocol: Protocol, stmt: UpdateNode): CodeBlock = generatorFor(protocol).update(protocol, stmt)
-
-    override fun output(protocol: Protocol, stmt: OutputNode): CodeBlock = generatorFor(protocol).output(protocol, stmt)
 
     override fun send(
         sender: LetNode,

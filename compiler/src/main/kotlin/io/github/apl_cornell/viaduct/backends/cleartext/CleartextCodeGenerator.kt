@@ -122,13 +122,6 @@ class CleartextCodeGenerator(context: CodeGeneratorContext) : AbstractCodeGenera
             else -> super.update(protocol, stmt)
         }
 
-    override fun output(protocol: Protocol, stmt: OutputNode): CodeBlock =
-        CodeBlock.of(
-            "runtime.output(%T(%L))",
-            typeAnalysis.type(stmt.message).valueClass,
-            exp(protocol, stmt.message)
-        )
-
     override fun send(
         sender: LetNode,
         sendProtocol: Protocol,

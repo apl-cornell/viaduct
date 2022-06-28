@@ -41,8 +41,6 @@ class CommitmentDispatchCodeGenerator(
 
     override fun update(protocol: Protocol, stmt: UpdateNode): CodeBlock = generatorFor(protocol).update(protocol, stmt)
 
-    override fun output(protocol: Protocol, stmt: OutputNode): CodeBlock = generatorFor(protocol).output(protocol, stmt)
-
     override fun send(
         sender: LetNode,
         sendProtocol: Protocol,

@@ -16,6 +16,7 @@ import com.squareup.kotlinpoet.joinToCode
 import io.github.apl_cornell.apl.prettyprinting.joined
 import io.github.apl_cornell.viaduct.analysis.NameAnalysis
 import io.github.apl_cornell.viaduct.analysis.ProtocolAnalysis
+import io.github.apl_cornell.viaduct.analysis.TypeAnalysis
 import io.github.apl_cornell.viaduct.runtime.Boxed
 import io.github.apl_cornell.viaduct.runtime.ViaductGeneratedProgram
 import io.github.apl_cornell.viaduct.runtime.ViaductRuntime
@@ -58,6 +59,7 @@ private class BackendCodeGenerator(
     val protocolComposer: ProtocolComposer,
     val hostDeclarations: TypeSpec
 ) {
+    private val typeAnalysis = TypeAnalysis.get(program)
     private val nameAnalysis = NameAnalysis.get(program)
     private val protocolAnalysis = ProtocolAnalysis(program, protocolComposer)
     private val context = Context()
@@ -246,7 +248,11 @@ private class BackendCodeGenerator(
 
             is OutParameterInitializationNode -> outParameterInitialization()
 
-            is OutputNode -> codeGenerator.output(protocol, stmt)
+            is OutputNode -> CodeBlock.of(
+                "runtime.output(%T(%L))",
+                typeAnalysis.type(stmt.message).valueClass,
+                codeGenerator.exp(protocol, stmt.message)
+            )
         }
     }
 

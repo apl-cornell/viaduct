@@ -2,7 +2,7 @@ plugins {
     kotlin("jvm")
 }
 
-val mainPackage = (project.group as String).replace('-', '_')
+val rootPackage: String by project.ext
 
 /** Dependencies */
 
@@ -24,12 +24,12 @@ val generatePropertiesFile by tasks.registering {
     outputs.dir(outputDir)
 
     doLast {
-        val packageDir = mainPackage.replace(".", File.separator)
+        val packageDir = rootPackage.replace(".", File.separator)
         val propertiesFile = outputDir.get().dir(packageDir).file("Properties.kt").asFile
         propertiesFile.parentFile.mkdirs()
         propertiesFile.writeText(
             """
-            package $mainPackage
+            package $rootPackage
 
             const val version = "${project.version}"
 

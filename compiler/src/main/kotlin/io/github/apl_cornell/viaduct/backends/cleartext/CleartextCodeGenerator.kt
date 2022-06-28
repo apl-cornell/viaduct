@@ -96,9 +96,9 @@ class CleartextCodeGenerator(context: CodeGeneratorContext) : AbstractCodeGenera
                 when (stmt.update.value) {
                     is Modify ->
                         CodeBlock.of(
-                            "%N %L %L",
+                            "%1N.set(%1N.get() %2L %3L)",
                             context.kotlinName(stmt.variable.value),
-                            stmt.update.value.name,
+                            stmt.update.value.operator,
                             exp(protocol, stmt.arguments[0])
                         )
 

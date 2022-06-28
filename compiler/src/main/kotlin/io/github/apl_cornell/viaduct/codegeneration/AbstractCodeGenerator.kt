@@ -4,6 +4,7 @@ import com.squareup.kotlinpoet.CodeBlock
 import com.squareup.kotlinpoet.PropertySpec
 import io.github.apl_cornell.viaduct.analysis.NameAnalysis
 import io.github.apl_cornell.viaduct.analysis.TypeAnalysis
+import io.github.apl_cornell.viaduct.runtime.Boxed
 import io.github.apl_cornell.viaduct.syntax.Arguments
 import io.github.apl_cornell.viaduct.syntax.ObjectTypeNode
 import io.github.apl_cornell.viaduct.syntax.Protocol
@@ -57,7 +58,7 @@ abstract class AbstractCodeGenerator(val context: CodeGeneratorContext) : CodeGe
 
                     is MutableCellType ->
                         when (expr.query.value) {
-                            is Get -> CodeBlock.of("%N", context.kotlinName(expr.variable.value))
+                            is Get -> CodeBlock.of("%N.get()", context.kotlinName(expr.variable.value))
                             else -> throw UnsupportedOperatorException(protocol, expr)
                         }
 
@@ -86,8 +87,12 @@ abstract class AbstractCodeGenerator(val context: CodeGeneratorContext) : CodeGe
         arguments: Arguments<AtomicExpressionNode>
     ): CodeBlock =
         when (objectType.className.value) {
-            ImmutableCell, MutableCell -> exp(
+            ImmutableCell -> exp(
                 protocol, arguments.first()
+            )
+            MutableCell -> CodeBlock.of(
+                "%T(%L)",
+                Boxed::class, exp(protocol, arguments.first())
             )
             Vector -> CodeBlock.of(
                 "%T(%L){ %L }",
@@ -114,7 +119,7 @@ abstract class AbstractCodeGenerator(val context: CodeGeneratorContext) : CodeGe
                 when (stmt.update.value) {
                     is io.github.apl_cornell.viaduct.syntax.datatypes.Set ->
                         CodeBlock.of(
-                            "%N = %L",
+                            "%N.set(%L)",
                             context.kotlinName(stmt.variable.value),
                             exp(protocol, stmt.arguments[0])
                         )

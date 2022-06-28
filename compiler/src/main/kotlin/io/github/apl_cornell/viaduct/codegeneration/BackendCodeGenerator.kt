@@ -266,9 +266,8 @@ private class BackendCodeGenerator(
                 ctorCall
             )
 
-            // TODO - change this (difference between viaduct, kotlin semantics)
             MutableCell -> CodeBlock.of(
-                "var %N = %L",
+                "val %N = %L",
                 context.kotlinName(stmt.name.value),
                 ctorCall
             )

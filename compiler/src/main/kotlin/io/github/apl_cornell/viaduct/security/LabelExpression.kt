@@ -9,41 +9,31 @@ import io.github.apl_cornell.viaduct.algebra.FreeDistributiveLattice
 import io.github.apl_cornell.viaduct.syntax.Host
 import io.github.apl_cornell.viaduct.syntax.LabelVariable
 
-
 sealed class LabelExpression : PrettyPrintable {
     // TODO: put this in IFC check, Label -> SecurityLattice
     abstract fun interpret(): Label
 
     // TODO: put this in elaboration
     abstract fun rename(renamer: (String) -> String = { x -> x }): LabelExpression
-
 }
 
 data class LabelLiteral(val name: Host) : LabelExpression() {
     override fun toDocument(): Document = name.toDocument()
 
     override fun interpret(): Label =
-        Label(
-            FreeDistributiveLattice(ConfidentialityComponent(HostPrincipal(name))),
-            FreeDistributiveLattice(IntegrityComponent(HostPrincipal(name)))
-        )
+        name.label
 
     override fun rename(renamer: (String) -> String): LabelExpression = this
-
 }
 
 data class LabelParameter(val name: LabelVariable) : LabelExpression() {
     override fun toDocument(): Document = name.toDocument()
 
     override fun interpret(): Label =
-        Label(
-            FreeDistributiveLattice(ConfidentialityComponent(PolymorphicPrincipal(name))),
-            FreeDistributiveLattice(IntegrityComponent(PolymorphicPrincipal(name)))
-        )
+        name.label
 
     override fun rename(renamer: (String) -> String): LabelExpression =
         LabelParameter(LabelVariable(renamer(name.name)))
-
 }
 
 data class LabelJoin(val lhs: LabelExpression, val rhs: LabelExpression) : LabelExpression() {
@@ -54,7 +44,6 @@ data class LabelJoin(val lhs: LabelExpression, val rhs: LabelExpression) : Label
 
     override fun rename(renamer: (String) -> String): LabelExpression =
         LabelJoin(lhs.rename(renamer), rhs.rename(renamer))
-
 }
 
 data class LabelMeet(val lhs: LabelExpression, val rhs: LabelExpression) : LabelExpression() {
@@ -65,7 +54,6 @@ data class LabelMeet(val lhs: LabelExpression, val rhs: LabelExpression) : Label
 
     override fun rename(renamer: (String) -> String): LabelExpression =
         LabelMeet(lhs.rename(renamer), rhs.rename(renamer))
-
 }
 
 data class LabelAnd(val lhs: LabelExpression, val rhs: LabelExpression) : LabelExpression() {
@@ -76,7 +64,6 @@ data class LabelAnd(val lhs: LabelExpression, val rhs: LabelExpression) : LabelE
 
     override fun rename(renamer: (String) -> String): LabelExpression =
         LabelAnd(lhs.rename(renamer), rhs.rename(renamer))
-
 }
 
 data class LabelOr(val lhs: LabelExpression, val rhs: LabelExpression) : LabelExpression() {
@@ -87,7 +74,6 @@ data class LabelOr(val lhs: LabelExpression, val rhs: LabelExpression) : LabelEx
 
     override fun rename(renamer: (String) -> String): LabelExpression =
         LabelOr(lhs.rename(renamer), rhs.rename(renamer))
-
 }
 
 data class LabelConfidentiality(val value: LabelExpression) : LabelExpression() {
@@ -99,7 +85,6 @@ data class LabelConfidentiality(val value: LabelExpression) : LabelExpression() 
 
     override fun rename(renamer: (String) -> String): LabelExpression =
         LabelConfidentiality(value.rename(renamer))
-
 }
 
 data class LabelIntegrity(val value: LabelExpression) : LabelExpression() {
@@ -110,7 +95,6 @@ data class LabelIntegrity(val value: LabelExpression) : LabelExpression() {
 
     override fun rename(renamer: (String) -> String): LabelExpression =
         LabelIntegrity(value.rename(renamer))
-
 }
 
 object LabelBottom : LabelExpression() {
@@ -121,9 +105,7 @@ object LabelBottom : LabelExpression() {
             .Bounds<LabelComponent>(FreeDistributiveLattice.bounds())
             .strongest
 
-
     override fun rename(renamer: (String) -> String): LabelExpression = this
-
 }
 
 object LabelTop : LabelExpression() {
@@ -135,5 +117,4 @@ object LabelTop : LabelExpression() {
             .weakest
 
     override fun rename(renamer: (String) -> String): LabelExpression = this
-
 }

@@ -1,6 +1,7 @@
 package io.github.apl_cornell.viaduct.security.solver2
 
 import io.github.apl_cornell.viaduct.algebra.FreeDistributiveLattice
+import io.github.apl_cornell.viaduct.algebra.FreeDistributiveLatticeCongruence
 import io.github.apl_cornell.viaduct.security.SecurityLattice
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Nested
@@ -51,7 +52,7 @@ private infix fun Term<Constant, Variable>.flowsTo(
 private fun solve(
     vararg constraint: Iterable<Constraint<Constant, Variable, IllegalFlowException>>
 ): ConstraintSolution<Constant, Variable> =
-    ConstraintSystem(constraint.flatMap { it }, ConstantBounds).solution()
+    ConstraintSystem(constraint.flatMap { it }, ConstantBounds, FreeDistributiveLatticeCongruence(listOf())).solution()
 
 internal class ConstraintSystemTest {
     @Nested
@@ -121,7 +122,8 @@ internal class ConstraintSystemTest {
     @Nested
     inner class DotGraphOutput {
         private fun dotGraph(vararg constraint: Iterable<Constraint<Constant, Variable, IllegalFlowException>>): String {
-            val system = ConstraintSystem(constraint.flatMap { it }, ConstantBounds)
+            val system =
+                ConstraintSystem(constraint.flatMap { it }, ConstantBounds, FreeDistributiveLatticeCongruence(listOf()))
             val writer = StringWriter()
             system.exportDotGraph(writer)
             return writer.toString()

@@ -86,7 +86,6 @@ class SecurityLattice<T : Lattice<T>>(
     override infix fun actsFor(that: SecurityLattice<T>): Boolean =
         throw UnsupportedOperationException()
 
-
     override fun toDocument() = Document(this.toString())
 
     /** Provides bounds for a [SecurityLattice] given bounds for [T]. */

@@ -1,6 +1,6 @@
 package io.github.apl_cornell.viaduct.selection
 
-import io.github.apl_cornell.viaduct.analysis.InformationFlowAnalysis2
+import io.github.apl_cornell.viaduct.analysis.InformationFlowAnalysis
 import io.github.apl_cornell.viaduct.analysis.NameAnalysis
 import io.github.apl_cornell.viaduct.analysis.descendantsIsInstance
 import io.github.apl_cornell.viaduct.attributes.attribute
@@ -57,7 +57,7 @@ class SelectionConstraintGenerator(
     private val nameGenerator = FreshNameGenerator()
     private val hostTrustConfiguration = HostTrustConfiguration(program)
     private val nameAnalysis = NameAnalysis.get(program)
-    private val informationFlowAnalysis = InformationFlowAnalysis2.get(program)
+    private val informationFlowAnalysis = InformationFlowAnalysis.get(program)
 
     private val costChoiceMap =
         mutableMapOf<CostVariable, MutableList<Pair<SelectionConstraint, Cost<IntegerCost>>>>()

@@ -28,7 +28,7 @@ class InsecureControlFlowError(
         get() {
             // TODO: use flowsTo rather than actsFor
             if (!nodeLabel.confidentiality(FreeDistributiveLattice.bounds())
-                    .actsFor(pc.confidentiality(FreeDistributiveLattice.bounds()))
+                .actsFor(pc.confidentiality(FreeDistributiveLattice.bounds()))
             ) {
                 // Confidentiality is the problem
                 // TODO: reword message (see the output of insecure-control-flow-confidentiality.via)

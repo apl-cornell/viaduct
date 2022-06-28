@@ -10,9 +10,9 @@ data class PrincipalComponent(val principal: Principal) : Component<Principal>(p
     override val integrityComponent: PrincipalComponent = PrincipalComponent(principal)
 }*/
 
-//data class ConfidentialityComponent<A>(val obj: A) : Component<A>(obj)
+// data class ConfidentialityComponent<A>(val obj: A) : Component<A>(obj)
 
-//data class IntegrityComponent<A>(val obj: A) : Component<A>(obj)
+// data class IntegrityComponent<A>(val obj: A) : Component<A>(obj)
 
 sealed class Component<A>
 
@@ -20,8 +20,8 @@ data class ConfidentialityComponent<A>(val obj: A) : Component<A>()
 
 data class IntegrityComponent<A>(val obj: A) : Component<A>()
 
-//sealed class PrincipalComponent(principal: Principal) : Component<Principal>(principal)
+// sealed class PrincipalComponent(principal: Principal) : Component<Principal>(principal)
 
-//data class ConfidentialityComponent(val principal: Principal) : PrincipalComponent(principal)
+// data class ConfidentialityComponent(val principal: Principal) : PrincipalComponent(principal)
 
-//data class IntegrityComponent(val principal: Principal) : PrincipalComponent(principal)
+// data class IntegrityComponent(val principal: Principal) : PrincipalComponent(principal)

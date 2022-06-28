@@ -21,10 +21,6 @@ class FreeDistributiveLattice<A> private constructor(joinOfMeets: JoinOfMeets<A>
 
     constructor(element: A) : this(persistentSetOf(persistentSetOf(element)))
 
-    override fun lessThanOrEqualTo(that: FreeDistributiveLattice<A>): Boolean {
-        return this.join(that) == that
-    }
-
     override fun join(that: FreeDistributiveLattice<A>): FreeDistributiveLattice<A> {
         return FreeDistributiveLattice(joinOfMeets.addAll(that.joinOfMeets))
     }

@@ -1,5 +1,6 @@
 package io.github.apl_cornell.viaduct.syntax.intermediate
 
+import io.github.apl_cornell.viaduct.security.LabelComponent
 import io.github.apl_cornell.viaduct.security.LabelLiteral
 import io.github.apl_cornell.viaduct.syntax.Arguments
 import io.github.apl_cornell.viaduct.syntax.DelegationKind
@@ -93,7 +94,7 @@ class FunctionDeclarationNode(
     val name: FunctionNameNode,
     val labelParameters: Arguments<LabelVariableNode>?,
     val parameters: Arguments<ParameterNode>,
-    val labelConstraints: Arguments<DelegationDeclarationNode>,
+    val labelConstraints: Arguments<DelegationDeclarationNode>?,
     val pcLabel: LabelNode?,
     val body: BlockNode,
     override val sourceLocation: SourceLocation
@@ -136,7 +137,6 @@ class FunctionDeclarationNode(
         if (i >= 0 && i < parameters.size) parameters[i] else null
 }
 
-
 /**
  * Declaration of a delegation.
  *
@@ -148,6 +148,37 @@ class DelegationDeclarationNode(
     val delegationProjection: DelegationProjection,
     override val sourceLocation: SourceLocation
 ) : TopLevelDeclarationNode() {
+
+    // TODO: WHERE TO WE PUT THIS?
+    val congruences = {
+        var node1Confidentiality: LabelComponent =
+            node1.value.interpret().confidentialityComponent
+        var node1Integrity: LabelComponent = node1.value.interpret().integrityComponent
+        var node2Confidentiality: LabelComponent =
+            node2.value.interpret().confidentialityComponent
+        var node2Integrity: LabelComponent = node2.value.interpret().integrityComponent
+
+        if (delegationKind == DelegationKind.IFC) {
+            node1Confidentiality = node2Confidentiality.also { node2Confidentiality = node1Confidentiality }
+        }
+        node1Confidentiality = node1Confidentiality.meet(node2Confidentiality)
+        node1Integrity = node1Integrity.meet(node2Integrity)
+
+        when (delegationProjection) {
+            DelegationProjection.CONFIDENTIALITY ->
+                listOf(Pair(node1Confidentiality, node2Confidentiality))
+
+            DelegationProjection.INTEGRITY ->
+                listOf(Pair(node1Integrity, node2Integrity))
+
+            DelegationProjection.BOTH ->
+                listOf(
+                    Pair(node1Confidentiality, node2Confidentiality),
+                    Pair(node1Integrity, node2Integrity)
+                )
+        }
+    }
+
     override val children: Iterable<BlockNode>
         get() = listOf()
 

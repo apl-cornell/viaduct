@@ -306,7 +306,7 @@ optional_ifc_delegation_list ::=
     :}
 
   | /* empty */ {:
-      RESULT = CollectionsKt.mutableListOf();
+      RESULT = null;
     :}
   ;
 
@@ -316,7 +316,7 @@ ifc_delegation_list ::=
     :}
 
   | /* empty */ {:
-      RESULT = CollectionsKt.mutableListOf();
+      RESULT = null;
     :}
   ;
 nonempty_ifc_delegation_list ::=
@@ -325,7 +325,7 @@ nonempty_ifc_delegation_list ::=
       RESULT = delegations;
     :}
   | ifc_delegation:delegation {:
-      RESULT = CollectionsKt.mutableListOf(delegation);
+      RESULT = new Arguments(CollectionsKt.mutableListOf(delegation), location(delegationleft, delegationright));
     :}
     ;
 
@@ -344,7 +344,7 @@ OPEN_BRACE:polybegin polymorphic_label_param_list:polylabels CLOSE_BRACE:polyend
     :}
 
   | /* empty */ {:
-      RESULT = CollectionsKt.mutableListOf();
+      RESULT = null;
     :}
   ;
 polymorphic_label_param_list ::=
@@ -353,7 +353,7 @@ polymorphic_label_param_list ::=
     :}
 
   | /* empty */ {:
-      RESULT = CollectionsKt.mutableListOf();
+      RESULT = null;
     :}
   ;
 
@@ -363,13 +363,13 @@ nonempty_polymorphic_label_param_list ::=
       RESULT = params;
     :}
   | label_param:label {:
-      RESULT = CollectionsKt.mutableListOf(label);
+      RESULT = new Arguments(CollectionsKt.mutableListOf(label), location(labelleft, labelright));
     :}
     ;
 
 label_param ::=
   CAP_IDENT:label {:
-    RESULT = new Located(new LabelParameter(label), location(labelleft, labelright));
+    RESULT = new Located(new LabelParameter(new LabelVariable(label)), location(labelleft, labelright));
   :}
   ;
 
@@ -886,9 +886,9 @@ label ::=
 
 
 label_expr ::=
-    IDENT:id {: RESULT = new LabelLiteral(id); :}
+    IDENT:id {: RESULT = new LabelLiteral(new Host(id)); :}
 
-  | CAP_IDENT:id {: RESULT = new LabelParameter(id); :}
+  | CAP_IDENT:id {: RESULT = new LabelParameter(new LabelVariable(id)); :}
 
   | TOP {: RESULT = LabelTop.INSTANCE; :}
 
@@ -932,11 +932,11 @@ label_signature ::=
 label_expr_signature ::=
     label_expr_noparam:l {: RESULT = l; :}
 
-  | CAP_IDENT:id             {: RESULT = new LabelParameter(id); :}
+  | CAP_IDENT:id             {: RESULT = new LabelParameter(new LabelVariable(id)); :}
   ;
 
 label_expr_noparam ::=
-    IDENT:id {: RESULT = new LabelLiteral(id); :}
+    IDENT:id {: RESULT = new LabelLiteral(new Host(id)); :}
 
   | TOP {: RESULT = LabelTop.INSTANCE; :}
 

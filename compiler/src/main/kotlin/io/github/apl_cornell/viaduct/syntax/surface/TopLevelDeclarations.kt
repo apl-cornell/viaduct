@@ -37,7 +37,6 @@ class HostDeclarationNode(
     override fun toDocumentWithoutComment(): Document = keyword("host") * name
 }
 
-
 /**
  * A parameter to a function declaration.
  */
@@ -69,7 +68,7 @@ class FunctionDeclarationNode(
     val name: FunctionNameNode,
     val labelParameters: Arguments<LabelVariableNode>?,
     val parameters: Arguments<ParameterNode>,
-    val labelConstraints: Arguments<DelegationDeclarationNode>,
+    val labelConstraints: Arguments<DelegationDeclarationNode>?,
     val pcLabel: LabelNode?,
     val body: BlockNode,
     override val sourceLocation: SourceLocation,
@@ -80,9 +79,8 @@ class FunctionDeclarationNode(
             (labelParameters?.braced() ?: Document("")) *
             name +
             (pcLabel?.let { listOf(it).braced() } ?: Document("")) *
-            parameters.tupled() * labelConstraints.braced() * body
+            parameters.tupled() * (labelConstraints?.braced() ?: Document("")) * body
 }
-
 
 /* Delegation syntax */
 
@@ -102,8 +100,10 @@ class DelegationDeclarationNode(
 ) : TopLevelDeclarationNode() {
     override fun toDocumentWithoutComment(): Document =
         keyword("delegation:") * listOf(node1).braced() *
-            (when (delegationKind) {
-                DelegationKind.AUTHORITY -> "=>"
-                DelegationKind.IFC -> ":>"
-            }) * listOf(node2).braced() * "for" * delegationProjection
+            (
+                when (delegationKind) {
+                    DelegationKind.AUTHORITY -> "=>"
+                    DelegationKind.IFC -> ":>"
+                }
+                ) * listOf(node2).braced() * "for" * delegationProjection
 }

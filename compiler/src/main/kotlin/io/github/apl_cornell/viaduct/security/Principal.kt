@@ -8,7 +8,8 @@ import io.github.apl_cornell.viaduct.syntax.Host
 import io.github.apl_cornell.viaduct.syntax.LabelVariable
 
 /** An actor with an associated security label. */
-sealed class Principal(val name: String) : Comparable<Principal>,
+sealed class Principal(val name: String) :
+    Comparable<Principal>,
     PrettyPrintable {
     override fun compareTo(other: Principal): Int =
         name.compareTo(other.name)
@@ -23,7 +24,6 @@ sealed class Principal(val name: String) : Comparable<Principal>,
 class HostPrincipal(host: Host) : Principal(host.name)
 
 class PolymorphicPrincipal(labelVariable: LabelVariable) : Principal(labelVariable.name)
-
 
 /** The display style of [Principal]s. */
 object PrincipalStyle : Style

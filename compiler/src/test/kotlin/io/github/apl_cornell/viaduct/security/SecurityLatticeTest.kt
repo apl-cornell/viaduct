@@ -2,7 +2,6 @@ package io.github.apl_cornell.viaduct.security
 
 import io.github.apl_cornell.viaduct.algebra.FreeDistributiveLattice
 import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 
@@ -21,18 +20,26 @@ private val SecurityLattice<Component>.c
 private val SecurityLattice<Component>.i
     get() = this.integrity(ComponentBounds)
 
-private fun assertActsFor(from: Component, to: Component) {
-    assertTrue(from.lessThanOrEqualTo(to)) { "$from does not flow to $to." }
-}
-
 private fun assertActsFor(from: SecurityLattice<Component>, to: SecurityLattice<Component>) {
-    assertActsFor(from.confidentialityComponent, to.confidentialityComponent)
-    assertActsFor(from.integrityComponent, to.integrityComponent)
+    assertActsFor(
+        to.confidentiality(FreeDistributiveLattice.bounds()),
+        from.confidentiality(FreeDistributiveLattice.bounds())
+    )
+    assertActsFor(
+        to.integrity(FreeDistributiveLattice.bounds()),
+        from.integrity(FreeDistributiveLattice.bounds())
+    )
 }
 
 private fun assertFlowsTo(from: SecurityLattice<Component>, to: SecurityLattice<Component>) {
-    assertActsFor(to.confidentialityComponent, from.confidentialityComponent)
-    assertActsFor(from.integrityComponent, to.integrityComponent)
+    assertActsFor(
+        to.confidentiality(FreeDistributiveLattice.bounds()),
+        from.confidentiality(FreeDistributiveLattice.bounds())
+    )
+    assertActsFor(
+        from.integrity(FreeDistributiveLattice.bounds()),
+        to.integrity(FreeDistributiveLattice.bounds())
+    )
 }
 
 internal class SecurityLatticeTest {

@@ -24,7 +24,7 @@ class InsecureDataFlowError(
         get() {
             // TODO: use flowsTo rather than actsFor
             if (!to.confidentiality(FreeDistributiveLattice.bounds())
-                    .actsFor(nodeLabel.confidentiality(FreeDistributiveLattice.bounds()))
+                .actsFor(nodeLabel.confidentiality(FreeDistributiveLattice.bounds()))
             ) {
                 // Confidentiality is the problem
                 return Document("This term is flowing to a place that does not have enough confidentiality:")

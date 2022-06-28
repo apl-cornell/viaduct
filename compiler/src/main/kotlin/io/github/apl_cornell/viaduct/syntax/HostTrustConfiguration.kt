@@ -7,9 +7,9 @@ import io.github.apl_cornell.viaduct.security.Principal
 import io.github.apl_cornell.viaduct.syntax.intermediate.DelegationDeclarationNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.ProgramNode
 
-
 /** A map that associates each host with its authority label. */
 class HostTrustConfiguration(val program: ProgramNode) {
+
     val congruence: FreeDistributiveLatticeCongruence<Component<Principal>> =
         FreeDistributiveLatticeCongruence(
             program.filterIsInstance<DelegationDeclarationNode>()
@@ -40,5 +40,6 @@ class HostTrustConfiguration(val program: ProgramNode) {
                                 Pair(node1Integrity, node2Integrity)
                             )
                     }
-                })
+                }
+        )
 }

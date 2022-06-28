@@ -8,16 +8,16 @@ interface LatticeCongruence<A : Lattice<A>> {
 }
 
 class FreeDistributiveLatticeCongruence<A>(
-    congruence: List<Congruence<FreeDistributiveLattice<A>>>
+    private val congruence: List<Congruence<FreeDistributiveLattice<A>>>
 ) : LatticeCongruence<FreeDistributiveLattice<A>> {
+
     private val foldedCongruence: Congruence<FreeDistributiveLattice<A>> =
         congruence.fold(
             Pair(
                 FreeDistributiveLattice.bounds<A>().bottom,
                 FreeDistributiveLattice.bounds<A>().bottom
             )
-        )
-        { acc, element ->
+        ) { acc, element ->
             Pair(acc.first.meet(element.first), acc.second.join(element.second))
         }
 
@@ -36,8 +36,8 @@ class FreeDistributiveLatticeCongruence<A>(
      */
     operator fun plus(other: FreeDistributiveLatticeCongruence<A>): FreeDistributiveLatticeCongruence<A> =
         FreeDistributiveLatticeCongruence(
-            listOf(this.foldedCongruence)
-                + listOf(other.foldedCongruence)
+            this.congruence +
+                other.congruence
         )
 
     companion object {

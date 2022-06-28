@@ -1,6 +1,6 @@
 package io.github.apl_cornell.viaduct.passes
 
-import io.github.apl_cornell.viaduct.analysis.InformationFlowAnalysis2
+import io.github.apl_cornell.viaduct.analysis.InformationFlowAnalysis
 import io.github.apl_cornell.viaduct.analysis.NameAnalysis
 import io.github.apl_cornell.viaduct.analysis.OutParameterInitializationAnalysis
 import io.github.apl_cornell.viaduct.analysis.TypeAnalysis
@@ -23,5 +23,5 @@ fun ProgramNode.check() {
 
     logger.duration("out parameter initialization analysis") { OutParameterInitializationAnalysis.get(this).check() }
 
-    logger.duration("information flow analysis") { InformationFlowAnalysis2.get(this).check() }
+    logger.duration("information flow analysis") { InformationFlowAnalysis.get(this).check() }
 }

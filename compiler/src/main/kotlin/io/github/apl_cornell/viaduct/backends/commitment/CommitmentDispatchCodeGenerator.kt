@@ -11,7 +11,6 @@ import io.github.apl_cornell.viaduct.syntax.Protocol
 import io.github.apl_cornell.viaduct.syntax.intermediate.AtomicExpressionNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.ExpressionNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.LetNode
-import io.github.apl_cornell.viaduct.syntax.intermediate.OutputNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.UpdateNode
 
 class CommitmentDispatchCodeGenerator(

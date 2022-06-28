@@ -10,7 +10,6 @@ import io.github.apl_cornell.viaduct.syntax.ProtocolName
 import io.github.apl_cornell.viaduct.syntax.intermediate.AtomicExpressionNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.ExpressionNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.LetNode
-import io.github.apl_cornell.viaduct.syntax.intermediate.OutputNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.UpdateNode
 
 interface CodeGenerator {

@@ -29,7 +29,6 @@ import io.github.apl_cornell.viaduct.syntax.intermediate.InputNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.LetNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.LiteralNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.OperatorApplicationNode
-import io.github.apl_cornell.viaduct.syntax.intermediate.OutputNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.UpdateNode
 import io.github.apl_cornell.viaduct.syntax.operators.Maximum
 import io.github.apl_cornell.viaduct.syntax.operators.Minimum

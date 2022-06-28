@@ -16,7 +16,6 @@ import io.github.apl_cornell.viaduct.syntax.intermediate.AtomicExpressionNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.DowngradeNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.ExpressionNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.LiteralNode
-import io.github.apl_cornell.viaduct.syntax.intermediate.OutputNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.QueryNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.ReadNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.UpdateNode

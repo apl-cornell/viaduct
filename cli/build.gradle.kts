@@ -5,7 +5,8 @@ plugins {
 
 /** Application */
 
-val mainPackage = "${project.group}.${project.name}"
+val rootPackage: String by ext
+val mainPackage = "$rootPackage.${project.name}"
 
 application {
     mainClass.set("$mainPackage.MainKt")

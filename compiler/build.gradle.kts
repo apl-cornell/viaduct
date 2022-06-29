@@ -58,13 +58,9 @@ sourceSets {
     }
 }
 
-tasks.compileJava.configure {
-    dependsOn(compileCup)
-}
-
 tasks.compileKotlin.configure {
-    dependsOn(compileCup)
     dependsOn(tasks.withType<org.xbib.gradle.plugin.JFlexTask>())
+    dependsOn(tasks.withType<CompileCupTask>())
 }
 
 tasks.withType<Test>().configureEach {

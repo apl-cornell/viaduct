@@ -2,6 +2,8 @@ plugins {
     `kotlin-dsl`
 }
 
+val rootPackage: String by ext
+
 dependencies {
     implementation(project(":shared"))
     implementation(project(":compiler"))
@@ -13,7 +15,7 @@ gradlePlugin {
     plugins {
         register("${rootProject.name}-plugin") {
             id = project.group as String
-            implementationClass = "${(project.group as String).replace('-', '_')}.gradle.ViaductPlugin"
+            implementationClass = "$rootPackage.gradle.ViaductPlugin"
         }
     }
 }

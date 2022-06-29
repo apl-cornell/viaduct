@@ -23,6 +23,8 @@ allprojects {
 
     version = if (versionFromGit == "unspecified") "0.0.0-SNAPSHOT" else versionFromGit
 
+    ext.set("rootPackage", (group as String).replace('-', '_'))
+
     /** Style */
 
     spotless {

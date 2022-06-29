@@ -29,7 +29,6 @@ import io.github.apl_cornell.viaduct.syntax.intermediate.InputNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.LetNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.LiteralNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.OperatorApplicationNode
-import io.github.apl_cornell.viaduct.syntax.intermediate.OutputNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.UpdateNode
 import io.github.apl_cornell.viaduct.syntax.operators.Maximum
 import io.github.apl_cornell.viaduct.syntax.operators.Minimum
@@ -96,9 +95,9 @@ class CleartextCodeGenerator(context: CodeGeneratorContext) : AbstractCodeGenera
                 when (stmt.update.value) {
                     is Modify ->
                         CodeBlock.of(
-                            "%N %L %L",
+                            "%1N.set(%1N.get() %2L %3L)",
                             context.kotlinName(stmt.variable.value),
-                            stmt.update.value.name,
+                            stmt.update.value.operator,
                             exp(protocol, stmt.arguments[0])
                         )
 
@@ -121,13 +120,6 @@ class CleartextCodeGenerator(context: CodeGeneratorContext) : AbstractCodeGenera
 
             else -> super.update(protocol, stmt)
         }
-
-    override fun output(protocol: Protocol, stmt: OutputNode): CodeBlock =
-        CodeBlock.of(
-            "runtime.output(%T(%L))",
-            typeAnalysis.type(stmt.message).valueClass,
-            exp(protocol, stmt.message)
-        )
 
     override fun send(
         sender: LetNode,

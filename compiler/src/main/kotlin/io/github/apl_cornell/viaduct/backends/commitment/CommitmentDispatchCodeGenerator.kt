@@ -10,7 +10,6 @@ import io.github.apl_cornell.viaduct.syntax.Arguments
 import io.github.apl_cornell.viaduct.syntax.ObjectTypeNode
 import io.github.apl_cornell.viaduct.syntax.Protocol
 import io.github.apl_cornell.viaduct.syntax.intermediate.AtomicExpressionNode
-import io.github.apl_cornell.viaduct.syntax.intermediate.FunctionArgumentNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.ExpressionNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.LetNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.UpdateNode
@@ -49,9 +48,6 @@ class CommitmentDispatchCodeGenerator(
     ): CodeBlock = generatorFor(protocol).constructorCall(protocol, objectType, arguments)
 
     override fun update(protocol: Protocol, stmt: UpdateNode): CodeBlock = generatorFor(protocol).update(protocol, stmt)
-
-    override fun argument(protocol: Protocol, argument: FunctionArgumentNode): CodeBlock =
-        generatorFor(protocol).argument(protocol, argument)
 
     override fun send(
         sender: LetNode,

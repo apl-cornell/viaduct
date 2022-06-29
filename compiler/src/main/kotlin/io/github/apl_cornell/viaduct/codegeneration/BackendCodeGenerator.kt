@@ -31,6 +31,8 @@ import io.github.apl_cornell.viaduct.syntax.intermediate.AssertionNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.BlockNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.BreakNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.DeclarationNode
+import io.github.apl_cornell.viaduct.syntax.intermediate.ExpressionArgumentNode
+import io.github.apl_cornell.viaduct.syntax.intermediate.FunctionArgumentNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.FunctionCallNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.FunctionDeclarationNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.IfNode
@@ -38,6 +40,10 @@ import io.github.apl_cornell.viaduct.syntax.intermediate.InfiniteLoopNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.LetNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.LiteralNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.ObjectDeclarationArgumentNode
+import io.github.apl_cornell.viaduct.syntax.intermediate.ObjectReferenceArgumentNode
+import io.github.apl_cornell.viaduct.syntax.intermediate.OutParameterArgumentNode
+import io.github.apl_cornell.viaduct.syntax.intermediate.OutParameterConstructorInitializerNode
+import io.github.apl_cornell.viaduct.syntax.intermediate.OutParameterExpressionInitializerNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.OutParameterInitializationNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.OutputNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.ProgramNode
@@ -45,8 +51,10 @@ import io.github.apl_cornell.viaduct.syntax.intermediate.ReadNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.SimpleStatementNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.StatementNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.UpdateNode
+import io.github.apl_cornell.viaduct.syntax.types.ImmutableCellType
+import io.github.apl_cornell.viaduct.syntax.types.MutableCellType
+import io.github.apl_cornell.viaduct.syntax.types.VectorType
 import io.github.apl_cornell.viaduct.util.FreshNameGenerator
-
 import java.util.LinkedList
 import java.util.Queue
 import javax.annotation.processing.Generated
@@ -192,7 +200,7 @@ private class BackendCodeGenerator(
                         if (arg is ObjectDeclarationArgumentNode)
                             CodeBlock.of("%N", newNames[arg])
                         else
-                            codeGenerator.argument(protocolAnalysis.primaryProtocol(arg), arg)
+                            argument(protocolAnalysis.primaryProtocol(arg), arg)
                     }.joinToCode()
                 )
 
@@ -249,6 +257,32 @@ private class BackendCodeGenerator(
             is AssertionNode -> TODO("Assertions not yet implemented.")
         }
     }
+    private fun argument(protocol: Protocol, argument: FunctionArgumentNode): CodeBlock {
+        return when (argument) {
+            // Input arguments
+            is ObjectReferenceArgumentNode -> {
+                when (typeAnalysis.type(nameAnalysis.declaration(argument))) {
+                    is ImmutableCellType, is VectorType -> {
+                        CodeBlock.of("%N", context.kotlinName(argument.variable.value))
+                    }
+                    is MutableCellType -> {
+                        CodeBlock.of("%N.get()", context.kotlinName(argument.variable.value))
+                    }
+                    else -> throw UnsupportedOperatorException(protocol, argument)
+                }
+            }
+            is ExpressionArgumentNode -> {
+                codeGenerator.exp(protocol, argument.expression)
+            }
+            // Output arguments
+            is ObjectDeclarationArgumentNode -> {
+                throw UnsupportedOperatorException(protocol, argument)
+            }
+            is OutParameterArgumentNode -> { // Out box already in scope
+                CodeBlock.of("%N", context.outBoxName(context.kotlinName(argument.parameter.value)))
+            }
+        }
+    }
 
     private fun simpleStatement(protocol: Protocol, stmt: SimpleStatementNode): CodeBlock {
         return when (stmt) {
@@ -258,7 +292,7 @@ private class BackendCodeGenerator(
 
             is UpdateNode -> codeGenerator.update(protocol, stmt)
 
-            is OutParameterInitializationNode -> outParameterInitialization()
+            is OutParameterInitializationNode -> outParameterInitialization(protocol, stmt)
 
             is OutputNode -> CodeBlock.of(
                 "runtime.output(%T(%L))",
@@ -300,14 +334,35 @@ private class BackendCodeGenerator(
     }
 
     fun outParameterInitialization(
-        /* protocol: Protocol, stmt: OutParameterInitializationNode */
-    ): CodeBlock =
-        CodeBlock.of("") // TODO (merge from fn calls)
+        protocol: Protocol,
+        stmt: OutParameterInitializationNode
+    ): CodeBlock {
+        val rhs = when (val init = stmt.initializer) {
+            is OutParameterConstructorInitializerNode -> codeGenerator.constructorCall(
+                protocol,
+                init.objectType,
+                init.arguments
+            )
+            is OutParameterExpressionInitializerNode -> codeGenerator.exp(protocol, init.expression)
+        }
+        val parameterName = context.kotlinName(stmt.name.value)
+
+        return CodeBlock.of( // TODO this ends up looking strange
+            """
+            |%N = %L
+            |%N.set(%N)
+            |
+            """.trimMargin(),
+            parameterName,
+            rhs,
+            context.outBoxName(parameterName),
+            parameterName
+        )
+    }
 
     private inner class Context : CodeGeneratorContext {
         private var tempMap: MutableMap<Pair<Temporary, Protocol>, String> = mutableMapOf()
         private var varMap: MutableMap<ObjectVariable, String> = mutableMapOf()
-
         private var outBoxNames: MutableMap<String, String> = mutableMapOf()
 
         private var selfSends: Queue<String> = LinkedList()

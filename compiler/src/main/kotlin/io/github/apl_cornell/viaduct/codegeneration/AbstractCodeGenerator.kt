@@ -7,9 +7,9 @@ import com.squareup.kotlinpoet.PropertySpec
 import com.squareup.kotlinpoet.TypeName
 import io.github.apl_cornell.viaduct.analysis.NameAnalysis
 import io.github.apl_cornell.viaduct.analysis.TypeAnalysis
+import io.github.apl_cornell.viaduct.runtime.Boxed
 import io.github.apl_cornell.viaduct.syntax.Arguments
 import io.github.apl_cornell.viaduct.syntax.ObjectTypeNode
-import io.github.apl_cornell.viaduct.runtime.Boxed
 import io.github.apl_cornell.viaduct.syntax.Protocol
 import io.github.apl_cornell.viaduct.syntax.datatypes.Get
 import io.github.apl_cornell.viaduct.syntax.datatypes.ImmutableCell
@@ -17,16 +17,8 @@ import io.github.apl_cornell.viaduct.syntax.datatypes.MutableCell
 import io.github.apl_cornell.viaduct.syntax.datatypes.Vector
 import io.github.apl_cornell.viaduct.syntax.intermediate.AtomicExpressionNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.DowngradeNode
-import io.github.apl_cornell.viaduct.syntax.intermediate.ExpressionArgumentNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.ExpressionNode
-import io.github.apl_cornell.viaduct.syntax.intermediate.FunctionArgumentNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.LiteralNode
-import io.github.apl_cornell.viaduct.syntax.intermediate.ObjectDeclarationArgumentNode
-import io.github.apl_cornell.viaduct.syntax.intermediate.ObjectReferenceArgumentNode
-import io.github.apl_cornell.viaduct.syntax.intermediate.OutParameterArgumentNode
-import io.github.apl_cornell.viaduct.syntax.intermediate.OutParameterConstructorInitializerNode
-import io.github.apl_cornell.viaduct.syntax.intermediate.OutParameterExpressionInitializerNode
-import io.github.apl_cornell.viaduct.syntax.intermediate.OutParameterInitializationNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.OutputNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.QueryNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.ReadNode
@@ -178,50 +170,6 @@ abstract class AbstractCodeGenerator(val context: CodeGeneratorContext) : CodeGe
 
             else -> throw UnsupportedOperatorException(protocol, stmt)
         }
-
-    override fun argument(protocol: Protocol, argument: FunctionArgumentNode): CodeBlock {
-        return when (argument) {
-            // Input arguments
-            is ObjectReferenceArgumentNode -> {
-                CodeBlock.of("%N", context.kotlinName(argument.variable.value))
-            }
-            is ExpressionArgumentNode -> {
-                exp(protocol, argument.expression)
-            }
-            // Output arguments
-            is ObjectDeclarationArgumentNode -> {
-                throw UnsupportedOperatorException(protocol, argument)
-            }
-            is OutParameterArgumentNode -> { // Out box already in scope
-                CodeBlock.of("%N", context.outBoxName(context.kotlinName(argument.parameter.value)))
-            }
-        }
-    }
-
-    private fun outParameterInitialization(
-        protocol: Protocol,
-        stmt: OutParameterInitializationNode
-    ): CodeBlock {
-        val rhs = when (val init = stmt.initializer) {
-            is OutParameterConstructorInitializerNode -> constructorCall(
-                protocol,
-                init.objectType,
-                init.arguments
-            )
-            is OutParameterExpressionInitializerNode -> exp(protocol, init.expression)
-        }
-        val parameterName = context.kotlinName(stmt.name.value)
-
-        return CodeBlock.builder().add(
-            "%N = %L \n",
-            parameterName,
-            rhs
-        ).add(
-            "%N.set(%N)",
-            context.outBoxName(parameterName),
-            parameterName
-        ).build()
-    }
 
     open fun output(protocol: Protocol, stmt: OutputNode): CodeBlock =
         throw UnsupportedOperatorException(protocol, stmt)

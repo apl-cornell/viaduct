@@ -25,9 +25,6 @@ import io.github.apl_cornell.viaduct.syntax.Host
 import io.github.apl_cornell.viaduct.syntax.ObjectVariable
 import io.github.apl_cornell.viaduct.syntax.Protocol
 import io.github.apl_cornell.viaduct.syntax.Temporary
-import io.github.apl_cornell.viaduct.syntax.datatypes.ImmutableCell
-import io.github.apl_cornell.viaduct.syntax.datatypes.MutableCell
-import io.github.apl_cornell.viaduct.syntax.datatypes.Vector
 import io.github.apl_cornell.viaduct.syntax.intermediate.AssertionNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.BlockNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.BreakNode
@@ -240,9 +237,17 @@ private class BackendCodeGenerator(
 
     private fun simpleStatement(protocol: Protocol, stmt: SimpleStatementNode): CodeBlock {
         return when (stmt) {
-            is LetNode -> let(protocol, stmt)
+            is LetNode -> CodeBlock.of(
+                "val %N = %L",
+                context.kotlinName(stmt.name.value, protocol),
+                codeGenerator.exp(protocol, stmt.value)
+            )
 
-            is DeclarationNode -> declaration(protocol, stmt)
+            is DeclarationNode -> CodeBlock.of(
+                "val %N = %L",
+                context.kotlinName(stmt.name.value),
+                codeGenerator.constructorCall(protocol, stmt.objectType, stmt.arguments)
+            )
 
             is UpdateNode -> codeGenerator.update(protocol, stmt)
 
@@ -253,37 +258,6 @@ private class BackendCodeGenerator(
                 typeAnalysis.type(stmt.message).valueClass,
                 codeGenerator.exp(protocol, stmt.message)
             )
-        }
-    }
-
-    private fun let(protocol: Protocol, stmt: LetNode): CodeBlock =
-        CodeBlock.of(
-            "val %N = %L",
-            context.kotlinName(stmt.name.value, protocol),
-            codeGenerator.exp(protocol, stmt.value)
-        )
-
-    private fun declaration(protocol: Protocol, stmt: DeclarationNode): CodeBlock {
-        val ctorCall = codeGenerator.constructorCall(protocol, stmt.objectType, stmt.arguments)
-        return when (stmt.objectType.className.value) {
-            ImmutableCell -> CodeBlock.of(
-                "val %N = %L",
-                context.kotlinName(stmt.name.value),
-                ctorCall
-            )
-
-            MutableCell -> CodeBlock.of(
-                "val %N = %L",
-                context.kotlinName(stmt.name.value),
-                ctorCall
-            )
-
-            Vector -> CodeBlock.of(
-                "val %N = %L",
-                context.kotlinName(stmt.name.value),
-                ctorCall
-            )
-            else -> throw UnsupportedOperatorException(protocol, stmt)
         }
     }
 

@@ -1,7 +1,7 @@
 package io.github.apl_cornell.viaduct.runtime
 
 /** Represents a mutable cell. */
-class Boxed<T>(var value: T) {
+class Boxed<T>(private var value: T) {
 
     fun set(update: T) {
         value = update

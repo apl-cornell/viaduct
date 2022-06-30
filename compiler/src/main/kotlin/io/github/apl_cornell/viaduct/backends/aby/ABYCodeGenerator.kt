@@ -129,6 +129,7 @@ class ABYCodeGenerator(
                 abyPartyBuilder.addStatement("%L", abyParty(protocol, role, portVarName))
                 abyPartyBuilder.endControlFlow()
             }
+
             else -> throw IllegalArgumentException("Unknown ABY Role: $role.")
         }
         return abyPartyBuilder.build()
@@ -170,6 +171,10 @@ class ABYCodeGenerator(
                             protocolToAbyPartyCircuit(sourceProtocol, SharingType.S_BOOL),
                             kotlinName
                         )
+                    // For compilation
+                    else -> {
+                        CodeBlock.of("")
+                    }
                 }
             }
 
@@ -178,6 +183,10 @@ class ABYCodeGenerator(
                     is YaoABY -> CodeBlock.of(".putB2YGate(%L)", kotlinName)
                     is BoolABY -> CodeBlock.of("")
                     is ArithABY -> CodeBlock.of(".putB2AGate(%L)", kotlinName)
+                    // For compilation
+                    else -> {
+                        CodeBlock.of("")
+                    }
                 }
             }
 
@@ -190,8 +199,19 @@ class ABYCodeGenerator(
                             protocolToAbyPartyCircuit(sourceProtocol, SharingType.S_YAO),
                             kotlinName
                         )
+
                     is ArithABY -> CodeBlock.of("")
+
+                    // For compilation
+                    else -> {
+                        CodeBlock.of("")
+                    }
                 }
+            }
+
+            // For compilation
+            else -> {
+                CodeBlock.of("")
             }
         }
     }
@@ -201,6 +221,8 @@ class ABYCodeGenerator(
             is ArithABY -> SharingType.S_ARITH
             is BoolABY -> SharingType.S_BOOL
             is YaoABY -> SharingType.S_YAO
+            // For compilation
+            else -> SharingType.S_SPLUT
         }
 
     private fun protocolToAbyPartyCircuit(
@@ -227,6 +249,7 @@ class ABYCodeGenerator(
                     value.value,
                     BIT_LENGTH
                 )
+
             is IntegerValue ->
                 CodeBlock.of(
                     "%L.putCONSGate(%L.toBigInteger(), %L)",
@@ -234,6 +257,7 @@ class ABYCodeGenerator(
                     value.value,
                     BIT_LENGTH
                 )
+
             else -> throw java.lang.IllegalArgumentException("Unknown value type: $value.")
         }
 
@@ -420,7 +444,8 @@ class ABYCodeGenerator(
                     args.last(),
                     args.first(),
 
-                )
+                    )
+
             else -> throw UnsupportedOperationException("Unknown operator $op.")
         }
 
@@ -467,6 +492,7 @@ class ABYCodeGenerator(
                                             context.kotlinName(expr.variable.value)
 
                                         )
+
                                     true ->
                                         CodeBlock.of(
                                             "%N[%L]",
@@ -474,6 +500,7 @@ class ABYCodeGenerator(
                                             cleartextExp(protocol, expr.arguments.first())
                                         )
                                 }
+
                             else -> super.exp(protocol, expr)
                         }
 
@@ -517,6 +544,7 @@ class ABYCodeGenerator(
                                 exp(protocol, stmt.arguments.last())
                             )
                         }
+
                         is Modify -> {
                             CodeBlock.of(
                                 "%N.%N(%N, %N, %L)",
@@ -534,6 +562,7 @@ class ABYCodeGenerator(
                                 )
                             )
                         }
+
                         else -> throw UnsupportedOperatorException(protocol, stmt)
                     }
 
@@ -546,6 +575,7 @@ class ABYCodeGenerator(
                                 exp(protocol, stmt.arguments.last())
                             )
                         }
+
                         is Modify -> {
                             CodeBlock.of(
                                 "%N[%L] = %L",
@@ -565,6 +595,7 @@ class ABYCodeGenerator(
                                 )
                             )
                         }
+
                         else -> throw UnsupportedOperatorException(protocol, stmt)
                     }
                 }
@@ -579,6 +610,7 @@ class ABYCodeGenerator(
                             exp(protocol, stmt.arguments.first())
                         )
                     }
+
                     is Modify -> {
                         CodeBlock.of(
                             "%N = %L",
@@ -593,6 +625,7 @@ class ABYCodeGenerator(
                             )
                         )
                     }
+
                     else -> throw UnsupportedOperatorException(protocol, stmt)
                 }
 
@@ -666,6 +699,7 @@ class ABYCodeGenerator(
                             event.recv.host
                         )
                     )
+
                 is IntegerType ->
                     outBuilder.addStatement(
                         "%L",

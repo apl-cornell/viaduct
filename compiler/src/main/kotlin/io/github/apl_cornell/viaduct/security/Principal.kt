@@ -9,9 +9,11 @@ import io.github.apl_cornell.viaduct.syntax.LabelVariable
 sealed class Principal : PrettyPrintable
 
 data class HostPrincipal(val host: Host) : Principal() {
+    override fun toString(): String = host.name
     override fun toDocument(): Document = host.toDocument()
 }
 
 data class PolymorphicPrincipal(val labelVariable: LabelVariable) : Principal() {
+    override fun toString(): String = labelVariable.name
     override fun toDocument(): Document = labelVariable.toDocument()
 }

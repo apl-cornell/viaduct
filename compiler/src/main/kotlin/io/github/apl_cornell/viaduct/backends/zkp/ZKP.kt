@@ -6,7 +6,6 @@ import io.github.apl_cornell.viaduct.security.LabelExpression
 import io.github.apl_cornell.viaduct.security.LabelIntegrity
 import io.github.apl_cornell.viaduct.security.LabelLiteral
 import io.github.apl_cornell.viaduct.syntax.Host
-import io.github.apl_cornell.viaduct.syntax.HostTrustConfiguration
 import io.github.apl_cornell.viaduct.syntax.InputPort
 import io.github.apl_cornell.viaduct.syntax.OutputPort
 import io.github.apl_cornell.viaduct.syntax.Protocol
@@ -31,7 +30,7 @@ class ZKP(val prover: Host, val verifiers: Set<Host>) : Protocol() {
     override val arguments: Map<String, Value>
         get() = mapOf("prover" to HostValue(prover), "verifiers" to HostSetValue(verifiers))
 
-    override fun authority(hostTrustConfiguration: HostTrustConfiguration): Label =
+    override fun authority(): Label =
         LabelAnd(
             LabelLiteral(prover),
             verifiers

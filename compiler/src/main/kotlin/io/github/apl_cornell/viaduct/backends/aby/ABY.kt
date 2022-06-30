@@ -4,7 +4,6 @@ import io.github.apl_cornell.viaduct.algebra.FreeDistributiveLattice
 import io.github.apl_cornell.viaduct.security.Label
 import io.github.apl_cornell.viaduct.security.LabelLiteral
 import io.github.apl_cornell.viaduct.syntax.Host
-import io.github.apl_cornell.viaduct.syntax.HostTrustConfiguration
 import io.github.apl_cornell.viaduct.syntax.InputPort
 import io.github.apl_cornell.viaduct.syntax.OutputPort
 import io.github.apl_cornell.viaduct.syntax.Protocol
@@ -29,7 +28,7 @@ sealed class ABY(val server: Host, val client: Host) : Protocol() {
     override val arguments: Map<String, Value>
         get() = mapOf("server" to HostValue(server), "client" to HostValue(client))
 
-    override fun authority(hostTrustConfiguration: HostTrustConfiguration): Label {
+    override fun authority(): Label {
         val combined = LabelLiteral(server).interpret() join LabelLiteral(client).interpret()
         // We limit confidentiality by integrity since ABY provides semi-honest security
         return combined meet combined.integrity(FreeDistributiveLattice.bounds()).swap()

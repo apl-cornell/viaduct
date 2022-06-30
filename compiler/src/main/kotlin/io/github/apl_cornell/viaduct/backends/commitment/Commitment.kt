@@ -6,7 +6,6 @@ import io.github.apl_cornell.viaduct.security.LabelExpression
 import io.github.apl_cornell.viaduct.security.LabelIntegrity
 import io.github.apl_cornell.viaduct.security.LabelLiteral
 import io.github.apl_cornell.viaduct.syntax.Host
-import io.github.apl_cornell.viaduct.syntax.HostTrustConfiguration
 import io.github.apl_cornell.viaduct.syntax.InputPort
 import io.github.apl_cornell.viaduct.syntax.OutputPort
 import io.github.apl_cornell.viaduct.syntax.Protocol
@@ -35,7 +34,7 @@ class Commitment(val cleartextHost: Host, val hashHosts: Set<Host>) : Protocol()
     override val arguments: Map<String, Value>
         get() = mapOf("sender" to HostValue(cleartextHost), "receivers" to HostSetValue(hashHosts))
 
-    override fun authority(hostTrustConfiguration: HostTrustConfiguration): Label =
+    override fun authority(): Label =
         LabelAnd(
             LabelLiteral(cleartextHost),
             hashHosts

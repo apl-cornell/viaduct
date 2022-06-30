@@ -146,8 +146,8 @@ nonterminal Value protocol_argument;
 // delegation syntax nonterminals
 nonterminal DelegationDeclarationNode ifc_delegation;
 nonterminal Located label_param;
-nonterminal Arguments optional_polymorphic_label_param_list, polymorphic_label_param_list, nonempty_polymorphic_label_param_list;
-nonterminal Arguments optional_ifc_delegation_list, ifc_delegation_list, nonempty_ifc_delegation_list;
+nonterminal List optional_polymorphic_label_param_list, polymorphic_label_param_list, nonempty_polymorphic_label_param_list;
+nonterminal List optional_ifc_delegation_list, ifc_delegation_list, nonempty_ifc_delegation_list;
 
 terminal String IDENT, CAP_IDENT;
 terminal String TMP_IDENT;
@@ -250,11 +250,15 @@ declaration ::=
   FUNCTION:begin IDENT:funcname optional_polymorphic_label_param_list:polylabels
     OPEN_PAREN:paramsbegin parameter_list:params CLOSE_PAREN:paramsclose
     optional_ifc_delegation_list:assumptions optional_pc:label block:body {:
+      Arguments polylabelsarg = null;
+      if (polylabels != null) polylabelsarg = new Arguments(polylabels, location(funcnameleft, paramsbeginleft));
+      Arguments assumptionsarg = null;
+      if (assumptions != null) assumptionsarg = new Arguments(assumptions, location(paramscloseleft, labelleft));
       RESULT = new FunctionDeclarationNode(
         new Located(new FunctionName(funcname), location(funcnameleft, funcnameright)),
-        polylabels,
+        polylabelsarg,
         new Arguments(params, location(paramsbeginleft, paramsbeginright)),
-        assumptions,
+        assumptionsarg,
         label,
         body,
         location(beginleft, bodyright),
@@ -325,7 +329,7 @@ nonempty_ifc_delegation_list ::=
       RESULT = delegations;
     :}
   | ifc_delegation:delegation {:
-      RESULT = new Arguments(CollectionsKt.mutableListOf(delegation), location(delegationleft, delegationright));
+      RESULT = CollectionsKt.mutableListOf(delegation);
     :}
     ;
 
@@ -363,7 +367,7 @@ nonempty_polymorphic_label_param_list ::=
       RESULT = params;
     :}
   | label_param:label {:
-      RESULT = new Arguments(CollectionsKt.mutableListOf(label), location(labelleft, labelright));
+      RESULT = CollectionsKt.mutableListOf(label);
     :}
     ;
 

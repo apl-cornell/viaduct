@@ -141,6 +141,10 @@ private fun LabelNode.renameObjects(renames: NameMap<ObjectVariable, ObjectVaria
     return Located(this.value.rename(renamer), this.sourceLocation)
 }
 
+private fun LabelNode.renameObjects(): LabelNode {
+    return this
+}
+
 private fun Arguments<LabelNode>.renameObjects(renames: NameMap<ObjectVariable, ObjectVariable>): Arguments<LabelNode> =
     Arguments(this.map { it.renameObjects(renames) }, this.sourceLocation)
 
@@ -169,7 +173,7 @@ private class FunctionElaborator(val nameGenerator: FreshNameGenerator) {
             functionDecl.labelParameters ?: Arguments(functionDecl.name.sourceLocation),
             Arguments(elaboratedParameters, functionDecl.parameters.sourceLocation),
             functionDecl.labelConstraints ?: Arguments(functionDecl.name.sourceLocation),
-            functionDecl.pcLabel?.renameObjects(objectRenames),
+            functionDecl.pcLabel?.renameObjects(),
             StatementElaborator(nameGenerator, objectRenames = objectRenames).elaborate(functionDecl.body),
             functionDecl.sourceLocation
         )

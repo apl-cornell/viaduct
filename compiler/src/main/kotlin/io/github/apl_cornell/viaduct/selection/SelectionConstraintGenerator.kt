@@ -67,12 +67,12 @@ class SelectionConstraintGenerator(
         val requiredAuthority = informationFlowAnalysis.label(node)
         val annotation = node.protocol?.value
         return if (annotation != null) {
-            if (!annotation.authority(hostTrustConfiguration).actsFor(requiredAuthority))
+            if (!annotation.authority().actsFor(requiredAuthority))
                 throw InvalidProtocolAnnotationError(node as Node)
             setOf(annotation)
         } else {
             protocolFactory.viableProtocols(node)
-                .filter { it.authority(hostTrustConfiguration).actsFor(requiredAuthority) }
+                .filter { it.authority().actsFor(requiredAuthority) }
                 .ifEmpty { throw NoApplicableProtocolError(node as Node) }
                 .toSet()
         }

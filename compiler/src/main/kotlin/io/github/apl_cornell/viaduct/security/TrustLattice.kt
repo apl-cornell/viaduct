@@ -2,7 +2,8 @@ package io.github.apl_cornell.viaduct.security
 
 /** A lattice whose elements are interpreted as principals. */
 interface TrustLattice<T : TrustLattice<T>> {
-    /** Decide if `this` is trusted to enforce [that]'s security policies. */
+    // TODO: DELETE THIS
+    /** Decide if `this` is trused to enforce [that]'s security policies. */
     infix fun actsFor(that: T): Boolean
 
     /**

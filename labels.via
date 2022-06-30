@@ -1,0 +1,60 @@
+host alice
+
+host bob
+
+fun {} main () {} {
+    /* {alice-> ∧ alice<-} */
+    val a = Array[int]{alice}(10);
+    /* {bob-> ∧ bob<-} */
+    val b = Array[int]{bob}(10);
+    {
+        /* {⊤-> ∧ (alice ∧ bob)<-} */
+        var i: int = 0;
+        loop {
+            /* {⊤-> ∧ (alice ∧ bob)<-} */
+            let $tmp = i;
+            /* {⊤-> ∧ (alice ∧ bob)<-} */
+            let $tmp_1 = ($tmp < 10);
+            if ($tmp_1) {
+                /* {⊤-> ∧ alice<-} */
+                let $tmp_2 = i;
+                /* {⊤-> ∧ alice<-} */
+                let $tmp_3 = i;
+                /* {⊤-> ∧ alice<-} */
+                let $tmp_4 = ($tmp_3 * 50);
+                a[$tmp_2] = $tmp_4;
+                i += 1;
+            } else {
+                break;
+            }
+        }
+    }
+    {
+        /* {⊤-> ∧ (alice ∧ bob)<-} */
+        var j: int = 0;
+        loop {
+            /* {⊤-> ∧ (alice ∧ bob)<-} */
+            let $tmp_5 = j;
+            /* {⊤-> ∧ (alice ∧ bob)<-} */
+            let $tmp_6 = ($tmp_5 < 10);
+            if ($tmp_6) {
+                /* {⊤-> ∧ bob<-} */
+                let $tmp_7 = j;
+                /* {⊤-> ∧ bob<-} */
+                let $tmp_8 = j;
+                /* {⊤-> ∧ bob<-} */
+                let $tmp_9 = ($tmp_8 * 100);
+                b[$tmp_7] = $tmp_9;
+                j += 1;
+            } else {
+                break;
+            }
+        }
+    }
+    /* {alice-> ∧ alice<-} */
+    let $tmp_10 = a[0];
+    output $tmp_10 to alice;
+    /* {alice-> ∧ alice<-} */
+    let $tmp_11 = a[9];
+    output $tmp_11 to alice;
+}

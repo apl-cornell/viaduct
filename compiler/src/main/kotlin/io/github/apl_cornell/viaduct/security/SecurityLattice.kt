@@ -86,6 +86,19 @@ class SecurityLattice<T : Lattice<T>>(
     override infix fun actsFor(that: SecurityLattice<T>): Boolean =
         throw UnsupportedOperationException()
 
+    // TODO: we can do better
+    override fun toString(): String {
+        val confidentialityStr = confidentialityComponent.toString()
+        val integrityStr = integrityComponent.toString()
+        val expression =
+            if (confidentialityComponent == integrityComponent) {
+                confidentialityStr
+            } else {
+                "$confidentialityStr-> ∧ $integrityStr<-"
+            }
+        return "{$expression}"
+    }
+
     override fun toDocument() = Document(this.toString())
 
     /** Provides bounds for a [SecurityLattice] given bounds for [T]. */

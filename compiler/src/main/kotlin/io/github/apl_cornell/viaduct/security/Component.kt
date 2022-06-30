@@ -16,9 +16,13 @@ data class PrincipalComponent(val principal: Principal) : Component<Principal>(p
 
 sealed class Component<A>
 
-data class ConfidentialityComponent<A>(val obj: A) : Component<A>()
+data class ConfidentialityComponent<A>(val principal: A) : Component<A>() {
+    override fun toString(): String = principal.toString()
+}
 
-data class IntegrityComponent<A>(val obj: A) : Component<A>()
+data class IntegrityComponent<A>(val principal: A) : Component<A>() {
+    override fun toString(): String = principal.toString()
+}
 
 // sealed class PrincipalComponent(principal: Principal) : Component<Principal>(principal)
 

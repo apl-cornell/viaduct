@@ -33,7 +33,7 @@ abstract class Protocol : Name, Comparable<Protocol> {
     abstract val arguments: Map<String, Value>
 
     /** Returns the authority label of this protocol given the authority labels of the participating hosts. */
-    abstract fun authority(hostTrustConfiguration: HostTrustConfiguration): Label
+    abstract fun authority(): Label
 
     /** Hosts involved in this protocol. */
     val hosts: HostSetValue by lazy {
@@ -42,6 +42,7 @@ abstract class Protocol : Name, Comparable<Protocol> {
             when (it) {
                 is HostValue ->
                     hosts.add(it.value)
+
                 is HostSetValue ->
                     hosts.addAll(it)
             }

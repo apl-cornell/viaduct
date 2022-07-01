@@ -39,10 +39,10 @@ import io.github.apl_cornell.viaduct.syntax.intermediate.LiteralNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.ObjectDeclarationArgumentNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.ObjectReferenceArgumentNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.OutParameterArgumentNode
-import io.github.apl_cornell.viaduct.syntax.intermediate.OutParameterInitializationNode
-import io.github.apl_cornell.viaduct.syntax.intermediate.OutputNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.OutParameterConstructorInitializerNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.OutParameterExpressionInitializerNode
+import io.github.apl_cornell.viaduct.syntax.intermediate.OutParameterInitializationNode
+import io.github.apl_cornell.viaduct.syntax.intermediate.OutputNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.ProgramNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.ReadNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.SimpleStatementNode

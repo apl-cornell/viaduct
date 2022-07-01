@@ -1,0 +1,26 @@
+host alice : {A & B<-}
+host bob   : {B & A<-}
+
+fun main() {
+    val a : int = input int from alice;
+    val b : int = input int from bob;
+    f(a, b);
+    h(a + b);
+}
+
+fun f(a: int{A & B<-}, b: int{B & A<-}) {
+    val win: bool = a == b;
+    g(win);
+}
+
+fun g(win: bool{A & B}) {
+    val ret: bool = declassify win to {A ⊓ B};
+    output ret to alice;
+    output ret to bob;
+}
+
+fun h(sum: int{A & B}) {
+    val ret: int = declassify sum to {A ⊓ B};
+    output ret to alice;
+    output ret to bob;
+}

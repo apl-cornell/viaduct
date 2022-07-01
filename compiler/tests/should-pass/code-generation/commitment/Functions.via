@@ -1,0 +1,17 @@
+host alice : {A}
+host bob   : {B}
+
+fun main() {
+    var a : int = endorse (input int from alice) to {A & B<-} from {A};
+    var b : int = endorse (input int from bob) to {B & A<-} from {B};
+    val d_b : int = declassify b from {B & A<-} to {A ⊓ B};
+    val equal : bool = endorse(d_b == a) to {A & B<-} from {A};
+    g0(equal, val win0);
+    output win0 to alice;
+    output win0 to bob;
+}
+
+fun g0(equal: bool{A & B<-}, ret: out bool{A ⊓ B}) {
+    val d_equal : bool = declassify equal from {A & B<-} to {A ⊓ B};
+    out ret = d_equal;
+}

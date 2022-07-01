@@ -5,10 +5,13 @@ import com.squareup.kotlinpoet.INT
 import com.squareup.kotlinpoet.KModifier
 import com.squareup.kotlinpoet.MemberName
 import com.squareup.kotlinpoet.PropertySpec
+import com.squareup.kotlinpoet.TypeName
 import com.squareup.kotlinpoet.asClassName
+import com.squareup.kotlinpoet.asTypeName
 import io.github.apl_cornell.aby.ABYParty
 import io.github.apl_cornell.aby.Aby
 import io.github.apl_cornell.aby.Role
+import io.github.apl_cornell.aby.Share
 import io.github.apl_cornell.aby.SharingType
 import io.github.apl_cornell.viaduct.analysis.NameAnalysis
 import io.github.apl_cornell.viaduct.analysis.ProtocolAnalysis
@@ -52,6 +55,8 @@ import io.github.apl_cornell.viaduct.syntax.types.BooleanType
 import io.github.apl_cornell.viaduct.syntax.types.ImmutableCellType
 import io.github.apl_cornell.viaduct.syntax.types.IntegerType
 import io.github.apl_cornell.viaduct.syntax.types.MutableCellType
+import io.github.apl_cornell.viaduct.syntax.types.ObjectType
+import io.github.apl_cornell.viaduct.syntax.types.ValueType
 import io.github.apl_cornell.viaduct.syntax.types.VectorType
 import io.github.apl_cornell.viaduct.syntax.values.BooleanValue
 import io.github.apl_cornell.viaduct.syntax.values.IntegerValue
@@ -423,6 +428,10 @@ class ABYCodeGenerator(
                 )
             else -> throw UnsupportedOperationException("Unknown operator $op.")
         }
+
+    override fun kotlinType(protocol: Protocol, sourceType: ValueType): TypeName = (Share::class).asTypeName()
+
+    override fun kotlinType(protocol: Protocol, sourceType: ObjectType): TypeName = (Share::class).asTypeName()
 
     override fun exp(protocol: Protocol, expr: ExpressionNode): CodeBlock =
         when (expr) {

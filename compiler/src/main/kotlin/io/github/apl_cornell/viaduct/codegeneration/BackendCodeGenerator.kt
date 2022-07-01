@@ -39,10 +39,10 @@ import io.github.apl_cornell.viaduct.syntax.intermediate.LiteralNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.ObjectDeclarationArgumentNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.ObjectReferenceArgumentNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.OutParameterArgumentNode
-import io.github.apl_cornell.viaduct.syntax.intermediate.OutParameterConstructorInitializerNode
-import io.github.apl_cornell.viaduct.syntax.intermediate.OutParameterExpressionInitializerNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.OutParameterInitializationNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.OutputNode
+import io.github.apl_cornell.viaduct.syntax.intermediate.OutParameterConstructorInitializerNode
+import io.github.apl_cornell.viaduct.syntax.intermediate.OutParameterExpressionInitializerNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.ProgramNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.ReadNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.SimpleStatementNode
@@ -281,8 +281,8 @@ private class BackendCodeGenerator(
         }
     }
 
-    private fun simpleStatement(protocol: Protocol, stmt: SimpleStatementNode): CodeBlock {
-        return when (stmt) {
+    private fun simpleStatement(protocol: Protocol, stmt: SimpleStatementNode): CodeBlock =
+        when (stmt) {
             is LetNode -> CodeBlock.of(
                 "val %N = %L",
                 context.kotlinName(stmt.name.value, protocol),
@@ -333,6 +333,11 @@ private class BackendCodeGenerator(
             parameterName
         )
     }
+
+    fun outParameterInitialization(
+        /* protocol: Protocol, stmt: OutParameterInitializationNode */
+    ): CodeBlock =
+        CodeBlock.of("") // TODO (merge from fn calls)
 
     private inner class Context : CodeGeneratorContext {
         private var tempMap: MutableMap<Pair<Temporary, Protocol>, String> = mutableMapOf()

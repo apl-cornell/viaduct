@@ -305,9 +305,8 @@ private class BackendCodeGenerator(
                 codeGenerator.exp(protocol, stmt.message)
             )
         }
-    }
 
-    fun outParameterInitialization(
+    private fun outParameterInitialization(
         protocol: Protocol,
         stmt: OutParameterInitializationNode
     ): CodeBlock {
@@ -333,11 +332,6 @@ private class BackendCodeGenerator(
             parameterName
         )
     }
-
-    fun outParameterInitialization(
-        /* protocol: Protocol, stmt: OutParameterInitializationNode */
-    ): CodeBlock =
-        CodeBlock.of("") // TODO (merge from fn calls)
 
     private inner class Context : CodeGeneratorContext {
         private var tempMap: MutableMap<Pair<Temporary, Protocol>, String> = mutableMapOf()

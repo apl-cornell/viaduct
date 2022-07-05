@@ -37,7 +37,12 @@ fun validateProtocolAssignment(
     fun checkAuthority(selection: ProtocolAssignment, node: VariableDeclarationNode) {
         val functionName = nameAnalysis.enclosingFunctionName(node as Node)
         val protocol = selection.getAssignment(functionName, node.name.value)
-        if (!protocol.authority().actsFor(informationFlowAnalysis.label(node))) {
+        if (!informationFlowAnalysis.trustConfiguration.actsFor(
+                protocol.authority(),
+                informationFlowAnalysis.label(node)
+            )
+        ) {
+            //if (!protocol.authority().actsFor(informationFlowAnalysis.label(node))) {
             throw InvalidProtocolAssignmentException(node, protocol)
         }
     }

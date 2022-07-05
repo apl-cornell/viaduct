@@ -3,7 +3,10 @@ package io.github.apl_cornell.viaduct.errors
 import io.github.apl_cornell.apl.prettyprinting.Document
 import io.github.apl_cornell.apl.prettyprinting.div
 import io.github.apl_cornell.viaduct.algebra.FreeDistributiveLattice
+import io.github.apl_cornell.viaduct.algebra.FreeDistributiveLatticeCongruence
+import io.github.apl_cornell.viaduct.security.Component
 import io.github.apl_cornell.viaduct.security.Label
+import io.github.apl_cornell.viaduct.security.Principal
 import io.github.apl_cornell.viaduct.syntax.HasSourceLocation
 
 /**
@@ -12,7 +15,8 @@ import io.github.apl_cornell.viaduct.syntax.HasSourceLocation
 class InsecureDataFlowError(
     private val node: HasSourceLocation,
     private val nodeLabel: Label,
-    private val to: Label
+    private val to: Label,
+    private val context: FreeDistributiveLatticeCongruence<Component<Principal>>
 ) : InformationFlowError() {
     override val category: String
         get() = "Insecure Data Flow"
@@ -23,8 +27,10 @@ class InsecureDataFlowError(
     override val description: Document
         get() {
             // TODO: use flowsTo rather than actsFor
-            if (!to.confidentiality(FreeDistributiveLattice.bounds())
-                .actsFor(nodeLabel.confidentiality(FreeDistributiveLattice.bounds()))
+            if (!context.lessThanOrEqualTo(
+                    nodeLabel.confidentialityComponent,
+                    to.confidentialityComponent
+                )
             ) {
                 // Confidentiality is the problem
                 return Document("This term is flowing to a place that does not have enough confidentiality:")
@@ -37,8 +43,10 @@ class InsecureDataFlowError(
                 // Integrity is the problem
                 // TODO: use flowsTo rather than actsFor
                 assert(
-                    !nodeLabel.integrity(FreeDistributiveLattice.bounds())
-                        .actsFor(to.integrity(FreeDistributiveLattice.bounds()))
+                    !context.lessThanOrEqualTo(
+                        to.integrityComponent,
+                        nodeLabel.integrityComponent
+                    )
                 )
                 return Document("This term does not have enough integrity:")
                     .withSource(node.sourceLocation) /

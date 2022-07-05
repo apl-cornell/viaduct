@@ -2,6 +2,7 @@ package io.github.apl_cornell.viaduct.syntax
 
 import io.github.apl_cornell.viaduct.algebra.FreeDistributiveLatticeCongruence
 import io.github.apl_cornell.viaduct.security.Component
+import io.github.apl_cornell.viaduct.security.Label
 import io.github.apl_cornell.viaduct.security.LabelComponent
 import io.github.apl_cornell.viaduct.security.Principal
 import io.github.apl_cornell.viaduct.syntax.intermediate.DelegationDeclarationNode
@@ -42,4 +43,8 @@ class HostTrustConfiguration(val program: ProgramNode) {
                     }
                 }
         )
+
+    fun actsFor(node1: Label, node2: Label) =
+        congruence.lessThanOrEqualTo(node2.confidentialityComponent, node1.confidentialityComponent) &&
+            congruence.lessThanOrEqualTo(node2.integrityComponent, node1.integrityComponent)
 }

@@ -15,10 +15,15 @@ class FreeDistributiveLatticeCongruence<A>(
         congruence.fold(
             Pair(
                 FreeDistributiveLattice.bounds<A>().bottom,
-                FreeDistributiveLattice.bounds<A>().bottom
+                FreeDistributiveLattice.bounds<A>().top
             )
         ) { acc, element ->
-            Pair(acc.first.meet(element.first), acc.second.join(element.second))
+            if (element.first.meet(acc.second) == element.first) {
+                Pair(acc.first.meet(element.first), acc.second.join(element.second))
+            } else {
+                assert(element.first.meet(acc.second) == element.second)
+                Pair(acc.first.meet(element.second), acc.second.join(element.first))
+            }
         }
 
     override fun equals(first: FreeDistributiveLattice<A>, second: FreeDistributiveLattice<A>) =
@@ -29,7 +34,7 @@ class FreeDistributiveLatticeCongruence<A>(
         first: FreeDistributiveLattice<A>,
         second: FreeDistributiveLattice<A>
     ): Boolean =
-        equals(first.join(second), second)
+        equals(first.meet(second), first)
 
     /**
      * Return a new congruence that has the congruence relation of this and other.

@@ -133,23 +133,23 @@ fun SProgramNode.elaborated(): IProgramNode {
     return IProgramNode(declarations, this.sourceLocation)
 }
 
-private fun LabelNode.renameObjects(renames: NameMap<ObjectVariable, ObjectVariable>): LabelNode {
+/*private fun LabelNode.renameObjects(renames: NameMap<ObjectVariable, ObjectVariable>): LabelNode {
     val renamer = { param: String ->
         renames[Located(ObjectVariable(param), this.sourceLocation)].name
     }
 
     return Located(this.value.rename(renamer), this.sourceLocation)
-}
+}*/
 
 private fun LabelNode.renameObjects(): LabelNode {
     return this
 }
 
-private fun Arguments<LabelNode>.renameObjects(renames: NameMap<ObjectVariable, ObjectVariable>): Arguments<LabelNode> =
-    Arguments(this.map { it.renameObjects(renames) }, this.sourceLocation)
+private fun Arguments<LabelNode>.renameObjects(): Arguments<LabelNode> =
+    Arguments(this.map { it.renameObjects() }, this.sourceLocation)
 
-private fun ObjectTypeNode.renameObjects(renames: NameMap<ObjectVariable, ObjectVariable>): ObjectTypeNode =
-    ObjectTypeNode(className, typeArguments, labelArguments?.renameObjects(renames))
+private fun ObjectTypeNode.renameObjects(): ObjectTypeNode =
+    ObjectTypeNode(className, typeArguments, labelArguments?.renameObjects())
 
 private class FunctionElaborator(val nameGenerator: FreshNameGenerator) {
     fun elaborate(functionDecl: SFunctionDeclarationNode): IFunctionDeclarationNode {
@@ -162,17 +162,32 @@ private class FunctionElaborator(val nameGenerator: FreshNameGenerator) {
             IParameterNode(
                 Located(objectRenames[parameter.name], parameter.name.sourceLocation),
                 parameter.parameterDirection,
-                parameter.objectType.renameObjects(objectRenames),
+                parameter.objectType.renameObjects(),
                 parameter.protocol,
                 parameter.sourceLocation
             )
         }
 
+        val delegations: Arguments<IDelegationDeclarationNode> =
+            if (functionDecl.labelConstraints == null) {
+                Arguments(listOf(), functionDecl.name.sourceLocation)
+            } else {
+                Arguments(functionDecl.labelConstraints.map {
+                    IDelegationDeclarationNode(
+                        it.node1,
+                        it.node2,
+                        it.delegationKind,
+                        it.delegationProjection,
+                        it.sourceLocation
+                    )
+                }, functionDecl.name.sourceLocation)
+            }
+
         return IFunctionDeclarationNode(
             functionDecl.name,
             functionDecl.labelParameters ?: Arguments(functionDecl.name.sourceLocation),
             Arguments(elaboratedParameters, functionDecl.parameters.sourceLocation),
-            functionDecl.labelConstraints ?: Arguments(functionDecl.name.sourceLocation),
+            delegations,
             functionDecl.pcLabel?.renameObjects(),
             StatementElaborator(nameGenerator, objectRenames = objectRenames).elaborate(functionDecl.body),
             functionDecl.sourceLocation
@@ -372,7 +387,7 @@ private class StatementElaborator(
 
                             IDeclarationNode(
                                 ObjectVariableNode(newName, stmt.variable.sourceLocation),
-                                initializer.objectType.renameObjects(objectRenames),
+                                initializer.objectType.renameObjects(),
                                 newArguments,
                                 initializer.protocol,
                                 stmt.sourceLocation
@@ -406,7 +421,7 @@ private class StatementElaborator(
                         when (val rhs = stmt.rhs) {
                             is SConstructorCallNode ->
                                 IOutParameterConstructorInitializerNode(
-                                    rhs.objectType.renameObjects(objectRenames),
+                                    rhs.objectType.renameObjects(),
                                     Arguments(
                                         rhs.arguments.map { it.toAnf(bindings).toAtomic(bindings) },
                                         rhs.arguments.sourceLocation

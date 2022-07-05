@@ -7,7 +7,6 @@ import io.github.apl_cornell.viaduct.attributes.attribute
 import io.github.apl_cornell.viaduct.errors.InformationFlowError
 import io.github.apl_cornell.viaduct.errors.InsecureDataFlowError
 import io.github.apl_cornell.viaduct.security.Component
-import io.github.apl_cornell.viaduct.security.HostPrincipal
 import io.github.apl_cornell.viaduct.security.Label
 import io.github.apl_cornell.viaduct.security.LabelAnd
 import io.github.apl_cornell.viaduct.security.LabelBottom
@@ -21,7 +20,6 @@ import io.github.apl_cornell.viaduct.security.LabelMeet
 import io.github.apl_cornell.viaduct.security.LabelOr
 import io.github.apl_cornell.viaduct.security.LabelParameter
 import io.github.apl_cornell.viaduct.security.LabelTop
-import io.github.apl_cornell.viaduct.security.PolymorphicPrincipal
 import io.github.apl_cornell.viaduct.security.Principal
 import io.github.apl_cornell.viaduct.security.SecurityLattice
 import io.github.apl_cornell.viaduct.security.solver2.Constraint
@@ -73,13 +71,12 @@ import io.github.apl_cornell.viaduct.algebra.solver2.Term as AlgebraTerm
 import io.github.apl_cornell.viaduct.syntax.LabelVariable as LabelVariableName
 
 private typealias PrincipalComponent = Component<Principal>
-private typealias HostComponent = Component<HostPrincipal>
-private typealias PolymorphicComponent = Component<PolymorphicPrincipal>
 private typealias LabelConstant = FreeDistributiveLattice<PrincipalComponent>
 private typealias LabelTerm = Term<LabelConstant, LabelVariable>
 private typealias LabelConstraint = Constraint<LabelConstant, LabelVariable, InformationFlowError>
 private typealias LabelConstraintSystem = ConstraintSystem<LabelConstant, LabelVariable, InformationFlowError>
 private typealias Solution = ConstraintSolution<LabelConstant, LabelVariable>
+private typealias DelegationContext = FreeDistributiveLatticeCongruence<Component<Principal>>
 
 /** We infer labels for specific nodes in the program, so we need constraint variables only for those nodes. */
 private sealed class LabelVariable {
@@ -133,7 +130,7 @@ class InformationFlowAnalysis private constructor(
         constraintSystem.solution()
     }
 
-    private val trustConfiguration: HostTrustConfiguration = HostTrustConfiguration(tree.root)
+    val trustConfiguration: HostTrustConfiguration = HostTrustConfiguration(tree.root)
 
     // private val solution by lazy { constraintSystem.solution() }
 
@@ -199,7 +196,7 @@ class InformationFlowAnalysis private constructor(
     private infix fun Pair<HasSourceLocation, LabelTerm>.flowsTo(toLabel: LabelTerm): Sequence<LabelConstraint> {
         val constraints: Iterable<LabelConstraint> =
             second.flowsTo(toLabel, LabelConstant.bounds()) { to, from ->
-                InsecureDataFlowError(this.first, from, to)
+                InsecureDataFlowError(this.first, from, to, (first as Node).delegationContext)
             }
         return constraints.asSequence()
     }
@@ -207,7 +204,7 @@ class InformationFlowAnalysis private constructor(
     private infix fun Pair<HasSourceLocation, LabelTerm>.confidentialityFlowsTo(toLabel: LabelTerm): Sequence<LabelConstraint> {
         val constraints: Iterable<LabelConstraint> =
             second.confidentialityFlowsTo(toLabel, LabelConstant.bounds()) { to, from ->
-                InsecureDataFlowError(this.first, from, to)
+                InsecureDataFlowError(this.first, from, to, (first as Node).delegationContext)
             }
         return constraints.asSequence()
     }
@@ -215,7 +212,7 @@ class InformationFlowAnalysis private constructor(
     private infix fun Pair<HasSourceLocation, LabelTerm>.integrityFlowsTo(toLabel: LabelTerm): Sequence<LabelConstraint> {
         val constraints: Iterable<LabelConstraint> =
             second.integrityFlowsTo(toLabel, LabelConstant.bounds()) { to, from ->
-                InsecureDataFlowError(this.first, from, to)
+                InsecureDataFlowError(this.first, from, to, (first as Node).delegationContext)
             }
         return constraints.asSequence()
     }
@@ -226,7 +223,7 @@ class InformationFlowAnalysis private constructor(
     ): Sequence<LabelConstraint> {
         val constraints: Iterable<LabelConstraint> =
             pcTerm.flowsTo(nodeLabel, LabelConstant.bounds()) { to, from ->
-                InsecureDataFlowError(this, from, to)
+                InsecureDataFlowError(this, from, to, delegationContext)
             }
         return constraints.asSequence()
     }
@@ -531,14 +528,17 @@ class InformationFlowAnalysis private constructor(
      * Return a [LabelConstraintSystem] given a function
      */
     private fun FunctionDeclarationNode.constraints(): LabelConstraintSystem {
-        val delegations = trustConfiguration.congruence +
-            FreeDistributiveLatticeCongruence(labelConstraints.flatMap { it.congruences() })
         return ConstraintSystem(
             body.constraints().asIterable(),
             FreeDistributiveLattice.bounds(),
-            delegations
+            this.body.delegationContext
         )
     }
+
+    private val Node.delegationContext: DelegationContext
+        get() = trustConfiguration.congruence +
+            FreeDistributiveLatticeCongruence(nameAnalysis.enclosingFunction(this)
+                .labelConstraints.flatMap { it.congruences() })
 
     /** Returns the inferred security label of the [Variable] defined by [node]. */
     fun label(node: VariableDeclarationNode): Label =

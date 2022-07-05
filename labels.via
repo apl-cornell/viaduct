@@ -2,59 +2,28 @@ host alice
 
 host bob
 
+fun {X, Z} f_1{Z<-} (a: int{X}, b: int{bob}, c: out int{Z}) {delegation: {X} :> {alice} for Both Projections, delegation: {Z} :> {alice} for Both Projections} {
+    /* {X-> ∧ Z<-} */
+    let $tmp = a;
+    /* {bob-> ∧ Z<-} */
+    let $tmp_1 = b;
+    /* {(X ∧ bob)-> ∧ Z<-} */
+    let $tmp_2 = ($tmp + $tmp_1);
+    out c = $tmp_2;
+}
+
 fun {} main () {} {
     /* {alice-> ∧ alice<-} */
-    val a = Array[int]{alice}(10);
+    let $tmp_3 = input int from alice;
+    /* {alice-> ∧ alice<-} */
+    val x: int = $tmp_3;
     /* {bob-> ∧ bob<-} */
-    val b = Array[int]{bob}(10);
-    {
-        /* {⊤-> ∧ (alice ∧ bob)<-} */
-        var i: int = 0;
-        loop {
-            /* {⊤-> ∧ (alice ∧ bob)<-} */
-            let $tmp = i;
-            /* {⊤-> ∧ (alice ∧ bob)<-} */
-            let $tmp_1 = ($tmp < 10);
-            if ($tmp_1) {
-                /* {⊤-> ∧ alice<-} */
-                let $tmp_2 = i;
-                /* {⊤-> ∧ alice<-} */
-                let $tmp_3 = i;
-                /* {⊤-> ∧ alice<-} */
-                let $tmp_4 = ($tmp_3 * 50);
-                a[$tmp_2] = $tmp_4;
-                i += 1;
-            } else {
-                break;
-            }
-        }
-    }
-    {
-        /* {⊤-> ∧ (alice ∧ bob)<-} */
-        var j: int = 0;
-        loop {
-            /* {⊤-> ∧ (alice ∧ bob)<-} */
-            let $tmp_5 = j;
-            /* {⊤-> ∧ (alice ∧ bob)<-} */
-            let $tmp_6 = ($tmp_5 < 10);
-            if ($tmp_6) {
-                /* {⊤-> ∧ bob<-} */
-                let $tmp_7 = j;
-                /* {⊤-> ∧ bob<-} */
-                let $tmp_8 = j;
-                /* {⊤-> ∧ bob<-} */
-                let $tmp_9 = ($tmp_8 * 100);
-                b[$tmp_7] = $tmp_9;
-                j += 1;
-            } else {
-                break;
-            }
-        }
-    }
+    let $tmp_4 = input int from bob;
+    /* {bob-> ∧ bob<-} */
+    val y: int = $tmp_4;
     /* {alice-> ∧ alice<-} */
-    let $tmp_10 = a[0];
-    output $tmp_10 to alice;
-    /* {alice-> ∧ alice<-} */
-    let $tmp_11 = a[9];
-    output $tmp_11 to alice;
+    let $tmp_5 = x;
+    /* {bob-> ∧ bob<-} */
+    let $tmp_6 = y;
+    f_1($tmp_5, $tmp_6, val z);
 }

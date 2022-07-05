@@ -18,7 +18,6 @@ import io.github.apl_cornell.viaduct.syntax.ParameterDirection
 import io.github.apl_cornell.viaduct.syntax.ProtocolNode
 import io.github.apl_cornell.viaduct.syntax.SourceLocation
 import io.github.apl_cornell.viaduct.syntax.datatypes.MutableCell
-import io.github.apl_cornell.viaduct.syntax.intermediate.DelegationDeclarationNode
 
 /** A declaration at the top level of a file. */
 sealed class TopLevelDeclarationNode : Node()

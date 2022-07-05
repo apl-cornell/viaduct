@@ -110,7 +110,9 @@ class FunctionDeclarationNode(
                 parameters.map { it.toSurfaceNode(metadata) },
                 parameters.sourceLocation
             ),
-            labelConstraints,
+            Arguments(labelConstraints.map {
+                it.toSurfaceNode()
+            }, labelConstraints.sourceLocation),
             pcLabel,
             body.toSurfaceNode(metadata),
             sourceLocation,

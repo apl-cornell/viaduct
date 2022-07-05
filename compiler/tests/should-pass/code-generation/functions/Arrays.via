@@ -12,7 +12,7 @@ fun main() {
     /* Passing array declaration as out arg */
     /* Passing out param array as arg to new fn call */
     f1(val b);
-    output b[0] to alice;  /* expects 0 */
+    output b[0] to alice;  /* expects 5 */
 
     /* Initializing out param array, then modifying array and returning */
     f2(val d);
@@ -25,6 +25,7 @@ fun f0(a: Array[int]) {
 
 fun f1(b: out Array[int]{A}) {
     g(out b);
+    b[0] = 5;
 }
 
 fun g(c: out Array[int]{A}) {

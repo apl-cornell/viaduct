@@ -16,6 +16,7 @@ import com.squareup.kotlinpoet.joinToCode
 import io.github.apl_cornell.viaduct.analysis.NameAnalysis
 import io.github.apl_cornell.viaduct.analysis.ProtocolAnalysis
 import io.github.apl_cornell.viaduct.analysis.TypeAnalysis
+import io.github.apl_cornell.viaduct.analysis.mainFunction
 import io.github.apl_cornell.viaduct.runtime.Out
 import io.github.apl_cornell.viaduct.runtime.ViaductGeneratedProgram
 import io.github.apl_cornell.viaduct.runtime.ViaductRuntime
@@ -68,6 +69,11 @@ private class BackendCodeGenerator(
     private val protocolAnalysis = ProtocolAnalysis(program, protocolComposer)
     private val context = Context()
     private val codeGenerator = codeGenerator(context)
+    private val outBoxNames: MutableMap<ObjectVariable, String> = mutableMapOf()
+
+    // Returns the kotlin name of the box of an out argument used in the source program
+    private fun outBoxName(outVariable: ObjectVariable): String =
+        outBoxNames.getOrPut(outVariable) { context.newTemporary(context.kotlinName(outVariable) + "_box") }
 
     fun generateClass(): TypeSpec {
         val classBuilder = TypeSpec.classBuilder(
@@ -98,15 +104,22 @@ private class BackendCodeGenerator(
     /** Generates code for [host]'s role in the function [functionDeclaration]. */
     private fun generate(functionDeclaration: FunctionDeclarationNode): FunSpec {
         val hostFunctionBuilder = FunSpec.builder(functionDeclaration.name.value.name)
+        hostFunctionBuilder.addModifiers(if (functionDeclaration.name.value == mainFunction) KModifier.PUBLIC else KModifier.PRIVATE)
 
-        for (param in functionDeclaration.parameters.filter { param -> param.protocol!!.value.hosts.contains(host) }) {
+        for (
+            param in functionDeclaration.parameters.filter { param ->
+                protocolAnalysis.primaryProtocol(param).hosts.contains(
+                    host
+                )
+            }
+        ) {
             val paramName = context.kotlinName(param.name.value)
-            val paramType = codeGenerator.kotlinType(param.protocol!!.value, typeAnalysis.type(param))
+            val paramType = codeGenerator.kotlinType(protocolAnalysis.primaryProtocol(param), typeAnalysis.type(param))
             if (param.isInParameter) {
                 hostFunctionBuilder.addParameter(paramName, paramType)
             } else {
                 hostFunctionBuilder.addParameter(
-                    context.outBoxName(paramName),
+                    outBoxName(param.name.value),
                     Out::class.asClassName().parameterizedBy(paramType)
                 )
                 hostFunctionBuilder.addStatement("val %N: %T", paramName, paramType)
@@ -209,6 +222,15 @@ private class BackendCodeGenerator(
                         newNames[outDeclaration]!!
                     )
                 }
+
+                // Set local variable after out parameter initialized by function call
+                arguments.filterIsInstance<OutParameterArgumentNode>().forEach {
+                    hostFunctionBuilder.addStatement(
+                        "%N = %N.get()",
+                        context.kotlinName(it.parameter.value),
+                        outBoxName(it.parameter.value)
+                    )
+                }
             }
 
             is IfNode -> {
@@ -254,6 +276,7 @@ private class BackendCodeGenerator(
             is AssertionNode -> TODO("Assertions not yet implemented.")
         }
     }
+
     private fun argument(protocol: Protocol, argument: FunctionArgumentNode): CodeBlock {
         return when (argument) {
             // Input arguments
@@ -276,7 +299,7 @@ private class BackendCodeGenerator(
                 throw UnsupportedOperatorException(protocol, argument)
             }
             is OutParameterArgumentNode -> { // Out box already in scope
-                CodeBlock.of("%N", context.outBoxName(context.kotlinName(argument.parameter.value)))
+                CodeBlock.of("%N", outBoxName(argument.parameter.value))
             }
         }
     }
@@ -320,15 +343,11 @@ private class BackendCodeGenerator(
         }
         val parameterName = context.kotlinName(stmt.name.value)
 
-        return CodeBlock.of( // TODO this ends up looking strange
-            """
-            |%N = %L
-            |%N.set(%N)
-            |
-            """.trimMargin(),
+        return CodeBlock.of(
+            "%N = %L; %N.set(%N)",
             parameterName,
             rhs,
-            context.outBoxName(parameterName),
+            outBoxName(stmt.name.value),
             parameterName
         )
     }
@@ -336,7 +355,6 @@ private class BackendCodeGenerator(
     private inner class Context : CodeGeneratorContext {
         private var tempMap: MutableMap<Pair<Temporary, Protocol>, String> = mutableMapOf()
         private var varMap: MutableMap<ObjectVariable, String> = mutableMapOf()
-        private var outBoxNames: MutableMap<String, String> = mutableMapOf()
 
         private var selfSends: Queue<String> = LinkedList()
 
@@ -364,9 +382,6 @@ private class BackendCodeGenerator(
 
         override fun newTemporary(baseName: String): String =
             freshNameGenerator.getFreshName(baseName)
-
-        override fun outBoxName(outName: String): String =
-            outBoxNames.getOrPut(outName) { freshNameGenerator.getFreshName(outName + "_box") }
 
         override fun codeOf(host: Host) =
             hostDeclarations.reference(host)

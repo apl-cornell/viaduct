@@ -55,7 +55,6 @@ import io.github.apl_cornell.viaduct.syntax.types.BooleanType
 import io.github.apl_cornell.viaduct.syntax.types.ImmutableCellType
 import io.github.apl_cornell.viaduct.syntax.types.IntegerType
 import io.github.apl_cornell.viaduct.syntax.types.MutableCellType
-import io.github.apl_cornell.viaduct.syntax.types.ObjectType
 import io.github.apl_cornell.viaduct.syntax.types.ValueType
 import io.github.apl_cornell.viaduct.syntax.types.VectorType
 import io.github.apl_cornell.viaduct.syntax.values.BooleanValue
@@ -430,8 +429,6 @@ class ABYCodeGenerator(
         }
 
     override fun kotlinType(protocol: Protocol, sourceType: ValueType): TypeName = (Share::class).asTypeName()
-
-    override fun kotlinType(protocol: Protocol, sourceType: ObjectType): TypeName = (Share::class).asTypeName()
 
     override fun exp(protocol: Protocol, expr: ExpressionNode): CodeBlock =
         when (expr) {

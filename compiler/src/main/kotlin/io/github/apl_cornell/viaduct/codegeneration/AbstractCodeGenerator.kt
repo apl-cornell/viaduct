@@ -5,6 +5,7 @@ import com.squareup.kotlinpoet.CodeBlock
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import com.squareup.kotlinpoet.PropertySpec
 import com.squareup.kotlinpoet.TypeName
+import com.squareup.kotlinpoet.asTypeName
 import io.github.apl_cornell.viaduct.analysis.NameAnalysis
 import io.github.apl_cornell.viaduct.analysis.TypeAnalysis
 import io.github.apl_cornell.viaduct.runtime.Boxed
@@ -19,7 +20,6 @@ import io.github.apl_cornell.viaduct.syntax.intermediate.AtomicExpressionNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.DowngradeNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.ExpressionNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.LiteralNode
-import io.github.apl_cornell.viaduct.syntax.intermediate.OutputNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.QueryNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.ReadNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.UpdateNode
@@ -42,7 +42,7 @@ abstract class AbstractCodeGenerator(val context: CodeGeneratorContext) : CodeGe
                 kotlinType(protocol, sourceType.elementType)
             }
             is MutableCellType -> {
-                kotlinType(protocol, sourceType.elementType)
+                (Boxed::class).asTypeName().parameterizedBy(kotlinType(protocol, sourceType.elementType))
             }
             is VectorType -> {
                 ARRAY.parameterizedBy(kotlinType(protocol, sourceType.elementType))
@@ -170,9 +170,6 @@ abstract class AbstractCodeGenerator(val context: CodeGeneratorContext) : CodeGe
 
             else -> throw UnsupportedOperatorException(protocol, stmt)
         }
-
-    open fun output(protocol: Protocol, stmt: OutputNode): CodeBlock =
-        throw UnsupportedOperatorException(protocol, stmt)
 
     override fun setup(protocol: Protocol): Iterable<PropertySpec> =
         listOf()

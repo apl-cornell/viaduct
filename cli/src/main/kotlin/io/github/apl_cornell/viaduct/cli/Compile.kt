@@ -89,11 +89,6 @@ class Compile : CliktCommand(help = "Compile ideal protocol to secure distribute
     override fun run() {
         val costRegime = if (wanCost) SimpleCostRegime.WAN else SimpleCostRegime.LAN
 
-        logger.info {
-            val solverNames = selectionProblemSolvers.map { it.first }
-            "Available solvers for protocol selection: ${solverNames.joinToString()}"
-        }
-
         if (compileKotlin) {
             val compiledProgram =
                 input.sourceFile().compileToKotlin(

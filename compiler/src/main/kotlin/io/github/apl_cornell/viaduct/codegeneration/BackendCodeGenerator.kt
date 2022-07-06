@@ -16,8 +16,8 @@ import com.squareup.kotlinpoet.joinToCode
 import io.github.apl_cornell.viaduct.analysis.NameAnalysis
 import io.github.apl_cornell.viaduct.analysis.ProtocolAnalysis
 import io.github.apl_cornell.viaduct.analysis.TypeAnalysis
-import io.github.apl_cornell.viaduct.prettyprinting.joined
-import io.github.apl_cornell.viaduct.runtime.Boxed
+import io.github.apl_cornell.viaduct.analysis.mainFunction
+import io.github.apl_cornell.viaduct.runtime.Out
 import io.github.apl_cornell.viaduct.runtime.ViaductGeneratedProgram
 import io.github.apl_cornell.viaduct.runtime.ViaductRuntime
 import io.github.apl_cornell.viaduct.selection.ProtocolComposer
@@ -29,6 +29,8 @@ import io.github.apl_cornell.viaduct.syntax.intermediate.AssertionNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.BlockNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.BreakNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.DeclarationNode
+import io.github.apl_cornell.viaduct.syntax.intermediate.ExpressionArgumentNode
+import io.github.apl_cornell.viaduct.syntax.intermediate.FunctionArgumentNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.FunctionCallNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.FunctionDeclarationNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.IfNode
@@ -36,7 +38,10 @@ import io.github.apl_cornell.viaduct.syntax.intermediate.InfiniteLoopNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.LetNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.LiteralNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.ObjectDeclarationArgumentNode
+import io.github.apl_cornell.viaduct.syntax.intermediate.ObjectReferenceArgumentNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.OutParameterArgumentNode
+import io.github.apl_cornell.viaduct.syntax.intermediate.OutParameterConstructorInitializerNode
+import io.github.apl_cornell.viaduct.syntax.intermediate.OutParameterExpressionInitializerNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.OutParameterInitializationNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.OutputNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.ProgramNode
@@ -61,6 +66,11 @@ private class BackendCodeGenerator(
     private val protocolAnalysis = ProtocolAnalysis(program, protocolComposer)
     private val context = Context()
     private val codeGenerator = codeGenerator(context)
+    private val outBoxNames: MutableMap<ObjectVariable, String> = mutableMapOf()
+
+    // Returns the kotlin name of the box of an out argument used in the source program
+    private fun outBoxName(outVariable: ObjectVariable): String =
+        outBoxNames.getOrPut(outVariable) { context.newTemporary(context.kotlinName(outVariable) + "_box") }
 
     fun generateClass(): TypeSpec {
         val classBuilder = TypeSpec.classBuilder(
@@ -91,6 +101,27 @@ private class BackendCodeGenerator(
     /** Generates code for [host]'s role in the function [functionDeclaration]. */
     private fun generate(functionDeclaration: FunctionDeclarationNode): FunSpec {
         val hostFunctionBuilder = FunSpec.builder(functionDeclaration.name.value.name)
+        hostFunctionBuilder.addModifiers(if (functionDeclaration.name.value == mainFunction) KModifier.PUBLIC else KModifier.PRIVATE)
+
+        for (
+            param in functionDeclaration.parameters.filter { param ->
+                protocolAnalysis.primaryProtocol(param).hosts.contains(
+                    host
+                )
+            }
+        ) {
+            val paramName = context.kotlinName(param.name.value)
+            val paramType = codeGenerator.kotlinType(protocolAnalysis.primaryProtocol(param), typeAnalysis.type(param))
+            if (param.isInParameter) {
+                hostFunctionBuilder.addParameter(paramName, paramType)
+            } else {
+                hostFunctionBuilder.addParameter(
+                    outBoxName(param.name.value),
+                    Out::class.asClassName().parameterizedBy(paramType)
+                )
+                hostFunctionBuilder.addStatement("val %N: %T", paramName, paramType)
+            }
+        }
         generate(hostFunctionBuilder, functionDeclaration.body, host)
         return hostFunctionBuilder.build()
     }
@@ -128,7 +159,6 @@ private class BackendCodeGenerator(
                 for (reader in readers) {
                     if (protocolAnalysis.participatingHosts(reader.value).contains(host)) {
                         hostFunctionBuilder.addCode(
-                            "%L",
                             codeGenerator.receive(
                                 stmt,
                                 protocol,
@@ -149,44 +179,53 @@ private class BackendCodeGenerator(
             }
 
             is FunctionCallNode -> {
+                val arguments =
+                    stmt.arguments.filter { arg -> protocolAnalysis.primaryProtocol(arg).hosts.contains(host) }
+                val outObjectDeclarations = arguments.filterIsInstance<ObjectDeclarationArgumentNode>()
 
-                // get all ObjectDeclarationArgumentNodes from [stmt]
-                val outObjectDeclarations = stmt.arguments.filterIsInstance<ObjectDeclarationArgumentNode>()
-
-                // create a new list of arguments without ObjectDeclarationArgumentNodes
-                val newArguments =
-                    stmt.arguments.filter { argument -> argument !is ObjectDeclarationArgumentNode }.toMutableList()
-
-                for (i in 0..outObjectDeclarations.size) {
-
-                    // declare boxed variable before function call
+                // Declare boxed variables
+                val newNames = outObjectDeclarations.associateWith { outDeclaration ->
+                    val newName = context.newTemporary(context.kotlinName(outDeclaration.name.value) + "_boxed")
                     hostFunctionBuilder.addStatement(
-                        "var %L = %T",
-                        context.kotlinName(outObjectDeclarations[i].name.value),
-                        Boxed::class.asClassName()
-                    )
-
-                    // add out parameter for declared object
-                    newArguments +=
-                        OutParameterArgumentNode(
-                            outObjectDeclarations[i].name,
-                            outObjectDeclarations[i].sourceLocation
+                        "val %L = %T()",
+                        newName,
+                        Out::class.asClassName().parameterizedBy(
+                            codeGenerator.kotlinType(
+                                protocolAnalysis.primaryProtocol(outDeclaration),
+                                typeAnalysis.type(outDeclaration)
+                            )
                         )
+                    )
+                    newName
                 }
 
-                // call function
+                // Call function
                 hostFunctionBuilder.addStatement(
-                    "%L(%L)",
-                    stmt.name,
-                    newArguments.joined().toString()
+                    "%N(%L)",
+                    stmt.name.value.name,
+                    arguments.map { arg ->
+                        if (arg is ObjectDeclarationArgumentNode)
+                            CodeBlock.of("%N", newNames[arg])
+                        else
+                            argument(protocolAnalysis.primaryProtocol(arg), arg)
+                    }.joinToCode()
                 )
 
-                // unbox boxes that were created before function call
-                for (i in 0..outObjectDeclarations.size) {
+                // Unpack boxed values
+                for (outDeclaration in outObjectDeclarations) {
                     hostFunctionBuilder.addStatement(
-                        "val %L = %L.get()",
-                        context.kotlinName(outObjectDeclarations[i].name.value),
-                        context.kotlinName(outObjectDeclarations[i].name.value)
+                        "val %N = %N.get()",
+                        context.kotlinName(outDeclaration.name.value),
+                        newNames[outDeclaration]!!
+                    )
+                }
+
+                // Set local variable after out parameter initialized by function call
+                arguments.filterIsInstance<OutParameterArgumentNode>().forEach {
+                    hostFunctionBuilder.addStatement(
+                        "%N = %N.get()",
+                        context.kotlinName(it.parameter.value),
+                        outBoxName(it.parameter.value)
                     )
                 }
             }
@@ -235,8 +274,27 @@ private class BackendCodeGenerator(
         }
     }
 
-    private fun simpleStatement(protocol: Protocol, stmt: SimpleStatementNode): CodeBlock {
-        return when (stmt) {
+    private fun argument(protocol: Protocol, argument: FunctionArgumentNode): CodeBlock {
+        return when (argument) {
+            // Input arguments
+            is ObjectReferenceArgumentNode -> {
+                CodeBlock.of("%N", context.kotlinName(argument.variable.value))
+            }
+            is ExpressionArgumentNode -> {
+                codeGenerator.exp(protocol, argument.expression)
+            }
+            // Output arguments
+            is ObjectDeclarationArgumentNode -> {
+                throw UnsupportedOperatorException(protocol, argument)
+            }
+            is OutParameterArgumentNode -> { // Out box already in scope
+                CodeBlock.of("%N", outBoxName(argument.parameter.value))
+            }
+        }
+    }
+
+    private fun simpleStatement(protocol: Protocol, stmt: SimpleStatementNode): CodeBlock =
+        when (stmt) {
             is LetNode -> CodeBlock.of(
                 "val %N = %L",
                 context.kotlinName(stmt.name.value, protocol),
@@ -251,7 +309,7 @@ private class BackendCodeGenerator(
 
             is UpdateNode -> codeGenerator.update(protocol, stmt)
 
-            is OutParameterInitializationNode -> outParameterInitialization()
+            is OutParameterInitializationNode -> outParameterInitialization(protocol, stmt)
 
             is OutputNode -> CodeBlock.of(
                 "runtime.output(%T(%L))",
@@ -259,12 +317,29 @@ private class BackendCodeGenerator(
                 codeGenerator.exp(protocol, stmt.message)
             )
         }
-    }
 
-    fun outParameterInitialization(
-        /* protocol: Protocol, stmt: OutParameterInitializationNode */
-    ): CodeBlock =
-        CodeBlock.of("") // TODO (merge from fn calls)
+    private fun outParameterInitialization(
+        protocol: Protocol,
+        stmt: OutParameterInitializationNode
+    ): CodeBlock {
+        val rhs = when (val init = stmt.initializer) {
+            is OutParameterConstructorInitializerNode -> codeGenerator.constructorCall(
+                protocol,
+                init.objectType,
+                init.arguments
+            )
+            is OutParameterExpressionInitializerNode -> codeGenerator.exp(protocol, init.expression)
+        }
+        val parameterName = context.kotlinName(stmt.name.value)
+
+        return CodeBlock.of(
+            "%N = %L; %N.set(%N)",
+            parameterName,
+            rhs,
+            outBoxName(stmt.name.value),
+            parameterName
+        )
+    }
 
     private inner class Context : CodeGeneratorContext {
         private var tempMap: MutableMap<Pair<Temporary, Protocol>, String> = mutableMapOf()

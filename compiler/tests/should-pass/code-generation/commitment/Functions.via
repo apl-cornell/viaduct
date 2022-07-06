@@ -1,0 +1,32 @@
+host alice : {A}
+host bob   : {B}
+
+fun main() {
+    var a : int = endorse (input int from alice) to {A & B<-} from {A};
+    var b : int = endorse (input int from bob) to {B & A<-} from {B};
+    val d_b : int = declassify b from {B & A<-} to {A ⊓ B};
+    val equal : bool = endorse(d_b == a) to {A & B<-} from {A};
+
+    g0(equal, val win0);
+    output win0 to alice;
+    output win0 to bob;
+
+    val c = Array[bool](2);
+    c[0] = equal;  /* A real commitment */
+    c[1] = true;   /* A fake commitment */
+    k(&c);
+}
+
+fun g0(equal: bool{A & B<-}, ret: out bool{A ⊓ B}) {
+    val d_equal : bool = declassify equal from {A & B<-} to {A ⊓ B};
+    out ret = d_equal;
+}
+
+fun k(c: Array[bool]) {
+    val equal: bool = declassify c[0] to {A ⊓ B};
+    output equal to alice;
+    output equal to bob;
+
+    output c[1] to alice;
+    output c[1] to bob;
+}

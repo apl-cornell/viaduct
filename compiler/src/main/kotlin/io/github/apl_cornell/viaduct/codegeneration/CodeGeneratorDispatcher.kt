@@ -2,6 +2,7 @@ package io.github.apl_cornell.viaduct.codegeneration
 
 import com.squareup.kotlinpoet.CodeBlock
 import com.squareup.kotlinpoet.PropertySpec
+import com.squareup.kotlinpoet.TypeName
 import io.github.apl_cornell.viaduct.selection.ProtocolCommunication
 import io.github.apl_cornell.viaduct.syntax.Arguments
 import io.github.apl_cornell.viaduct.syntax.ObjectTypeNode
@@ -10,11 +11,19 @@ import io.github.apl_cornell.viaduct.syntax.intermediate.AtomicExpressionNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.ExpressionNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.LetNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.UpdateNode
+import io.github.apl_cornell.viaduct.syntax.types.ObjectType
+import io.github.apl_cornell.viaduct.syntax.types.ValueType
 
 /** Dispatches to different [CodeGenerator]s based on [Protocol]. */
 abstract class CodeGeneratorDispatcher : CodeGenerator {
     /** Returns the [CodeGenerator] to use for [protocol]. */
     protected abstract fun generatorFor(protocol: Protocol): CodeGenerator
+
+    final override fun kotlinType(protocol: Protocol, sourceType: ValueType): TypeName =
+        generatorFor(protocol).kotlinType(protocol, sourceType)
+
+    final override fun kotlinType(protocol: Protocol, sourceType: ObjectType): TypeName =
+        generatorFor(protocol).kotlinType(protocol, sourceType)
 
     final override fun guard(protocol: Protocol, expr: AtomicExpressionNode): CodeBlock =
         generatorFor(protocol).guard(protocol, expr)

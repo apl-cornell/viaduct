@@ -49,9 +49,6 @@ import io.github.apl_cornell.viaduct.syntax.intermediate.ReadNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.SimpleStatementNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.StatementNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.UpdateNode
-import io.github.apl_cornell.viaduct.syntax.types.ImmutableCellType
-import io.github.apl_cornell.viaduct.syntax.types.MutableCellType
-import io.github.apl_cornell.viaduct.syntax.types.VectorType
 import io.github.apl_cornell.viaduct.util.FreshNameGenerator
 import java.util.LinkedList
 import java.util.Queue
@@ -281,15 +278,7 @@ private class BackendCodeGenerator(
         return when (argument) {
             // Input arguments
             is ObjectReferenceArgumentNode -> {
-                when (typeAnalysis.type(nameAnalysis.declaration(argument))) {
-                    is ImmutableCellType, is VectorType -> {
-                        CodeBlock.of("%N", context.kotlinName(argument.variable.value))
-                    }
-                    is MutableCellType -> {
-                        CodeBlock.of("%N.get()", context.kotlinName(argument.variable.value))
-                    }
-                    else -> throw UnsupportedOperatorException(protocol, argument)
-                }
+                CodeBlock.of("%N", context.kotlinName(argument.variable.value))
             }
             is ExpressionArgumentNode -> {
                 codeGenerator.exp(protocol, argument.expression)

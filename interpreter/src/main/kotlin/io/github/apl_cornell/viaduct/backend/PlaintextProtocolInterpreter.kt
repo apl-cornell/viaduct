@@ -1,6 +1,5 @@
 package io.github.apl_cornell.viaduct.backend
 
-import io.github.apl_cornell.apl.prettyprinting.joined
 import io.github.apl_cornell.viaduct.analysis.ProtocolAnalysis
 import io.github.apl_cornell.viaduct.backend.commitment.HashInfo
 import io.github.apl_cornell.viaduct.backend.commitment.encode
@@ -8,6 +7,7 @@ import io.github.apl_cornell.viaduct.backends.cleartext.Local
 import io.github.apl_cornell.viaduct.backends.cleartext.Plaintext
 import io.github.apl_cornell.viaduct.errors.UndefinedNameError
 import io.github.apl_cornell.viaduct.errors.ViaductInterpreterError
+import io.github.apl_cornell.viaduct.prettyprinting.joined
 import io.github.apl_cornell.viaduct.selection.CommunicationEvent
 import io.github.apl_cornell.viaduct.selection.ProtocolCommunication
 import io.github.apl_cornell.viaduct.syntax.Host

@@ -1,9 +1,9 @@
 package io.github.apl_cornell.viaduct.selection
 
-import io.github.apl_cornell.apl.prettyprinting.Document
-import io.github.apl_cornell.apl.prettyprinting.PrettyPrintable
-import io.github.apl_cornell.apl.prettyprinting.braced
-import io.github.apl_cornell.apl.prettyprinting.times
+import io.github.apl_cornell.viaduct.prettyprinting.Document
+import io.github.apl_cornell.viaduct.prettyprinting.PrettyPrintable
+import io.github.apl_cornell.viaduct.prettyprinting.braced
+import io.github.apl_cornell.viaduct.prettyprinting.times
 import kotlinx.collections.immutable.PersistentMap
 import kotlinx.collections.immutable.toPersistentMap
 

@@ -1,8 +1,8 @@
 package io.github.apl_cornell.viaduct.syntax.datatypes
 
-import io.github.apl_cornell.apl.prettyprinting.Document
-import io.github.apl_cornell.apl.prettyprinting.Style
-import io.github.apl_cornell.apl.prettyprinting.styled
+import io.github.apl_cornell.viaduct.prettyprinting.Document
+import io.github.apl_cornell.viaduct.prettyprinting.Style
+import io.github.apl_cornell.viaduct.prettyprinting.styled
 import io.github.apl_cornell.viaduct.syntax.Name
 
 /** The name of a primitive or user-defined class. */

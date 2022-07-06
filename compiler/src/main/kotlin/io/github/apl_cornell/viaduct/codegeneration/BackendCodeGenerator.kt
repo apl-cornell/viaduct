@@ -13,10 +13,10 @@ import com.squareup.kotlinpoet.TypeName
 import com.squareup.kotlinpoet.TypeSpec
 import com.squareup.kotlinpoet.asClassName
 import com.squareup.kotlinpoet.joinToCode
-import io.github.apl_cornell.apl.prettyprinting.joined
 import io.github.apl_cornell.viaduct.analysis.NameAnalysis
 import io.github.apl_cornell.viaduct.analysis.ProtocolAnalysis
 import io.github.apl_cornell.viaduct.analysis.TypeAnalysis
+import io.github.apl_cornell.viaduct.prettyprinting.joined
 import io.github.apl_cornell.viaduct.runtime.Boxed
 import io.github.apl_cornell.viaduct.runtime.ViaductGeneratedProgram
 import io.github.apl_cornell.viaduct.runtime.ViaductRuntime

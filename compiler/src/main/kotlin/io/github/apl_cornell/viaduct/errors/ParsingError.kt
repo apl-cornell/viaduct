@@ -1,8 +1,8 @@
 package io.github.apl_cornell.viaduct.errors
 
-import io.github.apl_cornell.apl.prettyprinting.Document
-import io.github.apl_cornell.apl.prettyprinting.div
-import io.github.apl_cornell.apl.prettyprinting.joined
+import io.github.apl_cornell.viaduct.prettyprinting.Document
+import io.github.apl_cornell.viaduct.prettyprinting.div
+import io.github.apl_cornell.viaduct.prettyprinting.joined
 import io.github.apl_cornell.viaduct.syntax.SourceLocation
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toPersistentList

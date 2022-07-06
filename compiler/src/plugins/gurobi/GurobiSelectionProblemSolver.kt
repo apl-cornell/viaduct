@@ -6,15 +6,16 @@ import gurobi.GRBLinExpr
 import gurobi.GRBModel
 import gurobi.GRBVar
 import io.github.apl_cornell.viaduct.syntax.Protocol
+import java.io.Closeable
 import java.util.Collections
 import kotlin.math.max
 
 /** Translate selection problem into an integer linear program and use the Gurobi solver to find a solution. */
 object GurobiSelectionProblemSolver : SelectionProblemSolver {
     override fun solve(problem: SelectionProblem): ProtocolAssignment? =
-        Worker().solve(problem)
+        Worker().use { it.solve(problem) }
 
-    private class Worker {
+    private class Worker : Closeable {
         private val constraintMap = HashMap<SelectionConstraint, GRBVar>()
         private val assignmentVariableMap = HashMap<FunctionVariable, MutableList<Pair<Protocol, GRBVar>>>()
         private val variableEqualsSet = mutableSetOf<VariableEquals>()
@@ -29,6 +30,11 @@ object GurobiSelectionProblemSolver : SelectionProblemSolver {
         init {
             env.set(GRB.IntParam.OutputFlag, 0)
             env.start()
+        }
+
+        override fun close() {
+            model.dispose()
+            env.dispose()
         }
 
         private fun generateSelectionVar(name: String): GRBVar {

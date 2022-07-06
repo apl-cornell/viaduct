@@ -1,6 +1,6 @@
 package io.github.apl_cornell.viaduct.errors
 
-import io.github.apl_cornell.apl.prettyprinting.Document
+import io.github.apl_cornell.viaduct.prettyprinting.Document
 import io.github.apl_cornell.viaduct.syntax.intermediate.Node
 
 /** Thrown when the protocol [node] is annotated with cannot implement [node]. */

@@ -1,6 +1,6 @@
-package io.github.apl_cornell.apl.prettyprinting
+package io.github.apl_cornell.viaduct.prettyprinting
 
-import io.github.apl_cornell.apl.prettyprinting.Document.Companion.invoke
+import io.github.apl_cornell.viaduct.prettyprinting.Document.Companion.invoke
 import org.fusesource.jansi.Ansi
 import java.io.ByteArrayOutputStream
 import java.io.PrintStream

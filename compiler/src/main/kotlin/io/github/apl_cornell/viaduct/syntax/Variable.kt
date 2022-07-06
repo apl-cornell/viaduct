@@ -1,11 +1,11 @@
 package io.github.apl_cornell.viaduct.syntax
 
-import io.github.apl_cornell.apl.prettyprinting.AnsiBaseColor
-import io.github.apl_cornell.apl.prettyprinting.AnsiColor
-import io.github.apl_cornell.apl.prettyprinting.Document
-import io.github.apl_cornell.apl.prettyprinting.NormalColor
-import io.github.apl_cornell.apl.prettyprinting.Style
-import io.github.apl_cornell.apl.prettyprinting.styled
+import io.github.apl_cornell.viaduct.prettyprinting.AnsiBaseColor
+import io.github.apl_cornell.viaduct.prettyprinting.AnsiColor
+import io.github.apl_cornell.viaduct.prettyprinting.Document
+import io.github.apl_cornell.viaduct.prettyprinting.NormalColor
+import io.github.apl_cornell.viaduct.prettyprinting.Style
+import io.github.apl_cornell.viaduct.prettyprinting.styled
 
 /** A variable is a name that stands for a value or an object instance. */
 sealed class Variable : Name {

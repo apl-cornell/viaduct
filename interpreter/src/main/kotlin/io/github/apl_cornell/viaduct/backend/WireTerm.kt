@@ -1,8 +1,8 @@
 package io.github.apl_cornell.viaduct.backend
 
-import io.github.apl_cornell.apl.prettyprinting.Document
-import io.github.apl_cornell.apl.prettyprinting.PrettyPrintable
 import io.github.apl_cornell.viaduct.backend.commitment.Hashing
+import io.github.apl_cornell.viaduct.prettyprinting.Document
+import io.github.apl_cornell.viaduct.prettyprinting.PrettyPrintable
 import io.github.apl_cornell.viaduct.syntax.Operator
 import io.github.apl_cornell.viaduct.syntax.operators.Addition
 import io.github.apl_cornell.viaduct.syntax.operators.And

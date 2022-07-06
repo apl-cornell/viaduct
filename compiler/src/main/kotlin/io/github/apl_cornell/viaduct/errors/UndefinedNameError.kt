@@ -1,8 +1,8 @@
 package io.github.apl_cornell.viaduct.errors
 
-import io.github.apl_cornell.apl.prettyprinting.Document
-import io.github.apl_cornell.apl.prettyprinting.plus
-import io.github.apl_cornell.apl.prettyprinting.times
+import io.github.apl_cornell.viaduct.prettyprinting.Document
+import io.github.apl_cornell.viaduct.prettyprinting.plus
+import io.github.apl_cornell.viaduct.prettyprinting.times
 import io.github.apl_cornell.viaduct.syntax.Located
 import io.github.apl_cornell.viaduct.syntax.Name
 import io.github.apl_cornell.viaduct.syntax.SourceLocation

@@ -1,6 +1,5 @@
 package io.github.apl_cornell.viaduct.analysis
 
-import io.github.apl_cornell.apl.prettyprinting.PrettyPrintable
 import io.github.apl_cornell.viaduct.attributes.Tree
 import io.github.apl_cornell.viaduct.attributes.attribute
 import io.github.apl_cornell.viaduct.errors.ConfidentialityChangingEndorsementError
@@ -10,6 +9,7 @@ import io.github.apl_cornell.viaduct.errors.InsecureDataFlowError
 import io.github.apl_cornell.viaduct.errors.IntegrityChangingDeclassificationError
 import io.github.apl_cornell.viaduct.errors.LabelMismatchError
 import io.github.apl_cornell.viaduct.errors.MalleableDowngradeError
+import io.github.apl_cornell.viaduct.prettyprinting.PrettyPrintable
 import io.github.apl_cornell.viaduct.security.Label
 import io.github.apl_cornell.viaduct.security.LabelParameter
 import io.github.apl_cornell.viaduct.security.solver.AtomicLabelTerm

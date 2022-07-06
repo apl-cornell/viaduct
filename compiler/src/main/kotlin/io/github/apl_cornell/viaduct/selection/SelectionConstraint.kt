@@ -1,13 +1,13 @@
 package io.github.apl_cornell.viaduct.selection
 
-import io.github.apl_cornell.apl.prettyprinting.Document
-import io.github.apl_cornell.apl.prettyprinting.PrettyPrintable
-import io.github.apl_cornell.apl.prettyprinting.plus
-import io.github.apl_cornell.apl.prettyprinting.times
-import io.github.apl_cornell.apl.prettyprinting.tupled
 import io.github.apl_cornell.viaduct.analysis.NameAnalysis
 import io.github.apl_cornell.viaduct.analysis.createdVariables
 import io.github.apl_cornell.viaduct.analysis.involvedVariables
+import io.github.apl_cornell.viaduct.prettyprinting.Document
+import io.github.apl_cornell.viaduct.prettyprinting.PrettyPrintable
+import io.github.apl_cornell.viaduct.prettyprinting.plus
+import io.github.apl_cornell.viaduct.prettyprinting.times
+import io.github.apl_cornell.viaduct.prettyprinting.tupled
 import io.github.apl_cornell.viaduct.syntax.FunctionName
 import io.github.apl_cornell.viaduct.syntax.Protocol
 import io.github.apl_cornell.viaduct.syntax.Variable

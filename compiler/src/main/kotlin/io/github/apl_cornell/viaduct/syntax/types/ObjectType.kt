@@ -1,9 +1,9 @@
 package io.github.apl_cornell.viaduct.syntax.types
 
-import io.github.apl_cornell.apl.prettyprinting.Document
-import io.github.apl_cornell.apl.prettyprinting.bracketed
-import io.github.apl_cornell.apl.prettyprinting.nested
-import io.github.apl_cornell.apl.prettyprinting.plus
+import io.github.apl_cornell.viaduct.prettyprinting.Document
+import io.github.apl_cornell.viaduct.prettyprinting.bracketed
+import io.github.apl_cornell.viaduct.prettyprinting.nested
+import io.github.apl_cornell.viaduct.prettyprinting.plus
 import io.github.apl_cornell.viaduct.syntax.datatypes.ClassName
 import io.github.apl_cornell.viaduct.syntax.datatypes.QueryName
 import io.github.apl_cornell.viaduct.syntax.datatypes.UpdateName

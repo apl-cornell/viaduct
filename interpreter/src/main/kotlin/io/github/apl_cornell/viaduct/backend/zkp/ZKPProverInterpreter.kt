@@ -190,7 +190,7 @@ class ZKPProverInterpreter(
             ImmutableCell -> ZKPObject.ZKPImmutableCell(getAtomicExprWire(arguments[0]))
             MutableCell -> ZKPObject.ZKPMutableCell(getAtomicExprWire(arguments[0]))
             Vector -> {
-                val length = runPlaintextExpr(arguments[0]) as IntegerValue
+                val length = runCleartextExpr(arguments[0]) as IntegerValue
                 ZKPObject.ZKPVectorObject(length.value, length.type.defaultValue, wireGenerator)
             }
             else -> throw Exception("unknown object")
@@ -214,7 +214,7 @@ class ZKPProverInterpreter(
                 throw Exception("bad query")
             }
             is ZKPObject.ZKPVectorObject -> if (query.value is Get) {
-                val index = runPlaintextExpr(args[0]) as IntegerValue
+                val index = runCleartextExpr(args[0]) as IntegerValue
                 obj.gates[index.value]
             } else {
                 throw Exception("bad query")
@@ -242,7 +242,7 @@ class ZKPProverInterpreter(
             is InputNode -> throw ViaductInterpreterError("impossible")
         }
 
-    private fun runPlaintextExpr(expr: AtomicExpressionNode): Value {
+    private fun runCleartextExpr(expr: AtomicExpressionNode): Value {
         return when (expr) {
             is LiteralNode -> expr.value
             is ReadNode -> tempStore[expr.temporary.value]!!
@@ -276,7 +276,7 @@ class ZKPProverInterpreter(
                 }
             }
             is ZKPObject.ZKPVectorObject -> {
-                val index = runPlaintextExpr(stmt.arguments[0]) as IntegerValue
+                val index = runCleartextExpr(stmt.arguments[0]) as IntegerValue
                 when (val updateValue = stmt.update.value) {
                     is io.github.apl_cornell.viaduct.syntax.datatypes.Set ->
                         o.gates[index.value] = getAtomicExprWire(stmt.arguments[1])

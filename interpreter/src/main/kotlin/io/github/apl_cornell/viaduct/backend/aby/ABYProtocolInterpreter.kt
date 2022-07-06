@@ -177,7 +177,7 @@ class ABYProtocolInterpreter(
             }
 
             Vector -> {
-                val length = runPlaintextExpr(arguments[0]) as IntegerValue
+                val length = runCleartextExpr(arguments[0]) as IntegerValue
                 ABYVectorObject(
                     protocolCircuitType[protocol.protocolName]!!,
                     length.value,
@@ -213,7 +213,7 @@ class ABYProtocolInterpreter(
         }
     }
 
-    private fun runPlaintextExpr(expr: AtomicExpressionNode): Value {
+    private fun runCleartextExpr(expr: AtomicExpressionNode): Value {
         return when (expr) {
             is LiteralNode -> expr.value
             is ReadNode ->
@@ -246,7 +246,7 @@ class ABYProtocolInterpreter(
     }
 
     /** Return either a cleartext or secret-shared value. Used by array indexing. */
-    private fun runPlaintextOrSecretExpr(
+    private fun runCleartextOrSecretExpr(
         circuitType: ABYCircuitType,
         expr: AtomicExpressionNode
     ): ABYValue {
@@ -259,7 +259,7 @@ class ABYProtocolInterpreter(
                         .all { event -> event.recv.id == ABY.CLEARTEXT_INPUT }
 
                 if (isCleartextRead) {
-                    ABYCleartextValue(runPlaintextExpr(expr))
+                    ABYCleartextValue(runCleartextExpr(expr))
                 } else {
                     ABYSecretValue(runSecretExpr(circuitType, expr))
                 }
@@ -680,7 +680,7 @@ class ABYProtocolInterpreter(
         ): ABYCircuitGate {
             return when (query.value) {
                 is Get -> {
-                    when (val indexValue: ABYValue = runPlaintextOrSecretExpr(circuitType, arguments[0])) {
+                    when (val indexValue: ABYValue = runCleartextOrSecretExpr(circuitType, arguments[0])) {
                         is ABYCleartextValue -> {
                             val index = ((indexValue.value) as IntegerValue).value
                             gates[index]
@@ -722,7 +722,7 @@ class ABYProtocolInterpreter(
             update: UpdateNameNode,
             arguments: List<AtomicExpressionNode>
         ) {
-            when (val index: ABYValue = runPlaintextOrSecretExpr(circuitType, arguments[0])) {
+            when (val index: ABYValue = runCleartextOrSecretExpr(circuitType, arguments[0])) {
                 is ABYCleartextValue -> {
                     val intIndex = (index.value as IntegerValue).value
                     gates[intIndex] = when (val updateValue = update.value) {

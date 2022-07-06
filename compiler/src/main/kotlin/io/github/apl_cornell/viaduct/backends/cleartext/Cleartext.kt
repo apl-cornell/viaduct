@@ -2,7 +2,7 @@ package io.github.apl_cornell.viaduct.backends.cleartext
 
 import io.github.apl_cornell.viaduct.syntax.Protocol
 
-abstract class Plaintext : Protocol() {
+abstract class Cleartext : Protocol() {
     companion object {
         const val INPUT = "INPUT"
         const val HASH_COMMITMENT_INPUT = "HASH_COMMITMENT_INPUT"

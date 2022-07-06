@@ -1,20 +1,26 @@
 plugins {
     kotlin("jvm")
+    kotlin("plugin.serialization")
 }
 
 /** Dependencies */
 
 dependencies {
-    implementation(project(":shared"))
-    implementation(project(":compiler"))
+    api(project(":shared"))
 
-    // Concurrency
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.5.2")
+    // Coroutines
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.3")
+
+    // Networking
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-protobuf:1.3.3")
 
     // Cryptography
-    implementation("com.github.apl-cornell:aby-java:0.1.1")
-    implementation(files("libs/jsnark.jar"))
+    api("io.github.apl-cornell:aby-java:0.2.2")
 
     // Testing
     testImplementation(project(":test-utilities"))
+}
+
+kotlin.sourceSets.all {
+    languageSettings.optIn("kotlin.RequiresOptIn")
 }

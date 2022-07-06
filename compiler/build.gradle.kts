@@ -11,16 +11,17 @@ plugins {
     kotlin("jvm")
 
     // Lexing & Parsing
-    id("org.xbib.gradle.plugin.jflex") version "1.5.0"
+    id("org.xbib.gradle.plugin.jflex") version "1.6.0"
 }
 
 /** Dependencies */
 
 dependencies {
     implementation(project(":shared"))
-    implementation(project(":runtime2"))
+    implementation(project(":runtime"))
 
     // Data structures
+    implementation("org.jetbrains.kotlinx:kotlinx-collections-immutable-jvm:0.3.5")
     implementation("com.uchuhimo:kotlinx-bimap:1.2")
 
     // Graphs
@@ -28,16 +29,18 @@ dependencies {
     implementation("org.jgrapht:jgrapht-io:1.5.1")
 
     // Unicode support
-    implementation("com.ibm.icu:icu4j:70.1")
+    implementation("com.ibm.icu:icu4j:71.1")
 
     // Parsing
     implementation("com.github.vbmacher:java-cup-runtime:11b-20160615-1")
 
     // Code generation
-    api("com.squareup:kotlinpoet:1.10.2")
+    api("com.squareup:kotlinpoet:1.12.0") {
+        exclude(module = "kotlin-reflect")
+    }
 
     // SMT solving
-    implementation("io.github.tudo-aqua:z3-turnkey:4.8.12")
+    implementation("io.github.tudo-aqua:z3-turnkey:4.8.14")
 
     // ILP solver
     // val gurobiHome = System.getenv("GUROBI_HOME")
@@ -96,20 +99,22 @@ sourceSets {
             if (project.findProperty("gurobiSolver") == "true") {
                 srcDir("src/plugins/gurobi")
             }
-            srcDir(compileCup.get().outputDirectory)
+            srcDir(compileCup.map { it.outputDirectory })
         }
     }
 }
 
-tasks.compileJava {
-    dependsOn(compileCup)
+tasks.compileKotlin.configure {
+    dependsOn(tasks.withType<org.xbib.gradle.plugin.JFlexTask>())
+    dependsOn(tasks.withType<CompileCupTask>())
     dependsOn(copyGurobiJars)
 }
 
-tasks.compileKotlin {
-    dependsOn(compileCup)
-    dependsOn(tasks.withType<org.xbib.gradle.plugin.JFlexTask>())
-    dependsOn(copyGurobiJars)
+tasks.withType<Test>().configureEach {
+    systemProperties(
+        "junit.jupiter.execution.parallel.enabled" to "true",
+        "junit.jupiter.execution.parallel.mode.default" to "concurrent"
+    )
 }
 
 // TODO: we only need to add explicit dependencies for dokkaHtmlPartial; dokkaHtml just works for some reason.
@@ -168,13 +173,12 @@ abstract class CompileCupTask : DefaultTask() {
         val className: String = cupFile.nameWithoutExtension
 
         project.mkdir(targetDirectory)
-        val args: List<String> = cupArguments.get() +
-            listOf(
-                "-destdir", targetDirectory.get().asFile.path,
-                "-package", packageName,
-                "-parser", className,
-                cupFile.path
-            )
+        val args: List<String> = cupArguments.get() + listOf(
+            "-destdir", targetDirectory.get().asFile.path,
+            "-package", packageName,
+            "-parser", className,
+            cupFile.path
+        )
         logger.info("java_cup ${args.joinToString(" ")}}")
         java_cup.Main.main(args.toTypedArray())
     }

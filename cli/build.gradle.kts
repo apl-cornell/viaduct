@@ -5,7 +5,8 @@ plugins {
 
 /** Application */
 
-val mainPackage = "${project.group}.${rootProject.name}.${project.name}"
+val rootPackage: String by ext
+val mainPackage = "$rootPackage.${project.name}"
 
 application {
     mainClass.set("$mainPackage.MainKt")
@@ -16,10 +17,10 @@ application {
 dependencies {
     implementation(project(":shared"))
     implementation(project(":compiler"))
-    implementation(project(":runtime"))
+    implementation(project(":interpreter"))
 
     // Command-line-argument parsing
-    implementation("com.github.ajalt.clikt:clikt:3.3.0")
+    implementation("com.github.ajalt.clikt:clikt:3.5.0")
 
     // Colored terminal output
     implementation("org.fusesource.jansi:jansi:2.4.0")
@@ -29,8 +30,8 @@ dependencies {
     implementation("guru.nidi:graphviz-java-all-j2v8:0.18.1")
 
     // Logging
-    implementation("org.apache.logging.log4j:log4j-core:2.17.0")
-    implementation("org.apache.logging.log4j:log4j-slf4j-impl:2.17.0")
+    implementation("org.apache.logging.log4j:log4j-core:2.18.0")
+    implementation("org.apache.logging.log4j:log4j-slf4j-impl:2.18.0")
 
     // Reflection
     implementation("org.reflections:reflections:0.10.2")

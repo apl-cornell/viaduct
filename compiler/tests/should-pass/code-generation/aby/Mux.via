@@ -1,0 +1,20 @@
+host alice : {A}
+host bob   : {A}
+
+fun main() {
+    let $tmp@Local(host = alice) = 1;
+    let $tmp1@Local(host = alice) = 2;
+    let $mux1@Local(host = bob) = input bool from bob;
+
+    let $tmpBool@BoolABY(client = bob, server = alice) = $tmp;
+    let $tmp1Bool@BoolABY(client = bob, server = alice) = $tmp1;
+
+    let $muxBool@BoolABY(client = bob, server = alice) = $mux1;
+
+    let $result@BoolABY(client = bob, server = alice) = mux($muxBool, $tmpBool, $tmp1Bool);
+
+    let $clearResult@Replication(hosts = {alice, bob}) = $result;
+
+    output $clearResult to alice;
+    output $clearResult to bob;
+}

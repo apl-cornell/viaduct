@@ -1,19 +1,15 @@
 plugins {
-    kotlin("multiplatform") version embeddedKotlinVersion apply false
-    kotlin("plugin.serialization") version embeddedKotlinVersion apply false
+    kotlin("multiplatform") version "1.7.0" apply false
+    kotlin("plugin.serialization") version "1.7.0" apply false
 
     // Versioning
-    id("com.palantir.git-version") version "0.12.3"
+    id("com.palantir.git-version") version "0.15.0"
 
     // Documentation
-    id("org.jetbrains.dokka") version "1.6.0"
+    id("org.jetbrains.dokka") version "1.7.0"
 
     // Style checking
-    id("com.diffplug.spotless") version "6.0.5"
-
-    // Dependency management
-    id("com.github.ben-manes.versions") version "0.39.0"
-    id("se.patrikerdes.use-latest-versions") version "0.2.18"
+    id("com.diffplug.spotless") version "6.7.2"
 }
 
 // Derive version from Git tags
@@ -22,12 +18,12 @@ val versionFromGit = gitVersion()
 
 allprojects {
     apply(plugin = "com.diffplug.spotless")
-    apply(plugin = "com.github.ben-manes.versions")
-    apply(plugin = "se.patrikerdes.use-latest-versions")
 
-    group = "edu.cornell.cs.apl"
+    group = "io.github.apl-cornell.${rootProject.name}"
 
     version = if (versionFromGit == "unspecified") "0.0.0-SNAPSHOT" else versionFromGit
+
+    ext.set("rootPackage", (group as String).replace('-', '_'))
 
     /** Style */
 
@@ -74,30 +70,27 @@ subprojects {
         /** Dependencies */
 
         dependencies {
-            // Data structures
-            "implementation"("org.jetbrains.kotlinx:kotlinx-collections-immutable-jvm:0.3.4")
-
             // Logging
-            "implementation"("io.github.microutils:kotlin-logging:2.1.0")
-            "testImplementation"("org.apache.logging.log4j:log4j-core:2.17.0")
-            "testImplementation"("org.apache.logging.log4j:log4j-slf4j-impl:2.17.0")
+            "implementation"("io.github.microutils:kotlin-logging:2.1.23")
+            "testImplementation"("org.apache.logging.log4j:log4j-core:2.18.0")
+            "testImplementation"("org.apache.logging.log4j:log4j-slf4j-impl:2.18.0")
         }
 
         /** Testing */
 
-        tasks.named<Test>("test") {
+        tasks.withType<Test>().configureEach {
             useJUnitPlatform()
 
             // Rerun tests when code examples change.
             inputs.files(project.fileTree("tests"))
         }
 
-        tasks.named<JacocoReport>("jacocoTestReport") {
+        tasks.withType<JacocoReport>().configureEach {
             reports {
                 xml.required.set(true)
                 html.required.set(true)
             }
-            dependsOn(tasks["test"])
+            dependsOn(tasks.withType<Test>())
         }
 
         /** API Documentation */

@@ -2,6 +2,8 @@ plugins {
     `kotlin-dsl`
 }
 
+val rootPackage: String by ext
+
 dependencies {
     implementation(project(":shared"))
     implementation(project(":compiler"))
@@ -11,9 +13,24 @@ dependencies {
 
 gradlePlugin {
     plugins {
-        register("viaduct-plugin") {
-            id = "viaduct"
-            implementationClass = "edu.cornell.cs.apl.viaduct.gradle.ViaductPlugin"
+        register("${rootProject.name}-plugin") {
+            id = project.group as String
+            implementationClass = "$rootPackage.gradle.ViaductPlugin"
+        }
+    }
+}
+
+// TODO: remove this after Gradle 7.5 comes out.
+tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
+    kotlinOptions.allWarningsAsErrors = false
+}
+
+// TODO: remove this after Gradle 7.5 comes out.
+afterEvaluate {
+    tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
+        kotlinOptions {
+            apiVersion = "1.5"
+            languageVersion = "1.5"
         }
     }
 }

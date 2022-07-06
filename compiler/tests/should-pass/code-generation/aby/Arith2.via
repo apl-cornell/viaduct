@@ -1,0 +1,35 @@
+host alice : {A}
+host bob   : {A}
+
+fun main() {
+    let $aliceLDiff@Local(host = alice) = input int from alice;
+    let $bobLDiff@Local(host = bob) = input int from bob;
+    let $secretDiff@ArithABY(client = bob, server = alice) = ($aliceLDiff - $bobLDiff);
+    let $clearDiff@Replication(hosts = {alice, bob}) = $secretDiff;
+    output $clearDiff to alice;
+    output $clearDiff to bob;
+
+    let $aliceLSum@Local(host = alice) = input int from alice;
+    let $bobLSum@Local(host = bob) = input int from bob;
+    let $secretSum@ArithABY(client = bob, server = alice) = ($aliceLSum + $bobLSum);
+    let $clearSum@Replication(hosts = {alice, bob}) = $secretSum;
+    output $clearSum to alice;
+    output $clearSum to bob;
+
+    let $aliceLProd@Local(host = alice) = input int from alice;
+    let $bobLProd@Local(host = bob) = input int from bob;
+    let $secretProd@ArithABY(client = bob, server = alice) = ($aliceLProd * $bobLProd);
+    let $clearProd@Replication(hosts = {alice, bob}) = $secretProd;
+    output $clearProd to alice;
+    output $clearProd to bob;
+
+    let $aliceLNeg@Local(host = alice) = input int from alice;
+    let $secretNegAlice@ArithABY(client = bob, server = alice) = -$aliceLNeg;
+    let $clearNegAlice@Local(host = alice) = $secretNegAlice;
+    output $clearNegAlice to alice;
+
+    let $bobLNeg@Local(host = bob) = input int from bob;
+    let $secretNegBob@ArithABY(client = bob, server = alice) = -$bobLNeg;
+    let $clearNegBob@Local(host = bob) = $secretNegBob;
+    output $clearNegBob to bob;
+}

@@ -1,6 +1,6 @@
-package edu.cornell.cs.apl.viaduct.selection
+package io.github.apl_cornell.viaduct.selection
 
-import edu.cornell.cs.apl.viaduct.syntax.Protocol
+import io.github.apl_cornell.viaduct.syntax.Protocol
 import gurobi.GRB
 import gurobi.GRBEnv
 import gurobi.GRBLinExpr

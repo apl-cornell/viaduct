@@ -7,11 +7,11 @@ import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.options.pair
 import com.github.ajalt.clikt.parameters.types.file
 import com.github.ajalt.clikt.parameters.types.int
+import io.github.apl_cornell.viaduct.backend.CleartextProtocolInterpreter
 import io.github.apl_cornell.viaduct.backend.HostAddress
 import io.github.apl_cornell.viaduct.backend.IO.FileStrategy
 import io.github.apl_cornell.viaduct.backend.IO.Strategy
 import io.github.apl_cornell.viaduct.backend.IO.TerminalIO
-import io.github.apl_cornell.viaduct.backend.PlaintextProtocolInterpreter
 import io.github.apl_cornell.viaduct.backend.ProtocolBackend
 import io.github.apl_cornell.viaduct.backend.ViaductBackend
 import io.github.apl_cornell.viaduct.backend.aby.ABYProtocolInterpreter
@@ -52,7 +52,7 @@ class Run : CliktCommand(help = "Run compiled protocol for a single host") {
 
     private fun getProtocolBackends(): List<ProtocolBackend> {
         return listOf(
-            PlaintextProtocolInterpreter,
+            CleartextProtocolInterpreter,
             ABYProtocolInterpreter,
             CommitmentProtocolInterpreterFactory,
             ZKPProtocolInterpreterFactory

@@ -1,6 +1,3 @@
-// toggle compilation Gurobi selection problem solver
-project.ext.set("gurobiSolver", "false")
-
 buildscript {
     dependencies {
         classpath("com.github.vbmacher:java-cup:11b-20160615-1")
@@ -13,6 +10,9 @@ plugins {
     // Lexing & Parsing
     id("org.xbib.gradle.plugin.jflex") version "1.6.0"
 }
+
+val gurobiHome: String? = System.getenv("GUROBI_HOME")
+val linkGurobi: Boolean = gurobiHome != null
 
 /** Dependencies */
 
@@ -42,12 +42,9 @@ dependencies {
     // SMT solving
     implementation("io.github.tudo-aqua:z3-turnkey:4.8.14")
 
-    // ILP solver
-    // val gurobiHome = System.getenv("GUROBI_HOME")
-    // implementation(files("file://${gurobiHome}/lib/gurobi.jar"))
-    // implementation(files("file://${gurobiHome}/lib/gurobi-javadoc.jar"))
-    implementation(files("lib/gurobi.jar"))
-    implementation(files("lib/gurobi-javadoc.jar"))
+    if (linkGurobi) {
+        implementation(files("$gurobiHome/lib/gurobi.jar", "$gurobiHome/lib/gurobi-javadoc.jar"))
+    }
 
     // Testing
     testImplementation(project(":test-utilities"))
@@ -62,44 +59,13 @@ jflex {
 
 val compileCup by tasks.registering(CompileCupTask::class)
 
-val copyGurobiJars by tasks.register("copyGurobi") {
-    doLast {
-        if (project.findProperty("gurobiSolver") == "true") {
-            val gurobiHome = File(System.getenv("GUROBI_HOME"))
-            val gurobiLib = File(gurobiHome, "lib")
-            val gurobiJar = File(gurobiLib, "gurobi.jar")
-            val gurobiJavadocJar = File(gurobiLib, "gurobi-javadoc.jar")
-
-            if (gurobiJar.isFile && gurobiJavadocJar.isFile) {
-                val libDir = File(project.projectDir, "lib")
-
-                // make lib/ directory if it doesn't exist
-                if (!libDir.isDirectory) {
-                    libDir.mkdir()
-                }
-
-                val newGurobiJar = File(libDir, "gurobi.jar")
-                val newGurobiJavadocJar = File(libDir, "gurobi-javadoc.jar")
-
-                newGurobiJar.delete()
-                newGurobiJavadocJar.delete()
-
-                gurobiJar.copyTo(newGurobiJar)
-                gurobiJar.copyTo(newGurobiJavadocJar)
-            } else {
-                throw GradleException("cannot copy Gurobi JAR files from $gurobiJar and $gurobiJavadocJar")
-            }
-        }
-    }
-}
-
 sourceSets {
     main {
         java {
-            if (project.findProperty("gurobiSolver") == "true") {
+            srcDir(compileCup.map { it.outputDirectory })
+            if (linkGurobi) {
                 srcDir("src/plugins/gurobi")
             }
-            srcDir(compileCup.map { it.outputDirectory })
         }
     }
 }
@@ -107,7 +73,6 @@ sourceSets {
 tasks.compileKotlin.configure {
     dependsOn(tasks.withType<org.xbib.gradle.plugin.JFlexTask>())
     dependsOn(tasks.withType<CompileCupTask>())
-    dependsOn(copyGurobiJars)
 }
 
 tasks.withType<Test>().configureEach {

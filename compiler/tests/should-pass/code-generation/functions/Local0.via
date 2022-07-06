@@ -1,0 +1,56 @@
+host alice : {A}
+host bob   : {A}
+
+fun main() {
+    val a : int = input int from alice;
+    val b : int = input int from bob;
+
+    /* Order of out vs in params does not matter */
+    f0(val win0, a, b);
+    output win0 to alice;
+    output win0 to bob;
+
+    f1(a, b, val win1);
+    output win1 to alice;
+    output win1 to bob;
+
+    /* Multiple outputs and hosts involved in fn */
+    f2(a, b, val a_out, val b_out);
+    output a_out to alice;
+    output b_out to bob;
+
+    /* Out param initialization to read */
+    f3(a, b, val win2);
+    output win2 to alice;
+    output win2 to bob;
+
+    var c: int = a;
+    var d: int = b;
+    c = c + 1;
+    d = d + 2;
+    f3(c, d, val win3);
+    output win3 to alice;
+    output win3 to bob;
+
+    f3(a + a + a, 0, val win4);
+    output win4 to alice;
+    output win4 to bob;
+}
+
+fun f0(ret: out bool{A}, a: int, b:int) {
+    out ret = a == b;
+}
+
+fun f1(a: int, b:int, ret: out bool{A}) {
+    out ret = a == b;
+}
+
+fun f2(c: int, d:int, a: out bool{A}, b: out bool{A}) {
+    out a = c == d;
+    out b = a;
+}
+
+fun f3(a: int, b:int, ret: out bool{A}) {
+    val tmp: bool = a == b;
+    out ret = tmp;
+}

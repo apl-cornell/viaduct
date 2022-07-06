@@ -1,0 +1,36 @@
+host alice : {A & B<-}
+host bob   : {B & A<-}
+
+fun main() {
+    val a : int = input int from alice;
+    val b : int = input int from bob;
+    f(a, b);
+    h(a + b);
+
+    val c = Array[int](1);
+    c[0] = a + b;
+    k(&c);
+}
+
+fun f(a: int{A & B<-}, b: int{B & A<-}) {
+    val win: bool = a == b;
+    g(win);
+}
+
+fun g(win: bool{A & B}) {
+    val ret: bool = declassify win to {A ⊓ B};
+    output ret to alice;
+    output ret to bob;
+}
+
+fun h(sum: int{A & B}) {
+    val ret: int = declassify sum to {A ⊓ B};
+    output ret to alice;
+    output ret to bob;
+}
+
+fun k(c: Array[int]) {
+    val num: int = declassify c[0] to {A ⊓ B};
+    output num to alice;
+    output num to bob;
+}

@@ -1,7 +1,11 @@
 package io.github.apl_cornell.viaduct.codegeneration
 
+import com.squareup.kotlinpoet.ARRAY
 import com.squareup.kotlinpoet.CodeBlock
+import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import com.squareup.kotlinpoet.PropertySpec
+import com.squareup.kotlinpoet.TypeName
+import com.squareup.kotlinpoet.asTypeName
 import io.github.apl_cornell.viaduct.analysis.NameAnalysis
 import io.github.apl_cornell.viaduct.analysis.TypeAnalysis
 import io.github.apl_cornell.viaduct.runtime.Boxed
@@ -21,12 +25,37 @@ import io.github.apl_cornell.viaduct.syntax.intermediate.ReadNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.UpdateNode
 import io.github.apl_cornell.viaduct.syntax.types.ImmutableCellType
 import io.github.apl_cornell.viaduct.syntax.types.MutableCellType
+import io.github.apl_cornell.viaduct.syntax.types.ObjectType
+import io.github.apl_cornell.viaduct.syntax.types.ValueType
 import io.github.apl_cornell.viaduct.syntax.types.VectorType
 import io.github.apl_cornell.viaduct.syntax.values.Value
 
 abstract class AbstractCodeGenerator(val context: CodeGeneratorContext) : CodeGenerator {
     private val nameAnalysis = NameAnalysis.get(context.program)
     private val typeAnalysis = TypeAnalysis.get(context.program)
+
+    override fun kotlinType(protocol: Protocol, sourceType: ValueType): TypeName = typeTranslator(sourceType)
+
+    override fun kotlinType(protocol: Protocol, sourceType: ObjectType): TypeName {
+        return when (sourceType) {
+            is ImmutableCellType -> {
+                kotlinType(protocol, sourceType.elementType)
+            }
+            is MutableCellType -> {
+                (Boxed::class).asTypeName().parameterizedBy(kotlinType(protocol, sourceType.elementType))
+            }
+            is VectorType -> {
+                ARRAY.parameterizedBy(kotlinType(protocol, sourceType.elementType))
+            }
+            else -> {
+                throw IllegalArgumentException(
+                    "Cannot convert ${
+                    sourceType.toDocument().print()
+                    } to Kotlin type."
+                )
+            }
+        }
+    }
 
     override fun guard(protocol: Protocol, expr: AtomicExpressionNode): CodeBlock =
         throw UnsupportedOperatorException(protocol, expr)

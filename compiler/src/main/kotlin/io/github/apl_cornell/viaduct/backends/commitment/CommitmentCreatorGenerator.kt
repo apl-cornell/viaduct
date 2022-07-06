@@ -2,11 +2,15 @@ package io.github.apl_cornell.viaduct.backends.commitment
 
 import com.squareup.kotlinpoet.CodeBlock
 import com.squareup.kotlinpoet.MemberName
+import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
+import com.squareup.kotlinpoet.TypeName
 import com.squareup.kotlinpoet.asClassName
+import com.squareup.kotlinpoet.asTypeName
 import io.github.apl_cornell.viaduct.analysis.TypeAnalysis
 import io.github.apl_cornell.viaduct.codegeneration.AbstractCodeGenerator
 import io.github.apl_cornell.viaduct.codegeneration.CodeGeneratorContext
 import io.github.apl_cornell.viaduct.codegeneration.receiveReplicated
+import io.github.apl_cornell.viaduct.codegeneration.typeTranslator
 import io.github.apl_cornell.viaduct.runtime.commitment.Committed
 import io.github.apl_cornell.viaduct.selection.CommunicationEvent
 import io.github.apl_cornell.viaduct.selection.ProtocolCommunication
@@ -17,11 +21,15 @@ import io.github.apl_cornell.viaduct.syntax.intermediate.AtomicExpressionNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.ExpressionNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.LetNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.LiteralNode
+import io.github.apl_cornell.viaduct.syntax.types.ValueType
 
 internal class CommitmentCreatorGenerator(
     context: CodeGeneratorContext
 ) : AbstractCodeGenerator(context) {
     private val typeAnalysis = TypeAnalysis.get(context.program)
+
+    override fun kotlinType(protocol: Protocol, sourceType: ValueType): TypeName =
+        (Committed::class).asTypeName().parameterizedBy(typeTranslator(sourceType))
 
     override fun guard(protocol: Protocol, expr: AtomicExpressionNode): CodeBlock =
         cleartextExp(protocol, expr)

@@ -1,0 +1,46 @@
+host alice: {A}
+
+fun main() {
+    val a = Array[int]{A}(1);
+    output a[0] to alice;  /* expects 0 */
+
+    /* Passing array obj ref as in arg */
+    /* Modifying in arg array */
+    f0(&a);
+    output a[0] to alice;  /* expects 1 */
+
+    /* Passing array declaration as out arg */
+    /* Passing out param array as arg to new fn call */
+    f1(val b);
+    output b[0] to alice;  /* expects 0 */
+
+    /* Initializing out param array, then modifying array and returning */
+    f2(val d);
+    output d[0] to alice;  /* expects 2 */
+
+    /* Modifying out array with local variable after instantiation by fn call */
+    f3(val e);
+    output e[0] to alice;  /* expects 5 */
+}
+
+fun f0(a: Array[int]) {
+    a[0] = 1;
+}
+
+fun f1(b: out Array[int]{A}) {
+    g(out b);
+}
+
+fun g(c: out Array[int]{A}) {
+    out c = Array[int]{A}(1);
+}
+
+fun f2(d: out Array[int]{A}) {
+    out d = Array[int]{A}(1);
+    d[0] = 2;
+}
+
+fun f3(e: out Array[int]{A}) {
+    g(out e);
+    e[0] = 5;
+}

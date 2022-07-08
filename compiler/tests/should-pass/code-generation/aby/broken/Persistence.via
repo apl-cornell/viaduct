@@ -1,0 +1,10 @@
+host alice : {A}
+host bob   : {A}
+
+fun main() {
+    let $x@ArithABY(client = bob, server = alice) = 10;
+    output $x to alice;
+
+    let $y@ArithABY(client = bob, server = alice) = $x;
+    output $y to alice;
+}

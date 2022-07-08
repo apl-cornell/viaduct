@@ -1,0 +1,12 @@
+host alice : {A}
+host bob   : {A}
+
+fun main() {
+    /*
+    let $index@Replication(hosts = {alice, bob}) = 5;
+    val a = Array[int]@ArithABY(client = bob, server = alice)(10);
+
+    let $x@ArithABY(client = bob, server = alice) = a[$index];
+    output $x to alice;
+    */
+}

@@ -1,8 +1,10 @@
 package io.github.apl_cornell.viaduct.cli
 
 import com.github.ajalt.clikt.core.CliktCommand
+import com.github.ajalt.clikt.parameters.options.default
 import com.github.ajalt.clikt.parameters.options.flag
 import com.github.ajalt.clikt.parameters.options.option
+import com.github.ajalt.clikt.parameters.types.choice
 import com.github.ajalt.clikt.parameters.types.file
 import guru.nidi.graphviz.engine.Format
 import guru.nidi.graphviz.engine.Graphviz
@@ -10,7 +12,10 @@ import io.github.apl_cornell.viaduct.backends.CodeGenerationBackend
 import io.github.apl_cornell.viaduct.backends.DefaultCombinedBackend
 import io.github.apl_cornell.viaduct.passes.compile
 import io.github.apl_cornell.viaduct.passes.compileToKotlin
+import io.github.apl_cornell.viaduct.selection.SelectionProblemSolver
 import io.github.apl_cornell.viaduct.selection.SimpleCostRegime
+import io.github.apl_cornell.viaduct.selection.defaultSelectionProblemSolver
+import io.github.apl_cornell.viaduct.selection.selectionProblemSolvers
 import mu.KotlinLogging
 import java.io.File
 import java.io.StringWriter
@@ -76,6 +81,11 @@ class Compile : CliktCommand(help = "Compile ideal protocol to secure distribute
         help = "Translate .via source file to a .kt file"
     ).flag(default = false)
 
+    val selectionProblemSolver: SelectionProblemSolver by option(
+        "--solver",
+        help = "Pick which solver to use for protocol selection"
+    ).choice(selectionProblemSolvers.toMap()).default(defaultSelectionProblemSolver)
+
     override fun run() {
         val costRegime = if (wanCost) SimpleCostRegime.WAN else SimpleCostRegime.LAN
 
@@ -85,6 +95,7 @@ class Compile : CliktCommand(help = "Compile ideal protocol to secure distribute
                     fileName = output?.nameWithoutExtension ?: "Source",
                     packageName = ".",
                     backend = CodeGenerationBackend,
+                    selectionSolver = selectionProblemSolver,
                     costRegime = costRegime,
                     saveLabelConstraintGraph = constraintGraphOutput::dumpGraph,
                     saveInferredLabels = labelOutput,
@@ -96,6 +107,7 @@ class Compile : CliktCommand(help = "Compile ideal protocol to secure distribute
             val compiledProgram =
                 input.sourceFile().compile(
                     backend = DefaultCombinedBackend,
+                    selectionSolver = selectionProblemSolver,
                     costRegime = costRegime,
                     saveLabelConstraintGraph = constraintGraphOutput::dumpGraph,
                     saveInferredLabels = labelOutput,

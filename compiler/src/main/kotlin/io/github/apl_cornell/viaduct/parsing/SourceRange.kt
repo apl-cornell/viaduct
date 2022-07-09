@@ -1,11 +1,11 @@
 package io.github.apl_cornell.viaduct.parsing
 
-import io.github.apl_cornell.apl.prettyprinting.Document
-import io.github.apl_cornell.apl.prettyprinting.Style
-import io.github.apl_cornell.apl.prettyprinting.concatenated
-import io.github.apl_cornell.apl.prettyprinting.plus
-import io.github.apl_cornell.apl.prettyprinting.styled
-import io.github.apl_cornell.apl.prettyprinting.times
+import io.github.apl_cornell.viaduct.prettyprinting.Document
+import io.github.apl_cornell.viaduct.prettyprinting.Style
+import io.github.apl_cornell.viaduct.prettyprinting.concatenated
+import io.github.apl_cornell.viaduct.prettyprinting.plus
+import io.github.apl_cornell.viaduct.prettyprinting.styled
+import io.github.apl_cornell.viaduct.prettyprinting.times
 
 /**
  * Denotes a nonempty set of consecutive characters in a source file. Empty ranges are not allowed,

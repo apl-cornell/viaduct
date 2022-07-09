@@ -9,14 +9,14 @@ private val gurobiSolver: SelectionProblemSolver? =
         null
     }
 
-val defaultSelectionProblemSolver: SelectionProblemSolver =
-    gurobiSolver ?: Z3SelectionProblemSolver
+private object PackageName
 
-/** Returns a list name-constructor pairs for all [SelectionProblemSolver] classes. */
+/** Returns all available [SelectionProblemSolver] instances. */
 val selectionProblemSolvers: List<Pair<String, SelectionProblemSolver>> =
     listOfNotNull(
         Pair("z3", Z3SelectionProblemSolver),
         gurobiSolver?.let { Pair("gurobi", it) }
     )
 
-private object PackageName
+val defaultSelectionProblemSolver: SelectionProblemSolver =
+    selectionProblemSolvers.first().second

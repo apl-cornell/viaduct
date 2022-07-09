@@ -7,13 +7,13 @@ import io.github.apl_cornell.viaduct.syntax.datatypes.Modify
 import io.github.apl_cornell.viaduct.syntax.values.IntegerValue
 import io.github.apl_cornell.viaduct.syntax.values.Value
 
-sealed class PlaintextClassObject {
+sealed class CleartextClassObject {
     abstract fun query(query: QueryNameNode, arguments: List<Value>): Value
 
     abstract fun update(update: UpdateNameNode, arguments: List<Value>)
 }
 
-object NullObject : PlaintextClassObject() {
+object NullObject : CleartextClassObject() {
     override fun query(query: QueryNameNode, arguments: List<Value>): Value {
         throw Exception("runtime error")
     }
@@ -23,7 +23,7 @@ object NullObject : PlaintextClassObject() {
     }
 }
 
-class ImmutableCellObject(val value: Value) : PlaintextClassObject() {
+class ImmutableCellObject(val value: Value) : CleartextClassObject() {
     override fun query(query: QueryNameNode, arguments: List<Value>): Value {
         return when (query.value) {
             is Get -> value
@@ -39,7 +39,7 @@ class ImmutableCellObject(val value: Value) : PlaintextClassObject() {
     }
 }
 
-class MutableCellObject(var value: Value) : PlaintextClassObject() {
+class MutableCellObject(var value: Value) : CleartextClassObject() {
     override fun query(query: QueryNameNode, arguments: List<Value>): Value {
         return when (query.value) {
             is Get -> value
@@ -67,7 +67,7 @@ class MutableCellObject(var value: Value) : PlaintextClassObject() {
     }
 }
 
-class VectorObject(val size: Int, defaultValue: Value) : PlaintextClassObject() {
+class VectorObject(val size: Int, defaultValue: Value) : CleartextClassObject() {
     val values: ArrayList<Value> = ArrayList(size)
 
     init {

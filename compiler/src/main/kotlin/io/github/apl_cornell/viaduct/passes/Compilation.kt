@@ -1,9 +1,6 @@
 package io.github.apl_cornell.viaduct.passes
 
 import com.squareup.kotlinpoet.FileSpec
-import io.github.apl_cornell.apl.prettyprinting.Document
-import io.github.apl_cornell.apl.prettyprinting.PrettyPrintable
-import io.github.apl_cornell.apl.prettyprinting.plus
 import io.github.apl_cornell.viaduct.analysis.InformationFlowAnalysis
 import io.github.apl_cornell.viaduct.analysis.NameAnalysis
 import io.github.apl_cornell.viaduct.analysis.descendantsIsInstance
@@ -13,6 +10,9 @@ import io.github.apl_cornell.viaduct.backends.zkp.zkpMuxPostprocessor
 import io.github.apl_cornell.viaduct.codegeneration.compileToKotlin
 import io.github.apl_cornell.viaduct.parsing.SourceFile
 import io.github.apl_cornell.viaduct.parsing.parse
+import io.github.apl_cornell.viaduct.prettyprinting.Document
+import io.github.apl_cornell.viaduct.prettyprinting.PrettyPrintable
+import io.github.apl_cornell.viaduct.prettyprinting.plus
 import io.github.apl_cornell.viaduct.selection.ProtocolSelection
 import io.github.apl_cornell.viaduct.selection.SelectionProblemSolver
 import io.github.apl_cornell.viaduct.selection.SimpleCostEstimator

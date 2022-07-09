@@ -1,9 +1,9 @@
 package io.github.apl_cornell.viaduct.backend.commitment
 
+import io.github.apl_cornell.viaduct.backend.CleartextClassObject
 import io.github.apl_cornell.viaduct.backend.ImmutableCellObject
 import io.github.apl_cornell.viaduct.backend.MutableCellObject
 import io.github.apl_cornell.viaduct.backend.NullObject
-import io.github.apl_cornell.viaduct.backend.PlaintextClassObject
 import io.github.apl_cornell.viaduct.backend.VectorObject
 import io.github.apl_cornell.viaduct.syntax.values.BooleanValue
 import io.github.apl_cornell.viaduct.syntax.values.ByteVecValue
@@ -37,7 +37,7 @@ fun Value.encode(): List<Byte> {
     }
 }
 
-fun PlaintextClassObject.encode(): List<Byte> {
+fun CleartextClassObject.encode(): List<Byte> {
     return when (this) {
         is ImmutableCellObject -> this.value.encode()
         is MutableCellObject -> this.value.encode()
@@ -64,7 +64,7 @@ object Hashing {
 
     fun generateHash(v: Value): HashInfo = generateHash(v.encode())
 
-    fun generateHash(c: PlaintextClassObject): HashInfo = generateHash(c.encode())
+    fun generateHash(c: CleartextClassObject): HashInfo = generateHash(c.encode())
 
     /** Deterministic hash for storing literals. **/
 

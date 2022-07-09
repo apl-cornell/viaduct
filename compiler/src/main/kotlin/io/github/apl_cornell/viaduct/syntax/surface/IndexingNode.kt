@@ -1,9 +1,9 @@
 package io.github.apl_cornell.viaduct.syntax.surface
 
-import io.github.apl_cornell.apl.prettyprinting.Document
-import io.github.apl_cornell.apl.prettyprinting.bracketed
-import io.github.apl_cornell.apl.prettyprinting.nested
-import io.github.apl_cornell.apl.prettyprinting.plus
+import io.github.apl_cornell.viaduct.prettyprinting.Document
+import io.github.apl_cornell.viaduct.prettyprinting.bracketed
+import io.github.apl_cornell.viaduct.prettyprinting.nested
+import io.github.apl_cornell.viaduct.prettyprinting.plus
 import io.github.apl_cornell.viaduct.syntax.Arguments
 import io.github.apl_cornell.viaduct.syntax.BinaryOperator
 import io.github.apl_cornell.viaduct.syntax.ObjectVariableNode

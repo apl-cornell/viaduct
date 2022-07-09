@@ -1,6 +1,6 @@
 package io.github.apl_cornell.viaduct.errors
 
-import io.github.apl_cornell.apl.prettyprinting.Document
+import io.github.apl_cornell.viaduct.prettyprinting.Document
 import io.github.apl_cornell.viaduct.syntax.intermediate.ProgramNode
 
 /** Thrown when protocol selection cannot find a solution. */

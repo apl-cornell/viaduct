@@ -1,6 +1,6 @@
 package io.github.apl_cornell.viaduct.syntax
 
-import io.github.apl_cornell.apl.prettyprinting.PrettyPrintable
+import io.github.apl_cornell.viaduct.prettyprinting.PrettyPrintable
 
 /** An object that names things. */
 interface Name : PrettyPrintable {

@@ -1,0 +1,15 @@
+host chuck : {C}
+host dave  : {D}
+host ed    : {C & D}
+
+fun main() {
+    val c : int = endorse (input int from chuck) to {C & D<-} from {C};
+    val d : int = endorse (input int from dave)  to {D & C<-} from {D};
+    f(c, d, val win);
+    output win to chuck;
+    output win to dave;
+}
+
+fun f(num: int{C & D<-}, guess: int{D & C<-}, ret: out bool{C ⊓ D}) {
+    out ret = declassify (guess == num) from {C & D} to {C ⊓ D};
+}

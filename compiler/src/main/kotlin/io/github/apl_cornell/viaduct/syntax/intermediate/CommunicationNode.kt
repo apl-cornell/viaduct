@@ -1,6 +1,6 @@
 package io.github.apl_cornell.viaduct.syntax.intermediate
 
-import io.github.apl_cornell.apl.prettyprinting.PrettyPrintable
+import io.github.apl_cornell.viaduct.prettyprinting.PrettyPrintable
 import io.github.apl_cornell.viaduct.syntax.HasSourceLocation
 import io.github.apl_cornell.viaduct.syntax.HostNode
 

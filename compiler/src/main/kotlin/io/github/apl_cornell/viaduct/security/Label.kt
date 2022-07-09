@@ -1,12 +1,12 @@
 package io.github.apl_cornell.viaduct.security
 
-import io.github.apl_cornell.apl.prettyprinting.Document
-import io.github.apl_cornell.apl.prettyprinting.PrettyPrintable
-import io.github.apl_cornell.apl.prettyprinting.Style
 import io.github.apl_cornell.viaduct.algebra.BoundedLattice
 import io.github.apl_cornell.viaduct.algebra.FreeDistributiveLattice
 import io.github.apl_cornell.viaduct.algebra.Lattice
 import io.github.apl_cornell.viaduct.algebra.PartialOrder
+import io.github.apl_cornell.viaduct.prettyprinting.Document
+import io.github.apl_cornell.viaduct.prettyprinting.PrettyPrintable
+import io.github.apl_cornell.viaduct.prettyprinting.Style
 import io.github.apl_cornell.viaduct.security.Label.Companion.bottom
 import io.github.apl_cornell.viaduct.security.Label.Companion.strongest
 import io.github.apl_cornell.viaduct.security.Label.Companion.top

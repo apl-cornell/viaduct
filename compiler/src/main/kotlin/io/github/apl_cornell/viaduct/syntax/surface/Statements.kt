@@ -1,13 +1,13 @@
 package io.github.apl_cornell.viaduct.syntax.surface
 
-import io.github.apl_cornell.apl.prettyprinting.Document
-import io.github.apl_cornell.apl.prettyprinting.concatenated
-import io.github.apl_cornell.apl.prettyprinting.joined
-import io.github.apl_cornell.apl.prettyprinting.nested
-import io.github.apl_cornell.apl.prettyprinting.plus
-import io.github.apl_cornell.apl.prettyprinting.times
-import io.github.apl_cornell.apl.prettyprinting.tupled
 import io.github.apl_cornell.viaduct.errors.InvalidConstructorCallError
+import io.github.apl_cornell.viaduct.prettyprinting.Document
+import io.github.apl_cornell.viaduct.prettyprinting.concatenated
+import io.github.apl_cornell.viaduct.prettyprinting.joined
+import io.github.apl_cornell.viaduct.prettyprinting.nested
+import io.github.apl_cornell.viaduct.prettyprinting.plus
+import io.github.apl_cornell.viaduct.prettyprinting.times
+import io.github.apl_cornell.viaduct.prettyprinting.tupled
 import io.github.apl_cornell.viaduct.syntax.Arguments
 import io.github.apl_cornell.viaduct.syntax.FunctionNameNode
 import io.github.apl_cornell.viaduct.syntax.HostNode

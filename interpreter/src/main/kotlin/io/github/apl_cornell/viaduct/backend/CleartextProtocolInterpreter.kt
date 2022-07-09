@@ -1,13 +1,13 @@
 package io.github.apl_cornell.viaduct.backend
 
-import io.github.apl_cornell.apl.prettyprinting.joined
 import io.github.apl_cornell.viaduct.analysis.ProtocolAnalysis
 import io.github.apl_cornell.viaduct.backend.commitment.HashInfo
 import io.github.apl_cornell.viaduct.backend.commitment.encode
+import io.github.apl_cornell.viaduct.backends.cleartext.Cleartext
 import io.github.apl_cornell.viaduct.backends.cleartext.Local
-import io.github.apl_cornell.viaduct.backends.cleartext.Plaintext
 import io.github.apl_cornell.viaduct.errors.UndefinedNameError
 import io.github.apl_cornell.viaduct.errors.ViaductInterpreterError
+import io.github.apl_cornell.viaduct.prettyprinting.joined
 import io.github.apl_cornell.viaduct.selection.CommunicationEvent
 import io.github.apl_cornell.viaduct.selection.ProtocolCommunication
 import io.github.apl_cornell.viaduct.syntax.Host
@@ -41,14 +41,14 @@ import kotlinx.collections.immutable.persistentMapOf
 import mu.KotlinLogging
 import java.util.Stack
 
-private val logger = KotlinLogging.logger("Plaintext")
+private val logger = KotlinLogging.logger("Cleartext")
 
-class PlaintextProtocolInterpreter(
+class CleartextProtocolInterpreter(
     program: ProgramNode,
     protocols: Set<Protocol>,
     private val host: Host,
     private val runtime: ViaductRuntime
-) : AbstractProtocolInterpreter<PlaintextClassObject>(program) {
+) : AbstractProtocolInterpreter<CleartextClassObject>(program) {
     override val availableProtocols: Set<Protocol> = protocols
 
     private val tempStoreStack: Stack<PersistentMap<Temporary, Value>> = Stack()
@@ -88,7 +88,7 @@ class PlaintextProtocolInterpreter(
         tempStoreStack.pop()
     }
 
-    override suspend fun buildExpressionObject(protocol: Protocol, expr: AtomicExpressionNode): PlaintextClassObject {
+    override suspend fun buildExpressionObject(protocol: Protocol, expr: AtomicExpressionNode): CleartextClassObject {
         return ImmutableCellObject(runExpr(expr))
     }
 
@@ -97,7 +97,7 @@ class PlaintextProtocolInterpreter(
         className: ClassName,
         typeArguments: List<ValueType>,
         arguments: List<AtomicExpressionNode>
-    ): PlaintextClassObject {
+    ): CleartextClassObject {
         return when (className) {
             ImmutableCell -> ImmutableCellObject(runExpr(arguments[0]))
 
@@ -112,11 +112,11 @@ class PlaintextProtocolInterpreter(
         }
     }
 
-    override fun getNullObject(protocol: Protocol): PlaintextClassObject = NullObject
+    override fun getNullObject(protocol: Protocol): CleartextClassObject = NullObject
 
     private fun runRead(read: ReadNode): Value =
         tempStore[read.temporary.value]
-            ?: throw ViaductInterpreterError("Plaintext: could not find local temporary ${read.temporary.value}")
+            ?: throw ViaductInterpreterError("Cleartext: could not find local temporary ${read.temporary.value}")
 
     private suspend fun runExpr(expr: ExpressionNode): Value {
         return when (expr) {
@@ -194,13 +194,13 @@ class PlaintextProtocolInterpreter(
         if (sendProtocol != recvProtocol) {
             val projection = ProtocolProjection(recvProtocol, this.host)
             val cleartextInputs =
-                events.getProjectionReceives(projection, Plaintext.INPUT)
+                events.getProjectionReceives(projection, Cleartext.INPUT)
 
             val cleartextCommitmentInputs =
-                events.getProjectionReceives(projection, Plaintext.CLEARTEXT_COMMITMENT_INPUT)
+                events.getProjectionReceives(projection, Cleartext.CLEARTEXT_COMMITMENT_INPUT)
 
             val hashCommitmentInputs =
-                events.getProjectionReceives(projection, Plaintext.HASH_COMMITMENT_INPUT)
+                events.getProjectionReceives(projection, Cleartext.HASH_COMMITMENT_INPUT)
 
             when {
                 // cleartext input
@@ -212,20 +212,20 @@ class PlaintextProtocolInterpreter(
                         if (cleartextValue == null) {
                             cleartextValue = receivedValue
                         } else if (cleartextValue != receivedValue) {
-                            throw ViaductInterpreterError("Plaintext: received different values")
+                            throw ViaductInterpreterError("Cleartext: received different values")
                         }
                     }
 
                     if (cleartextValue == null) {
-                        throw ViaductInterpreterError("Plaintext: received null value")
+                        throw ViaductInterpreterError("Cleartext: received null value")
                     }
 
                     // calculate set of hosts with whom [this.host] needs to check for equivocation
                     val hostsToCheckWith: Set<Host> =
                         events
                             .filter { event ->
-                                // remove events where receiving host is not receiving plaintext data
-                                event.recv.id == Plaintext.INPUT &&
+                                // remove events where receiving host is not receiving cleartext data
+                                event.recv.id == Cleartext.INPUT &&
 
                                     // remove events where a host is sending data to themselves
                                     event.send.host != event.recv.host &&
@@ -302,7 +302,7 @@ class PlaintextProtocolInterpreter(
                 }
 
                 else ->
-                    throw ViaductInterpreterError("Plaintext: received both commitment opening and cleartext value")
+                    throw ViaductInterpreterError("Cleartext: received both commitment opening and cleartext value")
             }
         }
     }
@@ -317,9 +317,9 @@ class PlaintextProtocolInterpreter(
             connectionMap: Map<Host, HostAddress>
         ): Iterable<ProtocolInterpreter> =
             setOf(
-                PlaintextProtocolInterpreter(
+                CleartextProtocolInterpreter(
                     program,
-                    protocols.filterIsInstance<Plaintext>().toSet(),
+                    protocols.filterIsInstance<Cleartext>().toSet(),
                     host,
                     runtime
                 )

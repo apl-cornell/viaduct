@@ -14,9 +14,10 @@ import io.github.apl_cornell.viaduct.prettyprinting.Document
 import io.github.apl_cornell.viaduct.prettyprinting.PrettyPrintable
 import io.github.apl_cornell.viaduct.prettyprinting.plus
 import io.github.apl_cornell.viaduct.selection.ProtocolSelection
+import io.github.apl_cornell.viaduct.selection.SelectionProblemSolver
 import io.github.apl_cornell.viaduct.selection.SimpleCostEstimator
 import io.github.apl_cornell.viaduct.selection.SimpleCostRegime
-import io.github.apl_cornell.viaduct.selection.Z3Selection
+import io.github.apl_cornell.viaduct.selection.defaultSelectionProblemSolver
 import io.github.apl_cornell.viaduct.selection.validateProtocolAssignment
 import io.github.apl_cornell.viaduct.syntax.intermediate.DeclarationNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.LetNode
@@ -34,6 +35,7 @@ private val logger = KotlinLogging.logger("Compile")
 /** Similar to [SourceFile.compileToKotlin], but returns a program for the interpreter. */
 fun SourceFile.compile(
     backend: Backend,
+    selectionSolver: SelectionProblemSolver = defaultSelectionProblemSolver,
     costRegime: SimpleCostRegime = SimpleCostRegime.WAN,
     saveLabelConstraintGraph: ((graphWriter: (Writer) -> Unit) -> Unit)? = null,
     saveInferredLabels: File? = null,
@@ -76,7 +78,7 @@ fun SourceFile.compile(
     val costEstimator = SimpleCostEstimator(protocolComposer, costRegime)
     val protocolAssignment = logger.duration("protocol selection") {
         ProtocolSelection(
-            Z3Selection(),
+            selectionSolver,
             protocolFactory,
             protocolComposer,
             costEstimator
@@ -136,6 +138,7 @@ fun SourceFile.compileToKotlin(
     fileName: String,
     packageName: String,
     backend: Backend,
+    selectionSolver: SelectionProblemSolver = defaultSelectionProblemSolver,
     costRegime: SimpleCostRegime = SimpleCostRegime.WAN,
     saveLabelConstraintGraph: ((graphWriter: (Writer) -> Unit) -> Unit)? = null,
     saveInferredLabels: File? = null,
@@ -145,6 +148,7 @@ fun SourceFile.compileToKotlin(
     val postProcessedProgram =
         this.compile(
             backend,
+            selectionSolver,
             costRegime,
             saveLabelConstraintGraph,
             saveInferredLabels,

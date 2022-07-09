@@ -15,8 +15,9 @@ class ProtocolSelection(
             throw NoHostDeclarationsError(program.sourceLocation.sourcePath)
         }
 
-        val constraintGenerator = SelectionConstraintGenerator(program, protocolFactory, protocolComposer, costEstimator)
+        val constraintGenerator =
+            SelectionConstraintGenerator(program, protocolFactory, protocolComposer, costEstimator)
         val selectionProblem = constraintGenerator.getSelectionProblem()
-        return solver.solveSelectionProblem(selectionProblem) ?: throw NoSelectionSolutionError(program)
+        return solver.solve(selectionProblem) ?: throw NoSelectionSolutionError(program)
     }
 }

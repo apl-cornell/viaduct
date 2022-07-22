@@ -2,63 +2,64 @@ host alice
 host bob
 
 /* Simple test */
-circuit fun <> f(a: int[]@Local(host = alice), b: int[m, n]@Local(host = alice)) -> c: int[]@Local(host = alice) {
-    val tmp[]@Local(host = alice) = a[] + b[0, 0];
-    return tmp[];
+circuit fun <> f@Local(host = alice)(a: int[]@Local(host = alice), b: int[m, n]@Local(host = alice)) -> c: int[]@Local(host = alice) {
+    val tmp[] = a[] + b[0, 0]
+    return tmp[]
 }
 
-/* No returns; reduce with multiple indexing parameters, literal on RHS */
-/*  TODO: This is kind of dumb. I have to make a whole node nullable just for a feature that
-doesn't make any sense. Alternative: Go back to CircuitBlocks only holding CircuitStatements,
-with the invariant that the last one is always the return, if it exists. Kind of a headache to work with ngl.
-Nullable is better than that option. But just not allowing no returns is better */
-circuit fun <> g() -> {
-    val fivetimesthree[]@Local(host = alice) = reduce(::+, 0) { i < 3 -> 5 };
-    val again[]@Local(host = alice) = reduce(::+, 0) { i < 3, j < 5 -> 1 };
+/* No returns reduce with multiple indexing parameters, literal on RHS */
+circuit fun <> g@Local(host = alice)() -> {
+    val fivetimesthree[] = reduce(::+, 0) { i < 3 -> 5 }
+    val again[] = reduce(::+, 0) { i < 3, j < 5 -> 1 }
+    return
 }
 
 /* Biometric matching example. More complicated reduces */
-circuit fun <n, d> biometric(
+circuit fun <n, d> biometric@YaoABY(client = bob, server = alice)(
     database: int[n, d]@Local(host = alice),
     sample: int[d]@Local(host = bob)
 ) → dist: int[]@Replication(hosts = {alice, bob}) {
-    val dists[i < n]@YaoABY(client = bob, server = alice) = reduce(::+, 0) { j < d -> (database[i, j] - sample[j]) * (database[i, j] - sample[j])};
-    val mindist[]@YaoABY(client = bob, server = alice) = reduce(::min, 999999) { i < n -> dists[i] };
-    return mindist[];
+    val dists[i < n] = reduce(::+, 0) { j < d -> (database[i, j] - sample[j]) * (database[i, j] - sample[j]) }
+    val mindist[] = reduce(::min, 999999) { i < n -> dists[i] }
+    return mindist[]
 }
 
 /* Multiple indexing parameters in let statement. Returning arrays */
-circuit fun <m, n, p> multiply(
+circuit fun <m, n, p> multiply@Local(host = alice)(
     a: int[m, n]@Local(host = alice),
     b: int[n, p]@Local(host = alice)
 ) → res: int[m, p]@Local(host = alice) {
-    val res[i < m, j < p]@Local(host = alice) = reduce(::+, 0){ k < n -> a[i, k] * b[k, j] };
-    return res[]; /* TODO returning full arrays */
+    val res[i < m, j < p] = reduce(::+, 0){ k < n -> a[i, k] * b[k, j] }
+    return res
 }
 
 /* Produces zero in O(n) time. */
-circuit fun <> slowZero(n: int[]@Local(host = alice)) → zero: int[]@Local(host = alice) {
-    val a[i < n]@Local(host = alice) = i;
-    val b[i < n]@Local(host = alice) = -1 * (n - i);
-    val line[i < n]@Local(host = alice) = a[i] + b[i];
-    val res[]@Local(host = alice) = reduce(::+, 0) { i < n -> line[i] };
-    return res[];
+circuit fun <> slowZero@Local(host = alice)(n: int[]@Local(host = alice)) → zero: int[]@Local(host = alice) {
+    val a[i < n] = i
+    val b[i < n] = -1 * (n - i)
+    val line[i < n] = a[i] + b[i]
+    val res[] = reduce(::+, 0) { i < n -> line[i] }
+    return res[]
 }
 
 /* Multiple returns. N-dimensional lookup */
-circuit fun <> h() -> a:int[]@Local(host = alice),
-                      b:int[]@Local(host = alice),
-                      c:int[]@Local(host = alice) {
-    val arr[i < 10, j < 10]@Local(host = alice) = i * 31 + j * 19;
-    return arr[1, 4], arr[3, 2], arr[8, 9];
+circuit fun <> h@Local(host = alice)()
+ -> a:int[]@Local(host = alice),
+    b:int[]@Local(host = alice),
+    c:int[]@Local(host = alice) {
+    val arr[i < 10, j < 10] = i * 31 + j * 19
+    return arr[1, 4], arr[3, 2], arr[8, 9]
 }
 
 /* Just a return statement */
-circuit fun <> k() -> a:int[]@Local(host = alice),
-                      b:int[]@Local(host = alice),
-                      c:int[]@Local(host = alice) {
-    return 3, 0, 1;
+circuit fun <> k@Local(host = alice)()
+ -> a:int[]@Local(host = alice),
+    b:int[]@Local(host = alice),
+    c:int[]@Local(host = alice) {
+    return 3, 0, 1
 }
 
 /* Empty */
-circuit fun <> empty() -> {}
+circuit fun <> empty@Local(host = alice)() -> {
+    return
+}

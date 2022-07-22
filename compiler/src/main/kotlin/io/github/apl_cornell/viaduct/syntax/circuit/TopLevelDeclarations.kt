@@ -10,7 +10,6 @@ import io.github.apl_cornell.viaduct.syntax.FunctionNameNode
 import io.github.apl_cornell.viaduct.syntax.HostNode
 import io.github.apl_cornell.viaduct.syntax.ProtocolNode
 import io.github.apl_cornell.viaduct.syntax.SourceLocation
-import io.github.apl_cornell.viaduct.syntax.VariableNode
 import io.github.apl_cornell.viaduct.syntax.surface.keyword
 
 /** A declaration at the top level of a file. */
@@ -28,17 +27,38 @@ class HostDeclarationNode(
     override fun toDocument(): Document = keyword("host") * name
 }
 
+class BoundParameterNode(
+    override val name: VariableNode,
+    override val sourceLocation: SourceLocation
+) : Node(), VariableDeclarationNode {
+    override fun toDocument(): Document = name.toDocument()
+}
+
 /**
  * A parameter to a function declaration.
  */
 class ParameterNode(
-    override val variable: VariableNode,
+    override val name: VariableNode,
     val type: ArrayTypeNode,
-    override val protocol: ProtocolNode,
+    val protocol: ProtocolNode,
     override val sourceLocation: SourceLocation
 ) : Node(), VariableDeclarationNode {
     override fun toDocument(): Document =
-        variable + Document(":") * type.toDocument() + Document("@") + protocol.value
+        name + Document(":") * type.toDocument() + Document("@") + protocol.value
+}
+
+/** A simple block of statements with no control flow, all on one protocol */
+class CircuitDeclarationNode(
+    val name: FunctionNameNode,
+    val protocol: ProtocolNode,
+    val bounds: Arguments<BoundParameterNode>,
+    val inputs: Arguments<ParameterNode>,
+    val outputs: Arguments<ParameterNode>,
+    val body: CircuitBlockNode,
+    override val sourceLocation: SourceLocation
+) : TopLevelDeclarationNode() {
+    override fun toDocument(): Document =
+        ((keyword("circuit fun") * "<" + bounds.joined() + ">") * name + "@" + protocol.value.toDocument() + inputs.tupled() * "->") * outputs.joined() * body
 }
 
 /* Non-circuit declaration
@@ -58,16 +78,3 @@ sealed class FunctionDeclarationNode(
     override val sourceLocation: SourceLocation
 ) : TopLevelDeclarationNode()
 */
-
-/** A simple block of statements with no control flow, all on one protocol */
-class CircuitDeclarationNode(
-    val name: FunctionNameNode,
-    val bounds: Arguments<VariableNode>,
-    val inputs: Arguments<ParameterNode>,
-    val outputs: Arguments<ParameterNode>,
-    val body: CircuitBlockNode,
-    override val sourceLocation: SourceLocation
-) : TopLevelDeclarationNode() {
-    override fun toDocument(): Document =
-        ((keyword("circuit fun") * "<" + bounds.joined() + ">") * name + inputs.tupled() * "->") * outputs.joined() * body
-}

@@ -8,10 +8,7 @@ import io.github.apl_cornell.viaduct.prettyprinting.Style
 import io.github.apl_cornell.viaduct.prettyprinting.styled
 
 /** A variable is a name that stands for a value or an object instance. */
-open class Variable(override val name: String) : Name {
-    override val nameCategory: String
-        get() = "variable"
-
+sealed class Variable : Name {
     override fun toDocument(): Document = Document(name).styled(VariableStyle)
 }
 
@@ -20,13 +17,13 @@ open class Variable(override val name: String) : Name {
  *
  * Temporaries are generated internally to name expression results.
  */
-data class Temporary(override val name: String) : Variable(name) {
+data class Temporary(override val name: String) : Variable() {
     override val nameCategory: String
         get() = "temporary"
 }
 
 /** A variable that binds an object. */
-data class ObjectVariable(override val name: String) : Variable(name) {
+data class ObjectVariable(override val name: String) : Variable() {
     override val nameCategory: String
         get() = "variable"
 }

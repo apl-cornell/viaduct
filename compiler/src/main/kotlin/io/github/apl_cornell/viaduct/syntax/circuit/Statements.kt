@@ -8,9 +8,7 @@ import io.github.apl_cornell.viaduct.prettyprinting.nested
 import io.github.apl_cornell.viaduct.prettyprinting.plus
 import io.github.apl_cornell.viaduct.prettyprinting.times
 import io.github.apl_cornell.viaduct.syntax.Arguments
-import io.github.apl_cornell.viaduct.syntax.ProtocolNode
 import io.github.apl_cornell.viaduct.syntax.SourceLocation
-import io.github.apl_cornell.viaduct.syntax.VariableNode
 import io.github.apl_cornell.viaduct.syntax.surface.keyword
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.toPersistentList
@@ -27,10 +25,10 @@ sealed class SimpleStatementNode : StatementNode()
 sealed class CircuitStatementNode : SimpleStatementNode()
 
 class IndexParameterNode(
-    val name: VariableNode,
+    override val name: VariableNode,
     val bound: IndexExpressionNode,
     override val sourceLocation: SourceLocation
-) : Node() {
+) : Node(), VariableDeclarationNode {
     override fun toDocument(): Document = name.toDocument() * "<" * bound
 }
 
@@ -45,7 +43,7 @@ sealed class BlockNode(
     override fun toDocument(): Document {
         val statements: List<Document> = statements.map {
             if (it is SimpleStatementNode)
-                it.toDocument() + ";"
+                it.toDocument()
             else
                 it.toDocument()
         }
@@ -60,15 +58,15 @@ sealed class BlockNode(
 class CircuitBlockNode
 private constructor(
     val statements: PersistentList<CircuitStatementNode>,
-    val returnStatement: ReturnNode?,
+    val returnStatement: ReturnNode,
     override val sourceLocation: SourceLocation
 ) : CircuitStatementNode(), List<CircuitStatementNode> by statements {
-    constructor(statements: List<CircuitStatementNode>, returnStatement: ReturnNode?, sourceLocation: SourceLocation) :
+    constructor(statements: List<CircuitStatementNode>, returnStatement: ReturnNode, sourceLocation: SourceLocation) :
         this(statements.toPersistentList(), returnStatement, sourceLocation)
 
     override fun toDocument(): Document {
-        val statements: MutableList<Document> = (statements.map { it.toDocument() + ";" } as MutableList<Document>)
-        if (returnStatement != null) statements.add(returnStatement.toDocument())
+        val statements: MutableList<Document> = (statements.map { it.toDocument() } as MutableList<Document>)
+        statements.add(returnStatement.toDocument())
         val body: Document = statements.concatenated(separator = Document.forcedLineBreak)
         return Document("{") +
             (Document.forcedLineBreak + body).nested() + Document.forcedLineBreak + "}"
@@ -79,14 +77,13 @@ private constructor(
 
 /** Binding the result of an expression to a variable. */
 class LetNode(
-    val name: VariableNode,
+    override val name: VariableNode,
     val indices: Arguments<IndexParameterNode>,
-    val protocol: ProtocolNode,
     val value: ExpressionNode,
     override val sourceLocation: SourceLocation
-) : CircuitStatementNode() {
+) : CircuitStatementNode(), VariableDeclarationNode {
     override fun toDocument(): Document =
-        keyword("val") * name + indices.bracketed() + "@" + protocol.value.toDocument() * "=" * value
+        keyword("val") * name + indices.bracketed() * "=" * value
 }
 
 class ReturnNode(

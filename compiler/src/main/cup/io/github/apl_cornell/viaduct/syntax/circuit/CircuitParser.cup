@@ -2,8 +2,6 @@ import io.github.apl_cornell.viaduct.errors.NoMainError;
 import io.github.apl_cornell.viaduct.errors.ParsingError;
 import io.github.apl_cornell.viaduct.security.*;
 import io.github.apl_cornell.viaduct.syntax.*;
-import io.github.apl_cornell.viaduct.syntax.datatypes.*;
-import io.github.apl_cornell.viaduct.syntax.circuit.*;
 import io.github.apl_cornell.viaduct.syntax.operators.*;
 import io.github.apl_cornell.viaduct.syntax.types.*;
 import io.github.apl_cornell.viaduct.syntax.values.*;
@@ -88,7 +86,7 @@ nonterminal List<TopLevelDeclarationNode> declaration_list;
 nonterminal TopLevelDeclarationNode declaration;
 
 nonterminal CircuitStatementNode circ_stmt;
-nonterminal ReturnNode optional_return;
+nonterminal ReturnNode return;
 //nonterminal SimpleStatementNode simple_stmt;
 //nonterminal StatementNode stmt;
 nonterminal CircuitBlockNode circ_block;
@@ -98,10 +96,11 @@ nonterminal List<CircuitStatementNode> circ_stmt_list;
 nonterminal PureExpressionNode expr;
 nonterminal IndexExpressionNode index_expr;
 nonterminal List<IndexExpressionNode> index_expr_list, nonempty_index_expr_list;
-nonterminal IndexingVariableNode index_var;
+nonterminal ReferenceNode reference;
 nonterminal LiteralNode literal;
 nonterminal Located<Variable> variable;
-nonterminal List<Located<Variable>> variable_list, nonempty_variable_list;
+nonterminal BoundParameterNode bound;
+nonterminal List<BoundParameterNode> bound_list, nonempty_bound_list;
 nonterminal ExpressionNode optional_initial_value;
 nonterminal List<ExpressionNode> expr_list, nonempty_expr_list;
 nonterminal Located<ArgumentLabel> argument_label;
@@ -216,10 +215,11 @@ declaration ::=
     HOST:begin host:host {:
       RESULT = new HostDeclarationNode(host, location(beginleft, hostright));
     :}
-  | CIRCUIT:begin FUNCTION LT:boundsopen variable_list:bounds GT:boundsclose IDENT:funcname
+  | CIRCUIT:begin FUNCTION LT:boundsopen bound_list:bounds GT:boundsclose IDENT:funcname protocol_annot:protocol
       OPEN_PAREN:paramsbegin parameter_list:inparams CLOSE_PAREN:paramsclose RARROW:arrow parameter_list:outparams circ_block:body {:
         RESULT = new CircuitDeclarationNode(
           new Located(new FunctionName(funcname), location(funcnameleft, funcnameright)),
+          protocol,
           new Arguments(bounds, location(boundsopenleft, boundscloseright)),
           new Arguments(inparams, location(paramsbeginleft, paramsbeginright)),
           new Arguments(outparams, location(arrowleft, arrowright)),
@@ -263,26 +263,25 @@ parameter ::=
 
 circ_stmt ::=
   /* let binding */
-  VAL:begin variable:var OPEN_SQBRACE:open index_param_list:indices CLOSE_SQBRACE:close protocol_annot:protocol EQ expr:e SEMICOLON {:
+  VAL:begin variable:var OPEN_SQBRACE:open index_param_list:indices CLOSE_SQBRACE:close EQ expr:e {:
       RESULT = new LetNode(
         var,
         new Arguments(indices, location(openleft, closeright)),
-        protocol,
         e,
         location(beginleft, eright)
       );
     :}
   ;
 
-optional_return ::=
+return ::=
   /* TODO only works because expr_list currently only generates pure expressions */
-  RETURN:begin expr_list:values SEMICOLON {:
+  RETURN:begin expr_list:values {:
+      SourceRange valuesLoc = (values.size() == 0) ? location(beginleft, valuesright) : location(valuesleft, valuesright);
       RESULT = new ReturnNode(
-        new Arguments(values, location(valuesleft, valuesright)),
+        new Arguments(values, valuesLoc),
         location(beginleft, valuesright)
       );
     :}
-  | /* empty */  {: RESULT = null; :}
   ;
 
 optional_initial_value ::=
@@ -291,7 +290,7 @@ optional_initial_value ::=
   ;
 
 circ_block ::=
-    OPEN_BRACE:begin circ_stmt_list:statements optional_return:ret CLOSE_BRACE:end {:
+    OPEN_BRACE:begin circ_stmt_list:statements return:ret CLOSE_BRACE:end {:
       RESULT = new CircuitBlockNode(statements, ret, location(beginleft, endright));
     :}
   ;
@@ -313,9 +312,12 @@ variable ::=
     :}
   ;
 
-variable_list ::=
-    nonempty_variable_list:vars {:
-      RESULT = vars;
+bound ::=
+  variable:var {: RESULT = new BoundParameterNode(var, location(varleft, varright)); :};
+
+bound_list ::=
+    nonempty_bound_list:bs {:
+      RESULT = bs;
     :}
 
   | /* empty */ {:
@@ -323,14 +325,14 @@ variable_list ::=
     :}
   ;
 
-nonempty_variable_list ::=
-    nonempty_variable_list:vars COMMA variable:var {:
-      vars.add(var);
-      RESULT = vars;
+nonempty_bound_list ::=
+    nonempty_bound_list:bs COMMA bound:b {:
+      bs.add(b);
+      RESULT = bs;
     :}
 
-  | variable:var {:
-      RESULT = CollectionsKt.mutableListOf(var);
+  | bound:b {:
+      RESULT = CollectionsKt.mutableListOf(b);
     :}
   ;
 
@@ -361,12 +363,12 @@ literal ::=
     RESULT = new LiteralNode(value, location(valueleft, valueright));
   :};
 
-index_var ::= variable:var {: RESULT = new IndexingVariableNode(var, location(varleft, varright)); :};
+reference ::= variable:var {: RESULT = new ReferenceNode(var, location(varleft, varright)); :};
 
 /* only appears when indexing */
 index_expr ::=
     literal:lit {: RESULT = lit; :}
-  | index_var:var {: RESULT = var; :};
+  | reference:var {: RESULT = var; :};
 
 index_expr_list ::=
     nonempty_index_expr_list:elist {: RESULT = elist; :}
@@ -407,29 +409,8 @@ nonempty_index_param_list ::=
     :}
   ;
 
-operator ::=
-    NOT {: RESULT = Not.INSTANCE; :}
-  | ANDAND {: RESULT = And.INSTANCE; :}
-  | OROR {: RESULT = Or.INSTANCE; :}
-  | AND {: RESULT = ExclusiveOr.INSTANCE; :}
-  | EQEQ {: RESULT = EqualTo.INSTANCE; :}
-  | NEQ {: RESULT = ExclusiveOr.INSTANCE; :}
-  | LT {: RESULT = LessThan.INSTANCE; :}
-  | LEQ {: RESULT = LessThanOrEqualTo.INSTANCE; :}
-  | GT {: RESULT = GreaterThan.INSTANCE; :}
-  | GEQ {: RESULT = GreaterThanOrEqualTo.INSTANCE; :}
-  | PLUS {: RESULT = Addition.INSTANCE; :}
-  | MINUS {: RESULT = Subtraction.INSTANCE; :}
-  | TIMES {: RESULT = Multiplication.INSTANCE; :}
-  | DIVIDE {: RESULT = Division.INSTANCE; :}
-  | MIN {: RESULT = Minimum.INSTANCE; :}
-  | MAX {: RESULT = Maximum.INSTANCE; :}
-  | MUX {: RESULT = Mux.INSTANCE; :}
-;
-
 expr ::=
-    literal:lit {: RESULT = lit; :}
-  | index_var:var {: RESULT = var; :}
+    index_expr:exp {: RESULT = exp; :}
   /* variable/array lookup */
   | variable:var OPEN_SQBRACE:open index_expr_list:indices CLOSE_SQBRACE:close {:
       RESULT = new LookupNode(
@@ -441,7 +422,7 @@ expr ::=
   | REDUCE:begin OPEN_PAREN COLONCOLON operator:op COMMA expr:defaultvalue CLOSE_PAREN OPEN_BRACE:bodybegin
    index_param_list:params RARROW:arrow expr:expression CLOSE_BRACE:bodyend {:
       RESULT = new ReduceNode(
-        op,
+        new OperatorNode(op, location(opleft, opright)),
         defaultvalue,
         new Arguments(params, location(bodybeginleft, arrowright)),
         expression,
@@ -514,6 +495,26 @@ expr ::=
       RESULT = e;
     :}
   ;
+
+operator ::=
+    NOT {: RESULT = Not.INSTANCE; :}
+  | ANDAND {: RESULT = And.INSTANCE; :}
+  | OROR {: RESULT = Or.INSTANCE; :}
+  | AND {: RESULT = ExclusiveOr.INSTANCE; :}
+  | EQEQ {: RESULT = EqualTo.INSTANCE; :}
+  | NEQ {: RESULT = ExclusiveOr.INSTANCE; :}
+  | LT {: RESULT = LessThan.INSTANCE; :}
+  | LEQ {: RESULT = LessThanOrEqualTo.INSTANCE; :}
+  | GT {: RESULT = GreaterThan.INSTANCE; :}
+  | GEQ {: RESULT = GreaterThanOrEqualTo.INSTANCE; :}
+  | PLUS {: RESULT = Addition.INSTANCE; :}
+  | MINUS {: RESULT = Subtraction.INSTANCE; :}
+  | TIMES {: RESULT = Multiplication.INSTANCE; :}
+  | DIVIDE {: RESULT = Division.INSTANCE; :}
+  | MIN {: RESULT = Minimum.INSTANCE; :}
+  | MAX {: RESULT = Maximum.INSTANCE; :}
+  | MUX {: RESULT = Mux.INSTANCE; :}
+;
 
 expr_list ::=
     nonempty_expr_list:elist {:

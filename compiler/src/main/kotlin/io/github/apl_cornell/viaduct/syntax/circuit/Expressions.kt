@@ -9,7 +9,6 @@ import io.github.apl_cornell.viaduct.prettyprinting.tupled
 import io.github.apl_cornell.viaduct.syntax.Arguments
 import io.github.apl_cornell.viaduct.syntax.Operator
 import io.github.apl_cornell.viaduct.syntax.SourceLocation
-import io.github.apl_cornell.viaduct.syntax.VariableNode
 import io.github.apl_cornell.viaduct.syntax.surface.keyword
 import io.github.apl_cornell.viaduct.syntax.values.Value
 
@@ -26,7 +25,8 @@ class LiteralNode(
     override fun toDocument(): Document = value.toDocument()
 }
 
-class IndexingVariableNode(
+/* References a variable. Only used for indexing variables and arrays. */
+class ReferenceNode(
     val name: VariableNode,
     override val sourceLocation: SourceLocation
 ) : IndexExpressionNode() {
@@ -51,20 +51,26 @@ class OperatorApplicationNode(
     override fun toDocument(): Document = Document("(") + operator.toDocument(arguments) + ")"
 }
 
+class OperatorNode(
+    val operator: Operator,
+    override val sourceLocation: SourceLocation
+) : Node() {
+    override fun toDocument(): Document = Document("::$operator")
+}
+
 /**
  * @param defaultValue to be used when the list is empty
  * @param operator must be associative
  */
 class ReduceNode(
-    val operator: Operator,
+    val operator: OperatorNode,
     val defaultValue: PureExpressionNode,
     val indices: Arguments<IndexParameterNode>,
     val body: PureExpressionNode,
     override val sourceLocation: SourceLocation
 ) : PureExpressionNode() {
     override fun toDocument(): Document {
-        val args = listOf(Document("::$operator"), defaultValue)
-        return keyword("reduce") + args.tupled() * "{" * indices.joined() * "->" * body * " }"
+        return keyword("reduce") + listOf(operator, defaultValue).tupled() * "{" * indices.joined() * "->" * body * " }"
     }
 }
 

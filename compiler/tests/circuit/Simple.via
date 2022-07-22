@@ -14,16 +14,6 @@ circuit fun <> g@Local(host = alice)() -> {
     return
 }
 
-/* Biometric matching example. More complicated reduces */
-circuit fun <n, d> biometric@YaoABY(client = bob, server = alice)(
-    database: int[n, d]@Local(host = alice),
-    sample: int[d]@Local(host = bob)
-) → dist: int[]@Replication(hosts = {alice, bob}) {
-    val dists[i < n] = reduce(::+, 0) { j < d -> (database[i, j] - sample[j]) * (database[i, j] - sample[j]) }
-    val mindist[] = reduce(::min, 999999) { i < n -> dists[i] }
-    return mindist[]
-}
-
 /* Multiple indexing parameters in let statement. Returning arrays */
 circuit fun <m, n, p> multiply@Local(host = alice)(
     a: int[m, n]@Local(host = alice),

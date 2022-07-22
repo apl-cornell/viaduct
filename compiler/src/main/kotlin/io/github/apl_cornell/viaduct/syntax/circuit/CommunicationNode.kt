@@ -1,4 +1,4 @@
-package io.github.apl_cornell.viaduct.syntax.intermediate2
+package io.github.apl_cornell.viaduct.syntax.circuit
 
 import io.github.apl_cornell.viaduct.syntax.HasSourceLocation
 import io.github.apl_cornell.viaduct.syntax.HostNode

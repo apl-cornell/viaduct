@@ -1,6 +1,6 @@
 package io.github.apl_cornell.viaduct.syntax.circuit
 
-import io.github.apl_cornell.viaduct.IR2TestFileProvider
+import io.github.apl_cornell.viaduct.CircuitTestFileProvider
 import io.github.apl_cornell.viaduct.backends.DefaultCombinedBackend
 import io.github.apl_cornell.viaduct.parsing.SourceFile
 import org.junit.jupiter.params.ParameterizedTest
@@ -9,15 +9,15 @@ import java.io.File
 
 internal class ParsingPrintingTest {
     @ParameterizedTest
-    @ArgumentsSource(IR2TestFileProvider::class)
+    @ArgumentsSource(CircuitTestFileProvider::class)
     fun `Circuit parses`(file: File) {
-        SourceFile.from(file).parseIR(DefaultCombinedBackend.protocolParsers)
+        SourceFile.from(file).parse(DefaultCombinedBackend.protocolParsers)
     }
 
     @ParameterizedTest
-    @ArgumentsSource(IR2TestFileProvider::class)
+    @ArgumentsSource(CircuitTestFileProvider::class)
     fun `Circuit prettyprints`(file: File) {
-        val program = SourceFile.from(file).parseIR(DefaultCombinedBackend.protocolParsers)
+        val program = SourceFile.from(file).parse(DefaultCombinedBackend.protocolParsers)
         println(program.toDocument().print())
     }
 }

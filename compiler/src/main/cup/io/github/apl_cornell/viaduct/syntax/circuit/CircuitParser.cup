@@ -110,7 +110,7 @@ nonterminal Operator operator;
 
 nonterminal Value value;
 nonterminal Located<ValueType> value_type;
-nonterminal ArrayTypeNode array_type;
+nonterminal Located<ArrayType> array_type;
 
 nonterminal Located<Host> host;
 // nonterminal List<Located<Host>> host_list, nonempty_host_list;
@@ -338,13 +338,15 @@ nonempty_bound_list ::=
 
 array_type ::=
     value_type:elementtype OPEN_SQBRACE:open index_expr_list:shape CLOSE_SQBRACE:close {:
-        RESULT = new ArrayTypeNode(
-          elementtype,
-          new Arguments(shape, location(openleft, closeright)),
+        RESULT = new Located(
+          new ArrayType(
+            elementtype,
+            new Arguments(shape, location(openleft, closeright))
+          ),
           location(elementtypeleft, closeright)
         );
     :}
-    ;
+  ;
 
 value_type ::=
     INT:type {:

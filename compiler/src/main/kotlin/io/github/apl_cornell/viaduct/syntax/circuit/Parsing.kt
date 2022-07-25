@@ -8,15 +8,15 @@ import io.github.apl_cornell.viaduct.syntax.ProtocolName
 import java_cup.runtime.ComplexSymbolFactory
 
 /** Parses [this] string and returns the AST. */
-fun String.parseIR(
+fun String.parse(
     path: String = "<string>",
     protocolParsers: Map<ProtocolName, ProtocolParser<Protocol>> = defaultProtocolParsers
 ): ProgramNode {
-    return SourceFile.from(path, this).parseIR(protocolParsers)
+    return SourceFile.from(path, this).parse(protocolParsers)
 }
 
 /** Parses [this] source file to IR and returns the IR. */
-fun SourceFile.parseIR(
+fun SourceFile.parse(
     protocolParsers: Map<ProtocolName, ProtocolParser<Protocol>> = defaultProtocolParsers
 ): ProgramNode {
     val symbolFactory = ComplexSymbolFactory()

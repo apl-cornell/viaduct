@@ -1,6 +1,5 @@
 package io.github.apl_cornell.viaduct.syntax.circuit
 
-import io.github.apl_cornell.viaduct.passes.elaborated
 import io.github.apl_cornell.viaduct.prettyprinting.Document
 import io.github.apl_cornell.viaduct.prettyprinting.concatenated
 import io.github.apl_cornell.viaduct.prettyprinting.plus
@@ -9,9 +8,7 @@ import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.toPersistentList
 
 /**
- * The intermediate level representation of a program.
- *
- * Instances are created by [elaborated].
+ * The circuit representation of a program.
  */
 class ProgramNode(
     val declarations: PersistentList<TopLevelDeclarationNode>,

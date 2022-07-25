@@ -25,7 +25,6 @@ class LiteralNode(
     override fun toDocument(): Document = value.toDocument()
 }
 
-/* References a variable. Only used for indexing variables and arrays. */
 class ReferenceNode(
     val name: VariableNode,
     override val sourceLocation: SourceLocation
@@ -33,7 +32,6 @@ class ReferenceNode(
     override fun toDocument(): Document = name.toDocument()
 }
 
-// Replaces Read, Query nodes.
 class LookupNode(
     private val variable: VariableNode,
     private val indices: Arguments<IndexExpressionNode>,

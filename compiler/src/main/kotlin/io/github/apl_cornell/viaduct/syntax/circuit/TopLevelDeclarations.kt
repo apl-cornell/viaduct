@@ -61,21 +61,3 @@ class CircuitDeclarationNode(
     override fun toDocument(): Document =
         ((keyword("circuit fun") * "<" + bounds.joined() + ">") * name + "@" + protocol.value.toDocument() + inputs.tupled() * "->") * outputs.joined() * body
 }
-
-/* Non-circuit declaration
-/**
- * A function declaration associating a name with code.
- *
- * @param name A name identifying the function.
- * @param pcLabel Value of the program control label at the beginning of [body].
- * @param parameters A list of formal parameters.
- * @param body Code to run when the function is called.
- */
-sealed class FunctionDeclarationNode(
-    open val name: FunctionNameNode,
-    open val inputs: Arguments<ParameterNode>,
-    open val outputs: Arguments<ParameterNode>,
-    open val body: BlockNode,
-    override val sourceLocation: SourceLocation
-) : TopLevelDeclarationNode()
-*/

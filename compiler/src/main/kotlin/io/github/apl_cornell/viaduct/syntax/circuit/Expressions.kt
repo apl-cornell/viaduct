@@ -72,35 +72,3 @@ class ReduceNode(
     }
 }
 
-/* Non-circuit expressions
-/**
- * An external input.
- *
- * @param type Type of the value to receive.
- */
-class InputNode(
-    val type: ArrayTypeNode,
-    override val host: HostNode,
-    override val sourceLocation: SourceLocation
-) : ExpressionNode(), CommunicationNode {
-    override fun toDocument(): Document = keyword("input") * type * keyword("from") * host
-}
-
-/** An external output. */
-class OutputNode(
-    val message: AtomicExpressionNode,
-    override val host: HostNode,
-    override val sourceLocation: SourceLocation
-) : ExpressionNode(), CommunicationNode {
-    override fun toDocument(): Document = keyword("output") * message * keyword("to") * host
-}
-*/
-/*
-  Note that index expressions may not be atomic. Consider:
-      val arr[i, j] = i + (i * j)
-  Can be rewritten to
-      val tmp[i, j] = i * j
-      val arr[i, j] = i + tmp[i, j]
-  But
-      val arr[i, j] = tmp[i + j + i, j]
-*/

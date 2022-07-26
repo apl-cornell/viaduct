@@ -71,4 +71,3 @@ class ReduceNode(
         return keyword("reduce") + listOf(operator, defaultValue).tupled() * "{" * indices.joined() * "->" * body * " }"
     }
 }
-

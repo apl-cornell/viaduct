@@ -21,9 +21,8 @@ class FreeDistributiveLattice<A> private constructor(joinOfMeets: JoinOfMeets<A>
 
     constructor(element: A) : this(persistentSetOf(persistentSetOf(element)))
 
-    override fun lessThanOrEqualTo(that: FreeDistributiveLattice<A>): Boolean {
-        return this.join(that) == that
-    }
+    override fun lessThanOrEqualTo(that: FreeDistributiveLattice<A>): Boolean =
+        this.lessThanOrEqualTo(that, listOf())
 
     /**
      * Represents the assumption that [from] is below [to].

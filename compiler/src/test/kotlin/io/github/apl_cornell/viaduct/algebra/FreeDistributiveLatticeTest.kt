@@ -36,6 +36,8 @@ internal class FreeDistributiveLatticeTest {
         @Test
         fun simple() {
             assertFlowsTo(a, b, a to b)
+            assertFlowsTo(a, c, a to b, b to c)
+            assertFlowsTo(a, c, b to c, a to b)
         }
 
         @Test

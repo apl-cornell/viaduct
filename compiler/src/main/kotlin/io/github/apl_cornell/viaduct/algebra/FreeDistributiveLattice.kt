@@ -33,14 +33,14 @@ class FreeDistributiveLattice<A> private constructor(joinOfMeets: JoinOfMeets<A>
 
     fun lessThanOrEqualTo(that: FreeDistributiveLattice<A>, assumptions: List<LessThanOrEqualTo<A>>): Boolean {
         return this.joinOfMeets.all { given ->
-            val firstApplicable = assumptions.indexOfFirst { it.isApplicable(given) }
-            if (firstApplicable == -1) {
+            val (applicable, inapplicable) = assumptions.partition { it.isApplicable(given) }
+            if (applicable.isEmpty()) {
                 that.joinOfMeets.any { required -> given.containsAll(required) }
             } else {
-                val givenAsLattice = FreeDistributiveLattice(persistentSetOf(given))
-                val newAssumptions = assumptions.toMutableList()
-                newAssumptions.removeAt(firstApplicable)
-                (givenAsLattice meet assumptions[firstApplicable].to).lessThanOrEqualTo(that, newAssumptions)
+                applicable
+                    .map { it.to }
+                    .fold(FreeDistributiveLattice(persistentSetOf(given)), FreeDistributiveLattice<A>::meet)
+                    .lessThanOrEqualTo(that, inapplicable)
             }
         }
     }

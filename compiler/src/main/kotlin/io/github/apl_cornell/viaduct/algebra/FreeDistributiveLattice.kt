@@ -21,8 +21,28 @@ class FreeDistributiveLattice<A> private constructor(joinOfMeets: JoinOfMeets<A>
 
     constructor(element: A) : this(persistentSetOf(persistentSetOf(element)))
 
-    override fun lessThanOrEqualTo(that: FreeDistributiveLattice<A>): Boolean {
-        return this.join(that) == that
+    override fun lessThanOrEqualTo(that: FreeDistributiveLattice<A>): Boolean =
+        this.lessThanOrEqualTo(that, listOf())
+
+    /**
+     * Represents the assumption that [from] is below [to].
+     *
+     * @see FreeDistributiveLattice.lessThanOrEqualTo
+     */
+    data class LessThanOrEqualTo<A>(val from: FreeDistributiveLattice<A>, val to: FreeDistributiveLattice<A>)
+
+    fun lessThanOrEqualTo(that: FreeDistributiveLattice<A>, assumptions: List<LessThanOrEqualTo<A>>): Boolean {
+        return this.joinOfMeets.all { given ->
+            val (applicable, inapplicable) = assumptions.partition { it.isApplicable(given) }
+            if (applicable.isEmpty()) {
+                that.joinOfMeets.any { required -> given.containsAll(required) }
+            } else {
+                applicable
+                    .map { it.to }
+                    .fold(FreeDistributiveLattice(persistentSetOf(given)), FreeDistributiveLattice<A>::meet)
+                    .lessThanOrEqualTo(that, inapplicable)
+            }
+        }
     }
 
     override fun join(that: FreeDistributiveLattice<A>): FreeDistributiveLattice<A> {
@@ -92,8 +112,10 @@ class FreeDistributiveLattice<A> private constructor(joinOfMeets: JoinOfMeets<A>
         return when (this) {
             bounds<A>().top ->
                 "\u22A4"
+
             bounds<A>().bottom ->
                 "\u22A5"
+
             else -> {
                 val meets = joinOfMeets.map { meetToString(it) }.sorted()
                 val body = meets.joinToString(" \u2228 ")
@@ -126,5 +148,8 @@ class FreeDistributiveLattice<A> private constructor(joinOfMeets: JoinOfMeets<A>
          */
         private fun <A> isRedundant(joinOfMeets: JoinOfMeets<A>, j: Meet<A>): Boolean =
             joinOfMeets.any { it != j && j.containsAll(it) }
+
+        private fun <A> LessThanOrEqualTo<A>.isApplicable(given: Meet<A>): Boolean =
+            this.from.joinOfMeets.any { required -> given.containsAll(required) }
     }
 }

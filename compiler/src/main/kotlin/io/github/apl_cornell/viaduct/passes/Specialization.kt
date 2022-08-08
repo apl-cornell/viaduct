@@ -1,6 +1,7 @@
 package io.github.apl_cornell.viaduct.passes
 
 import io.github.apl_cornell.viaduct.analysis.main
+import io.github.apl_cornell.viaduct.security.Label
 import io.github.apl_cornell.viaduct.syntax.Arguments
 import io.github.apl_cornell.viaduct.syntax.FunctionName
 import io.github.apl_cornell.viaduct.syntax.Located
@@ -18,9 +19,15 @@ import io.github.apl_cornell.viaduct.syntax.intermediate.StatementNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.TopLevelDeclarationNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.deepCopy
 import io.github.apl_cornell.viaduct.util.FreshNameGenerator
-import kotlinx.collections.immutable.PersistentMap
 import kotlinx.collections.immutable.persistentMapOf
 import java.util.LinkedList
+
+
+//typealias CallingContext = PersistentMap<Pair<FunctionName, List<Label>>, FunctionName>
+
+class CallingContext {
+
+}
 
 /** Returns an AST where every call site is specialized into new functions as much as possible.
  *  This allows for the most liberal protocol selection possible, at the cost of redundancy.
@@ -59,10 +66,14 @@ private class Specializer(
     val nameGenerator = FreshNameGenerator(functionMap.keys.map { f -> f.name }.toSet())
 
     // maintain a worklist of functions to specialize
-    val worklist = LinkedList<Triple<FunctionName, FunctionName, PersistentMap<FunctionName, FunctionName>>>()
+    val worklist = LinkedList<Triple<FunctionName, FunctionName, CallingContext>>()
+
+    private fun FunctionCallNode.argumentLabels(): List<Label> {
+
+    }
 
     fun specializeStatement(
-        callingCtx: PersistentMap<FunctionName, FunctionName>,
+        callingCtx: CallingContext,
         stmt: StatementNode
     ): StatementNode {
         return when (stmt) {

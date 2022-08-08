@@ -83,9 +83,6 @@ class SecurityLattice<T : Lattice<T>>(
     fun swap(): SecurityLattice<T> =
         SecurityLattice(integrityComponent, confidentialityComponent)
 
-    override infix fun actsFor(that: SecurityLattice<T>): Boolean =
-        throw UnsupportedOperationException()
-
     // TODO: we can do better
     override fun toString(): String {
         val confidentialityStr = confidentialityComponent.toString()

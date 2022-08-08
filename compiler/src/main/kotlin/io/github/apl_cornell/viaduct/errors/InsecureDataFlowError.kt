@@ -26,7 +26,6 @@ class InsecureDataFlowError(
 
     override val description: Document
         get() {
-            // TODO: use flowsTo rather than actsFor
             if (!context.lessThanOrEqualTo(
                     nodeLabel.confidentialityComponent,
                     to.confidentialityComponent
@@ -40,8 +39,6 @@ class InsecureDataFlowError(
                     Document("But it is going to a place that only guarantees:")
                         .withData(to.confidentiality(FreeDistributiveLattice.bounds()))
             } else {
-                // Integrity is the problem
-                // TODO: use flowsTo rather than actsFor
                 assert(
                     !context.lessThanOrEqualTo(
                         to.integrityComponent,

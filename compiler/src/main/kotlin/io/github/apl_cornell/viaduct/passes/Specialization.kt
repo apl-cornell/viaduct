@@ -59,6 +59,8 @@ fun ProgramNode.specialize(): ProgramNode {
     return ProgramNode(newDeclarations, this.sourceLocation)
 }
 
+typealias SpecializedFunction = Pair<List<Label>, FunctionName>
+
 private class Specializer(
     val functionMap: Map<FunctionName, FunctionDeclarationNode>,
     val mainProgram: BlockNode
@@ -69,6 +71,15 @@ private class Specializer(
     val worklist = LinkedList<Triple<FunctionName, FunctionName, CallingContext>>()
 
     private fun FunctionCallNode.argumentLabels(): List<Label> {
+
+    }
+
+    val informationflowAnalysis : InformationFlowAnalysis
+
+    val monoMap : MutableMap<FunctionDeclarationNode, MutableList<SpecializedFunction>>
+
+    // walk through the program to call this
+    fun FunctionCallNode.monomorphize(Map<PolyLabel, Label>) : FunctionCallNode {
 
     }
 

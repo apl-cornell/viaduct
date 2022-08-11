@@ -24,7 +24,7 @@ import io.github.apl_cornell.viaduct.syntax.circuit.VariableNode
 import io.github.apl_cornell.viaduct.syntax.types.ValueType
 import io.github.apl_cornell.viaduct.syntax.values.Value
 
-class /*Abstract*/ DefaultCodeGenerator(val context: CodeGeneratorContext) : CodeGenerator {
+abstract class AbstractCodeGenerator(val context: CodeGeneratorContext) : CodeGenerator {
 //    private val nameAnalysis = NameAnalysis.get(context.program)
 //    private val typeAnalysis = TypeAnalysis.get(context.program)
 
@@ -57,15 +57,16 @@ class /*Abstract*/ DefaultCodeGenerator(val context: CodeGeneratorContext) : Cod
         return builder.build()
     }
 
-    override fun send(
-        sender: LetNode, sendProtocol: Protocol, receiveProtocol: Protocol, events: ProtocolCommunication
-    ): CodeBlock = CodeBlock.of("send (temporary fix)") // TODO remove this and change communication node structure
+//    override fun send(
+//        sender: LetNode, sendProtocol: Protocol, receiveProtocol: Protocol, events: ProtocolCommunication
+//    ): CodeBlock = CodeBlock.of("send (temporary fix)") // TODO remove this and change communication node structure
+//
+//    override fun receive(
+//        sender: LetNode, sendProtocol: Protocol, receiveProtocol: Protocol, events: ProtocolCommunication
+//    ): CodeBlock = CodeBlock.of("receive (temporary fix)")
 
-    override fun receive(
-        sender: LetNode, sendProtocol: Protocol, receiveProtocol: Protocol, events: ProtocolCommunication
-    ): CodeBlock = CodeBlock.of("receive (temporary fix)")
-
-    fun generate(protocol: Protocol, builder: CodeBlock.Builder, host: Host, stmt: CircuitStatementNode) {
+    private fun generate(protocol: Protocol, builder: CodeBlock.Builder, host: Host, stmt: CircuitStatementNode) {
+        print("Ignore $host") // TODO remove this, just used to make the compiler stop complaining
         when (stmt) {
             is LetNode -> {
                 val lhs: CodeBlock
@@ -109,7 +110,30 @@ class /*Abstract*/ DefaultCodeGenerator(val context: CodeGeneratorContext) : Cod
         }
     }
 
-    fun reduce(protocol: Protocol, r: ReduceNode): CodeBlock {
+    open fun exp(protocol: Protocol, expr: ExpressionNode): CodeBlock = when (expr) {
+        is LiteralNode -> {
+            value(expr.value)
+        }
+        is ReferenceNode -> {
+            CodeBlock.of("%N", context.kotlinName(expr.name.value))
+        }
+        is LookupNode -> {
+            if (expr.indices.isEmpty()) {
+                CodeBlock.of("%N", context.kotlinName(expr.variable.value))
+            } else {
+                val builder = CodeBlock.builder()
+                builder.add("%N", context.kotlinName(expr.variable.value))
+                for (i in 0 until expr.indices.size) {
+                    builder.add("[%L]", exp(protocol, expr.indices[i]))
+                }
+                builder.build()
+            }
+        }
+        is ReduceNode -> reduce(protocol, expr)
+        is OperatorApplicationNode -> throw UnsupportedOperatorException(protocol, expr)
+    }
+
+    private fun reduce(protocol: Protocol, r: ReduceNode): CodeBlock {
         val loc = r.sourceLocation
         val acc = Variable("acc")
         val element = Variable("element")
@@ -131,51 +155,6 @@ class /*Abstract*/ DefaultCodeGenerator(val context: CodeGeneratorContext) : Cod
                 )
             )
         )
-    }
-
-    fun exp(protocol: Protocol, expr: ExpressionNode): CodeBlock = when (expr) {
-        is LiteralNode -> {
-            value(expr.value)
-        }
-        is ReferenceNode -> {
-            CodeBlock.of("%N", context.kotlinName(expr.name.value))
-        }
-        is LookupNode -> { // TODO reduce?
-            if (expr.indices.isEmpty()) {
-                CodeBlock.of("%N", context.kotlinName(expr.variable.value))
-            } else {
-                val builder = CodeBlock.builder()
-                builder.add("%N", context.kotlinName(expr.variable.value))
-                for (i in 0 until expr.indices.size) {
-                    builder.add("[%L]", exp(protocol, expr.indices[i]))
-                }
-                builder.build()
-            }
-        }
-        is OperatorApplicationNode -> {  // TODO Throw excn and implement this in backends instead.
-            when (expr.operator) {
-                Minimum -> CodeBlock.of(
-                    "%M(%L, %L)",
-                    MemberName("kotlin.math", "min"),
-                    exp(protocol, expr.arguments[0]),
-                    exp(protocol, expr.arguments[1])
-                )
-                Maximum -> CodeBlock.of(
-                    "%M(%L, %L)",
-                    MemberName("kotlin.math", "max"),
-                    exp(protocol, expr.arguments[0]),
-                    exp(protocol, expr.arguments[1])
-                )
-                is UnaryOperator -> CodeBlock.of(
-                    "%L%L", expr.operator.toString(), exp(protocol, expr.arguments[0])
-                )
-                is BinaryOperator -> CodeBlock.of(
-                    "%L %L %L", exp(protocol, expr.arguments[0]), expr.operator, exp(protocol, expr.arguments[1])
-                )
-                else -> throw UnsupportedOperatorException(protocol, expr)
-            }
-        }
-        is ReduceNode -> reduce(protocol, expr)
     }
 
     fun value(value: Value): CodeBlock = CodeBlock.of("%L", value)

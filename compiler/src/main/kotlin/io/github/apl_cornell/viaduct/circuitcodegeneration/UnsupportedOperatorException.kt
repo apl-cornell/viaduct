@@ -9,6 +9,3 @@ import io.github.apl_cornell.viaduct.syntax.circuit.Node
  */
 class UnsupportedOperatorException(protocol: Protocol, node: Node) :
     CodeGenerationException("Protocol ${protocol.name} does not support operation ${node.toDocument().print()}.")
-
-class UnsupportedExpressionException(protocol: Protocol, node: Node) :
-    CodeGenerationException("Protocol ${protocol.name} does not support expression ${node.toDocument().print()}.")

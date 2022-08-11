@@ -6,13 +6,9 @@ import com.squareup.kotlinpoet.MemberName
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import com.squareup.kotlinpoet.PropertySpec
 import com.squareup.kotlinpoet.TypeName
-import io.github.apl_cornell.viaduct.codegeneration.typeTranslator
-import io.github.apl_cornell.viaduct.selection.ProtocolCommunication
 import io.github.apl_cornell.viaduct.syntax.Arguments
-import io.github.apl_cornell.viaduct.syntax.BinaryOperator
 import io.github.apl_cornell.viaduct.syntax.Host
 import io.github.apl_cornell.viaduct.syntax.Protocol
-import io.github.apl_cornell.viaduct.syntax.UnaryOperator
 import io.github.apl_cornell.viaduct.syntax.circuit.ArrayType
 import io.github.apl_cornell.viaduct.syntax.circuit.CircuitDeclarationNode
 import io.github.apl_cornell.viaduct.syntax.circuit.CircuitStatementNode
@@ -25,8 +21,6 @@ import io.github.apl_cornell.viaduct.syntax.circuit.ReduceNode
 import io.github.apl_cornell.viaduct.syntax.circuit.ReferenceNode
 import io.github.apl_cornell.viaduct.syntax.circuit.Variable
 import io.github.apl_cornell.viaduct.syntax.circuit.VariableNode
-import io.github.apl_cornell.viaduct.syntax.operators.Maximum
-import io.github.apl_cornell.viaduct.syntax.operators.Minimum
 import io.github.apl_cornell.viaduct.syntax.types.ValueType
 import io.github.apl_cornell.viaduct.syntax.values.Value
 
@@ -38,7 +32,14 @@ class /*Abstract*/ DefaultCodeGenerator(val context: CodeGeneratorContext) : Cod
 
     override fun kotlinType(protocol: Protocol, sourceType: ArrayType): TypeName =
         if (sourceType.shape.isEmpty()) kotlinType(protocol, sourceType.elementType.value)
-        else ARRAY.parameterizedBy(kotlinType(protocol, sourceType.elementType.value))
+        else ARRAY.parameterizedBy(
+            kotlinType(
+                protocol, ArrayType(
+                    sourceType.elementType,
+                    Arguments(sourceType.shape.subList(1, sourceType.shape.size), sourceType.shape.sourceLocation)
+                )
+            )
+        )
 
     override fun circuitBody(protocol: Protocol, host: Host, circuitDeclaration: CircuitDeclarationNode): CodeBlock {
         val builder = CodeBlock.builder()
@@ -49,9 +50,7 @@ class /*Abstract*/ DefaultCodeGenerator(val context: CodeGeneratorContext) : Cod
             val outParam = circuitDeclaration.outputs[ret.index]
             val returnName = context.kotlinName(outParam.name.value)
             if (outParam.type.value.shape.isEmpty()) builder.addStatement(
-                "%N.set(%L)",
-                returnName,
-                exp(protocol, ret.value)
+                "%N.set(%L)", returnName, exp(protocol, ret.value)
             )
             else builder.addStatement("%N = %L", returnName, exp(protocol, ret.value))
         }
@@ -69,30 +68,26 @@ class /*Abstract*/ DefaultCodeGenerator(val context: CodeGeneratorContext) : Cod
     fun generate(protocol: Protocol, builder: CodeBlock.Builder, host: Host, stmt: CircuitStatementNode) {
         when (stmt) {
             is LetNode -> {
-                println("Ignore: $host") // TODO Remove. just put this in to get rid of annoying compile errors
-
                 val lhs: CodeBlock
                 if (stmt.indices.isEmpty()) {
                     lhs = CodeBlock.of("val %N", context.kotlinName(stmt.name.value))
                 } else {
-                    val lhsBuilder = CodeBlock.builder()
                     val name = context.kotlinName(stmt.name.value)
-
                     // Declare and initialize target array
-                    builder.add("val %N = ", name)
+                    val arrayDecl = CodeBlock.builder()
+                    arrayDecl.add("val %N = ", name)
                     for (i in 0 until stmt.indices.size) {
-                        builder.add("%T(%L){ ", Array::class, exp(protocol, stmt.indices[i].bound))
+                        arrayDecl.add("%T(%L){ ", Array::class, exp(protocol, stmt.indices[i].bound))
                         if (i == stmt.indices.size - 1) {
-                            builder.add("0")
+                            arrayDecl.add("%L", 0)  // TODO Use type analysis to put ValueType's default value here
                         }
                     }
                     for (i in 0 until stmt.indices.size) {
-                        builder.add(" }")
+                        arrayDecl.add(" }")
                     }
-
-                    // TODO make this nicer
-                    builder.add("\n")
-
+                    builder.addStatement(arrayDecl.build().toString())
+                    // Generate left-hand side of array let
+                    val lhsBuilder = CodeBlock.builder()
                     lhsBuilder.add("%N", name)
                     for (i in 0 until stmt.indices.size) {
                         val ind = context.kotlinName(stmt.indices[i].name.value)
@@ -101,14 +96,12 @@ class /*Abstract*/ DefaultCodeGenerator(val context: CodeGeneratorContext) : Cod
                     lhs = lhsBuilder.build()
                 }
 
-                val rhs = exp(protocol, stmt.value)
-
                 for (i in 0 until stmt.indices.size) {
                     val name = context.kotlinName(stmt.indices[i].name.value)
                     val bound = exp(protocol, stmt.indices[i].bound)
                     builder.beginControlFlow("for ($name in 0 until $bound)")
                 }
-                builder.addStatement("%L = %L", lhs, rhs)
+                builder.addStatement("%L = %L", lhs, exp(protocol, stmt.value))
                 for (i in 0 until stmt.indices.size) {
                     builder.endControlFlow()
                 }
@@ -186,14 +179,6 @@ class /*Abstract*/ DefaultCodeGenerator(val context: CodeGeneratorContext) : Cod
     }
 
     fun value(value: Value): CodeBlock = CodeBlock.of("%L", value)
-
-//    fun cleartextExp(protocol: Protocol, expr: AtomicExpressionNode): CodeBlock =
-//        when (expr) {
-//            is LiteralNode ->
-//                value(expr.value)
-//            is ReadNode ->
-//                CodeBlock.of("%N", context.kotlinName(expr.temporary.value, protocol))
-//        }
 
     override fun setup(protocol: Protocol): Iterable<PropertySpec> = listOf()
 }

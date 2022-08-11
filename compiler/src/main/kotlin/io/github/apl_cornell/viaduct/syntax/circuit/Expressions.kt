@@ -2,7 +2,6 @@ package io.github.apl_cornell.viaduct.syntax.circuit
 
 import io.github.apl_cornell.viaduct.prettyprinting.Document
 import io.github.apl_cornell.viaduct.prettyprinting.bracketed
-import io.github.apl_cornell.viaduct.prettyprinting.joined
 import io.github.apl_cornell.viaduct.prettyprinting.plus
 import io.github.apl_cornell.viaduct.prettyprinting.times
 import io.github.apl_cornell.viaduct.prettyprinting.tupled
@@ -33,8 +32,8 @@ class ReferenceNode(
 }
 
 class LookupNode(
-    private val variable: VariableNode,
-    private val indices: Arguments<IndexExpressionNode>,
+    val variable: VariableNode,
+    val indices: Arguments<IndexExpressionNode>,
     override val sourceLocation: SourceLocation
 ) : PureExpressionNode() {
     override fun toDocument(): Document = variable + indices.bracketed()
@@ -63,12 +62,11 @@ class OperatorNode(
 class ReduceNode(
     val operator: OperatorNode,
     val defaultValue: PureExpressionNode,
-    val indices: Arguments<IndexParameterNode>,
+    val indices: IndexParameterNode,
     val body: PureExpressionNode,
     override val sourceLocation: SourceLocation
 ) : PureExpressionNode() {
     override fun toDocument(): Document {
-        return keyword("reduce") + listOf(operator, defaultValue).tupled() * "{" * indices.joined() * "->" * body * " }"
+        return keyword("reduce") + listOf(operator, defaultValue).tupled() * "{" * indices * "->" * body * " }"
     }
 }
-

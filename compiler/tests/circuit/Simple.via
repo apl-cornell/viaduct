@@ -7,10 +7,9 @@ circuit fun <> f@Local(host = alice)(a: int[]@Local(host = alice), b: int[m, n]@
     return tmp[]
 }
 
-/* No returns reduce with multiple indexing parameters, literal on RHS */
+/* No returns reduce with literal on RHS */
 circuit fun <> g@Local(host = alice)() -> {
     val fivetimesthree[] = reduce(::+, 0) { i < 3 -> 5 }
-    val again[] = reduce(::+, 0) { i < 3, j < 5 -> 1 }
     return
 }
 
@@ -52,4 +51,11 @@ circuit fun <> k@Local(host = alice)()
 /* Empty */
 circuit fun <> empty@Local(host = alice)() -> {
     return
+}
+
+/* Find min */
+circuit fun <n> findMin@Local(host = alice)(
+    a: int[n]@Local(host = alice)
+) → res: int[]@Local(host = alice) {
+    return reduce(::min, 999999){ i < n -> a[i] }
 }

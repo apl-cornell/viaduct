@@ -1,11 +1,11 @@
 package io.github.apl_cornell.viaduct.circuitbackends.cleartext
 
-//import io.github.apl_cornell.viaduct.selection.AbstractProtocolComposer
-//import io.github.apl_cornell.viaduct.selection.CommunicationEvent
-//import io.github.apl_cornell.viaduct.syntax.Host
-//import io.github.apl_cornell.viaduct.syntax.Protocol
+// import io.github.apl_cornell.viaduct.selection.AbstractProtocolComposer
+// import io.github.apl_cornell.viaduct.selection.CommunicationEvent
+// import io.github.apl_cornell.viaduct.syntax.Host
+// import io.github.apl_cornell.viaduct.syntax.Protocol
 //
-//object CleartextProtocolComposer : AbstractProtocolComposer() {
+// object CleartextProtocolComposer : AbstractProtocolComposer() {
 //    override fun communicationEvents(source: Protocol, destination: Protocol): Iterable<CommunicationEvent>? =
 //        when {
 //            source is Local && destination is Local && source.host != destination.host -> {
@@ -49,9 +49,9 @@ package io.github.apl_cornell.viaduct.circuitbackends.cleartext
 //            else -> super.communicationEvents(source, destination)
 //        }
 //
-////    override fun mandatoryParticipatingHosts(protocol: Protocol, statement: LetNode): Set<Host> =
-////        protocol.hosts
+// //    override fun mandatoryParticipatingHosts(protocol: Protocol, statement: LetNode): Set<Host> =
+// //        protocol.hosts
 //
 //    override fun visibleGuardHosts(protocol: Protocol): Set<Host> =
 //        protocol.hosts
-//}
+// }

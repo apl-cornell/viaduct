@@ -1,38 +1,38 @@
 package io.github.apl_cornell.viaduct.circuitbackends.aby
 //
-//import io.github.apl_cornell.viaduct.passes.canMux
-//import io.github.apl_cornell.viaduct.selection.FunctionVariable
-//import io.github.apl_cornell.viaduct.selection.Implies
-//import io.github.apl_cornell.viaduct.selection.Literal
-//import io.github.apl_cornell.viaduct.selection.ProtocolComposer
-//import io.github.apl_cornell.viaduct.selection.ProtocolFactory
-//import io.github.apl_cornell.viaduct.selection.SelectionConstraint
-//import io.github.apl_cornell.viaduct.selection.variableInSet
-//import io.github.apl_cornell.viaduct.syntax.FunctionName
-//import io.github.apl_cornell.viaduct.syntax.ObjectVariable
-//import io.github.apl_cornell.viaduct.syntax.Protocol
-//import io.github.apl_cornell.viaduct.syntax.circuit.LetNode
-//import io.github.apl_cornell.viaduct.syntax.circuit.OperatorApplicationNode
-//import io.github.apl_cornell.viaduct.syntax.circuit.ProgramNode
-//import io.github.apl_cornell.viaduct.syntax.circuit.VariableDeclarationNode
-//import io.github.apl_cornell.viaduct.syntax.datatypes.Get
-//import io.github.apl_cornell.viaduct.syntax.datatypes.Vector
-//import io.github.apl_cornell.viaduct.syntax.operators.ComparisonOperator
-//import io.github.apl_cornell.viaduct.syntax.operators.Division
-//import io.github.apl_cornell.viaduct.syntax.operators.LogicalOperator
-//import io.github.apl_cornell.viaduct.syntax.operators.Maximum
-//import io.github.apl_cornell.viaduct.syntax.operators.Minimum
-//import io.github.apl_cornell.viaduct.syntax.operators.Mux
-//import io.github.apl_cornell.viaduct.util.pairedWith
+// import io.github.apl_cornell.viaduct.passes.canMux
+// import io.github.apl_cornell.viaduct.selection.FunctionVariable
+// import io.github.apl_cornell.viaduct.selection.Implies
+// import io.github.apl_cornell.viaduct.selection.Literal
+// import io.github.apl_cornell.viaduct.selection.ProtocolComposer
+// import io.github.apl_cornell.viaduct.selection.ProtocolFactory
+// import io.github.apl_cornell.viaduct.selection.SelectionConstraint
+// import io.github.apl_cornell.viaduct.selection.variableInSet
+// import io.github.apl_cornell.viaduct.syntax.FunctionName
+// import io.github.apl_cornell.viaduct.syntax.ObjectVariable
+// import io.github.apl_cornell.viaduct.syntax.Protocol
+// import io.github.apl_cornell.viaduct.syntax.circuit.LetNode
+// import io.github.apl_cornell.viaduct.syntax.circuit.OperatorApplicationNode
+// import io.github.apl_cornell.viaduct.syntax.circuit.ProgramNode
+// import io.github.apl_cornell.viaduct.syntax.circuit.VariableDeclarationNode
+// import io.github.apl_cornell.viaduct.syntax.datatypes.Get
+// import io.github.apl_cornell.viaduct.syntax.datatypes.Vector
+// import io.github.apl_cornell.viaduct.syntax.operators.ComparisonOperator
+// import io.github.apl_cornell.viaduct.syntax.operators.Division
+// import io.github.apl_cornell.viaduct.syntax.operators.LogicalOperator
+// import io.github.apl_cornell.viaduct.syntax.operators.Maximum
+// import io.github.apl_cornell.viaduct.syntax.operators.Minimum
+// import io.github.apl_cornell.viaduct.syntax.operators.Mux
+// import io.github.apl_cornell.viaduct.util.pairedWith
 //
-//// Only select ABY for a selection if:
-//// for every simple statement that reads from the selection:
-////      the pc of that statement flows to pc of selection
-////      if it's in a loop, the loop has a break
-////      every break for that loop has a pc that flows to pc of selection
+// // Only select ABY for a selection if:
+// // for every simple statement that reads from the selection:
+// //      the pc of that statement flows to pc of selection
+// //      if it's in a loop, the loop has a break
+// //      every break for that loop has a pc that flows to pc of selection
 //
-//class ABYProtocolFactory(program: ProgramNode) : ProtocolFactory {
-////    private val nameAnalysis = NameAnalysis.get(program)
+// class ABYProtocolFactory(program: ProgramNode) : ProtocolFactory {
+// //    private val nameAnalysis = NameAnalysis.get(program)
 //
 //    // hack to get backpointer to parent factory
 //    var parentFactory: ProtocolFactory? = null
@@ -153,4 +153,4 @@ package io.github.apl_cornell.viaduct.circuitbackends.aby
 //            else ->
 //                super.guardVisibilityConstraint(protocol, node)
 //        }
-//}
+// }

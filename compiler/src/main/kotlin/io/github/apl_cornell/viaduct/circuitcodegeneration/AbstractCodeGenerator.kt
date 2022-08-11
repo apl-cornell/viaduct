@@ -34,7 +34,8 @@ abstract class AbstractCodeGenerator(val context: CodeGeneratorContext) : CodeGe
         if (sourceType.shape.isEmpty()) kotlinType(protocol, sourceType.elementType.value)
         else ARRAY.parameterizedBy(
             kotlinType(
-                protocol, ArrayType(
+                protocol,
+                ArrayType(
                     sourceType.elementType,
                     Arguments(sourceType.shape.subList(1, sourceType.shape.size), sourceType.shape.sourceLocation)
                 )
@@ -80,7 +81,7 @@ abstract class AbstractCodeGenerator(val context: CodeGeneratorContext) : CodeGe
                     for (i in 0 until stmt.indices.size) {
                         arrayDecl.add("%T(%L){ ", Array::class, exp(protocol, stmt.indices[i].bound))
                         if (i == stmt.indices.size - 1) {
-                            arrayDecl.add("%L", 0)  // TODO Use type analysis to put ValueType's default value here
+                            arrayDecl.add("%L", 0) // TODO Use type analysis to put ValueType's default value here
                         }
                     }
                     for (i in 0 until stmt.indices.size) {
@@ -150,7 +151,8 @@ abstract class AbstractCodeGenerator(val context: CodeGeneratorContext) : CodeGe
             context.kotlinName(acc),
             context.kotlinName(element),
             exp(
-                protocol, OperatorApplicationNode(
+                protocol,
+                OperatorApplicationNode(
                     r.operator.operator, Arguments(listOf(accRef, elemRef), loc), loc
                 )
             )

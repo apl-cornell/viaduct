@@ -26,12 +26,12 @@ fun typeTranslator(viaductType: ValueType): TypeName =
         else -> throw IllegalArgumentException("Cannot convert ${viaductType.toDocument().print()} to Kotlin type.")
     }
 
-//fun receiveReplicated(
+// fun receiveReplicated(
 //    sender: LetNode,
 //    events: Set<CommunicationEvent>,
 //    context: CodeGeneratorContext,
 //    typeAnalysis: TypeAnalysis
-//): CodeBlock {
+// ): CodeBlock {
 //
 //    val receiveExpression = CodeBlock.builder()
 //    val it = events.iterator()
@@ -49,7 +49,7 @@ fun typeTranslator(viaductType: ValueType): TypeName =
 //        return receiveExpression.build()
 //    }
 //
-//// check to make sure that you got the same data from all hosts
+// // check to make sure that you got the same data from all hosts
 //    while (it.hasNext()) {
 //        val currentEvent = it.next()
 //        receiveExpression.add(
@@ -65,4 +65,4 @@ fun typeTranslator(viaductType: ValueType): TypeName =
 //    receiveExpression.endControlFlow()
 //
 //    return receiveExpression.build()
-//}
+// }

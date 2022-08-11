@@ -412,7 +412,7 @@ class ABYCodeGenerator(
                     args.last(),
                     args.first(),
 
-                    )
+                )
             else -> throw UnsupportedOperationException("Unknown operator $op.")
         }
 
@@ -423,7 +423,8 @@ class ABYCodeGenerator(
             is LiteralNode -> valueToShare(expr.value, protocol)
             is ReferenceNode -> CodeBlock.of("%N", context.kotlinName(expr.name.value))
             is LookupNode -> if (expr.indices.isEmpty() || expr.indices.map { clearArgument(it) }
-                    .reduce { a, b -> a && b })
+                .reduce { a, b -> a && b }
+            )
                 super.exp(protocol, expr)
             else throw UnsupportedOperationException("Secret indexing not supported")
             is ReduceNode -> super.exp(protocol, expr)

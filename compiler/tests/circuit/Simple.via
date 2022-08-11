@@ -18,8 +18,8 @@ circuit fun <m, n, p> multiply@Local(host = alice)(
     a: int[m, n]@Local(host = alice),
     b: int[n, p]@Local(host = alice)
 ) → res: int[m, p]@Local(host = alice) {
-    val res[i < m, j < p] = reduce(::+, 0){ k < n -> a[i, k] * b[k, j] }
-    return res
+    val r[i < m, j < p] = reduce(::+, 0){ k < n -> a[i, k] * b[k, j] }
+    return r
 }
 
 /* Produces zero in O(n) time. */

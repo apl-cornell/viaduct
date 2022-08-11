@@ -1,3 +1,6 @@
+host alice
+host bob
+
 /* Biometric matching */
 circuit fun <n, d> biometric@YaoABY(client = bob, server = alice)(
     database: int[n, d]@Local(host = alice),

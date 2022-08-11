@@ -7,6 +7,7 @@ import io.github.apl_cornell.viaduct.attributes.attribute
 import io.github.apl_cornell.viaduct.errors.InformationFlowError
 import io.github.apl_cornell.viaduct.errors.InsecureDataFlowError
 import io.github.apl_cornell.viaduct.security.Component
+import io.github.apl_cornell.viaduct.security.HostPrincipal
 import io.github.apl_cornell.viaduct.security.Label
 import io.github.apl_cornell.viaduct.security.LabelAnd
 import io.github.apl_cornell.viaduct.security.LabelBottom
@@ -20,6 +21,7 @@ import io.github.apl_cornell.viaduct.security.LabelMeet
 import io.github.apl_cornell.viaduct.security.LabelOr
 import io.github.apl_cornell.viaduct.security.LabelParameter
 import io.github.apl_cornell.viaduct.security.LabelTop
+import io.github.apl_cornell.viaduct.security.PolymorphicPrincipal
 import io.github.apl_cornell.viaduct.security.Principal
 import io.github.apl_cornell.viaduct.security.SecurityLattice
 import io.github.apl_cornell.viaduct.security.solver2.Constraint
@@ -33,6 +35,7 @@ import io.github.apl_cornell.viaduct.security.solver2.term
 import io.github.apl_cornell.viaduct.syntax.DelegationKind
 import io.github.apl_cornell.viaduct.syntax.HasSourceLocation
 import io.github.apl_cornell.viaduct.syntax.HostTrustConfiguration
+import io.github.apl_cornell.viaduct.syntax.Variable
 import io.github.apl_cornell.viaduct.syntax.intermediate.AssertionNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.BlockNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.BreakNode
@@ -77,6 +80,8 @@ private typealias LabelConstraint = Constraint<LabelConstant, LabelVariable, Inf
 private typealias LabelConstraintSystem = ConstraintSystem<LabelConstant, LabelVariable, InformationFlowError>
 private typealias Solution = ConstraintSolution<LabelConstant, LabelVariable>
 private typealias DelegationContext = FreeDistributiveLatticeCongruence<Component<Principal>>
+private typealias PolymorphicLabel = SecurityLattice<FreeDistributiveLattice<Component<PolymorphicPrincipal>>>
+private typealias HostLabel = SecurityLattice<FreeDistributiveLattice<Component<HostPrincipal>>>
 
 /** We infer labels for specific nodes in the program, so we need constraint variables only for those nodes. */
 private sealed class LabelVariable {
@@ -92,11 +97,8 @@ private sealed class LabelVariable {
             override fun toString(): String = node.name.value.name
         }
 
-        /** Label of a function argument. */
-        data class Argument(val node: FunctionArgumentNode) : Data() {
-            init {
-                require(node !is VariableDeclarationNode)
-            }
+        /** Label of a literal node. */
+        data class Literal(val node: LiteralNode) : Data() {
 
             override fun toString(): String = node.toDocument().print()
         }
@@ -217,7 +219,7 @@ class InformationFlowAnalysis private constructor(
         return constraints.asSequence()
     }
 
-    /** Returns constraints asserting that the pc at [this] node flows to [node] with label [nodeLabel]. */
+    /** Returns constraints asserting that the pc at [this] node flows to node with label [nodeLabel]. */
     private fun Node.pcFlowsTo(
         nodeLabel: LabelTerm
     ): Sequence<LabelConstraint> {
@@ -287,8 +289,11 @@ class InformationFlowAnalysis private constructor(
     private infix fun ExpressionNode.flowsTo(outputLabel: LabelTerm): Sequence<LabelConstraint> =
 
         when (this) {
-            is LiteralNode ->
-                sequenceOf()
+            is LiteralNode -> {
+                val literalVariable: Pair<HasSourceLocation, LabelTerm> =
+                    (this to term(LabelVariable.Data.Literal(this)))
+                literalVariable flowsTo outputLabel
+            }
 
             is ReadNode -> {
                 val declarationLabel = nameAnalysis.declaration(this).labelTerm
@@ -543,6 +548,50 @@ class InformationFlowAnalysis private constructor(
     /** Returns the inferred security label of the [Variable] defined by [node]. */
     fun label(node: VariableDeclarationNode): Label =
         nameAnalysis.enclosingFunction(node as Node).solution.evaluate(node.labelTerm)
+
+    fun label(node: FunctionArgumentNode): Label {
+        val solution = nameAnalysis.enclosingFunction(node).solution
+        return when (node) {
+            is ExpressionArgumentNode -> {
+                when (val expr = node.expression) {
+                    is LiteralNode -> {
+                        solution.evaluate(term(LabelVariable.Data.Literal(expr)))
+                    }
+
+                    is ReadNode -> {
+                        nameAnalysis.enclosingFunction(expr).solution
+                        solution.evaluate(nameAnalysis.declaration(expr).labelTerm)
+                    }
+                }
+            }
+
+            is ObjectReferenceArgumentNode -> {
+                solution.evaluate(nameAnalysis.declaration(node).labelTerm)
+            }
+
+            is ObjectDeclarationArgumentNode -> {
+                solution.evaluate(node.labelTerm)
+            }
+
+            is OutParameterArgumentNode -> {
+                solution.evaluate(nameAnalysis.declaration(node).labelTerm)
+            }
+        }
+    }
+
+    // a map from specialized functions to unspecialized functions
+
+    private val specializedMap: MutableMap<FunctionDeclarationNode, MutableMap<PolymorphicPrincipal, HostPrincipal>> =
+        mutableMapOf()
+
+    fun monomorphize(
+        functionDeclarationNode: FunctionDeclarationNode,
+        rewrite: Map<PolymorphicPrincipal, HostPrincipal>
+    ) {
+        assert(functionDeclarationNode !in specializedMap)
+        specializedMap.put(functionDeclarationNode.)
+    }
+
 
     /**
      * Asserts that the program does not violate information flow security.

@@ -47,4 +47,7 @@ class HostTrustConfiguration(val program: ProgramNode) {
     fun actsFor(from: Label, to: Label) =
         congruence.lessThanOrEqualTo(to.confidentialityComponent, from.confidentialityComponent) &&
             congruence.lessThanOrEqualTo(to.integrityComponent, from.integrityComponent)
+
+    fun equals(from: Label, to: Label) =
+        actsFor(from, to) && actsFor(to, from)
 }

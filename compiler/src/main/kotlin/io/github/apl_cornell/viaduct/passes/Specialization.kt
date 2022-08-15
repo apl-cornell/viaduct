@@ -199,7 +199,7 @@ private class Specializer(
 
             is BlockNode -> {
                 BlockNode(
-                    statements.map { specializeStatement() },
+                    statements.map { it.specializeStatement() },
                     sourceLocation
                 )
             }

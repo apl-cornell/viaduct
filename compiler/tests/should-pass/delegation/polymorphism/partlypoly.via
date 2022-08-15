@@ -1,5 +1,4 @@
-// square brackets
-fun f[X, Z](a: int{X}, b: int{bob}, c: out int{Z}) : {Z<-} where (X <: alice, alice ⊓ bob <: Z) {
+fun f{X, Z}(a: int{X}, b: int{bob}, c: out int{Z}) where (X <: alice, alice ⊓ bob <: Z) : {Z<-} {
   out c = a + b;
 }
 

@@ -427,7 +427,6 @@ class InformationFlowAnalysis private constructor(
                 }
             }
 
-            // TODO: different callsites in the same function should be differentiated before this
             is FunctionCallNode -> {
                 val functionDeclaration = nameAnalysis.declaration(this)
 
@@ -439,10 +438,24 @@ class InformationFlowAnalysis private constructor(
                     yieldAll(
                         arguments.flatMap {
                             // parameter of the callsite
-                            var parameter = nameAnalysis.parameter(it)
-                            // parameter are interpreted as label variables
-                            var parameterLabel: LabelTerm =
-                                parameter.objectType.labelArguments!!.first().value.interpretAsVariable(this@constraints)
+                            val parameter = nameAnalysis.parameter(it)
+                            // parameters are interpreted as label variables, literals are still literals
+                            val parameterLabel: LabelTerm =
+                                when (val parameterLabelExpression =
+                                    parameter.objectType.labelArguments!!.first().value) {
+                                    is LabelLiteral -> {
+                                        term(parameterLabelExpression.interpret())
+                                    }
+
+                                    is LabelParameter -> {
+                                        parameterLabelExpression.interpretAsVariable(this@constraints)
+                                    }
+
+                                    else -> {
+                                        assert(false)
+                                        term(parameterLabelExpression.interpret())
+                                    }
+                                }
                             when (it) {
                                 is ExpressionArgumentNode -> {
                                     it.expression flowsTo parameterLabel
@@ -555,6 +568,7 @@ class InformationFlowAnalysis private constructor(
         return functionDeclaration.solution.evaluate(node.labelTerm).rewriteLabel(functionDeclaration.name.value)
     }
 
+    /** Returns the inferred security label of function arguments. */
     fun label(node: FunctionArgumentNode): Label {
         val functionDeclaration = nameAnalysis.enclosingFunction(node as Node)
         val solution = functionDeclaration.solution
@@ -616,7 +630,7 @@ class InformationFlowAnalysis private constructor(
         }
     }
 
-    // monomorphize a function by copying and rewriting labels
+    /** monomorphize a function by copying and rewriting labels. */
     fun monomorphize(
         functionName: FunctionName,
         rewrite: Map<PrincipalComponent, FreeDistributiveLattice<PrincipalComponent>>

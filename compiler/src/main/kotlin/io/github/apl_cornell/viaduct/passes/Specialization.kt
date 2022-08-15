@@ -2,30 +2,28 @@ package io.github.apl_cornell.viaduct.passes
 
 import io.github.apl_cornell.viaduct.analysis.InformationFlowAnalysis
 import io.github.apl_cornell.viaduct.analysis.main
+import io.github.apl_cornell.viaduct.security.ConfidentialityComponent
+import io.github.apl_cornell.viaduct.security.IntegrityComponent
 import io.github.apl_cornell.viaduct.security.Label
+import io.github.apl_cornell.viaduct.security.LabelParameter
+import io.github.apl_cornell.viaduct.security.PolymorphicPrincipal
+import io.github.apl_cornell.viaduct.security.Principal
 import io.github.apl_cornell.viaduct.syntax.Arguments
 import io.github.apl_cornell.viaduct.syntax.FunctionName
 import io.github.apl_cornell.viaduct.syntax.HostTrustConfiguration
 import io.github.apl_cornell.viaduct.syntax.Located
-import io.github.apl_cornell.viaduct.syntax.intermediate.AssertionNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.AtomicExpressionNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.BlockNode
-import io.github.apl_cornell.viaduct.syntax.intermediate.BreakNode
-import io.github.apl_cornell.viaduct.syntax.intermediate.DeclarationNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.FunctionArgumentNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.FunctionCallNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.FunctionDeclarationNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.HostDeclarationNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.IfNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.InfiniteLoopNode
-import io.github.apl_cornell.viaduct.syntax.intermediate.LetNode
-import io.github.apl_cornell.viaduct.syntax.intermediate.OutParameterInitializationNode
-import io.github.apl_cornell.viaduct.syntax.intermediate.OutputNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.ParameterNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.ProgramNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.StatementNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.TopLevelDeclarationNode
-import io.github.apl_cornell.viaduct.syntax.intermediate.UpdateNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.deepCopy
 import io.github.apl_cornell.viaduct.util.FreshNameGenerator
 
@@ -56,9 +54,7 @@ class CallingContext(
         // name of the function being specialized
         val name: FunctionName = functionCallNode.name.value
         // label arguments of the current callsite
-        val argumentLabels = functionCallNode.arguments.map {
-            informationFlowAnalysis.label(it)
-        }
+        val argumentLabels = functionCallArgumentLabels(functionCallNode)
         return if (name in context) {
             // the case where the function is already specialized before
             // look for a specialized function that has the same signature
@@ -82,6 +78,9 @@ class CallingContext(
             (newFunctionName to false)
         }
     }
+
+    fun functionCallArgumentLabels(functionCallNode: FunctionCallNode): List<Label> =
+        functionCallNode.arguments.map { informationFlowAnalysis.label(it) }
 }
 
 /** Returns an AST where every call site is specialized into new functions as much as possible.
@@ -122,25 +121,46 @@ private class Specializer(
 
     val mainProgram: BlockNode = program.main.body
 
-    val callingContext = CallingContext(InformationFlowAnalysis.get(program), functionMap)
+    val informationFlowAnalysis = InformationFlowAnalysis.get(program)
+
+    val callingContext = CallingContext(informationFlowAnalysis, functionMap)
 
     val worklist: MutableList<FunctionCallNode> = mutableListOf()
 
-
-    fun StatementNode.monomorphizeStatement(): StatementNode =
-        when (this) {
-            is FunctionCallNode -> TODO()
-            is AssertionNode -> TODO()
-            is BlockNode -> TODO()
-            is BreakNode -> TODO()
-            is IfNode -> TODO()
-            is InfiniteLoopNode -> TODO()
-            is DeclarationNode -> TODO()
-            is LetNode -> TODO()
-            is OutParameterInitializationNode -> TODO()
-            is OutputNode -> TODO()
-            is UpdateNode -> TODO()
+    private fun monomorphizeFunction(
+        functionDeclarationNode: FunctionDeclarationNode,
+        newFunctionName: FunctionName,
+        argumentLabels: List<Label>
+    ) {
+        // function parameters as LabelExpressions
+        val functionParameters = functionDeclarationNode.parameters.map {
+            it.objectType.labelArguments!!.first().value
         }
+        assert(argumentLabels.size == functionParameters.size)
+        // first of each pair is LabelExpression of parameter, second of each is Label of argument
+        val parametersToArguments = functionParameters
+            // zip parameters with arguments
+            .zip(argumentLabels)
+            // filter polymorphic arguments (LabelParameters)
+            .filter { it.first is LabelParameter }
+            // get PolymorphicPrincipals from LabelParameters
+            .map { ((PolymorphicPrincipal((it.first as LabelParameter).name) as Principal) to it.second) }
+            // break up LabelParameters into Components
+            .flatMap {
+                listOf(
+                    (ConfidentialityComponent(it.first) to it.second.confidentialityComponent),
+                    (IntegrityComponent(it.first) to it.second.integrityComponent)
+                )
+            }
+            // make it a map
+            .toMap()
+
+        informationFlowAnalysis.monomorphize(
+            newFunctionName,
+            parametersToArguments
+        )
+    }
+
 
     fun StatementNode.specializeStatement(): StatementNode =
         when (this) {
@@ -197,10 +217,13 @@ private class Specializer(
             val callsite = worklist.removeFirst()
             // find newName of the function
             val (newName, isNew) = callingContext.specializedName(callsite)
+            val argumentLabels = callingContext.functionCallArgumentLabels(callsite)
             assert(!isNew)
             // find the unspecialized function declaration
             val function = functionMap[callsite.name.value]!!
-            // monomorphize and specialize this function
+            // monomorphize the function
+            monomorphizeFunction(function, newName, argumentLabels)
+            // then specialize
             newFunctions.add(
                 FunctionDeclarationNode(
                     Located(newName, function.name.sourceLocation),
@@ -211,7 +234,7 @@ private class Specializer(
                     ),
                     function.labelConstraints,
                     function.pcLabel,
-                    function.body.monomorphizeStatement().specializeStatement() as BlockNode,
+                    function.body.specializeStatement() as BlockNode,
                     function.sourceLocation
                 )
             )

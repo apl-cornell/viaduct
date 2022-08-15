@@ -33,6 +33,7 @@ import io.github.apl_cornell.viaduct.security.solver2.flowsTo
 import io.github.apl_cornell.viaduct.security.solver2.integrityFlowsTo
 import io.github.apl_cornell.viaduct.security.solver2.term
 import io.github.apl_cornell.viaduct.syntax.DelegationKind
+import io.github.apl_cornell.viaduct.syntax.FunctionName
 import io.github.apl_cornell.viaduct.syntax.HasSourceLocation
 import io.github.apl_cornell.viaduct.syntax.HostTrustConfiguration
 import io.github.apl_cornell.viaduct.syntax.Variable
@@ -69,6 +70,9 @@ import io.github.apl_cornell.viaduct.syntax.intermediate.ReadNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.StatementNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.UpdateNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.VariableDeclarationNode
+import kotlinx.collections.immutable.PersistentMap
+import kotlinx.collections.immutable.persistentMapOf
+import kotlinx.collections.immutable.toPersistentMap
 import java.io.Writer
 import io.github.apl_cornell.viaduct.algebra.solver2.Term as AlgebraTerm
 import io.github.apl_cornell.viaduct.syntax.LabelVariable as LabelVariableName
@@ -546,11 +550,14 @@ class InformationFlowAnalysis private constructor(
                 .labelConstraints.flatMap { it.congruences() })
 
     /** Returns the inferred security label of the [Variable] defined by [node]. */
-    fun label(node: VariableDeclarationNode): Label =
-        nameAnalysis.enclosingFunction(node as Node).solution.evaluate(node.labelTerm)
+    fun label(node: VariableDeclarationNode): Label {
+        val functionDeclaration = nameAnalysis.enclosingFunction(node as Node)
+        return functionDeclaration.solution.evaluate(node.labelTerm).rewriteLabel(functionDeclaration.name.value)
+    }
 
     fun label(node: FunctionArgumentNode): Label {
-        val solution = nameAnalysis.enclosingFunction(node).solution
+        val functionDeclaration = nameAnalysis.enclosingFunction(node as Node)
+        val solution = functionDeclaration.solution
         return when (node) {
             is ExpressionArgumentNode -> {
                 when (val expr = node.expression) {
@@ -576,20 +583,46 @@ class InformationFlowAnalysis private constructor(
             is OutParameterArgumentNode -> {
                 solution.evaluate(nameAnalysis.declaration(node).labelTerm)
             }
+        }.rewriteLabel(functionDeclaration.name.value)
+    }
+
+    // a map from specialized function name to rewrite map
+    private val rewriteMap: PersistentMap<FunctionName, PersistentMap<PrincipalComponent, LabelConstant>> =
+        persistentMapOf()
+
+    /**
+     * Given a label with polymorphic label and a rewrite map, return a label without polymorphic labels
+     */
+    private fun Label.rewriteLabel(functionName: FunctionName): Label {
+        val rewriting = rewriteMap[functionName]
+        if (rewriting == null) return this
+        else {
+            val newConfidentiality = this.confidentialityComponent.joinOfMeets
+                .fold(FreeDistributiveLattice.bounds<PrincipalComponent>().bottom) { accOut, meet ->
+                    accOut.join(meet.fold(FreeDistributiveLattice.bounds<PrincipalComponent>().top) { accIn, e ->
+                        accIn.meet((rewriting[e] ?: FreeDistributiveLattice(e)))
+                    })
+                }
+            val newIntegrity = this.integrityComponent.joinOfMeets
+                .fold(FreeDistributiveLattice.bounds<PrincipalComponent>().bottom) { accOut, meet ->
+                    accOut.join(meet.fold(FreeDistributiveLattice.bounds<PrincipalComponent>().top) { accIn, e ->
+                        accIn.meet((rewriting[e] ?: FreeDistributiveLattice(e)))
+                    })
+                }
+            return Label(
+                newConfidentiality,
+                newIntegrity
+            )
         }
     }
 
-    // a map from specialized functions to unspecialized functions
-
-    private val specializedMap: MutableMap<FunctionDeclarationNode, MutableMap<PolymorphicPrincipal, HostPrincipal>> =
-        mutableMapOf()
-
+    // monomorphize a function by copying and rewriting labels
     fun monomorphize(
-        functionDeclarationNode: FunctionDeclarationNode,
-        rewrite: Map<PolymorphicPrincipal, HostPrincipal>
+        functionName: FunctionName,
+        rewrite: Map<PrincipalComponent, FreeDistributiveLattice<PrincipalComponent>>
     ) {
-        assert(functionDeclarationNode !in specializedMap)
-        specializedMap.put(functionDeclarationNode.)
+        assert(functionName !in rewriteMap)
+        rewriteMap.put(functionName, rewrite.toPersistentMap())
     }
 
 

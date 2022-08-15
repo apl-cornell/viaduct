@@ -100,6 +100,16 @@ class FreeDistributiveLattice<A> private constructor(joinOfMeets: JoinOfMeets<A>
         }
     }
 
+    /**
+     * Given a map that maps element to expressions, rewrite by substitution.
+     */
+    fun rewrite(rewriting: Map<A, FreeDistributiveLattice<A>>): FreeDistributiveLattice<A> =
+        joinOfMeets.fold(FreeDistributiveLattice(persistentSetOf())) { accOut, meet ->
+            accOut.join(meet.fold(FreeDistributiveLattice(persistentSetOf(persistentSetOf()))) { accIn, e ->
+                accIn.meet((rewriting[e] ?: FreeDistributiveLattice(e)))
+            })
+        }
+
     companion object {
         private object Bounds : BoundedLattice<FreeDistributiveLattice<Nothing>> {
             override val bottom: FreeDistributiveLattice<Nothing> =

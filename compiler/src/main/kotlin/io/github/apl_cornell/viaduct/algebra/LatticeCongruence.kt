@@ -45,6 +45,9 @@ class FreeDistributiveLatticeCongruence<A>(
                 other.congruence
         )
 
+    fun FreeDistributiveLattice<A>.canonicalForm() =
+
+
     companion object {
         private val EMPTY: FreeDistributiveLatticeCongruence<*> =
             FreeDistributiveLatticeCongruence<Any>(emptyList())

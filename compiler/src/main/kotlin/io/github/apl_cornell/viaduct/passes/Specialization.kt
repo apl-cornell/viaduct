@@ -207,6 +207,9 @@ private class Specializer(
             else -> deepCopy() as StatementNode
         }
 
+    private fun FunctionDeclarationNode.specialize(args : List<Label>, newName : FunctionName) : FunctionDeclarationNode
+    = TODO()
+
     /** Specialize by processing call site in the worklist. */
     fun specialize(): Pair<BlockNode, List<FunctionDeclarationNode>> {
         val newFunctions = mutableListOf<FunctionDeclarationNode>()

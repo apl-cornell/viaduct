@@ -568,6 +568,11 @@ class InformationFlowAnalysis private constructor(
         return functionDeclaration.solution.evaluate(node.labelTerm).rewriteLabel(functionDeclaration.name.value)
     }
 
+    fun label(node: FunctionCallNode, labelVariable: LabelVariable): Label {
+        val functionDeclaration = nameAnalysis.enclosingFunction(node as Node)
+        return functionDeclaration.solution.evaluate(node.labelTerm).rewriteLabel(functionDeclaration.name.value)
+    }
+
     /** Returns the inferred security label of function arguments. */
     fun label(node: FunctionArgumentNode): Label {
         val functionDeclaration = nameAnalysis.enclosingFunction(node as Node)

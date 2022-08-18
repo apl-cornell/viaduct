@@ -10,3 +10,37 @@ fun main() {
 
 host alice
 host bob
+
+
+
+fun f{X, Z}(a: int{X}, b: int{bob}, c: out int{Z}) where (X <: alice, alice |_| bob <: Z) : {Z<-} {
+  out c = a + b;
+}
+
+fun main() {
+  val x : int{alice} = input int from alice;
+  val y : int{bob} = input int from bob;
+  f(x, y, val z);
+}
+
+X : alice
+Z : alice |_| bob
+
+fun f_1(a: int{alice}, b: int{bob}, c: out int{alice |_| bob}) where (X <: alice, alice |_| bob <: Z) : {Z<-} {
+  out c = a + b;
+}
+
+main() {
+f{alice}()
+f{bob}()
+}
+
+fun {X}f() {
+ g{X}()
+}
+
+fun g{Y}() {
+
+}
+
+Context{(f, X : alice, f_1), (f, X : bob, f_2), (g, Y : alice, g_1), (g, Y : bob, g_2)}

@@ -79,6 +79,7 @@ class SecurityLattice<T : Lattice<T>>(
      *
      * This is used to enforce robust declassification and transparent endorsement,
      * a.k.a. [nonmalleable information flow control](https://dl.acm.org/doi/10.1145/3133956.3134054).
+     * TODO: Swap components as well?
      */
     fun swap(): SecurityLattice<T> =
         SecurityLattice(integrityComponent, confidentialityComponent)

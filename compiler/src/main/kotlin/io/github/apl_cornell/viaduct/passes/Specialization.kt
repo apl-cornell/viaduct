@@ -1,25 +1,44 @@
 package io.github.apl_cornell.viaduct.passes
 
+import io.github.apl_cornell.viaduct.algebra.FreeDistributiveLattice
 import io.github.apl_cornell.viaduct.analysis.InformationFlowAnalysis
 import io.github.apl_cornell.viaduct.analysis.main
+import io.github.apl_cornell.viaduct.security.Component
 import io.github.apl_cornell.viaduct.security.ConfidentialityComponent
+import io.github.apl_cornell.viaduct.security.HostPrincipal
 import io.github.apl_cornell.viaduct.security.IntegrityComponent
 import io.github.apl_cornell.viaduct.security.Label
+import io.github.apl_cornell.viaduct.security.LabelAnd
+import io.github.apl_cornell.viaduct.security.LabelBottom
+import io.github.apl_cornell.viaduct.security.LabelConfidentiality
+import io.github.apl_cornell.viaduct.security.LabelExpression
+import io.github.apl_cornell.viaduct.security.LabelIntegrity
+import io.github.apl_cornell.viaduct.security.LabelJoin
+import io.github.apl_cornell.viaduct.security.LabelLiteral
+import io.github.apl_cornell.viaduct.security.LabelMeet
+import io.github.apl_cornell.viaduct.security.LabelOr
 import io.github.apl_cornell.viaduct.security.LabelParameter
+import io.github.apl_cornell.viaduct.security.LabelTop
 import io.github.apl_cornell.viaduct.security.PolymorphicPrincipal
 import io.github.apl_cornell.viaduct.security.Principal
 import io.github.apl_cornell.viaduct.syntax.Arguments
 import io.github.apl_cornell.viaduct.syntax.FunctionName
-import io.github.apl_cornell.viaduct.syntax.HostTrustConfiguration
+import io.github.apl_cornell.viaduct.syntax.LabelNode
 import io.github.apl_cornell.viaduct.syntax.Located
+import io.github.apl_cornell.viaduct.syntax.ObjectTypeNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.AtomicExpressionNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.BlockNode
+import io.github.apl_cornell.viaduct.syntax.intermediate.DeclarationNode
+import io.github.apl_cornell.viaduct.syntax.intermediate.DeclassificationNode
+import io.github.apl_cornell.viaduct.syntax.intermediate.EndorsementNode
+import io.github.apl_cornell.viaduct.syntax.intermediate.ExpressionNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.FunctionArgumentNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.FunctionCallNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.FunctionDeclarationNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.HostDeclarationNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.IfNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.InfiniteLoopNode
+import io.github.apl_cornell.viaduct.syntax.intermediate.LetNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.ParameterNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.ProgramNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.StatementNode
@@ -27,61 +46,10 @@ import io.github.apl_cornell.viaduct.syntax.intermediate.TopLevelDeclarationNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.deepCopy
 import io.github.apl_cornell.viaduct.util.FreshNameGenerator
 
+private typealias PrincipalComponent = Component<Principal>
+private typealias PolymorphicPrincipalComponent = Component<PolymorphicPrincipal>
+private typealias LabelConstant = FreeDistributiveLattice<PrincipalComponent>
 
-/**
- * A dictionary from (function name and a list of argument labels) to (specialized function name)
- */
-class CallingContext(
-    private val informationFlowAnalysis: InformationFlowAnalysis,
-    functionMap: Map<FunctionName, FunctionDeclarationNode>
-) {
-
-    private val hostTrustConfiguration: HostTrustConfiguration = informationFlowAnalysis.trustConfiguration
-
-    // fresh name generator
-    private val nameGenerator = FreshNameGenerator(functionMap.keys.map { f -> f.name }.toSet())
-
-    // internal storage of the function mapping
-    private val context: MutableMap<FunctionName, MutableList<Pair<List<Label>, FunctionName>>> =
-        mutableMapOf()
-
-    /**
-     * Given a [FunctionCallNode], return a specialized [FunctionName] this callsite refers to
-     * Callsites with the same function Names AND the same argument label signatures
-     * call the same specialized function.
-     */
-    fun specializedName(functionCallNode: FunctionCallNode): Pair<FunctionName, Boolean> {
-        // name of the function being specialized
-        val name: FunctionName = functionCallNode.name.value
-        // label arguments of the current callsite
-        val argumentLabels = functionCallArgumentLabels(functionCallNode)
-        return if (name in context) {
-            // the case where the function is already specialized before
-            // look for a specialized function that has the same signature
-            val targetFunction = context[name]?.find {
-                assert(it.first.size == argumentLabels.size)
-                it.first.zip(argumentLabels).all { (x, y) -> hostTrustConfiguration.equals(x, y) }
-            }
-            if (targetFunction != null) {
-                // return the specialized function name right away if found
-                (targetFunction.second to true)
-            } else {
-                // if none of the function has the same signature, create new name and put it in list
-                val newFunctionName = FunctionName(nameGenerator.getFreshName(name.name))
-                context[name]?.add((argumentLabels to newFunctionName))
-                (newFunctionName to false)
-            }
-        } else {
-            // the case where function name have not been specialized
-            val newFunctionName = FunctionName(nameGenerator.getFreshName(name.name))
-            context[name] = mutableListOf((argumentLabels to newFunctionName))
-            (newFunctionName to false)
-        }
-    }
-
-    fun functionCallArgumentLabels(functionCallNode: FunctionCallNode): List<Label> =
-        functionCallNode.arguments.map { informationFlowAnalysis.label(it) }
-}
 
 /** Returns an AST where every call site is specialized into new functions as much as possible.
  *  This allows for the most liberal protocol selection possible, at the cost of redundancy.
@@ -116,59 +84,175 @@ fun ProgramNode.specialize(): ProgramNode {
 private class Specializer(
     program: ProgramNode
 ) {
+    // map from old function name to old function declaration node
+    private val functionMap: Map<FunctionName, FunctionDeclarationNode> = program.functionMap
 
-    val functionMap: Map<FunctionName, FunctionDeclarationNode> = program.functionMap
+    // old main program
+    private val mainProgram: BlockNode = program.main.body
 
-    val mainProgram: BlockNode = program.main.body
+    private val informationFlowAnalysis = InformationFlowAnalysis.get(program)
 
-    val informationFlowAnalysis = InformationFlowAnalysis.get(program)
+    // worklist identified by new functions to be specialized
+    private val worklist: MutableList<FunctionName> = mutableListOf()
 
-    val callingContext = CallingContext(informationFlowAnalysis, functionMap)
+    // fresh name generator
+    private val nameGenerator = FreshNameGenerator(functionMap.keys.map { f -> f.name }.toSet())
 
-    val worklist: MutableList<FunctionCallNode> = mutableListOf()
+    private val context: MutableMap<FunctionName, MutableList<Pair<List<Label>, FunctionName>>> =
+        mutableMapOf()
 
-    private fun monomorphizeFunction(
-        functionDeclarationNode: FunctionDeclarationNode,
-        newFunctionName: FunctionName,
-        argumentLabels: List<Label>
-    ) {
-        // function parameters as LabelExpressions
-        val functionParameters = functionDeclarationNode.parameters.map {
-            it.objectType.labelArguments!!.first().value
-        }
-        assert(argumentLabels.size == functionParameters.size)
-        // first of each pair is LabelExpression of parameter, second of each is Label of argument
-        val parametersToArguments = functionParameters
-            // zip parameters with arguments
-            .zip(argumentLabels)
-            // filter polymorphic arguments (LabelParameters)
-            .filter { it.first is LabelParameter }
-            // get PolymorphicPrincipals from LabelParameters
-            .map { ((PolymorphicPrincipal((it.first as LabelParameter).name) as Principal) to it.second) }
-            // break up LabelParameters into Components
-            .flatMap {
-                listOf(
-                    (ConfidentialityComponent(it.first) to it.second.confidentialityComponent),
-                    (IntegrityComponent(it.first) to it.second.integrityComponent)
+    // map from new function to old function name
+    private val reverseContext: MutableMap<FunctionName, Pair<FunctionName, List<Label>>> = mutableMapOf()
+
+    /**
+     * Given a map that maps element to expressions, rewrite by substitution.
+     */
+    private fun LabelConstant.rewrite(rewrites: Map<PolymorphicPrincipalComponent, LabelConstant>): LabelConstant =
+        joinOfMeets.fold(FreeDistributiveLattice.bounds<PrincipalComponent>().bottom) { accOut, meet ->
+            accOut.join(meet.fold(FreeDistributiveLattice.bounds<PrincipalComponent>().top) { accIn, e ->
+                accIn.meet(
+                    when (e) {
+                        is IntegrityComponent -> {
+                            when (e.principal) {
+                                is HostPrincipal -> FreeDistributiveLattice(e)
+                                is PolymorphicPrincipal -> rewrites[e as PolymorphicPrincipalComponent]!!
+                            }
+                        }
+
+                        is ConfidentialityComponent -> {
+                            when (e.principal) {
+                                is HostPrincipal -> FreeDistributiveLattice(e)
+                                is PolymorphicPrincipal -> rewrites[e as PolymorphicPrincipalComponent]!!
+                            }
+                        }
+                    }
                 )
+            })
+        }
+
+    /**
+     * Given a label with polymorphic label and a rewrite map, return a label without polymorphic labels
+     */
+    private fun Label.rewrite(rewrites: Map<PolymorphicPrincipalComponent, LabelConstant>): Label =
+        Label(confidentialityComponent.rewrite(rewrites), this.integrityComponent.rewrite(rewrites))
+
+
+    /**
+     * Rewrite a PrincipalComponent
+     */
+    private fun PrincipalComponent.toLabelExpression(): LabelExpression =
+        when (this) {
+            is IntegrityComponent -> {
+                when (principal) {
+                    is HostPrincipal -> LabelIntegrity(LabelLiteral(principal.host))
+                    is PolymorphicPrincipal -> TODO()
+                }
             }
-            // make it a map
-            .toMap()
 
-        informationFlowAnalysis.monomorphize(
-            newFunctionName,
-            parametersToArguments
+            is ConfidentialityComponent -> {
+                when (principal) {
+                    is HostPrincipal -> LabelConfidentiality(LabelLiteral(principal.host))
+                    is PolymorphicPrincipal -> TODO()
+                }
+            }
+        }
+
+    private fun LabelExpression.rewrite(rewrites: Map<PolymorphicPrincipalComponent, LabelConstant>): LabelExpression =
+        when (this) {
+            is LabelParameter ->
+                LabelMeet(
+                    LabelConfidentiality(rewrites[ConfidentialityComponent(PolymorphicPrincipal(this.name))]!!
+                        .joinOfMeets.fold(LabelBottom as LabelExpression) { accOut, meet ->
+                            LabelJoin(accOut, meet.fold(LabelTop as LabelExpression) { accIn, e ->
+                                LabelMeet(accIn, e.toLabelExpression())
+                            })
+                        }),
+                    LabelIntegrity(rewrites[IntegrityComponent(PolymorphicPrincipal(this.name))]!!
+                        .joinOfMeets.fold(LabelBottom as LabelExpression) { accOut, meet ->
+                            LabelJoin(accOut, meet.fold(LabelTop as LabelExpression) { accIn, e ->
+                                LabelMeet(accIn, e.toLabelExpression())
+                            })
+                        })
+                )
+
+            is LabelAnd -> LabelAnd(lhs.rewrite(rewrites), rhs.rewrite(rewrites))
+            is LabelOr -> LabelOr(lhs.rewrite(rewrites), rhs.rewrite(rewrites))
+            is LabelJoin -> LabelJoin(lhs.rewrite(rewrites), rhs.rewrite(rewrites))
+            is LabelMeet -> LabelMeet(lhs.rewrite(rewrites), rhs.rewrite(rewrites))
+            is LabelConfidentiality -> LabelConfidentiality(value.rewrite(rewrites))
+            is LabelIntegrity -> LabelIntegrity(value.rewrite(rewrites))
+            else -> this
+        }
+
+    private fun LabelNode.specialize(rewrites: Map<PolymorphicPrincipalComponent, LabelConstant>): LabelNode =
+        LabelNode(value.rewrite(rewrites), sourceLocation)
+
+    private fun ObjectTypeNode.specialize(rewrites: Map<PolymorphicPrincipalComponent, LabelConstant>): ObjectTypeNode =
+        ObjectTypeNode(
+            className.copy(),
+            Arguments(
+                typeArguments.map { it.copy() },
+                typeArguments.sourceLocation
+            ),
+            Arguments(listOf(labelArguments?.first()!!.specialize(rewrites)), labelArguments.sourceLocation)
         )
-    }
 
 
-    fun StatementNode.specializeStatement(): StatementNode =
+    private fun ExpressionNode.specialize(rewrites: Map<PolymorphicPrincipalComponent, LabelConstant>): ExpressionNode =
+        when (this) {
+            is DeclassificationNode ->
+                DeclassificationNode(
+                    expression.specialize(rewrites) as AtomicExpressionNode,
+                    fromLabel?.specialize(rewrites),
+                    toLabel.specialize(rewrites),
+                    sourceLocation
+                )
+
+            is EndorsementNode ->
+                EndorsementNode(
+                    expression.specialize(rewrites) as AtomicExpressionNode,
+                    fromLabel.specialize(rewrites),
+                    toLabel?.specialize(rewrites),
+                    sourceLocation
+                )
+
+            else -> this.deepCopy() as ExpressionNode
+        }
+
+    private fun StatementNode.specialize(rewrites: Map<PolymorphicPrincipalComponent, LabelConstant>): StatementNode =
         when (this) {
             is FunctionCallNode -> {
-                // get name
-                val (specializedName, isNew) = callingContext.specializedName(this)
-                // add callsite to worklist if new
-                if (isNew) worklist.add(this)
+                // name of the function being specialized
+                val name: FunctionName = name.value
+                // label arguments of the current callsite
+                val argumentLabels = arguments.map { informationFlowAnalysis.label(it).rewrite(rewrites) }
+                val specializedName = if (name in context) {
+                    // the case where the function is already specialized before
+                    // look for a specialized function that has the same signature
+                    val targetFunction = context[name]?.find {
+                        assert(it.first.size == argumentLabels.size)
+                        it.first.zip(argumentLabels).all { (x, y) ->
+                            informationFlowAnalysis.trustConfiguration.equals(x, y)
+                        }
+                    }
+                    if (targetFunction != null) {
+                        worklist.add(targetFunction.second)
+                        // return the specialized function name right away if found
+                        targetFunction.second
+                    } else {
+                        // if none of the function has the same signature, create new name and put it in list
+                        val newFunctionName = FunctionName(nameGenerator.getFreshName(name.name))
+                        context[name]?.add((argumentLabels to newFunctionName))
+                        reverseContext[newFunctionName] = (name to argumentLabels)
+                        newFunctionName
+                    }
+                } else {
+                    // the case where function name have not been specialized
+                    val newFunctionName = FunctionName(nameGenerator.getFreshName(name.name))
+                    context[name] = mutableListOf((argumentLabels to newFunctionName))
+                    reverseContext[newFunctionName] = (name to argumentLabels)
+                    newFunctionName
+                }
                 // reconstruct callsite with new name
                 FunctionCallNode(
                     Located(specializedName, this.name.sourceLocation),
@@ -183,15 +267,15 @@ private class Specializer(
             is IfNode -> {
                 IfNode(
                     guard.deepCopy() as AtomicExpressionNode,
-                    thenBranch.specializeStatement() as BlockNode,
-                    elseBranch.specializeStatement() as BlockNode,
+                    thenBranch.specialize(rewrites) as BlockNode,
+                    elseBranch.specialize(rewrites) as BlockNode,
                     sourceLocation
                 )
             }
 
             is InfiniteLoopNode -> {
                 InfiniteLoopNode(
-                    body.specializeStatement() as BlockNode,
+                    body.specialize(rewrites) as BlockNode,
                     jumpLabel,
                     sourceLocation
                 )
@@ -199,48 +283,99 @@ private class Specializer(
 
             is BlockNode -> {
                 BlockNode(
-                    statements.map { it.specializeStatement() },
+                    statements.map { it.specialize(rewrites) },
                     sourceLocation
                 )
             }
 
+            is DeclarationNode ->
+                DeclarationNode(
+                    name,
+                    objectType.specialize(rewrites),
+                    Arguments(
+                        arguments.map { it.deepCopy() as AtomicExpressionNode },
+                        arguments.sourceLocation
+                    ),
+                    protocol,
+                    sourceLocation
+                )
+
+            is LetNode ->
+                LetNode(
+                    name,
+                    value.specialize(rewrites),
+                    protocol,
+                    sourceLocation
+                )
+
             else -> deepCopy() as StatementNode
         }
 
-    private fun FunctionDeclarationNode.specialize(args : List<Label>, newName : FunctionName) : FunctionDeclarationNode
-    = TODO()
+
+    private fun FunctionDeclarationNode.specialize(
+        rewrites: Map<PolymorphicPrincipalComponent, LabelConstant>,
+        newName: FunctionName
+
+    ): FunctionDeclarationNode =
+        FunctionDeclarationNode(
+            Located(newName, name.sourceLocation),
+            Arguments(labelParameters.sourceLocation),
+            Arguments(
+                parameters.map {
+                    ParameterNode(
+                        it.name.copy(),
+                        it.parameterDirection,
+                        it.objectType.specialize(rewrites),
+                        it.protocol,
+                        it.sourceLocation
+                    )
+                },
+                parameters.sourceLocation
+            ),
+            Arguments(labelConstraints.sourceLocation),
+            pcLabel?.specialize(rewrites),
+            body.specialize(rewrites) as BlockNode,
+            sourceLocation
+        )
 
     /** Specialize by processing call site in the worklist. */
     fun specialize(): Pair<BlockNode, List<FunctionDeclarationNode>> {
         val newFunctions = mutableListOf<FunctionDeclarationNode>()
-        val newMain = mainProgram.specializeStatement() as BlockNode
+        val newMain = mainProgram.specialize(mapOf()) as BlockNode
 
         while (worklist.isNotEmpty()) {
             // pick an unspecialized callsite
-            val callsite = worklist.removeFirst()
-            // find newName of the function
-            val (newName, isNew) = callingContext.specializedName(callsite)
-            val argumentLabels = callingContext.functionCallArgumentLabels(callsite)
-            assert(!isNew)
+            val newName = worklist.removeFirst()
+            val (oldName, argumentLabels) = reverseContext.getOrElse(newName) {
+                assert(false)
+                (" " to mutableListOf())
+            }
             // find the unspecialized function declaration
-            val function = functionMap[callsite.name.value]!!
-            // monomorphize the function
-            monomorphizeFunction(function, newName, argumentLabels)
+            val oldFunction = functionMap[oldName]!!
+            // create rewrite map for from PrincipalComponent to Label
+            val rewriteMap = oldFunction.parameters
+                // function parameters as LabelExpressions
+                .map {
+                    it.objectType.labelArguments!!.first().value
+                }
+                // zip parameters with arguments
+                .zip(argumentLabels)
+                // filter polymorphic arguments (LabelParameters)
+                .filter { it.first is LabelParameter }
+                // get PolymorphicPrincipals from LabelParameters
+                .map { (PolymorphicPrincipal((it.first as LabelParameter).name) to it.second) }
+                // break into components
+                .flatMap {
+                    listOf(
+                        (ConfidentialityComponent(it.first) to it.second.confidentialityComponent),
+                        (IntegrityComponent(it.first) to it.second.integrityComponent)
+                    )
+                }
+                // make it a map
+                .toMap()
             // then specialize
-            newFunctions.add(
-                FunctionDeclarationNode(
-                    Located(newName, function.name.sourceLocation),
-                    function.labelParameters,
-                    Arguments(
-                        function.parameters.map { it.deepCopy() as ParameterNode },
-                        function.parameters.sourceLocation
-                    ),
-                    function.labelConstraints,
-                    function.pcLabel,
-                    function.body.specializeStatement() as BlockNode,
-                    function.sourceLocation
-                )
-            )
+            // TODO: Want to check label parameters match rewrite keys
+            newFunctions.add(oldFunction.specialize(rewriteMap, newName))
         }
 
         return Pair(newMain, newFunctions)

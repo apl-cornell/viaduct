@@ -1,8 +1,6 @@
-package io.github.apl_cornell.viaduct.syntax.surface
+package io.github.apl_cornell.viaduct.syntax
 
 import io.github.apl_cornell.viaduct.prettyprinting.PrettyPrintable
-import io.github.apl_cornell.viaduct.syntax.HasSourceLocation
-import io.github.apl_cornell.viaduct.syntax.SourceLocation
 import org.junit.jupiter.api.assertThrows
 import org.opentest4j.AssertionFailedError
 import kotlin.reflect.KVisibility
@@ -10,18 +8,8 @@ import kotlin.reflect.full.memberProperties
 import kotlin.reflect.jvm.javaField
 
 /** Asserts that [actual] equals [expected], but ignores [SourceLocation]s. */
-// TODO: extend this to also work with intermediate Nodes.
 internal fun assertStructurallyEquals(expected: HasSourceLocation, actual: HasSourceLocation) {
-    // Actual must be from a compatible class
-    if (!actual::class.isInstance(expected))
-        fail(expected, actual)
-
-    // Compare all public properties that are backed by a field
-    expected::class.memberProperties.forEach {
-        if (it.visibility == KVisibility.PUBLIC && it.javaField != null) {
-            assertEquals(it.getter.call(expected), it.getter.call(actual))
-        }
-    }
+    assertEquals(expected, actual)
 }
 
 /**
@@ -45,8 +33,18 @@ private fun assertEquals(expected: Any?, actual: Any?) {
             }
         }
 
-        expected is HasSourceLocation && actual is HasSourceLocation ->
-            assertStructurallyEquals(expected, actual)
+        expected is HasSourceLocation && actual is HasSourceLocation -> {
+            // Actual must be from a compatible class
+            if (!actual::class.isInstance(expected))
+                fail(expected, actual)
+
+            // Compare all public properties that are backed by a field
+            expected::class.memberProperties.forEach {
+                if (it.visibility == KVisibility.PUBLIC && it.javaField != null) {
+                    assertEquals(it.getter.call(expected), it.getter.call(actual))
+                }
+            }
+        }
 
         else ->
             if (expected != actual)

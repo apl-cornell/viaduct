@@ -1,9 +1,10 @@
-package io.github.apl_cornell.viaduct.syntax.surface
+package io.github.apl_cornell.viaduct.syntax
 
 import io.github.apl_cornell.viaduct.PositiveTestFileProvider
 import io.github.apl_cornell.viaduct.backends.DefaultCombinedBackend
 import io.github.apl_cornell.viaduct.parsing.SourceFile
 import io.github.apl_cornell.viaduct.parsing.parse
+import io.github.apl_cornell.viaduct.syntax.surface.ProgramNode
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ArgumentsSource

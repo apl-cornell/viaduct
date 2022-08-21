@@ -28,7 +28,7 @@ import java.util.LinkedList
  */
 fun ProgramNode.specialize(): ProgramNode {
     val main = this.main
-    val (newMainBlock, newFunctions) = Specializer(this.functionMap, main.body).specialize()
+    val (newMainBlock, newFunctions) = Specializer(this.functions.associateBy { it.name.value }, main.body).specialize()
 
     val newDeclarations = mutableListOf<TopLevelDeclarationNode>()
     newDeclarations.addAll(

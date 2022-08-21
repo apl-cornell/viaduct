@@ -56,7 +56,8 @@ private fun fail(expected: Any?, actual: Any?) {
     org.junit.jupiter.api.fail {
         "Actual AST does not match the expected one." +
             "\nExpected: ${expected.print()}" +
-            "\nActual: ${actual.print()}"
+            "\nActual: ${actual.print()}" +
+            "\nType: ${expected?.javaClass}"
     }
 }
 

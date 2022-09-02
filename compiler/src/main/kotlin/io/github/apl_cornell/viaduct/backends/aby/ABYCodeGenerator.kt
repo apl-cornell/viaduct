@@ -171,10 +171,6 @@ class ABYCodeGenerator(
                             protocolToAbyPartyCircuit(sourceProtocol, SharingType.S_BOOL),
                             kotlinName
                         )
-                    // For compilation
-                    else -> {
-                        CodeBlock.of("")
-                    }
                 }
             }
 
@@ -183,10 +179,6 @@ class ABYCodeGenerator(
                     is YaoABY -> CodeBlock.of(".putB2YGate(%L)", kotlinName)
                     is BoolABY -> CodeBlock.of("")
                     is ArithABY -> CodeBlock.of(".putB2AGate(%L)", kotlinName)
-                    // For compilation
-                    else -> {
-                        CodeBlock.of("")
-                    }
                 }
             }
 
@@ -201,17 +193,7 @@ class ABYCodeGenerator(
                         )
 
                     is ArithABY -> CodeBlock.of("")
-
-                    // For compilation
-                    else -> {
-                        CodeBlock.of("")
-                    }
                 }
-            }
-
-            // For compilation
-            else -> {
-                CodeBlock.of("")
             }
         }
     }
@@ -221,8 +203,6 @@ class ABYCodeGenerator(
             is ArithABY -> SharingType.S_ARITH
             is BoolABY -> SharingType.S_BOOL
             is YaoABY -> SharingType.S_YAO
-            // For compilation
-            else -> SharingType.S_SPLUT
         }
 
     private fun protocolToAbyPartyCircuit(
@@ -444,7 +424,7 @@ class ABYCodeGenerator(
                     args.last(),
                     args.first(),
 
-                    )
+                )
 
             else -> throw UnsupportedOperationException("Unknown operator $op.")
         }

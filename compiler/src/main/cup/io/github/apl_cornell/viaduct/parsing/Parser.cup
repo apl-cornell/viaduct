@@ -373,7 +373,7 @@ nonempty_polymorphic_label_param_list ::=
 
 label_param ::=
   CAP_IDENT:label {:
-    RESULT = new Located(new LabelParameter(new LabelVariable(label)), location(labelleft, labelright));
+    RESULT = new Located(new LabelVariable(label), location(labelleft, labelright));
   :}
   ;
 

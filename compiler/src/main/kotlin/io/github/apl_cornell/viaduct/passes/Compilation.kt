@@ -65,8 +65,10 @@ fun SourceFile.compile(
     if (saveInferredLabels != null) {
         val ifcAnalysis = InformationFlowAnalysis.get(program)
         val labelMetadata: Metadata =
-            (program.descendantsIsInstance<LetNode>().map { it to ifcAnalysis.label(it) } +
-                program.descendantsIsInstance<DeclarationNode>().map { it to ifcAnalysis.label(it) }).toMap()
+            (
+                program.descendantsIsInstance<LetNode>().map { it to ifcAnalysis.label(it) } +
+                    program.descendantsIsInstance<DeclarationNode>().map { it to ifcAnalysis.label(it) }
+                ).toMap()
         saveInferredLabels.dumpProgramMetadata(program, labelMetadata)
     }
 

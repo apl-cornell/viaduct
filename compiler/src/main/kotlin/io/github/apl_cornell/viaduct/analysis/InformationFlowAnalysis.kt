@@ -433,8 +433,10 @@ class InformationFlowAnalysis private constructor(
                             val parameter = nameAnalysis.parameter(it)
                             // parameters are interpreted as label variables, literals are still literals
                             val parameterLabel: LabelTerm =
-                                when (val parameterLabelExpression =
-                                    parameter.objectType.labelArguments!!.first().value) {
+                                when (
+                                    val parameterLabelExpression =
+                                        parameter.objectType.labelArguments!!.first().value
+                                ) {
                                     is LabelLiteral -> {
                                         term(parameterLabelExpression.interpret())
                                     }
@@ -551,12 +553,19 @@ class InformationFlowAnalysis private constructor(
 
     private val Node.delegationContext: DelegationContext
         get() = trustConfiguration.congruence +
-            FreeDistributiveLatticeCongruence(nameAnalysis.enclosingFunction(this)
-                .labelConstraints.flatMap { it.congruences() })
+            FreeDistributiveLatticeCongruence(
+                nameAnalysis.enclosingFunction(this)
+                    .labelConstraints.flatMap { it.congruences() }
+            )
 
     /** Returns the inferred security label of the [Variable] defined by [node]. */
     fun label(node: VariableDeclarationNode): Label =
         nameAnalysis.enclosingFunction(node as Node).solution.evaluate(node.labelTerm)
+
+    /** Returns the label of a label parameter of a function being called */
+    fun label(functionCall: FunctionCallNode, labelParameter: LabelVariableName): Label =
+        nameAnalysis.enclosingFunction(functionCall)
+            .solution.evaluate(term(LabelVariable.Data.PolymorphicVariable(labelParameter, functionCall)))
 
     /** Returns the inferred security label of function arguments. */
     fun label(node: FunctionArgumentNode): Label {

@@ -172,15 +172,18 @@ private class FunctionElaborator(val nameGenerator: FreshNameGenerator) {
             if (functionDecl.labelConstraints == null) {
                 Arguments(listOf(), functionDecl.name.sourceLocation)
             } else {
-                Arguments(functionDecl.labelConstraints.map {
-                    IDelegationDeclarationNode(
-                        it.node1,
-                        it.node2,
-                        it.delegationKind,
-                        it.delegationProjection,
-                        it.sourceLocation
-                    )
-                }, functionDecl.name.sourceLocation)
+                Arguments(
+                    functionDecl.labelConstraints.map {
+                        IDelegationDeclarationNode(
+                            it.node1,
+                            it.node2,
+                            it.delegationKind,
+                            it.delegationProjection,
+                            it.sourceLocation
+                        )
+                    },
+                    functionDecl.name.sourceLocation
+                )
             }
 
         return IFunctionDeclarationNode(

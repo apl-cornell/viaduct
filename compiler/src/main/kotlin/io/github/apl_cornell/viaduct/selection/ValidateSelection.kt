@@ -42,7 +42,7 @@ fun validateProtocolAssignment(
                 informationFlowAnalysis.label(node)
             )
         ) {
-            //if (!protocol.authority().actsFor(informationFlowAnalysis.label(node))) {
+            // if (!protocol.authority().actsFor(informationFlowAnalysis.label(node))) {
             throw InvalidProtocolAssignmentException(node, protocol)
         }
     }

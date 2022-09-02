@@ -1,0 +1,38 @@
+host alice : {A}
+host bob   : {B}
+
+fun main() {
+    var a : int = input int from alice;
+    var b : int = input int from bob;
+    f0(a, b, val win0);
+    output win0 to alice;
+    output win0 to bob;
+
+    f1(a, b, val win1);
+    output win1 to alice;
+    output win1 to bob;
+}
+
+fun f0(c: int{A}, d: int{B}, ret: out bool{A ⊓ B}) {
+    val a : int = endorse c to {A & B<-} from {A};
+    val b : int = endorse d to {B & A<-} from {B};
+    val d_b : int = declassify b from {B & A<-} to {A ⊓ B};
+    val equal : bool   = d_b == a;
+    val e_equal : bool = endorse equal to {A & B<-} from {A};
+    val d_equal : bool = declassify e_equal from {A & B<-} to {A ⊓ B};
+    out ret = d_equal;
+}
+
+fun f1(c: int{A}, d: int{B}, ret: out bool{A ⊓ B}) {
+    val a : int = endorse c to {A & B<-} from {A};
+    val b : int = endorse d to {B & A<-} from {B};
+    val d_b : int = declassify b from {B & A<-} to {A ⊓ B};
+    val equal : bool = d_b == a;
+    g(equal, out ret);
+}
+
+fun g(equal: bool, ret: out bool{A ⊓ B}){
+    val e_equal : bool = endorse equal to {A & B<-} from {A};
+    val d_equal : bool = declassify e_equal from {A & B<-} to {A ⊓ B};
+    out ret = d_equal;
+}

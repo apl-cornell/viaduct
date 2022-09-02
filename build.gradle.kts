@@ -1,12 +1,12 @@
 plugins {
-    kotlin("multiplatform") version "1.7.0" apply false
-    kotlin("plugin.serialization") version "1.7.0" apply false
+    kotlin("multiplatform") version "1.7.10" apply false
+    kotlin("plugin.serialization") version "1.7.10" apply false
 
     // Versioning
     id("com.palantir.git-version") version "0.15.0"
 
     // Documentation
-    id("org.jetbrains.dokka") version "1.7.0"
+    id("org.jetbrains.dokka") version "1.7.10"
 
     // Style checking
     id("com.diffplug.spotless") version "6.7.2"
@@ -72,8 +72,8 @@ subprojects {
         dependencies {
             // Logging
             "implementation"("io.github.microutils:kotlin-logging:2.1.23")
-            "testImplementation"("org.apache.logging.log4j:log4j-core:2.17.2")
-            "testImplementation"("org.apache.logging.log4j:log4j-slf4j-impl:2.17.2")
+            "testImplementation"("org.apache.logging.log4j:log4j-core:2.18.0")
+            "testImplementation"("org.apache.logging.log4j:log4j-slf4j-impl:2.18.0")
         }
 
         /** Testing */

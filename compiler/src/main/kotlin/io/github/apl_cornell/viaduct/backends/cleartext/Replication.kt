@@ -15,7 +15,7 @@ import io.github.apl_cornell.viaduct.syntax.values.Value
  * Replication increases integrity, but doing it in the clear sacrifices confidentiality.
  * Additionally, availability is lost if _any_ participating host aborts.
  */
-class Replication(hosts: Set<Host>) : Plaintext() {
+class Replication(hosts: Set<Host>) : Cleartext() {
     companion object {
         val protocolName = ProtocolName("Replication")
     }

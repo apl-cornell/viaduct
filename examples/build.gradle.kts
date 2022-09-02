@@ -1,5 +1,5 @@
 plugins {
-    kotlin("jvm") version "1.7.0"
+    kotlin("jvm") version "1.7.10"
     id("io.github.apl-cornell.viaduct")
     application
 
@@ -26,12 +26,12 @@ dependencies {
 
     // Logging
     implementation("io.github.microutils:kotlin-logging:2.1.23")
-    implementation("org.apache.logging.log4j:log4j-core:2.17.2")
-    implementation("org.apache.logging.log4j:log4j-slf4j-impl:2.17.2")
+    implementation("org.apache.logging.log4j:log4j-core:2.18.0")
+    implementation("org.apache.logging.log4j:log4j-slf4j-impl:2.18.0")
 
     // Testing
     testImplementation("${project.group}:test-utilities")
-    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.3")
+    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.4")
 }
 
 application {

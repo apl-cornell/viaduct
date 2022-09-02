@@ -1,28 +1,32 @@
 package io.github.apl_cornell.viaduct.codegeneration
 
+import com.squareup.kotlinpoet.ARRAY
 import com.squareup.kotlinpoet.CodeBlock
+import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import com.squareup.kotlinpoet.PropertySpec
+import com.squareup.kotlinpoet.TypeName
+import com.squareup.kotlinpoet.asTypeName
 import io.github.apl_cornell.viaduct.analysis.NameAnalysis
 import io.github.apl_cornell.viaduct.analysis.TypeAnalysis
+import io.github.apl_cornell.viaduct.runtime.Boxed
+import io.github.apl_cornell.viaduct.syntax.Arguments
+import io.github.apl_cornell.viaduct.syntax.ObjectTypeNode
 import io.github.apl_cornell.viaduct.syntax.Protocol
 import io.github.apl_cornell.viaduct.syntax.datatypes.Get
 import io.github.apl_cornell.viaduct.syntax.datatypes.ImmutableCell
 import io.github.apl_cornell.viaduct.syntax.datatypes.MutableCell
 import io.github.apl_cornell.viaduct.syntax.datatypes.Vector
 import io.github.apl_cornell.viaduct.syntax.intermediate.AtomicExpressionNode
-import io.github.apl_cornell.viaduct.syntax.intermediate.DeclarationNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.DowngradeNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.ExpressionNode
-import io.github.apl_cornell.viaduct.syntax.intermediate.LetNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.LiteralNode
-import io.github.apl_cornell.viaduct.syntax.intermediate.OutParameterInitializationNode
-import io.github.apl_cornell.viaduct.syntax.intermediate.OutputNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.QueryNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.ReadNode
-import io.github.apl_cornell.viaduct.syntax.intermediate.SimpleStatementNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.UpdateNode
 import io.github.apl_cornell.viaduct.syntax.types.ImmutableCellType
 import io.github.apl_cornell.viaduct.syntax.types.MutableCellType
+import io.github.apl_cornell.viaduct.syntax.types.ObjectType
+import io.github.apl_cornell.viaduct.syntax.types.ValueType
 import io.github.apl_cornell.viaduct.syntax.types.VectorType
 import io.github.apl_cornell.viaduct.syntax.values.Value
 
@@ -30,27 +34,44 @@ abstract class AbstractCodeGenerator(val context: CodeGeneratorContext) : CodeGe
     private val nameAnalysis = NameAnalysis.get(context.program)
     private val typeAnalysis = TypeAnalysis.get(context.program)
 
-    override fun guard(protocol: Protocol, expr: AtomicExpressionNode): CodeBlock =
-        throw UnsupportedOperatorException(protocol, expr)
+    override fun kotlinType(protocol: Protocol, sourceType: ValueType): TypeName = typeTranslator(sourceType)
 
-    final override fun simpleStatement(protocol: Protocol, stmt: SimpleStatementNode): CodeBlock {
-        return when (stmt) {
-            is LetNode -> let(protocol, stmt)
-
-            is DeclarationNode -> declaration(protocol, stmt)
-
-            is UpdateNode -> update(protocol, stmt)
-
-            is OutParameterInitializationNode -> outParameterInitialization()
-
-            is OutputNode -> output(protocol, stmt)
+    override fun kotlinType(protocol: Protocol, sourceType: ObjectType): TypeName {
+        return when (sourceType) {
+            is ImmutableCellType -> {
+                kotlinType(protocol, sourceType.elementType)
+            }
+            is MutableCellType -> {
+                (Boxed::class).asTypeName().parameterizedBy(kotlinType(protocol, sourceType.elementType))
+            }
+            is VectorType -> {
+                ARRAY.parameterizedBy(kotlinType(protocol, sourceType.elementType))
+            }
+            else -> {
+                throw IllegalArgumentException(
+                    "Cannot convert ${
+                    sourceType.toDocument().print()
+                    } to Kotlin type."
+                )
+            }
         }
     }
+
+    override fun guard(protocol: Protocol, expr: AtomicExpressionNode): CodeBlock =
+        throw UnsupportedOperatorException(protocol, expr)
 
     fun value(value: Value): CodeBlock =
         CodeBlock.of("%L", value)
 
-    open fun exp(protocol: Protocol, expr: ExpressionNode): CodeBlock =
+    fun cleartextExp(protocol: Protocol, expr: AtomicExpressionNode): CodeBlock =
+        when (expr) {
+            is LiteralNode ->
+                value(expr.value)
+            is ReadNode ->
+                CodeBlock.of("%N", context.kotlinName(expr.temporary.value, protocol))
+        }
+
+    override fun exp(protocol: Protocol, expr: ExpressionNode): CodeBlock =
         when (expr) {
             is ReadNode ->
                 CodeBlock.of("%N", context.kotlinName(expr.temporary.value, protocol))
@@ -65,7 +86,7 @@ abstract class AbstractCodeGenerator(val context: CodeGeneratorContext) : CodeGe
 
                     is MutableCellType ->
                         when (expr.query.value) {
-                            is Get -> CodeBlock.of("%N", context.kotlinName(expr.variable.value))
+                            is Get -> CodeBlock.of("%N.get()", context.kotlinName(expr.variable.value))
                             else -> throw UnsupportedOperatorException(protocol, expr)
                         }
 
@@ -88,62 +109,45 @@ abstract class AbstractCodeGenerator(val context: CodeGeneratorContext) : CodeGe
             else -> throw UnsupportedOperatorException(protocol, expr)
         }
 
-    fun cleartextExp(protocol: Protocol, expr: AtomicExpressionNode): CodeBlock =
-        when (expr) {
-            is LiteralNode ->
-                value(expr.value)
-            is ReadNode ->
-                CodeBlock.of("%N", context.kotlinName(expr.temporary.value, protocol))
-        }
-
-    open fun let(protocol: Protocol, stmt: LetNode): CodeBlock =
-        CodeBlock.of(
-            "val %N = %L",
-            context.kotlinName(stmt.name.value, protocol),
-            exp(protocol, stmt.value)
-        )
-
-    fun declaration(protocol: Protocol, stmt: DeclarationNode): CodeBlock =
-        when (stmt.objectType.className.value) {
-            ImmutableCell -> CodeBlock.of(
-                "val %N = %L",
-                context.kotlinName(stmt.name.value),
-                exp(protocol, stmt.arguments.first())
+    override fun constructorCall(
+        protocol: Protocol,
+        objectType: ObjectTypeNode,
+        arguments: Arguments<AtomicExpressionNode>
+    ): CodeBlock =
+        when (objectType.className.value) {
+            ImmutableCell -> exp(
+                protocol, arguments.first()
             )
-
-            // TODO - change this (difference between viaduct, kotlin semantics)
             MutableCell -> CodeBlock.of(
-                "var %N = %L",
-                context.kotlinName(stmt.name.value),
-                exp(protocol, stmt.arguments.first())
+                "%T(%L)",
+                Boxed::class, exp(protocol, arguments.first())
             )
-
-            Vector -> {
-                CodeBlock.of(
-                    "val %N = %T(%L){ %L }",
-                    context.kotlinName(stmt.name.value),
-                    Array::class,
-                    cleartextExp(protocol, stmt.arguments.first()),
-                    exp(
-                        protocol,
-                        LiteralNode(
-                            stmt.objectType.typeArguments[0].value.defaultValue,
-                            stmt.objectType.typeArguments[0].sourceLocation
-                        )
+            Vector -> CodeBlock.of(
+                "%T(%L){ %L }",
+                Array::class,
+                cleartextExp(protocol, arguments.first()),
+                exp(
+                    protocol,
+                    LiteralNode(
+                        objectType.typeArguments[0].value.defaultValue,
+                        objectType.typeArguments[0].sourceLocation
                     )
                 )
-            }
-
-            else -> throw UnsupportedOperatorException(protocol, stmt)
+            )
+            else -> throw IllegalArgumentException(
+                "Protocol ${protocol.name} does not support object ${
+                objectType.toDocument().print()
+                }"
+            )
         }
 
-    open fun update(protocol: Protocol, stmt: UpdateNode): CodeBlock =
+    override fun update(protocol: Protocol, stmt: UpdateNode): CodeBlock =
         when (typeAnalysis.type(nameAnalysis.declaration(stmt))) {
             is MutableCellType ->
                 when (stmt.update.value) {
                     is io.github.apl_cornell.viaduct.syntax.datatypes.Set ->
                         CodeBlock.of(
-                            "%N = %L",
+                            "%N.set(%L)",
                             context.kotlinName(stmt.variable.value),
                             exp(protocol, stmt.arguments[0])
                         )
@@ -166,47 +170,6 @@ abstract class AbstractCodeGenerator(val context: CodeGeneratorContext) : CodeGe
 
             else -> throw UnsupportedOperatorException(protocol, stmt)
         }
-
-    private fun outParameterInitialization(
-/*        protocol: Protocol,
-        stmt: OutParameterInitializationNode*/
-    ): CodeBlock =
-        TODO()
-/*        when (val initializer = stmt.initializer) {
-            is OutParameterConstructorInitializerNode -> {
-                val outTmpString = context.newTemporary("outTmp")
-                CodeBlock.builder()
-                    .add(
-                        // declare object
-                        declarationHelper(
-                            outTmpString,
-                            initializer.className,
-                            initializer.arguments,
-                            value(initializer.typeArguments[0].value.defaultValue),
-                            protocol
-                        )
-                    )
-                    .add(
-                        // fill box with constructed object
-                        CodeBlock.of(
-                            "%N.set(%L)",
-                            context.kotlinName(stmt.name.value),
-                            outTmpString
-                        )
-                    )
-                    .build()
-            }
-            // fill box named [stmt.name.value.name] with [initializer.expression]
-            is OutParameterExpressionInitializerNode ->
-                CodeBlock.of(
-                    "%N.set(%L)",
-                    context.kotlinName(stmt.name.value),
-                    exp(protocol, initializer.expression)
-                )
-        }*/
-
-    open fun output(protocol: Protocol, stmt: OutputNode): CodeBlock =
-        throw UnsupportedOperatorException(protocol, stmt)
 
     override fun setup(protocol: Protocol): Iterable<PropertySpec> =
         listOf()

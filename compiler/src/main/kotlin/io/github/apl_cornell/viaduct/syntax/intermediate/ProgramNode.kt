@@ -24,17 +24,17 @@ private constructor(
         this(declarations.toPersistentList(), sourceLocation)
 
     // TODO: Should be moved to analysis.Declarations
-    val hostDeclarations: Iterable<HostDeclarationNode> =
-        declarations.filterIsInstance<HostDeclarationNode>()
+    val hostDeclarations: Iterable<HostDeclarationNode>
+        get() = declarations.filterIsInstance<HostDeclarationNode>()
 
     // TODO: Should be provided by HostTrustConfiguration
-    val hosts: Set<Host> = hostDeclarations.map { it.name.value }.toSet()
+    val hosts: Set<Host>
+        get() = hostDeclarations.map { it.name.value }.toSet()
 
     // TODO: Should be moved to analysis.Declarations
-    val functions: Iterable<FunctionDeclarationNode> =
-        declarations.filterIsInstance<FunctionDeclarationNode>()
+    val functions: Iterable<FunctionDeclarationNode>
+        get() = declarations.filterIsInstance<FunctionDeclarationNode>()
 
-    // TODO: Should be moved to analysis.NameAnalysis
     val functionMap: Map<FunctionName, FunctionDeclarationNode> =
         functions.associateBy { function -> function.name.value }
 

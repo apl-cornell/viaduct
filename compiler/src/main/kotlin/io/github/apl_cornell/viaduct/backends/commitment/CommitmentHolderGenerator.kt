@@ -3,7 +3,9 @@ package io.github.apl_cornell.viaduct.backends.commitment
 import com.squareup.kotlinpoet.CodeBlock
 import com.squareup.kotlinpoet.MemberName
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
+import com.squareup.kotlinpoet.TypeName
 import com.squareup.kotlinpoet.asClassName
+import com.squareup.kotlinpoet.asTypeName
 import io.github.apl_cornell.viaduct.analysis.TypeAnalysis
 import io.github.apl_cornell.viaduct.codegeneration.AbstractCodeGenerator
 import io.github.apl_cornell.viaduct.codegeneration.CodeGeneratorContext
@@ -18,12 +20,16 @@ import io.github.apl_cornell.viaduct.syntax.ProtocolProjection
 import io.github.apl_cornell.viaduct.syntax.intermediate.ExpressionNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.LetNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.LiteralNode
+import io.github.apl_cornell.viaduct.syntax.types.ValueType
 import io.github.apl_cornell.viaduct.backends.commitment.Commitment as CommitmentProtocol
 
 internal class CommitmentHolderGenerator(
     context: CodeGeneratorContext
 ) : AbstractCodeGenerator(context) {
     private val typeAnalysis: TypeAnalysis = TypeAnalysis.get(context.program)
+
+    override fun kotlinType(protocol: Protocol, sourceType: ValueType): TypeName =
+        (Commitment::class).asTypeName().parameterizedBy(typeTranslator(sourceType))
 
     override fun exp(protocol: Protocol, expr: ExpressionNode): CodeBlock =
         when (expr) {

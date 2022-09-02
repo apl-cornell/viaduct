@@ -1,7 +1,7 @@
 package io.github.apl_cornell.viaduct.parsing
 
-import io.github.apl_cornell.apl.prettyprinting.DefaultStyle
 import io.github.apl_cornell.viaduct.analysis.mainFunction
+import io.github.apl_cornell.viaduct.prettyprinting.DefaultStyle
 import io.github.apl_cornell.viaduct.syntax.HasSourceLocation
 import io.github.apl_cornell.viaduct.syntax.surface.FunctionDeclarationNode
 import io.github.apl_cornell.viaduct.syntax.surface.ProgramNode

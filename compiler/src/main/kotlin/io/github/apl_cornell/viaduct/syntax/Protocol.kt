@@ -1,10 +1,10 @@
 package io.github.apl_cornell.viaduct.syntax
 
-import io.github.apl_cornell.apl.prettyprinting.Document
-import io.github.apl_cornell.apl.prettyprinting.nested
-import io.github.apl_cornell.apl.prettyprinting.plus
-import io.github.apl_cornell.apl.prettyprinting.times
-import io.github.apl_cornell.apl.prettyprinting.tupled
+import io.github.apl_cornell.viaduct.prettyprinting.Document
+import io.github.apl_cornell.viaduct.prettyprinting.nested
+import io.github.apl_cornell.viaduct.prettyprinting.plus
+import io.github.apl_cornell.viaduct.prettyprinting.times
+import io.github.apl_cornell.viaduct.prettyprinting.tupled
 import io.github.apl_cornell.viaduct.security.Label
 import io.github.apl_cornell.viaduct.syntax.values.HostSetValue
 import io.github.apl_cornell.viaduct.syntax.values.HostValue

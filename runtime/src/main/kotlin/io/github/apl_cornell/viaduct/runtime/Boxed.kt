@@ -1,13 +1,13 @@
 package io.github.apl_cornell.viaduct.runtime
 
-abstract class Boxed {
-    abstract var temporary: Any
+/** Represents a mutable cell. */
+class Boxed<T>(private var value: T) {
 
-    fun set(update: Any) {
-        temporary = update
+    fun set(update: T) {
+        value = update
     }
 
-    fun get(): Any {
-        return temporary
+    fun get(): T {
+        return value
     }
 }

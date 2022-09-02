@@ -1,0 +1,55 @@
+host alice
+host bob
+
+/* Simple test */
+circuit fun <> f@Local(host = alice)(a: int[]@Local(host = alice), b: int[m, n]@Local(host = alice)) -> c: int[]@Local(host = alice) {
+    val tmp[] = a[] + b[0, 0]
+    return tmp[]
+}
+
+/* No returns reduce with multiple indexing parameters, literal on RHS */
+circuit fun <> g@Local(host = alice)() -> {
+    val fivetimesthree[] = reduce(::+, 0) { i < 3 -> 5 }
+    val again[] = reduce(::+, 0) { i < 3, j < 5 -> 1 }
+    return
+}
+
+/* Multiple indexing parameters in let statement. Returning arrays */
+circuit fun <m, n, p> multiply@Local(host = alice)(
+    a: int[m, n]@Local(host = alice),
+    b: int[n, p]@Local(host = alice)
+) → res: int[m, p]@Local(host = alice) {
+    val res[i < m, j < p] = reduce(::+, 0){ k < n -> a[i, k] * b[k, j] }
+    return res
+}
+
+/* Produces zero in O(n) time. */
+circuit fun <n> slowZero@Local(host = alice)() → zero: int[]@Local(host = alice) {
+    val a[i < n] = i
+    val b[i < n] = -1 * (n - i)
+    val line[i < n] = a[i] + b[i]
+    val res[] = reduce(::+, 0) { i < n -> line[i] }
+    return res[]
+}
+
+/* Multiple returns. N-dimensional lookup */
+circuit fun <> h@Local(host = alice)()
+ -> a:int[]@Local(host = alice),
+    b:int[]@Local(host = alice),
+    c:int[]@Local(host = alice) {
+    val arr[i < 10, j < 10] = i * 31 + j * 19
+    return arr[1, 4], arr[3, 2], arr[8, 9]
+}
+
+/* Just a return statement */
+circuit fun <> k@Local(host = alice)()
+ -> a:int[]@Local(host = alice),
+    b:int[]@Local(host = alice),
+    c:int[]@Local(host = alice) {
+    return 3, 0, 1
+}
+
+/* Empty */
+circuit fun <> empty@Local(host = alice)() -> {
+    return
+}

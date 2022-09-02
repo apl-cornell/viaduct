@@ -1,9 +1,9 @@
 package io.github.apl_cornell.viaduct.errors
 
-import io.github.apl_cornell.apl.prettyprinting.DEFAULT_LINE_WIDTH
-import io.github.apl_cornell.apl.prettyprinting.Document
-import io.github.apl_cornell.apl.prettyprinting.plus
 import io.github.apl_cornell.viaduct.parsing.parse
+import io.github.apl_cornell.viaduct.prettyprinting.DEFAULT_LINE_WIDTH
+import io.github.apl_cornell.viaduct.prettyprinting.Document
+import io.github.apl_cornell.viaduct.prettyprinting.plus
 import io.github.apl_cornell.viaduct.syntax.surface.ProgramNode
 import io.github.apl_cornell.viaduct.util.unicodeLineBreak
 import org.apache.commons.text.WordUtils

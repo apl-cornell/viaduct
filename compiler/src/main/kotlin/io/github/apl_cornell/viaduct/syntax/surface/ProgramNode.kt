@@ -1,9 +1,9 @@
 package io.github.apl_cornell.viaduct.syntax.surface
 
-import io.github.apl_cornell.apl.prettyprinting.Document
-import io.github.apl_cornell.apl.prettyprinting.concatenated
-import io.github.apl_cornell.apl.prettyprinting.plus
 import io.github.apl_cornell.viaduct.parsing.parse
+import io.github.apl_cornell.viaduct.prettyprinting.Document
+import io.github.apl_cornell.viaduct.prettyprinting.concatenated
+import io.github.apl_cornell.viaduct.prettyprinting.plus
 import io.github.apl_cornell.viaduct.syntax.SourceLocation
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.toPersistentList

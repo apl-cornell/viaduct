@@ -1,9 +1,9 @@
 package io.github.apl_cornell.viaduct.errors
 
-import io.github.apl_cornell.apl.prettyprinting.Document
-import io.github.apl_cornell.apl.prettyprinting.div
 import io.github.apl_cornell.viaduct.algebra.FreeDistributiveLattice
 import io.github.apl_cornell.viaduct.algebra.FreeDistributiveLatticeCongruence
+import io.github.apl_cornell.viaduct.prettyprinting.Document
+import io.github.apl_cornell.viaduct.prettyprinting.div
 import io.github.apl_cornell.viaduct.security.Component
 import io.github.apl_cornell.viaduct.security.Label
 import io.github.apl_cornell.viaduct.security.Principal

@@ -1,8 +1,8 @@
 package io.github.apl_cornell.viaduct.cli
 
-import io.github.apl_cornell.apl.prettyprinting.Document
-import io.github.apl_cornell.apl.prettyprinting.plus
 import io.github.apl_cornell.viaduct.errors.CompilationError
+import io.github.apl_cornell.viaduct.prettyprinting.Document
+import io.github.apl_cornell.viaduct.prettyprinting.plus
 import org.fusesource.jansi.AnsiConsole
 import java.io.IOException
 import kotlin.system.exitProcess

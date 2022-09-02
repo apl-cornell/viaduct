@@ -14,7 +14,7 @@ import io.github.apl_cornell.viaduct.syntax.values.Value
  *
  * This protocol has exactly the authority and the capabilities of the host it is tied to.
  */
-class Local(val host: Host) : Plaintext() {
+class Local(val host: Host) : Cleartext() {
     companion object {
         val protocolName = ProtocolName("Local")
     }

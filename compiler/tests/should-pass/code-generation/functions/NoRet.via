@@ -1,0 +1,14 @@
+host alice : {A}
+host bob   : {A}
+
+fun main() {
+    val a : int = input int from alice;
+    val b : int = input int from bob;
+    f(a, b);
+}
+
+fun f(a: int, b:int) {
+    val win: bool = a == b;
+    output win to alice;
+    output win to bob;
+}

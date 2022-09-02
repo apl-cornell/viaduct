@@ -29,7 +29,6 @@ import io.github.apl_cornell.viaduct.syntax.intermediate.InputNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.LetNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.LiteralNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.OperatorApplicationNode
-import io.github.apl_cornell.viaduct.syntax.intermediate.OutputNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.UpdateNode
 import io.github.apl_cornell.viaduct.syntax.operators.Maximum
 import io.github.apl_cornell.viaduct.syntax.operators.Minimum
@@ -96,9 +95,9 @@ class CleartextCodeGenerator(context: CodeGeneratorContext) : AbstractCodeGenera
                 when (stmt.update.value) {
                     is Modify ->
                         CodeBlock.of(
-                            "%N %L %L",
+                            "%1N.set(%1N.get() %2L %3L)",
                             context.kotlinName(stmt.variable.value),
-                            stmt.update.value.name,
+                            stmt.update.value.operator,
                             exp(protocol, stmt.arguments[0])
                         )
 
@@ -121,13 +120,6 @@ class CleartextCodeGenerator(context: CodeGeneratorContext) : AbstractCodeGenera
 
             else -> super.update(protocol, stmt)
         }
-
-    override fun output(protocol: Protocol, stmt: OutputNode): CodeBlock =
-        CodeBlock.of(
-            "runtime.output(%T(%L))",
-            typeAnalysis.type(stmt.message).valueClass,
-            exp(protocol, stmt.message)
-        )
 
     override fun send(
         sender: LetNode,
@@ -168,14 +160,14 @@ class CleartextCodeGenerator(context: CodeGeneratorContext) : AbstractCodeGenera
             val projection = ProtocolProjection(receiveProtocol, context.host)
             val cleartextInputs = events.getProjectionReceives(
                 projection,
-                Plaintext.INPUT
+                Cleartext.INPUT
             )
 
             val cleartextCommitmentInputs =
-                events.getProjectionReceives(projection, Plaintext.CLEARTEXT_COMMITMENT_INPUT)
+                events.getProjectionReceives(projection, Cleartext.CLEARTEXT_COMMITMENT_INPUT)
 
             val hashCommitmentInputs =
-                events.getProjectionReceives(projection, Plaintext.HASH_COMMITMENT_INPUT)
+                events.getProjectionReceives(projection, Cleartext.HASH_COMMITMENT_INPUT)
 
             when {
                 cleartextInputs.isNotEmpty() && cleartextCommitmentInputs.isEmpty() &&
@@ -196,8 +188,8 @@ class CleartextCodeGenerator(context: CodeGeneratorContext) : AbstractCodeGenera
                     val hostsToCheckWith: List<Host> =
                         events
                             .filter { event ->
-                                // remove events where receiving host is not receiving plaintext data
-                                event.recv.id == Plaintext.INPUT &&
+                                // remove events where receiving host is not receiving cleartext data
+                                event.recv.id == Cleartext.INPUT &&
 
                                     // remove events where a host is sending data to themselves
                                     event.send.host != event.recv.host &&

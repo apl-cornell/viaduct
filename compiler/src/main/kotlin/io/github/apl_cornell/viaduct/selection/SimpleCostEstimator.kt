@@ -464,9 +464,9 @@ class SimpleCostEstimator(
                     protocolComposer.communicate(source, destination)
                 }.filter { it.recv.id != Protocol.INTERNAL_INPUT || it.send.id != Protocol.INTERNAL_OUTPUT }
 
-            val plaintextMsgCost = remoteMessagingCost(events)
+            val cleartextMsgCost = remoteMessagingCost(events)
             val mpcExecCost = mpcExecutionCost(events)
-            val messageCost = plaintextMsgCost + mpcExecCost
+            val messageCost = cleartextMsgCost + mpcExecCost
 
             val abyShareConversionCost = abyShareConversionCost(events)
 

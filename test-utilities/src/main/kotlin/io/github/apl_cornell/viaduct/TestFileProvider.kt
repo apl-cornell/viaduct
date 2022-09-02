@@ -7,6 +7,12 @@ import java.io.File
 import java.util.stream.Stream
 import kotlin.streams.asStream
 
+/** Enumerates the paths of source files that use the circuit representation and should successfully compile. */
+class CircuitTestFileProvider(private val subfolder: String = "") : ArgumentsProvider {
+    override fun provideArguments(context: ExtensionContext?): Stream<out Arguments> =
+        testFilesAtPath("circuit/$subfolder").map { Arguments.of(it) }.asStream()
+}
+
 /** Enumerates the paths of source files that should successfully compile. */
 class PositiveTestFileProvider(private val subfolder: String = "") : ArgumentsProvider {
     override fun provideArguments(context: ExtensionContext?): Stream<out Arguments> =

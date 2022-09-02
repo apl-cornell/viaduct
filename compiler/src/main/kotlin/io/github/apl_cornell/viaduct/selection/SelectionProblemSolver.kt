@@ -1,5 +1,5 @@
 package io.github.apl_cornell.viaduct.selection
 
 interface SelectionProblemSolver {
-    fun solveSelectionProblem(problem: SelectionProblem): ProtocolAssignment?
+    fun solve(problem: SelectionProblem): ProtocolAssignment?
 }

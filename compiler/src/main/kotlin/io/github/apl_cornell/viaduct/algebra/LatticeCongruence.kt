@@ -37,6 +37,7 @@ class FreeDistributiveLatticeCongruence<A>(
         first.lessThanOrEqualTo(
             second,
             congruence.map { FreeDistributiveLattice.LessThanOrEqualTo(it.first, it.second) })
+    /*equals(first.meet(second), first)*/
 
     /**
      * Return a new congruence that has the congruence relation of this and other.

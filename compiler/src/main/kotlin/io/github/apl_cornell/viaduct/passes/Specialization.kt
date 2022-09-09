@@ -5,20 +5,8 @@ import io.github.apl_cornell.viaduct.analysis.InformationFlowAnalysis
 import io.github.apl_cornell.viaduct.analysis.main
 import io.github.apl_cornell.viaduct.security.Component
 import io.github.apl_cornell.viaduct.security.ConfidentialityComponent
-import io.github.apl_cornell.viaduct.security.HostPrincipal
 import io.github.apl_cornell.viaduct.security.IntegrityComponent
 import io.github.apl_cornell.viaduct.security.Label
-import io.github.apl_cornell.viaduct.security.LabelAnd
-import io.github.apl_cornell.viaduct.security.LabelBottom
-import io.github.apl_cornell.viaduct.security.LabelConfidentiality
-import io.github.apl_cornell.viaduct.security.LabelExpression
-import io.github.apl_cornell.viaduct.security.LabelIntegrity
-import io.github.apl_cornell.viaduct.security.LabelJoin
-import io.github.apl_cornell.viaduct.security.LabelLiteral
-import io.github.apl_cornell.viaduct.security.LabelMeet
-import io.github.apl_cornell.viaduct.security.LabelOr
-import io.github.apl_cornell.viaduct.security.LabelParameter
-import io.github.apl_cornell.viaduct.security.LabelTop
 import io.github.apl_cornell.viaduct.security.PolymorphicPrincipal
 import io.github.apl_cornell.viaduct.security.Principal
 import io.github.apl_cornell.viaduct.syntax.Arguments
@@ -46,9 +34,8 @@ import io.github.apl_cornell.viaduct.syntax.intermediate.TopLevelDeclarationNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.deepCopy
 import io.github.apl_cornell.viaduct.util.FreshNameGenerator
 
-private typealias PrincipalComponent = Component<Principal>
-private typealias PolymorphicPrincipalComponent = Component<PolymorphicPrincipal>
-private typealias LabelConstant = FreeDistributiveLattice<PrincipalComponent>
+typealias PrincipalComponent = Component<Principal>
+typealias LabelConstant = FreeDistributiveLattice<PrincipalComponent>
 
 /** Returns an AST where every call site is specialized into new functions as much as possible.
  *  This allows for the most liberal protocol selection possible, at the cost of redundancy.
@@ -91,7 +78,7 @@ private class Specializer(
     private val informationFlowAnalysis = InformationFlowAnalysis.get(program)
 
     // worklist identified by new functions and corresponding old functionCallNode to be specialized
-    private val worklist: MutableList<Triple<FunctionName, FunctionCallNode, Map<PrincipalComponent, LabelConstant>>> =
+    private val worklist: MutableList<Triple<FunctionName, FunctionCallNode, Rewrite>> =
         mutableListOf()
 
     // fresh name generator
@@ -105,93 +92,7 @@ private class Specializer(
     private val reverseContext: MutableMap<FunctionName, Pair<FunctionName, List<Label>>> = mutableMapOf()
 
 
-    /**
-     * Given a map that maps element to expressions, rewrite by substitution.
-     */
-    private fun LabelConstant.rewrite(rewrites: Map<PrincipalComponent, LabelConstant>): LabelConstant =
-        joinOfMeets.fold(FreeDistributiveLattice.bounds<PrincipalComponent>().bottom) { accOut, meet ->
-            accOut.join(
-                meet.fold(FreeDistributiveLattice.bounds<PrincipalComponent>().top) { accIn, e ->
-                    accIn.meet(
-                        when (e.principal) {
-                            is HostPrincipal -> FreeDistributiveLattice(e)
-                            is PolymorphicPrincipal -> rewrites[e]!!
-                        }
-                    )
-                }
-            )
-        }
-
-    /**
-     * Given a label with polymorphic label and a rewrite map, return a label without polymorphic labels
-     */
-    private fun Label.rewrite(rewrites: Map<PrincipalComponent, LabelConstant>): Label =
-        Label(confidentialityComponent.rewrite(rewrites), this.integrityComponent.rewrite(rewrites))
-
-    private fun LabelExpression.rewrite(rewrites: Map<PrincipalComponent, LabelConstant>): LabelExpression =
-        when (this) {
-            is LabelParameter -> {
-                /*val confidentialityRewrite = rewrites[ConfidentialityComponent(PolymorphicPrincipal(this.name))]!!
-                val integrityRewrite = rewrites[ConfidentialityComponent(PolymorphicPrincipal(this.name))]!!
-
-                LabelMeet(
-                    LabelConfidentiality(
-                        confidentialityRewrite.joinOfMeets.fold(LabelBottom as LabelExpression) { accOut, meet ->
-                            LabelJoin(
-                                accOut,
-                                meet.fold(LabelTop as LabelExpression) { accIn, e ->
-                                    LabelMeet(accIn, LabelLiteral((e.principal as HostPrincipal).host))
-                                }
-                            )
-                        }
-                    ),
-                    LabelIntegrity(
-                            integrityRewrite.joinOfMeets.fold(LabelBottom as LabelExpression) { accOut, meet ->
-                                LabelJoin(
-                                    accOut,
-                                    meet.fold(LabelTop as LabelExpression) { accIn, e ->
-                                        LabelMeet(accIn, LabelLiteral((e.principal as HostPrincipal).host))
-                                    }
-                                )
-                            }
-                    )
-                )*/
-
-                val confidentialityRewrite =
-                    LabelConfidentiality(rewrites[ConfidentialityComponent(PolymorphicPrincipal(this.name))]!!.joinOfMeets
-                        .map { meet ->
-                            meet.map { LabelLiteral((it.principal as HostPrincipal).host) }
-                                .reduceOrNull<LabelExpression, LabelExpression> { acc, e -> LabelMeet(acc, e) }
-                                ?: LabelBottom
-                        }
-                        .reduceOrNull { acc, e -> LabelJoin(acc, e) } ?: LabelTop)
-
-                val integrityRewrite =
-                    LabelIntegrity(rewrites[IntegrityComponent(PolymorphicPrincipal(this.name))]!!.joinOfMeets
-                        .map { meet ->
-                            meet
-                                .map { LabelLiteral((it.principal as HostPrincipal).host) }
-                                .reduceOrNull<LabelExpression, LabelExpression> { acc, e -> LabelMeet(acc, e) }
-                                ?: LabelBottom
-                        }
-                        .reduceOrNull { acc, e -> LabelJoin(acc, e) } ?: LabelTop)
-
-                LabelMeet(confidentialityRewrite, integrityRewrite)
-            }
-
-            is LabelAnd -> LabelAnd(lhs.rewrite(rewrites), rhs.rewrite(rewrites))
-            is LabelOr -> LabelOr(lhs.rewrite(rewrites), rhs.rewrite(rewrites))
-            is LabelJoin -> LabelJoin(lhs.rewrite(rewrites), rhs.rewrite(rewrites))
-            is LabelMeet -> LabelMeet(lhs.rewrite(rewrites), rhs.rewrite(rewrites))
-            is LabelConfidentiality -> LabelConfidentiality(value.rewrite(rewrites))
-            is LabelIntegrity -> LabelIntegrity(value.rewrite(rewrites))
-            else -> this
-        }
-
-    private fun LabelNode.specialize(rewrites: Map<PrincipalComponent, LabelConstant>): LabelNode =
-        LabelNode(value.rewrite(rewrites), sourceLocation)
-
-    private fun ObjectTypeNode.specialize(rewrites: Map<PrincipalComponent, LabelConstant>): ObjectTypeNode =
+    private fun ObjectTypeNode.specialize(rewrites: Rewrite): ObjectTypeNode =
         ObjectTypeNode(
             className.copy(),
             Arguments(
@@ -205,7 +106,10 @@ private class Specializer(
             }
         )
 
-    private fun ExpressionNode.specialize(rewrites: Map<PrincipalComponent, LabelConstant>): ExpressionNode =
+    private fun LabelNode.specialize(rewrites: Rewrite): LabelNode =
+        LabelNode(rewrites.rewrite(value), sourceLocation)
+
+    private fun ExpressionNode.specialize(rewrites: Rewrite): ExpressionNode =
         when (this) {
             is DeclassificationNode ->
                 DeclassificationNode(
@@ -226,13 +130,13 @@ private class Specializer(
             else -> this.copy(this.children.map { it.specialize(rewrites) })
         }
 
-    private fun StatementNode.specialize(rewrites: Map<PrincipalComponent, LabelConstant>): StatementNode =
+    private fun StatementNode.specialize(rewrites: Rewrite): StatementNode =
         when (this) {
             is FunctionCallNode -> {
 // name of the function being specialized
                 val name: FunctionName = name.value
 // label arguments of the current callsite
-                val argumentLabels = arguments.map { informationFlowAnalysis.label(it).rewrite(rewrites) }
+                val argumentLabels = arguments.map { rewrites.rewrite(informationFlowAnalysis.label(it)) }
                 val specializedName = if (name in context) {
                     // the case where the function is already specialized before
                     // look for a specialized function that has the same signature
@@ -320,7 +224,7 @@ private class Specializer(
         }
 
     private fun FunctionDeclarationNode.specialize(
-        rewrites: Map<PrincipalComponent, LabelConstant>,
+        rewrites: Rewrite,
         newName: FunctionName
     ): FunctionDeclarationNode =
         FunctionDeclarationNode(
@@ -342,12 +246,13 @@ private class Specializer(
             pcLabel?.specialize(rewrites),
             body.specialize(rewrites) as BlockNode,
             sourceLocation
+
         )
 
     /** Specialize by processing call site in the worklist. */
     fun specialize(): Pair<BlockNode, List<FunctionDeclarationNode>> {
         val newFunctions = mutableListOf<FunctionDeclarationNode>()
-        val newMain = mainProgram.specialize(mapOf()) as BlockNode
+        val newMain = mainProgram.specialize(Rewrite(mapOf())) as BlockNode
 
         while (worklist.isNotEmpty()) {
 // pick an unspecialized callsite
@@ -359,13 +264,15 @@ private class Specializer(
 // find the unspecialized function declaration
             val oldFunction = functionMap[oldName]!!
             // construct the rewrite map with labels that are already specialized
-            val rewrite = oldFunction.labelParameters
+            val rewrite = Rewrite(oldFunction.labelParameters
                 .map {
                     (PolymorphicPrincipal(it.value)
-                        to informationFlowAnalysis.label(
-                        oldFunctionCallNode,
-                        it.value
-                    ).rewrite(callsiteRewrite))
+                        to callsiteRewrite.rewrite(
+                        informationFlowAnalysis.label(
+                            oldFunctionCallNode,
+                            it.value
+                        )
+                    ))
                 }
 // break into components
                 .flatMap {
@@ -375,7 +282,7 @@ private class Specializer(
                     )
                 }
 // make it a map
-                .toMap()
+                .toMap())
 // then specialize
 // TODO: Want to check label parameters match rewrite keys
             newFunctions.add(oldFunction.specialize(rewrite, newName))

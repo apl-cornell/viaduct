@@ -166,8 +166,6 @@ class DelegationDeclarationNode(
         if (delegationKind == DelegationKind.IFC) {
             node1Confidentiality = node2Confidentiality.also { node2Confidentiality = node1Confidentiality }
         }
-        node1Confidentiality = node1Confidentiality.meet(node2Confidentiality)
-        node1Integrity = node1Integrity.meet(node2Integrity)
 
         when (delegationProjection) {
             DelegationProjection.CONFIDENTIALITY ->

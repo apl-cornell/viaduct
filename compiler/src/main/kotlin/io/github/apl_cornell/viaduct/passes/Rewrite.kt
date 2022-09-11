@@ -50,23 +50,23 @@ class Rewrite(private val rewrites: Map<PrincipalComponent, LabelConstant>) {
                 val confidentialityRewrite =
                     LabelConfidentiality(rewrites[ConfidentialityComponent(PolymorphicPrincipal(l.name))]!!.joinOfMeets
                         .map { meet ->
-                            meet.map { LabelLiteral((it.principal as HostPrincipal).host) }
+                            meet.map { LabelLiteral(((it as ConfidentialityComponent).principal as HostPrincipal).host) }
                                 .reduceOrNull<LabelExpression, LabelExpression> { acc, e -> LabelAnd(acc, e) }
-                                ?: LabelBottom
+                                ?: LabelTop
                         }
-                        .reduceOrNull { acc, e -> LabelOr(acc, e) } ?: LabelTop)
+                        .reduceOrNull { acc, e -> LabelOr(acc, e) } ?: LabelBottom)
 
                 val integrityRewrite =
                     LabelIntegrity(rewrites[IntegrityComponent(PolymorphicPrincipal(l.name))]!!.joinOfMeets
                         .map { meet ->
                             meet
-                                .map { LabelLiteral((it.principal as HostPrincipal).host) }
+                                .map { LabelLiteral(((it as IntegrityComponent).principal as HostPrincipal).host) }
                                 .reduceOrNull<LabelExpression, LabelExpression> { acc, e -> LabelAnd(acc, e) }
-                                ?: LabelBottom
+                                ?: LabelTop
                         }
-                        .reduceOrNull { acc, e -> LabelOr(acc, e) } ?: LabelTop)
+                        .reduceOrNull { acc, e -> LabelOr(acc, e) } ?: LabelBottom)
 
-                LabelMeet(confidentialityRewrite, integrityRewrite)
+                LabelAnd(confidentialityRewrite, integrityRewrite)
             }
 
             is LabelAnd -> LabelAnd(rewrite(l.lhs), rewrite(l.rhs))

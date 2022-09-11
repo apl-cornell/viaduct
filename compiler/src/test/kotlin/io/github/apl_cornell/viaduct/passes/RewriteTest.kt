@@ -4,8 +4,13 @@ import io.github.apl_cornell.viaduct.algebra.FreeDistributiveLattice
 import io.github.apl_cornell.viaduct.security.ConfidentialityComponent
 import io.github.apl_cornell.viaduct.security.HostPrincipal
 import io.github.apl_cornell.viaduct.security.IntegrityComponent
-import io.github.apl_cornell.viaduct.security.Label
+import io.github.apl_cornell.viaduct.security.LabelAnd
 import io.github.apl_cornell.viaduct.security.LabelBottom
+import io.github.apl_cornell.viaduct.security.LabelJoin
+import io.github.apl_cornell.viaduct.security.LabelLiteral
+import io.github.apl_cornell.viaduct.security.LabelMeet
+import io.github.apl_cornell.viaduct.security.LabelOr
+import io.github.apl_cornell.viaduct.security.LabelParameter
 import io.github.apl_cornell.viaduct.security.LabelTop
 import io.github.apl_cornell.viaduct.security.PolymorphicPrincipal
 import io.github.apl_cornell.viaduct.security.Principal
@@ -16,61 +21,38 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 
 internal class RewriteTest {
-    /*private val principalAlice = HostPrincipal(Host("alice"))
-    private val principalBob = HostPrincipal(Host("bob"))
-    private val principalChuck = HostPrincipal(Host("chuck"))
-    private val principalA = PolymorphicPrincipal(LabelVariable("A"))
-    private val principalB = PolymorphicPrincipal(LabelVariable("B"))
-    private val principalC = PolymorphicPrincipal(LabelVariable("C"))*/
-    private val principalAliceI = IntegrityComponent(HostPrincipal(Host("alice")) as Principal) as PrincipalComponent
-    private val principalBobI = IntegrityComponent(HostPrincipal(Host("bob")) as Principal) as PrincipalComponent
-    private val principalChuckI = IntegrityComponent(HostPrincipal(Host("chuck")) as Principal) as PrincipalComponent
-    private val principalAI =
-        IntegrityComponent(PolymorphicPrincipal(LabelVariable("A")) as Principal) as PrincipalComponent
-    private val principalBI =
-        IntegrityComponent(PolymorphicPrincipal(LabelVariable("B")) as Principal) as PrincipalComponent
-    private val principalCI =
-        IntegrityComponent(PolymorphicPrincipal(LabelVariable("C")) as Principal) as PrincipalComponent
-    private val principalAliceC =
-        ConfidentialityComponent(HostPrincipal(Host("alice")) as Principal) as PrincipalComponent
-    private val principalBobC = ConfidentialityComponent(HostPrincipal(Host("bob")) as Principal) as PrincipalComponent
-    private val principalChuckC =
-        ConfidentialityComponent(HostPrincipal(Host("chuck")) as Principal) as PrincipalComponent
-    private val principalAC =
-        ConfidentialityComponent(PolymorphicPrincipal(LabelVariable("A")) as Principal) as PrincipalComponent
-    private val principalBC =
-        ConfidentialityComponent(PolymorphicPrincipal(LabelVariable("B")) as Principal) as PrincipalComponent
-    private val principalCC =
-        ConfidentialityComponent(PolymorphicPrincipal(LabelVariable("C")) as Principal) as PrincipalComponent
-    private val aliceI = FreeDistributiveLattice(principalAliceI)
-    private val bobI = FreeDistributiveLattice(principalBobI)
-    private val chuckI = FreeDistributiveLattice(principalChuckI)
+    private fun h(s: String) = Host(s)
+    private fun p(s: String) = LabelVariable(s)
+    private fun hp(s: String) = HostPrincipal(h(s))
+    private fun pp(s: String) = PolymorphicPrincipal(p(s))
+    private fun hpi(s: String) = IntegrityComponent(hp(s) as Principal) as PrincipalComponent
+    private fun hpc(s: String) = ConfidentialityComponent(hp(s) as Principal) as PrincipalComponent
+    private fun ppi(s: String) = IntegrityComponent(pp(s) as Principal) as PrincipalComponent
+    private fun ppc(s: String) = ConfidentialityComponent(pp(s) as Principal) as PrincipalComponent
 
-    //private val AI = FreeDistributiveLattice(principalAI)
-    //private val BI = FreeDistributiveLattice(principalBI)
-    //private val CI = FreeDistributiveLattice(principalCI)
-    private val aliceC = FreeDistributiveLattice(principalAliceC)
-    private val bobC = FreeDistributiveLattice(principalBobC)
-    private val chuckC = FreeDistributiveLattice(principalChuckC)
-    private val AC = FreeDistributiveLattice(principalAC)
+    private fun fhpi(s: String) = FreeDistributiveLattice(hpi(s))
+    private fun fhpc(s: String) = FreeDistributiveLattice(hpc(s))
+    private fun fppi(s: String) = FreeDistributiveLattice(ppi(s))
+    private fun fppc(s: String) = FreeDistributiveLattice(ppc(s))
 
-    private val BC = FreeDistributiveLattice(principalBC)
-    private val CC = FreeDistributiveLattice(principalCC)
+    private fun hl(s: String) = LabelLiteral(h(s))
+    private fun pl(s: String) = LabelParameter(p(s))
+
     private val top = FreeDistributiveLattice.bounds<PrincipalComponent>().top
     private val bottom = FreeDistributiveLattice.bounds<PrincipalComponent>().bottom
     private val emptyRewrite = Rewrite(mapOf())
     private val easyRewrite = Rewrite(
         mapOf(
-            (principalAC to aliceC), (principalAI to aliceI),
-            (principalBC to bobC), (principalBI to bobI),
-            (principalCC to chuckC), (principalCI to chuckI)
+            (ppc("A") to fhpc("alice")), (ppi("A") to fhpi("alice")),
+            (ppc("B") to fhpc("bob")), (ppi("B") to fhpi("bob")),
+            (ppc("C") to fhpc("chuck")), (ppi("C") to fhpi("chuck"))
         )
     )
     private val hardRewrite = Rewrite(
         mapOf(
-            (principalAC to top), (principalAI to bottom),
-            (principalBC to aliceC.join(bobC)), (principalBI to aliceI.join(bobI)),
-            (principalCC to chuckC.meet(bobC)), (principalCI to chuckI.meet(bobI))
+            (ppc("A") to top), (ppi("A") to bottom),
+            (ppc("B") to fhpc("alice").join(fhpc("bob"))), (ppi("B") to fhpi("alice").meet(fhpi("bob"))),
+            (ppc("C") to fhpc("chuck")), (ppi("C") to fhpi("chuck"))
         )
     )
 
@@ -83,33 +65,112 @@ internal class RewriteTest {
         assertEquals(bottom, emptyRewrite.rewrite(bottom))
         assertEquals(bottom, easyRewrite.rewrite(bottom))
         assertEquals(bottom, hardRewrite.rewrite(bottom))
-        assertEquals(aliceC.join(bobC).meet(chuckC), emptyRewrite.rewrite(aliceC.join(bobC).meet(chuckC)))
-        assertEquals(aliceC.join(bobC).meet(chuckC), easyRewrite.rewrite(aliceC.join(bobC).meet(chuckC)))
-        assertEquals(aliceC.join(bobC).meet(chuckC), hardRewrite.rewrite(aliceC.join(bobC).meet(chuckC)))
-        assertThrows<NullPointerException> { emptyRewrite.rewrite(AC) }
-        assertEquals(aliceC, easyRewrite.rewrite(AC))
-        assertEquals(top, hardRewrite.rewrite(AC))
-        assertEquals(aliceC.join(bobC).meet(chuckC), easyRewrite.rewrite(AC.join(BC).meet(CC)))
-        assertEquals(aliceC.join(bobC).meet(chuckC), hardRewrite.rewrite(AC.meet(BC).meet(chuckC)))
+        assertEquals(
+            fhpc("alice").join(fhpc("bob")).meet(fhpc("chuck")),
+            emptyRewrite.rewrite(fhpc("alice").join(fhpc("bob")).meet(fhpc("chuck")))
+        )
+        assertEquals(
+            fhpc("alice").join(fhpc("bob")).meet(fhpc("chuck")),
+            easyRewrite.rewrite(fhpc("alice").join(fhpc("bob")).meet(fhpc("chuck")))
+        )
+        assertEquals(
+            fhpc("alice").join(fhpc("bob")).meet(fhpc("chuck")),
+            hardRewrite.rewrite(fhpc("alice").join(fhpc("bob")).meet(fhpc("chuck")))
+        )
+        assertThrows<NullPointerException> { emptyRewrite.rewrite(fppc("A")) }
+        assertEquals(fhpc("alice"), easyRewrite.rewrite(fppc("A")))
+        assertEquals(top, hardRewrite.rewrite(fppc("A")))
+        assertEquals(
+            fhpc("alice").join(fhpc("bob")).meet(fhpc("chuck")),
+            easyRewrite.rewrite(fppc("A").join(fppc("B")).meet(fppc("C")))
+        )
+        assertEquals(
+            fhpc("chuck"),
+            hardRewrite.rewrite(fppc("A").join(fppc("B")).meet(fppc("C")))
+        )
+        assertEquals(
+            fhpc("alice").join(fhpc("bob")).meet(fhpc("chuck")),
+            hardRewrite.rewrite(fppc("A").meet(fppc("B")).meet(fppc("C")))
+        )
+        assertEquals(
+            fhpi("alice").meet(fhpi("bob")).meet(fhpi("chuck")),
+            hardRewrite.rewrite(fppi("A").join(fppi("B")).meet(fppi("C")))
+        )
     }
 
     /* test on Label LabelConstants (FDL<PrincipalComponent>) */
     @Test
     fun testLabelExpression() {
-        assertEquals(Label(top, top), emptyRewrite.rewrite(LabelTop).interpret())
-        assertEquals(top, easyRewrite.rewrite(LabelTop).interpret())
-        assertEquals(top, hardRewrite.rewrite(LabelTop).interpret())
-        assertEquals(bottom, emptyRewrite.rewrite(LabelBottom).interpret())
-        assertEquals(bottom, easyRewrite.rewrite(LabelBottom).interpret())
-        assertEquals(bottom, hardRewrite.rewrite(LabelBottom).interpret())
-        /*assertEquals(aliceC.join(bobC).meet(chuckC), emptyRewrite.rewrite(aliceC.join(bobC).meet(chuckC)))
-        assertEquals(aliceC.join(bobC).meet(chuckC), easyRewrite.rewrite(aliceC.join(bobC).meet(chuckC)))
-        assertEquals(aliceC.join(bobC).meet(chuckC), hardRewrite.rewrite(aliceC.join(bobC).meet(chuckC)))
-        assertThrows<NullPointerException> { emptyRewrite.rewrite(AC) }
-        assertEquals(aliceC, easyRewrite.rewrite(AC))
-        assertEquals(top, hardRewrite.rewrite(AC))
-        assertEquals(aliceC.join(bobC).meet(chuckC), easyRewrite.rewrite(AC.join(BC).meet(CC)))
-        assertEquals(aliceC.join(bobC).meet(chuckC), hardRewrite.rewrite(AC.meet(BC).meet(chuckC)))*/
+        assertEquals(top, emptyRewrite.rewrite(LabelTop).interpret().confidentialityComponent)
+        assertEquals(top, easyRewrite.rewrite(LabelTop).interpret().confidentialityComponent)
+        assertEquals(top, hardRewrite.rewrite(LabelTop).interpret().confidentialityComponent)
+        assertEquals(bottom, emptyRewrite.rewrite(LabelBottom).interpret().confidentialityComponent)
+        assertEquals(bottom, easyRewrite.rewrite(LabelBottom).interpret().confidentialityComponent)
+        assertEquals(bottom, hardRewrite.rewrite(LabelBottom).interpret().confidentialityComponent)
+        assertEquals(
+            fhpc("alice").join(fhpc("bob")).meet(fhpc("chuck")),
+            emptyRewrite.rewrite(
+                LabelAnd(LabelOr(hl("alice"), hl("bob")), hl("chuck"))
+            ).interpret().confidentialityComponent
+        )
+        assertEquals(
+            fhpc("alice").join(fhpc("bob")).meet(fhpc("chuck")),
+            easyRewrite.rewrite(
+                LabelAnd(
+                    LabelOr(hl("alice"), hl("bob")),
+                    hl("chuck")
+                )
+            ).interpret().confidentialityComponent
+        )
+        assertEquals(
+            fhpc("alice").join(fhpc("bob")).meet(fhpc("chuck")),
+            hardRewrite.rewrite(
+                LabelAnd(
+                    LabelOr(hl("alice"), hl("bob")),
+                    hl("chuck")
+                )
+            ).interpret().confidentialityComponent
+        )
+        assertThrows<NullPointerException> { emptyRewrite.rewrite(pl("A")) }
+        assertEquals(fhpc("alice"), easyRewrite.rewrite(pl("A")).interpret().confidentialityComponent)
+        assertEquals(top, hardRewrite.rewrite(pl("A")).interpret().confidentialityComponent)
+        assertEquals(bottom, hardRewrite.rewrite(pl("A")).interpret().integrityComponent)
+
+        assertEquals(
+            fhpi("alice").meet(fhpi("bob")).meet(fhpi("chuck")),
+            hardRewrite.rewrite(LabelAnd(LabelOr(pl("A"), pl("B")), pl("C"))).interpret().integrityComponent
+        )
+        assertEquals(
+            fhpi("alice").meet(fhpi("bob")).meet(fhpi("chuck")),
+            hardRewrite.rewrite(LabelMeet(LabelJoin(pl("A"), pl("B")), pl("C"))).interpret().integrityComponent
+        )
+
+        assertEquals(
+            fhpc("alice").join(fhpc("bob")).join(fhpc("chuck")),
+            hardRewrite.rewrite(LabelOr(LabelAnd(pl("A"), pl("B")), pl("C"))).interpret().confidentialityComponent
+        )
+        assertEquals(
+            fhpc("alice").join(fhpc("bob")).join(fhpc("chuck")),
+            hardRewrite.rewrite(LabelMeet(LabelJoin(pl("A"), pl("B")), pl("C"))).interpret().confidentialityComponent
+        )
+
+        assertEquals(
+            fhpi("chuck"),
+            hardRewrite.rewrite(LabelOr(LabelAnd(pl("A"), pl("B")), pl("C"))).interpret().integrityComponent
+        )
+        assertEquals(
+            fhpi("chuck"),
+            hardRewrite.rewrite(LabelJoin(LabelMeet(pl("A"), pl("B")), pl("C"))).interpret().integrityComponent
+        )
+
+        assertEquals(
+            fhpc("chuck"),
+            hardRewrite.rewrite(LabelAnd(LabelOr(pl("A"), pl("B")), pl("C"))).interpret().confidentialityComponent
+        )
+        assertEquals(
+            fhpc("chuck"),
+            hardRewrite.rewrite(LabelJoin(LabelMeet(pl("A"), pl("B")), pl("C"))).interpret().confidentialityComponent
+        )
     }
 }
 

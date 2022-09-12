@@ -76,16 +76,16 @@ private class BackendCodeGenerator(
         }
         for (param in circuitDeclaration.inputs) {
             val paramName = context.kotlinName(param.name.value)
-            val paramType = codeGenerator.kotlinType(protocol, param.type.value)
+            val paramType = codeGenerator.kotlinType(protocol, param.type.elementType.value)
             builder.addParameter(paramName, paramType)
         }
         for (param in circuitDeclaration.outputs) {
             val paramName = context.kotlinName(param.name.value)
-            val type = param.type.value
-            val paramType = if (type.shape.isEmpty()) Out::class.asClassName().parameterizedBy(
-                codeGenerator.kotlinType(protocol, type.elementType.value)
+            val baseType = param.type.elementType.value
+            val paramType = if (param.type.shape.isEmpty()) Out::class.asClassName().parameterizedBy(
+                codeGenerator.kotlinType(protocol, baseType)
             ) else
-                codeGenerator.kotlinType(protocol, type)
+                codeGenerator.kotlinType(protocol, baseType)
             builder.addParameter(paramName, paramType)
         }
 

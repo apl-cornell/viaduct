@@ -23,6 +23,7 @@ import io.github.apl_cornell.viaduct.syntax.circuit.Variable
 import io.github.apl_cornell.viaduct.syntax.circuit.VariableNode
 import io.github.apl_cornell.viaduct.syntax.types.ValueType
 import io.github.apl_cornell.viaduct.syntax.values.Value
+import kotlinx.collections.immutable.PersistentList
 
 abstract class AbstractCodeGenerator(val context: CodeGeneratorContext) : CodeGenerator {
 //    private val nameAnalysis = NameAnalysis.get(context.program)
@@ -31,13 +32,13 @@ abstract class AbstractCodeGenerator(val context: CodeGeneratorContext) : CodeGe
     override fun kotlinType(protocol: Protocol, sourceType: ValueType): TypeName = typeTranslator(sourceType)
 
     override fun kotlinType(protocol: Protocol, sourceType: ArrayType): TypeName =
-        if (sourceType.shape.isEmpty()) kotlinType(protocol, sourceType.elementType.value)
+        if (sourceType.shape.isEmpty()) kotlinType(protocol, sourceType.elementType)
         else ARRAY.parameterizedBy(
             kotlinType(
                 protocol,
                 ArrayType(
                     sourceType.elementType,
-                    Arguments(sourceType.shape.subList(1, sourceType.shape.size), sourceType.shape.sourceLocation)
+                    sourceType.shape.subList(1, sourceType.shape.size) as PersistentList<IndexExpressionNode>
                 )
             )
         )
@@ -50,7 +51,7 @@ abstract class AbstractCodeGenerator(val context: CodeGeneratorContext) : CodeGe
         for (ret in circuitDeclaration.body.returnStatement.values.withIndex()) {
             val outParam = circuitDeclaration.outputs[ret.index]
             val returnName = context.kotlinName(outParam.name.value)
-            if (outParam.type.value.shape.isEmpty()) builder.addStatement(
+            if (outParam.type.shape.isEmpty()) builder.addStatement(
                 "%N.set(%L)", returnName, exp(protocol, ret.value)
             )
             else builder.addStatement("%N = %L", returnName, exp(protocol, ret.value))
@@ -69,7 +70,7 @@ abstract class AbstractCodeGenerator(val context: CodeGeneratorContext) : CodeGe
     private fun generate(protocol: Protocol, builder: CodeBlock.Builder, host: Host, stmt: CircuitStatementNode) {
         print("Ignore $host") // TODO remove this, just used to make the compiler stop complaining
         when (stmt) {
-            is LetNode -> {
+            is CircuitLetNode -> {
                 val lhs: CodeBlock
                 if (stmt.indices.isEmpty()) {
                     lhs = CodeBlock.of("val %N", context.kotlinName(stmt.name.value))
@@ -132,6 +133,7 @@ abstract class AbstractCodeGenerator(val context: CodeGeneratorContext) : CodeGe
         }
         is ReduceNode -> reduce(protocol, expr)
         is OperatorApplicationNode -> throw UnsupportedOperatorException(protocol, expr)
+        else -> throw UnsupportedOperatorException(protocol, expr)
     }
 
     private fun reduce(protocol: Protocol, r: ReduceNode): CodeBlock {

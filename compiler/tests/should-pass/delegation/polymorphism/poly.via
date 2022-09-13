@@ -1,4 +1,4 @@
-fun f[X, Y, Z](a: int{X}, b: int{Y}, c: out int{Z}) : {Z<-} where (X <: alice, Y <: bob, alice ⊓ bob <: Z) {
+fun f{X, Y, Z}(a: int{X}, b: int{Y}, c: out int{Z}) where (X <: alice, Y <: bob, alice ⊔ bob <: Z) {
   out c = a + b;
 }
 

@@ -2,6 +2,11 @@ package io.github.apl_cornell.viaduct.passes
 
 import io.github.apl_cornell.viaduct.errors.InvalidConstructorCallError
 import io.github.apl_cornell.viaduct.errors.JumpOutsideLoopScopeError
+import io.github.apl_cornell.viaduct.security.LabelAnd
+import io.github.apl_cornell.viaduct.security.LabelBottom
+import io.github.apl_cornell.viaduct.security.LabelConfidentiality
+import io.github.apl_cornell.viaduct.security.LabelIntegrity
+import io.github.apl_cornell.viaduct.security.LabelTop
 import io.github.apl_cornell.viaduct.syntax.Arguments
 import io.github.apl_cornell.viaduct.syntax.FunctionName
 import io.github.apl_cornell.viaduct.syntax.Host
@@ -185,13 +190,16 @@ private class FunctionElaborator(val nameGenerator: FreshNameGenerator) {
                     functionDecl.name.sourceLocation
                 )
             }
-
+        // TODO: remove default pc label when we have pc label ready
         return IFunctionDeclarationNode(
             functionDecl.name,
             functionDecl.labelParameters ?: Arguments(functionDecl.name.sourceLocation),
             Arguments(elaboratedParameters, functionDecl.parameters.sourceLocation),
             delegations,
-            functionDecl.pcLabel?.renameObjects(),
+            functionDecl.pcLabel ?: LabelNode(
+                LabelAnd(LabelIntegrity(LabelBottom), LabelConfidentiality(LabelTop)),
+                functionDecl.sourceLocation
+            ).renameObjects(),
             StatementElaborator(nameGenerator, objectRenames = objectRenames).elaborate(functionDecl.body),
             functionDecl.sourceLocation
         )

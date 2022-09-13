@@ -1,6 +1,6 @@
 package io.github.apl_cornell.viaduct.algebra
 
-private typealias Congruence<A> = Pair<A, A>
+typealias Congruence<A> = Pair<A, A>
 
 interface LatticeCongruence<A : Lattice<A>> {
     fun equals(first: A, second: A): Boolean

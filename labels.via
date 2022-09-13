@@ -2,54 +2,30 @@ host alice
 
 host bob
 
-fun {} f_1{⊥} (a: int{(alice-> & alice<-)}, b: int{bob}, c: out int{((alice & bob)-> & ⊤<-)}) {} {
+fun {} add10_1{(⊥<- & ⊤->)} (a: int{alice}, b: out int{bob}) {} {
     /* {ConfidentialityComponent(principal=alice)-> ∧ ⊤<-} */
     let $tmp = a;
-    g_1($tmp, val ga);
-    /* {ConfidentialityComponent(principal=bob)-> ∧ ⊤<-} */
-    let $tmp_1 = b;
-    g_2($tmp_1, val gb);
     /* {ConfidentialityComponent(principal=alice)-> ∧ ⊤<-} */
-    let $tmp_2 = ga;
-    /* {ConfidentialityComponent(principal=bob)-> ∧ ⊤<-} */
-    let $tmp_3 = gb;
-    /* {(ConfidentialityComponent(principal=alice) ∧ ConfidentialityComponent(principal=bob))-> ∧ ⊤<-} */
-    let $tmp_4 = ($tmp_2 + $tmp_3);
-    out c = $tmp_4;
+    let $tmp_1 = endorse $tmp to {(alice & bob<-)} from {alice};
+    /* {ConfidentialityComponent(principal=alice)-> ∧ ⊤<-} */
+    let $tmp_2 = ($tmp_1 + 10);
+    /* {(ConfidentialityComponent(principal=alice) ∨ ConfidentialityComponent(principal=bob))-> ∧ IntegrityComponent(principal=bob)<-} */
+    let $tmp_3 = declassify $tmp_2 to {((alice | bob)-> & (alice & bob)<-)};
+    out b = $tmp_3;
 }
 
-fun {} g_1{(alice-> & ⊤<-)} (a_1: int{(alice-> & ⊤<-)}, c_1: out int{(alice-> & ⊤<-)}) {} {
-    /* {ConfidentialityComponent(principal=alice)-> ∧ ⊤<-} */
+fun {} main{(⊥<- & ⊤->)} () {} {
+    /* {ConfidentialityComponent(principal=bob)-> ∧ IntegrityComponent(principal=bob)<-} */
+    val array = Array[int]{bob}(10);
+    /* {ConfidentialityComponent(principal=alice)-> ∧ IntegrityComponent(principal=alice)<-} */
+    val a_1: int{alice} = 0;
+    /* {ConfidentialityComponent(principal=alice)-> ∧ IntegrityComponent(principal=alice)<-} */
+    let $tmp_4 = a_1;
+    add10_1($tmp_4, val b_1);
+    /* {ConfidentialityComponent(principal=alice)-> ∧ IntegrityComponent(principal=alice)<-} */
     let $tmp_5 = a_1;
-    /* {ConfidentialityComponent(principal=alice)-> ∧ ⊤<-} */
-    let $tmp_6 = a_1;
-    /* {ConfidentialityComponent(principal=alice)-> ∧ ⊤<-} */
-    let $tmp_7 = ($tmp_5 + $tmp_6);
-    out c_1 = $tmp_7;
-}
-
-fun {} g_2{(bob-> & ⊤<-)} (a_1: int{(bob-> & ⊤<-)}, c_1: out int{(bob-> & ⊤<-)}) {} {
-    /* {ConfidentialityComponent(principal=bob)-> ∧ ⊤<-} */
-    let $tmp_5 = a_1;
-    /* {ConfidentialityComponent(principal=bob)-> ∧ ⊤<-} */
-    let $tmp_6 = a_1;
-    /* {ConfidentialityComponent(principal=bob)-> ∧ ⊤<-} */
-    let $tmp_7 = ($tmp_5 + $tmp_6);
-    out c_1 = $tmp_7;
-}
-
-fun {} main () {} {
-    /* {ConfidentialityComponent(principal=alice)-> ∧ IntegrityComponent(principal=alice)<-} */
-    let $tmp_8 = input int from alice;
-    /* {ConfidentialityComponent(principal=alice)-> ∧ IntegrityComponent(principal=alice)<-} */
-    val x: int{alice} = $tmp_8;
+    output $tmp_5 to alice;
     /* {ConfidentialityComponent(principal=bob)-> ∧ IntegrityComponent(principal=bob)<-} */
-    let $tmp_9 = input int from bob;
-    /* {ConfidentialityComponent(principal=bob)-> ∧ IntegrityComponent(principal=bob)<-} */
-    val y: int{bob} = $tmp_9;
-    /* {ConfidentialityComponent(principal=alice)-> ∧ IntegrityComponent(principal=alice)<-} */
-    let $tmp_10 = x;
-    /* {ConfidentialityComponent(principal=bob)-> ∧ IntegrityComponent(principal=bob)<-} */
-    let $tmp_11 = y;
-    f_1($tmp_10, $tmp_11, val z);
+    let $tmp_6 = b_1;
+    output $tmp_6 to bob;
 }

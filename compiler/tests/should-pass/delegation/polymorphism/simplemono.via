@@ -1,4 +1,4 @@
-fun f(a: int{alice}, b: int{bob}, c: out int{alice ⊓ bob}) {
+fun f(a: int{alice}, b: int{bob}, c: out int{alice ⊔ bob}) {
   out c = a + b;
 }
 

@@ -7,6 +7,8 @@ import io.github.apl_cornell.viaduct.attributes.attribute
 import io.github.apl_cornell.viaduct.errors.InformationFlowError
 import io.github.apl_cornell.viaduct.errors.InsecureDataFlowError
 import io.github.apl_cornell.viaduct.security.Component
+import io.github.apl_cornell.viaduct.security.ConfidentialityComponent
+import io.github.apl_cornell.viaduct.security.IntegrityComponent
 import io.github.apl_cornell.viaduct.security.Label
 import io.github.apl_cornell.viaduct.security.LabelAnd
 import io.github.apl_cornell.viaduct.security.LabelBottom
@@ -20,6 +22,7 @@ import io.github.apl_cornell.viaduct.security.LabelMeet
 import io.github.apl_cornell.viaduct.security.LabelOr
 import io.github.apl_cornell.viaduct.security.LabelParameter
 import io.github.apl_cornell.viaduct.security.LabelTop
+import io.github.apl_cornell.viaduct.security.PolymorphicPrincipal
 import io.github.apl_cornell.viaduct.security.Principal
 import io.github.apl_cornell.viaduct.security.SecurityLattice
 import io.github.apl_cornell.viaduct.security.solver2.Constraint
@@ -330,16 +333,16 @@ class InformationFlowAnalysis private constructor(
 
                 sequence {
                     yieldAll(this@flowsTo.pcFlowsTo(to))
-                    yieldAll((expression to from.swap()) flowsTo from)
-                    yieldAll((expression to to.swap()) flowsTo to)
+                    yieldAll((expression to from) flowsTo from.swap())
+                    yieldAll((expression to to) flowsTo to.swap())
                     yieldAll((this@flowsTo to to) flowsTo outputLabel)
-                    when (this@flowsTo) {
+                    /*when (this@flowsTo) {
                         is DeclassificationNode ->
                             yieldAll((expression to from) confidentialityFlowsTo to)
 
                         is EndorsementNode ->
                             yieldAll((expression to from) integrityFlowsTo to)
-                    }
+                    }*/
                 }
             }
 
@@ -556,7 +559,24 @@ class InformationFlowAnalysis private constructor(
             FreeDistributiveLatticeCongruence(
                 nameAnalysis.enclosingFunction(this)
                     .labelConstraints.flatMap { it.congruences() }
-            )
+            ) +
+            FreeDistributiveLatticeCongruence(
+                nameAnalysis.enclosingFunction(this).labelParameters.map {
+                    Pair(
+                        FreeDistributiveLattice(
+                            IntegrityComponent(
+                                PolymorphicPrincipal(it.value)
+                            )
+                        ),
+                        FreeDistributiveLattice(
+                            ConfidentialityComponent(
+                                PolymorphicPrincipal(
+                                    it.value
+                                )
+                            )
+                        )
+                    )
+                })
 
     /** Returns the inferred security label of the [Variable] defined by [node]. */
     fun label(node: VariableDeclarationNode): Label =

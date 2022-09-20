@@ -232,21 +232,6 @@ declaration_list ::=
   ;
 
 declaration ::=
-   /* HOST:begin host:host COLON label:authority {:
-      RESULT = new HostDeclarationNode(host, authority, location(beginleft, authorityright), null);
-    :}
-   | FUNCTION:begin IDENT:funcname
-    OPEN_PAREN:paramsbegin parameter_list:params CLOSE_PAREN:paramsclose block:body {:
-      RESULT = new FunctionDeclarationNode(
-        new Located(new FunctionName(funcname), location(funcnameleft, funcnameright)),
-        label,
-        new Arguments(params, location(paramsbeginleft, paramsbeginright)),
-        body,
-        location(beginleft, bodyright),
-        null
-      );
-  :}*/
-  // delegation syntax
   FUNCTION:begin IDENT:funcname optional_polymorphic_label_param_list:polylabels
     OPEN_PAREN:paramsbegin parameter_list:params CLOSE_PAREN:paramsclose
     optional_ifc_delegation_list:assumptions optional_pc:label block:body {:

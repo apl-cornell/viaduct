@@ -1,13 +1,14 @@
-fun add10(a: int, b: out int{b}) {
+/* a polymorphic function */
+fun add10{A, B}(a: int{A}, b: out int{B}) where (A <: B) {
     out b = a + 10;
 }
 
 fun main() {
-    val array = Array[int]{A}(10);
-    val a: int{A} = 0;
+    val array = Array[int]{alice}(10);
+    val a: int{alice} = 0;
     add10(a, val b);
     output b to alice;
 }
 
-host alice: {A}
-host bob: {B}
+host alice
+host bob

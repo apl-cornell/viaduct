@@ -2,30 +2,6 @@ host alice
 
 host bob
 
-fun {} add10_1{(⊥<- & ⊤->)} (a: int{alice}, b: out int{bob}) {} {
-    /* {ConfidentialityComponent(principal=alice)-> ∧ ⊤<-} */
-    let $tmp = a;
-    /* {ConfidentialityComponent(principal=alice)-> ∧ ⊤<-} */
-    let $tmp_1 = endorse $tmp to {(alice & bob<-)} from {alice};
-    /* {ConfidentialityComponent(principal=alice)-> ∧ ⊤<-} */
-    let $tmp_2 = ($tmp_1 + 10);
-    /* {(ConfidentialityComponent(principal=alice) ∨ ConfidentialityComponent(principal=bob))-> ∧ IntegrityComponent(principal=bob)<-} */
-    let $tmp_3 = declassify $tmp_2 to {((alice | bob)-> & (alice & bob)<-)};
-    out b = $tmp_3;
-}
-
-fun {} main{(⊥<- & ⊤->)} () {} {
-    /* {ConfidentialityComponent(principal=bob)-> ∧ IntegrityComponent(principal=bob)<-} */
-    val array = Array[int]{bob}(10);
-    /* {ConfidentialityComponent(principal=alice)-> ∧ IntegrityComponent(principal=alice)<-} */
-    val a_1: int{alice} = 0;
-    /* {ConfidentialityComponent(principal=alice)-> ∧ IntegrityComponent(principal=alice)<-} */
-    let $tmp_4 = a_1;
-    add10_1($tmp_4, val b_1);
-    /* {ConfidentialityComponent(principal=alice)-> ∧ IntegrityComponent(principal=alice)<-} */
-    let $tmp_5 = a_1;
-    output $tmp_5 to alice;
-    /* {ConfidentialityComponent(principal=bob)-> ∧ IntegrityComponent(principal=bob)<-} */
-    let $tmp_6 = b_1;
-    output $tmp_6 to bob;
+fun {} main() {} :{(⊥<- & ⊤->)} {
+    
 }

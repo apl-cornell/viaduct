@@ -16,3 +16,6 @@ fun main() {
 
 host alice
 host bob
+host chuck
+assume for -> alice & bob trusts chuck
+assume for <- chuck trusts alice & bob

@@ -173,4 +173,3 @@ internal class RewriteTest {
         )
     }
 }
-

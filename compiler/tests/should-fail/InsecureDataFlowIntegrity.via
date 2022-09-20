@@ -5,4 +5,4 @@ fun main() {
     val trusted: int{(A ∧ B)<-} = untrusted;
 }
 
-host alice : {A}
+host A 

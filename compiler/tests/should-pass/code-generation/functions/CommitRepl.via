@@ -1,5 +1,5 @@
-host alice : {A}
-host bob   : {B}
+host alice
+host bob
 
 fun main() {
     var a : int = input int from alice;
@@ -13,26 +13,26 @@ fun main() {
     output win1 to bob;
 }
 
-fun f0(c: int{A}, d: int{B}, ret: out bool{A ⊓ B}) {
-    val a : int = endorse c to {A & B<-} from {A};
-    val b : int = endorse d to {B & A<-} from {B};
-    val d_b : int = declassify b from {B & A<-} to {A ⊓ B};
+fun f0(c: int{alice}, d: int{bob}, ret: out bool{alice ⊓ bob}) {
+    val a : int = endorse c to {alice & bob<-} from {alice};
+    val b : int = endorse d to {bob & alice<-} from {bob};
+    val d_b : int = declassify b from {bob & alice<-} to {alice ⊓ bob};
     val equal : bool   = d_b == a;
-    val e_equal : bool = endorse equal to {A & B<-} from {A};
-    val d_equal : bool = declassify e_equal from {A & B<-} to {A ⊓ B};
+    val e_equal : bool = endorse equal to {alice & bob<-} from {alice};
+    val d_equal : bool = declassify e_equal from {alice & bob<-} to {alice ⊓ bob};
     out ret = d_equal;
 }
 
-fun f1(c: int{A}, d: int{B}, ret: out bool{A ⊓ B}) {
-    val a : int = endorse c to {A & B<-} from {A};
-    val b : int = endorse d to {B & A<-} from {B};
-    val d_b : int = declassify b from {B & A<-} to {A ⊓ B};
+fun f1(c: int{alice}, d: int{bob}, ret: out bool{alice ⊓ bob}) {
+    val a : int = endorse c to {alice & bob<-} from {alice};
+    val b : int = endorse d to {bob & alice<-} from {bob};
+    val d_b : int = declassify b from {bob & alice<-} to {alice ⊓ bob};
     val equal : bool = d_b == a;
     g(equal, out ret);
 }
 
-fun g(equal: bool, ret: out bool{A ⊓ B}){
-    val e_equal : bool = endorse equal to {A & B<-} from {A};
-    val d_equal : bool = declassify e_equal from {A & B<-} to {A ⊓ B};
+fun g(equal: bool{alice}, ret: out bool{alice ⊓ bob}){
+    val e_equal : bool = endorse equal to {alice & bob<-} from {alice};
+    val d_equal : bool = declassify e_equal from {alice & bob<-} to {alice ⊓ bob};
     out ret = d_equal;
 }

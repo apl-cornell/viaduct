@@ -2,6 +2,7 @@ package io.github.apl_cornell.viaduct.security
 
 import io.github.apl_cornell.viaduct.algebra.FreeDistributiveLattice
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 
@@ -21,14 +22,9 @@ private val SecurityLattice<Component>.i
     get() = this.integrity(ComponentBounds)
 
 private fun assertActsFor(from: SecurityLattice<Component>, to: SecurityLattice<Component>) {
-    assertActsFor(
-        to.confidentiality(FreeDistributiveLattice.bounds()),
-        from.confidentiality(FreeDistributiveLattice.bounds())
-    )
-    assertActsFor(
-        to.integrity(FreeDistributiveLattice.bounds()),
-        from.integrity(FreeDistributiveLattice.bounds())
-    )
+    val context = listOf<FreeDistributiveLattice.LessThanOrEqualTo<String>>()
+    assertTrue(from.integrityComponent.lessThanOrEqualTo(to.integrityComponent, context))
+    assertTrue(from.confidentialityComponent.lessThanOrEqualTo(to.confidentialityComponent, context))
 }
 
 private fun assertFlowsTo(from: SecurityLattice<Component>, to: SecurityLattice<Component>) {
@@ -81,15 +77,8 @@ internal class SecurityLatticeTest {
 
     @Test
     fun `swap same`() {
-        assertEquals(e("A"), e("A").swap())
-    }
-
-    @Test
-    fun `swap different`() {
-        assertEquals(
-            SecurityLattice(Component("B"), Component("A")),
-            SecurityLattice(Component("A"), Component("B")).swap()
-        )
+        assertEquals(e("A").integrityComponent, e("A").swap().confidentialityComponent)
+        assertEquals(e("A").confidentialityComponent, e("A").swap().integrityComponent)
     }
 
     @Nested

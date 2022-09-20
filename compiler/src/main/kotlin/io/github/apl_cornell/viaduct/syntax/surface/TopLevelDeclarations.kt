@@ -77,32 +77,32 @@ class FunctionDeclarationNode(
         keyword("fun") *
             (labelParameters?.braced() ?: Document("")) *
             name +
-            (pcLabel?.let { listOf(it).braced() } ?: Document("")) *
-            parameters.tupled() * (labelConstraints?.braced() ?: Document("")) * body
+            parameters.tupled() * (labelConstraints?.braced() ?: Document("")) *
+            (pcLabel?.let { Document(":") + listOf(it).braced() } ?: Document("")) * body
 }
 
 /* Delegation syntax */
 
 /**
  * Declaration of a delegations.
- * @param node1 The label that acts for the other label.
- * @param node2 The other label.
+ * @param from The label that acts for the other label.
+ * @param to The other label.
  * @param delegationKind is either IFC or AUTHORITY depending on what kind it is.
  */
 class DelegationDeclarationNode(
-    val node1: LabelNode,
-    val node2: LabelNode,
+    val from: LabelNode,
+    val to: LabelNode,
     val delegationKind: DelegationKind,
     val delegationProjection: DelegationProjection,
     override val sourceLocation: SourceLocation,
     override val comment: String?
 ) : TopLevelDeclarationNode() {
     override fun toDocumentWithoutComment(): Document =
-        keyword("delegation:") * listOf(node1).braced() *
+        keyword("delegation:") * listOf(from).braced() *
             (
                 when (delegationKind) {
-                    DelegationKind.AUTHORITY -> "=>"
+                    DelegationKind.AUTHORITY -> "trusts"
                     DelegationKind.IFC -> ":>"
                 }
-                ) * listOf(node2).braced() * "for" * delegationProjection
+                ) * listOf(to).braced() * "for" * delegationProjection
 }

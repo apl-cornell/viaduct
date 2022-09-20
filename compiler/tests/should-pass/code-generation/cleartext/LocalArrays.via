@@ -1,9 +1,9 @@
-host alice : {A}
-host bob   : {B}
+host alice
+host bob
 
 fun main() {
-    val a = Array[int]{A}(10);
-    val b = Array[int]{B}(10);
+    val a = Array[int]{alice}(10);
+    val b = Array[int]{bob}(10);
 
     for (var i: int = 0; i < 10; i += 1) {
         a[i] = i * 50;

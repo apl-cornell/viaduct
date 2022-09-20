@@ -256,7 +256,7 @@ class InformationFlowAnalysis private constructor(
             }
 
             is LabelMeet -> {
-                lhs.interpretAsVariable(node).join(rhs.interpretAsVariable(node))
+                lhs.interpretAsVariable(node).meet(rhs.interpretAsVariable(node))
             }
 
             is LabelOr -> {
@@ -336,13 +336,13 @@ class InformationFlowAnalysis private constructor(
                     yieldAll((expression to from) flowsTo from.swap())
                     yieldAll((expression to to) flowsTo to.swap())
                     yieldAll((this@flowsTo to to) flowsTo outputLabel)
-                    /*when (this@flowsTo) {
+                    when (this@flowsTo) {
                         is DeclassificationNode ->
-                            yieldAll((expression to from) confidentialityFlowsTo to)
+                            yieldAll((expression to from) integrityFlowsTo to)
 
                         is EndorsementNode ->
-                            yieldAll((expression to from) integrityFlowsTo to)
-                    }*/
+                            yieldAll((expression to from) confidentialityFlowsTo to)
+                    }
                 }
             }
 
@@ -352,7 +352,7 @@ class InformationFlowAnalysis private constructor(
                 // Host learns the current pc
                 sequence {
                     yieldAll(pcFlowsTo(hostLabel))
-                    yieldAll((host to hostLabel) flowsTo outputLabel)
+                    yieldAll((this@flowsTo to hostLabel) flowsTo outputLabel)
                 }
             }
         }
@@ -436,23 +436,9 @@ class InformationFlowAnalysis private constructor(
                             val parameter = nameAnalysis.parameter(it)
                             // parameters are interpreted as label variables, literals are still literals
                             val parameterLabel: LabelTerm =
-                                when (
-                                    val parameterLabelExpression =
-                                        parameter.objectType.labelArguments!!.first().value
-                                ) {
-                                    is LabelLiteral -> {
-                                        term(parameterLabelExpression.interpret())
-                                    }
+                                parameter.objectType.labelArguments!!.first().value
+                                    .interpretAsVariable(this@constraints)
 
-                                    is LabelParameter -> {
-                                        parameterLabelExpression.interpretAsVariable(this@constraints)
-                                    }
-
-                                    else -> {
-                                        assert(false)
-                                        term(parameterLabelExpression.interpret())
-                                    }
-                                }
                             when (it) {
                                 is ExpressionArgumentNode -> {
                                     it.expression flowsTo parameterLabel
@@ -479,8 +465,8 @@ class InformationFlowAnalysis private constructor(
                         functionDeclaration.labelConstraints.flatMap {
                             // this has to be IFC delegations
                             assert(it.delegationKind == DelegationKind.IFC)
-                            (it to it.node1.value.interpretAsVariable(this@constraints)) flowsTo
-                                it.node2.value.interpretAsVariable(this@constraints)
+                            (this@constraints to it.from.value.interpretAsVariable(this@constraints)) flowsTo
+                                it.to.value.interpretAsVariable(this@constraints)
                         }
                     )
                 }
@@ -576,7 +562,8 @@ class InformationFlowAnalysis private constructor(
                             )
                         )
                     )
-                })
+                }
+            )
 
     /** Returns the inferred security label of the [Variable] defined by [node]. */
     fun label(node: VariableDeclarationNode): Label =

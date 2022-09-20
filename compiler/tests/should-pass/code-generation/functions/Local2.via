@@ -1,14 +1,16 @@
-host ed    : {E & F<-}
-host fred  : {F & E<-}
+host ed
+host fred
+assume for <- ed trusts fred
+assume for <- fred trusts ed
 
 fun main() {
     val e : int = input int from ed;
-    val f : int = declassify (input int from fred) to {E ⊓ F};
+    val f : int = declassify (input int from fred) to {ed ⊓ fred};
     g(e, f, val win);
     output win to ed;
     output win to fred;
 }
 
-fun g(e: int, f: int, ret: out bool{E ⊓ F}) {
-    out ret = declassify (e == f) to {E ⊓ F};
+fun g(e: int{ed}, f: int{fred}, ret: out bool{ed ⊓ fred}) {
+    out ret = declassify (e == f) to {ed ⊓ fred};
 }

@@ -1,5 +1,7 @@
-host alice : {A}
-host bob   : {A}
+host alice
+host bob
+assume alice trusts bob
+assume bob trusts alice
 
 fun main() {
     val a : int = input int from alice;
@@ -37,20 +39,20 @@ fun main() {
     output win4 to bob;
 }
 
-fun f0(ret: out bool{A}, a: int, b:int) {
+fun f0(ret: out bool{alice}, a: int{alice}, b:int{bob}) {
     out ret = a == b;
 }
 
-fun f1(a: int, b:int, ret: out bool{A}) {
+fun f1(a: int{alice}, b:int{alice}, ret: out bool{alice}) {
     out ret = a == b;
 }
 
-fun f2(c: int, d:int, a: out bool{A}, b: out bool{A}) {
+fun f2(c: int{alice}, d:int{alice}, a: out bool{alice}, b: out bool{alice}) {
     out a = c == d;
     out b = a;
 }
 
-fun f3(a: int, b:int, ret: out bool{A}) {
+fun f3(a: int{alice}, b:int{alice}, ret: out bool{alice}) {
     val tmp: bool = a == b;
     out ret = tmp;
 }

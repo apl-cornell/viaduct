@@ -18,7 +18,6 @@ import io.github.apl_cornell.viaduct.security.LabelParameter
 import io.github.apl_cornell.viaduct.security.LabelTop
 import io.github.apl_cornell.viaduct.security.PolymorphicPrincipal
 
-
 class Rewrite(private val rewrites: Map<PrincipalComponent, LabelConstant>) {
 
     /**
@@ -48,23 +47,27 @@ class Rewrite(private val rewrites: Map<PrincipalComponent, LabelConstant>) {
         when (l) {
             is LabelParameter -> {
                 val confidentialityRewrite =
-                    LabelConfidentiality(rewrites[ConfidentialityComponent(PolymorphicPrincipal(l.name))]!!.joinOfMeets
-                        .map { meet ->
-                            meet.map { LabelLiteral(((it as ConfidentialityComponent).principal as HostPrincipal).host) }
-                                .reduceOrNull<LabelExpression, LabelExpression> { acc, e -> LabelAnd(acc, e) }
-                                ?: LabelTop
-                        }
-                        .reduceOrNull { acc, e -> LabelOr(acc, e) } ?: LabelBottom)
+                    LabelConfidentiality(
+                        rewrites[ConfidentialityComponent(PolymorphicPrincipal(l.name))]!!.joinOfMeets
+                            .map { meet ->
+                                meet.map { LabelLiteral(((it as ConfidentialityComponent).principal as HostPrincipal).host) }
+                                    .reduceOrNull<LabelExpression, LabelExpression> { acc, e -> LabelAnd(acc, e) }
+                                    ?: LabelTop
+                            }
+                            .reduceOrNull { acc, e -> LabelOr(acc, e) } ?: LabelBottom
+                    )
 
                 val integrityRewrite =
-                    LabelIntegrity(rewrites[IntegrityComponent(PolymorphicPrincipal(l.name))]!!.joinOfMeets
-                        .map { meet ->
-                            meet
-                                .map { LabelLiteral(((it as IntegrityComponent).principal as HostPrincipal).host) }
-                                .reduceOrNull<LabelExpression, LabelExpression> { acc, e -> LabelAnd(acc, e) }
-                                ?: LabelTop
-                        }
-                        .reduceOrNull { acc, e -> LabelOr(acc, e) } ?: LabelBottom)
+                    LabelIntegrity(
+                        rewrites[IntegrityComponent(PolymorphicPrincipal(l.name))]!!.joinOfMeets
+                            .map { meet ->
+                                meet
+                                    .map { LabelLiteral(((it as IntegrityComponent).principal as HostPrincipal).host) }
+                                    .reduceOrNull<LabelExpression, LabelExpression> { acc, e -> LabelAnd(acc, e) }
+                                    ?: LabelTop
+                            }
+                            .reduceOrNull { acc, e -> LabelOr(acc, e) } ?: LabelBottom
+                    )
 
                 LabelAnd(confidentialityRewrite, integrityRewrite)
             }

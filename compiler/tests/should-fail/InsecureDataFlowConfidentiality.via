@@ -5,4 +5,4 @@ fun main() {
     val public: int{A->} = secret;
 }
 
-host alice : {A}
+host A

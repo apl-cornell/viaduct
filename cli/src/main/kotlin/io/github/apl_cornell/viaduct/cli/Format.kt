@@ -30,7 +30,6 @@ class Format : CliktCommand(help = "Pretty print source program") {
             elaborated.specialize()
         }
 
-
         output.println(if (elaborate) specialized else program)
     }
 }

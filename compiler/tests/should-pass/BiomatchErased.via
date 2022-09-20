@@ -31,10 +31,12 @@ fun main() {
         }
     }
 
-    val result: int  = declassify min_dist to {A ⊓ B};
+    val result: int  = declassify min_dist to {alice ⊓ bob};
     output result to alice;
     output result to bob;
 }
 
-host alice: {A & B<-}
-host bob: {B & A<-}
+host alice
+host bob
+assume for <- alice trusts bob
+assume for <- bob trusts alice

@@ -36,7 +36,8 @@ class FreeDistributiveLatticeCongruence<A>(
     ): Boolean =
         first.lessThanOrEqualTo(
             second,
-            congruence.map { FreeDistributiveLattice.LessThanOrEqualTo(it.first, it.second) })
+            congruence.map { FreeDistributiveLattice.LessThanOrEqualTo(it.first, it.second) }
+        )
     /*equals(first.meet(second), first)*/
 
     /**

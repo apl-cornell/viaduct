@@ -147,8 +147,8 @@ class FunctionDeclarationNode(
  *
  */
 class DelegationDeclarationNode(
-    val node1: LabelNode,
-    val node2: LabelNode,
+    val from: LabelNode,
+    val to: LabelNode,
     val delegationKind: DelegationKind,
     val delegationProjection: DelegationProjection,
     override val sourceLocation: SourceLocation
@@ -156,28 +156,30 @@ class DelegationDeclarationNode(
 
     // TODO: WHERE TO WE PUT THIS?
     val congruences = {
-        var node1Confidentiality: LabelComponent =
-            node1.value.interpret().confidentialityComponent
-        var node1Integrity: LabelComponent = node1.value.interpret().integrityComponent
-        var node2Confidentiality: LabelComponent =
-            node2.value.interpret().confidentialityComponent
-        var node2Integrity: LabelComponent = node2.value.interpret().integrityComponent
+        var fromConfidentiality: LabelComponent =
+            from.value.interpret().confidentialityComponent
+        var fromIntegrity: LabelComponent = from.value.interpret().integrityComponent
+        var toConfidentiality: LabelComponent =
+            to.value.interpret().confidentialityComponent
+        var toIntegrity: LabelComponent = to.value.interpret().integrityComponent
 
-        if (delegationKind == DelegationKind.IFC) {
-            node1Confidentiality = node2Confidentiality.also { node2Confidentiality = node1Confidentiality }
+        fromConfidentiality = toConfidentiality.also { toConfidentiality = fromConfidentiality }
+
+        if (delegationKind == DelegationKind.AUTHORITY) {
+            fromIntegrity = toIntegrity.also { toIntegrity = fromIntegrity }
         }
 
         when (delegationProjection) {
             DelegationProjection.CONFIDENTIALITY ->
-                listOf(Pair(node1Confidentiality, node2Confidentiality))
+                listOf(Pair(fromConfidentiality, toConfidentiality))
 
             DelegationProjection.INTEGRITY ->
-                listOf(Pair(node1Integrity, node2Integrity))
+                listOf(Pair(fromIntegrity, toIntegrity))
 
             DelegationProjection.BOTH ->
                 listOf(
-                    Pair(node1Confidentiality, node2Confidentiality),
-                    Pair(node1Integrity, node2Integrity)
+                    Pair(fromConfidentiality, toConfidentiality),
+                    Pair(fromIntegrity, toIntegrity)
                 )
         }
     }
@@ -187,8 +189,8 @@ class DelegationDeclarationNode(
 
     override fun toSurfaceNode(metadata: Metadata): io.github.apl_cornell.viaduct.syntax.surface.DelegationDeclarationNode =
         io.github.apl_cornell.viaduct.syntax.surface.DelegationDeclarationNode(
-            node1,
-            node2,
+            from,
+            to,
             delegationKind,
             delegationProjection,
             sourceLocation,
@@ -196,5 +198,5 @@ class DelegationDeclarationNode(
         )
 
     override fun copy(children: List<Node>): DelegationDeclarationNode =
-        DelegationDeclarationNode(node1, node2, delegationKind, delegationProjection, sourceLocation)
+        DelegationDeclarationNode(from, to, delegationKind, delegationProjection, sourceLocation)
 }

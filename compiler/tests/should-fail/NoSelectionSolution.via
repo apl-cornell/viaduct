@@ -1,8 +1,11 @@
 /* NoSelectionSolutionError */
 
-host alice : {A & B<-}
-host bob   : {B & A<-}
-host chuck : {A & B}
+host alice
+host bob
+host chuck
+assume for <- alice trusts bob
+assume for <- bob trusts alice
+assume alice & bob trusts chuck
 
 fun main() {
     val x: int@YaoABY(server = alice, client = bob) = 1;

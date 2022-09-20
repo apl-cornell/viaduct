@@ -1,0 +1,18 @@
+fun f{X, Y, Z}(a: int{X}, b: int{Y}, c: out int{Z}) where (X <: alice, Y <: bob, alice & bob <: Z) {
+  val a1 : int = endorse a to {X & Y<-} from {X};
+  val b1 : int = endorse b to {Y & X<-} from {Y};
+  out c = a1 + b1;
+}
+
+fun main() {
+  val x : int = input int from alice;
+  val y : int = input int from bob;
+  f(x, y, val z);
+  output z to chuck;
+}
+
+host alice
+host bob
+host chuck
+assume for -> alice & bob trusts chuck
+assume for <- chuck trusts alice & bob

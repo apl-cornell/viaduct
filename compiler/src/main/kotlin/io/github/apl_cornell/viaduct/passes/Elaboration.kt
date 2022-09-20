@@ -6,6 +6,7 @@ import io.github.apl_cornell.viaduct.security.LabelAnd
 import io.github.apl_cornell.viaduct.security.LabelBottom
 import io.github.apl_cornell.viaduct.security.LabelConfidentiality
 import io.github.apl_cornell.viaduct.security.LabelIntegrity
+import io.github.apl_cornell.viaduct.security.LabelParameter
 import io.github.apl_cornell.viaduct.security.LabelTop
 import io.github.apl_cornell.viaduct.syntax.Arguments
 import io.github.apl_cornell.viaduct.syntax.FunctionName
@@ -13,11 +14,13 @@ import io.github.apl_cornell.viaduct.syntax.Host
 import io.github.apl_cornell.viaduct.syntax.JumpLabel
 import io.github.apl_cornell.viaduct.syntax.JumpLabelNode
 import io.github.apl_cornell.viaduct.syntax.LabelNode
+import io.github.apl_cornell.viaduct.syntax.LabelVariable
 import io.github.apl_cornell.viaduct.syntax.Located
 import io.github.apl_cornell.viaduct.syntax.NameMap
 import io.github.apl_cornell.viaduct.syntax.ObjectTypeNode
 import io.github.apl_cornell.viaduct.syntax.ObjectVariable
 import io.github.apl_cornell.viaduct.syntax.ObjectVariableNode
+import io.github.apl_cornell.viaduct.syntax.SourceLocation
 import io.github.apl_cornell.viaduct.syntax.Temporary
 import io.github.apl_cornell.viaduct.syntax.TemporaryNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.Node
@@ -124,8 +127,8 @@ fun SProgramNode.elaborated(): IProgramNode {
             is SDelegationDeclarationNode -> {
                 declarations.add(
                     IDelegationDeclarationNode(
-                        declaration.node1,
-                        declaration.node2,
+                        declaration.from,
+                        declaration.to,
                         declaration.delegationKind,
                         declaration.delegationProjection,
                         declaration.sourceLocation
@@ -144,62 +147,114 @@ fun SProgramNode.elaborated(): IProgramNode {
     }
 
     return Located(this.value.rename(renamer), this.sourceLocation)
-}*/
+}
 
-private fun LabelNode.renameObjects(): LabelNode {
+private fun LabelNode.renameObjects(objectRenames: NameMap<ObjectVariable, ObjectVariable>): LabelNode {
     return this
 }
 
-private fun Arguments<LabelNode>.renameObjects(): Arguments<LabelNode> =
-    Arguments(this.map { it.renameObjects() }, this.sourceLocation)
-
-private fun ObjectTypeNode.renameObjects(): ObjectTypeNode =
-    ObjectTypeNode(className, typeArguments, labelArguments?.renameObjects())
+private fun Arguments<LabelNode>.renameObjects(objectRenames: NameMap<ObjectVariable, ObjectVariable>): Arguments<LabelNode> =
+    Arguments(this.map { it.renameObjects(objectRenames) }, this.sourceLocation)
+*/
+private fun ObjectTypeNode.renameObjects(rename: ObjectVariable, sourceLoc: SourceLocation): ObjectTypeNode {
+    assert(labelArguments == null)
+    return ObjectTypeNode(
+        className, typeArguments,
+        Arguments(
+            listOf(Located(LabelParameter(LabelVariable(rename.name)), sourceLoc)),
+            sourceLocation
+        )
+    )
+}
 
 private class FunctionElaborator(val nameGenerator: FreshNameGenerator) {
     fun elaborate(functionDecl: SFunctionDeclarationNode): IFunctionDeclarationNode {
-        val objectRenames = functionDecl.parameters.fold(NameMap<ObjectVariable, ObjectVariable>()) { map, parameter ->
+        val objectRenames = functionDecl.parameters.fold(
+            NameMap<ObjectVariable, ObjectVariable>()
+        ) { map, parameter ->
             val newName = ObjectVariable(nameGenerator.getFreshName(parameter.name.value.name))
             map.put(parameter.name, newName)
         }
+
+        // when label parameters are not explicitly defined, create label parameters with the same name as variables.
+        /*val verbose = functionDecl.labelParameters != null*/
 
         val elaboratedParameters = functionDecl.parameters.map { parameter ->
             IParameterNode(
                 Located(objectRenames[parameter.name], parameter.name.sourceLocation),
                 parameter.parameterDirection,
-                parameter.objectType.renameObjects(),
+                /*if (verbose) parameter.objectType
+                else parameter.objectType.renameObjects(objectRenames[parameter.name], parameter.sourceLocation)*/
+                parameter.objectType,
                 parameter.protocol,
                 parameter.sourceLocation
             )
         }
 
         val delegations: Arguments<IDelegationDeclarationNode> =
-            if (functionDecl.labelConstraints == null) {
-                Arguments(listOf(), functionDecl.name.sourceLocation)
-            } else {
-                Arguments(
+            Arguments(
+                if (functionDecl.labelConstraints == null) {
+                    listOf()
+                } else {
                     functionDecl.labelConstraints.map {
                         IDelegationDeclarationNode(
-                            it.node1,
-                            it.node2,
+                            it.from,
+                            it.to,
                             it.delegationKind,
                             it.delegationProjection,
                             it.sourceLocation
                         )
-                    },
-                    functionDecl.name.sourceLocation
-                )
-            }
-        // TODO: remove default pc label when we have pc label ready
+                    }
+                } /*+
+                    if (!verbose) {
+                        functionDecl.parameters
+                            .filter {
+                                it.objectType.labelArguments != null
+                            }
+                            .map {
+                                val labelParameter =
+                                    LabelNode(
+                                        LabelParameter(LabelVariable(objectRenames[it.name].name)),
+                                        it.sourceLocation
+                                    )
+                                when (it.parameterDirection) {
+                                    ParameterDirection.IN ->
+                                        IDelegationDeclarationNode(
+                                            labelParameter,
+                                            it.objectType.labelArguments!!.first(),
+                                            DelegationKind.IFC,
+                                            DelegationProjection.BOTH,
+                                            it.sourceLocation
+                                        )
+
+                                    ParameterDirection.OUT ->
+                                        IDelegationDeclarationNode(
+                                            it.objectType.labelArguments!!.first(),
+                                            labelParameter,
+                                            DelegationKind.IFC,
+                                            DelegationProjection.BOTH,
+                                            it.sourceLocation
+                                        )
+                                }
+                            }
+                    } else {
+                        listOf()
+                    }*/, functionDecl.name.sourceLocation
+            )
+        // TODO: remove default pc label when we have pc label inference ready
         return IFunctionDeclarationNode(
             functionDecl.name,
-            functionDecl.labelParameters ?: Arguments(functionDecl.name.sourceLocation),
+            functionDecl.labelParameters ?: Arguments(
+                /*objectRenames.values.map { LabelVariableNode(LabelVariable(it.name), functionDecl.sourceLocation) }*/
+                listOf(),
+                functionDecl.name.sourceLocation
+            ),
             Arguments(elaboratedParameters, functionDecl.parameters.sourceLocation),
             delegations,
             functionDecl.pcLabel ?: LabelNode(
                 LabelAnd(LabelIntegrity(LabelBottom), LabelConfidentiality(LabelTop)),
                 functionDecl.sourceLocation
-            ).renameObjects(),
+            ),
             StatementElaborator(nameGenerator, objectRenames = objectRenames).elaborate(functionDecl.body),
             functionDecl.sourceLocation
         )
@@ -398,7 +453,7 @@ private class StatementElaborator(
 
                             IDeclarationNode(
                                 ObjectVariableNode(newName, stmt.variable.sourceLocation),
-                                initializer.objectType.renameObjects(),
+                                initializer.objectType,
                                 newArguments,
                                 initializer.protocol,
                                 stmt.sourceLocation
@@ -432,7 +487,7 @@ private class StatementElaborator(
                         when (val rhs = stmt.rhs) {
                             is SConstructorCallNode ->
                                 IOutParameterConstructorInitializerNode(
-                                    rhs.objectType.renameObjects(),
+                                    rhs.objectType,
                                     Arguments(
                                         rhs.arguments.map { it.toAnf(bindings).toAtomic(bindings) },
                                         rhs.arguments.sourceLocation

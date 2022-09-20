@@ -18,6 +18,7 @@ import io.github.apl_cornell.viaduct.syntax.intermediate.AtomicExpressionNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.BlockNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.DeclarationNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.DeclassificationNode
+import io.github.apl_cornell.viaduct.syntax.intermediate.DelegationDeclarationNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.EndorsementNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.ExpressionNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.FunctionArgumentNode
@@ -50,6 +51,7 @@ fun ProgramNode.specialize(): ProgramNode {
             .filterIsInstance<HostDeclarationNode>()
             .map { hostDecl -> hostDecl.deepCopy() as HostDeclarationNode }
     )
+    newDeclarations.addAll(this.declarations.filterIsInstance<DelegationDeclarationNode>())
     newDeclarations.addAll(newFunctions)
     newDeclarations.add(
         FunctionDeclarationNode(
@@ -90,7 +92,6 @@ private class Specializer(
 
     // map from new function to old function name
     private val reverseContext: MutableMap<FunctionName, Pair<FunctionName, List<Label>>> = mutableMapOf()
-
 
     private fun ObjectTypeNode.specialize(rewrites: Rewrite): ObjectTypeNode =
         ObjectTypeNode(
@@ -264,25 +265,29 @@ private class Specializer(
 // find the unspecialized function declaration
             val oldFunction = functionMap[oldName]!!
             // construct the rewrite map with labels that are already specialized
-            val rewrite = Rewrite(oldFunction.labelParameters
-                .map {
-                    (PolymorphicPrincipal(it.value)
-                        to callsiteRewrite.rewrite(
-                        informationFlowAnalysis.label(
-                            oldFunctionCallNode,
-                            it.value
-                        )
-                    ))
-                }
+            val rewrite = Rewrite(
+                oldFunction.labelParameters
+                    .map {
+                        (
+                            PolymorphicPrincipal(it.value)
+                                to callsiteRewrite.rewrite(
+                                    informationFlowAnalysis.label(
+                                        oldFunctionCallNode,
+                                        it.value
+                                    )
+                                )
+                            )
+                    }
 // break into components
-                .flatMap {
-                    listOf(
-                        (ConfidentialityComponent(it.first as Principal) to it.second.confidentialityComponent),
-                        (IntegrityComponent(it.first as Principal) to it.second.integrityComponent)
-                    )
-                }
+                    .flatMap {
+                        listOf(
+                            (ConfidentialityComponent(it.first as Principal) to it.second.confidentialityComponent),
+                            (IntegrityComponent(it.first as Principal) to it.second.integrityComponent)
+                        )
+                    }
 // make it a map
-                .toMap())
+                    .toMap()
+            )
 // then specialize
 // TODO: Want to check label parameters match rewrite keys
             newFunctions.add(oldFunction.specialize(rewrite, newName))

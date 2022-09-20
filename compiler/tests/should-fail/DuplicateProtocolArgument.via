@@ -1,6 +1,6 @@
 /* NameClashError */
 
-host alice : {A}
+host alice
 
 fun main() {
     val x: int@Local(host = alice, host = alice) = 0;

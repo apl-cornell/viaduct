@@ -1,6 +1,7 @@
 package io.github.apl_cornell.viaduct.passes
 
 import com.squareup.kotlinpoet.FileSpec
+import io.github.apl_cornell.viaduct.algebra.FreeDistributiveLattice
 import io.github.apl_cornell.viaduct.analysis.InformationFlowAnalysis
 import io.github.apl_cornell.viaduct.analysis.descendantsIsInstance
 import io.github.apl_cornell.viaduct.backends.Backend
@@ -12,6 +13,8 @@ import io.github.apl_cornell.viaduct.parsing.parse
 import io.github.apl_cornell.viaduct.prettyprinting.Document
 import io.github.apl_cornell.viaduct.prettyprinting.PrettyPrintable
 import io.github.apl_cornell.viaduct.prettyprinting.plus
+import io.github.apl_cornell.viaduct.security.LabelComponent
+import io.github.apl_cornell.viaduct.security.SecurityLattice
 import io.github.apl_cornell.viaduct.selection.ProtocolSelection
 import io.github.apl_cornell.viaduct.selection.SelectionProblemSolver
 import io.github.apl_cornell.viaduct.selection.SimpleCostEstimator
@@ -51,6 +54,19 @@ fun SourceFile.compile(
 
         // Dump label constraint graph.
         saveLabelConstraintGraph?.invoke(InformationFlowAnalysis.get(elaborated)::exportConstraintGraph)
+        // Dump program annotated with inferred labels.
+        if (saveInferredLabels != null) {
+            // val ifcAnalysis = InformationFlowAnalysis.get(elaborated)
+            val labelMetadata: Metadata =
+                (
+                    elaborated.descendantsIsInstance<LetNode>()
+                        .map { it to SecurityLattice.Bounds<LabelComponent>(FreeDistributiveLattice.bounds()).weakest } +
+                        elaborated.descendantsIsInstance<DeclarationNode>()
+                            .map { it to SecurityLattice.Bounds<LabelComponent>(FreeDistributiveLattice.bounds()).weakest }
+                    ).toMap()
+            saveInferredLabels.dumpProgramMetadata(elaborated, labelMetadata)
+        }
+
         // Perform static checks.
         elaborated.check()
 
@@ -60,6 +76,17 @@ fun SourceFile.compile(
     }
     // Dump label constraint graph.
     saveLabelConstraintGraph?.invoke(InformationFlowAnalysis.get(program)::exportConstraintGraph)
+    if (saveInferredLabels != null) {
+        // val ifcAnalysis = InformationFlowAnalysis.get(elaborated)
+        val labelMetadata: Metadata =
+            (
+                program.descendantsIsInstance<LetNode>()
+                    .map { it to SecurityLattice.Bounds<LabelComponent>(FreeDistributiveLattice.bounds()).weakest } +
+                    program.descendantsIsInstance<DeclarationNode>()
+                        .map { it to SecurityLattice.Bounds<LabelComponent>(FreeDistributiveLattice.bounds()).weakest }
+                ).toMap()
+        saveInferredLabels.dumpProgramMetadata(program, labelMetadata)
+    }
 
     // Dump program annotated with inferred labels.
     if (saveInferredLabels != null) {
@@ -76,7 +103,6 @@ fun SourceFile.compile(
 
     // Check the monomorphized program
     program.check()
-
 
     // Select protocols.
     val protocolFactory = backend.protocolFactory(program)

@@ -498,6 +498,8 @@ class NameAnalysis private constructor(private val tree: Tree<Node, ProgramNode>
             }
         }
 
+        fun LabelNode.check(Set<Host>, Set<LabelVariable>) = TODO()
+
         fun check(node: Node) {
             // Check that name references are valid
             when (node) {
@@ -553,6 +555,11 @@ class NameAnalysis private constructor(private val tree: Tree<Node, ProgramNode>
                     node.hostDeclarations
                     node.functionDeclarations
                 }
+            }
+            // Check that LabelVariables and Hosts area declared
+            when (node) {
+                is LetNode -> TODO()
+                is DeclarationNode -> TODO()
             }
             // Check the children
             node.children.forEach(::check)

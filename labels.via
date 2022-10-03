@@ -2,6 +2,46 @@ host alice
 
 host bob
 
+delegation: {alice} trusts {bob} for Integrity
+
+delegation: {bob} trusts {alice} for Integrity
+
 fun {} main() {} :{(⊥<- & ⊤->)} {
-    
+    /* {alice-> ∧ ⊤<-} */
+    let $tmp = input int from alice;
+    /* {alice-> ∧ alice<-} */
+    let $tmp_1 = endorse $tmp to {alice} from {alice};
+    /* {alice-> ∧ alice<-} */
+    val a: int{alice} = $tmp_1;
+    /* {bob-> ∧ ⊤<-} */
+    let $tmp_2 = input int from bob;
+    /* {bob-> ∧ bob<-} */
+    let $tmp_3 = endorse $tmp_2 to {bob} from {bob};
+    /* {bob-> ∧ bob<-} */
+    val b: int{bob} = $tmp_3;
+    /* {(alice ∧ bob)-> ∧ (alice ∧ bob)<-} */
+    var bob_richer: bool{(alice & bob)} = false;
+    /* {alice-> ∧ (alice ∧ bob)<-} */
+    let $tmp_4 = a;
+    /* {bob-> ∧ (alice ∧ bob)<-} */
+    let $tmp_5 = b;
+    /* {(alice ∧ bob)-> ∧ (alice ∧ bob)<-} */
+    let $tmp_6 = ($tmp_4 <= $tmp_5);
+    if ($tmp_6) {
+        bob_richer = true;
+    } else {
+        
+    }
+    /* {(alice ∧ bob)-> ∧ ⊤<-} */
+    let $tmp_7 = bob_richer;
+    /* {(alice ∨ bob)-> ∧ (alice ∧ bob)<-} */
+    let $tmp_8 = declassify $tmp_7 to {(alice | bob)};
+    /* {(alice ∨ bob)-> ∧ (alice ∧ bob)<-} */
+    val bob_richer_decl: bool = $tmp_8;
+    /* {(alice ∨ bob)-> ∧ alice<-} */
+    let $tmp_9 = bob_richer_decl;
+    output $tmp_9 to alice;
+    /* {(alice ∨ bob)-> ∧ bob<-} */
+    let $tmp_10 = bob_richer_decl;
+    output $tmp_10 to bob;
 }

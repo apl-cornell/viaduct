@@ -336,6 +336,7 @@ class InformationFlowAnalysis private constructor(
                     yieldAll((expression to from) flowsTo from.swap())
                     yieldAll((expression to to) flowsTo to.swap())
                     yieldAll((this@flowsTo to to) flowsTo outputLabel)
+                    // TODO: expression should flows to from label. it is causing rewrite map bug currently
                     when (this@flowsTo) {
                         is DeclassificationNode ->
                             yieldAll((expression to from) integrityFlowsTo to)

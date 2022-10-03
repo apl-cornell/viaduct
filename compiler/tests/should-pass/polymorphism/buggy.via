@@ -1,0 +1,18 @@
+fun buggy{X, Y, Z}(a: int{X}, b: int{Y}, c: out int{Z}) where (X ⊔ Y <: Z) {
+  buggy(b, a, out c);
+  buggy(a + b, a, out c);
+  buggy(b, a + b, out c);
+}
+
+fun main() {
+  val x : int{alice} = input int from alice;
+  val y : int{bob} = input int from bob;
+  buggy(x, y, val z);
+  output declassify z to {bob} to bob;
+  output declassify z to {alice} to alice;
+}
+
+host alice
+host bob
+assume for <- alice trusts bob
+assume for <- bob trusts alice

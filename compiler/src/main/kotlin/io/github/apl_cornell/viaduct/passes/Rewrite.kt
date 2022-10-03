@@ -46,6 +46,8 @@ class Rewrite(private val rewrites: Map<PrincipalComponent, LabelConstant>) {
     fun rewrite(l: LabelExpression): LabelExpression =
         when (l) {
             is LabelParameter -> {
+                // TODO: Catch nullptr exception or do a dedicated check?
+                // Or we do a pass that checks for undeclared label parameters
                 val confidentialityRewrite =
                     LabelConfidentiality(
                         rewrites[ConfidentialityComponent(PolymorphicPrincipal(l.name))]!!.joinOfMeets

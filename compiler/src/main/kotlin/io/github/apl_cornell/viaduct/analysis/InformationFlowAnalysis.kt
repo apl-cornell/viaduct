@@ -516,7 +516,7 @@ class InformationFlowAnalysis private constructor(
 
             is AssertionNode -> {
                 // Everybody must execute assertions, so [condition] must be public and trusted.
-                // TODO: can we do any better? This seems almost impossible to achieve...
+                // TODO: can we do any better? This seems almost impossible to achieve... Parametrize with hosts
                 condition flowsTo
                     term(SecurityLattice.Bounds<LabelConstant>(LabelConstant.bounds()).bottom)
             }

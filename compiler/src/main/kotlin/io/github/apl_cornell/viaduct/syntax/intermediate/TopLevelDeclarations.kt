@@ -95,7 +95,7 @@ class FunctionDeclarationNode(
     val labelParameters: Arguments<LabelVariableNode>,
     val parameters: Arguments<ParameterNode>,
     val labelConstraints: Arguments<DelegationDeclarationNode>,
-    val pcLabel: LabelNode?,
+    val pcLabel: LabelNode,
     val body: BlockNode,
     override val sourceLocation: SourceLocation
 ) : TopLevelDeclarationNode() {
@@ -149,13 +149,14 @@ class FunctionDeclarationNode(
 class DelegationDeclarationNode(
     val from: LabelNode,
     val to: LabelNode,
+    // TODO: remove Delegation Kind and use subclass
     val delegationKind: DelegationKind,
     val delegationProjection: DelegationProjection,
     override val sourceLocation: SourceLocation
 ) : TopLevelDeclarationNode() {
 
     // TODO: WHERE TO WE PUT THIS?
-    val congruences = {
+    fun congruences() {
         var fromConfidentiality: LabelComponent =
             from.value.interpret().confidentialityComponent
         var fromIntegrity: LabelComponent = from.value.interpret().integrityComponent

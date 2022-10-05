@@ -9,7 +9,7 @@ import io.github.apl_cornell.viaduct.security.HostPrincipal
 import io.github.apl_cornell.viaduct.security.IntegrityComponent
 import io.github.apl_cornell.viaduct.security.Label
 import io.github.apl_cornell.viaduct.security.Principal
-import io.github.apl_cornell.viaduct.syntax.intermediate.DelegationDeclarationNode
+import io.github.apl_cornell.viaduct.syntax.intermediate.AuthorityDelegationDeclarationNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.HostDeclarationNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.ProgramNode
 
@@ -18,7 +18,7 @@ class HostTrustConfiguration(val program: ProgramNode) {
 
     val congruence: FreeDistributiveLatticeCongruence<Component<Principal>> =
         FreeDistributiveLatticeCongruence(
-            program.filterIsInstance<DelegationDeclarationNode>()
+            program.filterIsInstance<AuthorityDelegationDeclarationNode>()
                 .flatMap { it.congruences() } +
                 program.filterIsInstance<HostDeclarationNode>().map {
                     Pair(

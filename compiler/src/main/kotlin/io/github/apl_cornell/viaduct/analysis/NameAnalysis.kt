@@ -6,22 +6,38 @@ import io.github.apl_cornell.viaduct.attributes.circularAttribute
 import io.github.apl_cornell.viaduct.attributes.collectedAttribute
 import io.github.apl_cornell.viaduct.errors.IncorrectNumberOfArgumentsError
 import io.github.apl_cornell.viaduct.errors.NameClashError
+import io.github.apl_cornell.viaduct.errors.UndefinedHostError
+import io.github.apl_cornell.viaduct.errors.UndefinedLabelVariableError
 import io.github.apl_cornell.viaduct.errors.UndefinedNameError
+import io.github.apl_cornell.viaduct.security.LabelAnd
+import io.github.apl_cornell.viaduct.security.LabelConfidentiality
+import io.github.apl_cornell.viaduct.security.LabelExpression
+import io.github.apl_cornell.viaduct.security.LabelIntegrity
+import io.github.apl_cornell.viaduct.security.LabelJoin
+import io.github.apl_cornell.viaduct.security.LabelLiteral
+import io.github.apl_cornell.viaduct.security.LabelMeet
+import io.github.apl_cornell.viaduct.security.LabelOr
+import io.github.apl_cornell.viaduct.security.LabelParameter
 import io.github.apl_cornell.viaduct.selection.FunctionVariable
 import io.github.apl_cornell.viaduct.syntax.FunctionName
 import io.github.apl_cornell.viaduct.syntax.Host
 import io.github.apl_cornell.viaduct.syntax.JumpLabel
+import io.github.apl_cornell.viaduct.syntax.LabelNode
+import io.github.apl_cornell.viaduct.syntax.LabelVariable
 import io.github.apl_cornell.viaduct.syntax.Located
 import io.github.apl_cornell.viaduct.syntax.Name
 import io.github.apl_cornell.viaduct.syntax.NameMap
 import io.github.apl_cornell.viaduct.syntax.ObjectTypeNode
 import io.github.apl_cornell.viaduct.syntax.ObjectVariable
 import io.github.apl_cornell.viaduct.syntax.ProtocolNode
+import io.github.apl_cornell.viaduct.syntax.SourceLocation
 import io.github.apl_cornell.viaduct.syntax.Temporary
 import io.github.apl_cornell.viaduct.syntax.intermediate.BlockNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.BreakNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.CommunicationNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.DeclarationNode
+import io.github.apl_cornell.viaduct.syntax.intermediate.DeclassificationNode
+import io.github.apl_cornell.viaduct.syntax.intermediate.EndorsementNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.ExpressionNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.FunctionArgumentNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.FunctionCallNode
@@ -264,6 +280,10 @@ class NameAnalysis private constructor(private val tree: Tree<Node, ProgramNode>
     fun enclosingFunction(node: Node): FunctionDeclarationNode =
         node.enclosingFunction!!
 
+    /** Returns label variable declarations in scope of [node]. */
+    private fun Node.labelVariables(): Set<LabelVariable> =
+        enclosingFunction(this).labelParameters.map { it.value }.toSet()
+
     /** Returns the function declaration enclosing [node]. */
     // TODO: this should just return the FunctionNode
     fun enclosingFunctionName(node: Node): FunctionName =
@@ -498,7 +518,57 @@ class NameAnalysis private constructor(private val tree: Tree<Node, ProgramNode>
             }
         }
 
-        fun LabelNode.check(Set<Host>, Set<LabelVariable>) = TODO()
+
+        fun LabelExpression.check(
+            hosts: Set<Host>,
+            labelVariables: Set<LabelVariable>,
+            sourceLocation: SourceLocation
+        ) {
+            when (this) {
+                is LabelLiteral -> {
+                    if (name !in hosts) {
+                        throw UndefinedHostError(name, sourceLocation)
+                    }
+                }
+
+                is LabelParameter -> {
+                    if (name !in labelVariables) {
+                        throw UndefinedLabelVariableError(name, sourceLocation)
+                    }
+                }
+
+                is LabelConfidentiality -> value.check(hosts, labelVariables, sourceLocation)
+                is LabelIntegrity -> value.check(hosts, labelVariables, sourceLocation)
+                is LabelJoin -> {
+                    lhs.check(hosts, labelVariables, sourceLocation)
+                    rhs.check(hosts, labelVariables, sourceLocation)
+                }
+
+                is LabelMeet -> {
+                    lhs.check(hosts, labelVariables, sourceLocation)
+                    rhs.check(hosts, labelVariables, sourceLocation)
+                }
+
+                is LabelAnd -> {
+                    lhs.check(hosts, labelVariables, sourceLocation)
+                    rhs.check(hosts, labelVariables, sourceLocation)
+                }
+
+                is LabelOr -> {
+                    lhs.check(hosts, labelVariables, sourceLocation)
+                    rhs.check(hosts, labelVariables, sourceLocation)
+                }
+
+                else -> {}
+            }
+        }
+
+        /** check if a [LabelNode] has undeclared [Host] or [LabelVariable] */
+        fun LabelNode.check(node: Node) {
+            val hosts = node.hostDeclarations.keys
+            val labelVariables = node.labelVariables()
+            value.check(hosts, labelVariables, sourceLocation)
+        }
 
         fun check(node: Node) {
             // Check that name references are valid
@@ -558,8 +628,22 @@ class NameAnalysis private constructor(private val tree: Tree<Node, ProgramNode>
             }
             // Check that LabelVariables and Hosts area declared
             when (node) {
-                is LetNode -> TODO()
-                is DeclarationNode -> TODO()
+                is DeclarationNode ->
+                    node.objectType.labelArguments?.first()?.check(node)
+
+                is DeclassificationNode -> {
+                    node.fromLabel?.check(node)
+                    node.toLabel.check(node)
+                }
+
+                is EndorsementNode -> {
+                    node.fromLabel.check(node)
+                    node.toLabel?.check(node)
+                }
+
+                is ParameterNode -> {
+                    node.objectType.labelArguments?.first()?.check(node)
+                }
             }
             // Check the children
             node.children.forEach(::check)

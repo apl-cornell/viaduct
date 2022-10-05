@@ -3,7 +3,6 @@ package io.github.apl_cornell.viaduct.syntax.intermediate
 import io.github.apl_cornell.viaduct.security.LabelComponent
 import io.github.apl_cornell.viaduct.security.LabelLiteral
 import io.github.apl_cornell.viaduct.syntax.Arguments
-import io.github.apl_cornell.viaduct.syntax.DelegationKind
 import io.github.apl_cornell.viaduct.syntax.DelegationProjection
 import io.github.apl_cornell.viaduct.syntax.FunctionNameNode
 import io.github.apl_cornell.viaduct.syntax.HostNode
@@ -94,7 +93,7 @@ class FunctionDeclarationNode(
     val name: FunctionNameNode,
     val labelParameters: Arguments<LabelVariableNode>,
     val parameters: Arguments<ParameterNode>,
-    val labelConstraints: Arguments<DelegationDeclarationNode>,
+    val labelConstraints: Arguments<IFCDelegationDeclarationNode>,
     val pcLabel: LabelNode,
     val body: BlockNode,
     override val sourceLocation: SourceLocation
@@ -142,21 +141,28 @@ class FunctionDeclarationNode(
         if (i >= 0 && i < parameters.size) parameters[i] else null
 }
 
+abstract class DelegationDeclarationNode(
+    open val from: LabelNode,
+    open val to: LabelNode,
+    open val delegationProjection: DelegationProjection,
+    override val sourceLocation: SourceLocation
+) : TopLevelDeclarationNode() {
+    abstract fun congruences(): List<Pair<LabelComponent, LabelComponent>>
+    abstract override fun toSurfaceNode(metadata: Metadata): io.github.apl_cornell.viaduct.syntax.surface.DelegationDeclarationNode
+}
+
 /**
  * Declaration of a delegation.
  *
  */
-class DelegationDeclarationNode(
-    val from: LabelNode,
-    val to: LabelNode,
-    // TODO: remove Delegation Kind and use subclass
-    val delegationKind: DelegationKind,
-    val delegationProjection: DelegationProjection,
+class AuthorityDelegationDeclarationNode(
+    override val from: LabelNode,
+    override val to: LabelNode,
+    override val delegationProjection: DelegationProjection,
     override val sourceLocation: SourceLocation
-) : TopLevelDeclarationNode() {
+) : DelegationDeclarationNode(from, to, delegationProjection, sourceLocation) {
 
-    // TODO: WHERE TO WE PUT THIS?
-    fun congruences() {
+    override fun congruences(): List<Pair<LabelComponent, LabelComponent>> {
         var fromConfidentiality: LabelComponent =
             from.value.interpret().confidentialityComponent
         var fromIntegrity: LabelComponent = from.value.interpret().integrityComponent
@@ -165,12 +171,9 @@ class DelegationDeclarationNode(
         var toIntegrity: LabelComponent = to.value.interpret().integrityComponent
 
         fromConfidentiality = toConfidentiality.also { toConfidentiality = fromConfidentiality }
+        fromIntegrity = toIntegrity.also { toIntegrity = fromIntegrity }
 
-        if (delegationKind == DelegationKind.AUTHORITY) {
-            fromIntegrity = toIntegrity.also { toIntegrity = fromIntegrity }
-        }
-
-        when (delegationProjection) {
+        return when (delegationProjection) {
             DelegationProjection.CONFIDENTIALITY ->
                 listOf(Pair(fromConfidentiality, toConfidentiality))
 
@@ -188,16 +191,67 @@ class DelegationDeclarationNode(
     override val children: Iterable<BlockNode>
         get() = listOf()
 
-    override fun toSurfaceNode(metadata: Metadata): io.github.apl_cornell.viaduct.syntax.surface.DelegationDeclarationNode =
-        io.github.apl_cornell.viaduct.syntax.surface.DelegationDeclarationNode(
+    override fun toSurfaceNode(metadata: Metadata): io.github.apl_cornell.viaduct.syntax.surface.AuthorityDelegationDeclarationNode =
+        io.github.apl_cornell.viaduct.syntax.surface.AuthorityDelegationDeclarationNode(
             from,
             to,
-            delegationKind,
             delegationProjection,
             sourceLocation,
             comment = metadataAsComment(metadata)
         )
 
-    override fun copy(children: List<Node>): DelegationDeclarationNode =
-        DelegationDeclarationNode(from, to, delegationKind, delegationProjection, sourceLocation)
+    override fun copy(children: List<Node>): AuthorityDelegationDeclarationNode =
+        AuthorityDelegationDeclarationNode(from, to, delegationProjection, sourceLocation)
+}
+
+/**
+ * Declaration of a delegation.
+ *
+ */
+class IFCDelegationDeclarationNode(
+    override val from: LabelNode,
+    override val to: LabelNode,
+    override val delegationProjection: DelegationProjection,
+    override val sourceLocation: SourceLocation
+) : DelegationDeclarationNode(from, to, delegationProjection, sourceLocation) {
+
+    override fun congruences(): List<Pair<LabelComponent, LabelComponent>> {
+        var fromConfidentiality: LabelComponent =
+            from.value.interpret().confidentialityComponent
+        var fromIntegrity: LabelComponent = from.value.interpret().integrityComponent
+        var toConfidentiality: LabelComponent =
+            to.value.interpret().confidentialityComponent
+        var toIntegrity: LabelComponent = to.value.interpret().integrityComponent
+
+        fromConfidentiality = toConfidentiality.also { toConfidentiality = fromConfidentiality }
+
+        return when (delegationProjection) {
+            DelegationProjection.CONFIDENTIALITY ->
+                listOf(Pair(fromConfidentiality, toConfidentiality))
+
+            DelegationProjection.INTEGRITY ->
+                listOf(Pair(fromIntegrity, toIntegrity))
+
+            DelegationProjection.BOTH ->
+                listOf(
+                    Pair(fromConfidentiality, toConfidentiality),
+                    Pair(fromIntegrity, toIntegrity)
+                )
+        }
+    }
+
+    override val children: Iterable<BlockNode>
+        get() = listOf()
+
+    override fun toSurfaceNode(metadata: Metadata): io.github.apl_cornell.viaduct.syntax.surface.IFCDelegationDeclarationNode =
+        io.github.apl_cornell.viaduct.syntax.surface.IFCDelegationDeclarationNode(
+            from,
+            to,
+            delegationProjection,
+            sourceLocation,
+            comment = metadataAsComment(metadata)
+        )
+
+    override fun copy(children: List<Node>): IFCDelegationDeclarationNode =
+        IFCDelegationDeclarationNode(from, to, delegationProjection, sourceLocation)
 }

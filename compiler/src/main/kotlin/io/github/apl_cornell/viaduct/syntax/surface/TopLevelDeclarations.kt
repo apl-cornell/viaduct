@@ -6,7 +6,6 @@ import io.github.apl_cornell.viaduct.prettyprinting.plus
 import io.github.apl_cornell.viaduct.prettyprinting.times
 import io.github.apl_cornell.viaduct.prettyprinting.tupled
 import io.github.apl_cornell.viaduct.syntax.Arguments
-import io.github.apl_cornell.viaduct.syntax.DelegationKind
 import io.github.apl_cornell.viaduct.syntax.DelegationProjection
 import io.github.apl_cornell.viaduct.syntax.FunctionNameNode
 import io.github.apl_cornell.viaduct.syntax.HostNode
@@ -67,7 +66,7 @@ class FunctionDeclarationNode(
     val name: FunctionNameNode,
     val labelParameters: Arguments<LabelVariableNode>?,
     val parameters: Arguments<ParameterNode>,
-    val labelConstraints: Arguments<DelegationDeclarationNode>?,
+    val labelConstraints: Arguments<IFCDelegationDeclarationNode>?,
     val pcLabel: LabelNode?,
     val body: BlockNode,
     override val sourceLocation: SourceLocation,
@@ -83,26 +82,44 @@ class FunctionDeclarationNode(
 
 /* Delegation syntax */
 
-/**
- * Declaration of a delegations.
- * @param from The label that acts for the other label.
- * @param to The other label.
- * @param delegationKind is either IFC or AUTHORITY depending on what kind it is.
- */
-class DelegationDeclarationNode(
-    val from: LabelNode,
-    val to: LabelNode,
-    val delegationKind: DelegationKind,
-    val delegationProjection: DelegationProjection,
+abstract class DelegationDeclarationNode(
+    open val from: LabelNode,
+    open val to: LabelNode,
+    open val delegationProjection: DelegationProjection,
     override val sourceLocation: SourceLocation,
     override val comment: String?
-) : TopLevelDeclarationNode() {
+) : TopLevelDeclarationNode()
+
+/**
+ * Declaration of an authority delegation.
+ * @param from The label that acts for the other label.
+ * @param to The other label.
+ */
+class AuthorityDelegationDeclarationNode(
+    override val from: LabelNode,
+    override val to: LabelNode,
+    override val delegationProjection: DelegationProjection,
+    override val sourceLocation: SourceLocation,
+    override val comment: String?
+) : DelegationDeclarationNode(from, to, delegationProjection, sourceLocation, comment) {
     override fun toDocumentWithoutComment(): Document =
         keyword("delegation:") * listOf(from).braced() *
-            (
-                when (delegationKind) {
-                    DelegationKind.AUTHORITY -> "trusts"
-                    DelegationKind.IFC -> ":>"
-                }
-                ) * listOf(to).braced() * "for" * delegationProjection
+            "trusts" * listOf(to).braced() * "for" * delegationProjection
+}
+
+/**
+ * Declaration of an IFC delegation.
+ * @param from The label that acts for the other label.
+ * @param to The other label.
+ */
+class IFCDelegationDeclarationNode(
+    override val from: LabelNode,
+    override val to: LabelNode,
+    override val delegationProjection: DelegationProjection,
+    override val sourceLocation: SourceLocation,
+    override val comment: String?
+) : DelegationDeclarationNode(from, to, delegationProjection, sourceLocation, comment) {
+    override fun toDocumentWithoutComment(): Document =
+        keyword("delegation:") * listOf(from).braced() *
+            ":>" * listOf(to).braced() * "for" * delegationProjection
 }

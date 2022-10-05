@@ -256,24 +256,24 @@ declaration ::=
         location(beginleft, hostright), null);
     :}
   | ASSUME:begin FOR RARROW label_expr:label1 TRUSTS label_expr:label2 {:
-      RESULT = new DelegationDeclarationNode(
+      RESULT = new AuthorityDelegationDeclarationNode(
         new Located(label1, location(label1left, label1right)),
         new Located(label2, location(label2left, label2right)),
-        DelegationKind.AUTHORITY, DelegationProjection.CONFIDENTIALITY,
+        DelegationProjection.CONFIDENTIALITY,
         location(beginleft, label2right), null);
   :}
   | ASSUME:begin FOR LARROW label_expr:label1 TRUSTS label_expr:label2 {:
-      RESULT = new DelegationDeclarationNode(
+      RESULT = new AuthorityDelegationDeclarationNode(
         new Located(label1, location(label1left, label1right)),
         new Located(label2, location(label2left, label2right)),
-        DelegationKind.AUTHORITY, DelegationProjection.INTEGRITY,
+        DelegationProjection.INTEGRITY,
         location(beginleft, label2right), null);
   :}
   | ASSUME:begin label_expr:label1 TRUSTS label_expr:label2 {:
-      RESULT = new DelegationDeclarationNode(
+      RESULT = new AuthorityDelegationDeclarationNode(
         new Located(label1, location(label1left, label1right)),
         new Located(label2, location(label2left, label2right)),
-        DelegationKind.AUTHORITY, DelegationProjection.BOTH,
+        DelegationProjection.BOTH,
         location(beginleft, label2right), null);
   :}
   ;
@@ -320,10 +320,10 @@ nonempty_ifc_delegation_list ::=
 
 ifc_delegation ::=
   label_expr:label1 FLOWSTO label_expr:label2 {:
-      RESULT = new DelegationDeclarationNode(
+      RESULT = new IFCDelegationDeclarationNode(
         new Located(label1, location(label1left, label1right)),
         new Located(label2, location(label2left, label2right)),
-        DelegationKind.IFC, DelegationProjection.BOTH, location(label1left, label2right), null);
+        DelegationProjection.BOTH, location(label1left, label2right), null);
   :}
   ;
 

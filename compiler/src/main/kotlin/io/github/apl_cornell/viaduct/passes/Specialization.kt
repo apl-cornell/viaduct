@@ -244,7 +244,7 @@ private class Specializer(
                 parameters.sourceLocation
             ),
             Arguments(labelConstraints.sourceLocation),
-            pcLabel?.specialize(rewrites),
+            pcLabel.specialize(rewrites),
             body.specialize(rewrites) as BlockNode,
             sourceLocation
 
@@ -271,11 +271,11 @@ private class Specializer(
                         (
                             PolymorphicPrincipal(it.value)
                                 to callsiteRewrite.rewrite(
-                                    informationFlowAnalysis.label(
-                                        oldFunctionCallNode,
-                                        it.value
-                                    )
+                                informationFlowAnalysis.label(
+                                    oldFunctionCallNode,
+                                    it.value
                                 )
+                            )
                             )
                     }
 // break into components

@@ -33,7 +33,6 @@ import io.github.apl_cornell.viaduct.security.solver2.confidentialityFlowsTo
 import io.github.apl_cornell.viaduct.security.solver2.flowsTo
 import io.github.apl_cornell.viaduct.security.solver2.integrityFlowsTo
 import io.github.apl_cornell.viaduct.security.solver2.term
-import io.github.apl_cornell.viaduct.syntax.DelegationKind
 import io.github.apl_cornell.viaduct.syntax.HasSourceLocation
 import io.github.apl_cornell.viaduct.syntax.HostTrustConfiguration
 import io.github.apl_cornell.viaduct.syntax.Variable
@@ -158,11 +157,7 @@ class InformationFlowAnalysis private constructor(
         get() =
             when (this) {
                 is FunctionDeclarationNode ->
-                    if (this.pcLabel != null) {
-                        term(this.pcLabel.value.interpret())
-                    } else {
-                        term(LabelVariable.PC(pathName))
-                    }
+                    term(this.pcLabel.value.interpret())
 
                 else -> term(LabelVariable.PC(pathName))
             }
@@ -429,7 +424,7 @@ class InformationFlowAnalysis private constructor(
                 sequence {
                     // pc flows to function
                     // TODO: use proper exception class
-                    yieldAll(pcFlowsTo(functionDeclaration.pcLabel!!.value.interpretAsVariable(this@constraints)))
+                    yieldAll(pcFlowsTo(functionDeclaration.pcLabel.value.interpretAsVariable(this@constraints)))
                     // arguments flows to parameters (and the reverse direction for out parameters)
                     yieldAll(
                         arguments.flatMap {
@@ -465,7 +460,6 @@ class InformationFlowAnalysis private constructor(
                     yieldAll(
                         functionDeclaration.labelConstraints.flatMap {
                             // this has to be IFC delegations
-                            assert(it.delegationKind == DelegationKind.IFC)
                             (this@constraints to it.from.value.interpretAsVariable(this@constraints)) flowsTo
                                 it.to.value.interpretAsVariable(this@constraints)
                         }

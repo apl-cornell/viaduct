@@ -6,42 +6,100 @@ delegation: {alice} trusts {bob} for Integrity
 
 delegation: {bob} trusts {alice} for Integrity
 
-fun {} main() {} :{(⊥<- & ⊤->)} {
+fun {} f_1(a: int{(alice-> & alice<-)}, b: int{(bob-> & ⊤<-)}, c: out int{((alice & bob)-> & ⊤<-)}) {} :{⊥} {
     /* {alice-> ∧ ⊤<-} */
-    let $tmp = input int from alice;
-    /* {alice-> ∧ alice<-} */
-    let $tmp_1 = endorse $tmp to {alice} from {alice};
-    /* {alice-> ∧ alice<-} */
-    val a: int{alice} = $tmp_1;
+    let $tmp = a;
     /* {bob-> ∧ ⊤<-} */
-    let $tmp_2 = input int from bob;
-    /* {bob-> ∧ bob<-} */
-    let $tmp_3 = endorse $tmp_2 to {bob} from {bob};
-    /* {bob-> ∧ bob<-} */
-    val b: int{bob} = $tmp_3;
-    /* {(alice ∧ bob)-> ∧ (alice ∧ bob)<-} */
-    var bob_richer: bool{(alice & bob)} = false;
-    /* {alice-> ∧ (alice ∧ bob)<-} */
-    let $tmp_4 = a;
-    /* {bob-> ∧ (alice ∧ bob)<-} */
-    let $tmp_5 = b;
-    /* {(alice ∧ bob)-> ∧ (alice ∧ bob)<-} */
-    let $tmp_6 = ($tmp_4 <= $tmp_5);
-    if ($tmp_6) {
-        bob_richer = true;
-    } else {
-        
-    }
+    let $tmp_1 = b;
+    g_1($tmp, $tmp_1, val gab);
+    /* {bob-> ∧ ⊤<-} */
+    let $tmp_2 = b;
+    /* {alice-> ∧ ⊤<-} */
+    let $tmp_3 = a;
+    g_2($tmp_2, $tmp_3, val gba);
     /* {(alice ∧ bob)-> ∧ ⊤<-} */
-    let $tmp_7 = bob_richer;
-    /* {(alice ∨ bob)-> ∧ (alice ∧ bob)<-} */
-    let $tmp_8 = declassify $tmp_7 to {(alice | bob)};
-    /* {(alice ∨ bob)-> ∧ (alice ∧ bob)<-} */
-    val bob_richer_decl: bool = $tmp_8;
-    /* {(alice ∨ bob)-> ∧ alice<-} */
-    let $tmp_9 = bob_richer_decl;
-    output $tmp_9 to alice;
-    /* {(alice ∨ bob)-> ∧ bob<-} */
-    let $tmp_10 = bob_richer_decl;
-    output $tmp_10 to bob;
+    let $tmp_4 = gab;
+    /* {(alice ∧ bob)-> ∧ ⊤<-} */
+    let $tmp_5 = gba;
+    /* {(alice ∧ bob)-> ∧ ⊤<-} */
+    let $tmp_6 = ($tmp_4 + $tmp_5);
+    out c = $tmp_6;
+}
+
+fun {} g_1(a_1: int{(alice-> & ⊤<-)}, b_1: int{(bob-> & ⊤<-)}, c_1: out int{((alice-> & ⊤<-) ⊔ (bob-> & ⊤<-))}) {} :{⊥} {
+    /* {alice-> ∧ ⊤<-} */
+    let $tmp_7 = a_1;
+    h_1($tmp_7, val ha);
+    /* {bob-> ∧ ⊤<-} */
+    let $tmp_8 = b_1;
+    h_2($tmp_8, val hb);
+    /* {alice-> ∧ ⊤<-} */
+    let $tmp_9 = ha;
+    /* {bob-> ∧ ⊤<-} */
+    let $tmp_10 = hb;
+    /* {(alice ∧ bob)-> ∧ ⊤<-} */
+    let $tmp_11 = ($tmp_9 + $tmp_10);
+    out c_1 = $tmp_11;
+}
+
+fun {} g_2(a_1: int{(bob-> & ⊤<-)}, b_1: int{(alice-> & ⊤<-)}, c_1: out int{((bob-> & ⊤<-) ⊔ (alice-> & ⊤<-))}) {} :{⊥} {
+    /* {bob-> ∧ ⊤<-} */
+    let $tmp_7 = a_1;
+    h_2($tmp_7, val ha);
+    /* {alice-> ∧ ⊤<-} */
+    let $tmp_8 = b_1;
+    h_1($tmp_8, val hb);
+    /* {bob-> ∧ ⊤<-} */
+    let $tmp_9 = ha;
+    /* {alice-> ∧ ⊤<-} */
+    let $tmp_10 = hb;
+    /* {(alice ∧ bob)-> ∧ ⊤<-} */
+    let $tmp_11 = ($tmp_9 + $tmp_10);
+    out c_1 = $tmp_11;
+}
+
+fun {} h_1(a_2: int{(alice-> & ⊤<-)}, c_2: out int{(alice-> & ⊤<-)}) {} :{(alice-> & ⊤<-)} {
+    /* {alice-> ∧ ⊤<-} */
+    let $tmp_12 = a_2;
+    /* {alice-> ∧ ⊤<-} */
+    let $tmp_13 = a_2;
+    /* {alice-> ∧ ⊤<-} */
+    let $tmp_14 = ($tmp_12 + $tmp_13);
+    out c_2 = $tmp_14;
+}
+
+fun {} h_2(a_2: int{(bob-> & ⊤<-)}, c_2: out int{(bob-> & ⊤<-)}) {} :{(bob-> & ⊤<-)} {
+    /* {bob-> ∧ ⊤<-} */
+    let $tmp_12 = a_2;
+    /* {bob-> ∧ ⊤<-} */
+    let $tmp_13 = a_2;
+    /* {bob-> ∧ ⊤<-} */
+    let $tmp_14 = ($tmp_12 + $tmp_13);
+    out c_2 = $tmp_14;
+}
+
+fun {} main() {} :{(⊥<- & ⊤->)} {
+    /* {alice-> ∧ alice<-} */
+    let $tmp_15 = input int from alice;
+    /* {alice-> ∧ alice<-} */
+    val x: int{alice} = $tmp_15;
+    /* {bob-> ∧ bob<-} */
+    let $tmp_16 = input int from bob;
+    /* {bob-> ∧ bob<-} */
+    val y: int{bob} = $tmp_16;
+    /* {alice-> ∧ alice<-} */
+    let $tmp_17 = x;
+    /* {bob-> ∧ ⊤<-} */
+    let $tmp_18 = y;
+    f_1($tmp_17, $tmp_18, val z);
+    /* {(alice ∧ bob)-> ∧ ⊤<-} */
+    let $tmp_19 = z;
+    /* {alice-> ∧ alice<-} */
+    let $tmp_20 = declassify $tmp_19 to {alice};
+    output $tmp_20 to alice;
+    /* {(alice ∧ bob)-> ∧ ⊤<-} */
+    let $tmp_21 = z;
+    /* {bob-> ∧ bob<-} */
+    let $tmp_22 = declassify $tmp_21 to {bob};
+    output $tmp_22 to bob;
 }

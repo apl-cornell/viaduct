@@ -27,11 +27,11 @@ import io.github.apl_cornell.viaduct.syntax.intermediate.Node
 import io.github.apl_cornell.viaduct.util.FreshNameGenerator
 import io.github.apl_cornell.viaduct.syntax.intermediate.AssertionNode as IAssertionNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.AtomicExpressionNode as IAtomicExpressionNode
+import io.github.apl_cornell.viaduct.syntax.intermediate.AuthorityDelegationDeclarationNode as IAuthorityDelegationDeclarationNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.BlockNode as IBlockNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.BreakNode as IBreakNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.DeclarationNode as IDeclarationNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.DeclassificationNode as IDeclassificationNode
-import io.github.apl_cornell.viaduct.syntax.intermediate.DelegationDeclarationNode as IDelegationDeclarationNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.EndorsementNode as IEndorsementNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.ExpressionArgumentNode as IExpressionArgumentNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.ExpressionNode as IExpressionNode
@@ -39,6 +39,7 @@ import io.github.apl_cornell.viaduct.syntax.intermediate.FunctionArgumentNode as
 import io.github.apl_cornell.viaduct.syntax.intermediate.FunctionCallNode as IFunctionCallNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.FunctionDeclarationNode as IFunctionDeclarationNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.HostDeclarationNode as IHostDeclarationNode
+import io.github.apl_cornell.viaduct.syntax.intermediate.IFCDelegationDeclarationNode as IIFCDelegationDeclarationNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.IfNode as IIfNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.InfiniteLoopNode as IInfiniteLoopNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.InputNode as IInputNode
@@ -60,6 +61,7 @@ import io.github.apl_cornell.viaduct.syntax.intermediate.StatementNode as IState
 import io.github.apl_cornell.viaduct.syntax.intermediate.TopLevelDeclarationNode as ITopLevelDeclarationNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.UpdateNode as IUpdateNode
 import io.github.apl_cornell.viaduct.syntax.surface.AssertionNode as SAssertionNode
+import io.github.apl_cornell.viaduct.syntax.surface.AuthorityDelegationDeclarationNode as SAuthorityDelegationDeclarationNode
 import io.github.apl_cornell.viaduct.syntax.surface.BlockNode as SBlockNode
 import io.github.apl_cornell.viaduct.syntax.surface.BreakNode as SBreakNode
 import io.github.apl_cornell.viaduct.syntax.surface.ConstructorCallNode as SConstructorCallNode
@@ -74,6 +76,7 @@ import io.github.apl_cornell.viaduct.syntax.surface.FunctionArgumentNode as SFun
 import io.github.apl_cornell.viaduct.syntax.surface.FunctionCallNode as SFunctionCallNode
 import io.github.apl_cornell.viaduct.syntax.surface.FunctionDeclarationNode as SFunctionDeclarationNode
 import io.github.apl_cornell.viaduct.syntax.surface.HostDeclarationNode as SHostDeclarationNode
+import io.github.apl_cornell.viaduct.syntax.surface.IFCDelegationDeclarationNode as SIFCDelegationDeclarationNode
 import io.github.apl_cornell.viaduct.syntax.surface.IfNode as SIfNode
 import io.github.apl_cornell.viaduct.syntax.surface.InfiniteLoopNode as SInfiniteLoopNode
 import io.github.apl_cornell.viaduct.syntax.surface.InputNode as SInputNode
@@ -125,16 +128,34 @@ fun SProgramNode.elaborated(): IProgramNode {
             }
 
             is SDelegationDeclarationNode -> {
-                declarations.add(
-                    IDelegationDeclarationNode(
-                        declaration.from,
-                        declaration.to,
-                        declaration.delegationKind,
-                        declaration.delegationProjection,
-                        declaration.sourceLocation
-                    )
-                )
+                when (declaration) {
+                    is SAuthorityDelegationDeclarationNode -> {
+                        declarations.add(
+                            IAuthorityDelegationDeclarationNode(
+                                declaration.from,
+                                declaration.to,
+                                declaration.delegationProjection,
+                                declaration.sourceLocation
+                            )
+                        )
+                    }
+
+                    is SIFCDelegationDeclarationNode -> {
+                        declarations.add(
+                            IIFCDelegationDeclarationNode(
+                                declaration.from,
+                                declaration.to,
+                                declaration.delegationProjection,
+                                declaration.sourceLocation
+                            )
+                        )
+                    }
+
+                    else -> {}
+                }
+
             }
+
         }
     }
 
@@ -191,16 +212,15 @@ private class FunctionElaborator(val nameGenerator: FreshNameGenerator) {
             )
         }
 
-        val delegations: Arguments<IDelegationDeclarationNode> =
+        val delegations: Arguments<IIFCDelegationDeclarationNode> =
             Arguments(
                 if (functionDecl.labelConstraints == null) {
                     listOf()
                 } else {
                     functionDecl.labelConstraints.map {
-                        IDelegationDeclarationNode(
+                        IIFCDelegationDeclarationNode(
                             it.from,
                             it.to,
-                            it.delegationKind,
                             it.delegationProjection,
                             it.sourceLocation
                         )

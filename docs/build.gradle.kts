@@ -52,5 +52,6 @@ fun pipenv(vararg arguments: String) {
 /** Runs [command] using `pipenv`. */
 fun pipenvRun(vararg command: String) {
     pipenv("sync")
+    pipenv("clean")
     pipenv("run", *command)
 }

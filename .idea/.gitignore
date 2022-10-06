@@ -31,6 +31,7 @@
 artifacts
 compiler.xml
 jarRepositories.xml
+kotlinc.xml
 modules.xml
 *.iml
 modules

@@ -42,7 +42,8 @@ abstract class Node : TreeNode<Node>, HasSourceLocation, PrettyPrintable {
      * children of this node, however, the nodes in [children] themselves are not copied.
      * This method assumes that [children] contains the correct number and types of nodes.
      */
-    abstract fun copy(children: List<Node> = this.children.toList()): Node
+    // TODO: this should take an iterator
+    abstract fun copy(children: List<Node> = this.children().asSequence().toList()): Node
 
     final override fun toDocument(): Document = toSurfaceNode(mapOf()).toDocument()
 
@@ -57,4 +58,4 @@ abstract class Node : TreeNode<Node>, HasSourceLocation, PrettyPrintable {
 
 /** Like [Node.copy], but recursively copies all descendant nodes also.*/
 fun Node.deepCopy(): Node =
-    this.copy(this.children.toList().map { it.deepCopy() })
+    this.copy(this.children().asSequence().map { it.deepCopy() }.toList())

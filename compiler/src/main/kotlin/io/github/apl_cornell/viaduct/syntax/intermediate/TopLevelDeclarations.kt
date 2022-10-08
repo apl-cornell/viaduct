@@ -10,8 +10,6 @@ import io.github.apl_cornell.viaduct.syntax.ObjectVariableNode
 import io.github.apl_cornell.viaduct.syntax.ParameterDirection
 import io.github.apl_cornell.viaduct.syntax.ProtocolNode
 import io.github.apl_cornell.viaduct.syntax.SourceLocation
-import kotlinx.collections.immutable.PersistentList
-import kotlinx.collections.immutable.toPersistentList
 
 /** A declaration at the top level of a file. */
 sealed class TopLevelDeclarationNode : Node() {
@@ -29,8 +27,8 @@ class HostDeclarationNode(
     val authority: LabelNode,
     override val sourceLocation: SourceLocation
 ) : TopLevelDeclarationNode() {
-    override val children: Iterable<Nothing>
-        get() = listOf()
+    override fun children(): Iterator<Nothing> =
+        iterator { }
 
     override fun toSurfaceNode(metadata: Metadata): io.github.apl_cornell.viaduct.syntax.surface.HostDeclarationNode =
         io.github.apl_cornell.viaduct.syntax.surface.HostDeclarationNode(
@@ -54,8 +52,8 @@ class ParameterNode(
     override val protocol: ProtocolNode?,
     override val sourceLocation: SourceLocation
 ) : Node(), ObjectVariableDeclarationNode {
-    override val children: Iterable<BlockNode>
-        get() = listOf()
+    override fun children(): Iterator<BlockNode> =
+        iterator { }
 
     override fun toSurfaceNode(metadata: Metadata): io.github.apl_cornell.viaduct.syntax.surface.ParameterNode =
         io.github.apl_cornell.viaduct.syntax.surface.ParameterNode(
@@ -92,8 +90,11 @@ class FunctionDeclarationNode(
     val body: BlockNode,
     override val sourceLocation: SourceLocation
 ) : TopLevelDeclarationNode() {
-    override val children: Iterable<Node>
-        get() = (parameters.toPersistentList() as PersistentList<Node>).add(body)
+    override fun children(): Iterator<Node> =
+        iterator {
+            yieldAll(parameters)
+            yield(body)
+        }
 
     override fun toSurfaceNode(metadata: Metadata): io.github.apl_cornell.viaduct.syntax.surface.FunctionDeclarationNode =
         io.github.apl_cornell.viaduct.syntax.surface.FunctionDeclarationNode(

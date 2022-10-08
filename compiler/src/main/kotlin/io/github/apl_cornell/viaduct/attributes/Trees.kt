@@ -23,7 +23,7 @@ class Tree<Node : TreeNode<Node>, out RootNode : Node>(val root: RootNode) {
 
     init {
         fun addNode(parent: Node?, node: Node, nodeIndex: Int) {
-            val children = node.children.toPersistentList()
+            val children = node.children().asSequence().toPersistentList()
             if (relations.put(node, NodeRelations(parent, children, nodeIndex)) != null) {
                 // TODO: custom exception class
                 error("Duplicate child node $node.")
@@ -65,9 +65,8 @@ class Tree<Node : TreeNode<Node>, out RootNode : Node>(val root: RootNode) {
 
 /** A node in a [Tree]. */
 interface TreeNode<out Node> {
-    /** The list of all children nodes. This is empty for leaf nodes. */
-    // TODO: this should be a list
-    val children: Iterable<Node>
+    /** All child nodes of this node. This is empty for leaf nodes. */
+    fun children(): Iterator<Node>
 }
 
 /**

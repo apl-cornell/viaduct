@@ -113,8 +113,8 @@ class OutParameterInitializationAnalysis private constructor(
                 meet(this.flowIn, this.body.flowOut)
 
             is BlockNode ->
-                if (this.children.any())
-                    this.children.last().flowOut
+                if (this.children().asSequence().any())
+                    this.children().asSequence().last().flowOut
                 else
                     this.flowIn
 
@@ -163,9 +163,7 @@ class OutParameterInitializationAnalysis private constructor(
                 define(nameAnalysis.declaration(node))
         }
 
-        for (child in node.children) {
-            check(child)
-        }
+        node.children().forEach(::check)
     }
 
     /** Begin check at ProgramNode [tree]. */

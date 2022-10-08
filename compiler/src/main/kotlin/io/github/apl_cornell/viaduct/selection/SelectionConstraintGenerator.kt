@@ -825,7 +825,7 @@ class SelectionConstraintGenerator(
         this.selectionConstraints()
             .union(this.costConstraints())
             .union(this.participatingHostConstraints())
-            .union(this.children.map { it.constraints() }.unions())
+            .union(this.children().asSequence().map { it.constraints() }.unions())
 
     fun getSelectionProblem(): SelectionProblem {
         val selectionConstraints = program.constraints()

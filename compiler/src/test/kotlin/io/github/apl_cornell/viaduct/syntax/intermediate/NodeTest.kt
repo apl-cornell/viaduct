@@ -25,10 +25,10 @@ internal class NodeTest {
 }
 
 private fun Node.deepCopy(): Node =
-    this.copy(this.children.toList().map { it.deepCopy() })
+    this.copy(this.children().asSequence().toList().map { it.deepCopy() })
 
 private fun Node.trackingDeepCopy(): Node {
-    val copiedChildren = TrackingList(this.children.toList().map { it.trackingDeepCopy() })
+    val copiedChildren = TrackingList(this.children().asSequence().toList().map { it.trackingDeepCopy() })
     val copied = this.copy(copiedChildren)
     assertEquals(0.until(copiedChildren.size).toSet(), copiedChildren.accessedIndices)
     return copied

@@ -54,7 +54,7 @@ fun <Node : TreeNode<Node>, T> collectedAttribute(
     val attributes: MutableMap<Node, MutableSet<T>> = mutableMapOf()
     fun visit(node: Node) {
         f(node).forEach { attributes.getOrPut(it.first) { mutableSetOf() }.add(it.second) }
-        node.children.forEach(::visit)
+        node.children().forEach(::visit)
     }
 
     // Traverse the tree lazily (only when any value is demanded)
@@ -71,6 +71,7 @@ private class CachedAttribute<in Node, out T>(private val f: (Node) -> T) : Attr
             when (val valueOption = attributeValue.currentValue) {
                 is Some<T> ->
                     valueOption.value
+
                 is None ->
                     if (attributeValue.isVisited) {
                         throw CycleInAttributeDefinitionException()

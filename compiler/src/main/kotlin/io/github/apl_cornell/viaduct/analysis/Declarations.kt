@@ -78,7 +78,7 @@ fun ExpressionNode.involvedVariables(): List<Variable> {
 /** Returns [this] node and all its descendants in post order. */
 fun Node.descendants(): Sequence<Node> =
     sequence {
-        this@descendants.children.forEach { yieldAll(it.descendants()) }
+        this@descendants.children().forEach { yieldAll(it.descendants()) }
         yield(this@descendants)
     }
 

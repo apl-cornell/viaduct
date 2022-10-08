@@ -13,7 +13,7 @@ import io.github.apl_cornell.viaduct.syntax.values.Value
 
 /** A computation that produces a result. */
 sealed class ExpressionNode : Node() {
-    abstract override val children: Iterable<AtomicExpressionNode>
+    abstract override fun children(): Iterator<AtomicExpressionNode>
 
     final override fun toSurfaceNode(metadata: Metadata): io.github.apl_cornell.viaduct.syntax.surface.ExpressionNode =
         toSurfaceNode()
@@ -27,8 +27,8 @@ sealed class PureExpressionNode : ExpressionNode()
 
 /** An expression that requires no computation to reduce to a value. */
 sealed class AtomicExpressionNode : PureExpressionNode() {
-    final override val children: Iterable<Nothing>
-        get() = listOf()
+    final override fun children(): Iterator<Nothing> =
+        iterator { }
 
     abstract override fun toSurfaceNode(): io.github.apl_cornell.viaduct.syntax.surface.AtomicExpressionNode
 
@@ -63,8 +63,8 @@ class OperatorApplicationNode(
     val arguments: Arguments<AtomicExpressionNode>,
     override val sourceLocation: SourceLocation
 ) : PureExpressionNode() {
-    override val children: Iterable<AtomicExpressionNode>
-        get() = arguments
+    override fun children(): Iterator<AtomicExpressionNode> =
+        arguments.iterator()
 
     override fun toSurfaceNode(): io.github.apl_cornell.viaduct.syntax.surface.OperatorApplicationNode =
         io.github.apl_cornell.viaduct.syntax.surface.OperatorApplicationNode(
@@ -88,8 +88,8 @@ class QueryNode(
     val arguments: Arguments<AtomicExpressionNode>,
     override val sourceLocation: SourceLocation
 ) : PureExpressionNode() {
-    override val children: Iterable<AtomicExpressionNode>
-        get() = arguments
+    override fun children(): Iterator<AtomicExpressionNode> =
+        arguments.iterator()
 
     override fun toSurfaceNode(): io.github.apl_cornell.viaduct.syntax.surface.QueryNode =
         io.github.apl_cornell.viaduct.syntax.surface.QueryNode(
@@ -120,8 +120,8 @@ sealed class DowngradeNode : PureExpressionNode() {
     /** The label after the downgrade. */
     abstract val toLabel: LabelNode?
 
-    final override val children: Iterable<AtomicExpressionNode>
-        get() = listOf(expression)
+    final override fun children(): Iterator<AtomicExpressionNode> =
+        iterator { yield(expression) }
 
     abstract override fun copy(children: List<Node>): DowngradeNode
 }
@@ -176,8 +176,8 @@ class InputNode(
     override val host: HostNode,
     override val sourceLocation: SourceLocation
 ) : ExpressionNode(), CommunicationNode {
-    override val children: Iterable<Nothing>
-        get() = listOf()
+    override fun children(): Iterator<Nothing> =
+        iterator { }
 
     override fun toSurfaceNode(): io.github.apl_cornell.viaduct.syntax.surface.InputNode =
         io.github.apl_cornell.viaduct.syntax.surface.InputNode(type, host, sourceLocation)

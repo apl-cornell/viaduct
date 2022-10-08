@@ -51,7 +51,7 @@ fun validateProtocolAssignment(
                 checkAuthority(selection, this)
             }
         }
-        this.children.forEach {
+        this.children().forEach {
             it.traverse(selection)
         }
     }

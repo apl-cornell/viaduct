@@ -26,13 +26,16 @@ internal class AttributesTest {
     private sealed class BinaryTree : TreeNode<BinaryTree>
 
     private class BinaryNode(val left: BinaryTree, val right: BinaryTree) : BinaryTree() {
-        override val children: Iterable<BinaryTree>
-            get() = listOf(left, right)
+        override fun children(): Iterator<BinaryTree> =
+            iterator {
+                yield(left)
+                yield(right)
+            }
     }
 
     private class BinaryLeaf(val value: Int) : BinaryTree() {
-        override val children: Iterable<BinaryTree>
-            get() = listOf()
+        override fun children(): Iterator<BinaryTree> =
+            iterator { }
     }
 
     private val leftLeaf = BinaryLeaf(1)
@@ -40,7 +43,7 @@ internal class AttributesTest {
     private val rootNode = BinaryNode(leftLeaf, rightLeaf)
 
     private val BinaryTree.parent by collectedAttribute(Tree(rootNode)) {
-        it.children.map { child -> child to it }
+        it.children().asSequence().map { child -> child to it }.toList()
     }
 
     @Test

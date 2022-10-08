@@ -49,8 +49,8 @@ private constructor(
     fun <T> cached(function: (ProgramNode) -> T): T =
         functionCache(function) as T
 
-    override val children: Iterable<TopLevelDeclarationNode>
-        get() = declarations
+    override fun children(): Iterator<TopLevelDeclarationNode> =
+        declarations.iterator()
 
     override fun toSurfaceNode(metadata: Metadata): io.github.apl_cornell.viaduct.syntax.surface.ProgramNode =
         io.github.apl_cornell.viaduct.syntax.surface.ProgramNode(

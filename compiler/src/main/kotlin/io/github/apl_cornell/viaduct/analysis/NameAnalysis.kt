@@ -43,6 +43,7 @@ import io.github.apl_cornell.viaduct.syntax.intermediate.ReadNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.SimpleStatementNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.StatementNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.UpdateNode
+import io.github.apl_cornell.viaduct.util.unions
 import kotlinx.collections.immutable.PersistentSet
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.persistentSetOf
@@ -65,6 +66,7 @@ class NameAnalysis private constructor(private val tree: Tree<Node, ProgramNode>
                 declarations.filterIsInstance<HostDeclarationNode>()
                     .fold(NameMap()) { map, declaration -> map.put(declaration.name, declaration) }
             }
+
             else ->
                 parent.hostDeclarations
         }
@@ -113,8 +115,10 @@ class NameAnalysis private constructor(private val tree: Tree<Node, ProgramNode>
         when (val parent = tree.parent(this)) {
             null ->
                 NameMap()
+
             is InfiniteLoopNode ->
                 parent.jumpTargets.put(parent.jumpLabel, parent)
+
             else ->
                 parent.jumpTargets
         }
@@ -139,13 +143,17 @@ class NameAnalysis private constructor(private val tree: Tree<Node, ProgramNode>
             when {
                 parent == null ->
                     NameMap()
+
                 parent is BlockNode && previousSibling != null ->
                     previousSibling.contextOut
+
                 parent is BlockNode && previousSibling == null && grandParent !is BlockNode && resetAtBlock ->
                     // TODO: resetting at block is not enough to guarantee security with temporaries
                     NameMap()
+
                 parent is FunctionDeclarationNode ->
                     parent.contextOut
+
                 else ->
                     parent.contextIn
             }
@@ -202,6 +210,7 @@ class NameAnalysis private constructor(private val tree: Tree<Node, ProgramNode>
         return when {
             parameter is ParameterNode && parameter.isOutParameter ->
                 parameter
+
             else ->
                 throw UndefinedNameError(parameter.name)
         }
@@ -212,8 +221,10 @@ class NameAnalysis private constructor(private val tree: Tree<Node, ProgramNode>
         when (node) {
             is ParameterNode ->
                 node.objectType
+
             is DeclarationNode ->
                 node.objectType
+
             is ObjectDeclarationArgumentNode ->
                 parameter(node).objectType
         }
@@ -260,16 +271,18 @@ class NameAnalysis private constructor(private val tree: Tree<Node, ProgramNode>
         when (this) {
             is ReadNode ->
                 persistentSetOf(this)
+
             is ExpressionNode ->
-                children.fold(persistentSetOf()) { acc, child -> acc.addAll(child.reads) }
+                children().asSequence().map { it.reads }.unions()
+
             is OutParameterInitializationNode ->
-                children.fold(persistentSetOf()) { acc, child -> acc.addAll(child.reads) }
+                children().asSequence().map { it.reads }.unions()
+
             is FunctionCallNode ->
-                children.fold(persistentSetOf()) { acc, child -> acc.addAll(child.reads) }
+                children().asSequence().map { it.reads }.unions()
+
             else ->
-                children.filterIsInstance<ExpressionNode>().fold(persistentSetOf()) { acc, child ->
-                    acc.addAll(child.reads)
-                }
+                children().asSequence().filterIsInstance<ExpressionNode>().map { it.reads }.unions()
         }
     }
 
@@ -424,7 +437,7 @@ class NameAnalysis private constructor(private val tree: Tree<Node, ProgramNode>
         if (this is FunctionCallNode) {
             declaration(this).reachableFunctions.add(this.name.value)
         } else {
-            this.children.fold(persistentSetOf()) { acc, child -> acc.addAll(child.reachableFunctions) }
+            this.children().asSequence().map { it.reachableFunctions }.unions()
         }
     }
 
@@ -485,26 +498,37 @@ class NameAnalysis private constructor(private val tree: Tree<Node, ProgramNode>
             when (node) {
                 is ParameterNode ->
                     node.protocol?.check()
+
                 is ReadNode ->
                     declaration(node)
+
                 is QueryNode ->
                     declaration(node)
+
                 is LetNode ->
                     node.protocol?.check()
+
                 is DeclarationNode ->
                     node.protocol?.check()
+
                 is UpdateNode ->
                     declaration(node)
+
                 is OutParameterInitializationNode ->
                     declaration(node)
+
                 is ObjectReferenceArgumentNode ->
                     declaration(node)
+
                 is OutParameterArgumentNode ->
                     declaration(node)
+
                 is FunctionCallNode ->
                     declaration(node)
+
                 is BreakNode ->
                     correspondingLoop(node)
+
                 is CommunicationNode ->
                     declaration(node)
             }
@@ -512,10 +536,13 @@ class NameAnalysis private constructor(private val tree: Tree<Node, ProgramNode>
             when (node) {
                 is LetNode ->
                     node.temporaryDefinitions.put(node.name, node)
+
                 is DeclarationNode ->
                     node.objectDeclarations.put(node.name, node)
+
                 is InfiniteLoopNode ->
                     node.jumpTargets.put(node.jumpLabel, node)
+
                 is ProgramNode -> {
                     // Forcing these thunks
                     node.hostDeclarations
@@ -523,7 +550,7 @@ class NameAnalysis private constructor(private val tree: Tree<Node, ProgramNode>
                 }
             }
             // Check the children
-            node.children.forEach(::check)
+            node.children().forEach(::check)
         }
         check(tree.root)
     }

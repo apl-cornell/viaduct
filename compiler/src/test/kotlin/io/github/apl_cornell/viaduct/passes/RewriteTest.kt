@@ -15,6 +15,7 @@ import io.github.apl_cornell.viaduct.security.LabelTop
 import io.github.apl_cornell.viaduct.security.PolymorphicPrincipal
 import io.github.apl_cornell.viaduct.security.Principal
 import io.github.apl_cornell.viaduct.syntax.Host
+import io.github.apl_cornell.viaduct.syntax.HostTrustConfiguration
 import io.github.apl_cornell.viaduct.syntax.LabelVariable
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
@@ -40,20 +41,22 @@ internal class RewriteTest {
 
     private val top = FreeDistributiveLattice.bounds<PrincipalComponent>().top
     private val bottom = FreeDistributiveLattice.bounds<PrincipalComponent>().bottom
-    private val emptyRewrite = Rewrite(mapOf())
+    private val emptyRewrite = Rewrite(mapOf(), HostTrustConfiguration.empty)
     private val easyRewrite = Rewrite(
         mapOf(
             (ppc("A") to fhpc("alice")), (ppi("A") to fhpi("alice")),
             (ppc("B") to fhpc("bob")), (ppi("B") to fhpi("bob")),
             (ppc("C") to fhpc("chuck")), (ppi("C") to fhpi("chuck"))
-        )
+        ),
+        HostTrustConfiguration.empty
     )
     private val hardRewrite = Rewrite(
         mapOf(
             (ppc("A") to top), (ppi("A") to bottom),
             (ppc("B") to fhpc("alice").join(fhpc("bob"))), (ppi("B") to fhpi("alice").meet(fhpi("bob"))),
             (ppc("C") to fhpc("chuck")), (ppi("C") to fhpi("chuck"))
-        )
+        ),
+        HostTrustConfiguration.empty
     )
 
     /* test on Label LabelConstants (FDL<PrincipalComponent>) */

@@ -130,7 +130,7 @@ class InformationFlowAnalysis private constructor(
         constraintSystem.solution()
     }
 
-    val trustConfiguration: HostTrustConfiguration = HostTrustConfiguration(tree.root)
+    val trustConfiguration: HostTrustConfiguration = HostTrustConfiguration.get(tree.root)
 
     // private val solution by lazy { constraintSystem.solution() }
 
@@ -331,6 +331,7 @@ class InformationFlowAnalysis private constructor(
                     yieldAll((expression to from) flowsTo from.swap())
                     yieldAll((expression to to) flowsTo to.swap())
                     yieldAll((this@flowsTo to to) flowsTo outputLabel)
+                    yieldAll(expression flowsTo from)
                     // TODO: expression should flows to from label. it is causing rewrite map bug currently
                     when (this@flowsTo) {
                         is DeclassificationNode ->

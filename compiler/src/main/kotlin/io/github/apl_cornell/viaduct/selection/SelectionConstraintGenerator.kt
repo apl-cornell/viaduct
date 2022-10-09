@@ -55,7 +55,7 @@ class SelectionConstraintGenerator(
     private val costEstimator: CostEstimator<IntegerCost>,
 ) {
     private val nameGenerator = FreshNameGenerator()
-    private val hostTrustConfiguration = HostTrustConfiguration(program)
+    private val hostTrustConfiguration = HostTrustConfiguration.get(program)
     private val nameAnalysis = NameAnalysis.get(program)
     private val informationFlowAnalysis = InformationFlowAnalysis.get(program)
 

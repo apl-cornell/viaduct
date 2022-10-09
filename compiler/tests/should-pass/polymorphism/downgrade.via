@@ -1,0 +1,25 @@
+fun main() {
+  val x1 : int{alice} = input int from alice;
+  val y1 : int{bob} = input int from bob;
+
+  val x2 : int = endorse x1 to {alice & bob<-} from {alice};
+  val y2 : int = endorse y1 to {bob & alice<-} from {bob};
+
+  val x3 : int = endorse x1 from {alice};
+  val y3 : int = endorse y1 from {bob};
+
+  val x4 : int = declassify x2 from {alice & bob<-} to {bob} ;
+  val y4 : int = declassify y2 from {bob & alice<-} to {alice} ;
+
+  val x5 : int = declassify x3 to {bob};
+  val y5 : int = declassify y3 to {alice};
+
+  output x4 to bob;
+  output y4 to alice;
+
+  output x5 to bob;
+  output y5 to alice;
+}
+
+host alice
+host bob

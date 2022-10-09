@@ -518,7 +518,6 @@ class NameAnalysis private constructor(private val tree: Tree<Node, ProgramNode>
             }
         }
 
-
         fun LabelExpression.check(
             hosts: Set<Host>,
             labelVariables: Set<LabelVariable>,

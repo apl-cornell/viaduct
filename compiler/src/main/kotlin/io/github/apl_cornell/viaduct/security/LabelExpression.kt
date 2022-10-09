@@ -7,6 +7,7 @@ import io.github.apl_cornell.viaduct.prettyprinting.plus
 import io.github.apl_cornell.viaduct.prettyprinting.times
 import io.github.apl_cornell.viaduct.prettyprinting.tupled
 import io.github.apl_cornell.viaduct.syntax.Host
+import io.github.apl_cornell.viaduct.syntax.HostTrustConfiguration
 import io.github.apl_cornell.viaduct.syntax.LabelVariable
 
 sealed class LabelExpression : PrettyPrintable {
@@ -118,3 +119,30 @@ object LabelTop : LabelExpression() {
 
     override fun rename(renamer: (String) -> String): LabelExpression = this
 }
+
+fun interpret(label: Label, trustConfiguration: HostTrustConfiguration): LabelExpression {
+    val con = label.confidentialityComponent.joinOfMeets
+        .map { meet ->
+            meet.filterIsInstance<ConfidentialityComponent<Principal>>()
+                .map {
+                    when (val principal = it.principal) {
+                        is HostPrincipal -> LabelLiteral(principal.host)
+                        is PolymorphicPrincipal -> LabelParameter(principal.labelVariable)
+                    }
+                }.reduceOrNull { acc, e -> LabelAnd(acc, e) } ?: LabelTop
+        }.reduceOrNull { acc, e -> LabelOr(acc, e) } ?: LabelBottom
+    val int = label.integrityComponent.joinOfMeets
+        .map { meet ->
+            meet.filterIsInstance<IntegrityComponent<Principal>>()
+                .map {
+                    when (val principal = it.principal) {
+                        is HostPrincipal -> LabelLiteral(principal.host)
+                        is PolymorphicPrincipal -> LabelParameter(principal.labelVariable)
+                    }
+                }.reduceOrNull { acc, e -> LabelAnd(acc, e) } ?: LabelTop
+        }.reduceOrNull { acc, e -> LabelOr(acc, e) } ?: LabelBottom
+    val result = LabelAnd(LabelConfidentiality(con), LabelIntegrity(int))
+    assert(trustConfiguration.equals(label, result.interpret()))
+    return result
+}
+// a function from label to label expression

@@ -11,6 +11,7 @@ import io.github.apl_cornell.viaduct.security.PolymorphicPrincipal
 import io.github.apl_cornell.viaduct.security.Principal
 import io.github.apl_cornell.viaduct.syntax.Arguments
 import io.github.apl_cornell.viaduct.syntax.FunctionName
+import io.github.apl_cornell.viaduct.syntax.HostTrustConfiguration
 import io.github.apl_cornell.viaduct.syntax.LabelNode
 import io.github.apl_cornell.viaduct.syntax.Located
 import io.github.apl_cornell.viaduct.syntax.ObjectTypeNode
@@ -69,7 +70,7 @@ fun ProgramNode.specialize(): ProgramNode {
 }
 
 private class Specializer(
-    program: ProgramNode
+    private val program: ProgramNode
 ) {
     // map from old function name to old function declaration node
     private val functionMap: Map<FunctionName, FunctionDeclarationNode> = program.functionMap
@@ -253,7 +254,7 @@ private class Specializer(
     /** Specialize by processing call site in the worklist. */
     fun specialize(): Pair<BlockNode, List<FunctionDeclarationNode>> {
         val newFunctions = mutableListOf<FunctionDeclarationNode>()
-        val newMain = mainProgram.specialize(Rewrite(mapOf())) as BlockNode
+        val newMain = mainProgram.specialize(Rewrite(mapOf(), HostTrustConfiguration.get(program))) as BlockNode
 
         while (worklist.isNotEmpty()) {
 // pick an unspecialized callsite
@@ -271,11 +272,11 @@ private class Specializer(
                         (
                             PolymorphicPrincipal(it.value)
                                 to callsiteRewrite.rewrite(
-                                informationFlowAnalysis.label(
-                                    oldFunctionCallNode,
-                                    it.value
+                                    informationFlowAnalysis.label(
+                                        oldFunctionCallNode,
+                                        it.value
+                                    )
                                 )
-                            )
                             )
                     }
 // break into components
@@ -286,7 +287,8 @@ private class Specializer(
                         )
                     }
 // make it a map
-                    .toMap()
+                    .toMap(),
+                HostTrustConfiguration.get(program)
             )
 // then specialize
 // TODO: Want to check label parameters match rewrite keys

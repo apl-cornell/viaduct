@@ -153,9 +153,7 @@ fun SProgramNode.elaborated(): IProgramNode {
 
                     else -> {}
                 }
-
             }
-
         }
     }
 

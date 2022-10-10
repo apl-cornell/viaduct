@@ -9,9 +9,9 @@ import java.util.IdentityHashMap
  *
  * This class is a simplified version of Kiama's tree relations.
  * Refer to the sections on
- * [Attribute Grammars](https://github.com/inkytonik/kiama/blob/master/wiki/Attribution.md#tree-relations)
+ * [Attribute Grammars](https://inkytonik.github.io/kiama/Attribution#tree-relations)
  * and
- * [Relations](https://github.com/inkytonik/kiama/blob/master/wiki/Relations.md).
+ * [Relations](https://inkytonik.github.io/kiama/Relations).
  * in Kiama's user manual for more information.
  *
  * @param Node The type of nodes in the tree.

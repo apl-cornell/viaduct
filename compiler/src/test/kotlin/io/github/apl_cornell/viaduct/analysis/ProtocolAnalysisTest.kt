@@ -6,6 +6,7 @@ import io.github.apl_cornell.viaduct.errors.NoMainError
 import io.github.apl_cornell.viaduct.passes.annotateWithProtocols
 import io.github.apl_cornell.viaduct.passes.check
 import io.github.apl_cornell.viaduct.passes.elaborated
+import io.github.apl_cornell.viaduct.passes.specialize
 import io.github.apl_cornell.viaduct.selection.ProtocolSelection
 import io.github.apl_cornell.viaduct.selection.SelectionProblemSolver
 import io.github.apl_cornell.viaduct.selection.SimpleCostEstimator
@@ -23,8 +24,7 @@ internal class ProtocolAnalysisTest {
     @ParameterizedTest
     @ArgumentsSource(SelectionProblemProvider::class)
     fun `it does not explode`(surfaceProgram: ProgramNode, solver: SelectionProblemSolver) {
-        val program = surfaceProgram.elaborated()
-        program.check()
+        val program = surfaceProgram.elaborated().also { it.check() }.specialize()
 
         val protocolComposer = DefaultCombinedBackend.protocolComposer
         val protocolAssignment =

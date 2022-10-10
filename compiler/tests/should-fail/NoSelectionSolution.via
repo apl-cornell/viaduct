@@ -5,7 +5,7 @@ host bob
 host chuck
 assume for <- alice trusts bob
 assume for <- bob trusts alice
-assume alice & bob trusts chuck
+assume chuck trusts alice & bob
 
 fun main() {
     val x: int@YaoABY(server = alice, client = bob) = 1;

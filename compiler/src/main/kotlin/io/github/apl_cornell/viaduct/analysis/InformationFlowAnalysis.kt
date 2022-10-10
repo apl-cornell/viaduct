@@ -5,7 +5,10 @@ import io.github.apl_cornell.viaduct.algebra.FreeDistributiveLatticeCongruence
 import io.github.apl_cornell.viaduct.attributes.Tree
 import io.github.apl_cornell.viaduct.attributes.attribute
 import io.github.apl_cornell.viaduct.errors.InformationFlowError
+import io.github.apl_cornell.viaduct.errors.InsecureControlFlowError
 import io.github.apl_cornell.viaduct.errors.InsecureDataFlowError
+import io.github.apl_cornell.viaduct.errors.IntegrityChangingDeclassificationError
+import io.github.apl_cornell.viaduct.errors.MalleableDowngradeError
 import io.github.apl_cornell.viaduct.security.Component
 import io.github.apl_cornell.viaduct.security.ConfidentialityComponent
 import io.github.apl_cornell.viaduct.security.IntegrityComponent
@@ -197,6 +200,28 @@ class InformationFlowAnalysis private constructor(
         return constraints.asSequence()
     }
 
+    /** FlowsTo with Custom Error */
+    private fun flowsTo(
+        fromLabel: LabelTerm,
+        toLabel: LabelTerm,
+        error: (Label, Label) -> InformationFlowError
+    ) =
+        fromLabel.flowsTo(toLabel, LabelConstant.bounds(), error).asSequence()
+
+    private fun integrityFlowsTo(
+        fromLabel: LabelTerm,
+        toLabel: LabelTerm,
+        error: (Label, Label) -> InformationFlowError
+    ) =
+        fromLabel.integrityFlowsTo(toLabel, LabelConstant.bounds(), error).asSequence()
+
+    private fun confidentialityFlowsTo(
+        fromLabel: LabelTerm,
+        toLabel: LabelTerm,
+        error: (Label, Label) -> InformationFlowError
+    ) =
+        fromLabel.confidentialityFlowsTo(toLabel, LabelConstant.bounds(), error).asSequence()
+
     private infix fun Pair<HasSourceLocation, LabelTerm>.confidentialityFlowsTo(toLabel: LabelTerm): Sequence<LabelConstraint> {
         val constraints: Iterable<LabelConstraint> =
             second.confidentialityFlowsTo(toLabel, LabelConstant.bounds()) { to, from ->
@@ -279,24 +304,36 @@ class InformationFlowAnalysis private constructor(
             }
         }
 
-    /** Returns constraints that need to hold for [this] expression to flow to [outputLabel]. */
+    /** By default, we use InsecureDataFlowError. */
     private infix fun ExpressionNode.flowsTo(outputLabel: LabelTerm): Sequence<LabelConstraint> =
+        flowsTo(outputLabel) { p, l -> p flowsTo l }
+
+    /** Returns constraints that need to hold for [this] expression to flow to [outputLabel].
+     *  OutputConstraint allows us to specify custom error message. */
+    private fun ExpressionNode.flowsTo(
+        outputLabel: LabelTerm,
+        outputConstraint: (Pair<HasSourceLocation, LabelTerm>, LabelTerm) -> Sequence<LabelConstraint>
+    ): Sequence<LabelConstraint> =
 
         when (this) {
             is LiteralNode -> {
                 val literalVariable: Pair<HasSourceLocation, LabelTerm> =
                     (this to term(LabelVariable.Data.Literal(this)))
-                literalVariable flowsTo outputLabel
+                outputConstraint(literalVariable, outputLabel)
             }
 
             is ReadNode -> {
                 val declarationLabel = nameAnalysis.declaration(this).labelTerm
-                (this to declarationLabel) flowsTo outputLabel
+                outputConstraint((this to declarationLabel), outputLabel)
             }
 
             is OperatorApplicationNode -> {
                 sequence {
-                    arguments.forEach { argument -> yieldAll(argument flowsTo outputLabel) }
+                    arguments.forEach { argument ->
+                        yieldAll(
+                            argument.flowsTo(outputLabel, outputConstraint)
+                        )
+                    }
                 }
             }
 
@@ -309,7 +346,7 @@ class InformationFlowAnalysis private constructor(
 
                     // TODO: return label should be based on the query.
                     //  For example, Array.length leaks the label on the size but not the data.
-                    yieldAll((this@flowsTo to declarationLabel) flowsTo outputLabel)
+                    yieldAll(outputConstraint((this@flowsTo to declarationLabel), outputLabel))
                 }
             }
 
@@ -327,15 +364,32 @@ class InformationFlowAnalysis private constructor(
                         term(toLabel!!.value.interpret())
 
                 sequence {
-                    yieldAll(this@flowsTo.pcFlowsTo(to))
-                    yieldAll((expression to from) flowsTo from.swap())
-                    yieldAll((expression to to) flowsTo to.swap())
-                    yieldAll((this@flowsTo to to) flowsTo outputLabel)
+                    val thisNode = this@flowsTo
+                    yieldAll(thisNode.pcFlowsTo(to))
+                    yieldAll(
+                        flowsTo(from, from.swap()) { _, _ ->
+                            MalleableDowngradeError(thisNode)
+                        }
+                    )
+                    yieldAll(
+                        flowsTo(to, to.swap()) { _, _ ->
+                            MalleableDowngradeError(thisNode)
+                        }
+                    )
+                    yieldAll(outputConstraint((thisNode to to), outputLabel))
                     yieldAll(expression flowsTo from)
                     // TODO: expression should flows to from label. it is causing rewrite map bug currently
-                    when (this@flowsTo) {
+                    when (thisNode) {
                         is DeclassificationNode ->
-                            yieldAll((expression to from) integrityFlowsTo to)
+                            yieldAll(
+                                integrityFlowsTo(from, to) { fromLabel, toLabel ->
+                                    IntegrityChangingDeclassificationError(
+                                        thisNode,
+                                        fromLabel,
+                                        toLabel
+                                    )
+                                }
+                            )
 
                         is EndorsementNode ->
                             yieldAll((expression to from) confidentialityFlowsTo to)
@@ -349,7 +403,7 @@ class InformationFlowAnalysis private constructor(
                 // Host learns the current pc
                 sequence {
                     yieldAll(pcFlowsTo(hostLabel))
-                    yieldAll((this@flowsTo to hostLabel) flowsTo outputLabel)
+                    yieldAll(outputConstraint((this@flowsTo to hostLabel), outputLabel))
                 }
             }
         }
@@ -483,8 +537,20 @@ class InformationFlowAnalysis private constructor(
                 val elsePC = elseBranch.pcTerm
                 sequence {
                     // check guard label flows to then and else PC
-                    yieldAll(guard flowsTo thenPC)
-                    yieldAll(guard flowsTo elsePC)
+                    yieldAll(
+                        guard.flowsTo(thenPC) { p, l ->
+                            flowsTo(p.second, l) { f, t ->
+                                InsecureControlFlowError(p.first, f, t, delegationContext)
+                            }
+                        }
+                    )
+                    yieldAll(
+                        guard.flowsTo(elsePC) { p, l ->
+                            flowsTo(p.second, l) { f, t ->
+                                InsecureControlFlowError(p.first, f, t, delegationContext)
+                            }
+                        }
+                    )
                     // this pc flows to pc of branches
                     yieldAll(pcFlowsTo(thenPC))
                     yieldAll(pcFlowsTo(elsePC))

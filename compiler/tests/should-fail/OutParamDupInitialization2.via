@@ -1,6 +1,6 @@
 /* OutParameterInitializationError */
 
-fun add10{(alice & bob)<-}(a: int{alice}, b: out int{bob}) {
+fun add10(a: int{alice}, b: out int{bob}) {
     if (a < 10) {
         out b = 10;
     }

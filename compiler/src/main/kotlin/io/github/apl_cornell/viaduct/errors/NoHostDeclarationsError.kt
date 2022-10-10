@@ -30,8 +30,8 @@ class NoHostDeclarationsError(override val source: String) : CompilationError() 
     private companion object {
         val exampleHostDeclarations: ProgramNode
             get() = """
-               host alice: {A}
-               host trusted : {A ∧ B<-}
+               host alice
+               host trusted
             """.trimIndent().parse()
 
         /** Wrap words the given string. All new lines and indentation are removed. */

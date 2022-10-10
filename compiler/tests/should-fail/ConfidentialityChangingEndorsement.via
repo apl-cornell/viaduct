@@ -1,5 +1,5 @@
-/* ConfidentialityChangingEndorsementError */
+/* UndefinedHostError */
 
 fun main() {
-    val result: int = endorse 42 to {A<-} from {A};
+    val result: int = endorse 42 to {alice<-} from {alice};
 }

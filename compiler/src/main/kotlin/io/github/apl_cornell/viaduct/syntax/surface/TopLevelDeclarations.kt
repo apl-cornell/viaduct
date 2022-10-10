@@ -74,9 +74,13 @@ class FunctionDeclarationNode(
 ) : TopLevelDeclarationNode() {
     override fun toDocumentWithoutComment(): Document =
         keyword("fun") *
-            (labelParameters?.braced() ?: Document("")) *
             name +
-            parameters.tupled() * (labelConstraints?.braced() ?: Document("")) *
+            (labelParameters?.braced() ?: Document("")) +
+            parameters.tupled() *
+            (
+                if (labelConstraints == null) Document("")
+                else Document("where") * labelConstraints.tupled()
+                ) *
             (pcLabel?.let { Document(":") + listOf(it).braced() } ?: Document("")) * body
 }
 
@@ -103,8 +107,10 @@ class AuthorityDelegationDeclarationNode(
     override val comment: String?
 ) : DelegationDeclarationNode(from, to, delegationProjection, sourceLocation, comment) {
     override fun toDocumentWithoutComment(): Document =
-        keyword("delegation:") * listOf(from).braced() *
-            "trusts" * listOf(to).braced() * "for" * delegationProjection
+        keyword("assume") *
+            (if (delegationProjection == DelegationProjection.BOTH) "" else "for") *
+            delegationProjection * from.toDocument() *
+            "trusts" * to.toDocument()
 }
 
 /**
@@ -120,6 +126,5 @@ class IFCDelegationDeclarationNode(
     override val comment: String?
 ) : DelegationDeclarationNode(from, to, delegationProjection, sourceLocation, comment) {
     override fun toDocumentWithoutComment(): Document =
-        keyword("delegation:") * listOf(from).braced() *
-            ":>" * listOf(to).braced() * "for" * delegationProjection
+        from.toDocument() * "<:" * to.toDocument()
 }

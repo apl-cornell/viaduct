@@ -1,5 +1,8 @@
 /* MalleableDowngradeError */
 
 fun main() {
-    val result: int = declassify 42 from {A->} to {B->};
+    val result: int = declassify 42 from {a->} to {b->};
 }
+
+host a
+host b

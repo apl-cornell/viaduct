@@ -7,9 +7,9 @@ import io.github.apl_cornell.viaduct.security.Label
 import io.github.apl_cornell.viaduct.syntax.intermediate.DeclassificationNode
 
 /**
- * Thrown when a [DeclassificationNode] modifies confidentiality.
+ * Thrown when a [DeclassificationNode] modifies integrity.
  *
- * @param node Declassify statement that modifies confidentiality.
+ * @param node Declassify statement that modifies integrity.
  * @param from Label of the expression being declassified.
  * @param to Resulting label of the expression.
  */

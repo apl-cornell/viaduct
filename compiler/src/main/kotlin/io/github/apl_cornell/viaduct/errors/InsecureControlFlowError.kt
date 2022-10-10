@@ -1,5 +1,13 @@
 package io.github.apl_cornell.viaduct.errors
 
+import io.github.apl_cornell.viaduct.algebra.FreeDistributiveLattice
+import io.github.apl_cornell.viaduct.algebra.FreeDistributiveLatticeCongruence
+import io.github.apl_cornell.viaduct.passes.PrincipalComponent
+import io.github.apl_cornell.viaduct.prettyprinting.Document
+import io.github.apl_cornell.viaduct.prettyprinting.div
+import io.github.apl_cornell.viaduct.security.Label
+import io.github.apl_cornell.viaduct.syntax.HasSourceLocation
+
 /**
  * Thrown when the control flow influences data in a way that violates security.
  *
@@ -7,11 +15,11 @@ package io.github.apl_cornell.viaduct.errors
  * @param nodeLabel Security label of the node.
  * @param pc Security label assigned to control flow.
  */
-/*
 class InsecureControlFlowError(
     private val node: HasSourceLocation,
     private val nodeLabel: Label,
-    private val pc: Label
+    private val pc: Label,
+    private val context: FreeDistributiveLatticeCongruence<PrincipalComponent>
 ) : InformationFlowError() {
     override val category: String
         get() = "Insecure Control Flow"
@@ -22,8 +30,10 @@ class InsecureControlFlowError(
     override val description: Document
         get() {
             // TODO: use flowsTo rather than actsFor
-            if (!nodeLabel.confidentiality(FreeDistributiveLattice.bounds())
-                    .actsFor(pc.confidentiality(FreeDistributiveLattice.bounds()))
+            if (!context.lessThanOrEqualTo(
+                    nodeLabel.confidentialityComponent,
+                    pc.confidentialityComponent
+                )
             ) {
                 // Confidentiality is the problem
                 // TODO: reword message (see the output of insecure-control-flow-confidentiality.via)
@@ -38,8 +48,10 @@ class InsecureControlFlowError(
                 // TODO: add an error test case that covers this branch.
                 // TODO: use flowsTo rather than actsFor
                 assert(
-                    !pc.integrity(FreeDistributiveLattice.bounds())
-                        .actsFor(nodeLabel.integrity(FreeDistributiveLattice.bounds()))
+                    !context.lessThanOrEqualTo(
+                        pc.integrityComponent,
+                        nodeLabel.integrityComponent
+                    )
                 )
                 return Document("The control flow does not have enough integrity for this term:")
                     .withSource(node.sourceLocation) /
@@ -50,4 +62,3 @@ class InsecureControlFlowError(
             }
         }
 }
-*/

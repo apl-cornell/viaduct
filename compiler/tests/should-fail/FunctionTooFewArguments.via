@@ -1,12 +1,12 @@
 /* IncorrectNumberOfArgumentsError */
 
-fun add10(a: int{alice}}, b: out int{bob}) {
-    out b = declassify (endorse a to {alice} & bob<-} from {alice}}) + 10 to {(alice|bob)-> & (alice & bob)<-};
+fun add10(a: int{alice}, b: out int{bob}) {
+    out b = declassify (endorse a to {alice & bob<-} from {alice}) + 10 to {(alice|bob)-> & (alice & bob)<-};
 }
 
 fun main() {
-    val array = Array[int]{alice}}(10);
-    val a: int{alice}} = 0;
+    val array = Array[int]{alice}(10);
+    val a: int{alice} = 0;
     add10(a);
     output a to alice;
 }

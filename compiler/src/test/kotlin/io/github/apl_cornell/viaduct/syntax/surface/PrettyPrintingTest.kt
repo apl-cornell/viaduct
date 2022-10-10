@@ -11,7 +11,7 @@ import org.junit.jupiter.params.provider.ArgumentsSource
 internal class PrettyPrintingTest {
     @Test
     fun `unicode characters work`() {
-        val programText = "host alice : {A ⊓ B}"
+        val programText = "host alice"
         val program = programText.parse()
         val printedAst = program.toDocument().print()
         assertStructurallyEquals(program, printedAst.parse())

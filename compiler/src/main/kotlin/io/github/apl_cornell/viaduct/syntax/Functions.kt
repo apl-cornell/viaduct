@@ -48,12 +48,12 @@ enum class DelegationKind : PrettyPrintable {
  */
 enum class DelegationProjection : PrettyPrintable {
     INTEGRITY {
-        override fun toDocument(): Document = Document("Integrity")
+        override fun toDocument(): Document = Document("<-")
     },
     CONFIDENTIALITY {
-        override fun toDocument(): Document = Document("Confidentiality")
+        override fun toDocument(): Document = Document("->")
     },
     BOTH {
-        override fun toDocument(): Document = Document("Both Projections")
+        override fun toDocument(): Document = Document("")
     }
 }

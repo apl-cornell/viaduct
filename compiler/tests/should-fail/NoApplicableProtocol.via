@@ -1,7 +1,0 @@
-/* NoApplicableProtocolError */
-
-host alice
-
-fun main() {
-    val tooIntegral: int{alice ∧ B<-} = 42;
-}

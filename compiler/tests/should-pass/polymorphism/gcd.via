@@ -22,3 +22,6 @@ host alice
 host bob
 assume for <- alice trusts bob
 assume for <- bob trusts alice
+host chuck
+assume alice trusts chuck
+assume bob trusts chuck

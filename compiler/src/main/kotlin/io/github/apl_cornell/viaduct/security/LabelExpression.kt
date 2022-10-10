@@ -142,7 +142,9 @@ fun interpret(label: Label, trustConfiguration: HostTrustConfiguration): LabelEx
                 }.reduceOrNull { acc, e -> LabelAnd(acc, e) } ?: LabelTop
         }.reduceOrNull { acc, e -> LabelOr(acc, e) } ?: LabelBottom
     val result = LabelAnd(LabelConfidentiality(con), LabelIntegrity(int))
+    // remove components that are not on the same side of label projection and assert
+    // that it is still correct
+    // TODO: Prove this is correct or think of new label model
     assert(trustConfiguration.equals(label, result.interpret()))
     return result
 }
-// a function from label to label expression

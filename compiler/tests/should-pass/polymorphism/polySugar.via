@@ -10,3 +10,7 @@ fun main() {
 
 host alice
 host bob
+
+host chuck
+assume alice trusts chuck
+assume bob trusts chuck

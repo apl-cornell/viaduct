@@ -1,6 +1,5 @@
 <component name="InspectionProjectProfileManager">
   <profile version="1.0">
     <option name="myName" value="ktlint" />
-    <inspection_tool class="NewClassNamingConvention" enabled="false" level="WARNING" enabled_by_default="false" />
   </profile>
 </component>

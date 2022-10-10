@@ -23,13 +23,10 @@ class Format : CliktCommand(help = "Pretty print source program") {
         val program = input.sourceFile().parse(DefaultCombinedBackend.protocolParsers)
         val elaborated by lazy { program.elaborated() }
 
-        val specialized = if (check) {
+        if (check) {
             elaborated.check()
-            elaborated.specialize()
-        } else {
-            elaborated.specialize()
         }
 
-        output.println(if (elaborate) specialized else program)
+        output.println(if (elaborate) elaborated.specialize() else program)
     }
 }

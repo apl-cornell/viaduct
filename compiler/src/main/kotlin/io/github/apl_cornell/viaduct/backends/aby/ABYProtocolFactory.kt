@@ -1,7 +1,7 @@
 package io.github.apl_cornell.viaduct.backends.aby
 
-import edu.cornell.cs.apl.viaduct.passes.canMux
 import io.github.apl_cornell.viaduct.analysis.NameAnalysis
+import io.github.apl_cornell.viaduct.passes.canMux
 import io.github.apl_cornell.viaduct.selection.FunctionVariable
 import io.github.apl_cornell.viaduct.selection.Implies
 import io.github.apl_cornell.viaduct.selection.Literal
@@ -75,6 +75,7 @@ class ABYProtocolFactory(program: ProgramNode) : ProtocolFactory {
         when (node) {
             is LetNode ->
                 protocols.filter { node.isApplicable(it) }.toSet()
+
             else ->
                 protocols
         }
@@ -153,9 +154,11 @@ class ABYProtocolFactory(program: ProgramNode) : ProtocolFactory {
             protocol is ArithABY ->
                 // Arithmetic circuits cannot mux, so keep the check.
                 Literal(true)
+
             protocol is ABY && node.guard is ReadNode ->
                 // Turn off visibility check when the conditional can be muxed.
                 Literal(!node.canMux())
+
             else ->
                 super.guardVisibilityConstraint(protocol, node)
         }

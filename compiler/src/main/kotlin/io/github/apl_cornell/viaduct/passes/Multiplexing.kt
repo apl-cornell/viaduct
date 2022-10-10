@@ -1,10 +1,9 @@
-package edu.cornell.cs.apl.viaduct.passes
+package io.github.apl_cornell.viaduct.passes
 
 import io.github.apl_cornell.viaduct.analysis.NameAnalysis
 import io.github.apl_cornell.viaduct.analysis.freshVariableNameGenerator
 import io.github.apl_cornell.viaduct.errors.UnknownDatatypeError
 import io.github.apl_cornell.viaduct.errors.UnknownMethodError
-import io.github.apl_cornell.viaduct.passes.ProgramPostprocessor
 import io.github.apl_cornell.viaduct.selection.ProtocolAssignment
 import io.github.apl_cornell.viaduct.syntax.Arguments
 import io.github.apl_cornell.viaduct.syntax.Located

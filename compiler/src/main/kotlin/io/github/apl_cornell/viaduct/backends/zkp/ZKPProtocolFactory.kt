@@ -1,11 +1,11 @@
 package io.github.apl_cornell.viaduct.backends.zkp
 
-import edu.cornell.cs.apl.viaduct.passes.canMux
 import io.github.apl_cornell.viaduct.analysis.NameAnalysis
 import io.github.apl_cornell.viaduct.backends.cleartext.Local
 import io.github.apl_cornell.viaduct.backends.cleartext.LocalProtocolFactory
 import io.github.apl_cornell.viaduct.backends.cleartext.Replication
 import io.github.apl_cornell.viaduct.backends.cleartext.ReplicationProtocolFactory
+import io.github.apl_cornell.viaduct.passes.canMux
 import io.github.apl_cornell.viaduct.selection.Literal
 import io.github.apl_cornell.viaduct.selection.ProtocolFactory
 import io.github.apl_cornell.viaduct.selection.SelectionConstraint
@@ -72,6 +72,7 @@ class ZKPProtocolFactory(val program: ProgramNode) : ProtocolFactory {
                         node.sendsTo(nameAnalysis, setOf(it), localAndReplicated + setOf(it))
                     )
                 }.ands()
+
             is DeclarationNode ->
                 protocols.map {
                     io.github.apl_cornell.viaduct.selection.And(
@@ -91,6 +92,7 @@ class ZKPProtocolFactory(val program: ProgramNode) : ProtocolFactory {
             protocol is ZKP && node.guard is ReadNode ->
                 // Turn off visibility check when the conditional can be muxed.
                 Literal(!node.canMux())
+
             else ->
                 super.guardVisibilityConstraint(protocol, node)
         }

@@ -239,12 +239,10 @@ class InformationFlowAnalysis private constructor(
     }
 
     /** Returns constraints asserting that the pc at [this] node flows to node with label [nodeLabel]. */
-    private fun Node.pcFlowsTo(
-        nodeLabel: LabelTerm
-    ): Sequence<LabelConstraint> {
+    private fun Node.pcFlowsTo(nodeLabel: LabelTerm): Sequence<LabelConstraint> {
         val constraints: Iterable<LabelConstraint> =
-            pcTerm.flowsTo(nodeLabel, LabelConstant.bounds()) { to, from ->
-                InsecureDataFlowError(this, from, to, delegationContext)
+            pcTerm.flowsTo(nodeLabel, LabelConstant.bounds()) { pcLabel, termLabel ->
+                InsecureControlFlowError(this, termLabel, pcLabel, delegationContext)
             }
         return constraints.asSequence()
     }

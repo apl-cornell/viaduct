@@ -3,7 +3,7 @@ package io.github.apl_cornell.viaduct.security.solver2
 import io.github.apl_cornell.viaduct.algebra.FreeDistributiveLattice
 import io.github.apl_cornell.viaduct.algebra.FreeDistributiveLatticeCongruence
 import io.github.apl_cornell.viaduct.security.SecurityLattice
-import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.AssertionFailureBuilder.assertionFailure
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
@@ -53,6 +53,17 @@ private fun solve(
     vararg constraint: Iterable<Constraint<Constant, Variable, IllegalFlowException>>
 ): ConstraintSolution<Constant, Variable> =
     ConstraintSystem(constraint.flatMap { it }, ConstantBounds, FreeDistributiveLatticeCongruence(listOf())).solution()
+
+private fun assertEquals(expected: SecurityLattice<Constant>, actual: SecurityLattice<Constant>) {
+    fun equals(expected: Constant, actual: Constant): Boolean =
+        expected.lessThanOrEqualTo(actual, listOf()) && actual.lessThanOrEqualTo(expected, listOf())
+
+    val confidentiality = equals(expected.confidentialityComponent, actual.confidentialityComponent)
+    val integrity = equals(expected.integrityComponent, actual.integrityComponent)
+    if (!(confidentiality && integrity)) {
+        assertionFailure().expected(expected).actual(actual).buildAndThrow()
+    }
+}
 
 internal class ConstraintSystemTest {
     @Nested

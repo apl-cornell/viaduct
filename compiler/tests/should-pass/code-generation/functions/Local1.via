@@ -1,17 +1,18 @@
+host alice
+host bob
 host chuck
-host dave
-host ed
 
-assume ed trusts chuck & dave
+assume alice trusts chuck
+assume bob trusts chuck
 
 fun main() {
-    val c : int = endorse (input int from chuck) to {chuck & dave<-} from {chuck};
-    val d : int = endorse (input int from dave)  to {dave & chuck<-} from {dave};
-    f(c, d, val win);
-    output win to chuck;
-    output win to dave;
+    val a : int = endorse (input int from alice) to {alice & bob<-} from {alice};
+    val b : int = endorse (input int from bob)  to {bob & alice<-} from {bob};
+    f(a, b, val win);
+    output win to alice;
+    output win to bob;
 }
 
-fun f(num: int{chuck & dave<-}, guess: int{dave & chuck<-}, ret: out bool{chuck ⊓ dave}) {
-    out ret = declassify (guess == num) from {chuck & dave} to {chuck ⊓ dave};
+fun f(num: int{alice & bob<-}, guess: int{bob & alice<-}, ret: out bool{alice ⊓ bob}) {
+    out ret = declassify (guess == num) from {alice & bob} to {alice ⊓ bob};
 }

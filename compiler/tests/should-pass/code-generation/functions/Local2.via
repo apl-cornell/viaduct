@@ -11,6 +11,6 @@ fun main() {
     output win to fred;
 }
 
-fun g(e: int{ed}, f: int{fred}, ret: out bool{ed ⊓ fred}) {
+fun g(e: int{ed}, f: int{ed ⊓ fred}, ret: out bool{ed ⊓ fred}) {
     out ret = declassify (e == f) to {ed ⊓ fred};
 }

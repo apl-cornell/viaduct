@@ -2,10 +2,10 @@ host alice
 host bob
 
 fun main() {
-/*    var a : int = endorse (input int from alice) to {alice & bob<-} from {alice};
+    var a : int = endorse (input int from alice) to {alice & bob<-} from {alice};
     var b : int = endorse (input int from bob) to {bob & alice<-} from {bob};
     val d_b : int = declassify b from {bob & alice<-} to {alice ⊓ bob};
-    val equal : bool = endorse(d_b == a) to {alice & bob<-} from {alice};
+    val equal : bool = endorse (d_b == a) to {alice & bob<-} from {alice};
 
     g0(equal, val win0);
     output win0 to alice;
@@ -14,16 +14,15 @@ fun main() {
     val c = Array[bool](2);
     c[0] = equal;  /* A real commitment */
     c[1] = true;   /* A fake commitment */
-    k(&c);*/
+    k(&c);
 }
-/*
+
 fun g0(equal: bool{alice & bob<-}, ret: out bool{alice ⊓ bob}) {
     val d_equal : bool = declassify equal from {alice & bob<-} to {alice ⊓ bob};
     out ret = d_equal;
 }
 
- does declassifying c[0] affect c[1]?
-fun k(c: Array[bool]{alice & bob}) {
+fun k(c: Array[bool]{alice & bob<-}) {
     val equal: bool = declassify c[0] to {alice ⊓ bob};
     output equal to alice;
     output equal to bob;
@@ -32,4 +31,3 @@ fun k(c: Array[bool]{alice & bob}) {
     output t to alice;
     output t to bob;
 }
-*/

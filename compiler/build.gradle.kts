@@ -11,6 +11,9 @@ plugins {
     id("org.xbib.gradle.plugin.jflex") version "1.6.0"
 }
 
+val gurobiHome: String? = System.getenv("GUROBI_HOME")
+val linkGurobi: Boolean = gurobiHome != null
+
 /** Dependencies */
 
 dependencies {
@@ -39,6 +42,10 @@ dependencies {
     // SMT solving
     implementation("io.github.tudo-aqua:z3-turnkey:4.8.14")
 
+    if (linkGurobi) {
+        implementation(files("$gurobiHome/lib/gurobi.jar", "$gurobiHome/lib/gurobi-javadoc.jar"))
+    }
+
     // Testing
     testImplementation(project(":test-utilities"))
     testImplementation(kotlin("reflect"))
@@ -54,7 +61,12 @@ val compileCup by tasks.registering(CompileCupTask::class)
 
 sourceSets {
     main {
-        java.srcDir(compileCup.map { it.outputDirectory })
+        java {
+            srcDir(compileCup.map { it.outputDirectory })
+            if (linkGurobi) {
+                srcDir("src/plugins/gurobi")
+            }
+        }
     }
 }
 

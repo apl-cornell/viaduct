@@ -37,7 +37,7 @@ dependencies {
     }
 
     // SMT solving
-    implementation("io.github.tudo-aqua:z3-turnkey:4.8.14")
+    implementation("tools.aqua:z3-turnkey:4.11.2")
 
     // Testing
     testImplementation(project(":test-utilities"))

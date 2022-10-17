@@ -18,6 +18,9 @@ class ProgramNode(
     constructor(declarations: List<TopLevelDeclarationNode>, sourceLocation: SourceLocation) :
         this(declarations.toPersistentList(), sourceLocation)
 
+    override val children: Iterable<Node>
+        get() = declarations
+
     val hostDeclarations: Iterable<HostDeclarationNode> =
         declarations.filterIsInstance<HostDeclarationNode>()
 
@@ -25,6 +28,9 @@ class ProgramNode(
 
     val circuits: Iterable<CircuitDeclarationNode> =
         declarations.filterIsInstance<CircuitDeclarationNode>()
+
+    val functions: Iterable<FunctionDeclarationNode> =
+        declarations.filterIsInstance<FunctionDeclarationNode>()
 
     override fun toDocument(): Document =
         declarations.concatenated(Document.forcedLineBreak + Document.forcedLineBreak)

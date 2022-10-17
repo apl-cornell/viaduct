@@ -21,6 +21,9 @@ class LiteralNode(
     val value: Value,
     override val sourceLocation: SourceLocation
 ) : IndexExpressionNode() {
+    override val children: Iterable<Nothing>
+        get() = listOf()
+
     override fun toDocument(): Document = value.toDocument()
 }
 
@@ -28,6 +31,9 @@ class ReferenceNode(
     val name: VariableNode,
     override val sourceLocation: SourceLocation
 ) : IndexExpressionNode() {
+    override val children: Iterable<Nothing>
+        get() = listOf()
+
     override fun toDocument(): Document = name.toDocument()
 }
 
@@ -36,22 +42,31 @@ class LookupNode(
     val indices: Arguments<IndexExpressionNode>,
     override val sourceLocation: SourceLocation
 ) : PureExpressionNode() {
+    override val children: Iterable<Node>
+        get() = indices
+
     override fun toDocument(): Document = variable + indices.bracketed()
 }
 
 /** An n-ary operator applied to n arguments. */
 class OperatorApplicationNode(
-    val operator: Operator,
+    val operator: OperatorNode,
     val arguments: Arguments<PureExpressionNode>,
     override val sourceLocation: SourceLocation
 ) : PureExpressionNode() {
-    override fun toDocument(): Document = Document("(") + operator.toDocument(arguments) + ")"
+    override val children: Iterable<Node>
+        get() = listOf(operator) + arguments
+
+    override fun toDocument(): Document = Document("(") + operator.operator.toDocument(arguments) + ")"
 }
 
 class OperatorNode(
     val operator: Operator,
     override val sourceLocation: SourceLocation
 ) : Node() {
+    override val children: Iterable<Nothing>
+        get() = listOf()
+
     override fun toDocument(): Document = Document("::$operator")
 }
 
@@ -66,6 +81,9 @@ class ReduceNode(
     val body: PureExpressionNode,
     override val sourceLocation: SourceLocation
 ) : PureExpressionNode() {
+    override val children: Iterable<Node>
+        get() = listOf(operator, defaultValue, indices, body)
+
     override fun toDocument(): Document {
         return keyword("reduce") + listOf(operator, defaultValue).tupled() * "{" * indices * "->" * body * " }"
     }

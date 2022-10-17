@@ -108,6 +108,8 @@ NUM         = ((-)?[1-9][0-9]*) | 0
   "::"            { return symbol(sym.COLONCOLON); }
 
   /* Expressions */
+  "."             { return symbol(sym.PERIOD); }
+
   "reduce"        { return symbol(sym.REDUCE); }
 
   "true"          { return symbol(sym.TRUE); }

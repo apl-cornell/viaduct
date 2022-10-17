@@ -23,7 +23,8 @@ action code {:
     private OperatorApplicationNode binaryExpression(BinaryOperator op, ExpressionNode lhs, ExpressionNode rhs) {
         Arguments arguments = Arguments.from(lhs, rhs);
         SourceRange sourceLocation = lhs.getSourceLocation().merge(rhs.getSourceLocation());
-        return new OperatorApplicationNode(op, arguments, sourceLocation);
+        SourceRange opLocation = new SourceRange(lhs.getSourceLocation().end, rhs.getSourceLocation().start);
+        return new OperatorApplicationNode(new OperatorNode(op, opLocation), arguments, sourceLocation);
     }
 :}
 
@@ -85,20 +86,26 @@ nonterminal ProgramNode program;
 nonterminal List<TopLevelDeclarationNode> declaration_list;
 nonterminal TopLevelDeclarationNode declaration;
 
-nonterminal CircuitStatementNode circ_stmt;
 nonterminal ReturnNode return;
-nonterminal CircuitBlockNode circ_block;
+nonterminal BlockNode<StatementNode> block;
+nonterminal List<StatementNode> stmt_list;
+nonterminal StatementNode stmt;
+nonterminal CommandNode command;
+nonterminal BlockNode<CircuitStatementNode> circ_block;
 nonterminal List<CircuitStatementNode> circ_stmt_list;
+nonterminal CircuitStatementNode circ_stmt;
 
-nonterminal PureExpressionNode expr;
+nonterminal ExpressionNode expr;
+nonterminal PureExpressionNode pure_expr;
 nonterminal IndexExpressionNode index_expr;
 nonterminal List<IndexExpressionNode> index_expr_list, nonempty_index_expr_list;
 nonterminal ReferenceNode reference;
+nonterminal List<ReferenceNode> reference_list, nonempty_reference_list;
 nonterminal LiteralNode literal;
 nonterminal Located<Variable> variable;
-nonterminal BoundParameterNode bound;
-nonterminal List<BoundParameterNode> bound_list, nonempty_bound_list;
-nonterminal List<ExpressionNode> expr_list, nonempty_expr_list;
+nonterminal SizeParameterNode size;
+nonterminal List<SizeParameterNode> size_list, nonempty_size_list;
+nonterminal List<PureExpressionNode> pure_expr_list, nonempty_pure_expr_list;
 nonterminal Located<ArgumentLabel> argument_label;
 nonterminal IndexParameterNode index_param;
 nonterminal List<IndexParameterNode> index_param_list, nonempty_index_param_list;
@@ -106,7 +113,7 @@ nonterminal Operator operator;
 
 nonterminal Value value;
 nonterminal Located<ValueType> value_type;
-nonterminal Located<ArrayType> array_type;
+nonterminal ArrayTypeNode array_type;
 
 nonterminal Located<Host> host;
 nonterminal List host_list, nonempty_host_list;
@@ -114,6 +121,9 @@ nonterminal HostSetValue host_set;
 
 nonterminal List parameter_list, nonempty_parameter_list;
 nonterminal ParameterNode parameter;
+
+nonterminal List<VariableBindingNode> var_binding_list, nonempty_var_binding_list;
+nonterminal VariableBindingNode var_binding;
 
 nonterminal Located<Protocol> protocol;
 nonterminal Located<Protocol> protocol_annot;
@@ -132,6 +142,10 @@ terminal CIRCUIT;
 terminal RETURN;
 terminal COLON;
 terminal COLONCOLON;
+
+terminal PERIOD;
+
+terminal INPUT, FROM, OUTPUT, TO;
 
 terminal REDUCE;
 
@@ -193,22 +207,33 @@ declaration ::=
     HOST:begin host:host {:
       RESULT = new HostDeclarationNode(host, location(beginleft, hostright));
     :}
-  | CIRCUIT:begin FUNCTION LT:boundsopen bound_list:bounds GT:boundsclose IDENT:funcname protocol_annot:protocol
+  | CIRCUIT:begin FUNCTION LT:sizesopen size_list:sizes GT:sizesclose IDENT:funcname protocol_annot:protocol
       OPEN_PAREN:paramsbegin parameter_list:inparams CLOSE_PAREN:paramsclose RARROW:arrow parameter_list:outparams circ_block:body {:
         RESULT = new CircuitDeclarationNode(
           new Located(new FunctionName(funcname), location(funcnameleft, funcnameright)),
           protocol,
-          new Arguments(bounds, location(boundsopenleft, boundscloseright)),
+          new Arguments(sizes, location(sizesopenleft, sizescloseright)),
           new Arguments(inparams, location(paramsbeginleft, paramsbeginright)),
           new Arguments(outparams, location(arrowleft, arrowright)),
           body,
           location(beginleft, bodyright)
         );
     :}
+  | FUNCTION:begin LT:sizesopen size_list:sizes GT:sizesclose IDENT:funcname protocol_annot:protocol
+        OPEN_PAREN:paramsbegin parameter_list:inparams CLOSE_PAREN:paramsclose RARROW:arrow parameter_list:outparams block:body {:
+          RESULT = new FunctionDeclarationNode(
+            new Located(new FunctionName(funcname), location(funcnameleft, funcnameright)),
+            new Arguments(sizes, location(sizesopenleft, sizescloseright)),
+            new Arguments(inparams, location(paramsbeginleft, paramsbeginright)),
+            new Arguments(outparams, location(arrowleft, arrowright)),
+            body,
+            location(beginleft, bodyright)
+          );
+      :}
   ;
 
-bound_list ::=
-    nonempty_bound_list:bs {:
+size_list ::=
+    nonempty_size_list:bs {:
       RESULT = bs;
     :}
   | /* empty */ {:
@@ -216,18 +241,18 @@ bound_list ::=
     :}
   ;
 
-nonempty_bound_list ::=
-    nonempty_bound_list:bs COMMA bound:b {:
+nonempty_size_list ::=
+    nonempty_size_list:bs COMMA size:b {:
       bs.add(b);
       RESULT = bs;
     :}
-  | bound:b {:
+  | size:b {:
       RESULT = CollectionsKt.mutableListOf(b);
     :}
   ;
 
-bound ::=
-  variable:var {: RESULT = new BoundParameterNode(var, location(varleft, varright)); :};
+size ::=
+  variable:var {: RESULT = new SizeParameterNode(var, location(varleft, varright)); :};
 
 parameter_list ::=
     nonempty_parameter_list:params {:
@@ -249,19 +274,17 @@ nonempty_parameter_list ::=
   ;
 
 parameter ::=
-    variable:name COLON array_type:type protocol_annot:protocol {:
+    variable:name COLON array_type:type {:
       RESULT = new ParameterNode(
         name,
         type,
-        protocol,
-        location(nameleft, protocolright)
+        location(nameleft, typeright)
       );
     :}
   ;
 
 return ::=
-  /* TODO only works because expr_list currently only generates pure expressions */
-  RETURN:begin expr_list:values {:
+  RETURN:begin pure_expr_list:values {:
       SourceRange valuesLoc = (values.size() == 0) ? location(beginleft, valuesright) : location(valuesleft, valuesright);
       RESULT = new ReturnNode(
         new Arguments(values, valuesLoc),
@@ -270,9 +293,82 @@ return ::=
     :}
   ;
 
+var_binding_list ::=
+    nonempty_var_binding_list:var_bindings {:
+      RESULT = var_bindings;
+    :}
+  | /* empty */ {:
+      RESULT = CollectionsKt.mutableListOf();
+    :}
+  ;
+
+nonempty_var_binding_list ::=
+    nonempty_var_binding_list:var_bindings COMMA var_binding:r {:
+      var_bindings.add(r);
+      RESULT = var_bindings;
+    :}
+  | var_binding:r {:
+      RESULT = CollectionsKt.mutableListOf(r);
+    :}
+  ;
+
+var_binding ::=
+    variable:name AT protocol:p {:
+      RESULT = new VariableBindingNode(
+        new Located(name, location(nameleft, nameright)),
+        new Located(p, location(pleft, pright)),
+        location(nameleft, pright)
+      );
+    :}
+  ;
+
+block ::=
+    OPEN_BRACE:begin stmt_list:statements return:ret CLOSE_BRACE:end {:
+      RESULT = new BlockNode(statements, ret, location(beginleft, endright));
+    :}
+  ;
+
+stmt_list ::=
+    stmt_list:slist stmt:s {:
+      slist.add(s);
+      RESULT = slist;
+    :}
+  | /* empty */ {:
+      RESULT = CollectionsKt.mutableListOf();
+    :}
+  ;
+
+stmt ::=
+  var_binding_list:varbindings EQ:e command:rhs {:
+      RESULT = new LetNode(
+          new Arguments(var_bindings, location(varbindingsleft, eright)),
+          rhs,
+          location(varbindingsleft, rhsright)
+      )
+  :}
+;
+
+command ::=
+    IDENT:funcname LT:ibegin index_expr_list:inds GT:iend
+    OPEN_PAREN:abegin reference_list:args CLOSE_PAREN:aend {:
+        RESULT = new CircuitCallNode(
+          new Located(new FunctionName(funcname), location(funcnameleft, funcnameright)),
+          new Arguments(inds, location(ibeginleft, iendright)),
+          new Arguments(args, location(abeginleft, aendright)),
+          location(var_bindingsleft, aendright)
+        );
+      :}
+  | host:sender PERIOD INPUT LT array_type:type GT OPEN_PAREN CLOSE_PAREN:end {:
+        RESULT = new InputNode(type, sender, location(senderleft, endright));
+    :}
+  | host:recipient PERIOD OUTPUT OPEN_PAREN pure_expr:message CLOSE_PAREN:end {:
+      RESULT = new OutputNode(message, recipient, location(recipientleft, endright));
+  :}
+;
+
 circ_block ::=
     OPEN_BRACE:begin circ_stmt_list:statements return:ret CLOSE_BRACE:end {:
-      RESULT = new CircuitBlockNode(statements, ret, location(beginleft, endright));
+      RESULT = new BlockNode(statements, ret, location(beginleft, endright));
     :}
   ;
 
@@ -288,10 +384,11 @@ circ_stmt_list ::=
 
 circ_stmt ::=
   /* let binding */
-  VAL:begin variable:var OPEN_SQBRACE:open index_param_list:indices CLOSE_SQBRACE:close EQ expr:e {:
-      RESULT = new LetNode(
+  VAL:begin variable:var OPEN_SQBRACE:open index_param_list:indices CLOSE_SQBRACE:close COLON array_type:type EQ pure_expr:e {:
+      RESULT = new CircuitLetNode(
         var,
         new Arguments(indices, location(openleft, closeright)),
+        type,
         e,
         location(beginleft, eright)
       );
@@ -329,13 +426,11 @@ index_param ::=
 
 array_type ::=
     value_type:elementtype OPEN_SQBRACE:open index_expr_list:shape CLOSE_SQBRACE:close {:
-        RESULT = new Located(
-          new ArrayType(
-            elementtype,
-            new Arguments(shape, location(openleft, closeright))
-          ),
-          location(elementtypeleft, closeright)
-        );
+      RESULT = new ArrayTypeNode(
+        elementtype,
+        new Arguments(shape, location(openleft, closeright)),
+        location(elementtypeleft, closeright)
+      );
     :}
   ;
 
@@ -368,6 +463,23 @@ nonempty_index_expr_list ::=
      :}
    ;
 
+reference_list ::=
+      nonempty_reference_list:rlist {: RESULT = rlist; :}
+    | /* empty */ {:
+      RESULT = CollectionsKt.mutableListOf();
+    :}
+  ;
+
+nonempty_reference_list ::=
+  nonempty_reference_list:rlist COMMA reference:r {:
+    rlist.add(r);
+    RESULT = rlist;
+  :}
+  | reference:r {:
+       RESULT = CollectionsKt.mutableListOf(r);
+     :}
+   ;
+
 index_expr ::=
     literal:lit   {: RESULT = lit; :}
   | reference:var {: RESULT = var; :};
@@ -381,7 +493,16 @@ literal ::=
 reference ::= variable:var {: RESULT = new ReferenceNode(var, location(varleft, varright)); :};
 
 expr ::=
+  | pure_expr:e {:
+      RESULT = e;
+  :}
+;
+
+pure_expr ::=
     index_expr:exp {: RESULT = exp; :}
+  | OPEN_PAREN pure_expr:e CLOSE_PAREN {:
+      RESULT = e;
+  :}
   /* variable/array lookup */
   | variable:var OPEN_SQBRACE:open index_expr_list:indices CLOSE_SQBRACE:close {:
       RESULT = new LookupNode(
@@ -390,8 +511,8 @@ expr ::=
         location(varleft, closeright)
       );
   :}
-  | REDUCE:begin OPEN_PAREN COLONCOLON operator:op COMMA expr:defaultvalue CLOSE_PAREN OPEN_BRACE:bodybegin
-   index_param:params RARROW:arrow expr:expression CLOSE_BRACE:bodyend {:
+  | REDUCE:begin OPEN_PAREN COLONCOLON operator:op COMMA pure_expr:defaultvalue CLOSE_PAREN OPEN_BRACE:bodybegin
+   index_param:params RARROW:arrow pure_expr:expression CLOSE_BRACE:bodyend {:
       RESULT = new ReduceNode(
         new OperatorNode(op, location(opleft, opright)),
         defaultvalue,
@@ -400,70 +521,70 @@ expr ::=
         location(beginleft, bodyendright)
       );
    :}
-  | NOT:begin expr:e {:
+  | NOT:begin pure_expr:e {:
       RESULT = new OperatorApplicationNode(
-        Not.INSTANCE,
+        new OperatorNode(Not.INSTANCE, location(beginleft, beginright)),
         Arguments.from(e),
         location(beginleft, eright));
     :}
-  | MINUS:begin expr:e {:
+  | MINUS:begin pure_expr:e {:
       RESULT = new OperatorApplicationNode(
-        Negation.INSTANCE,
+        new OperatorNode(Negation.INSTANCE, location(beginleft, beginright)),
         Arguments.from(e),
         location(beginleft, eright));
     :}
-  | expr:e1 ANDAND expr:e2 {:
+  | pure_expr:e1 ANDAND pure_expr:e2 {:
       RESULT = binaryExpression(And.INSTANCE, e1, e2);
     :}
-  | expr:e1 OROR expr:e2 {:
+  | pure_expr:e1 OROR pure_expr:e2 {:
       RESULT = binaryExpression(Or.INSTANCE, e1, e2);
     :}
-  | expr:e1 AND expr:e2 {:
+  | pure_expr:e1 AND pure_expr:e2 {:
       RESULT = binaryExpression(ExclusiveOr.INSTANCE, e1, e2);
     :}
-  | expr:e1 EQEQ expr:e2 {:
+  | pure_expr:e1 EQEQ pure_expr:e2 {:
       RESULT = binaryExpression(EqualTo.INSTANCE, e1, e2);
     :}
-  | expr:e1 NEQ expr:e2 {:
+  | pure_expr:e1 NEQ pure_expr:e2 {:
       RESULT = binaryExpression(ExclusiveOr.INSTANCE, e1, e2);
     :}
-  | expr:e1 LT expr:e2 {:
+  | pure_expr:e1 LT pure_expr:e2 {:
       RESULT = binaryExpression(LessThan.INSTANCE, e1, e2);
     :}
-  | expr:e1 LEQ expr:e2 {:
+  | pure_expr:e1 LEQ pure_expr:e2 {:
       RESULT = binaryExpression(LessThanOrEqualTo.INSTANCE, e1, e2);
     :}
-  | expr:e1 GT expr:e2 {:
+  | pure_expr:e1 GT pure_expr:e2 {:
       RESULT = binaryExpression(GreaterThan.INSTANCE, e1, e2);
     :}
-  | expr:e1 GEQ expr:e2 {:
+  | pure_expr:e1 GEQ pure_expr:e2 {:
       RESULT = binaryExpression(GreaterThanOrEqualTo.INSTANCE, e1, e2);
     :}
-  | expr:e1 PLUS expr:e2 {:
+  | pure_expr:e1 PLUS pure_expr:e2 {:
       RESULT = binaryExpression(Addition.INSTANCE, e1, e2);
     :}
-  | expr:e1 MINUS expr:e2 {:
+  | pure_expr:e1 MINUS pure_expr:e2 {:
       RESULT = binaryExpression(Subtraction.INSTANCE, e1, e2);
     :}
-  | expr:e1 TIMES expr:e2 {:
+  | pure_expr:e1 TIMES pure_expr:e2 {:
       RESULT = binaryExpression(Multiplication.INSTANCE, e1, e2);
     :}
-  | expr:e1 DIVIDE expr:e2 {:
+  | pure_expr:e1 DIVIDE pure_expr:e2 {:
       RESULT = binaryExpression(Division.INSTANCE, e1, e2);
     :}
-  | MIN:begin OPEN_PAREN expr:e1 COMMA expr:e2 CLOSE_PAREN:end {:
+  | MIN:begin OPEN_PAREN pure_expr:e1 COMMA pure_expr:e2 CLOSE_PAREN:end {:
       RESULT = binaryExpression(Minimum.INSTANCE, e1, e2);
     :}
-  | MAX:begin OPEN_PAREN expr:e1 COMMA expr:e2 CLOSE_PAREN:end {:
+  | MAX:begin OPEN_PAREN pure_expr:e1 COMMA pure_expr:e2 CLOSE_PAREN:end {:
       RESULT = binaryExpression(Maximum.INSTANCE, e1, e2);
     :}
-  | MUX:begin OPEN_PAREN expr:e1 COMMA expr:e2 COMMA expr:e3 CLOSE_PAREN:end {:
+  | MUX:begin OPEN_PAREN pure_expr:e1 COMMA pure_expr:e2 COMMA pure_expr:e3 CLOSE_PAREN:end {:
       Arguments arguments = Arguments.from(e1, e2, e3);
-      SourceRange sourceLocation = e1.getSourceLocation().merge(e2.getSourceLocation()).merge(e3.getSourceLocation());
-      RESULT = new OperatorApplicationNode(Mux.INSTANCE, arguments, location(beginleft, endright));
-    :}
-  | OPEN_PAREN expr:e CLOSE_PAREN {:
-      RESULT = e;
+      RESULT = new OperatorApplicationNode(
+        new OperatorNode(Mux.INSTANCE, location(beginleft, beginright)),
+        arguments,
+        location(beginleft, endright)
+      );
     :}
   ;
 
@@ -487,8 +608,8 @@ operator ::=
   | MUX {: RESULT = Mux.INSTANCE; :}
 ;
 
-expr_list ::=
-    nonempty_expr_list:elist {:
+pure_expr_list ::=
+    nonempty_pure_expr_list:elist {:
       RESULT = elist;
     :}
   | /* empty */ {:
@@ -496,12 +617,12 @@ expr_list ::=
     :}
   ;
 
-nonempty_expr_list ::=
-    nonempty_expr_list:elist COMMA expr:e {:
+nonempty_pure_expr_list ::=
+    nonempty_pure_expr_list:elist COMMA pure_expr:e {:
       elist.add(e);
       RESULT = elist;
     :}
-  | expr:e {:
+  | pure_expr:e {:
       RESULT = CollectionsKt.mutableListOf(e);
     :}
   ;

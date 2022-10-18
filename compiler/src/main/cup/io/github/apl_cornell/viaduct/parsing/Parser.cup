@@ -117,11 +117,10 @@ nonterminal Value value;
 nonterminal Located<ValueType> value_type;
 nonterminal Located<LabelExpression> label, optional_label, optional_from_label, optional_to_label;
 nonterminal Located<LabelExpression> label_signature, optional_label_signature, optional_pc;
-nonterminal LabelExpression label_expr, label_expr_noparam, label_expr_signature;
+nonterminal LabelExpression principal_expr, label_expr, label_expr_noparam, label_expr_signature;
 
 nonterminal Located<ObjectVariable> variable;
 nonterminal Located<Host> host;
-// nonterminal List<Located<Host>> host_list, nonempty_host_list;
 // TODO: the above type causes a parse error in the IntelliJ plugin
 nonterminal List host_list, nonempty_host_list;
 nonterminal HostSetValue host_set;
@@ -137,17 +136,16 @@ nonterminal Located<Protocol> protocol;
 nonterminal Located<Protocol> protocol_annot;
 nonterminal Located<ProtocolName> protocol_name;
 // TODO: more accurate types cause parse errors in IntelliJ
-//nonterminal List<Pair<Located<ArgumentLabel>, Located<Value>>> protocol_argument_list, nonempty_protocol_argument_list;
-//nonterminal Pair<Located<ArgumentLabel>, Located<Value>> protocol_labelled_argument;
+
 nonterminal List protocol_argument_list, nonempty_protocol_argument_list;
 nonterminal Pair<Located, Located> protocol_labelled_argument;
 nonterminal Value protocol_argument;
 
-// delegation syntax nonterminals
 nonterminal DelegationDeclarationNode ifc_delegation;
 nonterminal Located label_param;
 nonterminal List optional_polymorphic_label_param_list, polymorphic_label_param_list, nonempty_polymorphic_label_param_list;
 nonterminal List optional_ifc_delegation_list, ifc_delegation_list, nonempty_ifc_delegation_list;
+nonterminal DelegationProjection projection;
 
 terminal String IDENT, CAP_IDENT;
 terminal String TMP_IDENT;
@@ -159,7 +157,6 @@ terminal FUNCTION;
 terminal OUT;
 terminal COLON;
 
-// delegation syntax
 terminal TRUSTS, ASSUME;
 
 terminal EQ;
@@ -174,7 +171,6 @@ terminal EQEQ, NEQ, LT, LEQ, GT, GEQ;
 terminal PLUS, MINUS, TIMES, DIVIDE;
 terminal MIN, MAX, MUX;
 
-// delegation syntax
 terminal FLOWSTO;
 terminal WHERE;
 
@@ -255,26 +251,39 @@ declaration ::=
         new Located(new Host(host), location(hostleft, hostright)),
         location(beginleft, hostright), null);
     :}
-  | ASSUME:begin FOR RARROW label_expr:label1 TRUSTS label_expr:label2 {:
+  /*| ASSUME:begin FOR RARROW principal_expr:label1 TRUSTS principal_expr:label2 {:
       RESULT = new AuthorityDelegationDeclarationNode(
         new Located(label1, location(label1left, label1right)),
         new Located(label2, location(label2left, label2right)),
         DelegationProjection.CONFIDENTIALITY,
         location(beginleft, label2right), null);
   :}
-  | ASSUME:begin FOR LARROW label_expr:label1 TRUSTS label_expr:label2 {:
+  | ASSUME:begin FOR LARROW principal_expr:label1 TRUSTS principal_expr:label2 {:
       RESULT = new AuthorityDelegationDeclarationNode(
         new Located(label1, location(label1left, label1right)),
         new Located(label2, location(label2left, label2right)),
         DelegationProjection.INTEGRITY,
         location(beginleft, label2right), null);
-  :}
-  | ASSUME:begin label_expr:label1 TRUSTS label_expr:label2 {:
+  :}*/
+  | ASSUME:begin projection: proj label_expr:label1 TRUSTS label_expr:label2 {:
       RESULT = new AuthorityDelegationDeclarationNode(
         new Located(label1, location(label1left, label1right)),
         new Located(label2, location(label2left, label2right)),
-        DelegationProjection.BOTH,
+        proj,
         location(beginleft, label2right), null);
+  :}
+  ;
+
+
+projection ::=
+  FOR RARROW {:
+    RESULT = DelegationProjection.CONFIDENTIALITY;
+  :}
+  | FOR LARROW {:
+    RESULT = DelegationProjection.INTEGRITY;
+  :}
+  | /* empty */ {:
+    RESULT = DelegationProjection.BOTH;
   :}
   ;
 
@@ -873,6 +882,35 @@ label ::=
     :}
   ;
 
+principal_expr ::=
+    IDENT:id {: RESULT = new LabelLiteral(new Host(id)); :}
+
+  | CAP_IDENT:id {: RESULT = new LabelParameter(new LabelVariable(id)); :}
+
+  | TOP {: RESULT = LabelTop.INSTANCE; :}
+
+  | BOTTOM {: RESULT = LabelBottom.INSTANCE; :}
+
+  | principal_expr:l1 OR principal_expr:l2 {:
+      RESULT = new LabelOr(l1, l2);
+    :}
+
+  | principal_expr:l1 AND principal_expr:l2 {:
+      RESULT = new LabelAnd(l1, l2);
+    :}
+
+  | principal_expr:l1 JOIN principal_expr:l2 {:
+      RESULT = new LabelJoin(l1, l2);
+    :}
+
+  | principal_expr:l1 MEET principal_expr:l2 {:
+      RESULT = new LabelMeet(l1, l2);
+    :}
+
+  | OPEN_PAREN principal_expr:l CLOSE_PAREN {:
+      RESULT = l;
+    :}
+  ;
 
 label_expr ::=
     IDENT:id {: RESULT = new LabelLiteral(new Host(id)); :}

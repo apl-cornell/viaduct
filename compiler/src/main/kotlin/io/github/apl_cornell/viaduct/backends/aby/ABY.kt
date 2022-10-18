@@ -1,8 +1,8 @@
 package io.github.apl_cornell.viaduct.backends.aby
 
-import io.github.apl_cornell.viaduct.algebra.FreeDistributiveLattice
 import io.github.apl_cornell.viaduct.security.Label
-import io.github.apl_cornell.viaduct.security.LabelLiteral
+import io.github.apl_cornell.viaduct.security.integrity
+import io.github.apl_cornell.viaduct.security.label
 import io.github.apl_cornell.viaduct.syntax.Host
 import io.github.apl_cornell.viaduct.syntax.InputPort
 import io.github.apl_cornell.viaduct.syntax.OutputPort
@@ -29,9 +29,9 @@ sealed class ABY(val server: Host, val client: Host) : Protocol() {
         get() = mapOf("server" to HostValue(server), "client" to HostValue(client))
 
     override fun authority(): Label {
-        val combined = LabelLiteral(server).interpret() join LabelLiteral(client).interpret()
+        val combined = server.label join client.label
         // We limit confidentiality by integrity since ABY provides semi-honest security
-        return combined meet combined.integrity(FreeDistributiveLattice.bounds()).swap()
+        return combined meet combined.integrity().swap()
     }
 
     val secretInputPorts: Map<Host, InputPort> =

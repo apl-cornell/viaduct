@@ -2,6 +2,7 @@ package io.github.apl_cornell.viaduct.selection
 
 import io.github.apl_cornell.viaduct.analysis.InformationFlowAnalysis
 import io.github.apl_cornell.viaduct.analysis.NameAnalysis
+import io.github.apl_cornell.viaduct.syntax.HostTrustConfiguration
 import io.github.apl_cornell.viaduct.syntax.Protocol
 import io.github.apl_cornell.viaduct.syntax.intermediate.Node
 import io.github.apl_cornell.viaduct.syntax.intermediate.ProgramNode
@@ -25,6 +26,7 @@ fun validateProtocolAssignment(
 
     val nameAnalysis = NameAnalysis.get(program)
     val informationFlowAnalysis = InformationFlowAnalysis.get(program)
+    val hostTrustConfiguration = HostTrustConfiguration.get(program)
 
     fun checkViableProtocol(selection: ProtocolAssignment, node: VariableDeclarationNode) {
         val functionName = nameAnalysis.enclosingFunctionName(node as Node)
@@ -37,7 +39,7 @@ fun validateProtocolAssignment(
     fun checkAuthority(selection: ProtocolAssignment, node: VariableDeclarationNode) {
         val functionName = nameAnalysis.enclosingFunctionName(node as Node)
         val protocol = selection.getAssignment(functionName, node.name.value)
-        if (!informationFlowAnalysis.trustConfiguration.actsFor(
+        if (!hostTrustConfiguration.actsFor(
                 protocol.authority(),
                 informationFlowAnalysis.label(node)
             )

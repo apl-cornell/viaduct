@@ -1,7 +1,7 @@
 package io.github.apl_cornell.viaduct.backends.cleartext
 
 import io.github.apl_cornell.viaduct.security.Label
-import io.github.apl_cornell.viaduct.security.LabelLiteral
+import io.github.apl_cornell.viaduct.security.label
 import io.github.apl_cornell.viaduct.syntax.Host
 import io.github.apl_cornell.viaduct.syntax.InputPort
 import io.github.apl_cornell.viaduct.syntax.OutputPort
@@ -33,7 +33,7 @@ class Replication(hosts: Set<Host>) : Cleartext() {
         get() = mapOf("hosts" to participants)
 
     override fun authority(): Label =
-        hosts.map { LabelLiteral(it).interpret() }.reduce(Label::meet)
+        hosts.map { it.label }.reduce(Label::meet)
 
     val hostInputPorts: Map<Host, InputPort> =
         hosts.associateWith { h -> InputPort(this, h, INPUT) }

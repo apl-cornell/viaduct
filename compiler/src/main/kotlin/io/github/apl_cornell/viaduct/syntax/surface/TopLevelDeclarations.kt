@@ -81,7 +81,7 @@ class FunctionDeclarationNode(
                 if (labelConstraints == null) Document("")
                 else Document("where") * labelConstraints.tupled()
                 ) *
-            (pcLabel?.let { Document(":") + listOf(it).braced() } ?: Document("")) * body
+            (pcLabel?.let { Document(":") * listOf(it).braced() } ?: Document("")) * body
 }
 
 /* Delegation syntax */

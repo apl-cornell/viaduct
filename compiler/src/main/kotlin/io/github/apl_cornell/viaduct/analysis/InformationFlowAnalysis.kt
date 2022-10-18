@@ -4,6 +4,7 @@ import io.github.apl_cornell.viaduct.algebra.FreeDistributiveLattice
 import io.github.apl_cornell.viaduct.algebra.FreeDistributiveLatticeCongruence
 import io.github.apl_cornell.viaduct.attributes.Tree
 import io.github.apl_cornell.viaduct.attributes.attribute
+import io.github.apl_cornell.viaduct.errors.ConfidentialityChangingEndorsementError
 import io.github.apl_cornell.viaduct.errors.InformationFlowError
 import io.github.apl_cornell.viaduct.errors.InsecureControlFlowError
 import io.github.apl_cornell.viaduct.errors.InsecureDataFlowError
@@ -133,7 +134,7 @@ class InformationFlowAnalysis private constructor(
         constraintSystem.solution()
     }
 
-    val trustConfiguration: HostTrustConfiguration = HostTrustConfiguration.get(tree.root)
+    private val trustConfiguration: HostTrustConfiguration = HostTrustConfiguration.get(tree.root)
 
     // private val solution by lazy { constraintSystem.solution() }
 
@@ -192,13 +193,8 @@ class InformationFlowAnalysis private constructor(
             }
 
     /** Returns constraints asserting that [this] node with the given label can flow to a location with label [to]. */
-    private infix fun Pair<HasSourceLocation, LabelTerm>.flowsTo(toLabel: LabelTerm): Sequence<LabelConstraint> {
-        val constraints: Iterable<LabelConstraint> =
-            second.flowsTo(toLabel, LabelConstant.bounds()) { to, from ->
-                InsecureDataFlowError(this.first, from, to, (first as Node).delegationContext)
-            }
-        return constraints.asSequence()
-    }
+    private infix fun Pair<HasSourceLocation, LabelTerm>.flowsTo(toLabel: LabelTerm): Sequence<LabelConstraint> =
+        flowsTo(second, toLabel) { f, t -> InsecureDataFlowError(first, f, t, (first as Node).delegationContext) }
 
     /** FlowsTo with Custom Error */
     private fun flowsTo(
@@ -221,22 +217,6 @@ class InformationFlowAnalysis private constructor(
         error: (Label, Label) -> InformationFlowError
     ) =
         fromLabel.confidentialityFlowsTo(toLabel, LabelConstant.bounds(), error).asSequence()
-
-    private infix fun Pair<HasSourceLocation, LabelTerm>.confidentialityFlowsTo(toLabel: LabelTerm): Sequence<LabelConstraint> {
-        val constraints: Iterable<LabelConstraint> =
-            second.confidentialityFlowsTo(toLabel, LabelConstant.bounds()) { to, from ->
-                InsecureDataFlowError(this.first, from, to, (first as Node).delegationContext)
-            }
-        return constraints.asSequence()
-    }
-
-    private infix fun Pair<HasSourceLocation, LabelTerm>.integrityFlowsTo(toLabel: LabelTerm): Sequence<LabelConstraint> {
-        val constraints: Iterable<LabelConstraint> =
-            second.integrityFlowsTo(toLabel, LabelConstant.bounds()) { to, from ->
-                InsecureDataFlowError(this.first, from, to, (first as Node).delegationContext)
-            }
-        return constraints.asSequence()
-    }
 
     /** Returns constraints asserting that the pc at [this] node flows to node with label [nodeLabel]. */
     private fun Node.pcFlowsTo(nodeLabel: LabelTerm): Sequence<LabelConstraint> {
@@ -390,7 +370,15 @@ class InformationFlowAnalysis private constructor(
                             )
 
                         is EndorsementNode ->
-                            yieldAll((expression to from) confidentialityFlowsTo to)
+                            yieldAll(
+                                confidentialityFlowsTo(from, to) { fromLabel, toLabel ->
+                                    ConfidentialityChangingEndorsementError(
+                                        thisNode,
+                                        fromLabel,
+                                        toLabel
+                                    )
+                                }
+                            )
                     }
                 }
             }
@@ -608,7 +596,7 @@ class InformationFlowAnalysis private constructor(
             ) +
             FreeDistributiveLatticeCongruence(
                 nameAnalysis.enclosingFunction(this).labelParameters.map {
-                    Pair(
+                    FreeDistributiveLattice.LessThanOrEqualTo(
                         FreeDistributiveLattice(
                             IntegrityComponent(
                                 PolymorphicPrincipal(it.value)
@@ -671,6 +659,7 @@ class InformationFlowAnalysis private constructor(
      * @throws InformationFlowError if the program has insecure information flow.
      */
     fun check() {
+        // TODO: check all function where assumptions
         // Force thunk to ensure there is a solution to the constraints.
         tree.root.functions.forEach {
             it.solution

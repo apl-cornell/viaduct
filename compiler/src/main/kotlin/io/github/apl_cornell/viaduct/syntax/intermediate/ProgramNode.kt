@@ -35,8 +35,8 @@ private constructor(
     val functions: Iterable<FunctionDeclarationNode>
         get() = declarations.filterIsInstance<FunctionDeclarationNode>()
 
-    val functionMap: Map<FunctionName, FunctionDeclarationNode> =
-        functions.associateBy { function -> function.name.value }
+    val functionMap: Map<FunctionName, FunctionDeclarationNode>
+        get() = functions.associateBy { function -> function.name.value }
 
     /** A lazily constructed [Tree] instance for the program. */
     val tree: Tree<Node, ProgramNode> by lazy { Tree(this) }

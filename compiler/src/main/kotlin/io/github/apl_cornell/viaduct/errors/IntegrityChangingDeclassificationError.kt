@@ -1,9 +1,9 @@
 package io.github.apl_cornell.viaduct.errors
 
-import io.github.apl_cornell.viaduct.algebra.FreeDistributiveLattice
 import io.github.apl_cornell.viaduct.prettyprinting.Document
 import io.github.apl_cornell.viaduct.prettyprinting.div
 import io.github.apl_cornell.viaduct.security.Label
+import io.github.apl_cornell.viaduct.security.integrity
 import io.github.apl_cornell.viaduct.syntax.intermediate.DeclassificationNode
 
 /**
@@ -15,8 +15,8 @@ import io.github.apl_cornell.viaduct.syntax.intermediate.DeclassificationNode
  */
 class IntegrityChangingDeclassificationError(private val node: DeclassificationNode, from: Label, to: Label) :
     InformationFlowError() {
-    private val fromIntegrity: Label = from.integrity(FreeDistributiveLattice.bounds())
-    private val toIntegrity: Label = to.integrity(FreeDistributiveLattice.bounds())
+    private val fromIntegrity: Label = from.integrity()
+    private val toIntegrity: Label = to.integrity()
 
     override val category: String
         get() = "Declassify Changes Integrity"

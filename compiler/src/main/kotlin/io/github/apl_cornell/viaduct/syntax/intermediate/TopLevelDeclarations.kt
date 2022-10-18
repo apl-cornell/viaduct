@@ -1,7 +1,8 @@
 package io.github.apl_cornell.viaduct.syntax.intermediate
 
+import io.github.apl_cornell.viaduct.algebra.FreeDistributiveLattice
+import io.github.apl_cornell.viaduct.passes.PrincipalComponent
 import io.github.apl_cornell.viaduct.security.LabelComponent
-import io.github.apl_cornell.viaduct.security.LabelLiteral
 import io.github.apl_cornell.viaduct.syntax.Arguments
 import io.github.apl_cornell.viaduct.syntax.DelegationProjection
 import io.github.apl_cornell.viaduct.syntax.FunctionNameNode
@@ -33,7 +34,6 @@ class HostDeclarationNode(
     override val sourceLocation: SourceLocation,
 ) : TopLevelDeclarationNode() {
 
-    val authority: LabelLiteral = LabelLiteral(name.value)
     override val children: Iterable<Nothing>
         get() = listOf()
 
@@ -147,7 +147,7 @@ abstract class DelegationDeclarationNode(
     open val delegationProjection: DelegationProjection,
     override val sourceLocation: SourceLocation
 ) : TopLevelDeclarationNode() {
-    abstract fun congruences(): List<Pair<LabelComponent, LabelComponent>>
+    abstract fun congruences(): List<FreeDistributiveLattice.LessThanOrEqualTo<PrincipalComponent>>
     abstract override fun toSurfaceNode(metadata: Metadata): io.github.apl_cornell.viaduct.syntax.surface.DelegationDeclarationNode
 }
 
@@ -162,7 +162,7 @@ class AuthorityDelegationDeclarationNode(
     override val sourceLocation: SourceLocation
 ) : DelegationDeclarationNode(from, to, delegationProjection, sourceLocation) {
 
-    override fun congruences(): List<Pair<LabelComponent, LabelComponent>> {
+    override fun congruences(): List<FreeDistributiveLattice.LessThanOrEqualTo<PrincipalComponent>> {
         var fromConfidentiality: LabelComponent =
             from.value.interpret().confidentialityComponent
         var fromIntegrity: LabelComponent = from.value.interpret().integrityComponent
@@ -175,15 +175,15 @@ class AuthorityDelegationDeclarationNode(
 
         return when (delegationProjection) {
             DelegationProjection.CONFIDENTIALITY ->
-                listOf(Pair(fromConfidentiality, toConfidentiality))
+                listOf(FreeDistributiveLattice.LessThanOrEqualTo(fromConfidentiality, toConfidentiality))
 
             DelegationProjection.INTEGRITY ->
-                listOf(Pair(fromIntegrity, toIntegrity))
+                listOf(FreeDistributiveLattice.LessThanOrEqualTo(fromIntegrity, toIntegrity))
 
             DelegationProjection.BOTH ->
                 listOf(
-                    Pair(fromConfidentiality, toConfidentiality),
-                    Pair(fromIntegrity, toIntegrity)
+                    FreeDistributiveLattice.LessThanOrEqualTo(fromConfidentiality, toConfidentiality),
+                    FreeDistributiveLattice.LessThanOrEqualTo(fromIntegrity, toIntegrity)
                 )
         }
     }
@@ -215,7 +215,7 @@ class IFCDelegationDeclarationNode(
     override val sourceLocation: SourceLocation
 ) : DelegationDeclarationNode(from, to, delegationProjection, sourceLocation) {
 
-    override fun congruences(): List<Pair<LabelComponent, LabelComponent>> {
+    override fun congruences(): List<FreeDistributiveLattice.LessThanOrEqualTo<PrincipalComponent>> {
         var fromConfidentiality: LabelComponent =
             from.value.interpret().confidentialityComponent
         var fromIntegrity: LabelComponent = from.value.interpret().integrityComponent
@@ -227,15 +227,15 @@ class IFCDelegationDeclarationNode(
 
         return when (delegationProjection) {
             DelegationProjection.CONFIDENTIALITY ->
-                listOf(Pair(fromConfidentiality, toConfidentiality))
+                listOf(FreeDistributiveLattice.LessThanOrEqualTo(fromConfidentiality, toConfidentiality))
 
             DelegationProjection.INTEGRITY ->
-                listOf(Pair(fromIntegrity, toIntegrity))
+                listOf(FreeDistributiveLattice.LessThanOrEqualTo(fromIntegrity, toIntegrity))
 
             DelegationProjection.BOTH ->
                 listOf(
-                    Pair(fromConfidentiality, toConfidentiality),
-                    Pair(fromIntegrity, toIntegrity)
+                    FreeDistributiveLattice.LessThanOrEqualTo(fromConfidentiality, toConfidentiality),
+                    FreeDistributiveLattice.LessThanOrEqualTo(fromIntegrity, toIntegrity)
                 )
         }
     }

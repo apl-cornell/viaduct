@@ -79,6 +79,7 @@ private class Specializer(
     private val mainProgram: BlockNode = program.main.body
 
     private val informationFlowAnalysis = InformationFlowAnalysis.get(program)
+    private val hostTrustConfiguration = HostTrustConfiguration.get(program)
 
     // worklist identified by new functions and corresponding old functionCallNode to be specialized
     private val worklist: MutableList<Triple<FunctionName, FunctionCallNode, Rewrite>> =
@@ -145,7 +146,7 @@ private class Specializer(
                     val targetFunction = context[name]?.find {
                         assert(it.first.size == argumentLabels.size) { "argument label size different from parameter size" }
                         it.first.zip(argumentLabels).all { (x, y) ->
-                            informationFlowAnalysis.trustConfiguration.equals(x, y)
+                            hostTrustConfiguration.equals(x, y)
                         }
                     }
                     if (targetFunction != null) {
@@ -254,7 +255,7 @@ private class Specializer(
     /** Specialize by processing call site in the worklist. */
     fun specialize(): Pair<BlockNode, List<FunctionDeclarationNode>> {
         val newFunctions = mutableListOf<FunctionDeclarationNode>()
-        val newMain = mainProgram.specialize(Rewrite(mapOf(), HostTrustConfiguration.get(program))) as BlockNode
+        val newMain = mainProgram.specialize(Rewrite(mapOf(), hostTrustConfiguration)) as BlockNode
 
         while (worklist.isNotEmpty()) {
 // pick an unspecialized callsite
@@ -288,7 +289,7 @@ private class Specializer(
                     }
 // make it a map
                     .toMap(),
-                HostTrustConfiguration.get(program)
+                hostTrustConfiguration
             )
 // then specialize
 // TODO: Want to check label parameters match rewrite keys

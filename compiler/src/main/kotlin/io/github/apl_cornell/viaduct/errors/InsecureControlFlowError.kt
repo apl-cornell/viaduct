@@ -1,11 +1,13 @@
 package io.github.apl_cornell.viaduct.errors
 
-import io.github.apl_cornell.viaduct.algebra.FreeDistributiveLattice
 import io.github.apl_cornell.viaduct.algebra.FreeDistributiveLatticeCongruence
 import io.github.apl_cornell.viaduct.passes.PrincipalComponent
 import io.github.apl_cornell.viaduct.prettyprinting.Document
 import io.github.apl_cornell.viaduct.prettyprinting.div
 import io.github.apl_cornell.viaduct.security.Label
+import io.github.apl_cornell.viaduct.security.confidentiality
+import io.github.apl_cornell.viaduct.security.flowsTo
+import io.github.apl_cornell.viaduct.security.integrity
 import io.github.apl_cornell.viaduct.syntax.HasSourceLocation
 
 /**
@@ -30,9 +32,10 @@ class InsecureControlFlowError(
     override val description: Document
         get() {
             // TODO: use flowsTo rather than actsFor
-            if (!context.lessThanOrEqualTo(
-                    nodeLabel.confidentialityComponent,
-                    pc.confidentialityComponent
+            if (!flowsTo(
+                    pc.confidentiality(),
+                    nodeLabel.confidentiality(),
+                    context
                 )
             ) {
                 // Confidentiality is the problem
@@ -40,25 +43,26 @@ class InsecureControlFlowError(
                 return Document("Execution of this term might leak information encoded in the control flow:")
                     .withSource(node.sourceLocation) /
                     Document("Confidentiality label on control flow is:")
-                        .withData(pc.confidentiality(FreeDistributiveLattice.bounds())) /
+                        .withData(pc.confidentiality()) /
                     Document("But the term only guarantees:")
-                        .withData(nodeLabel.confidentiality(FreeDistributiveLattice.bounds()))
+                        .withData(nodeLabel.confidentiality())
             } else {
                 // Integrity is the problem
                 // TODO: add an error test case that covers this branch.
                 // TODO: use flowsTo rather than actsFor
                 assert(
-                    !context.lessThanOrEqualTo(
-                        pc.integrityComponent,
-                        nodeLabel.integrityComponent
+                    !flowsTo(
+                        pc.integrity(),
+                        nodeLabel.integrity(),
+                        context
                     )
                 )
                 return Document("The control flow does not have enough integrity for this term:")
                     .withSource(node.sourceLocation) /
                     Document("Integrity label on control flow is:")
-                        .withData(pc.integrity(FreeDistributiveLattice.bounds())) /
+                        .withData(pc.integrity()) /
                     Document("But it needs to be at least:")
-                        .withData(nodeLabel.integrity(FreeDistributiveLattice.bounds()))
+                        .withData(nodeLabel.integrity())
             }
         }
 }

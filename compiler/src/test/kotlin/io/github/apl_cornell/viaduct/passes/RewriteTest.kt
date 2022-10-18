@@ -1,6 +1,7 @@
 package io.github.apl_cornell.viaduct.passes
 
 import io.github.apl_cornell.viaduct.algebra.FreeDistributiveLattice
+import io.github.apl_cornell.viaduct.parsing.parse
 import io.github.apl_cornell.viaduct.security.ConfidentialityComponent
 import io.github.apl_cornell.viaduct.security.HostPrincipal
 import io.github.apl_cornell.viaduct.security.IntegrityComponent
@@ -39,16 +40,19 @@ internal class RewriteTest {
     private fun hl(s: String) = LabelLiteral(h(s))
     private fun pl(s: String) = LabelParameter(p(s))
 
+    private val emptyTrustConfiguration =
+        HostTrustConfiguration.get("fun main() {}".parse().elaborated())
+
     private val top = FreeDistributiveLattice.bounds<PrincipalComponent>().top
     private val bottom = FreeDistributiveLattice.bounds<PrincipalComponent>().bottom
-    private val emptyRewrite = Rewrite(mapOf(), HostTrustConfiguration.empty)
+    private val emptyRewrite = Rewrite(mapOf(), emptyTrustConfiguration)
     private val easyRewrite = Rewrite(
         mapOf(
             (ppc("A") to fhpc("alice")), (ppi("A") to fhpi("alice")),
             (ppc("B") to fhpc("bob")), (ppi("B") to fhpi("bob")),
             (ppc("C") to fhpc("chuck")), (ppi("C") to fhpi("chuck"))
         ),
-        HostTrustConfiguration.empty
+        emptyTrustConfiguration
     )
     private val hardRewrite = Rewrite(
         mapOf(
@@ -56,7 +60,7 @@ internal class RewriteTest {
             (ppc("B") to fhpc("alice").join(fhpc("bob"))), (ppi("B") to fhpi("alice").meet(fhpi("bob"))),
             (ppc("C") to fhpc("chuck")), (ppi("C") to fhpi("chuck"))
         ),
-        HostTrustConfiguration.empty
+        emptyTrustConfiguration
     )
 
     /* test on Label LabelConstants (FDL<PrincipalComponent>) */

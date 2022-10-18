@@ -6,8 +6,6 @@ import io.github.apl_cornell.viaduct.attributes.circularAttribute
 import io.github.apl_cornell.viaduct.attributes.collectedAttribute
 import io.github.apl_cornell.viaduct.errors.IncorrectNumberOfArgumentsError
 import io.github.apl_cornell.viaduct.errors.NameClashError
-import io.github.apl_cornell.viaduct.errors.UndefinedHostError
-import io.github.apl_cornell.viaduct.errors.UndefinedLabelVariableError
 import io.github.apl_cornell.viaduct.errors.UndefinedNameError
 import io.github.apl_cornell.viaduct.security.LabelAnd
 import io.github.apl_cornell.viaduct.security.LabelConfidentiality
@@ -526,13 +524,13 @@ class NameAnalysis private constructor(private val tree: Tree<Node, ProgramNode>
             when (this) {
                 is LabelLiteral -> {
                     if (name !in hosts) {
-                        throw UndefinedHostError(name, sourceLocation)
+                        throw UndefinedNameError(Located(name, sourceLocation))
                     }
                 }
 
                 is LabelParameter -> {
                     if (name !in labelVariables) {
-                        throw UndefinedLabelVariableError(name, sourceLocation)
+                        throw UndefinedNameError(Located(name, sourceLocation))
                     }
                 }
 
@@ -624,11 +622,19 @@ class NameAnalysis private constructor(private val tree: Tree<Node, ProgramNode>
                     node.hostDeclarations
                     node.functionDeclarations
                 }
+
+                is FunctionDeclarationNode -> {
+                    // check for duplicate LabelVariable declaration
+                    val nameMap = NameMap<LabelVariable, LabelVariable>()
+                    node.labelParameters.forEach {
+                        nameMap.put(it, it.value)
+                    }
+                }
             }
-            // Check that LabelVariables and Hosts area declared
+            // Check that LabelVariables and Hosts are declared
             when (node) {
                 is DeclarationNode ->
-                    node.objectType.labelArguments?.first()?.check(node)
+                    node.objectType.labelArguments?.forEach { it.check(node) }
 
                 is DeclassificationNode -> {
                     node.fromLabel?.check(node)
@@ -641,7 +647,7 @@ class NameAnalysis private constructor(private val tree: Tree<Node, ProgramNode>
                 }
 
                 is ParameterNode -> {
-                    node.objectType.labelArguments?.first()?.check(node)
+                    node.objectType.labelArguments?.forEach { it.check(node) }
                 }
             }
             // Check the children

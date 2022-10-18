@@ -54,20 +54,8 @@ fun <C : HeytingAlgebra<C>, V, T> Term<C, V>.flowsTo(
     bounds: BoundedLattice<C>,
     failWith: (SecurityLattice<C>, SecurityLattice<C>) -> T
 ): Iterable<Constraint<C, V, T>> =
-    listOf(
-        that.confidentialityComponent.flowsTo(this.confidentialityComponent) { to, from ->
-            failWith(
-                SecurityLattice(from).confidentiality(bounds),
-                SecurityLattice(to).confidentiality(bounds)
-            )
-        },
-        this.integrityComponent.flowsTo(that.integrityComponent) { from, to ->
-            failWith(
-                SecurityLattice(from).integrity(bounds),
-                SecurityLattice(to).integrity(bounds)
-            )
-        }
-    )
+    confidentialityFlowsTo(that, bounds, failWith) +
+        integrityFlowsTo(that, bounds, failWith)
 
 fun <C : HeytingAlgebra<C>, V, T> Term<C, V>.integrityFlowsTo(
     that: Term<C, V>,

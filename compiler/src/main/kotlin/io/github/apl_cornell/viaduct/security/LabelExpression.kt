@@ -82,7 +82,7 @@ data class LabelConfidentiality(val value: LabelExpression) : LabelExpression() 
 
     // Why do we need bounds to be separate?
     override fun interpret(): Label =
-        value.interpret().confidentiality(FreeDistributiveLattice.bounds())
+        value.interpret().confidentiality()
 
     override fun rename(renamer: (String) -> String): LabelExpression =
         LabelConfidentiality(value.rename(renamer))
@@ -92,7 +92,7 @@ data class LabelIntegrity(val value: LabelExpression) : LabelExpression() {
     override fun toDocument(): Document = value.toDocument() + Document("<-")
 
     override fun interpret(): Label =
-        value.interpret().integrity(FreeDistributiveLattice.bounds())
+        value.interpret().integrity()
 
     override fun rename(renamer: (String) -> String): LabelExpression =
         LabelIntegrity(value.rename(renamer))

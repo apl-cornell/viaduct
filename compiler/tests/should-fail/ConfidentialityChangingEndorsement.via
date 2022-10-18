@@ -1,5 +1,7 @@
-/* UndefinedHostError */
+/* ConfidentialityChangingEndorsementError */
 
 fun main() {
     val result: int = endorse 42 to {alice<-} from {alice};
 }
+
+host alice

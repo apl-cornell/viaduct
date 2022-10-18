@@ -52,21 +52,6 @@ fun SourceFile.compile(
             parsed.elaborated()
         }
 
-        // Dump label constraint graph.
-        saveLabelConstraintGraph?.invoke(InformationFlowAnalysis.get(elaborated)::exportConstraintGraph)
-        // Dump program annotated with inferred labels.
-        if (saveInferredLabels != null) {
-            // val ifcAnalysis = InformationFlowAnalysis.get(elaborated)
-            val labelMetadata: Metadata =
-                (
-                    elaborated.descendantsIsInstance<LetNode>()
-                        .map { it to SecurityLattice.Bounds<LabelComponent>(FreeDistributiveLattice.bounds()).weakest } +
-                        elaborated.descendantsIsInstance<DeclarationNode>()
-                            .map { it to SecurityLattice.Bounds<LabelComponent>(FreeDistributiveLattice.bounds()).weakest }
-                    ).toMap()
-            saveInferredLabels.dumpProgramMetadata(elaborated, labelMetadata)
-        }
-
         // Perform static checks.
         elaborated.check()
 
@@ -74,10 +59,10 @@ fun SourceFile.compile(
             elaborated.specialize()
         }
     }
+
     // Dump label constraint graph.
     saveLabelConstraintGraph?.invoke(InformationFlowAnalysis.get(program)::exportConstraintGraph)
     if (saveInferredLabels != null) {
-        // val ifcAnalysis = InformationFlowAnalysis.get(elaborated)
         val labelMetadata: Metadata =
             (
                 program.descendantsIsInstance<LetNode>()

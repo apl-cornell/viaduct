@@ -6,13 +6,16 @@ import io.github.apl_cornell.viaduct.security.HostPrincipal
 import io.github.apl_cornell.viaduct.security.IntegrityComponent
 import io.github.apl_cornell.viaduct.security.Label
 import io.github.apl_cornell.viaduct.security.LabelAnd
+import io.github.apl_cornell.viaduct.security.LabelBottom
 import io.github.apl_cornell.viaduct.security.LabelConfidentiality
 import io.github.apl_cornell.viaduct.security.LabelExpression
 import io.github.apl_cornell.viaduct.security.LabelIntegrity
 import io.github.apl_cornell.viaduct.security.LabelJoin
+import io.github.apl_cornell.viaduct.security.LabelLiteral
 import io.github.apl_cornell.viaduct.security.LabelMeet
 import io.github.apl_cornell.viaduct.security.LabelOr
 import io.github.apl_cornell.viaduct.security.LabelParameter
+import io.github.apl_cornell.viaduct.security.LabelTop
 import io.github.apl_cornell.viaduct.security.PolymorphicPrincipal
 import io.github.apl_cornell.viaduct.security.interpret
 import io.github.apl_cornell.viaduct.syntax.HostTrustConfiguration
@@ -63,6 +66,8 @@ class Rewrite(
             is LabelMeet -> LabelMeet(rewrite(l.lhs), rewrite(l.rhs))
             is LabelConfidentiality -> LabelConfidentiality(rewrite(l.value))
             is LabelIntegrity -> LabelIntegrity(rewrite(l.value))
-            else -> l
+            is LabelBottom -> l
+            is LabelTop -> l
+            is LabelLiteral -> l
         }
 }

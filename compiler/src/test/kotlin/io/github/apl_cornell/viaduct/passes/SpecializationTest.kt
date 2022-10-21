@@ -11,16 +11,6 @@ internal class SpecializationTest {
     fun `it specializes`(program: ProgramNode) {
         val elaborated = program.elaborated()
         elaborated.check()
-        elaborated.specialize()
+        elaborated.specialize().check()
     }
-    /*
-    @ParameterizedTest
-    @ArgumentsSource(PositiveTestProgramProvider::class)
-    fun `it has a valid constraint graph representation`(program: ProgramNode) {
-        val elaboratedProgram = program.elaborated()
-        val informationFlowAnalysis = InformationFlowAnalysis.get(elaboratedProgram)
-        elaboratedProgram.check()
-        val writer = StringWriter()
-        informationFlowAnalysis.exportConstraintGraph(writer)
-    }*/
 }

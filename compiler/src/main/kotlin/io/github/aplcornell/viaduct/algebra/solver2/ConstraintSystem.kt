@@ -110,10 +110,11 @@ class ConstraintSystem<C : HeytingAlgebra<C>, V, T : Throwable>(
 
             // Include solution in the label for variables.
             attributes["label"] = DefaultAttribute.createAttribute(
-                if (vertex is Variable)
+                if (vertex is Variable) {
                     "$vertex\\n{${bestEffortSolution.evaluate(vertex)}}"
-                else
+                } else {
                     vertex.toString()
+                }
             )
 
             // Differentiate constant vertices from variable vertices.

@@ -132,7 +132,7 @@ class CleartextCodeGenerator(context: CodeGeneratorContext) : AbstractCodeGenera
             val relevantEvents: Set<CommunicationEvent> =
                 events.getProjectionSends(ProtocolProjection(sendProtocol, context.host))
             for (event in relevantEvents) {
-                if (sender.value is InputNode)
+                if (sender.value is InputNode) {
                     sendBuilder.addStatement(
                         "%L",
                         context.send(
@@ -140,8 +140,9 @@ class CleartextCodeGenerator(context: CodeGeneratorContext) : AbstractCodeGenera
                             event.recv.host
                         )
                     )
-                else
+                } else {
                     sendBuilder.addStatement("%L", context.send(exp(sendProtocol, sender.value), event.recv.host))
+                }
             }
         }
         return sendBuilder.build()
@@ -172,7 +173,6 @@ class CleartextCodeGenerator(context: CodeGeneratorContext) : AbstractCodeGenera
             when {
                 cleartextInputs.isNotEmpty() && cleartextCommitmentInputs.isEmpty() &&
                     hashCommitmentInputs.isEmpty() -> {
-
                     receiveBuilder.addStatement(
                         "val %L = %L",
                         clearTextTemp,
@@ -230,7 +230,6 @@ class CleartextCodeGenerator(context: CodeGeneratorContext) : AbstractCodeGenera
                 // commitment opening
                 cleartextInputs.isEmpty() && cleartextCommitmentInputs.isNotEmpty() &&
                     hashCommitmentInputs.isNotEmpty() -> {
-
                     // sanity check, only open one commitment at once
                     if (cleartextCommitmentInputs.size != 1) {
                         throw IllegalArgumentException("Received multiple commitments to open.")

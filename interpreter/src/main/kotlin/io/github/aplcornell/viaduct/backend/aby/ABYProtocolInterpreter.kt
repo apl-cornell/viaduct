@@ -473,7 +473,9 @@ class ABYProtocolInterpreter(
 
                 else -> throw Exception("unknown type $msgType")
             }
-        } else null
+        } else {
+            null
+        }
     }
 
     override suspend fun runGuard(protocol: Protocol, expr: AtomicExpressionNode): Value {

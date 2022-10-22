@@ -127,9 +127,12 @@ abstract class CompileCupTask : DefaultTask() {
 
         project.mkdir(targetDirectory)
         val args: List<String> = cupArguments.get() + listOf(
-            "-destdir", targetDirectory.get().asFile.path,
-            "-package", packageName,
-            "-parser", className,
+            "-destdir",
+            targetDirectory.get().asFile.path,
+            "-package",
+            packageName,
+            "-parser",
+            className,
             cupFile.path
         )
         logger.info("java_cup ${args.joinToString(" ")}}")

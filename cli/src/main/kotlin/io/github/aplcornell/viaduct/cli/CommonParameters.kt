@@ -64,10 +64,11 @@ internal fun ParameterHolder.verbosity(): OptionDelegate<Int> =
 
 /** Returns a [SourceFile] constructed from [this]. Uses the standard input if [this] is `null`. */
 internal fun File?.sourceFile(): SourceFile =
-    if (this == null)
+    if (this == null) {
         System.`in`.bufferedReader().use { SourceFile.from("<stdin>", it) }
-    else
+    } else {
         SourceFile.from(this)
+    }
 
 /**
  * Jansi has this annoying behavior of reading [java.io.FileDescriptor.out] directly instead of using [System.out].
@@ -98,7 +99,8 @@ internal fun File?.println(document: PrettyPrintable) {
 
 /** Writes [program] to [this] file. Writes to the standard output if [this] is `null`. */
 internal fun File?.write(program: FileSpec) =
-    if (this != null)
+    if (this != null) {
         writer().use { program.writeTo(it) }
-    else
+    } else {
         program.writeTo(System.out)
+    }

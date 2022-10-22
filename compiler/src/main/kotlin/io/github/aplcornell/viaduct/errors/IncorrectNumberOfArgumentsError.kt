@@ -24,10 +24,11 @@ class IncorrectNumberOfArgumentsError(
 
     override val category: String
         get() =
-            if (actual.size > expected)
+            if (actual.size > expected) {
                 "Too Many Arguments"
-            else
+            } else {
                 "Too Few Arguments"
+            }
 
     override val source: String
         get() = method.sourceLocation.sourcePath

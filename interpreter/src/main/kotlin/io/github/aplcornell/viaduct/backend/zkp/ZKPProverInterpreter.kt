@@ -185,7 +185,6 @@ class ZKPProverInterpreter(
         typeArguments: List<ValueType>,
         arguments: List<AtomicExpressionNode>
     ): ZKPObject {
-
         return when (className) {
             ImmutableCell -> ZKPObject.ZKPImmutableCell(getAtomicExprWire(arguments[0]))
             MutableCell -> ZKPObject.ZKPMutableCell(getAtomicExprWire(arguments[0]))

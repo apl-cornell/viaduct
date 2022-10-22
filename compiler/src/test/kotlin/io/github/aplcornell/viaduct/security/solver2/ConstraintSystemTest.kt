@@ -87,7 +87,7 @@ internal class ConstraintSystemTest {
         @Test
         fun `constant flows to variable`() {
             val solution = solve(
-                t(c("A")) flowsTo t("x"),
+                t(c("A")) flowsTo t("x")
             )
             assertEquals(c("A").c(), solution("x"))
         }
@@ -95,7 +95,7 @@ internal class ConstraintSystemTest {
         @Test
         fun `variable flows to constant`() {
             val solution = solve(
-                t("x") flowsTo t(c("A")),
+                t("x") flowsTo t(c("A"))
             )
             assertEquals(c("A").i(), solution("x"))
         }

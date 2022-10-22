@@ -24,10 +24,11 @@ object ZKPProtocolInterpreterFactory : ProtocolBackend {
         val zkpProtocols = protocols.filterIsInstance<ZKP>()
         return zkpProtocols.map {
             val processRuntime = ViaductProcessRuntime(runtime, ProtocolProjection(it, host))
-            if (host == it.prover)
+            if (host == it.prover) {
                 (ZKPProverInterpreter(program, protocolAnalysis, processRuntime))
-            else
+            } else {
                 (ZKPVerifierInterpreter(program, protocolAnalysis, processRuntime))
+            }
         }
     }
 }

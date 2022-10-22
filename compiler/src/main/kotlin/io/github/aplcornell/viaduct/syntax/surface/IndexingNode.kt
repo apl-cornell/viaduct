@@ -81,10 +81,11 @@ internal class IndexingNode(
         get() = null
 
     override fun toDocumentWithoutComment(): Document =
-        if (indices.isEmpty())
+        if (indices.isEmpty()) {
             variable.toDocument()
-        else
+        } else {
             variable + indices.bracketed().nested()
+        }
 
     companion object {
         /**
@@ -92,10 +93,11 @@ internal class IndexingNode(
          * The result is `null` if the query is not reading an index.
          */
         internal fun from(queryNode: QueryNode): IndexingNode? {
-            return if (queryNode.query.value is Get)
+            return if (queryNode.query.value is Get) {
                 IndexingNode(queryNode.variable, queryNode.arguments)
-            else
+            } else {
                 null
+            }
         }
 
         /**

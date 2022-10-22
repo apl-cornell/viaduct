@@ -15,8 +15,9 @@ class EquivocationException private constructor(
     companion object {
         /** Throws [EquivocationException] if [expectedValue] does not match [actualValue]. */
         fun <T> assertEquals(expectedValue: T, expectedValueProvider: Host, actualValue: T, actualValueProvider: Host) {
-            if (expectedValue != actualValue)
+            if (expectedValue != actualValue) {
                 throw EquivocationException(expectedValue, expectedValueProvider, actualValue, actualValueProvider)
+            }
         }
     }
 }

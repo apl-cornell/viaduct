@@ -96,8 +96,9 @@ fun List<PrettyPrintable>.concatenated(separator: PrettyPrintable = Document()):
 /** Returns [this] list with [separator] inserted between each element. */
 private fun <T> List<T>.joinedWith(separator: T): List<T> {
     val result = mutableListOf<T>()
-    if (this.isNotEmpty())
+    if (this.isNotEmpty()) {
         result.add(this.first())
+    }
     this.drop(1).forEach {
         result.add(separator)
         result.add(it)
@@ -261,10 +262,11 @@ sealed class Document : PrettyPrintable {
         fun Document.traverse(indentation: Int, style: Style) {
             when (this) {
                 is Text -> {
-                    if (ansi)
+                    if (ansi) {
                         output.print(style.toAnsi().a(this.text).reset())
-                    else
+                    } else {
                         output.print(this.text)
+                    }
                 }
 
                 is LineBreak -> {
@@ -288,8 +290,9 @@ sealed class Document : PrettyPrintable {
             }
         }
 
-        if (ansi)
+        if (ansi) {
             output.print(Ansi().reset())
+        }
         this.traverse(0, DefaultStyle)
         output.flush()
     }
@@ -437,10 +440,11 @@ private class Nested private constructor(val document: Document, val indentation
 
     companion object {
         operator fun invoke(document: Document, indentationChange: Int): Document =
-            if (indentationChange == 0)
+            if (indentationChange == 0) {
                 document
-            else
+            } else {
                 Nested(document, indentationChange)
+            }
     }
 }
 

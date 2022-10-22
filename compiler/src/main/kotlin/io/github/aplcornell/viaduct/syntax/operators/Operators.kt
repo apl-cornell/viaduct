@@ -30,30 +30,33 @@ object LogicalOperatorPrecedence : Precedence
 /** The precedence of [ComparisonOperator]s. */
 object ComparisonOperatorPrecedence : Precedence {
     override fun compareTo(other: Precedence): Order {
-        return if (other is LogicalOperatorPrecedence)
+        return if (other is LogicalOperatorPrecedence) {
             Order.HIGHER
-        else
+        } else {
             super.compareTo(other)
+        }
     }
 }
 
 /** The precedence of [Addition] and [Subtraction]. */
 object AdditiveOperatorPrecedence : Precedence {
     override fun compareTo(other: Precedence): Order {
-        return if (other is LogicalOperatorPrecedence || other is ComparisonOperatorPrecedence)
+        return if (other is LogicalOperatorPrecedence || other is ComparisonOperatorPrecedence) {
             Order.HIGHER
-        else
+        } else {
             super.compareTo(other)
+        }
     }
 }
 
 /** The precedence of [Multiplication] and [Division]. */
 object MultiplicativeOperatorPrecedence : Precedence {
     override fun compareTo(other: Precedence): Order {
-        return if (other is LogicalOperatorPrecedence || other is ComparisonOperatorPrecedence || other is AdditiveOperatorPrecedence)
+        return if (other is LogicalOperatorPrecedence || other is ComparisonOperatorPrecedence || other is AdditiveOperatorPrecedence) {
             Order.HIGHER
-        else
+        } else {
             super.compareTo(other)
+        }
     }
 }
 

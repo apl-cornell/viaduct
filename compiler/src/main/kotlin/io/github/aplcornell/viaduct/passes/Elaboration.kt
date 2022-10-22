@@ -509,9 +509,11 @@ private class StatementElaborator(
 
                 val newScope = this.copy(
                     jumpLabelRenames =
-                    if (stmt.jumpLabel == null)
+                    if (stmt.jumpLabel == null) {
                         jumpLabelRenames
-                    else jumpLabelRenames.put(stmt.jumpLabel, renamedJumpLabel),
+                    } else {
+                        jumpLabelRenames.put(stmt.jumpLabel, renamedJumpLabel)
+                    },
                     surroundingLoop = renamedJumpLabel
                 )
 
@@ -525,17 +527,19 @@ private class StatementElaborator(
             }
 
             is SBreakNode -> {
-                if (surroundingLoop == null)
+                if (surroundingLoop == null) {
                     throw JumpOutsideLoopScopeError(stmt)
+                }
 
                 val jumpLabelNode: JumpLabelNode =
-                    if (stmt.jumpLabel == null)
+                    if (stmt.jumpLabel == null) {
                         JumpLabelNode(surroundingLoop, stmt.sourceLocation)
-                    else
+                    } else {
                         JumpLabelNode(
                             jumpLabelRenames[stmt.jumpLabel],
                             stmt.jumpLabel.sourceLocation
                         )
+                    }
 
                 listOf(
                     IBreakNode(jumpLabelNode, stmt.sourceLocation)

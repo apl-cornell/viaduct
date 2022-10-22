@@ -101,9 +101,9 @@ class UpdateNode(
         val indexing = IndexingNode.from(this)
         return if (indexing != null) {
             val assignOp =
-                if (update.value is Modify)
+                if (update.value is Modify) {
                     Document("${update.value.operator}=")
-                else {
+                } else {
                     assert(update.value is Set)
                     Document("=")
                 }
@@ -308,10 +308,11 @@ private constructor(
 
     override fun toDocumentWithoutComment(): Document {
         val statements: List<Document> = statements.map {
-            if (it is SimpleStatementNode || it is BreakNode || it is AssertionNode)
+            if (it is SimpleStatementNode || it is BreakNode || it is AssertionNode) {
                 it.toDocument() + ";"
-            else
+            } else {
                 it.toDocument()
+            }
         }
         val body: Document = statements.concatenated(separator = Document.forcedLineBreak)
         return Document("{") +

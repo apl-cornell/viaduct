@@ -26,8 +26,9 @@ private fun assertEquals(expected: Any?, actual: Any?) {
             return
 
         expected is List<*> && actual is List<*> -> {
-            if (expected.size != actual.size)
+            if (expected.size != actual.size) {
                 fail(expected, actual)
+            }
             for (i in expected.indices) {
                 assertEquals(expected[i], actual[i])
             }
@@ -35,8 +36,9 @@ private fun assertEquals(expected: Any?, actual: Any?) {
 
         expected is HasSourceLocation && actual is HasSourceLocation -> {
             // Actual must be from a compatible class
-            if (!actual::class.isInstance(expected))
+            if (!actual::class.isInstance(expected)) {
                 fail(expected, actual)
+            }
 
             // Compare all public properties that are backed by a field
             expected::class.memberProperties.forEach {
@@ -47,8 +49,9 @@ private fun assertEquals(expected: Any?, actual: Any?) {
         }
 
         else ->
-            if (expected != actual)
+            if (expected != actual) {
                 fail(expected, actual)
+            }
     }
 }
 

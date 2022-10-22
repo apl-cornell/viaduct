@@ -113,10 +113,11 @@ class OutParameterInitializationAnalysis private constructor(
                 meet(this.flowIn, this.body.flowOut)
 
             is BlockNode ->
-                if (this.children.any())
+                if (this.children.any()) {
                     this.children.last().flowOut
-                else
+                } else {
                     this.flowIn
+                }
 
             else -> this.flowIn
         }
@@ -129,15 +130,17 @@ class OutParameterInitializationAnalysis private constructor(
     private fun check(node: Node) {
         fun use(declaration: ObjectVariableDeclarationNode) {
             node.flowIn[declaration.name.value]?.let {
-                if (it != InitializationState.INITIALIZED)
+                if (it != InitializationState.INITIALIZED) {
                     throw OutParameterInitializationError(declaration as ParameterNode, node)
+                }
             }
         }
 
         fun define(declaration: ParameterNode) {
             node.flowIn[declaration.name.value]?.let {
-                if (it != InitializationState.UNINITIALIZED)
+                if (it != InitializationState.UNINITIALIZED) {
                     throw OutParameterInitializationError(declaration, node)
+                }
             }
         }
 

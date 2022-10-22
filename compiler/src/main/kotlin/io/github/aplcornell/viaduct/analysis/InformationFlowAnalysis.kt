@@ -330,16 +330,18 @@ class InformationFlowAnalysis private constructor(
 
             is DowngradeNode -> {
                 val from: LabelTerm =
-                    if (fromLabel == null)
+                    if (fromLabel == null) {
                         term(LabelVariable.Data.DeclassificationFrom(this as DeclassificationNode))
-                    else
+                    } else {
                         term(fromLabel!!.value.interpret())
+                    }
 
                 val to: LabelTerm =
-                    if (toLabel == null)
+                    if (toLabel == null) {
                         term(LabelVariable.Data.EndorsementTo(this as EndorsementNode))
-                    else
+                    } else {
                         term(toLabel!!.value.interpret())
+                    }
 
                 sequence {
                     val thisNode = this@flowsTo

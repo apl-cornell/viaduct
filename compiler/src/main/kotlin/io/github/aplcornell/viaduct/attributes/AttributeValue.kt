@@ -12,8 +12,9 @@ internal class AttributeValue<T>(initial: T) {
     var currentValue = initial
         /** @throws IllegalStateException if the value is set when [isFinalized] is `true`. */
         set(value) {
-            if (isFinalized)
+            if (isFinalized) {
                 throw IllegalStateException("Cannot set the value of a finalized cell.")
+            }
             field = value
         }
 
@@ -34,10 +35,11 @@ internal class AttributeValue<T>(initial: T) {
      */
     val value: T
         get() =
-            if (isFinalized)
+            if (isFinalized) {
                 currentValue
-            else
+            } else {
                 throw IllegalStateException("Cannot get the value of a non-finalized cell.")
+            }
 
     /** Marks the cell as finalized. */
     fun finalize() {

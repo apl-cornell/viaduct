@@ -160,16 +160,18 @@ fun <C : HeytingAlgebra<C>, V, T> Term<C, V>.flowsTo(
         term.variable ?: term.constant!!
 
     fun leftHandEdge(term: ConstantAndVariable<C, V>): LeftHandEdge<C> =
-        if (term.constant != null && term.variable != null)
+        if (term.constant != null && term.variable != null) {
             ImplyEdge(term.constant.value)
-        else
+        } else {
             IdentityEdge()
+        }
 
     fun rightHandEdge(term: ConstantAndVariable<C, V>): RightHandEdge<C> =
-        if (term.constant != null && term.variable != null)
+        if (term.constant != null && term.variable != null) {
             JoinEdge(term.constant.value)
-        else
+        } else {
             IdentityEdge()
+        }
 
     val lhs =
         try {

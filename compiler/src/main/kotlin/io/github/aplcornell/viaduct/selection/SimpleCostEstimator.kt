@@ -335,7 +335,11 @@ class SimpleCostEstimator(
         if (events.any { event ->
             event.send.protocol is ABY && event.send.id != Protocol.INTERNAL_OUTPUT && event.recv.protocol !is ABY
         }
-        ) 10 else 0
+        ) {
+            10
+        } else {
+            0
+        }
 
     // from Ishaq et al CCS 2019
     private val abyConversionCostMap: Map<Pair<ProtocolName, ProtocolName>, Cost<IntegerCost>> =

@@ -3,7 +3,7 @@ INCLUDES = -I/usr/lib/jvm/default-java/include -I/usr/lib/jvm/default-java/inclu
 
 FILES = libsnarkwrapper.cpp libsnarkwrapper_wrap.cpp
 
-PACKAGE = io.github.apl_cornell.viaduct.libsnarkwrapper
+PACKAGE = io.github.aplcornell.viaduct.libsnarkwrapper
 PACKAGE_DIR = $(subst .,/,$(PACKAGE))
 
 libsnarkwrapper.so: libsnarkwrapper_wrap.o

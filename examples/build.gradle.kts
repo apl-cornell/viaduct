@@ -9,7 +9,7 @@ plugins {
 
 group = "io.github.apl-cornell.viaduct"
 
-val mainPackage = "${(project.group as String).replace('-', '_')}.${project.name}"
+val mainPackage = "${(project.group as String).replace("-", "")}.${project.name}"
 
 java {
     toolchain {

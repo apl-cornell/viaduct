@@ -6,7 +6,7 @@
  * the SWIG interface file instead.
  * ----------------------------------------------------------------------------- */
 
-package io.github.apl_cornell.viaduct.libsnarkwrapper;
+package io.github.aplcornell.viaduct.libsnarkwrapper;
 
 public class libsnarkwrapperJNI {
   public static final native long new_IntVector__SWIG_0();

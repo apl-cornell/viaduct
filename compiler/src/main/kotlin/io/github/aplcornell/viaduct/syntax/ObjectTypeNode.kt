@@ -1,14 +1,14 @@
-package io.github.apl_cornell.viaduct.syntax
+package io.github.aplcornell.viaduct.syntax
 
-import io.github.apl_cornell.viaduct.prettyprinting.Document
-import io.github.apl_cornell.viaduct.prettyprinting.PrettyPrintable
-import io.github.apl_cornell.viaduct.prettyprinting.braced
-import io.github.apl_cornell.viaduct.prettyprinting.bracketed
-import io.github.apl_cornell.viaduct.prettyprinting.joined
-import io.github.apl_cornell.viaduct.prettyprinting.nested
-import io.github.apl_cornell.viaduct.prettyprinting.plus
-import io.github.apl_cornell.viaduct.syntax.datatypes.ImmutableCell
-import io.github.apl_cornell.viaduct.syntax.datatypes.MutableCell
+import io.github.aplcornell.viaduct.prettyprinting.Document
+import io.github.aplcornell.viaduct.prettyprinting.PrettyPrintable
+import io.github.aplcornell.viaduct.prettyprinting.braced
+import io.github.aplcornell.viaduct.prettyprinting.bracketed
+import io.github.aplcornell.viaduct.prettyprinting.joined
+import io.github.aplcornell.viaduct.prettyprinting.nested
+import io.github.aplcornell.viaduct.prettyprinting.plus
+import io.github.aplcornell.viaduct.syntax.datatypes.ImmutableCell
+import io.github.aplcornell.viaduct.syntax.datatypes.MutableCell
 
 /** A class name applied to type and label arguments. */
 class ObjectTypeNode(

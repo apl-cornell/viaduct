@@ -1,4 +1,4 @@
-package io.github.apl_cornell.viaduct.util.dataflow
+package io.github.aplcornell.viaduct.util.dataflow
 
 import org.jgrapht.graph.DefaultEdge
 

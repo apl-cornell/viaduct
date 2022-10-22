@@ -1,14 +1,14 @@
-package io.github.apl_cornell.viaduct.security
+package io.github.aplcornell.viaduct.security
 
-import io.github.apl_cornell.viaduct.algebra.FreeDistributiveLattice
-import io.github.apl_cornell.viaduct.prettyprinting.Document
-import io.github.apl_cornell.viaduct.prettyprinting.PrettyPrintable
-import io.github.apl_cornell.viaduct.prettyprinting.plus
-import io.github.apl_cornell.viaduct.prettyprinting.times
-import io.github.apl_cornell.viaduct.prettyprinting.tupled
-import io.github.apl_cornell.viaduct.syntax.Host
-import io.github.apl_cornell.viaduct.syntax.HostTrustConfiguration
-import io.github.apl_cornell.viaduct.syntax.LabelVariable
+import io.github.aplcornell.viaduct.algebra.FreeDistributiveLattice
+import io.github.aplcornell.viaduct.prettyprinting.Document
+import io.github.aplcornell.viaduct.prettyprinting.PrettyPrintable
+import io.github.aplcornell.viaduct.prettyprinting.plus
+import io.github.aplcornell.viaduct.prettyprinting.times
+import io.github.aplcornell.viaduct.prettyprinting.tupled
+import io.github.aplcornell.viaduct.syntax.Host
+import io.github.aplcornell.viaduct.syntax.HostTrustConfiguration
+import io.github.aplcornell.viaduct.syntax.LabelVariable
 
 sealed class LabelExpression : PrettyPrintable {
     // TODO: put this in IFC check, Label -> SecurityLattice

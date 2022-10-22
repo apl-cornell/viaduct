@@ -1,13 +1,13 @@
-package io.github.apl_cornell.viaduct.backend
+package io.github.aplcornell.viaduct.backend
 
-import io.github.apl_cornell.viaduct.analysis.ProtocolAnalysis
-import io.github.apl_cornell.viaduct.backend.IO.Strategy
-import io.github.apl_cornell.viaduct.backends.DefaultCombinedBackend
-import io.github.apl_cornell.viaduct.errors.ViaductInterpreterError
-import io.github.apl_cornell.viaduct.syntax.Host
-import io.github.apl_cornell.viaduct.syntax.intermediate.HostDeclarationNode
-import io.github.apl_cornell.viaduct.syntax.intermediate.ProgramNode
-import io.github.apl_cornell.viaduct.util.duration
+import io.github.aplcornell.viaduct.analysis.ProtocolAnalysis
+import io.github.aplcornell.viaduct.backend.IO.Strategy
+import io.github.aplcornell.viaduct.backends.DefaultCombinedBackend
+import io.github.aplcornell.viaduct.errors.ViaductInterpreterError
+import io.github.aplcornell.viaduct.syntax.Host
+import io.github.aplcornell.viaduct.syntax.intermediate.HostDeclarationNode
+import io.github.aplcornell.viaduct.syntax.intermediate.ProgramNode
+import io.github.aplcornell.viaduct.util.duration
 import mu.KotlinLogging
 
 private val logger = KotlinLogging.logger("ViaductBackend")

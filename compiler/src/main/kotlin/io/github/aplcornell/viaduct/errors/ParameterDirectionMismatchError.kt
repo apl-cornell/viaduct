@@ -1,9 +1,9 @@
-package io.github.apl_cornell.viaduct.errors
+package io.github.aplcornell.viaduct.errors
 
-import io.github.apl_cornell.viaduct.prettyprinting.Document
-import io.github.apl_cornell.viaduct.prettyprinting.div
-import io.github.apl_cornell.viaduct.syntax.intermediate.FunctionArgumentNode
-import io.github.apl_cornell.viaduct.syntax.intermediate.ParameterNode
+import io.github.aplcornell.viaduct.prettyprinting.Document
+import io.github.aplcornell.viaduct.prettyprinting.div
+import io.github.aplcornell.viaduct.syntax.intermediate.FunctionArgumentNode
+import io.github.aplcornell.viaduct.syntax.intermediate.ParameterNode
 
 class ParameterDirectionMismatchError(
     private val parameter: ParameterNode,

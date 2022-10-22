@@ -1,4 +1,4 @@
-package io.github.apl_cornell.viaduct.algebra
+package io.github.aplcornell.viaduct.algebra
 
 /**
  * Like [Comparable], but not all pairs of elements have to be ordered.

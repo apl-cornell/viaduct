@@ -1,8 +1,8 @@
-package io.github.apl_cornell.viaduct.runtime
+package io.github.aplcornell.viaduct.runtime
 
-import io.github.apl_cornell.viaduct.syntax.types.IOValueType
-import io.github.apl_cornell.viaduct.syntax.values.IOValue
-import io.github.apl_cornell.viaduct.syntax.values.Value
+import io.github.aplcornell.viaduct.syntax.types.IOValueType
+import io.github.aplcornell.viaduct.syntax.values.IOValue
+import io.github.aplcornell.viaduct.syntax.values.Value
 
 interface IOStrategy {
     /** Inputs a value of type [type] from the host. */

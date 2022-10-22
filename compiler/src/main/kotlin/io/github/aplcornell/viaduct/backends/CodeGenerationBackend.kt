@@ -1,12 +1,12 @@
-package io.github.apl_cornell.viaduct.backends
+package io.github.aplcornell.viaduct.backends
 
-import io.github.apl_cornell.viaduct.backends.aby.ABYBackend
-import io.github.apl_cornell.viaduct.backends.aby.ABYProtocolFactory
-import io.github.apl_cornell.viaduct.backends.cleartext.CleartextBackend
-import io.github.apl_cornell.viaduct.backends.commitment.CommitmentBackend
-import io.github.apl_cornell.viaduct.selection.ProtocolFactory
-import io.github.apl_cornell.viaduct.selection.unions
-import io.github.apl_cornell.viaduct.syntax.intermediate.ProgramNode
+import io.github.aplcornell.viaduct.backends.aby.ABYBackend
+import io.github.aplcornell.viaduct.backends.aby.ABYProtocolFactory
+import io.github.aplcornell.viaduct.backends.cleartext.CleartextBackend
+import io.github.aplcornell.viaduct.backends.commitment.CommitmentBackend
+import io.github.aplcornell.viaduct.selection.ProtocolFactory
+import io.github.aplcornell.viaduct.selection.unions
+import io.github.aplcornell.viaduct.syntax.intermediate.ProgramNode
 
 /** Combines all back ends that support code generation. */
 object CodeGenerationBackend : Backend by backends.unions() {

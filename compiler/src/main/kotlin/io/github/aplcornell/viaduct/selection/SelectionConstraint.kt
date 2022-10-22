@@ -1,20 +1,20 @@
-package io.github.apl_cornell.viaduct.selection
+package io.github.aplcornell.viaduct.selection
 
-import io.github.apl_cornell.viaduct.analysis.NameAnalysis
-import io.github.apl_cornell.viaduct.analysis.createdVariables
-import io.github.apl_cornell.viaduct.analysis.involvedVariables
-import io.github.apl_cornell.viaduct.prettyprinting.Document
-import io.github.apl_cornell.viaduct.prettyprinting.PrettyPrintable
-import io.github.apl_cornell.viaduct.prettyprinting.plus
-import io.github.apl_cornell.viaduct.prettyprinting.times
-import io.github.apl_cornell.viaduct.prettyprinting.tupled
-import io.github.apl_cornell.viaduct.syntax.FunctionName
-import io.github.apl_cornell.viaduct.syntax.Protocol
-import io.github.apl_cornell.viaduct.syntax.Variable
-import io.github.apl_cornell.viaduct.syntax.intermediate.DeclarationNode
-import io.github.apl_cornell.viaduct.syntax.intermediate.ExpressionNode
-import io.github.apl_cornell.viaduct.syntax.intermediate.LetNode
-import io.github.apl_cornell.viaduct.syntax.intermediate.Node
+import io.github.aplcornell.viaduct.analysis.NameAnalysis
+import io.github.aplcornell.viaduct.analysis.createdVariables
+import io.github.aplcornell.viaduct.analysis.involvedVariables
+import io.github.aplcornell.viaduct.prettyprinting.Document
+import io.github.aplcornell.viaduct.prettyprinting.PrettyPrintable
+import io.github.aplcornell.viaduct.prettyprinting.plus
+import io.github.aplcornell.viaduct.prettyprinting.times
+import io.github.aplcornell.viaduct.prettyprinting.tupled
+import io.github.aplcornell.viaduct.syntax.FunctionName
+import io.github.aplcornell.viaduct.syntax.Protocol
+import io.github.aplcornell.viaduct.syntax.Variable
+import io.github.aplcornell.viaduct.syntax.intermediate.DeclarationNode
+import io.github.aplcornell.viaduct.syntax.intermediate.ExpressionNode
+import io.github.aplcornell.viaduct.syntax.intermediate.LetNode
+import io.github.aplcornell.viaduct.syntax.intermediate.Node
 
 data class FunctionVariable(val function: FunctionName, val variable: Variable) : PrettyPrintable {
     override fun toDocument(): Document =

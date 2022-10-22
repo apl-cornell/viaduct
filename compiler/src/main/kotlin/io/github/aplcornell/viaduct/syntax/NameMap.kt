@@ -1,7 +1,7 @@
-package io.github.apl_cornell.viaduct.syntax
+package io.github.aplcornell.viaduct.syntax
 
-import io.github.apl_cornell.viaduct.errors.NameClashError
-import io.github.apl_cornell.viaduct.errors.UndefinedNameError
+import io.github.aplcornell.viaduct.errors.NameClashError
+import io.github.aplcornell.viaduct.errors.UndefinedNameError
 import kotlinx.collections.immutable.PersistentMap
 import kotlinx.collections.immutable.persistentMapOf
 

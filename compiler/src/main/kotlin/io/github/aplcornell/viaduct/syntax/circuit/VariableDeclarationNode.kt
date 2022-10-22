@@ -1,4 +1,4 @@
-package io.github.apl_cornell.viaduct.syntax.circuit
+package io.github.aplcornell.viaduct.syntax.circuit
 
 /** A node that declares a [Variable]. */
 sealed interface VariableDeclarationNode {

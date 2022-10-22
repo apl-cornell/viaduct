@@ -1,42 +1,42 @@
-package io.github.apl_cornell.viaduct.backend.commitment
+package io.github.aplcornell.viaduct.backend.commitment
 
-import io.github.apl_cornell.viaduct.analysis.ProtocolAnalysis
-import io.github.apl_cornell.viaduct.backend.ObjectLocation
-import io.github.apl_cornell.viaduct.backend.SingleProtocolInterpreter
-import io.github.apl_cornell.viaduct.backend.ViaductProcessRuntime
-import io.github.apl_cornell.viaduct.backends.commitment.Commitment
-import io.github.apl_cornell.viaduct.errors.ViaductInterpreterError
-import io.github.apl_cornell.viaduct.selection.CommunicationEvent
-import io.github.apl_cornell.viaduct.selection.ProtocolCommunication
-import io.github.apl_cornell.viaduct.syntax.Host
-import io.github.apl_cornell.viaduct.syntax.ObjectVariable
-import io.github.apl_cornell.viaduct.syntax.Protocol
-import io.github.apl_cornell.viaduct.syntax.ProtocolProjection
-import io.github.apl_cornell.viaduct.syntax.QueryNameNode
-import io.github.apl_cornell.viaduct.syntax.Temporary
-import io.github.apl_cornell.viaduct.syntax.UpdateNameNode
-import io.github.apl_cornell.viaduct.syntax.datatypes.ClassName
-import io.github.apl_cornell.viaduct.syntax.datatypes.Get
-import io.github.apl_cornell.viaduct.syntax.datatypes.ImmutableCell
-import io.github.apl_cornell.viaduct.syntax.datatypes.MutableCell
-import io.github.apl_cornell.viaduct.syntax.datatypes.Vector
-import io.github.apl_cornell.viaduct.syntax.intermediate.AtomicExpressionNode
-import io.github.apl_cornell.viaduct.syntax.intermediate.DowngradeNode
-import io.github.apl_cornell.viaduct.syntax.intermediate.ExpressionNode
-import io.github.apl_cornell.viaduct.syntax.intermediate.InputNode
-import io.github.apl_cornell.viaduct.syntax.intermediate.LetNode
-import io.github.apl_cornell.viaduct.syntax.intermediate.LiteralNode
-import io.github.apl_cornell.viaduct.syntax.intermediate.OperatorApplicationNode
-import io.github.apl_cornell.viaduct.syntax.intermediate.OutputNode
-import io.github.apl_cornell.viaduct.syntax.intermediate.ProgramNode
-import io.github.apl_cornell.viaduct.syntax.intermediate.QueryNode
-import io.github.apl_cornell.viaduct.syntax.intermediate.ReadNode
-import io.github.apl_cornell.viaduct.syntax.intermediate.SimpleStatementNode
-import io.github.apl_cornell.viaduct.syntax.intermediate.UpdateNode
-import io.github.apl_cornell.viaduct.syntax.types.ValueType
-import io.github.apl_cornell.viaduct.syntax.values.ByteVecValue
-import io.github.apl_cornell.viaduct.syntax.values.IntegerValue
-import io.github.apl_cornell.viaduct.syntax.values.Value
+import io.github.aplcornell.viaduct.analysis.ProtocolAnalysis
+import io.github.aplcornell.viaduct.backend.ObjectLocation
+import io.github.aplcornell.viaduct.backend.SingleProtocolInterpreter
+import io.github.aplcornell.viaduct.backend.ViaductProcessRuntime
+import io.github.aplcornell.viaduct.backends.commitment.Commitment
+import io.github.aplcornell.viaduct.errors.ViaductInterpreterError
+import io.github.aplcornell.viaduct.selection.CommunicationEvent
+import io.github.aplcornell.viaduct.selection.ProtocolCommunication
+import io.github.aplcornell.viaduct.syntax.Host
+import io.github.aplcornell.viaduct.syntax.ObjectVariable
+import io.github.aplcornell.viaduct.syntax.Protocol
+import io.github.aplcornell.viaduct.syntax.ProtocolProjection
+import io.github.aplcornell.viaduct.syntax.QueryNameNode
+import io.github.aplcornell.viaduct.syntax.Temporary
+import io.github.aplcornell.viaduct.syntax.UpdateNameNode
+import io.github.aplcornell.viaduct.syntax.datatypes.ClassName
+import io.github.aplcornell.viaduct.syntax.datatypes.Get
+import io.github.aplcornell.viaduct.syntax.datatypes.ImmutableCell
+import io.github.aplcornell.viaduct.syntax.datatypes.MutableCell
+import io.github.aplcornell.viaduct.syntax.datatypes.Vector
+import io.github.aplcornell.viaduct.syntax.intermediate.AtomicExpressionNode
+import io.github.aplcornell.viaduct.syntax.intermediate.DowngradeNode
+import io.github.aplcornell.viaduct.syntax.intermediate.ExpressionNode
+import io.github.aplcornell.viaduct.syntax.intermediate.InputNode
+import io.github.aplcornell.viaduct.syntax.intermediate.LetNode
+import io.github.aplcornell.viaduct.syntax.intermediate.LiteralNode
+import io.github.aplcornell.viaduct.syntax.intermediate.OperatorApplicationNode
+import io.github.aplcornell.viaduct.syntax.intermediate.OutputNode
+import io.github.aplcornell.viaduct.syntax.intermediate.ProgramNode
+import io.github.aplcornell.viaduct.syntax.intermediate.QueryNode
+import io.github.aplcornell.viaduct.syntax.intermediate.ReadNode
+import io.github.aplcornell.viaduct.syntax.intermediate.SimpleStatementNode
+import io.github.aplcornell.viaduct.syntax.intermediate.UpdateNode
+import io.github.aplcornell.viaduct.syntax.types.ValueType
+import io.github.aplcornell.viaduct.syntax.values.ByteVecValue
+import io.github.aplcornell.viaduct.syntax.values.IntegerValue
+import io.github.aplcornell.viaduct.syntax.values.Value
 import kotlinx.collections.immutable.PersistentMap
 import kotlinx.collections.immutable.persistentMapOf
 import mu.KotlinLogging
@@ -309,7 +309,7 @@ class CommitmentProtocolCleartextInterpreter(
 
         override fun update(update: UpdateNameNode, arguments: List<AtomicExpressionNode>) {
             when (update.value) {
-                is io.github.apl_cornell.viaduct.syntax.datatypes.Set -> {
+                is io.github.aplcornell.viaduct.syntax.datatypes.Set -> {
                     this.value = runExpr(arguments[0])
                 }
 
@@ -339,7 +339,7 @@ class CommitmentProtocolCleartextInterpreter(
 
         override fun update(update: UpdateNameNode, arguments: List<AtomicExpressionNode>) {
             when (update.value) {
-                is io.github.apl_cornell.viaduct.syntax.datatypes.Set -> {
+                is io.github.aplcornell.viaduct.syntax.datatypes.Set -> {
                     val index = (runCleartextExpr(arguments[0]) as IntegerValue).value
                     this.hashedObjects[index] = runExpr(arguments[1])
                 }

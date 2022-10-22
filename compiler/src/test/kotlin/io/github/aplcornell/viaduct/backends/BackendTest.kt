@@ -1,10 +1,10 @@
-package io.github.apl_cornell.viaduct.backends
+package io.github.aplcornell.viaduct.backends
 
-import io.github.apl_cornell.viaduct.backends.cleartext.CleartextBackend
-import io.github.apl_cornell.viaduct.backends.commitment.CommitmentBackend
-import io.github.apl_cornell.viaduct.parsing.ProtocolParser
-import io.github.apl_cornell.viaduct.syntax.Protocol
-import io.github.apl_cornell.viaduct.syntax.ProtocolName
+import io.github.aplcornell.viaduct.backends.cleartext.CleartextBackend
+import io.github.aplcornell.viaduct.backends.commitment.CommitmentBackend
+import io.github.aplcornell.viaduct.parsing.ProtocolParser
+import io.github.aplcornell.viaduct.syntax.Protocol
+import io.github.aplcornell.viaduct.syntax.ProtocolName
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertDoesNotThrow
 import org.junit.jupiter.api.assertThrows

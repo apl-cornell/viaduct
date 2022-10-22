@@ -1,35 +1,35 @@
-package io.github.apl_cornell.viaduct.backends.aby
+package io.github.aplcornell.viaduct.backends.aby
 
-import io.github.apl_cornell.viaduct.analysis.NameAnalysis
-import io.github.apl_cornell.viaduct.passes.canMux
-import io.github.apl_cornell.viaduct.selection.FunctionVariable
-import io.github.apl_cornell.viaduct.selection.Implies
-import io.github.apl_cornell.viaduct.selection.Literal
-import io.github.apl_cornell.viaduct.selection.ProtocolComposer
-import io.github.apl_cornell.viaduct.selection.ProtocolFactory
-import io.github.apl_cornell.viaduct.selection.SelectionConstraint
-import io.github.apl_cornell.viaduct.selection.variableInSet
-import io.github.apl_cornell.viaduct.syntax.FunctionName
-import io.github.apl_cornell.viaduct.syntax.ObjectVariable
-import io.github.apl_cornell.viaduct.syntax.Protocol
-import io.github.apl_cornell.viaduct.syntax.datatypes.Get
-import io.github.apl_cornell.viaduct.syntax.datatypes.Vector
-import io.github.apl_cornell.viaduct.syntax.intermediate.DeclarationNode
-import io.github.apl_cornell.viaduct.syntax.intermediate.IfNode
-import io.github.apl_cornell.viaduct.syntax.intermediate.LetNode
-import io.github.apl_cornell.viaduct.syntax.intermediate.OperatorApplicationNode
-import io.github.apl_cornell.viaduct.syntax.intermediate.ProgramNode
-import io.github.apl_cornell.viaduct.syntax.intermediate.QueryNode
-import io.github.apl_cornell.viaduct.syntax.intermediate.ReadNode
-import io.github.apl_cornell.viaduct.syntax.intermediate.UpdateNode
-import io.github.apl_cornell.viaduct.syntax.intermediate.VariableDeclarationNode
-import io.github.apl_cornell.viaduct.syntax.operators.ComparisonOperator
-import io.github.apl_cornell.viaduct.syntax.operators.Division
-import io.github.apl_cornell.viaduct.syntax.operators.LogicalOperator
-import io.github.apl_cornell.viaduct.syntax.operators.Maximum
-import io.github.apl_cornell.viaduct.syntax.operators.Minimum
-import io.github.apl_cornell.viaduct.syntax.operators.Mux
-import io.github.apl_cornell.viaduct.util.pairedWith
+import io.github.aplcornell.viaduct.analysis.NameAnalysis
+import io.github.aplcornell.viaduct.passes.canMux
+import io.github.aplcornell.viaduct.selection.FunctionVariable
+import io.github.aplcornell.viaduct.selection.Implies
+import io.github.aplcornell.viaduct.selection.Literal
+import io.github.aplcornell.viaduct.selection.ProtocolComposer
+import io.github.aplcornell.viaduct.selection.ProtocolFactory
+import io.github.aplcornell.viaduct.selection.SelectionConstraint
+import io.github.aplcornell.viaduct.selection.variableInSet
+import io.github.aplcornell.viaduct.syntax.FunctionName
+import io.github.aplcornell.viaduct.syntax.ObjectVariable
+import io.github.aplcornell.viaduct.syntax.Protocol
+import io.github.aplcornell.viaduct.syntax.datatypes.Get
+import io.github.aplcornell.viaduct.syntax.datatypes.Vector
+import io.github.aplcornell.viaduct.syntax.intermediate.DeclarationNode
+import io.github.aplcornell.viaduct.syntax.intermediate.IfNode
+import io.github.aplcornell.viaduct.syntax.intermediate.LetNode
+import io.github.aplcornell.viaduct.syntax.intermediate.OperatorApplicationNode
+import io.github.aplcornell.viaduct.syntax.intermediate.ProgramNode
+import io.github.aplcornell.viaduct.syntax.intermediate.QueryNode
+import io.github.aplcornell.viaduct.syntax.intermediate.ReadNode
+import io.github.aplcornell.viaduct.syntax.intermediate.UpdateNode
+import io.github.aplcornell.viaduct.syntax.intermediate.VariableDeclarationNode
+import io.github.aplcornell.viaduct.syntax.operators.ComparisonOperator
+import io.github.aplcornell.viaduct.syntax.operators.Division
+import io.github.aplcornell.viaduct.syntax.operators.LogicalOperator
+import io.github.aplcornell.viaduct.syntax.operators.Maximum
+import io.github.aplcornell.viaduct.syntax.operators.Minimum
+import io.github.aplcornell.viaduct.syntax.operators.Mux
+import io.github.aplcornell.viaduct.util.pairedWith
 
 // Only select ABY for a selection if:
 // for every simple statement that reads from the selection:
@@ -58,7 +58,7 @@ class ABYProtocolFactory(program: ProgramNode) : ProtocolFactory {
                 is OperatorApplicationNode ->
                     when (rhs.operator) {
                         is ComparisonOperator, is LogicalOperator,
-                        io.github.apl_cornell.viaduct.syntax.operators.Not,
+                        io.github.aplcornell.viaduct.syntax.operators.Not,
                         Mux, Maximum, Minimum, Division ->
                             protocol !is ArithABY
 
@@ -136,7 +136,7 @@ class ABYProtocolFactory(program: ProgramNode) : ProtocolFactory {
     override fun constraint(node: UpdateNode): SelectionConstraint {
         val objectType = nameAnalysis.objectType(nameAnalysis.declaration(node))
         return if (objectType.className.value == Vector &&
-            node.update.value == io.github.apl_cornell.viaduct.syntax.datatypes.Set &&
+            node.update.value == io.github.aplcornell.viaduct.syntax.datatypes.Set &&
             node.arguments[0] is ReadNode
         ) {
             cleartextArrayLengthAndIndexConstraint(

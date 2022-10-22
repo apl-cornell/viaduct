@@ -1,4 +1,4 @@
-package io.github.apl_cornell.viaduct.attributes
+package io.github.aplcornell.viaduct.attributes
 
 import java.util.concurrent.ConcurrentHashMap
 

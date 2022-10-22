@@ -1,7 +1,7 @@
-package io.github.apl_cornell.viaduct.syntax.types
+package io.github.aplcornell.viaduct.syntax.types
 
-import io.github.apl_cornell.viaduct.syntax.values.HostValue
-import io.github.apl_cornell.viaduct.syntax.values.Value
+import io.github.aplcornell.viaduct.syntax.values.HostValue
+import io.github.aplcornell.viaduct.syntax.values.Value
 
 /** The type assigned to [HostValue]s. */
 object HostType : ValueType() {

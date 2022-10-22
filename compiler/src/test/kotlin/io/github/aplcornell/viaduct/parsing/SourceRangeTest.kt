@@ -1,10 +1,10 @@
-package io.github.apl_cornell.viaduct.parsing
+package io.github.aplcornell.viaduct.parsing
 
-import io.github.apl_cornell.viaduct.analysis.mainFunction
-import io.github.apl_cornell.viaduct.prettyprinting.DefaultStyle
-import io.github.apl_cornell.viaduct.syntax.HasSourceLocation
-import io.github.apl_cornell.viaduct.syntax.surface.FunctionDeclarationNode
-import io.github.apl_cornell.viaduct.syntax.surface.ProgramNode
+import io.github.aplcornell.viaduct.analysis.mainFunction
+import io.github.aplcornell.viaduct.prettyprinting.DefaultStyle
+import io.github.aplcornell.viaduct.syntax.HasSourceLocation
+import io.github.aplcornell.viaduct.syntax.surface.FunctionDeclarationNode
+import io.github.aplcornell.viaduct.syntax.surface.ProgramNode
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Nested

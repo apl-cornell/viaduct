@@ -1,12 +1,12 @@
-package io.github.apl_cornell.viaduct.security.solver2
+package io.github.aplcornell.viaduct.security.solver2
 
-import io.github.apl_cornell.viaduct.algebra.BoundedLattice
-import io.github.apl_cornell.viaduct.algebra.HeytingAlgebra
-import io.github.apl_cornell.viaduct.algebra.Lattice
-import io.github.apl_cornell.viaduct.algebra.solver2.IllegalTermException
-import io.github.apl_cornell.viaduct.algebra.solver2.flowsTo
-import io.github.apl_cornell.viaduct.security.SecurityLattice
-import io.github.apl_cornell.viaduct.algebra.solver2.Term as ComponentTerm
+import io.github.aplcornell.viaduct.algebra.BoundedLattice
+import io.github.aplcornell.viaduct.algebra.HeytingAlgebra
+import io.github.aplcornell.viaduct.algebra.Lattice
+import io.github.aplcornell.viaduct.algebra.solver2.IllegalTermException
+import io.github.aplcornell.viaduct.algebra.solver2.flowsTo
+import io.github.aplcornell.viaduct.security.SecurityLattice
+import io.github.aplcornell.viaduct.algebra.solver2.Term as ComponentTerm
 
 /** Represents a [SecurityLattice] expression that can appear in [Constraint]s. */
 typealias Term<C, V> = SecurityLattice<ComponentTerm<C, ComponentVariable<V>>>

@@ -1,6 +1,6 @@
-package io.github.apl_cornell.viaduct.syntax
+package io.github.aplcornell.viaduct.syntax
 
-import io.github.apl_cornell.viaduct.parsing.SourceRange
+import io.github.aplcornell.viaduct.parsing.SourceRange
 
 /** Specifies what portion of the source code an abstract syntax tree node corresponds to. */
 typealias SourceLocation = SourceRange

@@ -1,18 +1,18 @@
-package io.github.apl_cornell.viaduct.backends
+package io.github.aplcornell.viaduct.backends
 
-import io.github.apl_cornell.viaduct.codegeneration.CodeGenerator
-import io.github.apl_cornell.viaduct.codegeneration.CodeGeneratorContext
-import io.github.apl_cornell.viaduct.codegeneration.unions
-import io.github.apl_cornell.viaduct.parsing.ProtocolParser
-import io.github.apl_cornell.viaduct.selection.ProtocolComposer
-import io.github.apl_cornell.viaduct.selection.ProtocolFactory
-import io.github.apl_cornell.viaduct.selection.cached
-import io.github.apl_cornell.viaduct.selection.filter
-import io.github.apl_cornell.viaduct.selection.unions
-import io.github.apl_cornell.viaduct.syntax.Protocol
-import io.github.apl_cornell.viaduct.syntax.ProtocolName
-import io.github.apl_cornell.viaduct.syntax.intermediate.ProgramNode
-import io.github.apl_cornell.viaduct.util.unions
+import io.github.aplcornell.viaduct.codegeneration.CodeGenerator
+import io.github.aplcornell.viaduct.codegeneration.CodeGeneratorContext
+import io.github.aplcornell.viaduct.codegeneration.unions
+import io.github.aplcornell.viaduct.parsing.ProtocolParser
+import io.github.aplcornell.viaduct.selection.ProtocolComposer
+import io.github.aplcornell.viaduct.selection.ProtocolFactory
+import io.github.aplcornell.viaduct.selection.cached
+import io.github.aplcornell.viaduct.selection.filter
+import io.github.aplcornell.viaduct.selection.unions
+import io.github.aplcornell.viaduct.syntax.Protocol
+import io.github.aplcornell.viaduct.syntax.ProtocolName
+import io.github.aplcornell.viaduct.syntax.intermediate.ProgramNode
+import io.github.aplcornell.viaduct.util.unions
 
 /** A compiler extension that adds support for a cryptographic backend. */
 interface Backend {

@@ -1,4 +1,4 @@
-package io.github.apl_cornell.viaduct.util
+package io.github.aplcornell.viaduct.util
 
 /**
  * Returns the list of all pairs where the first element is from [this] list,

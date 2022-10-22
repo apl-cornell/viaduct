@@ -1,4 +1,4 @@
-package io.github.apl_cornell.viaduct.algebra
+package io.github.aplcornell.viaduct.algebra
 
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test

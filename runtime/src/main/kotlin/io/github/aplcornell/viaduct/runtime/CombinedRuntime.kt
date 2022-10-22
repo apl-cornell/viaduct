@@ -1,4 +1,4 @@
-package io.github.apl_cornell.viaduct.runtime
+package io.github.aplcornell.viaduct.runtime
 
 class CombinedRuntime(
     private val ioStrategy: IOStrategy,

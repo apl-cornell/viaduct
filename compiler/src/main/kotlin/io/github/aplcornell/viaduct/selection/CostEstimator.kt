@@ -1,8 +1,8 @@
-package io.github.apl_cornell.viaduct.selection
+package io.github.aplcornell.viaduct.selection
 
-import io.github.apl_cornell.viaduct.syntax.Host
-import io.github.apl_cornell.viaduct.syntax.Protocol
-import io.github.apl_cornell.viaduct.syntax.intermediate.SimpleStatementNode
+import io.github.aplcornell.viaduct.syntax.Host
+import io.github.aplcornell.viaduct.syntax.Protocol
+import io.github.aplcornell.viaduct.syntax.intermediate.SimpleStatementNode
 
 /**
  * A modular cost model for estimating the cost of executing a program given a protocol assignment.

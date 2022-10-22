@@ -1,4 +1,4 @@
-package io.github.apl_cornell.viaduct.util.dataflow
+package io.github.aplcornell.viaduct.util.dataflow
 
 /** Nodes in a data flow graph. */
 interface DataFlowNode<A> {

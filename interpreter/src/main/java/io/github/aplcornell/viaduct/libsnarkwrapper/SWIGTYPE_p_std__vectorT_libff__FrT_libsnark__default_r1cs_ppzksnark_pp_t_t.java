@@ -6,7 +6,7 @@
  * the SWIG interface file instead.
  * ----------------------------------------------------------------------------- */
 
-package io.github.apl_cornell.viaduct.libsnarkwrapper;
+package io.github.aplcornell.viaduct.libsnarkwrapper;
 
 public class SWIGTYPE_p_std__vectorT_libff__FrT_libsnark__default_r1cs_ppzksnark_pp_t_t {
   private transient long swigCPtr;

@@ -1,37 +1,37 @@
-package io.github.apl_cornell.viaduct.backends.zkp
+package io.github.aplcornell.viaduct.backends.zkp
 
-import io.github.apl_cornell.viaduct.analysis.NameAnalysis
-import io.github.apl_cornell.viaduct.backends.cleartext.Local
-import io.github.apl_cornell.viaduct.backends.cleartext.LocalProtocolFactory
-import io.github.apl_cornell.viaduct.backends.cleartext.Replication
-import io.github.apl_cornell.viaduct.backends.cleartext.ReplicationProtocolFactory
-import io.github.apl_cornell.viaduct.passes.canMux
-import io.github.apl_cornell.viaduct.selection.Literal
-import io.github.apl_cornell.viaduct.selection.ProtocolFactory
-import io.github.apl_cornell.viaduct.selection.SelectionConstraint
-import io.github.apl_cornell.viaduct.selection.ands
-import io.github.apl_cornell.viaduct.selection.readsFrom
-import io.github.apl_cornell.viaduct.selection.sendsTo
-import io.github.apl_cornell.viaduct.syntax.Operator
-import io.github.apl_cornell.viaduct.syntax.Protocol
-import io.github.apl_cornell.viaduct.syntax.intermediate.DeclarationNode
-import io.github.apl_cornell.viaduct.syntax.intermediate.ExpressionNode
-import io.github.apl_cornell.viaduct.syntax.intermediate.IfNode
-import io.github.apl_cornell.viaduct.syntax.intermediate.LetNode
-import io.github.apl_cornell.viaduct.syntax.intermediate.OperatorApplicationNode
-import io.github.apl_cornell.viaduct.syntax.intermediate.ProgramNode
-import io.github.apl_cornell.viaduct.syntax.intermediate.ReadNode
-import io.github.apl_cornell.viaduct.syntax.intermediate.VariableDeclarationNode
-import io.github.apl_cornell.viaduct.syntax.operators.Addition
-import io.github.apl_cornell.viaduct.syntax.operators.And
-import io.github.apl_cornell.viaduct.syntax.operators.EqualTo
-import io.github.apl_cornell.viaduct.syntax.operators.LessThan
-import io.github.apl_cornell.viaduct.syntax.operators.LessThanOrEqualTo
-import io.github.apl_cornell.viaduct.syntax.operators.Multiplication
-import io.github.apl_cornell.viaduct.syntax.operators.Mux
-import io.github.apl_cornell.viaduct.syntax.operators.Not
-import io.github.apl_cornell.viaduct.syntax.operators.Or
-import io.github.apl_cornell.viaduct.util.subsequences
+import io.github.aplcornell.viaduct.analysis.NameAnalysis
+import io.github.aplcornell.viaduct.backends.cleartext.Local
+import io.github.aplcornell.viaduct.backends.cleartext.LocalProtocolFactory
+import io.github.aplcornell.viaduct.backends.cleartext.Replication
+import io.github.aplcornell.viaduct.backends.cleartext.ReplicationProtocolFactory
+import io.github.aplcornell.viaduct.passes.canMux
+import io.github.aplcornell.viaduct.selection.Literal
+import io.github.aplcornell.viaduct.selection.ProtocolFactory
+import io.github.aplcornell.viaduct.selection.SelectionConstraint
+import io.github.aplcornell.viaduct.selection.ands
+import io.github.aplcornell.viaduct.selection.readsFrom
+import io.github.aplcornell.viaduct.selection.sendsTo
+import io.github.aplcornell.viaduct.syntax.Operator
+import io.github.aplcornell.viaduct.syntax.Protocol
+import io.github.aplcornell.viaduct.syntax.intermediate.DeclarationNode
+import io.github.aplcornell.viaduct.syntax.intermediate.ExpressionNode
+import io.github.aplcornell.viaduct.syntax.intermediate.IfNode
+import io.github.aplcornell.viaduct.syntax.intermediate.LetNode
+import io.github.aplcornell.viaduct.syntax.intermediate.OperatorApplicationNode
+import io.github.aplcornell.viaduct.syntax.intermediate.ProgramNode
+import io.github.aplcornell.viaduct.syntax.intermediate.ReadNode
+import io.github.aplcornell.viaduct.syntax.intermediate.VariableDeclarationNode
+import io.github.aplcornell.viaduct.syntax.operators.Addition
+import io.github.aplcornell.viaduct.syntax.operators.And
+import io.github.aplcornell.viaduct.syntax.operators.EqualTo
+import io.github.aplcornell.viaduct.syntax.operators.LessThan
+import io.github.aplcornell.viaduct.syntax.operators.LessThanOrEqualTo
+import io.github.aplcornell.viaduct.syntax.operators.Multiplication
+import io.github.aplcornell.viaduct.syntax.operators.Mux
+import io.github.aplcornell.viaduct.syntax.operators.Not
+import io.github.aplcornell.viaduct.syntax.operators.Or
+import io.github.aplcornell.viaduct.util.subsequences
 
 class ZKPProtocolFactory(val program: ProgramNode) : ProtocolFactory {
     private val nameAnalysis = NameAnalysis.get(program)
@@ -67,7 +67,7 @@ class ZKPProtocolFactory(val program: ProgramNode) : ProtocolFactory {
             // TODO: unify these cases
             is LetNode ->
                 protocols.map {
-                    io.github.apl_cornell.viaduct.selection.And(
+                    io.github.aplcornell.viaduct.selection.And(
                         node.readsFrom(nameAnalysis, setOf(it), localAndReplicated + setOf(it)),
                         node.sendsTo(nameAnalysis, setOf(it), localAndReplicated + setOf(it))
                     )
@@ -75,7 +75,7 @@ class ZKPProtocolFactory(val program: ProgramNode) : ProtocolFactory {
 
             is DeclarationNode ->
                 protocols.map {
-                    io.github.apl_cornell.viaduct.selection.And(
+                    io.github.aplcornell.viaduct.selection.And(
                         node.readsFrom(nameAnalysis, setOf(it), localAndReplicated + setOf(it)),
                         node.sendsTo(nameAnalysis, setOf(it), localAndReplicated + setOf(it))
                     )

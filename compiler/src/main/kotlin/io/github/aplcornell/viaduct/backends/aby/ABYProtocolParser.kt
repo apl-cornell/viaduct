@@ -1,8 +1,8 @@
-package io.github.apl_cornell.viaduct.backends.aby
+package io.github.aplcornell.viaduct.backends.aby
 
-import io.github.apl_cornell.viaduct.parsing.ProtocolArguments
-import io.github.apl_cornell.viaduct.parsing.ProtocolParser
-import io.github.apl_cornell.viaduct.syntax.values.HostValue
+import io.github.aplcornell.viaduct.parsing.ProtocolArguments
+import io.github.aplcornell.viaduct.parsing.ProtocolParser
+import io.github.aplcornell.viaduct.syntax.values.HostValue
 
 /** Parser for the [ABY] protocol. */
 object ArithABYProtocolParser : ProtocolParser<ArithABY> {

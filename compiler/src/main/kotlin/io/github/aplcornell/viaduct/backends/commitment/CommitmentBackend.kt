@@ -1,14 +1,14 @@
-package io.github.apl_cornell.viaduct.backends.commitment
+package io.github.aplcornell.viaduct.backends.commitment
 
-import io.github.apl_cornell.viaduct.backends.Backend
-import io.github.apl_cornell.viaduct.codegeneration.CodeGenerator
-import io.github.apl_cornell.viaduct.codegeneration.CodeGeneratorContext
-import io.github.apl_cornell.viaduct.parsing.ProtocolParser
-import io.github.apl_cornell.viaduct.selection.ProtocolComposer
-import io.github.apl_cornell.viaduct.selection.ProtocolFactory
-import io.github.apl_cornell.viaduct.syntax.Protocol
-import io.github.apl_cornell.viaduct.syntax.ProtocolName
-import io.github.apl_cornell.viaduct.syntax.intermediate.ProgramNode
+import io.github.aplcornell.viaduct.backends.Backend
+import io.github.aplcornell.viaduct.codegeneration.CodeGenerator
+import io.github.aplcornell.viaduct.codegeneration.CodeGeneratorContext
+import io.github.aplcornell.viaduct.parsing.ProtocolParser
+import io.github.aplcornell.viaduct.selection.ProtocolComposer
+import io.github.aplcornell.viaduct.selection.ProtocolFactory
+import io.github.aplcornell.viaduct.syntax.Protocol
+import io.github.aplcornell.viaduct.syntax.ProtocolName
+import io.github.aplcornell.viaduct.syntax.intermediate.ProgramNode
 
 object CommitmentBackend : Backend {
     override val protocols: Set<ProtocolName>

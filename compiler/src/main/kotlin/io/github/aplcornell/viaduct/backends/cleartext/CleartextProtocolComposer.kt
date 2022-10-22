@@ -1,10 +1,10 @@
-package io.github.apl_cornell.viaduct.backends.cleartext
+package io.github.aplcornell.viaduct.backends.cleartext
 
-import io.github.apl_cornell.viaduct.selection.AbstractProtocolComposer
-import io.github.apl_cornell.viaduct.selection.CommunicationEvent
-import io.github.apl_cornell.viaduct.syntax.Host
-import io.github.apl_cornell.viaduct.syntax.Protocol
-import io.github.apl_cornell.viaduct.syntax.intermediate.LetNode
+import io.github.aplcornell.viaduct.selection.AbstractProtocolComposer
+import io.github.aplcornell.viaduct.selection.CommunicationEvent
+import io.github.aplcornell.viaduct.syntax.Host
+import io.github.aplcornell.viaduct.syntax.Protocol
+import io.github.aplcornell.viaduct.syntax.intermediate.LetNode
 
 object CleartextProtocolComposer : AbstractProtocolComposer() {
     override fun communicationEvents(source: Protocol, destination: Protocol): Iterable<CommunicationEvent>? =

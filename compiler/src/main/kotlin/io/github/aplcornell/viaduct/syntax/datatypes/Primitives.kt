@@ -1,6 +1,6 @@
-package io.github.apl_cornell.viaduct.syntax.datatypes
+package io.github.aplcornell.viaduct.syntax.datatypes
 
-import io.github.apl_cornell.viaduct.syntax.BinaryOperator
+import io.github.aplcornell.viaduct.syntax.BinaryOperator
 
 /** A class that stores a single unmodifiable value. */
 val ImmutableCell: ClassName =

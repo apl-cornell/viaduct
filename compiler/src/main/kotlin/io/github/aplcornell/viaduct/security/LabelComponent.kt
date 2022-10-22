@@ -1,5 +1,5 @@
-package io.github.apl_cornell.viaduct.security
+package io.github.aplcornell.viaduct.security
 
-import io.github.apl_cornell.viaduct.algebra.FreeDistributiveLattice
+import io.github.aplcornell.viaduct.algebra.FreeDistributiveLattice
 
 typealias LabelComponent = FreeDistributiveLattice<Component<Principal>>

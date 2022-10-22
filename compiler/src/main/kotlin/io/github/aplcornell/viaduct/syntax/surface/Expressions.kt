@@ -1,23 +1,23 @@
-package io.github.apl_cornell.viaduct.syntax.surface
+package io.github.aplcornell.viaduct.syntax.surface
 
-import io.github.apl_cornell.viaduct.prettyprinting.Document
-import io.github.apl_cornell.viaduct.prettyprinting.braced
-import io.github.apl_cornell.viaduct.prettyprinting.nested
-import io.github.apl_cornell.viaduct.prettyprinting.plus
-import io.github.apl_cornell.viaduct.prettyprinting.times
-import io.github.apl_cornell.viaduct.prettyprinting.tupled
-import io.github.apl_cornell.viaduct.syntax.Arguments
-import io.github.apl_cornell.viaduct.syntax.HostNode
-import io.github.apl_cornell.viaduct.syntax.LabelNode
-import io.github.apl_cornell.viaduct.syntax.ObjectTypeNode
-import io.github.apl_cornell.viaduct.syntax.ObjectVariableNode
-import io.github.apl_cornell.viaduct.syntax.Operator
-import io.github.apl_cornell.viaduct.syntax.ProtocolNode
-import io.github.apl_cornell.viaduct.syntax.QueryNameNode
-import io.github.apl_cornell.viaduct.syntax.SourceLocation
-import io.github.apl_cornell.viaduct.syntax.TemporaryNode
-import io.github.apl_cornell.viaduct.syntax.ValueTypeNode
-import io.github.apl_cornell.viaduct.syntax.values.Value
+import io.github.aplcornell.viaduct.prettyprinting.Document
+import io.github.aplcornell.viaduct.prettyprinting.braced
+import io.github.aplcornell.viaduct.prettyprinting.nested
+import io.github.aplcornell.viaduct.prettyprinting.plus
+import io.github.aplcornell.viaduct.prettyprinting.times
+import io.github.aplcornell.viaduct.prettyprinting.tupled
+import io.github.aplcornell.viaduct.syntax.Arguments
+import io.github.aplcornell.viaduct.syntax.HostNode
+import io.github.aplcornell.viaduct.syntax.LabelNode
+import io.github.aplcornell.viaduct.syntax.ObjectTypeNode
+import io.github.aplcornell.viaduct.syntax.ObjectVariableNode
+import io.github.aplcornell.viaduct.syntax.Operator
+import io.github.aplcornell.viaduct.syntax.ProtocolNode
+import io.github.aplcornell.viaduct.syntax.QueryNameNode
+import io.github.aplcornell.viaduct.syntax.SourceLocation
+import io.github.aplcornell.viaduct.syntax.TemporaryNode
+import io.github.aplcornell.viaduct.syntax.ValueTypeNode
+import io.github.aplcornell.viaduct.syntax.values.Value
 
 /** A computation that produces a result. */
 sealed class ExpressionNode : Node() {

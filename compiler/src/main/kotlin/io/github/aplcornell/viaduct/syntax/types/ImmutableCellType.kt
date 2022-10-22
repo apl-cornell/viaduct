@@ -1,10 +1,10 @@
-package io.github.apl_cornell.viaduct.syntax.types
+package io.github.aplcornell.viaduct.syntax.types
 
-import io.github.apl_cornell.viaduct.syntax.datatypes.ClassName
-import io.github.apl_cornell.viaduct.syntax.datatypes.Get
-import io.github.apl_cornell.viaduct.syntax.datatypes.ImmutableCell
-import io.github.apl_cornell.viaduct.syntax.datatypes.QueryName
-import io.github.apl_cornell.viaduct.syntax.datatypes.UpdateName
+import io.github.aplcornell.viaduct.syntax.datatypes.ClassName
+import io.github.aplcornell.viaduct.syntax.datatypes.Get
+import io.github.aplcornell.viaduct.syntax.datatypes.ImmutableCell
+import io.github.aplcornell.viaduct.syntax.datatypes.QueryName
+import io.github.aplcornell.viaduct.syntax.datatypes.UpdateName
 import kotlinx.collections.immutable.persistentListOf
 
 /** The type of [ImmutableCell] objects. */

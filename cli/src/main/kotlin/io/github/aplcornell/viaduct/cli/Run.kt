@@ -1,4 +1,4 @@
-package io.github.apl_cornell.viaduct.cli
+package io.github.aplcornell.viaduct.cli
 
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.parameters.arguments.argument
@@ -7,20 +7,20 @@ import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.options.pair
 import com.github.ajalt.clikt.parameters.types.file
 import com.github.ajalt.clikt.parameters.types.int
-import io.github.apl_cornell.viaduct.backend.CleartextProtocolInterpreter
-import io.github.apl_cornell.viaduct.backend.HostAddress
-import io.github.apl_cornell.viaduct.backend.IO.FileStrategy
-import io.github.apl_cornell.viaduct.backend.IO.Strategy
-import io.github.apl_cornell.viaduct.backend.IO.TerminalIO
-import io.github.apl_cornell.viaduct.backend.ProtocolBackend
-import io.github.apl_cornell.viaduct.backend.ViaductBackend
-import io.github.apl_cornell.viaduct.backend.aby.ABYProtocolInterpreter
-import io.github.apl_cornell.viaduct.backend.commitment.CommitmentProtocolInterpreterFactory
-import io.github.apl_cornell.viaduct.backend.zkp.ZKPProtocolInterpreterFactory
-import io.github.apl_cornell.viaduct.backends.DefaultCombinedBackend
-import io.github.apl_cornell.viaduct.parsing.parse
-import io.github.apl_cornell.viaduct.passes.elaborated
-import io.github.apl_cornell.viaduct.syntax.Host
+import io.github.aplcornell.viaduct.backend.CleartextProtocolInterpreter
+import io.github.aplcornell.viaduct.backend.HostAddress
+import io.github.aplcornell.viaduct.backend.IO.FileStrategy
+import io.github.aplcornell.viaduct.backend.IO.Strategy
+import io.github.aplcornell.viaduct.backend.IO.TerminalIO
+import io.github.aplcornell.viaduct.backend.ProtocolBackend
+import io.github.aplcornell.viaduct.backend.ViaductBackend
+import io.github.aplcornell.viaduct.backend.aby.ABYProtocolInterpreter
+import io.github.aplcornell.viaduct.backend.commitment.CommitmentProtocolInterpreterFactory
+import io.github.aplcornell.viaduct.backend.zkp.ZKPProtocolInterpreterFactory
+import io.github.aplcornell.viaduct.backends.DefaultCombinedBackend
+import io.github.aplcornell.viaduct.parsing.parse
+import io.github.aplcornell.viaduct.passes.elaborated
+import io.github.aplcornell.viaduct.syntax.Host
 import java.io.File
 import kotlin.system.exitProcess
 

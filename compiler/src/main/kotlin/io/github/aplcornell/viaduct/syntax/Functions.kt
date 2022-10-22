@@ -1,10 +1,10 @@
-package io.github.apl_cornell.viaduct.syntax
+package io.github.aplcornell.viaduct.syntax
 
-import io.github.apl_cornell.viaduct.prettyprinting.Document
-import io.github.apl_cornell.viaduct.prettyprinting.PrettyPrintable
-import io.github.apl_cornell.viaduct.prettyprinting.Style
-import io.github.apl_cornell.viaduct.prettyprinting.styled
-import io.github.apl_cornell.viaduct.syntax.surface.KeywordStyle
+import io.github.aplcornell.viaduct.prettyprinting.Document
+import io.github.aplcornell.viaduct.prettyprinting.PrettyPrintable
+import io.github.aplcornell.viaduct.prettyprinting.Style
+import io.github.aplcornell.viaduct.prettyprinting.styled
+import io.github.aplcornell.viaduct.syntax.surface.KeywordStyle
 
 /**
  * Specifies whether a parameter is an IN parameter (can be used)

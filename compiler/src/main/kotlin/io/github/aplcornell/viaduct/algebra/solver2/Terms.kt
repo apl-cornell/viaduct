@@ -1,11 +1,11 @@
-package io.github.apl_cornell.viaduct.algebra.solver2
+package io.github.aplcornell.viaduct.algebra.solver2
 
-import io.github.apl_cornell.viaduct.algebra.BoundedLattice
-import io.github.apl_cornell.viaduct.algebra.HeytingAlgebra
-import io.github.apl_cornell.viaduct.algebra.JoinSemiLattice
-import io.github.apl_cornell.viaduct.algebra.Lattice
-import io.github.apl_cornell.viaduct.algebra.MeetSemiLattice
-import io.github.apl_cornell.viaduct.util.dataflow.DataFlowNode
+import io.github.aplcornell.viaduct.algebra.BoundedLattice
+import io.github.aplcornell.viaduct.algebra.HeytingAlgebra
+import io.github.aplcornell.viaduct.algebra.JoinSemiLattice
+import io.github.aplcornell.viaduct.algebra.Lattice
+import io.github.aplcornell.viaduct.algebra.MeetSemiLattice
+import io.github.aplcornell.viaduct.util.dataflow.DataFlowNode
 
 /** Represents a lattice expression that can appear in [Constraint]s. */
 sealed class Term<C, V> : Lattice<Term<C, V>> {

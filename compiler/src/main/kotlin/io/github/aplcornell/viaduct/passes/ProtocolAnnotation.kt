@@ -1,20 +1,20 @@
-package io.github.apl_cornell.viaduct.passes
+package io.github.aplcornell.viaduct.passes
 
-import io.github.apl_cornell.viaduct.analysis.NameAnalysis
-import io.github.apl_cornell.viaduct.selection.ProtocolAssignment
-import io.github.apl_cornell.viaduct.syntax.Arguments
-import io.github.apl_cornell.viaduct.syntax.Located
-import io.github.apl_cornell.viaduct.syntax.intermediate.BlockNode
-import io.github.apl_cornell.viaduct.syntax.intermediate.DeclarationNode
-import io.github.apl_cornell.viaduct.syntax.intermediate.DelegationDeclarationNode
-import io.github.apl_cornell.viaduct.syntax.intermediate.FunctionDeclarationNode
-import io.github.apl_cornell.viaduct.syntax.intermediate.HostDeclarationNode
-import io.github.apl_cornell.viaduct.syntax.intermediate.IfNode
-import io.github.apl_cornell.viaduct.syntax.intermediate.InfiniteLoopNode
-import io.github.apl_cornell.viaduct.syntax.intermediate.LetNode
-import io.github.apl_cornell.viaduct.syntax.intermediate.ParameterNode
-import io.github.apl_cornell.viaduct.syntax.intermediate.ProgramNode
-import io.github.apl_cornell.viaduct.syntax.intermediate.StatementNode
+import io.github.aplcornell.viaduct.analysis.NameAnalysis
+import io.github.aplcornell.viaduct.selection.ProtocolAssignment
+import io.github.aplcornell.viaduct.syntax.Arguments
+import io.github.aplcornell.viaduct.syntax.Located
+import io.github.aplcornell.viaduct.syntax.intermediate.BlockNode
+import io.github.aplcornell.viaduct.syntax.intermediate.DeclarationNode
+import io.github.aplcornell.viaduct.syntax.intermediate.DelegationDeclarationNode
+import io.github.aplcornell.viaduct.syntax.intermediate.FunctionDeclarationNode
+import io.github.aplcornell.viaduct.syntax.intermediate.HostDeclarationNode
+import io.github.aplcornell.viaduct.syntax.intermediate.IfNode
+import io.github.aplcornell.viaduct.syntax.intermediate.InfiniteLoopNode
+import io.github.aplcornell.viaduct.syntax.intermediate.LetNode
+import io.github.aplcornell.viaduct.syntax.intermediate.ParameterNode
+import io.github.aplcornell.viaduct.syntax.intermediate.ProgramNode
+import io.github.aplcornell.viaduct.syntax.intermediate.StatementNode
 
 /** Annotate parameters, declarations, and let nodes with protocols. */
 fun ProgramNode.annotateWithProtocols(assignment: ProtocolAssignment): ProgramNode =

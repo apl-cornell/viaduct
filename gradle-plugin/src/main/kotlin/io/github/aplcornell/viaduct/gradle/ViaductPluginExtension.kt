@@ -1,3 +1,3 @@
-package io.github.apl_cornell.viaduct.gradle
+package io.github.aplcornell.viaduct.gradle
 
 abstract class ViaductPluginExtension

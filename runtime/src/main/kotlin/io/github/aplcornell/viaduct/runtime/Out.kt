@@ -1,4 +1,4 @@
-package io.github.apl_cornell.viaduct.runtime
+package io.github.aplcornell.viaduct.runtime
 
 /** Represents an output argument of a function call. */
 class Out<T : Any> {

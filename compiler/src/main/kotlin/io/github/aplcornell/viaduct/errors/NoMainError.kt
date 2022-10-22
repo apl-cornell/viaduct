@@ -1,11 +1,11 @@
-package io.github.apl_cornell.viaduct.errors
+package io.github.aplcornell.viaduct.errors
 
-import io.github.apl_cornell.viaduct.analysis.mainFunction
-import io.github.apl_cornell.viaduct.parsing.parse
-import io.github.apl_cornell.viaduct.prettyprinting.Document
-import io.github.apl_cornell.viaduct.prettyprinting.plus
-import io.github.apl_cornell.viaduct.prettyprinting.times
-import io.github.apl_cornell.viaduct.syntax.surface.ProgramNode
+import io.github.aplcornell.viaduct.analysis.mainFunction
+import io.github.aplcornell.viaduct.parsing.parse
+import io.github.aplcornell.viaduct.prettyprinting.Document
+import io.github.aplcornell.viaduct.prettyprinting.plus
+import io.github.aplcornell.viaduct.prettyprinting.times
+import io.github.aplcornell.viaduct.syntax.surface.ProgramNode
 
 /** Thrown when trying to compile a program with no main. */
 class NoMainError(override val source: String) : CompilationError() {

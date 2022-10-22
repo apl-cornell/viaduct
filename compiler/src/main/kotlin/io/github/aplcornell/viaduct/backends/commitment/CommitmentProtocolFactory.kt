@@ -1,18 +1,18 @@
-package io.github.apl_cornell.viaduct.backends.commitment
+package io.github.aplcornell.viaduct.backends.commitment
 
-import io.github.apl_cornell.viaduct.analysis.NameAnalysis
-import io.github.apl_cornell.viaduct.analysis.immediateRHS
-import io.github.apl_cornell.viaduct.selection.ProtocolFactory
-import io.github.apl_cornell.viaduct.syntax.Protocol
-import io.github.apl_cornell.viaduct.syntax.intermediate.AtomicExpressionNode
-import io.github.apl_cornell.viaduct.syntax.intermediate.DeclarationNode
-import io.github.apl_cornell.viaduct.syntax.intermediate.DowngradeNode
-import io.github.apl_cornell.viaduct.syntax.intermediate.LetNode
-import io.github.apl_cornell.viaduct.syntax.intermediate.ParameterNode
-import io.github.apl_cornell.viaduct.syntax.intermediate.ProgramNode
-import io.github.apl_cornell.viaduct.syntax.intermediate.QueryNode
-import io.github.apl_cornell.viaduct.syntax.intermediate.VariableDeclarationNode
-import io.github.apl_cornell.viaduct.util.subsequences
+import io.github.aplcornell.viaduct.analysis.NameAnalysis
+import io.github.aplcornell.viaduct.analysis.immediateRHS
+import io.github.aplcornell.viaduct.selection.ProtocolFactory
+import io.github.aplcornell.viaduct.syntax.Protocol
+import io.github.aplcornell.viaduct.syntax.intermediate.AtomicExpressionNode
+import io.github.aplcornell.viaduct.syntax.intermediate.DeclarationNode
+import io.github.aplcornell.viaduct.syntax.intermediate.DowngradeNode
+import io.github.aplcornell.viaduct.syntax.intermediate.LetNode
+import io.github.aplcornell.viaduct.syntax.intermediate.ParameterNode
+import io.github.aplcornell.viaduct.syntax.intermediate.ProgramNode
+import io.github.aplcornell.viaduct.syntax.intermediate.QueryNode
+import io.github.aplcornell.viaduct.syntax.intermediate.VariableDeclarationNode
+import io.github.aplcornell.viaduct.util.subsequences
 
 class CommitmentProtocolFactory(val program: ProgramNode) : ProtocolFactory {
     private val nameAnalysis = NameAnalysis.get(program)
@@ -32,7 +32,7 @@ class CommitmentProtocolFactory(val program: ProgramNode) : ProtocolFactory {
 
             is DeclarationNode -> {
                 nameAnalysis.updaters(this).all { updateNode ->
-                    updateNode.update.value == io.github.apl_cornell.viaduct.syntax.datatypes.Set
+                    updateNode.update.value == io.github.aplcornell.viaduct.syntax.datatypes.Set
                 }
             }
 

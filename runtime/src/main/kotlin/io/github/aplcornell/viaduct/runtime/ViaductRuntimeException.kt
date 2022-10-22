@@ -1,3 +1,3 @@
-package io.github.apl_cornell.viaduct.runtime
+package io.github.aplcornell.viaduct.runtime
 
 abstract class ViaductRuntimeException(message: String) : RuntimeException(message)

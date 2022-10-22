@@ -1,18 +1,18 @@
-package io.github.apl_cornell.viaduct.backend
+package io.github.aplcornell.viaduct.backend
 
-import io.github.apl_cornell.viaduct.backend.commitment.Hashing
-import io.github.apl_cornell.viaduct.prettyprinting.Document
-import io.github.apl_cornell.viaduct.prettyprinting.PrettyPrintable
-import io.github.apl_cornell.viaduct.syntax.Operator
-import io.github.apl_cornell.viaduct.syntax.operators.Addition
-import io.github.apl_cornell.viaduct.syntax.operators.And
-import io.github.apl_cornell.viaduct.syntax.operators.EqualTo
-import io.github.apl_cornell.viaduct.syntax.operators.LessThan
-import io.github.apl_cornell.viaduct.syntax.operators.LessThanOrEqualTo
-import io.github.apl_cornell.viaduct.syntax.operators.Multiplication
-import io.github.apl_cornell.viaduct.syntax.operators.Mux
-import io.github.apl_cornell.viaduct.syntax.operators.Not
-import io.github.apl_cornell.viaduct.syntax.operators.Or
+import io.github.aplcornell.viaduct.backend.commitment.Hashing
+import io.github.aplcornell.viaduct.prettyprinting.Document
+import io.github.aplcornell.viaduct.prettyprinting.PrettyPrintable
+import io.github.aplcornell.viaduct.syntax.Operator
+import io.github.aplcornell.viaduct.syntax.operators.Addition
+import io.github.aplcornell.viaduct.syntax.operators.And
+import io.github.aplcornell.viaduct.syntax.operators.EqualTo
+import io.github.aplcornell.viaduct.syntax.operators.LessThan
+import io.github.aplcornell.viaduct.syntax.operators.LessThanOrEqualTo
+import io.github.aplcornell.viaduct.syntax.operators.Multiplication
+import io.github.aplcornell.viaduct.syntax.operators.Mux
+import io.github.aplcornell.viaduct.syntax.operators.Not
+import io.github.aplcornell.viaduct.syntax.operators.Or
 
 sealed class WireTerm
 data class WireOp(val op: Operator, val inputs: List<WireTerm>) : WireTerm()

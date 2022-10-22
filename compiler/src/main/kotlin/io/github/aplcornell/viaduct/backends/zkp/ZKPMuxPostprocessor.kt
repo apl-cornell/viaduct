@@ -1,8 +1,8 @@
-package io.github.apl_cornell.viaduct.backends.zkp
+package io.github.aplcornell.viaduct.backends.zkp
 
-import io.github.apl_cornell.viaduct.passes.MuxPostprocessor
-import io.github.apl_cornell.viaduct.passes.ProgramPostprocessor
-import io.github.apl_cornell.viaduct.selection.ProtocolAssignment
+import io.github.aplcornell.viaduct.passes.MuxPostprocessor
+import io.github.aplcornell.viaduct.passes.ProgramPostprocessor
+import io.github.aplcornell.viaduct.selection.ProtocolAssignment
 
 fun zkpMuxPostprocessor(
     protocolAssignment: ProtocolAssignment,

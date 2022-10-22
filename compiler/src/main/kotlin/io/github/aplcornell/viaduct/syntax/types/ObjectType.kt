@@ -1,12 +1,12 @@
-package io.github.apl_cornell.viaduct.syntax.types
+package io.github.aplcornell.viaduct.syntax.types
 
-import io.github.apl_cornell.viaduct.prettyprinting.Document
-import io.github.apl_cornell.viaduct.prettyprinting.bracketed
-import io.github.apl_cornell.viaduct.prettyprinting.nested
-import io.github.apl_cornell.viaduct.prettyprinting.plus
-import io.github.apl_cornell.viaduct.syntax.datatypes.ClassName
-import io.github.apl_cornell.viaduct.syntax.datatypes.QueryName
-import io.github.apl_cornell.viaduct.syntax.datatypes.UpdateName
+import io.github.aplcornell.viaduct.prettyprinting.Document
+import io.github.aplcornell.viaduct.prettyprinting.bracketed
+import io.github.aplcornell.viaduct.prettyprinting.nested
+import io.github.aplcornell.viaduct.prettyprinting.plus
+import io.github.aplcornell.viaduct.syntax.datatypes.ClassName
+import io.github.aplcornell.viaduct.syntax.datatypes.QueryName
+import io.github.aplcornell.viaduct.syntax.datatypes.UpdateName
 
 /** The type of objects. */
 abstract class ObjectType : Type {

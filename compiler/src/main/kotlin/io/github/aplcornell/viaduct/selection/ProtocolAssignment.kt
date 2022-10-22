@@ -1,8 +1,8 @@
-package io.github.apl_cornell.viaduct.selection
+package io.github.aplcornell.viaduct.selection
 
-import io.github.apl_cornell.viaduct.syntax.FunctionName
-import io.github.apl_cornell.viaduct.syntax.Protocol
-import io.github.apl_cornell.viaduct.syntax.Variable
+import io.github.aplcornell.viaduct.syntax.FunctionName
+import io.github.aplcornell.viaduct.syntax.Protocol
+import io.github.aplcornell.viaduct.syntax.Variable
 import java.lang.Integer.max
 
 data class ProtocolAssignment(

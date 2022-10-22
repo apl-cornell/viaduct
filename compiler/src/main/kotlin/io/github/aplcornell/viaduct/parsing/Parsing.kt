@@ -1,9 +1,9 @@
-package io.github.apl_cornell.viaduct.parsing
+package io.github.aplcornell.viaduct.parsing
 
-import io.github.apl_cornell.viaduct.security.LabelExpression
-import io.github.apl_cornell.viaduct.syntax.Protocol
-import io.github.apl_cornell.viaduct.syntax.ProtocolName
-import io.github.apl_cornell.viaduct.syntax.surface.ProgramNode
+import io.github.aplcornell.viaduct.security.LabelExpression
+import io.github.aplcornell.viaduct.syntax.Protocol
+import io.github.aplcornell.viaduct.syntax.ProtocolName
+import io.github.aplcornell.viaduct.syntax.surface.ProgramNode
 import java_cup.runtime.ComplexSymbolFactory
 
 /** Parses [this] string and returns the AST. */

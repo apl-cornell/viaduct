@@ -1,6 +1,6 @@
-package io.github.apl_cornell.viaduct.runtime
+package io.github.aplcornell.viaduct.runtime
 
-import io.github.apl_cornell.viaduct.syntax.Host
+import io.github.aplcornell.viaduct.syntax.Host
 
 class HostCommunicationException(host: Host, otherHost: Host) : ViaductRuntimeException(
     if (host == otherHost) {

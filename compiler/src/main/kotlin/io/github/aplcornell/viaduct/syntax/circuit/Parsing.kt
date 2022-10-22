@@ -1,10 +1,10 @@
-package io.github.apl_cornell.viaduct.syntax.circuit
+package io.github.aplcornell.viaduct.syntax.circuit
 
-import io.github.apl_cornell.viaduct.parsing.ProtocolParser
-import io.github.apl_cornell.viaduct.parsing.SourceFile
-import io.github.apl_cornell.viaduct.parsing.defaultProtocolParsers
-import io.github.apl_cornell.viaduct.syntax.Protocol
-import io.github.apl_cornell.viaduct.syntax.ProtocolName
+import io.github.aplcornell.viaduct.parsing.ProtocolParser
+import io.github.aplcornell.viaduct.parsing.SourceFile
+import io.github.aplcornell.viaduct.parsing.defaultProtocolParsers
+import io.github.aplcornell.viaduct.syntax.Protocol
+import io.github.aplcornell.viaduct.syntax.ProtocolName
 import java_cup.runtime.ComplexSymbolFactory
 
 /** Parses [this] string and returns the AST. */

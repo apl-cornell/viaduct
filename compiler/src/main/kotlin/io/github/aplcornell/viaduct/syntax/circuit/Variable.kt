@@ -1,10 +1,10 @@
-package io.github.apl_cornell.viaduct.syntax.circuit
+package io.github.aplcornell.viaduct.syntax.circuit
 
-import io.github.apl_cornell.viaduct.prettyprinting.Document
-import io.github.apl_cornell.viaduct.prettyprinting.styled
-import io.github.apl_cornell.viaduct.syntax.Located
-import io.github.apl_cornell.viaduct.syntax.Name
-import io.github.apl_cornell.viaduct.syntax.VariableStyle
+import io.github.aplcornell.viaduct.prettyprinting.Document
+import io.github.aplcornell.viaduct.prettyprinting.styled
+import io.github.aplcornell.viaduct.syntax.Located
+import io.github.aplcornell.viaduct.syntax.Name
+import io.github.aplcornell.viaduct.syntax.VariableStyle
 
 /** A variable is a name that stands for a value or an object instance. */
 data class Variable(override val name: String) : Name {

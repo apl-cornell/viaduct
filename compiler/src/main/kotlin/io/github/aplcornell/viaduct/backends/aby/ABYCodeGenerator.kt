@@ -1,4 +1,4 @@
-package io.github.apl_cornell.viaduct.backends.aby
+package io.github.aplcornell.viaduct.backends.aby
 
 import com.squareup.kotlinpoet.CodeBlock
 import com.squareup.kotlinpoet.INT
@@ -13,53 +13,53 @@ import io.github.apl_cornell.aby.Aby
 import io.github.apl_cornell.aby.Role
 import io.github.apl_cornell.aby.Share
 import io.github.apl_cornell.aby.SharingType
-import io.github.apl_cornell.viaduct.analysis.NameAnalysis
-import io.github.apl_cornell.viaduct.analysis.ProtocolAnalysis
-import io.github.apl_cornell.viaduct.analysis.TypeAnalysis
-import io.github.apl_cornell.viaduct.codegeneration.AbstractCodeGenerator
-import io.github.apl_cornell.viaduct.codegeneration.CodeGeneratorContext
-import io.github.apl_cornell.viaduct.codegeneration.UnsupportedOperatorException
-import io.github.apl_cornell.viaduct.codegeneration.typeTranslator
-import io.github.apl_cornell.viaduct.selection.ProtocolCommunication
-import io.github.apl_cornell.viaduct.syntax.Host
-import io.github.apl_cornell.viaduct.syntax.Operator
-import io.github.apl_cornell.viaduct.syntax.Protocol
-import io.github.apl_cornell.viaduct.syntax.datatypes.Get
-import io.github.apl_cornell.viaduct.syntax.datatypes.Modify
-import io.github.apl_cornell.viaduct.syntax.intermediate.AtomicExpressionNode
-import io.github.apl_cornell.viaduct.syntax.intermediate.ExpressionNode
-import io.github.apl_cornell.viaduct.syntax.intermediate.LetNode
-import io.github.apl_cornell.viaduct.syntax.intermediate.LiteralNode
-import io.github.apl_cornell.viaduct.syntax.intermediate.OperatorApplicationNode
-import io.github.apl_cornell.viaduct.syntax.intermediate.QueryNode
-import io.github.apl_cornell.viaduct.syntax.intermediate.ReadNode
-import io.github.apl_cornell.viaduct.syntax.intermediate.UpdateNode
-import io.github.apl_cornell.viaduct.syntax.operators.Addition
-import io.github.apl_cornell.viaduct.syntax.operators.And
-import io.github.apl_cornell.viaduct.syntax.operators.Division
-import io.github.apl_cornell.viaduct.syntax.operators.EqualTo
-import io.github.apl_cornell.viaduct.syntax.operators.ExclusiveOr
-import io.github.apl_cornell.viaduct.syntax.operators.GreaterThan
-import io.github.apl_cornell.viaduct.syntax.operators.GreaterThanOrEqualTo
-import io.github.apl_cornell.viaduct.syntax.operators.LessThan
-import io.github.apl_cornell.viaduct.syntax.operators.LessThanOrEqualTo
-import io.github.apl_cornell.viaduct.syntax.operators.Maximum
-import io.github.apl_cornell.viaduct.syntax.operators.Minimum
-import io.github.apl_cornell.viaduct.syntax.operators.Multiplication
-import io.github.apl_cornell.viaduct.syntax.operators.Mux
-import io.github.apl_cornell.viaduct.syntax.operators.Negation
-import io.github.apl_cornell.viaduct.syntax.operators.Not
-import io.github.apl_cornell.viaduct.syntax.operators.Or
-import io.github.apl_cornell.viaduct.syntax.operators.Subtraction
-import io.github.apl_cornell.viaduct.syntax.types.BooleanType
-import io.github.apl_cornell.viaduct.syntax.types.ImmutableCellType
-import io.github.apl_cornell.viaduct.syntax.types.IntegerType
-import io.github.apl_cornell.viaduct.syntax.types.MutableCellType
-import io.github.apl_cornell.viaduct.syntax.types.ValueType
-import io.github.apl_cornell.viaduct.syntax.types.VectorType
-import io.github.apl_cornell.viaduct.syntax.values.BooleanValue
-import io.github.apl_cornell.viaduct.syntax.values.IntegerValue
-import io.github.apl_cornell.viaduct.syntax.values.Value
+import io.github.aplcornell.viaduct.analysis.NameAnalysis
+import io.github.aplcornell.viaduct.analysis.ProtocolAnalysis
+import io.github.aplcornell.viaduct.analysis.TypeAnalysis
+import io.github.aplcornell.viaduct.codegeneration.AbstractCodeGenerator
+import io.github.aplcornell.viaduct.codegeneration.CodeGeneratorContext
+import io.github.aplcornell.viaduct.codegeneration.UnsupportedOperatorException
+import io.github.aplcornell.viaduct.codegeneration.typeTranslator
+import io.github.aplcornell.viaduct.selection.ProtocolCommunication
+import io.github.aplcornell.viaduct.syntax.Host
+import io.github.aplcornell.viaduct.syntax.Operator
+import io.github.aplcornell.viaduct.syntax.Protocol
+import io.github.aplcornell.viaduct.syntax.datatypes.Get
+import io.github.aplcornell.viaduct.syntax.datatypes.Modify
+import io.github.aplcornell.viaduct.syntax.intermediate.AtomicExpressionNode
+import io.github.aplcornell.viaduct.syntax.intermediate.ExpressionNode
+import io.github.aplcornell.viaduct.syntax.intermediate.LetNode
+import io.github.aplcornell.viaduct.syntax.intermediate.LiteralNode
+import io.github.aplcornell.viaduct.syntax.intermediate.OperatorApplicationNode
+import io.github.aplcornell.viaduct.syntax.intermediate.QueryNode
+import io.github.aplcornell.viaduct.syntax.intermediate.ReadNode
+import io.github.aplcornell.viaduct.syntax.intermediate.UpdateNode
+import io.github.aplcornell.viaduct.syntax.operators.Addition
+import io.github.aplcornell.viaduct.syntax.operators.And
+import io.github.aplcornell.viaduct.syntax.operators.Division
+import io.github.aplcornell.viaduct.syntax.operators.EqualTo
+import io.github.aplcornell.viaduct.syntax.operators.ExclusiveOr
+import io.github.aplcornell.viaduct.syntax.operators.GreaterThan
+import io.github.aplcornell.viaduct.syntax.operators.GreaterThanOrEqualTo
+import io.github.aplcornell.viaduct.syntax.operators.LessThan
+import io.github.aplcornell.viaduct.syntax.operators.LessThanOrEqualTo
+import io.github.aplcornell.viaduct.syntax.operators.Maximum
+import io.github.aplcornell.viaduct.syntax.operators.Minimum
+import io.github.aplcornell.viaduct.syntax.operators.Multiplication
+import io.github.aplcornell.viaduct.syntax.operators.Mux
+import io.github.aplcornell.viaduct.syntax.operators.Negation
+import io.github.aplcornell.viaduct.syntax.operators.Not
+import io.github.aplcornell.viaduct.syntax.operators.Or
+import io.github.aplcornell.viaduct.syntax.operators.Subtraction
+import io.github.aplcornell.viaduct.syntax.types.BooleanType
+import io.github.aplcornell.viaduct.syntax.types.ImmutableCellType
+import io.github.aplcornell.viaduct.syntax.types.IntegerType
+import io.github.aplcornell.viaduct.syntax.types.MutableCellType
+import io.github.aplcornell.viaduct.syntax.types.ValueType
+import io.github.aplcornell.viaduct.syntax.types.VectorType
+import io.github.aplcornell.viaduct.syntax.values.BooleanValue
+import io.github.aplcornell.viaduct.syntax.values.IntegerValue
+import io.github.aplcornell.viaduct.syntax.values.Value
 import java.math.BigInteger
 
 private data class ABYPair(val server: Host, val client: Host)
@@ -108,7 +108,7 @@ class ABYCodeGenerator(
                     "val %N = %M()",
                     portVarName,
                     MemberName(
-                        "io.github.apl_cornell.viaduct.runtime",
+                        "io.github.aplcornell.viaduct.runtime",
                         "findAvailableTcpPort"
                     )
                 )
@@ -314,7 +314,7 @@ class ABYCodeGenerator(
                 CodeBlock.of(
                     "%L.%M(%L)",
                     protocolToAbyPartyCircuit(protocol),
-                    MemberName("io.github.apl_cornell.viaduct.runtime.aby", "putNOTGate"),
+                    MemberName("io.github.aplcornell.viaduct.runtime.aby", "putNOTGate"),
                     args.first()
                 )
 
@@ -338,13 +338,13 @@ class ABYCodeGenerator(
                         CodeBlock.of(
                             "%L.%M(%L)",
                             protocolToAbyPartyCircuit(protocol),
-                            MemberName("io.github.apl_cornell.viaduct.runtime.aby", "putNOTGate"),
+                            MemberName("io.github.aplcornell.viaduct.runtime.aby", "putNOTGate"),
                             args.first()
                         ),
                         CodeBlock.of(
                             "%L.%M(%L)",
                             protocolToAbyPartyCircuit(protocol),
-                            MemberName("io.github.apl_cornell.viaduct.runtime.aby", "putNOTGate"),
+                            MemberName("io.github.aplcornell.viaduct.runtime.aby", "putNOTGate"),
                             args.last()
                         )
                     )
@@ -520,7 +520,7 @@ class ABYCodeGenerator(
             is VectorType -> {
                 when (clearArgument(stmt.arguments.first())) {
                     false -> when (stmt.update.value) {
-                        is io.github.apl_cornell.viaduct.syntax.datatypes.Set -> {
+                        is io.github.aplcornell.viaduct.syntax.datatypes.Set -> {
                             CodeBlock.of(
                                 "%N.%N(%L, %L, %L)",
                                 context.kotlinName(stmt.variable.value),
@@ -553,7 +553,7 @@ class ABYCodeGenerator(
                     }
 
                     true -> when (stmt.update.value) {
-                        is io.github.apl_cornell.viaduct.syntax.datatypes.Set -> {
+                        is io.github.aplcornell.viaduct.syntax.datatypes.Set -> {
                             CodeBlock.of(
                                 "%N[%L] = %L",
                                 context.kotlinName(stmt.variable.value),
@@ -589,7 +589,7 @@ class ABYCodeGenerator(
 
             is MutableCellType ->
                 when (stmt.update.value) {
-                    is io.github.apl_cornell.viaduct.syntax.datatypes.Set -> {
+                    is io.github.aplcornell.viaduct.syntax.datatypes.Set -> {
                         CodeBlock.of(
                             "%N.set(%L)",
                             context.kotlinName(stmt.variable.value),
@@ -680,7 +680,7 @@ class ABYCodeGenerator(
                             CodeBlock.of(
                                 "%L.getClearValue32().%M",
                                 outShareName,
-                                MemberName("io.github.apl_cornell.viaduct.runtime.aby", "bool")
+                                MemberName("io.github.aplcornell.viaduct.runtime.aby", "bool")
                             ),
                             event.recv.host
                         )

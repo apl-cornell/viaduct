@@ -1,10 +1,10 @@
-package io.github.apl_cornell.viaduct.examples
+package io.github.aplcornell.viaduct.examples
 
-import io.github.apl_cornell.viaduct.runtime.CombinedRuntime
-import io.github.apl_cornell.viaduct.runtime.ScannerIOStrategy
-import io.github.apl_cornell.viaduct.runtime.TCPNetworkStrategy
-import io.github.apl_cornell.viaduct.runtime.ViaductGeneratedProgram
-import io.github.apl_cornell.viaduct.syntax.Host
+import io.github.aplcornell.viaduct.runtime.CombinedRuntime
+import io.github.aplcornell.viaduct.runtime.ScannerIOStrategy
+import io.github.aplcornell.viaduct.runtime.TCPNetworkStrategy
+import io.github.aplcornell.viaduct.runtime.ViaductGeneratedProgram
+import io.github.aplcornell.viaduct.syntax.Host
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.runBlocking

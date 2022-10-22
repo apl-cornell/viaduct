@@ -1,8 +1,8 @@
-package io.github.apl_cornell.viaduct.selection
+package io.github.aplcornell.viaduct.selection
 
-import io.github.apl_cornell.viaduct.errors.NoHostDeclarationsError
-import io.github.apl_cornell.viaduct.errors.NoSelectionSolutionError
-import io.github.apl_cornell.viaduct.syntax.intermediate.ProgramNode
+import io.github.aplcornell.viaduct.errors.NoHostDeclarationsError
+import io.github.aplcornell.viaduct.errors.NoSelectionSolutionError
+import io.github.aplcornell.viaduct.syntax.intermediate.ProgramNode
 
 class ProtocolSelection(
     private val solver: SelectionProblemSolver,

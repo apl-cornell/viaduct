@@ -1,7 +1,7 @@
-package io.github.apl_cornell.viaduct.backend
+package io.github.aplcornell.viaduct.backend
 
-import io.github.apl_cornell.viaduct.syntax.JumpLabel
-import io.github.apl_cornell.viaduct.syntax.intermediate.BreakNode
+import io.github.aplcornell.viaduct.syntax.JumpLabel
+import io.github.aplcornell.viaduct.syntax.intermediate.BreakNode
 
 internal class LoopBreakSignal(val breakNode: BreakNode) : Exception() {
     val jumpLabel: JumpLabel

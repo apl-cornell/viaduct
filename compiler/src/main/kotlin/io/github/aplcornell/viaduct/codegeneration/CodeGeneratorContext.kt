@@ -1,13 +1,13 @@
-package io.github.apl_cornell.viaduct.codegeneration
+package io.github.aplcornell.viaduct.codegeneration
 
 import com.squareup.kotlinpoet.CodeBlock
 import com.squareup.kotlinpoet.TypeName
-import io.github.apl_cornell.viaduct.selection.ProtocolComposer
-import io.github.apl_cornell.viaduct.syntax.Host
-import io.github.apl_cornell.viaduct.syntax.ObjectVariable
-import io.github.apl_cornell.viaduct.syntax.Protocol
-import io.github.apl_cornell.viaduct.syntax.Temporary
-import io.github.apl_cornell.viaduct.syntax.intermediate.ProgramNode
+import io.github.aplcornell.viaduct.selection.ProtocolComposer
+import io.github.aplcornell.viaduct.syntax.Host
+import io.github.aplcornell.viaduct.syntax.ObjectVariable
+import io.github.aplcornell.viaduct.syntax.Protocol
+import io.github.aplcornell.viaduct.syntax.Temporary
+import io.github.aplcornell.viaduct.syntax.intermediate.ProgramNode
 
 interface CodeGeneratorContext {
     val program: ProgramNode

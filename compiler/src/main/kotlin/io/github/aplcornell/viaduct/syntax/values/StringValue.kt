@@ -1,7 +1,7 @@
-package io.github.apl_cornell.viaduct.syntax.values
+package io.github.aplcornell.viaduct.syntax.values
 
-import io.github.apl_cornell.viaduct.syntax.types.StringType
-import io.github.apl_cornell.viaduct.syntax.types.ValueType
+import io.github.aplcornell.viaduct.syntax.types.StringType
+import io.github.aplcornell.viaduct.syntax.types.ValueType
 
 /** A string. */
 data class StringValue(val value: String) : Value() {

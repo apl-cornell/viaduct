@@ -1,8 +1,8 @@
-package io.github.apl_cornell.viaduct.syntax
+package io.github.aplcornell.viaduct.syntax
 
-import io.github.apl_cornell.viaduct.prettyprinting.Document
-import io.github.apl_cornell.viaduct.prettyprinting.Style
-import io.github.apl_cornell.viaduct.prettyprinting.styled
+import io.github.aplcornell.viaduct.prettyprinting.Document
+import io.github.aplcornell.viaduct.prettyprinting.Style
+import io.github.aplcornell.viaduct.prettyprinting.styled
 
 /**
  * A participant in the distributed computation.

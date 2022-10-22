@@ -1,16 +1,16 @@
-package io.github.apl_cornell.viaduct.backends.commitment
+package io.github.aplcornell.viaduct.backends.commitment
 
-import io.github.apl_cornell.viaduct.security.Label
-import io.github.apl_cornell.viaduct.security.integrity
-import io.github.apl_cornell.viaduct.security.label
-import io.github.apl_cornell.viaduct.syntax.Host
-import io.github.apl_cornell.viaduct.syntax.InputPort
-import io.github.apl_cornell.viaduct.syntax.OutputPort
-import io.github.apl_cornell.viaduct.syntax.Protocol
-import io.github.apl_cornell.viaduct.syntax.ProtocolName
-import io.github.apl_cornell.viaduct.syntax.values.HostSetValue
-import io.github.apl_cornell.viaduct.syntax.values.HostValue
-import io.github.apl_cornell.viaduct.syntax.values.Value
+import io.github.aplcornell.viaduct.security.Label
+import io.github.aplcornell.viaduct.security.integrity
+import io.github.aplcornell.viaduct.security.label
+import io.github.aplcornell.viaduct.syntax.Host
+import io.github.aplcornell.viaduct.syntax.InputPort
+import io.github.aplcornell.viaduct.syntax.OutputPort
+import io.github.aplcornell.viaduct.syntax.Protocol
+import io.github.aplcornell.viaduct.syntax.ProtocolName
+import io.github.aplcornell.viaduct.syntax.values.HostSetValue
+import io.github.aplcornell.viaduct.syntax.values.HostValue
+import io.github.aplcornell.viaduct.syntax.values.Value
 
 class Commitment(val cleartextHost: Host, val hashHosts: Set<Host>) : Protocol() {
     companion object {

@@ -1,4 +1,4 @@
-package io.github.apl_cornell.viaduct.security
+package io.github.aplcornell.viaduct.security
 
 sealed class Component<A> {
     abstract val principal: A

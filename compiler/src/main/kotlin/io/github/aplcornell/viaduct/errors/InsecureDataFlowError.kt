@@ -1,15 +1,15 @@
-package io.github.apl_cornell.viaduct.errors
+package io.github.aplcornell.viaduct.errors
 
-import io.github.apl_cornell.viaduct.algebra.FreeDistributiveLatticeCongruence
-import io.github.apl_cornell.viaduct.prettyprinting.Document
-import io.github.apl_cornell.viaduct.prettyprinting.div
-import io.github.apl_cornell.viaduct.security.Component
-import io.github.apl_cornell.viaduct.security.Label
-import io.github.apl_cornell.viaduct.security.Principal
-import io.github.apl_cornell.viaduct.security.confidentiality
-import io.github.apl_cornell.viaduct.security.flowsTo
-import io.github.apl_cornell.viaduct.security.integrity
-import io.github.apl_cornell.viaduct.syntax.HasSourceLocation
+import io.github.aplcornell.viaduct.algebra.FreeDistributiveLatticeCongruence
+import io.github.aplcornell.viaduct.prettyprinting.Document
+import io.github.aplcornell.viaduct.prettyprinting.div
+import io.github.aplcornell.viaduct.security.Component
+import io.github.aplcornell.viaduct.security.Label
+import io.github.aplcornell.viaduct.security.Principal
+import io.github.aplcornell.viaduct.security.confidentiality
+import io.github.aplcornell.viaduct.security.flowsTo
+import io.github.aplcornell.viaduct.security.integrity
+import io.github.aplcornell.viaduct.syntax.HasSourceLocation
 
 /**
  * Thrown when a term's output flows to a location that would violate information flow security.

@@ -1,9 +1,9 @@
-package io.github.apl_cornell.viaduct.codegeneration
+package io.github.aplcornell.viaduct.codegeneration
 
-import io.github.apl_cornell.viaduct.backends.cleartext.Local
-import io.github.apl_cornell.viaduct.parsing.parse
-import io.github.apl_cornell.viaduct.passes.elaborated
-import io.github.apl_cornell.viaduct.syntax.Host
+import io.github.aplcornell.viaduct.backends.cleartext.Local
+import io.github.aplcornell.viaduct.parsing.parse
+import io.github.aplcornell.viaduct.passes.elaborated
+import io.github.aplcornell.viaduct.syntax.Host
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 

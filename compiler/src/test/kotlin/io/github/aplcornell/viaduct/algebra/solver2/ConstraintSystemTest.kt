@@ -1,7 +1,7 @@
-package io.github.apl_cornell.viaduct.algebra.solver2
+package io.github.aplcornell.viaduct.algebra.solver2
 
-import io.github.apl_cornell.viaduct.algebra.FreeDistributiveLattice
-import io.github.apl_cornell.viaduct.algebra.FreeDistributiveLatticeCongruence
+import io.github.aplcornell.viaduct.algebra.FreeDistributiveLattice
+import io.github.aplcornell.viaduct.algebra.FreeDistributiveLatticeCongruence
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test

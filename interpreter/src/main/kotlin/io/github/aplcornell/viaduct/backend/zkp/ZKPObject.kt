@@ -1,10 +1,10 @@
-package io.github.apl_cornell.viaduct.backend.zkp
+package io.github.aplcornell.viaduct.backend.zkp
 
-import io.github.apl_cornell.viaduct.backend.WireGenerator
-import io.github.apl_cornell.viaduct.backend.WireTerm
-import io.github.apl_cornell.viaduct.syntax.values.BooleanValue
-import io.github.apl_cornell.viaduct.syntax.values.IntegerValue
-import io.github.apl_cornell.viaduct.syntax.values.Value
+import io.github.aplcornell.viaduct.backend.WireGenerator
+import io.github.aplcornell.viaduct.backend.WireTerm
+import io.github.aplcornell.viaduct.syntax.values.BooleanValue
+import io.github.aplcornell.viaduct.syntax.values.IntegerValue
+import io.github.aplcornell.viaduct.syntax.values.Value
 
 sealed class ZKPObject {
     data class ZKPImmutableCell(val value: WireTerm) : ZKPObject()

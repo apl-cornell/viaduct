@@ -1,10 +1,10 @@
-package io.github.apl_cornell.viaduct.cli
+package io.github.aplcornell.viaduct.cli
 
 import com.github.ajalt.clikt.completion.CompletionCommand
 import com.github.ajalt.clikt.core.NoOpCliktCommand
 import com.github.ajalt.clikt.core.subcommands
 import com.github.ajalt.clikt.parameters.options.versionOption
-import io.github.apl_cornell.viaduct.version
+import io.github.aplcornell.viaduct.version
 
 class Viaduct : NoOpCliktCommand(help = "Compile high level specifications to secure distributed programs.") {
     val verbose by verbosity()

@@ -1,12 +1,12 @@
-package io.github.apl_cornell.viaduct.syntax.intermediate
+package io.github.aplcornell.viaduct.syntax.intermediate
 
-import io.github.apl_cornell.viaduct.attributes.Attribute
-import io.github.apl_cornell.viaduct.attributes.Tree
-import io.github.apl_cornell.viaduct.attributes.attribute
-import io.github.apl_cornell.viaduct.passes.elaborated
-import io.github.apl_cornell.viaduct.syntax.FunctionName
-import io.github.apl_cornell.viaduct.syntax.Host
-import io.github.apl_cornell.viaduct.syntax.SourceLocation
+import io.github.aplcornell.viaduct.attributes.Attribute
+import io.github.aplcornell.viaduct.attributes.Tree
+import io.github.aplcornell.viaduct.attributes.attribute
+import io.github.aplcornell.viaduct.passes.elaborated
+import io.github.aplcornell.viaduct.syntax.FunctionName
+import io.github.aplcornell.viaduct.syntax.Host
+import io.github.aplcornell.viaduct.syntax.SourceLocation
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.toPersistentList
 
@@ -56,8 +56,8 @@ private constructor(
     override val children: Iterable<TopLevelDeclarationNode>
         get() = declarations
 
-    override fun toSurfaceNode(metadata: Metadata): io.github.apl_cornell.viaduct.syntax.surface.ProgramNode =
-        io.github.apl_cornell.viaduct.syntax.surface.ProgramNode(
+    override fun toSurfaceNode(metadata: Metadata): io.github.aplcornell.viaduct.syntax.surface.ProgramNode =
+        io.github.aplcornell.viaduct.syntax.surface.ProgramNode(
             declarations.map { it.toSurfaceNode(metadata) },
             sourceLocation
         )

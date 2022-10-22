@@ -1,4 +1,4 @@
-package io.github.apl_cornell.viaduct.util
+package io.github.aplcornell.viaduct.util
 
 fun <T : Comparable<T>> Set<T>.asComparable() =
     object : Comparable<Set<T>> {

@@ -1,14 +1,14 @@
-package io.github.apl_cornell.viaduct.errors
+package io.github.aplcornell.viaduct.errors
 
-import io.github.apl_cornell.viaduct.prettyprinting.Document
-import io.github.apl_cornell.viaduct.prettyprinting.div
-import io.github.apl_cornell.viaduct.prettyprinting.plus
-import io.github.apl_cornell.viaduct.prettyprinting.times
-import io.github.apl_cornell.viaduct.prettyprinting.tupled
-import io.github.apl_cornell.viaduct.syntax.MethodNameNode
-import io.github.apl_cornell.viaduct.syntax.ObjectVariableNode
-import io.github.apl_cornell.viaduct.syntax.types.ObjectType
-import io.github.apl_cornell.viaduct.syntax.types.ValueType
+import io.github.aplcornell.viaduct.prettyprinting.Document
+import io.github.aplcornell.viaduct.prettyprinting.div
+import io.github.aplcornell.viaduct.prettyprinting.plus
+import io.github.aplcornell.viaduct.prettyprinting.times
+import io.github.aplcornell.viaduct.prettyprinting.tupled
+import io.github.aplcornell.viaduct.syntax.MethodNameNode
+import io.github.aplcornell.viaduct.syntax.ObjectVariableNode
+import io.github.aplcornell.viaduct.syntax.types.ObjectType
+import io.github.aplcornell.viaduct.syntax.types.ValueType
 
 /**
  * Thrown when an object is called with a method it does not recognize.

@@ -1,4 +1,4 @@
-package io.github.apl_cornell.viaduct.codegeneration
+package io.github.aplcornell.viaduct.codegeneration
 
 import com.squareup.kotlinpoet.ARRAY
 import com.squareup.kotlinpoet.CodeBlock
@@ -6,29 +6,29 @@ import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import com.squareup.kotlinpoet.PropertySpec
 import com.squareup.kotlinpoet.TypeName
 import com.squareup.kotlinpoet.asTypeName
-import io.github.apl_cornell.viaduct.analysis.NameAnalysis
-import io.github.apl_cornell.viaduct.analysis.TypeAnalysis
-import io.github.apl_cornell.viaduct.runtime.Boxed
-import io.github.apl_cornell.viaduct.syntax.Arguments
-import io.github.apl_cornell.viaduct.syntax.ObjectTypeNode
-import io.github.apl_cornell.viaduct.syntax.Protocol
-import io.github.apl_cornell.viaduct.syntax.datatypes.Get
-import io.github.apl_cornell.viaduct.syntax.datatypes.ImmutableCell
-import io.github.apl_cornell.viaduct.syntax.datatypes.MutableCell
-import io.github.apl_cornell.viaduct.syntax.datatypes.Vector
-import io.github.apl_cornell.viaduct.syntax.intermediate.AtomicExpressionNode
-import io.github.apl_cornell.viaduct.syntax.intermediate.DowngradeNode
-import io.github.apl_cornell.viaduct.syntax.intermediate.ExpressionNode
-import io.github.apl_cornell.viaduct.syntax.intermediate.LiteralNode
-import io.github.apl_cornell.viaduct.syntax.intermediate.QueryNode
-import io.github.apl_cornell.viaduct.syntax.intermediate.ReadNode
-import io.github.apl_cornell.viaduct.syntax.intermediate.UpdateNode
-import io.github.apl_cornell.viaduct.syntax.types.ImmutableCellType
-import io.github.apl_cornell.viaduct.syntax.types.MutableCellType
-import io.github.apl_cornell.viaduct.syntax.types.ObjectType
-import io.github.apl_cornell.viaduct.syntax.types.ValueType
-import io.github.apl_cornell.viaduct.syntax.types.VectorType
-import io.github.apl_cornell.viaduct.syntax.values.Value
+import io.github.aplcornell.viaduct.analysis.NameAnalysis
+import io.github.aplcornell.viaduct.analysis.TypeAnalysis
+import io.github.aplcornell.viaduct.runtime.Boxed
+import io.github.aplcornell.viaduct.syntax.Arguments
+import io.github.aplcornell.viaduct.syntax.ObjectTypeNode
+import io.github.aplcornell.viaduct.syntax.Protocol
+import io.github.aplcornell.viaduct.syntax.datatypes.Get
+import io.github.aplcornell.viaduct.syntax.datatypes.ImmutableCell
+import io.github.aplcornell.viaduct.syntax.datatypes.MutableCell
+import io.github.aplcornell.viaduct.syntax.datatypes.Vector
+import io.github.aplcornell.viaduct.syntax.intermediate.AtomicExpressionNode
+import io.github.aplcornell.viaduct.syntax.intermediate.DowngradeNode
+import io.github.aplcornell.viaduct.syntax.intermediate.ExpressionNode
+import io.github.aplcornell.viaduct.syntax.intermediate.LiteralNode
+import io.github.aplcornell.viaduct.syntax.intermediate.QueryNode
+import io.github.aplcornell.viaduct.syntax.intermediate.ReadNode
+import io.github.aplcornell.viaduct.syntax.intermediate.UpdateNode
+import io.github.aplcornell.viaduct.syntax.types.ImmutableCellType
+import io.github.aplcornell.viaduct.syntax.types.MutableCellType
+import io.github.aplcornell.viaduct.syntax.types.ObjectType
+import io.github.aplcornell.viaduct.syntax.types.ValueType
+import io.github.aplcornell.viaduct.syntax.types.VectorType
+import io.github.aplcornell.viaduct.syntax.values.Value
 
 abstract class AbstractCodeGenerator(val context: CodeGeneratorContext) : CodeGenerator {
     private val nameAnalysis = NameAnalysis.get(context.program)
@@ -145,7 +145,7 @@ abstract class AbstractCodeGenerator(val context: CodeGeneratorContext) : CodeGe
         when (typeAnalysis.type(nameAnalysis.declaration(stmt))) {
             is MutableCellType ->
                 when (stmt.update.value) {
-                    is io.github.apl_cornell.viaduct.syntax.datatypes.Set ->
+                    is io.github.aplcornell.viaduct.syntax.datatypes.Set ->
                         CodeBlock.of(
                             "%N.set(%L)",
                             context.kotlinName(stmt.variable.value),
@@ -157,7 +157,7 @@ abstract class AbstractCodeGenerator(val context: CodeGeneratorContext) : CodeGe
 
             is VectorType ->
                 when (stmt.update.value) {
-                    is io.github.apl_cornell.viaduct.syntax.datatypes.Set ->
+                    is io.github.aplcornell.viaduct.syntax.datatypes.Set ->
                         CodeBlock.of(
                             "%N[%L] = %L",
                             context.kotlinName(stmt.variable.value),

@@ -1,9 +1,9 @@
-package io.github.apl_cornell.viaduct.errors
+package io.github.aplcornell.viaduct.errors
 
-import io.github.apl_cornell.viaduct.prettyprinting.Document
-import io.github.apl_cornell.viaduct.prettyprinting.div
-import io.github.apl_cornell.viaduct.syntax.HasSourceLocation
-import io.github.apl_cornell.viaduct.syntax.types.Type
+import io.github.aplcornell.viaduct.prettyprinting.Document
+import io.github.aplcornell.viaduct.prettyprinting.div
+import io.github.aplcornell.viaduct.syntax.HasSourceLocation
+import io.github.aplcornell.viaduct.syntax.types.Type
 
 /**
  * Thrown when the inferred type of an AST node does not match its expected type.

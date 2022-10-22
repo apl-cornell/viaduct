@@ -1,7 +1,7 @@
-package io.github.apl_cornell.viaduct.errors
+package io.github.aplcornell.viaduct.errors
 
-import io.github.apl_cornell.viaduct.prettyprinting.Document
-import io.github.apl_cornell.viaduct.syntax.intermediate.ProgramNode
+import io.github.aplcornell.viaduct.prettyprinting.Document
+import io.github.aplcornell.viaduct.syntax.intermediate.ProgramNode
 
 /** Thrown when protocol selection cannot find a solution. */
 class NoSelectionSolutionError(private val program: ProgramNode) : CompilationError() {

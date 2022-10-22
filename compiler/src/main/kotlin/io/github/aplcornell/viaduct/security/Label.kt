@@ -1,10 +1,10 @@
-package io.github.apl_cornell.viaduct.security
+package io.github.aplcornell.viaduct.security
 
-import io.github.apl_cornell.viaduct.algebra.FreeDistributiveLattice
-import io.github.apl_cornell.viaduct.algebra.FreeDistributiveLatticeCongruence
-import io.github.apl_cornell.viaduct.passes.PrincipalComponent
-import io.github.apl_cornell.viaduct.syntax.Host
-import io.github.apl_cornell.viaduct.syntax.LabelVariable
+import io.github.aplcornell.viaduct.algebra.FreeDistributiveLattice
+import io.github.aplcornell.viaduct.algebra.FreeDistributiveLatticeCongruence
+import io.github.aplcornell.viaduct.passes.PrincipalComponent
+import io.github.aplcornell.viaduct.syntax.Host
+import io.github.aplcornell.viaduct.syntax.LabelVariable
 
 typealias Label = SecurityLattice<FreeDistributiveLattice<Component<Principal>>>
 

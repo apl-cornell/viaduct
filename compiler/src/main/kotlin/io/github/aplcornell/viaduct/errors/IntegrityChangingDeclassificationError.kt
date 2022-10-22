@@ -1,10 +1,10 @@
-package io.github.apl_cornell.viaduct.errors
+package io.github.aplcornell.viaduct.errors
 
-import io.github.apl_cornell.viaduct.prettyprinting.Document
-import io.github.apl_cornell.viaduct.prettyprinting.div
-import io.github.apl_cornell.viaduct.security.Label
-import io.github.apl_cornell.viaduct.security.integrity
-import io.github.apl_cornell.viaduct.syntax.intermediate.DeclassificationNode
+import io.github.aplcornell.viaduct.prettyprinting.Document
+import io.github.aplcornell.viaduct.prettyprinting.div
+import io.github.aplcornell.viaduct.security.Label
+import io.github.aplcornell.viaduct.security.integrity
+import io.github.aplcornell.viaduct.syntax.intermediate.DeclassificationNode
 
 /**
  * Thrown when a [DeclassificationNode] modifies integrity.

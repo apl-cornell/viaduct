@@ -1,16 +1,16 @@
-package io.github.apl_cornell.viaduct.backend.zkp
+package io.github.aplcornell.viaduct.backend.zkp
 
-import io.github.apl_cornell.viaduct.analysis.ProtocolAnalysis
-import io.github.apl_cornell.viaduct.backend.HostAddress
-import io.github.apl_cornell.viaduct.backend.ProtocolBackend
-import io.github.apl_cornell.viaduct.backend.ProtocolInterpreter
-import io.github.apl_cornell.viaduct.backend.ViaductProcessRuntime
-import io.github.apl_cornell.viaduct.backend.ViaductRuntime
-import io.github.apl_cornell.viaduct.backends.zkp.ZKP
-import io.github.apl_cornell.viaduct.syntax.Host
-import io.github.apl_cornell.viaduct.syntax.Protocol
-import io.github.apl_cornell.viaduct.syntax.ProtocolProjection
-import io.github.apl_cornell.viaduct.syntax.intermediate.ProgramNode
+import io.github.aplcornell.viaduct.analysis.ProtocolAnalysis
+import io.github.aplcornell.viaduct.backend.HostAddress
+import io.github.aplcornell.viaduct.backend.ProtocolBackend
+import io.github.aplcornell.viaduct.backend.ProtocolInterpreter
+import io.github.aplcornell.viaduct.backend.ViaductProcessRuntime
+import io.github.aplcornell.viaduct.backend.ViaductRuntime
+import io.github.aplcornell.viaduct.backends.zkp.ZKP
+import io.github.aplcornell.viaduct.syntax.Host
+import io.github.aplcornell.viaduct.syntax.Protocol
+import io.github.aplcornell.viaduct.syntax.ProtocolProjection
+import io.github.aplcornell.viaduct.syntax.intermediate.ProgramNode
 
 object ZKPProtocolInterpreterFactory : ProtocolBackend {
     override fun buildProtocolInterpreters(

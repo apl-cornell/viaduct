@@ -1,7 +1,7 @@
-package io.github.apl_cornell.viaduct.util.dataflow
+package io.github.aplcornell.viaduct.util.dataflow
 
-import io.github.apl_cornell.viaduct.algebra.MeetSemiLattice
-import io.github.apl_cornell.viaduct.util.UniqueQueue
+import io.github.aplcornell.viaduct.algebra.MeetSemiLattice
+import io.github.aplcornell.viaduct.util.UniqueQueue
 import org.jgrapht.Graph
 import org.jgrapht.Graphs
 import org.jgrapht.alg.connectivity.KosarajuStrongConnectivityInspector

@@ -1,28 +1,28 @@
-package io.github.apl_cornell.viaduct.backend.aby
+package io.github.aplcornell.viaduct.backend.aby
 
 import io.github.apl_cornell.aby.Aby
 import io.github.apl_cornell.aby.Circuit
 import io.github.apl_cornell.aby.Role
 import io.github.apl_cornell.aby.Share
 import io.github.apl_cornell.aby.UInt32Vector
-import io.github.apl_cornell.viaduct.syntax.Operator
-import io.github.apl_cornell.viaduct.syntax.operators.Addition
-import io.github.apl_cornell.viaduct.syntax.operators.And
-import io.github.apl_cornell.viaduct.syntax.operators.Division
-import io.github.apl_cornell.viaduct.syntax.operators.EqualTo
-import io.github.apl_cornell.viaduct.syntax.operators.ExclusiveOr
-import io.github.apl_cornell.viaduct.syntax.operators.GreaterThan
-import io.github.apl_cornell.viaduct.syntax.operators.GreaterThanOrEqualTo
-import io.github.apl_cornell.viaduct.syntax.operators.LessThan
-import io.github.apl_cornell.viaduct.syntax.operators.LessThanOrEqualTo
-import io.github.apl_cornell.viaduct.syntax.operators.Maximum
-import io.github.apl_cornell.viaduct.syntax.operators.Minimum
-import io.github.apl_cornell.viaduct.syntax.operators.Multiplication
-import io.github.apl_cornell.viaduct.syntax.operators.Mux
-import io.github.apl_cornell.viaduct.syntax.operators.Negation
-import io.github.apl_cornell.viaduct.syntax.operators.Not
-import io.github.apl_cornell.viaduct.syntax.operators.Or
-import io.github.apl_cornell.viaduct.syntax.operators.Subtraction
+import io.github.aplcornell.viaduct.syntax.Operator
+import io.github.aplcornell.viaduct.syntax.operators.Addition
+import io.github.aplcornell.viaduct.syntax.operators.And
+import io.github.aplcornell.viaduct.syntax.operators.Division
+import io.github.aplcornell.viaduct.syntax.operators.EqualTo
+import io.github.aplcornell.viaduct.syntax.operators.ExclusiveOr
+import io.github.aplcornell.viaduct.syntax.operators.GreaterThan
+import io.github.aplcornell.viaduct.syntax.operators.GreaterThanOrEqualTo
+import io.github.aplcornell.viaduct.syntax.operators.LessThan
+import io.github.aplcornell.viaduct.syntax.operators.LessThanOrEqualTo
+import io.github.aplcornell.viaduct.syntax.operators.Maximum
+import io.github.aplcornell.viaduct.syntax.operators.Minimum
+import io.github.aplcornell.viaduct.syntax.operators.Multiplication
+import io.github.aplcornell.viaduct.syntax.operators.Mux
+import io.github.aplcornell.viaduct.syntax.operators.Negation
+import io.github.aplcornell.viaduct.syntax.operators.Not
+import io.github.aplcornell.viaduct.syntax.operators.Or
+import io.github.aplcornell.viaduct.syntax.operators.Subtraction
 
 /**
  * A method that adds the gate for an operation with the given arguments to the circuit and returns

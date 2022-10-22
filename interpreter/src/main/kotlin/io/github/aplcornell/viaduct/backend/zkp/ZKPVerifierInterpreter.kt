@@ -1,49 +1,49 @@
-package io.github.apl_cornell.viaduct.backend.zkp
+package io.github.aplcornell.viaduct.backend.zkp
 
-import io.github.apl_cornell.viaduct.analysis.ProtocolAnalysis
-import io.github.apl_cornell.viaduct.analysis.TypeAnalysis
-import io.github.apl_cornell.viaduct.backend.ObjectLocation
-import io.github.apl_cornell.viaduct.backend.SingleProtocolInterpreter
-import io.github.apl_cornell.viaduct.backend.ViaductProcessRuntime
-import io.github.apl_cornell.viaduct.backend.WireGenerator
-import io.github.apl_cornell.viaduct.backend.WireTerm
-import io.github.apl_cornell.viaduct.backend.asString
-import io.github.apl_cornell.viaduct.backend.wireName
-import io.github.apl_cornell.viaduct.backends.zkp.ZKP
-import io.github.apl_cornell.viaduct.errors.ViaductInterpreterError
-import io.github.apl_cornell.viaduct.libsnarkwrapper.libsnarkwrapper.mkByteBuf
-import io.github.apl_cornell.viaduct.selection.ProtocolCommunication
-import io.github.apl_cornell.viaduct.syntax.ObjectVariable
-import io.github.apl_cornell.viaduct.syntax.Protocol
-import io.github.apl_cornell.viaduct.syntax.ProtocolProjection
-import io.github.apl_cornell.viaduct.syntax.QueryNameNode
-import io.github.apl_cornell.viaduct.syntax.Temporary
-import io.github.apl_cornell.viaduct.syntax.datatypes.ClassName
-import io.github.apl_cornell.viaduct.syntax.datatypes.Get
-import io.github.apl_cornell.viaduct.syntax.datatypes.ImmutableCell
-import io.github.apl_cornell.viaduct.syntax.datatypes.MutableCell
-import io.github.apl_cornell.viaduct.syntax.datatypes.Vector
-import io.github.apl_cornell.viaduct.syntax.intermediate.AtomicExpressionNode
-import io.github.apl_cornell.viaduct.syntax.intermediate.DeclassificationNode
-import io.github.apl_cornell.viaduct.syntax.intermediate.EndorsementNode
-import io.github.apl_cornell.viaduct.syntax.intermediate.ExpressionNode
-import io.github.apl_cornell.viaduct.syntax.intermediate.InputNode
-import io.github.apl_cornell.viaduct.syntax.intermediate.LetNode
-import io.github.apl_cornell.viaduct.syntax.intermediate.LiteralNode
-import io.github.apl_cornell.viaduct.syntax.intermediate.OperatorApplicationNode
-import io.github.apl_cornell.viaduct.syntax.intermediate.OutputNode
-import io.github.apl_cornell.viaduct.syntax.intermediate.ProgramNode
-import io.github.apl_cornell.viaduct.syntax.intermediate.QueryNode
-import io.github.apl_cornell.viaduct.syntax.intermediate.ReadNode
-import io.github.apl_cornell.viaduct.syntax.intermediate.SimpleStatementNode
-import io.github.apl_cornell.viaduct.syntax.intermediate.UpdateNode
-import io.github.apl_cornell.viaduct.syntax.types.BooleanType
-import io.github.apl_cornell.viaduct.syntax.types.IntegerType
-import io.github.apl_cornell.viaduct.syntax.types.ValueType
-import io.github.apl_cornell.viaduct.syntax.values.BooleanValue
-import io.github.apl_cornell.viaduct.syntax.values.ByteVecValue
-import io.github.apl_cornell.viaduct.syntax.values.IntegerValue
-import io.github.apl_cornell.viaduct.syntax.values.Value
+import io.github.aplcornell.viaduct.analysis.ProtocolAnalysis
+import io.github.aplcornell.viaduct.analysis.TypeAnalysis
+import io.github.aplcornell.viaduct.backend.ObjectLocation
+import io.github.aplcornell.viaduct.backend.SingleProtocolInterpreter
+import io.github.aplcornell.viaduct.backend.ViaductProcessRuntime
+import io.github.aplcornell.viaduct.backend.WireGenerator
+import io.github.aplcornell.viaduct.backend.WireTerm
+import io.github.aplcornell.viaduct.backend.asString
+import io.github.aplcornell.viaduct.backend.wireName
+import io.github.aplcornell.viaduct.backends.zkp.ZKP
+import io.github.aplcornell.viaduct.errors.ViaductInterpreterError
+import io.github.aplcornell.viaduct.libsnarkwrapper.libsnarkwrapper.mkByteBuf
+import io.github.aplcornell.viaduct.selection.ProtocolCommunication
+import io.github.aplcornell.viaduct.syntax.ObjectVariable
+import io.github.aplcornell.viaduct.syntax.Protocol
+import io.github.aplcornell.viaduct.syntax.ProtocolProjection
+import io.github.aplcornell.viaduct.syntax.QueryNameNode
+import io.github.aplcornell.viaduct.syntax.Temporary
+import io.github.aplcornell.viaduct.syntax.datatypes.ClassName
+import io.github.aplcornell.viaduct.syntax.datatypes.Get
+import io.github.aplcornell.viaduct.syntax.datatypes.ImmutableCell
+import io.github.aplcornell.viaduct.syntax.datatypes.MutableCell
+import io.github.aplcornell.viaduct.syntax.datatypes.Vector
+import io.github.aplcornell.viaduct.syntax.intermediate.AtomicExpressionNode
+import io.github.aplcornell.viaduct.syntax.intermediate.DeclassificationNode
+import io.github.aplcornell.viaduct.syntax.intermediate.EndorsementNode
+import io.github.aplcornell.viaduct.syntax.intermediate.ExpressionNode
+import io.github.aplcornell.viaduct.syntax.intermediate.InputNode
+import io.github.aplcornell.viaduct.syntax.intermediate.LetNode
+import io.github.aplcornell.viaduct.syntax.intermediate.LiteralNode
+import io.github.aplcornell.viaduct.syntax.intermediate.OperatorApplicationNode
+import io.github.aplcornell.viaduct.syntax.intermediate.OutputNode
+import io.github.aplcornell.viaduct.syntax.intermediate.ProgramNode
+import io.github.aplcornell.viaduct.syntax.intermediate.QueryNode
+import io.github.aplcornell.viaduct.syntax.intermediate.ReadNode
+import io.github.aplcornell.viaduct.syntax.intermediate.SimpleStatementNode
+import io.github.aplcornell.viaduct.syntax.intermediate.UpdateNode
+import io.github.aplcornell.viaduct.syntax.types.BooleanType
+import io.github.aplcornell.viaduct.syntax.types.IntegerType
+import io.github.aplcornell.viaduct.syntax.types.ValueType
+import io.github.aplcornell.viaduct.syntax.values.BooleanValue
+import io.github.aplcornell.viaduct.syntax.values.ByteVecValue
+import io.github.aplcornell.viaduct.syntax.values.IntegerValue
+import io.github.aplcornell.viaduct.syntax.values.Value
 import kotlinx.collections.immutable.PersistentMap
 import kotlinx.collections.immutable.persistentMapOf
 import mu.KotlinLogging
@@ -230,9 +230,9 @@ class ZKPVerifierInterpreter(
             is ZKPObject.ZKPImmutableCell -> throw Exception("runtime error")
             is ZKPObject.ZKPMutableCell -> {
                 when (val updateValue = stmt.update.value) {
-                    is io.github.apl_cornell.viaduct.syntax.datatypes.Set ->
+                    is io.github.aplcornell.viaduct.syntax.datatypes.Set ->
                         o.value = getAtomicExprWire(stmt.arguments[0])
-                    is io.github.apl_cornell.viaduct.syntax.datatypes.Modify -> {
+                    is io.github.aplcornell.viaduct.syntax.datatypes.Modify -> {
                         val arg = getAtomicExprWire(stmt.arguments[0])
                         o.value = wireGenerator.mkOp(updateValue.operator, listOf(o.value, arg))
                     }
@@ -243,9 +243,9 @@ class ZKPVerifierInterpreter(
             is ZKPObject.ZKPVectorObject -> {
                 val index = runCleartextExpr(stmt.arguments[0]) as IntegerValue
                 when (val updateValue = stmt.update.value) {
-                    is io.github.apl_cornell.viaduct.syntax.datatypes.Set ->
+                    is io.github.aplcornell.viaduct.syntax.datatypes.Set ->
                         o.gates[index.value] = getAtomicExprWire(stmt.arguments[1])
-                    is io.github.apl_cornell.viaduct.syntax.datatypes.Modify -> {
+                    is io.github.aplcornell.viaduct.syntax.datatypes.Modify -> {
                         val arg = getAtomicExprWire(stmt.arguments[1])
                         o.gates[index.value] =
                             wireGenerator.mkOp(updateValue.operator, listOf(o.gates[index.value], arg))

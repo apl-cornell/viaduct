@@ -1,12 +1,12 @@
-package io.github.apl_cornell.viaduct.backends.zkp
+package io.github.aplcornell.viaduct.backends.zkp
 
-import io.github.apl_cornell.viaduct.backends.cleartext.Local
-import io.github.apl_cornell.viaduct.backends.cleartext.Replication
-import io.github.apl_cornell.viaduct.selection.AbstractProtocolComposer
-import io.github.apl_cornell.viaduct.selection.CommunicationEvent
-import io.github.apl_cornell.viaduct.syntax.Host
-import io.github.apl_cornell.viaduct.syntax.Protocol
-import io.github.apl_cornell.viaduct.syntax.intermediate.LetNode
+import io.github.aplcornell.viaduct.backends.cleartext.Local
+import io.github.aplcornell.viaduct.backends.cleartext.Replication
+import io.github.aplcornell.viaduct.selection.AbstractProtocolComposer
+import io.github.aplcornell.viaduct.selection.CommunicationEvent
+import io.github.aplcornell.viaduct.syntax.Host
+import io.github.aplcornell.viaduct.syntax.Protocol
+import io.github.aplcornell.viaduct.syntax.intermediate.LetNode
 
 object ZKPProtocolComposer : AbstractProtocolComposer() {
     override fun communicationEvents(source: Protocol, destination: Protocol): Iterable<CommunicationEvent>? =

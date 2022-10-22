@@ -1,9 +1,9 @@
-package io.github.apl_cornell.viaduct.syntax.types
+package io.github.aplcornell.viaduct.syntax.types
 
-import io.github.apl_cornell.viaduct.syntax.values.BooleanValue
-import io.github.apl_cornell.viaduct.syntax.values.IntegerValue
-import io.github.apl_cornell.viaduct.syntax.values.UnitValue
-import io.github.apl_cornell.viaduct.syntax.values.Value
+import io.github.aplcornell.viaduct.syntax.values.BooleanValue
+import io.github.aplcornell.viaduct.syntax.values.IntegerValue
+import io.github.aplcornell.viaduct.syntax.values.UnitValue
+import io.github.aplcornell.viaduct.syntax.values.Value
 
 /** Type of values that can be sent to or received from hosts. */
 sealed class IOValueType : ValueType()

@@ -1,11 +1,11 @@
-package io.github.apl_cornell.viaduct.syntax.values
+package io.github.aplcornell.viaduct.syntax.values
 
-import io.github.apl_cornell.viaduct.syntax.Host
-import io.github.apl_cornell.viaduct.syntax.HostNode
-import io.github.apl_cornell.viaduct.syntax.Name
-import io.github.apl_cornell.viaduct.syntax.NameMap
-import io.github.apl_cornell.viaduct.syntax.types.HostSetType
-import io.github.apl_cornell.viaduct.syntax.types.ValueType
+import io.github.aplcornell.viaduct.syntax.Host
+import io.github.aplcornell.viaduct.syntax.HostNode
+import io.github.aplcornell.viaduct.syntax.Name
+import io.github.aplcornell.viaduct.syntax.NameMap
+import io.github.aplcornell.viaduct.syntax.types.HostSetType
+import io.github.aplcornell.viaduct.syntax.types.ValueType
 import kotlinx.collections.immutable.PersistentSet
 import kotlinx.collections.immutable.toPersistentSet
 

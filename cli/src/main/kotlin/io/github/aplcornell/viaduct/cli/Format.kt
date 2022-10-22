@@ -1,13 +1,13 @@
-package io.github.apl_cornell.viaduct.cli
+package io.github.aplcornell.viaduct.cli
 
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.parameters.options.flag
 import com.github.ajalt.clikt.parameters.options.option
-import io.github.apl_cornell.viaduct.backends.DefaultCombinedBackend
-import io.github.apl_cornell.viaduct.parsing.parse
-import io.github.apl_cornell.viaduct.passes.check
-import io.github.apl_cornell.viaduct.passes.elaborated
-import io.github.apl_cornell.viaduct.passes.specialize
+import io.github.aplcornell.viaduct.backends.DefaultCombinedBackend
+import io.github.aplcornell.viaduct.parsing.parse
+import io.github.aplcornell.viaduct.passes.check
+import io.github.aplcornell.viaduct.passes.elaborated
+import io.github.aplcornell.viaduct.passes.specialize
 import java.io.File
 
 class Format : CliktCommand(help = "Pretty print source program") {

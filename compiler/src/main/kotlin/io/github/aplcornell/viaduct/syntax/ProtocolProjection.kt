@@ -1,6 +1,6 @@
-package io.github.apl_cornell.viaduct.syntax
+package io.github.aplcornell.viaduct.syntax
 
-import io.github.apl_cornell.viaduct.prettyprinting.Document
+import io.github.aplcornell.viaduct.prettyprinting.Document
 
 data class ProtocolProjection(
     val protocol: Protocol,

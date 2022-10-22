@@ -1,4 +1,4 @@
-package io.github.apl_cornell.viaduct.backend.aby
+package io.github.aplcornell.viaduct.backend.aby
 
 import io.github.apl_cornell.aby.ABYParty
 import io.github.apl_cornell.aby.Aby
@@ -6,56 +6,56 @@ import io.github.apl_cornell.aby.Phase
 import io.github.apl_cornell.aby.Role
 import io.github.apl_cornell.aby.Share
 import io.github.apl_cornell.aby.SharingType
-import io.github.apl_cornell.viaduct.analysis.ProtocolAnalysis
-import io.github.apl_cornell.viaduct.analysis.TypeAnalysis
-import io.github.apl_cornell.viaduct.backend.AbstractProtocolInterpreter
-import io.github.apl_cornell.viaduct.backend.HostAddress
-import io.github.apl_cornell.viaduct.backend.ObjectLocation
-import io.github.apl_cornell.viaduct.backend.ProtocolBackend
-import io.github.apl_cornell.viaduct.backend.ProtocolInterpreter
-import io.github.apl_cornell.viaduct.backend.ViaductRuntime
-import io.github.apl_cornell.viaduct.backends.aby.ABY
-import io.github.apl_cornell.viaduct.backends.aby.ArithABY
-import io.github.apl_cornell.viaduct.backends.aby.BoolABY
-import io.github.apl_cornell.viaduct.backends.aby.YaoABY
-import io.github.apl_cornell.viaduct.errors.UndefinedNameError
-import io.github.apl_cornell.viaduct.errors.ViaductInterpreterError
-import io.github.apl_cornell.viaduct.selection.ProtocolCommunication
-import io.github.apl_cornell.viaduct.syntax.Host
-import io.github.apl_cornell.viaduct.syntax.ObjectVariable
-import io.github.apl_cornell.viaduct.syntax.Protocol
-import io.github.apl_cornell.viaduct.syntax.ProtocolName
-import io.github.apl_cornell.viaduct.syntax.QueryNameNode
-import io.github.apl_cornell.viaduct.syntax.Temporary
-import io.github.apl_cornell.viaduct.syntax.UpdateNameNode
-import io.github.apl_cornell.viaduct.syntax.datatypes.ClassName
-import io.github.apl_cornell.viaduct.syntax.datatypes.Get
-import io.github.apl_cornell.viaduct.syntax.datatypes.ImmutableCell
-import io.github.apl_cornell.viaduct.syntax.datatypes.Modify
-import io.github.apl_cornell.viaduct.syntax.datatypes.MutableCell
-import io.github.apl_cornell.viaduct.syntax.datatypes.Vector
-import io.github.apl_cornell.viaduct.syntax.intermediate.AtomicExpressionNode
-import io.github.apl_cornell.viaduct.syntax.intermediate.DeclassificationNode
-import io.github.apl_cornell.viaduct.syntax.intermediate.EndorsementNode
-import io.github.apl_cornell.viaduct.syntax.intermediate.InputNode
-import io.github.apl_cornell.viaduct.syntax.intermediate.LetNode
-import io.github.apl_cornell.viaduct.syntax.intermediate.LiteralNode
-import io.github.apl_cornell.viaduct.syntax.intermediate.OperatorApplicationNode
-import io.github.apl_cornell.viaduct.syntax.intermediate.OutputNode
-import io.github.apl_cornell.viaduct.syntax.intermediate.ProgramNode
-import io.github.apl_cornell.viaduct.syntax.intermediate.PureExpressionNode
-import io.github.apl_cornell.viaduct.syntax.intermediate.QueryNode
-import io.github.apl_cornell.viaduct.syntax.intermediate.ReadNode
-import io.github.apl_cornell.viaduct.syntax.intermediate.SimpleStatementNode
-import io.github.apl_cornell.viaduct.syntax.intermediate.UpdateNode
-import io.github.apl_cornell.viaduct.syntax.operators.EqualTo
-import io.github.apl_cornell.viaduct.syntax.operators.Mux
-import io.github.apl_cornell.viaduct.syntax.types.BooleanType
-import io.github.apl_cornell.viaduct.syntax.types.IntegerType
-import io.github.apl_cornell.viaduct.syntax.types.ValueType
-import io.github.apl_cornell.viaduct.syntax.values.BooleanValue
-import io.github.apl_cornell.viaduct.syntax.values.IntegerValue
-import io.github.apl_cornell.viaduct.syntax.values.Value
+import io.github.aplcornell.viaduct.analysis.ProtocolAnalysis
+import io.github.aplcornell.viaduct.analysis.TypeAnalysis
+import io.github.aplcornell.viaduct.backend.AbstractProtocolInterpreter
+import io.github.aplcornell.viaduct.backend.HostAddress
+import io.github.aplcornell.viaduct.backend.ObjectLocation
+import io.github.aplcornell.viaduct.backend.ProtocolBackend
+import io.github.aplcornell.viaduct.backend.ProtocolInterpreter
+import io.github.aplcornell.viaduct.backend.ViaductRuntime
+import io.github.aplcornell.viaduct.backends.aby.ABY
+import io.github.aplcornell.viaduct.backends.aby.ArithABY
+import io.github.aplcornell.viaduct.backends.aby.BoolABY
+import io.github.aplcornell.viaduct.backends.aby.YaoABY
+import io.github.aplcornell.viaduct.errors.UndefinedNameError
+import io.github.aplcornell.viaduct.errors.ViaductInterpreterError
+import io.github.aplcornell.viaduct.selection.ProtocolCommunication
+import io.github.aplcornell.viaduct.syntax.Host
+import io.github.aplcornell.viaduct.syntax.ObjectVariable
+import io.github.aplcornell.viaduct.syntax.Protocol
+import io.github.aplcornell.viaduct.syntax.ProtocolName
+import io.github.aplcornell.viaduct.syntax.QueryNameNode
+import io.github.aplcornell.viaduct.syntax.Temporary
+import io.github.aplcornell.viaduct.syntax.UpdateNameNode
+import io.github.aplcornell.viaduct.syntax.datatypes.ClassName
+import io.github.aplcornell.viaduct.syntax.datatypes.Get
+import io.github.aplcornell.viaduct.syntax.datatypes.ImmutableCell
+import io.github.aplcornell.viaduct.syntax.datatypes.Modify
+import io.github.aplcornell.viaduct.syntax.datatypes.MutableCell
+import io.github.aplcornell.viaduct.syntax.datatypes.Vector
+import io.github.aplcornell.viaduct.syntax.intermediate.AtomicExpressionNode
+import io.github.aplcornell.viaduct.syntax.intermediate.DeclassificationNode
+import io.github.aplcornell.viaduct.syntax.intermediate.EndorsementNode
+import io.github.aplcornell.viaduct.syntax.intermediate.InputNode
+import io.github.aplcornell.viaduct.syntax.intermediate.LetNode
+import io.github.aplcornell.viaduct.syntax.intermediate.LiteralNode
+import io.github.aplcornell.viaduct.syntax.intermediate.OperatorApplicationNode
+import io.github.aplcornell.viaduct.syntax.intermediate.OutputNode
+import io.github.aplcornell.viaduct.syntax.intermediate.ProgramNode
+import io.github.aplcornell.viaduct.syntax.intermediate.PureExpressionNode
+import io.github.aplcornell.viaduct.syntax.intermediate.QueryNode
+import io.github.aplcornell.viaduct.syntax.intermediate.ReadNode
+import io.github.aplcornell.viaduct.syntax.intermediate.SimpleStatementNode
+import io.github.aplcornell.viaduct.syntax.intermediate.UpdateNode
+import io.github.aplcornell.viaduct.syntax.operators.EqualTo
+import io.github.aplcornell.viaduct.syntax.operators.Mux
+import io.github.aplcornell.viaduct.syntax.types.BooleanType
+import io.github.aplcornell.viaduct.syntax.types.IntegerType
+import io.github.aplcornell.viaduct.syntax.types.ValueType
+import io.github.aplcornell.viaduct.syntax.values.BooleanValue
+import io.github.aplcornell.viaduct.syntax.values.IntegerValue
+import io.github.aplcornell.viaduct.syntax.values.Value
 import kotlinx.collections.immutable.PersistentMap
 import kotlinx.collections.immutable.persistentMapOf
 import mu.KotlinLogging
@@ -647,7 +647,7 @@ class ABYProtocolInterpreter(
             arguments: List<AtomicExpressionNode>
         ) {
             gate = when (val updateValue = update.value) {
-                is io.github.apl_cornell.viaduct.syntax.datatypes.Set -> {
+                is io.github.aplcornell.viaduct.syntax.datatypes.Set -> {
                     this@ABYProtocolInterpreter.runSecretExpr(circuitType, arguments[0])
                 }
 
@@ -726,7 +726,7 @@ class ABYProtocolInterpreter(
                 is ABYCleartextValue -> {
                     val intIndex = (index.value as IntegerValue).value
                     gates[intIndex] = when (val updateValue = update.value) {
-                        is io.github.apl_cornell.viaduct.syntax.datatypes.Set -> {
+                        is io.github.aplcornell.viaduct.syntax.datatypes.Set -> {
                             runSecretExpr(circuitType, arguments[1])
                         }
 
@@ -750,7 +750,7 @@ class ABYProtocolInterpreter(
                     val circuitArg: ABYCircuitGate = runSecretExpr(circuitType, arguments[1])
                     for (i in 0 until size) {
                         val rhs = when (val updateValue = update.value) {
-                            is io.github.apl_cornell.viaduct.syntax.datatypes.Set -> circuitArg
+                            is io.github.aplcornell.viaduct.syntax.datatypes.Set -> circuitArg
 
                             is Modify -> {
                                 operatorToCircuit(

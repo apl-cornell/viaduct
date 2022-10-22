@@ -1,9 +1,9 @@
-package io.github.apl_cornell.viaduct.syntax.values
+package io.github.aplcornell.viaduct.syntax.values
 
-import io.github.apl_cornell.viaduct.syntax.types.BooleanType
-import io.github.apl_cornell.viaduct.syntax.types.IOValueType
-import io.github.apl_cornell.viaduct.syntax.types.IntegerType
-import io.github.apl_cornell.viaduct.syntax.types.UnitType
+import io.github.aplcornell.viaduct.syntax.types.BooleanType
+import io.github.aplcornell.viaduct.syntax.types.IOValueType
+import io.github.aplcornell.viaduct.syntax.types.IntegerType
+import io.github.aplcornell.viaduct.syntax.types.UnitType
 
 sealed class IOValue : Value()
 

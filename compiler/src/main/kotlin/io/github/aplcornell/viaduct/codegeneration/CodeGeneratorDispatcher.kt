@@ -1,18 +1,18 @@
-package io.github.apl_cornell.viaduct.codegeneration
+package io.github.aplcornell.viaduct.codegeneration
 
 import com.squareup.kotlinpoet.CodeBlock
 import com.squareup.kotlinpoet.PropertySpec
 import com.squareup.kotlinpoet.TypeName
-import io.github.apl_cornell.viaduct.selection.ProtocolCommunication
-import io.github.apl_cornell.viaduct.syntax.Arguments
-import io.github.apl_cornell.viaduct.syntax.ObjectTypeNode
-import io.github.apl_cornell.viaduct.syntax.Protocol
-import io.github.apl_cornell.viaduct.syntax.intermediate.AtomicExpressionNode
-import io.github.apl_cornell.viaduct.syntax.intermediate.ExpressionNode
-import io.github.apl_cornell.viaduct.syntax.intermediate.LetNode
-import io.github.apl_cornell.viaduct.syntax.intermediate.UpdateNode
-import io.github.apl_cornell.viaduct.syntax.types.ObjectType
-import io.github.apl_cornell.viaduct.syntax.types.ValueType
+import io.github.aplcornell.viaduct.selection.ProtocolCommunication
+import io.github.aplcornell.viaduct.syntax.Arguments
+import io.github.aplcornell.viaduct.syntax.ObjectTypeNode
+import io.github.aplcornell.viaduct.syntax.Protocol
+import io.github.aplcornell.viaduct.syntax.intermediate.AtomicExpressionNode
+import io.github.aplcornell.viaduct.syntax.intermediate.ExpressionNode
+import io.github.aplcornell.viaduct.syntax.intermediate.LetNode
+import io.github.aplcornell.viaduct.syntax.intermediate.UpdateNode
+import io.github.aplcornell.viaduct.syntax.types.ObjectType
+import io.github.aplcornell.viaduct.syntax.types.ValueType
 
 /** Dispatches to different [CodeGenerator]s based on [Protocol]. */
 abstract class CodeGeneratorDispatcher : CodeGenerator {

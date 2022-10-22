@@ -1,24 +1,24 @@
-package io.github.apl_cornell.viaduct.passes
+package io.github.aplcornell.viaduct.passes
 
-import io.github.apl_cornell.viaduct.algebra.FreeDistributiveLattice
-import io.github.apl_cornell.viaduct.security.ConfidentialityComponent
-import io.github.apl_cornell.viaduct.security.HostPrincipal
-import io.github.apl_cornell.viaduct.security.IntegrityComponent
-import io.github.apl_cornell.viaduct.security.Label
-import io.github.apl_cornell.viaduct.security.LabelAnd
-import io.github.apl_cornell.viaduct.security.LabelBottom
-import io.github.apl_cornell.viaduct.security.LabelConfidentiality
-import io.github.apl_cornell.viaduct.security.LabelExpression
-import io.github.apl_cornell.viaduct.security.LabelIntegrity
-import io.github.apl_cornell.viaduct.security.LabelJoin
-import io.github.apl_cornell.viaduct.security.LabelLiteral
-import io.github.apl_cornell.viaduct.security.LabelMeet
-import io.github.apl_cornell.viaduct.security.LabelOr
-import io.github.apl_cornell.viaduct.security.LabelParameter
-import io.github.apl_cornell.viaduct.security.LabelTop
-import io.github.apl_cornell.viaduct.security.PolymorphicPrincipal
-import io.github.apl_cornell.viaduct.security.interpret
-import io.github.apl_cornell.viaduct.syntax.HostTrustConfiguration
+import io.github.aplcornell.viaduct.algebra.FreeDistributiveLattice
+import io.github.aplcornell.viaduct.security.ConfidentialityComponent
+import io.github.aplcornell.viaduct.security.HostPrincipal
+import io.github.aplcornell.viaduct.security.IntegrityComponent
+import io.github.aplcornell.viaduct.security.Label
+import io.github.aplcornell.viaduct.security.LabelAnd
+import io.github.aplcornell.viaduct.security.LabelBottom
+import io.github.aplcornell.viaduct.security.LabelConfidentiality
+import io.github.aplcornell.viaduct.security.LabelExpression
+import io.github.aplcornell.viaduct.security.LabelIntegrity
+import io.github.aplcornell.viaduct.security.LabelJoin
+import io.github.aplcornell.viaduct.security.LabelLiteral
+import io.github.aplcornell.viaduct.security.LabelMeet
+import io.github.aplcornell.viaduct.security.LabelOr
+import io.github.aplcornell.viaduct.security.LabelParameter
+import io.github.aplcornell.viaduct.security.LabelTop
+import io.github.aplcornell.viaduct.security.PolymorphicPrincipal
+import io.github.aplcornell.viaduct.security.interpret
+import io.github.aplcornell.viaduct.syntax.HostTrustConfiguration
 
 class Rewrite(
     private val rewrites: Map<PrincipalComponent, LabelConstant>,

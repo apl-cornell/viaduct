@@ -1,22 +1,22 @@
-package io.github.apl_cornell.viaduct.syntax.intermediate
+package io.github.aplcornell.viaduct.syntax.intermediate
 
-import io.github.apl_cornell.viaduct.syntax.Arguments
-import io.github.apl_cornell.viaduct.syntax.FunctionNameNode
-import io.github.apl_cornell.viaduct.syntax.HostNode
-import io.github.apl_cornell.viaduct.syntax.JumpLabelNode
-import io.github.apl_cornell.viaduct.syntax.ObjectTypeNode
-import io.github.apl_cornell.viaduct.syntax.ObjectVariableNode
-import io.github.apl_cornell.viaduct.syntax.ProtocolNode
-import io.github.apl_cornell.viaduct.syntax.SourceLocation
-import io.github.apl_cornell.viaduct.syntax.TemporaryNode
-import io.github.apl_cornell.viaduct.syntax.UpdateNameNode
+import io.github.aplcornell.viaduct.syntax.Arguments
+import io.github.aplcornell.viaduct.syntax.FunctionNameNode
+import io.github.aplcornell.viaduct.syntax.HostNode
+import io.github.aplcornell.viaduct.syntax.JumpLabelNode
+import io.github.aplcornell.viaduct.syntax.ObjectTypeNode
+import io.github.aplcornell.viaduct.syntax.ObjectVariableNode
+import io.github.aplcornell.viaduct.syntax.ProtocolNode
+import io.github.aplcornell.viaduct.syntax.SourceLocation
+import io.github.aplcornell.viaduct.syntax.TemporaryNode
+import io.github.aplcornell.viaduct.syntax.UpdateNameNode
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toPersistentList
 
 /** A computation with side effects. */
 sealed class StatementNode : Node() {
-    abstract override fun toSurfaceNode(metadata: Metadata): io.github.apl_cornell.viaduct.syntax.surface.StatementNode
+    abstract override fun toSurfaceNode(metadata: Metadata): io.github.aplcornell.viaduct.syntax.surface.StatementNode
 
     abstract override fun copy(children: List<Node>): StatementNode
 }
@@ -28,7 +28,7 @@ sealed class StatementNode : Node() {
 sealed class SimpleStatementNode : StatementNode() {
     abstract override val children: Iterable<Node>
 
-    abstract override fun toSurfaceNode(metadata: Metadata): io.github.apl_cornell.viaduct.syntax.surface.SimpleStatementNode
+    abstract override fun toSurfaceNode(metadata: Metadata): io.github.aplcornell.viaduct.syntax.surface.SimpleStatementNode
 
     abstract override fun copy(children: List<Node>): SimpleStatementNode
 }
@@ -45,8 +45,8 @@ class LetNode(
     override val children: Iterable<ExpressionNode>
         get() = listOf(value)
 
-    override fun toSurfaceNode(metadata: Metadata): io.github.apl_cornell.viaduct.syntax.surface.LetNode =
-        io.github.apl_cornell.viaduct.syntax.surface.LetNode(
+    override fun toSurfaceNode(metadata: Metadata): io.github.aplcornell.viaduct.syntax.surface.LetNode =
+        io.github.aplcornell.viaduct.syntax.surface.LetNode(
             name,
             value.toSurfaceNode(),
             protocol,
@@ -69,10 +69,10 @@ class DeclarationNode(
     override val children: Iterable<AtomicExpressionNode>
         get() = arguments
 
-    override fun toSurfaceNode(metadata: Metadata): io.github.apl_cornell.viaduct.syntax.surface.DeclarationNode =
-        io.github.apl_cornell.viaduct.syntax.surface.DeclarationNode(
+    override fun toSurfaceNode(metadata: Metadata): io.github.aplcornell.viaduct.syntax.surface.DeclarationNode =
+        io.github.aplcornell.viaduct.syntax.surface.DeclarationNode(
             name,
-            io.github.apl_cornell.viaduct.syntax.surface.ConstructorCallNode(
+            io.github.aplcornell.viaduct.syntax.surface.ConstructorCallNode(
                 objectType,
                 protocol,
                 Arguments(arguments.map { it.toSurfaceNode() }, arguments.sourceLocation),
@@ -102,8 +102,8 @@ class UpdateNode(
     override val children: Iterable<AtomicExpressionNode>
         get() = arguments
 
-    override fun toSurfaceNode(metadata: Metadata): io.github.apl_cornell.viaduct.syntax.surface.UpdateNode =
-        io.github.apl_cornell.viaduct.syntax.surface.UpdateNode(
+    override fun toSurfaceNode(metadata: Metadata): io.github.aplcornell.viaduct.syntax.surface.UpdateNode =
+        io.github.aplcornell.viaduct.syntax.surface.UpdateNode(
             variable,
             update,
             Arguments(arguments.map { it.toSurfaceNode() }, arguments.sourceLocation),
@@ -121,10 +121,10 @@ class UpdateNode(
 }
 
 sealed class OutParameterInitializerNode : Node() {
-    final override fun toSurfaceNode(metadata: Metadata): io.github.apl_cornell.viaduct.syntax.surface.ExpressionNode =
+    final override fun toSurfaceNode(metadata: Metadata): io.github.aplcornell.viaduct.syntax.surface.ExpressionNode =
         toSurfaceNode()
 
-    abstract fun toSurfaceNode(): io.github.apl_cornell.viaduct.syntax.surface.ExpressionNode
+    abstract fun toSurfaceNode(): io.github.aplcornell.viaduct.syntax.surface.ExpressionNode
 }
 
 class OutParameterExpressionInitializerNode(
@@ -134,7 +134,7 @@ class OutParameterExpressionInitializerNode(
     override val children: Iterable<AtomicExpressionNode>
         get() = listOf(expression)
 
-    override fun toSurfaceNode(): io.github.apl_cornell.viaduct.syntax.surface.AtomicExpressionNode =
+    override fun toSurfaceNode(): io.github.aplcornell.viaduct.syntax.surface.AtomicExpressionNode =
         expression.toSurfaceNode()
 
     override fun copy(children: List<Node>): Node =
@@ -152,8 +152,8 @@ class OutParameterConstructorInitializerNode(
     override val children: Iterable<AtomicExpressionNode>
         get() = arguments
 
-    override fun toSurfaceNode(): io.github.apl_cornell.viaduct.syntax.surface.ConstructorCallNode =
-        io.github.apl_cornell.viaduct.syntax.surface.ConstructorCallNode(
+    override fun toSurfaceNode(): io.github.aplcornell.viaduct.syntax.surface.ConstructorCallNode =
+        io.github.aplcornell.viaduct.syntax.surface.ConstructorCallNode(
             objectType,
             null,
             Arguments(
@@ -182,8 +182,8 @@ class OutParameterInitializationNode(
     override val children: Iterable<OutParameterInitializerNode>
         get() = listOf(initializer)
 
-    override fun toSurfaceNode(metadata: Metadata): io.github.apl_cornell.viaduct.syntax.surface.OutParameterInitializationNode =
-        io.github.apl_cornell.viaduct.syntax.surface.OutParameterInitializationNode(
+    override fun toSurfaceNode(metadata: Metadata): io.github.aplcornell.viaduct.syntax.surface.OutParameterInitializationNode =
+        io.github.aplcornell.viaduct.syntax.surface.OutParameterInitializationNode(
             name,
             initializer.toSurfaceNode(),
             sourceLocation,
@@ -208,8 +208,8 @@ class OutputNode(
     override val children: Iterable<AtomicExpressionNode>
         get() = listOf(message)
 
-    override fun toSurfaceNode(metadata: Metadata): io.github.apl_cornell.viaduct.syntax.surface.OutputNode =
-        io.github.apl_cornell.viaduct.syntax.surface.OutputNode(
+    override fun toSurfaceNode(metadata: Metadata): io.github.aplcornell.viaduct.syntax.surface.OutputNode =
+        io.github.aplcornell.viaduct.syntax.surface.OutputNode(
             message.toSurfaceNode(),
             host,
             sourceLocation,
@@ -228,10 +228,10 @@ sealed class ControlNode : StatementNode() {
 }
 
 sealed class FunctionArgumentNode : Node() {
-    final override fun toSurfaceNode(metadata: Metadata): io.github.apl_cornell.viaduct.syntax.surface.FunctionArgumentNode =
+    final override fun toSurfaceNode(metadata: Metadata): io.github.aplcornell.viaduct.syntax.surface.FunctionArgumentNode =
         toSurfaceNode()
 
-    abstract fun toSurfaceNode(): io.github.apl_cornell.viaduct.syntax.surface.FunctionArgumentNode
+    abstract fun toSurfaceNode(): io.github.aplcornell.viaduct.syntax.surface.FunctionArgumentNode
 }
 
 sealed class FunctionInputArgumentNode : FunctionArgumentNode()
@@ -245,8 +245,8 @@ class ExpressionArgumentNode(
     override val children: Iterable<ExpressionNode>
         get() = listOf(expression)
 
-    override fun toSurfaceNode(): io.github.apl_cornell.viaduct.syntax.surface.ExpressionArgumentNode =
-        io.github.apl_cornell.viaduct.syntax.surface.ExpressionArgumentNode(expression.toSurfaceNode(), sourceLocation)
+    override fun toSurfaceNode(): io.github.aplcornell.viaduct.syntax.surface.ExpressionArgumentNode =
+        io.github.aplcornell.viaduct.syntax.surface.ExpressionArgumentNode(expression.toSurfaceNode(), sourceLocation)
 
     override fun copy(children: List<Node>): Node =
         ExpressionArgumentNode(children[0] as AtomicExpressionNode, sourceLocation)
@@ -259,8 +259,8 @@ class ObjectReferenceArgumentNode(
     override val children: Iterable<ExpressionNode>
         get() = listOf()
 
-    override fun toSurfaceNode(): io.github.apl_cornell.viaduct.syntax.surface.ObjectReferenceArgumentNode =
-        io.github.apl_cornell.viaduct.syntax.surface.ObjectReferenceArgumentNode(variable, sourceLocation)
+    override fun toSurfaceNode(): io.github.aplcornell.viaduct.syntax.surface.ObjectReferenceArgumentNode =
+        io.github.aplcornell.viaduct.syntax.surface.ObjectReferenceArgumentNode(variable, sourceLocation)
 
     override fun copy(children: List<Node>): Node =
         ObjectReferenceArgumentNode(variable, sourceLocation)
@@ -276,8 +276,8 @@ class ObjectDeclarationArgumentNode(
     override val children: Iterable<ExpressionNode>
         get() = listOf()
 
-    override fun toSurfaceNode(): io.github.apl_cornell.viaduct.syntax.surface.ObjectDeclarationArgumentNode =
-        io.github.apl_cornell.viaduct.syntax.surface.ObjectDeclarationArgumentNode(name, sourceLocation)
+    override fun toSurfaceNode(): io.github.aplcornell.viaduct.syntax.surface.ObjectDeclarationArgumentNode =
+        io.github.aplcornell.viaduct.syntax.surface.ObjectDeclarationArgumentNode(name, sourceLocation)
 
     override fun copy(children: List<Node>): Node =
         ObjectDeclarationArgumentNode(name, sourceLocation)
@@ -290,8 +290,8 @@ class OutParameterArgumentNode(
     override val children: Iterable<ExpressionNode>
         get() = listOf()
 
-    override fun toSurfaceNode(): io.github.apl_cornell.viaduct.syntax.surface.OutParameterArgumentNode =
-        io.github.apl_cornell.viaduct.syntax.surface.OutParameterArgumentNode(parameter, sourceLocation)
+    override fun toSurfaceNode(): io.github.aplcornell.viaduct.syntax.surface.OutParameterArgumentNode =
+        io.github.aplcornell.viaduct.syntax.surface.OutParameterArgumentNode(parameter, sourceLocation)
 
     override fun copy(children: List<Node>): Node =
         OutParameterArgumentNode(parameter, sourceLocation)
@@ -306,8 +306,8 @@ class FunctionCallNode(
     override val children: Iterable<Node>
         get() = arguments
 
-    override fun toSurfaceNode(metadata: Metadata): io.github.apl_cornell.viaduct.syntax.surface.FunctionCallNode =
-        io.github.apl_cornell.viaduct.syntax.surface.FunctionCallNode(
+    override fun toSurfaceNode(metadata: Metadata): io.github.aplcornell.viaduct.syntax.surface.FunctionCallNode =
+        io.github.aplcornell.viaduct.syntax.surface.FunctionCallNode(
             name,
             Arguments(
                 arguments.map { arg -> arg.toSurfaceNode() },
@@ -343,8 +343,8 @@ class IfNode(
     override val children: Iterable<Node>
         get() = listOf(guard, thenBranch, elseBranch)
 
-    override fun toSurfaceNode(metadata: Metadata): io.github.apl_cornell.viaduct.syntax.surface.IfNode =
-        io.github.apl_cornell.viaduct.syntax.surface.IfNode(
+    override fun toSurfaceNode(metadata: Metadata): io.github.aplcornell.viaduct.syntax.surface.IfNode =
+        io.github.aplcornell.viaduct.syntax.surface.IfNode(
             guard.toSurfaceNode(),
             thenBranch.toSurfaceNode(metadata),
             elseBranch.toSurfaceNode(metadata),
@@ -369,8 +369,8 @@ class InfiniteLoopNode(
     override val children: Iterable<BlockNode>
         get() = listOf(body)
 
-    override fun toSurfaceNode(metadata: Metadata): io.github.apl_cornell.viaduct.syntax.surface.InfiniteLoopNode =
-        io.github.apl_cornell.viaduct.syntax.surface.InfiniteLoopNode(
+    override fun toSurfaceNode(metadata: Metadata): io.github.aplcornell.viaduct.syntax.surface.InfiniteLoopNode =
+        io.github.aplcornell.viaduct.syntax.surface.InfiniteLoopNode(
             body.toSurfaceNode(metadata),
             jumpLabel,
             sourceLocation,
@@ -393,8 +393,8 @@ class BreakNode(
     override val children: Iterable<Nothing>
         get() = listOf()
 
-    override fun toSurfaceNode(metadata: Metadata): io.github.apl_cornell.viaduct.syntax.surface.BreakNode =
-        io.github.apl_cornell.viaduct.syntax.surface.BreakNode(
+    override fun toSurfaceNode(metadata: Metadata): io.github.aplcornell.viaduct.syntax.surface.BreakNode =
+        io.github.aplcornell.viaduct.syntax.surface.BreakNode(
             jumpLabel,
             sourceLocation,
             comment = metadataAsComment(metadata)
@@ -412,8 +412,8 @@ class AssertionNode(
     override val children: Iterable<AtomicExpressionNode>
         get() = listOf(condition)
 
-    override fun toSurfaceNode(metadata: Metadata): io.github.apl_cornell.viaduct.syntax.surface.AssertionNode =
-        io.github.apl_cornell.viaduct.syntax.surface.AssertionNode(
+    override fun toSurfaceNode(metadata: Metadata): io.github.aplcornell.viaduct.syntax.surface.AssertionNode =
+        io.github.aplcornell.viaduct.syntax.surface.AssertionNode(
             condition.toSurfaceNode(),
             sourceLocation,
             comment = metadataAsComment(metadata)
@@ -438,8 +438,8 @@ private constructor(
     override val children: Iterable<StatementNode>
         get() = statements
 
-    override fun toSurfaceNode(metadata: Metadata): io.github.apl_cornell.viaduct.syntax.surface.BlockNode =
-        io.github.apl_cornell.viaduct.syntax.surface.BlockNode(
+    override fun toSurfaceNode(metadata: Metadata): io.github.aplcornell.viaduct.syntax.surface.BlockNode =
+        io.github.aplcornell.viaduct.syntax.surface.BlockNode(
             statements.map { it.toSurfaceNode(metadata) },
             sourceLocation,
             comment = metadataAsComment(metadata)

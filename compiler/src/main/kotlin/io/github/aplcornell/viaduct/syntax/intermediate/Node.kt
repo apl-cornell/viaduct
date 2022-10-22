@@ -1,12 +1,12 @@
-package io.github.apl_cornell.viaduct.syntax.intermediate
+package io.github.aplcornell.viaduct.syntax.intermediate
 
-import io.github.apl_cornell.viaduct.attributes.Tree
-import io.github.apl_cornell.viaduct.attributes.TreeNode
-import io.github.apl_cornell.viaduct.prettyprinting.Document
-import io.github.apl_cornell.viaduct.prettyprinting.PrettyPrintable
-import io.github.apl_cornell.viaduct.syntax.HasSourceLocation
-import io.github.apl_cornell.viaduct.syntax.JumpLabel
-import io.github.apl_cornell.viaduct.syntax.Variable
+import io.github.aplcornell.viaduct.attributes.Tree
+import io.github.aplcornell.viaduct.attributes.TreeNode
+import io.github.aplcornell.viaduct.prettyprinting.Document
+import io.github.aplcornell.viaduct.prettyprinting.PrettyPrintable
+import io.github.aplcornell.viaduct.syntax.HasSourceLocation
+import io.github.aplcornell.viaduct.syntax.JumpLabel
+import io.github.aplcornell.viaduct.syntax.Variable
 
 /** Metadata information per node. */
 typealias Metadata = Map<Node, PrettyPrintable>
@@ -30,7 +30,7 @@ abstract class Node : TreeNode<Node>, HasSourceLocation, PrettyPrintable {
      *
      * @param metadata Associates metadata with some nodes, which is converted into a comment.
      */
-    abstract fun toSurfaceNode(metadata: Metadata = mapOf()): io.github.apl_cornell.viaduct.syntax.surface.Node
+    abstract fun toSurfaceNode(metadata: Metadata = mapOf()): io.github.aplcornell.viaduct.syntax.surface.Node
 
     /**
      * Returns a shallow copy of this node where the child nodes are replaced by [children].

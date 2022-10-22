@@ -1,15 +1,15 @@
-package io.github.apl_cornell.viaduct.syntax
+package io.github.aplcornell.viaduct.syntax
 
-import io.github.apl_cornell.viaduct.prettyprinting.Document
-import io.github.apl_cornell.viaduct.prettyprinting.nested
-import io.github.apl_cornell.viaduct.prettyprinting.plus
-import io.github.apl_cornell.viaduct.prettyprinting.times
-import io.github.apl_cornell.viaduct.prettyprinting.tupled
-import io.github.apl_cornell.viaduct.security.Label
-import io.github.apl_cornell.viaduct.syntax.values.HostSetValue
-import io.github.apl_cornell.viaduct.syntax.values.HostValue
-import io.github.apl_cornell.viaduct.syntax.values.Value
-import io.github.apl_cornell.viaduct.util.asComparable
+import io.github.aplcornell.viaduct.prettyprinting.Document
+import io.github.aplcornell.viaduct.prettyprinting.nested
+import io.github.aplcornell.viaduct.prettyprinting.plus
+import io.github.aplcornell.viaduct.prettyprinting.times
+import io.github.aplcornell.viaduct.prettyprinting.tupled
+import io.github.aplcornell.viaduct.security.Label
+import io.github.aplcornell.viaduct.syntax.values.HostSetValue
+import io.github.aplcornell.viaduct.syntax.values.HostValue
+import io.github.aplcornell.viaduct.syntax.values.Value
+import io.github.aplcornell.viaduct.util.asComparable
 
 /**
  * An abstract location where computations can be placed.

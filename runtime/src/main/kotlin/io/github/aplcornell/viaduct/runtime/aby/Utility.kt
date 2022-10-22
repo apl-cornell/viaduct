@@ -1,4 +1,4 @@
-package io.github.apl_cornell.viaduct.runtime.aby
+package io.github.aplcornell.viaduct.runtime.aby
 
 import io.github.apl_cornell.aby.Aby
 import io.github.apl_cornell.aby.Circuit

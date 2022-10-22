@@ -1,6 +1,6 @@
-package io.github.apl_cornell.viaduct.security
+package io.github.aplcornell.viaduct.security
 
-import io.github.apl_cornell.viaduct.algebra.FreeDistributiveLattice
+import io.github.aplcornell.viaduct.algebra.FreeDistributiveLattice
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Nested

@@ -1,4 +1,4 @@
-package io.github.apl_cornell.viaduct.syntax
+package io.github.aplcornell.viaduct.syntax
 
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.persistentListOf

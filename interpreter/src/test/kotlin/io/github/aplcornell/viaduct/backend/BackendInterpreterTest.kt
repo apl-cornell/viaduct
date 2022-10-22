@@ -1,23 +1,23 @@
-package io.github.apl_cornell.viaduct.backend
+package io.github.aplcornell.viaduct.backend
 
-import io.github.apl_cornell.viaduct.PositiveTestFileProvider
-import io.github.apl_cornell.viaduct.analysis.ProtocolAnalysis
-import io.github.apl_cornell.viaduct.backend.IO.Strategy
-import io.github.apl_cornell.viaduct.backends.DefaultCombinedBackend
-import io.github.apl_cornell.viaduct.parsing.SourceFile
-import io.github.apl_cornell.viaduct.passes.compile
-import io.github.apl_cornell.viaduct.selection.ProtocolCommunication
-import io.github.apl_cornell.viaduct.selection.SimpleCostRegime
-import io.github.apl_cornell.viaduct.syntax.Host
-import io.github.apl_cornell.viaduct.syntax.Protocol
-import io.github.apl_cornell.viaduct.syntax.intermediate.AtomicExpressionNode
-import io.github.apl_cornell.viaduct.syntax.intermediate.FunctionArgumentNode
-import io.github.apl_cornell.viaduct.syntax.intermediate.LetNode
-import io.github.apl_cornell.viaduct.syntax.intermediate.ParameterNode
-import io.github.apl_cornell.viaduct.syntax.intermediate.SimpleStatementNode
-import io.github.apl_cornell.viaduct.syntax.values.BooleanValue
-import io.github.apl_cornell.viaduct.syntax.values.IntegerValue
-import io.github.apl_cornell.viaduct.syntax.values.Value
+import io.github.aplcornell.viaduct.PositiveTestFileProvider
+import io.github.aplcornell.viaduct.analysis.ProtocolAnalysis
+import io.github.aplcornell.viaduct.backend.IO.Strategy
+import io.github.aplcornell.viaduct.backends.DefaultCombinedBackend
+import io.github.aplcornell.viaduct.parsing.SourceFile
+import io.github.aplcornell.viaduct.passes.compile
+import io.github.aplcornell.viaduct.selection.ProtocolCommunication
+import io.github.aplcornell.viaduct.selection.SimpleCostRegime
+import io.github.aplcornell.viaduct.syntax.Host
+import io.github.aplcornell.viaduct.syntax.Protocol
+import io.github.aplcornell.viaduct.syntax.intermediate.AtomicExpressionNode
+import io.github.aplcornell.viaduct.syntax.intermediate.FunctionArgumentNode
+import io.github.aplcornell.viaduct.syntax.intermediate.LetNode
+import io.github.aplcornell.viaduct.syntax.intermediate.ParameterNode
+import io.github.aplcornell.viaduct.syntax.intermediate.SimpleStatementNode
+import io.github.aplcornell.viaduct.syntax.values.BooleanValue
+import io.github.aplcornell.viaduct.syntax.values.IntegerValue
+import io.github.aplcornell.viaduct.syntax.values.Value
 import kotlinx.collections.immutable.PersistentMap
 import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.launch
@@ -76,7 +76,7 @@ private class FakeProtocolInterpreter(
 private object FakeProtocolBackend : ProtocolBackend {
     override fun buildProtocolInterpreters(
         host: Host,
-        program: io.github.apl_cornell.viaduct.syntax.intermediate.ProgramNode,
+        program: io.github.aplcornell.viaduct.syntax.intermediate.ProgramNode,
         protocols: Set<Protocol>,
         protocolAnalysis: ProtocolAnalysis,
         runtime: ViaductRuntime,

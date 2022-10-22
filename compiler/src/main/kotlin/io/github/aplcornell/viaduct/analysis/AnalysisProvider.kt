@@ -1,6 +1,6 @@
-package io.github.apl_cornell.viaduct.analysis
+package io.github.aplcornell.viaduct.analysis
 
-import io.github.apl_cornell.viaduct.syntax.intermediate.ProgramNode
+import io.github.aplcornell.viaduct.syntax.intermediate.ProgramNode
 
 interface AnalysisProvider<Analysis> {
     /**

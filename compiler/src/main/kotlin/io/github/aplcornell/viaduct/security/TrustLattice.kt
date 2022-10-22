@@ -1,4 +1,4 @@
-package io.github.apl_cornell.viaduct.security
+package io.github.aplcornell.viaduct.security
 
 /** A lattice whose elements are interpreted as principals. */
 interface TrustLattice<T : TrustLattice<T>> {

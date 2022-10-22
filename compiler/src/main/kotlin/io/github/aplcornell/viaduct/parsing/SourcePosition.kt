@@ -1,4 +1,4 @@
-package io.github.apl_cornell.viaduct.parsing
+package io.github.aplcornell.viaduct.parsing
 
 /**
  * Represents a position in a source file. Positions correspond to spaces between characters rather

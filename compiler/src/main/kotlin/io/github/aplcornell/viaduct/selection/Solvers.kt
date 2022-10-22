@@ -1,4 +1,4 @@
-package io.github.apl_cornell.viaduct.selection
+package io.github.aplcornell.viaduct.selection
 
 /** Returns all available [SelectionProblemSolver] instances. */
 val selectionProblemSolvers: List<Pair<String, SelectionProblemSolver>> =

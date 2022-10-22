@@ -1,11 +1,11 @@
-package io.github.apl_cornell.viaduct.selection
+package io.github.aplcornell.viaduct.selection
 
-import io.github.apl_cornell.viaduct.syntax.Protocol
-import io.github.apl_cornell.viaduct.syntax.intermediate.IfNode
-import io.github.apl_cornell.viaduct.syntax.intermediate.Node
-import io.github.apl_cornell.viaduct.syntax.intermediate.UpdateNode
-import io.github.apl_cornell.viaduct.syntax.intermediate.VariableDeclarationNode
-import io.github.apl_cornell.viaduct.util.unions
+import io.github.aplcornell.viaduct.syntax.Protocol
+import io.github.aplcornell.viaduct.syntax.intermediate.IfNode
+import io.github.aplcornell.viaduct.syntax.intermediate.Node
+import io.github.aplcornell.viaduct.syntax.intermediate.UpdateNode
+import io.github.aplcornell.viaduct.syntax.intermediate.VariableDeclarationNode
+import io.github.aplcornell.viaduct.util.unions
 
 /**
  * Generates a list of [Protocol]s that can implement a given [Node],

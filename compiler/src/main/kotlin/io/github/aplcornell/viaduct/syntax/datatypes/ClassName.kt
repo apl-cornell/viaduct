@@ -1,9 +1,9 @@
-package io.github.apl_cornell.viaduct.syntax.datatypes
+package io.github.aplcornell.viaduct.syntax.datatypes
 
-import io.github.apl_cornell.viaduct.prettyprinting.Document
-import io.github.apl_cornell.viaduct.prettyprinting.Style
-import io.github.apl_cornell.viaduct.prettyprinting.styled
-import io.github.apl_cornell.viaduct.syntax.Name
+import io.github.aplcornell.viaduct.prettyprinting.Document
+import io.github.aplcornell.viaduct.prettyprinting.Style
+import io.github.aplcornell.viaduct.prettyprinting.styled
+import io.github.aplcornell.viaduct.syntax.Name
 
 /** The name of a primitive or user-defined class. */
 data class ClassName(override val name: String) : Name {

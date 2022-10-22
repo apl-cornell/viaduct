@@ -1,8 +1,8 @@
-package io.github.apl_cornell.viaduct
+package io.github.aplcornell.viaduct
 
-import io.github.apl_cornell.viaduct.backends.DefaultCombinedBackend
-import io.github.apl_cornell.viaduct.parsing.SourceFile
-import io.github.apl_cornell.viaduct.parsing.parse
+import io.github.aplcornell.viaduct.backends.DefaultCombinedBackend
+import io.github.aplcornell.viaduct.parsing.SourceFile
+import io.github.aplcornell.viaduct.parsing.parse
 import org.junit.jupiter.api.extension.ExtensionContext
 import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.ArgumentsProvider

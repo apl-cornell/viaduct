@@ -1,96 +1,96 @@
-package io.github.apl_cornell.viaduct.passes
+package io.github.aplcornell.viaduct.passes
 
-import io.github.apl_cornell.viaduct.errors.InvalidConstructorCallError
-import io.github.apl_cornell.viaduct.errors.JumpOutsideLoopScopeError
-import io.github.apl_cornell.viaduct.security.LabelAnd
-import io.github.apl_cornell.viaduct.security.LabelBottom
-import io.github.apl_cornell.viaduct.security.LabelConfidentiality
-import io.github.apl_cornell.viaduct.security.LabelIntegrity
-import io.github.apl_cornell.viaduct.security.LabelTop
-import io.github.apl_cornell.viaduct.syntax.Arguments
-import io.github.apl_cornell.viaduct.syntax.FunctionName
-import io.github.apl_cornell.viaduct.syntax.Host
-import io.github.apl_cornell.viaduct.syntax.JumpLabel
-import io.github.apl_cornell.viaduct.syntax.JumpLabelNode
-import io.github.apl_cornell.viaduct.syntax.LabelNode
-import io.github.apl_cornell.viaduct.syntax.Located
-import io.github.apl_cornell.viaduct.syntax.NameMap
-import io.github.apl_cornell.viaduct.syntax.ObjectVariable
-import io.github.apl_cornell.viaduct.syntax.ObjectVariableNode
-import io.github.apl_cornell.viaduct.syntax.Temporary
-import io.github.apl_cornell.viaduct.syntax.TemporaryNode
-import io.github.apl_cornell.viaduct.syntax.intermediate.Node
-import io.github.apl_cornell.viaduct.util.FreshNameGenerator
-import io.github.apl_cornell.viaduct.syntax.intermediate.AssertionNode as IAssertionNode
-import io.github.apl_cornell.viaduct.syntax.intermediate.AtomicExpressionNode as IAtomicExpressionNode
-import io.github.apl_cornell.viaduct.syntax.intermediate.AuthorityDelegationDeclarationNode as IAuthorityDelegationDeclarationNode
-import io.github.apl_cornell.viaduct.syntax.intermediate.BlockNode as IBlockNode
-import io.github.apl_cornell.viaduct.syntax.intermediate.BreakNode as IBreakNode
-import io.github.apl_cornell.viaduct.syntax.intermediate.DeclarationNode as IDeclarationNode
-import io.github.apl_cornell.viaduct.syntax.intermediate.DeclassificationNode as IDeclassificationNode
-import io.github.apl_cornell.viaduct.syntax.intermediate.EndorsementNode as IEndorsementNode
-import io.github.apl_cornell.viaduct.syntax.intermediate.ExpressionArgumentNode as IExpressionArgumentNode
-import io.github.apl_cornell.viaduct.syntax.intermediate.ExpressionNode as IExpressionNode
-import io.github.apl_cornell.viaduct.syntax.intermediate.FunctionArgumentNode as IFunctionArgumentNode
-import io.github.apl_cornell.viaduct.syntax.intermediate.FunctionCallNode as IFunctionCallNode
-import io.github.apl_cornell.viaduct.syntax.intermediate.FunctionDeclarationNode as IFunctionDeclarationNode
-import io.github.apl_cornell.viaduct.syntax.intermediate.HostDeclarationNode as IHostDeclarationNode
-import io.github.apl_cornell.viaduct.syntax.intermediate.IFCDelegationDeclarationNode as IIFCDelegationDeclarationNode
-import io.github.apl_cornell.viaduct.syntax.intermediate.IfNode as IIfNode
-import io.github.apl_cornell.viaduct.syntax.intermediate.InfiniteLoopNode as IInfiniteLoopNode
-import io.github.apl_cornell.viaduct.syntax.intermediate.InputNode as IInputNode
-import io.github.apl_cornell.viaduct.syntax.intermediate.LetNode as ILetNode
-import io.github.apl_cornell.viaduct.syntax.intermediate.LiteralNode as ILiteralNode
-import io.github.apl_cornell.viaduct.syntax.intermediate.ObjectDeclarationArgumentNode as IObjectDeclarationArgumentNode
-import io.github.apl_cornell.viaduct.syntax.intermediate.ObjectReferenceArgumentNode as IObjectReferenceArgumentNode
-import io.github.apl_cornell.viaduct.syntax.intermediate.OperatorApplicationNode as IOperatorApplicationNode
-import io.github.apl_cornell.viaduct.syntax.intermediate.OutParameterArgumentNode as IOutParameterArgumentNode
-import io.github.apl_cornell.viaduct.syntax.intermediate.OutParameterConstructorInitializerNode as IOutParameterConstructorInitializerNode
-import io.github.apl_cornell.viaduct.syntax.intermediate.OutParameterExpressionInitializerNode as IOutParameterExpressionInitializerNode
-import io.github.apl_cornell.viaduct.syntax.intermediate.OutParameterInitializationNode as IOutParameterInitializationNode
-import io.github.apl_cornell.viaduct.syntax.intermediate.OutputNode as IOutputNode
-import io.github.apl_cornell.viaduct.syntax.intermediate.ParameterNode as IParameterNode
-import io.github.apl_cornell.viaduct.syntax.intermediate.ProgramNode as IProgramNode
-import io.github.apl_cornell.viaduct.syntax.intermediate.QueryNode as IQueryNode
-import io.github.apl_cornell.viaduct.syntax.intermediate.ReadNode as IReadNode
-import io.github.apl_cornell.viaduct.syntax.intermediate.StatementNode as IStatementNode
-import io.github.apl_cornell.viaduct.syntax.intermediate.TopLevelDeclarationNode as ITopLevelDeclarationNode
-import io.github.apl_cornell.viaduct.syntax.intermediate.UpdateNode as IUpdateNode
-import io.github.apl_cornell.viaduct.syntax.surface.AssertionNode as SAssertionNode
-import io.github.apl_cornell.viaduct.syntax.surface.AuthorityDelegationDeclarationNode as SAuthorityDelegationDeclarationNode
-import io.github.apl_cornell.viaduct.syntax.surface.BlockNode as SBlockNode
-import io.github.apl_cornell.viaduct.syntax.surface.BreakNode as SBreakNode
-import io.github.apl_cornell.viaduct.syntax.surface.ConstructorCallNode as SConstructorCallNode
-import io.github.apl_cornell.viaduct.syntax.surface.DeclarationNode as SDeclarationNode
-import io.github.apl_cornell.viaduct.syntax.surface.DeclassificationNode as SDeclassificationNode
-import io.github.apl_cornell.viaduct.syntax.surface.DelegationDeclarationNode as SDelegationDeclarationNode
-import io.github.apl_cornell.viaduct.syntax.surface.EndorsementNode as SEndorsementNode
-import io.github.apl_cornell.viaduct.syntax.surface.ExpressionArgumentNode as SExpressionArgumentNode
-import io.github.apl_cornell.viaduct.syntax.surface.ExpressionNode as SExpressionNode
-import io.github.apl_cornell.viaduct.syntax.surface.ForLoopNode as SForLoopNode
-import io.github.apl_cornell.viaduct.syntax.surface.FunctionArgumentNode as SFunctionArgumentNode
-import io.github.apl_cornell.viaduct.syntax.surface.FunctionCallNode as SFunctionCallNode
-import io.github.apl_cornell.viaduct.syntax.surface.FunctionDeclarationNode as SFunctionDeclarationNode
-import io.github.apl_cornell.viaduct.syntax.surface.HostDeclarationNode as SHostDeclarationNode
-import io.github.apl_cornell.viaduct.syntax.surface.IFCDelegationDeclarationNode as SIFCDelegationDeclarationNode
-import io.github.apl_cornell.viaduct.syntax.surface.IfNode as SIfNode
-import io.github.apl_cornell.viaduct.syntax.surface.InfiniteLoopNode as SInfiniteLoopNode
-import io.github.apl_cornell.viaduct.syntax.surface.InputNode as SInputNode
-import io.github.apl_cornell.viaduct.syntax.surface.LetNode as SLetNode
-import io.github.apl_cornell.viaduct.syntax.surface.LiteralNode as SLiteralNode
-import io.github.apl_cornell.viaduct.syntax.surface.ObjectDeclarationArgumentNode as SObjectDeclarationArgumentNode
-import io.github.apl_cornell.viaduct.syntax.surface.ObjectReferenceArgumentNode as SObjectReferenceArgumentNode
-import io.github.apl_cornell.viaduct.syntax.surface.OperatorApplicationNode as SOperatorApplicationNode
-import io.github.apl_cornell.viaduct.syntax.surface.OutParameterArgumentNode as SOutParameterArgumentNode
-import io.github.apl_cornell.viaduct.syntax.surface.OutParameterInitializationNode as SOutParameterInitializationNode
-import io.github.apl_cornell.viaduct.syntax.surface.OutputNode as SOutputNode
-import io.github.apl_cornell.viaduct.syntax.surface.ProgramNode as SProgramNode
-import io.github.apl_cornell.viaduct.syntax.surface.QueryNode as SQueryNode
-import io.github.apl_cornell.viaduct.syntax.surface.ReadNode as SReadNode
-import io.github.apl_cornell.viaduct.syntax.surface.SkipNode as SSkipNode
-import io.github.apl_cornell.viaduct.syntax.surface.StatementNode as SStatementNode
-import io.github.apl_cornell.viaduct.syntax.surface.UpdateNode as SUpdateNode
-import io.github.apl_cornell.viaduct.syntax.surface.WhileLoopNode as SWhileLoopNode
+import io.github.aplcornell.viaduct.errors.InvalidConstructorCallError
+import io.github.aplcornell.viaduct.errors.JumpOutsideLoopScopeError
+import io.github.aplcornell.viaduct.security.LabelAnd
+import io.github.aplcornell.viaduct.security.LabelBottom
+import io.github.aplcornell.viaduct.security.LabelConfidentiality
+import io.github.aplcornell.viaduct.security.LabelIntegrity
+import io.github.aplcornell.viaduct.security.LabelTop
+import io.github.aplcornell.viaduct.syntax.Arguments
+import io.github.aplcornell.viaduct.syntax.FunctionName
+import io.github.aplcornell.viaduct.syntax.Host
+import io.github.aplcornell.viaduct.syntax.JumpLabel
+import io.github.aplcornell.viaduct.syntax.JumpLabelNode
+import io.github.aplcornell.viaduct.syntax.LabelNode
+import io.github.aplcornell.viaduct.syntax.Located
+import io.github.aplcornell.viaduct.syntax.NameMap
+import io.github.aplcornell.viaduct.syntax.ObjectVariable
+import io.github.aplcornell.viaduct.syntax.ObjectVariableNode
+import io.github.aplcornell.viaduct.syntax.Temporary
+import io.github.aplcornell.viaduct.syntax.TemporaryNode
+import io.github.aplcornell.viaduct.syntax.intermediate.Node
+import io.github.aplcornell.viaduct.util.FreshNameGenerator
+import io.github.aplcornell.viaduct.syntax.intermediate.AssertionNode as IAssertionNode
+import io.github.aplcornell.viaduct.syntax.intermediate.AtomicExpressionNode as IAtomicExpressionNode
+import io.github.aplcornell.viaduct.syntax.intermediate.AuthorityDelegationDeclarationNode as IAuthorityDelegationDeclarationNode
+import io.github.aplcornell.viaduct.syntax.intermediate.BlockNode as IBlockNode
+import io.github.aplcornell.viaduct.syntax.intermediate.BreakNode as IBreakNode
+import io.github.aplcornell.viaduct.syntax.intermediate.DeclarationNode as IDeclarationNode
+import io.github.aplcornell.viaduct.syntax.intermediate.DeclassificationNode as IDeclassificationNode
+import io.github.aplcornell.viaduct.syntax.intermediate.EndorsementNode as IEndorsementNode
+import io.github.aplcornell.viaduct.syntax.intermediate.ExpressionArgumentNode as IExpressionArgumentNode
+import io.github.aplcornell.viaduct.syntax.intermediate.ExpressionNode as IExpressionNode
+import io.github.aplcornell.viaduct.syntax.intermediate.FunctionArgumentNode as IFunctionArgumentNode
+import io.github.aplcornell.viaduct.syntax.intermediate.FunctionCallNode as IFunctionCallNode
+import io.github.aplcornell.viaduct.syntax.intermediate.FunctionDeclarationNode as IFunctionDeclarationNode
+import io.github.aplcornell.viaduct.syntax.intermediate.HostDeclarationNode as IHostDeclarationNode
+import io.github.aplcornell.viaduct.syntax.intermediate.IFCDelegationDeclarationNode as IIFCDelegationDeclarationNode
+import io.github.aplcornell.viaduct.syntax.intermediate.IfNode as IIfNode
+import io.github.aplcornell.viaduct.syntax.intermediate.InfiniteLoopNode as IInfiniteLoopNode
+import io.github.aplcornell.viaduct.syntax.intermediate.InputNode as IInputNode
+import io.github.aplcornell.viaduct.syntax.intermediate.LetNode as ILetNode
+import io.github.aplcornell.viaduct.syntax.intermediate.LiteralNode as ILiteralNode
+import io.github.aplcornell.viaduct.syntax.intermediate.ObjectDeclarationArgumentNode as IObjectDeclarationArgumentNode
+import io.github.aplcornell.viaduct.syntax.intermediate.ObjectReferenceArgumentNode as IObjectReferenceArgumentNode
+import io.github.aplcornell.viaduct.syntax.intermediate.OperatorApplicationNode as IOperatorApplicationNode
+import io.github.aplcornell.viaduct.syntax.intermediate.OutParameterArgumentNode as IOutParameterArgumentNode
+import io.github.aplcornell.viaduct.syntax.intermediate.OutParameterConstructorInitializerNode as IOutParameterConstructorInitializerNode
+import io.github.aplcornell.viaduct.syntax.intermediate.OutParameterExpressionInitializerNode as IOutParameterExpressionInitializerNode
+import io.github.aplcornell.viaduct.syntax.intermediate.OutParameterInitializationNode as IOutParameterInitializationNode
+import io.github.aplcornell.viaduct.syntax.intermediate.OutputNode as IOutputNode
+import io.github.aplcornell.viaduct.syntax.intermediate.ParameterNode as IParameterNode
+import io.github.aplcornell.viaduct.syntax.intermediate.ProgramNode as IProgramNode
+import io.github.aplcornell.viaduct.syntax.intermediate.QueryNode as IQueryNode
+import io.github.aplcornell.viaduct.syntax.intermediate.ReadNode as IReadNode
+import io.github.aplcornell.viaduct.syntax.intermediate.StatementNode as IStatementNode
+import io.github.aplcornell.viaduct.syntax.intermediate.TopLevelDeclarationNode as ITopLevelDeclarationNode
+import io.github.aplcornell.viaduct.syntax.intermediate.UpdateNode as IUpdateNode
+import io.github.aplcornell.viaduct.syntax.surface.AssertionNode as SAssertionNode
+import io.github.aplcornell.viaduct.syntax.surface.AuthorityDelegationDeclarationNode as SAuthorityDelegationDeclarationNode
+import io.github.aplcornell.viaduct.syntax.surface.BlockNode as SBlockNode
+import io.github.aplcornell.viaduct.syntax.surface.BreakNode as SBreakNode
+import io.github.aplcornell.viaduct.syntax.surface.ConstructorCallNode as SConstructorCallNode
+import io.github.aplcornell.viaduct.syntax.surface.DeclarationNode as SDeclarationNode
+import io.github.aplcornell.viaduct.syntax.surface.DeclassificationNode as SDeclassificationNode
+import io.github.aplcornell.viaduct.syntax.surface.DelegationDeclarationNode as SDelegationDeclarationNode
+import io.github.aplcornell.viaduct.syntax.surface.EndorsementNode as SEndorsementNode
+import io.github.aplcornell.viaduct.syntax.surface.ExpressionArgumentNode as SExpressionArgumentNode
+import io.github.aplcornell.viaduct.syntax.surface.ExpressionNode as SExpressionNode
+import io.github.aplcornell.viaduct.syntax.surface.ForLoopNode as SForLoopNode
+import io.github.aplcornell.viaduct.syntax.surface.FunctionArgumentNode as SFunctionArgumentNode
+import io.github.aplcornell.viaduct.syntax.surface.FunctionCallNode as SFunctionCallNode
+import io.github.aplcornell.viaduct.syntax.surface.FunctionDeclarationNode as SFunctionDeclarationNode
+import io.github.aplcornell.viaduct.syntax.surface.HostDeclarationNode as SHostDeclarationNode
+import io.github.aplcornell.viaduct.syntax.surface.IFCDelegationDeclarationNode as SIFCDelegationDeclarationNode
+import io.github.aplcornell.viaduct.syntax.surface.IfNode as SIfNode
+import io.github.aplcornell.viaduct.syntax.surface.InfiniteLoopNode as SInfiniteLoopNode
+import io.github.aplcornell.viaduct.syntax.surface.InputNode as SInputNode
+import io.github.aplcornell.viaduct.syntax.surface.LetNode as SLetNode
+import io.github.aplcornell.viaduct.syntax.surface.LiteralNode as SLiteralNode
+import io.github.aplcornell.viaduct.syntax.surface.ObjectDeclarationArgumentNode as SObjectDeclarationArgumentNode
+import io.github.aplcornell.viaduct.syntax.surface.ObjectReferenceArgumentNode as SObjectReferenceArgumentNode
+import io.github.aplcornell.viaduct.syntax.surface.OperatorApplicationNode as SOperatorApplicationNode
+import io.github.aplcornell.viaduct.syntax.surface.OutParameterArgumentNode as SOutParameterArgumentNode
+import io.github.aplcornell.viaduct.syntax.surface.OutParameterInitializationNode as SOutParameterInitializationNode
+import io.github.aplcornell.viaduct.syntax.surface.OutputNode as SOutputNode
+import io.github.aplcornell.viaduct.syntax.surface.ProgramNode as SProgramNode
+import io.github.aplcornell.viaduct.syntax.surface.QueryNode as SQueryNode
+import io.github.aplcornell.viaduct.syntax.surface.ReadNode as SReadNode
+import io.github.aplcornell.viaduct.syntax.surface.SkipNode as SSkipNode
+import io.github.aplcornell.viaduct.syntax.surface.StatementNode as SStatementNode
+import io.github.aplcornell.viaduct.syntax.surface.UpdateNode as SUpdateNode
+import io.github.aplcornell.viaduct.syntax.surface.WhileLoopNode as SWhileLoopNode
 
 /**
  * Elaborates this surface program into a program in the intermediate representation.

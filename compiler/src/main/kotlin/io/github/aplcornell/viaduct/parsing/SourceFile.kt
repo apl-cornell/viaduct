@@ -1,6 +1,6 @@
-package io.github.apl_cornell.viaduct.parsing
+package io.github.aplcornell.viaduct.parsing
 
-import io.github.apl_cornell.viaduct.util.graphemeClusterCount
+import io.github.aplcornell.viaduct.util.graphemeClusterCount
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toImmutableList
 import java.io.File

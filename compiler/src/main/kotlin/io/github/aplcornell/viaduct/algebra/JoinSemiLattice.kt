@@ -1,4 +1,4 @@
-package io.github.apl_cornell.viaduct.algebra
+package io.github.aplcornell.viaduct.algebra
 
 /** A set that supports binary least upper bounds. */
 interface JoinSemiLattice<T : JoinSemiLattice<T>> {

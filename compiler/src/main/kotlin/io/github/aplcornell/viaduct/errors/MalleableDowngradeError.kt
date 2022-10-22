@@ -1,7 +1,7 @@
-package io.github.apl_cornell.viaduct.errors
+package io.github.aplcornell.viaduct.errors
 
-import io.github.apl_cornell.viaduct.prettyprinting.Document
-import io.github.apl_cornell.viaduct.syntax.intermediate.DowngradeNode
+import io.github.aplcornell.viaduct.prettyprinting.Document
+import io.github.aplcornell.viaduct.syntax.intermediate.DowngradeNode
 
 /**
  * Thrown when a [DowngradeNode] node violate the non-malleable information flow control

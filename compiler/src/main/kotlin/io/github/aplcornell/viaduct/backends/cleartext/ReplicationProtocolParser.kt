@@ -1,8 +1,8 @@
-package io.github.apl_cornell.viaduct.backends.cleartext
+package io.github.aplcornell.viaduct.backends.cleartext
 
-import io.github.apl_cornell.viaduct.parsing.ProtocolArguments
-import io.github.apl_cornell.viaduct.parsing.ProtocolParser
-import io.github.apl_cornell.viaduct.syntax.values.HostSetValue
+import io.github.aplcornell.viaduct.parsing.ProtocolArguments
+import io.github.aplcornell.viaduct.parsing.ProtocolParser
+import io.github.aplcornell.viaduct.syntax.values.HostSetValue
 
 /** Parser for the [Replication] protocol. */
 object ReplicationProtocolParser : ProtocolParser<Replication> {

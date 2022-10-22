@@ -1,10 +1,10 @@
-package io.github.apl_cornell.viaduct.selection
+package io.github.aplcornell.viaduct.selection
 
-import io.github.apl_cornell.viaduct.syntax.Host
-import io.github.apl_cornell.viaduct.syntax.InputPort
-import io.github.apl_cornell.viaduct.syntax.OutputPort
-import io.github.apl_cornell.viaduct.syntax.PortId
-import io.github.apl_cornell.viaduct.syntax.ProtocolProjection
+import io.github.aplcornell.viaduct.syntax.Host
+import io.github.aplcornell.viaduct.syntax.InputPort
+import io.github.aplcornell.viaduct.syntax.OutputPort
+import io.github.aplcornell.viaduct.syntax.PortId
+import io.github.aplcornell.viaduct.syntax.ProtocolProjection
 
 data class CommunicationEvent(val send: OutputPort, val recv: InputPort)
 

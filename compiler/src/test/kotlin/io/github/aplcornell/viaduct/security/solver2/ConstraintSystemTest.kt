@@ -1,14 +1,14 @@
-package io.github.apl_cornell.viaduct.security.solver2
+package io.github.aplcornell.viaduct.security.solver2
 
-import io.github.apl_cornell.viaduct.algebra.FreeDistributiveLattice
-import io.github.apl_cornell.viaduct.algebra.FreeDistributiveLatticeCongruence
-import io.github.apl_cornell.viaduct.security.SecurityLattice
+import io.github.aplcornell.viaduct.algebra.FreeDistributiveLattice
+import io.github.aplcornell.viaduct.algebra.FreeDistributiveLatticeCongruence
+import io.github.aplcornell.viaduct.security.SecurityLattice
 import org.junit.jupiter.api.AssertionFailureBuilder.assertionFailure
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import java.io.StringWriter
-import io.github.apl_cornell.viaduct.algebra.solver2.Term as ComponentTerm
+import io.github.aplcornell.viaduct.algebra.solver2.Term as ComponentTerm
 
 private typealias Constant = FreeDistributiveLattice<String>
 private typealias Variable = String

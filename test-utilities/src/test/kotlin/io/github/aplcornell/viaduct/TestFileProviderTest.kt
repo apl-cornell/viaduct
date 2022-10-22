@@ -1,4 +1,4 @@
-package io.github.apl_cornell.viaduct
+package io.github.aplcornell.viaduct
 
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ArgumentsSource

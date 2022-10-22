@@ -1,4 +1,4 @@
-package io.github.apl_cornell.viaduct.selection
+package io.github.aplcornell.viaduct.selection
 
 import com.microsoft.z3.BoolExpr
 import com.microsoft.z3.Context
@@ -9,8 +9,8 @@ import com.microsoft.z3.Status
 import com.microsoft.z3.enumerations.Z3_lbool
 import com.uchuhimo.collections.BiMap
 import com.uchuhimo.collections.mutableBiMapOf
-import io.github.apl_cornell.viaduct.syntax.Protocol
-import io.github.apl_cornell.viaduct.util.FreshNameGenerator
+import io.github.aplcornell.viaduct.syntax.Protocol
+import io.github.aplcornell.viaduct.util.FreshNameGenerator
 import mu.KotlinLogging
 
 private val logger = KotlinLogging.logger("Z3Selection")

@@ -1,10 +1,10 @@
-package io.github.apl_cornell.viaduct.syntax.surface
+package io.github.aplcornell.viaduct.syntax.surface
 
-import io.github.apl_cornell.viaduct.prettyprinting.Document
-import io.github.apl_cornell.viaduct.prettyprinting.PrettyPrintable
-import io.github.apl_cornell.viaduct.prettyprinting.commented
-import io.github.apl_cornell.viaduct.prettyprinting.div
-import io.github.apl_cornell.viaduct.syntax.HasSourceLocation
+import io.github.aplcornell.viaduct.prettyprinting.Document
+import io.github.aplcornell.viaduct.prettyprinting.PrettyPrintable
+import io.github.aplcornell.viaduct.prettyprinting.commented
+import io.github.aplcornell.viaduct.prettyprinting.div
+import io.github.aplcornell.viaduct.syntax.HasSourceLocation
 
 /**
  * A node in the abstract syntax tree of a surface level program.

@@ -1,16 +1,16 @@
-package io.github.apl_cornell.viaduct.backend.commitment
+package io.github.aplcornell.viaduct.backend.commitment
 
-import io.github.apl_cornell.viaduct.backend.CleartextClassObject
-import io.github.apl_cornell.viaduct.backend.ImmutableCellObject
-import io.github.apl_cornell.viaduct.backend.MutableCellObject
-import io.github.apl_cornell.viaduct.backend.NullObject
-import io.github.apl_cornell.viaduct.backend.VectorObject
-import io.github.apl_cornell.viaduct.syntax.values.BooleanValue
-import io.github.apl_cornell.viaduct.syntax.values.ByteVecValue
-import io.github.apl_cornell.viaduct.syntax.values.IntegerValue
-import io.github.apl_cornell.viaduct.syntax.values.StringValue
-import io.github.apl_cornell.viaduct.syntax.values.UnitValue
-import io.github.apl_cornell.viaduct.syntax.values.Value
+import io.github.aplcornell.viaduct.backend.CleartextClassObject
+import io.github.aplcornell.viaduct.backend.ImmutableCellObject
+import io.github.aplcornell.viaduct.backend.MutableCellObject
+import io.github.aplcornell.viaduct.backend.NullObject
+import io.github.aplcornell.viaduct.backend.VectorObject
+import io.github.aplcornell.viaduct.syntax.values.BooleanValue
+import io.github.aplcornell.viaduct.syntax.values.ByteVecValue
+import io.github.aplcornell.viaduct.syntax.values.IntegerValue
+import io.github.aplcornell.viaduct.syntax.values.StringValue
+import io.github.aplcornell.viaduct.syntax.values.UnitValue
+import io.github.aplcornell.viaduct.syntax.values.Value
 import java.security.MessageDigest
 import java.security.SecureRandom
 

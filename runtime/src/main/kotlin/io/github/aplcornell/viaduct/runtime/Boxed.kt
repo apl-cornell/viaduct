@@ -1,4 +1,4 @@
-package io.github.apl_cornell.viaduct.runtime
+package io.github.aplcornell.viaduct.runtime
 
 /** Represents a mutable cell. */
 class Boxed<T>(private var value: T) {

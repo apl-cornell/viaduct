@@ -1,4 +1,4 @@
-package io.github.apl_cornell.viaduct.prettyprinting
+package io.github.aplcornell.viaduct.prettyprinting
 
 import org.fusesource.jansi.Ansi
 

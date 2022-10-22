@@ -1,4 +1,4 @@
-package io.github.apl_cornell.viaduct.cli
+package io.github.aplcornell.viaduct.cli
 
 import com.github.ajalt.clikt.core.PrintHelpMessage
 import org.junit.jupiter.api.BeforeAll

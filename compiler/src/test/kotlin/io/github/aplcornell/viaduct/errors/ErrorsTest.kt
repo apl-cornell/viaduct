@@ -1,12 +1,12 @@
-package io.github.apl_cornell.viaduct.errors
+package io.github.aplcornell.viaduct.errors
 
-import io.github.apl_cornell.viaduct.NegativeTestFileProvider
-import io.github.apl_cornell.viaduct.backends.DefaultCombinedBackend
-import io.github.apl_cornell.viaduct.parsing.SourceFile
-import io.github.apl_cornell.viaduct.parsing.isBlankOrUnderline
-import io.github.apl_cornell.viaduct.passes.compile
-import io.github.apl_cornell.viaduct.prettyprinting.Document
-import io.github.apl_cornell.viaduct.prettyprinting.plus
+import io.github.aplcornell.viaduct.NegativeTestFileProvider
+import io.github.aplcornell.viaduct.backends.DefaultCombinedBackend
+import io.github.aplcornell.viaduct.parsing.SourceFile
+import io.github.aplcornell.viaduct.parsing.isBlankOrUnderline
+import io.github.aplcornell.viaduct.passes.compile
+import io.github.aplcornell.viaduct.prettyprinting.Document
+import io.github.aplcornell.viaduct.prettyprinting.plus
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Assertions.assertTrue

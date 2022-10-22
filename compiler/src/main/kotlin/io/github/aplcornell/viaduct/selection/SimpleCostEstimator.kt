@@ -1,35 +1,35 @@
-package io.github.apl_cornell.viaduct.selection
+package io.github.aplcornell.viaduct.selection
 
-import io.github.apl_cornell.viaduct.backends.aby.ABY
-import io.github.apl_cornell.viaduct.backends.aby.ArithABY
-import io.github.apl_cornell.viaduct.backends.aby.BoolABY
-import io.github.apl_cornell.viaduct.backends.aby.YaoABY
-import io.github.apl_cornell.viaduct.backends.cleartext.Local
-import io.github.apl_cornell.viaduct.backends.cleartext.Replication
-import io.github.apl_cornell.viaduct.backends.commitment.Commitment
-import io.github.apl_cornell.viaduct.backends.zkp.ZKP
-import io.github.apl_cornell.viaduct.syntax.Host
-import io.github.apl_cornell.viaduct.syntax.Operator
-import io.github.apl_cornell.viaduct.syntax.Protocol
-import io.github.apl_cornell.viaduct.syntax.ProtocolName
-import io.github.apl_cornell.viaduct.syntax.intermediate.LetNode
-import io.github.apl_cornell.viaduct.syntax.intermediate.OperatorApplicationNode
-import io.github.apl_cornell.viaduct.syntax.intermediate.SimpleStatementNode
-import io.github.apl_cornell.viaduct.syntax.operators.Addition
-import io.github.apl_cornell.viaduct.syntax.operators.And
-import io.github.apl_cornell.viaduct.syntax.operators.Division
-import io.github.apl_cornell.viaduct.syntax.operators.EqualTo
-import io.github.apl_cornell.viaduct.syntax.operators.ExclusiveOr
-import io.github.apl_cornell.viaduct.syntax.operators.GreaterThan
-import io.github.apl_cornell.viaduct.syntax.operators.GreaterThanOrEqualTo
-import io.github.apl_cornell.viaduct.syntax.operators.LessThan
-import io.github.apl_cornell.viaduct.syntax.operators.LessThanOrEqualTo
-import io.github.apl_cornell.viaduct.syntax.operators.Maximum
-import io.github.apl_cornell.viaduct.syntax.operators.Minimum
-import io.github.apl_cornell.viaduct.syntax.operators.Multiplication
-import io.github.apl_cornell.viaduct.syntax.operators.Mux
-import io.github.apl_cornell.viaduct.syntax.operators.Negation
-import io.github.apl_cornell.viaduct.syntax.operators.Subtraction
+import io.github.aplcornell.viaduct.backends.aby.ABY
+import io.github.aplcornell.viaduct.backends.aby.ArithABY
+import io.github.aplcornell.viaduct.backends.aby.BoolABY
+import io.github.aplcornell.viaduct.backends.aby.YaoABY
+import io.github.aplcornell.viaduct.backends.cleartext.Local
+import io.github.aplcornell.viaduct.backends.cleartext.Replication
+import io.github.aplcornell.viaduct.backends.commitment.Commitment
+import io.github.aplcornell.viaduct.backends.zkp.ZKP
+import io.github.aplcornell.viaduct.syntax.Host
+import io.github.aplcornell.viaduct.syntax.Operator
+import io.github.aplcornell.viaduct.syntax.Protocol
+import io.github.aplcornell.viaduct.syntax.ProtocolName
+import io.github.aplcornell.viaduct.syntax.intermediate.LetNode
+import io.github.aplcornell.viaduct.syntax.intermediate.OperatorApplicationNode
+import io.github.aplcornell.viaduct.syntax.intermediate.SimpleStatementNode
+import io.github.aplcornell.viaduct.syntax.operators.Addition
+import io.github.aplcornell.viaduct.syntax.operators.And
+import io.github.aplcornell.viaduct.syntax.operators.Division
+import io.github.aplcornell.viaduct.syntax.operators.EqualTo
+import io.github.aplcornell.viaduct.syntax.operators.ExclusiveOr
+import io.github.aplcornell.viaduct.syntax.operators.GreaterThan
+import io.github.aplcornell.viaduct.syntax.operators.GreaterThanOrEqualTo
+import io.github.aplcornell.viaduct.syntax.operators.LessThan
+import io.github.aplcornell.viaduct.syntax.operators.LessThanOrEqualTo
+import io.github.aplcornell.viaduct.syntax.operators.Maximum
+import io.github.aplcornell.viaduct.syntax.operators.Minimum
+import io.github.aplcornell.viaduct.syntax.operators.Multiplication
+import io.github.aplcornell.viaduct.syntax.operators.Mux
+import io.github.aplcornell.viaduct.syntax.operators.Negation
+import io.github.aplcornell.viaduct.syntax.operators.Subtraction
 import kotlinx.collections.immutable.persistentMapOf
 
 enum class SimpleCostRegime { LAN, WAN }
@@ -94,14 +94,14 @@ class SimpleCostEstimator(
             Pair(And, YaoABY.protocolName) to opCost(146, 145),
 
             // OR
-            Pair(io.github.apl_cornell.viaduct.syntax.operators.Or, BoolABY.protocolName) to
+            Pair(io.github.aplcornell.viaduct.syntax.operators.Or, BoolABY.protocolName) to
                 opCost(138, 139),
-            Pair(io.github.apl_cornell.viaduct.syntax.operators.Or, YaoABY.protocolName) to
+            Pair(io.github.aplcornell.viaduct.syntax.operators.Or, YaoABY.protocolName) to
                 opCost(146, 146),
 
             // NOT (don't have numbers for these, copy AND)
-            Pair(io.github.apl_cornell.viaduct.syntax.operators.Not, BoolABY.protocolName) to opCost(137, 137),
-            Pair(io.github.apl_cornell.viaduct.syntax.operators.Not, YaoABY.protocolName) to opCost(146, 145),
+            Pair(io.github.aplcornell.viaduct.syntax.operators.Not, BoolABY.protocolName) to opCost(137, 137),
+            Pair(io.github.aplcornell.viaduct.syntax.operators.Not, YaoABY.protocolName) to opCost(146, 145),
 
             // EQUAL TO
             Pair(EqualTo, BoolABY.protocolName) to opCost(184, 186),
@@ -168,14 +168,14 @@ class SimpleCostEstimator(
             Pair(And, YaoABY.protocolName) to opCost(0, 23),
 
             // OR (TODO: no numbers for these, copy AND)
-            Pair(io.github.apl_cornell.viaduct.syntax.operators.Or, BoolABY.protocolName) to
+            Pair(io.github.aplcornell.viaduct.syntax.operators.Or, BoolABY.protocolName) to
                 opCost(1, 1932),
-            Pair(io.github.apl_cornell.viaduct.syntax.operators.Or, YaoABY.protocolName) to
+            Pair(io.github.aplcornell.viaduct.syntax.operators.Or, YaoABY.protocolName) to
                 opCost(0, 23),
 
             // NOT (TODO: no numbers for these, copy AND)
-            Pair(io.github.apl_cornell.viaduct.syntax.operators.Not, BoolABY.protocolName) to opCost(1, 1932),
-            Pair(io.github.apl_cornell.viaduct.syntax.operators.Not, YaoABY.protocolName) to opCost(0, 23),
+            Pair(io.github.aplcornell.viaduct.syntax.operators.Not, BoolABY.protocolName) to opCost(1, 1932),
+            Pair(io.github.aplcornell.viaduct.syntax.operators.Not, YaoABY.protocolName) to opCost(0, 23),
 
             Pair(ExclusiveOr, BoolABY.protocolName) to opCost(0, 0),
             Pair(ExclusiveOr, YaoABY.protocolName) to opCost(0, 12),
@@ -245,14 +245,14 @@ class SimpleCostEstimator(
             Pair(And, YaoABY.protocolName) to opCost(22, 15),
 
             // OR = NOT (AND (NOT lhs) (NOT rhs))
-            Pair(io.github.apl_cornell.viaduct.syntax.operators.Or, BoolABY.protocolName) to
+            Pair(io.github.aplcornell.viaduct.syntax.operators.Or, BoolABY.protocolName) to
                 opCost(20 + (3 * 5), 15 + (3 * 5)),
-            Pair(io.github.apl_cornell.viaduct.syntax.operators.Or, YaoABY.protocolName) to
+            Pair(io.github.aplcornell.viaduct.syntax.operators.Or, YaoABY.protocolName) to
                 opCost(22 + (3 * 6), 15 + (3 * 5)),
 
             // NOT
-            Pair(io.github.apl_cornell.viaduct.syntax.operators.Not, BoolABY.protocolName) to opCost(5, 5),
-            Pair(io.github.apl_cornell.viaduct.syntax.operators.Not, YaoABY.protocolName) to opCost(6, 5),
+            Pair(io.github.aplcornell.viaduct.syntax.operators.Not, BoolABY.protocolName) to opCost(5, 5),
+            Pair(io.github.aplcornell.viaduct.syntax.operators.Not, YaoABY.protocolName) to opCost(6, 5),
 
             // EQUAL TO
             Pair(EqualTo, BoolABY.protocolName) to opCost(25, 26),

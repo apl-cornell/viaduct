@@ -1,26 +1,26 @@
-package io.github.apl_cornell.viaduct.syntax.intermediate
+package io.github.aplcornell.viaduct.syntax.intermediate
 
-import io.github.apl_cornell.viaduct.algebra.FreeDistributiveLattice
-import io.github.apl_cornell.viaduct.passes.PrincipalComponent
-import io.github.apl_cornell.viaduct.security.LabelComponent
-import io.github.apl_cornell.viaduct.syntax.Arguments
-import io.github.apl_cornell.viaduct.syntax.DelegationProjection
-import io.github.apl_cornell.viaduct.syntax.FunctionNameNode
-import io.github.apl_cornell.viaduct.syntax.HostNode
-import io.github.apl_cornell.viaduct.syntax.LabelNode
-import io.github.apl_cornell.viaduct.syntax.LabelVariableNode
-import io.github.apl_cornell.viaduct.syntax.ObjectTypeNode
-import io.github.apl_cornell.viaduct.syntax.ObjectVariable
-import io.github.apl_cornell.viaduct.syntax.ObjectVariableNode
-import io.github.apl_cornell.viaduct.syntax.ParameterDirection
-import io.github.apl_cornell.viaduct.syntax.ProtocolNode
-import io.github.apl_cornell.viaduct.syntax.SourceLocation
+import io.github.aplcornell.viaduct.algebra.FreeDistributiveLattice
+import io.github.aplcornell.viaduct.passes.PrincipalComponent
+import io.github.aplcornell.viaduct.security.LabelComponent
+import io.github.aplcornell.viaduct.syntax.Arguments
+import io.github.aplcornell.viaduct.syntax.DelegationProjection
+import io.github.aplcornell.viaduct.syntax.FunctionNameNode
+import io.github.aplcornell.viaduct.syntax.HostNode
+import io.github.aplcornell.viaduct.syntax.LabelNode
+import io.github.aplcornell.viaduct.syntax.LabelVariableNode
+import io.github.aplcornell.viaduct.syntax.ObjectTypeNode
+import io.github.aplcornell.viaduct.syntax.ObjectVariable
+import io.github.aplcornell.viaduct.syntax.ObjectVariableNode
+import io.github.aplcornell.viaduct.syntax.ParameterDirection
+import io.github.aplcornell.viaduct.syntax.ProtocolNode
+import io.github.aplcornell.viaduct.syntax.SourceLocation
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.toPersistentList
 
 /** A declaration at the top level of a file. */
 sealed class TopLevelDeclarationNode : Node() {
-    abstract override fun toSurfaceNode(metadata: Metadata): io.github.apl_cornell.viaduct.syntax.surface.TopLevelDeclarationNode
+    abstract override fun toSurfaceNode(metadata: Metadata): io.github.aplcornell.viaduct.syntax.surface.TopLevelDeclarationNode
 }
 
 /**
@@ -37,8 +37,8 @@ class HostDeclarationNode(
     override val children: Iterable<Nothing>
         get() = listOf()
 
-    override fun toSurfaceNode(metadata: Metadata): io.github.apl_cornell.viaduct.syntax.surface.HostDeclarationNode =
-        io.github.apl_cornell.viaduct.syntax.surface.HostDeclarationNode(
+    override fun toSurfaceNode(metadata: Metadata): io.github.aplcornell.viaduct.syntax.surface.HostDeclarationNode =
+        io.github.aplcornell.viaduct.syntax.surface.HostDeclarationNode(
             name,
             sourceLocation,
             comment = metadataAsComment(metadata)
@@ -61,8 +61,8 @@ class ParameterNode(
     override val children: Iterable<BlockNode>
         get() = listOf()
 
-    override fun toSurfaceNode(metadata: Metadata): io.github.apl_cornell.viaduct.syntax.surface.ParameterNode =
-        io.github.apl_cornell.viaduct.syntax.surface.ParameterNode(
+    override fun toSurfaceNode(metadata: Metadata): io.github.aplcornell.viaduct.syntax.surface.ParameterNode =
+        io.github.aplcornell.viaduct.syntax.surface.ParameterNode(
             name,
             parameterDirection,
             objectType,
@@ -101,8 +101,8 @@ class FunctionDeclarationNode(
     override val children: Iterable<Node>
         get() = (parameters.toPersistentList() as PersistentList<Node>).add(body)
 
-    override fun toSurfaceNode(metadata: Metadata): io.github.apl_cornell.viaduct.syntax.surface.FunctionDeclarationNode =
-        io.github.apl_cornell.viaduct.syntax.surface.FunctionDeclarationNode(
+    override fun toSurfaceNode(metadata: Metadata): io.github.aplcornell.viaduct.syntax.surface.FunctionDeclarationNode =
+        io.github.aplcornell.viaduct.syntax.surface.FunctionDeclarationNode(
             name,
             labelParameters,
             Arguments(
@@ -148,7 +148,7 @@ abstract class DelegationDeclarationNode(
     override val sourceLocation: SourceLocation
 ) : TopLevelDeclarationNode() {
     abstract fun congruences(): List<FreeDistributiveLattice.LessThanOrEqualTo<PrincipalComponent>>
-    abstract override fun toSurfaceNode(metadata: Metadata): io.github.apl_cornell.viaduct.syntax.surface.DelegationDeclarationNode
+    abstract override fun toSurfaceNode(metadata: Metadata): io.github.aplcornell.viaduct.syntax.surface.DelegationDeclarationNode
 }
 
 /**
@@ -191,8 +191,8 @@ class AuthorityDelegationDeclarationNode(
     override val children: Iterable<BlockNode>
         get() = listOf()
 
-    override fun toSurfaceNode(metadata: Metadata): io.github.apl_cornell.viaduct.syntax.surface.AuthorityDelegationDeclarationNode =
-        io.github.apl_cornell.viaduct.syntax.surface.AuthorityDelegationDeclarationNode(
+    override fun toSurfaceNode(metadata: Metadata): io.github.aplcornell.viaduct.syntax.surface.AuthorityDelegationDeclarationNode =
+        io.github.aplcornell.viaduct.syntax.surface.AuthorityDelegationDeclarationNode(
             from,
             to,
             delegationProjection,
@@ -243,8 +243,8 @@ class IFCDelegationDeclarationNode(
     override val children: Iterable<BlockNode>
         get() = listOf()
 
-    override fun toSurfaceNode(metadata: Metadata): io.github.apl_cornell.viaduct.syntax.surface.IFCDelegationDeclarationNode =
-        io.github.apl_cornell.viaduct.syntax.surface.IFCDelegationDeclarationNode(
+    override fun toSurfaceNode(metadata: Metadata): io.github.aplcornell.viaduct.syntax.surface.IFCDelegationDeclarationNode =
+        io.github.aplcornell.viaduct.syntax.surface.IFCDelegationDeclarationNode(
             from,
             to,
             delegationProjection,

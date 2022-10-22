@@ -1,11 +1,11 @@
-package io.github.apl_cornell.viaduct.backend
+package io.github.aplcornell.viaduct.backend
 
-import io.github.apl_cornell.viaduct.syntax.QueryNameNode
-import io.github.apl_cornell.viaduct.syntax.UpdateNameNode
-import io.github.apl_cornell.viaduct.syntax.datatypes.Get
-import io.github.apl_cornell.viaduct.syntax.datatypes.Modify
-import io.github.apl_cornell.viaduct.syntax.values.IntegerValue
-import io.github.apl_cornell.viaduct.syntax.values.Value
+import io.github.aplcornell.viaduct.syntax.QueryNameNode
+import io.github.aplcornell.viaduct.syntax.UpdateNameNode
+import io.github.aplcornell.viaduct.syntax.datatypes.Get
+import io.github.aplcornell.viaduct.syntax.datatypes.Modify
+import io.github.aplcornell.viaduct.syntax.values.IntegerValue
+import io.github.aplcornell.viaduct.syntax.values.Value
 
 sealed class CleartextClassObject {
     abstract fun query(query: QueryNameNode, arguments: List<Value>): Value
@@ -52,7 +52,7 @@ class MutableCellObject(var value: Value) : CleartextClassObject() {
 
     override fun update(update: UpdateNameNode, arguments: List<Value>) {
         value = when (val updateValue = update.value) {
-            is io.github.apl_cornell.viaduct.syntax.datatypes.Set -> {
+            is io.github.aplcornell.viaduct.syntax.datatypes.Set -> {
                 arguments[0]
             }
 
@@ -94,7 +94,7 @@ class VectorObject(val size: Int, defaultValue: Value) : CleartextClassObject() 
         val index = arguments[0] as IntegerValue
 
         values[index.value] = when (val updateValue = update.value) {
-            is io.github.apl_cornell.viaduct.syntax.datatypes.Set -> {
+            is io.github.aplcornell.viaduct.syntax.datatypes.Set -> {
                 arguments[1]
             }
 

@@ -1,7 +1,7 @@
-package io.github.apl_cornell.viaduct.errors
+package io.github.aplcornell.viaduct.errors
 
-import io.github.apl_cornell.viaduct.prettyprinting.Document
-import io.github.apl_cornell.viaduct.syntax.intermediate.Node
+import io.github.aplcornell.viaduct.prettyprinting.Document
+import io.github.aplcornell.viaduct.syntax.intermediate.Node
 
 /** Thrown when a required protocol annotation in [node] is not found. */
 class NoProtocolAnnotationError(private val node: Node) : CompilationError() {

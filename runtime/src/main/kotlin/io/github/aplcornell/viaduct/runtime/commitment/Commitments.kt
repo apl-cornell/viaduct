@@ -1,6 +1,6 @@
-package io.github.apl_cornell.viaduct.runtime.commitment
+package io.github.aplcornell.viaduct.runtime.commitment
 
-import io.github.apl_cornell.viaduct.runtime.commitment.Committed.Companion.commitment
+import io.github.aplcornell.viaduct.runtime.commitment.Committed.Companion.commitment
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToByteArray

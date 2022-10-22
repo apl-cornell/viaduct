@@ -1,4 +1,4 @@
-package io.github.apl_cornell.viaduct.algebra
+package io.github.aplcornell.viaduct.algebra
 
 interface LatticeCongruence<A : Lattice<A>> {
     fun equals(first: A, second: A): Boolean

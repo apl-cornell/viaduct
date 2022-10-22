@@ -1,6 +1,6 @@
-package io.github.apl_cornell.viaduct.backend.IO
+package io.github.aplcornell.viaduct.backend.IO
 
-import io.github.apl_cornell.viaduct.syntax.values.Value
+import io.github.aplcornell.viaduct.syntax.values.Value
 
 interface Strategy {
     suspend fun getInput(): Value

@@ -1,6 +1,6 @@
-package io.github.apl_cornell.viaduct.runtime
+package io.github.aplcornell.viaduct.runtime
 
-import io.github.apl_cornell.viaduct.syntax.Host
+import io.github.aplcornell.viaduct.syntax.Host
 
 /** Thrown when a [Host] catches the attacker trying to equivocate. */
 class EquivocationException private constructor(

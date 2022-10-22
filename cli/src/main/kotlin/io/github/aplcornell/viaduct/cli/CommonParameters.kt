@@ -1,4 +1,4 @@
-package io.github.apl_cornell.viaduct.cli
+package io.github.aplcornell.viaduct.cli
 
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.core.ParameterHolder
@@ -11,10 +11,10 @@ import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.options.validate
 import com.github.ajalt.clikt.parameters.types.file
 import com.squareup.kotlinpoet.FileSpec
-import io.github.apl_cornell.viaduct.parsing.SourceFile
-import io.github.apl_cornell.viaduct.prettyprinting.Document
-import io.github.apl_cornell.viaduct.prettyprinting.PrettyPrintable
-import io.github.apl_cornell.viaduct.prettyprinting.plus
+import io.github.aplcornell.viaduct.parsing.SourceFile
+import io.github.aplcornell.viaduct.prettyprinting.Document
+import io.github.aplcornell.viaduct.prettyprinting.PrettyPrintable
+import io.github.aplcornell.viaduct.prettyprinting.plus
 import org.apache.logging.log4j.Level
 import org.apache.logging.log4j.core.config.Configurator
 import org.fusesource.jansi.AnsiConsole

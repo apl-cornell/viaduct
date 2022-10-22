@@ -1,7 +1,7 @@
-package io.github.apl_cornell.viaduct.codegeneration
+package io.github.aplcornell.viaduct.codegeneration
 
-import io.github.apl_cornell.viaduct.syntax.Protocol
-import io.github.apl_cornell.viaduct.syntax.intermediate.Node
+import io.github.aplcornell.viaduct.syntax.Protocol
+import io.github.aplcornell.viaduct.syntax.intermediate.Node
 
 /**
  * Thrown when a protocol is assigned an operator it cannot implement.

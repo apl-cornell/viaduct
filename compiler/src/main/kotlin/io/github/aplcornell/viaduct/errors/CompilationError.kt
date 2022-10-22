@@ -1,17 +1,17 @@
-package io.github.apl_cornell.viaduct.errors
+package io.github.aplcornell.viaduct.errors
 
-import io.github.apl_cornell.viaduct.prettyprinting.AnsiBaseColor
-import io.github.apl_cornell.viaduct.prettyprinting.AnsiColor
-import io.github.apl_cornell.viaduct.prettyprinting.DEFAULT_LINE_WIDTH
-import io.github.apl_cornell.viaduct.prettyprinting.Document
-import io.github.apl_cornell.viaduct.prettyprinting.NormalColor
-import io.github.apl_cornell.viaduct.prettyprinting.PrettyPrintable
-import io.github.apl_cornell.viaduct.prettyprinting.Style
-import io.github.apl_cornell.viaduct.prettyprinting.div
-import io.github.apl_cornell.viaduct.prettyprinting.nested
-import io.github.apl_cornell.viaduct.prettyprinting.plus
-import io.github.apl_cornell.viaduct.prettyprinting.styled
-import io.github.apl_cornell.viaduct.syntax.SourceLocation
+import io.github.aplcornell.viaduct.prettyprinting.AnsiBaseColor
+import io.github.aplcornell.viaduct.prettyprinting.AnsiColor
+import io.github.aplcornell.viaduct.prettyprinting.DEFAULT_LINE_WIDTH
+import io.github.aplcornell.viaduct.prettyprinting.Document
+import io.github.aplcornell.viaduct.prettyprinting.NormalColor
+import io.github.aplcornell.viaduct.prettyprinting.PrettyPrintable
+import io.github.aplcornell.viaduct.prettyprinting.Style
+import io.github.aplcornell.viaduct.prettyprinting.div
+import io.github.aplcornell.viaduct.prettyprinting.nested
+import io.github.aplcornell.viaduct.prettyprinting.plus
+import io.github.aplcornell.viaduct.prettyprinting.styled
+import io.github.aplcornell.viaduct.syntax.SourceLocation
 
 /**
  * Superclass of all errors caused by bad user input to the compiler.

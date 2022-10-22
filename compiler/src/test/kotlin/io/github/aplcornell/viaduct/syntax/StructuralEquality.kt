@@ -1,6 +1,6 @@
-package io.github.apl_cornell.viaduct.syntax
+package io.github.aplcornell.viaduct.syntax
 
-import io.github.apl_cornell.viaduct.prettyprinting.PrettyPrintable
+import io.github.aplcornell.viaduct.prettyprinting.PrettyPrintable
 import org.junit.jupiter.api.assertThrows
 import org.opentest4j.AssertionFailedError
 import kotlin.reflect.KVisibility

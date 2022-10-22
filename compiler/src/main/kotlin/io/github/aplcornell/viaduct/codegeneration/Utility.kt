@@ -1,4 +1,4 @@
-package io.github.apl_cornell.viaduct.codegeneration
+package io.github.aplcornell.viaduct.codegeneration
 
 import com.squareup.kotlinpoet.BOOLEAN
 import com.squareup.kotlinpoet.CodeBlock
@@ -6,15 +6,15 @@ import com.squareup.kotlinpoet.INT
 import com.squareup.kotlinpoet.STRING
 import com.squareup.kotlinpoet.TypeName
 import com.squareup.kotlinpoet.U_BYTE_ARRAY
-import io.github.apl_cornell.viaduct.analysis.TypeAnalysis
-import io.github.apl_cornell.viaduct.selection.CommunicationEvent
-import io.github.apl_cornell.viaduct.syntax.intermediate.LetNode
-import io.github.apl_cornell.viaduct.syntax.types.BooleanType
-import io.github.apl_cornell.viaduct.syntax.types.ByteVecType
-import io.github.apl_cornell.viaduct.syntax.types.IntegerType
-import io.github.apl_cornell.viaduct.syntax.types.StringType
-import io.github.apl_cornell.viaduct.syntax.types.ValueType
-import io.github.apl_cornell.viaduct.syntax.values.Value
+import io.github.aplcornell.viaduct.analysis.TypeAnalysis
+import io.github.aplcornell.viaduct.selection.CommunicationEvent
+import io.github.aplcornell.viaduct.syntax.intermediate.LetNode
+import io.github.aplcornell.viaduct.syntax.types.BooleanType
+import io.github.aplcornell.viaduct.syntax.types.ByteVecType
+import io.github.aplcornell.viaduct.syntax.types.IntegerType
+import io.github.aplcornell.viaduct.syntax.types.StringType
+import io.github.aplcornell.viaduct.syntax.types.ValueType
+import io.github.aplcornell.viaduct.syntax.values.Value
 import kotlin.reflect.KClass
 
 /** Returns the [KClass] object for values of this type. */

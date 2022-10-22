@@ -1,4 +1,4 @@
-package io.github.apl_cornell.viaduct
+package io.github.aplcornell.viaduct
 
 import org.junit.jupiter.api.extension.ExtensionContext
 import org.junit.jupiter.params.provider.Arguments

@@ -1,6 +1,6 @@
-package io.github.apl_cornell.viaduct.syntax.circuit;
+package io.github.aplcornell.viaduct.syntax.circuit;
 
-import io.github.apl_cornell.viaduct.errors.IllegalCharacterError;
+import io.github.aplcornell.viaduct.errors.IllegalCharacterError;
 
 import java.io.Reader;
 
@@ -8,7 +8,7 @@ import java_cup.runtime.ComplexSymbolFactory;
 import java_cup.runtime.ComplexSymbolFactory.Location;
 import java_cup.runtime.Symbol;
 
-import io.github.apl_cornell.viaduct.parsing.*;
+import io.github.aplcornell.viaduct.parsing.*;
 
 
 %%

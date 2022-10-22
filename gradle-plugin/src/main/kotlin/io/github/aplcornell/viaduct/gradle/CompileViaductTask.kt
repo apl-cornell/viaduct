@@ -1,9 +1,9 @@
-package io.github.apl_cornell.viaduct.gradle
+package io.github.aplcornell.viaduct.gradle
 
-import io.github.apl_cornell.viaduct.backends.Backend
-import io.github.apl_cornell.viaduct.errors.CompilationError
-import io.github.apl_cornell.viaduct.parsing.SourceFile
-import io.github.apl_cornell.viaduct.passes.compileToKotlin
+import io.github.aplcornell.viaduct.backends.Backend
+import io.github.aplcornell.viaduct.errors.CompilationError
+import io.github.aplcornell.viaduct.parsing.SourceFile
+import io.github.aplcornell.viaduct.passes.compileToKotlin
 import org.gradle.api.DefaultTask
 import org.gradle.api.GradleException
 import org.gradle.api.file.DirectoryProperty

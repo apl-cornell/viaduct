@@ -1,8 +1,8 @@
-package io.github.apl_cornell.viaduct.errors
+package io.github.aplcornell.viaduct.errors
 
-import io.github.apl_cornell.viaduct.prettyprinting.Document
-import io.github.apl_cornell.viaduct.syntax.HasSourceLocation
-import io.github.apl_cornell.viaduct.syntax.Protocol
+import io.github.aplcornell.viaduct.prettyprinting.Document
+import io.github.aplcornell.viaduct.syntax.HasSourceLocation
+import io.github.aplcornell.viaduct.syntax.Protocol
 
 /** Thrown when there is no [Protocol] that can be assigned to [node]. */
 class NoApplicableProtocolError(private val node: HasSourceLocation) : CompilationError() {

@@ -1,11 +1,11 @@
-package io.github.apl_cornell.viaduct.protocols
+package io.github.aplcornell.viaduct.protocols
 
-import io.github.apl_cornell.viaduct.security.Label
-import io.github.apl_cornell.viaduct.syntax.Host
-import io.github.apl_cornell.viaduct.syntax.Protocol
-import io.github.apl_cornell.viaduct.syntax.ProtocolName
-import io.github.apl_cornell.viaduct.syntax.values.HostSetValue
-import io.github.apl_cornell.viaduct.syntax.values.Value
+import io.github.aplcornell.viaduct.security.Label
+import io.github.aplcornell.viaduct.syntax.Host
+import io.github.aplcornell.viaduct.syntax.Protocol
+import io.github.aplcornell.viaduct.syntax.ProtocolName
+import io.github.aplcornell.viaduct.syntax.values.HostSetValue
+import io.github.aplcornell.viaduct.syntax.values.Value
 
 /**
  * Protocol used to synchronize hosts.

@@ -1,4 +1,4 @@
-package io.github.apl_cornell.viaduct.algebra
+package io.github.aplcornell.viaduct.algebra
 
 /**
  * A Heyting algebra is a bounded lattice that supports an implication operation `→` where

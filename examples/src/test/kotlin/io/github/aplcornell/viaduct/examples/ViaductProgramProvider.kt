@@ -1,6 +1,6 @@
-package io.github.apl_cornell.viaduct.examples
+package io.github.aplcornell.viaduct.examples
 
-import io.github.apl_cornell.viaduct.runtime.ViaductGeneratedProgram
+import io.github.aplcornell.viaduct.runtime.ViaductGeneratedProgram
 import org.junit.jupiter.api.extension.ExtensionContext
 import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.ArgumentsProvider

@@ -1,6 +1,6 @@
-package io.github.apl_cornell.viaduct.algebra.solver2
+package io.github.aplcornell.viaduct.algebra.solver2
 
-import io.github.apl_cornell.viaduct.algebra.Lattice
+import io.github.aplcornell.viaduct.algebra.Lattice
 
 /** A solution to a system of constraints. Maps variables of type [V] to values of type [C]. */
 class ConstraintSolution<C : Lattice<C>, V> internal constructor(

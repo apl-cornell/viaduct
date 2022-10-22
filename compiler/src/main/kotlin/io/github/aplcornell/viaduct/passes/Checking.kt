@@ -1,12 +1,12 @@
-package io.github.apl_cornell.viaduct.passes
+package io.github.aplcornell.viaduct.passes
 
-import io.github.apl_cornell.viaduct.analysis.InformationFlowAnalysis
-import io.github.apl_cornell.viaduct.analysis.NameAnalysis
-import io.github.apl_cornell.viaduct.analysis.OutParameterInitializationAnalysis
-import io.github.apl_cornell.viaduct.analysis.TypeAnalysis
-import io.github.apl_cornell.viaduct.errors.CompilationError
-import io.github.apl_cornell.viaduct.syntax.intermediate.ProgramNode
-import io.github.apl_cornell.viaduct.util.duration
+import io.github.aplcornell.viaduct.analysis.InformationFlowAnalysis
+import io.github.aplcornell.viaduct.analysis.NameAnalysis
+import io.github.aplcornell.viaduct.analysis.OutParameterInitializationAnalysis
+import io.github.aplcornell.viaduct.analysis.TypeAnalysis
+import io.github.aplcornell.viaduct.errors.CompilationError
+import io.github.aplcornell.viaduct.syntax.intermediate.ProgramNode
+import io.github.aplcornell.viaduct.util.duration
 import mu.KotlinLogging
 
 private val logger = KotlinLogging.logger("Check")

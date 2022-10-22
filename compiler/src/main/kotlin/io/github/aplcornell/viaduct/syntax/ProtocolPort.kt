@@ -1,4 +1,4 @@
-package io.github.apl_cornell.viaduct.syntax
+package io.github.aplcornell.viaduct.syntax
 
 typealias PortId = String
 

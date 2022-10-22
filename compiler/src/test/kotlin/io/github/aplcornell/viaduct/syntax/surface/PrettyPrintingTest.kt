@@ -1,9 +1,9 @@
-package io.github.apl_cornell.viaduct.syntax.surface
+package io.github.aplcornell.viaduct.syntax.surface
 
-import io.github.apl_cornell.viaduct.PositiveTestProgramProvider
-import io.github.apl_cornell.viaduct.backends.DefaultCombinedBackend
-import io.github.apl_cornell.viaduct.parsing.parse
-import io.github.apl_cornell.viaduct.syntax.assertStructurallyEquals
+import io.github.aplcornell.viaduct.PositiveTestProgramProvider
+import io.github.aplcornell.viaduct.backends.DefaultCombinedBackend
+import io.github.aplcornell.viaduct.parsing.parse
+import io.github.aplcornell.viaduct.syntax.assertStructurallyEquals
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ArgumentsSource

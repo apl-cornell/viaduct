@@ -1,8 +1,8 @@
-package io.github.apl_cornell.viaduct.parsing
+package io.github.aplcornell.viaduct.parsing
 
-import io.github.apl_cornell.viaduct.PositiveTestFileProvider
-import io.github.apl_cornell.viaduct.backends.DefaultCombinedBackend
-import io.github.apl_cornell.viaduct.errors.NoMainError
+import io.github.aplcornell.viaduct.PositiveTestFileProvider
+import io.github.aplcornell.viaduct.backends.DefaultCombinedBackend
+import io.github.aplcornell.viaduct.errors.NoMainError
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.params.ParameterizedTest

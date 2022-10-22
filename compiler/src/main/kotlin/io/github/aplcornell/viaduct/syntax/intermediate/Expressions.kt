@@ -1,24 +1,24 @@
-package io.github.apl_cornell.viaduct.syntax.intermediate
+package io.github.aplcornell.viaduct.syntax.intermediate
 
-import io.github.apl_cornell.viaduct.syntax.Arguments
-import io.github.apl_cornell.viaduct.syntax.HostNode
-import io.github.apl_cornell.viaduct.syntax.LabelNode
-import io.github.apl_cornell.viaduct.syntax.ObjectVariableNode
-import io.github.apl_cornell.viaduct.syntax.Operator
-import io.github.apl_cornell.viaduct.syntax.QueryNameNode
-import io.github.apl_cornell.viaduct.syntax.SourceLocation
-import io.github.apl_cornell.viaduct.syntax.TemporaryNode
-import io.github.apl_cornell.viaduct.syntax.ValueTypeNode
-import io.github.apl_cornell.viaduct.syntax.values.Value
+import io.github.aplcornell.viaduct.syntax.Arguments
+import io.github.aplcornell.viaduct.syntax.HostNode
+import io.github.aplcornell.viaduct.syntax.LabelNode
+import io.github.aplcornell.viaduct.syntax.ObjectVariableNode
+import io.github.aplcornell.viaduct.syntax.Operator
+import io.github.aplcornell.viaduct.syntax.QueryNameNode
+import io.github.aplcornell.viaduct.syntax.SourceLocation
+import io.github.aplcornell.viaduct.syntax.TemporaryNode
+import io.github.aplcornell.viaduct.syntax.ValueTypeNode
+import io.github.aplcornell.viaduct.syntax.values.Value
 
 /** A computation that produces a result. */
 sealed class ExpressionNode : Node() {
     abstract override val children: Iterable<AtomicExpressionNode>
 
-    final override fun toSurfaceNode(metadata: Metadata): io.github.apl_cornell.viaduct.syntax.surface.ExpressionNode =
+    final override fun toSurfaceNode(metadata: Metadata): io.github.aplcornell.viaduct.syntax.surface.ExpressionNode =
         toSurfaceNode()
 
-    abstract fun toSurfaceNode(): io.github.apl_cornell.viaduct.syntax.surface.ExpressionNode
+    abstract fun toSurfaceNode(): io.github.aplcornell.viaduct.syntax.surface.ExpressionNode
 
     abstract override fun copy(children: List<Node>): ExpressionNode
 }
@@ -30,7 +30,7 @@ sealed class AtomicExpressionNode : PureExpressionNode() {
     final override val children: Iterable<Nothing>
         get() = listOf()
 
-    abstract override fun toSurfaceNode(): io.github.apl_cornell.viaduct.syntax.surface.AtomicExpressionNode
+    abstract override fun toSurfaceNode(): io.github.aplcornell.viaduct.syntax.surface.AtomicExpressionNode
 
     abstract override fun copy(children: List<Node>): AtomicExpressionNode
 }
@@ -38,8 +38,8 @@ sealed class AtomicExpressionNode : PureExpressionNode() {
 /** A literal constant. */
 class LiteralNode(val value: Value, override val sourceLocation: SourceLocation) :
     AtomicExpressionNode() {
-    override fun toSurfaceNode(): io.github.apl_cornell.viaduct.syntax.surface.LiteralNode =
-        io.github.apl_cornell.viaduct.syntax.surface.LiteralNode(value, sourceLocation)
+    override fun toSurfaceNode(): io.github.aplcornell.viaduct.syntax.surface.LiteralNode =
+        io.github.aplcornell.viaduct.syntax.surface.LiteralNode(value, sourceLocation)
 
     override fun copy(children: List<Node>): LiteralNode =
         LiteralNode(value, sourceLocation)
@@ -50,8 +50,8 @@ class ReadNode(val temporary: TemporaryNode) : AtomicExpressionNode() {
     override val sourceLocation: SourceLocation
         get() = temporary.sourceLocation
 
-    override fun toSurfaceNode(): io.github.apl_cornell.viaduct.syntax.surface.ReadNode =
-        io.github.apl_cornell.viaduct.syntax.surface.ReadNode(temporary)
+    override fun toSurfaceNode(): io.github.aplcornell.viaduct.syntax.surface.ReadNode =
+        io.github.aplcornell.viaduct.syntax.surface.ReadNode(temporary)
 
     override fun copy(children: List<Node>): ReadNode =
         ReadNode(temporary)
@@ -66,8 +66,8 @@ class OperatorApplicationNode(
     override val children: Iterable<AtomicExpressionNode>
         get() = arguments
 
-    override fun toSurfaceNode(): io.github.apl_cornell.viaduct.syntax.surface.OperatorApplicationNode =
-        io.github.apl_cornell.viaduct.syntax.surface.OperatorApplicationNode(
+    override fun toSurfaceNode(): io.github.aplcornell.viaduct.syntax.surface.OperatorApplicationNode =
+        io.github.aplcornell.viaduct.syntax.surface.OperatorApplicationNode(
             operator,
             Arguments(arguments.map { it.toSurfaceNode() }, arguments.sourceLocation),
             sourceLocation
@@ -91,8 +91,8 @@ class QueryNode(
     override val children: Iterable<AtomicExpressionNode>
         get() = arguments
 
-    override fun toSurfaceNode(): io.github.apl_cornell.viaduct.syntax.surface.QueryNode =
-        io.github.apl_cornell.viaduct.syntax.surface.QueryNode(
+    override fun toSurfaceNode(): io.github.aplcornell.viaduct.syntax.surface.QueryNode =
+        io.github.aplcornell.viaduct.syntax.surface.QueryNode(
             variable,
             query,
             Arguments(arguments.map { it.toSurfaceNode() }, arguments.sourceLocation),
@@ -133,8 +133,8 @@ class DeclassificationNode(
     override val toLabel: LabelNode,
     override val sourceLocation: SourceLocation
 ) : DowngradeNode() {
-    override fun toSurfaceNode(): io.github.apl_cornell.viaduct.syntax.surface.DeclassificationNode =
-        io.github.apl_cornell.viaduct.syntax.surface.DeclassificationNode(
+    override fun toSurfaceNode(): io.github.aplcornell.viaduct.syntax.surface.DeclassificationNode =
+        io.github.aplcornell.viaduct.syntax.surface.DeclassificationNode(
             expression.toSurfaceNode(),
             fromLabel,
             toLabel,
@@ -152,8 +152,8 @@ class EndorsementNode(
     override val toLabel: LabelNode?,
     override val sourceLocation: SourceLocation
 ) : DowngradeNode() {
-    override fun toSurfaceNode(): io.github.apl_cornell.viaduct.syntax.surface.EndorsementNode =
-        io.github.apl_cornell.viaduct.syntax.surface.EndorsementNode(
+    override fun toSurfaceNode(): io.github.aplcornell.viaduct.syntax.surface.EndorsementNode =
+        io.github.aplcornell.viaduct.syntax.surface.EndorsementNode(
             expression.toSurfaceNode(),
             fromLabel,
             toLabel,
@@ -179,8 +179,8 @@ class InputNode(
     override val children: Iterable<Nothing>
         get() = listOf()
 
-    override fun toSurfaceNode(): io.github.apl_cornell.viaduct.syntax.surface.InputNode =
-        io.github.apl_cornell.viaduct.syntax.surface.InputNode(type, host, sourceLocation)
+    override fun toSurfaceNode(): io.github.aplcornell.viaduct.syntax.surface.InputNode =
+        io.github.aplcornell.viaduct.syntax.surface.InputNode(type, host, sourceLocation)
 
     override fun copy(children: List<Node>): InputNode =
         InputNode(type, host, sourceLocation)

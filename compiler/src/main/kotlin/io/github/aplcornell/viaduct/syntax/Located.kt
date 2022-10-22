@@ -1,15 +1,15 @@
-package io.github.apl_cornell.viaduct.syntax
+package io.github.aplcornell.viaduct.syntax
 
-import io.github.apl_cornell.viaduct.prettyprinting.Document
-import io.github.apl_cornell.viaduct.prettyprinting.PrettyPrintable
-import io.github.apl_cornell.viaduct.security.LabelExpression
-import io.github.apl_cornell.viaduct.syntax.circuit.ArrayType
-import io.github.apl_cornell.viaduct.syntax.datatypes.ClassName
-import io.github.apl_cornell.viaduct.syntax.datatypes.MethodName
-import io.github.apl_cornell.viaduct.syntax.datatypes.QueryName
-import io.github.apl_cornell.viaduct.syntax.datatypes.UpdateName
-import io.github.apl_cornell.viaduct.syntax.types.ValueType
-import io.github.apl_cornell.viaduct.syntax.values.Value
+import io.github.aplcornell.viaduct.prettyprinting.Document
+import io.github.aplcornell.viaduct.prettyprinting.PrettyPrintable
+import io.github.aplcornell.viaduct.security.LabelExpression
+import io.github.aplcornell.viaduct.syntax.circuit.ArrayType
+import io.github.aplcornell.viaduct.syntax.datatypes.ClassName
+import io.github.aplcornell.viaduct.syntax.datatypes.MethodName
+import io.github.aplcornell.viaduct.syntax.datatypes.QueryName
+import io.github.aplcornell.viaduct.syntax.datatypes.UpdateName
+import io.github.aplcornell.viaduct.syntax.types.ValueType
+import io.github.aplcornell.viaduct.syntax.values.Value
 
 /** Attaches a source location to an arbitrary type. */
 data class Located<out T : PrettyPrintable>(

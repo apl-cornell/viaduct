@@ -1,10 +1,10 @@
-package io.github.apl_cornell.viaduct.syntax.intermediate
+package io.github.aplcornell.viaduct.syntax.intermediate
 
-import io.github.apl_cornell.viaduct.syntax.ObjectVariable
-import io.github.apl_cornell.viaduct.syntax.ObjectVariableNode
-import io.github.apl_cornell.viaduct.syntax.ProtocolNode
-import io.github.apl_cornell.viaduct.syntax.Variable
-import io.github.apl_cornell.viaduct.syntax.VariableNode
+import io.github.aplcornell.viaduct.syntax.ObjectVariable
+import io.github.aplcornell.viaduct.syntax.ObjectVariableNode
+import io.github.aplcornell.viaduct.syntax.ProtocolNode
+import io.github.aplcornell.viaduct.syntax.Variable
+import io.github.aplcornell.viaduct.syntax.VariableNode
 
 /** A node that declares a [Variable]. */
 sealed interface VariableDeclarationNode {

@@ -1,15 +1,15 @@
-package io.github.apl_cornell.viaduct.syntax.circuit
+package io.github.aplcornell.viaduct.syntax.circuit
 
-import io.github.apl_cornell.viaduct.prettyprinting.Document
-import io.github.apl_cornell.viaduct.prettyprinting.bracketed
-import io.github.apl_cornell.viaduct.prettyprinting.concatenated
-import io.github.apl_cornell.viaduct.prettyprinting.joined
-import io.github.apl_cornell.viaduct.prettyprinting.nested
-import io.github.apl_cornell.viaduct.prettyprinting.plus
-import io.github.apl_cornell.viaduct.prettyprinting.times
-import io.github.apl_cornell.viaduct.syntax.Arguments
-import io.github.apl_cornell.viaduct.syntax.SourceLocation
-import io.github.apl_cornell.viaduct.syntax.surface.keyword
+import io.github.aplcornell.viaduct.prettyprinting.Document
+import io.github.aplcornell.viaduct.prettyprinting.bracketed
+import io.github.aplcornell.viaduct.prettyprinting.concatenated
+import io.github.aplcornell.viaduct.prettyprinting.joined
+import io.github.aplcornell.viaduct.prettyprinting.nested
+import io.github.aplcornell.viaduct.prettyprinting.plus
+import io.github.aplcornell.viaduct.prettyprinting.times
+import io.github.aplcornell.viaduct.syntax.Arguments
+import io.github.aplcornell.viaduct.syntax.SourceLocation
+import io.github.aplcornell.viaduct.syntax.surface.keyword
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.toPersistentList
 

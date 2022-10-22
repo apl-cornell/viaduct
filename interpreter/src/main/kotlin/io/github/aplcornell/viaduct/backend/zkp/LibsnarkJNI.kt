@@ -1,4 +1,4 @@
-package io.github.apl_cornell.viaduct.backend.zkp
+package io.github.aplcornell.viaduct.backend.zkp
 
 class LibsnarkJNI {
     external fun sayHello()

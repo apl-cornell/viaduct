@@ -1,4 +1,4 @@
-package io.github.apl_cornell.viaduct.security
+package io.github.aplcornell.viaduct.security
 
 /** Provides the weakest and strongest principals in a [TrustLattice]. */
 interface BoundedTrustLattice<T : TrustLattice<T>> {

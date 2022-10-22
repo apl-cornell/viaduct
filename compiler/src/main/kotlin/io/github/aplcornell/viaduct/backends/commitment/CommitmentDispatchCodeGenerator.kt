@@ -1,9 +1,9 @@
-package io.github.apl_cornell.viaduct.backends.commitment
+package io.github.aplcornell.viaduct.backends.commitment
 
-import io.github.apl_cornell.viaduct.codegeneration.CodeGenerator
-import io.github.apl_cornell.viaduct.codegeneration.CodeGeneratorContext
-import io.github.apl_cornell.viaduct.codegeneration.CodeGeneratorDispatcher
-import io.github.apl_cornell.viaduct.syntax.Protocol
+import io.github.aplcornell.viaduct.codegeneration.CodeGenerator
+import io.github.aplcornell.viaduct.codegeneration.CodeGeneratorContext
+import io.github.aplcornell.viaduct.codegeneration.CodeGeneratorDispatcher
+import io.github.aplcornell.viaduct.syntax.Protocol
 
 class CommitmentDispatchCodeGenerator(
     private val context: CodeGeneratorContext

@@ -1,6 +1,6 @@
-package io.github.apl_cornell.viaduct.backends.cleartext
+package io.github.aplcornell.viaduct.backends.cleartext
 
-import io.github.apl_cornell.viaduct.syntax.Protocol
+import io.github.aplcornell.viaduct.syntax.Protocol
 
 abstract class Cleartext : Protocol() {
     companion object {

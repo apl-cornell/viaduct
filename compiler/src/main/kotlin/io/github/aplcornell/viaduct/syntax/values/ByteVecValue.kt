@@ -1,7 +1,7 @@
-package io.github.apl_cornell.viaduct.syntax.values
+package io.github.aplcornell.viaduct.syntax.values
 
-import io.github.apl_cornell.viaduct.syntax.types.ByteVecType
-import io.github.apl_cornell.viaduct.syntax.types.ValueType
+import io.github.aplcornell.viaduct.syntax.types.ByteVecType
+import io.github.aplcornell.viaduct.syntax.types.ValueType
 
 /** A bytevec. */
 data class ByteVecValue(val value: List<Byte>) : Value() {

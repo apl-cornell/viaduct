@@ -6,7 +6,7 @@
  * the SWIG interface file instead.
  * ----------------------------------------------------------------------------- */
 
-package io.github.apl_cornell.viaduct.libsnarkwrapper;
+package io.github.aplcornell.viaduct.libsnarkwrapper;
 
 public class BoolVector extends java.util.AbstractList<Boolean> implements java.util.RandomAccess {
   private transient long swigCPtr;

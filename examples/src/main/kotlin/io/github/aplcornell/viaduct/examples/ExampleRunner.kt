@@ -1,4 +1,4 @@
-package io.github.apl_cornell.viaduct.examples
+package io.github.aplcornell.viaduct.examples
 
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.core.NoOpCliktCommand
@@ -10,12 +10,12 @@ import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.options.validate
 import com.github.ajalt.clikt.parameters.options.versionOption
 import com.github.ajalt.clikt.parameters.types.file
-import io.github.apl_cornell.viaduct.runtime.CombinedRuntime
-import io.github.apl_cornell.viaduct.runtime.ScannerIOStrategy
-import io.github.apl_cornell.viaduct.runtime.TCPNetworkStrategy
-import io.github.apl_cornell.viaduct.runtime.ViaductGeneratedProgram
-import io.github.apl_cornell.viaduct.syntax.Host
-import io.github.apl_cornell.viaduct.version
+import io.github.aplcornell.viaduct.runtime.CombinedRuntime
+import io.github.aplcornell.viaduct.runtime.ScannerIOStrategy
+import io.github.aplcornell.viaduct.runtime.TCPNetworkStrategy
+import io.github.aplcornell.viaduct.runtime.ViaductGeneratedProgram
+import io.github.aplcornell.viaduct.syntax.Host
+import io.github.aplcornell.viaduct.version
 import mu.KotlinLogging
 import org.apache.logging.log4j.Level
 import org.apache.logging.log4j.core.config.Configurator

@@ -1,6 +1,6 @@
-package io.github.apl_cornell.viaduct.gradle
+package io.github.aplcornell.viaduct.gradle
 
-import io.github.apl_cornell.viaduct.backends.CodeGenerationBackend
+import io.github.aplcornell.viaduct.backends.CodeGenerationBackend
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.tasks.SourceSet

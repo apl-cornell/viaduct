@@ -1,4 +1,4 @@
-package io.github.apl_cornell.viaduct.util
+package io.github.aplcornell.viaduct.util
 
 import mu.KLogger
 import kotlin.system.measureTimeMillis

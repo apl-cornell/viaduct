@@ -1,4 +1,4 @@
-package io.github.apl_cornell.viaduct.algebra
+package io.github.aplcornell.viaduct.algebra
 
 /** Provides the identity element in a [JoinSemiLattice]. */
 interface BoundedJoinSemiLattice<T : JoinSemiLattice<T>> {

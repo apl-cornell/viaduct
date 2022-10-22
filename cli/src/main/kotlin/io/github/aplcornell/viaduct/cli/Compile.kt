@@ -1,4 +1,4 @@
-package io.github.apl_cornell.viaduct.cli
+package io.github.aplcornell.viaduct.cli
 
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.parameters.options.default
@@ -8,14 +8,14 @@ import com.github.ajalt.clikt.parameters.types.choice
 import com.github.ajalt.clikt.parameters.types.file
 import guru.nidi.graphviz.engine.Format
 import guru.nidi.graphviz.engine.Graphviz
-import io.github.apl_cornell.viaduct.backends.CodeGenerationBackend
-import io.github.apl_cornell.viaduct.backends.DefaultCombinedBackend
-import io.github.apl_cornell.viaduct.passes.compile
-import io.github.apl_cornell.viaduct.passes.compileToKotlin
-import io.github.apl_cornell.viaduct.selection.SelectionProblemSolver
-import io.github.apl_cornell.viaduct.selection.SimpleCostRegime
-import io.github.apl_cornell.viaduct.selection.defaultSelectionProblemSolver
-import io.github.apl_cornell.viaduct.selection.selectionProblemSolvers
+import io.github.aplcornell.viaduct.backends.CodeGenerationBackend
+import io.github.aplcornell.viaduct.backends.DefaultCombinedBackend
+import io.github.aplcornell.viaduct.passes.compile
+import io.github.aplcornell.viaduct.passes.compileToKotlin
+import io.github.aplcornell.viaduct.selection.SelectionProblemSolver
+import io.github.aplcornell.viaduct.selection.SimpleCostRegime
+import io.github.aplcornell.viaduct.selection.defaultSelectionProblemSolver
+import io.github.aplcornell.viaduct.selection.selectionProblemSolvers
 import mu.KotlinLogging
 import java.io.File
 import java.io.StringWriter

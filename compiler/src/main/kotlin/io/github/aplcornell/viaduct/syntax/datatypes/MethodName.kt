@@ -1,12 +1,12 @@
-package io.github.apl_cornell.viaduct.syntax.datatypes
+package io.github.aplcornell.viaduct.syntax.datatypes
 
-import io.github.apl_cornell.viaduct.prettyprinting.AnsiBaseColor
-import io.github.apl_cornell.viaduct.prettyprinting.AnsiColor
-import io.github.apl_cornell.viaduct.prettyprinting.BrightColor
-import io.github.apl_cornell.viaduct.prettyprinting.Document
-import io.github.apl_cornell.viaduct.prettyprinting.Style
-import io.github.apl_cornell.viaduct.prettyprinting.styled
-import io.github.apl_cornell.viaduct.syntax.Name
+import io.github.aplcornell.viaduct.prettyprinting.AnsiBaseColor
+import io.github.aplcornell.viaduct.prettyprinting.AnsiColor
+import io.github.aplcornell.viaduct.prettyprinting.BrightColor
+import io.github.aplcornell.viaduct.prettyprinting.Document
+import io.github.aplcornell.viaduct.prettyprinting.Style
+import io.github.aplcornell.viaduct.prettyprinting.styled
+import io.github.aplcornell.viaduct.syntax.Name
 
 /** An object method. */
 interface MethodName : Name {

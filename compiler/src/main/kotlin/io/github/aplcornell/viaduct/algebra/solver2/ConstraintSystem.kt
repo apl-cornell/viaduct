@@ -1,12 +1,12 @@
-package io.github.apl_cornell.viaduct.algebra.solver2
+package io.github.aplcornell.viaduct.algebra.solver2
 
-import io.github.apl_cornell.viaduct.algebra.BoundedLattice
-import io.github.apl_cornell.viaduct.algebra.HeytingAlgebra
-import io.github.apl_cornell.viaduct.algebra.LatticeCongruence
-import io.github.apl_cornell.viaduct.algebra.PartialOrder
-import io.github.apl_cornell.viaduct.util.Colors
-import io.github.apl_cornell.viaduct.util.dataflow.DataFlowEdge
-import io.github.apl_cornell.viaduct.util.dataflow.solveDataFlow
+import io.github.aplcornell.viaduct.algebra.BoundedLattice
+import io.github.aplcornell.viaduct.algebra.HeytingAlgebra
+import io.github.aplcornell.viaduct.algebra.LatticeCongruence
+import io.github.aplcornell.viaduct.algebra.PartialOrder
+import io.github.aplcornell.viaduct.util.Colors
+import io.github.aplcornell.viaduct.util.dataflow.DataFlowEdge
+import io.github.aplcornell.viaduct.util.dataflow.solveDataFlow
 import org.jgrapht.Graph
 import org.jgrapht.graph.DirectedPseudograph
 import org.jgrapht.nio.Attribute

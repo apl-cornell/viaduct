@@ -1,9 +1,9 @@
-package io.github.apl_cornell.viaduct.codegeneration
+package io.github.aplcornell.viaduct.codegeneration
 
-import io.github.apl_cornell.viaduct.PositiveTestFileProvider
-import io.github.apl_cornell.viaduct.backends.CodeGenerationBackend
-import io.github.apl_cornell.viaduct.parsing.SourceFile
-import io.github.apl_cornell.viaduct.passes.compileToKotlin
+import io.github.aplcornell.viaduct.PositiveTestFileProvider
+import io.github.aplcornell.viaduct.backends.CodeGenerationBackend
+import io.github.aplcornell.viaduct.parsing.SourceFile
+import io.github.aplcornell.viaduct.passes.compileToKotlin
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ArgumentsProvider
 import org.junit.jupiter.params.provider.ArgumentsSource

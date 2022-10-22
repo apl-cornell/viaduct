@@ -1,11 +1,11 @@
-import io.github.apl_cornell.viaduct.errors.NoMainError;
-import io.github.apl_cornell.viaduct.errors.ParsingError;
-import io.github.apl_cornell.viaduct.security.*;
-import io.github.apl_cornell.viaduct.syntax.*;
-import io.github.apl_cornell.viaduct.syntax.operators.*;
-import io.github.apl_cornell.viaduct.syntax.types.*;
-import io.github.apl_cornell.viaduct.syntax.values.*;
-import io.github.apl_cornell.viaduct.parsing.*;
+import io.github.aplcornell.viaduct.errors.NoMainError;
+import io.github.aplcornell.viaduct.errors.ParsingError;
+import io.github.aplcornell.viaduct.security.*;
+import io.github.aplcornell.viaduct.syntax.*;
+import io.github.aplcornell.viaduct.syntax.operators.*;
+import io.github.aplcornell.viaduct.syntax.types.*;
+import io.github.aplcornell.viaduct.syntax.values.*;
+import io.github.aplcornell.viaduct.parsing.*;
 
 import java.util.List;
 import java.util.LinkedList;

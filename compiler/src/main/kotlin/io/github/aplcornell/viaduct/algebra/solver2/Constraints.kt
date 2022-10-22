@@ -1,8 +1,8 @@
-package io.github.apl_cornell.viaduct.algebra.solver2
+package io.github.aplcornell.viaduct.algebra.solver2
 
-import io.github.apl_cornell.viaduct.algebra.HeytingAlgebra
-import io.github.apl_cornell.viaduct.algebra.JoinSemiLattice
-import io.github.apl_cornell.viaduct.util.dataflow.DataFlowEdge
+import io.github.aplcornell.viaduct.algebra.HeytingAlgebra
+import io.github.aplcornell.viaduct.algebra.JoinSemiLattice
+import io.github.aplcornell.viaduct.util.dataflow.DataFlowEdge
 
 /** A lattice constraint. */
 sealed class Constraint<C, V, T>

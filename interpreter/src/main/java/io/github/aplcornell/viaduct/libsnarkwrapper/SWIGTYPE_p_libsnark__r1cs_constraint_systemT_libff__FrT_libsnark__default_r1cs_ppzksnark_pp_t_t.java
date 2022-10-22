@@ -6,7 +6,7 @@
  * the SWIG interface file instead.
  * ----------------------------------------------------------------------------- */
 
-package io.github.apl_cornell.viaduct.libsnarkwrapper;
+package io.github.aplcornell.viaduct.libsnarkwrapper;
 
 public
 class SWIGTYPE_p_libsnark__r1cs_constraint_systemT_libff__FrT_libsnark__default_r1cs_ppzksnark_pp_t_t {

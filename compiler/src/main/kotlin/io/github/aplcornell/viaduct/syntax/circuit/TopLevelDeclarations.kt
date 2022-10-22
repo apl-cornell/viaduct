@@ -1,17 +1,17 @@
-package io.github.apl_cornell.viaduct.syntax.circuit
+package io.github.aplcornell.viaduct.syntax.circuit
 
-import io.github.apl_cornell.viaduct.prettyprinting.Document
-import io.github.apl_cornell.viaduct.prettyprinting.joined
-import io.github.apl_cornell.viaduct.prettyprinting.plus
-import io.github.apl_cornell.viaduct.prettyprinting.times
-import io.github.apl_cornell.viaduct.prettyprinting.tupled
-import io.github.apl_cornell.viaduct.syntax.Arguments
-import io.github.apl_cornell.viaduct.syntax.ArrayTypeNode
-import io.github.apl_cornell.viaduct.syntax.FunctionNameNode
-import io.github.apl_cornell.viaduct.syntax.HostNode
-import io.github.apl_cornell.viaduct.syntax.ProtocolNode
-import io.github.apl_cornell.viaduct.syntax.SourceLocation
-import io.github.apl_cornell.viaduct.syntax.surface.keyword
+import io.github.aplcornell.viaduct.prettyprinting.Document
+import io.github.aplcornell.viaduct.prettyprinting.joined
+import io.github.aplcornell.viaduct.prettyprinting.plus
+import io.github.aplcornell.viaduct.prettyprinting.times
+import io.github.aplcornell.viaduct.prettyprinting.tupled
+import io.github.aplcornell.viaduct.syntax.Arguments
+import io.github.aplcornell.viaduct.syntax.ArrayTypeNode
+import io.github.aplcornell.viaduct.syntax.FunctionNameNode
+import io.github.aplcornell.viaduct.syntax.HostNode
+import io.github.aplcornell.viaduct.syntax.ProtocolNode
+import io.github.aplcornell.viaduct.syntax.SourceLocation
+import io.github.aplcornell.viaduct.syntax.surface.keyword
 
 /** A declaration at the top level of a file. */
 sealed class TopLevelDeclarationNode : Node()

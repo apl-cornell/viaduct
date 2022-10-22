@@ -1,4 +1,4 @@
-package io.github.apl_cornell.viaduct.algebra
+package io.github.aplcornell.viaduct.algebra
 
 /** A set that supports binary greatest lower bounds. */
 interface MeetSemiLattice<T : MeetSemiLattice<T>> {

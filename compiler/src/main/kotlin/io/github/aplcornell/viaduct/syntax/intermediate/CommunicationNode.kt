@@ -1,8 +1,8 @@
-package io.github.apl_cornell.viaduct.syntax.intermediate
+package io.github.aplcornell.viaduct.syntax.intermediate
 
-import io.github.apl_cornell.viaduct.prettyprinting.PrettyPrintable
-import io.github.apl_cornell.viaduct.syntax.HasSourceLocation
-import io.github.apl_cornell.viaduct.syntax.HostNode
+import io.github.aplcornell.viaduct.prettyprinting.PrettyPrintable
+import io.github.aplcornell.viaduct.syntax.HasSourceLocation
+import io.github.aplcornell.viaduct.syntax.HostNode
 
 /** An external input or an output. */
 sealed interface CommunicationNode : HasSourceLocation, PrettyPrintable {

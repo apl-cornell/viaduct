@@ -1,15 +1,15 @@
-host alice : {A}
-host bob   : {B}
+host alice
+host bob
 
 fun main() {
-    val arr = Array[int]{A ⊓ B}(20);
+    val arr = Array[int]{alice ⊓ bob}(20);
 
     for (var i: int = 0; i < 10; i += 1) {
-        arr[i] = endorse (declassify (input int from alice) to {A ⊓ B->}) from {A ⊓ B->};
+        arr[i] = endorse (declassify (input int from alice) to {alice ⊓ bob->}) from {alice ⊓ bob->};
     }
 
     for (var j: int = 10; j < 20; j += 1) {
-        arr[j] = endorse (declassify (input int from bob) to {B ⊓ A->}) from {B ⊓ A->};
+        arr[j] = endorse (declassify (input int from bob) to {bob ⊓ alice->}) from {bob ⊓ alice->};
     }
 
     output arr[0] to bob;

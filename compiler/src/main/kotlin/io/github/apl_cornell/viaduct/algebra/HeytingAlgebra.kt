@@ -8,7 +8,7 @@ package io.github.apl_cornell.viaduct.algebra
  *
  * @see [Wikipedia page on pseudocomplement](https://en.wikipedia.org/wiki/Pseudocomplement.Relative_pseudocomplement)
  */
-interface HeytingAlgebra<T : HeytingAlgebra<T>> : Lattice<T>, PartialOrder<T> {
+interface HeytingAlgebra<T : HeytingAlgebra<T>> : Lattice<T> {
     /** `this.imply(that)` is the greatest solution to `this.meet(x) ≤ that`. */
     infix fun imply(that: T): T
 }

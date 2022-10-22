@@ -5,23 +5,26 @@
  */
 fun main() {
   /* Round 1 */
-  val a1: int = endorse (input int from alice) to {A & B<-} from {A & B<-};
-  val b1: int = endorse (input int from bob) to {B & A<-} from {B & A<-};
+  val a1: int = endorse (input int from alice) to {alice} from {alice};
+  val b1: int = endorse (input int from bob) to {bob} from {bob};
 
   /* Reveal who had the higher bid. */
-  val a1_higher: bool = declassify (a1 > b1) to {A ⊓ B};
+  val a1_higher: bool = declassify (a1 > b1) to {alice ⊓ bob};
   output a1_higher to alice;
   output a1_higher to bob;
 
   /* Round 2 */
-  val a2: int = endorse (input int from alice) to {A & B<-} from {A & B<-};
-  val b2: int = endorse (input int from bob) to {B & A<-} from {B & A<-};
+  val a2: int = endorse (input int from alice) to {alice} from {alice};
+  val b2: int = endorse (input int from bob) to {bob} from {bob};
 
   /* Reveal the overall winner. */
-  val a_higher: bool = declassify (a1 + a2 > b1 + b2) to {A ⊓ B};
+  val a_higher: bool = declassify (a1 + a2 > b1 + b2) to {alice ⊓ bob};
   output a_higher to alice;
   output a_higher to bob;
 }
 
-host alice : {A & B<-}
-host bob   : {B & A<-}
+
+host alice
+host bob
+assume for <- alice trusts bob
+assume for <- bob trusts alice

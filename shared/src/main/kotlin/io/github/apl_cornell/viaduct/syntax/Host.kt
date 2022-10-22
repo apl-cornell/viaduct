@@ -11,6 +11,7 @@ import io.github.apl_cornell.viaduct.prettyprinting.styled
  * it has inputs and outputs.
  */
 data class Host(override val name: String) : Name, Comparable<Host> {
+
     override val nameCategory: String
         get() = "host"
 

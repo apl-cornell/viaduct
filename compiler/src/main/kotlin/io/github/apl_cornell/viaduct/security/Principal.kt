@@ -2,20 +2,18 @@ package io.github.apl_cornell.viaduct.security
 
 import io.github.apl_cornell.viaduct.prettyprinting.Document
 import io.github.apl_cornell.viaduct.prettyprinting.PrettyPrintable
-import io.github.apl_cornell.viaduct.prettyprinting.Style
-import io.github.apl_cornell.viaduct.prettyprinting.styled
+import io.github.apl_cornell.viaduct.syntax.Host
+import io.github.apl_cornell.viaduct.syntax.LabelVariable
 
 /** An actor with an associated security label. */
-data class Principal(val name: String) : Comparable<Principal>, PrettyPrintable {
-    override fun compareTo(other: Principal): Int =
-        name.compareTo(other.name)
+sealed class Principal : PrettyPrintable
 
-    override fun toDocument(): Document = Document(name).styled(PrincipalStyle)
-
-    // TODO: remove and use [toDocument]
-    override fun toString(): String =
-        name
+data class HostPrincipal(val host: Host) : Principal() {
+    override fun toString(): String = "${host.name}"
+    override fun toDocument(): Document = host.toDocument()
 }
 
-/** The display style of [Principal]s. */
-object PrincipalStyle : Style
+data class PolymorphicPrincipal(val labelVariable: LabelVariable) : Principal() {
+    override fun toString(): String = "${labelVariable.name}"
+    override fun toDocument(): Document = labelVariable.toDocument()
+}

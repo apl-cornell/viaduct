@@ -1,8 +1,8 @@
 package io.github.apl_cornell.viaduct.backends.cleartext
 
 import io.github.apl_cornell.viaduct.security.Label
+import io.github.apl_cornell.viaduct.security.label
 import io.github.apl_cornell.viaduct.syntax.Host
-import io.github.apl_cornell.viaduct.syntax.HostTrustConfiguration
 import io.github.apl_cornell.viaduct.syntax.InputPort
 import io.github.apl_cornell.viaduct.syntax.OutputPort
 import io.github.apl_cornell.viaduct.syntax.ProtocolName
@@ -25,8 +25,8 @@ class Local(val host: Host) : Cleartext() {
     override val arguments: Map<String, Value>
         get() = mapOf("host" to HostValue(host))
 
-    override fun authority(hostTrustConfiguration: HostTrustConfiguration): Label =
-        hostTrustConfiguration(host).interpret()
+    override fun authority(): Label =
+        host.label
 
     val inputPort = InputPort(this, this.host, INPUT)
 

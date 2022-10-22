@@ -55,7 +55,7 @@ class SelectionConstraintGenerator(
     private val costEstimator: CostEstimator<IntegerCost>,
 ) {
     private val nameGenerator = FreshNameGenerator()
-    private val hostTrustConfiguration = HostTrustConfiguration(program)
+    private val hostTrustConfiguration = HostTrustConfiguration.get(program)
     private val nameAnalysis = NameAnalysis.get(program)
     private val informationFlowAnalysis = InformationFlowAnalysis.get(program)
 
@@ -67,12 +67,15 @@ class SelectionConstraintGenerator(
         val requiredAuthority = informationFlowAnalysis.label(node)
         val annotation = node.protocol?.value
         return if (annotation != null) {
-            if (!annotation.authority(hostTrustConfiguration).actsFor(requiredAuthority))
+            if (!hostTrustConfiguration.actsFor(annotation.authority(), requiredAuthority))
+            // update actsfor
+            // if (!annotation.authority().actsFor(requiredAuthority))
                 throw InvalidProtocolAnnotationError(node as Node)
             setOf(annotation)
         } else {
             protocolFactory.viableProtocols(node)
-                .filter { it.authority(hostTrustConfiguration).actsFor(requiredAuthority) }
+                .filter { hostTrustConfiguration.actsFor(it.authority(), requiredAuthority) }
+                // .filter { it.authority().actsFor(requiredAuthority) }
                 .ifEmpty { throw NoApplicableProtocolError(node as Node) }
                 .toSet()
         }

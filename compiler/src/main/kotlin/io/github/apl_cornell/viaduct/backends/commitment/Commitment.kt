@@ -1,11 +1,9 @@
 package io.github.apl_cornell.viaduct.backends.commitment
 
 import io.github.apl_cornell.viaduct.security.Label
-import io.github.apl_cornell.viaduct.security.LabelAnd
-import io.github.apl_cornell.viaduct.security.LabelExpression
-import io.github.apl_cornell.viaduct.security.LabelIntegrity
+import io.github.apl_cornell.viaduct.security.integrity
+import io.github.apl_cornell.viaduct.security.label
 import io.github.apl_cornell.viaduct.syntax.Host
-import io.github.apl_cornell.viaduct.syntax.HostTrustConfiguration
 import io.github.apl_cornell.viaduct.syntax.InputPort
 import io.github.apl_cornell.viaduct.syntax.OutputPort
 import io.github.apl_cornell.viaduct.syntax.Protocol
@@ -34,13 +32,11 @@ class Commitment(val cleartextHost: Host, val hashHosts: Set<Host>) : Protocol()
     override val arguments: Map<String, Value>
         get() = mapOf("sender" to HostValue(cleartextHost), "receivers" to HostSetValue(hashHosts))
 
-    override fun authority(hostTrustConfiguration: HostTrustConfiguration): Label =
-        LabelAnd(
-            hostTrustConfiguration(cleartextHost),
+    override fun authority(): Label =
+        cleartextHost.label and
             hashHosts
-                .map { LabelIntegrity(hostTrustConfiguration(it)) }
-                .reduce<LabelExpression, LabelExpression> { acc, l -> LabelAnd(acc, l) }
-        ).interpret()
+                .map { it.label.integrity() }
+                .reduce { acc, l -> acc and l }
 
     val inputPort = InputPort(this, this.cleartextHost, INPUT)
 

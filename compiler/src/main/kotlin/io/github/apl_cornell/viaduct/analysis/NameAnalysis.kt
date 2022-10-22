@@ -7,21 +7,35 @@ import io.github.apl_cornell.viaduct.attributes.collectedAttribute
 import io.github.apl_cornell.viaduct.errors.IncorrectNumberOfArgumentsError
 import io.github.apl_cornell.viaduct.errors.NameClashError
 import io.github.apl_cornell.viaduct.errors.UndefinedNameError
+import io.github.apl_cornell.viaduct.security.LabelAnd
+import io.github.apl_cornell.viaduct.security.LabelConfidentiality
+import io.github.apl_cornell.viaduct.security.LabelExpression
+import io.github.apl_cornell.viaduct.security.LabelIntegrity
+import io.github.apl_cornell.viaduct.security.LabelJoin
+import io.github.apl_cornell.viaduct.security.LabelLiteral
+import io.github.apl_cornell.viaduct.security.LabelMeet
+import io.github.apl_cornell.viaduct.security.LabelOr
+import io.github.apl_cornell.viaduct.security.LabelParameter
 import io.github.apl_cornell.viaduct.selection.FunctionVariable
 import io.github.apl_cornell.viaduct.syntax.FunctionName
 import io.github.apl_cornell.viaduct.syntax.Host
 import io.github.apl_cornell.viaduct.syntax.JumpLabel
+import io.github.apl_cornell.viaduct.syntax.LabelNode
+import io.github.apl_cornell.viaduct.syntax.LabelVariable
 import io.github.apl_cornell.viaduct.syntax.Located
 import io.github.apl_cornell.viaduct.syntax.Name
 import io.github.apl_cornell.viaduct.syntax.NameMap
 import io.github.apl_cornell.viaduct.syntax.ObjectTypeNode
 import io.github.apl_cornell.viaduct.syntax.ObjectVariable
 import io.github.apl_cornell.viaduct.syntax.ProtocolNode
+import io.github.apl_cornell.viaduct.syntax.SourceLocation
 import io.github.apl_cornell.viaduct.syntax.Temporary
 import io.github.apl_cornell.viaduct.syntax.intermediate.BlockNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.BreakNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.CommunicationNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.DeclarationNode
+import io.github.apl_cornell.viaduct.syntax.intermediate.DeclassificationNode
+import io.github.apl_cornell.viaduct.syntax.intermediate.EndorsementNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.ExpressionNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.FunctionArgumentNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.FunctionCallNode
@@ -65,6 +79,7 @@ class NameAnalysis private constructor(private val tree: Tree<Node, ProgramNode>
                 declarations.filterIsInstance<HostDeclarationNode>()
                     .fold(NameMap()) { map, declaration -> map.put(declaration.name, declaration) }
             }
+
             else ->
                 parent.hostDeclarations
         }
@@ -113,8 +128,10 @@ class NameAnalysis private constructor(private val tree: Tree<Node, ProgramNode>
         when (val parent = tree.parent(this)) {
             null ->
                 NameMap()
+
             is InfiniteLoopNode ->
                 parent.jumpTargets.put(parent.jumpLabel, parent)
+
             else ->
                 parent.jumpTargets
         }
@@ -139,13 +156,17 @@ class NameAnalysis private constructor(private val tree: Tree<Node, ProgramNode>
             when {
                 parent == null ->
                     NameMap()
+
                 parent is BlockNode && previousSibling != null ->
                     previousSibling.contextOut
+
                 parent is BlockNode && previousSibling == null && grandParent !is BlockNode && resetAtBlock ->
                     // TODO: resetting at block is not enough to guarantee security with temporaries
                     NameMap()
+
                 parent is FunctionDeclarationNode ->
                     parent.contextOut
+
                 else ->
                     parent.contextIn
             }
@@ -202,6 +223,7 @@ class NameAnalysis private constructor(private val tree: Tree<Node, ProgramNode>
         return when {
             parameter is ParameterNode && parameter.isOutParameter ->
                 parameter
+
             else ->
                 throw UndefinedNameError(parameter.name)
         }
@@ -212,8 +234,10 @@ class NameAnalysis private constructor(private val tree: Tree<Node, ProgramNode>
         when (node) {
             is ParameterNode ->
                 node.objectType
+
             is DeclarationNode ->
                 node.objectType
+
             is ObjectDeclarationArgumentNode ->
                 parameter(node).objectType
         }
@@ -251,6 +275,14 @@ class NameAnalysis private constructor(private val tree: Tree<Node, ProgramNode>
     }
 
     /** Returns the function declaration enclosing [node]. */
+    fun enclosingFunction(node: Node): FunctionDeclarationNode =
+        node.enclosingFunction!!
+
+    /** Returns label variable declarations in scope of [node]. */
+    private fun Node.labelVariables(): Set<LabelVariable> =
+        enclosingFunction(this).labelParameters.map { it.value }.toSet()
+
+    /** Returns the function declaration enclosing [node]. */
     // TODO: this should just return the FunctionNode
     fun enclosingFunctionName(node: Node): FunctionName =
         node.enclosingFunction!!.name.value
@@ -260,12 +292,16 @@ class NameAnalysis private constructor(private val tree: Tree<Node, ProgramNode>
         when (this) {
             is ReadNode ->
                 persistentSetOf(this)
+
             is ExpressionNode ->
                 children.fold(persistentSetOf()) { acc, child -> acc.addAll(child.reads) }
+
             is OutParameterInitializationNode ->
                 children.fold(persistentSetOf()) { acc, child -> acc.addAll(child.reads) }
+
             is FunctionCallNode ->
                 children.fold(persistentSetOf()) { acc, child -> acc.addAll(child.reads) }
+
             else ->
                 children.filterIsInstance<ExpressionNode>().fold(persistentSetOf()) { acc, child ->
                     acc.addAll(child.reads)
@@ -480,31 +516,93 @@ class NameAnalysis private constructor(private val tree: Tree<Node, ProgramNode>
             }
         }
 
+        fun LabelExpression.check(
+            hosts: Set<Host>,
+            labelVariables: Set<LabelVariable>,
+            sourceLocation: SourceLocation
+        ) {
+            when (this) {
+                is LabelLiteral -> {
+                    if (name !in hosts) {
+                        throw UndefinedNameError(Located(name, sourceLocation))
+                    }
+                }
+
+                is LabelParameter -> {
+                    if (name !in labelVariables) {
+                        throw UndefinedNameError(Located(name, sourceLocation))
+                    }
+                }
+
+                is LabelConfidentiality -> value.check(hosts, labelVariables, sourceLocation)
+                is LabelIntegrity -> value.check(hosts, labelVariables, sourceLocation)
+                is LabelJoin -> {
+                    lhs.check(hosts, labelVariables, sourceLocation)
+                    rhs.check(hosts, labelVariables, sourceLocation)
+                }
+
+                is LabelMeet -> {
+                    lhs.check(hosts, labelVariables, sourceLocation)
+                    rhs.check(hosts, labelVariables, sourceLocation)
+                }
+
+                is LabelAnd -> {
+                    lhs.check(hosts, labelVariables, sourceLocation)
+                    rhs.check(hosts, labelVariables, sourceLocation)
+                }
+
+                is LabelOr -> {
+                    lhs.check(hosts, labelVariables, sourceLocation)
+                    rhs.check(hosts, labelVariables, sourceLocation)
+                }
+
+                else -> {}
+            }
+        }
+
+        /** check if a [LabelNode] has undeclared [Host] or [LabelVariable] */
+        fun LabelNode.check(node: Node) {
+            val hosts = node.hostDeclarations.keys
+            val labelVariables = node.labelVariables()
+            value.check(hosts, labelVariables, sourceLocation)
+        }
+
         fun check(node: Node) {
             // Check that name references are valid
             when (node) {
                 is ParameterNode ->
                     node.protocol?.check()
+
                 is ReadNode ->
                     declaration(node)
+
                 is QueryNode ->
                     declaration(node)
+
                 is LetNode ->
                     node.protocol?.check()
+
                 is DeclarationNode ->
                     node.protocol?.check()
+
                 is UpdateNode ->
                     declaration(node)
+
                 is OutParameterInitializationNode ->
                     declaration(node)
+
                 is ObjectReferenceArgumentNode ->
                     declaration(node)
+
                 is OutParameterArgumentNode ->
                     declaration(node)
+
                 is FunctionCallNode ->
                     declaration(node)
+
                 is BreakNode ->
                     correspondingLoop(node)
+
                 is CommunicationNode ->
                     declaration(node)
             }
@@ -512,14 +610,44 @@ class NameAnalysis private constructor(private val tree: Tree<Node, ProgramNode>
             when (node) {
                 is LetNode ->
                     node.temporaryDefinitions.put(node.name, node)
+
                 is DeclarationNode ->
                     node.objectDeclarations.put(node.name, node)
+
                 is InfiniteLoopNode ->
                     node.jumpTargets.put(node.jumpLabel, node)
+
                 is ProgramNode -> {
                     // Forcing these thunks
                     node.hostDeclarations
                     node.functionDeclarations
+                }
+
+                is FunctionDeclarationNode -> {
+                    // check for duplicate LabelVariable declaration
+                    val nameMap = NameMap<LabelVariable, LabelVariable>()
+                    node.labelParameters.forEach {
+                        nameMap.put(it, it.value)
+                    }
+                }
+            }
+            // Check that LabelVariables and Hosts are declared
+            when (node) {
+                is DeclarationNode ->
+                    node.objectType.labelArguments?.forEach { it.check(node) }
+
+                is DeclassificationNode -> {
+                    node.fromLabel?.check(node)
+                    node.toLabel.check(node)
+                }
+
+                is EndorsementNode -> {
+                    node.fromLabel.check(node)
+                    node.toLabel?.check(node)
+                }
+
+                is ParameterNode -> {
+                    node.objectType.labelArguments?.forEach { it.check(node) }
                 }
             }
             // Check the children

@@ -1,8 +1,13 @@
 package io.github.apl_cornell.viaduct.errors
 
+import io.github.apl_cornell.viaduct.algebra.FreeDistributiveLatticeCongruence
+import io.github.apl_cornell.viaduct.passes.PrincipalComponent
 import io.github.apl_cornell.viaduct.prettyprinting.Document
 import io.github.apl_cornell.viaduct.prettyprinting.div
 import io.github.apl_cornell.viaduct.security.Label
+import io.github.apl_cornell.viaduct.security.confidentiality
+import io.github.apl_cornell.viaduct.security.flowsTo
+import io.github.apl_cornell.viaduct.security.integrity
 import io.github.apl_cornell.viaduct.syntax.HasSourceLocation
 
 /**
@@ -15,7 +20,8 @@ import io.github.apl_cornell.viaduct.syntax.HasSourceLocation
 class InsecureControlFlowError(
     private val node: HasSourceLocation,
     private val nodeLabel: Label,
-    private val pc: Label
+    private val pc: Label,
+    private val context: FreeDistributiveLatticeCongruence<PrincipalComponent>
 ) : InformationFlowError() {
     override val category: String
         get() = "Insecure Control Flow"
@@ -25,7 +31,13 @@ class InsecureControlFlowError(
 
     override val description: Document
         get() {
-            if (!pc.confidentiality().flowsTo(nodeLabel.confidentiality())) {
+            // TODO: use flowsTo rather than actsFor
+            if (!flowsTo(
+                    pc.confidentiality(),
+                    nodeLabel.confidentiality(),
+                    context
+                )
+            ) {
                 // Confidentiality is the problem
                 // TODO: reword message (see the output of insecure-control-flow-confidentiality.via)
                 return Document("Execution of this term might leak information encoded in the control flow:")
@@ -37,7 +49,14 @@ class InsecureControlFlowError(
             } else {
                 // Integrity is the problem
                 // TODO: add an error test case that covers this branch.
-                assert(!pc.integrity().flowsTo(nodeLabel.integrity()))
+                // TODO: use flowsTo rather than actsFor
+                assert(
+                    !flowsTo(
+                        pc.integrity(),
+                        nodeLabel.integrity(),
+                        context
+                    )
+                )
                 return Document("The control flow does not have enough integrity for this term:")
                     .withSource(node.sourceLocation) /
                     Document("Integrity label on control flow is:")

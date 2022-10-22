@@ -22,6 +22,7 @@ import io.github.apl_cornell.viaduct.syntax.intermediate.BlockNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.BreakNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.CommunicationNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.DeclarationNode
+import io.github.apl_cornell.viaduct.syntax.intermediate.DelegationDeclarationNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.FunctionCallNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.FunctionDeclarationNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.HostDeclarationNode
@@ -85,14 +86,18 @@ class MuxPostprocessor(
                 when (declaration) {
                     is HostDeclarationNode -> declaration.deepCopy() as TopLevelDeclarationNode
 
+                    is DelegationDeclarationNode -> declaration.deepCopy() as TopLevelDeclarationNode
+
                     is FunctionDeclarationNode -> {
                         FunctionDeclarationNode(
                             declaration.name,
-                            declaration.pcLabel,
+                            declaration.labelParameters,
                             Arguments(
                                 declaration.parameters.map { it.deepCopy() as ParameterNode },
                                 declaration.parameters.sourceLocation
                             ),
+                            declaration.labelConstraints,
+                            declaration.pcLabel,
                             mux(
                                 declaration.body,
                                 nameAnalysis,

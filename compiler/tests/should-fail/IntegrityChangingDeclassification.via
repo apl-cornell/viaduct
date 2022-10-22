@@ -1,5 +1,8 @@
 /* IntegrityChangingDeclassificationError */
 
 fun main() {
-    val result: int = declassify 42 from {A} to {(A ∧ B)<-};
+    val result: int = declassify 42 from {a} to {(a ∧ b)<-};
 }
+
+host a
+host b

@@ -26,7 +26,7 @@ fun validateProtocolAssignment(
 
     val nameAnalysis = NameAnalysis.get(program)
     val informationFlowAnalysis = InformationFlowAnalysis.get(program)
-    val hostTrustConfiguration = HostTrustConfiguration(program)
+    val hostTrustConfiguration = HostTrustConfiguration.get(program)
 
     fun checkViableProtocol(selection: ProtocolAssignment, node: VariableDeclarationNode) {
         val functionName = nameAnalysis.enclosingFunctionName(node as Node)
@@ -39,7 +39,12 @@ fun validateProtocolAssignment(
     fun checkAuthority(selection: ProtocolAssignment, node: VariableDeclarationNode) {
         val functionName = nameAnalysis.enclosingFunctionName(node as Node)
         val protocol = selection.getAssignment(functionName, node.name.value)
-        if (!protocol.authority(hostTrustConfiguration).actsFor(informationFlowAnalysis.label(node))) {
+        if (!hostTrustConfiguration.actsFor(
+                protocol.authority(),
+                informationFlowAnalysis.label(node)
+            )
+        ) {
+            // if (!protocol.authority().actsFor(informationFlowAnalysis.label(node))) {
             throw InvalidProtocolAssignmentException(node, protocol)
         }
     }

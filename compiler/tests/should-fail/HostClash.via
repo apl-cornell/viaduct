@@ -1,7 +1,7 @@
 /* NameClashError */
 
-host alice : {A}
-host alice : {A}
+host alice
+host alice
 
 fun main() {
     val x: int = 0;

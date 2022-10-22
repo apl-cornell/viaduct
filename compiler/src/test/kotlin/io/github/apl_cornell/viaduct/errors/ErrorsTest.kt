@@ -5,9 +5,12 @@ import io.github.apl_cornell.viaduct.backends.DefaultCombinedBackend
 import io.github.apl_cornell.viaduct.parsing.SourceFile
 import io.github.apl_cornell.viaduct.parsing.isBlankOrUnderline
 import io.github.apl_cornell.viaduct.passes.compile
+import io.github.apl_cornell.viaduct.prettyprinting.Document
+import io.github.apl_cornell.viaduct.prettyprinting.plus
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ArgumentsSource
 import java.io.File
@@ -35,6 +38,18 @@ internal class ErrorsTest {
             assertFalse(isBlankOrUnderline(messageLines[messageLines.size - 2])) {
                 "Error message should have no more than one blank line at the end."
             }
+        }
+    }
+
+    /** Can be run manually to look at error messages. */
+    @Disabled
+    @ParameterizedTest
+    @ArgumentsSource(NegativeTestFileProvider::class)
+    fun `print error messages`(file: File) {
+        try {
+            compile(file)
+        } catch (e: CompilationError) {
+            (e.toDocument() + Document.lineBreak).print(System.err, ansi = true)
         }
     }
 }

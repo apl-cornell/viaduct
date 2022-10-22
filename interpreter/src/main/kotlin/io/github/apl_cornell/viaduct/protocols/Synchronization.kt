@@ -2,7 +2,6 @@ package io.github.apl_cornell.viaduct.protocols
 
 import io.github.apl_cornell.viaduct.security.Label
 import io.github.apl_cornell.viaduct.syntax.Host
-import io.github.apl_cornell.viaduct.syntax.HostTrustConfiguration
 import io.github.apl_cornell.viaduct.syntax.Protocol
 import io.github.apl_cornell.viaduct.syntax.ProtocolName
 import io.github.apl_cornell.viaduct.syntax.values.HostSetValue
@@ -25,6 +24,6 @@ class Synchronization(hosts: Set<Host>) : Protocol() {
     override val arguments: Map<String, Value>
         get() = mapOf("hosts" to participants)
 
-    override fun authority(hostTrustConfiguration: HostTrustConfiguration): Label =
+    override fun authority(): Label =
         throw Error("Synchronization protocol has no authority label")
 }

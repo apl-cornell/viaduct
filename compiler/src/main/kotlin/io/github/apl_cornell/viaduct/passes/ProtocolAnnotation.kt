@@ -6,6 +6,7 @@ import io.github.apl_cornell.viaduct.syntax.Arguments
 import io.github.apl_cornell.viaduct.syntax.Located
 import io.github.apl_cornell.viaduct.syntax.intermediate.BlockNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.DeclarationNode
+import io.github.apl_cornell.viaduct.syntax.intermediate.DelegationDeclarationNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.FunctionDeclarationNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.HostDeclarationNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.IfNode
@@ -84,10 +85,13 @@ private class ProtocolAnnotator(val program: ProgramNode, val selection: Protoco
                     is HostDeclarationNode ->
                         decl
 
+                    is DelegationDeclarationNode ->
+                        decl
+
                     is FunctionDeclarationNode ->
                         FunctionDeclarationNode(
                             decl.name,
-                            decl.pcLabel,
+                            decl.labelParameters,
                             Arguments(
                                 decl.parameters.map { param ->
                                     ParameterNode(
@@ -103,6 +107,8 @@ private class ProtocolAnnotator(val program: ProgramNode, val selection: Protoco
                                 },
                                 decl.parameters.sourceLocation
                             ),
+                            decl.labelConstraints,
+                            decl.pcLabel,
                             run(decl.body) as BlockNode,
                             decl.sourceLocation
                         )

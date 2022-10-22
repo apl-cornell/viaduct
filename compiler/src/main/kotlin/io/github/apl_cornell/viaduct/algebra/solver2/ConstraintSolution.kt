@@ -2,7 +2,7 @@ package io.github.apl_cornell.viaduct.algebra.solver2
 
 import io.github.apl_cornell.viaduct.algebra.Lattice
 
-/** A solution to a system of constraints. Maps variables to values. */
+/** A solution to a system of constraints. Maps variables of type [V] to values of type [C]. */
 class ConstraintSolution<C : Lattice<C>, V> internal constructor(
     private val solution: Map<V, C>,
     private val default: C

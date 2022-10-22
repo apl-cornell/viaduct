@@ -2,6 +2,11 @@ package io.github.apl_cornell.viaduct.passes
 
 import io.github.apl_cornell.viaduct.errors.InvalidConstructorCallError
 import io.github.apl_cornell.viaduct.errors.JumpOutsideLoopScopeError
+import io.github.apl_cornell.viaduct.security.LabelAnd
+import io.github.apl_cornell.viaduct.security.LabelBottom
+import io.github.apl_cornell.viaduct.security.LabelConfidentiality
+import io.github.apl_cornell.viaduct.security.LabelIntegrity
+import io.github.apl_cornell.viaduct.security.LabelTop
 import io.github.apl_cornell.viaduct.syntax.Arguments
 import io.github.apl_cornell.viaduct.syntax.FunctionName
 import io.github.apl_cornell.viaduct.syntax.Host
@@ -10,7 +15,6 @@ import io.github.apl_cornell.viaduct.syntax.JumpLabelNode
 import io.github.apl_cornell.viaduct.syntax.LabelNode
 import io.github.apl_cornell.viaduct.syntax.Located
 import io.github.apl_cornell.viaduct.syntax.NameMap
-import io.github.apl_cornell.viaduct.syntax.ObjectTypeNode
 import io.github.apl_cornell.viaduct.syntax.ObjectVariable
 import io.github.apl_cornell.viaduct.syntax.ObjectVariableNode
 import io.github.apl_cornell.viaduct.syntax.Temporary
@@ -19,6 +23,7 @@ import io.github.apl_cornell.viaduct.syntax.intermediate.Node
 import io.github.apl_cornell.viaduct.util.FreshNameGenerator
 import io.github.apl_cornell.viaduct.syntax.intermediate.AssertionNode as IAssertionNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.AtomicExpressionNode as IAtomicExpressionNode
+import io.github.apl_cornell.viaduct.syntax.intermediate.AuthorityDelegationDeclarationNode as IAuthorityDelegationDeclarationNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.BlockNode as IBlockNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.BreakNode as IBreakNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.DeclarationNode as IDeclarationNode
@@ -30,6 +35,7 @@ import io.github.apl_cornell.viaduct.syntax.intermediate.FunctionArgumentNode as
 import io.github.apl_cornell.viaduct.syntax.intermediate.FunctionCallNode as IFunctionCallNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.FunctionDeclarationNode as IFunctionDeclarationNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.HostDeclarationNode as IHostDeclarationNode
+import io.github.apl_cornell.viaduct.syntax.intermediate.IFCDelegationDeclarationNode as IIFCDelegationDeclarationNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.IfNode as IIfNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.InfiniteLoopNode as IInfiniteLoopNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.InputNode as IInputNode
@@ -51,11 +57,13 @@ import io.github.apl_cornell.viaduct.syntax.intermediate.StatementNode as IState
 import io.github.apl_cornell.viaduct.syntax.intermediate.TopLevelDeclarationNode as ITopLevelDeclarationNode
 import io.github.apl_cornell.viaduct.syntax.intermediate.UpdateNode as IUpdateNode
 import io.github.apl_cornell.viaduct.syntax.surface.AssertionNode as SAssertionNode
+import io.github.apl_cornell.viaduct.syntax.surface.AuthorityDelegationDeclarationNode as SAuthorityDelegationDeclarationNode
 import io.github.apl_cornell.viaduct.syntax.surface.BlockNode as SBlockNode
 import io.github.apl_cornell.viaduct.syntax.surface.BreakNode as SBreakNode
 import io.github.apl_cornell.viaduct.syntax.surface.ConstructorCallNode as SConstructorCallNode
 import io.github.apl_cornell.viaduct.syntax.surface.DeclarationNode as SDeclarationNode
 import io.github.apl_cornell.viaduct.syntax.surface.DeclassificationNode as SDeclassificationNode
+import io.github.apl_cornell.viaduct.syntax.surface.DelegationDeclarationNode as SDelegationDeclarationNode
 import io.github.apl_cornell.viaduct.syntax.surface.EndorsementNode as SEndorsementNode
 import io.github.apl_cornell.viaduct.syntax.surface.ExpressionArgumentNode as SExpressionArgumentNode
 import io.github.apl_cornell.viaduct.syntax.surface.ExpressionNode as SExpressionNode
@@ -64,6 +72,7 @@ import io.github.apl_cornell.viaduct.syntax.surface.FunctionArgumentNode as SFun
 import io.github.apl_cornell.viaduct.syntax.surface.FunctionCallNode as SFunctionCallNode
 import io.github.apl_cornell.viaduct.syntax.surface.FunctionDeclarationNode as SFunctionDeclarationNode
 import io.github.apl_cornell.viaduct.syntax.surface.HostDeclarationNode as SHostDeclarationNode
+import io.github.apl_cornell.viaduct.syntax.surface.IFCDelegationDeclarationNode as SIFCDelegationDeclarationNode
 import io.github.apl_cornell.viaduct.syntax.surface.IfNode as SIfNode
 import io.github.apl_cornell.viaduct.syntax.surface.InfiniteLoopNode as SInfiniteLoopNode
 import io.github.apl_cornell.viaduct.syntax.surface.InputNode as SInputNode
@@ -104,7 +113,6 @@ fun SProgramNode.elaborated(): IProgramNode {
                 declarations.add(
                     IHostDeclarationNode(
                         declaration.name,
-                        declaration.authority,
                         declaration.sourceLocation
                     )
                 )
@@ -114,29 +122,45 @@ fun SProgramNode.elaborated(): IProgramNode {
                 functions = functions.put(declaration.name, true)
                 declarations.add(FunctionElaborator(nameGenerator).elaborate(declaration))
             }
+
+            is SDelegationDeclarationNode -> {
+                when (declaration) {
+                    is SAuthorityDelegationDeclarationNode -> {
+                        declarations.add(
+                            IAuthorityDelegationDeclarationNode(
+                                declaration.from,
+                                declaration.to,
+                                declaration.delegationProjection,
+                                declaration.sourceLocation
+                            )
+                        )
+                    }
+
+                    is SIFCDelegationDeclarationNode -> {
+                        declarations.add(
+                            IIFCDelegationDeclarationNode(
+                                declaration.from,
+                                declaration.to,
+                                declaration.delegationProjection,
+                                declaration.sourceLocation
+                            )
+                        )
+                    }
+
+                    else -> {}
+                }
+            }
         }
     }
 
     return IProgramNode(declarations, this.sourceLocation)
 }
 
-private fun LabelNode.renameObjects(renames: NameMap<ObjectVariable, ObjectVariable>): LabelNode {
-    val renamer = { param: String ->
-        renames[Located(ObjectVariable(param), this.sourceLocation)].name
-    }
-
-    return Located(this.value.rename(renamer), this.sourceLocation)
-}
-
-private fun Arguments<LabelNode>.renameObjects(renames: NameMap<ObjectVariable, ObjectVariable>): Arguments<LabelNode> =
-    Arguments(this.map { it.renameObjects(renames) }, this.sourceLocation)
-
-private fun ObjectTypeNode.renameObjects(renames: NameMap<ObjectVariable, ObjectVariable>): ObjectTypeNode =
-    ObjectTypeNode(className, typeArguments, labelArguments?.renameObjects(renames))
-
 private class FunctionElaborator(val nameGenerator: FreshNameGenerator) {
     fun elaborate(functionDecl: SFunctionDeclarationNode): IFunctionDeclarationNode {
-        val objectRenames = functionDecl.parameters.fold(NameMap<ObjectVariable, ObjectVariable>()) { map, parameter ->
+        val objectRenames = functionDecl.parameters.fold(
+            NameMap<ObjectVariable, ObjectVariable>()
+        ) { map, parameter ->
             val newName = ObjectVariable(nameGenerator.getFreshName(parameter.name.value.name))
             map.put(parameter.name, newName)
         }
@@ -145,16 +169,41 @@ private class FunctionElaborator(val nameGenerator: FreshNameGenerator) {
             IParameterNode(
                 Located(objectRenames[parameter.name], parameter.name.sourceLocation),
                 parameter.parameterDirection,
-                parameter.objectType.renameObjects(objectRenames),
+                parameter.objectType,
                 parameter.protocol,
                 parameter.sourceLocation
             )
         }
 
+        val delegations: Arguments<IIFCDelegationDeclarationNode> =
+            Arguments(
+                if (functionDecl.labelConstraints == null) {
+                    listOf()
+                } else {
+                    functionDecl.labelConstraints.map {
+                        IIFCDelegationDeclarationNode(
+                            it.from,
+                            it.to,
+                            it.delegationProjection,
+                            it.sourceLocation
+                        )
+                    }
+                },
+                functionDecl.name.sourceLocation
+            )
+        // TODO: remove default pc label when we have pc label inference ready
         return IFunctionDeclarationNode(
             functionDecl.name,
-            functionDecl.pcLabel?.renameObjects(objectRenames),
+            functionDecl.labelParameters ?: Arguments(
+                listOf(),
+                functionDecl.name.sourceLocation
+            ),
             Arguments(elaboratedParameters, functionDecl.parameters.sourceLocation),
+            delegations,
+            functionDecl.pcLabel ?: LabelNode(
+                LabelAnd(LabelIntegrity(LabelBottom), LabelConfidentiality(LabelTop)),
+                functionDecl.sourceLocation
+            ),
             StatementElaborator(nameGenerator, objectRenames = objectRenames).elaborate(functionDecl.body),
             functionDecl.sourceLocation
         )
@@ -353,7 +402,7 @@ private class StatementElaborator(
 
                             IDeclarationNode(
                                 ObjectVariableNode(newName, stmt.variable.sourceLocation),
-                                initializer.objectType.renameObjects(objectRenames),
+                                initializer.objectType,
                                 newArguments,
                                 initializer.protocol,
                                 stmt.sourceLocation
@@ -387,7 +436,7 @@ private class StatementElaborator(
                         when (val rhs = stmt.rhs) {
                             is SConstructorCallNode ->
                                 IOutParameterConstructorInitializerNode(
-                                    rhs.objectType.renameObjects(objectRenames),
+                                    rhs.objectType,
                                     Arguments(
                                         rhs.arguments.map { it.toAnf(bindings).toAtomic(bindings) },
                                         rhs.arguments.sourceLocation

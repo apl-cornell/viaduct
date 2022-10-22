@@ -1,5 +1,7 @@
-host alice : {A & B<-}
-host bob   : {B & A<-}
+host alice
+host bob
+assume for <- alice trusts bob
+assume for <- bob trusts alice
 
 fun main() {
     val a : int = input int from alice;
@@ -12,25 +14,25 @@ fun main() {
     k(&c);
 }
 
-fun f(a: int{A & B<-}, b: int{B & A<-}) {
+fun f(a: int{alice}, b: int{bob}) {
     val win: bool = a == b;
     g(win);
 }
 
-fun g(win: bool{A & B}) {
-    val ret: bool = declassify win to {A ⊓ B};
+fun g(win: bool{alice & bob}) {
+    val ret: bool = declassify win to {alice ⊓ bob};
     output ret to alice;
     output ret to bob;
 }
 
-fun h(sum: int{A & B}) {
-    val ret: int = declassify sum to {A ⊓ B};
+fun h(sum: int{alice & bob}) {
+    val ret: int = declassify sum to {alice ⊓ bob};
     output ret to alice;
     output ret to bob;
 }
 
-fun k(c: Array[int]) {
-    val num: int = declassify c[0] to {A ⊓ B};
+fun k(c: Array[int]{alice & bob}) {
+    val num: int = declassify c[0] to {alice ⊓ bob};
     output num to alice;
     output num to bob;
 }

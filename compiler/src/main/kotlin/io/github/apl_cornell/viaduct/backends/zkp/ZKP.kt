@@ -1,11 +1,9 @@
 package io.github.apl_cornell.viaduct.backends.zkp
 
 import io.github.apl_cornell.viaduct.security.Label
-import io.github.apl_cornell.viaduct.security.LabelAnd
-import io.github.apl_cornell.viaduct.security.LabelExpression
-import io.github.apl_cornell.viaduct.security.LabelIntegrity
+import io.github.apl_cornell.viaduct.security.integrity
+import io.github.apl_cornell.viaduct.security.label
 import io.github.apl_cornell.viaduct.syntax.Host
-import io.github.apl_cornell.viaduct.syntax.HostTrustConfiguration
 import io.github.apl_cornell.viaduct.syntax.InputPort
 import io.github.apl_cornell.viaduct.syntax.OutputPort
 import io.github.apl_cornell.viaduct.syntax.Protocol
@@ -30,13 +28,11 @@ class ZKP(val prover: Host, val verifiers: Set<Host>) : Protocol() {
     override val arguments: Map<String, Value>
         get() = mapOf("prover" to HostValue(prover), "verifiers" to HostSetValue(verifiers))
 
-    override fun authority(hostTrustConfiguration: HostTrustConfiguration): Label =
-        LabelAnd(
-            hostTrustConfiguration(prover),
+    override fun authority(): Label =
+        prover.label and
             verifiers
-                .map { LabelIntegrity(hostTrustConfiguration(it)) }
-                .reduce<LabelExpression, LabelExpression> { acc, l -> LabelAnd(acc, l) }
-        ).interpret()
+                .map { it.label.integrity() }
+                .reduce { acc, l -> acc and l }
 
     val secretInputPort: InputPort =
         InputPort(this, prover, "ZKP_SECRET_INPUT")

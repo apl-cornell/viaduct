@@ -2,6 +2,7 @@ package io.github.apl_cornell.viaduct.algebra.solver2
 
 import io.github.apl_cornell.viaduct.algebra.BoundedLattice
 import io.github.apl_cornell.viaduct.algebra.HeytingAlgebra
+import io.github.apl_cornell.viaduct.algebra.LatticeCongruence
 import io.github.apl_cornell.viaduct.algebra.PartialOrder
 import io.github.apl_cornell.viaduct.util.Colors
 import io.github.apl_cornell.viaduct.util.dataflow.DataFlowEdge
@@ -28,7 +29,8 @@ import java.io.Writer
  */
 class ConstraintSystem<C : HeytingAlgebra<C>, V, T : Throwable>(
     constraints: Iterable<Constraint<C, V, T>>,
-    bounds: BoundedLattice<C>
+    bounds: BoundedLattice<C>,
+    private val delegationContext: LatticeCongruence<C>
 ) {
     /**
      * Represents constraints as a graph. Each vertex is an atomic term (a constant or a variable),
@@ -74,7 +76,7 @@ class ConstraintSystem<C : HeytingAlgebra<C>, V, T : Throwable>(
                 is FlowsToConstraint -> {
                     val from = bestEffortSolution.evaluate(it.from)
                     val to = bestEffortSolution.evaluate(it.to)
-                    if (!from.lessThanOrEqualTo(to)) it.failWith(from, to) else null
+                    if (!delegationContext.lessThanOrEqualTo(from, to)) it.failWith(from, to) else null
                 }
             }
         }
@@ -95,7 +97,7 @@ class ConstraintSystem<C : HeytingAlgebra<C>, V, T : Throwable>(
     private fun constraintSatisfied(edge: DataFlowEdge<C>): Boolean {
         val sourceValue = bestEffortSolution.evaluate(constraintGraph.getEdgeSource(edge))
         val targetValue = bestEffortSolution.evaluate(constraintGraph.getEdgeTarget(edge))
-        return targetValue.lessThanOrEqualTo(edge.propagate(sourceValue))
+        return delegationContext.lessThanOrEqualTo(targetValue, edge.propagate(sourceValue))
     }
 
     /** Outputs the constraint system as a DOT graph to [writer]. */
@@ -130,8 +132,10 @@ class ConstraintSystem<C : HeytingAlgebra<C>, V, T : Throwable>(
             val color = when {
                 !constraintSatisfied(edge) ->
                     Colors.RED
+
                 edge is IdentityEdge ->
                     Colors.BLACK
+
                 else ->
                     Colors.BLUE
             }

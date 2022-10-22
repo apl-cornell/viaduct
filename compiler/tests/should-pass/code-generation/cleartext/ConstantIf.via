@@ -1,4 +1,4 @@
-host alice: {A}
+host alice
 
 fun main() {
     val x: int = input int from alice;

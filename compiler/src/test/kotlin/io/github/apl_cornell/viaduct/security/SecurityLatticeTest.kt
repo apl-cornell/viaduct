@@ -21,18 +21,21 @@ private val SecurityLattice<Component>.c
 private val SecurityLattice<Component>.i
     get() = this.integrity(ComponentBounds)
 
-private fun assertActsFor(from: Component, to: Component) {
-    assertTrue(from.lessThanOrEqualTo(to)) { "$from does not flow to $to." }
-}
-
 private fun assertActsFor(from: SecurityLattice<Component>, to: SecurityLattice<Component>) {
-    assertActsFor(from.confidentialityComponent, to.confidentialityComponent)
-    assertActsFor(from.integrityComponent, to.integrityComponent)
+    val context = listOf<FreeDistributiveLattice.LessThanOrEqualTo<String>>()
+    assertTrue(from.integrityComponent.lessThanOrEqualTo(to.integrityComponent, context))
+    assertTrue(from.confidentialityComponent.lessThanOrEqualTo(to.confidentialityComponent, context))
 }
 
 private fun assertFlowsTo(from: SecurityLattice<Component>, to: SecurityLattice<Component>) {
-    assertActsFor(to.confidentialityComponent, from.confidentialityComponent)
-    assertActsFor(from.integrityComponent, to.integrityComponent)
+    assertActsFor(
+        to.confidentiality(FreeDistributiveLattice.bounds()),
+        from.confidentiality(FreeDistributiveLattice.bounds())
+    )
+    assertActsFor(
+        from.integrity(FreeDistributiveLattice.bounds()),
+        to.integrity(FreeDistributiveLattice.bounds())
+    )
 }
 
 internal class SecurityLatticeTest {
@@ -74,15 +77,8 @@ internal class SecurityLatticeTest {
 
     @Test
     fun `swap same`() {
-        assertEquals(e("A"), e("A").swap())
-    }
-
-    @Test
-    fun `swap different`() {
-        assertEquals(
-            SecurityLattice(Component("B"), Component("A")),
-            SecurityLattice(Component("A"), Component("B")).swap()
-        )
+        assertEquals(e("A").integrityComponent, e("A").swap().confidentialityComponent)
+        assertEquals(e("A").confidentialityComponent, e("A").swap().integrityComponent)
     }
 
     @Nested

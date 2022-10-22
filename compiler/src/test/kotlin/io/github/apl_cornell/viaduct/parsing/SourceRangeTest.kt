@@ -16,11 +16,11 @@ internal class SourceRangeTest {
         private val program1 = "fun main() {}".parse()
         private val program2 = "fun main() {\n}".parse()
         private val program3 = """
-                host h1 : {H1}
-                host h2 : {H2}
+                host h1
+                host h2
                 fun main() {}
-                host h3 : {H3}
-                host h4 : {H4}
+                host h3
+                host h4
         """.trimIndent().parse()
 
         @Test

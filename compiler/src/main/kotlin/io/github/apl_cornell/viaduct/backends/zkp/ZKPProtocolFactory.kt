@@ -72,6 +72,7 @@ class ZKPProtocolFactory(val program: ProgramNode) : ProtocolFactory {
                         node.sendsTo(nameAnalysis, setOf(it), localAndReplicated + setOf(it))
                     )
                 }.ands()
+
             is DeclarationNode ->
                 protocols.map {
                     io.github.apl_cornell.viaduct.selection.And(
@@ -91,6 +92,7 @@ class ZKPProtocolFactory(val program: ProgramNode) : ProtocolFactory {
             protocol is ZKP && node.guard is ReadNode ->
                 // Turn off visibility check when the conditional can be muxed.
                 Literal(!node.canMux())
+
             else ->
                 super.guardVisibilityConstraint(protocol, node)
         }

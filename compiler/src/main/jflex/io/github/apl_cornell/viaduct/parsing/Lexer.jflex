@@ -1,6 +1,10 @@
 package io.github.apl_cornell.viaduct.parsing;
 
 import io.github.apl_cornell.viaduct.errors.IllegalCharacterError;
+import io.github.apl_cornell.viaduct.parsing.SourceFile;
+import io.github.apl_cornell.viaduct.parsing.SourcePosition;
+import io.github.apl_cornell.viaduct.parsing.SourceRange;
+import io.github.apl_cornell.viaduct.parsing.sym;
 
 import java.io.Reader;
 
@@ -94,6 +98,11 @@ NUM         = ((-)?[1-9][0-9]*) | 0
   "fun"           { return symbol(sym.FUNCTION); }
   "out"           { return symbol(sym.OUT); }
 
+  /* Delegation syntax */
+  "assume"        { return symbol(sym.ASSUME); }
+  "trusts"         { return symbol(sym.TRUSTS); }
+  "where"         { return symbol(sym.WHERE); }
+
   /* Types */
   "int"           { return symbol(sym.INT); }
   "bool"          { return symbol(sym.BOOL); }
@@ -150,6 +159,9 @@ NUM         = ((-)?[1-9][0-9]*) | 0
   "<="            { return symbol(sym.LEQ); }
   ">"             { return symbol(sym.GT); }
   ">="            { return symbol(sym.GEQ); }
+
+  /* delegation syntax */
+  "<:"            { return symbol(sym.FLOWSTO); }
 
   "declassify"    { return symbol(sym.DECLASSIFY); }
   "endorse"       { return symbol(sym.ENDORSE); }

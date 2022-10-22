@@ -1,16 +1,18 @@
-host alice : {A & B<-}
-host bob   : {B & A<-}
+host alice
+host bob
+assume for <- alice trusts bob
+assume for <- bob trusts alice
 
 fun main() {
-    val length: int{A ⊓ B} = 5;
+    val length: int{alice ⊓ bob} = 5;
     get_mins(length, val a_min, val b_min);
     f(a_min, b_min);
 }
 
-fun get_mins(length: int{A ⊓ B}, a: out int{A & B<-}, b: out int{B & A<-}) {
-    var a_min: int{A & B<-} = 0;
-    var b_min: int{B & A<-} = 0;
-    for (var i: int{A ⊓ B} = 0; i < length; i += 1) {
+fun get_mins(length: int{alice ⊓ bob}, a: out int{alice & bob<-}, b: out int{bob & alice<-}) {
+    var a_min: int{alice & bob<-} = 0;
+    var b_min: int{bob & alice<-} = 0;
+    for (var i: int{alice ⊓ bob} = 0; i < length; i += 1) {
         a_min = min(a_min, input int from alice);
         b_min = min(b_min, input int from bob);
     }
@@ -18,8 +20,8 @@ fun get_mins(length: int{A ⊓ B}, a: out int{A & B<-}, b: out int{B & A<-}) {
     out b = b_min;
 }
 
-fun f(a_min: int{A & B<-}, b_min: int{B & A<-}) {
-    val a_wins: bool{A ⊓ B} = declassify (a_min > b_min) to {A ⊓ B};
+fun f(a_min: int{alice & bob<-}, b_min: int{bob & alice<-}) {
+    val a_wins: bool{alice ⊓ bob} = declassify (a_min > b_min) to {alice ⊓ bob};
     output a_wins to alice;
     output a_wins to bob;
 }

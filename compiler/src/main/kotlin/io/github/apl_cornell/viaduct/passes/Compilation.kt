@@ -2,7 +2,6 @@ package io.github.apl_cornell.viaduct.passes
 
 import com.squareup.kotlinpoet.FileSpec
 import io.github.apl_cornell.viaduct.analysis.InformationFlowAnalysis
-import io.github.apl_cornell.viaduct.analysis.NameAnalysis
 import io.github.apl_cornell.viaduct.analysis.descendantsIsInstance
 import io.github.apl_cornell.viaduct.backends.Backend
 import io.github.apl_cornell.viaduct.backends.aby.abyMuxPostprocessor
@@ -49,26 +48,33 @@ fun SourceFile.compile(
         val elaborated = logger.duration("elaboration") {
             parsed.elaborated()
         }
-        // TODO: specialization fails with a null pointer error without this redundant check.
-        NameAnalysis.get(elaborated).check()
-        logger.duration("function specialization") {
+
+        // Dump label constraint graph.
+        saveLabelConstraintGraph?.invoke(InformationFlowAnalysis.get(elaborated)::exportConstraintGraph)
+
+        // Perform static checks.
+        elaborated.check()
+
+        val specialized = logger.duration("function specialization") {
             elaborated.specialize()
         }
+
+        // Check that function specialization is sensible.
+        specialized.check()
+
+        specialized
     }
-
-    // Perform static checks.
-    program.check()
-
-    // Dump label constraint graph.
-    saveLabelConstraintGraph?.invoke(InformationFlowAnalysis.get(program)::exportConstraintGraph)
 
     // Dump program annotated with inferred labels.
     if (saveInferredLabels != null) {
         val ifcAnalysis = InformationFlowAnalysis.get(program)
-        val labelMetadata: Metadata = sequence {
-            yieldAll(program.descendantsIsInstance<LetNode>().map { it to ifcAnalysis.label(it) })
-            yieldAll(program.descendantsIsInstance<DeclarationNode>().map { it to ifcAnalysis.label(it) })
-        }.toMap()
+        val labelMetadata: Metadata =
+            (
+                program.descendantsIsInstance<LetNode>()
+                    .map { it to ifcAnalysis.label(it) } +
+                    program.descendantsIsInstance<DeclarationNode>()
+                        .map { it to ifcAnalysis.label(it) }
+                ).toMap()
         saveInferredLabels.dumpProgramMetadata(program, labelMetadata)
     }
 

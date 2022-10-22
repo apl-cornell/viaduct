@@ -41,6 +41,8 @@ typealias TemporaryNode = Located<Temporary>
 
 typealias ObjectVariableNode = Located<ObjectVariable>
 
+typealias LabelVariableNode = Located<LabelVariable>
+
 typealias JumpLabelNode = Located<JumpLabel>
 
 typealias ValueNode = Located<Value>

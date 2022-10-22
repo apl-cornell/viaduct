@@ -2,6 +2,8 @@ package io.github.apl_cornell.viaduct.security
 
 import io.github.apl_cornell.viaduct.algebra.BoundedLattice
 import io.github.apl_cornell.viaduct.algebra.Lattice
+import io.github.apl_cornell.viaduct.prettyprinting.Document
+import io.github.apl_cornell.viaduct.prettyprinting.PrettyPrintable
 
 /**
  * A lattice for information flow security. This is a product lattice with
@@ -14,7 +16,7 @@ import io.github.apl_cornell.viaduct.algebra.Lattice
  *
  * [and] and [or] talk about trust.
  */
-data class SecurityLattice<T : Lattice<T>>(
+class SecurityLattice<T : Lattice<T>>(
     /**
      * The confidentiality component in the underlying lattice.
      *
@@ -28,7 +30,7 @@ data class SecurityLattice<T : Lattice<T>>(
      * Unlike [integrity], the result is not a [SecurityLattice].
      */
     val integrityComponent: T
-) : Lattice<SecurityLattice<T>>, TrustLattice<SecurityLattice<T>> {
+) : Lattice<SecurityLattice<T>>, TrustLattice<SecurityLattice<T>>, PrettyPrintable {
     /** Returns an element with [confidentialityComponent] and [integrityComponent] equal to [principal]. */
     constructor(principal: T) : this(principal, principal)
 
@@ -77,12 +79,25 @@ data class SecurityLattice<T : Lattice<T>>(
      *
      * This is used to enforce robust declassification and transparent endorsement,
      * a.k.a. [nonmalleable information flow control](https://dl.acm.org/doi/10.1145/3133956.3134054).
+     * TODO: Swap components as well?
      */
     fun swap(): SecurityLattice<T> =
         SecurityLattice(integrityComponent, confidentialityComponent)
 
-    override infix fun actsFor(that: SecurityLattice<T>): Boolean =
-        throw UnsupportedOperationException()
+    // TODO: we can do better
+    override fun toString(): String {
+        val confidentialityStr = confidentialityComponent.toString()
+        val integrityStr = integrityComponent.toString()
+        val expression =
+            if (confidentialityComponent == integrityComponent) {
+                confidentialityStr
+            } else {
+                "$confidentialityStr-> ∧ $integrityStr<-"
+            }
+        return "{$expression}"
+    }
+
+    override fun toDocument() = Document(this.toString())
 
     /** Provides bounds for a [SecurityLattice] given bounds for [T]. */
     class Bounds<T : Lattice<T>>(

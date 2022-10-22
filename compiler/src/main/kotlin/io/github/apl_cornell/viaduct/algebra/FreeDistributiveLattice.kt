@@ -17,12 +17,9 @@ private typealias JoinOfMeets<A> = PersistentSet<Meet<A>>
  */
 class FreeDistributiveLattice<A> private constructor(joinOfMeets: JoinOfMeets<A>) :
     HeytingAlgebra<FreeDistributiveLattice<A>> {
-    private val joinOfMeets = removeRedundant(joinOfMeets)
+    val joinOfMeets = removeRedundant(joinOfMeets)
 
     constructor(element: A) : this(persistentSetOf(persistentSetOf(element)))
-
-    override fun lessThanOrEqualTo(that: FreeDistributiveLattice<A>): Boolean =
-        this.lessThanOrEqualTo(that, listOf())
 
     /**
      * Represents the assumption that [from] is below [to].

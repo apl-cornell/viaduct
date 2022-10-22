@@ -28,3 +28,32 @@ data class FunctionName(override val name: String) : Name {
 }
 
 object FunctionNameStyle : Style
+
+/**
+ * Specifies whether a delegation is an information flow delegation
+ * or an authority delegation.
+ */
+enum class DelegationKind : PrettyPrintable {
+    IFC {
+        override fun toDocument(): Document = Document("IFC Delegation")
+    },
+    AUTHORITY {
+        override fun toDocument(): Document = Document("Authority Delegation")
+    }
+}
+
+/**
+ * Specifies whether a delegation is an information flow delegation
+ * or an authority delegation.
+ */
+enum class DelegationProjection : PrettyPrintable {
+    INTEGRITY {
+        override fun toDocument(): Document = Document("<-")
+    },
+    CONFIDENTIALITY {
+        override fun toDocument(): Document = Document("->")
+    },
+    BOTH {
+        override fun toDocument(): Document = Document("")
+    }
+}

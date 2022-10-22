@@ -2,6 +2,7 @@ package io.github.apl_cornell.viaduct.security.solver2
 
 import io.github.apl_cornell.viaduct.algebra.BoundedLattice
 import io.github.apl_cornell.viaduct.algebra.HeytingAlgebra
+import io.github.apl_cornell.viaduct.algebra.LatticeCongruence
 import io.github.apl_cornell.viaduct.security.SecurityLattice
 import java.io.Writer
 import io.github.apl_cornell.viaduct.algebra.solver2.ConstraintSystem as ComponentSystem
@@ -14,9 +15,10 @@ import io.github.apl_cornell.viaduct.algebra.solver2.ConstraintSystem as Compone
  */
 class ConstraintSystem<C : HeytingAlgebra<C>, V, T : Throwable>(
     constraints: Iterable<Constraint<C, V, T>>,
-    bounds: BoundedLattice<C>
+    bounds: BoundedLattice<C>,
+    delegationContext: LatticeCongruence<C>
 ) {
-    private val componentSystem = ComponentSystem(constraints, bounds)
+    private val componentSystem = ComponentSystem(constraints, bounds, delegationContext)
 
     /**
      * Returns the least-trust solution to the set of constraints in the system.

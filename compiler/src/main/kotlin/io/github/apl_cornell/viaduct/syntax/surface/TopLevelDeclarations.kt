@@ -6,9 +6,11 @@ import io.github.apl_cornell.viaduct.prettyprinting.plus
 import io.github.apl_cornell.viaduct.prettyprinting.times
 import io.github.apl_cornell.viaduct.prettyprinting.tupled
 import io.github.apl_cornell.viaduct.syntax.Arguments
+import io.github.apl_cornell.viaduct.syntax.DelegationProjection
 import io.github.apl_cornell.viaduct.syntax.FunctionNameNode
 import io.github.apl_cornell.viaduct.syntax.HostNode
 import io.github.apl_cornell.viaduct.syntax.LabelNode
+import io.github.apl_cornell.viaduct.syntax.LabelVariableNode
 import io.github.apl_cornell.viaduct.syntax.ObjectTypeNode
 import io.github.apl_cornell.viaduct.syntax.ObjectVariableNode
 import io.github.apl_cornell.viaduct.syntax.ParameterDirection
@@ -27,11 +29,10 @@ sealed class TopLevelDeclarationNode : Node()
  */
 class HostDeclarationNode(
     val name: HostNode,
-    val authority: LabelNode,
     override val sourceLocation: SourceLocation,
     override val comment: String? = null
 ) : TopLevelDeclarationNode() {
-    override fun toDocumentWithoutComment(): Document = keyword("host") * name * ":" * listOf(authority).braced()
+    override fun toDocumentWithoutComment(): Document = keyword("host") * name
 }
 
 /**
@@ -63,14 +64,67 @@ class ParameterNode(
  */
 class FunctionDeclarationNode(
     val name: FunctionNameNode,
-    val pcLabel: LabelNode?,
+    val labelParameters: Arguments<LabelVariableNode>?,
     val parameters: Arguments<ParameterNode>,
+    val labelConstraints: Arguments<IFCDelegationDeclarationNode>?,
+    val pcLabel: LabelNode?,
     val body: BlockNode,
     override val sourceLocation: SourceLocation,
     override val comment: String? = null
 ) : TopLevelDeclarationNode() {
     override fun toDocumentWithoutComment(): Document =
-        keyword("fun") * name +
-            (pcLabel?.let { listOf(it).braced() } ?: Document("")) +
-            parameters.tupled() * body
+        keyword("fun") *
+            name +
+            (labelParameters?.braced() ?: Document("")) +
+            parameters.tupled() *
+            (
+                if (labelConstraints == null) Document("")
+                else Document("where") * labelConstraints.tupled()
+                ) *
+            (pcLabel?.let { Document(":") * listOf(it).braced() } ?: Document("")) * body
+}
+
+/* Delegation syntax */
+
+abstract class DelegationDeclarationNode(
+    open val from: LabelNode,
+    open val to: LabelNode,
+    open val delegationProjection: DelegationProjection,
+    override val sourceLocation: SourceLocation,
+    override val comment: String?
+) : TopLevelDeclarationNode()
+
+/**
+ * Declaration of an authority delegation.
+ * @param from The label that acts for the other label.
+ * @param to The other label.
+ */
+class AuthorityDelegationDeclarationNode(
+    override val from: LabelNode,
+    override val to: LabelNode,
+    override val delegationProjection: DelegationProjection,
+    override val sourceLocation: SourceLocation,
+    override val comment: String?
+) : DelegationDeclarationNode(from, to, delegationProjection, sourceLocation, comment) {
+    override fun toDocumentWithoutComment(): Document =
+        keyword("assume") *
+            (if (delegationProjection == DelegationProjection.BOTH) "" else "for") *
+            delegationProjection * from.toDocument() *
+            "trusts" * to.toDocument()
+}
+
+/**
+ * Declaration of an IFC delegation.
+ * @param from The label that acts for the other label.
+ * @param to The other label.
+ */
+class IFCDelegationDeclarationNode(
+    override val from: LabelNode,
+    override val to: LabelNode,
+    override val delegationProjection: DelegationProjection,
+    override val sourceLocation: SourceLocation,
+    override val comment: String?
+) : DelegationDeclarationNode(from, to, delegationProjection, sourceLocation, comment) {
+    override fun toDocumentWithoutComment(): Document =
+        from.toDocument() * "<:" * to.toDocument()
 }

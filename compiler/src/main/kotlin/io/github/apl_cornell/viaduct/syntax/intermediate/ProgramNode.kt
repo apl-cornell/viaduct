@@ -4,6 +4,7 @@ import io.github.apl_cornell.viaduct.attributes.Attribute
 import io.github.apl_cornell.viaduct.attributes.Tree
 import io.github.apl_cornell.viaduct.attributes.attribute
 import io.github.apl_cornell.viaduct.passes.elaborated
+import io.github.apl_cornell.viaduct.syntax.FunctionName
 import io.github.apl_cornell.viaduct.syntax.Host
 import io.github.apl_cornell.viaduct.syntax.SourceLocation
 import kotlinx.collections.immutable.PersistentList
@@ -33,6 +34,9 @@ private constructor(
     // TODO: Should be moved to analysis.Declarations
     val functions: Iterable<FunctionDeclarationNode>
         get() = declarations.filterIsInstance<FunctionDeclarationNode>()
+
+    val functionMap: Map<FunctionName, FunctionDeclarationNode>
+        get() = functions.associateBy { function -> function.name.value }
 
     /** A lazily constructed [Tree] instance for the program. */
     val tree: Tree<Node, ProgramNode> by lazy { Tree(this) }

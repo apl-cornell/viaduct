@@ -28,9 +28,9 @@ private class HostConnection(private val socket: Socket) : Closeable by socket {
     val output = DataOutputStream(socket.getOutputStream())
 }
 
+/** Implementation of a pairwise connected network using TCP sockets. */
 @OptIn(ExperimentalSerializationApi::class)
 @Suppress("UNCHECKED_CAST")
-/** Implementation of a pairwise connected network using TCP sockets. */
 class TCPNetworkStrategy(
     private val host: Host,
     private val hostAddresses: Map<Host, InetSocketAddress>,

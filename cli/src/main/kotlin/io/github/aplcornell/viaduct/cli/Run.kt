@@ -77,10 +77,11 @@ class Run : CliktCommand(help = "Run compiled protocol for a single host") {
         val backend = ViaductBackend(getProtocolBackends(), connectionInfoMap)
 
         val strategy: Strategy =
-            if (inputStrategy == null)
+            if (inputStrategy == null) {
                 (TerminalIO())
-            else
+            } else {
                 (FileStrategy(inputStrategy!!))
+            }
 
         // interpret program
         backend.run(program, Host(hostName), strategy)

@@ -78,8 +78,11 @@ class FunctionDeclarationNode(
             (labelParameters?.braced() ?: Document("")) +
             parameters.tupled() *
             (
-                if (labelConstraints == null) Document("")
-                else Document("where") * labelConstraints.tupled()
+                if (labelConstraints == null) {
+                    Document("")
+                } else {
+                    Document("where") * labelConstraints.tupled()
+                }
                 ) *
             (pcLabel?.let { Document(":") * listOf(it).braced() } ?: Document("")) * body
 }

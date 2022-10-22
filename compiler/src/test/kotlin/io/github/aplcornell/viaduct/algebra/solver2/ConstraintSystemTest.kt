@@ -98,7 +98,7 @@ internal class ConstraintSystemTest {
         @Test
         fun left() {
             val solution = solve(
-                (t("x") join t("y")) flowsTo t(c("A")),
+                (t("x") join t("y")) flowsTo t(c("A"))
             )
             assertEquals(c("A"), solution("x"))
             assertEquals(c("A"), solution("y"))
@@ -107,7 +107,7 @@ internal class ConstraintSystemTest {
         @Test
         fun `right constant and constant`() {
             val solution = solve(
-                t("x") flowsTo (t(c("A")) join t(c("B"))),
+                t("x") flowsTo (t(c("A")) join t(c("B")))
             )
             assertEquals(c("A") join c("B"), solution("x"))
         }

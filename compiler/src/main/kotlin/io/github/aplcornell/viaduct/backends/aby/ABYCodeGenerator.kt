@@ -84,8 +84,11 @@ class ABYCodeGenerator(
         }
 
     private fun address(protocol: ABY, host: Host) =
-        if (role(protocol, host) == Role.SERVER) CodeBlock.of("%S", "")
-        else CodeBlock.of("%L.hostName", context.url(protocol.server))
+        if (role(protocol, host) == Role.SERVER) {
+            CodeBlock.of("%S", "")
+        } else {
+            CodeBlock.of("%L.hostName", context.url(protocol.server))
+        }
 
     private fun abyParty(protocol: ABY, role: Role, port: String): CodeBlock =
         CodeBlock.of(
@@ -161,8 +164,9 @@ class ABYCodeGenerator(
         sourceProtocol: Protocol,
         kotlinName: String
     ): CodeBlock {
-        if (sourceProtocol !is ABY || destProtocol !is ABY)
+        if (sourceProtocol !is ABY || destProtocol !is ABY) {
             return CodeBlock.of("")
+        }
 
         return when (sourceProtocol) {
             is YaoABY -> {
@@ -426,7 +430,7 @@ class ABYCodeGenerator(
                     MemberName("io.github.apl_cornell.aby.Aby", "putInt32DIVGate"),
                     protocolToAbyPartyCircuit(protocol),
                     args.last(),
-                    args.first(),
+                    args.first()
 
                 )
 
@@ -715,7 +719,6 @@ class ABYCodeGenerator(
         val receiveBuilder = CodeBlock.builder()
         for (event in events) {
             when {
-
                 // secret input for this host; create input gate
                 event.recv.id == ABY.SECRET_INPUT && event.recv.host == context.host -> {
                     when (typeAnalysis.type(sender)) {

@@ -48,17 +48,23 @@ internal class RewriteTest {
     private val emptyRewrite = Rewrite(mapOf(), emptyTrustConfiguration)
     private val easyRewrite = Rewrite(
         mapOf(
-            (ppc("A") to fhpc("alice")), (ppi("A") to fhpi("alice")),
-            (ppc("B") to fhpc("bob")), (ppi("B") to fhpi("bob")),
-            (ppc("C") to fhpc("chuck")), (ppi("C") to fhpi("chuck"))
+            (ppc("A") to fhpc("alice")),
+            (ppi("A") to fhpi("alice")),
+            (ppc("B") to fhpc("bob")),
+            (ppi("B") to fhpi("bob")),
+            (ppc("C") to fhpc("chuck")),
+            (ppi("C") to fhpi("chuck"))
         ),
         emptyTrustConfiguration
     )
     private val hardRewrite = Rewrite(
         mapOf(
-            (ppc("A") to top), (ppi("A") to bottom),
-            (ppc("B") to fhpc("alice").join(fhpc("bob"))), (ppi("B") to fhpi("alice").meet(fhpi("bob"))),
-            (ppc("C") to fhpc("chuck")), (ppi("C") to fhpi("chuck"))
+            (ppc("A") to top),
+            (ppi("A") to bottom),
+            (ppc("B") to fhpc("alice").join(fhpc("bob"))),
+            (ppi("B") to fhpi("alice").meet(fhpi("bob"))),
+            (ppc("C") to fhpc("chuck")),
+            (ppi("C") to fhpi("chuck"))
         ),
         emptyTrustConfiguration
     )

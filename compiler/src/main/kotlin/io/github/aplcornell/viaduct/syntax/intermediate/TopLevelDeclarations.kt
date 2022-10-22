@@ -31,7 +31,7 @@ sealed class TopLevelDeclarationNode : Node() {
  */
 class HostDeclarationNode(
     val name: HostNode,
-    override val sourceLocation: SourceLocation,
+    override val sourceLocation: SourceLocation
 ) : TopLevelDeclarationNode() {
 
     override val children: Iterable<Nothing>

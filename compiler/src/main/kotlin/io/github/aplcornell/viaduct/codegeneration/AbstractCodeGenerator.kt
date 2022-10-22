@@ -116,11 +116,13 @@ abstract class AbstractCodeGenerator(val context: CodeGeneratorContext) : CodeGe
     ): CodeBlock =
         when (objectType.className.value) {
             ImmutableCell -> exp(
-                protocol, arguments.first()
+                protocol,
+                arguments.first()
             )
             MutableCell -> CodeBlock.of(
                 "%T(%L)",
-                Boxed::class, exp(protocol, arguments.first())
+                Boxed::class,
+                exp(protocol, arguments.first())
             )
             Vector -> CodeBlock.of(
                 "%T(%L){ %L }",

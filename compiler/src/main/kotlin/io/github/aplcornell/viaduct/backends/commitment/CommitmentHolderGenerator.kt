@@ -77,7 +77,6 @@ internal class CommitmentHolderGenerator(
         receiveProtocol: Protocol,
         events: ProtocolCommunication
     ): CodeBlock {
-
         val receiveBuilder = CodeBlock.builder()
         val projection = ProtocolProjection(receiveProtocol, context.host)
         if (sendProtocol != receiveProtocol) {
@@ -97,7 +96,7 @@ internal class CommitmentHolderGenerator(
                             relevantEvents,
                             context,
                             typeAnalysis
-                        ),
+                        )
                     )
                 }
 

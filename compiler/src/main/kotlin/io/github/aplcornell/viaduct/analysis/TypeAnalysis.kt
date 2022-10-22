@@ -65,8 +65,9 @@ class TypeAnalysis private constructor(
 ) {
     /** Throws [TypeMismatchError] if the type of this expression is not [expectedType]. */
     private fun ExpressionNode.assertHasType(expectedType: ValueType) {
-        if (type != expectedType)
+        if (type != expectedType) {
             throw TypeMismatchError(this, type, expectedType)
+        }
     }
 
     /**
@@ -79,8 +80,9 @@ class TypeAnalysis private constructor(
         methodType: FunctionType,
         arguments: Arguments<ExpressionNode>
     ): ValueType {
-        if (methodType.arguments.size != arguments.size)
+        if (methodType.arguments.size != arguments.size) {
             throw IncorrectNumberOfArgumentsError(methodName, methodType.arguments.size, arguments)
+        }
 
         // Check that arguments have the correct types.
         arguments.zip(methodType.arguments) { argument, expectedType ->

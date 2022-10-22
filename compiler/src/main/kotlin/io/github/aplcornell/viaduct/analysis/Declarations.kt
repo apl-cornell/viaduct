@@ -98,8 +98,9 @@ val mainFunction = FunctionName("main")
 val ProgramNode.main: FunctionDeclarationNode
     get() =
         this.functions.find { it.name.value == mainFunction }?.also {
-            if (it.parameters.isNotEmpty())
+            if (it.parameters.isNotEmpty()) {
                 throw IncorrectNumberOfArgumentsError(it.name, 0, it.parameters)
+            }
         } ?: throw NoMainError(this.sourceLocation.sourcePath)
 
 /** A [FreshNameGenerator] that will avoid all [Variable] names in this node. */

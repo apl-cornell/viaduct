@@ -13,9 +13,10 @@ class CommitmentDispatchCodeGenerator(
 
     override fun generatorFor(protocol: Protocol): CodeGenerator {
         require(protocol is Commitment)
-        return if (context.host == protocol.cleartextHost)
+        return if (context.host == protocol.cleartextHost) {
             commitmentCreatorGenerator
-        else
+        } else {
             commitmentHolderGenerator
+        }
     }
 }

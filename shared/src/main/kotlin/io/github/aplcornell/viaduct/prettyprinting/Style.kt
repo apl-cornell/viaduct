@@ -66,11 +66,14 @@ internal fun Style.toAnsi(): Ansi {
     val ansi = Ansi()
     setColor(foregroundColor, ansi::fg, ansi::fgBright)
     setColor(backgroundColor, ansi::bg, ansi::bgBright)
-    if (italic)
+    if (italic) {
         ansi.a(Ansi.Attribute.ITALIC)
-    if (bold)
+    }
+    if (bold) {
         ansi.a(Ansi.Attribute.INTENSITY_BOLD)
-    if (underline)
+    }
+    if (underline) {
         ansi.a(Ansi.Attribute.UNDERLINE)
+    }
     return ansi
 }

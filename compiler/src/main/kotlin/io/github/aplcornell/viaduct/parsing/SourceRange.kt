@@ -90,7 +90,9 @@ data class SourceRange(val start: SourcePosition, val end: SourcePosition) {
                     Document.forcedLineBreak +
                         " ".repeat(highlightStartColumn - 1) +
                         Document("^".repeat(highlightLength)).styled(highlightStyle)
-                } else Document()
+                } else {
+                    Document()
+                }
 
             Document(lineNumber) + multilineMarker * Document(sourceFile.getLine(line)) + underline
         }
@@ -101,8 +103,9 @@ data class SourceRange(val start: SourcePosition, val end: SourcePosition) {
             if (highlightingMultipleLines || end.line != relevantLines.last) {
                 // Last line did not have an underline. Add blank line instead.
                 Document.forcedLineBreak
-            } else
+            } else {
                 Document()
+            }
 
         return outputLines.concatenated(Document.forcedLineBreak) + bottomPadding
     }

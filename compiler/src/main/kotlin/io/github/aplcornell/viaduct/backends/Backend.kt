@@ -35,7 +35,7 @@ fun Iterable<Backend>.unions(): Backend {
         this@unions.forEach { backend ->
             backend.protocols.forEach { protocol ->
                 val previous = this.put(protocol, backend)
-                if (previous != null)
+                if (previous != null) {
                     throw IllegalArgumentException(
                         """
                         Protocol ${protocol.name} is implemented by multiple backends:
@@ -43,6 +43,7 @@ fun Iterable<Backend>.unions(): Backend {
                         ${'\t'}${backend.name}
                         """.trimIndent()
                     )
+                }
             }
         }
     }

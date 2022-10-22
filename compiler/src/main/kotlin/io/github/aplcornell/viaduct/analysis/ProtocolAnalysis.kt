@@ -64,8 +64,9 @@ class ProtocolAnalysis(
                 val protocol =
                     statement.protocol?.value ?: throw NoProtocolAnnotationError(statement)
 
-                if (statement.value is CommunicationNode)
+                if (statement.value is CommunicationNode) {
                     assert(protocol == Local(statement.value.host.value))
+                }
 
                 protocol
             }

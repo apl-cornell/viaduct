@@ -104,11 +104,11 @@ private class BackendCodeGenerator(
         hostFunctionBuilder.addModifiers(if (functionDeclaration.name.value == mainFunction) KModifier.PUBLIC else KModifier.PRIVATE)
 
         for (
-            param in functionDeclaration.parameters.filter { param ->
-                protocolAnalysis.primaryProtocol(param).hosts.contains(
-                    host
-                )
-            }
+        param in functionDeclaration.parameters.filter { param ->
+            protocolAnalysis.primaryProtocol(param).hosts.contains(
+                host
+            )
+        }
         ) {
             val paramName = context.kotlinName(param.name.value)
             val paramType = codeGenerator.kotlinType(protocolAnalysis.primaryProtocol(param), typeAnalysis.type(param))
@@ -204,10 +204,11 @@ private class BackendCodeGenerator(
                     "%N(%L)",
                     stmt.name.value.name,
                     arguments.map { arg ->
-                        if (arg is ObjectDeclarationArgumentNode)
+                        if (arg is ObjectDeclarationArgumentNode) {
                             CodeBlock.of("%N", newNames[arg])
-                        else
+                        } else {
                             argument(protocolAnalysis.primaryProtocol(arg), arg)
+                        }
                     }.joinToCode()
                 )
 

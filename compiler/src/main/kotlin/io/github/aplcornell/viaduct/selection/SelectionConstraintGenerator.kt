@@ -52,7 +52,7 @@ class SelectionConstraintGenerator(
     private val program: ProgramNode,
     private val protocolFactory: ProtocolFactory,
     private val protocolComposer: ProtocolComposer,
-    private val costEstimator: CostEstimator<IntegerCost>,
+    private val costEstimator: CostEstimator<IntegerCost>
 ) {
     private val nameGenerator = FreshNameGenerator()
     private val hostTrustConfiguration = HostTrustConfiguration.get(program)
@@ -67,10 +67,11 @@ class SelectionConstraintGenerator(
         val requiredAuthority = informationFlowAnalysis.label(node)
         val annotation = node.protocol?.value
         return if (annotation != null) {
-            if (!hostTrustConfiguration.actsFor(annotation.authority(), requiredAuthority))
-            // update actsfor
-            // if (!annotation.authority().actsFor(requiredAuthority))
+            if (!hostTrustConfiguration.actsFor(annotation.authority(), requiredAuthority)) {
+                // update actsfor
+                // if (!annotation.authority().actsFor(requiredAuthority))
                 throw InvalidProtocolAnnotationError(node as Node)
+            }
             setOf(annotation)
         } else {
             protocolFactory.viableProtocols(node)
@@ -402,7 +403,6 @@ class SelectionConstraintGenerator(
         costVariable: CostVariable
     ):
         Iterable<SelectionConstraint> {
-
         // cartesian product of all viable protocols for arguments
         val argProtocolMaps: Set<PersistentMap<ReadNode, Protocol>> =
             getArgumentViableProtocols(persistentMapOf(), reads)
@@ -479,10 +479,11 @@ class SelectionConstraintGenerator(
                                 argProtocolMap.flatMap { argProtocol ->
                                     val argDeclaration = nameAnalysis.declaration(argProtocol.key)
                                     val events =
-                                        if (protocolComposer.canCommunicate(argProtocol.value, protocol))
+                                        if (protocolComposer.canCommunicate(argProtocol.value, protocol)) {
                                             (protocolComposer.communicate(argProtocol.value, protocol))
-                                        else
+                                        } else {
                                             (ProtocolCommunication(setOf()))
+                                        }
 
                                     // if a protocol host is participating, every host sending a message to it must also be participating
                                     protocol.hosts.map { protocolHost ->

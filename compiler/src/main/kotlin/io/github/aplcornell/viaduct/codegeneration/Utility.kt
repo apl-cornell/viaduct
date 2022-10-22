@@ -36,7 +36,6 @@ fun receiveReplicated(
     context: CodeGeneratorContext,
     typeAnalysis: TypeAnalysis
 ): CodeBlock {
-
     val receiveExpression = CodeBlock.builder()
     val it = events.iterator()
 

@@ -51,8 +51,9 @@ class Committed<T> private constructor(val value: T, val nonce: ByteArray) {
 class Commitment<T>(val hash: ByteArray) {
     /** */
     inline fun <reified T> open(secret: Committed<T>): T =
-        if (secret.nonce.size != Committed.NONCE_LENGTH || !hash.contentEquals(secret.commitment().hash))
+        if (secret.nonce.size != Committed.NONCE_LENGTH || !hash.contentEquals(secret.commitment().hash)) {
             throw InvalidCommitmentException(secret.value)
-        else
+        } else {
             secret.value
+        }
 }

@@ -26,7 +26,7 @@ dependencies {
     implementation("org.jgrapht:jgrapht-io:1.5.1")
 
     // Unicode support
-    implementation("com.ibm.icu:icu4j:71.1")
+    implementation("com.ibm.icu:icu4j:72.1")
 
     // Parsing
     implementation("com.github.vbmacher:java-cup-runtime:11b-20160615-1")

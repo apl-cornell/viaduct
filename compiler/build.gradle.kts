@@ -1,6 +1,6 @@
 buildscript {
     dependencies {
-        classpath("com.github.vbmacher:java-cup:11b-20160615-1")
+        classpath("com.github.vbmacher:java-cup:11b-20160615-2")
     }
 }
 

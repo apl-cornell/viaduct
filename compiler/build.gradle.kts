@@ -1,6 +1,6 @@
 buildscript {
     dependencies {
-        classpath("com.github.vbmacher:java-cup:11b-20160615-1")
+        classpath("com.github.vbmacher:java-cup:11b-20160615-2")
     }
 }
 
@@ -29,7 +29,7 @@ dependencies {
     implementation("com.ibm.icu:icu4j:72.1")
 
     // Parsing
-    implementation("com.github.vbmacher:java-cup-runtime:11b-20160615-1")
+    implementation("com.github.vbmacher:java-cup-runtime:11b-20160615-2")
 
     // Code generation
     api("com.squareup:kotlinpoet:1.12.0") {

@@ -8,7 +8,7 @@ plugins {
     kotlin("jvm")
 
     // Lexing & Parsing
-    id("org.xbib.gradle.plugin.jflex") version "1.6.0"
+    id("org.xbib.gradle.plugin.jflex") version "1.7.0"
 }
 
 /** Dependencies */

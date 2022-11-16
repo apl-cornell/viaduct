@@ -47,7 +47,7 @@ dependencies {
 /** Compilation */
 
 jflex {
-    encoding = Charsets.UTF_8.name()
+    encoding.set(Charsets.UTF_8.name())
 }
 
 val compileCup by tasks.registering(CompileCupTask::class)

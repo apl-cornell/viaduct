@@ -8,7 +8,7 @@ plugins {
     kotlin("jvm")
 
     // Lexing & Parsing
-    id("org.xbib.gradle.plugin.jflex") version "1.6.0"
+    id("org.xbib.gradle.plugin.jflex") version "1.7.0"
 }
 
 /** Dependencies */
@@ -47,7 +47,7 @@ dependencies {
 /** Compilation */
 
 jflex {
-    encoding = Charsets.UTF_8.name()
+    encoding.set(Charsets.UTF_8.name())
 }
 
 val compileCup by tasks.registering(CompileCupTask::class)

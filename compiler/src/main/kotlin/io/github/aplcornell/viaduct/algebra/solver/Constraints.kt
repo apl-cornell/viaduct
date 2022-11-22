@@ -1,4 +1,4 @@
-package io.github.aplcornell.viaduct.algebra.solver2
+package io.github.aplcornell.viaduct.algebra.solver
 
 import io.github.aplcornell.viaduct.algebra.HeytingAlgebra
 import io.github.aplcornell.viaduct.algebra.JoinSemiLattice
@@ -48,6 +48,7 @@ internal class ImplyEdge<C : HeytingAlgebra<C>>(val antecedent: C) : LeftHandEdg
         when (that) {
             is IdentityEdge ->
                 this
+
             is JoinEdge ->
                 ImplyJoinEdge(this.antecedent, that.joined)
         }

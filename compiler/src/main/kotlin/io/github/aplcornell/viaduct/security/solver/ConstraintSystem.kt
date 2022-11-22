@@ -1,11 +1,11 @@
-package io.github.aplcornell.viaduct.security.solver2
+package io.github.aplcornell.viaduct.security.solver
 
 import io.github.aplcornell.viaduct.algebra.BoundedLattice
 import io.github.aplcornell.viaduct.algebra.HeytingAlgebra
 import io.github.aplcornell.viaduct.algebra.LatticeCongruence
 import io.github.aplcornell.viaduct.security.SecurityLattice
 import java.io.Writer
-import io.github.aplcornell.viaduct.algebra.solver2.ConstraintSystem as ComponentSystem
+import io.github.aplcornell.viaduct.algebra.solver.ConstraintSystem as ComponentSystem
 
 /**
  * Given a set of [SecurityLattice] constraints, finds an assignment to all variables that

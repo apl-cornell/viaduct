@@ -1,4 +1,4 @@
-package io.github.aplcornell.viaduct.algebra.solver2
+package io.github.aplcornell.viaduct.algebra.solver
 
 import io.github.aplcornell.viaduct.algebra.BoundedLattice
 import io.github.aplcornell.viaduct.algebra.HeytingAlgebra

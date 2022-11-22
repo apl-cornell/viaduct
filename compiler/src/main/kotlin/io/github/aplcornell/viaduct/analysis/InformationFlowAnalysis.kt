@@ -29,14 +29,14 @@ import io.github.aplcornell.viaduct.security.LabelTop
 import io.github.aplcornell.viaduct.security.PolymorphicPrincipal
 import io.github.aplcornell.viaduct.security.Principal
 import io.github.aplcornell.viaduct.security.SecurityLattice
-import io.github.aplcornell.viaduct.security.solver2.Constraint
-import io.github.aplcornell.viaduct.security.solver2.ConstraintSolution
-import io.github.aplcornell.viaduct.security.solver2.ConstraintSystem
-import io.github.aplcornell.viaduct.security.solver2.Term
-import io.github.aplcornell.viaduct.security.solver2.confidentialityFlowsTo
-import io.github.aplcornell.viaduct.security.solver2.flowsTo
-import io.github.aplcornell.viaduct.security.solver2.integrityFlowsTo
-import io.github.aplcornell.viaduct.security.solver2.term
+import io.github.aplcornell.viaduct.security.solver.Constraint
+import io.github.aplcornell.viaduct.security.solver.ConstraintSolution
+import io.github.aplcornell.viaduct.security.solver.ConstraintSystem
+import io.github.aplcornell.viaduct.security.solver.Term
+import io.github.aplcornell.viaduct.security.solver.confidentialityFlowsTo
+import io.github.aplcornell.viaduct.security.solver.flowsTo
+import io.github.aplcornell.viaduct.security.solver.integrityFlowsTo
+import io.github.aplcornell.viaduct.security.solver.term
 import io.github.aplcornell.viaduct.syntax.HasSourceLocation
 import io.github.aplcornell.viaduct.syntax.HostTrustConfiguration
 import io.github.aplcornell.viaduct.syntax.Variable
@@ -74,7 +74,7 @@ import io.github.aplcornell.viaduct.syntax.intermediate.StatementNode
 import io.github.aplcornell.viaduct.syntax.intermediate.UpdateNode
 import io.github.aplcornell.viaduct.syntax.intermediate.VariableDeclarationNode
 import java.io.Writer
-import io.github.aplcornell.viaduct.algebra.solver2.Term as AlgebraTerm
+import io.github.aplcornell.viaduct.algebra.solver.Term as AlgebraTerm
 import io.github.aplcornell.viaduct.syntax.LabelVariable as LabelVariableName
 
 private typealias PrincipalComponent = Component<Principal>

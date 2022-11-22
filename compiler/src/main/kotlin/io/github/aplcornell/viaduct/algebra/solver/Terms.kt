@@ -1,4 +1,4 @@
-package io.github.aplcornell.viaduct.algebra.solver2
+package io.github.aplcornell.viaduct.algebra.solver
 
 import io.github.aplcornell.viaduct.algebra.BoundedLattice
 import io.github.aplcornell.viaduct.algebra.HeytingAlgebra
@@ -91,8 +91,10 @@ private data class ConstantAndVariable<C, V>(val constant: Constant<C, V>?, val 
             when {
                 a1 == null ->
                     a2
+
                 a2 == null ->
                     a1
+
                 else ->
                     both(a1, a2)
             }
@@ -116,8 +118,10 @@ private fun <C : MeetSemiLattice<C>, V> joinOfMeets(term: Term<C, V>): List<Cons
     when (term) {
         is AtomicTerm ->
             listOf(ConstantAndVariable(term))
+
         is Join ->
             joinOfMeets(term.lhs) + joinOfMeets(term.rhs)
+
         is Meet ->
             joinOfMeets(term.lhs).flatMap { m1 ->
                 joinOfMeets(term.rhs).map { m2 ->
@@ -135,12 +139,14 @@ private fun <C : JoinSemiLattice<C>, V> meetOfJoins(term: Term<C, V>): List<Cons
     when (term) {
         is AtomicTerm ->
             listOf(ConstantAndVariable(term))
+
         is Join ->
             meetOfJoins(term.lhs).flatMap { j1 ->
                 meetOfJoins(term.rhs).map { j2 ->
                     j1.combine(j2, JoinSemiLattice<C>::join)
                 }
             }
+
         is Meet ->
             meetOfJoins(term.lhs) + meetOfJoins(term.rhs)
     }

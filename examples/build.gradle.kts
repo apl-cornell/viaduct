@@ -54,7 +54,7 @@ spotless {
 }
 
 val generateViaductProgramList by tasks.registering(GenerateViaductProgramList::class) {
-    sourceDirectory.set(tasks.compileViaduct.map { it.sourceDirectory }.get())
+    sourceDirectory.set(tasks.compileViaductMain.map { it.sourceDirectory }.get())
     outputPackage.set(mainPackage)
 }
 

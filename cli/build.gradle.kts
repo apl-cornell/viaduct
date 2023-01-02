@@ -20,7 +20,7 @@ dependencies {
     implementation(project(":interpreter"))
 
     // Command-line-argument parsing
-    implementation("com.github.ajalt.clikt:clikt:3.5.0")
+    implementation("com.github.ajalt.clikt:clikt:3.5.1")
 
     // Colored terminal output
     implementation("org.fusesource.jansi:jansi:2.4.0")

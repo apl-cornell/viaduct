@@ -20,7 +20,7 @@ class NoHostDeclarationsError(override val source: String) : CompilationError() 
                 This program has no host declarations.
                 Hosts are the participants in the protocol.
                 I cannot compile the program without any participants!
-                """.reflow()
+                """.reflow(),
             ) + Document.lineBreak
 
     override val hint: Document

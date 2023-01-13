@@ -49,7 +49,7 @@ data class SourceRange(val start: SourcePosition, val end: SourcePosition) {
      */
     fun showInSource(
         highlightStyle: Style,
-        contextLines: Int = if (start.line == end.line) 0 else 1
+        contextLines: Int = if (start.line == end.line) 0 else 1,
     ): Document {
         // List of lines to be printed
         val relevantLines: IntRange = run {

@@ -53,9 +53,9 @@ internal class RewriteTest {
             (ppc("B") to fhpc("bob")),
             (ppi("B") to fhpi("bob")),
             (ppc("C") to fhpc("chuck")),
-            (ppi("C") to fhpi("chuck"))
+            (ppi("C") to fhpi("chuck")),
         ),
-        emptyTrustConfiguration
+        emptyTrustConfiguration,
     )
     private val hardRewrite = Rewrite(
         mapOf(
@@ -64,9 +64,9 @@ internal class RewriteTest {
             (ppc("B") to fhpc("alice").join(fhpc("bob"))),
             (ppi("B") to fhpi("alice").meet(fhpi("bob"))),
             (ppc("C") to fhpc("chuck")),
-            (ppi("C") to fhpi("chuck"))
+            (ppi("C") to fhpi("chuck")),
         ),
-        emptyTrustConfiguration
+        emptyTrustConfiguration,
     )
 
     /* test on Label LabelConstants (FDL<PrincipalComponent>) */
@@ -80,34 +80,34 @@ internal class RewriteTest {
         assertEquals(bottom, hardRewrite.rewrite(bottom))
         assertEquals(
             fhpc("alice").join(fhpc("bob")).meet(fhpc("chuck")),
-            emptyRewrite.rewrite(fhpc("alice").join(fhpc("bob")).meet(fhpc("chuck")))
+            emptyRewrite.rewrite(fhpc("alice").join(fhpc("bob")).meet(fhpc("chuck"))),
         )
         assertEquals(
             fhpc("alice").join(fhpc("bob")).meet(fhpc("chuck")),
-            easyRewrite.rewrite(fhpc("alice").join(fhpc("bob")).meet(fhpc("chuck")))
+            easyRewrite.rewrite(fhpc("alice").join(fhpc("bob")).meet(fhpc("chuck"))),
         )
         assertEquals(
             fhpc("alice").join(fhpc("bob")).meet(fhpc("chuck")),
-            hardRewrite.rewrite(fhpc("alice").join(fhpc("bob")).meet(fhpc("chuck")))
+            hardRewrite.rewrite(fhpc("alice").join(fhpc("bob")).meet(fhpc("chuck"))),
         )
         assertThrows<NullPointerException> { emptyRewrite.rewrite(fppc("A")) }
         assertEquals(fhpc("alice"), easyRewrite.rewrite(fppc("A")))
         assertEquals(top, hardRewrite.rewrite(fppc("A")))
         assertEquals(
             fhpc("alice").join(fhpc("bob")).meet(fhpc("chuck")),
-            easyRewrite.rewrite(fppc("A").join(fppc("B")).meet(fppc("C")))
+            easyRewrite.rewrite(fppc("A").join(fppc("B")).meet(fppc("C"))),
         )
         assertEquals(
             fhpc("chuck"),
-            hardRewrite.rewrite(fppc("A").join(fppc("B")).meet(fppc("C")))
+            hardRewrite.rewrite(fppc("A").join(fppc("B")).meet(fppc("C"))),
         )
         assertEquals(
             fhpc("alice").join(fhpc("bob")).meet(fhpc("chuck")),
-            hardRewrite.rewrite(fppc("A").meet(fppc("B")).meet(fppc("C")))
+            hardRewrite.rewrite(fppc("A").meet(fppc("B")).meet(fppc("C"))),
         )
         assertEquals(
             fhpi("alice").meet(fhpi("bob")).meet(fhpi("chuck")),
-            hardRewrite.rewrite(fppi("A").join(fppi("B")).meet(fppi("C")))
+            hardRewrite.rewrite(fppi("A").join(fppi("B")).meet(fppi("C"))),
         )
     }
 
@@ -123,26 +123,26 @@ internal class RewriteTest {
         assertEquals(
             fhpc("alice").join(fhpc("bob")).meet(fhpc("chuck")),
             emptyRewrite.rewrite(
-                LabelAnd(LabelOr(hl("alice"), hl("bob")), hl("chuck"))
-            ).interpret().confidentialityComponent
+                LabelAnd(LabelOr(hl("alice"), hl("bob")), hl("chuck")),
+            ).interpret().confidentialityComponent,
         )
         assertEquals(
             fhpc("alice").join(fhpc("bob")).meet(fhpc("chuck")),
             easyRewrite.rewrite(
                 LabelAnd(
                     LabelOr(hl("alice"), hl("bob")),
-                    hl("chuck")
-                )
-            ).interpret().confidentialityComponent
+                    hl("chuck"),
+                ),
+            ).interpret().confidentialityComponent,
         )
         assertEquals(
             fhpc("alice").join(fhpc("bob")).meet(fhpc("chuck")),
             hardRewrite.rewrite(
                 LabelAnd(
                     LabelOr(hl("alice"), hl("bob")),
-                    hl("chuck")
-                )
-            ).interpret().confidentialityComponent
+                    hl("chuck"),
+                ),
+            ).interpret().confidentialityComponent,
         )
         assertThrows<NullPointerException> { emptyRewrite.rewrite(pl("A")) }
         assertEquals(fhpc("alice"), easyRewrite.rewrite(pl("A")).interpret().confidentialityComponent)
@@ -151,38 +151,38 @@ internal class RewriteTest {
 
         assertEquals(
             fhpi("alice").meet(fhpi("bob")).meet(fhpi("chuck")),
-            hardRewrite.rewrite(LabelAnd(LabelOr(pl("A"), pl("B")), pl("C"))).interpret().integrityComponent
+            hardRewrite.rewrite(LabelAnd(LabelOr(pl("A"), pl("B")), pl("C"))).interpret().integrityComponent,
         )
         assertEquals(
             fhpi("alice").meet(fhpi("bob")).meet(fhpi("chuck")),
-            hardRewrite.rewrite(LabelMeet(LabelJoin(pl("A"), pl("B")), pl("C"))).interpret().integrityComponent
+            hardRewrite.rewrite(LabelMeet(LabelJoin(pl("A"), pl("B")), pl("C"))).interpret().integrityComponent,
         )
 
         assertEquals(
             fhpc("alice").join(fhpc("bob")).join(fhpc("chuck")),
-            hardRewrite.rewrite(LabelOr(LabelAnd(pl("A"), pl("B")), pl("C"))).interpret().confidentialityComponent
+            hardRewrite.rewrite(LabelOr(LabelAnd(pl("A"), pl("B")), pl("C"))).interpret().confidentialityComponent,
         )
         assertEquals(
             fhpc("alice").join(fhpc("bob")).join(fhpc("chuck")),
-            hardRewrite.rewrite(LabelMeet(LabelJoin(pl("A"), pl("B")), pl("C"))).interpret().confidentialityComponent
+            hardRewrite.rewrite(LabelMeet(LabelJoin(pl("A"), pl("B")), pl("C"))).interpret().confidentialityComponent,
         )
 
         assertEquals(
             fhpi("chuck"),
-            hardRewrite.rewrite(LabelOr(LabelAnd(pl("A"), pl("B")), pl("C"))).interpret().integrityComponent
+            hardRewrite.rewrite(LabelOr(LabelAnd(pl("A"), pl("B")), pl("C"))).interpret().integrityComponent,
         )
         assertEquals(
             fhpi("chuck"),
-            hardRewrite.rewrite(LabelJoin(LabelMeet(pl("A"), pl("B")), pl("C"))).interpret().integrityComponent
+            hardRewrite.rewrite(LabelJoin(LabelMeet(pl("A"), pl("B")), pl("C"))).interpret().integrityComponent,
         )
 
         assertEquals(
             fhpc("chuck"),
-            hardRewrite.rewrite(LabelAnd(LabelOr(pl("A"), pl("B")), pl("C"))).interpret().confidentialityComponent
+            hardRewrite.rewrite(LabelAnd(LabelOr(pl("A"), pl("B")), pl("C"))).interpret().confidentialityComponent,
         )
         assertEquals(
             fhpc("chuck"),
-            hardRewrite.rewrite(LabelJoin(LabelMeet(pl("A"), pl("B")), pl("C"))).interpret().confidentialityComponent
+            hardRewrite.rewrite(LabelJoin(LabelMeet(pl("A"), pl("B")), pl("C"))).interpret().confidentialityComponent,
         )
     }
 }

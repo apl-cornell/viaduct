@@ -6,7 +6,7 @@ interface LatticeCongruence<A : Lattice<A>> {
 }
 
 class FreeDistributiveLatticeCongruence<A>(
-    private val congruence: List<FreeDistributiveLattice.LessThanOrEqualTo<A>>
+    private val congruence: List<FreeDistributiveLattice.LessThanOrEqualTo<A>>,
 ) : LatticeCongruence<FreeDistributiveLattice<A>> {
 
     override fun equals(first: FreeDistributiveLattice<A>, second: FreeDistributiveLattice<A>) =
@@ -14,11 +14,11 @@ class FreeDistributiveLatticeCongruence<A>(
 
     override fun lessThanOrEqualTo(
         first: FreeDistributiveLattice<A>,
-        second: FreeDistributiveLattice<A>
+        second: FreeDistributiveLattice<A>,
     ): Boolean =
         first.lessThanOrEqualTo(
             second,
-            congruence
+            congruence,
         )
 
     /**
@@ -27,7 +27,7 @@ class FreeDistributiveLatticeCongruence<A>(
     operator fun plus(other: FreeDistributiveLatticeCongruence<A>): FreeDistributiveLatticeCongruence<A> =
         FreeDistributiveLatticeCongruence(
             this.congruence +
-                other.congruence
+                other.congruence,
         )
 
     companion object {

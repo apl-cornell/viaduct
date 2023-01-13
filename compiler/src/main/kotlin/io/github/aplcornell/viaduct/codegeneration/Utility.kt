@@ -34,7 +34,7 @@ fun receiveReplicated(
     sender: LetNode,
     events: Set<CommunicationEvent>,
     context: CodeGeneratorContext,
-    typeAnalysis: TypeAnalysis
+    typeAnalysis: TypeAnalysis,
 ): CodeBlock {
     val receiveExpression = CodeBlock.builder()
     val it = events.iterator()
@@ -42,12 +42,12 @@ fun receiveReplicated(
     if (events.size > 1) {
         receiveExpression.beginControlFlow(
             "%L.also",
-            context.receive(typeTranslator(typeAnalysis.type(sender)), it.next().send.host)
+            context.receive(typeTranslator(typeAnalysis.type(sender)), it.next().send.host),
         )
     } else {
         receiveExpression.add(
             "%L",
-            context.receive(typeTranslator(typeAnalysis.type(sender)), it.next().send.host)
+            context.receive(typeTranslator(typeAnalysis.type(sender)), it.next().send.host),
         )
         return receiveExpression.build()
     }
@@ -61,7 +61,7 @@ fun receiveReplicated(
             "it",
             events.first().send.host,
             context.receive(typeTranslator(typeAnalysis.type(sender)), currentEvent.send.host),
-            currentEvent.send.host
+            currentEvent.send.host,
         )
     }
 

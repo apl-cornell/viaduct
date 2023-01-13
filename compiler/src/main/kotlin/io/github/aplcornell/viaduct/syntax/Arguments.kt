@@ -8,7 +8,7 @@ import kotlinx.collections.immutable.toPersistentList
 class Arguments<out T>
 private constructor(
     private val arguments: PersistentList<T>,
-    override val sourceLocation: SourceLocation
+    override val sourceLocation: SourceLocation,
 ) : HasSourceLocation, List<T> by arguments {
     /** An empty argument list. */
     constructor(sourceLocation: SourceLocation) :

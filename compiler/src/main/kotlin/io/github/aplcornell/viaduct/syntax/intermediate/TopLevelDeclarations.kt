@@ -31,7 +31,7 @@ sealed class TopLevelDeclarationNode : Node() {
  */
 class HostDeclarationNode(
     val name: HostNode,
-    override val sourceLocation: SourceLocation
+    override val sourceLocation: SourceLocation,
 ) : TopLevelDeclarationNode() {
 
     override val children: Iterable<Nothing>
@@ -41,7 +41,7 @@ class HostDeclarationNode(
         io.github.aplcornell.viaduct.syntax.surface.HostDeclarationNode(
             name,
             sourceLocation,
-            comment = metadataAsComment(metadata)
+            comment = metadataAsComment(metadata),
         )
 
     override fun copy(children: List<Node>): HostDeclarationNode =
@@ -56,7 +56,7 @@ class ParameterNode(
     val parameterDirection: ParameterDirection,
     val objectType: ObjectTypeNode,
     override val protocol: ProtocolNode?,
-    override val sourceLocation: SourceLocation
+    override val sourceLocation: SourceLocation,
 ) : Node(), ObjectVariableDeclarationNode {
     override val children: Iterable<BlockNode>
         get() = listOf()
@@ -68,7 +68,7 @@ class ParameterNode(
             objectType,
             protocol,
             sourceLocation,
-            comment = metadataAsComment(metadata)
+            comment = metadataAsComment(metadata),
         )
 
     override fun copy(children: List<Node>): Node =
@@ -96,7 +96,7 @@ class FunctionDeclarationNode(
     val labelConstraints: Arguments<IFCDelegationDeclarationNode>,
     val pcLabel: LabelNode,
     val body: BlockNode,
-    override val sourceLocation: SourceLocation
+    override val sourceLocation: SourceLocation,
 ) : TopLevelDeclarationNode() {
     override val children: Iterable<Node>
         get() = (parameters.toPersistentList() as PersistentList<Node>).add(body)
@@ -107,18 +107,18 @@ class FunctionDeclarationNode(
             labelParameters,
             Arguments(
                 parameters.map { it.toSurfaceNode(metadata) },
-                parameters.sourceLocation
+                parameters.sourceLocation,
             ),
             Arguments(
                 labelConstraints.map {
                     it.toSurfaceNode()
                 },
-                labelConstraints.sourceLocation
+                labelConstraints.sourceLocation,
             ),
             pcLabel,
             body.toSurfaceNode(metadata),
             sourceLocation,
-            comment = metadataAsComment(metadata)
+            comment = metadataAsComment(metadata),
         )
 
     override fun copy(children: List<Node>): Node {
@@ -130,7 +130,7 @@ class FunctionDeclarationNode(
             labelConstraints,
             pcLabel,
             children.last() as BlockNode,
-            sourceLocation
+            sourceLocation,
         )
     }
 
@@ -145,7 +145,7 @@ abstract class DelegationDeclarationNode(
     open val from: LabelNode,
     open val to: LabelNode,
     open val delegationProjection: DelegationProjection,
-    override val sourceLocation: SourceLocation
+    override val sourceLocation: SourceLocation,
 ) : TopLevelDeclarationNode() {
     abstract fun congruences(): List<FreeDistributiveLattice.LessThanOrEqualTo<PrincipalComponent>>
     abstract override fun toSurfaceNode(metadata: Metadata): io.github.aplcornell.viaduct.syntax.surface.DelegationDeclarationNode
@@ -159,7 +159,7 @@ class AuthorityDelegationDeclarationNode(
     override val from: LabelNode,
     override val to: LabelNode,
     override val delegationProjection: DelegationProjection,
-    override val sourceLocation: SourceLocation
+    override val sourceLocation: SourceLocation,
 ) : DelegationDeclarationNode(from, to, delegationProjection, sourceLocation) {
 
     override fun congruences(): List<FreeDistributiveLattice.LessThanOrEqualTo<PrincipalComponent>> {
@@ -183,7 +183,7 @@ class AuthorityDelegationDeclarationNode(
             DelegationProjection.BOTH ->
                 listOf(
                     FreeDistributiveLattice.LessThanOrEqualTo(fromConfidentiality, toConfidentiality),
-                    FreeDistributiveLattice.LessThanOrEqualTo(fromIntegrity, toIntegrity)
+                    FreeDistributiveLattice.LessThanOrEqualTo(fromIntegrity, toIntegrity),
                 )
         }
     }
@@ -197,7 +197,7 @@ class AuthorityDelegationDeclarationNode(
             to,
             delegationProjection,
             sourceLocation,
-            comment = metadataAsComment(metadata)
+            comment = metadataAsComment(metadata),
         )
 
     override fun copy(children: List<Node>): AuthorityDelegationDeclarationNode =
@@ -212,7 +212,7 @@ class IFCDelegationDeclarationNode(
     override val from: LabelNode,
     override val to: LabelNode,
     override val delegationProjection: DelegationProjection,
-    override val sourceLocation: SourceLocation
+    override val sourceLocation: SourceLocation,
 ) : DelegationDeclarationNode(from, to, delegationProjection, sourceLocation) {
 
     override fun congruences(): List<FreeDistributiveLattice.LessThanOrEqualTo<PrincipalComponent>> {
@@ -235,7 +235,7 @@ class IFCDelegationDeclarationNode(
             DelegationProjection.BOTH ->
                 listOf(
                     FreeDistributiveLattice.LessThanOrEqualTo(fromConfidentiality, toConfidentiality),
-                    FreeDistributiveLattice.LessThanOrEqualTo(fromIntegrity, toIntegrity)
+                    FreeDistributiveLattice.LessThanOrEqualTo(fromIntegrity, toIntegrity),
                 )
         }
     }
@@ -249,7 +249,7 @@ class IFCDelegationDeclarationNode(
             to,
             delegationProjection,
             sourceLocation,
-            comment = metadataAsComment(metadata)
+            comment = metadataAsComment(metadata),
         )
 
     override fun copy(children: List<Node>): IFCDelegationDeclarationNode =

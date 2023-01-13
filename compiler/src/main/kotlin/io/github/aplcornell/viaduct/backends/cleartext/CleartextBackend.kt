@@ -18,7 +18,7 @@ object CleartextBackend : Backend {
     override val protocolParsers: Map<ProtocolName, ProtocolParser<Protocol>>
         get() = mapOf(
             Local.protocolName to LocalProtocolParser,
-            Replication.protocolName to ReplicationProtocolParser
+            Replication.protocolName to ReplicationProtocolParser,
         )
 
     override fun protocolFactory(program: ProgramNode): ProtocolFactory =

@@ -32,7 +32,7 @@ internal class ProtocolAnalysisTest {
                 solver,
                 DefaultCombinedBackend.protocolFactory(program),
                 protocolComposer,
-                SimpleCostEstimator(protocolComposer, SimpleCostRegime.LAN)
+                SimpleCostEstimator(protocolComposer, SimpleCostRegime.LAN),
             ).selectAssignment(program)
 
         val annotatedProgram = program.annotateWithProtocols(protocolAssignment)

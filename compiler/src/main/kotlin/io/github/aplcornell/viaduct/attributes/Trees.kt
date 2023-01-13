@@ -80,5 +80,5 @@ interface TreeNode<out Node> {
 private data class NodeRelations<Node>(
     val parent: Node?,
     val children: PersistentList<Node>,
-    val index: Int
+    val index: Int,
 )

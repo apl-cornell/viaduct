@@ -50,10 +50,10 @@ data class Hashed<T>(val value: T, val info: HashInfo)
 class CommitmentProtocolCleartextInterpreter(
     program: ProgramNode,
     private val protocolAnalysis: ProtocolAnalysis,
-    private val runtime: ViaductProcessRuntime
+    private val runtime: ViaductProcessRuntime,
 ) : SingleProtocolInterpreter<CommitmentProtocolCleartextInterpreter.HashedObject>(
     program,
-    runtime.projection.protocol
+    runtime.projection.protocol,
 ) {
     private val hashHosts: Set<Host> = (runtime.projection.protocol as Commitment).hashHosts
 
@@ -89,7 +89,7 @@ class CommitmentProtocolCleartextInterpreter(
     private fun pushContext(
         newObjectStore: PersistentMap<ObjectVariable, ObjectLocation>,
         newTempStore: PersistentMap<Temporary, Hashed<Value>>,
-        newCtTempStore: PersistentMap<Temporary, Value>
+        newCtTempStore: PersistentMap<Temporary, Value>,
     ) {
         objectStoreStack.push(newObjectStore)
         tempStoreStack.push(newTempStore)
@@ -119,8 +119,8 @@ class CommitmentProtocolCleartextInterpreter(
                 commitment,
                 ProtocolProjection(
                     runtime.projection.protocol,
-                    commitmentReceiver
-                )
+                    commitmentReceiver,
+                ),
             )
 
             logger.info { "sent commitment to host ${commitmentReceiver.name}" }
@@ -158,7 +158,7 @@ class CommitmentProtocolCleartextInterpreter(
     override suspend fun buildObject(
         className: ClassName,
         typeArguments: List<ValueType>,
-        arguments: List<AtomicExpressionNode>
+        arguments: List<AtomicExpressionNode>,
     ): HashedObject {
         return when (className) {
             ImmutableCell, MutableCell -> HashedCellObject(runExpr(arguments[0]))
@@ -192,7 +192,7 @@ class CommitmentProtocolCleartextInterpreter(
         sendProtocol: Protocol,
         receiver: SimpleStatementNode,
         recvProtocol: Protocol,
-        events: ProtocolCommunication
+        events: ProtocolCommunication,
     ) {
         if (receiver != runtime.projection.protocol) {
             val hashedValue: Hashed<Value> = tempStore[sender.name.value]!!
@@ -220,7 +220,7 @@ class CommitmentProtocolCleartextInterpreter(
         sendProtocol: Protocol,
         receiver: SimpleStatementNode,
         recvProtocol: Protocol,
-        events: ProtocolCommunication
+        events: ProtocolCommunication,
     ) {
         if (sendProtocol != runtime.projection.protocol) {
             when {

@@ -19,7 +19,7 @@ fun validateProtocolAssignment(
     protocolFactory: ProtocolFactory,
     protocolComposer: ProtocolComposer,
     costEstimator: CostEstimator<IntegerCost>,
-    protocolAssignment: ProtocolAssignment
+    protocolAssignment: ProtocolAssignment,
 ) {
     val constraintGenerator =
         SelectionConstraintGenerator(program, protocolFactory, protocolComposer, costEstimator)
@@ -41,7 +41,7 @@ fun validateProtocolAssignment(
         val protocol = selection.getAssignment(functionName, node.name.value)
         if (!hostTrustConfiguration.actsFor(
                 protocol.authority(),
-                informationFlowAnalysis.label(node)
+                informationFlowAnalysis.label(node),
             )
         ) {
             // if (!protocol.authority().actsFor(informationFlowAnalysis.label(node))) {

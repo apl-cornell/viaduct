@@ -47,7 +47,7 @@ class CleartextProtocolInterpreter(
     program: ProgramNode,
     protocols: Set<Protocol>,
     private val host: Host,
-    private val runtime: ViaductRuntime
+    private val runtime: ViaductRuntime,
 ) : AbstractProtocolInterpreter<CleartextClassObject>(program) {
     override val availableProtocols: Set<Protocol> = protocols
 
@@ -69,7 +69,7 @@ class CleartextProtocolInterpreter(
 
     private fun pushContext(
         newObjectStore: PersistentMap<ObjectVariable, ObjectLocation>,
-        newTempStore: PersistentMap<Temporary, Value>
+        newTempStore: PersistentMap<Temporary, Value>,
     ) {
         objectStoreStack.push(newObjectStore)
         tempStoreStack.push(newTempStore)
@@ -96,7 +96,7 @@ class CleartextProtocolInterpreter(
         protocol: Protocol,
         className: ClassName,
         typeArguments: List<ValueType>,
-        arguments: List<AtomicExpressionNode>
+        arguments: List<AtomicExpressionNode>,
     ): CleartextClassObject {
         return when (className) {
             ImmutableCell -> ImmutableCellObject(runExpr(arguments[0]))
@@ -170,7 +170,7 @@ class CleartextProtocolInterpreter(
         sendProtocol: Protocol,
         receiver: SimpleStatementNode,
         recvProtocol: Protocol,
-        events: ProtocolCommunication
+        events: ProtocolCommunication,
     ) {
         if (sendProtocol != recvProtocol) {
             val relevantEvents: Set<CommunicationEvent> =
@@ -188,7 +188,7 @@ class CleartextProtocolInterpreter(
         sendProtocol: Protocol,
         receiver: SimpleStatementNode,
         recvProtocol: Protocol,
-        events: ProtocolCommunication
+        events: ProtocolCommunication,
     ) {
         // must receive from read protocol
         if (sendProtocol != recvProtocol) {
@@ -251,7 +251,7 @@ class CleartextProtocolInterpreter(
                         runtime.send(
                             cleartextValue,
                             projection,
-                            ProtocolProjection(recvProtocol, host)
+                            ProtocolProjection(recvProtocol, host),
                         )
                     }
 
@@ -259,14 +259,14 @@ class CleartextProtocolInterpreter(
                         val recvValue =
                             runtime.receive(
                                 ProtocolProjection(recvProtocol, host),
-                                projection
+                                projection,
                             )
 
                         if (recvValue != cleartextValue) {
                             throw ViaductInterpreterError(
                                 "equivocation error between hosts: " + this.host.toDocument().print() + ", " +
                                     host.toDocument().print() + ", expected " + cleartextValue.toDocument().print() +
-                                    ", received " + recvValue.toDocument().print()
+                                    ", received " + recvValue.toDocument().print(),
                             )
                         }
                     }
@@ -283,7 +283,7 @@ class CleartextProtocolInterpreter(
 
                     logger.info {
                         "received opened commitment value and nonce from ${
-                        cleartextSendEvent.send.asProjection().toDocument().print()
+                            cleartextSendEvent.send.asProjection().toDocument().print()
                         }"
                     }
 
@@ -293,7 +293,7 @@ class CleartextProtocolInterpreter(
                         assert(HashInfo(commitment.value, nonce.value).verify(msg.encode()))
                         logger.info {
                             "verified commitment from host ${
-                            hashCommitmentInput.send.asProjection().toDocument().print()
+                                hashCommitmentInput.send.asProjection().toDocument().print()
                             }"
                         }
                     }
@@ -314,15 +314,15 @@ class CleartextProtocolInterpreter(
             protocols: Set<Protocol>,
             protocolAnalysis: ProtocolAnalysis,
             runtime: ViaductRuntime,
-            connectionMap: Map<Host, HostAddress>
+            connectionMap: Map<Host, HostAddress>,
         ): Iterable<ProtocolInterpreter> =
             setOf(
                 CleartextProtocolInterpreter(
                     program,
                     protocols.filterIsInstance<Cleartext>().toSet(),
                     host,
-                    runtime
-                )
+                    runtime,
+                ),
             )
     }
 }

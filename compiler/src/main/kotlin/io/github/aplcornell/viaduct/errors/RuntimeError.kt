@@ -5,7 +5,7 @@ import io.github.aplcornell.viaduct.syntax.HasSourceLocation
 
 class RuntimeError(
     val information: String,
-    val node: HasSourceLocation? = null
+    val node: HasSourceLocation? = null,
 ) : CompilationError() {
     override val category = "Runtime Error"
 

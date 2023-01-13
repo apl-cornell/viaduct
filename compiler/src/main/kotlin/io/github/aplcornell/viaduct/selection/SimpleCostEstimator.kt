@@ -49,7 +49,7 @@ enum class SimpleCostRegime { LAN, WAN }
  * */
 class SimpleCostEstimator(
     private val protocolComposer: ProtocolComposer,
-    private val costRegime: SimpleCostRegime
+    private val costRegime: SimpleCostRegime,
 ) : CostEstimator<IntegerCost> {
     companion object {
         private const val NUM_MESSAGES = "numberOfMessages"
@@ -133,7 +133,7 @@ class SimpleCostEstimator(
 
             // MIN = (MUX + LESS THAN)
             Pair(Maximum, BoolABY.protocolName) to opCost(141, 141),
-            Pair(Maximum, YaoABY.protocolName) to opCost(148, 146)
+            Pair(Maximum, YaoABY.protocolName) to opCost(148, 146),
         )
 
     // from the original ABY paper; cost is from setup + (sequential) online time divided by 100
@@ -210,7 +210,7 @@ class SimpleCostEstimator(
 
             // MIN = (MUX + LESS THAN)
             Pair(Maximum, BoolABY.protocolName) to opCost(2 + 8, 2252 + 10802),
-            Pair(Maximum, YaoABY.protocolName) to opCost(1 + 1, 23 + 23)
+            Pair(Maximum, YaoABY.protocolName) to opCost(1 + 1, 23 + 23),
         )
 
     // from my own estimation
@@ -284,7 +284,7 @@ class SimpleCostEstimator(
 
             // MAX
             Pair(Maximum, BoolABY.protocolName) to opCost(34, 36),
-            Pair(Maximum, YaoABY.protocolName) to opCost(18, 15)
+            Pair(Maximum, YaoABY.protocolName) to opCost(18, 15),
         )
 
     override fun executionCost(stmt: SimpleStatementNode, protocol: Protocol): Cost<IntegerCost> =
@@ -297,7 +297,7 @@ class SimpleCostEstimator(
                 is ZKP -> IntegerCost(50 + protocol.verifiers.size)
                 is ABY -> IntegerCost(100)
                 else -> throw Error("unknown protocol ${protocol.protocolName}")
-            }
+            },
         ).concat(
             when (protocol) {
                 is ArithABY, is BoolABY, is YaoABY -> {
@@ -308,7 +308,7 @@ class SimpleCostEstimator(
                                     mpcOperationCostMap3[rhs.operator to protocol.protocolName]
                                         ?: throw Error(
                                             "SimpleCostEstimator: no cost for operator ${rhs.operator} " +
-                                                "in protocol ${protocol.protocolName}"
+                                                "in protocol ${protocol.protocolName}",
                                         )
 
                                 else -> zeroCost()
@@ -320,7 +320,7 @@ class SimpleCostEstimator(
                 }
 
                 else -> zeroCost()
-            }
+            },
         )
 
     /** Cost of sending messages over the wire from one host to another. */
@@ -333,8 +333,8 @@ class SimpleCostEstimator(
      * to another protocol occurs. */
     private fun mpcExecutionCost(events: List<CommunicationEvent>): Int =
         if (events.any { event ->
-            event.send.protocol is ABY && event.send.id != Protocol.INTERNAL_OUTPUT && event.recv.protocol !is ABY
-        }
+                event.send.protocol is ABY && event.send.id != Protocol.INTERNAL_OUTPUT && event.recv.protocol !is ABY
+            }
         ) {
             10
         } else {
@@ -360,7 +360,7 @@ class SimpleCostEstimator(
                 zeroCost().update(LAN_COST, IntegerCost(20)).update(WAN_COST, IntegerCost(20)),
 
             Pair(YaoABY.protocolName, BoolABY.protocolName) to
-                zeroCost().update(LAN_COST, IntegerCost(1)).update(WAN_COST, IntegerCost(15))
+                zeroCost().update(LAN_COST, IntegerCost(1)).update(WAN_COST, IntegerCost(15)),
         )
 
     // from ABY paper
@@ -382,7 +382,7 @@ class SimpleCostEstimator(
                 zeroCost().update(LAN_COST, IntegerCost(0)).update(WAN_COST, IntegerCost(4191)),
 
             Pair(YaoABY.protocolName, BoolABY.protocolName) to
-                zeroCost().update(LAN_COST, IntegerCost(0)).update(WAN_COST, IntegerCost(0))
+                zeroCost().update(LAN_COST, IntegerCost(0)).update(WAN_COST, IntegerCost(0)),
         )
 
     // from my estimation
@@ -404,7 +404,7 @@ class SimpleCostEstimator(
                 zeroCost().update(LAN_COST, IntegerCost(15)).update(WAN_COST, IntegerCost(15)),
 
             Pair(YaoABY.protocolName, BoolABY.protocolName) to
-                zeroCost().update(LAN_COST, IntegerCost(5)).update(WAN_COST, IntegerCost(5))
+                zeroCost().update(LAN_COST, IntegerCost(5)).update(WAN_COST, IntegerCost(5)),
         )
 
     /** Cost of converting between different ABY circuit types. */
@@ -488,8 +488,8 @@ class SimpleCostEstimator(
                 NUM_MESSAGES to IntegerCost(0),
                 EXECUTION_COST to IntegerCost(0),
                 LAN_COST to IntegerCost(0),
-                WAN_COST to IntegerCost(0)
-            )
+                WAN_COST to IntegerCost(0),
+            ),
         )
 
     /** Feature weights in low latency settings.
@@ -500,8 +500,8 @@ class SimpleCostEstimator(
                 NUM_MESSAGES to IntegerCost(3),
                 EXECUTION_COST to IntegerCost(1),
                 LAN_COST to IntegerCost(1),
-                WAN_COST to IntegerCost(0)
-            )
+                WAN_COST to IntegerCost(0),
+            ),
         )
 
     /** Feature weights in high latency settings.
@@ -512,8 +512,8 @@ class SimpleCostEstimator(
                 NUM_MESSAGES to IntegerCost(5),
                 EXECUTION_COST to IntegerCost(1),
                 LAN_COST to IntegerCost(0),
-                WAN_COST to IntegerCost(1)
-            )
+                WAN_COST to IntegerCost(1),
+            ),
         )
 
     override fun featureWeights(): Cost<IntegerCost> =

@@ -76,7 +76,7 @@ class ABYProtocolInterpreter(
     private val protocolAnalysis: ProtocolAnalysis,
     private val runtime: ViaductRuntime,
     connectionMap: Map<Host, HostAddress>,
-    port: Int = DEFAULT_PORT
+    port: Int = DEFAULT_PORT,
 ) : AbstractProtocolInterpreter<ABYProtocolInterpreter.ABYClassObject>(program) {
     override val availableProtocols: Set<Protocol> =
         if (role == Role.SERVER) {
@@ -128,7 +128,7 @@ class ABYProtocolInterpreter(
     private fun pushContext(
         newObjectStore: PersistentMap<ObjectVariable, ObjectLocation>,
         newSsTempStore: PersistentMap<Temporary, ABYCircuitGate>,
-        newCtTempStore: PersistentMap<Temporary, Value>
+        newCtTempStore: PersistentMap<Temporary, Value>,
     ) {
         objectStoreStack.push(newObjectStore)
         ssTempStoreStack.push(newSsTempStore)
@@ -151,10 +151,10 @@ class ABYProtocolInterpreter(
 
     override suspend fun buildExpressionObject(
         protocol: Protocol,
-        expr: AtomicExpressionNode
+        expr: AtomicExpressionNode,
     ): ABYClassObject {
         return ABYImmutableCellObject(
-            runSecretExpr(protocolCircuitType[protocol.protocolName]!!, expr)
+            runSecretExpr(protocolCircuitType[protocol.protocolName]!!, expr),
         )
     }
 
@@ -162,7 +162,7 @@ class ABYProtocolInterpreter(
         protocol: Protocol,
         className: ClassName,
         typeArguments: List<ValueType>,
-        arguments: List<AtomicExpressionNode>
+        arguments: List<AtomicExpressionNode>,
     ): ABYClassObject {
         val circuitType = protocolCircuitType[protocol.protocolName]!!
         return when (className) {
@@ -181,7 +181,7 @@ class ABYProtocolInterpreter(
                 ABYVectorObject(
                     protocolCircuitType[protocol.protocolName]!!,
                     length.value,
-                    typeArguments[0].defaultValue
+                    typeArguments[0].defaultValue,
                 )
             }
 
@@ -248,7 +248,7 @@ class ABYProtocolInterpreter(
     /** Return either a cleartext or secret-shared value. Used by array indexing. */
     private fun runCleartextOrSecretExpr(
         circuitType: ABYCircuitType,
-        expr: AtomicExpressionNode
+        expr: AtomicExpressionNode,
     ): ABYValue {
         return when (expr) {
             is LiteralNode -> ABYCleartextValue(expr.value)
@@ -345,7 +345,7 @@ class ABYProtocolInterpreter(
     private fun buildABYCircuit(
         circuitBuilder: ABYCircuitBuilder,
         variableShareMap: Map<ABYCircuitGate, VariableShare>,
-        outGate: ABYCircuitGate
+        outGate: ABYCircuitGate,
     ): VariableShare {
         // pre-order traversal of circuit
         val traverseStack = Stack<ABYCircuitGate>()
@@ -396,7 +396,7 @@ class ABYProtocolInterpreter(
 
     private fun computeVariableCircuitMap(
         circuitBuilder: ABYCircuitBuilder,
-        outputGate: ABYCircuitGate
+        outputGate: ABYCircuitGate,
     ): Map<ABYCircuitGate, VariableShare> {
         val variableCircuitMap: MutableMap<ABYCircuitGate, VariableShare> = mutableMapOf()
         val variableSchedule = computeVariableSchedule(outputGate)
@@ -436,7 +436,7 @@ class ABYProtocolInterpreter(
                 boolCircuit = aby.getCircuitBuilder(SharingType.S_BOOL)!!,
                 yaoCircuit = aby.getCircuitBuilder(SharingType.S_YAO)!!,
                 bitlen = BITLEN,
-                role = role
+                role = role,
             )
 
         val variableCircuitMap: Map<ABYCircuitGate, VariableShare> =
@@ -508,7 +508,7 @@ class ABYProtocolInterpreter(
         sendProtocol: Protocol,
         receiver: SimpleStatementNode,
         recvProtocol: Protocol,
-        events: ProtocolCommunication
+        events: ProtocolCommunication,
     ) {
         if (!availableProtocols.contains(recvProtocol)) {
             val receivingHosts = events.map { event -> event.recv.host }.toSet()
@@ -533,7 +533,7 @@ class ABYProtocolInterpreter(
         sendProtocol: Protocol,
         receiver: SimpleStatementNode,
         recvProtocol: Protocol,
-        events: ProtocolCommunication
+        events: ProtocolCommunication,
     ) {
         if (!availableProtocols.contains(sendProtocol)) {
             val circuitType = protocolCircuitType[recvProtocol.protocolName]!!
@@ -586,13 +586,13 @@ class ABYProtocolInterpreter(
         abstract fun query(
             circuitType: ABYCircuitType,
             query: QueryNameNode,
-            arguments: List<AtomicExpressionNode>
+            arguments: List<AtomicExpressionNode>,
         ): ABYCircuitGate
 
         abstract fun update(
             circuitType: ABYCircuitType,
             update: UpdateNameNode,
-            arguments: List<AtomicExpressionNode>
+            arguments: List<AtomicExpressionNode>,
         )
     }
 
@@ -604,7 +604,7 @@ class ABYProtocolInterpreter(
         override fun query(
             circuitType: ABYCircuitType,
             query: QueryNameNode,
-            arguments: List<AtomicExpressionNode>
+            arguments: List<AtomicExpressionNode>,
         ): ABYCircuitGate {
             return when (query.value) {
                 is Get -> gate
@@ -618,7 +618,7 @@ class ABYProtocolInterpreter(
         override fun update(
             circuitType: ABYCircuitType,
             update: UpdateNameNode,
-            arguments: List<AtomicExpressionNode>
+            arguments: List<AtomicExpressionNode>,
         ) {
             throw ViaductInterpreterError("ABY: unknown update for immutable cell", update)
         }
@@ -632,7 +632,7 @@ class ABYProtocolInterpreter(
         override fun query(
             circuitType: ABYCircuitType,
             query: QueryNameNode,
-            arguments: List<AtomicExpressionNode>
+            arguments: List<AtomicExpressionNode>,
         ): ABYCircuitGate {
             return when (query.value) {
                 is Get -> gate
@@ -646,7 +646,7 @@ class ABYProtocolInterpreter(
         override fun update(
             circuitType: ABYCircuitType,
             update: UpdateNameNode,
-            arguments: List<AtomicExpressionNode>
+            arguments: List<AtomicExpressionNode>,
         ) {
             gate = when (val updateValue = update.value) {
                 is io.github.aplcornell.viaduct.syntax.datatypes.Set -> {
@@ -678,7 +678,7 @@ class ABYProtocolInterpreter(
         override fun query(
             circuitType: ABYCircuitType,
             query: QueryNameNode,
-            arguments: List<AtomicExpressionNode>
+            arguments: List<AtomicExpressionNode>,
         ): ABYCircuitGate {
             return when (query.value) {
                 is Get -> {
@@ -697,14 +697,14 @@ class ABYProtocolInterpreter(
                                     operatorToCircuit(
                                         EqualTo,
                                         listOf(indexValue.value, ABYConstantGate(i, circuitType)),
-                                        circuitType
+                                        circuitType,
                                     )
 
                                 val mux: ABYCircuitGate =
                                     operatorToCircuit(
                                         Mux,
                                         listOf(guard, gates[i], currentShare),
-                                        circuitType
+                                        circuitType,
                                     )
 
                                 currentShare = mux
@@ -722,7 +722,7 @@ class ABYProtocolInterpreter(
         override fun update(
             circuitType: ABYCircuitType,
             update: UpdateNameNode,
-            arguments: List<AtomicExpressionNode>
+            arguments: List<AtomicExpressionNode>,
         ) {
             when (val index: ABYValue = runCleartextOrSecretExpr(circuitType, arguments[0])) {
                 is ABYCleartextValue -> {
@@ -737,7 +737,7 @@ class ABYProtocolInterpreter(
                             operatorToCircuit(
                                 updateValue.operator,
                                 listOf(gates[intIndex], circuitArg),
-                                circuitType
+                                circuitType,
                             )
                         }
 
@@ -758,13 +758,13 @@ class ABYProtocolInterpreter(
                                 operatorToCircuit(
                                     updateValue.operator,
                                     listOf(gates[i], circuitArg),
-                                    circuitType
+                                    circuitType,
                                 )
                             }
 
                             else -> throw ViaductInterpreterError(
                                 "ABY: unknown update ${update.value} for vector",
-                                update
+                                update,
                             )
                         }
 
@@ -772,14 +772,14 @@ class ABYProtocolInterpreter(
                             operatorToCircuit(
                                 EqualTo,
                                 listOf(index.value, ABYConstantGate(i, circuitType)),
-                                circuitType
+                                circuitType,
                             )
 
                         val mux: ABYCircuitGate =
                             operatorToCircuit(
                                 Mux,
                                 listOf(guard, rhs, gates[i]),
-                                circuitType
+                                circuitType,
                             )
 
                         gates[i] = mux
@@ -794,7 +794,7 @@ class ABYProtocolInterpreter(
         override fun query(
             circuitType: ABYCircuitType,
             query: QueryNameNode,
-            arguments: List<AtomicExpressionNode>
+            arguments: List<AtomicExpressionNode>,
         ): ABYCircuitGate {
             throw ViaductInterpreterError("ABY: unknown query ${query.value} for null object", query)
         }
@@ -802,7 +802,7 @@ class ABYProtocolInterpreter(
         override fun update(
             circuitType: ABYCircuitType,
             update: UpdateNameNode,
-            arguments: List<AtomicExpressionNode>
+            arguments: List<AtomicExpressionNode>,
         ) {
             throw ViaductInterpreterError("ABY: unknown update ${update.value} for null object", update)
         }
@@ -818,7 +818,7 @@ class ABYProtocolInterpreter(
             mapOf(
                 ArithABY.protocolName to ABYCircuitType.ARITH,
                 BoolABY.protocolName to ABYCircuitType.BOOL,
-                YaoABY.protocolName to ABYCircuitType.YAO
+                YaoABY.protocolName to ABYCircuitType.YAO,
             )
 
         override fun buildProtocolInterpreters(
@@ -827,7 +827,7 @@ class ABYProtocolInterpreter(
             protocols: Set<Protocol>,
             protocolAnalysis: ProtocolAnalysis,
             runtime: ViaductRuntime,
-            connectionMap: Map<Host, HostAddress>
+            connectionMap: Map<Host, HostAddress>,
         ): Iterable<ProtocolInterpreter> {
             // this has to be sorted so all hosts agree on the port number to use!
             val abyProtocols = protocols.filterIsInstance<ABY>().sorted()
@@ -851,8 +851,8 @@ class ABYProtocolInterpreter(
                             protocolAnalysis,
                             runtime,
                             connectionMap,
-                            port
-                        )
+                            port,
+                        ),
                     )
                     currentHostPairs.add(hostPair)
                     currentPort++

@@ -9,7 +9,7 @@ import io.github.aplcornell.viaduct.syntax.types.Type
 
 class ArrayType(
     val elementType: ValueTypeNode,
-    val shape: Arguments<IndexExpressionNode>
+    val shape: Arguments<IndexExpressionNode>,
 ) : Type {
     override fun toDocument(): Document = elementType + shape.bracketed()
 }

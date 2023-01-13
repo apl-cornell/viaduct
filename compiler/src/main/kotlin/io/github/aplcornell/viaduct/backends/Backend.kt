@@ -41,7 +41,7 @@ fun Iterable<Backend>.unions(): Backend {
                         Protocol ${protocol.name} is implemented by multiple backends:
                         ${'\t'}${previous.name}
                         ${'\t'}${backend.name}
-                        """.trimIndent()
+                        """.trimIndent(),
                     )
                 }
             }

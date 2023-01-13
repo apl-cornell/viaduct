@@ -99,7 +99,7 @@ class ProtocolArguments internal constructor(private val arguments: NamedArgumen
 internal fun parseProtocol(
     protocolParsers: Map<ProtocolName, ProtocolParser<Protocol>>,
     protocolName: ProtocolNameNode,
-    arguments: NamedArguments<ValueNode>
+    arguments: NamedArguments<ValueNode>,
 ): Protocol {
     val parser = protocolParsers[protocolName.value] ?: throw UndefinedNameError(protocolName)
     val protocolArguments = ProtocolArguments(arguments)

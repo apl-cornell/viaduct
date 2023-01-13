@@ -18,7 +18,7 @@ import kotlinx.collections.immutable.toPersistentList
 class ProgramNode
 private constructor(
     val declarations: PersistentList<TopLevelDeclarationNode>,
-    override val sourceLocation: SourceLocation
+    override val sourceLocation: SourceLocation,
 ) : Node(), List<TopLevelDeclarationNode> by declarations {
     constructor(declarations: List<TopLevelDeclarationNode>, sourceLocation: SourceLocation) :
         this(declarations.toPersistentList(), sourceLocation)
@@ -59,7 +59,7 @@ private constructor(
     override fun toSurfaceNode(metadata: Metadata): io.github.aplcornell.viaduct.syntax.surface.ProgramNode =
         io.github.aplcornell.viaduct.syntax.surface.ProgramNode(
             declarations.map { it.toSurfaceNode(metadata) },
-            sourceLocation
+            sourceLocation,
         )
 
     override fun copy(children: List<Node>): ProgramNode =

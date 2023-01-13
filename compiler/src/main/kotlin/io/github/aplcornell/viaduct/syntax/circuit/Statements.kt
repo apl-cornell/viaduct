@@ -23,7 +23,7 @@ class CircuitBlockNode
 private constructor(
     val statements: PersistentList<CircuitStatementNode>,
     val returnStatement: ReturnNode,
-    override val sourceLocation: SourceLocation
+    override val sourceLocation: SourceLocation,
 ) : Node(), List<CircuitStatementNode> by statements {
     constructor(statements: List<CircuitStatementNode>, returnStatement: ReturnNode, sourceLocation: SourceLocation) :
         this(statements.toPersistentList(), returnStatement, sourceLocation)
@@ -46,7 +46,7 @@ class LetNode(
     override val name: VariableNode,
     val indices: Arguments<IndexParameterNode>,
     val value: ExpressionNode,
-    override val sourceLocation: SourceLocation
+    override val sourceLocation: SourceLocation,
 ) : CircuitStatementNode(), VariableDeclarationNode {
     override fun toDocument(): Document =
         keyword("val") * name + indices.bracketed() * "=" * value
@@ -54,7 +54,7 @@ class LetNode(
 
 class ReturnNode(
     val values: Arguments<PureExpressionNode>,
-    override val sourceLocation: SourceLocation
+    override val sourceLocation: SourceLocation,
 ) : StatementNode() {
     override fun toDocument(): Document = keyword("return") * values.joined()
 }

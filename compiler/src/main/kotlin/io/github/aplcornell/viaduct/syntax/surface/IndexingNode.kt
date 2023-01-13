@@ -26,7 +26,7 @@ import io.github.aplcornell.viaduct.syntax.datatypes.Vector
  */
 internal class IndexingNode(
     private val variable: ObjectVariableNode,
-    private val indices: Arguments<ExpressionNode>
+    private val indices: Arguments<ExpressionNode>,
 ) : Node() {
     /** Returns an expression that reads the value stored at the indexed location. */
     fun get(): QueryNode {
@@ -34,7 +34,7 @@ internal class IndexingNode(
             variable,
             QueryNameNode(Get, variable.sourceLocation),
             indices,
-            this.sourceLocation
+            this.sourceLocation,
         )
     }
 
@@ -48,9 +48,9 @@ internal class IndexingNode(
             UpdateNameNode(Set, methodSourceLocation),
             Arguments(
                 indices + value,
-                sourceLocation = indices.sourceLocation.merge(value.sourceLocation)
+                sourceLocation = indices.sourceLocation.merge(value.sourceLocation),
             ),
-            variable.sourceLocation.merge(value.sourceLocation)
+            variable.sourceLocation.merge(value.sourceLocation),
         )
     }
 
@@ -61,16 +61,16 @@ internal class IndexingNode(
     fun modify(
         operator: BinaryOperator,
         argument: ExpressionNode,
-        methodSourceLocation: SourceLocation
+        methodSourceLocation: SourceLocation,
     ): UpdateNode {
         return UpdateNode(
             variable,
             UpdateNameNode(Modify(operator), methodSourceLocation),
             Arguments(
                 indices + argument,
-                sourceLocation = indices.sourceLocation.merge(argument.sourceLocation)
+                sourceLocation = indices.sourceLocation.merge(argument.sourceLocation),
             ),
-            variable.sourceLocation.merge(argument.sourceLocation)
+            variable.sourceLocation.merge(argument.sourceLocation),
         )
     }
 
@@ -109,7 +109,7 @@ internal class IndexingNode(
             return if (update is Set || update is Modify) {
                 val indices = Arguments(
                     updateNode.arguments.dropLast(1),
-                    sourceLocation = updateNode.arguments.sourceLocation
+                    sourceLocation = updateNode.arguments.sourceLocation,
                 )
                 IndexingNode(updateNode.variable, indices)
             } else {

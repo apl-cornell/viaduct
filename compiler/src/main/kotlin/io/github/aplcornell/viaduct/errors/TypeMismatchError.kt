@@ -15,7 +15,7 @@ import io.github.aplcornell.viaduct.syntax.types.Type
 class TypeMismatchError(
     private val node: HasSourceLocation,
     private val actualType: Type,
-    private val expectedType: Type
+    private val expectedType: Type,
 ) : CompilationError() {
     override val category: String
         get() = "Type Mismatch"

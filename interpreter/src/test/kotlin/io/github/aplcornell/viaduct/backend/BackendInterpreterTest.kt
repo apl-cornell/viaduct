@@ -2,7 +2,7 @@ package io.github.aplcornell.viaduct.backend
 
 import io.github.aplcornell.viaduct.PositiveTestFileProvider
 import io.github.aplcornell.viaduct.analysis.ProtocolAnalysis
-import io.github.aplcornell.viaduct.backend.IO.Strategy
+import io.github.aplcornell.viaduct.backend.io.Strategy
 import io.github.aplcornell.viaduct.backends.DefaultCombinedBackend
 import io.github.aplcornell.viaduct.parsing.SourceFile
 import io.github.aplcornell.viaduct.passes.compile
@@ -33,7 +33,7 @@ import java.net.ServerSocket
 import java.util.concurrent.Executors
 
 private class FakeProtocolInterpreter(
-    override val availableProtocols: Set<Protocol>
+    override val availableProtocols: Set<Protocol>,
 ) : ProtocolInterpreter {
     override suspend fun runGuard(protocol: Protocol, expr: AtomicExpressionNode): Value {
         return BooleanValue(false)
@@ -46,7 +46,7 @@ private class FakeProtocolInterpreter(
         sendProtocol: Protocol,
         receiver: SimpleStatementNode,
         recvProtocol: Protocol,
-        events: ProtocolCommunication
+        events: ProtocolCommunication,
     ) {
     }
 
@@ -55,7 +55,7 @@ private class FakeProtocolInterpreter(
         sendProtocol: Protocol,
         receiver: SimpleStatementNode,
         recvProtocol: Protocol,
-        events: ProtocolCommunication
+        events: ProtocolCommunication,
     ) {
     }
 
@@ -80,7 +80,7 @@ private object FakeProtocolBackend : ProtocolBackend {
         protocols: Set<Protocol>,
         protocolAnalysis: ProtocolAnalysis,
         runtime: ViaductRuntime,
-        connectionMap: Map<Host, HostAddress>
+        connectionMap: Map<Host, HostAddress>,
     ): Iterable<ProtocolInterpreter> {
         return setOf(FakeProtocolInterpreter(protocols))
     }

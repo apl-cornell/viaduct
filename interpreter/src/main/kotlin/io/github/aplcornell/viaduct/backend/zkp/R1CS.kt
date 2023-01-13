@@ -91,7 +91,7 @@ class R1CS(val isProver: Boolean, val wire: WireTerm, val is_eq_to: Long) {
                     auxInputs[this.index] = r1cs.mkPrivateValProver(
                         this.v.toLong(),
                         auxInputHashes[this.index]!!,
-                        auxInputNonces[this.index]!!
+                        auxInputNonces[this.index]!!,
                     )
                 }
             }
@@ -100,7 +100,7 @@ class R1CS(val isProver: Boolean, val wire: WireTerm, val is_eq_to: Long) {
                 if (!auxInputs.containsKey(this.index)) {
                     auxInputs[this.index] = r1cs.mkPrivateValVerifier(
                         auxInputHashes[this.index]!!,
-                        auxInputNonces[this.index]!!
+                        auxInputNonces[this.index]!!,
                     )
                 }
             }

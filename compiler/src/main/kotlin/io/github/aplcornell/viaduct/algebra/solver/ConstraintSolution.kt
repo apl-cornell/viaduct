@@ -5,7 +5,7 @@ import io.github.aplcornell.viaduct.algebra.Lattice
 /** A solution to a system of constraints. Maps variables of type [V] to values of type [C]. */
 class ConstraintSolution<C : Lattice<C>, V> internal constructor(
     private val solution: Map<V, C>,
-    private val default: C
+    private val default: C,
 ) : (V) -> C {
     /** Returns the value of [term]. */
     fun evaluate(term: Term<C, V>): C =

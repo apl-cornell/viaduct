@@ -22,7 +22,7 @@ sealed class ZKPObject {
                             1
                         } else {
                             0
-                        }
+                        },
                     )
                     else -> throw Exception("Bad default value")
                 }

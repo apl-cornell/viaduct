@@ -8,7 +8,7 @@ import kotlinx.collections.immutable.persistentMapOf
 /** A persistent map from [Name]s to [Data]. */
 internal class NameMap<N : Name, Data>
 private constructor(
-    private val map: PersistentMap<N, Pair<Data, SourceLocation>>
+    private val map: PersistentMap<N, Pair<Data, SourceLocation>>,
 ) {
     /** The empty map. */
     constructor() : this(persistentMapOf())
@@ -52,7 +52,7 @@ private constructor(
             throw NameClashError(name.value, previousDeclaration, name.sourceLocation)
         }
         return NameMap(
-            map.put(name.value, Pair(data, name.sourceLocation))
+            map.put(name.value, Pair(data, name.sourceLocation)),
         )
     }
 }

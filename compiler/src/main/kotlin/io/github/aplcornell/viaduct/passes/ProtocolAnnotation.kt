@@ -33,9 +33,9 @@ private class ProtocolAnnotator(val program: ProgramNode, val selection: Protoco
                     stmt.value,
                     Located(
                         selection.getAssignment(enclosingFunction, stmt.name.value),
-                        stmt.sourceLocation
+                        stmt.sourceLocation,
                     ),
-                    stmt.sourceLocation
+                    stmt.sourceLocation,
                 )
             }
 
@@ -47,16 +47,16 @@ private class ProtocolAnnotator(val program: ProgramNode, val selection: Protoco
                     stmt.arguments,
                     Located(
                         selection.getAssignment(enclosingFunction, stmt.name.value),
-                        stmt.sourceLocation
+                        stmt.sourceLocation,
                     ),
-                    stmt.sourceLocation
+                    stmt.sourceLocation,
                 )
             }
 
             is BlockNode ->
                 BlockNode(
                     stmt.statements.map { run(it) },
-                    stmt.sourceLocation
+                    stmt.sourceLocation,
                 )
 
             is IfNode ->
@@ -64,14 +64,14 @@ private class ProtocolAnnotator(val program: ProgramNode, val selection: Protoco
                     stmt.guard,
                     run(stmt.thenBranch) as BlockNode,
                     run(stmt.elseBranch) as BlockNode,
-                    stmt.sourceLocation
+                    stmt.sourceLocation,
                 )
 
             is InfiniteLoopNode ->
                 InfiniteLoopNode(
                     run(stmt.body) as BlockNode,
                     stmt.jumpLabel,
-                    stmt.sourceLocation
+                    stmt.sourceLocation,
                 )
 
             else -> stmt
@@ -100,20 +100,20 @@ private class ProtocolAnnotator(val program: ProgramNode, val selection: Protoco
                                         param.objectType,
                                         Located(
                                             selection.getAssignment(decl.name.value, param.name.value),
-                                            param.sourceLocation
+                                            param.sourceLocation,
                                         ),
-                                        param.sourceLocation
+                                        param.sourceLocation,
                                     )
                                 },
-                                decl.parameters.sourceLocation
+                                decl.parameters.sourceLocation,
                             ),
                             decl.labelConstraints,
                             decl.pcLabel,
                             run(decl.body) as BlockNode,
-                            decl.sourceLocation
+                            decl.sourceLocation,
                         )
                 }
             },
-            program.sourceLocation
+            program.sourceLocation,
         )
 }

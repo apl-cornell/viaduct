@@ -41,7 +41,7 @@ import kotlinx.collections.immutable.toPersistentSet
 /** Associates each [StatementNode] with the [Protocol]s involved in its execution. */
 class ProtocolAnalysis(
     val program: ProgramNode,
-    private val protocolComposer: ProtocolComposer
+    private val protocolComposer: ProtocolComposer,
 ) {
     private val tree = program.tree
     private val nameAnalysis = NameAnalysis.get(program)
@@ -125,7 +125,7 @@ class ProtocolAnalysis(
     }
 
     private val FunctionDeclarationNode.protocols: PersistentSet<Protocol> by circularAttribute(
-        persistentHashSetOf()
+        persistentHashSetOf(),
     ) {
         this.parameters
             .fold(persistentSetOf<Protocol>()) { acc, param ->
@@ -135,13 +135,13 @@ class ProtocolAnalysis(
             .addAll(
                 nameAnalysis.calls(this).fold(persistentSetOf<Protocol>()) { acc, call ->
                     acc.addAll(call.protocols)
-                }
+                },
             )
     }
 
     /** Used to compute [protocols]. */
     private val StatementNode.protocols: PersistentSet<Protocol> by circularAttribute(
-        persistentHashSetOf()
+        persistentHashSetOf(),
     ) {
         when (this) {
             is LetNode -> {
@@ -235,7 +235,7 @@ class ProtocolAnalysis(
     }
 
     private val StatementNode.participatingHosts: Set<Host> by circularAttribute(
-        persistentHashSetOf()
+        persistentHashSetOf(),
     ) {
         when (this) {
             is DeclarationNode ->
@@ -275,7 +275,7 @@ class ProtocolAnalysis(
                                             }
                                         }.flatMap { arg ->
                                             primaryProtocol(nameAnalysis.parameter(arg)).hosts
-                                        }
+                                        },
                                 )
                             }
 
@@ -286,7 +286,7 @@ class ProtocolAnalysis(
                             else -> setOf()
                         }
                     }.fold(
-                        protocolComposer.mandatoryParticipatingHosts(protocol, this)
+                        protocolComposer.mandatoryParticipatingHosts(protocol, this),
                     ) { acc, hostSet -> acc.union(hostSet) }
             }
 
@@ -297,7 +297,7 @@ class ProtocolAnalysis(
                     .plus(
                         this.arguments.flatMap { arg ->
                             primaryProtocol(nameAnalysis.parameter(arg)).hosts
-                        }
+                        },
                     )
             }
 
@@ -322,7 +322,7 @@ class ProtocolAnalysis(
 
     /** Hosts that need to be synchronized after the statement. */
     private val StatementNode.hostsRequiringSync: Set<Host> by circularAttribute(
-        persistentHashSetOf()
+        persistentHashSetOf(),
     ) {
         when (this) {
             is LetNode -> {

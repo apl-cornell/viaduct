@@ -23,11 +23,11 @@ object CommitmentProtocolComposer : AbstractProtocolComposer() {
 
             source is Commitment && destination is Local -> {
                 setOf(
-                    CommunicationEvent(source.openCleartextOutputPort, destination.cleartextCommitmentInputPort)
+                    CommunicationEvent(source.openCleartextOutputPort, destination.cleartextCommitmentInputPort),
                 ).plus(
                     source.openCommitmentOutputPorts.values.map {
                         CommunicationEvent(it, destination.hashCommitmentInputPort)
-                    }
+                    },
                 )
             }
 
@@ -36,12 +36,12 @@ object CommitmentProtocolComposer : AbstractProtocolComposer() {
                     listOf(
                         CommunicationEvent(
                             source.openCleartextOutputPort,
-                            destination.hostCleartextCommitmentInputPorts.getValue(host)
-                        )
+                            destination.hostCleartextCommitmentInputPorts.getValue(host),
+                        ),
                     ).plus(
                         source.openCommitmentOutputPorts.values.map {
                             CommunicationEvent(it, destination.hostHashCommitmentInputPorts.getValue(host))
-                        }
+                        },
                     )
                 }
             }

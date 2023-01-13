@@ -77,7 +77,7 @@ fun StatementNode.canMux(): Boolean =
 
 class MuxPostprocessor(
     val containedProtocolCheck: (Protocol) -> Boolean,
-    val selection: ProtocolAssignment
+    val selection: ProtocolAssignment,
 ) : ProgramPostprocessor {
     override fun postprocess(program: ProgramNode): ProgramNode {
         val nameAnalysis = NameAnalysis.get(program)
@@ -94,33 +94,33 @@ class MuxPostprocessor(
                             declaration.labelParameters,
                             Arguments(
                                 declaration.parameters.map { it.deepCopy() as ParameterNode },
-                                declaration.parameters.sourceLocation
+                                declaration.parameters.sourceLocation,
                             ),
                             declaration.labelConstraints,
                             declaration.pcLabel,
                             mux(
                                 declaration.body,
                                 nameAnalysis,
-                                declaration.freshVariableNameGenerator()
+                                declaration.freshVariableNameGenerator(),
                             ),
-                            declaration.sourceLocation
+                            declaration.sourceLocation,
                         )
                     }
                 }
             },
-            program.sourceLocation
+            program.sourceLocation,
         )
     }
 
     fun mux(
         block: BlockNode,
         nameAnalysis: NameAnalysis,
-        nameGenerator: FreshNameGenerator = block.freshVariableNameGenerator()
+        nameGenerator: FreshNameGenerator = block.freshVariableNameGenerator(),
     ): BlockNode {
         val newStatements = mutableListOf<StatementNode>()
         for (child in block.statements) {
             newStatements.addAll(
-                asStraightLine(child, nameAnalysis, nameGenerator, null)
+                asStraightLine(child, nameAnalysis, nameGenerator, null),
             )
         }
 
@@ -131,7 +131,7 @@ class MuxPostprocessor(
         stmt: StatementNode,
         nameAnalysis: NameAnalysis,
         nameGenerator: FreshNameGenerator,
-        currentGuard: TemporaryNode?
+        currentGuard: TemporaryNode?,
     ): List<StatementNode> =
         when (stmt) {
             is LetNode -> listOf(stmt.deepCopy() as StatementNode)
@@ -147,13 +147,13 @@ class MuxPostprocessor(
                     val getTemporary =
                         Located(
                             Temporary(nameGenerator.getFreshName("${'$'}$GET_TEMPORARY_NAME")),
-                            stmt.sourceLocation
+                            stmt.sourceLocation,
                         )
 
                     val muxTemporary =
                         Located(
                             Temporary(nameGenerator.getFreshName("${'$'}$MUX_TEMPORARY_NAME")),
-                            stmt.sourceLocation
+                            stmt.sourceLocation,
                         )
 
                     val indexExpr: () -> AtomicExpressionNode? = {
@@ -172,12 +172,12 @@ class MuxPostprocessor(
                                 Located(Get, stmt.sourceLocation),
                                 Arguments(
                                     indexExpr()?.let { listOf(it) } ?: listOf(),
-                                    stmt.sourceLocation
+                                    stmt.sourceLocation,
                                 ),
-                                stmt.sourceLocation
+                                stmt.sourceLocation,
                             ),
                             Located(updateProtocol, stmt.sourceLocation),
-                            stmt.sourceLocation
+                            stmt.sourceLocation,
                         )
 
                     val muxCall = { arg: AtomicExpressionNode ->
@@ -187,19 +187,19 @@ class MuxPostprocessor(
                                 Mux,
                                 Arguments(
                                     listOf(ReadNode(currentGuard), arg, ReadNode(getTemporary)),
-                                    stmt.sourceLocation
+                                    stmt.sourceLocation,
                                 ),
-                                stmt.sourceLocation
+                                stmt.sourceLocation,
                             ),
                             Located(updateProtocol, stmt.sourceLocation),
-                            stmt.sourceLocation
+                            stmt.sourceLocation,
                         )
                     }
 
                     val operationTemporary =
                         Located(
                             Temporary(nameGenerator.getFreshName("${'$'}$OP_TEMPORARY_NAME")),
-                            stmt.arguments.sourceLocation
+                            stmt.arguments.sourceLocation,
                         )
 
                     val operatorCall = { operator: Operator, arg: AtomicExpressionNode ->
@@ -209,12 +209,12 @@ class MuxPostprocessor(
                                 operator,
                                 Arguments(
                                     listOf(ReadNode(getTemporary), arg),
-                                    arg.sourceLocation
+                                    arg.sourceLocation,
                                 ),
-                                arg.sourceLocation
+                                arg.sourceLocation,
                             ),
                             Located(updateProtocol, stmt.sourceLocation),
-                            arg.sourceLocation
+                            arg.sourceLocation,
                         )
                     }
 
@@ -223,15 +223,15 @@ class MuxPostprocessor(
                             stmt.variable,
                             Located(
                                 Set,
-                                stmt.update.sourceLocation
+                                stmt.update.sourceLocation,
                             ),
                             Arguments(
                                 indexExpr()?.let {
                                     listOf(it, ReadNode(muxTemporary))
                                 } ?: listOf(ReadNode(muxTemporary)),
-                                stmt.sourceLocation
+                                stmt.sourceLocation,
                             ),
-                            stmt.sourceLocation
+                            stmt.sourceLocation,
                         )
 
                     when (val update = stmt.update.value) {
@@ -239,7 +239,7 @@ class MuxPostprocessor(
                             listOf(
                                 getCall,
                                 muxCall(indexExpr() ?: stmt.arguments[0].deepCopy() as AtomicExpressionNode),
-                                updateCall
+                                updateCall,
                             )
                         }
 
@@ -248,10 +248,10 @@ class MuxPostprocessor(
                                 getCall,
                                 operatorCall(
                                     update.operator,
-                                    indexExpr() ?: stmt.arguments[0].deepCopy() as AtomicExpressionNode
+                                    indexExpr() ?: stmt.arguments[0].deepCopy() as AtomicExpressionNode,
                                 ),
                                 muxCall(ReadNode(operationTemporary)),
-                                updateCall
+                                updateCall,
                             )
                         }
 
@@ -284,17 +284,17 @@ class MuxPostprocessor(
                         val negatedGuard =
                             Located(
                                 Temporary(nameGenerator.getFreshName("${'$'}$GUARD_TEMPORARY_NAME")),
-                                stmt.guard.sourceLocation
+                                stmt.guard.sourceLocation,
                             )
                         val pathGuard =
                             Located(
                                 Temporary(nameGenerator.getFreshName("${'$'}$GUARD_TEMPORARY_NAME")),
-                                stmt.guard.sourceLocation
+                                stmt.guard.sourceLocation,
                             )
                         val negatedPathGuard =
                             Located(
                                 Temporary(nameGenerator.getFreshName("${'$'}$GUARD_TEMPORARY_NAME")),
-                                stmt.guard.sourceLocation
+                                stmt.guard.sourceLocation,
                             )
 
                         val newStatements = mutableListOf<StatementNode>()
@@ -306,13 +306,13 @@ class MuxPostprocessor(
                                     Not,
                                     Arguments(
                                         listOf(stmt.guard.deepCopy() as AtomicExpressionNode),
-                                        stmt.guard.sourceLocation
+                                        stmt.guard.sourceLocation,
                                     ),
-                                    stmt.guard.sourceLocation
+                                    stmt.guard.sourceLocation,
                                 ),
                                 Located(guardProtocol, stmt.guard.sourceLocation),
-                                stmt.guard.sourceLocation
-                            )
+                                stmt.guard.sourceLocation,
+                            ),
                         )
 
                         newStatements.add(
@@ -324,16 +324,16 @@ class MuxPostprocessor(
                                         Arguments(
                                             listOf(
                                                 stmt.guard.deepCopy() as AtomicExpressionNode,
-                                                ReadNode(it)
+                                                ReadNode(it),
                                             ),
-                                            stmt.guard.sourceLocation
+                                            stmt.guard.sourceLocation,
                                         ),
-                                        stmt.guard.sourceLocation
+                                        stmt.guard.sourceLocation,
                                     )
                                 } ?: stmt.guard.deepCopy() as AtomicExpressionNode,
                                 Located(guardProtocol, stmt.guard.sourceLocation),
-                                stmt.guard.sourceLocation
-                            )
+                                stmt.guard.sourceLocation,
+                            ),
                         )
 
                         newStatements.add(
@@ -344,14 +344,14 @@ class MuxPostprocessor(
                                         And,
                                         Arguments(
                                             listOf(ReadNode(negatedGuard), ReadNode(it)),
-                                            stmt.guard.sourceLocation
+                                            stmt.guard.sourceLocation,
                                         ),
-                                        stmt.guard.sourceLocation
+                                        stmt.guard.sourceLocation,
                                     )
                                 } ?: ReadNode(negatedGuard),
                                 Located(guardProtocol, stmt.guard.sourceLocation),
-                                stmt.guard.sourceLocation
-                            )
+                                stmt.guard.sourceLocation,
+                            ),
                         )
 
                         newStatements.addAll(
@@ -359,16 +359,16 @@ class MuxPostprocessor(
                                 stmt.thenBranch,
                                 nameAnalysis,
                                 nameGenerator,
-                                pathGuard
-                            )
+                                pathGuard,
+                            ),
                         )
                         newStatements.addAll(
                             asStraightLine(
                                 stmt.elseBranch,
                                 nameAnalysis,
                                 nameGenerator,
-                                negatedPathGuard
-                            )
+                                negatedPathGuard,
+                            ),
                         )
 
                         newStatements
@@ -381,8 +381,8 @@ class MuxPostprocessor(
                                 stmt.guard.deepCopy() as AtomicExpressionNode,
                                 mux(stmt.thenBranch, nameAnalysis, nameGenerator),
                                 mux(stmt.elseBranch, nameAnalysis, nameGenerator),
-                                stmt.sourceLocation
-                            )
+                                stmt.sourceLocation,
+                            ),
                         )
                     }
                 }
@@ -394,8 +394,8 @@ class MuxPostprocessor(
                     InfiniteLoopNode(
                         mux(stmt.body, nameAnalysis, nameGenerator),
                         stmt.jumpLabel,
-                        stmt.sourceLocation
-                    )
+                        stmt.sourceLocation,
+                    ),
                 )
             }
 

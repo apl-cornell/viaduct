@@ -65,7 +65,7 @@ import java.math.BigInteger
 private data class ABYPair(val server: Host, val client: Host)
 
 class ABYCodeGenerator(
-    context: CodeGeneratorContext
+    context: CodeGeneratorContext,
 ) : AbstractCodeGenerator(context) {
     private val typeAnalysis: TypeAnalysis = TypeAnalysis.get(context.program)
     private val nameAnalysis: NameAnalysis = NameAnalysis.get(context.program)
@@ -98,7 +98,7 @@ class ABYCodeGenerator(
             port,
             "Aby",
             MemberName(Aby::class.asClassName(), "getLT"), // TODO make this not hard coded
-            BIT_LENGTH
+            BIT_LENGTH,
         )
 
     private fun abyPartySetup(protocol: Protocol, role: Role): CodeBlock {
@@ -112,13 +112,13 @@ class ABYCodeGenerator(
                     portVarName,
                     MemberName(
                         "io.github.aplcornell.viaduct.runtime",
-                        "findAvailableTcpPort"
-                    )
+                        "findAvailableTcpPort",
+                    ),
                 )
 
                 abyPartyBuilder.addStatement(
                     "%L",
-                    context.send(CodeBlock.of(portVarName), (protocol as ABY).client)
+                    context.send(CodeBlock.of(portVarName), (protocol as ABY).client),
                 )
 
                 abyPartyBuilder.addStatement("%L", abyParty(protocol, role, portVarName))
@@ -130,7 +130,7 @@ class ABYCodeGenerator(
                 abyPartyBuilder.addStatement(
                     "val %N = %L",
                     portVarName,
-                    context.receive(INT, (protocol as ABY).server)
+                    context.receive(INT, (protocol as ABY).server),
                 )
 
                 abyPartyBuilder.addStatement("%L", abyParty(protocol, role, portVarName))
@@ -149,12 +149,12 @@ class ABYCodeGenerator(
             listOf(
                 PropertySpec.builder(
                     protocolToABYPartyMap.getOrPut(
-                        ABYPair(protocol.server, protocol.client)
+                        ABYPair(protocol.server, protocol.client),
                     ) { context.newTemporary("abyParty") },
-                    ABYParty::class
+                    ABYParty::class,
                 ).initializer(
-                    abyPartySetup(protocol, role(protocol, context.host))
-                ).addModifiers(KModifier.PRIVATE).build()
+                    abyPartySetup(protocol, role(protocol, context.host)),
+                ).addModifiers(KModifier.PRIVATE).build(),
             )
         }
     }
@@ -162,7 +162,7 @@ class ABYCodeGenerator(
     private fun addConversionGates(
         destProtocol: Protocol,
         sourceProtocol: Protocol,
-        kotlinName: String
+        kotlinName: String,
     ): CodeBlock {
         if (sourceProtocol !is ABY || destProtocol !is ABY) {
             return CodeBlock.of("")
@@ -177,7 +177,7 @@ class ABYCodeGenerator(
                         CodeBlock.of(
                             ".putB2AGate(%L.putY2BGate(%L))",
                             protocolToAbyPartyCircuit(sourceProtocol, SharingType.S_BOOL),
-                            kotlinName
+                            kotlinName,
                         )
                 }
             }
@@ -197,7 +197,7 @@ class ABYCodeGenerator(
                         CodeBlock.of(
                             ".putY2BGate(%L.putA2YGate(%L))",
                             protocolToAbyPartyCircuit(sourceProtocol, SharingType.S_YAO),
-                            kotlinName
+                            kotlinName,
                         )
 
                     is ArithABY -> CodeBlock.of("")
@@ -215,7 +215,7 @@ class ABYCodeGenerator(
 
     private fun protocolToAbyPartyCircuit(
         protocol: Protocol,
-        shareType: SharingType = protocolToShareType(protocol as ABY)
+        shareType: SharingType = protocolToShareType(protocol as ABY),
     ): CodeBlock {
         if (protocol !is ABY) {
             return CodeBlock.of("%L", "")
@@ -224,7 +224,7 @@ class ABYCodeGenerator(
             "%L.getCircuitBuilder(%T.%L)",
             protocolToABYPartyMap.getValue(ABYPair(protocol.server, protocol.client)),
             shareType::class.asClassName(),
-            shareType
+            shareType,
         )
     }
 
@@ -235,7 +235,7 @@ class ABYCodeGenerator(
                     "%L.putCONSGate(%L.toInt().toBigInteger(), %L)",
                     protocolToAbyPartyCircuit(protocol),
                     value.value,
-                    BIT_LENGTH
+                    BIT_LENGTH,
                 )
 
             is IntegerValue ->
@@ -243,7 +243,7 @@ class ABYCodeGenerator(
                     "%L.putCONSGate(%L.toBigInteger(), %L)",
                     protocolToAbyPartyCircuit(protocol),
                     value.value,
-                    BIT_LENGTH
+                    BIT_LENGTH,
                 )
 
             else -> throw java.lang.IllegalArgumentException("Unknown value type: $value.")
@@ -253,7 +253,7 @@ class ABYCodeGenerator(
         circuit: CodeBlock,
         gateMethod: CodeBlock,
         arg1: CodeBlock,
-        arg2: CodeBlock
+        arg2: CodeBlock,
     ): CodeBlock =
         CodeBlock.of("%L.%L(%L, %L)", circuit, gateMethod, arg1, arg2)
 
@@ -265,7 +265,7 @@ class ABYCodeGenerator(
                     MemberName("io.github.apl_cornell.aby.Aby", "putMinGate"),
                     protocolToAbyPartyCircuit(protocol),
                     args.first(),
-                    args.last()
+                    args.last(),
                 )
 
             Maximum ->
@@ -274,7 +274,7 @@ class ABYCodeGenerator(
                     MemberName("io.github.apl_cornell.aby.Aby", "putMaxGate"),
                     protocolToAbyPartyCircuit(protocol),
                     args.first(),
-                    args.last()
+                    args.last(),
                 )
 
             Negation ->
@@ -285,9 +285,9 @@ class ABYCodeGenerator(
                         "%L.putCONSGate(%T.ZERO, %L)",
                         protocolToAbyPartyCircuit(protocol),
                         BigInteger::class.asClassName(),
-                        BIT_LENGTH
+                        BIT_LENGTH,
                     ),
-                    args.first()
+                    args.first(),
                 )
 
             Addition ->
@@ -295,7 +295,7 @@ class ABYCodeGenerator(
                     protocolToAbyPartyCircuit(protocol),
                     CodeBlock.of("putADDGate"),
                     args.first(),
-                    args.last()
+                    args.last(),
                 )
 
             Subtraction ->
@@ -303,7 +303,7 @@ class ABYCodeGenerator(
                     protocolToAbyPartyCircuit(protocol),
                     CodeBlock.of("putSUBGate"),
                     args.first(),
-                    args.last()
+                    args.last(),
                 )
 
             Multiplication ->
@@ -311,7 +311,7 @@ class ABYCodeGenerator(
                     protocolToAbyPartyCircuit(protocol),
                     CodeBlock.of("putMULGate"),
                     args.first(),
-                    args.last()
+                    args.last(),
                 )
 
             Not ->
@@ -319,7 +319,7 @@ class ABYCodeGenerator(
                     "%L.%M(%L)",
                     protocolToAbyPartyCircuit(protocol),
                     MemberName("io.github.aplcornell.viaduct.runtime.aby", "putNOTGate"),
-                    args.first()
+                    args.first(),
                 )
 
             And ->
@@ -327,7 +327,7 @@ class ABYCodeGenerator(
                     protocolToAbyPartyCircuit(protocol),
                     CodeBlock.of("putANDGate"),
                     args.first(),
-                    args.last()
+                    args.last(),
                 )
 
             // a | b = ~(~a & ~b)
@@ -343,15 +343,15 @@ class ABYCodeGenerator(
                             "%L.%M(%L)",
                             protocolToAbyPartyCircuit(protocol),
                             MemberName("io.github.aplcornell.viaduct.runtime.aby", "putNOTGate"),
-                            args.first()
+                            args.first(),
                         ),
                         CodeBlock.of(
                             "%L.%M(%L)",
                             protocolToAbyPartyCircuit(protocol),
                             MemberName("io.github.aplcornell.viaduct.runtime.aby", "putNOTGate"),
-                            args.last()
-                        )
-                    )
+                            args.last(),
+                        ),
+                    ),
                 )
 
             EqualTo ->
@@ -359,7 +359,7 @@ class ABYCodeGenerator(
                     protocolToAbyPartyCircuit(protocol),
                     CodeBlock.of("putEQGate"),
                     args.first(),
-                    args.last()
+                    args.last(),
                 )
 
             LessThan ->
@@ -367,7 +367,7 @@ class ABYCodeGenerator(
                     protocolToAbyPartyCircuit(protocol),
                     CodeBlock.of("putGTGate"),
                     args.last(),
-                    args.first()
+                    args.first(),
                 )
 
             // (x <= y) <=> not (x > y)
@@ -380,8 +380,8 @@ class ABYCodeGenerator(
                         protocolToAbyPartyCircuit(protocol),
                         CodeBlock.of("putGTGate"),
                         args.first(),
-                        args.last()
-                    )
+                        args.last(),
+                    ),
                 )
 
             GreaterThan ->
@@ -389,7 +389,7 @@ class ABYCodeGenerator(
                     protocolToAbyPartyCircuit(protocol),
                     CodeBlock.of("putGTGate"),
                     args.first(),
-                    args.last()
+                    args.last(),
                 )
 
             // (x >= y) <=> not (x < y)
@@ -402,8 +402,8 @@ class ABYCodeGenerator(
                         protocolToAbyPartyCircuit(protocol),
                         CodeBlock.of("putLTGate"),
                         args.first(),
-                        args.last()
-                    )
+                        args.last(),
+                    ),
                 )
 
             Mux ->
@@ -413,7 +413,7 @@ class ABYCodeGenerator(
                     "putMUXGate",
                     args.first(),
                     args[1],
-                    args.last()
+                    args.last(),
                 )
 
             ExclusiveOr ->
@@ -421,7 +421,7 @@ class ABYCodeGenerator(
                     protocolToAbyPartyCircuit(protocol),
                     CodeBlock.of("putXORGate"),
                     args.first(),
-                    args.last()
+                    args.last(),
                 )
 
             Division ->
@@ -430,7 +430,7 @@ class ABYCodeGenerator(
                     MemberName("io.github.apl_cornell.aby.Aby", "putInt32DIVGate"),
                     protocolToAbyPartyCircuit(protocol),
                     args.last(),
-                    args.first()
+                    args.first(),
 
                 )
 
@@ -447,13 +447,13 @@ class ABYCodeGenerator(
                 val conversion = addConversionGates(
                     protocol, // destination protocol
                     protocolAnalysis.primaryProtocol(expr), // source protocol
-                    context.kotlinName(expr.temporary.value, protocolAnalysis.primaryProtocol(expr)) // share name
+                    context.kotlinName(expr.temporary.value, protocolAnalysis.primaryProtocol(expr)), // share name
                 )
                 if (conversion != CodeBlock.of("")) {
                     CodeBlock.of(
                         "%L%L",
                         protocolToAbyPartyCircuit(protocol),
-                        conversion
+                        conversion,
                     )
                 } else {
                     CodeBlock.of("%N", context.kotlinName(expr.temporary.value, protocol))
@@ -464,7 +464,7 @@ class ABYCodeGenerator(
                 shareOfOperatorApplication(
                     protocol,
                     expr.operator,
-                    expr.arguments.map { exp(protocol, it) }
+                    expr.arguments.map { exp(protocol, it) },
                 )
 
             // only generate code for the secret query case, otherwise call super
@@ -479,7 +479,7 @@ class ABYCodeGenerator(
                                             "%L(%L, %L)",
                                             "secretIndexQuery",
                                             exp(protocol, expr.arguments.first()),
-                                            context.kotlinName(expr.variable.value)
+                                            context.kotlinName(expr.variable.value),
 
                                         )
 
@@ -487,7 +487,7 @@ class ABYCodeGenerator(
                                         CodeBlock.of(
                                             "%N[%L]",
                                             context.kotlinName(expr.variable.value),
-                                            cleartextExp(protocol, expr.arguments.first())
+                                            cleartextExp(protocol, expr.arguments.first()),
                                         )
                                 }
 
@@ -531,7 +531,7 @@ class ABYCodeGenerator(
                                 "secretUpdateSet",
                                 protocolToAbyPartyCircuit(protocol),
                                 exp(protocol, stmt.arguments.first()),
-                                exp(protocol, stmt.arguments.last())
+                                exp(protocol, stmt.arguments.last()),
                             )
                         }
 
@@ -547,9 +547,9 @@ class ABYCodeGenerator(
                                     stmt.update.value.operator,
                                     listOf(
                                         CodeBlock.of("it"),
-                                        exp(protocol, stmt.arguments.last())
-                                    )
-                                )
+                                        exp(protocol, stmt.arguments.last()),
+                                    ),
+                                ),
                             )
                         }
 
@@ -562,7 +562,7 @@ class ABYCodeGenerator(
                                 "%N[%L] = %L",
                                 context.kotlinName(stmt.variable.value),
                                 cleartextExp(protocol, stmt.arguments.first()),
-                                exp(protocol, stmt.arguments.last())
+                                exp(protocol, stmt.arguments.last()),
                             )
                         }
 
@@ -578,11 +578,11 @@ class ABYCodeGenerator(
                                         CodeBlock.of(
                                             "%N[%L]",
                                             context.kotlinName(stmt.variable.value),
-                                            cleartextExp(protocol, stmt.arguments.first())
+                                            cleartextExp(protocol, stmt.arguments.first()),
                                         ),
-                                        exp(protocol, stmt.arguments.last())
-                                    )
-                                )
+                                        exp(protocol, stmt.arguments.last()),
+                                    ),
+                                ),
                             )
                         }
 
@@ -597,7 +597,7 @@ class ABYCodeGenerator(
                         CodeBlock.of(
                             "%N.set(%L)",
                             context.kotlinName(stmt.variable.value),
-                            exp(protocol, stmt.arguments.first())
+                            exp(protocol, stmt.arguments.first()),
                         )
                     }
 
@@ -610,9 +610,9 @@ class ABYCodeGenerator(
                                 stmt.update.value.operator,
                                 listOf(
                                     CodeBlock.of(context.kotlinName(stmt.variable.value)),
-                                    exp(protocol, stmt.arguments.first())
-                                )
-                            )
+                                    exp(protocol, stmt.arguments.first()),
+                                ),
+                            ),
                         )
                     }
 
@@ -628,7 +628,7 @@ class ABYCodeGenerator(
         sender: LetNode,
         sendProtocol: Protocol,
         receiveProtocol: Protocol,
-        events: ProtocolCommunication
+        events: ProtocolCommunication,
     ): CodeBlock {
         if (receiveProtocol is ABY) {
             return CodeBlock.of("")
@@ -666,13 +666,13 @@ class ABYCodeGenerator(
             outShareName,
             protocolToAbyPartyCircuit(sendProtocol),
             context.kotlinName(sender.name.value, sendProtocol),
-            outRole
+            outRole,
         )
 
         // execute circuit
         outBuilder.addStatement(
             "%L.execCircuit()",
-            protocolToABYPartyMap[ABYPair(sendProtocol.server, sendProtocol.client)]
+            protocolToABYPartyMap[ABYPair(sendProtocol.server, sendProtocol.client)],
         )
 
         for (event in events.filter { event -> event.send.host == context.host }) {
@@ -684,10 +684,10 @@ class ABYCodeGenerator(
                             CodeBlock.of(
                                 "%L.getClearValue32().%M",
                                 outShareName,
-                                MemberName("io.github.aplcornell.viaduct.runtime.aby", "bool")
+                                MemberName("io.github.aplcornell.viaduct.runtime.aby", "bool"),
                             ),
-                            event.recv.host
-                        )
+                            event.recv.host,
+                        ),
                     )
 
                 is IntegerType ->
@@ -695,8 +695,8 @@ class ABYCodeGenerator(
                         "%L",
                         context.send(
                             CodeBlock.of("%L.getClearValue32().toInt()", outShareName),
-                            event.recv.host
-                        )
+                            event.recv.host,
+                        ),
                     )
             }
         }
@@ -704,7 +704,7 @@ class ABYCodeGenerator(
         // reset circuit
         outBuilder.addStatement(
             "%L.reset()",
-            protocolToABYPartyMap[ABYPair(sendProtocol.server, sendProtocol.client)]
+            protocolToABYPartyMap[ABYPair(sendProtocol.server, sendProtocol.client)],
         )
 
         return outBuilder.build()
@@ -714,7 +714,7 @@ class ABYCodeGenerator(
         sender: LetNode,
         sendProtocol: Protocol,
         receiveProtocol: Protocol,
-        events: ProtocolCommunication
+        events: ProtocolCommunication,
     ): CodeBlock {
         val receiveBuilder = CodeBlock.builder()
         for (event in events) {
@@ -729,7 +729,7 @@ class ABYCodeGenerator(
                                 protocolToAbyPartyCircuit(receiveProtocol),
                                 context.receive(typeTranslator(typeAnalysis.type(sender)), event.send.host),
                                 BIT_LENGTH,
-                                roleToCodeBlock(role(receiveProtocol, context.host))
+                                roleToCodeBlock(role(receiveProtocol, context.host)),
                             )
 
                         is IntegerType ->
@@ -739,7 +739,7 @@ class ABYCodeGenerator(
                                 protocolToAbyPartyCircuit(receiveProtocol),
                                 context.receive(typeTranslator(typeAnalysis.type(sender)), event.send.host),
                                 BIT_LENGTH,
-                                roleToCodeBlock(role(receiveProtocol, context.host))
+                                roleToCodeBlock(role(receiveProtocol, context.host)),
                             )
                     }
                 }
@@ -750,7 +750,7 @@ class ABYCodeGenerator(
                         "val %L = %L.putDummyINGate(%L)",
                         context.kotlinName(sender.name.value, receiveProtocol),
                         protocolToAbyPartyCircuit(receiveProtocol),
-                        BIT_LENGTH
+                        BIT_LENGTH,
                     )
                 }
 

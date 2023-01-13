@@ -24,7 +24,7 @@ import io.github.aplcornell.viaduct.syntax.intermediate.LiteralNode
 import io.github.aplcornell.viaduct.syntax.types.ValueType
 
 internal class CommitmentCreatorGenerator(
-    context: CodeGeneratorContext
+    context: CodeGeneratorContext,
 ) : AbstractCodeGenerator(context) {
     private val typeAnalysis = TypeAnalysis.get(context.program)
 
@@ -40,7 +40,7 @@ internal class CommitmentCreatorGenerator(
                 "%T.%N(%L)",
                 Committed::class,
                 "fake",
-                value(expr.value)
+                value(expr.value),
             )
 
             else -> super.exp(protocol, expr)
@@ -50,7 +50,7 @@ internal class CommitmentCreatorGenerator(
         sender: LetNode,
         sendProtocol: Protocol,
         receiveProtocol: Protocol,
-        events: ProtocolCommunication
+        events: ProtocolCommunication,
     ): CodeBlock {
         val sendBuilder = CodeBlock.builder()
         if (sendProtocol != receiveProtocol) {
@@ -63,8 +63,8 @@ internal class CommitmentCreatorGenerator(
                     "%L",
                     context.send(
                         CodeBlock.of("%N", context.kotlinName(sender.name.value, sendProtocol)),
-                        event.recv.host
-                    )
+                        event.recv.host,
+                    ),
                 )
             }
         }
@@ -75,7 +75,7 @@ internal class CommitmentCreatorGenerator(
         sender: LetNode,
         sendProtocol: Protocol,
         receiveProtocol: Protocol,
-        events: ProtocolCommunication
+        events: ProtocolCommunication,
     ): CodeBlock {
         val receiveBuilder = CodeBlock.builder()
         val projection = ProtocolProjection(receiveProtocol, context.host)
@@ -87,7 +87,7 @@ internal class CommitmentCreatorGenerator(
                     val relevantEvents =
                         events.getHostReceives(
                             projection.host,
-                            Commitment.CLEARTEXT_INPUT
+                            Commitment.CLEARTEXT_INPUT,
                         )
 
                     if (relevantEvents.isNotEmpty()) {
@@ -98,8 +98,8 @@ internal class CommitmentCreatorGenerator(
                                 sender,
                                 relevantEvents,
                                 context,
-                                typeAnalysis
-                            )
+                                typeAnalysis,
+                            ),
                         )
                     }
                 }
@@ -108,7 +108,7 @@ internal class CommitmentCreatorGenerator(
                     val cleartextInputEvents =
                         events.getProjectionReceives(
                             projection,
-                            Commitment.INPUT
+                            Commitment.INPUT,
                         )
 
                     receiveBuilder.addStatement(
@@ -119,8 +119,8 @@ internal class CommitmentCreatorGenerator(
                             sender,
                             cleartextInputEvents,
                             context,
-                            typeAnalysis
-                        )
+                            typeAnalysis,
+                        ),
                     )
 
                     // create commitment
@@ -128,7 +128,7 @@ internal class CommitmentCreatorGenerator(
                         "val %N = %N.%M()",
                         commitmentTemp,
                         context.kotlinName(sender.name.value, receiveProtocol),
-                        MemberName(Committed.Companion::class.asClassName(), "commitment")
+                        MemberName(Committed.Companion::class.asClassName(), "commitment"),
                     )
 
                     for (hashHost in hashHosts) {
@@ -137,10 +137,10 @@ internal class CommitmentCreatorGenerator(
                             context.send(
                                 CodeBlock.of(
                                     "%L",
-                                    commitmentTemp
+                                    commitmentTemp,
                                 ),
-                                hashHost
-                            )
+                                hashHost,
+                            ),
                         )
                     }
                 }

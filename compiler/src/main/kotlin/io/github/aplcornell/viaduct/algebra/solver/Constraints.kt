@@ -12,14 +12,14 @@ internal data class FlowsToConstraint<C, V, T>(
     val from: Term<C, V>,
     val to: Term<C, V>,
     val failWith: (from: C, to: C) -> T,
-    internal val reducedForm: Iterable<ReducedFlowsToConstraint<C, V>>
+    internal val reducedForm: Iterable<ReducedFlowsToConstraint<C, V>>,
 ) : Constraint<C, V, T>()
 
 /** A constraint that represents `[from] flowsTo [propagate].propagate([to])`. */
 internal data class ReducedFlowsToConstraint<C, V>(
     val from: AtomicTerm<C, V>,
     val propagate: DataFlowEdge<C>,
-    val to: AtomicTerm<C, V>
+    val to: AtomicTerm<C, V>,
 )
 
 /** [DataFlowEdge]s that appear on the left-hand of [LeftHandEdge.compose]. */

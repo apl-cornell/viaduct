@@ -1,7 +1,7 @@
 package io.github.aplcornell.viaduct.backend
 
 import io.github.aplcornell.viaduct.analysis.ProtocolAnalysis
-import io.github.aplcornell.viaduct.backend.IO.Strategy
+import io.github.aplcornell.viaduct.backend.io.Strategy
 import io.github.aplcornell.viaduct.errors.ViaductInterpreterError
 import io.github.aplcornell.viaduct.protocols.Synchronization
 import io.github.aplcornell.viaduct.selection.CommunicationEvent
@@ -44,18 +44,18 @@ sealed class CommunicationMessage : ViaductMessage()
 data class SendMessage(
     val sender: ProcessId,
     val receiver: ProcessId,
-    val message: Value
+    val message: Value,
 ) : CommunicationMessage()
 
 data class ReceiveMessage(
     val sender: ProcessId,
-    val receiver: ProcessId
+    val receiver: ProcessId,
 ) : CommunicationMessage()
 
 object ShutdownMessage : ViaductMessage()
 
 private abstract class ViaductThread(
-    val msgQueue: Channel<ViaductMessage>
+    val msgQueue: Channel<ViaductMessage>,
 ) {
     abstract suspend fun processCommunicationMessage(msg: CommunicationMessage)
 
@@ -77,7 +77,7 @@ private class ViaductReceiverThread(
     val host: Host,
     val socket: Socket,
     val runtime: ViaductRuntime,
-    msgQueue: Channel<ViaductMessage>
+    msgQueue: Channel<ViaductMessage>,
 ) : ViaductThread(msgQueue) {
     var bytesReceived: Long = 0
         private set
@@ -149,7 +149,7 @@ private class ViaductSenderThread(
     val host: Host,
     val socket: Socket,
     val runtime: ViaductRuntime,
-    msgQueue: Channel<ViaductMessage>
+    msgQueue: Channel<ViaductMessage>,
 ) : ViaductThread(msgQueue) {
     var bytesSent: Long = 0
         private set
@@ -213,12 +213,12 @@ data class HostInfo(
     val id: HostId,
     val address: HostAddress,
     val recvChannel: Channel<ViaductMessage>,
-    val sendChannel: Channel<ViaductMessage>
+    val sendChannel: Channel<ViaductMessage>,
 )
 
 data class ProcessInfo(
     val process: ProtocolProjection,
-    val id: ProcessId
+    val id: ProcessId,
 ) {
     val host: Host
         get() = process.host
@@ -235,7 +235,7 @@ class ViaductRuntime(
     private val protocolAnalysis: ProtocolAnalysis,
     private val hostConnectionInfo: Map<Host, HostAddress>,
     private val backends: List<ProtocolBackend>,
-    private val strategy: Strategy
+    private val strategy: Strategy,
 ) {
     private val syncProtocol = Synchronization(program.hostDeclarations.map { it.name.value }.toSet())
     private val processInfoMap: Map<Process, ProcessInfo>
@@ -269,7 +269,7 @@ class ViaductRuntime(
                 }.plus(
                     syncProtocol.hosts.map { host ->
                         ProtocolProjection(syncProtocol, host)
-                    }
+                    },
                 ).sorted()
 
         val tempProcessInfoMap: MutableMap<Process, ProcessInfo> = mutableMapOf()
@@ -312,7 +312,7 @@ class ViaductRuntime(
                     .filter { host2 -> host2 != host }
                     .map { host2 ->
                         ProtocolProjection(syncProtocol, host2) to Channel(CHANNEL_CAPACITY)
-                    }
+                    },
             )
         }
 
@@ -462,7 +462,7 @@ class ViaductRuntime(
                     hostParticipatingProtocols,
                     protocolAnalysis,
                     this,
-                    hostConnectionInfo
+                    hostConnectionInfo,
                 )
             }
 
@@ -477,7 +477,7 @@ class ViaductRuntime(
                             kv.key,
                             connectionMap[kv.key]!!,
                             this@ViaductRuntime,
-                            hostInfoMap[kv.key]!!.recvChannel
+                            hostInfoMap[kv.key]!!.recvChannel,
                         )
 
                     senderThreads[kv.key] =
@@ -485,7 +485,7 @@ class ViaductRuntime(
                             kv.key,
                             connectionMap[kv.key]!!,
                             this@ViaductRuntime,
-                            hostInfoMap[kv.key]!!.sendChannel
+                            hostInfoMap[kv.key]!!.sendChannel,
                         )
 
                     launch(Executors.newSingleThreadExecutor().asCoroutineDispatcher()) {
@@ -510,8 +510,8 @@ class ViaductRuntime(
                         processInterpreters,
                         ViaductProcessRuntime(
                             this@ViaductRuntime,
-                            ProtocolProjection(syncProtocol, host)
-                        )
+                            ProtocolProjection(syncProtocol, host),
+                        ),
                     )
                 interpreter.run()
             }
@@ -543,7 +543,7 @@ class ViaductRuntime(
 
 class ViaductProcessRuntime(
     private val runtime: ViaductRuntime,
-    val projection: ProtocolProjection
+    val projection: ProtocolProjection,
 ) {
     suspend fun send(value: Value, receiver: ProtocolProjection) {
         runtime.send(value, projection, receiver)

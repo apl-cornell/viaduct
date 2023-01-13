@@ -22,7 +22,7 @@ class UnknownMethodError(
     private val objectName: ObjectVariableNode,
     private val methodName: MethodNameNode,
     private val objectType: ObjectType? = null,
-    private val argumentTypes: List<ValueType>? = null
+    private val argumentTypes: List<ValueType>? = null,
 ) : CompilationError() {
     override val category: String
         get() = "Unknown Method"

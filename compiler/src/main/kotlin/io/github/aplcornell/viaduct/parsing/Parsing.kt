@@ -9,14 +9,14 @@ import java_cup.runtime.ComplexSymbolFactory
 /** Parses [this] string and returns the AST. */
 fun String.parse(
     path: String = "<string>",
-    protocolParsers: Map<ProtocolName, ProtocolParser<Protocol>> = defaultProtocolParsers
+    protocolParsers: Map<ProtocolName, ProtocolParser<Protocol>> = defaultProtocolParsers,
 ): ProgramNode {
     return SourceFile.from(path, this).parse(protocolParsers)
 }
 
 /** Parses [this] source file and returns the AST. */
 fun SourceFile.parse(
-    protocolParsers: Map<ProtocolName, ProtocolParser<Protocol>> = defaultProtocolParsers
+    protocolParsers: Map<ProtocolName, ProtocolParser<Protocol>> = defaultProtocolParsers,
 ): ProgramNode {
     val symbolFactory = ComplexSymbolFactory()
     val scanner = Lexer(this, symbolFactory)

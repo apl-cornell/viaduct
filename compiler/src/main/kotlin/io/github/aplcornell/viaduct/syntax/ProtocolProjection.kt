@@ -4,7 +4,7 @@ import io.github.aplcornell.viaduct.prettyprinting.Document
 
 data class ProtocolProjection(
     val protocol: Protocol,
-    val host: Host
+    val host: Host,
 ) : Name, Comparable<ProtocolProjection> {
     override val name = toString()
 

@@ -66,7 +66,7 @@ tasks.compileKotlin.configure {
 tasks.withType<Test>().configureEach {
     systemProperties(
         "junit.jupiter.execution.parallel.enabled" to "true",
-        "junit.jupiter.execution.parallel.mode.default" to "concurrent"
+        "junit.jupiter.execution.parallel.mode.default" to "concurrent",
     )
 }
 
@@ -133,7 +133,7 @@ abstract class CompileCupTask : DefaultTask() {
             packageName,
             "-parser",
             className,
-            cupFile.path
+            cupFile.path,
         )
         logger.info("java_cup ${args.joinToString(" ")}}")
         java_cup.Main.main(args.toTypedArray())

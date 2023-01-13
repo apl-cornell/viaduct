@@ -160,7 +160,7 @@ private fun <C : JoinSemiLattice<C>, V> meetOfJoins(term: Term<C, V>): List<Cons
  */
 fun <C : HeytingAlgebra<C>, V, T> Term<C, V>.flowsTo(
     that: Term<C, V>,
-    failWith: (C, C) -> T
+    failWith: (C, C) -> T,
 ): Constraint<C, V, T> {
     fun node(term: ConstantAndVariable<C, V>): AtomicTerm<C, V> =
         term.variable ?: term.constant!!

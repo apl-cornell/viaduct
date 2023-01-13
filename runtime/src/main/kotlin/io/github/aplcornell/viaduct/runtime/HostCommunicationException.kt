@@ -7,5 +7,5 @@ class HostCommunicationException(host: Host, otherHost: Host) : ViaductRuntimeEx
         "Runtime for host ${host.name} cannot send/receive data to/from itself."
     } else {
         "Runtime for host ${host.name} cannot send/receive data to/from host ${otherHost.name}."
-    }
+    },
 )

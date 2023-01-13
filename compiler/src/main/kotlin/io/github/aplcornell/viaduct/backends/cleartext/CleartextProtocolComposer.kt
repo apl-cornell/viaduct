@@ -37,7 +37,7 @@ object CleartextProtocolComposer : AbstractProtocolComposer() {
                         dstHostReceivers.map { receiver ->
                             CommunicationEvent(source.hostOutputPorts.getValue(sender), destination.hostInputPorts.getValue(receiver))
                         }
-                    }
+                    },
                 )
             }
 

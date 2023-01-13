@@ -20,14 +20,14 @@ sealed class IndexExpressionNode : PureExpressionNode()
 /** A literal constant. */
 class LiteralNode(
     val value: Value,
-    override val sourceLocation: SourceLocation
+    override val sourceLocation: SourceLocation,
 ) : IndexExpressionNode() {
     override fun toDocument(): Document = value.toDocument()
 }
 
 class ReferenceNode(
     val name: VariableNode,
-    override val sourceLocation: SourceLocation
+    override val sourceLocation: SourceLocation,
 ) : IndexExpressionNode() {
     override fun toDocument(): Document = name.toDocument()
 }
@@ -35,7 +35,7 @@ class ReferenceNode(
 class LookupNode(
     private val variable: VariableNode,
     private val indices: Arguments<IndexExpressionNode>,
-    override val sourceLocation: SourceLocation
+    override val sourceLocation: SourceLocation,
 ) : PureExpressionNode() {
     override fun toDocument(): Document = variable + indices.bracketed()
 }
@@ -44,14 +44,14 @@ class LookupNode(
 class OperatorApplicationNode(
     val operator: Operator,
     val arguments: Arguments<PureExpressionNode>,
-    override val sourceLocation: SourceLocation
+    override val sourceLocation: SourceLocation,
 ) : PureExpressionNode() {
     override fun toDocument(): Document = Document("(") + operator.toDocument(arguments) + ")"
 }
 
 class OperatorNode(
     val operator: Operator,
-    override val sourceLocation: SourceLocation
+    override val sourceLocation: SourceLocation,
 ) : Node() {
     override fun toDocument(): Document = Document("::$operator")
 }
@@ -65,7 +65,7 @@ class ReduceNode(
     val defaultValue: PureExpressionNode,
     val indices: Arguments<IndexParameterNode>,
     val body: PureExpressionNode,
-    override val sourceLocation: SourceLocation
+    override val sourceLocation: SourceLocation,
 ) : PureExpressionNode() {
     override fun toDocument(): Document {
         return keyword("reduce") + listOf(operator, defaultValue).tupled() * "{" * indices.joined() * "->" * body * " }"

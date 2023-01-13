@@ -52,7 +52,7 @@ class SelectionConstraintGenerator(
     private val program: ProgramNode,
     private val protocolFactory: ProtocolFactory,
     private val protocolComposer: ProtocolComposer,
-    private val costEstimator: CostEstimator<IntegerCost>
+    private val costEstimator: CostEstimator<IntegerCost>,
 ) {
     private val nameGenerator = FreshNameGenerator()
     private val hostTrustConfiguration = HostTrustConfiguration.get(program)
@@ -125,7 +125,7 @@ class SelectionConstraintGenerator(
                 CostChoice(
                     choices.map { choice ->
                         Pair(choice.first, CostLiteral(choice.second.features[feature]!!.cost))
-                    }
+                    },
                 )
             }
         } ?: throw NoSelectionSolutionError(program)
@@ -203,10 +203,10 @@ class SelectionConstraintGenerator(
                     variableInSet(
                         FunctionVariable(
                             nameAnalysis.functionDeclaration(this).name.value,
-                            this.name.value
+                            this.name.value,
                         ),
-                        viableProtocols(this)
-                    )
+                        viableProtocols(this),
+                    ),
                 )
 
             is LetNode ->
@@ -217,8 +217,8 @@ class SelectionConstraintGenerator(
                             setOf(
                                 VariableIn(
                                     FunctionVariable(nameAnalysis.enclosingFunctionName(this), this.name.value),
-                                    Local(rhs.host.value)
-                                )
+                                    Local(rhs.host.value),
+                                ),
                             )
                         }
 
@@ -229,20 +229,20 @@ class SelectionConstraintGenerator(
                             setOf(
                                 variableInSet(
                                     FunctionVariable(nameAnalysis.enclosingFunctionName(this), this.name.value),
-                                    viableProtocols(this)
-                                )
+                                    viableProtocols(this),
+                                ),
                             ).plus(
                                 when (val objectDecl = nameAnalysis.declaration(rhs)) {
                                     is DeclarationNode ->
                                         VariableEquals(
                                             FunctionVariable(enclosingFunctionName, objectDecl.name.value),
-                                            FunctionVariable(enclosingFunctionName, this.name.value)
+                                            FunctionVariable(enclosingFunctionName, this.name.value),
                                         )
 
                                     is ParameterNode ->
                                         VariableEquals(
                                             FunctionVariable(enclosingFunctionName, objectDecl.name.value),
-                                            FunctionVariable(enclosingFunctionName, this.name.value)
+                                            FunctionVariable(enclosingFunctionName, this.name.value),
                                         )
 
                                     is ObjectDeclarationArgumentNode -> {
@@ -250,12 +250,12 @@ class SelectionConstraintGenerator(
                                         VariableEquals(
                                             FunctionVariable(
                                                 nameAnalysis.functionDeclaration(param).name.value,
-                                                param.name.value
+                                                param.name.value,
                                             ),
-                                            FunctionVariable(enclosingFunctionName, this.name.value)
+                                            FunctionVariable(enclosingFunctionName, this.name.value),
                                         )
                                     }
-                                }
+                                },
                             )
                         }
 
@@ -263,20 +263,20 @@ class SelectionConstraintGenerator(
                             setOf(
                                 variableInSet(
                                     FunctionVariable(nameAnalysis.enclosingFunctionName(this), this.name.value),
-                                    viableProtocols(this)
-                                )
+                                    viableProtocols(this),
+                                ),
                             )
                         }
-                    }
+                    },
                 )
 
             is DeclarationNode ->
                 setOf(
                     variableInSet(
                         FunctionVariable(nameAnalysis.enclosingFunctionName(this), this.name.value),
-                        viableProtocols(this)
+                        viableProtocols(this),
                     ),
-                    protocolFactory.constraint(this)
+                    protocolFactory.constraint(this),
                 )
 
             is UpdateNode -> setOf(protocolFactory.constraint(this))
@@ -295,8 +295,8 @@ class SelectionConstraintGenerator(
                                 VariableIn(fv, protocol),
                                 iff(
                                     this.guardVisibilityFlag,
-                                    protocolFactory.guardVisibilityConstraint(protocol, this)
-                                )
+                                    protocolFactory.guardVisibilityConstraint(protocol, this),
+                                ),
                             )
                         }
                     }
@@ -309,8 +309,8 @@ class SelectionConstraintGenerator(
                 setOf(
                     VariableEquals(
                         FunctionVariable(nameAnalysis.enclosingFunctionName(this), this.name.value),
-                        FunctionVariable(parameterFunctionName, parameter.name.value)
-                    )
+                        FunctionVariable(parameterFunctionName, parameter.name.value),
+                    ),
                 )
             }
 
@@ -324,7 +324,7 @@ class SelectionConstraintGenerator(
                     .map { letNode ->
                         VariableEquals(
                             FunctionVariable(nameAnalysis.enclosingFunctionName(letNode), letNode.name.value),
-                            FunctionVariable(parameterFunctionName, parameter.name.value)
+                            FunctionVariable(parameterFunctionName, parameter.name.value),
                         )
                     }
                     .toSet()
@@ -337,8 +337,8 @@ class SelectionConstraintGenerator(
                 setOf(
                     VariableEquals(
                         FunctionVariable(nameAnalysis.enclosingFunctionName(this), this.variable.value),
-                        FunctionVariable(parameterFunctionName, parameter.name.value)
-                    )
+                        FunctionVariable(parameterFunctionName, parameter.name.value),
+                    ),
                 )
             }
 
@@ -349,8 +349,8 @@ class SelectionConstraintGenerator(
                 setOf(
                     VariableEquals(
                         FunctionVariable(nameAnalysis.enclosingFunctionName(this), this.parameter.value),
-                        FunctionVariable(parameterFunctionName, parameter.name.value)
-                    )
+                        FunctionVariable(parameterFunctionName, parameter.name.value),
+                    ),
                 )
             }
 
@@ -366,7 +366,7 @@ class SelectionConstraintGenerator(
      */
     private fun getArgumentViableProtocols(
         previous: PersistentMap<ReadNode, Protocol>,
-        next: List<ReadNode>
+        next: List<ReadNode>,
     ):
         Set<PersistentMap<ReadNode, Protocol>> {
         return if (next.isEmpty()) {
@@ -378,7 +378,7 @@ class SelectionConstraintGenerator(
             protocols.flatMap { protocol ->
                 getArgumentViableProtocols(
                     previous.put(current, protocol),
-                    tail
+                    tail,
                 )
             }.toSet()
         }
@@ -400,7 +400,7 @@ class SelectionConstraintGenerator(
         protocols: Set<Protocol>,
         reads: List<ReadNode>,
         baseCostFunction: (Protocol) -> Cost<IntegerCost>,
-        costVariable: CostVariable
+        costVariable: CostVariable,
     ):
         Iterable<SelectionConstraint> {
         // cartesian product of all viable protocols for arguments
@@ -426,7 +426,7 @@ class SelectionConstraintGenerator(
                             argProtocolMap.map { kv ->
                                 VariableIn(
                                     FunctionVariable(fv.function, kv.key.temporary.value),
-                                    kv.value
+                                    kv.value,
                                 )
                             }.ands()
 
@@ -466,13 +466,13 @@ class SelectionConstraintGenerator(
                                 baseCostFunction(protocol).concat(
                                     argProtocolMap.values.fold(costEstimator.zeroCost()) { acc, argProtocol ->
                                         acc.concat(costEstimator.communicationCost(argProtocol, protocol))
-                                    }
+                                    },
                                 )
 
                             addCostChoice(
                                 costVariable,
                                 And(VariableIn(fv, protocol), argProtocolConstraints),
-                                cost
+                                cost,
                             )
 
                             val participatingHostsConstraint: SelectionConstraint =
@@ -497,7 +497,7 @@ class SelectionConstraintGenerator(
                                             stmt.participatingHosts[protocolHost]!!,
                                             activatedReaderHosts.map { readerHost ->
                                                 argDeclaration.participatingHosts[readerHost]!!
-                                            }.ands()
+                                            }.ands(),
                                         )
                                     }
                                 }.ands()
@@ -505,8 +505,8 @@ class SelectionConstraintGenerator(
                             setOf(
                                 Implies(
                                     argProtocolConstraints,
-                                    And(participatingHostsConstraint)
-                                )
+                                    And(participatingHostsConstraint),
+                                ),
                             )
                         } else { // has invalid arg protocols
                             invalidArgProtocolSet.addAll(invalidArgProtocols)
@@ -523,14 +523,14 @@ class SelectionConstraintGenerator(
                     invalidArgProtocolSet.map { argProtocol ->
                         VariableIn(
                             FunctionVariable(fv.function, argProtocol.first.temporary.value),
-                            argProtocol.second
+                            argProtocol.second,
                         )
-                    }.ors()
+                    }.ors(),
                 )
 
             Implies(
                 VariableIn(fv, protocol),
-                And(hostConstraints, invalidArgProtocolConstraint)
+                And(hostConstraints, invalidArgProtocolConstraint),
             )
         }
     }
@@ -565,7 +565,7 @@ class SelectionConstraintGenerator(
                     protocols,
                     nameAnalysis.reads(this.value).toList(),
                     { protocol -> costEstimator.executionCost(this, protocol) },
-                    this.costVariable
+                    this.costVariable,
                 )
             }
 
@@ -578,7 +578,7 @@ class SelectionConstraintGenerator(
                     protocols,
                     this.arguments.filterIsInstance<ReadNode>(),
                     { protocol -> costEstimator.executionCost(this, protocol) },
-                    this.costVariable
+                    this.costVariable,
                 )
             }
 
@@ -591,7 +591,7 @@ class SelectionConstraintGenerator(
                     protocols,
                     this.arguments.filterIsInstance<ReadNode>(),
                     { protocol -> costEstimator.executionCost(this, protocol) },
-                    this.costVariable
+                    this.costVariable,
                 )
             }
 
@@ -611,12 +611,12 @@ class SelectionConstraintGenerator(
                     this,
                     FunctionVariable(
                         nameAnalysis.functionDeclaration(parameter).name.value,
-                        parameter.name.value
+                        parameter.name.value,
                     ),
                     viableProtocols(parameter),
                     reads,
                     { protocol -> costEstimator.executionCost(this, protocol) },
-                    this.costVariable
+                    this.costVariable,
                 )
             }
 
@@ -641,9 +641,9 @@ class SelectionConstraintGenerator(
                                     this.costVariable,
                                     VariableIn(
                                         FunctionVariable(enclosingFunctionName, msgDecl.name.value),
-                                        msgProtocol
+                                        msgProtocol,
                                     ),
-                                    costEstimator.communicationCost(msgProtocol, outputProtocol)
+                                    costEstimator.communicationCost(msgProtocol, outputProtocol),
                                 )
                                 setOf()
                             } else {
@@ -653,9 +653,9 @@ class SelectionConstraintGenerator(
                                     Not(
                                         VariableIn(
                                             FunctionVariable(enclosingFunctionName, msgDecl.name.value),
-                                            msgProtocol
-                                        )
-                                    )
+                                            msgProtocol,
+                                        ),
+                                    ),
                                 )
                             }
                         }
@@ -669,7 +669,7 @@ class SelectionConstraintGenerator(
     private fun statementParticipatingHostConstraints(
         stmt: SimpleStatementNode,
         fv: FunctionVariable,
-        protocols: Set<Protocol>
+        protocols: Set<Protocol>,
     ):
         Iterable<SelectionConstraint> {
         return protocols.map { protocol ->
@@ -687,7 +687,7 @@ class SelectionConstraintGenerator(
 
                             else -> setOf()
                         }
-                    }.ands()
+                    }.ands(),
             )
         }
     }
@@ -701,7 +701,7 @@ class SelectionConstraintGenerator(
                 this.statements.fold(
                     program.hostDeclarations.associate {
                         it.name.value to (Literal(false) as SelectionConstraint)
-                    }
+                    },
                 ) { acc: Map<Host, SelectionConstraint>, stmt: StatementNode ->
                     acc.mapValues { kv -> Or(kv.value, stmt.participatingHosts[kv.key]!!) }
                 }.map { kv ->
@@ -733,7 +733,7 @@ class SelectionConstraintGenerator(
                                             // then it must also participate in computing the guard
                                             Implies(
                                                 this.participatingHosts[host]!!,
-                                                guardDeclaration.participatingHosts[host]!!
+                                                guardDeclaration.participatingHosts[host]!!,
                                             )
                                         } else {
                                             // if a host participates in a conditional but the guard is
@@ -745,11 +745,11 @@ class SelectionConstraintGenerator(
                                                     VariableIn(
                                                         FunctionVariable(
                                                             enclosingFunction,
-                                                            guard.temporary.value
+                                                            guard.temporary.value,
                                                         ),
-                                                        guardProtocol
-                                                    )
-                                                )
+                                                        guardProtocol,
+                                                    ),
+                                                ),
                                             )
                                         }
                                     }
@@ -759,7 +759,7 @@ class SelectionConstraintGenerator(
                             // the guard visibility flag is enabled
                             setOf(Implies(this.guardVisibilityFlag, visibilityConstraints))
                         }
-                    }
+                    },
                 )
             }
 
@@ -817,7 +817,7 @@ class SelectionConstraintGenerator(
                         } else {
                             Not(this.participatingHosts[host]!!)
                         }
-                    }.ands()
+                    }.ands(),
                 )
             }
 
@@ -841,15 +841,15 @@ class SelectionConstraintGenerator(
             }.plus(
                 program.descendantsIsInstance<InfiniteLoopNode>().map { loopNode ->
                     loopNode to loopNode.symbolicCost.featureSum()
-                }
+                },
             ).plus(
                 program.descendantsIsInstance<IfNode>().map { ifNode ->
                     ifNode to ifNode.symbolicCost.featureSum()
-                }
+                },
             ).plus(
                 program.descendantsIsInstance<SimpleStatementNode>().map { sstmt ->
                     sstmt to sstmt.symbolicCost.featureSum()
-                }
+                },
             ).toMap()
 
         return SelectionProblem(selectionConstraints, cost, costMap)

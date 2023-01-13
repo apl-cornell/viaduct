@@ -31,7 +31,7 @@ import java.util.Stack
 typealias ObjectLocation = Int
 
 abstract class AbstractProtocolInterpreter<Obj>(
-    val program: ProgramNode
+    val program: ProgramNode,
 ) : ProtocolInterpreter {
     protected val objectHeap: MutableList<Obj> = mutableListOf()
 
@@ -51,13 +51,13 @@ abstract class AbstractProtocolInterpreter<Obj>(
     protected abstract suspend fun pushContext(initialStore: PersistentMap<ObjectVariable, ObjectLocation>)
 
     override suspend fun pushFunctionContext(
-        arguments: PersistentMap<ParameterNode, Pair<Protocol, FunctionArgumentNode>>
+        arguments: PersistentMap<ParameterNode, Pair<Protocol, FunctionArgumentNode>>,
     ) {
         functionFrameStack.push(
             objectHeap.size to
                 persistentMapOf(
-                    *(arguments.map { kv -> kv.key to kv.value.second }.toTypedArray())
-                )
+                    *(arguments.map { kv -> kv.key to kv.value.second }.toTypedArray()),
+                ),
         )
 
         val initialStore: PersistentMap<ObjectVariable, ObjectLocation> =
@@ -69,8 +69,8 @@ abstract class AbstractProtocolInterpreter<Obj>(
                                 allocateObject(
                                     buildExpressionObject(
                                         kv.value.first,
-                                        argument.expression
-                                    )
+                                        argument.expression,
+                                    ),
                                 )
 
                             is ObjectReferenceArgumentNode ->
@@ -99,7 +99,7 @@ abstract class AbstractProtocolInterpreter<Obj>(
                 .map { kv ->
                     Pair(
                         kv.value as FunctionOutputArgumentNode,
-                        getObject(getObjectLocation(kv.key.name.value))
+                        getObject(getObjectLocation(kv.key.name.value)),
                     )
                 }
 
@@ -162,7 +162,7 @@ abstract class AbstractProtocolInterpreter<Obj>(
         protocol: Protocol,
         className: ClassName,
         typeArguments: List<ValueType>,
-        arguments: List<AtomicExpressionNode>
+        arguments: List<AtomicExpressionNode>,
     ): Obj
 
     abstract fun getNullObject(protocol: Protocol): Obj
@@ -179,9 +179,9 @@ abstract class AbstractProtocolInterpreter<Obj>(
                             protocol,
                             stmt.objectType.className.value,
                             stmt.objectType.typeArguments.map { it.value },
-                            stmt.arguments
-                        )
-                    )
+                            stmt.arguments,
+                        ),
+                    ),
                 )
             }
 
@@ -199,7 +199,7 @@ abstract class AbstractProtocolInterpreter<Obj>(
                                 protocol,
                                 initializer.objectType.className.value,
                                 initializer.objectType.typeArguments.map { it.value },
-                                initializer.arguments
+                                initializer.arguments,
                             )
                         }
                     }
@@ -223,7 +223,7 @@ abstract class AbstractProtocolInterpreter<Obj>(
  *  protocol argument on implemented methods isn't necessary. */
 abstract class SingleProtocolInterpreter<Obj>(
     program: ProgramNode,
-    protocol: Protocol
+    protocol: Protocol,
 ) : AbstractProtocolInterpreter<Obj>(program) {
     override val availableProtocols: Set<Protocol> =
         setOf(protocol)
@@ -236,14 +236,14 @@ abstract class SingleProtocolInterpreter<Obj>(
     abstract suspend fun buildObject(
         className: ClassName,
         typeArguments: List<ValueType>,
-        arguments: List<AtomicExpressionNode>
+        arguments: List<AtomicExpressionNode>,
     ): Obj
 
     override suspend fun buildObject(
         protocol: Protocol,
         className: ClassName,
         typeArguments: List<ValueType>,
-        arguments: List<AtomicExpressionNode>
+        arguments: List<AtomicExpressionNode>,
     ): Obj =
         buildObject(className, typeArguments, arguments)
 

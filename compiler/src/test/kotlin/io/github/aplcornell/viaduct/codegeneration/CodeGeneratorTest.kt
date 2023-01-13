@@ -16,7 +16,7 @@ internal class CodeGeneratorTest {
         SourceFile.from(file).compileToKotlin(
             file.nameWithoutExtension,
             packageName = ".",
-            backend = CodeGenerationBackend
+            backend = CodeGenerationBackend,
         ).writeTo(System.out)
     }
 }

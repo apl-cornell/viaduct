@@ -6,7 +6,7 @@ import io.github.aplcornell.viaduct.codegeneration.CodeGeneratorDispatcher
 import io.github.aplcornell.viaduct.syntax.Protocol
 
 class CommitmentDispatchCodeGenerator(
-    private val context: CodeGeneratorContext
+    private val context: CodeGeneratorContext,
 ) : CodeGeneratorDispatcher() {
     private val commitmentCreatorGenerator = CommitmentCreatorGenerator(context)
     private val commitmentHolderGenerator = CommitmentHolderGenerator(context)

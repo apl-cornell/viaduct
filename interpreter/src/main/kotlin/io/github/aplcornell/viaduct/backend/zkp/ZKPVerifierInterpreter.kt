@@ -56,7 +56,7 @@ private val logger = KotlinLogging.logger("ZKP Verifier")
 class ZKPVerifierInterpreter(
     program: ProgramNode,
     val protocolAnalysis: ProtocolAnalysis,
-    val runtime: ViaductProcessRuntime
+    val runtime: ViaductProcessRuntime,
 ) :
     SingleProtocolInterpreter<ZKPObject>(program, runtime.projection.protocol) {
 
@@ -156,7 +156,7 @@ class ZKPVerifierInterpreter(
     override suspend fun buildObject(
         className: ClassName,
         typeArguments: List<ValueType>,
-        arguments: List<AtomicExpressionNode>
+        arguments: List<AtomicExpressionNode>,
     ): ZKPObject {
         return when (className) {
             ImmutableCell -> ZKPObject.ZKPImmutableCell(getAtomicExprWire(arguments[0]))
@@ -271,7 +271,7 @@ class ZKPVerifierInterpreter(
         sendProtocol: Protocol,
         receiver: SimpleStatementNode,
         recvProtocol: Protocol,
-        events: ProtocolCommunication
+        events: ProtocolCommunication,
     ) {
         val hostEvents = events.getHostSends(runtime.projection.host)
         if (sendProtocol != recvProtocol && hostEvents.isNotEmpty()) {
@@ -311,7 +311,7 @@ class ZKPVerifierInterpreter(
         sendProtocol: Protocol,
         receiver: SimpleStatementNode,
         recvProtocol: Protocol,
-        events: ProtocolCommunication
+        events: ProtocolCommunication,
     ) {
         if (sendProtocol != recvProtocol) {
             val publicInputs = events.getHostReceives(runtime.projection.host, "ZKP_PUBLIC_INPUT")

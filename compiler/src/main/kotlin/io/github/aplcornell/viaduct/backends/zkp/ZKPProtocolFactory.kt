@@ -69,7 +69,7 @@ class ZKPProtocolFactory(val program: ProgramNode) : ProtocolFactory {
                 protocols.map {
                     io.github.aplcornell.viaduct.selection.And(
                         node.readsFrom(nameAnalysis, setOf(it), localAndReplicated + setOf(it)),
-                        node.sendsTo(nameAnalysis, setOf(it), localAndReplicated + setOf(it))
+                        node.sendsTo(nameAnalysis, setOf(it), localAndReplicated + setOf(it)),
                     )
                 }.ands()
 
@@ -77,7 +77,7 @@ class ZKPProtocolFactory(val program: ProgramNode) : ProtocolFactory {
                 protocols.map {
                     io.github.aplcornell.viaduct.selection.And(
                         node.readsFrom(nameAnalysis, setOf(it), localAndReplicated + setOf(it)),
-                        node.sendsTo(nameAnalysis, setOf(it), localAndReplicated + setOf(it))
+                        node.sendsTo(nameAnalysis, setOf(it), localAndReplicated + setOf(it)),
                     )
                 }.ands()
 

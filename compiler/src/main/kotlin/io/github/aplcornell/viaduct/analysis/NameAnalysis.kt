@@ -146,7 +146,7 @@ class NameAnalysis private constructor(private val tree: Tree<Node, ProgramNode>
      */
     private inner class Context<N : Name, Data>(
         resetAtBlock: Boolean,
-        defines: (Node) -> List<Pair<Located<N>, Data>>
+        defines: (Node) -> List<Pair<Located<N>, Data>>,
     ) : ReadOnlyProperty<Node, NameMap<N, Data>> {
         /** Context just before this node. */
         private val Node.contextIn: NameMap<N, Data> by attribute {
@@ -259,7 +259,7 @@ class NameAnalysis private constructor(private val tree: Tree<Node, ProgramNode>
             ?: throw IncorrectNumberOfArgumentsError(
                 functionCall.name,
                 functionDecl.parameters.size,
-                functionCall.arguments
+                functionCall.arguments,
             )
     }
 
@@ -455,7 +455,7 @@ class NameAnalysis private constructor(private val tree: Tree<Node, ProgramNode>
 
     /** Set of functions reachable from a node by transitively following function calls. */
     private val Node.reachableFunctions: PersistentSet<FunctionName> by circularAttribute(
-        persistentSetOf()
+        persistentSetOf(),
     ) {
         if (this is FunctionCallNode) {
             declaration(this).reachableFunctions.add(this.name.value)
@@ -473,7 +473,7 @@ class NameAnalysis private constructor(private val tree: Tree<Node, ProgramNode>
         this.descendantsIsInstance<DeclarationNode>().map { decl -> FunctionVariable(functionName, decl.name.value) }
             .plus(
                 this.descendantsIsInstance<LetNode>()
-                    .map { letNode -> FunctionVariable(functionName, letNode.name.value) }
+                    .map { letNode -> FunctionVariable(functionName, letNode.name.value) },
             ).plus(
                 this.descendantsIsInstance<UpdateNode>().map { update ->
                     when (val decl = declaration(update)) {
@@ -483,18 +483,18 @@ class NameAnalysis private constructor(private val tree: Tree<Node, ProgramNode>
                         is ParameterNode ->
                             FunctionVariable(
                                 functionDeclaration(decl).name.value,
-                                decl.name.value
+                                decl.name.value,
                             )
 
                         is ObjectDeclarationArgumentNode -> {
                             val param = parameter(decl)
                             FunctionVariable(
                                 functionDeclaration(param).name.value,
-                                decl.name.value
+                                decl.name.value,
                             )
                         }
                     }
-                }
+                },
             ).toSet()
     }
 
@@ -519,7 +519,7 @@ class NameAnalysis private constructor(private val tree: Tree<Node, ProgramNode>
         fun LabelExpression.check(
             hosts: Set<Host>,
             labelVariables: Set<LabelVariable>,
-            sourceLocation: SourceLocation
+            sourceLocation: SourceLocation,
         ) {
             when (this) {
                 is LabelLiteral -> {

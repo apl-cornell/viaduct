@@ -8,7 +8,7 @@ class ProtocolSelection(
     private val solver: SelectionProblemSolver,
     private val protocolFactory: ProtocolFactory,
     private val protocolComposer: ProtocolComposer,
-    private val costEstimator: CostEstimator<IntegerCost>
+    private val costEstimator: CostEstimator<IntegerCost>,
 ) {
     fun selectAssignment(program: ProgramNode): ProtocolAssignment {
         if (program.hosts.isEmpty()) {

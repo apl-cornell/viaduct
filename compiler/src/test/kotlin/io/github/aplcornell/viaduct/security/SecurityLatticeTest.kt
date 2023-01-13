@@ -30,11 +30,11 @@ private fun assertActsFor(from: SecurityLattice<Component>, to: SecurityLattice<
 private fun assertFlowsTo(from: SecurityLattice<Component>, to: SecurityLattice<Component>) {
     assertActsFor(
         to.confidentiality(FreeDistributiveLattice.bounds()),
-        from.confidentiality(FreeDistributiveLattice.bounds())
+        from.confidentiality(FreeDistributiveLattice.bounds()),
     )
     assertActsFor(
         from.integrity(FreeDistributiveLattice.bounds()),
-        to.integrity(FreeDistributiveLattice.bounds())
+        to.integrity(FreeDistributiveLattice.bounds()),
     )
 }
 

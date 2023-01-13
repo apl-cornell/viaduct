@@ -37,7 +37,7 @@ private class ExampleRunner : NoOpCliktCommand(help = "Run compiled Viaduct prog
             Print debugging information
 
             Repeat for more and more granular messages.
-        """
+        """,
     ).counted().validate {
         // Set the global logging level.
         // Note: this is not how `.validate` is meant to be used, but it's the closest feature Clikt provides.
@@ -76,24 +76,24 @@ private class Run : CliktCommand(help = "Run a compiled program for a single hos
 
     private val programName by argument(
         "PROGRAM",
-        help = "Program to run"
+        help = "Program to run",
     )
 
     private val hostName by argument(
         "HOSTNAME",
-        help = "Host that will run the protocol"
+        help = "Host that will run the protocol",
     )
 
     val inputFile: File? by option(
         "-i",
         "--input",
-        help = "File to stream inputs from"
+        help = "File to stream inputs from",
     ).file(canBeDir = false, mustExist = true)
 
     val hostAddresses: Map<String, String> by option(
         "-h",
         "--hostinfo",
-        help = "Associate each host with its address"
+        help = "Associate each host with its address",
     ).associate()
 
     override fun run() {

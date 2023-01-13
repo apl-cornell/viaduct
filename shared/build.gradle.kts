@@ -34,7 +34,7 @@ val generatePropertiesFile by tasks.registering {
             const val version = "${project.version}"
 
             const val group = "${project.group}"
-            """.trimIndent()
+            """.trimIndent(),
         )
     }
 }

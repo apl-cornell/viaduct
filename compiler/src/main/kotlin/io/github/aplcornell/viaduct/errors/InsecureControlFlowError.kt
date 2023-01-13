@@ -21,7 +21,7 @@ class InsecureControlFlowError(
     private val node: HasSourceLocation,
     private val nodeLabel: Label,
     private val pc: Label,
-    private val context: FreeDistributiveLatticeCongruence<PrincipalComponent>
+    private val context: FreeDistributiveLatticeCongruence<PrincipalComponent>,
 ) : InformationFlowError() {
     override val category: String
         get() = "Insecure Control Flow"
@@ -35,7 +35,7 @@ class InsecureControlFlowError(
             if (!flowsTo(
                     pc.confidentiality(),
                     nodeLabel.confidentiality(),
-                    context
+                    context,
                 )
             ) {
                 // Confidentiality is the problem
@@ -54,8 +54,8 @@ class InsecureControlFlowError(
                     !flowsTo(
                         pc.integrity(),
                         nodeLabel.integrity(),
-                        context
-                    )
+                        context,
+                    ),
                 )
                 return Document("The control flow does not have enough integrity for this term:")
                     .withSource(node.sourceLocation) /

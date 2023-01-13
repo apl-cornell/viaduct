@@ -15,7 +15,7 @@ import java.util.Scanner
 
 class ScannerIOStrategy(
     private val input: Scanner,
-    private val output: Writer = System.out.writer(Charset.defaultCharset())
+    private val output: Writer = System.out.writer(Charset.defaultCharset()),
 ) : IOStrategy {
     override fun input(type: IOValueType): Value {
         return when (type) {

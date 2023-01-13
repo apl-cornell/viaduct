@@ -35,7 +35,7 @@ class IntegerCost(val cost: Int) : CostMonoid<IntegerCost> {
  * Consists of a map of features over some cost monoid.
  * */
 data class Cost<C : CostMonoid<C>>(
-    val features: PersistentMap<CostFeature, C>
+    val features: PersistentMap<CostFeature, C>,
 ) : CostMonoid<Cost<C>>, Map<CostFeature, C> by features, PrettyPrintable {
     override fun concat(other: Cost<C>): Cost<C> =
         Cost(
@@ -44,22 +44,22 @@ data class Cost<C : CostMonoid<C>>(
                     kv.value.concat(other.features[kv.key] ?: kv.value.zero())
                 }
                 .plus(other.features.filterKeys { k -> !features.containsKey(k) })
-                .toPersistentMap()
+                .toPersistentMap(),
         )
 
     override fun zero(): Cost<C> =
         Cost(
-            this.features.map { kv -> kv.key to kv.value.zero() }.toMap().toPersistentMap()
+            this.features.map { kv -> kv.key to kv.value.zero() }.toMap().toPersistentMap(),
         )
 
     fun <D : CostMonoid<D>> map(f: (C) -> D): Cost<D> =
         Cost(
-            this.features.map { kv -> kv.key to f(kv.value) }.toMap().toPersistentMap()
+            this.features.map { kv -> kv.key to f(kv.value) }.toMap().toPersistentMap(),
         )
 
     fun <D : CostMonoid<D>> featureMap(f: (CostFeature, C) -> D): Cost<D> =
         Cost(
-            this.features.map { kv -> kv.key to f(kv.key, kv.value) }.toMap().toPersistentMap()
+            this.features.map { kv -> kv.key to f(kv.key, kv.value) }.toMap().toPersistentMap(),
         )
 
     fun update(feature: CostFeature, cost: C): Cost<C> =

@@ -26,7 +26,7 @@ import java.io.PrintStream
 internal fun CliktCommand.inputProgram(): ArgumentDelegate<File?> =
     argument(
         "FILE",
-        help = "Read input program from <file> (default: stdin)"
+        help = "Read input program from <file> (default: stdin)",
     ).file(mustExist = true, canBeDir = false, mustBeReadable = true).optional()
 
 /** Adds an output parameter to a [CliktCommand]. */
@@ -34,7 +34,7 @@ internal fun ParameterHolder.outputFile(): OptionDelegate<File?> =
     option(
         "-o",
         "--output",
-        help = "Write output to FILE (default: stdout)"
+        help = "Write output to FILE (default: stdout)",
     ).file(canBeDir = false, mustExist = false)
 
 /** Adds a command line option that sets the application logging level. */
@@ -46,7 +46,7 @@ internal fun ParameterHolder.verbosity(): OptionDelegate<Int> =
             Print debugging information
 
             Repeat for more and more granular messages.
-        """
+        """,
     ).counted().validate {
         // Set the global logging level.
         // Note: this is not how `.validate` is meant to be used, but it's the closest feature Clikt provides.

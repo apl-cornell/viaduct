@@ -38,7 +38,7 @@ internal class FreeDistributiveLatticeTest {
         val context3 = listOf(FreeDistributiveLattice.LessThanOrEqualTo(elemA, bottom))
         val context4 = listOf(
             FreeDistributiveLattice.LessThanOrEqualTo(elemA, elemA.meet(elemB.join(elemC))),
-            FreeDistributiveLattice.LessThanOrEqualTo(elemC.meet(elemA.join(elemB)), elemB.meet(elemC))
+            FreeDistributiveLattice.LessThanOrEqualTo(elemC.meet(elemA.join(elemB)), elemB.meet(elemC)),
         )
 
         assert(elemA.lessThanOrEqualTo(elemA, context0))

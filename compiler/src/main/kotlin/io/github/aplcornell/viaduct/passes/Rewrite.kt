@@ -22,7 +22,7 @@ import io.github.aplcornell.viaduct.syntax.HostTrustConfiguration
 
 class Rewrite(
     private val rewrites: Map<PrincipalComponent, LabelConstant>,
-    private val hostTrustConfiguration: HostTrustConfiguration
+    private val hostTrustConfiguration: HostTrustConfiguration,
 ) {
 
     /**
@@ -36,9 +36,9 @@ class Rewrite(
                         when (e.principal) {
                             is HostPrincipal -> FreeDistributiveLattice(e)
                             is PolymorphicPrincipal -> rewrites[e]!!
-                        }
+                        },
                     )
-                }
+                },
             )
         }
 
@@ -54,9 +54,9 @@ class Rewrite(
                 interpret(
                     Label(
                         rewrites[ConfidentialityComponent(PolymorphicPrincipal(l.name))]!!,
-                        rewrites[IntegrityComponent(PolymorphicPrincipal(l.name))]!!
+                        rewrites[IntegrityComponent(PolymorphicPrincipal(l.name))]!!,
                     ),
-                    hostTrustConfiguration
+                    hostTrustConfiguration,
                 )
             }
 

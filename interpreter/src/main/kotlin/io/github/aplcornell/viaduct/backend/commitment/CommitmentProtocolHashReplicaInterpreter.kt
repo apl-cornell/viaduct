@@ -48,10 +48,10 @@ private val logger = KotlinLogging.logger("Commitment")
 class CommitmentProtocolHashReplicaInterpreter(
     program: ProgramNode,
     private val protocolAnalysis: ProtocolAnalysis,
-    private val runtime: ViaductProcessRuntime
+    private val runtime: ViaductProcessRuntime,
 ) : SingleProtocolInterpreter<CommitmentProtocolHashReplicaInterpreter.CommitmentObject>(
     program,
-    runtime.projection.protocol
+    runtime.projection.protocol,
 ) {
     override val availableProtocols: Set<Protocol> =
         setOf(runtime.projection.protocol)
@@ -91,7 +91,7 @@ class CommitmentProtocolHashReplicaInterpreter(
     private fun pushContext(
         newObjectStore: PersistentMap<ObjectVariable, ObjectLocation>,
         newHashTempStore: PersistentMap<Temporary, List<Byte>>,
-        newCtTempStore: PersistentMap<Temporary, Value>
+        newCtTempStore: PersistentMap<Temporary, Value>,
     ) {
         objectStoreStack.push(newObjectStore)
         hashTempStoreStack.push(newHashTempStore)
@@ -119,7 +119,7 @@ class CommitmentProtocolHashReplicaInterpreter(
     override suspend fun buildObject(
         className: ClassName,
         typeArguments: List<ValueType>,
-        arguments: List<AtomicExpressionNode>
+        arguments: List<AtomicExpressionNode>,
     ): CommitmentObject {
         return when (className) {
             ImmutableCell, MutableCell -> CommitmentCell(runExpr(arguments[0]))
@@ -142,7 +142,7 @@ class CommitmentProtocolHashReplicaInterpreter(
         hashTempStore[read.temporary.value]
             ?: throw ViaductInterpreterError(
                 "${runtime.projection.protocol.toDocument().print()}:" +
-                    " could not find local temporary ${read.temporary.value}"
+                    " could not find local temporary ${read.temporary.value}",
             )
 
     private fun runCleartextExpr(expr: AtomicExpressionNode): Value =
@@ -193,7 +193,7 @@ class CommitmentProtocolHashReplicaInterpreter(
         sendProtocol: Protocol,
         receiver: SimpleStatementNode,
         recvProtocol: Protocol,
-        events: ProtocolCommunication
+        events: ProtocolCommunication,
     ) {
         if (!availableProtocols.contains(recvProtocol)) {
             val relevantEvents: Set<CommunicationEvent> =
@@ -217,7 +217,7 @@ class CommitmentProtocolHashReplicaInterpreter(
         sendProtocol: Protocol,
         receiver: SimpleStatementNode,
         recvProtocol: Protocol,
-        events: ProtocolCommunication
+        events: ProtocolCommunication,
     ) {
         if (sendProtocol != runtime.projection.protocol) { // receive commitment
             when {
@@ -251,7 +251,7 @@ class CommitmentProtocolHashReplicaInterpreter(
     inner class CommitmentCell(var bytes: List<Byte>) : CommitmentObject() {
         override fun query(
             query: QueryNameNode,
-            @Suppress("UNUSED_PARAMETER") arguments: List<AtomicExpressionNode>
+            @Suppress("UNUSED_PARAMETER") arguments: List<AtomicExpressionNode>,
         ): List<Byte> {
             return when (query.value) {
                 is Get -> bytes

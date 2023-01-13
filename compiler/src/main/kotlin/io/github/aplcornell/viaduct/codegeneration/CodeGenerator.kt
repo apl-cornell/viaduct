@@ -27,7 +27,7 @@ interface CodeGenerator {
     fun constructorCall(
         protocol: Protocol,
         objectType: ObjectTypeNode,
-        arguments: Arguments<AtomicExpressionNode>
+        arguments: Arguments<AtomicExpressionNode>,
     ): CodeBlock
 
     fun update(protocol: Protocol, stmt: UpdateNode): CodeBlock
@@ -36,14 +36,14 @@ interface CodeGenerator {
         sender: LetNode,
         sendProtocol: Protocol,
         receiveProtocol: Protocol,
-        events: ProtocolCommunication
+        events: ProtocolCommunication,
     ): CodeBlock
 
     fun receive(
         sender: LetNode,
         sendProtocol: Protocol,
         receiveProtocol: Protocol,
-        events: ProtocolCommunication
+        events: ProtocolCommunication,
     ): CodeBlock
 
     fun setup(protocol: Protocol): Iterable<PropertySpec>

@@ -12,7 +12,7 @@ import kotlinx.collections.immutable.toPersistentList
  */
 class ProgramNode(
     val declarations: PersistentList<TopLevelDeclarationNode>,
-    override val sourceLocation: SourceLocation
+    override val sourceLocation: SourceLocation,
 ) : Node(), List<TopLevelDeclarationNode> by declarations {
     constructor(declarations: List<TopLevelDeclarationNode>, sourceLocation: SourceLocation) :
         this(declarations.toPersistentList(), sourceLocation)

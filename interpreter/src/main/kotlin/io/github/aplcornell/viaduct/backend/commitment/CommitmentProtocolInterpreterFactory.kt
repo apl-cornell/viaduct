@@ -19,7 +19,7 @@ object CommitmentProtocolInterpreterFactory : ProtocolBackend {
         protocols: Set<Protocol>,
         protocolAnalysis: ProtocolAnalysis,
         runtime: ViaductRuntime,
-        connectionMap: Map<Host, HostAddress>
+        connectionMap: Map<Host, HostAddress>,
     ): Iterable<ProtocolInterpreter> {
         return protocols
             .filterIsInstance<Commitment>()

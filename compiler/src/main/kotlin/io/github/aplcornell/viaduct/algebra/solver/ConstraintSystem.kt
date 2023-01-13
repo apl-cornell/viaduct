@@ -30,7 +30,7 @@ import java.io.Writer
 class ConstraintSystem<C : HeytingAlgebra<C>, V, T : Throwable>(
     constraints: Iterable<Constraint<C, V, T>>,
     bounds: BoundedLattice<C>,
-    private val delegationContext: LatticeCongruence<C>
+    private val delegationContext: LatticeCongruence<C>,
 ) {
     /**
      * Represents constraints as a graph. Each vertex is an atomic term (a constant or a variable),
@@ -114,7 +114,7 @@ class ConstraintSystem<C : HeytingAlgebra<C>, V, T : Throwable>(
                     "$vertex\\n{${bestEffortSolution.evaluate(vertex)}}"
                 } else {
                     vertex.toString()
-                }
+                },
             )
 
             // Differentiate constant vertices from variable vertices.
@@ -143,7 +143,7 @@ class ConstraintSystem<C : HeytingAlgebra<C>, V, T : Throwable>(
             mapOf(
                 "label" to DefaultAttribute.createAttribute(edge.toString()),
                 "color" to DefaultAttribute.createAttribute(color),
-                "fontcolor" to DefaultAttribute.createAttribute(color)
+                "fontcolor" to DefaultAttribute.createAttribute(color),
             )
         }
 

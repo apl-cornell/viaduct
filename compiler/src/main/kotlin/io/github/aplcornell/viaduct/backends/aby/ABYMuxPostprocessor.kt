@@ -5,5 +5,5 @@ import io.github.aplcornell.viaduct.passes.ProgramPostprocessor
 import io.github.aplcornell.viaduct.selection.ProtocolAssignment
 
 fun abyMuxPostprocessor(
-    protocolAssignment: ProtocolAssignment
+    protocolAssignment: ProtocolAssignment,
 ): ProgramPostprocessor = MuxPostprocessor({ p -> p is ABY }, protocolAssignment)

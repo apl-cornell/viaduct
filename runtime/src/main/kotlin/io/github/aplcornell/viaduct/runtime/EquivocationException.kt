@@ -7,10 +7,10 @@ class EquivocationException private constructor(
     expectedValue: Any?,
     expectedValueProvider: Host,
     actualValue: Any?,
-    actualValueProvider: Host
+    actualValueProvider: Host,
 ) : ViaductRuntimeException(
     "Equivocation detected: expected $expectedValue ($expectedValueProvider) " +
-        "but got $actualValue ($actualValueProvider)."
+        "but got $actualValue ($actualValueProvider).",
 ) {
     companion object {
         /** Throws [EquivocationException] if [expectedValue] does not match [actualValue]. */

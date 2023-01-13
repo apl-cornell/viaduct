@@ -24,7 +24,7 @@ import io.github.aplcornell.viaduct.syntax.types.ValueType
 import io.github.aplcornell.viaduct.backends.commitment.Commitment as CommitmentProtocol
 
 internal class CommitmentHolderGenerator(
-    context: CodeGeneratorContext
+    context: CodeGeneratorContext,
 ) : AbstractCodeGenerator(context) {
     private val typeAnalysis: TypeAnalysis = TypeAnalysis.get(context.program)
 
@@ -38,7 +38,7 @@ internal class CommitmentHolderGenerator(
                 Committed::class,
                 "fake",
                 value(expr.value),
-                MemberName(Committed.Companion::class.asClassName(), "commitment")
+                MemberName(Committed.Companion::class.asClassName(), "commitment"),
             )
 
             else -> super.exp(protocol, expr)
@@ -48,7 +48,7 @@ internal class CommitmentHolderGenerator(
         sender: LetNode,
         sendProtocol: Protocol,
         receiveProtocol: Protocol,
-        events: ProtocolCommunication
+        events: ProtocolCommunication,
     ): CodeBlock {
         val sendBuilder = CodeBlock.builder()
 
@@ -56,7 +56,7 @@ internal class CommitmentHolderGenerator(
         val relevantEvents: List<CommunicationEvent> =
             events.getProjectionSends(
                 ProtocolProjection(sendProtocol, context.host),
-                CommitmentProtocol.OPEN_COMMITMENT_OUTPUT
+                CommitmentProtocol.OPEN_COMMITMENT_OUTPUT,
             ).toList()
 
         for (event in relevantEvents) {
@@ -64,8 +64,8 @@ internal class CommitmentHolderGenerator(
                 "%L",
                 context.send(
                     CodeBlock.of("%N", context.kotlinName(sender.name.value, sendProtocol)),
-                    event.recv.host
-                )
+                    event.recv.host,
+                ),
             )
         }
         return sendBuilder.build()
@@ -75,7 +75,7 @@ internal class CommitmentHolderGenerator(
         sender: LetNode,
         sendProtocol: Protocol,
         receiveProtocol: Protocol,
-        events: ProtocolCommunication
+        events: ProtocolCommunication,
     ): CodeBlock {
         val receiveBuilder = CodeBlock.builder()
         val projection = ProtocolProjection(receiveProtocol, context.host)
@@ -85,7 +85,7 @@ internal class CommitmentHolderGenerator(
                     val relevantEvents =
                         events.getHostReceives(
                             projection.host,
-                            CommitmentProtocol.CLEARTEXT_INPUT
+                            CommitmentProtocol.CLEARTEXT_INPUT,
                         )
 
                     receiveBuilder.addStatement(
@@ -95,8 +95,8 @@ internal class CommitmentHolderGenerator(
                             sender,
                             relevantEvents,
                             context,
-                            typeAnalysis
-                        )
+                            typeAnalysis,
+                        ),
                     )
                 }
 
@@ -107,10 +107,10 @@ internal class CommitmentHolderGenerator(
                             context.kotlinName(sender.name.value, receiveProtocol),
                             context.receive(
                                 Commitment::class.asClassName().parameterizedBy(
-                                    typeTranslator(typeAnalysis.type(sender))
+                                    typeTranslator(typeAnalysis.type(sender)),
                                 ),
-                                events.first().send.host
-                            )
+                                events.first().send.host,
+                            ),
                         )
                     }
                 }

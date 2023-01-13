@@ -63,7 +63,7 @@ private val logger = KotlinLogging.logger("ZKP Prover")
 class ZKPProverInterpreter(
     program: ProgramNode,
     private val protocolAnalysis: ProtocolAnalysis,
-    val runtime: ViaductProcessRuntime
+    val runtime: ViaductProcessRuntime,
 ) :
     SingleProtocolInterpreter<ZKPObject>(program, runtime.projection.protocol) {
 
@@ -107,7 +107,7 @@ class ZKPProverInterpreter(
     private fun pushContext(
         newObjectStore: PersistentMap<ObjectVariable, ObjectLocation>,
         newTempStore: PersistentMap<Temporary, Value>,
-        newWireStore: PersistentMap<Temporary, WireTerm>
+        newWireStore: PersistentMap<Temporary, WireTerm>,
     ) {
         objectStoreStack.push(newObjectStore)
         tempStack.push(newTempStore)
@@ -183,7 +183,7 @@ class ZKPProverInterpreter(
     override suspend fun buildObject(
         className: ClassName,
         typeArguments: List<ValueType>,
-        arguments: List<AtomicExpressionNode>
+        arguments: List<AtomicExpressionNode>,
     ): ZKPObject {
         return when (className) {
             ImmutableCell -> ZKPObject.ZKPImmutableCell(getAtomicExprWire(arguments[0]))
@@ -305,7 +305,7 @@ class ZKPProverInterpreter(
         sendProtocol: Protocol,
         receiver: SimpleStatementNode,
         recvProtocol: Protocol,
-        events: ProtocolCommunication
+        events: ProtocolCommunication,
     ) {
         if (sendProtocol != recvProtocol) {
             val wire = wireStore[sender.name.value]!!
@@ -358,7 +358,7 @@ class ZKPProverInterpreter(
             for (event in hostEvents) {
                 runtime.send(
                     wireVal.toValue(typeAnalysis.type(sender)),
-                    ProtocolProjection(event.recv.protocol, event.recv.host)
+                    ProtocolProjection(event.recv.protocol, event.recv.host),
                 )
             }
         }
@@ -369,7 +369,7 @@ class ZKPProverInterpreter(
         sendProtocol: Protocol,
         receiver: SimpleStatementNode,
         recvProtocol: Protocol,
-        events: ProtocolCommunication
+        events: ProtocolCommunication,
     ) {
         if (sendProtocol != recvProtocol) {
             logger.info {

@@ -17,7 +17,7 @@ import java.util.Queue
  */
 fun <A : MeetSemiLattice<A>, NodeT : DataFlowNode<A>, EdgeT : DataFlowEdge<A>> solveDataFlow(
     top: A,
-    graph: Graph<NodeT, EdgeT>
+    graph: Graph<NodeT, EdgeT>,
 ): Map<NodeT, A> {
     return DataFlow(top, graph).run()
 }
@@ -25,7 +25,7 @@ fun <A : MeetSemiLattice<A>, NodeT : DataFlowNode<A>, EdgeT : DataFlowEdge<A>> s
 /** A solver that computes the greatest solution to a set of data flow equations. */
 private class DataFlow<A : MeetSemiLattice<A>, NodeT : DataFlowNode<A>, EdgeT : DataFlowEdge<A>> constructor(
     private val top: A,
-    private val graph: Graph<NodeT, EdgeT>
+    private val graph: Graph<NodeT, EdgeT>,
 ) {
     private val nodeOutValues = mutableMapOf<NodeT, A>()
 

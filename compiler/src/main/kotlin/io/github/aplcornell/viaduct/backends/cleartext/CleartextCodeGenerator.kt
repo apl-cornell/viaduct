@@ -53,27 +53,27 @@ class CleartextCodeGenerator(context: CodeGeneratorContext) : AbstractCodeGenera
                             "%M(%L, %L)",
                             MemberName("kotlin.math", "min"),
                             exp(protocol, expr.arguments[0]),
-                            exp(protocol, expr.arguments[1])
+                            exp(protocol, expr.arguments[1]),
                         )
                     Maximum ->
                         CodeBlock.of(
                             "%M(%L, %L)",
                             MemberName("kotlin.math", "max"),
                             exp(protocol, expr.arguments[0]),
-                            exp(protocol, expr.arguments[1])
+                            exp(protocol, expr.arguments[1]),
                         )
                     is UnaryOperator ->
                         CodeBlock.of(
                             "%L%L",
                             expr.operator.toString(),
-                            exp(protocol, expr.arguments[0])
+                            exp(protocol, expr.arguments[0]),
                         )
                     is BinaryOperator ->
                         CodeBlock.of(
                             "%L %L %L",
                             exp(protocol, expr.arguments[0]),
                             expr.operator,
-                            exp(protocol, expr.arguments[1])
+                            exp(protocol, expr.arguments[1]),
                         )
                     else -> throw UnsupportedOperatorException(protocol, expr)
                 }
@@ -83,7 +83,7 @@ class CleartextCodeGenerator(context: CodeGeneratorContext) : AbstractCodeGenera
                 CodeBlock.of(
                     "(runtime.input(%T) as %T).value",
                     expr.type.value::class,
-                    expr.type.value.valueClass
+                    expr.type.value.valueClass,
                 )
 
             else -> super.exp(protocol, expr)
@@ -98,7 +98,7 @@ class CleartextCodeGenerator(context: CodeGeneratorContext) : AbstractCodeGenera
                             "%1N.set(%1N.get() %2L %3L)",
                             context.kotlinName(stmt.variable.value),
                             stmt.update.value.operator,
-                            exp(protocol, stmt.arguments[0])
+                            exp(protocol, stmt.arguments[0]),
                         )
 
                     else -> super.update(protocol, stmt)
@@ -112,7 +112,7 @@ class CleartextCodeGenerator(context: CodeGeneratorContext) : AbstractCodeGenera
                             context.kotlinName(stmt.variable.value),
                             cleartextExp(protocol, stmt.arguments[0]),
                             stmt.update.value.name,
-                            exp(protocol, stmt.arguments[1])
+                            exp(protocol, stmt.arguments[1]),
                         )
 
                     else -> super.update(protocol, stmt)
@@ -125,7 +125,7 @@ class CleartextCodeGenerator(context: CodeGeneratorContext) : AbstractCodeGenera
         sender: LetNode,
         sendProtocol: Protocol,
         receiveProtocol: Protocol,
-        events: ProtocolCommunication
+        events: ProtocolCommunication,
     ): CodeBlock {
         val sendBuilder = CodeBlock.builder()
         if (sendProtocol != receiveProtocol) {
@@ -137,8 +137,8 @@ class CleartextCodeGenerator(context: CodeGeneratorContext) : AbstractCodeGenera
                         "%L",
                         context.send(
                             CodeBlock.of("%N", context.kotlinName(sender.name.value, sendProtocol)),
-                            event.recv.host
-                        )
+                            event.recv.host,
+                        ),
                     )
                 } else {
                     sendBuilder.addStatement("%L", context.send(exp(sendProtocol, sender.value), event.recv.host))
@@ -152,7 +152,7 @@ class CleartextCodeGenerator(context: CodeGeneratorContext) : AbstractCodeGenera
         sender: LetNode,
         sendProtocol: Protocol,
         receiveProtocol: Protocol,
-        events: ProtocolCommunication
+        events: ProtocolCommunication,
     ): CodeBlock {
         val receiveBuilder = CodeBlock.builder()
         val clearTextTemp = context.newTemporary("clearTextTemp")
@@ -161,7 +161,7 @@ class CleartextCodeGenerator(context: CodeGeneratorContext) : AbstractCodeGenera
             val projection = ProtocolProjection(receiveProtocol, context.host)
             val cleartextInputs = events.getProjectionReceives(
                 projection,
-                Cleartext.INPUT
+                Cleartext.INPUT,
             )
 
             val cleartextCommitmentInputs =
@@ -180,8 +180,8 @@ class CleartextCodeGenerator(context: CodeGeneratorContext) : AbstractCodeGenera
                             sender,
                             cleartextInputs,
                             context,
-                            typeAnalysis
-                        )
+                            typeAnalysis,
+                        ),
                     )
 
                     // calculate set of hosts with whom [receivingHost] needs to check for equivocation
@@ -215,13 +215,13 @@ class CleartextCodeGenerator(context: CodeGeneratorContext) : AbstractCodeGenera
                             clearTextTemp,
                             context.codeOf(cleartextInputs.first().send.host),
                             context.receive(typeTranslator(typeAnalysis.type(sender)), host),
-                            context.codeOf(host)
+                            context.codeOf(host),
                         )
                     }
                     receiveBuilder.addStatement(
                         "val %N = %N",
                         context.kotlinName(sender.name.value, receiveProtocol),
-                        clearTextTemp
+                        clearTextTemp,
                     )
 
                     return receiveBuilder.build()
@@ -241,10 +241,10 @@ class CleartextCodeGenerator(context: CodeGeneratorContext) : AbstractCodeGenera
                         clearTextCommittedTemp,
                         context.receive(
                             Committed::class.asClassName().parameterizedBy(
-                                typeTranslator((typeAnalysis.type(sender)))
+                                typeTranslator((typeAnalysis.type(sender))),
                             ),
-                            cleartextCommitmentInputs.first().send.host
-                        )
+                            cleartextCommitmentInputs.first().send.host,
+                        ),
                     )
 
                     for (hashSendEvent in hashCommitmentInputs) {
@@ -252,12 +252,12 @@ class CleartextCodeGenerator(context: CodeGeneratorContext) : AbstractCodeGenera
                             "%L.%L(%N)",
                             context.receive(
                                 Commitment::class.asClassName().parameterizedBy(
-                                    typeTranslator((typeAnalysis.type(sender)))
+                                    typeTranslator((typeAnalysis.type(sender))),
                                 ),
-                                hashSendEvent.send.host
+                                hashSendEvent.send.host,
                             ),
                             "open",
-                            clearTextCommittedTemp
+                            clearTextCommittedTemp,
                         )
                     }
 
@@ -265,7 +265,7 @@ class CleartextCodeGenerator(context: CodeGeneratorContext) : AbstractCodeGenera
                         "val %N = %L.%N",
                         context.kotlinName(sender.name.value, receiveProtocol),
                         clearTextCommittedTemp,
-                        "value"
+                        "value",
                     )
                 }
 

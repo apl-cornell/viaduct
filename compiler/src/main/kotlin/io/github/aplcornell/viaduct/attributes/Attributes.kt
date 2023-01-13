@@ -49,7 +49,7 @@ fun <Node, T> attribute(f: Node.() -> T): Attribute<Node, T> =
 //  [Extending Attribute Grammars with Collection Attributes – Evaluation and Applications](https://www.ieee-scam.org/2007/papers/40.pdf)
 fun <Node : TreeNode<Node>, T> collectedAttribute(
     tree: Tree<Node, Node>,
-    f: (Node) -> Iterable<Pair<Node, T>>
+    f: (Node) -> Iterable<Pair<Node, T>>,
 ): Attribute<Node, Set<T>> {
     val attributes: MutableMap<Node, MutableSet<T>> = mutableMapOf()
     fun visit(node: Node) {

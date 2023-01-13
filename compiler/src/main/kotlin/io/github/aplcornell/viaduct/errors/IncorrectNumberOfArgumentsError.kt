@@ -16,7 +16,7 @@ import io.github.aplcornell.viaduct.syntax.Name
 class IncorrectNumberOfArgumentsError(
     private val method: Located<Name>,
     private val expected: Int,
-    private val actual: Arguments<*>
+    private val actual: Arguments<*>,
 ) : CompilationError() {
     init {
         require(expected != actual.size)
@@ -39,6 +39,6 @@ class IncorrectNumberOfArgumentsError(
             return Document("Call to") * method *
                 "expects" * Document("$expected") * argumentsPlural +
                 Document(", but it got") * Document("${actual.size}") * Document("instead.")
-                .withSource(method.sourceLocation)
+                    .withSource(method.sourceLocation)
         }
 }

@@ -34,7 +34,7 @@ abstract class CodeGeneratorDispatcher : CodeGenerator {
     final override fun constructorCall(
         protocol: Protocol,
         objectType: ObjectTypeNode,
-        arguments: Arguments<AtomicExpressionNode>
+        arguments: Arguments<AtomicExpressionNode>,
     ): CodeBlock =
         generatorFor(protocol).constructorCall(protocol, objectType, arguments)
 
@@ -45,7 +45,7 @@ abstract class CodeGeneratorDispatcher : CodeGenerator {
         sender: LetNode,
         sendProtocol: Protocol,
         receiveProtocol: Protocol,
-        events: ProtocolCommunication
+        events: ProtocolCommunication,
     ): CodeBlock =
         generatorFor(sendProtocol).send(sender, sendProtocol, receiveProtocol, events)
 
@@ -53,7 +53,7 @@ abstract class CodeGeneratorDispatcher : CodeGenerator {
         sender: LetNode,
         sendProtocol: Protocol,
         receiveProtocol: Protocol,
-        events: ProtocolCommunication
+        events: ProtocolCommunication,
     ): CodeBlock =
         generatorFor(receiveProtocol).receive(sender, sendProtocol, receiveProtocol, events)
 

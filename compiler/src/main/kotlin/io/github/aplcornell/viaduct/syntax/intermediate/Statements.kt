@@ -40,7 +40,7 @@ class LetNode(
     override val name: TemporaryNode,
     val value: ExpressionNode,
     override val protocol: ProtocolNode?,
-    override val sourceLocation: SourceLocation
+    override val sourceLocation: SourceLocation,
 ) : SimpleStatementNode(), VariableDeclarationNode {
     override val children: Iterable<ExpressionNode>
         get() = listOf(value)
@@ -51,7 +51,7 @@ class LetNode(
             value.toSurfaceNode(),
             protocol,
             sourceLocation,
-            comment = metadataAsComment(metadata)
+            comment = metadataAsComment(metadata),
         )
 
     override fun copy(children: List<Node>): LetNode =
@@ -64,7 +64,7 @@ class DeclarationNode(
     val objectType: ObjectTypeNode,
     val arguments: Arguments<AtomicExpressionNode>,
     override val protocol: ProtocolNode?,
-    override val sourceLocation: SourceLocation
+    override val sourceLocation: SourceLocation,
 ) : SimpleStatementNode(), ObjectVariableDeclarationNode {
     override val children: Iterable<AtomicExpressionNode>
         get() = arguments
@@ -76,10 +76,10 @@ class DeclarationNode(
                 objectType,
                 protocol,
                 Arguments(arguments.map { it.toSurfaceNode() }, arguments.sourceLocation),
-                sourceLocation
+                sourceLocation,
             ),
             sourceLocation,
-            comment = metadataAsComment(metadata)
+            comment = metadataAsComment(metadata),
         )
 
     override fun copy(children: List<Node>): DeclarationNode =
@@ -88,7 +88,7 @@ class DeclarationNode(
             objectType,
             Arguments(children.map { it as AtomicExpressionNode }, arguments.sourceLocation),
             protocol,
-            sourceLocation
+            sourceLocation,
         )
 }
 
@@ -97,7 +97,7 @@ class UpdateNode(
     val variable: ObjectVariableNode,
     val update: UpdateNameNode,
     val arguments: Arguments<AtomicExpressionNode>,
-    override val sourceLocation: SourceLocation
+    override val sourceLocation: SourceLocation,
 ) : SimpleStatementNode() {
     override val children: Iterable<AtomicExpressionNode>
         get() = arguments
@@ -108,7 +108,7 @@ class UpdateNode(
             update,
             Arguments(arguments.map { it.toSurfaceNode() }, arguments.sourceLocation),
             sourceLocation,
-            comment = metadataAsComment(metadata)
+            comment = metadataAsComment(metadata),
         )
 
     override fun copy(children: List<Node>): UpdateNode =
@@ -116,7 +116,7 @@ class UpdateNode(
             variable,
             update,
             Arguments(children.map { it as AtomicExpressionNode }, arguments.sourceLocation),
-            sourceLocation
+            sourceLocation,
         )
 }
 
@@ -129,7 +129,7 @@ sealed class OutParameterInitializerNode : Node() {
 
 class OutParameterExpressionInitializerNode(
     val expression: AtomicExpressionNode,
-    override val sourceLocation: SourceLocation
+    override val sourceLocation: SourceLocation,
 ) : OutParameterInitializerNode() {
     override val children: Iterable<AtomicExpressionNode>
         get() = listOf(expression)
@@ -140,14 +140,14 @@ class OutParameterExpressionInitializerNode(
     override fun copy(children: List<Node>): Node =
         OutParameterExpressionInitializerNode(
             children[0] as AtomicExpressionNode,
-            sourceLocation
+            sourceLocation,
         )
 }
 
 class OutParameterConstructorInitializerNode(
     val objectType: ObjectTypeNode,
     val arguments: Arguments<AtomicExpressionNode>,
-    override val sourceLocation: SourceLocation
+    override val sourceLocation: SourceLocation,
 ) : OutParameterInitializerNode() {
     override val children: Iterable<AtomicExpressionNode>
         get() = arguments
@@ -158,9 +158,9 @@ class OutParameterConstructorInitializerNode(
             null,
             Arguments(
                 arguments.map { arg -> arg.toSurfaceNode() },
-                arguments.sourceLocation
+                arguments.sourceLocation,
             ),
-            sourceLocation
+            sourceLocation,
         )
 
     override fun copy(children: List<Node>): OutParameterConstructorInitializerNode =
@@ -168,16 +168,16 @@ class OutParameterConstructorInitializerNode(
             objectType,
             Arguments(
                 children.map { child -> child as AtomicExpressionNode },
-                arguments.sourceLocation
+                arguments.sourceLocation,
             ),
-            sourceLocation
+            sourceLocation,
         )
 }
 
 class OutParameterInitializationNode(
     val name: ObjectVariableNode,
     val initializer: OutParameterInitializerNode,
-    override val sourceLocation: SourceLocation
+    override val sourceLocation: SourceLocation,
 ) : SimpleStatementNode() {
     override val children: Iterable<OutParameterInitializerNode>
         get() = listOf(initializer)
@@ -187,14 +187,14 @@ class OutParameterInitializationNode(
             name,
             initializer.toSurfaceNode(),
             sourceLocation,
-            comment = metadataAsComment(metadata)
+            comment = metadataAsComment(metadata),
         )
 
     override fun copy(children: List<Node>): OutParameterInitializationNode =
         OutParameterInitializationNode(
             name,
             children[0] as OutParameterInitializerNode,
-            sourceLocation
+            sourceLocation,
         )
 }
 // Communication Statements
@@ -203,7 +203,7 @@ class OutParameterInitializationNode(
 class OutputNode(
     val message: AtomicExpressionNode,
     override val host: HostNode,
-    override val sourceLocation: SourceLocation
+    override val sourceLocation: SourceLocation,
 ) : SimpleStatementNode(), CommunicationNode {
     override val children: Iterable<AtomicExpressionNode>
         get() = listOf(message)
@@ -213,7 +213,7 @@ class OutputNode(
             message.toSurfaceNode(),
             host,
             sourceLocation,
-            comment = metadataAsComment(metadata)
+            comment = metadataAsComment(metadata),
         )
 
     override fun copy(children: List<Node>): OutputNode =
@@ -240,7 +240,7 @@ sealed class FunctionOutputArgumentNode : FunctionArgumentNode()
 
 class ExpressionArgumentNode(
     val expression: AtomicExpressionNode,
-    override val sourceLocation: SourceLocation
+    override val sourceLocation: SourceLocation,
 ) : FunctionInputArgumentNode() {
     override val children: Iterable<ExpressionNode>
         get() = listOf(expression)
@@ -254,7 +254,7 @@ class ExpressionArgumentNode(
 
 class ObjectReferenceArgumentNode(
     val variable: ObjectVariableNode,
-    override val sourceLocation: SourceLocation
+    override val sourceLocation: SourceLocation,
 ) : FunctionInputArgumentNode() {
     override val children: Iterable<ExpressionNode>
         get() = listOf()
@@ -268,7 +268,7 @@ class ObjectReferenceArgumentNode(
 
 class ObjectDeclarationArgumentNode(
     override val name: ObjectVariableNode,
-    override val sourceLocation: SourceLocation
+    override val sourceLocation: SourceLocation,
 ) : FunctionOutputArgumentNode(), ObjectVariableDeclarationNode {
     override val protocol: ProtocolNode?
         get() = null
@@ -285,7 +285,7 @@ class ObjectDeclarationArgumentNode(
 
 class OutParameterArgumentNode(
     val parameter: ObjectVariableNode,
-    override val sourceLocation: SourceLocation
+    override val sourceLocation: SourceLocation,
 ) : FunctionOutputArgumentNode() {
     override val children: Iterable<ExpressionNode>
         get() = listOf()
@@ -301,7 +301,7 @@ class OutParameterArgumentNode(
 class FunctionCallNode(
     val name: FunctionNameNode,
     val arguments: Arguments<FunctionArgumentNode>,
-    override val sourceLocation: SourceLocation
+    override val sourceLocation: SourceLocation,
 ) : ControlNode() {
     override val children: Iterable<Node>
         get() = arguments
@@ -311,10 +311,10 @@ class FunctionCallNode(
             name,
             Arguments(
                 arguments.map { arg -> arg.toSurfaceNode() },
-                arguments.sourceLocation
+                arguments.sourceLocation,
             ),
             sourceLocation,
-            comment = metadataAsComment(metadata)
+            comment = metadataAsComment(metadata),
         )
 
     override fun copy(children: List<Node>): FunctionCallNode =
@@ -322,9 +322,9 @@ class FunctionCallNode(
             name,
             Arguments(
                 children.map { child -> child as FunctionArgumentNode },
-                arguments.sourceLocation
+                arguments.sourceLocation,
             ),
-            sourceLocation
+            sourceLocation,
         )
 }
 
@@ -338,7 +338,7 @@ class IfNode(
     val guard: AtomicExpressionNode,
     val thenBranch: BlockNode,
     val elseBranch: BlockNode,
-    override val sourceLocation: SourceLocation
+    override val sourceLocation: SourceLocation,
 ) : ControlNode() {
     override val children: Iterable<Node>
         get() = listOf(guard, thenBranch, elseBranch)
@@ -349,7 +349,7 @@ class IfNode(
             thenBranch.toSurfaceNode(metadata),
             elseBranch.toSurfaceNode(metadata),
             sourceLocation,
-            comment = metadataAsComment(metadata)
+            comment = metadataAsComment(metadata),
         )
 
     override fun copy(children: List<Node>): IfNode =
@@ -364,7 +364,7 @@ class IfNode(
 class InfiniteLoopNode(
     val body: BlockNode,
     val jumpLabel: JumpLabelNode,
-    override val sourceLocation: SourceLocation
+    override val sourceLocation: SourceLocation,
 ) : ControlNode() {
     override val children: Iterable<BlockNode>
         get() = listOf(body)
@@ -374,7 +374,7 @@ class InfiniteLoopNode(
             body.toSurfaceNode(metadata),
             jumpLabel,
             sourceLocation,
-            comment = metadataAsComment(metadata)
+            comment = metadataAsComment(metadata),
         )
 
     override fun copy(children: List<Node>): InfiniteLoopNode =
@@ -388,7 +388,7 @@ class InfiniteLoopNode(
  */
 class BreakNode(
     val jumpLabel: JumpLabelNode,
-    override val sourceLocation: SourceLocation
+    override val sourceLocation: SourceLocation,
 ) : ControlNode() {
     override val children: Iterable<Nothing>
         get() = listOf()
@@ -397,7 +397,7 @@ class BreakNode(
         io.github.aplcornell.viaduct.syntax.surface.BreakNode(
             jumpLabel,
             sourceLocation,
-            comment = metadataAsComment(metadata)
+            comment = metadataAsComment(metadata),
         )
 
     override fun copy(children: List<Node>): BreakNode =
@@ -407,7 +407,7 @@ class BreakNode(
 /** Asserting that a condition is true, and failing otherwise. */
 class AssertionNode(
     val condition: AtomicExpressionNode,
-    override val sourceLocation: SourceLocation
+    override val sourceLocation: SourceLocation,
 ) : StatementNode() {
     override val children: Iterable<AtomicExpressionNode>
         get() = listOf(condition)
@@ -416,7 +416,7 @@ class AssertionNode(
         io.github.aplcornell.viaduct.syntax.surface.AssertionNode(
             condition.toSurfaceNode(),
             sourceLocation,
-            comment = metadataAsComment(metadata)
+            comment = metadataAsComment(metadata),
         )
 
     override fun copy(children: List<Node>): AssertionNode =
@@ -427,7 +427,7 @@ class AssertionNode(
 class BlockNode
 private constructor(
     val statements: PersistentList<StatementNode>,
-    override val sourceLocation: SourceLocation
+    override val sourceLocation: SourceLocation,
 ) : StatementNode(), List<StatementNode> by statements {
     constructor(statements: List<StatementNode>, sourceLocation: SourceLocation) :
         this(statements.toPersistentList(), sourceLocation)
@@ -442,7 +442,7 @@ private constructor(
         io.github.aplcornell.viaduct.syntax.surface.BlockNode(
             statements.map { it.toSurfaceNode(metadata) },
             sourceLocation,
-            comment = metadataAsComment(metadata)
+            comment = metadataAsComment(metadata),
         )
 
     override fun copy(children: List<Node>): BlockNode =

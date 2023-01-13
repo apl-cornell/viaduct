@@ -48,7 +48,7 @@ class ReadNode(val temporary: TemporaryNode) :
 class OperatorApplicationNode(
     val operator: Operator,
     val arguments: Arguments<ExpressionNode>,
-    override val sourceLocation: SourceLocation
+    override val sourceLocation: SourceLocation,
 ) : ExpressionNode() {
     override fun toDocumentWithoutComment(): Document = Document("(") + operator.toDocument(arguments) + ")"
 }
@@ -58,7 +58,7 @@ class QueryNode(
     val variable: ObjectVariableNode,
     val query: QueryNameNode,
     val arguments: Arguments<ExpressionNode>,
-    override val sourceLocation: SourceLocation
+    override val sourceLocation: SourceLocation,
 ) : ExpressionNode() {
     override fun toDocumentWithoutComment(): Document =
         IndexingNode.from(this)?.toDocument()
@@ -82,7 +82,7 @@ class DeclassificationNode(
     override val expression: ExpressionNode,
     override val fromLabel: LabelNode?,
     override val toLabel: LabelNode,
-    override val sourceLocation: SourceLocation
+    override val sourceLocation: SourceLocation,
 ) : DowngradeNode() {
     override fun toDocumentWithoutComment(): Document {
         val from = fromLabel?.let { Document() * keyword("from") * listOf(it).braced() } ?: Document()
@@ -96,7 +96,7 @@ class EndorsementNode(
     override val expression: ExpressionNode,
     override val fromLabel: LabelNode,
     override val toLabel: LabelNode?,
-    override val sourceLocation: SourceLocation
+    override val sourceLocation: SourceLocation,
 ) : DowngradeNode() {
     override fun toDocumentWithoutComment(): Document {
         val from = keyword("from") * listOf(fromLabel).braced()
@@ -115,7 +115,7 @@ class EndorsementNode(
 class InputNode(
     val type: ValueTypeNode,
     val host: HostNode,
-    override val sourceLocation: SourceLocation
+    override val sourceLocation: SourceLocation,
 ) : ExpressionNode() {
     override fun toDocumentWithoutComment(): Document = keyword("input") * type * keyword("from") * host
 }
@@ -127,7 +127,7 @@ class ConstructorCallNode(
     val objectType: ObjectTypeNode,
     val protocol: ProtocolNode?,
     val arguments: Arguments<ExpressionNode>,
-    override val sourceLocation: SourceLocation
+    override val sourceLocation: SourceLocation,
 ) : ExpressionNode() {
     override fun toDocumentWithoutComment(): Document {
         val arguments = arguments.tupled().nested()

@@ -30,7 +30,7 @@ abstract class AbstractProtocolComposer : ProtocolComposer() {
             source.hosts.map { host ->
                 CommunicationEvent(
                     source.internalOutputPorts.getValue(host),
-                    destination.internalInputPorts.getValue(host)
+                    destination.internalInputPorts.getValue(host),
                 )
             }
         } else {

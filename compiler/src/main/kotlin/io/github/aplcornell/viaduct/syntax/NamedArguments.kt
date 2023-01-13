@@ -14,7 +14,7 @@ class NamedArguments<out T>
 private constructor(
     private val argumentLabels: PersistentList<ArgumentLabelNode>,
     private val arguments: PersistentMap<ArgumentLabel, T>,
-    override val sourceLocation: SourceLocation
+    override val sourceLocation: SourceLocation,
 ) : HasSourceLocation {
     /** An empty argument list. */
     constructor(sourceLocation: SourceLocation) :
@@ -46,7 +46,7 @@ private constructor(
         @JvmStatic
         operator fun <T> invoke(
             arguments: List<Pair<ArgumentLabelNode, T>>,
-            sourceLocation: SourceLocation
+            sourceLocation: SourceLocation,
         ): NamedArguments<T> {
             // Check for duplicates
             arguments.fold(NameMap<ArgumentLabel, Unit>()) { map, argument -> map.put(argument.first, Unit) }

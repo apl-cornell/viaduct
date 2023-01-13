@@ -12,14 +12,14 @@ val Host.label
     get() =
         Label(
             FreeDistributiveLattice(ConfidentialityComponent(HostPrincipal(this))),
-            FreeDistributiveLattice(IntegrityComponent(HostPrincipal(this)))
+            FreeDistributiveLattice(IntegrityComponent(HostPrincipal(this))),
         )
 
 val LabelVariable.label
     get() =
         Label(
             FreeDistributiveLattice(ConfidentialityComponent(PolymorphicPrincipal(this))),
-            FreeDistributiveLattice(IntegrityComponent(PolymorphicPrincipal(this)))
+            FreeDistributiveLattice(IntegrityComponent(PolymorphicPrincipal(this))),
         )
 
 fun Label.confidentiality(): Label = confidentiality(FreeDistributiveLattice.bounds())

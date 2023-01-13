@@ -201,7 +201,7 @@ fun PrettyPrintable.styled(style: Style): Document =
 fun List<PrettyPrintable>.joined(
     separator: PrettyPrintable = Document(","),
     prefix: PrettyPrintable = Document(),
-    postfix: PrettyPrintable = Document()
+    postfix: PrettyPrintable = Document(),
 ): Document {
     return prefix
         .plus(this.concatenated(separator + Document.lineBreak))

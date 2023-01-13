@@ -23,14 +23,14 @@ sealed class TopLevelDeclarationNode : Node()
  */
 class HostDeclarationNode(
     val name: HostNode,
-    override val sourceLocation: SourceLocation
+    override val sourceLocation: SourceLocation,
 ) : TopLevelDeclarationNode() {
     override fun toDocument(): Document = keyword("host") * name
 }
 
 class BoundParameterNode(
     override val name: VariableNode,
-    override val sourceLocation: SourceLocation
+    override val sourceLocation: SourceLocation,
 ) : Node(), VariableDeclarationNode {
     override fun toDocument(): Document = name.toDocument()
 }
@@ -42,7 +42,7 @@ class ParameterNode(
     override val name: VariableNode,
     val type: ArrayTypeNode,
     val protocol: ProtocolNode,
-    override val sourceLocation: SourceLocation
+    override val sourceLocation: SourceLocation,
 ) : Node(), VariableDeclarationNode {
     override fun toDocument(): Document =
         name + Document(":") * type.toDocument() + Document("@") + protocol.value
@@ -56,7 +56,7 @@ class CircuitDeclarationNode(
     val inputs: Arguments<ParameterNode>,
     val outputs: Arguments<ParameterNode>,
     val body: CircuitBlockNode,
-    override val sourceLocation: SourceLocation
+    override val sourceLocation: SourceLocation,
 ) : TopLevelDeclarationNode() {
     override fun toDocument(): Document =
         ((keyword("circuit fun") * "<" + bounds.joined() + ">") * name + "@" + protocol.value.toDocument() + inputs.tupled() * "->") * outputs.joined() * body

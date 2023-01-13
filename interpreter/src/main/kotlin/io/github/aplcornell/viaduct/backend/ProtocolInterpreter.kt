@@ -25,7 +25,7 @@ interface ProtocolInterpreter {
         sendProtocol: Protocol,
         receiver: SimpleStatementNode,
         recvProtocol: Protocol,
-        events: ProtocolCommunication
+        events: ProtocolCommunication,
     )
 
     suspend fun runReceive(
@@ -33,7 +33,7 @@ interface ProtocolInterpreter {
         sendProtocol: Protocol,
         receiver: SimpleStatementNode,
         recvProtocol: Protocol,
-        events: ProtocolCommunication
+        events: ProtocolCommunication,
     )
 
     suspend fun pushContext()
@@ -56,6 +56,6 @@ interface ProtocolBackend {
         protocols: Set<Protocol>,
         protocolAnalysis: ProtocolAnalysis,
         runtime: ViaductRuntime,
-        connectionMap: Map<Host, HostAddress>
+        connectionMap: Map<Host, HostAddress>,
     ): Iterable<ProtocolInterpreter>
 }

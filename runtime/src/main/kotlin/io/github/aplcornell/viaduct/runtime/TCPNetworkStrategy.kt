@@ -35,7 +35,7 @@ class TCPNetworkStrategy(
     private val host: Host,
     private val hostAddresses: Map<Host, InetSocketAddress>,
     private val connectionNumRetry: Int = CONNECTION_NUM_RETRY,
-    private val connectionRetryDelay: Long = CONNECTION_RETRY_DELAY
+    private val connectionRetryDelay: Long = CONNECTION_RETRY_DELAY,
 ) : NetworkStrategy, Closeable {
     companion object {
         // default: try to connect for at most 10 times, at 1000ms intervals
@@ -96,7 +96,7 @@ class TCPNetworkStrategy(
                             throw HostConnectionException(
                                 this@TCPNetworkStrategy.host,
                                 listeningHost,
-                                listeningHostAddress
+                                listeningHostAddress,
                             )
                         }
                     }

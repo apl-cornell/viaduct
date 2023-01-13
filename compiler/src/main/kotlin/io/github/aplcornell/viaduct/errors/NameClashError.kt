@@ -11,7 +11,7 @@ import io.github.aplcornell.viaduct.syntax.SourceLocation
 class NameClashError(
     private val name: Name,
     private val firstDeclaration: SourceLocation,
-    private val secondDeclaration: SourceLocation
+    private val secondDeclaration: SourceLocation,
 ) : CompilationError() {
     init {
         require(this.firstDeclaration.sourcePath == this.secondDeclaration.sourcePath)

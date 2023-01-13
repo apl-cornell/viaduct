@@ -39,7 +39,7 @@ fun SourceFile.compile(
     saveLabelConstraintGraph: ((graphWriter: (Writer) -> Unit) -> Unit)? = null,
     saveInferredLabels: File? = null,
     saveEstimatedCost: File? = null,
-    saveProtocolAssignment: File? = null
+    saveProtocolAssignment: File? = null,
 ): ProgramNode {
     val program = run {
         val parsed = logger.duration("parsing") {
@@ -87,7 +87,7 @@ fun SourceFile.compile(
             selectionSolver,
             protocolFactory,
             protocolComposer,
-            costEstimator
+            costEstimator,
         ).selectAssignment(program)
     }
 
@@ -107,7 +107,7 @@ fun SourceFile.compile(
         protocolFactory,
         protocolComposer,
         costEstimator,
-        protocolAssignment
+        protocolAssignment,
     )
 
     val annotatedProgram = program.annotateWithProtocols(protocolAssignment)
@@ -119,7 +119,7 @@ fun SourceFile.compile(
     val postProcessedProgram = logger.duration("post processing") {
         val postprocessor = ProgramPostprocessorRegistry(
             abyMuxPostprocessor(protocolAssignment),
-            zkpMuxPostprocessor(protocolAssignment)
+            zkpMuxPostprocessor(protocolAssignment),
         )
         postprocessor.postprocess(annotatedProgram)
     }
@@ -149,7 +149,7 @@ fun SourceFile.compileToKotlin(
     saveLabelConstraintGraph: ((graphWriter: (Writer) -> Unit) -> Unit)? = null,
     saveInferredLabels: File? = null,
     saveEstimatedCost: File? = null,
-    saveProtocolAssignment: File? = null
+    saveProtocolAssignment: File? = null,
 ): FileSpec {
     val postProcessedProgram =
         this.compile(
@@ -159,14 +159,14 @@ fun SourceFile.compileToKotlin(
             saveLabelConstraintGraph,
             saveInferredLabels,
             saveEstimatedCost,
-            saveProtocolAssignment
+            saveProtocolAssignment,
         )
 
     return postProcessedProgram.compileToKotlin(
         fileName,
         packageName,
         backend::codeGenerator,
-        backend.protocolComposer
+        backend.protocolComposer,
     )
 }
 

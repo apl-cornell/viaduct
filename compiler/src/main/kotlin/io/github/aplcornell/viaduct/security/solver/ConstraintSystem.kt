@@ -16,7 +16,7 @@ import io.github.aplcornell.viaduct.algebra.solver.ConstraintSystem as Component
 class ConstraintSystem<C : HeytingAlgebra<C>, V, T : Throwable>(
     constraints: Iterable<Constraint<C, V, T>>,
     bounds: BoundedLattice<C>,
-    delegationContext: LatticeCongruence<C>
+    delegationContext: LatticeCongruence<C>,
 ) {
     private val componentSystem = ComponentSystem(constraints, bounds, delegationContext)
 

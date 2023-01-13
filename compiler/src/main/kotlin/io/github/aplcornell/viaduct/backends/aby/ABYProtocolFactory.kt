@@ -59,7 +59,8 @@ class ABYProtocolFactory(program: ProgramNode) : ProtocolFactory {
                     when (rhs.operator) {
                         is ComparisonOperator, is LogicalOperator,
                         io.github.aplcornell.viaduct.syntax.operators.Not,
-                        Mux, Maximum, Minimum, Division ->
+                        Mux, Maximum, Minimum, Division,
+                        ->
                             protocol !is ArithABY
 
                         else -> true
@@ -83,7 +84,7 @@ class ABYProtocolFactory(program: ProgramNode) : ProtocolFactory {
     private fun cleartextArrayLengthAndIndexConstraint(
         enclosingFunction: FunctionName,
         arrayObject: ObjectVariable,
-        lengthOrIndexExpr: ReadNode
+        lengthOrIndexExpr: ReadNode,
     ): SelectionConstraint {
         val exprDecl = nameAnalysis.declaration(lengthOrIndexExpr)
         val cleartextLengthProtocols =
@@ -102,7 +103,7 @@ class ABYProtocolFactory(program: ProgramNode) : ProtocolFactory {
 
         return Implies(
             variableInSet(FunctionVariable(enclosingFunction, arrayObject), protocols),
-            variableInSet(FunctionVariable(enclosingFunction, exprDecl.name.value), cleartextLengthProtocols)
+            variableInSet(FunctionVariable(enclosingFunction, exprDecl.name.value), cleartextLengthProtocols),
         )
     }
 
@@ -115,7 +116,7 @@ class ABYProtocolFactory(program: ProgramNode) : ProtocolFactory {
                     cleartextArrayLengthAndIndexConstraint(
                         nameAnalysis.enclosingFunctionName(node),
                         rhs.variable.value,
-                        rhs.arguments[0] as ReadNode
+                        rhs.arguments[0] as ReadNode,
                     )
                 } else {
                     super.constraint(node)
@@ -126,7 +127,7 @@ class ABYProtocolFactory(program: ProgramNode) : ProtocolFactory {
                 cleartextArrayLengthAndIndexConstraint(
                     nameAnalysis.enclosingFunctionName(node),
                     node.name.value,
-                    node.arguments[0] as ReadNode
+                    node.arguments[0] as ReadNode,
                 )
 
             else ->
@@ -142,7 +143,7 @@ class ABYProtocolFactory(program: ProgramNode) : ProtocolFactory {
             cleartextArrayLengthAndIndexConstraint(
                 nameAnalysis.enclosingFunctionName(node),
                 node.variable.value,
-                node.arguments[0] as ReadNode
+                node.arguments[0] as ReadNode,
             )
         } else {
             super.constraint(node)

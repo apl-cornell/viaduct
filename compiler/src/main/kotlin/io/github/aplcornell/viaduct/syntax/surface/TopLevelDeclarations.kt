@@ -30,7 +30,7 @@ sealed class TopLevelDeclarationNode : Node()
 class HostDeclarationNode(
     val name: HostNode,
     override val sourceLocation: SourceLocation,
-    override val comment: String? = null
+    override val comment: String? = null,
 ) : TopLevelDeclarationNode() {
     override fun toDocumentWithoutComment(): Document = keyword("host") * name
 }
@@ -44,7 +44,7 @@ class ParameterNode(
     val objectType: ObjectTypeNode,
     val protocol: ProtocolNode?,
     override val sourceLocation: SourceLocation,
-    override val comment: String? = null
+    override val comment: String? = null,
 ) : Node() {
     init {
         assert(objectType.className.value != MutableCell)
@@ -70,7 +70,7 @@ class FunctionDeclarationNode(
     val pcLabel: LabelNode?,
     val body: BlockNode,
     override val sourceLocation: SourceLocation,
-    override val comment: String? = null
+    override val comment: String? = null,
 ) : TopLevelDeclarationNode() {
     override fun toDocumentWithoutComment(): Document =
         keyword("fun") *
@@ -94,7 +94,7 @@ abstract class DelegationDeclarationNode(
     open val to: LabelNode,
     open val delegationProjection: DelegationProjection,
     override val sourceLocation: SourceLocation,
-    override val comment: String?
+    override val comment: String?,
 ) : TopLevelDeclarationNode()
 
 /**
@@ -107,7 +107,7 @@ class AuthorityDelegationDeclarationNode(
     override val to: LabelNode,
     override val delegationProjection: DelegationProjection,
     override val sourceLocation: SourceLocation,
-    override val comment: String?
+    override val comment: String?,
 ) : DelegationDeclarationNode(from, to, delegationProjection, sourceLocation, comment) {
     override fun toDocumentWithoutComment(): Document =
         keyword("assume") *
@@ -126,7 +126,7 @@ class IFCDelegationDeclarationNode(
     override val to: LabelNode,
     override val delegationProjection: DelegationProjection,
     override val sourceLocation: SourceLocation,
-    override val comment: String?
+    override val comment: String?,
 ) : DelegationDeclarationNode(from, to, delegationProjection, sourceLocation, comment) {
     override fun toDocumentWithoutComment(): Document =
         from.toDocument() * "<:" * to.toDocument()

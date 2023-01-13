@@ -140,7 +140,7 @@ data class SelectionProblem(
     val cost: SymbolicCost,
 
     /** Extra metadata that lets us associate cost with different parts of a program. */
-    val costMap: Map<Node, SymbolicCost> = mapOf()
+    val costMap: Map<Node, SymbolicCost> = mapOf(),
 )
 
 internal fun SelectionConstraint.or(other: SelectionConstraint): SelectionConstraint =
@@ -223,7 +223,7 @@ fun SelectionConstraint.guardVisibilityVariables(): Set<GuardVisibilityFlag> =
 
 fun SelectionConstraint.variableNames(): Set<String> =
     this.hostVariables().map { hv -> hv.variable }.toSet().union(
-        this.guardVisibilityVariables().map { gv -> gv.variable }
+        this.guardVisibilityVariables().map { gv -> gv.variable },
     )
 
 /** States whether an expression reads only from the protocols in [protocols]. **/
@@ -236,13 +236,13 @@ fun ExpressionNode.readsFrom(nameAnalysis: NameAnalysis, protocols: Set<Protocol
 fun LetNode.readsFrom(nameAnalysis: NameAnalysis, to: Set<Protocol>, from: Set<Protocol>): SelectionConstraint =
     Implies(
         variableInSet(FunctionVariable(nameAnalysis.enclosingFunctionName(this), this.name.value), to),
-        this.value.readsFrom(nameAnalysis, from)
+        this.value.readsFrom(nameAnalysis, from),
     )
 
 fun DeclarationNode.readsFrom(nameAnalysis: NameAnalysis, to: Set<Protocol>, from: Set<Protocol>): SelectionConstraint =
     Implies(
         variableInSet(FunctionVariable(nameAnalysis.enclosingFunctionName(this), this.name.value), to),
-        this.arguments.map { it.readsFrom(nameAnalysis, from) }.ands()
+        this.arguments.map { it.readsFrom(nameAnalysis, from) }.ands(),
     )
 
 /** States that if the let node is stored at any protocol in [from], it sends to only the protocols in [to]. **/
@@ -253,17 +253,17 @@ fun LetNode.sendsTo(nameAnalysis: NameAnalysis, from: Set<Protocol>, to: Set<Pro
             stmt.createdVariables().map {
                 variableInSet(FunctionVariable(nameAnalysis.enclosingFunctionName(stmt), it), to)
             }.ands()
-        }.ands()
+        }.ands(),
     )
 
 fun DeclarationNode.sendsTo(nameAnalysis: NameAnalysis, from: Set<Protocol>, to: Set<Protocol>): SelectionConstraint =
     Implies(
         variableInSet(
             FunctionVariable(nameAnalysis.enclosingFunctionName(this), this.name.value),
-            from
+            from,
         ),
         nameAnalysis.queriers(this).map {
             val clet = nameAnalysis.correspondingLet(it)
             variableInSet(FunctionVariable(nameAnalysis.enclosingFunctionName(clet), clet.name.value), to)
-        }.ands()
+        }.ands(),
     )

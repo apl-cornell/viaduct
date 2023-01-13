@@ -124,7 +124,7 @@ private sealed class LabelVariable {
 /** Associates [Variable]s with their [Label]s. */
 class InformationFlowAnalysis private constructor(
     private val tree: Tree<Node, ProgramNode>,
-    private val nameAnalysis: NameAnalysis
+    private val nameAnalysis: NameAnalysis,
 ) {
     private val FunctionDeclarationNode.constraintSystem: LabelConstraintSystem by attribute {
         constraints()
@@ -200,21 +200,21 @@ class InformationFlowAnalysis private constructor(
     private fun flowsTo(
         fromLabel: LabelTerm,
         toLabel: LabelTerm,
-        error: (Label, Label) -> InformationFlowError
+        error: (Label, Label) -> InformationFlowError,
     ) =
         fromLabel.flowsTo(toLabel, LabelConstant.bounds(), error).asSequence()
 
     private fun integrityFlowsTo(
         fromLabel: LabelTerm,
         toLabel: LabelTerm,
-        error: (Label, Label) -> InformationFlowError
+        error: (Label, Label) -> InformationFlowError,
     ) =
         fromLabel.integrityFlowsTo(toLabel, LabelConstant.bounds(), error).asSequence()
 
     private fun confidentialityFlowsTo(
         fromLabel: LabelTerm,
         toLabel: LabelTerm,
-        error: (Label, Label) -> InformationFlowError
+        error: (Label, Label) -> InformationFlowError,
     ) =
         fromLabel.confidentialityFlowsTo(toLabel, LabelConstant.bounds(), error).asSequence()
 
@@ -239,13 +239,13 @@ class InformationFlowAnalysis private constructor(
 
             is LabelConfidentiality -> {
                 value.interpretAsVariable(node).confidentiality(
-                    AlgebraTerm.Bounds(FreeDistributiveLattice.bounds())
+                    AlgebraTerm.Bounds(FreeDistributiveLattice.bounds()),
                 )
             }
 
             is LabelIntegrity -> {
                 value.interpretAsVariable(node).integrity(
-                    AlgebraTerm.Bounds(FreeDistributiveLattice.bounds())
+                    AlgebraTerm.Bounds(FreeDistributiveLattice.bounds()),
                 )
             }
 
@@ -269,7 +269,7 @@ class InformationFlowAnalysis private constructor(
                 term(
                     SecurityLattice
                         .Bounds<LabelComponent>(FreeDistributiveLattice.bounds())
-                        .strongest
+                        .strongest,
                 )
             }
 
@@ -277,7 +277,7 @@ class InformationFlowAnalysis private constructor(
                 term(
                     SecurityLattice
                         .Bounds<LabelComponent>(FreeDistributiveLattice.bounds())
-                        .weakest
+                        .weakest,
                 )
             }
         }
@@ -290,7 +290,7 @@ class InformationFlowAnalysis private constructor(
      *  OutputConstraint allows us to specify custom error message. */
     private fun ExpressionNode.flowsTo(
         outputLabel: LabelTerm,
-        outputConstraint: (Pair<HasSourceLocation, LabelTerm>, LabelTerm) -> Sequence<LabelConstraint>
+        outputConstraint: (Pair<HasSourceLocation, LabelTerm>, LabelTerm) -> Sequence<LabelConstraint>,
     ): Sequence<LabelConstraint> =
 
         when (this) {
@@ -309,7 +309,7 @@ class InformationFlowAnalysis private constructor(
                 sequence {
                     arguments.forEach { argument ->
                         yieldAll(
-                            argument.flowsTo(outputLabel, outputConstraint)
+                            argument.flowsTo(outputLabel, outputConstraint),
                         )
                     }
                 }
@@ -349,12 +349,12 @@ class InformationFlowAnalysis private constructor(
                     yieldAll(
                         flowsTo(from, from.swap()) { _, _ ->
                             MalleableDowngradeError(thisNode)
-                        }
+                        },
                     )
                     yieldAll(
                         flowsTo(to, to.swap()) { _, _ ->
                             MalleableDowngradeError(thisNode)
-                        }
+                        },
                     )
                     yieldAll(outputConstraint((thisNode to to), outputLabel))
                     yieldAll(expression flowsTo from)
@@ -366,9 +366,9 @@ class InformationFlowAnalysis private constructor(
                                     IntegrityChangingDeclassificationError(
                                         thisNode,
                                         fromLabel,
-                                        toLabel
+                                        toLabel,
                                     )
-                                }
+                                },
                             )
 
                         is EndorsementNode ->
@@ -377,9 +377,9 @@ class InformationFlowAnalysis private constructor(
                                     ConfidentialityChangingEndorsementError(
                                         thisNode,
                                         fromLabel,
-                                        toLabel
+                                        toLabel,
                                     )
-                                }
+                                },
                             )
                     }
                 }
@@ -416,7 +416,7 @@ class InformationFlowAnalysis private constructor(
                     yieldAll(
                         arguments.flatMap {
                             it flowsTo labelTerm
-                        }
+                        },
                     )
                     // pc flows to l
                     yieldAll(pcFlowsTo(labelTerm))
@@ -430,7 +430,7 @@ class InformationFlowAnalysis private constructor(
                     yieldAll(
                         arguments.flatMap {
                             it flowsTo labelTerm
-                        }
+                        },
                     )
                     // pc flows to label of updated variables
                     yieldAll(pcFlowsTo(labelTerm))
@@ -454,7 +454,7 @@ class InformationFlowAnalysis private constructor(
                             yieldAll(
                                 initializer.arguments.flatMap {
                                     it flowsTo labelTerm
-                                }
+                                },
                             )
                         }
                     }
@@ -496,7 +496,7 @@ class InformationFlowAnalysis private constructor(
                                     (parameter to parameterLabel).flowsTo(nameAnalysis.declaration(it).labelTerm)
                                 }
                             }
-                        }
+                        },
                     )
                     // parameters satisfy function IFC constraints, where polymorphic variables
                     // in the function declaration are interpreted as existential variables
@@ -505,7 +505,7 @@ class InformationFlowAnalysis private constructor(
                             // this has to be IFC delegations
                             (this@constraints to it.from.value.interpretAsVariable(this@constraints)) flowsTo
                                 it.to.value.interpretAsVariable(this@constraints)
-                        }
+                        },
                     )
                 }
             }
@@ -530,14 +530,14 @@ class InformationFlowAnalysis private constructor(
                             flowsTo(p.second, l) { f, t ->
                                 InsecureControlFlowError(p.first, f, t, delegationContext)
                             }
-                        }
+                        },
                     )
                     yieldAll(
                         guard.flowsTo(elsePC) { p, l ->
                             flowsTo(p.second, l) { f, t ->
                                 InsecureControlFlowError(p.first, f, t, delegationContext)
                             }
-                        }
+                        },
                     )
                     // this pc flows to pc of branches
                     yieldAll(pcFlowsTo(thenPC))
@@ -586,7 +586,7 @@ class InformationFlowAnalysis private constructor(
         return ConstraintSystem(
             body.constraints().asIterable(),
             FreeDistributiveLattice.bounds(),
-            this.body.delegationContext
+            this.body.delegationContext,
         )
     }
 
@@ -594,25 +594,25 @@ class InformationFlowAnalysis private constructor(
         get() = trustConfiguration.congruence +
             FreeDistributiveLatticeCongruence(
                 nameAnalysis.enclosingFunction(this)
-                    .labelConstraints.flatMap { it.congruences() }
+                    .labelConstraints.flatMap { it.congruences() },
             ) +
             FreeDistributiveLatticeCongruence(
                 nameAnalysis.enclosingFunction(this).labelParameters.map {
                     FreeDistributiveLattice.LessThanOrEqualTo(
                         FreeDistributiveLattice(
                             IntegrityComponent(
-                                PolymorphicPrincipal(it.value)
-                            )
+                                PolymorphicPrincipal(it.value),
+                            ),
                         ),
                         FreeDistributiveLattice(
                             ConfidentialityComponent(
                                 PolymorphicPrincipal(
-                                    it.value
-                                )
-                            )
-                        )
+                                    it.value,
+                                ),
+                            ),
+                        ),
                     )
-                }
+                },
             )
 
     /** Returns the inferred security label of the [Variable] defined by [node]. */

@@ -16,7 +16,7 @@ import io.github.aplcornell.viaduct.syntax.HasSourceLocation
 class LabelMismatchError(
     private val node: HasSourceLocation,
     private val actualLabel: Label,
-    private val expectedLabel: Label
+    private val expectedLabel: Label,
 ) : InformationFlowError() {
     override val category: String
         get() = "Information Flow Label Mismatch"

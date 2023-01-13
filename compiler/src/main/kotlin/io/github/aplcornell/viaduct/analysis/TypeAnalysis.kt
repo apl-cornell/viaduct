@@ -61,7 +61,7 @@ import io.github.aplcornell.viaduct.syntax.types.VectorType
 /** Associates [Variable]s with their [Type]s. */
 class TypeAnalysis private constructor(
     private val tree: Tree<Node, ProgramNode>,
-    private val nameAnalysis: NameAnalysis
+    private val nameAnalysis: NameAnalysis,
 ) {
     /** Throws [TypeMismatchError] if the type of this expression is not [expectedType]. */
     private fun ExpressionNode.assertHasType(expectedType: ValueType) {
@@ -78,7 +78,7 @@ class TypeAnalysis private constructor(
     private fun checkMethodCall(
         methodName: Located<Name>,
         methodType: FunctionType,
-        arguments: Arguments<ExpressionNode>
+        arguments: Arguments<ExpressionNode>,
     ): ValueType {
         if (methodType.arguments.size != arguments.size) {
             throw IncorrectNumberOfArgumentsError(methodName, methodType.arguments.size, arguments)
@@ -170,7 +170,7 @@ class TypeAnalysis private constructor(
                 ObjectTypeNode(
                     Located(ImmutableCell, this.sourceLocation),
                     Arguments.from(Located(this.expression.type, this.expression.sourceLocation)),
-                    null
+                    null,
                 ).buildType()
 
             is OutParameterConstructorInitializerNode ->
@@ -208,7 +208,7 @@ class TypeAnalysis private constructor(
                             node.variable,
                             node.update,
                             objectType,
-                            node.arguments.map { it.type }
+                            node.arguments.map { it.type },
                         )
                     }
                     checkMethodCall(node.update, methodType, node.arguments)
@@ -234,7 +234,7 @@ class TypeAnalysis private constructor(
                         checkMethodCall(
                             Located(initializationType.className, node.initializer.sourceLocation),
                             constructorType,
-                            arguments
+                            arguments,
                         )
                     }
                 }
@@ -264,7 +264,7 @@ class TypeAnalysis private constructor(
                                 is ExpressionArgumentNode ->
                                     Pair(
                                         ImmutableCellType(argument.expression.type),
-                                        false
+                                        false,
                                     )
 
                                 is ObjectReferenceArgumentNode ->

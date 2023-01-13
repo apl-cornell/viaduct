@@ -25,9 +25,9 @@ class HostTrustConfiguration private constructor(val program: ProgramNode) {
                 program.filterIsInstance<HostDeclarationNode>().map {
                     FreeDistributiveLattice.LessThanOrEqualTo(
                         FreeDistributiveLattice(IntegrityComponent(HostPrincipal(it.name.value) as Principal) as PrincipalComponent),
-                        FreeDistributiveLattice(ConfidentialityComponent(HostPrincipal(it.name.value) as Principal) as PrincipalComponent)
+                        FreeDistributiveLattice(ConfidentialityComponent(HostPrincipal(it.name.value) as Principal) as PrincipalComponent),
                     )
-                }
+                },
         )
 
     fun actsFor(from: Label, to: Label) = actsFor(from, to, congruence)

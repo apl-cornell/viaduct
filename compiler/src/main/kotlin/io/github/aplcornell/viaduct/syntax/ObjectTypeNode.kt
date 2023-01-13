@@ -14,7 +14,7 @@ import io.github.aplcornell.viaduct.syntax.datatypes.MutableCell
 class ObjectTypeNode(
     val className: ClassNameNode,
     val typeArguments: Arguments<ValueTypeNode>,
-    val labelArguments: Arguments<LabelNode>?
+    val labelArguments: Arguments<LabelNode>?,
 ) : HasSourceLocation, PrettyPrintable {
     override val sourceLocation: SourceLocation
         get() = className.sourceLocation.merge((labelArguments ?: typeArguments).sourceLocation)

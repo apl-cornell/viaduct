@@ -50,7 +50,7 @@ fun ProgramNode.specialize(): ProgramNode {
     newDeclarations.addAll(
         this.declarations
             .filterIsInstance<HostDeclarationNode>()
-            .map { hostDecl -> hostDecl.deepCopy() as HostDeclarationNode }
+            .map { hostDecl -> hostDecl.deepCopy() as HostDeclarationNode },
     )
     newDeclarations.addAll(this.declarations.filterIsInstance<DelegationDeclarationNode>())
     newDeclarations.addAll(newFunctions)
@@ -62,15 +62,15 @@ fun ProgramNode.specialize(): ProgramNode {
             main.labelConstraints,
             main.pcLabel,
             newMainBlock,
-            main.sourceLocation
-        )
+            main.sourceLocation,
+        ),
     )
 
     return ProgramNode(newDeclarations, this.sourceLocation)
 }
 
 private class Specializer(
-    private val program: ProgramNode
+    private val program: ProgramNode,
 ) {
     // map from old function name to old function declaration node
     private val functionMap: Map<FunctionName, FunctionDeclarationNode> = program.functionMap
@@ -100,13 +100,13 @@ private class Specializer(
             className.copy(),
             Arguments(
                 typeArguments.map { it.copy() },
-                typeArguments.sourceLocation
+                typeArguments.sourceLocation,
             ),
             if (labelArguments == null) {
                 null
             } else {
                 Arguments(listOf(labelArguments.first().specialize(rewrites)), labelArguments.sourceLocation)
-            }
+            },
         )
 
     private fun LabelNode.specialize(rewrites: Rewrite): LabelNode =
@@ -119,7 +119,7 @@ private class Specializer(
                     expression.specialize(rewrites) as AtomicExpressionNode,
                     fromLabel?.specialize(rewrites),
                     toLabel.specialize(rewrites),
-                    sourceLocation
+                    sourceLocation,
                 )
 
             is EndorsementNode ->
@@ -127,7 +127,7 @@ private class Specializer(
                     expression.specialize(rewrites) as AtomicExpressionNode,
                     fromLabel.specialize(rewrites),
                     toLabel?.specialize(rewrites),
-                    sourceLocation
+                    sourceLocation,
                 )
 
             else -> this.copy(this.children.map { it.specialize(rewrites) })
@@ -173,9 +173,9 @@ private class Specializer(
                     Located(specializedName, this.name.sourceLocation),
                     Arguments(
                         arguments.map { arg -> arg.deepCopy() as FunctionArgumentNode },
-                        arguments.sourceLocation
+                        arguments.sourceLocation,
                     ),
-                    sourceLocation
+                    sourceLocation,
                 )
             }
 
@@ -184,7 +184,7 @@ private class Specializer(
                     guard.deepCopy() as AtomicExpressionNode,
                     thenBranch.specialize(rewrites) as BlockNode,
                     elseBranch.specialize(rewrites) as BlockNode,
-                    sourceLocation
+                    sourceLocation,
                 )
             }
 
@@ -192,14 +192,14 @@ private class Specializer(
                 InfiniteLoopNode(
                     body.specialize(rewrites) as BlockNode,
                     jumpLabel,
-                    sourceLocation
+                    sourceLocation,
                 )
             }
 
             is BlockNode -> {
                 BlockNode(
                     statements.map { it.specialize(rewrites) },
-                    sourceLocation
+                    sourceLocation,
                 )
             }
 
@@ -209,10 +209,10 @@ private class Specializer(
                     objectType.specialize(rewrites),
                     Arguments(
                         arguments.map { it.deepCopy() as AtomicExpressionNode },
-                        arguments.sourceLocation
+                        arguments.sourceLocation,
                     ),
                     protocol,
-                    sourceLocation
+                    sourceLocation,
                 )
 
             is LetNode ->
@@ -220,7 +220,7 @@ private class Specializer(
                     name,
                     value.specialize(rewrites),
                     protocol,
-                    sourceLocation
+                    sourceLocation,
                 )
 
             else -> deepCopy() as StatementNode
@@ -228,7 +228,7 @@ private class Specializer(
 
     private fun FunctionDeclarationNode.specialize(
         rewrites: Rewrite,
-        newName: FunctionName
+        newName: FunctionName,
     ): FunctionDeclarationNode =
         FunctionDeclarationNode(
             Located(newName, name.sourceLocation),
@@ -240,15 +240,15 @@ private class Specializer(
                         it.parameterDirection,
                         it.objectType.specialize(rewrites),
                         it.protocol,
-                        it.sourceLocation
+                        it.sourceLocation,
                     )
                 },
-                parameters.sourceLocation
+                parameters.sourceLocation,
             ),
             Arguments(labelConstraints.sourceLocation),
             pcLabel.specialize(rewrites),
             body.specialize(rewrites) as BlockNode,
-            sourceLocation
+            sourceLocation,
 
         )
 
@@ -275,8 +275,8 @@ private class Specializer(
                                 to callsiteRewrite.rewrite(
                                     informationFlowAnalysis.label(
                                         oldFunctionCallNode,
-                                        it.value
-                                    )
+                                        it.value,
+                                    ),
                                 )
                             )
                     }
@@ -284,12 +284,12 @@ private class Specializer(
                     .flatMap {
                         listOf(
                             (ConfidentialityComponent(it.first as Principal) to it.second.confidentialityComponent),
-                            (IntegrityComponent(it.first as Principal) to it.second.integrityComponent)
+                            (IntegrityComponent(it.first as Principal) to it.second.integrityComponent),
                         )
                     }
 // make it a map
                     .toMap(),
-                hostTrustConfiguration
+                hostTrustConfiguration,
             )
 // then specialize
 // TODO: Want to check label parameters match rewrite keys

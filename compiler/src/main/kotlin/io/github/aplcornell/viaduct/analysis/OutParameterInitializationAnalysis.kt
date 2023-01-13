@@ -43,7 +43,7 @@ private enum class InitializationState {
 /** Take the meet of two maps. */
 private fun meet(
     map1: PersistentMap<ObjectVariable, InitializationState>,
-    map2: PersistentMap<ObjectVariable, InitializationState>
+    map2: PersistentMap<ObjectVariable, InitializationState>,
 ): PersistentMap<ObjectVariable, InitializationState> {
     require(map1.keys == map2.keys)
     return map1.keys.fold(persistentMapOf()) { acc, key ->
@@ -57,7 +57,7 @@ private fun meet(
  */
 class OutParameterInitializationAnalysis private constructor(
     private val tree: Tree<Node, ProgramNode>,
-    private val nameAnalysis: NameAnalysis
+    private val nameAnalysis: NameAnalysis,
 ) {
     /** Defines initialization map of out parameters BEFORE node has been executed. */
     private val Node.flowIn: PersistentMap<ObjectVariable, InitializationState> by attribute {
@@ -90,7 +90,7 @@ class OutParameterInitializationAnalysis private constructor(
             is OutParameterInitializationNode ->
                 this.flowIn.put(
                     this.name.value,
-                    this.flowIn.getValue(this.name.value).join(InitializationState.INITIALIZED)
+                    this.flowIn.getValue(this.name.value).join(InitializationState.INITIALIZED),
                 )
 
             is FunctionCallNode ->

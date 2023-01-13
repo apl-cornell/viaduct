@@ -17,7 +17,7 @@ import kotlinx.collections.immutable.toPersistentList
 class ParsingError(
     private val location: SourceLocation,
     private val actualToken: String,
-    expectedTokens: List<String>
+    expectedTokens: List<String>,
 ) : CompilationError() {
     private val expectedTokens: ImmutableList<String> = expectedTokens.toPersistentList()
 

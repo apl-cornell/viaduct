@@ -13,11 +13,11 @@ interface ProtocolPort {
 data class InputPort(
     override val protocol: Protocol,
     override val host: Host,
-    override val id: PortId
+    override val id: PortId,
 ) : ProtocolPort
 
 data class OutputPort(
     override val protocol: Protocol,
     override val host: Host,
-    override val id: PortId
+    override val id: PortId,
 ) : ProtocolPort

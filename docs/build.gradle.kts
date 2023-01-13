@@ -36,7 +36,7 @@ val mkdocsPublish by tasks.registering {
             "--push",
             "--update-aliases",
             "$version",
-            "latest"
+            "latest",
         )
     }
 }

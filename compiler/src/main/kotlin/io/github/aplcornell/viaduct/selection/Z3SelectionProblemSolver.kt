@@ -36,7 +36,7 @@ object Z3SelectionProblemSolver : SelectionProblemSolver {
             ctx: Context,
             vmap: BiMap<FunctionVariable, IntExpr>,
             boolVarMap: Map<String, BoolExpr>,
-            protocolMap: BiMap<Protocol, Int>
+            protocolMap: BiMap<Protocol, Int>,
         ): BoolExpr {
             return when (constraint) {
                 is True -> ctx.mkTrue()
@@ -47,7 +47,7 @@ object Z3SelectionProblemSolver : SelectionProblemSolver {
                 is Implies ->
                     ctx.mkImplies(
                         boolExpr(constraint.lhs, ctx, vmap, boolVarMap, protocolMap),
-                        boolExpr(constraint.rhs, ctx, vmap, boolVarMap, protocolMap)
+                        boolExpr(constraint.rhs, ctx, vmap, boolVarMap, protocolMap),
                     )
 
                 is Or ->
@@ -72,7 +72,7 @@ object Z3SelectionProblemSolver : SelectionProblemSolver {
             ctx: Context,
             fvMap: BiMap<FunctionVariable, IntExpr>,
             boolVarMap: Map<String, BoolExpr>,
-            protocolMap: BiMap<Protocol, Int>
+            protocolMap: BiMap<Protocol, Int>,
         ): Pair<IntExpr, BoolExpr> =
             when (symCost) {
                 is CostLiteral -> Pair(ctx.mkInt(symCost.cost), ctx.mkTrue())
@@ -93,7 +93,7 @@ object Z3SelectionProblemSolver : SelectionProblemSolver {
                     val (rhsExpr, constrsR) = arithExpr(symCost.rhs, ctx, fvMap, boolVarMap, protocolMap)
                     Pair(
                         ctx.mkITE(ctx.mkGe(lhsExpr, rhsExpr), lhsExpr, rhsExpr) as IntExpr,
-                        ctx.mkAnd(constrsL, constrsR)
+                        ctx.mkAnd(constrsL, constrsR),
                     )
                 }
 
@@ -110,11 +110,11 @@ object Z3SelectionProblemSolver : SelectionProblemSolver {
                                     ctx,
                                     fvMap,
                                     boolVarMap,
-                                    protocolMap
+                                    protocolMap,
                                 )
                                 ctx.mkImplies(guardExpr, ctx.mkAnd(ctx.mkEq(costVar, costExpr), costConstrs))
-                            }.toTypedArray()
-                        )
+                            }.toTypedArray(),
+                        ),
                     )
                 }
             }
@@ -180,7 +180,7 @@ object Z3SelectionProblemSolver : SelectionProblemSolver {
                                 boolVarMap.mapValues { kv ->
                                     (model.evaluate(kv.value, false) as BoolExpr).boolValue == Z3_lbool.Z3_L_TRUE
                                 },
-                                problem
+                                problem,
                             )
 
                         logger.info { "constraints satisfiable, extracted model" }

@@ -14,7 +14,7 @@ import io.github.aplcornell.viaduct.syntax.values.Value
 /** Attaches a source location to an arbitrary type. */
 data class Located<out T : PrettyPrintable>(
     val value: T,
-    override val sourceLocation: SourceLocation
+    override val sourceLocation: SourceLocation,
 ) : HasSourceLocation, PrettyPrintable {
     override fun toDocument(): Document = value.toDocument()
 }

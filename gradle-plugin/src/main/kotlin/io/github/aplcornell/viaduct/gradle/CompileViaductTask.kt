@@ -87,7 +87,7 @@ abstract class CompileViaductTask : DefaultTask() {
                 backend = backend.get(),
                 saveInferredLabels = debugDirectory.resolve("InferredLabels.via"),
                 saveEstimatedCost = debugDirectory.resolve("EstimatedCost.via"),
-                saveProtocolAssignment = debugDirectory.resolve("ProtocolAssignment.via")
+                saveProtocolAssignment = debugDirectory.resolve("ProtocolAssignment.via"),
             )
 
         // Write the output

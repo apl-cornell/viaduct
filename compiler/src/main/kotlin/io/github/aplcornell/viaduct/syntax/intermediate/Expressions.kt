@@ -61,7 +61,7 @@ class ReadNode(val temporary: TemporaryNode) : AtomicExpressionNode() {
 class OperatorApplicationNode(
     val operator: Operator,
     val arguments: Arguments<AtomicExpressionNode>,
-    override val sourceLocation: SourceLocation
+    override val sourceLocation: SourceLocation,
 ) : PureExpressionNode() {
     override val children: Iterable<AtomicExpressionNode>
         get() = arguments
@@ -70,14 +70,14 @@ class OperatorApplicationNode(
         io.github.aplcornell.viaduct.syntax.surface.OperatorApplicationNode(
             operator,
             Arguments(arguments.map { it.toSurfaceNode() }, arguments.sourceLocation),
-            sourceLocation
+            sourceLocation,
         )
 
     override fun copy(children: List<Node>): OperatorApplicationNode =
         OperatorApplicationNode(
             operator,
             Arguments(children.map { it as AtomicExpressionNode }, arguments.sourceLocation),
-            sourceLocation
+            sourceLocation,
         )
 }
 
@@ -86,7 +86,7 @@ class QueryNode(
     val variable: ObjectVariableNode,
     val query: QueryNameNode,
     val arguments: Arguments<AtomicExpressionNode>,
-    override val sourceLocation: SourceLocation
+    override val sourceLocation: SourceLocation,
 ) : PureExpressionNode() {
     override val children: Iterable<AtomicExpressionNode>
         get() = arguments
@@ -96,7 +96,7 @@ class QueryNode(
             variable,
             query,
             Arguments(arguments.map { it.toSurfaceNode() }, arguments.sourceLocation),
-            sourceLocation
+            sourceLocation,
         )
 
     override fun copy(children: List<Node>): QueryNode =
@@ -104,7 +104,7 @@ class QueryNode(
             variable,
             query,
             Arguments(children.map { it as AtomicExpressionNode }, arguments.sourceLocation),
-            sourceLocation
+            sourceLocation,
         )
 }
 
@@ -131,14 +131,14 @@ class DeclassificationNode(
     override val expression: AtomicExpressionNode,
     override val fromLabel: LabelNode?,
     override val toLabel: LabelNode,
-    override val sourceLocation: SourceLocation
+    override val sourceLocation: SourceLocation,
 ) : DowngradeNode() {
     override fun toSurfaceNode(): io.github.aplcornell.viaduct.syntax.surface.DeclassificationNode =
         io.github.aplcornell.viaduct.syntax.surface.DeclassificationNode(
             expression.toSurfaceNode(),
             fromLabel,
             toLabel,
-            sourceLocation
+            sourceLocation,
         )
 
     override fun copy(children: List<Node>): DeclassificationNode =
@@ -150,14 +150,14 @@ class EndorsementNode(
     override val expression: AtomicExpressionNode,
     override val fromLabel: LabelNode,
     override val toLabel: LabelNode?,
-    override val sourceLocation: SourceLocation
+    override val sourceLocation: SourceLocation,
 ) : DowngradeNode() {
     override fun toSurfaceNode(): io.github.aplcornell.viaduct.syntax.surface.EndorsementNode =
         io.github.aplcornell.viaduct.syntax.surface.EndorsementNode(
             expression.toSurfaceNode(),
             fromLabel,
             toLabel,
-            sourceLocation
+            sourceLocation,
         )
 
     override fun copy(children: List<Node>): EndorsementNode =
@@ -174,7 +174,7 @@ class EndorsementNode(
 class InputNode(
     val type: ValueTypeNode,
     override val host: HostNode,
-    override val sourceLocation: SourceLocation
+    override val sourceLocation: SourceLocation,
 ) : ExpressionNode(), CommunicationNode {
     override val children: Iterable<Nothing>
         get() = listOf()

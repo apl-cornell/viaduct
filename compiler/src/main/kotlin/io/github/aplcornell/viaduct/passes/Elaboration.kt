@@ -113,8 +113,8 @@ fun SProgramNode.elaborated(): IProgramNode {
                 declarations.add(
                     IHostDeclarationNode(
                         declaration.name,
-                        declaration.sourceLocation
-                    )
+                        declaration.sourceLocation,
+                    ),
                 )
             }
 
@@ -131,8 +131,8 @@ fun SProgramNode.elaborated(): IProgramNode {
                                 declaration.from,
                                 declaration.to,
                                 declaration.delegationProjection,
-                                declaration.sourceLocation
-                            )
+                                declaration.sourceLocation,
+                            ),
                         )
                     }
 
@@ -142,8 +142,8 @@ fun SProgramNode.elaborated(): IProgramNode {
                                 declaration.from,
                                 declaration.to,
                                 declaration.delegationProjection,
-                                declaration.sourceLocation
-                            )
+                                declaration.sourceLocation,
+                            ),
                         )
                     }
 
@@ -159,7 +159,7 @@ fun SProgramNode.elaborated(): IProgramNode {
 private class FunctionElaborator(val nameGenerator: FreshNameGenerator) {
     fun elaborate(functionDecl: SFunctionDeclarationNode): IFunctionDeclarationNode {
         val objectRenames = functionDecl.parameters.fold(
-            NameMap<ObjectVariable, ObjectVariable>()
+            NameMap<ObjectVariable, ObjectVariable>(),
         ) { map, parameter ->
             val newName = ObjectVariable(nameGenerator.getFreshName(parameter.name.value.name))
             map.put(parameter.name, newName)
@@ -171,7 +171,7 @@ private class FunctionElaborator(val nameGenerator: FreshNameGenerator) {
                 parameter.parameterDirection,
                 parameter.objectType,
                 parameter.protocol,
-                parameter.sourceLocation
+                parameter.sourceLocation,
             )
         }
 
@@ -185,27 +185,27 @@ private class FunctionElaborator(val nameGenerator: FreshNameGenerator) {
                             it.from,
                             it.to,
                             it.delegationProjection,
-                            it.sourceLocation
+                            it.sourceLocation,
                         )
                     }
                 },
-                functionDecl.name.sourceLocation
+                functionDecl.name.sourceLocation,
             )
         // TODO: remove default pc label when we have pc label inference ready
         return IFunctionDeclarationNode(
             functionDecl.name,
             functionDecl.labelParameters ?: Arguments(
                 listOf(),
-                functionDecl.name.sourceLocation
+                functionDecl.name.sourceLocation,
             ),
             Arguments(elaboratedParameters, functionDecl.parameters.sourceLocation),
             delegations,
             functionDecl.pcLabel ?: LabelNode(
                 LabelAnd(LabelIntegrity(LabelBottom), LabelConfidentiality(LabelTop)),
-                functionDecl.sourceLocation
+                functionDecl.sourceLocation,
             ),
             StatementElaborator(nameGenerator, objectRenames = objectRenames).elaborate(functionDecl.body),
-            functionDecl.sourceLocation
+            functionDecl.sourceLocation,
         )
     }
 }
@@ -219,7 +219,7 @@ private class StatementElaborator(
     private val jumpLabelRenames: NameMap<JumpLabel, JumpLabel> = NameMap(),
 
     /** The label of the innermost loop surrounding the current context. */
-    private val surroundingLoop: JumpLabel? = null
+    private val surroundingLoop: JumpLabel? = null,
 ) {
     private companion object {
         const val TMP_NAME = "${'$'}tmp"
@@ -228,14 +228,14 @@ private class StatementElaborator(
 
     private fun copy(
         jumpLabelRenames: NameMap<JumpLabel, JumpLabel> = this.jumpLabelRenames,
-        surroundingLoop: JumpLabel? = this.surroundingLoop
+        surroundingLoop: JumpLabel? = this.surroundingLoop,
     ): StatementElaborator =
         StatementElaborator(
             nameGenerator,
             NameMap(), // Temporaries are local and reset at each block.
             objectRenames,
             jumpLabelRenames,
-            surroundingLoop
+            surroundingLoop,
         )
 
     /** Generates a new temporary whose name is based on [baseName]. */
@@ -269,9 +269,9 @@ private class StatementElaborator(
                     operator,
                     Arguments(
                         arguments.map { it.toAnf(bindings).toAtomic(bindings) },
-                        arguments.sourceLocation
+                        arguments.sourceLocation,
                     ),
-                    sourceLocation
+                    sourceLocation,
                 )
 
             is SQueryNode -> {
@@ -280,9 +280,9 @@ private class StatementElaborator(
                     query,
                     Arguments(
                         arguments.map { it.toAnf(bindings).toAtomic(bindings) },
-                        arguments.sourceLocation
+                        arguments.sourceLocation,
                     ),
-                    sourceLocation
+                    sourceLocation,
                 )
             }
 
@@ -291,7 +291,7 @@ private class StatementElaborator(
                     expression.toAnf(bindings).toAtomic(bindings),
                     fromLabel,
                     toLabel,
-                    sourceLocation
+                    sourceLocation,
                 )
 
             is SEndorsementNode ->
@@ -299,7 +299,7 @@ private class StatementElaborator(
                     expression.toAnf(bindings).toAtomic(bindings),
                     fromLabel,
                     toLabel,
-                    sourceLocation
+                    sourceLocation,
                 )
 
             is SInputNode ->
@@ -315,7 +315,7 @@ private class StatementElaborator(
             is SExpressionArgumentNode ->
                 IExpressionArgumentNode(
                     expression.toAnf(bindings).toAtomic(bindings),
-                    sourceLocation
+                    sourceLocation,
                 )
 
             is SObjectDeclarationArgumentNode -> {
@@ -323,20 +323,20 @@ private class StatementElaborator(
                 objectRenames = objectRenames.put(variable, newName)
                 IObjectDeclarationArgumentNode(
                     Located(newName, variable.sourceLocation),
-                    sourceLocation
+                    sourceLocation,
                 )
             }
 
             is SObjectReferenceArgumentNode ->
                 IObjectReferenceArgumentNode(
                     Located(objectRenames[variable], variable.sourceLocation),
-                    sourceLocation
+                    sourceLocation,
                 )
 
             is SOutParameterArgumentNode ->
                 IOutParameterArgumentNode(
                     Located(objectRenames[parameter], parameter.sourceLocation),
-                    sourceLocation
+                    sourceLocation,
                 )
         }
 
@@ -382,7 +382,7 @@ private class StatementElaborator(
                         TemporaryNode(newName, stmt.temporary.sourceLocation),
                         newValue,
                         stmt.protocol,
-                        stmt.sourceLocation
+                        stmt.sourceLocation,
                     )
                 }
 
@@ -394,7 +394,7 @@ private class StatementElaborator(
                             val newArguments =
                                 Arguments(
                                     initializer.arguments.map { it.toAnf(bindings).toAtomic(bindings) },
-                                    initializer.arguments.sourceLocation
+                                    initializer.arguments.sourceLocation,
                                 )
 
                             val newName = ObjectVariable(nameGenerator.getFreshName(stmt.variable.value.name))
@@ -405,7 +405,7 @@ private class StatementElaborator(
                                 initializer.objectType,
                                 newArguments,
                                 initializer.protocol,
-                                stmt.sourceLocation
+                                stmt.sourceLocation,
                             )
                         }
 
@@ -418,14 +418,14 @@ private class StatementElaborator(
                     IUpdateNode(
                         ObjectVariableNode(
                             objectRenames[stmt.variable],
-                            stmt.variable.sourceLocation
+                            stmt.variable.sourceLocation,
                         ),
                         stmt.update,
                         Arguments(
                             stmt.arguments.map { it.toAnf(bindings).toAtomic(bindings) },
-                            stmt.arguments.sourceLocation
+                            stmt.arguments.sourceLocation,
                         ),
-                        stmt.sourceLocation
+                        stmt.sourceLocation,
                     )
                 }
 
@@ -439,22 +439,22 @@ private class StatementElaborator(
                                     rhs.objectType,
                                     Arguments(
                                         rhs.arguments.map { it.toAnf(bindings).toAtomic(bindings) },
-                                        rhs.arguments.sourceLocation
+                                        rhs.arguments.sourceLocation,
                                     ),
-                                    rhs.sourceLocation
+                                    rhs.sourceLocation,
                                 )
 
                             else ->
                                 IOutParameterExpressionInitializerNode(
                                     rhs.toAnf(bindings).toAtomic(bindings),
-                                    rhs.sourceLocation
+                                    rhs.sourceLocation,
                                 )
                         }
 
                     IOutParameterInitializationNode(
                         newName,
                         initializer,
-                        stmt.sourceLocation
+                        stmt.sourceLocation,
                     )
                 }
 
@@ -464,9 +464,9 @@ private class StatementElaborator(
                         stmt.name,
                         Arguments(
                             stmt.arguments.map { arg -> arg.run(bindings) },
-                            stmt.arguments.sourceLocation
+                            stmt.arguments.sourceLocation,
                         ),
-                        stmt.sourceLocation
+                        stmt.sourceLocation,
                     )
                 }
 
@@ -478,7 +478,7 @@ private class StatementElaborator(
                     IOutputNode(
                         stmt.message.toAnf(bindings).toAtomic(bindings),
                         stmt.host,
-                        stmt.sourceLocation
+                        stmt.sourceLocation,
                     )
                 }
 
@@ -486,7 +486,7 @@ private class StatementElaborator(
                 withBindings { bindings ->
                     IAssertionNode(
                         stmt.condition.toAnf(bindings).toAtomic(bindings),
-                        stmt.sourceLocation
+                        stmt.sourceLocation,
                     )
                 }
 
@@ -496,7 +496,7 @@ private class StatementElaborator(
                         stmt.guard.toAnf(bindings).toAtomic(bindings),
                         elaborate(stmt.thenBranch),
                         elaborate(stmt.elseBranch),
-                        stmt.sourceLocation
+                        stmt.sourceLocation,
                     )
                 }
             }
@@ -514,15 +514,15 @@ private class StatementElaborator(
                     } else {
                         jumpLabelRenames.put(stmt.jumpLabel, renamedJumpLabel)
                     },
-                    surroundingLoop = renamedJumpLabel
+                    surroundingLoop = renamedJumpLabel,
                 )
 
                 listOf(
                     IInfiniteLoopNode(
                         newScope.elaborate(stmt.body),
                         JumpLabelNode(renamedJumpLabel, jumpLabelLocation),
-                        stmt.sourceLocation
-                    )
+                        stmt.sourceLocation,
+                    ),
                 )
             }
 
@@ -537,12 +537,12 @@ private class StatementElaborator(
                     } else {
                         JumpLabelNode(
                             jumpLabelRenames[stmt.jumpLabel],
-                            stmt.jumpLabel.sourceLocation
+                            stmt.jumpLabel.sourceLocation,
                         )
                     }
 
                 listOf(
-                    IBreakNode(jumpLabelNode, stmt.sourceLocation)
+                    IBreakNode(jumpLabelNode, stmt.sourceLocation),
                 )
             }
 
@@ -587,14 +587,14 @@ private fun elaborate(node: SWhileLoopNode): SInfiniteLoopNode =
                 thenBranch = node.body,
                 elseBranch = SBlockNode(
                     SBreakNode(jumpLabel = node.jumpLabel, sourceLocation = node.sourceLocation),
-                    sourceLocation = node.sourceLocation
+                    sourceLocation = node.sourceLocation,
                 ),
-                sourceLocation = node.sourceLocation
+                sourceLocation = node.sourceLocation,
             ),
-            sourceLocation = node.sourceLocation
+            sourceLocation = node.sourceLocation,
         ),
         jumpLabel = node.jumpLabel,
-        sourceLocation = node.sourceLocation
+        sourceLocation = node.sourceLocation,
     )
 
 /**
@@ -622,7 +622,7 @@ private fun elaborate(node: SForLoopNode): SBlockNode =
             guard = node.guard,
             body = SBlockNode(node.body + node.update, sourceLocation = node.sourceLocation),
             jumpLabel = node.jumpLabel,
-            sourceLocation = node.sourceLocation
+            sourceLocation = node.sourceLocation,
         ),
-        sourceLocation = node.sourceLocation
+        sourceLocation = node.sourceLocation,
     )

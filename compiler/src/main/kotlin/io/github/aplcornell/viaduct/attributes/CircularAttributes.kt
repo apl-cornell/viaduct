@@ -47,7 +47,7 @@ private object EvaluationState {
  */
 private class CircularAttribute<in Node, out T>(
     private val initial: T,
-    private val f: (Node) -> T
+    private val f: (Node) -> T,
 ) : Attribute<Node, T>() {
     private val cache: MutableMap<Node, AttributeValue<T>> = ConcurrentHashMap()
 

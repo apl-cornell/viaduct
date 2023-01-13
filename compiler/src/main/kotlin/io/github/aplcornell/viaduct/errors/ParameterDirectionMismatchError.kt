@@ -7,7 +7,7 @@ import io.github.aplcornell.viaduct.syntax.intermediate.ParameterNode
 
 class ParameterDirectionMismatchError(
     private val parameter: ParameterNode,
-    private val argument: FunctionArgumentNode
+    private val argument: FunctionArgumentNode,
 ) : CompilationError() {
     override val category: String
         get() = "Parameter Direction Mismatch"

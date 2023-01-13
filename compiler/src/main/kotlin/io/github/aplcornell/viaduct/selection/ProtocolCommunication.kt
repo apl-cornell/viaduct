@@ -9,7 +9,7 @@ import io.github.aplcornell.viaduct.syntax.ProtocolProjection
 data class CommunicationEvent(val send: OutputPort, val recv: InputPort)
 
 data class ProtocolCommunication(
-    val events: Set<CommunicationEvent>
+    val events: Set<CommunicationEvent>,
 ) : Set<CommunicationEvent> by events {
     fun getHostSends(h: Host, portId: PortId? = null): Set<CommunicationEvent> =
         events.filter { event ->

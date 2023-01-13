@@ -7,7 +7,7 @@ import io.github.aplcornell.viaduct.syntax.intermediate.ParameterNode
 
 class OutParameterInitializationError(
     private val parameter: ParameterNode,
-    private val useSite: Node? = null
+    private val useSite: Node? = null,
 ) : CompilationError() {
     override val category: String
         get() = "Out Parameter Initialization Error"

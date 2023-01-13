@@ -7,7 +7,7 @@ import java.net.InetSocketAddress
 class HostConnectionException(
     host: Host,
     otherHost: Host,
-    address: InetSocketAddress
+    address: InetSocketAddress,
 ) : ViaductRuntimeException(
-    "Runtime for host ${host.name} cannot connect to host ${otherHost.name} at $address."
+    "Runtime for host ${host.name} cannot connect to host ${otherHost.name} at $address.",
 )

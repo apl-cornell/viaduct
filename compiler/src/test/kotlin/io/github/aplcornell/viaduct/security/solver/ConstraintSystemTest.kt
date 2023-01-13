@@ -45,12 +45,12 @@ private val Term<Constant, Variable>.i
 
 /** Shorthand for creating flows to constraints. */
 private infix fun Term<Constant, Variable>.flowsTo(
-    that: Term<Constant, Variable>
+    that: Term<Constant, Variable>,
 ): Iterable<Constraint<Constant, Variable, IllegalFlowException>> =
     this.flowsTo(that, ConstantBounds, ::IllegalFlowException)
 
 private fun solve(
-    vararg constraint: Iterable<Constraint<Constant, Variable, IllegalFlowException>>
+    vararg constraint: Iterable<Constraint<Constant, Variable, IllegalFlowException>>,
 ): ConstraintSolution<Constant, Variable> =
     ConstraintSystem(constraint.flatMap { it }, ConstantBounds, FreeDistributiveLatticeCongruence(listOf())).solution()
 
@@ -71,7 +71,7 @@ internal class ConstraintSystemTest {
         @Test
         fun `constant flows to constant`() {
             solve(
-                t(c("A")) flowsTo t(c("A"))
+                t(c("A")) flowsTo t(c("A")),
             )
         }
 
@@ -79,7 +79,7 @@ internal class ConstraintSystemTest {
         fun `constant not flows to constant`() {
             assertThrows<IllegalFlowException> {
                 solve(
-                    t(c("A")) flowsTo t(c("B"))
+                    t(c("A")) flowsTo t(c("B")),
                 )
             }
         }
@@ -87,7 +87,7 @@ internal class ConstraintSystemTest {
         @Test
         fun `constant flows to variable`() {
             val solution = solve(
-                t(c("A")) flowsTo t("x")
+                t(c("A")) flowsTo t("x"),
             )
             assertEquals(c("A").c(), solution("x"))
         }
@@ -95,7 +95,7 @@ internal class ConstraintSystemTest {
         @Test
         fun `variable flows to constant`() {
             val solution = solve(
-                t("x") flowsTo t(c("A"))
+                t("x") flowsTo t(c("A")),
             )
             assertEquals(c("A").i(), solution("x"))
         }
@@ -105,7 +105,7 @@ internal class ConstraintSystemTest {
             assertThrows<IllegalFlowException> {
                 solve(
                     t(c("A")) flowsTo t("x"),
-                    t("x") flowsTo t(c("B"))
+                    t("x") flowsTo t(c("B")),
                 )
             }
         }
@@ -113,7 +113,7 @@ internal class ConstraintSystemTest {
         @Test
         fun `variable flows to self`() {
             val solution = solve(
-                t("x") flowsTo t("x")
+                t("x") flowsTo t("x"),
             )
             assertEquals(SecurityBounds.weakest, solution("x"))
         }
@@ -123,7 +123,7 @@ internal class ConstraintSystemTest {
             val solution = solve(
                 t("x") flowsTo t(c("A")),
                 t("x") flowsTo t("y"),
-                t("y") flowsTo t(c("B"))
+                t("y") flowsTo t(c("B")),
             )
             assertEquals((c("A") meet c("B")).i(), solution("x"))
             assertEquals(c("B").i(), solution("y"))
@@ -147,8 +147,8 @@ internal class ConstraintSystemTest {
                     t("x") flowsTo t(c("A")),
                     t("y") flowsTo (t("x") join t(c("B"))),
                     t(c("A")) meet t("z") flowsTo t(c("A")),
-                    t(c("A")) meet t("z") flowsTo (t(c("A")) join t("t"))
-                )
+                    t(c("A")) meet t("z") flowsTo (t(c("A")) join t("t")),
+                ),
             )
         }
 
@@ -157,8 +157,8 @@ internal class ConstraintSystemTest {
             println(
                 dotGraph(
                     t(c("A")) flowsTo t("x"),
-                    t("x") flowsTo t(c("B"))
-                )
+                    t("x") flowsTo t(c("B")),
+                ),
             )
         }
     }

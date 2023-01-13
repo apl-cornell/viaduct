@@ -38,7 +38,7 @@ class BackendInterpreter(
     private val program: ProgramNode,
     private val protocolAnalysis: ProtocolAnalysis,
     private val protocolInterpreters: List<ProtocolInterpreter>,
-    private val runtime: ViaductProcessRuntime
+    private val runtime: ViaductProcessRuntime,
 ) {
     private val nameAnalysis = NameAnalysis.get(program)
     private val protocolInterpreterMap: Map<Protocol, ProtocolInterpreter>
@@ -146,7 +146,7 @@ class BackendInterpreter(
                         protocolInterpreterMap[readerProtocol]
                             ?.runReceive(stmt, protocol, reader, readerProtocol!!, events!!)
                             ?: throw ViaductInterpreterError(
-                                "no backend for protocol ${readerProtocol!!.toDocument().print()}"
+                                "no backend for protocol ${readerProtocol!!.toDocument().print()}",
                             )
                     }
                 }

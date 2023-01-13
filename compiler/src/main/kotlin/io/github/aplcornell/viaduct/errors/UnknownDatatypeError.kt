@@ -14,7 +14,7 @@ import io.github.aplcornell.viaduct.syntax.datatypes.ClassName
  */
 class UnknownDatatypeError(
     private val objectName: ObjectVariableNode,
-    private val className: ClassName
+    private val className: ClassName,
 ) : CompilationError() {
     override val category: String
         get() = "Unknown Datatype"

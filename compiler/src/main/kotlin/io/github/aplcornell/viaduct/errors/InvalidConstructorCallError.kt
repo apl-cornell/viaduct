@@ -5,7 +5,7 @@ import io.github.aplcornell.viaduct.syntax.surface.Node
 
 class InvalidConstructorCallError(
     private val node: Node,
-    private val constructorNeeded: Boolean = false
+    private val constructorNeeded: Boolean = false,
 ) : CompilationError() {
     override val category: String
         get() =

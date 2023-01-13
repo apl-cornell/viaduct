@@ -15,7 +15,7 @@ class Committed<T> private constructor(val value: T, val nonce: ByteArray) {
         value = value,
         nonce = ByteArray(NONCE_LENGTH).apply {
             secureRandom.nextBytes(this)
-        }
+        },
     )
 
     companion object {

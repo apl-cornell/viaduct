@@ -91,7 +91,7 @@ data class NormalizeCounter(
     var inIndex: Int = 0,
     val inMap: MutableMap<Int, Int>,
     var publicIndex: Int = 0,
-    val publicMap: MutableMap<Int, Int>
+    val publicMap: MutableMap<Int, Int>,
 )
 
 fun WireTerm.normalize(counter: NormalizeCounter): WireTerm =

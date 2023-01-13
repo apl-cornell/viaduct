@@ -5,7 +5,7 @@ import io.github.aplcornell.viaduct.syntax.HasSourceLocation
 
 class ViaductInterpreterError(
     val information: String,
-    val node: HasSourceLocation? = null
+    val node: HasSourceLocation? = null,
 ) : CompilationError() {
     override val category = "Interpreter Error"
 

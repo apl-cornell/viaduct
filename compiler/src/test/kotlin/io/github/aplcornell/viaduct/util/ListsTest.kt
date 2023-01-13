@@ -21,7 +21,7 @@ internal class ListsTest {
         fun `subsequences are sorted from the smallest to the largest`() {
             assertEquals(
                 listOf(listOf(), listOf(1), listOf(2), listOf(1, 2)),
-                listOf(1, 2).subsequences()
+                listOf(1, 2).subsequences(),
             )
         }
 
@@ -29,7 +29,7 @@ internal class ListsTest {
         fun `duplicate elements are duplicated`() {
             assertEquals(
                 listOf(listOf(), listOf(1), listOf(1), listOf(1, 1)),
-                listOf(1, 1).subsequences()
+                listOf(1, 1).subsequences(),
             )
         }
     }

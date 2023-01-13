@@ -19,7 +19,7 @@ data class HashInfo(val hash: List<Byte>, val nonce: List<Byte>) {
         return (
             MessageDigest.getInstance("SHA-256").digest(nonce.toByteArray() + data.toByteArray()).toList()
                 ==
-                    hash
+                hash
             )
     }
 }
@@ -58,7 +58,7 @@ object Hashing {
         SecureRandom().nextBytes(nonce)
         return HashInfo(
             MessageDigest.getInstance("SHA-256").digest(nonce + data.toByteArray()).toList(),
-            nonce.toList()
+            nonce.toList(),
         )
     }
 
@@ -71,7 +71,7 @@ object Hashing {
     fun deterministicHash(data: List<Byte>): HashInfo {
         return HashInfo(
             MessageDigest.getInstance("SHA-256").digest(data.toByteArray()).toList(),
-            listOf()
+            listOf(),
         )
     }
 

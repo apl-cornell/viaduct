@@ -7,7 +7,7 @@ import io.github.aplcornell.viaduct.syntax.SourceLocation
 class IndexParameterNode(
     override val name: VariableNode,
     val bound: IndexExpressionNode,
-    override val sourceLocation: SourceLocation
+    override val sourceLocation: SourceLocation,
 ) : Node(), VariableDeclarationNode {
     override fun toDocument(): Document = name.toDocument() * "<" * bound
 }

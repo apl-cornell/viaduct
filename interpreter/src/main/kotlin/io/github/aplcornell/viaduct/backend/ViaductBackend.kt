@@ -1,7 +1,7 @@
 package io.github.aplcornell.viaduct.backend
 
 import io.github.aplcornell.viaduct.analysis.ProtocolAnalysis
-import io.github.aplcornell.viaduct.backend.IO.Strategy
+import io.github.aplcornell.viaduct.backend.io.Strategy
 import io.github.aplcornell.viaduct.backends.DefaultCombinedBackend
 import io.github.aplcornell.viaduct.errors.ViaductInterpreterError
 import io.github.aplcornell.viaduct.syntax.Host
@@ -14,7 +14,7 @@ private val logger = KotlinLogging.logger("ViaductBackend")
 
 class ViaductBackend(
     private val backends: List<ProtocolBackend>,
-    private val customConnectionInfo: Map<Host, HostAddress> = mapOf()
+    private val customConnectionInfo: Map<Host, HostAddress> = mapOf(),
 ) {
     companion object {
         const val DEFAULT_PORT = 5000

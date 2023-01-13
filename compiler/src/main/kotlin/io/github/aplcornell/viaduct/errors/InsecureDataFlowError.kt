@@ -18,7 +18,7 @@ class InsecureDataFlowError(
     private val node: HasSourceLocation,
     private val nodeLabel: Label,
     private val to: Label,
-    private val context: FreeDistributiveLatticeCongruence<Component<Principal>>
+    private val context: FreeDistributiveLatticeCongruence<Component<Principal>>,
 ) : InformationFlowError() {
     override val category: String
         get() = "Insecure Data Flow"

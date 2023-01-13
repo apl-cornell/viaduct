@@ -18,7 +18,7 @@ object ABYBackend : Backend {
         get() = mapOf(
             ArithABY.protocolName to ArithABYProtocolParser,
             BoolABY.protocolName to BoolABYProtocolParser,
-            YaoABY.protocolName to YaoABYProtocolParser
+            YaoABY.protocolName to YaoABYProtocolParser,
         )
 
     override fun protocolFactory(program: ProgramNode): ProtocolFactory = ABYProtocolFactory(program)

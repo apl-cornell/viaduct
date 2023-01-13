@@ -59,7 +59,7 @@ private class BackendCodeGenerator(
     val host: Host,
     codeGenerator: (context: CodeGeneratorContext) -> CodeGenerator,
     val protocolComposer: ProtocolComposer,
-    val hostDeclarations: TypeSpec
+    val hostDeclarations: TypeSpec,
 ) {
     private val typeAnalysis = TypeAnalysis.get(program)
     private val nameAnalysis = NameAnalysis.get(program)
@@ -74,16 +74,16 @@ private class BackendCodeGenerator(
 
     fun generateClass(): TypeSpec {
         val classBuilder = TypeSpec.classBuilder(
-            host.name.replaceFirstChar { it.uppercase() }
+            host.name.replaceFirstChar { it.uppercase() },
         ).primaryConstructor(
             FunSpec.constructorBuilder()
                 .addParameter("runtime", ViaductRuntime::class)
-                .build()
+                .build(),
         ).addProperty(
             PropertySpec.builder("runtime", ViaductRuntime::class)
                 .initializer("runtime")
                 .addModifiers(KModifier.PRIVATE)
-                .build()
+                .build(),
         )
 
         for (protocol in protocolAnalysis.participatingProtocols(program)) {
@@ -106,7 +106,7 @@ private class BackendCodeGenerator(
         for (
         param in functionDeclaration.parameters.filter { param ->
             protocolAnalysis.primaryProtocol(param).hosts.contains(
-                host
+                host,
             )
         }
         ) {
@@ -117,7 +117,7 @@ private class BackendCodeGenerator(
             } else {
                 hostFunctionBuilder.addParameter(
                     outBoxName(param.name.value),
-                    Out::class.asClassName().parameterizedBy(paramType)
+                    Out::class.asClassName().parameterizedBy(paramType),
                 )
                 hostFunctionBuilder.addStatement("val %N: %T", paramName, paramType)
             }
@@ -149,8 +149,8 @@ private class BackendCodeGenerator(
                                 stmt,
                                 protocol,
                                 reader.key,
-                                protocolAnalysis.relevantCommunicationEvents(stmt, reader.value)
-                            )
+                                protocolAnalysis.relevantCommunicationEvents(stmt, reader.value),
+                            ),
                         )
                     }
                 }
@@ -163,8 +163,8 @@ private class BackendCodeGenerator(
                                 stmt,
                                 protocol,
                                 reader.key,
-                                protocolAnalysis.relevantCommunicationEvents(stmt, reader.value)
-                            )
+                                protocolAnalysis.relevantCommunicationEvents(stmt, reader.value),
+                            ),
                         )
                     }
                 }
@@ -192,9 +192,9 @@ private class BackendCodeGenerator(
                         Out::class.asClassName().parameterizedBy(
                             codeGenerator.kotlinType(
                                 protocolAnalysis.primaryProtocol(outDeclaration),
-                                typeAnalysis.type(outDeclaration)
-                            )
-                        )
+                                typeAnalysis.type(outDeclaration),
+                            ),
+                        ),
                     )
                     newName
                 }
@@ -209,7 +209,7 @@ private class BackendCodeGenerator(
                         } else {
                             argument(protocolAnalysis.primaryProtocol(arg), arg)
                         }
-                    }.joinToCode()
+                    }.joinToCode(),
                 )
 
                 // Unpack boxed values
@@ -217,7 +217,7 @@ private class BackendCodeGenerator(
                     hostFunctionBuilder.addStatement(
                         "val %N = %N.get()",
                         context.kotlinName(outDeclaration.name.value),
-                        newNames[outDeclaration]!!
+                        newNames[outDeclaration]!!,
                     )
                 }
 
@@ -226,7 +226,7 @@ private class BackendCodeGenerator(
                     hostFunctionBuilder.addStatement(
                         "%N = %N.get()",
                         context.kotlinName(it.parameter.value),
-                        outBoxName(it.parameter.value)
+                        outBoxName(it.parameter.value),
                     )
                 }
             }
@@ -299,13 +299,13 @@ private class BackendCodeGenerator(
             is LetNode -> CodeBlock.of(
                 "val %N = %L",
                 context.kotlinName(stmt.name.value, protocol),
-                codeGenerator.exp(protocol, stmt.value)
+                codeGenerator.exp(protocol, stmt.value),
             )
 
             is DeclarationNode -> CodeBlock.of(
                 "val %N = %L",
                 context.kotlinName(stmt.name.value),
-                codeGenerator.constructorCall(protocol, stmt.objectType, stmt.arguments)
+                codeGenerator.constructorCall(protocol, stmt.objectType, stmt.arguments),
             )
 
             is UpdateNode -> codeGenerator.update(protocol, stmt)
@@ -315,19 +315,19 @@ private class BackendCodeGenerator(
             is OutputNode -> CodeBlock.of(
                 "runtime.output(%T(%L))",
                 typeAnalysis.type(stmt.message).valueClass,
-                codeGenerator.exp(protocol, stmt.message)
+                codeGenerator.exp(protocol, stmt.message),
             )
         }
 
     private fun outParameterInitialization(
         protocol: Protocol,
-        stmt: OutParameterInitializationNode
+        stmt: OutParameterInitializationNode,
     ): CodeBlock {
         val rhs = when (val init = stmt.initializer) {
             is OutParameterConstructorInitializerNode -> codeGenerator.constructorCall(
                 protocol,
                 init.objectType,
-                init.arguments
+                init.arguments,
             )
             is OutParameterExpressionInitializerNode -> codeGenerator.exp(protocol, init.expression)
         }
@@ -338,7 +338,7 @@ private class BackendCodeGenerator(
             parameterName,
             rhs,
             outBoxName(stmt.name.value),
-            parameterName
+            parameterName,
         )
     }
 
@@ -406,7 +406,7 @@ private fun hostDeclarations(program: ProgramNode): TypeSpec {
         hosts.addProperty(
             PropertySpec.builder(host.name, Host::class)
                 .initializer(CodeBlock.of("%T(%S)", Host::class, host.name))
-                .build()
+                .build(),
         )
     }
 
@@ -421,7 +421,7 @@ fun ProgramNode.compileToKotlin(
     fileName: String,
     packageName: String,
     codeGenerator: (context: CodeGeneratorContext) -> CodeGenerator,
-    protocolComposer: ProtocolComposer
+    protocolComposer: ProtocolComposer,
 ): FileSpec {
     val fileBuilder = FileSpec.builder(packageName, fileName)
 
@@ -429,7 +429,7 @@ fun ProgramNode.compileToKotlin(
     fileBuilder.addAnnotation(
         AnnotationSpec.builder(Generated::class)
             .addMember("%S", BackendCodeGenerator::class.qualifiedName!!)
-            .build()
+            .build(),
     )
 
     // Suppress warnings expected in generated code.
@@ -438,7 +438,7 @@ fun ProgramNode.compileToKotlin(
             .addMember("%S", "RedundantVisibilityModifier")
             .addMember("%S", "UNUSED_PARAMETER")
             .addMember("%S", "UNUSED_VARIABLE")
-            .build()
+            .build(),
     )
 
     // Create an object wrapping all generated code.
@@ -455,11 +455,11 @@ fun ProgramNode.compileToKotlin(
                 CodeBlock.of(
                     "%M(%L)",
                     MemberName("kotlin.collections", "setOf"),
-                    hostDeclarations.propertySpecs.map { CodeBlock.of("%N.%N", hostDeclarations, it) }.joinToCode()
-                )
+                    hostDeclarations.propertySpecs.map { CodeBlock.of("%N.%N", hostDeclarations, it) }.joinToCode(),
+                ),
             )
             .addModifiers(KModifier.OVERRIDE)
-            .build()
+            .build(),
     )
 
     // Generate code for each host.

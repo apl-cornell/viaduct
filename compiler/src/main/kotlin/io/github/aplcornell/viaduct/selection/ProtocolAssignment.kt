@@ -8,7 +8,7 @@ import java.lang.Integer.max
 data class ProtocolAssignment(
     val assignment: Map<FunctionVariable, Protocol>,
     val propModel: Map<String, Boolean>,
-    val problem: SelectionProblem
+    val problem: SelectionProblem,
 ) {
     fun getAssignment(fv: FunctionVariable): Protocol =
         assignment.getValue(fv)

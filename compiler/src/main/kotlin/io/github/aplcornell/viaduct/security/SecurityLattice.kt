@@ -29,7 +29,7 @@ class SecurityLattice<T : Lattice<T>>(
      *
      * Unlike [integrity], the result is not a [SecurityLattice].
      */
-    val integrityComponent: T
+    val integrityComponent: T,
 ) : Lattice<SecurityLattice<T>>, TrustLattice<SecurityLattice<T>>, PrettyPrintable {
     /** Returns an element with [confidentialityComponent] and [integrityComponent] equal to [principal]. */
     constructor(principal: T) : this(principal, principal)
@@ -101,7 +101,7 @@ class SecurityLattice<T : Lattice<T>>(
 
     /** Provides bounds for a [SecurityLattice] given bounds for [T]. */
     class Bounds<T : Lattice<T>>(
-        bounds: BoundedLattice<T>
+        bounds: BoundedLattice<T>,
     ) : BoundedLattice<SecurityLattice<T>>, BoundedTrustLattice<SecurityLattice<T>> {
         override val strongest: SecurityLattice<T> =
             SecurityLattice(strongest(bounds), strongest(bounds))

@@ -41,49 +41,49 @@ class Compile : CliktCommand(help = "Compile ideal protocol to secure distribute
             File extension (EXT) determines the output format.
             Supported formats are the same as the ones in Graphviz.
             Most common ones are svg, png, dot, and json.
-        """
+        """,
     ).file(canBeDir = false)
 
     val labelOutput: File? by option(
         "-l",
         "--label",
         metavar = "FILE.via",
-        help = "Write program decorated with minimal authority labels to FILE.via"
+        help = "Write program decorated with minimal authority labels to FILE.via",
     ).file(canBeDir = false)
 
     val costOutput: File? by option(
         "-c",
         "--cost",
         metavar = "FILE.via",
-        help = "Write program decorated with cost to FILE.via"
+        help = "Write program decorated with cost to FILE.via",
     ).file(canBeDir = false)
 
     val protocolSelectionOutput: File? by option(
         "-s",
         "--selection",
         metavar = "FILE.via",
-        help = "Write program decorated with protocol selection to FILE.via"
+        help = "Write program decorated with protocol selection to FILE.via",
     ).file(canBeDir = false)
 
     val maximizeCost: Boolean by option(
         "--maxcost",
-        help = "Maximize cost during protocol selection instead of minimize"
+        help = "Maximize cost during protocol selection instead of minimize",
     ).flag(default = false)
 
     val wanCost: Boolean by option(
         "--wancost",
-        help = "Use WAN cost model instead of LAN cost model"
+        help = "Use WAN cost model instead of LAN cost model",
     ).flag(default = false)
 
     val compileKotlin: Boolean by option(
         "-k",
         "--kotlin",
-        help = "Translate .via source file to a .kt file"
+        help = "Translate .via source file to a .kt file",
     ).flag(default = false)
 
     val selectionProblemSolver: SelectionProblemSolver by option(
         "--solver",
-        help = "Pick which solver to use for protocol selection"
+        help = "Pick which solver to use for protocol selection",
     ).choice(selectionProblemSolvers.toMap()).default(defaultSelectionProblemSolver)
 
     override fun run() {
@@ -100,7 +100,7 @@ class Compile : CliktCommand(help = "Compile ideal protocol to secure distribute
                     saveLabelConstraintGraph = constraintGraphOutput::dumpGraph,
                     saveInferredLabels = labelOutput,
                     saveEstimatedCost = costOutput,
-                    saveProtocolAssignment = protocolSelectionOutput
+                    saveProtocolAssignment = protocolSelectionOutput,
                 )
             output.write(compiledProgram)
         } else {
@@ -112,7 +112,7 @@ class Compile : CliktCommand(help = "Compile ideal protocol to secure distribute
                     saveLabelConstraintGraph = constraintGraphOutput::dumpGraph,
                     saveInferredLabels = labelOutput,
                     saveEstimatedCost = costOutput,
-                    saveProtocolAssignment = protocolSelectionOutput
+                    saveProtocolAssignment = protocolSelectionOutput,
                 )
             output.println(compiledProgram)
         }

@@ -50,8 +50,8 @@ abstract class AbstractCodeGenerator(val context: CodeGeneratorContext) : CodeGe
             else -> {
                 throw IllegalArgumentException(
                     "Cannot convert ${
-                    sourceType.toDocument().print()
-                    } to Kotlin type."
+                        sourceType.toDocument().print()
+                    } to Kotlin type.",
                 )
             }
         }
@@ -96,7 +96,7 @@ abstract class AbstractCodeGenerator(val context: CodeGeneratorContext) : CodeGe
                                 CodeBlock.of(
                                     "%N[%L]",
                                     context.kotlinName(expr.variable.value),
-                                    cleartextExp(protocol, expr.arguments.first())
+                                    cleartextExp(protocol, expr.arguments.first()),
                                 )
                             else -> throw UnsupportedOperatorException(protocol, expr)
                         }
@@ -112,17 +112,17 @@ abstract class AbstractCodeGenerator(val context: CodeGeneratorContext) : CodeGe
     override fun constructorCall(
         protocol: Protocol,
         objectType: ObjectTypeNode,
-        arguments: Arguments<AtomicExpressionNode>
+        arguments: Arguments<AtomicExpressionNode>,
     ): CodeBlock =
         when (objectType.className.value) {
             ImmutableCell -> exp(
                 protocol,
-                arguments.first()
+                arguments.first(),
             )
             MutableCell -> CodeBlock.of(
                 "%T(%L)",
                 Boxed::class,
-                exp(protocol, arguments.first())
+                exp(protocol, arguments.first()),
             )
             Vector -> CodeBlock.of(
                 "%T(%L){ %L }",
@@ -132,14 +132,14 @@ abstract class AbstractCodeGenerator(val context: CodeGeneratorContext) : CodeGe
                     protocol,
                     LiteralNode(
                         objectType.typeArguments[0].value.defaultValue,
-                        objectType.typeArguments[0].sourceLocation
-                    )
-                )
+                        objectType.typeArguments[0].sourceLocation,
+                    ),
+                ),
             )
             else -> throw IllegalArgumentException(
                 "Protocol ${protocol.name} does not support object ${
-                objectType.toDocument().print()
-                }"
+                    objectType.toDocument().print()
+                }",
             )
         }
 
@@ -151,7 +151,7 @@ abstract class AbstractCodeGenerator(val context: CodeGeneratorContext) : CodeGe
                         CodeBlock.of(
                             "%N.set(%L)",
                             context.kotlinName(stmt.variable.value),
-                            exp(protocol, stmt.arguments[0])
+                            exp(protocol, stmt.arguments[0]),
                         )
 
                     else -> throw UnsupportedOperatorException(protocol, stmt)
@@ -164,7 +164,7 @@ abstract class AbstractCodeGenerator(val context: CodeGeneratorContext) : CodeGe
                             "%N[%L] = %L",
                             context.kotlinName(stmt.variable.value),
                             cleartextExp(protocol, stmt.arguments[0]),
-                            exp(protocol, stmt.arguments[1])
+                            exp(protocol, stmt.arguments[1]),
                         )
 
                     else -> throw UnsupportedOperatorException(protocol, stmt)

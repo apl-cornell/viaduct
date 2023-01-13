@@ -16,7 +16,7 @@ enum class ParameterDirection : PrettyPrintable {
     },
     OUT {
         override fun toDocument(): Document = Document(" out").styled(KeywordStyle)
-    }
+    },
 }
 
 /** The name of a function. */
@@ -39,7 +39,7 @@ enum class DelegationKind : PrettyPrintable {
     },
     AUTHORITY {
         override fun toDocument(): Document = Document("Authority Delegation")
-    }
+    },
 }
 
 /**
@@ -55,5 +55,5 @@ enum class DelegationProjection : PrettyPrintable {
     },
     BOTH {
         override fun toDocument(): Document = Document("")
-    }
+    },
 }

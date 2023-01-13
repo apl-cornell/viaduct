@@ -11,7 +11,7 @@ import kotlinx.collections.immutable.toPersistentList
 class FunctionType
 private constructor(
     val arguments: PersistentList<ValueType>,
-    val result: ValueType
+    val result: ValueType,
 ) : Type {
     constructor(arguments: List<ValueType>, result: ValueType) :
         this(arguments.toPersistentList(), result)

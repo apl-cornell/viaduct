@@ -226,7 +226,7 @@ class ABYCodeGenerator(
         when (value) {
             is BooleanValue ->
                 CodeBlock.of(
-                    "%L.putCONSGate(%L.toInt().toBigInteger(), %L)",
+                    "%L.putCONSGate(%L.compareTo(false).toBigInteger(), %L)",
                     protocolToAbyPartyCircuit(protocol),
                     value.value,
                     BIT_LENGTH
@@ -424,7 +424,7 @@ class ABYCodeGenerator(
                     args.last(),
                     args.first(),
 
-                )
+                    )
             else -> throw UnsupportedOperationException("Unknown operator $op.")
         }
 

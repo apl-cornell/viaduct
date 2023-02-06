@@ -1,6 +1,7 @@
 package io.github.apl_cornell.viaduct.syntax.circuit
 
 import io.github.apl_cornell.viaduct.prettyprinting.Document
+import io.github.apl_cornell.viaduct.prettyprinting.braced
 import io.github.apl_cornell.viaduct.prettyprinting.bracketed
 import io.github.apl_cornell.viaduct.prettyprinting.concatenated
 import io.github.apl_cornell.viaduct.prettyprinting.joined
@@ -28,30 +29,25 @@ sealed class CommandNode : Node()
 class BlockNode<Statement : StatementNode>
 private constructor(
     val statements: PersistentList<Statement>,
-    val returnStatement: ReturnNode?,
+    val returnStatement: ReturnNode,
     override val sourceLocation: SourceLocation
 ) : Node(), List<Statement> by statements {
-    constructor(statements: List<Statement>, returnStatement: ReturnNode?, sourceLocation: SourceLocation) :
+    constructor(statements: List<Statement>, returnStatement: ReturnNode, sourceLocation: SourceLocation) :
         this(statements.toPersistentList(), returnStatement, sourceLocation)
 
     override val children: Iterable<Node>
-        get() {
-            var c: Iterable<Node> = statements
-            returnStatement?.let { c += listOf(returnStatement) }
-            return c
-        }
+        get() = statements + listOf(returnStatement)
 
     override fun toDocument(): Document {
         val statements: MutableList<Document> = (statements.map { it.toDocument() } as MutableList<Document>)
-        returnStatement?.let { statements.add(it.toDocument()) }
+        statements.add(returnStatement.toDocument())
         val body: Document = statements.concatenated(separator = Document.forcedLineBreak)
-        return Document("{") +
-            (Document.forcedLineBreak + body).nested() + Document.forcedLineBreak + "}"
+        return listOf((Document.forcedLineBreak + body).nested() + Document.forcedLineBreak).braced()
     }
 }
 
 class ReturnNode(
-    val values: Arguments<PureExpressionNode>,
+    val values: Arguments<ReferenceNode>,
     override val sourceLocation: SourceLocation
 ) : StatementNode() {
     override val children: Iterable<Node>
@@ -69,7 +65,7 @@ class CircuitLetNode(
     override val name: VariableNode,
     val indices: Arguments<IndexParameterNode>,
     val type: ArrayTypeNode,
-    val value: PureExpressionNode,
+    val value: ExpressionNode,
     override val sourceLocation: SourceLocation
 ) : CircuitStatementNode(), VariableDeclarationNode {
     override val children: Iterable<Node>
@@ -80,15 +76,15 @@ class CircuitLetNode(
 }
 
 class LetNode(
-    val name: Arguments<VariableBindingNode>,
+    val bindings: Arguments<VariableBindingNode>,
     val command: CommandNode,
     override val sourceLocation: SourceLocation
 ) : StatementNode() {
     override val children: Iterable<Node>
-        get() = name + listOf(command)
+        get() = bindings + listOf(command)
 
     override fun toDocument(): Document =
-        keyword("val") * name.joined() * "=" * command
+        keyword("val") * bindings.joined() * "=" * command
 }
 
 class VariableBindingNode(
@@ -137,7 +133,8 @@ class InputNode(
 
 /** An external output. */
 class OutputNode(
-    val message: PureExpressionNode,
+    val type: ArrayTypeNode,
+    val message: ReferenceNode,
     val host: HostNode,
     override val sourceLocation: SourceLocation
 ) : CommandNode() {

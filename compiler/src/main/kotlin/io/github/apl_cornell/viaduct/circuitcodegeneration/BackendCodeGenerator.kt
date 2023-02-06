@@ -14,13 +14,21 @@ import com.squareup.kotlinpoet.TypeName
 import com.squareup.kotlinpoet.TypeSpec
 import com.squareup.kotlinpoet.asClassName
 import com.squareup.kotlinpoet.joinToCode
+import io.github.apl_cornell.viaduct.circuitanalysis.NameAnalysis
+import io.github.apl_cornell.viaduct.codegeneration.valueClass
 import io.github.apl_cornell.viaduct.runtime.Out
 import io.github.apl_cornell.viaduct.runtime.ViaductGeneratedProgram
 import io.github.apl_cornell.viaduct.runtime.ViaductRuntime
 import io.github.apl_cornell.viaduct.syntax.Host
+import io.github.apl_cornell.viaduct.syntax.circuit.CircuitCallNode
 import io.github.apl_cornell.viaduct.syntax.circuit.CircuitDeclarationNode
+import io.github.apl_cornell.viaduct.syntax.circuit.FunctionDeclarationNode
+import io.github.apl_cornell.viaduct.syntax.circuit.InputNode
+import io.github.apl_cornell.viaduct.syntax.circuit.LetNode
+import io.github.apl_cornell.viaduct.syntax.circuit.OutputNode
 import io.github.apl_cornell.viaduct.syntax.circuit.ProgramNode
 import io.github.apl_cornell.viaduct.syntax.circuit.Variable
+import io.github.apl_cornell.viaduct.syntax.circuit.VariableBindingNode
 import io.github.apl_cornell.viaduct.util.FreshNameGenerator
 import java.util.LinkedList
 import java.util.Queue
@@ -30,27 +38,19 @@ private class BackendCodeGenerator(
     val program: ProgramNode,
     val host: Host,
     codeGenerator: (context: CodeGeneratorContext) -> CodeGenerator,
-//    val protocolComposer: ProtocolComposer,
     val hostDeclarations: TypeSpec
 ) {
-    //    private val typeAnalysis = TypeAnalysis.get(program)
-//    private val nameAnalysis = NameAnalysis.get(program)
-//    private val protocolAnalysis = ProtocolAnalysis(program, protocolComposer)
+    private val nameAnalysis = NameAnalysis.get(program)
+
     private val context = Context()
     private val codeGenerator = codeGenerator(context)
 
     fun generateClass(): TypeSpec {
-        val classBuilder = TypeSpec.classBuilder(
-            host.name.replaceFirstChar { it.uppercase() }
-        ).primaryConstructor(
-            FunSpec.constructorBuilder()
-                .addParameter("runtime", ViaductRuntime::class)
-                .build()
+        val classBuilder = TypeSpec.classBuilder(host.name.replaceFirstChar { it.uppercase() }).primaryConstructor(
+            FunSpec.constructorBuilder().addParameter("runtime", ViaductRuntime::class).build()
         ).addProperty(
-            PropertySpec.builder("runtime", ViaductRuntime::class)
-                .initializer("runtime")
-                .addModifiers(KModifier.PRIVATE)
-                .build()
+            PropertySpec.builder("runtime", ViaductRuntime::class).initializer("runtime")
+                .addModifiers(KModifier.PRIVATE).build()
         )
         // TODO Replace with a call to ProtocolAnalysis
         val participatingProtocols = program.circuits.map { it.protocol.value }
@@ -60,36 +60,163 @@ private class BackendCodeGenerator(
             }
         }
         for (circuit in program.circuits) {
-            classBuilder.addFunction(generate(host, circuit)).build()
+            classBuilder.addFunction(generate(circuit)).build()
+        }
+        for (function in program.functions) {
+            classBuilder.addFunction(generate(function)).build()
         }
         return classBuilder.build()
     }
 
-    /** Generates code for [host]'s role in the circuit [circuitDeclaration]. */
-    fun generate(host: Host, circuitDeclaration: CircuitDeclarationNode): FunSpec {
+    /** Generates code the function [functionDeclaration]. Currently only supports main. */
+    fun generate(functionDeclaration: FunctionDeclarationNode): FunSpec {
+        val builder = FunSpec.builder(functionDeclaration.name.value.name)
+        for (stmt in functionDeclaration.body.statements) {
+            when (stmt) {
+                is LetNode -> {
+                    when (val command = stmt.command) {
+                        is CircuitCallNode -> {
+                            val circuitDecl: CircuitDeclarationNode = nameAnalysis.declaration(command)
+                            val (importCode, inputs) = codeGenerator.import(
+                                circuitDecl.protocol.value,
+                                command.inputs.zip(circuitDecl.inputs).map { (arg, inParam) ->
+                                    Argument(
+                                        indexExpression(arg, context),
+                                        inParam.type,
+                                        (nameAnalysis.declaration(arg) as VariableBindingNode).protocol.value,
+                                        arg.sourceLocation
+                                    )
+                                }
+                            )
+                            builder.addCode(importCode)
+                            val outNames = circuitDecl.outputs.associateWith { outParam ->
+                                val outName = context.newTemporary(context.kotlinName(outParam.name.value) + "_boxed")
+                                builder.addStatement(
+                                    "val %L = %T()", outName,
+                                    Out::class.asClassName().parameterizedBy(
+                                        kotlinType(
+                                            outParam.type.shape,
+                                            codeGenerator.paramType(
+                                                circuitDecl.protocol.value,
+                                                outParam.type.elementType.value
+                                            )
+                                        )
+                                    )
+                                )
+                                outName
+                            }
+                            builder.addCode(
+                                "%N(%L)",
+                                command.name.value.name,
+                                ((command.bounds).map { indexExpression(it, context) } + inputs +
+                                    circuitDecl.outputs.map { CodeBlock.of("%N", outNames[it]) }).joinToCode()
+                            )
+                            val outTmps = circuitDecl.outputs.map {
+                                val tmp = context.newTemporary(it.name.value.name)
+                                builder.addStatement("%N = %N.get()", tmp, outNames[it]!!)
+                                CodeBlock.of("%N", tmp)
+                            }
+                            val (exportCode, outputs) = codeGenerator.export(
+                                circuitDecl.protocol.value,
+                                stmt.bindings.mapIndexed { index, binding ->
+                                    Argument(
+                                        outTmps[index],
+                                        circuitDecl.outputs[index].type,
+                                        binding.protocol.value,
+                                        binding.sourceLocation
+                                    )
+                                }
+                            )
+                            builder.addCode(exportCode)
+                            stmt.bindings.zip(outputs).forEach { (binding, output) ->
+                                builder.addStatement("val %N = %L", context.kotlinName(binding.name.value), output)
+                            }
+                        }
+                        is InputNode -> {
+                            val name = context.kotlinName(stmt.bindings[0].name.value)
+                            val shape = command.type.shape
+                            if (shape.isEmpty()) {
+                                builder.addStatement(
+                                    "val %N = (runtime.input(%T) as %T).value",
+                                    name,
+                                    command.type.elementType.value::class,
+                                    command.type.elementType.value.valueClass
+                                )
+                            } else {
+                                builder.addStatement(
+                                    "val %N = %L",
+                                    name,
+                                    shape.new(
+                                        { _ -> CodeBlock.of("%T", typeTranslator(command.type.elementType.value)) },
+                                        context
+                                    )
+                                )
+                                builder.addCode(CodeBlock.of("%N", name).forEachIndexed(shape, { _, value ->
+                                    CodeBlock.of(
+                                        "%L = (runtime.input(%T) as %T).value",
+                                        value,
+                                        command.type.elementType.value::class,
+                                        command.type.elementType.value.valueClass
+                                    )
+                                }, context))
+                            }
+                        }
+                        is OutputNode -> {
+                            val shape = command.type.shape
+                            if (shape.isEmpty()) {
+                                builder.addStatement(
+                                    "runtime.output(%T(%L))",
+                                    command.type.elementType.value.valueClass,
+                                    indexExpression(command.message, context)
+                                )
+                            } else {
+                                builder.addCode(
+                                    CodeBlock.of("%N", context.kotlinName(command.message.name.value))
+                                        .forEachIndexed(shape, { _, value ->
+                                            CodeBlock.of(
+                                                "runtime.output(%T(%L))",
+                                                command.type.elementType.value.valueClass,
+                                                value
+                                            )
+                                        }, context)
+                                )
+                            }
+                        }
+                    }
+                }
+                else -> throw UnsupportedOperationException("Incorrect statement type in function body")
+            }
+        }
+        return builder.build()
+    }
+
+    /** Generates code for the circuit [circuitDeclaration]. */
+    fun generate(circuitDeclaration: CircuitDeclarationNode): FunSpec {
         val protocol = circuitDeclaration.protocol.value
         val builder = FunSpec.builder(circuitDeclaration.name.value.name)
         builder.addModifiers(KModifier.PRIVATE)
 
-        for (bound in circuitDeclaration.bounds) {
+        for (bound in circuitDeclaration.sizes) {
             builder.addParameter(context.kotlinName(bound.name.value), INT)
         }
         for (param in circuitDeclaration.inputs) {
             val paramName = context.kotlinName(param.name.value)
-            val paramType = codeGenerator.kotlinType(protocol, param.type.elementType.value)
+            val paramType = if (param.type.shape.isEmpty())
+                codeGenerator.paramType(protocol, param.type.elementType.value)
+            else kotlinType(param.type.shape, codeGenerator.paramType(protocol, param.type.elementType.value))
             builder.addParameter(paramName, paramType)
         }
         for (param in circuitDeclaration.outputs) {
             val paramName = context.kotlinName(param.name.value)
             val baseType = param.type.elementType.value
-            val paramType = if (param.type.shape.isEmpty()) Out::class.asClassName().parameterizedBy(
-                codeGenerator.kotlinType(protocol, baseType)
-            ) else
-                codeGenerator.kotlinType(protocol, baseType)
+            val paramType = Out::class.asClassName().parameterizedBy(
+                if (param.type.shape.isEmpty())
+                    codeGenerator.paramType(protocol, baseType)
+                else kotlinType(param.type.shape, codeGenerator.paramType(protocol, baseType))
+            )
             builder.addParameter(paramName, paramType)
         }
-
-        builder.addCode(codeGenerator.circuitBody(protocol, host, circuitDeclaration))
+        builder.addCode(codeGenerator.circuitBody(protocol, circuitDeclaration))
         return builder.build()
     }
 
@@ -138,8 +265,7 @@ private class BackendCodeGenerator(
                 CodeBlock.of("%N.%M(%L, %L)", "runtime", sendMember, value, codeOf(receiver))
             }
 
-        override fun url(host: Host): CodeBlock =
-            CodeBlock.of("%N.url(%L)", "runtime", codeOf(host))
+        override fun url(host: Host): CodeBlock = CodeBlock.of("%N.url(%L)", "runtime", codeOf(host))
     }
 }
 
@@ -150,8 +276,7 @@ private fun hostDeclarations(program: ProgramNode): TypeSpec {
     // Create a declaration for each host.
     program.hosts.forEach { host ->
         hosts.addProperty(
-            PropertySpec.builder(host.name, Host::class)
-                .initializer(CodeBlock.of("%T(%S)", Host::class, host.name))
+            PropertySpec.builder(host.name, Host::class).initializer(CodeBlock.of("%T(%S)", Host::class, host.name))
                 .build()
         )
     }
@@ -160,8 +285,7 @@ private fun hostDeclarations(program: ProgramNode): TypeSpec {
 }
 
 /** Returns a reference to the declaration of [host]. */
-private fun TypeSpec.reference(host: Host): CodeBlock =
-    CodeBlock.of("%N.%N", this, host.name)
+private fun TypeSpec.reference(host: Host): CodeBlock = CodeBlock.of("%N.%N", this, host.name)
 
 fun ProgramNode.compileToKotlin(
     fileName: String,
@@ -173,18 +297,14 @@ fun ProgramNode.compileToKotlin(
 
     // Mark generated code as automatically generated.
     fileBuilder.addAnnotation(
-        AnnotationSpec.builder(Generated::class)
-            .addMember("%S", BackendCodeGenerator::class.qualifiedName!!)
+        AnnotationSpec.builder(Generated::class).addMember("%S", BackendCodeGenerator::class.qualifiedName!!)
             .build()
     )
 
     // Suppress warnings expected in generated code.
     fileBuilder.addAnnotation(
-        AnnotationSpec.builder(Suppress::class)
-            .addMember("%S", "RedundantVisibilityModifier")
-            .addMember("%S", "UNUSED_PARAMETER")
-            .addMember("%S", "UNUSED_VARIABLE")
-            .build()
+        AnnotationSpec.builder(Suppress::class).addMember("%S", "RedundantVisibilityModifier")
+            .addMember("%S", "UNUSED_PARAMETER").addMember("%S", "UNUSED_VARIABLE").build()
     )
 
     // Create an object wrapping all generated code.
@@ -203,9 +323,7 @@ fun ProgramNode.compileToKotlin(
                     MemberName("kotlin.collections", "setOf"),
                     hostDeclarations.propertySpecs.map { CodeBlock.of("%N.%N", hostDeclarations, it) }.joinToCode()
                 )
-            )
-            .addModifiers(KModifier.OVERRIDE)
-            .build()
+            ).addModifiers(KModifier.OVERRIDE).build()
     )
 
     // Generate code for each host.

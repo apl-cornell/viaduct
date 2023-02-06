@@ -107,6 +107,9 @@ NUM         = ((-)?[1-9][0-9]*) | 0
   ":"             { return symbol(sym.COLON); }
   "::"            { return symbol(sym.COLONCOLON); }
 
+  "input"         { return symbol(sym.INPUT); }
+  "output"        { return symbol(sym.OUTPUT); }
+
   /* Expressions */
   "."             { return symbol(sym.PERIOD); }
 

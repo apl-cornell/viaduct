@@ -1,5 +1,8 @@
 package io.github.apl_cornell.viaduct.syntax.circuit
 
+import io.github.apl_cornell.viaduct.attributes.Attribute
+import io.github.apl_cornell.viaduct.attributes.Tree
+import io.github.apl_cornell.viaduct.attributes.attribute
 import io.github.apl_cornell.viaduct.prettyprinting.Document
 import io.github.apl_cornell.viaduct.prettyprinting.concatenated
 import io.github.apl_cornell.viaduct.prettyprinting.plus
@@ -20,6 +23,21 @@ class ProgramNode(
 
     override val children: Iterable<Node>
         get() = declarations
+
+    /** A lazily constructed [Tree] instance for the program. */
+    val tree: Tree<Node, ProgramNode> by lazy { Tree(this) }
+
+    private val functionCache: Attribute<(ProgramNode) -> Any?, Any?> = attribute {
+        this.invoke(this@ProgramNode)
+    }
+
+    /**
+     * Applies [function] to this program and returns the results.
+     * The result is cached, so future calls with the same function do not evaluate [function].
+     */
+    @Suppress("UNCHECKED_CAST")
+    fun <T> cached(function: (ProgramNode) -> T): T =
+        functionCache(function) as T
 
     val hostDeclarations: Iterable<HostDeclarationNode> =
         declarations.filterIsInstance<HostDeclarationNode>()

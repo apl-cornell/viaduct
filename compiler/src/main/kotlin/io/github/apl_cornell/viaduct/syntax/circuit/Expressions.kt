@@ -13,8 +13,7 @@ import io.github.apl_cornell.viaduct.syntax.values.Value
 
 /** A computation that produces a result. */
 sealed class ExpressionNode : Node()
-sealed class PureExpressionNode : ExpressionNode()
-sealed class IndexExpressionNode : PureExpressionNode()
+sealed class IndexExpressionNode : ExpressionNode()
 
 /** A literal constant. */
 class LiteralNode(
@@ -41,7 +40,7 @@ class LookupNode(
     val variable: VariableNode,
     val indices: Arguments<IndexExpressionNode>,
     override val sourceLocation: SourceLocation
-) : PureExpressionNode() {
+) : ExpressionNode() {
     override val children: Iterable<Node>
         get() = indices
 
@@ -51,9 +50,9 @@ class LookupNode(
 /** An n-ary operator applied to n arguments. */
 class OperatorApplicationNode(
     val operator: OperatorNode,
-    val arguments: Arguments<PureExpressionNode>,
+    val arguments: Arguments<ExpressionNode>,
     override val sourceLocation: SourceLocation
-) : PureExpressionNode() {
+) : ExpressionNode() {
     override val children: Iterable<Node>
         get() = listOf(operator) + arguments
 
@@ -76,11 +75,11 @@ class OperatorNode(
  */
 class ReduceNode(
     val operator: OperatorNode,
-    val defaultValue: PureExpressionNode,
+    val defaultValue: ExpressionNode,
     val indices: IndexParameterNode,
-    val body: PureExpressionNode,
+    val body: ExpressionNode,
     override val sourceLocation: SourceLocation
-) : PureExpressionNode() {
+) : ExpressionNode() {
     override val children: Iterable<Node>
         get() = listOf(operator, defaultValue, indices, body)
 

@@ -26,10 +26,12 @@ internal class CircuitTest {
     @ParameterizedTest
     @ArgumentsSource(CircuitTestFileProvider::class)
     fun `Circuit generates`(file: File) {
-        SourceFile.from(file).parse(DefaultCombinedBackend.protocolParsers).compileToKotlin(
-            file.nameWithoutExtension,
-            packageName = ".",
-            CodeGenerationBackend::codeGenerator,
-        ).writeTo(System.out)
+        print(
+            SourceFile.from(file).parse(DefaultCombinedBackend.protocolParsers).compileToKotlin(
+                file.nameWithoutExtension,
+                packageName = ".",
+                CodeGenerationBackend::codeGenerator,
+            )
+        )
     }
 }

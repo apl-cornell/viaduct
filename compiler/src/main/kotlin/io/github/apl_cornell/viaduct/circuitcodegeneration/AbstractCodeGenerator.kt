@@ -1,120 +1,72 @@
 package io.github.apl_cornell.viaduct.circuitcodegeneration
 
-import com.squareup.kotlinpoet.ARRAY
 import com.squareup.kotlinpoet.CodeBlock
 import com.squareup.kotlinpoet.MemberName
-import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import com.squareup.kotlinpoet.PropertySpec
 import com.squareup.kotlinpoet.TypeName
-import io.github.apl_cornell.viaduct.syntax.Arguments
-import io.github.apl_cornell.viaduct.syntax.Host
+import com.squareup.kotlinpoet.joinToCode
 import io.github.apl_cornell.viaduct.syntax.Protocol
-import io.github.apl_cornell.viaduct.syntax.circuit.ArrayType
+import io.github.apl_cornell.viaduct.syntax.circuit.ArrayTypeNode
 import io.github.apl_cornell.viaduct.syntax.circuit.CircuitDeclarationNode
+import io.github.apl_cornell.viaduct.syntax.circuit.CircuitLetNode
 import io.github.apl_cornell.viaduct.syntax.circuit.CircuitStatementNode
 import io.github.apl_cornell.viaduct.syntax.circuit.ExpressionNode
-import io.github.apl_cornell.viaduct.syntax.circuit.LetNode
 import io.github.apl_cornell.viaduct.syntax.circuit.LiteralNode
 import io.github.apl_cornell.viaduct.syntax.circuit.LookupNode
 import io.github.apl_cornell.viaduct.syntax.circuit.OperatorApplicationNode
+import io.github.apl_cornell.viaduct.syntax.circuit.OperatorNode
 import io.github.apl_cornell.viaduct.syntax.circuit.ReduceNode
 import io.github.apl_cornell.viaduct.syntax.circuit.ReferenceNode
-import io.github.apl_cornell.viaduct.syntax.circuit.Variable
-import io.github.apl_cornell.viaduct.syntax.circuit.VariableNode
 import io.github.apl_cornell.viaduct.syntax.types.ValueType
-import io.github.apl_cornell.viaduct.syntax.values.Value
-import kotlinx.collections.immutable.PersistentList
 
 abstract class AbstractCodeGenerator(val context: CodeGeneratorContext) : CodeGenerator {
-//    private val nameAnalysis = NameAnalysis.get(context.program)
-//    private val typeAnalysis = TypeAnalysis.get(context.program)
+    override fun paramType(protocol: Protocol, sourceType: ValueType): TypeName = typeTranslator(sourceType)
 
-    override fun kotlinType(protocol: Protocol, sourceType: ValueType): TypeName = typeTranslator(sourceType)
+    override fun storageType(protocol: Protocol, sourceType: ValueType): TypeName = typeTranslator(sourceType)
 
-    override fun kotlinType(protocol: Protocol, sourceType: ArrayType): TypeName =
-        if (sourceType.shape.isEmpty()) kotlinType(protocol, sourceType.elementType)
-        else ARRAY.parameterizedBy(
-            kotlinType(
-                protocol,
-                ArrayType(
-                    sourceType.elementType,
-                    sourceType.shape.subList(1, sourceType.shape.size) as PersistentList<IndexExpressionNode>
-                )
-            )
-        )
+    fun paramType(protocol: Protocol, sourceType: ArrayTypeNode): TypeName =
+        kotlinType(sourceType.shape, paramType(protocol, sourceType.elementType.value))
 
-    override fun circuitBody(protocol: Protocol, host: Host, circuitDeclaration: CircuitDeclarationNode): CodeBlock {
+    fun storageType(protocol: Protocol, sourceType: ArrayTypeNode): TypeName =
+        kotlinType(sourceType.shape, storageType(protocol, sourceType.elementType.value))
+
+    override fun circuitBody(protocol: Protocol, circuitDeclaration: CircuitDeclarationNode): CodeBlock {
         val builder = CodeBlock.builder()
         for (stmt in circuitDeclaration.body) {
-            generate(protocol, builder, host, stmt)
+            generate(protocol, builder, stmt)
         }
-        for (ret in circuitDeclaration.body.returnStatement.values.withIndex()) {
-            val outParam = circuitDeclaration.outputs[ret.index]
-            val returnName = context.kotlinName(outParam.name.value)
-            if (outParam.type.shape.isEmpty()) builder.addStatement(
-                "%N.set(%L)", returnName, exp(protocol, ret.value)
+        circuitDeclaration.body.returnStatement.values.forEachIndexed { index, value ->
+            builder.addStatement(
+                "%N.set(%L)",
+                context.kotlinName(circuitDeclaration.outputs[index].name.value),
+                indexExpression(value, context)
             )
-            else builder.addStatement("%N = %L", returnName, exp(protocol, ret.value))
         }
         return builder.build()
     }
 
-//    override fun send(
-//        sender: LetNode, sendProtocol: Protocol, receiveProtocol: Protocol, events: ProtocolCommunication
-//    ): CodeBlock = CodeBlock.of("send (temporary fix)") // TODO remove this and change communication node structure
-//
-//    override fun receive(
-//        sender: LetNode, sendProtocol: Protocol, receiveProtocol: Protocol, events: ProtocolCommunication
-//    ): CodeBlock = CodeBlock.of("receive (temporary fix)")
-
-    private fun generate(protocol: Protocol, builder: CodeBlock.Builder, host: Host, stmt: CircuitStatementNode) {
-        print("Ignore $host") // TODO remove this, just used to make the compiler stop complaining
+    private fun generate(protocol: Protocol, builder: CodeBlock.Builder, stmt: CircuitStatementNode) {
         when (stmt) {
             is CircuitLetNode -> {
-                val lhs: CodeBlock
-                if (stmt.indices.isEmpty()) {
-                    lhs = CodeBlock.of("val %N", context.kotlinName(stmt.name.value))
-                } else {
-                    val name = context.kotlinName(stmt.name.value)
-                    // Declare and initialize target array
-                    val arrayDecl = CodeBlock.builder()
-                    arrayDecl.add("val %N = ", name)
-                    for (i in 0 until stmt.indices.size) {
-                        arrayDecl.add("%T(%L){ ", Array::class, exp(protocol, stmt.indices[i].bound))
-                        if (i == stmt.indices.size - 1) {
-                            arrayDecl.add("%L", 0) // TODO Use type analysis to put ValueType's default value here
-                        }
-                    }
-                    for (i in 0 until stmt.indices.size) {
-                        arrayDecl.add(" }")
-                    }
-                    builder.addStatement(arrayDecl.build().toString())
-                    // Generate left-hand side of array let
-                    val lhsBuilder = CodeBlock.builder()
-                    lhsBuilder.add("%N", name)
-                    for (i in 0 until stmt.indices.size) {
-                        val ind = context.kotlinName(stmt.indices[i].name.value)
-                        lhsBuilder.add("[$ind]")
-                    }
-                    lhs = lhsBuilder.build()
+                val rhsBuilder = CodeBlock.builder()
+                for (indexParameter in stmt.indices) {
+                    rhsBuilder.add(
+                        "%T(%L){ %N -> ",
+                        Array::class,
+                        indexExpression(indexParameter.bound, context),
+                        context.kotlinName(indexParameter.name.value)
+                    )
                 }
-
-                for (i in 0 until stmt.indices.size) {
-                    val name = context.kotlinName(stmt.indices[i].name.value)
-                    val bound = exp(protocol, stmt.indices[i].bound)
-                    builder.beginControlFlow("for ($name in 0 until $bound)")
-                }
-                builder.addStatement("%L = %L", lhs, exp(protocol, stmt.value))
-                for (i in 0 until stmt.indices.size) {
-                    builder.endControlFlow()
-                }
+                rhsBuilder.add("%L", exp(protocol, stmt.value))
+                repeat(stmt.indices.size) { builder.add(" }") }
+                builder.addStatement("val %N = %L", context.kotlinName(stmt.name.value), rhsBuilder.build())
             }
         }
     }
 
     open fun exp(protocol: Protocol, expr: ExpressionNode): CodeBlock = when (expr) {
         is LiteralNode -> {
-            value(expr.value)
+            CodeBlock.of("%L", expr.value)
         }
         is ReferenceNode -> {
             CodeBlock.of("%N", context.kotlinName(expr.name.value))
@@ -123,25 +75,26 @@ abstract class AbstractCodeGenerator(val context: CodeGeneratorContext) : CodeGe
             if (expr.indices.isEmpty()) {
                 CodeBlock.of("%N", context.kotlinName(expr.variable.value))
             } else {
-                val builder = CodeBlock.builder()
-                builder.add("%N", context.kotlinName(expr.variable.value))
-                for (i in 0 until expr.indices.size) {
-                    builder.add("[%L]", exp(protocol, expr.indices[i]))
-                }
-                builder.build()
+                CodeBlock.of(
+                    "%N%L",
+                    context.kotlinName(expr.variable.value),
+                    expr.indices.map { CodeBlock.of("[%L]", exp(protocol, it)) }.joinToCode(separator = "")
+                )
             }
         }
         is ReduceNode -> reduce(protocol, expr)
-        is OperatorApplicationNode -> throw UnsupportedOperatorException(protocol, expr)
-        else -> throw UnsupportedOperatorException(protocol, expr)
+        is OperatorApplicationNode -> CodeBlock.of(
+            "(%L)",
+            operatorApplication(protocol, expr.operator, expr.arguments.map { exp(protocol, it) })
+        )
     }
 
+    open fun operatorApplication(protocol: Protocol, op: OperatorNode, arguments: List<CodeBlock>): CodeBlock =
+        throw UnsupportedOperatorException(protocol, op)
+
     private fun reduce(protocol: Protocol, r: ReduceNode): CodeBlock {
-        val loc = r.sourceLocation
-        val acc = Variable("acc")
-        val element = Variable("element")
-        val accRef = ReferenceNode(VariableNode(acc, loc), loc)
-        val elemRef = ReferenceNode(VariableNode(element, loc), loc)
+        val acc = context.newTemporary("acc")
+        val element = context.newTemporary("element")
         return CodeBlock.of(
             "(0 until %L).%M { %N -> %L }.%M(%L) { %N, %N -> %L }",
             exp(protocol, r.indices.bound),
@@ -150,18 +103,15 @@ abstract class AbstractCodeGenerator(val context: CodeGeneratorContext) : CodeGe
             exp(protocol, r.body),
             MemberName("kotlin.collections", "fold"),
             exp(protocol, r.defaultValue),
-            context.kotlinName(acc),
-            context.kotlinName(element),
-            exp(
+            acc,
+            element,
+            operatorApplication(
                 protocol,
-                OperatorApplicationNode(
-                    r.operator.operator, Arguments(listOf(accRef, elemRef), loc), loc
-                )
+                r.operator,
+                listOf(CodeBlock.of(acc), CodeBlock.of(element))
             )
         )
     }
-
-    fun value(value: Value): CodeBlock = CodeBlock.of("%L", value)
 
     override fun setup(protocol: Protocol): Iterable<PropertySpec> = listOf()
 }

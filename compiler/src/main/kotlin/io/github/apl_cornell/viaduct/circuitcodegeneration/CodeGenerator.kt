@@ -3,36 +3,46 @@ package io.github.apl_cornell.viaduct.circuitcodegeneration
 import com.squareup.kotlinpoet.CodeBlock
 import com.squareup.kotlinpoet.PropertySpec
 import com.squareup.kotlinpoet.TypeName
-import io.github.apl_cornell.viaduct.selection.ProtocolCommunication
-import io.github.apl_cornell.viaduct.syntax.Host
+import io.github.apl_cornell.viaduct.syntax.HasSourceLocation
 import io.github.apl_cornell.viaduct.syntax.Protocol
 import io.github.apl_cornell.viaduct.syntax.ProtocolName
-import io.github.apl_cornell.viaduct.syntax.circuit.ArrayType
+import io.github.apl_cornell.viaduct.syntax.SourceLocation
+import io.github.apl_cornell.viaduct.syntax.circuit.ArrayTypeNode
 import io.github.apl_cornell.viaduct.syntax.circuit.CircuitDeclarationNode
-import io.github.apl_cornell.viaduct.syntax.circuit.LetNode
 import io.github.apl_cornell.viaduct.syntax.types.ValueType
 
+class Argument(
+    val value: CodeBlock,
+    val type: ArrayTypeNode,
+    val protocol: Protocol,
+    override val sourceLocation: SourceLocation
+) : HasSourceLocation
+
 interface CodeGenerator {
-    fun kotlinType(protocol: Protocol, sourceType: ValueType): TypeName
+    fun paramType(protocol: Protocol, sourceType: ValueType): TypeName
 
-    fun kotlinType(protocol: Protocol, sourceType: ArrayType): TypeName
+    fun storageType(protocol: Protocol, sourceType: ValueType): TypeName
 
-    /** Generates code for [host]'s role in the body of circuit [circuitDeclaration]. */
-    fun circuitBody(protocol: Protocol, host: Host, circuitDeclaration: CircuitDeclarationNode): CodeBlock
+    /** Generates code for the body of circuit [circuitDeclaration]. */
+    fun circuitBody(protocol: Protocol, circuitDeclaration: CircuitDeclarationNode): CodeBlock
 
-    fun send(
-        sender: LetNode,
-        sendProtocol: Protocol,
-        receiveProtocol: Protocol,
-        events: ProtocolCommunication
-    ): CodeBlock
+    /**
+     * Generates code for importing values from storage formats, and the names associated with imported results.
+     * @param protocol The protocol values are being imported to.
+     * @param valuesAndSources CodeBlocks which reference the values to be imported, and the protocols on which the
+     * values are stored.
+     * @return (codeBlock, names) such that codeBlock is the code which imports values, names is the list of names
+     * associated with the results.
+     *///TODO updateme
+    fun import(
+        protocol: Protocol,
+        arguments: List<Argument>
+    ): Pair<CodeBlock, List<CodeBlock>>
 
-    fun receive(
-        sender: LetNode,
-        sendProtocol: Protocol,
-        receiveProtocol: Protocol,
-        events: ProtocolCommunication
-    ): CodeBlock
+    fun export(
+        protocol: Protocol,
+        arguments: List<Argument>
+    ): Pair<CodeBlock, List<CodeBlock>>
 
     fun setup(protocol: Protocol): Iterable<PropertySpec>
 }

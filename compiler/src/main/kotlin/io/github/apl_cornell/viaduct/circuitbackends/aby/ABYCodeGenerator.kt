@@ -13,20 +13,22 @@ import io.github.apl_cornell.aby.Aby
 import io.github.apl_cornell.aby.Role
 import io.github.apl_cornell.aby.Share
 import io.github.apl_cornell.aby.SharingType
+import io.github.apl_cornell.viaduct.circuitanalysis.NameAnalysis
+import io.github.apl_cornell.viaduct.circuitbackends.cleartext.Local
+import io.github.apl_cornell.viaduct.circuitbackends.cleartext.Replication
 import io.github.apl_cornell.viaduct.circuitcodegeneration.AbstractCodeGenerator
+import io.github.apl_cornell.viaduct.circuitcodegeneration.Argument
 import io.github.apl_cornell.viaduct.circuitcodegeneration.CodeGeneratorContext
-import io.github.apl_cornell.viaduct.selection.ProtocolCommunication
+import io.github.apl_cornell.viaduct.circuitcodegeneration.UnsupportedCommunicationException
 import io.github.apl_cornell.viaduct.syntax.Host
 import io.github.apl_cornell.viaduct.syntax.Operator
 import io.github.apl_cornell.viaduct.syntax.Protocol
 import io.github.apl_cornell.viaduct.syntax.circuit.ExpressionNode
 import io.github.apl_cornell.viaduct.syntax.circuit.IndexExpressionNode
-import io.github.apl_cornell.viaduct.syntax.circuit.LetNode
 import io.github.apl_cornell.viaduct.syntax.circuit.LiteralNode
-import io.github.apl_cornell.viaduct.syntax.circuit.LookupNode
-import io.github.apl_cornell.viaduct.syntax.circuit.OperatorApplicationNode
-import io.github.apl_cornell.viaduct.syntax.circuit.ReduceNode
+import io.github.apl_cornell.viaduct.syntax.circuit.OperatorNode
 import io.github.apl_cornell.viaduct.syntax.circuit.ReferenceNode
+import io.github.apl_cornell.viaduct.syntax.circuit.SizeParameterNode
 import io.github.apl_cornell.viaduct.syntax.operators.Addition
 import io.github.apl_cornell.viaduct.syntax.operators.And
 import io.github.apl_cornell.viaduct.syntax.operators.Division
@@ -44,6 +46,7 @@ import io.github.apl_cornell.viaduct.syntax.operators.Negation
 import io.github.apl_cornell.viaduct.syntax.operators.Not
 import io.github.apl_cornell.viaduct.syntax.operators.Or
 import io.github.apl_cornell.viaduct.syntax.operators.Subtraction
+import io.github.apl_cornell.viaduct.syntax.types.IntegerType
 import io.github.apl_cornell.viaduct.syntax.types.ValueType
 import io.github.apl_cornell.viaduct.syntax.values.BooleanValue
 import io.github.apl_cornell.viaduct.syntax.values.IntegerValue
@@ -55,9 +58,7 @@ private data class ABYPair(val server: Host, val client: Host)
 class ABYCodeGenerator(
     context: CodeGeneratorContext
 ) : AbstractCodeGenerator(context) {
-    //    private val typeAnalysis: TypeAnalysis = TypeAnalysis.get(context.program)
-//    private val nameAnalysis: NameAnalysis = NameAnalysis.get(context.program)
-//    private val protocolAnalysis: ProtocolAnalysis = ProtocolAnalysis(context.program, context.protocolComposer)
+    private val nameAnalysis: NameAnalysis = NameAnalysis.get(context.program)
     private var protocolToABYPartyMap: MutableMap<ABYPair, String> = mutableMapOf()
 
     companion object {
@@ -412,180 +413,134 @@ class ABYCodeGenerator(
                     args.last(),
                     args.first(),
 
-                )
+                    )
             else -> throw UnsupportedOperationException("Unknown operator $op.")
         }
 
-    override fun kotlinType(protocol: Protocol, sourceType: ValueType): TypeName = (Share::class).asTypeName()
+    override fun paramType(protocol: Protocol, sourceType: ValueType): TypeName = (Share::class).asTypeName()
+
+    override fun storageType(protocol: Protocol, sourceType: ValueType): TypeName = INT
 
     override fun exp(protocol: Protocol, expr: ExpressionNode): CodeBlock =
         when (expr) {
             is LiteralNode -> valueToShare(expr.value, protocol)
             is ReferenceNode -> CodeBlock.of("%N", context.kotlinName(expr.name.value))
-            is LookupNode -> if (expr.indices.isEmpty() || expr.indices.map { clearArgument(it) }
-                .reduce { a, b -> a && b }
-            )
-                super.exp(protocol, expr)
-            else throw UnsupportedOperationException("Secret indexing not supported")
-            is ReduceNode -> super.exp(protocol, expr)
-            is OperatorApplicationNode ->
-                shareOfOperatorApplication(
-                    protocol,
-                    expr.operator,
-                    expr.arguments.map { exp(protocol, it) }
-                )
+            else -> super.exp(protocol, expr)
         }
+
+    override fun operatorApplication(protocol: Protocol, op: OperatorNode, arguments: List<CodeBlock>) =
+        shareOfOperatorApplication(
+            protocol,
+            op.operator,
+            arguments
+        )
 
     private fun clearArgument(arg: IndexExpressionNode): Boolean =
         when (arg) {
             is LiteralNode -> true
-            is ReferenceNode -> true /* protocolAnalysis.relevantCommunicationEvents(arg)
-                .all { event -> event.recv.id == ABY.CLEARTEXT_INPUT } */
-            // TODO fix this once protocol analysis implemented
+            is ReferenceNode -> (nameAnalysis.declaration(arg) is SizeParameterNode)
         }
 
     private fun roleToCodeBlock(role: Role): CodeBlock = CodeBlock.of("%T.%L", role::class.asClassName(), role)
 
-    override fun send(
-        sender: LetNode,
-        sendProtocol: Protocol,
-        receiveProtocol: Protocol,
-        events: ProtocolCommunication
-    ) = CodeBlock.of("Send not yet implemented")
-    /*: CodeBlock {
-        if (receiveProtocol is ABY) {
-            return CodeBlock.of("")
-        }
-        val outBuilder = CodeBlock.builder()
-        val outShareName = context.newTemporary("outShare")
-
-        val otherHostInfo: Pair<Host, Role> =
-            if (context.host == (sendProtocol as ABY).client) {
-                Pair(sendProtocol.server, Role.SERVER)
-            } else {
-                Pair(sendProtocol.client, Role.CLIENT)
-            }
-
-        val thisHostRole = if (otherHostInfo.second == Role.CLIENT) Role.SERVER else Role.CLIENT
-
-        val receivingHosts = events.map { event -> event.recv.host }.toSet()
-        val thisHostReceives = receivingHosts.contains(context.host)
-        val otherHostReceives = receivingHosts.contains(otherHostInfo.first)
-        val outRole: CodeBlock =
+    override fun import(
+        protocol: Protocol,
+        arguments: List<Argument>
+    ): Pair<CodeBlock, List<CodeBlock>> {
+        require(protocol is ABY)
+        require(context.host in protocol.hosts)
+        val builder = CodeBlock.builder()
+        val values = arguments.map { argument ->
+            val inputName = context.newTemporary(argument.value.toString() + "_inShare")
             when {
-                thisHostReceives && !otherHostReceives -> roleToCodeBlock(thisHostRole)
-
-                !thisHostReceives && otherHostReceives ->
-                    if (thisHostRole == Role.SERVER) roleToCodeBlock(Role.CLIENT) else roleToCodeBlock(Role.SERVER)
-
-                thisHostReceives && otherHostReceives -> roleToCodeBlock(Role.ALL)
-
-                else ->
-                    throw IllegalArgumentException("ABY: at least one party must receive output when executing circuit.")
-            }
-
-        outBuilder.addStatement(
-            "val %L = %L.putOUTGate(%L, %L)",
-            outShareName,
-            protocolToAbyPartyCircuit(sendProtocol),
-            context.kotlinName(sender.name.value),
-            outRole
-        )
-
-        // execute circuit
-        outBuilder.addStatement(
-            "%L.execCircuit()",
-            protocolToABYPartyMap[ABYPair(sendProtocol.server, sendProtocol.client)]
-        )
-
-        for (event in events.filter { event -> event.send.host == context.host }) {
-            when (typeAnalysis.type(sender)) {
-                is BooleanType ->
-                    outBuilder.addStatement(
-                        "%L",
-                        context.send(
-                            CodeBlock.of(
-                                "%L.getClearValue32().%M",
-                                outShareName,
-                                MemberName("io.github.apl_cornell.viaduct.runtime.aby", "bool")
-                            ),
-                            event.recv.host
-                        )
-                    )
-                is IntegerType ->
-                    outBuilder.addStatement(
-                        "%L",
-                        context.send(
-                            CodeBlock.of("%L.getClearValue32().toInt()", outShareName),
-                            event.recv.host
-                        )
-                    )
-            }
-        }
-
-        // reset circuit
-        outBuilder.addStatement(
-            "%L.reset()",
-            protocolToABYPartyMap[ABYPair(sendProtocol.server, sendProtocol.client)]
-        )
-
-        return outBuilder.build()
-    }*/
-
-    override fun receive(
-        sender: LetNode,
-        sendProtocol: Protocol,
-        receiveProtocol: Protocol,
-        events: ProtocolCommunication
-    ) = CodeBlock.of("Send not yet implemented")
-    /*: CodeBlock {
-    val receiveBuilder = CodeBlock.builder()
-    for (event in events) {
-        when {
-
-            // secret input for this host; create input gate
-            event.recv.id == ABY.SECRET_INPUT && event.recv.host == context.host -> {
-                when (typeAnalysis.type(sender)) {
-                    is BooleanType ->
-                        receiveBuilder.addStatement(
-                            "val %L = %L.putINGate(%L.compareTo(false).toBigInteger(), %L, %L)",
-                            context.kotlinName(sender.name.value, receiveProtocol),
-                            protocolToAbyPartyCircuit(receiveProtocol),
-                            context.receive(typeTranslator(typeAnalysis.type(sender)), event.send.host),
-                            BIT_LENGTH,
-                            roleToCodeBlock(role(receiveProtocol, context.host))
-                        )
-
-                    is IntegerType ->
-                        receiveBuilder.addStatement(
+                argument.protocol is Local && argument.protocol.host in protocol.hosts -> {
+                    if (argument.protocol.host == context.host) {
+                        builder.addStatement(
                             "val %L = %L.putINGate(%L.toBigInteger(), %L, %L)",
-                            context.kotlinName(sender.name.value, receiveProtocol),
-                            protocolToAbyPartyCircuit(receiveProtocol),
-                            context.receive(typeTranslator(typeAnalysis.type(sender)), event.send.host),
+                            inputName,
+                            protocolToAbyPartyCircuit(protocol),
+                            if (argument.type.elementType.value is IntegerType) argument.value else CodeBlock.of(
+                                "%L.compareTo(false)",
+                                argument.value
+                            ),
                             BIT_LENGTH,
-                            roleToCodeBlock(role(receiveProtocol, context.host))
+                            roleToCodeBlock(role(protocol, context.host))
                         )
+                    } else {
+                        builder.addStatement(
+                            "val %L = %L.putDummyINGate(%L)",
+                            inputName,
+                            protocolToAbyPartyCircuit(protocol),
+                            BIT_LENGTH
+                        )
+                    }
                 }
+                argument.protocol is Replication && argument.protocol.hosts == protocol.hosts -> {
+                    builder.addStatement(
+                        "val %L = %L.putCONSGate(%L.toBigInteger(), %L)",
+                        inputName,
+                        protocolToAbyPartyCircuit(protocol),
+                        if (argument.type.elementType.value is IntegerType) argument.value else CodeBlock.of(
+                            "%L.compareTo(false)",
+                            argument.value
+                        ),
+                        BIT_LENGTH
+                    )
+                }
+                else -> throw UnsupportedCommunicationException(argument.protocol, protocol, argument.sourceLocation)
             }
-
-            // other host has secret input; create dummy gate
-            event.recv.id == ABY.SECRET_INPUT && event.recv.host != context.host -> {
-                receiveBuilder.addStatement(
-                    "val %L = %L.putDummyINGate(%L)",
-                    context.kotlinName(sender.name.value, receiveProtocol),
-                    protocolToAbyPartyCircuit(receiveProtocol),
-                    BIT_LENGTH
-                )
-            }
-
-            // TODO() - look into how to take from the send queue in this case
-            // cleartext input; create constant gate
-            event.recv.id == ABY.CLEARTEXT_INPUT && event.recv.host == context.host -> {
-                receiveBuilder.add(exp(sendProtocol, sender.value))
-            }
+            CodeBlock.of("%N", inputName)
         }
+        return Pair(builder.build(), values)
     }
 
-    return receiveBuilder.build()
-}*/
+    override fun export(
+        protocol: Protocol,
+        arguments: List<Argument>
+    ): Pair<CodeBlock, List<CodeBlock>> {
+        require(protocol is ABY)
+        require(context.host in protocol.hosts)
+        val builder = CodeBlock.builder()
+        val outShareNames = arguments.map { argument ->
+            val outShareName = context.newTemporary(argument.value.toString() + "_outShare")
+            val outRole = when (argument.protocol) {
+                Local(protocol.server) -> Role.SERVER
+                Local(protocol.client) -> Role.CLIENT
+                Replication(setOf(protocol.server, protocol.client)) -> Role.ALL
+                else -> throw IllegalStateException()
+            }
+            builder.addStatement(
+                "val %N = %L.putOUTGate(%L, %L)",
+                outShareName,
+                protocolToAbyPartyCircuit(protocol),
+                argument.value,
+                roleToCodeBlock(outRole)
+            )
+            CodeBlock.of("%N", outShareName)
+        }
+        builder.addStatement(
+            "%L.execCircuit()",
+            protocolToABYPartyMap[ABYPair(protocol.server, protocol.client)]
+        )
+        val cleartextTmps = arguments.zip(outShareNames).map { (arg, outShareName) ->
+            val cleartextTmp = context.newTemporary("cleartextTmp")
+            if (context.host in arg.protocol.hosts) {
+                builder.addStatement(
+                    "val %N = %L.getClearValue32().%L",
+                    cleartextTmp,
+                    outShareName,
+                    if (arg.type.elementType.value is IntegerType) "toInt()" else MemberName(
+                        "io.github.apl_cornell.viaduct.runtime.aby",
+                        "bool"
+                    )
+                )
+            }
+            CodeBlock.of(cleartextTmp)
+        }
+        builder.addStatement(
+            "%L.reset()",
+            protocolToABYPartyMap[ABYPair(protocol.server, protocol.client)]
+        )
+        return Pair(builder.build(), cleartextTmps)
+    }
 }

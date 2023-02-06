@@ -11,8 +11,8 @@ import io.github.apl_cornell.viaduct.syntax.SourceLocation
 class UnsupportedCommunicationException(from: Protocol, to: Protocol, sourceLocation: SourceLocation) :
     CodeGenerationException(
         "Protocol ${from.name} does not support communication to ${to.name}.\n ${
-            sourceLocation.showInSource(
-                DefaultStyle
-            ).print()
+        sourceLocation.showInSource(
+            DefaultStyle
+        ).print()
         }"
     )

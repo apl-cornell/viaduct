@@ -108,8 +108,10 @@ private class BackendCodeGenerator(
                             builder.addCode(
                                 "%N(%L)",
                                 command.name.value.name,
-                                ((command.bounds).map { indexExpression(it, context) } + inputs +
-                                    circuitDecl.outputs.map { CodeBlock.of("%N", outNames[it]) }).joinToCode()
+                                (
+                                    (command.bounds).map { indexExpression(it, context) } + inputs +
+                                        circuitDecl.outputs.map { CodeBlock.of("%N", outNames[it]) }
+                                    ).joinToCode()
                             )
                             val outTmps = circuitDecl.outputs.map {
                                 val tmp = context.newTemporary(it.name.value.name)
@@ -151,14 +153,16 @@ private class BackendCodeGenerator(
                                         context
                                     )
                                 )
-                                builder.addCode(CodeBlock.of("%N", name).forEachIndexed(shape, { _, value ->
-                                    CodeBlock.of(
-                                        "%L = (runtime.input(%T) as %T).value",
-                                        value,
-                                        command.type.elementType.value::class,
-                                        command.type.elementType.value.valueClass
-                                    )
-                                }, context))
+                                builder.addCode(
+                                    CodeBlock.of("%N", name).forEachIndexed(shape, { _, value ->
+                                        CodeBlock.of(
+                                            "%L = (runtime.input(%T) as %T).value",
+                                            value,
+                                            command.type.elementType.value::class,
+                                            command.type.elementType.value.valueClass
+                                        )
+                                    }, context)
+                                )
                             }
                         }
                         is OutputNode -> {
